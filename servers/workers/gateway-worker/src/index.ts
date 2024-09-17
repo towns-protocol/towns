@@ -13,6 +13,8 @@ export interface Env extends AuthEnv {
     CF_API: string
     ACCOUNT_ID: string
     ENVIRONMENT: Environment
+    PRIVY_APP_ID: string
+    PRIVY_APP_KEY: string
     LINEAR_API_KEY: string
     LINEAR_TEAM_ID: string
     LINEAR_GRAPHQL_URL: string

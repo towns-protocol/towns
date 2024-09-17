@@ -2,6 +2,7 @@ import { Request as IttyRequest, Router } from 'itty-router'
 import { type Env } from './index'
 import { createLinearIssue } from './linearClient'
 import { getLinearPayloadFromFormData } from './getLinearPayloadFromFormData'
+import { PrivyClient } from '@privy-io/server-auth'
 
 const router = Router()
 
@@ -57,6 +58,27 @@ router.get('/space/:id/identity', async (request: WorkerRequest, env) => {
         return new Response(`identity not found for space: ${spaceId}`, { status: 404 })
     }
     return new Response(JSON.parse(JSON.stringify(value)), { status: 200 })
+})
+
+router.post('/user/delete', async (request: WorkerRequest, env: Env, ctx) => {
+    const privyToken = request.headers.get('X-User-Token')
+    if (!privyToken || privyToken === '') {
+        return new Response('Missing User Token', { status: 400 })
+    }
+
+    const privyClient = new PrivyClient(env.PRIVY_APP_ID, env.PRIVY_APP_KEY)
+    try {
+        const verification = await privyClient.verifyAuthToken(privyToken)
+        if (!verification.userId) {
+            return new Response('Invalid User Token', { status: 400 })
+        }
+        await privyClient.deleteUser(verification.userId)
+        console.log(`User ${verification.userId} deleted`)
+        return new Response('ok', { status: 200 })
+    } catch (error) {
+        console.error(error)
+        return new Response('Error', { status: 400 })
+    }
 })
 
 router.post('/user-feedback', async (request: WorkerRequest, env: Env, ctx) => {

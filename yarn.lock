@@ -20325,6 +20325,7 @@ __metadata:
   resolution: "gateway-worker@workspace:servers/workers/gateway-worker"
   dependencies:
     "@cloudflare/workers-types": ^4.20240529.0
+    "@privy-io/server-auth": ^1.9.1
     "@river-build/generated": "workspace:^"
     "@types/jest": ^29.5.3
     "@typescript-eslint/eslint-plugin": ^6.10.0
