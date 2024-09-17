@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"github.com/river-build/river/core/node/dlog"
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -87,6 +88,7 @@ func NewSyncers(
 	cookies StreamCookieSetGroupedByNodeAddress,
 ) (*SyncerSet, <-chan *SyncStreamsResponse, error) {
 	var (
+		log             = dlog.FromCtx(ctx)
 		syncers         = make(map[common.Address]StreamsSyncer)
 		streamID2Syncer = make(map[StreamId]StreamsSyncer)
 		messages        = make(chan *SyncStreamsResponse, 256)
@@ -100,6 +102,21 @@ func NewSyncers(
 			syncers:               syncers,
 			streamID2Syncer:       streamID2Syncer,
 			messages:              messages,
+		}
+
+		// report these streams as down
+		unavailableRemote = func(cookieSet SyncCookieSet) {
+			for _, cookie := range cookieSet.AsSlice() {
+				select {
+				case messages <- &SyncStreamsResponse{
+					SyncOp:   SyncOp_SYNC_DOWN,
+					StreamId: cookie.GetStreamId(),
+				}:
+					continue
+				case <-ctx.Done():
+					return
+				}
+			}
 		}
 	)
 
@@ -115,13 +132,19 @@ func NewSyncers(
 		} else {
 			client, err := nodeRegistry.GetStreamServiceClientForAddress(nodeAddress)
 			if err != nil {
-				return nil, nil, err
+				log.Warn("Unable to find client for remote stream sync",
+					"err", err, "remoteNode", nodeAddress)
+				go unavailableRemote(cookieSet)
+				continue
 			}
 
 			syncer, err := newRemoteSyncer(
 				ctx, globalSyncOpCtxCancel, syncID, nodeAddress, client, cookieSet.AsSlice(), ss.rmStream, messages)
 			if err != nil {
-				return nil, nil, err
+				log.Warn("Unable to connect to remote stream when starting stream sync",
+					"err", err, "remoteNode", nodeAddress)
+				go unavailableRemote(cookieSet)
+				continue
 			}
 
 			syncers[nodeAddress] = syncer
