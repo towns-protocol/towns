@@ -297,8 +297,12 @@ globalStyle(`${richText} ${ol} ${ol} ${ol} ${ol}`, {
     listStyleType: 'decimal',
 })
 
-globalStyle(`${codeBlock} strong`, {
+globalStyle(`${codeBlock} strong, ${code} strong, ${richText} strong > ${code}`, {
     fontWeight: 'bold',
+})
+
+globalStyle(`${richText} del ${code}`, {
+    textDecoration: 'line-through',
 })
 
 globalStyle(`${richText} ${paragraph} + ${paragraph}`, {

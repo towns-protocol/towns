@@ -123,39 +123,56 @@ export default function serialize(
         }
     }
 
-    // Never allow decorating break tags with rich text formatting,
-    // this can malform generated markdown
-    // Also ensure we're only ever applying text formatting to leaf node
-    // level chunks, otherwise we can end up in a situation where
-    // we try applying formatting like to a node like this:
-    // "Text foo bar **baz**" resulting in "**Text foo bar **baz****"
-    // which is invalid markup and can mess everything up
+    /**
+     * Handle the case where we have a leaf node, and NOT a break tag (\n, <br>). We want to apply formatting in the
+     * correct order. We also want to ensure that we're not applying formatting to a string that is only whitespace.
+     * For every formatting type, we add the corresponding markdown format string to the `markdownFormatStr` variable.
+     *
+     * @example
+     * { text: 'foo', bold: true, code: true }
+     * // will become
+     * '**`foo`**'
+     *
+     * @description Code is ALWAYS last, so we can't have a string like this:
+     * \`\*\*foo\*\*\`, as it will not be formatted
+     */
     if (children !== BREAK_TAG && isLeafNode(chunk)) {
-        if (chunk.strikethrough && chunk.bold && chunk.italic) {
-            children = retainWhitespaceAndFormat(children, '~~***')
-        } else if (chunk.bold && chunk.italic) {
-            children = retainWhitespaceAndFormat(children, '***')
-        } else if (children.match(/^[-_*]{3,}/gi)) {
-            // If we have a line of 3 or more dashes or underscores, we need to escape them
-            // to prevent them from being parsed as a thematic break in markdown
-            children = '\\' + children
-        } else {
-            if (chunk.bold) {
-                children = retainWhitespaceAndFormat(children, '**')
-            }
-
-            if (chunk.italic) {
-                children = retainWhitespaceAndFormat(children, '_')
-            }
-
-            if (chunk.strikethrough) {
-                children = retainWhitespaceAndFormat(children, '~~')
-            }
-
-            if (chunk.code) {
-                children = retainWhitespaceAndFormat(children, '`')
-            }
+        let markdownFormatStr = ''
+        // Order of these if statements is important
+        if (chunk.strikethrough) {
+            markdownFormatStr += '~~'
         }
+        if (chunk.bold) {
+            markdownFormatStr += '**'
+        }
+        if (chunk.italic) {
+            markdownFormatStr += '*'
+        }
+        // Code is always last
+        if (chunk.code) {
+            markdownFormatStr += '`'
+        }
+
+        /**
+         * Thematic break is a special case where we don't want to apply formatting
+         * to the children. We just want to return the thematic break
+         *
+         * @example
+         * { text: '-------' }
+         * // will become
+         * \\-------
+         */
+        if (children.match(/^[-_*]{3,}/gi)) {
+            children = '\\' + children
+        }
+
+        /**
+         * If an empty string is being formatted, we don't want to apply formatting and just return empty string
+         */
+        children =
+            children.trim() === ''
+                ? children
+                : retainWhitespaceAndFormat(children, markdownFormatStr)
     }
 
     switch (type) {
