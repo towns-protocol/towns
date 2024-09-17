@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react'
 import type { PlateContentProps } from '@udecode/plate-common'
-import { PlateContent } from '@udecode/plate-common'
+import { PlateContent, useEditorRef } from '@udecode/plate-common'
 import { clsx } from 'clsx'
 import * as fieldStyles from 'ui/components/_internal/Field/Field.css'
 import * as styles from '../../RichTextEditor.css'
@@ -30,19 +30,29 @@ const Editor = React.forwardRef<
         },
         ref,
     ) => {
+        const editor = useEditorRef()
         /**
          * We need to make sure `onKeyDown` passed as `PlateContentProps` is called as well, to ensure default behavior is intact
          */
         const _onKeyDown = useCallback(
             (e: React.KeyboardEvent<HTMLDivElement>) => {
-                if (!isTouch && e.key === 'Backspace' && isEditorEmpty) {
+                /**
+                 * Prevent the default behavior of backspace when the editor is empty
+                 * This is to prevent the placeholder from flickering due to continuous state updates
+                 */
+                if (
+                    !isTouch &&
+                    e.key === 'Backspace' &&
+                    editor.children.length === 1 &&
+                    isEditorEmpty
+                ) {
                     e.preventDefault()
                     return false
                 }
                 handleSendOnEnter?.(e)
                 onKeyDown?.(e)
             },
-            [onKeyDown, handleSendOnEnter, isEditorEmpty, isTouch],
+            [onKeyDown, handleSendOnEnter, isEditorEmpty, isTouch, editor],
         )
 
         return (
