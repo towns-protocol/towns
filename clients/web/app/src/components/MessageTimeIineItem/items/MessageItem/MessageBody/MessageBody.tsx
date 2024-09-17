@@ -94,11 +94,18 @@ const useHideAttachementLinks = (body: string, attachedLinks: string[]) => {
 
         if (isTownsAppUrl(link)) {
             // body is a single markdown link to the attachment
-            const pattern = `[${link}](${link})`
-            return body.startsWith(pattern) || body.endsWith(pattern)
-                ? body.replace(pattern, '')
-                : body
+            let pattern: string
+
+            pattern = `[${link}](${link})`
+            if (body.startsWith(pattern) || body.endsWith(pattern)) {
+                return body.replace(pattern, '')
+            }
+            pattern = `<${link}>`
+            if (body.startsWith(pattern) || body.endsWith(pattern)) {
+                return body.replace(pattern, '')
+            }
         }
+
         return body
     }, [attachedLinks, body])
 }
