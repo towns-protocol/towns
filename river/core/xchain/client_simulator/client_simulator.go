@@ -2,7 +2,6 @@ package client_simulator
 
 import (
 	"context"
-	"crypto/ecdsa"
 	"fmt"
 	"math/big"
 	"time"
@@ -17,8 +16,6 @@ import (
 	node_crypto "github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/dlog"
 
-	xc "github.com/river-build/river/core/xchain/common"
-
 	"github.com/river-build/river/core/contracts/base"
 	"github.com/river-build/river/core/contracts/base/deploy"
 
@@ -26,100 +23,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/ethclient"
 )
-
-var isEntitled = false
-
-func toggleCustomEntitlement(
-	ctx context.Context,
-	cfg *config.Config,
-	fromAddress common.Address,
-	client *ethclient.Client,
-	privateKey *ecdsa.PrivateKey,
-) {
-	log := dlog.FromCtx(ctx).With("application", "clientSimulator")
-
-	nonce, err := client.PendingNonceAt(context.Background(), fromAddress)
-	if err != nil {
-		log.Error("Failed getting PendingNonceAt", "err", err)
-		return
-	}
-
-	gasPrice, err := client.SuggestGasPrice(context.Background())
-	if err != nil {
-		log.Error("Failed SuggestGasPrice", "err", err)
-		return
-	}
-
-	auth, err := bind.NewKeyedTransactorWithChainID(
-		privateKey,
-		big.NewInt(31337),
-	) // replace 31337 with your actual chainID
-	if err != nil {
-		log.Error("NewKeyedTransactorWithChainID", "err", err)
-		return
-	}
-	auth.Nonce = big.NewInt(int64(nonce))
-	auth.Value = big.NewInt(0)       // in wei
-	auth.GasLimit = uint64(30000000) // in units
-	auth.GasPrice = gasPrice
-
-	mockCustomContract, err := deploy.NewMockCustomEntitlement(
-		cfg.GetTestCustomEntitlementContractAddress(),
-		client,
-	)
-	if err != nil {
-		log.Error("Failed to parse contract ABI", "err", err)
-		return
-	}
-
-	isEntitled = !isEntitled
-
-	txn, err := mockCustomContract.SetEntitled(auth, []common.Address{fromAddress}, isEntitled)
-	if err != nil {
-		log.Error("Failed to SetEntitled", "err", err)
-		return
-	}
-
-	rawBlockNumber := xc.WaitForTransaction(client, txn)
-
-	if rawBlockNumber == nil {
-		log.Error("Client MockCustomContract SetEntitled failed to mine")
-		return
-	}
-
-	log.Info(
-		"Client SetEntitled mined in block",
-		"rawBlockNumber",
-		rawBlockNumber,
-		"id",
-		txn.Hash(),
-		"hex",
-		txn.Hash().Hex(),
-	)
-}
-
-func customEntitlementExample(cfg *config.Config) base.IRuleEntitlementBaseRuleData {
-	return base.IRuleEntitlementBaseRuleData{
-		Operations: []base.IRuleEntitlementBaseOperation{
-			{
-				OpType: uint8(contract_types.CHECK),
-				Index:  0,
-			},
-		},
-		CheckOperations: []base.IRuleEntitlementBaseCheckOperation{
-			{
-				OpType:  uint8(contract_types.ISENTITLED),
-				ChainId: big.NewInt(1),
-				// This contract is deployed on our local base dev chain.
-				ContractAddress: cfg.GetTestCustomEntitlementContractAddress(),
-				Threshold:       big.NewInt(0),
-			},
-		},
-	}
-}
 
 func erc721Example() base.IRuleEntitlementBaseRuleData {
 	return base.IRuleEntitlementBaseRuleData{
@@ -167,8 +71,6 @@ type SimulationType int
 const (
 	ERC721 SimulationType = iota
 	ERC20
-	ISENTITLED
-	TOGGLEISENTITLED
 )
 
 type postResult struct {
@@ -665,11 +567,6 @@ func (cs *clientSimulator) EvaluateRuleData(
 }
 
 func RunClientSimulator(ctx context.Context, cfg *config.Config, wallet *node_crypto.Wallet, simType SimulationType) {
-	if simType == TOGGLEISENTITLED {
-		ToggleEntitlement(ctx, cfg, wallet)
-		return
-	}
-
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
@@ -690,54 +587,10 @@ func RunClientSimulator(ctx context.Context, cfg *config.Config, wallet *node_cr
 		ruleData = erc721Example()
 	case ERC20:
 		ruleData = erc20Example()
-	case ISENTITLED:
-		ruleData = customEntitlementExample(cfg)
-	case TOGGLEISENTITLED:
-		fallthrough
 	default:
 		log.Error("--- ClientSimulator invalid SimulationType", "simType", simType)
 		return
 	}
 
 	_, _ = cs.EvaluateRuleData(ctx, cfg, ruleData)
-}
-
-func ToggleEntitlement(ctx context.Context, cfg *config.Config, wallet *node_crypto.Wallet) {
-	log := dlog.FromCtx(ctx).With("application", "clientSimulator")
-
-	privateKey := wallet.PrivateKeyStruct
-	publicKey := privateKey.Public()
-	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
-	if !ok {
-		log.Error("error casting public key to ECDSA")
-		return
-	}
-
-	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
-
-	log.Info("ClientSimulator fromAddress", "fromAddress", fromAddress.Hex())
-
-	baseWebsocketURL, err := xc.ConvertHTTPToWebSocket(cfg.BaseChain.NetworkUrl)
-	if err != nil {
-		log.Error("Failed to convert BaseChain HTTP to WebSocket", "err", err)
-		return
-	}
-
-	client, err := ethclient.Dial(baseWebsocketURL)
-	if err != nil {
-		log.Error("Failed to connect to the Ethereum client", "err", err)
-		return
-	}
-	log.Info("ClientSimulator connected to Ethereum client")
-
-	bc := context.Background()
-	var result interface{}
-	err = client.Client().CallContext(bc, &result, "anvil_setBalance", fromAddress, 1_000_000_000_000_000_000)
-	if err != nil {
-		log.Info("Failed call anvil_setBalance", "error=", err)
-		return
-	}
-	log.Info("ClientSimulator add funds on anvil to wallet address", "result", result)
-
-	toggleCustomEntitlement(ctx, cfg, fromAddress, client, privateKey)
 }

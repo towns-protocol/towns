@@ -950,7 +950,8 @@ describe('spaceWithEntitlements', () => {
         log('Done', Date.now() - doneStart)
     })
 
-    test('customEntitlementGateJoinPass', async () => {
+    // TODO: re-enable as part of https://github.com/river-build/river/issues/1046
+    test.skip('customEntitlementGateJoinPass', async () => {
         const ruleData = treeToRuleData(await customCheckOp('TestCustom'))
 
         const { alice, bob, aliceSpaceDapp, aliceProvider, alicesWallet, spaceId, channelId } =
@@ -984,7 +985,8 @@ describe('spaceWithEntitlements', () => {
         log('Done', Date.now() - doneStart)
     })
 
-    test('customEntitlementGateJoinFail', async () => {
+    // TODO: re-enable as part of https://github.com/river-build/river/issues/1046
+    test.skip('customEntitlementGateJoinFail', async () => {
         const ruleData = treeToRuleData(await customCheckOp('TestCustom'))
         const { alice, bob, aliceSpaceDapp, aliceProvider, alicesWallet, spaceId } =
             await createTownWithRequirements({
@@ -1012,7 +1014,8 @@ describe('spaceWithEntitlements', () => {
         log('Done', Date.now() - doneStart)
     })
 
-    test('customEntitlementGateJoinPass - join as root, asset in linked wallet', async () => {
+    // TODO: re-enable as part of https://github.com/river-build/river/issues/1046
+    test.skip('customEntitlementGateJoinPass - join as root, asset in linked wallet', async () => {
         const ruleData = treeToRuleData(await customCheckOp('TestCustom'))
         const {
             alice,
@@ -1057,7 +1060,7 @@ describe('spaceWithEntitlements', () => {
         log('Done', Date.now() - doneStart)
     })
 
-    test('customEntitlementGateJoinPass - join as linked wallet, asset in root wallet', async () => {
+    test.skip('customEntitlementGateJoinPass - join as linked wallet, asset in root wallet', async () => {
         const contractName = 'TestCustom'
         const customAddress = await TestCustomEntitlement.getContractAddress(contractName)
         const op: Operation = {

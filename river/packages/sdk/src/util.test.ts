@@ -182,6 +182,7 @@ export async function erc20CheckOp(contractName: string, threshold: bigint): Pro
     }
 }
 
+// TODO: update to crossChainCheckOp as part of https://github.com/river-build/river/issues/1046
 export async function customCheckOp(contractName: string): Promise<Operation> {
     const contractAddress = await TestCustomEntitlement.getContractAddress(contractName)
     return {

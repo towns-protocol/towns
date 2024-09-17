@@ -13,6 +13,10 @@ export class PlatformRequirements extends BaseContractShim<LocalhostContract, Lo
         super(address, provider, LocalhostAbi)
     }
 
+    public getMembershipMintLimit() {
+        return this.read.getMembershipMintLimit()
+    }
+
     public getMembershipFee() {
         return this.read.getMembershipFee()
     }

@@ -131,24 +131,6 @@ func TestConvertV1RuleDataToV2(t *testing.T) {
 				},
 			},
 		},
-		"Custom": {
-			ruleData: test_util.CustomEntitlementCheck(10, testAddress),
-			expected: base.IRuleEntitlementBaseRuleDataV2{
-				Operations: []base.IRuleEntitlementBaseOperation{
-					{
-						OpType: uint8(types.CHECK),
-						Index:  0,
-					},
-				},
-				CheckOperations: []base.IRuleEntitlementBaseCheckOperationV2{
-					{
-						OpType:          uint8(types.ISENTITLED),
-						ChainId:         big.NewInt(10),
-						ContractAddress: testAddress,
-					},
-				},
-			},
-		},
 		"EthBalance": {
 			ruleData: test_util.EthBalanceCheck(15, 1500),
 			expected: base.IRuleEntitlementBaseRuleDataV2{

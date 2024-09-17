@@ -1,6 +1,10 @@
 import { check, dlogger } from '@river-build/dlog'
 import { promises as fs } from 'node:fs'
-import { RiverConfig, makeDefaultChannelStreamId } from '@river-build/sdk'
+import {
+    RiverConfig,
+    contractAddressFromSpaceId,
+    makeDefaultChannelStreamId,
+} from '@river-build/sdk'
 import { Wallet, ethers } from 'ethers'
 import { makeStressClient } from '../../utils/stressClient'
 import { kickoffChat } from './kickoffChat'
@@ -143,6 +147,7 @@ export async function setupChat(opts: {
     }
     // log all the deets
     const envVars = [
+        `SPACE_ADDRESS=${contractAddressFromSpaceId(spaceId)}`,
         `SPACE_ID=${spaceId}`,
         `ANNOUNCE_CHANNEL_ID=${announceChannelId}`,
         `CHANNEL_IDS=${channelIds.join(',')}`,

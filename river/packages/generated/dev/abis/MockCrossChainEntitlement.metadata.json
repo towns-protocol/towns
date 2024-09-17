@@ -1,0 +1,159 @@
+{
+  "compiler": {
+    "version": "0.8.24+commit.e11b9ed9"
+  },
+  "language": "Solidity",
+  "output": {
+    "abi": [
+      {
+        "inputs": [
+          {
+            "internalType": "address[]",
+            "name": "users",
+            "type": "address[]"
+          },
+          {
+            "internalType": "bytes",
+            "name": "data",
+            "type": "bytes"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function",
+        "name": "isEntitled",
+        "outputs": [
+          {
+            "internalType": "bool",
+            "name": "",
+            "type": "bool"
+          }
+        ]
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "bytes32",
+            "name": "",
+            "type": "bytes32"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function",
+        "name": "isEntitledByUserAndId",
+        "outputs": [
+          {
+            "internalType": "bool",
+            "name": "",
+            "type": "bool"
+          }
+        ]
+      },
+      {
+        "inputs": [],
+        "stateMutability": "pure",
+        "type": "function",
+        "name": "parameters",
+        "outputs": [
+          {
+            "internalType": "struct ICrossChainEntitlement.Parameter[]",
+            "name": "",
+            "type": "tuple[]",
+            "components": [
+              {
+                "internalType": "string",
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "internalType": "string",
+                "name": "primitive",
+                "type": "string"
+              },
+              {
+                "internalType": "string",
+                "name": "description",
+                "type": "string"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "id",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "user",
+            "type": "address"
+          },
+          {
+            "internalType": "bool",
+            "name": "entitled",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function",
+        "name": "setIsEntitled"
+      }
+    ],
+    "devdoc": {
+      "kind": "dev",
+      "methods": {},
+      "version": 1
+    },
+    "userdoc": {
+      "kind": "user",
+      "methods": {},
+      "version": 1
+    }
+  },
+  "settings": {
+    "remappings": [
+      "@openzeppelin/=node_modules/@openzeppelin/",
+      "@prb/math/=node_modules/@prb/math/src/",
+      "@prb/test/=node_modules/@prb/test/src/",
+      "account-abstraction/=node_modules/account-abstraction/contracts/",
+      "ds-test/=node_modules/ds-test/src/",
+      "forge-std/=node_modules/forge-std/src/",
+      "hardhat-deploy/=node_modules/hardhat-deploy/",
+      "solady/=node_modules/solady/src/"
+    ],
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "metadata": {
+      "bytecodeHash": "none",
+      "appendCBOR": false
+    },
+    "compilationTarget": {
+      "contracts/test/mocks/MockCrossChainEntitlement.sol": "MockCrossChainEntitlement"
+    },
+    "evmVersion": "paris",
+    "libraries": {}
+  },
+  "sources": {
+    "contracts/src/spaces/entitlements/ICrossChainEntitlement.sol": {
+      "keccak256": "0xc4f8345418d1a53484a0896639f1201f6afd899be0a9ca89c7e4a4717b91635b",
+      "urls": [
+        "bzz-raw://615519730737ea5621fb1feeda4dc652ad2a5823d7d5613e4a4d0be6f17d9cef",
+        "dweb:/ipfs/QmZnajX2f3o7KsTWwYdq4a1Ss37ckJd9FsmBoAADjjNHnn"
+      ],
+      "license": "MIT"
+    },
+    "contracts/test/mocks/MockCrossChainEntitlement.sol": {
+      "keccak256": "0xd6e47a178d38b26536e9c8b0fe3233e76e91a9f331742db919d8edff229082f2",
+      "urls": [
+        "bzz-raw://085f18ab6529ff949097e029b71dbf51b94b88b8e91a1712aaeb0048df03e026",
+        "dweb:/ipfs/QmVhNcDUqcR5WoKQJtEBGATbs2sRqn35SEXJ67DUeFDXuu"
+      ],
+      "license": "MIT"
+    }
+  },
+  "version": 1
+}

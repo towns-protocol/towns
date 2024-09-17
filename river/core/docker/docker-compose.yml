@@ -3,8 +3,6 @@ services:
         # image: public.ecr.aws/h5v6m2x1/river:latest
         build:
             dockerfile: ../Dockerfile
-        volumes:
-            - ./local_river_node_logs:/riveruser/river_node/logs
         environment:
             - BASECHAIN__CHAINID=31337
             - STORAGE_TYPE=postgres

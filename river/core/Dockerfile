@@ -30,12 +30,10 @@ LABEL org.opencontainers.image.title="River Node" \
     org.opencontainers.image.licenses="MIT"
 
 # Install dependencies
-RUN apk add --no-cache libcap supervisor curl && \
+RUN apk add --no-cache libcap curl && \
     adduser -D riveruser
 
 COPY docker/run.sh /etc/run.sh
-COPY docker/full_node.supervisord.conf /etc/full_node.supervisord.conf
-COPY docker/archive_node.supervisord.conf /etc/archive_node.supervisord.conf
 COPY --from=builder /bin/river_node /usr/bin/river_node
 
 # Use setcap to allow the web server binary to bind to privileged ports
@@ -44,9 +42,7 @@ RUN setcap 'cap_net_bind_service=+ep' /usr/bin/river_node
 COPY --from=builder /build/node/default_config.yaml /riveruser/river_node/config/config.yaml
 
 RUN mkdir -p /riveruser/river_node/logs
-RUN mkdir -p /riveruser/supervisord/logs
 RUN chown riveruser:riveruser /riveruser/river_node/logs
-RUN chown riveruser:riveruser /riveruser/supervisord/logs
 
 # Set non-root user
 USER riveruser

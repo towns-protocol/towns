@@ -6,6 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/river-build/river/core/contracts/base"
+	"github.com/river-build/river/core/node/crypto"
 
 	contract_types "github.com/river-build/river/core/contracts/types"
 )
@@ -81,20 +82,37 @@ func Erc20Check(chainId uint64, contractAddress common.Address, threshold uint64
 	}
 }
 
-func CustomEntitlementCheck(chainId uint64, contractAddress common.Address) base.IRuleEntitlementBaseRuleData {
-	return base.IRuleEntitlementBaseRuleData{
+func MockCrossChainEntitlementCheck(
+	chainId uint64,
+	contractAddress common.Address,
+	id *big.Int,
+) base.IRuleEntitlementBaseRuleDataV2 {
+	params := crypto.ABIEncodeUint256(id)
+	return CrossChainEntitlementCheck(
+		chainId,
+		contractAddress,
+		params,
+	)
+}
+
+func CrossChainEntitlementCheck(
+	chainId uint64,
+	contractAddress common.Address,
+	params []byte,
+) base.IRuleEntitlementBaseRuleDataV2 {
+	return base.IRuleEntitlementBaseRuleDataV2{
 		Operations: []base.IRuleEntitlementBaseOperation{
 			{
 				OpType: uint8(contract_types.CHECK),
 				Index:  0,
 			},
 		},
-		CheckOperations: []base.IRuleEntitlementBaseCheckOperation{
+		CheckOperations: []base.IRuleEntitlementBaseCheckOperationV2{
 			{
 				OpType:          uint8(contract_types.ISENTITLED),
 				ChainId:         new(big.Int).SetUint64(chainId),
 				ContractAddress: contractAddress,
-				Threshold:       new(big.Int).SetUint64(0),
+				Params:          params,
 			},
 		},
 	}

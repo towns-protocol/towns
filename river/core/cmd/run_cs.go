@@ -70,10 +70,6 @@ out:
 				go xc.RunClientSimulator(bc, cmdConfig, wallet, xc.ERC20)
 			case 'b':
 				go xc.RunClientSimulator(bc, cmdConfig, wallet, xc.ERC721)
-			case 'c':
-				go xc.RunClientSimulator(bc, cmdConfig, wallet, xc.ISENTITLED)
-			case 'd':
-				go xc.RunClientSimulator(bc, cmdConfig, wallet, xc.TOGGLEISENTITLED)
 			case 'q':
 				log.Info("Quit Exit")
 				break out

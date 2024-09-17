@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"math/big"
 	"reflect"
 	"slices"
 	"strings"
@@ -449,9 +450,10 @@ func (occ *onChainConfiguration) applyEvent(ctx context.Context, event *river.Ri
 }
 
 var (
-	int64Type, _  = abi.NewType("int64", "", nil)
-	uint64Type, _ = abi.NewType("uint64", "", nil)
-	stringType, _ = abi.NewType("string", "string", nil)
+	int64Type, _   = abi.NewType("int64", "", nil)
+	uint64Type, _  = abi.NewType("uint64", "", nil)
+	uint256Type, _ = abi.NewType("uint256", "", nil)
+	stringType, _  = abi.NewType("string", "string", nil)
 )
 
 // ABIEncodeInt64 returns Solidity abi.encode(i)
@@ -480,6 +482,20 @@ func ABIDecodeUint64(data []byte) (uint64, error) {
 		return 0, err
 	}
 	return args[0].(uint64), nil
+}
+
+// ABIEncodeUint256 returns Solidity abi.encode(i)
+func ABIEncodeUint256(i *big.Int) []byte {
+	value, _ := abi.Arguments{{Type: uint256Type}}.Pack(i)
+	return value
+}
+
+func ABIDecodeUint256(data []byte) (*big.Int, error) {
+	args, err := abi.Arguments{{Type: uint256Type}}.Unpack(data)
+	if err != nil {
+		return nil, err
+	}
+	return args[0].(*big.Int), nil
 }
 
 // ABIEncodeString returns Solidity abi.encode(s)

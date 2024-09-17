@@ -188,7 +188,10 @@ export type MembershipInfo = Pick<
     MembershipInfoStruct,
     'maxSupply' | 'currency' | 'feeRecipient' | 'price' | 'duration' | 'pricingModule'
 > &
-    TotalSupplyInfo
+    TotalSupplyInfo & {
+        prepaidSupply: number
+        remainingFreeSupply: number
+    }
 
 export type TotalSupplyInfo = Pick<TotalSupplyOutputStruct, 'totalSupply'>
 

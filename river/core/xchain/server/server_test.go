@@ -56,10 +56,10 @@ type serviceTester struct {
 	stopBlockAutoMining func()
 
 	// Addresses
-	mockEntitlementGatedAddress  common.Address
-	mockCustomEntitlementAddress common.Address
-	entitlementCheckerAddress    common.Address
-	walletLinkingAddress         common.Address
+	mockEntitlementGatedAddress      common.Address
+	mockCrossChainEntitlementAddress common.Address
+	entitlementCheckerAddress        common.Address
+	walletLinkingAddress             common.Address
 
 	// Contracts
 	entitlementChecker *base.IEntitlementChecker
@@ -149,10 +149,10 @@ func (st *serviceTester) deployXchainTestContracts() {
 	st.require.NoError(err)
 	st.mockEntitlementGatedAddress = addr
 
-	// Deploy the mock custom entitlement contract
-	addr, _, _, err = test_contracts.DeployMockCustomEntitlement(auth, client)
+	// Deploy the mock cross chain entitlement contract
+	addr, _, _, err = test_contracts.DeployMockCrossChainEntitlement(auth, client)
 	st.require.NoError(err)
-	st.mockCustomEntitlementAddress = addr
+	st.mockCrossChainEntitlementAddress = addr
 
 	// Deploy the wallet linking contract
 	addr, _, _, err = test_contracts.DeployMockWalletLink(auth, client)
@@ -172,8 +172,8 @@ func (st *serviceTester) deployXchainTestContracts() {
 		st.entitlementCheckerAddress.Hex(),
 		"mockEntitlementGated",
 		st.mockEntitlementGatedAddress.Hex(),
-		"mockCustomEntitlement",
-		st.mockCustomEntitlementAddress.Hex(),
+		"mockCrossChainEntitlement",
+		st.mockCrossChainEntitlementAddress.Hex(),
 		"walletLink",
 		st.walletLinkingAddress.Hex(),
 	)
@@ -302,7 +302,7 @@ func (st *serviceTester) Config() *config.Config {
 			Address: st.walletLinkingAddress,
 		},
 		TestCustomEntitlementContract: config.ContractConfig{
-			Address: st.mockCustomEntitlementAddress,
+			Address: st.mockCrossChainEntitlementAddress,
 		},
 		Log: config.LogConfig{
 			NoColor: true,
@@ -869,8 +869,9 @@ func TestErc20Entitlements(t *testing.T) {
 func toggleEntitlement(
 	require *require.Assertions,
 	auth *bind.TransactOpts,
-	customEntitlement *deploy.MockCustomEntitlement,
+	crossChainEntitlement *deploy.MockCrossChainEntitlement,
 	wallet *node_crypto.Wallet,
+	id int64,
 	response bool,
 ) {
 	// Update nonce
@@ -879,17 +880,17 @@ func toggleEntitlement(
 	auth.Nonce = big.NewInt(int64(nonce))
 
 	// Toggle contract response
-	txn, err := customEntitlement.SetEntitled(auth, []common.Address{wallet.Address}, response)
+	txn, err := crossChainEntitlement.SetIsEntitled(auth, big.NewInt(id), wallet.Address, response)
 	require.NoError(err)
 	blockNum := xc_common.WaitForTransaction(anvilClient, txn)
 	require.NotNil(blockNum)
 }
 
-func deployMockCustomEntitlement(
+func deployMockCrossChainEntitlement(
 	require *require.Assertions,
 	st *serviceTester,
-) (*bind.TransactOpts, common.Address, *deploy.MockCustomEntitlement) {
-	// Deploy mock custom entitlement contract to anvil chain
+) (*bind.TransactOpts, common.Address, *deploy.MockCrossChainEntitlement) {
+	// Deploy mock crosschain entitlement contract to anvil chain
 	nonce, err := anvilClient.PendingNonceAt(context.Background(), anvilWallet.Address)
 	require.NoError(err)
 	auth, err := bind.NewKeyedTransactorWithChainID(anvilWallet.PrivateKeyStruct, big.NewInt(31337))
@@ -898,27 +899,24 @@ func deployMockCustomEntitlement(
 	auth.Value = big.NewInt(0)         // in wei
 	auth.GasLimit = uint64(30_000_000) // in units
 
-	contractAddress, txn, customEntitlement, err := deploy.DeployMockCustomEntitlement(
+	contractAddress, txn, crossChainEntitlement, err := deploy.DeployMockCrossChainEntitlement(
 		auth,
 		anvilClient,
 	)
 	require.NoError(err)
 	require.NotNil(
 		xc_common.WaitForTransaction(anvilClient, txn),
-		"Failed to mine custom entitlement contract deployment",
+		"Failed to mine cross chain entitlement contract deployment",
 	)
-	return auth, contractAddress, customEntitlement
+	return auth, contractAddress, crossChainEntitlement
 }
 
-func TestCustomEntitlements(t *testing.T) {
+func TestCrossChainEntitlements(t *testing.T) {
 	tests := map[string]struct {
-		v2                  bool
 		sentByRootKeyWallet bool
 	}{
-		"v1 request sent by root key wallet": {sentByRootKeyWallet: true},
-		"v1 request sent by linked wallet":   {sentByRootKeyWallet: false},
-		"v2 request sent by root key wallet": {v2: true, sentByRootKeyWallet: true},
-		"v2 request sent by linked wallet":   {v2: true, sentByRootKeyWallet: false},
+		"v2 request sent by root key wallet": {sentByRootKeyWallet: true},
+		"v2 request sent by linked wallet":   {sentByRootKeyWallet: false},
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -937,64 +935,53 @@ func TestCustomEntitlements(t *testing.T) {
 			cs.Start(ctx)
 			defer cs.Stop()
 
+			// Deploy mock crosschain entitlement contract to anvil chain
+			auth, contractAddress, crossChainEntitlement := deployMockCrossChainEntitlement(require, st)
+			t.Log("Deployed crosschain entitlement contract", contractAddress.Hex(), ChainID)
+
 			check := func(
-				v1Check base.IRuleEntitlementBaseRuleData,
-				expected bool,
+				check base.IRuleEntitlementBaseRuleDataV2,
+				result bool,
 			) {
-				if tc.v2 {
-					v2Check, err := contract_types.ConvertV1RuleDataToV2(ctx, &v1Check)
-					require.NoError(err)
-					expectV2EntitlementCheckResult(
-						require,
-						cs,
-						ctx,
-						cfg,
-						*v2Check,
-						expected,
-					)
-				} else {
-					expectEntitlementCheckResult(
-						require,
-						cs,
-						ctx,
-						cfg,
-						v1Check,
-						expected,
-					)
-				}
+				expectV2EntitlementCheckResult(
+					require,
+					cs,
+					ctx,
+					cfg,
+					check,
+					result,
+				)
 			}
 
-			// Deploy mock custom entitlement contract to anvil chain
-			auth, contractAddress, customEntitlement := deployMockCustomEntitlement(require, st)
-			t.Log("Deployed custom entitlement contract", contractAddress.Hex(), ChainID)
-
 			// Initially the check should fail.
-			customCheck := test_util.CustomEntitlementCheck(ChainID, contractAddress)
-			check(customCheck, false)
+			isEntitledCheck := test_util.MockCrossChainEntitlementCheck(ChainID, contractAddress, big.NewInt(1))
+			check(isEntitledCheck, false)
 
-			toggleEntitlement(require, auth, customEntitlement, cs.Wallet(), true)
+			// Toggle entitlemenet result for user's wallet
+			toggleEntitlement(require, auth, crossChainEntitlement, cs.Wallet(), 1, true)
 
 			// Check should now succeed.
-			check(customCheck, true)
-
-			// Untoggle entitlement for client simulator wallet
-			toggleEntitlement(require, auth, customEntitlement, cs.Wallet(), false)
+			check(isEntitledCheck, true)
 
 			// Create a set of 3 linked wallets using client simulator address.
 			_, wallet1, wallet2, wallet3 := generateLinkedWallets(ctx, require, tc.sentByRootKeyWallet, st, cs.Wallet())
 
-			for _, wallet := range []*node_crypto.Wallet{wallet1, wallet2, wallet3} {
+			for i, wallet := range []*node_crypto.Wallet{wallet1, wallet2, wallet3} {
+				// Use a new id for each check
+				id := int64(i) + 2
+				isEntitledCheck = test_util.MockCrossChainEntitlementCheck(ChainID, contractAddress, big.NewInt(id))
+
 				// Check should fail for all wallets.
-				check(customCheck, false)
+				check(isEntitledCheck, false)
 
 				// Toggle entitlement for a particular linked wallet
-				toggleEntitlement(require, auth, customEntitlement, wallet, true)
+				toggleEntitlement(require, auth, crossChainEntitlement, wallet, id, true)
 
 				// Check should now succeed for the wallet.
-				check(customCheck, true)
+				check(isEntitledCheck, true)
 
 				// Untoggle entitlement for the wallet
-				toggleEntitlement(require, auth, customEntitlement, wallet, false)
+				toggleEntitlement(require, auth, crossChainEntitlement, wallet, id, false)
 			}
 		})
 	}

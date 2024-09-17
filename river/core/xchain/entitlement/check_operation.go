@@ -198,7 +198,7 @@ func (e *Evaluator) evaluateIsEntitledOperation(
 		return false, fmt.Errorf("evaluateIsEntitledOperation: Chain ID %v not found", op.ChainID)
 	}
 
-	customEntitlementChecker, err := base.NewICustomEntitlement(
+	crossChainEntitlementChecker, err := base.NewICrossChainEntitlement(
 		op.ContractAddress,
 		client,
 	)
@@ -212,9 +212,10 @@ func (e *Evaluator) evaluateIsEntitledOperation(
 	}
 	for _, wallet := range linkedWallets {
 		// Check if the caller is entitled
-		isEntitled, err := customEntitlementChecker.IsEntitled(
+		isEntitled, err := crossChainEntitlementChecker.IsEntitled(
 			&bind.CallOpts{Context: ctx},
 			[]common.Address{wallet},
+			op.Params,
 		)
 		if err != nil {
 			log.Error("Failed to check if caller is entitled",

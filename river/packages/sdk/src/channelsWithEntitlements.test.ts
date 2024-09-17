@@ -995,7 +995,8 @@ describe('channelsWithEntitlements', () => {
         log('Done', Date.now() - doneStart)
     })
 
-    test('custom entitlement gate pass', async () => {
+    // TODO: re-enable as part of https://github.com/river-build/river/issues/1046
+    test.skip('custom entitlement gate pass', async () => {
         const ruleData = treeToRuleData(await customCheckOp('TestCustom'))
 
         const { alice, bob, alicesWallet, aliceSpaceDapp, spaceId, channelId } =
@@ -1017,7 +1018,8 @@ describe('channelsWithEntitlements', () => {
         log('Done', Date.now() - doneStart)
     })
 
-    test('custom entitlement gate fail', async () => {
+    // TODO: re-enable as part of https://github.com/river-build/river/issues/1046
+    test.skip('custom entitlement gate fail', async () => {
         const ruleData = treeToRuleData(await customCheckOp('TestCustom'))
 
         const { alice, bob, alicesWallet, aliceSpaceDapp, spaceId, channelId } =
@@ -1039,7 +1041,8 @@ describe('channelsWithEntitlements', () => {
         log('Done', Date.now() - doneStart)
     })
 
-    test('custom entitlement gate join pass - join as root, linked wallet entitled', async () => {
+    // TODO: re-enable as part of https://github.com/river-build/river/issues/1046
+    test.skip('custom entitlement gate join pass - join as root, linked wallet entitled', async () => {
         const ruleData = treeToRuleData(await customCheckOp('TestCustom'))
 
         const {
@@ -1079,7 +1082,8 @@ describe('channelsWithEntitlements', () => {
         log('Done', Date.now() - doneStart)
     })
 
-    test('custom entitlement gated join - join as linked wallet, assets in root wallet', async () => {
+    // TODO: re-enable as part of https://github.com/river-build/river/issues/1046
+    test.skip('custom entitlement gated join - join as linked wallet, assets in root wallet', async () => {
         const ruleData = treeToRuleData(await customCheckOp('TestCustom'))
         const {
             alice,

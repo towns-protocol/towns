@@ -526,7 +526,7 @@ export class UserOps {
             throw new Error('abstractAccountAddress is required')
         }
 
-        const membershipPrice = await this.spaceDapp.getJoinSpacePrice(spaceId)
+        const { price: membershipPrice } = await this.spaceDapp.getJoinSpacePriceDetails(spaceId)
         const callDataJoinSpace = space.Membership.encodeFunctionData('joinSpace', [recipient])
 
         const endCheckLink = this.timeTracker?.startMeasurement(

@@ -43,10 +43,10 @@ generate_go base base IRuleEntitlementV2 rule_entitlement_v2 IRuleEntitlement
 generate_go base base IEntitlementChecker i_entitlement_checker
 generate_go base base IEntitlementGated i_entitlement_gated
 generate_go base base IEntitlement i_entitlement
-generate_go base base ICustomEntitlement i_custom_entitlement
+generate_go base base ICrossChainEntitlement i_cross_chain_entitlement
 
 # Full Base (and other) contracts for deployment from tests
-generate_go base/deploy deploy MockCustomEntitlement mock_custom_entitlement
+generate_go base/deploy deploy MockCrossChainEntitlement mock_cross_chain_entitlement
 generate_go base/deploy deploy MockEntitlementGated mock_entitlement_gated
 generate_go base/deploy deploy MockEntitlementChecker mock_entitlement_checker
 generate_go base/deploy deploy EntitlementChecker entitlement_checker
