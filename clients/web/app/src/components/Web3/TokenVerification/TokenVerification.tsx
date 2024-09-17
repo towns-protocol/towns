@@ -19,8 +19,9 @@ import { TokenGatingMembership, useTokensGatingMembership } from 'hooks/useToken
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { TokenSelectionDisplayWithMetadata } from 'routes/RoleRestrictedChannelJoinPanel'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
-import { FullPanelOverlay, LinkedWallet, useConnectThenLink } from '../WalletLinkingPanel'
+import { FullPanelOverlay, LinkedWallet } from '../WalletLinkingPanel'
 import { mapToErrorMessage } from '../utils'
+import { useConnectThenLink } from '../useConnectThenLink'
 
 type Props = {
     onHide: () => void

@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
-import { useConnectWallet } from '@privy-io/react-auth'
-import { useEmbeddedWallet, useGetEmbeddedSigner } from '@towns/privy'
+import { useGetEmbeddedSigner } from '@towns/privy'
 import {
     Address,
     BlockchainTransactionType,
@@ -24,6 +23,7 @@ import {
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { useBalance } from 'hooks/useBalance'
 import { useWalletPrefix } from './useWalletPrefix'
+import { useConnectThenLink } from './useConnectThenLink'
 
 export const WalletLinkingPanel = React.memo(() => {
     return (
@@ -238,34 +238,4 @@ export function LinkedWallet({
             )}
         </PanelButton>
     )
-}
-
-export function useConnectThenLink({
-    onLinkWallet,
-}: {
-    onLinkWallet: (
-        ...args: Parameters<
-            ReturnType<typeof useLinkEOAToRootKeyTransaction>['linkEOAToRootKeyTransaction']
-        >
-    ) => void
-}) {
-    const embeddedWallet = useEmbeddedWallet()
-    const { getSigner } = useGetEmbeddedSigner()
-
-    const { connectWallet } = useConnectWallet({
-        onSuccess: async (wallet) => {
-            const rootSigner = await getSigner()
-            if (!embeddedWallet) {
-                console.error('no embedded wallet')
-                return
-            }
-
-            onLinkWallet(rootSigner, (await wallet.getEthersProvider()).getSigner())
-        },
-        onError: (error) => {
-            console.error('error connecting wallet', error)
-        },
-    })
-
-    return connectWallet
 }
