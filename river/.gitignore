@@ -26,7 +26,6 @@ contracts/docs/coverage
 contracts/.env
 contracts/.env.tpl
 
-lib/
 abi/
 
 /docs
@@ -81,3 +80,5 @@ go.work.sum
 
 /packages/stress-testing/.env
 /packages/stress/*/.env*
+
+.idea

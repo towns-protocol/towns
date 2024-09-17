@@ -4,8 +4,8 @@ pragma solidity ^0.8.23;
 // utils
 import {TestUtils} from "contracts/test/utils/TestUtils.sol";
 
-import {SimpleAccountFactory} from "lib/account-abstraction/contracts/samples/SimpleAccountFactory.sol";
-import {SimpleAccount} from "lib/account-abstraction/contracts/samples/SimpleAccount.sol";
+import {SimpleAccountFactory} from "account-abstraction/samples/SimpleAccountFactory.sol";
+import {SimpleAccount} from "account-abstraction/samples/SimpleAccount.sol";
 
 // interfaces
 import {IArchitectBase} from "contracts/src/factory/facets/architect/IArchitect.sol";
@@ -15,7 +15,7 @@ import {IWalletLink} from "contracts/src/factory/facets/wallet-link/IWalletLink.
 import {ISpaceOwner} from "contracts/src/spaces/facets/owner/ISpaceOwner.sol";
 import {IMainnetDelegation} from "contracts/src/tokens/river/base/delegation/IMainnetDelegation.sol";
 import {INodeOperator} from "contracts/src/base/registry/facets/operator/INodeOperator.sol";
-import {IEntryPoint} from "lib/account-abstraction/contracts/interfaces/IEntryPoint.sol";
+import {IEntryPoint} from "account-abstraction/interfaces/IEntryPoint.sol";
 
 // libraries
 import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";

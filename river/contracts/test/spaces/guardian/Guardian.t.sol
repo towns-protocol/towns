@@ -11,7 +11,8 @@ import {IArchitect} from "contracts/src/factory/facets/architect/IArchitect.sol"
 
 // contracts
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
-import {SimpleAccount} from "lib/account-abstraction/contracts/samples/SimpleAccount.sol";
+import {SimpleAccount} from "account-abstraction/samples/SimpleAccount.sol";
+
 contract GuardianTest is BaseSetup, IGuardianBase {
   IGuardian guardian;
 

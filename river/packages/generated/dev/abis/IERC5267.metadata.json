@@ -72,15 +72,14 @@
   },
   "settings": {
     "remappings": [
-      "@openzeppelin/=lib/@openzeppelin/",
-      "@prb/math/=lib/@prb/math/src/",
-      "@prb/test/=lib/@prb/test/src/",
-      "account-abstraction/=lib/account-abstraction/contracts/",
-      "base64/=lib/base64/",
-      "ds-test/=lib/ds-test/src/",
-      "forge-std/=lib/forge-std/src/",
-      "hardhat-deploy/=lib/hardhat-deploy/",
-      "solady/=lib/solady/src/"
+      "@openzeppelin/=node_modules/@openzeppelin/",
+      "@prb/math/=node_modules/@prb/math/src/",
+      "@prb/test/=node_modules/@prb/test/src/",
+      "account-abstraction/=node_modules/account-abstraction/contracts/",
+      "ds-test/=node_modules/ds-test/src/",
+      "forge-std/=node_modules/forge-std/src/",
+      "hardhat-deploy/=node_modules/hardhat-deploy/",
+      "solady/=node_modules/solady/"
     ],
     "optimizer": {
       "enabled": true,
@@ -91,13 +90,13 @@
       "appendCBOR": false
     },
     "compilationTarget": {
-      "lib/@openzeppelin/contracts/interfaces/IERC5267.sol": "IERC5267"
+      "node_modules/@openzeppelin/contracts/interfaces/IERC5267.sol": "IERC5267"
     },
     "evmVersion": "paris",
     "libraries": {}
   },
   "sources": {
-    "lib/@openzeppelin/contracts/interfaces/IERC5267.sol": {
+    "node_modules/@openzeppelin/contracts/interfaces/IERC5267.sol": {
       "keccak256": "0x92aa1df62dc3d33f1656d63bede0923e0df0b706ad4137c8b10b0a8fe549fd92",
       "urls": [
         "bzz-raw://c5c0f29195ad64cbe556da8e257dac8f05f78c53f90323c0d2accf8e6922d33a",

@@ -47,7 +47,7 @@
         "harmonyweb:build": "turbo build --filter harmonyweb",
         "install:foundry": "./river/scripts/foundry-up.sh && yarn forge install",
         "lint": "turbo lint",
-        "postinstall": "husky install && node river/scripts/copyLibs.js",
+        "postinstall": "husky install && ./scripts/create-contract-lib-symlink.sh",
         "preinstall": "rm -f river/yarn.lock",
         "prepare": "husky install",
         "prettier:check": "prettier --check .",

@@ -9,7 +9,6 @@
         "clean": "make clean",
         "format": "make format",
         "lint": "make lint",
-        "postinstall": "node ../scripts/copyLibs.js",
         "setup": "make clean && make build",
         "snapshot": "make snapshot",
         "sync": "make update",

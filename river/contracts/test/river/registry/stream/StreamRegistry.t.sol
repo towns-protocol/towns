@@ -5,6 +5,7 @@ import {IOwnableBase} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 // structs
 // libraries
 import {StreamWithId} from "contracts/src/river/registry/libraries/RegistryStorage.sol";
+import {RiverRegistryErrors} from "contracts/src/river/registry/libraries/RegistryErrors.sol";
 
 // contracts
 // deployments
@@ -116,6 +117,114 @@ contract StreamRegistryTest is RiverRegistryBaseSetup, IOwnableBase {
     assertEq(foundCount, 2);
     assertEq(foundStreams[0].id, streamIdOne);
     assertEq(foundStreams[1].id, streamIdTwo);
+  }
+
+  function allocateStream(
+    address node,
+    bytes32 streamId,
+    uint256 expectedCount
+  ) private {
+    address[] memory nodes = new address[](1);
+    nodes[0] = node;
+    bytes memory genesisMiniblock = abi.encodePacked("genesisMiniblock");
+    bytes32 genesisMiniblockHash = 0;
+    vm.prank(node);
+    streamRegistry.allocateStream(
+      streamId,
+      nodes,
+      genesisMiniblockHash,
+      genesisMiniblock
+    );
+    assertEq(streamRegistry.getStreamCount(), expectedCount);
+  }
+
+  function assertStreamsEqual(
+    StreamWithId[] memory result,
+    bytes32[] memory expectedIds
+  ) private {
+    assertEq(result.length, expectedIds.length);
+    for (uint256 i = 0; i < result.length; i++) {
+      assertEq(result[i].id, expectedIds[i]);
+    }
+  }
+
+  function test_getPaginatedStreams(
+    address nodeOperator
+  )
+    external
+    givenNodeOperatorIsApproved(nodeOperator)
+    givenNodeIsRegistered(nodeOperator, node1, url1)
+    givenNodeIsRegistered(nodeOperator, node2, url2)
+  {
+    assertEq(streamRegistry.getStreamCount(), 0);
+
+    // Allocate 4 streams.
+    allocateStream(
+      node1,
+      0x0000000000000000000000000000000000000000000000000000000000000001,
+      1
+    );
+
+    allocateStream(
+      node2,
+      0x0000000000000000000000000000000000000000000000000000000000000002,
+      2
+    );
+
+    allocateStream(
+      node1,
+      0x0000000000000000000000000000000000000000000000000000000000000003,
+      3
+    );
+
+    allocateStream(
+      node2,
+      0x0000000000000000000000000000000000000000000000000000000000000004,
+      4
+    );
+
+    StreamWithId[] memory streams;
+    bool lastPage;
+
+    // Fetch a single stream.
+    (streams, lastPage) = streamRegistry.getPaginatedStreams(0, 1);
+    bytes32[] memory expectedIds = new bytes32[](1);
+    expectedIds[
+      0
+    ] = 0x0000000000000000000000000000000000000000000000000000000000000001;
+    assertStreamsEqual(streams, expectedIds);
+    assertEq(lastPage, false);
+
+    // Fetch the rest of thte streams.
+    (streams, lastPage) = streamRegistry.getPaginatedStreams(1, 4);
+    expectedIds = new bytes32[](3);
+    expectedIds[
+      0
+    ] = 0x0000000000000000000000000000000000000000000000000000000000000002;
+    expectedIds[
+      1
+    ] = 0x0000000000000000000000000000000000000000000000000000000000000003;
+    expectedIds[
+      2
+    ] = 0x0000000000000000000000000000000000000000000000000000000000000004;
+    assertStreamsEqual(streams, expectedIds);
+    assertEq(lastPage, true);
+
+    // Fetch past the end of the set of streams and expect an appropriately sized return value.
+    (streams, lastPage) = streamRegistry.getPaginatedStreams(2, 6);
+    expectedIds = new bytes32[](2);
+    expectedIds[
+      0
+    ] = 0x0000000000000000000000000000000000000000000000000000000000000003;
+    expectedIds[
+      1
+    ] = 0x0000000000000000000000000000000000000000000000000000000000000004;
+    assertStreamsEqual(streams, expectedIds);
+    assertEq(lastPage, true);
+
+    // Invalid fetch params (start >= stop) should revert.
+    vm.expectRevert(bytes(RiverRegistryErrors.BAD_ARG));
+    streamRegistry.getPaginatedStreams(1, 1);
   }
 
   function test_streamCountOnNode(

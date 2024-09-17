@@ -12,7 +12,7 @@ import { isDefined } from './check'
 
 const DEFAULT_RETRY_COUNT = 2
 const log = dlog('csb:persistence')
-const logError = dlogError('csb:persistence')
+const logError = dlogError('csb:persistence:error')
 
 async function fnReadRetryer<T>(
     fn: () => Promise<T | undefined>,

@@ -754,15 +754,14 @@
   },
   "settings": {
     "remappings": [
-      "@openzeppelin/=lib/@openzeppelin/",
-      "@prb/math/=lib/@prb/math/src/",
-      "@prb/test/=lib/@prb/test/src/",
-      "account-abstraction/=lib/account-abstraction/contracts/",
-      "base64/=lib/base64/",
-      "ds-test/=lib/ds-test/src/",
-      "forge-std/=lib/forge-std/src/",
-      "hardhat-deploy/=lib/hardhat-deploy/",
-      "solady/=lib/solady/src/"
+      "@openzeppelin/=node_modules/@openzeppelin/",
+      "@prb/math/=node_modules/@prb/math/src/",
+      "@prb/test/=node_modules/@prb/test/src/",
+      "account-abstraction/=node_modules/account-abstraction/contracts/",
+      "ds-test/=node_modules/ds-test/src/",
+      "forge-std/=node_modules/forge-std/src/",
+      "hardhat-deploy/=node_modules/hardhat-deploy/",
+      "solady/=node_modules/solady/src/"
     ],
     "optimizer": {
       "enabled": true,
@@ -1299,7 +1298,7 @@
       ],
       "license": "MIT"
     },
-    "lib/@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol": {
+    "node_modules/@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol": {
       "keccak256": "0xbfb6695731de677140fbf76c772ab08c4233a122fb51ac28ac120fc49bbbc4ec",
       "urls": [
         "bzz-raw://68f8fded7cc318efa15874b7c6a983fe17a4a955d72d240353a9a4ca1e1b824c",
@@ -1307,7 +1306,7 @@
       ],
       "license": "MIT"
     },
-    "lib/@openzeppelin/contracts/proxy/ERC1967/ERC1967Utils.sol": {
+    "node_modules/@openzeppelin/contracts/proxy/ERC1967/ERC1967Utils.sol": {
       "keccak256": "0x06a78f9b3ee3e6d0eb4e4cd635ba49960bea34cac1db8c0a27c75f2319f1fd65",
       "urls": [
         "bzz-raw://547d21aa17f4f3f1a1a7edf7167beff8dd9496a0348d5588f15cc8a4b29d052a",
@@ -1315,7 +1314,7 @@
       ],
       "license": "MIT"
     },
-    "lib/@openzeppelin/contracts/proxy/Proxy.sol": {
+    "node_modules/@openzeppelin/contracts/proxy/Proxy.sol": {
       "keccak256": "0xc3f2ec76a3de8ed7a7007c46166f5550c72c7709e3fc7e8bb3111a7191cdedbd",
       "urls": [
         "bzz-raw://e73efb4c2ca655882dc237c6b4f234a9bd36d97159d8fcaa837eb01171f726ac",
@@ -1323,7 +1322,7 @@
       ],
       "license": "MIT"
     },
-    "lib/@openzeppelin/contracts/proxy/beacon/IBeacon.sol": {
+    "node_modules/@openzeppelin/contracts/proxy/beacon/IBeacon.sol": {
       "keccak256": "0xc59a78b07b44b2cf2e8ab4175fca91e8eca1eee2df7357b8d2a8833e5ea1f64c",
       "urls": [
         "bzz-raw://5aa4f07e65444784c29cd7bfcc2341b34381e4e5b5da9f0c5bd00d7f430e66fa",
@@ -1331,7 +1330,7 @@
       ],
       "license": "MIT"
     },
-    "lib/@openzeppelin/contracts/token/ERC20/IERC20.sol": {
+    "node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol": {
       "keccak256": "0xc6a8ff0ea489379b61faa647490411b80102578440ab9d84e9a957cc12164e70",
       "urls": [
         "bzz-raw://0ea104e577e63faea3b69c415637e99e755dcbf64c5833d7140c35a714d6d90c",
@@ -1339,7 +1338,7 @@
       ],
       "license": "MIT"
     },
-    "lib/@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol": {
+    "node_modules/@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol": {
       "keccak256": "0x6008dabfe393240d73d7dd7688033f72740d570aa422254d29a7dce8568f3aff",
       "urls": [
         "bzz-raw://f5196ec75139918c6c7bb4251b36395e668f1fa6d206beba7e7520e74913940d",
@@ -1347,7 +1346,7 @@
       ],
       "license": "MIT"
     },
-    "lib/@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol": {
+    "node_modules/@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol": {
       "keccak256": "0x37bb49513c49c87c4642a891b13b63571bc87013dde806617aa1efb54605f386",
       "urls": [
         "bzz-raw://b3036b3a83b7c48f96641f2a9002b9f2dcb6a5958dd670894ada21ae8229b3d0",
@@ -1355,7 +1354,7 @@
       ],
       "license": "MIT"
     },
-    "lib/@openzeppelin/contracts/token/ERC721/IERC721.sol": {
+    "node_modules/@openzeppelin/contracts/token/ERC721/IERC721.sol": {
       "keccak256": "0x5ef46daa3b58ef2702279d514780316efaa952915ee1aa3396f041ee2982b0b4",
       "urls": [
         "bzz-raw://2f8f2a76e23b02fc69e8cd24c3cb47da6c7af3a2d6c3a382f8ac25c6e094ade7",
@@ -1363,7 +1362,7 @@
       ],
       "license": "MIT"
     },
-    "lib/@openzeppelin/contracts/utils/Address.sol": {
+    "node_modules/@openzeppelin/contracts/utils/Address.sol": {
       "keccak256": "0xaf28a975a78550e45f65e559a3ad6a5ad43b9b8a37366999abd1b7084eb70721",
       "urls": [
         "bzz-raw://b7bd24e224f67f65bfadf85dc2929fa965456bb2415478bd0125471b5ce35245",
@@ -1371,7 +1370,7 @@
       ],
       "license": "MIT"
     },
-    "lib/@openzeppelin/contracts/utils/StorageSlot.sol": {
+    "node_modules/@openzeppelin/contracts/utils/StorageSlot.sol": {
       "keccak256": "0x32ba59b4b7299237c8ba56319110989d7978a039faf754793064e967e5894418",
       "urls": [
         "bzz-raw://1ae50c8b562427df610cc4540c9bf104acca7ef8e2dcae567ae7e52272281e9c",
@@ -1379,7 +1378,7 @@
       ],
       "license": "MIT"
     },
-    "lib/@openzeppelin/contracts/utils/introspection/IERC165.sol": {
+    "node_modules/@openzeppelin/contracts/utils/introspection/IERC165.sol": {
       "keccak256": "0x4296879f55019b23e135000eb36896057e7101fb7fb859c5ef690cf14643757b",
       "urls": [
         "bzz-raw://87b3541437c8c443ccd36795e56a338ed12855eec17f8da624511b8d1a7e14df",
@@ -1387,7 +1386,7 @@
       ],
       "license": "MIT"
     },
-    "lib/@openzeppelin/contracts/utils/structs/EnumerableSet.sol": {
+    "node_modules/@openzeppelin/contracts/utils/structs/EnumerableSet.sol": {
       "keccak256": "0x86c1470cbfd878491e5de030072b647352d36bd27122cffb928970b1945282aa",
       "urls": [
         "bzz-raw://ad85dd393ee0a1917c57046abc5155f51f77844b2c6a42c05c1b8dd26d6ff3c1",
@@ -1395,7 +1394,7 @@
       ],
       "license": "MIT"
     },
-    "lib/solady/src/utils/LibClone.sol": {
+    "node_modules/solady/src/utils/LibClone.sol": {
       "keccak256": "0x87e7107cd0dd0b0a4842f705bde584e8aa5149b678654d3b438e6683b1b90314",
       "urls": [
         "bzz-raw://f33b424b3d85944e32c9dace9939f9faa4d30ef7f2d2b0b9f8238f956c8ed89d",
@@ -1403,7 +1402,7 @@
       ],
       "license": "MIT"
     },
-    "lib/solady/src/utils/Multicallable.sol": {
+    "node_modules/solady/src/utils/Multicallable.sol": {
       "keccak256": "0x0f5895a87b561dcf8b4d4068e1a56ab28bbebde08ff88534bdc8fe0379516d1c",
       "urls": [
         "bzz-raw://bbf0a55f90662536abe978d26b44a76a3ead4e962db205e64850d6c8276129bf",
