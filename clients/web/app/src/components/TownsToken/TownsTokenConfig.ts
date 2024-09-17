@@ -40,6 +40,16 @@ export const TownsTokenConfig = {
             maxTextHeight: 80,
             borderRadius: 'md',
         },
+        sideBar: {
+            containerSize: 8 * 21,
+            addressSize: 8 * 17.5,
+            addressRadius: 8 * 2,
+            badgeSize: 8 * 14,
+            badgeRadius: 14,
+            fontSize: 10,
+            maxTextHeight: 80,
+            borderRadius: 'md',
+        },
         lg: {
             containerSize: 200,
             addressSize: 190,

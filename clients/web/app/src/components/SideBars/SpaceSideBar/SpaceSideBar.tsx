@@ -80,15 +80,13 @@ export const SpaceSideBar = (props: Props) => {
     })
 
     const [hasScrolldedPastHeader, setHasScrolledPastHeader] = useState(false)
-    const [scrollOffset, setScrollOffset] = useState(1)
 
     const headerRef = useRef<HTMLElement>(null)
 
     const onScroll = () => {
         const containerTop = scrollRef.current?.getBoundingClientRect().top ?? 0
         const headerY = (headerRef.current?.getBoundingClientRect()?.top ?? 0) - containerTop
-        setScrollOffset(Math.max(0, Math.min(headerY - 58, 50)) / 50)
-        setHasScrolledPastHeader(headerY > -1 && headerY <= 0)
+        setHasScrolledPastHeader(headerY === 8)
     }
 
     const navigate = useNavigate()
@@ -167,7 +165,6 @@ export const SpaceSideBar = (props: Props) => {
                     />
 
                     <SpaceSideBarHeader
-                        scrollOffset={scrollOffset}
                         space={space}
                         opaqueHeaderBar={hasScrolldedPastHeader}
                         headerRef={headerRef}

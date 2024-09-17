@@ -26,7 +26,6 @@ export const SpaceSideBarHeader = (props: {
     headerRef: React.RefObject<HTMLElement>
     space: SpaceData
     opaqueHeaderBar: boolean
-    scrollOffset: number
 }) => {
     const { opaqueHeaderBar, space } = props
     const { baseChain } = useEnvironment()
@@ -74,7 +73,7 @@ export const SpaceSideBarHeader = (props: {
                 horizontal
                 height="x6"
                 zIndex="uiAbove"
-                pointerEvents={opaqueHeaderBar ? 'auto' : 'none'}
+                pointerEvents="none"
                 className={styles.spaceHeader}
                 justifyContent="spaceBetween"
             >
@@ -98,10 +97,14 @@ export const SpaceSideBarHeader = (props: {
                     />
                 </Box>
             </Stack>
+
+            {/* interactive header */}
+
             <Stack
                 centerContent
                 data-common="hey"
-                paddingTop="md"
+                paddingTop="lg"
+                paddingBottom="sm"
                 position="relative"
                 width="100%"
                 className={styles.spaceIconContainer}
@@ -110,7 +113,7 @@ export const SpaceSideBarHeader = (props: {
                 {space ? (
                     <InteractiveSpaceIcon
                         key={!isReduceMotion ? space.id : undefined}
-                        size="sm"
+                        size="sideBar"
                         spaceId={space.id}
                         address={spaceInfo?.address}
                         spaceName={space.name}
@@ -118,22 +121,27 @@ export const SpaceSideBarHeader = (props: {
                 ) : (
                     <Box background="level1" rounded="md" width="x17" aspectRatio="1/1" />
                 )}
-                <Box height="x2" />
             </Stack>
 
+            {/* sticky bar */}
+
             <Stack
-                className={styles.stickyHeaderInset}
                 width="100%"
                 position="sticky"
-                top="none"
+                top="sm"
                 zIndex="ui"
-                height="x6"
+                height="x4"
+                justifyContent="center"
                 ref={props.headerRef}
             >
                 <Box
-                    style={{ opacity: opaqueHeaderBar ? 1 : 0 }}
+                    style={
+                        opaqueHeaderBar
+                            ? { opacity: 1, transition: `opacity 220ms` }
+                            : { opacity: 0 }
+                    }
                     position="absolute"
-                    bottom="none"
+                    bottom="-sm"
                     background="level2"
                     boxShadow="medium"
                     height="x6"
@@ -141,28 +149,30 @@ export const SpaceSideBarHeader = (props: {
                     pointerEvents="none"
                     roundedTop="sm"
                 />
-                <Stack horizontal height="x6">
-                    <Box width="x7" shrink={false} />
-                    <Box grow position="relative">
-                        <Box absoluteFill justifyContent="center" cursor="pointer">
-                            {hasName && (
-                                <Paragraph
-                                    strong
-                                    truncate
-                                    size={isSmall ? 'md' : 'lg'}
-                                    textAlign="center"
-                                    onClick={onTokenClick}
-                                >
-                                    {space.name}
-                                </Paragraph>
-                            )}
+
+                <Box justifyContent="center" height="x3" cursor="pointer" onClick={onTokenClick}>
+                    <Stack horizontal height="x4">
+                        <Box width="x7" shrink={false} />
+                        <Box grow position="relative">
+                            <Box absoluteFill justifyContent="center">
+                                {hasName && (
+                                    <Paragraph
+                                        strong
+                                        truncate
+                                        size={isSmall ? 'md' : 'lg'}
+                                        textAlign="center"
+                                    >
+                                        {space.name}
+                                    </Paragraph>
+                                )}
+                            </Box>
                         </Box>
-                    </Box>
-                    <Box width="x7" shrink={false} />
-                </Stack>
+                        <Box width="x7" shrink={false} />
+                    </Stack>
+                </Box>
             </Stack>
 
-            <Stack gap paddingX insetX="xs">
+            <Stack paddingX gap="md" insetX="xs" paddingY="xs">
                 <Paragraph textAlign="center" color="cta2" size="sm">
                     <Link
                         to={`/${PATHS.SPACES}/${space.id}/members`}
