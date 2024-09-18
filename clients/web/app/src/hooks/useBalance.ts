@@ -109,6 +109,10 @@ export function formatUnitsToFixedLength(
     // Scale and round the BigInt value
     const roundedValue = (value + scaleFactor / 2n) / scaleFactor
 
+    if (value === 0n) {
+        return '0'
+    }
+
     const smallestDisplayableValue = `0.${'0'.repeat(displayDecimals - 1)}1`
     if (roundedValue === 0n) {
         return `< ${smallestDisplayableValue}`

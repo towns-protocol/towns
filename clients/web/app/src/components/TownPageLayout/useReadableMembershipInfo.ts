@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useMembershipInfo } from 'use-towns-client'
-import { BigNumberish, ethers } from 'ethers'
+import { BigNumberish, utils } from 'ethers'
 import { ETH_ADDRESS } from '@components/Web3/utils'
 
 export function useReadableMembershipInfo(networkId: string) {
@@ -22,15 +22,17 @@ function transformData(data: ReturnType<typeof useMembershipInfo>['data']) {
     return {
         ...data,
         price: transformPrice(data.price as BigNumberish),
-        maxSupply: transformLimit(Number(data.maxSupply)),
+        maxSupply: Number(data.maxSupply),
         currency: transformCurrency(data.currency as string),
-        totalSupply: transformTotalSupply(Number(data.totalSupply)),
-        duration: transformDuration(Number(data.duration)),
+        totalSupply: data.totalSupply,
+        duration: Number(data.duration),
+        prepaidSupply: data.prepaidSupply,
+        remainingFreeSupply: data.remainingFreeSupply,
     }
 }
 
 function transformPrice(price: BigNumberish) {
-    const eth = ethers.utils.formatEther(price)
+    const eth = utils.formatEther(price)
 
     switch (eth) {
         case '0.0':
@@ -38,18 +40,6 @@ function transformPrice(price: BigNumberish) {
         default:
             return eth
     }
-}
-
-function transformLimit(limit: number) {
-    return limit
-}
-
-function transformDuration(duration: number) {
-    return duration
-}
-
-function transformTotalSupply(totalSupply: number) {
-    return totalSupply
 }
 
 function transformCurrency(currency: string) {

@@ -9,11 +9,13 @@ import { ModalContainer } from '@components/Modals/ModalContainer'
 
 type PanelContentProps = {
     onClosed: () => void
+    freeAllocation: number | undefined
 }
 
 export function PanelContent({
     onClosed,
     children,
+    freeAllocation,
 }: PanelContentProps & { children: React.ReactNode }) {
     const isTouch = useDevice().isTouch
     const content = useMemo(() => {
@@ -23,14 +25,14 @@ export function PanelContent({
                 <EditGating />
 
                 <Paragraph strong>Pricing</Paragraph>
-                <EditPricing />
+                <EditPricing freeAllocation={freeAllocation} />
 
                 <Paragraph strong>Membership</Paragraph>
                 <EditMembership />
                 {children}
             </Stack>
         )
-    }, [children])
+    }, [children, freeAllocation])
 
     if (isTouch) {
         return (

@@ -11,6 +11,7 @@ import {
     findFixedPricingModule,
     useEditSpaceMembershipTransaction,
     useIsTransactionPending,
+    useMembershipFreeAllocation,
     useMembershipInfo,
     usePricingModuleForMembership,
     usePricingModules,
@@ -91,6 +92,7 @@ function EditMembershipForm({
     const transactionIsPending = useIsTransactionPending(
         BlockchainTransactionType.EditSpaceMembership,
     )
+    const { data: freeAllocation } = useMembershipFreeAllocation(spaceId)
 
     const ruleData: IRuleEntitlementV2Base.RuleDataV2Struct | undefined =
         roleDetails?.ruleData.kind === 'v1'
@@ -217,6 +219,7 @@ function EditMembershipForm({
                                         )}
                                         <EditPricing
                                             enableDynamicPricing={!pricingModule?.isFixed}
+                                            freeAllocation={freeAllocation}
                                         />
 
                                         <Paragraph strong>Membership</Paragraph>

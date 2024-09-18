@@ -224,7 +224,7 @@ const TownsContent = (
     const { data: memberInfo, isLoading } = useReadableMembershipInfo(townId)
     const { data: entitlements } = useEntitlements(townId)
 
-    const priceText = getPriceText(memberInfo?.price)
+    const priceText = getPriceText(memberInfo?.price, memberInfo?.remainingFreeSupply)
 
     const navigate = useNavigate()
 

@@ -32,26 +32,33 @@ describe('TownPageUtilsTests', () => {
 
     test('should convert price 0 to text', () => {
         const price = '0'
-        const priceText = getPriceText(price)
+        const remainingFreeSupply = 100
+        const priceText = getPriceText(price, remainingFreeSupply)
         expect(priceText?.value).toBe('Free')
-        expect(priceText?.suffix).toBe('First 100')
+        expect(priceText?.suffix).toBe(`Next ${remainingFreeSupply}`)
     })
 
     test('should respect decimals', () => {
         const price = '2.0000'
-        const priceText = getPriceText(price)
+        const remainingFreeSupply = 0
+        const priceText = getPriceText(price, remainingFreeSupply)
         expect(priceText?.value).toBe('2')
+        expect(priceText?.suffix).toBe('ETH')
     })
 
     test('should respect decimals', () => {
         const price = '0.001'
-        const priceText = getPriceText(price)
+        const remainingFreeSupply = 0
+        const priceText = getPriceText(price, remainingFreeSupply)
         expect(priceText?.value).toBe('0.001')
+        expect(priceText?.suffix).toBe('ETH')
     })
 
     test('should write "free"', () => {
         const price = 'Free'
-        const priceText = getPriceText(price)
+        const remainingFreeSupply = 100
+        const priceText = getPriceText(price, remainingFreeSupply)
         expect(priceText?.value).toBe('Free')
+        expect(priceText?.suffix).toBe(`Next ${remainingFreeSupply}`)
     })
 })

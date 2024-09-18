@@ -8,8 +8,10 @@ import { MembershipSettingsSchemaType } from '../MembershipNFT/CreateSpaceFormV2
 export function EditPricing({
     // currently, a space cannot switch from fixed to dynamic pricing
     enableDynamicPricing = true,
+    freeAllocation,
 }: {
     enableDynamicPricing?: boolean
+    freeAllocation: number | undefined
 }) {
     const { formState, setValue, watch, trigger } = useFormContext<MembershipSettingsSchemaType>()
     const { data: minimumMmebershipPrice, isLoading: isLoadingMinMembershipPrice } =
@@ -80,7 +82,7 @@ export function EditPricing({
                     name="membershipPricingType"
                     value="dynamic"
                     title="Dynamic"
-                    description="Free for the first 100 members, then logarithmically increasing price"
+                    description={`Free for the first ${freeAllocation} members, then logarithmically increasing price`}
                     dataTestId="membership-pricing-type-dynamic"
                     onClick={() => onDynamicClick(formProps)}
                     {...formProps}

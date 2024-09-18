@@ -3,7 +3,7 @@ import { FormProvider, UseFormReturn, useFormContext } from 'react-hook-form'
 import { ethers } from 'ethers'
 
 import { useNavigate } from 'react-router'
-import { useConnectivity, useImageStore } from 'use-towns-client'
+import { useConnectivity, useImageStore, usePlatformMintLimit } from 'use-towns-client'
 import { CreateSpaceFlowStatus } from 'use-towns-client/dist/client/TownsClientTypes'
 import { AnimatePresence } from 'framer-motion'
 import { PrivyWrapper } from 'privy/PrivyProvider'
@@ -100,6 +100,10 @@ function CreateSpaceFormV2WithoutAuth() {
     const { data: abstractAccountAddress } = useAbstractAccountAddress({
         rootKeyAddress: loggedInWalletAddress,
     })
+
+    // because we submit the form with freeAllocation = 0 for dyamic pricing,
+    // the contracts will use this value to calculate the free allocation
+    const { data: platformMintLimit } = usePlatformMintLimit()
 
     const [panelType, setPanelType] = useState<PanelType | undefined>()
 
@@ -380,7 +384,7 @@ function CreateSpaceFormV2WithoutAuth() {
                                                             }
                                                             subtitle={
                                                                 membershipPricingType === 'dynamic'
-                                                                    ? 'First 100'
+                                                                    ? `First ${platformMintLimit}`
                                                                     : 'ETH'
                                                             }
                                                             dataTestId="membership-cost-type"
@@ -614,7 +618,10 @@ function CreateSpaceFormV2WithoutAuth() {
                             {/* Panel */}
                             {panelType && (
                                 <PanelWrapper panelType={panelType}>
-                                    <PanelContent onClosed={() => setPanelType(undefined)}>
+                                    <PanelContent
+                                        freeAllocation={platformMintLimit}
+                                        onClosed={() => setPanelType(undefined)}
+                                    >
                                         <Stack height="x16">
                                             <CreateTownSubmit
                                                 setPanelType={setPanelType}

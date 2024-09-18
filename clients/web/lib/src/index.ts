@@ -117,6 +117,8 @@ export {
     usePlatformMinMembershipPrice,
     getPlatformMinMembershipPriceFromQueryCache,
 } from './hooks/use-platform-min-membership-price'
+export { useMembershipFreeAllocation } from './hooks/use-membership-free-allocation'
+export { usePlatformMintLimit } from './hooks/use-platform-mint-limit'
 export { useSetChannelAutojoin } from './hooks/use-set-channel-autojoin'
 export { useSetHideUserJoinLeave } from './hooks/use-set-hide-user-join-leave'
 

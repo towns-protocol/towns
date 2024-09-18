@@ -81,4 +81,9 @@ export const blockchainKeys = {
         spaceId ?? 'waitingForSpaceId',
     ],
     minimumMembershipPrice: () => ['minimumMembershipPrice'],
+    membershipMintLimit: () => ['membershipMintLimit'],
+    membershipFreeAllocation: (spaceId: string | undefined) => [
+        'membershipFreeAllocation',
+        spaceId ?? 'waitingForSpaceId',
+    ],
 }

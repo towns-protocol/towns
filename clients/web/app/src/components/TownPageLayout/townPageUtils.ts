@@ -1,8 +1,11 @@
 import { MONTH_MS, SECOND_MS, YEAR_MS } from 'data/constants'
 import { formatUnitsToFixedLength, parseUnits } from 'hooks/useBalance'
 
-export const getPriceText = (price: string | undefined) => {
-    if (typeof price === 'undefined') {
+export const getPriceText = (
+    price: string | undefined,
+    remainingFreeSupply: number | undefined,
+) => {
+    if (typeof price === 'undefined' || typeof remainingFreeSupply === 'undefined') {
         return undefined
     }
     const numericPrice = parseFloat(price || '0')
@@ -10,7 +13,7 @@ export const getPriceText = (price: string | undefined) => {
 
     return {
         value: isFree ? 'Free' : `${formatUnitsToFixedLength(parseUnits(price))}`,
-        suffix: isFree ? 'First 100' : 'ETH',
+        suffix: isFree ? `Next ${remainingFreeSupply}` : 'ETH',
     }
 }
 
