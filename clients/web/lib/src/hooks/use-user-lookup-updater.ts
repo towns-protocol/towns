@@ -66,7 +66,7 @@ export const useUserLookupUpdater = (
 
     const onStreamMetadataUpdated = useCallback(
         (streamId: string, userId: string) => {
-            dlog.info('onStreamMetadataUpdated', streamId, userId)
+            dlog.log('onStreamMetadataUpdated', streamId, userId)
             if (isSpaceStreamId(streamId)) {
                 const stream = client?.streams.get(streamId)
                 const metadata = stream?.view.getMemberMetadata()
@@ -104,7 +104,7 @@ export const useUserLookupUpdater = (
 
     const onStreamInitialized = useCallback(
         (streamId: string, contentKind: SnapshotCaseType) => {
-            dlog.info('onStreamInitialized', streamId, contentKind)
+            dlog.log('onStreamInitialized', streamId, contentKind)
             const stream = client?.streams.get(streamId)
             const metadata = stream?.view.getMemberMetadata()
 
@@ -160,7 +160,7 @@ export const useUserLookupUpdater = (
     const oldClient = useRef(client)
     useEffect(() => {
         if (oldClient.current === client) {
-            dlog.info('useUserLookupUpdater, client changed', oldClient.current, client)
+            dlog.log('useUserLookupUpdater, client changed', oldClient.current, client)
             oldClient.current = client
         }
 
