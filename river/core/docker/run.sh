@@ -8,9 +8,11 @@ fi
 
 if [ "$RUN_MODE" == "full" ]; then
     echo "Running full node"
+    cd /riveruser/river_node
     exec /usr/bin/river_node run
 elif [ "$RUN_MODE" == "archive" ]; then
     echo "Running archive node"
+    cd /riveruser/river_node
     exec /usr/bin/river_node archive
 else
     echo "Unknown RUN_MODE: $RUN_MODE"
