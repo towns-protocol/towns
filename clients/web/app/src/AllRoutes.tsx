@@ -12,6 +12,7 @@ import { PublicTownPage } from 'routes/PublicTownPage/PublicTownPage'
 import { NotificationRoute } from 'routes/NotificationRoute'
 import { env } from 'utils'
 import { DebugRoute } from '@components/DebugBar/DebugBar'
+import { PublicSupportPage } from 'routes/PublicSupportPage/PublicSupportPage'
 
 export const AllRoutes = React.memo(() => {
     const { isAuthenticated } = useConnectivity()
@@ -39,6 +40,7 @@ export const AllRoutes = React.memo(() => {
                     </Route>
 
                     <Route path="/playground/*" element={<PlaygroundLazy />} />
+                    <Route path="/help" element={<PublicSupportPage />} />
                     {env.DEV && <Route path="/env" element={<DebugRoute />} />}
                 </Route>
             </Routes>
