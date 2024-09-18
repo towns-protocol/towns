@@ -76,7 +76,7 @@ export function GiphySearchContextProvider({ children }: { children?: JSX.Elemen
                 }
                 setTrendingSearches(data || [])
             } catch (error) {
-                console.log(error)
+                console.error(error)
             }
         }
         fetchTrendingSearches()

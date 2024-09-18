@@ -3,8 +3,8 @@ import { Box, IconButton, Paragraph, Text } from '@ui'
 import { shortAddress } from 'ui/utils/utils'
 import { Field } from 'ui/components/_internal/Field'
 import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
-import { TokenDataWithChainId, TokenType } from '../types'
-import { tokenIdSchema } from './tokenSchemas'
+import { TokenType } from '../types'
+import { Token, tokenIdSchema } from './tokenSchemas'
 import { TokenImage } from './TokenImage'
 import { TokenSelectorStyles } from './TokenSelector.css'
 import { NetworkName } from './NetworkName'
@@ -12,10 +12,9 @@ import { NetworkName } from './NetworkName'
 export function TokenOption({
     option,
     onAddItem,
-    selected,
 }: {
-    option: TokenDataWithChainId
-    onAddItem: (option: TokenDataWithChainId) => void
+    option: Token
+    onAddItem: (option: Token) => void
     selected: boolean
 }) {
     const isERC1155 = option.data.type === TokenType.ERC1155
@@ -97,12 +96,7 @@ export function TokenOption({
                 {option.data.address && (
                     <>
                         <TokenImage imgSrc={option.data.imgSrc} width="x4" />
-                        <Box
-                            alignItems="start"
-                            justifyContent="spaceBetween"
-                            height="x4"
-                            overflow="hidden"
-                        >
+                        <Box alignItems="start" justifyContent="spaceBetween" height="x4">
                             <Paragraph truncate>
                                 {option.data?.label ? option.data.label : 'Unknown Token'}
                             </Paragraph>

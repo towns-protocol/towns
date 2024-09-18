@@ -404,7 +404,7 @@ const SubmitButton = (props: {
     })
 
     const onInvalid: SubmitErrorHandler<RoleOverrideFormSchemaType> = useEvent((errors) => {
-        console.log(errors)
+        console.error(errors)
     })
 
     return (

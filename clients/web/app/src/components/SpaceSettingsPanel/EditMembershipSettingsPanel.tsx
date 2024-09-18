@@ -28,17 +28,21 @@ import { EditGating } from '@components/Web3/EditMembership/EditGating'
 import { EditPricing } from '@components/Web3/EditMembership/EditPricing'
 import { EditMembership } from '@components/Web3/EditMembership/EditMembership'
 import {
-    convertRuleDataToTokenFormSchema,
+    convertRuleDataToTokenEntitlementSchema,
+    convertRuleDataToTokenSchema,
     convertTokenTypeToOperationType,
 } from '@components/Tokens/utils'
 import { PrivyWrapper } from 'privy/PrivyProvider'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { FullPanelOverlay } from '@components/Web3/WalletLinkingPanel'
+import { isEveryoneAddress } from '@components/Web3/utils'
+import { Token } from '@components/Tokens/TokenSelector/tokenSchemas'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { EVERYONE_ADDRESS } from 'utils'
 import { usePlatformMinMembershipPriceInEth } from 'hooks/usePlatformMinMembershipPriceInEth'
 import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
+import { useMultipleTokenMetadatasForChainIds } from 'api/lib/collectionMetadata'
 import { EditMembershipSchemaType, editMembershipSchema } from './editMembershipSchema'
 
 export const EDIT_MEMBERSHIP_SETTINGS_PANEL = 'editMembershipSettings'
@@ -93,17 +97,85 @@ function EditMembershipForm({
             ? convertRuleDataV1ToV2(roleDetails.ruleData.rules)
             : roleDetails?.ruleData.rules
 
-    const defaultTokens = ruleData ? convertRuleDataToTokenFormSchema(ruleData) : []
+    const initialTokenValues = useMemo(
+        () => (ruleData ? convertRuleDataToTokenSchema(ruleData) : []),
+        [ruleData],
+    )
 
-    const defaultValues: EditMembershipSchemaType = {
-        membershipType: defaultTokens.length > 0 ? 'tokenHolders' : 'everyone',
-        membershipLimit: Number(membershipInfo?.maxSupply) ?? 0,
-        membershipCost: ethers.utils.formatEther((membershipInfo?.price as BigNumberish) ?? 0),
-        membershipPricingType: pricingModule?.isFixed ? 'fixed' : 'dynamic',
-        tokensGatingMembership: defaultTokens,
-        // TODO: currency defaults to ETH when addressZero
-        membershipCurrency: (membershipInfo?.currency as string) ?? ethers.constants.AddressZero,
-        prepaidMemberships: 0,
+    const { data: initialTokensData, isLoading: isLoadingTokensData } =
+        useMultipleTokenMetadatasForChainIds(
+            initialTokenValues.map((token) => ({
+                type: token.data.type,
+                address: token.data.address as Address,
+                tokenIds: [],
+                chainId: token.chainId,
+                quantity: token.data.quantity ?? 1n,
+            })),
+        )
+
+    const clientTokensGatedBy: Token[] = useMemo(() => {
+        if (isLoadingTokensData || !initialTokensData) {
+            return []
+        }
+
+        const tokens = initialTokenValues.map((token) => {
+            const metadata = initialTokensData.find(
+                (t) =>
+                    t.chainId === token.chainId &&
+                    t.data.address?.toLowerCase() === token.data.address?.toLowerCase(),
+            )
+
+            if (metadata) {
+                return {
+                    chainId: metadata.chainId,
+                    data: {
+                        address: metadata.data.address as Address,
+                        quantity: metadata.data.quantity ?? 1n,
+                        type: metadata.data.type,
+                        label: metadata.data.label || '',
+                        imgSrc: metadata.data.imgSrc || '',
+                    },
+                }
+            }
+
+            return undefined
+        })
+        return tokens.filter((token) => token !== undefined) as Token[]
+    }, [initialTokenValues, initialTokensData, isLoadingTokensData])
+
+    const gatingType = useMemo(() => {
+        if (initialTokenValues.length > 0) {
+            return 'gated'
+        }
+        return roleDetails?.users?.some((address) => !isEveryoneAddress(address))
+            ? 'gated'
+            : 'everyone'
+    }, [roleDetails, initialTokenValues.length])
+
+    const usersGatedBy = useMemo(() => {
+        return (roleDetails?.users || []).filter(
+            (address) => !isEveryoneAddress(address),
+        ) as Address[]
+    }, [roleDetails])
+
+    const defaultValues: EditMembershipSchemaType = useMemo(
+        () => ({
+            gatingType,
+            tokensGatedBy: ruleData ? convertRuleDataToTokenEntitlementSchema(ruleData) : [],
+            clientTokensGatedBy,
+            usersGatedBy,
+            membershipLimit: Number(membershipInfo?.maxSupply) ?? 0,
+            membershipCost: ethers.utils.formatEther((membershipInfo?.price as BigNumberish) ?? 0),
+            membershipPricingType: pricingModule?.isFixed ? 'fixed' : 'dynamic',
+            membershipCurrency:
+                (membershipInfo?.currency as string) ?? ethers.constants.AddressZero,
+            prepaidMemberships: 0,
+        }),
+        [gatingType, clientTokensGatedBy, usersGatedBy, membershipInfo, pricingModule, ruleData],
+    )
+
+    if (isLoadingTokensData) {
+        return <ButtonSpinner />
     }
 
     return (
@@ -118,9 +190,8 @@ function EditMembershipForm({
                         <FormProvider {..._form}>
                             <Stack gap grow>
                                 <Paragraph strong>Who Can Join</Paragraph>
-                                <EditGating />
+                                <EditGating isRole />
 
-                                {/* if there's no abstract account config (local/anvil), for now just update the role */}
                                 {environment.accountAbstractionConfig && (
                                     <>
                                         <Paragraph strong>Pricing</Paragraph>
@@ -140,7 +211,7 @@ function EditMembershipForm({
                                                 />
                                                 <Text size="sm">
                                                     {`This space is using dynamic pricing. If you
-                                    switch to fixed pricing, you can't go back.`}
+                        switch to fixed pricing, you can't go back.`}
                                                 </Text>
                                             </Stack>
                                         )}
@@ -241,8 +312,7 @@ function SubmitButton({
         const def = structuredClone(defaultValues)
         const cur = structuredClone(watchAllFields)
         function sorter(arr: typeof defaultValues | undefined) {
-            arr?.tokensGatingMembership?.sort()
-            arr?.tokensGatingMembership?.forEach((t) => t?.tokenIds?.sort())
+            arr?.clientTokensGatedBy?.sort()
         }
         sorter(def)
         sorter(cur)
@@ -255,8 +325,9 @@ function SubmitButton({
         formState.isSubmitting ||
         isUnchanged ||
         Object.keys(formState.errors).length > 0 ||
-        (watchAllFields.membershipType === 'tokenHolders' &&
-            watchAllFields.tokensGatingMembership.length === 0) ||
+        (watchAllFields.gatingType === 'gated' &&
+            watchAllFields.clientTokensGatedBy.length === 0 &&
+            watchAllFields.usersGatedBy.length === 0) ||
         isLoadingPricingModules ||
         isLoadingRoleDetails ||
         transactionIsPending
@@ -339,12 +410,12 @@ function SubmitButton({
         //////////////////////////////////////////
         // check quantity
         //////////////////////////////////////////
-        if (data.tokensGatingMembership.length > 0) {
-            const missingQuantity = data.tokensGatingMembership.some(
-                (token) => token.quantity === 0n || token.quantity === undefined,
+        if (data.clientTokensGatedBy.length > 0) {
+            const missingQuantity = data.clientTokensGatedBy.some(
+                (token) => token.data.quantity === 0n || token.data.quantity === undefined,
             )
             if (missingQuantity) {
-                setError('tokensGatingMembership', {
+                setError('clientTokensGatedBy', {
                     type: 'manual',
                     message: 'Please enter a valid quantity.',
                 })
@@ -353,13 +424,13 @@ function SubmitButton({
         }
 
         const ruleData =
-            data.tokensGatingMembership.length > 0
+            data.clientTokensGatedBy.length > 0
                 ? createOperationsTree(
-                      data.tokensGatingMembership.map((t) => ({
-                          address: t.address as Address,
+                      data.clientTokensGatedBy.map((t) => ({
+                          address: t.data.address as Address,
                           chainId: BigInt(t.chainId),
-                          type: convertTokenTypeToOperationType(t.type),
-                          threshold: t.quantity,
+                          type: convertTokenTypeToOperationType(t.data.type),
+                          threshold: t.data.quantity ?? 1n,
                       })),
                   )
                 : NoopRuleData
@@ -381,8 +452,7 @@ function SubmitButton({
                 roleName: roleDetails.name,
                 permissions: roleDetails.permissions,
                 spaceNetworkId: spaceId,
-                // at this time, the only thing we are updating is entitlements
-                users: data.tokensGatingMembership.length > 0 ? [] : [EVERYONE_ADDRESS],
+                users: data.gatingType === 'everyone' ? [EVERYONE_ADDRESS] : data.usersGatedBy,
                 ruleData,
             },
             membershipParams: {
@@ -397,11 +467,6 @@ function SubmitButton({
 
         if (txContext?.status === TransactionStatus.Success) {
             closePanel()
-            // if (isTouch) {
-            //     //
-            // } else {
-            //     openPanel(CHANNEL_INFO_PARAMS.TOWN_INFO)
-            // }
         }
     })
 

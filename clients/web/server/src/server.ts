@@ -153,8 +153,6 @@ async function updateTemplate({
 
         townData = await getTownDataFromContract(townId)
 
-        console.log({ townData })
-
         if (townData) {
             info.title = townData.name || info.title
             info.description =

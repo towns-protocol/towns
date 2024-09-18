@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router'
 import {
-    Address,
     BlockchainTransactionType,
     EVERYONE_ADDRESS,
     Permission,
@@ -22,9 +21,9 @@ import { utils } from 'ethers'
 import { Panel } from '@components/Panel/Panel'
 import { Box, Button, Icon, MotionIcon, Pill, Stack, Text } from '@ui'
 import { Accordion } from 'ui/components/Accordion/Accordion'
-import { convertRuleDataToTokenFormSchema } from '@components/Tokens/utils'
+import { convertRuleDataToTokenEntitlementSchema } from '@components/Tokens/utils'
 import { Avatar } from '@components/Avatar/Avatar'
-import { TokenEntitlement } from '@components/Tokens/TokenSelector/tokenSchemas'
+import { Token, TokenEntitlement } from '@components/Tokens/TokenSelector/tokenSchemas'
 import { TokenImage } from '@components/Tokens/TokenSelector/TokenImage'
 import { useTokenMetadataForChainId } from 'api/lib/collectionMetadata'
 import { TokenSelectionDisplay } from '@components/Tokens/TokenSelector/TokenSelection'
@@ -351,21 +350,14 @@ export function TokenSelectionDisplayWithMetadata(props: {
 
     const isAddress = utils.isAddress(token.address)
 
-    if (!isAddress) {
+    if (!isAddress || !tokenMetadata) {
         return null
     }
 
     return (
         <TokenSelectionDisplay
             elevate
-            data={{
-                ...token,
-                imgSrc: tokenMetadata?.data.imgSrc ?? '',
-                label: tokenMetadata?.data.label ?? token.address,
-                address: token.address as Address,
-                openSeaCollectionUrl: tokenMetadata?.data.openSeaCollectionUrl,
-            }}
-            chainId={token.chainId}
+            token={tokenMetadata as Token}
             userPassesEntitlement={passesEntitlement}
         />
     )
@@ -552,7 +544,7 @@ function extractRoleEntitlementDetails({
 }) {
     const hasUserEntitlement = role.users.length > 0 && !role.users.includes(EVERYONE_ADDRESS)
     const hasRuleEntitlement = role.ruleData.rules.checkOperations.length > 0
-    const tokens = convertRuleDataToTokenFormSchema(
+    const tokens = convertRuleDataToTokenEntitlementSchema(
         role.ruleData.kind === 'v2'
             ? role.ruleData.rules
             : convertRuleDataV1ToV2(role.ruleData.rules),

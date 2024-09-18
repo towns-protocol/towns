@@ -1,5 +1,9 @@
+import { z } from 'zod'
 import { UploadImageRequestConfig } from '@components/UploadImage/useOnImageChangeEvent'
+import { formSchema } from '@components/SpaceSettingsPanel/schema'
 import { MEMBERSHIP_TYPE, SPACE_NAME } from '../constants'
+
+export type RoleFormSchemaType = z.infer<typeof formSchema>
 
 // export type TokenDataStruct = {
 //     address: string
@@ -9,7 +13,7 @@ import { MEMBERSHIP_TYPE, SPACE_NAME } from '../constants'
 
 export interface CreateSpaceFormState {
     step1: {
-        [MEMBERSHIP_TYPE]: 'everyone' | 'tokenHolders' | null
+        [MEMBERSHIP_TYPE]: 'everyone' | 'gated' | null
         // [TOKENS]: TokenDataStruct[]
     }
     step2: {

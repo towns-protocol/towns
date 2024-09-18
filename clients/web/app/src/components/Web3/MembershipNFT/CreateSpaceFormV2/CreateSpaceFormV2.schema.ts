@@ -1,17 +1,13 @@
 import { z } from 'zod'
 import { getPlatformMinMembershipPriceFromQueryCache } from 'use-towns-client'
 import { ethers } from 'ethers'
-import { tokenEntitlementSchema } from '@components/Tokens/TokenSelector/tokenSchemas'
-
-// enum MembershipGasFeePayer {
-//     Member = 'member',
-//     Town = 'town',
-// }
+import { gatingSchema } from '@components/Web3/Gating/Gating.schema'
 
 export const MAX_LENGTH_SPACE_NAME = 32
 export const MAX_LENGTH_SPACE_BIO = 240
 
-const membershipTypeErrorMessage = 'Please choose who can join your town.'
+const membershipPricingErrorMessage =
+    'Please choose how you want to set the price of your membership.'
 
 export const membershipSettingsSchema = z
     .object({
@@ -33,33 +29,19 @@ export const membershipSettingsSchema = z
             z.literal('dynamic', {
                 errorMap: (_err, _ctx) => {
                     // invalid_literal is the error code, but zod only configs for invalid_type_error
-                    return { message: membershipTypeErrorMessage }
+                    return { message: membershipPricingErrorMessage }
                 },
             }),
             z.literal('fixed', {
                 errorMap: (_err, _ctx) => {
                     // invalid_literal is the error code, but zod only configs for invalid_type_error
-                    return { message: membershipTypeErrorMessage }
+                    return { message: membershipPricingErrorMessage }
                 },
             }),
         ]),
         membershipCost: z.string(),
-        membershipType: z.union([
-            z.literal('everyone', {
-                errorMap: (_err, _ctx) => {
-                    // invalid_literal is the error code, but zod only configs for invalid_type_error
-                    return { message: membershipTypeErrorMessage }
-                },
-            }),
-            z.literal('tokenHolders', {
-                errorMap: (_err, _ctx) => {
-                    // invalid_literal is the error code, but zod only configs for invalid_type_error
-                    return { message: membershipTypeErrorMessage }
-                },
-            }),
-        ]),
-        tokensGatingMembership: z.array(tokenEntitlementSchema),
     })
+    .and(gatingSchema)
     .superRefine((data, ctx) => {
         const membershipCostAsNumber = Number(data['membershipCost'])
         const membershipPricingType = data['membershipPricingType']
@@ -87,16 +69,6 @@ export const membershipSettingsSchema = z
                     code: z.ZodIssueCode.custom,
                     message: `The cost of a membership must be at least ${minCostInEth} ETH.`,
                     path: ['membershipCost'],
-                })
-            }
-        }
-
-        if (data['membershipType'] === 'tokenHolders') {
-            if (data['tokensGatingMembership']?.length === 0) {
-                ctx.addIssue({
-                    code: z.ZodIssueCode.custom,
-                    path: ['tokensGatingMembership'],
-                    message: 'Select at least one token',
                 })
             }
         }

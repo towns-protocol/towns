@@ -4,17 +4,19 @@ import { Box, Icon, IconButton, Stack, Text } from '@ui'
 import { shortAddress } from 'ui/utils/utils'
 import { formatUnits } from 'hooks/useBalance'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
-import { TokenDataWithChainId, TokenType } from '../types'
+import { TokenType } from '../types'
 import { TokenImage } from './TokenImage'
 import { NetworkName } from './NetworkName'
+import { Token } from './tokenSchemas'
 
-type BaseTokenSelectionProps = TokenDataWithChainId & {
+type BaseTokenSelectionProps = {
     elevate?: boolean
+    token: Token
 }
 
 type TokenSelectionInputProps = BaseTokenSelectionProps & {
-    onDelete: (option: TokenDataWithChainId) => void
-    onEdit: (option: TokenDataWithChainId) => void
+    onDelete: (option: Token) => void
+    onEdit: (option: Token) => void
 }
 
 type TokenSelectionDisplayProps = BaseTokenSelectionProps & {
@@ -24,14 +26,13 @@ type TokenSelectionDisplayProps = BaseTokenSelectionProps & {
 type TokenSelectionProps = TokenSelectionInputProps | TokenSelectionDisplayProps
 
 function TokenSelection(props: TokenSelectionProps) {
-    const { elevate = false } = props
-    const { address, imgSrc, label, quantity, openSeaCollectionUrl } = props.data
+    const { elevate = false, token } = props
 
-    const isErc20 = props.data.type === TokenType.ERC20
+    const isErc20 = token.data.type === TokenType.ERC20
 
     const transformedQuantity = isErc20
-        ? formatUnits(quantity ?? 1n, props.data.decimals)
-        : quantity?.toString() ?? '1'
+        ? formatUnits(token.data.quantity ?? 1n, token.data.decimals)
+        : token.data.quantity?.toString() ?? '1'
 
     return (
         <Stack
@@ -41,17 +42,18 @@ function TokenSelection(props: TokenSelectionProps) {
             elevate={elevate}
             paddingX="sm"
             rounded="sm"
-            background="level3"
+            background="level2"
             alignItems="center"
             width="100%"
-            data-testid={`token-pill-selector-pill-${address}`}
+            data-testid={`token-pill-selector-pill-${token.data.address}`}
         >
-            <TokenImage imgSrc={imgSrc} width="x5" />
+            <TokenImage imgSrc={token.data.imgSrc} width="x5" />
             <Stack horizontal grow gap="sm" alignItems="center" flexWrap="wrap">
                 <Stack grow gap="sm">
                     <Stack horizontal gap="sm" alignItems="center">
                         <Text truncate>
-                            {transformedQuantity} {label?.length ? label : 'Unknown Token'}
+                            {transformedQuantity}{' '}
+                            {token.data.label?.length ? token.data.label : 'Unknown Token'}
                         </Text>
                         {'userPassesEntitlement' in props &&
                             props.userPassesEntitlement === false && (
@@ -69,8 +71,8 @@ function TokenSelection(props: TokenSelectionProps) {
                             )}
                     </Stack>
                     <Stack horizontal alignItems="center" gap="sm">
-                        <ClipboardCopy clipboardContent={address}>
-                            <Text size="sm">{shortAddress(address)}</Text>
+                        <ClipboardCopy clipboardContent={token.data.address}>
+                            <Text size="sm">{shortAddress(token.data.address)}</Text>
                         </ClipboardCopy>
                         <Text size="sm" color="gray2">
                             &#x2022;
@@ -79,15 +81,15 @@ function TokenSelection(props: TokenSelectionProps) {
                             <Box
                                 tooltip={
                                     <Box background="level2" padding="sm" rounded="sm">
-                                        <Text fontSize="sm">Chain ID: {props.chainId}</Text>
+                                        <Text fontSize="sm">Chain ID: {token.chainId}</Text>
                                     </Box>
                                 }
                             >
-                                <NetworkName color="gray2" chainId={props.chainId} size="sm" />
+                                <NetworkName color="gray2" chainId={token.chainId} size="sm" />
                             </Box>
-                            {openSeaCollectionUrl && (
+                            {token.data.openSeaCollectionUrl && (
                                 <Link
-                                    to={openSeaCollectionUrl}
+                                    to={token.data.openSeaCollectionUrl}
                                     rel="noopener noreffer"
                                     target="_blank"
                                 >
@@ -104,13 +106,13 @@ function TokenSelection(props: TokenSelectionProps) {
                         data-testid="token-pill-edit"
                         icon="edit"
                         size="square_md"
-                        onClick={() => props.onEdit({ chainId: props.chainId, data: props.data })}
+                        onClick={() => props.onEdit(token)}
                     />
                     <IconButton
                         data-testid="token-pill-delete"
                         icon="close"
                         size="square_md"
-                        onClick={() => props.onDelete({ chainId: props.chainId, data: props.data })}
+                        onClick={() => props.onDelete(token)}
                     />
                 </Stack>
             )}

@@ -9,15 +9,12 @@ import { useDevice } from 'hooks/useDevice'
 import { AvatarTextHorizontal } from '@components/Avatar/AvatarTextHorizontal'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { baseScanUrl, openSeaAssetUrl } from '@components/Web3/utils'
+import { convertTokenEntitlementToTokenSchema } from '@components/Tokens/utils'
 import { vars } from 'ui/styles/vars.css'
 import { ToneName } from 'ui/styles/themes'
 import { getInviteUrl } from 'ui/utils/utils'
 import useCopyToClipboard from 'hooks/useCopyToClipboard'
-import {
-    TokenGatingMembership,
-    checkAnyoneCanJoin,
-    useTokensGatingMembership,
-} from 'hooks/useTokensGatingMembership'
+import { Entitlements, checkAnyoneCanJoin, useEntitlements } from 'hooks/useEntitlements'
 import { useGetSpaceIdentity } from 'hooks/useSpaceIdentity'
 import { usePublicPageLoginFlow } from 'routes/PublicTownPage/usePublicPageLoginFlow'
 import { useReadableMembershipInfo } from './useReadableMembershipInfo'
@@ -84,10 +81,9 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
 
     const { data: membershipInfo } = useReadableMembershipInfo(spaceId)
 
-    const { data: tokensGatingMembership, isLoading: isTokensGatingMembershipLoading } =
-        useTokensGatingMembership(spaceId)
+    const { data: entitlements, isLoading: isEntitlementsLoading } = useEntitlements(spaceId)
 
-    const anyoneCanJoin = checkAnyoneCanJoin(tokensGatingMembership)
+    const anyoneCanJoin = checkAnyoneCanJoin(entitlements)
 
     const { imageSrc } = useImageSource(spaceId, ImageVariants.thumbnail600)
     const leftColRef = useRef<HTMLDivElement>(null)
@@ -160,8 +156,8 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
                                 address={address}
                                 chainId={chainId}
                                 anyoneCanJoin={anyoneCanJoin}
-                                isTokensGatingMembershipLoading={isTokensGatingMembershipLoading}
-                                tokensGatingMembership={tokensGatingMembership}
+                                isEntitlementsLoading={isEntitlementsLoading}
+                                entitlements={entitlements}
                             />
                         )}
                         <Bio bio={bio} />
@@ -316,17 +312,17 @@ const InformationBoxes = (props: {
     address?: `0x${string}`
     chainId: number
     anyoneCanJoin: boolean
-    isTokensGatingMembershipLoading: boolean
-    tokensGatingMembership?: TokenGatingMembership
+    isEntitlementsLoading: boolean
+    entitlements?: Entitlements
 }) => {
     const {
         address,
         anyoneCanJoin,
         chainId,
         duration,
-        isTokensGatingMembershipLoading,
+        isEntitlementsLoading,
         price,
-        tokensGatingMembership,
+        entitlements,
     } = props
     const { isTouch } = useDevice()
     const onAddressClick = useEvent(() => {
@@ -340,7 +336,10 @@ const InformationBoxes = (props: {
         window.open(`${openSeaAssetUrl(chainId, address)}`, '_blank', 'noopener,noreferrer')
     })
 
-    const _tokens = useMemo(() => tokensGatingMembership?.tokens, [tokensGatingMembership])
+    const tokens = useMemo(
+        () => (entitlements ? entitlements?.tokens.map(convertTokenEntitlementToTokenSchema) : []),
+        [entitlements],
+    )
 
     return (
         <MotionStack
@@ -363,8 +362,8 @@ const InformationBoxes = (props: {
                 title="For"
                 subtitle={anyoneCanJoin ? 'Anyone' : 'Holders'}
                 anyoneCanJoin={anyoneCanJoin}
-                isTokensGatingMembershipLoading={isTokensGatingMembershipLoading}
-                tokensGatingMembership={_tokens}
+                isEntitlementsLoading={isEntitlementsLoading}
+                tokensGatedBy={tokens}
                 dataTestId="town-preview-membership-info-bubble"
             />
             <InformationBox

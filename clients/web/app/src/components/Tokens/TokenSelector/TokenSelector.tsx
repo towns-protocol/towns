@@ -1,41 +1,34 @@
 import React, { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { z } from 'zod'
-import { zodResolver } from '@hookform/resolvers/zod'
 import { Controller, useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { TokenType } from '@token-worker/types'
-import { TokenData, TokenDataWithChainId } from '@components/Tokens/types'
-import { Box, Button, Icon, IconButton, Stack, Text, TextField } from '@ui'
-import { useTokenMetadataAcrossNetworks } from 'api/lib/collectionMetadata'
-import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
-import { useClickedOrFocusedOutside } from 'hooks/useClickedOrFocusedOutside'
+import { TokenDataWithChainId } from '@components/Tokens/types'
 import { ModalContainer } from '@components/Modals/ModalContainer'
-import { isTouch } from 'hooks/useDevice'
+import { Box, Button, Icon, IconButton, Stack, Text, TextField } from '@ui'
+import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
+import { useTokenMetadataAcrossNetworks } from 'api/lib/collectionMetadata'
+import { useClickedOrFocusedOutside } from 'hooks/useClickedOrFocusedOutside'
 import { formatUnits, parseUnits } from 'hooks/useBalance'
-import { TokenOption } from './TokenOption'
+import { isTouch } from 'hooks/useDevice'
 import { TokenSelectionDisplay, TokenSelectionInput } from './TokenSelection'
+import { TokenOption } from './TokenOption'
+import { Token } from './tokenSchemas'
+
+const allowedTokenTypes = [TokenType.ERC721, TokenType.ERC20]
 
 type Props = {
     isValidationError: boolean
-    initialSelection?: TokenDataWithChainId[]
     inputRef?: React.RefObject<HTMLInputElement>
-    onSelectionChange: (args: { tokens: TokenDataWithChainId[] }) => void
-    allowedTokenTypes?: TokenType[]
     allowedNetworks?: number[]
+    value: Token[]
+    onChange: (tokens: Token[]) => void
 }
 
-// Shows a list of tokens that can be selected. Also allows for adding your own token
-// valid tokens can either be ERC721, UNKNOWN, or NOT_A_CONTRACT
-//
-// if ERC721, it can be selected from the drop down on the appropriate network
-//
-// if UNKNOWN or NOT_A_CONTRACT, it can be added by entering the contract address
-// the user must select the network (if allowed), and be made aware that only ERC721 tokens are supported
 export function TokenSelector(props: Props) {
-    const allowedTokenTypes = props.allowedTokenTypes ?? [TokenType.ERC721, TokenType.ERC20]
-    const { isValidationError, onSelectionChange, initialSelection, allowedNetworks } = props
+    const { isValidationError, inputRef, allowedNetworks, value, onChange } = props
     const [textFieldValue, setTextFieldValue] = useState('')
-    const [selection, setSelection] = useState<TokenDataWithChainId[]>(initialSelection ?? [])
-    const [tokenEditor, setTokenEditor] = useState<TokenDataWithChainId | undefined>()
+    const [tokenEditor, setTokenEditor] = useState<Token | undefined>()
     const containerRef = useRef<HTMLDivElement>(null)
 
     const { data: tokenMetadata, isLoading: isTokenMetadataLoading } =
@@ -66,70 +59,62 @@ export function TokenSelector(props: Props) {
         allowedTokenTypes,
     })
 
-    const onChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+    const onTextFieldChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
         setTextFieldValue(e.target.value)
     }, [])
 
-    const onAddItem = useCallback((option: TokenDataWithChainId) => {
-        setTextFieldValue('')
-        setSelection((prev) => {
-            if (
-                prev.some(
-                    (t) => t.data.address === option.data.address && t.chainId === option.chainId,
-                )
-            ) {
-                return prev
-            }
-            return prev.concat({
-                ...option,
-                data: {
-                    ...option.data,
-                    quantity:
-                        option.data.type === TokenType.ERC20
-                            ? parseUnits(
-                                  option.data.quantity?.toString() ?? '1',
-                                  option.data.decimals,
-                              )
-                            : option.data.quantity ?? 1n,
+    const onAddItem = useCallback(
+        (option: Token) => {
+            setTextFieldValue('')
+            onChange([
+                ...value,
+                {
+                    ...option,
+                    data: {
+                        ...option.data,
+                        quantity:
+                            option.data.type === TokenType.ERC20
+                                ? parseUnits(
+                                      option.data.quantity?.toString() ?? '1',
+                                      option.data.decimals,
+                                  )
+                                : option.data.quantity ?? 1n,
+                    },
                 },
-            })
-        })
-    }, [])
+            ])
+        },
+        [onChange, value],
+    )
 
-    const onUpdate = useCallback((token: TokenDataWithChainId) => {
-        setSelection((prev) => {
-            const match = prev.find(
-                (t) => t.data.address === token.data.address && t.chainId === token.chainId,
+    const onDelete = useCallback(
+        (token: Token) => {
+            onChange(
+                value.filter(
+                    (t) => t.data.address !== token.data.address || t.chainId !== token.chainId,
+                ),
             )
-            if (!match) {
-                return prev
-            }
-            const index = prev.indexOf(match)
-            return prev
-                .slice(0, index)
-                .concat(token)
-                .concat(prev.slice(index + 1))
-        })
-    }, [])
+        },
+        [onChange, value],
+    )
 
-    const onDelete = useCallback((token: TokenDataWithChainId) => {
-        setSelection((prev) => {
-            const match = prev.find(
-                (t) => t.data.address === token.data.address && t.chainId === token.chainId,
-            )
-            if (!match) {
-                return prev
-            }
-            const index = prev.indexOf(match)
-            return prev.slice(0, index).concat(prev.slice(index + 1))
-        })
-    }, [])
-
-    const onEdit = useCallback((token: TokenDataWithChainId) => {
+    const onEdit = useCallback((token: Token) => {
         setTokenEditor(token)
     }, [])
 
-    const _isTouch = isTouch()
+    const onUpdate = useCallback(
+        (updatedToken: Token) => {
+            onChange(
+                value.map((t) =>
+                    t.data.address === updatedToken.data.address &&
+                    t.chainId === updatedToken.chainId
+                        ? updatedToken
+                        : t,
+                ),
+            )
+            setTokenEditor(undefined)
+        },
+        [onChange, value],
+    )
 
     useClickedOrFocusedOutside(containerRef, {
         onOutside: () => {
@@ -137,12 +122,16 @@ export function TokenSelector(props: Props) {
         },
     })
 
-    useEffect(() => {
-        onSelectionChange({ tokens: selection })
-    }, [onSelectionChange, selection])
+    const _isTouch = isTouch()
 
     return (
-        <Box gap="md" ref={containerRef} position="relative" zIndex="above">
+        <Box
+            gap="sm"
+            ref={containerRef}
+            position="relative"
+            zIndex="above"
+            data-testid="token-search"
+        >
             <Box
                 horizontal
                 gap="sm"
@@ -154,14 +143,14 @@ export function TokenSelector(props: Props) {
                 border={isValidationError || anyResultIsERC1155 ? 'negative' : 'default'}
             >
                 <TextField
-                    ref={props.inputRef}
+                    ref={inputRef}
                     data-testid="token-selector-input"
-                    background="level3"
+                    background="level2"
                     value={textFieldValue}
                     tone="none"
                     placeholder="Enter a contract address"
                     size={Math.max(3, textFieldValue.length + 1)}
-                    onChange={onChange}
+                    onChange={onTextFieldChange}
                 />
             </Box>
 
@@ -174,12 +163,12 @@ export function TokenSelector(props: Props) {
             )}
 
             <Box gap="sm">
-                {selection.map((token) => (
+                {value.map((token) => (
                     <TokenSelectionInput
                         key={token.chainId + token.data.address}
+                        token={token}
                         onDelete={onDelete}
                         onEdit={onEdit}
-                        {...token}
                     />
                 ))}
             </Box>
@@ -191,35 +180,28 @@ export function TokenSelector(props: Props) {
             )}
 
             {Array.isArray(knownTokens) && knownTokens.length > 0 ? (
-                <TokenOptions tokens={knownTokens} onAddItem={onAddItem} />
+                <TokenOptions tokens={knownTokens as Token[]} onAddItem={onAddItem} />
             ) : showUnknownTokensList ? (
-                <>
-                    <TokenOptions
-                        headerElement={
-                            <Box horizontal gap="sm">
-                                <Icon type="alert" color="negative" size="square_sm" />
-                                <Box gap="sm">
-                                    <Text
-                                        size="sm"
-                                        color="gray1"
-                                    >{`We didn't find your token on any of the supported networks.`}</Text>
-                                    <Text
-                                        size="sm"
-                                        color="gray1"
-                                    >{`If you add this token, it will be submitted as an ERC-721.`}</Text>
-                                </Box>
+                <TokenOptions
+                    headerElement={
+                        <Box horizontal gap="sm" alignItems="center">
+                            <Icon type="alert" color="negative" size="square_sm" />
+                            <Box gap="sm">
+                                <Text size="sm" color="gray1">
+                                    We didn&apos;t find your token on any of the supported networks.
+                                </Text>
                             </Box>
-                        }
-                        tokens={
-                            resultsOnAllowedNetworks?.filter(
-                                (t) =>
-                                    t.data.type === TokenType.UNKNOWN ||
-                                    t.data.type === TokenType.NOT_A_CONTRACT,
-                            ) ?? []
-                        }
-                        onAddItem={(o) => onAddItem(o)}
-                    />
-                </>
+                        </Box>
+                    }
+                    tokens={
+                        (resultsOnAllowedNetworks?.filter(
+                            (t) =>
+                                t.data.type !== TokenType.UNKNOWN &&
+                                t.data.type !== TokenType.NOT_A_CONTRACT,
+                        ) ?? []) as Token[]
+                    }
+                    onAddItem={onAddItem}
+                />
             ) : null}
 
             {tokenEditor && (
@@ -244,8 +226,8 @@ function TokenOptions({
     onAddItem,
     headerElement,
 }: {
-    tokens: TokenDataWithChainId[]
-    onAddItem: (option: TokenDataWithChainId) => void
+    tokens: Token[]
+    onAddItem: (option: Token) => void
     headerElement?: React.ReactNode
 }) {
     return (
@@ -280,8 +262,8 @@ function TokenOptions({
 }
 
 function TokenEditor(props: {
-    token: TokenDataWithChainId
-    onUpdate: (token: TokenDataWithChainId) => void
+    token: Token
+    onUpdate: (token: Token) => void
     onHide: () => void
 }) {
     const { token, onUpdate, onHide } = props
@@ -331,11 +313,12 @@ function TokenEditor(props: {
         }
     }, [token.data])
 
-    const transformQuantityForSubmit = useCallback((quantity: string, tokenData: TokenData) => {
-        return tokenData.type === TokenType.ERC20
-            ? parseUnits(quantity, tokenData.decimals)
-            : BigInt(quantity)
-    }, [])
+    const transformQuantityForSubmit = useCallback(
+        (quantity: string, tokenType: TokenType, decimals: number = 18) => {
+            return tokenType === TokenType.ERC20 ? parseUnits(quantity, decimals) : BigInt(quantity)
+        },
+        [],
+    )
 
     const {
         control,
@@ -352,7 +335,11 @@ function TokenEditor(props: {
             ...token,
             data: {
                 ...token.data,
-                quantity: transformQuantityForSubmit(data.quantity, token.data),
+                quantity: transformQuantityForSubmit(
+                    data.quantity,
+                    token.data.type,
+                    token.data.decimals,
+                ),
             },
         })
         onHide()
@@ -377,7 +364,7 @@ function TokenEditor(props: {
                 <IconButton padding="xs" icon="close" onClick={onHide} />
             </Stack>
 
-            <TokenSelectionDisplay {...token} />
+            <TokenSelectionDisplay token={token} />
 
             <Box as="form" style={{ width: '100%' }} gap="md" onSubmit={handleSubmit(onSubmit)}>
                 <Box gap alignSelf="start" width="100%">
@@ -437,11 +424,15 @@ function useValidTokens(args: {
         return tokens
     }, [args.allowedTokenTypes, args.tokenMetadata])
 }
+
 function useSorted(tokenMetadata: TokenDataWithChainId[] | undefined) {
     return useMemo(
         () =>
             tokenMetadata
                 ? tokenMetadata
+                      .slice()
+                      .slice()
+                      // sort by whether the token has a hit in NFT api
                       .slice()
                       // sort by whether the token has a hit in NFT api
                       .sort((a, b) => {

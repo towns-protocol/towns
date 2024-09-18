@@ -1,10 +1,11 @@
 import {
+    Address,
     CheckOperationType,
     IRuleEntitlementV2Base,
     createDecodedCheckOperationFromTree,
 } from 'use-towns-client'
 import { TokenType } from './types'
-import { TokenEntitlement } from './TokenSelector/tokenSchemas'
+import { Token, TokenEntitlement } from './TokenSelector/tokenSchemas'
 
 export function convertTokenTypeToOperationType(type: TokenType) {
     switch (type) {
@@ -32,7 +33,7 @@ export function convertOperationTypeToTokenType(type: CheckOperationType) {
     }
 }
 
-export function convertRuleDataToTokenFormSchema(
+export function convertRuleDataToTokenEntitlementSchema(
     ruleData: IRuleEntitlementV2Base.RuleDataV2Struct,
 ): TokenEntitlement[] {
     return createDecodedCheckOperationFromTree(ruleData).map((p) => {
@@ -45,4 +46,42 @@ export function convertRuleDataToTokenFormSchema(
             tokenIds: tokenId ? [Number(tokenId)] : [],
         }
     })
+}
+
+export function convertRuleDataToTokenSchema(
+    ruleData: IRuleEntitlementV2Base.RuleDataV2Struct,
+): Token[] {
+    return createDecodedCheckOperationFromTree(ruleData).map((p) => {
+        const { threshold, tokenId, ...rest } = p
+        return {
+            chainId: Number(p.chainId),
+            data: {
+                ...rest,
+                address: p.address as Address,
+                type: convertOperationTypeToTokenType(p.type),
+                name: '',
+                symbol: '',
+                imageUrl: '',
+                openSeaCollectionUrl: '',
+                decimals: undefined,
+                tokenId: tokenId ?? undefined,
+                quantity: threshold ?? 1n,
+            },
+        }
+    })
+}
+
+export function convertTokenEntitlementToTokenSchema(tokenEntitlement: TokenEntitlement): Token {
+    return {
+        chainId: tokenEntitlement.chainId,
+        data: {
+            address: tokenEntitlement.address,
+            type: tokenEntitlement.type,
+            name: '',
+            symbol: '',
+            imageUrl: '',
+            openSeaCollectionUrl: '',
+            decimals: undefined,
+        },
+    }
 }

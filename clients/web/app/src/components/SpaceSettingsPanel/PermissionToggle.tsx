@@ -11,7 +11,7 @@ export type Role = {
     id: string
     name: string
     permissions: Permission[]
-    users: string[]
+    usersGatedBy: string[]
 }
 
 type Props = {
@@ -39,7 +39,7 @@ export const PermissionToggle = (props: Props) => {
     }, [defaultToggled])
 
     return (
-        <Stack horizontal grow gap as="label">
+        <Stack horizontal grow gap as="label" cursor="pointer">
             <Stack grow>
                 <Paragraph strong>{metaData?.name}</Paragraph>
                 <Paragraph color="gray2">{metaData?.description}</Paragraph>

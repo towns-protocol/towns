@@ -1,8 +1,9 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
     Address,
     BlockchainTransactionType,
+    EVERYONE_ADDRESS,
     IRuleEntitlementV2Base,
     NoopRuleData,
     Permission,
@@ -16,8 +17,7 @@ import {
     useUpdateRoleTransaction,
 } from 'use-towns-client'
 import { useEvent } from 'react-use-event-hook'
-import { z } from 'zod'
-import { FormProvider, SubmitErrorHandler, UseFormReturn, useFormContext } from 'react-hook-form'
+import { FormProvider, SubmitErrorHandler, useFormContext } from 'react-hook-form'
 import isEqual from 'lodash/isEqual'
 import { AnimatePresence } from 'framer-motion'
 import { useGetEmbeddedSigner } from '@towns/privy'
@@ -48,19 +48,18 @@ import { ModalContainer } from '@components/Modals/ModalContainer'
 import { FullPanelOverlay } from '@components/Web3/WalletLinkingPanel'
 import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
-import { TokenSelector } from '@components/Tokens/TokenSelector/TokenSelector'
-import { TokenDataWithChainId } from '@components/Tokens/types'
-import { useMultipleTokenMetadatasForChainIds } from 'api/lib/collectionMetadata'
 import {
-    convertRuleDataToTokenFormSchema,
+    convertRuleDataToTokenEntitlementSchema,
+    convertRuleDataToTokenSchema,
     convertTokenTypeToOperationType,
 } from '@components/Tokens/utils'
-import { convertToNumber, mapTokenOptionsToTokenDataStruct } from './utils'
+import { EditGating } from '@components/Web3/EditMembership/EditGating'
+import { RoleFormSchemaType } from '@components/Web3/CreateSpaceForm/types'
+import { isEveryoneAddress } from '@components/Web3/utils'
+import { Token } from '@components/Tokens/TokenSelector/tokenSchemas'
+import { useMultipleTokenMetadatasForChainIds } from 'api/lib/collectionMetadata'
+import { convertToNumber } from './utils'
 import { formSchema } from './schema'
-import { UserPillSelector } from './UserPillSelector'
-import { SearchInputHeightAdjuster } from './SearchInputHeightAdjuster'
-
-export type RoleFormSchemaType = z.infer<typeof formSchema>
 
 export const SingleRolePanel = React.memo(() => {
     return (
@@ -135,26 +134,106 @@ export function SingleRolePanelWithoutAuth() {
             ? convertRuleDataV1ToV2(roleDetails.ruleData.rules)
             : roleDetails?.ruleData.rules
 
-    const tokens = useMemo(() => {
-        if (!ruleData) {
+    const initialTokenValues = useMemo(
+        () => (ruleData ? convertRuleDataToTokenSchema(ruleData) : []),
+        [ruleData],
+    )
+
+    const { data: initialTokensData, isLoading: isLoadingTokensData } =
+        useMultipleTokenMetadatasForChainIds(
+            initialTokenValues.map((token) => ({
+                type: token.data.type,
+                address: token.data.address as Address,
+                tokenIds: [],
+                chainId: token.chainId,
+                quantity: token.data.quantity ?? 1n,
+            })),
+        )
+
+    const clientTokensGatedBy: Token[] = useMemo(() => {
+        if (!initialTokensData) {
             return []
         }
-        return convertRuleDataToTokenFormSchema(ruleData)
-    }, [ruleData])
 
-    const values = useMemo(
+        const tokens = initialTokenValues.map((token) => {
+            const metadata = initialTokensData.find(
+                (t) =>
+                    t.chainId === token.chainId &&
+                    t.data.address?.toLowerCase() === token.data.address?.toLowerCase(),
+            )
+
+            if (metadata) {
+                return {
+                    chainId: metadata.chainId,
+                    data: {
+                        address: metadata.data.address as Address,
+                        quantity: metadata.data.quantity ?? 1n,
+                        type: metadata.data.type,
+                        label: metadata.data.label || '',
+                        imgSrc: metadata.data.imgSrc || '',
+                    },
+                }
+            }
+
+            return {
+                chainId: token.chainId,
+                data: {
+                    address: token.data.address as Address,
+                    quantity: token.data.quantity ?? 1n,
+                    type: token.data.type,
+                    label: '',
+                    imgSrc: '',
+                },
+            }
+        })
+        return tokens
+    }, [initialTokenValues, initialTokensData])
+
+    const usersGatedBy = useMemo(() => {
+        return (roleDetails?.users || []).filter(
+            (address) => !isEveryoneAddress(address),
+        ) as Address[]
+    }, [roleDetails])
+
+    const gatingType = useMemo(() => {
+        if (isCreateRole) {
+            return 'everyone'
+        }
+        if (initialTokenValues.length > 0) {
+            return 'gated'
+        }
+        return roleDetails?.users?.some((address) => !isEveryoneAddress(address))
+            ? 'gated'
+            : 'everyone'
+    }, [isCreateRole, roleDetails, initialTokenValues.length])
+
+    const values: RoleFormSchemaType = useMemo(
         () => ({
-            // roleDetails is undefined when creating a new role
-            name: roleDetails?.name ?? '',
+            name: roleDetails?.name || '',
             channelPermissions: isCreateRole
                 ? [Permission.Read, Permission.React]
                 : defaultChannelPermissionsValues,
             townPermissions: townRoleDetails?.permissions ?? [],
-            users: roleDetails?.users ?? [],
-            tokens,
+            tokensGatedBy: ruleData ? convertRuleDataToTokenEntitlementSchema(ruleData) : [],
+            clientTokensGatedBy,
+            gatingType,
+            usersGatedBy,
         }),
-        [tokens, roleDetails, isCreateRole, defaultChannelPermissionsValues, townRoleDetails],
+        [
+            roleDetails,
+            isCreateRole,
+            defaultChannelPermissionsValues,
+            townRoleDetails,
+            clientTokensGatedBy,
+            gatingType,
+            usersGatedBy,
+            ruleData,
+        ],
     )
+
+    if (isLoadingTokensData) {
+        return <ButtonSpinner />
+    }
 
     return (
         <Panel label="Roles" padding="none">
@@ -171,12 +250,10 @@ export function SingleRolePanelWithoutAuth() {
                         height="100%"
                         defaultValues={values}
                     >
-                        {(hookForm) => {
-                            const _form = hookForm as unknown as UseFormReturn<RoleFormSchemaType>
-
+                        {(form) => {
                             return (
                                 <>
-                                    <FormProvider {..._form}>
+                                    <FormProvider {...form}>
                                         <Stack
                                             grow
                                             overflow="auto"
@@ -189,10 +266,9 @@ export function SingleRolePanelWithoutAuth() {
                                             <Stack
                                                 overflow="auto"
                                                 padding="md"
-                                                // TODO: this background
                                                 gap={{
                                                     touch: 'md',
-                                                    desktop: 'x4',
+                                                    desktop: 'lg',
                                                 }}
                                                 rounded="sm"
                                             >
@@ -225,38 +301,26 @@ export function SingleRolePanelWithoutAuth() {
                                                     renderLabel={(label) => <Text>{label}</Text>}
                                                     label="Role name"
                                                     tone={
-                                                        _form.formState.errors.name
+                                                        form.formState.errors.name
                                                             ? 'error'
                                                             : 'neutral'
                                                     }
-                                                    {..._form.register('name')}
+                                                    {...form.register('name')}
                                                 />
 
-                                                {/* TODO: re-enable once xchain is working with role permissions */}
                                                 {isDefaultMembershipRole ? null : (
-                                                    // TODO: there are no tokens for the default membership role, what should we do?
-                                                    // <Stack gap>
-                                                    //     <Text>Digital Asset Requirement</Text>
-                                                    //     <Stack alignSelf="start">
-                                                    //         {'//roleDetails?.ruleData'}
-                                                    //     </Stack>
-                                                    // </Stack>
                                                     <Stack
                                                         position="relative"
                                                         zIndex="tooltipsAbove"
+                                                        gap="md"
                                                     >
-                                                        <TokenSearch isCreateRole={isCreateRole} />
+                                                        <Text>Who Gets Access</Text>
+                                                        <EditGating isRole />
                                                     </Stack>
                                                 )}
 
-                                                {!isDefaultMembershipRole && (
-                                                    <Stack position="relative" zIndex="tooltips">
-                                                        <UserSearch isCreateRole={isCreateRole} />
-                                                    </Stack>
-                                                )}
-
-                                                <Stack gap="md">
-                                                    <Text>Channel permissions</Text>
+                                                <Stack gap="md" data-testid="channel-permissions">
+                                                    <Text>Channel Permissions</Text>
                                                     <Stack
                                                         gap="lg"
                                                         background="level2"
@@ -268,8 +332,8 @@ export function SingleRolePanelWithoutAuth() {
                                                         />
                                                     </Stack>
                                                 </Stack>
-                                                <Stack gap="md">
-                                                    <Text>Town permissions</Text>
+                                                <Stack gap="md" data-testid="town-permissions">
+                                                    <Text>Town Permissions</Text>
                                                     <Stack
                                                         gap="lg"
                                                         background="level2"
@@ -311,7 +375,7 @@ export function SingleRolePanelWithoutAuth() {
                                             </SubmitButton>
                                         </Stack>
 
-                                        {Object.keys(_form.formState.errors).length > 0 && (
+                                        {Object.keys(form.formState.errors).length > 0 && (
                                             <ErrorsNotification />
                                         )}
                                     </FormProvider>
@@ -411,9 +475,8 @@ function SubmitButton({
         const sorter = (arr: typeof defaultValues | undefined) => {
             arr?.channelPermissions?.sort()
             arr?.townPermissions?.sort()
-            arr?.users?.sort()
-            arr?.tokens?.sort()
-            arr?.tokens?.forEach((t) => t?.tokenIds?.sort())
+            arr?.usersGatedBy?.sort()
+            arr?.clientTokensGatedBy?.sort()
         }
         sorter(def)
         sorter(cur)
@@ -425,7 +488,9 @@ function SubmitButton({
         formState.isSubmitting ||
         isUnchanged ||
         Object.keys(formState.errors).length > 0 ||
-        (isCreateRole && !watchAllFields.tokens?.length && !watchAllFields.users.length) ||
+        (watchAllFields.gatingType === 'gated' &&
+            !watchAllFields.clientTokensGatedBy?.length &&
+            !watchAllFields.usersGatedBy.length) ||
         transactionIsPending
 
     const onValid = useEvent(async (data: RoleFormSchemaType) => {
@@ -443,14 +508,20 @@ function SubmitButton({
         const _channelPermissions = [...new Set(data.channelPermissions)].sort()
         const _townPermissions = [...new Set(data.townPermissions)].sort()
 
+        // If gatedType is everyone, usersGatedBy should be the everyone address
+        const usersGatedBy = data.gatingType === 'everyone' ? [EVERYONE_ADDRESS] : data.usersGatedBy
+
+        // If gatedType is everyone, tokensGatedBy should be empty
+        const tokensGatedBy = data.gatingType === 'everyone' ? [] : data.clientTokensGatedBy
+
         const ruleData =
-            data.tokens.length > 0
+            tokensGatedBy.length > 0
                 ? createOperationsTree(
-                      data.tokens.map((t) => ({
-                          address: t.address as Address,
+                      tokensGatedBy.map((t) => ({
+                          address: t.data.address as Address,
                           chainId: BigInt(t.chainId),
-                          type: convertTokenTypeToOperationType(t.type),
-                          threshold: t.quantity,
+                          type: convertTokenTypeToOperationType(t.data.type),
+                          threshold: t.data.quantity ?? 1n,
                       })),
                   )
                 : NoopRuleData
@@ -460,7 +531,7 @@ function SubmitButton({
                 spaceId,
                 data.name,
                 [..._channelPermissions, ..._townPermissions],
-                data.users,
+                usersGatedBy,
                 ruleData,
                 signer,
             )
@@ -474,7 +545,7 @@ function SubmitButton({
                 roleId,
                 data.name,
                 [..._channelPermissions, ..._townPermissions],
-                data.users,
+                usersGatedBy,
                 ruleData,
                 signer,
             )
@@ -494,116 +565,6 @@ function SubmitButton({
         >
             {children}
         </FancyButton>
-    )
-}
-
-function UserSearch({ isCreateRole }: { isCreateRole: boolean }) {
-    const { getValues, setValue, formState, trigger } = useFormContext<RoleFormSchemaType>()
-    const hadValueRef = useRef(false)
-
-    const onSelectionChange = useEvent((addresses: Set<Address>) => {
-        setValue('users', Array.from(addresses), { shouldDirty: true })
-        if (addresses.size) {
-            hadValueRef.current = true
-        }
-        triggerTokensAndUsersValidation(trigger, hadValueRef.current)
-    })
-
-    const initialSelection = useMemo(() => {
-        const users = getValues('users')
-        if (users.length) {
-            return new Set<Address>(users as Address[])
-        }
-        return new Set<Address>()
-    }, [getValues])
-
-    return (
-        <Stack gap data-testid="user-search">
-            <Text>Search people</Text>
-            <SearchInputHeightAdjuster>
-                {(inputContainerRef) => (
-                    <UserPillSelector
-                        initialSelection={initialSelection}
-                        // the custom validation is attached to tokens field
-                        isValidationError={
-                            (formState.errors.tokens &&
-                                formState.errors.tokens.message?.includes('token or user')) !==
-                            undefined
-                        }
-                        inputContainerRef={inputContainerRef}
-                        onSelectionChange={onSelectionChange}
-                    />
-                )}
-            </SearchInputHeightAdjuster>
-        </Stack>
-    )
-}
-
-// superrefine is not triggering w/ react-hook-form onChange mode
-// so we need to manually trigger the validation
-// https://github.com/react-hook-form/resolvers/issues/661
-function triggerTokensAndUsersValidation(
-    trigger: ReturnType<typeof useFormContext<RoleFormSchemaType>>['trigger'],
-    everHadValue: boolean,
-) {
-    if (everHadValue) {
-        trigger(['tokens', 'users'])
-    }
-}
-
-function TokenSearch({ isCreateRole }: { isCreateRole: boolean }) {
-    const { getValues, setValue, trigger, formState } = useFormContext<RoleFormSchemaType>()
-
-    const initialTokenValues = useMemo(() => getValues('tokens') || [], [getValues])
-
-    const { data: initialTokensData, isLoading: isLoadingInitialTokens } =
-        useMultipleTokenMetadatasForChainIds(initialTokenValues)
-    const hadValueRef = useRef(false)
-
-    const onSelectionChange = useCallback(
-        ({ tokens }: { tokens: TokenDataWithChainId[] }) => {
-            setValue('tokens', mapTokenOptionsToTokenDataStruct(tokens), { shouldDirty: true })
-            if (tokens.length) {
-                hadValueRef.current = true
-            }
-            triggerTokensAndUsersValidation(trigger, hadValueRef.current)
-        },
-        [setValue, trigger],
-    )
-
-    return (
-        <Stack gap data-testid="token-search">
-            <Text>Digital Asset Requirement</Text>
-            {isLoadingInitialTokens ? (
-                <Stack centerContent padding>
-                    <ButtonSpinner />
-                </Stack>
-            ) : (
-                <>
-                    {isCreateRole && (
-                        <Stack
-                            horizontal
-                            background="level2"
-                            padding="md"
-                            gap="sm"
-                            rounded="sm"
-                            alignItems="center"
-                        >
-                            <Icon type="info" color="gray2" size="square_sm" />
-                            <Text size="sm">
-                                Select at least one digital asset or wallet address for gating this
-                                role.
-                            </Text>
-                        </Stack>
-                    )}
-                    <TokenSelector
-                        initialSelection={initialTokensData}
-                        isValidationError={formState.errors.tokens !== undefined}
-                        onSelectionChange={onSelectionChange}
-                    />
-                </>
-            )}
-        </Stack>
     )
 }
 
@@ -627,8 +588,9 @@ export function ChannelPermissionsToggles({
             id: roleDetails?.id.toString() ?? '',
             name: formValues.name,
             permissions: formValues.channelPermissions ?? [],
-            tokens: formValues.tokens ?? [],
-            users: (formValues.users as Address[]) ?? [],
+            tokensGatedBy: formValues.tokensGatedBy ?? [],
+            clientTokensGatedBy: formValues.clientTokensGatedBy ?? [],
+            usersGatedBy: (formValues.usersGatedBy as Address[]) ?? [],
         }
     })
 
@@ -684,8 +646,9 @@ function TownPermissionsToggles({
             id: roleDetails?.id.toString() ?? '',
             name: formValues.name,
             permissions: formValues.townPermissions ?? [],
-            tokens: formValues.tokens ?? [],
-            users: (formValues.users as Address[]) ?? [],
+            tokensGatedBy: formValues.tokensGatedBy ?? [],
+            clientTokensGatedBy: formValues.clientTokensGatedBy ?? [],
+            usersGatedBy: (formValues.usersGatedBy as Address[]) ?? [],
         }
     })
 

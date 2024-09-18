@@ -174,7 +174,7 @@ function usePrivyLoginWithErrorHandler({
                         // extra safe
                         await retryGetAccessToken(1)
                     } catch (error) {
-                        console.log('error logging out of privy', error)
+                        console.error('error logging out of privy', error)
                     }
                     popupToast(
                         ({ toast }) => (

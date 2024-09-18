@@ -27,7 +27,7 @@ import { Avatar } from '@components/Avatar/Avatar'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { useReadableMembershipInfo } from '@components/TownPageLayout/useReadableMembershipInfo'
 import { getPriceText } from '@components/TownPageLayout/townPageUtils'
-import { useTokensGatingMembership } from 'hooks/useTokensGatingMembership'
+import { useEntitlements } from 'hooks/useEntitlements'
 import { SelectedToken } from '@components/TownPageLayout/TokenInfoBox'
 import { PATHS } from 'routes'
 import { MessageAttachmentsContext } from './MessageAttachmentsContext'
@@ -222,7 +222,7 @@ const TownsContent = (
 
     const { data: spaceInfo } = useContractSpaceInfo(townId)
     const { data: memberInfo, isLoading } = useReadableMembershipInfo(townId)
-    const { data: tokensGatingMembership } = useTokensGatingMembership(townId)
+    const { data: entitlements } = useEntitlements(townId)
 
     const priceText = getPriceText(memberInfo?.price)
 
@@ -298,10 +298,10 @@ const TownsContent = (
                         ) : (
                             <></>
                         )}
-                        {(tokensGatingMembership?.tokens.length ?? 0) > 0 ? (
+                        {(entitlements?.tokens.length ?? 0) > 0 ? (
                             <Pill position="relative" alignSelf="start">
                                 <Stack horizontal gap="xs">
-                                    {tokensGatingMembership.tokens.map((token, index) => (
+                                    {entitlements?.tokens.map((token, index) => (
                                         <Box key={token.address + token.chainId}>
                                             <SelectedToken
                                                 contractAddress={token.address}
@@ -311,7 +311,7 @@ const TownsContent = (
                                             />
                                         </Box>
                                     ))}
-                                    {tokensGatingMembership.tokens.at(-1)?.type}
+                                    {entitlements?.tokens.at(-1)?.type}
                                 </Stack>
                             </Pill>
                         ) : (

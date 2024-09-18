@@ -1,5 +1,5 @@
 import React from 'react'
-import { Box } from 'ui/components/Box/Box'
+import { Box, type BoxProps } from 'ui/components/Box/Box'
 import { vars } from 'ui/styles/vars.css'
 import * as style from './Toggle.css'
 
@@ -8,7 +8,10 @@ type Props<D> = {
     onToggle: (checked: boolean, data?: D) => void
     disabled?: boolean
     metaData?: D
+    background?: BoxProps['background']
+    'data-testid'?: string
 }
+
 /**
  * Controlled component not to be used in the context of a form
  */
@@ -28,7 +31,7 @@ export const Toggle = <D,>(props: Props<D>) => {
                 display="inline-flex"
                 alignItems="center"
                 justifyContent="spaceBetween"
-                background={isToggled ? 'positive' : 'level3'}
+                background={isToggled ? 'positive' : props.background ?? 'level3'}
                 style={{
                     transition: 'all 200ms ease-out',
                 }}
@@ -48,6 +51,7 @@ export const Toggle = <D,>(props: Props<D>) => {
                         disabled={props.disabled}
                         type="checkbox"
                         checked={isToggled}
+                        data-testid={props['data-testid'] ?? 'toggle-input'}
                         onChange={onChange}
                     />
                     <Box

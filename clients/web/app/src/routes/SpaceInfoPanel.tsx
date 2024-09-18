@@ -47,7 +47,7 @@ import { openSeaAssetUrl } from '@components/Web3/utils'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { Panel } from '@components/Panel/Panel'
 import { SpaceSettingsNavigationPanel } from '@components/SpaceSettingsPanel/SpaceSettingsNavigationPanel'
-import { convertRuleDataToTokenFormSchema } from '@components/Tokens/utils'
+import { convertRuleDataToTokenEntitlementSchema } from '@components/Tokens/utils'
 import { TokenImage } from '@components/Tokens/TokenSelector/TokenImage'
 import { useTokenMetadataForChainId } from 'api/lib/collectionMetadata'
 import { NetworkName } from '@components/Tokens/TokenSelector/NetworkName'
@@ -521,7 +521,7 @@ const TokensGatingSpace = ({
 }) => {
     const { isLoading: isLoadingRoleDetails, roleDetails } = useRoleDetails(spaceId ?? '', 1)
     const tokens = roleDetails?.ruleData
-        ? convertRuleDataToTokenFormSchema(
+        ? convertRuleDataToTokenEntitlementSchema(
               roleDetails.ruleData.kind === 'v2'
                   ? roleDetails.ruleData.rules
                   : convertRuleDataV1ToV2(roleDetails.ruleData.rules),

@@ -1,6 +1,6 @@
 export const EVERYONE = 'everyone'
-export const TOKEN_HOLDERS = 'tokenHolders'
-export const MEMBERSHIP_TYPE = 'membershipType'
+export const GATED = 'gated'
+export const MEMBERSHIP_TYPE = 'gatingType'
 export const TOKENS = 'tokens'
 export const SPACE_NAME = 'spaceName'
 

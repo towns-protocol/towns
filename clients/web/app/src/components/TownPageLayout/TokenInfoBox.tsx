@@ -1,24 +1,26 @@
 import React from 'react'
+import { Address } from 'use-towns-client'
 import { Box, BoxProps, Icon, Text } from '@ui'
 import { TokenImage } from '@components/Tokens/TokenSelector/TokenImage'
 import { useTokenMetadataForChainId } from 'api/lib/collectionMetadata'
 import { vars } from 'ui/styles/vars.css'
 import { NetworkName } from '@components/Tokens/TokenSelector/NetworkName'
+import { Token } from '@components/Tokens/TokenSelector/tokenSchemas'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { InformationBox } from './InformationBox'
 
 export const TokenInfoBox = ({
-    tokensGatingMembership,
+    tokensGatedBy,
     onInfoBoxClick,
     hasError,
     title,
     subtitle,
     anyoneCanJoin,
-    isTokensGatingMembershipLoading,
+    isEntitlementsLoading,
     dataTestId,
 }: {
-    tokensGatingMembership: { address: string; chainId: number }[] | undefined
-    isTokensGatingMembershipLoading?: boolean
+    tokensGatedBy: Token[]
+    isEntitlementsLoading?: boolean
     onInfoBoxClick?: () => void
     title: string
     subtitle: string
@@ -28,48 +30,39 @@ export const TokenInfoBox = ({
 }) => {
     return (
         <InformationBox
-            // key="c"
             border={hasError ? 'negative' : 'none'}
             title={title}
-            centerContent={
-                <>
-                    {!anyoneCanJoin ? (
-                        isTokensGatingMembershipLoading ? (
-                            <Box>
-                                <ButtonSpinner height="x1" />
-                            </Box>
-                        ) : !tokensGatingMembership ? (
-                            <></>
-                        ) : (
-                            <Box position="relative" width="x3" aspectRatio="1/1">
-                                {tokensGatingMembership.map((token, index) => (
-                                    <Box
-                                        key={token.address + token.chainId}
-                                        position="absolute"
-                                        top="none"
-                                        style={{
-                                            zIndex: +vars.zIndex.ui - index || 1,
-                                            transform: `translateX(${
-                                                -(tokensGatingMembership.length * 5) / 2
-                                            }px)`,
-                                            left: index ? `${index * 10}px` : 0,
-                                        }}
-                                    >
-                                        <SelectedToken
-                                            contractAddress={token.address}
-                                            chainId={token.chainId}
-                                        />
-                                    </Box>
-                                ))}
-                            </Box>
-                        )
-                    ) : (
-                        <Icon type="people" size="square_md" />
-                    )}
-                </>
-            }
             subtitle={subtitle}
             dataTestId={dataTestId}
+            centerContent={
+                anyoneCanJoin ? (
+                    <Icon type="people" size="square_md" />
+                ) : isEntitlementsLoading ? (
+                    <Box>
+                        <ButtonSpinner height="x1" />
+                    </Box>
+                ) : tokensGatedBy && tokensGatedBy.length > 0 ? (
+                    <Box position="relative" width="x3" aspectRatio="1/1">
+                        {tokensGatedBy.map((token, index) => (
+                            <Box
+                                key={`${token.data.address}-${token.chainId}`}
+                                position="absolute"
+                                top="none"
+                                style={{
+                                    zIndex: +vars.zIndex.ui - index || 1,
+                                    transform: `translateX(${-(tokensGatedBy.length * 5) / 2}px)`,
+                                    left: index ? `${index * 10}px` : 0,
+                                }}
+                            >
+                                <SelectedToken
+                                    contractAddress={token.data.address as Address}
+                                    chainId={token.chainId}
+                                />
+                            </Box>
+                        ))}
+                    </Box>
+                ) : null
+            }
             onClick={onInfoBoxClick}
         />
     )

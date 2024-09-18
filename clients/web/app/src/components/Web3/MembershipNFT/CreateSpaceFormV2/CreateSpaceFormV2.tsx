@@ -109,12 +109,14 @@ function CreateSpaceFormV2WithoutAuth() {
 
     const defaultValues: Omit<CreateSpaceFormV2SchemaType, 'spaceName'> & { spaceName: undefined } =
         {
-            membershipType: 'everyone',
+            gatingType: 'everyone',
             membershipLimit: 1000,
             membershipCost: '0',
             spaceName: undefined,
             membershipPricingType: 'dynamic',
-            tokensGatingMembership: [],
+            tokensGatedBy: [],
+            clientTokensGatedBy: [],
+            usersGatedBy: [],
             spaceIconUrl: null,
             spaceIconFile: null,
             shortDescription: null,
@@ -174,8 +176,9 @@ function CreateSpaceFormV2WithoutAuth() {
                         spaceNameValue,
                         price,
                         limit,
-                        tokensGatingMembership,
-                        membershipType,
+                        gatingType,
+                        clientTokensGatedBy,
+                        // TODO: Get usersGatedBy back here
                         shortDescriptionValue,
                         longDescriptionValue,
                         membershipPricingType,
@@ -184,8 +187,8 @@ function CreateSpaceFormV2WithoutAuth() {
                         'spaceName',
                         'membershipCost',
                         'membershipLimit',
-                        'tokensGatingMembership',
-                        'membershipType',
+                        'gatingType',
+                        'clientTokensGatedBy',
                         'shortDescription',
                         'longDescription',
                         'membershipPricingType',
@@ -241,8 +244,8 @@ function CreateSpaceFormV2WithoutAuth() {
                         return price
                     }
 
-                    const isEveryoneMembership = membershipType === 'everyone'
-                    const isTokenFieldTouched = _form.formState.touchedFields.tokensGatingMembership
+                    const isEveryoneMembership = gatingType === 'everyone'
+                    const isTokenFieldTouched = _form.formState.touchedFields.clientTokensGatedBy
 
                     return (
                         <FormProvider {..._form}>
@@ -337,13 +340,11 @@ function CreateSpaceFormV2WithoutAuth() {
                                                         zIndex="layer"
                                                     >
                                                         <TokenInfoBox
-                                                            tokensGatingMembership={
-                                                                tokensGatingMembership
-                                                            }
+                                                            tokensGatedBy={clientTokensGatedBy}
                                                             hasError={
                                                                 Boolean(
                                                                     _form.formState.errors[
-                                                                        'tokensGatingMembership'
+                                                                        'clientTokensGatedBy'
                                                                     ],
                                                                 ) && !!isTokenFieldTouched
                                                             }

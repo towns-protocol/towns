@@ -1,6 +1,4 @@
-import { randProductName, randTextRange } from '@ngneat/falso'
 import { GetCollectionsForOwnerResponse, TokenType } from '@token-worker/types'
-import { CreateSpaceFormState } from './types'
 
 export const MOCK_CONTRACT_METADATA_RESPONSE: GetCollectionsForOwnerResponse = {
     pageKey:
@@ -56,29 +54,4 @@ export const MOCK_CONTRACT_METADATA_RESPONSE: GetCollectionsForOwnerResponse = {
                 'https://i.seadn.io/gae/7O8H5tVTUPfi03LBY3xI29wkuzp8sSsRvr_BjOxXUfsU7mrkV7WxhOMedXKBp-dqDtCLjSfLwzWEMg6_yrxw8YPXC7OY9TqelDm9?w=500&auto=format',
         },
     ],
-}
-
-export const MOCK_TOKENS = Array(5)
-    .fill(0)
-    .map((_, index) => {
-        return {
-            imgSrc: `https://picsum.photos/id/${index + 20}/400`,
-            label: randTextRange({
-                min: 5,
-                max: 10,
-            }),
-            contractAddress: `0x71C7656EC7ab88b098defB751B7401B5f6d8976${index + 1}`,
-        }
-    })
-
-export const StoreMockForManualSubmissionsNotToBeUsedInTests: CreateSpaceFormState = {
-    step1: {
-        membershipType: 'tokenHolders',
-    },
-    step2: {
-        spaceName: randProductName().toLowerCase(),
-    },
-    spaceImageData: null,
-    createdSpaceId: null,
-    mintedTokenAddress: null,
 }

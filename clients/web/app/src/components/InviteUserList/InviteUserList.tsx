@@ -89,8 +89,6 @@ export const InviteUserList = (props: {
             .slice(0, 25)
     }, [hiddenUserIds, isMultiSelect, lookupUser, memberIds, searchTerm, userId])
 
-    console.log({ filteredUserIds })
-
     const recentUsers = usePersistOrder(
         useRecentUsers(userId).filter((id) => !hiddenUserIds.has(id)),
     )

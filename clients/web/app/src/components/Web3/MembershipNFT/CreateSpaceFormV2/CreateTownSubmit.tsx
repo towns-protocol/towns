@@ -33,7 +33,7 @@ import { usePlatformMinMembershipPriceInEth } from 'hooks/usePlatformMinMembersh
 import { useUploadAttachment } from '@components/MediaDropContext/useUploadAttachment'
 import { PanelType, TransactionDetails } from './types'
 import { CreateSpaceFormV2SchemaType } from './CreateSpaceFormV2.schema'
-import { mapToErrorMessage } from '../../utils'
+import { EVERYONE_ADDRESS, isEveryoneAddress, mapToErrorMessage } from '../../utils'
 
 export function CreateTownSubmit({
     form,
@@ -90,17 +90,14 @@ export function CreateTownSubmit({
 
         form.handleSubmit(
             async (values) => {
-                const { spaceName, membershipCost, membershipLimit, tokensGatingMembership } =
-                    values
-
                 const createSpaceInfo: CreateSpaceInfo = {
-                    name: spaceName ?? '',
+                    name: values.spaceName ?? '',
                     shortDescription: values.shortDescription ?? '',
                     longDescription: values.longDescription ?? '',
                 }
 
                 Analytics.getInstance().track('submitting create town form', {}, () => {
-                    console.log('[analytics] submitting create town form')
+                    console.info('[analytics] submitting create town form')
                 })
 
                 const signer = await getSigner()
@@ -119,7 +116,7 @@ export function CreateTownSubmit({
                 let priceInWei: ethers.BigNumberish
 
                 try {
-                    priceInWei = ethers.utils.parseEther(membershipCost)
+                    priceInWei = ethers.utils.parseEther(values.membershipCost)
                 } catch (error) {
                     form.setError('membershipCost', {
                         type: 'manual',
@@ -191,12 +188,17 @@ export function CreateTownSubmit({
                 //////////////////////////////////////////
                 // check quantity
                 //////////////////////////////////////////
-                if (tokensGatingMembership.length > 0) {
-                    const missingQuantity = tokensGatingMembership.some(
-                        (token) => token.quantity === 0n || token.quantity === undefined,
+
+                // If gatedType is everyone, tokensGatedBy should be empty
+                const tokensGatedBy =
+                    values.gatingType === 'everyone' ? [] : values.clientTokensGatedBy
+
+                if (tokensGatedBy.length > 0) {
+                    const missingQuantity = tokensGatedBy.some(
+                        (token) => token.data.quantity === 0n || token.data.quantity === undefined,
                     )
                     if (missingQuantity) {
-                        form.setError('tokensGatingMembership', {
+                        form.setError('tokensGatedBy', {
                             type: 'manual',
                             message: 'Please enter a valid quantity.',
                         })
@@ -212,17 +214,23 @@ export function CreateTownSubmit({
                 //////////////////////////////////////////
                 // check rule data
                 //////////////////////////////////////////
-                const isEveryone = tokensGatingMembership.length === 0
-                const ruleData = isEveryone
-                    ? NoopRuleData
-                    : createOperationsTree(
-                          tokensGatingMembership.map((t) => ({
-                              address: t.address as Address,
-                              chainId: BigInt(t.chainId),
-                              type: convertTokenTypeToOperationType(t.type),
-                              threshold: BigInt(t.quantity),
-                          })),
-                      )
+                // If gatedType is everyone, usersGatedBy should be the everyone address, if we have more users, we should remove the everyone address
+                const usersGatedBy =
+                    values.gatingType === 'everyone'
+                        ? [EVERYONE_ADDRESS]
+                        : values.usersGatedBy.filter((address) => !isEveryoneAddress(address))
+
+                const ruleData =
+                    tokensGatedBy.length > 0
+                        ? createOperationsTree(
+                              tokensGatedBy.map((t) => ({
+                                  address: t.data.address as Address,
+                                  chainId: BigInt(t.chainId),
+                                  type: convertTokenTypeToOperationType(t.data.type),
+                                  threshold: t.data.quantity ?? undefined,
+                              })),
+                          )
+                        : NoopRuleData
 
                 //////////////////////////////////////////
                 // create space
@@ -232,7 +240,7 @@ export function CreateTownSubmit({
                         name: createSpaceInfo.name + ' - Member',
                         symbol: 'MEMBER',
                         price: priceInWei,
-                        maxSupply: membershipLimit,
+                        maxSupply: values.membershipLimit,
                         duration: 60 * 60 * 24 * 365, // 1 year in seconds
                         currency: ethers.constants.AddressZero,
                         // this value is no longer used in contract
@@ -244,17 +252,12 @@ export function CreateTownSubmit({
                         pricingModule: pricingModuleToSubmit,
                     },
                     requirements: {
-                        // TODO: make sure token gating works after xchain updated
-                        everyone: isEveryone,
-                        users: [],
+                        everyone: values.gatingType === 'everyone',
+                        users: usersGatedBy,
                         ruleData: encodeRuleDataV2(ruleData),
                     },
                     permissions: [Permission.Read, Permission.Write, Permission.React],
                 }
-                console.log('submitting values: ', {
-                    createSpaceInfo,
-                    requirements,
-                })
 
                 // close the panel
                 setPanelType(undefined)
@@ -282,7 +285,7 @@ export function CreateTownSubmit({
                                 error: errorMessage,
                             },
                             () => {
-                                console.log('[analytics] error creating town:', errorMessage)
+                                console.info('[analytics] error creating town:', errorMessage)
                             },
                         )
                         toast.custom(
@@ -306,25 +309,25 @@ export function CreateTownSubmit({
                     const tracked = {
                         spaceName: createSpaceInfo.name,
                         spaceId: result.data.spaceId,
-                        everyone: isEveryone,
+                        everyone: values.gatingType === 'everyone',
                         pricingModule: isFixedPricing ? 'fixed' : 'dynamic',
                         priceInWei: priceInWei.toString(),
-                        tokensGatingMembership: tokensGatingMembership.map((t) => ({
-                            address: t.address,
+                        tokensGatedBy: tokensGatedBy.map((t) => ({
+                            address: t.data.address,
                             chainId: t.chainId,
-                            tokenType: t.type,
-                            quantity: t.quantity,
+                            tokenType: t.data.type,
+                            quantity: t.data.quantity?.toString(),
                         })),
                     }
                     const trackedAnalytics = {
                         ...tracked,
-                        tokensGatingMembership: tracked.tokensGatingMembership.map((token) => ({
+                        tokensGatedBy: tracked.tokensGatedBy.map((token) => ({
                             ...token,
-                            quantity: token.quantity.toString(),
+                            quantity: token.quantity?.toString(),
                         })),
                     }
                     Analytics.getInstance().track('created town', trackedAnalytics, () => {
-                        console.log('[analytics] created town', trackedAnalytics)
+                        console.info('[analytics] created town', trackedAnalytics)
                     })
 
                     if (values.spaceIconUrl && values.spaceIconFile) {
@@ -341,7 +344,7 @@ export function CreateTownSubmit({
                         timeoutDuration = 3000
                         spaceInfoCache.mutate(spaceInfo)
                     } catch (error) {
-                        console.log('error getting space info after creating town: ', error)
+                        console.error('error getting space info after creating town: ', error)
                     }
 
                     setRecentlyMintedSpaceToken({ spaceId: networkId, isOwner: true })

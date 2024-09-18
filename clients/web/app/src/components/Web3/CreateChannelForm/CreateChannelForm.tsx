@@ -11,7 +11,7 @@ import {
     useHasPermission,
     useMultipleRoleDetails,
 } from 'use-towns-client'
-import React, { useCallback, useEffect, useMemo } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router'
 import { z } from 'zod'
 import { useGetEmbeddedSigner } from '@towns/privy'
@@ -41,7 +41,7 @@ import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
 import { CHANNEL_INFO_PARAMS, PATHS } from 'routes'
 import { Spinner } from '@components/Spinner'
 
-import { convertRuleDataToTokenFormSchema } from '@components/Tokens/utils'
+import { convertRuleDataToTokenEntitlementSchema } from '@components/Tokens/utils'
 import { useContractRoles } from 'hooks/useContractRoles'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
@@ -105,17 +105,6 @@ export const CreateChannelForm = (props: Props) => {
     const onCreateNewRole = useCallback(() => {
         openPanel('roles', { roles: 'new', stackId: 'main' })
     }, [openPanel])
-
-    useEffect(() => {
-        console.log(
-            '[CreateChannelForm]',
-            'createChannelTransaction',
-            'transactionStatus:',
-            transactionStatus,
-            'transactionHash:',
-            transactionHash,
-        )
-    }, [transactionHash, transactionStatus])
 
     const { getSigner, isPrivyReady } = useGetEmbeddedSigner()
 
@@ -259,16 +248,16 @@ export const CreateChannelForm = (props: Props) => {
                                         ? convertRuleDataV1ToV2(ruleData.rules)
                                         : ruleData.rules
 
-                                const tokens = convertRuleDataToTokenFormSchema(ruleDataV2).map(
-                                    (t) => {
-                                        return {
-                                            chainId: t.chainId,
-                                            contractAddress: t.address,
-                                            opType: t.type,
-                                            threshold: t.quantity.toString(),
-                                        } as ApiObject
-                                    },
-                                )
+                                const tokens = convertRuleDataToTokenEntitlementSchema(
+                                    ruleDataV2,
+                                ).map((t) => {
+                                    return {
+                                        chainId: t.chainId,
+                                        contractAddress: t.address,
+                                        opType: t.type,
+                                        threshold: t.quantity.toString(),
+                                    } as ApiObject
+                                })
                                 return {
                                     id: r.id,
                                     name: r.name,

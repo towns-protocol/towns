@@ -53,57 +53,7 @@ vi.mock('react-router-dom', async () => {
     }
 })
 
-// const mockCollectionsForOwner: ReturnType<typeof useCollectionsForLoggedInUser>['data'] = {
-//     tokens: [
-//         {
-//             address: '0x134',
-//             label: 'Test token',
-//             imgSrc: 'test.png',
-//             type: TokenType.ERC1155,
-//         },
-//     ],
-//     nextPageKey: undefined,
-// }
-
-// vi.mock('api/lib/tokenContracts', async () => {
-//     const actual = (await vi.importActual(
-//         'api/lib/tokenContracts',
-//     )) as typeof import('api/lib/tokenContracts')
-//     return {
-//         ...actual,
-//         useCollectionsForLoggedInUser: () => {
-//             return {
-//                 data: mockCollectionsForOwner,
-//                 isLoading: false,
-//             }
-//         },
-//     }
-// })
-
 let roleDetailsMockData: RoleDetails | undefined = undefined
-
-vi.mock('zustand', async (importOriginal) => {
-    const actual = (await vi.importActual('zustand')) as typeof import('zustand')
-    return {
-        ...actual,
-        createStore: actual.createStore,
-    }
-})
-vi.mock('zustand', async (importOriginal) => {
-    const actual = (await vi.importActual('zustand')) as typeof import('zustand')
-    return {
-        ...actual,
-        createStore: actual.createStore,
-    }
-})
-
-vi.mock('zustand', async (importOriginal) => {
-    const actual = (await vi.importActual('zustand')) as typeof import('zustand')
-    return {
-        ...actual,
-        createStore: actual.createStore,
-    }
-})
 
 vi.mock('use-towns-client', async () => {
     const actual = (await vi.importActual('use-towns-client')) as typeof Lib
@@ -146,6 +96,10 @@ vi.mock('use-towns-client', async () => {
                 error: undefined,
             }
         },
+        useConnectivity: (): ReturnType<typeof Lib.useConnectivity> => ({
+            ...actual.useConnectivity(),
+            loggedInWalletAddress: '0x123',
+        }),
     }
 })
 
@@ -190,6 +144,8 @@ const Wrapper = () => {
     )
 }
 
+const MOCK_USER_ADDRESS = mockMembers[0].userId
+
 afterEach(() => {
     vi.clearAllMocks()
 })
@@ -199,15 +155,12 @@ describe('SingleRolePanel', () => {
         mockUseSearchParams.mockReturnValue([new URLSearchParams('roles=new'), vi.fn()])
         render(<Wrapper />)
         const roleName = await getNameInput()
-        const tokenSearch = screen.getByTestId('token-search')
-        const userSearch = screen.getByTestId('user-search')
-        const tokenPills = within(tokenSearch).queryAllByTestId(/^token-selector-pill/i)
-        const userPills = within(userSearch).queryAllByTestId(/^user-selector-pill/i)
+        const gatingSection = await screen.findByTestId('gating-section')
+        const membershipTypeEveryone = within(gatingSection).getByTestId('membership-type-everyone')
+        const membershipTypeGated = within(gatingSection).getByTestId('membership-type-gated')
         expect(roleName).toHaveValue('')
-        expect(tokenSearch).toBeInTheDocument()
-        expect(userSearch).toBeInTheDocument()
-        expect(tokenPills).toHaveLength(0)
-        expect(userPills).toHaveLength(0)
+        expect(membershipTypeEveryone).toBeChecked()
+        expect(membershipTypeGated).not.toBeChecked()
     })
     test('should not contain delete role button when creating a new role', async () => {
         mockUseSearchParams.mockReturnValue([new URLSearchParams('roles=new'), vi.fn()])
@@ -215,47 +168,55 @@ describe('SingleRolePanel', () => {
         const deleteRoleButton = screen.queryByTestId('delete-role-button')
         expect(deleteRoleButton).not.toBeInTheDocument()
     })
-    test('should always contain an Everyone option in user search', async () => {
-        mockUseSearchParams.mockReturnValue([new URLSearchParams('roles=new'), vi.fn()])
-        render(<Wrapper />)
 
-        await openUserSearch()
-
-        const option = await getEveryoneOption()
-        expect(option).toHaveTextContent('Everyone')
-    })
-
-    test('should not submit when name field is empty', async () => {
+    test('submit button should be disabled when name field is empty', async () => {
         mockUseSearchParams.mockReturnValue([new URLSearchParams('roles=new'), vi.fn()])
         render(<Wrapper />)
         const submitButton = screen.getByTestId('submit-button')
         expect(submitButton).toBeDisabled()
-
-        await openUserSearch()
-        const option = await getEveryoneOption()
-        await userEvent.click(option)
-        const userSearch = screen.getByTestId('user-search')
-        const userPills = await within(userSearch).findAllByTestId(/^user-pill-selector-pill/i)
-        await waitFor(() => expect(userPills).toHaveLength(1))
-
-        expect(submitButton).not.toBeDisabled()
-        await userEvent.click(submitButton)
-        await screen.findByText(/role name is required/gi)
     })
 
-    test('should not submit when token or users are empty, after filling in name input', async () => {
+    test('submit button should be disabled when digital assets toggle is enabled but no tokens are selected', async () => {
         mockUseSearchParams.mockReturnValue([new URLSearchParams('roles=new'), vi.fn()])
         render(<Wrapper />)
+        const membershipTypeGated = screen.getByTestId('membership-type-gated')
+        await userEvent.click(membershipTypeGated)
+        const digitalAssetsToggle = await screen.findByTestId('digital-assets-toggle')
+        await userEvent.click(digitalAssetsToggle)
         const submitButton = screen.getByTestId('submit-button')
         expect(submitButton).toBeDisabled()
+    })
 
-        const roleName = await getNameInput()
-        await userEvent.type(roleName, 'test role')
+    test('submit button should be disabled when wallet addresses toggle is enabled but no wallet addresses are selected', async () => {
+        mockUseSearchParams.mockReturnValue([new URLSearchParams('roles=new'), vi.fn()])
+        render(<Wrapper />)
+        await enableWalletAddressesGate()
+        const submitButton = screen.getByTestId('submit-button')
+        expect(submitButton).toBeDisabled()
+    })
+
+    test('submit button should be enabled when wallet addresses toggle is enabled and a wallet address is selected', async () => {
+        mockUseSearchParams.mockReturnValue([new URLSearchParams('roles=new'), vi.fn()])
+        render(<Wrapper />)
+        await enableWalletAddressesGate()
+        const walletAddressInput = screen.getByTestId('pill-selector-input')
+
+        const mockAddress1 = MOCK_USER_ADDRESS
+        await userEvent.type(walletAddressInput, mockAddress1)
+
         await waitFor(() => {
-            expect(screen.getAllByDisplayValue(/test role/gi).length).toBe(1)
+            expect(walletAddressInput).toHaveValue(mockAddress1)
         })
 
-        await waitFor(() => expect(submitButton).toBeDisabled())
+        const addressOption = await screen.findByTestId(`user-pill-selector-option-${mockAddress1}`)
+        expect(addressOption).toBeInTheDocument()
+        await userEvent.click(addressOption)
+
+        const addressPill = await screen.findByTestId(`user-pill-selector-pill-${mockAddress1}`)
+        expect(addressPill).toBeInTheDocument()
+
+        const submitButton = await screen.findByTestId('submit-button')
+        expect(submitButton).not.toBeDisabled()
     })
 
     test('should submit with gated tokens', async () => {
@@ -272,7 +233,7 @@ describe('SingleRolePanel', () => {
             expect(screen.getAllByDisplayValue(/new role 1/gi).length).toBe(1)
         })
 
-        const option = await searchForToken()
+        const option = await addFakeToken()
         await userEvent.click(option)
         await waitFor(() => expect(submitButton).not.toBeDisabled())
         await userEvent.click(submitButton)
@@ -305,9 +266,7 @@ describe('SingleRolePanel', () => {
             expect(screen.getAllByDisplayValue(/new role 2/gi).length).toBe(1)
         })
 
-        await openUserSearch()
-        const option = await getEveryoneOption()
-        await userEvent.click(option)
+        await addFakeWalletAddress()
         await waitFor(() => expect(submitButton).not.toBeDisabled())
         await userEvent.click(submitButton)
 
@@ -316,7 +275,7 @@ describe('SingleRolePanel', () => {
                 spaceRoomIdentifier,
                 'new role 2',
                 [Lib.Permission.React, Lib.Permission.Read],
-                [EVERYONE_ADDRESS],
+                [MOCK_USER_ADDRESS],
                 Lib.NoopRuleData,
                 {},
             )
@@ -336,15 +295,34 @@ describe('SingleRolePanel', () => {
             expect(screen.getAllByDisplayValue(/new role 3/gi).length).toBe(1)
         })
 
-        const tokenSearch = screen.getByTestId('token-search')
-        const tokenInput = within(tokenSearch).getByTestId(/token-selector-input/i)
-        await userEvent.click(tokenInput)
-        const tokenOption = await searchForToken()
-        await userEvent.click(tokenOption)
+        await enableDigitalAssetsGate()
+        const walletAddressesToggle = screen.getByTestId('wallet-addresses-toggle')
+        await userEvent.click(walletAddressesToggle)
+        expect(walletAddressesToggle).toBeChecked()
 
-        await openUserSearch()
-        const everyoneOption = await getEveryoneOption()
-        await userEvent.click(everyoneOption)
+        const fakeAddress = MOCK_USER_ADDRESS
+        const walletAddressInput = screen.getByTestId(/pill-selector-input/i)
+        await userEvent.type(walletAddressInput, fakeAddress)
+        await waitFor(() => {
+            expect(walletAddressInput).toHaveValue(fakeAddress)
+        })
+        const addressOption = await screen.findByTestId(`user-pill-selector-option-${fakeAddress}`)
+        expect(addressOption).toBeInTheDocument()
+        await userEvent.click(addressOption)
+
+        const addressPill = screen.getByTestId(`user-pill-selector-pill-${fakeAddress}`)
+        expect(addressPill).toBeInTheDocument()
+        await userEvent.click(addressPill)
+
+        const tokenSearch = screen.getByTestId('token-search')
+        const tokenInput = await within(tokenSearch).findByTestId(/token-selector-input/i)
+        await userEvent.click(tokenInput)
+        // erc1155 ui not set up yet, this is an ERC721 token
+        await userEvent.type(tokenInput, SUDOLETS_MOCK.address)
+        const tokenOption = await waitFor(() => {
+            return within(tokenSearch).getAllByTestId(/^token-selector-option/i)
+        })
+        await userEvent.click(tokenOption[0])
 
         await waitFor(() => expect(submitButton).not.toBeDisabled())
         await userEvent.click(submitButton)
@@ -354,7 +332,7 @@ describe('SingleRolePanel', () => {
                 spaceRoomIdentifier,
                 'new role 3',
                 [Lib.Permission.React, Lib.Permission.Read],
-                [EVERYONE_ADDRESS],
+                [MOCK_USER_ADDRESS],
                 createOperationsTreeForERC721(),
                 {},
             )
@@ -374,13 +352,13 @@ describe('SingleRolePanel', () => {
             expect(screen.getAllByDisplayValue(/new role 4/gi).length).toBe(1)
         })
 
-        await openUserSearch()
-        const everyoneOption = await getEveryoneOption()
-        await userEvent.click(everyoneOption)
+        await addFakeWalletAddress()
 
-        const readCheckbox = screen.getAllByTestId('toggle')
+        const channelPermissions = screen.getByTestId('channel-permissions')
+        const permissionsCheckboxes = within(channelPermissions).getAllByTestId('toggle')
+
         // click the write checkbox
-        await userEvent.click(readCheckbox[1])
+        await userEvent.click(permissionsCheckboxes[1])
 
         await waitFor(() => expect(submitButton).not.toBeDisabled())
         await userEvent.click(submitButton)
@@ -390,24 +368,25 @@ describe('SingleRolePanel', () => {
                 spaceRoomIdentifier,
                 'new role 4',
                 [Lib.Permission.React, Lib.Permission.Read, Lib.Permission.Write],
-                [EVERYONE_ADDRESS],
+                [MOCK_USER_ADDRESS],
                 Lib.NoopRuleData,
                 {},
             )
         })
     })
 
-    test('should render with default values when editing a role - user gating', async () => {
+    test('should render with default values when editing a role with everyone access', async () => {
         // map to the role id
         mockUseSearchParams.mockReturnValue([new URLSearchParams('roles=7'), vi.fn()])
         roleDetailsMockData = roleWithEveryone
         render(<Wrapper />)
         const roleName = await getNameInput()
         await waitFor(() => expect(roleName).toHaveValue('Everyone'))
-        const userSearch = screen.getByTestId('user-search')
-        await waitFor(() =>
-            expect(within(userSearch).getAllByTestId(/^user-pill-selector-pill/i)).toHaveLength(1),
-        )
+
+        const membershipTypeEveryone = screen.getByTestId('membership-type-everyone')
+        expect(membershipTypeEveryone).toBeChecked()
+        const membershipTypeGated = screen.getByTestId('membership-type-gated')
+        expect(membershipTypeGated).not.toBeChecked()
     })
 
     test('should render with default values when editing a role - token gating', async () => {
@@ -417,62 +396,16 @@ describe('SingleRolePanel', () => {
         render(<Wrapper />)
         const roleName = await getNameInput()
         await waitFor(() => expect(roleName).toHaveValue('Member'))
-        const tokenSearch = screen.getByTestId('token-search')
+        const digitalAssetsToggle = await screen.findByTestId('digital-assets-toggle')
+        expect(digitalAssetsToggle).toBeChecked()
+        const walletAddressesToggle = screen.getByTestId('wallet-addresses-toggle')
+        expect(walletAddressesToggle).not.toBeChecked()
+        const tokenSearch = await screen.findByTestId('token-search')
         await waitFor(() =>
             expect(within(tokenSearch).getAllByTestId(/^token-pill-selector-pill/i)).toHaveLength(
                 2,
             ),
         )
-    })
-
-    test('should show error when only gated asset is removed - user gating', async () => {
-        // map to the role id
-        mockUseSearchParams.mockReturnValue([new URLSearchParams('roles=7'), vi.fn()])
-        roleDetailsMockData = roleWithEveryone
-        render(<Wrapper />)
-        const roleName = await getNameInput()
-        await waitFor(() => expect(roleName).toHaveValue('Everyone'))
-        const userSearch = screen.getByTestId('user-search')
-        await waitFor(() =>
-            expect(within(userSearch).getAllByTestId(/^user-pill-selector-pill/i)).toHaveLength(1),
-        )
-        const deletePillButton = within(userSearch).getByTestId(/^user-pill-delete/i)
-
-        await userEvent.click(deletePillButton)
-        await waitFor(() =>
-            expect(
-                within(userSearch).queryAllByTestId(/^user-pill-selector-pill/i),
-            ).to.toHaveLength(0),
-        )
-        await screen.findByText(/Select at least one token or user/gi)
-    })
-
-    test('should not show error when only gated asset is removed then added - user gating', async () => {
-        // map to the role id
-        mockUseSearchParams.mockReturnValue([new URLSearchParams('roles=7'), vi.fn()])
-        roleDetailsMockData = roleWithEveryone
-        render(<Wrapper />)
-        const roleName = await getNameInput()
-        await waitFor(() => expect(roleName).toHaveValue('Everyone'))
-        const userSearch = screen.getByTestId('user-search')
-        await waitFor(() =>
-            expect(within(userSearch).getAllByTestId(/^user-pill-selector-pill/i)).toHaveLength(1),
-        )
-        const deletePillButton = within(userSearch).getByTestId(/^user-pill-delete/i)
-
-        await userEvent.click(deletePillButton)
-        await waitFor(() =>
-            expect(
-                within(userSearch).queryAllByTestId(/^user-pill-selector-pill/i),
-            ).to.toHaveLength(0),
-        )
-        await screen.findByText(/Select at least one token or user/gi)
-        const everyoneOption = await getEveryoneOption()
-        await userEvent.click(everyoneOption)
-        await waitFor(() =>
-            expect(within(userSearch).getAllByTestId(/^user-pill-selector-pill/i)).toHaveLength(1),
-        )
-        expect(screen.queryByText(/Select at least one token or user/gi)).toBeNull()
     })
 
     test('should show error when only gated asset is removed - token gating', async () => {
@@ -482,7 +415,7 @@ describe('SingleRolePanel', () => {
         render(<Wrapper />)
         const roleName = await getNameInput()
         await waitFor(() => expect(roleName).toHaveValue('Member'))
-        const tokenSearch = screen.getByTestId('token-search')
+        const tokenSearch = await screen.findByTestId('token-search')
         await waitFor(() =>
             expect(within(tokenSearch).getAllByTestId(/^token-pill-selector-pill/i)).toHaveLength(
                 2,
@@ -497,7 +430,7 @@ describe('SingleRolePanel', () => {
                 within(tokenSearch).queryAllByTestId(/^token-pill-selector-pill/i),
             ).to.toHaveLength(0),
         )
-        await screen.findByText(/Select at least one token or user/gi)
+        await screen.findByText(/Select at least one token/gi)
     })
 
     test('should not show error when only gated asset is removed then added - token gating', async () => {
@@ -507,7 +440,7 @@ describe('SingleRolePanel', () => {
         render(<Wrapper />)
         const roleName = await getNameInput()
         await waitFor(() => expect(roleName).toHaveValue('Member'))
-        const tokenSearch = screen.getByTestId('token-search')
+        const tokenSearch = await screen.findByTestId('token-search')
         await waitFor(() =>
             expect(within(tokenSearch).getAllByTestId(/^token-pill-selector-pill/i)).toHaveLength(
                 2,
@@ -522,15 +455,15 @@ describe('SingleRolePanel', () => {
                 within(tokenSearch).queryAllByTestId(/^token-pill-selector-pill/i),
             ).to.toHaveLength(0),
         )
-        await screen.findByText(/Select at least one token or user/gi)
-        const option = await searchForToken()
+        await screen.findByText(/Select at least one token/gi)
+        const option = await addFakeToken()
         await userEvent.click(option)
         await waitFor(() =>
             expect(within(tokenSearch).getAllByTestId(/^token-pill-selector-pill/i)).toHaveLength(
                 1,
             ),
         )
-        expect(screen.queryByText(/Select at least one token or user/gi)).toBeNull()
+        expect(screen.queryByText(/Select at least one token/gi)).toBeNull()
     })
 
     test('should enable submit button when name is changed', async () => {
@@ -540,7 +473,7 @@ describe('SingleRolePanel', () => {
         render(<Wrapper />)
         const roleName = await getNameInput()
         await waitFor(() => expect(roleName).toHaveValue('Member'))
-        const tokenSearch = screen.getByTestId('token-search')
+        const tokenSearch = await screen.findByTestId('token-search')
         await waitFor(() =>
             expect(within(tokenSearch).getAllByTestId(/^token-pill-selector-pill/i)).toHaveLength(
                 2,
@@ -558,7 +491,7 @@ describe('SingleRolePanel', () => {
         render(<Wrapper />)
         const roleName = await screen.findByPlaceholderText(/Enter a name for the role/gi)
         await waitFor(() => expect(roleName).toHaveValue('Member'))
-        const tokenSearch = screen.getByTestId('token-search')
+        const tokenSearch = await screen.findByTestId('token-search')
         await waitFor(() =>
             expect(within(tokenSearch).getAllByTestId(/^token-pill-selector-pill/i)).toHaveLength(
                 2,
@@ -578,7 +511,7 @@ describe('SingleRolePanel', () => {
         render(<Wrapper />)
         const roleName = await getNameInput()
         await waitFor(() => expect(roleName).toHaveValue('Member'))
-        const tokenSearch = screen.getByTestId('token-search')
+        const tokenSearch = await screen.findByTestId('token-search')
         await waitFor(() =>
             expect(within(tokenSearch).getAllByTestId(/^token-pill-selector-pill/i)).toHaveLength(
                 2,
@@ -590,13 +523,15 @@ describe('SingleRolePanel', () => {
 
         await userEvent.click(deletePillButtons[0])
 
-        await waitFor(() =>
-            expect(
-                within(tokenSearch).queryAllByTestId(/^token-pill-selector-pill/i),
-            ).to.toHaveLength(1),
+        const tokenPillsAfter = await within(tokenSearch).findAllByTestId(
+            /^token-pill-selector-pill/i,
         )
-
-        await waitFor(() => expect(screen.getByTestId('submit-button')).not.toBeDisabled())
+        await waitFor(() => {
+            expect(tokenPillsAfter).toHaveLength(1)
+        })
+        await waitFor(() => {
+            expect(screen.getByTestId('submit-button')).not.toBeDisabled()
+        })
     })
 
     test('should submit updated role with gated tokens and users', async () => {
@@ -608,15 +543,15 @@ describe('SingleRolePanel', () => {
         render(<Wrapper />)
         const roleName = await getNameInput()
         await waitFor(() => expect(roleName).toHaveValue('Member'))
-        const tokenSearch = screen.getByTestId('token-search')
+        const tokenSearch = await screen.findByTestId('token-search')
         await waitFor(() =>
             expect(within(tokenSearch).getAllByTestId(/^token-pill-selector-pill/i)).toHaveLength(
                 2,
             ),
         )
         expect(screen.getByTestId('submit-button')).toBeDisabled()
-        const everyoneOption = await getEveryoneOption()
-        await userEvent.click(everyoneOption)
+
+        await userEvent.type(roleName, 'new name')
 
         await waitFor(() => expect(screen.getByTestId('submit-button')).not.toBeDisabled())
 
@@ -626,9 +561,9 @@ describe('SingleRolePanel', () => {
             expect(updateRoleTransactionSpy).toHaveBeenCalledWith(
                 spaceRoomIdentifier,
                 roleWithMemberMNft.id,
-                roleWithMemberMNft.name,
+                roleWithMemberMNft.name + 'new name',
                 [Lib.Permission.React, Lib.Permission.Read, Lib.Permission.Write],
-                [EVERYONE_ADDRESS],
+                [],
                 roleWithMemberMNft.ruleData.rules,
                 {},
             )
@@ -776,8 +711,42 @@ describe('SingleRolePanel', () => {
     })
 })
 
-async function searchForToken() {
-    const tokenSearch = screen.getByTestId('token-search')
+async function enableGatingOption() {
+    const membershipTypeGated = screen.getByTestId('membership-type-gated')
+    expect(membershipTypeGated).toBeInTheDocument()
+    await userEvent.click(membershipTypeGated)
+
+    const digitalAssetsToggle = await screen.findByTestId('digital-assets-toggle')
+    expect(digitalAssetsToggle).toBeInTheDocument()
+
+    const walletAddressesToggle = screen.getByTestId('wallet-addresses-toggle')
+    expect(walletAddressesToggle).toBeInTheDocument()
+}
+
+async function enableDigitalAssetsGate() {
+    await enableGatingOption()
+
+    const digitalAssetsToggle = await screen.findByTestId('digital-assets-toggle')
+    if (!(await waitFor(() => (digitalAssetsToggle as HTMLInputElement).checked))) {
+        await userEvent.click(digitalAssetsToggle)
+    }
+    await waitFor(() => expect(digitalAssetsToggle).toBeChecked())
+}
+
+async function enableWalletAddressesGate() {
+    await enableGatingOption()
+
+    const walletAddressesToggle = await screen.findByTestId('wallet-addresses-toggle')
+    if (!(await waitFor(() => (walletAddressesToggle as HTMLInputElement).checked))) {
+        await userEvent.click(walletAddressesToggle)
+    }
+    await waitFor(() => expect(walletAddressesToggle).toBeChecked())
+}
+
+async function addFakeToken() {
+    await enableDigitalAssetsGate()
+
+    const tokenSearch = await screen.findByTestId('token-search')
     const tokenInput = await within(tokenSearch).findByTestId(/token-selector-input/i)
     await userEvent.click(tokenInput)
     // erc1155 ui not set up yet, this is an ERC721 token
@@ -788,20 +757,29 @@ async function searchForToken() {
     return option[0]
 }
 
-async function openUserSearch() {
-    const userSearch = screen.getByTestId('user-search')
+async function openWalletAddressesSearch() {
+    await enableWalletAddressesGate()
+
+    const userSearch = await screen.findByTestId('user-search')
     const userInput = within(userSearch).getByTestId(/pill-selector-input/i)
     await userEvent.click(userInput)
 }
 
-async function getEveryoneOption() {
-    const userSearch = screen.getByTestId('user-search')
-    const userInput = within(userSearch).getByTestId(/pill-selector-input/i)
-    await userEvent.click(userInput)
-    const option = await waitFor(() =>
-        within(userSearch).getAllByTestId(/^user-pill-selector-option/i),
-    )
-    return option[0]
+async function addFakeWalletAddress() {
+    await openWalletAddressesSearch()
+    const fakeAddress = MOCK_USER_ADDRESS
+    const walletAddressInput = await screen.findByTestId(/pill-selector-input/i)
+    await userEvent.type(walletAddressInput, fakeAddress)
+    await waitFor(() => {
+        expect(walletAddressInput).toHaveValue(fakeAddress)
+    })
+    const addressOption = await screen.findByTestId(`user-pill-selector-option-${fakeAddress}`)
+    expect(addressOption).toBeInTheDocument()
+    await userEvent.click(addressOption)
+
+    const addressPill = screen.getByTestId(`user-pill-selector-pill-${fakeAddress}`)
+    expect(addressPill).toBeInTheDocument()
+    await userEvent.click(addressPill)
 }
 
 function getNameInput() {

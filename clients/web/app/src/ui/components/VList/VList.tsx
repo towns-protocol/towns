@@ -81,7 +81,7 @@ export function VList<T extends { id: string }>(props: Props<T>) {
     }, [groupIds, list])
 
     useLayoutEffect(() => {
-        DEBUG && console.log({ groups })
+        DEBUG && console.info({ groups })
     }, [groups])
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - DEBUG

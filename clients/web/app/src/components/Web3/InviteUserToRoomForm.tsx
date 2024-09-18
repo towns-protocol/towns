@@ -19,7 +19,7 @@ export const InviteUserToRoomForm = (props: Props) => {
     const onInviteClicked = useCallback(() => {
         console.log('invite clicked', inviteeUserId)
         if (inviteeUserId === '') {
-            console.log('error, invitee is empty')
+            console.error('error, invitee is empty')
             return
         }
         props.onInviteClicked(props.spaceId, props.roomId, inviteeUserId)

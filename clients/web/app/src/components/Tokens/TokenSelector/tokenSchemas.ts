@@ -21,4 +21,22 @@ export const tokenEntitlementSchema = z.object({
     type: z.nativeEnum(TokenType),
 })
 
+export const tokenSchema = z.object({
+    chainId: z.number(),
+    data: z.object({
+        address: z.string(),
+        type: z.nativeEnum(TokenType),
+        name: z.string().optional(),
+        symbol: z.string().optional(),
+        imageUrl: z.string().optional(),
+        openSeaCollectionUrl: z.string().optional(),
+        quantity: z.bigint().optional(),
+        decimals: z.number().optional(),
+        imgSrc: z.string().optional(),
+        label: z.string().optional(),
+    }),
+})
+
 export type TokenEntitlement = z.infer<typeof tokenEntitlementSchema>
+
+export type Token = z.infer<typeof tokenSchema>

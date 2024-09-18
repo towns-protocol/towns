@@ -15,7 +15,7 @@ import { Button, Icon, IconButton, MotionBox, Paragraph, Stack, Text } from '@ui
 import { useErrorToast } from 'hooks/useErrorToast'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
-import { TokenGatingMembership, useTokensGatingMembership } from 'hooks/useTokensGatingMembership'
+import { Entitlements, useEntitlements } from 'hooks/useEntitlements'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { TokenSelectionDisplayWithMetadata } from 'routes/RoleRestrictedChannelJoinPanel'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
@@ -32,7 +32,7 @@ type Props = {
 export function TokenVerification({ onHide, spaceId, joinSpace }: Props) {
     const { data: linkedWallets } = useLinkedWallets()
     const { loggedInWalletAddress } = useConnectivity()
-    const { data: entitlements } = useTokensGatingMembership(spaceId)
+    const { data: entitlements } = useEntitlements(spaceId)
     const tokensLength = entitlements?.tokens.length ?? 0
     const maxWidth = tokensLength > 2 ? 'auto' : '400'
     const { getSigner } = useGetEmbeddedSigner()
@@ -118,7 +118,7 @@ function Content({
 }: PropsWithChildren<
     {
         linkedWallets: string[] | undefined
-        entitlements: TokenGatingMembership
+        entitlements: Entitlements
     } & Omit<Props, 'spaceId'>
 >) {
     const { loggedInWalletAddress } = useConnectivity()

@@ -1,14 +1,13 @@
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { firstBy } from 'thenby'
 import { Address, LookupUser, useOfflineStore, useUserLookupContext } from 'use-towns-client'
 import { isAddress } from 'ethers/lib/utils'
 import { Avatar } from '@components/Avatar/Avatar'
-import { Box, IconButton, Text } from '@ui'
+import { Box, IconButton, Stack, Text } from '@ui'
 import { useRecentUsers } from 'hooks/useRecentUsers'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { PillSelector } from '@components/DirectMessages/CreateDirectMessage/PillSelector'
 import { shortAddress } from 'ui/utils/utils'
-import { EVERYONE_ADDRESS } from 'utils'
 import { isEveryoneAddress } from '@components/Web3/utils'
 import { useDevice } from 'hooks/useDevice'
 import {
@@ -16,28 +15,18 @@ import {
     useLookupUsersWithAbstractAccountAddress,
 } from 'hooks/useAbstractAccountAddress'
 import { NoMatches } from '@components/NoMatches/NoMatches'
+import { SearchInputHeightAdjuster } from '@components/SpaceSettingsPanel/SearchInputHeightAdjuster'
 
 const CUSTOM_USER_ADDRESS = 'CUSTOM_USER_ADDRESS'
 
 type Props = {
-    initialSelection: Set<Address>
-    inputContainerRef: React.RefObject<HTMLDivElement>
-    onSelectionChange: (addresses: Set<Address>) => void
+    value: Set<Address>
+    onChange: (addresses: Set<Address>) => void
     isValidationError: boolean
 }
 
-const everyoneUser: LookupUserWithAbstractAccountAddress = {
-    userId: EVERYONE_ADDRESS,
-    abstractAccountAddress: EVERYONE_ADDRESS,
-    username: 'Everyone',
-    usernameConfirmed: false,
-    usernameEncrypted: false,
-    displayName: 'Everyone',
-    displayNameEncrypted: false,
-}
-
-export const UserPillSelector = (props: Props) => {
-    const { onSelectionChange: onSelectionChangeProp, isValidationError } = props
+export const WalletMemberSelector = (props: Props) => {
+    const { value, onChange, isValidationError } = props
     const { lookupUser } = useUserLookupContext()
     const { data: _users, isLoading } = useLookupUsersWithAbstractAccountAddress()
     const { isTouch } = useDevice()
@@ -47,23 +36,15 @@ export const UserPillSelector = (props: Props) => {
         if (isLoading || !_users) {
             return []
         }
-        return [everyoneUser].concat(_users)
+        return _users.filter((user) => !isEveryoneAddress(user.userId))
     }, [_users, isLoading])
-
-    // -------------------------------------------------------------------------
-    const [selectedAddresses, setSelectedAddresses] = useState(() => new Set<string>())
-
-    const numSelected = selectedAddresses.size
 
     const onSelectionChange = useCallback(
         (userIds: Set<string>) => {
-            setSelectedAddresses(userIds)
-            onSelectionChangeProp(userIds as Set<Address>)
+            onChange(userIds as Set<Address>)
         },
-        [onSelectionChangeProp],
+        [onChange],
     )
-
-    // -------------------------------------------------------------------------
 
     const optionSorter = useCallback(
         (options: LookupUserWithAbstractAccountAddress[]) =>
@@ -88,7 +69,6 @@ export const UserPillSelector = (props: Props) => {
         }) => (
             <Box
                 cursor="pointer"
-                data-testid={`user-pill-selector-option-${option.userId}`}
                 onClick={() => {
                     onAddItem()
                 }}
@@ -100,28 +80,38 @@ export const UserPillSelector = (props: Props) => {
     )
 
     return (
-        <PillSelector
-            hideResultsWhenNotActive
-            autoFocus={false}
-            options={users}
-            isError={isValidationError}
-            initialFocusIndex={isTouch ? -1 : 0}
-            initialSelection={props.initialSelection}
-            keys={['username', 'displayName', 'abstractAccountAddress']}
-            label="Suggested"
-            placeholder={!numSelected ? 'Search people' : numSelected >= 1 ? 'Add people' : ''}
-            optionRenderer={optionRenderer}
-            pillRenderer={(p) => (
-                <PillRenderer address={p.key} lookupUser={lookupUser} onDelete={p.onDelete} />
-            )}
-            optionSorter={optionSorter}
-            getOptionKey={(o) => o.abstractAccountAddress}
-            emptySelectionElement={(props) => <EmptySelectionElement {...props} />}
-            inputContainerRef={props.inputContainerRef}
-            onSelectionChange={onSelectionChange}
-            // onConfirm={props.onConfirm}
-            // onPreviewChange={props.onUserPreviewChange}
-        />
+        <Stack gap data-testid="user-search">
+            <SearchInputHeightAdjuster>
+                {(inputContainerRef) => (
+                    <PillSelector
+                        hideResultsWhenNotActive
+                        autoFocus={false}
+                        options={users}
+                        isError={isValidationError}
+                        initialFocusIndex={isTouch ? -1 : 0}
+                        initialSelection={value}
+                        keys={['username', 'displayName', 'abstractAccountAddress']}
+                        label="Suggested"
+                        placeholder={
+                            !value.size ? 'Search members' : value.size >= 1 ? 'Add members' : ''
+                        }
+                        optionRenderer={optionRenderer}
+                        pillRenderer={(p) => (
+                            <PillRenderer
+                                address={p.key}
+                                lookupUser={lookupUser}
+                                onDelete={p.onDelete}
+                            />
+                        )}
+                        optionSorter={optionSorter}
+                        getOptionKey={(o) => o.abstractAccountAddress}
+                        emptySelectionElement={(props) => <EmptySelectionElement {...props} />}
+                        inputContainerRef={inputContainerRef}
+                        onSelectionChange={onSelectionChange}
+                    />
+                )}
+            </SearchInputHeightAdjuster>
+        </Stack>
     )
 }
 
@@ -152,21 +142,19 @@ function PillRenderer(params: {
             alignItems="center"
             data-testid={`user-pill-selector-pill-${aaAddress}`}
         >
-            {everyone ? (
-                <Avatar size="avatar_xs" icon="people" iconSize="square_xs" />
-            ) : (
-                <Avatar size="avatar_xs" userId={rootKeyAddress} />
-            )}
+            <Avatar size="avatar_xs" userId={rootKeyAddress} />
 
             {rootKeyAddress && rootKeyUser && getPrettyDisplayName(rootKeyUser)}
-            <Box
-                whiteSpace="nowrap"
-                tooltip={everyone ? 'All wallet addresses' : aaAddress}
-                fontSize="sm"
-                color={everyone ? 'default' : 'gray2'}
-            >
-                {everyone ? <Text>Everyone</Text> : aaAddress && shortAddress(aaAddress)}
-            </Box>
+            {aaAddress && (
+                <Box
+                    whiteSpace="nowrap"
+                    tooltip={aaAddress}
+                    fontSize="sm"
+                    color={everyone ? 'default' : 'gray2'}
+                >
+                    {shortAddress(aaAddress)}
+                </Box>
+            )}
 
             <IconButton
                 data-testid={`user-pill-delete-${aaAddress}`}
@@ -186,6 +174,7 @@ export const UserOption = (props: {
 }) => {
     const { selected, user } = props
     const isCustomUserAddress = user.displayName === CUSTOM_USER_ADDRESS
+
     return (
         <Box
             horizontal
@@ -195,27 +184,17 @@ export const UserOption = (props: {
             insetX="xs"
             padding="sm"
             rounded={selected ? 'xs' : undefined}
+            data-testid={`user-pill-selector-option-${user.userId}`}
         >
-            {isEveryoneAddress(user.userId) ? (
-                <Avatar size="avatar_x4" icon="people" />
-            ) : (
-                <Avatar size="avatar_x4" userId={isCustomUserAddress ? undefined : user.userId} />
-            )}
+            <Avatar size="avatar_x4" userId={isCustomUserAddress ? undefined : user.userId} />
             <Box justifyContent="center" gap="sm">
                 {!isCustomUserAddress && <Text>{getPrettyDisplayName(user)}</Text>}
 
-                <Box
-                    tooltip={
-                        isEveryoneAddress(user.abstractAccountAddress)
-                            ? undefined
-                            : user.abstractAccountAddress
-                    }
-                    color="gray2"
-                >
-                    {isEveryoneAddress(user.abstractAccountAddress)
-                        ? 'All wallet addresses'
-                        : shortAddress(user.abstractAccountAddress)}
-                </Box>
+                {user.abstractAccountAddress && (
+                    <Box tooltip={user.abstractAccountAddress} color="gray2">
+                        {shortAddress(user.abstractAccountAddress)}
+                    </Box>
+                )}
             </Box>
         </Box>
     )
