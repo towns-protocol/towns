@@ -14,11 +14,35 @@ env:
     BASESCAN_SEPOLIA_API_KEY: ${{ secrets.BASESCAN_SEPOLIA_API_KEY }}
     RIVERSCAN_DEVNET_URL: 'https://towns-devnet.explorer.caldera.xyz/api'
     RIVER_DEVNET_RPC_URL: 'https://towns-devnet.rpc.caldera.xyz/http'
+    AWS_ACCESS_KEY_ID: ${{ secrets.S3_AWS_ACCESS_KEY_ID }}
+    AWS_SECRET_ACCESS_KEY: ${{ secrets.S3_AWS_SECRET_ACCESS_KEY }}
+    AWS_REGION: ${{ secrets.S3_AWS_REGION }}
+    FACET_SOURCE_PATH: '../../river/contracts/src'
+    COMPILED_FACETS_PATH: '../../river/contracts/out'
+    DEPLOYMENTS_PATH: '../../river/contracts/deployments'
+    SOURCE_DIFF_DIR: 's3://source-diff-reports'
+    GOWORK: 'off'
 
 on:
     workflow_dispatch: # Allows manual triggering
+        inputs:
+            job_to_run:
+                description: 'Select job to run'
+                required: false
+                type: choice
+                options:
+                    - 'all'
+                    - 'Upgrade_Facets_Sparse'
+                    - 'Upgrade_Facets'
+                default: 'all'
 
     workflow_call:
+        inputs:
+            job_to_run:
+                description: 'Select job to run'
+                required: false
+                type: string
+                default: 'Upgrade_Facets'
         secrets:
             ALPHA_BASE_SEPOLIA_DEPLOYER_PK:
                 required: true
@@ -33,7 +57,104 @@ on:
             BASESCAN_SEPOLIA_API_KEY:
                 required: true
 jobs:
+    Upgrade_Facets_Sparse:
+        if: github.event.inputs.job_to_run == 'all' || github.event.inputs.job_to_run == 'Upgrade_Facets_Sparse'
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+              with:
+                  ref: main
+
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: '20'
+                  cache: 'yarn'
+
+            - name: Install Foundry
+              uses: foundry-rs/foundry-toolchain@v1
+              with:
+                  version: ${{ env.FOUNDRY_VERSION }}
+
+            - name: Install node dependencies
+              run: yarn install --immutable
+
+            - name: Set up Go
+              uses: actions/setup-go@v4
+              with:
+                  go-version: '1.22' # Specify the Go version you need
+
+            - name: Configure AWS credentials
+              uses: aws-actions/configure-aws-credentials@v1
+              with:
+                  aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+                  aws-region: ${{ env.AWS_REGION }}
+
+            - name: Install dependencies
+              run: |
+                  go mod download
+                  go mod tidy
+              working-directory: river/scripts/bytecode-diff
+
+            - name: Run source diff report generation
+              run: |
+                  go run main.go -s -v
+              working-directory: river/scripts/bytecode-diff
+              env:
+                  SOURCE_DIFF_DIR: ${{ env.SOURCE_DIFF_DIR }}
+                  BASESCAN_API_KEY: ${{ env.BASESCAN_API_KEY }}
+                  BASE_SEPOLIA_RPC_URL: ${{ env.BASE_SEPOLIA_RPC_URL }}
+                  FACET_SOURCE_PATH: ${{ env.FACET_SOURCE_PATH }}
+                  COMPILED_FACETS_PATH: ${{ env.COMPILED_FACETS_PATH }}
+                  DEPLOYMENTS_PATH: ${{ env.DEPLOYMENTS_PATH }}
+                  GOWORK: ${{ env.GOWORK }}
+
+            - name: Read source diff report and output to json
+              run: |
+                  # Get the latest file from S3
+                  LATEST_FILE=$(aws s3 ls ${{ env.SOURCE_DIFF_DIR }} | sort | tail -n 1 | awk '{print $4}')
+
+                  # Copy the latest file from S3 to local
+                  aws s3 cp ${{ env.SOURCE_DIFF_DIR }}/$LATEST_FILE ./compiled_source_diff.yaml
+
+                  # Convert YAML to JSON
+                  yq -o=json ./compiled_source_diff.yaml > compiled_source_diff.json
+
+                  echo "INTERACTION_INPUT_PATH=river/contracts/compiled_source_diff.json" >> $GITHUB_ENV
+              working-directory: river/contracts
+
+            - name: Run Base Sepolia Interaction
+              run: make interact-any-explicit \
+                  context=alpha \
+                  rpc=base_sepolia \
+                  contract=InteractAlphaSparse \
+                  private_key=${{ env.ALPHA_BASE_SEPOLIA_DEPLOYER_PK }} \
+                  etherscan=${{ env.BLOCKSCOUT_SEPOLIA_API_KEY }} \
+                  verifier=${{ env.BLOCKSCOUT_SEPOLIA_URL }}
+              working-directory: river/contracts
+              env:
+                  INTERACTION_INPUT_PATH: ${{ env.INTERACTION_INPUT_PATH }}
+
+            # If action failed, we send a slack notification
+            - name: Slack notification
+              if: failure()
+              uses: slackapi/slack-github-action@v1.24.0
+              env:
+                  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_CD_ALERT_WORKFLOW_WEBHOOK_URL }}
+              with:
+                  payload: |
+                      {
+                        "step": "Upgrade Alpha Facets",
+                        "environment": "alpha",
+                        "branch": "${{ github.ref }}",
+                        "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                        "commit": "${{ github.sha }}",
+                            "actor": "${{ github.actor }}"
+                      }
+
     Upgrade_Facets:
+        if: github.event.inputs.job_to_run == 'all' || github.event.inputs.job_to_run == 'Upgrade_Facets'
         runs-on: ubuntu-latest
         steps:
             - name: Checkout code
