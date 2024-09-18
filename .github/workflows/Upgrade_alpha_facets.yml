@@ -17,9 +17,9 @@ env:
     AWS_ACCESS_KEY_ID: ${{ secrets.S3_AWS_ACCESS_KEY_ID }}
     AWS_SECRET_ACCESS_KEY: ${{ secrets.S3_AWS_SECRET_ACCESS_KEY }}
     AWS_REGION: ${{ secrets.S3_AWS_REGION }}
-    FACET_SOURCE_PATH: '../../river/contracts/src'
-    COMPILED_FACETS_PATH: '../../river/contracts/out'
-    DEPLOYMENTS_PATH: '../../river/contracts/deployments'
+    FACET_SOURCE_PATH: '../../contracts/src'
+    COMPILED_FACETS_PATH: '../../contracts/out'
+    DEPLOYMENTS_PATH: '../../contracts/deployments'
     SOURCE_DIFF_DIR: 's3://source-diff-reports'
     GOWORK: 'off'
 
@@ -79,6 +79,10 @@ jobs:
             - name: Install node dependencies
               run: yarn install --immutable
 
+            - name: Build contracts
+              run: make build
+              working-directory: river/contracts
+
             - name: Set up Go
               uses: actions/setup-go@v4
               with:
@@ -114,14 +118,17 @@ jobs:
               run: |
                   # Get the latest file from S3
                   LATEST_FILE=$(aws s3 ls ${{ env.SOURCE_DIFF_DIR }} | sort | tail -n 1 | awk '{print $4}')
+                  echo "Latest source diff file: $LATEST_FILE"
 
                   # Copy the latest file from S3 to local
+                  # Switch directories to a directory foundry can read
+                  cd deployments
                   aws s3 cp ${{ env.SOURCE_DIFF_DIR }}/$LATEST_FILE ./compiled_source_diff.yaml
 
                   # Convert YAML to JSON
                   yq -o=json ./compiled_source_diff.yaml > compiled_source_diff.json
 
-                  echo "INTERACTION_INPUT_PATH=river/contracts/compiled_source_diff.json" >> $GITHUB_ENV
+                  echo "INTERACTION_INPUT_PATH=/contracts/deployments/compiled_source_diff.json" >> $GITHUB_ENV
               working-directory: river/contracts
 
             - name: Run Base Sepolia Interaction
