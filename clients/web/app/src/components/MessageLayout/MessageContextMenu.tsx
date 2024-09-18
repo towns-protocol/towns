@@ -97,11 +97,16 @@ export const MessageContextMenu = (props: Props) => {
         'adminRedaction' | 'redaction' | undefined
     >(undefined)
 
-    const onDeleteClick = useCallback(() => {
-        if (channelId && eventId) {
-            setDeletePrompt('redaction')
-        }
-    }, [channelId, eventId])
+    const onDeleteClick = useShortcut(
+        'DeleteMessage',
+        useCallback(() => {
+            if (channelId && eventId) {
+                setDeletePrompt('redaction')
+            }
+        }, [channelId, eventId, setDeletePrompt]),
+        { enableOnContentEditable: false },
+        [],
+    )
 
     const onDeleteCancel = useCallback(() => {
         setDeletePrompt(undefined)
@@ -141,16 +146,11 @@ export const MessageContextMenu = (props: Props) => {
         [],
     )
 
-    const onRedactConfirm = useShortcut(
-        'DeleteMessage',
-        useCallback(() => {
-            if (channelId) {
-                redactEvent(channelId, eventId)
-            }
-        }, [channelId, eventId, redactEvent]),
-        { enableOnContentEditable: false },
-        [],
-    )
+    const onRedactConfirm = useCallback(() => {
+        if (channelId) {
+            redactEvent(channelId, eventId)
+        }
+    }, [channelId, eventId, redactEvent])
 
     const onAdminRedactConfirm = useCallback(() => {
         if (channelId && eventId) {
