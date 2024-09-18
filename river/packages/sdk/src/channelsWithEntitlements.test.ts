@@ -16,7 +16,6 @@ import {
     linkWallets,
     getXchainConfigForTesting,
     erc20CheckOp,
-    customCheckOp,
     setupChannelWithCustomRole,
     expectUserCanJoinChannel,
     expectUserCannotJoinChannel,
@@ -30,7 +29,6 @@ import {
     Permission,
     TestERC721,
     TestERC20,
-    TestCustomEntitlement,
     TestEthBalance,
     LogicalOperationType,
     OperationType,
@@ -985,129 +983,6 @@ describe('channelsWithEntitlements', () => {
         await TestERC20.publicMint('TestERC20', aliceProvider.wallet.address as Address, 25)
 
         log('expect that alice can join the space')
-        // Validate alice can join the channel
-        await expectUserCanJoinChannel(alice, aliceSpaceDapp, spaceId, channelId!)
-
-        const doneStart = Date.now()
-        // kill the clients
-        await bob.stopSync()
-        await alice.stopSync()
-        log('Done', Date.now() - doneStart)
-    })
-
-    // TODO: re-enable as part of https://github.com/river-build/river/issues/1046
-    test.skip('custom entitlement gate pass', async () => {
-        const ruleData = treeToRuleData(await customCheckOp('TestCustom'))
-
-        const { alice, bob, alicesWallet, aliceSpaceDapp, spaceId, channelId } =
-            await setupChannelWithCustomRole([], ruleData)
-
-        await TestCustomEntitlement.setEntitled(
-            'TestCustom',
-            [alicesWallet.address as Address],
-            true,
-        )
-
-        log('expect that alice can join the channel')
-        await expectUserCanJoinChannel(alice, aliceSpaceDapp, spaceId, channelId!)
-
-        // kill the clients
-        const doneStart = Date.now()
-        await bob.stopSync()
-        await alice.stopSync()
-        log('Done', Date.now() - doneStart)
-    })
-
-    // TODO: re-enable as part of https://github.com/river-build/river/issues/1046
-    test.skip('custom entitlement gate fail', async () => {
-        const ruleData = treeToRuleData(await customCheckOp('TestCustom'))
-
-        const { alice, bob, alicesWallet, aliceSpaceDapp, spaceId, channelId } =
-            await setupChannelWithCustomRole([], ruleData)
-
-        await TestCustomEntitlement.setEntitled(
-            'TestCustom',
-            [alicesWallet.address as Address],
-            false,
-        )
-
-        log('expect that alice cannot join the channel')
-        await expectUserCannotJoinChannel(alice, aliceSpaceDapp, spaceId, channelId!)
-
-        // kill the clients
-        const doneStart = Date.now()
-        await bob.stopSync()
-        await alice.stopSync()
-        log('Done', Date.now() - doneStart)
-    })
-
-    // TODO: re-enable as part of https://github.com/river-build/river/issues/1046
-    test.skip('custom entitlement gate join pass - join as root, linked wallet entitled', async () => {
-        const ruleData = treeToRuleData(await customCheckOp('TestCustom'))
-
-        const {
-            alice,
-            bob,
-            aliceSpaceDapp,
-            aliceProvider,
-            carolsWallet,
-            carolProvider,
-            spaceId,
-            channelId,
-        } = await setupChannelWithCustomRole([], ruleData)
-
-        // Link carol's wallet to alice's as root
-        await linkWallets(aliceSpaceDapp, aliceProvider.wallet, carolProvider.wallet)
-
-        log('expect that alice cannot join the channel')
-        await expectUserCannotJoinChannel(alice, aliceSpaceDapp, spaceId, channelId!)
-
-        // Set entitlement for carol's wallet
-        await TestCustomEntitlement.setEntitled(
-            'TestCustom',
-            [carolsWallet.address as Address],
-            true,
-        )
-
-        // Wait 2 seconds for the negative auth cache to expire
-        await new Promise((f) => setTimeout(f, 2000))
-
-        // Validate alice can join the channel
-        await expectUserCanJoinChannel(alice, aliceSpaceDapp, spaceId, channelId!)
-
-        const doneStart = Date.now()
-        // kill the clients
-        await bob.stopSync()
-        await alice.stopSync()
-        log('Done', Date.now() - doneStart)
-    })
-
-    // TODO: re-enable as part of https://github.com/river-build/river/issues/1046
-    test.skip('custom entitlement gated join - join as linked wallet, assets in root wallet', async () => {
-        const ruleData = treeToRuleData(await customCheckOp('TestCustom'))
-        const {
-            alice,
-            bob,
-            aliceSpaceDapp,
-            carolSpaceDapp,
-            aliceProvider,
-            carolsWallet,
-            carolProvider,
-            spaceId,
-            channelId,
-        } = await setupChannelWithCustomRole([], ruleData)
-
-        log("Joining alice's wallet as a linked wallet to carol's root wallet")
-        await linkWallets(carolSpaceDapp, carolProvider.wallet, aliceProvider.wallet)
-
-        // Set carol's wallet as entitled
-        await TestCustomEntitlement.setEntitled(
-            'TestCustom',
-            [carolsWallet.address as Address],
-            true,
-        )
-
-        log('expect that alice can join the channel')
         // Validate alice can join the channel
         await expectUserCanJoinChannel(alice, aliceSpaceDapp, spaceId, channelId!)
 

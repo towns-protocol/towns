@@ -739,7 +739,7 @@ const errorTests = [
         error: 'Invalid threshold for check operation ERC721',
     },
     {
-        desc: 'custom entitlement invalid check (chainId)',
+        desc: 'cross chain entitlement invalid check (chainId)',
         check: {
             opType: OperationType.CHECK,
             checkType: CheckOperationType.ISENTITLED,
@@ -749,7 +749,7 @@ const errorTests = [
         error: 'Invalid chain id for check operation ISENTITLED',
     },
     {
-        desc: 'custom entitlement invalid check (contractAddress)',
+        desc: 'cross chain entitlement invalid check (contractAddress)',
         check: {
             opType: OperationType.CHECK,
             checkType: CheckOperationType.ISENTITLED,

@@ -1,28 +1,36 @@
-import { createTestClient, http, publicActions, walletActions, parseEther } from 'viem'
+import {
+    createTestClient,
+    http,
+    publicActions,
+    walletActions,
+    parseEther,
+    encodeAbiParameters,
+    Hex,
+} from 'viem'
 import { foundry } from 'viem/chains'
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
 
-import { MockCustomEntitlement } from './MockCustomEntitlement'
+import { MockCrossChainEntitlement } from './MockCrossChainEntitlement'
 import { deployContract, Mutex } from './TestGatingUtils'
 import { Address } from './ContractTypes'
 
 import { dlogger } from '@river-build/dlog'
 
-const logger = dlogger('csb:TestGatingERC20')
+const logger = dlogger('csb:TestGatingCrossChainEntitlement')
 
-const mockCustomContracts = new Map<string, Address>()
-const mockCustomContractsMutex = new Mutex()
+const mockCrossChainEntitlementContracts = new Map<string, Address>()
+const mockCrossChainEntitlementsMutex = new Mutex()
 
 async function getContractAddress(tokenName: string): Promise<Address> {
     try {
-        await mockCustomContractsMutex.lock()
-        if (!mockCustomContracts.has(tokenName)) {
+        await mockCrossChainEntitlementsMutex.lock()
+        if (!mockCrossChainEntitlementContracts.has(tokenName)) {
             const contractAddress = await deployContract(
                 tokenName,
-                MockCustomEntitlement.abi,
-                MockCustomEntitlement.bytecode,
+                MockCrossChainEntitlement.abi,
+                MockCrossChainEntitlement.bytecode,
             )
-            mockCustomContracts.set(tokenName, contractAddress)
+            mockCrossChainEntitlementContracts.set(tokenName, contractAddress)
         }
     } catch (e) {
         logger.error('Failed to deploy contract', e)
@@ -31,15 +39,16 @@ async function getContractAddress(tokenName: string): Promise<Address> {
             `Failed to get contract address: ${tokenName}`,
         )
     } finally {
-        mockCustomContractsMutex.unlock()
+        mockCrossChainEntitlementsMutex.unlock()
     }
 
-    return mockCustomContracts.get(tokenName)!
+    return mockCrossChainEntitlementContracts.get(tokenName)!
 }
 
-async function setEntitled(
-    customEntitlementContractName: string,
-    userAddresses: Address[],
+async function setIsEntitled(
+    contractName: string,
+    userAddress: Address,
+    id: bigint,
     entitled: boolean,
 ): Promise<void> {
     const privateKey = generatePrivateKey()
@@ -58,33 +67,28 @@ async function setEntitled(
         value: parseEther('1'),
     })
 
-    const contractAddress = await getContractAddress(customEntitlementContractName)
+    const contractAddress = await getContractAddress(contractName)
 
     logger.log(
-        `Setting custom entitlement to ${entitled} for users ${userAddresses.join(
-            ',',
-        )} for contract ${customEntitlementContractName}`,
+        `Setting cross chain entitlement to ${entitled} for user ${userAddress} ` +
+            `with id ${id} on contract ${contractName} at address ${contractAddress}`,
     )
     const txnReceipt = await client.writeContract({
         address: contractAddress,
-        abi: MockCustomEntitlement.abi,
-        functionName: 'setEntitled',
-        args: [userAddresses, entitled],
+        abi: MockCrossChainEntitlement.abi,
+        functionName: 'setIsEntitled',
+        args: [id, userAddress, entitled],
         account: throwawayAccount,
     })
 
     const receipt = await client.waitForTransactionReceipt({ hash: txnReceipt })
     expect(receipt.status).toBe('success')
-    logger.log(
-        `Set custom entitlement to ${entitled} for users ${userAddresses.join(
-            ',',
-        )} for contract ${customEntitlementContractName}`,
-    )
 }
 
 async function isEntitled(
     customEntitlementContractName: string,
     userAddresses: Address[],
+    id: bigint,
 ): Promise<boolean> {
     const contractAddress = await getContractAddress(customEntitlementContractName)
     const privateKey = generatePrivateKey()
@@ -98,18 +102,38 @@ async function isEntitled(
         .extend(publicActions)
         .extend(walletActions)
 
+    const encodedId = encodeIdParameter(id)
     const result = await client.readContract({
         address: contractAddress,
-        abi: MockCustomEntitlement.abi,
+        abi: MockCrossChainEntitlement.abi,
         functionName: 'isEntitled',
-        args: [userAddresses],
+        args: [userAddresses, encodedId],
     })
 
     return result as boolean
 }
 
-export const TestCustomEntitlement = {
+const mockCrossChainEntitlementParamsAbi = {
+    components: [
+        {
+            name: 'id',
+            type: 'uint256',
+        },
+    ],
+    name: 'params',
+    type: 'tuple',
+} as const
+
+function encodeIdParameter(id: bigint): Hex {
+    if (id < 0n) {
+        throw new Error(`Invalid id ${id}: must be nonnegative`)
+    }
+    return encodeAbiParameters([mockCrossChainEntitlementParamsAbi], [{ id }])
+}
+
+export const TestCrossChainEntitlement = {
     getContractAddress,
-    setEntitled,
+    encodeIdParameter,
+    setIsEntitled,
     isEntitled,
 }

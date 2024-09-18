@@ -12,7 +12,6 @@ import {
     getNftRuleData,
     getXchainConfigForTesting,
     erc20CheckOp,
-    customCheckOp,
     ethBalanceCheckOp,
     oneEth,
     oneHalfEth,
@@ -31,7 +30,6 @@ import {
     NoopRuleData,
     Operation,
     OperationType,
-    TestCustomEntitlement,
     TestERC20,
     TestERC721,
     TestEthBalance,
@@ -931,173 +929,6 @@ describe('spaceWithEntitlements', () => {
         log('Minting an NFT for carols wallet, which is the root to alices wallet')
         await TestERC20.publicMint('TestERC20', carolsWallet.address as Address, 25)
         await TestERC20.publicMint('TestERC20', alicesWallet.address as Address, 25)
-
-        log('expect that alice can join the space')
-        await expectUserCanJoin(
-            spaceId,
-            channelId,
-            'alice',
-            alice,
-            aliceSpaceDapp,
-            alicesWallet.address,
-            aliceProvider.wallet,
-        )
-
-        const doneStart = Date.now()
-        // kill the clients
-        await bob.stopSync()
-        await alice.stopSync()
-        log('Done', Date.now() - doneStart)
-    })
-
-    // TODO: re-enable as part of https://github.com/river-build/river/issues/1046
-    test.skip('customEntitlementGateJoinPass', async () => {
-        const ruleData = treeToRuleData(await customCheckOp('TestCustom'))
-
-        const { alice, bob, aliceSpaceDapp, aliceProvider, alicesWallet, spaceId, channelId } =
-            await createTownWithRequirements({
-                everyone: false,
-                users: [],
-                ruleData,
-            })
-
-        // set alice as entitled; she should be able to join.
-        await TestCustomEntitlement.setEntitled(
-            'TestCustom',
-            [alicesWallet.address as Address],
-            true,
-        )
-
-        await expectUserCanJoin(
-            spaceId,
-            channelId,
-            'alice',
-            alice,
-            aliceSpaceDapp,
-            alicesWallet.address,
-            aliceProvider.wallet,
-        )
-
-        const doneStart = Date.now()
-        // kill the clients
-        await bob.stopSync()
-        await alice.stopSync()
-        log('Done', Date.now() - doneStart)
-    })
-
-    // TODO: re-enable as part of https://github.com/river-build/river/issues/1046
-    test.skip('customEntitlementGateJoinFail', async () => {
-        const ruleData = treeToRuleData(await customCheckOp('TestCustom'))
-        const { alice, bob, aliceSpaceDapp, aliceProvider, alicesWallet, spaceId } =
-            await createTownWithRequirements({
-                everyone: false,
-                users: [],
-                ruleData,
-            })
-
-        // Have alice create her own space so she can initialize her user stream.
-        // Then she will attempt to join the space from the client, which should fail.
-        await createUserStreamAndSyncClient(
-            alice,
-            aliceSpaceDapp,
-            'alice',
-            await everyoneMembershipStruct(aliceSpaceDapp, alice),
-            aliceProvider.wallet,
-        )
-
-        await expectUserCannotJoinSpace(spaceId, alice, aliceSpaceDapp, alicesWallet.address)
-
-        const doneStart = Date.now()
-        // kill the clients
-        await bob.stopSync()
-        await alice.stopSync()
-        log('Done', Date.now() - doneStart)
-    })
-
-    // TODO: re-enable as part of https://github.com/river-build/river/issues/1046
-    test.skip('customEntitlementGateJoinPass - join as root, asset in linked wallet', async () => {
-        const ruleData = treeToRuleData(await customCheckOp('TestCustom'))
-        const {
-            alice,
-            bob,
-            aliceSpaceDapp,
-            aliceProvider,
-            alicesWallet,
-            carolsWallet,
-            carolProvider,
-            spaceId,
-            channelId,
-        } = await createTownWithRequirements({
-            everyone: false,
-            users: [],
-            ruleData: ruleData,
-        })
-
-        await linkWallets(aliceSpaceDapp, aliceProvider.wallet, carolProvider.wallet)
-
-        // join alice
-        log("Setting carol's wallet as entitled")
-        await TestCustomEntitlement.setEntitled(
-            'TestCustom',
-            [carolsWallet.address as Address],
-            true,
-        )
-
-        await expectUserCanJoin(
-            spaceId,
-            channelId,
-            'alice',
-            alice,
-            aliceSpaceDapp,
-            alicesWallet.address,
-            aliceProvider.wallet,
-        )
-
-        const doneStart = Date.now()
-        // kill the clients
-        await bob.stopSync()
-        await alice.stopSync()
-        log('Done', Date.now() - doneStart)
-    })
-
-    test.skip('customEntitlementGateJoinPass - join as linked wallet, asset in root wallet', async () => {
-        const contractName = 'TestCustom'
-        const customAddress = await TestCustomEntitlement.getContractAddress(contractName)
-        const op: Operation = {
-            opType: OperationType.CHECK,
-            checkType: CheckOperationType.ISENTITLED,
-            chainId: 31337n,
-            contractAddress: customAddress,
-            params: '0x',
-        }
-        const ruleData = treeToRuleData(op)
-        const {
-            alice,
-            bob,
-            aliceSpaceDapp,
-            aliceProvider,
-            alicesWallet,
-            carolsWallet,
-            carolProvider,
-            carolSpaceDapp,
-            spaceId,
-            channelId,
-        } = await createTownWithRequirements({
-            everyone: false,
-            users: [],
-            ruleData: ruleData,
-        })
-
-        log("Joining alice's wallet as a linked wallet to carols root wallet")
-        await linkWallets(carolSpaceDapp, carolProvider.wallet, aliceProvider.wallet)
-
-        // join alice
-        log("Setting carol's linked wallet as entitled")
-        await TestCustomEntitlement.setEntitled(
-            contractName,
-            [carolsWallet.address as Address],
-            true,
-        )
 
         log('expect that alice can join the space')
         await expectUserCanJoin(

@@ -605,7 +605,12 @@ async function evaluateCheckOperation(
                 controller.abort()
                 return zeroAddress
             }
-            return evaluateCustomEntitledOperation(operation, controller, provider, linkedWallets)
+            return evaluateCrossChainEntitlementOperation(
+                operation,
+                controller,
+                provider,
+                linkedWallets,
+            )
         }
         case CheckOperationType.ETH_BALANCE: {
             const etherChainProviders = await findEtherChainProviders(xchainConfig)
@@ -910,7 +915,7 @@ async function evaluateERC20Operation(
     )
 }
 
-async function evaluateCustomEntitledOperation(
+async function evaluateCrossChainEntitlementOperation(
     operation: CheckOperationV2,
     controller: AbortController,
     provider: ethers.providers.BaseProvider,
@@ -918,12 +923,12 @@ async function evaluateCustomEntitledOperation(
 ): Promise<EntitledWalletOrZeroAddress> {
     const contract = new ethers.Contract(
         operation.contractAddress,
-        ['function isEntitled(address[]) view returns (bool)'],
+        ['function isEntitled(address[], bytes) view returns (bool)'],
         provider,
     )
     return await Promise.any(
         linkedWallets.map(async (wallet): Promise<Address> => {
-            const isEntitled = await contract.callStatic.isEntitled([wallet])
+            const isEntitled = await contract.callStatic.isEntitled([wallet], operation.params)
             if (isEntitled === true) {
                 return wallet as Address
             }
