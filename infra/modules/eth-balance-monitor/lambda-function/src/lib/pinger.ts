@@ -41,7 +41,7 @@ export class Ping {
         try {
             response = await fetch(url.toString())
         } catch (e: unknown) {
-            console.error(`Failed to ping node ${node.url}: ${e}`)
+            console.warn(`Failed to ping node ${node.url}: ${e}`)
             return {
                 result: 'error' as const,
                 message: `Failed to ping node ${node.url}: ${e}`,
@@ -61,7 +61,7 @@ export class Ping {
         try {
             jsonResponse = await response.json()
         } catch (e: unknown) {
-            console.error(`Failed to parse JSON response from node ${node.url}: ${e}`)
+            console.warn(`Failed to parse JSON response from node ${node.url}: ${e}`)
             return {
                 result: 'error' as const,
                 message: `Failed to parse JSON response from node ${node.url}: ${e}`,
@@ -71,7 +71,7 @@ export class Ping {
         const parsedResponse = NodeStatusSchema.safeParse(jsonResponse)
 
         if (!parsedResponse.success) {
-            console.error(
+            console.warn(
                 `Failed to validate JSON response from node ${node.url}: ${parsedResponse.error}`,
             )
             return {

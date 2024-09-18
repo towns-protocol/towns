@@ -20,6 +20,8 @@ export class MetricsArtifacts {
         await this.generateNodesJSON()
         await this.generateOperatorsJSON()
         await this.generatePingResultsJSON()
+        await this.generateSpaceMembershipsJSON()
+        await this.generateAggregateStatsJSON()
     }
 
     private async setup() {
@@ -71,6 +73,18 @@ export class MetricsArtifacts {
     private async generatePingResultsJSON() {
         const destination = path.join(this.artifactsDir, 'pingResults.json')
         await fs.writeFile(destination, JSON.stringify(this.metrics.nodePingResults, null, 2))
+        console.log(`Created: ${destination}`)
+    }
+
+    private async generateSpaceMembershipsJSON() {
+        const destination = path.join(this.artifactsDir, 'spaceMemberships.json')
+        await fs.writeFile(destination, JSON.stringify(this.metrics.spacesWithMemberships, null, 2))
+        console.log(`Created: ${destination}`)
+    }
+
+    private async generateAggregateStatsJSON() {
+        const destination = path.join(this.artifactsDir, 'aggregateStats.json')
+        await fs.writeFile(destination, JSON.stringify(this.metrics.aggregateNetworkStats, null, 2))
         console.log(`Created: ${destination}`)
     }
 }

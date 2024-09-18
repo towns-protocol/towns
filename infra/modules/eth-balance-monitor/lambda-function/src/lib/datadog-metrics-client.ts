@@ -288,6 +288,10 @@ export class DatadogMetricsClient {
         numMissingNodesOnRiver: number
         numTotalSpaceMemberships: number
         numTotalUniqueSpaceMembers: number
+        numTotalPricedSpaces: number
+        numTotalPaidSpaceMemberships: number
+        numTotalSpacesWithPaidMemberships: number
+        numUniqueSpaceOwners: number
     }) {
         console.log('Posting aggregate network stats to Datadog:')
         const metrics = [
@@ -330,6 +334,22 @@ export class DatadogMetricsClient {
             {
                 name: 'river_network.total_unique_space_members',
                 value: stats.numTotalUniqueSpaceMembers,
+            },
+            {
+                name: 'river_network.total_priced_spaces',
+                value: stats.numTotalPricedSpaces,
+            },
+            {
+                name: 'river_network.total_paid_space_memberships',
+                value: stats.numTotalPaidSpaceMemberships,
+            },
+            {
+                name: 'river_network.total_spaces_with_paid_memberships',
+                value: stats.numTotalSpacesWithPaidMemberships,
+            },
+            {
+                name: 'river_network.total_unique_space_owners',
+                value: stats.numUniqueSpaceOwners,
             },
         ]
 

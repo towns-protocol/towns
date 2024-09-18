@@ -32,7 +32,7 @@ module "lambda_function" {
 
   trigger_on_package_timestamp = false
 
-  memory_size = 8192
+  memory_size = 10240
 
   environment_variables = {
     DATADOG_API_KEY_SECRET_ARN         = local.global_remote_state.river_global_dd_agent_api_key.arn

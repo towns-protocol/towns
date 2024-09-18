@@ -4,6 +4,10 @@ import {
     BaseRegistry,
     SpaceOwner,
     SpaceRegistrar,
+    SpaceDapp,
+    findDynamicPricingModule,
+    findFixedPricingModule,
+    PricingModuleStruct,
 } from '@river-build/web3'
 import { ethers } from 'ethers'
 import { Ping as Pinger } from './pinger'
@@ -12,9 +16,6 @@ import { NodeStructOutput } from '@river-build/generated/dev/typings/INodeRegist
 import { Unpromisify, withQueue } from './utils'
 import { MetricsIntegrator } from './metrics-integrator'
 import { IERC721ABase } from '@river-build/generated/dev/typings/IERC721AQueryable'
-import pRetry from 'p-retry'
-import pThrottle from 'p-throttle'
-import PQueue from 'p-queue'
 
 export type MetricsExtractorScrapeConfig = {
     getSpaceMemberships: boolean
@@ -32,6 +33,9 @@ export type SpaceWithTokenOwners = {
     address: string
     numMemberships: number
     tokenOwnerships: IERC721ABase.TokenOwnershipStructOutput[]
+    isPriced: boolean
+    numPaidMemberships: number
+    pricingModule: string
 }
 
 export class MetricsExtractor {
@@ -41,7 +45,7 @@ export class MetricsExtractor {
         private readonly riverRegistry: RiverRegistry,
         private readonly baseRegistry: BaseRegistry,
         private readonly spaceOwner: SpaceOwner,
-        private readonly spaceRegistrar: SpaceRegistrar,
+        private readonly spaceDapp: SpaceDapp,
         private readonly pinger: Pinger,
         private readonly integrator: MetricsIntegrator,
         private readonly scrapeConfig: MetricsExtractorScrapeConfig,
@@ -54,7 +58,7 @@ export class MetricsExtractor {
         const riverRegistry = new RiverRegistry(deployment.river, riverChainProvider)
         const baseRegistry = new BaseRegistry(deployment.base, baseChainProvider)
         const spaceOwner = new SpaceOwner(deployment.base, baseChainProvider)
-        const spaceRegistrar = new SpaceRegistrar(deployment.base, baseChainProvider)
+        const spaceDapp = new SpaceDapp(deployment.base, baseChainProvider)
         const pinger = new Pinger()
         const metricsIntegrator = new MetricsIntegrator()
         const scrapeConfig = {
@@ -67,7 +71,7 @@ export class MetricsExtractor {
             riverRegistry,
             baseRegistry,
             spaceOwner,
-            spaceRegistrar,
+            spaceDapp,
             pinger,
             metricsIntegrator,
             scrapeConfig,
@@ -126,6 +130,39 @@ export class MetricsExtractor {
         return numTotalSpaces
     }
 
+    private async getSpaceOwners(numTotalSpaces: number) {
+        const NUM_RETRIES = 3
+        const THROTTLE_LIMIT = 200 // num requests
+        const THROTTLE_INTERVAL = 1000 // per ms
+        const CONCURRENCY = 50
+
+        console.log('getting space owners')
+        const getSpaceOwnerArgs = Array.from({ length: numTotalSpaces }, (_, i) => i)
+        const onFailedAttempt = (tokenId: number, error: Error) => {
+            console.warn(
+                error,
+                `failed attempt to get space owner for token id ${tokenId}. retrying...`,
+            )
+        }
+        const options = {
+            concurrency: CONCURRENCY,
+            retries: NUM_RETRIES,
+            throttle: {
+                limit: THROTTLE_LIMIT,
+                interval: THROTTLE_INTERVAL,
+            },
+            onFailedAttempt,
+        }
+
+        const spaceOwners = await withQueue(
+            this.spaceOwner.erc721A.read.ownerOf,
+            getSpaceOwnerArgs,
+            options,
+        )
+        console.log('got space owners')
+        return spaceOwners
+    }
+
     private async getNumTotalStreams() {
         console.log('getting num total streams')
         const numTotalStreamsBigNumber =
@@ -157,22 +194,70 @@ export class MetricsExtractor {
         return riverChainWalletBalances
     }
 
-    private async getSpaceWithMembershipsByTokenId(tokenId: number): Promise<SpaceWithTokenOwners> {
-        console.log(`getting space memberships for token id ${tokenId}`)
-        const spaceAddress = await this.spaceRegistrar.SpaceArchitect.read.getSpaceByTokenId(
-            tokenId,
-        )
-        const space = this.spaceRegistrar.getSpace(spaceAddress)!
+    private async getSpaceWithMembershipsByTokenId({
+        tokenId,
+        fixedPricingModule,
+        dynamicPricingModule,
+        v1DynamicPricingModule,
+    }: {
+        tokenId: number
+        fixedPricingModule: PricingModuleStruct
+        dynamicPricingModule: PricingModuleStruct
+        v1DynamicPricingModule: PricingModuleStruct | undefined
+    }): Promise<SpaceWithTokenOwners> {
+        const spaceAddress =
+            await this.spaceDapp.spaceRegistrar.SpaceArchitect.read.getSpaceByTokenId(tokenId)
+        const space = this.spaceDapp.spaceRegistrar.getSpace(spaceAddress)!
         const numMembershipsBigInt = await space.ERC721A.read.totalSupply()
         const numMemberships = numMembershipsBigInt.toNumber()
         const membershipTokenIds = Array.from({ length: numMemberships }, (_, i) => i)
         const tokenOwnerships = await space.ERC721AQueryable.read.explicitOwnershipsOf(
             membershipTokenIds,
         )
+        const membershipPrice = await space.Membership.read.getMembershipPrice()
+        const isPriced = membershipPrice.gt(0)
+        let numPaidMemberships = 0
+
+        const pricingModule = await space.Membership.read.getMembershipPricingModule()
+        const currentPricingModuleName = pricingModule.toLowerCase()
+        const isFixed =
+            currentPricingModuleName === fixedPricingModule.module.toString().toLowerCase()
+        const isV1Dynamic =
+            v1DynamicPricingModule &&
+            currentPricingModuleName === v1DynamicPricingModule.module.toString().toLowerCase()
+        const isV2Dynamic =
+            currentPricingModuleName === dynamicPricingModule.module.toString().toLowerCase()
+
+        if (isPriced) {
+            if (isFixed) {
+                // is fixed pricing module
+
+                numPaidMemberships = numMemberships
+            } else if (isV1Dynamic || isV2Dynamic) {
+                // is dynamic pricing module
+
+                // TODO: should we include remaining pre-paid memberships in the count?
+
+                const freeAllocationsBigNumber =
+                    await space.Membership.read.getMembershipFreeAllocation()
+                const freeAllocations = freeAllocationsBigNumber.toNumber()
+
+                numPaidMemberships = Math.max(0, numMemberships - freeAllocations)
+            } else {
+                throw new Error(`Unknown pricing module: ${pricingModule}`)
+            }
+        }
+
+        // remove the space owner from paid members:
+        numPaidMemberships = Math.max(0, numPaidMemberships - 1)
+
         return {
             address: spaceAddress,
             numMemberships,
             tokenOwnerships,
+            isPriced,
+            numPaidMemberships,
+            pricingModule: currentPricingModuleName,
         }
     }
 
@@ -211,8 +296,24 @@ export class MetricsExtractor {
         }
         console.log('getting space memberships')
 
-        const tokenIds = Array.from({ length: numTotalSpaces }, (_, i) => i)
-        const onFailedAttempt = (tokenId: number, error: Error) => {
+        const pricingModules = await this.spaceDapp.listPricingModules()
+        const fixedPricingModule = findFixedPricingModule(pricingModules)
+        const dynamicPricingModule = findDynamicPricingModule(pricingModules)
+        const v1DynamicPricingModule = pricingModules.find(
+            (module) => module.name === 'TieredLogPricingOracle',
+        )
+
+        if (!fixedPricingModule || !dynamicPricingModule) {
+            throw new Error('No pricing modules found')
+        }
+
+        const getSpaceArgs = Array.from({ length: numTotalSpaces }, (_, i) => ({
+            tokenId: i,
+            fixedPricingModule,
+            dynamicPricingModule,
+            v1DynamicPricingModule,
+        }))
+        const onFailedAttempt = ({ tokenId }: { tokenId: number }, error: Error) => {
             console.warn(
                 error,
                 `failed attempt to get space memberships for token id ${tokenId}. retrying...`,
@@ -230,7 +331,7 @@ export class MetricsExtractor {
 
         const spacesWithMemberships = await withQueue(
             this.getSpaceWithMembershipsByTokenId.bind(this),
-            tokenIds,
+            getSpaceArgs,
             options,
         )
 
@@ -282,11 +383,13 @@ export class MetricsExtractor {
             riverChainWalletBalances,
             nodePingResults,
             spacesWithMemberships,
+            spaceOwners,
         ] = await Promise.all([
             this.getBaseChainWalletBalances(nodesOnRiver),
             this.getRiverChainWalletBalances(nodesOnRiver),
             this.pinger.pingNodes(combinedNodes),
             this.getAllSpacesWithMemberships(numTotalSpaces),
+            this.getSpaceOwners(numTotalSpaces),
         ])
 
         const walletBalances = riverChainWalletBalances.concat(baseChainWalletBalances)
@@ -317,6 +420,27 @@ export class MetricsExtractor {
             numTotalUniqueSpaceMembers = memberAddressToNumMemberships.size
         }
 
+        const numTotalPricedSpaces =
+            spacesWithMemberships.kind === 'success'
+                ? spacesWithMemberships.result.filter((space) => space.isPriced).length
+                : 0
+
+        const numTotalPaidSpaceMemberships =
+            spacesWithMemberships.kind === 'success'
+                ? spacesWithMemberships.result.reduce(
+                      (acc, space) => acc + space.numPaidMemberships,
+                      0,
+                  )
+                : 0
+
+        const numTotalSpacesWithPaidMemberships =
+            spacesWithMemberships.kind === 'success'
+                ? spacesWithMemberships.result.filter((space) => space.numPaidMemberships > 0)
+                      .length
+                : 0
+
+        const numUniqueSpaceOwners = new Set(spaceOwners).size
+
         return {
             walletBalances,
             nodePingResults,
@@ -339,6 +463,10 @@ export class MetricsExtractor {
                 numMissingNodesOnBase,
                 numMissingNodesOnRiver,
                 numTotalUniqueSpaceMembers,
+                numTotalPricedSpaces,
+                numTotalPaidSpaceMemberships,
+                numTotalSpacesWithPaidMemberships,
+                numUniqueSpaceOwners,
             },
         }
     }
