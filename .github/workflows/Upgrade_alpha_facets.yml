@@ -128,11 +128,24 @@ jobs:
                   # Convert YAML to JSON
                   yq -o=json ./compiled_source_diff.yaml > compiled_source_diff.json
 
+                  # Check if the file exists
+                  if [ ! -f ./compiled_source_diff.json ]; then
+                    echo "Error: compiled_source_diff.json not found"
+                    exit 1
+                  fi
+                  echo "compiled_source_diff.json file exists"
+
                   echo "INTERACTION_INPUT_PATH=/contracts/deployments/compiled_source_diff.json" >> $GITHUB_ENV
               working-directory: river/contracts
 
             - name: Run Base Sepolia Interaction
-              run: make interact-any-explicit \
+              run: |
+                if [ ! -f ./deployments/compiled_source_diff.json ]; then
+                  echo "Error: compiled_source_diff.json not found"
+                  exit 1
+                fi
+                echo "compiled_source_diff.json file exists"
+                make interact-any-explicit \
                   context=alpha \
                   rpc=base_sepolia \
                   contract=InteractAlphaSparse \
