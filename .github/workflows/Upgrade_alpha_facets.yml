@@ -133,7 +133,6 @@ jobs:
                     echo "Error: compiled_source_diff.json not found"
                     exit 1
                   fi
-                  echo "compiled_source_diff.json file exists"
 
                   echo "INTERACTION_INPUT_PATH=/contracts/deployments/compiled_source_diff.json" >> $GITHUB_ENV
               working-directory: river/contracts
@@ -144,7 +143,6 @@ jobs:
                   echo "Error: compiled_source_diff.json not found"
                   exit 1
                 fi
-                echo "compiled_source_diff.json file exists"
                 make interact-any-explicit \
                   context=alpha \
                   rpc=base_sepolia \
