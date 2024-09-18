@@ -23,6 +23,7 @@ type Props = (ParagraphProps | LabelProps) & {
     noWrap?: boolean
     strong?: boolean
     display?: BoxProps['display']
+    wordBreak?: BoxProps['wordBreak']
     style?: BoxProps['style']
 } & TextSprinkles
 

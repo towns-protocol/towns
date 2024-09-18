@@ -12,6 +12,7 @@ export const typeProperties = defineProperties({
         textDecoration: vars.textDecoration,
         whiteSpace: vars.whiteSpace,
         fontStyle: ['normal', 'italic'],
+        wordBreak: ['normal', 'break-all', 'break-word', 'keep-all'],
     },
     shorthands: {
         // fontWeight: ["fontVariationSettings"],

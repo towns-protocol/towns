@@ -135,7 +135,7 @@ export const PastedFile = (props: PastedFileProps) => {
                 />
             ) : (
                 <Box padding paddingRight="lg" border="level3" rounded="sm">
-                    <Text size="sm" fontWeight="medium">
+                    <Text wordBreak="break-all" size="sm" fontWeight="medium">
                         {info.filename}
                     </Text>
                 </Box>
