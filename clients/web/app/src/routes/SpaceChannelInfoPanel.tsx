@@ -30,7 +30,10 @@ import { useLeaveChannel } from 'hooks/useLeaveChannel'
 import { ChannelPermissionsNameDescriptionModal } from '@components/ChannelSettings/ChannelPermissionsNameDescriptionForm'
 import { PrivyWrapper } from 'privy/PrivyProvider'
 import { atoms } from 'ui/styles/atoms.css'
-import { isChannelPermission } from '@components/SpaceSettingsPanel/rolePermissions.const'
+import {
+    channelPermissionDescriptions,
+    isChannelPermission,
+} from '@components/SpaceSettingsPanel/rolePermissions.const'
 import { ChannelMembersModal } from './SpaceChannelDirectoryPanel'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
 import { ChannelsRolesList } from './RoleRestrictedChannelJoinPanel'
@@ -211,9 +214,12 @@ export const ChannelInfo = () => {
                                         channelId={channelId}
                                         roleId={role.roleId}
                                         permissions={role.permissions}
+                                        showDiff={canEditChannel}
                                     />
                                 ) : (
-                                    role.permissions.join(', ')
+                                    role.permissions
+                                        .map((p) => channelPermissionDescriptions[p]?.name ?? p)
+                                        .join(', ')
                                 )
                             }
                             onEditRolePermissions={
@@ -316,23 +322,52 @@ const PermissionText = (props: {
     roleId: number
     channelId: string
     permissions: Permission[]
+    showDiff?: boolean
 }) => {
-    const { spaceId, roleId, channelId, permissions } = props
+    const { spaceId, roleId, channelId, permissions, showDiff } = props
     const { permissions: permissionOverrides } = usePermissionOverrides(spaceId, channelId, roleId)
+
+    const result = useMemo(() => {
+        if (!showDiff || !permissionOverrides) {
+            // keep original order if there's not diff to show
+            return {
+                union: permissionOverrides ?? permissions,
+                removed: [] as Permission[],
+                added: [] as Permission[],
+            }
+        }
+
+        const sets = {
+            intersection: permissions.filter((p) => permissionOverrides?.includes(p)),
+            removed: permissions.filter((p) => !permissionOverrides?.includes(p)),
+            added: permissionOverrides?.filter((p) => !permissions.includes(p)) ?? [],
+        }
+
+        return {
+            ...sets,
+            union: [...sets.intersection, ...sets.removed, ...sets.added],
+        }
+    }, [showDiff, permissionOverrides, permissions])
+
     return (
         <Paragraph color="gray2" size="sm">
-            {(permissionOverrides ?? permissions).filter(isChannelPermission).join(', ')}
-            {permissionOverrides ? (
-                <span
-                    className={atoms({
-                        color: 'cta2',
-                    })}
-                >
-                    *
-                </span>
-            ) : (
-                ''
-            )}
+            {result.union.filter(isChannelPermission).map((p, index, arr) => {
+                const className =
+                    !showDiff || !permissionOverrides
+                        ? ''
+                        : atoms({
+                              color: result.added.includes(p) ? 'default' : 'gray2',
+                              textDecoration: result.removed.includes(p) ? 'lineThrough' : 'none',
+                          })
+                return (
+                    <>
+                        <span key={p} className={className}>
+                            {channelPermissionDescriptions[p]?.name ?? p}
+                        </span>
+                        {index < arr.length - 1 && ', '}
+                    </>
+                )
+            })}
         </Paragraph>
     )
 }
