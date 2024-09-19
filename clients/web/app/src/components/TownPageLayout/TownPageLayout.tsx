@@ -371,7 +371,7 @@ const InformationBoxes = (props: {
             />
             <InformationBox
                 key="cost"
-                title="Cost"
+                title="Entry"
                 placeholder={!price}
                 centerContent={
                     <Text size="lg" fontWeight="strong">
