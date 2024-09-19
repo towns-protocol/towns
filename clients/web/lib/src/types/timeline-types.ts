@@ -186,9 +186,6 @@ export interface RoomMessageMissingEvent {
 export interface RoomMemberEvent {
     kind: ZTEvent.RoomMember
     userId: string
-    avatarUrl?: string
-    displayName?: string
-    isDirect?: boolean
     membership: Membership
     streamId?: string // in a case of an invitation to a channel with a streamId
 }
@@ -494,9 +491,7 @@ export function getFallbackContent(
         case ZTEvent.RoomMessageEncrypted:
             return `Decrypting...`
         case ZTEvent.RoomMember: {
-            const name = content.displayName ?? content.userId
-            const avatar = content.avatarUrl ?? 'none'
-            return `[${content.membership}] name: ${name} avatar: ${avatar}`
+            return `[${content.membership}] userId: ${content.userId}`
         }
         case ZTEvent.RoomMessage:
             return `${senderDisplayName}: ${content.body}`

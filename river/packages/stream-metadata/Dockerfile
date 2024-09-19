@@ -41,7 +41,16 @@ RUN yarn run turbo build --filter @river-build/stream-metadata
 FROM node:lts-alpine3.20 as runner
 COPY --from=builder /river/packages/stream-metadata/dist /river/packages/stream-metadata/dist
 
-# run the service
+# install dd-trace again (because the bundler excludes some of the sub-dependencies)
 WORKDIR /river/packages/stream-metadata
-ENV NODE_ENV=production 
+RUN yarn init --yes
+RUN yarn add dd-trace@^5.19.0
+
+# run the service
+ARG GIT_SHA
+
+ENV DD_GIT_REPOSITORY_URL="https://github.com/river-build/river" \
+    DD_GIT_COMMIT_SHA=${GIT_SHA} \
+    NODE_ENV=production
+
 CMD ["node", "--enable-source-maps", "./dist/node_esbuild.cjs"]

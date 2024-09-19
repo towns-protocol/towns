@@ -27,7 +27,7 @@ export function isEthAddress(address: string): boolean {
     return address === ETH_ADDRESS
 }
 
-const walletLinkError = new WalletAlreadyLinkedError()
+const walletAlreadyLinkedError = new WalletAlreadyLinkedError()
 const walletNotLinkedError = new WalletNotLinkedError()
 
 type AuthError = ReturnType<(typeof useCasablancaStore)['getState']>['authError']
@@ -66,7 +66,11 @@ export function mapToErrorMessage(args: {
     }
 
     // for now let's only track errors with a source
-    if (source) {
+    if (
+        source &&
+        // walletAlreadyLinkedError already linked is a client thrown error we can ignore
+        errorName !== walletAlreadyLinkedError.name
+    ) {
         trackError(errorTracking)
     }
 
@@ -106,7 +110,7 @@ function getErrorDisplayText(error: ErrorTypes | undefined) {
                 errorText =
                     'You may have insufficient funds in your wallet. Please check your wallet and try again.'
                 break
-            case errorName === walletLinkError.name:
+            case errorName === walletAlreadyLinkedError.name:
                 errorText = 'Wallet is already linked.'
                 break
             case errorName === walletNotLinkedError.name:

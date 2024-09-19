@@ -141,7 +141,7 @@ contract StreamRegistryTest is RiverRegistryBaseSetup, IOwnableBase {
   function assertStreamsEqual(
     StreamWithId[] memory result,
     bytes32[] memory expectedIds
-  ) private {
+  ) private pure {
     assertEq(result.length, expectedIds.length);
     for (uint256 i = 0; i < result.length; i++) {
       assertEq(result[i].id, expectedIds[i]);

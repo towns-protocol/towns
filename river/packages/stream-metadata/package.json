@@ -34,6 +34,7 @@
 		"@river-build/proto": "workspace:^",
 		"@river-build/sdk": "workspace:^",
 		"@river-build/web3": "workspace:^",
+		"dd-trace": "^5.19.0",
 		"dotenv": "^16.4.5",
 		"esbuild-plugin-pino": "^2.2.0",
 		"ethers": "^5.7.2",

@@ -288,6 +288,128 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
       });
   }
 
+  function diamondInitParamsFromFacets(
+    address deployer,
+    string[] memory facets
+  ) public {
+    for (uint256 i = 0; i < facets.length; i++) {
+      bytes32 facetNameHash = keccak256(abi.encodePacked(facets[i]));
+
+      if (facetNameHash == keccak256(abi.encodePacked("MetadataFacet"))) {
+        metadata = metadataHelper.deploy(deployer);
+        addFacet(
+          metadataHelper.makeCut(metadata, IDiamond.FacetCutAction.Add),
+          metadata,
+          metadataHelper.makeInitData(bytes32("SpaceFactory"), "")
+        );
+      } else if (facetNameHash == keccak256(abi.encodePacked("Architect"))) {
+        architect = architectHelper.deploy(deployer);
+        addFacet(
+          architectHelper.makeCut(architect, IDiamond.FacetCutAction.Add),
+          architect,
+          architectHelper.makeInitData(
+            spaceOwner,
+            userEntitlement,
+            ruleEntitlement,
+            legacyRuleEntitlement
+          )
+        );
+      } else if (
+        facetNameHash == keccak256(abi.encodePacked("MockLegacyArchitect"))
+      ) {
+        legacyArchitect = deployMockLegacyArchitect.deploy(deployer);
+        addFacet(
+          deployMockLegacyArchitect.makeCut(
+            legacyArchitect,
+            IDiamond.FacetCutAction.Add
+          ),
+          legacyArchitect,
+          deployMockLegacyArchitect.makeInitData("")
+        );
+      } else if (facetNameHash == keccak256(abi.encodePacked("ProxyManager"))) {
+        proxyManager = proxyManagerHelper.deploy(deployer);
+        addFacet(
+          proxyManagerHelper.makeCut(proxyManager, IDiamond.FacetCutAction.Add),
+          proxyManager,
+          proxyManagerHelper.makeInitData(spaceImpl)
+        );
+      } else if (
+        facetNameHash == keccak256(abi.encodePacked("PausableFacet"))
+      ) {
+        pausable = pausableHelper.deploy(deployer);
+        addFacet(
+          pausableHelper.makeCut(pausable, IDiamond.FacetCutAction.Add),
+          pausable,
+          pausableHelper.makeInitData("")
+        );
+      } else if (
+        facetNameHash ==
+        keccak256(abi.encodePacked("PlatformRequirementsFacet"))
+      ) {
+        platformReqs = platformReqsHelper.deploy(deployer);
+        addFacet(
+          platformReqsHelper.makeCut(platformReqs, IDiamond.FacetCutAction.Add),
+          platformReqs,
+          platformReqsHelper.makeInitData(
+            deployer, // feeRecipient
+            500, // membershipBps 5%
+            0.005 ether, // membershipFee
+            1_000, // membershipFreeAllocation
+            365 days, // membershipDuration
+            0.001 ether // membershipMinPrice
+          )
+        );
+      } else if (
+        facetNameHash == keccak256(abi.encodePacked("PricingModulesFacet"))
+      ) {
+        pricingModulesFacet = pricingModulesHelper.deploy(deployer);
+        addFacet(
+          pricingModulesHelper.makeCut(
+            pricingModulesFacet,
+            IDiamond.FacetCutAction.Add
+          ),
+          pricingModulesFacet,
+          pricingModulesHelper.makeInitData(pricingModules)
+        );
+      } else if (
+        facetNameHash == keccak256(abi.encodePacked("ImplementationRegistry"))
+      ) {
+        registry = registryHelper.deploy(deployer);
+        addFacet(
+          registryHelper.makeCut(registry, IDiamond.FacetCutAction.Add),
+          registry,
+          registryHelper.makeInitData("")
+        );
+      } else if (facetNameHash == keccak256(abi.encodePacked("WalletLink"))) {
+        walletLink = walletLinkHelper.deploy(deployer);
+        addFacet(
+          walletLinkHelper.makeCut(walletLink, IDiamond.FacetCutAction.Add),
+          walletLink,
+          walletLinkHelper.makeInitData("")
+        );
+      } else if (facetNameHash == keccak256(abi.encodePacked("EIP712Facet"))) {
+        eip712 = eip712Helper.deploy(deployer);
+        addFacet(
+          eip712Helper.makeCut(eip712, IDiamond.FacetCutAction.Add),
+          eip712,
+          eip712Helper.makeInitData("SpaceFactory", "1")
+        );
+      } else if (
+        facetNameHash == keccak256(abi.encodePacked("PartnerRegistry"))
+      ) {
+        partnerRegistry = partnerRegistryHelper.deploy(deployer);
+        addFacet(
+          partnerRegistryHelper.makeCut(
+            partnerRegistry,
+            IDiamond.FacetCutAction.Add
+          ),
+          partnerRegistry,
+          partnerRegistryHelper.makeInitData("")
+        );
+      }
+    }
+  }
+
   function __deploy(address deployer) public override returns (address) {
     addImmutableCuts(deployer);
 

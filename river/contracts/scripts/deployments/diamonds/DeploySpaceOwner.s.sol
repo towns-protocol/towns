@@ -111,6 +111,40 @@ contract DeploySpaceOwner is DiamondHelper, Deployer {
       });
   }
 
+  function diamondInitParamsFromFacets(
+    address deployer,
+    string[] memory facets
+  ) public {
+    for (uint256 i = 0; i < facets.length; i++) {
+      bytes32 facetNameHash = keccak256(abi.encodePacked(facets[i]));
+
+      if (facetNameHash == keccak256(abi.encodePacked("MetadataFacet"))) {
+        metadata = metadataHelper.deploy(deployer);
+        addFacet(
+          metadataHelper.makeCut(metadata, IDiamond.FacetCutAction.Add),
+          metadata,
+          metadataHelper.makeInitData(bytes32("Space Owner"), "")
+        );
+      } else if (facetNameHash == keccak256(abi.encodePacked("SpaceOwner"))) {
+        spaceOwner = spaceOwnerHelper.deploy(deployer);
+        addFacet(
+          spaceOwnerHelper.makeCut(spaceOwner, IDiamond.FacetCutAction.Add),
+          spaceOwner,
+          spaceOwnerHelper.makeInitData("Space Owner", "OWNER", "1")
+        );
+      } else if (
+        facetNameHash == keccak256(abi.encodePacked("GuardianFacet"))
+      ) {
+        guardian = guardianHelper.deploy(deployer);
+        addFacet(
+          guardianHelper.makeCut(guardian, IDiamond.FacetCutAction.Add),
+          guardian,
+          guardianHelper.makeInitData(7 days)
+        );
+      }
+    }
+  }
+
   function __deploy(address deployer) public override returns (address) {
     addImmutableCuts(deployer);
 

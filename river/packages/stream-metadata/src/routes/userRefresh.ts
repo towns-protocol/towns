@@ -10,6 +10,7 @@ const paramsSchema = z.object({
 	}),
 })
 
+// This route handler validates the refresh request and quickly returns a 200 response.
 export async function userRefresh(request: FastifyRequest, reply: FastifyReply) {
 	const logger = request.log.child({ name: userRefresh.name })
 
@@ -21,23 +22,33 @@ export async function userRefresh(request: FastifyRequest, reply: FastifyReply) 
 		return reply.code(400).send({ error: 'Bad Request', message: errorMessage })
 	}
 
-	const { userId } = parseResult.data
+	return reply.code(200).send({ ok: true })
+}
+
+// This onResponse hook does the actual heavy lifting of invalidating the CloudFront cache.
+export async function userRefreshOnResponse(
+	request: FastifyRequest,
+	reply: FastifyReply,
+	done: () => void,
+) {
+	const logger = request.log.child({ name: userRefreshOnResponse.name })
+
+	const { userId } = paramsSchema.parse(request.params)
+
 	logger.info({ userId }, 'Refreshing user')
 
 	try {
 		const path = `/user/${userId}/image`
-
-		// Refresh CloudFront cache
 		await CloudfrontManager.createCloudfrontInvalidation({ path, logger })
-
-		return reply.code(200).send({ ok: true })
 	} catch (error) {
 		logger.error(
 			{
 				error,
+				userId,
 			},
 			'Failed to refresh user',
 		)
-		return reply.code(500).send('Failed to refresh user')
 	}
+
+	done()
 }

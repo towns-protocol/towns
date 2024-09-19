@@ -1142,6 +1142,12 @@ export default [
         "internalType": "address"
       },
       {
+        "name": "operator",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
         "name": "url",
         "type": "string",
         "indexed": false,

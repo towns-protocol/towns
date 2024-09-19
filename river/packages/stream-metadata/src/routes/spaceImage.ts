@@ -40,7 +40,7 @@ export async function fetchSpaceImage(request: FastifyRequest, reply: FastifyRep
 	const { spaceAddress } = parseResult.data
 	logger.info({ spaceAddress }, 'Fetching space image')
 
-	let stream: StreamStateView | undefined
+	let stream: StreamStateView
 	try {
 		const streamId = makeStreamId(StreamPrefix.Space, spaceAddress)
 		stream = await getStream(logger, streamId)
@@ -52,13 +52,6 @@ export async function fetchSpaceImage(request: FastifyRequest, reply: FastifyRep
 			},
 			'Failed to get stream',
 		)
-		return reply
-			.code(404)
-			.header('Cache-Control', CACHE_CONTROL['4xx'])
-			.send('Stream not found')
-	}
-
-	if (!stream) {
 		return reply
 			.code(404)
 			.header('Cache-Control', CACHE_CONTROL['4xx'])

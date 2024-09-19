@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Resource Usage</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+      }
+      .container {
+        width: 80%;
+        margin: 0 auto;
+      }
+      .stats {
+        margin-top: 20px;
+      }
+      #loading {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>System Resources</h1>
+      <div class="stats">
+        <strong>Total Memory:</strong> {{.TotalMemory}} bytes, or
+        <span class="formatBytes">{{.TotalMemory}}</span><br />
+        <strong>Used Memory:</strong> {{.UsedMemory}} bytes, or
+        <span class="formatBytes">{{.UsedMemory}}</span><br />
+        <strong>Available Memory:</strong> {{.AvailableMemory}} bytes, or
+        <span class="formatBytes">{{.AvailableMemory}}</span><br />
+        <br />
+        <strong>CPU Usage</strong> {{.CpuUsagePercent | printf "%.2f" }}%<br />
+        <br />
+      </div>
+      <h1>Node Process Resource Usage</h1>
+      <div class="stats">
+        <strong>Memory Allocated:</strong> {{.MemAlloc}} bytes, or
+        <span class="formatBytes">{{.MemAlloc}}</span><br />
+        <strong>Total Memory Allocated:</strong> {{.TotalAlloc}} bytes, or
+        <span class="formatBytes">{{.TotalAlloc}}</span><br />
+        <strong>Memory Sys:</strong> {{.Sys}} bytes, or
+        <span class="formatBytes">{{.Sys}}</span><br />
+        <strong>Number of Live Objects:</strong> {{.NumLiveObjs}}<br />
+        <strong>Number of Goroutines:</strong> {{.NumGoroutines}}<br />
+      </div>
+      <form onsubmit="return triggerGC()">
+        <button type="submit">Trigger GC</button>
+      </form>
+      <div id="loading">Performing garbage collection...</div>
+    </div>
+    <script>
+      function formatBytes(bytes) {
+        let amt = +bytes;
+        if (!amt || amt < 1) return "0 Bytes";
+        const sizes = ["PB", "TB", "GB", "MB", "KB", "B"];
+        while (amt >= 1024) {
+          sizes.pop();
+          amt /= 1024;
+        }
+        return `${parseFloat(amt).toFixed(2)} ${sizes.pop()}`;
+      }
+
+      const unformatted = document.querySelectorAll(".formatBytes");
+      unformatted.forEach((element) => {
+        element.textContent = formatBytes(element.textContent);
+      });
+
+      function triggerGC() {
+        document.getElementById("loading").style.display = "block";
+        fetch("?gcnow=true")
+          .then((response) => response.text())
+          .then((html) => {
+            document.open();
+            document.write(html);
+            document.close();
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            document.getElementById("loading").style.display = "none";
+          });
+        return false; // Prevent default form submission
+      }
+    </script>
+  </body>
+</html>

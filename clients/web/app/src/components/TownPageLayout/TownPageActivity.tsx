@@ -37,7 +37,7 @@ export const TownPageActivity = (props: { townId: string }) => {
                 ...event,
                 icon: 'member' as IconName,
                 type: event.type,
-                body: `Purchased membership and joined`,
+                body: `Joined the town`,
             })),
             ...(townStats?.latestCreatedChannels || []).map((event) => ({
                 ...event,

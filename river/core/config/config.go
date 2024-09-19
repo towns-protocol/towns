@@ -147,9 +147,8 @@ type Config struct {
 	XChainBlockchains []uint64
 
 	// extra xChain configuration
-	EntitlementContract           ContractConfig `mapstructure:"entitlement_contract"`
-	TestEntitlementContract       ContractConfig `mapstructure:"test_contract"`
-	TestCustomEntitlementContract ContractConfig `mapstructure:"test_custom_entitlement_contract"`
+	EntitlementContract     ContractConfig `mapstructure:"entitlement_contract"`
+	TestEntitlementContract ContractConfig `mapstructure:"test_contract"`
 
 	// History indicates how far back xchain must look for entitlement check requests after start
 	History time.Duration
@@ -420,10 +419,6 @@ func (c *Config) GetWalletLinkContractAddress() common.Address {
 
 func (c *Config) GetTestEntitlementContractAddress() common.Address {
 	return c.TestEntitlementContract.Address
-}
-
-func (c *Config) GetTestCustomEntitlementContractAddress() common.Address {
-	return c.TestCustomEntitlementContract.Address
 }
 
 func (c *Config) Init() error {

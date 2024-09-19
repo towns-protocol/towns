@@ -130,7 +130,7 @@ export interface INodeRegistryInterface extends utils.Interface {
   ): Result;
 
   events: {
-    "NodeAdded(address,string,uint8)": EventFragment;
+    "NodeAdded(address,address,string,uint8)": EventFragment;
     "NodeRemoved(address)": EventFragment;
     "NodeStatusUpdated(address,uint8)": EventFragment;
     "NodeUrlUpdated(address,string)": EventFragment;
@@ -144,11 +144,12 @@ export interface INodeRegistryInterface extends utils.Interface {
 
 export interface NodeAddedEventObject {
   nodeAddress: string;
+  operator: string;
   url: string;
   status: number;
 }
 export type NodeAddedEvent = TypedEvent<
-  [string, string, number],
+  [string, string, string, number],
   NodeAddedEventObject
 >;
 
@@ -320,13 +321,15 @@ export interface INodeRegistry extends BaseContract {
   };
 
   filters: {
-    "NodeAdded(address,string,uint8)"(
+    "NodeAdded(address,address,string,uint8)"(
       nodeAddress?: PromiseOrValue<string> | null,
+      operator?: PromiseOrValue<string> | null,
       url?: null,
       status?: null
     ): NodeAddedEventFilter;
     NodeAdded(
       nodeAddress?: PromiseOrValue<string> | null,
+      operator?: PromiseOrValue<string> | null,
       url?: null,
       status?: null
     ): NodeAddedEventFilter;

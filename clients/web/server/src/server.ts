@@ -141,7 +141,7 @@ async function updateTemplate({
     const info: Record<string, string> = {
         title: 'Towns',
         description: 'A new way to connect with your community',
-        image: 'https://app.towns.com/favicon.png',
+        image: '/og-image.jpg',
     }
 
     let townData: TownData | undefined

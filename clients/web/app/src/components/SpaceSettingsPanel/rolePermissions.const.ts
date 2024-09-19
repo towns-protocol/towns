@@ -7,11 +7,11 @@ export const channelPermissionDescriptions: {
     }
 } = {
     [Permission.Read]: {
-        name: 'Read messages',
+        name: 'Read',
         description: 'Allow members to read messages.',
     },
     [Permission.Write]: {
-        name: 'Send messages',
+        name: 'Write',
         description: 'Allow members to send messages.',
     },
     [Permission.React]: {
@@ -19,11 +19,11 @@ export const channelPermissionDescriptions: {
         description: 'Allow members to emoji react to messages.',
     },
     [Permission.Redact]: {
-        name: 'Remove messages',
+        name: 'Delete',
         description: 'Allow members to remove messages.',
     },
     [Permission.PinMessage]: {
-        name: 'Pin messages',
+        name: 'Pin',
         description: 'Allow members to pin messages to the channel.',
     },
 } as const

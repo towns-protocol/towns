@@ -182,10 +182,18 @@ func (n *nodeRegistryImpl) OnNodeAdded(ctx context.Context, event types.Log) {
 
 	if _, exists := n.nodes[e.NodeAddress]; !exists {
 		// TODO: add operator to NodeAdded event
-		nodeRecord := n.addNode(e.NodeAddress, e.Url, e.Status, common.Address{})
-		log.Info("NodeRegistry: NodeAdded", "node", nodeRecord.address, "blockNum", event.BlockNumber)
+		nodeRecord := n.addNode(e.NodeAddress, e.Url, e.Status, e.Operator)
+		log.Info(
+			"NodeRegistry: NodeAdded",
+			"node",
+			nodeRecord.address,
+			"blockNum",
+			event.BlockNumber,
+			"operator",
+			e.Operator,
+		)
 	} else {
-		log.Error("NodeRegistry: Got NodeAdded for node that already exists in NodeRegistry", "blockNum", event.BlockNumber, "node", e.NodeAddress, "nodes", n.nodes)
+		log.Error("NodeRegistry: Got NodeAdded for node that already exists in NodeRegistry", "blockNum", event.BlockNumber, "node", e.NodeAddress, "operator", e.Operator, "nodes", n.nodes)
 	}
 }
 

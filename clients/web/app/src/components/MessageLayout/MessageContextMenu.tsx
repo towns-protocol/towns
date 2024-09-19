@@ -15,6 +15,7 @@ import { useRouteParams } from 'hooks/useRouteParams'
 import { ShortcutAction, ShortcutActions } from 'data/shortcuts'
 import { ShortcutKeys } from '@components/Shortcuts/ShortcutKeys'
 import { TooltipContext } from 'ui/components/Tooltip/TooltipRenderer'
+import { isInputFocused } from '@components/RichTextPlate/utils/helpers'
 import { useCreateUnreadMarker } from './hooks/useCreateUnreadMarker'
 import { DeleteMessagePrompt } from './DeleteMessagePrompt'
 
@@ -104,7 +105,7 @@ export const MessageContextMenu = (props: Props) => {
                 setDeletePrompt('redaction')
             }
         }, [channelId, eventId, setDeletePrompt]),
-        { enableOnContentEditable: false },
+        { enableOnContentEditable: false, enabled: !isInputFocused() },
         [],
     )
 
@@ -128,7 +129,7 @@ export const MessageContextMenu = (props: Props) => {
                 timelineContext?.timelineActions?.onSelectEditingMessage(eventId)
             }
         }, [eventId, props.canEdit, timelineContext?.timelineActions]),
-        { enableOnContentEditable: false },
+        { enableOnContentEditable: false, enabled: !isInputFocused() },
         [],
     )
     const onReply = useShortcut(
@@ -142,7 +143,7 @@ export const MessageContextMenu = (props: Props) => {
                 }
             }
         }, [canReplyInline, eventId, onOpenMessageThread, setReplyToEventId, props.canReply]),
-        { enableOnContentEditable: false },
+        { enableOnContentEditable: false, enabled: !isInputFocused() },
         [],
     )
 
@@ -166,7 +167,7 @@ export const MessageContextMenu = (props: Props) => {
                 copy(link)
             }
         }, [channelId, copy, eventId, spaceId, threadParentId]),
-        { enableOnContentEditable: false },
+        { enableOnContentEditable: false, enabled: !isInputFocused() },
         [],
     )
 
@@ -178,7 +179,7 @@ export const MessageContextMenu = (props: Props) => {
                 void sendReadReceipt(unreadMarker, true)
             }
         }, [markAsUnread, sendReadReceipt]),
-        { enableOnContentEditable: false },
+        { enableOnContentEditable: false, enabled: !isInputFocused() },
         [],
     )
 

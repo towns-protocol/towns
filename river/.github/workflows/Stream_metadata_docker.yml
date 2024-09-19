@@ -45,8 +45,15 @@ jobs:
                   REGISTRY_ALIAS: h5v6m2x1
                   ECR_REPOSITORY: river-stream-metadata
               run: |
-                  docker build -t $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:latest . -f ./packages/stream-metadata/Dockerfile
+                  docker build \
+                    --build-arg GIT_SHA=${{ github.sha }} \
+                    -f ./packages/stream-metadata/Dockerfile \
+                    -t $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:latest \
+                    -t $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:${{ github.sha }} \
+                    .
+
                   docker push $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:latest
+                  docker push $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:${{ github.sha }}
 
             # If action failed, we send a slack notification
             - name: Slack notification

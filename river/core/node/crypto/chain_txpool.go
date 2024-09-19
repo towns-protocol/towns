@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"errors"
+	"log/slog"
 	"math/big"
 	"strings"
 	"sync"
@@ -16,13 +17,14 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+
 	"github.com/river-build/river/core/config"
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/infra"
 	. "github.com/river-build/river/core/node/protocol"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
 )
 
 type (
@@ -134,8 +136,10 @@ type (
 	}
 )
 
-var _ TransactionPool = (*transactionPool)(nil)
-var _ TransactionPoolPendingTransaction = (*txPoolPendingTransaction)(nil)
+var (
+	_ TransactionPool                   = (*transactionPool)(nil)
+	_ TransactionPoolPendingTransaction = (*txPoolPendingTransaction)(nil)
+)
 
 func newPendingTransactionPool(
 	monitor ChainMonitor,
@@ -227,6 +231,64 @@ func (pool *pendingTransactionPool) run() {
 	}
 }
 
+func (pool *pendingTransactionPool) closeTx(
+	log *slog.Logger,
+	ptx *txPoolPendingTransaction,
+	receipt *types.Receipt,
+	txHash common.Hash,
+) {
+	pool.pendingTxs.Delete(ptx.tx.Nonce())
+	if (txHash != common.Hash{}) {
+		ptx.executedHash.Store(&txHash)
+	}
+	if receipt != nil {
+		ptx.listener <- receipt
+	}
+	close(ptx.listener)
+
+	status := "failed"
+	if receipt != nil {
+		if receipt.Status == types.ReceiptStatusSuccessful {
+			status = "succeeded"
+		}
+
+		log.Debug(
+			"TxPool: Transaction DONE",
+			"txHash", txHash,
+			"chain", pool.chainID,
+			"name", ptx.name,
+			"from", ptx.txOpts.From,
+			"to", ptx.tx.To(),
+			"nonce", ptx.tx.Nonce(),
+			"succeeded", receipt.Status == types.ReceiptStatusSuccessful,
+			"cumulativeGasUsed", receipt.CumulativeGasUsed,
+			"gasUsed", receipt.GasUsed,
+			"effectiveGasPrice", receipt.EffectiveGasPrice,
+			"blockHash", receipt.BlockHash,
+			"blockNumber", receipt.BlockNumber,
+		)
+	} else {
+		status = "canceled"
+		log.Debug(
+			"TxPool: Transaction DONE",
+			"txHash", txHash,
+			"chain", pool.chainID,
+			"name", ptx.name,
+			"from", ptx.txOpts.From,
+			"to", ptx.tx.To(),
+			"nonce", ptx.tx.Nonce(),
+			"succeeded", false,
+		)
+	}
+
+	pool.pendingTxCount.Add(-1)
+	pool.processedTxCount.Add(1)
+	pool.transactionTotalInclusionDuration.Observe(time.Since(ptx.firstSubmit).Seconds())
+	pool.transactionInclusionDuration.Observe(time.Since(ptx.lastSubmit).Seconds())
+	pool.transactionsProcessed.With(prometheus.Labels{"status": status}).Inc()
+	pool.transactionsPending.Add(-1)
+}
+
 func (pool *pendingTransactionPool) checkPendingTransactions(ctx context.Context, head *types.Header) {
 	// Try lock to have only one invocation at a time.
 	if !pool.onCheckPendingTransactionsMutex.TryLock() {
@@ -260,39 +322,7 @@ func (pool *pendingTransactionPool) checkPendingTransactions(ctx context.Context
 				txHash := ptx.txHashes[i]
 				receipt, err := pool.client.TransactionReceipt(ctx, txHash)
 				if receipt != nil {
-					pool.pendingTxs.Delete(ptx.tx.Nonce())
-					ptx.executedHash.Store(&txHash)
-					ptx.listener <- receipt
-					close(ptx.listener)
-
-					status := "failed"
-					if receipt.Status == types.ReceiptStatusSuccessful {
-						status = "succeeded"
-					}
-
-					log.Debug(
-						"TxPool: Transaction DONE",
-						"txHash", txHash,
-						"chain", pool.chainID,
-						"name", ptx.name,
-						"from", ptx.txOpts.From,
-						"to", ptx.tx.To(),
-						"nonce", ptx.tx.Nonce(),
-						"succeeded", receipt.Status == types.ReceiptStatusSuccessful,
-						"cumulativeGasUsed", receipt.CumulativeGasUsed,
-						"gasUsed", receipt.GasUsed,
-						"effectiveGasPrice", receipt.EffectiveGasPrice,
-						"blockHash", receipt.BlockHash,
-						"blockNumber", receipt.BlockNumber,
-					)
-
-					pool.pendingTxCount.Add(-1)
-					pool.processedTxCount.Add(1)
-					pool.transactionTotalInclusionDuration.Observe(time.Since(ptx.firstSubmit).Seconds())
-					pool.transactionInclusionDuration.Observe(time.Since(ptx.lastSubmit).Seconds())
-					pool.transactionsProcessed.With(prometheus.Labels{"status": status}).Inc()
-					pool.transactionsPending.Add(-1)
-
+					pool.closeTx(log, ptx, receipt, txHash)
 					return true
 				}
 				if errors.Is(err, ethereum.NotFound) {
@@ -317,50 +347,53 @@ func (pool *pendingTransactionPool) checkPendingTransactions(ctx context.Context
 				pool.pendingTxs.Delete(nonce)
 				close(ptx.listener) // this will return an error that the receipt wasn't available when waiting for it
 			}
-		} else { // determine if tx is eligible for resubmit
-			if pool.replacePolicy.Eligible(head, ptx.lastSubmit, ptx.tx) {
-				ptx.txOpts.GasPrice, ptx.txOpts.GasFeeCap, ptx.txOpts.GasTipCap =
-					pool.pricePolicy.Reprice(head, ptx.tx)
+		} else if ptx.txOpts.Context != nil && ptx.txOpts.Context.Err() != nil {
+			log.Debug("replacement transaction canceled", "txHash", ptx.tx.Hash(), "err", ptx.txOpts.Context.Err())
+			pool.closeTx(log, ptx, nil, common.Hash{})
+		} else if pool.replacePolicy.Eligible(head, ptx.lastSubmit, ptx.tx) { // determine if tx is eligible for resubmit
+			ptx.txOpts.GasPrice, ptx.txOpts.GasFeeCap, ptx.txOpts.GasTipCap = pool.pricePolicy.Reprice(head, ptx.tx)
 
-				ptx.txOpts.GasLimit = 0 // force re-simulation to determine new gas limit
+			ptx.txOpts.GasLimit = 0 // force re-simulation to determine new gas limit
 
-				tx, err := ptx.resubmit(ptx.txOpts)
-				if err != nil {
-					log.Warn("unable to create replacement transaction", "txHash", ptx.tx.Hash(), "err", err)
-					return true
-				}
+			tx, err := ptx.resubmit(ptx.txOpts)
+			if err != nil {
+				log.Warn("unable to create replacement transaction", "txHash", ptx.tx.Hash(), "err", err)
+				return true
+			}
 
-				if err := pool.client.SendTransaction(ctx, tx); err == nil {
-					log.Debug(
-						"TxPool: Transaction REPLACED",
-						"old", ptx.tx.Hash(),
-						"txHash", tx.Hash(),
-						"chain", pool.chainID,
-						"name", ptx.name,
-						"nonce", tx.Nonce(),
-						"from", ptx.txOpts.From,
-						"to", tx.To(),
-						"gasPrice", tx.GasPrice(),
-						"gasFeeCap", tx.GasFeeCap(),
-						"gasTipCap", tx.GasTipCap(),
-					)
+			if err := pool.client.SendTransaction(ctx, tx); err == nil {
+				log.Debug(
+					"TxPool: Transaction REPLACED",
+					"old", ptx.tx.Hash(),
+					"txHash", tx.Hash(),
+					"chain", pool.chainID,
+					"name", ptx.name,
+					"nonce", tx.Nonce(),
+					"from", ptx.txOpts.From,
+					"to", tx.To(),
+					"gasPrice", tx.GasPrice(),
+					"gasFeeCap", tx.GasFeeCap(),
+					"gasTipCap", tx.GasTipCap(),
+				)
 
-					ptx.tx = tx
-					ptx.txHashes = append(ptx.txHashes, tx.Hash())
-					ptx.lastSubmit = time.Now()
+				ptx.tx = tx
+				ptx.txHashes = append(ptx.txHashes, tx.Hash())
+				ptx.lastSubmit = time.Now()
 
-					funcSelector := funcSelectorFromTxForMetrics(tx)
-					gasCap, _ := tx.GasFeeCap().Float64()
-					tipCap, _ := tx.GasTipCap().Float64()
+				funcSelector := funcSelectorFromTxForMetrics(tx)
+				gasCap, _ := tx.GasFeeCap().Float64()
+				tipCap, _ := tx.GasTipCap().Float64()
 
-					pool.replacementsSent.Add(1)
-					pool.lastReplacementSent.Store(ptx.lastSubmit.Unix())
-					pool.transactionsReplaced.With(prometheus.Labels{"func_selector": funcSelector}).Add(1)
-					pool.transactionGasCap.With(prometheus.Labels{"replacement": "false"}).Set(gasCap)
-					pool.transactionGasTip.With(prometheus.Labels{"replacement": "false"}).Set(tipCap)
-				} else {
-					log.Error("unable to replace transaction", "txHash", tx.Hash(), "err", err)
-				}
+				pool.replacementsSent.Add(1)
+				pool.lastReplacementSent.Store(ptx.lastSubmit.Unix())
+				pool.transactionsReplaced.With(prometheus.Labels{"func_selector": funcSelector}).Add(1)
+				pool.transactionGasCap.With(prometheus.Labels{"replacement": "false"}).Set(gasCap)
+				pool.transactionGasTip.With(prometheus.Labels{"replacement": "false"}).Set(tipCap)
+			} else if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+				log.Debug("replacement transaction canceled", "txHash", tx.Hash(), "err", err)
+				pool.closeTx(log, ptx, nil, common.Hash{})
+			} else {
+				log.Error("unable to replace transaction", "txHash", tx.Hash(), "err", err)
 			}
 		}
 
@@ -536,6 +569,7 @@ func (r *transactionPool) Submit(
 
 	return r.submitNoLock(ctx, name, createTx, true)
 }
+
 func (r *transactionPool) submitNoLock(
 	ctx context.Context,
 	name string,

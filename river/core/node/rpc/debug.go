@@ -72,7 +72,7 @@ func (s *Service) registerDebugHandlers(enableDebugEndpoints bool, cfg config.De
 	}
 
 	if cfg.Memory || enableDebugEndpoints {
-		handler.HandleFunc(mux, "/debug/memory", MemoryHandler)
+		handler.HandleFunc(mux, "/debug/stats", StatsHandler)
 	}
 
 	if cfg.PProf || enableDebugEndpoints {

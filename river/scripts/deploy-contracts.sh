@@ -64,7 +64,6 @@ make interact-any-local context=$RIVER_ENV rpc=base_anvil contract=InteractPostD
 make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=utils contract=DeployMember
 make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=utils contract=DeployMockNFT
 make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=utils contract=DeployEntitlementGatedExample
-make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=utils contract=DeployCustomEntitlementExample
 
 # River Registry
 make deploy-any-local context=$RIVER_ENV rpc=river_anvil type=diamonds contract=DeployRiverRegistry

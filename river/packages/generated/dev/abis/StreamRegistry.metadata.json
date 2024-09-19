@@ -747,7 +747,7 @@
       "ds-test/=node_modules/ds-test/src/",
       "forge-std/=node_modules/forge-std/src/",
       "hardhat-deploy/=node_modules/hardhat-deploy/",
-      "solady/=node_modules/solady/"
+      "solady/=node_modules/solady/src/"
     ],
     "optimizer": {
       "enabled": true,
@@ -773,10 +773,10 @@
       "license": "MIT"
     },
     "contracts/src/river/registry/facets/stream/StreamRegistry.sol": {
-      "keccak256": "0xfb8130f9286df026d67d6332b6e40a02d4a3ee4420d6f276f29ce4f2ed9d6831",
+      "keccak256": "0x1946975d3cc0eb2dadf47dfb484ef68013c6b3ca0490c8dd4ce66088d9b61baa",
       "urls": [
-        "bzz-raw://356743a3243de655d599df8d1f4575ac1423e2adb1807c029a393f39f0c652fc",
-        "dweb:/ipfs/QmbpdmhGwLnyFnjvE82cMpT882i2hVksYSTNpfME8gGe1t"
+        "bzz-raw://489851e15a171224b9500e06e07825a1a310436a71be9f3339698b4907aa2712",
+        "dweb:/ipfs/Qmf27U51bn4CvH5ZEhW9F6AjrA9HnMVX5FHHfv8aweQG4C"
       ],
       "license": "MIT"
     },
