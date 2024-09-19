@@ -7,14 +7,12 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
-
-	"github.com/river-build/river/core/node/dlog"
-	"github.com/river-build/river/core/node/storage"
-
 	. "github.com/river-build/river/core/node/base"
+	"github.com/river-build/river/core/node/dlog"
 	. "github.com/river-build/river/core/node/nodes"
 	. "github.com/river-build/river/core/node/protocol"
 	. "github.com/river-build/river/core/node/shared"
+	"github.com/river-build/river/core/node/storage"
 
 	mapset "github.com/deckarep/golang-set/v2"
 )
@@ -134,6 +132,77 @@ func (s *streamImpl) ApplyMiniblock(ctx context.Context, miniblock *MiniblockInf
 	return s.applyMiniblockImplNoLock(ctx, miniblock)
 }
 
+// importMiniblock imports the given miniblocks.
+func (s *streamImpl) importMiniblocks(
+	ctx context.Context,
+	miniblocks []*MiniblockInfo,
+) error {
+	if len(miniblocks) == 0 {
+		return nil
+	}
+
+	blocksToWriteToStorage := make([]*storage.MiniblockData, len(miniblocks))
+	for i, miniblock := range miniblocks {
+		bytes, err := miniblock.ToBytes()
+		if err != nil {
+			return err
+		}
+
+		blocksToWriteToStorage[i] = &storage.MiniblockData{
+			StreamID:      s.streamId,
+			Number:        miniblock.Num,
+			MiniBlockInfo: bytes,
+		}
+	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if s.view == nil {
+		importFromGenesis := miniblocks[0].header().MiniblockNum == 0
+		if importFromGenesis {
+			if err := s.initFromGenesis(ctx, miniblocks[0], blocksToWriteToStorage[0]); err != nil {
+				return err
+			}
+			miniblocks = miniblocks[1:]
+			blocksToWriteToStorage = blocksToWriteToStorage[1:]
+		}
+
+		if err := s.loadInternal(ctx); err != nil {
+			return err
+		}
+	}
+
+	// apply mini-blocks one by one on view, backup existing view in case
+	// applying/writing miniblocks fails rollback view.
+	var (
+		err  error
+		view = s.view
+	)
+
+	for _, miniblock := range miniblocks {
+		if miniblock.Num <= view.LastBlock().Num {
+			blocksToWriteToStorage = blocksToWriteToStorage[1:]
+			continue
+		}
+
+		view, err = view.copyAndApplyBlock(miniblock, s.params.ChainConfig, true)
+		if err != nil {
+			return err
+		}
+	}
+
+	err = s.params.Storage.ImportMiniblocks(ctx, blocksToWriteToStorage)
+	if err != nil {
+		return err
+	}
+
+	s.view = view
+
+	// TODO: inform subscribes with rate throttling?
+	return nil
+}
+
 func (s *streamImpl) applyMiniblockImplNoLock(ctx context.Context, miniblock *MiniblockInfo) error {
 	// Check if the miniblock is already applied.
 	if miniblock.Num <= s.view.LastBlock().Num {
@@ -144,7 +213,7 @@ func (s *streamImpl) applyMiniblockImplNoLock(ctx context.Context, miniblock *Mi
 	// TODO: tests for this.
 
 	// Lets see if this miniblock can be applied.
-	newSV, err := s.view.copyAndApplyBlock(miniblock, s.params.ChainConfig)
+	newSV, err := s.view.copyAndApplyBlock(miniblock, s.params.ChainConfig, false)
 	if err != nil {
 		return err
 	}
@@ -215,6 +284,47 @@ func (s *streamImpl) PromoteCandidate(ctx context.Context, mbHash common.Hash, m
 	}
 
 	return s.applyMiniblockImplNoLock(ctx, miniblock)
+}
+
+func (s *streamImpl) initFromGenesis(
+	ctx context.Context,
+	genesisInfo *MiniblockInfo,
+	genesis *storage.MiniblockData,
+) error {
+	if genesis.Number != 0 {
+		return RiverError(Err_BAD_BLOCK, "init from genesis must be from block with num 0")
+	}
+
+	_, registeredGenesisHash, _, err := s.params.Registry.GetStreamWithGenesis(ctx, genesis.StreamID)
+	if err != nil {
+		return err
+	}
+
+	if registeredGenesisHash != genesisInfo.Hash {
+		return RiverError(Err_BAD_BLOCK, "Invalid genesis block hash").
+			Tags("registryHash", registeredGenesisHash, "blockHash", genesisInfo.Hash).
+			Func("initFromGenesis")
+	}
+
+	if err := s.params.Storage.CreateStreamStorage(ctx, s.streamId, genesis.MiniBlockInfo); err != nil {
+		if AsRiverError(err).Code != Err_ALREADY_EXISTS {
+			return err
+		}
+	}
+
+	view, err := MakeStreamView(
+		ctx,
+		&storage.ReadStreamFromLastSnapshotResult{
+			StartMiniblockNumber: 0,
+			Miniblocks:           [][]byte{genesis.MiniBlockInfo},
+		},
+	)
+	if err != nil {
+		return err
+	}
+	s.view = view
+
+	return nil
 }
 
 func (s *streamImpl) initFromBlockchain(ctx context.Context) error {

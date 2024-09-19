@@ -36,7 +36,7 @@ export async function fetchUserProfileImage(request: FastifyRequest, reply: Fast
 	const { userId } = parseResult.data
 
 	logger.info({ userId }, 'Fetching user image')
-	let stream: StreamStateView | undefined
+	let stream: StreamStateView
 	try {
 		const userMetadataStreamId = makeStreamId(StreamPrefix.UserMetadata, userId)
 		stream = await getStream(logger, userMetadataStreamId)

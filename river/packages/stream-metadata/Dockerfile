@@ -44,4 +44,10 @@ COPY --from=builder /river/packages/stream-metadata/dist /river/packages/stream-
 # run the service
 WORKDIR /river/packages/stream-metadata
 ENV NODE_ENV=production 
+
+ARG GIT_SHA
+
+ENV DD_GIT_REPOSITORY_URL="https://github.com/river-build/river" \
+    DD_GIT_COMMIT_SHA=${GIT_SHA}
+
 CMD ["node", "--enable-source-maps", "./dist/node_esbuild.cjs"]

@@ -34,7 +34,7 @@ contract NodeRegistry is INodeRegistry, RegistryModifiers {
     ds.nodes.add(nodeAddress); // TODO: remove this line
     ds.nodeByAddress[nodeAddress] = newNode;
 
-    emit NodeAdded(nodeAddress, url, status);
+    emit NodeAdded(nodeAddress, msg.sender, url, status);
   }
 
   function removeNode(

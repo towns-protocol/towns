@@ -69,28 +69,19 @@ export async function fetchSpaceMetadata(request: FastifyRequest, reply: Fastify
 	}
 
 	// Normalize the contractUri for case-insensitive comparison and handle empty string
-	const normalizedContractUri = spaceInfo.uri.toLowerCase().trim() || ''
 	const defaultSpaceTokenUri = `${spaceMetadataBaseUrl}/${spaceAddress}`
 
-	// handle the case where the space uses our default stream-metadata service
-	// or the contractUri is not set or is an empty string
-	if (!normalizedContractUri || normalizedContractUri === defaultSpaceTokenUri.toLowerCase()) {
-		const image = `${defaultSpaceTokenUri}/image`
-		const spaceMetadata: SpaceMetadataResponse = {
-			name: spaceInfo.name,
-			description: getSpaceDecription(spaceInfo),
-			image,
-		}
-
-		return reply
-			.header('Content-Type', 'application/json')
-			.header('Cache-Control', CACHE_CONTROL[200])
-			.send(spaceMetadata)
+	const image = `${defaultSpaceTokenUri}/image`
+	const spaceMetadata: SpaceMetadataResponse = {
+		name: spaceInfo.name,
+		description: getSpaceDecription(spaceInfo),
+		image,
 	}
 
-	// Not using the default space image service
-	// redirect to the space contract's uri
-	return reply.header('Cache-Control', CACHE_CONTROL[307]).redirect(spaceInfo.uri)
+	return reply
+		.header('Content-Type', 'application/json')
+		.header('Cache-Control', CACHE_CONTROL[200])
+		.send(spaceMetadata)
 }
 
 function getSpaceDecription({ shortDescription, longDescription }: SpaceInfo): string {

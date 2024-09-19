@@ -29,7 +29,7 @@ contract NodeRegistryTest is RiverRegistryBaseSetup, INodeRegistryBase {
 
     vm.prank(nodeOperator);
     vm.expectEmit(diamond);
-    emit NodeAdded(node, url, NodeStatus.Operational);
+    emit NodeAdded(node, nodeOperator, url, NodeStatus.Operational);
     nodeRegistry.registerNode(node, url, NodeStatus.Operational);
 
     Node memory registered = nodeRegistry.getNode(node);

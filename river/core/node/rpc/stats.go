@@ -3,12 +3,16 @@ package rpc
 import (
 	"net/http"
 	"runtime"
+	"time"
+
+	psutilCpu "github.com/shirou/gopsutil/cpu"
+	psutilMem "github.com/shirou/gopsutil/mem"
 
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/rpc/render"
 )
 
-func MemoryHandler(w http.ResponseWriter, r *http.Request) {
+func StatsHandler(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Query().Get("gcnow") == "true" {
 		runtime.GC()
 	}
@@ -21,12 +25,22 @@ func MemoryHandler(w http.ResponseWriter, r *http.Request) {
 
 	runtime.ReadMemStats(&m)
 
-	reply := render.MemStatsData{
-		MemAlloc:      m.Alloc,
-		TotalAlloc:    m.TotalAlloc,
-		Sys:           m.Sys,
-		NumLiveObjs:   m.Mallocs - m.Frees,
-		NumGoroutines: numGoroutines,
+	// Get memory stats
+	v, _ := psutilMem.VirtualMemory()
+
+	// Get CPU stats
+	cpuPercentages, _ := psutilCpu.Percent(time.Second, false)
+
+	reply := render.SystemStatsData{
+		MemAlloc:        m.Alloc,
+		TotalAlloc:      m.TotalAlloc,
+		Sys:             m.Sys,
+		NumLiveObjs:     m.Mallocs - m.Frees,
+		NumGoroutines:   numGoroutines,
+		TotalMemory:     v.Total,
+		UsedMemory:      v.Used,
+		AvailableMemory: v.Available,
+		CpuUsagePercent: cpuPercentages[0],
 	}
 
 	output, err := render.Execute(&reply)

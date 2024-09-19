@@ -234,17 +234,15 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     uint256 start,
     uint256 stop
   ) external view returns (StreamWithId[] memory, bool) {
-    require(start < stop, RiverRegistryErrors.BAD_ARG);
+    if (start >= stop) revert(RiverRegistryErrors.BAD_ARG);
 
     uint256 streamCount = ds.streams.length();
+    uint256 maxStreamIndex = stop > streamCount ? streamCount : stop;
+    uint256 count = maxStreamIndex > start ? maxStreamIndex - start : 0;
 
-    uint256 maxStreamIndex = stop;
-    if (streamCount < stop) {
-      maxStreamIndex = streamCount;
-    }
-    StreamWithId[] memory streams = new StreamWithId[](maxStreamIndex - start);
+    StreamWithId[] memory streams = new StreamWithId[](count);
 
-    for (uint256 i = 0; start + i < maxStreamIndex; ++i) {
+    for (uint256 i = 0; i < count; ++i) {
       bytes32 id = ds.streams.at(start + i);
       streams[i] = StreamWithId({id: id, stream: ds.streamById[id]});
     }

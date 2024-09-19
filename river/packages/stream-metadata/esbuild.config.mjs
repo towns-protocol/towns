@@ -10,6 +10,18 @@ build({
 		".ts": "ts",
 		".wasm": "file",
 	},
+	external: [
+		// esbuild cannot bundle native modules
+		"@datadog/native-metrics",
+
+		// required if you use profiling
+		"@datadog/pprof",
+
+		// required if you encounter graphql errors during the build step
+		"graphql/language/visitor",
+		"graphql/language/printer",
+		"graphql/utilities",
+	],
 	outdir: "dist",
 	outExtension: { ".js": ".cjs" }, // Ensure the output file has .cjs extension
 	platform: "node",

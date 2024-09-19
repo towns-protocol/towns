@@ -35,19 +35,10 @@ function makeStreamRpcClient(logger: FastifyBaseLogger, url: string): StreamRpcC
 
 async function getStreamClient(logger: FastifyBaseLogger, streamId: `0x${string}`) {
 	const node = await getNodeForStream(logger, streamId)
-	let url = node?.url
-	if (!clients.has(url)) {
-		const client = makeStreamRpcClient(logger, url)
-		clients.set(client.url!, client)
-		url = client.url!
-	}
-	logger.info({ url }, 'client connected to node')
+	const client = clients.get(node.url) || makeStreamRpcClient(logger, node.url)
+	clients.set(node.url, client)
 
-	const client = clients.get(url)
-	if (!client) {
-		logger.error({ url }, 'Failed to get client for url')
-		throw new Error('Failed to get client for url')
-	}
+	logger.info({ url: node.url }, 'client connected to node')
 
 	return { client, lastMiniblockNum: node.lastMiniblockNum }
 }
@@ -158,14 +149,7 @@ export async function getStream(
 	logger: FastifyBaseLogger,
 	streamId: string,
 ): Promise<StreamStateView> {
-	const result = await getStreamClient(logger, `0x${streamId}`)
-	const client = result.client
-	const lastMiniblockNum = result.lastMiniblockNum
-
-	if (!client) {
-		logger.error({ streamId }, 'Failed to get client for stream')
-		throw new Error(`Failed to get client for stream ${streamId}`)
-	}
+	const { client, lastMiniblockNum } = await getStreamClient(logger, `0x${streamId}`)
 	logger.info(
 		{
 			nodeUrl: client.url,
@@ -207,16 +191,9 @@ export async function getMediaStreamContent(
 	fullStreamId: StreamIdHex,
 	secret: Uint8Array,
 	iv: Uint8Array,
-): Promise<MediaContent | { data: null; mimeType: null }> {
+): Promise<MediaContent> {
 	const streamId = stripHexPrefix(fullStreamId)
 	const sv = await getStream(logger, streamId)
-
-	if (!sv) {
-		logger.error({ streamId }, 'Failed to get stream')
-		throw new Error(`Failed to get stream ${streamId}`)
-	}
-
 	const result = await mediaContentFromStreamView(logger, sv, secret, iv)
-
 	return result
 }

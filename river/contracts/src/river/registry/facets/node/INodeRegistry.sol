@@ -10,7 +10,12 @@ interface INodeRegistryBase {
   // =============================================================
   //                           Events
   // =============================================================
-  event NodeAdded(address indexed nodeAddress, string url, NodeStatus status);
+  event NodeAdded(
+    address indexed nodeAddress,
+    address indexed operator,
+    string url,
+    NodeStatus status
+  );
   event NodeStatusUpdated(address indexed nodeAddress, NodeStatus status);
   event NodeUrlUpdated(address indexed nodeAddress, string url);
   event NodeRemoved(address indexed nodeAddress);

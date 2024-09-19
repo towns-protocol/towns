@@ -59,7 +59,12 @@ contract RiverRegistryBaseSetup is TestUtils {
 
     vm.prank(nodeOperator);
     vm.expectEmit();
-    emit INodeRegistryBase.NodeAdded(node, url, NodeStatus.NotInitialized);
+    emit INodeRegistryBase.NodeAdded(
+      node,
+      nodeOperator,
+      url,
+      NodeStatus.NotInitialized
+    );
     nodeRegistry.registerNode(node, url, NodeStatus.NotInitialized);
     _;
   }

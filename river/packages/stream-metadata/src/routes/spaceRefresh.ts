@@ -14,6 +14,7 @@ const paramsSchema = z.object({
 		}),
 })
 
+// This route handler validates the refresh request and quickly returns a 200 response.
 export async function spaceRefresh(request: FastifyRequest, reply: FastifyReply) {
 	const logger = request.log.child({ name: spaceRefresh.name })
 
@@ -25,7 +26,19 @@ export async function spaceRefresh(request: FastifyRequest, reply: FastifyReply)
 		return reply.code(400).send({ error: 'Bad Request', message: errorMessage })
 	}
 
-	const { spaceAddress } = parseResult.data
+	return reply.code(200).send({ ok: true })
+}
+
+// This onResponse hook does the actual heavy lifting of invalidating the CloudFront cache and refreshing OpenSea.
+export async function spaceRefreshOnResponse(
+	request: FastifyRequest,
+	reply: FastifyReply,
+	done: () => void,
+) {
+	const logger = request.log.child({ name: spaceRefreshOnResponse.name })
+
+	const { spaceAddress } = paramsSchema.parse(request.params)
+
 	logger.info({ spaceAddress }, 'Refreshing space')
 
 	try {
@@ -36,8 +49,6 @@ export async function spaceRefresh(request: FastifyRequest, reply: FastifyReply)
 			waitUntilFinished: true,
 		})
 		await refreshOpenSea({ spaceAddress, logger })
-
-		return reply.code(200).send({ ok: true })
 	} catch (error) {
 		logger.error(
 			{
@@ -46,6 +57,7 @@ export async function spaceRefresh(request: FastifyRequest, reply: FastifyReply)
 			},
 			'Failed to refresh space',
 		)
-		return reply.code(500).send({ error: 'Failed to refresh space' })
 	}
+
+	done()
 }

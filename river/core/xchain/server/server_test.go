@@ -301,9 +301,6 @@ func (st *serviceTester) Config() *config.Config {
 		ArchitectContract: config.ContractConfig{
 			Address: st.walletLinkingAddress,
 		},
-		TestCustomEntitlementContract: config.ContractConfig{
-			Address: st.mockCrossChainEntitlementAddress,
-		},
 		Log: config.LogConfig{
 			NoColor: true,
 		},
