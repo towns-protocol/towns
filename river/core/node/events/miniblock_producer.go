@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/river-build/river/core/contracts/river"
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/crypto"
@@ -22,7 +23,7 @@ const (
 	MiniblockCandidateBatchSize = 50
 )
 
-// RemoteMiniblockProvider abstracts communications required for coordinated miniblock production.
+// RemoteMiniblockProvider abstracts comminications required for coordinated miniblock production.
 type RemoteMiniblockProvider interface {
 	GetMbProposal(
 		ctx context.Context,
@@ -30,28 +31,12 @@ type RemoteMiniblockProvider interface {
 		streamId StreamId,
 		forceSnapshot bool,
 	) (*MiniblockProposal, error)
-
 	SaveMbCandidate(
 		ctx context.Context,
 		node common.Address,
 		streamId StreamId,
 		mb *Miniblock,
 	) error
-
-	// GetMiniBlocksStreamed returns a stream of mini-blocks or an error for the given stream in the range
-	// [fromMiniBlockNum..toMiniBlockNum).
-	GetMbsStreamed(
-		ctx context.Context,
-		node common.Address,
-		stream StreamId,
-		fromMiniBlockNum int64, // inclusive
-		toMiniBlockNum int64, // exclusive
-	) <-chan *MbOrError
-}
-
-type MbOrError struct {
-	Miniblock *Miniblock
-	Err       error
 }
 
 type MiniblockProducer interface {
@@ -344,6 +329,7 @@ func gatherRemoteProposals(
 		go func(i int, node common.Address) {
 			defer wg.Done()
 			proposal, err := params.RemoteMiniblockProvider.GetMbProposal(ctx, node, streamId, forceSnapshot)
+
 			mu.Lock()
 			defer mu.Unlock()
 			if err != nil {

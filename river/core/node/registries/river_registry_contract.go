@@ -282,15 +282,14 @@ func (c *RiverRegistryContract) GetStreamCount(ctx context.Context, blockNum cry
 
 var ZeroBytes32 = [32]byte{}
 
-// ForAllStreams calls the given cb for all streams that are registered in the river registry at the given block num.
-// If cb returns false ForAllStreams returns.
-func (c *RiverRegistryContract) ForAllStreams(
+func (c *RiverRegistryContract) GetAllStreams(
 	ctx context.Context,
 	blockNum crypto.BlockNumber,
-	cb func(*GetStreamResult) bool,
-) error {
+) ([]*GetStreamResult, error) {
 	// TODO: setting
 	const pageSize = int64(5000)
+
+	ret := make([]*GetStreamResult, 0, 5000)
 
 	lastPage := false
 	var err error
@@ -299,7 +298,7 @@ func (c *RiverRegistryContract) ForAllStreams(
 		callOpts := c.callOptsWithBlockNum(ctx, blockNum)
 		streams, lastPage, err = c.StreamRegistry.GetPaginatedStreams(callOpts, big.NewInt(i), big.NewInt(i+pageSize))
 		if err != nil {
-			return WrapRiverError(
+			return nil, WrapRiverError(
 				Err_CANNOT_CALL_CONTRACT,
 				err,
 			).Func("GetStreamByIndex").
@@ -311,28 +310,10 @@ func (c *RiverRegistryContract) ForAllStreams(
 			}
 			streamId, err := StreamIdFromHash(stream.Id)
 			if err != nil {
-				return err
+				return nil, err
 			}
-			if !cb(makeGetStreamResult(streamId, &stream.Stream)) {
-				return nil
-			}
+			ret = append(ret, makeGetStreamResult(streamId, &stream.Stream))
 		}
-	}
-
-	return nil
-}
-
-func (c *RiverRegistryContract) GetAllStreams(
-	ctx context.Context,
-	blockNum crypto.BlockNumber,
-) ([]*GetStreamResult, error) {
-	ret := make([]*GetStreamResult, 0, 5000)
-
-	if err := c.ForAllStreams(ctx, blockNum, func(r *GetStreamResult) bool {
-		ret = append(ret, r)
-		return true
-	}); err != nil {
-		return nil, err
 	}
 
 	return ret, nil

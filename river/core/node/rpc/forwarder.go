@@ -328,7 +328,6 @@ func (s *Service) GetMiniblocks(
 			LogWarn(log).
 			AsConnectError()
 	}
-
 	log.Debug("GetMiniblocks LEAVE", "response", r.Msg)
 	return r, nil
 }

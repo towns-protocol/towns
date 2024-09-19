@@ -334,7 +334,6 @@ func (r *streamViewImpl) makeMiniblockHeader(
 func (r *streamViewImpl) copyAndApplyBlock(
 	miniblock *MiniblockInfo,
 	cfg crypto.OnChainConfiguration,
-	skipMiniblockEventsCheck bool,
 ) (*streamViewImpl, error) {
 	recencyConstraintsGenerations := int(cfg.Get().RecencyConstraintsGen)
 
@@ -380,7 +379,7 @@ func (r *streamViewImpl) copyAndApplyBlock(
 	for _, e := range miniblock.events {
 		if _, ok := remaining[e.Hash]; ok {
 			delete(remaining, e.Hash)
-		} else if !skipMiniblockEventsCheck {
+		} else {
 			return nil, RiverError(Err_BAD_BLOCK, "streamViewImpl: block event not found", "stream", r.streamId, "event_hash", FormatHash(e.Hash))
 		}
 	}
