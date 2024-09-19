@@ -471,9 +471,6 @@ function toTownsContent_MemberPayload(
                 content: {
                     kind: ZTEvent.RoomMember,
                     userId: userIdFromAddress(value.content.value.userAddress),
-                    avatarUrl: undefined, // todo avatarUrl
-                    displayName: userIdFromAddress(value.content.value.userAddress),
-                    isDirect: undefined, // todo is this needed?
                     membership: toMembership(value.content.value.op),
                 } satisfies RoomMemberEvent,
             }
@@ -581,9 +578,6 @@ function toTownsContent_UserPayload(
                 content: {
                     kind: ZTEvent.RoomMember,
                     userId: '', // this is just the current user
-                    avatarUrl: undefined, // todo avatarUrl
-                    displayName: '', // todo displayName
-                    isDirect: undefined, // todo is this needed?
                     membership: toMembership(payload.op),
                     streamId: streamId,
                 } satisfies RoomMemberEvent,
@@ -596,9 +590,6 @@ function toTownsContent_UserPayload(
                 content: {
                     kind: ZTEvent.RoomMember,
                     userId: userIdFromAddress(payload.userId),
-                    avatarUrl: undefined, // todo avatarUrl
-                    displayName: userIdFromAddress(payload.userId), // todo displayName
-                    isDirect: undefined, // todo is this needed?
                     membership: toMembership(payload.op),
                 } satisfies RoomMemberEvent,
             }
