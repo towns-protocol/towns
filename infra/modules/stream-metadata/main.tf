@@ -219,10 +219,8 @@ resource "aws_ecs_task_definition" "fargate_task_definition" {
   task_role_arn      = aws_iam_role.ecs_task_execution_role.arn
   execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
 
-  # TODO: observe performance & update
   cpu = 2048
 
-  # TODO: observe performance & update
   memory = 4096
 
   requires_compatibilities = ["FARGATE"]
@@ -286,6 +284,14 @@ resource "aws_ecs_task_definition" "fargate_task_definition" {
       {
         name  = "CLOUDFRONT_DISTRIBUTION_ID",
         value = module.cdn.id
+      },
+      {
+        name  = "TRACING_ENABLED",
+        value = "true"
+      },
+      {
+        name  = "PROFILING_ENABLED",
+        value = "true"
       }
     ]
 
