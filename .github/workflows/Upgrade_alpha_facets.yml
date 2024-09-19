@@ -34,7 +34,7 @@ on:
                     - 'all'
                     - 'Upgrade_Facets_Sparse'
                     - 'Upgrade_Facets'
-                default: 'all'
+                default: 'Upgrade_Facets_Sparse'
 
     workflow_call:
         inputs:
@@ -42,7 +42,7 @@ on:
                 description: 'Select job to run'
                 required: false
                 type: string
-                default: 'Upgrade_Facets'
+                default: 'Upgrade_Facets_Sparse'
         secrets:
             ALPHA_BASE_SEPOLIA_DEPLOYER_PK:
                 required: true
@@ -120,29 +120,26 @@ jobs:
                   LATEST_FILE=$(aws s3 ls ${{ env.SOURCE_DIFF_DIR }} | sort | tail -n 1 | awk '{print $4}')
                   echo "Latest source diff file: $LATEST_FILE"
 
+                  REPORT_FILE_NAME="compiled_source_diff"
                   # Copy the latest file from S3 to local
                   # Switch directories to a directory foundry can read
                   cd deployments
-                  aws s3 cp ${{ env.SOURCE_DIFF_DIR }}/$LATEST_FILE ./compiled_source_diff.yaml
+                  aws s3 cp "${{ env.SOURCE_DIFF_DIR }}/$LATEST_FILE" "./${REPORT_FILE_NAME}.yaml"
 
                   # Convert YAML to JSON
-                  yq -o=json ./compiled_source_diff.yaml > compiled_source_diff.json
+                  yq -o=json "./${REPORT_FILE_NAME}.yaml" > "${REPORT_FILE_NAME}.json"
 
                   # Check if the file exists
-                  if [ ! -f ./compiled_source_diff.json ]; then
-                    echo "Error: compiled_source_diff.json not found"
+                  if [ ! -f "./${REPORT_FILE_NAME}.json" ]; then
+                    echo "Error: ${REPORT_FILE_NAME}.json not found"
                     exit 1
                   fi
 
-                  echo "INTERACTION_INPUT_PATH=/contracts/deployments/compiled_source_diff.json" >> $GITHUB_ENV
+                  echo "INTERACTION_INPUT_PATH=/contracts/deployments/${REPORT_FILE_NAME}.json" >> $GITHUB_ENV
               working-directory: river/contracts
 
             - name: Run Base Sepolia Interaction
               run: |
-                  if [ ! -f ./deployments/compiled_source_diff.json ]; then
-                    echo "Error: compiled_source_diff.json not found"
-                    exit 1
-                  fi
                   make interact-any-explicit \
                     context=alpha \
                     rpc=base_sepolia \
