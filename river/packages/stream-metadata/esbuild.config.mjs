@@ -26,7 +26,7 @@ build({
 	outExtension: { ".js": ".cjs" }, // Ensure the output file has .cjs extension
 	platform: "node",
 	plugins: [esbuildPluginPino({ transports: ["pino-pretty"] })],
-	sourcemap: "inline",
+	sourcemap: true,
 	target: "es2022",
 	minify: false, // No minification for easier debugging. Add minification in production later
 	treeShaking: true, // Enable tree shaking to remove unused code

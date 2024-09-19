@@ -52,7 +52,7 @@ interface IRiverConfig is IRiverConfigBase {
   /**
    * @notice Set a bytes setting for the given key
    * @dev Emits ConfigurationChanged event
-   * @param key The setting key
+   * @param key The keccak256 hash of the setting name
    * @param blockNumber The block number on which the setting becomes active, can't be max value of uint64
    * @param value The setting value (value must be its ABI representation), can't be empty
    */

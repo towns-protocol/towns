@@ -1,9 +1,12 @@
 package utils
 
 import (
+	"bytes"
+	"context"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -14,6 +17,11 @@ import (
 
 	"github.com/ethereum/go-ethereum/crypto"
 	"gopkg.in/yaml.v2"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 )
 
 const (
@@ -28,9 +36,41 @@ type DiamondReport struct {
 	Facets            []FacetDiff `yaml:"facets"`
 }
 
+type FacetSourceDiff struct {
+	FacetName       string `yaml:"facetName"`
+	DeployedAddress string `yaml:"deployedAddress"`
+	SourceHash      string `yaml:"sourceHash"`
+}
+
+type SourceFacetDiff struct {
+	Diamond   string            `yaml:"diamond"`
+	Facets    []FacetSourceDiff `yaml:"facets"`
+	NumFacets uint              `yaml:"numFacets"`
+}
+
+type SourceDiffReport struct {
+	Environment        string            `yaml:"environment"`
+	CurrentCommitHash  string            `yaml:"currentCommitHash"`
+	PreviousCommitHash string            `yaml:"previousCommitHash"`
+	Updated            []SourceFacetDiff `yaml:"updated"`
+	Existing           []SourceFacetDiff `yaml:"existing"`
+	NumUpdated         uint              `yaml:"numUpdated"`
+	NumExisting        uint              `yaml:"numExisting"`
+}
+
+type (
+	FacetName   string
+	DiamondName string
+)
+
+type CommitHashes struct {
+	Previous string `yaml:"previous"`
+	Current  string `yaml:"current"`
+}
+
 type Data struct {
-	Updated  map[string]string `yaml:"updated"`
-	Existing map[string]string `yaml:"existing"`
+	Updated  map[FacetName]string `yaml:"updated"`
+	Existing map[FacetName]string `yaml:"existing"`
 }
 
 type FacetFile struct {
@@ -47,6 +87,8 @@ const (
 	SpaceOwner   Diamond = "spaceOwner"
 )
 
+// GetFacetFiles walks the given path and returns a slice of FacetFile structs
+// containing information about the facet files.
 func GetFacetFiles(facetSourcePath string) ([]FacetFile, error) {
 	var facetFiles []FacetFile
 
@@ -73,8 +115,11 @@ func GetFacetFiles(facetSourcePath string) ([]FacetFile, error) {
 	return facetFiles, nil
 }
 
-func GetCompiledFacetHashes(path string, files []FacetFile) (map[string]string, error) {
-	result := make(map[string]string)
+// GetCompiledFacetHashes reads compiled facet files from the given path and calculates
+// their Keccak256 hashes. It returns a map where the keys are the original filenames
+// (without the .bin extension) and the values are the corresponding hashes.
+func GetCompiledFacetHashes(path string, files []FacetFile) (map[FacetName]string, error) {
+	result := make(map[FacetName]string)
 
 	for _, files := range files {
 		rootPath := filepath.Join(path, files.Filename)
@@ -86,7 +131,7 @@ func GetCompiledFacetHashes(path string, files []FacetFile) (map[string]string, 
 				if data, err := os.ReadFile(currentPath); err == nil {
 					hash := crypto.Keccak256Hash(data).Hex()
 					originalFilename := strings.TrimSuffix(info.Name(), ".bin")
-					result[originalFilename] = hash
+					result[FacetName(originalFilename)] = hash
 				}
 			}
 
@@ -100,12 +145,18 @@ func GetCompiledFacetHashes(path string, files []FacetFile) (map[string]string, 
 	return result, nil
 }
 
+// CreateFacetHashesReport generates a report comparing compiled facet hashes with existing ones.
+// It categorizes hashes as updated or existing, and writes the report to a YAML file.
+// The function can output to either a local directory or an S3 bucket.
 func CreateFacetHashesReport(
 	compiledFacetsPath string,
-	compiledHashes map[string]string,
-	yamlOutputDir string,
+	compiledHashes map[FacetName]string,
+	alphaFacets map[DiamondName][]Facet,
+	outputPath string,
+	environment string,
 	verbose bool,
 ) error {
+	var err error
 	// Get current git commit hash
 	cmd := exec.Command("git", "rev-parse", "--short", "HEAD")
 	commitHashRaw, err := cmd.Output()
@@ -117,48 +168,129 @@ func CreateFacetHashesReport(
 	// Get current date in MMDDYYYY format
 	currentDate := time.Now().UTC().Format("01022006")
 
-	latestFile, err := getLatestYamlFile(yamlOutputDir, commitHash)
+	var previousReport SourceDiffReport
+	var s3Client *s3.Client
+	var cfg aws.Config
+
+	if strings.HasPrefix(outputPath, "s3://") {
+		// Create S3 client
+		cfg, err = config.LoadDefaultConfig(context.TODO())
+		if err != nil {
+			return fmt.Errorf("unable to load SDK config: %w", err)
+		}
+		s3Client = s3.NewFromConfig(cfg)
+
+		previousReport, err = getLatestYamlFileFromS3(s3Client, outputPath, commitHash)
+	} else {
+		previousReport, err = getLatestYamlFile(outputPath, commitHash)
+	}
 	if err != nil {
 		return err
 	}
 
-	var updatedHashes, existingHashes map[string]string
-
-	if latestFile == "" {
-		existingHashes = compiledHashes
-		updatedHashes = make(map[string]string)
-	} else {
-		var previousData Data
-		data, err := os.ReadFile(latestFile)
-		if err != nil {
-			return err
-		}
-		err = yaml.Unmarshal(data, &previousData)
-		if err != nil {
-			return err
-		}
-
-		// Combine previous Updated and Existing into a single map for comparison
-		previousHashes := make(map[string]string)
-		for k, v := range previousData.Updated {
-			previousHashes[k] = v
-		}
-		for k, v := range previousData.Existing {
-			previousHashes[k] = v
-		}
-
-		updatedHashes, existingHashes = categorizeHashes(compiledHashes, previousHashes)
+	commitHashes := CommitHashes{
+		Previous: previousReport.CurrentCommitHash,
+		Current:  commitHash,
 	}
+	report := generateReport(previousReport, compiledHashes, alphaFacets, environment, commitHashes)
 
-	report := Data{
-		Updated:  updatedHashes,
-		Existing: existingHashes,
+	if strings.HasPrefix(outputPath, "s3://") {
+		return writeYamlReportToS3(s3Client, outputPath, report, commitHash, currentDate, verbose)
 	}
-
-	return writeYamlReport(yamlOutputDir, report, commitHash, currentDate, verbose)
+	return writeYamlReport(outputPath, report, commitHash, currentDate, verbose)
 }
 
-func writeYamlReport(yamlOutputDir string, report Data, commitHash, currentDate string, verbose bool) error {
+func generateReport(
+	previousReport SourceDiffReport,
+	currentHashes map[FacetName]string,
+	envFacets map[DiamondName][]Facet,
+	environment string,
+	commitHashes CommitHashes,
+) SourceDiffReport {
+	report := SourceDiffReport{
+		Environment:        environment,
+		CurrentCommitHash:  commitHashes.Current,
+		PreviousCommitHash: commitHashes.Previous,
+		Updated:            []SourceFacetDiff{},
+		Existing:           []SourceFacetDiff{},
+	}
+
+	for diamond, facets := range envFacets {
+		updatedFacets := []FacetSourceDiff{}
+		existingFacets := []FacetSourceDiff{}
+
+		for _, facet := range facets {
+			facetName := FacetName(facet.ContractName)
+			currentHash, exists := currentHashes[facetName]
+			if !exists {
+				continue // Skip if the facet is not in the compiled hashes
+			}
+
+			facetSourceDiff := FacetSourceDiff{
+				FacetName:       facet.ContractName,
+				DeployedAddress: facet.FacetAddress.Hex(),
+				SourceHash:      currentHash,
+			}
+
+			prevFacet := findPreviousDiff(previousReport, string(diamond), facet.ContractName)
+			if prevFacet == nil || prevFacet.SourceHash != currentHash {
+				updatedFacets = append(updatedFacets, facetSourceDiff)
+			} else {
+				existingFacets = append(existingFacets, facetSourceDiff)
+			}
+		}
+
+		if len(updatedFacets) > 0 {
+			report.Updated = append(report.Updated, SourceFacetDiff{
+				Diamond:   string(diamond),
+				Facets:    updatedFacets,
+				NumFacets: uint(len(updatedFacets)),
+			})
+		}
+		if len(existingFacets) > 0 {
+			report.Existing = append(report.Existing, SourceFacetDiff{
+				Diamond:   string(diamond),
+				Facets:    existingFacets,
+				NumFacets: uint(len(existingFacets)),
+			})
+		}
+	}
+
+	// Calculate NumUpdated and NumExisting
+	report.NumUpdated = uint(len(report.Updated))
+	report.NumExisting = uint(len(report.Existing))
+
+	return report
+}
+
+func findPreviousDiff(previousReport SourceDiffReport, diamond string, facetName string) *FacetSourceDiff {
+	for _, sourceFacetDiff := range previousReport.Updated {
+		if sourceFacetDiff.Diamond == diamond {
+			for _, facet := range sourceFacetDiff.Facets {
+				if facet.FacetName == facetName {
+					return &facet
+				}
+			}
+		}
+	}
+	for _, sourceFacetDiff := range previousReport.Existing {
+		if sourceFacetDiff.Diamond == diamond {
+			for _, facet := range sourceFacetDiff.Facets {
+				if facet.FacetName == facetName {
+					return &facet
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func writeYamlReport(
+	yamlOutputDir string,
+	report SourceDiffReport,
+	commitHash, currentDate string,
+	verbose bool,
+) error {
 	yamlContent, err := yaml.Marshal(report)
 	if err != nil {
 		return fmt.Errorf("error marshaling YAML content: %w", err)
@@ -204,22 +336,67 @@ func writeYamlReport(yamlOutputDir string, report Data, commitHash, currentDate 
 	return nil
 }
 
-func getLatestYamlFile(dir string, currentCommitHash string) (string, error) {
+func writeYamlReportToS3(
+	client *s3.Client,
+	s3Path string,
+	report SourceDiffReport,
+	commitHash, currentDate string,
+	verbose bool,
+) error {
+	// Parse bucket and key from s3Path
+	parts := strings.SplitN(strings.TrimPrefix(s3Path, "s3://"), "/", 2)
+	bucket := parts[0]
+	keyPrefix := ""
+	if len(parts) > 1 {
+		keyPrefix = parts[1]
+	}
+
+	// Marshal report to YAML
+	yamlContent, err := yaml.Marshal(report)
+	if err != nil {
+		return fmt.Errorf("error marshaling YAML content: %w", err)
+	}
+
+	// Generate filename
+	filename := fmt.Sprintf("%s_%s.yaml", commitHash, currentDate)
+	key := filename
+	if keyPrefix != "" {
+		key = filepath.Join(keyPrefix, filename)
+	}
+
+	// Upload file to S3
+	_, err = client.PutObject(context.TODO(), &s3.PutObjectInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String(key),
+		Body:   bytes.NewReader(yamlContent),
+	})
+	if err != nil {
+		return fmt.Errorf("error uploading file to S3: %w", err)
+	}
+
+	if verbose {
+		Log.Info().Msgf("YAML file uploaded to S3: s3://%s/%s", bucket, key)
+	}
+
+	return nil
+}
+
+func getLatestYamlFile(dir string, currentCommitHash string) (SourceDiffReport, error) {
 	// Convert to absolute path
 	absDir, err := filepath.Abs(dir)
 	if err != nil {
-		return "", err
+		return SourceDiffReport{}, err
 	}
 
 	// Check if directory exists
 	if _, err := os.Stat(absDir); os.IsNotExist(err) {
 		// Directory doesn't exist, return empty string without error
-		return "", nil
+		return SourceDiffReport{}, nil
 	}
 
 	files, err := os.ReadDir(absDir)
 	if err != nil {
-		return "", err
+		return SourceDiffReport{}, err
 	}
 
 	var yamlFiles []os.DirEntry
@@ -231,49 +408,140 @@ func getLatestYamlFile(dir string, currentCommitHash string) (string, error) {
 
 	if len(yamlFiles) == 0 {
 		// No YAML files found, return empty string without error
-		return "", nil
+		return SourceDiffReport{}, nil
 	}
 
 	sort.Slice(yamlFiles, func(i, j int) bool {
-		nameParts1 := strings.Split(strings.TrimSuffix(yamlFiles[i].Name(), ".yaml"), "_")
-		nameParts2 := strings.Split(strings.TrimSuffix(yamlFiles[j].Name(), ".yaml"), "_")
-
-		if len(nameParts1) < 2 || len(nameParts2) < 2 {
-			return false
-		}
-
-		date1, _ := strconv.Atoi(nameParts1[1])
-		date2, _ := strconv.Atoi(nameParts2[1])
+		date1, _ := getDateFromFileName(yamlFiles[i].Name())
+		date2, _ := getDateFromFileName(yamlFiles[j].Name())
 
 		if date1 != date2 {
 			return date1 > date2
 		}
 
-		if len(nameParts1) == 3 && len(nameParts2) == 3 {
-			num1, _ := strconv.Atoi(nameParts1[2])
-			num2, _ := strconv.Atoi(nameParts2[2])
-
-			return num1 > num2
-		}
-
-		return len(nameParts1) > len(nameParts2)
+		// If dates are the same, compare modification times
+		info1, _ := yamlFiles[i].Info()
+		info2, _ := yamlFiles[j].Info()
+		return info1.ModTime().After(info2.ModTime())
 	})
 
 	for _, file := range yamlFiles {
 		commitHash := strings.Split(file.Name(), "_")[0]
 		if commitHash != currentCommitHash {
-			return filepath.Join(absDir, file.Name()), nil
+			latestFile := filepath.Join(absDir, file.Name())
+
+			// Read and unmarshal the YAML file
+			data, err := os.ReadFile(latestFile)
+			if err != nil {
+				return SourceDiffReport{}, fmt.Errorf("error reading YAML file: %w", err)
+			}
+
+			var previousData SourceDiffReport
+			err = yaml.Unmarshal(data, &previousData)
+			if err != nil {
+				return SourceDiffReport{}, fmt.Errorf("error unmarshaling YAML data: %w", err)
+			}
+
+			return previousData, nil
 		}
 	}
 
-	return "", nil // No file with a different commit hash found
+	return SourceDiffReport{}, nil // No file with a different commit hash found
+}
+
+func getLatestYamlFileFromS3(client *s3.Client, s3Path string, currentCommitHash string) (SourceDiffReport, error) {
+	// Parse bucket and prefix from s3Path
+	parts := strings.SplitN(strings.TrimPrefix(s3Path, "s3://"), "/", 2)
+	bucket := parts[0]
+	prefix := ""
+	if len(parts) > 1 {
+		prefix = parts[1]
+	}
+
+	// List objects in the bucket
+	input := &s3.ListObjectsV2Input{
+		Bucket: aws.String(bucket),
+	}
+	if prefix != "" {
+		input.Prefix = aws.String(prefix)
+	}
+
+	resp, err := client.ListObjectsV2(context.TODO(), input)
+	if err != nil {
+		return SourceDiffReport{}, fmt.Errorf("unable to list S3 objects: %w", err)
+	}
+
+	// Find the latest YAML file by date and last modified time
+	var latestFiles []*types.Object
+	var latestDate int
+
+	for _, obj := range resp.Contents {
+		if strings.HasSuffix(*obj.Key, ".yaml") {
+			commitHash := strings.Split(filepath.Base(*obj.Key), "_")[0]
+			if commitHash != currentCommitHash {
+				date, _ := getDateFromFileName(*obj.Key)
+				if date > latestDate {
+					latestDate = date
+					latestFiles = []*types.Object{&obj}
+				} else if date == latestDate {
+					latestFiles = append(latestFiles, &obj)
+				}
+			}
+		}
+	}
+
+	if len(latestFiles) == 0 {
+		return SourceDiffReport{}, nil
+	}
+
+	// If multiple files have the same latest date, choose the one with the latest modification time
+	latestFile := latestFiles[0]
+	for _, file := range latestFiles[1:] {
+		if file.LastModified.After(*latestFile.LastModified) {
+			latestFile = file
+		}
+	}
+
+	// Download the file from S3
+	result, err := client.GetObject(context.TODO(), &s3.GetObjectInput{
+		Bucket: aws.String(bucket),
+		Key:    latestFile.Key,
+	})
+	if err != nil {
+		return SourceDiffReport{}, fmt.Errorf("error downloading file from S3: %w", err)
+	}
+	defer result.Body.Close()
+
+	// Read and unmarshal the YAML data
+	data, err := io.ReadAll(result.Body)
+	if err != nil {
+		return SourceDiffReport{}, fmt.Errorf("error reading S3 object body: %w", err)
+	}
+
+	var previousData SourceDiffReport
+	err = yaml.Unmarshal(data, &previousData)
+	if err != nil {
+		return SourceDiffReport{}, fmt.Errorf("error unmarshaling YAML data: %w", err)
+	}
+
+	return previousData, nil
+}
+
+// Helper function to extract date from filename in the form filename_MMDDYYYY.yaml
+func getDateFromFileName(fileName string) (int, error) {
+	parts := strings.Split(strings.TrimSuffix(filepath.Base(fileName), ".yaml"), "_")
+	if len(parts) < 2 {
+		return 0, fmt.Errorf("invalid filename format")
+	}
+	return strconv.Atoi(parts[1])
 }
 
 func categorizeHashes(
-	compiledHashes, previousHashes map[string]string,
-) (updatedHashes, existingHashes map[string]string) {
-	updatedHashes = make(map[string]string)
-	existingHashes = make(map[string]string)
+	compiledHashes map[FacetName]string,
+	previousHashes map[FacetName]string,
+) (updatedHashes, existingHashes map[FacetName]string) {
+	updatedHashes = make(map[FacetName]string)
+	existingHashes = make(map[FacetName]string)
 
 	for contract, hash := range compiledHashes {
 		if prevHash, exists := previousHashes[contract]; !exists || prevHash != hash {

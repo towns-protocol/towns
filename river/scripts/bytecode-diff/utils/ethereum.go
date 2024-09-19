@@ -26,7 +26,7 @@ type Facet struct {
 }
 
 // ReadAllFacets reads all the facets from the given Diamond contract address
-func ReadAllFacets(client *ethclient.Client, contractAddress string, basescanAPIKey string) ([]Facet, error) {
+func ReadAllFacets(client *ethclient.Client, contractAddress string, basescanAPIKey string, fetchBytecode bool) ([]Facet, error) {
 	if client == nil {
 		return nil, fmt.Errorf("Ethereum client is nil")
 	}
@@ -103,32 +103,35 @@ func ReadAllFacets(client *ethclient.Client, contractAddress string, basescanAPI
 		}
 
 		facets[i].ContractName = contractName
-		data, err := contractABI.Pack("facetFunctionSelectors", facet.FacetAddress)
-		if err != nil {
-			return nil, fmt.Errorf("failed to pack data for facetFunctionSelectors: %w", err)
-		}
 
-		result, err := client.CallContract(context.Background(), ethereum.CallMsg{
-			To:   &contract,
-			Data: data,
-		}, nil)
-		if err != nil {
-			return nil, fmt.Errorf("failed to call facetFunctionSelectors: %w", err)
-		}
+		if fetchBytecode {
+			data, err := contractABI.Pack("facetFunctionSelectors", facet.FacetAddress)
+			if err != nil {
+				return nil, fmt.Errorf("failed to pack data for facetFunctionSelectors: %w", err)
+			}
 
-		var selectors []common.Hash
-		err = contractABI.UnpackIntoInterface(&selectors, "facetFunctionSelectors", result)
-		if err != nil {
-			return nil, fmt.Errorf("failed to unpack facetFunctionSelectors result: %w", err)
-		}
+			result, err := client.CallContract(context.Background(), ethereum.CallMsg{
+				To:   &contract,
+				Data: data,
+			}, nil)
+			if err != nil {
+				return nil, fmt.Errorf("failed to call facetFunctionSelectors: %w", err)
+			}
 
-		// Convert selectors to hex strings
-		hexSelectors := make([]string, len(selectors))
-		for j, selector := range selectors {
-			hexSelectors[j] = BytesToHexString(selector[:])
-		}
+			var selectors []common.Hash
+			err = contractABI.UnpackIntoInterface(&selectors, "facetFunctionSelectors", result)
+			if err != nil {
+				return nil, fmt.Errorf("failed to unpack facetFunctionSelectors result: %w", err)
+			}
 
-		facets[i].SelectorsHex = hexSelectors
+			// Convert selectors to hex strings
+			hexSelectors := make([]string, len(selectors))
+			for j, selector := range selectors {
+				hexSelectors[j] = BytesToHexString(selector[:])
+			}
+
+			facets[i].SelectorsHex = hexSelectors
+		}
 	}
 
 	return facets, nil
@@ -164,6 +167,15 @@ func CreateEthereumClients(
 	}
 
 	return clients, nil
+}
+
+// CreateEthereumClient creates a single Ethereum client for the given RPC URL
+func CreateEthereumClient(rpcUrl string) (*ethclient.Client, error) {
+	client, err := ethclient.Dial(rpcUrl)
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to the Ethereum client: %w", err)
+	}
+	return client, nil
 }
 
 // GetBasescanUrl determines the appropriate Basescan API URL based on the chain ID

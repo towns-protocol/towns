@@ -27,6 +27,14 @@ var (
 	logLevel              string
 )
 
+// Add this new constant declaration
+var baseDiamonds = []utils.Diamond{
+	utils.BaseRegistry,
+	utils.Space,
+	utils.SpaceFactory,
+	utils.SpaceOwner,
+}
+
 func init() {
 	log := zerolog.New(os.Stderr).With().Timestamp().Logger()
 	utils.SetLogger(log)
@@ -133,23 +141,28 @@ var rootCmd = &cobra.Command{
 				log.Fatal().
 					Msg("Report out directory is missing. Set it using --report-out-dir flag or REPORT_OUT_DIR environment variable")
 			}
+			envDeploymentsPath := os.Getenv("DEPLOYMENTS_PATH")
+			if envDeploymentsPath != "" {
+				deploymentsPath = envDeploymentsPath
+			}
+			if deploymentsPath == "" {
+				deploymentsPath = cmd.Flag("deployments").Value.String()
+			}
+			if deploymentsPath == "" {
+				log.Fatal().
+					Msg("Deployments path is missing. Set it using --deployments flag or DEPLOYMENTS_PATH environment variable")
+			}
 			return
 		}
 
-		envDeploymentsPath := os.Getenv("DEPLOYMENTS_PATH")
-		if envDeploymentsPath != "" {
-			deploymentsPath = envDeploymentsPath
-		}
-		if deploymentsPath == "" {
-			deploymentsPath = cmd.Flag("deployments").Value.String()
-		}
-		if deploymentsPath == "" {
-			log.Fatal().
-				Msg("Deployments path is missing. Set it using --deployments flag or DEPLOYMENTS_PATH environment variable")
-		}
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		verbose, _ := cmd.Flags().GetBool("verbose")
+		baseConfig := utils.BaseConfig{
+			BaseRpcUrl:        baseRpcUrl,
+			BaseSepoliaRpcUrl: baseSepoliaRpcUrl,
+			BasescanAPIKey:    os.Getenv("BASESCAN_API_KEY"),
+		}
 		if sourceDiff {
 
 			log.Info().
@@ -157,7 +170,7 @@ var rootCmd = &cobra.Command{
 				Str("compiledFacetsPath", compiledFacetsPath).
 				Msg("Running diff for facet path recursively only compiled facet contracts")
 
-			if err := executeSourceDiff(verbose, facetSourcePath, compiledFacetsPath, sourceDiffDir); err != nil {
+			if err := executeSourceDiff(verbose, baseConfig, facetSourcePath, compiledFacetsPath, sourceDiffDir); err != nil {
 				log.Fatal().Err(err).Msg("Error executing source diff")
 				return
 			}
@@ -192,12 +205,6 @@ var rootCmd = &cobra.Command{
 			}
 
 			log.Info().Str("sourceEnvironment", sourceEnvironment).Str("targetEnvironment", targetEnvironment).Msg("Running diff for environment")
-			// Create BaseConfig struct
-			baseConfig := utils.BaseConfig{
-				BaseRpcUrl:        baseRpcUrl,
-				BaseSepoliaRpcUrl: baseSepoliaRpcUrl,
-				BasescanAPIKey:    basescanAPIKey,
-			}
 
 			if err := executeEnvrionmentDiff(verbose, baseConfig, deploymentsPath, sourceEnvironment, targetEnvironment, reportOutDir); err != nil {
 				log.Fatal().Err(err).Msg("Error executing environment diff")
@@ -206,7 +213,7 @@ var rootCmd = &cobra.Command{
 	},
 }
 
-func executeSourceDiff(verbose bool, facetSourcePath, compiledFacetsPath string, reportOutDir string) error {
+func executeSourceDiff(verbose bool, baseConfig utils.BaseConfig, facetSourcePath, compiledFacetsPath string, reportOutDir string) error {
 	facetFiles, err := utils.GetFacetFiles(facetSourcePath)
 	if err != nil {
 		log.Error().
@@ -229,13 +236,47 @@ func executeSourceDiff(verbose bool, facetSourcePath, compiledFacetsPath string,
 
 	if verbose {
 		log.Info().Int("compiledHashesCount", len(compiledHashes)).Msg("Compiled Facet Hashes")
-		for file, hash := range compiledHashes {
-			log.Info().Str("file", file).Str("hash", hash).Msg("Compiled Facet Hash")
+		for facet, hash := range compiledHashes {
+			log.Info().Str("facet", string(facet)).Str("hash", hash).Msg("Compiled Facet Hash")
 		}
 	}
+	// read all addresses of facets from alpha deployed diamond contracts
+	const sourceEnvironment = "alpha"
 
-	err = utils.CreateFacetHashesReport(compiledFacetsPath, compiledHashes, reportOutDir, verbose)
+	sourceDeploymentsPath := filepath.Join(deploymentsPath, sourceEnvironment)
+	sourceDiamonds, err := utils.GetDiamondAddresses(sourceDeploymentsPath, baseDiamonds, verbose)
+
+	// Create Ethereum client
+	client, err := utils.CreateEthereumClient(baseConfig.BaseSepoliaRpcUrl)
 	if err != nil {
+		log.Error().Err(err).Msg("Error creating Ethereum client")
+		return err
+	}
+	defer client.Close()
+
+	alphaFacets := make(map[utils.DiamondName][]utils.Facet)
+	for diamondName, diamondAddress := range sourceDiamonds {
+		// read all facet addresses, names from diamond contract
+		facets, err := utils.ReadAllFacets(client, diamondAddress, baseConfig.BasescanAPIKey, false)
+		if err != nil {
+			log.Error().Err(err).Str("diamond", string(diamondName)).Msg("Error reading all facets for source diamond")
+			return err
+		}
+		alphaFacets[utils.DiamondName(diamondName)] = facets
+	}
+
+	err = utils.CreateFacetHashesReport(compiledFacetsPath, compiledHashes, alphaFacets, reportOutDir, sourceEnvironment, verbose)
+
+	if err != nil {
+		if verbose {
+			log.Info().
+				Str("compiledFacetsPath", compiledFacetsPath).
+				Interface("compiledHashes", compiledHashes).
+				Interface("alphaFacets", alphaFacets).
+				Str("reportOutDir", reportOutDir).
+				Bool("verbose", verbose).
+				Msg("Arguments for CreateFacetHashesReport")
+		}
 		log.Error().Err(err).Msg("Error creating facet hashes report")
 		return err
 	}
@@ -250,12 +291,6 @@ func executeEnvrionmentDiff(
 	reportOutDir string,
 ) error {
 	// walk environment diamonds and get all facet addresses from DiamondLoupe facet view
-	baseDiamonds := []utils.Diamond{
-		utils.BaseRegistry,
-		utils.Space,
-		utils.SpaceFactory,
-		utils.SpaceOwner,
-	}
 	sourceDeploymentsPath := filepath.Join(deploymentsPath, sourceEnvironment)
 	sourceDiamonds, err := utils.GetDiamondAddresses(sourceDeploymentsPath, baseDiamonds, verbose)
 	if err != nil {
@@ -291,7 +326,7 @@ func executeEnvrionmentDiff(
 				Str("diamondAddress", diamondAddress).
 				Msg("source Diamond Address")
 		}
-		facets, err := utils.ReadAllFacets(clients[sourceEnvironment], diamondAddress, baseConfig.BasescanAPIKey)
+		facets, err := utils.ReadAllFacets(clients[sourceEnvironment], diamondAddress, baseConfig.BasescanAPIKey, true)
 		if err != nil {
 			log.Error().Err(err).Msgf("Error reading all facets for source diamond %s", diamondName)
 			return err
@@ -306,7 +341,7 @@ func executeEnvrionmentDiff(
 
 	targetFacets := make(map[string][]utils.Facet)
 	for diamondName, diamondAddress := range targetDiamonds {
-		facets, err := utils.ReadAllFacets(clients[targetEnvironment], diamondAddress, baseConfig.BasescanAPIKey)
+		facets, err := utils.ReadAllFacets(clients[targetEnvironment], diamondAddress, baseConfig.BasescanAPIKey, true)
 		if err != nil {
 			log.Error().Err(err).Msgf("Error reading all facets for target diamond %s", diamondName)
 			return err

@@ -1,2 +1,4 @@
 .env
-/source-diffs/
+/source-diff*/
+/deployed-diff*/
+**/*.yaml

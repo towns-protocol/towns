@@ -165,6 +165,15 @@ export REPORT_OUT_DIR=/path/to/report/output
 ./bytecode-diff -s --verbose
 ```
 
+3. Run source code diff with r/w to remote s3 bucket:
+
+```bash
+export AWS_ACCESS_KEY_ID=<your-access-key-id>
+export AWS_SECRET_ACCESS_KEY=<your-secret-access-key>
+export SOURCE_DIFF_DIR=s3://bucket/path
+./bytecode-diff -s --verbose
+```
+
 ## Notes
 
 - If a `.env` file is present in the same directory as the script, it will be loaded automatically.

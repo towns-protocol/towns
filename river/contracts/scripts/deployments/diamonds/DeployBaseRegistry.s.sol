@@ -170,6 +170,91 @@ contract DeployBaseRegistry is DiamondHelper, Deployer {
       });
   }
 
+  function diamondInitParamsFromFacets(
+    address deployer,
+    string[] memory facets
+  ) public {
+    for (uint256 i = 0; i < facets.length; i++) {
+      string memory facetName = facets[i];
+      bytes32 facetNameHash = keccak256(abi.encodePacked(facetName));
+
+      if (facetNameHash == keccak256(abi.encodePacked("MetadataFacet"))) {
+        metadata = metadataHelper.deploy(deployer);
+        addFacet(
+          metadataHelper.makeCut(metadata, IDiamond.FacetCutAction.Add),
+          metadata,
+          metadataHelper.makeInitData("SpaceOperator", "")
+        );
+      } else if (
+        facetNameHash == keccak256(abi.encodePacked("EntitlementChecker"))
+      ) {
+        entitlementChecker = checkerHelper.deploy(deployer);
+        addFacet(
+          checkerHelper.makeCut(
+            entitlementChecker,
+            IDiamond.FacetCutAction.Add
+          ),
+          entitlementChecker,
+          checkerHelper.makeInitData("")
+        );
+      } else if (
+        facetNameHash == keccak256(abi.encodePacked("NodeOperatorFacet"))
+      ) {
+        operator = operatorHelper.deploy(deployer);
+        addFacet(
+          operatorHelper.makeCut(operator, IDiamond.FacetCutAction.Add),
+          operator,
+          operatorHelper.makeInitData("")
+        );
+      } else if (
+        facetNameHash == keccak256(abi.encodePacked("RewardsDistribution"))
+      ) {
+        distribution = distributionHelper.deploy(deployer);
+        addFacet(
+          distributionHelper.makeCut(distribution, IDiamond.FacetCutAction.Add),
+          distribution,
+          distributionHelper.makeInitData("")
+        );
+      } else if (
+        facetNameHash == keccak256(abi.encodePacked("MainnetDelegation"))
+      ) {
+        mainnetDelegation = mainnetDelegationHelper.deploy(deployer);
+        messenger = messengerHelper.deploy(deployer);
+        addFacet(
+          mainnetDelegationHelper.makeCut(
+            mainnetDelegation,
+            IDiamond.FacetCutAction.Add
+          ),
+          mainnetDelegation,
+          mainnetDelegationHelper.makeInitData(messenger)
+        );
+      } else if (
+        facetNameHash == keccak256(abi.encodePacked("SpaceDelegationFacet"))
+      ) {
+        spaceDelegation = spaceDelegationHelper.deploy(deployer);
+        addFacet(
+          spaceDelegationHelper.makeCut(
+            spaceDelegation,
+            IDiamond.FacetCutAction.Add
+          ),
+          spaceDelegation,
+          spaceDelegationHelper.makeInitData(
+            0x9172852305F32819469bf38A3772f29361d7b768
+          )
+        );
+      } else if (
+        facetNameHash == keccak256(abi.encodePacked("ERC721ANonTransferable"))
+      ) {
+        nft = deployNFT.deploy(deployer);
+        addFacet(
+          deployNFT.makeCut(nft, IDiamond.FacetCutAction.Add),
+          nft,
+          deployNFT.makeInitData("Operator", "OPR")
+        );
+      }
+    }
+  }
+
   function __deploy(address deployer) public override returns (address) {
     addImmutableCuts(deployer);
 

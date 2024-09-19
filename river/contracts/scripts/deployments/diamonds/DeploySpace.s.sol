@@ -189,6 +189,104 @@ contract DeploySpace is DiamondHelper, Deployer {
       });
   }
 
+  function diamondInitParamsFromFacets(
+    address deployer,
+    string[] memory facets
+  ) public {
+    for (uint256 i = 0; i < facets.length; i++) {
+      bytes32 facetNameHash = keccak256(abi.encodePacked(facets[i]));
+
+      if (facetNameHash == keccak256(abi.encodePacked("ERC721A"))) {
+        erc721a = erc721aHelper.deploy(deployer);
+        erc721aHelper.removeSelector(IERC721A.tokenURI.selector);
+        addCut(erc721aHelper.makeCut(erc721a, IDiamond.FacetCutAction.Add));
+      } else if (
+        facetNameHash == keccak256(abi.encodePacked("ERC721AQueryable"))
+      ) {
+        erc721aQueryable = erc721aQueryableHelper.deploy(deployer);
+        addCut(
+          erc721aQueryableHelper.makeCut(
+            erc721aQueryable,
+            IDiamond.FacetCutAction.Add
+          )
+        );
+      } else if (facetNameHash == keccak256(abi.encodePacked("Banning"))) {
+        banning = banningHelper.deploy(deployer);
+        addCut(banningHelper.makeCut(banning, IDiamond.FacetCutAction.Add));
+      } else if (
+        facetNameHash == keccak256(abi.encodePacked("MembershipFacet"))
+      ) {
+        membership = membershipHelper.deploy(deployer);
+        addCut(
+          membershipHelper.makeCut(membership, IDiamond.FacetCutAction.Add)
+        );
+      } else if (
+        facetNameHash == keccak256(abi.encodePacked("MembershipMetadata"))
+      ) {
+        membershipMetadata = membershipMetadataHelper.deploy(deployer);
+        addCut(
+          membershipMetadataHelper.makeCut(
+            membershipMetadata,
+            IDiamond.FacetCutAction.Add
+          )
+        );
+      } else if (
+        facetNameHash == keccak256(abi.encodePacked("EntitlementDataQueryable"))
+      ) {
+        entitlementDataQueryable = entitlementDataQueryableHelper.deploy(
+          deployer
+        );
+        addCut(
+          entitlementDataQueryableHelper.makeCut(
+            entitlementDataQueryable,
+            IDiamond.FacetCutAction.Add
+          )
+        );
+      } else if (
+        facetNameHash == keccak256(abi.encodePacked("EntitlementsManager"))
+      ) {
+        entitlements = entitlementsHelper.deploy(deployer);
+        addCut(
+          entitlementsHelper.makeCut(entitlements, IDiamond.FacetCutAction.Add)
+        );
+      } else if (facetNameHash == keccak256(abi.encodePacked("Roles"))) {
+        roles = rolesHelper.deploy(deployer);
+        addCut(rolesHelper.makeCut(roles, IDiamond.FacetCutAction.Add));
+      } else if (facetNameHash == keccak256(abi.encodePacked("Channels"))) {
+        channels = channelsHelper.deploy(deployer);
+        addCut(channelsHelper.makeCut(channels, IDiamond.FacetCutAction.Add));
+      } else if (
+        facetNameHash == keccak256(abi.encodePacked("TokenPausableFacet"))
+      ) {
+        tokenPausable = tokenPausableHelper.deploy(deployer);
+        addCut(
+          tokenPausableHelper.makeCut(
+            tokenPausable,
+            IDiamond.FacetCutAction.Add
+          )
+        );
+      } else if (facetNameHash == keccak256(abi.encodePacked("PrepayFacet"))) {
+        prepay = prepayHelper.deploy(deployer);
+        addCut(prepayHelper.makeCut(prepay, IDiamond.FacetCutAction.Add));
+      } else if (
+        facetNameHash == keccak256(abi.encodePacked("ReferralsFacet"))
+      ) {
+        referrals = referralsHelper.deploy(deployer);
+        addCut(referralsHelper.makeCut(referrals, IDiamond.FacetCutAction.Add));
+      } else if (
+        facetNameHash == keccak256(abi.encodePacked("EntitlementGated"))
+      ) {
+        entitlementGated = entitlementGatedHelper.deploy(deployer);
+        addCut(
+          entitlementGatedHelper.makeCut(
+            entitlementGated,
+            IDiamond.FacetCutAction.Add
+          )
+        );
+      }
+    }
+  }
+
   function __deploy(address deployer) public override returns (address) {
     addImmutableCuts(deployer);
 
