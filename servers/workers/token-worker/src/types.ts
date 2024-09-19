@@ -131,6 +131,7 @@ export type ContractMetadata = {
     image?: NftImageMetadata | null
     displayNft?: NftDisplayNft | null
     decimals?: number | null
+    tokenId?: string | null
     quantity?: bigint | null
 }
 

@@ -85,6 +85,7 @@ export function EditGating({ isRole }: EditGatingProps) {
                             imgSrc: token.data.imgSrc,
                             openSeaCollectionUrl: token.data.openSeaCollectionUrl || undefined,
                             decimals: token.data.decimals,
+                            tokenId: token.data.tokenId,
                         },
                     })),
                     {
@@ -194,7 +195,7 @@ export function EditGating({ isRole }: EditGatingProps) {
                                                     undefined && !!isTokenFieldTouched
                                             }
                                             inputRef={inputRef}
-                                            value={getValues('clientTokensGatedBy')}
+                                            tokens={getValues('clientTokensGatedBy')}
                                             onChange={onSelectedTokensChange}
                                         />
                                     )}

@@ -52,11 +52,11 @@ import {
     convertRuleDataToTokenEntitlementSchema,
     convertRuleDataToTokenSchema,
     convertTokenTypeToOperationType,
+    transformQuantityForSubmit,
 } from '@components/Tokens/utils'
 import { EditGating } from '@components/Web3/EditMembership/EditGating'
 import { RoleFormSchemaType } from '@components/Web3/CreateSpaceForm/types'
 import { isEveryoneAddress } from '@components/Web3/utils'
-import { Token } from '@components/Tokens/TokenSelector/tokenSchemas'
 import { useMultipleTokenMetadatasForChainIds } from 'api/lib/collectionMetadata'
 import { convertToNumber } from './utils'
 import { formSchema } from './schema'
@@ -139,55 +139,8 @@ export function SingleRolePanelWithoutAuth() {
         [ruleData],
     )
 
-    const { data: initialTokensData, isLoading: isLoadingTokensData } =
-        useMultipleTokenMetadatasForChainIds(
-            initialTokenValues.map((token) => ({
-                type: token.data.type,
-                address: token.data.address as Address,
-                tokenIds: [],
-                chainId: token.chainId,
-                quantity: token.data.quantity ?? 1n,
-            })),
-        )
-
-    const clientTokensGatedBy: Token[] = useMemo(() => {
-        if (!initialTokensData) {
-            return []
-        }
-
-        const tokens = initialTokenValues.map((token) => {
-            const metadata = initialTokensData.find(
-                (t) =>
-                    t.chainId === token.chainId &&
-                    t.data.address?.toLowerCase() === token.data.address?.toLowerCase(),
-            )
-
-            if (metadata) {
-                return {
-                    chainId: metadata.chainId,
-                    data: {
-                        address: metadata.data.address as Address,
-                        quantity: metadata.data.quantity ?? 1n,
-                        type: metadata.data.type,
-                        label: metadata.data.label || '',
-                        imgSrc: metadata.data.imgSrc || '',
-                    },
-                }
-            }
-
-            return {
-                chainId: token.chainId,
-                data: {
-                    address: token.data.address as Address,
-                    quantity: token.data.quantity ?? 1n,
-                    type: token.data.type,
-                    label: '',
-                    imgSrc: '',
-                },
-            }
-        })
-        return tokens
-    }, [initialTokenValues, initialTokensData])
+    const { data: clientTokensGatedBy, isLoading: isLoadingTokensData } =
+        useMultipleTokenMetadatasForChainIds(initialTokenValues)
 
     const usersGatedBy = useMemo(() => {
         return (roleDetails?.users || []).filter(
@@ -521,7 +474,14 @@ function SubmitButton({
                           address: t.data.address as Address,
                           chainId: BigInt(t.chainId),
                           type: convertTokenTypeToOperationType(t.data.type),
-                          threshold: t.data.quantity ?? 1n,
+                          threshold: t.data.quantity
+                              ? transformQuantityForSubmit(
+                                    t.data.quantity,
+                                    t.data.type,
+                                    t.data.decimals,
+                                )
+                              : 1n,
+                          tokenId: t.data.tokenId ? BigInt(t.data.tokenId) : undefined,
                       })),
                   )
                 : NoopRuleData

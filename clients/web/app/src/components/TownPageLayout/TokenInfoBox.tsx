@@ -45,7 +45,7 @@ export const TokenInfoBox = ({
                     <Box position="relative" width="x3" aspectRatio="1/1">
                         {tokensGatedBy.map((token, index) => (
                             <Box
-                                key={`${token.data.address}-${token.chainId}`}
+                                key={`${token.data.address}-${token.chainId}-${token.data.tokenId}`}
                                 position="absolute"
                                 top="none"
                                 style={{
@@ -78,11 +78,8 @@ export function SelectedToken({
     chainId: number
     size?: BoxProps['width']
 } & Omit<BoxProps, 'size'>) {
-    const { data: tokenDataWithChainId, error } = useTokenMetadataForChainId(
-        contractAddress,
-        chainId,
-    )
-    console.log('tokenDataWithChainId', tokenDataWithChainId, error)
+    const { data: tokenDataWithChainId } = useTokenMetadataForChainId(contractAddress, chainId)
+
     return (
         <Box
             tooltip={

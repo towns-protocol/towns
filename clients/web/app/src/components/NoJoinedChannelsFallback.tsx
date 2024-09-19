@@ -14,7 +14,7 @@ export const NoJoinedChannelsFallback = () => {
                 spaceId: 'no space id',
             },
             () => {
-                console.log('clicked browse channels (no space id)')
+                console.info('clicked browse channels (no space id)')
             },
         )
         setIsVisible(true)

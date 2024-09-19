@@ -32,12 +32,12 @@ import {
     convertRuleDataToTokenEntitlementSchema,
     convertRuleDataToTokenSchema,
     convertTokenTypeToOperationType,
+    transformQuantityForSubmit,
 } from '@components/Tokens/utils'
 import { PrivyWrapper } from 'privy/PrivyProvider'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { FullPanelOverlay } from '@components/Web3/WalletLinkingPanel'
 import { isEveryoneAddress } from '@components/Web3/utils'
-import { Token } from '@components/Tokens/TokenSelector/tokenSchemas'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { EVERYONE_ADDRESS } from 'utils'
@@ -104,46 +104,8 @@ function EditMembershipForm({
         [ruleData],
     )
 
-    const { data: initialTokensData, isLoading: isLoadingTokensData } =
-        useMultipleTokenMetadatasForChainIds(
-            initialTokenValues.map((token) => ({
-                type: token.data.type,
-                address: token.data.address as Address,
-                tokenIds: [],
-                chainId: token.chainId,
-                quantity: token.data.quantity ?? 1n,
-            })),
-        )
-
-    const clientTokensGatedBy: Token[] = useMemo(() => {
-        if (isLoadingTokensData || !initialTokensData) {
-            return []
-        }
-
-        const tokens = initialTokenValues.map((token) => {
-            const metadata = initialTokensData.find(
-                (t) =>
-                    t.chainId === token.chainId &&
-                    t.data.address?.toLowerCase() === token.data.address?.toLowerCase(),
-            )
-
-            if (metadata) {
-                return {
-                    chainId: metadata.chainId,
-                    data: {
-                        address: metadata.data.address as Address,
-                        quantity: metadata.data.quantity ?? 1n,
-                        type: metadata.data.type,
-                        label: metadata.data.label || '',
-                        imgSrc: metadata.data.imgSrc || '',
-                    },
-                }
-            }
-
-            return undefined
-        })
-        return tokens.filter((token) => token !== undefined) as Token[]
-    }, [initialTokenValues, initialTokensData, isLoadingTokensData])
+    const { data: clientTokensGatedBy, isLoading: isLoadingTokensData } =
+        useMultipleTokenMetadatasForChainIds(initialTokenValues)
 
     const gatingType = useMemo(() => {
         if (initialTokenValues.length > 0) {
@@ -192,7 +154,7 @@ function EditMembershipForm({
                         <FormProvider {..._form}>
                             <Stack gap grow>
                                 <Paragraph strong>Who Can Join</Paragraph>
-                                <EditGating isRole />
+                                <EditGating />
 
                                 {environment.accountAbstractionConfig && (
                                     <>
@@ -410,30 +372,27 @@ function SubmitButton({
             return
         }
 
-        //////////////////////////////////////////
-        // check quantity
-        //////////////////////////////////////////
-        if (data.clientTokensGatedBy.length > 0) {
-            const missingQuantity = data.clientTokensGatedBy.some(
-                (token) => token.data.quantity === 0n || token.data.quantity === undefined,
-            )
-            if (missingQuantity) {
-                setError('clientTokensGatedBy', {
-                    type: 'manual',
-                    message: 'Please enter a valid quantity.',
-                })
-                return
-            }
-        }
+        // If gatedType is everyone, usersGatedBy should be the everyone address
+        const usersGatedBy = data.gatingType === 'everyone' ? [EVERYONE_ADDRESS] : data.usersGatedBy
+
+        // If gatedType is everyone, tokensGatedBy should be empty
+        const tokensGatedBy = data.gatingType === 'everyone' ? [] : data.clientTokensGatedBy
 
         const ruleData =
-            data.clientTokensGatedBy.length > 0
+            tokensGatedBy.length > 0
                 ? createOperationsTree(
-                      data.clientTokensGatedBy.map((t) => ({
+                      tokensGatedBy.map((t) => ({
                           address: t.data.address as Address,
                           chainId: BigInt(t.chainId),
                           type: convertTokenTypeToOperationType(t.data.type),
-                          threshold: t.data.quantity ?? 1n,
+                          threshold: t.data.quantity
+                              ? transformQuantityForSubmit(
+                                    t.data.quantity,
+                                    t.data.type,
+                                    t.data.decimals,
+                                )
+                              : 1n,
+                          tokenId: t.data.tokenId ? BigInt(t.data.tokenId) : undefined,
                       })),
                   )
                 : NoopRuleData
@@ -455,7 +414,7 @@ function SubmitButton({
                 roleName: roleDetails.name,
                 permissions: roleDetails.permissions,
                 spaceNetworkId: spaceId,
-                users: data.gatingType === 'everyone' ? [EVERYONE_ADDRESS] : data.usersGatedBy,
+                users: usersGatedBy,
                 ruleData,
             },
             membershipParams: {
