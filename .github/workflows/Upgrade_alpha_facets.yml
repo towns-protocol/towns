@@ -139,17 +139,17 @@ jobs:
 
             - name: Run Base Sepolia Interaction
               run: |
-                if [ ! -f ./deployments/compiled_source_diff.json ]; then
-                  echo "Error: compiled_source_diff.json not found"
-                  exit 1
-                fi
-                make interact-any-explicit \
-                  context=alpha \
-                  rpc=base_sepolia \
-                  contract=InteractAlphaSparse \
-                  private_key=${{ env.ALPHA_BASE_SEPOLIA_DEPLOYER_PK }} \
-                  etherscan=${{ env.BLOCKSCOUT_SEPOLIA_API_KEY }} \
-                  verifier=${{ env.BLOCKSCOUT_SEPOLIA_URL }}
+                  if [ ! -f ./deployments/compiled_source_diff.json ]; then
+                    echo "Error: compiled_source_diff.json not found"
+                    exit 1
+                  fi
+                  make interact-any-explicit \
+                    context=alpha \
+                    rpc=base_sepolia \
+                    contract=InteractAlphaSparse \
+                    private_key=${{ env.ALPHA_BASE_SEPOLIA_DEPLOYER_PK }} \
+                    etherscan=${{ env.BLOCKSCOUT_SEPOLIA_API_KEY }} \
+                    verifier=${{ env.BLOCKSCOUT_SEPOLIA_URL }}
               working-directory: river/contracts
               env:
                   INTERACTION_INPUT_PATH: ${{ env.INTERACTION_INPUT_PATH }}
