@@ -8,7 +8,6 @@ import {
     registerAndStartClients,
     waitForWithRetries,
     findRoleByName,
-    createTestChannelWithSpaceRoles,
 } from 'use-towns-client/tests/integration/helpers/TestUtils'
 
 import { ZTEvent } from '../../src/types/timeline-types'
@@ -76,53 +75,7 @@ describe('redact messages', () => {
         await waitFor(() => expect(alice.getMessages(channelId)).not.toContain(message))
     })
 
-    test("member cannot redact other's messages", async () => {
-        /** Arrange */
-        // create all the users for the test
-        const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
-        await alice.fundWallet()
-        // create a space with entitlement to read and write
-        const spaceId = await createTestSpaceGatedByTownNft(
-            alice,
-            [Permission.Read, Permission.Write],
-            {
-                name: alice.makeUniqueName(),
-            },
-        )
-        // create a channel for reading and writing
-        const channelId = await createTestChannelWithSpaceRoles(alice, {
-            name: 'alices channel',
-            parentSpaceId: spaceId,
-            roles: [],
-        })
-        // invite user to join the channel
-        const bobUserId = bob.getUserId()
-        if (!bobUserId) {
-            throw new Error('Failed to get bob user id')
-        }
-        await bob.joinTown(spaceId, bob.wallet)
-        await bob.joinRoom(channelId)
-
-        /** Act */
-        // alice sends a message in the channel
-        const message = 'Hello I am alice!'
-        await alice.sendMessage(channelId, message)
-        await waitFor(() => expect(bob.getMessages(channelId)).toContain(message))
-        const messageEvent = bob
-            .getEvents_TypedRoomMessage(channelId)
-            .find((event) => event.content.body === message)
-        if (!messageEvent) {
-            throw new Error(`Failed to get message event ${bob.getEventsDescription(channelId)}`)
-        }
-        // bob tries to redact alice's message
-        await bob.redactEvent(channelId, messageEvent.eventId)
-
-        /** Assert */
-        // verify that the message is NOT redacted
-        expect(alice.getMessages(channelId)).toContain(message)
-    })
-
-    test.skip("moderator can redact other's messages", async () => {
+    test("moderator can redact other's messages", async () => {
         /** Arrange */
         // create all the users for the test
         const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
@@ -192,7 +145,9 @@ describe('redact messages', () => {
 
         /** Assert */
         // verify that NO error was thrown for redaction
-        await waitForWithRetries(async () => bob.redactEvent(channelId, messageEvent.eventId))
+        await waitForWithRetries(async () =>
+            bob.adminRedactMessage(channelId, messageEvent.eventId),
+        )
         // verify that the message is redacted
         await waitFor(() => expect(alice.getMessages(channelId)).not.toContain(message))
     })

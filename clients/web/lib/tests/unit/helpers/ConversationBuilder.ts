@@ -73,6 +73,7 @@ export class ConversationBuilder {
         newBody: string
         mentions?: OTWMention[]
         id?: string
+        senderId?: string
     }): ConversationBuilder {
         const event = this.events.find((e) => e.eventId === params.edits)
         if (!event) {
@@ -86,13 +87,18 @@ export class ConversationBuilder {
                     edits: params.edits,
                     mentions: params.mentions,
                 }),
-                userId: event.sender.id,
+                userId: params.senderId ?? event.sender.id,
             }),
         )
         return this
     }
 
-    redactMessage(params: { redacts: string; id?: string }): ConversationBuilder {
+    redactMessage(params: {
+        redacts: string
+        id?: string
+        senderId?: string
+        isAdmin?: boolean
+    }): ConversationBuilder {
         const event = this.events.find((e) => e.eventId === params.redacts)
         if (!event) {
             throw new Error(`Could not find event ${params.redacts}`)
@@ -102,8 +108,9 @@ export class ConversationBuilder {
                 eventId: params.id,
                 content: makeRedaction({
                     redacts: params.redacts,
+                    isAdmin: params.isAdmin,
                 }),
-                userId: event.sender.id,
+                userId: params.senderId ?? event.sender.id,
             }),
         )
         return this
@@ -172,10 +179,10 @@ function makeEdit(params: {
     })
 }
 
-function makeRedaction(params: { redacts: string }): RedactionActionEvent {
+function makeRedaction(params: { redacts: string; isAdmin?: boolean }): RedactionActionEvent {
     return {
         kind: ZTEvent.RedactionActionEvent,
         refEventId: params.redacts,
-        adminRedaction: false,
+        adminRedaction: params.isAdmin ?? false,
     }
 }

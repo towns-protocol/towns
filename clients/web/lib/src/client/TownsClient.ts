@@ -2288,6 +2288,15 @@ export class TownsClient
         if (!this.casablancaClient) {
             throw new Error('casablanca client is undefined')
         }
+        const event = this.casablancaClient.stream(roomId)?.view.events.get(eventId)
+        if (!event) {
+            throw new Error(`ref event not found: ${eventId}`)
+        }
+        if (event.remoteEvent?.creatorUserId !== this.casablancaClient.userId) {
+            throw new Error(
+                `you can only send channelMessageEdit for your own messages: ${eventId} userId: ${this.casablancaClient.userId}`,
+            )
+        }
         await this.casablancaClient.sendChannelMessage_Edit_Text(roomId, eventId, {
             threadId: originalEventContent.threadId,
             threadPreview: originalEventContent.threadPreview,
@@ -2307,6 +2316,15 @@ export class TownsClient
     public async redactEvent(roomId: string, eventId: string, reason?: string) {
         if (!this.casablancaClient) {
             throw new Error('casablanca client is undefined')
+        }
+        const event = this.casablancaClient.stream(roomId)?.view.events.get(eventId)
+        if (!event) {
+            throw new Error(`ref event not found: ${eventId}`)
+        }
+        if (event.remoteEvent?.creatorUserId !== this.casablancaClient.userId) {
+            throw new Error(
+                `you can only send channelMessageRedaction for your own messages: ${eventId} userId: ${this.casablancaClient.userId}`,
+            )
         }
         await this.casablancaClient.sendChannelMessage_Redaction(roomId, {
             refEventId: eventId,

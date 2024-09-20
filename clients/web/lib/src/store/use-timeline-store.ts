@@ -448,8 +448,24 @@ function makeTimelineStoreInterface(
     }
 }
 
+function canReplaceEvent(prev: TimelineEvent, next: TimelineEvent): boolean {
+    if (next.content?.kind === ZTEvent.RedactedEvent && next.content.isAdminRedaction) {
+        return true
+    }
+    if (next.sender.id === prev.sender.id) {
+        return true
+    }
+    console.warn('cannot replace event', { prev, next })
+    return false
+}
+
 function toReplacedMessageEvent(prev: TimelineEvent, next: TimelineEvent): TimelineEvent {
-    if (next.content?.kind === ZTEvent.RoomMessage && prev.content?.kind === ZTEvent.RoomMessage) {
+    if (!canReplaceEvent(prev, next)) {
+        return prev
+    } else if (
+        next.content?.kind === ZTEvent.RoomMessage &&
+        prev.content?.kind === ZTEvent.RoomMessage
+    ) {
         // when we replace an event, we copy the content up to the root event
         // so we keep the prev id, but use the next content
         const isLocalId = prev.eventId.startsWith('~')
@@ -521,6 +537,7 @@ function makeRedactionEvent(redactionAction: TimelineEvent): TimelineEvent {
     }
     const newContent = {
         kind: ZTEvent.RedactedEvent,
+        isAdminRedaction: redactionAction.content.adminRedaction,
     } satisfies RedactedEvent
 
     return {

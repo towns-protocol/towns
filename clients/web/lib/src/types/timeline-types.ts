@@ -288,6 +288,7 @@ export interface RoomTopicEvent {
 // original event: the event that was redacted
 export interface RedactedEvent {
     kind: ZTEvent.RedactedEvent
+    isAdminRedaction: boolean
 }
 
 // the event that redacted the original event

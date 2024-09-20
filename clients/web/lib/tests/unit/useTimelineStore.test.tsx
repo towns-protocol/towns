@@ -111,6 +111,15 @@ describe('UseTimelineStore', () => {
             // results
             execute('alice', events, { timeline: ['MSG_0 alice: hi bob! (edited)'] })
         }),
+        test('test send and edit with different sender', () => {
+            // events (use a custom id for the fist message so we can edit it)
+            const events = new ConversationBuilder()
+                .sendMessage({ id: 'MSG_0', from: 'alice', body: 'hi bob!' })
+                .editMessage({ edits: 'MSG_0', newBody: 'alice sucks! (edited)', senderId: 'bob' })
+                .getEvents()
+            // results
+            execute('alice', events, { timeline: ['MSG_0 alice: hi bob!'] })
+        }),
         test('test send and multiple edits', () => {
             // events (use a custom id for the fist message so we can edit it)
             const events = new ConversationBuilder()
@@ -249,6 +258,54 @@ describe('UseTimelineStore', () => {
                     'MSG_2 ~Redacted~',
                     'event4 alice: banannas? lol',
                     'event5 Redacts MSG_2 adminRedaction: false',
+                ],
+            })
+        }),
+        test('test send and redact', () => {
+            // events (use a custom id for the fist message so we can edit it)
+            const events = new ConversationBuilder()
+                .sendMessage({ id: 'MSG_0', from: 'alice', body: 'hi bob' })
+                .sendMessage({ id: 'MSG_1', from: 'alice', body: 'hi bob!' })
+                .redactMessage({ redacts: 'MSG_0' })
+                .getEvents()
+            // results
+            execute('alice', events, {
+                timeline: [
+                    'MSG_0 ~Redacted~',
+                    'MSG_1 alice: hi bob!',
+                    'event2 Redacts MSG_0 adminRedaction: false',
+                ],
+            })
+        }),
+        test('test send and redact with different sender, redaction should be ignored', () => {
+            // events (use a custom id for the fist message so we can edit it)
+            const events = new ConversationBuilder()
+                .sendMessage({ id: 'MSG_0', from: 'alice', body: 'hi bob' })
+                .sendMessage({ id: 'MSG_1', from: 'alice', body: 'hi bob!' })
+                .redactMessage({ redacts: 'MSG_0', senderId: 'bob' })
+                .getEvents()
+            // results
+            execute('alice', events, {
+                timeline: [
+                    'MSG_0 alice: hi bob',
+                    'MSG_1 alice: hi bob!',
+                    'event2 Redacts MSG_0 adminRedaction: false', // the redaction action show up, but the message is not redacted
+                ],
+            })
+        }),
+        test('test send and admin redact', () => {
+            // events (use a custom id for the fist message so we can edit it)
+            const events = new ConversationBuilder()
+                .sendMessage({ id: 'MSG_0', from: 'alice', body: 'hi bob' })
+                .sendMessage({ id: 'MSG_1', from: 'alice', body: 'hi bob!' })
+                .redactMessage({ redacts: 'MSG_0', senderId: 'bob', isAdmin: true })
+                .getEvents()
+            // results
+            execute('alice', events, {
+                timeline: [
+                    'MSG_0 ~Redacted~',
+                    'MSG_1 alice: hi bob!',
+                    'event2 Redacts MSG_0 adminRedaction: true',
                 ],
             })
         })
