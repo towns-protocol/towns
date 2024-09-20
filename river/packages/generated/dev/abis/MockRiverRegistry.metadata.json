@@ -1485,7 +1485,7 @@
           "details": "Emits ConfigurationChanged event",
           "params": {
             "blockNumber": "The block number on which the setting becomes active, can't be max value of uint64",
-            "key": "The setting key",
+            "key": "The keccak256 hash of the setting name",
             "value": "The setting value (value must be its ABI representation), can't be empty"
           }
         }
@@ -1637,10 +1637,10 @@
       "license": "MIT"
     },
     "contracts/src/river/registry/facets/config/IRiverConfig.sol": {
-      "keccak256": "0x7293c511c6915f4c9074b499f175f18841cb3f3acb8271cb34007f376e164c3a",
+      "keccak256": "0x17d5e8570557d046fd9a311da7eecf69f8d198eb8ec54bd14057d4d485427600",
       "urls": [
-        "bzz-raw://89fe81eb0e39efdd7909ee912e684c9a7bfd6c05ccfefa2d43052cf696c66fb2",
-        "dweb:/ipfs/Qmbf8uS41N2LcgEQq9AwXNm23HnPAJhWkt1JK8LGxTUofF"
+        "bzz-raw://a7ab5c4b1d7be2494915012608093387aca8b0e68db5696db94de22d3702a066",
+        "dweb:/ipfs/QmYauTuD8NAcDy7Hf87sWjXbafZJpi2vCXjeMgLuygmLge"
       ],
       "license": "MIT"
     },
@@ -1693,10 +1693,10 @@
       "license": "MIT"
     },
     "contracts/src/river/registry/facets/stream/StreamRegistry.sol": {
-      "keccak256": "0x1946975d3cc0eb2dadf47dfb484ef68013c6b3ca0490c8dd4ce66088d9b61baa",
+      "keccak256": "0xc7223f5967e9a1df0587e552e2f4710c3c8ac1a4efabc3f1098ee87a14bc8c2f",
       "urls": [
-        "bzz-raw://489851e15a171224b9500e06e07825a1a310436a71be9f3339698b4907aa2712",
-        "dweb:/ipfs/Qmf27U51bn4CvH5ZEhW9F6AjrA9HnMVX5FHHfv8aweQG4C"
+        "bzz-raw://ba9533a8bfcf107abdc0827e7e1376b0de009dba0fa69e7eeb9f7532bc5bd9df",
+        "dweb:/ipfs/QmcEWAjvy5TQpQGcM2Sb8rTzbSc3tKr4fMCxJ8BYHjGotj"
       ],
       "license": "MIT"
     },

@@ -15,6 +15,7 @@ require (
 	github.com/kr/text v0.2.0
 	github.com/matoous/go-nanoid v1.5.0
 	github.com/mitchellh/mapstructure v1.5.0
+	github.com/panjf2000/ants/v2 v2.10.0
 	github.com/prometheus/client_golang v1.19.1
 	github.com/rogpeppe/go-internal v1.12.0
 	github.com/rs/cors v1.9.0

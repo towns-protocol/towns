@@ -141,6 +141,10 @@ func (s *Service) proposeMiniblock(
 		return nil, err
 	}
 
+	if proposal == nil {
+		return nil, RiverError(Err_MINIPOOL_MISSING_EVENTS, "Empty stream minipool")
+	}
+
 	return &ProposeMiniblockResponse{
 		Proposal: proposal,
 	}, nil

@@ -55,6 +55,9 @@ const (
 	// StreamServiceAddStreamToSyncProcedure is the fully-qualified name of the StreamService's
 	// AddStreamToSync RPC.
 	StreamServiceAddStreamToSyncProcedure = "/river.StreamService/AddStreamToSync"
+	// StreamServiceModifySyncProcedure is the fully-qualified name of the StreamService's ModifySync
+	// RPC.
+	StreamServiceModifySyncProcedure = "/river.StreamService/ModifySync"
 	// StreamServiceCancelSyncProcedure is the fully-qualified name of the StreamService's CancelSync
 	// RPC.
 	StreamServiceCancelSyncProcedure = "/river.StreamService/CancelSync"
@@ -78,6 +81,7 @@ var (
 	streamServiceAddEventMethodDescriptor             = streamServiceServiceDescriptor.Methods().ByName("AddEvent")
 	streamServiceSyncStreamsMethodDescriptor          = streamServiceServiceDescriptor.Methods().ByName("SyncStreams")
 	streamServiceAddStreamToSyncMethodDescriptor      = streamServiceServiceDescriptor.Methods().ByName("AddStreamToSync")
+	streamServiceModifySyncMethodDescriptor           = streamServiceServiceDescriptor.Methods().ByName("ModifySync")
 	streamServiceCancelSyncMethodDescriptor           = streamServiceServiceDescriptor.Methods().ByName("CancelSync")
 	streamServiceRemoveStreamFromSyncMethodDescriptor = streamServiceServiceDescriptor.Methods().ByName("RemoveStreamFromSync")
 	streamServiceInfoMethodDescriptor                 = streamServiceServiceDescriptor.Methods().ByName("Info")
@@ -94,6 +98,12 @@ type StreamServiceClient interface {
 	AddEvent(context.Context, *connect.Request[protocol.AddEventRequest]) (*connect.Response[protocol.AddEventResponse], error)
 	SyncStreams(context.Context, *connect.Request[protocol.SyncStreamsRequest]) (*connect.ServerStreamForClient[protocol.SyncStreamsResponse], error)
 	AddStreamToSync(context.Context, *connect.Request[protocol.AddStreamToSyncRequest]) (*connect.Response[protocol.AddStreamToSyncResponse], error)
+	// ModifySync adds/removes streams to/from an in progress sync session.
+	// The client must check ModifySyncResponse to determine which streams failed to add/remove.
+	//
+	// Note that it is possible for the client to receive stream updates for streams that are added
+	// or stops receiving stream updates for streams that are removed before this calls returns.
+	ModifySync(context.Context, *connect.Request[protocol.ModifySyncRequest]) (*connect.Response[protocol.ModifySyncResponse], error)
 	CancelSync(context.Context, *connect.Request[protocol.CancelSyncRequest]) (*connect.Response[protocol.CancelSyncResponse], error)
 	RemoveStreamFromSync(context.Context, *connect.Request[protocol.RemoveStreamFromSyncRequest]) (*connect.Response[protocol.RemoveStreamFromSyncResponse], error)
 	Info(context.Context, *connect.Request[protocol.InfoRequest]) (*connect.Response[protocol.InfoResponse], error)
@@ -158,6 +168,12 @@ func NewStreamServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithSchema(streamServiceAddStreamToSyncMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
+		modifySync: connect.NewClient[protocol.ModifySyncRequest, protocol.ModifySyncResponse](
+			httpClient,
+			baseURL+StreamServiceModifySyncProcedure,
+			connect.WithSchema(streamServiceModifySyncMethodDescriptor),
+			connect.WithClientOptions(opts...),
+		),
 		cancelSync: connect.NewClient[protocol.CancelSyncRequest, protocol.CancelSyncResponse](
 			httpClient,
 			baseURL+StreamServiceCancelSyncProcedure,
@@ -195,6 +211,7 @@ type streamServiceClient struct {
 	addEvent             *connect.Client[protocol.AddEventRequest, protocol.AddEventResponse]
 	syncStreams          *connect.Client[protocol.SyncStreamsRequest, protocol.SyncStreamsResponse]
 	addStreamToSync      *connect.Client[protocol.AddStreamToSyncRequest, protocol.AddStreamToSyncResponse]
+	modifySync           *connect.Client[protocol.ModifySyncRequest, protocol.ModifySyncResponse]
 	cancelSync           *connect.Client[protocol.CancelSyncRequest, protocol.CancelSyncResponse]
 	removeStreamFromSync *connect.Client[protocol.RemoveStreamFromSyncRequest, protocol.RemoveStreamFromSyncResponse]
 	info                 *connect.Client[protocol.InfoRequest, protocol.InfoResponse]
@@ -241,6 +258,11 @@ func (c *streamServiceClient) AddStreamToSync(ctx context.Context, req *connect.
 	return c.addStreamToSync.CallUnary(ctx, req)
 }
 
+// ModifySync calls river.StreamService.ModifySync.
+func (c *streamServiceClient) ModifySync(ctx context.Context, req *connect.Request[protocol.ModifySyncRequest]) (*connect.Response[protocol.ModifySyncResponse], error) {
+	return c.modifySync.CallUnary(ctx, req)
+}
+
 // CancelSync calls river.StreamService.CancelSync.
 func (c *streamServiceClient) CancelSync(ctx context.Context, req *connect.Request[protocol.CancelSyncRequest]) (*connect.Response[protocol.CancelSyncResponse], error) {
 	return c.cancelSync.CallUnary(ctx, req)
@@ -271,6 +293,12 @@ type StreamServiceHandler interface {
 	AddEvent(context.Context, *connect.Request[protocol.AddEventRequest]) (*connect.Response[protocol.AddEventResponse], error)
 	SyncStreams(context.Context, *connect.Request[protocol.SyncStreamsRequest], *connect.ServerStream[protocol.SyncStreamsResponse]) error
 	AddStreamToSync(context.Context, *connect.Request[protocol.AddStreamToSyncRequest]) (*connect.Response[protocol.AddStreamToSyncResponse], error)
+	// ModifySync adds/removes streams to/from an in progress sync session.
+	// The client must check ModifySyncResponse to determine which streams failed to add/remove.
+	//
+	// Note that it is possible for the client to receive stream updates for streams that are added
+	// or stops receiving stream updates for streams that are removed before this calls returns.
+	ModifySync(context.Context, *connect.Request[protocol.ModifySyncRequest]) (*connect.Response[protocol.ModifySyncResponse], error)
 	CancelSync(context.Context, *connect.Request[protocol.CancelSyncRequest]) (*connect.Response[protocol.CancelSyncResponse], error)
 	RemoveStreamFromSync(context.Context, *connect.Request[protocol.RemoveStreamFromSyncRequest]) (*connect.Response[protocol.RemoveStreamFromSyncResponse], error)
 	Info(context.Context, *connect.Request[protocol.InfoRequest]) (*connect.Response[protocol.InfoResponse], error)
@@ -331,6 +359,12 @@ func NewStreamServiceHandler(svc StreamServiceHandler, opts ...connect.HandlerOp
 		connect.WithSchema(streamServiceAddStreamToSyncMethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
+	streamServiceModifySyncHandler := connect.NewUnaryHandler(
+		StreamServiceModifySyncProcedure,
+		svc.ModifySync,
+		connect.WithSchema(streamServiceModifySyncMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
+	)
 	streamServiceCancelSyncHandler := connect.NewUnaryHandler(
 		StreamServiceCancelSyncProcedure,
 		svc.CancelSync,
@@ -373,6 +407,8 @@ func NewStreamServiceHandler(svc StreamServiceHandler, opts ...connect.HandlerOp
 			streamServiceSyncStreamsHandler.ServeHTTP(w, r)
 		case StreamServiceAddStreamToSyncProcedure:
 			streamServiceAddStreamToSyncHandler.ServeHTTP(w, r)
+		case StreamServiceModifySyncProcedure:
+			streamServiceModifySyncHandler.ServeHTTP(w, r)
 		case StreamServiceCancelSyncProcedure:
 			streamServiceCancelSyncHandler.ServeHTTP(w, r)
 		case StreamServiceRemoveStreamFromSyncProcedure:
@@ -420,6 +456,10 @@ func (UnimplementedStreamServiceHandler) SyncStreams(context.Context, *connect.R
 
 func (UnimplementedStreamServiceHandler) AddStreamToSync(context.Context, *connect.Request[protocol.AddStreamToSyncRequest]) (*connect.Response[protocol.AddStreamToSyncResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("river.StreamService.AddStreamToSync is not implemented"))
+}
+
+func (UnimplementedStreamServiceHandler) ModifySync(context.Context, *connect.Request[protocol.ModifySyncRequest]) (*connect.Response[protocol.ModifySyncResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("river.StreamService.ModifySync is not implemented"))
 }
 
 func (UnimplementedStreamServiceHandler) CancelSync(context.Context, *connect.Request[protocol.CancelSyncRequest]) (*connect.Response[protocol.CancelSyncResponse], error) {

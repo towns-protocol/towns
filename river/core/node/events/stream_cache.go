@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-
 	"github.com/river-build/river/core/contracts/river"
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/crypto"
@@ -50,6 +49,8 @@ type streamCacheImpl struct {
 	// streamImpl can be in unloaded state, in which case it will be loaded on first GetStream call.
 	cache sync.Map
 
+	syncTasks *StreamSyncTasksProcessor
+
 	chainConfig crypto.OnChainConfiguration
 
 	streamCacheSizeGauge     prometheus.Gauge
@@ -62,6 +63,11 @@ func NewStreamCache(
 	ctx context.Context,
 	params *StreamCacheParams,
 ) (*streamCacheImpl, error) {
+	syncTasks, err := NewStreamSyncTasksProcessor()
+	if err != nil {
+		return nil, err
+	}
+
 	s := &streamCacheImpl{
 		params: params,
 		streamCacheSizeGauge: params.Metrics.NewGaugeVecEx(
@@ -79,24 +85,36 @@ func NewStreamCache(
 			params.Wallet.Address.String(),
 		),
 		chainConfig: params.ChainConfig,
+		syncTasks:   syncTasks,
 	}
 
-	streams, err := params.Registry.GetAllStreams(ctx, params.AppliedBlockNum)
-	if err != nil {
+	// schedule sync tasks for all streams that are local to this node.
+	// these tasks sync up the local db with the latest block in the registry.
+	var localStreamResults []*registries.GetStreamResult
+	if err := params.Registry.ForAllStreams(ctx, params.AppliedBlockNum, func(stream *registries.GetStreamResult) bool {
+		if slices.Contains(stream.Nodes, params.Wallet.Address) {
+			localStreamResults = append(localStreamResults, stream)
+		}
+		return true
+	}); err != nil {
 		return nil, err
 	}
 
-	// TODO: read stream state from storage and schedule required reconciliations.
-
-	for _, stream := range streams {
-		if slices.Contains(stream.Nodes, params.Wallet.Address) {
-			s.cache.Store(stream.StreamId, &streamImpl{
-				params:           params,
-				streamId:         stream.StreamId,
-				nodes:            NewStreamNodes(stream.Nodes, params.Wallet.Address),
-				lastAccessedTime: time.Now(),
-			})
+	// schedule sync tasks for all local streams in the background
+	go func() {
+		for _, stream := range localStreamResults {
+			s.syncTasks.Submit(ctx, stream, s)
 		}
+	}()
+
+	// load local streams in-memory cache
+	for _, stream := range localStreamResults {
+		s.cache.Store(stream.StreamId, &streamImpl{
+			params:           params,
+			streamId:         stream.StreamId,
+			nodes:            NewStreamNodes(stream.Nodes, params.Wallet.Address),
+			lastAccessedTime: time.Now(),
+		})
 	}
 
 	err = params.Registry.OnStreamEvent(

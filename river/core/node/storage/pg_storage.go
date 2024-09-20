@@ -1417,7 +1417,6 @@ func (s *PostgresEventStore) runMigrations(ctx context.Context) error {
 	if err != nil && err != migrate.ErrNilVersion {
 		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Error fetching migration version before running migrations")
 	}
-	
 
 	if err = migration.Up(); err != nil && err != migrate.ErrNoChange {
 		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Error running migrations")
@@ -1753,4 +1752,166 @@ func (s *PostgresEventStore) debugReadStreamData(
 	}
 
 	return result, nil
+}
+
+func (s *PostgresEventStore) StreamLastMiniBlock(
+	ctx context.Context,
+	streamID StreamId,
+) (*MiniblockData, error) {
+	var ret *MiniblockData
+	err := s.txRunner(
+		ctx,
+		"StreamLastMiniBlock",
+		pgx.ReadOnly,
+		func(ctx context.Context, tx pgx.Tx) error {
+			var err error
+			ret, err = s.streamLastMiniBlockTx(ctx, tx, streamID)
+			return err
+		},
+		nil,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return ret, nil
+}
+
+func (s *PostgresEventStore) streamLastMiniBlockTx(
+	ctx context.Context,
+	tx pgx.Tx,
+	streamID StreamId,
+) (*MiniblockData, error) {
+	miniblockNumsRow, err := tx.Query(
+		ctx,
+		"SELECT seq_num, blockdata FROM miniblocks WHERE stream_id = $1 ORDER BY seq_num DESC LIMIT 1",
+		streamID,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer miniblockNumsRow.Close()
+
+	if miniblockNumsRow.Next() {
+		var (
+			maxSeqNum int64
+			blockData []byte
+		)
+
+		if err = miniblockNumsRow.Scan(&maxSeqNum, &blockData); err != nil {
+			return nil, err
+		}
+
+		return &MiniblockData{
+			StreamID:      streamID,
+			Number:        maxSeqNum,
+			MiniBlockInfo: blockData,
+		}, nil
+	}
+
+	return nil, RiverError(Err_NOT_FOUND, "latest miniblock in DB not found for stream").
+		Tags("stream", streamID).
+		Func("lastMiniBlockForStream")
+}
+
+func (s *PostgresEventStore) ImportMiniblocks(ctx context.Context, miniBlocks []*MiniblockData) error {
+	if len(miniBlocks) == 0 {
+		return nil
+	}
+
+	return s.txRunner(
+		ctx,
+		"ImportMiniBlocks",
+		pgx.ReadWrite,
+		func(ctx context.Context, tx pgx.Tx) error {
+			if miniBlocks[0].Number == 0 {
+				if err := s.createStreamStorageTx(ctx, tx, miniBlocks[0].StreamID, miniBlocks[0].MiniBlockInfo); err != nil {
+					return err
+				}
+				miniBlocks = miniBlocks[1:]
+			}
+
+			return s.importMiniblocksTx(ctx, tx, miniBlocks)
+		},
+		nil,
+		"streamId", miniBlocks[0].StreamID,
+	)
+}
+
+func (s *PostgresEventStore) importMiniblocksTx(ctx context.Context, tx pgx.Tx, miniBlocks []*MiniblockData) error {
+	if len(miniBlocks) == 0 {
+		return nil
+	}
+
+	var (
+		streamID = miniBlocks[0].StreamID
+		seqNum   *int64
+	)
+
+	err := tx.QueryRow(
+		ctx,
+		"SELECT MAX(seq_num) as latest_blocks_number FROM miniblocks WHERE stream_id = $1", streamID).
+		Scan(&seqNum)
+	if err != nil {
+		return err
+	}
+
+	if seqNum == nil {
+		seqNum = new(int64)
+		*seqNum = -1
+	}
+
+	// clean up minipool
+	_, err = tx.Exec(ctx, "DELETE FROM minipools WHERE slot_num > -1 AND stream_id = $1", streamID)
+	if err != nil {
+		return err
+	}
+
+	for _, miniBlock := range miniBlocks {
+		var (
+			expBlockNum = *seqNum + 1
+			err         error
+		)
+
+		if expBlockNum != miniBlock.Number {
+			return RiverError(Err_BAD_BLOCK, "Expected block %d to import but got block %d", expBlockNum, miniBlock.Number)
+		}
+
+		if expBlockNum == 0 {
+			err = s.txRunner(
+				ctx,
+				"CreateStreamStorage",
+				pgx.ReadWrite,
+				func(ctx context.Context, tx pgx.Tx) error {
+					return s.createStreamStorageTx(ctx, tx, streamID, miniBlock.MiniBlockInfo)
+				},
+				nil,
+				"streamId", streamID,
+			)
+		} else {
+			_, err = tx.Exec(
+				ctx,
+				"INSERT INTO miniblocks (stream_id, seq_num, blockdata) values ($1, $2, $3)",
+				//"INSERT INTO miniblocks SELECT stream_id, seq_num, blockdata FROM miniblock_candidates WHERE stream_id = $1 AND seq_num = $2 AND miniblock_candidates.block_hash = $3",
+				streamID,
+				miniBlock.Number,
+				miniBlock.MiniBlockInfo, // avoid leading '0x'
+			)
+		}
+		if err != nil {
+			return err
+		}
+
+		*seqNum = *seqNum + 1
+	}
+
+	_, err = tx.Exec(
+		ctx,
+		"UPDATE minipools SET generation = $1 WHERE slot_num = -1 AND stream_id = $2",
+		miniBlocks[len(miniBlocks)-1].Number+1,
+		streamID,
+	)
+
+	return err
 }

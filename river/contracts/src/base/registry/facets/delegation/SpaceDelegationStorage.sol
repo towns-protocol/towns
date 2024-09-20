@@ -26,9 +26,8 @@ library SpaceDelegationStorage {
   }
 
   function layout() internal pure returns (Layout storage s) {
-    bytes32 slot = STORAGE_SLOT;
     assembly {
-      s.slot := slot
+      s.slot := STORAGE_SLOT
     }
   }
 }

@@ -2,7 +2,6 @@ package storage
 
 import (
 	"context"
-
 	"github.com/ethereum/go-ethereum/common"
 
 	. "github.com/river-build/river/core/node/shared"
@@ -106,7 +105,22 @@ type StreamStorage interface {
 		streamId StreamId,
 	) (*DebugReadStreamDataResult, error)
 
+	// StreamLastMiniBlock returns the last mini-block number for the given stream from storage.
+	StreamLastMiniBlock(ctx context.Context, streamID StreamId) (*MiniblockData, error)
+
+	// ImportMiniblocks imports raw blocks into the database.
+	//
+	// This bypasses the mini-block candidate/promotion approach and is meant to catch up the storage with the
+	// streams registry after the node was down.
+	ImportMiniblocks(ctx context.Context, miniBlocks []*MiniblockData) error
+
 	Close(ctx context.Context)
+}
+
+type MiniblockData struct {
+	StreamID      StreamId
+	Number        int64
+	MiniBlockInfo []byte
 }
 
 type MiniblockDescriptor struct {
