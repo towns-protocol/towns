@@ -6,7 +6,7 @@ cbor_metadata = false # Remove all metadata hashes from your contract's bytecode
 evm_version = "paris" # The EVM version to use during tests.
 fuzz = { runs = 256 } # The amount of fuzz runs to perform for each fuzz test case.
 gas_reports = ["*"] # The contracts to print gas reports for.
-libs = ["node_modules"]
+libs = ["node_modules", "lib"]
 optimizer = true # Whether or not to enable the Solidity optimizer.
 optimizer_runs = 200 # The amount of optimizer runs to perform.
 out = "contracts/out" # The path to put contract artifacts in, relative to the root of the project.
