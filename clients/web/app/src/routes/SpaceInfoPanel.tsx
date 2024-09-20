@@ -56,6 +56,7 @@ import { useNotificationSettings } from 'hooks/useNotificationSettings'
 import { useUploadAttachment } from '@components/MediaDropContext/useUploadAttachment'
 import { EditTownInfo } from '@components/Panel/EditTownInfo'
 import { ContractInfoButtons } from '@components/Panel/ContractInfoButtons'
+import { Analytics } from 'hooks/useAnalytics'
 import { PublicTownPage } from './PublicTownPage/PublicTownPage'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
 
@@ -194,6 +195,7 @@ export const SpaceInfo = () => {
 
     const onLeaveClick = useCallback(() => {
         setActiveModal('confirm-leave')
+        Analytics.getInstance().track('clicked leave town')
     }, [setActiveModal])
 
     const setOptimisticSpaceInitialized = useAppProgressStore(
@@ -209,6 +211,10 @@ export const SpaceInfo = () => {
 
         // clean up
         setOptimisticSpaceInitialized(spaceID, false)
+
+        Analytics.getInstance().track('confirmed leave town', undefined, () => {
+            console.log('[analytics] confirmed leave town')
+        })
 
         setTimeout(() => {
             navigate('/')

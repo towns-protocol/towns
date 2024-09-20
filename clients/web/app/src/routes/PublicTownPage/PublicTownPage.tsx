@@ -3,7 +3,7 @@ import { clsx } from 'clsx'
 import debug from 'debug'
 import React, { useCallback, useEffect, useMemo } from 'react'
 import { useLocation, useNavigate } from 'react-router'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useConnectivity, useContractSpaceInfoWithoutClient, useMyProfile } from 'use-towns-client'
 import { getTownDataFromSSR } from 'utils/parseTownDataFromSSR'
 import { AppProgressState } from '@components/AppProgressOverlay/AppProgressState'
@@ -51,18 +51,6 @@ const PublicTownPageWithoutAuth = (props: { isPreview?: boolean; onClosePreview?
 
     const { isTouch } = useDevice()
     const location = useLocation()
-    const [searchParams] = useSearchParams()
-    const { isInvite, joinSpaceId, oauthProvider } = useMemo(() => {
-        const inviteValues = searchParams.get('invite')
-        const isInvite = inviteValues !== undefined
-        const joinSpaceId = searchParams.get('join')
-        const oauthProvider = searchParams.get('privy_oauth_provider')
-        return {
-            isInvite,
-            joinSpaceId,
-            oauthProvider,
-        }
-    }, [searchParams])
 
     useEffect(() => {
         console.log('[PublicTownPage][route]', 'route', {
@@ -79,15 +67,13 @@ const PublicTownPageWithoutAuth = (props: { isPreview?: boolean; onClosePreview?
     }, [])
 
     useEffect(() => {
-        const tracked = {
-            joinSpaceId,
-            isInvite,
-            oauthProvider,
+        if (isPreview) {
+            return
         }
-        Analytics.getInstance().page('home-page', 'public town page', tracked, () => {
-            console.log('[analytics] public town page', tracked)
+        Analytics.getInstance().page('home-page', 'public town page', {
+            spaceId,
         })
-    }, [isInvite, joinSpaceId, oauthProvider, spaceId])
+    }, [isPreview, spaceId])
 
     useEffect(() => {
         console.log('[analytics]')
@@ -157,15 +143,7 @@ const Header = (props: { isPreview: boolean; onClosePreview?: () => void }) => {
     const { login } = useCombinedAuth()
 
     const onClickLogin = useCallback(() => {
-        Analytics.getInstance().track(
-            'clicked login',
-            {
-                buttonText: 'Log In',
-            },
-            () => {
-                console.log('[analytics][PublicTownPage] clicked login')
-            },
-        )
+        Analytics.getInstance().track('clicked login')
         login()
     }, [login])
 

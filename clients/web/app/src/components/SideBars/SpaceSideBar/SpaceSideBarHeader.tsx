@@ -20,6 +20,7 @@ import { baseScanUrl } from '@components/Web3/utils'
 import { useDevice } from 'hooks/useDevice'
 import useCopyToClipboard from 'hooks/useCopyToClipboard'
 import { SECOND_MS } from 'data/constants'
+import { Analytics } from 'hooks/useAnalytics'
 import * as styles from './SpaceSideBar.css'
 
 export const SpaceSideBarHeader = (props: {
@@ -199,6 +200,7 @@ const ShareTownLinkButton = (props: { spaceId: string }) => {
     const onCopyClick = useCallback(() => {
         copy(inviteUrl)
         setCopyDisplay(true)
+        Analytics.getInstance().track('clicked on share town link')
     }, [copy, inviteUrl])
 
     useEffect(() => {

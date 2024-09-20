@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react'
 import { useFavoriteChannels } from 'hooks/useFavoriteChannels'
 import { Box, Icon } from '@ui'
+import { Analytics } from 'hooks/useAnalytics'
 import { favoriteStyle, favoriteStyleAutoHide } from './FavoriteChannelButton.css'
 
 export const FavoriteChannelButton = (props: {
@@ -15,10 +16,14 @@ export const FavoriteChannelButton = (props: {
             event.preventDefault()
             event.stopPropagation()
             toggleFavoriteChannelId(channelId)
+            const eventName = favorite
+                ? 'clicked remove channel from favorites'
+                : 'clicked add channel to favorites'
+            Analytics.getInstance().track(eventName)
         },
-        [channelId, toggleFavoriteChannelId],
+        [channelId, favorite, toggleFavoriteChannelId],
     )
-    const tooltip = favorite ? 'Remove from Favorites' : 'Add to Favorites'
+    const tooltip = favorite ? 'Remove from Favorites' : 'favorites'
     const forceDisplay = favorite && isUnreadSection
     return (
         <Box tooltip={tooltip}>

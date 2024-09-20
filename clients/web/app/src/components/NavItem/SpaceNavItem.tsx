@@ -10,6 +10,7 @@ import { useSizeContext } from 'ui/hooks/useSizeContext'
 import { vars } from 'ui/styles/vars.css'
 import { useUserStore } from 'store/userSettingsStore'
 import { ToneName } from 'ui/styles/themes'
+import { Analytics } from 'hooks/useAnalytics'
 import { NavItem } from './_NavItem'
 
 type Props = {
@@ -55,7 +56,11 @@ export const SpaceNavItem = (props: Props) => {
                 ? favoriteSpaces.filter((f) => f !== id)
                 : [id, ...favoriteSpaces],
         )
-    }, [favoriteSpaces, id, setFavoriteSpaces, userId])
+        const eventName = isFavorite
+            ? 'clicked remove space from favorites'
+            : 'clicked add space to favorites'
+        Analytics.getInstance().track(eventName)
+    }, [favoriteSpaces, id, isFavorite, setFavoriteSpaces, userId])
 
     const [isHovered, setIsHovered] = React.useState(false)
     const onMouseEnter = useCallback(() => setIsHovered(true), [])
