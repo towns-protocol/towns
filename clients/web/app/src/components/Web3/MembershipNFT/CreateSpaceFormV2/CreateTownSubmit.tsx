@@ -25,7 +25,10 @@ import { CreateSpaceFlowStatus } from 'use-towns-client/dist/client/TownsClientT
 import { Box, Icon, IconButton, Text } from '@ui'
 import { PATHS } from 'routes'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
-import { convertTokenTypeToOperationType } from '@components/Tokens/utils'
+import {
+    convertTokenTypeToOperationType,
+    transformQuantityForSubmit,
+} from '@components/Tokens/utils'
 import { useStore } from 'store/store'
 import { Analytics } from 'hooks/useAnalytics'
 import { useNotificationSettings } from 'hooks/useNotificationSettings'
@@ -195,7 +198,7 @@ export function CreateTownSubmit({
 
                 if (tokensGatedBy.length > 0) {
                     const missingQuantity = tokensGatedBy.some(
-                        (token) => token.data.quantity === 0n || token.data.quantity === undefined,
+                        (token) => token.data.quantity === '0' || token.data.quantity === undefined,
                     )
                     if (missingQuantity) {
                         form.setError('tokensGatedBy', {
@@ -214,6 +217,7 @@ export function CreateTownSubmit({
                 //////////////////////////////////////////
                 // check rule data
                 //////////////////////////////////////////
+
                 // If gatedType is everyone, usersGatedBy should be the everyone address, if we have more users, we should remove the everyone address
                 const usersGatedBy =
                     values.gatingType === 'everyone'
@@ -227,7 +231,14 @@ export function CreateTownSubmit({
                                   address: t.data.address as Address,
                                   chainId: BigInt(t.chainId),
                                   type: convertTokenTypeToOperationType(t.data.type),
-                                  threshold: t.data.quantity ?? undefined,
+                                  threshold: t.data.quantity
+                                      ? transformQuantityForSubmit(
+                                            t.data.quantity,
+                                            t.data.type,
+                                            t.data.decimals,
+                                        )
+                                      : 1n,
+                                  tokenId: t.data.tokenId ? BigInt(t.data.tokenId) : undefined,
                               })),
                           )
                         : NoopRuleData

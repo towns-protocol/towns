@@ -12,6 +12,7 @@ import {IVotesEnumerable} from "contracts/src/diamond/facets/governance/votes/en
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {SpaceDelegationStorage} from "contracts/src/base/registry/facets/delegation/SpaceDelegationStorage.sol";
+import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 
 // contracts
 import {OwnableBase} from "contracts/src/diamond/facets/ownable/OwnableBase.sol";
@@ -29,7 +30,7 @@ contract SpaceDelegationFacet is ISpaceDelegation, OwnableBase, Facet {
 
   modifier onlySpaceOwner(address space) {
     if (!_isValidSpaceOwner(space)) {
-      revert SpaceDelegation__InvalidSpace();
+      CustomRevert.revertWith(SpaceDelegation__InvalidSpace.selector);
     }
     _;
   }
@@ -38,15 +39,17 @@ contract SpaceDelegationFacet is ISpaceDelegation, OwnableBase, Facet {
     address space,
     address operator
   ) external onlySpaceOwner(space) {
-    if (space == address(0)) revert SpaceDelegation__InvalidAddress();
-    if (operator == address(0)) revert SpaceDelegation__InvalidAddress();
+    if (space == address(0))
+      CustomRevert.revertWith(SpaceDelegation__InvalidAddress.selector);
+    if (operator == address(0))
+      CustomRevert.revertWith(SpaceDelegation__InvalidAddress.selector);
 
     SpaceDelegationStorage.Layout storage ds = SpaceDelegationStorage.layout();
 
     address currentOperator = ds.operatorBySpace[space];
 
     if (currentOperator != address(0) && currentOperator == operator)
-      revert SpaceDelegation__AlreadyDelegated(currentOperator);
+      CustomRevert.revertWith(SpaceDelegation__AlreadyDelegated.selector);
 
     //remove the space from the current operator
     ds.spacesByOperator[currentOperator].remove(space);
@@ -61,14 +64,15 @@ contract SpaceDelegationFacet is ISpaceDelegation, OwnableBase, Facet {
   }
 
   function removeSpaceDelegation(address space) external onlySpaceOwner(space) {
-    if (space == address(0)) revert SpaceDelegation__InvalidAddress();
+    if (space == address(0))
+      CustomRevert.revertWith(SpaceDelegation__InvalidAddress.selector);
 
     SpaceDelegationStorage.Layout storage ds = SpaceDelegationStorage.layout();
 
     address operator = ds.operatorBySpace[space];
 
     if (operator == address(0)) {
-      revert SpaceDelegation__InvalidAddress();
+      CustomRevert.revertWith(SpaceDelegation__InvalidAddress.selector);
     }
 
     ds.operatorBySpace[space] = address(0);
@@ -94,7 +98,8 @@ contract SpaceDelegationFacet is ISpaceDelegation, OwnableBase, Facet {
   //                           Token
   // =============================================================
   function setRiverToken(address newToken) external onlyOwner {
-    if (newToken == address(0)) revert SpaceDelegation__InvalidAddress();
+    if (newToken == address(0))
+      CustomRevert.revertWith(SpaceDelegation__InvalidAddress.selector);
 
     SpaceDelegationStorage.Layout storage ds = SpaceDelegationStorage.layout();
 
@@ -111,7 +116,8 @@ contract SpaceDelegationFacet is ISpaceDelegation, OwnableBase, Facet {
   //                      Mainnet Delegation
   // =============================================================
   function setMainnetDelegation(address newDelegation) external onlyOwner {
-    if (newDelegation == address(0)) revert SpaceDelegation__InvalidAddress();
+    if (newDelegation == address(0))
+      CustomRevert.revertWith(SpaceDelegation__InvalidAddress.selector);
 
     SpaceDelegationStorage.layout().mainnetDelegation = newDelegation;
     emit MainnetDelegationChanged(newDelegation);
@@ -131,7 +137,10 @@ contract SpaceDelegationFacet is ISpaceDelegation, OwnableBase, Facet {
   }
 
   function setStakeRequirement(uint256 newRequirement) external onlyOwner {
-    if (newRequirement == 0) revert SpaceDelegation__InvalidStakeRequirement();
+    if (newRequirement == 0)
+      CustomRevert.revertWith(
+        SpaceDelegation__InvalidStakeRequirement.selector
+      );
 
     SpaceDelegationStorage.layout().stakeRequirement = newRequirement;
     emit StakeRequirementChanged(newRequirement);
@@ -145,35 +154,31 @@ contract SpaceDelegationFacet is ISpaceDelegation, OwnableBase, Facet {
     address operator
   ) internal view returns (uint256) {
     SpaceDelegationStorage.Layout storage ds = SpaceDelegationStorage.layout();
-    if (ds.riverToken == address(0)) return 0;
-
-    if (ds.mainnetDelegation == address(0)) return 0;
-    uint256 delegation = 0;
-    //get the delegation from the base delegation
-    address[] memory baseDelegators = IVotesEnumerable(ds.riverToken)
-      .getDelegatorsByDelegatee(operator);
-    for (uint256 i = 0; i < baseDelegators.length; i++) {
-      delegation += IERC20(ds.riverToken).balanceOf(baseDelegators[i]);
-    }
+    (address riverToken_, address mainnetDelegation_) = (
+      ds.riverToken,
+      ds.mainnetDelegation
+    );
+    if (riverToken_ == address(0) || mainnetDelegation_ == address(0)) return 0;
 
     // get the delegation from the mainnet delegation
-    delegation += IMainnetDelegation(ds.mainnetDelegation)
+    uint256 delegation = IMainnetDelegation(mainnetDelegation_)
       .getDelegatedStakeByOperator(operator);
+
+    // get the delegation from the base delegation
+    address[] memory baseDelegators = IVotesEnumerable(riverToken_)
+      .getDelegatorsByDelegatee(operator);
+    for (uint256 i; i < baseDelegators.length; ++i) {
+      delegation += IERC20(riverToken_).balanceOf(baseDelegators[i]);
+    }
 
     address[] memory spaces = ds.spacesByOperator[operator].values();
 
-    for (uint256 i = 0; i < spaces.length; ) {
-      address[] memory usersDelegatingToSpace = IVotesEnumerable(ds.riverToken)
+    for (uint256 i; i < spaces.length; ++i) {
+      address[] memory usersDelegatingToSpace = IVotesEnumerable(riverToken_)
         .getDelegatorsByDelegatee(spaces[i]);
 
-      for (uint256 j = 0; j < usersDelegatingToSpace.length; j++) {
-        delegation += IERC20(ds.riverToken).balanceOf(
-          usersDelegatingToSpace[j]
-        );
-      }
-
-      unchecked {
-        i++;
+      for (uint256 j; j < usersDelegatingToSpace.length; ++j) {
+        delegation += IERC20(riverToken_).balanceOf(usersDelegatingToSpace[j]);
       }
     }
 

@@ -77,11 +77,16 @@ with `ChainID=1337`
    and river-anvil chains.
 
 <b>To deploy a single diamond base contract to your local anvil instance</b>\
-from within the `contracts/` folder you can run `make deploy-base-anvil contract=Deploy[Contract]` you will replace
+from within the `contracts/` folder you can run `make deploy-base-anvil contract=Deploy[Contract] type=diamonds` you will replace
 the `[Contract]` part with the contract you want to deploy, you can see all the contracts available for deployment
-in [this](./scripts/deployments) part of the project.
+in [this](./scripts/deployments/diamonds) part of the project.
 
 <b>To deploy a facet base contract to your local anvil instance</b>\
-from within the `contracts/` folder you can run `make deploy-base-anvil contract=Deploy[Facet] type=facet` you will
+from within the `contracts/` folder you can run `make deploy-base-anvil contract=Deploy[Facet] type=facets` you will
+replace the `[Facet]` part with the contract you want to deploy, you can see all the facets available for deployment
+in [this](./scripts/deployments/facets) part of the project.
+
+<b>To deploy our contracts to a live network</b>\
+from within the `contracts/` folder you can run `make deploy-base-sepolia contract=Deploy[Facet] type=facets context=[context]` you will
 replace the `[Facet]` part with the contract you want to deploy, you can see all the facets available for deployment
 in [this](./scripts/deployments/facets) part of the project.

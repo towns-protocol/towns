@@ -15,6 +15,7 @@ export type TokenData = {
     openSeaCollectionUrl?: string | null
     symbol?: string
     decimals?: number
+    tokenId?: bigint | undefined
 }
 
 export type TokenDataWithChainId = {

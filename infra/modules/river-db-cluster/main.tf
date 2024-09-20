@@ -16,6 +16,20 @@ data "aws_rds_engine_version" "postgresql" {
   version = "15.4"
 }
 
+resource "aws_rds_cluster_parameter_group" "river_db_paramater_group" {
+  name        = "${local.cluster_name}-parameter-group"
+  family      = "aurora-postgresql15"
+  description = "Custom parameter group for river db cluster"
+
+  parameter {
+    apply_method = "pending-reboot"
+    name         = "max_connections"
+
+    # this is the maximum supported value for max_connections
+    value = "16000"
+  }
+}
+
 module "rds_aurora_postgresql" {
   source = "terraform-aws-modules/rds-aurora/aws"
 
@@ -52,6 +66,8 @@ module "rds_aurora_postgresql" {
   tags = local.tags
 
   deletion_protection = true
+
+  db_cluster_parameter_group_name = aws_rds_cluster_parameter_group.river_db_paramater_group.name
 
   serverlessv2_scaling_configuration = {
     min_capacity = 4

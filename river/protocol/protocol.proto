@@ -768,6 +768,34 @@ message RemoveStreamFromSyncRequest {
 
 message RemoveStreamFromSyncResponse {}
 
+// ModifySyncRequest adds or removes streams from an existing sync session.
+message ModifySyncRequest {
+  // sync_id is the id of the sync session.
+  string sync_id = 1;
+  // add_streams contains the stream cookies for streams to add to the stream sync session.
+  repeated SyncCookie add_streams = 2;
+  // remove_streams contains the stream id's to remove from the sync session.
+  repeated bytes remove_streams = 3;
+}
+
+// SyncStreamOpStatus contains details why adding or removing a stream to/from a sync session failed.
+message SyncStreamOpStatus {
+  // stream_id that failed to add/remove to/from the sync session.
+  bytes stream_id = 1;
+  // code represents the error code
+  int32 code = 2;
+  // message describing what happened
+  string message = 3;
+}
+
+// ModifySyncResponse contains the details of a stream sync modification request.
+message ModifySyncResponse {
+  // List with streams that failed to add to the sync operation.
+  repeated SyncStreamOpStatus adds = 1;
+  // List with streams that failed to be removed from the sync operation.
+  repeated SyncStreamOpStatus removals = 2;
+}
+
 // CancelSyncRequest cancels the sync session.
 message CancelSyncRequest {
     // sync_id is the unique id of the sync session.
@@ -805,6 +833,12 @@ service StreamService {
     rpc AddEvent(AddEventRequest) returns (AddEventResponse);
     rpc SyncStreams(SyncStreamsRequest) returns (stream SyncStreamsResponse);
     rpc AddStreamToSync(AddStreamToSyncRequest) returns (AddStreamToSyncResponse);
+    // ModifySync adds/removes streams to/from an in progress sync session.
+    // The client must check ModifySyncResponse to determine which streams failed to add/remove.
+    //
+    // Note that it is possible for the client to receive stream updates for streams that are added
+    // or stops receiving stream updates for streams that are removed before this calls returns.
+    rpc ModifySync(ModifySyncRequest) returns (ModifySyncResponse);
     rpc CancelSync(CancelSyncRequest) returns (CancelSyncResponse);
     rpc RemoveStreamFromSync(RemoveStreamFromSyncRequest) returns (RemoveStreamFromSyncResponse);
     rpc Info(InfoRequest) returns (InfoResponse);

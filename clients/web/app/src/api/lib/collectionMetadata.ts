@@ -5,8 +5,9 @@ import { ZodEffects, ZodNativeEnum, z } from 'zod'
 import { Address, useSupportedXChainIds } from 'use-towns-client'
 import { env } from 'utils'
 import { axiosClient } from 'api/apiClient'
-import { TokenDataWithChainId, TokenType } from '@components/Tokens/types'
-import { TokenEntitlement } from '@components/Tokens/TokenSelector/tokenSchemas'
+import { TokenType } from '@components/Tokens/types'
+import { transformQuantityForDisplay } from '@components/Tokens/utils'
+import { Token } from '@components/Tokens/TokenSelector/tokenSchemas'
 
 export const queryKeyAcrossNetworks = 'tokenMetadataAcrossNetworks'
 const singleTokenQueryKey = 'tokenMetadata'
@@ -70,7 +71,7 @@ export function useTokenMetadataAcrossNetworks(tokenAddress: string) {
 
     return useQuery({
         queryKey: [queryKeyAcrossNetworks, _address],
-        queryFn: async (): Promise<TokenDataWithChainId[]> => {
+        queryFn: async (): Promise<Token[]> => {
             if (!supportedXChainIds) {
                 return []
             }
@@ -105,13 +106,13 @@ function singleTokenQuerySetup(args: {
     chainId: number
     queryClient: ReturnType<typeof useQueryClient>
     supportedChainIds: number[] | undefined
-}): UseQueryOptions<TokenDataWithChainId> {
+}): UseQueryOptions<Token> {
     const { tokenAddress, chainId, queryClient } = args
     const _address = tokenAddress.toLowerCase()
 
     return {
         queryKey: [singleTokenQueryKey, _address, chainId],
-        queryFn: async (): Promise<TokenDataWithChainId> => {
+        queryFn: async (): Promise<Token> => {
             if (!args.supportedChainIds) {
                 throw new Error('supportedChainIds is required')
             }
@@ -178,14 +179,14 @@ export function useTokenMetadataForChainId(tokenAddress: string, chainId: number
     })
 }
 
-export function useMultipleTokenMetadatasForChainIds(tokens: TokenEntitlement[] | undefined) {
+export function useMultipleTokenMetadatasForChainIds(tokens: Token[] | undefined) {
     const queryClient = useQueryClient()
     const { data: supportedXChainIds } = useSupportedXChainIds()
 
     return useQueries({
         queries: (tokens ?? []).map((token) => {
             const querySetup = singleTokenQuerySetup({
-                tokenAddress: token.address,
+                tokenAddress: token.data.address,
                 chainId: token.chainId,
                 queryClient,
                 supportedChainIds: supportedXChainIds,
@@ -197,20 +198,31 @@ export function useMultipleTokenMetadatasForChainIds(tokens: TokenEntitlement[] 
         }),
         combine: (results) => {
             return {
-                data: results
-                    .map((r, index) => {
-                        if (r.data && tokens && tokens[index]) {
-                            return {
-                                ...r.data,
-                                data: {
-                                    ...r.data.data,
-                                    quantity: tokens[index].quantity,
-                                },
-                            }
-                        }
-                        return r.data
-                    })
-                    .filter((r): r is TokenDataWithChainId => r !== undefined),
+                data: (results
+                    ? results
+                          .map((r, index) => {
+                              if (r.data && tokens && tokens[index]) {
+                                  const { quantity, tokenId, type } = tokens[index].data
+
+                                  return {
+                                      ...r.data,
+                                      data: {
+                                          ...r.data.data,
+                                          quantity: quantity
+                                              ? transformQuantityForDisplay(
+                                                    BigInt(quantity),
+                                                    type,
+                                                    r.data.data.decimals,
+                                                )
+                                              : undefined,
+                                          tokenId: tokenId ?? undefined,
+                                      },
+                                  }
+                              }
+                              return r.data
+                          })
+                          .filter((r) => r !== undefined)
+                    : []) as Token[],
                 isError: results.some((r) => r.isError),
                 isLoading: results.some((r) => r.isLoading),
             }
@@ -220,13 +232,13 @@ export function useMultipleTokenMetadatasForChainIds(tokens: TokenEntitlement[] 
 
 export function mapTokensAcrossNetoworksToTokenProps(
     tokens: GetCollectionMetadataAcrossNetworksResponse[],
-): TokenDataWithChainId[] {
+): Token[] {
     return tokens.map((token) => {
         return mapToTokenData(token.data, token.chainId)
     })
 }
 
-export function mapToTokenData(token: ContractMetadata, chainId: number): TokenDataWithChainId {
+export function mapToTokenData(token: ContractMetadata, chainId: number): Token {
     return {
         chainId,
         data: {

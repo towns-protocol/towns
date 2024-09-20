@@ -6,12 +6,10 @@ import {
     isCiphertext,
     isDefined,
     isRemoteEvent,
-    isDecryptedEvent,
     isLocalEvent,
     logNever,
     LocalTimelineEvent,
     StreamChange,
-    DecryptedTimelineEvent,
     RemoteTimelineEvent,
     userIdFromAddress,
     streamIdFromBytes,
@@ -28,7 +26,6 @@ import {
     DmChannelPayload,
     GdmChannelPayload,
     ChannelMessage,
-    ChannelProperties,
     ChannelMessage_Post_Attachment,
     MemberPayload,
 } from '@river-build/proto'
@@ -240,13 +237,8 @@ export function useCasablancaTimelines(
 
 export function toEvent(timelineEvent: StreamTimelineEvent, userId: string): TimelineEvent {
     const eventId = timelineEvent.hashStr
-    let senderId = timelineEvent.creatorUserId
+    const senderId = timelineEvent.creatorUserId
 
-    if (timelineEvent.remoteEvent?.event.payload.value?.content.case == 'membership') {
-        senderId = userIdFromAddress(
-            timelineEvent.remoteEvent?.event.payload.value?.content.value.initiatorAddress,
-        )
-    }
     const sender = {
         id: senderId,
         displayName: senderId, // todo displayName
@@ -305,8 +297,6 @@ function toTownsContent(timelineEvent: StreamTimelineEvent): TownsContentResult 
             'local event',
             timelineEvent.hashStr,
         )
-    } else if (isDecryptedEvent(timelineEvent)) {
-        return toTownsContent_fromDecryptedEvent(timelineEvent.hashStr, timelineEvent)
     } else if (isRemoteEvent(timelineEvent)) {
         return toTownsContent_fromParsedEvent(timelineEvent.hashStr, timelineEvent)
     } else {
@@ -335,29 +325,6 @@ function validateEvent(
     return { description }
 }
 
-function toTownsContent_fromDecryptedEvent(
-    eventId: string,
-    message: DecryptedTimelineEvent,
-): TownsContentResult {
-    const description = `${message.decryptedContent.kind} id: ${eventId}`
-
-    switch (message.decryptedContent.kind) {
-        case 'text':
-            return { error: `payload contains only text: ${message.decryptedContent.content}` }
-        case 'channelMessage':
-            return toTownsContent_FromChannelMessage(
-                message.decryptedContent.content,
-                description,
-                eventId,
-            )
-        case 'channelProperties':
-            return toTownsContent_FromChannelProperties(message.decryptedContent.content)
-        default:
-            logNever(message.decryptedContent)
-            return { error: `Unknown payload case: ${description}` }
-    }
-}
-
 function toTownsContent_fromParsedEvent(
     eventId: string,
     timelineEvent: RemoteTimelineEvent,
@@ -374,7 +341,7 @@ function toTownsContent_fromParsedEvent(
     switch (message.event.payload.case) {
         case 'userPayload':
             return toTownsContent_UserPayload(
-                eventId,
+                timelineEvent,
                 message,
                 message.event.payload.value,
                 description,
@@ -432,7 +399,7 @@ function toTownsContent_fromParsedEvent(
             }
         case 'memberPayload':
             return toTownsContent_MemberPayload(
-                eventId,
+                timelineEvent,
                 message,
                 message.event.payload.value,
                 description,
@@ -460,7 +427,7 @@ function toTownsContent_MiniblockHeader(
 }
 
 function toTownsContent_MemberPayload(
-    eventId: string,
+    event: StreamTimelineEvent,
     message: ParsedEvent,
     value: MemberPayload,
     description: string,
@@ -471,6 +438,7 @@ function toTownsContent_MemberPayload(
                 content: {
                     kind: ZTEvent.RoomMember,
                     userId: userIdFromAddress(value.content.value.userAddress),
+                    initiatorId: userIdFromAddress(value.content.value.initiatorAddress),
                     membership: toMembership(value.content.value.op),
                 } satisfies RoomMemberEvent,
             }
@@ -499,15 +467,22 @@ function toTownsContent_MemberPayload(
                 content: {
                     kind: ZTEvent.SpaceDisplayName,
                     userId: message.creatorUserId,
-                    displayName: value.content.value.ciphertext,
+                    displayName:
+                        event.decryptedContent?.kind === 'text'
+                            ? event.decryptedContent.content
+                            : value.content.value.ciphertext,
                 } satisfies SpaceDisplayNameEvent,
             }
+
         case 'username':
             return {
                 content: {
                     kind: ZTEvent.SpaceUsername,
                     userId: message.creatorUserId,
-                    username: value.content.value.ciphertext,
+                    username:
+                        event.decryptedContent?.kind === 'text'
+                            ? event.decryptedContent.content
+                            : value.content.value.ciphertext,
                 } satisfies SpaceUsernameEvent,
             }
         case 'ensAddress':
@@ -555,7 +530,7 @@ function toTownsContent_MemberPayload(
 }
 
 function toTownsContent_UserPayload(
-    eventId: string,
+    event: RemoteTimelineEvent,
     message: ParsedEvent,
     value: UserPayload,
     description: string,
@@ -578,6 +553,7 @@ function toTownsContent_UserPayload(
                 content: {
                     kind: ZTEvent.RoomMember,
                     userId: '', // this is just the current user
+                    initiatorId: '',
                     membership: toMembership(payload.op),
                     streamId: streamId,
                 } satisfies RoomMemberEvent,
@@ -590,6 +566,7 @@ function toTownsContent_UserPayload(
                 content: {
                     kind: ZTEvent.RoomMember,
                     userId: userIdFromAddress(payload.userId),
+                    initiatorId: event.remoteEvent.creatorUserId,
                     membership: toMembership(payload.op),
                 } satisfies RoomMemberEvent,
             }
@@ -626,6 +603,13 @@ function toTownsContent_ChannelPayload(
             }
         }
         case 'message': {
+            if (timelineEvent.decryptedContent?.kind === 'channelMessage') {
+                return toTownsContent_FromChannelMessage(
+                    timelineEvent.decryptedContent.content,
+                    description,
+                    eventId,
+                )
+            }
             const payload = value.content.value
             return toTownsContent_ChannelPayload_Message(timelineEvent, payload, description)
         }
@@ -711,17 +695,6 @@ function toTownsContent_FromChannelMessage(
     }
 }
 
-function toTownsContent_FromChannelProperties(
-    channelProperties: ChannelProperties,
-): TownsContentResult {
-    return {
-        content: {
-            kind: ZTEvent.RoomProperties,
-            properties: channelProperties,
-        } satisfies RoomPropertiesEvent,
-    }
-}
-
 function toTownsContent_ChannelPayload_Message(
     timelineEvent: StreamTimelineEvent,
     payload: EncryptedData,
@@ -753,8 +726,16 @@ function toTownsContent_ChannelPayload_ChannelProperties(
     payload: EncryptedData,
     description: string,
 ): TownsContentResult {
+    if (timelineEvent.decryptedContent?.kind === 'channelProperties') {
+        return {
+            content: {
+                kind: ZTEvent.RoomProperties,
+                properties: timelineEvent.decryptedContent.content,
+            } satisfies RoomPropertiesEvent,
+        }
+    }
     // If the payload is encrypted, we display nothing.
-    return { error: `${description} invalid channel properties` }
+    return { error: `${description} encrypted channel properties` }
 }
 
 function toTownsContent_ChannelPayload_Message_Post(

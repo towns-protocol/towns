@@ -2,9 +2,7 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import { Box, Icon, IconButton, Stack, Text } from '@ui'
 import { shortAddress } from 'ui/utils/utils'
-import { formatUnits } from 'hooks/useBalance'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
-import { TokenType } from '../types'
 import { TokenImage } from './TokenImage'
 import { NetworkName } from './NetworkName'
 import { Token } from './tokenSchemas'
@@ -28,12 +26,6 @@ type TokenSelectionProps = TokenSelectionInputProps | TokenSelectionDisplayProps
 function TokenSelection(props: TokenSelectionProps) {
     const { elevate = false, token } = props
 
-    const isErc20 = token.data.type === TokenType.ERC20
-
-    const transformedQuantity = isErc20
-        ? formatUnits(token.data.quantity ?? 1n, token.data.decimals)
-        : token.data.quantity?.toString() ?? '1'
-
     return (
         <Stack
             horizontal
@@ -52,8 +44,8 @@ function TokenSelection(props: TokenSelectionProps) {
                 <Stack grow gap="sm">
                     <Stack horizontal gap="sm" alignItems="center">
                         <Text truncate>
-                            {transformedQuantity}{' '}
-                            {token.data.label?.length ? token.data.label : 'Unknown Token'}
+                            {token.data.quantity}{' '}
+                            {token.data.label?.length ? token.data.label : 'Unknown Token'}{' '}
                         </Text>
                         {'userPassesEntitlement' in props &&
                             props.userPassesEntitlement === false && (
@@ -77,6 +69,16 @@ function TokenSelection(props: TokenSelectionProps) {
                         <Text size="sm" color="gray2">
                             &#x2022;
                         </Text>
+                        {token.data.tokenId !== undefined && (
+                            <>
+                                <Text size="sm" color="gray2">
+                                    ID: {token.data.tokenId.toString()}
+                                </Text>
+                                <Text size="sm" color="gray2">
+                                    &#x2022;
+                                </Text>
+                            </>
+                        )}
                         <Stack horizontal gap="xs" alignItems="center">
                             <Box
                                 tooltip={

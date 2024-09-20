@@ -3,18 +3,31 @@ pragma solidity ^0.8.24;
 
 // interfaces
 import {IWETH} from "contracts/src/utils/interfaces/IWETH.sol";
-import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 // libraries
+import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
+import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 
 // contracts
 
 library CurrencyTransfer {
-  using SafeERC20 for IERC20;
+  using SafeTransferLib for address;
 
   /// @dev The address interpreted as native token of the chain.
-  address public constant NATIVE_TOKEN =
+  address internal constant NATIVE_TOKEN =
     address(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
+
+  /// @dev The ETH transfer has failed.
+  error ETHTransferFailed();
+
+  /// @dev The ERC20 `transferFrom` has failed.
+  error TransferFromFailed();
+
+  /// @dev The ERC20 `transfer` has failed.
+  error TransferFailed();
+
+  /// @dev The `msg.value` does not match the amount.
+  error MsgValueMismatch();
 
   /// @dev Transfers a given amount of currency.
   /// @param currency The currency to transfer.
@@ -60,10 +73,16 @@ library CurrencyTransfer {
         IWETH(_nativeTokenWrapper).withdraw(amount);
         safeTransferNativeTokenWithWrapper(to, amount, _nativeTokenWrapper);
       } else if (to == address(this)) {
-        require(amount == msg.value, "msg.value != amount");
-        IWETH(_nativeTokenWrapper).deposit{value: amount}();
+        if (amount != msg.value)
+          CustomRevert.revertWith(MsgValueMismatch.selector);
+
+        IWETH(_nativeTokenWrapper).deposit{value: msg.value}();
       } else {
-        safeTransferNativeTokenWithWrapper(to, amount, _nativeTokenWrapper);
+        // This is a fallback for the case where the contract receives native token and then transfers it to another address.
+        if (amount != msg.value)
+          CustomRevert.revertWith(MsgValueMismatch.selector);
+
+        safeTransferNativeTokenWithWrapper(to, msg.value, _nativeTokenWrapper);
       }
     } else {
       safeTransferERC20(currency, from, to, amount);
@@ -82,16 +101,15 @@ library CurrencyTransfer {
     }
 
     if (from == address(this)) {
-      IERC20(token).safeTransfer(to, amount);
+      token.safeTransfer(to, amount);
     } else {
-      IERC20(token).safeTransferFrom(from, to, amount);
+      token.safeTransferFrom(from, to, amount);
     }
   }
 
   /// @dev Transfers `amount` of native token to `to`.
   function safeTransferNativeToken(address to, uint256 value) internal {
-    (bool success, ) = to.call{value: value}("");
-    require(success, "native token transfer failed");
+    to.safeTransferETH(value);
   }
 
   /// @dev Transfers `amount` of native token to `to`. (With native token wrapping)
@@ -100,10 +118,10 @@ library CurrencyTransfer {
     uint256 value,
     address _nativeTokenWrapper
   ) internal {
-    (bool success, ) = to.call{value: value}("");
+    bool success = to.trySafeTransferETH(value, gasleft());
     if (!success) {
       IWETH(_nativeTokenWrapper).deposit{value: value}();
-      IERC20(_nativeTokenWrapper).safeTransfer(to, value);
+      _nativeTokenWrapper.safeTransfer(to, value);
     }
   }
 }

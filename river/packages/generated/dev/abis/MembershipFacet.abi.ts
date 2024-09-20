@@ -963,28 +963,6 @@ export default [
   },
   {
     "type": "error",
-    "name": "AddressEmptyCode",
-    "inputs": [
-      {
-        "name": "target",
-        "type": "address",
-        "internalType": "address"
-      }
-    ]
-  },
-  {
-    "type": "error",
-    "name": "AddressInsufficientBalance",
-    "inputs": [
-      {
-        "name": "account",
-        "type": "address",
-        "internalType": "address"
-      }
-    ]
-  },
-  {
-    "type": "error",
     "name": "ApprovalCallerNotOwnerNorApproved",
     "inputs": []
   },
@@ -1136,11 +1114,6 @@ export default [
   {
     "type": "error",
     "name": "Entitlement__ValueAlreadyExists",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "FailedInnerCall",
     "inputs": []
   },
   {
@@ -1454,17 +1427,6 @@ export default [
     "type": "error",
     "name": "Roles__RoleDoesNotExist",
     "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "SafeERC20FailedOperation",
-    "inputs": [
-      {
-        "name": "token",
-        "type": "address",
-        "internalType": "address"
-      }
-    ]
   },
   {
     "type": "error",

@@ -210,14 +210,14 @@ func TestLoad(t *testing.T) {
 	miniblock, err := NewMiniblockInfoFromParsed(miniblockHeaderEvent, envelopes)
 	assert.NoError(t, err)
 	// with 5 generations (5 blocks kept in memory)
-	newSV1, err := view.copyAndApplyBlock(miniblock, btc.OnChainConfig)
+	newSV1, err := view.copyAndApplyBlock(miniblock, btc.OnChainConfig, false)
 	assert.NoError(t, err)
 	assert.Equal(t, len(newSV1.blocks), 2) // we should have both blocks in memory
 
 	btc.SetConfigValue(t, ctx, crypto.StreamRecencyConstraintsGenerationsConfigKey, crypto.ABIEncodeInt64(0))
 
 	// with 0 generations (0 in memory block history)
-	newSV2, err := view.copyAndApplyBlock(miniblock, btc.OnChainConfig)
+	newSV2, err := view.copyAndApplyBlock(miniblock, btc.OnChainConfig, false)
 	assert.NoError(t, err)
 	assert.Equal(t, len(newSV2.blocks), 1) // we should only have the latest block in memory
 	// add an event with an old hash

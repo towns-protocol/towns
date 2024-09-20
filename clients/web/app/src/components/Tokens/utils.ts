@@ -4,6 +4,7 @@ import {
     IRuleEntitlementV2Base,
     createDecodedCheckOperationFromTree,
 } from 'use-towns-client'
+import { formatUnits, parseUnits } from 'hooks/useBalance'
 import { TokenType } from './types'
 import { Token, TokenEntitlement } from './TokenSelector/tokenSchemas'
 
@@ -64,8 +65,8 @@ export function convertRuleDataToTokenSchema(
                 imageUrl: '',
                 openSeaCollectionUrl: '',
                 decimals: undefined,
-                tokenId: tokenId ?? undefined,
-                quantity: threshold ?? 1n,
+                tokenId: tokenId ? tokenId.toString() : undefined,
+                quantity: threshold ? threshold.toString() : undefined,
             },
         }
     })
@@ -83,5 +84,25 @@ export function convertTokenEntitlementToTokenSchema(tokenEntitlement: TokenEnti
             openSeaCollectionUrl: '',
             decimals: undefined,
         },
+    }
+}
+
+export const transformQuantityForSubmit = (
+    quantity: string,
+    tokenType: TokenType,
+    decimals: number = 18,
+) => {
+    return tokenType === TokenType.ERC20 ? parseUnits(quantity, decimals) : BigInt(quantity)
+}
+
+export const transformQuantityForDisplay = (
+    quantity: bigint,
+    tokenType: TokenType,
+    decimals: number = 18,
+) => {
+    if (tokenType === TokenType.ERC20) {
+        return formatUnits(quantity, decimals)
+    } else {
+        return quantity.toString()
     }
 }

@@ -30,10 +30,11 @@ export const tokenSchema = z.object({
         symbol: z.string().optional(),
         imageUrl: z.string().optional(),
         openSeaCollectionUrl: z.string().optional(),
-        quantity: z.bigint().optional(),
+        quantity: z.string().optional(),
         decimals: z.number().optional(),
         imgSrc: z.string().optional(),
         label: z.string().optional(),
+        tokenId: z.string().optional(),
     }),
 })
 

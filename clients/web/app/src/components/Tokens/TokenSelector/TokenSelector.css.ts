@@ -12,6 +12,9 @@ export const TokenSelectorStyles = style([
             '&:focus': {
                 background: vars.color.background.level3,
             },
+            '&:hover': {
+                background: vars.color.background.level3,
+            },
         },
     },
 ])

@@ -1,200 +1,48 @@
-import React, { useCallback, useRef, useState } from 'react'
-import { Box, IconButton, Paragraph, Text } from '@ui'
+import React from 'react'
+import { Box, Paragraph } from '@ui'
 import { shortAddress } from 'ui/utils/utils'
-import { Field } from 'ui/components/_internal/Field'
-import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
-import { TokenType } from '../types'
-import { Token, tokenIdSchema } from './tokenSchemas'
+import { Token } from './tokenSchemas'
 import { TokenImage } from './TokenImage'
 import { TokenSelectorStyles } from './TokenSelector.css'
 import { NetworkName } from './NetworkName'
 
 export function TokenOption({
-    option,
+    token,
     onAddItem,
 }: {
-    option: Token
-    onAddItem: (option: Token) => void
-    selected: boolean
+    token: Token
+    onAddItem: (token: Token) => void
 }) {
-    const isERC1155 = option.data.type === TokenType.ERC1155
-
-    const [tokenIdErrorMessage, setTokenIdErrorMessage] = useState<string | undefined>()
-
-    const [textInputValue, setTextInputValue] = useState<string>('')
-
-    const onTextInputClick = useCallback((e: React.MouseEvent<HTMLInputElement>) => {
-        e.stopPropagation()
-    }, [])
-    const onTextInputFocus = useCallback((e: React.FocusEvent<HTMLInputElement>) => {
-        e.stopPropagation()
-    }, [])
-    const onTextInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-        const { value } = e.target
-        const result = tokenIdSchema.safeParse({
-            tokenId: Number(value?.length ? value : undefined),
-        })
-        if (!result.success) {
-            if (value === '') {
-                setTextInputValue('')
-            }
-            setTokenIdErrorMessage(result.error.flatten().fieldErrors?.tokenId?.[0])
-            return
-        } else {
-            setTokenIdErrorMessage(undefined)
-        }
-        setTextInputValue(value)
-    }, [])
-
-    const addTokenId = useCallback(() => {
-        if (textInputValue && option.data?.address) {
-            throw new Error('Not implemented yet.')
-        }
-    }, [option.data?.address, textInputValue])
-
-    const onTextInputKeyDown = useCallback(
-        (e: React.KeyboardEvent<HTMLInputElement>) => {
-            if (e.key === 'Enter') {
-                e.preventDefault()
-                e.stopPropagation()
-                addTokenId()
-            }
-        },
-        [addTokenId],
-    )
-
-    const textInputRef = useRef<HTMLInputElement>(null)
-
-    const onAddTokenClick = useCallback(
-        (e: React.MouseEvent<HTMLInputElement>) => {
-            e.stopPropagation()
-            addTokenId()
-        },
-        [addTokenId],
-    )
     return (
         <Box gap="sm">
-            <NetworkName chainId={option.chainId} />
+            <NetworkName chainId={token.chainId} />
             <Box
                 horizontal
                 alignItems="center"
                 gap="sm"
                 rounded="xs"
                 padding="sm"
-                cursor={!isERC1155 ? 'pointer' : 'default'}
-                data-testid={`token-selector-option-${option.data?.address}`}
-                as={!isERC1155 ? 'button' : 'div'}
-                type={!isERC1155 ? 'button' : undefined}
+                cursor="pointer"
+                data-testid={`token-selector-option-${token.chainId}-${token.data?.address}`}
+                as="button"
+                type="button"
                 color="default"
-                className={!isERC1155 ? TokenSelectorStyles : undefined}
+                className={TokenSelectorStyles}
                 onClick={() => {
-                    if (!isERC1155) {
-                        onAddItem(option)
-                    }
+                    onAddItem(token)
                 }}
             >
-                {option.data.address && (
-                    <>
-                        <TokenImage imgSrc={option.data.imgSrc} width="x4" />
-                        <Box alignItems="start" justifyContent="spaceBetween" height="x4">
-                            <Paragraph truncate>
-                                {option.data?.label ? option.data.label : 'Unknown Token'}
-                            </Paragraph>
-                            {option.data?.address && (
-                                <Box color="gray2" fontSize="sm" tooltip={option.data?.address}>
-                                    {shortAddress(option.data?.address)}
-                                </Box>
-                            )}
+                <TokenImage imgSrc={token.data.imgSrc} width="x4" />
+                <Box alignItems="start" justifyContent="spaceBetween" height="x4">
+                    <Paragraph truncate>
+                        {token.data?.label ? token.data.label : 'Unknown Token'}
+                    </Paragraph>
+                    {token.data?.address && (
+                        <Box color="gray2" fontSize="sm" tooltip={token.data?.address}>
+                            {shortAddress(token.data?.address)}
                         </Box>
-                    </>
-                )}
-
-                {isERC1155 && (
-                    <Box
-                        horizontal
-                        alignItems="start"
-                        justifySelf="end"
-                        style={{
-                            marginLeft: 'auto',
-                        }}
-                        height="x4"
-                    >
-                        {/* <Box width="x4" /> */}
-                        <Box alignItems="start" paddingLeft="sm">
-                            <Box horizontal centerContent gap>
-                                <Box position="relative">
-                                    <Field width="100" paddingX="none" tone="neutral">
-                                        {(overlays, { className, ...inputProps }) => (
-                                            <>
-                                                <Box
-                                                    ref={textInputRef}
-                                                    as="input"
-                                                    width="100%"
-                                                    {...inputProps}
-                                                    rounded="sm"
-                                                    height="input_sm"
-                                                    type="text"
-                                                    placeholder="Token ID"
-                                                    value={textInputValue}
-                                                    border="level4"
-                                                    fontSize="xs"
-                                                    background="level2"
-                                                    color="default"
-                                                    paddingX="sm"
-                                                    // className={styles.input}
-                                                    onClick={onTextInputClick}
-                                                    onFocus={onTextInputFocus}
-                                                    onChange={onTextInputChange}
-                                                    onKeyDown={onTextInputKeyDown}
-                                                />
-                                                {overlays}
-                                            </>
-                                        )}
-                                    </Field>
-
-                                    <Box
-                                        centerContent
-                                        tooltip={
-                                            <Box background="level4" padding="sm" rounded="sm">
-                                                <Text size="sm">
-                                                    This is an ERC1155 token and requires a token
-                                                    ID.
-                                                </Text>
-                                            </Box>
-                                        }
-                                        padding="xs"
-                                        rounded="full"
-                                        position="absolute"
-                                        background="level4"
-                                        top="-sm"
-                                        right="-sm"
-                                        width="x2"
-                                        aspectRatio="square"
-                                    >
-                                        <Text size="xs">?</Text>
-                                    </Box>
-                                </Box>
-                                <IconButton
-                                    icon="plus"
-                                    color="default"
-                                    border="level4"
-                                    rounded="full"
-                                    size="square_xxs"
-                                    type="button"
-                                    onClick={onAddTokenClick}
-                                />
-                            </Box>
-
-                            <Box paddingTop="sm">
-                                {tokenIdErrorMessage ? (
-                                    <ErrorMessageText size="xs" message={tokenIdErrorMessage} />
-                                ) : (
-                                    <Text size="xs">&nbsp;</Text>
-                                )}
-                            </Box>
-                        </Box>
-                    </Box>
-                )}
+                    )}
+                </Box>
             </Box>
         </Box>
     )
