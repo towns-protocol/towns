@@ -12,13 +12,13 @@ import {
 } from '../types/timeline-types'
 import reverse from 'lodash/reverse'
 
-/// TimelinesMap: { roomId: TimelineEvent[] }
+/// TimelinesMap: { streamId: TimelineEvent[] }
 export type TimelinesMap = Record<string, TimelineEvent[]>
-/// ThreadStatsMap: { roomId: { eventId: ThreadStats } }
+/// ThreadStatsMap: { streamId: { eventId: ThreadStats } }
 export type ThreadStatsMap = Record<string, Record<string, ThreadStats>>
-/// ThreadContentMap: { roomId: { eventId: ThreadContent } }
+/// ThreadContentMap: { streamId: { eventId: ThreadContent } }
 export type ThreadsMap = Record<string, TimelinesMap>
-/// ReactionsMap: { roomId: { eventId: MessageReactions } }
+/// ReactionsMap: { streamId: { eventId: MessageReactions } }
 export type ReactionsMap = Record<string, Record<string, MessageReactions>>
 
 export type TimelineStoreStates = {
@@ -33,7 +33,7 @@ export type TimelineStoreStates = {
 
 export interface TimelineStoreInterface {
     initializeStream: (userId: string, streamId: string) => void
-    reset: (roomIds: string[]) => void
+    reset: (streamIds: string[]) => void
     appendEvents: (events: TimelineEvent[], userId: string, streamId: string) => void
     prependEvents: (events: TimelineEvent[], userId: string, streamId: string) => void
     updateEvents: (events: TimelineEvent[], userId: string, streamId: string) => void
@@ -68,7 +68,7 @@ export const useTimelineStore = createWithEqualityFn<TimelineStore>((set) => ({
 function makeTimelineStoreInterface(
     setState: (fn: (prevState: TimelineStoreStates) => TimelineStoreStates) => void,
 ): TimelineStoreInterface {
-    const initializeStream = (userId: string, roomId: string) => {
+    const initializeStream = (userId: string, streamId: string) => {
         const aggregated = {
             threadStats: {} as Record<string, ThreadStats>,
             threads: {} as Record<string, TimelineEvent[]>,
@@ -76,101 +76,101 @@ function makeTimelineStoreInterface(
         }
 
         setState((state) => ({
-            timelines: { ...state.timelines, [roomId]: [] },
+            timelines: { ...state.timelines, [streamId]: [] },
             replacedEvents: state.replacedEvents,
             pendingReplacedEvents: state.pendingReplacedEvents,
             threadsStats: {
                 ...state.threadsStats,
-                [roomId]: aggregated.threadStats,
+                [streamId]: aggregated.threadStats,
             },
             threads: {
                 ...state.threads,
-                [roomId]: aggregated.threads,
+                [streamId]: aggregated.threads,
             },
             reactions: {
                 ...state.reactions,
-                [roomId]: aggregated.reactions,
+                [streamId]: aggregated.reactions,
             },
             lastestEventByUser: state.lastestEventByUser,
         }))
     }
 
-    const reset = (roomIds: string[]) => {
+    const reset = (streamIds: string[]) => {
         setState((prev) => {
-            for (const roomId of roomIds) {
-                delete prev.timelines[roomId]
-                delete prev.replacedEvents[roomId]
-                delete prev.pendingReplacedEvents[roomId]
-                delete prev.threadsStats[roomId]
-                delete prev.threads[roomId]
-                delete prev.reactions[roomId]
+            for (const streamId of streamIds) {
+                delete prev.timelines[streamId]
+                delete prev.replacedEvents[streamId]
+                delete prev.pendingReplacedEvents[streamId]
+                delete prev.threadsStats[streamId]
+                delete prev.threads[streamId]
+                delete prev.reactions[streamId]
             }
             return prev
         })
     }
-    const removeEvent = (state: TimelineStoreStates, roomId: string, eventId: string) => {
-        const eventIndex = state.timelines[roomId]?.findIndex((e) => e.eventId == eventId)
+    const removeEvent = (state: TimelineStoreStates, streamId: string, eventId: string) => {
+        const eventIndex = state.timelines[streamId]?.findIndex((e) => e.eventId == eventId)
         if ((eventIndex ?? -1) < 0) {
             return state
         }
-        const event = state.timelines[roomId][eventIndex]
+        const event = state.timelines[streamId][eventIndex]
         return {
-            timelines: removeTimelineEvent(roomId, eventIndex, state.timelines),
+            timelines: removeTimelineEvent(streamId, eventIndex, state.timelines),
             replacedEvents: state.replacedEvents,
             pendingReplacedEvents: state.pendingReplacedEvents,
-            threadsStats: removeThreadStat(roomId, event, state.threadsStats),
-            threads: removeThreadEvent(roomId, event, state.threads),
-            reactions: removeReaction(roomId, event, state.reactions),
+            threadsStats: removeThreadStat(streamId, event, state.threadsStats),
+            threads: removeThreadEvent(streamId, event, state.threads),
+            reactions: removeReaction(streamId, event, state.reactions),
             lastestEventByUser: state.lastestEventByUser,
         }
     }
     const appendEvent = (
         state: TimelineStoreStates,
         userId: string,
-        roomId: string,
+        streamId: string,
         timelineEvent: TimelineEvent,
     ) => {
         return {
-            timelines: appendTimelineEvent(roomId, timelineEvent, state.timelines),
+            timelines: appendTimelineEvent(streamId, timelineEvent, state.timelines),
             replacedEvents: state.replacedEvents,
             pendingReplacedEvents: state.pendingReplacedEvents,
             threadsStats: addThreadStats(
-                roomId,
+                streamId,
                 timelineEvent,
                 state.threadsStats,
-                state.timelines[roomId],
+                state.timelines[streamId],
                 userId,
             ),
-            threads: insertThreadEvent(roomId, timelineEvent, state.threads),
-            reactions: addReactions(roomId, timelineEvent, state.reactions),
+            threads: insertThreadEvent(streamId, timelineEvent, state.threads),
+            reactions: addReactions(streamId, timelineEvent, state.reactions),
             lastestEventByUser: state.lastestEventByUser,
         }
     }
     const prependEvent = (
         state: TimelineStoreStates,
         userId: string,
-        roomId: string,
+        streamId: string,
         inTimelineEvent: TimelineEvent,
     ) => {
-        const timelineEvent = state.pendingReplacedEvents[roomId]?.[inTimelineEvent.eventId]
+        const timelineEvent = state.pendingReplacedEvents[streamId]?.[inTimelineEvent.eventId]
             ? toReplacedMessageEvent(
                   inTimelineEvent,
-                  state.pendingReplacedEvents[roomId][inTimelineEvent.eventId],
+                  state.pendingReplacedEvents[streamId][inTimelineEvent.eventId],
               )
             : inTimelineEvent
         return {
-            timelines: prependTimelineEvent(roomId, timelineEvent, state.timelines),
+            timelines: prependTimelineEvent(streamId, timelineEvent, state.timelines),
             replacedEvents: state.replacedEvents,
             pendingReplacedEvents: state.pendingReplacedEvents,
             threadsStats: addThreadStats(
-                roomId,
+                streamId,
                 timelineEvent,
                 state.threadsStats,
-                state.timelines[roomId],
+                state.timelines[streamId],
                 userId,
             ),
-            threads: insertThreadEvent(roomId, timelineEvent, state.threads),
-            reactions: addReactions(roomId, timelineEvent, state.reactions),
+            threads: insertThreadEvent(streamId, timelineEvent, state.threads),
+            reactions: addReactions(streamId, timelineEvent, state.reactions),
             lastestEventByUser: state.lastestEventByUser,
         }
     }
@@ -178,11 +178,11 @@ function makeTimelineStoreInterface(
     const replaceEvent = (
         state: TimelineStoreStates,
         userId: string,
-        roomId: string,
+        streamId: string,
         replacedMsgId: string,
         timelineEvent: TimelineEvent,
     ) => {
-        const timeline = state.timelines[roomId] ?? []
+        const timeline = state.timelines[streamId] ?? []
         const eventIndex = timeline.findIndex(
             (e: TimelineEvent) =>
                 e.eventId === replacedMsgId ||
@@ -192,8 +192,8 @@ function makeTimelineStoreInterface(
         if (eventIndex === -1) {
             // if we didn't find an event to replace...
             if (
-                state.pendingReplacedEvents[roomId]?.[replacedMsgId] &&
-                state.pendingReplacedEvents[roomId][replacedMsgId].latestEventNum >
+                state.pendingReplacedEvents[streamId]?.[replacedMsgId] &&
+                state.pendingReplacedEvents[streamId][replacedMsgId].latestEventNum >
                     timelineEvent.latestEventNum
             ) {
                 // if we already have a replacement here, leave it, because we sync backwards, we assume the first one is the correct one
@@ -204,8 +204,8 @@ function makeTimelineStoreInterface(
                     ...state,
                     pendingReplacedEvents: {
                         ...state.pendingReplacedEvents,
-                        [roomId]: {
-                            ...state.pendingReplacedEvents[roomId],
+                        [streamId]: {
+                            ...state.pendingReplacedEvents[streamId],
                             [replacedMsgId]: timelineEvent,
                         },
                     },
@@ -219,7 +219,9 @@ function makeTimelineStoreInterface(
         const newEvent = toReplacedMessageEvent(oldEvent, timelineEvent)
 
         const threadParentId = newEvent.threadParentId
-        const threadTimeline = threadParentId ? state.threads[roomId]?.[threadParentId] : undefined
+        const threadTimeline = threadParentId
+            ? state.threads[streamId]?.[threadParentId]
+            : undefined
         const threadEventIndex =
             threadTimeline?.findIndex(
                 (e) =>
@@ -229,7 +231,7 @@ function makeTimelineStoreInterface(
 
         return {
             timelines: replaceTimelineEvent(
-                roomId,
+                streamId,
                 newEvent,
                 eventIndex,
                 timeline,
@@ -237,35 +239,35 @@ function makeTimelineStoreInterface(
             ),
             replacedEvents: {
                 ...state.replacedEvents,
-                [roomId]: [...(state.replacedEvents[roomId] ?? []), { oldEvent, newEvent }],
+                [streamId]: [...(state.replacedEvents[streamId] ?? []), { oldEvent, newEvent }],
             },
             pendingReplacedEvents: state.pendingReplacedEvents,
             threadsStats: addThreadStats(
-                roomId,
+                streamId,
                 newEvent,
-                removeThreadStat(roomId, oldEvent, state.threadsStats),
-                state.timelines[roomId],
+                removeThreadStat(streamId, oldEvent, state.threadsStats),
+                state.timelines[streamId],
                 userId,
             ),
             threads:
                 threadParentId && threadTimeline && threadEventIndex >= 0
                     ? {
                           ...state.threads,
-                          [roomId]: replaceTimelineEvent(
+                          [streamId]: replaceTimelineEvent(
                               threadParentId,
                               newEvent,
                               threadEventIndex,
                               threadTimeline,
-                              state.threads[roomId],
+                              state.threads[streamId],
                           ),
                       }
                     : threadParentId
-                    ? insertThreadEvent(roomId, newEvent, state.threads)
+                    ? insertThreadEvent(streamId, newEvent, state.threads)
                     : state.threads,
             reactions: addReactions(
-                roomId,
+                streamId,
                 newEvent,
-                removeReaction(roomId, oldEvent, state.reactions),
+                removeReaction(streamId, oldEvent, state.reactions),
             ),
             lastestEventByUser: state.lastestEventByUser,
         }
@@ -530,7 +532,7 @@ function makeRedactionEvent(redactionAction: TimelineEvent): TimelineEvent {
 }
 
 function addThreadStats(
-    roomId: string,
+    streamId: string,
     timelineEvent: TimelineEvent,
     threadsStats: ThreadStatsMap,
     timeline: TimelineEvent[] | undefined,
@@ -541,12 +543,12 @@ function addThreadStats(
     if (parentId) {
         return {
             ...threadsStats,
-            [roomId]: {
-                ...threadsStats[roomId],
+            [streamId]: {
+                ...threadsStats[streamId],
                 [parentId]: addThreadStat(
                     timelineEvent,
                     parentId,
-                    threadsStats[roomId]?.[parentId],
+                    threadsStats[streamId]?.[parentId],
                     timeline,
                     userId,
                 ),
@@ -554,20 +556,20 @@ function addThreadStats(
         }
     }
     // if we are a parent...
-    if (threadsStats[roomId]?.[timelineEvent.eventId]) {
+    if (threadsStats[streamId]?.[timelineEvent.eventId]) {
         // update ourself in the map
         return {
             ...threadsStats,
-            [roomId]: {
-                ...threadsStats[roomId],
+            [streamId]: {
+                ...threadsStats[streamId],
                 [timelineEvent.eventId]: {
-                    ...threadsStats[roomId][timelineEvent.eventId],
+                    ...threadsStats[streamId][timelineEvent.eventId],
                     parentEvent: timelineEvent,
                     parentMessageContent: getRoomMessageContent(timelineEvent),
                     isParticipating:
-                        threadsStats[roomId][timelineEvent.eventId].isParticipating ||
+                        threadsStats[streamId][timelineEvent.eventId].isParticipating ||
                         (timelineEvent.content?.kind !== ZTEvent.RedactedEvent &&
-                            threadsStats[roomId][timelineEvent.eventId].replyEventIds.size > 0 &&
+                            threadsStats[streamId][timelineEvent.eventId].replyEventIds.size > 0 &&
                             (timelineEvent.sender.id === userId || timelineEvent.isMentioned)),
                 },
             },
@@ -620,7 +622,7 @@ function addThreadStat(
 }
 
 function removeThreadStat(
-    roomId: string,
+    streamId: string,
     timelineEvent: TimelineEvent,
     threadsStats: ThreadStatsMap,
 ) {
@@ -628,10 +630,10 @@ function removeThreadStat(
     if (!parentId) {
         return threadsStats
     }
-    if (!threadsStats[roomId]?.[parentId]) {
+    if (!threadsStats[streamId]?.[parentId]) {
         return threadsStats
     }
-    const updated = { ...threadsStats[roomId] }
+    const updated = { ...threadsStats[streamId] }
     const entry = updated[parentId]
 
     if (entry) {
@@ -645,19 +647,23 @@ function removeThreadStat(
             }
         }
     }
-    return { ...threadsStats, [roomId]: updated }
+    return { ...threadsStats, [streamId]: updated }
 }
 
-function addReactions(roomId: string, event: TimelineEvent, reactions: ReactionsMap): ReactionsMap {
+function addReactions(
+    streamId: string,
+    event: TimelineEvent,
+    reactions: ReactionsMap,
+): ReactionsMap {
     const parentId = event.reactionParentId
     if (!parentId) {
         return reactions
     }
     return {
         ...reactions,
-        [roomId]: {
-            ...reactions[roomId],
-            [parentId]: addReaction(event, reactions[roomId]?.[parentId]),
+        [streamId]: {
+            ...reactions[streamId],
+            [parentId]: addReaction(event, reactions[streamId]?.[parentId]),
         },
     }
 }
@@ -679,7 +685,7 @@ function addReaction(event: TimelineEvent, entry?: MessageReactions): MessageRea
 }
 
 function removeReaction(
-    roomId: string,
+    streamId: string,
     event: TimelineEvent,
     reactions: ReactionsMap,
 ): ReactionsMap {
@@ -687,7 +693,7 @@ function removeReaction(
     if (!parentId) {
         return reactions
     }
-    if (!reactions[roomId]?.[parentId]) {
+    if (!reactions[streamId]?.[parentId]) {
         return reactions
     }
     const content = event.content?.kind === ZTEvent.Reaction ? event.content : undefined
@@ -696,7 +702,7 @@ function removeReaction(
     }
     const reactionName = content.reaction
     const senderId = event.sender.id
-    const updated = { ...reactions[roomId] }
+    const updated = { ...reactions[streamId] }
     const entry = updated[parentId]
     if (entry) {
         const reactions = entry[reactionName]
@@ -707,27 +713,31 @@ function removeReaction(
             delete entry[reactionName]
         }
     }
-    return { ...reactions, [roomId]: updated }
+    return { ...reactions, [streamId]: updated }
 }
 
-function removeThreadEvent(roomId: string, event: TimelineEvent, threads: ThreadsMap): ThreadsMap {
+function removeThreadEvent(
+    streamId: string,
+    event: TimelineEvent,
+    threads: ThreadsMap,
+): ThreadsMap {
     const parentId = event.threadParentId
     if (!parentId) {
         return threads
     }
     const threadEventIndex =
-        threads[roomId]?.[parentId]?.findIndex((e) => e.eventId === event.eventId) ?? -1
+        threads[streamId]?.[parentId]?.findIndex((e) => e.eventId === event.eventId) ?? -1
     if (threadEventIndex === -1) {
         return threads
     }
     return {
         ...threads,
-        [roomId]: removeTimelineEvent(parentId, threadEventIndex, threads[roomId]),
+        [streamId]: removeTimelineEvent(parentId, threadEventIndex, threads[streamId]),
     }
 }
 
 function insertThreadEvent(
-    roomId: string,
+    streamId: string,
     timelineEvent: TimelineEvent,
     threads: ThreadsMap,
 ): ThreadsMap {
@@ -736,66 +746,66 @@ function insertThreadEvent(
     }
     return {
         ...threads,
-        [roomId]: insertTimelineEvent(
+        [streamId]: insertTimelineEvent(
             timelineEvent.threadParentId,
             timelineEvent,
-            threads[roomId] ?? {},
+            threads[streamId] ?? {},
         ),
     }
 }
 
 function removeTimelineEvent(
-    roomId: string,
+    streamId: string,
     eventIndex: number,
     timelines: TimelinesMap,
 ): TimelinesMap {
     return {
         ...timelines,
-        [roomId]: [
-            ...timelines[roomId].slice(0, eventIndex),
-            ...timelines[roomId].slice(eventIndex + 1),
+        [streamId]: [
+            ...timelines[streamId].slice(0, eventIndex),
+            ...timelines[streamId].slice(eventIndex + 1),
         ],
     }
 }
 
 function insertTimelineEvent(
-    roomId: string,
+    streamId: string,
     timelineEvent: TimelineEvent,
     timelines: TimelinesMap,
 ) {
     // thread items are decrypted in an unpredictable order, so we need to insert them in the correct order
     return {
         ...timelines,
-        [roomId]: [timelineEvent, ...(timelines[roomId] ?? [])].sort((a, b) =>
+        [streamId]: [timelineEvent, ...(timelines[streamId] ?? [])].sort((a, b) =>
             a.eventNum > b.eventNum ? 1 : -1,
         ),
     }
 }
 
 function appendTimelineEvent(
-    roomId: string,
+    streamId: string,
     timelineEvent: TimelineEvent,
     timelines: TimelinesMap,
 ) {
     return {
         ...timelines,
-        [roomId]: [...(timelines[roomId] ?? []), timelineEvent],
+        [streamId]: [...(timelines[streamId] ?? []), timelineEvent],
     }
 }
 
 function prependTimelineEvent(
-    roomId: string,
+    streamId: string,
     timelineEvent: TimelineEvent,
     timelines: TimelinesMap,
 ) {
     return {
         ...timelines,
-        [roomId]: [timelineEvent, ...(timelines[roomId] ?? [])],
+        [streamId]: [timelineEvent, ...(timelines[streamId] ?? [])],
     }
 }
 
 function replaceTimelineEvent(
-    roomId: string,
+    streamId: string,
     newEvent: TimelineEvent,
     eventIndex: number,
     timeline: TimelineEvent[],
@@ -803,7 +813,7 @@ function replaceTimelineEvent(
 ) {
     return {
         ...timelines,
-        [roomId]: [...timeline.slice(0, eventIndex), newEvent, ...timeline.slice(eventIndex + 1)],
+        [streamId]: [...timeline.slice(0, eventIndex), newEvent, ...timeline.slice(eventIndex + 1)],
     }
 }
 
