@@ -31,7 +31,6 @@ on:
                 required: false
                 type: choice
                 options:
-                    - 'all'
                     - 'Upgrade_Facets_Sparse'
                     - 'Upgrade_Facets'
                 default: 'Upgrade_Facets_Sparse'
@@ -58,7 +57,7 @@ on:
                 required: true
 jobs:
     Upgrade_Facets_Sparse:
-        if: github.event.inputs.job_to_run == 'all' || github.event.inputs.job_to_run == 'Upgrade_Facets_Sparse'
+        if: github.event.inputs.job_to_run == 'Upgrade_Facets_Sparse'
         runs-on: ubuntu-latest
         steps:
             - name: Checkout code
@@ -180,7 +179,7 @@ jobs:
                       }
 
     Upgrade_Facets:
-        if: github.event.inputs.job_to_run == 'all' || github.event.inputs.job_to_run == 'Upgrade_Facets'
+        if: github.event.inputs.job_to_run == 'Upgrade_Facets'
         runs-on: ubuntu-latest
         steps:
             - name: Checkout code
@@ -210,16 +209,6 @@ jobs:
                   etherscan=${{ env.BLOCKSCOUT_SEPOLIA_API_KEY }} \
                   verifier=${{ env.BLOCKSCOUT_SEPOLIA_URL }}
               working-directory: river/contracts
-
-            # - name: Verify Base Sepolia Interaction
-            #   run: make interact-resume-any-explicit \
-            #       context=alpha \
-            #       rpc=base_sepolia \
-            #       contract=InteractAlpha \
-            #       private_key=${{ env.ALPHA_BASE_SEPOLIA_DEPLOYER_PK }} \
-            #       etherscan=${{ env.BASESCAN_SEPOLIA_API_KEY }} \
-            #       verifier=${{ env.BASESCAN_SEPOLIA_URL }}
-            #   working-directory: river/contracts
 
             - name: Run River Devnet Interaction
               env:
