@@ -154,6 +154,7 @@ export interface MdastNode {
     url?: string
     alt?: string
     lang?: string
+    meta?: string
     start?: number
     // position?: any
     // spread?: any

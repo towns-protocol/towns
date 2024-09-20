@@ -16,6 +16,23 @@ const remarkPreserveListContent = () => {
                 node.type = ELEMENT_LIC
             }
         })
+
+        /**
+         * We don't want code-block inside list. Convert `code` inside `li` to `lic` and append the
+         * text inside as children of a text node.
+         * @see {https://linear.app/hnt-labs/issue/TOWNS-12280}
+         */
+        visit(tree, 'code', (node: MdastNode, _index, parent: MdastNode) => {
+            if (parent.type === defaultNodeTypes.listItem) {
+                node.type = ELEMENT_LIC
+                node.children = [
+                    {
+                        type: 'text',
+                        value: '``` ' + [node.lang, node.meta, node.value].join(' '),
+                    },
+                ]
+            }
+        })
     }
 
     return transformer
