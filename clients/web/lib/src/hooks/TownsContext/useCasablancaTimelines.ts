@@ -240,13 +240,8 @@ export function useCasablancaTimelines(
 
 export function toEvent(timelineEvent: StreamTimelineEvent, userId: string): TimelineEvent {
     const eventId = timelineEvent.hashStr
-    let senderId = timelineEvent.creatorUserId
+    const senderId = timelineEvent.creatorUserId
 
-    if (timelineEvent.remoteEvent?.event.payload.value?.content.case == 'membership') {
-        senderId = userIdFromAddress(
-            timelineEvent.remoteEvent?.event.payload.value?.content.value.initiatorAddress,
-        )
-    }
     const sender = {
         id: senderId,
         displayName: senderId, // todo displayName
@@ -374,7 +369,7 @@ function toTownsContent_fromParsedEvent(
     switch (message.event.payload.case) {
         case 'userPayload':
             return toTownsContent_UserPayload(
-                eventId,
+                timelineEvent,
                 message,
                 message.event.payload.value,
                 description,
@@ -471,6 +466,7 @@ function toTownsContent_MemberPayload(
                 content: {
                     kind: ZTEvent.RoomMember,
                     userId: userIdFromAddress(value.content.value.userAddress),
+                    initiatorId: userIdFromAddress(value.content.value.initiatorAddress),
                     membership: toMembership(value.content.value.op),
                 } satisfies RoomMemberEvent,
             }
@@ -555,7 +551,7 @@ function toTownsContent_MemberPayload(
 }
 
 function toTownsContent_UserPayload(
-    eventId: string,
+    event: RemoteTimelineEvent,
     message: ParsedEvent,
     value: UserPayload,
     description: string,
@@ -578,6 +574,7 @@ function toTownsContent_UserPayload(
                 content: {
                     kind: ZTEvent.RoomMember,
                     userId: '', // this is just the current user
+                    initiatorId: '',
                     membership: toMembership(payload.op),
                     streamId: streamId,
                 } satisfies RoomMemberEvent,
@@ -590,6 +587,7 @@ function toTownsContent_UserPayload(
                 content: {
                     kind: ZTEvent.RoomMember,
                     userId: userIdFromAddress(payload.userId),
+                    initiatorId: event.remoteEvent.creatorUserId,
                     membership: toMembership(payload.op),
                 } satisfies RoomMemberEvent,
             }

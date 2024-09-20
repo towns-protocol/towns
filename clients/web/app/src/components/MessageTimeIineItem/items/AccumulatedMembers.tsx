@@ -29,7 +29,7 @@ const MAX_AVATARS = 3
 export const AccumulatedRoomMemberEvent = (props: Props) => {
     const { lookupUser } = useUserLookupContext()
     const { event, channelName, channelType, userId, channelEncrypted: isChannelEncrypted } = props
-    const senderId = event.events[0]?.sender?.id
+    const senderId = event.events[0]?.content?.initiatorId
     const eventUserId = event.events[0]?.content?.userId
 
     const isAddedEvent =
