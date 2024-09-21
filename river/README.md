@@ -33,6 +33,12 @@ Welcome to the River repo. Here you will find all of the components to run the c
     brew install jq
 ```
 
+- **just**
+
+```
+    brew install just
+```
+
 ## Setup
 
 1. Run `yarn install && yarn prepare` from the root of the repository

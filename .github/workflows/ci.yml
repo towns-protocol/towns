@@ -121,6 +121,8 @@ jobs:
                     --name river_postgres_container
 
         steps:
+            - uses: taiki-e/install-action@just
+
             - name: Cancel previous runs
               if: github.event_name != 'schedule'
               uses: styfle/cancel-workflow-action@0.12.1
@@ -200,11 +202,8 @@ jobs:
                   echo "NODE_EXTRA_CA_CERTS=$HOME/river-ca-cert.pem" >> $GITHUB_ENV
 
             - name: Run multiple nodes
-              run: |
-                  ./run_multi.sh -c
-                  ./run_multi.sh -r &
-                  for i in {5170..5179}; do yarn wait-on https://localhost:$i/debug/multi --timeout=900000 --i=5000 --verbose; done
-              working-directory: river/core/node
+              run: just RUN_ENV=multi config-and-start
+              working-directory: river/core
 
             - name: Build & Test (with entitlements)
               run: yarn csb:turbo-no-sdk
@@ -240,6 +239,8 @@ jobs:
                     --name river_postgres_container
 
         steps:
+            - uses: taiki-e/install-action@just
+
             - name: Cancel previous runs
               if: github.event_name != 'schedule'
               uses: styfle/cancel-workflow-action@0.12.1
@@ -319,11 +320,8 @@ jobs:
                   echo "NODE_EXTRA_CA_CERTS=$HOME/river-ca-cert.pem" >> $GITHUB_ENV
 
             - name: Run multiple nodes
-              run: |
-                  ./run_multi.sh -c
-                  ./run_multi.sh -r &
-                  for i in {5170..5179}; do yarn wait-on https://localhost:$i/debug/multi --timeout=900000 --i=5000 --verbose; done
-              working-directory: river/core/node
+              run: just RUN_ENV=multi config-and-start
+              working-directory: river/core
 
             - name: Build & Test With Legacy Spaces (with entitlements)
               run: yarn csb:turbo-no-sdk:legacy

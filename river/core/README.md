@@ -1,3 +1,50 @@
+# Using just to start local deployment
+
+Local [DB](#provisioning-docker-with-postgres-db) and [CA](#setting-up-local-ca-for-tls) need to be provisioned.
+[Just](#installing-just) installed.
+
+To list all available commands:
+
+    just RUN_ENV=multi
+
+There are two local environments available:
+
+- multi_ne - no entitlements
+- multi - entitlements are enabled
+
+Environment name always needs to be provided through RUN_ENV variable.
+
+Config, build and start in background:
+
+    just RUN_ENV=multi config-and-start
+
+Stop:
+
+    just RUN_ENV=multi stop
+
+See colored logs in realtime (Ctrl-C to exit):
+
+    just RUN_ENV=multi tail-logs
+
+Just build:
+
+    just RUN_ENV=multi build
+
+Just start with existing config and binary:
+
+    just RUN_ENV=multi start
+
+There are `run` version of commands that wait for Ctrl-C and stop nodes on exit:
+
+    just RUN_ENV=multi config-and-run
+    just RUN_ENV=multi config-run-tail
+    just RUN_ENV=multi run
+    just RUN_ENV=multi run-and-tail
+
+# Installing just
+
+    brew install just
+
 # Installing protoc and Buf
 
     brew install protobuf@3
@@ -26,11 +73,9 @@ Then generate the TLS certificates for the node:
 
     scripts/generate-ca.sh
 
-# Running River node
+# Provisioning Docker with Postgres DB
 
-Start storage backend, build node and start:
-
-    scripts/launch.sh
+    scripts/launch_storage.sh
 
 # Running River Tests
 

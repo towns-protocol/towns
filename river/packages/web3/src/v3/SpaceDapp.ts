@@ -325,20 +325,23 @@ export class SpaceDapp implements ISpaceDapp {
         signer: ethers.Signer,
         txnOpts?: TransactionOpts,
     ): Promise<ContractTransaction> {
-        const spaceInfo = {
-            name: params.spaceName,
-            uri: params.uri,
-            membership: params.membership,
-            channel: {
-                metadata: params.channelName || '',
-            },
-            shortDescription: params.shortDescription ?? '',
-            longDescription: params.longDescription ?? '',
-        }
-        return wrapTransaction(
-            () => this.spaceRegistrar.SpaceArchitect.write(signer).createSpace(spaceInfo),
-            txnOpts,
-        )
+        return wrapTransaction(() => {
+            return this.spaceRegistrar.SpaceArchitect.write(signer).createSpaceWithPrepay({
+                channel: {
+                    metadata: params.channelName || '',
+                },
+                membership: params.membership,
+                metadata: {
+                    name: params.spaceName,
+                    uri: params.uri,
+                    longDescription: params.longDescription || '',
+                    shortDescription: params.shortDescription || '',
+                },
+                prepay: {
+                    supply: params.prepaySupply ?? 0,
+                },
+            })
+        }, txnOpts)
     }
 
     public async createChannel(

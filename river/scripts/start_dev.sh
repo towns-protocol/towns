@@ -101,8 +101,8 @@ wait_for_process "$BUILD_PID" "build"
 echo "STARTED ALL CHAINS AND BUILT ALL CONTRACTS"
 
 # Now generate the core server config
-./scripts/configure-nodes.sh --multi
-./scripts/configure-nodes.sh --multi_ne
+(cd ./core && just RUN_ENV=multi config build)
+(cd ./core && just RUN_ENV=multi_ne config build)
 
 # Continue with rest of the script
 echo "Continuing with the rest of the script..."
@@ -117,8 +117,8 @@ commands=(
     "watch_proto:cd packages/proto && yarn watch"
     "watch_web3:cd packages/web3 && yarn watch"
     "watch_go:cd protocol && yarn watch:go"
-    "core_multi:./core/node/run_multi.sh -r"
-    "core_multi_ne:./core/node/run_multi.sh -r --de"
+    "core_multi:(cd ./core && just RUN_ENV=multi run)"
+    "core_multi_ne:(cd ./core && just RUN_ENV=multi_ne run)"
     "river_stream_metadata_multi_ne:yarn workspace @river-build/stream-metadata dev:local_multi_ne"
 )
 

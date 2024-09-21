@@ -354,6 +354,7 @@ contract ArchitectTest is
     address user,
     address proxyInitializer
   ) external assumeEOA(user) {
+    vm.assume(user != deployer);
     vm.prank(user);
     vm.expectRevert(abi.encodeWithSelector(Ownable__NotOwner.selector, user));
     spaceArchitect.setProxyInitializer(

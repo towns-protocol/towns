@@ -175,7 +175,7 @@
     {
       "label": "Casablanca",
       "type": "shell",
-      "command": "sleep 3 && yarn run --top-level csb:dev:entitlements -r",
+      "command": "sleep 3 && cd ./core && just RUN_ENV=multi start",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -185,7 +185,7 @@
     {
       "label": "Casablanca-No-Entitlements",
       "type": "shell",
-      "command": "sleep 5 && yarn run --top-level csb:start:no-entitlements -r",
+      "command": "sleep 5 && cd ./core && just RUN_ENV=multi_ne start",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -195,7 +195,7 @@
     {
       "label": "Configure Casablanca-Multinode ",
       "type": "shell",
-      "command": "./scripts/configure-nodes.sh --multi",
+      "command": "cd ./core && just RUN_ENV=multi config build",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -207,7 +207,7 @@
     {
       "label": "Configure Casablanca-Multinode-No-Entitlements",
       "type": "shell",
-      "command": "./scripts/configure-nodes.sh --multi_ne",
+      "command": "cd ./core && just RUN_ENV=multi_ne config build",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -219,7 +219,7 @@
     {
       "label": "Casablanca-Multinode",
       "type": "shell",
-      "command": "yarn run --top-level csb:multi -r",
+      "command": "cd ./core && just RUN_ENV=multi start",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -229,7 +229,7 @@
     {
       "label": "Casablanca-Multinode-No-Entitlements",
       "type": "shell",
-      "command": "yarn run --top-level csb:multi:no-entitlements -r",
+      "command": "cd ./core && just RUN_ENV=multi_ne start",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -239,7 +239,7 @@
     {
       "label": "Stop Casablanca",
       "type": "shell",
-      "command": "./core/scripts/stop_node.sh && ./core/node/stop_multi.sh",
+      "command": "cd ./core && just RUN_ENV=multi stop && just RUN_ENV=multi_ne stop",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -275,7 +275,7 @@
     {
       "label": "CasablancaConfigureNodes",
       "type": "shell",
-      "command": "RIVER_BLOCK_TIME=1 ./scripts/configure-nodes.sh --multi && RIVER_BLOCK_TIME=1 ./scripts/configure-nodes.sh --multi_ne",
+      "command": "cd ./core && just RUN_ENV=multi config build && just RUN_ENV=multi_ne config build",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {

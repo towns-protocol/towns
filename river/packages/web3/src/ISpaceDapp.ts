@@ -44,6 +44,7 @@ export interface CreateSpaceParams {
     membership: MembershipStruct
     shortDescription?: string
     longDescription?: string
+    prepaySupply?: number
 }
 
 export interface UpdateChannelParams {

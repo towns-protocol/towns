@@ -91,8 +91,6 @@ See [conventions](conventions.md)
 
 # Other Tools
 
-You need jq to run the run_multi.sh script
-
     brew install jq
 
 # Debugging Tests

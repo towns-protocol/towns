@@ -19,6 +19,8 @@ jobs:
         runs-on: ubuntu-latest-8-cores
         timeout-minutes: 240
         steps:
+            - uses: taiki-e/install-action@just
+
             - name: Checkout code
               uses: actions/checkout@v4
 
@@ -56,9 +58,8 @@ jobs:
                   echo "NODE_EXTRA_CA_CERTS=$HOME/river-ca-cert.pem" >> $GITHUB_ENV
 
             - name: Configure multi
-              run: |
-                  ./run_multi.sh -c
-              working-directory: river/core/node
+              run: just RUN_ENV=multi config
+              working-directory: river/core
 
             - name: Spin up stackup worker with fake privy verification that skips limit checks
               working-directory: ./servers/workers/stackup-worker

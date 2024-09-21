@@ -179,6 +179,8 @@ jobs:
                     --name river_postgres_container
 
         steps:
+            - uses: taiki-e/install-action@just
+
             - name: Cancel previous runs
               if: github.event_name != 'schedule'
               uses: styfle/cancel-workflow-action@0.12.1
@@ -269,11 +271,8 @@ jobs:
                   echo "NODE_EXTRA_CA_CERTS=$HOME/river-ca-cert.pem" >> $GITHUB_ENV
 
             - name: Run multiple nodes
-              working-directory: core/node
-              run: |
-                  ./run_multi.sh --de -c
-                  ./run_multi.sh --de -r &
-                  for i in {5180..5189}; do yarn wait-on https://localhost:$i/debug/multi --timeout=900000 --i=5000 --verbose; done
+              working-directory: core
+              run: just RUN_ENV=multi_ne config-and-start
 
             - name: Run SDK Tests (without entitlements)
               working-directory: packages/sdk
@@ -319,6 +318,8 @@ jobs:
                     --name river_postgres_container
 
         steps:
+            - uses: taiki-e/install-action@just
+
             - name: Cancel previous runs
               if: github.event_name != 'schedule'
               uses: styfle/cancel-workflow-action@0.12.1
@@ -406,11 +407,8 @@ jobs:
                   echo "NODE_EXTRA_CA_CERTS=$HOME/river-ca-cert.pem" >> $GITHUB_ENV
 
             - name: Run multiple nodes
-              run: |
-                  cd ./core/node
-                  ./run_multi.sh -c
-                  ./run_multi.sh -r &
-                  for i in {5170..5179}; do yarn wait-on https://localhost:$i/debug/multi --timeout=900000 --i=5000 --verbose; done
+              run: just RUN_ENV=multi config-and-start
+              working-directory: core
 
             - name: Build & Test (with entitlements)
               run: yarn csb:turbo-no-sdk
@@ -449,6 +447,8 @@ jobs:
                     --name river_postgres_container
 
         steps:
+            - uses: taiki-e/install-action@just
+
             - name: Cancel previous runs
               if: github.event_name != 'schedule'
               uses: styfle/cancel-workflow-action@0.12.1
@@ -536,11 +536,8 @@ jobs:
                   echo "NODE_EXTRA_CA_CERTS=$HOME/river-ca-cert.pem" >> $GITHUB_ENV
 
             - name: Run multiple nodes
-              run: |
-                  cd ./core/node
-                  ./run_multi.sh -c
-                  ./run_multi.sh -r &
-                  for i in {5170..5179}; do yarn wait-on https://localhost:$i/debug/multi --timeout=900000 --i=5000 --verbose; done
+              run: just RUN_ENV=multi config-and-start
+              working-directory: core
 
             - name: Build & Test (with entitlements)
               run: yarn csb:turbo-no-sdk
