@@ -103,8 +103,8 @@ wait_for_process "$BUILD_PID" "build"
 echo "STARTED ALL CHAINS AND DEPLOYED ALL CONTRACTS"
 
 # Now generate the core server config
-./river/scripts/configure-nodes.sh --multi
-./river/scripts/configure-nodes.sh --multi_ne
+(cd ./river/core && just RUN_ENV=multi stop config build)
+(cd ./river/core && just RUN_ENV=multi_ne stop config build)
 
 # Continue with rest of the script
 echo "Continuing with the rest of the script..."
@@ -131,8 +131,8 @@ commands=(
     #"notification_service:sleep 4 && ./scripts/start-local-notification-service.sh"
     "worker_stackup:cd servers/workers/stackup-worker && yarn dev:local"
     "river_stream_metadata_multi:yarn workspace @river-build/stream-metadata dev:local_multi"
-    "core:./river/core/node/run_multi.sh -r"
-    "core_de:./river/core/node/run_multi.sh -r --de"
+    "core:(cd ./river/core && just RUN_ENV=multi start)"
+    "core_de:(cd ./river/core && just RUN_ENV=multi_ne start)"
 )
 
 # Create a Tmux window for each command

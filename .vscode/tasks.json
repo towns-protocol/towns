@@ -275,7 +275,7 @@
     {
       "label": "4337: Configure Casablanca-Multinode",
       "type": "shell",
-      "command": "BASE_EXECUTION_CLIENT=geth_dev ./river/scripts/configure-nodes.sh --multi",
+      "command": "BASE_EXECUTION_CLIENT=geth_dev (cd ./river/core && just RUN_ENV=multi config)",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -287,7 +287,7 @@
     {
       "label": "Configure Casablanca-Multinode",
       "type": "shell",
-      "command": "./river/scripts/configure-nodes.sh --multi",
+      "command": "(cd ./river/core && just RUN_ENV=multi config build)",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -299,7 +299,7 @@
     {
       "label": "Casablanca-Multinode",
       "type": "shell",
-      "command": "sleep 3 && yarn run --top-level csb:multi -r",
+      "command": "sleep 3 && cd ./river/core && just RUN_ENV=multi start",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -309,7 +309,7 @@
     {
       "label": "Stop Casablanca",
       "type": "shell",
-      "command": "./river/core/scripts/stop_node.sh && ./river/core/node/stop_multi.sh",
+      "command": "cd ./river/core && just RUN_ENV=multi stop",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {

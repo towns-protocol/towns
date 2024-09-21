@@ -115,8 +115,7 @@ wait_for_process "$BUILD_PID" "build"
 echo "STARTED ALL CHAINS AND DEPLOYED ALL CONTRACTS"
 
 # Now generate the core server config
-BASE_EXECUTION_CLIENT="geth_dev" ./river/scripts/configure-nodes.sh --multi
-BASE_EXECUTION_CLIENT="geth_dev" ./river/core/node/run_multi.sh -c
+BASE_EXECUTION_CLIENT="geth_dev" (cd ./river/core && just RUN_ENV=multi config)
 ./scripts/fund_multi_for_geth.sh
 
 # Continue with rest of the script
