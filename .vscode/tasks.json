@@ -275,7 +275,7 @@
     {
       "label": "4337: Configure Casablanca-Multinode",
       "type": "shell",
-      "command": "BASE_EXECUTION_CLIENT=geth_dev (cd ./river/core && just RUN_ENV=multi config)",
+      "command": "BASE_EXECUTION_CLIENT=geth_dev cd ./river/core && just RUN_ENV=multi config",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
