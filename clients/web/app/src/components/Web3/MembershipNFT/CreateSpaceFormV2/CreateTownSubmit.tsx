@@ -324,7 +324,11 @@ export function CreateTownSubmit({
                         spaceName: createSpaceInfo.name,
                         spaceId: result.data.spaceId,
                         everyone: values.gatingType === 'everyone',
-                        pricingModule: isFixedPricing ? 'fixed' : 'dynamic',
+                        pricingModule: isFixedPricing
+                            ? 'fixed'
+                            : prepaySupply > 0
+                            ? 'prepaid'
+                            : 'dynamic',
                         priceInWei: priceInWei.toString(),
                         tokensGatedBy: tokensGatedBy.map((t) => ({
                             address: t.data.address,
