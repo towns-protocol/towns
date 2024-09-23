@@ -225,8 +225,6 @@ contract River is
     }
 
     super._update(from, to, value);
-
-    _transferVotingUnits(from, to, value);
   }
 
   function _getVotingUnits(

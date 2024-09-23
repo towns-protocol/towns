@@ -44,7 +44,7 @@ func runServices(ctx context.Context, cfg *config.Config, stream bool, xchain bo
 	var xchainService server.XChain
 	var wg sync.WaitGroup
 	if xchain {
-		xchainService, err = server.New(ctx, cmdConfig, nil, 1, metricsRegistry)
+		xchainService, err = server.New(ctx, cfg, nil, nil, 1, metricsRegistry)
 		if err != nil {
 			return err
 		}

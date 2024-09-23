@@ -141,11 +141,6 @@ type Config struct {
 
 	ChainConfigs map[uint64]*ChainConfig `mapstructure:"-"` // This is a derived field from Chains.
 
-	// XChainBlockchains is a list of chain IDs that are allowed to be used in xChain checks.
-	// TODO: this value is going to be moved on-chain so same setting is shared between all nodes and clients.
-	// If value is not set, as a fallback ChainConfigs keys are used.
-	XChainBlockchains []uint64
-
 	// extra xChain configuration
 	EntitlementContract     ContractConfig `mapstructure:"entitlement_contract"`
 	TestEntitlementContract ContractConfig `mapstructure:"test_contract"`
@@ -503,13 +498,6 @@ func (c *Config) parseChains() error {
 		}
 	}
 	c.ChainConfigs = chainConfigs
-
-	// If XChainBlockchains is not set, use all chain IDs from ChainConfigs.
-	if len(c.XChainBlockchains) == 0 {
-		for chainID := range chainConfigs {
-			c.XChainBlockchains = append(c.XChainBlockchains, chainID)
-		}
-	}
 
 	return nil
 }

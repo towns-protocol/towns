@@ -11,7 +11,7 @@ func clean() {
 	cmdConfig = nil
 }
 
-func TestBlockchainConfiNotSetByDefault(t *testing.T) {
+func TestBlockchainConfigNotSetByDefault(t *testing.T) {
 	clean()
 	require := require.New(t)
 
@@ -22,7 +22,6 @@ func TestBlockchainConfiNotSetByDefault(t *testing.T) {
 
 	require.Empty(cmdConfig.Chains)
 	require.Empty(cmdConfig.ChainConfigs)
-	require.Empty(cmdConfig.XChainBlockchains)
 }
 
 func TestBlockchainConfigSetByEnv(t *testing.T) {
@@ -30,10 +29,8 @@ func TestBlockchainConfigSetByEnv(t *testing.T) {
 	require := require.New(t)
 
 	chainsValue := "1:https//eth0.org/foobar,2:https//eth1.org/foobar,123:https//eth123.org/foobar,6524490:https//river.org/foobar"
-	xchainsValue := "1,2"
 	t.Setenv("CHAINS", chainsValue)
 	t.Setenv("CHAINBLOCKTIMES", "2:100s,123:2.5s")
-	t.Setenv("XCHAINBLOCKCHAINS", xchainsValue)
 
 	configFiles = []string{"../node/default_config.yaml"}
 	cmdConfig, _, err := initViperConfig()
@@ -54,8 +51,6 @@ func TestBlockchainConfigSetByEnv(t *testing.T) {
 
 	require.Equal("https//river.org/foobar", cmdConfig.ChainConfigs[6524490].NetworkUrl)
 	require.Equal(uint64(2000), cmdConfig.ChainConfigs[6524490].BlockTimeMs)
-
-	require.Equal([]uint64{1, 2}, cmdConfig.XChainBlockchains)
 }
 
 func TestXChainFallback(t *testing.T) {
@@ -65,7 +60,6 @@ func TestXChainFallback(t *testing.T) {
 	chainsValue := "1:https//eth0.org/foobar,2:https//eth1.org/foobar,123:https//eth123.org/foobar,6524490:https//river.org/foobar"
 	t.Setenv("CHAINS", chainsValue)
 	t.Setenv("CHAINBLOCKTIMES", "2:100s,123:2.5s")
-	t.Setenv("XCHAINBLOCKCHAINS", "")
 
 	configFiles = []string{"../node/default_config.yaml"}
 	cmdConfig, _, err := initViperConfig()
@@ -86,20 +80,16 @@ func TestXChainFallback(t *testing.T) {
 
 	require.Equal("https//river.org/foobar", cmdConfig.ChainConfigs[6524490].NetworkUrl)
 	require.Equal(uint64(2000), cmdConfig.ChainConfigs[6524490].BlockTimeMs)
-
-	require.ElementsMatch([]uint64{1, 2, 123, 6524490}, cmdConfig.XChainBlockchains)
 }
 
-func TestBlockchainChainsStringFallbakc(t *testing.T) {
+func TestBlockchainChainsStringFallback(t *testing.T) {
 	clean()
 	require := require.New(t)
 
 	chainsValue := "1:https//eth0.org/foobar,2:https//eth1.org/foobar,123:https//eth123.org/foobar,6524490:https//river.org/foobar"
-	xchainsValue := "1,2"
 	t.Setenv("CHAINS", "")
 	t.Setenv("CHAINSSTRING", chainsValue)
 	t.Setenv("CHAINBLOCKTIMES", "2:100s,123:2.5s")
-	t.Setenv("XCHAINBLOCKCHAINS", xchainsValue)
 
 	configFiles = []string{"../node/default_config.yaml"}
 	cmdConfig, _, err := initViperConfig()
@@ -120,6 +110,4 @@ func TestBlockchainChainsStringFallbakc(t *testing.T) {
 
 	require.Equal("https//river.org/foobar", cmdConfig.ChainConfigs[6524490].NetworkUrl)
 	require.Equal(uint64(2000), cmdConfig.ChainConfigs[6524490].BlockTimeMs)
-
-	require.Equal([]uint64{1, 2}, cmdConfig.XChainBlockchains)
 }

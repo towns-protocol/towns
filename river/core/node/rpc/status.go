@@ -177,7 +177,7 @@ func (s *Service) getStatusResponse(ctx context.Context, url *url.URL) (*statusi
 		River:             riverPing,
 		Base:              basePing,
 		OtherChains:       otherChainsPing,
-		XChainBlockchains: s.config.XChainBlockchains,
+		XChainBlockchains: s.chainConfig.Get().XChain.Blockchains,
 	}, status
 }
 

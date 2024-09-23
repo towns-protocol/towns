@@ -12,6 +12,7 @@ import (
 	"github.com/river-build/river/core/config"
 	"github.com/river-build/river/core/contracts/base"
 	. "github.com/river-build/river/core/node/protocol"
+	"github.com/river-build/river/core/node/registries"
 	"github.com/river-build/river/core/xchain/contracts"
 	"github.com/river-build/river/core/xchain/entitlement"
 	"github.com/river-build/river/core/xchain/util"
@@ -41,6 +42,10 @@ type (
 		config          *config.Config
 		cancel          context.CancelFunc
 		evaluator       *entitlement.Evaluator
+
+		riverChain       *crypto.Blockchain
+		registryContract *registries.RiverRegistryContract
+		chainConfig      crypto.OnChainConfiguration
 
 		// Metrics
 		metrics                           infra.MetricsFactory
@@ -81,6 +86,7 @@ func New(
 	ctx context.Context,
 	cfg *config.Config,
 	baseChain *crypto.Blockchain,
+	riverChain *crypto.Blockchain,
 	workerID int,
 	metricsRegistry *prometheus.Registry,
 ) (server *xchain, err error) {
@@ -95,7 +101,37 @@ func New(
 
 	metrics := infra.NewMetricsFactory(metricsRegistry, "river", "xchain")
 
-	evaluator, err := entitlement.NewEvaluatorFromConfig(ctx, cfg, metrics)
+	var wallet *crypto.Wallet
+	if baseChain == nil {
+		wallet, err = util.LoadWallet(ctx)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		wallet = baseChain.Wallet
+	}
+
+	if riverChain == nil {
+		riverChain, err = crypto.NewBlockchain(ctx, &cfg.RiverChain, wallet, metrics, nil)
+		if err != nil {
+			return nil, err
+		}
+		riverChain.StartChainMonitor(ctx)
+	}
+
+	registryContract, err := registries.NewRiverRegistryContract(ctx, riverChain, &cfg.RegistryContract)
+	if err != nil {
+		return nil, err
+	}
+
+	chainConfig, err := crypto.NewOnChainConfig(
+		ctx, riverChain.Client, registryContract.Address, riverChain.InitialBlockNum, riverChain.ChainMonitor,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	evaluator, err := entitlement.NewEvaluatorFromConfig(ctx, cfg, chainConfig, metrics)
 	if err != nil {
 		return nil, err
 	}
@@ -113,7 +149,8 @@ func New(
 	var (
 		log = dlog.FromCtx(ctx).
 			With("worker_id", workerID).
-			With("application", "xchain")
+			With("application", "xchain").
+			With("nodeAddress", wallet.Address.Hex())
 		checkerContract = bind.NewBoundContract(
 			cfg.GetEntitlementContractAddress(),
 			*checkerABI,
@@ -123,18 +160,7 @@ func New(
 		)
 	)
 
-	log.Info("Starting xchain node", "cfg", cfg)
-
-	var wallet *crypto.Wallet
-	if baseChain == nil {
-		wallet, err = util.LoadWallet(ctx)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		wallet = baseChain.Wallet
-	}
-	log = log.With("nodeAddress", wallet.Address.Hex())
+	log.Info("Starting xchain node", "cfg", cfg, "onChainConfig", chainConfig.Get())
 
 	if baseChain == nil {
 		baseChain, err = crypto.NewBlockchain(ctx, &cfg.BaseChain, wallet, metrics, nil)
@@ -179,6 +205,10 @@ func New(
 		evmErrDecoder:   decoder,
 		config:          cfg,
 		evaluator:       evaluator,
+
+		riverChain:       riverChain,
+		registryContract: registryContract,
+		chainConfig:      chainConfig,
 
 		metrics:                   metrics,
 		entitlementCheckRequested: entCounter.MustCurryWith(map[string]string{"op": "requested"}),

@@ -11,11 +11,13 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/river-build/river/core/config"
+	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/infra"
 	"github.com/river-build/river/core/xchain/examples"
 
 	"github.com/ethereum/go-ethereum/common"
 
+	"github.com/river-build/river/core/contracts/river"
 	. "github.com/river-build/river/core/contracts/types"
 )
 
@@ -285,9 +287,31 @@ var cfg = &config.Config{
 			BlockTimeMs: 2000,
 		},
 	},
-	XChainBlockchains: []uint64{
-		examples.EthSepoliaChainIdUint64,
-		examples.BaseSepoliaChainIdUint64,
+}
+
+type MockOnChainCfg struct {
+	settings *crypto.OnChainSettings
+}
+
+func (m *MockOnChainCfg) ActiveBlock() crypto.BlockNumber { return 0 }
+func (m *MockOnChainCfg) Get() *crypto.OnChainSettings    { return m.settings }
+func (m *MockOnChainCfg) GetOnBlock(block crypto.BlockNumber) *crypto.OnChainSettings {
+	return m.settings
+}
+
+func (m *MockOnChainCfg) All() []*crypto.OnChainSettings {
+	return []*crypto.OnChainSettings{m.settings}
+}
+func (m *MockOnChainCfg) LastAppliedEvent() *river.RiverConfigV1ConfigurationChanged { return nil }
+
+var allSepoliaChains_onChainConfig = &MockOnChainCfg{
+	settings: &crypto.OnChainSettings{
+		XChain: crypto.XChainSettings{
+			Blockchains: []uint64{
+				examples.EthSepoliaChainIdUint64,
+				examples.BaseSepoliaChainIdUint64,
+			},
+		},
 	},
 }
 
@@ -295,7 +319,12 @@ var evaluator *Evaluator
 
 func TestMain(m *testing.M) {
 	var err error
-	evaluator, err = NewEvaluatorFromConfig(context.Background(), cfg, infra.NewMetricsFactory(nil, "", ""))
+	evaluator, err = NewEvaluatorFromConfig(
+		context.Background(),
+		cfg,
+		allSepoliaChains_onChainConfig,
+		infra.NewMetricsFactory(nil, "", ""),
+	)
 	if err != nil {
 		panic(err)
 	}
@@ -823,31 +852,12 @@ var singleEtherChainBlockChainInfo = map[uint64]config.BlockchainInfo{
 
 func Test_evaluateEthBalance_withConfig(t *testing.T) {
 	tests := map[string]struct {
-		cfg         config.Config
 		op          Operation
 		wallets     []common.Address
 		expected    bool
 		expectedErr error
 	}{
 		"Ether chains < supported chains (positive result)": {
-			cfg: config.Config{
-				ChainConfigs: map[uint64]*config.ChainConfig{
-					examples.EthSepoliaChainIdUint64: {
-						NetworkUrl:  "https://ethereum-sepolia-rpc.publicnode.com",
-						ChainId:     examples.EthSepoliaChainIdUint64,
-						BlockTimeMs: 12000,
-					},
-					examples.BaseSepoliaChainIdUint64: {
-						NetworkUrl:  "https://sepolia.base.org",
-						ChainId:     examples.BaseSepoliaChainIdUint64,
-						BlockTimeMs: 2000,
-					},
-				},
-				XChainBlockchains: []uint64{
-					examples.EthSepoliaChainIdUint64,
-					examples.BaseSepoliaChainIdUint64,
-				},
-			},
 			op: &ethBalance0_4,
 			wallets: []common.Address{
 				examples.EthWallet_0_5Eth,
@@ -855,24 +865,6 @@ func Test_evaluateEthBalance_withConfig(t *testing.T) {
 			expected: true,
 		},
 		"Ether chains < supported chains (negative result)": {
-			cfg: config.Config{
-				ChainConfigs: map[uint64]*config.ChainConfig{
-					examples.EthSepoliaChainIdUint64: {
-						NetworkUrl:  "https://ethereum-sepolia-rpc.publicnode.com",
-						ChainId:     examples.EthSepoliaChainIdUint64,
-						BlockTimeMs: 12000,
-					},
-					examples.BaseSepoliaChainIdUint64: {
-						NetworkUrl:  "https://sepolia.base.org",
-						ChainId:     examples.BaseSepoliaChainIdUint64,
-						BlockTimeMs: 2000,
-					},
-				},
-				XChainBlockchains: []uint64{
-					examples.EthSepoliaChainIdUint64,
-					examples.BaseSepoliaChainIdUint64,
-				},
-			},
 			op: &ethBalance0_5,
 			wallets: []common.Address{
 				examples.EthWallet_0_5Eth,
@@ -886,7 +878,8 @@ func Test_evaluateEthBalance_withConfig(t *testing.T) {
 			require := require.New(t)
 			customEvaluator, err := NewEvaluatorFromConfigWithBlockchainInfo(
 				context.Background(),
-				&tc.cfg,
+				cfg,
+				allSepoliaChains_onChainConfig,
 				singleEtherChainBlockChainInfo,
 				infra.NewMetricsFactory(nil, "", ""),
 			)

@@ -1,6 +1,7 @@
 package crypto
 
 import (
+	"log/slog"
 	"math"
 	"testing"
 	"time"
@@ -13,6 +14,7 @@ import (
 
 	"github.com/river-build/river/core/contracts/river"
 	"github.com/river-build/river/core/node/base/test"
+	"github.com/river-build/river/core/node/dlog"
 )
 
 func TestOnChainConfigSettingMultipleActiveBlockValues(t *testing.T) {
@@ -132,6 +134,7 @@ func TestSetOnChain(t *testing.T) {
 	btc.SetConfigValue(t, ctx, StreamRecencyConstraintsAgeSecConfigKey, ABIEncodeUint64(5))
 	btc.SetConfigValue(t, ctx, "unknown key is fine", ABIEncodeUint64(5))
 	btc.SetConfigValue(t, ctx, MediaStreamMembershipLimitsDMConfigKey, ABIEncodeUint64(5))
+	btc.SetConfigValue(t, ctx, XChainBlockchainsConfigKey, ABIEncodeUint64Array([]uint64{1, 10, 100}))
 
 	s := btc.OnChainConfig.Get()
 	assert.EqualValues(3, s.ReplicationFactor)
@@ -139,6 +142,7 @@ func TestSetOnChain(t *testing.T) {
 	assert.Equal(3*time.Second, s.StreamCacheExpiration)
 	assert.Equal(5*time.Second, s.RecencyConstraintsAge)
 	assert.EqualValues(5, s.MembershipLimits.DM)
+	assert.EqualValues([]uint64{1, 10, 100}, s.XChain.Blockchains)
 
 	btc.SetConfigValue(t, ctx, StreamReplicationFactorConfigKey, []byte("invalid value is ignored"))
 	assert.EqualValues(3, btc.OnChainConfig.Get().ReplicationFactor)
@@ -287,16 +291,29 @@ type Cfg struct {
 	C3 time.Duration `mapstructure:"foo.c3Ms"`
 	C4 time.Duration `mapstructure:"foo.c4Seconds"`
 	C5 CfgInner      `mapstructure:",squash"`
+	C6 []uint64      `mapstructure:"foo.c6"`
 }
 
 type CfgInner struct {
-	F1 string `mapstructure:"foo.f1"`
-	F2 int    `mapstructure:"foo.f2"`
+	F1 string   `mapstructure:"foo.f1"`
+	F2 int      `mapstructure:"foo.f2"`
+	F3 []uint64 `mapstructure:"foo.f3List"`
+	F4 []uint64 `mapstructure:"foo.f4"`
+}
+
+// Disable color output for console testing.
+func noColorLogger() *slog.Logger {
+	return slog.New(
+		dlog.NewPrettyTextHandler(dlog.DefaultLogOut, &dlog.PrettyHandlerOptions{
+			Colors: dlog.ColorMap_Disabled,
+		}),
+	)
 }
 
 func TestDecoder(t *testing.T) {
 	require := require.New(t)
 	ctx, cancel := test.NewTestContext()
+	ctx = dlog.CtxWithLog(ctx, noColorLogger())
 	defer cancel()
 
 	configMap := make(map[string]interface{})
@@ -306,6 +323,9 @@ func TestDecoder(t *testing.T) {
 	configMap["foo.c4Seconds"] = ABIEncodeUint64(5)
 	configMap["foo.f1"] = ABIEncodeString("hello")
 	configMap["foo.f2"] = ABIEncodeInt64(42)
+	configMap["foo.c6"] = ABIEncodeUint64Array([]uint64{100, 200, 300, 400})
+	configMap["foo.f3List"] = ABIEncodeUint64Array([]uint64{1, 2, 3})
+	configMap["foo.f4"] = ABIEncodeUint64Array([]uint64{})
 
 	var decodedCfg Cfg
 	decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
@@ -323,4 +343,7 @@ func TestDecoder(t *testing.T) {
 	require.Equal(time.Duration(5)*time.Second, decodedCfg.C4)
 	require.Equal("hello", decodedCfg.C5.F1)
 	require.Equal(42, decodedCfg.C5.F2)
+	require.Equal([]uint64{100, 200, 300, 400}, decodedCfg.C6)
+	require.Equal([]uint64{1, 2, 3}, decodedCfg.C5.F3)
+	require.Equal([]uint64{}, decodedCfg.C5.F4)
 }

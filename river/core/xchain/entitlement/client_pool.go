@@ -29,11 +29,18 @@ type (
 // NewBlockchainClientPool creates a new blockchain client pool for the chains in the given cfg.
 // It uses ethclient.Client instances that are safe to use concurrently. Therefor the pool keeps a reference to each
 // client and there is no need for callers to return the obtained client back to the pool after use.
-func NewBlockchainClientPool(ctx context.Context, cfg *config.Config) (BlockchainClientPool, error) {
+func NewBlockchainClientPool(
+	ctx context.Context,
+	cfg *config.Config,
+	onChainCfg crypto.OnChainConfiguration,
+) (BlockchainClientPool, error) {
 	log := dlog.FromCtx(ctx)
 	clients := make(map[uint64]crypto.BlockchainClient)
-	// TODO: why this is not returning errors if chain client can't be created?
-	for _, chainID := range cfg.XChainBlockchains {
+	// TODO: This is not creating errors if a client cannot be created for the sake of maintaining
+	// data availability on the network. As soon as replicated streams reaches maturity on external
+	// networks, consider returning an error, and possibly causing the node to fail to start, if a
+	// client cannot be created for any XChain-supported chain.
+	for _, chainID := range onChainCfg.Get().XChain.Blockchains {
 		chainCfg, ok := cfg.ChainConfigs[chainID]
 		if !ok {
 			log.Warn("Chain config not found", "chainId", chainID)

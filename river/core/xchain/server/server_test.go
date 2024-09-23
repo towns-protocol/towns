@@ -255,6 +255,14 @@ func (st *serviceTester) Start(t *testing.T) {
 		}
 	}()
 
+	// Set on-chain configuration for supported xchain chain ids.
+	st.btc.SetConfigValue(
+		t,
+		ctx,
+		crypto.XChainBlockchainsConfigKey,
+		crypto.ABIEncodeUint64Array([]uint64{ChainID}),
+	)
+
 	for i := 0; i < len(st.nodes); i++ {
 		st.nodes[i] = &testNodeRecord{}
 		bc := st.btc.GetBlockchain(st.ctx, i)
@@ -278,7 +286,7 @@ func (st *serviceTester) Start(t *testing.T) {
 			log.Fatal("unable to register node")
 		}
 
-		svr, err := server.New(st.ctx, st.Config(), bc, i, nil)
+		svr, err := server.New(st.ctx, st.Config(), bc, bc, i, nil)
 		st.require.NoError(err)
 		st.nodes[i].svr = svr
 		st.nodes[i].address = bc.Wallet.Address
@@ -288,10 +296,9 @@ func (st *serviceTester) Start(t *testing.T) {
 
 func (st *serviceTester) Config() *config.Config {
 	cfg := &config.Config{
-		BaseChain:         node_config.ChainConfig{},
-		RiverChain:        node_config.ChainConfig{},
-		Chains:            fmt.Sprintf("%d:%s", ChainID, BaseRpcEndpoint),
-		XChainBlockchains: []uint64{ChainID},
+		BaseChain:  node_config.ChainConfig{},
+		RiverChain: node_config.ChainConfig{},
+		Chains:     fmt.Sprintf("%d:%s", ChainID, BaseRpcEndpoint),
 		TestEntitlementContract: config.ContractConfig{
 			Address: st.mockEntitlementGatedAddress,
 		},
@@ -300,6 +307,9 @@ func (st *serviceTester) Config() *config.Config {
 		},
 		ArchitectContract: config.ContractConfig{
 			Address: st.walletLinkingAddress,
+		},
+		RegistryContract: config.ContractConfig{
+			Address: st.btc.RiverRegistryAddress,
 		},
 		Log: config.LogConfig{
 			NoColor: true,

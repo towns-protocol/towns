@@ -120,19 +120,23 @@ func (s *Service) start() error {
 
 	s.initTracing()
 
+	// There is an order here to how components must be initialized.
+	// 1. The river chain is needed in order to read on-chain configuration for instantiating entitlements.
+	// 2. Entitlements need to be initialized in order to initialize the chain auth module when initializing
+	// the base chain.
+	err = s.initRiverChain()
+	if err != nil {
+		return AsRiverError(err).Message("Failed to init river chain").LogError(s.defaultLogger)
+	}
+	s.defaultLogger.Info("On-chain Configuration", "config", s.chainConfig.Get())
+
 	err = s.initEntitlements()
 	if err != nil {
 		return AsRiverError(err).Message("Failed to init entitlements").LogError(s.defaultLogger)
 	}
-
 	err = s.initBaseChain()
 	if err != nil {
 		return AsRiverError(err).Message("Failed to init base chain").LogError(s.defaultLogger)
-	}
-
-	err = s.initRiverChain()
-	if err != nil {
-		return AsRiverError(err).Message("Failed to init river chain").LogError(s.defaultLogger)
 	}
 
 	s.initEthBalanceMetrics()
@@ -201,7 +205,11 @@ func (s *Service) initInstance(mode string) {
 		)
 	}
 	s.serverCtx = dlog.CtxWithLog(s.serverCtx, s.defaultLogger)
-	s.defaultLogger.Info("Starting server", "config", s.config, "mode", mode)
+	s.defaultLogger.Info(
+		"Starting server",
+		"config", s.config,
+		"mode", mode,
+	)
 
 	subsystem := mode
 	if mode == ServerModeFull {
@@ -490,7 +498,7 @@ func (s *Service) serveH2C() {
 
 func (s *Service) initEntitlements() error {
 	var err error
-	s.entitlementEvaluator, err = entitlement.NewEvaluatorFromConfig(s.serverCtx, s.config, s.metrics)
+	s.entitlementEvaluator, err = entitlement.NewEvaluatorFromConfig(s.serverCtx, s.config, s.chainConfig, s.metrics)
 	if err != nil {
 		return err
 	}

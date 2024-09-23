@@ -27,6 +27,35 @@ function set_config_uint() {
     2> /dev/null
 }
 
+function set_config_uint_array() {
+  local unformattedKey=$1
+  local key="$(cast keccak "$(echo "$1" | tr "[:upper:]" "[:lower:]")")"
+  local blockNum=$2
+  shift
+  shift
+
+  local offset="$(cast to-uint256 32)"
+  local length="$(cast to-uint256 $#)"
+
+  # Encode offset and length
+  encodedArray="$offset${length:2}" # remove `0x`` prefix
+
+  for value in "$@"; do
+    encoded="$(cast to-uint256 "${value}")"
+    encodedArray+="${encoded:2}" # remove `0x` prefix
+  done
+
+  echo "set on-chain config key: $unformattedKey value: $@ activation-block: ${blockNum}"
+
+  cast send \
+    --rpc-url http://127.0.0.1:8546 \
+    --private-key "$LOCAL_PRIVATE_KEY" \
+    "$RIVER_REGISTRY_ADDRESS" \
+    "setConfiguration(bytes32,uint64,bytes)" \
+    "${key}" "${blockNum}" "${encodedArray}" \
+    2> /dev/null
+}
+
 # Wait for the river chain to be ready
 if [ "${SKIP_CHAIN_WAIT}" != "true" ]; then
     ./scripts/wait-for-riverchain.sh
@@ -34,6 +63,7 @@ fi
 
 echo "Set River on-chain configuration"
 
+set_config_uint_array "xchain.blockchains" 0 31337 31338 84532 11155111 # local chains and sepolia eth / base
 set_config_uint "stream.media.maxChunkCount" 0 10
 set_config_uint "stream.media.maxChunkSize" 0 500000
 set_config_uint "media.streamMembershipLimits.77" 0 6
@@ -48,4 +78,3 @@ set_config_uint "stream.minEventsPerSnapshot.a8" 0 10
 set_config_uint "stream.minEventsPerSnapshot.ad" 0 10
 set_config_uint "stream.cacheExpirationMs" 0 300000            # 5m
 set_config_uint "stream.cacheExpirationPollIntervalMs" 0 30000 # 30s
-
