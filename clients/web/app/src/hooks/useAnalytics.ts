@@ -10,7 +10,7 @@ import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from '@r
 import { TownsAnalytics } from 'use-towns-client'
 import { datadogLogs } from '@datadog/browser-logs'
 import { env } from 'utils'
-import { getBrowserName, isAndroid, isIOS, isPWA } from './useDevice'
+import { UserAgentInstance, getBrowserName, isPWA } from './useDevice'
 
 const USER_ID_KEY = 'analytics-userId'
 
@@ -218,11 +218,11 @@ export function getChannelType(channelId: string) {
 }
 
 function getCommonAnalyticsProperties(): ApiObject {
-    const device = isIOS() ? 'ios' : isAndroid() ? 'android' : 'desktop'
+    const os = UserAgentInstance.getOS()
     const platform = isPWA() ? 'pwa' : 'browser'
     return {
         browserName: getBrowserName(),
-        device,
+        device: os.name,
         platform,
     }
 }

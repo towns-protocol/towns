@@ -1,6 +1,6 @@
 import UAParser from 'ua-parser-js'
 
-const UserAgentInstance = new UAParser(window.navigator.userAgent)
+export const UserAgentInstance = new UAParser(window.navigator.userAgent)
 
 export function isTouch() {
     const device = UserAgentInstance.getDevice()
