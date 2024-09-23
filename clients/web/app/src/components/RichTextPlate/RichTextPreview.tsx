@@ -102,6 +102,11 @@ export const RichTextPreviewInternal = ({
                     {props.children}
                 </Box>
             ),
+            u: (props: React.PropsWithChildren) => (
+                <Box textDecoration="underline" display="inline" as="u">
+                    {props.children}
+                </Box>
+            ),
             code: CodeLeaf,
             pre: (props: React.PropsWithChildren) => <CodeBlockElement ref={ref} {...props} />,
             blockquote: BlockquoteElement,

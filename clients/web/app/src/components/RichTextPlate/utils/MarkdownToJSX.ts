@@ -15,6 +15,7 @@ import { channelMentionHandler, listContentHandler, userMentionHandler } from '.
 import remarkTransformUserAndChannels from './remark/remarkTransformUserAndChannels'
 import remarkPreserveListContent from './remark/remarkPreserveListContent'
 import remarkRemoveHeadings from './remark/remarkRemoveHeadings'
+import remarkUnderline from './remark/remarkUnderline'
 import remarkDecodeHTMLCodeBlocks from './remark/remarkDecodeHTMLCodeBlocks'
 import { getChannelNames } from './helpers'
 import { TUserIDNameMap } from '../components/plate-ui/autocomplete/types'
@@ -48,6 +49,7 @@ const MarkdownRenderer = ({
     const unifiedPipeline = unified()
         .use(markdown)
         .use(remarkGfm)
+        .use(remarkUnderline(children as string))
         .use(remarkPreserveListContent)
         .use(remarkRemoveHeadings)
         .use(remarkDecodeHTMLCodeBlocks)

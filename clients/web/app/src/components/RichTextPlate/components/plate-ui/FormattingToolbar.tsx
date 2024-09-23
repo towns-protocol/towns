@@ -2,7 +2,13 @@ import React, { ComponentProps, useCallback, useMemo } from 'react'
 import { AnimationProps } from 'framer-motion'
 import { useEditorRef } from '@udecode/plate-common'
 import { withRef } from '@udecode/cn'
-import { MARK_BOLD, MARK_CODE, MARK_ITALIC, MARK_STRIKETHROUGH } from '@udecode/plate-basic-marks'
+import {
+    MARK_BOLD,
+    MARK_CODE,
+    MARK_ITALIC,
+    MARK_STRIKETHROUGH,
+    MARK_UNDERLINE,
+} from '@udecode/plate-basic-marks'
 import { ListStyleType } from '@udecode/plate-indent-list'
 import { Box, BoxProps, DividerEditorToolbar, IconButton, MotionBox, Stack } from '@ui'
 import { GiphyEntryDesktop } from '@components/Giphy/GiphyEntry'
@@ -126,6 +132,11 @@ export const FormattingToolbar = withRef<'div', FormattingToolbarProps>(
                                     nodeType={MARK_ITALIC}
                                     icon="italic"
                                     tooltip={ShortcutTooltip({ action: 'ItalicText' })}
+                                />
+                                <MarkToolbarButton
+                                    nodeType={MARK_UNDERLINE}
+                                    icon="underline"
+                                    tooltip={ShortcutTooltip({ action: 'UnderlineText' })}
                                 />
                                 <MarkToolbarButton
                                     nodeType={MARK_STRIKETHROUGH}

@@ -25,6 +25,7 @@ export interface NodeTypes {
     }
     emphasis_mark: string
     strong_mark: string
+    underline_mark: string
     delete_mark: string
     inline_code_mark: string
     thematic_break: string
@@ -48,6 +49,7 @@ export type MdastNodeType =
     | 'html'
     | 'emphasis'
     | 'strong'
+    | 'underline'
     | 'delete'
     | 'inlineCode'
     | 'break'
@@ -78,6 +80,7 @@ export const defaultNodeTypes: NodeTypes = {
     },
     emphasis_mark: 'italic',
     strong_mark: 'bold',
+    underline_mark: 'underline',
     delete_mark: 'strikethrough',
     inline_code_mark: 'code',
     thematic_break: 'thematic_break',
@@ -90,6 +93,7 @@ export const defaultNodeTypes: NodeTypes = {
 export interface LeafType {
     text: string
     strikethrough?: boolean
+    underline?: boolean
     bold?: boolean
     italic?: boolean
     code?: boolean
@@ -156,7 +160,8 @@ export interface MdastNode {
     lang?: string
     meta?: string
     start?: number
-    // position?: any
+    position?: { start: { offset: number }; end: { offset: number } }
+    data?: { hName: string; hProperties: Record<string, string> }
     // spread?: any
     // checked?: any
     // indent?: any

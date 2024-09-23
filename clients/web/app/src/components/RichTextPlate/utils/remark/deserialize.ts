@@ -128,6 +128,12 @@ export default function deserialize<T extends InputNodeTypes>(
                 ...forceLeafNode(children as Array<TextNode>),
                 ...persistLeafFormats(children as Array<MdastNode>),
             }
+        case 'underline':
+            return {
+                [types.underline_mark as string]: true,
+                ...forceLeafNode(children as Array<TextNode>),
+                ...persistLeafFormats(children as Array<MdastNode>),
+            }
         case 'delete':
             return {
                 [types.delete_mark as string]: true,

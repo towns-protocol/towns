@@ -142,6 +142,9 @@ export default function serialize(
         if (chunk.strikethrough) {
             markdownFormatStr += '~~'
         }
+        if (chunk.underline) {
+            markdownFormatStr += '__'
+        }
         if (chunk.bold) {
             markdownFormatStr += '**'
         }

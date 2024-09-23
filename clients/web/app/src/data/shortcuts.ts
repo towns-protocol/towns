@@ -105,6 +105,10 @@ export const Shortcuts = {
             keys: 'Mod+I',
             description: 'Italic',
         },
+        UnderlineText: {
+            keys: 'Mod+U',
+            description: 'Underline',
+        },
         OpenGifPicker: {
             keys: 'Mod+G',
             description: 'Open GIF picker',

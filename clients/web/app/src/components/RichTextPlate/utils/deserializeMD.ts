@@ -7,6 +7,7 @@ import remarkDecodeHTMLCodeBlocks from './remark/remarkDecodeHTMLCodeBlocks'
 import remarkSlate from './remark/plugin'
 import remarkTransformUserAndChannels from './remark/remarkTransformUserAndChannels'
 import remarkRemoveHeadings from './remark/remarkRemoveHeadings'
+import remarkUnderline from './remark/remarkUnderline'
 import { TUserIDNameMap } from '../components/plate-ui/autocomplete/types'
 
 /**
@@ -26,6 +27,7 @@ export const deserializeMd = <V extends Value>(
     const tree = unified()
         .use(markdown)
         .use(remarkGfm)
+        .use(remarkUnderline(data))
         .use(remarkRemoveHeadings)
         .use(remarkDecodeHTMLCodeBlocks)
         .use(remarkSlate)
