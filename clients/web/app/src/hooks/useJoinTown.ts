@@ -5,6 +5,7 @@ import { isLimitReachedError, isMaybeFundsError, mapToErrorMessage } from '@comp
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { useStore } from 'store/store'
 import { usePublicPageLoginFlow } from 'routes/PublicTownPage/usePublicPageLoginFlow'
+import { Analytics } from './useAnalytics'
 
 export const useJoinTown = (spaceId: string | undefined, onSuccessfulJoin?: () => void) => {
     const { clientSingleton, signerContext } = useTownsContext()
@@ -38,6 +39,10 @@ export const useJoinTown = (spaceId: string | undefined, onSuccessfulJoin?: () =
             return
         }
         if (clientSingleton && spaceId && signer) {
+            Analytics.getInstance().track('joining town', {
+                spaceId,
+            })
+
             setRecentlyMintedSpaceToken(undefined)
 
             const roomIdentifier = spaceId

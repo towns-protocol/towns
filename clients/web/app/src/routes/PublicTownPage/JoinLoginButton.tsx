@@ -54,17 +54,16 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
             createPrivyNotAuthenticatedNotification()
             return
         }
-
         Analytics.getInstance().track(
-            'clicked join town',
+            'Clicked join town on town page',
             {
                 spaceId,
+                meetsMembershipRequirements,
             },
             () => {
-                console.log('[analytics][JoinLoginButton] clicked join town')
+                console.log('[analytics][JoinLoginButton] Clicked join town on town page')
             },
         )
-
         preventJoinUseEffect.current = true
         startPublicPageloginFlow()
         if (meetsMembershipRequirements) {
@@ -74,6 +73,10 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
             setIsJoining(false)
         } else {
             // show asset verification modal
+            Analytics.getInstance().page('requirements-modal', 'view gated requirements modal', {
+                spaceId,
+                meetsMembershipRequirements,
+            })
             showAssetModal()
         }
     }, [
@@ -87,17 +90,8 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
     ])
 
     const onLoginClick = useCallback(() => {
-        Analytics.getInstance().track(
-            'clicked join town',
-            {
-                spaceId,
-            },
-            () => {
-                console.log('[analytics][JoinLoginButton] clicked join town')
-            },
-        )
         startPublicPageloginFlow()
-    }, [spaceId, startPublicPageloginFlow])
+    }, [startPublicPageloginFlow])
 
     useErrorToast({ errorMessage: isNoFundsError ? undefined : errorMessage })
 

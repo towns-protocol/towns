@@ -19,6 +19,7 @@ import { Entitlements, useEntitlements } from 'hooks/useEntitlements'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { TokenSelectionDisplayWithMetadata } from 'routes/RoleRestrictedChannelJoinPanel'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
+import { Analytics } from 'hooks/useAnalytics'
 import { FullPanelOverlay, LinkedWallet } from '../WalletLinkingPanel'
 import { mapToErrorMessage } from '../utils'
 import { useConnectThenLink } from '../useConnectThenLink'
@@ -150,6 +151,12 @@ function Content({
             await invalidateJoinSpace()
 
             const canJoin = getJoinSpaceQueryData()
+
+            Analytics.getInstance().track('successfully linked wallet', {
+                spaceId,
+                meetsMembershipRequirements: canJoin,
+            })
+
             if (!canJoin) {
                 tickNoAssets()
             }
@@ -170,9 +177,12 @@ function Content({
     })
 
     const onJoinClick = useCallback(async () => {
+        Analytics.getInstance().track('clicked join town on link wallet modal', {
+            spaceId,
+        })
         onHide()
         await joinSpace()
-    }, [joinSpace, onHide])
+    }, [joinSpace, onHide, spaceId])
 
     if (linkedWallets === undefined || isLoadingMeetsMembership) {
         return (
