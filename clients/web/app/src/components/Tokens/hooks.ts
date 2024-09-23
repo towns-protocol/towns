@@ -1,8 +1,16 @@
 import { useMemo } from 'react'
-import { Token } from './TokenSelector/tokenSchemas'
+import {
+    Address,
+    VersionedRuleData,
+    convertRuleDataV1ToV2,
+    createDecodedCheckOperationFromTree,
+} from 'use-towns-client'
+import { Entitlements } from 'hooks/useEntitlements'
+import { Token, TokenEntitlement, TokenWithBigInt } from './TokenSelector/tokenSchemas'
 import { TokenType } from './types'
+import { convertOperationTypeToTokenType } from './utils'
 
-export function useValidTokens(args: {
+export function useValidAndSortedTokens(args: {
     tokenMetadata: Token[] | undefined
     allowedTokenTypes: TokenType[]
 }) {
@@ -10,31 +18,76 @@ export function useValidTokens(args: {
         if (!args.tokenMetadata) {
             return undefined
         }
-        const tokens = args.tokenMetadata.filter((t) =>
+        const validTokens = args.tokenMetadata.filter((t) =>
             args.allowedTokenTypes.includes(t.data.type),
         )
 
-        return tokens
+        return validTokens.length > 0
+            ? validTokens.sort((a, b) => {
+                  if (a.data.label && b.data.label) {
+                      return a.data.label.localeCompare(b.data.label)
+                  }
+                  return 1
+              })
+            : undefined
     }, [args.allowedTokenTypes, args.tokenMetadata])
 }
 
-export function useSorted(tokenMetadata: Token[] | undefined) {
-    return useMemo(
-        () =>
-            tokenMetadata
-                ? tokenMetadata
-                      .slice()
-                      .slice()
-                      // sort by whether the token has a hit in NFT api
-                      .slice()
-                      // sort by whether the token has a hit in NFT api
-                      .sort((a, b) => {
-                          if (a.data.label && b.data.label) {
-                              return a.data.label.localeCompare(b.data.label)
-                          }
-                          return 1
-                      })
-                : undefined,
-        [tokenMetadata],
-    )
+export function useConvertRuleDataToToken(
+    versionedRuleData: VersionedRuleData | undefined,
+): TokenWithBigInt[] {
+    const ruleData =
+        versionedRuleData?.kind === 'v1'
+            ? convertRuleDataV1ToV2(versionedRuleData.rules)
+            : versionedRuleData?.rules
+
+    return useMemo(() => {
+        if (!ruleData) {
+            return []
+        }
+
+        return createDecodedCheckOperationFromTree(ruleData).map((p) => {
+            const { threshold, tokenId, ...rest } = p
+            return {
+                chainId: Number(p.chainId),
+                data: {
+                    ...rest,
+                    address: p.address as Address,
+                    type: convertOperationTypeToTokenType(p.type),
+                    name: '',
+                    symbol: '',
+                    imageUrl: '',
+                    openSeaCollectionUrl: '',
+                    decimals: undefined,
+                    tokenId: tokenId ?? undefined,
+                    quantity: threshold ?? undefined,
+                },
+            }
+        })
+    }, [ruleData])
+}
+
+export function useConvertEntitlementsToTokenWithBigInt(entitlements?: Entitlements) {
+    return useMemo(() => {
+        if (!entitlements) {
+            return []
+        }
+
+        return entitlements.tokens.map(
+            (tokenEntitlement: TokenEntitlement): TokenWithBigInt => ({
+                chainId: tokenEntitlement.chainId,
+                data: {
+                    address: tokenEntitlement.address,
+                    type: tokenEntitlement.type,
+                    name: '',
+                    symbol: '',
+                    imageUrl: '',
+                    openSeaCollectionUrl: '',
+                    decimals: undefined,
+                    quantity: undefined,
+                    tokenId: undefined,
+                },
+            }),
+        )
+    }, [entitlements])
 }

@@ -20,7 +20,7 @@ function triggerTokensAndUsersValidation(
     everHadValue: boolean,
 ) {
     if (everHadValue) {
-        trigger(['clientTokensGatedBy', 'usersGatedBy'])
+        trigger(['tokensGatedBy', 'usersGatedBy'])
     }
 }
 
@@ -67,13 +67,13 @@ export function EditGating({ isRole }: EditGatingProps) {
     const onSelectedTokensChange = useCallback(
         (tokens: Token[]) => {
             if (tokens.length === 0) {
-                setValue('clientTokensGatedBy', [], {
+                setValue('tokensGatedBy', [], {
                     shouldValidate: true,
                 })
             } else {
                 hadTokenValueRef.current = true
                 setValue(
-                    'clientTokensGatedBy',
+                    'tokensGatedBy',
                     tokens.map((token) => ({
                         chainId: token.chainId,
                         data: {
@@ -132,7 +132,7 @@ export function EditGating({ isRole }: EditGatingProps) {
     }
 
     const gatingType = watch('gatingType')
-    const isTokenFieldTouched = formState.touchedFields.clientTokensGatedBy
+    const isTokenFieldTouched = formState.touchedFields.tokensGatedBy
 
     return (
         <Stack gap="sm" data-testid="gating-section">
@@ -191,11 +191,11 @@ export function EditGating({ isRole }: EditGatingProps) {
                                     {digitalAssetsEnabled && (
                                         <TokenSelector
                                             isValidationError={
-                                                formState.errors.clientTokensGatedBy !==
-                                                    undefined && !!isTokenFieldTouched
+                                                formState.errors.tokensGatedBy !== undefined &&
+                                                !!isTokenFieldTouched
                                             }
                                             inputRef={inputRef}
-                                            tokens={getValues('clientTokensGatedBy')}
+                                            tokens={getValues('tokensGatedBy')}
                                             onChange={onSelectedTokensChange}
                                         />
                                     )}
@@ -246,10 +246,7 @@ export function EditGating({ isRole }: EditGatingProps) {
                 {isValid ? null : (
                     <>
                         {isTokenFieldTouched && gatingType === 'gated' && (
-                            <ErrorMessage
-                                errors={formState.errors}
-                                fieldName="clientTokensGatedBy"
-                            />
+                            <ErrorMessage errors={formState.errors} fieldName="tokensGatedBy" />
                         )}
                     </>
                 )}

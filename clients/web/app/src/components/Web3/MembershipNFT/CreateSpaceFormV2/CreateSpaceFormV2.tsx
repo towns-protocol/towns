@@ -119,7 +119,6 @@ function CreateSpaceFormV2WithoutAuth() {
             spaceName: undefined,
             membershipPricingType: 'dynamic',
             tokensGatedBy: [],
-            clientTokensGatedBy: [],
             usersGatedBy: [],
             clientPricingOption: 'dynamic',
             spaceIconUrl: null,
@@ -184,7 +183,7 @@ function CreateSpaceFormV2WithoutAuth() {
                         price,
                         limit,
                         gatingType,
-                        clientTokensGatedBy,
+                        tokensGatedBy,
                         // TODO: Get usersGatedBy back here
                         shortDescriptionValue,
                         longDescriptionValue,
@@ -195,7 +194,7 @@ function CreateSpaceFormV2WithoutAuth() {
                         'membershipCost',
                         'membershipLimit',
                         'gatingType',
-                        'clientTokensGatedBy',
+                        'tokensGatedBy',
                         'shortDescription',
                         'longDescription',
                         'membershipPricingType',
@@ -252,7 +251,7 @@ function CreateSpaceFormV2WithoutAuth() {
                     }
 
                     const isEveryoneMembership = gatingType === 'everyone'
-                    const isTokenFieldTouched = _form.formState.touchedFields.clientTokensGatedBy
+                    const isTokenFieldTouched = _form.formState.touchedFields.tokensGatedBy
                     const prepaidMemberships = _form.getValues('prepaidMemberships')
 
                     return (
@@ -344,11 +343,11 @@ function CreateSpaceFormV2WithoutAuth() {
                                                             zIndex="layer"
                                                         >
                                                             <TokenInfoBox
-                                                                tokensGatedBy={clientTokensGatedBy}
+                                                                tokensGatedBy={tokensGatedBy}
                                                                 hasError={
                                                                     Boolean(
                                                                         _form.formState.errors[
-                                                                            'clientTokensGatedBy'
+                                                                            'tokensGatedBy'
                                                                         ],
                                                                     ) && !!isTokenFieldTouched
                                                                 }

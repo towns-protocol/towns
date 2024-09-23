@@ -41,3 +41,12 @@ export const tokenSchema = z.object({
 export type TokenEntitlement = z.infer<typeof tokenEntitlementSchema>
 
 export type Token = z.infer<typeof tokenSchema>
+
+// The reason we want a distinction is because we don't want to confuse quantity with bigint with string,
+// since to convert quantity to string we need to parse decimals for erc20
+export type TokenWithBigInt = Omit<Token, 'data'> & {
+    data: Omit<Token['data'], 'quantity' | 'tokenId'> & {
+        quantity: bigint | undefined
+        tokenId: bigint | undefined
+    }
+}

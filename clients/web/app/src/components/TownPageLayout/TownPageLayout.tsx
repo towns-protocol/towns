@@ -7,9 +7,9 @@ import { ImageVariants, useImageSource } from '@components/UploadImage/useImageS
 import { Box, Button, Heading, Icon, IconButton, MotionStack, Paragraph, Stack, Text } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { AvatarTextHorizontal } from '@components/Avatar/AvatarTextHorizontal'
+import { useConvertEntitlementsToTokenWithBigInt } from '@components/Tokens/hooks'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { baseScanUrl, openSeaAssetUrl } from '@components/Web3/utils'
-import { convertTokenEntitlementToTokenSchema } from '@components/Tokens/utils'
 import { vars } from 'ui/styles/vars.css'
 import { ToneName } from 'ui/styles/themes'
 import { getInviteUrl } from 'ui/utils/utils'
@@ -17,6 +17,8 @@ import useCopyToClipboard from 'hooks/useCopyToClipboard'
 import { Entitlements, checkAnyoneCanJoin, useEntitlements } from 'hooks/useEntitlements'
 import { useGetSpaceIdentity } from 'hooks/useSpaceIdentity'
 import { usePublicPageLoginFlow } from 'routes/PublicTownPage/usePublicPageLoginFlow'
+import { useTokensWithMetadata } from 'api/lib/collectionMetadata'
+import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { useReadableMembershipInfo } from './useReadableMembershipInfo'
 import { TokenInfoBox } from './TokenInfoBox'
 import { InformationBox } from './InformationBox'
@@ -339,10 +341,12 @@ const InformationBoxes = (props: {
         window.open(`${openSeaAssetUrl(chainId, address)}`, '_blank', 'noopener,noreferrer')
     })
 
-    const tokens = useMemo(
-        () => (entitlements ? entitlements?.tokens.map(convertTokenEntitlementToTokenSchema) : []),
-        [entitlements],
-    )
+    const tokens = useConvertEntitlementsToTokenWithBigInt(entitlements)
+    const { data: tokensGatedBy, isLoading: isLoadingTokensData } = useTokensWithMetadata(tokens)
+
+    if (isLoadingTokensData) {
+        return <ButtonSpinner />
+    }
 
     return (
         <MotionStack
@@ -366,7 +370,7 @@ const InformationBoxes = (props: {
                 subtitle={anyoneCanJoin ? 'Anyone' : 'Holders'}
                 anyoneCanJoin={anyoneCanJoin}
                 isEntitlementsLoading={isEntitlementsLoading}
-                tokensGatedBy={tokens}
+                tokensGatedBy={tokensGatedBy}
                 dataTestId="town-preview-membership-info-bubble"
             />
             <InformationBox

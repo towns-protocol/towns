@@ -7,7 +7,7 @@ import { env } from 'utils'
 import { axiosClient } from 'api/apiClient'
 import { TokenType } from '@components/Tokens/types'
 import { transformQuantityForDisplay } from '@components/Tokens/utils'
-import { Token } from '@components/Tokens/TokenSelector/tokenSchemas'
+import { Token, TokenWithBigInt } from '@components/Tokens/TokenSelector/tokenSchemas'
 
 export const queryKeyAcrossNetworks = 'tokenMetadataAcrossNetworks'
 const singleTokenQueryKey = 'tokenMetadata'
@@ -179,7 +179,7 @@ export function useTokenMetadataForChainId(tokenAddress: string, chainId: number
     })
 }
 
-export function useMultipleTokenMetadatasForChainIds(tokens: Token[] | undefined) {
+export function useTokensWithMetadata(tokens: TokenWithBigInt[] | undefined) {
     const queryClient = useQueryClient()
     const { data: supportedXChainIds } = useSupportedXChainIds()
 
@@ -198,7 +198,7 @@ export function useMultipleTokenMetadatasForChainIds(tokens: Token[] | undefined
         }),
         combine: (results) => {
             return {
-                data: (results
+                data: results
                     ? results
                           .map((r, index) => {
                               if (r.data && tokens && tokens[index]) {
@@ -215,14 +215,14 @@ export function useMultipleTokenMetadatasForChainIds(tokens: Token[] | undefined
                                                     r.data.data.decimals,
                                                 )
                                               : undefined,
-                                          tokenId: tokenId ?? undefined,
+                                          tokenId: tokenId ? tokenId.toString() : undefined,
                                       },
                                   }
                               }
                               return r.data
                           })
-                          .filter((r) => r !== undefined)
-                    : []) as Token[],
+                          .filter((r): r is Token => r !== undefined)
+                    : [],
                 isError: results.some((r) => r.isError),
                 isLoading: results.some((r) => r.isLoading),
             }

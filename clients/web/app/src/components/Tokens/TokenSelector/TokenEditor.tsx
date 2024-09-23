@@ -67,6 +67,10 @@ export function TokenEditor(props: {
         setFocus,
     } = useForm<{ quantity: string; tokenId?: string }>({
         resolver: zodResolver(schema),
+        defaultValues: {
+            quantity: token.data.quantity,
+            tokenId: token.data.tokenId,
+        },
     })
 
     const onSubmit = (data: { quantity: string; tokenId?: string }) => {

@@ -2,9 +2,12 @@ import {
     Address,
     CheckOperationType,
     IRuleEntitlementV2Base,
+    NoopRuleData,
     createDecodedCheckOperationFromTree,
+    createOperationsTree,
 } from 'use-towns-client'
 import { formatUnits, parseUnits } from 'hooks/useBalance'
+import { EVERYONE_ADDRESS } from 'utils'
 import { TokenType } from './types'
 import { Token, TokenEntitlement } from './TokenSelector/tokenSchemas'
 
@@ -49,44 +52,6 @@ export function convertRuleDataToTokenEntitlementSchema(
     })
 }
 
-export function convertRuleDataToTokenSchema(
-    ruleData: IRuleEntitlementV2Base.RuleDataV2Struct,
-): Token[] {
-    return createDecodedCheckOperationFromTree(ruleData).map((p) => {
-        const { threshold, tokenId, ...rest } = p
-        return {
-            chainId: Number(p.chainId),
-            data: {
-                ...rest,
-                address: p.address as Address,
-                type: convertOperationTypeToTokenType(p.type),
-                name: '',
-                symbol: '',
-                imageUrl: '',
-                openSeaCollectionUrl: '',
-                decimals: undefined,
-                tokenId: tokenId ? tokenId.toString() : undefined,
-                quantity: threshold ? threshold.toString() : undefined,
-            },
-        }
-    })
-}
-
-export function convertTokenEntitlementToTokenSchema(tokenEntitlement: TokenEntitlement): Token {
-    return {
-        chainId: tokenEntitlement.chainId,
-        data: {
-            address: tokenEntitlement.address,
-            type: tokenEntitlement.type,
-            name: '',
-            symbol: '',
-            imageUrl: '',
-            openSeaCollectionUrl: '',
-            decimals: undefined,
-        },
-    }
-}
-
 export const transformQuantityForSubmit = (
     quantity: string,
     tokenType: TokenType,
@@ -105,4 +70,34 @@ export const transformQuantityForDisplay = (
     } else {
         return quantity.toString()
     }
+}
+
+export const prepareGatedDataForSubmit = (
+    gatingType: string,
+    tokensGatedBy: Token[],
+    usersGatedBy: string[],
+) => {
+    const finalUsersGatedBy = gatingType === 'everyone' ? [EVERYONE_ADDRESS] : usersGatedBy
+    const finalTokensGatedBy = gatingType === 'everyone' ? [] : tokensGatedBy
+
+    const ruleData =
+        finalTokensGatedBy.length > 0
+            ? createOperationsTree(
+                  finalTokensGatedBy.map((t) => ({
+                      address: t.data.address as Address,
+                      chainId: BigInt(t.chainId),
+                      type: convertTokenTypeToOperationType(t.data.type),
+                      threshold: t.data.quantity
+                          ? transformQuantityForSubmit(
+                                t.data.quantity,
+                                t.data.type,
+                                t.data.decimals,
+                            )
+                          : 1n,
+                      tokenId: t.data.tokenId ? BigInt(t.data.tokenId) : undefined,
+                  })),
+              )
+            : NoopRuleData
+
+    return { tokensGatedBy: finalTokensGatedBy, usersGatedBy: finalUsersGatedBy, ruleData }
 }

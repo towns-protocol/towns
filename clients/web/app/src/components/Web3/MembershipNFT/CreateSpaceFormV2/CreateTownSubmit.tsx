@@ -1,11 +1,5 @@
 import { UseFormReturn } from 'react-hook-form'
-import {
-    MembershipStruct,
-    NoopRuleData,
-    Permission,
-    createOperationsTree,
-    encodeRuleDataV2,
-} from '@river-build/web3'
+import { MembershipStruct, Permission, encodeRuleDataV2 } from '@river-build/web3'
 import {
     Address,
     CreateSpaceInfo,
@@ -25,10 +19,7 @@ import { CreateSpaceFlowStatus } from 'use-towns-client/dist/client/TownsClientT
 import { Box, Icon, IconButton, Text } from '@ui'
 import { PATHS } from 'routes'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
-import {
-    convertTokenTypeToOperationType,
-    transformQuantityForSubmit,
-} from '@components/Tokens/utils'
+import { prepareGatedDataForSubmit } from '@components/Tokens/utils'
 import { useStore } from 'store/store'
 import { Analytics } from 'hooks/useAnalytics'
 import { useNotificationSettings } from 'hooks/useNotificationSettings'
@@ -36,7 +27,7 @@ import { usePlatformMinMembershipPriceInEth } from 'hooks/usePlatformMinMembersh
 import { useUploadAttachment } from '@components/MediaDropContext/useUploadAttachment'
 import { PanelType, TransactionDetails } from './types'
 import { CreateSpaceFormV2SchemaType } from './CreateSpaceFormV2.schema'
-import { EVERYONE_ADDRESS, isEveryoneAddress, mapToErrorMessage } from '../../utils'
+import { mapToErrorMessage } from '../../utils'
 
 export function CreateTownSubmit({
     form,
@@ -92,13 +83,13 @@ export function CreateTownSubmit({
         })
 
         form.handleSubmit(
-            async (values) => {
+            async (data: CreateSpaceFormV2SchemaType) => {
                 const prepaySupply = form.getValues().prepaidMemberships ?? 0
 
                 const createSpaceInfo: CreateSpaceInfo = {
-                    name: values.spaceName ?? '',
-                    shortDescription: values.shortDescription ?? '',
-                    longDescription: values.longDescription ?? '',
+                    name: data.spaceName ?? '',
+                    shortDescription: data.shortDescription ?? '',
+                    longDescription: data.longDescription ?? '',
                     prepaySupply,
                 }
 
@@ -122,7 +113,7 @@ export function CreateTownSubmit({
                 let priceInWei: ethers.BigNumberish
 
                 try {
-                    priceInWei = ethers.utils.parseEther(values.membershipCost)
+                    priceInWei = ethers.utils.parseEther(data.membershipCost)
                 } catch (error) {
                     form.setError('membershipCost', {
                         type: 'manual',
@@ -191,60 +182,12 @@ export function CreateTownSubmit({
                     setPricingModuleError()
                     return
                 }
-                //////////////////////////////////////////
-                // check quantity
-                //////////////////////////////////////////
 
-                // If gatedType is everyone, tokensGatedBy should be empty
-                const tokensGatedBy =
-                    values.gatingType === 'everyone' ? [] : values.clientTokensGatedBy
-
-                if (tokensGatedBy.length > 0) {
-                    const missingQuantity = tokensGatedBy.some(
-                        (token) => token.data.quantity === '0' || token.data.quantity === undefined,
-                    )
-                    if (missingQuantity) {
-                        form.setError('tokensGatedBy', {
-                            type: 'manual',
-                            message: 'Please enter a valid quantity.',
-                        })
-                        setPanelType(PanelType.all)
-
-                        setTransactionDetails({
-                            isTransacting: false,
-                            townAddress: undefined,
-                        })
-                        return
-                    }
-                }
-                //////////////////////////////////////////
-                // check rule data
-                //////////////////////////////////////////
-
-                // If gatedType is everyone, usersGatedBy should be the everyone address, if we have more users, we should remove the everyone address
-                const usersGatedBy =
-                    values.gatingType === 'everyone'
-                        ? [EVERYONE_ADDRESS]
-                        : values.usersGatedBy.filter((address) => !isEveryoneAddress(address))
-
-                const ruleData =
-                    tokensGatedBy.length > 0
-                        ? createOperationsTree(
-                              tokensGatedBy.map((t) => ({
-                                  address: t.data.address as Address,
-                                  chainId: BigInt(t.chainId),
-                                  type: convertTokenTypeToOperationType(t.data.type),
-                                  threshold: t.data.quantity
-                                      ? transformQuantityForSubmit(
-                                            t.data.quantity,
-                                            t.data.type,
-                                            t.data.decimals,
-                                        )
-                                      : 1n,
-                                  tokenId: t.data.tokenId ? BigInt(t.data.tokenId) : undefined,
-                              })),
-                          )
-                        : NoopRuleData
+                const { tokensGatedBy, usersGatedBy, ruleData } = prepareGatedDataForSubmit(
+                    data.gatingType,
+                    data.tokensGatedBy,
+                    data.usersGatedBy,
+                )
 
                 //////////////////////////////////////////
                 // create space
@@ -254,7 +197,7 @@ export function CreateTownSubmit({
                         name: createSpaceInfo.name + ' - Member',
                         symbol: 'MEMBER',
                         price: priceInWei,
-                        maxSupply: values.membershipLimit,
+                        maxSupply: data.membershipLimit,
                         duration: 60 * 60 * 24 * 365, // 1 year in seconds
                         currency: ethers.constants.AddressZero,
                         // this value is no longer used in contract
@@ -266,7 +209,7 @@ export function CreateTownSubmit({
                         pricingModule: pricingModuleToSubmit,
                     },
                     requirements: {
-                        everyone: values.gatingType === 'everyone',
+                        everyone: data.gatingType === 'everyone',
                         users: usersGatedBy,
                         ruleData: encodeRuleDataV2(ruleData),
                     },
@@ -320,10 +263,10 @@ export function CreateTownSubmit({
                 if (result?.data && result.data.spaceId && result.data.channelId) {
                     const newPath = `/${PATHS.SPACES}/${result.data.spaceId}/${PATHS.CHANNELS}/${result.data.channelId}`
                     const networkId = result.data.spaceId
-                    const tracked = {
+                    const trackedAnalytics = {
                         spaceName: createSpaceInfo.name,
                         spaceId: result.data.spaceId,
-                        everyone: values.gatingType === 'everyone',
+                        everyone: data.gatingType === 'everyone',
                         pricingModule: isFixedPricing
                             ? 'fixed'
                             : prepaySupply > 0
@@ -334,22 +277,16 @@ export function CreateTownSubmit({
                             address: t.data.address,
                             chainId: t.chainId,
                             tokenType: t.data.type,
-                            quantity: t.data.quantity?.toString(),
-                        })),
-                    }
-                    const trackedAnalytics = {
-                        ...tracked,
-                        tokensGatedBy: tracked.tokensGatedBy.map((token) => ({
-                            ...token,
-                            quantity: token.quantity?.toString(),
+                            quantity: t.data.quantity,
+                            tokenId: t.data.tokenId,
                         })),
                     }
                     Analytics.getInstance().track('created town', trackedAnalytics, () => {
                         console.info('[analytics] created town', trackedAnalytics)
                     })
 
-                    if (values.spaceIconUrl && values.spaceIconFile) {
-                        await uploadTownImageToStream(networkId, values.spaceIconFile, () => {})
+                    if (data.spaceIconUrl && data.spaceIconFile) {
+                        await uploadTownImageToStream(networkId, data.spaceIconFile, () => {})
                     }
 
                     let timeoutDuration = 0

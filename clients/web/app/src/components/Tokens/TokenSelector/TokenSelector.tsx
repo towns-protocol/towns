@@ -9,7 +9,7 @@ import { TokenSelectionInput } from './TokenSelection'
 import { Token } from './tokenSchemas'
 import { TokenEditor } from './TokenEditor'
 import { TokenOptions } from './TokenOptions'
-import { useSorted, useValidTokens } from '../hooks'
+import { useValidAndSortedTokens } from '../hooks'
 import { TokenType } from '../types'
 
 const allowedTokenTypes = [TokenType.ERC721, TokenType.ERC20, TokenType.ERC1155]
@@ -44,8 +44,8 @@ export function TokenSelector(props: Props) {
         )
     }, [resultsOnAllowedNetworks])
 
-    const knownTokens = useValidTokens({
-        tokenMetadata: useSorted(resultsOnAllowedNetworks),
+    const knownTokens = useValidAndSortedTokens({
+        tokenMetadata: resultsOnAllowedNetworks,
         allowedTokenTypes,
     })
 
@@ -167,11 +167,11 @@ export function TokenSelector(props: Props) {
                         </Box>
                     }
                     tokens={
-                        (resultsOnAllowedNetworks?.filter(
+                        resultsOnAllowedNetworks?.filter(
                             (t) =>
                                 t.data.type !== TokenType.UNKNOWN &&
                                 t.data.type !== TokenType.NOT_A_CONTRACT,
-                        ) ?? []) as Token[]
+                        ) ?? []
                     }
                     onAddItem={onEdit}
                 />

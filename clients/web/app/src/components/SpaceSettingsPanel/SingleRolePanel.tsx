@@ -1,65 +1,29 @@
 import React, { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
-    Address,
     BlockchainTransactionType,
-    EVERYONE_ADDRESS,
-    IRuleEntitlementV2Base,
-    NoopRuleData,
     Permission,
-    RoleDetails,
-    convertRuleDataV1ToV2,
-    createOperationsTree,
-    useCreateRoleTransaction,
-    useDeleteRoleTransaction,
     useIsTransactionPending,
     useRoleDetails,
-    useUpdateRoleTransaction,
 } from 'use-towns-client'
-import { useEvent } from 'react-use-event-hook'
-import { FormProvider, SubmitErrorHandler, useFormContext } from 'react-hook-form'
-import isEqual from 'lodash/isEqual'
+import { FormProvider, useFormContext } from 'react-hook-form'
 import { AnimatePresence } from 'framer-motion'
-import { useGetEmbeddedSigner } from '@towns/privy'
 import { PrivyWrapper } from 'privy/PrivyProvider'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { Panel } from '@components/Panel/Panel'
-import {
-    Button,
-    ErrorMessage,
-    FancyButton,
-    FormRender,
-    Icon,
-    MotionStack,
-    Paragraph,
-    Stack,
-    Text,
-    TextField,
-} from '@ui'
+import { Button, ErrorMessage, FormRender, Icon, MotionStack, Stack, Text, TextField } from '@ui'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
-import {
-    channelPermissionDescriptions,
-    enabledChannelPermissions,
-    enabledTownPermissions,
-    townPermissionDescriptions,
-} from '@components/SpaceSettingsPanel/rolePermissions.const'
-import { PermissionToggle } from '@components/SpaceSettingsPanel/PermissionToggle'
-import { ModalContainer } from '@components/Modals/ModalContainer'
 import { FullPanelOverlay } from '@components/Web3/WalletLinkingPanel'
 import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
-import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
-import {
-    convertRuleDataToTokenEntitlementSchema,
-    convertRuleDataToTokenSchema,
-    convertTokenTypeToOperationType,
-    transformQuantityForSubmit,
-} from '@components/Tokens/utils'
 import { EditGating } from '@components/Web3/EditMembership/EditGating'
 import { RoleFormSchemaType } from '@components/Web3/CreateSpaceForm/types'
-import { isEveryoneAddress } from '@components/Web3/utils'
-import { useMultipleTokenMetadatasForChainIds } from 'api/lib/collectionMetadata'
 import { convertToNumber } from './utils'
 import { formSchema } from './schema'
+import { useChannelAndTownRoleDetails, useGatingInfo } from './hooks'
+import { SingleRolePanelSubmitButton } from './SingleRolePanelSubmitButton'
+import { ChannelPermissionsToggles } from './ChannelPermissionsToggles'
+import { DeleteRoleModal } from './DeleteRoleModal'
+import { TownPermissionsToggles } from './TownPermissionsToggles'
 
 export const SingleRolePanel = React.memo(() => {
     return (
@@ -77,26 +41,10 @@ export function SingleRolePanelWithoutAuth() {
     const roleId = isCreateRole ? undefined : convertToNumber(rolesParam ?? '')
 
     const { isLoading, roleDetails } = useRoleDetails(spaceIdFromPath ?? '', roleId)
-    const { channelRoleDetails, townRoleDetails } = useMemo(() => {
-        const channelRoleDetails: RoleDetails | undefined = roleDetails
-            ? { ...roleDetails }
-            : undefined
-        const townRoleDetails: RoleDetails | undefined = roleDetails
-            ? { ...roleDetails }
-            : undefined
-        channelRoleDetails &&
-            (channelRoleDetails.permissions = channelRoleDetails.permissions.filter(
-                (p) => channelPermissionDescriptions[p],
-            ))
-        townRoleDetails &&
-            (townRoleDetails.permissions = townRoleDetails.permissions.filter(
-                (p) => townPermissionDescriptions[p],
-            ))
-        return {
-            channelRoleDetails,
-            townRoleDetails,
-        }
-    }, [roleDetails])
+
+    const { channelRoleDetails, townRoleDetails, defaultChannelPermissionsValues } =
+        useChannelAndTownRoleDetails(roleDetails)
+
     const [deleteModal, setDeleteModal] = useState(false)
     const hideDeleteModal = () => setDeleteModal(false)
     const showDeleteModal = () => setDeleteModal(true)
@@ -116,49 +64,8 @@ export function SingleRolePanelWithoutAuth() {
     const transactionIsPending =
         pendingCreateRoleTransaction || pendingUpdateRoleTransaction || pendingDeleteRoleTransaction
 
-    const defaultChannelPermissionsValues = useMemo(() => {
-        if (!channelRoleDetails) {
-            return []
-        }
-
-        const { permissions } = channelRoleDetails
-        // for existing roles pre react permission, add it if write is present
-        const defaultP = permissions.includes(Permission.Write)
-            ? permissions.concat(Permission.React)
-            : permissions
-        return [...new Set(defaultP)]
-    }, [channelRoleDetails])
-
-    const ruleData: IRuleEntitlementV2Base.RuleDataV2Struct | undefined =
-        roleDetails?.ruleData.kind === 'v1'
-            ? convertRuleDataV1ToV2(roleDetails.ruleData.rules)
-            : roleDetails?.ruleData.rules
-
-    const initialTokenValues = useMemo(
-        () => (ruleData ? convertRuleDataToTokenSchema(ruleData) : []),
-        [ruleData],
-    )
-
-    const { data: clientTokensGatedBy, isLoading: isLoadingTokensData } =
-        useMultipleTokenMetadatasForChainIds(initialTokenValues)
-
-    const usersGatedBy = useMemo(() => {
-        return (roleDetails?.users || []).filter(
-            (address) => !isEveryoneAddress(address),
-        ) as Address[]
-    }, [roleDetails])
-
-    const gatingType = useMemo(() => {
-        if (isCreateRole) {
-            return 'everyone'
-        }
-        if (initialTokenValues.length > 0) {
-            return 'gated'
-        }
-        return roleDetails?.users?.some((address) => !isEveryoneAddress(address))
-            ? 'gated'
-            : 'everyone'
-    }, [isCreateRole, roleDetails, initialTokenValues.length])
+    const { gatingType, usersGatedBy, tokensGatedBy, isTokensGatedByLoading } =
+        useGatingInfo(roleDetails)
 
     const values: RoleFormSchemaType = useMemo(
         () => ({
@@ -167,9 +74,8 @@ export function SingleRolePanelWithoutAuth() {
                 ? [Permission.Read, Permission.React]
                 : defaultChannelPermissionsValues,
             townPermissions: townRoleDetails?.permissions ?? [],
-            tokensGatedBy: ruleData ? convertRuleDataToTokenEntitlementSchema(ruleData) : [],
-            clientTokensGatedBy,
             gatingType,
+            tokensGatedBy,
             usersGatedBy,
         }),
         [
@@ -177,14 +83,13 @@ export function SingleRolePanelWithoutAuth() {
             isCreateRole,
             defaultChannelPermissionsValues,
             townRoleDetails,
-            clientTokensGatedBy,
             gatingType,
             usersGatedBy,
-            ruleData,
+            tokensGatedBy,
         ],
     )
 
-    if (isLoadingTokensData) {
+    if (isTokensGatedByLoading) {
         return <ButtonSpinner />
     }
 
@@ -318,14 +223,14 @@ export function SingleRolePanelWithoutAuth() {
                                         </Stack>
 
                                         <Stack padding="md" paddingTop="sm">
-                                            <SubmitButton
+                                            <SingleRolePanelSubmitButton
                                                 isCreateRole={isCreateRole}
                                                 roleId={roleId}
                                                 spaceId={spaceIdFromPath}
                                                 transactionIsPending={transactionIsPending}
                                             >
                                                 {isCreateRole ? 'Create Role' : 'Save Role'}
-                                            </SubmitButton>
+                                            </SingleRolePanelSubmitButton>
                                         </Stack>
 
                                         {Object.keys(form.formState.errors).length > 0 && (
@@ -354,290 +259,6 @@ export function SingleRolePanelWithoutAuth() {
             <UserOpTxModal />
         </Panel>
     )
-}
-
-function DeleteRoleModal({
-    hideDeleteModal,
-    spaceId,
-    roleId,
-}: {
-    spaceId: string | undefined
-    roleId: number | undefined
-    hideDeleteModal: () => void
-}) {
-    // success and error statuses are handled by <BlockchainTxNotifier />
-    const { deleteRoleTransaction } = useDeleteRoleTransaction()
-    const { getSigner, isPrivyReady } = useGetEmbeddedSigner()
-    const onDelete = useEvent(async () => {
-        if (!spaceId || !roleId) {
-            return
-        }
-        const signer = await getSigner()
-        if (!signer) {
-            createPrivyNotAuthenticatedNotification()
-            return
-        }
-        hideDeleteModal()
-        await deleteRoleTransaction(spaceId, roleId, signer)
-    })
-
-    return (
-        <ModalContainer minWidth="400" onHide={hideDeleteModal}>
-            <Stack gap="x4" padding="sm">
-                <Paragraph strong>Are you sure you want to delete this role?</Paragraph>
-                <Paragraph>This action cannot be undone.</Paragraph>
-                <Stack horizontal gap alignSelf="end">
-                    <Button onClick={hideDeleteModal}>Cancel</Button>
-                    <Button
-                        tone="error"
-                        data-testid="confirm-delete-role-button"
-                        disabled={!isPrivyReady}
-                        onClick={onDelete}
-                    >
-                        Delete
-                    </Button>
-                </Stack>
-            </Stack>
-        </ModalContainer>
-    )
-}
-
-function SubmitButton({
-    children,
-    isCreateRole,
-    roleId,
-    spaceId,
-    transactionIsPending,
-}: {
-    children?: string
-    isCreateRole: boolean
-    roleId?: number
-    spaceId: string | undefined
-    transactionIsPending: boolean
-}) {
-    const { handleSubmit, formState, watch } = useFormContext<RoleFormSchemaType>()
-    const { defaultValues } = formState
-    const watchAllFields = watch()
-    const { createRoleTransaction } = useCreateRoleTransaction()
-    const { updateRoleTransaction } = useUpdateRoleTransaction()
-    const { getSigner, isPrivyReady } = useGetEmbeddedSigner()
-
-    const isUnchanged = useMemo(() => {
-        const def = structuredClone(defaultValues)
-        const cur = structuredClone(watchAllFields)
-        const sorter = (arr: typeof defaultValues | undefined) => {
-            arr?.channelPermissions?.sort()
-            arr?.townPermissions?.sort()
-            arr?.usersGatedBy?.sort()
-            arr?.clientTokensGatedBy?.sort()
-        }
-        sorter(def)
-        sorter(cur)
-        return isEqual(def, cur)
-    }, [defaultValues, watchAllFields])
-
-    const isDisabled =
-        !isPrivyReady ||
-        formState.isSubmitting ||
-        isUnchanged ||
-        Object.keys(formState.errors).length > 0 ||
-        (watchAllFields.gatingType === 'gated' &&
-            !watchAllFields.clientTokensGatedBy?.length &&
-            !watchAllFields.usersGatedBy.length) ||
-        transactionIsPending
-
-    const onValid = useEvent(async (data: RoleFormSchemaType) => {
-        if (!spaceId) {
-            return
-        }
-
-        const signer = await getSigner()
-        if (!signer) {
-            createPrivyNotAuthenticatedNotification()
-            return
-        }
-
-        // just in case
-        const _channelPermissions = [...new Set(data.channelPermissions)].sort()
-        const _townPermissions = [...new Set(data.townPermissions)].sort()
-
-        // If gatedType is everyone, usersGatedBy should be the everyone address
-        const usersGatedBy = data.gatingType === 'everyone' ? [EVERYONE_ADDRESS] : data.usersGatedBy
-
-        // If gatedType is everyone, tokensGatedBy should be empty
-        const tokensGatedBy = data.gatingType === 'everyone' ? [] : data.clientTokensGatedBy
-
-        const ruleData =
-            tokensGatedBy.length > 0
-                ? createOperationsTree(
-                      tokensGatedBy.map((t) => ({
-                          address: t.data.address as Address,
-                          chainId: BigInt(t.chainId),
-                          type: convertTokenTypeToOperationType(t.data.type),
-                          threshold: t.data.quantity
-                              ? transformQuantityForSubmit(
-                                    t.data.quantity,
-                                    t.data.type,
-                                    t.data.decimals,
-                                )
-                              : 1n,
-                          tokenId: t.data.tokenId ? BigInt(t.data.tokenId) : undefined,
-                      })),
-                  )
-                : NoopRuleData
-
-        if (isCreateRole) {
-            await createRoleTransaction(
-                spaceId,
-                data.name,
-                [..._channelPermissions, ..._townPermissions],
-                usersGatedBy,
-                ruleData,
-                signer,
-            )
-        } else {
-            if (!roleId) {
-                console.error('No roleId for edit role.')
-                return
-            }
-            await updateRoleTransaction(
-                spaceId,
-                roleId,
-                data.name,
-                [..._channelPermissions, ..._townPermissions],
-                usersGatedBy,
-                ruleData,
-                signer,
-            )
-        }
-    })
-
-    const onInvalid: SubmitErrorHandler<RoleFormSchemaType> = useEvent((errors) => {
-        console.error(errors)
-    })
-
-    return (
-        <FancyButton
-            cta
-            data-testid="submit-button"
-            disabled={isDisabled}
-            onClick={handleSubmit(onValid, onInvalid)}
-        >
-            {children}
-        </FancyButton>
-    )
-}
-
-export function ChannelPermissionsToggles({
-    roleDetails,
-    onPermissionChange,
-}: {
-    roleDetails: ReturnType<typeof useRoleDetails>['roleDetails']
-    onPermissionChange?: (permissions: Permission[]) => void
-}) {
-    const { setValue, getValues } = useFormContext<RoleFormSchemaType>()
-
-    // use the default form values, which map to the roleDetails
-    const formValues = getValues()
-
-    // TODO: once SpaceSettings is gone and RoleRow lives here only, we can refactor RoleRow to just use the initial permissions of the form
-    // and pass only the permissions to the row, no need to pass the whole role
-
-    const [role, setRole] = useState(() => {
-        return {
-            id: roleDetails?.id.toString() ?? '',
-            name: formValues.name,
-            permissions: formValues.channelPermissions ?? [],
-            tokensGatedBy: formValues.tokensGatedBy ?? [],
-            clientTokensGatedBy: formValues.clientTokensGatedBy ?? [],
-            usersGatedBy: (formValues.usersGatedBy as Address[]) ?? [],
-        }
-    })
-
-    const onToggleChannelPermissions = useEvent((permissionId: Permission, isChecked: boolean) => {
-        const newPermissions = createNewChannelPermissions(
-            formValues.channelPermissions,
-            permissionId,
-            isChecked,
-        )
-
-        setRole((role) => ({
-            ...role,
-            permissions: newPermissions,
-        }))
-
-        setValue('channelPermissions', newPermissions)
-
-        onPermissionChange?.(newPermissions)
-    })
-
-    return enabledChannelPermissions.map((permissionId: Permission) => {
-        const isDisabled =
-            permissionId === Permission.Read ||
-            (permissionId === Permission.React && role.permissions.includes(Permission.Write))
-        return role ? (
-            <PermissionToggle
-                permissionId={permissionId}
-                defaultToggled={!!formValues.channelPermissions.includes(permissionId)}
-                metaData={channelPermissionDescriptions[permissionId]}
-                key={permissionId}
-                disabled={isDisabled}
-                onToggle={onToggleChannelPermissions}
-            />
-        ) : null
-    })
-}
-
-function TownPermissionsToggles({
-    roleDetails,
-}: {
-    roleDetails: ReturnType<typeof useRoleDetails>['roleDetails']
-}) {
-    const { setValue, getValues } = useFormContext<RoleFormSchemaType>()
-
-    // TODO: once SpaceSettings is gone and RoleRow lives here only, we can refactor RoleRow to just use the initial permissions of the form
-    // and pass only the permissions to the row, no need to pass the whole role
-
-    const [role, setRole] = useState(() => {
-        // use the default form values, which map to the roleDetails
-        const formValues = getValues()
-
-        return {
-            id: roleDetails?.id.toString() ?? '',
-            name: formValues.name,
-            permissions: formValues.townPermissions ?? [],
-            tokensGatedBy: formValues.tokensGatedBy ?? [],
-            clientTokensGatedBy: formValues.clientTokensGatedBy ?? [],
-            usersGatedBy: (formValues.usersGatedBy as Address[]) ?? [],
-        }
-    })
-
-    const onToggleTownPermissions = useEvent((permissionId: Permission, value: boolean) => {
-        const currentPermissions = role.permissions
-        const newPermissions = value
-            ? currentPermissions.concat(permissionId)
-            : currentPermissions.filter((p) => p !== permissionId)
-
-        setRole((role) => ({
-            ...role,
-            permissions: newPermissions,
-        }))
-
-        setValue('townPermissions', newPermissions)
-    })
-
-    return enabledTownPermissions.map((permissionId: Permission) => {
-        return role ? (
-            <PermissionToggle
-                permissionId={permissionId}
-                defaultToggled={!!role?.permissions?.includes(permissionId)}
-                metaData={townPermissionDescriptions[permissionId]}
-                key={permissionId}
-                disabled={townPermissionDescriptions[permissionId]?.disabled}
-                onToggle={onToggleTownPermissions}
-            />
-        ) : null
-    })
 }
 
 function ErrorsNotification() {
@@ -690,21 +311,4 @@ function ErrorsNotification() {
             </MotionStack>
         </AnimatePresence>
     )
-}
-
-function createNewChannelPermissions(
-    permissions: Permission[],
-    permissionId: Permission,
-    value: boolean,
-) {
-    let _permissions: Permission[]
-    if (permissionId === Permission.Write && value) {
-        // add write + react - can't react w/o write
-        _permissions = permissions.concat(permissionId, Permission.React)
-    } else {
-        _permissions = value
-            ? permissions.concat(permissionId)
-            : permissions.filter((p) => p !== permissionId)
-    }
-    return [...new Set(_permissions)]
 }
