@@ -25,7 +25,7 @@ import { mapToErrorMessage } from '../utils'
 import { useConnectThenLink } from '../useConnectThenLink'
 
 type Props = {
-    onHide: () => void
+    onHide: ({ shouldEndLoginFlow }: { shouldEndLoginFlow: boolean }) => void
     spaceId: string
     joinSpace: () => Promise<void>
 }
@@ -68,7 +68,7 @@ export function TokenVerification({ onHide, spaceId, joinSpace }: Props) {
     return (
         <Stack position="relative" padding="lg" paddingTop="md" maxWidth={maxWidth} overflow="auto">
             <Stack alignItems="end">
-                <IconButton icon="close" onClick={onHide} />
+                <IconButton icon="close" onClick={() => onHide({ shouldEndLoginFlow: true })} />
             </Stack>
             <Stack gap alignItems="center">
                 <Text strong size="lg">
@@ -80,7 +80,7 @@ export function TokenVerification({ onHide, spaceId, joinSpace }: Props) {
                     linkedWallets={linkedWallets}
                     entitlements={entitlements}
                     joinSpace={joinSpace}
-                    onHide={onHide}
+                    onHide={() => onHide({ shouldEndLoginFlow: true })}
                 >
                     {linkedWallets && linkedWallets.length > 1 ? (
                         <Paragraph strong>Linked Wallets</Paragraph>
@@ -177,10 +177,10 @@ function Content({
     })
 
     const onJoinClick = useCallback(async () => {
+        onHide({ shouldEndLoginFlow: false })
         Analytics.getInstance().track('clicked join town on link wallet modal', {
             spaceId,
         })
-        onHide()
         await joinSpace()
     }, [joinSpace, onHide, spaceId])
 

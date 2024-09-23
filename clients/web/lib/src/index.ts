@@ -41,7 +41,7 @@ export { useFavIconBadge, useAppBadge } from './hooks/TownsContext/useFavIconBad
 export { useFullyReadMarker } from './hooks/use-fully-read-marker'
 export { useMembershipInfo } from './hooks/use-membership-info'
 export { useIsSpaceOwner } from './hooks/use-is-space-owner'
-export { useHasPermission } from './hooks/use-has-permission'
+export { useHasPermission, useFetchHasJoinPermission } from './hooks/use-has-permission'
 export { useMemberOf } from './hooks/use-member-of'
 export { useMembers } from './hooks/use-members'
 export { useMembership } from './hooks/use-membership'

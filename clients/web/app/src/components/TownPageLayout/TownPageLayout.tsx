@@ -91,7 +91,7 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
     const leftColRef = useRef<HTMLDivElement>(null)
     const rightColRef = useRef<HTMLDivElement>(null)
     const [leftColWidth, rightColWidth] = useColumnWidths({ leftColRef, rightColRef })
-    const isJoining = !!usePublicPageLoginFlow().joiningSpace
+    const isJoining = !!usePublicPageLoginFlow().spaceBeingJoined
 
     const priceText = useMemo(
         () => getPriceText(membershipInfo?.price, membershipInfo?.remainingFreeSupply),

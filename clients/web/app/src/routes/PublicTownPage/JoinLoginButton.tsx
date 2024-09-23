@@ -1,41 +1,42 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { Permission, useConnectivity, useHasPermission, useTownsClient } from 'use-towns-client'
+import React, { useCallback } from 'react'
+import { Permission, useConnectivity, useHasPermission, useTownsContext } from 'use-towns-client'
 import { useGetEmbeddedSigner } from '@towns/privy'
 import { Box, BoxProps, FancyButton, Icon, IconProps, Text } from '@ui'
 import { useDevice } from 'hooks/useDevice'
-import { useJoinTown } from 'hooks/useJoinTown'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { TokenVerification } from '@components/Web3/TokenVerification/TokenVerification'
-import { useErrorToast } from 'hooks/useErrorToast'
 import { Analytics } from 'hooks/useAnalytics'
 import { AboveAppProgressModalContainer } from '@components/AppProgressOverlay/AboveAppProgress/AboveAppProgress'
-import { useCombinedAuth } from 'privy/useCombinedAuth'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
-import { useNotificationSettings } from 'hooks/useNotificationSettings'
 import { usePublicPageLoginFlow } from './usePublicPageLoginFlow'
 
 const LoginComponent = React.lazy(() => import('@components/Login/LoginComponent'))
 
 export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
     const isPreview = false
-    const { client, signerContext } = useTownsClient()
     const { isAuthenticated, loggedInWalletAddress } = useConnectivity()
-    const { isConnected: connected } = useCombinedAuth()
     const { getSigner } = useGetEmbeddedSigner()
+    const { clientSingleton, signerContext } = useTownsContext()
 
-    const { start: startPublicPageloginFlow, joiningSpace } = usePublicPageLoginFlow()
+    const {
+        startJoinMeetsRequirements,
+        startJoinPreLogin,
+        joinTown,
+        end: endPublicPageLoginFlow,
+        startJoinDoesNotMeetRequirements,
+        spaceBeingJoined,
+        disableJoinUi,
+        assetModal,
+        setAssetModal,
+    } = usePublicPageLoginFlow()
 
     const { isTouch } = useDevice()
-    const { joinSpace, errorMessage, isNoFundsError } = useJoinTown(spaceId)
-    const [isJoining, setIsJoining] = useState(false)
-    const [assetModal, setAssetModal] = useState(false)
-    const showAssetModal = () => setAssetModal(true)
-    const hideAssetModal = () => {
+    const hideAssetModal = ({ shouldEndLoginFlow }: { shouldEndLoginFlow: boolean }) => {
+        if (shouldEndLoginFlow) {
+            endPublicPageLoginFlow()
+        }
         setAssetModal(false)
     }
-    const { addTownNotificationSettings } = useNotificationSettings()
-
-    const preventJoinUseEffect = useRef(false)
 
     const { hasPermission: meetsMembershipRequirements, isLoading: isLoadingMeetsMembership } =
         useHasPermission({
@@ -45,7 +46,7 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
         })
 
     const onJoinClick = useCallback(async () => {
-        if (isJoining) {
+        if (disableJoinUi) {
             return
         }
         const signer = await getSigner()
@@ -64,59 +65,48 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
                 console.log('[analytics][JoinLoginButton] Clicked join town on town page')
             },
         )
-        preventJoinUseEffect.current = true
-        startPublicPageloginFlow()
         if (meetsMembershipRequirements) {
-            setIsJoining(true)
-            await joinSpace()
-            spaceId && (await addTownNotificationSettings(spaceId))
-            setIsJoining(false)
+            startJoinMeetsRequirements({
+                signer,
+                clientSingleton,
+                signerContext,
+            })
         } else {
             // show asset verification modal
             Analytics.getInstance().page('requirements-modal', 'view gated requirements modal', {
                 spaceId,
                 meetsMembershipRequirements,
             })
-            showAssetModal()
+            startJoinDoesNotMeetRequirements()
         }
     }, [
-        isJoining,
+        disableJoinUi,
         getSigner,
         spaceId,
-        startPublicPageloginFlow,
         meetsMembershipRequirements,
-        joinSpace,
-        addTownNotificationSettings,
+        startJoinMeetsRequirements,
+        clientSingleton,
+        signerContext,
+        startJoinDoesNotMeetRequirements,
     ])
+
+    const onTokenVerificationJoinClick = useCallback(async () => {
+        const signer = await getSigner()
+
+        if (!signer) {
+            createPrivyNotAuthenticatedNotification()
+            return
+        }
+        joinTown({
+            signer,
+            clientSingleton,
+            signerContext,
+        })
+    }, [getSigner, joinTown, clientSingleton, signerContext])
 
     const onLoginClick = useCallback(() => {
-        startPublicPageloginFlow()
-    }, [startPublicPageloginFlow])
-
-    useErrorToast({ errorMessage: isNoFundsError ? undefined : errorMessage })
-
-    useEffect(() => {
-        // if widnow has join param and user is authenticated and has an embedded wallet
-        if (
-            !preventJoinUseEffect.current &&
-            !isLoadingMeetsMembership &&
-            !!joiningSpace &&
-            signerContext &&
-            isAuthenticated &&
-            connected
-        ) {
-            preventJoinUseEffect.current = true
-            onJoinClick()
-        }
-    }, [
-        isAuthenticated,
-        connected,
-        onJoinClick,
-        joiningSpace,
-        client,
-        signerContext,
-        isLoadingMeetsMembership,
-    ])
+        startJoinPreLogin()
+    }, [startJoinPreLogin])
 
     if (isPreview) {
         return
@@ -141,8 +131,8 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
             <FancyButton
                 cta
                 type="button"
-                disabled={isJoining}
-                spinner={isJoining}
+                disabled={disableJoinUi}
+                spinner={!!spaceBeingJoined}
                 onClick={onJoinClick}
             >
                 Join
@@ -159,11 +149,11 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
                     padding="none"
                     minWidth="350"
                     background="none"
-                    onHide={hideAssetModal}
+                    onHide={() => hideAssetModal({ shouldEndLoginFlow: true })}
                 >
                     <TokenVerification
                         spaceId={spaceId}
-                        joinSpace={joinSpace}
+                        joinSpace={onTokenVerificationJoinClick}
                         onHide={hideAssetModal}
                     />
                 </AboveAppProgressModalContainer>

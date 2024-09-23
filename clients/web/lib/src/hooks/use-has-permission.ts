@@ -13,43 +13,54 @@ interface Props {
     permission: Permission
 }
 
-export function useHasPermission(props: Props) {
-    const { clientSingleton } = useTownsClient()
+function querySetup(
+    props: Props,
+    clientSingleton: ReturnType<typeof useTownsClient>['clientSingleton'],
+) {
     const { spaceId, channelId, walletAddress, permission } = props
-    const queryClient = useQueryClient()
-
-    const getHasPermission = useCallback(async () => {
-        if (clientSingleton && walletAddress) {
-            const isEntitled = await clientSingleton.isEntitled(
-                spaceId,
-                channelId,
-                walletAddress,
-                permission,
-            )
-            console.log(
-                '[useHasPermission]',
-                'getHasPermission() from network',
-                new Date().toString(),
-                {
+    return {
+        queryKey: blockchainKeys.hasPermission(props),
+        queryFn: async () => {
+            if (clientSingleton && walletAddress) {
+                const isEntitled = await clientSingleton.isEntitled(
                     spaceId,
                     channelId,
                     walletAddress,
                     permission,
-                },
-                isEntitled,
-            )
-            return isEntitled
-        }
-        return false
-    }, [channelId, clientSingleton, permission, spaceId, walletAddress])
+                )
+                console.log(
+                    '[useHasPermission]',
+                    'getHasPermission() from network',
+                    new Date().toString(),
+                    {
+                        spaceId,
+                        channelId,
+                        walletAddress,
+                        permission,
+                    },
+                    isEntitled,
+                )
+                return isEntitled
+            }
+            return false
+        },
+    }
+}
+
+export function useHasPermission(props: Props) {
+    const { clientSingleton } = useTownsClient()
+    const { walletAddress } = props
+    const queryClient = useQueryClient()
+
+    const { queryFn, queryKey } = querySetup(props, clientSingleton)
 
     const invalidate = useCallback(() => {
-        return queryClient.invalidateQueries({ queryKey: blockchainKeys.hasPermission(props) })
-    }, [props, queryClient])
+        return queryClient.invalidateQueries({ queryKey })
+    }, [queryClient, queryKey])
 
     const getQueryData = useCallback(() => {
-        return queryClient.getQueryData<boolean>(blockchainKeys.hasPermission(props))
-    }, [props, queryClient])
+        return queryClient.getQueryData<boolean>(queryKey)
+    }, [queryClient, queryKey])
 
     // Queries
     const {
@@ -59,9 +70,9 @@ export function useHasPermission(props: Props) {
     } = useQuery(
         // unique key per query so that React Query
         // can manage the cache for us.
-        blockchainKeys.hasPermission(props),
+        queryKey,
         // query function that does the data fetching.
-        getHasPermission,
+        queryFn,
         // options for the query.
         // query will not execute until the client is defined.
         {
@@ -81,4 +92,24 @@ export function useHasPermission(props: Props) {
         getQueryData,
         error,
     }
+}
+
+export function useFetchHasJoinPermission() {
+    const { clientSingleton } = useTownsClient()
+    const queryClient = useQueryClient()
+
+    return useCallback(
+        (props: Pick<Props, 'spaceId' | 'walletAddress'>) => {
+            const { queryFn, queryKey } = querySetup(
+                {
+                    spaceId: props.spaceId,
+                    walletAddress: props.walletAddress,
+                    permission: Permission.JoinSpace,
+                },
+                clientSingleton,
+            )
+            return queryClient.fetchQuery({ queryKey, queryFn })
+        },
+        [queryClient, clientSingleton],
+    )
 }

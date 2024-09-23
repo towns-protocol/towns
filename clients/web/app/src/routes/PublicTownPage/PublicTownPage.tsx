@@ -47,7 +47,7 @@ const PublicTownPageWithoutAuth = (props: { isPreview?: boolean; onClosePreview?
 
     const spaceInfo = _spaceInfo || spaceInfoFromSSR?.townData
     const className = clsx([darkTheme, atoms({ color: 'default' })])
-    const isJoining = !!usePublicPageLoginFlow().joiningSpace
+    const isJoining = !!usePublicPageLoginFlow().spaceBeingJoined
 
     const { isTouch } = useDevice()
     const location = useLocation()

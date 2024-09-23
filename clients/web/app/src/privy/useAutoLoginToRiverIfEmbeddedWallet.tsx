@@ -1,11 +1,14 @@
 import React, { useCallback } from 'react'
-import { useConnectivity, useTownsClient } from 'use-towns-client'
+import { useConnectivity, useFetchHasJoinPermission, useTownsClient } from 'use-towns-client'
 import { useGetEmbeddedSigner } from '@towns/privy'
 import useStateMachine from '@cassiozen/usestatemachine'
 import { Signer } from 'ethers'
 import { usePrivy } from '@privy-io/react-auth'
 import { clearEmbeddedWalletStorage } from '@towns/privy/EmbeddedSignerContext'
-import { usePublicPageLoginFlow } from 'routes/PublicTownPage/usePublicPageLoginFlow'
+import {
+    publicPageLoginStore,
+    usePublicPageLoginFlow,
+} from 'routes/PublicTownPage/usePublicPageLoginFlow'
 import { trackError } from 'hooks/useAnalytics'
 import { popupToast } from '@components/Notifications/popupToast'
 import { StandardToast } from '@components/Notifications/StandardToast'
@@ -31,9 +34,24 @@ export function useAutoLoginToRiverIfEmbeddedWallet({
 }) {
     const { getSigner } = useGetEmbeddedSigner()
     const { logout: privyLogout } = usePrivy()
-    const { end: endPublicPageLoginFlow } = usePublicPageLoginFlow()
+    const {
+        end: endPublicPageLoginFlow,
+        startJoinMeetsRequirements,
+        startJoinDoesNotMeetRequirements,
+    } = usePublicPageLoginFlow()
     const { clientSingleton } = useTownsClient()
+    const fetchHasJoinPermission = useFetchHasJoinPermission()
+
     const userOps = clientSingleton?.userOps
+
+    const _setupUserops = useCallback(
+        async (signer: Signer) => {
+            if (userOps) {
+                userOps.setup(signer)
+            }
+        },
+        [userOps],
+    )
 
     const [state, send] = useStateMachine({
         context: { isAutoLoggingInToRiver: false, hasSuccessfulLogin: false },
@@ -99,12 +117,34 @@ export function useAutoLoginToRiverIfEmbeddedWallet({
                         if (!signer || privyError) {
                             send('NO_SIGNER')
                             alertPrivyError(privyError)
+                            endPublicPageLoginFlow()
                             return
                         }
 
                         await riverLogin(signer, {
-                            onSuccess: () => {
+                            onSuccess: async ({ casablancaContext, wallet }) => {
                                 send('LOGGED_IN_TO_RIVER')
+
+                                if (signer) {
+                                    await _setupUserops(signer)
+                                    if (publicPageLoginStore.getState().spaceBeingJoined) {
+                                        const isEntitled = await fetchHasJoinPermission({
+                                            walletAddress: wallet,
+                                            spaceId:
+                                                publicPageLoginStore.getState().spaceBeingJoined,
+                                        })
+
+                                        if (isEntitled) {
+                                            startJoinMeetsRequirements({
+                                                signer,
+                                                clientSingleton,
+                                                signerContext: casablancaContext,
+                                            })
+                                        } else {
+                                            startJoinDoesNotMeetRequirements()
+                                        }
+                                    }
+                                }
                             },
                             onError: (error) => {
                                 endPublicPageLoginFlow()
@@ -128,7 +168,7 @@ export function useAutoLoginToRiverIfEmbeddedWallet({
                 },
                 effect({ setContext }: { setContext: SetContextFn }) {
                     setContext((c) => ({ ...c, hasSuccessfulLogin: true }))
-                    async function _setupUserops() {
+                    async function uo() {
                         let signer: Signer | undefined
                         try {
                             signer = await getSigner()
@@ -136,10 +176,10 @@ export function useAutoLoginToRiverIfEmbeddedWallet({
                             return
                         }
                         if (signer) {
-                            await userOps?.setup(signer)
+                            await _setupUserops(signer)
                         }
                     }
-                    void _setupUserops()
+                    void uo()
                 },
             },
         },
