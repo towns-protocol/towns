@@ -41,12 +41,12 @@ export function usePrepayMembershipTransaction() {
             signer: TSigner,
         ): Promise<PrepayMembershipTransactionContext | undefined> {
             if (isTransacting.current) {
-                console.warn('useUpdateRoleTransaction', 'Transaction already in progress')
+                console.warn('usePrepayMembershipTransaction', 'Transaction already in progress')
                 return undefined
             }
             let transactionResult: PrepayMembershipTransactionContext | undefined
             if (!signer) {
-                console.error('useUpdateRoleTransaction', 'Signer is undefined')
+                console.error('usePrepayMembershipTransaction', 'Signer is undefined')
                 transactionResult = createTransactionContext({
                     status: TransactionStatus.Failed,
                     error: new SignerUndefinedError(),
@@ -79,7 +79,7 @@ export function usePrepayMembershipTransaction() {
                 }
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } catch (e: any) {
-                console.error('useUpdateRoleTransaction', 'Transaction failed', e)
+                console.error('usePrepayMembershipTransaction', 'Transaction failed', e)
                 transactionResult = createTransactionContext({
                     status: TransactionStatus.Failed,
                     error: toError(e),
@@ -94,7 +94,7 @@ export function usePrepayMembershipTransaction() {
     )
 
     useEffect(() => {
-        console.log('useUpdateRoleTransaction', 'states', {
+        console.log('usePrepayMembershipTransaction', 'states', {
             isLoading,
             data,
             error,

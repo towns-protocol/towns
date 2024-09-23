@@ -25,6 +25,7 @@ import {
     decodeRuleDataV2,
     LegacyUpdateRoleParams,
     XchainConfig,
+    ISpaceDapp,
 } from '@river-build/web3'
 import {
     ChannelMessage_Post_Mention,
@@ -85,7 +86,7 @@ import {
     Address,
     TSigner,
 } from '../types/web3-types'
-import { MembershipStruct, Permission, SpaceInfo, ISpaceDapp } from '@river-build/web3'
+import { MembershipStruct, Permission, SpaceInfo } from '@river-build/web3'
 import { BlockchainTransactionStore } from './BlockchainTransactionStore'
 import { UserOps, getTransactionHashOrUserOpHash, isUserOpResponse } from '@towns/userops'
 import { StartMeasurementReturn, TimeTrackerEvents, getTimeTracker } from '../SequenceTimeTracker'
@@ -512,6 +513,7 @@ export class TownsClient
                 membership,
                 shortDescription: createSpaceInfo.shortDescription ?? '',
                 longDescription: createSpaceInfo.longDescription ?? '',
+                prepaySupply: createSpaceInfo.prepaySupply ?? 0,
             }
             try {
                 if (this.isAccountAbstractionEnabled()) {

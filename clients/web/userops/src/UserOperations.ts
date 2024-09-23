@@ -2,7 +2,6 @@ import {
     Address,
     ISpaceDapp,
     LegacySpaceInfoStruct,
-    SpaceInfoStruct,
     SpaceDapp,
     createEntitlementStruct,
     createLegacyEntitlementStruct,
@@ -15,6 +14,7 @@ import {
     stringifyChannelMetadataJSON,
     SetChannelPermissionOverridesParams,
     ClearChannelPermissionOverridesParams,
+    IArchitectBase,
 } from '@river-build/web3'
 import { ethers } from 'ethers'
 import isEqual from 'lodash/isEqual'
@@ -386,14 +386,21 @@ export class UserOps {
         }
         const [createpaceParams, signer] = args
 
-        const spaceInfo: SpaceInfoStruct = {
-            name: createpaceParams.spaceName,
-            uri: createpaceParams.uri,
-            shortDescription: createpaceParams.shortDescription ?? '',
-            longDescription: createpaceParams.longDescription ?? '',
-            membership: createpaceParams.membership,
+        const prepaySupply = createpaceParams.prepaySupply ?? 0
+
+        const spaceInfo: IArchitectBase.CreateSpaceStruct = {
             channel: {
                 metadata: createpaceParams.channelName || '',
+            },
+            metadata: {
+                name: createpaceParams.spaceName,
+                uri: createpaceParams.uri,
+                shortDescription: createpaceParams.shortDescription ?? '',
+                longDescription: createpaceParams.longDescription ?? '',
+            },
+            membership: createpaceParams.membership,
+            prepay: {
+                supply: prepaySupply,
             },
         }
 
@@ -411,7 +418,7 @@ export class UserOps {
             throw new Error('abstractAccountAddress is required')
         }
 
-        const createSpaceFnName = 'createSpace'
+        const createSpaceFnName = 'createSpaceWithPrepay'
 
         const callDataCreateSpace = this.spaceDapp.spaceRegistrar.SpaceArchitect.encodeFunctionData(
             createSpaceFnName,
@@ -423,56 +430,144 @@ export class UserOps {
             'userops_check_if_linked',
         )
 
-        if (await this.spaceDapp.walletLink.checkIfLinked(signer, abstractAccountAddress)) {
-            endLinkCheck?.()
+        const cost = (await this.spaceDapp.platformRequirements.getMembershipFee()).mul(
+            prepaySupply,
+        )
 
+        const hasLinkedWallet = await this.spaceDapp.walletLink.checkIfLinked(
+            signer,
+            abstractAccountAddress,
+        )
+
+        endLinkCheck?.()
+
+        if (hasLinkedWallet) {
             const functionHashForPaymasterProxy = getFunctionSigHash(
                 this.spaceDapp.spaceRegistrar.SpaceArchitect.interface,
                 createSpaceFnName,
             )
 
-            const op = await this.sendUserOp(
+            return await this.sendUserOp(
                 {
                     toAddress: this.spaceDapp.spaceRegistrar.SpaceArchitect.address,
                     callData: callDataCreateSpace,
                     signer,
                     spaceId: undefined,
                     functionHashForPaymasterProxy,
+                    value: cost,
                 },
                 TimeTrackerEvents.CREATE_SPACE,
             )
-            return op
+        } else if (cost.eq(0)) {
+            // wallet isn't linked, create a user op that both links and creates the space
+            const functionHashForPaymasterProxy = getFunctionSigHash(
+                this.spaceDapp.spaceRegistrar.SpaceArchitect.interface,
+                'createSpace_linkWallet',
+            )
+
+            const callDataForLinkingSmartAccount = await this.encodeDataForLinkingSmartAccount(
+                signer,
+                abstractAccountAddress,
+            )
+
+            return await this.sendUserOp(
+                {
+                    toAddress: [
+                        this.spaceDapp.walletLink.address,
+                        this.spaceDapp.spaceRegistrar.SpaceArchitect.address,
+                    ],
+                    callData: [callDataForLinkingSmartAccount, callDataCreateSpace],
+                    signer,
+                    spaceId: undefined,
+                    functionHashForPaymasterProxy,
+                },
+                TimeTrackerEvents.CREATE_SPACE,
+            )
+        } else {
+            await this.linkWallet(signer, abstractAccountAddress, TimeTrackerEvents.CREATE_SPACE)
+
+            const functionHashForPaymasterProxy = getFunctionSigHash(
+                this.spaceDapp.spaceRegistrar.SpaceArchitect.interface,
+                createSpaceFnName,
+            )
+
+            return await this.sendUserOp(
+                {
+                    toAddress: this.spaceDapp.spaceRegistrar.SpaceArchitect.address,
+                    callData: callDataCreateSpace,
+                    signer,
+                    spaceId: undefined,
+                    functionHashForPaymasterProxy,
+                    value: cost,
+                },
+                TimeTrackerEvents.CREATE_SPACE,
+            )
         }
-        endLinkCheck?.()
+    }
 
-        // wallet isn't linked, create a user op that both links and creates the space
-        const functionName = 'createSpace_linkWallet'
-
-        // TODO: this needs to accept an array of names/interfaces
-        const functionHashForPaymasterProxy = getFunctionSigHash(
-            this.spaceDapp.spaceRegistrar.SpaceArchitect.interface,
-            functionName,
-        )
-
-        const callDataForLinkingSmartAccount = await this.encodeDataForLinkingSmartAccount(
+    private async linkWallet(
+        signer: ethers.Signer,
+        abstractAccountAddress: Address,
+        sequenceName: TimeTrackerEvents,
+    ) {
+        if (!this.spaceDapp) {
+            throw new Error('spaceDapp is required')
+        }
+        const linkWalletUserOp = await this.sendLinkSmartAccountToRootKeyOp(
             signer,
             abstractAccountAddress,
+            sequenceName,
         )
 
-        const op = await this.sendUserOp(
-            {
-                toAddress: [
-                    this.spaceDapp.walletLink.address,
-                    this.spaceDapp.spaceRegistrar.SpaceArchitect.address,
-                ],
-                callData: [callDataForLinkingSmartAccount, callDataCreateSpace],
-                signer,
-                spaceId: undefined,
-                functionHashForPaymasterProxy,
-            },
-            TimeTrackerEvents.CREATE_SPACE,
-        )
-        return op
+        let userOpEventWalletLink: UserOperationEventEvent | null
+
+        try {
+            const endLinkRelay = this.timeTracker?.startMeasurement(
+                sequenceName,
+                'userops_wait_for_link_wallet_relay',
+            )
+            userOpEventWalletLink = await linkWalletUserOp.wait()
+            endLinkRelay?.()
+            if (!userOpEventWalletLink?.args.success) {
+                throw new CodeException({
+                    message: 'Failed to perform user operation for linking wallet',
+                    code: 'USER_OPS_FAILED_TO_PERFORM_USER_OPERATION_LINK_WALLET',
+                    category: 'userop',
+                })
+            }
+        } catch (error) {
+            throw new CodeException({
+                message: 'Failed to perform user operation for linking wallet',
+                code: 'USER_OPS_FAILED_TO_PERFORM_USER_OPERATION_LINK_WALLET',
+                data: error,
+                category: 'userop',
+            })
+        }
+
+        try {
+            const endWaitForLinkWalletTx = this.timeTracker?.startMeasurement(
+                sequenceName,
+                'userops_wait_for_link_wallet_tx',
+            )
+            const linkWalletReceipt = await this.spaceDapp.provider?.waitForTransaction(
+                userOpEventWalletLink.transactionHash,
+            )
+            endWaitForLinkWalletTx?.()
+            if (linkWalletReceipt?.status !== 1) {
+                throw new CodeException({
+                    message: 'Failed to link wallet',
+                    code: 'USER_OPS_FAILED_TO_LINK_WALLET',
+                    category: 'userop',
+                })
+            }
+        } catch (error) {
+            throw new CodeException({
+                message: 'Failed to link wallet',
+                code: 'USER_OPS_FAILED_TO_LINK_WALLET',
+                data: error,
+                category: 'userop',
+            })
+        }
     }
 
     private async encodeDataForLinkingSmartAccount(
@@ -574,60 +669,7 @@ export class UserOps {
         //
         // Therefore, we need to link the wallet first, then join the space
         // Another smart account contract should support this and allow for a single user operation
-        const linkWalletUserOp = await this.sendLinkSmartAccountToRootKeyOp(
-            signer,
-            abstractAccountAddress,
-            TimeTrackerEvents.JOIN_SPACE,
-        )
-
-        let userOpEventWalletLink: UserOperationEventEvent | null
-        try {
-            const endLinkRelay = this.timeTracker?.startMeasurement(
-                TimeTrackerEvents.JOIN_SPACE,
-                'userops_wait_for_link_wallet_relay',
-            )
-            userOpEventWalletLink = await linkWalletUserOp.wait()
-            endLinkRelay?.()
-            if (!userOpEventWalletLink?.args.success) {
-                throw new CodeException({
-                    message: 'Failed to perform user operation for linking wallet',
-                    code: 'USER_OPS_FAILED_TO_PERFORM_USER_OPERATION_LINK_WALLET',
-                    category: 'userop',
-                })
-            }
-        } catch (error) {
-            throw new CodeException({
-                message: 'Failed to perform user operation for linking wallet',
-                code: 'USER_OPS_FAILED_TO_PERFORM_USER_OPERATION_LINK_WALLET',
-                data: error,
-                category: 'userop',
-            })
-        }
-
-        try {
-            const endWaitForLinkWalletTx = this.timeTracker?.startMeasurement(
-                TimeTrackerEvents.JOIN_SPACE,
-                'userops_wait_for_link_wallet_tx',
-            )
-            const linkWalletReceipt = await this.spaceDapp.provider?.waitForTransaction(
-                userOpEventWalletLink.transactionHash,
-            )
-            endWaitForLinkWalletTx?.()
-            if (linkWalletReceipt?.status !== 1) {
-                throw new CodeException({
-                    message: 'Failed to link wallet',
-                    code: 'USER_OPS_FAILED_TO_LINK_WALLET',
-                    category: 'userop',
-                })
-            }
-        } catch (error) {
-            throw new CodeException({
-                message: 'Failed to link wallet',
-                code: 'USER_OPS_FAILED_TO_LINK_WALLET',
-                data: error,
-                category: 'userop',
-            })
-        }
+        await this.linkWallet(signer, abstractAccountAddress, TimeTrackerEvents.JOIN_SPACE)
 
         return this.sendUserOp(
             {

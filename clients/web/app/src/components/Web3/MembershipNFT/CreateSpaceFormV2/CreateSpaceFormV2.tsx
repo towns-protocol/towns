@@ -121,12 +121,14 @@ function CreateSpaceFormV2WithoutAuth() {
             tokensGatedBy: [],
             clientTokensGatedBy: [],
             usersGatedBy: [],
+            clientPricingOption: 'dynamic',
             spaceIconUrl: null,
             spaceIconFile: null,
             shortDescription: null,
             longDescription: null,
             // TODO: currency defaults to ETH when addressZero
             membershipCurrency: ethers.constants.AddressZero,
+            prepaidMemberships: 0,
         }
 
     const [createFlowStatus, setCreateFlowStatus] = useState<CreateSpaceFlowStatus>()
@@ -137,7 +139,7 @@ function CreateSpaceFormV2WithoutAuth() {
     }, [])
 
     return (
-        <Stack horizontal>
+        <Stack horizontal grow>
             {isTouch() && (
                 <Stack
                     horizontal
@@ -151,6 +153,7 @@ function CreateSpaceFormV2WithoutAuth() {
                         standalone: 'safeAreaInsetTop',
                         default: 'md',
                     }}
+                    alignSelf="start"
                 >
                     <Stack>
                         <IconButton
@@ -250,15 +253,15 @@ function CreateSpaceFormV2WithoutAuth() {
 
                     const isEveryoneMembership = gatingType === 'everyone'
                     const isTokenFieldTouched = _form.formState.touchedFields.clientTokensGatedBy
+                    const prepaidMemberships = _form.getValues('prepaidMemberships')
 
                     return (
                         <FormProvider {..._form}>
-                            <Stack centerContent grow width="100%" padding="xs">
+                            <Stack centerContent grow width="100%">
                                 <Stack
                                     centerContent
                                     grow
                                     width="100%"
-                                    background={isTouch() ? 'none' : 'readability'}
                                     rounded="xs"
                                     position="relative"
                                     overflow="auto"
@@ -301,7 +304,7 @@ function CreateSpaceFormV2WithoutAuth() {
                                         >
                                             {/* left col */}
                                             <Stack grow position="relative" ref={leftColRef}>
-                                                <Stack gap="x4">
+                                                <Stack gap="md">
                                                     {/* image when panel open */}
                                                     {!_isTouch && panelType && (
                                                         <Stack display="block">
@@ -315,130 +318,136 @@ function CreateSpaceFormV2WithoutAuth() {
                                                         </Stack>
                                                     )}
 
-                                                    <Stack gap="sm">
-                                                        <SpaceNameField
-                                                            form={_form}
-                                                            spaceNameValue={spaceNameValue}
-                                                        />
-                                                        {_form.formState.errors['spaceName'] &&
-                                                            showSpaceNameError() && (
-                                                                <FadeInBox key="spaceNameError">
-                                                                    <ErrorMessage
-                                                                        errors={
-                                                                            _form.formState.errors
-                                                                        }
-                                                                        fieldName="spaceName"
-                                                                    />
-                                                                </FadeInBox>
-                                                            )}
-                                                    </Stack>
+                                                    <SpaceNameField
+                                                        form={_form}
+                                                        spaceNameValue={spaceNameValue}
+                                                        errorMessage={
+                                                            <ErrorMessage
+                                                                preventSpace
+                                                                disabled={!showSpaceNameError()}
+                                                                errors={_form.formState.errors}
+                                                                fieldName="spaceName"
+                                                            />
+                                                        }
+                                                    />
 
-                                                    {/* info boxes */}
-                                                    <MotionBox
-                                                        horizontal
-                                                        scrollbars
-                                                        layoutScroll
-                                                        alignItems="start"
-                                                        gap="sm"
-                                                        overflow="auto"
-                                                        zIndex="layer"
-                                                    >
-                                                        <TokenInfoBox
-                                                            tokensGatedBy={clientTokensGatedBy}
-                                                            hasError={
-                                                                Boolean(
+                                                    <MotionBox layoutRoot layout>
+                                                        {/* info boxes */}
+                                                        <MotionBox
+                                                            horizontal
+                                                            scrollbars
+                                                            layoutScroll
+                                                            alignItems="start"
+                                                            gap="sm"
+                                                            overflowX="auto"
+                                                            overflowY="hidden"
+                                                            zIndex="layer"
+                                                        >
+                                                            <TokenInfoBox
+                                                                tokensGatedBy={clientTokensGatedBy}
+                                                                hasError={
+                                                                    Boolean(
+                                                                        _form.formState.errors[
+                                                                            'clientTokensGatedBy'
+                                                                        ],
+                                                                    ) && !!isTokenFieldTouched
+                                                                }
+                                                                title="For"
+                                                                subtitle={
+                                                                    isEveryoneMembership
+                                                                        ? 'Anyone'
+                                                                        : 'Holders'
+                                                                }
+                                                                anyoneCanJoin={isEveryoneMembership}
+                                                                dataTestId="membership-token-type"
+                                                                onInfoBoxClick={onInfoBoxClick}
+                                                            />
+
+                                                            <InformationBox
+                                                                title="Cost"
+                                                                border={
                                                                     _form.formState.errors[
-                                                                        'clientTokensGatedBy'
-                                                                    ],
-                                                                ) && !!isTokenFieldTouched
-                                                            }
-                                                            title="For"
-                                                            subtitle={
-                                                                isEveryoneMembership
-                                                                    ? 'Anyone'
-                                                                    : 'Holders'
-                                                            }
-                                                            anyoneCanJoin={isEveryoneMembership}
-                                                            dataTestId="membership-token-type"
-                                                            onInfoBoxClick={onInfoBoxClick}
-                                                        />
+                                                                        'membershipCost'
+                                                                    ]
+                                                                        ? 'negative'
+                                                                        : 'none'
+                                                                }
+                                                                centerContent={
+                                                                    <Box paddingX width="100%">
+                                                                        <Paragraph
+                                                                            truncate
+                                                                            textAlign="center"
+                                                                        >
+                                                                            {costInfoBoxText()}
+                                                                        </Paragraph>
+                                                                    </Box>
+                                                                }
+                                                                subtitle={
+                                                                    membershipPricingType ===
+                                                                    'dynamic'
+                                                                        ? `First ${
+                                                                              (platformMintLimit ??
+                                                                                  0) +
+                                                                              (prepaidMemberships ??
+                                                                                  0)
+                                                                          }`
+                                                                        : 'ETH'
+                                                                }
+                                                                dataTestId="membership-cost-type"
+                                                                onClick={onInfoBoxClick}
+                                                            />
 
-                                                        <InformationBox
-                                                            title="Cost"
-                                                            border={
-                                                                _form.formState.errors[
-                                                                    'membershipCost'
-                                                                ]
-                                                                    ? 'negative'
-                                                                    : 'none'
-                                                            }
-                                                            centerContent={
-                                                                <Box paddingX width="100%">
-                                                                    <Paragraph
-                                                                        truncate
-                                                                        textAlign="center"
-                                                                    >
-                                                                        {costInfoBoxText()}
-                                                                    </Paragraph>
-                                                                </Box>
-                                                            }
-                                                            subtitle={
-                                                                membershipPricingType === 'dynamic'
-                                                                    ? `First ${platformMintLimit}`
-                                                                    : 'ETH'
-                                                            }
-                                                            dataTestId="membership-cost-type"
-                                                            onClick={onInfoBoxClick}
-                                                        />
+                                                            <InformationBox
+                                                                title="Max"
+                                                                border={
+                                                                    _form.formState.errors[
+                                                                        'membershipLimit'
+                                                                    ]
+                                                                        ? 'negative'
+                                                                        : 'none'
+                                                                }
+                                                                centerContent={
+                                                                    <Box paddingX width="100%">
+                                                                        <Paragraph
+                                                                            truncate
+                                                                            textAlign="center"
+                                                                        >
+                                                                            {_form.formState.errors[
+                                                                                'membershipLimit'
+                                                                            ]
+                                                                                ? '-- '
+                                                                                : formattedLimit}
+                                                                        </Paragraph>
+                                                                    </Box>
+                                                                }
+                                                                subtitle="Memberships"
+                                                                dataTestId="membership-limit"
+                                                                onClick={onInfoBoxClick}
+                                                            />
 
-                                                        <InformationBox
-                                                            title="Max"
-                                                            border={
-                                                                _form.formState.errors[
-                                                                    'membershipLimit'
-                                                                ]
-                                                                    ? 'negative'
-                                                                    : 'none'
-                                                            }
-                                                            centerContent={
-                                                                <Box paddingX width="100%">
-                                                                    <Paragraph
-                                                                        truncate
-                                                                        textAlign="center"
-                                                                    >
-                                                                        {_form.formState.errors[
-                                                                            'membershipLimit'
-                                                                        ]
-                                                                            ? '-- '
-                                                                            : formattedLimit}
-                                                                    </Paragraph>
-                                                                </Box>
-                                                            }
-                                                            subtitle="Memberships"
-                                                            dataTestId="membership-limit"
-                                                            onClick={onInfoBoxClick}
-                                                        />
+                                                            <InformationBox
+                                                                title="Founder"
+                                                                centerContent={
+                                                                    <Avatar
+                                                                        size="avatar_sm"
+                                                                        userId={
+                                                                            loggedInWalletAddress
+                                                                        }
+                                                                    />
+                                                                }
+                                                                subtitle={shortAddress(
+                                                                    abstractAccountAddress ?? '',
+                                                                )}
+                                                                dataTestId="town-founder"
+                                                            />
 
-                                                        <InformationBox
-                                                            title="Founder"
-                                                            centerContent={
-                                                                <Avatar
-                                                                    size="avatar_sm"
-                                                                    userId={loggedInWalletAddress}
-                                                                />
-                                                            }
-                                                            subtitle={shortAddress(
-                                                                abstractAccountAddress ?? '',
-                                                            )}
-                                                            dataTestId="town-founder"
-                                                        />
-
-                                                        <InformationBox
-                                                            title="Valid For"
-                                                            centerContent={1}
-                                                            subtitle="Year"
-                                                            dataTestId="town-valid-for"
-                                                        />
+                                                            <InformationBox
+                                                                title="Valid For"
+                                                                centerContent={1}
+                                                                subtitle="Year"
+                                                                dataTestId="town-valid-for"
+                                                            />
+                                                        </MotionBox>
                                                     </MotionBox>
 
                                                     {/* motto */}
@@ -451,7 +460,7 @@ function CreateSpaceFormV2WithoutAuth() {
                                                             text={
                                                                 shortDescriptionValue ?? undefined
                                                             }
-                                                            fontSize="lg"
+                                                            fontSize="md"
                                                             placeholder="Add town motto"
                                                             tone="none"
                                                             maxLength={32}
@@ -463,25 +472,22 @@ function CreateSpaceFormV2WithoutAuth() {
                                                         />
                                                     </Box>
                                                     {/* bio */}
-                                                    <Box
+
+                                                    <AutoGrowTextArea
+                                                        paddingY
                                                         background="lightHover"
-                                                        rounded="sm"
-                                                        paddingY="md"
-                                                    >
-                                                        <AutoGrowTextArea
-                                                            text={longDescriptionValue ?? undefined}
-                                                            fontSize="lg"
-                                                            placeholder="Add town description"
-                                                            tone="none"
-                                                            maxLength={400}
-                                                            minHeight="x20"
-                                                            counterOffset={{
-                                                                bottom: 'none',
-                                                            }}
-                                                            data-testid="town-description-textarea"
-                                                            {..._form.register('longDescription')}
-                                                        />
-                                                    </Box>
+                                                        text={longDescriptionValue ?? undefined}
+                                                        fontSize="md"
+                                                        placeholder="Add town description"
+                                                        tone="none"
+                                                        maxLength={400}
+                                                        minHeight="x20"
+                                                        counterOffset={{
+                                                            bottom: 'md',
+                                                        }}
+                                                        data-testid="town-description-textarea"
+                                                        {..._form.register('longDescription')}
+                                                    />
                                                 </Stack>
                                             </Stack>
 
@@ -752,7 +758,7 @@ const PanelWrapper = ({
             position="absolute"
             zIndex="above"
             background="level1"
-            height="100vh"
+            height={{ desktop: '100%', touch: '100vh' }}
             right="none"
             initial={{
                 x: '100%',
@@ -839,6 +845,7 @@ export const UploadImageField = ({
                 >
                     <InteractiveTownsToken
                         mintMode
+                        reduceMotion
                         size={size ? 'sm' : _isTouch ? 'md' : 'xl'}
                         spaceName={spaceName}
                         address={transactionDetails.townAddress}
@@ -848,6 +855,7 @@ export const UploadImageField = ({
             ) : (
                 <InteractiveTownsToken
                     mintMode
+                    reduceMotion
                     size={_isTouch ? 'md' : 'xl'}
                     spaceName={spaceName}
                     address={transactionDetails.townAddress}
@@ -861,36 +869,36 @@ export const UploadImageField = ({
 function SpaceNameField({
     form,
     spaceNameValue,
+    errorMessage,
 }: {
     spaceNameValue: string
     form: UseFormReturn<CreateSpaceFormV2SchemaType>
+    errorMessage?: JSX.Element | null
 }) {
     const { setFocus } = useFormContext<CreateSpaceFormV2SchemaType>()
     useEffect(() => {
         setFocus('spaceName')
     }, [setFocus])
     return (
-        <>
-            <Box background="lightHover" rounded="sm">
-                <TextField
-                    paddingY="sm"
-                    value={spaceNameValue}
-                    maxLength={32}
-                    fontSize="h2"
-                    fontWeight="strong"
-                    placeholder="Town name"
-                    tone="none"
-                    autoComplete="one-time-code"
-                    rounded="sm"
-                    data-testid="town-name-input"
-                    onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                            e.preventDefault()
-                        }
-                    }}
-                    {...form.register('spaceName')}
-                />
-            </Box>
-        </>
+        <TextField
+            background="lightHover"
+            message={errorMessage}
+            paddingY="sm"
+            value={spaceNameValue}
+            maxLength={32}
+            fontSize="h2"
+            fontWeight="strong"
+            placeholder="Town name"
+            tone="none"
+            autoComplete="one-time-code"
+            rounded="sm"
+            data-testid="town-name-input"
+            onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault()
+                }
+            }}
+            {...form.register('spaceName')}
+        />
     )
 }

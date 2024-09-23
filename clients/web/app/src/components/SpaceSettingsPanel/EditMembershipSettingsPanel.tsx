@@ -131,6 +131,7 @@ function EditMembershipForm({
             membershipLimit: Number(membershipInfo?.maxSupply) ?? 0,
             membershipCost: ethers.utils.formatEther((membershipInfo?.price as BigNumberish) ?? 0),
             membershipPricingType: pricingModule?.isFixed ? 'fixed' : 'dynamic',
+            clientPricingOption: pricingModule?.isFixed ? 'fixed' : 'dynamic',
             membershipCurrency:
                 (membershipInfo?.currency as string) ?? ethers.constants.AddressZero,
             prepaidMemberships: 0,

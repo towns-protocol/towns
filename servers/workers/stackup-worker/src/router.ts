@@ -52,6 +52,7 @@ router.post('/api/transaction-limits', async (request: WorkerRequest, env: Env) 
 
     try {
         switch (operation) {
+            case 'createSpaceWithPrepay':
             case 'createSpace': {
                 // default: any wallet that exists in HNT Privy DB can make: 3 towns / day with no gas costs
                 // more restrictive: only wallets created by email addresses on HNT Labs curated whitelist can mint 3 towns / day with no gas costs

@@ -75,6 +75,7 @@ export const paymasterProxyMiddleware = async (
         if (
             !spaceId &&
             functionHashForPaymasterProxy !== 'createSpace' &&
+            functionHashForPaymasterProxy !== 'createSpaceWithPrepay' &&
             functionHashForPaymasterProxy !== 'createSpace_linkWallet' &&
             functionHashForPaymasterProxy !== 'linkWalletToRootKey' &&
             functionHashForPaymasterProxy !== 'linkCallerToRootKey' &&

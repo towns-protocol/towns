@@ -60,6 +60,10 @@ export {
     useMultipleRoleDetails,
     usePrefetchMultipleRoleDetails,
 } from './hooks/use-role-details'
+export {
+    usePlatformMembershipFee,
+    usePlatformMembershipPriceForSupplyInEth,
+} from './hooks/use-platform-membership-fee'
 export { useRoles } from './hooks/use-roles'
 export { useRoom } from './hooks/use-room'
 export { useSetChannelPermissionOverrides } from './hooks/use-set-channel-permission-overrides'

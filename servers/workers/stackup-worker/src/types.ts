@@ -37,6 +37,7 @@ export function isTransactionLimitRequest(obj: any): obj is TransactionLimitRequ
         typeof obj.operation === 'string' &&
         isValidOperation(obj.operation) &&
         (obj.operation === 'createSpace' ||
+            obj.operation === 'createSpaceWithPrepay' ||
             obj.operation === 'joinSpace' ||
             obj.operation === 'linkWalletToRootKey' ||
             obj.operation === 'linkCallerToRootKey' ||
@@ -171,6 +172,7 @@ export const ContractName = {
 export type ContractName = (typeof ContractName)[keyof typeof ContractName]
 
 export const FunctionName = {
+    createSpaceWithPrepay: 'createSpaceWithPrepay',
     createSpace: 'createSpace',
     removeLink: 'removeLink',
     joinSpace: 'joinSpace',

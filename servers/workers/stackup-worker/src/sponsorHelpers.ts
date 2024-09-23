@@ -52,6 +52,7 @@ export async function handleVerifications(args: {
         // todo: all other on-chain write functions exposed in app (see @river-build/web3 for list)
         switch (functionHash) {
             // todo: functionHash should be a keccak hash of the function signature
+            case 'createSpaceWithPrepay':
             case 'createSpace': {
                 const { errorMessage, root, sender } = commonChecks({
                     rootKeyAddress: rootKeyAddress,

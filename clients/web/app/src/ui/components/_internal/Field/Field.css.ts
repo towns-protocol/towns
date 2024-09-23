@@ -5,7 +5,7 @@ export const field = style({
     appearance: 'none',
     color: 'inherit',
     outline: 'none',
-    background: 'inherit',
+    background: 'none',
     selectors: {
         '&::placeholder': {
             color: vars.color.foreground.gray2,

@@ -93,10 +93,13 @@ export function CreateTownSubmit({
 
         form.handleSubmit(
             async (values) => {
+                const prepaySupply = form.getValues().prepaidMemberships ?? 0
+
                 const createSpaceInfo: CreateSpaceInfo = {
                     name: values.spaceName ?? '',
                     shortDescription: values.shortDescription ?? '',
                     longDescription: values.longDescription ?? '',
+                    prepaySupply,
                 }
 
                 Analytics.getInstance().track('submitting create town form', {}, () => {

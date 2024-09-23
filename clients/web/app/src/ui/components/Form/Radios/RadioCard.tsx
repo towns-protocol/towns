@@ -24,7 +24,7 @@ export const RadioCard = <T extends FieldValues>(props: Props<T>) => {
     return (
         <Stack padding gap background="level2" cursor="pointer" borderRadius="sm" onClick={onClick}>
             <Stack horizontal gap justifyContent="spaceBetween" alignItems="center">
-                <Stack gap="paragraph">
+                <Stack gap="sm">
                     <Paragraph>{title}</Paragraph>
                     <Paragraph size="sm" color="gray2">
                         {description}

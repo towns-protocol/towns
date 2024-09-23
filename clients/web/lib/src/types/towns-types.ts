@@ -132,6 +132,11 @@ export interface CreateSpaceInfo {
     defaultChannelName?: string
     shortDescription?: string
     longDescription?: string
+    // TODO: prepaySupply doesn't belong in the this structure, but so doesn't the
+    // other properties. Moving this out would require the refactor of the
+    // createSpaceTransaction signature which affects a lot of code and is out
+    // of scope for this PR.
+    prepaySupply?: number
 }
 
 export interface CreateChannelInfo {

@@ -9,20 +9,27 @@ type Props<HookFormValues> = {
     message?: string
     textProps?: TextProps
     preventSpace?: boolean
+    disabled?: boolean
 } & BoxProps
 
 const ErrorMessage = <H,>(props: Props<H>) => {
-    const { errors, fieldName, message, textProps, preventSpace = false, ...boxProps } = props
+    const {
+        errors,
+        fieldName,
+        message,
+        textProps,
+        disabled,
+        preventSpace = false,
+        ...boxProps
+    } = props
     const methods = useFormContext()
     const error = get(errors || methods.formState.errors, fieldName)
     const registrationMessage = error?.message
     const errorMessage = !error ? '\u00A0' : message || registrationMessage
 
-    return preventSpace && !error ? (
-        <></>
-    ) : (
+    return preventSpace && (!error || disabled) ? null : (
         <Box {...boxProps}>
-            <ErrorMessageText {...textProps} message={errorMessage} />
+            {!disabled && <ErrorMessageText {...textProps} message={errorMessage} />}
         </Box>
     )
 }

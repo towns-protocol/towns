@@ -86,4 +86,5 @@ export const blockchainKeys = {
         'membershipFreeAllocation',
         spaceId ?? 'waitingForSpaceId',
     ],
+    membershipFee: () => ['membershipFee'],
 }

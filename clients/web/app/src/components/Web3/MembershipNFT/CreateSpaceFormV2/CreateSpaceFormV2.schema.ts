@@ -39,7 +39,29 @@ export const membershipSettingsSchema = z
                 },
             }),
         ]),
+        /**
+         * this is just for the radio card selection whereas
+         * "membershipPricingType" actually determines the pricing type
+         */
+        clientPricingOption: z.union([
+            z.literal('dynamic', {
+                errorMap: (_err, _ctx) => {
+                    return { message: membershipPricingErrorMessage }
+                },
+            }),
+            z.literal('fixed', {
+                errorMap: (_err, _ctx) => {
+                    return { message: membershipPricingErrorMessage }
+                },
+            }),
+            z.literal('prepaid', {
+                errorMap: (_err, _ctx) => {
+                    return { message: membershipPricingErrorMessage }
+                },
+            }),
+        ]),
         membershipCost: z.string(),
+        prepaidMemberships: z.number().optional().default(0),
     })
     .and(gatingSchema)
     .superRefine((data, ctx) => {
