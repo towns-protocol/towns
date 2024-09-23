@@ -20,7 +20,12 @@ import { atoms } from 'ui/styles/atoms.css'
 import { useDevice } from 'hooks/useDevice'
 import { Panel } from '@components/Panel/Panel'
 import { MediaDropContextProvider } from '@components/MediaDropContext/MediaDropContext'
-import { Analytics, getChannelType } from 'hooks/useAnalytics'
+import {
+    Analytics,
+    getChannelType,
+    getPostedMessageType,
+    getThreadReplyOrDmReply,
+} from 'hooks/useAnalytics'
 import { useIsChannelReactable } from 'hooks/useIsChannelReactable'
 
 type Props = {
@@ -50,8 +55,10 @@ export const MessageThreadPanel = (props: Props) => {
                 spaceId,
                 channelId,
                 channelType: getChannelType(channelId),
-                isThread: true,
-                messageType: options?.messageType,
+                reply: getThreadReplyOrDmReply({ threadId: 'threadId' }),
+                messageType: getPostedMessageType(value, {
+                    messageType: options?.messageType,
+                }),
             }
             Analytics.getInstance().track('posted message', tracked, () => {
                 console.log('[analytics] posted message (thread)', tracked)

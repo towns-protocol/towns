@@ -10,7 +10,7 @@ import { ShortcutTooltip } from '@components/Shortcuts/ShortcutTooltip'
 import useCopyToClipboard from 'hooks/useCopyToClipboard'
 import { ReplyToMessageContext } from '@components/ReplyToMessageContext/ReplyToMessageContext'
 import { getLinkToMessage } from 'utils/getLinkToMessage'
-import { Analytics, getChannelType } from 'hooks/useAnalytics'
+import { Analytics, getChannelType, getThreadReplyOrDmReply } from 'hooks/useAnalytics'
 import { useRouteParams } from 'hooks/useRouteParams'
 import { ShortcutAction, ShortcutActions } from 'data/shortcuts'
 import { ShortcutKeys } from '@components/Shortcuts/ShortcutKeys'
@@ -53,7 +53,7 @@ export const MessageContextMenu = (props: Props) => {
     } = useTownsClient()
     const timelineContext = useContext(MessageTimelineContext)
 
-    const { canReplyInline, setReplyToEventId } = useContext(ReplyToMessageContext)
+    const { canReplyInline, replyToEventId, setReplyToEventId } = useContext(ReplyToMessageContext)
     const { onOpenMessageThread } = useOpenMessageThread(spaceId, channelId)
 
     const [copiedText, copy] = useCopyToClipboard()
@@ -77,20 +77,21 @@ export const MessageContextMenu = (props: Props) => {
                 console.error('no emoji id')
                 return
             }
-            const tracked = {
+            sendReaction(channelId, eventId, data.id, threadId)
+            Analytics.getInstance().track('posted message', {
                 spaceId,
                 channelId,
                 channelType: getChannelType(channelId),
-                isThread: !!threadId,
+                reply: getThreadReplyOrDmReply({
+                    threadId,
+                    canReplyInline,
+                    replyToEventId,
+                }),
                 messageType: 'emoji reaction',
                 emojiId: data.id,
-            }
-            Analytics.getInstance().track('posted message', tracked, () => {
-                console.log('[analytics] posted message (emoji reaction)', tracked)
             })
-            sendReaction(channelId, eventId, data.id, threadId)
         },
-        [channelId, eventId, sendReaction, spaceId, threadId],
+        [canReplyInline, channelId, eventId, replyToEventId, sendReaction, spaceId, threadId],
     )
     const ref = useRef<HTMLDivElement>(null)
 
@@ -150,14 +151,30 @@ export const MessageContextMenu = (props: Props) => {
     const onRedactConfirm = useCallback(() => {
         if (channelId) {
             redactEvent(channelId, eventId)
+            Analytics.getInstance().track('posted message', {
+                channelId,
+                channelType: getChannelType(channelId),
+                messageType: 'redacted',
+                reply: getThreadReplyOrDmReply({
+                    threadId,
+                    canReplyInline,
+                    replyToEventId,
+                }),
+            })
         }
-    }, [channelId, eventId, redactEvent])
+    }, [canReplyInline, channelId, eventId, redactEvent, replyToEventId, threadId])
 
     const onAdminRedactConfirm = useCallback(() => {
         if (channelId && eventId) {
             adminRedactMessage(channelId, eventId)
+            Analytics.getInstance().track('posted message', {
+                channelId,
+                channelType: getChannelType(channelId),
+                messageType: 'admin redacted',
+                reply: getThreadReplyOrDmReply({ threadId, canReplyInline, replyToEventId }),
+            })
         }
-    }, [channelId, eventId, adminRedactMessage])
+    }, [channelId, eventId, adminRedactMessage, threadId, canReplyInline, replyToEventId])
 
     const onCopyLinkToMessage = useShortcut(
         'CopyLinkToMessage',
@@ -194,7 +211,7 @@ export const MessageContextMenu = (props: Props) => {
                 spaceId,
                 channelId,
                 channelType: getChannelType(channelId),
-                isThread: !!threadId,
+                reply: getThreadReplyOrDmReply({ threadId }),
             }
             Analytics.getInstance().track('clicked pin message', tracked)
             pinMessage(channelId, e)
@@ -208,7 +225,7 @@ export const MessageContextMenu = (props: Props) => {
                 spaceId,
                 channelId,
                 channelType: getChannelType(channelId),
-                isThread: !!threadId,
+                reply: getThreadReplyOrDmReply({ threadId }),
             }
             Analytics.getInstance().track('clicked unpin message', tracked)
             unpinMessage(channelId, e)

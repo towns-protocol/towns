@@ -96,7 +96,7 @@ function getTownsLinks(text: string) {
     return urls
 }
 
-function getExternalLinks(text: string) {
+export function getExternalLinks(text: string) {
     const urls = Array.from(text.matchAll(/https:\/\/[^\s]+/g))
         .map((u) => {
             if (u) {

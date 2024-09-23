@@ -7,10 +7,12 @@ import {
 } from '@rudderstack/analytics-js'
 import { keccak256 } from 'ethers/lib/utils'
 import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from '@river-build/sdk'
-import { TownsAnalytics } from 'use-towns-client'
+import { MessageType, TownsAnalytics } from 'use-towns-client'
 import { datadogLogs } from '@datadog/browser-logs'
 import { env } from 'utils'
+import { isEmoji } from 'utils/isEmoji'
 import { UserAgentInstance, getBrowserName, isPWA } from './useDevice'
+import { getExternalLinks } from './useExtractInternalLinks'
 
 const USER_ID_KEY = 'analytics-userId'
 
@@ -215,6 +217,38 @@ export function getChannelType(channelId: string) {
         : isChannelStreamId(channelId)
         ? 'channel'
         : 'unknown'
+}
+
+export type PostedMessageOptions = {
+    messageType?: MessageType
+    filesCount?: number
+}
+
+export function getPostedMessageType(
+    value: string,
+    { messageType, filesCount = 0 }: PostedMessageOptions,
+): string | undefined {
+    return isEmoji(value) ? 'emoji' : isUrl(value) ? 'link' : filesCount > 0 ? 'file' : messageType // last option
+}
+
+export type ThreadOrDmReply = {
+    threadId?: string
+    canReplyInline?: boolean
+    replyToEventId?: string | null
+}
+
+export function getThreadReplyOrDmReply({
+    threadId,
+    canReplyInline,
+    replyToEventId,
+}: ThreadOrDmReply): string | undefined {
+    const dmReply = canReplyInline && replyToEventId
+    return dmReply ? 'directly reply' : threadId ? 'thread reply' : ''
+}
+
+function isUrl(value: string): boolean {
+    const urls = getExternalLinks(value)
+    return urls.length > 0
 }
 
 function getCommonAnalyticsProperties(): ApiObject {

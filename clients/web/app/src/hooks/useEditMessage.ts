@@ -1,8 +1,11 @@
-import { useCallback } from 'react'
+import { useCallback, useContext } from 'react'
 import { RoomMessageEvent, SendTextMessageOptions, useTownsClient } from 'use-towns-client'
+import { ReplyToMessageContext } from '@components/ReplyToMessageContext/ReplyToMessageContext'
+import { Analytics, getChannelType, getThreadReplyOrDmReply } from './useAnalytics'
 
 export const useEditMessage = (channelId?: string) => {
     const { editMessage } = useTownsClient()
+    const { canReplyInline, replyToEventId } = useContext(ReplyToMessageContext)
 
     const editChannelMessage = useCallback(
         (
@@ -12,9 +15,20 @@ export const useEditMessage = (channelId?: string) => {
         ) => {
             if (value && eventId && channelId) {
                 editMessage(channelId, eventId, originalEventContent, value, msgOptions)
+                Analytics.getInstance().track('posted message', {
+                    eventId,
+                    channelId,
+                    channelType: getChannelType(channelId),
+                    reply: getThreadReplyOrDmReply({
+                        threadId: originalEventContent.threadId,
+                        canReplyInline,
+                        replyToEventId,
+                    }),
+                    messageType: 'edited',
+                })
             }
         },
-        [channelId, editMessage],
+        [canReplyInline, channelId, editMessage, replyToEventId],
     )
 
     return { editChannelMessage }

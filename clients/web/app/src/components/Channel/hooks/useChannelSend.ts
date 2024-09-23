@@ -1,6 +1,11 @@
 import { useCallback, useContext } from 'react'
 import { SendMessageOptions, useTownsClient } from 'use-towns-client'
-import { Analytics, getChannelType } from 'hooks/useAnalytics'
+import {
+    Analytics,
+    getChannelType,
+    getPostedMessageType,
+    getThreadReplyOrDmReply,
+} from 'hooks/useAnalytics'
 import { ReplyToMessageContext } from '@components/ReplyToMessageContext/ReplyToMessageContext'
 import { useSlashCommand } from 'hooks/useSlashCommand'
 
@@ -11,11 +16,11 @@ export const useChannelSend = (params: {
 }) => {
     const { channelId, spaceId, threadId } = params
     const { sendMessage } = useTownsClient()
-    const { replyToEventId, setReplyToEventId } = useContext(ReplyToMessageContext)
+    const { canReplyInline, replyToEventId, setReplyToEventId } = useContext(ReplyToMessageContext)
     const { parseAndExecuteCommand } = useSlashCommand()
 
     const onSend = useCallback(
-        (value: string, options: SendMessageOptions | undefined) => {
+        (value: string, options: SendMessageOptions | undefined, filesCount: number = 0) => {
             if (!channelId) {
                 return
             }
@@ -28,8 +33,15 @@ export const useChannelSend = (params: {
                 spaceId,
                 channelId,
                 channelType: getChannelType(channelId),
-                isThread: !!threadId,
-                messageType: options?.messageType,
+                reply: getThreadReplyOrDmReply({
+                    threadId,
+                    canReplyInline,
+                    replyToEventId,
+                }),
+                messageType: getPostedMessageType(value, {
+                    messageType: options?.messageType,
+                    filesCount,
+                }),
             }
             Analytics.getInstance().track('posted message', tracked, () => {
                 console.log('[analytics] posted message', tracked)
@@ -58,6 +70,7 @@ export const useChannelSend = (params: {
             parseAndExecuteCommand,
             spaceId,
             threadId,
+            canReplyInline,
             replyToEventId,
             sendMessage,
             setReplyToEventId,

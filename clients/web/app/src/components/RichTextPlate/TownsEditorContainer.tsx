@@ -30,7 +30,11 @@ import { EditorFallback } from './components/EditorFallback'
 import { unfurlLinksToAttachments } from './utils/unfurlLinks'
 
 type Props = {
-    onSend?: (value: string, options: SendTextMessageOptions | undefined) => void
+    onSend?: (
+        value: string,
+        options: SendTextMessageOptions | undefined,
+        filesCount?: number,
+    ) => void
     onCancel?: () => void
     autoFocus?: boolean
     editable?: boolean
@@ -171,7 +175,7 @@ const TownsTextEditorWithoutBoundary = ({
                 deferredRef.resolve?.()
             }
 
-            onSend(message, options)
+            onSend(message, options, files?.length)
         },
         [
             onSend,

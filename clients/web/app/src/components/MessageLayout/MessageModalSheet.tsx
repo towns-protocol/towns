@@ -12,7 +12,7 @@ import { ReplyToMessageContext } from '@components/ReplyToMessageContext/ReplyTo
 import { getLinkToMessage } from 'utils/getLinkToMessage'
 import useCopyToClipboard from 'hooks/useCopyToClipboard'
 import { useRouteParams } from 'hooks/useRouteParams'
-import { Analytics, getChannelType } from 'hooks/useAnalytics'
+import { Analytics, getChannelType, getThreadReplyOrDmReply } from 'hooks/useAnalytics'
 import { DeleteMessagePrompt } from './DeleteMessagePrompt'
 
 type Props = {
@@ -82,7 +82,7 @@ export const MessageModalSheet = (props: Props) => {
         threadParentId,
         timeline: timelineContext?.events,
     })
-    const { canReplyInline, setReplyToEventId } = useContext(ReplyToMessageContext)
+    const { canReplyInline, replyToEventId, setReplyToEventId } = useContext(ReplyToMessageContext)
     const onThreadClick = useCallback(() => {
         onClose()
         if (canReplyInline && setReplyToEventId) {
@@ -104,8 +104,14 @@ export const MessageModalSheet = (props: Props) => {
     const onDeleteConfirm = useCallback(() => {
         if (channelId) {
             redactEvent(channelId, eventId)
+            Analytics.getInstance().track('posted message', {
+                channelId,
+                channelType: getChannelType(channelId),
+                reply: getThreadReplyOrDmReply({ threadId, canReplyInline, replyToEventId }),
+                messageType: 'redacted',
+            })
         }
-    }, [channelId, eventId, redactEvent])
+    }, [canReplyInline, channelId, eventId, redactEvent, replyToEventId, threadId])
 
     const onDeleteCancel = useCallback(() => {
         setActivePrompt(undefined)
@@ -138,9 +144,30 @@ export const MessageModalSheet = (props: Props) => {
                 return
             }
             sendReaction(channelId, eventId, id, threadId)
+            Analytics.getInstance().track('posted message', {
+                spaceId,
+                channelId,
+                channelType: getChannelType(channelId),
+                reply: getThreadReplyOrDmReply({
+                    threadId,
+                    canReplyInline,
+                    replyToEventId,
+                }),
+                messageType: 'emoji reaction',
+                emojiId: id,
+            })
             onClose()
         },
-        [channelId, eventId, sendReaction, threadId, onClose],
+        [
+            channelId,
+            eventId,
+            sendReaction,
+            threadId,
+            spaceId,
+            canReplyInline,
+            replyToEventId,
+            onClose,
+        ],
     )
 
     const onSelectEmoji = useCallback(
@@ -174,7 +201,7 @@ export const MessageModalSheet = (props: Props) => {
                 spaceId,
                 channelId,
                 channelType: getChannelType(channelId),
-                isThread: !!threadId,
+                reply: getThreadReplyOrDmReply({ threadId }),
             }
             Analytics.getInstance().track('clicked pin message', tracked)
             pinMessage(channelId, eventId)
@@ -188,7 +215,7 @@ export const MessageModalSheet = (props: Props) => {
                 spaceId,
                 channelId,
                 channelType: getChannelType(channelId),
-                isThread: !!threadId,
+                reply: getThreadReplyOrDmReply({ threadId }),
             }
             Analytics.getInstance().track('clicked unpin message', tracked)
             unpinMessage(channelId, eventId)

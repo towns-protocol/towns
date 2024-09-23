@@ -1,6 +1,6 @@
 import { IGif } from '@giphy/js-types'
 import { Grid } from '@giphy/react-components'
-import React from 'react'
+import React, { useContext } from 'react'
 import {
     MessageType,
     SendImageMessageOptions,
@@ -10,6 +10,7 @@ import {
     useTownsClient,
 } from 'use-towns-client'
 import { Spinner } from '@components/Spinner'
+import { ReplyToMessageContext } from '@components/ReplyToMessageContext/ReplyToMessageContext'
 import { Box } from '@ui'
 import { useStore } from 'store/store'
 import { useCardOpenerContext } from 'ui/components/Overlay/CardOpenerContext'
@@ -17,6 +18,7 @@ import { atoms } from 'ui/styles/atoms.css'
 import { themes } from 'ui/styles/themes'
 import { baseline } from 'ui/styles/vars.css'
 import { useDevice } from 'hooks/useDevice'
+import { Analytics, getChannelType, getThreadReplyOrDmReply } from 'hooks/useAnalytics'
 import { GiphySearchBar } from './GiphySearchBar'
 import { useGiphySearchContext } from './GiphySearchContext'
 import { GiphyTrendingContainer } from './GiphyTrendingPill'
@@ -52,6 +54,7 @@ export const GiphyPickerCard = (props: GiphyPickerCardProps) => {
     const { closeCard, threadId, threadPreview } = props
 
     const { fetchGifs, query, isFetching } = useGiphySearchContext()
+    const { canReplyInline, replyToEventId } = useContext(ReplyToMessageContext)
     const { sendMessage } = useTownsClient()
 
     const isInReplyThread = !!props.threadId
@@ -107,6 +110,16 @@ export const GiphyPickerCard = (props: GiphyPickerCardProps) => {
             },
         } satisfies SendImageMessageOptions
         sendMessage(channelId, gifData.title, messageContent)
+        Analytics.getInstance().track('posted message', {
+            channelId,
+            channelType: getChannelType(channelId),
+            reply: getThreadReplyOrDmReply({
+                threadId,
+                canReplyInline,
+                replyToEventId,
+            }),
+            messageType: 'gif',
+        })
     }
 
     return (
