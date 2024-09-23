@@ -1,5 +1,5 @@
 import React from 'react'
-import { Outlet, Route, Routes } from 'react-router'
+import { Navigate, Outlet, Route, Routes } from 'react-router'
 import { useConnectivity } from 'use-towns-client'
 import { Box, Stack } from '@ui'
 import { useDevice } from 'hooks/useDevice'
@@ -27,6 +27,10 @@ export const AllRoutes = React.memo(() => {
                         <>
                             {!isAuthenticated ? (
                                 <>
+                                    <Route
+                                        path={`${PATHS.SPACES}/new`}
+                                        element={<Navigate to="/" />}
+                                    />
                                     <Route
                                         path={`${PATHS.SPACES}/:spaceSlug/*`}
                                         element={<PublicTownPage />}
