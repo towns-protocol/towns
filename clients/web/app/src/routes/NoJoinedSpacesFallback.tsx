@@ -106,6 +106,17 @@ export const NoJoinedSpacesFallback = () => {
         navigate(`/${PATHS.SPACES}/new`)
     }, [navigate])
 
+    const openLearnMore = useCallback(() => {
+        Analytics.getInstance().track('clicked learn more', {}, () => {
+            console.log('[analytics] clicked learn more')
+        })
+        window.open(
+            'https://www.notion.so/herenottherelabs/Town-Hall-9e5c8120218d489392e8a72aef8c0326?pvs=4',
+            '_blank',
+            'noopener,noreferrer',
+        )
+    }, [])
+
     // need to default spaceHierarchies to undefined and check for it here
     // to prevent flash on load
     // if (!spaceDataMap) {
@@ -148,15 +159,20 @@ export const NoJoinedSpacesFallback = () => {
                     <Icon padding="md" size="square_xl" type="home" background="level2" />
                     <Stack centerContent gap>
                         <Heading level={3} textAlign="center">
-                            You don&apos;t have invitations to any town
+                            Start Your First Town
                         </Heading>
                         <Text textAlign="center" color="gray2">
-                            Quit waiting around and start a town now:
+                            Build a town and invite your friends or community.
                         </Text>
                     </Stack>
-                    <Button tone="cta1" width="auto" grow={false} onClick={openTownPanel}>
-                        Create a Town
-                    </Button>
+                    <Stack horizontal gap>
+                        <Button tone="cta1" width="auto" grow={false} onClick={openTownPanel}>
+                            Create a Town
+                        </Button>
+                        <Button tone="level2" width="auto" grow={false} onClick={openLearnMore}>
+                            Learn More
+                        </Button>
+                    </Stack>
                 </Stack>
             </Stack>
         )
