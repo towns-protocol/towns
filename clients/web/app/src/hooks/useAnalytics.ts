@@ -184,7 +184,30 @@ export function trackError(args: {
             name,
             source,
         },
+        analytics: {
+            commonProperties: getCommonAnalyticsProperties(),
+            loginMethod: findPrivyLoginMethod(),
+            psuedoId: Analytics.getInstance().pseudoId,
+        },
     })
+}
+
+/**
+ * This is a hack to grab the login method from local storage
+ * We should think about storing login method ourselves but for now just want to see if this correlates to anything in DD errors
+ */
+function findPrivyLoginMethod() {
+    const regex = /^privy:\w+:recent-login-method$/
+
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i)
+        if (!key) {
+            continue
+        }
+        if (regex.test(key)) {
+            return localStorage.getItem(key)
+        }
+    }
 }
 
 function isErrorLike(e: unknown) {
