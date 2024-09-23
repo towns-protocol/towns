@@ -4,6 +4,7 @@ import {
     BlockchainTransactionType,
     IRuleEntitlementV2Base,
     NoopRuleData,
+    PricingModuleStruct,
     TransactionStatus,
     convertRuleDataV1ToV2,
     createOperationsTree,
@@ -107,6 +108,8 @@ function EditMembershipForm({
     const { data: clientTokensGatedBy, isLoading: isLoadingTokensData } =
         useMultipleTokenMetadatasForChainIds(initialTokenValues)
 
+    const { data: pricingModules, isLoading: isLoadingPricingModules } = usePricingModules()
+
     const gatingType = useMemo(() => {
         if (initialTokenValues.length > 0) {
             return 'gated'
@@ -181,8 +184,10 @@ function EditMembershipForm({
                                             </Stack>
                                         )}
                                         <EditPricing
-                                            enableDynamicPricing={!pricingModule?.isFixed}
+                                            isEditMode
                                             freeAllocation={freeAllocation}
+                                            pricingModules={pricingModules}
+                                            isLoadingPricingModules={isLoadingPricingModules}
                                         />
 
                                         <Paragraph strong>Membership</Paragraph>
@@ -193,6 +198,8 @@ function EditMembershipForm({
                                 <SubmitButton
                                     spaceId={spaceId}
                                     transactionIsPending={transactionIsPending}
+                                    pricingModules={pricingModules}
+                                    isLoadingPricingModules={isLoadingPricingModules}
                                 >
                                     Update
                                 </SubmitButton>
@@ -259,10 +266,14 @@ function SubmitButton({
     children,
     spaceId,
     transactionIsPending,
+    pricingModules,
+    isLoadingPricingModules,
 }: {
     children?: React.ReactNode
     spaceId: string | undefined
     transactionIsPending: boolean
+    pricingModules: PricingModuleStruct[] | undefined
+    isLoadingPricingModules: boolean
 }) {
     const { handleSubmit, formState, watch, setError } = useFormContext<EditMembershipSchemaType>()
     const { defaultValues } = formState
@@ -270,7 +281,7 @@ function SubmitButton({
     // success and error statuses are handled by <BlockchainTxNotifier />
     const { getSigner, isPrivyReady } = useGetEmbeddedSigner()
     const { editSpaceMembershipTransaction } = useEditSpaceMembershipTransaction()
-    const { data: pricingModules, isLoading: isLoadingPricingModules } = usePricingModules()
+
     const { roleDetails, isLoading: isLoadingRoleDetails } = useRoleDetails(spaceId ?? '', 1)
     const { closePanel } = usePanelActions()
 

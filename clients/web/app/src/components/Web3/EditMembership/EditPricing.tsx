@@ -1,9 +1,16 @@
-import React, { ChangeEvent, useCallback, useEffect, useRef, useState } from 'react'
+import React, { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useFormContext } from 'react-hook-form'
-import { usePlatformMembershipPriceForSupplyInEth, usePlatformMintLimit } from 'use-towns-client'
+import {
+    PricingModuleStruct,
+    findDynamicPricingModule,
+    findFixedPricingModule,
+    usePlatformMembershipPriceForSupplyInEth,
+    usePlatformMintLimit,
+} from 'use-towns-client'
 import { FadeInBox } from '@components/Transitions'
 import { Box, ErrorMessage, Paragraph, RadioCard, Stack, TextField } from '@ui'
 import { usePlatformMinMembershipPriceInEth } from 'hooks/usePlatformMinMembershipPriceInEth'
+import { shimmerClass } from 'ui/styles/globals/shimmer.css'
 import { MembershipSettingsSchemaType } from '../MembershipNFT/CreateSpaceFormV2/CreateSpaceFormV2.schema'
 
 enum PricingPreset {
@@ -13,12 +20,18 @@ enum PricingPreset {
 }
 
 export function EditPricing({
+    pricingModules,
+    isLoadingPricingModules,
     // currently, a space cannot switch from fixed to dynamic pricing
-    enableDynamicPricing = true,
+    disablePricingModules,
     freeAllocation,
+    isEditMode,
 }: {
-    enableDynamicPricing?: boolean
     freeAllocation: number | undefined
+    pricingModules?: PricingModuleStruct[]
+    isLoadingPricingModules?: boolean
+    disablePricingModules?: boolean
+    isEditMode?: boolean
 }) {
     const { formState, setValue, watch, trigger } = useFormContext<MembershipSettingsSchemaType>()
     const { data: minimumMemebershipPrice, isLoading: isLoadingMinMembershipPrice } =
@@ -76,7 +89,7 @@ export function EditPricing({
         if (pricingPreset === 'fixed') {
             presetRef.current.membershipCost = membershipCost
         }
-    })
+    }, [membershipCost, prepaidMemberships, pricingPreset])
 
     const onSelectPricingPreset = useCallback(
         (preset: typeof pricingPreset) => {
@@ -113,6 +126,7 @@ export function EditPricing({
                             shouldValidate: true,
                         },
                     )
+                    break
                 }
             }
         },
@@ -125,9 +139,35 @@ export function EditPricing({
     const { data: totalMembershipFee } =
         usePlatformMembershipPriceForSupplyInEth(prepaidMemberships)
 
+    const enabledPricingModules = useMemo(() => {
+        if (pricingModules) {
+            return [
+                findDynamicPricingModule(pricingModules) ? ('dynamic' as const) : undefined,
+                findFixedPricingModule(pricingModules) ? ('fixed' as const) : undefined,
+            ].filter(Boolean)
+        }
+    }, [pricingModules])
+
+    if (isLoadingPricingModules) {
+        return (
+            <Stack
+                padding
+                gap="sm"
+                rounded="sm"
+                color="gray2"
+                background="level2"
+                className={shimmerClass}
+            >
+                <Stack horizontal gap="sm">
+                    <Paragraph>Loading pricing modules</Paragraph>
+                </Stack>
+            </Stack>
+        )
+    }
+
     return (
         <Stack gap="sm" rounded="md">
-            {enableDynamicPricing && (
+            {enabledPricingModules?.includes('dynamic') && (
                 <RadioCard
                     selected={pricingPreset === PricingPreset.Dynamic}
                     name="clientPricingOption"
@@ -139,31 +179,35 @@ export function EditPricing({
                     {...formProps}
                 />
             )}
-            <RadioCard
-                selected={pricingPreset === PricingPreset.Fixed}
-                name="clientPricingOption"
-                value="fixed"
-                title="Fixed"
-                description="Everyone pays the same price"
-                dataTestId="membership-pricing-type-fixed"
-                onClick={() => onSelectPricingPreset(PricingPreset.Fixed)}
-                {...formProps}
-            >
-                {pricingPreset === PricingPreset.Fixed ? (
-                    <TextField
-                        autoFocus
-                        background="level3"
-                        autoComplete="one-time-code"
-                        {...formProps.register('membershipCost')}
-                        disabled={isLoadingMinMembershipPrice}
-                        border={
-                            formProps.formState.errors['membershipCost'] ? 'negative' : undefined
-                        }
-                        onChange={onCostChange}
-                    />
-                ) : null}
-            </RadioCard>
-            {enableDynamicPricing && (
+            {enabledPricingModules?.includes('fixed') && (
+                <RadioCard
+                    selected={pricingPreset === PricingPreset.Fixed}
+                    name="clientPricingOption"
+                    value="fixed"
+                    title="Fixed"
+                    description="Everyone pays the same price"
+                    dataTestId="membership-pricing-type-fixed"
+                    onClick={() => onSelectPricingPreset(PricingPreset.Fixed)}
+                    {...formProps}
+                >
+                    {pricingPreset === PricingPreset.Fixed ? (
+                        <TextField
+                            autoFocus
+                            background="level3"
+                            autoComplete="one-time-code"
+                            {...formProps.register('membershipCost')}
+                            disabled={isLoadingMinMembershipPrice}
+                            border={
+                                formProps.formState.errors['membershipCost']
+                                    ? 'negative'
+                                    : undefined
+                            }
+                            onChange={onCostChange}
+                        />
+                    ) : null}
+                </RadioCard>
+            )}
+            {!isEditMode && enabledPricingModules?.includes('dynamic') && (
                 <RadioCard
                     name="clientPricingOption"
                     value="prepaid"

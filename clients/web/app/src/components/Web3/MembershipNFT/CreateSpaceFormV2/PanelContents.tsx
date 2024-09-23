@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react'
+import { usePricingModules } from 'use-towns-client'
 import { Paragraph, Stack } from '@ui'
 import { EditPricing } from '@components/Web3/EditMembership/EditPricing'
 import { EditMembership } from '@components/Web3/EditMembership/EditMembership'
@@ -18,21 +19,24 @@ export function PanelContent({
     freeAllocation,
 }: PanelContentProps & { children: React.ReactNode }) {
     const isTouch = useDevice().isTouch
+    const { data: pricingModules, isLoading: isLoadingPricingModules } = usePricingModules()
     const content = useMemo(() => {
         return (
             <Stack gap>
                 <Paragraph strong>Who Can Join</Paragraph>
                 <EditGating />
-
                 <Paragraph strong>Pricing</Paragraph>
-                <EditPricing freeAllocation={freeAllocation} />
-
+                <EditPricing
+                    freeAllocation={freeAllocation}
+                    pricingModules={pricingModules}
+                    isLoadingPricingModules={isLoadingPricingModules}
+                />
                 <Paragraph strong>Membership</Paragraph>
                 <EditMembership />
                 {children}
             </Stack>
         )
-    }, [children, freeAllocation])
+    }, [children, freeAllocation, isLoadingPricingModules, pricingModules])
 
     if (isTouch) {
         return (
