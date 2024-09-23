@@ -85,9 +85,29 @@ export const UserProfile = (props: Props) => {
         }
     }, [hasNftProfilePicture])
 
+    const nftUrl = useMemo(() => {
+        if (!resolvedNft) {
+            return
+        }
+
+        if (resolvedNft.image.thumbnail) {
+            return resolvedNft.image.thumbnail
+        }
+
+        if (resolvedNft.image.gateway) {
+            return resolvedNft.image.gateway
+        }
+    }, [resolvedNft])
+
     const resourceId = useMemo(() => {
-        return userId ?? ''
-    }, [userId])
+        if (!userId) {
+            return ''
+        }
+        if (nftUrl) {
+            return userId + '_' + nftUrl
+        }
+        return userId
+    }, [userId, nftUrl])
 
     const { uploadUserProfileImageToStream } = useUploadAttachment()
     const isUploadingUserProfileImageRef = useRef<boolean>(false)

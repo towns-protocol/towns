@@ -345,8 +345,15 @@ const EnsDisplayNameModal = (props: {
     const { spaceId, streamId, onHide, currentEns, setShowingEnsDisplayNameForm } = props
     const { ensNames, isFetching } = useEnsNames()
     const { setEnsAddress } = useSetEnsAddress()
-    const { lookupUser, setSpaceUser } = useUserLookupStore()
     const myUserId = useMyUserId()
+    const user = useUserLookupStore((s) =>
+        spaceId && myUserId ? s.spaceUsers?.[spaceId]?.[myUserId] : undefined,
+    )
+    const { lookupUser, setSpaceUser } = useUserLookupStore((s) => ({
+        lookupUser: s.lookupUser,
+        setSpaceUser: s.setSpaceUser,
+    }))
+
     const { openPanel } = usePanelActions()
     const [selectedEns, setSelectedEns] = useState<{ address?: string; name?: string } | undefined>(
         currentEns,
@@ -365,7 +372,6 @@ const EnsDisplayNameModal = (props: {
             if (!streamId || !myUserId) {
                 return
             }
-            const user = lookupUser(myUserId)
             setSpaceUser(
                 myUserId,
                 {
@@ -376,7 +382,7 @@ const EnsDisplayNameModal = (props: {
                 spaceId,
             )
         },
-        [lookupUser, myUserId, setSpaceUser, spaceId, streamId],
+        [myUserId, setSpaceUser, spaceId, streamId, user],
     )
 
     const onSave = useCallback(() => {
@@ -384,8 +390,8 @@ const EnsDisplayNameModal = (props: {
             onHide()
             return
         }
-        const user = lookupUser(myUserId)
-        const oldEns = { address: user?.ensAddress, name: user?.ensName }
+        const userSnapshot = lookupUser(myUserId)
+        const oldEns = { address: userSnapshot?.ensAddress, name: userSnapshot?.ensName }
 
         // Ideally, we would like to queue those updates and do it later
         if (!streamId) {
