@@ -194,7 +194,7 @@ export const RichTextEditor = ({
          * As a workaround, we set the editor text to a space character to remove the placeholder
          * on any manual input change. The reconciliation of the actual editor text is completed later
          */
-        setEditorText(' ')
+        startTransition(() => setEditorText(' '))
         if (editorRef.current) {
             onChange(editorRef.current)
             const text = toPlainText(editorRef.current.children)
@@ -291,7 +291,6 @@ export const RichTextEditor = ({
                             disabled={isSendingMessage}
                             isTouch={isTouch}
                             isEditing={isEditing}
-                            isEditorEmpty={isEditorEmpty}
                             handleSendOnEnter={handleSendOnEnter}
                             onFocus={onFocus}
                             onBlur={onBlur}
