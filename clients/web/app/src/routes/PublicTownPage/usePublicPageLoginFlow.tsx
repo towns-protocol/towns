@@ -268,7 +268,7 @@ export const publicPageLoginStore = create<{
             : undefined,
     setSpaceBeingJoined: (joiningSpaceId) => {
         updateQueryStringValueWithoutNavigation(JOIN, joiningSpaceId)
-        set({ spaceBeingJoined: joiningSpaceId, disableJoinUi: true })
+        set({ spaceBeingJoined: joiningSpaceId })
     },
     end: () => {
         updateQueryStringValueWithoutNavigation(JOIN, '')

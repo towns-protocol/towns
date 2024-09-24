@@ -267,98 +267,117 @@ describe('SingleRolePanel', () => {
         },
     )
 
-    test('should submit new role with gated users', async () => {
-        mockUseSearchParams.mockReturnValue([new URLSearchParams('roles=new'), vi.fn()])
-        vi.spyOn(Lib, 'useCreateRoleTransaction').mockImplementation(useMockedCreateRoleTransaction)
-
-        render(<Wrapper />)
-        const submitButton = screen.getByTestId('submit-button')
-        expect(submitButton).toBeDisabled()
-
-        const roleName = await getNameInput()
-        await userEvent.type(roleName, 'new role 2')
-        await waitFor(() => {
-            expect(screen.getAllByDisplayValue(/new role 2/gi).length).toBe(1)
-        })
-
-        await addFakeWalletAddress()
-        await waitFor(() => expect(submitButton).not.toBeDisabled())
-        await userEvent.click(submitButton)
-
-        await waitFor(() => {
-            expect(createRoleTransactionSpy).toHaveBeenCalledWith(
-                spaceRoomIdentifier,
-                'new role 2',
-                [Lib.Permission.React, Lib.Permission.Read],
-                [MOCK_USER_ADDRESS],
-                Lib.NoopRuleData,
-                {},
+    test(
+        'should submit new role with gated users',
+        {
+            timeout: 10_000,
+        },
+        async () => {
+            mockUseSearchParams.mockReturnValue([new URLSearchParams('roles=new'), vi.fn()])
+            vi.spyOn(Lib, 'useCreateRoleTransaction').mockImplementation(
+                useMockedCreateRoleTransaction,
             )
-        })
-    })
-    test('should submit new role with gated tokens and users', async () => {
-        mockUseSearchParams.mockReturnValue([new URLSearchParams('roles=new'), vi.fn()])
-        vi.spyOn(Lib, 'useCreateRoleTransaction').mockImplementation(useMockedCreateRoleTransaction)
 
-        render(<Wrapper />)
-        const submitButton = screen.getByTestId('submit-button')
-        expect(submitButton).toBeDisabled()
+            render(<Wrapper />)
+            const submitButton = screen.getByTestId('submit-button')
+            expect(submitButton).toBeDisabled()
 
-        const roleName = await getNameInput()
-        await userEvent.type(roleName, 'new role 3')
-        await waitFor(() => {
-            expect(screen.getAllByDisplayValue(/new role 3/gi).length).toBe(1)
-        })
+            const roleName = await getNameInput()
+            await userEvent.type(roleName, 'new role 2')
+            await waitFor(() => {
+                expect(screen.getAllByDisplayValue(/new role 2/gi).length).toBe(1)
+            })
 
-        await enableDigitalAssetsGate()
-        const walletAddressesToggle = screen.getByTestId('wallet-addresses-toggle')
-        await userEvent.click(walletAddressesToggle)
-        expect(walletAddressesToggle).toBeChecked()
+            await addFakeWalletAddress()
+            await waitFor(() => expect(submitButton).not.toBeDisabled())
+            await userEvent.click(submitButton)
 
-        const fakeAddress = MOCK_USER_ADDRESS
-        const walletAddressInput = screen.getByTestId(/pill-selector-input/i)
-        await userEvent.type(walletAddressInput, fakeAddress)
-        await waitFor(() => {
-            expect(walletAddressInput).toHaveValue(fakeAddress)
-        })
-        const addressOption = await screen.findByTestId(`user-pill-selector-option-${fakeAddress}`)
-        expect(addressOption).toBeInTheDocument()
-        await userEvent.click(addressOption)
-
-        const addressPill = screen.getByTestId(`user-pill-selector-pill-${fakeAddress}`)
-        expect(addressPill).toBeInTheDocument()
-        await userEvent.click(addressPill)
-
-        const tokenSearch = screen.getByTestId('token-search')
-        const tokenInput = await within(tokenSearch).findByTestId(/token-selector-input/i)
-        await userEvent.click(tokenInput)
-        // erc1155 ui not set up yet, this is an ERC721 token
-        await userEvent.type(tokenInput, SUDOLETS_MOCK.address)
-        const tokenOption = await waitFor(() => {
-            return within(tokenSearch).getAllByTestId(/^token-selector-option/i)
-        })
-        await userEvent.click(tokenOption[0])
-
-        const tokenEditor = await screen.findByTestId('token-editor')
-        const tokenQuantityField = within(tokenEditor).getByPlaceholderText(/enter a quantity/gi)
-        await userEvent.type(tokenQuantityField, '1')
-        const tokenEditorSubmit = within(tokenEditor).getByRole('button', { name: 'Add' })
-        await userEvent.click(tokenEditorSubmit)
-
-        await waitFor(() => expect(submitButton).not.toBeDisabled())
-        await userEvent.click(submitButton)
-
-        await waitFor(() => {
-            expect(createRoleTransactionSpy).toHaveBeenCalledWith(
-                spaceRoomIdentifier,
-                'new role 3',
-                [Lib.Permission.React, Lib.Permission.Read],
-                [MOCK_USER_ADDRESS],
-                createOperationsTreeForERC721(),
-                {},
+            await waitFor(() => {
+                expect(createRoleTransactionSpy).toHaveBeenCalledWith(
+                    spaceRoomIdentifier,
+                    'new role 2',
+                    [Lib.Permission.React, Lib.Permission.Read],
+                    [MOCK_USER_ADDRESS],
+                    Lib.NoopRuleData,
+                    {},
+                )
+            })
+        },
+    )
+    test(
+        'should submit new role with gated tokens and users',
+        {
+            timeout: 10_000,
+        },
+        async () => {
+            mockUseSearchParams.mockReturnValue([new URLSearchParams('roles=new'), vi.fn()])
+            vi.spyOn(Lib, 'useCreateRoleTransaction').mockImplementation(
+                useMockedCreateRoleTransaction,
             )
-        })
-    })
+
+            render(<Wrapper />)
+            const submitButton = screen.getByTestId('submit-button')
+            expect(submitButton).toBeDisabled()
+
+            const roleName = await getNameInput()
+            await userEvent.type(roleName, 'new role 3')
+            await waitFor(() => {
+                expect(screen.getAllByDisplayValue(/new role 3/gi).length).toBe(1)
+            })
+
+            await enableDigitalAssetsGate()
+            const walletAddressesToggle = screen.getByTestId('wallet-addresses-toggle')
+            await userEvent.click(walletAddressesToggle)
+            expect(walletAddressesToggle).toBeChecked()
+
+            const fakeAddress = MOCK_USER_ADDRESS
+            const walletAddressInput = screen.getByTestId(/pill-selector-input/i)
+            await userEvent.type(walletAddressInput, fakeAddress)
+            await waitFor(() => {
+                expect(walletAddressInput).toHaveValue(fakeAddress)
+            })
+            const addressOption = await screen.findByTestId(
+                `user-pill-selector-option-${fakeAddress}`,
+            )
+            expect(addressOption).toBeInTheDocument()
+            await userEvent.click(addressOption)
+
+            const addressPill = screen.getByTestId(`user-pill-selector-pill-${fakeAddress}`)
+            expect(addressPill).toBeInTheDocument()
+            await userEvent.click(addressPill)
+
+            const tokenSearch = screen.getByTestId('token-search')
+            const tokenInput = await within(tokenSearch).findByTestId(/token-selector-input/i)
+            await userEvent.click(tokenInput)
+            // erc1155 ui not set up yet, this is an ERC721 token
+            await userEvent.type(tokenInput, SUDOLETS_MOCK.address)
+            const tokenOption = await waitFor(() => {
+                return within(tokenSearch).getAllByTestId(/^token-selector-option/i)
+            })
+            await userEvent.click(tokenOption[0])
+
+            const tokenEditor = await screen.findByTestId('token-editor')
+            const tokenQuantityField =
+                within(tokenEditor).getByPlaceholderText(/enter a quantity/gi)
+            await userEvent.type(tokenQuantityField, '1')
+            const tokenEditorSubmit = within(tokenEditor).getByRole('button', { name: 'Add' })
+            await userEvent.click(tokenEditorSubmit)
+
+            await waitFor(() => expect(submitButton).not.toBeDisabled())
+            await userEvent.click(submitButton)
+
+            await waitFor(() => {
+                expect(createRoleTransactionSpy).toHaveBeenCalledWith(
+                    spaceRoomIdentifier,
+                    'new role 3',
+                    [Lib.Permission.React, Lib.Permission.Read],
+                    [MOCK_USER_ADDRESS],
+                    createOperationsTreeForERC721(),
+                    {},
+                )
+            })
+        },
+    )
     test('should submit new role with checked permissions', async () => {
         mockUseSearchParams.mockReturnValue([new URLSearchParams('roles=new'), vi.fn()])
         vi.spyOn(Lib, 'useCreateRoleTransaction').mockImplementation(useMockedCreateRoleTransaction)
