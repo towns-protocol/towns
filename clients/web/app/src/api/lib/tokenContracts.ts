@@ -1,4 +1,4 @@
-import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQueries, useQuery } from '@tanstack/react-query'
 import { z } from 'zod'
 import {
     ContractMetadata,
@@ -9,32 +9,13 @@ import {
     NftDisplayNft,
     NftImageMetadata,
 } from '@token-worker/types'
-import { useMemo } from 'react'
-import { Address, useConnectivity, useSupportedXChainIds } from 'use-towns-client'
+import { Address, useSupportedXChainIds } from 'use-towns-client'
 import { ethers } from 'ethers'
 import { TokenData, TokenDataWithChainId, TokenType } from '@components/Tokens/types'
 import { env } from 'utils'
-import {
-    fetchBaseSepolia,
-    fetchMainnetTokens,
-    useNetworkForNftApi,
-} from 'hooks/useNetworkForNftApi'
-import { useEnvironment } from 'hooks/useEnvironmnet'
 import { axiosClient } from '../apiClient'
 
 export const queryKey = 'tokenContractsForAddress'
-
-type CachedData = {
-    previousPageKey?: string
-    nextPageKey?: string
-    tokens: TokenData[]
-}
-
-type UseTokenContractsForAdress = {
-    wallet: string
-    enabled: boolean
-    chainId: number | undefined
-}
 
 const zNftImageMetadata: z.ZodType<NftImageMetadata> = z.object({
     cachedUrl: z.string().optional().nullable(),
@@ -84,41 +65,6 @@ const zNftMetadata: z.ZodType<GetNftMetadataResponse & GetNftOwnersResponse> = z
     description: z.string().optional().nullable(),
 })
 
-// Get the tokens in a user's wallet
-export function useCollectionsForOwner({ wallet, enabled, chainId }: UseTokenContractsForAdress) {
-    const nftNetwork = useNetworkForNftApi()
-    const { data: supportedChainIds } = useSupportedXChainIds()
-
-    return useQuery({
-        queryKey: [queryKey],
-
-        queryFn: () =>
-            chainId === 31337
-                ? getLocalHostTokens(wallet, nftNetwork, supportedChainIds ?? [])
-                : getTokenContractsForAddress(wallet, nftNetwork, supportedChainIds ?? []),
-
-        staleTime: 1000 * 15,
-        refetchOnMount: false,
-        refetchOnWindowFocus: false,
-        refetchOnReconnect: false,
-        enabled: enabled && Boolean(chainId) && Boolean(supportedChainIds),
-    })
-}
-
-export function useCollectionsForLoggedInUser() {
-    // TODO: this should probably be all linked wallets
-    // and use useQueries to get all the tokens for all the wallets
-    const { loggedInWalletAddress } = useConnectivity()
-    const { baseChain } = useEnvironment()
-    const chainId = baseChain.id
-
-    return useCollectionsForOwner({
-        wallet: loggedInWalletAddress ?? '',
-        enabled: Boolean(chainId),
-        chainId,
-    })
-}
-
 export function useCollectionsForAddressesAcrossNetworks({
     wallets,
     enabled = true,
@@ -149,15 +95,6 @@ export function useCollectionsForAddressesAcrossNetworks({
     const data = responses.flatMap((r) => r.data).flatMap((r) => r)
     return { data, isFetching }
 }
-// Grab the tokens from the existing query
-export function useCachedTokensForWallet() {
-    const queryClient = useQueryClient()
-
-    return useMemo(() => {
-        const cached = queryClient.getQueryData<CachedData>([queryKey])
-        return cached || { nextPageKey: '', previousPageKey: '', tokens: [] }
-    }, [queryClient])
-}
 
 export function useNftMetadata(
     info:
@@ -185,44 +122,6 @@ export function useNftMetadata(
         staleTime: 1000 * 60 * 5,
         enabled: !!info && !!supportedChainIds,
     })
-}
-
-async function getLocalHostTokens(wallet: string, nftNetwork: number, supportedChainIds: number[]) {
-    // to test with a big list of tokens, add ?mainnet to the url, or ?base_sepolia to use the base_sepolia testnet
-    if (fetchMainnetTokens || fetchBaseSepolia) {
-        return getTokenContractsForAddress(wallet, nftNetwork, supportedChainIds)
-    }
-
-    // on local, just return empty array
-    const tokens: TokenData[] = []
-    return {
-        tokens,
-        nextPageKey: undefined,
-    }
-}
-
-async function getTokenContractsForAddress(
-    wallet: string,
-    nftNetwork: number,
-    supportedChainIds: number[],
-) {
-    const TOKENS_SERVER_URL = env.VITE_TOKEN_SERVER_URL
-    // See token-worker README for more information
-    const url = `${TOKENS_SERVER_URL}/api/getCollectionsForOwner/alchemy/${nftNetwork}/${wallet}?supportedChainIds=${joinSupportedChainIds(
-        supportedChainIds,
-    )}`
-    const response = await axiosClient.get(url)
-    const parseResult = zSchema.safeParse(response.data)
-
-    if (!parseResult.success) {
-        console.error(`Error parsing ContractMetadataResponse:: ${parseResult.error}`)
-        throw new Error(`Error parsing ContractMetadataResponse:: ${parseResult.error}`)
-    }
-
-    const tokens = await Promise.all(parseResult.data.collections.map(mapToTokenProps))
-    const nextPageKey = parseResult.data.pageKey
-
-    return { tokens, nextPageKey }
 }
 
 async function getNftMetadata(
