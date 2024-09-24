@@ -111,7 +111,7 @@ export const NoJoinedSpacesFallback = () => {
             console.log('[analytics] clicked learn more')
         })
         window.open(
-            'https://www.notion.so/herenottherelabs/Town-Hall-9e5c8120218d489392e8a72aef8c0326?pvs=4',
+            'https://herenottherelabs.notion.site/Town-Hall-9e5c8120218d489392e8a72aef8c0326',
             '_blank',
             'noopener,noreferrer',
         )
