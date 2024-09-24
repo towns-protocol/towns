@@ -57,7 +57,9 @@ on:
                 required: true
 jobs:
     Upgrade_Facets_Sparse:
-        if: github.event.inputs.job_to_run == 'Upgrade_Facets_Sparse'
+        if: >
+            github.event_name == 'workflow_dispatch' && github.event.inputs.job_to_run == 'Upgrade_Facets_Sparse' ||
+            github.event_name == 'workflow_call' && inputs.job_to_run == 'Upgrade_Facets_Sparse'
         runs-on: ubuntu-latest
         steps:
             - name: Checkout code
@@ -179,7 +181,9 @@ jobs:
                       }
 
     Upgrade_Facets:
-        if: github.event.inputs.job_to_run == 'Upgrade_Facets'
+        if: >
+            github.event_name == 'workflow_dispatch' && github.event.inputs.job_to_run == 'Upgrade_Facets' ||
+            github.event_name == 'workflow_call' && inputs.job_to_run == 'Upgrade_Facets'
         runs-on: ubuntu-latest
         steps:
             - name: Checkout code
