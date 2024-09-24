@@ -11,6 +11,7 @@ CONTRACTS_DIR := '../packages/generated/deployments' / RIVER_ENV
 INSTANCE_BASE := RUN_BASE
 RPC_BASE := 'http://127.0.0.1:8545'
 RPC_RIVER := 'http://127.0.0.1:8546'
+BASE_EXECUTION_CLIENT := env_var_or_default("BASE_EXECUTION_CLIENT", "")
 
 OPERATOR_ADDRESS := `source ../contracts/.env.localhost && echo "${SENDER_ADDRESS}"`
 LOCAL_PRIVATE_KEY := `source ../contracts/.env.localhost && echo "${LOCAL_PRIVATE_KEY}"`
@@ -34,6 +35,7 @@ print-env:
     @echo "RPC_RIVER=${RPC_RIVER}"
     @echo "OPERATOR_ADDRESS=${OPERATOR_ADDRESS}"
     @echo "LOCAL_PRIVATE_KEY=${LOCAL_PRIVATE_KEY}"
+    @echo "BASE_EXECUTION_CLIENT=${BASE_EXECUTION_CLIENT}"
 
 clean:
     @rm -rf ${RUN_BASE}
@@ -53,10 +55,18 @@ _anvil-start $NAME $PORT $CHAIN_ID:
         ../scripts/wait-for-port.sh ${PORT} anvil_${NAME}
     fi
 
-anvil-base: (_anvil-start "base" "8545" "31337")
+anvil-base: 
+    #!/usr/bin/env -S bash {{BASH_OPTS}}
+    if [ "${BASE_EXECUTION_CLIENT}" != "geth_dev" ]; then
+        just _anvil-start "base" "8545" "31337"
+    fi
+
 
 anvil-base-stop:
-    ../scripts/kill-on-port.sh 8545 anvil_base
+    #!/usr/bin/env -S bash {{BASH_OPTS}}
+    if [ "${BASE_EXECUTION_CLIENT}" != "geth_dev" ]; then
+        ../scripts/kill-on-port.sh 8545 anvil_base
+    fi
 
 anvil-river: (_anvil-start "river" "8546" "31338")
 
