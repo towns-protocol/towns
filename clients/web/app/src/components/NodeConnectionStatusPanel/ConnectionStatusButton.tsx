@@ -4,6 +4,7 @@ import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { Box, Icon } from '@ui'
 import { CHANNEL_INFO_PARAMS } from 'routes'
 import { SECOND_MS } from 'data/constants'
+import { Analytics } from 'hooks/useAnalytics'
 import * as styles from './ConnectionStatusButton.css'
 import { useConnectionStatus } from './hooks/useConnectionStatus'
 
@@ -16,6 +17,7 @@ export const NodeStatusButton = () => {
             closePanel()
         } else {
             openPanel(CHANNEL_INFO_PARAMS.NODE_STATUS)
+            Analytics.getInstance().track('clicked river network button')
         }
     }, [closePanel, isPanelOpen, openPanel])
 
