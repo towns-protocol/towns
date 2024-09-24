@@ -8,17 +8,17 @@ import { baseScanUrl, openSeaAssetUrl } from '@components/Web3/utils'
 export const ContractInfoButtons = ({
     contractAddress,
     ownerAddress,
-    openSeaNft,
+    nft,
 }: {
     contractAddress: string
     ownerAddress?: string
-    openSeaNft?: `0x${string}/${number}`
+    nft?: `0x${string}/${number}`
 }) => {
     const { baseChain } = useEnvironment()
     const chainId = baseChain.id
 
     const clipboardAddress = ownerAddress || contractAddress
-    const openSeaUrl = openSeaAssetUrl(chainId, openSeaNft || contractAddress)
+    const openSeaUrl = openSeaAssetUrl(chainId, nft || contractAddress)
 
     return (
         <Stack horizontal gap="sm">

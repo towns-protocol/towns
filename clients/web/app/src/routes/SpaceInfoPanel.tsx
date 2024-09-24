@@ -467,8 +467,8 @@ const TownOwnerButton = (props: {
                             </Box>
                             <ContractInfoButtons
                                 ownerAddress={owner}
-                                contractAddress={address}
-                                openSeaNft={openSeaNft}
+                                contractAddress={ownerContract ?? address}
+                                nft={openSeaNft}
                             />
                         </Box>
                     </Box>
