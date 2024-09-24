@@ -1,6 +1,6 @@
 # Using just to start local deployment
 
-Local [DB](#provisioning-docker-with-postgres-db) and [CA](#setting-up-local-ca-for-tls) need to be provisioned.
+Local [CA](#setting-up-local-ca-for-tls) needs to be provisioned.
 [Just](#installing-just) installed.
 
 To list all available commands:
@@ -72,10 +72,6 @@ First create the CA and register it with Mac OS:
 Then generate the TLS certificates for the node:
 
     scripts/generate-ca.sh
-
-# Provisioning Docker with Postgres DB
-
-    scripts/launch_storage.sh
 
 # Running River Tests
 

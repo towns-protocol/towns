@@ -6,6 +6,7 @@ import {EntitlementGated} from "contracts/src/spaces/facets/gated/EntitlementGat
 import {IRuleEntitlement} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
 import {IEntitlementDataQueryableBase} from "contracts/src/spaces/facets/entitlements/extensions/IEntitlementDataQueryable.sol";
 
+/// @dev _onEntitlementCheckResultPosted is not implemented to avoid confusion
 contract MockEntitlementGated is EntitlementGated {
   mapping(uint256 => IRuleEntitlement.RuleData) ruleDatasByRoleId;
   mapping(uint256 => IRuleEntitlement.RuleDataV2) ruleDatasV2ByRoleId;
@@ -16,7 +17,7 @@ contract MockEntitlementGated is EntitlementGated {
     _setEntitlementChecker(checker);
   }
 
-  // This function is used to set the RuleData for the requestEntitlementCheck function
+  // This function is used to get the RuleData for the requestEntitlementCheck function
   // jamming it in here so it can be called from the test
   function getRuleData(
     uint256 roleId
@@ -47,18 +48,23 @@ contract MockEntitlementGated is EntitlementGated {
   }
 
   function requestEntitlementCheckV2(
-    uint256 roleId,
+    uint256[] memory roleIds,
     IRuleEntitlement.RuleDataV2 calldata ruleData
   ) external returns (bytes32) {
-    ruleDatasV2ByRoleId[roleId] = ruleData;
+    for (uint256 i = 0; i < roleIds.length; i++) {
+      ruleDatasV2ByRoleId[roleIds[i]] = ruleData;
+    }
     bytes32 transactionId = keccak256(
       abi.encodePacked(tx.origin, block.number)
     );
-    _requestEntitlementCheck(
-      transactionId,
-      IRuleEntitlement(address(this)),
-      roleId
-    );
+
+    for (uint256 i = 0; i < roleIds.length; i++) {
+      _requestEntitlementCheck(
+        transactionId,
+        IRuleEntitlement(address(this)),
+        roleIds[i]
+      );
+    }
     return transactionId;
   }
 

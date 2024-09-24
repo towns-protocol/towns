@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -1234,6 +1235,233 @@ func NewPostgresEventStore(
 	return store, nil
 }
 
+type PostgresStatusResult struct {
+	TotalConns              int32         `json:"total_conns"`
+	AcquiredConns           int32         `json:"acquired_conns"`
+	IdleConns               int32         `json:"idle_conns"`
+	ConstructingConns       int32         `json:"constructing_conns"`
+	MaxConns                int32         `json:"max_conns"`
+	NewConnsCount           int64         `json:"new_conns_count"`
+	AcquireCount            int64         `json:"acquire_count"`
+	EmptyAcquireCount       int64         `json:"empty_acquire_count"`
+	CanceledAcquireCount    int64         `json:"canceled_acquire_count"`
+	AcquireDuration         time.Duration `json:"acquire_duration"`
+	MaxLifetimeDestroyCount int64         `json:"max_lifetime_destroy_count"`
+	MaxIdleDestroyCount     int64         `json:"max_idle_destroy_count"`
+	Version                 string        `json:"version"`
+	EsCount                 string        `json:"es_count"`
+	SystemId                string        `json:"system_id"`
+}
+
+func PreparePostgresStatus(ctx context.Context, pool PgxPoolInfo) PostgresStatusResult {
+	poolStat := pool.Pool.Stat()
+	// Query to get PostgreSQL version
+	var version string
+	err := pool.Pool.QueryRow(ctx, "SELECT version()").Scan(&version)
+	if err != nil {
+		version = fmt.Sprintf("Error: %v", err)
+		dlog.FromCtx(ctx).Error("failed to get PostgreSQL version", "err", err)
+	}
+
+	// Query to count rows in the es table
+	var esCount string
+	var count int64
+	err = pool.Pool.QueryRow(ctx, "SELECT COUNT(*) FROM es").Scan(&count)
+	if err != nil {
+		esCount = fmt.Sprintf("Error: %v", err)
+	} else {
+		esCount = fmt.Sprintf("%d", count)
+	}
+
+	var systemId string
+	err = pool.Pool.QueryRow(ctx, "SELECT system_identifier FROM pg_control_system()").Scan(&systemId)
+	if err != nil {
+		systemId = fmt.Sprintf("Error: %v", err)
+	}
+
+	return PostgresStatusResult{
+		TotalConns:              poolStat.TotalConns(),
+		AcquiredConns:           poolStat.AcquiredConns(),
+		IdleConns:               poolStat.IdleConns(),
+		ConstructingConns:       poolStat.ConstructingConns(),
+		MaxConns:                poolStat.MaxConns(),
+		NewConnsCount:           poolStat.NewConnsCount(),
+		AcquireCount:            poolStat.AcquireCount(),
+		EmptyAcquireCount:       poolStat.EmptyAcquireCount(),
+		CanceledAcquireCount:    poolStat.CanceledAcquireCount(),
+		AcquireDuration:         poolStat.AcquireDuration(),
+		MaxLifetimeDestroyCount: poolStat.MaxLifetimeDestroyCount(),
+		MaxIdleDestroyCount:     poolStat.MaxIdleDestroyCount(),
+		Version:                 version,
+		EsCount:                 esCount,
+		SystemId:                systemId,
+	}
+}
+
+func SetupPostgresMetrics(ctx context.Context, pool PgxPoolInfo, factory infra.MetricsFactory) {
+	// Create a function to get the latest PostgreSQL status
+	getStatus := func() PostgresStatusResult {
+		return PreparePostgresStatus(ctx, pool)
+	}
+
+	// Metrics for numeric values
+	numericMetrics := []struct {
+		name     string
+		help     string
+		getValue func(PostgresStatusResult) float64
+	}{
+		{
+			"postgres_total_conns",
+			"Total number of connections in the pool",
+			func(s PostgresStatusResult) float64 { return float64(s.TotalConns) },
+		},
+		{
+			"postgres_acquired_conns",
+			"Number of currently acquired connections",
+			func(s PostgresStatusResult) float64 { return float64(s.AcquiredConns) },
+		},
+		{
+			"postgres_idle_conns",
+			"Number of idle connections",
+			func(s PostgresStatusResult) float64 { return float64(s.IdleConns) },
+		},
+		{
+			"postgres_constructing_conns",
+			"Number of connections with construction in progress",
+			func(s PostgresStatusResult) float64 { return float64(s.ConstructingConns) },
+		},
+		{
+			"postgres_max_conns",
+			"Maximum number of connections allowed",
+			func(s PostgresStatusResult) float64 { return float64(s.MaxConns) },
+		},
+		{
+			"postgres_new_conns_count",
+			"Total number of new connections opened",
+			func(s PostgresStatusResult) float64 { return float64(s.NewConnsCount) },
+		},
+		{
+			"postgres_acquire_count",
+			"Total number of successful connection acquisitions",
+			func(s PostgresStatusResult) float64 { return float64(s.AcquireCount) },
+		},
+		{
+			"postgres_empty_acquire_count",
+			"Total number of successful acquires that waited for a connection",
+			func(s PostgresStatusResult) float64 { return float64(s.EmptyAcquireCount) },
+		},
+		{
+			"postgres_canceled_acquire_count",
+			"Total number of acquires canceled by context",
+			func(s PostgresStatusResult) float64 { return float64(s.CanceledAcquireCount) },
+		},
+		{
+			"postgres_acquire_duration_seconds",
+			"Duration of connection acquisitions",
+			func(s PostgresStatusResult) float64 { return s.AcquireDuration.Seconds() },
+		},
+		{
+			"postgres_max_lifetime_destroy_count",
+			"Total number of connections destroyed due to MaxConnLifetime",
+			func(s PostgresStatusResult) float64 { return float64(s.MaxLifetimeDestroyCount) },
+		},
+		{
+			"postgres_max_idle_destroy_count",
+			"Total number of connections destroyed due to MaxConnIdleTime",
+			func(s PostgresStatusResult) float64 { return float64(s.MaxIdleDestroyCount) },
+		},
+	}
+
+	for _, metric := range numericMetrics {
+		factory.NewGaugeFunc(
+			prometheus.GaugeOpts{
+				Name: metric.name,
+				Help: metric.help,
+			},
+			func(getValue func(PostgresStatusResult) float64) func() float64 {
+				return func() float64 {
+					return getValue(getStatus())
+				}
+			}(metric.getValue),
+		)
+	}
+
+	// Metrics for version, system ID, and ES count
+	versionGauge := factory.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "postgres_version_info",
+			Help: "PostgreSQL version information",
+		},
+		[]string{"version"},
+	)
+
+	systemIDGauge := factory.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "postgres_system_id_info",
+			Help: "PostgreSQL system identifier information",
+		},
+		[]string{"system_id"},
+	)
+
+	esCountGauge := factory.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "postgres_es_count_info",
+			Help: "Number of rows in the es table",
+		},
+		[]string{"es_count"},
+	)
+
+	// Function to update version, system ID, and ES count
+	var (
+		lastVersion  string
+		lastSystemID string
+		lastEsCount  string
+		mu           sync.Mutex
+	)
+
+	updateMetrics := func() {
+		status := getStatus()
+		mu.Lock()
+		defer mu.Unlock()
+
+		if status.Version != lastVersion {
+			versionGauge.Reset()
+			versionGauge.WithLabelValues(status.Version).Set(1)
+			lastVersion = status.Version
+		}
+
+		if status.SystemId != lastSystemID {
+			systemIDGauge.Reset()
+			systemIDGauge.WithLabelValues(status.SystemId).Set(1)
+			lastSystemID = status.SystemId
+		}
+
+		if status.EsCount != lastEsCount {
+			esCountGauge.Reset()
+			esCountGauge.WithLabelValues(status.EsCount).Set(1)
+			lastEsCount = status.EsCount
+		}
+	}
+
+	// Initial update
+	updateMetrics()
+
+	// Setup periodic updates
+	go func() {
+		ticker := time.NewTicker(5 * time.Second)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				updateMetrics()
+			}
+		}
+	}()
+}
+
 // Disallow allocating more than 30% of connections for streaming connections.
 var MaxStreamingConnectionsRatio float32 = 0.3
 
@@ -1278,6 +1506,7 @@ func newPostgresEventStore(
 		numStreamingConnections += 1
 		numRegularConnections -= 1
 	}
+	SetupPostgresMetrics(ctx, *poolInfo, metrics)
 
 	store := &PostgresEventStore{
 		config:               poolInfo.Config,
@@ -1415,7 +1644,10 @@ func (s *PostgresEventStore) runMigrations(ctx context.Context) error {
 	// Get the current migration version before running Up()
 	beforeVersion, _, err := migration.Version()
 	if err != nil && err != migrate.ErrNilVersion {
-		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Error fetching migration version before running migrations")
+		return WrapRiverError(
+			Err_DB_OPERATION_FAILURE,
+			err,
+		).Message("Error fetching migration version before running migrations")
 	}
 
 	if err = migration.Up(); err != nil && err != migrate.ErrNoChange {
@@ -1425,7 +1657,10 @@ func (s *PostgresEventStore) runMigrations(ctx context.Context) error {
 	// Get the migration version after running Up()
 	afterVersion, _, err := migration.Version()
 	if err != nil {
-		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Error fetching migration version after running migrations")
+		return WrapRiverError(
+			Err_DB_OPERATION_FAILURE,
+			err,
+		).Message("Error fetching migration version after running migrations")
 	}
 
 	// Trigger a full vacuum if we're upgrading to 5 to reclaim disk space
@@ -1455,7 +1690,11 @@ func (s *PostgresEventStore) vacuumTables(ctx context.Context, dbUrlWithSchema s
 	for _, table := range tables {
 		query := fmt.Sprintf("VACUUM FULL %s;", table)
 		if _, err := db.Exec(query); err != nil {
-			return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Error running VACUUM FULL").Tag("table", table)
+			return WrapRiverError(
+				Err_DB_OPERATION_FAILURE,
+				err,
+			).Message("Error running VACUUM FULL").
+				Tag("table", table)
 		}
 		log.Info("Successfully vacuumed table", "table", table)
 	}
@@ -1786,7 +2025,6 @@ func (s *PostgresEventStore) streamLastMiniBlockTx(
 		"SELECT seq_num, blockdata FROM miniblocks WHERE stream_id = $1 ORDER BY seq_num DESC LIMIT 1",
 		streamID,
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -1875,7 +2113,12 @@ func (s *PostgresEventStore) importMiniblocksTx(ctx context.Context, tx pgx.Tx, 
 		)
 
 		if expBlockNum != miniBlock.Number {
-			return RiverError(Err_BAD_BLOCK, "Expected block %d to import but got block %d", expBlockNum, miniBlock.Number)
+			return RiverError(
+				Err_BAD_BLOCK,
+				"Expected block %d to import but got block %d",
+				expBlockNum,
+				miniBlock.Number,
+			)
 		}
 
 		if expBlockNum == 0 {

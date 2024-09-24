@@ -445,9 +445,9 @@ export default [
     "name": "requestEntitlementCheckV2",
     "inputs": [
       {
-        "name": "roleId",
-        "type": "uint256",
-        "internalType": "uint256"
+        "name": "roleIds",
+        "type": "uint256[]",
+        "internalType": "uint256[]"
       },
       {
         "name": "ruleData",

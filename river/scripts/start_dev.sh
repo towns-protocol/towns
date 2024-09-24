@@ -22,6 +22,16 @@ if ! command -v brew &> /dev/null; then
 fi
 
 # Install Tmux using Homebrew if not present
+if ! command -v just &> /dev/null; then
+    echo "just is not installed. Installing it using Homebrew..."
+    if ! brew install just; then
+        echo "Failed to install just."
+        exit 1
+    fi
+    echo "just installed successfully."
+fi
+
+# Install Tmux using Homebrew if not present
 if ! command -v tmux &> /dev/null; then
     echo "Tmux is not installed. Installing it using Homebrew..."
     if ! brew install tmux; then
@@ -56,6 +66,14 @@ yarn install
 # Create a new tmux session
 tmux new-session -d -s $SESSION_NAME
 
+
+# Start chains and Postgres in separate panes of the same window
+tmux new-window -t $SESSION_NAME -n 'BlockChains_base'
+tmux send-keys -t $SESSION_NAME:'BlockChains_base' "./scripts/start-local-basechain.sh &" C-m
+tmux new-window -t $SESSION_NAME -n 'BlockChains_river'
+tmux send-keys -t $SESSION_NAME:'BlockChains_river' "./scripts/start-local-riverchain.sh &" C-m
+
+
 # Start contract build in background
 pushd contracts
 set -a
@@ -65,12 +83,6 @@ make build & BUILD_PID=$!
 popd
 
 ./core/scripts/launch_storage.sh &
-
-# Start chains and Postgres in separate panes of the same window
-tmux new-window -t $SESSION_NAME -n 'BlockChains_base'
-tmux send-keys -t $SESSION_NAME:'BlockChains_base' "./scripts/start-local-basechain.sh &" C-m
-tmux new-window -t $SESSION_NAME -n 'BlockChains_river'
-tmux send-keys -t $SESSION_NAME:'BlockChains_river' "./scripts/start-local-riverchain.sh &" C-m
 
 # Function to wait for a specific port
 wait_for_port() {

@@ -560,9 +560,9 @@
       {
         "inputs": [
           {
-            "internalType": "uint256",
-            "name": "roleId",
-            "type": "uint256"
+            "internalType": "uint256[]",
+            "name": "roleIds",
+            "type": "uint256[]"
           },
           {
             "internalType": "struct IRuleEntitlementBase.RuleDataV2",
@@ -812,10 +812,10 @@
       "license": "MIT"
     },
     "contracts/src/spaces/facets/gated/EntitlementGatedBase.sol": {
-      "keccak256": "0xc126ab162786e4a043bdeb437c79b1ad662a339a73afca5d62aecf86f2ec1696",
+      "keccak256": "0xc366826972be55e693cc94a807a4670835d5b6e2ad76bda1568d973cb17c9d48",
       "urls": [
-        "bzz-raw://2745494dafb968eeec52e5b1d73ff6a9a9eaaf0243fc88b53b8862f940974ca2",
-        "dweb:/ipfs/Qmd3ShreFj8YWL5YDEEnS2vPcm43PyEeWFBrpJdXGmTWKW"
+        "bzz-raw://52da22c7232956849a9d64934af2b13c48a79c9920d7cbdff719195399671029",
+        "dweb:/ipfs/QmexiBbVtWDgRwVjftFDjtxLEhcPVQmp78b1bu8s94w2Pg"
       ],
       "license": "MIT"
     },
@@ -844,10 +844,10 @@
       "license": "MIT"
     },
     "contracts/test/mocks/MockEntitlementGated.sol": {
-      "keccak256": "0x55bb8ef4a29d4e335b527e322bffc6e2f4246b77e728a1923fc8eab604c8d614",
+      "keccak256": "0xd19147bec1718cdc1746bdee362920b1fb1e8c82ed57d96b1f3d45e5e4623612",
       "urls": [
-        "bzz-raw://13fed87f1d77c07bfb8e2f35abd80b2411ede6e4a9527c772de30aaddc8d2241",
-        "dweb:/ipfs/QmY6VDpKKhku5GfFTpRUZKruW3rwqLopZwgNK6N1uAxKgq"
+        "bzz-raw://ddf5eb82e2ad8791aa2ff6700ecb063099f21a586fbc9190a5a6536d3773238b",
+        "dweb:/ipfs/QmUxk6dGs39QmvV8emgPft8cqYdPtKCynfWdi4rVb23mc8"
       ],
       "license": "MIT"
     },

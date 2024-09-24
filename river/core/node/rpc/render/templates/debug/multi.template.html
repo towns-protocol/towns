@@ -7,27 +7,33 @@
       body {
         font-family: monospace;
       }
+
       .success {
         color: green;
       }
+
       .error {
         color: red;
       }
+
       table,
       th,
       td {
         border: 1px solid black;
         border-collapse: collapse;
       }
+
       th,
       td {
         padding: 8px;
         text-align: center;
       }
+
       .tooltip {
         position: relative;
         display: inline-block;
       }
+
       .tooltip .tooltiptext {
         visibility: hidden;
         background-color: white;
@@ -37,97 +43,142 @@
         padding: 5px;
         position: absolute;
         z-index: 1;
-        top: 0;
-        left: 100%;
+        top: 100%;
+        left: 50%;
+        transform: translateX(-50%);
         white-space: pre-wrap;
-        margin-left: 10px;
+        margin-top: 5px;
+        max-height: 300px;
+        overflow-y: auto;
       }
+
       .tooltip:hover .tooltiptext {
         visibility: visible;
+      }
+
+      .tooltip:nth-last-child(-n + 3) .tooltiptext {
+        right: 0;
+        left: auto;
+        transform: none;
       }
     </style>
   </head>
   <!-- prettier-ignore -->
+
   <body>
-    <h2>Node Response Times</h2>
-    <table>
-      <!-- Header row -->
-      <tr>
-        <th>Node</th>
-        <th>HTTP/1.1</th>
-        <th>HTTP/2</th>
-        <th>GRPC</th>
-        <th>Version</th>
-        <th>Uptime</th>
-        <th>Address</th>
-        <th>Status in Contract</th>
-        <th>Operator</th>
-        <th>River Eth Balance</th>
-        <th>Base Eth Balance</th>
-      </tr>
+  <h2>Node Response Times</h2>
+  <table>
+    <!-- Header row -->
+    <tr>
+      <th>Node</th>
+      <th>HTTP/1.1</th>
+      <th>HTTP/2</th>
+      <th>GRPC</th>
+      <th>Version</th>
+      <th>Uptime</th>
+      <th>Address</th>
+      <th>Status in Contract</th>
+      <th>Operator</th>
+      <th>River Eth Balance</th>
+      <th>Base Eth Balance</th>
+      <th>Postgres Status</th>
+    </tr>
 
-      <!-- Data rows for each Node -->
-      {{range .Status.Nodes}}
-      <tr>
-        <th><a href="{{.Record.Url}}/debug/multi">{{.Record.Url}}</a>{{if .Local}} <b>*</b>{{end}}</th>
-        {{with .Http11}}
-        <td class="{{if .Success}}success{{else}}error{{end}}">
-          <span class="tooltip">
-            {{.StatusText}} {{.Elapsed}}
-            <span class="tooltiptext"><pre>{{.ToPrettyJson}}</pre></span>
+    <!-- Data rows for each Node -->
+    {{range .Status.Nodes}}
+    <tr>
+      <th><a href="{{.Record.Url}}/debug/multi">{{.Record.Url}}</a>{{if .Local}} <b>*</b>{{end}}</th>
+      {{with .Http11}}
+      <td class="{{if .Success}}success{{else}}error{{end}}">
+        <span class="tooltip">
+          {{.StatusText}} {{.Elapsed}}
+          <span class="tooltiptext">
+            <pre>{{.ToPrettyJson}}</pre>
           </span>
-        </td>
-        {{end}}
-        {{with .Http20}}
-        <td class="{{if .Success}}success{{else}}error{{end}}">
-          <span class="tooltip">
-            {{.StatusText}} {{.Elapsed}}
-            <span class="tooltiptext"><pre>{{.ToPrettyJson}}</pre></span>
-          </span>
-        </td>
-        {{end}}        {{with .Grpc}}
-        <td class="{{if .Success}}success{{else}}error{{end}}">
-          <span class="tooltip">
-            {{.StatusText}} {{.Elapsed}}
-            <span class="tooltiptext"><pre>{{.ToPrettyJson}}</pre></span>
-          </span>
-        </td>
-        <td>{{.Version}}</td>
-        <td>
-          <span class="tooltip">
-            {{.Uptime}}
-            <span class="tooltiptext"><pre>Start time: <span class="timeconvert">{{.StartTime}}</span>
-UTC: {{.StartTime}}</pre></span>
-          </span>
-        </td>
-        {{end}}
-        <td>{{.Record.Address}}</td>
-        <td>{{.Record.Status}} ({{.Record.StatusText}})</td>
-        <td>{{.Record.Operator}}</td>
-        <td>{{.RiverEthBalance}}</td>
-        <td>{{.BaseEthBalance}}</td>
-      </tr>
+        </span>
+      </td>
       {{end}}
-    </table>
-    <span class="tooltip">
-      Current Time: <span class="timeconvert">{{.Status.QueryTime}}</span><br />
-      Elapsed Time: {{.Status.Elapsed}}
-      <span class="tooltiptext"><pre>UTC: {{.Status.QueryTime}}</pre></span>
-    </span>
+      {{with .Http20}}
+      <td class="{{if .Success}}success{{else}}error{{end}}">
+        <span class="tooltip">
+          {{.StatusText}} {{.Elapsed}}
+          <span class="tooltiptext">
+            <pre>{{.ToPrettyJson}}</pre>
+          </span>
+        </span>
+      </td>
+      {{end}} {{with .Grpc}}
+      <td class="{{if .Success}}success{{else}}error{{end}}">
+        <span class="tooltip">
+          {{.StatusText}} {{.Elapsed}}
+          <span class="tooltiptext">
+            <pre>{{.ToPrettyJson}}</pre>
+          </span>
+        </span>
+      </td>
+      <td>{{.Version}}</td>
+      <td>
+        <span class="tooltip">
+          {{.Uptime}}
+          <span class="tooltiptext">
+            <pre>Start time: <span class="timeconvert">{{.StartTime}}</span>
+UTC: {{.StartTime}}</pre>
+          </span>
+        </span>
+      </td>
+      {{end}}
+      <td>{{.Record.Address}}</td>
+      <td>{{.Record.Status}} ({{.Record.StatusText}})</td>
+      <td>{{.Record.Operator}}</td>
+      <td>{{.RiverEthBalance}}</td>
+      <td>{{.BaseEthBalance}}</td>
+      <td>
+        <span class="tooltip">
+          {{.PostgresStatus.TotalConns}} total connections
+          <span class="tooltiptext">
+            Version: {{.PostgresStatus.Version}}
+            SystemId: {{.PostgresStatus.SystemId}}
+            EsCount: {{.PostgresStatus.EsCount}}
+            Total Connections: {{.PostgresStatus.TotalConns}}
+            Acquired Connections: {{.PostgresStatus.AcquiredConns}}
+            Idle Connections: {{.PostgresStatus.IdleConns}}
+            Constructing Connections: {{.PostgresStatus.ConstructingConns}}
+            Max Connections: {{.PostgresStatus.MaxConns}}
+            New Connections Count: {{.PostgresStatus.NewConnsCount}}
+            Acquire Count: {{.PostgresStatus.AcquireCount}}
+            Empty Acquire Count: {{.PostgresStatus.EmptyAcquireCount}}
+            Canceled Acquire Count: {{.PostgresStatus.CanceledAcquireCount}}
+            Acquire Duration: {{.PostgresStatus.AcquireDuration}}
+            Max Lifetime Destroy Count: {{.PostgresStatus.MaxLifetimeDestroyCount}}
+            Max Idle Destroy Count: {{.PostgresStatus.MaxIdleDestroyCount}}
 
-    <script>
-      document.addEventListener("DOMContentLoaded", function() {
-        var times = document.querySelectorAll('.timeconvert');
-        times.forEach(function(time) {
-          try {
-            var originalTime = time.textContent;
-            var localTime = new Date(originalTime).toLocaleString();
-            time.textContent = localTime;
-          } catch (e) {
-            console.error('Error converting time:', e);
-          }
-        });
+          </span>
+        </span>
+      </td>
+    </tr>
+    {{end}}
+  </table>
+  <span class="tooltip">
+    Current Time: <span class="timeconvert">{{.Status.QueryTime}}</span><br />
+    Elapsed Time: {{.Status.Elapsed}}
+    <span class="tooltiptext">
+      <pre>UTC: {{.Status.QueryTime}}</pre>
+    </span>
+  </span>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      var times = document.querySelectorAll('.timeconvert');
+      times.forEach(function (time) {
+        try {
+          var originalTime = time.textContent;
+          var localTime = new Date(originalTime).toLocaleString();
+          time.textContent = localTime;
+        } catch (e) {
+          console.error('Error converting time:', e);
+        }
       });
-    </script>
-  </body>
+    });
+  </script>
+</body>
 </html>

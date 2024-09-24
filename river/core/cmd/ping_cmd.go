@@ -52,7 +52,7 @@ func runPing(cfg *config.Config) error {
 		return err
 	}
 
-	result, err := rpc.GetRiverNetworkStatus(ctx, cfg, nodeRegistry, riverChain, baseChain, nil)
+	result, err := rpc.GetRiverNetworkStatus(ctx, cfg, nodeRegistry, riverChain, baseChain, nil, nil)
 	if err != nil {
 		return err
 	}

@@ -16,6 +16,9 @@ import {Vm} from "forge-std/Test.sol";
 //contracts
 import {MembershipFacet} from "contracts/src/spaces/facets/membership/MembershipFacet.sol";
 
+// debuggging
+import {console} from "forge-std/console.sol";
+
 contract MembershipJoinSpaceTest is
   MembershipBaseSetup,
   IEntitlementCheckerBase,
@@ -123,7 +126,9 @@ contract MembershipJoinSpaceTest is
       }
 
       vm.prank(selectedNodes[i]);
-      vm.expectRevert(EntitlementGated_TransactionNotRegistered.selector);
+      vm.expectRevert(
+        EntitlementGated_TransactionCheckAlreadyCompleted.selector
+      );
       _entitlementGated.postEntitlementCheckResult(
         transactionId,
         roleId,
@@ -222,7 +227,7 @@ contract MembershipJoinSpaceTest is
     // Further node votes to the terminated transaction should cause reversion due to cleaned up txn.
     vm.expectRevert(
       abi.encodeWithSelector(
-        IEntitlementGatedBase.EntitlementGated_TransactionNotRegistered.selector
+        IEntitlementGatedBase.EntitlementGated_NodeNotFound.selector
       )
     );
     EntitlementCheckRequestEvent memory finalRequest = entitlementCheckRequests[
@@ -275,7 +280,9 @@ contract MembershipJoinSpaceTest is
       }
 
       vm.prank(selectedNodes[i]);
-      vm.expectRevert(EntitlementGated_TransactionNotRegistered.selector);
+      vm.expectRevert(
+        EntitlementGated_TransactionCheckAlreadyCompleted.selector
+      );
       IEntitlementGated(contractAddress).postEntitlementCheckResult(
         transactionId,
         roleId,

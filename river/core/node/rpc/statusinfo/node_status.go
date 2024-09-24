@@ -1,6 +1,10 @@
 package statusinfo
 
-import "encoding/json"
+import (
+	"encoding/json"
+
+	"github.com/river-build/river/core/node/storage"
+)
 
 type BlockchainPing struct {
 	Result  string `json:"result"`
@@ -87,13 +91,14 @@ func (r GrpcResult) ToPrettyJson() string {
 }
 
 type NodeStatus struct {
-	Record          RegistryNodeInfo `json:"record"`
-	Local           bool             `json:"local,omitempty"`
-	Http11          HttpResult       `json:"http11"`
-	Http20          HttpResult       `json:"http20"`
-	Grpc            GrpcResult       `json:"grpc"`
-	RiverEthBalance string           `json:"river_eth_balance"`
-	BaseEthBalance  string           `json:"base_eth_balance"`
+	Record          RegistryNodeInfo             `json:"record"`
+	Local           bool                         `json:"local,omitempty"`
+	Http11          HttpResult                   `json:"http11"`
+	Http20          HttpResult                   `json:"http20"`
+	Grpc            GrpcResult                   `json:"grpc"`
+	RiverEthBalance string                       `json:"river_eth_balance"`
+	BaseEthBalance  string                       `json:"base_eth_balance"`
+	PostgresStatus  storage.PostgresStatusResult `json:"postgres_status"`
 }
 
 type RiverStatus struct {

@@ -27,6 +27,7 @@ import (
 	. "github.com/river-build/river/core/node/protocol/protocolconnect"
 	"github.com/river-build/river/core/node/rpc/render"
 	"github.com/river-build/river/core/node/rpc/statusinfo"
+	"github.com/river-build/river/core/node/storage"
 )
 
 func formatDurationToMs(d time.Duration) string {
@@ -224,6 +225,18 @@ func getEthBalance(
 	}
 }
 
+
+func getPgxPoolStatus(
+	ctx context.Context,
+	result *storage.PostgresStatusResult,
+	poolInfo *storage.PgxPoolInfo,
+	wg *sync.WaitGroup,
+) {
+	defer wg.Done()
+
+	*result = storage.PreparePostgresStatus(ctx, *poolInfo)
+}
+
 func GetRiverNetworkStatus(
 	ctx context.Context,
 	cfg *config.Config,
@@ -231,6 +244,7 @@ func GetRiverNetworkStatus(
 	riverChain *crypto.Blockchain,
 	baseChain *crypto.Blockchain,
 	connectOtelIterceptor *otelconnect.Interceptor,
+	storagePoolInfo *storage.PgxPoolInfo,
 ) (*statusinfo.RiverStatus, error) {
 	startTime := time.Now()
 
@@ -295,6 +309,10 @@ func GetRiverNetworkStatus(
 			wg.Add(1)
 			go getEthBalance(ctx, &r.BaseEthBalance, baseChain, n.Address(), &wg)
 		}
+		if storagePoolInfo != nil {
+			wg.Add(1)
+			go getPgxPoolStatus(ctx, &r.PostgresStatus, storagePoolInfo, &wg)
+		}
 	}
 
 	wg.Wait()
@@ -320,6 +338,7 @@ func (s *Service) handleDebugMulti(w http.ResponseWriter, r *http.Request) {
 		s.riverChain,
 		s.baseChain,
 		s.otelConnectIterceptor,
+		s.storagePoolInfo,
 	)
 	if err == nil {
 		err = render.ExecuteAndWrite(&render.DebugMultiData{Status: status}, w)
@@ -351,6 +370,7 @@ func (s *Service) handleDebugMultiJson(w http.ResponseWriter, r *http.Request) {
 		s.riverChain,
 		s.baseChain,
 		s.otelConnectIterceptor,
+		s.storagePoolInfo,
 	)
 	if err == nil {
 		// Write status as json
