@@ -243,9 +243,10 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
                     await hadWindowToFocus.focus()
                     const navigationChannel = new BroadcastChannel(WEB_PUSH_NAVIGATION_CHANNEL)
                     // avoid reloading the page
-                    navigationChannel.postMessage({ path: url, channelId, threadId })
+                    navigationChannel.postMessage({ path: url, spaceId, channelId, threadId })
                     await sendLogToDatadog('info', 'Broadcast navigation event', {
                         path: url,
+                        spaceId,
                         channelId,
                         threadId,
                     })
@@ -272,6 +273,7 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
                     await window?.focus()
                     await sendLogToDatadog('info', 'Opened browser window', {
                         path: url,
+                        spaceId,
                         channelId,
                         threadId,
                     })

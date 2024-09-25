@@ -5,6 +5,7 @@ import { WEB_PUSH_NAVIGATION_CHANNEL } from 'workers/types.d'
 
 import { useNotificationRoute } from './useNotificationRoute'
 import { useDevice } from './useDevice'
+import { Analytics } from './useAnalytics'
 
 const TAG = '[useAppNotifications][route]'
 const log = console.log
@@ -32,6 +33,10 @@ export function useAppNotifications() {
                 eventDataChannelId: event.data.channelId,
                 eventDataThreadId: event.data.threadId,
                 url: path,
+            })
+            Analytics.getInstance().track('clicked notification', {
+                spaceId: event.data.spaceId,
+                channelId: event.data.channelId,
             })
             navigateTo(path)
         }
