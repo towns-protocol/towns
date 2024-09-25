@@ -173,6 +173,23 @@ export const UnbanIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) =>
     </svg>
 ))
 
+export const BaseIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
+    <svg
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        {...props}
+        ref={ref}
+    >
+        <path
+            d="M11.9808 23C18.0666 23 23 18.0752 23 12C23 5.92486 18.0666 1 11.9808 1C6.20703 1 1.47042 5.43292 1 11.0754H15.5648V12.9246H1C1.47042 18.5671 6.20703 23 11.9808 23Z"
+            fill="#0D5BFF"
+        />
+    </svg>
+))
+
 export const BellIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" {...props} ref={ref}>
         <path
@@ -1834,6 +1851,7 @@ const iconMap = {
     attachment: AttachmentIcon,
     back: BackIcon,
     ban: BanIcon,
+    base: BaseIcon,
     bell: BellIcon,
     blockquote: BlockQuoteIcon,
     blockHand: BlockHandIcon,

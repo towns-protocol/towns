@@ -34,6 +34,7 @@ export const usePanelActions = () => {
                     roleId?: string
                     data?: string
                     roles?: 'new'
+                    wallet?: string
                 } = {},
             ) => {
                 const { stackId = contextStackId, ...restOptions } = options

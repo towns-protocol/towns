@@ -31,6 +31,8 @@ import { PinsPanel } from '@components/PinsPanel/PinsPanel'
 import { ChannelRiverMetadataSettingsPanel } from '@components/ChannelSettings/ChannelRiverMetadataSettingsForm'
 import { ChannelPermissionOverridesPanel } from '@components/ChannelSettings/ChannelPermissionOverridesPanel'
 import { BearerTokenPrivyWrapper } from '@components/BearerTokenPanel/BearerTokenPanel'
+import { SingleWalletPanel } from '@components/Web3/Wallet/SingleWalletPanel'
+import { TransferAssetsPanel } from '@components/Web3/Wallet/TransferAssetsPanel'
 
 export const usePanels = () => {
     const [searchParams] = useSearchParams()
@@ -63,6 +65,12 @@ export const usePanels = () => {
     switch (panel) {
         default: {
             break
+        }
+        case CHANNEL_INFO_PARAMS.TRANSFER_ASSETS: {
+            return <TransferAssetsPanel />
+        }
+        case CHANNEL_INFO_PARAMS.SINGLE_WALLET: {
+            return <SingleWalletPanel />
         }
         case CHANNEL_INFO_PARAMS.BUG_REPORT: {
             return <BugReportPanel />

@@ -55,6 +55,8 @@ export const CHANNEL_INFO_PARAMS = {
     MUTUAL_TOWNS: 'mutual-towns',
     PINS: 'pins',
     BEARER_TOKEN: 'bearer-token',
+    SINGLE_WALLET: 'wallet',
+    TRANSFER_ASSETS: 'transfer-assets',
 } as const
 
 export type CHANNEL_INFO_PARAMS_VALUES =

@@ -22,6 +22,7 @@ import {
 } from 'hooks/useAbstractAccountAddress'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { useBalance } from 'hooks/useBalance'
+import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { useWalletPrefix } from './useWalletPrefix'
 import { useConnectThenLink } from './useConnectThenLink'
 import { ConnectWalletThenLinkButton } from './ConnectWalletThenLinkButton'
@@ -193,15 +194,21 @@ export function LinkedWallet({
     const { data: aaAdress } = useAbstractAccountAddress({
         rootKeyAddress: loggedInWalletAddress,
     })
+    const { openPanel } = usePanelActions()
 
     const isAbstractAccount =
         aaAdress && isAbstractAccountAddress({ address, abstractAccountAddress: aaAdress })
 
-    const aaBalance = useBalance({
+    const balance = useBalance({
         address: address,
-        enabled: isAbstractAccount,
         watch: true,
     })
+
+    const onWalletClick = () => {
+        if (isAbstractAccount) {
+            openPanel('wallet', { wallet: address })
+        }
+    }
 
     const isWalletLinkingPending = useIsTransactionPending(BlockchainTransactionType.LinkWallet)
     const isWalletUnLinkingPending = useIsTransactionPending(BlockchainTransactionType.UnlinkWallet)
@@ -212,39 +219,60 @@ export function LinkedWallet({
     // TODO: we have a privy wallet, and AA wallet. Probably we want to filter out the privy wallet, and only show AA wallet address. Do we need to have our own UI for AA wallet assets? Since you can't export it to MM
     return (
         <PanelButton
-            cursor="auto"
             as="div"
             background="level2"
-            hoverable={false}
+            hoverable={isAbstractAccount}
+            cursor={isAbstractAccount ? 'pointer' : 'auto'}
             justifyContent="spaceBetween"
             height={height}
+            onClick={onWalletClick}
         >
-            <Stack gap="sm" alignItems="start">
+            <Stack
+                horizontal
+                gap="sm"
+                justifyContent="spaceBetween"
+                alignItems="center"
+                width="100%"
+            >
                 {isAbstractAccount && (
-                    <Paragraph>
-                        Towns Wallet - {aaBalance.data?.formatted ?? 0}{' '}
-                        {aaBalance.data?.symbol ?? ''}
-                    </Paragraph>
+                    <Stack gap="sm">
+                        <Paragraph>Towns Wallet</Paragraph>
+                        <ClipboardCopy
+                            color={isAbstractAccount ? 'gray2' : 'gray1'}
+                            label={shortAddress(address)}
+                            clipboardContent={
+                                isAbstractAccount ? `${walletPrefix}:${address}` : address
+                            }
+                        />
+                    </Stack>
                 )}
-
-                <ClipboardCopy
-                    color={isAbstractAccount ? 'gray2' : 'gray1'}
-                    label={shortAddress(address)}
-                    clipboardContent={isAbstractAccount ? `${walletPrefix}:${address}` : address}
-                />
+                {!isAbstractAccount && (
+                    <Stack horizontal centerContent gap="sm">
+                        <ClipboardCopy
+                            color={isAbstractAccount ? 'gray2' : 'gray1'}
+                            label={shortAddress(address)}
+                            clipboardContent={
+                                isAbstractAccount ? `${walletPrefix}:${address}` : address
+                            }
+                        />
+                        <>
+                            <IconButton
+                                cursor={isDisabled ? 'not-allowed' : 'pointer'}
+                                disabled={isDisabled}
+                                opacity={isDisabled ? '0.5' : 'opaque'}
+                                icon="unlink"
+                                color="default"
+                                tooltip="Unlink Wallet"
+                                onClick={() => onUnlinkClick?.(address)}
+                            />
+                        </>
+                    </Stack>
+                )}
+                <Stack horizontal centerContent gap="sm">
+                    {balance.data?.formatted ?? 0} {balance.data?.symbol ?? ''}
+                    <Icon type="base" size="square_sm" />
+                </Stack>
             </Stack>
-
-            {!isAbstractAccount && (
-                <IconButton
-                    cursor={isDisabled ? 'not-allowed' : 'pointer'}
-                    disabled={isDisabled}
-                    opacity={isDisabled ? '0.5' : 'opaque'}
-                    icon="unlink"
-                    color="default"
-                    tooltip="Unlink Wallet"
-                    onClick={() => onUnlinkClick?.(address)}
-                />
-            )}
         </PanelButton>
     )
 }
