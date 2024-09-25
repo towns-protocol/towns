@@ -11,7 +11,7 @@ import {
     useUnlinkWalletTransaction,
 } from 'use-towns-client'
 import { useGetEmbeddedSigner } from '@towns/privy'
-import { Button, Icon, IconButton, MotionBox, Paragraph, Stack, Text } from '@ui'
+import { Button, IconButton, MotionBox, Paragraph, Stack, Text } from '@ui'
 import { useErrorToast } from 'hooks/useErrorToast'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
@@ -23,6 +23,8 @@ import { Analytics } from 'hooks/useAnalytics'
 import { FullPanelOverlay, LinkedWallet } from '../WalletLinkingPanel'
 import { mapToErrorMessage } from '../utils'
 import { useConnectThenLink } from '../useConnectThenLink'
+import { ConnectWalletThenLinkButton } from '../ConnectWalletThenLinkButton'
+import { WalletLinkingInfo } from '../WalletLinkingInfo'
 
 type Props = {
     onHide: ({ shouldEndLoginFlow }: { shouldEndLoginFlow: boolean }) => void
@@ -240,10 +242,14 @@ function Content({
 
                     {children}
 
-                    <Button tone="cta1" width="100%" onClick={connectWalletThenLink}>
-                        <Icon type="link" />
-                        Link a wallet with asset
-                    </Button>
+                    <ConnectWalletThenLinkButton
+                        tone="cta1"
+                        width="100%"
+                        buttonText="Link a wallet with asset"
+                        onLinkWallet={connectWalletThenLink}
+                    />
+
+                    <WalletLinkingInfo />
 
                     {isLoadingLinkingWallet && <FullPanelOverlay text="Linking Wallet" />}
                 </>

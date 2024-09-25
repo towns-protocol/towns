@@ -34,6 +34,8 @@ import { StandardToast } from '@components/Notifications/StandardToast'
 import { mapToErrorMessage } from '@components/Web3/utils'
 import { Analytics } from 'hooks/useAnalytics'
 import { useConnectThenLink } from '@components/Web3/useConnectThenLink'
+import { ConnectWalletThenLinkButton } from '@components/Web3/ConnectWalletThenLinkButton'
+import { WalletLinkingInfo } from '@components/Web3/WalletLinkingInfo'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
 import { useOnJoinChannel } from './AllChannelsList/AllChannelsList'
 
@@ -216,13 +218,13 @@ function Roles(props: {
                     </Button>
                 )}
 
-                <Button
+                <ConnectWalletThenLinkButton
                     tone={syncingSpace || isWalletLinkingPending ? 'level2' : 'cta1'}
                     disabled={syncingSpace || isWalletLinkingPending}
-                    onClick={onLinkEOAClick}
-                >
-                    <Icon type="link" /> Link Wallet
-                </Button>
+                    onLinkWallet={onLinkEOAClick}
+                />
+
+                <WalletLinkingInfo />
             </Stack>
         </>
     )

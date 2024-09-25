@@ -24,6 +24,8 @@ import { createPrivyNotAuthenticatedNotification } from '@components/Notificatio
 import { useBalance } from 'hooks/useBalance'
 import { useWalletPrefix } from './useWalletPrefix'
 import { useConnectThenLink } from './useConnectThenLink'
+import { ConnectWalletThenLinkButton } from './ConnectWalletThenLinkButton'
+import { WalletLinkingInfo } from './WalletLinkingInfo'
 
 export const WalletLinkingPanel = React.memo(() => {
     return (
@@ -92,17 +94,24 @@ function WalletLinkingPanelWithoutAuth() {
                     />
                 )
             })}
-            <PanelButton
-                cursor={isDisabled ? 'not-allowed' : 'pointer'}
-                opacity={isDisabled ? '0.5' : 'opaque'}
-                disabled={isDisabled}
-                onClick={onLinkEOAClick}
-            >
-                <Box width="height_md" alignItems="center">
-                    <Icon type="link" size="square_sm" />
-                </Box>
-                <Paragraph color="default">Link new wallet</Paragraph>
-            </PanelButton>
+
+            <ConnectWalletThenLinkButton onLinkWallet={onLinkEOAClick}>
+                {({ onClick }) => (
+                    <PanelButton
+                        cursor={isDisabled ? 'not-allowed' : 'pointer'}
+                        opacity={isDisabled ? '0.5' : 'opaque'}
+                        disabled={isDisabled}
+                        onClick={onClick}
+                    >
+                        <Box width="height_md" alignItems="center">
+                            <Icon type="link" size="square_sm" />
+                        </Box>
+                        <Paragraph color="default">Link new wallet</Paragraph>
+                    </PanelButton>
+                )}
+            </ConnectWalletThenLinkButton>
+
+            <WalletLinkingInfo />
 
             {/* {isLoadingLinkingWallet && <FullPanelOverlay text="Linking Wallet" />} */}
             {/* {isLoadingUnlinkingWallet && <FullPanelOverlay text="Unlinking Wallet" />} */}
@@ -205,7 +214,7 @@ export function LinkedWallet({
         <PanelButton
             cursor="auto"
             as="div"
-            background="level3"
+            background="level2"
             hoverable={false}
             justifyContent="spaceBetween"
             height={height}
