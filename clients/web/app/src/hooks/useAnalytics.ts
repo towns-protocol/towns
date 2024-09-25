@@ -17,11 +17,23 @@ import { getExternalLinks } from './useExtractInternalLinks'
 const USER_ID_KEY = 'analytics-userId'
 
 interface IAnalyticsBackend {
-    track(event: string, properties?: ApiObject, callback?: ApiCallback): void
-    page(category?: string, name?: string, properties?: ApiObject, callback?: ApiCallback): void
+    track(
+        event: string,
+        properties?: ApiObject | ApiCallback,
+        options?: ApiOptions | ApiCallback,
+        callback?: ApiCallback,
+    ): void
+    page(
+        category?: string,
+        name?: string,
+        properties?: ApiObject | ApiOptions | ApiCallback,
+        options?: ApiOptions | ApiCallback,
+        callback?: ApiCallback,
+    ): void
     identify(
         pseudoId: string | undefined,
-        traits: IdentifyTraits | ApiOptions | undefined,
+        traits?: IdentifyTraits | ApiOptions | ApiCallback,
+        options?: ApiOptions | ApiCallback,
         callback?: ApiCallback,
     ): void
     reset(resetId: boolean): void
@@ -31,20 +43,32 @@ interface IAnalyticsBackend {
 class LocalhostAnalyticsBackend implements IAnalyticsBackend {
     constructor() {}
 
-    track(event: string, properties?: ApiObject, _callback?: ApiCallback): void {
-        console.log('[analytics-localhost] track', event, properties)
+    track(
+        event: string,
+        properties?: ApiObject | ApiCallback,
+        options?: ApiOptions | ApiCallback,
+        _callback?: ApiCallback,
+    ): void {
+        console.log('[analytics-localhost] track', event, properties, options)
     }
 
-    page(category?: string, name?: string, properties?: ApiObject, _callback?: ApiCallback): void {
-        console.log('[analytics-localhost] page', category, name, properties)
+    page(
+        category?: string,
+        name?: string,
+        properties?: ApiObject | ApiOptions | ApiCallback,
+        options?: ApiOptions | ApiCallback,
+        _callback?: ApiCallback,
+    ): void {
+        console.log('[analytics-localhost] page', category, name, properties, options)
     }
 
     identify(
         pseudoId: string | undefined,
-        traits: IdentifyTraits | ApiOptions | undefined,
+        traits?: IdentifyTraits | ApiOptions | ApiCallback,
+        options?: ApiOptions | ApiCallback,
         _callback?: ApiCallback,
     ): void {
-        console.log('[analytics-localhost] identify', pseudoId, traits)
+        console.log('[analytics-localhost] identify', pseudoId, traits, options)
     }
 
     reset(resetId: boolean): void {
@@ -125,11 +149,21 @@ export class Analytics implements TownsAnalytics {
         this.backend.reset(true)
     }
 
-    public identify(traits?: IdentifyTraits | ApiOptions, callback?: ApiCallback) {
-        this.backend.identify(this.pseudoId, traits, callback)
+    public identify(
+        traits?: IdentifyTraits | ApiOptions | ApiCallback,
+        options?: ApiOptions | ApiCallback,
+        callback?: ApiCallback,
+    ) {
+        this.backend.identify(this.pseudoId, traits, options, callback)
     }
 
-    public page(category?: string, name?: string, properties?: ApiObject, callback?: ApiCallback) {
+    public page(
+        category?: string,
+        name?: string,
+        properties?: ApiObject | ApiOptions | ApiCallback,
+        options?: ApiOptions | ApiCallback,
+        callback?: ApiCallback,
+    ) {
         this.backend.page(
             category,
             name,
@@ -137,17 +171,24 @@ export class Analytics implements TownsAnalytics {
                 ...properties,
                 ...this.commonProperties,
             },
+            options,
             callback,
         )
     }
 
-    public track(event: string, properties?: ApiObject, callback?: ApiCallback) {
+    public track(
+        event: string,
+        properties?: ApiObject | ApiCallback,
+        options?: ApiOptions | ApiCallback,
+        callback?: ApiCallback,
+    ) {
         this.backend.track(
             event,
             {
                 ...properties,
                 ...this.commonProperties,
             },
+            options,
             callback,
         )
     }
