@@ -91,6 +91,8 @@ jobs:
     upgrade_alpha_facets:
         name: Upgrade Alpha Facets
         uses: './.github/workflows/Upgrade_alpha_facets.yml'
+        with:
+            job_to_run: Upgrade_Facets_Sparse
         secrets:
             ALPHA_BASE_SEPOLIA_DEPLOYER_PK: ${{ secrets.ALPHA_BASE_SEPOLIA_DEPLOYER_PK }}
             SLACK_CD_ALERT_WORKFLOW_WEBHOOK_URL: ${{ secrets.SLACK_CD_ALERT_WORKFLOW_WEBHOOK_URL }}
