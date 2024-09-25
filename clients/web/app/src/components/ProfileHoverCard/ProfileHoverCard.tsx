@@ -1,5 +1,5 @@
 import React from 'react'
-import { useUserLookupContext } from 'use-towns-client'
+import { useSpaceId, useUserLookupContext } from 'use-towns-client'
 import { Avatar } from '@components/Avatar/Avatar'
 import { useGetUserBio } from 'hooks/useUserBio'
 import { Stack } from 'ui/components/Stack/Stack'
@@ -8,6 +8,7 @@ import { Tooltip } from 'ui/components/Tooltip/Tooltip'
 import { MutualTowns } from '@components/MutualTowns/MutualTowns'
 import { useResolveEnsName } from 'api/lib/ensNames'
 import { Icon, Text } from '@ui'
+import { UserRolePills } from '@components/UserRoles/UserRoles'
 
 type Props = {
     userId: string
@@ -15,14 +16,16 @@ type Props = {
 
 export const ProfileHoverCard = (props: Props) => {
     const { userId } = props
-
     const { lookupUser } = useUserLookupContext()
     const user = lookupUser(userId)
     const { data: userBio } = useGetUserBio(userId)
     const { resolvedEnsName } = useResolveEnsName({ userId, ensAddress: user?.ensAddress })
+    const spaceId = useSpaceId()
+
+    const userRoles = spaceId ? <UserRolePills userId={userId} spaceId={spaceId} /> : null
 
     return user ? (
-        <Tooltip gap elevate maxWidth="300" background="level2">
+        <Tooltip gap elevate maxWidth="300">
             <Stack gap padding="sm">
                 <Stack horizontal gap>
                     <Avatar userId={userId} size="avatar_lg" />
@@ -62,6 +65,12 @@ export const ProfileHoverCard = (props: Props) => {
                         <Paragraph size="md" color="gray2">
                             {userBio}
                         </Paragraph>
+                    </Stack>
+                )}
+                {userRoles && (
+                    <Stack gap="sm">
+                        <Paragraph strong>Roles</Paragraph>
+                        <Stack>{userRoles}</Stack>
                     </Stack>
                 )}
             </Stack>

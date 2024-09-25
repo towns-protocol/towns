@@ -36,7 +36,7 @@ import {
 } from 'api/lib/notificationSettings'
 import { useDevice } from 'hooks/useDevice'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
-import { CHANNEL_INFO_PARAMS, PATHS, TOWN_INFO_PARAMS } from 'routes'
+import { CHANNEL_INFO_PARAMS, TOWN_INFO_PARAMS } from 'routes'
 import { getInviteUrl, shortAddress } from 'ui/utils/utils'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { ConfirmLeaveModal } from '@components/ConfirmLeaveModal/ConfirmLeaveModal'
@@ -162,9 +162,9 @@ export const SpaceInfo = () => {
         if (isTouch) {
             setActiveModal('members')
         } else {
-            navigate(`/${PATHS.SPACES}/${spaceID}/members?panel=${CHANNEL_INFO_PARAMS.TOWN_INFO}`)
+            openPanel(CHANNEL_INFO_PARAMS.TOWN_MEMBERS)
         }
-    }, [isTouch, navigate, spaceID])
+    }, [isTouch, openPanel])
 
     const onManageRolesClick = useEvent(() => {
         if (!isRolesPanel) {

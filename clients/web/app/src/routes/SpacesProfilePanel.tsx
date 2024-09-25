@@ -43,7 +43,6 @@ import { ConfirmBlockModal } from '@components/ConfirmBlockModal/ConfirmBlockMod
 import { PanelButton } from '@components/Panel/PanelButton'
 import { useBlockedUsers } from 'hooks/useBlockedUsers'
 import { UserPreferences } from '@components/UserProfile/UserPreferences'
-// import { useMatchingMessages } from '@components/DirectMessages/CreateDirectMessage/hooks/useMatchingMessages'
 import { Analytics } from 'hooks/useAnalytics'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
 

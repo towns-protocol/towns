@@ -8,9 +8,7 @@ import {
     useMyMembership,
     useSpaceMembers,
 } from 'use-towns-client'
-import { Link } from 'react-router-dom'
 import { useEnvironment } from 'hooks/useEnvironmnet'
-import { PATHS } from 'routes'
 import { useSizeContext } from 'ui/hooks/useSizeContext'
 import { Box, Icon, IconButton, Paragraph, Stack } from '@ui'
 import { getInviteUrl } from 'ui/utils/utils'
@@ -21,6 +19,7 @@ import { useDevice } from 'hooks/useDevice'
 import useCopyToClipboard from 'hooks/useCopyToClipboard'
 import { SECOND_MS } from 'data/constants'
 import { Analytics } from 'hooks/useAnalytics'
+import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import * as styles from './SpaceSideBar.css'
 
 export const SpaceSideBarHeader = (props: {
@@ -67,6 +66,12 @@ export const SpaceSideBarHeader = (props: {
     const size = useSizeContext()
     const isSmall = size.lessThan(200)
     const { isReduceMotion } = useDevice()
+
+    const { openPanel } = usePanelActions()
+
+    const onTownMembersClick = useEvent(() => {
+        openPanel('town-members')
+    })
 
     return (
         <>
@@ -173,16 +178,19 @@ export const SpaceSideBarHeader = (props: {
                 </Box>
             </Stack>
 
-            <Stack paddingX gap="md" insetX="xs" paddingY="xs">
+            <Stack
+                paddingX
+                gap="md"
+                insetX="xs"
+                paddingY="xs"
+                data-testid="all-town-members-list-button"
+                cursor="pointer"
+                onClick={onTownMembersClick}
+            >
                 <Paragraph textAlign="center" color="cta2" size="sm">
-                    <Link
-                        to={`/${PATHS.SPACES}/${space.id}/members`}
-                        data-testid="all-town-members-list-button"
-                    >
-                        {hasMembers
-                            ? `${membersCount} member${membersCount > 1 ? 's' : ''}`
-                            : 'fetching members...'}
-                    </Link>
+                    {hasMembers
+                        ? `${membersCount} member${membersCount > 1 ? 's' : ''}`
+                        : 'fetching members...'}
                 </Paragraph>
                 <ShareTownLinkButton spaceId={space.id} />
             </Stack>

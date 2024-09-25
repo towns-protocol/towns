@@ -48,7 +48,7 @@ export const MutualTowns = (props: { userId: string | undefined; max?: number })
                     <React.Fragment key={s.id}>
                         <Box insetLeft="sm" paddingLeft="xs">
                             <SpaceIcon
-                                background="level1"
+                                background="level2"
                                 border="strongFaint"
                                 rounded="sm"
                                 letterFontSize="sm"

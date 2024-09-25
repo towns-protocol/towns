@@ -37,6 +37,7 @@ import { useDevice } from 'hooks/useDevice'
 import { VerifiedOnChainAssetTooltip } from '@components/VerifiedOnChainAssetTooltip/VerifiedOnChainAssetTooltip'
 import { useUploadAttachment } from '@components/MediaDropContext/useUploadAttachment'
 import { UploadImageRequestConfig } from '@components/UploadImage/useOnImageChangeEvent'
+import { UserRoles } from '@components/UserRoles/UserRoles'
 import { UserWalletContent } from './UserWalletContent'
 
 type Props = {
@@ -334,6 +335,7 @@ export const UserProfile = (props: Props) => {
                         ))}
                 </Stack>
             )}
+            <UserRoles userId={userId} />
         </Stack>
     )
 }

@@ -8,7 +8,6 @@ import { CreateSpaceFormV2 } from '@components/Web3/MembershipNFT/CreateSpaceFor
 import { Panel } from '@components/Panel/Panel'
 import { CardLabel } from '@ui'
 import { CreateMessage } from '@components/DirectMessages/CreateDirectMessage/CreateMessage'
-import { ChannelSettings } from './ChannelSettings'
 import { SpaceHome, TouchHome } from './home'
 import { SpaceMentions } from './SpaceMentions'
 import { SpacesChannel, SpacesChannelRoute } from './SpacesChannel'
@@ -16,9 +15,7 @@ import { SpacesChannelReplies } from './SpacesChannelReplies'
 import { SpacesInvite } from './SpacesInvite'
 import { SpaceThreads } from './SpaceThreads'
 import { SpaceProfilePanel } from './SpacesProfilePanel'
-import { SpaceMembers } from './SpaceMembers'
 import { NoJoinedSpacesFallback } from './NoJoinedSpacesFallback'
-import { ChannelMembers } from './ChannelMembers'
 import { TouchProfile } from './TouchProfile'
 import { SpacesChannelAnimated } from './SpacesChannelAnimated'
 import { AppPanelLayout } from './layouts/AppPanelLayout'
@@ -99,7 +96,6 @@ export const AuthenticatedRoutes = () => {
                                 />
                                 <Route path={`${PATHS.SPACES}/:spaceSlug`}>
                                     <Route index element={<SpaceHome />} />
-                                    <Route path={PATHS.MEMBERS} element={<SpaceMembers />} />
                                     {messageRoutes}
                                     <Route
                                         path={`${PATHS.CHANNELS}/:channelSlug`}
@@ -170,13 +166,7 @@ const TownRoutes = () => (
     <Routes>
         <Route path={PATHS.INVITE} element={<SpacesInvite />} />
         <Route path={PATHS.SEARCH} element={<TouchSearchTab />} />
-
-        <Route path={`${PATHS.CHANNELS}/:channelSlug`}>
-            <Route element={<SpacesChannelRoute />}>
-                <Route path={PATHS.MEMBERS} element={<ChannelMembers />} />
-                <Route path={PATHS.SETTINGS} element={<ChannelSettings />} />
-            </Route>
-        </Route>
+        <Route path={`${PATHS.CHANNELS}/:channelSlug`} element={<SpacesChannelRoute />} />
     </Routes>
 )
 

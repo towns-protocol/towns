@@ -4,7 +4,7 @@ import {
     useCasablancaStore,
 } from 'use-towns-client'
 
-import { WalletAlreadyLinkedError, WalletNotLinkedError } from '@river-build/web3'
+import { Permission, WalletAlreadyLinkedError, WalletNotLinkedError } from '@river-build/web3'
 
 import {
     ENTITLEMENT_NOT_ALLOWED,
@@ -14,6 +14,19 @@ import {
     ERROR_NAME_LENGTH_INVALID,
     ERROR_SPACE_ALREADY_REGISTERED,
 } from '@components/Web3/constants'
+
+export const MODERATOR_PERMISSIONS: Permission[] = [
+    Permission.Redact,
+    Permission.PinMessage,
+    Permission.Ban,
+    Permission.AddRemoveChannels,
+    Permission.ModifySpaceSettings,
+]
+
+export const isModeratorPermission = (permission: Permission) => {
+    return MODERATOR_PERMISSIONS.includes(permission)
+}
+
 import { trackError } from 'hooks/useAnalytics'
 
 export const EVERYONE_ADDRESS = '0x0000000000000000000000000000000000000001'

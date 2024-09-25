@@ -31,6 +31,7 @@ import { PinsPanel } from '@components/PinsPanel/PinsPanel'
 import { ChannelRiverMetadataSettingsPanel } from '@components/ChannelSettings/ChannelRiverMetadataSettingsForm'
 import { ChannelPermissionOverridesPanel } from '@components/ChannelSettings/ChannelPermissionOverridesPanel'
 import { BearerTokenPrivyWrapper } from '@components/BearerTokenPanel/BearerTokenPanel'
+import { TownMembersPanel } from '@components/TownMembersPanel/TownMembersPanel'
 import { SingleWalletPanel } from '@components/Web3/Wallet/SingleWalletPanel'
 import { TransferAssetsPanel } from '@components/Web3/Wallet/TransferAssetsPanel'
 
@@ -180,6 +181,10 @@ export const usePanels = () => {
             } else {
                 return null
             }
+        }
+
+        case CHANNEL_INFO_PARAMS.TOWN_MEMBERS: {
+            return withWrapper(<TownMembersPanel />)
         }
     }
 

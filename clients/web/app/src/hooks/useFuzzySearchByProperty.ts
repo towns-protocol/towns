@@ -1,11 +1,7 @@
 import React, { useCallback, useMemo, useState } from 'react'
 import fuzzysort from 'fuzzysort'
 
-type FuzzySearchItem = {
-    name: string
-}
-
-export function useFuzzySearchByProperty<T extends FuzzySearchItem>(
+export function useFuzzySearchByProperty<T>(
     items: T[],
     searchKey: keyof T & string = 'name' as keyof T & string,
 ) {

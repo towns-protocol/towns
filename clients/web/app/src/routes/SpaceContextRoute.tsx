@@ -123,7 +123,7 @@ const SpaceContext = () => {
     )
 }
 
-const { CHANNELS, MESSAGES, SPACES, SETTINGS } = PATHS
+const { CHANNELS, MESSAGES, SPACES } = PATHS
 
 export interface RouteInfo {
     type: 'channel' | 'invite' | 'messages' | 'settings' | 'generic' | 'home' | 'notfound'
@@ -196,11 +196,6 @@ const useSpaceRouteMatcher = (space: SpaceData | undefined): RouteInfo | undefin
                 }
                 return {
                     type: 'messages',
-                    ...routeInfo,
-                } as const
-            } else if (routeInfo.pathname.includes(SETTINGS)) {
-                return {
-                    type: 'settings',
                     ...routeInfo,
                 } as const
             } else {

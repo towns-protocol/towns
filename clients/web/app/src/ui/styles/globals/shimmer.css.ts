@@ -21,6 +21,26 @@ export const shimmerClass = style({
     backgroundSize: `3000px 100%`,
 })
 
+const pillShimmerKeyframes = keyframes({
+    '0%': {
+        backgroundPosition: `-200px 0`,
+    },
+    '20%': {
+        backgroundPosition: `0px 0`,
+    },
+    '100%': {
+        backgroundPosition: `200px 0`,
+    },
+})
+
+export const pillShimmerClass = style({
+    animation: `${pillShimmerKeyframes} 2s infinite ease-in`,
+    background: `linear-gradient(
+       to right, ${vars.color.background.level3} 0px, ${vars.color.background.level3Hover} 200px, ${vars.color.background.level3} 400px
+    )`,
+    backgroundSize: `400px 100%`,
+})
+
 export const shimmerGradientTopClass = style({
     selectors: {
         '&:after': {

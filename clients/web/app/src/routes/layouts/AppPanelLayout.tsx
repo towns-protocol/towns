@@ -20,7 +20,6 @@ export const AppPanelLayout = () => {
     const messageRoute = useMatch({ path: `/${PATHS.MESSAGES}`, end: false })
     const homeRoute = useMatch({ path: '/home', end: true })
     const spacesNewRoute = useMatch({ path: `/${PATHS.SPACES}/new`, end: true })
-    const spacesSettingsRoute = useMatch({ path: `/${PATHS.SPACES}/:space/settings`, end: false })
 
     const space = useSpaceData()
     const config = ['spaces', 'primary-menu', 'secondary-menu', 'content']
@@ -32,8 +31,7 @@ export const AppPanelLayout = () => {
     // can't rely on `space` being defined
     const hasTownRoute = !!useSpaceIdFromPathname() || space
 
-    const displaySpacePanel =
-        hasTownRoute && (!(spacesSettingsRoute || spacesNewRoute || homeRoute) || isMessagesRoute)
+    const displaySpacePanel = hasTownRoute && (!(spacesNewRoute || homeRoute) || isMessagesRoute)
 
     return (
         <>

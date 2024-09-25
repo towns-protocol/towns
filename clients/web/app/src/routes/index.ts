@@ -6,7 +6,7 @@ export const PATHS = {
     MENTIONS: 'mentions',
     MEMBERS: 'members',
     THREADS: 'threads',
-    SETTINGS: 'settings',
+    // SETTINGS: 'settings',
     LOGIN: 'login',
     VERSIONS: 'versions',
     ROLES: 'roles',
@@ -55,6 +55,7 @@ export const CHANNEL_INFO_PARAMS = {
     MUTUAL_TOWNS: 'mutual-towns',
     PINS: 'pins',
     BEARER_TOKEN: 'bearer-token',
+    TOWN_MEMBERS: 'town-members',
     SINGLE_WALLET: 'wallet',
     TRANSFER_ASSETS: 'transfer-assets',
 } as const
