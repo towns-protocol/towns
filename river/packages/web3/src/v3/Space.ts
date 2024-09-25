@@ -59,6 +59,7 @@ export class Space {
     private readonly entitlementDataQueryable: IEntitlementDataQueryableShim
     private readonly prepay: IPrepayShim
     private readonly erc721A: IERC721AShim
+    private readonly spaceOwnerErc721A: IERC721AShim
 
     constructor(
         address: string,
@@ -79,6 +80,7 @@ export class Space {
         this.pausable = new TokenPausableFacetShim(address, provider)
         this.roles = new IRolesShim(address, provider)
         this.spaceOwner = new ISpaceOwnerShim(config.addresses.spaceOwner, provider)
+        this.spaceOwnerErc721A = new IERC721AShim(config.addresses.spaceOwner, provider)
         this.membership = new IMembershipShim(address, provider)
         this.banning = new IBanningShim(address, provider)
         this.erc721AQueryable = new IERC721AQueryableShim(address, provider)
@@ -96,6 +98,7 @@ export class Space {
             this.pausable,
             this.roles,
             this.spaceOwner,
+            this.spaceOwnerErc721A,
             this.membership,
             this.banning,
             this.erc721AQueryable,
@@ -163,6 +166,10 @@ export class Space {
 
     public get ERC721A(): IERC721AShim {
         return this.erc721A
+    }
+
+    public get SpaceOwnerErc721A(): IERC721AShim {
+        return this.spaceOwnerErc721A
     }
 
     public getSpaceInfo(): Promise<ISpaceOwnerBase.SpaceStruct> {

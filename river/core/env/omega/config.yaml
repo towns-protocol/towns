@@ -1,6 +1,6 @@
 # Blockchain configuration
 baseChain:
-    chainId: 84532
+    chainId: 8453
     networkUrl: 'https://mainnet.base.org'
     blockTimeMs: 2000
 riverChain:

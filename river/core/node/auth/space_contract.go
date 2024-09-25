@@ -51,4 +51,8 @@ type SpaceContract interface {
 		spaceId shared.StreamId,
 		linkedWallets []common.Address,
 	) (bool, error)
+	GetRoles(
+		ctx context.Context,
+		spaceId shared.StreamId,
+	) ([]types.BaseRole, error)
 }

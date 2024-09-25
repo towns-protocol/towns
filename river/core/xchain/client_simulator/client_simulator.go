@@ -288,7 +288,7 @@ func (cs *clientSimulator) executeV2Check(ctx context.Context, ruleData *deploy.
 				return nil, err
 			}
 			log.Info("NewMockEntitlementGated", "gated", gated.RequestEntitlementCheck, "err", err)
-			tx, err := gated.RequestEntitlementCheckV2(opts, big.NewInt(0), *ruleData)
+			tx, err := gated.RequestEntitlementCheckV2(opts, []*big.Int{big.NewInt(0)}, *ruleData)
 			log.Info("RequestEntitlementCheckV2 called", "tx", tx, "err", err)
 			return tx, err
 		})

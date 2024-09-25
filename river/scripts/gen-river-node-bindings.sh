@@ -44,6 +44,8 @@ generate_go base base IEntitlementChecker i_entitlement_checker
 generate_go base base IEntitlementGated i_entitlement_gated
 generate_go base base IEntitlement i_entitlement
 generate_go base base ICrossChainEntitlement i_cross_chain_entitlement
+generate_go base base IRoles i_roles
+
 
 # Full Base (and other) contracts for deployment from tests
 generate_go base/deploy deploy MockCrossChainEntitlement mock_cross_chain_entitlement

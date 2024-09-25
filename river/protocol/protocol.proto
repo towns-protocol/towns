@@ -138,6 +138,9 @@ message MiniblockHeader {
     // pointer to block with previous snapshot
     int64 prev_snapshot_miniblock_num = 7;
 
+    // optional metadata tags for external systems
+    Tags tags = 8;
+
     // stream payloads are required to have a content field
     oneof content {
         google.protobuf.Empty none = 100;
@@ -653,6 +656,10 @@ message GetStreamExRequest {
 
 message Minipool {
     repeated Envelope events = 1;
+}
+
+message Tags {
+    map<string, string> tags = 1;
 }
 
 // GetStreamExResponse is a stream of raw data that represents the current state of the requested stream.

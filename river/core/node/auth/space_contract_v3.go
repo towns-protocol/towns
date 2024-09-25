@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"fmt"
 	"math/big"
 	"sync"
 
@@ -22,6 +23,7 @@ type Space struct {
 	address         common.Address
 	managerContract *base.EntitlementsManager
 	queryContract   *base.EntitlementDataQueryable
+	rolesContract   *base.IRoles
 	banning         Banning
 	pausable        *base.Pausable
 	channels        *base.Channels
@@ -57,6 +59,77 @@ func NewSpaceContractV3(
 	}
 
 	return spaceContract, nil
+}
+
+func (sc *SpaceContractV3) GetRoles(
+	ctx context.Context,
+	spaceId shared.StreamId,
+) ([]types.BaseRole, error) {
+	space, err := sc.getSpace(ctx, spaceId)
+	if err != nil {
+		return nil, err
+	}
+
+	iRoleBaseRoles, err := space.rolesContract.GetRoles(nil)
+	if err != nil {
+		return nil, err
+	}
+
+	iEntitlementCache := make(map[common.Address]*base.IEntitlement)
+
+	baseRoles := make([]types.BaseRole, len(iRoleBaseRoles))
+	for i, iRoleBaseRole := range iRoleBaseRoles {
+		marshalledEntitlements := make([]types.Entitlement, 0, len(iRoleBaseRole.Entitlements))
+		for _, entitlement := range iRoleBaseRole.Entitlements {
+			if _, ok := iEntitlementCache[entitlement]; !ok {
+				iEntitlement, err := base.NewIEntitlement(entitlement, sc.backend)
+				if err != nil {
+					return nil, fmt.Errorf("error constructing IEntitlement for address %v, %w", entitlement, err)
+				}
+				iEntitlementCache[entitlement] = iEntitlement
+			}
+			iEntitlement := iEntitlementCache[entitlement]
+			entitlementType, err := iEntitlement.ModuleType(nil)
+			if err != nil {
+				return nil, fmt.Errorf(
+					"error fetching entitlement type for IEntitlement @ address %v: %w",
+					entitlement,
+					err,
+				)
+			}
+			entitlementData, err := iEntitlement.GetEntitlementDataByRoleId(nil, iRoleBaseRole.Id)
+			if err != nil {
+				return nil, fmt.Errorf(
+					"error fetching entitlement data for role %v from IEntitlement @ address %v: %w",
+					iRoleBaseRole.Id.Uint64(),
+					entitlement,
+					err,
+				)
+			}
+			rawEntitlement := base.IEntitlementDataQueryableBaseEntitlementData{
+				EntitlementType: entitlementType,
+				EntitlementData: entitlementData,
+			}
+			marshalledEntitlement, err := types.MarshalEntitlement(ctx, rawEntitlement)
+			if err != nil {
+				return nil, fmt.Errorf(
+					"error marshalling entitlement for role id %v from IEntitlement @ address %v: %w",
+					iRoleBaseRole.Id.Uint64(),
+					entitlement,
+					err,
+				)
+			}
+			marshalledEntitlements = append(marshalledEntitlements, marshalledEntitlement)
+		}
+		baseRoles[i] = types.BaseRole{
+			Id:           iRoleBaseRole.Id,
+			Name:         iRoleBaseRole.Name,
+			Disabled:     iRoleBaseRole.Disabled,
+			Permissions:  iRoleBaseRole.Permissions,
+			Entitlements: marshalledEntitlements,
+		}
+	}
+	return baseRoles, nil
 }
 
 func (sc *SpaceContractV3) IsMember(
@@ -337,6 +410,10 @@ func (sc *SpaceContractV3) getSpace(ctx context.Context, spaceId shared.StreamId
 		if err != nil {
 			return nil, err
 		}
+		rolesContract, err := base.NewIRoles(address, sc.backend)
+		if err != nil {
+			return nil, err
+		}
 		pausable, err := base.NewPausable(address, sc.backend)
 		if err != nil {
 			return nil, err
@@ -355,6 +432,7 @@ func (sc *SpaceContractV3) getSpace(ctx context.Context, spaceId shared.StreamId
 			address:         address,
 			managerContract: managerContract,
 			queryContract:   queryContract,
+			rolesContract:   rolesContract,
 			banning:         banning,
 			pausable:        pausable,
 			channels:        channels,
