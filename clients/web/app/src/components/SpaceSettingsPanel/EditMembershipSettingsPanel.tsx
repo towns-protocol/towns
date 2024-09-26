@@ -18,6 +18,7 @@ import { FullPanelOverlay } from '@components/Web3/WalletLinkingPanel'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
 import { formatUnits } from 'hooks/useBalance'
+import { EditPricingTitle } from '@components/Web3/EditMembership/EditPricingTitle'
 import { EditMembershipSchemaType, editMembershipSchema } from './editMembershipSchema'
 import { useGatingInfo, useMembershipInfoAndRoleDetails } from './hooks'
 import { EditMembershipSubmitButton } from './EditMembershipSubmitButton'
@@ -104,42 +105,46 @@ function EditMembershipForm({
 
                     return (
                         <FormProvider {..._form}>
-                            <Stack gap grow>
-                                <Paragraph strong>Who Can Join</Paragraph>
-                                <EditGating />
-
+                            <Stack grow gap paddingY="xs">
+                                <Stack gap="paragraph">
+                                    <Paragraph strong>Who Can Join</Paragraph>
+                                    <EditGating />
+                                </Stack>
                                 {environment.accountAbstractionConfig && (
                                     <>
-                                        <Paragraph strong>Pricing</Paragraph>
-                                        {!pricingModule?.isFixed && isFixedPricingSelected && (
-                                            <Stack
-                                                horizontal
-                                                background="level2"
-                                                padding="md"
-                                                gap="sm"
-                                                rounded="sm"
-                                                alignItems="center"
-                                            >
-                                                <Icon
-                                                    type="info"
-                                                    color="negative"
-                                                    size="square_sm"
-                                                />
-                                                <Text size="sm">
-                                                    {`This space is using dynamic pricing. If you
+                                        <Stack gap="paragraph">
+                                            <EditPricingTitle />
+                                            {!pricingModule?.isFixed && isFixedPricingSelected && (
+                                                <Stack
+                                                    horizontal
+                                                    background="level2"
+                                                    padding="md"
+                                                    gap="sm"
+                                                    rounded="sm"
+                                                    alignItems="center"
+                                                >
+                                                    <Icon
+                                                        type="info"
+                                                        color="negative"
+                                                        size="square_sm"
+                                                    />
+                                                    <Text size="sm">
+                                                        {`This space is using dynamic pricing. If you
                         switch to fixed pricing, you can't go back.`}
-                                                </Text>
-                                            </Stack>
-                                        )}
-                                        <EditPricing
-                                            isEditMode
-                                            freeAllocation={freeAllocation}
-                                            pricingModules={pricingModules}
-                                            isLoadingPricingModules={isLoadingPricingModules}
-                                        />
-
-                                        <Paragraph strong>Membership</Paragraph>
-                                        <EditMembership />
+                                                    </Text>
+                                                </Stack>
+                                            )}
+                                            <EditPricing
+                                                isEditMode
+                                                freeAllocation={freeAllocation}
+                                                pricingModules={pricingModules}
+                                                isLoadingPricingModules={isLoadingPricingModules}
+                                            />
+                                        </Stack>
+                                        <Stack gap="paragraph">
+                                            <Paragraph strong>Membership</Paragraph>
+                                            <EditMembership />
+                                        </Stack>
                                     </>
                                 )}
 

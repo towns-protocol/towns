@@ -7,6 +7,7 @@ import { EditGating } from '@components/Web3/EditMembership/EditGating'
 import { Panel } from '@components/Panel/Panel'
 import { useDevice } from 'hooks/useDevice'
 import { ModalContainer } from '@components/Modals/ModalContainer'
+import { EditPricingTitle } from '@components/Web3/EditMembership/EditPricingTitle'
 
 type PanelContentProps = {
     onClosed: () => void
@@ -22,17 +23,23 @@ export function PanelContent({
     const { data: pricingModules, isLoading: isLoadingPricingModules } = usePricingModules()
     const content = useMemo(() => {
         return (
-            <Stack gap>
-                <Paragraph strong>Who Can Join</Paragraph>
-                <EditGating />
-                <Paragraph strong>Pricing</Paragraph>
-                <EditPricing
-                    freeAllocation={freeAllocation}
-                    pricingModules={pricingModules}
-                    isLoadingPricingModules={isLoadingPricingModules}
-                />
-                <Paragraph strong>Membership</Paragraph>
-                <EditMembership />
+            <Stack gap paddingY="xs">
+                <Stack gap="paragraph">
+                    <Paragraph strong>Who Can Join</Paragraph>
+                    <EditGating />
+                </Stack>
+                <Stack gap="paragraph">
+                    <EditPricingTitle />
+                    <EditPricing
+                        freeAllocation={freeAllocation}
+                        pricingModules={pricingModules}
+                        isLoadingPricingModules={isLoadingPricingModules}
+                    />
+                </Stack>
+                <Stack gap="paragraph">
+                    <Paragraph strong>Membership</Paragraph>
+                    <EditMembership />
+                </Stack>
                 {children}
             </Stack>
         )

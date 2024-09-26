@@ -240,15 +240,15 @@ export function EditGating({ isRole }: EditGatingProps) {
                 </RadioCard>
             )}
 
-            <Stack>
-                {isValid ? null : (
-                    <>
-                        {isTokenFieldTouched && gatingType === 'gated' && (
+            {isValid ? null : (
+                <>
+                    {isTokenFieldTouched && gatingType === 'gated' && (
+                        <Stack>
                             <ErrorMessage errors={formState.errors} fieldName="tokensGatedBy" />
-                        )}
-                    </>
-                )}
-            </Stack>
+                        </Stack>
+                    )}
+                </>
+            )}
         </Stack>
     )
 }

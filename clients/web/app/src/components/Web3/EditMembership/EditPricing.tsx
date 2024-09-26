@@ -166,7 +166,7 @@ export function EditPricing({
     }
 
     return (
-        <Stack gap="sm" rounded="md">
+        <Stack gap="sm">
             {enabledPricingModules?.includes('dynamic') && (
                 <RadioCard
                     selected={pricingPreset === PricingPreset.Dynamic}
@@ -243,6 +243,7 @@ export function EditPricing({
                                         autoFocus
                                         width="100"
                                         step={100}
+                                        min={0}
                                         background="level3"
                                         autoComplete="one-time-code"
                                         type="number"
@@ -285,7 +286,7 @@ export function EditPricing({
                     <ErrorMessage errors={formState.errors} fieldName="membershipCost" />
                 </FadeInBox>
             ) : (
-                <>&nbsp;</>
+                <></>
             )}
         </Stack>
     )
