@@ -184,11 +184,11 @@ function CreateSpaceFormV2WithoutAuth() {
                         limit,
                         gatingType,
                         tokensGatedBy,
-                        // TODO: Get usersGatedBy back here
                         shortDescriptionValue,
                         longDescriptionValue,
                         membershipPricingType,
                         spaceIconUrl,
+                        prepaidMemberships,
                     ] = _form.watch([
                         'spaceName',
                         'membershipCost',
@@ -199,6 +199,7 @@ function CreateSpaceFormV2WithoutAuth() {
                         'longDescription',
                         'membershipPricingType',
                         'spaceIconUrl',
+                        'prepaidMemberships',
                     ])
 
                     // b/c it's a FileList before upload
@@ -252,7 +253,6 @@ function CreateSpaceFormV2WithoutAuth() {
 
                     const isEveryoneMembership = gatingType === 'everyone'
                     const isTokenFieldTouched = _form.formState.touchedFields.tokensGatedBy
-                    const prepaidMemberships = _form.getValues('prepaidMemberships')
 
                     return (
                         <FormProvider {..._form}>
@@ -351,11 +351,11 @@ function CreateSpaceFormV2WithoutAuth() {
                                                                         ],
                                                                     ) && !!isTokenFieldTouched
                                                                 }
-                                                                title="For"
+                                                                title="Access"
                                                                 subtitle={
                                                                     isEveryoneMembership
-                                                                        ? 'Anyone'
-                                                                        : 'Holders'
+                                                                        ? 'Open'
+                                                                        : 'Gated'
                                                                 }
                                                                 anyoneCanJoin={isEveryoneMembership}
                                                                 dataTestId="membership-token-type"

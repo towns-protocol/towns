@@ -4,7 +4,7 @@ import { useGetEmbeddedSigner } from '@towns/privy'
 import { Box, BoxProps, FancyButton, Icon, IconProps, Text } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
-import { TokenVerification } from '@components/Web3/TokenVerification/TokenVerification'
+import { GatedTownModal } from '@components/Web3/GatedTownModal/GatedTownModal'
 import { Analytics } from 'hooks/useAnalytics'
 import { AboveAppProgressModalContainer } from '@components/AppProgressOverlay/AboveAppProgress/AboveAppProgress'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
@@ -151,7 +151,7 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
                     background="none"
                     onHide={() => hideAssetModal({ shouldEndLoginFlow: true })}
                 >
-                    <TokenVerification
+                    <GatedTownModal
                         spaceId={spaceId}
                         joinSpace={onTokenVerificationJoinClick}
                         onHide={hideAssetModal}

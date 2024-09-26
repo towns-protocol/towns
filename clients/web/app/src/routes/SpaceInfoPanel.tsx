@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router'
 import { useSearchParams } from 'react-router-dom'
 import { useEvent } from 'react-use-event-hook'
 import {
-    convertRuleDataV1ToV2,
     useBannedWalletAddresses,
     useConnectivity,
     useContractSpaceInfo,
@@ -47,9 +46,8 @@ import { openSeaAssetUrl } from '@components/Web3/utils'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { Panel } from '@components/Panel/Panel'
 import { SpaceSettingsNavigationPanel } from '@components/SpaceSettingsPanel/SpaceSettingsNavigationPanel'
-import { convertRuleDataToTokenEntitlementSchema } from '@components/Tokens/utils'
 import { TokenImage } from '@components/Tokens/TokenSelector/TokenImage'
-import { useTokenMetadataForChainId } from 'api/lib/collectionMetadata'
+import { useTokensWithMetadata } from 'api/lib/collectionMetadata'
 import { NetworkName } from '@components/Tokens/TokenSelector/NetworkName'
 import { useAppProgressStore } from '@components/AppProgressOverlay/store/appProgressStore'
 import { useNotificationSettings } from 'hooks/useNotificationSettings'
@@ -57,6 +55,8 @@ import { useUploadAttachment } from '@components/MediaDropContext/useUploadAttac
 import { EditTownInfo } from '@components/Panel/EditTownInfo'
 import { ContractInfoButtons } from '@components/Panel/ContractInfoButtons'
 import { Analytics } from 'hooks/useAnalytics'
+import { useConvertRuleDataToToken } from '@components/Tokens/hooks'
+import { Token } from '@components/Tokens/TokenSelector/tokenSchemas'
 import { PublicTownPage } from './PublicTownPage/PublicTownPage'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
 
@@ -526,15 +526,14 @@ const TokensGatingSpace = ({
     onClick: () => void
 }) => {
     const { isLoading: isLoadingRoleDetails, roleDetails } = useRoleDetails(spaceId ?? '', 1)
-    const tokens = roleDetails?.ruleData
-        ? convertRuleDataToTokenEntitlementSchema(
-              roleDetails.ruleData.kind === 'v2'
-                  ? roleDetails.ruleData.rules
-                  : convertRuleDataV1ToV2(roleDetails.ruleData.rules),
-          )
-        : []
 
-    if (isLoadingRoleDetails || tokens.length === 0) {
+    const initialTokenValues = useConvertRuleDataToToken(roleDetails?.ruleData)
+
+    const { data: tokens, isLoading: isTokensLoading } = useTokensWithMetadata(
+        initialTokenValues.slice(0, 3),
+    )
+
+    if (isLoadingRoleDetails || tokens.length === 0 || isTokensLoading) {
         return null
     }
 
@@ -551,7 +550,7 @@ const TokensGatingSpace = ({
                 <Box horizontal centerContent gap="sm">
                     <Icon type="lock" size="square_sm" color="gray2" />
                     <Paragraph size="sm" color="default">
-                        For Holders
+                        Gated
                     </Paragraph>
                 </Box>
                 <Box
@@ -561,51 +560,35 @@ const TokensGatingSpace = ({
                         marginLeft: 'auto',
                     }}
                 >
-                    {tokens.slice(0, 3).map((token) => {
-                        return (
-                            <>
-                                <TokenToDisplay
-                                    key={token.address}
-                                    contractAddress={token.address}
-                                    chainId={token.chainId}
-                                />
-                            </>
-                        )
-                    })}
+                    {tokens.map((token) => (
+                        <TokenToDisplay key={token.data.address} token={token} />
+                    ))}
                 </Box>
                 {canEdit && (
                     <IconButton icon="edit" size="square_sm" color="gray2" onClick={onClick} />
                 )}
-                {tokens.length > 3 && `+${tokens.length - 3} more`}
+                {initialTokenValues.length > 3 && `+${initialTokenValues.length - 3} more`}
             </Box>
         </Stack>
     )
 }
 
-function TokenToDisplay({
-    contractAddress,
-    chainId,
-}: {
-    contractAddress: string
-    chainId: number
-}) {
-    const { data: tokenDataWithChainId } = useTokenMetadataForChainId(contractAddress, chainId)
-
+function TokenToDisplay({ token }: { token: Token }) {
     return (
         <Box
             tooltip={
                 <Box centerContent background="level1" padding="sm" rounded="sm" gap="sm">
                     <Text size="sm" textAlign="center">
-                        {tokenDataWithChainId?.data.label ?? 'Unknown Token'}
+                        {token.data.label ?? 'Unknown Token'}
                     </Text>
-                    <NetworkName chainId={chainId} />
+                    <NetworkName chainId={token.chainId} />
                     <Text size="sm" textAlign="center" color="gray2">
-                        {tokenDataWithChainId?.data.address}
+                        {token.data.address}
                     </Text>
                 </Box>
             }
         >
-            <TokenImage imgSrc={tokenDataWithChainId?.data.imgSrc} width="x3" />
+            <TokenImage imgSrc={token.data.imgSrc} width="x3" />
         </Box>
     )
 }

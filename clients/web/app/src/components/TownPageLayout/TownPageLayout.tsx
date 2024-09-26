@@ -366,8 +366,8 @@ const InformationBoxes = (props: {
             }}
         >
             <TokenInfoBox
-                title="For"
-                subtitle={anyoneCanJoin ? 'Anyone' : 'Holders'}
+                title="Access"
+                subtitle={anyoneCanJoin ? 'Open' : 'Gated'}
                 anyoneCanJoin={anyoneCanJoin}
                 isEntitlementsLoading={isEntitlementsLoading}
                 tokensGatedBy={tokensGatedBy}

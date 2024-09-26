@@ -1,4 +1,4 @@
-import React, { PropsWithChildren, useCallback, useState } from 'react'
+import React, { PropsWithChildren, useCallback, useMemo, useState } from 'react'
 import {
     Address,
     BlockchainTransactionType,
@@ -21,7 +21,7 @@ import { TokenSelectionDisplayWithMetadata } from 'routes/RoleRestrictedChannelJ
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { Analytics } from 'hooks/useAnalytics'
 import { FullPanelOverlay, LinkedWallet } from '../WalletLinkingPanel'
-import { mapToErrorMessage } from '../utils'
+import { isEveryoneAddress, mapToErrorMessage } from '../utils'
 import { useConnectThenLink } from '../useConnectThenLink'
 import { ConnectWalletThenLinkButton } from '../ConnectWalletThenLinkButton'
 import { WalletLinkingInfo } from '../WalletLinkingInfo'
@@ -32,7 +32,7 @@ type Props = {
     joinSpace: () => Promise<void>
 }
 
-export function TokenVerification({ onHide, spaceId, joinSpace }: Props) {
+export function GatedTownModal({ onHide, spaceId, joinSpace }: Props) {
     const { data: linkedWallets } = useLinkedWallets()
     const { loggedInWalletAddress } = useConnectivity()
     const { data: entitlements } = useEntitlements(spaceId)
@@ -42,6 +42,12 @@ export function TokenVerification({ onHide, spaceId, joinSpace }: Props) {
     const { data: aaAdress } = useAbstractAccountAddress({
         rootKeyAddress: loggedInWalletAddress,
     })
+
+    const isTokenGated = useMemo(() => entitlements?.tokens.length > 0, [entitlements])
+    const isUserGated = useMemo(
+        () => entitlements?.users.some((user) => !isEveryoneAddress(user)),
+        [entitlements],
+    )
 
     const {
         isLoading: isLoadingUnlinkingWallet,
@@ -74,9 +80,15 @@ export function TokenVerification({ onHide, spaceId, joinSpace }: Props) {
             </Stack>
             <Stack gap alignItems="center">
                 <Text strong size="lg">
-                    Digital Asset Required
+                    Town gated
                 </Text>
-                <Text color="gray1">{`Any of the following tokens must be held to claim membership:`}</Text>
+                {isTokenGated && isUserGated ? (
+                    <Text color="gray1">{`You must be in the allow list or hold any of the following tokens to claim membership:`}</Text>
+                ) : isTokenGated ? (
+                    <Text color="gray1">{`Any of the following tokens must be held to claim membership:`}</Text>
+                ) : isUserGated ? (
+                    <Text color="gray1">{`You must be in the allow list to join this town.`}</Text>
+                ) : null}
 
                 <Content
                     linkedWallets={linkedWallets}

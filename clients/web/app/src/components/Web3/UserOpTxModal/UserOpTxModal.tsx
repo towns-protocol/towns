@@ -14,7 +14,7 @@ import { usePublicPageLoginFlow } from 'routes/PublicTownPage/usePublicPageLogin
 import { AboveAppProgressModalContainer } from '@components/AppProgressOverlay/AboveAppProgress/AboveAppProgress'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
-import { CopyWalletAddressButton } from '../TokenVerification/Buttons'
+import { CopyWalletAddressButton } from '../GatedTownModal/Buttons'
 import { useWalletPrefix } from '../useWalletPrefix'
 
 type Props = {

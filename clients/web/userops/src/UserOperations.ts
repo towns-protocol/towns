@@ -1368,7 +1368,6 @@ export class UserOps {
         const newFreeAllocationForPaidSpace = freeAllocation ?? 1
 
         const newRuleData = args.updateRoleParams.ruleData
-        const newUsers = args.updateRoleParams.users
 
         const { membershipInfo, roleEntitlements } =
             await this.getDetailsForEditingMembershipSettings(spaceId, space)
@@ -1384,22 +1383,6 @@ export class UserOps {
         }
 
         if (!isEqual(newRuleData, roleEntitlements?.ruleData.rules)) {
-            const newRuleDataIsNoop = isEqual(newRuleData, NoopRuleData)
-
-            if (newRuleDataIsNoop && !newUsers.includes(EVERYONE_ADDRESS)) {
-                throw new CodeException({
-                    message: 'Noop rule entitlement must be used with the everyone address',
-                    code: 'USER_OPS_NOOP_REQUIRES_EVERYONE',
-                    category: 'userop',
-                })
-            } else if (!newRuleDataIsNoop && newUsers.includes(EVERYONE_ADDRESS)) {
-                throw new CodeException({
-                    message: 'Rule entitlements cannot be used with the everyone address',
-                    code: 'USER_OPS_RULES_CANNOT_BE_USED_WITH_EVERYONE',
-                    category: 'userop',
-                })
-            }
-
             const roleData = await this.encodeUpdateRoleData({
                 space,
                 updateRoleParams: args.updateRoleParams,
