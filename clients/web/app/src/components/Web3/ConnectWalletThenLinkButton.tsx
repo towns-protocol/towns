@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from 'react'
+import { Signer } from 'ethers'
 import { Box, Button, ButtonProps, Icon, Text } from '@ui'
 import { isTouch } from 'hooks/useDevice'
 import { ModalContainer } from '@components/Modals/ModalContainer'
@@ -6,7 +7,7 @@ import { useConnectThenLink } from './useConnectThenLink'
 import { WalletLinkingInfoLink } from './WalletLinkingInfo'
 
 type Props = {
-    onLinkWallet: () => void
+    onLinkWallet: (rootKey: Signer | undefined, wallet: Signer | undefined) => void
     buttonText?: string
     children?: (props: { onClick: () => void }) => JSX.Element
 } & Omit<ButtonProps, 'children' | 'onClick'>
@@ -42,8 +43,8 @@ export function ConnectWalletThenLinkButton(props: Props) {
             )}
 
             {showModal && (
-                <ModalContainer minWidth="auto" onHide={() => setShowModal(false)}>
-                    <Box padding="sm" gap="lg" alignItems="center">
+                <ModalContainer asSheet minWidth="auto" onHide={() => setShowModal(false)}>
+                    <Box padding="md" gap="lg" alignItems="center">
                         <Text strong size="lg">
                             Confirm Base Network Compatibility
                         </Text>

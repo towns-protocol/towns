@@ -39,8 +39,11 @@ export function useConnectThenLink({
                     )
                 }
             }
+            // switching the chain doesn't immediately update in `wallet` (ms later it does)
+            // so we need to check the network
+            const networkChainId = (await (await wallet.getEthersProvider()).getNetwork()).chainId
 
-            if (wallet.chainId.includes(chainString)) {
+            if (networkChainId === baseChain.id) {
                 onLinkWallet(rootSigner, (await wallet.getEthersProvider()).getSigner())
             } else {
                 popupToast(({ toast }) => (

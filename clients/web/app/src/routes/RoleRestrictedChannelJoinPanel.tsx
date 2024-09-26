@@ -33,7 +33,6 @@ import { popupToast } from '@components/Notifications/popupToast'
 import { StandardToast } from '@components/Notifications/StandardToast'
 import { mapToErrorMessage } from '@components/Web3/utils'
 import { Analytics } from 'hooks/useAnalytics'
-import { useConnectThenLink } from '@components/Web3/useConnectThenLink'
 import { ConnectWalletThenLinkButton } from '@components/Web3/ConnectWalletThenLinkButton'
 import { WalletLinkingInfo } from '@components/Web3/WalletLinkingInfo'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
@@ -193,9 +192,6 @@ function Roles(props: {
         },
     })
 
-    const onLinkEOAClick = useConnectThenLink({
-        onLinkWallet: linkEOAToRootKeyTransaction,
-    })
     const isWalletLinkingPending = useIsTransactionPending(BlockchainTransactionType.LinkWallet)
 
     return (
@@ -221,7 +217,7 @@ function Roles(props: {
                 <ConnectWalletThenLinkButton
                     tone={syncingSpace || isWalletLinkingPending ? 'level2' : 'cta1'}
                     disabled={syncingSpace || isWalletLinkingPending}
-                    onLinkWallet={onLinkEOAClick}
+                    onLinkWallet={linkEOAToRootKeyTransaction}
                 />
 
                 <WalletLinkingInfo />

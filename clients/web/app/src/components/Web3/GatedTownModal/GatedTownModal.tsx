@@ -22,7 +22,6 @@ import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { Analytics } from 'hooks/useAnalytics'
 import { FullPanelOverlay, LinkedWallet } from '../WalletLinkingPanel'
 import { isEveryoneAddress, mapToErrorMessage } from '../utils'
-import { useConnectThenLink } from '../useConnectThenLink'
 import { ConnectWalletThenLinkButton } from '../ConnectWalletThenLinkButton'
 import { WalletLinkingInfo } from '../WalletLinkingInfo'
 
@@ -177,10 +176,6 @@ function Content({
         },
     })
 
-    const connectWalletThenLink = useConnectThenLink({
-        onLinkWallet: linkEOAToRootKeyTransaction,
-    })
-
     useErrorToast({
         errorMessage: errorLinkWallet
             ? mapToErrorMessage({
@@ -258,7 +253,7 @@ function Content({
                         tone="cta1"
                         width="100%"
                         buttonText="Link a wallet with asset"
-                        onLinkWallet={connectWalletThenLink}
+                        onLinkWallet={linkEOAToRootKeyTransaction}
                     />
 
                     <WalletLinkingInfo />

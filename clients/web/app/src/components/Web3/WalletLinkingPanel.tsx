@@ -24,7 +24,6 @@ import { createPrivyNotAuthenticatedNotification } from '@components/Notificatio
 import { useBalance } from 'hooks/useBalance'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { useWalletPrefix } from './useWalletPrefix'
-import { useConnectThenLink } from './useConnectThenLink'
 import { ConnectWalletThenLinkButton } from './ConnectWalletThenLinkButton'
 import { WalletLinkingInfo } from './WalletLinkingInfo'
 
@@ -59,10 +58,6 @@ function WalletLinkingPanelWithoutAuth() {
     const { unlinkWalletTransaction } = useUnlinkWalletTransaction()
     const { getSigner, isPrivyReady } = useGetEmbeddedSigner()
 
-    const onLinkEOAClick = useConnectThenLink({
-        onLinkWallet: linkEOAToRootKeyTransaction,
-    })
-
     const { data: linkedWallets } = useLinkedWallets()
 
     async function onUnlinkClick(addressToUnlink: Address) {
@@ -96,7 +91,7 @@ function WalletLinkingPanelWithoutAuth() {
                 )
             })}
 
-            <ConnectWalletThenLinkButton onLinkWallet={onLinkEOAClick}>
+            <ConnectWalletThenLinkButton onLinkWallet={linkEOAToRootKeyTransaction}>
                 {({ onClick }) => (
                     <PanelButton
                         cursor={isDisabled ? 'not-allowed' : 'pointer'}
