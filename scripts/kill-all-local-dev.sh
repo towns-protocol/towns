@@ -72,8 +72,8 @@ function do_killl() {
 echo ""
 if prompt 'Stop Casbablanca?:y/n '
 then
-    ./river/core/scripts/stop_node.sh 
-    ./river/core/node/stop_multi.sh
+    (cd ./river/core && just RUN_ENV=multi stop)
+    (cd ./river/core && just RUN_ENV=multi_ne stop)
 
     # just in case
     do_killl './bin/river_node run'

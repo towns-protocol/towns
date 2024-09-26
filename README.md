@@ -85,9 +85,16 @@ There are a few ways to run the local dev environment:
 
 ### App development against local blockchains/servers with Account Abstraction
 
-- This mirrors the production setup, locally. Use the keystroke: `Ctrl+Shift+P` to bring up the command pallets and type `tasks`, select `~4337: Start Local Dev~`. It will take several minutes to start up.
+- This mirrors the production setup, locally. (This will be ported to start_dev/tmux when I have time)
+
+1. Use the keystroke: `Ctrl+Shift+P` to bring up the command pallets and type `tasks`, select `~4337: Start Local Dev~`. It will take several minutes to start up.
+2. Wait for all the tasks to spin up. Then you can either run the task: `"4337: Run Casablanca-Multinode`, or (recommended), in a separate terminal run: `cd ./river/core && just BASE_EXECUTION_CLIENT=geth_dev RUN_ENV=multi config-and-start`.
+
+- Once these steps are complete, visit `localhost:3000` in your browser to access the app.
 - You MUST make sure the env switcher in the bottom right of the app UI is set to `local` to run against the local environment.
 - If you are working on user operations, base chain transactions, SpaceDapp, you should run the app this way!!
+
+If you make changes to river go code, or contracts, re-run the just command from step 2 (or kill and restart the task) to pick up the new changes (contracts will be redeployed, etc).
 
 ### App development against local blockchains/servers without Account Abstraction
 

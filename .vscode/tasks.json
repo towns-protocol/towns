@@ -109,7 +109,6 @@
       "label": "4337: Stage 2",
       "dependsOn": [
         "WaitFor4337",
-        "4337: Configure Casablanca-Multinode",
         "BuildProtobufs",
         "4337: Stage 3"
       ],
@@ -120,6 +119,18 @@
       "dependsOrder": "sequence"
     },
     {
+      "label": "4337: Run Casablanca-Multinode",
+      "type": "shell",
+      "command": "cd ./river/core && just BASE_EXECUTION_CLIENT=geth_dev RUN_ENV=multi config-and-run",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "ephemeral",
+        "focus": true,
+        "panel": "shared",
+      }
+    },
+    {
       "label": "4337: Stage 3",
       "dependsOn": [
         "Start Watches",
@@ -128,9 +139,7 @@
         "TokenWorker",
         "StreamMetadataService",
         "GatewayWorker",
-        //"NotificationService",
         "4337: StackupWorker",
-        "Casablanca-Multinode",
         "4337: Fund XChain"
       ],
       "group": {
@@ -264,18 +273,6 @@
       "label": "YarnClean & Cleanup",
       "type": "shell",
       "command": "./scripts/yarn-clean.sh",
-      "isBackground": true,
-      "problemMatcher": [],
-      "presentation": {
-        "group": "ephemeral",
-        "focus": true,
-        "panel": "shared",
-      }
-    },
-    {
-      "label": "4337: Configure Casablanca-Multinode",
-      "type": "shell",
-      "command": "BASE_EXECUTION_CLIENT=geth_dev cd ./river/core && just RUN_ENV=multi config",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
