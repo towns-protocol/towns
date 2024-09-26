@@ -15,3 +15,10 @@ if git diff --cached --name-only | grep '^river/'; then
   echo "Please remove changes to the 'river' directory from the staging area to proceed."
   exit 1
 fi
+
+# Check for staged files in the '' directory.
+if git diff --cached --name-only | grep '^scripts/river-node-tag/'; then
+  echo "Error: Attempt to commit changes in the 'scripts/river-node-tag' subtree is blocked."
+  echo "Please remove changes to the 'scripts/river-node-tag' directory from the staging area to proceed."
+  exit 1
+fi
