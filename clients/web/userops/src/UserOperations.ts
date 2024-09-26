@@ -1750,7 +1750,12 @@ export class UserOps {
         // If rejected, gas must be estimated in later middleware
         if (this.paymasterProxyUrl && this.paymasterProxyAuthSecret) {
             builder.useMiddleware(async (ctx) => {
-                const { sequenceName, functionHashForPaymasterProxy, spaceId } = this.middlewareVars
+                const { sequenceName, functionHashForPaymasterProxy, spaceId, txValue } =
+                    this.middlewareVars
+
+                if (txValue && ethers.BigNumber.from(txValue).gt(0)) {
+                    return
+                }
                 let endPaymasterMiddleware: (() => void) | undefined
                 if (sequenceName) {
                     endPaymasterMiddleware = timeTracker?.startMeasurement(
