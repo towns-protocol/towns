@@ -12,10 +12,10 @@ const getStableDefault = memoize(
     (userId: string): LookupUser => {
         return {
             userId,
-            username: userId,
+            username: '',
             usernameConfirmed: true,
             usernameEncrypted: false,
-            displayName: userId,
+            displayName: '',
             displayNameEncrypted: false,
         } satisfies LookupUser
     },

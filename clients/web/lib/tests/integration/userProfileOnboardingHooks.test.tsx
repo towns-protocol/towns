@@ -38,11 +38,13 @@ describe('userProfileOnboardingHooks', () => {
             () => expect(screen.getByTestId('clientRunning')).toHaveTextContent('true'),
             TestConstants.DoubleDefaultWaitForTimeout,
         )
-        const myProfileName = screen.getByTestId('myProfileName')
+        const myUserId = screen.getByTestId('userId')
         const authStatus = screen.getByTestId('authStatus')
         await waitFor(() => expect(authStatus).toHaveTextContent(AuthStatus.Credentialed))
 
         // verify alice userid is rendering
-        await waitFor(() => expect(myProfileName).toHaveTextContent(aliceProvider.wallet.address))
+        await waitFor(() =>
+            expect(myUserId).toHaveTextContent(aliceProvider.wallet.address.toLowerCase()),
+        )
     }) // end test
 }) // end describe
