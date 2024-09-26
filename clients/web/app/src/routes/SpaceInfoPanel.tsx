@@ -21,7 +21,6 @@ import {
 import { isValidStreamId } from '@river-build/sdk'
 import { BigNumberish } from 'ethers'
 import { UploadImageRequestConfig } from '@components/UploadImage/useOnImageChangeEvent'
-import { MembersPageTouchModal } from '@components/MembersPage/MembersPage'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { PanelButton } from '@components/Panel/PanelButton'
 import { InteractiveSpaceIcon } from '@components/SpaceIcon'
@@ -159,12 +158,8 @@ export const SpaceInfo = () => {
     }, [spaceID, mutateNotificationSettings, spaceMuteSetting])
 
     const onMembersClick = useCallback(() => {
-        if (isTouch) {
-            setActiveModal('members')
-        } else {
-            openPanel(CHANNEL_INFO_PARAMS.TOWN_MEMBERS)
-        }
-    }, [isTouch, openPanel])
+        openPanel(CHANNEL_INFO_PARAMS.TOWN_MEMBERS)
+    }, [openPanel])
 
     const onManageRolesClick = useEvent(() => {
         if (!isRolesPanel) {
@@ -372,8 +367,6 @@ export const SpaceInfo = () => {
             <Stack grow padding paddingBottom="lg" justifyContent="end">
                 {/* footer content */}
             </Stack>
-
-            {activeModal === 'members' && <MembersPageTouchModal onHide={setModalUndefined} />}
 
             {activeModal === 'confirm-leave' && (
                 <ConfirmLeaveModal
