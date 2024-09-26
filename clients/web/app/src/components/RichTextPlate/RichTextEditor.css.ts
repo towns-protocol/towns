@@ -109,7 +109,7 @@ export const ul = style({
 export const ol = style({
     margin: `${vars.space.xs} 0`,
     padding: 0,
-    listStylePosition: 'inside',
+    listStylePosition: 'outside',
     listStyleType: 'decimal',
 })
 
@@ -232,6 +232,10 @@ globalStyle(`${richText}${singleEmojiMessage} p`, {
 
 globalStyle(`${richText} ul ul, ${richText} ul ol`, {
     marginLeft: vars.space.md,
+})
+
+globalStyle(`${richText} ${ol} ${listitem}`, {
+    marginLeft: vars.space.lg,
 })
 
 globalStyle(`${richText} ${codeBlock} ${code}`, {
