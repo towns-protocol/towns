@@ -1,13 +1,14 @@
 import React, { useState } from 'react'
 import linkifyit from 'linkify-it'
 import { useEvent } from 'react-use-event-hook'
-import { findNode, focusEditor, useEditorRef } from '@udecode/plate-common'
+import { findNode, useEditorRef } from '@udecode/plate-common'
 import { getEditorString } from '@udecode/slate'
 import { ELEMENT_LINK, upsertLink } from '@udecode/plate-link'
 import { useDevice } from 'hooks/useDevice'
 import { AddLinkModal } from './plate-ui/LinkModal'
 import { FloatingToolbar } from './plate-ui/FloatingToolbar'
 import { FormattingToolbar, FormattingToolbarProps } from './plate-ui/FormattingToolbar'
+import { focusEditorTowns } from '../utils/helpers'
 
 interface Props extends Omit<FormattingToolbarProps, 'onLinkClick'> {
     editorId: string
@@ -30,7 +31,7 @@ export const EditorToolbarTop = ({ editorId, ...props }: Props) => {
 
         if (isTouch) {
             const text = prompt(link ? 'Edit Link' : 'Add Link', link || 'https://')
-            focusEditor(editor)
+            focusEditorTowns(editor)
             if (!text) {
                 return
             }
@@ -57,12 +58,12 @@ export const EditorToolbarTop = ({ editorId, ...props }: Props) => {
         const linkText = selectionText ? undefined : parsedLink.text
 
         upsertLink(editor, { url: parsedLink.url, text: linkText })
-        focusEditor(editor)
+        focusEditorTowns(editor)
     })
 
     const onHideModal = useEvent(() => {
         setLinkModal(false)
-        focusEditor(editor)
+        focusEditorTowns(editor)
     })
 
     const { isTouch } = useDevice()

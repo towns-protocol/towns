@@ -1,6 +1,4 @@
 import React, { useCallback, useId } from 'react'
-import { focusEditor } from '@udecode/slate-react'
-import { getEndPoint } from '@udecode/slate'
 import { useEditorRef, useEventEditorSelectors } from '@udecode/plate-common'
 import { GiphyEntryDesktop, GiphyEntryTouch } from '@components/Giphy/GiphyEntry'
 import { EmojiPickerButton, EmojiPickerButtonTouch } from '@components/EmojiPickerButton'
@@ -9,6 +7,7 @@ import { Box, IconButton, Stack } from '@ui'
 import { MotionIcon, MotionIconButton } from 'ui/components/Motion/MotionComponents'
 import { useMediaDropContext } from '@components/MediaDropContext/MediaDropContext'
 import { ELEMENT_MENTION_EMOJI } from '../plugins/createEmojiPlugin'
+import { focusEditorTowns } from '../utils/helpers'
 import { TEmojiMentionElement } from './plate-ui/autocomplete/types'
 
 type Props = {
@@ -44,7 +43,7 @@ export const EditorToolbarBottom = (props: Props) => {
                 } as TEmojiMentionElement,
                 { text: ' ' },
             ])
-            focusEditor(editor, getEndPoint(editor, []))
+            focusEditorTowns(editor, true)
         },
         [editor],
     )
@@ -54,7 +53,7 @@ export const EditorToolbarBottom = (props: Props) => {
             event.preventDefault()
             event.stopPropagation()
             setIsFormattingToolbarOpen(!isFormattingToolbarOpen)
-            focusEditor(editor)
+            focusEditorTowns(editor)
         },
         [setIsFormattingToolbarOpen, editor, isFormattingToolbarOpen],
     )

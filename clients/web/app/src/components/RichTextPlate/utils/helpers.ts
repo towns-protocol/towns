@@ -6,11 +6,14 @@ import { ELEMENT_MENTION_INPUT, TMentionInputElement } from '@udecode/plate-ment
 import {
     EElementOrText,
     PlateEditor,
+    TElement,
     TLocation,
     TPath,
     Value,
     findNode,
+    focusEditor,
     getBlockAbove,
+    getEndPoint,
     getNodeString,
     getNodes,
     insertFragment,
@@ -159,6 +162,13 @@ export const setNodeType = (editor: PlateEditor, type: string) => {
             split: true,
         },
     )
+}
+
+export const focusEditorTowns = (editor?: PlateEditor<TElement[]> | null, end = false) => {
+    if (!editor) {
+        return
+    }
+    focusEditor(editor, end ? getEndPoint(editor, []) : undefined)
 }
 
 export const dispatchMockEnterEvent = () => {

@@ -1,4 +1,4 @@
-import React, { startTransition, useCallback, useMemo, useRef, useState } from 'react'
+import React, { startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
     Channel,
     EmbeddedMessageAttachment,
@@ -8,8 +8,6 @@ import {
     UnfurledLinkAttachment,
 } from 'use-towns-client'
 import { Plate, PlateEditor, TElement, Value, resetEditor } from '@udecode/plate-common'
-import { getEndPoint } from '@udecode/slate'
-import { focusEditor } from '@udecode/slate-react'
 import { ELEMENT_PARAGRAPH } from '@udecode/plate-paragraph'
 import noop from 'lodash/noop'
 import { UnfurledLinkAttachmentPreview } from '@components/EmbeddedMessageAttachement/EditorAttachmentPreview'
@@ -25,7 +23,7 @@ import {
 import { toMD } from './utils/toMD'
 import { toPlainText } from './utils/toPlainText'
 import { SendMarkdownPlugin } from './components/SendMarkdownPlugin'
-import { isInputFocused } from './utils/helpers'
+import { focusEditorTowns, isInputFocused } from './utils/helpers'
 import { CaptureLinkAttachmentsPlugin } from './components/CaptureLinkAttachmentsPlugin'
 import { PasteFilePlugin } from './components/PasteFilePlugin'
 import { Editor } from './components/plate-ui/Editor'
@@ -136,6 +134,12 @@ export const RichTextEditor = ({
     const valueFromStore = useInputStore((state) => state.channelMessageInputMap[storageId.current])
     const setInput = useInputStore((state) => state.setChannelmessageInput)
 
+    useEffect(() => {
+        if (hasInlinePreview && !isInputFocused()) {
+            focusEditorTowns(editorRef.current, true)
+        }
+    }, [hasInlinePreview])
+
     const initialValue = useMemo(() => {
         /* used when editing a message: convert initial value passed as prop from MD string to Plate JSON  */
         if (_initialValue) {
@@ -156,9 +160,7 @@ export const RichTextEditor = ({
             resetEditor(editorRef.current)
             // Delay focusing the editor to wait for the editor to reset and re-render
             setTimeout(() => {
-                if (editorRef.current) {
-                    focusEditor(editorRef.current, getEndPoint(editorRef.current, []))
-                }
+                focusEditorTowns(editorRef.current, true)
             }, 100)
         }
         setIsSendingMessage(false)
