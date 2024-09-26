@@ -9,4 +9,6 @@ if [ $# -gt 0 ]; then
     SESSION_NAME="$1"
 fi
 
+sh ./scripts/kill-all-local-dev.sh -y
+
 tmux list-windows -t "$SESSION_NAME" -F '#I' | xargs -I {} tmux kill-window -t "$SESSION_NAME":{}

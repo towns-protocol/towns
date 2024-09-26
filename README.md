@@ -87,6 +87,20 @@ There are a few ways to run the local dev environment:
 
 - This mirrors the production setup, locally. (This will be ported to start_dev/tmux when I have time)
 
+To run using tmux:
+
+You can start the entire local dev setup with the script: `./scripts/start_dev_4337.sh`, and kill all local processes with: `./scripts/kill_dev.sh`. I suggest you make aliases for these scripts.
+
+When the startup script completes, you will be attached to a tmux session. You can view the windows from within the session by pressing `Ctrl+b` then `"w"`. Then you can switch to whatever process you want and hit `Enter` to attach to it. From here you can monitor or restart the process. i.e. if I made changes to the unfurl worker, I might attach and restart it. It's also an option to kill a process by pressing `Ctrl+c`, then in a separate terminal you can run the process again, if that's your desired workflow.
+
+The kill_dev script will kill all processes and terminate the tmux session.
+
+If accidentally exit the tmux session, you can reattach with: `tmux attach -t River`
+
+You can see basic tmux commands [here](https://gist.github.com/simplysh/dd61e464e521efd1e17a8515f19d11d2).
+
+To run with VSCode:
+
 1. Use the keystroke: `Ctrl+Shift+P` to bring up the command pallets and type `tasks`, select `~4337: Start Local Dev~`. It will take several minutes to start up.
 2. Wait for all the tasks to spin up. Then you can either run the task: `"4337: Run Casablanca-Multinode`, or (recommended), in a separate terminal run: `cd ./river/core && just BASE_EXECUTION_CLIENT=geth_dev RUN_ENV=multi config-and-start`.
 
