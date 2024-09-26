@@ -41,7 +41,7 @@ function EditMembershipSettingsPanelWithoutAuth() {
     )
     return (
         <>
-            <Stack gap grow position="relative" overflow="auto">
+            <Stack gap grow position="relative">
                 {isLoading ? (
                     <Stack grow centerContent>
                         <ButtonSpinner />
