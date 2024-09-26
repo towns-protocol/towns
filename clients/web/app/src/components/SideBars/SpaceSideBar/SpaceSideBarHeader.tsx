@@ -185,9 +185,8 @@ export const SpaceSideBarHeader = (props: {
                 paddingY="xs"
                 data-testid="all-town-members-list-button"
                 cursor="pointer"
-                onClick={onTownMembersClick}
             >
-                <Paragraph textAlign="center" color="cta2" size="sm">
+                <Paragraph textAlign="center" color="cta2" size="sm" onClick={onTownMembersClick}>
                     {hasMembers
                         ? `${membersCount} member${membersCount > 1 ? 's' : ''}`
                         : 'fetching members...'}
