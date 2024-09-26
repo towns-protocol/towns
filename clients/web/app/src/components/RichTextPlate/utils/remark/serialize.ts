@@ -3,7 +3,7 @@ import { BlockType, LeafType, NodeTypes, defaultNodeTypes } from './ast-types'
 import { BREAK_TAG } from '../helpers'
 
 interface Options {
-    nodeTypes: NodeTypes
+    nodeTypes?: NodeTypes
     listDepth?: number
     olStartIndex?: number
     ignoreParagraphNewline?: boolean
@@ -24,12 +24,9 @@ const isLeafNode = (node: BlockType | LeafType): node is LeafType => {
     )
 }
 
-const VOID_ELEMENTS: Array<keyof NodeTypes> = ['thematic_break', 'image']
+const VOID_ELEMENTS: Array<keyof NodeTypes> = ['thematic_break', 'image', 'paragraph']
 
-export default function serialize(
-    chunk: BlockType | LeafType,
-    opts: Options = { nodeTypes: defaultNodeTypes },
-) {
+export default function serialize(chunk: BlockType | LeafType, opts: Options = {}) {
     const {
         nodeTypes: userNodeTypes = defaultNodeTypes,
         ignoreParagraphNewline = false,

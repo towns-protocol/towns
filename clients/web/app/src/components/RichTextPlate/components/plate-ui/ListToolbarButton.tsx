@@ -9,7 +9,6 @@ import {
 } from '@udecode/plate-list'
 import { withRef } from '@udecode/cn'
 import { IconButton, IconName } from '@ui'
-import { splitParagraphsByNewLines } from '../../utils/helpers'
 
 type Props = {
     nodeType: ListStyleType
@@ -34,13 +33,10 @@ export const ListToolbarButton = withRef<
         (e: React.MouseEvent) => {
             e.preventDefault()
             e.stopPropagation()
-            if (!pressed) {
-                splitParagraphsByNewLines(editor)
-            }
             props.onClick()
             collapseSelection(editor)
         },
-        [props, pressed, editor],
+        [props, editor],
     )
 
     return (

@@ -17,7 +17,7 @@ import { isMarkActive, toggleMark } from '@udecode/slate-utils'
 import { ELEMENT_LI, ELEMENT_LIC, ELEMENT_OL, ELEMENT_UL, unwrapList } from '@udecode/plate-list'
 import { ELEMENT_PARAGRAPH } from '@udecode/plate-paragraph'
 import { ResetNodePluginRule } from '@udecode/plate-reset-node'
-import { getLowestBlockquoteNode, getLowestParagraphNode } from '../utils/helpers'
+import { getLowestBlockquoteNode } from '../utils/helpers'
 import {
     isSelectionAtBlockQuoteEnd,
     isSelectionAtCodeBlockEnd,
@@ -93,22 +93,6 @@ export const nodeResetRules: ResetNodePluginRuleWithHotKey[] = [
                 return true
             }
             return false
-        },
-    },
-    {
-        types: [ELEMENT_PARAGRAPH],
-        hotkey: 'shift+enter',
-        predicate: (editor) => {
-            const paragraphNode = getLowestParagraphNode(editor)
-            if (!paragraphNode) {
-                return false
-            }
-            return getNodeString(paragraphNode).endsWith('\n')
-        },
-        defaultType: ELEMENT_PARAGRAPH,
-        onReset: (editor) => {
-            editor.deleteBackward('character')
-            exitBreak(editor, { defaultType: ELEMENT_PARAGRAPH })
         },
     },
     {

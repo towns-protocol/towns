@@ -132,8 +132,7 @@ const platePlugins = (
                         {
                             hotkey: 'shift+enter',
                             query: {
-                                exclude: [ELEMENT_LIC, ELEMENT_CODE_BLOCK],
-                                allow: [ELEMENT_BLOCKQUOTE, ELEMENT_PARAGRAPH],
+                                allow: [ELEMENT_BLOCKQUOTE],
                             },
                         },
                     ],

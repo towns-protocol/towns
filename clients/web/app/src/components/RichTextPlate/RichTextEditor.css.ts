@@ -219,10 +219,19 @@ export const blockquote = style([
     }),
     {
         marginTop: vars.space.md,
-        marginBottom: vars.space.md,
         marginLeft: vars.space.md,
+        marginBottom: 0,
+        paddingBottom: vars.space.xs,
     },
 ])
+
+globalStyle(`${richText} ${blockquote} + ${blockquote}`, {
+    marginTop: 0,
+})
+
+globalStyle(`${richText} ${blockquote} + ${paragraph}`, {
+    marginTop: vars.space.md,
+})
 
 export const singleEmojiMessage = style({})
 globalStyle(`${richText}${singleEmojiMessage} p`, {
@@ -310,7 +319,7 @@ globalStyle(`${richText} del ${code}`, {
 })
 
 globalStyle(`${richText} ${paragraph} + ${paragraph}`, {
-    marginTop: vars.space.md,
+    marginTop: vars.space.sm,
 })
 
 globalStyle(`${richText} ${paragraph} + ${edited}`, {
