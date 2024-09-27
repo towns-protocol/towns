@@ -59,7 +59,7 @@ export const AppBugReportOverlay = () => {
                                     Bug Report
                                 </Text>
                             </Stack>
-                            <ErrorReportForm asSheet onHide={onHideBugReport} />
+                            <ErrorReportForm onHide={onHideBugReport} />
                         </Box>
                     </ModalContainer>
                 </QueryClientProvider>

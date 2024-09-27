@@ -153,29 +153,17 @@ export const ErrorReportModal = (props: { minimal?: boolean }) => {
     )
 }
 
-export const ErrorReportForm = (props: {
-    onHide?: () => void
-    asSheet?: boolean
-    excludeDebugInfo?: boolean
-}) => {
-    const { onHide, asSheet, excludeDebugInfo } = props
+export const ErrorReportForm = (props: { onHide?: () => void; excludeDebugInfo?: boolean }) => {
+    const { onHide, excludeDebugInfo } = props
     return (
         <FileDropContextProvider title="Attach a file">
-            <_ErrorReportForm
-                asSheet={asSheet}
-                excludeDebugInfo={excludeDebugInfo}
-                onHide={onHide}
-            />
+            <_ErrorReportForm excludeDebugInfo={excludeDebugInfo} onHide={onHide} />
         </FileDropContextProvider>
     )
 }
 
-const _ErrorReportForm = (props: {
-    onHide?: () => void
-    asSheet?: boolean
-    excludeDebugInfo?: boolean
-}) => {
-    const { onHide, asSheet, excludeDebugInfo } = props
+const _ErrorReportForm = (props: { onHide?: () => void; excludeDebugInfo?: boolean }) => {
+    const { onHide, excludeDebugInfo } = props
     const inputRef = useRef<HTMLInputElement>(null)
     const [success, setSuccess] = useState(false)
     const [isDragging, setIsDragging] = useState(false)
@@ -265,12 +253,7 @@ const _ErrorReportForm = (props: {
                 return (
                     <>
                         <SyncFormFiles form={form} />
-                        <Stack
-                            padding={{ mobile: 'sm', default: 'none' }}
-                            scroll={asSheet}
-                            scrollbars={asSheet}
-                            maxHeight={asSheet ? '50vh' : 'auto'}
-                        >
+                        <Stack padding={{ mobile: 'sm', default: 'none' }}>
                             <Stack gap>
                                 <MotionBox layout="position">
                                     <TextField
