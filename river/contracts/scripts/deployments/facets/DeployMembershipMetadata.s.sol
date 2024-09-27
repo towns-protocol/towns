@@ -12,6 +12,7 @@ import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
 
 contract DeployMembershipMetadata is Deployer, FacetHelper {
   constructor() {
+    addSelector(MembershipMetadata.refreshMetadata.selector);
     addSelector(MembershipMetadata.tokenURI.selector);
   }
 

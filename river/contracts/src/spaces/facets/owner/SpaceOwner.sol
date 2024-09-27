@@ -2,13 +2,14 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+import {IERC4906} from "@openzeppelin/contracts/interfaces/IERC4906.sol";
 import {ISpaceOwner} from "./ISpaceOwner.sol";
+import {IMembershipMetadata} from "contracts/src/spaces/facets/membership/metadata/IMembershipMetadata.sol";
 
 // libraries
 
 // contracts
 import {ERC721A} from "contracts/src/diamond/facets/token/ERC721A/ERC721A.sol";
-
 import {SpaceOwnerBase} from "./SpaceOwnerBase.sol";
 import {OwnableBase} from "contracts/src/diamond/facets/ownable/OwnableBase.sol";
 import {GuardianBase} from "contracts/src/spaces/facets/guardian/GuardianBase.sol";
@@ -84,6 +85,10 @@ contract SpaceOwner is
   ) external {
     _onlySpaceOwner(space);
     _updateSpace(space, name, uri, shortDescription, longDescription);
+
+    IMembershipMetadata(space).refreshMetadata();
+
+    emit IERC4906.MetadataUpdate(_getTokenId(space));
   }
 
   function nonces(address owner) external view returns (uint256 result) {
@@ -144,7 +149,7 @@ contract SpaceOwner is
     uint256 quantity
   ) internal override {
     if (from != address(0) && _guardianEnabled(from)) {
-      // allow transfering handle at minting time
+      // allow transferring handle at minting time
       revert Guardian_Enabled();
     }
 
@@ -171,7 +176,7 @@ contract SpaceOwner is
   //                           Internal
   // =============================================================
   function _onlySpaceOwner(address space) internal view {
-    if (_ownerOf(_getSpace(space).tokenId) != msg.sender) {
+    if (_ownerOf(_getTokenId(space)) != msg.sender) {
       revert SpaceOwner__OnlySpaceOwnerAllowed();
     }
   }

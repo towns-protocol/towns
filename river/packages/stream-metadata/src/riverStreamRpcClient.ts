@@ -2,6 +2,7 @@ import {
 	ParsedStreamResponse,
 	StreamStateView,
 	decryptAESGCM,
+	retryInterceptor,
 	streamIdAsBytes,
 	streamIdAsString,
 	unpackStream,
@@ -25,6 +26,9 @@ function makeStreamRpcClient(logger: FastifyBaseLogger, url: string): StreamRpcC
 	const options: ConnectTransportOptions = {
 		httpVersion: '2',
 		baseUrl: url,
+		interceptors: [
+			retryInterceptor({ maxAttempts: 3, initialRetryDelay: 2000, maxRetryDelay: 6000 }),
+		],
 	}
 
 	const transport = createConnectTransport(options)

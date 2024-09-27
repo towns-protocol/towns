@@ -12,6 +12,7 @@ import {CurrencyTransfer} from "contracts/src/utils/libraries/CurrencyTransfer.s
 import {ReentrancyGuard} from "contracts/src/diamond/facets/reentrancy/ReentrancyGuard.sol";
 import {MembershipJoin} from "./join/MembershipJoin.sol";
 import {Facet} from "contracts/src/diamond/facets/Facet.sol";
+
 contract MembershipFacet is
   IMembership,
   MembershipJoin,

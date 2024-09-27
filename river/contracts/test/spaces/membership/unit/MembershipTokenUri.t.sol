@@ -2,6 +2,8 @@
 pragma solidity ^0.8.19;
 
 // interfaces
+import {IERC4906} from "@openzeppelin/contracts/interfaces/IERC4906.sol";
+import {IMembershipMetadata} from "contracts/src/spaces/facets/membership/metadata/IMembershipMetadata.sol";
 
 // utils
 import {MembershipBaseSetup} from "../MembershipBaseSetup.sol";
@@ -34,8 +36,12 @@ contract MembershipTokenUriTest is MembershipBaseSetup {
     uint256 tokenId = tokenIds[0];
 
     string memory uri = membershipToken.tokenURI(tokenId);
-    assertTrue(
-      keccak256(abi.encodePacked(uri)) != keccak256(abi.encodePacked(""))
-    );
+    assertEq(uri, "ipfs://test/token/1");
+  }
+
+  function test_refreshMetadata() external {
+    vm.expectEmit(address(membership));
+    emit IERC4906.BatchMetadataUpdate(0, type(uint256).max);
+    IMembershipMetadata(address(membership)).refreshMetadata();
   }
 }

@@ -45,6 +45,7 @@ export async function fetchUserBio(request: FastifyRequest, reply: FastifyReply)
 
 	const protobufBio = await getUserBio(stream)
 	if (!protobufBio) {
+		logger.info({ userId, streamId: stream.streamId }, 'bio not found')
 		return reply.code(404).send('bio not found')
 	}
 	const bio = protobufBio.bio

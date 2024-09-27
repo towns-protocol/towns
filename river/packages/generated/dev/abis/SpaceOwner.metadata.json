@@ -444,6 +444,19 @@
       {
         "inputs": [
           {
+            "internalType": "uint256",
+            "name": "_tokenId",
+            "type": "uint256",
+            "indexed": false
+          }
+        ],
+        "type": "event",
+        "name": "MetadataUpdate",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
             "internalType": "address",
             "name": "previousOwner",
             "type": "address",
@@ -1600,6 +1613,14 @@
       ],
       "license": "MIT"
     },
+    "contracts/src/spaces/facets/membership/metadata/IMembershipMetadata.sol": {
+      "keccak256": "0x880c5cb358b4a471d273ae582bb0068f679ca0adfd75cf36f21107aced4ecfcb",
+      "urls": [
+        "bzz-raw://6c8f64c60534a1bbf0242d1a4ee69a8b164b78dd62ea1681bf60a801d6db6c80",
+        "dweb:/ipfs/QmYYaFyqzZBb6KnJ2BVft418C5m7viZAPLpxHitP8kbJZb"
+      ],
+      "license": "MIT"
+    },
     "contracts/src/spaces/facets/owner/ISpaceOwner.sol": {
       "keccak256": "0x7baa36238144aae1068d9df8b28c6741cbcf1f26e53c0e429fc62c351623c1f4",
       "urls": [
@@ -1609,18 +1630,18 @@
       "license": "MIT"
     },
     "contracts/src/spaces/facets/owner/SpaceOwner.sol": {
-      "keccak256": "0x4ebcfab63a8a42db5bef2c2681e00f438ef36e26592611feac596e09fd27f189",
+      "keccak256": "0x2827a42ed4ecbbf6c869ac4e0b60b4eb946ac74f5f066e85fe46c17ed06fe81b",
       "urls": [
-        "bzz-raw://80288a74d35e2a8440d2d0a4f74219adde0e0c544c61c55009a37a79e4c29de2",
-        "dweb:/ipfs/QmYt2Ggj4425a3TzGWT7LmQivPsxdD7R9Bh9JoYsEhqzYE"
+        "bzz-raw://8d022f1de02e1c25ace41c5fbd1ba4b1d9592b342b6a6d943bd29f9731615a04",
+        "dweb:/ipfs/QmUgz3vA94edh9yxY1ZP2u5zR1weg4j3hiYwNW9TFxXWNs"
       ],
       "license": "MIT"
     },
     "contracts/src/spaces/facets/owner/SpaceOwnerBase.sol": {
-      "keccak256": "0xc099c8e138203b047385e359e26ece811fa788c180c3157f082c6c3bc22c1937",
+      "keccak256": "0x5f13f9246fbf565ebef09d61477e24a5d6c1a9e0cc3b285521ef356c022d1d0e",
       "urls": [
-        "bzz-raw://ead0e7a507ae8b63abc034c3c9d711365585bb0545c89effbeb79c71cec3b17a",
-        "dweb:/ipfs/QmZa2aTL4Bm7DDBYMKsLibz5SJvced56CUBrpi2RXWGRZy"
+        "bzz-raw://15fdda81ae99a64bce64200403443cf42bd968c21806146741252489ba537cca",
+        "dweb:/ipfs/QmQ7EigQNBttBS2SY3YBmeNqDB7wzaEWSz3GVMYkaKRZpm"
       ],
       "license": "MIT"
     },
@@ -1645,6 +1666,38 @@
       "urls": [
         "bzz-raw://39e68f53191121d78a6adc94587e085fb2845206cc8f5c58bf7f4532126e6bb3",
         "dweb:/ipfs/QmPLJ9UXfvhJEPhyKpQyz2WM7oNtGgJtbFpXfM8hmZDWRG"
+      ],
+      "license": "MIT"
+    },
+    "node_modules/@openzeppelin/contracts/interfaces/IERC165.sol": {
+      "keccak256": "0xde7e9fd9aee8d4f40772f96bb3b58836cbc6dfc0227014a061947f8821ea9724",
+      "urls": [
+        "bzz-raw://11fea9f8bc98949ac6709f0c1699db7430d2948137aa94d5a9e95a91f61a710a",
+        "dweb:/ipfs/QmQdfRXxQjwP6yn3DVo1GHPpriKNcFghSPi94Z1oKEFUNS"
+      ],
+      "license": "MIT"
+    },
+    "node_modules/@openzeppelin/contracts/interfaces/IERC4906.sol": {
+      "keccak256": "0xb31b86c03f4677dcffa4655285d62433509513be9bafa0e04984565052d34e44",
+      "urls": [
+        "bzz-raw://a89c6fb0cd5fef4244500b633f63def9f2bb2134debb961e590bd5a2910662fd",
+        "dweb:/ipfs/QmNqWyCxyopvb99RbRomPpfTZGXRi5MnzgpFXE2BFLLgMc"
+      ],
+      "license": "MIT"
+    },
+    "node_modules/@openzeppelin/contracts/interfaces/IERC721.sol": {
+      "keccak256": "0xc4d7ebf63eb2f6bf3fee1b6c0ee775efa9f31b4843a5511d07eea147e212932d",
+      "urls": [
+        "bzz-raw://01c66a2fad66bc710db7510419a7eee569b40b67cd9f01b70a3fc90d6f76c03b",
+        "dweb:/ipfs/QmT1CjJZq4eTNA4nu8E9ZrWfaZu6ReUsDbjcK8DbEFqwx5"
+      ],
+      "license": "MIT"
+    },
+    "node_modules/@openzeppelin/contracts/token/ERC721/IERC721.sol": {
+      "keccak256": "0x5ef46daa3b58ef2702279d514780316efaa952915ee1aa3396f041ee2982b0b4",
+      "urls": [
+        "bzz-raw://2f8f2a76e23b02fc69e8cd24c3cb47da6c7af3a2d6c3a382f8ac25c6e094ade7",
+        "dweb:/ipfs/QmPV4ZS4tPVv4mTCf9ejyZ1ai57EEibDRj7mN2ARDCLV5n"
       ],
       "license": "MIT"
     },

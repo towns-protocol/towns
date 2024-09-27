@@ -2,6 +2,7 @@ package entitlement
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 
@@ -26,6 +27,47 @@ func (e *Evaluator) EvaluateRuleData(
 	return e.evaluateOp(ctx, opTree, linkedWallets)
 }
 
+// isEntitlementEvaluationError returns true iff the error is the result of a failure when evaluating
+// an entitlement. It ignores context cancellations, which can occur when a operation evaluation
+// short-circuits because the other child returned a definitive answer.
+func isEntitlementEvaluationError(err error) bool {
+	return err != nil && !errors.Is(err, context.Canceled)
+}
+
+// logIfEntitlementError conditionally logs an error if it was not a context cancellation.
+func logIfEntitlementError(ctx context.Context, err error) {
+	if isEntitlementEvaluationError(err) {
+		dlog.FromCtx(ctx).Warn("Entitlement evaluation succeeded, but encountered error", "error", err)
+	}
+}
+
+// composeEntitlementEvaluationError returns a composed error type that incorporates the error of
+// either child as long as that error is not a context cancellation, which we ignore because we
+// introduce it ourselves.
+func composeEntitlementEvaluationError(leftErr error, rightErr error) error {
+	if isEntitlementEvaluationError(leftErr) && isEntitlementEvaluationError(rightErr) {
+		return fmt.Errorf("%w; %w", leftErr, rightErr)
+	}
+	if isEntitlementEvaluationError(leftErr) {
+		return leftErr
+	}
+	if isEntitlementEvaluationError(rightErr) {
+		return rightErr
+	}
+	return nil
+}
+
+// evaluateAndOperation evaluates the results of it's two child operations, ANDs them, and
+// returns the final response. As soon as any one child operation evaluates as unentitled,
+// the method will short-circuit evaluation of the other child and return a false response.
+//
+// In the case where one child operation results in an error:
+//   - If the other child evaluates as unentitled, return the false result, because the user
+//     is definitely not entitled.
+//   - If the other child evaluates to true, return the error because we do not know
+//     if the user was truly entitled.
+//
+// If both child calls result in an error, the method will return a wrapped error.
 func (e *Evaluator) evaluateAndOperation(
 	ctx context.Context,
 	op *types.AndOperation,
@@ -46,9 +88,9 @@ func (e *Evaluator) evaluateAndOperation(
 	defer rightCancel()
 	go func() {
 		leftResult, leftErr = e.evaluateOp(leftCtx, op.LeftOperation, linkedWallets)
-		if !leftResult || leftErr != nil {
-			// cancel the other goroutine
-			// if the left result is false or there is an error
+		if !leftResult && leftErr == nil {
+			// cancel the other goroutine if the left result is false, since we know
+			// the user is unentitled
 			rightCancel()
 		}
 		wg.Done()
@@ -56,18 +98,47 @@ func (e *Evaluator) evaluateAndOperation(
 
 	go func() {
 		rightResult, rightErr = e.evaluateOp(rightCtx, op.RightOperation, linkedWallets)
-		if !rightResult || rightErr != nil {
-			// cancel the other goroutine
-			// if the right result is false or there is an error
+		if !rightResult && rightErr == nil {
+			// cancel the other goroutine if the right result is false, since we know
+			// the user is unentitled
 			leftCancel()
 		}
 		wg.Done()
 	}()
 
 	wg.Wait()
-	return leftResult && rightResult, nil
+
+	// Evaluate definitive results and return them without error, logging if an evaluation error occurred.
+	// 1. Both checks are true - return true
+	// 2. If either check is false, was not cancelled, and did not fail - return false, as the user is not entitled.
+	if leftResult && rightResult {
+		return true, nil
+	}
+
+	if !leftResult && leftErr == nil {
+		logIfEntitlementError(ctx, rightErr)
+		return false, nil
+	}
+
+	if !rightResult && rightErr == nil {
+		logIfEntitlementError(ctx, leftErr)
+		return false, nil
+	}
+
+	return false, composeEntitlementEvaluationError(leftErr, rightErr)
 }
 
+// evaluateOrOperation evaluates the results of it's two child operations, ORs them, and
+// returns the final response. As soon as any one child operation evaluates as entitled,
+// the method will short-circuit evaluation of the other child and return a true response.
+//
+// In the case where one child operation results in an error:
+//   - If the other child evaluates as entitled, return the true result, because the user
+//     is definitely entitled.
+//   - If the other child evaluates to false, return the error because we do not know
+//     if the user was truly unentitled.
+//
+// If both child calls result in an error, the method will return a wrapped error.
 func (e *Evaluator) evaluateOrOperation(
 	ctx context.Context,
 	op *types.OrOperation,
@@ -88,9 +159,9 @@ func (e *Evaluator) evaluateOrOperation(
 	defer rightCancel()
 	go func() {
 		leftResult, leftErr = e.evaluateOp(leftCtx, op.LeftOperation, linkedWallets)
-		if leftResult || leftErr != nil {
-			// cancel the other goroutine
-			// if the left result is true or there is an error
+		if leftResult {
+			// cancel the other goroutine if the left result is true, since we know
+			// the user is unentitled
 			rightCancel()
 		}
 		wg.Done()
@@ -98,16 +169,24 @@ func (e *Evaluator) evaluateOrOperation(
 
 	go func() {
 		rightResult, rightErr = e.evaluateOp(rightCtx, op.RightOperation, linkedWallets)
-		if rightResult || rightErr != nil {
-			// cancel the other goroutine
-			// if the right result is true or there is an error
+		if rightResult {
+			// cancel the other goroutine if the right result is true, since we know
+			// the user is entitled
 			leftCancel()
 		}
 		wg.Done()
 	}()
 
 	wg.Wait()
-	return leftResult || rightResult, nil
+
+	// If at least one child evaluates as entitled, log any errors and return a true result.
+	if leftResult || rightResult {
+		logIfEntitlementError(ctx, leftErr)
+		logIfEntitlementError(ctx, rightErr)
+		return true, nil
+	}
+
+	return false, composeEntitlementEvaluationError(leftErr, rightErr)
 }
 
 func awaitTimeout(ctx context.Context, f func() error) error {

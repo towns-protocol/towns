@@ -277,7 +277,7 @@ func (ca *chainAuth) isSpaceEnabledUncached(
 	return &boolCacheResult{allowed: !isDisabled}, err
 }
 
-func (ca *chainAuth) checkSpaceEnabled(ctx context.Context, cfg *config.Config, spaceId shared.StreamId) error {
+func (ca *chainAuth) checkSpaceEnabled(ctx context.Context, cfg *config.Config, spaceId shared.StreamId) (bool, error) {
 	isEnabled, cacheHit, err := ca.entitlementCache.executeUsingCache(
 		ctx,
 		cfg,
@@ -285,7 +285,7 @@ func (ca *chainAuth) checkSpaceEnabled(ctx context.Context, cfg *config.Config, 
 		ca.isSpaceEnabledUncached,
 	)
 	if err != nil {
-		return err
+		return false, err
 	}
 	if cacheHit {
 		ca.isSpaceEnabledCacheHit.Inc()
@@ -293,11 +293,7 @@ func (ca *chainAuth) checkSpaceEnabled(ctx context.Context, cfg *config.Config, 
 		ca.isSpaceEnabledCacheMiss.Inc()
 	}
 
-	if isEnabled.IsAllowed() {
-		return nil
-	} else {
-		return RiverError(Err_SPACE_DISABLED, "Space is disabled", "spaceId", spaceId).Func("isEntitledToSpace")
-	}
+	return isEnabled.IsAllowed(), nil
 }
 
 func (ca *chainAuth) isChannelEnabledUncached(
@@ -315,7 +311,7 @@ func (ca *chainAuth) checkChannelEnabled(
 	cfg *config.Config,
 	spaceId shared.StreamId,
 	channelId shared.StreamId,
-) error {
+) (bool, error) {
 	isEnabled, cacheHit, err := ca.entitlementCache.executeUsingCache(
 		ctx,
 		cfg,
@@ -323,7 +319,7 @@ func (ca *chainAuth) checkChannelEnabled(
 		ca.isChannelEnabledUncached,
 	)
 	if err != nil {
-		return err
+		return false, err
 	}
 	if cacheHit {
 		ca.isChannelEnabledCacheHit.Inc()
@@ -331,11 +327,7 @@ func (ca *chainAuth) checkChannelEnabled(
 		ca.isChannelEnabledCacheMiss.Inc()
 	}
 
-	if isEnabled.IsAllowed() {
-		return nil
-	} else {
-		return RiverError(Err_CHANNEL_DISABLED, "Channel is disabled", "spaceId", spaceId, "channelId", channelId).Func("checkChannelEnabled")
-	}
+	return isEnabled.IsAllowed(), nil
 }
 
 // CacheResult is the result of a cache lookup.
@@ -704,6 +696,28 @@ func (ca *chainAuth) checkMembership(
 	}
 }
 
+func (ca *chainAuth) checkStreamIsEnabled(
+	ctx context.Context,
+	cfg *config.Config,
+	args *ChainAuthArgs,
+) (bool, error) {
+	if args.kind == chainAuthKindSpace || args.kind == chainAuthKindIsSpaceMember {
+		isEnabled, err := ca.checkSpaceEnabled(ctx, cfg, args.spaceId)
+		if err != nil {
+			return false, err
+		}
+		return isEnabled, nil
+	} else if args.kind == chainAuthKindChannel {
+		isEnabled, err := ca.checkChannelEnabled(ctx, cfg, args.spaceId, args.channelId)
+		if err != nil {
+			return false, err
+		}
+		return isEnabled, nil
+	} else {
+		return false, RiverError(Err_INTERNAL, "Unknown chain auth kind").Func("checkStreamIsEnabled")
+	}
+}
+
 /** checkEntitlement checks if the user is entitled to the space / channel.
  * It checks the entitlments for the root key and all the wallets linked to it in parallel.
  * If any of the wallets is entitled, the user is entitled and all inflight requests are cancelled.
@@ -720,18 +734,11 @@ func (ca *chainAuth) checkEntitlement(
 	ctx, cancel := context.WithTimeout(ctx, time.Millisecond*time.Duration(ca.contractCallsTimeoutMs))
 	defer cancel()
 
-	if args.kind == chainAuthKindSpace || args.kind == chainAuthKindIsSpaceMember {
-		err := ca.checkSpaceEnabled(ctx, cfg, args.spaceId)
-		if err != nil {
-			return &boolCacheResult{allowed: false}, nil
-		}
-	} else if args.kind == chainAuthKindChannel {
-		err := ca.checkChannelEnabled(ctx, cfg, args.spaceId, args.channelId)
-		if err != nil {
-			return &boolCacheResult{allowed: false}, nil
-		}
-	} else {
-		return &boolCacheResult{allowed: false}, RiverError(Err_INTERNAL, "Unknown chain auth kind").Func("isWalletEntitled")
+	isEnabled, err := ca.checkStreamIsEnabled(ctx, cfg, args)
+	if err != nil {
+		return &boolCacheResult{allowed: false}, err
+	} else if !isEnabled {
+		return &boolCacheResult{allowed: false}, nil
 	}
 
 	// Get all linked wallets.

@@ -316,6 +316,8 @@ function getRetryDelay(error: unknown, attempts: number, retryParams: RetryParam
             return retryDelay
         } else if (errorContains(error, Err.DEBUG_ERROR)) {
             return retryDelay
+        } else if (errorContains(error, Err.DB_OPERATION_FAILURE)) {
+            return retryDelay
         }
     }
     return -1

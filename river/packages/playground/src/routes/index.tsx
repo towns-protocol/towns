@@ -58,6 +58,15 @@ export const router = createBrowserRouter([
                     }
                 },
             },
+            {
+                path: 'inspect',
+                lazy: async () => {
+                    const { InspectRoute } = await import('./inspect/root')
+                    return {
+                        Component: InspectRoute,
+                    }
+                },
+            },
         ],
     },
 ])

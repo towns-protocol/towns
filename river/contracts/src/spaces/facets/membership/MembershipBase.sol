@@ -2,19 +2,20 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IMembershipBase} from "./IMembership.sol";
 import {IPlatformRequirements} from "contracts/src/factory/facets/platform/requirements/IPlatformRequirements.sol";
 import {IMembershipPricing} from "./pricing/IMembershipPricing.sol";
 import {IPricingModules} from "contracts/src/factory/facets/architect/pricing/IPricingModules.sol";
+
 // libraries
-import {MembershipStorage} from "./MembershipStorage.sol";
 import {CurrencyTransfer} from "contracts/src/utils/libraries/CurrencyTransfer.sol";
+import {MembershipStorage} from "./MembershipStorage.sol";
+
+// contracts
 import {BasisPoints} from "contracts/src/utils/libraries/BasisPoints.sol";
-import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 abstract contract MembershipBase is IMembershipBase {
-  using SafeERC20 for IERC20;
-
   function __MembershipBase_init(
     Membership memory info,
     address spaceFactory

@@ -46,6 +46,6 @@ describe('spaceDappTests', () => {
         expect(uri).toBe(`http://localhost:3002/${spaceAddress}`) // hardcoded in InteractSetDefaultUriLocalhost.s.sol
 
         const memberURI = await spaceDapp.memberTokenURI(spaceId, membership2.tokenId)
-        expect(memberURI).toBe(`http://localhost:3002/${spaceAddress}`) // hardcoded in InteractSetDefaultUriLocalhost.s.sol
+        expect(memberURI).toBe(`http://localhost:3002/${spaceAddress}/token/${membership2.tokenId}`) // hardcoded in InteractSetDefaultUriLocalhost.s.sol
     })
 })
