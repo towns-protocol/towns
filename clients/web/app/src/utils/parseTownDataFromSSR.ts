@@ -33,6 +33,7 @@ export const getTownDataFromSSR = () => {
             return result.data
         }
     } catch (error) {
-        console.error(`getTownDataFromSSR`, error)
+        console.log(`[getTownDataFromSSR] unable to parse`)
+        return undefined
     }
 }
