@@ -2,6 +2,7 @@ import linkifyit from 'linkify-it'
 import { ELEMENT_BLOCKQUOTE } from '@udecode/plate-block-quote'
 import { ELEMENT_CODE_LINE } from '@udecode/plate-code-block'
 import { ELEMENT_PARAGRAPH } from '@udecode/plate-paragraph'
+import { ELEMENT_LINK, TLinkElement, unwrapLink } from '@udecode/plate-link'
 import { ELEMENT_MENTION_INPUT, TMentionInputElement } from '@udecode/plate-mention'
 import {
     PlateEditor,
@@ -10,11 +11,16 @@ import {
     focusEditor,
     getBlockAbove,
     getEndPoint,
+    getNodeString,
+    getPreviousSiblingNode,
     isBlock,
+    moveSelection,
     setElements,
 } from '@udecode/plate-common'
 import { isType } from '@udecode/plate-utils'
 import { Channel } from 'use-towns-client'
+import debounce from 'lodash/debounce'
+import { SECOND_MS } from 'data/constants'
 
 const linkify = linkifyit()
 export const BREAK_TAG = '<br>'
@@ -115,6 +121,43 @@ export const getUrlHref = (url: string) => {
     } catch (e) {
         return url
     }
+}
+
+export const getLinkURLAtSelection = (editor: PlateEditor) => {
+    const linkNode = getLinkNodeAtSelection(editor)
+    if (!linkNode || !linkNode?.[0]?.url) {
+        return
+    }
+    return linkNode[0].url as string
+}
+
+/**
+ * Unwrap the link at the current selection. If the link is not a valid URL, it will be unwrapped
+ * and converted to plain text.
+ *
+ * Exported as a debounced function below to prevent multiple calls in quick succession.
+ */
+const unwrapLinkAtSelection = (editor: PlateEditor) => {
+    const { selection } = editor
+    if (!selection) {
+        return
+    }
+    const previousNode = getPreviousSiblingNode(editor, selection.focus.path)
+    if (!Array.isArray(previousNode) || (previousNode[0] as TLinkElement).type !== ELEMENT_LINK) {
+        return
+    }
+    const previousNodeText = getNodeString(previousNode[0] as TLinkElement)
+    if (!isExactlyUrl(previousNodeText)) {
+        moveSelection(editor, { distance: 1, reverse: true })
+        unwrapLink(editor)
+        moveSelection(editor, { distance: 1 })
+    }
+}
+
+export const debouncedUnwrapLinkAtSelection = debounce(unwrapLinkAtSelection, SECOND_MS / 10)
+
+export const getLinkNodeAtSelection = (editor: PlateEditor) => {
+    return findNode(editor, { match: { type: ELEMENT_LINK } })
 }
 
 export const isCodeBlockElement = (editor: PlateEditor) =>

@@ -53,7 +53,7 @@ import { ParagraphElement } from '../components/plate-ui/ParagraphElement'
 import { EmojiMentionElement } from '../components/plate-ui/EmojiMentionElement'
 import { autoformatRules } from './autoformat'
 import { nodeResetRules } from './nodeReset'
-import { createShiftEnterListPlugin } from './shiftEnterListPlugin'
+import { createEditorOverridesPlugin } from './createEditorOverridesPlugin'
 import { createFormatTextLinkPlugin, createIOSPasteLinkPlugin } from './createFormatTextLinkPlugin'
 import { ELEMENT_MENTION_CHANNEL, createChannelPlugin } from './createChannelPlugin'
 import { ELEMENT_MENTION_EMOJI, createEmojiPlugin } from './createEmojiPlugin'
@@ -138,7 +138,7 @@ const platePlugins = (
                     ],
                 },
             }),
-            createShiftEnterListPlugin(),
+            createEditorOverridesPlugin(),
             createExitBreakPlugin({
                 options: {
                     rules: [

@@ -1,14 +1,14 @@
 import React, { useState } from 'react'
 import linkifyit from 'linkify-it'
 import { useEvent } from 'react-use-event-hook'
-import { findNode, useEditorRef } from '@udecode/plate-common'
+import { useEditorRef } from '@udecode/plate-common'
 import { getEditorString } from '@udecode/slate'
-import { ELEMENT_LINK, upsertLink } from '@udecode/plate-link'
+import { upsertLink } from '@udecode/plate-link'
 import { useDevice } from 'hooks/useDevice'
 import { AddLinkModal } from './plate-ui/LinkModal'
 import { FloatingToolbar } from './plate-ui/FloatingToolbar'
 import { FormattingToolbar, FormattingToolbarProps } from './plate-ui/FormattingToolbar'
-import { focusEditorTowns } from '../utils/helpers'
+import { focusEditorTowns, getLinkURLAtSelection } from '../utils/helpers'
 
 interface Props extends Omit<FormattingToolbarProps, 'onLinkClick'> {
     editorId: string
@@ -23,11 +23,7 @@ export const EditorToolbarTop = ({ editorId, ...props }: Props) => {
 
     const onLinkClick = useEvent(() => {
         // Check if the user is adding a new link or modifying an existing one
-        const linkEntry = findNode(editor, { match: { type: ELEMENT_LINK } })
-        let link: string | undefined = undefined
-        if (Array.isArray(linkEntry) && linkEntry[0]?.url) {
-            link = linkEntry[0].url as string
-        }
+        const link = getLinkURLAtSelection(editor)
 
         if (isTouch) {
             const text = prompt(link ? 'Edit Link' : 'Add Link', link || 'https://')
