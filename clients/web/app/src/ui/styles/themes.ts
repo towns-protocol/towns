@@ -42,6 +42,12 @@ const html = {
     none: 'none',
 }
 
+const Rainbow = {
+    backgroundImage: `linear-gradient(90deg, ${Figma.Colors.Blue}, ${Figma.Colors.Yellow}, ${Figma.Colors.Pink})`,
+    color: 'transparent',
+    backgroundClip: 'text',
+}
+
 const light = (() => {
     const layer = {
         none: 'none',
@@ -70,6 +76,7 @@ const light = (() => {
         secondary: Figma.Colors.Pink,
         inverted: Figma.DarkMode.Primary,
         onTone: Figma.Colors.Black,
+        rainbow: Rainbow,
     }
 
     return {
@@ -117,6 +124,7 @@ const dark = (() => {
         secondary: Figma.Colors.Pink,
         inverted: Figma.DarkMode.Level1,
         onTone: Figma.Colors.Black,
+        rainbow: Rainbow,
     } as const
 
     return {

@@ -77,7 +77,11 @@ const TownMembers = (props: { memberIds: string[] }) => {
             },
             {
                 owner: {
-                    title: <Paragraph color="cta1">Founder</Paragraph>,
+                    title: (
+                        <Paragraph color="rainbow" alignSelf="start">
+                            Founder
+                        </Paragraph>
+                    ),
                     users: [],
                 },
                 admins: {

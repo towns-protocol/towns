@@ -7,6 +7,7 @@ import {
     useLinkedWalletsForWallet,
     useMultipleRoleDetails,
     useRoles,
+    useSpaceFromContract,
     useSpaceId,
 } from 'use-towns-client'
 import { Box, BoxProps, Paragraph } from '@ui'
@@ -72,6 +73,10 @@ export const UserRolePills = (props: { userId: string; spaceId: string }) => {
             : []
     }, [linkedWallets, roleDetails])
 
+    const spaceOwner = useSpaceFromContract(spaceId)?.space?.owner
+
+    const isOwner = spaceOwner && linkedWallets?.some((w) => w === spaceOwner)
+
     if (isLoadingRoles || isLoadingRoleDetails) {
         return <Paragraph color="gray2">Loading</Paragraph>
     }
@@ -82,6 +87,18 @@ export const UserRolePills = (props: { userId: string; spaceId: string }) => {
 
     return (
         <Box horizontal flexWrap="wrap" display="flex" gap="xs">
+            {isOwner && (
+                <RolePill
+                    isAdmin
+                    roleDetails={{
+                        id: 0,
+                        name: 'Founder',
+                        permissions: [],
+                    }}
+                    spaceId={spaceId}
+                    userId={userId}
+                />
+            )}
             {matchingRoles.map((r) => (
                 <RolePill key={r.id} roleDetails={r} spaceId={spaceId} userId={userId} />
             ))}
@@ -89,8 +106,16 @@ export const UserRolePills = (props: { userId: string; spaceId: string }) => {
     )
 }
 
-const RolePill = (props: { roleDetails: RoleDetails; userId: string; spaceId: string }) => {
-    const { roleDetails } = props
+const RolePill = (
+    props: {
+        roleDetails: Pick<RoleDetails, 'id' | 'permissions' | 'name'>
+        userId: string
+        spaceId: string
+        type?: 'member' | 'admin' | 'founder'
+        isAdmin?: boolean
+    } & BoxProps,
+) => {
+    const { roleDetails, isAdmin } = props
 
     const boxProps = useMemo((): Partial<BoxProps> => {
         if (roleDetails.permissions.some((p) => MODERATOR_PERMISSIONS.includes(p))) {
@@ -101,7 +126,7 @@ const RolePill = (props: { roleDetails: RoleDetails; userId: string; spaceId: st
 
     return (
         <Box padding="sm" borderRadius="sm" {...boxProps}>
-            <Paragraph truncate size="sm">
+            <Paragraph truncate size="sm" color={isAdmin ? 'rainbow' : undefined}>
                 {DEFAULT_ROLE_NAMES[roleDetails.id] ?? roleDetails.name}
             </Paragraph>
         </Box>
