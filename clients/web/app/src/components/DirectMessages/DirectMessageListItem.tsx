@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react'
+import React, { forwardRef, useCallback, useMemo, useRef } from 'react'
 import {
     DMChannelIdentifier,
     LookupUser,
@@ -9,6 +9,7 @@ import {
     useUserLookupContext,
 } from 'use-towns-client'
 import { MostRecentMessageInfo_OneOf } from 'use-towns-client/dist/hooks/use-dm-latest-message'
+import { useInView } from 'react-intersection-observer'
 import { Avatar } from '@components/Avatar/Avatar'
 import { UserList } from '@components/UserList/UserList'
 import { Box, BoxProps, Icon, MotionBox, Paragraph, Stack, Text } from '@ui'
@@ -16,6 +17,7 @@ import { notUndefined } from 'ui/utils/utils'
 import { formatShortDate } from 'utils/formatDates'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { htmlToText } from 'workers/data_transforms'
+import { shimmerClass } from 'ui/styles/globals/shimmer.css'
 import { GroupDMIcon, GroupDMIconProps } from './GroupDMIcon'
 
 type Props = {
@@ -27,13 +29,31 @@ type Props = {
 export const DirectMessageListItem = (props: Props & { selected: boolean }) => {
     const { channel, onSelect, selected, unread } = props
 
+    const { ref, inView } = useInView({
+        rootMargin: '400px 0px',
+    })
+
+    const inViewRef = useRef(inView)
+    inViewRef.current = inViewRef.current || inView
+
     const onClick = useCallback(() => {
         onSelect(channel.id)
     }, [channel.id, onSelect])
 
     return (
-        <DirectMessageMotionContainer selected={selected} onClick={onClick}>
-            <DirectMessageRowContent channel={channel} unread={unread} />
+        <DirectMessageMotionContainer
+            selected={selected}
+            ref={ref}
+            reduceMotion={!inViewRef.current}
+            onClick={onClick}
+        >
+            {inViewRef.current ? (
+                <DirectMessageRowContent channel={channel} unread={unread} />
+            ) : (
+                <Box grow paddingY="xxs">
+                    <Stack grow borderRadius="sm" className={shimmerClass} height="x4" />
+                </Box>
+            )}
         </DirectMessageMotionContainer>
     )
 }
@@ -343,24 +363,27 @@ export const MessageContentSummary = (props: {
     }
 }
 
-export const DirectMessageMotionContainer = ({
-    selected,
-    ...boxProps
-}: { selected?: boolean } & Omit<
-    BoxProps,
-    'transition' | 'onDrag' | 'onDragStart' | 'onDragEnd' | 'onAnimationStart'
->) => (
+export const DirectMessageMotionContainer = forwardRef<
+    HTMLDivElement,
+    { selected?: boolean; reduceMotion?: boolean } & Omit<
+        BoxProps,
+        'transition' | 'onDrag' | 'onDragStart' | 'onDragEnd' | 'onAnimationStart'
+    >
+>(({ selected, reduceMotion, ...boxProps }, ref) => (
     <MotionBox
         gap
         horizontal
         layout="position"
-        transition={{ type: 'spring', damping: 25, stiffness: 120 }}
+        transition={
+            reduceMotion ? { duration: 0 } : { type: 'spring', damping: 25, stiffness: 120 }
+        }
         cursor="pointer"
         hoverable={!selected}
         background={selected ? 'level2' : 'level1'}
         alignItems="start"
         padding="sm"
         borderRadius="sm"
+        ref={ref}
         {...boxProps}
     />
-)
+))

@@ -11,6 +11,7 @@ import {
 } from 'use-towns-client'
 import { LayoutGroup } from 'framer-motion'
 import { genId } from '@river-build/sdk'
+import { useInView } from 'react-intersection-observer'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { ActionNavItem } from '@components/NavItem/ActionNavItem'
 import { ChannelNavGroup } from '@components/NavItem/ChannelNavGroup'
@@ -28,6 +29,7 @@ import { useUnseenChannelIds } from 'hooks/useUnseenChannelIdsCount'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { OffscreenMarker, OffscreenPill } from '@components/OffscreenPill/OffscreenPill'
 import { Analytics } from 'hooks/useAnalytics'
+import { DirectMessageItemSkeleton } from '@components/DirectMessages/DirectMessageItemSkeleton'
 import * as styles from './SpaceSideBar.css'
 import { SpaceSideBarHeader } from './SpaceSideBarHeader'
 import { SidebarLoadingAnimation } from './SpaceSideBarLoading'
@@ -118,8 +120,10 @@ export const SpaceSideBar = (props: Props) => {
     const itemRenderer = useCallback(
         (u: (typeof unreadChannels)[0], isUnreadSection?: boolean) => {
             const key = `${u.id}`
+            // dm items can get expensive to render, use intersection observer
+            const checkVisibility = u.type === 'dm'
             return (
-                <SpaceSideBarListItem key={key}>
+                <SpaceSideBarListItem key={key} checkVisibility={checkVisibility}>
                     <OffscreenMarker id={key} containerMarginTop={HEADER_MARGIN} />
                     {u.type === 'dm' ? (
                         <CondensedChannelNavItem
@@ -336,11 +340,27 @@ const REDUCE_MOTION = isReduceMotion()
 const MenuGroup = ({ children }: { children: React.ReactNode }) =>
     REDUCE_MOTION ? children : <LayoutGroup>{children}</LayoutGroup>
 
-const SpaceSideBarListItem = ({ children }: { children: React.ReactNode }) => {
+const SpaceSideBarListItem = ({
+    children,
+    checkVisibility = false,
+}: {
+    children: React.ReactNode
+    checkVisibility?: boolean
+}) => {
+    const { ref, inView } = useInView({
+        rootMargin: '200px 0px',
+        skip: !checkVisibility,
+        initialInView: !checkVisibility,
+    })
+
+    const inViewRef = useRef(inView)
+    inViewRef.current = inViewRef.current || inView
+
     return REDUCE_MOTION ? (
         children
     ) : (
         <MotionBox
+            ref={ref}
             initial={{ opacity: 0 }}
             animate={{
                 opacity: 1,
@@ -358,7 +378,7 @@ const SpaceSideBarListItem = ({ children }: { children: React.ReactNode }) => {
                 layout: { duration: 0.4, ease: 'circOut' },
             }}
         >
-            {children}
+            {!checkVisibility || inViewRef.current ? children : <DirectMessageItemSkeleton />}
         </MotionBox>
     )
 }
