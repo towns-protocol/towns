@@ -1,14 +1,12 @@
-import { BigNumberish } from 'ethers'
-
 export interface SpaceInfo {
     address: string
-    createdAt: BigNumberish
+    createdAt: string // is BigNumber
     networkId: string
     name: string
     owner: string
     disabled: boolean
     shortDescription: string
     longDescription: string
-    tokenId: BigNumberish
+    tokenId: string // is BigNumber
     uri: string
 }

@@ -11,7 +11,7 @@ import path from 'node:path'
 import NodeCache from 'node-cache'
 import { appPackageVersion } from './utils/app-package-version'
 import { config } from './config'
-import { getWeb3Deployment, ISpaceOwnerShim, SpaceOwner } from '@river-build/web3'
+import { getWeb3Deployment, ISpaceOwnerShim, SpaceInfo, SpaceOwner } from '@river-build/web3'
 
 const { PROVIDER_URL, MODE, PORT, VITE_RIVER_ENV } = config
 
@@ -113,18 +113,7 @@ function validateTownId(townId: string) {
     return townId.match(/^[0-9a-f]{64}$/)
 }
 
-type TownData = {
-    name?: string
-    shortDescription?: string
-    longDescription?: string
-    uri?: string
-    tokenId?: number
-    createdAt?: number
-    networkId?: string
-    address?: string
-    owner?: string
-    disabled?: boolean
-}
+type TownData = Partial<SpaceInfo>
 
 async function updateTemplate({
     townId,
@@ -188,8 +177,8 @@ async function getTownDataFromContract(townId: string): Promise<TownData | undef
                   name: result.name,
                   shortDescription: result.shortDescription,
                   longDescription: result.longDescription,
-                  tokenId: Number(result.tokenId),
-                  createdAt: Number(result.createdAt),
+                  tokenId: result.tokenId.toString(),
+                  createdAt: result.createdAt.toString(),
                   uri: result.uri,
                   networkId: townId,
                   disabled: true, // TODO: pausable

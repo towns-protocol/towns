@@ -538,8 +538,8 @@ export class SpaceDapp implements ISpaceDapp {
             owner,
             disabled,
             uri: (spaceInfo.uri as string) ?? '',
-            tokenId: spaceInfo.tokenId as ethers.BigNumber,
-            createdAt: spaceInfo.createdAt as ethers.BigNumber,
+            tokenId: ethers.BigNumber.from(spaceInfo.tokenId).toString(),
+            createdAt: ethers.BigNumber.from(spaceInfo.createdAt).toString(),
             shortDescription: (spaceInfo.shortDescription as string) ?? '',
             longDescription: (spaceInfo.longDescription as string) ?? '',
         }

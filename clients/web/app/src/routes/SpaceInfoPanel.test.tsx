@@ -44,8 +44,8 @@ const generateSpaceData = (networkId: string) => {
         disabled: false,
         shortDescription: spaceData.shortDescription,
         longDescription: spaceData.longDescription,
-        createdAt: BigNumber.from(0),
-        tokenId: BigNumber.from(0),
+        createdAt: BigNumber.from(0).toString(),
+        tokenId: BigNumber.from(0).toString(),
         uri: 'https://example.com',
     }
 
