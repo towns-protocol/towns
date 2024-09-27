@@ -1,5 +1,4 @@
 import { ChannelMetadata, SpaceInfo } from '@river-build/web3'
-import { BigNumber } from 'ethers'
 import isEqual from 'lodash/isEqual'
 import { create, StateCreator } from 'zustand'
 import { createJSONStorage, persist, PersistOptions } from 'zustand/middleware'
@@ -135,26 +134,8 @@ export const useOfflineStore = create<OfflineStates>(
         }),
         {
             name: OFFLINE_STORE_NAME,
-            storage: createJSONStorage(() => localStorage, {
-                reviver: (key, value) => {
-                    if (isBigNumber(value)) {
-                        return BigNumber.from(value)
-                    }
-                    return value
-                },
-            }),
-            version: 1,
+            storage: createJSONStorage(() => localStorage),
+            version: 2,
         },
     ),
 )
-
-const isBigNumber = (value: unknown): value is BigNumber => {
-    return (
-        typeof value === 'object' &&
-        value !== null &&
-        '_type' in value &&
-        value._type === 'BigNumber' &&
-        'hex' in value &&
-        typeof value.hex === 'string'
-    )
-}
