@@ -55,16 +55,10 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
             createPrivyNotAuthenticatedNotification()
             return
         }
-        Analytics.getInstance().track(
-            'Clicked join town on town page',
-            {
-                spaceId,
-                meetsMembershipRequirements,
-            },
-            () => {
-                console.log('[analytics][JoinLoginButton] Clicked join town on town page')
-            },
-        )
+        Analytics.getInstance().track('clicked join town on town page', {
+            spaceId,
+            meetsMembershipRequirements,
+        })
         if (meetsMembershipRequirements) {
             startJoinMeetsRequirements({
                 signer,
