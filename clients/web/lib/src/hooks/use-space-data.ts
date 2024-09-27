@@ -39,10 +39,10 @@ export const useSpaceDataStore = create<SpaceDataStore>((set) => ({
                 return state
             }
 
-            console.log(`setSpaceData<${spaceData.id}> data changed`, {
-                prevSpaceId: state.spaceDataMap[spaceData.id]?.id,
-                spaceData,
-            })
+            // console.log(`setSpaceData<${spaceData.id}> data changed`, {
+            //     prevSpaceId: state.spaceDataMap[spaceData.id]?.id,
+            //     spaceData,
+            // })
 
             return {
                 spaceDataMap: {
@@ -126,10 +126,10 @@ function channelInfoQueryConfig({
             }
             const channel = await space.getChannelMetadata(channelId)
 
-            console.log(
-                `channelInfoQueryConfig spaceDapp.getChannelMetadata: ${spaceId}/${channelId} at: ${updatedAtKey}`,
-                { channel },
-            )
+            // console.log(
+            //     `channelInfoQueryConfig spaceDapp.getChannelMetadata: ${spaceId}/${channelId} at: ${updatedAtKey}`,
+            //     { channel },
+            // )
             if (channel) {
                 useOfflineStore
                     .getState()
@@ -171,7 +171,7 @@ function spaceInfoWithChannelsQueryConfig({
                 return undefined
             }
             const spaceInfo: SpaceInfo | undefined = await spaceDapp.getSpaceInfo(spaceId)
-            console.log(`useContractSpaceInfo: ${spaceId}`, { spaceInfo })
+            // console.log(`useContractSpaceInfo: ${spaceId}`, { spaceInfo })
             // if we don't have a spaceInfo from network for some reasons, return the cached one
             if (!spaceInfo) {
                 return useOfflineStore.getState().offlineSpaceInfoMap[spaceId]
@@ -231,9 +231,9 @@ export function useChannelMetadata(spaceChannels: {
                               channel.id,
                               channel.updatedAtKey,
                           )
-                          console.log(
-                              `useChannelMetadata query: ${spaceId}/${channel.id} at: ${channel.updatedAtKey}`,
-                          )
+                          //   console.log(
+                          //       `useChannelMetadata query: ${spaceId}/${channel.id} at: ${channel.updatedAtKey}`,
+                          //   )
                           return res
                       },
                       ...queryConfig.options,
@@ -332,8 +332,8 @@ export function useContractSpaceInfos(opts: TownsOpts, client?: CasablancaClient
             return {
                 queryKey: queryConfig.queryKey,
                 queryFn: () => {
-                    const res = queryConfig.queryFn(spaceDapp, client, id)
-                    console.log(`useContractSpaceInfos: ${id}`, { spaceInfo: res })
+                    // const res = queryConfig.queryFn(spaceDapp, client, id)
+                    // console.log(`useContractSpaceInfos: ${id}`, { spaceInfo: res })
                     return queryConfig.queryFn(spaceDapp, client, id)
                 },
                 ...queryConfig.options,
@@ -384,7 +384,7 @@ export const useContractSpaceInfo = (
         queryConfig.queryKey,
         () => {
             const res = queryConfig.queryFn(spaceDapp, client, spaceId)
-            console.log(`useContractSpaceInfo: ${spaceId}`, { spaceInfo: res })
+            // console.log(`useContractSpaceInfo: ${spaceId}`, { spaceInfo: res })
             return res
         },
         {
@@ -419,7 +419,7 @@ export function useContractSpaceInfoWithoutClient(spaceId: string | undefined) {
             return undefined
         }
         const spaceInfo: SpaceInfo | undefined = await spaceDapp.getSpaceInfo(spaceId)
-        console.log(`useContractSpaceInfo: ${spaceId}`, { spaceInfo })
+        // console.log(`useContractSpaceInfo: ${spaceId}`, { spaceInfo })
         // if we don't have a spaceInfo from network for some reasons, return the cached one
         if (!spaceInfo) {
             return useOfflineStore.getState().offlineSpaceInfoMap[spaceId]
