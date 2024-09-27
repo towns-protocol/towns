@@ -14,9 +14,8 @@ env:
     BASESCAN_SEPOLIA_API_KEY: ${{ secrets.BASESCAN_SEPOLIA_API_KEY }}
     RIVERSCAN_DEVNET_URL: 'https://towns-devnet.explorer.caldera.xyz/api'
     RIVER_DEVNET_RPC_URL: 'https://towns-devnet.rpc.caldera.xyz/http'
-    AWS_ACCESS_KEY_ID: ${{ secrets.S3_AWS_ACCESS_KEY_ID }}
-    AWS_SECRET_ACCESS_KEY: ${{ secrets.S3_AWS_SECRET_ACCESS_KEY }}
-    AWS_REGION: ${{ secrets.S3_AWS_REGION }}
+    S3_AWS_ACCESS_KEY_ID: ${{ secrets.S3_AWS_ACCESS_KEY_ID }}
+    S3_AWS_SECRET_ACCESS_KEY: ${{ secrets.S3_AWS_SECRET_ACCESS_KEY }}
     FACET_SOURCE_PATH: '../../contracts/src'
     COMPILED_FACETS_PATH: '../../contracts/out'
     DEPLOYMENTS_PATH: '../../contracts/deployments'
@@ -43,6 +42,10 @@ on:
                 type: string
                 default: 'Upgrade_Facets_Sparse'
         secrets:
+            S3_AWS_ACCESS_KEY_ID:
+                required: true
+            S3_AWS_SECRET_ACCESS_KEY:
+                required: true
             ALPHA_BASE_SEPOLIA_DEPLOYER_PK:
                 required: true
             SLACK_CD_ALERT_WORKFLOW_WEBHOOK_URL:
@@ -90,9 +93,9 @@ jobs:
             - name: Configure AWS credentials
               uses: aws-actions/configure-aws-credentials@v1
               with:
-                  aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
-                  aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
-                  aws-region: ${{ env.AWS_REGION }}
+                  aws-access-key-id: ${{ env.S3_AWS_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ env.S3_AWS_SECRET_ACCESS_KEY }}
+                  aws-region: us-east-1
 
             - name: Install dependencies
               run: |
