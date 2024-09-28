@@ -274,7 +274,7 @@ contract DeploySpace is DiamondHelper, Deployer {
         referrals = referralsHelper.deploy(deployer);
         addCut(referralsHelper.makeCut(referrals, IDiamond.FacetCutAction.Add));
       } else if (
-        facetNameHash == keccak256(abi.encodePacked("EntitlementGated"))
+        facetNameHash == keccak256(abi.encodePacked("SpaceEntitlementGated"))
       ) {
         entitlementGated = entitlementGatedHelper.deploy(deployer);
         addCut(
