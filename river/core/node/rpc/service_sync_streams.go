@@ -2,6 +2,8 @@ package rpc
 
 import (
 	"context"
+	"errors"
+	"log/slog"
 	"runtime/pprof"
 	"time"
 
@@ -32,21 +34,25 @@ func (s *Service) SyncStreams(
 	ctx, log := utils.CtxAndLogForRequest(ctx, req)
 	startTime := time.Now()
 	syncId := GenNanoid()
-	log.Info("SyncStreams START", "syncId", syncId)
+	log.Debug("SyncStreams START", "syncId", syncId)
 
 	var err error
 	runWithLabels(ctx, syncId, func(ctx context.Context) {
 		err = s.syncHandler.SyncStreams(ctx, syncId, req, res)
 	})
 	if err != nil {
+		level := slog.LevelWarn
+		if errors.Is(err, context.Canceled) {
+			level = slog.LevelDebug
+		}
 		err = AsRiverError(
 			err,
 		).Func("SyncStreams").
 			Tags("syncId", syncId, "duration", time.Since(startTime)).
-			LogWarn(log).
+			LogLevel(log, level).
 			AsConnectError()
 	} else {
-		log.Info("SyncStreams DONE", "syncId", syncId, "duration", time.Since(startTime))
+		log.Debug("SyncStreams DONE", "syncId", syncId, "duration", time.Since(startTime))
 	}
 	return err
 }

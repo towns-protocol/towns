@@ -128,7 +128,6 @@ func (s *Service) start() error {
 	if err != nil {
 		return AsRiverError(err).Message("Failed to init river chain").LogError(s.defaultLogger)
 	}
-	s.defaultLogger.Info("On-chain Configuration", "config", s.chainConfig.Get())
 
 	err = s.initEntitlements()
 	if err != nil {
@@ -663,6 +662,7 @@ func createServerFromBase64(
 		BaseContext: func(listener net.Listener) context.Context {
 			return ctx
 		},
+		ErrorLog: newHttpLogger(ctx),
 	}, nil
 }
 
@@ -689,6 +689,7 @@ func createServerFromFile(
 		BaseContext: func(listener net.Listener) context.Context {
 			return ctx
 		},
+		ErrorLog: newHttpLogger(ctx),
 	}, nil
 }
 
@@ -701,6 +702,7 @@ func createH2CServer(ctx context.Context, address string, handler http.Handler) 
 		BaseContext: func(listener net.Listener) context.Context {
 			return ctx
 		},
+		ErrorLog: newHttpLogger(ctx),
 	}, nil
 }
 

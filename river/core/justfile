@@ -16,8 +16,9 @@ BASE_EXECUTION_CLIENT := env_var_or_default("BASE_EXECUTION_CLIENT", "")
 OPERATOR_ADDRESS := `source ../contracts/.env.localhost && echo "${SENDER_ADDRESS}"`
 LOCAL_PRIVATE_KEY := `source ../contracts/.env.localhost && echo "${LOCAL_PRIVATE_KEY}"`
 
-#TODO: remove x when debugging is done
-BASH_OPTS := '-euxo pipefail'
+# Set to "-x" to log bash commands
+JUST_BASH_OPTS := env_var_or_default("JUST_BASH_OPTS", "")
+BASH_OPTS := '-euo pipefail ' + JUST_BASH_OPTS
 
 default:
     @just --list
@@ -43,7 +44,7 @@ clean:
 _anvil-start $NAME $PORT $CHAIN_ID:
     #!/usr/bin/env -S bash {{BASH_OPTS}}
     mkdir -p ./run_files/anvil
-    if nc -z localhost ${PORT} > /dev/null; then
+    if nc -z localhost ${PORT} > /dev/null 2>&1; then
         echo "Anvil already running on port ${PORT}"
     else
         echo "Starting ${NAME} on port ${PORT}"
@@ -77,9 +78,13 @@ anvils: anvil-base anvil-river
 
 anvils-stop: anvil-base-stop anvil-river-stop
 
+anvils-tail-logs:
+    #!/usr/bin/env -S bash {{BASH_OPTS}}
+    tail -n 10 -F ./run_files/anvil/*.log
+
 storage-start:
     #!/usr/bin/env -S bash {{BASH_OPTS}}
-    if nc -z localhost 5433 > /dev/null; then
+    if nc -z localhost 5433 > /dev/null 2>&1; then
         echo "Postgres already running on port 5433"
     else
         echo "Starting Postgres"
@@ -156,13 +161,26 @@ just-config-base-chain:
 
 config-base-chain: deploy-contracts just-config-base-chain
 
+[positional-arguments]
+run-bin *args:
+    #!/usr/bin/env -S bash {{BASH_OPTS}}
+    source ${ENV_FILE}
+    cd ${RUN_BASE}
+    mkdir -p logs
+    RIVER_PORT=80 ./bin/river_node \
+        --config common.yaml \
+        --config config.yaml \
+        --config contracts.env \
+        "$@"
+
 just-config-river-chain:
     #!/usr/bin/env -S bash {{BASH_OPTS}}
     source ${ENV_FILE}
-    source ${RUN_BASE}/contracts.env
-    ../scripts/set-riverchain-config.sh
+    PRIVATE_KEY=${LOCAL_PRIVATE_KEY} \
+        just run-bin \
+        on-chain-config set-csv ../../${ENV_PATH}/on_chain.csv
 
-config-river-chain: deploy-contracts just-config-river-chain
+config-river-chain: deploy-contracts config-root build just-config-river-chain
 
 config-root:
     #!/usr/bin/env -S bash {{BASH_OPTS}}
@@ -270,7 +288,52 @@ tail-logs:
     source ${ENV_FILE}
     shopt -s nullglob
     LOGS=(${INSTANCE_BASE}/*/logs/tty.*.log)
-    tail -n 500 -f ${LOGS[@]}
+    tail -n 500 -F ${LOGS[@]}
+
+# Tail logs from all instances starting with 10 last lines
+tail-logs-short:
+    #!/usr/bin/env -S bash {{BASH_OPTS}}
+    source ${ENV_FILE}
+    shopt -s nullglob
+    LOGS=(${INSTANCE_BASE}/*/logs/tty.*.log)
+    tail -n 10 -F ${LOGS[@]}
+
+# Print last 10 lines from each instance log
+print-logs:
+    #!/usr/bin/env -S bash {{BASH_OPTS}}
+    source ${ENV_FILE}
+    shopt -s nullglob
+    LOGS=(${INSTANCE_BASE}/*/logs/tty.*.log)
+    tail -n 10 ${LOGS[@]}
+
+# Tail stderr from all instances
+tail-stderr:
+    #!/usr/bin/env -S bash {{BASH_OPTS}}
+    source ${ENV_FILE}
+    shopt -s nullglob
+    LOGS=(${INSTANCE_BASE}/*/logs/tty.stderr.log)
+    tail -n 500 -F ${LOGS[@]}
+
+# Print stderr from all instances
+print-stderr:
+    #!/usr/bin/env -S bash {{BASH_OPTS}}
+    source ${ENV_FILE}
+    shopt -s nullglob
+    LOGS=(${INSTANCE_BASE}/*/logs/tty.stderr.log)
+    tail -n 10000 ${LOGS[@]}
+
+# Exits with error if any instance has non-empty stderr
+check-stderr:
+    #!/usr/bin/env -S bash {{BASH_OPTS}}
+    source ${ENV_FILE}
+    shopt -s nullglob
+    LOGS=(${INSTANCE_BASE}/*/logs/tty.stderr.log)
+    RESULT=$(tail -q ${LOGS[@]})
+    if [ -n "${RESULT}" ]; then
+        tail -n 10000 ${LOGS[@]}
+        echo "ERROR: Found non-empty stderr logs"
+        exit 1
+    fi
 
 _start-all: (_loop-instances "_run-node")
 
@@ -303,6 +366,18 @@ _loop-instances-seq $CMD:
         just ${CMD} ${i} ${INSTANCE_DIR}
     done
 
+# Loop instances without stopping on error, return 0 if all succeeded, 1 if any failed
+_loop-instances-seq-nostop $CMD:
+    #!/usr/bin/env -S bash {{BASH_OPTS}}
+    source ${ENV_FILE}
+    EXIT_CODE=0
+    for ((i=0; i<${NUM_INSTANCES}; i++)); do
+        INSTANCE_NAME=$(printf "%02d" ${i})
+        INSTANCE_DIR="${INSTANCE_BASE}/${INSTANCE_NAME}"
+        just ${CMD} ${i} ${INSTANCE_DIR} || EXIT_CODE=1
+    done
+    exit ${EXIT_CODE}
+
 _loop-instances-parallel $CMD:
     #!/usr/bin/env -S bash {{BASH_OPTS}}
     source ${ENV_FILE}
@@ -331,3 +406,14 @@ ping-anvil-base: (_ping-anvil RPC_BASE "base")
 ping-anvil-river: (_ping-anvil RPC_RIVER "river")
 
 ping-anvils: ping-anvil-base ping-anvil-river
+
+_ping-instance-tcp $INSTANCE_NUM $INSTANCE_DIR:
+    #!/usr/bin/env -S bash {{BASH_OPTS}}
+    source ${ENV_FILE}
+    source ${INSTANCE_DIR}/config/config.env
+    if ! (nc -z localhost ${RIVER_PORT} > /dev/null 2>&1); then
+        echo "No instance ${INSTANCE_NUM} on port ${RIVER_PORT}"
+        exit 1
+    fi
+
+ping-instances-tcp: (_loop-instances-seq-nostop "_ping-instance-tcp")

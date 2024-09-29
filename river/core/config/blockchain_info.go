@@ -88,13 +88,13 @@ func GetDefaultBlockchainInfo() map[uint64]BlockchainInfo {
 		31337: {
 			ChainId:      31337,
 			Name:         "Anvil Base",
-			Blocktime:    2 * time.Second,
+			Blocktime:    time.Second,
 			IsEtherBased: true,
 		},
 		31338: {
 			ChainId:      31338,
 			Name:         "Anvil River",
-			Blocktime:    2 * time.Second,
+			Blocktime:    time.Second,
 			IsEtherBased: true, // This is set for ease of testing.
 		},
 		100: {

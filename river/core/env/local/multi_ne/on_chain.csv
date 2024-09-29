@@ -1,0 +1,15 @@
+"stream.media.maxChunkCount",0,10
+"stream.media.maxChunkSize",0,500000
+"media.streamMembershipLimits.77",0,6
+"media.streamMembershipLimits.88",0,2
+"stream.recencyConstraints.ageSeconds",0,11
+"stream.recencyConstraints.generations",0,5
+"stream.replicationFactor",0,1
+"stream.defaultMinEventsPerSnapshot",0,100
+"stream.minEventsPerSnapshot.a1",0,10
+"stream.minEventsPerSnapshot.a5",0,10
+"stream.minEventsPerSnapshot.a8",0,10
+"stream.minEventsPerSnapshot.ad",0,10
+"stream.cacheExpirationMs",0,300000
+"stream.cacheExpirationPollIntervalMs",0,30000
+"xchain.blockchains",0,"31337,31338,84532,11155111"

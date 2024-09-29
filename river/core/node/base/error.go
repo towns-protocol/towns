@@ -369,6 +369,10 @@ func (e *RiverErrorImpl) LogDebug(l *slog.Logger) *RiverErrorImpl {
 	return e.LogWithLevel(l, slog.LevelDebug)
 }
 
+func (e *RiverErrorImpl) LogLevel(l *slog.Logger, level slog.Level) *RiverErrorImpl {
+	return e.LogWithLevel(l, level)
+}
+
 func ToConnectError(err error) *connect.Error {
 	if err == nil {
 		return nil

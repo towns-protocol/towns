@@ -48,6 +48,35 @@ const (
 	XChainBlockchainsConfigKey                      = "xchain.blockchains"
 )
 
+var (
+	knownOnChainSettingKeys map[string]string
+	onceInitKeys            sync.Once
+)
+
+// AllKnownOnChainSettingKeys returns a map of all known on-chain setting keys and their Ethereum ABI types.
+func AllKnownOnChainSettingKeys() map[string]string {
+	onceInitKeys.Do(func() {
+		result := map[string]any{}
+		err := mapstructure.Decode(OnChainSettings{}, &result)
+		if err != nil {
+			panic(err)
+		}
+		knownOnChainSettingKeys = map[string]string{}
+		for k, v := range result {
+			if strings.HasSuffix(k, "Ms") || strings.HasSuffix(k, "Seconds") {
+				knownOnChainSettingKeys[k] = "int64"
+				continue
+			}
+			t := reflect.TypeOf(v).String()
+			if strings.HasPrefix(t, "[]") {
+				t = t[2:] + "[]"
+			}
+			knownOnChainSettingKeys[k] = t
+		}
+	})
+	return knownOnChainSettingKeys
+}
+
 // OnChainSettings holds the configuration settings that are stored on-chain.
 // This data structure is immutable, so it is safe to access it concurrently.
 type OnChainSettings struct {
@@ -311,6 +340,7 @@ func HashSettingName(name string) common.Hash {
 
 func (occ *onChainConfiguration) processRawSettings(
 	ctx context.Context,
+	blockNum BlockNumber,
 ) {
 	log := dlog.FromCtx(ctx)
 
@@ -349,6 +379,8 @@ func (occ *onChainConfiguration) processRawSettings(
 	}
 
 	occ.cfg.Store(&settings)
+
+	log.Info("OnChainConfig: applied", "settings", settings[len(settings)-1], "currentBlock", blockNum)
 }
 
 func NewOnChainConfig(
@@ -429,7 +461,7 @@ func makeOnChainConfig(
 		defaultsMap:      defaultsMap,
 		loadedSettingMap: rawSettings,
 	}
-	cfg.processRawSettings(ctx)
+	cfg.processRawSettings(ctx, appliedBlockNum)
 
 	// set the current block number as the current active block. This is used to determine which settings are currently
 	// active. Settings can be queued and become active after a future block.
@@ -456,15 +488,29 @@ func (occ *onChainConfiguration) applyEvent(ctx context.Context, event *river.Ri
 	occ.mu.Lock()
 	defer occ.mu.Unlock()
 	occ.loadedSettingMap.apply(ctx, occ.keyHashToName, event)
-	occ.processRawSettings(ctx)
+	occ.processRawSettings(ctx, BlockNumber(event.Block))
 }
 
 var (
-	int64Type, _              = abi.NewType("int64", "", nil)
-	uint64Type, _             = abi.NewType("uint64", "", nil)
-	uint64DynamicArrayType, _ = abi.NewType("uint64[]", "", nil)
-	uint256Type, _            = abi.NewType("uint256", "", nil)
-	stringType, _             = abi.NewType("string", "string", nil)
+	AbiTypeName_Int64       = "int64"
+	AbiTypeName_Uint64      = "uint64"
+	AbiTypeName_Uint64Array = "uint64[]"
+	AbiTypeName_Uint256     = "uint256"
+	AbiTypeName_String      = "string"
+
+	AbiTypeName_All = []string{
+		AbiTypeName_Int64,
+		AbiTypeName_Uint64,
+		AbiTypeName_Uint64Array,
+		AbiTypeName_Uint256,
+		AbiTypeName_String,
+	}
+
+	int64Type, _              = abi.NewType(AbiTypeName_Int64, "", nil)
+	uint64Type, _             = abi.NewType(AbiTypeName_Uint64, "", nil)
+	uint64DynamicArrayType, _ = abi.NewType(AbiTypeName_Uint64Array, "", nil)
+	uint256Type, _            = abi.NewType(AbiTypeName_Uint256, "", nil)
+	stringType, _             = abi.NewType(AbiTypeName_String, "", nil)
 )
 
 // ABIEncodeInt64 returns Solidity abi.encode(i)

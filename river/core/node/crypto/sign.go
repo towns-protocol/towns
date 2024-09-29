@@ -147,6 +147,17 @@ func NewWalletFromPrivKey(ctx context.Context, privKey string) (*Wallet, error) 
 		nil
 }
 
+func NewWalletFromEnv(ctx context.Context, envVar string) (*Wallet, error) {
+	privKey, ok := os.LookupEnv(envVar)
+	if !ok {
+		return nil, AsRiverError(nil, Err_BAD_CONFIG).
+			Message("Environment variable not set").
+			Tag("variable", envVar).
+			Func("NewWalletFromEnv")
+	}
+	return NewWalletFromPrivKey(ctx, privKey)
+}
+
 func LoadWallet(ctx context.Context, filename string) (*Wallet, error) {
 	log := dlog.FromCtx(ctx)
 
@@ -167,107 +178,6 @@ func LoadWallet(ctx context.Context, filename string) (*Wallet, error) {
 			Address:          address,
 		},
 		nil
-}
-
-func (w *Wallet) SaveWalletFromEnv(
-	ctx context.Context,
-	privateKeyFilename string,
-	publicKeyFilename string,
-	addressFilename string,
-	overwrite bool,
-) error {
-	log := dlog.FromCtx(ctx)
-
-	openFlags := os.O_WRONLY | os.O_CREATE | os.O_EXCL
-	if overwrite {
-		openFlags = os.O_WRONLY | os.O_CREATE | os.O_TRUNC
-	}
-
-	fAddr, err := os.OpenFile(addressFilename, openFlags, KEY_FILE_PERMISSIONS)
-	if err != nil {
-		return AsRiverError(err, Err_BAD_CONFIG).
-			Message("Failed to open address file").
-			Tag("filename", addressFilename).
-			Func("SaveWalletFromEnv")
-	}
-	defer fAddr.Close()
-
-	_, err = fAddr.WriteString(w.String())
-	if err != nil {
-		return AsRiverError(err, Err_INTERNAL).
-			Message("Failed to write address to file").
-			Tag("filename", addressFilename).
-			Func("SaveWalletFromEnv")
-	}
-
-	err = fAddr.Close()
-	if err != nil {
-		return AsRiverError(err, Err_INTERNAL).
-			Message("Failed to close address file").
-			Tag("filename", addressFilename).
-			Func("SaveWalletFromEnv")
-	}
-
-	fPriv, err := os.OpenFile(privateKeyFilename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, KEY_FILE_PERMISSIONS)
-	if err != nil {
-		return AsRiverError(err, Err_BAD_CONFIG).
-			Message("Failed to open private key file").
-			Tag("filename", privateKeyFilename).
-			Func("SaveWalletFromEnv")
-	}
-	defer fPriv.Close()
-
-	fPub, err := os.OpenFile(publicKeyFilename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, KEY_FILE_PERMISSIONS)
-	if err != nil {
-		return AsRiverError(err, Err_BAD_CONFIG).
-			Message("Failed to open public key file").
-			Tag("filename", publicKeyFilename).
-			Func("SaveWalletFromEnv")
-	}
-	defer fPub.Close()
-
-	k := hex.EncodeToString(w.PrivateKey)
-	_, err = fPriv.WriteString(k)
-	if err != nil {
-		return AsRiverError(err, Err_INTERNAL).
-			Message("Failed to write private key to file").
-			Tag("filename", privateKeyFilename).
-			Func("SaveWalletFromEnv")
-	}
-
-	err = fPriv.Close()
-	if err != nil {
-		return AsRiverError(err, Err_INTERNAL).
-			Message("Failed to close private key file").
-			Tag("filename", privateKeyFilename).
-			Func("SaveWalletFromEnv")
-	}
-
-	k = hex.EncodeToString(crypto.FromECDSAPub(&w.PrivateKeyStruct.PublicKey))
-	_, err = fPub.WriteString(k)
-	if err != nil {
-		return AsRiverError(err, Err_INTERNAL).
-			Message("Failed to write public key to file").
-			Tag("filename", publicKeyFilename).
-			Func("SaveWalletFromEnv")
-	}
-
-	err = fPub.Close()
-	if err != nil {
-		return AsRiverError(err, Err_INTERNAL).
-			Message("Failed to close public key file").
-			Tag("filename", publicKeyFilename).
-			Func("SaveWalletFromEnv")
-	}
-
-	log.Info(
-		"Wallet saved from env.",
-		"address",
-		w.Address.Hex(),
-		"publicKey",
-		crypto.FromECDSAPub(&w.PrivateKeyStruct.PublicKey),
-	)
-	return nil
 }
 
 func (w *Wallet) SaveWallet(
