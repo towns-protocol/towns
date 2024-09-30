@@ -51,6 +51,10 @@ export async function handleVerifications(args: {
 
         // todo: all other on-chain write functions exposed in app (see @river-build/web3 for list)
         switch (functionHash) {
+            // client only allows transferring assets out of "Towns wallet", we can sponsor this
+            case 'transferTokens': {
+                break
+            }
             // todo: functionHash should be a keccak hash of the function signature
             case 'createSpaceWithPrepay':
             case 'createSpace': {

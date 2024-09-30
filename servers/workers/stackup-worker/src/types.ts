@@ -245,6 +245,7 @@ export type EventName = (typeof EventName)[keyof typeof EventName]
 // TODO: different name for this
 const FunctionHash = {
     ...FunctionName,
+    transferTokens: 'transferTokens',
     createSpace_linkWallet: 'createSpace_linkWallet',
     joinSpace_linkWallet: 'joinSpace_linkWallet',
     editMembershipSettings: 'editMembershipSettings',
