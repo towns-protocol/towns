@@ -42,9 +42,14 @@ export function useNotificationSettings() {
         const newSettings = {
             userSettings: createDefaultUserSettings(myUserId),
         }
-        await replaceAllNotificationSettingsAsync(newSettings)
-        log.info('created user notification settings', newSettings)
-        return newSettings
+        try {
+            await replaceAllNotificationSettingsAsync(newSettings)
+            log.info('created user notification settings', newSettings)
+            return newSettings
+        } catch (err) {
+            log.error('error adding user notification settings', { userId: myUserId, err })
+            return
+        }
     }, [myUserId, replaceAllNotificationSettingsAsync])
 
     const addTownNotificationSettings = useCallback(
@@ -68,8 +73,18 @@ export function useNotificationSettings() {
                             spaceSettings: newSpaceSettings,
                         },
                     }
-                    await updateNotificationSettingsAsync(newSettings)
-                    log.info('added town notification settings', newSettings)
+                    try {
+                        await updateNotificationSettingsAsync(newSettings)
+                        log.info('added town notification settings', newSettings)
+                        return true
+                    } catch (err) {
+                        log.error('error adding town notification settings', {
+                            spaceId,
+                            isNewSpace,
+                            err,
+                        })
+                        return false
+                    }
                 }
             }
         },
@@ -106,8 +121,18 @@ export function useNotificationSettings() {
                     if (newChannelSettings) {
                         newSettings.userSettings.channelSettings = newChannelSettings
                     }
-                    await updateNotificationSettingsAsync(newSettings)
-                    log.info('added channel notification settings', newSettings)
+                    try {
+                        await updateNotificationSettingsAsync(newSettings)
+                        log.info('added channel notification settings', newSettings)
+                        return true
+                    } catch (err) {
+                        log.error('error updating channel noficiation settings', {
+                            spaceId,
+                            channelId,
+                            err,
+                        })
+                        return false
+                    }
                 }
             }
         },
@@ -132,8 +157,14 @@ export function useNotificationSettings() {
                             channelSettings: [...channelSettings, newChannelSettings],
                         },
                     }
-                    await updateNotificationSettingsAsync(newDmSettings)
-                    log.info('added DM/GDM notification settings', newDmSettings)
+                    try {
+                        await updateNotificationSettingsAsync(newDmSettings)
+                        log.info('added DM/GDM notification settings', newDmSettings)
+                        return true
+                    } catch (err) {
+                        log.error('error updating DM/GDM noficiation settings', { channelId, err })
+                        return false
+                    }
                 }
             }
         },
@@ -152,8 +183,14 @@ export function useNotificationSettings() {
                         channelSettings: changedChannelSettings,
                     },
                 }
-                await updateNotificationSettingsAsync(changedTownSettings)
-                log.info('removed town notification settings', changedTownSettings)
+                try {
+                    await updateNotificationSettingsAsync(changedTownSettings)
+                    log.info('removed town notification settings', changedTownSettings)
+                    return true
+                } catch (err) {
+                    log.error('error removing town notification settings', err)
+                    return false
+                }
             }
         },
         [channelSettings, myUserId, spaceSettings, updateNotificationSettingsAsync],
@@ -171,8 +208,14 @@ export function useNotificationSettings() {
                         channelSettings: changedChannelSettings,
                     },
                 }
-                await updateNotificationSettingsAsync(changedChannelSettingsSchema)
-                log.info('removed channel notification settings', changedChannelSettingsSchema)
+                try {
+                    await updateNotificationSettingsAsync(changedChannelSettingsSchema)
+                    log.info('removed channel notification settings', changedChannelSettingsSchema)
+                    return true
+                } catch (err) {
+                    log.error('error removing channel notificaiton settings', { channelId, err })
+                    return false
+                }
             }
         },
         [channelSettings, myUserId, updateNotificationSettingsAsync],

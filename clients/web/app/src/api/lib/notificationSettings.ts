@@ -9,6 +9,7 @@ import {
 } from '@notification-service/types'
 import { useMemo } from 'react'
 import { debug } from 'debug'
+import axios from 'axios'
 import { env } from 'utils'
 import { axiosClient } from 'api/apiClient'
 import { MINUTE_MS } from 'data/constants'
@@ -155,6 +156,8 @@ export function useSaveNotificationSettings() {
     const queryClient = useQueryClient()
 
     return useMutation({
+        retryDelay: retryDelayFn,
+        retry: retryFn,
         mutationFn: async ({ userSettings }: SaveUserSettingsSchema) => {
             return saveUserNotificationSettings({ userSettings })
         },
@@ -174,6 +177,8 @@ export function usePatchNotificationSettings() {
     const queryClient = useQueryClient()
 
     return useMutation({
+        retryDelay: retryDelayFn,
+        retry: retryFn,
         mutationFn: async ({ userSettings }: PatchUserSettingsSchema) => {
             return patchNotificationSettings({ userSettings })
         },
@@ -197,6 +202,8 @@ export function useSetMuteSettingForChannelOrSpace() {
     const queryClient = useQueryClient()
 
     return useMutation({
+        retryDelay: retryDelayFn,
+        retry: retryFn,
         mutationFn: async ({
             spaceId,
             channelId,
@@ -261,4 +268,20 @@ export function useSetMuteSettingForChannelOrSpace() {
             console.error('[useSetNotificationSettings] error', error)
         },
     })
+}
+
+function retryFn(failureCount: number, error: unknown): boolean {
+    // Check if the error is an AxiosError
+    if (axios.isAxiosError(error)) {
+        // Retry logic based on the error and failure count
+        if (error.response?.status === 500 || error.message === 'Network Error') {
+            return failureCount <= 3 // Retry up to 3 times
+        }
+    }
+    return false //
+}
+
+function retryDelayFn(failureCount: number): number {
+    // Exponential backoff: Delay = 1000ms * 2^failureCount (up to a max of 30 seconds)
+    return Math.min(1000 * 2 ** failureCount, 30000) // Max delay of 30 seconds
 }
