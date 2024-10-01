@@ -245,6 +245,15 @@ export const MessageContextMenu = (props: Props) => {
                 onClick: onEditClick,
             } as const)
         }
+
+        submenuItems.push({
+            key: 'markAsUnread',
+            icon: 'messageUnread',
+            text: 'Mark unread',
+            shortcutAction: 'MarkAsUnread' as const,
+            onClick: onMarkAsUnreadClick,
+        } as const)
+
         if (props.canPin) {
             submenuItems.push(
                 isPinned
@@ -281,6 +290,7 @@ export const MessageContextMenu = (props: Props) => {
         onAdminRedact,
         onDeleteClick,
         onEditClick,
+        onMarkAsUnreadClick,
         onPinMessage,
         onUnpinMessage,
         props.canEdit,
@@ -329,13 +339,6 @@ export const MessageContextMenu = (props: Props) => {
                             onClick={onReply}
                         />
                     )}
-
-                    <IconButton
-                        tooltip={<ShortcutTooltip action="MarkAsUnread" />}
-                        icon="messageUnread"
-                        size="square_sm"
-                        onClick={onMarkAsUnreadClick}
-                    />
 
                     <IconButton
                         color={hasCopied ? 'positive' : 'gray2'}
