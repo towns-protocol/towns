@@ -1,19 +1,19 @@
-import React, { useMemo, useState } from 'react'
 import { userOpsStore } from '@towns/userops'
 import { BigNumber } from 'ethers'
-
-import { Address, BASE_SEPOLIA, useConnectivity } from 'use-towns-client'
+import React, { useMemo, useState } from 'react'
+import { Address, useConnectivity } from 'use-towns-client'
 import { useShallow } from 'zustand/react/shallow'
+import { AboveAppProgressModalContainer } from '@components/AppProgressOverlay/AboveAppProgress/AboveAppProgress'
 import { Box, Button, Heading, Icon, IconButton, Paragraph, Text } from '@ui'
-import { shortAddress } from 'ui/utils/utils'
-import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
+import { BRIDGE_LEARN_MORE_LINK } from 'data/links'
+import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
+import { formatUnitsToFixedLength, useBalance } from 'hooks/useBalance'
 import { isTouch, useDevice } from 'hooks/useDevice'
 import { useIsSmartAccountDeployed } from 'hooks/useIsSmartAccountDeployed'
-import { formatUnitsToFixedLength, useBalance } from 'hooks/useBalance'
 import { usePublicPageLoginFlow } from 'routes/PublicTownPage/usePublicPageLoginFlow'
-import { AboveAppProgressModalContainer } from '@components/AppProgressOverlay/AboveAppProgress/AboveAppProgress'
-import { useEnvironment } from 'hooks/useEnvironmnet'
-import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
+import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
+import { atoms } from 'ui/styles/atoms.css'
+import { shortAddress } from 'ui/utils/utils'
 import { CopyWalletAddressButton } from '../GatedTownModal/Buttons'
 import { useWalletPrefix } from '../useWalletPrefix'
 
@@ -63,7 +63,6 @@ function UserOpTxModalContent({
         rootKeyAddress: loggedInWalletAddress as Address,
     })
 
-    const { baseChainConfig } = useEnvironment()
     const walletPrefix = useWalletPrefix()
 
     const { isLoading: isSmartAccountDeployedLoading } = useIsSmartAccountDeployed()
@@ -103,11 +102,6 @@ function UserOpTxModalContent({
         [smartAccountAddress, walletPrefix],
     )
 
-    const bridgeLink =
-        baseChainConfig.chainId === BASE_SEPOLIA
-            ? 'https://sepolia-bridge.base.org/deposit'
-            : 'https://bridge.base.org/deposit'
-
     const onCopyClick = () => {
         setShowWalletWarning(true)
     }
@@ -124,18 +118,17 @@ function UserOpTxModalContent({
         if (balanceIsLessThanCost) {
             return (
                 <>
-                    <Text color="error" size="sm">
-                        You need to transfer ETH on Base to your towns wallet{' '}
+                    <Text size="sm" color="error">
+                        You need to bridge ETH on Base and then transfer to your towns wallet.{' '}
                         <Box
                             as="a"
-                            display="inline"
-                            cursor="pointer"
-                            href={bridgeLink}
-                            color="default"
+                            gap="xs"
+                            href={BRIDGE_LEARN_MORE_LINK}
                             target="_blank"
                             rel="noopener noreferrer"
+                            className={atoms({ color: 'default', display: 'inline' })}
                         >
-                            here
+                            Learn how
                         </Box>
                         .
                     </Text>

@@ -17,6 +17,7 @@ import { AppProgressState } from '@components/AppProgressOverlay/AppProgressStat
 import { AppProgressOverlayTrigger } from '@components/AppProgressOverlay/AppProgressOverlayTrigger'
 import { useDebounce } from 'hooks/useDebounce'
 import { SECOND_MS } from 'data/constants'
+import { TOWN_HALL_LINK } from 'data/links'
 
 export const NoJoinedSpacesFallback = () => {
     const navigate = useNavigate()
@@ -110,11 +111,7 @@ export const NoJoinedSpacesFallback = () => {
         Analytics.getInstance().track('clicked learn more', {}, () => {
             console.log('[analytics] clicked learn more')
         })
-        window.open(
-            'https://herenottherelabs.notion.site/Town-Hall-9e5c8120218d489392e8a72aef8c0326',
-            '_blank',
-            'noopener,noreferrer',
-        )
+        window.open(TOWN_HALL_LINK, '_blank', 'noopener,noreferrer')
     }, [])
 
     // need to default spaceHierarchies to undefined and check for it here
