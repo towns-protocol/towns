@@ -4,7 +4,7 @@ import { Sheet } from 'react-modal-sheet'
 import {
     Address,
     useChannelData,
-    useChannelMembers,
+    useChannelId,
     useMyUserId,
     useTownsClient,
     useUserLookupContext,
@@ -25,6 +25,7 @@ import { atoms } from 'ui/styles/atoms.css'
 import { modalSheetClass } from 'ui/styles/globals/sheet.css'
 import { shortAddress } from 'ui/utils/utils'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
+import { useChannelHeaderMembers } from 'hooks/useChannelHeaderMembers'
 import { ChannelInviteModal } from '../../routes/ChannelInvitePanel'
 import { usePanelActions } from '../../routes/layouts/hooks/usePanelActions'
 
@@ -71,6 +72,7 @@ export const ChannelMembersPanel = () => {
                 </Stack>
             }
             padding="none"
+            gap="none"
         >
             <ChannelMembers
                 canAddMembers={canAddMembers}
@@ -93,7 +95,8 @@ const ChannelMembers = (props: {
     onRemoveMember?: (userId: string) => void
 }) => {
     const { canAddMembers, onRemoveMember } = props
-    const { memberIds } = useChannelMembers()
+    const channelId = useChannelId()
+    const memberIds = useChannelHeaderMembers(channelId)
     const myUserId = useMyUserId()
     const { openPanel } = usePanelActions()
     const { lookupUser } = useUserLookupContext()
@@ -124,9 +127,24 @@ const ChannelMembers = (props: {
     } = useFuzzySearchByProperty(membersWithNames)
 
     return (
-        <Stack minHeight="forceScroll" gap="md">
-            {canAddMembers && <AddMemberRow onClick={addMembersClick} />}
-            <Box position="sticky" top="none" padding="md" paddingBottom="none">
+        <>
+            <Box
+                padding
+                paddingBottom="none"
+                height="x8"
+                position="fixed"
+                width="100%"
+                zIndex="above"
+                insetBottom="xs"
+            >
+                <Box
+                    background="level1"
+                    height="x7"
+                    top="none"
+                    left="none"
+                    position="absolute"
+                    width="100%"
+                />
                 <TextField
                     background="level2"
                     placeholder="Search members"
@@ -134,15 +152,25 @@ const ChannelMembers = (props: {
                     onChange={handleSearchChange}
                 />
             </Box>
-            {filteredMembers.map(({ userId }) => (
-                <ChannelMemberRow
-                    key={userId}
-                    userId={userId}
-                    onRemoveMember={userId === myUserId ? undefined : onRemoveMember}
-                />
-            ))}
-            {filteredMembers.length === 0 && <NoMatches searchTerm={searchText} />}
-        </Stack>
+            <Box minHeight="x9" />
+
+            {canAddMembers && <AddMemberRow onClick={addMembersClick} />}
+
+            {(filteredMembers?.length > 0 ? filteredMembers : membersWithNames).map(
+                ({ userId }) => (
+                    <ChannelMemberRow
+                        key={userId}
+                        userId={userId}
+                        onRemoveMember={userId === myUserId ? undefined : onRemoveMember}
+                    />
+                ),
+            )}
+            {filteredMembers.length === 0 && (
+                <Box paddingX>
+                    <NoMatches searchTerm={searchText} />
+                </Box>
+            )}
+        </>
     )
 }
 
@@ -295,43 +323,51 @@ const ChannelMemberRow = (props: ChannelMemberRowProps) => {
     }
 
     return (
-        <Stack
-            horizontal
-            paddingX="md"
-            paddingY="sm"
-            background={{ hover: 'level3', default: undefined }}
-            cursor="pointer"
-            alignItems="center"
-            onClick={onClick}
-            onPointerEnter={isTouch ? undefined : onPointerEnter}
-            onPointerLeave={isTouch ? undefined : onPointerLeave}
-        >
-            <Stack horizontal height="height_lg" gap="md" width="100%">
-                <Box
-                    centerContent
-                    tooltip={!isTouch ? <ProfileHoverCard userId={userId} /> : undefined}
-                >
-                    <Avatar userId={userId} size="avatar_x4" />
-                </Box>
-                <Stack grow gap="paragraph" overflow="hidden" paddingY="xs" insetY="xxs">
-                    <Paragraph truncate color="default">
-                        {getPrettyDisplayName(globalUser)}
-                    </Paragraph>
-                    {abstractAccountAddress && (
-                        <ClipboardCopy
-                            label={shortAddress(abstractAccountAddress)}
-                            clipboardContent={abstractAccountAddress}
-                        />
-                    )}
+        <Stack paddingX="sm">
+            <Stack
+                horizontal
+                borderRadius="xs"
+                paddingX="sm"
+                paddingY="sm"
+                background={{ hover: 'level2', default: undefined }}
+                cursor="pointer"
+                alignItems="center"
+                onClick={onClick}
+                onPointerEnter={isTouch ? undefined : onPointerEnter}
+                onPointerLeave={isTouch ? undefined : onPointerLeave}
+            >
+                <Stack horizontal gap width="100%">
+                    <Box
+                        centerContent
+                        tooltip={!isTouch ? <ProfileHoverCard userId={userId} /> : undefined}
+                    >
+                        <Avatar userId={userId} size="avatar_x4" />
+                    </Box>
+                    <Stack grow gap="paragraph" overflow="hidden" paddingY="xs" insetY="xxs">
+                        <Paragraph truncate color="default">
+                            {getPrettyDisplayName(globalUser)}
+                        </Paragraph>
+                        {abstractAccountAddress && (
+                            <ClipboardCopy
+                                label={shortAddress(abstractAccountAddress)}
+                                clipboardContent={abstractAccountAddress}
+                            />
+                        )}
+                    </Stack>
                 </Stack>
+                {onRemoveMember && isHeaderHovering && (
+                    <Box tooltip="Remove from group">
+                        <Button
+                            tone="none"
+                            color="gray2"
+                            size="inline"
+                            onClick={onRemoveMemberClicked}
+                        >
+                            <Icon type="minus" />
+                        </Button>
+                    </Box>
+                )}
             </Stack>
-            {onRemoveMember && isHeaderHovering && (
-                <Box tooltip="Remove from group">
-                    <Button tone="none" color="gray2" size="inline" onClick={onRemoveMemberClicked}>
-                        <Icon type="minus" />
-                    </Button>
-                </Box>
-            )}
         </Stack>
     )
 }
