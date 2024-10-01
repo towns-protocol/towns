@@ -49,7 +49,9 @@ const ChecklistStep = (props: { step: string; state: 'progress' | 'done' | 'todo
                 justifyContent="center"
                 animate={{ opacity: props.state === 'todo' ? 0.5 : 1 }}
             >
-                <Paragraph fontWeight="medium">{props.step}</Paragraph>
+                <Paragraph fontWeight="medium" whiteSpace="nowrap">
+                    {props.step}
+                </Paragraph>
             </MotionBox>
         </MotionBox>
     )
