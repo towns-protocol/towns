@@ -57,7 +57,6 @@ import { createEditorOverridesPlugin } from './createEditorOverridesPlugin'
 import { createFormatTextLinkPlugin, createIOSPasteLinkPlugin } from './createFormatTextLinkPlugin'
 import { ELEMENT_MENTION_CHANNEL, createChannelPlugin } from './createChannelPlugin'
 import { ELEMENT_MENTION_EMOJI, createEmojiPlugin } from './createEmojiPlugin'
-import { createSanitizeDOMPlugin } from './createSanitizePlugin'
 import { createErrorHandlingPlugin } from './WithErrorHandlingPlugin'
 import {
     ComboboxTypes,
@@ -77,7 +76,6 @@ const platePlugins = (
 ) =>
     createPlugins(
         [
-            createSanitizeDOMPlugin(),
             createAutoformatPlugin({
                 options: {
                     rules: autoformatRules,
