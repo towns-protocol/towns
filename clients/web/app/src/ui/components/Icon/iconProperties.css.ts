@@ -42,6 +42,10 @@ export const iconProperties = defineProperties({
                 width: vars.dims.toolbar.toolbar_icon,
                 height: vars.dims.toolbar.toolbar_icon,
             },
+            square_x5: {
+                height: vars.dims.baseline.x5,
+                width: vars.dims.baseline.x5,
+            },
         },
     },
     shorthands: {

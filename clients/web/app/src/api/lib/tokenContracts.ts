@@ -9,13 +9,17 @@ import {
     NftDisplayNft,
     NftImageMetadata,
 } from '@token-worker/types'
-import { Address, useSupportedXChainIds } from 'use-towns-client'
+import { Address, queryClient, useSupportedXChainIds } from 'use-towns-client'
 import { ethers } from 'ethers'
 import { TokenData, TokenDataWithChainId, TokenType } from '@components/Tokens/types'
 import { env } from 'utils'
 import { axiosClient } from '../apiClient'
 
 export const queryKey = 'tokenContractsForAddress'
+
+function tokenContractsForAddressQueryKey(wallet: string) {
+    return [queryKey, wallet]
+}
 
 const zNftImageMetadata: z.ZodType<NftImageMetadata> = z.object({
     cachedUrl: z.string().optional().nullable(),
@@ -76,7 +80,7 @@ export function useCollectionsForAddressesAcrossNetworks({
 
     const queries = wallets.map((wallet) => {
         return {
-            queryKey: ['tokenContractsForAddress', wallet],
+            queryKey: tokenContractsForAddressQueryKey(wallet),
             queryFn: () => {
                 if (!supportedXChainIds) {
                     return []
@@ -84,7 +88,7 @@ export function useCollectionsForAddressesAcrossNetworks({
                 return getTokenContractsForAddressAcrossNetworks(wallet, supportedXChainIds)
             },
             enabled: enabled && ethers.utils.isAddress(wallet) && Boolean(supportedXChainIds),
-            staleTime: 1000,
+            staleTime: 15_000,
             refetchOnMount: false,
             refetchOnWindowFocus: false,
             refetchOnReconnect: false,
@@ -94,6 +98,16 @@ export function useCollectionsForAddressesAcrossNetworks({
     const isFetching = responses.some((response) => response.isLoading)
     const data = responses.flatMap((r) => r.data).flatMap((r) => r)
     return { data, isFetching }
+}
+
+export function getCollectionsForAddressQueryData(
+    wallet: string,
+): TokenDataWithChainId[] | undefined {
+    return queryClient.getQueryData(tokenContractsForAddressQueryKey(wallet))
+}
+
+export function invalidateCollectionsForAddressQueryData(wallet: string) {
+    return queryClient.invalidateQueries({ queryKey: tokenContractsForAddressQueryKey(wallet) })
 }
 
 export function useNftMetadata(

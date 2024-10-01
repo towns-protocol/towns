@@ -24,6 +24,7 @@ type Props<T> = {
     onConfirm?: () => void
     onPreviewChange?: (previewItem: T | undefined) => void
     onSelectionChange?: (selection: Set<string>) => void
+    searchItemsRenderer?: (searchItems: T[]) => JSX.Element
     optionRenderer: (props: {
         option: T
         selected: boolean
@@ -71,6 +72,7 @@ export const PillSelector = <T,>(props: Props<T>) => {
         hideResultsWhenNotActive,
         autoFocus = true,
         inputContainerRef,
+        searchItemsRenderer,
         initialSelection,
         isError,
         fieldRefOverride,
@@ -350,7 +352,9 @@ export const PillSelector = <T,>(props: Props<T>) => {
                         props.label
                     )}
                     {/* list container*/}
-                    {searchItems.length > 0 && (
+                    {searchItems.length > 0 && searchItemsRenderer ? (
+                        searchItemsRenderer(searchItems)
+                    ) : (
                         <Stack gap="sm" ref={listRef} data-testid="suggested-people-list-entries">
                             {searchItems.map((o, i) => (
                                 <Box key={getOptionKey(o)}>

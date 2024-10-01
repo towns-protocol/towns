@@ -113,6 +113,7 @@ export class BlockchainTransactionStore extends (EventEmitter as new () => Typed
                             ...tx,
                             id,
                             status: result.success ? 'success' : 'failure',
+                            receipt: result.receipt,
                         })
                         return
                     } else {
@@ -179,19 +180,12 @@ export class BlockchainTransactionStore extends (EventEmitter as new () => Typed
     }
 
     private updateTransaction(tx: BlockchainStoreTx) {
-        if (!this.transactions[tx.id]) {
-            this.transactions = { ...this.transactions, [tx.id]: tx }
-        }
-        const { status, error } = tx
-        const { [tx.id]: updateTX, ...rest } = this.transactions
-
-        updateTX.status = status
-        if (error) {
-            updateTX.error = error
+        this.transactions[tx.id] = {
+            ...this.transactions[tx.id],
+            ...tx,
         }
 
-        this.transactions = { ...rest, [tx.id]: updateTX }
-        this.emit('updatedTransaction', updateTX)
+        this.emit('updatedTransaction', this.transactions[tx.id])
         this.emit('transactions', this.transactions)
     }
 }

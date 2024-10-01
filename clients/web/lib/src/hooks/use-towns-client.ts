@@ -13,6 +13,7 @@ import {
     PrepayMembershipTransactionContext,
     RoleTransactionContext,
     TransactionContext,
+    TransferAssetTransactionContext,
     WalletLinkTransactionContext,
 } from '../client/TownsClientTypes'
 import {
@@ -276,6 +277,13 @@ interface TownsClientImpl {
     waitForPrepayMembershipTransaction: (
         context: PrepayMembershipTransactionContext | undefined,
     ) => Promise<PrepayMembershipTransactionContext | undefined>
+    transferAsset: (
+        transferData: NonNullable<TransferAssetTransactionContext['data']>,
+        signer: TSigner,
+    ) => Promise<TransferAssetTransactionContext | undefined>
+    waitForTransferAssetTransaction: (
+        transactionContext: TransferAssetTransactionContext,
+    ) => Promise<TransferAssetTransactionContext | undefined>
 }
 
 export function useTownsClient(): TownsClientImpl {
@@ -423,6 +431,10 @@ export function useTownsClient(): TownsClientImpl {
         prepayMembershipTransaction: useWithCatch(clientSingleton?.prepayMembershipTransaction),
         waitForPrepayMembershipTransaction: useWithCatch(
             clientSingleton?.waitForPrepayMembershipTransaction,
+        ),
+        transferAsset: useWithCatch(clientSingleton?.transferAsset),
+        waitForTransferAssetTransaction: useWithCatch(
+            clientSingleton?.waitForTransferAssetTransaction,
         ),
     }
 }

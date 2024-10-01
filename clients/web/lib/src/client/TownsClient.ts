@@ -50,6 +50,7 @@ import {
     PrepayMembershipTransactionContext,
     JoinFlowStatus,
     CreateSpaceFlowStatus,
+    TransferAssetTransactionContext,
 } from './TownsClientTypes'
 import {
     CreateChannelInfo,
@@ -2714,6 +2715,82 @@ export class TownsClient
                 : undefined,
             error,
         }
+    }
+
+    public async transferAsset(
+        transferData: NonNullable<TransferAssetTransactionContext['data']>,
+        signer: TSigner,
+    ): Promise<TransferAssetTransactionContext | undefined> {
+        let transaction: TransactionOrUserOperation | undefined = undefined
+        let error: Error | undefined = undefined
+        const continueStoreTx = this.blockchainTransactionStore.begin({
+            type: BlockchainTransactionType.TransferAsset,
+            data: transferData,
+        })
+
+        try {
+            if (this.isAccountAbstractionEnabled()) {
+                if (transferData.value) {
+                    transaction = await this.userOps?.sendTransferEthOp(
+                        {
+                            recipient: transferData.recipient,
+                            value: transferData.value,
+                        },
+                        signer,
+                    )
+                } else {
+                    transaction = await this.userOps?.sendTransferAssetsOp(
+                        {
+                            contractAddress: transferData.contractAddress,
+                            recipient: transferData.recipient,
+                            tokenId: transferData.tokenId,
+                        },
+                        signer,
+                    )
+                }
+            }
+        } catch (err) {
+            error = err as Error
+        }
+
+        continueStoreTx({
+            hashOrUserOpHash: getTransactionHashOrUserOpHash(transaction),
+            transaction,
+            error,
+            eventListener: {
+                wait: async (): Promise<{
+                    success: boolean
+                    [x: string]: unknown
+                }> => {
+                    if (isUserOpResponse(transaction)) {
+                        const result = await transaction?.getUserOperationReceipt()
+                        return {
+                            receipt: result?.receipt,
+                            success: result?.success ?? false,
+                        }
+                    }
+                    return {
+                        success: false,
+                    }
+                },
+            },
+        })
+
+        return {
+            transaction,
+            receipt: undefined,
+            status: transaction ? TransactionStatus.Pending : TransactionStatus.Failed,
+            data: transaction ? transferData : undefined,
+            error,
+        }
+    }
+
+    public async waitForTransferAssetTransaction(
+        transactionContext: TransferAssetTransactionContext,
+    ) {
+        const txnContext = await this._waitForBlockchainTransaction(transactionContext)
+        logTxnResult('waitTransferAssetTransaction', txnContext)
+        return txnContext
     }
 
     public async getLinkedWallets(walletAddress: string): Promise<string[]> {

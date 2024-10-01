@@ -131,11 +131,7 @@ const SpaceProfileWithoutAuth = () => {
     const { openPanel } = usePanelActions()
 
     const onWalletLinkingClick = useEvent(() => {
-        if (isTouch) {
-            setModal(ModalType.Wallets)
-        } else {
-            openPanel(CHANNEL_INFO_PARAMS.WALLETS)
-        }
+        openPanel(CHANNEL_INFO_PARAMS.WALLETS)
     })
 
     const onPreferencesClick = useEvent(() => {

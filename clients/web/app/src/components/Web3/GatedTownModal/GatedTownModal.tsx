@@ -38,7 +38,7 @@ export function GatedTownModal({ onHide, spaceId, joinSpace }: Props) {
     const tokensLength = entitlements?.tokens.length ?? 0
     const maxWidth = tokensLength > 2 ? 'auto' : '400'
     const { getSigner } = useGetEmbeddedSigner()
-    const { data: aaAdress } = useAbstractAccountAddress({
+    const { data: aaAddress } = useAbstractAccountAddress({
         rootKeyAddress: loggedInWalletAddress,
     })
 
@@ -100,16 +100,16 @@ export function GatedTownModal({ onHide, spaceId, joinSpace }: Props) {
                     ) : null}
                     {linkedWallets !== undefined &&
                         linkedWallets
-                            // exclude showing the aaAdress in the list of linked wallets for digital asset requirement
+                            // exclude showing the aaAddress in the list of linked wallets for digital asset requirement
                             // we don't want users sending assets here
-                            .filter((a) => a !== aaAdress)
+                            .filter((a) => a !== aaAddress)
                             .map((a) => {
                                 return (
                                     <Stack width="100%" key={a}>
                                         <LinkedWallet
                                             height="x7"
                                             address={a as Address}
-                                            loggedInWalletAddress={loggedInWalletAddress ?? '0x'}
+                                            aaAddress={aaAddress ?? '0x'}
                                             onUnlinkClick={onUnlinkClick}
                                         />
                                     </Stack>

@@ -2,11 +2,18 @@ import {
     RoleEntitlements as R_RoleEntitlements,
     RoleDetails as R_RoleDetails,
     ISpaceDapp as R_ISpaceDapp,
-    ContractEventListener,
 } from '@river-build/web3'
 import { TownsUserOpClientSendUserOperationResponse } from '@towns/userops'
 import { ContractReceipt, ContractTransaction, Signer, providers } from 'ethers'
 
+export type ContractEventListener = {
+    wait: () => Promise<{
+        receipt?: ContractReceipt
+        success: boolean
+        error?: Error | undefined
+        [x: string]: unknown
+    }>
+}
 // TODO: replace instances of wagmi/viem Address with this type
 export type Address = `0x${string}`
 
@@ -48,6 +55,7 @@ export enum BlockchainTransactionType {
     // not a single tx, but a series of txs exectued in a single user operation
     EditSpaceMembership = 'editSpaceMembership',
     PrepayMembership = 'prepayMembership',
+    TransferAsset = 'transferAsset',
 }
 
 export type BlockchainTransaction = {
@@ -60,6 +68,7 @@ export type BlockchainTransaction = {
     }
     type: BlockchainTransactionType
     eventListener?: ContractEventListener
+    receipt?: ReceiptType
 }
 
 // versioned types for easier reference/upgrade

@@ -1,26 +1,25 @@
-import React, { useMemo } from 'react'
-import { Address } from 'use-towns-client'
-import { Box, Icon, Stack, Text } from '@ui'
+import React from 'react'
+import { Box, Icon, Text } from '@ui'
 import { Panel } from '@components/Panel/Panel'
 import { PanelButton } from '@components/Panel/PanelButton'
 import { useBalance } from 'hooks/useBalance'
-import { useNfts } from 'hooks/useNfts'
-import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
-import { TokenSelectionDisplay } from '@components/Tokens/TokenSelector/TokenSelection'
-import { useEnvironment } from 'hooks/useEnvironmnet'
-import { Token } from '@components/Tokens/TokenSelector/tokenSchemas'
-import { VList } from 'ui/components/VList2/VList'
+import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { useGetWalletParam, useIsAAWallet } from './useGetWalletParam'
+import { NftsList } from './NftsList'
 
 export function SingleWalletPanel() {
     const isAAWallet = useIsAAWallet()
     const walletAddress = useGetWalletParam()
+    const { openPanel } = usePanelActions()
 
     const balance = useBalance({
         address: walletAddress || undefined,
         watch: true,
     })
-    const baseChainId = useEnvironment().baseChain.id
+
+    const onTransferAsset = () => {
+        openPanel('transfer-assets', { wallet: walletAddress })
+    }
 
     if (!isAAWallet) {
         return <></>
@@ -30,10 +29,10 @@ export function SingleWalletPanel() {
 
     return (
         <Panel label={title}>
-            {/* <PanelButton cursor="pointer">
+            <PanelButton cursor="pointer" onClick={onTransferAsset}>
                 <Icon type="linkOutWithFrame" size="square_sm" color="gray2" />
                 <Text strong>Transfer Asset</Text>
-            </PanelButton> */}
+            </PanelButton>
             <PanelButton hoverable={false} as="div" cursor="auto" height="auto">
                 <Box width="height_md" alignItems="center">
                     <Icon type="base" size="square_lg" />
@@ -47,58 +46,7 @@ export function SingleWalletPanel() {
                     </Text>
                 </Box>
             </PanelButton>
-            <Nfts baseChainId={baseChainId} walletAddress={walletAddress} />
+            <NftsList walletAddress={walletAddress} />
         </Panel>
-    )
-}
-
-function Nfts({
-    baseChainId,
-    walletAddress,
-}: {
-    baseChainId: number
-    walletAddress: Address | undefined
-}) {
-    const { nfts, isFetching } = useNfts(walletAddress)
-
-    const _nfts = useMemo(() => {
-        return nfts
-            .filter((nft) => nft.chainId === baseChainId)
-            .map((nft) => {
-                const transformed: Token = {
-                    ...nft,
-                    data: {
-                        ...nft.data,
-                        openSeaCollectionUrl: nft.data.openSeaCollectionUrl ?? undefined,
-                        quantity: nft.data.quantity?.toString() ?? undefined,
-                        tokenId: nft.data.tokenId?.toString() ?? undefined,
-                    },
-                }
-                return transformed
-            })
-    }, [nfts, baseChainId])
-
-    if (isFetching) {
-        return <ButtonSpinner />
-    }
-
-    return (
-        <Stack height="100%" position="relative">
-            <VList
-                getItemKey={(item) => item.data.address}
-                align="top"
-                list={_nfts}
-                estimateHeight={() => 75}
-                itemRenderer={(data) => <VListItem token={data} />}
-            />
-        </Stack>
-    )
-}
-
-function VListItem({ token }: { token: Token }) {
-    return (
-        <Stack paddingBottom="md">
-            <TokenSelectionDisplay token={token} />
-        </Stack>
     )
 }

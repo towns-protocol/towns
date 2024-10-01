@@ -13,12 +13,14 @@ export function useBalance({
     watch = false,
     staleTime,
     gcTime,
+    fixedLength = 5,
 }: {
     address: Address | undefined
     enabled?: boolean
     watch?: boolean
     gcTime?: number
     staleTime?: number
+    fixedLength?: number
 }) {
     const { baseProvider } = useTownsContext()
     const queryClient = useQueryClient()
@@ -60,7 +62,7 @@ export function useBalance({
                 decimals: 18,
                 // TODO: if we ever needed to, then chain.nativeCurrency.symbol
                 symbol: 'ETH',
-                formatted: formatUnitsToFixedLength(value ?? '0', 18, 5),
+                formatted: formatUnitsToFixedLength(value ?? '0', 18, fixedLength),
                 value,
             }
         },

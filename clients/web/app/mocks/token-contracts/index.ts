@@ -1,0 +1,61 @@
+export const NFT_METADATA_RESPONSE = [
+    {
+        chainId: 84532,
+        status: 'success',
+        data: {
+            totalCount: 2,
+            collections: [
+                {
+                    address: '0x2824D1235d1CbcA6d61C00C3ceeCB9155cd33a42',
+                    name: 'Space Owner',
+                    symbol: 'OWNER',
+                    totalSupply: '28224',
+                    tokenType: 'ERC721',
+                    contractDeployer: '0x9f2667b9Ec9a7d09A47D87156f032c6735a077Ad',
+                    deployedBlockNumber: 14778641,
+                    totalBalance: '1',
+                    numDistinctTokensOwned: '1',
+                    isSpam: false,
+                    displayNft: {
+                        tokenId: '0',
+                        name: 'test',
+                    },
+                    image: {
+                        cachedUrl: null,
+                        thumbnailUrl: null,
+                        pngUrl: null,
+                        contentType: null,
+                        size: null,
+                        originalUrl: null,
+                    },
+                    imageUrl: null,
+                },
+                {
+                    address: '0xDa5a7c666796C7246287E9479F38D6b205F7ca96',
+                    name: 'test - Member',
+                    symbol: 'MEMBER',
+                    totalSupply: '2',
+                    tokenType: 'ERC721',
+                    contractDeployer: null,
+                    deployedBlockNumber: null,
+                    totalBalance: '1',
+                    numDistinctTokensOwned: '1',
+                    isSpam: false,
+                    displayNft: {
+                        tokenId: '0',
+                        name: 'test - Member',
+                    },
+                    image: {
+                        cachedUrl: null,
+                        thumbnailUrl: null,
+                        pngUrl: null,
+                        contentType: null,
+                        size: null,
+                        originalUrl: null,
+                    },
+                    imageUrl: null,
+                },
+            ],
+        },
+    },
+]

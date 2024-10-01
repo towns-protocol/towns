@@ -19,6 +19,7 @@ import { useWalletPrefix } from '../useWalletPrefix'
 
 type Props = {
     valueLabel?: string
+    requiresBalanceGreaterThanCost?: boolean
 }
 
 export function UserOpTxModal(props: Props) {
@@ -46,8 +47,10 @@ export function UserOpTxModal(props: Props) {
 
 function UserOpTxModalContent({
     valueLabel,
+    requiresBalanceGreaterThanCost,
     endPublicPageLoginFlow,
 }: Props & { endPublicPageLoginFlow: () => void }) {
+    const _requiresBalanceGreaterThanCost = requiresBalanceGreaterThanCost ?? true
     const { currOpGas, currOpValue, confirm, deny, retryDetails } = userOpsStore(
         useShallow((s) => ({
             currOpGas: s.currOpGas,
@@ -84,17 +87,29 @@ function UserOpTxModalContent({
     const currOpValueInEth = currOpValue
         ? formatUnitsToFixedLength(BigNumber.from(currOpValue).toBigInt())
         : undefined
-    const totalInEth = formatUnitsToFixedLength(totalCost.toBigInt())
     const [showWalletWarning, setShowWalletWarning] = useState(false)
 
     const { data: balanceData, isLoading: isLoadingBalance } = useBalance({
         address: smartAccountAddress,
         enabled: !!smartAccountAddress,
         watch: true,
+        fixedLength: 18,
     })
-    const formattedBalance = `${balanceData?.formatted ?? 0} ${balanceData?.symbol ?? ''}`
+    const balanceIsLessThanCost =
+        _requiresBalanceGreaterThanCost && balanceData && balanceData.value < totalCost.toBigInt()
 
-    const balanceIsLessThanCost = balanceData && balanceData.value < totalCost.toBigInt()
+    const formattedBalance = `${
+        (balanceIsLessThanCost
+            ? balanceData?.formatted ?? 0
+            : formatUnitsToFixedLength(balanceData?.value ?? 0n, 18, 5)) ?? 0
+    } ${balanceData?.symbol ?? ''}`
+
+    const totalInEth = formatUnitsToFixedLength(
+        totalCost.toBigInt(),
+        18,
+        balanceIsLessThanCost ? 18 : 5,
+    )
+
     const _isTouch = isTouch()
 
     const walletCopyText = useMemo(
@@ -175,7 +190,7 @@ function UserOpTxModalContent({
                         Confirm Transaction
                     </Text>
                 </Box>
-                <Heading level={2}>{totalInEth + ' ETH'}</Heading>
+                <Heading level={balanceIsLessThanCost ? 3 : 2}>{totalInEth + ' ETH'}</Heading>
                 <Box padding background="level3" rounded="sm" width="100%" gap="md" color="default">
                     <Box horizontal width="100%" justifyContent="spaceBetween">
                         <Text>
@@ -227,7 +242,9 @@ function UserOpTxModalContent({
                             </Text>
                         </Box>
                         {formattedBalance ? (
-                            <Text>{formattedBalance} Available</Text>
+                            <Text size={balanceIsLessThanCost ? 'sm' : 'md'}>
+                                {formattedBalance} Available
+                            </Text>
                         ) : (
                             <ButtonSpinner />
                         )}

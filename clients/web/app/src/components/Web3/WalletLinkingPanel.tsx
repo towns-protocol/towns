@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import { useGetEmbeddedSigner } from '@towns/privy'
 import {
     Address,
@@ -10,10 +10,8 @@ import {
     useUnlinkWalletTransaction,
 } from 'use-towns-client'
 import { PrivyWrapper } from 'privy/PrivyProvider'
-import { Box, BoxProps, Button, Icon, IconButton, Paragraph, Stack, Text } from '@ui'
+import { Box, BoxProps, Button, Icon, Paragraph, Stack, Text } from '@ui'
 import { PanelButton } from '@components/Panel/PanelButton'
-import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
-import { shortAddress } from 'ui/utils/utils'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import {
@@ -21,11 +19,10 @@ import {
     useAbstractAccountAddress,
 } from 'hooks/useAbstractAccountAddress'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
-import { useBalance } from 'hooks/useBalance'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
-import { useWalletPrefix } from './useWalletPrefix'
 import { ConnectWalletThenLinkButton } from './ConnectWalletThenLinkButton'
 import { WalletLinkingInfo } from './WalletLinkingInfo'
+import { WalletWithBalance } from './Wallet/WalletWithBalance'
 
 export const WalletLinkingPanel = React.memo(() => {
     return (
@@ -58,7 +55,18 @@ function WalletLinkingPanelWithoutAuth() {
     const { unlinkWalletTransaction } = useUnlinkWalletTransaction()
     const { getSigner, isPrivyReady } = useGetEmbeddedSigner()
 
-    const { data: linkedWallets } = useLinkedWallets()
+    const { data: aaAddress } = useAbstractAccountAddress({
+        rootKeyAddress: loggedInWalletAddress,
+    })
+
+    const { data: _linkedWallets } = useLinkedWallets()
+    const linkedWallets = useMemo(
+        () =>
+            _linkedWallets
+                ?.slice()
+                .sort((a) => (a.toLowerCase() === aaAddress?.toLowerCase() ? -1 : 1)),
+        [_linkedWallets, aaAddress],
+    )
 
     async function onUnlinkClick(addressToUnlink: Address) {
         const signer = await getSigner()
@@ -84,7 +92,7 @@ function WalletLinkingPanelWithoutAuth() {
                 return (
                     <LinkedWallet
                         address={a as Address}
-                        loggedInWalletAddress={loggedInWalletAddress}
+                        aaAddress={aaAddress}
                         key={a}
                         onUnlinkClick={showUnlinkModal}
                     />
@@ -158,7 +166,7 @@ export function FullPanelOverlay({
     opacity?: BoxProps['opacity']
 }) {
     return (
-        <Stack absoluteFill centerContent>
+        <Stack absoluteFill centerContent zIndex="above">
             <Stack
                 opacity={opacity}
                 position="absolute"
@@ -177,27 +185,19 @@ export function FullPanelOverlay({
 
 export function LinkedWallet({
     address,
-    loggedInWalletAddress,
+    aaAddress,
     onUnlinkClick,
     height = 'x8',
 }: {
     address: Address
-    loggedInWalletAddress: Address
+    aaAddress: Address | undefined
     onUnlinkClick?: (address: Address) => void
     height?: BoxProps['height']
 }) {
-    const { data: aaAdress } = useAbstractAccountAddress({
-        rootKeyAddress: loggedInWalletAddress,
-    })
     const { openPanel } = usePanelActions()
 
     const isAbstractAccount =
-        aaAdress && isAbstractAccountAddress({ address, abstractAccountAddress: aaAdress })
-
-    const balance = useBalance({
-        address: address,
-        watch: true,
-    })
+        aaAddress && isAbstractAccountAddress({ address, abstractAccountAddress: aaAddress })
 
     const onWalletClick = () => {
         if (isAbstractAccount) {
@@ -208,7 +208,6 @@ export function LinkedWallet({
     const isWalletLinkingPending = useIsTransactionPending(BlockchainTransactionType.LinkWallet)
     const isWalletUnLinkingPending = useIsTransactionPending(BlockchainTransactionType.UnlinkWallet)
     const { isPrivyReady } = useGetEmbeddedSigner()
-    const walletPrefix = useWalletPrefix()
     const isDisabled = !isPrivyReady || isWalletLinkingPending || isWalletUnLinkingPending
 
     // TODO: we have a privy wallet, and AA wallet. Probably we want to filter out the privy wallet, and only show AA wallet address. Do we need to have our own UI for AA wallet assets? Since you can't export it to MM
@@ -222,52 +221,12 @@ export function LinkedWallet({
             height={height}
             onClick={onWalletClick}
         >
-            <Stack
-                horizontal
-                gap="sm"
-                justifyContent="spaceBetween"
-                alignItems="center"
-                width="100%"
-            >
-                {isAbstractAccount && (
-                    <Stack gap="sm">
-                        <Paragraph>Towns Wallet</Paragraph>
-                        <ClipboardCopy
-                            color={isAbstractAccount ? 'gray2' : 'gray1'}
-                            label={shortAddress(address)}
-                            clipboardContent={
-                                isAbstractAccount ? `${walletPrefix}:${address}` : address
-                            }
-                        />
-                    </Stack>
-                )}
-                {!isAbstractAccount && (
-                    <Stack horizontal centerContent gap="sm">
-                        <ClipboardCopy
-                            color={isAbstractAccount ? 'gray2' : 'gray1'}
-                            label={shortAddress(address)}
-                            clipboardContent={
-                                isAbstractAccount ? `${walletPrefix}:${address}` : address
-                            }
-                        />
-                        <>
-                            <IconButton
-                                cursor={isDisabled ? 'not-allowed' : 'pointer'}
-                                disabled={isDisabled}
-                                opacity={isDisabled ? '0.5' : 'opaque'}
-                                icon="unlink"
-                                color="default"
-                                tooltip="Unlink Wallet"
-                                onClick={() => onUnlinkClick?.(address)}
-                            />
-                        </>
-                    </Stack>
-                )}
-                <Stack horizontal centerContent gap="sm">
-                    {balance.data?.formatted ?? 0} {balance.data?.symbol ?? ''}
-                    <Icon type="base" size="square_sm" />
-                </Stack>
-            </Stack>
+            <WalletWithBalance
+                address={address}
+                isAbstractAccount={!!isAbstractAccount}
+                isDisabled={isDisabled}
+                onUnlinkClick={onUnlinkClick}
+            />
         </PanelButton>
     )
 }

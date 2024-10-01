@@ -1,4 +1,9 @@
-export type { Space, SpaceIdentifier, TransactionContext } from './client/TownsClientTypes'
+export type {
+    Space,
+    SpaceIdentifier,
+    TransactionContext,
+    TransferAssetTransactionContext,
+} from './client/TownsClientTypes'
 export { TransactionStatus } from './client/TownsClientTypes'
 
 export { ChannelContextProvider, useChannelContext } from './components/ChannelContextProvider'
@@ -125,6 +130,7 @@ export { useMembershipFreeAllocation } from './hooks/use-membership-free-allocat
 export { usePlatformMintLimit } from './hooks/use-platform-mint-limit'
 export { useSetChannelAutojoin } from './hooks/use-set-channel-autojoin'
 export { useSetHideUserJoinLeave } from './hooks/use-set-hide-user-join-leave'
+export { useTransferAssetTransaction } from './hooks/use-transfer-asset-transaction'
 
 export { useCasablancaStore } from './store/use-casablanca-store'
 export { useFullyReadMarkerStore } from './store/use-fully-read-marker-store'

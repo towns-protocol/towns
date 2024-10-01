@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { Box, Icon, IconButton, Stack, Text } from '@ui'
+import { Box, BoxProps, Icon, IconButton, Stack, Text } from '@ui'
 import { shortAddress } from 'ui/utils/utils'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { TokenImage } from './TokenImage'
@@ -21,20 +21,23 @@ type TokenSelectionDisplayProps = BaseTokenSelectionProps & {
     userPassesEntitlement?: boolean
 }
 
-type TokenSelectionProps = TokenSelectionInputProps | TokenSelectionDisplayProps
+type TokenSelectionProps = (TokenSelectionInputProps | TokenSelectionDisplayProps) & {
+    wrapperBoxProps?: BoxProps
+}
 
-function TokenSelection(props: TokenSelectionProps) {
-    const { elevate = false, token } = props
+export function TokenSelection(props: TokenSelectionProps) {
+    const { elevate = false, token, wrapperBoxProps } = props
 
     return (
         <Stack
             horizontal
-            paddingY
+            hoverable={wrapperBoxProps?.hoverable}
+            paddingY={wrapperBoxProps?.paddingY ?? 'md'}
             gap="sm"
             elevate={elevate}
-            paddingX="sm"
-            rounded="sm"
-            background="level2"
+            paddingX={wrapperBoxProps?.paddingX ?? 'sm'}
+            rounded={wrapperBoxProps?.rounded ?? 'sm'}
+            background={wrapperBoxProps?.background ?? 'level2'}
             alignItems="center"
             width="100%"
             data-testid={`token-pill-selector-pill-${token.data.address}`}

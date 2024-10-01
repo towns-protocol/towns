@@ -10,7 +10,7 @@ export const useTransactionStore = () => {
     const { clientSingleton } = useTownsClient()
     useEffect(() => {
         const handleChange = (transactions: BlockchainStoreTransactions) => {
-            setTransactions(transactions)
+            setTransactions((s) => ({ ...s, ...transactions }))
         }
 
         clientSingleton?.blockchainTransactionStore.on('transactions', handleChange)

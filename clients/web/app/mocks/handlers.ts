@@ -6,6 +6,7 @@ import {
     tokenCollections,
 } from './token-collections'
 import { env } from '../src/utils'
+import { NFT_METADATA_RESPONSE } from './token-contracts'
 
 export const browserHandlers = [
     rest.get('/mock-endpoint', (req, res, ctx) => {
@@ -46,6 +47,14 @@ export const testHandlers = [
             }
             const data = getContractMetadataAcrossNetworksMock[address]
             return res(ctx.status(200), ctx.json([data]))
+        },
+    ),
+
+    rest.get(
+        `${env.VITE_TOKEN_SERVER_URL || ''}/api/getCollectionsForOwnerAcrossNetworks/*`,
+        (req, res, ctx) => {
+            const data = NFT_METADATA_RESPONSE
+            return res(ctx.status(200), ctx.json(data))
         },
     ),
     // END TOKEN WORKER ///////////////

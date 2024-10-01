@@ -9,12 +9,17 @@ import {
 
 import headlessToast, { Toast } from 'react-hot-toast/headless'
 import { useSearchParams } from 'react-router-dom'
+import { TransferAssetTransactionContext } from 'use-towns-client/dist/client/TownsClientTypes'
+import { BigNumber } from 'ethers'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { CHANNEL_INFO_PARAMS } from 'routes'
 import { popupToast } from '@components/Notifications/popupToast'
-import { StandardToast } from '@components/Notifications/StandardToast'
-import { mapToErrorMessage } from './utils'
+import { StandardToast, Props as StandardToastProps } from '@components/Notifications/StandardToast'
+import { useEnvironment } from 'hooks/useEnvironmnet'
+import { formatUnits } from 'hooks/useBalance'
+import { shortAddress } from 'ui/utils/utils'
+import { baseScanUrl, mapToErrorMessage } from './utils'
 
 type ToastProps = {
     tx: BlockchainStoreTx
@@ -26,13 +31,15 @@ type ToastProps = {
     successMessage: string
     pendingMessage?: string
     errorMessage?: string
-}
+    onCtaClick?: (updatedTx: BlockchainStoreTx) => void
+} & Omit<StandardToastProps, 'toast' | 'message' | 'onCtaClick'>
 
 export function BlockchainTxNotifier() {
     const spaceId = useSpaceIdFromPathname()
     const myMembership = useMyMembership(spaceId ?? '')
     const isMember = myMembership === Membership.Join
     const { currentlyOpenPanel } = usePanelActions()
+    const { baseChain } = useEnvironment()
 
     useOnTransactionUpdated((tx) => {
         // these potential txs will show a toast that transitions from a pending to a success or failure state
@@ -114,6 +121,44 @@ export function BlockchainTxNotifier() {
                         successMessage: 'Channel updated!',
                     })
                     break
+
+                case BlockchainTransactionType.TransferAsset: {
+                    const data = tx.data as TransferAssetTransactionContext['data']
+
+                    let successMessage: string = 'Transfer complete!'
+                    if (data?.value) {
+                        try {
+                            successMessage = `${formatUnits(
+                                BigNumber.from(data.value).toBigInt(),
+                            )} ETH was sent to ${shortAddress(data.recipient)}`
+                        } catch (error) {
+                            console.error(error)
+                        }
+                    } else {
+                        const label = data?.assetLabel ?? data?.contractAddress
+                        const recipient = data?.recipient
+                            ? `to ${shortAddress(data.recipient)}`
+                            : ''
+                        successMessage = `${label} was sent ${recipient}`
+                    }
+
+                    generateToast({
+                        tx,
+                        pendingMessage: 'Transfer in progress...',
+                        successMessage: successMessage,
+                        cta: 'View Transaction',
+                        onCtaClick: (updatedTx: BlockchainStoreTx) => {
+                            window.open(
+                                `${baseScanUrl(baseChain.id)}/tx/${
+                                    updatedTx.receipt?.transactionHash
+                                }`,
+                                '_blank',
+                                'noopener,noreferrer',
+                            )
+                        },
+                    })
+                    break
+                }
                 default:
                     break
             }
@@ -157,6 +202,8 @@ function MonitoringNotification(props: ToastProps & { toast: Toast }) {
         errorMessage = tx.error
             ? mapToErrorMessage({ error: tx.error, source: tx.type })
             : undefined,
+        cta,
+        onCtaClick,
         toast,
         /**
          * if onlyShowPending is true, the toast will appear in pending state and never dismiss
@@ -165,24 +212,24 @@ function MonitoringNotification(props: ToastProps & { toast: Toast }) {
         onlyShowPending,
     } = props
 
-    const [status, setStatus] = useState(tx.status)
+    const [updatedTx, setUpdatedTx] = useState(tx)
 
     const [searchParams] = useSearchParams()
     const rolesParam = searchParams.get('roles')
 
     const { message } = useMemo(() => {
-        return status === 'pending' || status === 'potential'
+        return updatedTx.status === 'pending' || updatedTx.status === 'potential'
             ? {
                   message: pendingMessage,
               }
-            : status === 'success'
+            : updatedTx.status === 'success'
             ? {
                   message: successMessage,
               }
             : {
                   message: errorMessage,
               }
-    }, [status, pendingMessage, successMessage, errorMessage])
+    }, [updatedTx.status, pendingMessage, successMessage, errorMessage])
 
     const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -196,7 +243,7 @@ function MonitoringNotification(props: ToastProps & { toast: Toast }) {
                 return
             }
 
-            setStatus(_tx.status)
+            setUpdatedTx(_tx)
 
             const dismissTimer = () => {
                 timeoutRef.current && clearTimeout(timeoutRef.current)
@@ -242,16 +289,30 @@ function MonitoringNotification(props: ToastProps & { toast: Toast }) {
     }, [closePanel, rolesParam, tx.type])
 
     // prevent flash when user rejects tx
-    if (tx.status === 'failure' && !errorMessage) {
+    if (updatedTx.status === 'failure' && !errorMessage) {
         return null
     }
 
-    if (tx.status === 'success') {
-        return <StandardToast.Success toast={toast} message={message ?? ''} />
+    if (updatedTx.status === 'success') {
+        return (
+            <StandardToast.Success
+                toast={toast}
+                message={message ?? ''}
+                cta={cta}
+                onCtaClick={() => onCtaClick?.(updatedTx)}
+            />
+        )
     }
 
-    if (tx.status === 'failure') {
-        return <StandardToast.Error toast={toast} message={message ?? ''} />
+    if (updatedTx.status === 'failure') {
+        return (
+            <StandardToast.Error
+                toast={toast}
+                message={message ?? ''}
+                cta={cta}
+                onCtaClick={() => onCtaClick?.(updatedTx)}
+            />
+        )
     }
 
     return <StandardToast.Pending toast={toast} message={message ?? ''} />

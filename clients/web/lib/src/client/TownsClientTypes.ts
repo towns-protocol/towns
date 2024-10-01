@@ -73,6 +73,19 @@ export type TransactionContext<T> =
           error?: undefined
       }
 
+export type TransferAssetsData = {
+    contractAddress: string
+    recipient: string
+    tokenId: string
+    value?: BigNumberish
+}
+
+export type TransferAssetTransactionContext = TransactionContext<
+    {
+        assetLabel?: string
+    } & TransferAssetsData
+>
+
 export type CreateSpaceTransactionContext = TransactionContext<{
     spaceName?: string
     spaceId?: string

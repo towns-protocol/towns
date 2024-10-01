@@ -1,4 +1,4 @@
-import React, { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useFormContext } from 'react-hook-form'
 import {
     PricingModuleStruct,
@@ -12,6 +12,7 @@ import { Box, ErrorMessage, Paragraph, RadioCard, Stack, TextField } from '@ui'
 import { usePlatformMinMembershipPriceInEth } from 'hooks/usePlatformMinMembershipPriceInEth'
 import { shimmerClass } from 'ui/styles/globals/shimmer.css'
 import { MembershipSettingsSchemaType } from '../MembershipNFT/CreateSpaceFormV2/CreateSpaceFormV2.schema'
+import { useEthInputChange } from './useEthInputChange'
 
 enum PricingPreset {
     Dynamic = 'dynamic',
@@ -41,36 +42,7 @@ export function EditPricing({
 
     const [price] = watch(['membershipCost', 'membershipLimit'])
 
-    const onCostChange = useCallback(
-        (e: ChangeEvent<HTMLInputElement>) => {
-            const { value } = e.target
-
-            if (value.includes('.')) {
-                const priceHasDecimalAlready = price.toString().includes('.')
-                const [, decimal] = value.split('.')
-
-                // user deleted the only decimal number
-                if (!decimal && priceHasDecimalAlready) {
-                    // strip the "." from the value and set to integer
-                    setValue('membershipCost', value, {
-                        shouldValidate: true,
-                    })
-                    return
-                }
-                // user added decimal but hasn't enterd any numbers after it
-                if (!decimal) {
-                    return
-                }
-            }
-
-            setValue('membershipCost', value, {
-                shouldValidate: true,
-            })
-
-            trigger('membershipCost') // trigger the superRefine
-        },
-        [setValue, trigger, price],
-    )
+    const onCostChange = useEthInputChange(price, 'membershipCost', setValue, trigger)
 
     const [pricingPreset, setPricingPreset] = useState<PricingPreset>(PricingPreset.Dynamic)
 
