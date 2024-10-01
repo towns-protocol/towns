@@ -178,15 +178,14 @@ export const SpaceSideBarHeader = (props: {
                 </Box>
             </Stack>
 
-            <Stack
-                paddingX
-                gap="md"
-                insetX="xs"
-                paddingY="xs"
-                data-testid="all-town-members-list-button"
-                cursor="pointer"
-            >
-                <Paragraph textAlign="center" color="cta2" size="sm" onClick={onTownMembersClick}>
+            <Stack paddingX gap="md" insetX="xs" paddingY="xs" cursor="pointer">
+                <Paragraph
+                    data-testid="all-town-members-list-button"
+                    textAlign="center"
+                    color="cta2"
+                    size="sm"
+                    onClick={onTownMembersClick}
+                >
                     {hasMembers
                         ? `${membersCount} member${membersCount > 1 ? 's' : ''}`
                         : 'fetching members...'}
