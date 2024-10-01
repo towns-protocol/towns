@@ -1,4 +1,6 @@
+import { isGDMChannelStreamId } from '@river-build/sdk'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { Sheet } from 'react-modal-sheet'
 import {
     Address,
     useChannelData,
@@ -7,28 +9,26 @@ import {
     useTownsClient,
     useUserLookupContext,
 } from 'use-towns-client'
-import { isGDMChannelStreamId } from '@river-build/sdk'
-import { Sheet } from 'react-modal-sheet'
-import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
-import { Box, Button, Icon, Paragraph, Stack, Text, TextField } from '@ui'
-import { atoms } from 'ui/styles/atoms.css'
-import { shortAddress } from 'ui/utils/utils'
-import { ModalContainer } from '@components/Modals/ModalContainer'
-import { Panel } from '@components/Panel/Panel'
-import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { Avatar } from '@components/Avatar/Avatar'
-import { CHANNEL_INFO_PARAMS } from 'routes'
-import { ProfileHoverCard } from '@components/ProfileHoverCard/ProfileHoverCard'
-import { useDevice } from 'hooks/useDevice'
-import { modalSheetClass } from 'ui/styles/globals/sheet.css'
-import { TableCell } from '@components/TableCell/TableCell'
-import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
+import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
+import { ModalContainer } from '@components/Modals/ModalContainer'
 import { NoMatches } from '@components/NoMatches/NoMatches'
+import { Panel } from '@components/Panel/Panel'
+import { ProfileHoverCard } from '@components/ProfileHoverCard/ProfileHoverCard'
+import { TableCell } from '@components/TableCell/TableCell'
+import { Box, Button, Icon, Paragraph, Stack, Text, TextField } from '@ui'
+import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
+import { useDevice } from 'hooks/useDevice'
 import { useFuzzySearchByProperty } from 'hooks/useFuzzySearchByProperty'
-import { ChannelInviteModal } from './ChannelInvitePanel'
-import { usePanelActions } from './layouts/hooks/usePanelActions'
+import { CHANNEL_INFO_PARAMS } from 'routes'
+import { atoms } from 'ui/styles/atoms.css'
+import { modalSheetClass } from 'ui/styles/globals/sheet.css'
+import { shortAddress } from 'ui/utils/utils'
+import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
+import { ChannelInviteModal } from '../../routes/ChannelInvitePanel'
+import { usePanelActions } from '../../routes/layouts/hooks/usePanelActions'
 
-export const ChannelDirectoryPanel = () => {
+export const ChannelMembersPanel = () => {
     const { channel } = useChannelData()
     const { client } = useTownsClient()
 

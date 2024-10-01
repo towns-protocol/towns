@@ -34,7 +34,7 @@ import {
     channelPermissionDescriptions,
     isChannelPermission,
 } from '@components/SpaceSettingsPanel/rolePermissions.const'
-import { ChannelMembersModal } from './SpaceChannelDirectoryPanel'
+import { ChannelMembersModal } from '../components/ChannelMembersPanel/ChannelMembersPanel'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
 import { ChannelsRolesList } from './RoleRestrictedChannelJoinPanel'
 

@@ -24,7 +24,7 @@ import { PanelButton } from '@components/Panel/PanelButton'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { Analytics } from 'hooks/useAnalytics'
-import { ChannelMembersModal } from './SpaceChannelDirectoryPanel'
+import { ChannelMembersModal } from '../components/ChannelMembersPanel/ChannelMembersPanel'
 import { GDMChannelPermissionsModal } from './GDMChannelPermissions'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
 

@@ -11,7 +11,7 @@ import { ChannelInfoPanel } from 'routes/SpaceChannelInfoPanel'
 import { SpaceChannelWrapper } from '@components/Channel/ChannelWrapper'
 import { SpacesChannelReplies } from 'routes/SpacesChannelReplies'
 import { SpaceProfilePanel } from 'routes/SpacesProfilePanel'
-import { ChannelDirectoryPanel } from 'routes/SpaceChannelDirectoryPanel'
+import { ChannelMembersPanel } from '@components/ChannelMembersPanel/ChannelMembersPanel'
 import { CreateChannelPanel } from '@components/CreateChannelPanel/CreateChannelPanel'
 import { SpaceInfoPanel } from 'routes/SpaceInfoPanel'
 import { RolesPanel } from '@components/SpaceSettingsPanel/RolesPanel'
@@ -94,7 +94,7 @@ export const usePanels = () => {
             return <SpaceProfilePanel />
         }
         case CHANNEL_INFO_PARAMS.DIRECTORY: {
-            return withWrapper(<ChannelDirectoryPanel />)
+            return withWrapper(<ChannelMembersPanel />)
         }
         case CHANNEL_INFO_PARAMS.CREATE_CHANNEL: {
             return withWrapper(<CreateChannelPanel />)
