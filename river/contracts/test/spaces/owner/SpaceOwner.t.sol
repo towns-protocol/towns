@@ -265,7 +265,7 @@ contract SpaceOwnerTest is ISpaceOwnerBase, IOwnableBase, BaseSetup {
     string memory tokenUri = spaceOwnerToken.tokenURI(tokenId);
     string memory expectedUri = string.concat(
       defaultUri,
-      "/",
+      "/space/",
       Strings.toHexString(spaceAddress)
     );
     assertEq(LibString.toCase(tokenUri, false), expectedUri);
@@ -283,6 +283,7 @@ contract SpaceOwnerTest is ISpaceOwnerBase, IOwnableBase, BaseSetup {
     string memory tokenUri = spaceOwnerToken.tokenURI(tokenId);
     string memory expectedUri = string.concat(
       uriWithSlash,
+      "space/",
       Strings.toHexString(spaceAddress)
     );
     assertEq(LibString.toCase(tokenUri, false), expectedUri);

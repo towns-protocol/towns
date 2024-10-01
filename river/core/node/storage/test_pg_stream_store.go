@@ -8,14 +8,14 @@ import (
 	"github.com/river-build/river/core/node/testutils/dbtestutils"
 )
 
-type TestPgStore struct {
-	Storage     *PostgresEventStore
+type TestStreamStore struct {
+	Storage     *PostgresStreamStore
 	ExitChannel chan error
 	Close       func()
 }
 
-func NewTestPgStore(ctx context.Context) *TestPgStore {
-	dbCfg, schema, schemaDeleter, err := dbtestutils.StartDB(ctx)
+func NewTestStreamStore(ctx context.Context) *TestStreamStore {
+	dbCfg, schema, schemaDeleter, err := dbtestutils.ConfigureDB(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -26,7 +26,7 @@ func NewTestPgStore(ctx context.Context) *TestPgStore {
 	}
 
 	exitChan := make(chan error, 1)
-	streamStorage, err := NewPostgresEventStore(
+	streamStorage, err := NewPostgresStreamStore(
 		ctx,
 		pool,
 		GenShortNanoid(),
@@ -37,7 +37,7 @@ func NewTestPgStore(ctx context.Context) *TestPgStore {
 		panic(err)
 	}
 
-	return &TestPgStore{
+	return &TestStreamStore{
 		Storage:     streamStorage,
 		ExitChannel: exitChan,
 		Close: func() {

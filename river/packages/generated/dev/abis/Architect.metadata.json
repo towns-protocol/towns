@@ -1179,10 +1179,10 @@
       "license": "MIT"
     },
     "contracts/src/spaces/facets/membership/MembershipBase.sol": {
-      "keccak256": "0x052dec7e9e05b6ce5b9f6b94838dbc5b1e061803a183ab1b1c98fc6175187cb0",
+      "keccak256": "0x24a83f33b6aba917571d93e5d50b82f862181697d756275aae81994de7e1decc",
       "urls": [
-        "bzz-raw://4884f2e8919bb7ed91aa1fdcd3a09b9830efd31efbc07c3ba83b1eb3f151acb5",
-        "dweb:/ipfs/QmTNep8vLvtPeJPrfcx47xTe9CW43YJqbfeAiVn99K9QxK"
+        "bzz-raw://19cc2af4b25833552a77b928df89a2f2f1a3d18758d19ba58dfbbccc24627cb1",
+        "dweb:/ipfs/QmRDijChijx8ebG36qXUUPRQAwWV8UNDdhYgfeNMz2mxAX"
       ],
       "license": "MIT"
     },

@@ -161,6 +161,7 @@ just-config-base-chain:
 
 config-base-chain: deploy-contracts just-config-base-chain
 
+# Run build node binary for environment
 [positional-arguments]
 run-bin *args:
     #!/usr/bin/env -S bash {{BASH_OPTS}}
@@ -172,6 +173,49 @@ run-bin *args:
         --config config.yaml \
         --config contracts.env \
         "$@"
+
+# Run node from source with go run (for debugging)
+[positional-arguments]
+run-go *args:
+    #!/usr/bin/env -S bash {{BASH_OPTS}}
+    source ${ENV_FILE}
+    cd ${RUN_BASE}
+    mkdir -p logs
+    go run ../../river_node/main.go \
+        --config common.yaml \
+        --config config.yaml \
+        --config contracts.env \
+        "$@"
+
+# Run node from source with go run with config for instance N
+[positional-arguments]
+_run-go-inst $INSTANCE_NUM $INSTANCE_DIR *args:
+    #!/usr/bin/env -S bash {{BASH_OPTS}}
+    source ${ENV_FILE}
+    cd ${INSTANCE_DIR}
+    mkdir -p logs
+    shift 2
+    go run ../../../river_node/main.go \
+        --config ../common.yaml \
+        --config ../config.yaml \
+        --config ../contracts.env \
+        --config config/config.env \
+        "$@"
+
+# Run node from source with go run with config for instance N
+[positional-arguments]
+run-go-inst $INSTANCE_NUM *args:
+    #!/usr/bin/env -S bash {{BASH_OPTS}}
+    INSTANCE_NAME=$(printf "%02d" ${INSTANCE_NUM})
+    INSTANCE_DIR="${INSTANCE_BASE}/${INSTANCE_NAME}"
+    shift
+    just _run-go-inst ${INSTANCE_NUM} ${INSTANCE_DIR} "$@"
+
+# Run node from source with go run with for each instance
+[positional-arguments]
+run-go-all *args: 
+    #!/usr/bin/env -S bash {{BASH_OPTS}}
+    just _loop-instances-seq-args _run-go-inst "$@"
 
 just-config-river-chain:
     #!/usr/bin/env -S bash {{BASH_OPTS}}
@@ -339,8 +383,10 @@ _start-all: (_loop-instances "_run-node")
 
 _wait-all: (_loop-instances "_wait-node")
 
-# Config, build, and start nodes in background
+# Config, build, and start nodes in background. Alias: cbs
 config-and-start: stop config build start
+
+alias cbs := config-and-start
 
 # Start nodes in background, config and build should be run before
 start: _start-all _wait-all
@@ -357,13 +403,29 @@ run: _start-all _wait-all _wait-ctrl-c stop
 # Start nodes in foreground tailing logs, config and build should be run before
 run-and-tail: _start-all _wait-all tail-logs stop
 
+# Stop, build, and start nodes in background
+restart: stop build start
+
 _loop-instances-seq $CMD:
     #!/usr/bin/env -S bash {{BASH_OPTS}}
     source ${ENV_FILE}
     for ((i=0; i<${NUM_INSTANCES}; i++)); do
         INSTANCE_NAME=$(printf "%02d" ${i})
         INSTANCE_DIR="${INSTANCE_BASE}/${INSTANCE_NAME}"
+        echo "Running ${CMD} for instance ${i}"
         just ${CMD} ${i} ${INSTANCE_DIR}
+    done
+
+[positional-arguments]
+_loop-instances-seq-args $CMD *args:
+    #!/usr/bin/env -S bash {{BASH_OPTS}}
+    shift
+    source ${ENV_FILE}
+    for ((i=0; i<${NUM_INSTANCES}; i++)); do
+        INSTANCE_NAME=$(printf "%02d" ${i})
+        INSTANCE_DIR="${INSTANCE_BASE}/${INSTANCE_NAME}"
+        echo "Running ${CMD} for instance ${i} with args $@"
+        just ${CMD} ${i} ${INSTANCE_DIR} "$@"
     done
 
 # Loop instances without stopping on error, return 0 if all succeeded, 1 if any failed
@@ -374,6 +436,7 @@ _loop-instances-seq-nostop $CMD:
     for ((i=0; i<${NUM_INSTANCES}; i++)); do
         INSTANCE_NAME=$(printf "%02d" ${i})
         INSTANCE_DIR="${INSTANCE_BASE}/${INSTANCE_NAME}"
+        echo "Running ${CMD} for instance ${i}"
         just ${CMD} ${i} ${INSTANCE_DIR} || EXIT_CODE=1
     done
     exit ${EXIT_CODE}
@@ -417,3 +480,19 @@ _ping-instance-tcp $INSTANCE_NUM $INSTANCE_DIR:
     fi
 
 ping-instances-tcp: (_loop-instances-seq-nostop "_ping-instance-tcp")
+
+# Invoke cast with -r for river chain.
+[positional-arguments]
+cast-river +args:
+    #!/usr/bin/env -S bash {{BASH_OPTS}}
+    METHOD=$1
+    shift
+    cast ${METHOD} -r ${RPC_RIVER} "$@"
+
+# Invoke cast with -r for base chain.
+[positional-arguments]
+cast-base *args:
+    #!/usr/bin/env -S bash {{BASH_OPTS}}
+    METHOD=$1
+    shift
+    cast ${METHOD} -r ${RPC_BASE} "$@"

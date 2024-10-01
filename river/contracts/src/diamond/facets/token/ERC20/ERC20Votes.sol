@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IERC5805} from "contracts/src/diamond/facets/governance/votes/IERC5805.sol";
+import {IERC5805} from "@openzeppelin/contracts/interfaces/IERC5805.sol";
 
 // libraries
 import {VotesStorage} from "contracts/src/diamond/facets/governance/votes/VotesStorage.sol";

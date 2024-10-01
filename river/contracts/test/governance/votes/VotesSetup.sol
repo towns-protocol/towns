@@ -9,8 +9,8 @@ pragma solidity ^0.8.23;
 import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
 import {MockERC721Votes} from "contracts/test/mocks/MockERC721Votes.sol";
 
-import {IERC6372} from "contracts/src/diamond/facets/governance/votes/IERC6372.sol";
-import {IVotes} from "contracts/src/diamond/facets/governance/votes/IVotes.sol";
+import {IERC6372} from "@openzeppelin/contracts/interfaces/IERC6372.sol";
+import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 
 contract VotesHelper is FacetHelper {
   MockERC721Votes internal mockERC721Votes;

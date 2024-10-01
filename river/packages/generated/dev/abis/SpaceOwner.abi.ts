@@ -827,13 +827,13 @@ export default [
         "internalType": "address"
       },
       {
-        "name": "previousBalance",
+        "name": "previousVotes",
         "type": "uint256",
         "indexed": false,
         "internalType": "uint256"
       },
       {
-        "name": "newBalance",
+        "name": "newVotes",
         "type": "uint256",
         "indexed": false,
         "internalType": "uint256"
@@ -1241,5 +1241,16 @@ export default [
     "type": "error",
     "name": "Validator__InvalidStringLength",
     "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "VotesExpiredSignature",
+    "inputs": [
+      {
+        "name": "expiry",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ]
   }
 ] as const

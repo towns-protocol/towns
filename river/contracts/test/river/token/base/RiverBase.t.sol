@@ -7,7 +7,7 @@ import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC2
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {ILockBase} from "contracts/src/tokens/lock/ILock.sol";
 import {IOwnableBase} from "contracts/src/diamond/facets/ownable/IERC173.sol";
-import {IVotes} from "contracts/src/diamond/facets/governance/votes/IVotes.sol";
+import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 
 //libraries
 

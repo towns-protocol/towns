@@ -1,6 +1,6 @@
 {
     "name": "@river-build/proto",
-    "version": "0.0.76",
+    "version": "0.0.78",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "dist/index.js",
@@ -12,7 +12,7 @@
         "build": "yarn buf:generate && tsc",
         "cb": "yarn clean && yarn build",
         "clean": "yarn buf:clean && rm -rf ./dist",
-        "my-jest": "yarn node -r ../../scripts/node-no-warn.js --experimental-vm-modules $(yarn bin jest) --passWithNoTests",
+        "my-jest": "NODE_EXTRA_CA_CERTS=${HOME}/river-ca-cert.pem yarn node -r ../../scripts/node-no-warn.js --experimental-vm-modules $(yarn bin jest) --passWithNoTests",
         "test": "yarn my-jest",
         "test:ci": "yarn my-jest",
         "watch": "node scripts/watch_proto_files.cjs",

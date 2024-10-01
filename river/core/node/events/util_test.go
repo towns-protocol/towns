@@ -6,6 +6,9 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
+
 	"github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/base/test"
 	"github.com/river-build/river/core/node/crypto"
@@ -16,8 +19,6 @@ import (
 	. "github.com/river-build/river/core/node/shared"
 	"github.com/river-build/river/core/node/storage"
 	"github.com/river-build/river/core/node/testutils"
-	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/proto"
 )
 
 type cacheTestContext struct {
@@ -93,8 +94,8 @@ func makeCacheTestContext(t *testing.T, p testParams) (context.Context, *cacheTe
 		bc := btc.GetBlockchain(ctx, i)
 		bc.StartChainMonitor(ctx)
 
-		pg := storage.NewTestPgStore(ctx)
-		t.Cleanup(pg.Close)
+		streamStore := storage.NewTestStreamStore(ctx)
+		t.Cleanup(streamStore.Close)
 
 		cfg := btc.RegistryConfig()
 		registry, err := registries.NewRiverRegistryContract(ctx, bc, &cfg)
@@ -108,7 +109,7 @@ func makeCacheTestContext(t *testing.T, p testParams) (context.Context, *cacheTe
 		sr := NewStreamRegistry(bc.Wallet.Address, nr, registry, btc.OnChainConfig)
 
 		params := &StreamCacheParams{
-			Storage:                 pg.Storage,
+			Storage:                 streamStore.Storage,
 			Wallet:                  bc.Wallet,
 			RiverChain:              bc,
 			Registry:                registry,
@@ -301,7 +302,7 @@ func (ctc *cacheTestContext) GetMbsStreamed(
 	fromMiniBlockNum int64, // inclusive
 	toMiniBlockNum int64, // exclusive
 ) <-chan *MbOrError {
-	var mbChanOrErr = make(chan *MbOrError)
+	mbChanOrErr := make(chan *MbOrError)
 
 	go func() {
 		defer close(mbChanOrErr)

@@ -1,6 +1,6 @@
 {
     "name": "@river-build/encryption",
-    "version": "0.0.76",
+    "version": "0.0.78",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "dist/index.js",
@@ -11,7 +11,7 @@
         "clean": "rm -rf dist",
         "lint": "yarn eslint --format unix ./src",
         "lint:fix": "yarn lint --fix",
-        "my-jest": "yarn node -r ../../scripts/node-no-warn.js --experimental-vm-modules $(yarn bin jest)",
+        "my-jest": "NODE_EXTRA_CA_CERTS=${HOME}/river-ca-cert.pem yarn node -r ../../scripts/node-no-warn.js --experimental-vm-modules $(yarn bin jest)",
         "test": "yarn my-jest",
         "test:ci": "yarn test",
         "test:debug": "DEBUG=test yarn my-jest",

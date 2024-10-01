@@ -26,12 +26,16 @@ abstract contract MembershipBase is IMembershipBase {
     ds.pricingModule = info.pricingModule;
     ds.membershipCurrency = CurrencyTransfer.NATIVE_TOKEN;
     ds.membershipMaxSupply = info.maxSupply;
-    ds.freeAllocation = info.freeAllocation;
 
     if (info.freeAllocation > 0) {
       _verifyFreeAllocation(info.freeAllocation);
-      ds.freeAllocationEnabled = true;
+      ds.freeAllocation = info.freeAllocation;
+    } else {
+      ds.freeAllocation = IPlatformRequirements(ds.spaceFactory)
+        .getMembershipMintLimit();
     }
+
+    ds.freeAllocationEnabled = true;
 
     if (info.price > 0) {
       _verifyPrice(info.price);

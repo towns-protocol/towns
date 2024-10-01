@@ -12,7 +12,7 @@ import (
 func TestMigrateExistingDb(t *testing.T) {
 	require := require.New(t)
 
-	ctx, _, testParams := setupTest()
+	ctx, _, testParams := setupStreamStorageTest()
 	defer testParams.closer()
 
 	pool, err := CreateAndValidatePgxPool(
@@ -25,14 +25,13 @@ func TestMigrateExistingDb(t *testing.T) {
 
 	instanceId2 := GenShortNanoid()
 	exitSignal2 := make(chan error, 1)
-	pgEventStore2, err := newPostgresEventStore(
+	pgStreamStore2, err := NewPostgresStreamStore(
 		ctx,
 		pool,
 		instanceId2,
 		exitSignal2,
 		infra.NewMetricsFactory(nil, "", ""),
-		migrationsDir,
 	)
 	require.NoError(err)
-	defer pgEventStore2.Close(ctx)
+	defer pgStreamStore2.Close(ctx)
 }

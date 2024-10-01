@@ -1,6 +1,6 @@
 {
     "name": "@river-build/sdk",
-    "version": "0.0.76",
+    "version": "0.0.78",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "dist/index.js",
@@ -12,8 +12,8 @@
         "dev": "my-node src/index.ts",
         "lint": "yarn eslint --format unix ./src  --max-warnings=0",
         "lint:fix": "yarn lint --fix",
-        "my-jest": "yarn node -r ../../scripts/node-no-warn.js --experimental-vm-modules $(yarn bin jest) --testTimeout=300000",
-        "my-node": "yarn node -r ../../scripts/node-no-warn.js --loader ts-node/esm --experimental-specifier-resolution=node --experimental-vm-modules",
+        "my-jest": "NODE_EXTRA_CA_CERTS=${HOME}/river-ca-cert.pem yarn node -r ../../scripts/node-no-warn.js --experimental-vm-modules $(yarn bin jest) --testTimeout=300000",
+        "my-node": "NODE_EXTRA_CA_CERTS=${HOME}/river-ca-cert.pem yarn node -r ../../scripts/node-no-warn.js --loader ts-node/esm --experimental-specifier-resolution=node --experimental-vm-modules",
         "test": "yarn test:ci:multi:ne",
         "test:ci": "yarn test:ci:multi:ne",
         "test:ci:multi:ent:legacy": "USE_LEGACY_SPACES=true RIVER_ENV=local_multi yarn my-jest --group=with-entitlements",

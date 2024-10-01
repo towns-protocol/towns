@@ -224,6 +224,17 @@
       {
         "inputs": [
           {
+            "internalType": "uint256",
+            "name": "expiry",
+            "type": "uint256"
+          }
+        ],
+        "type": "error",
+        "name": "VotesExpiredSignature"
+      },
+      {
+        "inputs": [
+          {
             "internalType": "address",
             "name": "owner",
             "type": "address",
@@ -337,13 +348,13 @@
           },
           {
             "internalType": "uint256",
-            "name": "previousBalance",
+            "name": "previousVotes",
             "type": "uint256",
             "indexed": false
           },
           {
             "internalType": "uint256",
-            "name": "newBalance",
+            "name": "newVotes",
             "type": "uint256",
             "indexed": false
           }
@@ -1413,43 +1424,19 @@
       ],
       "license": "MIT"
     },
-    "contracts/src/diamond/facets/governance/votes/IERC5805.sol": {
-      "keccak256": "0x8b3b84026610f99bcac6139359305a46c537edf377e44771b904c2bd35719ee3",
-      "urls": [
-        "bzz-raw://49a8e7af9b47b6bbd794ccb50380b8f9e9b84561d62bcbf16843dde55bab86e6",
-        "dweb:/ipfs/QmdBdYxvhwCwtqW9DfPa6Bw5PrYdzhuKQyJv4vcLsttqrV"
-      ],
-      "license": "MIT"
-    },
-    "contracts/src/diamond/facets/governance/votes/IERC6372.sol": {
-      "keccak256": "0xc3fa5c25bdd3db6126e04897496889e68a65749b050ae8fede0ff80e322aca86",
-      "urls": [
-        "bzz-raw://bcf56ae1474c9a3032f8b15b1bbbeeb50ac21c574047f846673d4aca9bf82db4",
-        "dweb:/ipfs/Qmcce1zD6TBWiMLXMDsFF6bUrwtVtharjwvAbtkMmoYRgd"
-      ],
-      "license": "MIT"
-    },
-    "contracts/src/diamond/facets/governance/votes/IVotes.sol": {
-      "keccak256": "0xef9a51a12d9c5a331de719be078e39858739a3d5043ebc20814d1331d8a7d8c3",
-      "urls": [
-        "bzz-raw://8a077058f77857cd2668fc97943dd64fdfd2463b8a0e163ef9973da8bb1f593a",
-        "dweb:/ipfs/QmXZavPSRakx4GHD9gDpDBWQDt1SL2hYvbARA62zVeUq2w"
-      ],
-      "license": "MIT"
-    },
     "contracts/src/diamond/facets/governance/votes/Votes.sol": {
-      "keccak256": "0x583ee53b96d9ead23925281c765624a48e7a385942247c4da1ecc1052193ed67",
+      "keccak256": "0x9df4a59415c2a2d260248b6f17b5afebd359c1fc3fa3d30de28c96295a128cb0",
       "urls": [
-        "bzz-raw://c5c8cc50c062867c32ad9e3d0b4ad847f22576809d9f704aa8ee72b7ab617462",
-        "dweb:/ipfs/QmSayHRuL6dwMfYNBNe29Sp63oeNDoemZttLWCv1urWCZc"
+        "bzz-raw://7bac8e7e2ba6f34aaf7eef070d727f1fb1f05dc0a06acfd84e9ac32e3bc32501",
+        "dweb:/ipfs/QmeRpJPPyJzdag6FSyyPYjABFz57XhCQfDKFS72tYMJ69Q"
       ],
       "license": "MIT"
     },
     "contracts/src/diamond/facets/governance/votes/VotesBase.sol": {
-      "keccak256": "0x41049b5967fcceaf40dab9bb2863a701ba5aa68fa219321773028498c61e6add",
+      "keccak256": "0xc97d25c8fa9b7773e6fce8e544f632f6140ab01ce2bc6a39f54a089b55ca645c",
       "urls": [
-        "bzz-raw://e63ecb4168e2b2f4819e606bf2b66195b48e42bd5d22a3def701dac016160112",
-        "dweb:/ipfs/QmVJxvxjkTE9cH44DRXCwGntEyPRgsVDBiw2AiCT1KNDBC"
+        "bzz-raw://45093f56720e7945d6914226d11cc83f834756af22d69d763f568078c8996ec7",
+        "dweb:/ipfs/QmSg8RU1sPWqgq8563cXyjnqN7wJD1ZkkXr9yGCQusXiA3"
       ],
       "license": "MIT"
     },
@@ -1654,10 +1641,10 @@
       "license": "MIT"
     },
     "contracts/src/spaces/facets/owner/SpaceOwnerUriBase.sol": {
-      "keccak256": "0xbc0f6bc661567cdc37620e295a3619aa5787a60fe6330fa6e2044314ab46fe49",
+      "keccak256": "0x284522f1e6276dbb031c39f86ef77cde4f40abf87077f49c8efe289047e35f9c",
       "urls": [
-        "bzz-raw://6eae9fe0a43035a47e600d7a476f314c0a9aebaa59754e851751a18b1736751f",
-        "dweb:/ipfs/QmfN95VxwSkkvemoJ3w8gtzYjnehb1aocuu8zVLk6KPCBv"
+        "bzz-raw://db9f0345f931ea02a3eeb46c4246e20f7ccfef6b502efb0e085f178351c95b2a",
+        "dweb:/ipfs/QmYYgD5B1zCLRqZK2hENfKxLq8F6k9qst5iuHe9hASkFzV"
       ],
       "license": "MIT"
     },
@@ -1666,6 +1653,14 @@
       "urls": [
         "bzz-raw://39e68f53191121d78a6adc94587e085fb2845206cc8f5c58bf7f4532126e6bb3",
         "dweb:/ipfs/QmPLJ9UXfvhJEPhyKpQyz2WM7oNtGgJtbFpXfM8hmZDWRG"
+      ],
+      "license": "MIT"
+    },
+    "node_modules/@openzeppelin/contracts/governance/utils/IVotes.sol": {
+      "keccak256": "0x5e2b397ae88fd5c68e4f6762eb9f65f65c36702eb57796495f471d024ce70947",
+      "urls": [
+        "bzz-raw://348fc8e291d54314bb22437b532f443d5dbfb80c8cc9591567c1af6554ccf856",
+        "dweb:/ipfs/QmP8ZTyitZinxcpwAHeYHhwj7u21zPpKXSiww38V74sXC2"
       ],
       "license": "MIT"
     },
@@ -1682,6 +1677,22 @@
       "urls": [
         "bzz-raw://a89c6fb0cd5fef4244500b633f63def9f2bb2134debb961e590bd5a2910662fd",
         "dweb:/ipfs/QmNqWyCxyopvb99RbRomPpfTZGXRi5MnzgpFXE2BFLLgMc"
+      ],
+      "license": "MIT"
+    },
+    "node_modules/@openzeppelin/contracts/interfaces/IERC5805.sol": {
+      "keccak256": "0x4b9b89f91adbb7d3574f85394754cfb08c5b4eafca8a7061e2094a019ab8f818",
+      "urls": [
+        "bzz-raw://7373d5dbb8eb2381aa0883a456fac89283fcaf52f42fa805d4188f270716742a",
+        "dweb:/ipfs/QmVnZDmT4ABvNhRJMaQnbCzsCA8HpyHPVaxi4fCi92LFv2"
+      ],
+      "license": "MIT"
+    },
+    "node_modules/@openzeppelin/contracts/interfaces/IERC6372.sol": {
+      "keccak256": "0xeb2857b7dafb7e0d8526dbfe794e6c047df2851c9e6ee91dc4a55f3c34af5d33",
+      "urls": [
+        "bzz-raw://49bf13f6c2a38a9bcc7b852d4e2b9cebb4068b832642cce61069cdb5f06bb2fb",
+        "dweb:/ipfs/QmdKAJVE7rR2kENCZnEM1yKswrGii7WuE9gZpsQvnXJhwn"
       ],
       "license": "MIT"
     },

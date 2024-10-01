@@ -57,7 +57,7 @@ func DeleteTestSchema(ctx context.Context, dbUrl string, schemaName string) erro
 	return err
 }
 
-func StartDB(ctx context.Context) (*config.DatabaseConfig, string, func(), error) {
+func ConfigureDB(ctx context.Context) (*config.DatabaseConfig, string, func(), error) {
 	dbSchemaName := os.Getenv("TEST_DATABASE_SCHEMA_NAME")
 	if dbSchemaName == "" {
 		b := make([]byte, 16)

@@ -8,12 +8,17 @@ var path = require('path')
 var os = require('os')
 var fs = require('fs')
 
-var localRiverCA = path.join(os.homedir(), 'river-ca-cert.pem')
-
-if (!fs.existsSync(localRiverCA)) {
-    console.log('CA does not exist, did you forget to run ../scripts/register-ca.sh')
+if (process.env.NODE_EXTRA_CA_CERTS === undefined || process.env.NODE_EXTRA_CA_CERTS === '') {
+    console.log('ERROR: NODE_EXTRA_CA_CERTS must be set')
+    // Next line only works for node subprocesses, it's too late for the current process.
+    process.env.NODE_EXTRA_CA_CERTS = path.join(os.homedir(), 'river-ca-cert.pem')
 } else {
-    process.env.NODE_EXTRA_CA_CERTS = localRiverCA
+    if (!fs.existsSync(process.env.NODE_EXTRA_CA_CERTS)) {
+        console.log(
+            'ERROR: NODE_EXTRA_CA_CERTS does not exist, did you forget to run scripts/register-ca.sh? ',
+            process.env.NODE_EXTRA_CA_CERTS,
+        )
+    }
 }
 
 // Increase max listeners from 10 to 100 to avoid warnings for legitimate use cases.

@@ -510,7 +510,7 @@ func (s *Service) initStore() error {
 
 	switch s.config.StorageType {
 	case storage.StreamStorageTypePostgres:
-		store, err := storage.NewPostgresEventStore(
+		store, err := storage.NewPostgresStreamStore(
 			ctx,
 			s.storagePoolInfo,
 			s.instanceId,

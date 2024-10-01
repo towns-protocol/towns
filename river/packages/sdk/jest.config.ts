@@ -1,15 +1,20 @@
 import path from 'path'
-import os from 'os'
 import fs from 'fs'
-
+import os from 'os'
 import type { JestConfigWithTsJest } from 'ts-jest'
 
-const localRiverCA = path.join(os.homedir(), 'river-ca-cert.pem')
-
-if (!fs.existsSync(localRiverCA)) {
-    console.log('CA does not exist, did you forget to run ../scripts/register-ca.sh')
+if (process.env.NODE_EXTRA_CA_CERTS === undefined || process.env.NODE_EXTRA_CA_CERTS === '') {
+    console.log('jest.config.ts: ERROR: NODE_EXTRA_CA_CERTS must be set')
+    // Next line only works for node subprocesses, it's too late for the current process.
+    process.env.NODE_EXTRA_CA_CERTS = path.join(os.homedir(), 'river-ca-cert.pem')
+} else {
+    if (!fs.existsSync(process.env.NODE_EXTRA_CA_CERTS)) {
+        console.log(
+            'jest.config.ts: ERROR: NODE_EXTRA_CA_CERTS does not exist, did you forget to run scripts/register-ca.sh? ',
+            process.env.NODE_EXTRA_CA_CERTS,
+        )
+    }
 }
-process.env.NODE_EXTRA_CA_CERTS = localRiverCA
 
 const findMsgpackrFolder = () => {
     let currentDir = __dirname

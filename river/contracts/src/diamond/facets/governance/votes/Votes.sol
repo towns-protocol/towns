@@ -2,8 +2,8 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IERC6372} from "./IERC6372.sol";
-import {IVotes} from "./IVotes.sol";
+import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
+import {IERC6372} from "@openzeppelin/contracts/interfaces/IERC6372.sol";
 
 // contracts
 import {VotesBase} from "./VotesBase.sol";
