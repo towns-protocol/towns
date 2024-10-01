@@ -240,7 +240,9 @@ export const UserProfile = (props: Props) => {
                             {userId && user.ensAddress && (
                                 <EnsBadge userId={userId} ensAddress={user.ensAddress} />
                             )}
-                            <Text color="default">@{user.username}</Text>
+                            {user.username?.length > 1 && (
+                                <Text color="default">@{user.username}</Text>
+                            )}
                         </>
                     )}
                     <UserWalletContent abstractAccountAddress={abstractAccountAddress} />
