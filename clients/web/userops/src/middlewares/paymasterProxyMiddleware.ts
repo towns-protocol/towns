@@ -1,9 +1,9 @@
-import { UserOpsConfig } from './types'
+import { UserOpsConfig } from '../types'
 import { BigNumber } from 'ethers'
 import { IUserOperation, IUserOperationMiddlewareCtx } from 'userop'
 import { z } from 'zod'
-import { CodeException } from './errors'
-import { isUsingAlchemyBundler } from './utils'
+import { CodeException } from '../errors'
+import { isUsingAlchemyBundler } from '../utils'
 
 type PaymasterProxyResponse = {
     paymasterAndData: string
@@ -79,11 +79,13 @@ export const paymasterProxyMiddleware = async (
             functionHashForPaymasterProxy !== 'createSpace_linkWallet' &&
             functionHashForPaymasterProxy !== 'linkWalletToRootKey' &&
             functionHashForPaymasterProxy !== 'linkCallerToRootKey' &&
-            functionHashForPaymasterProxy !== 'removeLink'
+            functionHashForPaymasterProxy !== 'removeLink' &&
+            functionHashForPaymasterProxy !== 'transferTokens'
         ) {
-            throw new Error(
-                '[paymasterProxyMiddleware] townId is required for all user operations except createSpace, linkWallet, and removeLink',
-            )
+            const errorMessage =
+                '[paymasterProxyMiddleware] townId is required for all user operations except createSpace, linkWallet, and removeLink'
+            console.error(errorMessage)
+            throw new Error(errorMessage)
         }
 
         const data: PaymasterProxyPostData = {

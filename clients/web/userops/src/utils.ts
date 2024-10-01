@@ -1,5 +1,5 @@
 import { ContractTransaction, ethers } from 'ethers'
-import { ISendUserOperationResponse } from 'userop'
+import { ISendUserOperationResponse, IUserOperation } from 'userop'
 import { Address } from '@river-build/web3'
 import { FunctionHash } from './types'
 
@@ -52,4 +52,22 @@ export function getFunctionSigHash<ContractInterface extends ethers.utils.Interf
 
 export function isUsingAlchemyBundler(bundlerUrl: string) {
     return bundlerUrl.includes('alchemy')
+}
+
+export const OpToJSON = (op: IUserOperation): IUserOperation => {
+    return Object.keys(op)
+        .map((key) => {
+            let val = op[key as unknown as keyof IUserOperation]
+            if (typeof val !== 'string' || !val.startsWith('0x')) {
+                val = ethers.utils.hexValue(val)
+            }
+            return [key, val]
+        })
+        .reduce(
+            (set, [k, v]) => ({
+                ...set,
+                [k]: v,
+            }),
+            {},
+        ) as IUserOperation
 }

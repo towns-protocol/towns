@@ -10,7 +10,7 @@ import {
 } from 'userop'
 import { EntryPoint, EntryPoint__factory } from 'userop/dist/typechain'
 import { ERC4337 } from './constants'
-import { OpToJSON } from './middlewares'
+import { OpToJSON } from './utils'
 import { datadogLogs } from '@datadog/browser-logs'
 
 export type TownsUserOpClientSendUserOperationResponse = ISendUserOperationResponse & {

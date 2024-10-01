@@ -74,6 +74,9 @@ export const FunctionHash = {
     editMembershipSettings: 'editMembershipSettings',
     setChannelPermissionOverrides: 'setChannelPermissionOverrides',
     clearChannelPermissionOverrides: 'clearChannelPermissionOverrides',
+    unsupported: 'unsupported',
+    transferTokens: 'transferTokens',
+    transferEth: 'transferEth',
 } as const
 
 export type FunctionHash = keyof typeof FunctionHash
@@ -91,4 +94,13 @@ export type TimeTracker = {
         step: string,
     ) => ((data?: Record<string, unknown>) => void) | undefined
     endMeasurement: (sequence: string, step: string, data?: Record<string, unknown>) => void
+}
+
+export type GasEstimate = {
+    preVerificationGas: ethers.BigNumberish
+    verificationGasLimit: ethers.BigNumberish
+    callGasLimit: ethers.BigNumberish
+
+    // TODO: remove this with EntryPoint v0.7
+    verificationGas: ethers.BigNumberish
 }

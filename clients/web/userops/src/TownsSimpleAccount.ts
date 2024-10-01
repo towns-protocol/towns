@@ -118,4 +118,8 @@ export class TownsSimpleAccount extends UserOperationBuilder {
     executeBatch(to: Array<string>, data: Array<BytesLike>) {
         return this.setCallData(this.proxy.interface.encodeFunctionData('executeBatch', [to, data]))
     }
+
+    decodeExecute(data: BytesLike) {
+        return this.proxy.interface.decodeFunctionData('execute', data)
+    }
 }

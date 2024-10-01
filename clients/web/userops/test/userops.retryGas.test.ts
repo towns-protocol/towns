@@ -3,8 +3,8 @@ import { Permission } from '@river-build/web3'
 import { createSpaceDappAndUserops, createUngatedSpace, generatePrivyWalletIfKey } from './utils'
 import { expect, vi } from 'vitest'
 import * as errors from '../src/errors'
-import * as paymasterProxyMiddleware from '../src/paymasterProxyMiddleware'
-import * as middlewares from '../src/middlewares'
+import * as paymasterProxyMiddleware from '../src/middlewares/paymasterProxyMiddleware'
+import * as promptUser from '../src/middlewares/promptUser'
 import { ISendUserOperationOpts, UserOperationBuilder } from 'userop'
 
 test('a sponsored userop that fails because of gas too low runs again', async () => {
@@ -69,12 +69,13 @@ test('a non-sponsored userop that fails because of gas too low runs again', asyn
                 return {
                     userOpHash: '0x123',
                     wait: () => Promise.resolve(null),
+                    getUserOperationReceipt: () => Promise.resolve(null),
                 }
             }
             throw new Error()
         },
     )
-    const promptUserSpy = vi.spyOn(middlewares, 'promptUser').mockImplementation(() => () => {
+    const promptUserSpy = vi.spyOn(promptUser, 'promptUser').mockImplementation(() => {
         count++
         return Promise.resolve()
     })

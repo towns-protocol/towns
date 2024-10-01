@@ -26,18 +26,18 @@ import { ERC4337 } from 'userop/dist/constants'
 import { CodeException, errorToCodeException, matchGasTooLowError } from './errors'
 import { UserOperationEventEvent } from 'userop/dist/typechain/EntryPoint'
 import { EVERYONE_ADDRESS, getFunctionSigHash, isUsingAlchemyBundler } from './utils'
-import {
-    simpleEstimateGas,
-    promptUser,
-    signUserOpHash,
-    estimateAlchemyGasFees,
-} from './middlewares'
-import { paymasterProxyMiddleware } from './paymasterProxyMiddleware'
+import { signUserOpHash } from './middlewares/signUserOpHash'
+import { estimateGasLimit } from './middlewares/estimateGasLimit'
+import { estimateAlchemyGasFees } from './middlewares/estimateAlchemyGasFees'
+import { subtractGasFromMaxValue } from './middlewares/substractGasFromValue'
+import { promptUser } from './middlewares/promptUser'
+import { paymasterProxyMiddleware } from './middlewares/paymasterProxyMiddleware'
 import { MiddlewareVars } from './MiddlewareVars'
 import { abstractAddressMap } from './abstractAddressMap'
 import { TownsSimpleAccount } from './TownsSimpleAccount'
 import { getGasPrice as getEthMaxPriorityFeePerGas } from 'userop/dist/preset/middleware'
 import { TownsUserOpClient, TownsUserOpClientSendUserOperationResponse } from './TownsUserOpClient'
+import { getTransferCallData } from './generateTransferCallData'
 
 export class UserOps {
     private bundlerUrl: string
@@ -1708,6 +1708,67 @@ export class UserOps {
         })
     }
 
+    public async sendTransferEthOp(
+        transferData: {
+            recipient: string
+            value: ethers.BigNumberish
+        },
+        signer: ethers.Signer,
+    ) {
+        const { recipient, value } = transferData
+
+        const aaAddress = await this.getAbstractAccountAddress({
+            rootKeyAddress: (await signer.getAddress()) as Address,
+        })
+
+        if (!aaAddress) {
+            throw new Error('Failed to get AA address')
+        }
+
+        return this.sendUserOp({
+            toAddress: recipient,
+            callData: '0x',
+            functionHashForPaymasterProxy: 'transferEth',
+            signer,
+            spaceId: undefined,
+            value,
+        })
+    }
+
+    public async sendTransferAssetsOp(
+        transferData: {
+            contractAddress: string
+            recipient: string
+            tokenId: string
+            quantity?: number
+        },
+        signer: ethers.Signer,
+    ) {
+        const { recipient, contractAddress, tokenId, quantity } = transferData
+        const fromAddress = await this.getAbstractAccountAddress({
+            rootKeyAddress: (await signer.getAddress()) as Address,
+        })
+        if (!fromAddress) {
+            throw new Error('Failed to get from address')
+        }
+
+        const callData = await getTransferCallData({
+            recipient,
+            tokenId,
+            fromAddress,
+            contractAddress,
+            provider: (await this.getBuilder({ signer })).provider,
+            quantity,
+        })
+        return this.sendUserOp({
+            toAddress: contractAddress,
+            callData,
+            signer,
+            spaceId: undefined,
+            functionHashForPaymasterProxy: 'transferTokens',
+        })
+    }
+
     public async getBuilder(args: { signer: ethers.Signer }) {
         if (!this.builder) {
             const { signer } = args
@@ -1783,31 +1844,38 @@ export class UserOps {
             builder.useMiddleware(async (ctx) => estimateAlchemyGasFees(ctx, builder.provider))
         }
 
+        builder.useMiddleware(async (ctx) => {
+            const { spaceId } = this.middlewareVars
+
+            return estimateGasLimit({
+                ctx,
+                provider: builder.provider,
+                bundlerUrl: this.bundlerUrl,
+                spaceId,
+                spaceDapp: this.spaceDapp,
+            })
+        })
+
         // prompt user if the paymaster rejected. recalculate preverification gas
         if (!this.skipPromptUserOnPMRejectedOp) {
             builder.useMiddleware(async (ctx) => {
-                const { sequenceName, functionHashForPaymasterProxy, spaceId, txValue } =
-                    this.middlewareVars
-                return promptUser(this.spaceDapp, txValue, {
-                    sequenceName,
-                    timeTracker,
-                    stepPrefix: functionHashForPaymasterProxy,
-                })(ctx, {
-                    bundlerProvider: builder.provider,
-                    config: this.spaceDapp?.config,
-                    rpcUrl: this.aaRpcUrl,
-                    bundlerUrl: this.bundlerUrl,
-                    spaceId,
-                })
+                const { txValue } = this.middlewareVars
+                await promptUser(ctx, txValue)
             })
         }
-        // estimate gas w/o prompt if needed
-        // time tracking not needed as this is for error reporting in test scenarios
-        else {
-            builder.useMiddleware(async (ctx) =>
-                simpleEstimateGas(ctx, builder.provider, this.bundlerUrl),
-            )
-        }
+
+        builder.useMiddleware(async (ctx) => {
+            const { txValue, functionHashForPaymasterProxy } = this.middlewareVars
+            if (!txValue || !functionHashForPaymasterProxy) {
+                return
+            }
+
+            return subtractGasFromMaxValue(ctx, signer, {
+                functionHash: functionHashForPaymasterProxy,
+                builder,
+                value: txValue,
+            })
+        })
 
         // sign the user operation
         builder.useMiddleware(async (ctx) => signUserOpHash(ctx, signer))
