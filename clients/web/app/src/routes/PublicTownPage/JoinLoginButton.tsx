@@ -64,6 +64,7 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
                 signer,
                 clientSingleton,
                 signerContext,
+                source: 'public pagejoin click',
             })
         } else {
             // show asset verification modal
@@ -95,6 +96,7 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
             signer,
             clientSingleton,
             signerContext,
+            source: 'token verification click',
         })
     }, [getSigner, joinTown, clientSingleton, signerContext])
 

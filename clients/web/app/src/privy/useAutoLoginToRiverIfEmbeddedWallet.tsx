@@ -139,6 +139,7 @@ export function useAutoLoginToRiverIfEmbeddedWallet({
                                                 signer,
                                                 clientSingleton,
                                                 signerContext: casablancaContext,
+                                                source: 'auto login to river',
                                             })
                                         } else {
                                             startJoinDoesNotMeetRequirements()

@@ -48,10 +48,12 @@ export function usePublicPageLoginFlow() {
             signer,
             clientSingleton,
             signerContext,
+            source,
         }: {
             signer: TSigner
             clientSingleton: TClientSingleton
             signerContext: TSignerContext
+            source: string
         }) => {
             if (!spaceId || !clientSingleton || !signer || !signerContext) {
                 const missingParams: string[] = []
@@ -75,9 +77,9 @@ export function usePublicPageLoginFlow() {
                                 error: new Error(
                                     `[usePublicPageLoginFlow] missing params: ${missingParams.join(
                                         ', ',
-                                    )}`,
+                                    )} - ${source}`,
                                 ),
-                                source: 'join space',
+                                source,
                             }) ?? ''
                         }
                     />
@@ -142,10 +144,12 @@ export function usePublicPageLoginFlow() {
             signer,
             clientSingleton,
             signerContext,
+            source,
         }: {
             signer: TSigner
             clientSingleton: TClientSingleton
             signerContext: TSignerContext
+            source: string
         }) => {
             if (!spaceId) {
                 return
@@ -162,6 +166,7 @@ export function usePublicPageLoginFlow() {
                     signer,
                     clientSingleton,
                     signerContext,
+                    source,
                 })
                 setDisableJoinUi(false)
             }
