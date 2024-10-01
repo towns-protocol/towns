@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useRef, useState } from 'react'
 import { useFormContext } from 'react-hook-form'
 import { Address, useConnectivity } from 'use-towns-client'
 import { Token } from '@components/Tokens/TokenSelector/tokenSchemas'
@@ -6,7 +6,6 @@ import { ErrorMessage, Paragraph, RadioCard, Stack, Toggle } from '@ui'
 import { TokenSelector } from '@components/Tokens/TokenSelector/TokenSelector'
 import { WalletMemberSelector } from '@components/SpaceSettingsPanel/WalletMemberSelector'
 import { MembershipSettingsSchemaType } from '../MembershipNFT/CreateSpaceFormV2/CreateSpaceFormV2.schema'
-import { isEveryoneAddress } from '../utils'
 
 interface EditGatingProps {
     isRole?: boolean
@@ -38,13 +37,9 @@ export function EditGating({ isRole }: EditGatingProps) {
     const hadTokenValueRef = useRef(false)
     const hadUsersValueRef = useRef(false)
 
-    const usersGatedBy = useMemo(() => {
-        return new Set(
-            (getValues('usersGatedBy') || []).filter((address) => !isEveryoneAddress(address)),
-        ) as Set<Address>
-    }, [getValues])
-
-    const [walletAddressesEnabled, setWalletAddressesEnabled] = useState(usersGatedBy.size > 0)
+    const [walletAddressesEnabled, setWalletAddressesEnabled] = useState(
+        getValues('usersGatedBy').length > 0,
+    )
 
     const onEveryoneClick = useCallback(() => {
         reset(
@@ -107,14 +102,15 @@ export function EditGating({ isRole }: EditGatingProps) {
     }, [digitalAssetsEnabled, onSelectedTokensChange])
 
     const onUsersGatedByChange = useCallback(
-        (addresses: Set<Address>) => {
-            setValue('usersGatedBy', Array.from(addresses) as Address[], {
+        (addresses: Address[]) => {
+            setValue('usersGatedBy', addresses, {
                 shouldValidate: true,
             })
-            if (addresses.size > 0) {
+            if (addresses.length > 0) {
                 hadUsersValueRef.current = true
             }
             triggerTokensAndUsersValidation(formProps.trigger, hadUsersValueRef.current)
+            setWalletAddressesEnabled(true)
         },
         [setValue, formProps],
     )
@@ -123,7 +119,8 @@ export function EditGating({ isRole }: EditGatingProps) {
         const nextValue = !walletAddressesEnabled
         setWalletAddressesEnabled(nextValue)
         if (!nextValue) {
-            onUsersGatedByChange(new Set())
+            onUsersGatedByChange([])
+            setWalletAddressesEnabled(false)
         }
     }, [walletAddressesEnabled, onUsersGatedByChange])
 
@@ -225,7 +222,8 @@ export function EditGating({ isRole }: EditGatingProps) {
 
                                     {walletAddressesEnabled && (
                                         <WalletMemberSelector
-                                            value={usersGatedBy}
+                                            isRole={isRole}
+                                            walletMembers={getValues('usersGatedBy') as Address[]}
                                             isValidationError={
                                                 formState.errors.usersGatedBy !== undefined &&
                                                 !!formState.touchedFields.usersGatedBy

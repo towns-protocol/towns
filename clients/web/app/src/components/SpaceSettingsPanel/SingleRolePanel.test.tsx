@@ -26,6 +26,13 @@ import { TokenType } from '@components/Tokens/types'
 import { convertTokenTypeToOperationType } from '@components/Tokens/utils'
 import { SingleRolePanel } from './SingleRolePanel'
 import { SUDOLETS_MOCK } from '../../../mocks/token-collections'
+import {
+    mockAddress,
+    mockDuplicateWalletAddresses,
+    mockDuplicateWalletAddressesCsv,
+    mockInvalidEthWalletAddressesCsv,
+    mockWalletMembersCsv,
+} from '../../../mocks/wallet_addresses'
 
 const [roleWithEveryone, roleWithMemberMNft] = roleDataWithBothRolesAssignedToChannel
 
@@ -199,7 +206,7 @@ describe('SingleRolePanel', () => {
         mockUseSearchParams.mockReturnValue([new URLSearchParams('roles=new'), vi.fn()])
         render(<Wrapper />)
         await enableWalletAddressesGate()
-        const walletAddressInput = screen.getByTestId('pill-selector-input')
+        const walletAddressInput = screen.getByTestId('address-selection-input')
 
         const mockAddress1 = MOCK_USER_ADDRESS
         await userEvent.type(walletAddressInput, mockAddress1)
@@ -208,11 +215,11 @@ describe('SingleRolePanel', () => {
             expect(walletAddressInput).toHaveValue(mockAddress1)
         })
 
-        const addressOption = await screen.findByTestId(`user-pill-selector-option-${mockAddress1}`)
+        const addressOption = await screen.findByTestId(`address-selection-option-${mockAddress1}`)
         expect(addressOption).toBeInTheDocument()
         await userEvent.click(addressOption)
 
-        const addressPill = await screen.findByTestId(`user-pill-selector-pill-${mockAddress1}`)
+        const addressPill = await screen.findByTestId(`address-selection-display-${mockAddress1}`)
         expect(addressPill).toBeInTheDocument()
 
         const submitButton = await screen.findByTestId('submit-button')
@@ -331,18 +338,18 @@ describe('SingleRolePanel', () => {
             expect(walletAddressesToggle).toBeChecked()
 
             const fakeAddress = MOCK_USER_ADDRESS
-            const walletAddressInput = screen.getByTestId(/pill-selector-input/i)
+            const walletAddressInput = screen.getByTestId(/address-selection-input/i)
             await userEvent.type(walletAddressInput, fakeAddress)
             await waitFor(() => {
                 expect(walletAddressInput).toHaveValue(fakeAddress)
             })
             const addressOption = await screen.findByTestId(
-                `user-pill-selector-option-${fakeAddress}`,
+                `address-selection-option-${fakeAddress}`,
             )
             expect(addressOption).toBeInTheDocument()
             await userEvent.click(addressOption)
 
-            const addressPill = screen.getByTestId(`user-pill-selector-pill-${fakeAddress}`)
+            const addressPill = screen.getByTestId(`address-selection-display-${fakeAddress}`)
             expect(addressPill).toBeInTheDocument()
             await userEvent.click(addressPill)
 
@@ -756,6 +763,118 @@ describe('SingleRolePanel', () => {
             )
         })
     })
+
+    test('should upload CSV file and add valid wallet addresses', async () => {
+        mockUseSearchParams.mockReturnValue([new URLSearchParams('roles=new'), vi.fn()])
+        render(<Wrapper />)
+
+        await enableWalletAddressesGate()
+
+        const file = new File([mockWalletMembersCsv], 'wallet_members.csv', { type: 'text/csv' })
+
+        const uploadCsvButton = await screen.findByTestId('upload-csv-button')
+        await userEvent.click(uploadCsvButton)
+
+        const fileInput = await screen.findByTestId('csv-file-input')
+        await userEvent.upload(fileInput, file)
+
+        const addressCount = screen.getByText(/20 addresses/)
+        expect(addressCount).toBeInTheDocument()
+    })
+
+    test('should remove duplicates and invalid addresses on CSV upload', async () => {
+        mockUseSearchParams.mockReturnValue([new URLSearchParams('roles=new'), vi.fn()])
+        render(<Wrapper />)
+
+        await enableWalletAddressesGate()
+
+        const file = new File(
+            [mockInvalidEthWalletAddressesCsv],
+            'invalid_eth_wallet_addresses.csv',
+            { type: 'text/csv' },
+        )
+
+        const uploadCsvButton = await screen.findByTestId('upload-csv-button')
+        await userEvent.click(uploadCsvButton)
+
+        const fileInput = await screen.findByTestId('csv-file-input')
+        await userEvent.upload(fileInput, file)
+
+        const confirmButton = await screen.findByTestId('confirm-button')
+        await userEvent.click(confirmButton)
+
+        const addressCount = await screen.findByText(/18 addresses/)
+        expect(addressCount).toBeInTheDocument()
+    })
+
+    test('should remove duplicate addresses on CSV upload', async () => {
+        mockUseSearchParams.mockReturnValue([new URLSearchParams('roles=new'), vi.fn()])
+        render(<Wrapper />)
+
+        await enableWalletAddressesGate()
+
+        const file = new File([mockDuplicateWalletAddressesCsv], 'duplicate_wallet_addresses.csv', {
+            type: 'text/csv',
+        })
+
+        const uploadCsvButton = await screen.findByTestId('upload-csv-button')
+        await userEvent.click(uploadCsvButton)
+
+        const fileInput = await screen.findByTestId('csv-file-input')
+        await userEvent.upload(fileInput, file)
+
+        const duplicateCount = await screen.findByText(/We found 4 duplicate addresses/)
+        expect(duplicateCount).toBeInTheDocument()
+
+        const validAddressCount = await screen.findByText(/We found 1 valid address/)
+        expect(validAddressCount).toBeInTheDocument()
+
+        const confirmButton = await screen.findByTestId('confirm-button')
+        await userEvent.click(confirmButton)
+
+        const individualAddress = await screen.findByTestId(
+            `address-selection-display-${mockDuplicateWalletAddresses[0]}`,
+        )
+        expect(individualAddress).toBeInTheDocument()
+    })
+
+    test(
+        'should display correct count when adding CSV and individual addresses',
+        {
+            timeout: 10_000,
+        },
+        async () => {
+            mockUseSearchParams.mockReturnValue([new URLSearchParams('roles=new'), vi.fn()])
+            render(<Wrapper />)
+
+            await enableWalletAddressesGate()
+
+            const file = new File([mockWalletMembersCsv], 'wallet_members.csv', {
+                type: 'text/csv',
+            })
+
+            const uploadCsvButton = await screen.findByTestId('upload-csv-button')
+            await userEvent.click(uploadCsvButton)
+
+            const fileInput = await screen.findByTestId('csv-file-input')
+            await userEvent.upload(fileInput, file)
+
+            const confirmButton = await screen.findByTestId('confirm-button')
+            await userEvent.click(confirmButton)
+
+            const addressCountFirst = await screen.findByText(/20 addresses/)
+            expect(addressCountFirst).toBeInTheDocument()
+
+            const searchInput = await screen.findByTestId('address-selection-input')
+            await userEvent.type(searchInput, mockAddress)
+
+            const option = await screen.findByTestId(`address-selection-option-${mockAddress}`)
+            await userEvent.click(option)
+
+            const addressCountSecond = await screen.findByText(/21 addresses/)
+            expect(addressCountSecond).toBeInTheDocument()
+        },
+    )
 })
 
 async function enableGatingOption() {
@@ -808,23 +927,23 @@ async function openWalletAddressesSearch() {
     await enableWalletAddressesGate()
 
     const userSearch = await screen.findByTestId('user-search')
-    const userInput = within(userSearch).getByTestId(/pill-selector-input/i)
+    const userInput = within(userSearch).getByTestId(/address-selection-input/i)
     await userEvent.click(userInput)
 }
 
 async function addFakeWalletAddress() {
     await openWalletAddressesSearch()
     const fakeAddress = MOCK_USER_ADDRESS
-    const walletAddressInput = await screen.findByTestId(/pill-selector-input/i)
+    const walletAddressInput = await screen.findByTestId(/address-selection-input/i)
     await userEvent.type(walletAddressInput, fakeAddress)
     await waitFor(() => {
         expect(walletAddressInput).toHaveValue(fakeAddress)
     })
-    const addressOption = await screen.findByTestId(`user-pill-selector-option-${fakeAddress}`)
+    const addressOption = await screen.findByTestId(`address-selection-option-${fakeAddress}`)
     expect(addressOption).toBeInTheDocument()
     await userEvent.click(addressOption)
 
-    const addressPill = screen.getByTestId(`user-pill-selector-pill-${fakeAddress}`)
+    const addressPill = screen.getByTestId(`address-selection-display-${fakeAddress}`)
     expect(addressPill).toBeInTheDocument()
     await userEvent.click(addressPill)
 }

@@ -1,246 +1,202 @@
-import React, { useCallback, useMemo } from 'react'
-import { firstBy } from 'thenby'
-import { Address, LookupUser, useOfflineStore, useUserLookupContext } from 'use-towns-client'
+import React, { useCallback, useMemo, useState } from 'react'
+import { Address } from 'use-towns-client'
 import { isAddress } from 'ethers/lib/utils'
-import { Avatar } from '@components/Avatar/Avatar'
-import { Box, IconButton, Stack, Text } from '@ui'
-import { useRecentUsers } from 'hooks/useRecentUsers'
+import { Box, Button, Stack, Text, TextField } from '@ui'
+import { CSVUploader } from '@components/CSVUploader/CSVUploader'
+import { useLookupUsersWithAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
+import { MultipleAddresses } from '@components/AddressSelection/MultipleAddresses'
+import { AddressSelectionDisplay } from '@components/AddressSelection/AddressSelectionDisplay'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
-import { PillSelector } from '@components/DirectMessages/CreateDirectMessage/PillSelector'
 import { shortAddress } from 'ui/utils/utils'
-import { isEveryoneAddress } from '@components/Web3/utils'
-import { useDevice } from 'hooks/useDevice'
-import {
-    LookupUserWithAbstractAccountAddress,
-    useLookupUsersWithAbstractAccountAddress,
-} from 'hooks/useAbstractAccountAddress'
-import { NoMatches } from '@components/NoMatches/NoMatches'
-import { SearchInputHeightAdjuster } from '@components/SpaceSettingsPanel/SearchInputHeightAdjuster'
-
-const CUSTOM_USER_ADDRESS = 'CUSTOM_USER_ADDRESS'
 
 type Props = {
-    value: Set<Address>
-    onChange: (addresses: Set<Address>) => void
+    isRole: boolean | undefined
+    walletMembers: Address[]
+    onChange: (addresses: Address[]) => void
     isValidationError: boolean
 }
 
 export const WalletMemberSelector = (props: Props) => {
-    const { value, onChange, isValidationError } = props
-    const { lookupUser } = useUserLookupContext()
-    const { data: _users, isLoading } = useLookupUsersWithAbstractAccountAddress()
-    const { isTouch } = useDevice()
+    const { walletMembers, onChange, isValidationError, isRole } = props
+    const { data: users } = useLookupUsersWithAbstractAccountAddress()
+    const [searchTerm, setSearchTerm] = useState('')
 
-    const recentUsers = useRecentUsers()
-    const users = useMemo(() => {
-        if (isLoading || !_users) {
-            return []
+    console.log(users)
+
+    const { selectedAddresses, unselectedAddresses } = useMemo(() => {
+        if (isRole) {
+            const usersAddresses = users?.map((user) => user.abstractAccountAddress) || []
+            const selectedAddresses = walletMembers.filter((address) =>
+                usersAddresses.includes(address),
+            )
+            const unselectedAddresses = walletMembers.filter(
+                (address) => !usersAddresses.includes(address),
+            )
+            return {
+                selectedAddresses,
+                unselectedAddresses,
+            }
+        } else {
+            return {
+                selectedAddresses: [],
+                unselectedAddresses: [],
+            }
         }
-        return _users.filter((user) => !isEveryoneAddress(user.userId))
-    }, [_users, isLoading])
+    }, [users, walletMembers, isRole])
 
-    const onSelectionChange = useCallback(
-        (userIds: Set<string>) => {
-            onChange(userIds as Set<Address>)
+    const handleCSVAddresses = useCallback(
+        (addresses: Address[]) => {
+            const newAddresses = [...new Set([...walletMembers, ...addresses])]
+            onChange(newAddresses)
         },
-        [onChange],
+        [walletMembers, onChange],
     )
 
-    const optionSorter = useCallback(
-        (options: LookupUserWithAbstractAccountAddress[]) =>
-            [...options].sort(
-                firstBy<LookupUserWithAbstractAccountAddress>(
-                    (u) => [...recentUsers].reverse().indexOf(u.userId),
-                    -1,
-                ).thenBy((id) => lookupUser(id.userId)?.displayName),
-            ),
-        [recentUsers, lookupUser],
+    const handleRemoveAddress = useCallback(
+        (addressToRemove: Address) => {
+            onChange(walletMembers.filter((address) => address !== addressToRemove))
+        },
+        [walletMembers, onChange],
     )
 
-    const optionRenderer = useCallback(
-        ({
-            option,
-            selected,
-            onAddItem,
-        }: {
-            option: LookupUserWithAbstractAccountAddress
-            selected: boolean
-            onAddItem: (customKey?: string) => void
-        }) => (
-            <Box
-                cursor="pointer"
-                onClick={() => {
-                    onAddItem()
-                }}
-            >
-                <UserOption key={option.userId} user={option} selected={selected} />
-            </Box>
-        ),
-        [],
+    const handleRemoveAllAddresses = useCallback(() => {
+        onChange([])
+    }, [onChange])
+
+    const handleAddAddress = useCallback(
+        (newAddress: Address) => {
+            if (!walletMembers.includes(newAddress)) {
+                onChange([...walletMembers, newAddress])
+            }
+            setSearchTerm('')
+        },
+        [walletMembers, onChange],
     )
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchTerm(e.target.value)
+    }
+
+    const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') {
+            if (isAddress(searchTerm)) {
+                handleAddAddress(searchTerm as Address)
+            } else if (
+                isRole &&
+                users?.some((user) =>
+                    getPrettyDisplayName(user).toLowerCase().includes(searchTerm.toLowerCase()),
+                )
+            ) {
+                const user = users?.find((user) =>
+                    getPrettyDisplayName(user).toLowerCase().includes(searchTerm.toLowerCase()),
+                )
+                if (user) {
+                    handleAddAddress(user.abstractAccountAddress)
+                }
+            }
+        }
+    }
+
+    const filteredUsers =
+        users?.filter(
+            (user) =>
+                getPrettyDisplayName(user).toLowerCase().includes(searchTerm.toLowerCase()) ||
+                user.abstractAccountAddress.toLowerCase().includes(searchTerm.toLowerCase()),
+        ) || []
 
     return (
         <Stack gap data-testid="user-search">
-            <SearchInputHeightAdjuster>
-                {(inputContainerRef) => (
-                    <PillSelector
-                        hideResultsWhenNotActive
-                        autoFocus={false}
-                        options={users}
-                        isError={isValidationError}
-                        initialFocusIndex={isTouch ? -1 : 0}
-                        initialSelection={value}
-                        keys={['username', 'displayName', 'abstractAccountAddress']}
-                        label="Suggested"
-                        placeholder={
-                            !value.size ? 'Search members' : value.size >= 1 ? 'Add members' : ''
-                        }
-                        optionRenderer={optionRenderer}
-                        pillRenderer={(p) => (
-                            <PillRenderer
-                                address={p.key}
-                                lookupUser={lookupUser}
-                                onDelete={p.onDelete}
-                            />
-                        )}
-                        optionSorter={optionSorter}
-                        getOptionKey={(o) => o.abstractAccountAddress}
-                        emptySelectionElement={(props) => <EmptySelectionElement {...props} />}
-                        inputContainerRef={inputContainerRef}
-                        onSelectionChange={onSelectionChange}
-                    />
-                )}
-            </SearchInputHeightAdjuster>
+            <Stack gap="xs">
+                <Box position="relative">
+                    <Box horizontal gap="xs" alignItems="center">
+                        <TextField
+                            value={searchTerm}
+                            placeholder={
+                                isRole ? 'Search members or enter address' : 'Enter address'
+                            }
+                            background="level2"
+                            data-testid="address-selection-input"
+                            onChange={handleInputChange}
+                            onKeyDown={handleInputKeyDown}
+                        />
+                        <CSVUploader handleCSVAddresses={handleCSVAddresses} />
+                    </Box>
+                    {searchTerm ? (
+                        <Box
+                            position="absolute"
+                            background="level1"
+                            padding="sm"
+                            rounded="sm"
+                            top="x4"
+                            left="none"
+                            style={{ marginTop: '22px', zIndex: 9999 }}
+                            cursor="default"
+                        >
+                            <Stack gap="xs" width="250">
+                                {filteredUsers.length > 0 ? (
+                                    filteredUsers.map((user) => (
+                                        <Button
+                                            data-testid={`address-selection-option-${user.abstractAccountAddress}`}
+                                            key={user.abstractAccountAddress}
+                                            onClick={() =>
+                                                handleAddAddress(user.abstractAccountAddress)
+                                            }
+                                        >
+                                            {getPrettyDisplayName(user)} (
+                                            {shortAddress(user.abstractAccountAddress)})
+                                        </Button>
+                                    ))
+                                ) : isAddress(searchTerm) ? (
+                                    <Button
+                                        data-testid={`address-selection-option-${searchTerm}`}
+                                        onClick={() => handleAddAddress(searchTerm as Address)}
+                                    >
+                                        Add address: {shortAddress(searchTerm as Address)}
+                                    </Button>
+                                ) : (
+                                    <Box padding="md">
+                                        <Text>
+                                            {isRole
+                                                ? 'Not a member or valid address'
+                                                : 'Not a valid address'}
+                                        </Text>
+                                    </Box>
+                                )}
+                            </Stack>
+                        </Box>
+                    ) : null}
+                </Box>
+                <Box>
+                    {selectedAddresses.length <= 15 ? (
+                        <>
+                            {selectedAddresses.map((address) => (
+                                <AddressSelectionDisplay
+                                    key={address}
+                                    address={address}
+                                    onRemove={handleRemoveAddress}
+                                />
+                            ))}
+                            {selectedAddresses.length === 0 &&
+                                walletMembers.length <= 15 &&
+                                unselectedAddresses.map((address) => (
+                                    <AddressSelectionDisplay
+                                        key={address}
+                                        address={address}
+                                        onRemove={handleRemoveAddress}
+                                    />
+                                ))}
+                        </>
+                    ) : null}
+                    {walletMembers.length > 15 && (
+                        <MultipleAddresses
+                            walletMembers={walletMembers}
+                            selectedAddresses={selectedAddresses}
+                            removeAll={handleRemoveAllAddresses}
+                        />
+                    )}
+                </Box>
+            </Stack>
+            {isValidationError && <Text color="error">Please add at least one valid address.</Text>}
         </Stack>
     )
-}
-
-function PillRenderer(params: {
-    address: string
-    lookupUser: (userId: string) => LookupUser | undefined
-    onDelete: (customKey?: string) => void
-}) {
-    const { address: aaAddress, lookupUser, onDelete } = params
-    const offlineWalletAddressMap = useOfflineStore((state) => state.offlineWalletAddressMap)
-
-    // need to get root key for avatar and username
-    const rootKeyAddress = Object.keys(offlineWalletAddressMap).find(
-        (key) => offlineWalletAddressMap[key] === aaAddress,
-    )
-    const everyone = isEveryoneAddress(aaAddress)
-
-    const rootKeyUser = rootKeyAddress ? lookupUser(rootKeyAddress) : undefined
-
-    return (
-        <Box
-            horizontal
-            gap="sm"
-            paddingX="sm"
-            paddingY="xs"
-            background="level3"
-            rounded="md"
-            alignItems="center"
-            data-testid={`user-pill-selector-pill-${aaAddress}`}
-        >
-            <Avatar size="avatar_xs" userId={rootKeyAddress} />
-
-            {rootKeyAddress && rootKeyUser && getPrettyDisplayName(rootKeyUser)}
-            {aaAddress && (
-                <Box
-                    whiteSpace="nowrap"
-                    tooltip={aaAddress}
-                    fontSize="sm"
-                    color={everyone ? 'default' : 'gray2'}
-                >
-                    {shortAddress(aaAddress)}
-                </Box>
-            )}
-
-            <IconButton
-                data-testid={`user-pill-delete-${aaAddress}`}
-                icon="close"
-                size="square_xs"
-                onClick={() => {
-                    onDelete()
-                }}
-            />
-        </Box>
-    )
-}
-
-export const UserOption = (props: {
-    user: LookupUserWithAbstractAccountAddress
-    selected: boolean
-}) => {
-    const { selected, user } = props
-    const isCustomUserAddress = user.displayName === CUSTOM_USER_ADDRESS
-
-    return (
-        <Box
-            horizontal
-            gap
-            key={user.userId}
-            background={selected ? 'level3' : undefined}
-            insetX="xs"
-            padding="sm"
-            rounded={selected ? 'xs' : undefined}
-            data-testid={`user-pill-selector-option-${user.userId}`}
-        >
-            <Avatar size="avatar_x4" userId={isCustomUserAddress ? undefined : user.userId} />
-            <Box justifyContent="center" gap="sm">
-                {!isCustomUserAddress && <Text>{getPrettyDisplayName(user)}</Text>}
-
-                {user.abstractAccountAddress && (
-                    <Box tooltip={user.abstractAccountAddress} color="gray2">
-                        {shortAddress(user.abstractAccountAddress)}
-                    </Box>
-                )}
-            </Box>
-        </Box>
-    )
-}
-
-function EmptySelectionElement({
-    searchTerm,
-    onAddItem,
-}: {
-    searchTerm: string
-    onAddItem: (specialKey: string) => void
-}) {
-    if (!searchTerm.length) {
-        return <></>
-    }
-
-    if (isAddress(searchTerm)) {
-        return (
-            <Box
-                padding
-                horizontal
-                gap="sm"
-                background="level2"
-                height="x7"
-                alignItems="center"
-                rounded="sm"
-                boxShadow="card"
-            >
-                <Box cursor="pointer" onClick={() => onAddItem(searchTerm)}>
-                    <UserOption
-                        selected
-                        key={searchTerm}
-                        user={{
-                            userId: searchTerm,
-                            abstractAccountAddress: searchTerm as Address,
-                            username: searchTerm,
-                            usernameConfirmed: false,
-                            usernameEncrypted: false,
-                            displayName: CUSTOM_USER_ADDRESS,
-                            displayNameEncrypted: false,
-                        }}
-                    />
-                </Box>
-            </Box>
-        )
-    }
-
-    return <NoMatches searchTerm={searchTerm} />
 }
