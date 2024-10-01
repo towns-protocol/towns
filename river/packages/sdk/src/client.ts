@@ -29,6 +29,7 @@ import {
     AddEventResponse_Error,
     ChunkedMedia,
     UserBio,
+    Tags,
 } from '@river-build/proto'
 import {
     bin_fromHexString,
@@ -140,12 +141,14 @@ import { SyncedStream } from './syncedStream'
 import { SyncedStreamsExtension } from './syncedStreamsExtension'
 import { SignerContext } from './signerContext'
 import { decryptAESGCM, deriveKeyAndIV, encryptAESGCM, uint8ArrayToBase64 } from './crypto_utils'
+import { makeTags } from './tags'
 
 export type ClientEvents = StreamEvents & DecryptionEvents
 
 type SendChannelMessageOptions = {
     beforeSendEventHook?: Promise<void>
     onLocalEventAppended?: (localId: string) => void
+    disableTags?: boolean // if true, tags will not be added to the message
 }
 
 export class Client
@@ -1351,13 +1354,16 @@ export class Client
         if (opts?.beforeSendEventHook) {
             await opts?.beforeSendEventHook
         }
-        return this.makeAndSendChannelMessageEvent(streamId, payload, localId)
+        return this.makeAndSendChannelMessageEvent(streamId, payload, localId, {
+            disableTags: opts?.disableTags,
+        })
     }
 
     private async makeAndSendChannelMessageEvent(
         streamId: string,
         payload: ChannelMessage,
         localId?: string,
+        opts?: { disableTags?: boolean },
     ) {
         const stream = this.stream(streamId)
         check(isDefined(stream), 'stream not found')
@@ -1402,6 +1408,7 @@ export class Client
             }
         }
 
+        const tags = opts?.disableTags === true ? undefined : makeTags(payload, stream.view)
         const cleartext = payload.toJsonString()
         const message = await this.encryptGroupEvent(payload, streamId)
         message.refEventId = getRefEventIdFromChannelMessage(payload)
@@ -1413,19 +1420,22 @@ export class Client
             return this.makeEventAndAddToStream(streamId, make_ChannelPayload_Message(message), {
                 method: 'sendMessage',
                 localId,
-                cleartext: cleartext,
+                cleartext,
+                tags,
             })
         } else if (isDMChannelStreamId(streamId)) {
             return this.makeEventAndAddToStream(streamId, make_DMChannelPayload_Message(message), {
                 method: 'sendMessageDM',
                 localId,
-                cleartext: cleartext,
+                cleartext,
+                tags,
             })
         } else if (isGDMChannelStreamId(streamId)) {
             return this.makeEventAndAddToStream(streamId, make_GDMChannelPayload_Message(message), {
                 method: 'sendMessageGDM',
                 localId,
-                cleartext: cleartext,
+                cleartext,
+                tags,
             })
         } else {
             throw new Error(`invalid streamId: ${streamId}`)
@@ -1978,7 +1988,13 @@ export class Client
     async makeEventAndAddToStream(
         streamId: string | Uint8Array,
         payload: PlainMessage<StreamEvent>['payload'],
-        options: { method?: string; localId?: string; cleartext?: string; optional?: boolean } = {},
+        options: {
+            method?: string
+            localId?: string
+            cleartext?: string
+            optional?: boolean
+            tags?: PlainMessage<Tags>
+        } = {},
     ): Promise<{ eventId: string; error?: AddEventResponse_Error }> {
         // TODO: filter this.logged payload for PII reasons
         this.logCall(
@@ -2006,6 +2022,7 @@ export class Client
             options.optional,
             options.localId,
             options.cleartext,
+            options.tags,
         )
         return { eventId, error }
     }
@@ -2017,6 +2034,7 @@ export class Client
         optional?: boolean,
         localId?: string,
         cleartext?: string,
+        tags?: PlainMessage<Tags>,
         retryCount?: number,
     ): Promise<{ prevMiniblockHash: Uint8Array; eventId: string; error?: AddEventResponse_Error }> {
         const event = await makeEvent(this.signerContext, payload, prevMiniblockHash)
@@ -2066,6 +2084,7 @@ export class Client
                     optional,
                     isDefined(localId) ? eventId : undefined,
                     cleartext,
+                    tags,
                     retryCount + 1,
                 )
             } else {

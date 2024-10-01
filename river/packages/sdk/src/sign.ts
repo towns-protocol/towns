@@ -9,6 +9,7 @@ import {
     Miniblock,
     StreamAndCookie,
     SyncCookie,
+    Tags,
 } from '@river-build/proto'
 import { assertBytes } from 'ethereum-cryptography/utils'
 import { recoverPublicKey, signSync, verify } from 'ethereum-cryptography/secp256k1'
@@ -21,6 +22,7 @@ export const _impl_makeEvent_impl_ = async (
     context: SignerContext,
     payload: PlainMessage<StreamEvent>['payload'],
     prevMiniblockHash?: Uint8Array,
+    tags?: PlainMessage<Tags>,
 ): Promise<Envelope> => {
     const streamEvent = new StreamEvent({
         creatorAddress: context.creatorAddress,
@@ -28,6 +30,7 @@ export const _impl_makeEvent_impl_ = async (
         prevMiniblockHash,
         payload,
         createdAtEpochMs: BigInt(Date.now()),
+        tags,
     })
     if (context.delegateSig !== undefined) {
         streamEvent.delegateSig = context.delegateSig
@@ -45,6 +48,7 @@ export const makeEvent = async (
     context: SignerContext,
     payload: PlainMessage<StreamEvent>['payload'],
     prevMiniblockHash?: Uint8Array,
+    tags?: PlainMessage<Tags>,
 ): Promise<Envelope> => {
     // const pl: Payload = payload instanceof Payload ? payload : new Payload(payload)
     const pl = payload // todo check this
@@ -62,7 +66,7 @@ export const makeEvent = async (
         )
     }
 
-    return _impl_makeEvent_impl_(context, pl, prevMiniblockHash)
+    return _impl_makeEvent_impl_(context, pl, prevMiniblockHash, tags)
 }
 
 export const makeEvents = async (
