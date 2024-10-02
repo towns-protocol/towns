@@ -23,7 +23,7 @@ export { Tooltip } from './Tooltip/Tooltip'
 export { TooltipRenderer } from './Tooltip/TooltipRenderer'
 export { Badge } from './Badge'
 export { ErrorMessage } from './ErrorMessage/ErrorMessage'
-export { VList } from './VList'
+export { VList } from './VList2/VList'
 export * from './Toggle'
 export {
     MotionBox,
