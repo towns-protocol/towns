@@ -10,7 +10,7 @@ const inputClassName = clsx([fieldStyles.field, styles.richText, styles.contentE
 const Editor = React.forwardRef<
     HTMLDivElement,
     PlateContentProps & {
-        handleSendOnEnter?: (e: React.KeyboardEvent<HTMLDivElement>) => void
+        customKeydownHandler?: (e: React.KeyboardEvent<HTMLDivElement>) => void
         isTouch: boolean
         isEditing: boolean
     }
@@ -22,7 +22,7 @@ const Editor = React.forwardRef<
             isEditing,
             isTouch,
             readOnly,
-            handleSendOnEnter,
+            customKeydownHandler,
             onKeyDown,
             ...props
         },
@@ -33,10 +33,10 @@ const Editor = React.forwardRef<
          */
         const _onKeyDown = useCallback(
             (e: React.KeyboardEvent<HTMLDivElement>) => {
-                handleSendOnEnter?.(e)
+                customKeydownHandler?.(e)
                 onKeyDown?.(e)
             },
-            [onKeyDown, handleSendOnEnter],
+            [onKeyDown, customKeydownHandler],
         )
 
         return (

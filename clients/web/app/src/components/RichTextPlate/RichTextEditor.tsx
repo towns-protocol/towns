@@ -164,14 +164,11 @@ export const RichTextEditor = ({
             }, 100)
         }
         setIsSendingMessage(false)
-    }, [setInput, setIsSendingMessage])
+    }, [setInput])
 
-    const onFocusChange = useCallback(
-        (focus: boolean) => {
-            setFocused(focus)
-        },
-        [setFocused],
-    )
+    const onFocusChange = useCallback((focus: boolean) => {
+        setFocused(focus)
+    }, [])
 
     const onFocus = useCallback(() => onFocusChange(true), [onFocusChange])
 
@@ -196,7 +193,16 @@ export const RichTextEditor = ({
          * As a workaround, we set the editor text to a space character to remove the placeholder
          * on any manual input change. The reconciliation of the actual editor text is completed later
          */
-        startTransition(() => setEditorText(' '))
+        if (!isTouch) {
+            /**
+             * For desktop, we set editor text `onChange`. However, we need to do this `onKeydown` for mobile
+             * to prevent the placeholder from showing up while typing, since soft keyboard `onChange` events
+             * are not quick enough, and leads to overlapping placeholders for a brief moment
+
+             * @see customKeydownHandler
+             */
+            startTransition(() => setEditorText(' '))
+        }
         if (editorRef.current) {
             onChange(editorRef.current)
             const text = toPlainText(editorRef.current.children)
@@ -206,7 +212,7 @@ export const RichTextEditor = ({
                 setIsEditorEmpty(currentTextEmpty)
             })
         }
-    }, [setEditorText, setIsEditorEmpty, onChange])
+    }, [onChange, isTouch])
 
     const sendMessage = useCallback(async () => {
         if (!editorRef.current) {
@@ -222,8 +228,18 @@ export const RichTextEditor = ({
         }
     }, [editorText, fileCount, onSend, resetEditorAfterSend])
 
-    const handleSendOnEnter: React.KeyboardEventHandler = useCallback(
+    const customKeydownHandler: React.KeyboardEventHandler = useCallback(
         async (event) => {
+            /**
+             * For desktop, we set editor text `onChange`. However, we need to do this `onKeydown` for mobile
+             * to prevent the placeholder from showing up while typing, since soft keyboard `onChange` events
+             * are not quick enough, and leads to overlapping placeholders for a brief moment
+
+             * @see customKeydownHandler
+             */
+            if (isTouch && event.key !== 'Backspace') {
+                setEditorText(' ')
+            }
             if (
                 !editorRef.current ||
                 isTouch ||
@@ -293,7 +309,7 @@ export const RichTextEditor = ({
                             disabled={isSendingMessage}
                             isTouch={isTouch}
                             isEditing={isEditing}
-                            handleSendOnEnter={handleSendOnEnter}
+                            customKeydownHandler={customKeydownHandler}
                             onFocus={onFocus}
                             onBlur={onBlur}
                         />
