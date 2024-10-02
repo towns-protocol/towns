@@ -127,18 +127,18 @@ export const RichTextEditor = ({
     // hack: reset field + apply autoFocus when a new inline reply is opened
     // using the builtin focusEditor won't scroll the field into view on iOS
     const autoFocus = useMemo(
-        () => (isTouch && hasInlinePreview) || _autoFocus,
-        [isTouch, hasInlinePreview, _autoFocus],
+        () => (isTouch && hasInlinePreview) || isEditing || _autoFocus,
+        [isTouch, hasInlinePreview, _autoFocus, isEditing],
     )
 
     const valueFromStore = useInputStore((state) => state.channelMessageInputMap[storageId.current])
     const setInput = useInputStore((state) => state.setChannelmessageInput)
 
     useEffect(() => {
-        if (hasInlinePreview && !isInputFocused()) {
+        if (autoFocus && !isInputFocused()) {
             focusEditorTowns(editorRef.current, true)
         }
-    }, [hasInlinePreview])
+    }, [autoFocus])
 
     const initialValue = useMemo(() => {
         /* used when editing a message: convert initial value passed as prop from MD string to Plate JSON  */
