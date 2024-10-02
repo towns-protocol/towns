@@ -29,8 +29,8 @@ function set_tag() {
   if [ "$AUTOCOMMIT" == "true" ]; then
     echo "Autocommit is enabled. Committing the change." >&2
 
-    git add scripts/river-node-tag
-    git commit -m "Update river node tag to $1"
+    RIVER_ALLOW_COMMIT=true git add scripts/river-node-tag
+    RIVER_ALLOW_COMMIT=true git commit -m "Update river node tag to $1"
   fi
 }
 
