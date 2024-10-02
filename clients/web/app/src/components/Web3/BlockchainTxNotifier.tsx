@@ -30,7 +30,7 @@ type ToastProps = {
     onlyShowPending?: boolean
     successMessage: string
     pendingMessage?: string
-    errorMessage?: string
+    overrideErrorMessage?: string
     onCtaClick?: (updatedTx: BlockchainStoreTx) => void
 } & Omit<StandardToastProps, 'toast' | 'message' | 'onCtaClick'>
 
@@ -173,7 +173,6 @@ export function BlockchainTxNotifier() {
                     generateToast({
                         tx,
                         successMessage: '',
-                        errorMessage: mapToErrorMessage({ error: tx.error, source: tx.type }),
                     })
                     break
                 }
@@ -199,9 +198,7 @@ function MonitoringNotification(props: ToastProps & { toast: Toast }) {
         tx,
         successMessage,
         pendingMessage = 'Transaction pending...',
-        errorMessage = tx.error
-            ? mapToErrorMessage({ error: tx.error, source: tx.type })
-            : undefined,
+        overrideErrorMessage,
         cta,
         onCtaClick,
         toast,
@@ -213,9 +210,9 @@ function MonitoringNotification(props: ToastProps & { toast: Toast }) {
     } = props
 
     const [updatedTx, setUpdatedTx] = useState(tx)
-
     const [searchParams] = useSearchParams()
     const rolesParam = searchParams.get('roles')
+    const errorMessage = mapToErrorMessage({ error: updatedTx.error, source: updatedTx.type })
 
     const { message } = useMemo(() => {
         return updatedTx.status === 'pending' || updatedTx.status === 'potential'
@@ -227,9 +224,9 @@ function MonitoringNotification(props: ToastProps & { toast: Toast }) {
                   message: successMessage,
               }
             : {
-                  message: errorMessage,
+                  message: overrideErrorMessage ?? errorMessage,
               }
-    }, [updatedTx.status, pendingMessage, successMessage, errorMessage])
+    }, [updatedTx.status, pendingMessage, successMessage, errorMessage, overrideErrorMessage])
 
     const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -305,14 +302,7 @@ function MonitoringNotification(props: ToastProps & { toast: Toast }) {
     }
 
     if (updatedTx.status === 'failure') {
-        return (
-            <StandardToast.Error
-                toast={toast}
-                message={message ?? ''}
-                cta={cta}
-                onCtaClick={() => onCtaClick?.(updatedTx)}
-            />
-        )
+        return <StandardToast.Error toast={toast} message={message ?? ''} />
     }
 
     return <StandardToast.Pending toast={toast} message={message ?? ''} />
