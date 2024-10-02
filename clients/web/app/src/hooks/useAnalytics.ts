@@ -84,12 +84,14 @@ export class Analytics implements TownsAnalytics {
     private static instance: Analytics
     private readonly backend: IAnalyticsBackend
     private readonly commonProperties: ApiObject
+    private readonly commonOptions: ApiOptions
     private readonly trackedEvents: Set<string> = new Set()
     private _user?: { userId: string | null }
 
     private constructor(analytics: IAnalyticsBackend) {
         this.backend = analytics
         this.commonProperties = getCommonAnalyticsProperties()
+        this.commonOptions = getCommonAnalyticsOptions()
     }
 
     public static getInstance(): Analytics {
@@ -154,7 +156,15 @@ export class Analytics implements TownsAnalytics {
         options?: ApiOptions | ApiCallback,
         callback?: ApiCallback,
     ) {
-        this.backend.identify(this.pseudoId, traits, options, callback)
+        this.backend.identify(
+            this.pseudoId,
+            traits,
+            {
+                ...this.commonOptions,
+                ...options,
+            },
+            callback,
+        )
     }
 
     public page(
@@ -168,10 +178,13 @@ export class Analytics implements TownsAnalytics {
             category,
             name,
             {
-                ...properties,
                 ...this.commonProperties,
+                ...properties,
             },
-            options,
+            {
+                ...this.commonOptions,
+                ...options,
+            },
             callback,
         )
     }
@@ -185,10 +198,13 @@ export class Analytics implements TownsAnalytics {
         this.backend.track(
             event,
             {
-                ...properties,
                 ...this.commonProperties,
+                ...properties,
             },
-            options,
+            {
+                ...this.commonOptions,
+                ...options,
+            },
             callback,
         )
     }
@@ -322,5 +338,13 @@ function getCommonAnalyticsProperties(): ApiObject {
         browserName: getBrowserName(),
         device: os.name,
         platform,
+    }
+}
+
+function getCommonAnalyticsOptions(): ApiOptions {
+    return {
+        app: {
+            name: 'TOWNS-web',
+        },
     }
 }
