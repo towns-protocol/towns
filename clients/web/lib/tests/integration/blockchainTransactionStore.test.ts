@@ -80,6 +80,7 @@ test('should clear all promises when client stops', async () => {
             ruleData: EncodedNoopRuleData,
             everyone: false,
             users: [],
+            syncEntitlements: false,
         },
     }
 

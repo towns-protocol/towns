@@ -100,6 +100,41 @@
       {
         "inputs": [],
         "type": "error",
+        "name": "Roles__EntitlementAlreadyExists"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "Roles__EntitlementDoesNotExist"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "Roles__InvalidEntitlementAddress"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "Roles__InvalidPermission"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "Roles__PermissionAlreadyExists"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "Roles__PermissionDoesNotExist"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "Roles__RoleDoesNotExist"
+      },
+      {
+        "inputs": [],
+        "type": "error",
         "name": "Validator__InvalidAddress"
       },
       {
@@ -190,6 +225,81 @@
         "inputs": [
           {
             "internalType": "address",
+            "name": "updater",
+            "type": "address",
+            "indexed": true
+          },
+          {
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256",
+            "indexed": true
+          },
+          {
+            "internalType": "bytes32",
+            "name": "channelId",
+            "type": "bytes32",
+            "indexed": true
+          }
+        ],
+        "type": "event",
+        "name": "PermissionsAddedToChannelRole",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "updater",
+            "type": "address",
+            "indexed": true
+          },
+          {
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256",
+            "indexed": true
+          },
+          {
+            "internalType": "bytes32",
+            "name": "channelId",
+            "type": "bytes32",
+            "indexed": true
+          }
+        ],
+        "type": "event",
+        "name": "PermissionsRemovedFromChannelRole",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "updater",
+            "type": "address",
+            "indexed": true
+          },
+          {
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256",
+            "indexed": true
+          },
+          {
+            "internalType": "bytes32",
+            "name": "channelId",
+            "type": "bytes32",
+            "indexed": true
+          }
+        ],
+        "type": "event",
+        "name": "PermissionsUpdatedForChannelRole",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
             "name": "module",
             "type": "address",
             "indexed": true
@@ -223,6 +333,63 @@
         ],
         "type": "event",
         "name": "PricingModuleUpdated",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "creator",
+            "type": "address",
+            "indexed": true
+          },
+          {
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256",
+            "indexed": true
+          }
+        ],
+        "type": "event",
+        "name": "RoleCreated",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "remover",
+            "type": "address",
+            "indexed": true
+          },
+          {
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256",
+            "indexed": true
+          }
+        ],
+        "type": "event",
+        "name": "RoleRemoved",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "updater",
+            "type": "address",
+            "indexed": true
+          },
+          {
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256",
+            "indexed": true
+          }
+        ],
+        "type": "event",
+        "name": "RoleUpdated",
         "anonymous": false
       },
       {
@@ -308,6 +475,16 @@
                 "type": "string"
               },
               {
+                "internalType": "string",
+                "name": "shortDescription",
+                "type": "string"
+              },
+              {
+                "internalType": "string",
+                "name": "longDescription",
+                "type": "string"
+              },
+              {
                 "internalType": "struct IArchitectBase.Membership",
                 "name": "membership",
                 "type": "tuple",
@@ -383,6 +560,11 @@
                         "internalType": "bytes",
                         "name": "ruleData",
                         "type": "bytes"
+                      },
+                      {
+                        "internalType": "bool",
+                        "name": "syncEntitlements",
+                        "type": "bool"
                       }
                     ]
                   },
@@ -404,16 +586,6 @@
                     "type": "string"
                   }
                 ]
-              },
-              {
-                "internalType": "string",
-                "name": "shortDescription",
-                "type": "string"
-              },
-              {
-                "internalType": "string",
-                "name": "longDescription",
-                "type": "string"
               }
             ]
           }
@@ -539,6 +711,11 @@
                         "internalType": "bytes",
                         "name": "ruleData",
                         "type": "bytes"
+                      },
+                      {
+                        "internalType": "bool",
+                        "name": "syncEntitlements",
+                        "type": "bool"
                       }
                     ]
                   },
@@ -709,12 +886,12 @@
     "devdoc": {
       "kind": "dev",
       "methods": {
-        "createSpace((string,string,((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes),string[]),(string),string,string))": {
+        "createSpace((string,string,string,string,((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes,bool),string[]),(string)))": {
           "params": {
             "SpaceInfo": "Space information"
           }
         },
-        "createSpaceWithPrepay(((string,string,string,string),((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes),string[]),(string),(uint256)))": {
+        "createSpaceWithPrepay(((string,string,string,string),((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes,bool),string[]),(string),(uint256)))": {
           "params": {
             "createSpace": "Space information"
           }
@@ -736,10 +913,10 @@
     "userdoc": {
       "kind": "user",
       "methods": {
-        "createSpace((string,string,((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes),string[]),(string),string,string))": {
+        "createSpace((string,string,string,string,((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes,bool),string[]),(string)))": {
           "notice": "Creates a new space"
         },
-        "createSpaceWithPrepay(((string,string,string,string),((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes),string[]),(string),(uint256)))": {
+        "createSpaceWithPrepay(((string,string,string,string),((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes,bool),string[]),(string),(uint256)))": {
           "notice": "Creates a new space with a prepayment"
         },
         "getProxyInitializer()": {
@@ -1019,10 +1196,10 @@
       "license": "MIT"
     },
     "contracts/src/factory/facets/architect/ArchitectBase.sol": {
-      "keccak256": "0x8f4984bbf8873b14c35645fee62496025ac377ddee8c731b16f325908ac7d2f0",
+      "keccak256": "0x418634f69e1ccfd35c56acba1fee359c276eddc709268813619f0e76025a1cfd",
       "urls": [
-        "bzz-raw://c78d5acf2839f1fc2f4b66376ef3ae6a9d94a84b51c44dc81f9e2d5c785f6ebd",
-        "dweb:/ipfs/QmZQSMZMhJ3BH3Lm9X6QV6ETcFFJ5XtKkUUZQ3SqJTEUKK"
+        "bzz-raw://88a0d5170c944d94945b5e75a5af11fdb3d9bd2c0e5426206d9fde463c9f1e45",
+        "dweb:/ipfs/QmPpgy6Hb9k861HTYuaCc1ZTi1KCSMnZq7GDRV5UG3xyy1"
       ],
       "license": "MIT"
     },
@@ -1035,10 +1212,10 @@
       "license": "MIT"
     },
     "contracts/src/factory/facets/architect/IArchitect.sol": {
-      "keccak256": "0x7557473a08229252796468403453dfa39c6780f7716cf06152a7d57ff4d778fd",
+      "keccak256": "0x7c3801be9b0a207be4a3480a8de5916171d02c7c14a7bbc860e69efb2e4256ce",
       "urls": [
-        "bzz-raw://f625cde9c07288ba1f24aceb0aec11eaed619df0d130dbada5cffbcd8b08f804",
-        "dweb:/ipfs/QmSHzmeL6owo321yAusyQZqnVfgvLEoxLDjEpxDF3kpn8o"
+        "bzz-raw://b6f69032815b4d443b767bccc309cd01c6009e9589f87e703aa349fbc159e9a3",
+        "dweb:/ipfs/Qme3GAGshKo8hvbMnV9ipDnSizjMQzYmFCtPFCTubRBW3L"
       ],
       "license": "MIT"
     },

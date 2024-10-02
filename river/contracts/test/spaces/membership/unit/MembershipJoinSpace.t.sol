@@ -17,7 +17,6 @@ import {Vm} from "forge-std/Test.sol";
 import {MembershipFacet} from "contracts/src/spaces/facets/membership/MembershipFacet.sol";
 
 // debuggging
-import {console} from "forge-std/console.sol";
 
 contract MembershipJoinSpaceTest is
   MembershipBaseSetup,

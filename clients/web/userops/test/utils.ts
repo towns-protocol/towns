@@ -120,6 +120,7 @@ export async function createUngatedSpace({
                 everyone: true,
                 users: [],
                 ruleData: NoopRuleData,
+                syncEntitlements: false,
             },
         }
         return userOps.sendCreateLegacySpaceOp([
@@ -150,6 +151,7 @@ export async function createUngatedSpace({
                 everyone: true,
                 users: [],
                 ruleData: EncodedNoopRuleData,
+                syncEntitlements: false,
             },
         }
         const townInfo = {
@@ -201,6 +203,7 @@ export async function createGatedSpace({
                 everyone: false,
                 users: [],
                 ruleData: convertRuleDataV2ToV1(boredApeRuleData),
+                syncEntitlements: false,
             },
         }
 
@@ -231,6 +234,7 @@ export async function createGatedSpace({
                 everyone: false,
                 users: [],
                 ruleData: encodeRuleDataV2(boredApeRuleData),
+                syncEntitlements: false,
             },
         }
 
@@ -284,6 +288,7 @@ export async function createFixedPriceSpace({
                 everyone: true,
                 users: [],
                 ruleData: NoopRuleData,
+                syncEntitlements: false,
             },
         }
 
@@ -313,6 +318,7 @@ export async function createFixedPriceSpace({
                 everyone: true,
                 users: [],
                 ruleData: EncodedNoopRuleData,
+                syncEntitlements: false,
             },
         }
 

@@ -68,6 +68,7 @@ describe('createSpaceChannelHooks', () => {
                                 everyone: true,
                                 users: [],
                                 ruleData: EncodedNoopRuleData,
+                                syncEntitlements: false,
                             },
                         },
 

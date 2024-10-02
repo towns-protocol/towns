@@ -30,6 +30,16 @@ const _abi = [
             internalType: "string",
           },
           {
+            name: "shortDescription",
+            type: "string",
+            internalType: "string",
+          },
+          {
+            name: "longDescription",
+            type: "string",
+            internalType: "string",
+          },
+          {
             name: "membership",
             type: "tuple",
             internalType: "struct ILegacyArchitectBase.Membership",
@@ -180,6 +190,11 @@ const _abi = [
                       },
                     ],
                   },
+                  {
+                    name: "syncEntitlements",
+                    type: "bool",
+                    internalType: "bool",
+                  },
                 ],
               },
               {
@@ -200,16 +215,6 @@ const _abi = [
                 internalType: "string",
               },
             ],
-          },
-          {
-            name: "shortDescription",
-            type: "string",
-            internalType: "string",
-          },
-          {
-            name: "longDescription",
-            type: "string",
-            internalType: "string",
           },
         ],
       },

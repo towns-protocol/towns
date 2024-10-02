@@ -201,6 +201,7 @@ function TestComponent(args: {
                         everyone: true,
                         users: [],
                         ruleData: EncodedNoopRuleData,
+                        syncEntitlements: false,
                     },
                     pricingModule: dynamicPricingModule.module,
                 }),

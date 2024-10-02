@@ -66,6 +66,7 @@ describe('Towns event handlers test', () => {
                 everyone: false,
                 users: [alice.wallet.address],
                 ruleData: EncodedNoopRuleData,
+                syncEntitlements: false,
             },
         }
         // createSpace is gated by the mock NFT. Mint one for yourself before proceeding.

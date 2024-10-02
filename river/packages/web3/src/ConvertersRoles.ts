@@ -131,6 +131,7 @@ export function downgradeMembershipStruct(membership: MembershipStruct): LegacyM
             ),
             everyone: membership.requirements.everyone,
             users: membership.requirements.users,
+            syncEntitlements: membership.requirements.syncEntitlements,
         },
         permissions: membership.permissions,
         settings: membership.settings,

@@ -206,6 +206,7 @@ function TestComponent(args: {
                         everyone: true,
                         users: [],
                         ruleData: EncodedNoopRuleData,
+                        syncEntitlements: false,
                     },
                     pricingModule: dynamicPricingModule.module,
                 }),
@@ -229,7 +230,7 @@ function TestComponent(args: {
                     {
                         name: args.channelName,
                         parentSpaceId: spaceId,
-                        roleIds: [],
+                        roles: [],
                     },
                     args.signer,
                 )

@@ -52,6 +52,7 @@ export async function createUngatedSpace(
             everyone: true,
             users: [],
             ruleData: NoopRuleData,
+            syncEntitlements: false,
         },
     }
 

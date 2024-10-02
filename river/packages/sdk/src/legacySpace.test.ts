@@ -35,6 +35,7 @@ describe('Legacy Space Detection', () => {
             permissions: legacyMembership.permissions,
             requirements: {
                 everyone: true,
+                syncEntitlements: false,
                 users: [],
                 ruleData: encodeRuleDataV2(
                     convertRuleDataV1ToV2(legacyMembership.requirements.ruleData),

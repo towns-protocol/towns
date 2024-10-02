@@ -488,6 +488,7 @@ export class TownsClient
                         ruleData: convertRuleDataV2ToV1(
                             decodeRuleDataV2(membership.requirements.ruleData as Hex),
                         ),
+                        syncEntitlements: membership.requirements.syncEntitlements,
                     },
                 },
                 shortDescription: createSpaceInfo.shortDescription ?? '',

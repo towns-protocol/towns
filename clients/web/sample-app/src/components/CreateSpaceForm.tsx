@@ -168,6 +168,7 @@ export const CreateSpaceForm = (props: Props) => {
                 everyone: true,
                 users: [],
                 ruleData: EncodedNoopRuleData,
+                syncEntitlements: false,
             },
         }
 

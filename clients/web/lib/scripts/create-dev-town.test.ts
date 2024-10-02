@@ -88,6 +88,7 @@ export async function createDevTown(client: TownsTestClient): Promise<string | u
             everyone: true,
             users: [],
             ruleData: NoopRuleData,
+            syncEntitlements: false,
         },
     }
 

@@ -33,6 +33,7 @@ export async function makeDefaultMembershipInfo(
         requirements: {
             everyone: true,
             users: [],
+            syncEntitlements: false,
             ruleData: EncodedNoopRuleData,
         },
     } satisfies MembershipStruct

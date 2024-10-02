@@ -163,6 +163,7 @@ function TestComponent(args: {
                                 },
                             ]),
                         ),
+                        syncEntitlements: false,
                     },
                     pricingModule: dynamicPricingModule.module,
                 }),

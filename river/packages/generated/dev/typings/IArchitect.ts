@@ -69,13 +69,20 @@ export declare namespace IArchitectBase {
     everyone: PromiseOrValue<boolean>;
     users: PromiseOrValue<string>[];
     ruleData: PromiseOrValue<BytesLike>;
+    syncEntitlements: PromiseOrValue<boolean>;
   };
 
   export type MembershipRequirementsStructOutput = [
     boolean,
     string[],
-    string
-  ] & { everyone: boolean; users: string[]; ruleData: string };
+    string,
+    boolean
+  ] & {
+    everyone: boolean;
+    users: string[];
+    ruleData: string;
+    syncEntitlements: boolean;
+  };
 
   export type MembershipStruct = {
     settings: IMembershipBase.MembershipStruct;
@@ -100,26 +107,26 @@ export declare namespace IArchitectBase {
   export type SpaceInfoStruct = {
     name: PromiseOrValue<string>;
     uri: PromiseOrValue<string>;
-    membership: IArchitectBase.MembershipStruct;
-    channel: IArchitectBase.ChannelInfoStruct;
     shortDescription: PromiseOrValue<string>;
     longDescription: PromiseOrValue<string>;
+    membership: IArchitectBase.MembershipStruct;
+    channel: IArchitectBase.ChannelInfoStruct;
   };
 
   export type SpaceInfoStructOutput = [
     string,
     string,
-    IArchitectBase.MembershipStructOutput,
-    IArchitectBase.ChannelInfoStructOutput,
     string,
-    string
+    string,
+    IArchitectBase.MembershipStructOutput,
+    IArchitectBase.ChannelInfoStructOutput
   ] & {
     name: string;
     uri: string;
-    membership: IArchitectBase.MembershipStructOutput;
-    channel: IArchitectBase.ChannelInfoStructOutput;
     shortDescription: string;
     longDescription: string;
+    membership: IArchitectBase.MembershipStructOutput;
+    channel: IArchitectBase.ChannelInfoStructOutput;
   };
 
   export type MetadataStruct = {
@@ -162,8 +169,8 @@ export declare namespace IArchitectBase {
 
 export interface IArchitectInterface extends utils.Interface {
   functions: {
-    "createSpace((string,string,((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes),string[]),(string),string,string))": FunctionFragment;
-    "createSpaceWithPrepay(((string,string,string,string),((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes),string[]),(string),(uint256)))": FunctionFragment;
+    "createSpace((string,string,string,string,((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes,bool),string[]),(string)))": FunctionFragment;
+    "createSpaceWithPrepay(((string,string,string,string),((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes,bool),string[]),(string),(uint256)))": FunctionFragment;
     "getProxyInitializer()": FunctionFragment;
     "getSpaceArchitectImplementations()": FunctionFragment;
     "getSpaceByTokenId(uint256)": FunctionFragment;

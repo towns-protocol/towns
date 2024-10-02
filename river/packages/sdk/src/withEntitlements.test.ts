@@ -72,6 +72,7 @@ describe('withEntitlements', () => {
                 everyone: true,
                 users: [],
                 ruleData: NoopRuleData,
+                syncEntitlements: false,
             },
         }
 

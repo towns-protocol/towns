@@ -1544,6 +1544,21 @@ export class SpaceDapp implements ISpaceDapp {
         return createEntitlementStruct(space, params.users, params.ruleData)
     }
 
+    public async refreshMetadata(
+        spaceId: string,
+        signer: ethers.Signer,
+        txnOpts?: TransactionOpts,
+    ): Promise<ContractTransaction> {
+        const space = this.getSpace(spaceId)
+        if (!space) {
+            throw new Error(`Space with spaceId "${spaceId}" is not found.`)
+        }
+        return wrapTransaction(
+            () => space.Membership.metadata.write(signer).refreshMetadata(),
+            txnOpts,
+        )
+    }
+
     public getSpaceAddress(receipt: ContractReceipt): string | undefined {
         const eventName = 'SpaceCreated'
         if (receipt.status !== 1) {

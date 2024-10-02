@@ -143,6 +143,7 @@ export async function createTestSpaceGatedByTownsNfts(
                     },
                 ]),
             ),
+            syncEntitlements: false,
         },
     }
     if (!createSpaceInfo) {
@@ -196,6 +197,7 @@ export async function createTestSpaceGatedByTownNft(
             everyone: true,
             users: [],
             ruleData: EncodedNoopRuleData,
+            syncEntitlements: false,
         },
     }
     if (!createSpaceInfo) {
@@ -253,6 +255,7 @@ export async function createPaidTestSpaceGatedByTownNft(
             everyone: true,
             users: [],
             ruleData: EncodedNoopRuleData,
+            syncEntitlements: false,
         },
     }
     if (!createSpaceInfo) {

@@ -225,6 +225,7 @@ export async function makeCreateSpaceParams(
 			everyone: true,
 			users: [],
 			ruleData: NoopRuleData,
+			syncEntitlements: false,
 		},
 	}
 	// all create space args

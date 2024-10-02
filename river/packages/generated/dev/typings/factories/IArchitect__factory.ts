@@ -27,6 +27,16 @@ const _abi = [
             internalType: "string",
           },
           {
+            name: "shortDescription",
+            type: "string",
+            internalType: "string",
+          },
+          {
+            name: "longDescription",
+            type: "string",
+            internalType: "string",
+          },
+          {
             name: "membership",
             type: "tuple",
             internalType: "struct IArchitectBase.Membership",
@@ -103,6 +113,11 @@ const _abi = [
                     type: "bytes",
                     internalType: "bytes",
                   },
+                  {
+                    name: "syncEntitlements",
+                    type: "bool",
+                    internalType: "bool",
+                  },
                 ],
               },
               {
@@ -123,16 +138,6 @@ const _abi = [
                 internalType: "string",
               },
             ],
-          },
-          {
-            name: "shortDescription",
-            type: "string",
-            internalType: "string",
-          },
-          {
-            name: "longDescription",
-            type: "string",
-            internalType: "string",
           },
         ],
       },
@@ -258,6 +263,11 @@ const _abi = [
                     name: "ruleData",
                     type: "bytes",
                     internalType: "bytes",
+                  },
+                  {
+                    name: "syncEntitlements",
+                    type: "bool",
+                    internalType: "bool",
                   },
                 ],
               },

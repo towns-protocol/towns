@@ -64,6 +64,7 @@ describe('membershipManagement', () => {
                 everyone: true,
                 users: [],
                 ruleData: NoopRuleData,
+                syncEntitlements: false,
             },
         }
 

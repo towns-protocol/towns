@@ -81,6 +81,7 @@ describe('mediaWithEntitlements', () => {
                 everyone: true,
                 users: [],
                 ruleData: NoopRuleData,
+                syncEntitlements: false,
             },
         }
 
@@ -179,6 +180,7 @@ describe('mediaWithEntitlements', () => {
                 everyone: true,
                 users: [],
                 ruleData: NoopRuleData,
+                syncEntitlements: false,
             },
         }
 

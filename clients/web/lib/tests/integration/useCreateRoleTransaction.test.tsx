@@ -174,6 +174,7 @@ function TestComponent(args: {
                                 },
                             ]),
                         ),
+                        syncEntitlements: false,
                     },
                 }),
                 args.signer,

@@ -83,6 +83,7 @@ export async function makeTestMembershipInfo(
             everyone: true,
             users: [],
             ruleData: NoopRuleData,
+            syncEntitlements: false,
         },
     } satisfies LegacyMembershipStruct
 }

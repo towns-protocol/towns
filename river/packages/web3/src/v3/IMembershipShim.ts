@@ -10,15 +10,18 @@ import { BaseContractShim } from './BaseContractShim'
 
 import LocalhostAbi from '@river-build/generated/dev/abis/MembershipFacet.abi.json' assert { type: 'json' }
 import { dlogger } from '@river-build/dlog'
+import { IMembershipMetadataShim } from './IMembershipMetadataShim'
 
 const log = dlogger('csb:IMembershipShim')
 
 export class IMembershipShim extends BaseContractShim<LocalhostContract, LocalhostInterface> {
     private erc721Shim: IERC721AShim
+    metadata: IMembershipMetadataShim
 
     constructor(address: string, provider: ethers.providers.Provider | undefined) {
         super(address, provider, LocalhostAbi)
         this.erc721Shim = new IERC721AShim(address, provider)
+        this.metadata = new IMembershipMetadataShim(address, provider)
     }
 
     async hasMembership(wallet: string) {

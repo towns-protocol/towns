@@ -18,6 +18,7 @@ interface ILegacyArchitectBase {
     bool everyone;
     address[] users;
     IRuleEntitlement.RuleData ruleData;
+    bool syncEntitlements;
   }
 
   struct Membership {
@@ -33,10 +34,10 @@ interface ILegacyArchitectBase {
   struct SpaceInfo {
     string name;
     string uri;
-    Membership membership;
-    ChannelInfo channel;
     string shortDescription;
     string longDescription;
+    Membership membership;
+    ChannelInfo channel;
   }
 
   // =============================================================

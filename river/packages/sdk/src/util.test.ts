@@ -504,6 +504,7 @@ export async function createVersionedSpaceFromMembership(
                 requirements: {
                     everyone: membership.requirements.everyone,
                     users: [],
+                    syncEntitlements: false,
                     ruleData: encodeRuleDataV2(
                         convertRuleDataV1ToV2(
                             membership.requirements.ruleData as IRuleEntitlementBase.RuleDataStruct,
@@ -549,6 +550,7 @@ export async function createVersionedSpace(
                     requirements: {
                         everyone: createSpaceParams.membership.requirements.everyone,
                         users: [],
+                        syncEntitlements: false,
                         ruleData: encodeRuleDataV2(
                             convertRuleDataV1ToV2(
                                 createSpaceParams.membership.requirements
@@ -666,6 +668,7 @@ export async function everyoneMembershipStruct(
             everyone: true,
             users: [],
             ruleData: NoopRuleData,
+            syncEntitlements: false,
         },
     }
 }
@@ -1040,6 +1043,7 @@ export async function createTownWithRequirements(requirements: {
             everyone: requirements.everyone,
             users: requirements.users,
             ruleData: encodeRuleDataV2(requirements.ruleData),
+            syncEntitlements: false,
         },
     }
 

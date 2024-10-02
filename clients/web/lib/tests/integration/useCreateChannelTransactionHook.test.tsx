@@ -127,6 +127,7 @@ describe('useCreateChannelTransactionHook', () => {
                                 everyone: true,
                                 users: [],
                                 ruleData: EncodedNoopRuleData,
+                                syncEntitlements: false,
                             },
                             pricingModule: dynamicPricingModule.module,
                         }),

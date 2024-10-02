@@ -263,6 +263,7 @@ test(
                 everyone: false,
                 users: [],
                 ruleData: encodeRuleDataV2(ruleData),
+                syncEntitlements: false,
             },
         }
 
@@ -334,6 +335,7 @@ test('joinSpace gated with 2 NFTs, wallet linking', async () => {
             everyone: false,
             users: [],
             ruleData: encodeRuleDataV2(ruleData),
+            syncEntitlements: false,
         },
     }
 

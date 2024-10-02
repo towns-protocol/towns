@@ -29,7 +29,7 @@ import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
 import {Architect} from "contracts/src/factory/facets/architect/Architect.sol";
 import {MockERC721} from "contracts/test/mocks/MockERC721.sol";
 import {UserEntitlement} from "contracts/src/spaces/entitlements/user/UserEntitlement.sol";
-import {SpaceProxyInitializer} from "contracts/src/spaces/facets/proxy/SpaceProxyInitializer.sol";
+
 import {Factory} from "contracts/src/utils/Factory.sol";
 // errors
 import {Validator__InvalidStringLength} from "contracts/src/utils/Validator.sol";
@@ -76,6 +76,86 @@ contract ArchitectTest is
     );
   }
 
+  function test_fuzz_createUserSpace_syncedEntitlements(
+    address founder
+  ) external assumeEOA(founder) {
+    vm.prank(founder);
+
+    address[] memory users = new address[](1);
+    users[0] = _randomAddress();
+
+    IArchitectBase.SpaceInfo memory spaceInfo = _createUserSpaceInfo(
+      "Test",
+      users
+    );
+    spaceInfo.membership.settings.pricingModule = pricingModule;
+    spaceInfo.membership.requirements.syncEntitlements = true;
+    address spaceAddress = spaceArchitect.createSpace(spaceInfo);
+
+    IRoles.Role[] memory roles = IRoles(spaceAddress).getRoles();
+    IRoles.Role memory memberRole;
+    for (uint256 i; i < roles.length; ++i) {
+      if (LibString.eq(roles[i].name, "Member")) {
+        memberRole = roles[i];
+        break;
+      }
+    }
+
+    IEntitlementsManager.Entitlement[]
+      memory entitlements = IEntitlementsManager(spaceAddress)
+        .getEntitlements();
+    address entitlementAddress;
+    for (uint256 i; i < entitlements.length; ++i) {
+      if (LibString.eq(entitlements[i].moduleType, "UserEntitlement")) {
+        entitlementAddress = entitlements[i].moduleAddress;
+        break;
+      }
+    }
+
+    bytes memory entitlementData = IUserEntitlement(entitlementAddress)
+      .getEntitlementDataByRoleId(memberRole.id);
+    assertEq(entitlementData, abi.encode(users));
+  }
+
+  function test_fuzz_createGatedSpace_syncedEntitlements(
+    address founder
+  ) external assumeEOA(founder) {
+    vm.prank(founder);
+    IArchitectBase.SpaceInfo memory spaceInfo = _createGatedSpaceInfo("Test");
+    spaceInfo.membership.settings.pricingModule = pricingModule;
+    spaceInfo.membership.requirements.syncEntitlements = true;
+    address spaceAddress = spaceArchitect.createSpace(spaceInfo);
+
+    IRoles.Role[] memory roles = IRoles(spaceAddress).getRoles();
+    IRoles.Role memory memberRole;
+    for (uint256 i; i < roles.length; ++i) {
+      if (LibString.eq(roles[i].name, "Member")) {
+        memberRole = roles[i];
+        break;
+      }
+    }
+
+    IEntitlementsManager.Entitlement[]
+      memory entitlements = IEntitlementsManager(spaceAddress)
+        .getEntitlements();
+    address ruleEntitlementAddress;
+    for (uint256 i; i < entitlements.length; ++i) {
+      if (LibString.eq(entitlements[i].moduleType, "RuleEntitlementV2")) {
+        ruleEntitlementAddress = entitlements[i].moduleAddress;
+        break;
+      }
+    }
+
+    IRuleEntitlement.RuleDataV2 memory ruleData = IRuleEntitlementV2(
+      ruleEntitlementAddress
+    ).getRuleDataV2(memberRole.id);
+
+    assertEq(
+      abi.encode(ruleData),
+      abi.encode(RuleEntitlementUtil.getMockERC721RuleData())
+    );
+  }
+
   function test_fuzz_minterRoleEntitlementExists(
     address founder
   ) external assumeEOA(founder) {
@@ -96,8 +176,8 @@ contract ArchitectTest is
       }
     }
 
-    uint256 minterRoleId = 1;
     // ruleData for minter role
+    uint256 minterRoleId = 1;
     IRuleEntitlement.RuleDataV2 memory ruleData = IRuleEntitlementV2(
       ruleEntitlementAddress
     ).getRuleDataV2(minterRoleId);
@@ -309,21 +389,6 @@ contract ArchitectTest is
         break;
       }
     }
-
-    // update the permissions of the member role
-    // string[] memory permissions = new string[](3);
-    // permissions[0] = Permissions.Read;
-    // permissions[1] = Permissions.Write;
-    // permissions[2] = Permissions.AddRemoveChannels;
-    // IRoles.CreateEntitlement[]
-    //   memory entitlements = new IRoles.CreateEntitlement[](0);
-    // vm.prank(founder);
-    // IRoles(spaceInstance).updateRole(
-    //   memberRole.id,
-    //   memberRole.name,
-    //   permissions,
-    //   entitlements
-    // );
 
     string[] memory permissions = new string[](1);
     permissions[0] = Permissions.AddRemoveChannels;

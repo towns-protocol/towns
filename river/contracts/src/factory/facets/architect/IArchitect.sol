@@ -22,6 +22,7 @@ interface IArchitectBase {
     bool everyone;
     address[] users;
     bytes ruleData;
+    bool syncEntitlements;
   }
 
   struct Membership {
@@ -37,10 +38,10 @@ interface IArchitectBase {
   struct SpaceInfo {
     string name;
     string uri;
-    Membership membership;
-    ChannelInfo channel;
     string shortDescription;
     string longDescription;
+    Membership membership;
+    ChannelInfo channel;
   }
 
   struct Metadata {

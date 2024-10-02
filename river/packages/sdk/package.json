@@ -12,7 +12,7 @@
         "dev": "my-node src/index.ts",
         "lint": "yarn eslint --format unix ./src  --max-warnings=0",
         "lint:fix": "yarn lint --fix",
-        "my-jest": "NODE_EXTRA_CA_CERTS=${HOME}/river-ca-cert.pem yarn node -r ../../scripts/node-no-warn.js --experimental-vm-modules $(yarn bin jest) --testTimeout=300000 --maxWorkers=400%",
+        "my-jest": "NODE_EXTRA_CA_CERTS=${HOME}/river-ca-cert.pem yarn node -r ../../scripts/node-no-warn.js --experimental-vm-modules $(yarn bin jest) --testTimeout=300000",
         "my-node": "NODE_EXTRA_CA_CERTS=${HOME}/river-ca-cert.pem yarn node -r ../../scripts/node-no-warn.js --loader ts-node/esm --experimental-specifier-resolution=node --experimental-vm-modules",
         "test": "yarn test:ci:multi:ne",
         "test:ci": "yarn test:ci:multi:ne",
