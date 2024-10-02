@@ -11,7 +11,13 @@ import path from 'node:path'
 import NodeCache from 'node-cache'
 import { appPackageVersion } from './utils/app-package-version'
 import { config } from './config'
-import { getWeb3Deployment, ISpaceOwnerShim, SpaceInfo, SpaceOwner } from '@river-build/web3'
+import {
+    getWeb3Deployment,
+    ISpaceOwnerShim,
+    SpaceAddressFromSpaceId,
+    SpaceOwner,
+    SpaceInfo,
+} from '@river-build/web3'
 
 const { PROVIDER_URL, MODE, PORT, VITE_RIVER_ENV } = config
 
@@ -20,6 +26,19 @@ const cache = new NodeCache({ stdTTL: 900 }) // 900 seconds = 15 minutes
 const server = Fastify({
     logger: true,
 })
+
+const buildStreamMetadataUrl = (mode: string) => {
+    switch (mode) {
+        case 'omega':
+            return 'https://river.delivery'
+        case 'gamma':
+            return 'https://gamma.river.delivery'
+        case 'alpha':
+            return 'https://alpha.river.delivery'
+        default:
+            return 'http://localhost:3002'
+    }
+}
 
 const provider = new ethers.providers.JsonRpcProvider(PROVIDER_URL)
 
@@ -136,9 +155,10 @@ async function updateTemplate({
     let townData: TownData | undefined
 
     if (townId && validateTownId(townId)) {
+        const spaceAddress = SpaceAddressFromSpaceId(townId)
         // default town info
         info.description = ``
-        info.image = `https://imagedelivery.net/qaaQ52YqlPXKEVQhjChiDA/${townId}/thumbnail600`
+        info.image = buildStreamMetadataUrl(MODE) + `/space/${spaceAddress}/image`
 
         townData = await getTownDataFromContract(townId)
 
