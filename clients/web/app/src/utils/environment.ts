@@ -75,6 +75,7 @@ const envSchema = z.object({
 
     VITE_DD_CLIENT_TOKEN: z.string().optional(), // used for datadog client side monitoring
     VITE_PRIVY_ID: z.string(),
+    VITE_PRIVY_CLIENT_ID: z.string().optional(),
 
     VITE_LOG_SAMPLING_RATE: intStringWithin(0, 100).optional(),
     VITE_AA_BUNDLER_URL: z.string().url(),

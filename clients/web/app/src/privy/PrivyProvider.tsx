@@ -30,6 +30,7 @@ function PrivyProvider({ children }: { children: JSX.Element }) {
     return (
         <TownsPrivyProvider
             appId={env.VITE_PRIVY_ID}
+            clientId={env.VITE_PRIVY_CLIENT_ID}
             config={{
                 defaultChain: chain,
                 // the privy ethers signer is derived from the supported chains
