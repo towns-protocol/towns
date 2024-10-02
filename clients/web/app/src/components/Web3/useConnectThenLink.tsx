@@ -6,6 +6,7 @@ import { useEnvironment } from 'hooks/useEnvironmnet'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { popupToast } from '@components/Notifications/popupToast'
 import { StandardToast } from '@components/Notifications/StandardToast'
+import { Analytics } from 'hooks/useAnalytics'
 
 export function useConnectThenLink({
     onLinkWallet,
@@ -21,6 +22,10 @@ export function useConnectThenLink({
 
     const { connectWallet } = useConnectWallet({
         onSuccess: async (wallet) => {
+            Analytics.getInstance().track('connected wallet', {
+                walletName: wallet.meta.name,
+            })
+
             const rootSigner = await getSigner()
             if (!rootSigner) {
                 createPrivyNotAuthenticatedNotification()
