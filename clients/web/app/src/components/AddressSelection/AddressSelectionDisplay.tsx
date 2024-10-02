@@ -34,7 +34,7 @@ export const AddressSelectionDisplay = ({ address, onRemove }: Props) => {
             data-testid={`address-selection-display-${address}`}
         >
             <Box horizontal alignItems="center" gap="sm">
-                <Avatar size="avatar_sm" userId={address} />
+                <Avatar size="avatar_sm" userId={user && user.userId ? user.userId : address} />
                 <Box horizontal alignItems="center">
                     <Box tooltip={address}>
                         <Text>{name}</Text>

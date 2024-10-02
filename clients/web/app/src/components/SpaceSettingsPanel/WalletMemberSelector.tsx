@@ -21,8 +21,6 @@ export const WalletMemberSelector = (props: Props) => {
     const { data: users } = useLookupUsersWithAbstractAccountAddress()
     const [searchTerm, setSearchTerm] = useState('')
 
-    console.log(users)
-
     const { selectedAddresses, unselectedAddresses } = useMemo(() => {
         if (isRole) {
             const usersAddresses = users?.map((user) => user.abstractAccountAddress) || []
@@ -39,7 +37,7 @@ export const WalletMemberSelector = (props: Props) => {
         } else {
             return {
                 selectedAddresses: [],
-                unselectedAddresses: [],
+                unselectedAddresses: walletMembers,
             }
         }
     }, [users, walletMembers, isRole])
