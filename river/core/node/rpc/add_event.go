@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/dlog"
 	. "github.com/river-build/river/core/node/events"
@@ -62,6 +63,7 @@ func (s *Service) addParsedEvent(
 	if err != nil {
 		return err
 	}
+	_, _ = s.scrubTaskProcessor.TryScheduleScrub(ctx, streamId, false)
 
 	canAddEvent, chainAuthArgsList, sideEffects, err := rules.CanAddEvent(
 		ctx,
@@ -92,7 +94,7 @@ func (s *Service) addParsedEvent(
 		// If no chainAuthArgs grant entitlement, execute the OnChainAuthFailure side effect.
 		if !isEntitled {
 			if sideEffects.OnChainAuthFailure != nil {
-				err := s.addEventPayload(
+				err := s.AddEventPayload(
 					ctx,
 					sideEffects.OnChainAuthFailure.StreamId,
 					sideEffects.OnChainAuthFailure.Payload,
@@ -111,7 +113,7 @@ func (s *Service) addParsedEvent(
 	}
 
 	if sideEffects.RequiredParentEvent != nil {
-		err := s.addEventPayload(ctx, sideEffects.RequiredParentEvent.StreamId, sideEffects.RequiredParentEvent.Payload)
+		err := s.AddEventPayload(ctx, sideEffects.RequiredParentEvent.StreamId, sideEffects.RequiredParentEvent.Payload)
 		if err != nil {
 			return err
 		}
@@ -132,7 +134,7 @@ func (s *Service) addParsedEvent(
 	return nil
 }
 
-func (s *Service) addEventPayload(ctx context.Context, streamId StreamId, payload IsStreamEvent_Payload) error {
+func (s *Service) AddEventPayload(ctx context.Context, streamId StreamId, payload IsStreamEvent_Payload) error {
 	hashRequest := &GetLastMiniblockHashRequest{
 		StreamId: streamId[:],
 	}

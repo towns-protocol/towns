@@ -10,6 +10,8 @@ import (
 
 	"connectrpc.com/otelconnect"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/trace"
+
 	"github.com/river-build/river/core/config"
 	"github.com/river-build/river/core/node/auth"
 	"github.com/river-build/river/core/node/crypto"
@@ -19,9 +21,9 @@ import (
 	. "github.com/river-build/river/core/node/protocol/protocolconnect"
 	"github.com/river-build/river/core/node/registries"
 	river_sync "github.com/river-build/river/core/node/rpc/sync"
+	"github.com/river-build/river/core/node/scrub"
 	"github.com/river-build/river/core/node/storage"
 	"github.com/river-build/river/core/xchain/entitlement"
-	"go.opentelemetry.io/otel/trace"
 )
 
 type Service struct {
@@ -44,9 +46,10 @@ type Service struct {
 	storage         storage.StreamStorage
 
 	// Streams
-	cache       events.StreamCache
-	mbProducer  events.MiniblockProducer
-	syncHandler river_sync.Handler
+	cache              events.StreamCache
+	mbProducer         events.MiniblockProducer
+	syncHandler        river_sync.Handler
+	scrubTaskProcessor scrub.StreamScrubTaskProcessor
 
 	// River chain
 	riverChain       *crypto.Blockchain

@@ -63,6 +63,9 @@ func GetDefaultConfig() *Config {
 			StacksMaxSizeKb: 5 * 1024,
 			TxPool:          true,
 		},
+		Scrubbing: ScrubbingConfig{
+			ScrubEligibleDuration: time.Hour,
+		},
 	}
 }
 
@@ -97,6 +100,9 @@ type Config struct {
 	// Metrics
 	Metrics             MetricsConfig
 	PerformanceTracking PerformanceTrackingConfig
+
+	// Scrubbing
+	Scrubbing ScrubbingConfig
 
 	// Network configuration
 	Network NetworkConfig
@@ -380,6 +386,13 @@ func (ac *ArchiveConfig) GetStreamsContractCallPageSize() int64 {
 		return 5000
 	}
 	return ac.StreamsContractCallPageSize
+}
+
+type ScrubbingConfig struct {
+	// ScrubEligibleDuration is the minimum length of time that must pass before a stream is eligible
+	// to be re-scrubbed.
+	// If unset, it defaults to 1 hour.
+	ScrubEligibleDuration time.Duration
 }
 
 type FilterConfig struct {

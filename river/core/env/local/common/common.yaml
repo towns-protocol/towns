@@ -46,3 +46,6 @@ xChainBlockchains: '31337,31338,84532,11155111'
 enableDebugEndpoints: true
 
 standByOnStart: false
+
+scrubbing:
+    scrubEligibleDuration: 5s

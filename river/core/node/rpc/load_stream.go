@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"context"
+	"time"
 
 	. "github.com/river-build/river/core/node/events"
 	. "github.com/river-build/river/core/node/protocol"
@@ -51,6 +52,10 @@ func (s *Service) loadStream(ctx context.Context, streamId StreamId) (Stream, St
 		stub:     stub,
 	}, streamView, nil
 }
+
+// We never scrub remote streams
+func (s *remoteStream) LastScrubbedTime() time.Time    { return time.Time{} }
+func (s *remoteStream) MarkScrubbed(_ context.Context) {}
 
 func (s *remoteStream) GetMiniblocks(
 	ctx context.Context,

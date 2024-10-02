@@ -26,7 +26,17 @@ type MiniblockStream interface {
 	GetMiniblocks(ctx context.Context, fromInclusive int64, ToExclusive int64) ([]*Miniblock, bool, error)
 }
 
+// A ScrubTrackable tracks and updates the last time a stream was scrubbed. Scrubbing is a
+// process where the stream node analyzes stream membership for members that have lost
+// membership entitlements and generates LEAVE events to boot them from the stream. At this
+// time, we only apply scrubbing to channels, which are a subset of joinable streams.
+type ScrubTrackable interface {
+	LastScrubbedTime() time.Time
+	MarkScrubbed(ctx context.Context)
+}
+
 type Stream interface {
+	ScrubTrackable
 	AddableStream
 	MiniblockStream
 }
@@ -78,14 +88,31 @@ type streamImpl struct {
 	mu   sync.RWMutex
 	view *streamViewImpl
 
-	// lastAccessedTime keeps track when the stream was last used by a client
+	// lastAccessedTime keeps track of when the stream was last used by a client
 	lastAccessedTime time.Time
+	// lastScrubbedTime keeps track of when the stream was last scrubbed. Streams that
+	// are never scrubbed will not have this value modified.
+	lastScrubbedTime time.Time
 
 	// TODO: perf optimization: support subs on unloaded streams.
 	receivers mapset.Set[SyncResultReceiver]
 }
 
 var _ SyncStream = (*streamImpl)(nil)
+
+func (s *streamImpl) LastScrubbedTime() time.Time {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	return s.lastScrubbedTime
+}
+
+func (s *streamImpl) MarkScrubbed(ctx context.Context) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.lastScrubbedTime = time.Now()
+}
 
 // Should be called with lock held
 // Either view or loadError will be set in Stream.
@@ -124,10 +151,8 @@ func (s *streamImpl) ApplyMiniblock(ctx context.Context, miniblock *MiniblockInf
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if s.view == nil {
-		if err := s.loadInternal(ctx); err != nil {
-			return err
-		}
+	if err := s.loadInternal(ctx); err != nil {
+		return err
 	}
 
 	return s.applyMiniblockImplNoLock(ctx, miniblock)
@@ -258,10 +283,8 @@ func (s *streamImpl) PromoteCandidate(ctx context.Context, mbHash common.Hash, m
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if s.view == nil {
-		if err := s.loadInternal(ctx); err != nil {
-			return err
-		}
+	if err := s.loadInternal(ctx); err != nil {
+		return err
 	}
 
 	// Check if the miniblock is already applied.
@@ -394,8 +417,7 @@ func (s *streamImpl) getView(ctx context.Context) (*streamViewImpl, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.lastAccessedTime = time.Now()
-	err := s.loadInternal(ctx)
-	if err != nil {
+	if err := s.loadInternal(ctx); err != nil {
 		return nil, err
 	}
 	return s.view, nil
@@ -476,8 +498,7 @@ func (s *streamImpl) GetMiniblocks(
 func (s *streamImpl) AddEvent(ctx context.Context, event *ParsedEvent) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	err := s.loadInternal(ctx)
-	if err != nil {
+	if err := s.loadInternal(ctx); err != nil {
 		return err
 	}
 
@@ -563,8 +584,7 @@ func (s *streamImpl) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncR
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	err := s.loadInternal(ctx)
-	if err != nil {
+	if err := s.loadInternal(ctx); err != nil {
 		return err
 	}
 

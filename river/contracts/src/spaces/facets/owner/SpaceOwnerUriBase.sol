@@ -25,7 +25,7 @@ abstract contract SpaceOwnerUriBase is ISpaceOwnerBase {
     return SpaceOwnerStorage.layout().defaultUri;
   }
 
-  /// @dev Returns `${space.uri}` or `${defaultUri}/space/${spaceAddress}`
+  /// @dev Returns `${space.uri}` or `${defaultUri}/${spaceAddress}`
   function _render(
     uint256 tokenId
   ) internal view virtual returns (string memory) {
@@ -48,18 +48,9 @@ abstract contract SpaceOwnerUriBase is ISpaceOwnerBase {
       // the ASCII code for "/" is 0x2f
       if (bytes(defaultUri)[length - 1] != 0x2f) {
         return
-          string.concat(
-            defaultUri,
-            "/space/",
-            spaceAddress.toHexStringChecksummed()
-          );
+          string.concat(defaultUri, "/", spaceAddress.toHexStringChecksummed());
       } else {
-        return
-          string.concat(
-            defaultUri,
-            "space/",
-            spaceAddress.toHexStringChecksummed()
-          );
+        return string.concat(defaultUri, spaceAddress.toHexStringChecksummed());
       }
     }
   }

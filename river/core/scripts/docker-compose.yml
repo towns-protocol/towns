@@ -7,7 +7,7 @@ services:
             - POSTGRES_USER=postgres
             - POSTGRES_PASSWORD=postgres
             - PGUSER=postgres
-        command: postgres -c max_connections=1000
+        command: postgres -c max_connections=30000
         logging:
             options:
                 max-size: 10m

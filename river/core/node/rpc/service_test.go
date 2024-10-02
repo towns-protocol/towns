@@ -391,7 +391,7 @@ func testMethodsWithClient(tester *serviceTester, client protocolconnect.StreamS
 		Optional: true,
 	}))
 	require.NoError(err)
-	require.NotNil(resp.Msg, "expected user stream to not exist")
+	require.NotNil(resp.Msg, "expected user stream to exist")
 
 	// create user stream for user 2
 	resuser, _, err := createUser(ctx, wallet2, client, nil)

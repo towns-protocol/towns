@@ -1300,7 +1300,9 @@ export class Client
     private onStreamInitialized = (streamId: string): void => {
         const scrollbackUntilContentFound = async () => {
             const stream = this.streams.get(streamId)
-            check(isDefined(stream), 'stream not found')
+            if (!stream) {
+                return
+            }
             while (stream.view.getContent().needsScrollback()) {
                 const scrollback = await this.scrollback(streamId)
                 if (scrollback.terminus) {
