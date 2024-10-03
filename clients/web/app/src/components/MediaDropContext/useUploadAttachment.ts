@@ -9,7 +9,7 @@ import {
 import { useCallback } from 'react'
 import imageCompression from 'browser-image-compression'
 import { ChunkedMedia } from '@river-build/proto'
-import { refreshSpaceCache, refreshUserCache } from 'api/lib/fetchImage'
+import { refreshSpaceCache, refreshUserImageCache } from 'api/lib/fetchImage'
 import { isImageMimeType } from 'utils/isMediaMimeType'
 
 const CHUNK_SIZE = 500_000
@@ -287,7 +287,7 @@ export const useUploadAttachment = () => {
                     },
                 })
                 await setUserProfileImage(chunkedMedia)
-                await refreshUserCache(userId)
+                await refreshUserImageCache(userId)
                 return true
             } catch (e) {
                 console.error('Error uploading image to stream', e)

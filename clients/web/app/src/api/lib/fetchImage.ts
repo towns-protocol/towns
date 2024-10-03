@@ -62,9 +62,22 @@ export async function refreshSpaceCache(spaceId: string): Promise<{ ok: boolean 
     }
 }
 
-export async function refreshUserCache(userId: string): Promise<{ ok: boolean }> {
+export async function refreshUserImageCache(userId: string): Promise<{ ok: boolean }> {
     const route = new URL(env.VITE_RIVER_STREAM_METADATA_URL)
     route.pathname = `/user/${userId}/refresh`
+    route.searchParams.set('target', 'image')
+    try {
+        const { data } = await axiosClient.get(route.toString())
+        return { ok: data.ok }
+    } catch (e) {
+        return { ok: false }
+    }
+}
+
+export async function refreshUserBioCache(userId: string): Promise<{ ok: boolean }> {
+    const route = new URL(env.VITE_RIVER_STREAM_METADATA_URL)
+    route.pathname = `/user/${userId}/refresh`
+    route.searchParams.set('target', 'bio')
     try {
         const { data } = await axiosClient.get(route.toString())
         return { ok: data.ok }

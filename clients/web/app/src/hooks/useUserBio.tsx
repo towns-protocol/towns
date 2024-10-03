@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { useOfflineStore, useTownsClient } from 'use-towns-client'
 import { UserBio } from '@river-build/proto'
 import { env } from 'utils'
+import { refreshUserBioCache } from 'api/lib/fetchImage'
 import { axiosClient } from '../api/apiClient'
 
 const queryKey = 'userBio'
@@ -57,7 +58,7 @@ export const useGetUserBio = (userId: string | undefined) => {
 
 export const useSetUserBio = (userId: string | undefined) => {
     const queryClient = useQueryClient()
-    const { offlineUserBioMap, setOfflineUserBio } = useOfflineStore()
+    const { setOfflineUserBio } = useOfflineStore()
     const { client } = useTownsClient()
 
     const setUserBio = useCallback(
@@ -66,11 +67,11 @@ export const useSetUserBio = (userId: string | undefined) => {
                 return
             }
             await client?.setUserBio(new UserBio({ bio }))
-            const updated = await getUserBio(userId, offlineUserBioMap[userId], setOfflineUserBio)
-            setOfflineUserBio(userId, updated)
-            queryClient.setQueryData([queryKey, userId], updated)
+            setOfflineUserBio(userId, bio)
+            queryClient.setQueryData([queryKey, userId], bio)
+            await refreshUserBioCache(userId)
         },
-        [client, offlineUserBioMap, queryClient, setOfflineUserBio, userId],
+        [client, queryClient, setOfflineUserBio, userId],
     )
 
     return useMutation({
