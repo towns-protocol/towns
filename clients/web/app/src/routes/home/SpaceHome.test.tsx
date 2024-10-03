@@ -6,6 +6,7 @@ import * as Lib from 'use-towns-client'
 import * as Router from 'react-router'
 import { PATHS } from 'routes'
 import { TestApp } from 'test/testUtils'
+import { addressFromSpaceId } from 'ui/utils/utils'
 import { SpaceHome } from './SpaceHome'
 
 vi.mock('react-router', async () => {
@@ -71,7 +72,9 @@ describe('<SpaceHome />', () => {
 
         await waitFor(
             () => {
-                expect(navigateSpy).toHaveBeenCalledWith(`/${PATHS.SPACES}/some-stream-id/threads/`)
+                expect(navigateSpy).toHaveBeenCalledWith(
+                    `/${PATHS.SPACES}/${addressFromSpaceId('some-stream-id')}/threads/`,
+                )
             },
             {
                 timeout: 4000,
@@ -97,7 +100,9 @@ describe('<SpaceHome />', () => {
         await waitFor(
             () => {
                 expect(navigateSpy).toHaveBeenCalledWith(
-                    `/${PATHS.SPACES}/some-stream-id/channels/some-channel-stream-id/`,
+                    `/${PATHS.SPACES}/${addressFromSpaceId(
+                        'some-stream-id',
+                    )}/channels/some-channel-stream-id/`,
                 )
             },
             {

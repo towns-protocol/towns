@@ -1,6 +1,6 @@
 import capitalize from 'lodash/capitalize'
 import React, { useEffect, useMemo } from 'react'
-import { Outlet, useMatch } from 'react-router'
+import { Outlet } from 'react-router'
 import { matchPath, useLocation, useSearchParams } from 'react-router-dom'
 import { Channel, SpaceContextProvider, SpaceData, useTownsContext } from 'use-towns-client'
 import { PATHS } from 'routes'
@@ -9,6 +9,8 @@ import { useSetDocTitle } from 'hooks/useDocTitle'
 import { useContractAndServerSpaceData } from 'hooks/useContractAndServerSpaceData'
 import { useDevice } from 'hooks/useDevice'
 import { env } from 'utils/environment'
+import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
+import { addressFromSpaceId } from 'ui/utils/utils'
 
 export interface RouteParams {
     spaceId?: string
@@ -21,8 +23,7 @@ const createSpaceTitle = (spaceName?: string, childLabel?: string) => {
 }
 
 export const SpaceContextRoute = () => {
-    const spaceRoute = useMatch({ path: `/${PATHS.SPACES}/:spaceSlug`, end: false })
-    const spaceId = spaceRoute?.params.spaceSlug ?? ''
+    const spaceId = useSpaceIdFromPathname()
 
     return (
         <SpaceContextProvider spaceId={spaceId}>
@@ -187,7 +188,7 @@ const useSpaceRouteMatcher = (space: SpaceData | undefined): RouteInfo | undefin
                     // if that is also unavailable, get it from the bookmark store
                     if (!spaceIdBookmark) {
                         const spaceIdFromStore = useStore.getState().spaceIdBookmark
-                        spaceIdBookmark = space ? space.id : spaceIdFromStore
+                        spaceIdBookmark = space ? addressFromSpaceId(space.id) : spaceIdFromStore
                     }
                     if (spaceIdBookmark) {
                         routeInfo.pathname = `/${SPACES}/${spaceIdBookmark}`

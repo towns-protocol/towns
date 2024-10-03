@@ -10,6 +10,7 @@ import { useStore } from 'store/store'
 import { PanelContext, PanelStack } from '@components/Panel/PanelContext'
 import { AppProgressState } from '@components/AppProgressOverlay/AppProgressState'
 import { AppProgressOverlayTrigger } from '@components/AppProgressOverlay/AppProgressOverlayTrigger'
+import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 
 export const DirectMessages = () => {
     const { isTouch } = useDevice()
@@ -19,16 +20,16 @@ export const DirectMessages = () => {
     const panelContext = useContext(PanelContext)
     const stackId = panelContext?.stackId
 
-    const { spaceSlug } = useParams()
+    const spaceId = useSpaceIdFromPathname()
     useTouchRedirect({ isTouch })
 
     const searchParamsStackId = useMemo(() => searchParams.get('stackId'), [searchParams])
 
-    if (isTouch && !spaceSlug) {
+    if (isTouch && !spaceId) {
         return (
             <AppProgressOverlayTrigger
                 progressState={AppProgressState.LoggingIn}
-                debugSource="DM route !spaceSlug"
+                debugSource="DM route !spaceId"
             />
         )
     }
@@ -78,7 +79,7 @@ const useTouchRedirect = ({ isTouch }: { isTouch: boolean }) => {
     const navigate = useNavigate()
 
     const params = useParams()
-    const spaceId = params.spaceSlug
+    const spaceId = useSpaceIdFromPathname()
     const channelId = params.channelSlug
     const replyId = params.messageId
 

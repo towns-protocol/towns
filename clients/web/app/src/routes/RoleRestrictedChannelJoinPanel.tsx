@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { useParams } from 'react-router'
 import {
     BlockchainTransactionType,
     EVERYONE_ADDRESS,
@@ -35,6 +34,7 @@ import { mapToErrorMessage } from '@components/Web3/utils'
 import { Analytics } from 'hooks/useAnalytics'
 import { ConnectWalletThenLinkButton } from '@components/Web3/ConnectWalletThenLinkButton'
 import { WalletLinkingInfo } from '@components/Web3/WalletLinkingInfo'
+import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
 import { useOnJoinChannel } from './AllChannelsList/AllChannelsList'
 
@@ -48,7 +48,9 @@ export const RoleRestrictedChannelJoinPanel = React.memo(() => {
 
 function RoleRestrictedChannelJoinPanelWithoutAuth() {
     const { data: channelId } = usePanelActions()
-    const { spaceSlug } = useParams()
+
+    const spaceSlug = useSpaceIdFromPathname()
+
     const tracked = useRef(false)
 
     const { channelSettings, isLoading } = useChannelSettings(spaceSlug ?? '', channelId ?? '')

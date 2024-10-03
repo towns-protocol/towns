@@ -4,6 +4,7 @@ import { useSpaceData, useTownsClient } from 'use-towns-client'
 import { PATHS } from 'routes'
 import { InviteUserToRoomForm } from '@components/Web3'
 import { Stack } from '@ui'
+import { addressFromSpaceId } from 'ui/utils/utils'
 
 export const SpacesInvite = () => {
     const { inviteUser } = useTownsClient()
@@ -18,7 +19,7 @@ export const SpacesInvite = () => {
     const onInviteClicked = useCallback(
         async (spaceId: string, roomId: string | undefined, inviteeUserId: string) => {
             await inviteUser(spaceId, inviteeUserId)
-            navigate(`/${PATHS.SPACES}/${spaceId}/`)
+            navigate(`/${PATHS.SPACES}/${addressFromSpaceId(spaceId)}/`)
         },
         [inviteUser, navigate],
     )

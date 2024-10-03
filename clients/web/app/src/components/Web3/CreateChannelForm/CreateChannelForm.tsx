@@ -35,7 +35,12 @@ import {
     TextField,
     Toggle,
 } from '@ui'
-import { ChannelNameRegExp, isForbiddenError, isRejectionError } from 'ui/utils/utils'
+import {
+    ChannelNameRegExp,
+    addressFromSpaceId,
+    isForbiddenError,
+    isRejectionError,
+} from 'ui/utils/utils'
 import { TransactionUIState, toTransactionUIStates } from 'hooks/TransactionUIState'
 import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
 import { CHANNEL_INFO_PARAMS, PATHS } from 'routes'
@@ -601,7 +606,9 @@ export const CreateChannelFormContainer = ({
         (roomId: string) => {
             console.log('[CreateChannelForm]', 'onCreateChannel', roomId)
             navigate(
-                `/${PATHS.SPACES}/${spaceId}/${PATHS.CHANNELS}/${roomId}/?panel=${CHANNEL_INFO_PARAMS.CHANNEL_INFO}`,
+                `/${PATHS.SPACES}/${addressFromSpaceId(spaceId)}/${
+                    PATHS.CHANNELS
+                }/${roomId}/?panel=${CHANNEL_INFO_PARAMS.CHANNEL_INFO}`,
             )
             if (hideOnCreation) {
                 onHide()

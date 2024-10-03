@@ -20,6 +20,7 @@ import { Box, Card, Dot, Icon } from '@ui'
 import { NavItem } from '@components/NavItem/_NavItem'
 import { Analytics } from 'hooks/useAnalytics'
 import { useUserStore } from 'store/userSettingsStore'
+import { addressFromSpaceId } from 'ui/utils/utils'
 
 export const MainSideBar = () => {
     const { isTouch } = useDevice()
@@ -113,9 +114,9 @@ export const SpaceList = (props: {
     const navigate = useNavigate()
 
     const onSelectItem = useCallback(
-        (id: string) => {
-            navigate(`/${PATHS.SPACES}/${id}/`)
-            props.onSelectSpace?.(id)
+        (spaceId: string) => {
+            navigate(`/${PATHS.SPACES}/${addressFromSpaceId(spaceId)}/`)
+            props.onSelectSpace?.(spaceId)
         },
         [navigate, props],
     )

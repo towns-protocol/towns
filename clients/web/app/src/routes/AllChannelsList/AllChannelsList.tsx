@@ -29,6 +29,7 @@ import { useNotificationSettings } from 'hooks/useNotificationSettings'
 import { useChannelEntitlements } from 'hooks/useChannelEntitlements'
 import { TokenTypePill } from '@components/Web3/TokenTypePill'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
+import { addressFromSpaceId } from 'ui/utils/utils'
 
 export const AllChannelsList = ({
     onHideBrowseChannels,
@@ -314,12 +315,12 @@ export function useOnJoinChannel(props: {
                     // leaving the last channel
                     if (joinedChannels.length === 1) {
                         setTownRouteBookmark(space.id, '')
-                        navigate(`/${PATHS.SPACES}/${space.id}/`)
+                        navigate(`/${PATHS.SPACES}/${addressFromSpaceId(space.id)}/`)
                     }
                     // go to the next channel
                     else if (indexOfThisChannel === 0) {
                         navigate(
-                            `/${PATHS.SPACES}/${space.id}/${PATHS.CHANNELS}/${
+                            `/${PATHS.SPACES}/${addressFromSpaceId(space.id)}/${PATHS.CHANNELS}/${
                                 joinedChannels[indexOfThisChannel + 1].id
                             }/`,
                         )
@@ -327,7 +328,7 @@ export function useOnJoinChannel(props: {
                     // go to the previous channel
                     else {
                         navigate(
-                            `/${PATHS.SPACES}/${space.id}/${PATHS.CHANNELS}/${
+                            `/${PATHS.SPACES}/${addressFromSpaceId(space.id)}/${PATHS.CHANNELS}/${
                                 flatChannels[indexOfThisChannel - 1].id
                             }/`,
                         )

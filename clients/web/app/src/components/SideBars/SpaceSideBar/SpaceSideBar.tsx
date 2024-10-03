@@ -30,6 +30,7 @@ import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { OffscreenMarker, OffscreenPill } from '@components/OffscreenPill/OffscreenPill'
 import { Analytics } from 'hooks/useAnalytics'
 import { DirectMessageItemSkeleton } from '@components/DirectMessages/DirectMessageItemSkeleton'
+import { addressFromSpaceId } from 'ui/utils/utils'
 import * as styles from './SpaceSideBar.css'
 import { SpaceSideBarHeader } from './SpaceSideBarHeader'
 import { SidebarLoadingAnimation } from './SpaceSideBarLoading'
@@ -189,7 +190,9 @@ export const SpaceSideBar = (props: Props) => {
                                         <ActionNavItem
                                             highlight={unreadThreadsCount > 0}
                                             icon="threads"
-                                            link={`/${PATHS.SPACES}/${space.id}/threads`}
+                                            link={`/${PATHS.SPACES}/${addressFromSpaceId(
+                                                space.id,
+                                            )}/threads`}
                                             id="threads"
                                             label="Threads"
                                             badge={
@@ -209,7 +212,9 @@ export const SpaceSideBar = (props: Props) => {
                                             icon="at"
                                             id="mentions"
                                             label="Mentions"
-                                            link={`/${PATHS.SPACES}/${space.id}/mentions`}
+                                            link={`/${PATHS.SPACES}/${addressFromSpaceId(
+                                                space.id,
+                                            )}/mentions`}
                                             minHeight="x5"
                                             key="mentions"
                                             data-testid="mentions-nav-item"

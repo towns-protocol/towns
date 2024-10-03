@@ -7,6 +7,7 @@ import { PATHS } from 'routes'
 import { useStore } from 'store/store'
 import { useDevice } from 'hooks/useDevice'
 import { Analytics } from 'hooks/useAnalytics'
+import { addressFromSpaceId } from 'ui/utils/utils'
 import {
     LINKED_NOTIFICATION_KIND,
     LINKED_NOTIFICATION_REL_ENTRY,
@@ -34,7 +35,10 @@ export const SpaceHome = () => {
             : undefined
         let bookmarkedRoute = spaceId ? s.townRouteBookmarks[spaceId] : undefined
         // verify the stored route matches the current URL scheme
-        bookmarkedRoute = matchPath(`${PATHS.SPACES}/${spaceId}/*`, bookmarkedRoute ?? '')
+        bookmarkedRoute = matchPath(
+            `${PATHS.SPACES}/${addressFromSpaceId(space?.id)}/*`,
+            bookmarkedRoute ?? '',
+        )
             ? bookmarkedRoute
             : undefined
         return {
@@ -122,9 +126,11 @@ export const SpaceHome = () => {
                 // the worst case is that user is navigated to the threads page,
                 // and has to click on a channel once it loads in
                 // TODO: probably we should have replace this with "Space Home" or something when that is implemented/designed
-                route = `/${PATHS.SPACES}/${spaceId}/${PATHS.THREADS}/`
+                route = `/${PATHS.SPACES}/${addressFromSpaceId(space?.id)}/${PATHS.THREADS}/`
             } else {
-                route = `/${PATHS.SPACES}/${spaceId}/${PATHS.CHANNELS}/${firstChannelId}/`
+                route = `/${PATHS.SPACES}/${addressFromSpaceId(space?.id)}/${
+                    PATHS.CHANNELS
+                }/${firstChannelId}/`
             }
 
             const timeout = setTimeout(() => {
@@ -135,7 +141,7 @@ export const SpaceHome = () => {
                 clearTimeout(timeout)
             }
         }
-    }, [navigate, space, spaceId, channels])
+    }, [channels, navigate, space?.id, space?.isLoadingChannels, space?.membership])
 
     return <>{/* don't need to render anything, redirects above take user elsewhere */}</>
 }

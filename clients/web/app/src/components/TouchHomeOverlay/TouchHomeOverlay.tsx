@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react'
 import { useConnectivity, useSpaceContext, useTownsContext } from 'use-towns-client'
 import { useNavigate } from 'react-router'
-import { shortAddress } from 'ui/utils/utils'
+import { addressFromSpaceId, shortAddress } from 'ui/utils/utils'
 import { Box, IconButton, MotionBox, MotionStack, Stack, Text } from '@ui'
 import { transitions } from 'ui/transitions/transitions'
 import { PATHS } from 'routes'
@@ -22,7 +22,7 @@ export const TouchHomeOverlay = (props: Props) => {
     const navigate = useNavigate()
 
     const profileClicked = useCallback(() => {
-        const path = `/${PATHS.SPACES}/${spaceId}/${PATHS.PROFILE}/me`
+        const path = `/${PATHS.SPACES}/${addressFromSpaceId(spaceId)}/${PATHS.PROFILE}/me`
         navigate(path)
     }, [navigate, spaceId])
 

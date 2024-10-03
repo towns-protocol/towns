@@ -19,6 +19,7 @@ import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { getIsRoomMessageContent, getMessageBody } from 'utils/ztevent_util'
 import { useDmChannels } from 'hooks/useDMChannels'
 import { useHandleReaction } from 'hooks/useReactions'
+import { addressFromSpaceId } from 'ui/utils/utils'
 
 const createMessageLink = (
     spaceId: string,
@@ -29,10 +30,14 @@ const createMessageLink = (
 ) => {
     if (isTouch) {
         if (isDMChannelStreamId(channelId) || isGDMChannelStreamId(channelId)) {
-            return `/${PATHS.SPACES}/${spaceId}/${PATHS.MESSAGES}/${channelId}/#${eventId}`
+            return `/${PATHS.SPACES}/${addressFromSpaceId(spaceId)}/${
+                PATHS.MESSAGES
+            }/${channelId}/#${eventId}`
         }
     }
-    const channelSegment = `/${PATHS.SPACES}/${spaceId}/${PATHS.CHANNELS}/${channelId}/`
+    const channelSegment = `/${PATHS.SPACES}/${addressFromSpaceId(spaceId)}/${
+        PATHS.CHANNELS
+    }/${channelId}/`
     const threadSegment = threadId ? `${PATHS.REPLIES}/${threadId}/` : ``
     const eventSegment = `#${eventId}`
     return `${channelSegment}${threadSegment}${eventSegment}`

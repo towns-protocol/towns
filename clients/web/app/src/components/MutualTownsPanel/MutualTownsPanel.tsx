@@ -10,6 +10,7 @@ import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { PATHS } from 'routes'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
+import { addressFromSpaceId } from 'ui/utils/utils'
 
 export const MutualTownsPanel = (props: { userId: string }) => {
     const { userId } = props
@@ -37,7 +38,7 @@ export const MutualTownsPanel = (props: { userId: string }) => {
 
     const onTownClick = useCallback(
         (spaceId: string) => {
-            navigate(`/${PATHS.SPACES}/${spaceId}`)
+            navigate(`/${PATHS.SPACES}/${addressFromSpaceId(spaceId)}`)
         },
         [navigate],
     )

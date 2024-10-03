@@ -5,6 +5,7 @@ import { PATHS } from 'routes'
 import { useShortcut } from 'hooks/useShortcut'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { useSortedChannels } from 'hooks/useSortedChannels'
+import { addressFromSpaceId } from 'ui/utils/utils'
 
 export const RegisterChannelShortcuts = () => {
     const space = useSpaceData()
@@ -29,7 +30,12 @@ export const RegisterChannelShortcuts = () => {
         const currentChannelIndex = channels.findIndex((s) => s.id === channelId)
         const numChannels = channels.length
         const index = (currentChannelIndex + increment + numChannels) % numChannels
-        navigate(`/${PATHS.SPACES}/${space.id}/${PATHS.CHANNELS}/${channels[index].id}/`)
+
+        navigate(
+            `/${PATHS.SPACES}/${addressFromSpaceId(space.id)}/${PATHS.CHANNELS}/${
+                channels[index].id
+            }/`,
+        )
     }
 
     useShortcut('NavigateToPreviousChannel', () => {

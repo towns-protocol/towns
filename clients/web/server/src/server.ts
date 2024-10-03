@@ -14,10 +14,11 @@ import { config } from './config'
 import {
     getWeb3Deployment,
     ISpaceOwnerShim,
-    SpaceAddressFromSpaceId,
-    SpaceOwner,
     SpaceInfo,
+    SpaceOwner,
+    SpaceAddressFromSpaceId,
 } from '@river-build/web3'
+import { makeSpaceStreamId } from '@river-build/sdk/src/id'
 
 const { PROVIDER_URL, MODE, PORT, VITE_RIVER_ENV } = config
 
@@ -86,8 +87,8 @@ server.setNotFoundHandler(async (request, reply) => {
         // If file exists, serve the static file
         return reply.sendFile(urlPath)
     } else if (urlPath.startsWith('/t/') || urlPath === '/') {
-        const townId = urlPath.match(/^\/t\/([0-9a-f]{64})/)?.[1] ?? ''
-        const exactMatch = townId && urlPath.match(new RegExp(`^/t/[0-9a-f]{64}/?$`))
+        const townId = getTownIdFromPath(urlPath)
+        const exactMatch = townId && isTownPageExactMatch(urlPath)
         const html = await updateTemplate({ townId, route: exactMatch ? 'town-page' : 'page' })
         return reply.header('Content-Type', 'text/html').send(html)
     } else if (urlPath === '/version') {
@@ -209,4 +210,23 @@ async function getTownDataFromContract(townId: string): Promise<TownData | undef
         server.log.error('Error fetching town name from contract' + JSON.stringify(error))
         return
     }
+}
+
+// as a transition, this works for both streamId and contract address formats
+const townIdRegex = new RegExp('/t/([0-9a-f]{64}|0x[0-9a-f]{40})', 'i')
+
+function getTownIdFromPath(urlPath: string) {
+    const match = urlPath.match(townIdRegex)?.[1] ?? ''
+    if (match.startsWith('0x')) {
+        return makeSpaceStreamId(match)
+    }
+    return match
+}
+
+// matches town landing page segment, used to hint the app to focus
+// rendering the public town page
+const townPageExactMatch = new RegExp('/t/([0-9a-f]{64}|0x[0-9a-f]{40})/?$', 'i')
+
+function isTownPageExactMatch(urlPath: string) {
+    return townPageExactMatch.test(urlPath)
 }

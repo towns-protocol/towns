@@ -6,6 +6,7 @@ import { Badge, Box, ButtonText, Icon, Stack } from '@ui'
 import { useMuteSettings } from 'api/lib/notificationSettings'
 import { FavoriteChannelButton } from '@components/FavoriteChannelButton/FavoriteChannelButton'
 import { useChannelEntitlements } from 'hooks/useChannelEntitlements'
+import { addressFromSpaceId } from 'ui/utils/utils'
 import { NavItem } from './_NavItem'
 
 type Props = {
@@ -35,7 +36,7 @@ export const ChannelNavItem = (props: Props) => {
         channelId: channel.id,
     })
 
-    const link = `/${PATHS.SPACES}/${space.id}/channels/${channel.id}/`
+    const link = `/${PATHS.SPACES}/${addressFromSpaceId(space.id)}/channels/${channel.id}/`
     const isHighlight = channel.id === channelSlug
 
     const { channelIsMuted, spaceIsMuted } = useMuteSettings({

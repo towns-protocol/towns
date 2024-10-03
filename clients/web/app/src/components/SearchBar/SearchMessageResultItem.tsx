@@ -20,7 +20,7 @@ import { Avatar } from '@components/Avatar/Avatar'
 import { SearchContext } from '@components/SearchContext/SearchContext'
 import { formatShortDate } from 'utils/formatDates'
 import { UserList } from '@components/UserList/UserList'
-import { notUndefined } from 'ui/utils/utils'
+import { addressFromSpaceId, notUndefined } from 'ui/utils/utils'
 import { useDevice } from 'hooks/useDevice'
 
 const createMessageLink = (
@@ -32,14 +32,18 @@ const createMessageLink = (
 ) => {
     if (isDMChannelStreamId(channelId) || isGDMChannelStreamId(channelId)) {
         return isTouch
-            ? `/${PATHS.SPACES}/${spaceId}/${PATHS.MESSAGES}/${channelId}/#${eventId}`
+            ? `/${PATHS.SPACES}/${addressFromSpaceId(spaceId)}/${
+                  PATHS.MESSAGES
+              }/${channelId}/#${eventId}`
             : `/${PATHS.MESSAGES}/${channelId}/#${eventId}`
     }
 
     if (!spaceId) {
         return undefined
     }
-    const channelSegment = `/${PATHS.SPACES}/${spaceId}/${PATHS.CHANNELS}/${channelId}/`
+    const channelSegment = `/${PATHS.SPACES}/${addressFromSpaceId(spaceId)}/${
+        PATHS.CHANNELS
+    }/${channelId}/`
     const threadSegment = threadId ? `${PATHS.REPLIES}/${threadId}/` : ``
     const eventSegment = `#${eventId}`
     return `${channelSegment}${threadSegment}${eventSegment}`

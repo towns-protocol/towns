@@ -34,7 +34,7 @@ export const getInviteUrl = ({ spaceId }: { spaceId: string | undefined }) =>
     `${getAbsoluteSpaceUrl({ spaceId })}/`
 
 export const getAbsoluteSpaceUrl = ({ spaceId }: { spaceId: string | undefined }) =>
-    spaceId ? `${getAppUrl()}/${PATHS.SPACES}/${spaceId}` : undefined
+    spaceId ? `${getAppUrl()}/${PATHS.SPACES}/${addressFromSpaceId(spaceId)}` : undefined
 
 export const getAbsoluteChannelUrl = (params: { spaceId: string; channelId: string }) =>
     `${getAbsoluteSpaceUrl(params)}/${PATHS.CHANNELS}/${params.channelId}`
@@ -48,3 +48,7 @@ export const getTypedEntries = <T extends object>(obj: T) => Object.entries(obj)
 
 // Supported name format for channel
 export const ChannelNameRegExp = new RegExp(/^[a-zA-Z0-9 _-]+$/)
+
+export const addressFromSpaceId = (spaceId: string | undefined) => {
+    return spaceId ? '0x' + spaceId.slice(2, 42) : undefined
+}
