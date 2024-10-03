@@ -20,28 +20,30 @@ export class CloudfrontManager {
 		})
 	}
 
-	private async invalidate(params: { path: string; waitUntilFinished?: boolean }) {
+	private async invalidate(params: { paths: string[]; waitUntilFinished?: boolean }) {
 		const invalidationCommand = await this.cloudFront.createInvalidation({
 			DistributionId: this.config.distributionId,
 			InvalidationBatch: {
-				CallerReference: `${new Date().toISOString()}-${params.path.substring(0, 5)}`,
+				CallerReference: `${new Date().toISOString()}-${params.paths
+					.map((path) => path.substring(0, 5))
+					.join('-')}`,
 				Paths: {
-					Quantity: 1,
-					Items: [params.path],
+					Quantity: params.paths.length,
+					Items: params.paths,
 				},
 			},
 		})
 
-		this.logger.info({ path: params.path }, 'CloudFront cache invalidation created')
+		this.logger.info({ path: params.paths }, 'CloudFront cache invalidation created')
 
 		if (params.waitUntilFinished) {
-			await this.waitForInvalidation(invalidationCommand, params.path)
+			await this.waitForInvalidation(invalidationCommand, params.paths)
 		}
 	}
 
 	private async waitForInvalidation(
 		invalidationCommand: GetInvalidationCommandOutput,
-		path: string,
+		paths: string[],
 	) {
 		let attempts = 0
 		let currentInvalidationCommand = invalidationCommand
@@ -51,7 +53,7 @@ export class CloudfrontManager {
 				this.logger.error(
 					{
 						invalidation: currentInvalidationCommand,
-						path,
+						paths,
 					},
 					'CloudFront cache invalidation did not complete in time',
 				)
@@ -60,7 +62,7 @@ export class CloudfrontManager {
 			this.logger.info(
 				{
 					invalidation: currentInvalidationCommand,
-					path,
+					paths,
 				},
 				'Waiting for CloudFront cache invalidation to complete...',
 			)
@@ -78,21 +80,21 @@ export class CloudfrontManager {
 		this.logger.info(
 			{
 				invalidation: currentInvalidationCommand,
-				path,
+				paths,
 			},
 			'CloudFront cache invalidation completed',
 		)
 	}
 
 	static async createCloudfrontInvalidation(params: {
-		path: string
+		paths: string[]
 		logger: FastifyBaseLogger
 		waitUntilFinished?: boolean
 	}) {
 		if (!envConfig.cloudfront) {
 			params.logger.warn(
 				{
-					path: params.path,
+					paths: params.paths,
 				},
 				'CloudFront distribution ID not set, skipping cache invalidation',
 			)

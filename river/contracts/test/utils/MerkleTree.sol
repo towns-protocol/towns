@@ -29,7 +29,7 @@ contract MerkleTree {
     bytes32[] memory nodes = tree[0] = new bytes32[](members.length);
     for (uint256 i = 0; i < members.length; ++i) {
       // Leaf hashes are inverted to prevent second preimage attacks.
-      nodes[i] = keccak256(abi.encodePacked(members[i], claimAmounts[i]));
+      nodes[i] = _createLeaf(members[i], claimAmounts[i]);
     }
     // Build up subsequent layers until we arrive at the root hash.
     // Each parent node is the hash of the two children below it.
@@ -71,5 +71,23 @@ contract MerkleTree {
       }
       leafIndex /= 2;
     }
+  }
+
+  function _createLeaf(
+    address member,
+    uint256 amount
+  ) internal pure returns (bytes32) {
+    bytes32 leaf;
+    assembly ("memory-safe") {
+      // Store the member address at memory location 0
+      mstore(0, member)
+      // Store the amount at memory location 0x20 (32 bytes after the account address)
+      mstore(0x20, amount)
+      // Compute the keccak256 hash of the account and amount, and store it at memory location 0
+      mstore(0, keccak256(0, 0x40))
+      // Compute the keccak256 hash of the previous hash (stored at memory location 0) and store it in the leaf variable
+      leaf := keccak256(0, 0x20)
+    }
+    return leaf;
   }
 }

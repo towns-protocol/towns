@@ -34,7 +34,7 @@ abstract contract DiamondHelper is IDiamond {
     FacetCut memory cut,
     address initAddress,
     bytes memory initData
-  ) internal {
+  ) public {
     addCut(cut);
     addInit(initAddress, initData);
   }

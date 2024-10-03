@@ -86,12 +86,10 @@ export function setupRoutes(srv: Server) {
 	srv.get('/space/:spaceAddress/image', fetchSpaceImage)
 	srv.get('/space/:spaceAddress', fetchSpaceMetadata)
 	srv.get('/space/:spaceAddress/token/:tokenId', fetchSpaceMemberMetadata)
+	srv.get('/user/:userId/bio', fetchUserBio)
 
 	// not cached
 	srv.get('/health', checkHealth)
-
-	// should be cached, but not before implementing /refresh on metadata routes
-	srv.get('/user/:userId/bio', fetchUserBio)
 
 	// should be rate-limited, but not yet
 	srv.get('/space/:spaceAddress/refresh', { onResponse: spaceRefreshOnResponse }, spaceRefresh)

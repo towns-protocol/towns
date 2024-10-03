@@ -42,9 +42,8 @@ export async function spaceRefreshOnResponse(
 	logger.info({ spaceAddress }, 'Refreshing space')
 
 	try {
-		const path = `/space/${spaceAddress}/image`
 		await CloudfrontManager.createCloudfrontInvalidation({
-			path,
+			paths: [`/space/${spaceAddress}/image`],
 			logger,
 			waitUntilFinished: true,
 		})

@@ -51,6 +51,7 @@
 /packages/generated/dev/ @sergekh2 @giuseppecrj
 /packages/sdk/ @sergekh2 @texuf
 /packages/sdk/src/ @sergekh2 @texuf @erikolsson
+/packages/stream-metadata/ @brianathere @texuf
 /protocol/ @sergekh2 @texuf
 /scripts/ @texuf
 turbo.json @mechanical-turk
