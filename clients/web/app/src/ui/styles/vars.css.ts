@@ -97,13 +97,13 @@ const root = createGlobalTheme(':root', {
     space: {
         none: '0',
         xxs: `${baseline * 0.25}px`,
-        // 11 occurences
+        // 11 occurrences
         xs: `${baseline * 0.5}px`,
-        // 45 occurences
+        // 45 occurrences
         sm: `${baseline * 1}px`, // sm
-        // 67 occurences
+        // 67 occurrences
         md: `${baseline * 2}px`, // md
-        // 15 occurences
+        // 15 occurrences
         lg: `${baseline * 3}px`, // lg
 
         x4: `${baseline * 4}px`, // old lg

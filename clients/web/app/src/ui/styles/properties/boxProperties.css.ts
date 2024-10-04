@@ -263,7 +263,12 @@ export const boxProperties = defineProperties({
         paddingTop: vars.space,
         paddingBottom: vars.space,
 
-        // padding
+        // margin
+        marginLeft: vars.space,
+        marginRight: vars.space,
+        marginTop: vars.space,
+        marginBottom: vars.space,
+
         insetLeft: vars.insetLeft,
         insetRight: vars.insetRight,
         insetTop: vars.insetTop,
@@ -304,6 +309,7 @@ export const boxProperties = defineProperties({
         paddingX: ['paddingLeft', 'paddingRight'],
         paddingY: ['paddingTop', 'paddingBottom'],
         padding: ['paddingLeft', 'paddingRight', 'paddingTop', 'paddingBottom'],
+        margin: ['marginLeft', 'marginRight', 'marginTop', 'marginBottom'],
 
         border: ['borderLeft', 'borderRight', 'borderTop', 'borderBottom'],
         rounded: [

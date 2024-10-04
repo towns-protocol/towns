@@ -18,6 +18,7 @@ import { formatShortDate } from 'utils/formatDates'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { htmlToText } from 'workers/data_transforms'
 import { shimmerClass } from 'ui/styles/globals/shimmer.css'
+import { truncateTextDMList } from './DirectMessageListItem.css'
 import { GroupDMIcon, GroupDMIconProps } from './GroupDMIcon'
 
 type Props = {
@@ -106,18 +107,7 @@ export const DirectMessageRowContent = (props: {
                     <Text
                         color={unread ? 'default' : 'gray2'}
                         size="sm"
-                        style={{
-                            // todo: experiment with this, may not keep
-                            // and if we keep it will move into the Text component
-                            paddingTop: '4px',
-                            paddingBottom: '5px',
-                            marginBottom: '-4px',
-                            WebkitLineClamp: 2,
-                            WebkitBoxOrient: 'vertical',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            display: '-webkit-box',
-                        }}
+                        className={truncateTextDMList}
                     >
                         <DMMessageContentSummary
                             info={latest?.info}
