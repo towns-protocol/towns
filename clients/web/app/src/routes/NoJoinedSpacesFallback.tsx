@@ -167,7 +167,7 @@ export const NoJoinedSpacesFallback = () => {
                             Create a Town
                         </Button>
                         <Button tone="level2" width="auto" grow={false} onClick={openLearnMore}>
-                            Learn More
+                            Join Town Hall
                         </Button>
                     </Stack>
                 </Stack>
