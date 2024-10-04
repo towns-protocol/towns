@@ -4,6 +4,7 @@ import { usePrivy } from '@privy-io/react-auth'
 import { useCombinedAuth } from 'privy/useCombinedAuth'
 import { Box, FancyButton } from '@ui'
 import { Analytics } from 'hooks/useAnalytics'
+import { useStartupTime } from 'StartupProvider'
 
 type LoginComponentProps = {
     text?: string
@@ -19,6 +20,7 @@ function LoginComponent({
     const { ready: privyReady } = usePrivy()
     const { login, isAutoLoggingInToRiver } = useCombinedAuth()
     const { authStatus: libAuthStatus } = useConnectivity()
+    const [, resetStartupTime] = useStartupTime()
 
     const isBusy = libAuthStatus === AuthStatus.EvaluatingCredentials || isAutoLoggingInToRiver
 
@@ -39,20 +41,17 @@ function LoginComponent({
         if (!privyReady || isBusy) {
             return
         }
+        // For Welcome page, the onLoginClick callback is undefined.
         if (!onLoginClick) {
-            Analytics.getInstance().track(
-                'clicked login',
-                {
-                    buttonText: text,
-                },
-                () => {
-                    console.log('[analytics][LoginComponent] clicked login')
-                },
-            )
+            // reset the app start time if the user clicks the Login button
+            resetStartupTime()
+            Analytics.getInstance().track('clicked login', () => {
+                console.log('[analytics][LoginComponent] clicked login')
+            })
         }
         await onLoginClick?.()
         await login()
-    }, [privyReady, isBusy, onLoginClick, login, text])
+    }, [privyReady, isBusy, onLoginClick, login, resetStartupTime])
 
     if (AuthStatus.EvaluatingCredentials === libAuthStatus) {
         return <></>

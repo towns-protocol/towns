@@ -220,6 +220,21 @@ export class Analytics implements TownsAnalytics {
     }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function trackTime(message: string, properties?: Record<string, any>) {
+    const data = {
+        ...properties,
+        timestamp: Date.now(),
+        // track down perf issues for individuals if needed.
+        pseudoId: Analytics.getInstance().pseudoId,
+        anonymousId: Analytics.getInstance().anonymousId,
+    }
+    datadogLogs.logger.info(message, {
+        data,
+    })
+    console.log(message, data)
+}
+
 export function trackError(args: {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     error: any

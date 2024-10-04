@@ -28,6 +28,7 @@ import { shortAddress } from 'ui/utils/utils'
 import { AppProgressOverlayTrigger } from '@components/AppProgressOverlay/AppProgressOverlayTrigger'
 import { Avatar } from '@components/Avatar/Avatar'
 import { AppBugReportButton } from '@components/AppBugReport/AppBugReportButton'
+import { useStartupTime } from 'StartupProvider'
 import { BottomBarContent } from './BottomBarContent'
 import { usePublicPageLoginFlow } from './usePublicPageLoginFlow'
 
@@ -141,11 +142,14 @@ const Header = (props: { isPreview: boolean; onClosePreview?: () => void }) => {
     const { isAuthenticated } = useConnectivity()
     const { isPreview, onClosePreview } = props
     const { login } = useCombinedAuth()
+    const [, resetStartupTime] = useStartupTime()
 
     const onClickLogin = useCallback(() => {
+        // reset the app start time if the user clicks the Login button
+        resetStartupTime()
         Analytics.getInstance().track('clicked login')
         login()
-    }, [login])
+    }, [login, resetStartupTime])
 
     const fromLink = useLocation().state?.fromLink === true
     const navigate = useNavigate()

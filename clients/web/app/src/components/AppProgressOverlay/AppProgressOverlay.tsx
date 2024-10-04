@@ -6,8 +6,9 @@ import { SetupAnimation } from '@components/SetupAnimation/SetupAnimation'
 import { BoxProps, MotionStack, ZLayerProvider } from '@ui'
 import { useStore } from 'store/store'
 import { AppBugReportButton } from '@components/AppBugReport/AppBugReportButton'
+import { trackTime } from 'hooks/useAnalytics'
 import { AppOverlayDebugger } from './AppOverlayDebugger'
-import { AppProgressState } from './AppProgressState'
+import { AppProgressOverlayKey, AppProgressState, toAppStartupTrack } from './AppProgressState'
 import { AppSkeletonView } from './AppSkeletonView'
 import { useAppProgressStore } from './store/appProgressStore'
 
@@ -42,8 +43,15 @@ export const AppProgressOverlay = (props: { debug?: boolean }) => {
     }, [])
 
     useEffect(() => {
+        const showing = appProgressOverlay !== AppProgressState.None
+        if (showing) {
+            // track the time for each stage of the app startup
+            trackTime('[app startup]', {
+                stage: toAppStartupTrack(content.key),
+            })
+        }
         console.log('[app progress] overlay key:', {
-            showing: appProgressOverlay !== AppProgressState.None,
+            showing,
             overlay: appProgressOverlay,
             content: content.key,
         })
@@ -70,30 +78,42 @@ export const AppProgressOverlay = (props: { debug?: boolean }) => {
 export const useAppOverlayContent = (
     state: AppProgressState,
     isOptimisticInitialized: boolean,
-): { key: 'logo' | 'skeleton' | 'animation'; element: JSX.Element } => {
+): { key: AppProgressOverlayKey; element: JSX.Element } => {
     return useMemo(() => {
         if (state === AppProgressState.LoadingAssets) {
-            return { key: 'logo', element: <TransitionLogo key="logo" /> }
+            return {
+                key: AppProgressOverlayKey.Logo,
+                element: <TransitionLogo key={AppProgressOverlayKey.Logo} />,
+            }
         }
         if (state === AppProgressState.LoggingIn) {
             return isOptimisticInitialized
                 ? // we think we have already initialized the space, show the
                   // skeleton instead of risking a flash of the setup animation
-                  { key: 'skeleton', element: <AppSkeletonView key="skeleton" /> }
-                : { key: 'logo', element: <TransitionLogo key="logo" /> }
+                  {
+                      key: AppProgressOverlayKey.Skeleton,
+                      element: <AppSkeletonView key="skeleton" />,
+                  }
+                : {
+                      key: AppProgressOverlayKey.Logo,
+                      element: <TransitionLogo key={AppProgressOverlayKey.Logo} />,
+                  }
         }
 
         if (state === AppProgressState.InitializingWorkspace) {
             return isOptimisticInitialized
                 ? // we think we have already initialized the space, show the
                   // skeleton instead of risking a flash of the setup animation
-                  { key: 'skeleton', element: <AppSkeletonView key="skeleton" /> }
+                  {
+                      key: AppProgressOverlayKey.Skeleton,
+                      element: <AppSkeletonView key={AppProgressOverlayKey.Skeleton} />,
+                  }
                 : {
-                      key: 'animation',
+                      key: AppProgressOverlayKey.Animation,
                       element: (
                           <SetupAnimation
                               mode={AppProgressState.InitializingWorkspace}
-                              key="animation"
+                              key={AppProgressOverlayKey.Animation}
                           />
                       ),
                   }
@@ -101,12 +121,20 @@ export const useAppOverlayContent = (
 
         if (state === AppProgressState.Joining) {
             return {
-                key: 'animation',
-                element: <SetupAnimation mode={AppProgressState.Joining} key="animation" />,
+                key: AppProgressOverlayKey.Animation,
+                element: (
+                    <SetupAnimation
+                        mode={AppProgressState.Joining}
+                        key={AppProgressOverlayKey.Animation}
+                    />
+                ),
             }
         }
 
-        return { key: 'logo', element: <TransitionLogo key="logo" /> }
+        return {
+            key: AppProgressOverlayKey.Logo,
+            element: <TransitionLogo key={AppProgressOverlayKey.Logo} />,
+        }
     }, [state, isOptimisticInitialized])
 }
 
