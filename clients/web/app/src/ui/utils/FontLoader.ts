@@ -2,7 +2,7 @@ import { precomputeValues } from '@capsizecss/vanilla-extract'
 import { getTypedEntries } from './utils'
 
 const BodyFontStyles = {
-    letterSpacing: '0em',
+    letterSpacing: '-0.02em',
 }
 
 const HeadingFontStyles = {
