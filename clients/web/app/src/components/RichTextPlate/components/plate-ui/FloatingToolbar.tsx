@@ -26,12 +26,18 @@ export const FloatingToolbar = withRef<
         editorId,
         focusedEditorId,
         floatingOptions: {
-            placement: 'top',
+            placement: 'top-start',
             middleware: [
                 offset(0),
                 flip({
                     padding: 12,
-                    fallbackPlacements: ['top-start', 'top-end', 'bottom-start', 'bottom-end'],
+                    fallbackPlacements: [
+                        'top-start',
+                        'left-start',
+                        'left-end',
+                        'bottom-end',
+                        'top',
+                    ],
                 }),
             ],
             ...state?.floatingOptions,
