@@ -318,7 +318,13 @@ globalStyle(`${richText} del ${code}`, {
     textDecoration: 'line-through',
 })
 
+// While displaying paragraphs in timeline, we want to have a space between them
 globalStyle(`${richText} ${paragraph} + ${paragraph}`, {
+    marginTop: vars.space.md,
+})
+
+// While typing paragraphs in editor, we want to have the appearance of new para being a new line, so it needs lesser space between them
+globalStyle(`${richText}${contentEditable} ${paragraph} + ${paragraph}`, {
     marginTop: vars.space.sm,
 })
 

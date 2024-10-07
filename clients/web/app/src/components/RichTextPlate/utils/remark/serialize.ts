@@ -219,8 +219,10 @@ export default function serialize(chunk: BlockType | LeafType, opts: Options = {
         case nodeTypes.heading[6]:
         case nodeTypes.code_line:
         case nodeTypes.lic:
-        case nodeTypes.paragraph:
             return `${children}\n`
+
+        case nodeTypes.paragraph:
+            return `${children}  \n`
 
         case nodeTypes.thematic_break:
             return `---\n`
