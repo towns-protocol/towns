@@ -228,10 +228,9 @@ export const MessageTimeline = (props: Props) => {
                     const displayEncrypted = e.events.every(
                         (e) => e.content.kind === ZTEvent.RoomMessageEncrypted,
                     )
-                    // only picks 3 messages (first and last ones) when
-                    // decrypted content is showing
+                    // only picks 1 message (last) of an encrypted group
                     const filtered = displayEncrypted
-                        ? e.events.filter((e, i, events) => i === 0 || i > events.length - 3)
+                        ? e.events.filter((e, i, events) => i === 0)
                         : e.events
 
                     return filtered
