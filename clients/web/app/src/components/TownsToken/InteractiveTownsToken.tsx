@@ -210,7 +210,10 @@ export const InteractiveTownsToken = (props: Props) => {
                     onMouseMove={onMouseMove}
                     onMouseEnter={onMouseEnter}
                     onMouseLeave={onMouseLeave}
-                />
+                    onClick={props.onClick}
+                >
+                    {props.children}
+                </TownsToken>
             </Box>
         </motion.div>
     )

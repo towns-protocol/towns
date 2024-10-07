@@ -68,6 +68,11 @@ export const TownsToken = (props: Props) => {
                     background="level1"
                     {...boxProps}
                 >
+                    {props.children && (
+                        <Box absoluteFill centerContent>
+                            {props.children}
+                        </Box>
+                    )}
                     <Box absoluteFill centerContent>
                         {imageSrc && !isError ? (
                             <img

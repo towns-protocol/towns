@@ -74,16 +74,16 @@ export function CreateTownSubmit({
     }, [error, hasError])
 
     const onSubmit = useCallback(async () => {
-        toast.dismiss()
-        setRecentlyMintedSpaceToken(undefined)
-
-        setTransactionDetails({
-            isTransacting: true,
-            townAddress: undefined,
-        })
-
         form.handleSubmit(
             async (data: CreateSpaceFormV2SchemaType) => {
+                toast.dismiss()
+                setRecentlyMintedSpaceToken(undefined)
+
+                setTransactionDetails({
+                    isTransacting: true,
+                    townAddress: undefined,
+                })
+
                 const prepaySupply = form.getValues().prepaidMemberships ?? 0
 
                 const createSpaceInfo: CreateSpaceInfo = {
@@ -319,7 +319,6 @@ export function CreateTownSubmit({
                 }
             },
             (_errors) => {
-                setPanelType(PanelType.all)
                 setTransactionDetails({
                     isTransacting: false,
                     townAddress: undefined,
@@ -348,7 +347,8 @@ export function CreateTownSubmit({
         disabled:
             !isPrivyReady ||
             isLoading ||
-            !form.formState.isDirty ||
+            !form.getValues().spaceIconFile ||
+            // !form.formState.isDirty ||
             Object.keys(form.formState.errors).length > 0 ||
             membershipCostValue === '' ||
             (membershipPricingType === 'fixed' && Number(membershipCostValue) === 0),

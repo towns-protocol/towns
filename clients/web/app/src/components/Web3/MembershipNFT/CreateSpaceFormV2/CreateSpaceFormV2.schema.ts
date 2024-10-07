@@ -99,10 +99,7 @@ export const membershipSettingsSchema = z
 export const schema = z
     .object({
         spaceIconUrl: z.coerce.string().optional().nullable(),
-        spaceIconFile: z
-            .custom<File>((val) => val instanceof File, 'Please upload a file')
-            .optional()
-            .nullable(),
+        spaceIconFile: z.custom<File>((val) => val instanceof File, 'Please upload an image'),
         spaceName: z
             .string({
                 errorMap: (err, ctx) => {

@@ -14,6 +14,7 @@ import {
     ErrorMessage,
     FormRender,
     Grid,
+    Icon,
     IconButton,
     MotionBox,
     MotionStack,
@@ -23,10 +24,7 @@ import {
     TextField,
 } from '@ui'
 import { BlurredBackground } from '@components/TouchLayoutHeader/BlurredBackground'
-import {
-    LargeUploadImageTemplate,
-    UploadImageTemplateSize,
-} from '@components/UploadImage/LargeUploadImageTemplate'
+import { UploadImageTemplateSize } from '@components/UploadImage/LargeUploadImageTemplate'
 import { InteractiveTownsToken } from '@components/TownsToken/InteractiveTownsToken'
 import { shortAddress } from 'ui/utils/utils'
 import { FadeInBox } from '@components/Transitions'
@@ -42,6 +40,7 @@ import { CreateSpaceAnimation } from '@components/SetupAnimation/CreateSpaceAnim
 import { SECOND_MS } from 'data/constants'
 import { AppBugReportButton } from '@components/AppBugReport/AppBugReportButton'
 import { UploadImageRequestConfig } from '@components/UploadImage/useOnImageChangeEvent'
+import { UploadImageRenderer } from '@components/UploadImage/UploadImageRenderer'
 import { CreateSpaceFormV2SchemaType, schema } from './CreateSpaceFormV2.schema'
 import { AvatarPlaceholder } from '../AvatarPlaceholder'
 import { PanelType, TransactionDetails } from './types'
@@ -111,24 +110,24 @@ function CreateSpaceFormV2WithoutAuth() {
     const rightColRef = useRef<HTMLDivElement>(null)
     const [leftColWidth, rightColWidth] = useColumnWidths({ leftColRef, rightColRef })
 
-    const defaultValues: Omit<CreateSpaceFormV2SchemaType, 'spaceName'> & { spaceName: undefined } =
-        {
-            gatingType: 'everyone',
-            membershipLimit: 1000,
-            membershipCost: '0',
-            spaceName: undefined,
-            membershipPricingType: 'dynamic',
-            tokensGatedBy: [],
-            usersGatedBy: [],
-            clientPricingOption: 'dynamic',
-            spaceIconUrl: null,
-            spaceIconFile: null,
-            shortDescription: null,
-            longDescription: null,
-            // TODO: currency defaults to ETH when addressZero
-            membershipCurrency: ethers.constants.AddressZero,
-            prepaidMemberships: 0,
-        }
+    const defaultValues: Omit<CreateSpaceFormV2SchemaType, 'spaceName' | 'spaceIconFile'> & {
+        spaceName: undefined
+    } = {
+        gatingType: 'everyone',
+        membershipLimit: 1000,
+        membershipCost: '0',
+        spaceName: undefined,
+        membershipPricingType: 'dynamic',
+        tokensGatedBy: [],
+        usersGatedBy: [],
+        clientPricingOption: 'dynamic',
+        spaceIconUrl: null,
+        shortDescription: null,
+        longDescription: null,
+        // TODO: currency defaults to ETH when addressZero
+        membershipCurrency: ethers.constants.AddressZero,
+        prepaidMemberships: 0,
+    }
 
     const [createFlowStatus, setCreateFlowStatus] = useState<CreateSpaceFlowStatus>()
 
@@ -173,7 +172,7 @@ function CreateSpaceFormV2WithoutAuth() {
                 schema={schema}
                 // make sure all values from schema are set so the form validates properly
                 defaultValues={defaultValues}
-                mode="all"
+                mode="onSubmit"
             >
                 {(hookForm) => {
                     const _form = hookForm as unknown as UseFormReturn<CreateSpaceFormV2SchemaType>
@@ -208,18 +207,6 @@ function CreateSpaceFormV2WithoutAuth() {
 
                     if (spaceNameValue && !hasReached2Chars.current && spaceNameValue.length > 1) {
                         hasReached2Chars.current = true
-                    }
-
-                    const showSpaceNameError = () => {
-                        if (_form.formState.isSubmitted) {
-                            return true
-                        }
-                        const spaceNameError = _form.formState.errors['spaceName']
-                        if (spaceNameError?.type !== 'too_small') {
-                            return true
-                        }
-                        // only show the too_small error if the user has typed more than 2 characters
-                        return hasReached2Chars.current
                     }
 
                     const onInfoBoxClick = () => {
@@ -304,32 +291,17 @@ function CreateSpaceFormV2WithoutAuth() {
                                             {/* left col */}
                                             <Stack grow position="relative" ref={leftColRef}>
                                                 <Stack gap="md">
-                                                    {/* image when panel open */}
-                                                    {!_isTouch && panelType && (
-                                                        <Stack display="block">
-                                                            <UploadImageField
-                                                                size="sm"
-                                                                isActive={!!panelType}
-                                                                transactionDetails={
-                                                                    transactionDetails
-                                                                }
-                                                            />
-                                                        </Stack>
-                                                    )}
-
                                                     <SpaceNameField
                                                         form={_form}
                                                         spaceNameValue={spaceNameValue}
                                                         errorMessage={
                                                             <ErrorMessage
                                                                 preventSpace
-                                                                disabled={!showSpaceNameError()}
                                                                 errors={_form.formState.errors}
                                                                 fieldName="spaceName"
                                                             />
                                                         }
                                                     />
-
                                                     <MotionBox layoutRoot layout>
                                                         {/* info boxes */}
                                                         <MotionBox
@@ -727,8 +699,8 @@ const SubmitButton = ({
 }) => {
     return (
         <Button
-            disabled={disabled}
-            tone={disabled ? 'level3' : 'cta1'}
+            disabled={false}
+            tone={disabled ? 'level2' : 'cta1'}
             data-testid="create-town-button"
             onClick={onSubmit}
         >
@@ -819,9 +791,9 @@ export const UploadImageField = ({
     const avoidScrollbarsStyle = useMemo(() => ({ contain: 'layout' }), [])
 
     return (
-        <Box display="inline-block" style={avoidScrollbarsStyle}>
+        <Box style={avoidScrollbarsStyle}>
             {isActive ? (
-                <LargeUploadImageTemplate<CreateSpaceFormV2SchemaType>
+                <UploadImageRenderer<CreateSpaceFormV2SchemaType>
                     canEdit={!transactionDetails.isTransacting}
                     type="spaceIcon"
                     formFieldName="spaceIconUrl"
@@ -837,20 +809,53 @@ export const UploadImageField = ({
                         },
                     }}
                     clearErrors={clearErrors}
-                    uploadIconSize="square_md"
-                    uploadIconPosition={imageSrc ? 'topRight' : 'absoluteCenter'}
-                    size={size ?? 'tabletToDesktop'}
                     onUploadImage={onUpload}
+                    onFileAdded={() => {
+                        clearErrors(['spaceIconFile'])
+                    }}
                 >
-                    <InteractiveTownsToken
-                        mintMode
-                        reduceMotion
-                        size={size ? 'sm' : _isTouch ? 'md' : 'xl'}
-                        spaceName={spaceName}
-                        address={transactionDetails.townAddress}
-                        imageSrc={imageSrc ?? undefined}
-                    />
-                </LargeUploadImageTemplate>
+                    {({ isUploading, onClick, inputField }) => {
+                        const error =
+                            formState.errors['spaceIconUrl'] || formState.errors['spaceIconFile']
+
+                        const color = error ? 'negative' : 'gray2'
+
+                        return (
+                            <Box>
+                                <InteractiveTownsToken
+                                    mintMode
+                                    reduceMotion
+                                    size={size === 'sm' ? 'sm' : _isTouch ? 'md' : 'xl'}
+                                    address={transactionDetails.townAddress}
+                                    imageSrc={imageSrc ?? undefined}
+                                    color={color}
+                                    onClick={() => {
+                                        onClick()
+                                    }}
+                                >
+                                    <Box
+                                        padding="sm"
+                                        color={color}
+                                        style={{ border: '2px solid' }}
+                                        borderRadius="full"
+                                    >
+                                        <Icon type="camera" size="square_md" color={color} />
+                                    </Box>
+                                </InteractiveTownsToken>
+                                <Box position="absolute">{inputField}</Box>
+                                {error ? (
+                                    <Box grow paddingTop="lg">
+                                        <Paragraph size="sm" color={color} textAlign="center">
+                                            {error.message}
+                                        </Paragraph>
+                                    </Box>
+                                ) : (
+                                    <></>
+                                )}
+                            </Box>
+                        )
+                    }}
+                </UploadImageRenderer>
             ) : (
                 <InteractiveTownsToken
                     mintMode

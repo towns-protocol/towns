@@ -26,6 +26,7 @@ export type UseOnImageChangeEventProps<T extends FieldValues> = {
         }
     }
     onUploadImage?: (args: UploadImageRequestConfig) => void
+    onFileAdded?: () => void
 } & Pick<UseFormReturn<T>, 'setError' | 'clearErrors' | 'formState'>
 
 export function useOnImageChangeEvent<T extends FieldValues>({
@@ -36,6 +37,7 @@ export function useOnImageChangeEvent<T extends FieldValues>({
     clearErrors,
     type,
     onUploadImage,
+    onFileAdded,
 }: UseOnImageChangeEventProps<T>) {
     const _resourceId = useMemo(() => resourceId, [resourceId])
     const {
@@ -59,6 +61,7 @@ export function useOnImageChangeEvent<T extends FieldValues>({
             const url = URL.createObjectURL(files[0])
             const { width, height } = await getImageDimensions(url)
             clearErrors?.([formFieldName])
+            onFileAdded?.()
 
             if (files[0].size > maxSize.max) {
                 setError?.(formFieldName, {
