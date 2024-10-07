@@ -8,7 +8,7 @@ export const truncateTextDMList = style([
         marginBottom: '-xs',
     }),
     {
-        paddingBottom: '-5px',
+        paddingBottom: '5px',
         WebkitLineClamp: 2,
         WebkitBoxOrient: 'vertical',
         textOverflow: 'ellipsis',
