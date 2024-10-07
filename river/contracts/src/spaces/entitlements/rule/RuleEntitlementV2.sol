@@ -117,7 +117,11 @@ contract RuleEntitlementV2 is
   ) external onlySpace {
     _removeRuleDataV1(roleId);
 
-    if (entitlementData.length == 0) return;
+    // We should never allow the setting of empty rule datas because it can cause the xchain
+    // architecture to be invoked when by default a user is not entitled.
+    if (entitlementData.length == 0) {
+      revert Entitlement__InvalidValue();
+    }
 
     // equivalent: abi.decode(entitlementData, (RuleDataV2))
     RuleDataV2 calldata data;
@@ -127,7 +131,11 @@ contract RuleEntitlementV2 is
       data := add(entitlementData.offset, calldataload(entitlementData.offset))
     }
 
-    if (data.operations.length == 0) return;
+    // We should never allow the setting of empty rule datas because it can cause the xchain
+    // architecture to be invoked when by default a user is not entitled.
+    if (data.operations.length == 0) {
+      revert Entitlement__InvalidValue();
+    }
 
     // Cache lengths of operations arrays to reduce state access cost
     uint256 operationsLength = data.operations.length;

@@ -75,6 +75,7 @@ import {
     encodeERC1155Params,
     convertRuleDataV2ToV1,
     XchainConfig,
+    UpdateRoleParams,
 } from '@river-build/web3'
 
 const log = dlog('csb:test:util')
@@ -943,6 +944,36 @@ export async function createRole(
 
     const { roleId, error: roleError } = await spaceDapp.waitForRoleCreated(spaceId, txn)
     return { roleId, error: roleError }
+}
+
+export interface UpdateRoleContext {
+    error: Error | undefined
+}
+
+export async function updateRole(
+    spaceDapp: ISpaceDapp,
+    provider: ethers.providers.Provider,
+    params: UpdateRoleParams,
+    signer: ethers.Signer,
+): Promise<UpdateRoleContext> {
+    let txn: ethers.ContractTransaction | undefined = undefined
+    let error: Error | undefined = undefined
+    if (useLegacySpaces()) {
+        throw new Error('updateRole is v2 only')
+    }
+    try {
+        txn = await spaceDapp.updateRole(params, signer)
+    } catch (err) {
+        error = spaceDapp.parseSpaceError(params.spaceNetworkId, err)
+        return { error }
+    }
+
+    const receipt = await provider.waitForTransaction(txn.hash)
+    if (receipt.status === 0) {
+        return { error: new Error('Transaction failed') }
+    }
+
+    return { error: undefined }
 }
 
 export interface CreateChannelContext {

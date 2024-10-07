@@ -75,6 +75,27 @@ contract RuleEntitlementV2Test is RuleEntitlementTest {
     assertEq(vm.getMappingLength(entitlement, bytes32(ENTITLEMENTS_SLOT)), 0);
   }
 
+  function test_setRuleEntitlement_revertOnEmptyRuleData() public {
+    test_upgradeToRuleV2();
+
+    vm.expectRevert(Entitlement__InvalidValue.selector);
+
+    vm.prank(space);
+
+    ruleEntitlementV2.setEntitlement(roleId, "");
+  }
+
+  function test_setRuleEntitlement_revertOnZeroLengthRuleData() public {
+    test_upgradeToRuleV2();
+
+    vm.expectRevert(Entitlement__InvalidValue.selector);
+
+    vm.prank(space);
+
+    RuleDataV2 memory ruleDataV2;
+    ruleEntitlementV2.setEntitlement(roleId, abi.encode(ruleDataV2));
+  }
+
   function test_removeRuleEntitlement() external override {
     test_setRuleEntitlement();
 

@@ -24,6 +24,7 @@ import {
     decodeERC1155Params,
     createOperationsTree,
     XchainConfig,
+    EncodedNoopRuleData,
 } from './entitlement'
 import { MOCK_ADDRESS, MOCK_ADDRESS_2, MOCK_ADDRESS_3 } from './Utils'
 import { zeroAddress } from 'viem'
@@ -987,6 +988,13 @@ test('encode/decode rule data v2', async () => {
     const operations = ruleDataToOperations(decodedDag)
     const newTree = postOrderArrayToTree(operations)
     expect(randomTree.opType === newTree.opType).toBeTruthy()
+})
+
+test('decode empty ruledata v2 to NoopRuleData v1', async () => {
+    const converted = convertRuleDataV2ToV1(decodeRuleDataV2(EncodedNoopRuleData))
+    expect(converted.operations).toHaveLength(0)
+    expect(converted.checkOperations).toHaveLength(0)
+    expect(converted.logicalOperations).toHaveLength(0)
 })
 
 // encode/decode should respect address equality semantics but may not maintain case
