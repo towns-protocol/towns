@@ -3,6 +3,7 @@ import React, { useEffect, useMemo } from 'react'
 import { Outlet } from 'react-router'
 import { matchPath, useLocation, useSearchParams } from 'react-router-dom'
 import { Channel, SpaceContextProvider, SpaceData, useTownsContext } from 'use-towns-client'
+import { makeSpaceStreamId } from '@river-build/sdk'
 import { PATHS } from 'routes'
 import { useStore } from 'store/store'
 import { useSetDocTitle } from 'hooks/useDocTitle'
@@ -267,5 +268,8 @@ export function getRouteParams(path?: string): RouteParams {
         channelId = matchWithSpaceChannelThread.params.channelId
         threadId = matchWithSpaceChannelThread.params.threadId
     }
+
+    spaceId = spaceId?.startsWith('0x') ? makeSpaceStreamId(spaceId) : spaceId
+
     return { spaceId, channelId, threadId }
 }
