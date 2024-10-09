@@ -275,6 +275,7 @@ export const SpaceInfo = () => {
                                     }
                                     // emit event to update the nft metadata
                                     refreshMetadataTransaction(spaceId, signer)
+                                    headlessToast.dismiss()
                                 }}
                             />
                         ),
