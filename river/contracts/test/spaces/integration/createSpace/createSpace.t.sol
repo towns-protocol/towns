@@ -134,14 +134,6 @@ contract IntegrationCreateSpace is
     spaceArchitect.createSpace(spaceInfo);
 
     MockERC721(mock).mint(user, 1);
-
-    // TODO: Add asserts for the entitlements
-    // assertTrue(
-    //   IEntitlementsManager(newSpace).isEntitledToSpace(
-    //     user,
-    //     Permissions.JoinSpace
-    //   )
-    // );
   }
 
   // =============================================================

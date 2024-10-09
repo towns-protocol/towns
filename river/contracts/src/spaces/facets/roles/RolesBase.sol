@@ -226,10 +226,16 @@ abstract contract RolesBase is IRolesBase {
 
     // loop through old entitlements and remove them
     for (uint256 i = 0; i < currentEntitlementsLen; ) {
-      EntitlementsManagerService.proxyRemoveRoleFromEntitlement(
-        address(currentEntitlements[i]),
-        roleId
-      );
+      // fetch entitlement data and if it's not empty, remove it
+      bytes memory entitlementData = IEntitlement(currentEntitlements[i])
+        .getEntitlementDataByRoleId(roleId);
+
+      if (entitlementData.length > 0) {
+        EntitlementsManagerService.proxyRemoveRoleFromEntitlement(
+          address(currentEntitlements[i]),
+          roleId
+        );
+      }
 
       unchecked {
         i++;
