@@ -140,6 +140,10 @@ export async function handleVerifications(args: {
                 }
                 break
             }
+            // refreshMetadata is a erc 4906 metadata update
+            case 'refreshMetadata': {
+                break
+            }
             case 'createRole':
             case 'removeRole':
             case 'updateRole':

@@ -1,15 +1,17 @@
 import { Permission } from '@river-build/web3'
-import React, { useCallback, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useSearchParams } from 'react-router-dom'
 import { useEvent } from 'react-use-event-hook'
 import {
+    TransactionStatus,
     useBannedWalletAddresses,
     useConnectivity,
     useContractSpaceInfo,
     useGetRootKeyFromLinkedWallet,
     useHasPermission,
     useIsSpaceOwner,
+    useRefreshMetadataTx,
     useRoleDetails,
     useSpaceData,
     useSpaceId,
@@ -20,6 +22,8 @@ import {
 } from 'use-towns-client'
 import { isValidStreamId } from '@river-build/sdk'
 import { BigNumberish } from 'ethers'
+import { useGetEmbeddedSigner } from '@towns/privy'
+import headlessToast from 'react-hot-toast/headless'
 import { UploadImageRequestConfig } from '@components/UploadImage/useOnImageChangeEvent'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { PanelButton } from '@components/Panel/PanelButton'
@@ -56,13 +60,18 @@ import { ContractInfoButtons } from '@components/Panel/ContractInfoButtons'
 import { Analytics } from 'hooks/useAnalytics'
 import { useConvertRuleDataToToken } from '@components/Tokens/hooks'
 import { Token } from '@components/Tokens/TokenSelector/tokenSchemas'
+import { StandardToast } from '@components/Notifications/StandardToast'
+import { popupToast } from '@components/Notifications/popupToast'
+import { PrivyWrapper } from 'privy/PrivyProvider'
 import { PublicTownPage } from './PublicTownPage/PublicTownPage'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
 
 export const SpaceInfoPanel = () => {
     return (
         <Panel label="Town Info">
-            <SpaceInfo />
+            <PrivyWrapper>
+                <SpaceInfo />
+            </PrivyWrapper>
         </Panel>
     )
 }
@@ -71,6 +80,8 @@ export const SpaceInfo = () => {
     const space = useSpaceData()
     const { isTouch } = useDevice()
     const [searchParams] = useSearchParams()
+    const { baseChain } = useEnvironment()
+
     // touch handles roles panel with modals
     const isRolesPanel = !isTouch && searchParams.get(CHANNEL_INFO_PARAMS.ROLES) != null
     const isSpaceSettingsPanel =
@@ -230,6 +241,13 @@ export const SpaceInfo = () => {
 
     const { uploadTownImageToStream } = useUploadAttachment()
     const isUploadingSpaceIconRef = useRef<boolean>(false)
+    const { refreshMetadataTransaction, transactionStatus } = useRefreshMetadataTx()
+    const { getSigner } = useGetEmbeddedSigner()
+
+    const [refreshMetadataToastId, setRefreshMetadataToastId] = useState<string | undefined>(
+        undefined,
+    )
+
     const onUploadSpaceIcon = useCallback(
         async ({ imageUrl, file, id: spaceId, type, setProgress }: UploadImageRequestConfig) => {
             if (isUploadingSpaceIconRef.current) {
@@ -241,13 +259,87 @@ export const SpaceInfo = () => {
                 try {
                     // upload the space icon
                     await uploadTownImageToStream(spaceId, file, setProgress)
+                    const toastId = popupToast(
+                        ({ toast }) => (
+                            <StandardToast
+                                message="Would you like to publish the space image to OpenSea?"
+                                toast={toast}
+                                ctaColor="positive"
+                                icon="openSeaPlain"
+                                iconColor="gray2"
+                                cta="Publish"
+                                onCtaClick={async () => {
+                                    const signer = await getSigner()
+                                    if (!signer) {
+                                        return
+                                    }
+                                    // emit event to update the nft metadata
+                                    refreshMetadataTransaction(spaceId, signer)
+                                }}
+                            />
+                        ),
+                        { duration: Infinity },
+                    )
+                    setRefreshMetadataToastId(toastId)
                 } finally {
                     isUploadingSpaceIconRef.current = false
                 }
             }
         },
-        [casablancaClient, uploadTownImageToStream],
+        [casablancaClient, getSigner, refreshMetadataTransaction, uploadTownImageToStream],
     )
+
+    useEffect(() => {
+        if (!refreshMetadataToastId) {
+            return
+        }
+        if (transactionStatus === TransactionStatus.Success) {
+            headlessToast.dismiss(refreshMetadataToastId)
+            popupToast(({ toast }) => (
+                <StandardToast.Success
+                    message="Your space image has been published to OpenSea"
+                    cta="View on OpenSea"
+                    toast={toast}
+                    onCtaClick={() => {
+                        window.open(
+                            `${openSeaAssetUrl(baseChain.id, address)}`,
+                            '_blank',
+                            'noopener,noreferrer',
+                        )
+                    }}
+                />
+            ))
+        }
+        if (transactionStatus === TransactionStatus.Failed) {
+            headlessToast.dismiss(refreshMetadataToastId)
+            const toastId = popupToast(({ toast }) => (
+                <StandardToast.Error
+                    message="Something went wrong while publishing your space image to OpenSea"
+                    toast={toast}
+                    cta={space?.id ? 'Try again' : undefined}
+                    onCtaClick={async () => {
+                        if (!space?.id) {
+                            return
+                        }
+                        const signer = await getSigner()
+                        if (!signer) {
+                            return
+                        }
+                        refreshMetadataTransaction(space.id, signer)
+                    }}
+                />
+            ))
+            setRefreshMetadataToastId(toastId)
+        }
+    }, [
+        transactionStatus,
+        refreshMetadataToastId,
+        getSigner,
+        refreshMetadataTransaction,
+        space?.id,
+        baseChain.id,
+        address,
+    ])
 
     return (
         <>

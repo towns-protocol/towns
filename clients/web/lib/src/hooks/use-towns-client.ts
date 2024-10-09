@@ -245,6 +245,13 @@ interface TownsClientImpl {
     setHighPriorityStreams: (streamIds: string[]) => Promise<void>
     setUserProfileImage: (chunkedMedia: PlainMessage<ChunkedMedia>) => Promise<void>
     setUserBio: (bio: UserBio) => Promise<void>
+    refreshMetadataTransaction: (
+        spaceId: string,
+        signer: TSigner,
+    ) => Promise<TransactionContext<void> | undefined>
+    waitForRefreshMetadataTransaction: (
+        context: TransactionContext<void> | undefined,
+    ) => Promise<TransactionContext<void> | undefined>
     updateSpaceInfoTransaction: (
         spaceId: string,
         name: string,
@@ -435,6 +442,10 @@ export function useTownsClient(): TownsClientImpl {
         transferAsset: useWithCatch(clientSingleton?.transferAsset),
         waitForTransferAssetTransaction: useWithCatch(
             clientSingleton?.waitForTransferAssetTransaction,
+        ),
+        refreshMetadataTransaction: useWithCatch(clientSingleton?.refreshMetadataTransaction),
+        waitForRefreshMetadataTransaction: useWithCatch(
+            clientSingleton?.waitForRefreshMetadataTransaction,
         ),
     }
 }

@@ -1192,6 +1192,46 @@ export class TownsClient
         })
     }
 
+    public async refreshMetadataTransaction(
+        spaceNetworkId: string,
+        signer: ethers.Signer | undefined,
+    ): Promise<TransactionContext<void>> {
+        if (!signer) {
+            throw new SignerUndefinedError()
+        }
+        let transaction: TransactionOrUserOperation | undefined = undefined
+        let error: Error | undefined = undefined
+        const continueStoreTx = this.blockchainTransactionStore.begin({
+            type: BlockchainTransactionType.RefreshMetadata,
+            data: {
+                spaceStreamId: spaceNetworkId,
+            },
+        })
+        try {
+            const args = [spaceNetworkId, signer] as const
+            if (this.isAccountAbstractionEnabled()) {
+                transaction = await this.userOps?.refreshMetadata([...args])
+            } else {
+                transaction = await this.spaceDapp.refreshMetadata(...args)
+            }
+            this.log(`[refreshMetadataTransaction] transaction created` /*, transaction*/)
+        } catch (err) {
+            error = this.spaceDapp.parseSpaceError(spaceNetworkId, err)
+        }
+
+        continueStoreTx({
+            hashOrUserOpHash: getTransactionHashOrUserOpHash(transaction),
+            transaction,
+            error,
+        })
+
+        return createTransactionContext({
+            transaction,
+            status: transaction ? TransactionStatus.Pending : TransactionStatus.Failed,
+            error,
+        })
+    }
+
     /**
      * This function is used to edit the membership settings of a space.
      * With account abstraciton enabled, it consists of multiple transactions that are combined into a single user operation.
@@ -1490,6 +1530,14 @@ export class TownsClient
     ): Promise<TransactionContext<void>> {
         const txnContext = await this._waitForBlockchainTransaction(context)
         logTxnResult('waitForSetChannelPermissionOverridesTransaction', txnContext)
+        return txnContext
+    }
+
+    public async waitForRefreshMetadataTransaction(
+        context: TransactionContext<void> | undefined,
+    ): Promise<TransactionContext<void>> {
+        const txnContext = await this._waitForBlockchainTransaction(context)
+        logTxnResult('waitForRefreshMetadataTransaction', txnContext)
         return txnContext
     }
 

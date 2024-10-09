@@ -147,6 +147,7 @@ export { Membership, MessageType } from './types/towns-types'
 export { toRoomIdentifier } from './types/room-identifier'
 export { toMessageInfo } from './hooks/use-dm-latest-message'
 export { useStreamMetadataUpdater } from './hooks/use-stream-metadata-updater'
+export { useRefreshMetadataTx } from './hooks/use-refresh-metadata'
 export { useImageStore } from './store/use-image-store'
 export * from './types/timeline-types'
 export {

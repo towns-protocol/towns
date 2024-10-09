@@ -205,6 +205,7 @@ export const FunctionName = {
     // Membership.sol
     setMembershipLimit: 'setMembershipLimit',
     setMembershipPrice: 'setMembershipPrice',
+    refreshMetadata: 'refreshMetadata',
 } as const
 
 export type FunctionName = (typeof FunctionName)[keyof typeof FunctionName]
@@ -249,6 +250,7 @@ const FunctionHash = {
     createSpace_linkWallet: 'createSpace_linkWallet',
     joinSpace_linkWallet: 'joinSpace_linkWallet',
     editMembershipSettings: 'editMembershipSettings',
+    refreshMetadata: 'refreshMetadata',
 } as const
 
 type FunctionHash = (typeof FunctionHash)[keyof typeof FunctionHash]

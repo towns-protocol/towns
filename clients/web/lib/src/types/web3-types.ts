@@ -56,6 +56,7 @@ export enum BlockchainTransactionType {
     EditSpaceMembership = 'editSpaceMembership',
     PrepayMembership = 'prepayMembership',
     TransferAsset = 'transferAsset',
+    RefreshMetadata = 'refreshMetadata',
 }
 
 export type BlockchainTransaction = {

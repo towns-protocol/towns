@@ -77,6 +77,7 @@ export const FunctionHash = {
     unsupported: 'unsupported',
     transferTokens: 'transferTokens',
     transferEth: 'transferEth',
+    refreshMetadata: 'refreshMetadata',
 } as const
 
 export type FunctionHash = keyof typeof FunctionHash

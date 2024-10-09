@@ -1769,6 +1769,26 @@ export class UserOps {
         })
     }
 
+    public async refreshMetadata(args: Parameters<SpaceDapp['refreshMetadata']>) {
+        const [spaceId, signer] = args
+        if (!this.spaceDapp) {
+            throw new Error('spaceDapp is required')
+        }
+        const space = this.spaceDapp.getSpace(spaceId)
+        if (!space) {
+            throw new Error(`Space with spaceId "${spaceId}" is not found.`)
+        }
+        const callData = space.Membership.metadata.encodeFunctionData('refreshMetadata', [])
+
+        return this.sendUserOp({
+            toAddress: space.Address,
+            callData,
+            signer,
+            spaceId,
+            functionHashForPaymasterProxy: 'refreshMetadata',
+        })
+    }
+
     public async getBuilder(args: { signer: ethers.Signer }) {
         if (!this.builder) {
             const { signer } = args
