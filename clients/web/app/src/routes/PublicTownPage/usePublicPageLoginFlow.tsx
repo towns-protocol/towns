@@ -101,7 +101,12 @@ export function usePublicPageLoginFlow() {
                     }),
                 )
 
-                if (!result) {
+                if (result) {
+                    // success
+                    Analytics.getInstance().track('joined town', {
+                        spaceId,
+                    })
+                } else {
                     end()
                     popupToast(({ toast }) => (
                         <StandardToast.Error
