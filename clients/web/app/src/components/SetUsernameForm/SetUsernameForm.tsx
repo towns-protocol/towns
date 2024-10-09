@@ -49,13 +49,9 @@ export const SetUsernameForm = (props: Props & { onHide: () => void }) => {
                 // If we succeed, we'll be redirected to the space. If not, we'll stay on this page.
                 try {
                     await setUsername(spaceData.id, value)
-                    Analytics.getInstance().track(
-                        'set username when joining town',
-                        undefined,
-                        () => {
-                            console.log('[analytics] set username when joining town')
-                        },
-                    )
+                    Analytics.getInstance().track('set username when joining town', {
+                        spaceId: spaceData.id,
+                    })
                 } catch (e) {
                     setRequestInFlight(false)
                 }

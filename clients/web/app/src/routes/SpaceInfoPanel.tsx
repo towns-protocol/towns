@@ -207,8 +207,8 @@ export const SpaceInfo = () => {
         // clean up
         setOptimisticSpaceInitialized(spaceID, false)
 
-        Analytics.getInstance().track('confirmed leave town', undefined, () => {
-            console.log('[analytics] confirmed leave town')
+        Analytics.getInstance().track('confirmed leave town', {
+            spaceId: spaceID,
         })
 
         setTimeout(() => {
