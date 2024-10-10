@@ -1,6 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 import {
     Client as StreamsClient,
     RiverConfig,
@@ -10,7 +7,7 @@ import {
 } from '@river-build/sdk'
 import { type ExportedDevice } from '@river-build/encryption'
 import { LocalhostWeb3Provider, SpaceDapp } from '@river-build/web3'
-import { dlogger, shortenHexString } from '@river-build/dlog'
+import { shortenHexString } from '@river-build/dlog'
 import { Wallet } from 'ethers'
 import { PlainMessage } from '@bufbuild/protobuf'
 import { ChannelMessage_Post_Attachment, ChannelMessage_Post_Mention } from '@river-build/proto'
@@ -18,7 +15,7 @@ import { waitFor } from './waitFor'
 import { IStorage } from './storage'
 import { makeHttp2StreamRpcClient } from './rpc-http2'
 import { sha256 } from 'ethers/lib/utils'
-const logger = dlogger('stress:stressClient')
+import { getLogger } from './logger'
 
 export async function makeStressClient(
     config: RiverConfig,
@@ -28,7 +25,11 @@ export async function makeStressClient(
 ) {
     const bot = new Bot(inWallet, config)
     const storageKey = `stressclient_${bot.userId}_${config.environmentId}`
-
+    const logger = getLogger('stress:makeStressClient', {
+        clientIndex,
+        userId: bot.userId,
+        storageKey,
+    })
     let device: ExportedDevice | undefined
     const rawDevice = await globalPersistedStore?.get(storageKey).catch(() => undefined)
     if (rawDevice) {
@@ -68,6 +69,8 @@ export async function makeStressClient(
 }
 
 export class StressClient {
+    logger: ReturnType<typeof getLogger>
+
     constructor(
         public config: RiverConfig,
         public clientIndex: number,
@@ -80,7 +83,7 @@ export class StressClient {
         public globalPersistedStore: IStorage | undefined,
         public storageKey: string,
     ) {
-        logger.log('StressClient', {
+        this.logger = getLogger('stress:stressClient', {
             clientIndex,
             userId,
             logId: this.logId,
@@ -174,9 +177,9 @@ export class StressClient {
                     this.storageKey,
                     JSON.stringify(device, null, 2),
                 )
-                logger.log(`Device exported to ${this.storageKey}`)
+                this.logger.info({ storageKey: this.storageKey }, 'device exported')
             } catch (e) {
-                logger.error('Failed to export device', e)
+                this.logger.error(e, 'failed to export device')
             }
         }
         return device

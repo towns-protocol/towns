@@ -1,7 +1,7 @@
-import { dlogger } from '@river-build/dlog'
 import Redis from 'ioredis'
+import { getLogger } from './logger'
 
-const logger = dlogger('stress:storage')
+const logger = getLogger('stress:storage')
 
 export interface IStorage {
     get(key: string): Promise<string | null>
@@ -21,7 +21,7 @@ export class RedisStorage implements IStorage {
             const r = await this.client.get(key)
             return r
         } catch (error) {
-            logger.error(`Failed to get key ${key}:`, error)
+            logger.error({ error, key }, `Failed to get key`)
             return null
         }
     }
@@ -29,14 +29,14 @@ export class RedisStorage implements IStorage {
         try {
             await this.client.set(key, value)
         } catch (error) {
-            logger.error(`Failed to set key ${key} with value ${value}:`, error)
+            logger.error({ error, key, value }, `Failed to set key/value`)
         }
     }
     async remove(key: string): Promise<void> {
         try {
             await this.client.del(key)
         } catch (error) {
-            logger.error(`Failed to remove key ${key}:`, error)
+            logger.error({ error, key }, `Failed to remove key`)
         }
     }
 
@@ -44,7 +44,7 @@ export class RedisStorage implements IStorage {
         try {
             await this.client.quit()
         } catch (error) {
-            logger.error('Failed to close Redis connection:', error)
+            logger.error({ error }, 'Failed to close Redis connection')
         }
     }
 }

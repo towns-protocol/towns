@@ -1,16 +1,15 @@
 import { StressClient } from '../../utils/stressClient'
 import { ChatConfig } from '../common/types'
-import { dlogger } from '@river-build/dlog'
 import { getRandomEmoji } from '../../utils/emoji'
 import { channelMessagePostWhere } from '../../utils/timeline'
 
 export async function joinSlowChat(client: StressClient, cfg: ChatConfig) {
-    const logger = dlogger(`stress:joinSlowChat:${client.logId}}`)
+    const logger = client.logger.child({ name: 'joinSlowChat' })
     // is user a member of all the channels?
     // is user a member of the space?
     // does user exist on the stream node?
 
-    logger.log('joinChat', client.userId)
+    logger.info('start joinSlowChat')
 
     // wait for the user to have a membership nft
     await client.waitFor(
@@ -21,7 +20,7 @@ export async function joinSlowChat(client: StressClient, cfg: ChatConfig) {
         },
     )
 
-    logger.log(`start client #${client.clientIndex}`)
+    logger.info('start client')
 
     const announceChannelId = cfg.announceChannelId
     // start up the client
@@ -41,9 +40,7 @@ export async function joinSlowChat(client: StressClient, cfg: ChatConfig) {
                         v.remoteEvent?.event.payload.value?.content.case === 'message',
                 )
                 const decryptedCount = cms.filter((v) => v.decryptedContent).length
-                logger.log(
-                    `waiting for root message #${client.clientIndex} ${decryptedCount}/${cms.length}`,
-                )
+                logger.info({ decryptedCount, total: cms.length }, 'waiting for root message')
             }
             count++
             return announceChannel.view.timeline.find(
@@ -57,12 +54,12 @@ export async function joinSlowChat(client: StressClient, cfg: ChatConfig) {
         cfg.kickoffMessageEventId = message.hashStr
     }
 
-    logger.log('emoji it')
+    logger.info('emoji it')
 
     // emoji it
     await client.sendReaction(announceChannelId, message.hashStr, getRandomEmoji())
 
-    logger.log('joined')
+    logger.info('joined')
 }
 
 // cruft we need to do for process leader

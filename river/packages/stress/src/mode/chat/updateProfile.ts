@@ -1,10 +1,10 @@
-import { dlogger } from '@river-build/dlog'
 import { makeBotName } from '../../utils/botName'
 import { StressClient } from '../../utils/stressClient'
 import { ChatConfig } from '../common/types'
+import { getLogger } from '../../utils/logger'
 
 export async function updateProfile(client: StressClient, cfg: ChatConfig) {
-    const logger = dlogger(`stress:updateProfile:${client.logId}`)
+    const logger = getLogger('stress:updateProfile', { logId: client.logId })
     // set the name and profile picture in the space
     const spaceStream = await client.streamsClient.waitForStream(cfg.spaceId)
     const existingName = spaceStream.view?.membershipContent.memberMetadata.usernames.info(
@@ -13,7 +13,7 @@ export async function updateProfile(client: StressClient, cfg: ChatConfig) {
 
     if (existingName.username == '' && !existingName.usernameEncrypted) {
         const name = makeBotName(client.clientIndex)
-        logger.log('updating profile to: ' + name)
+        logger.info({ nameToUpdate: name }, 'updating profile')
         await client.streamsClient.setUsername(cfg.spaceId, name)
     }
 }

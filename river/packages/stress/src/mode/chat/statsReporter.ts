@@ -1,8 +1,8 @@
-import { dlogger } from '@river-build/dlog'
 import type { StressClient } from '../../utils/stressClient'
 import { ChatConfig } from '../common/types'
+import { getLogger } from '../../utils/logger'
 
-const logger = dlogger('stress:statsReporter')
+const logger = getLogger('stress:statsReporter')
 
 export function statsReporter(rootClient: StressClient, chatConfig: ChatConfig) {
     let canceled = false
@@ -37,7 +37,7 @@ export function statsReporter(rootClient: StressClient, chatConfig: ChatConfig) 
     }, 5000)
 
     return () => {
-        logger.info('canceled')
+        logger.debug('stat reporter canceled')
         clearInterval(interval)
         canceled = true
     }

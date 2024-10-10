@@ -1,4 +1,3 @@
-import { dlogger } from '@river-build/dlog'
 import os from 'os'
 
 export function getSystemInfo() {
@@ -9,8 +8,4 @@ export function getSystemInfo() {
         CPUModel: `${os.cpus()[0].model}`,
         CPUSpeed: `${os.cpus()[0].speed} MHz`,
     }
-}
-
-export function printSystemInfo(logger: ReturnType<typeof dlogger>) {
-    logger.log('System Info:', getSystemInfo())
 }

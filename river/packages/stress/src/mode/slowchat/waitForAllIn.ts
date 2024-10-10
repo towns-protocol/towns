@@ -1,11 +1,12 @@
-import { check, dlogger } from '@river-build/dlog'
+import { check } from '@river-build/dlog'
 import type { StressClient } from '../../utils/stressClient'
 import { ChatConfig } from '../common/types'
 import { isDefined } from '@river-build/sdk'
+import { getLogger } from '../../utils/logger'
 
 export async function waitForAllIn(rootClient: StressClient, chatConfig: ChatConfig) {
     check(isDefined(chatConfig.kickoffMessageEventId), 'kickoffMessageEventId')
-    const logger = dlogger(`stress:statsReporter:${rootClient.logId}`)
+    const logger = getLogger('stress:waitForAllIn', { logId: rootClient.logId })
     const lastReactionCount = 0
     const timeout = 600000 // 10 minutes
     const startTime = Date.now()
@@ -21,7 +22,10 @@ export async function waitForAllIn(rootClient: StressClient, chatConfig: ChatCon
             chatConfig.kickoffMessageEventId,
         )
         if (lastReactionCount !== reactionCount) {
-            logger.log(`waiting for allin: ${reactionCount}/${chatConfig.clientsCount}`)
+            logger.info(
+                { reactionCount, clientsCount: chatConfig.clientsCount },
+                'waiting for allin',
+            )
         }
         if (reactionCount >= chatConfig.clientsCount) {
             break

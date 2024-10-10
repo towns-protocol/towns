@@ -2,13 +2,12 @@ import { StressClient } from '../../utils/stressClient'
 import { getSystemInfo } from '../../utils/systemInfo'
 import { BigNumber, Wallet } from 'ethers'
 import { ChatConfig } from '../common/types'
-import { check, dlogger } from '@river-build/dlog'
+import { check } from '@river-build/dlog'
 import { makeCodeBlock } from '../../utils/messages'
 
-const logger = dlogger('stress:kickoffChat')
-
 export async function kickoffChat(rootClient: StressClient, cfg: ChatConfig) {
-    logger.log('kickoffChat', rootClient.userId)
+    const logger = rootClient.logger.child({ name: 'kickoffChat' })
+    logger.info('start kickoffChat')
     check(rootClient.clientIndex === 0, 'rootClient.clientIndex === 0')
     const globalRunIndex = parseInt(
         (await cfg.globalPersistedStore?.get('stress_global_run_index').catch(() => undefined)) ??
@@ -19,19 +18,19 @@ export async function kickoffChat(rootClient: StressClient, cfg: ChatConfig) {
     const { spaceId, sessionId } = cfg
     const balance = await rootClient.baseProvider.wallet.getBalance()
     const announceChannelId = cfg.announceChannelId
-    logger.log('start client')
+    logger.debug('start client')
     await startRootClient(rootClient, balance, spaceId, announceChannelId)
 
     await rootClient.streamsClient.waitForStream(announceChannelId)
 
-    logger.log('share keys')
+    logger.debug('share keys')
     const shareKeysStart = Date.now()
     await rootClient.streamsClient.cryptoBackend?.ensureOutboundSession(announceChannelId, {
         awaitInitialShareSession: true,
     })
     const shareKeysDuration = Date.now() - shareKeysStart
 
-    logger.log('send message')
+    logger.debug('send message')
     const { eventId: kickoffMessageEventId } = await rootClient.sendMessage(
         announceChannelId,
         `hello, we're starting the stress test now!, containers: ${cfg.containerCount} ppc: ${cfg.processesPerContainer} clients: ${cfg.clientsCount} randomNewClients: ${cfg.randomClients.length} sessionId: ${sessionId}`,
@@ -52,7 +51,7 @@ export async function kickoffChat(rootClient: StressClient, cfg: ChatConfig) {
         globalRunIndex,
     }
 
-    logger.log('start thread')
+    logger.debug('start thread')
     await rootClient.sendMessage(
         announceChannelId,
         `System Info: ${makeCodeBlock(getSystemInfo())} Initial Stats: ${makeCodeBlock(
@@ -66,20 +65,20 @@ export async function kickoffChat(rootClient: StressClient, cfg: ChatConfig) {
             spaceId,
             wallet.address,
         )
-        logger.log('minting membership for', i, wallet.address, 'has', hasSpaceMembership)
+        logger.debug({ i, address: wallet.address, hasSpaceMembership }, 'minting membership')
         if (!hasSpaceMembership) {
             const result = await rootClient.spaceDapp.joinSpace(
                 spaceId,
                 wallet.address,
                 rootClient.baseProvider.wallet,
             )
-            logger.log('minted membership', result)
+            logger.debug(result, 'minted membership')
             // sleep for > 1 second
             await new Promise((resolve) => setTimeout(resolve, 1100))
         }
     }
 
-    logger.log('mint random memberships')
+    logger.debug('mint random memberships')
     for (let i = 0; i < cfg.randomClients.length; i++) {
         const client = cfg.randomClients[i]
         await mintMembershipForWallet(client.baseProvider.wallet, i)
@@ -87,12 +86,12 @@ export async function kickoffChat(rootClient: StressClient, cfg: ChatConfig) {
 
     // loop over all the clients, mint memberships for them if they're not members
     // via spaceDapp.hasSpaceMembership
-    logger.log('mint memberships')
+    logger.debug('mint memberships')
     for (let i = 0; i < cfg.allWallets.length; i++) {
         const wallet = cfg.allWallets[i]
         await mintMembershipForWallet(wallet, i)
     }
-    logger.log('done')
+    logger.info('kickoffChat done')
 }
 
 // cruft we need to do for root user

@@ -1,5 +1,6 @@
 import { build } from "esbuild";
 import { wasmLoader } from "esbuild-plugin-wasm";
+import esbuildPluginPino from "esbuild-plugin-pino";
 
 build({
   entryPoints: ["./src/start.ts", "./src/demo.ts"],
@@ -10,7 +11,8 @@ build({
   format: "cjs",
   outdir: "dist",
   outExtension: { ".js": ".cjs" },
-  plugins: [wasmLoader()],
+  plugins: [wasmLoader(), esbuildPluginPino({ transports: ["pino-pretty"] })],
+
   ignoreAnnotations: true,
   assetNames: "[name]",
   loader: {

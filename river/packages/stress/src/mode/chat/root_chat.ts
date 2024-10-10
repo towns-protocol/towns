@@ -1,4 +1,4 @@
-import { check, dlogger } from '@river-build/dlog'
+import { check } from '@river-build/dlog'
 import { promises as fs } from 'node:fs'
 import {
     RiverConfig,
@@ -14,6 +14,7 @@ import { chitChat } from './chitChat'
 import { sumarizeChat } from './sumarizeChat'
 import { statsReporter } from './statsReporter'
 import { getChatConfig } from '../common/common'
+import { getLogger } from '../../utils/logger'
 
 /*
  * Starts a chat stress test.
@@ -25,10 +26,9 @@ export async function startStressChat(opts: {
     processIndex: number
     rootWallet: Wallet
 }) {
-    const logger = dlogger(`stress:run:${opts.processIndex}`)
-    logger.log('startStressChat')
+    const logger = getLogger('stress:run')
     const chatConfig = getChatConfig(opts)
-    logger.log('make clients')
+    logger.info({ chatConfig }, 'make clients')
     const clients = await Promise.all(
         chatConfig.localClients.wallets.map((wallet, i) =>
             makeStressClient(
@@ -70,7 +70,7 @@ export async function startStressChat(opts: {
     const PARALLEL_UPDATES = 4
     const errors: unknown[] = []
 
-    logger.log('kickoffChat')
+    logger.info('kickoffChat')
     clients.push(...chatConfig.randomClients)
 
     for (let i = 0; i < clients.length; i += PARALLEL_UPDATES) {
@@ -78,13 +78,14 @@ export async function startStressChat(opts: {
         const results = await Promise.allSettled(span.map((client) => joinChat(client, chatConfig)))
         results.forEach((r, index) => {
             if (r.status === 'rejected') {
-                logger.error(`${span[index].logId} error calling joinChat`, r.reason)
+                const client = span[index]
+                client.logger.error(r, 'error joinChat')
                 errors.push(r.reason)
             }
         })
     }
 
-    logger.log('updateProfile')
+    logger.info('updateProfile')
     for (let i = 0; i < clients.length; i += PARALLEL_UPDATES) {
         const span = clients.slice(i, i + PARALLEL_UPDATES)
         const results = await Promise.allSettled(
@@ -92,31 +93,33 @@ export async function startStressChat(opts: {
         )
         results.forEach((r, index) => {
             if (r.status === 'rejected') {
-                logger.error(`${span[index].logId} error calling updateProfile`, r.reason)
+                const client = span[index]
+                client.logger.error(r, 'error updateProfile')
                 errors.push(r.reason)
             }
         })
     }
 
-    logger.log('chitChat')
+    logger.info('chitChat')
     const results = await Promise.allSettled(clients.map((client) => chitChat(client, chatConfig)))
     results.forEach((r, index) => {
         if (r.status === 'rejected') {
-            logger.error(`${clients[index].logId} error calling chitChat`, r.reason)
+            const client = clients[index]
+            client.logger.error(r, 'error chitChat')
             errors.push(r.reason)
         }
     })
 
-    logger.log('sumarizeChat')
+    logger.info('sumarizeChat')
     const summary = await sumarizeChat(clients, chatConfig, errors)
 
-    logger.log('done', { summary })
+    logger.info({ summary }, 'done')
 
     cancelStatsReporting?.()
 
     for (let i = 0; i < clients.length; i += 1) {
         const client = clients[i]
-        logger.log(`stopping ${client.logId}`)
+        logger.info(`stopping ${client.logId}`)
         await client.stop()
     }
 
@@ -131,8 +134,8 @@ export async function setupChat(opts: {
     makeAnnounceChannel?: boolean
     numChannels?: number
 }) {
-    const logger = dlogger(`stress:setupChat`)
-    logger.log('setupChat')
+    const logger = getLogger('stress:setupChat')
+    logger.info('setupChat')
     const client = await makeStressClient(opts.config, 0, opts.rootWallet, undefined)
     // make a space
     const { spaceId } = await client.createSpace('stress test space')
@@ -152,11 +155,11 @@ export async function setupChat(opts: {
         `ANNOUNCE_CHANNEL_ID=${announceChannelId}`,
         `CHANNEL_IDS=${channelIds.join(',')}`,
     ]
-    logger.log(envVars.join('\n'))
+    logger.info(envVars.join('\n'))
     await fs.writeFile('scripts/.env.localhost_chat', envVars.join('\n'))
-    logger.log('join at', `http://localhost:3000/t/${spaceId}/?invite`)
-    logger.log('or', `http://localhost:3001/spaces/${spaceId}/?invite`)
-    logger.log('done')
+    logger.info('join at', `http://localhost:3000/t/${spaceId}/?invite`)
+    logger.info('or', `http://localhost:3001/spaces/${spaceId}/?invite`)
+    logger.info('done')
 
     return {
         spaceId,

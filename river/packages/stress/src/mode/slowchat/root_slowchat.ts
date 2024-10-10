@@ -1,12 +1,12 @@
 import { RiverConfig } from '@river-build/sdk'
 import { Wallet } from 'ethers'
-import { dlogger } from '@river-build/dlog'
 import { getChatConfig } from '../common/common'
 import { makeStressClient } from '../../utils/stressClient'
 import { kickoffChat } from '../chat/kickoffChat'
 import { slowChat } from './slowChat'
 import { waitForAllIn } from './waitForAllIn'
 import { joinSlowChat } from './joinSlowChat'
+import { getLogger } from '../../utils/logger'
 
 /*
  * Starts a slowchat stress test.
@@ -18,8 +18,8 @@ export async function startStressSlowChat(opts: {
     processIndex: number
     rootWallet: Wallet
 }) {
-    const logger = dlogger(`stress:run:${opts.processIndex}`)
-    logger.log('startStressSlowChat')
+    const logger = getLogger(`stress:run`, { processIndex: opts.processIndex })
+    logger.info('startStressSlowChat')
     const chatConfig = getChatConfig(opts)
 
     const clients = await Promise.all(
@@ -52,11 +52,11 @@ export async function startStressSlowChat(opts: {
         }
     })
 
-    logger.log('done')
+    logger.info('done')
 
     for (let i = 0; i < clients.length; i += 1) {
         const client = clients[i]
-        logger.log(`stopping ${client.logId}`)
+        logger.info({ logId: client.logId }, 'stopping')
         await client.stop()
     }
 

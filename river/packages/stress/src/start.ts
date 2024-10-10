@@ -1,27 +1,31 @@
 import 'fake-indexeddb/auto' // used to mock indexdb in dexie, don't remove
-import { check, dlogger } from '@river-build/dlog'
+import { check } from '@river-build/dlog'
 import { makeRiverConfig } from '@river-build/sdk'
 import { exit } from 'process'
 import { Wallet } from 'ethers'
 import { isSet } from './utils/expect'
 import { setupChat, startStressChat } from './mode/chat/root_chat'
 import { startStressSlowChat } from './mode/slowchat/root_slowchat'
+import { getLogger } from './utils/logger'
 
 check(isSet(process.env.RIVER_ENV), 'process.env.RIVER_ENV')
 check(isSet(process.env.PROCESS_INDEX), 'process.env.PROCESS_INDEX')
 const processIndex = parseInt(process.env.PROCESS_INDEX)
 
 const config = makeRiverConfig(process.env.RIVER_ENV)
-const logger = dlogger(`stress:run:${processIndex}`)
-logger.log('======================= run =======================')
+const logger = getLogger(`stress:run`, { processIndex })
+logger.info('======================= run =======================')
 
 if (processIndex === 0) {
-    logger.log('env', process.env)
-    logger.log('config', {
-        environmentId: config.environmentId,
-        base: { rpcUrl: config.base.rpcUrl },
-        river: { rpcUrl: config.river.rpcUrl },
-    })
+    logger.info(process.env, 'env')
+    logger.info(
+        {
+            environmentId: config.environmentId,
+            base: { rpcUrl: config.base.rpcUrl },
+            river: { rpcUrl: config.river.rpcUrl },
+        },
+        'config',
+    )
 }
 
 function getRootWallet(): { wallet: Wallet; mnemonic: string } {
