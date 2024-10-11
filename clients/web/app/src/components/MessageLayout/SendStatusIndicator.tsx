@@ -54,6 +54,7 @@ export const SendStatusIndicator = (props: { status: SendStatus }) => {
             position="bottomRight"
             initial={animated}
             animate={animated}
+            data-testid="send-status-indicator"
             transition={{ duration: 1 }}
         >
             <Icon

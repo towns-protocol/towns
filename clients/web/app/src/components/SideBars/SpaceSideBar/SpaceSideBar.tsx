@@ -225,6 +225,7 @@ export const SpaceSideBar = (props: Props) => {
                                     <SpaceSideBarSectionHeader
                                         label="Unreads"
                                         key="unreads"
+                                        dataTestId="unreads-header"
                                         hidden={unreadChannels.length === 0}
                                     />
                                     <OffscreenMarker
@@ -262,6 +263,7 @@ export const SpaceSideBar = (props: Props) => {
                                                     <IconButton
                                                         icon="plus"
                                                         tooltip="New channel"
+                                                        data-testid="create-channel-plus-button"
                                                         tooltipOptions={{ immediate: true }}
                                                         onClick={onShowCreateChannel}
                                                     />
@@ -280,6 +282,7 @@ export const SpaceSideBar = (props: Props) => {
                                                 icon="plus"
                                                 id="newChannel"
                                                 label="Create channel"
+                                                data-testid="create-channel-card-button"
                                                 onClick={onShowCreateChannel}
                                             />
                                         </SpaceSideBarListItem>

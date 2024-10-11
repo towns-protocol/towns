@@ -82,6 +82,7 @@ export const EmojiPickerButton = (props: Props) => {
                         placement: 'vertical',
                         immediate: true,
                     }}
+                    data-testid="emoji-picker-button"
                 >
                     <IconButton icon="emojiAdd" {...triggerProps} size={size} />
                 </Container>

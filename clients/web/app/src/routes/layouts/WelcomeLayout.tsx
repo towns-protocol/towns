@@ -10,7 +10,12 @@ export const WelcomeLayout = (props: { children?: React.ReactNode; debugText?: s
     return (
         <>
             <Stack centerContent scroll height="100vh" background="level1" width="100vw">
-                <Stack padding justifyContent="end" alignItems="center">
+                <Stack
+                    padding
+                    justifyContent="end"
+                    alignItems="center"
+                    data-testid="towns-welcome-logo"
+                >
                     <TransitionLogo />
                 </Stack>
                 <Stack padding>

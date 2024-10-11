@@ -83,7 +83,7 @@ const DesktopPanel = ({ modalPresentable, onClosed: onCloseProp, ...rest }: Prop
                 label={label}
                 leftBarButton={leftBarButton}
                 rightBarButton={rightBarButton}
-                dataTestId={`${label} panel-header`}
+                dataTestId={`${label} panel`}
                 onClose={isRootPanel ? undefined : onClose}
             />
             <PanelContent {...boxProps} />

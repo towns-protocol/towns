@@ -170,14 +170,28 @@ const DesktopChannelHeader = (props: Props & HeaderProps) => {
             <AnimatePresence>{showLoadingIndicator && <AnimatedLoaderGradient />}</AnimatePresence>
             {displayNotificationBanner && (
                 <Stack horizontal gap padding background="level3" alignItems="center">
-                    <Text fontWeight="strong" color="default">
+                    <Text
+                        fontWeight="strong"
+                        color="default"
+                        data-testid="enable-notifications-header"
+                    >
                         Turn on notifications for threads, mentions and DMs?
                     </Text>
                     <Box grow />
-                    <Button size="button_sm" tone="cta1" onClick={onClickRequestPermission}>
+                    <Button
+                        size="button_sm"
+                        tone="cta1"
+                        data-testid="enable-notifications-header-button"
+                        onClick={onClickRequestPermission}
+                    >
                         Enable
                     </Button>
-                    <Button size="button_sm" tone="level2" onClick={onClickDenyPermission}>
+                    <Button
+                        size="button_sm"
+                        tone="level2"
+                        data-testid="no-thanks-notifications-header-button"
+                        onClick={onClickDenyPermission}
+                    >
                         No thanks
                     </Button>
                 </Stack>

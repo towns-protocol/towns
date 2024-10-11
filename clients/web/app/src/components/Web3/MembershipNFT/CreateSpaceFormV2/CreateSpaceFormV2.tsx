@@ -797,6 +797,7 @@ export const UploadImageField = ({
                     canEdit={!transactionDetails.isTransacting}
                     type="spaceIcon"
                     formFieldName="spaceIconUrl"
+                    dataTestId="create-town-image-upload-field"
                     resourceId={TEMPORARY_SPACE_ICON_URL}
                     setError={setError}
                     register={register}

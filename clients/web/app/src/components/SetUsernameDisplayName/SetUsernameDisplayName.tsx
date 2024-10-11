@@ -196,7 +196,12 @@ export const SetUsernameDisplayName = (props: { streamId: string }) => {
                         )}
                     </Text>
                     {user && !showEditFields && (
-                        <TextButton onClick={() => setShowEditFields(true)}>Edit</TextButton>
+                        <TextButton
+                            data-testid="edit-username-button"
+                            onClick={() => setShowEditFields(true)}
+                        >
+                            Edit
+                        </TextButton>
                     )}
                 </Box>
             ) : (
@@ -210,6 +215,7 @@ export const SetUsernameDisplayName = (props: { streamId: string }) => {
                         value={dirtyDisplayName}
                         error={displayNameErrorMessage}
                         placeholder="Enter display name"
+                        dataTestId="edit-display-name-input-field"
                         maxLength={32}
                         onKeyDown={saveOnEnter}
                         onChange={onDisplayNameChange}
@@ -224,6 +230,7 @@ export const SetUsernameDisplayName = (props: { streamId: string }) => {
                         error={usernameError}
                         maxLength={16}
                         placeholder="Enter username"
+                        dataTestId="edit-username-input-field"
                         onKeyDown={saveOnEnter}
                         onChange={onUsernameChange}
                     />
@@ -270,7 +277,12 @@ export const SetUsernameDisplayName = (props: { streamId: string }) => {
                     <Box grow />
 
                     <>
-                        <Button size="button_xs" tone="level2" onClick={onCancel}>
+                        <Button
+                            size="button_xs"
+                            tone="level2"
+                            data-testid="edit-username-panel-cancel-button"
+                            onClick={onCancel}
+                        >
                             <Text color="gray2" size="sm">
                                 Cancel
                             </Text>
@@ -279,6 +291,7 @@ export const SetUsernameDisplayName = (props: { streamId: string }) => {
                             size="button_xs"
                             tone="level2"
                             disabled={saveButtonDisabled}
+                            data-testid="edit-username-panel-save-button"
                             onClick={onSave}
                         >
                             <Text color="default" size="sm">
@@ -306,18 +319,32 @@ const UsernameDisplayNameContent = (props: { user: LookupUser }) => {
 
     return user.usernameEncrypted && user.displayNameEncrypted ? (
         <>
-            <Text fontSize="lg" fontWeight="strong" color="default">
+            <Text
+                fontSize="lg"
+                fontWeight="strong"
+                color="default"
+                data-testid="current-username-encrypted"
+            >
                 {shortAddress(user.userId)}
             </Text>
         </>
     ) : (
         <>
             {!user.displayNameEncrypted && user.displayName.length > 0 && (
-                <Text color="default" fontSize="lg" fontWeight="strong">
+                <Text
+                    color="default"
+                    fontSize="lg"
+                    fontWeight="strong"
+                    data-testid="current-display-name-decrypted"
+                >
                     {getPrettyDisplayName(user)}
                 </Text>
             )}
-            {!user.usernameEncrypted && <Text color="gray2">@{user.username}</Text>}
+            {!user.usernameEncrypted && (
+                <Text color="gray2" data-testid="current-username-decrypted">
+                    @{user.username}
+                </Text>
+            )}
         </>
     )
 }

@@ -23,6 +23,7 @@ type Props<T extends FieldValues> = {
     imageRestrictions?: UseOnImageChangeEventProps<T>['imageRestrictions']
     onUploadImage?: UseOnImageChangeEventProps<T>['onUploadImage']
     onFileAdded?: () => void
+    dataTestId?: string
 } & Pick<UseFormReturn<T>, 'setError' | 'clearErrors' | 'formState' | 'register'>
 
 export const UploadImageRenderer = <T extends FieldValues>(props: Props<T>) => {
@@ -39,6 +40,7 @@ export const UploadImageRenderer = <T extends FieldValues>(props: Props<T>) => {
         clearErrors,
         onUploadImage,
         onFileAdded,
+        dataTestId,
     } = props
 
     const { onChange, isUploading } = useOnImageChangeEvent({
@@ -79,6 +81,7 @@ export const UploadImageRenderer = <T extends FieldValues>(props: Props<T>) => {
                 ref={ref}
                 register={register}
                 accept="image/*"
+                dataTestId={dataTestId}
                 onChange={onChange}
             />
         ) : (

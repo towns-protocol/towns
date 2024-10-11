@@ -161,6 +161,7 @@ export function TokenEditor(props: {
                                 tone="neutral"
                                 background="level2"
                                 placeholder="Enter a quantity"
+                                data-testid="token-quantity-input-field"
                                 onChange={(e) => {
                                     const value = e.target.value
                                     if (token.data.type === TokenType.ERC20) {
@@ -183,7 +184,7 @@ export function TokenEditor(props: {
                 {errors.tokenId && <Text color="error">{errors.tokenId.message}</Text>}
 
                 <Box centerContent>
-                    <Button type="submit" tone="cta1">
+                    <Button type="submit" tone="cta1" data-testid="add-tokens-button">
                         {tokenAlreadyExists ? 'Update' : 'Add'}
                     </Button>
                 </Box>
