@@ -1,6 +1,6 @@
 {
     "name": "@river-build/react-sdk",
-    "version": "0.0.81",
+    "version": "0.0.83",
     "description": "React Hooks for River SDK",
     "repository": {
         "type": "git",

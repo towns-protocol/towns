@@ -23,6 +23,9 @@ BASH_OPTS := '-euo pipefail ' + JUST_BASH_OPTS
 default:
     @just --list
 
+help:
+    @just --list
+
 print-env:
     @echo "RUN_ENV=${RUN_ENV}"
     @echo "ENV_PATH_BASE=${ENV_PATH_BASE}"

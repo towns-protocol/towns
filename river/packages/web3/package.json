@@ -1,6 +1,6 @@
 {
     "name": "@river-build/web3",
-    "version": "0.0.81",
+    "version": "0.0.83",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "dist/index.js",
@@ -25,6 +25,7 @@
         "debug": "^4.3.4",
         "ethers": "^5.7.2",
         "lodash": "^4.17.21",
+        "lru-cache": "^11.0.1",
         "nanoid": "^4.0.0",
         "viem": "^1.18.2",
         "zod": "^3.21.4"
