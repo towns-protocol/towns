@@ -77,7 +77,7 @@ export const CardLabel = (props: {
         {props.leftBarButton}
         <Box grow paddingY="sm" width="none" /* truncate hack */>
             {typeof props.label === 'string' ? (
-                <Paragraph truncate fontWeight="medium" data-testid={props.dataTestId}>
+                <Paragraph truncate fontWeight="medium" data-testid={`${props.dataTestId}-header`}>
                     {props.label}
                 </Paragraph>
             ) : (
@@ -85,7 +85,14 @@ export const CardLabel = (props: {
             )}
         </Box>
         <Box>
-            {props.onClose && <IconButton icon="close" insetRight="xs" onClick={props.onClose} />}
+            {props.onClose && (
+                <IconButton
+                    icon="close"
+                    insetRight="xs"
+                    data-testid={`${props.dataTestId}-close-button`}
+                    onClick={props.onClose}
+                />
+            )}
         </Box>
         {props.rightBarButton && (
             <>

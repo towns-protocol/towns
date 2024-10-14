@@ -117,7 +117,10 @@ export const MintAnimation = (props: {
                                 .
                             </Paragraph>
                             <Box height="100%" paddingTop="xs">
-                                <IconButton icon="close" />
+                                <IconButton
+                                    icon="close"
+                                    data-testid="mint-animation-close-button"
+                                />
                             </Box>
                         </Stack>
                     </MotionStack>

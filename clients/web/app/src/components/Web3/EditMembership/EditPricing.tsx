@@ -167,6 +167,7 @@ export function EditPricing({
                             autoFocus
                             background="level3"
                             autoComplete="one-time-code"
+                            data-testid="fixed-town-membership-cost"
                             {...formProps.register('membershipCost')}
                             disabled={isLoadingMinMembershipPrice}
                             border={

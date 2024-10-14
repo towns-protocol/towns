@@ -111,6 +111,7 @@ const GiphyCardOpener = (props: Props) => {
                         immediate: true,
                         removeOnClick: true,
                     }}
+                    data-testid="giphy-button"
                 >
                     <IconButton
                         icon="gif"

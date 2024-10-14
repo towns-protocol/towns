@@ -25,6 +25,7 @@ type Props<T extends FieldValues> = {
     uploadIconPosition?: BoxProps['position']
     uploadIconSize?: IconProps['size']
     size?: UploadImageTemplateSize
+    dataTestId?: string
 } & Pick<UseFormReturn<T>, 'setError' | 'clearErrors' | 'formState' | 'register'>
 
 const config: {
@@ -69,6 +70,7 @@ export const LargeUploadImageTemplate = <T extends FieldValues>(props: Props<T>)
         uploadIconSize = 'square_sm',
         uploadIconPosition = 'topRight',
         size = 'lg',
+        dataTestId,
     } = props
 
     const { onChange, isUploading } = useOnImageChangeEvent({
@@ -142,6 +144,7 @@ export const LargeUploadImageTemplate = <T extends FieldValues>(props: Props<T>)
                             ref={ref}
                             register={register}
                             accept="image/*"
+                            dataTestId={dataTestId}
                             onChange={onChange}
                         />
                         <FieldOutline tone="accent" rounded="md" />

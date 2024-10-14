@@ -337,6 +337,7 @@ export const CreateChannelForm = (props: Props) => {
                                 autoFocus
                                 background="level2"
                                 label="Name"
+                                data-testid="channel-name-input-field"
                                 renderLabel={(label) => (
                                     <Text as="label" for="name">
                                         {label}
@@ -371,6 +372,7 @@ export const CreateChannelForm = (props: Props) => {
                             <TextField
                                 background="level2"
                                 label="Description"
+                                data-testid="channel-description-input-field"
                                 renderLabel={(label) => (
                                     <Text as="label" for="topic">
                                         {label}
@@ -522,6 +524,7 @@ export const CreateChannelForm = (props: Props) => {
                                 <FancyButton
                                     cta={isAbleToInteract && formState.isValid}
                                     type="submit"
+                                    data-testid="create-channel-submit-button"
                                     disabled={!isAbleToInteract}
                                     spinner={!isAbleToInteract}
                                 >
@@ -643,14 +646,21 @@ export const CreateChannelFormModal = ({ spaceId, onHide }: Omit<Props, 'onCreat
 
 const ChannelCreatedToast = ({ toast: _toast, message }: { toast: Toast; message: string }) => {
     return (
-        <Stack horizontal gap alignContent="center">
+        <Stack horizontal gap alignContent="center" data-testid="channel-created-toast-container">
             <Box centerContent height="x4" width="x4" background="level3" rounded="sm">
                 <Icon color="gray2" type="tag" size="square_sm" />
             </Box>
             <Box width="200">
-                <Text size="sm">{message}</Text>
+                <Text size="sm" data-testid="channel-created-toast-message">
+                    {message}
+                </Text>
             </Box>
-            <IconButton icon="close" insetTop="xs" onClick={() => toast.dismiss(_toast.id)}>
+            <IconButton
+                icon="close"
+                insetTop="xs"
+                data-testid="channel-created-toast-close-button"
+                onClick={() => toast.dismiss(_toast.id)}
+            >
                 Dismiss
             </IconButton>
         </Stack>

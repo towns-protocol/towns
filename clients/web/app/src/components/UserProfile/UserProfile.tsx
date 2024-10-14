@@ -163,6 +163,7 @@ export const UserProfile = (props: Props) => {
                                     min: 300,
                                 },
                             }}
+                            dataTestId="user-avatar-upload"
                             onUploadImage={onUploadUserProfileImage}
                         >
                             <Stack centerContent aspectRatio="1/1">

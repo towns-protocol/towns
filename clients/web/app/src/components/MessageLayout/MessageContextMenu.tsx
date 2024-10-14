@@ -336,6 +336,7 @@ export const MessageContextMenu = (props: Props) => {
                                     <ShortcutTooltip action="ReplyInThread" />
                                 )
                             }
+                            data-testid="message-reply--button"
                             onClick={onReply}
                         />
                     )}
@@ -347,6 +348,7 @@ export const MessageContextMenu = (props: Props) => {
                         }
                         icon="link"
                         size="square_sm"
+                        data-testid="message-link-copy-button"
                         onClick={onCopyLinkToMessage}
                     />
 
@@ -357,6 +359,7 @@ export const MessageContextMenu = (props: Props) => {
                             tooltipOptions={{
                                 trigger: 'click',
                             }}
+                            data-testid="message-more-options-button"
                             tooltip={<Submenu items={submenuItems} />}
                         />
                     )}
@@ -409,6 +412,7 @@ const Submenu = (props: {
                             roundedTop={isFirst ? 'md' : 'none'}
                             roundedBottom={isLast ? 'md' : 'none'}
                             color={item.color}
+                            data-testid={`more-options-menu-${item.key}-button`}
                             onClick={() => {
                                 item.onClick?.()
                                 tooltipContext?.close?.()

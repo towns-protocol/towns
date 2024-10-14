@@ -99,6 +99,7 @@ export const IsolatedMessageItem = (
     const item = (
         <Box
             overflow="hidden"
+            data-testid="isolated-message-item"
             background={isTouch ? 'inherit' : props.selected ? 'level3' : 'level2'}
             elevate={!isTouch}
             {...boxProps}

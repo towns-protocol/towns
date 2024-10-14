@@ -80,7 +80,7 @@ export const SetupAnimation = (props: Props) => {
     )
 
     return (
-        <Stack gap centerContent>
+        <Stack gap centerContent data-testid="setup-animation">
             <NodeAnimationContext.Provider value={config}>
                 <NodeAnimationLoader skipPlaceholder animateIntro maxWidth="250" />
             </NodeAnimationContext.Provider>

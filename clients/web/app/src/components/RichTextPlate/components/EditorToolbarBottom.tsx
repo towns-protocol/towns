@@ -113,6 +113,7 @@ export const EditorToolbarBottom = (props: Props) => {
                         active={false}
                         tooltip="Formatting"
                         tooltipOptions={{ placement: 'vertical', immediate: true }}
+                        data-testid="text-formatting-button"
                         onClick={onFormattingButtonClicked}
                     />
                     {!isEditing ? (
@@ -137,6 +138,7 @@ export const EditorToolbarBottom = (props: Props) => {
                         padding="xs"
                         tooltip={isTouch ? undefined : 'Upload file'}
                         tooltipOptions={{ immediate: true, placement: 'vertical' }}
+                        data-testid="add-attachment-button"
                     >
                         <MotionIcon
                             type="attachment"

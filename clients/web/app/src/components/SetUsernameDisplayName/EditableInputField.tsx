@@ -6,12 +6,13 @@ export const EditableInputField = (props: {
     title: string
     value: string
     placeholder: string
+    dataTestId?: string
     error?: string
     maxLength: number
     onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void
     onKeyDown?: (e: React.KeyboardEvent) => void
 }) => {
-    const { title, value, placeholder, error, maxLength, onChange, onKeyDown } = props
+    const { title, value, placeholder, dataTestId, error, maxLength, onChange, onKeyDown } = props
     const charsRemaining = maxLength - value.length
     const [isEditing, setIsEditing] = useState<boolean>(false)
     const editingStateChanged = useCallback(
@@ -36,6 +37,7 @@ export const EditableInputField = (props: {
                         height="height_lg"
                         paddingX="sm"
                         placeholder={placeholder}
+                        data-testid={dataTestId}
                         // need to manually override paddingRight for the chars remaining to fit
                         style={{ paddingRight: '20px' }}
                         autoCorrect="off"
