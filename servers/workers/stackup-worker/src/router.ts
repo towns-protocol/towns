@@ -250,6 +250,61 @@ router.post(
     },
 )
 
+router.post(
+    '/api/sponsor-userop/open',
+    async (request: WorkerRequest, env: Env, { privyClient }) => {
+        if (env.REFUSE_ALL_OPS === 'true') {
+            return new Response(toJson({ error: 'User operations are not available' }), {
+                status: 503,
+            })
+        }
+        const content = await getContentAsJson(request)
+        if (!content || !isTownsUserOperation(content)) {
+            return new Response(toJson({ error: 'Bad Request' }), { status: 400 })
+        }
+
+        const endVerifyAuthTokenDuration = durationLogger('Verify Auth Token')
+        const verifiedClaims = await verifyPrivyAuthToken({
+            request,
+            privyClient,
+            env,
+        })
+        endVerifyAuthTokenDuration()
+
+        if (!verifiedClaims) {
+            return new Response(toJson({ error: 'invalid auth token' }), { status: 401 })
+        }
+
+        const { townId, ...userOperation } = content.data
+
+        if (!env.ALCHEMY_GM_POLICY_ID_OPEN) {
+            return new Response(toJson({ error: 'ALCHEMY_GM_POLICY_ID_OPEN not set' }), {
+                status: 405,
+            })
+        }
+        if (!env.ALCHEMY_PAYMASTER_RPC_URL) {
+            return new Response(toJson({ error: 'ALCHEMY_PAYMASTER_RPC_URL not set' }), {
+                status: 405,
+            })
+        }
+
+        const requestInit = createAlchemyRequestGasAndPaymasterDataRequest({
+            policyId: env.ALCHEMY_GM_POLICY_ID_OPEN,
+            userOperation,
+            entryPoint: env.ERC4337_ENTRYPOINT_ADDRESS,
+        })
+        console.log('paymaster API request:', requestInit.body)
+        const durationAlchemyApiRequest = durationLogger('paymaster API Request')
+        const responseFetched = await fetch(`${env.ALCHEMY_PAYMASTER_RPC_URL}`, requestInit)
+        durationAlchemyApiRequest()
+        return handlePaymasterResponse({
+            paymasterResponse: responseFetched,
+            env,
+            townId,
+        })
+    },
+)
+
 router.post('/admin/api/add-override', async (request: WorkerRequest, env: Env) => {
     // authneticate and authorize caller here (HNT Labs)
 

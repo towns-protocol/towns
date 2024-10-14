@@ -30,6 +30,7 @@ export interface Env extends AuthEnv {
     PRIVY_APP_ID: string
     ALCHEMY_API_KEY: string
     ALCHEMY_GM_POLICY_ID?: string
+    ALCHEMY_GM_POLICY_ID_OPEN?: string
     ALCHEMY_PAYMASTER_RPC_URL?: string
     SKIP_LIMIT_VERIFICATION: string
     REFUSE_ALL_OPS: string

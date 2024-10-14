@@ -1,6 +1,6 @@
 main = "./src/index.ts"
 name = "stackup-worker"
-compatibility_date = "2023-01-20"
+compatibility_date = "2024-05-24"
 logpush = true
 node_compat = true
 account_id = "9840f8a36a817b103e00e29a0e2bad6f"
@@ -20,10 +20,13 @@ SKIP_TOWNID_VERIFICATION = "false"
 
 
 # The necessary secrets are:
-# STACKUP_API_TOKEN
 # PRIVY_APP_KEY
 # PRIVY_APP_ID
 # ALCHEMY_API_KEY
+# ALCHEMY_GM_POLICY_ID_OPEN
+# ALCHEMY_PAYMASTER_RPC_URL
+# ALCHEMY_GM_POLICY_ID
+# STACKUP_PAYMSTER_RPC_URL
 # AUTH_SECRET (for paymaster proxy api)
 # ADMIN_AUTH_SECRET (for admin api)
 #
