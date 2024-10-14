@@ -792,8 +792,10 @@ export function createOperationsTree(
         switch (op.type) {
             case CheckOperationType.ERC20:
             case CheckOperationType.ERC721:
-            case CheckOperationType.ETH_BALANCE:
                 params = encodeThresholdParams({ threshold: op.threshold ?? BigInt(1) })
+                break
+            case CheckOperationType.ETH_BALANCE:
+                params = encodeThresholdParams({ threshold: op.threshold ?? BigInt(0) })
                 break
             case CheckOperationType.ERC1155:
                 params = encodeERC1155Params({
@@ -857,7 +859,8 @@ export function createDecodedCheckOperationFromTree(
                 })
             } else if (
                 operation.checkType === CheckOperationType.ERC20 ||
-                operation.checkType === CheckOperationType.ERC721
+                operation.checkType === CheckOperationType.ERC721 ||
+                operation.checkType === CheckOperationType.ETH_BALANCE
             ) {
                 const { threshold } = decodeThresholdParams(operation.params)
                 checkOpSubsets.push({

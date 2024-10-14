@@ -53,7 +53,7 @@ describe('Link Wallet', () => {
         }
 
         expect(tx_link_again.error).toBeDefined()
-        expect(tx_link_again.error?.name).toBe('WalletLink__LinkAlreadyExists')
+        expect(tx_link_again.error?.name).toBe('SpaceDappWalletLinkLinkAlreadyExists')
         expect(txHashAgain).toBeUndefined()
 
         // remove link
@@ -127,7 +127,7 @@ describe('Link Wallet', () => {
         }
 
         expect(tx_link_again.error).toBeDefined()
-        expect(tx_link_again.error?.name).toBe('WalletLink__LinkAlreadyExists')
+        expect(tx_link_again.error?.name).toBe('SpaceDappWalletLinkLinkAlreadyExists')
         expect(txHashAgain).toBeUndefined()
 
         // remove link

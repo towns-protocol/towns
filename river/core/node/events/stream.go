@@ -214,7 +214,7 @@ func (s *streamImpl) importMiniblocks(
 		}
 
 		var newEvents []*Envelope
-		view, newEvents, err = view.copyAndApplyBlock(miniblock, s.params.ChainConfig)
+		view, newEvents, err = view.copyAndApplyBlock(miniblock, s.params.ChainConfig.Get())
 		if err != nil {
 			return err
 		}
@@ -244,7 +244,7 @@ func (s *streamImpl) applyMiniblockImplNoLock(ctx context.Context, miniblock *Mi
 	// TODO: tests for this.
 
 	// Lets see if this miniblock can be applied.
-	newSV, newEvents, err := s.view.copyAndApplyBlock(miniblock, s.params.ChainConfig)
+	newSV, newEvents, err := s.view.copyAndApplyBlock(miniblock, s.params.ChainConfig.Get())
 	if err != nil {
 		return err
 	}

@@ -38,14 +38,14 @@ type StreamView interface {
 	LastBlock() *MiniblockInfo
 	ValidateNextEvent(
 		ctx context.Context,
-		cfg crypto.OnChainConfiguration,
+		cfg *crypto.OnChainSettings,
 		parsedEvent *ParsedEvent,
 		currentTime time.Time,
 	) error
 	GetStats() StreamViewStats
 	ProposeNextMiniblock(
 		ctx context.Context,
-		cfg crypto.OnChainConfiguration,
+		cfg *crypto.OnChainSettings,
 		forceSnapshot bool,
 	) (*MiniblockProposal, error)
 	IsMember(userAddress []byte) (bool, error)
@@ -209,23 +209,6 @@ func (r *streamViewImpl) copyAndAddEvent(event *ParsedEvent) (*streamViewImpl, e
 			Tags("event", event.ShortDebugStr(), "streamId", r.streamId)
 	}
 
-	for _, block := range r.blocks {
-		for _, e := range block.events {
-			if event.Hash == e.Hash {
-				return nil, RiverError(
-					Err_DUPLICATE_EVENT,
-					"streamViewImpl: previous block contains this event",
-					"blockNum",
-					block.Num,
-					"event",
-					event.ShortDebugStr(),
-					"streamId",
-					r.streamId,
-				).Func("copyAndAddEvent")
-			}
-		}
-	}
-
 	ret := &streamViewImpl{
 		streamId:      r.streamId,
 		blocks:        r.blocks,
@@ -242,7 +225,7 @@ func (r *streamViewImpl) LastBlock() *MiniblockInfo {
 
 func (r *streamViewImpl) ProposeNextMiniblock(
 	ctx context.Context,
-	cfg crypto.OnChainConfiguration,
+	cfg *crypto.OnChainSettings,
 	forceSnapshot bool,
 ) (*MiniblockProposal, error) {
 	var hashes [][]byte
@@ -276,6 +259,7 @@ func (r *streamViewImpl) makeMiniblockHeader(
 		)
 	}
 
+	log := dlog.FromCtx(ctx)
 	hashes := make([][]byte, 0, r.minipool.events.Len())
 	events := make([]*ParsedEvent, 0, r.minipool.events.Len())
 
@@ -311,7 +295,7 @@ func (r *streamViewImpl) makeMiniblockHeader(
 				offset := block.header().EventNumOffset
 				err := Update_Snapshot(snapshot, e, miniblockNum, offset+int64(j))
 				if err != nil {
-					dlog.FromCtx(ctx).Error("Failed to update snapshot",
+					log.Error("Failed to update snapshot",
 						"error", err,
 						"streamId", r.streamId,
 						"event", e.ShortDebugStr(),
@@ -319,11 +303,11 @@ func (r *streamViewImpl) makeMiniblockHeader(
 				}
 			}
 		}
-		// update with events from the new block
+		// update with current events in minipool
 		for i, e := range events {
 			err := Update_Snapshot(snapshot, e, nextMiniblockNum, eventNumOffset+int64(i))
 			if err != nil {
-				dlog.FromCtx(ctx).Error("Failed to update snapshot",
+				log.Error("Failed to update snapshot",
 					"error", err,
 					"streamId", r.streamId,
 					"event", e.ShortDebugStr(),
@@ -350,9 +334,9 @@ func (r *streamViewImpl) makeMiniblockHeader(
 // Returns the new view and the events that were in the applied miniblock, but not in the minipool.
 func (r *streamViewImpl) copyAndApplyBlock(
 	miniblock *MiniblockInfo,
-	cfg crypto.OnChainConfiguration,
+	cfg *crypto.OnChainSettings,
 ) (*streamViewImpl, []*Envelope, error) {
-	recencyConstraintsGenerations := int(cfg.Get().RecencyConstraintsGen)
+	recencyConstraintsGenerations := int(cfg.RecencyConstraintsGen)
 
 	header := miniblock.headerEvent.Event.GetMiniblockHeader()
 	if header == nil {
@@ -551,8 +535,8 @@ func (r *streamViewImpl) SyncCookie(localNodeAddress common.Address) *SyncCookie
 	}
 }
 
-func (r *streamViewImpl) shouldSnapshot(ctx context.Context, cfg crypto.OnChainConfiguration) bool {
-	minEventsPerSnapshot := int(cfg.Get().MinSnapshotEvents.ForType(r.streamId.Type()))
+func (r *streamViewImpl) shouldSnapshot(ctx context.Context, cfg *crypto.OnChainSettings) bool {
+	minEventsPerSnapshot := int(cfg.MinSnapshotEvents.ForType(r.streamId.Type()))
 
 	count := 0
 	// count the events in the minipool
@@ -576,7 +560,7 @@ func (r *streamViewImpl) shouldSnapshot(ctx context.Context, cfg crypto.OnChainC
 
 func (r *streamViewImpl) ValidateNextEvent(
 	ctx context.Context,
-	cfg crypto.OnChainConfiguration,
+	cfg *crypto.OnChainSettings,
 	parsedEvent *ParsedEvent,
 	currentTime time.Time,
 ) error {
@@ -648,11 +632,11 @@ func (r *streamViewImpl) ValidateNextEvent(
 
 func (r *streamViewImpl) isRecentBlock(
 	ctx context.Context,
-	cfg crypto.OnChainConfiguration,
+	cfg *crypto.OnChainSettings,
 	block *MiniblockInfo,
 	currentTime time.Time,
 ) bool {
-	maxAgeDuration := cfg.Get().RecencyConstraintsAge
+	maxAgeDuration := cfg.RecencyConstraintsAge
 	diff := currentTime.Sub(block.header().Timestamp.AsTime())
 	return diff <= maxAgeDuration
 }

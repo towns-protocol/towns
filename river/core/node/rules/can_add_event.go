@@ -144,7 +144,7 @@ func CanAddEvent(
 		return false, nil, nil, RiverError(Err_INVALID_ARGUMENT, "event has no prevMiniblockHash")
 	}
 	// check preceding miniblock hash
-	err := streamView.ValidateNextEvent(ctx, chainConfig, parsedEvent, currentTime)
+	err := streamView.ValidateNextEvent(ctx, chainConfig.Get(), parsedEvent, currentTime)
 	if err != nil {
 		return false, nil, nil, err
 	}

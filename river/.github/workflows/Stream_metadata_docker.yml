@@ -6,6 +6,7 @@ on:
             - main
         paths:
             - 'packages/stream-metadata/**'
+            - 'packages/**'
     workflow_dispatch:
 
 env:

@@ -74,6 +74,9 @@ function makeConfig() {
 			tracingEnabled: envMain.TRACING_ENABLED,
 			profilingEnabled: envMain.PROFILING_ENABLED,
 		},
+		healthCheck: {
+			timeout: 5000, // 5 seconds
+		},
 	}
 }
 

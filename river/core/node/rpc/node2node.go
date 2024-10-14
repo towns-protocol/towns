@@ -136,7 +136,7 @@ func (s *Service) proposeMiniblock(
 		return nil, err
 	}
 
-	proposal, err := view.ProposeNextMiniblock(ctx, s.chainConfig, req.DebugForceSnapshot)
+	proposal, err := view.ProposeNextMiniblock(ctx, s.chainConfig.Get(), req.DebugForceSnapshot)
 	if err != nil {
 		return nil, err
 	}

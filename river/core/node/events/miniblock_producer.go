@@ -383,7 +383,7 @@ func mbProduceCandiate(
 		return nil, err
 	}
 
-	localProposal, err := view.ProposeNextMiniblock(ctx, params.ChainConfig, forceSnapshot)
+	localProposal, err := view.ProposeNextMiniblock(ctx, params.ChainConfig.Get(), forceSnapshot)
 	if err != nil {
 		return nil, err
 	}

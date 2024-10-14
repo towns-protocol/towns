@@ -271,7 +271,7 @@ func (ctc *cacheTestContext) GetMbProposal(
 		return nil, err
 	}
 
-	proposal, err := view.ProposeNextMiniblock(ctx, inst.params.ChainConfig, forceSnapshot)
+	proposal, err := view.ProposeNextMiniblock(ctx, inst.params.ChainConfig.Get(), forceSnapshot)
 	if err != nil {
 		return nil, err
 	}
