@@ -68,10 +68,14 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
             })
         } else {
             // show asset verification modal
-            Analytics.getInstance().page('requirements-modal', 'view gated requirements modal', {
-                spaceId,
-                meetsMembershipRequirements,
-            })
+            Analytics.getInstance().page(
+                'requirements-modal',
+                'viewed gated town requirements modal',
+                {
+                    spaceId,
+                    meetsMembershipRequirements,
+                },
+            )
             startJoinDoesNotMeetRequirements()
         }
     }, [

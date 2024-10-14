@@ -62,10 +62,14 @@ function RoleRestrictedChannelJoinPanelWithoutAuth() {
             return
         }
         tracked.current = true
-        Analytics.getInstance().track('view gated channel requirements panel', {
-            spaceId: spaceSlug,
-            channelId,
-        })
+        Analytics.getInstance().page(
+            'requirements-modal',
+            'viewed gated channel requirements panel',
+            {
+                spaceId: spaceSlug,
+                channelId,
+            },
+        )
     }, [spaceSlug, channelId])
 
     return (
