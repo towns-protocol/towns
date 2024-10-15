@@ -187,6 +187,7 @@ class ClientStateMachine extends (EventEmitter as new () => TypedEmitter<ClientS
 
     private updateClient(client: CasablancaClient) {
         if (this.state instanceof Credentialed) {
+            console.log('[use-towns-client-listener] connected to river after client update')
             this.state = new ConnectedToRiver(
                 this.state.credentials,
                 client,
@@ -251,24 +252,26 @@ async function logInWithRetries(
     // eslint-disable-next-line no-constant-condition
     while (true) {
         try {
-            console.log('**logging in')
+            console.log('[use-towns-client-listener] logging in')
             const context = credentialsToSignerContext(credentials)
             const userId = userIdFromAddress(context.creatorAddress)
             const isRegistered =
                 useOfflineStore.getState().skipIsRegisteredCheck[userId] ||
                 (await fetchIsRegistered(client, context))
             if (!isRegistered) {
-                console.log("**user authenticated, hasn't joined a space")
+                console.log("[use-towns-client-listener] user authenticated, hasn't joined a space")
                 return new Credentialed(credentials, context)
             } else {
-                console.log('**user authenticated, starting casablanca client')
+                console.log(
+                    '[use-towns-client-listener] user authenticated, starting casablanca client',
+                )
                 useOfflineStore.getState().setSkipIsRegisteredCheck(userId)
                 const casablancaClient = await client.startCasablancaClient(context)
                 return new ConnectedToRiver(credentials, casablancaClient, context)
             }
         } catch (e) {
             retryCount++
-            console.log('******* casablanca client encountered exception *******', e)
+            console.log('[use-towns-client-listener] casablanca client encountered exception', e)
             try {
                 await client.logoutFromCasablanca()
             } catch (e) {
@@ -284,7 +287,7 @@ async function logInWithRetries(
                 return new None()
             } else {
                 const retryDelay = getRetryDelay(retryCount)
-                console.log('******* retrying', { retryDelay, retryCount })
+                console.log('[use-towns-client-listener] retrying', { retryDelay, retryCount })
                 // sleep
                 await new Promise((resolve) => setTimeout(resolve, retryDelay))
             }
@@ -343,7 +346,10 @@ function logServerUrlMismatch(
 }
 
 async function fetchIsRegistered(client: TownsClient, context: SignerContext) {
-    console.log('** fetching Is registered State for', context.creatorAddress)
+    console.log(
+        '[use-towns-client-listener] fetching Is registered State for',
+        context.creatorAddress,
+    )
     const unauthedClient = await client.makeUnauthenticatedClient()
     return await unauthedClient.userWithAddressExists(context.creatorAddress)
 }
