@@ -253,8 +253,8 @@ const _ErrorReportForm = (props: { onHide?: () => void; excludeDebugInfo?: boole
                 return (
                     <>
                         <SyncFormFiles form={form} />
-                        <Stack padding={{ mobile: 'sm', default: 'none' }}>
-                            <Stack gap>
+                        <Stack>
+                            <Box gap>
                                 <MotionBox layout="position">
                                     <TextField
                                         autoFocus
@@ -427,7 +427,7 @@ const _ErrorReportForm = (props: { onHide?: () => void; excludeDebugInfo?: boole
                                     </Stack>
                                 )}
                                 <Box height="x8" />
-                            </Stack>
+                            </Box>
                         </Stack>
 
                         <Box

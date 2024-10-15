@@ -1,18 +1,10 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import React, { useCallback } from 'react'
-import { create } from 'zustand'
 import { Box, IconButton, Stack, Text, ZLayerProvider } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { ErrorReportForm } from '../ErrorReport/ErrorReport'
-
-export const useAppOverlayBugReport = create<{
-    visible: boolean
-    setVisible: (visible: boolean) => void
-}>((set) => ({
-    visible: false as boolean,
-    setVisible: (visible: boolean) => set({ visible }),
-}))
+import { useAppOverlayBugReport } from './useAppOverlayBugReport'
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -38,28 +30,37 @@ export const AppBugReportOverlay = () => {
         <ZLayerProvider>
             {isVisible && (
                 <QueryClientProvider client={queryClient}>
-                    <ModalContainer asSheet padding="none" onHide={onHideBugReport}>
-                        <Box position="relative">
-                            {!isTouch && (
-                                <Box top="md" right="md" position="relative">
-                                    <IconButton
-                                        position="topRight"
-                                        icon="close"
-                                        onClick={onHideBugReport}
-                                    />
+                    <ModalContainer padding="none" touchTitle="Bug Report" onHide={onHideBugReport}>
+                        {!isTouch && (
+                            <Stack
+                                gap
+                                grow
+                                horizontal
+                                alignItems="center"
+                                padding="md"
+                                height="x6"
+                                background="level2"
+                            >
+                                <Box width="x4" />
+                                <Box grow centerContent>
+                                    <Text
+                                        size="lg"
+                                        fontWeight="strong"
+                                        color="default"
+                                        data-testid="bug-report-header"
+                                    >
+                                        Bug Report
+                                    </Text>
                                 </Box>
-                            )}
-                            <Stack gap alignItems="center" paddingY="lg">
-                                <Text
-                                    size="lg"
-                                    fontWeight="strong"
-                                    color="default"
-                                    data-testid="bug-report-header"
-                                >
-                                    Bug Report
-                                </Text>
+                                <Box width="x4" alignItems="end">
+                                    <IconButton icon="close" onClick={onHideBugReport} />
+                                </Box>
                             </Stack>
-                            <ErrorReportForm onHide={onHideBugReport} />
+                        )}
+                        <Box grow scroll position="relative">
+                            <Box padding shrink overflow="auto" maxHeight="100%">
+                                <ErrorReportForm onHide={onHideBugReport} />
+                            </Box>
                         </Box>
                     </ModalContainer>
                 </QueryClientProvider>
