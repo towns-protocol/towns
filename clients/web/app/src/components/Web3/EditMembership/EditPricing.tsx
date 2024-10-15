@@ -20,6 +20,10 @@ enum PricingPreset {
     Prepaid = 'prepaid',
 }
 
+const isPricingPreset = (preset: string): preset is PricingPreset => {
+    return Object.values(PricingPreset).includes(preset as PricingPreset)
+}
+
 export function EditPricing({
     pricingModules,
     isLoadingPricingModules,
@@ -44,7 +48,10 @@ export function EditPricing({
 
     const onCostChange = useEthInputChange(price, 'membershipCost', setValue, trigger)
 
-    const [pricingPreset, setPricingPreset] = useState<PricingPreset>(PricingPreset.Dynamic)
+    const [pricingPreset, setPricingPreset] = useState<PricingPreset>(() => {
+        const preset = formProps.getValues().clientPricingOption
+        return isPricingPreset(preset) ? preset : PricingPreset.Dynamic
+    })
 
     const prepaidMemberships = watch('prepaidMemberships')
     const membershipCost = watch('membershipCost')
