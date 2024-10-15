@@ -19,7 +19,7 @@ export function isMacOS() {
 
 export function isSafari() {
     const browser = UserAgentInstance.getBrowser()
-    return browser.name === 'Safari'
+    return /safari/i.test(browser.name ?? '')
 }
 
 export function isAndroid() {
