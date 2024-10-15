@@ -83,7 +83,7 @@ resource "aws_lb_target_group" "target_group" {
     interval            = 60
     timeout             = 59
     healthy_threshold   = 2
-    unhealthy_threshold = 3
+    unhealthy_threshold = 10
   }
 
   tags = module.global_constants.tags
@@ -213,11 +213,11 @@ locals {
 }
 
 locals {
-  total_cpu    = 2048
-  total_memory = 4096
+  total_cpu    = 1024
+  total_memory = 2048
 
   dd_agent_cpu    = 256
-  dd_agent_memory = 512
+  dd_agent_memory = 256
 
   service_cpu    = local.total_cpu - local.dd_agent_cpu
   service_memory = local.total_memory - local.dd_agent_memory
@@ -225,7 +225,7 @@ locals {
   service_cpu_percentage    = (local.service_cpu * 100) / local.total_cpu
   service_memory_percentage = (local.service_memory * 100) / local.total_memory
 
-  service_target_cpu_percentage    = 70
+  service_target_cpu_percentage    = 50
   service_target_memory_percentage = 70
 
   autoscale_target_cpu_percentage    = (local.service_target_cpu_percentage * local.service_cpu_percentage) / 100
@@ -409,8 +409,8 @@ resource "aws_appautoscaling_target" "ecs" {
   service_namespace  = "ecs"
   resource_id        = "service/${var.ecs_cluster.name}/${aws_ecs_service.ecs-service.name}"
   scalable_dimension = "ecs:service:DesiredCount"
-  min_capacity       = 1
-  max_capacity       = 5
+  min_capacity       = 2
+  max_capacity       = 10
 }
 
 resource "aws_appautoscaling_policy" "cpu" {
@@ -426,7 +426,7 @@ resource "aws_appautoscaling_policy" "cpu" {
       predefined_metric_type = "ECSServiceAverageCPUUtilization"
     }
     scale_in_cooldown  = 300 // begin scale in after 5 minutes of low CPU
-    scale_out_cooldown = 60  // begin scale out after 1 minute of high CPU
+    scale_out_cooldown = 30  // begin scale out after 30 seconds of high CPU
   }
 }
 
