@@ -1,7 +1,12 @@
 /* eslint-disable no-restricted-imports */
 /* eslint-disable @typescript-eslint/unbound-method */
 import { useCallback, useMemo } from 'react'
-import { FullyReadMarker, type ChunkedMedia, UserBio } from '@river-build/proto'
+import {
+    FullyReadMarker,
+    type ChunkedMedia,
+    UserBio,
+    AddEventResponse_Error,
+} from '@river-build/proto'
 import { PlainMessage } from '@bufbuild/protobuf'
 import {
     BanUnbanWalletTransactionContext,
@@ -243,6 +248,16 @@ interface TownsClientImpl {
     setRoomProperties: (roomId: string, title: string, topic: string) => Promise<void>
     setDisplayName: (streamId: string, displayName: string) => Promise<void>
     setHighPriorityStreams: (streamIds: string[]) => Promise<void>
+    setSpaceImage: (
+        spaceId: string,
+        chunkedMedia: PlainMessage<ChunkedMedia>,
+    ) => Promise<
+        | {
+              eventId: string
+              error?: AddEventResponse_Error | undefined
+          }
+        | undefined
+    >
     setUserProfileImage: (chunkedMedia: PlainMessage<ChunkedMedia>) => Promise<void>
     setUserBio: (bio: UserBio) => Promise<void>
     refreshMetadataTransaction: (
@@ -427,6 +442,7 @@ export function useTownsClient(): TownsClientImpl {
         setRoomProperties: useWithCatch(clientSingleton?.setRoomProperties),
         setAvatarUrl: useWithCatch(clientSingleton?.setAvatarUrl),
         setHighPriorityStreams: useWithCatch(clientSingleton?.setHighPriorityStreams),
+        setSpaceImage: useWithCatch(clientSingleton?.setSpaceImage),
         setUserProfileImage: useWithCatch(clientSingleton?.setUserProfileImage),
         setUserBio: useWithCatch(clientSingleton?.setUserBio),
         linkEOAToRootKey: useWithCatch(clientSingleton?.linkEOAToRootKey),

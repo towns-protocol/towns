@@ -23,7 +23,8 @@ export type EncryptionMetadataForUpload = {
 }
 
 export const useUploadAttachment = () => {
-    const { client, createMediaStream, setUserProfileImage, sendMediaPayload } = useTownsClient()
+    const { createMediaStream, setUserProfileImage, sendMediaPayload, setSpaceImage } =
+        useTownsClient()
 
     function shouldCompressFile(file: File): boolean {
         return file.type !== 'image/gif' && isImageMimeType(file.type)
@@ -205,7 +206,6 @@ export const useUploadAttachment = () => {
             if (!isImageMimeType(file.type)) {
                 return false
             }
-
             console.log('uploadTownImageToStream', { spaceId })
 
             // set progress to 1 to start the spinner
@@ -234,10 +234,11 @@ export const useUploadAttachment = () => {
                         },
                     },
                 })
-                await client?.setSpaceImage(spaceId, chunkedMedia)
+                const result = await setSpaceImage(spaceId, chunkedMedia)
                 console.log('setSpaceImage', {
                     spaceId,
                     mediaStreamId: mediaInfo.streamId,
+                    result,
                 })
 
                 await refreshSpaceCache(spaceId)
@@ -251,7 +252,7 @@ export const useUploadAttachment = () => {
                 setProgress(0)
             }
         },
-        [client, uploadImageFile],
+        [setSpaceImage, uploadImageFile],
     )
 
     const uploadUserProfileImageToStream = useCallback(

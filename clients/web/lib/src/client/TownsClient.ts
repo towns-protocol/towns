@@ -28,6 +28,7 @@ import {
     ISpaceDapp,
 } from '@river-build/web3'
 import {
+    AddEventResponse_Error,
     ChannelMessage_Post_Mention,
     ChunkedMedia,
     FullyReadMarker,
@@ -2473,11 +2474,15 @@ export class TownsClient
     public async setSpaceImage(
         spaceStreamId: string,
         chunkedMedia: PlainMessage<ChunkedMedia>,
-    ): Promise<void> {
+    ): Promise<{
+        eventId: string
+        error?: AddEventResponse_Error | undefined
+    }> {
         if (!this.casablancaClient) {
             throw new Error('No casablanca client')
         }
-        await this.casablancaClient.setSpaceImage(spaceStreamId, chunkedMedia)
+        const response = await this.casablancaClient.setSpaceImage(spaceStreamId, chunkedMedia)
+        return response
     }
 
     public async setUserProfileImage(chunkedMedia: PlainMessage<ChunkedMedia>): Promise<void> {
