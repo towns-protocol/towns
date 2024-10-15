@@ -14107,9 +14107,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"allotment@npm:^1.20.2":
-  version: 1.20.2
-  resolution: "allotment@npm:1.20.2"
+"allotment@npm:~1.19.0":
+  version: 1.19.5
+  resolution: "allotment@npm:1.19.5"
   dependencies:
     classnames: ^2.3.0
     eventemitter3: ^5.0.0
@@ -14120,7 +14120,7 @@ __metadata:
   peerDependencies:
     react: ^17.0.0 || ^18.0.0
     react-dom: ^17.0.0 || ^18.0.0
-  checksum: a4c12d7e6fd136a78bf7e4d25210001180d578b941e09642fe459f903af33ead7d6713ff88e1394cea8dbacf61cc86f60566d655851c2e9ac29751ca40f2a9d2
+  checksum: bdc47fdc632b2f40068d28b4cc634826ac2dca2ee41a47962a846e2503df8933dbadde6926bcaa77b1e6239e7fae3900705da0ccbc7a4e22aa71526a94d12737
   languageName: node
   linkType: hard
 
@@ -20978,7 +20978,7 @@ __metadata:
     "@vanilla-extract/sprinkles": ^1.6.2
     "@vanilla-extract/vite-plugin": ^3.9.3
     "@vitejs/plugin-react": ^4.3.1
-    allotment: ^1.20.2
+    allotment: ~1.19.0
     axios: ^1.2.6
     browser-image-compression: ^2.0.2
     class-variance-authority: ^0.7.0
