@@ -11,7 +11,7 @@ import {
     useUserLookupContext,
 } from 'use-towns-client'
 import { DraftChannel } from '@components/Channel/Channel'
-import { PanelContext, PanelStack } from '@components/Panel/PanelContext'
+import { PanelContext } from '@components/Panel/PanelContext'
 import { UserList } from '@components/UserList/UserList'
 import { ZLayerBox } from '@components/ZLayer/ZLayerContext'
 import { NoMatches } from '@components/NoMatches/NoMatches'
@@ -250,15 +250,7 @@ const useEscapeCreateMessage = () => {
     useEffect(() => {
         const onKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Escape') {
-                Analytics.getInstance().track(
-                    'escape key pressed',
-                    { panel: PanelStack.DIRECT_MESSAGES },
-                    () => {
-                        console.log('[analytics] escape key pressed', {
-                            panel: PanelStack.DIRECT_MESSAGES,
-                        })
-                    },
-                )
+                Analytics.getInstance().track('canceled create direct message')
                 navigate(-1)
             }
         }
