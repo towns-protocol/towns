@@ -15057,6 +15057,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"boolbase@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "boolbase@npm:1.0.0"
+  checksum: 3e25c80ef626c3a3487c73dbfc70ac322ec830666c9ad915d11b701142fab25ec1e63eff2c450c74347acfd2de854ccde865cd79ef4db1683f7c7b046ea43bb0
+  languageName: node
+  linkType: hard
+
 "bowser@npm:^2.11.0":
   version: 2.11.0
   resolution: "bowser@npm:2.11.0"
@@ -16588,6 +16595,13 @@ __metadata:
   dependencies:
     hyphenate-style-name: ^1.0.3
   checksum: 066318e918c04a5e5bce46b38fe81052ea6ac051bcc6d3c369a1d59ceb1546cb2b6086901ab5d22be084122ee3732169996a3dfb04d3406eaee205af77aec61b
+  languageName: node
+  linkType: hard
+
+"css-selector-parser@npm:^3.0.0":
+  version: 3.0.5
+  resolution: "css-selector-parser@npm:3.0.5"
+  checksum: aefcc9841dcf02adee18f6225e03cd44a12aa6357694a19732d03b5d31a2d276b5c6a66a3c32b090438e8a7bfacdb6d0b2ae45b8b5d66eaf08efa941f768bd33
   languageName: node
   linkType: hard
 
@@ -21057,6 +21071,7 @@ __metadata:
     typescript: ^5.1.6
     ua-parser-js: ^1.0.33
     unfurl-worker: "workspace:^"
+    unist-util-select: ^5.1.0
     unist-util-visit: ^5.0.0
     use-towns-client: "workspace:^"
     vanilla-classnames: ^0.1.0
@@ -26595,6 +26610,15 @@ __metadata:
     semver: ^7.3.7
     validate-npm-package-name: ^4.0.0
   checksum: 7557d0c7d23bc0084e8da489c8e7b5cafcd1ee720826ca96f2b8388d64955b28cea36f2fefc8cb4835cb34795bf3ee26c20b2e8bcfbec626db50e3954240937c
+  languageName: node
+  linkType: hard
+
+"nth-check@npm:^2.0.0":
+  version: 2.1.1
+  resolution: "nth-check@npm:2.1.1"
+  dependencies:
+    boolbase: ^1.0.0
+  checksum: 5afc3dafcd1573b08877ca8e6148c52abd565f1d06b1eb08caf982e3fa289a82f2cae697ffb55b5021e146d60443f1590a5d6b944844e944714a5b549675bcd3
   languageName: node
   linkType: hard
 
@@ -32591,6 +32615,19 @@ __metadata:
     "@types/unist": ^3.0.0
     unist-util-visit: ^5.0.0
   checksum: 8aabdb9d0e3e744141bc123d8f87b90835d521209ad3c6c4619d403b324537152f0b8f20dda839b40c3aa0abfbf1828b3635a7a8bb159c3ed469e743023510ee
+  languageName: node
+  linkType: hard
+
+"unist-util-select@npm:^5.1.0":
+  version: 5.1.0
+  resolution: "unist-util-select@npm:5.1.0"
+  dependencies:
+    "@types/unist": ^3.0.0
+    css-selector-parser: ^3.0.0
+    devlop: ^1.1.0
+    nth-check: ^2.0.0
+    zwitch: ^2.0.0
+  checksum: 1e3abe4c53a642fc3f907b6462232e387b4b14c90ba5b8cb804592edf5020b48f8d9fd076b5beb406594641d385f847ab078c9f5dd3b8fe4aef32b8ce355158e
   languageName: node
   linkType: hard
 

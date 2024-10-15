@@ -11,16 +11,23 @@ import markdown from 'remark-parse'
 import remarkGfm from 'remark-gfm'
 import { unified } from 'unified'
 import { ELEMENT_MENTION_CHANNEL } from '../plugins/createChannelPlugin'
-import { channelMentionHandler, listContentHandler, userMentionHandler } from './rehypeHandlers'
+import {
+    channelMentionHandler,
+    editedHandler,
+    listContentHandler,
+    userMentionHandler,
+} from './rehypeHandlers'
 import remarkTransformUserAndChannels from './remark/remarkTransformUserAndChannels'
 import remarkPreserveListContent from './remark/remarkPreserveListContent'
 import remarkRemoveHeadings from './remark/remarkRemoveHeadings'
 import remarkUnderline from './remark/remarkUnderline'
 import remarkDecodeHTMLCodeBlocks from './remark/remarkDecodeHTMLCodeBlocks'
+import remarkEditedAnnotation, { ELEMENT_EDITED } from './remark/remarkEditedAnnotation'
 import { getChannelNames } from './helpers'
 import { TUserIDNameMap } from '../components/plate-ui/autocomplete/types'
 
 type MarkdownRendererProps = React.PropsWithChildren<{
+    isEdited?: boolean
     components: Partial<Components>
     channels?: Channel[]
     userHashMap?: TUserIDNameMap
@@ -36,6 +43,7 @@ type MarkdownRendererProps = React.PropsWithChildren<{
  */
 const MarkdownRenderer = ({
     components,
+    isEdited = false,
     channels = [],
     userHashMap = {},
     lookupUser,
@@ -53,13 +61,15 @@ const MarkdownRenderer = ({
         .use(remarkPreserveListContent)
         .use(remarkRemoveHeadings)
         .use(remarkDecodeHTMLCodeBlocks)
+        .use(remarkEditedAnnotation(isEdited))
         .use(remarkTransformUserAndChannels(channels, userHashMap, lookupUser))
         .use(remarkRehype, {
-            passThrough: [ELEMENT_LIC, ELEMENT_MENTION, ELEMENT_MENTION_CHANNEL],
+            passThrough: [ELEMENT_LIC, ELEMENT_MENTION, ELEMENT_MENTION_CHANNEL, 'abbr'],
             handlers: {
                 [ELEMENT_MENTION]: userMentionHandler,
                 [ELEMENT_MENTION_CHANNEL]: channelMentionHandler,
                 [ELEMENT_LIC]: listContentHandler,
+                [ELEMENT_EDITED]: editedHandler,
             },
         } as unknown as Options)
 

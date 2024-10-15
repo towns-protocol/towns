@@ -123,6 +123,7 @@
         "three": "^0.165.0",
         "throttle-debounce": "^5.0.2",
         "ua-parser-js": "^1.0.33",
+        "unist-util-select": "^5.1.0",
         "unist-util-visit": "^5.0.0",
         "use-towns-client": "workspace:^",
         "vanilla-classnames": "^0.1.0",

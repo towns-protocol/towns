@@ -27,6 +27,7 @@ import { ListElement } from './components/plate-ui/ListElement'
 import { ParagraphWithoutPlate } from './components/plate-ui/ParagraphElement'
 import { edited, richText, singleEmojiMessage } from './RichTextEditor.css'
 import MarkdownToJSX from './utils/MarkdownToJSX'
+import { ELEMENT_EDITED } from './utils/remark/remarkEditedAnnotation'
 
 const fieldClassName = clsx([fieldStyles.field, richText])
 
@@ -102,6 +103,17 @@ export const RichTextPreviewInternal = ({
                     {props.children}
                 </Box>
             ),
+            [ELEMENT_EDITED]: (props: React.PropsWithChildren) => (
+                <Box
+                    as="span"
+                    display="inline-block"
+                    color="gray2"
+                    fontSize="sm"
+                    className={edited}
+                >
+                    {props.children}
+                </Box>
+            ),
             u: (props: React.PropsWithChildren) => (
                 <Box textDecoration="underline" display="inline" as="u">
                     {props.children}
@@ -145,17 +157,13 @@ export const RichTextPreviewInternal = ({
                     // eslint-disable-next-line
                     // @ts-ignore
                     components={memoizedComponents}
+                    isEdited={statusAnnotation === 'edited'}
                     channels={channels}
                     userHashMap={userHashMap}
                     lookupUser={lookupUser as LookupUserFn}
                 >
                     {content}
                 </MarkdownToJSX>
-                {statusAnnotation === 'edited' && (
-                    <Box as="span" color="gray2" fontSize="sm" className={edited}>
-                        (edited)
-                    </Box>
-                )}
             </Box>
         </div>
     )

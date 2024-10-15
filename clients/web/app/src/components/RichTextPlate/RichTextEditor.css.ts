@@ -32,7 +32,9 @@ export const contentEditablePWA = style([
 export const paragraph = style({
     overflowWrap: 'anywhere',
 })
-export const edited = style({})
+export const edited = style({
+    marginLeft: vars.space.xs,
+})
 
 export const link = style([
     atoms({
@@ -325,9 +327,5 @@ globalStyle(`${richText} ${paragraph} + ${paragraph}`, {
 
 // While typing paragraphs in editor, we want to have the appearance of new para being a new line, so it needs lesser space between them
 globalStyle(`${richText}${contentEditable} ${paragraph} + ${paragraph}`, {
-    marginTop: vars.space.sm,
-})
-
-globalStyle(`${richText} ${paragraph} + ${edited}`, {
     marginTop: vars.space.sm,
 })
