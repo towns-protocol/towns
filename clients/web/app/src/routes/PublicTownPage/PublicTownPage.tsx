@@ -29,6 +29,7 @@ import { AppProgressOverlayTrigger } from '@components/AppProgressOverlay/AppPro
 import { Avatar } from '@components/Avatar/Avatar'
 import { AppBugReportButton } from '@components/AppBugReport/AppBugReportButton'
 import { useStartupTime } from 'StartupProvider'
+import { AppStoreBanner } from '@components/AppStoreBanner/AppStoreBanner'
 import { BottomBarContent } from './BottomBarContent'
 import { usePublicPageLoginFlow } from './usePublicPageLoginFlow'
 
@@ -85,6 +86,7 @@ const PublicTownPageWithoutAuth = (props: { isPreview?: boolean; onClosePreview?
             <AbsoluteBackground networkId={spaceInfo.networkId} />
 
             <Box absoluteFill height="100dvh" bottom="none" className={className}>
+                <AppStoreBanner />
                 <TownPageLayout
                     headerContent={<Header isPreview={isPreview} onClosePreview={onClosePreview} />}
                     bottomContent={({ leftColWidth, rightColWidth }) => (

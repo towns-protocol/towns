@@ -1,18 +1,19 @@
 import React from 'react'
 import { Navigate, Outlet, Route, Routes } from 'react-router'
 import { useConnectivity } from 'use-towns-client'
+import { DebugRoute } from '@components/DebugBar/DebugBar'
+import { PlaygroundLazy } from '@components/Playground/PlaygroundLazy'
 import { Box, Stack } from '@ui'
 import { useDevice } from 'hooks/useDevice'
-import { WelcomeRoute } from 'routes/Welcome'
-import { mobileAppClass } from 'ui/styles/globals/utils.css'
 import { PATHS } from 'routes'
 import { AuthenticatedRoutes } from 'routes/AuthenticatedRoutes'
-import { PlaygroundLazy } from '@components/Playground/PlaygroundLazy'
-import { PublicTownPage } from 'routes/PublicTownPage/PublicTownPage'
 import { NotificationRoute } from 'routes/NotificationRoute'
-import { env } from 'utils'
-import { DebugRoute } from '@components/DebugBar/DebugBar'
 import { PublicSupportPage } from 'routes/PublicSupportPage/PublicSupportPage'
+import { PublicTownPage } from 'routes/PublicTownPage/PublicTownPage'
+import { WelcomeRoute } from 'routes/Welcome'
+import { mobileAppClass } from 'ui/styles/globals/utils.css'
+import { env } from 'utils'
+import { AppStoreBanner } from '@components/AppStoreBanner/AppStoreBanner'
 
 export const AllRoutes = React.memo(() => {
     const { isAuthenticated } = useConnectivity()
@@ -57,6 +58,7 @@ const ResponsiveOutlet = () => {
 
     return isTouch ? (
         <Box className={mobileAppClass}>
+            <AppStoreBanner />
             <Outlet />
         </Box>
     ) : (

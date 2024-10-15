@@ -35,6 +35,8 @@ interface AppState {
     setSeenChannelIds: (seenChannelIds: string[]) => void
     favoriteChannelIds: string[]
     setFavoriteChannelIds: (favoriteChannelIds: string[]) => void
+    setAppStoreBanner: (state: boolean) => void
+    appStoreBanner: boolean
 }
 
 export const GLOBAL_STORE_NAME = 'towns/global'
@@ -133,6 +135,10 @@ export const useStore = create(
             favoriteChannelIds: [],
             setFavoriteChannelIds: (favoriteChannelIds) => {
                 set(() => ({ favoriteChannelIds }))
+            },
+            appStoreBanner: true,
+            setAppStoreBanner: (appStoreBanner: boolean) => {
+                set(() => ({ appStoreBanner }))
             },
         }),
         {
