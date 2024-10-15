@@ -1,3 +1,9 @@
+import { ApiObject } from '@rudderstack/analytics-js/*'
+import { useGetEmbeddedSigner } from '@towns/privy'
+import React, { useCallback, useMemo } from 'react'
+import { UseFormReturn } from 'react-hook-form'
+import { Toast, toast } from 'react-hot-toast/headless'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
     CreateChannelInfo,
     IRuleEntitlementV2Base,
@@ -11,15 +17,7 @@ import {
     useHasPermission,
     useMultipleRoleDetails,
 } from 'use-towns-client'
-import React, { useCallback, useMemo } from 'react'
-import { useNavigate } from 'react-router'
 import { z } from 'zod'
-import { useGetEmbeddedSigner } from '@towns/privy'
-import { Toast, toast } from 'react-hot-toast/headless'
-import { ApiObject } from '@rudderstack/analytics-js/*'
-import { UseFormReturn } from 'react-hook-form'
-import { useSearchParams } from 'react-router-dom'
-import { PrivyWrapper } from 'privy/PrivyProvider'
 import {
     Box,
     Button,
@@ -35,32 +33,33 @@ import {
     TextField,
     Toggle,
 } from '@ui'
+import { TransactionUIState, toTransactionUIStates } from 'hooks/TransactionUIState'
+import { PrivyWrapper } from 'privy/PrivyProvider'
+import { CHANNEL_INFO_PARAMS, PATHS } from 'routes'
+import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
 import {
     ChannelNameRegExp,
     addressFromSpaceId,
     isForbiddenError,
     isRejectionError,
 } from 'ui/utils/utils'
-import { TransactionUIState, toTransactionUIStates } from 'hooks/TransactionUIState'
-import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
-import { CHANNEL_INFO_PARAMS, PATHS } from 'routes'
 import { Spinner } from '@components/Spinner'
 
-import { convertRuleDataToTokenEntitlementSchema } from '@components/Tokens/utils'
-import { useContractRoles } from 'hooks/useContractRoles'
+import { useChangePermissionOverridesStore } from '@components/ChannelSettings/useChangePermissionOverridesStore'
 import { ModalContainer } from '@components/Modals/ModalContainer'
-import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
+import { PanelButton } from '@components/Panel/PanelButton'
+import { isChannelPermission } from '@components/SpaceSettingsPanel/rolePermissions.const'
+import { convertRuleDataToTokenEntitlementSchema } from '@components/Tokens/utils'
+import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
+import { Analytics } from 'hooks/useAnalytics'
+import { useContractRoles } from 'hooks/useContractRoles'
 import { useDevice } from 'hooks/useDevice'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
-import { Analytics } from 'hooks/useAnalytics'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
-import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
-import { PanelButton } from '@components/Panel/PanelButton'
-import { useChangePermissionOverridesStore } from '@components/ChannelSettings/useChangePermissionOverridesStore'
-import { atoms } from 'ui/styles/atoms.css'
 import { PersistForm, usePeristedFormValue } from 'ui/components/Form/PersistForm'
-import { isChannelPermission } from '@components/SpaceSettingsPanel/rolePermissions.const'
+import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
+import { atoms } from 'ui/styles/atoms.css'
 import { mapToErrorMessage } from '../utils'
 
 type Props = {
@@ -605,19 +604,24 @@ export const CreateChannelFormContainer = ({
 }: Omit<Props, 'onCreateChannel'> & { hideOnCreation?: boolean }) => {
     const navigate = useNavigate()
 
+    const { isTouch } = useDevice()
+
     const onCreateChannel = useCallback(
         (roomId: string) => {
             console.log('[CreateChannelForm]', 'onCreateChannel', roomId)
+
+            const channelPath = `/${PATHS.SPACES}/${addressFromSpaceId(spaceId)}/${
+                PATHS.CHANNELS
+            }/${roomId}`
+
             navigate(
-                `/${PATHS.SPACES}/${addressFromSpaceId(spaceId)}/${
-                    PATHS.CHANNELS
-                }/${roomId}/?panel=${CHANNEL_INFO_PARAMS.CHANNEL_INFO}`,
+                `${channelPath}${!isTouch ? `/?panel=${CHANNEL_INFO_PARAMS.CHANNEL_INFO}` : ``}`,
             )
             if (hideOnCreation) {
                 onHide()
             }
         },
-        [navigate, spaceId, onHide, hideOnCreation],
+        [hideOnCreation, isTouch, navigate, onHide, spaceId],
     )
 
     return (
