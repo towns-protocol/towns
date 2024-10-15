@@ -81,9 +81,9 @@ resource "aws_lb_target_group" "target_group" {
   health_check {
     path                = "/health"
     interval            = 60
-    timeout             = 6
+    timeout             = 59
     healthy_threshold   = 2
-    unhealthy_threshold = 2
+    unhealthy_threshold = 3
   }
 
   tags = module.global_constants.tags
@@ -209,6 +209,27 @@ locals {
   base_url         = "https://${local.host}"
 
   service_port = 80
+
+}
+
+locals {
+  total_cpu    = 2048
+  total_memory = 4096
+
+  dd_agent_cpu    = 256
+  dd_agent_memory = 512
+
+  service_cpu    = local.total_cpu - local.dd_agent_cpu
+  service_memory = local.total_memory - local.dd_agent_memory
+
+  service_cpu_percentage    = (local.service_cpu * 100) / local.total_cpu
+  service_memory_percentage = (local.service_memory * 100) / local.total_memory
+
+  service_target_cpu_percentage    = 70
+  service_target_memory_percentage = 70
+
+  autoscale_target_cpu_percentage    = (local.service_target_cpu_percentage * local.service_cpu_percentage) / 100
+  autoscale_target_memory_percentage = (local.service_target_memory_percentage * local.service_memory_percentage) / 100
 }
 
 resource "aws_ecs_task_definition" "fargate_task_definition" {
@@ -219,9 +240,9 @@ resource "aws_ecs_task_definition" "fargate_task_definition" {
   task_role_arn      = aws_iam_role.ecs_task_execution_role.arn
   execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
 
-  cpu = 2048
+  cpu = local.total_cpu
 
-  memory = 4096
+  memory = local.total_memory
 
   requires_compatibilities = ["FARGATE"]
 
@@ -238,6 +259,9 @@ resource "aws_ecs_task_definition" "fargate_task_definition" {
       hostPort      = local.service_port
       protocol      = "tcp"
     }]
+
+    cpu    = local.service_cpu
+    memory = local.service_memory
 
     essential = true
 
@@ -315,8 +339,8 @@ resource "aws_ecs_task_definition" "fargate_task_definition" {
         "protocol" : "tcp"
       }]
 
-      cpu    = 1024
-      memory = 2048
+      cpu    = local.dd_agent_cpu
+      memory = local.dd_agent_memory
 
       secrets = [{
         name      = "DD_API_KEY"
@@ -397,7 +421,7 @@ resource "aws_appautoscaling_policy" "cpu" {
   policy_type        = "TargetTrackingScaling"
 
   target_tracking_scaling_policy_configuration {
-    target_value = 70.0
+    target_value = local.autoscale_target_cpu_percentage
     predefined_metric_specification {
       predefined_metric_type = "ECSServiceAverageCPUUtilization"
     }
@@ -414,7 +438,7 @@ resource "aws_appautoscaling_policy" "memory" {
   policy_type        = "TargetTrackingScaling"
 
   target_tracking_scaling_policy_configuration {
-    target_value = 70.0
+    target_value = local.autoscale_target_memory_percentage
     predefined_metric_specification {
       predefined_metric_type = "ECSServiceAverageMemoryUtilization"
     }
