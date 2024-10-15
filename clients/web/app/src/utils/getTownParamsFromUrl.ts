@@ -1,8 +1,9 @@
+import { makeSpaceStreamId } from '@river-build/sdk'
 import { PATHS } from 'routes'
 import { isTownsAppUrl } from './isTownsAppUrl'
 
 const townsIdRegex = new RegExp(
-    `${PATHS.SPACES}/([0-9a-z]{64})(?:/|/${PATHS.CHANNELS}/([0-9a-z]{64}))(?:/|$)`,
+    `${PATHS.SPACES}/(0x[0-9a-z]{40}|[0-9a-z]{64})(?:/|/${PATHS.CHANNELS}/([0-9a-z]{64}))(?:/|$)`,
 )
 
 export const getTownParamsFromUrl = (url: string | undefined) => {
@@ -13,7 +14,10 @@ export const getTownParamsFromUrl = (url: string | undefined) => {
         const parsedUrl = new URL(url)
         const pathname = parsedUrl.pathname
         const parsed = pathname.match(townsIdRegex)
-        const townId = parsed?.[1]
+        let townId = parsed?.[1]
+        if (townId?.startsWith('0x')) {
+            townId = makeSpaceStreamId(townId)
+        }
         const channelId = parsed?.[2]
         return townId ? { townId, channelId, townPath: pathname } : undefined
     } catch (e) {
