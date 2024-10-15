@@ -7,7 +7,15 @@ import {
     SendTextMessageOptions,
     UnfurledLinkAttachment,
 } from 'use-towns-client'
-import { Plate, PlateEditor, TElement, Value, resetEditor } from '@udecode/plate-common'
+import {
+    Plate,
+    PlateEditor,
+    TElement,
+    Value,
+    getPointAfter,
+    getPointBeforeLocation,
+    resetEditor,
+} from '@udecode/plate-common'
 import { ELEMENT_PARAGRAPH } from '@udecode/plate-paragraph'
 import noop from 'lodash/noop'
 import { UnfurledLinkAttachmentPreview } from '@components/EmbeddedMessageAttachement/EditorAttachmentPreview'
@@ -79,6 +87,7 @@ type RichTextEditorProps = {
     ) => void
     onCancel?: () => void
     onChange?: (editor: PlateEditor<Value>) => void
+    onArrowEscape?: (direction: 'up' | 'down') => void
 }
 
 export const RichTextEditor = ({
@@ -101,6 +110,7 @@ export const RichTextEditor = ({
     channels,
     lookupUser,
     unfurledLinkAttachments = [],
+    onArrowEscape,
     onRemoveUnfurledLinkAttachment = noop,
     onMessageLinksUpdated = noop,
     onCancel = noop,
@@ -228,17 +238,49 @@ export const RichTextEditor = ({
         }
     }, [editorText, fileCount, onSend, resetEditorAfterSend])
 
+    /**
+     * When the user presses the arrow keys, we want to exit the editor if the cursor is at the top or bottom
+     * of the editor. This is to allow the user to navigate to the previous or next message in the thread
+     *
+     * @see TOWNS-4187
+     */
+    const exitEditorOnArrow: React.KeyboardEventHandler = useCallback(
+        (event) => {
+            if (!onArrowEscape || !editorRef.current || !editorRef.current.selection) {
+                return
+            }
+
+            if (
+                event.key === 'ArrowUp' &&
+                !getPointBeforeLocation(editorRef.current, editorRef.current.selection)
+            ) {
+                onArrowEscape('up')
+            } else if (
+                event.key === 'ArrowDown' &&
+                !getPointAfter(editorRef.current, editorRef.current.selection)
+            ) {
+                onArrowEscape('down')
+            }
+        },
+        [onArrowEscape],
+    )
+
     const customKeydownHandler: React.KeyboardEventHandler = useCallback(
         async (event) => {
             /**
              * For desktop, we set editor text `onChange`. However, we need to do this `onKeydown` for mobile
              * to prevent the placeholder from showing up while typing, since soft keyboard `onChange` events
              * are not quick enough, and leads to overlapping placeholders for a brief moment
-
+             *
+             * /^.$/u.test(event.key) is used to check if the key pressed is a single Unicode character and not a
+             * special key (e.g. shift, ctrl, etc.)
+             *
              * @see customKeydownHandler
              */
-            if (isTouch && event.key !== 'Backspace') {
+            if (isTouch && /^.$/u.test(event.key)) {
                 setEditorText(' ')
+            } else {
+                exitEditorOnArrow(event)
             }
             if (
                 !editorRef.current ||
@@ -256,7 +298,7 @@ export const RichTextEditor = ({
                 await sendMessage()
             }
         },
-        [isEditorEmpty, sendMessage, isTouch, disabled, disabledSend, fileCount],
+        [isEditorEmpty, sendMessage, isTouch, disabled, disabledSend, fileCount, exitEditorOnArrow],
     )
 
     const sendButtons = (
