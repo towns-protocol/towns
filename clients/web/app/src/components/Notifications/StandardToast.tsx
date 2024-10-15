@@ -114,6 +114,6 @@ StandardToast.Error = (props: Props) => (
 
 StandardToast.Pending = (props: Props<undefined>) => <StandardToast pending {...props} />
 
-export function dismissToast(toast: Toast) {
-    headlessToast.dismiss(toast.id)
+export function dismissToast(toastId: string) {
+    headlessToast.dismiss(toastId)
 }

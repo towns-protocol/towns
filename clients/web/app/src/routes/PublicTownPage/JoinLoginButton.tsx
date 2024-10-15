@@ -1,13 +1,21 @@
-import React, { useCallback } from 'react'
-import { Permission, useConnectivity, useHasPermission, useTownsContext } from 'use-towns-client'
+import React, { useCallback, useEffect } from 'react'
+import {
+    AuthStatus,
+    Permission,
+    useConnectivity,
+    useHasPermission,
+    useTownsContext,
+} from 'use-towns-client'
 import { useGetEmbeddedSigner } from '@towns/privy'
 import { Box, BoxProps, FancyButton, Icon, IconProps, Text } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { GatedTownModal } from '@components/Web3/GatedTownModal/GatedTownModal'
-import { Analytics } from 'hooks/useAnalytics'
+import { Analytics, trackError } from 'hooks/useAnalytics'
 import { AboveAppProgressModalContainer } from '@components/AppProgressOverlay/AboveAppProgress/AboveAppProgress'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
+import { popupToast } from '@components/Notifications/popupToast'
+import { StandardToast, dismissToast } from '@components/Notifications/StandardToast'
 import { usePublicPageLoginFlow } from './usePublicPageLoginFlow'
 
 const LoginComponent = React.lazy(() => import('@components/Login/LoginComponent'))
@@ -108,11 +116,18 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
         startJoinPreLogin()
     }, [startJoinPreLogin])
 
+    const isEvaluating = useWatchEvaluatingCredentialsAuthStatus()
+
     if (isPreview) {
         return
     }
 
     const content = () => {
+        if (isEvaluating) {
+            return (
+                <LoadingStatusMessage spinner background="level2" message="Connecting to River" />
+            )
+        }
         if (!isAuthenticated) {
             return (
                 <Box width={isTouch ? undefined : '300'}>
@@ -123,9 +138,14 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
 
         if (isLoadingMeetsMembership) {
             return (
-                <LoadingStatusMessage spinner background="level3" message="Checking requirements" />
+                <LoadingStatusMessage spinner background="level2" message="Checking membership" />
             )
         }
+
+        Analytics.getInstance().trackOnce('join button shown', {
+            spaceId,
+            meetsMembershipRequirements,
+        })
 
         return (
             <FancyButton
@@ -162,6 +182,51 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
     )
 }
 
+function useWatchEvaluatingCredentialsAuthStatus() {
+    const { authStatus } = useConnectivity()
+
+    useEffect(() => {
+        let timeoutId: NodeJS.Timeout | undefined
+        let toastId: string | undefined
+
+        if (authStatus === AuthStatus.EvaluatingCredentials) {
+            timeoutId = setTimeout(() => {
+                const message =
+                    '[useWatchEvaluatingCredentialsAuthStatus] timeout connecting to River'
+                trackError({
+                    error: new Error(message),
+                    category: 'river',
+                    displayText: message,
+                    code: 'timeout',
+                    source: 'credentials auth status public page join',
+                })
+                toastId = popupToast(
+                    ({ toast }) => (
+                        <StandardToast.Error
+                            message={`We're having trouble connecting with River. Please try again later.`}
+                            toast={toast}
+                        />
+                    ),
+                    {
+                        duration: Infinity,
+                    },
+                )
+            }, 10_000)
+        } else {
+            if (toastId) {
+                dismissToast(toastId)
+            }
+        }
+
+        return () => {
+            if (timeoutId) {
+                clearTimeout(timeoutId)
+            }
+        }
+    }, [authStatus])
+
+    return authStatus === AuthStatus.EvaluatingCredentials
+}
 const LoadingStatusMessage = ({
     background = 'error',
     message,
