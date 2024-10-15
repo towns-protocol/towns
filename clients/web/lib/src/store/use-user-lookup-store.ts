@@ -1,5 +1,4 @@
 import { persist, PersistStorage, StorageValue } from 'zustand/middleware'
-import { immer } from 'zustand/middleware/immer'
 import debounce from 'lodash/debounce'
 import Dexie from 'dexie'
 import { LookupUser } from 'types/user-lookup'
@@ -72,7 +71,7 @@ const userLookupStorage: PersistStorage<UserLookupStoreData> = {
 
 export const useUserLookupStore = createWithEqualityFn<UserLookupStore>()(
     persist(
-        immer((set, get) => ({
+        (set, get) => ({
             spaceUsers: {},
             channelUsers: {},
             fallbackUserLookups: {},
@@ -80,40 +79,58 @@ export const useUserLookupStore = createWithEqualityFn<UserLookupStore>()(
             setSpaceUser: (userId, user, spaceId) => {
                 set((state) => {
                     if (spaceId) {
-                        if (!state.allUsers[userId]) {
-                            state.allUsers[userId] = {}
+                        const newAllUsers = { ...state.allUsers }
+                        if (!newAllUsers[userId]) {
+                            newAllUsers[userId] = {}
+                        }
+                        newAllUsers[userId] = { ...newAllUsers[userId], [spaceId]: { ...user } }
+
+                        const newSpaceUsers = { ...state.spaceUsers }
+                        if (!newSpaceUsers[spaceId]) {
+                            newSpaceUsers[spaceId] = {}
+                        }
+                        newSpaceUsers[spaceId] = {
+                            ...newSpaceUsers[spaceId],
+                            [userId]: { ...user },
                         }
 
-                        state.allUsers[userId][spaceId] = { ...user }
-
-                        if (!state.spaceUsers[spaceId]) {
-                            state.spaceUsers[spaceId] = {}
-                        }
-                        state.spaceUsers[spaceId][userId] = {
-                            ...user,
-                        }
+                        const newFallbackUserLookups = { ...state.fallbackUserLookups }
                         if (
                             typeof user?.username === 'string' &&
                             user.username.length > 0 &&
-                            !state.fallbackUserLookups[userId]?.username
+                            !newFallbackUserLookups[userId]?.username
                         ) {
-                            state.fallbackUserLookups[userId] = {
-                                ...user,
-                            }
+                            newFallbackUserLookups[userId] = { ...user }
+                        }
+
+                        return {
+                            ...state,
+                            allUsers: newAllUsers,
+                            spaceUsers: newSpaceUsers,
+                            fallbackUserLookups: newFallbackUserLookups,
                         }
                     }
+                    return state
                 })
             },
             setChannelUser: (userId, user, channelId) => {
                 set((state) => {
                     if (channelId) {
-                        if (!state.channelUsers[channelId]) {
-                            state.channelUsers[channelId] = {}
+                        const newChannelUsers = { ...state.channelUsers }
+                        if (!newChannelUsers[channelId]) {
+                            newChannelUsers[channelId] = {}
                         }
-                        state.channelUsers[channelId][userId] = {
-                            ...user,
+                        newChannelUsers[channelId] = {
+                            ...newChannelUsers[channelId],
+                            [userId]: { ...user },
+                        }
+
+                        return {
+                            ...state,
+                            channelUsers: newChannelUsers,
                         }
                     }
+                    return state
                 })
             },
             lookupUser: (userId, spaceId, channelId) => {
@@ -122,37 +139,52 @@ export const useUserLookupStore = createWithEqualityFn<UserLookupStore>()(
             },
             updateUserEverywhere: (userId: string, updater: (user: LookupUser) => LookupUser) => {
                 set((state) => {
-                    for (const spaceId in state.spaceUsers) {
-                        if (state.spaceUsers[spaceId][userId]) {
-                            state.spaceUsers[spaceId][userId] = updater(
-                                state.spaceUsers[spaceId][userId],
-                            )
-                        }
-                    }
-                    for (const channelId in state.channelUsers) {
-                        if (state.channelUsers[channelId][userId]) {
-                            state.channelUsers[channelId][userId] = updater(
-                                state.channelUsers[channelId][userId],
-                            )
-                        }
-                    }
-                    if (state.fallbackUserLookups[userId]) {
-                        state.fallbackUserLookups[userId] = updater(
-                            state.fallbackUserLookups[userId],
-                        )
-                    }
-                    if (state.allUsers[userId]) {
-                        for (const streamId in state.allUsers[userId]) {
-                            if (state.allUsers[userId][streamId]) {
-                                state.allUsers[userId][streamId] = updater(
-                                    state.allUsers[userId][streamId],
-                                )
+                    const newSpaceUsers = { ...state.spaceUsers }
+                    const newChannelUsers = { ...state.channelUsers }
+                    const newFallbackUserLookups = { ...state.fallbackUserLookups }
+                    const newAllUsers = { ...state.allUsers }
+
+                    for (const spaceId in newSpaceUsers) {
+                        if (newSpaceUsers[spaceId][userId]) {
+                            newSpaceUsers[spaceId] = {
+                                ...newSpaceUsers[spaceId],
+                                [userId]: updater(newSpaceUsers[spaceId][userId]),
                             }
                         }
                     }
+
+                    for (const channelId in newChannelUsers) {
+                        if (newChannelUsers[channelId][userId]) {
+                            newChannelUsers[channelId] = {
+                                ...newChannelUsers[channelId],
+                                [userId]: updater(newChannelUsers[channelId][userId]),
+                            }
+                        }
+                    }
+
+                    if (newFallbackUserLookups[userId]) {
+                        newFallbackUserLookups[userId] = updater(newFallbackUserLookups[userId])
+                    }
+
+                    if (newAllUsers[userId]) {
+                        newAllUsers[userId] = Object.fromEntries(
+                            Object.entries(newAllUsers[userId]).map(([streamId, user]) => [
+                                streamId,
+                                updater(user),
+                            ]),
+                        )
+                    }
+
+                    return {
+                        ...state,
+                        spaceUsers: newSpaceUsers,
+                        channelUsers: newChannelUsers,
+                        fallbackUserLookups: newFallbackUserLookups,
+                        allUsers: newAllUsers,
+                    }
                 })
             },
-        })),
+        }),
         {
             name: 'user-lookup-store',
             //storage: createJSONStorage(() => userLookupStorage),
