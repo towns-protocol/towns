@@ -26750,9 +26750,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"on-chain-metrics-lambda@workspace:infra/modules/eth-balance-monitor/lambda-function":
+"on-chain-metrics-lambda@workspace:infra/modules/network-health-monitor/lambda-function":
   version: 0.0.0-use.local
-  resolution: "on-chain-metrics-lambda@workspace:infra/modules/eth-balance-monitor/lambda-function"
+  resolution: "on-chain-metrics-lambda@workspace:infra/modules/network-health-monitor/lambda-function"
   dependencies:
     "@aws-sdk/client-secrets-manager": 3.460.0
     "@datadog/datadog-api-client": ^1.22.0

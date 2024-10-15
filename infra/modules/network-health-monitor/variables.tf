@@ -28,3 +28,8 @@ variable "base_chain_rpc_url_secret_arn" {
   description = "The secret ARN for the base chain rpc url"
   type        = string
 }
+
+variable "extracted_metrics_kind" {
+  description = "What kind of metrics to extract - (node or usage)"
+  type        = string
+}

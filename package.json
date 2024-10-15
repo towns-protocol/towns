@@ -164,6 +164,6 @@
         "river/packages/*",
         "servers/workers/*",
         "servers/notification-service",
-        "infra/modules/eth-balance-monitor/lambda-function"
+        "infra/modules/network-health-monitor/lambda-function"
     ]
 }

@@ -27,7 +27,12 @@ export type MetricsExtractorConfig = {
     environment: string
 }
 
-export type RiverMetrics = Unpromisify<ReturnType<typeof MetricsExtractor.prototype.extract>>
+export type NodeMetrics = Unpromisify<
+    ReturnType<typeof MetricsExtractor.prototype.extractNodeMetrics>
+>
+export type UsageMetrics = Unpromisify<
+    ReturnType<typeof MetricsExtractor.prototype.extractUsageMetrics>
+>
 
 export type SpaceWithTokenOwners = {
     address: string
@@ -108,18 +113,6 @@ export class MetricsExtractor {
         const operatorsOnRiver = await this.riverRegistry.operatorRegistry.read.getAllOperators()
         console.log('got operators on river')
         return operatorsOnRiver
-    }
-
-    private async getStreamCountsOnRiver() {
-        // TODO: uncomment to get stream counts on river
-        // const riverNodeAddresses = nodesOnRiver.map((node) => node.nodeAddress)
-        // console.log('getting stream counts on river')
-        // const streamCountsOnRiver = await riverRegistry.getStreamCountsOnNodes(riverNodeAddresses)
-        // console.log('got stream counts on river')
-        // const nodesOnRiverWithStreamCounts = nodesOnRiver.map((node, index) => {
-        //     const streamCount = streamCountsOnRiver[index]
-        //     return { node, streamCount: Number(streamCount) }
-        // })
     }
 
     private async getNumTotalSpaces() {
@@ -347,21 +340,12 @@ export class MetricsExtractor {
         }
     }
 
-    async extract() {
-        const [
-            nodesOnRiver,
-            nodesOnBase,
-            operatorsOnBase,
-            operatorsOnRiver,
-            numTotalSpaces,
-            numTotalStreams,
-        ] = await Promise.all([
+    private async getNodes() {
+        const [nodesOnRiver, nodesOnBase, operatorsOnBase, operatorsOnRiver] = await Promise.all([
             this.getNodesOnRiver(),
             this.getNodesOnBase(),
             this.getOperatorsOnBase(),
             this.getOperatorsOnRiver(),
-            this.getNumTotalSpaces(),
-            this.getNumTotalStreams(),
         ])
 
         const combinedNodes = this.integrator.combineNodes(nodesOnBase, nodesOnRiver)
@@ -377,20 +361,36 @@ export class MetricsExtractor {
             combinedOperators,
             combinedNodes,
         )
+        return {
+            nodesOnRiver,
+            nodesOnBase,
+            operatorsOnBase,
+            operatorsOnRiver,
+            combinedNodes,
+            combinedOperators,
+            combinedNodesWithOperators,
+            combinedOperatorsWithNodes,
+        }
+    }
 
-        const [
-            baseChainWalletBalances,
-            riverChainWalletBalances,
-            nodePingResults,
-            spacesWithMemberships,
-            spaceOwners,
-        ] = await Promise.all([
-            this.getBaseChainWalletBalances(nodesOnRiver),
-            this.getRiverChainWalletBalances(nodesOnRiver),
-            this.pinger.pingNodes(combinedNodes),
-            this.getAllSpacesWithMemberships(numTotalSpaces),
-            this.getSpaceOwners(numTotalSpaces),
-        ])
+    public async extractNodeMetrics() {
+        const {
+            nodesOnRiver,
+            nodesOnBase,
+            operatorsOnBase,
+            operatorsOnRiver,
+            combinedNodes,
+            combinedOperators,
+            combinedNodesWithOperators,
+            combinedOperatorsWithNodes,
+        } = await this.getNodes()
+
+        const [baseChainWalletBalances, riverChainWalletBalances, nodePingResults] =
+            await Promise.all([
+                this.getBaseChainWalletBalances(nodesOnRiver),
+                this.getRiverChainWalletBalances(nodesOnRiver),
+                this.pinger.pingNodes(combinedNodes),
+            ])
 
         const walletBalances = riverChainWalletBalances.concat(baseChainWalletBalances)
         const missingNodesOnRiver = combinedNodes.filter((node) => node.isMissingOnRiver)
@@ -403,6 +403,37 @@ export class MetricsExtractor {
             (operator) => operator.status === 3, // 3 is the status for approved operators
         ).length
         const numTotalOperatorsOnRiver = operatorsOnRiver.length
+
+        return {
+            walletBalances,
+            nodePingResults,
+            combinedNodes,
+            combinedOperators,
+            combinedNodesWithOperators,
+            combinedOperatorsWithNodes,
+            nodesOnBase,
+            nodesOnRiver,
+            aggregateNodeStats: {
+                numTotalNodesOnBase,
+                numTotalNodesOnRiver,
+                numTotalOperatorsOnBase,
+                numTotalOperatorsOnRiver,
+                numMissingNodesOnBase,
+                numMissingNodesOnRiver,
+            },
+        }
+    }
+
+    async extractUsageMetrics() {
+        const [numTotalSpaces, numTotalStreams] = await Promise.all([
+            this.getNumTotalSpaces(),
+            this.getNumTotalStreams(),
+        ])
+
+        const [spacesWithMemberships, spaceOwners] = await Promise.all([
+            this.getAllSpacesWithMemberships(numTotalSpaces),
+            this.getSpaceOwners(numTotalSpaces),
+        ])
 
         let numTotalSpaceMemberships = 0
         let memberAddressToNumMemberships: Map<string, number> = new Map()
@@ -442,26 +473,12 @@ export class MetricsExtractor {
         const numUniqueSpaceOwners = new Set(spaceOwners).size
 
         return {
-            walletBalances,
-            nodePingResults,
-            combinedNodes,
-            combinedOperators,
-            combinedNodesWithOperators,
-            combinedOperatorsWithNodes,
-            nodesOnBase,
-            nodesOnRiver,
             spacesWithMemberships,
             memberAddressToNumMemberships,
-            aggregateNetworkStats: {
+            aggregateUsageStats: {
                 numTotalSpaces,
-                numTotalSpaceMemberships,
                 numTotalStreams,
-                numTotalNodesOnBase,
-                numTotalNodesOnRiver,
-                numTotalOperatorsOnBase,
-                numTotalOperatorsOnRiver,
-                numMissingNodesOnBase,
-                numMissingNodesOnRiver,
+                numTotalSpaceMemberships,
                 numTotalUniqueSpaceMembers,
                 numTotalPricedSpaces,
                 numTotalPaidSpaceMemberships,

@@ -3,19 +3,21 @@ module "global_constants" {
 }
 
 locals {
-  base_name                    = "eth-balance-monitor"
+  base_name                    = "network-health-monitor-${var.extracted_metrics_kind}"
   lambda_function_service_name = "${local.base_name}-lambda-function"
   lambda_tags = merge(module.global_constants.tags, {
     Service = local.lambda_function_service_name
   })
   global_remote_state = module.global_constants.global_remote_state.outputs
+  memory_size         = var.extracted_metrics_kind == "usage" ? 2048 : 1024
+  schedule_expression = var.extracted_metrics_kind == "usage" ? "rate(1 day)" : "rate(5 minutes)"
 }
 
 module "lambda_function" {
   source                = "terraform-aws-modules/lambda/aws"
   version               = "7.2.0"
   function_name         = "${local.lambda_function_service_name}-${terraform.workspace}"
-  description           = "Lambda function to monitor on-chain metrics"
+  description           = "Lambda function to monitor on-chain  metrics"
   handler               = "index.handler"
   runtime               = "nodejs20.x"
   architectures         = ["x86_64"]
@@ -32,7 +34,7 @@ module "lambda_function" {
 
   trigger_on_package_timestamp = false
 
-  memory_size = 10240
+  memory_size = local.memory_size
 
   environment_variables = {
     DATADOG_API_KEY_SECRET_ARN         = local.global_remote_state.river_global_dd_agent_api_key.arn
@@ -40,6 +42,7 @@ module "lambda_function" {
     RIVER_CHAIN_RPC_URL_SECRET_ARN     = var.river_chain_rpc_url_secret_arn,
     BASE_CHAIN_RPC_URL_SECRET_ARN      = var.base_chain_rpc_url_secret_arn,
     ENVIRONMENT                        = terraform.workspace
+    EXTRACTED_METRICS_KIND             = var.extracted_metrics_kind
   }
 
   source_path = "${path.module}/lambda-function/dist"
@@ -68,11 +71,7 @@ resource "aws_cloudwatch_event_rule" "schedule" {
   name        = "schedule-${module.lambda_function.lambda_function_name}"
   description = "Schedule for the river node eth balance monitor lambda function"
 
-  # TODO: create a separate lambda for expensive queries. (https://linear.app/hnt-labs/issue/HNT-8096/create-a-second-lambda-for-expensive-queries-with-lower-run-rates)
-  # The cheaper queries should run every 5-10 minutes.
-  # The expensive ones should run no more than once per hour.
-  # every 1 hour
-  schedule_expression = "rate(1 hour)"
+  schedule_expression = local.schedule_expression
 }
 
 resource "aws_cloudwatch_event_target" "schedule" {

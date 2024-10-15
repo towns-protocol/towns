@@ -18,8 +18,9 @@ const run = async () => {
         environment: env.ENVIRONMENT,
     })
 
-    const metrics = await extractor.extract()
-    const artifacts = new MetricsArtifacts(metrics)
+    const nodeMetrics = await extractor.extractNodeMetrics()
+    const usageMetrics = await extractor.extractUsageMetrics()
+    const artifacts = new MetricsArtifacts(nodeMetrics, usageMetrics)
     await artifacts.createArtifacts()
 }
 

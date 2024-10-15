@@ -13,6 +13,13 @@ export async function handleDatadogJob(config: Config) {
         env: environment,
     })
     const metricsExtractor = MetricsExtractor.init(config)
-    const metrics = await metricsExtractor.extract()
-    await datadog.postAllMetrics(metrics)
+    if (config.extractedMetricsKind === 'usage') {
+        const usageMetrics = await metricsExtractor.extractUsageMetrics()
+        await datadog.postUsageMetrics(usageMetrics)
+    } else if (config.extractedMetricsKind === 'node') {
+        const nodeMetrics = await metricsExtractor.extractNodeMetrics()
+        await datadog.postNodeMetrics(nodeMetrics)
+    } else {
+        throw new Error(`Unknown extracted metrics kind: ${config.extractedMetricsKind}`)
+    }
 }

@@ -8,6 +8,7 @@ function getEnvVars() {
         DATADOG_APPLICATION_KEY_SECRET_ARN,
         RIVER_CHAIN_RPC_URL_SECRET_ARN,
         BASE_CHAIN_RPC_URL_SECRET_ARN,
+        EXTRACTED_METRICS_KIND,
     } = process.env
     if (typeof ENVIRONMENT !== 'string' || !ENVIRONMENT.trim().length) {
         throw new Error('ENVIRONMENT is not defined')
@@ -36,12 +37,19 @@ function getEnvVars() {
     ) {
         throw new Error('DATADOG_APPLICATION_KEY_SECRET_ARN is not defined')
     }
+    if (typeof EXTRACTED_METRICS_KIND !== 'string' || !EXTRACTED_METRICS_KIND.trim().length) {
+        throw new Error('EXTRACTED_METRICS_KIND is not defined')
+    } else if (EXTRACTED_METRICS_KIND !== 'usage' && EXTRACTED_METRICS_KIND !== 'node') {
+        throw new Error('EXTRACTED_METRICS_KIND must be either "usage" or "node"')
+    }
+
     return {
         ENVIRONMENT,
         DATADOG_API_KEY_SECRET_ARN,
         DATADOG_APPLICATION_KEY_SECRET_ARN,
         RIVER_CHAIN_RPC_URL_SECRET_ARN,
         BASE_CHAIN_RPC_URL_SECRET_ARN,
+        EXTRACTED_METRICS_KIND,
     }
 }
 
@@ -64,6 +72,7 @@ export async function getConfig() {
         RIVER_CHAIN_RPC_URL_SECRET_ARN,
         BASE_CHAIN_RPC_URL_SECRET_ARN,
         ENVIRONMENT,
+        EXTRACTED_METRICS_KIND,
     } = getEnvVars()
     const datadogApiKey = await getSecretValue(DATADOG_API_KEY_SECRET_ARN)
     const datadogApplicationKey = await getSecretValue(DATADOG_APPLICATION_KEY_SECRET_ARN)
@@ -76,6 +85,7 @@ export async function getConfig() {
         riverChainRpcUrl,
         baseChainRpcUrl,
         environment: ENVIRONMENT,
+        extractedMetricsKind: EXTRACTED_METRICS_KIND,
     }
 }
 
