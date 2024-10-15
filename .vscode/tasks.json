@@ -214,14 +214,6 @@
       "problemMatcher": []
     },
     {
-      // Optional worker that's only required if testing the gateway worker with siwe verification
-      "label": "Start SIWE worker",
-      "type": "shell",
-      "command": "cd servers/workers/siwe-worker && yarn dev:local",
-      "isBackground": true,
-      "problemMatcher": [],
-    },
-    {
       "label": "FoundryUp",
       "type": "shell",
       "command": "./river/scripts/foundry-up.sh",

@@ -119,21 +119,6 @@
         ],
         "versionGroups": [
             {
-                "label": "Different versions in worker & client - need v2.x in workers, which breaks client",
-                "dependencies": [
-                    "siwe"
-                ],
-                "packages": [
-                    "siwe-worker",
-                    "worker-common"
-                ],
-                "dependencyTypes": [
-                    "prod",
-                    "dev",
-                    "peer"
-                ]
-            },
-            {
                 "label": "Different versions in river/* and client",
                 "dependencies": [
                     "@testing-library/react",

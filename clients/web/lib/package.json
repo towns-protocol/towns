@@ -46,7 +46,6 @@
         "marked": "^12.0.2",
         "marked-plaintify": "^1.0.1",
         "node-emoji": "^1.11.0",
-        "siwe": "^1.1.6",
         "viem": "^1.18.2",
         "zustand": "^4.5.4"
     },

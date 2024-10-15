@@ -115,7 +115,6 @@
         "remark-rehype": "^11.1.0",
         "remark-slate": "^1.8.6",
         "seedrandom": "^3.0.5",
-        "siwe": "^1.1.6",
         "slate": "0.102.0",
         "slate-history": "^0.100.0",
         "slate-hyperscript": "^0.100.0",

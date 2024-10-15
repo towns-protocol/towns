@@ -6722,7 +6722,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@noble/hashes@npm:1.4.0, @noble/hashes@npm:^1.1.2, @noble/hashes@npm:^1.3.1, @noble/hashes@npm:~1.4.0":
+"@noble/hashes@npm:1.4.0, @noble/hashes@npm:^1.3.1, @noble/hashes@npm:~1.4.0":
   version: 1.4.0
   resolution: "@noble/hashes@npm:1.4.0"
   checksum: 8ba816ae26c90764b8c42493eea383716396096c5f7ba6bea559993194f49d80a73c081f315f4c367e51bd2d5891700bcdfa816b421d24ab45b41cb03e4f3342
@@ -10659,27 +10659,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@spruceid/siwe-parser@npm:^1.1.3":
-  version: 1.1.3
-  resolution: "@spruceid/siwe-parser@npm:1.1.3"
-  dependencies:
-    apg-js: ^4.1.1
-  checksum: 708786ba2f10987c45c1fd8a6243ba6572ee7f320531616d71ff66044828bc24af66f5537ce09c9272bdae93fcc35b566a7804fe7997284f2ee5445a36e6add2
-  languageName: node
-  linkType: hard
-
-"@spruceid/siwe-parser@npm:^2.0.2":
-  version: 2.0.2
-  resolution: "@spruceid/siwe-parser@npm:2.0.2"
-  dependencies:
-    "@noble/hashes": ^1.1.2
-    apg-js: ^4.1.1
-    uri-js: ^4.4.1
-    valid-url: ^1.0.9
-  checksum: 689b09a73026c79223805c77762b923af25209274f26d5f26d95f808a882ceb138dfbdfb6d7c8e31a67fb677bc16d90079c83821ee8e7c8bcece29cd94b2a67b
-  languageName: node
-  linkType: hard
-
 "@stablelib/aead@npm:^1.0.1":
   version: 1.0.1
   resolution: "@stablelib/aead@npm:1.0.1"
@@ -14242,13 +14221,6 @@ __metadata:
     normalize-path: ^3.0.0
     picomatch: ^2.0.4
   checksum: 3e044fd6d1d26545f235a9fe4d7a534e2029d8e59fa7fd9f2a6eb21230f6b5380ea1eaf55136e60cbf8e613544b3b766e7a6fa2102e2a3a117505466e3025dc2
-  languageName: node
-  linkType: hard
-
-"apg-js@npm:^4.1.1":
-  version: 4.1.3
-  resolution: "apg-js@npm:4.1.3"
-  checksum: fa815838fc3c4b2fa5801419d050c5cf0ac8b5dbbc7476a9c9b8e1ae5fc78feccf01ff3ff52ef1e80c72f8b7bf39f589f1b8aaad5f5aeba399523a9ba18da127
   languageName: node
   linkType: hard
 
@@ -21074,7 +21046,6 @@ __metadata:
     remark-slate: ^1.8.6
     rollup-plugin-visualizer: ^5.12.0
     seedrandom: ^3.0.5
-    siwe: ^1.1.6
     slate: 0.102.0
     slate-history: ^0.100.0
     slate-hyperscript: ^0.100.0
@@ -29641,7 +29612,6 @@ __metadata:
     react-router-dom: ^6.4.2
     rollup-plugin-node-polyfills: ^0.2.1
     rollup-plugin-visualizer: ^5.12.0
-    siwe: ^1.1.6
     typescript: ^5.1.6
     url: ^0.11.0
     use-towns-client: "workspace:^"
@@ -30064,33 +30034,6 @@ __metadata:
   version: 1.0.5
   resolution: "sisteransi@npm:1.0.5"
   checksum: aba6438f46d2bfcef94cf112c835ab395172c75f67453fe05c340c770d3c402363018ae1ab4172a1026a90c47eaccf3af7b6ff6fa749a680c2929bd7fa2b37a4
-  languageName: node
-  linkType: hard
-
-"siwe@npm:^1.1.6":
-  version: 1.1.6
-  resolution: "siwe@npm:1.1.6"
-  dependencies:
-    "@spruceid/siwe-parser": ^1.1.3
-    "@stablelib/random": ^1.0.1
-    apg-js: ^4.1.1
-  peerDependencies:
-    ethers: 5.5.1
-  checksum: 067517d2dd37c034f6c81011cf2d9cd821d44710030161990f630cf0228dcf327d02343e59cd00c761836aa3497f1e9f2d975f9d887db6174d611b3b3a6190f5
-  languageName: node
-  linkType: hard
-
-"siwe@npm:^2.1.3":
-  version: 2.1.3
-  resolution: "siwe@npm:2.1.3"
-  dependencies:
-    "@spruceid/siwe-parser": ^2.0.2
-    "@stablelib/random": ^1.0.1
-    uri-js: ^4.4.1
-    valid-url: ^1.0.9
-  peerDependencies:
-    ethers: ^5.5.1
-  checksum: ccfaf83d504bcd77a32dc673ed54b1787879b2613a910aac9c93b26a9bbe6eaa4b9b94db41008ac379a8ad167086d83cbcaebe8dbd75f7ecf6a330c2b5ac7281
   languageName: node
   linkType: hard
 
@@ -33023,7 +32966,6 @@ __metadata:
     pino: ^8.17.1
     react: ^18.2.0
     react-dom: ^18.2.0
-    siwe: ^1.1.6
     ts-jest: ^29.1.1
     typescript: ^5.1.6
     viem: ^1.18.2
@@ -33185,13 +33127,6 @@ __metadata:
   dependencies:
     homedir-polyfill: ^1.0.1
   checksum: 193db08aa396d993da04d3d985450784aa0010f51613005d13ef97d7b2b9e1ba5aef04affa585037adece12de5ca532f6f5fc40288495eab55e2eebc201809d2
-  languageName: node
-  linkType: hard
-
-"valid-url@npm:^1.0.9":
-  version: 1.0.9
-  resolution: "valid-url@npm:1.0.9"
-  checksum: 3ecb030559404441c2cf104cbabab8770efb0f36d117db03d1081052ef133015a68806148ce954bb4dd0b5c42c14b709a88783c93d66b0916cb67ba771c98702
   languageName: node
   linkType: hard
 
@@ -34490,7 +34425,6 @@ __metadata:
     jest-environment-miniflare: ^2.14.2
     miniflare: ^3.20240524.1
     prettier: ^2.8.8
-    siwe: ^2.1.3
     ts-jest: ^29.1.1
     typescript: ^5.1.6
     wrangler: ^3.58.0

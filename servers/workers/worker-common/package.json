@@ -22,8 +22,7 @@
     "dependencies": {
         "@river-build/generated": "workspace:^",
         "@river-build/web3": "workspace:^",
-        "ethers": "^5.7.2",
-        "siwe": "^2.1.3"
+        "ethers": "^5.7.2"
     },
     "devDependencies": {
         "@cloudflare/workers-types": "^4.20240529.0",

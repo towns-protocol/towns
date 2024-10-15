@@ -18,7 +18,6 @@
     "./servers/workers/worker-common",
     "./servers/workers/token-worker",
     "./servers/workers/gateway-worker",
-    "./servers/workers/siwe-worker",
     "./servers/workers/unfurl-worker",
     "./servers/workers/stackup-worker",
   ],
