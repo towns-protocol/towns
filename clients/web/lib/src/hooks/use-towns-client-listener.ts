@@ -1,5 +1,10 @@
 import { MutableRefObject, useEffect, useRef, useState } from 'react'
-import { Client as CasablancaClient, SignerContext, userIdFromAddress } from '@river-build/sdk'
+import {
+    Client as CasablancaClient,
+    errorContains,
+    SignerContext,
+    userIdFromAddress,
+} from '@river-build/sdk'
 import { check } from '@river-build/dlog'
 import { AuthStatus } from './login'
 import { TownsClient } from '../client/TownsClient'
@@ -16,6 +21,7 @@ import { staticAssertNever } from '../utils/towns-utils'
 import { useNetworkStatus } from './use-network-status'
 import { useSpaceDapp } from './use-space-dapp'
 import { useOfflineStore } from '../store/use-offline-store'
+import { Err } from '@river-build/proto'
 
 export const useTownsClientListener = (opts: TownsOpts) => {
     const { setAuthStatus: setCasablancaAuthStatus, setAuthError: setCasablancaAuthError } =
@@ -251,9 +257,10 @@ async function logInWithRetries(
     const MAX_RETRY_COUNT = 20
     // eslint-disable-next-line no-constant-condition
     while (true) {
+        const context = credentialsToSignerContext(credentials)
         try {
             console.log('[use-towns-client-listener] logging in')
-            const context = credentialsToSignerContext(credentials)
+
             const userId = userIdFromAddress(context.creatorAddress)
             const isRegistered =
                 useOfflineStore.getState().skipIsRegisteredCheck[userId] ||
@@ -276,6 +283,11 @@ async function logInWithRetries(
                 await client.logoutFromCasablanca()
             } catch (e) {
                 console.error('error while logging out', e)
+            }
+
+            if (errorContains(e, Err.BAD_STREAM_CREATION_PARAMS)) {
+                // if the user streams failed to create, just return in the credentialed state, it should resolve if the user joins or creates a space
+                return new Credentialed(credentials, context)
             }
             // aellis - if you have credentials you should always be able to sign in to the stream node
             // this error is probably a connect error, so we should just retry forever probably?
