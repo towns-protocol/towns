@@ -6,6 +6,7 @@ import { shallow } from 'zustand/shallow'
 
 import { dlogger } from '@river-build/dlog'
 import { createWithEqualityFn } from 'zustand/traditional'
+import isEqual from 'lodash/isEqual'
 
 const dlog = dlogger('csb:store:user-lookup')
 
@@ -39,18 +40,22 @@ const debouncedSave = debounce(
         const spaceUsers = value.state.spaceUsers
         const channelUsers = value.state.channelUsers
         const fallbackUserLookups = value.state.fallbackUserLookups
-        await db
-            .table('userLookup')
-            .put({ key: name, spaceUsers, channelUsers, fallbackUserLookups })
+        const allUsers = value.state.allUsers
+        try {
+            await db
+                .table('userLookup')
+                .put({ key: name, spaceUsers, channelUsers, fallbackUserLookups, allUsers })
+        } catch (e) {
+            dlog.error(`problem saving to persistence`, e)
+        }
     },
-    250,
-    { maxWait: 500 },
+    1000,
+    { maxWait: 5000 },
 )
 
 const userLookupStorage: PersistStorage<UserLookupStoreData> = {
     async getItem(name: string) {
         const item = await db.table<UserLookupStore, string>('userLookup').get({ key: name })
-
         return {
             state: item ?? {
                 spaceUsers: {},
@@ -78,59 +83,85 @@ export const useUserLookupStore = createWithEqualityFn<UserLookupStore>()(
             allUsers: {},
             setSpaceUser: (userId, user, spaceId) => {
                 set((state) => {
-                    if (spaceId) {
-                        const newAllUsers = { ...state.allUsers }
-                        if (!newAllUsers[userId]) {
-                            newAllUsers[userId] = {}
-                        }
-                        newAllUsers[userId] = { ...newAllUsers[userId], [spaceId]: { ...user } }
-
-                        const newSpaceUsers = { ...state.spaceUsers }
-                        if (!newSpaceUsers[spaceId]) {
-                            newSpaceUsers[spaceId] = {}
-                        }
-                        newSpaceUsers[spaceId] = {
-                            ...newSpaceUsers[spaceId],
-                            [userId]: { ...user },
-                        }
-
-                        const newFallbackUserLookups = { ...state.fallbackUserLookups }
-                        if (
-                            typeof user?.username === 'string' &&
-                            user.username.length > 0 &&
-                            !newFallbackUserLookups[userId]?.username
-                        ) {
-                            newFallbackUserLookups[userId] = { ...user }
-                        }
-
-                        return {
-                            ...state,
-                            allUsers: newAllUsers,
-                            spaceUsers: newSpaceUsers,
-                            fallbackUserLookups: newFallbackUserLookups,
-                        }
+                    const { allUsers, spaceUsers, fallbackUserLookups } = state
+                    if (!spaceId) {
+                        return state
                     }
-                    return state
+
+                    // avoid mutation if user === stored users in all places
+                    // this occurs a lot during initialization while unrolling
+                    // streams upon persisted state
+                    if (
+                        allUsers[userId] &&
+                        spaceUsers[spaceId]?.[userId] &&
+                        fallbackUserLookups[userId] &&
+                        isEqual(allUsers[userId][spaceId], user) &&
+                        isEqual(spaceUsers[spaceId][userId], user) &&
+                        isEqual(fallbackUserLookups[userId], user)
+                    ) {
+                        return state
+                    }
+
+                    const newAllUsers = { ...allUsers }
+                    if (!newAllUsers[userId]) {
+                        newAllUsers[userId] = {}
+                    }
+                    newAllUsers[userId] = {
+                        ...newAllUsers[userId],
+                        [spaceId]: { ...user },
+                    }
+
+                    const newSpaceUsers = { ...spaceUsers }
+                    if (!newSpaceUsers[spaceId]) {
+                        newSpaceUsers[spaceId] = {}
+                    }
+                    newSpaceUsers[spaceId] = {
+                        ...newSpaceUsers[spaceId],
+                        [userId]: { ...user },
+                    }
+
+                    const newFallbackUserLookups = { ...fallbackUserLookups }
+                    if (
+                        typeof user?.username === 'string' &&
+                        user.username.length > 0 &&
+                        !newFallbackUserLookups[userId]?.username
+                    ) {
+                        newFallbackUserLookups[userId] = { ...user }
+                    }
+
+                    return {
+                        ...state,
+                        allUsers: newAllUsers,
+                        spaceUsers: newSpaceUsers,
+                        fallbackUserLookups: newFallbackUserLookups,
+                    }
                 })
             },
             setChannelUser: (userId, user, channelId) => {
                 set((state) => {
-                    if (channelId) {
-                        const newChannelUsers = { ...state.channelUsers }
-                        if (!newChannelUsers[channelId]) {
-                            newChannelUsers[channelId] = {}
-                        }
-                        newChannelUsers[channelId] = {
-                            ...newChannelUsers[channelId],
-                            [userId]: { ...user },
-                        }
-
-                        return {
-                            ...state,
-                            channelUsers: newChannelUsers,
-                        }
+                    if (!channelId) {
+                        return state
                     }
-                    return state
+
+                    if (
+                        state.channelUsers[channelId] &&
+                        isEqual(state.channelUsers[channelId], user)
+                    ) {
+                        return state
+                    }
+                    const newChannelUsers = { ...state.channelUsers }
+                    if (!newChannelUsers[channelId]) {
+                        newChannelUsers[channelId] = {}
+                    }
+                    newChannelUsers[channelId] = {
+                        ...newChannelUsers[channelId],
+                        [userId]: { ...user },
+                    }
+
+                    return {
+                        ...state,
+                        channelUsers: newChannelUsers,
+                    }
                 })
             },
             lookupUser: (userId, spaceId, channelId) => {
@@ -187,23 +218,24 @@ export const useUserLookupStore = createWithEqualityFn<UserLookupStore>()(
         }),
         {
             name: 'user-lookup-store',
-            //storage: createJSONStorage(() => userLookupStorage),
             storage: userLookupStorage,
-            onRehydrateStorage: () => (state) => {
-                // instead of storing allUsers we can build it from spaceUsers
-                for (const spaceId in state?.spaceUsers) {
-                    for (const userId in state.spaceUsers[spaceId]) {
-                        if (!state.allUsers[userId]) {
-                            state.allUsers[userId] = {}
-                        }
-                        if (!state.allUsers[userId][spaceId]) {
-                            state.allUsers[userId][spaceId] = {
-                                ...state.spaceUsers[spaceId][userId],
-                            }
-                        }
+            partialize: (state) => {
+                const { allUsers, channelUsers, spaceUsers, fallbackUserLookups } = state
+                return {
+                    allUsers,
+                    channelUsers,
+                    spaceUsers,
+                    fallbackUserLookups,
+                }
+            },
+            onRehydrateStorage: () => {
+                return (_state, error) => {
+                    if (error) {
+                        dlog.error('an error happened during hydration', error)
+                    } else {
+                        dlog.info('rehydration complete')
                     }
                 }
-                dlog.info('rehydration complete')
             },
         },
     ),
