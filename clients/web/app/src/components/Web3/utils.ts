@@ -123,6 +123,10 @@ function getErrorDisplayText(error: ErrorTypes | undefined) {
                 errorText =
                     'You may have insufficient funds in your wallet. Please check your wallet and try again.'
                 break
+            case isActiveChainIdDifferentErrorMessage(error):
+                errorText =
+                    'Please make sure your wallet is on the correct network and is connected to the app.'
+                break
             case errorName === walletAlreadyLinkedError.name:
                 errorText = 'Wallet is already linked.'
                 break
@@ -250,6 +254,10 @@ export function isMaybeFundsError(error: ErrorTypes | undefined) {
 
 function isRejectedErrorMessage(error: ErrorTypes | undefined) {
     return error?.message?.toString()?.includes('user rejected transaction')
+}
+
+function isActiveChainIdDifferentErrorMessage(error: ErrorTypes | undefined) {
+    return error?.message?.toString()?.includes('active chainId is different than the one provided')
 }
 
 export function baseScanUrl(chainId: number) {

@@ -61,6 +61,12 @@ export function useConnectThenLink({
         },
         onError: (error) => {
             console.error('[useConnectThenLink] error connecting wallet', error)
+            popupToast(({ toast }) => (
+                <StandardToast.Error
+                    toast={toast}
+                    message={`Please make sure your wallet supports and is connected to the ${baseChain.name} network.`}
+                />
+            ))
         },
     })
 

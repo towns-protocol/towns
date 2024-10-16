@@ -20,6 +20,9 @@ import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { TokenSelectionDisplayWithMetadata } from 'routes/RoleRestrictedChannelJoinPanel'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { Analytics } from 'hooks/useAnalytics'
+import { popupToast } from '@components/Notifications/popupToast'
+import { StandardToast } from '@components/Notifications/StandardToast'
+import { useEnvironment } from 'hooks/useEnvironmnet'
 import { FullPanelOverlay, LinkedWallet } from '../WalletLinkingPanel'
 import { isEveryoneAddress, mapToErrorMessage } from '../utils'
 import { ConnectWalletThenLinkButton } from '../ConnectWalletThenLinkButton'
@@ -151,39 +154,43 @@ function Content({
     const { noAssets, tickNoAssets } = useNoAssetsState()
     const isJoinPending = useIsTransactionPending(BlockchainTransactionType.JoinSpace)
     const { isPrivyReady } = useGetEmbeddedSigner()
+    const { baseChain } = useEnvironment()
 
-    const {
-        isLoading: isLoadingLinkingWallet,
-        linkEOAToRootKeyTransaction,
-        error: errorLinkWallet,
-    } = useLinkEOAToRootKeyTransaction({
-        onSuccess: async () => {
-            if (!loggedInWalletAddress) {
-                return
-            }
-            await invalidateJoinSpace()
+    const { isLoading: isLoadingLinkingWallet, linkEOAToRootKeyTransaction } =
+        useLinkEOAToRootKeyTransaction({
+            onSuccess: async () => {
+                if (!loggedInWalletAddress) {
+                    return
+                }
+                await invalidateJoinSpace()
 
-            const canJoin = getJoinSpaceQueryData()
+                const canJoin = getJoinSpaceQueryData()
 
-            Analytics.getInstance().track('successfully linked wallet', {
-                spaceId,
-                meetsMembershipRequirements: canJoin,
-            })
+                Analytics.getInstance().track('successfully linked wallet', {
+                    spaceId,
+                    meetsMembershipRequirements: canJoin,
+                })
 
-            if (!canJoin) {
-                tickNoAssets()
-            }
-        },
-    })
-
-    useErrorToast({
-        errorMessage: errorLinkWallet
-            ? mapToErrorMessage({
-                  error: errorLinkWallet,
-                  source: 'token verification link wallet',
-              })
-            : undefined,
-    })
+                if (!canJoin) {
+                    tickNoAssets()
+                }
+            },
+            onError: async (error) => {
+                console.error('[useLinkEOAToRootKeyTransaction] error linking wallet', error)
+                popupToast(({ toast }) => (
+                    <StandardToast.Error
+                        toast={toast}
+                        message={
+                            mapToErrorMessage({
+                                error,
+                                source: 'token verification link wallet',
+                            }) ??
+                            `There was an error linking your wallet. Make sure your wallet supports and is connected to the ${baseChain.name} network.`
+                        }
+                    />
+                ))
+            },
+        })
 
     const onJoinClick = useCallback(async () => {
         onHide({ shouldEndLoginFlow: false })
