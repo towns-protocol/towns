@@ -41,6 +41,9 @@ export function matchGasTooLowError(error: unknown) {
             'AA23 reverted',
             // verificationGasLimit too low
             'OOG',
+            // replacement underpriced
+            'currentMaxPriorityFee',
+            'currentMaxFee',
         ]
         const match = possibleGasErrors.find((error) => err.message.includes(error))
         if (match) {

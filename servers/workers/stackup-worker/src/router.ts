@@ -209,7 +209,7 @@ router.post(
         }
         const { data } = content
 
-        const { townId, functionHash, rootKeyAddress, ...userOperation } = data
+        const { townId, functionHash, rootKeyAddress, gasOverrides, ...userOperation } = data
 
         const verificationErrorResponse = await handleVerifications({
             privyClient,
@@ -235,6 +235,7 @@ router.post(
             policyId: env.ALCHEMY_GM_POLICY_ID,
             userOperation,
             entryPoint: env.ERC4337_ENTRYPOINT_ADDRESS,
+            gasOverrides,
         })
         console.log('paymaster API request:', requestInit.body)
         const durationAlchemyApiRequest = durationLogger('paymaster API Request')
@@ -246,7 +247,6 @@ router.post(
             env,
             townId,
         })
-        // proxy successful VerifyingPaymasterResult response to caller
     },
 )
 

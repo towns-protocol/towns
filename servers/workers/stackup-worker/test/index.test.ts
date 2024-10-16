@@ -95,19 +95,29 @@ describe('http router', () => {
         let requestBody = JSON.parse(lastCall?.[1]?.body as string)
         expect(requestBody.method).toBe('alchemy_requestGasAndPaymasterAndData')
         expect(requestBody.params[0].overrides).toStrictEqual({
-            maxPriorityFeePerGas: { multiplier: 1.2 },
-            preVerificationGas: { multiplier: 1.2 },
+            maxFeePerGas: { multiplier: 1.2 },
+            maxPriorityFeePerGas: {
+                multiplier: 1.2,
+            },
+            callGasLimit: { multiplier: 1.2 },
+            verificationGasLimit: {
+                multiplier: 1.2,
+            },
+            preVerificationGas: {
+                multiplier: 1.2,
+            },
         })
     })
 
-    test('verify createSpace with mocked fetch to Alchemy api', async () => {
+    test('verify createSpace with gas overrides', async () => {
         const fetchMock = getMiniflareFetchMock()
         fetchMock.disableNetConnect()
         const env = getMiniflareBindings()
         const url = new URL(env.STACKUP_PAYMASTER_RPC_URL)
         const origin = fetchMock.get(url.origin)
         env.SKIP_TOWNID_VERIFICATION = 'true'
-        const resultErrorStackup = {
+
+        const resultError = {
             id: 1,
             jsonrpc: '2.0',
             error: { message: 'api error', code: 1 },
@@ -115,11 +125,21 @@ describe('http router', () => {
         origin
             .intercept({
                 method: 'POST',
-                path: `${url.pathname}`, // user 1, public image variant
+                path: `${url.pathname}`,
             })
-            .reply(400, resultErrorStackup)
+            .reply(400, resultError)
 
-        const result = await worker.fetch(
+        const spy = jest.spyOn(globalThis, 'fetch')
+        const gasOverrides = {
+            maxFeePerGas: '0x1234',
+            maxPriorityFeePerGas: '0x1234',
+        }
+        const data = {
+            ...JSON.parse(createSpaceFakeRequest),
+            gasOverrides,
+        }
+
+        await worker.fetch(
             ...generateRequest(
                 'api/sponsor-userop/alchemy',
                 'POST',
@@ -127,15 +147,26 @@ describe('http router', () => {
                     Authorization: `Bearer ${AUTH_TOKEN}`,
                 },
                 toJson({
-                    data: JSON.parse(createSpaceFakeRequest),
+                    data,
                 }) as BodyInit,
                 env,
             ),
         )
-        expect(result.status).toBe(400)
 
-        const text = await result.text()
-        expect(text).toContain('Invalid Paymaster Response')
+        let lastCall = spy.mock.lastCall
+        let requestBody = JSON.parse(lastCall?.[1]?.body as string)
+        expect(requestBody.method).toBe('alchemy_requestGasAndPaymasterAndData')
+        expect(requestBody.params[0].overrides).toStrictEqual({
+            maxFeePerGas: '0x1234',
+            maxPriorityFeePerGas: '0x1234',
+            callGasLimit: { multiplier: 1.2 },
+            verificationGasLimit: {
+                multiplier: 1.2,
+            },
+            preVerificationGas: {
+                multiplier: 1.2,
+            },
+        })
     })
 
     test('verify joinTown with mocked fetch to Stackup api', async () => {

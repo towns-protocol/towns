@@ -38,6 +38,7 @@ import { TownsSimpleAccount } from './TownsSimpleAccount'
 import { getGasPrice as getEthMaxPriorityFeePerGas } from 'userop/dist/preset/middleware'
 import { TownsUserOpClient, TownsUserOpClientSendUserOperationResponse } from './TownsUserOpClient'
 import { getTransferCallData } from './generateTransferCallData'
+import { datadogLogs } from '@datadog/browser-logs'
 
 export class UserOps {
     private bundlerUrl: string
@@ -250,6 +251,14 @@ export class UserOps {
                     const gasTooLowErrorType = matchGasTooLowError(error)
                     if (gasTooLowErrorType) {
                         this.middlewareVars.operationAttempt++
+
+                        datadogLogs.logger.error('[UserOperations] gas too low error', {
+                            error,
+                            codeException: _error,
+                            errorMessage: _error.message,
+                            gasTooLowErrorType,
+                            operationAttempt: this.middlewareVars.operationAttempt,
+                        })
 
                         userOpsStore.setState({
                             retryDetails: {

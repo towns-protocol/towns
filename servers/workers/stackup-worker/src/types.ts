@@ -1,6 +1,6 @@
 import { IUserOperation } from 'userop.js'
 import { Environment } from 'worker-common'
-
+import { BigNumberish } from 'ethers'
 // see https://github.com/stackup-wallet/userop.js/blob/1d9d0e034691cd384e194c9e8b3165680a334180/src/preset/middleware/paymaster.ts
 export interface VerifyingPaymasterResult {
     paymasterAndData: string
@@ -14,7 +14,18 @@ export type TownsUserOperation = {
         townId?: string
         functionHash: (typeof FunctionHash)[keyof typeof FunctionHash]
         rootKeyAddress: string
+        gasOverrides?: GasOverrides
     }
+}
+
+type Multiplier = number
+
+export type GasOverrides = {
+    callGasLimit?: BigNumberish | Multiplier
+    maxFeePerGas?: BigNumberish | Multiplier
+    maxPriorityFeePerGas?: BigNumberish | Multiplier
+    preVerificationGas?: BigNumberish | Multiplier
+    verificationGasLimit?: BigNumberish | Multiplier
 }
 
 export type TransactionLimitRequest = {

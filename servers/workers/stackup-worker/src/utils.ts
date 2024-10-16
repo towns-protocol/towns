@@ -1,6 +1,6 @@
 import { IUserOperation } from 'userop.js'
 import { Request as IttyRequest } from 'itty-router'
-import { isHexString } from './types'
+import { GasOverrides, isHexString } from './types'
 import { Address } from '@river-build/web3'
 
 export type WorkerRequest = Request & IttyRequest
@@ -40,8 +40,25 @@ export function createAlchemyRequestGasAndPaymasterDataRequest(args: {
     policyId: string
     entryPoint: string
     userOperation: IUserOperation
+    gasOverrides?: GasOverrides
 }) {
-    const { policyId, entryPoint, userOperation } = args
+    const { policyId, entryPoint, userOperation, gasOverrides } = args
+
+    const fallbackMultiplier = 1.2
+
+    const overrides: Record<string, string | { multiplier: number }> = {
+        maxFeePerGas: gasOverrides?.maxFeePerGas?.toString() ?? { multiplier: fallbackMultiplier },
+        maxPriorityFeePerGas: gasOverrides?.maxPriorityFeePerGas?.toString() ?? {
+            multiplier: fallbackMultiplier,
+        },
+        callGasLimit: gasOverrides?.callGasLimit?.toString() ?? { multiplier: fallbackMultiplier },
+        verificationGasLimit: gasOverrides?.verificationGasLimit?.toString() ?? {
+            multiplier: fallbackMultiplier,
+        },
+        preVerificationGas: gasOverrides?.preVerificationGas?.toString() ?? {
+            multiplier: fallbackMultiplier,
+        },
+    }
 
     // https://docs.alchemy.com/reference/alchemy-requestgasandpaymasteranddata
     const init = {
@@ -61,16 +78,7 @@ export function createAlchemyRequestGasAndPaymasterDataRequest(args: {
                         initCode: userOperation.initCode,
                         callData: userOperation.callData,
                     },
-                    overrides: {
-                        // if a sponsored op failed b/c of low gas for one of these fields,
-                        // increase the value for all of them
-                        // we could be more granular, but more aggressive and hopefully results in greater, faster success
-                        maxPriorityFeePerGas: { multiplier: 1.2 },
-                        // docs say this parameter is always going to be 5% when using requestgasandpaymasteranddata
-                        // https://docs.alchemy.com/reference/bundler-api-fee-logic#how-do-we-determine-fee-values-to-give-your-uo-the-best-chance-of-landing-on-chain
-                        // but i'm including it because maybe it is outdated and another docs page does include this value https://docs.alchemy.com/reference/alchemy-requestgasandpaymasteranddata
-                        preVerificationGas: { multiplier: 1.2 },
-                    },
+                    overrides,
                 },
             ],
         }),
