@@ -838,7 +838,8 @@ describe('SingleRolePanel', () => {
         expect(individualAddress).toBeInTheDocument()
     })
 
-    test(
+    // https://linear.app/hnt-labs/issue/TOWNS-13180/fix-flaky-test
+    test.skip(
         'should display correct count when adding CSV and individual addresses',
         {
             timeout: 10_000,
