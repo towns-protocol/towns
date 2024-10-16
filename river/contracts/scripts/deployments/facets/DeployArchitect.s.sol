@@ -12,12 +12,10 @@ import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
 
 contract DeployArchitect is FacetHelper, Deployer {
   constructor() {
-    addSelector(IArchitect.createSpace.selector);
     addSelector(IArchitect.getSpaceByTokenId.selector);
     addSelector(IArchitect.getTokenIdBySpace.selector);
     addSelector(IArchitect.setSpaceArchitectImplementations.selector);
     addSelector(IArchitect.getSpaceArchitectImplementations.selector);
-    addSelector(IArchitect.createSpaceWithPrepay.selector);
     addSelector(IArchitect.setProxyInitializer.selector);
     addSelector(IArchitect.getProxyInitializer.selector);
   }

@@ -51,7 +51,7 @@ export async function fetchUserProfileImage(request: FastifyRequest, reply: Fast
 			},
 			'Failed to get stream',
 		)
-		return reply.code(404).send('Stream not found')
+		return reply.code(404).header('Cache-Control', CACHE_CONTROL[404]).send('Stream not found')
 	}
 
 	// get the image metadata from the stream

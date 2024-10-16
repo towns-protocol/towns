@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"context"
+
 	"github.com/river-build/river/core/node/utils"
 
 	"connectrpc.com/connect"
@@ -138,6 +139,12 @@ func peerNodeStreamingResponseWithRetries(
 	return nil
 }
 
+func (s *Service) asAnnotatedRiverError(err error) *RiverErrorImpl {
+	return AsRiverError(err).
+		Tag("nodeAddress", s.wallet.Address).
+		Tag("nodeUrl", s.config.Address)
+}
+
 func (s *Service) CreateStream(
 	ctx context.Context,
 	req *connect.Request[CreateStreamRequest],
@@ -146,9 +153,8 @@ func (s *Service) CreateStream(
 	log.Debug("CreateStream REQUEST", "streamId", req.Msg.StreamId)
 	r, e := s.createStreamImpl(ctx, req)
 	if e != nil {
-		return nil, AsRiverError(
-			e,
-		).Func("CreateStream").
+		return nil, s.asAnnotatedRiverError(e).
+			Func("CreateStream").
 			Tag("streamId", req.Msg.StreamId).
 			LogWarn(log).
 			AsConnectError()
@@ -179,9 +185,8 @@ func (s *Service) GetStream(
 	log.Debug("GetStream ENTER")
 	r, e := s.getStreamImpl(ctx, req)
 	if e != nil {
-		return nil, AsRiverError(
-			e,
-		).Func("GetStream").
+		return nil, s.asAnnotatedRiverError(e).
+			Func("GetStream").
 			Tag("req.Msg.StreamId", req.Msg.StreamId).
 			LogWarn(log).
 			AsConnectError()
@@ -199,9 +204,8 @@ func (s *Service) GetStreamEx(
 	log.Debug("GetStreamEx ENTER")
 	e := s.getStreamExImpl(ctx, req, resp)
 	if e != nil {
-		return AsRiverError(
-			e,
-		).Func("GetStreamEx").
+		return s.asAnnotatedRiverError(e).
+			Func("GetStreamEx").
 			Tag("req.Msg.StreamId", req.Msg.StreamId).
 			LogWarn(log).
 			AsConnectError()
@@ -321,9 +325,8 @@ func (s *Service) GetMiniblocks(
 	log.Debug("GetMiniblocks ENTER", "req", req.Msg)
 	r, e := s.getMiniblocksImpl(ctx, req)
 	if e != nil {
-		return nil, AsRiverError(
-			e,
-		).Func("GetMiniblocks").
+		return nil, s.asAnnotatedRiverError(e).
+			Func("GetMiniblocks").
 			Tag("req.Msg.StreamId", req.Msg.StreamId).
 			LogWarn(log).
 			AsConnectError()
@@ -374,9 +377,8 @@ func (s *Service) GetLastMiniblockHash(
 	log.Debug("GetLastMiniblockHash ENTER", "req", req.Msg)
 	r, e := s.getLastMiniblockHashImpl(ctx, req)
 	if e != nil {
-		return nil, AsRiverError(
-			e,
-		).Func("GetLastMiniblockHash").
+		return nil, s.asAnnotatedRiverError(e).
+			Func("GetLastMiniblockHash").
 			Tag("req.Msg.StreamId", req.Msg.StreamId).
 			LogWarn(log).
 			AsConnectError()
@@ -426,9 +428,8 @@ func (s *Service) AddEvent(
 	log.Debug("AddEvent ENTER", "req", req.Msg)
 	r, e := s.addEventImpl(ctx, req)
 	if e != nil {
-		return nil, AsRiverError(
-			e,
-		).Func("AddEvent").
+		return nil, s.asAnnotatedRiverError(e).
+			Func("AddEvent").
 			Tag("req.Msg.StreamId", req.Msg.StreamId).
 			LogWarn(log).
 			AsConnectError()

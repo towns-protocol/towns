@@ -54,6 +54,7 @@ export WALLET_ADDRESS="0x95D7701A0Faa5F514B4c5B49bf66580fCE9ffbf7"
 export BASE_CHAIN_RPC_URL="http://localhost:8545"
 export RIVER_CHAIN_RPC_URL="http://localhost:8546"
 export NODE_TLS_REJECT_UNAUTHORIZED=0 # allow unsigned against localhost
+export NODE_ENV=development
 
 # fund the root wallet
 cast rpc -r $BASE_CHAIN_RPC_URL anvil_setBalance $WALLET_ADDRESS 10000000000000000000 > /dev/null

@@ -18,7 +18,7 @@ func (s *Service) localGetMiniblocks(
 		return nil, err
 	}
 
-	stream, err := s.cache.GetSyncStream(ctx, streamId)
+	stream, err := s.cache.GetStream(ctx, streamId)
 	if err != nil {
 		return nil, err
 	}

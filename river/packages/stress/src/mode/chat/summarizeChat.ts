@@ -6,7 +6,7 @@ import { channelMessagePostWhere } from '../../utils/timeline'
 import { isDefined } from '@river-build/sdk'
 import { makeCodeBlock } from '../../utils/messages'
 
-export async function sumarizeChat(
+export async function summarizeChat(
     localClients: StressClient[],
     cfg: ChatConfig,
     errors: unknown[],

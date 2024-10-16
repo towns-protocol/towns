@@ -8,7 +8,8 @@ import {MembershipBaseSetup} from "../MembershipBaseSetup.sol";
 import {IEntitlementGated} from "contracts/src/spaces/facets/gated/IEntitlementGated.sol";
 import {IEntitlementGatedBase} from "contracts/src/spaces/facets/gated/IEntitlementGated.sol";
 import {IEntitlementCheckerBase} from "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol";
-import {IArchitect, IArchitectBase} from "contracts/src/factory/facets/architect/IArchitect.sol";
+import {IArchitectBase} from "contracts/src/factory/facets/architect/IArchitect.sol";
+import {ICreateSpace} from "contracts/src/factory/facets/create/ICreateSpace.sol";
 
 //libraries
 import {Vm} from "forge-std/Test.sol";
@@ -545,7 +546,7 @@ contract MembershipJoinSpaceTest is
     freeAllocationInfo.membership.settings.freeAllocation = 1;
 
     vm.prank(founder);
-    address freeAllocationSpace = IArchitect(spaceFactory).createSpace(
+    address freeAllocationSpace = ICreateSpace(spaceFactory).createSpace(
       freeAllocationInfo
     );
 

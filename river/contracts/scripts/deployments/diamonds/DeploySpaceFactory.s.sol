@@ -24,6 +24,7 @@ import {DeployDiamondLoupe} from "contracts/scripts/deployments/facets/DeployDia
 import {DeployIntrospection} from "contracts/scripts/deployments/facets/DeployIntrospection.s.sol";
 import {DeployMetadata} from "contracts/scripts/deployments/facets/DeployMetadata.s.sol";
 import {DeployArchitect} from "contracts/scripts/deployments/facets/DeployArchitect.s.sol";
+import {DeployCreateSpace} from "contracts/scripts/deployments/facets/DeployCreateSpace.s.sol";
 import {DeployProxyManager} from "contracts/scripts/deployments/facets/DeployProxyManager.s.sol";
 
 import {DeployUserEntitlement} from "contracts/scripts/deployments/utils/DeployUserEntitlement.s.sol";
@@ -56,6 +57,7 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
 
   // facets
   DeployArchitect architectHelper = new DeployArchitect();
+  DeployCreateSpace createSpaceHelper = new DeployCreateSpace();
   DeployPricingModules pricingModulesHelper = new DeployPricingModules();
   DeployImplementationRegistry registryHelper =
     new DeployImplementationRegistry();
@@ -98,6 +100,7 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
 
   // space addresses
   address architect;
+  address create;
   address legacyArchitect;
   address proxyManager;
   address pausable;
@@ -179,6 +182,7 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
   ) public returns (Diamond.InitParams memory) {
     metadata = metadataHelper.deploy(deployer);
     architect = architectHelper.deploy(deployer);
+    create = createSpaceHelper.deploy(deployer);
     registry = registryHelper.deploy(deployer);
     walletLink = walletLinkHelper.deploy(deployer);
     proxyManager = proxyManagerHelper.deploy(deployer);
@@ -211,6 +215,11 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
         ruleEntitlement, // ruleEntitlement
         legacyRuleEntitlement // legacyRuleEntitlement
       )
+    );
+    addFacet(
+      createSpaceHelper.makeCut(create, IDiamond.FacetCutAction.Add),
+      create,
+      createSpaceHelper.makeInitData("")
     );
     addFacet(
       deployMockLegacyArchitect.makeCut(
@@ -405,6 +414,15 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
           ),
           partnerRegistry,
           partnerRegistryHelper.makeInitData("")
+        );
+      } else if (
+        facetNameHash == keccak256(abi.encodePacked("CreateSpaceFacet"))
+      ) {
+        create = createSpaceHelper.deploy(deployer);
+        addFacet(
+          createSpaceHelper.makeCut(create, IDiamond.FacetCutAction.Add),
+          create,
+          createSpaceHelper.makeInitData("")
         );
       }
     }

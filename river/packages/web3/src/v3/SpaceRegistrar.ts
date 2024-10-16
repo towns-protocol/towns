@@ -2,6 +2,7 @@ import { SpaceAddressFromSpaceId } from '../Utils'
 import { BaseChainConfig } from '../IStaticContractsInfo'
 import { ISpaceArchitectShim } from './ISpaceArchitectShim'
 import { ILegacySpaceArchitectShim } from './ILegacySpaceArchitectShim'
+import { ICreateSpaceShim } from './ICreateSpaceShim'
 
 import { Space } from './Space'
 import { ethers } from 'ethers'
@@ -17,6 +18,7 @@ export class SpaceRegistrar {
     private readonly provider: ethers.providers.Provider
     private readonly spaceArchitect: ISpaceArchitectShim
     private readonly legacySpaceArchitect: ILegacySpaceArchitectShim
+    private readonly createSpace: ICreateSpaceShim
     private readonly spaces: LRUCache<string, Space>
 
     constructor(config: BaseChainConfig, provider: ethers.providers.Provider) {
@@ -30,6 +32,11 @@ export class SpaceRegistrar {
             config.addresses.spaceFactory,
             provider,
         )
+        this.createSpace = new ICreateSpaceShim(config.addresses.spaceFactory, provider)
+    }
+
+    public get CreateSpace(): ICreateSpaceShim {
+        return this.createSpace
     }
 
     public get SpaceArchitect(): ISpaceArchitectShim {

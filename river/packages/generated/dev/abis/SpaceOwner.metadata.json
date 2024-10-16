@@ -1641,10 +1641,10 @@
       "license": "MIT"
     },
     "contracts/src/spaces/facets/owner/SpaceOwnerUriBase.sol": {
-      "keccak256": "0x284522f1e6276dbb031c39f86ef77cde4f40abf87077f49c8efe289047e35f9c",
+      "keccak256": "0xbc0f6bc661567cdc37620e295a3619aa5787a60fe6330fa6e2044314ab46fe49",
       "urls": [
-        "bzz-raw://db9f0345f931ea02a3eeb46c4246e20f7ccfef6b502efb0e085f178351c95b2a",
-        "dweb:/ipfs/QmYYgD5B1zCLRqZK2hENfKxLq8F6k9qst5iuHe9hASkFzV"
+        "bzz-raw://6eae9fe0a43035a47e600d7a476f314c0a9aebaa59754e851751a18b1736751f",
+        "dweb:/ipfs/QmfN95VxwSkkvemoJ3w8gtzYjnehb1aocuu8zVLk6KPCBv"
       ],
       "license": "MIT"
     },

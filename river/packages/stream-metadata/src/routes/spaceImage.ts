@@ -1,4 +1,4 @@
-import { FastifyReply, FastifyRequest } from 'fastify'
+import { FastifyReply, FastifyRequest, type FastifyBaseLogger } from 'fastify'
 import { ChunkedMedia } from '@river-build/proto'
 import { StreamPrefix, StreamStateView, makeStreamId } from '@river-build/sdk'
 import { z } from 'zod'
@@ -55,11 +55,11 @@ export async function fetchSpaceImage(request: FastifyRequest, reply: FastifyRep
 			},
 			'Failed to get stream',
 		)
-		return reply.code(404).send('Stream not found')
+		return reply.code(404).header('Cache-Control', CACHE_CONTROL[404]).send('Stream not found')
 	}
 
 	// get the image metatdata from the stream
-	const spaceImage = await getSpaceImage(stream)
+	const spaceImage = await getSpaceImage(logger, stream)
 	if (!spaceImage) {
 		logger.error({ spaceAddress, streamId: stream.streamId }, 'spaceImage not found')
 		return reply
@@ -107,9 +107,11 @@ export async function fetchSpaceImage(request: FastifyRequest, reply: FastifyRep
 }
 
 export async function getSpaceImage(
+	logger: FastifyBaseLogger,
 	streamView: StreamStateView,
 ): Promise<ChunkedMedia | undefined> {
 	if (streamView.contentKind !== 'spaceContent') {
+		logger.error({ streamView }, 'stream view is not a space content')
 		return undefined
 	}
 	return streamView.spaceContent.getSpaceImage()

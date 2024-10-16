@@ -1,57 +1,73 @@
 import type { StressClient } from '../../utils/stressClient'
 import { ChatConfig } from '../common/types'
-import { getLogger } from '../../utils/logger'
 
-const logger = getLogger('stress:statsReporter')
-
-export function statsReporter(rootClient: StressClient, chatConfig: ChatConfig) {
-    let canceled = false
-    let lastReactionCount = 0
-    const interval = setInterval(() => {
-        if (canceled) {
-            return
-        }
-        void (async () => {
-            if (chatConfig.kickoffMessageEventId && chatConfig.countClientsMessageEventId) {
-                const reactionCount = countReactions(
-                    rootClient,
-                    chatConfig.announceChannelId,
-                    chatConfig.kickoffMessageEventId,
-                )
+export function statsReporter(chatConfig: ChatConfig) {
+    return {
+        logStep: (
+            client: StressClient,
+            step: string,
+            isSuccess: boolean,
+            metadata?: Record<string, unknown>,
+        ) => {
+            client.logger.info(
+                {
+                    sequence: 'STRESS_RESULT',
+                    step,
+                    result: isSuccess ? 'PASS' : 'FAIL',
+                    metadata,
+                },
+                'stress step result',
+            )
+        },
+        reactionCounter: (rootClient: StressClient) => {
+            let canceled = false
+            let lastReactionCount = 0
+            const interval = setInterval(() => {
                 if (canceled) {
                     return
                 }
-                if (lastReactionCount === reactionCount) {
-                    return
-                }
-                lastReactionCount = reactionCount
-                await updateCountClients(
-                    rootClient,
-                    chatConfig.announceChannelId,
-                    chatConfig.countClientsMessageEventId,
-                    chatConfig.clientsCount,
-                    reactionCount,
-                )
+                void (async () => {
+                    if (chatConfig.kickoffMessageEventId && chatConfig.countClientsMessageEventId) {
+                        const reactionCount = countReactions(
+                            rootClient,
+                            chatConfig.announceChannelId,
+                            chatConfig.kickoffMessageEventId,
+                        )
+                        if (canceled) {
+                            return
+                        }
+                        if (lastReactionCount === reactionCount) {
+                            return
+                        }
+                        lastReactionCount = reactionCount
+                        await updateCountClients(
+                            rootClient,
+                            chatConfig.announceChannelId,
+                            chatConfig.countClientsMessageEventId,
+                            chatConfig.clientsCount,
+                            reactionCount,
+                        )
+                    }
+                })()
+            }, 5000)
+            return () => {
+                rootClient.logger.debug('canceled')
+                clearInterval(interval)
+                canceled = true
             }
-        })()
-    }, 5000)
-
-    return () => {
-        logger.debug('stat reporter canceled')
-        clearInterval(interval)
-        canceled = true
+        },
     }
 }
 
 export const updateCountClients = async (
-    client: StressClient,
+    rootClient: StressClient,
     announceChannelId: string,
     countClientsMessageEventId: string,
     totalClients: number,
     reactionCounts: number,
 ) => {
-    logger.info(`Clients: ${reactionCounts}/${totalClients} 🤖`)
-    return await client.streamsClient.sendChannelMessage_Edit_Text(
+    rootClient.logger.info(`Clients: ${reactionCounts}/${totalClients} 🤖`)
+    return await rootClient.streamsClient.sendChannelMessage_Edit_Text(
         announceChannelId,
         countClientsMessageEventId,
         {
@@ -65,11 +81,11 @@ export const updateCountClients = async (
 }
 
 export const countReactions = (
-    client: StressClient,
+    rootClient: StressClient,
     announceChannelId: string,
     rootMessageId: string,
 ) => {
-    const channel = client.streamsClient.stream(announceChannelId)
+    const channel = rootClient.streamsClient.stream(announceChannelId)
     if (!channel) {
         return 0
     }

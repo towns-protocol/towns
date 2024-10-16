@@ -28,6 +28,7 @@ import {Vm} from "forge-std/Test.sol";
 
 import {Architect} from "contracts/src/factory/facets/architect/Architect.sol";
 import {MembershipFacet} from "contracts/src/spaces/facets/membership/MembershipFacet.sol";
+import {CreateSpaceFacet} from "contracts/src/factory/facets/create/CreateSpace.sol";
 
 contract MembershipBaseSetup is
   IMembershipBase,
@@ -90,7 +91,7 @@ contract MembershipBaseSetup is
 
     vm.startPrank(founder);
     // user space is a space where only alice and charlie are allowed along with the founder
-    userSpace = Architect(spaceFactory).createSpace(userSpaceInfo);
+    userSpace = CreateSpaceFacet(spaceFactory).createSpace(userSpaceInfo);
     vm.stopPrank();
 
     membership = MembershipFacet(userSpace);

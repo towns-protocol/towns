@@ -9,7 +9,6 @@ import type {
   CallOverrides,
   ContractTransaction,
   Overrides,
-  PayableOverrides,
   PopulatedTransaction,
   Signer,
   utils,
@@ -28,149 +27,8 @@ import type {
   PromiseOrValue,
 } from "./common";
 
-export declare namespace IMembershipBase {
-  export type MembershipStruct = {
-    name: PromiseOrValue<string>;
-    symbol: PromiseOrValue<string>;
-    price: PromiseOrValue<BigNumberish>;
-    maxSupply: PromiseOrValue<BigNumberish>;
-    duration: PromiseOrValue<BigNumberish>;
-    currency: PromiseOrValue<string>;
-    feeRecipient: PromiseOrValue<string>;
-    freeAllocation: PromiseOrValue<BigNumberish>;
-    pricingModule: PromiseOrValue<string>;
-  };
-
-  export type MembershipStructOutput = [
-    string,
-    string,
-    BigNumber,
-    BigNumber,
-    BigNumber,
-    string,
-    string,
-    BigNumber,
-    string
-  ] & {
-    name: string;
-    symbol: string;
-    price: BigNumber;
-    maxSupply: BigNumber;
-    duration: BigNumber;
-    currency: string;
-    feeRecipient: string;
-    freeAllocation: BigNumber;
-    pricingModule: string;
-  };
-}
-
-export declare namespace IArchitectBase {
-  export type MembershipRequirementsStruct = {
-    everyone: PromiseOrValue<boolean>;
-    users: PromiseOrValue<string>[];
-    ruleData: PromiseOrValue<BytesLike>;
-    syncEntitlements: PromiseOrValue<boolean>;
-  };
-
-  export type MembershipRequirementsStructOutput = [
-    boolean,
-    string[],
-    string,
-    boolean
-  ] & {
-    everyone: boolean;
-    users: string[];
-    ruleData: string;
-    syncEntitlements: boolean;
-  };
-
-  export type MembershipStruct = {
-    settings: IMembershipBase.MembershipStruct;
-    requirements: IArchitectBase.MembershipRequirementsStruct;
-    permissions: PromiseOrValue<string>[];
-  };
-
-  export type MembershipStructOutput = [
-    IMembershipBase.MembershipStructOutput,
-    IArchitectBase.MembershipRequirementsStructOutput,
-    string[]
-  ] & {
-    settings: IMembershipBase.MembershipStructOutput;
-    requirements: IArchitectBase.MembershipRequirementsStructOutput;
-    permissions: string[];
-  };
-
-  export type ChannelInfoStruct = { metadata: PromiseOrValue<string> };
-
-  export type ChannelInfoStructOutput = [string] & { metadata: string };
-
-  export type SpaceInfoStruct = {
-    name: PromiseOrValue<string>;
-    uri: PromiseOrValue<string>;
-    shortDescription: PromiseOrValue<string>;
-    longDescription: PromiseOrValue<string>;
-    membership: IArchitectBase.MembershipStruct;
-    channel: IArchitectBase.ChannelInfoStruct;
-  };
-
-  export type SpaceInfoStructOutput = [
-    string,
-    string,
-    string,
-    string,
-    IArchitectBase.MembershipStructOutput,
-    IArchitectBase.ChannelInfoStructOutput
-  ] & {
-    name: string;
-    uri: string;
-    shortDescription: string;
-    longDescription: string;
-    membership: IArchitectBase.MembershipStructOutput;
-    channel: IArchitectBase.ChannelInfoStructOutput;
-  };
-
-  export type MetadataStruct = {
-    name: PromiseOrValue<string>;
-    uri: PromiseOrValue<string>;
-    shortDescription: PromiseOrValue<string>;
-    longDescription: PromiseOrValue<string>;
-  };
-
-  export type MetadataStructOutput = [string, string, string, string] & {
-    name: string;
-    uri: string;
-    shortDescription: string;
-    longDescription: string;
-  };
-
-  export type PrepayStruct = { supply: PromiseOrValue<BigNumberish> };
-
-  export type PrepayStructOutput = [BigNumber] & { supply: BigNumber };
-
-  export type CreateSpaceStruct = {
-    metadata: IArchitectBase.MetadataStruct;
-    membership: IArchitectBase.MembershipStruct;
-    channel: IArchitectBase.ChannelInfoStruct;
-    prepay: IArchitectBase.PrepayStruct;
-  };
-
-  export type CreateSpaceStructOutput = [
-    IArchitectBase.MetadataStructOutput,
-    IArchitectBase.MembershipStructOutput,
-    IArchitectBase.ChannelInfoStructOutput,
-    IArchitectBase.PrepayStructOutput
-  ] & {
-    metadata: IArchitectBase.MetadataStructOutput;
-    membership: IArchitectBase.MembershipStructOutput;
-    channel: IArchitectBase.ChannelInfoStructOutput;
-    prepay: IArchitectBase.PrepayStructOutput;
-  };
-}
-
 export interface IArchitectInterface extends utils.Interface {
   functions: {
-    "createSpace((string,string,string,string,((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes,bool),string[]),(string)))": FunctionFragment;
-    "createSpaceWithPrepay(((string,string,string,string),((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes,bool),string[]),(string),(uint256)))": FunctionFragment;
     "getProxyInitializer()": FunctionFragment;
     "getSpaceArchitectImplementations()": FunctionFragment;
     "getSpaceByTokenId(uint256)": FunctionFragment;
@@ -181,8 +39,6 @@ export interface IArchitectInterface extends utils.Interface {
 
   getFunction(
     nameOrSignatureOrTopic:
-      | "createSpace"
-      | "createSpaceWithPrepay"
       | "getProxyInitializer"
       | "getSpaceArchitectImplementations"
       | "getSpaceByTokenId"
@@ -191,14 +47,6 @@ export interface IArchitectInterface extends utils.Interface {
       | "setSpaceArchitectImplementations"
   ): FunctionFragment;
 
-  encodeFunctionData(
-    functionFragment: "createSpace",
-    values: [IArchitectBase.SpaceInfoStruct]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "createSpaceWithPrepay",
-    values: [IArchitectBase.CreateSpaceStruct]
-  ): string;
   encodeFunctionData(
     functionFragment: "getProxyInitializer",
     values?: undefined
@@ -229,14 +77,6 @@ export interface IArchitectInterface extends utils.Interface {
     ]
   ): string;
 
-  decodeFunctionResult(
-    functionFragment: "createSpace",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "createSpaceWithPrepay",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(
     functionFragment: "getProxyInitializer",
     data: BytesLike
@@ -323,16 +163,6 @@ export interface IArchitect extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
-    createSpace(
-      SpaceInfo: IArchitectBase.SpaceInfoStruct,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    createSpaceWithPrepay(
-      createSpace: IArchitectBase.CreateSpaceStruct,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
     getProxyInitializer(overrides?: CallOverrides): Promise<[string]>;
 
     getSpaceArchitectImplementations(
@@ -369,16 +199,6 @@ export interface IArchitect extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
   };
-
-  createSpace(
-    SpaceInfo: IArchitectBase.SpaceInfoStruct,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  createSpaceWithPrepay(
-    createSpace: IArchitectBase.CreateSpaceStruct,
-    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
 
   getProxyInitializer(overrides?: CallOverrides): Promise<string>;
 
@@ -417,16 +237,6 @@ export interface IArchitect extends BaseContract {
   ): Promise<ContractTransaction>;
 
   callStatic: {
-    createSpace(
-      SpaceInfo: IArchitectBase.SpaceInfoStruct,
-      overrides?: CallOverrides
-    ): Promise<string>;
-
-    createSpaceWithPrepay(
-      createSpace: IArchitectBase.CreateSpaceStruct,
-      overrides?: CallOverrides
-    ): Promise<string>;
-
     getProxyInitializer(overrides?: CallOverrides): Promise<string>;
 
     getSpaceArchitectImplementations(
@@ -485,16 +295,6 @@ export interface IArchitect extends BaseContract {
   };
 
   estimateGas: {
-    createSpace(
-      SpaceInfo: IArchitectBase.SpaceInfoStruct,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    createSpaceWithPrepay(
-      createSpace: IArchitectBase.CreateSpaceStruct,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
     getProxyInitializer(overrides?: CallOverrides): Promise<BigNumber>;
 
     getSpaceArchitectImplementations(
@@ -526,16 +326,6 @@ export interface IArchitect extends BaseContract {
   };
 
   populateTransaction: {
-    createSpace(
-      SpaceInfo: IArchitectBase.SpaceInfoStruct,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    createSpaceWithPrepay(
-      createSpace: IArchitectBase.CreateSpaceStruct,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
     getProxyInitializer(
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;

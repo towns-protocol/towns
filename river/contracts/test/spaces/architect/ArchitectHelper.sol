@@ -8,33 +8,15 @@ import {Architect} from "contracts/src/factory/facets/architect/Architect.sol";
 import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
 
 contract ArchitectHelper is FacetHelper {
-  Architect internal architect;
-
   constructor() {
-    architect = new Architect();
-
-    uint256 index;
-    bytes4[] memory selectors_ = new bytes4[](5);
-
-    selectors_[index++] = Architect.getSpaceByTokenId.selector;
-    selectors_[index++] = Architect.getTokenIdBySpace.selector;
-    selectors_[index++] = Architect.createSpace.selector;
-    selectors_[index++] = Architect.setSpaceArchitectImplementations.selector;
-    selectors_[index++] = Architect.getSpaceArchitectImplementations.selector;
-
-    addSelectors(selectors_);
-  }
-
-  function facet() public view override returns (address) {
-    return address(architect);
+    addSelector(Architect.getSpaceByTokenId.selector);
+    addSelector(Architect.getTokenIdBySpace.selector);
+    addSelector(Architect.setSpaceArchitectImplementations.selector);
+    addSelector(Architect.getSpaceArchitectImplementations.selector);
   }
 
   function initializer() public pure override returns (bytes4) {
     return Architect.__Architect_init.selector;
-  }
-
-  function selectors() public view override returns (bytes4[] memory) {
-    return functionSelectors;
   }
 
   function makeInitData(

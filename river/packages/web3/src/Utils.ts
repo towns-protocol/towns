@@ -68,6 +68,11 @@ export function SpaceAddressFromSpaceId(spaceId: string): string {
     return ethers.utils.getAddress(spaceId.slice(2, 42))
 }
 
+// River space stream ids are 64 characters long, and start with '10'
+export function SpaceIdFromSpaceAddress(spaceAddress: string): string {
+    return spaceAddress.toLowerCase().replace('0x', '10').padEnd(64, '0')
+}
+
 /**
  * Use this function in the default case of a exhaustive switch statement to ensure that all cases are handled.
  * Always throws JSON RPC error.

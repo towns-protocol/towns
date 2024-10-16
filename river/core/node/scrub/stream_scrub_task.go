@@ -65,7 +65,13 @@ func (tp *streamScrubTaskProcessorImpl) processTask(task *streamScrubTask) {
 		With("Func", "streamScrubTask.process").
 		With("channelId", task.channelId).
 		With("spaceId", task.spaceId)
-	_, view, err := tp.cache.GetStream(tp.ctx, task.channelId)
+	stream, err := tp.cache.GetStream(tp.ctx, task.channelId)
+	if err != nil {
+		log.Error("Unable to get stream from cache", "error", err)
+		return
+	}
+
+	view, err := stream.GetView(tp.ctx)
 	if err != nil {
 		log.Error(
 			"Unable to scrub stream; could not fetch stream view",
@@ -186,9 +192,15 @@ func (tp *streamScrubTaskProcessorImpl) TryScheduleScrub(
 		return false, nil
 	}
 
-	stream, view, err := tp.cache.GetStream(ctx, streamId)
+	stream, err := tp.cache.GetStream(ctx, streamId)
 	if err != nil {
 		log.Warn("Unable to get stream from cache")
+		return false, err
+	}
+
+	view, err := stream.GetView(ctx)
+	if err != nil {
+		log.Warn("Unable to get view from stream")
 		return false, err
 	}
 

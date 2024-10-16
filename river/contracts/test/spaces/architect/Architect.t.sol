@@ -18,6 +18,7 @@ import {IRoles} from "contracts/src/spaces/facets/roles/IRoles.sol";
 import {IMembership} from "contracts/src/spaces/facets/membership/IMembership.sol";
 import {ISpaceOwner} from "contracts/src/spaces/facets/owner/ISpaceOwner.sol";
 import {ISpaceProxyInitializer} from "contracts/src/spaces/facets/proxy/ISpaceProxyInitializer.sol";
+import {ICreateSpace} from "contracts/src/factory/facets/create/ICreateSpace.sol";
 
 // libraries
 import {LibString} from "solady/utils/LibString.sol";
@@ -29,7 +30,6 @@ import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
 import {Architect} from "contracts/src/factory/facets/architect/Architect.sol";
 import {MockERC721} from "contracts/test/mocks/MockERC721.sol";
 import {UserEntitlement} from "contracts/src/spaces/entitlements/user/UserEntitlement.sol";
-
 import {Factory} from "contracts/src/utils/Factory.sol";
 // errors
 import {Validator__InvalidStringLength} from "contracts/src/utils/Validator.sol";
@@ -41,10 +41,12 @@ contract ArchitectTest is
   IPausableBase
 {
   Architect public spaceArchitect;
+  ICreateSpace public createSpaceFacet;
 
   function setUp() public override {
     super.setUp();
     spaceArchitect = Architect(spaceFactory);
+    createSpaceFacet = ICreateSpace(spaceFactory);
   }
 
   function test_fuzz_createSpace(
@@ -57,7 +59,7 @@ contract ArchitectTest is
     spaceInfo.membership.settings.pricingModule = pricingModule;
 
     vm.prank(founder);
-    address spaceAddress = spaceArchitect.createSpace(spaceInfo);
+    address spaceAddress = createSpaceFacet.createSpace(spaceInfo);
 
     // expect owner to be founder
     assertTrue(
@@ -90,7 +92,7 @@ contract ArchitectTest is
     );
     spaceInfo.membership.settings.pricingModule = pricingModule;
     spaceInfo.membership.requirements.syncEntitlements = true;
-    address spaceAddress = spaceArchitect.createSpace(spaceInfo);
+    address spaceAddress = createSpaceFacet.createSpace(spaceInfo);
 
     IRoles.Role[] memory roles = IRoles(spaceAddress).getRoles();
     IRoles.Role memory memberRole;
@@ -124,7 +126,7 @@ contract ArchitectTest is
     IArchitectBase.SpaceInfo memory spaceInfo = _createGatedSpaceInfo("Test");
     spaceInfo.membership.settings.pricingModule = pricingModule;
     spaceInfo.membership.requirements.syncEntitlements = true;
-    address spaceAddress = spaceArchitect.createSpace(spaceInfo);
+    address spaceAddress = createSpaceFacet.createSpace(spaceInfo);
 
     IRoles.Role[] memory roles = IRoles(spaceAddress).getRoles();
     IRoles.Role memory memberRole;
@@ -162,7 +164,7 @@ contract ArchitectTest is
     vm.prank(founder);
     IArchitectBase.SpaceInfo memory spaceInfo = _createGatedSpaceInfo("Test");
     spaceInfo.membership.settings.pricingModule = pricingModule;
-    address spaceAddress = spaceArchitect.createSpace(spaceInfo);
+    address spaceAddress = createSpaceFacet.createSpace(spaceInfo);
 
     IEntitlementsManager.Entitlement[]
       memory entitlements = IEntitlementsManager(spaceAddress)
@@ -252,7 +254,7 @@ contract ArchitectTest is
     spaceInfo.membership.settings.pricingModule = pricingModule;
 
     vm.prank(founder);
-    address newSpace = spaceArchitect.createSpace(spaceInfo);
+    address newSpace = createSpaceFacet.createSpace(spaceInfo);
 
     assertTrue(
       IEntitlementsManager(newSpace).isEntitledToSpace(
@@ -299,13 +301,13 @@ contract ArchitectTest is
 
     vm.prank(founder);
     vm.expectRevert(Pausable__Paused.selector);
-    spaceArchitect.createSpace(spaceInfo);
+    createSpaceFacet.createSpace(spaceInfo);
 
     vm.prank(deployer);
     IPausable(address(spaceArchitect)).unpause();
 
     vm.prank(founder);
-    spaceArchitect.createSpace(spaceInfo);
+    createSpaceFacet.createSpace(spaceInfo);
   }
 
   function test_fuzz_revertIfInvalidSpaceId(
@@ -317,7 +319,7 @@ contract ArchitectTest is
     spaceInfo.membership.settings.pricingModule = pricingModule;
 
     vm.prank(founder);
-    spaceArchitect.createSpace(spaceInfo);
+    createSpaceFacet.createSpace(spaceInfo);
   }
 
   function test_revertIfNotProperReceiver(string memory spaceName) external {
@@ -329,7 +331,7 @@ contract ArchitectTest is
     vm.expectRevert(Factory.Factory__FailedDeployment.selector);
 
     vm.prank(address(this));
-    spaceArchitect.createSpace(spaceInfo);
+    createSpaceFacet.createSpace(spaceInfo);
   }
 
   function test_fuzz_revertIfInvalidPricingModule(
@@ -350,7 +352,7 @@ contract ArchitectTest is
 
     vm.prank(founder);
     vm.expectRevert(Architect__InvalidPricingModule.selector);
-    spaceArchitect.createSpace(spaceInfo);
+    createSpaceFacet.createSpace(spaceInfo);
   }
 
   function test_fuzz_createSpace_updateMemberPermissions(
@@ -365,7 +367,7 @@ contract ArchitectTest is
     spaceInfo.membership.settings.pricingModule = pricingModule;
 
     vm.prank(founder);
-    address spaceInstance = spaceArchitect.createSpace(spaceInfo);
+    address spaceInstance = createSpaceFacet.createSpace(spaceInfo);
 
     // have another user join the space
     vm.prank(user);

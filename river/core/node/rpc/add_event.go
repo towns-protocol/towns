@@ -59,10 +59,16 @@ func (s *Service) addParsedEvent(
 	parsedEvent *ParsedEvent,
 	nodes StreamNodes,
 ) error {
-	localStream, streamView, err := s.cache.GetStream(ctx, streamId)
+	localStream, err := s.cache.GetStream(ctx, streamId)
 	if err != nil {
 		return err
 	}
+
+	streamView, err := localStream.GetView(ctx)
+	if err != nil {
+		return err
+	}
+
 	_, _ = s.scrubTaskProcessor.TryScheduleScrub(ctx, streamId, false)
 
 	canAddEvent, chainAuthArgsList, sideEffects, err := rules.CanAddEvent(

@@ -39,6 +39,8 @@ type Stream interface {
 	ScrubTrackable
 	AddableStream
 	MiniblockStream
+
+	GetView(ctx context.Context) (StreamView, error)
 }
 
 type SyncResultReceiver interface {
@@ -53,8 +55,6 @@ type SyncResultReceiver interface {
 // TODO: refactor interfaces.
 type SyncStream interface {
 	Stream
-
-	GetView(ctx context.Context) (StreamView, error)
 
 	Sub(ctx context.Context, cookie *SyncCookie, receiver SyncResultReceiver) error
 	Unsub(receiver SyncResultReceiver)

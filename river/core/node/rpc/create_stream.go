@@ -68,7 +68,11 @@ func (s *Service) createStream(ctx context.Context, req *CreateStreamRequest) (*
 	// check that the creator satisfies the required memberships reqirements
 	if csRules.RequiredMemberships != nil {
 		// load the creator's user stream
-		_, creatorStreamView, err := s.loadStream(ctx, csRules.CreatorStreamId)
+		stream, err := s.loadStream(ctx, csRules.CreatorStreamId)
+		var creatorStreamView StreamView
+		if err == nil {
+			creatorStreamView, err = stream.GetView(ctx)
+		}
 		if err != nil {
 			return nil, RiverError(Err_PERMISSION_DENIED, "failed to load creator stream", "err", err)
 		}
@@ -158,7 +162,11 @@ func (s *Service) createReplicatedStream(
 	var localSyncCookie *SyncCookie
 	if nodes.IsLocal() {
 		sender.GoLocal(func() error {
-			_, sv, err := s.cache.GetStream(ctx, streamId)
+			st, err := s.cache.GetStream(ctx, streamId)
+			if err != nil {
+				return err
+			}
+			sv, err := st.GetView(ctx)
 			if err != nil {
 				return err
 			}

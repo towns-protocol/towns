@@ -15,6 +15,7 @@ import {SpaceOwner} from "contracts/src/spaces/facets/owner/SpaceOwner.sol";
 import {IERC173} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 import {IMainnetDelegationBase} from "contracts/src/tokens/river/base/delegation/IMainnetDelegation.sol";
 import {IOwnableBase} from "contracts/src/diamond/facets/ownable/IERC173.sol";
+import {INodeOperatorBase} from "contracts/src/base/registry/facets/operator/INodeOperator.sol";
 
 // structs
 import {NodeOperatorStatus} from "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
@@ -29,7 +30,8 @@ import {River} from "contracts/src/tokens/river/base/River.sol";
 import {MainnetDelegation} from "contracts/src/tokens/river/base/delegation/MainnetDelegation.sol";
 import {RewardsDistribution} from "contracts/src/base/registry/facets/distribution/RewardsDistribution.sol";
 import {SpaceDelegationFacet} from "contracts/src/base/registry/facets/delegation/SpaceDelegationFacet.sol";
-import {INodeOperatorBase} from "contracts/src/base/registry/facets/operator/INodeOperator.sol";
+
+import {ICreateSpace} from "contracts/src/factory/facets/create/ICreateSpace.sol";
 
 contract RewardsDistributionTest is
   BaseSetup,
@@ -1360,7 +1362,7 @@ contract RewardsDistributionTest is
         memory everyoneSpaceInfo = _createEveryoneSpaceInfo(spaceName);
       everyoneSpaceInfo.membership.settings.pricingModule = fixedPricingModule;
 
-      address everyoneSpace = Architect(spaceFactory).createSpace(
+      address everyoneSpace = ICreateSpace(spaceFactory).createSpace(
         everyoneSpaceInfo
       );
 

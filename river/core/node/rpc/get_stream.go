@@ -6,20 +6,25 @@ import (
 	"connectrpc.com/connect"
 
 	. "github.com/river-build/river/core/node/base"
+	. "github.com/river-build/river/core/node/events"
 	. "github.com/river-build/river/core/node/protocol"
-	"github.com/river-build/river/core/node/shared"
+	. "github.com/river-build/river/core/node/shared"
 )
 
 func (s *Service) localGetStream(
 	ctx context.Context,
 	req *connect.Request[GetStreamRequest],
 ) (*connect.Response[GetStreamResponse], error) {
-	streamId, err := shared.StreamIdFromBytes(req.Msg.StreamId)
+	streamId, err := StreamIdFromBytes(req.Msg.StreamId)
 	if err != nil {
 		return nil, err
 	}
 
-	_, streamView, err := s.cache.GetStream(ctx, streamId)
+	var streamView StreamView
+	stream, err := s.cache.GetStream(ctx, streamId)
+	if err == nil {
+		streamView, err = stream.GetView(ctx)
+	}
 
 	if err != nil {
 		if req.Msg.Optional && AsRiverError(err).Code == Err_NOT_FOUND {

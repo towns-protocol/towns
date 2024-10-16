@@ -16,6 +16,7 @@ import {ISpaceOwner} from "contracts/src/spaces/facets/owner/ISpaceOwner.sol";
 import {IMainnetDelegation} from "contracts/src/tokens/river/base/delegation/IMainnetDelegation.sol";
 import {INodeOperator} from "contracts/src/base/registry/facets/operator/INodeOperator.sol";
 import {IEntryPoint} from "account-abstraction/interfaces/IEntryPoint.sol";
+import {ICreateSpace} from "contracts/src/factory/facets/create/ICreateSpace.sol";
 
 // libraries
 import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
@@ -167,8 +168,8 @@ contract BaseSetup is TestUtils, SpaceHelper {
     everyoneSpaceInfo.membership.settings.pricingModule = fixedPricingModule;
 
     vm.startPrank(founder);
-    space = Architect(spaceFactory).createSpace(spaceInfo);
-    everyoneSpace = Architect(spaceFactory).createSpace(everyoneSpaceInfo);
+    space = ICreateSpace(spaceFactory).createSpace(spaceInfo);
+    everyoneSpace = ICreateSpace(spaceFactory).createSpace(everyoneSpaceInfo);
     vm.stopPrank();
   }
 

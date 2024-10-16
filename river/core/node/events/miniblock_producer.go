@@ -227,7 +227,7 @@ func (p *miniblockProducer) TestMakeMiniblock(
 	streamId StreamId,
 	forceSnapshot bool,
 ) (common.Hash, int64, error) {
-	stream, err := p.streamCache.GetSyncStream(ctx, streamId)
+	stream, err := p.streamCache.GetStream(ctx, streamId)
 	if err != nil {
 		return common.Hash{}, -1, err
 	}

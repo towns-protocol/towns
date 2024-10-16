@@ -45,20 +45,6 @@ contract Architect is
   // =============================================================
 
   /// @inheritdoc IArchitect
-  function createSpace(
-    SpaceInfo memory spaceInfo
-  ) external nonReentrant whenNotPaused returns (address) {
-    return _createSpace(spaceInfo);
-  }
-
-  /// @inheritdoc IArchitect
-  function createSpaceWithPrepay(
-    CreateSpace memory spaceInfo
-  ) external payable nonReentrant whenNotPaused returns (address) {
-    return _createSpaceWithPrepay(spaceInfo);
-  }
-
-  /// @inheritdoc IArchitect
   function getSpaceByTokenId(uint256 tokenId) external view returns (address) {
     return _getSpaceByTokenId(tokenId);
   }

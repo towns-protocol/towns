@@ -429,10 +429,11 @@ export class UserOps {
 
         const createSpaceFnName = 'createSpaceWithPrepay'
 
-        const callDataCreateSpace = this.spaceDapp.spaceRegistrar.SpaceArchitect.encodeFunctionData(
+        const callDataCreateSpace = this.spaceDapp.spaceRegistrar.CreateSpace.encodeFunctionData(
             createSpaceFnName,
             [spaceInfo],
         )
+        const toContractAddress = this.spaceDapp.spaceRegistrar.CreateSpace.address
 
         const endLinkCheck = this.timeTracker?.startMeasurement(
             TimeTrackerEvents.CREATE_SPACE,
@@ -458,7 +459,7 @@ export class UserOps {
 
             return await this.sendUserOp(
                 {
-                    toAddress: this.spaceDapp.spaceRegistrar.SpaceArchitect.address,
+                    toAddress: toContractAddress,
                     callData: callDataCreateSpace,
                     signer,
                     spaceId: undefined,
@@ -481,10 +482,7 @@ export class UserOps {
 
             return await this.sendUserOp(
                 {
-                    toAddress: [
-                        this.spaceDapp.walletLink.address,
-                        this.spaceDapp.spaceRegistrar.SpaceArchitect.address,
-                    ],
+                    toAddress: [this.spaceDapp.walletLink.address, toContractAddress],
                     callData: [callDataForLinkingSmartAccount, callDataCreateSpace],
                     signer,
                     spaceId: undefined,
@@ -502,7 +500,7 @@ export class UserOps {
 
             return await this.sendUserOp(
                 {
-                    toAddress: this.spaceDapp.spaceRegistrar.SpaceArchitect.address,
+                    toAddress: toContractAddress,
                     callData: callDataCreateSpace,
                     signer,
                     spaceId: undefined,

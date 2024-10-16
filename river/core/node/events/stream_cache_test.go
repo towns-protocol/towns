@@ -36,8 +36,10 @@ func TestStreamCacheViewEviction(t *testing.T) {
 
 	tc.createStreamNoCache(streamID, genesisMiniblock)
 
-	streamSync, streamView, err := streamCache.GetStream(ctx, streamID)
+	streamSync, err := streamCache.GetStream(ctx, streamID)
 	require.NoError(err, "loading stream record")
+	streamView, err := streamSync.GetView(ctx)
+	require.NoError(err)
 
 	// stream just loaded and should be with view in cache
 	streamWithoutLoadedView := 0
@@ -105,8 +107,10 @@ func TestStreamCacheViewEviction(t *testing.T) {
 	require.Equal(0, streamWithLoadedViewCount, "stream cache must have ne loaded stream")
 
 	// stream view must be loaded again in cache
-	_, _, err = streamCache.GetStream(ctx, streamID)
+	stream, err := streamCache.GetStream(ctx, streamID)
 	require.NoError(err, "loading stream record")
+	_, err = stream.GetView(ctx)
+	require.NoError(err, "get view")
 	streamWithoutLoadedView = 0
 	streamWithLoadedViewCount = 0
 	streamCache.cache.Range(func(key, value any) bool {
@@ -142,8 +146,10 @@ func TestCacheEvictionWithFilledMiniBlockPool(t *testing.T) {
 
 	tc.createStreamNoCache(streamID, genesisMiniblock)
 
-	streamSync, _, err := streamCache.GetStream(ctx, streamID)
+	streamSync, err := streamCache.GetStream(ctx, streamID)
 	require.NoError(err, "loading stream record")
+	_, err = streamSync.GetView(ctx)
+	require.NoError(err, "get view")
 
 	// stream just loaded and should have view loaded
 	streamWithoutLoadedView := 0
@@ -252,7 +258,7 @@ func TestStreamMiniblockBatchProduction(t *testing.T) {
 		go func(streamID shared.StreamId, genesis *protocol.Miniblock) {
 			defer wg.Done()
 
-			streamSync, err := streamCache.GetSyncStream(ctx, streamID)
+			streamSync, err := streamCache.GetStream(ctx, streamID)
 			require.NoError(err, "get stream")
 
 			// unload view for half of the streams
@@ -288,8 +294,10 @@ func TestStreamMiniblockBatchProduction(t *testing.T) {
 			// quit loop when all added events are included in mini-blocks
 			miniblocksProduced := 0
 			for streamID := range genesisBlocks {
-				stream, view, err := streamCache.GetStream(ctx, streamID)
+				stream, err := streamCache.GetStream(ctx, streamID)
 				require.NoError(err, "get stream")
+				view, err := stream.GetView(ctx)
+				require.NoError(err, "get view")
 
 				var (
 					expStreamEventsCount = len(genesisBlocks[streamID].Events) + streamsWithEvents[streamID]
@@ -374,8 +382,10 @@ func TestStreamUnloadWithSubscribers(t *testing.T) {
 	// obtain sync cookies for allocated streams
 	for streamID := range genesisBlocks {
 		// get sync cookies so we can start from somewhere
-		_, streamView, err := streamCache.GetStream(ctx, streamID)
+		stream, err := streamCache.GetStream(ctx, streamID)
 		require.NoError(err, "get stream")
+		streamView, err := stream.GetView(ctx)
+		require.NoError(err, "get view")
 		syncCookies[streamID] = streamView.SyncCookie(node.Wallet.Address)
 	}
 
@@ -389,7 +399,7 @@ func TestStreamUnloadWithSubscribers(t *testing.T) {
 	mpProducer := NewMiniblockProducer(ctx, streamCache, &MiniblockProducerOpts{TestDisableMbProdcutionOnBlock: true})
 
 	for streamID, syncCookie := range syncCookies {
-		streamSync, err := streamCache.GetSyncStream(ctx, streamID)
+		streamSync, err := streamCache.GetStream(ctx, streamID)
 		require.NoError(err, "get sync stream")
 		subscriptionReceivers[streamID] = new(testStreamCacheViewEvictionSub)
 		err = streamSync.Sub(ctx, syncCookie, subscriptionReceivers[streamID])
@@ -410,7 +420,7 @@ func TestStreamUnloadWithSubscribers(t *testing.T) {
 	for streamID, genesis := range genesisBlocks {
 		count++
 		if count < 2 {
-			streamSync, err := streamCache.GetSyncStream(ctx, streamID)
+			streamSync, err := streamCache.GetStream(ctx, streamID)
 			require.NoError(err, "get sync stream")
 			for i := 0; i < 1+int(streamID[3]%50); i++ {
 				addEvent(t, ctx, streamCache.params, streamSync,

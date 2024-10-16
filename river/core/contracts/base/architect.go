@@ -29,73 +29,9 @@ var (
 	_	= abi.ConvertType
 )
 
-// IArchitectBaseChannelInfo is an auto generated low-level Go binding around an user-defined struct.
-type IArchitectBaseChannelInfo struct {
-	Metadata string
-}
-
-// IArchitectBaseCreateSpace is an auto generated low-level Go binding around an user-defined struct.
-type IArchitectBaseCreateSpace struct {
-	Metadata	IArchitectBaseMetadata
-	Membership	IArchitectBaseMembership
-	Channel		IArchitectBaseChannelInfo
-	Prepay		IArchitectBasePrepay
-}
-
-// IArchitectBaseMembership is an auto generated low-level Go binding around an user-defined struct.
-type IArchitectBaseMembership struct {
-	Settings	IMembershipBaseMembership
-	Requirements	IArchitectBaseMembershipRequirements
-	Permissions	[]string
-}
-
-// IArchitectBaseMembershipRequirements is an auto generated low-level Go binding around an user-defined struct.
-type IArchitectBaseMembershipRequirements struct {
-	Everyone		bool
-	Users			[]common.Address
-	RuleData		[]byte
-	SyncEntitlements	bool
-}
-
-// IArchitectBaseMetadata is an auto generated low-level Go binding around an user-defined struct.
-type IArchitectBaseMetadata struct {
-	Name			string
-	Uri			string
-	ShortDescription	string
-	LongDescription		string
-}
-
-// IArchitectBasePrepay is an auto generated low-level Go binding around an user-defined struct.
-type IArchitectBasePrepay struct {
-	Supply *big.Int
-}
-
-// IArchitectBaseSpaceInfo is an auto generated low-level Go binding around an user-defined struct.
-type IArchitectBaseSpaceInfo struct {
-	Name			string
-	Uri			string
-	ShortDescription	string
-	LongDescription		string
-	Membership		IArchitectBaseMembership
-	Channel			IArchitectBaseChannelInfo
-}
-
-// IMembershipBaseMembership is an auto generated low-level Go binding around an user-defined struct.
-type IMembershipBaseMembership struct {
-	Name		string
-	Symbol		string
-	Price		*big.Int
-	MaxSupply	*big.Int
-	Duration	uint64
-	Currency	common.Address
-	FeeRecipient	common.Address
-	FreeAllocation	*big.Int
-	PricingModule	common.Address
-}
-
 // ArchitectMetaData contains all meta data concerning the Architect contract.
 var ArchitectMetaData = &bind.MetaData{
-	ABI: "[{\"type\":\"function\",\"name\":\"createSpace\",\"inputs\":[{\"name\":\"SpaceInfo\",\"type\":\"tuple\",\"internalType\":\"structIArchitectBase.SpaceInfo\",\"components\":[{\"name\":\"name\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"uri\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"shortDescription\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"longDescription\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"membership\",\"type\":\"tuple\",\"internalType\":\"structIArchitectBase.Membership\",\"components\":[{\"name\":\"settings\",\"type\":\"tuple\",\"internalType\":\"structIMembershipBase.Membership\",\"components\":[{\"name\":\"name\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"symbol\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"price\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"maxSupply\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"duration\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"currency\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"feeRecipient\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"freeAllocation\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"pricingModule\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"name\":\"requirements\",\"type\":\"tuple\",\"internalType\":\"structIArchitectBase.MembershipRequirements\",\"components\":[{\"name\":\"everyone\",\"type\":\"bool\",\"internalType\":\"bool\"},{\"name\":\"users\",\"type\":\"address[]\",\"internalType\":\"address[]\"},{\"name\":\"ruleData\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"syncEntitlements\",\"type\":\"bool\",\"internalType\":\"bool\"}]},{\"name\":\"permissions\",\"type\":\"string[]\",\"internalType\":\"string[]\"}]},{\"name\":\"channel\",\"type\":\"tuple\",\"internalType\":\"structIArchitectBase.ChannelInfo\",\"components\":[{\"name\":\"metadata\",\"type\":\"string\",\"internalType\":\"string\"}]}]}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"createSpaceWithPrepay\",\"inputs\":[{\"name\":\"createSpace\",\"type\":\"tuple\",\"internalType\":\"structIArchitectBase.CreateSpace\",\"components\":[{\"name\":\"metadata\",\"type\":\"tuple\",\"internalType\":\"structIArchitectBase.Metadata\",\"components\":[{\"name\":\"name\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"uri\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"shortDescription\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"longDescription\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"name\":\"membership\",\"type\":\"tuple\",\"internalType\":\"structIArchitectBase.Membership\",\"components\":[{\"name\":\"settings\",\"type\":\"tuple\",\"internalType\":\"structIMembershipBase.Membership\",\"components\":[{\"name\":\"name\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"symbol\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"price\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"maxSupply\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"duration\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"currency\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"feeRecipient\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"freeAllocation\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"pricingModule\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"name\":\"requirements\",\"type\":\"tuple\",\"internalType\":\"structIArchitectBase.MembershipRequirements\",\"components\":[{\"name\":\"everyone\",\"type\":\"bool\",\"internalType\":\"bool\"},{\"name\":\"users\",\"type\":\"address[]\",\"internalType\":\"address[]\"},{\"name\":\"ruleData\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"syncEntitlements\",\"type\":\"bool\",\"internalType\":\"bool\"}]},{\"name\":\"permissions\",\"type\":\"string[]\",\"internalType\":\"string[]\"}]},{\"name\":\"channel\",\"type\":\"tuple\",\"internalType\":\"structIArchitectBase.ChannelInfo\",\"components\":[{\"name\":\"metadata\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"name\":\"prepay\",\"type\":\"tuple\",\"internalType\":\"structIArchitectBase.Prepay\",\"components\":[{\"name\":\"supply\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]}]}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"payable\"},{\"type\":\"function\",\"name\":\"getProxyInitializer\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractISpaceProxyInitializer\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getSpaceArchitectImplementations\",\"inputs\":[],\"outputs\":[{\"name\":\"ownerTokenImplementation\",\"type\":\"address\",\"internalType\":\"contractISpaceOwner\"},{\"name\":\"userEntitlementImplementation\",\"type\":\"address\",\"internalType\":\"contractIUserEntitlement\"},{\"name\":\"ruleEntitlementImplementation\",\"type\":\"address\",\"internalType\":\"contractIRuleEntitlementV2\"},{\"name\":\"legacyRuleEntitlement\",\"type\":\"address\",\"internalType\":\"contractIRuleEntitlement\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getSpaceByTokenId\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"space\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getTokenIdBySpace\",\"inputs\":[{\"name\":\"space\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"setProxyInitializer\",\"inputs\":[{\"name\":\"proxyInitializer\",\"type\":\"address\",\"internalType\":\"contractISpaceProxyInitializer\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setSpaceArchitectImplementations\",\"inputs\":[{\"name\":\"ownerTokenImplementation\",\"type\":\"address\",\"internalType\":\"contractISpaceOwner\"},{\"name\":\"userEntitlementImplementation\",\"type\":\"address\",\"internalType\":\"contractIUserEntitlement\"},{\"name\":\"ruleEntitlementImplementation\",\"type\":\"address\",\"internalType\":\"contractIRuleEntitlementV2\"},{\"name\":\"legacyRuleEntitlement\",\"type\":\"address\",\"internalType\":\"contractIRuleEntitlement\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"Architect__ProxyInitializerSet\",\"inputs\":[{\"name\":\"proxyInitializer\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"SpaceCreated\",\"inputs\":[{\"name\":\"owner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"tokenId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"space\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"error\",\"name\":\"Architect__InvalidAddress\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"Architect__InvalidNetworkId\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"Architect__InvalidPricingModule\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"Architect__InvalidStringLength\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"Architect__NotContract\",\"inputs\":[]}]",
+	ABI: "[{\"type\":\"function\",\"name\":\"getProxyInitializer\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractISpaceProxyInitializer\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getSpaceArchitectImplementations\",\"inputs\":[],\"outputs\":[{\"name\":\"ownerTokenImplementation\",\"type\":\"address\",\"internalType\":\"contractISpaceOwner\"},{\"name\":\"userEntitlementImplementation\",\"type\":\"address\",\"internalType\":\"contractIUserEntitlement\"},{\"name\":\"ruleEntitlementImplementation\",\"type\":\"address\",\"internalType\":\"contractIRuleEntitlementV2\"},{\"name\":\"legacyRuleEntitlement\",\"type\":\"address\",\"internalType\":\"contractIRuleEntitlement\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getSpaceByTokenId\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"space\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getTokenIdBySpace\",\"inputs\":[{\"name\":\"space\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"setProxyInitializer\",\"inputs\":[{\"name\":\"proxyInitializer\",\"type\":\"address\",\"internalType\":\"contractISpaceProxyInitializer\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setSpaceArchitectImplementations\",\"inputs\":[{\"name\":\"ownerTokenImplementation\",\"type\":\"address\",\"internalType\":\"contractISpaceOwner\"},{\"name\":\"userEntitlementImplementation\",\"type\":\"address\",\"internalType\":\"contractIUserEntitlement\"},{\"name\":\"ruleEntitlementImplementation\",\"type\":\"address\",\"internalType\":\"contractIRuleEntitlementV2\"},{\"name\":\"legacyRuleEntitlement\",\"type\":\"address\",\"internalType\":\"contractIRuleEntitlement\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"Architect__ProxyInitializerSet\",\"inputs\":[{\"name\":\"proxyInitializer\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"SpaceCreated\",\"inputs\":[{\"name\":\"owner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"tokenId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"space\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"error\",\"name\":\"Architect__InvalidAddress\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"Architect__InvalidNetworkId\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"Architect__InvalidPricingModule\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"Architect__InvalidStringLength\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"Architect__NotContract\",\"inputs\":[]}]",
 }
 
 // ArchitectABI is the input ABI used to generate the binding from.
@@ -390,48 +326,6 @@ func (_Architect *ArchitectSession) GetTokenIdBySpace(space common.Address) (*bi
 // Solidity: function getTokenIdBySpace(address space) view returns(uint256)
 func (_Architect *ArchitectCallerSession) GetTokenIdBySpace(space common.Address) (*big.Int, error) {
 	return _Architect.Contract.GetTokenIdBySpace(&_Architect.CallOpts, space)
-}
-
-// CreateSpace is a paid mutator transaction binding the contract method 0xf822028d.
-//
-// Solidity: function createSpace((string,string,string,string,((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes,bool),string[]),(string)) SpaceInfo) returns(address)
-func (_Architect *ArchitectTransactor) CreateSpace(opts *bind.TransactOpts, SpaceInfo IArchitectBaseSpaceInfo) (*types.Transaction, error) {
-	return _Architect.contract.Transact(opts, "createSpace", SpaceInfo)
-}
-
-// CreateSpace is a paid mutator transaction binding the contract method 0xf822028d.
-//
-// Solidity: function createSpace((string,string,string,string,((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes,bool),string[]),(string)) SpaceInfo) returns(address)
-func (_Architect *ArchitectSession) CreateSpace(SpaceInfo IArchitectBaseSpaceInfo) (*types.Transaction, error) {
-	return _Architect.Contract.CreateSpace(&_Architect.TransactOpts, SpaceInfo)
-}
-
-// CreateSpace is a paid mutator transaction binding the contract method 0xf822028d.
-//
-// Solidity: function createSpace((string,string,string,string,((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes,bool),string[]),(string)) SpaceInfo) returns(address)
-func (_Architect *ArchitectTransactorSession) CreateSpace(SpaceInfo IArchitectBaseSpaceInfo) (*types.Transaction, error) {
-	return _Architect.Contract.CreateSpace(&_Architect.TransactOpts, SpaceInfo)
-}
-
-// CreateSpaceWithPrepay is a paid mutator transaction binding the contract method 0xcd55d94c.
-//
-// Solidity: function createSpaceWithPrepay(((string,string,string,string),((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes,bool),string[]),(string),(uint256)) createSpace) payable returns(address)
-func (_Architect *ArchitectTransactor) CreateSpaceWithPrepay(opts *bind.TransactOpts, createSpace IArchitectBaseCreateSpace) (*types.Transaction, error) {
-	return _Architect.contract.Transact(opts, "createSpaceWithPrepay", createSpace)
-}
-
-// CreateSpaceWithPrepay is a paid mutator transaction binding the contract method 0xcd55d94c.
-//
-// Solidity: function createSpaceWithPrepay(((string,string,string,string),((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes,bool),string[]),(string),(uint256)) createSpace) payable returns(address)
-func (_Architect *ArchitectSession) CreateSpaceWithPrepay(createSpace IArchitectBaseCreateSpace) (*types.Transaction, error) {
-	return _Architect.Contract.CreateSpaceWithPrepay(&_Architect.TransactOpts, createSpace)
-}
-
-// CreateSpaceWithPrepay is a paid mutator transaction binding the contract method 0xcd55d94c.
-//
-// Solidity: function createSpaceWithPrepay(((string,string,string,string),((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes,bool),string[]),(string),(uint256)) createSpace) payable returns(address)
-func (_Architect *ArchitectTransactorSession) CreateSpaceWithPrepay(createSpace IArchitectBaseCreateSpace) (*types.Transaction, error) {
-	return _Architect.Contract.CreateSpaceWithPrepay(&_Architect.TransactOpts, createSpace)
 }
 
 // SetProxyInitializer is a paid mutator transaction binding the contract method 0xe6907c9d.

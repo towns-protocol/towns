@@ -2,7 +2,7 @@ import { UserEntitlementShim as UserEntitlementShimV3 } from './v3/UserEntitleme
 import {
     IMembershipBase as IMembershipBaseV3,
     IArchitectBase as ISpaceArchitectBaseV3,
-} from './v3/ISpaceArchitectShim'
+} from './v3/ICreateSpaceShim'
 import { ILegacyArchitectBase } from './v3/ILegacySpaceArchitectShim'
 import { IRolesBase as IRolesBaseV3 } from './v3/IRolesShim'
 import { RuleEntitlementShim } from './v3/RuleEntitlementShim'

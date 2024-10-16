@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/river-build/river/core/contracts/river"
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/crypto"
@@ -33,8 +34,7 @@ type StreamCacheParams struct {
 
 type StreamCache interface {
 	Params() *StreamCacheParams
-	GetStream(ctx context.Context, streamId StreamId) (SyncStream, StreamView, error)
-	GetSyncStream(ctx context.Context, streamId StreamId) (SyncStream, error)
+	GetStream(ctx context.Context, streamId StreamId) (SyncStream, error)
 	ForceFlushAll(ctx context.Context)
 	GetLoadedViews(ctx context.Context) []StreamView
 	GetMbCandidateStreams(ctx context.Context) []*streamImpl
@@ -355,19 +355,12 @@ func (s *streamCacheImpl) createStreamStorage(
 	}
 }
 
-func (s *streamCacheImpl) GetStream(ctx context.Context, streamId StreamId) (SyncStream, StreamView, error) {
+func (s *streamCacheImpl) GetStream(ctx context.Context, streamId StreamId) (SyncStream, error) {
 	stream, err := s.getStreamImpl(ctx, streamId)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-
-	streamView, err := stream.GetView(ctx)
-
-	if err == nil {
-		return stream, streamView, nil
-	} else {
-		return nil, nil, err
-	}
+	return stream, nil
 }
 
 func (s *streamCacheImpl) getStreamImpl(ctx context.Context, streamId StreamId) (*streamImpl, error) {
@@ -376,14 +369,6 @@ func (s *streamCacheImpl) getStreamImpl(ctx context.Context, streamId StreamId) 
 		return s.tryLoadStreamRecord(ctx, streamId)
 	}
 	return entry.(*streamImpl), nil
-}
-
-func (s *streamCacheImpl) GetSyncStream(ctx context.Context, streamId StreamId) (SyncStream, error) {
-	stream, err := s.getStreamImpl(ctx, streamId)
-	if err != nil {
-		return nil, err
-	}
-	return stream, nil
 }
 
 func (s *streamCacheImpl) ForceFlushAll(ctx context.Context) {

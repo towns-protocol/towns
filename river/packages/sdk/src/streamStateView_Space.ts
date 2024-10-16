@@ -157,9 +157,7 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
         return this.spaceImage
     }
 
-    private async decryptSpaceImage(
-        encryptedData: EncryptedData,
-    ): Promise<ChunkedMedia | undefined> {
+    private async decryptSpaceImage(encryptedData: EncryptedData): Promise<ChunkedMedia> {
         try {
             const spaceAddress = contractAddressFromSpaceId(this.streamId)
             const context = spaceAddress.toLowerCase()

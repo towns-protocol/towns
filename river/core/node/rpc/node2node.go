@@ -40,10 +40,16 @@ func (s *Service) allocateStream(ctx context.Context, req *AllocateStreamRequest
 
 	// TODO: check request is signed by correct node
 	// TODO: all checks that should be done on create?
-	_, view, err := s.cache.GetStream(ctx, streamId)
+	stream, err := s.cache.GetStream(ctx, streamId)
 	if err != nil {
 		return nil, err
 	}
+
+	view, err := stream.GetView(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	return &AllocateStreamResponse{
 		SyncCookie: view.SyncCookie(s.wallet.Address),
 	}, nil
@@ -83,7 +89,7 @@ func (s *Service) newEventReceived(
 		return nil, err
 	}
 
-	stream, err := s.cache.GetSyncStream(ctx, streamId)
+	stream, err := s.cache.GetStream(ctx, streamId)
 	if err != nil {
 		return nil, err
 	}
@@ -131,7 +137,12 @@ func (s *Service) proposeMiniblock(
 		return nil, err
 	}
 
-	_, view, err := s.cache.GetStream(ctx, streamId)
+	stream, err := s.cache.GetStream(ctx, streamId)
+	if err != nil {
+		return nil, err
+	}
+
+	view, err := stream.GetView(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -178,7 +189,7 @@ func (s *Service) saveMiniblockCandidate(
 		return nil, err
 	}
 
-	stream, err := s.cache.GetSyncStream(ctx, streamId)
+	stream, err := s.cache.GetStream(ctx, streamId)
 	if err != nil {
 		return nil, err
 	}

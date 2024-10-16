@@ -18,7 +18,12 @@ func (s *Service) localGetLastMiniblockHash(
 		return nil, err
 	}
 
-	_, streamView, err := s.cache.GetStream(ctx, streamId)
+	stream, err := s.cache.GetStream(ctx, streamId)
+	if err != nil {
+		return nil, err
+	}
+
+	streamView, err := stream.GetView(ctx)
 	if err != nil {
 		return nil, err
 	}

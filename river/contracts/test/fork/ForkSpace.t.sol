@@ -2,13 +2,15 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IArchitect, IArchitectBase} from "contracts/src/factory/facets/architect/IArchitect.sol";
+import {IArchitectBase} from "contracts/src/factory/facets/architect/IArchitect.sol";
 
 // libraries
 
 // contracts
 import {TestUtils} from "contracts/test/utils/TestUtils.sol";
 import {SpaceHelper} from "contracts/test/spaces/SpaceHelper.sol";
+
+import {ICreateSpace} from "contracts/src/factory/facets/create/ICreateSpace.sol";
 
 contract ForkOmegaSpace is TestUtils, SpaceHelper, IArchitectBase {
   address founder;
@@ -17,7 +19,7 @@ contract ForkOmegaSpace is TestUtils, SpaceHelper, IArchitectBase {
   address spaceFactory = 0x9978c826d93883701522d2CA645d5436e5654252;
   address spaceOwner = 0x2824D1235d1CbcA6d61C00C3ceeCB9155cd33a42;
 
-  IArchitect spaceArchitect = IArchitect(spaceFactory);
+  ICreateSpace spaceArchitect = ICreateSpace(spaceFactory);
 
   function setUp() external onlyForked {
     SpaceInfo memory spaceInfo = _createEveryoneSpaceInfo("fork-space");

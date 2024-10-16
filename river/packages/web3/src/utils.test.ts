@@ -1,4 +1,9 @@
-import { parseChannelMetadataJSON, NoEntitledWalletError } from './Utils'
+import {
+    parseChannelMetadataJSON,
+    NoEntitledWalletError,
+    SpaceAddressFromSpaceId,
+    SpaceIdFromSpaceAddress,
+} from './Utils'
 
 describe('utils.test.ts', () => {
     test('channelMetadataJson', async () => {
@@ -13,6 +18,20 @@ describe('utils.test.ts', () => {
         expect(parseChannelMetadataJSON('11111')).toEqual({
             name: '11111',
             description: '',
+        })
+    })
+
+    describe('SpaceAddressFromSpaceId', () => {
+        test('should convert space id to space address', () => {
+            expect(SpaceIdFromSpaceAddress('0xd645e5b484b4cf6c7aad2e74f58166c28781a6c9')).toEqual(
+                '10d645e5b484b4cf6c7aad2e74f58166c28781a6c90000000000000000000000',
+            )
+
+            expect(
+                SpaceAddressFromSpaceId(
+                    '10d645e5b484b4cf6c7aad2e74f58166c28781a6c90000000000000000000000',
+                ),
+            ).toEqual('0xd645e5b484b4cf6C7Aad2e74F58166C28781A6c9')
         })
     })
 
