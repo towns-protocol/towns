@@ -7,6 +7,7 @@ import { Icon, Stack } from '@ui'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { PanelButton } from '@components/Panel/PanelButton'
+import { Analytics } from 'hooks/useAnalytics'
 import { SingleRolePanel } from './SingleRolePanel'
 import { isNumeric } from './utils'
 
@@ -30,6 +31,9 @@ function RolesListPanel() {
     const onNewRoleClick = useEvent(() => {
         searchParams.set('roles', 'new')
         setSearchParams(searchParams)
+        Analytics.getInstance().track('clicked new role in town info panel', {
+            spaceId: spaceIdFromPath,
+        })
     })
 
     return (
@@ -65,10 +69,14 @@ function RolesListPanel() {
 
 function RoleListItem(props: { roleId: number; name: string }) {
     const [searchParams, setSearchParams] = useSearchParams()
+    const spaceIdFromPath = useSpaceIdFromPathname()
 
     const onClick = useEvent(() => {
         searchParams.set('roles', props.roleId.toString())
         setSearchParams(searchParams)
+        Analytics.getInstance().track('clicked on a role in the town info panel', {
+            spaceId: spaceIdFromPath,
+        })
     })
     return (
         <Stack>

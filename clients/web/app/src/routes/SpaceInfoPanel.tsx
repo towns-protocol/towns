@@ -173,6 +173,9 @@ export const SpaceInfo = () => {
 
     const onManageRolesClick = useEvent(() => {
         if (!isRolesPanel) {
+            Analytics.getInstance().track('clicked on manage roles', {
+                spaceId: spaceID,
+            })
             openPanel(CHANNEL_INFO_PARAMS.ROLES)
             if (isTouch) {
                 setActiveModal(CHANNEL_INFO_PARAMS.ROLES)

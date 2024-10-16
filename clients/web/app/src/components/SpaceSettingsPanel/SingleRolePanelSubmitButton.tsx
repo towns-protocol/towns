@@ -7,6 +7,7 @@ import { useEvent } from 'react-use-event-hook'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { FancyButton } from '@ui'
 import { prepareGatedDataForSubmit } from '@components/Tokens/utils'
+import { Analytics } from 'hooks/useAnalytics'
 import { RoleFormSchemaType } from '../Web3/CreateSpaceForm/types'
 
 export function SingleRolePanelSubmitButton({
@@ -64,6 +65,13 @@ export function SingleRolePanelSubmitButton({
             return
         }
 
+        Analytics.getInstance().track(
+            isCreateRole ? 'clicked on create role' : 'clicked on save role',
+            {
+                spaceId,
+            },
+        )
+
         // just in case
         const _channelPermissions = [...new Set(data.channelPermissions)].sort()
         const _townPermissions = [...new Set(data.townPermissions)].sort()
@@ -74,29 +82,81 @@ export function SingleRolePanelSubmitButton({
             data.usersGatedBy,
         )
 
+        const permissions = [..._channelPermissions, ..._townPermissions]
         if (isCreateRole) {
-            await createRoleTransaction(
+            console.log('[analytics]', ruleData)
+            Analytics.getInstance().track('submitting create role transaction', {
+                spaceId,
+                gatingType: data.gatingType,
+                userGated: data.usersGatedBy.length > 0,
+                tokenGated: data.tokensGatedBy.length > 0,
+                permissions,
+            })
+            const tx = await createRoleTransaction(
                 spaceId,
                 data.name,
-                [..._channelPermissions, ..._townPermissions],
+                permissions,
                 usersGatedBy,
                 ruleData,
                 signer,
             )
+            const rx = await tx?.receipt
+            if (rx?.status === 1) {
+                Analytics.getInstance().track('successfully created role', {
+                    spaceId,
+                    gatingType: data.gatingType,
+                    userGated: data.usersGatedBy.length > 0,
+                    tokenGated: data.tokensGatedBy.length > 0,
+                    permissions,
+                })
+            } else {
+                Analytics.getInstance().track('failed to create role', {
+                    spaceId,
+                    gatingType: data.gatingType,
+                    userGated: data.usersGatedBy.length > 0,
+                    tokenGated: data.tokensGatedBy.length > 0,
+                    permissions,
+                })
+            }
         } else {
             if (!roleId) {
                 console.error('No roleId for edit role.')
                 return
             }
-            await updateRoleTransaction(
+            Analytics.getInstance().track('submitting save role transaction', {
+                spaceId,
+                gatingType: data.gatingType,
+                userGated: data.usersGatedBy.length > 0,
+                tokenGated: data.tokensGatedBy.length > 0,
+                permissions,
+            })
+            const tx = await updateRoleTransaction(
                 spaceId,
                 roleId,
                 data.name,
-                [..._channelPermissions, ..._townPermissions],
+                permissions,
                 usersGatedBy,
                 ruleData,
                 signer,
             )
+            const rx = await tx?.receipt
+            if (rx?.status === 1) {
+                Analytics.getInstance().track('successfully saved role', {
+                    spaceId,
+                    gatingType: data.gatingType,
+                    userGated: data.usersGatedBy.length > 0,
+                    tokenGated: data.tokensGatedBy.length > 0,
+                    permissions,
+                })
+            } else {
+                Analytics.getInstance().track('failed to save role', {
+                    spaceId,
+                    gatingType: data.gatingType,
+                    userGated: data.usersGatedBy.length > 0,
+                    tokenGated: data.tokensGatedBy.length > 0,
+                    permissions,
+                })
+            }
         }
     })
 
