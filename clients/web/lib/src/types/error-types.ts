@@ -61,3 +61,17 @@ export function getErrorCategory(error: unknown) {
 export function addCategoryToErrorIfNotExists<T>(error: T, category: ErrorCategory) {
     return addCategoryToError(error, getErrorCategory(error) ?? category)
 }
+
+// https://docs.alchemy.com/reference/bundler-api-errors
+// DO NOT add error code -32521, which is when userop is reverted during the execution phase - we want those errors to be decoded against contracts
+export function skipErrorDecoding(error: unknown): error is Error {
+    return (
+        typeof error === 'object' &&
+        error !== null &&
+        'code' in error &&
+        typeof error.code === 'number' &&
+        // -32602 invalid userop - can happen when replacement underpriced
+        // -32500 wrong nonce
+        (error.code === -32602 || error.code === -32500)
+    )
+}

@@ -72,6 +72,7 @@ import { getDefaultXChainIds, marshallXChainConfig } from './XChainConfig'
 import {
     addCategoryToError,
     getErrorCategory,
+    skipErrorDecoding,
     MembershipRejectedError,
     SignerUndefinedError,
 } from '../types/error-types'
@@ -762,7 +763,7 @@ export class TownsClient
             }
         } catch (err) {
             console.error('[updateChannelTransaction]', err)
-            error = this.spaceDapp.parseSpaceError(updateChannelInfo.parentSpaceId, err)
+            error = this.getDecodedErrorForSpace(updateChannelInfo.parentSpaceId, err)
         }
 
         continueStoreTx({
@@ -1043,7 +1044,7 @@ export class TownsClient
 
             this.log(`[createRoleTransaction] transaction created` /*, transaction*/)
         } catch (err) {
-            error = this.spaceDapp.parseSpaceError(spaceNetworkId, err)
+            error = this.getDecodedErrorForSpace(spaceNetworkId, err)
         }
 
         continueStoreTx({
@@ -1122,7 +1123,7 @@ export class TownsClient
             )
             this.log(`[addRoleToChannelTransaction] transaction created` /*, transaction*/)
         } catch (err) {
-            error = this.spaceDapp.parseSpaceError(spaceNetworkId, err)
+            error = this.getDecodedErrorForSpace(spaceNetworkId, err)
         }
 
         return {
@@ -1177,7 +1178,7 @@ export class TownsClient
             }
             this.log(`[updateSpaceInfoTransaction] transaction created` /*, transaction*/)
         } catch (err) {
-            error = this.spaceDapp.parseSpaceError(spaceNetworkId, err)
+            error = this.getDecodedErrorForSpace(spaceNetworkId, err)
         }
 
         continueStoreTx({
@@ -1217,7 +1218,7 @@ export class TownsClient
             }
             this.log(`[refreshMetadataTransaction] transaction created` /*, transaction*/)
         } catch (err) {
-            error = this.spaceDapp.parseSpaceError(spaceNetworkId, err)
+            error = this.getDecodedErrorForSpace(spaceNetworkId, err)
         }
 
         continueStoreTx({
@@ -1290,7 +1291,7 @@ export class TownsClient
 
             this.log(`[updateRoleTransaction] transaction created` /*, transaction*/)
         } catch (err) {
-            error = this.spaceDapp.parseSpaceError(spaceId, err)
+            error = this.getDecodedErrorForSpace(spaceId, err)
         }
         // todo: add necessary contextual data
         continueStoreTx({
@@ -1370,7 +1371,7 @@ export class TownsClient
 
             this.log(`[updateRoleTransaction] transaction created` /*, transaction*/)
         } catch (err) {
-            error = this.spaceDapp.parseSpaceError(spaceNetworkId, err)
+            error = this.getDecodedErrorForSpace(spaceNetworkId, err)
         }
         // todo: add necessary contextual data
         continueStoreTx({
@@ -1428,7 +1429,7 @@ export class TownsClient
                 `[setChannelPermissionOverridesTransaction] transaction created` /*, transaction*/,
             )
         } catch (err) {
-            error = this.spaceDapp.parseSpaceError(spaceNetworkId, err)
+            error = this.getDecodedErrorForSpace(spaceNetworkId, err)
         }
         // todo: add necessary contextual data
         continueStoreTx({
@@ -1485,7 +1486,7 @@ export class TownsClient
                 `[setChannelPermissionOverridesTransaction] transaction created` /*, transaction*/,
             )
         } catch (err) {
-            error = this.spaceDapp.parseSpaceError(spaceNetworkId, err)
+            error = this.getDecodedErrorForSpace(spaceNetworkId, err)
         }
 
         // todo: add necessary contextual data
@@ -1576,7 +1577,7 @@ export class TownsClient
             }
             this.log(`[banTransaction] transaction created`)
         } catch (err) {
-            error = this.spaceDapp.parseSpaceError(spaceId, err)
+            error = this.getDecodedErrorForSpace(spaceId, err)
         }
 
         continueStoreTx({
@@ -1628,7 +1629,7 @@ export class TownsClient
             }
             this.log(`[unbanTransaction] transaction created`)
         } catch (err) {
-            error = this.spaceDapp.parseSpaceError(spaceId, err)
+            error = this.getDecodedErrorForSpace(spaceId, err)
         }
 
         continueStoreTx({
@@ -1691,7 +1692,7 @@ export class TownsClient
             }
             this.log(`[deleteRoleTransaction] transaction created` /*, transaction*/)
         } catch (err) {
-            error = this.spaceDapp.parseSpaceError(spaceNetworkId, err)
+            error = this.getDecodedErrorForSpace(spaceNetworkId, err)
         }
 
         continueStoreTx({
@@ -2118,7 +2119,7 @@ export class TownsClient
             this.log(`[linkEOAToRootKey] transaction created` /*, transaction*/)
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: unknown) {
-            error = this.spaceDapp.parseSpaceError(spaceId, err)
+            error = this.getDecodedErrorForSpace(spaceId, err)
         }
         continueStoreTx({
             hashOrUserOpHash: getTransactionHashOrUserOpHash(transaction),
@@ -2906,7 +2907,10 @@ export class TownsClient
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    private getDecodedErrorForSpaceFactory(error: any): Error & { code?: string } {
+    private getDecodedErrorForSpaceFactory(error: any): Error {
+        if (skipErrorDecoding(error)) {
+            return error
+        }
         try {
             return this.spaceDapp.parseSpaceFactoryError(error)
         } catch (e: unknown) {
@@ -2938,6 +2942,9 @@ export class TownsClient
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private getDecodedErrorForSpace(spaceId: string, error: any): Error {
+        if (skipErrorDecoding(error)) {
+            return error
+        }
         try {
             // parseSpaceError needs to be rewritten to return actual errors
             const fakeError = this.spaceDapp.parseSpaceError(spaceId, error)
