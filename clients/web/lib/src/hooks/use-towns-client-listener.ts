@@ -271,11 +271,11 @@ async function logInWithRetries(
             }
         } catch (e) {
             retryCount++
-            console.log('[use-towns-client-listener] casablanca client encountered exception', e)
+            console.error('[use-towns-client-listener] casablanca client encountered exception', e)
             try {
                 await client.logoutFromCasablanca()
             } catch (e) {
-                console.log('error while logging out', e)
+                console.error('error while logging out', e)
             }
             // aellis - if you have credentials you should always be able to sign in to the stream node
             // this error is probably a connect error, so we should just retry forever probably?
