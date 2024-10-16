@@ -27,6 +27,11 @@ export function useRefreshMetadataTx() {
         }
     }, [transactionContext])
 
+    const reset = useCallback(() => {
+        setTransactionContext(undefined)
+        isTransacting.current = false
+    }, [])
+
     const _refreshMetadataTransaction = useCallback(
         async function (
             spaceId: string,
@@ -82,5 +87,6 @@ export function useRefreshMetadataTx() {
         transactionStatus,
         isSuccess: transactionStatus === TransactionStatus.Success,
         refreshMetadataTransaction: _refreshMetadataTransaction,
+        reset,
     }
 }

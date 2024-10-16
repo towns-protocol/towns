@@ -23,7 +23,6 @@ import {
 import { isValidStreamId } from '@river-build/sdk'
 import { BigNumberish } from 'ethers'
 import { useGetEmbeddedSigner } from '@towns/privy'
-import headlessToast from 'react-hot-toast/headless'
 import { UploadImageRequestConfig } from '@components/UploadImage/useOnImageChangeEvent'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { PanelButton } from '@components/Panel/PanelButton'
@@ -241,12 +240,12 @@ export const SpaceInfo = () => {
 
     const { uploadTownImageToStream } = useUploadAttachment()
     const isUploadingSpaceIconRef = useRef<boolean>(false)
-    const { refreshMetadataTransaction, transactionStatus } = useRefreshMetadataTx()
+    const {
+        refreshMetadataTransaction,
+        transactionStatus,
+        reset: resetTxContext,
+    } = useRefreshMetadataTx()
     const { getSigner } = useGetEmbeddedSigner()
-
-    const [refreshMetadataToastId, setRefreshMetadataToastId] = useState<string | undefined>(
-        undefined,
-    )
 
     const onUploadSpaceIcon = useCallback(
         async ({ imageUrl, file, id: spaceId, type, setProgress }: UploadImageRequestConfig) => {
@@ -259,7 +258,7 @@ export const SpaceInfo = () => {
                 try {
                     // upload the space icon
                     await uploadTownImageToStream(spaceId, file, setProgress)
-                    const toastId = popupToast(
+                    popupToast(
                         ({ toast }) => (
                             <StandardToast
                                 message="Would you like to publish the space image to OpenSea?"
@@ -268,20 +267,19 @@ export const SpaceInfo = () => {
                                 icon="openSeaPlain"
                                 iconColor="gray2"
                                 cta="Publish"
-                                onCtaClick={async () => {
+                                onCtaClick={async ({ dismissToast }) => {
                                     const signer = await getSigner()
                                     if (!signer) {
                                         return
                                     }
                                     // emit event to update the nft metadata
-                                    refreshMetadataTransaction(spaceId, signer)
-                                    headlessToast.dismiss()
+                                    await refreshMetadataTransaction(spaceId, signer)
+                                    dismissToast()
                                 }}
                             />
                         ),
                         { duration: Infinity },
                     )
-                    setRefreshMetadataToastId(toastId)
                 } finally {
                     isUploadingSpaceIconRef.current = false
                 }
@@ -291,34 +289,30 @@ export const SpaceInfo = () => {
     )
 
     useEffect(() => {
-        if (!refreshMetadataToastId) {
-            return
-        }
         if (transactionStatus === TransactionStatus.Success) {
-            headlessToast.dismiss(refreshMetadataToastId)
             popupToast(({ toast }) => (
                 <StandardToast.Success
                     message="Your space image has been published to OpenSea"
                     cta="View on OpenSea"
                     toast={toast}
-                    onCtaClick={() => {
+                    onCtaClick={({ dismissToast }) => {
                         window.open(
                             `${openSeaAssetUrl(baseChain.id, address)}`,
                             '_blank',
                             'noopener,noreferrer',
                         )
+                        dismissToast()
                     }}
                 />
             ))
         }
         if (transactionStatus === TransactionStatus.Failed) {
-            headlessToast.dismiss(refreshMetadataToastId)
-            const toastId = popupToast(({ toast }) => (
+            popupToast(({ toast }) => (
                 <StandardToast.Error
                     message="Something went wrong while publishing your space image to OpenSea"
                     toast={toast}
                     cta={space?.id ? 'Try again' : undefined}
-                    onCtaClick={async () => {
+                    onCtaClick={async ({ dismissToast }) => {
                         if (!space?.id) {
                             return
                         }
@@ -326,20 +320,22 @@ export const SpaceInfo = () => {
                         if (!signer) {
                             return
                         }
-                        refreshMetadataTransaction(space.id, signer)
+                        resetTxContext()
+                        await refreshMetadataTransaction(space.id, signer)
+                        dismissToast()
                     }}
                 />
             ))
-            setRefreshMetadataToastId(toastId)
         }
+        resetTxContext()
     }, [
         transactionStatus,
-        refreshMetadataToastId,
         getSigner,
         refreshMetadataTransaction,
         space?.id,
         baseChain.id,
         address,
+        resetTxContext,
     ])
 
     return (
