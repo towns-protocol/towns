@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react'
 import { Box, Icon } from '@ui'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
+import { Analytics } from 'hooks/useAnalytics'
 
 export const BugReportButton = () => {
     const { closePanel, openPanel, isPanelOpen } = usePanelActions()
@@ -10,6 +11,7 @@ export const BugReportButton = () => {
         if (isPanelOpen('bug-report')) {
             closePanel()
         } else {
+            Analytics.getInstance().track('clicked bug report')
             openPanel('bug-report')
         }
     }, [closePanel, isPanelOpen, openPanel])

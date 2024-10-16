@@ -34,6 +34,7 @@ import {
     FileDropContextProvider,
     useFileDropContext,
 } from '@components/FileDropContext/FileDropContext'
+import { Analytics } from 'hooks/useAnalytics'
 import * as fieldStyles from '../../ui/components/_internal/Field/Field.css'
 import { BugSubmittedToast } from './BugSubmittedToast'
 
@@ -71,6 +72,8 @@ const defaultValues = {
 }
 
 async function postCustomError(data: FormState) {
+    Analytics.getInstance().track('submitting bug report')
+
     const ENV = env.VITE_RIVER_ENV ?? 'localhost'
     const GATEWAY_SERVER_URL = env.VITE_GATEWAY_URL
     const url = `${GATEWAY_SERVER_URL}/user-feedback`
@@ -212,6 +215,7 @@ const _ErrorReportForm = (props: { onHide?: () => void; excludeDebugInfo?: boole
     })
 
     if (success) {
+        Analytics.getInstance().track('submitted bug report')
         toast.custom((t) => {
             return (
                 <BugSubmittedToast
