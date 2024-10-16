@@ -79,7 +79,13 @@ const template = fsSync.readFileSync(indexPath, 'utf-8')
 // Serve static files or index.html for all other routes
 server.setNotFoundHandler(async (request, reply) => {
     // strip query params and hash
-    const urlPath = new URL(request.raw.url ?? '', `https://${request.headers.host}`).pathname
+    const baseUrl = `https://${request.headers.host}`
+    let urlPath: string
+    try {
+        urlPath = new URL(request.raw.url ?? '', baseUrl).pathname
+    } catch (error) {
+        urlPath = '/'
+    }
 
     const filePath = path.join(__dirname, '..', '..', 'app', 'dist', urlPath)
 
