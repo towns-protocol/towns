@@ -201,6 +201,12 @@ type DatabaseConfig struct {
 	// If StandByOnStart is true, it's recommended to set it to the double of Config.ShutdownTimeout.
 	// If set to 0, then default value is used. To disable the delay set to 1ms or less.
 	StartupDelay time.Duration
+
+	// IsolationLevel is the transaction isolation level to use for the database operations.
+	// Allowed values: "serializable", "repeatable read", "read committed".
+	// If not set or value can't be parsed, defaults to "serializable".
+	// Intention is to migrate to "read committed" for performance reasons after testing is complete.
+	IsolationLevel string
 }
 
 func (c DatabaseConfig) GetUrl() string {

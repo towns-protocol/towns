@@ -50,6 +50,10 @@ export function getChatConfig(opts: { processIndex: number; rootWallet: Wallet }
     if (clientStartIndex >= clientEndIndex) {
         throw new Error('clientStartIndex >= clientEndIndex')
     }
+    const gdmProbability = process.env.GDM_PROBABILITY
+        ? parseFloat(process.env.GDM_PROBABILITY)
+        : 0.2
+    const averageWaitTimeout = (1000 * clientsCount * 2) / channelIds.length
     return {
         kickoffMessageEventId: undefined,
         countClientsMessageEventId: undefined,
@@ -76,5 +80,7 @@ export function getChatConfig(opts: { processIndex: number; rootWallet: Wallet }
         waitForSpaceMembershipTimeoutMs: Math.max(duration * 1000, 20000),
         waitForChannelDecryptionTimeoutMs: Math.max(duration * 1000, 20000),
         globalPersistedStore: storage,
+        gdmProbability,
+        averageWaitTimeout,
     } satisfies ChatConfig
 }

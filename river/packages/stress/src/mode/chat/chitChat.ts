@@ -4,16 +4,15 @@ import { makeSillyMessage } from '../../utils/messages'
 import { getLogger } from '../../utils/logger'
 
 export async function chitChat(client: StressClient, cfg: ChatConfig) {
+    const { channelIds, duration, averageWaitTimeout } = cfg
     const logger = getLogger('stress:chitchat', { logId: client.logId })
     // for cfg.duration seconds, randomly every 1-5 seconds, send a message to one of cfg.channelIds
-    const end = Date.now() + cfg.duration * 1000
-    const channelIds = cfg.channelIds
+    const end = Date.now() + duration * 1000
     const randomChannel = () => channelIds[Math.floor(Math.random() * channelIds.length)]
     // wait at least 1 second between messages across all clients
-    const averateWaitTime = (1000 * cfg.clientsCount * 2) / cfg.channelIds.length
-    logger.info({ chattingUntil: end, averageWait: averateWaitTime }, 'chitChat')
+    logger.info({ chattingUntil: end, averageWaitTimeout }, 'chitChat')
     while (Date.now() < end) {
         await client.sendMessage(randomChannel(), `${makeSillyMessage()}`)
-        await new Promise((resolve) => setTimeout(resolve, Math.random() * averateWaitTime))
+        await new Promise((resolve) => setTimeout(resolve, Math.random() * averageWaitTimeout))
     }
 }

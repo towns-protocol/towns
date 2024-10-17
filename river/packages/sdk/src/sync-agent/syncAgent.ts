@@ -22,6 +22,7 @@ import { AuthStatus } from './river-connection/models/authStatus'
 import { ethers } from 'ethers'
 import { makeStreamRpcClient, type MakeRpcClientType } from '../makeStreamRpcClient'
 import type { EncryptionDeviceInitOpts } from '@river-build/encryption'
+import { Gdms, type GdmsModel } from './gdms/gdms'
 
 export interface SyncAgentConfig {
     context: SignerContext
@@ -43,6 +44,7 @@ export class SyncAgent {
     store: Store
     user: User
     spaces: Spaces
+    gdms: Gdms
     private stopped = false
 
     // flattened observables - just pointers to the observable objects in the models
@@ -56,6 +58,7 @@ export class SyncAgent {
         userInbox: PersistedObservable<UserInboxModel>
         userMetadata: PersistedObservable<UserMetadataModel>
         userSettings: PersistedObservable<UserSettingsModel>
+        gdms: PersistedObservable<GdmsModel>
     }
 
     constructor(config: SyncAgentConfig) {
@@ -89,7 +92,7 @@ export class SyncAgent {
 
         this.user = new User(this.userId, this.store, this.riverConnection)
         this.spaces = new Spaces(this.store, this.riverConnection, this.user.memberships, spaceDapp)
-
+        this.gdms = new Gdms(this.store, this.riverConnection, this.user.memberships)
         // flatten out the observables
         this.observables = {
             riverAuthStatus: this.riverConnection.authStatus,
@@ -101,6 +104,7 @@ export class SyncAgent {
             userInbox: this.user.inbox,
             userMetadata: this.user.deviceKeys,
             userSettings: this.user.settings,
+            gdms: this.gdms,
         }
     }
 

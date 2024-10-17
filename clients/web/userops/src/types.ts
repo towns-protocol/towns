@@ -42,8 +42,10 @@ type ExecuteBatchData = {
 }
 
 export const FunctionHash = {
+    // createSpace
     createSpace: 'createSpace',
     createSpaceWithPrepay: 'createSpaceWithPrepay',
+    //
     removeLink: 'removeLink',
     joinSpace: 'joinSpace',
     linkCallerToRootKey: 'linkCallerToRootKey',

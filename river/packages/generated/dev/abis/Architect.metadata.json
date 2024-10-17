@@ -884,10 +884,10 @@
       "license": "MIT"
     },
     "contracts/src/factory/facets/architect/IArchitect.sol": {
-      "keccak256": "0xc53b94ae7740401a89a5c6535ed842ceb4d4b2c8806f76f55e3ae828741b287d",
+      "keccak256": "0x5d790cabaad08df5dda57b8055dbf21ed103bd10ad0e4d684a0e690f9c240a24",
       "urls": [
-        "bzz-raw://fc972ff384d674abc5cfd47c3dc3faedc6c9d2fbff92b7eb3d1645a9f4a948be",
-        "dweb:/ipfs/QmWbdrzSuM9BFRdiWGqq8ajswC9itt8Ku7w6Whe7DtngAq"
+        "bzz-raw://8ff954eb61db93e8b7b58d542f73d75b2e9ee856896a07d436bbc8101b4e9aea",
+        "dweb:/ipfs/QmdgzSC3JooGsWA6BTgyXQU7YA6byFFLuVkyZqs7mEgRCm"
       ],
       "license": "MIT"
     },

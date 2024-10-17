@@ -2119,10 +2119,10 @@
       "license": "MIT"
     },
     "contracts/src/spaces/facets/roles/RolesBase.sol": {
-      "keccak256": "0x6b984e7391d7a9a7399240c98fdc46d1d83c2f551f5a18d1d9f41c0b7f4f3080",
+      "keccak256": "0xc847fa3ca60c268fc9ae30160b22092757e336d00e899f4002a68558eaf4c5f1",
       "urls": [
-        "bzz-raw://d675dfc528d2b12e180d3c737d3f4e6f1e90b81f3366dfed861a787b1e27b3ca",
-        "dweb:/ipfs/QmVnsDdZeKD5jLnDjwAqvgwMC5iUbn7RrrCDcnw9ijH35E"
+        "bzz-raw://65284c01e6bae841b51f0a53161d9e88c46b207b8eefdf98cd3c582f2312963e",
+        "dweb:/ipfs/QmNcxd1hKiyYmKfVjjbwEHrydRJFLQYpjgeC6jMUosbcsY"
       ],
       "license": "MIT"
     },

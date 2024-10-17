@@ -326,7 +326,11 @@ export class SpaceDapp implements ISpaceDapp {
         txnOpts?: TransactionOpts,
     ): Promise<ContractTransaction> {
         return wrapTransaction(() => {
-            return this.spaceRegistrar.CreateSpace.write(signer).createSpaceWithPrepay({
+            const createSpaceFunction = this.spaceRegistrar.CreateSpace.write(signer)[
+                'createSpaceWithPrepay(((string,string,string,string),((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes,bool),string[]),(string),(uint256)))'
+            ] as (arg: any) => Promise<ContractTransaction>
+
+            return createSpaceFunction({
                 channel: {
                     metadata: params.channelName || '',
                 },

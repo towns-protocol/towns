@@ -18,4 +18,9 @@ interface ICreateSpace is IArchitectBase {
   function createSpaceWithPrepay(
     CreateSpace memory createSpace
   ) external payable returns (address);
+
+  // backwards compatibility
+  function createSpaceWithPrepay(
+    CreateSpaceOld memory spaceInfo
+  ) external payable returns (address);
 }

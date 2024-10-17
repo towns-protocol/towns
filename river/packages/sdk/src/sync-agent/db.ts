@@ -14,6 +14,8 @@ import { UserInbox } from './user/models/userInbox'
 import { UserMemberships } from './user/models/userMemberships'
 import { UserSettings } from './user/models/userSettings'
 import { User } from './user/user'
+import { Gdms } from './gdms/gdms'
+import { Gdm } from './gdms/models/gdm'
 
 export const DB_VERSION = 1
 export const DB_MODELS = [
@@ -33,4 +35,6 @@ export const DB_MODELS = [
     MemberEnsAddress,
     MemberNft,
     MemberMembership,
+    Gdms,
+    Gdm,
 ]

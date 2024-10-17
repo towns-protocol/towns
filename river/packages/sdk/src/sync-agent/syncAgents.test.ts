@@ -13,29 +13,38 @@ describe('syncAgents.test.ts', () => {
     logger.log('start')
     const bobUser = new Bot()
     const aliceUser = new Bot()
+    const charlieUser = new Bot()
     let bob: SyncAgent
     let alice: SyncAgent
+    let charlie: SyncAgent
 
     beforeEach(async () => {
         await bobUser.fundWallet()
         await aliceUser.fundWallet()
+        await charlieUser.fundWallet()
         bob = await bobUser.makeSyncAgent()
         alice = await aliceUser.makeSyncAgent()
+        charlie = await charlieUser.makeSyncAgent()
     })
 
     afterEach(async () => {
         await bob.stop()
         await alice.stop()
+        await charlie.stop()
     })
 
     test('syncAgents', async () => {
-        await Promise.all([bob.start(), alice.start()])
+        await Promise.all([bob.start(), alice.start(), charlie.start()])
 
         const { spaceId } = await bob.spaces.createSpace({ spaceName: 'BlastOff' }, bobUser.signer)
         expect(bob.user.memberships.isJoined(spaceId)).toBe(true)
 
-        await alice.spaces.getSpace(spaceId).join(aliceUser.signer)
+        await Promise.all([
+            alice.spaces.getSpace(spaceId).join(aliceUser.signer),
+            charlie.spaces.getSpace(spaceId).join(charlieUser.signer),
+        ])
         expect(alice.user.memberships.isJoined(spaceId)).toBe(true)
+        expect(charlie.user.memberships.isJoined(spaceId)).toBe(true)
     })
 
     test('syncAgents load async', async () => {
@@ -132,5 +141,23 @@ describe('syncAgents.test.ts', () => {
         const result3 = await aliceChannel.pin(event!.eventId)
         expect(result3).toBeDefined()
         expect(result3.error).toBeUndefined()
+    })
+
+    test('gdm', async () => {
+        await Promise.all([bob.start(), alice.start(), charlie.start()])
+        const { streamId } = await bob.gdms.createGDM([alice.userId, charlie.userId])
+        const bobGdm = bob.gdms.getGdm(streamId)
+        expect(bobGdm.members.data.userIds).toEqual(
+            expect.arrayContaining([bob.userId, alice.userId, charlie.userId]),
+        )
+        await bobGdm.sendMessage('Hello, World!')
+        const aliceGdm = alice.gdms.getGdm(streamId)
+        await waitFor(
+            () =>
+                expect(
+                    aliceGdm.timeline.events.value.find((e) => e.text === 'Hello, World!'),
+                ).toBeDefined(),
+            { timeoutMS: 10000 },
+        )
     })
 })

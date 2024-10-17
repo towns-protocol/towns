@@ -8,8 +8,6 @@ pragma solidity ^0.8.23;
 // contracts
 
 interface ILockBase {
-  error LockAlreadyEnabled();
-  error LockAlreadyDisabled();
   error LockNotAuthorized();
 
   event LockUpdated(

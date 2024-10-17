@@ -28,4 +28,6 @@ export interface ChatConfig {
     waitForSpaceMembershipTimeoutMs: number
     waitForChannelDecryptionTimeoutMs: number
     globalPersistedStore: IStorage | undefined
+    gdmProbability: number
+    averageWaitTimeout: number
 }

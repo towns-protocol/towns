@@ -194,6 +194,22 @@ contract RiverBaseTest is BaseSetup, ILockBase, IOwnableBase {
     assertEq(riverFacet.isLockEnabled(alice), false);
   }
 
+  function test_fuzz_delegate_redelegate(
+    address alice,
+    uint256 amount,
+    address bob
+  )
+    external
+    givenCallerHasBridgedTokens(alice, amount)
+    whenCallerDelegatesToASpace(alice)
+  {
+    vm.assume(bob != address(0) && bob != space);
+    vm.startPrank(alice);
+    riverFacet.delegate(bob);
+    riverFacet.delegate(address(0));
+    riverFacet.delegate(bob);
+  }
+
   function test_fuzz_transfer_revertWhen_lockEnabled(
     address alice,
     uint256 amount,

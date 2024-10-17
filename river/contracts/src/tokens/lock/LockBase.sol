@@ -14,7 +14,7 @@ abstract contract LockBase is ILockBase {
   }
 
   modifier onlyAllowed() {
-    if (!_canLock()) revert LockNotAuthorized();
+    if (!_canLock()) CustomRevert.revertWith(LockNotAuthorized.selector);
     _;
   }
 
@@ -25,9 +25,6 @@ abstract contract LockBase is ILockBase {
   function _enableLock(address caller) internal {
     LockStorage.Layout storage ds = LockStorage.layout();
 
-    if (ds.enabledByAddress[caller])
-      CustomRevert.revertWith(LockAlreadyEnabled.selector);
-
     ds.enabledByAddress[caller] = true;
 
     emit LockUpdated(caller, true, 0);
@@ -35,9 +32,6 @@ abstract contract LockBase is ILockBase {
 
   function _disableLock(address caller) internal {
     LockStorage.Layout storage ds = LockStorage.layout();
-
-    if (!ds.enabledByAddress[caller])
-      CustomRevert.revertWith(LockAlreadyDisabled.selector);
 
     uint256 cooldown = block.timestamp + ds.defaultCooldown;
     ds.enabledByAddress[caller] = false;

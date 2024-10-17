@@ -2,7 +2,6 @@ package storage
 
 import (
 	"context"
-	"database/sql"
 	"embed"
 	"fmt"
 	"log/slog"
@@ -44,6 +43,8 @@ type PostgresEventStore struct {
 
 	txCounter  *infra.StatusCounterVec
 	txDuration *prometheus.HistogramVec
+
+	isolationLevel pgx.TxIsoLevel
 }
 
 // var _ StreamStorage = (*PostgresEventStore)(nil)
@@ -131,7 +132,7 @@ func (s *PostgresEventStore) txRunnerInner(
 	}
 	defer release()
 
-	tx, err := s.pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.Serializable, AccessMode: accessMode})
+	tx, err := s.pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: s.isolationLevel, AccessMode: accessMode})
 	if err != nil {
 		return err
 	}
@@ -574,6 +575,21 @@ func (s *PostgresEventStore) init(
 		"name",
 	)
 
+	switch strings.ToLower(poolInfo.Config.IsolationLevel) {
+	case "serializable":
+		s.isolationLevel = pgx.Serializable
+	case "repeatable read", "repeatable_read", "repeatableread":
+		s.isolationLevel = pgx.RepeatableRead
+	case "read committed", "read_committed", "readcommitted":
+		s.isolationLevel = pgx.ReadCommitted
+	default:
+		s.isolationLevel = pgx.Serializable
+	}
+
+	if s.isolationLevel != pgx.Serializable {
+		log.Info("PostgresEventStore: using isolation level", "level", s.isolationLevel)
+	}
+
 	err := s.InitStorage(ctx)
 	if err != nil {
 		return err
@@ -689,62 +705,8 @@ func (s *PostgresEventStore) runMigrations(ctx context.Context) error {
 		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Error creating migration instance")
 	}
 
-	// Get the current migration version before running Up()
-	beforeVersion, _, err := migration.Version()
-	if err != nil && err != migrate.ErrNilVersion {
-		return WrapRiverError(
-			Err_DB_OPERATION_FAILURE,
-			err,
-		).Message("Error fetching migration version before running migrations")
-	}
-
 	if err = migration.Up(); err != nil && err != migrate.ErrNoChange {
 		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Error running migrations")
-	}
-
-	// Get the migration version after running Up()
-	afterVersion, _, err := migration.Version()
-	if err != nil {
-		return WrapRiverError(
-			Err_DB_OPERATION_FAILURE,
-			err,
-		).Message("Error fetching migration version after running migrations")
-	}
-
-	// Trigger a full vacuum if we're upgrading to 5 to reclaim disk space
-	if beforeVersion < 5 && afterVersion == 5 {
-		// Run VACUUM FULL on the relevant tables
-		if err = s.vacuumTables(ctx, dbUrlWithSchema); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-// vacuumTables runs VACUUM FULL on the list of tables
-func (s *PostgresEventStore) vacuumTables(ctx context.Context, dbUrlWithSchema string) error {
-	log := dlog.FromCtx(ctx)
-
-	db, err := sql.Open("postgres", dbUrlWithSchema)
-	if err != nil {
-		return err
-	}
-	defer db.Close()
-
-	// Skipping miniblocks table as it can be very large and VACUUM FULL can take a long time
-	tables := []string{"miniblock_candidates", "es", "minipools"}
-
-	for _, table := range tables {
-		query := fmt.Sprintf("VACUUM FULL %s;", table)
-		if _, err := db.Exec(query); err != nil {
-			return WrapRiverError(
-				Err_DB_OPERATION_FAILURE,
-				err,
-			).Message("Error running VACUUM FULL").
-				Tag("table", table)
-		}
-		log.Info("Successfully vacuumed table", "table", table)
 	}
 
 	return nil

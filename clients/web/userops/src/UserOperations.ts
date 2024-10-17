@@ -427,13 +427,16 @@ export class UserOps {
             throw new Error('abstractAccountAddress is required')
         }
 
+        // stackup-worker identifier,
+        // fn is overloaded, but stackup-worker only checks "createSpaceWithPrepay"
         const createSpaceFnName = 'createSpaceWithPrepay'
+        const createSpaceShim = this.spaceDapp.spaceRegistrar.CreateSpace
 
-        const callDataCreateSpace = this.spaceDapp.spaceRegistrar.CreateSpace.encodeFunctionData(
-            createSpaceFnName,
+        const callDataCreateSpace = createSpaceShim.encodeFunctionData(
+            'createSpaceWithPrepay(((string,string,string,string),((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes,bool),string[]),(string),(uint256)))',
             [spaceInfo],
         )
-        const toContractAddress = this.spaceDapp.spaceRegistrar.CreateSpace.address
+        const toContractAddress = createSpaceShim.address
 
         const endLinkCheck = this.timeTracker?.startMeasurement(
             TimeTrackerEvents.CREATE_SPACE,
@@ -453,7 +456,7 @@ export class UserOps {
 
         if (hasLinkedWallet) {
             const functionHashForPaymasterProxy = getFunctionSigHash(
-                this.spaceDapp.spaceRegistrar.SpaceArchitect.interface,
+                createSpaceShim.interface,
                 createSpaceFnName,
             )
 
@@ -471,7 +474,7 @@ export class UserOps {
         } else if (cost.eq(0)) {
             // wallet isn't linked, create a user op that both links and creates the space
             const functionHashForPaymasterProxy = getFunctionSigHash(
-                this.spaceDapp.spaceRegistrar.SpaceArchitect.interface,
+                createSpaceShim.interface,
                 'createSpace_linkWallet',
             )
 
@@ -494,7 +497,7 @@ export class UserOps {
             await this.linkWallet(signer, abstractAccountAddress, TimeTrackerEvents.CREATE_SPACE)
 
             const functionHashForPaymasterProxy = getFunctionSigHash(
-                this.spaceDapp.spaceRegistrar.SpaceArchitect.interface,
+                createSpaceShim.interface,
                 createSpaceFnName,
             )
 
