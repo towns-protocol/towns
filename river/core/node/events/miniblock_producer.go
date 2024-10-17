@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/river-build/river/core/contracts/river"
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/crypto"
@@ -70,7 +71,7 @@ type MiniblockProducer interface {
 		ctx context.Context,
 		streamId StreamId,
 		forceSnapshot bool,
-	) (common.Hash, int64, error)
+	) (*MiniblockRef, error)
 }
 
 type MiniblockProducerOpts struct {
@@ -226,10 +227,10 @@ func (p *miniblockProducer) TestMakeMiniblock(
 	ctx context.Context,
 	streamId StreamId,
 	forceSnapshot bool,
-) (common.Hash, int64, error) {
+) (*MiniblockRef, error) {
 	stream, err := p.streamCache.GetStream(ctx, streamId)
 	if err != nil {
-		return common.Hash{}, -1, err
+		return nil, err
 	}
 
 	job := &mbJob{
@@ -247,7 +248,7 @@ func (p *miniblockProducer) TestMakeMiniblock(
 
 		err = SleepWithContext(ctx, 10*time.Millisecond)
 		if err != nil {
-			return common.Hash{}, -1, err
+			return nil, err
 		}
 	}
 
@@ -259,16 +260,16 @@ func (p *miniblockProducer) TestMakeMiniblock(
 
 		err = SleepWithContext(ctx, 10*time.Millisecond)
 		if err != nil {
-			return common.Hash{}, -1, err
+			return nil, err
 		}
 	}
 
 	view, err := stream.GetView(ctx)
 	if err != nil {
-		return common.Hash{}, -1, err
+		return nil, err
 	}
 
-	return view.LastBlock().Hash, view.LastBlock().Num, nil
+	return view.LastBlock().Ref, nil
 }
 
 func combineProposals(
@@ -455,8 +456,8 @@ func mbProduceCandiate(
 		return params.Storage.WriteMiniblockCandidate(
 			ctx,
 			stream.streamId,
-			mbInfo.Hash,
-			mbInfo.Num,
+			mbInfo.Ref.Hash,
+			mbInfo.Ref.Num,
 			miniblockBytes,
 		)
 	})
@@ -517,9 +518,9 @@ func (p *miniblockProducer) submitProposalBatch(ctx context.Context, proposals [
 		err := p.streamCache.Params().Registry.SetStreamLastMiniblock(
 			ctx,
 			job.stream.streamId,
-			*job.candidate.headerEvent.PrevMiniblockHash,
+			job.candidate.headerEvent.MiniblockRef.Hash,
 			job.candidate.headerEvent.Hash,
-			uint64(job.candidate.Num),
+			uint64(job.candidate.Ref.Num),
 			false,
 		)
 		if err != nil {
@@ -534,9 +535,9 @@ func (p *miniblockProducer) submitProposalBatch(ctx context.Context, proposals [
 				mbs,
 				river.SetMiniblock{
 					StreamId:          job.stream.streamId,
-					PrevMiniBlockHash: *job.candidate.headerEvent.PrevMiniblockHash,
+					PrevMiniBlockHash: job.candidate.headerEvent.MiniblockRef.Hash,
 					LastMiniblockHash: job.candidate.headerEvent.Hash,
-					LastMiniblockNum:  uint64(job.candidate.Num),
+					LastMiniblockNum:  uint64(job.candidate.Ref.Num),
 					IsSealed:          false,
 				},
 			)

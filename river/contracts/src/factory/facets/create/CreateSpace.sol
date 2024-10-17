@@ -34,4 +34,27 @@ contract CreateSpaceFacet is
   ) external payable nonReentrant whenNotPaused returns (address) {
     return _createSpaceWithPrepay(spaceInfo);
   }
+
+  function createSpaceWithPrepay(
+    CreateSpaceOld memory spaceInfo
+  ) external payable nonReentrant whenNotPaused returns (address) {
+    MembershipRequirements memory requirements = MembershipRequirements({
+      everyone: spaceInfo.membership.requirements.everyone,
+      users: spaceInfo.membership.requirements.users,
+      ruleData: spaceInfo.membership.requirements.ruleData,
+      syncEntitlements: false
+    });
+    Membership memory membership = Membership({
+      settings: spaceInfo.membership.settings,
+      requirements: requirements,
+      permissions: spaceInfo.membership.permissions
+    });
+    CreateSpace memory newSpaceInfo = CreateSpace({
+      metadata: spaceInfo.metadata,
+      membership: membership,
+      channel: spaceInfo.channel,
+      prepay: spaceInfo.prepay
+    });
+    return _createSpaceWithPrepay(newSpaceInfo);
+  }
 }

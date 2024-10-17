@@ -145,16 +145,16 @@ func (ctc *cacheTestContext) initAllCaches(opts *MiniblockProducerOpts) {
 	}
 }
 
-func (ctc *cacheTestContext) createReplStream() (StreamId, []common.Address, []byte) {
+func (ctc *cacheTestContext) createReplStream() (StreamId, []common.Address, *MiniblockRef) {
 	streamId := testutils.FakeStreamId(STREAM_USER_SETTINGS_BIN)
-	mb := MakeGenesisMiniblockForUserSettingsStream(ctc.t, ctc.clientWallet, streamId)
-	mbBytes, err := proto.Marshal(mb)
+	mb := MakeGenesisMiniblockForUserSettingsStream(ctc.t, ctc.clientWallet, ctc.instances[0].params.Wallet, streamId)
+	mbBytes, err := mb.ToBytes()
 	ctc.require.NoError(err)
 
 	nodes, err := ctc.instances[0].streamRegistry.AllocateStream(
 		ctc.ctx,
 		streamId,
-		common.BytesToHash(mb.Header.Hash),
+		common.BytesToHash(mb.Proto.Header.Hash),
 		mbBytes,
 	)
 	ctc.require.NoError(err)
@@ -167,10 +167,14 @@ func (ctc *cacheTestContext) createReplStream() (StreamId, []common.Address, []b
 		ctc.require.NoError(err)
 	}
 
-	return streamId, nodes, mb.Header.Hash
+	return streamId, nodes, &MiniblockRef{Hash: common.Hash(mb.Proto.Header.Hash), Num: 0}
 }
 
-func (ctc *cacheTestContext) addReplEvent(streamId StreamId, prevMiniblockHash []byte, nodes []common.Address) {
+func (ctc *cacheTestContext) addReplEvent(
+	streamId StreamId,
+	prevMiniblock *MiniblockRef,
+	nodes []common.Address,
+) {
 	addr := crypto.GetTestAddress()
 	ev, err := MakeParsedEventWithPayload(
 		ctc.clientWallet,
@@ -181,7 +185,7 @@ func (ctc *cacheTestContext) addReplEvent(streamId StreamId, prevMiniblockHash [
 				EventNum:  22,
 			},
 		),
-		prevMiniblockHash,
+		prevMiniblock,
 	)
 	ctc.require.NoError(err)
 
@@ -239,22 +243,22 @@ func (ctc *cacheTestContext) allocateStreams(count int) map[StreamId]*Miniblock 
 			defer wg.Done()
 
 			streamID := testutils.FakeStreamId(STREAM_SPACE_BIN)
-			mb := MakeGenesisMiniblockForSpaceStream(ctc.t, ctc.clientWallet, streamID)
-			ctc.createStreamNoCache(streamID, mb)
+			mb := MakeGenesisMiniblockForSpaceStream(ctc.t, ctc.clientWallet, ctc.instances[0].params.Wallet, streamID)
+			ctc.createStreamNoCache(streamID, mb.Proto)
 
 			mu.Lock()
 			defer mu.Unlock()
-			genesisBlocks[streamID] = mb
+			genesisBlocks[streamID] = mb.Proto
 		}()
 	}
 	wg.Wait()
 	return genesisBlocks
 }
 
-func (ctc *cacheTestContext) makeMiniblock(inst int, streamId StreamId, forceSnapshot bool) (common.Hash, int64) {
-	h, n, err := ctc.instances[inst].mbProducer.TestMakeMiniblock(ctc.ctx, streamId, forceSnapshot)
+func (ctc *cacheTestContext) makeMiniblock(inst int, streamId StreamId, forceSnapshot bool) *MiniblockRef {
+	ref, err := ctc.instances[inst].mbProducer.TestMakeMiniblock(ctc.ctx, streamId, forceSnapshot)
 	ctc.require.NoError(err)
-	return h, n
+	return ref
 }
 
 func (ctc *cacheTestContext) GetMbProposal(

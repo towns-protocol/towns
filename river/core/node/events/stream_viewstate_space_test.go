@@ -19,9 +19,9 @@ func makeEnvelopeWithPayload_T(
 	t *testing.T,
 	wallet *crypto.Wallet,
 	payload protocol.IsStreamEvent_Payload,
-	prevMiniblockHash []byte,
+	prevMiniblock *MiniblockRef,
 ) *protocol.Envelope {
-	envelope, err := MakeEnvelopeWithPayload(wallet, payload, prevMiniblockHash)
+	envelope, err := MakeEnvelopeWithPayload(wallet, payload, prevMiniblock)
 	require.NoError(t, err)
 	return envelope
 }
@@ -122,7 +122,7 @@ func joinSpace_T(
 						user,
 						user,
 					),
-					stream.view.LastBlock().Hash[:],
+					stream.view.LastBlock().Ref,
 				),
 			),
 		)
@@ -152,7 +152,7 @@ func joinChannel_T(
 						user,
 						stream.view.StreamParentId(),
 					),
-					stream.view.LastBlock().Hash[:],
+					stream.view.LastBlock().Ref,
 				),
 			),
 		)
@@ -182,7 +182,7 @@ func leaveChannel_T(
 						user,
 						nil,
 					),
-					stream.view.LastBlock().Hash[:],
+					stream.view.LastBlock().Ref,
 				),
 			),
 		)
@@ -233,7 +233,7 @@ func TestSpaceViewState(t *testing.T) {
 	require.Equal(t, 1, len(stream.view.blocks))
 
 	// make a miniblock
-	_, _ = tt.makeMiniblock(0, spaceStreamId, false)
+	_ = tt.makeMiniblock(0, spaceStreamId, false)
 	// check that we have 2 blocks
 	require.Equal(t, 2, len(stream.view.blocks))
 	// refresh view
@@ -310,7 +310,7 @@ func TestChannelViewState_JoinedMembers(t *testing.T) {
 	channelStream := cStream.(*streamImpl)
 	joinChannel_T(t, userWallet, ctx, channelStream, []string{alice, bob, carol})
 	// make a miniblock
-	_, _ = tt.makeMiniblock(0, channelStreamId, false)
+	_ = tt.makeMiniblock(0, channelStreamId, false)
 	// get the miniblock's last snapshot and convert it into bytes
 	miniblocks := channelStream.view.MiniblocksFromLastSnapshot()
 	miniblock := miniblocks[0]
@@ -372,7 +372,7 @@ func TestChannelViewState_RemainingMembers(t *testing.T) {
 	// bob leaves the channel
 	leaveChannel_T(t, userWallet, ctx, channelStream, []string{bob})
 	// make a miniblock
-	_, _ = tt.makeMiniblock(0, channelStreamId, false)
+	_ = tt.makeMiniblock(0, channelStreamId, false)
 	// get the miniblock's last snapshot and convert it into bytes
 	miniblocks := channelStream.view.MiniblocksFromLastSnapshot()
 	miniblock := miniblocks[0]

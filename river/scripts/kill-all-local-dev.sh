@@ -93,6 +93,7 @@ then
     ./packages/stress/scripts/stop_redis.sh
 fi
 
+do_killl just "$1"
 do_killl yarn "$1"
 do_killl anvil "$1"
 do_killl wrangler "$1"

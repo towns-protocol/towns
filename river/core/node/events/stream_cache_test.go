@@ -175,10 +175,17 @@ func TestCacheEvictionWithFilledMiniBlockPool(t *testing.T) {
 	require.Nil(loadedStream.(*streamImpl).view, "view not unloaded")
 
 	// try to create a miniblock, pool is empty so it should not fail but also should not create a miniblock
-	_, _ = tc.makeMiniblock(0, streamID, false)
+	_ = tc.makeMiniblock(0, streamID, false)
 
 	// add event to stream with unloaded view, view should be loaded in cache and minipool must contain event
-	addEvent(t, ctx, tc.instances[0].params, streamSync, "payload", common.BytesToHash(genesisMiniblock.Header.Hash))
+	addEvent(
+		t,
+		ctx,
+		tc.instances[0].params,
+		streamSync,
+		"payload",
+		&MiniblockRef{Hash: common.BytesToHash(genesisMiniblock.Header.Hash), Num: 0},
+	)
 
 	// with event in minipool ensure that view isn't evicted from cache
 	time.Sleep(10 * time.Millisecond) // make sure we hit the cache expiration of 1 ms
@@ -189,9 +196,9 @@ func TestCacheEvictionWithFilledMiniBlockPool(t *testing.T) {
 	require.NotNil(loadedStream.(*streamImpl).view, "view unloaded")
 
 	// now it should be possible to create a miniblock
-	blockHash, blockNum := tc.makeMiniblock(0, streamID, false)
-	require.NotEqual(common.Hash{}, blockHash)
-	require.Greater(blockNum, int64(0))
+	mbRef := tc.makeMiniblock(0, streamID, false)
+	require.NotEqual(common.Hash{}, mbRef.Hash)
+	require.Greater(mbRef.Num, int64(0))
 
 	// minipool should be empty now and view should be evicted from cache
 	time.Sleep(10 * time.Millisecond) // make sure we hit the cache expiration of 1 ms
@@ -276,7 +283,7 @@ func TestStreamMiniblockBatchProduction(t *testing.T) {
 			numToAdd := 1 + int(streamID[3]%50)
 			for i := range numToAdd {
 				addEvent(t, ctx, streamCache.params, streamSync,
-					fmt.Sprintf("msg# %d", i), common.BytesToHash(genesis.Header.Hash))
+					fmt.Sprintf("msg# %d", i), &MiniblockRef{Hash: common.BytesToHash(genesis.Header.Hash), Num: 0})
 			}
 
 			mu.Lock()
@@ -424,7 +431,7 @@ func TestStreamUnloadWithSubscribers(t *testing.T) {
 			require.NoError(err, "get sync stream")
 			for i := 0; i < 1+int(streamID[3]%50); i++ {
 				addEvent(t, ctx, streamCache.params, streamSync,
-					fmt.Sprintf("msg# %d", i), common.BytesToHash(genesis.Header.Hash))
+					fmt.Sprintf("msg# %d", i), &MiniblockRef{Hash: common.BytesToHash(genesis.Header.Hash), Num: 0})
 			}
 			streamsWithEvents[streamID] = 1 + int(streamID[3]%50)
 		} else {

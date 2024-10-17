@@ -6,6 +6,8 @@ import (
 
 	"connectrpc.com/connect"
 
+	"github.com/ethereum/go-ethereum/common"
+
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/dlog"
 	. "github.com/river-build/river/core/node/events"
@@ -69,7 +71,7 @@ func (s *Service) addParsedEvent(
 		return err
 	}
 
-	_, _ = s.scrubTaskProcessor.TryScheduleScrub(ctx, streamId, false)
+	_, _ = s.scrubTaskProcessor.TryScheduleScrub(ctx, localStream, false)
 
 	canAddEvent, chainAuthArgsList, sideEffects, err := rules.CanAddEvent(
 		ctx,
@@ -148,7 +150,10 @@ func (s *Service) AddEventPayload(ctx context.Context, streamId StreamId, payloa
 	if err != nil {
 		return err
 	}
-	envelope, err := MakeEnvelopeWithPayload(s.wallet, payload, hashResponse.Msg.Hash)
+	envelope, err := MakeEnvelopeWithPayload(s.wallet, payload, &MiniblockRef{
+		Hash: common.BytesToHash(hashResponse.Msg.Hash),
+		Num:  hashResponse.Msg.MiniblockNum,
+	})
 	if err != nil {
 		return err
 	}

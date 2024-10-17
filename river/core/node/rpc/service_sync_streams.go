@@ -63,7 +63,11 @@ func (s *Service) SyncStreams(
 				)
 				continue
 			}
-			_, _ = s.scrubTaskProcessor.TryScheduleScrub(ctx, streamId, false)
+
+			// If the added stream is local, schedule a scrub.
+			if stream, _ := s.cache.GetStream(ctx, streamId); stream != nil {
+				_, _ = s.scrubTaskProcessor.TryScheduleScrub(ctx, stream, false)
+			}
 		}
 		log.Debug("SyncStreams DONE", "syncId", syncId, "duration", time.Since(startTime))
 	}
@@ -96,7 +100,10 @@ func (s *Service) AddStreamToSync(
 				req.Msg.SyncPos.StreamId,
 			)
 		} else {
-			_, _ = s.scrubTaskProcessor.TryScheduleScrub(ctx, streamId, false)
+			// If the stream is local, schedule a scrub.
+			if stream, _ := s.cache.GetStream(ctx, streamId); stream != nil {
+				_, _ = s.scrubTaskProcessor.TryScheduleScrub(ctx, stream, false)
+			}
 		}
 	}
 	return res, err

@@ -36,12 +36,18 @@ abstract contract VotesEnumerable is IVotesEnumerable {
   ) internal virtual {
     VotesEnumerableStorage.Layout storage ds = VotesEnumerableStorage.layout();
 
-    ds.delegators.remove(account);
-    ds.delegatorsByDelegatee[currentDelegatee].remove(account);
-
-    // if the delegatee is not address(0) then add the account and is not already a delegator then add it
-    if (newDelegatee != address(0)) {
+    // if the current delegatee is address(0) then add the account
+    if (currentDelegatee == address(0)) {
       ds.delegators.add(account);
+    } else {
+      ds.delegatorsByDelegatee[currentDelegatee].remove(account);
+    }
+
+    if (newDelegatee == address(0)) {
+      ds.delegators.remove(account);
+      ds.delegationTimeForDelegator[account] = 0;
+    } else {
+      // if the new delegatee is not address(0) then add the account
       ds.delegatorsByDelegatee[newDelegatee].add(account);
       ds.delegationTimeForDelegator[account] = block.timestamp;
     }

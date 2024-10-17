@@ -175,7 +175,7 @@
     {
       "label": "Casablanca",
       "type": "shell",
-      "command": "sleep 3 && cd ./core && just RUN_ENV=multi start",
+      "command": "sleep 3 && cd ./core && just RUN_ENV=multi run-and-tail",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -185,7 +185,7 @@
     {
       "label": "Casablanca-No-Entitlements",
       "type": "shell",
-      "command": "sleep 5 && cd ./core && just RUN_ENV=multi_ne start",
+      "command": "sleep 5 && cd ./core && just RUN_ENV=multi_ne run-and-tail",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -219,7 +219,7 @@
     {
       "label": "Casablanca-Multinode",
       "type": "shell",
-      "command": "cd ./core && just RUN_ENV=multi start",
+      "command": "cd ./core && just RUN_ENV=multi run-and-tail",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -229,7 +229,7 @@
     {
       "label": "Casablanca-Multinode-No-Entitlements",
       "type": "shell",
-      "command": "cd ./core && just RUN_ENV=multi_ne start",
+      "command": "cd ./core && just RUN_ENV=multi_ne run-and-tail",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {

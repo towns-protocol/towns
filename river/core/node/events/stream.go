@@ -176,7 +176,7 @@ func (s *streamImpl) importMiniblocks(
 
 		blocksToWriteToStorage[i] = &storage.MiniblockData{
 			StreamID:      s.streamId,
-			Number:        miniblock.Num,
+			Number:        miniblock.Ref.Num,
 			MiniBlockInfo: bytes,
 		}
 	}
@@ -208,7 +208,7 @@ func (s *streamImpl) importMiniblocks(
 
 	allNewEvents := []*Envelope{}
 	for _, miniblock := range miniblocks {
-		if miniblock.Num <= view.LastBlock().Num {
+		if miniblock.Ref.Num <= view.LastBlock().Ref.Num {
 			blocksToWriteToStorage = blocksToWriteToStorage[1:]
 			continue
 		}
@@ -236,7 +236,7 @@ func (s *streamImpl) importMiniblocks(
 
 func (s *streamImpl) applyMiniblockImplNoLock(ctx context.Context, miniblock *MiniblockInfo) error {
 	// Check if the miniblock is already applied.
-	if miniblock.Num <= s.view.LastBlock().Num {
+	if miniblock.Ref.Num <= s.view.LastBlock().Ref.Num {
 		return nil
 	}
 
@@ -262,7 +262,7 @@ func (s *streamImpl) applyMiniblockImplNoLock(ctx context.Context, miniblock *Mi
 		ctx,
 		s.streamId,
 		s.view.minipool.generation,
-		miniblock.Hash,
+		miniblock.Ref.Hash,
 		miniblock.headerEvent.Event.GetMiniblockHeader().GetSnapshot() != nil,
 		newMinipool,
 	)
@@ -288,16 +288,16 @@ func (s *streamImpl) PromoteCandidate(ctx context.Context, mbHash common.Hash, m
 	}
 
 	// Check if the miniblock is already applied.
-	if mbNum <= s.view.LastBlock().Num {
+	if mbNum <= s.view.LastBlock().Ref.Num {
 		// Log error if hash doesn't match.
 		mb, _ := s.view.blockWithNum(mbNum)
-		if mb != nil && mbHash != mb.Hash {
+		if mb != nil && mbHash != mb.Ref.Hash {
 			dlog.FromCtx(ctx).Error("PromoteCandidate: Miniblock is already applied",
 				"streamId", s.streamId,
 				"blockNum", mbNum,
 				"blockHash", mbHash,
-				"lastBlockNum", s.view.LastBlock().Num,
-				"lastBlockHash", s.view.LastBlock().Hash,
+				"lastBlockNum", s.view.LastBlock().Ref.Num,
+				"lastBlockHash", s.view.LastBlock().Ref.Hash,
 			)
 		}
 		return nil
@@ -330,9 +330,9 @@ func (s *streamImpl) initFromGenesis(
 		return err
 	}
 
-	if registeredGenesisHash != genesisInfo.Hash {
+	if registeredGenesisHash != genesisInfo.Ref.Hash {
 		return RiverError(Err_BAD_BLOCK, "Invalid genesis block hash").
-			Tags("registryHash", registeredGenesisHash, "blockHash", genesisInfo.Hash).
+			Tags("registryHash", registeredGenesisHash, "blockHash", genesisInfo.Ref.Hash).
 			Func("initFromGenesis")
 	}
 
@@ -735,15 +735,15 @@ func (s *streamImpl) SaveMiniblockCandidate(ctx context.Context, mb *Miniblock) 
 		return err
 	}
 
-	if mbInfo.Num <= view.LastBlock().Num {
+	if mbInfo.Ref.Num <= view.LastBlock().Ref.Num {
 		// TODO: better error code.
 		return RiverError(
 			Err_INTERNAL,
 			"Miniblock is too old",
 			"candidate.Num",
-			mbInfo.Num,
+			mbInfo.Ref.Num,
 			"lastBlock.Num",
-			view.LastBlock().Num,
+			view.LastBlock().Ref.Num,
 			"streamId",
 			s.streamId,
 		)
@@ -752,8 +752,8 @@ func (s *streamImpl) SaveMiniblockCandidate(ctx context.Context, mb *Miniblock) 
 	return s.params.Storage.WriteMiniblockCandidate(
 		ctx,
 		s.streamId,
-		mbInfo.Hash,
-		mbInfo.Num,
+		mbInfo.Ref.Hash,
+		mbInfo.Ref.Num,
 		serialized,
 	)
 }

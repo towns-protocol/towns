@@ -269,13 +269,13 @@ func TestSyncWithFlush(t *testing.T) {
 
 	syncClients.expectOneUpdate(t, &updateOpts{})
 
-	require.NoError(addUserBlockedFillerEvent(ctx, wallet, client0, streamId, cookie.PrevMiniblockHash))
+	require.NoError(addUserBlockedFillerEvent(ctx, wallet, client0, streamId, MiniblockRefFromCookie(cookie)))
 	syncClients.expectOneUpdate(t, &updateOpts{events: 1, eventType: "UserSettingsPayload"})
 
-	hash, mbNum, err := makeMiniblock(ctx, client0, streamId, false, 0)
+	mbRef, err := makeMiniblock(ctx, client0, streamId, false, 0)
 	require.NoError(err)
-	require.NotEmpty(hash)
-	require.Equal(int64(1), mbNum)
+	require.NotEmpty(mbRef.Hash)
+	require.Equal(int64(1), mbRef.Num)
 	syncClients.expectOneUpdate(t, &updateOpts{events: 1, eventType: "MiniblockHeader"})
 
 	var cacheCleanupTotal CacheCleanupResult
@@ -287,13 +287,13 @@ func TestSyncWithFlush(t *testing.T) {
 	require.Equal(1, cacheCleanupTotal.TotalStreams)
 	require.Equal(1, cacheCleanupTotal.UnloadedStreams)
 
-	require.NoError(addUserBlockedFillerEvent(ctx, wallet, client0, streamId, hash))
+	require.NoError(addUserBlockedFillerEvent(ctx, wallet, client0, streamId, mbRef))
 	syncClients.expectOneUpdate(t, &updateOpts{events: 1, eventType: "UserSettingsPayload"})
 
-	hash, mbNum, err = makeMiniblock(ctx, client0, streamId, false, 0)
+	mbRef, err = makeMiniblock(ctx, client0, streamId, false, mbRef.Num)
 	require.NoError(err)
-	require.NotEmpty(hash)
-	require.Equal(int64(2), mbNum)
+	require.NotEmpty(mbRef.Hash)
+	require.Equal(int64(2), mbRef.Num)
 	syncClients.expectOneUpdate(t, &updateOpts{events: 1, eventType: "MiniblockHeader"})
 
 	syncClients.cancelAll(t, ctx)

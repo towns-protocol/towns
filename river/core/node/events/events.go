@@ -8,16 +8,43 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
+	"github.com/river-build/river/core/contracts/river"
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/crypto"
 	. "github.com/river-build/river/core/node/protocol"
 	. "github.com/river-build/river/core/node/shared"
 )
 
+type MiniblockRef struct {
+	Hash common.Hash
+	Num  int64
+}
+
+func MiniblockRefFromCookie(cookie *SyncCookie) *MiniblockRef {
+	return &MiniblockRef{
+		Hash: common.BytesToHash(cookie.GetPrevMiniblockHash()),
+		Num:  max(cookie.GetMinipoolGen()-1, 0),
+	}
+}
+
+func MiniblockRefFromLastHash(resp *GetLastMiniblockHashResponse) *MiniblockRef {
+	return &MiniblockRef{
+		Hash: common.BytesToHash(resp.GetHash()),
+		Num:  resp.GetMiniblockNum(),
+	}
+}
+
+func MiniblockRefFromContractRecord(stream *river.Stream) *MiniblockRef {
+	return &MiniblockRef{
+		Hash: stream.LastMiniblockHash,
+		Num:  int64(stream.LastMiniblockNum),
+	}
+}
+
 func MakeStreamEvent(
 	wallet *crypto.Wallet,
 	payload IsStreamEvent_Payload,
-	prevMiniblockHash []byte,
+	prevMiniblock *MiniblockRef,
 ) (*StreamEvent, error) {
 	salt := make([]byte, 32)
 	_, err := rand.Read(salt)
@@ -29,11 +56,15 @@ func MakeStreamEvent(
 	epochMillis := time.Now().UnixNano() / int64(time.Millisecond)
 
 	event := &StreamEvent{
-		CreatorAddress:    wallet.Address.Bytes(),
-		Salt:              salt,
-		PrevMiniblockHash: prevMiniblockHash,
-		Payload:           payload,
-		CreatedAtEpochMs:  epochMillis,
+		CreatorAddress:   wallet.Address.Bytes(),
+		Salt:             salt,
+		Payload:          payload,
+		CreatedAtEpochMs: epochMillis,
+	}
+
+	if prevMiniblock != nil && prevMiniblock.Hash != (common.Hash{}) {
+		event.PrevMiniblockHash = prevMiniblock.Hash[:]
+		event.PrevMiniblockNum = prevMiniblock.Num
 	}
 
 	return event, nil
@@ -42,7 +73,7 @@ func MakeStreamEvent(
 func MakeDelegatedStreamEvent(
 	wallet *crypto.Wallet,
 	payload IsStreamEvent_Payload,
-	prevMiniblockHash []byte,
+	prevMiniblock *MiniblockRef,
 	delegateSig []byte,
 ) (*StreamEvent, error) {
 	salt := make([]byte, 32)
@@ -57,7 +88,8 @@ func MakeDelegatedStreamEvent(
 	event := &StreamEvent{
 		CreatorAddress:    wallet.Address.Bytes(),
 		Salt:              salt,
-		PrevMiniblockHash: prevMiniblockHash,
+		PrevMiniblockHash: prevMiniblock.Hash[:],
+		PrevMiniblockNum:  prevMiniblock.Num,
 		Payload:           payload,
 		DelegateSig:       delegateSig,
 		CreatedAtEpochMs:  epochMillis,
@@ -90,9 +122,9 @@ func MakeEnvelopeWithEvent(wallet *crypto.Wallet, streamEvent *StreamEvent) (*En
 func MakeEnvelopeWithPayload(
 	wallet *crypto.Wallet,
 	payload IsStreamEvent_Payload,
-	prevMiniblockHash []byte,
+	prevMiniblock *MiniblockRef,
 ) (*Envelope, error) {
-	streamEvent, err := MakeStreamEvent(wallet, payload, prevMiniblockHash)
+	streamEvent, err := MakeStreamEvent(wallet, payload, prevMiniblock)
 	if err != nil {
 		return nil, err
 	}
@@ -102,9 +134,9 @@ func MakeEnvelopeWithPayload(
 func MakeParsedEventWithPayload(
 	wallet *crypto.Wallet,
 	payload IsStreamEvent_Payload,
-	prevMiniblockHash []byte,
+	prevMiniblock *MiniblockRef,
 ) (*ParsedEvent, error) {
-	streamEvent, err := MakeStreamEvent(wallet, payload, prevMiniblockHash)
+	streamEvent, err := MakeStreamEvent(wallet, payload, prevMiniblock)
 	if err != nil {
 		return nil, err
 	}
@@ -114,12 +146,11 @@ func MakeParsedEventWithPayload(
 		return nil, err
 	}
 
-	prevMiniBlockHash := common.BytesToHash(prevMiniblockHash)
 	return &ParsedEvent{
-		Event:             streamEvent,
-		Envelope:          envelope,
-		Hash:              common.BytesToHash(envelope.Hash),
-		PrevMiniblockHash: &prevMiniBlockHash,
+		Event:        streamEvent,
+		Envelope:     envelope,
+		Hash:         common.BytesToHash(envelope.Hash),
+		MiniblockRef: prevMiniblock,
 	}, nil
 }
 
@@ -394,6 +425,18 @@ func Make_UserSettingsPayload_UserBlock(userBlock *UserSettingsPayload_UserBlock
 		UserSettingsPayload: &UserSettingsPayload{
 			Content: &UserSettingsPayload_UserBlock_{
 				UserBlock: userBlock,
+			},
+		},
+	}
+}
+
+func Make_UserSettingsPayload_FullyReadMarkers(
+	fullyReadMarkers *UserSettingsPayload_FullyReadMarkers,
+) *StreamEvent_UserSettingsPayload {
+	return &StreamEvent_UserSettingsPayload{
+		UserSettingsPayload: &UserSettingsPayload{
+			Content: &UserSettingsPayload_FullyReadMarkers_{
+				FullyReadMarkers: fullyReadMarkers,
 			},
 		},
 	}

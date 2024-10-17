@@ -13,10 +13,10 @@ func TestReplicatedMbProduction(t *testing.T) {
 
 	tc.initAllCaches(&MiniblockProducerOpts{TestDisableMbProdcutionOnBlock: true})
 
-	streamId, streamNodes, prevMbHash := tc.createReplStream()
+	streamId, streamNodes, prevMb := tc.createReplStream()
 
 	for range 20 {
-		tc.addReplEvent(streamId, prevMbHash, streamNodes)
+		tc.addReplEvent(streamId, prevMb, streamNodes)
 	}
 
 	leaderAddr := streamNodes[0]

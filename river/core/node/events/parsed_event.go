@@ -14,12 +14,12 @@ import (
 )
 
 type ParsedEvent struct {
-	Event             *StreamEvent
-	Envelope          *Envelope
-	Hash              common.Hash
-	PrevMiniblockHash *common.Hash `dlog:"omit"`
-	SignerPubKey      []byte
-	shortDebugStr     string
+	Event         *StreamEvent
+	Envelope      *Envelope
+	Hash          common.Hash
+	MiniblockRef  *MiniblockRef
+	SignerPubKey  []byte
+	shortDebugStr string
 }
 
 func (e *ParsedEvent) GetEnvelopeBytes() ([]byte, error) {
@@ -73,13 +73,15 @@ func ParseEvent(envelope *Envelope) (*ParsedEvent, error) {
 		}
 	}
 
-	PrevMiniblockHash := common.BytesToHash(streamEvent.PrevMiniblockHash)
 	return &ParsedEvent{
-		Event:             &streamEvent,
-		Envelope:          envelope,
-		Hash:              common.BytesToHash(envelope.Hash),
-		PrevMiniblockHash: &PrevMiniblockHash,
-		SignerPubKey:      signerPubKey,
+		Event:    &streamEvent,
+		Envelope: envelope,
+		Hash:     common.BytesToHash(envelope.Hash),
+		MiniblockRef: &MiniblockRef{
+			Hash: common.BytesToHash(streamEvent.PrevMiniblockHash),
+			Num:  streamEvent.PrevMiniblockNum,
+		},
+		SignerPubKey: signerPubKey,
 	}, nil
 }
 

@@ -15,8 +15,7 @@ interface ILockBase {
   event LockUpdated(
     address indexed caller,
     bool indexed enabled,
-    uint256 cooldown,
-    uint256 timestamp
+    uint256 cooldown
   );
 }
 

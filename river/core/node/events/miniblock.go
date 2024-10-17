@@ -90,8 +90,7 @@ func NextMiniblockTimestamp(prevBlockTimestamp *timestamppb.Timestamp) *timestam
 }
 
 type MiniblockInfo struct {
-	Hash        common.Hash
-	Num         int64
+	Ref         *MiniblockRef
 	headerEvent *ParsedEvent
 	events      []*ParsedEvent
 	Proto       *Miniblock
@@ -187,8 +186,10 @@ func NewMiniblockInfoFromProto(pb *Miniblock, opts NewMiniblockInfoFromProtoOpts
 	// TODO: add header validation, num of events, prev block hash, block num, etc
 
 	return &MiniblockInfo{
-		Hash:        headerEvent.Hash,
-		Num:         blockHeader.MiniblockNum,
+		Ref: &MiniblockRef{
+			Hash: headerEvent.Hash,
+			Num:  blockHeader.MiniblockNum,
+		},
 		headerEvent: headerEvent,
 		events:      events,
 		Proto:       pb,
@@ -206,8 +207,10 @@ func NewMiniblockInfoFromParsed(headerEvent *ParsedEvent, events []*ParsedEvent)
 	}
 
 	return &MiniblockInfo{
-		Hash:        headerEvent.Hash,
-		Num:         headerEvent.Event.GetMiniblockHeader().MiniblockNum,
+		Ref: &MiniblockRef{
+			Hash: headerEvent.Hash,
+			Num:  headerEvent.Event.GetMiniblockHeader().MiniblockNum,
+		},
 		headerEvent: headerEvent,
 		events:      events,
 		Proto: &Miniblock{
@@ -225,7 +228,10 @@ func NewMiniblockInfoFromHeaderAndParsed(
 	headerEvent, err := MakeParsedEventWithPayload(
 		wallet,
 		Make_MiniblockHeader(header),
-		header.PrevMiniblockHash,
+		&MiniblockRef{
+			Hash: common.BytesToHash(header.PrevMiniblockHash),
+			Num:  max(header.MiniblockNum-1, 0),
+		},
 	)
 	if err != nil {
 		return nil, err

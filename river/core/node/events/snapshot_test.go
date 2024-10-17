@@ -47,7 +47,7 @@ func make_User_Membership(
 	wallet *crypto.Wallet,
 	membershipOp MembershipOp,
 	streamId StreamId,
-	prevMiniblockHash []byte,
+	prevMiniblock *MiniblockRef,
 	t *testing.T,
 ) *ParsedEvent {
 	envelope, err := MakeEnvelopeWithPayload(
@@ -58,7 +58,7 @@ func make_User_Membership(
 			nil,
 			nil,
 		),
-		prevMiniblockHash,
+		prevMiniblock,
 	)
 	assert.NoError(t, err)
 	parsed, err := ParseEvent(envelope)
@@ -70,7 +70,7 @@ func make_Space_Membership(
 	wallet *crypto.Wallet,
 	membershipOp MembershipOp,
 	userId string,
-	prevMiniblockHash []byte,
+	prevMiniblock *MiniblockRef,
 	t *testing.T,
 ) *ParsedEvent {
 	envelope, err := MakeEnvelopeWithPayload(
@@ -80,7 +80,7 @@ func make_Space_Membership(
 			userId,
 			userId,
 		),
-		prevMiniblockHash,
+		prevMiniblock,
 	)
 	assert.NoError(t, err)
 	parsed, err := ParseEvent(envelope)
@@ -91,7 +91,7 @@ func make_Space_Membership(
 func make_Space_Image(
 	wallet *crypto.Wallet,
 	ciphertext string,
-	prevMiniblockHash []byte,
+	prevMiniblock *MiniblockRef,
 	t *testing.T,
 ) *ParsedEvent {
 	envelope, err := MakeEnvelopeWithPayload(
@@ -100,7 +100,7 @@ func make_Space_Image(
 			ciphertext,
 			AES_GCM_DERIVED_ALGORITHM,
 		),
-		prevMiniblockHash,
+		prevMiniblock,
 	)
 	assert.NoError(t, err)
 	parsed, err := ParseEvent(envelope)
@@ -108,13 +108,13 @@ func make_Space_Image(
 	return parsed
 }
 
-func make_Space_Username(wallet *crypto.Wallet, username string, prevHash []byte, t *testing.T) *ParsedEvent {
+func make_Space_Username(wallet *crypto.Wallet, username string, prevMiniblock *MiniblockRef, t *testing.T) *ParsedEvent {
 	envelope, err := MakeEnvelopeWithPayload(
 		wallet,
 		Make_MemberPayload_Username(
 			&EncryptedData{Ciphertext: username},
 		),
-		prevHash,
+		prevMiniblock,
 	)
 	assert.NoError(t, err)
 	parsed, err := ParseEvent(envelope)
@@ -125,7 +125,7 @@ func make_Space_Username(wallet *crypto.Wallet, username string, prevHash []byte
 func make_Space_DisplayName(
 	wallet *crypto.Wallet,
 	displayName string,
-	prevHash []byte,
+	prevMiniblock *MiniblockRef,
 	t *testing.T,
 ) *ParsedEvent {
 	envelope, err := MakeEnvelopeWithPayload(
@@ -133,7 +133,7 @@ func make_Space_DisplayName(
 		Make_MemberPayload_DisplayName(
 			&EncryptedData{Ciphertext: displayName},
 		),
-		prevHash,
+		prevMiniblock,
 	)
 	assert.NoError(t, err)
 	parsed, err := ParseEvent(envelope)

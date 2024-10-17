@@ -30,8 +30,8 @@ func (s *Service) localGetLastMiniblockHash(
 
 	lastBlock := streamView.LastBlock()
 	resp := &GetLastMiniblockHashResponse{
-		Hash:         lastBlock.Hash[:],
-		MiniblockNum: lastBlock.Num,
+		Hash:         lastBlock.Ref.Hash[:],
+		MiniblockNum: lastBlock.Ref.Num,
 	}
 
 	return connect.NewResponse(resp), nil

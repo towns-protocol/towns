@@ -167,7 +167,7 @@ func (s *streamCacheImpl) onStreamLastMiniblockUpdated(
 	}
 
 	// Check if current state is beyond candidate. (Local candidates are applied immediately after tx).
-	if uint64(view.LastBlock().Num) >= event.LastMiniblockNum {
+	if uint64(view.LastBlock().Ref.Num) >= event.LastMiniblockNum {
 		return
 	}
 

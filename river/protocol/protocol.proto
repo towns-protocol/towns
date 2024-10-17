@@ -88,6 +88,9 @@ message StreamEvent {
     /** Tags are optional, used for external systems to deliver notifications. */
     Tags tags = 7;
 
+    /** prev_miniblock_num contains miniblock number for prev_miniblock_hash. */
+    int64 prev_miniblock_num = 8;
+
     /** Variable-type payload. 
       * Payloads should obey the following rules:
       * - payloads should have their own unique type
@@ -1005,4 +1008,9 @@ enum Err {
     MINIPOOL_MISSING_EVENTS = 60;
     STREAM_LAST_BLOCK_MISMATCH = 61;
     DOWNSTREAM_NETWORK_ERROR = 62;
+
+    // Stream replica on the local node does not have miniblock with given number yet.
+    // This is a temporary state and the node will have the miniblock at a later point in time.
+    // The client should retry with an increasing delay, starting at 100ms.
+    MINIBLOCK_TOO_NEW = 63;
 }

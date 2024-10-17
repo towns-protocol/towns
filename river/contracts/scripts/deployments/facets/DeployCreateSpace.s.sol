@@ -14,7 +14,20 @@ import {CreateSpaceFacet} from "contracts/src/factory/facets/create/CreateSpace.
 contract DeployCreateSpace is FacetHelper, Deployer {
   constructor() {
     addSelector(CreateSpaceFacet.createSpace.selector);
-    addSelector(CreateSpaceFacet.createSpaceWithPrepay.selector);
+    addSelector(
+      bytes4(
+        keccak256(
+          "createSpaceWithPrepay(((string,string,string,string),((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes,bool),string[]),(string),(uint256)))"
+        )
+      )
+    );
+    addSelector(
+      bytes4(
+        keccak256(
+          "createSpaceWithPrepay(((string,string,string,string),((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes),string[]),(string),(uint256)))"
+        )
+      )
+    );
   }
 
   function initializer() public pure override returns (bytes4) {

@@ -6,8 +6,10 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
 
+	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/base/test"
 	"github.com/river-build/river/core/node/crypto"
 	. "github.com/river-build/river/core/node/protocol"
@@ -132,13 +134,11 @@ func TestLoad(t *testing.T) {
 	assert.EqualValues(t, 2, cfg.MinSnapshotEvents.ForType(STREAM_USER_BIN))
 	assert.Equal(t, false, view.shouldSnapshot(ctx, cfg))
 
-	blockHash := view.LastBlock().Hash
-
 	// add one more event (just join again)
 	join2, err := MakeEnvelopeWithPayload(
 		userWallet,
 		Make_UserPayload_Membership(MembershipOp_SO_JOIN, streamId, nil, nil),
-		blockHash[:],
+		view.LastBlock().Ref,
 	)
 	assert.NoError(t, err)
 	nextEvent := parsedEvent(t, join2)
@@ -159,7 +159,7 @@ func TestLoad(t *testing.T) {
 	join3, err := MakeEnvelopeWithPayload(
 		userWallet,
 		Make_UserPayload_Membership(MembershipOp_SO_JOIN, streamId, nil, nil),
-		view.LastBlock().Hash[:],
+		view.LastBlock().Ref,
 	)
 	assert.NoError(t, err)
 	nextEvent = parsedEvent(t, join3)
@@ -202,7 +202,7 @@ func TestLoad(t *testing.T) {
 	miniblockHeaderEvent, err := MakeParsedEventWithPayload(
 		userWallet,
 		Make_MiniblockHeader(miniblockHeader),
-		view.LastBlock().Hash[:],
+		view.LastBlock().Ref,
 	)
 	assert.NoError(t, err)
 	miniblock, err := NewMiniblockInfoFromParsed(miniblockHeaderEvent, envelopes)
@@ -223,7 +223,7 @@ func TestLoad(t *testing.T) {
 	join4, err := MakeEnvelopeWithPayload(
 		userWallet,
 		Make_UserPayload_Membership(MembershipOp_SO_LEAVE, streamId, nil, nil),
-		newSV1.blocks[0].Hash[:],
+		newSV1.blocks[0].Ref,
 	)
 	assert.NoError(t, err)
 	nextEvent = parsedEvent(t, join4)
@@ -242,4 +242,97 @@ func TestLoad(t *testing.T) {
 	err = newSV1.ValidateNextEvent(ctx, cfg, nextEvent, time.Now())
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "BAD_PREV_MINIBLOCK_HASH")
+}
+
+func toBytes(t *testing.T, mb *MiniblockInfo) []byte {
+	mbBytes, err := mb.ToBytes()
+	require.NoError(t, err)
+	return mbBytes
+}
+
+func TestMbHashConstraints(t *testing.T) {
+	ctx, cancel := test.NewTestContext()
+	defer cancel()
+	require := require.New(t)
+	userWallet, _ := crypto.NewWallet(ctx)
+	nodeWallet, _ := crypto.NewWallet(ctx)
+	streamId := UserSettingStreamIdFromAddr(userWallet.Address)
+
+	timeNow := time.Now()
+	var mbBytes [][]byte
+	var mbs []*MiniblockInfo
+
+	genMb := MakeGenesisMiniblockForUserSettingsStream(t, userWallet, nodeWallet, streamId)
+	mbBytes = append(mbBytes, toBytes(t, genMb))
+	mbs = append(mbs, genMb)
+
+	prevMb := genMb
+	for range 10 {
+		mb := MakeTestBlockForUserSettingsStream(t, userWallet, nodeWallet, prevMb)
+		mbBytes = append(mbBytes, toBytes(t, mb))
+		mbs = append(mbs, mb)
+		prevMb = mb
+	}
+
+	view, err := MakeStreamView(
+		ctx,
+		&storage.ReadStreamFromLastSnapshotResult{
+			Miniblocks: mbBytes,
+		},
+	)
+	require.NoError(err)
+
+	cfg := crypto.DefaultOnChainSettings()
+
+	for i, mb := range mbs {
+		err = view.ValidateNextEvent(
+			ctx,
+			cfg,
+			MakeEvent(
+				t,
+				userWallet,
+				Make_UserSettingsPayload_FullyReadMarkers(&UserSettingsPayload_FullyReadMarkers{}),
+				mb.Ref,
+			),
+			timeNow,
+		)
+		// TODO: this should only be 5 last blocks
+		require.NoError(err, "Any block recent enough should be good %d", i)
+	}
+
+	for i, mb := range mbs {
+		err = view.ValidateNextEvent(
+			ctx,
+			cfg,
+			MakeEvent(
+				t,
+				userWallet,
+				Make_UserSettingsPayload_FullyReadMarkers(&UserSettingsPayload_FullyReadMarkers{}),
+				mb.Ref,
+			),
+			timeNow.Add(60*time.Second),
+		)
+		// only 2 last blocks are good enough if all blocks are old.
+		if i <= 9 {
+			require.Error(err, "Shouldn't be able to add with too old block %d", i)
+			require.EqualValues(AsRiverError(err).Code, Err_BAD_PREV_MINIBLOCK_HASH)
+		} else {
+			require.NoError(err, "Should be able to add with last block ref %d", i)
+		}
+	}
+
+	newMb := MakeTestBlockForUserSettingsStream(t, userWallet, nodeWallet, prevMb)
+	err = view.ValidateNextEvent(
+		ctx,
+		cfg,
+		MakeEvent(
+			t,
+			userWallet,
+			Make_UserSettingsPayload_FullyReadMarkers(&UserSettingsPayload_FullyReadMarkers{}),
+			newMb.Ref,
+		),
+		timeNow,
+	)
+	require.Error(err)
+	require.EqualValues(AsRiverError(err).Code, Err_MINIBLOCK_TOO_NEW)
 }

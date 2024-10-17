@@ -37,7 +37,7 @@ func (s *Service) localGetStream(
 			return nil, err
 		}
 	} else {
-		_, _ = s.scrubTaskProcessor.TryScheduleScrub(ctx, streamId, false)
+		_, _ = s.scrubTaskProcessor.TryScheduleScrub(ctx, stream, false)
 		return connect.NewResponse(&GetStreamResponse{
 			Stream: &StreamAndCookie{
 				Events:         streamView.MinipoolEnvelopes(),

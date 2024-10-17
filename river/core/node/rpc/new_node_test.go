@@ -38,7 +38,7 @@ func testCreate100Streams(
 	}
 	if streamSettings != nil && streamSettings.DisableMiniblockCreation {
 		for _, streamId := range streamdIds {
-			_, _, err := makeMiniblock(ctx, c, streamId, false, -1)
+			_, err := makeMiniblock(ctx, c, streamId, false, -1)
 			require.NoError(err)
 		}
 	}

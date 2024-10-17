@@ -130,7 +130,7 @@ contract River is
     uint256 value
   ) internal virtual override(ERC20, ERC20Votes) {
     if (from != address(0) && _lockEnabled(from)) {
-      // allow transfering at minting time
+      // allow transferring at minting time
       revert River__TransferLockEnabled();
     }
     super._update(from, to, value);
@@ -170,7 +170,7 @@ contract River is
   /// @dev Do not allow disabling lock without delegating
   function disableLock(address account) external override onlyAllowed {}
 
-  /// @notice Clock used for flagging checkpoints, overriden to implement timestamp based
+  /// @notice Clock used for flagging checkpoints, overridden to implement timestamp based
   /// checkpoints (and voting).
   function clock() public view override returns (uint48) {
     return uint48(block.timestamp);

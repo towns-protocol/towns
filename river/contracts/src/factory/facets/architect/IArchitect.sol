@@ -17,6 +17,25 @@ interface IArchitectBase {
   //                           STRUCTS
   // =============================================================
 
+  struct MembershipRequirementsOld {
+    bool everyone;
+    address[] users;
+    bytes ruleData;
+  }
+
+  struct MembershipOld {
+    IMembershipBase.Membership settings;
+    MembershipRequirementsOld requirements;
+    string[] permissions;
+  }
+
+  struct CreateSpaceOld {
+    Metadata metadata;
+    MembershipOld membership;
+    ChannelInfo channel;
+    Prepay prepay;
+  }
+
   // Latest
   struct MembershipRequirements {
     bool everyone;
