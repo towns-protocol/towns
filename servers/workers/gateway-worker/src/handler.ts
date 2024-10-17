@@ -81,7 +81,7 @@ router.post('/user/delete', async (request: WorkerRequest, env: Env, ctx) => {
     }
 })
 
-router.post('/user-feedback', async (request: WorkerRequest, env: Env, ctx) => {
+router.post('/user-feedback', async (request: WorkerRequest, env: Env, ctx: ExecutionContext) => {
     const formData = await request.formData()
     const linearPayload = getLinearPayloadFromFormData(formData)
     const linearTask = () =>
@@ -91,6 +91,32 @@ router.post('/user-feedback', async (request: WorkerRequest, env: Env, ctx) => {
                 teamId: env.LINEAR_TEAM_ID,
                 graphQLUrl: env.LINEAR_GRAPHQL_URL,
                 userFeedbackProjectId: env.LINEAR_USER_FEEDBACK_PROJECT_ID,
+            },
+            ...linearPayload,
+        })
+
+    // Use the waitUntil method to ensure background work continues after the response
+    if (ctx && typeof ctx.waitUntil === 'function') {
+        ctx.waitUntil(linearTask())
+        console.log('User feedback queued for processing')
+    } else {
+        console.error('Context (ctx) is undefined or does not have waitUntil method')
+    }
+
+    // Send the response immediately
+    return new Response('ok', { status: 200 })
+})
+
+router.post('/report-content', async (request: WorkerRequest, env: Env, ctx: ExecutionContext) => {
+    const formData = await request.formData()
+    const linearPayload = getLinearPayloadFromFormData(formData)
+    const linearTask = () =>
+        createLinearIssue({
+            config: {
+                apiKey: env.LINEAR_API_KEY,
+                teamId: env.LINEAR_TEAM_ID,
+                graphQLUrl: env.LINEAR_GRAPHQL_URL,
+                userFeedbackProjectId: env.LINEAR_REPORT_CONTENT_PROJECT_ID,
             },
             ...linearPayload,
         })

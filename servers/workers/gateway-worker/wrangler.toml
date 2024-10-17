@@ -24,6 +24,7 @@ CF_API = "https://api.cloudflare.com/client/v4/accounts"
 ACCOUNT_ID = "9840f8a36a817b103e00e29a0e2bad6f"
 LINEAR_TEAM_ID = "2de99085-cb4a-4fd2-89c7-a892c91c0383"
 LINEAR_USER_FEEDBACK_PROJECT_ID = "56801874-57ba-42e7-a9ae-5052b27500eb"
+LINEAR_REPORT_CONTENT_PROJECT_ID = "ef3bd21e-0c26-4f76-9f1c-700cc76a514e"
 # LINEAR_STABLE_ENV_PROJECT_ID = "ab916e54-519b-4372-8ef9-cc2ba2ec8637"
 LINEAR_GRAPHQL_URL = "https://api.linear.app/graphql"
 
@@ -49,7 +50,7 @@ LINEAR_GRAPHQL_URL = "https://api.linear.app/graphql"
 routes = [
     { pattern = "gateway-worker-test-beta.towns.com", custom_domain = true },
 ]
-vars = { ENVIRONMENT = "test-beta", CF_API = "https://api.cloudflare.com/client/v4/accounts", ACCOUNT_ID = "9840f8a36a817b103e00e29a0e2bad6f", LINEAR_TEAM_ID = "2de99085-cb4a-4fd2-89c7-a892c91c0383", LINEAR_USER_FEEDBACK_PROJECT_ID = "56801874-57ba-42e7-a9ae-5052b27500eb", LINEAR_GRAPHQL_URL = "https://api.linear.app/graphql" } # [vars] access, not secrets
+vars = { ENVIRONMENT = "test-beta", CF_API = "https://api.cloudflare.com/client/v4/accounts", ACCOUNT_ID = "9840f8a36a817b103e00e29a0e2bad6f", LINEAR_TEAM_ID = "2de99085-cb4a-4fd2-89c7-a892c91c0383", LINEAR_USER_FEEDBACK_PROJECT_ID = "56801874-57ba-42e7-a9ae-5052b27500eb", LINEAR_REPORT_CONTENT_PROJECT_ID = "ef3bd21e-0c26-4f76-9f1c-700cc76a514e", LINEAR_GRAPHQL_URL = "https://api.linear.app/graphql" } # [vars] access, not secrets
 
 # created with wrangler kv:namespace create "USER" --env test-beta
 # created with wrangler kv:namespace create "SPACE" --env test-beta
@@ -62,7 +63,7 @@ kv_namespaces = [
 # CF_ENV=omega yarn publish
 [env.omega]
 routes = [{ pattern = "gateway-worker.towns.com", custom_domain = true }]
-vars = { ENVIRONMENT = "omega", CF_API = "https://api.cloudflare.com/client/v4/accounts", ACCOUNT_ID = "9840f8a36a817b103e00e29a0e2bad6f", LINEAR_TEAM_ID = "2de99085-cb4a-4fd2-89c7-a892c91c0383", LINEAR_USER_FEEDBACK_PROJECT_ID = "56801874-57ba-42e7-a9ae-5052b27500eb", LINEAR_GRAPHQL_URL = "https://api.linear.app/graphql" } # [vars] access, not secrets
+vars = { ENVIRONMENT = "omega", CF_API = "https://api.cloudflare.com/client/v4/accounts", ACCOUNT_ID = "9840f8a36a817b103e00e29a0e2bad6f", LINEAR_TEAM_ID = "2de99085-cb4a-4fd2-89c7-a892c91c0383", LINEAR_USER_FEEDBACK_PROJECT_ID = "56801874-57ba-42e7-a9ae-5052b27500eb", LINEAR_REPORT_CONTENT_PROJECT_ID = "ef3bd21e-0c26-4f76-9f1c-700cc76a514e", LINEAR_GRAPHQL_URL = "https://api.linear.app/graphql" } # [vars] access, not secrets
 
 # created with wrangler kv:namespace create "USER" --env omega
 # created with wrangler kv:namespace create "SPACE" --env omega
@@ -75,7 +76,7 @@ kv_namespaces = [
 # CF_ENV=alpha yarn publish
 [env.alpha]
 routes = [{ pattern = "gateway-worker-alpha.towns.com", custom_domain = true }]
-vars = { ENVIRONMENT = "alpha", CF_API = "https://api.cloudflare.com/client/v4/accounts", ACCOUNT_ID = "9840f8a36a817b103e00e29a0e2bad6f", LINEAR_TEAM_ID = "2de99085-cb4a-4fd2-89c7-a892c91c0383", LINEAR_USER_FEEDBACK_PROJECT_ID = "56801874-57ba-42e7-a9ae-5052b27500eb", LINEAR_GRAPHQL_URL = "https://api.linear.app/graphql" } # [vars] access, not secrets
+vars = { ENVIRONMENT = "alpha", CF_API = "https://api.cloudflare.com/client/v4/accounts", ACCOUNT_ID = "9840f8a36a817b103e00e29a0e2bad6f", LINEAR_TEAM_ID = "2de99085-cb4a-4fd2-89c7-a892c91c0383", LINEAR_USER_FEEDBACK_PROJECT_ID = "56801874-57ba-42e7-a9ae-5052b27500eb", LINEAR_REPORT_CONTENT_PROJECT_ID = "ef3bd21e-0c26-4f76-9f1c-700cc76a514e", LINEAR_GRAPHQL_URL = "https://api.linear.app/graphql" } # [vars] access, not secrets
 
 # created with wrangler kv:namespace create "USER" --env alpha
 # created with wrangler kv:namespace create "SPACE" --env alpha
