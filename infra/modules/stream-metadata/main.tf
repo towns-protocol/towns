@@ -98,9 +98,10 @@ module "alb" {
 }
 
 module "cdn" {
-  source             = "./cdn"
-  alias_domain_name  = local.host
-  origin_domain_name = module.alb.dns_name
+  source                = "./cdn"
+  alias_domain_name     = local.host
+  origin_domain_name    = module.alb.dns_name
+  origin_shield_enabled = var.origin_shield_enabled
 }
 
 # Behind the load balancer

@@ -81,9 +81,18 @@ resource "aws_cloudfront_distribution" "this" {
     compress = true
   }
 
+  custom_error_response {
+    error_caching_min_ttl = 0
+    error_code            = 404
+  }
+
   origin {
     domain_name = var.origin_domain_name
     origin_id   = local.origin_id
+    origin_shield {
+      enabled              = var.origin_shield_enabled
+      origin_shield_region = "us-east-1"
+    }
 
     custom_origin_config {
       http_port                = 80

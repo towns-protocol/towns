@@ -30,3 +30,9 @@ variable "ecs_cluster" {
     id   = string
   })
 }
+
+variable "origin_shield_enabled" {
+  description = "Whether or not to enable origin shield"
+  type        = bool
+  default     = false
+}

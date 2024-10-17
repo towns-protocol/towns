@@ -171,6 +171,8 @@ module "stream_metadata" {
   river_chain_rpc_url_secret_arn = local.global_remote_state.river_mainnet_rpc_url_secret.arn
   base_chain_rpc_url_secret_arn  = local.global_remote_state.base_mainnet_rpc_url_secret.arn
 
+  origin_shield_enabled = true
+
   private_subnets = module.vpc.private_subnets
   public_subnets  = module.vpc.public_subnets
 }
