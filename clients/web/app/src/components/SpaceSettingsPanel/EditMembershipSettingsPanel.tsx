@@ -71,7 +71,7 @@ function EditMembershipForm({
     )
     const { data: freeAllocation } = useMembershipFreeAllocation(spaceId)
 
-    const { gatingType, usersGatedBy, tokensGatedBy, isTokensGatedByLoading } =
+    const { gatingType, usersGatedBy, tokensGatedBy, ethBalanceGatedBy, isTokensGatedByLoading } =
         useGatingInfo(roleDetails)
 
     const { data: pricingModules, isLoading: isLoadingPricingModules } = usePricingModules()
@@ -80,6 +80,7 @@ function EditMembershipForm({
         () => ({
             gatingType,
             tokensGatedBy,
+            ethBalanceGatedBy,
             usersGatedBy,
             membershipLimit: Number(membershipInfo?.maxSupply) ?? 0,
             membershipCost: formatUnits((membershipInfo?.price as bigint) ?? 0n),
@@ -88,7 +89,7 @@ function EditMembershipForm({
             membershipCurrency: (membershipInfo?.currency as string) ?? constants.AddressZero,
             prepaidMemberships: 0,
         }),
-        [gatingType, tokensGatedBy, usersGatedBy, membershipInfo, pricingModule],
+        [gatingType, tokensGatedBy, usersGatedBy, membershipInfo, pricingModule, ethBalanceGatedBy],
     )
 
     if (isTokensGatedByLoading) {

@@ -246,7 +246,7 @@ export function mapToTokenData(token: ContractMetadata, chainId: number): Token 
             openSeaCollectionUrl: token.openSeaCollectionUrl || undefined,
             label: token.name || '',
             address: (token.address || '') as Address,
-            type: (token?.tokenType as TokenType) || undefined,
+            type: token?.tokenType as TokenType,
             quantity: undefined,
             symbol: token?.symbol || undefined,
             decimals: token?.decimals || undefined,

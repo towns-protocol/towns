@@ -1,11 +1,13 @@
 import {
     Address,
     CheckOperationType,
+    DecodedCheckOperation,
     IRuleEntitlementV2Base,
     NoopRuleData,
     createDecodedCheckOperationFromTree,
     createOperationsTree,
 } from 'use-towns-client'
+import { constants } from 'ethers'
 import { formatUnits, parseUnits } from 'hooks/useBalance'
 import { EVERYONE_ADDRESS } from 'utils'
 import { TokenType } from './types'
@@ -76,27 +78,34 @@ export const prepareGatedDataForSubmit = (
     gatingType: string,
     tokensGatedBy: Token[],
     usersGatedBy: string[],
+    ethBalanceGatedBy: string,
 ) => {
     const finalUsersGatedBy = gatingType === 'everyone' ? [EVERYONE_ADDRESS] : usersGatedBy
     const finalTokensGatedBy = gatingType === 'everyone' ? [] : tokensGatedBy
 
+    const tokensGatedByOps: DecodedCheckOperation[] = finalTokensGatedBy.map((t) => ({
+        address: t.data.address as Address,
+        chainId: BigInt(t.chainId),
+        type: convertTokenTypeToOperationType(t.data.type),
+        threshold: t.data.quantity
+            ? transformQuantityForSubmit(t.data.quantity, t.data.type, t.data.decimals)
+            : 1n,
+        tokenId: t.data.tokenId ? BigInt(t.data.tokenId) : undefined,
+    }))
+
+    const ethBalanceOps: DecodedCheckOperation = {
+        type: CheckOperationType.ETH_BALANCE,
+        threshold: transformQuantityForSubmit(ethBalanceGatedBy, TokenType.ERC20, 18),
+        chainId: 0n,
+        address: constants.AddressZero,
+    }
+
     const ruleData =
-        finalTokensGatedBy.length > 0
-            ? createOperationsTree(
-                  finalTokensGatedBy.map((t) => ({
-                      address: t.data.address as Address,
-                      chainId: BigInt(t.chainId),
-                      type: convertTokenTypeToOperationType(t.data.type),
-                      threshold: t.data.quantity
-                          ? transformQuantityForSubmit(
-                                t.data.quantity,
-                                t.data.type,
-                                t.data.decimals,
-                            )
-                          : 1n,
-                      tokenId: t.data.tokenId ? BigInt(t.data.tokenId) : undefined,
-                  })),
-              )
+        finalTokensGatedBy.length > 0 || ethBalanceGatedBy
+            ? createOperationsTree([
+                  ...(finalTokensGatedBy.length > 0 ? tokensGatedByOps : []),
+                  ...(ethBalanceGatedBy ? [ethBalanceOps] : []),
+              ])
             : NoopRuleData
 
     return { tokensGatedBy: finalTokensGatedBy, usersGatedBy: finalUsersGatedBy, ruleData }

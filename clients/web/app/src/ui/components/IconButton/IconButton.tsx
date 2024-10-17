@@ -11,6 +11,7 @@ type Props = {
     active?: boolean
     icon: IconName
     size?: IconAtoms['size']
+    'data-testid'?: string
 } & Omit<BoxProps, 'size'> &
     Pick<TooltipBoxProps, 'tooltip' | 'tooltipOptions'>
 
@@ -23,6 +24,7 @@ export const IconButton = forwardRef<HTMLDivElement, Props>((props, ref) => {
         background,
         tooltip,
         tooltipOptions,
+        'data-testid': testId,
         ...boxProps
     } = props
     const { isTouch } = useDevice()
@@ -44,6 +46,7 @@ export const IconButton = forwardRef<HTMLDivElement, Props>((props, ref) => {
             color={isActive ? 'default' : 'gray2'}
             tooltip={isTouch ? undefined : tooltip}
             tooltipOptions={isTouch ? undefined : tooltipOptions}
+            data-testid={testId}
             {...boxProps}
         >
             <Icon type={props.icon} size={size} />

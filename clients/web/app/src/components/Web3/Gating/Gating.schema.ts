@@ -19,10 +19,15 @@ export const gatingSchema = z
         ]),
         tokensGatedBy: z.array(tokenSchema),
         usersGatedBy: z.array(z.string()),
+        ethBalanceGatedBy: z.string(),
     })
     .superRefine((data, ctx) => {
         if (data['gatingType'] === 'gated') {
-            if (data['tokensGatedBy']?.length === 0 && data['usersGatedBy']?.length === 0) {
+            if (
+                data['tokensGatedBy']?.length === 0 &&
+                data['usersGatedBy']?.length === 0 &&
+                data['ethBalanceGatedBy'] === ''
+            ) {
                 ctx.addIssue({
                     code: z.ZodIssueCode.custom,
                     path: ['tokensGatedBy'],

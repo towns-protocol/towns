@@ -50,8 +50,9 @@ export function SingleRolePanelSubmitButton({
         isUnchanged ||
         Object.keys(formState.errors).length > 0 ||
         (watchAllFields.gatingType === 'gated' &&
-            !watchAllFields.tokensGatedBy?.length &&
-            !watchAllFields.usersGatedBy.length) ||
+            watchAllFields.tokensGatedBy.length === 0 &&
+            watchAllFields.usersGatedBy.length === 0 &&
+            !watchAllFields.ethBalanceGatedBy) ||
         transactionIsPending
 
     const onValid = useEvent(async (data: RoleFormSchemaType) => {
@@ -80,6 +81,7 @@ export function SingleRolePanelSubmitButton({
             data.gatingType,
             data.tokensGatedBy,
             data.usersGatedBy,
+            data.ethBalanceGatedBy,
         )
 
         const permissions = [..._channelPermissions, ..._townPermissions]

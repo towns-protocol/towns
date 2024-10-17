@@ -64,7 +64,7 @@ export function SingleRolePanelWithoutAuth() {
     const transactionIsPending =
         pendingCreateRoleTransaction || pendingUpdateRoleTransaction || pendingDeleteRoleTransaction
 
-    const { gatingType, usersGatedBy, tokensGatedBy, isTokensGatedByLoading } =
+    const { gatingType, usersGatedBy, tokensGatedBy, ethBalanceGatedBy, isTokensGatedByLoading } =
         useGatingInfo(roleDetails)
 
     const values: RoleFormSchemaType = useMemo(
@@ -77,6 +77,7 @@ export function SingleRolePanelWithoutAuth() {
             gatingType,
             tokensGatedBy,
             usersGatedBy,
+            ethBalanceGatedBy,
         }),
         [
             roleDetails,
@@ -86,6 +87,7 @@ export function SingleRolePanelWithoutAuth() {
             gatingType,
             usersGatedBy,
             tokensGatedBy,
+            ethBalanceGatedBy,
         ],
     )
 

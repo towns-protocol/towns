@@ -57,7 +57,8 @@ export function EditMembershipSubmitButton({
         Object.keys(formState.errors).length > 0 ||
         (watchAllFields.gatingType === 'gated' &&
             watchAllFields.tokensGatedBy.length === 0 &&
-            watchAllFields.usersGatedBy.length === 0) ||
+            watchAllFields.usersGatedBy.length === 0 &&
+            !watchAllFields.ethBalanceGatedBy) ||
         isLoadingPricingModules ||
         isLoadingRoleDetails ||
         transactionIsPending
@@ -141,6 +142,7 @@ export function EditMembershipSubmitButton({
             data.gatingType,
             data.tokensGatedBy,
             data.usersGatedBy,
+            data.ethBalanceGatedBy,
         )
 
         isSubmittedRef.current = true

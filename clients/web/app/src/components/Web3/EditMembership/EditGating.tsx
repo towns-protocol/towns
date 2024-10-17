@@ -19,7 +19,7 @@ function triggerTokensAndUsersValidation(
     everHadValue: boolean,
 ) {
     if (everHadValue) {
-        trigger(['tokensGatedBy', 'usersGatedBy'])
+        trigger(['tokensGatedBy', 'usersGatedBy', 'ethBalanceGatedBy'])
     }
 }
 
@@ -31,12 +31,14 @@ export function EditGating({ isRole }: EditGatingProps) {
     const inputRef = useRef<HTMLInputElement>(null)
 
     const [digitalAssetsEnabled, setDigitalAssetsEnabled] = useState(
-        getValues('tokensGatedBy').length > 0,
+        getValues('tokensGatedBy').length > 0 ||
+            getValues('usersGatedBy').length > 0 ||
+            !!getValues('ethBalanceGatedBy'),
     )
 
     const hadTokenValueRef = useRef(false)
     const hadUsersValueRef = useRef(false)
-
+    const hadEthBalanceValueRef = useRef(false)
     const [walletAddressesEnabled, setWalletAddressesEnabled] = useState(
         getValues('usersGatedBy').length > 0,
     )
@@ -93,13 +95,25 @@ export function EditGating({ isRole }: EditGatingProps) {
         [setValue, formProps],
     )
 
+    const onEthBalanceChange = useCallback(
+        (balance: string) => {
+            hadEthBalanceValueRef.current = true
+            setValue('ethBalanceGatedBy', balance, {
+                shouldValidate: true,
+            })
+            triggerTokensAndUsersValidation(formProps.trigger, hadEthBalanceValueRef.current)
+        },
+        [setValue, formProps],
+    )
+
     const onDigitalAssetsToggle = useCallback(() => {
         const nextValue = !digitalAssetsEnabled
         setDigitalAssetsEnabled(nextValue)
         if (!nextValue) {
             onSelectedTokensChange([])
+            onEthBalanceChange('')
         }
-    }, [digitalAssetsEnabled, onSelectedTokensChange])
+    }, [digitalAssetsEnabled, onSelectedTokensChange, onEthBalanceChange])
 
     const onUsersGatedByChange = useCallback(
         (addresses: Address[]) => {
@@ -130,6 +144,7 @@ export function EditGating({ isRole }: EditGatingProps) {
 
     const gatingType = watch('gatingType')
     const isTokenFieldTouched = formState.touchedFields.tokensGatedBy
+    const isEthBalanceFieldTouched = formState.touchedFields.ethBalanceGatedBy
 
     return (
         <Stack gap="sm" data-testid="gating-section">
@@ -188,11 +203,14 @@ export function EditGating({ isRole }: EditGatingProps) {
                                         <TokenSelector
                                             isValidationError={
                                                 formState.errors.tokensGatedBy !== undefined &&
-                                                !!isTokenFieldTouched
+                                                !!isTokenFieldTouched &&
+                                                !!isEthBalanceFieldTouched
                                             }
                                             inputRef={inputRef}
+                                            ethBalance={getValues('ethBalanceGatedBy')}
                                             tokens={getValues('tokensGatedBy')}
                                             onChange={onSelectedTokensChange}
+                                            onEthBalanceChange={onEthBalanceChange}
                                         />
                                     )}
                                 </Stack>

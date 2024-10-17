@@ -1,6 +1,7 @@
 import React, { ChangeEvent, useCallback, useMemo, useRef, useState } from 'react'
+import { constants } from 'ethers'
 import { ModalContainer } from '@components/Modals/ModalContainer'
-import { Box, Icon, Text, TextField } from '@ui'
+import { Box, Icon, IconButton, Text, TextField } from '@ui'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { useTokenMetadataAcrossNetworks } from 'api/lib/collectionMetadata'
 import { useClickedOrFocusedOutside } from 'hooks/useClickedOrFocusedOutside'
@@ -14,16 +15,30 @@ import { TokenType } from '../types'
 
 const allowedTokenTypes = [TokenType.ERC721, TokenType.ERC20, TokenType.ERC1155]
 
+const NATIVE_TOKEN: Token = {
+    chainId: 1,
+    data: {
+        address: '0x0000000000000000000000000000000000000000',
+        type: TokenType.ERC20,
+        label: 'ETH',
+        symbol: 'ETH',
+        decimals: 18,
+        imgSrc: '/public/eth-icon.svg',
+    },
+}
+
 type Props = {
     isValidationError: boolean
     inputRef?: React.RefObject<HTMLInputElement>
     allowedNetworks?: number[]
     tokens: Token[]
+    ethBalance: string
     onChange: (tokens: Token[]) => void
+    onEthBalanceChange: (balance: string) => void
 }
 
 export function TokenSelector(props: Props) {
-    const { isValidationError, inputRef, allowedNetworks, tokens, onChange } = props
+    const { inputRef, allowedNetworks, tokens, onChange, onEthBalanceChange, ethBalance } = props
     const [textFieldValue, setTextFieldValue] = useState('')
     const [tokenEditor, setTokenEditor] = useState<Token | undefined>()
     const containerRef = useRef<HTMLDivElement>(null)
@@ -79,16 +94,20 @@ export function TokenSelector(props: Props) {
 
     const onDelete = useCallback(
         (token: Token) => {
-            onChange(
-                tokens.filter(
-                    (t) =>
-                        t.data.address !== token.data.address ||
-                        t.chainId !== token.chainId ||
-                        t.data.tokenId !== token.data.tokenId,
-                ),
-            )
+            if (token.data.address === constants.AddressZero) {
+                onEthBalanceChange('')
+            } else {
+                onChange(
+                    tokens.filter(
+                        (t) =>
+                            t.data.address !== token.data.address ||
+                            t.chainId !== token.chainId ||
+                            t.data.tokenId !== token.data.tokenId,
+                    ),
+                )
+            }
         },
-        [onChange, tokens],
+        [onChange, tokens, onEthBalanceChange],
     )
 
     const onEdit = useCallback((token: Token) => {
@@ -103,6 +122,16 @@ export function TokenSelector(props: Props) {
 
     const _isTouch = isTouch()
 
+    const nativeTokenWithQuantity: Token | undefined = useMemo(() => {
+        return {
+            ...NATIVE_TOKEN,
+            data: {
+                ...NATIVE_TOKEN.data,
+                quantity: ethBalance,
+            },
+        }
+    }, [ethBalance])
+
     return (
         <Box
             gap="sm"
@@ -111,16 +140,7 @@ export function TokenSelector(props: Props) {
             zIndex="above"
             data-testid="token-search"
         >
-            <Box
-                horizontal
-                gap="sm"
-                background="level2"
-                rounded="sm"
-                flexWrap="wrap"
-                minHeight="x6"
-                overflow="hidden"
-                border={isValidationError ? 'negative' : 'default'}
-            >
+            <Box horizontal gap="xs" alignItems="center">
                 <TextField
                     ref={inputRef}
                     data-testid="token-selector-input"
@@ -128,12 +148,28 @@ export function TokenSelector(props: Props) {
                     value={textFieldValue}
                     tone="none"
                     placeholder="Enter a contract address"
-                    size={Math.max(3, textFieldValue.length + 1)}
                     onChange={onTextFieldChange}
+                />
+
+                <IconButton
+                    icon="eth"
+                    tooltip="ETH Balance Gate"
+                    background="level2"
+                    padding="md"
+                    rounded="sm"
+                    data-testid="balance-gate-button"
+                    onClick={() => setTokenEditor(nativeTokenWithQuantity)}
                 />
             </Box>
 
             <Box gap="sm">
+                {nativeTokenWithQuantity && ethBalance !== '' && ethBalance !== '0' && (
+                    <TokenSelectionInput
+                        token={nativeTokenWithQuantity}
+                        onDelete={onDelete}
+                        onEdit={onEdit}
+                    />
+                )}
                 {tokens.map((token) => (
                     <TokenSelectionInput
                         key={token.chainId + token.data.address + (token.data.tokenId ?? '')}
@@ -192,6 +228,7 @@ export function TokenSelector(props: Props) {
                                 t.data.tokenId === tokenEditor.data.tokenId,
                         )}
                         onAddOrUpdate={addOrUpdate}
+                        onEthBalanceChange={onEthBalanceChange}
                         onHide={() => setTokenEditor(undefined)}
                     />
                 </ModalContainer>

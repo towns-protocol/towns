@@ -187,6 +187,7 @@ export function CreateTownSubmit({
                     data.gatingType,
                     data.tokensGatedBy,
                     data.usersGatedBy,
+                    data.ethBalanceGatedBy,
                 )
 
                 //////////////////////////////////////////

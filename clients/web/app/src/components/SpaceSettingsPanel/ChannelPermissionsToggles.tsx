@@ -31,6 +31,7 @@ export function ChannelPermissionsToggles({
             permissions: formValues.channelPermissions ?? [],
             tokensGatedBy: formValues.tokensGatedBy ?? [],
             usersGatedBy: (formValues.usersGatedBy as Address[]) ?? [],
+            ethBalanceGatedBy: formValues.ethBalanceGatedBy ?? '',
         }
     })
 

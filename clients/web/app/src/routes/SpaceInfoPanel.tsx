@@ -612,7 +612,7 @@ const TokensGatingSpace = ({
 }) => {
     const { isLoading: isLoadingRoleDetails, roleDetails } = useRoleDetails(spaceId ?? '', 1)
 
-    const initialTokenValues = useConvertRuleDataToToken(roleDetails?.ruleData)
+    const { tokens: initialTokenValues } = useConvertRuleDataToToken(roleDetails?.ruleData)
 
     const { data: tokens, isLoading: isTokensLoading } = useTokensWithMetadata(
         initialTokenValues.slice(0, 3),

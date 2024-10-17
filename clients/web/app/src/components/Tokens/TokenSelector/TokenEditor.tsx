@@ -2,6 +2,7 @@ import React, { useEffect } from 'react'
 import { z } from 'zod'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { constants } from 'ethers'
 import { TokenType } from '@token-worker/types'
 import { Box, Button, IconButton, Stack, Text, TextField } from '@ui'
 import { TokenSelectionDisplay } from './TokenSelection'
@@ -11,9 +12,12 @@ export function TokenEditor(props: {
     token: Token
     tokenAlreadyExists: boolean
     onAddOrUpdate: (token: Token) => void
+    onEthBalanceChange: (balance: string) => void
     onHide: () => void
 }) {
-    const { token, tokenAlreadyExists, onAddOrUpdate, onHide } = props
+    const { token, tokenAlreadyExists, onAddOrUpdate, onEthBalanceChange, onHide } = props
+
+    const isNativeToken = token.data.address === constants.AddressZero
 
     const schema = z.object({
         quantity: z
@@ -74,16 +78,20 @@ export function TokenEditor(props: {
     })
 
     const onSubmit = (data: { quantity: string; tokenId?: string }) => {
-        onAddOrUpdate({
-            ...token,
-            data: {
-                ...token.data,
-                quantity: data.quantity,
-                // Only add tokenId if the token is ERC1155
-                ...(token.data.type === TokenType.ERC1155 &&
-                    data.tokenId && { tokenId: data.tokenId }),
-            },
-        })
+        if (isNativeToken) {
+            onEthBalanceChange(data.quantity)
+        } else {
+            onAddOrUpdate({
+                ...token,
+                data: {
+                    ...token.data,
+                    quantity: data.quantity,
+                    // Only add tokenId if the token is ERC1155
+                    ...(token.data.type === TokenType.ERC1155 &&
+                        data.tokenId && { tokenId: data.tokenId }),
+                },
+            })
+        }
         onHide()
     }
 
@@ -105,12 +113,20 @@ export function TokenEditor(props: {
             >
                 <Box width="x3" />
                 <Text strong size="lg">
-                    {tokenAlreadyExists ? 'Edit Token' : 'Add Token'}
+                    {isNativeToken ? 'Require ETH' : `${tokenAlreadyExists ? 'Edit' : 'Add'} Token`}
                 </Text>
                 <IconButton padding="xs" icon="close" onClick={onHide} />
             </Stack>
 
-            <TokenSelectionDisplay token={token} />
+            <TokenSelectionDisplay
+                token={{
+                    ...token,
+                    data: {
+                        ...token.data,
+                        quantity: '',
+                    },
+                }}
+            />
 
             <Box as="form" style={{ width: '100%' }} gap="md" onSubmit={handleSubmit(onSubmit)}>
                 {token.data.type === TokenType.ERC1155 && !tokenAlreadyExists && (
@@ -160,14 +176,26 @@ export function TokenEditor(props: {
                                 type="text"
                                 tone="neutral"
                                 background="level2"
-                                placeholder="Enter a quantity"
+                                placeholder="Enter quantity"
                                 data-testid="token-quantity-input-field"
                                 onChange={(e) => {
                                     const value = e.target.value
                                     if (token.data.type === TokenType.ERC20) {
-                                        // Allow decimal input for ERC20 tokens
-                                        if (/^\d*\.?\d*$/.test(value)) {
-                                            field.onChange(value)
+                                        // Allow decimal input for ERC20 tokens, limited by token decimals
+                                        const parts = value.split('.')
+                                        if (parts.length <= 2 && /^\d*\.?\d*$/.test(value)) {
+                                            const maxDecimals = token.data.decimals ?? 18
+                                            if (
+                                                parts.length === 2 &&
+                                                parts[1].length > maxDecimals
+                                            ) {
+                                                // Truncate to allowed number of decimals
+                                                field.onChange(
+                                                    `${parts[0]}.${parts[1].slice(0, maxDecimals)}`,
+                                                )
+                                            } else {
+                                                field.onChange(value)
+                                            }
                                         }
                                     } else {
                                         // Only allow integer input for non-ERC20 tokens
@@ -185,7 +213,11 @@ export function TokenEditor(props: {
 
                 <Box centerContent>
                     <Button type="submit" tone="cta1" data-testid="add-tokens-button">
-                        {tokenAlreadyExists ? 'Update' : 'Add'}
+                        {tokenAlreadyExists ||
+                        (isNativeToken && token.data.quantity && token.data.quantity !== '0')
+                            ? 'Update'
+                            : 'Add'}{' '}
+                        {isNativeToken ? 'ETH Requirement' : 'Token'}
                     </Button>
                 </Box>
             </Box>

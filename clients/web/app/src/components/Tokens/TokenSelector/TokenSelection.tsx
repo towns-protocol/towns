@@ -1,11 +1,14 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
+import { constants } from 'ethers'
 import { Box, BoxProps, Icon, IconButton, Stack, Text } from '@ui'
 import { shortAddress } from 'ui/utils/utils'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { TokenImage } from './TokenImage'
 import { NetworkName } from './NetworkName'
 import { Token } from './tokenSchemas'
+
+const NATIVE_CHAIN_IDS = [1, 8453, 10, 42161]
 
 type BaseTokenSelectionProps = {
     elevate?: boolean
@@ -47,7 +50,7 @@ export function TokenSelection(props: TokenSelectionProps) {
                 <Stack grow gap="sm">
                     <Stack horizontal gap="sm" alignItems="center">
                         <Text truncate>
-                            {token.data.quantity}{' '}
+                            {token.data.quantity !== '0' ? token.data.quantity : ''}{' '}
                             {token.data.label?.length ? token.data.label : 'Unknown Token'}{' '}
                         </Text>
                         {'userPassesEntitlement' in props &&
@@ -66,12 +69,16 @@ export function TokenSelection(props: TokenSelectionProps) {
                             )}
                     </Stack>
                     <Stack horizontal alignItems="center" gap="sm">
-                        <ClipboardCopy clipboardContent={token.data.address}>
-                            <Text size="sm">{shortAddress(token.data.address)}</Text>
-                        </ClipboardCopy>
-                        <Text size="sm" color="gray2">
-                            &#x2022;
-                        </Text>
+                        {token.data.address !== constants.AddressZero && (
+                            <>
+                                <ClipboardCopy clipboardContent={token.data.address}>
+                                    <Text size="sm">{shortAddress(token.data.address)}</Text>
+                                </ClipboardCopy>
+                                <Text size="sm" color="gray2">
+                                    &#x2022;
+                                </Text>
+                            </>
+                        )}
                         {token.data.tokenId !== undefined && (
                             <>
                                 <Text size="sm" color="gray2">
@@ -83,15 +90,42 @@ export function TokenSelection(props: TokenSelectionProps) {
                             </>
                         )}
                         <Stack horizontal gap="xs" alignItems="center">
-                            <Box
-                                tooltip={
-                                    <Box background="level2" padding="sm" rounded="sm">
-                                        <Text fontSize="sm">Chain ID: {token.chainId}</Text>
+                            {token.data.address === constants.AddressZero ? (
+                                NATIVE_CHAIN_IDS.map((chainId) => (
+                                    <Box
+                                        key={chainId}
+                                        tooltip={
+                                            <Box background="level2" padding="sm" rounded="sm">
+                                                <Text fontSize="sm">Chain ID: {chainId}</Text>
+                                            </Box>
+                                        }
+                                    >
+                                        <Box horizontal color="gray2">
+                                            <NetworkName
+                                                color="gray2"
+                                                chainId={chainId}
+                                                size="sm"
+                                            />
+                                            {chainId !==
+                                                NATIVE_CHAIN_IDS[NATIVE_CHAIN_IDS.length - 1] && (
+                                                <Text size="sm" color="gray2">
+                                                    ,
+                                                </Text>
+                                            )}
+                                        </Box>
                                     </Box>
-                                }
-                            >
-                                <NetworkName color="gray2" chainId={token.chainId} size="sm" />
-                            </Box>
+                                ))
+                            ) : (
+                                <Box
+                                    tooltip={
+                                        <Box background="level2" padding="sm" rounded="sm">
+                                            <Text fontSize="sm">Chain ID: {token.chainId}</Text>
+                                        </Box>
+                                    }
+                                >
+                                    <NetworkName color="gray2" chainId={token.chainId} size="sm" />
+                                </Box>
+                            )}
                             {token.data.openSeaCollectionUrl && (
                                 <Link
                                     to={token.data.openSeaCollectionUrl}

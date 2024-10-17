@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import {
     Address,
+    CheckOperationType,
     VersionedRuleData,
     convertRuleDataV1ToV2,
     createDecodedCheckOperationFromTree,
@@ -33,9 +34,10 @@ export function useValidAndSortedTokens(args: {
     }, [args.allowedTokenTypes, args.tokenMetadata])
 }
 
-export function useConvertRuleDataToToken(
-    versionedRuleData: VersionedRuleData | undefined,
-): TokenWithBigInt[] {
+export function useConvertRuleDataToToken(versionedRuleData: VersionedRuleData | undefined): {
+    ethBalance: bigint | undefined
+    tokens: TokenWithBigInt[]
+} {
     const ruleData =
         versionedRuleData?.kind === 'v1'
             ? convertRuleDataV1ToV2(versionedRuleData.rules)
@@ -43,27 +45,34 @@ export function useConvertRuleDataToToken(
 
     return useMemo(() => {
         if (!ruleData) {
-            return []
+            return { ethBalance: undefined, tokens: [] }
         }
+        const decodedOperations = createDecodedCheckOperationFromTree(ruleData)
+        const ethBalance = decodedOperations.find(
+            (p) => p.type === CheckOperationType.ETH_BALANCE,
+        )?.threshold
+        const tokens = decodedOperations
+            .filter((p) => p.type !== CheckOperationType.ETH_BALANCE)
+            .map((p) => {
+                const { threshold, tokenId, ...rest } = p
+                return {
+                    chainId: Number(p.chainId),
+                    data: {
+                        ...rest,
+                        address: p.address as Address,
+                        type: convertOperationTypeToTokenType(p.type),
+                        name: '',
+                        symbol: '',
+                        imageUrl: '',
+                        openSeaCollectionUrl: '',
+                        decimals: undefined,
+                        tokenId: tokenId ?? undefined,
+                        quantity: threshold ?? undefined,
+                    },
+                }
+            })
 
-        return createDecodedCheckOperationFromTree(ruleData).map((p) => {
-            const { threshold, tokenId, ...rest } = p
-            return {
-                chainId: Number(p.chainId),
-                data: {
-                    ...rest,
-                    address: p.address as Address,
-                    type: convertOperationTypeToTokenType(p.type),
-                    name: '',
-                    symbol: '',
-                    imageUrl: '',
-                    openSeaCollectionUrl: '',
-                    decimals: undefined,
-                    tokenId: tokenId ?? undefined,
-                    quantity: threshold ?? undefined,
-                },
-            }
-        })
+        return { ethBalance, tokens }
     }, [ruleData])
 }
 

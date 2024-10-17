@@ -120,6 +120,7 @@ function CreateSpaceFormV2WithoutAuth() {
         membershipPricingType: 'dynamic',
         tokensGatedBy: [],
         usersGatedBy: [],
+        ethBalanceGatedBy: '',
         clientPricingOption: 'dynamic',
         spaceIconUrl: null,
         shortDescription: null,

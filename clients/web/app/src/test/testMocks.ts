@@ -1,10 +1,11 @@
-import { BigNumber } from 'ethers'
+import { BigNumber, constants } from 'ethers'
 // eslint-disable-next-line no-restricted-imports
 import * as townsClient from 'use-towns-client'
 import { NoopRuleData, Permission } from '@river-build/web3'
 import { EVERYONE_ADDRESS } from 'utils'
 import { convertTokenTypeToOperationType } from '@components/Tokens/utils'
 import { TokenType } from '@components/Tokens/types'
+import { parseUnits } from 'hooks/useBalance'
 import { getWalletAddress } from './testUtils'
 import { TEST_NFT_COLLECTION_METADATA_ADDRESSES } from '../../mocks/token-collections'
 
@@ -70,6 +71,24 @@ export const roleDataWithBothRolesAssignedToChannel: townsClient.RoleDetails[] =
                     address: TEST_NFT_COLLECTION_METADATA_ADDRESSES[1] as townsClient.Address,
                     chainId: BigInt(1),
                     type: convertTokenTypeToOperationType(TokenType.ERC721),
+                },
+            ]),
+        },
+    },
+    {
+        id: 9,
+        name: 'ETH Gated Role',
+        permissions: [Permission.Read, Permission.Write],
+        users: [],
+        channels: [channelDataForRole],
+        ruleData: {
+            kind: 'v2',
+            rules: townsClient.createOperationsTree([
+                {
+                    address: constants.AddressZero,
+                    chainId: BigInt(1),
+                    type: townsClient.CheckOperationType.ETH_BALANCE,
+                    threshold: parseUnits('0.1', 18),
                 },
             ]),
         },

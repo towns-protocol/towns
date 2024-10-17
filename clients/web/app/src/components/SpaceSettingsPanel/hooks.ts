@@ -11,6 +11,7 @@ import { isEveryoneAddress } from '@components/Web3/utils'
 import { TokenWithBigInt } from '@components/Tokens/TokenSelector/tokenSchemas'
 import { useTokensWithMetadata } from 'api/lib/collectionMetadata'
 import { useConvertRuleDataToToken } from '@components/Tokens/hooks'
+import { formatUnits } from 'hooks/useBalance'
 import { channelPermissionDescriptions, townPermissionDescriptions } from './rolePermissions.const'
 
 export function useMembershipInfoAndRoleDetails(spaceId: string | undefined) {
@@ -65,15 +66,16 @@ export function useMembershipInfoAndRoleDetails(spaceId: string | undefined) {
 function useGatingType(
     roleDetails: RoleDetails | null | undefined,
     initialTokenValues: TokenWithBigInt[],
+    ethBalance: bigint,
 ): 'gated' | 'everyone' {
     return useMemo(() => {
-        if (initialTokenValues.length > 0) {
+        if (initialTokenValues.length > 0 || ethBalance > 0n) {
             return 'gated'
         }
         return roleDetails?.users?.some((address: string) => !isEveryoneAddress(address))
             ? 'gated'
             : 'everyone'
-    }, [roleDetails, initialTokenValues.length])
+    }, [roleDetails, initialTokenValues.length, ethBalance])
 }
 
 function useUsersGatedBy(roleDetails: RoleDetails | null | undefined) {
@@ -85,22 +87,23 @@ function useUsersGatedBy(roleDetails: RoleDetails | null | undefined) {
 }
 
 export function useGatingInfo(roleDetails: RoleDetails | null | undefined) {
-    const initialTokenValues = useConvertRuleDataToToken(roleDetails?.ruleData)
+    const { ethBalance, tokens } = useConvertRuleDataToToken(roleDetails?.ruleData)
 
-    const { data: tokensGatedBy, isLoading: isTokensGatedByLoading } =
-        useTokensWithMetadata(initialTokenValues)
+    const { data: tokensGatedBy, isLoading: isTokensGatedByLoading } = useTokensWithMetadata(tokens)
 
-    const gatingType = useGatingType(roleDetails, initialTokenValues)
+    const gatingType = useGatingType(roleDetails, tokens, ethBalance ?? 0n)
     const usersGatedBy = useUsersGatedBy(roleDetails)
+    const ethBalanceGatedBy = ethBalance ? formatUnits(ethBalance, 18) : ''
 
     return useMemo(
         () => ({
             gatingType,
             usersGatedBy,
             tokensGatedBy,
+            ethBalanceGatedBy,
             isTokensGatedByLoading,
         }),
-        [gatingType, usersGatedBy, tokensGatedBy, isTokensGatedByLoading],
+        [gatingType, usersGatedBy, tokensGatedBy, isTokensGatedByLoading, ethBalanceGatedBy],
     )
 }
 

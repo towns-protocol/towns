@@ -34,7 +34,8 @@ import {
     mockWalletMembersCsv,
 } from '../../../mocks/wallet_addresses'
 
-const [roleWithEveryone, roleWithMemberMNft] = roleDataWithBothRolesAssignedToChannel
+const [roleWithEveryone, roleWithMemberMNft, roleWithEthBalance] =
+    roleDataWithBothRolesAssignedToChannel
 
 vi.mock('privy/useCombinedAuth', async () => {
     const actual = (await vi.importActual(
@@ -250,10 +251,9 @@ describe('SingleRolePanel', () => {
             const option = await addFakeToken()
             await userEvent.click(option)
             const tokenEditor = await screen.findByTestId('token-editor')
-            const tokenQuantityField =
-                within(tokenEditor).getByPlaceholderText(/enter a quantity/gi)
+            const tokenQuantityField = within(tokenEditor).getByPlaceholderText(/enter quantity/gi)
             await userEvent.type(tokenQuantityField, '1')
-            const tokenEditorSubmit = within(tokenEditor).getByRole('button', { name: 'Add' })
+            const tokenEditorSubmit = within(tokenEditor).getByRole('button', { name: 'Add Token' })
             await userEvent.click(tokenEditorSubmit)
 
             await waitFor(() => expect(submitButton).not.toBeDisabled())
@@ -364,10 +364,9 @@ describe('SingleRolePanel', () => {
             await userEvent.click(tokenOption[0])
 
             const tokenEditor = await screen.findByTestId('token-editor')
-            const tokenQuantityField =
-                within(tokenEditor).getByPlaceholderText(/enter a quantity/gi)
+            const tokenQuantityField = within(tokenEditor).getByPlaceholderText(/enter quantity/gi)
             await userEvent.type(tokenQuantityField, '1')
-            const tokenEditorSubmit = within(tokenEditor).getByRole('button', { name: 'Add' })
+            const tokenEditorSubmit = within(tokenEditor).getByRole('button', { name: 'Add Token' })
             await userEvent.click(tokenEditorSubmit)
 
             await waitFor(() => expect(submitButton).not.toBeDisabled())
@@ -507,9 +506,9 @@ describe('SingleRolePanel', () => {
         await userEvent.click(option)
 
         const tokenEditor = await screen.findByTestId('token-editor')
-        const tokenQuantityField = within(tokenEditor).getByPlaceholderText(/enter a quantity/gi)
+        const tokenQuantityField = within(tokenEditor).getByPlaceholderText(/enter quantity/gi)
         await userEvent.type(tokenQuantityField, '1')
-        const tokenEditorSubmit = within(tokenEditor).getByRole('button', { name: 'Add' })
+        const tokenEditorSubmit = within(tokenEditor).getByRole('button', { name: 'Add Token' })
         await userEvent.click(tokenEditorSubmit)
 
         await waitFor(() =>
@@ -876,6 +875,68 @@ describe('SingleRolePanel', () => {
             expect(addressCountSecond).toBeInTheDocument()
         },
     )
+
+    test('should submit with gated ETH balance', async () => {
+        mockUseSearchParams.mockReturnValue([new URLSearchParams('roles=new'), vi.fn()])
+        vi.spyOn(Lib, 'useCreateRoleTransaction').mockImplementation(useMockedCreateRoleTransaction)
+
+        render(<Wrapper />)
+        const submitButton = screen.getByTestId('submit-button')
+        expect(submitButton).toBeDisabled()
+
+        const roleName = await getNameInput()
+        await userEvent.type(roleName, 'ETH Gated Role')
+        await waitFor(() => {
+            expect(screen.getAllByDisplayValue(/ETH Gated Role/gi).length).toBe(1)
+        })
+
+        const membershipTypeGated = screen.getByTestId('membership-type-gated')
+        await userEvent.click(membershipTypeGated)
+
+        const digitalAssetsToggle = await screen.findByTestId('digital-assets-toggle')
+        await userEvent.click(digitalAssetsToggle)
+
+        const balanceGateButton = await screen.findByTestId('balance-gate-button')
+        await userEvent.click(balanceGateButton)
+
+        const tokenQuantityField = await screen.findByTestId('token-quantity-input-field')
+        await userEvent.type(tokenQuantityField, '0.1')
+
+        const addTokensButton = await screen.findByTestId('add-tokens-button')
+        await userEvent.click(addTokensButton)
+
+        await waitFor(() => expect(submitButton).not.toBeDisabled())
+        await userEvent.click(submitButton)
+    })
+
+    test('should update existing role with gated ETH balance', async () => {
+        mockUseSearchParams.mockReturnValue([new URLSearchParams('roles=8'), vi.fn()])
+        roleDetailsMockData = roleWithEthBalance
+        vi.spyOn(Lib, 'useUpdateRoleTransaction').mockImplementation(useMockedUpdateRoleTransaction)
+
+        render(<Wrapper />)
+        const submitButton = screen.getByTestId('submit-button')
+        expect(submitButton).toBeDisabled()
+
+        const roleName = await getNameInput()
+        await waitFor(() => expect(roleName).toHaveValue('ETH Gated Role'))
+
+        const balanceGateButton = await screen.findByTestId('balance-gate-button')
+        await userEvent.click(balanceGateButton)
+
+        const tokenQuantityField = await screen.findByTestId('token-quantity-input-field')
+        await waitFor(() => expect(tokenQuantityField).toHaveValue('0.1'))
+        await userEvent.clear(tokenQuantityField)
+        await waitFor(() => expect(tokenQuantityField).toHaveValue(''))
+        await userEvent.type(tokenQuantityField, '0.5')
+        await waitFor(() => expect(tokenQuantityField).toHaveValue('0.5'))
+
+        const addTokensButton = await screen.findByTestId('add-tokens-button')
+        await userEvent.click(addTokensButton)
+
+        await waitFor(() => expect(submitButton).not.toBeDisabled())
+        await userEvent.click(submitButton)
+    })
 })
 
 async function enableGatingOption() {
