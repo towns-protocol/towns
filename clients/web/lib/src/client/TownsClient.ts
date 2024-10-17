@@ -253,8 +253,8 @@ export class TownsClient
                     '[localStartCasablancaClientWithRetries] error starting casablanca client',
                     { error: e, retryCount },
                 )
+                await this.logoutFromCasablanca()
                 if (retryCount > maxRetries) {
-                    await this.logoutFromCasablanca()
                     throw e
                 }
                 const retryDelay = getRetryDelay(retryCount)
@@ -267,8 +267,6 @@ export class TownsClient
         }
     }
 
-    /************************************************
-     * makeStreamRpcClient
     /************************************************
      * startCasablancaClient
      *************************************************/
