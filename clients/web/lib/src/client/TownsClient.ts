@@ -227,6 +227,49 @@ export class TownsClient
     }
 
     /************************************************
+     * localStartCasablancaClientWithRetries
+     * for use in joining or creating a space for a new user
+     * a few things can happen:
+     * - the network is down
+     * - the isEntitled call can race during space creation and fail even though the space was created (alchemy isn't up to date on the node)
+     *************************************************/
+    private async localStartCasablancaClientWithRetries(
+        context: SignerContext,
+        metadata: { spaceId: string },
+        sequenceName: TimeTrackerEvents,
+    ): Promise<CasablancaClient> {
+        const maxRetries = 3
+        let retryCount = 0
+        const getRetryDelay = (retryCount: number) => {
+            return Math.min(1000 * 2 ** retryCount, 20000) // 2, 4, 8 seconds if max retries is 3
+        }
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+            try {
+                return await this.startCasablancaClient(context, metadata, sequenceName)
+            } catch (e) {
+                retryCount++
+                console.error(
+                    '[localStartCasablancaClientWithRetries] error starting casablanca client',
+                    { error: e, retryCount },
+                )
+                if (retryCount > maxRetries) {
+                    await this.logoutFromCasablanca()
+                    throw e
+                }
+                const retryDelay = getRetryDelay(retryCount)
+                console.log('[localStartCasablancaClientWithRetries] retrying', {
+                    retryDelay,
+                    retryCount,
+                })
+                await new Promise((resolve) => setTimeout(resolve, retryDelay))
+            }
+        }
+    }
+
+    /************************************************
+     * makeStreamRpcClient
+    /************************************************
      * startCasablancaClient
      *************************************************/
     public async startCasablancaClient(
@@ -378,7 +421,7 @@ export class TownsClient
                 // wait until the space and channel are minted on-chain
                 // before creating the streams
                 if (!this.casablancaClient && signerContext) {
-                    await this.startCasablancaClient(
+                    await this.localStartCasablancaClientWithRetries(
                         signerContext,
                         { spaceId },
                         TimeTrackerEvents.CREATE_SPACE,
@@ -1826,7 +1869,7 @@ export class TownsClient
 
         const joinRiverRoom = async () => {
             if (!this.casablancaClient && signerContext) {
-                await this.startCasablancaClient(
+                await this.localStartCasablancaClientWithRetries(
                     signerContext,
                     { spaceId },
                     TimeTrackerEvents.JOIN_SPACE,
