@@ -22,7 +22,7 @@ module "lambda_function" {
   runtime               = "nodejs20.x"
   architectures         = ["x86_64"]
   publish               = true
-  timeout               = 600
+  timeout               = 900 // 15 minutes
   create_package        = true
   vpc_subnet_ids        = var.subnet_ids
   attach_network_policy = true

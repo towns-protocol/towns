@@ -1,10 +1,10 @@
 import { client, v2 } from '@datadog/datadog-api-client'
-import { MetricSeries } from '@datadog/datadog-api-client/dist/packages/datadog-api-client-v2'
 import { RiverNodeWalletBalance } from './wallet-balance'
 import { RiverNodePingResults } from './pinger'
 import { NodeStructOutput } from '@river-build/generated/dev/typings/INodeRegistry'
 import { NodeMetrics, UsageMetrics } from './metrics-extractor'
 import { CombinedNode, CombinedOperator } from './metrics-integrator'
+import { GAUGE } from '@datadog/datadog-api-client/dist/packages/datadog-api-client-v2/models/MetricIntakeType'
 
 export class DatadogMetricsClient {
     private readonly apiKey: string
@@ -19,7 +19,7 @@ export class DatadogMetricsClient {
         this.timestamp = Math.floor(Date.now() / 1000)
     }
 
-    private async postSeries(series: Array<MetricSeries>) {
+    private async postSeries(series: Array<v2.MetricSeries>) {
         const configuration = client.createConfiguration({
             authMethods: {
                 apiKeyAuth: this.apiKey,
@@ -69,7 +69,7 @@ export class DatadogMetricsClient {
     private async postWalletBalances(walletBalances: RiverNodeWalletBalance[]) {
         console.log('Posting wallet balances to Datadog:')
 
-        const series = walletBalances.map(({ node, balance, chain }) => {
+        const series: v2.MetricSeries[] = walletBalances.map(({ node, balance, chain }) => {
             const walletAddress = node.nodeAddress
             const tags = [
                 `env:${this.env}`,
@@ -79,6 +79,7 @@ export class DatadogMetricsClient {
                 `chain:${chain}`,
             ]
             return {
+                type: GAUGE,
                 metric: `river_node.wallet_balance`,
                 points: [{ timestamp: this.timestamp, value: balance }],
                 tags,
@@ -91,7 +92,7 @@ export class DatadogMetricsClient {
     private async postNodeStatusOnRiver(nodes: CombinedNode[]) {
         console.log('Posting river status to Datadog:')
 
-        const series = nodes.map((node) => {
+        const series: v2.MetricSeries[] = nodes.map((node) => {
             const nodeUrl = typeof node.url === 'string' ? node.url : 'unknown'
             const isMissing = node.isMissingOnRiver ? 'true' : 'false'
             const tags = [
@@ -106,6 +107,7 @@ export class DatadogMetricsClient {
             // remote_only, operational, failed etc.
 
             return {
+                type: GAUGE,
                 metric: `river_node.river_status`,
                 points: [{ timestamp: this.timestamp, value: node.riverStatus }],
                 tags,
@@ -118,7 +120,7 @@ export class DatadogMetricsClient {
     private async postNodeStatusOnBase(nodes: CombinedNode[]) {
         console.log('Posting base status to Datadog:')
 
-        const series = nodes.map((node) => {
+        const series: v2.MetricSeries[] = nodes.map((node) => {
             const nodeUrl = typeof node.url === 'string' ? node.url : 'unknown'
             const isMissing = node.isMissingOnBase ? 'true' : 'false'
             const tags = [
@@ -133,6 +135,7 @@ export class DatadogMetricsClient {
             // remote_only, operational, failed etc.
 
             return {
+                type: GAUGE,
                 metric: `river_node.base_status`,
                 points: [{ timestamp: this.timestamp, value: node.baseStatus }],
                 tags,
@@ -142,32 +145,8 @@ export class DatadogMetricsClient {
         return this.postSeries(series)
     }
 
-    private async postNodeStreamCounts(
-        nodeStreamCounts: { node: NodeStructOutput; streamCount: number }[],
-    ) {
-        console.log('Posting node stream counts to Datadog:')
-
-        const series = nodeStreamCounts.map(({ streamCount, node }) => {
-            const tags = [
-                `env:${this.env}`,
-                `wallet_address:${node.nodeAddress}`,
-                `operator_address:${node.operator}`,
-                `node_url:${encodeURI(node.url)}`,
-            ]
-
-            return {
-                metric: `river_node.stream_count`,
-                points: [{ timestamp: this.timestamp, value: streamCount }],
-                tags,
-            }
-        })
-
-        console.log('Series:', JSON.stringify(series, null, 2))
-        return this.postSeries(series)
-    }
-
     private async postNodeChainStatusMetrics(pingNodeResults: RiverNodePingResults) {
-        const series: MetricSeries[] = []
+        const series: v2.MetricSeries[] = []
         pingNodeResults.forEach(({ ping, node }) => {
             const nodeUrl = typeof node.url === 'string' ? node.url : 'unknown'
             if (ping.result === 'success') {
@@ -193,18 +172,21 @@ export class DatadogMetricsClient {
                     // remove 'ms' from the end of the string
                     const latency = parseInt(chain.latency.slice(0, -2))
                     series.push({
+                        type: GAUGE,
                         metric: `river_node.chain.status`,
                         points: [{ timestamp: this.timestamp, value: 1 }],
                         tags: currentTags,
                     })
 
                     series.push({
+                        type: GAUGE,
                         metric: `river_node.chain.latency`,
                         points: [{ timestamp: this.timestamp, value: latency }],
                         tags: currentTags,
                     })
 
                     series.push({
+                        type: GAUGE,
                         metric: `river_node.chain.latest_block_number`,
                         points: [{ timestamp: this.timestamp, value: chain.block }],
                         tags: currentTags,
@@ -218,7 +200,7 @@ export class DatadogMetricsClient {
     private async postNodePingResults(pingNodeResults: RiverNodePingResults) {
         console.log('Posting node ping results to Datadog:')
 
-        const series = pingNodeResults.map(({ ping, node }) => {
+        const series: v2.MetricSeries[] = pingNodeResults.map(({ ping, node }) => {
             const nodeUrl = typeof node.url === 'string' ? node.url : 'unknown'
             const tags = [
                 `env:${this.env}`,
@@ -235,6 +217,7 @@ export class DatadogMetricsClient {
             }
 
             return {
+                type: GAUGE,
                 metric: `river_node.ping`,
                 points: [{ timestamp: this.timestamp, value: 1 }],
                 tags,
@@ -247,10 +230,11 @@ export class DatadogMetricsClient {
     private async postBaseOperatorStatus(operators: CombinedOperator[]) {
         console.log('Posting base operator status to Datadog:')
 
-        const series = operators.map((operator) => {
+        const series: v2.MetricSeries[] = operators.map((operator) => {
             const tags = [`env:${this.env}`, `operator_address:${operator.operatorAddress}`]
 
             return {
+                type: GAUGE,
                 metric: `node_operator.base_status`,
                 points: [{ timestamp: this.timestamp, value: operator.baseOperatorStatus }],
                 tags,
@@ -264,10 +248,11 @@ export class DatadogMetricsClient {
     private async postRiverOperatorStatus(operators: CombinedOperator[]) {
         console.log('Posting river operator status to Datadog:')
 
-        const series = operators.map((operator) => {
+        const series: v2.MetricSeries[] = operators.map((operator) => {
             const tags = [`env:${this.env}`, `operator_address:${operator.operatorAddress}`]
 
             return {
+                type: GAUGE,
                 metric: `node_operator.river_status`,
                 points: [{ timestamp: this.timestamp, value: operator.riverOperatorStatus }],
                 tags,
@@ -314,8 +299,9 @@ export class DatadogMetricsClient {
             },
         ]
 
-        const series = metrics.map(({ name, value }) => {
+        const series: v2.MetricSeries[] = metrics.map(({ name, value }) => {
             return {
+                type: GAUGE,
                 metric: name,
                 points: [{ timestamp: this.timestamp, value }],
                 tags: [`env:${this.env}`],
@@ -372,8 +358,9 @@ export class DatadogMetricsClient {
             },
         ]
 
-        const series = metrics.map(({ name, value }) => {
+        const series: v2.MetricSeries[] = metrics.map(({ name, value }) => {
             return {
+                type: GAUGE,
                 metric: name,
                 points: [{ timestamp: this.timestamp, value }],
                 tags: [`env:${this.env}`],

@@ -430,10 +430,8 @@ export class MetricsExtractor {
             this.getNumTotalStreams(),
         ])
 
-        const [spacesWithMemberships, spaceOwners] = await Promise.all([
-            this.getAllSpacesWithMemberships(numTotalSpaces),
-            this.getSpaceOwners(numTotalSpaces),
-        ])
+        const spacesWithMemberships = await this.getAllSpacesWithMemberships(numTotalSpaces)
+        const spaceOwners = await this.getSpaceOwners(numTotalSpaces)
 
         let numTotalSpaceMemberships = 0
         let memberAddressToNumMemberships: Map<string, number> = new Map()
