@@ -110,6 +110,7 @@
       "dependsOn": [
         "WaitFor4337",
         "BuildProtobufs",
+        "4337: Configure Casablanca-Multinode",
         "4337: Stage 3"
       ],
       "group": {
@@ -119,9 +120,21 @@
       "dependsOrder": "sequence"
     },
     {
+      "label": "4337: Configure Casablanca-Multinode",
+      "type": "shell",
+      "command": "cd ./river/core && just BASE_EXECUTION_CLIENT=geth_dev RUN_ENV=multi config build",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "ephemeral",
+        "focus": true,
+        "panel": "shared",
+      }
+    },
+    {
       "label": "4337: Run Casablanca-Multinode",
       "type": "shell",
-      "command": "cd ./river/core && just BASE_EXECUTION_CLIENT=geth_dev RUN_ENV=multi config-and-run",
+      "command": "cd ./river/core && just BASE_EXECUTION_CLIENT=geth_dev RUN_ENV=multi run-and-tail",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -140,7 +153,8 @@
         "StreamMetadataService",
         "GatewayWorker",
         "4337: StackupWorker",
-        "4337: Fund XChain"
+        "4337: Fund XChain",
+        "4337: Run Casablanca-Multinode"
       ],
       "group": {
         "kind": "build",
@@ -288,7 +302,7 @@
     {
       "label": "Casablanca-Multinode",
       "type": "shell",
-      "command": "sleep 3 && cd ./river/core && just RUN_ENV=multi start",
+      "command": "sleep 3 && cd ./river/core && just RUN_ENV=multi run-and-tail",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
