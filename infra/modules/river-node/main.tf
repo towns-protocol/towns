@@ -505,7 +505,7 @@ resource "aws_ecs_task_definition" "river-fargate" {
       },
       {
         name  = "DATABASE__EXTRA"
-        value = "?sslmode=disable&pool_max_conns=1000"
+        value = "?sslmode=disable&pool_max_conns=${tostring(var.max_db_connections)}"
       },
       {
         name  = "ARCHITECTCONTRACT__VERSION"

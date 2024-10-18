@@ -108,3 +108,9 @@ variable "chainsstring_secret_arn" {
   description = "The secret ARN for the chain ids and rpc urls"
   type        = string
 }
+
+variable "max_db_connections" {
+  description = "The maximum number of database connections on the client side"
+  type        = number
+  default     = 1000
+}

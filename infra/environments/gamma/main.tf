@@ -160,7 +160,8 @@ module "river_node" {
 
   river_node_ssl_cert_secret_arn = module.river_node_ssl_cert.river_node_ssl_cert_secret_arn
 
-  river_node_db = module.river_db_cluster
+  river_node_db      = module.river_db_cluster
+  max_db_connections = 50 // As an experiment, we are setting this to 50 on gamma
 
   public_subnets  = module.vpc.public_subnets
   private_subnets = module.vpc.private_subnets
