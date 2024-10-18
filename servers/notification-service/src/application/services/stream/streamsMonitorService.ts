@@ -59,20 +59,15 @@ export class StreamsMonitorService {
     }
 
     private async getNewStreamsToMonitor(): Promise<StreamsMetadata> {
-        const streamIds = (
-            await database.syncedStream.findMany({
-                select: { StreamId: true },
-            })
-        ).map((s) => s.StreamId)
-        const channelIds = await database.userSettingsChannel.findMany({
-            select: { ChannelId: true },
-            where: {
-                ChannelId: {
-                    notIn: streamIds,
-                },
-            },
-            distinct: ['ChannelId'],
-        })
+        const channelIds = (await database.$queryRaw`
+            SELECT DISTINCT "ChannelId" 
+            FROM "UserSettingsChannel" 
+            WHERE "ChannelId" NOT IN (
+                SELECT "StreamId" FROM "SyncedStream"
+            );
+        `) as {
+            ChannelId: string
+        }[]
 
         const streamInfo: StreamsMetadata = {
             [StreamKind.DM]: { streamIds: new Set() },
