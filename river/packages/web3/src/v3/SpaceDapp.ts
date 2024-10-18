@@ -1585,6 +1585,14 @@ export class SpaceDapp implements ISpaceDapp {
         return undefined
     }
 
+    public withdrawSpaceFunds(spaceId: string, recipient: string, signer: ethers.Signer) {
+        const space = this.getSpace(spaceId)
+        if (!space) {
+            throw new Error(`Space with spaceId "${spaceId}" is not found.`)
+        }
+        return space.Membership.write(signer).withdraw(recipient)
+    }
+
     // If the caller doesn't provide an abort controller, listenForMembershipToken will create one
     public listenForMembershipEvent(
         spaceId: string,

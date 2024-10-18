@@ -15,6 +15,7 @@ const BoolFromStringSchema = BoolStringSchema.transform((str) => str === 'true')
 
 const envMainSchema = z.object({
 	RIVER_ENV: z.string(),
+	ENVIRONMENT: z.string(),
 	RIVER_CHAIN_RPC_URL: z.string().url(),
 	BASE_CHAIN_RPC_URL: z.string().url(),
 	RIVER_STREAM_METADATA_BASE_URL: z.string().url(),
@@ -73,6 +74,7 @@ function makeConfig() {
 		apm: {
 			tracingEnabled: envMain.TRACING_ENABLED,
 			profilingEnabled: envMain.PROFILING_ENABLED,
+			environment: envMain.ENVIRONMENT,
 		},
 		healthCheck: {
 			timeout: 5000, // 5 seconds

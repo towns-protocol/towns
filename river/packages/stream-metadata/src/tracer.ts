@@ -7,7 +7,7 @@ import { config } from './environment'
 if (config.apm.tracingEnabled) {
 	tracer.init({
 		service: 'stream-metadata',
-		env: config.riverEnv,
+		env: config.apm.environment,
 		profiling: config.apm.profilingEnabled,
 		logInjection: true,
 		version: config.version,

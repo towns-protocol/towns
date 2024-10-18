@@ -323,4 +323,9 @@ export interface ISpaceDapp {
         abortController?: AbortController,
     ) => Promise<{ issued: true; tokenId: string } | { issued: false; tokenId: undefined }>
     getMembershipFreeAllocation: (spaceId: string) => Promise<BigNumber>
+    withdrawSpaceFunds: (
+        spaceId: string,
+        recipient: string,
+        signer: SignerType,
+    ) => Promise<TransactionType>
 }
