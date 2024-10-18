@@ -470,6 +470,10 @@ resource "aws_ecs_task_definition" "river-fargate" {
         value = "true"
       },
       {
+        name = "RIVER_DATABASE_ISOLATIONLEVEL",
+        value = var.river_database_isolation_level
+      },
+      {
         # TODO: check with serge if this can be set to false on archive nodes
         # TODO: try again with the new version of the archive node
         name  = "STANDBYONSTART",

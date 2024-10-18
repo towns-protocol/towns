@@ -114,3 +114,9 @@ variable "max_db_connections" {
   type        = number
   default     = 1000
 }
+
+variable "river_database_isolation_level" {
+  description = "The isolation level for the river database"
+  type        = string
+  default     = ""
+}

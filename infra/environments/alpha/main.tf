@@ -150,6 +150,11 @@ module "stream_metadata" {
   public_subnets  = module.vpc.public_subnets
 }
 
+locals {
+  river_database_isolation_level = "READ COMMITTED"
+  river_max_db_connections       = 50
+}
+
 module "river_node" {
   source = "../../modules/river-node"
   count  = local.num_full_nodes
@@ -160,7 +165,9 @@ module "river_node" {
 
   river_node_ssl_cert_secret_arn = module.river_node_ssl_cert.river_node_ssl_cert_secret_arn
 
-  river_node_db = module.river_db_cluster
+  river_node_db                  = module.river_db_cluster
+  river_database_isolation_level = local.river_database_isolation_level
+  max_db_connections             = local.river_max_db_connections
 
   public_subnets  = module.vpc.public_subnets
   private_subnets = module.vpc.private_subnets
@@ -202,7 +209,9 @@ module "archive_node" {
 
   river_node_ssl_cert_secret_arn = module.river_node_ssl_cert.river_node_ssl_cert_secret_arn
 
-  river_node_db = module.river_db_cluster
+  river_node_db                  = module.river_db_cluster
+  river_database_isolation_level = local.river_database_isolation_level
+  max_db_connections             = local.river_max_db_connections
 
   public_subnets  = module.vpc.public_subnets
   private_subnets = module.vpc.private_subnets
