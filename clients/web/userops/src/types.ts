@@ -80,6 +80,7 @@ export const FunctionHash = {
     transferTokens: 'transferTokens',
     transferEth: 'transferEth',
     refreshMetadata: 'refreshMetadata',
+    withdraw: 'withdraw',
 } as const
 
 export type FunctionHash = keyof typeof FunctionHash

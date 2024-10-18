@@ -1745,6 +1745,25 @@ export class UserOps {
         })
     }
 
+    public async sendWithdrawSpaceFundsOp(args: Parameters<SpaceDapp['withdrawSpaceFunds']>) {
+        const [spaceId, recipient, signer] = args
+        const space = this.spaceDapp?.getSpace(spaceId)
+
+        if (!space) {
+            throw new Error(`Space with spaceId "${spaceId}" is not found.`)
+        }
+
+        const callData = space.Membership.encodeFunctionData('withdraw', [recipient])
+
+        return this.sendUserOp({
+            toAddress: space.Membership.address,
+            callData,
+            functionHashForPaymasterProxy: 'withdraw',
+            signer,
+            spaceId: undefined,
+        })
+    }
+
     public async sendTransferAssetsOp(
         transferData: {
             contractAddress: string

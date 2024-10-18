@@ -217,6 +217,7 @@ export const FunctionName = {
     setMembershipLimit: 'setMembershipLimit',
     setMembershipPrice: 'setMembershipPrice',
     refreshMetadata: 'refreshMetadata',
+    withdraw: 'withdraw',
 } as const
 
 export type FunctionName = (typeof FunctionName)[keyof typeof FunctionName]

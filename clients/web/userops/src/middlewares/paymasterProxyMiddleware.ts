@@ -1,4 +1,4 @@
-import { UserOpsConfig } from '../types'
+import { FunctionHash, UserOpsConfig } from '../types'
 import { BigNumber } from 'ethers'
 import { IUserOperation, IUserOperationMiddlewareCtx } from 'userop'
 import { z } from 'zod'
@@ -33,7 +33,7 @@ export const paymasterProxyMiddleware = async (
     args: {
         userOpContext: IUserOperationMiddlewareCtx
         rootKeyAddress: string
-        functionHashForPaymasterProxy: string | undefined
+        functionHashForPaymasterProxy: FunctionHash | undefined
         spaceId: string | undefined
         bundlerUrl: string
         fetchAccessTokenFn: (() => Promise<string | null>) | undefined
@@ -72,18 +72,21 @@ export const paymasterProxyMiddleware = async (
             throw new Error('functionHashForPaymasterProxy is required')
         }
 
-        if (
-            !spaceId &&
-            functionHashForPaymasterProxy !== 'createSpace' &&
-            functionHashForPaymasterProxy !== 'createSpaceWithPrepay' &&
-            functionHashForPaymasterProxy !== 'createSpace_linkWallet' &&
-            functionHashForPaymasterProxy !== 'linkWalletToRootKey' &&
-            functionHashForPaymasterProxy !== 'linkCallerToRootKey' &&
-            functionHashForPaymasterProxy !== 'removeLink' &&
-            functionHashForPaymasterProxy !== 'transferTokens'
-        ) {
-            const errorMessage =
-                '[paymasterProxyMiddleware] townId is required for all user operations except createSpace, linkWallet, and removeLink'
+        const doNotRequireSpaceId: FunctionHash[] = [
+            'createSpace',
+            'createSpaceWithPrepay',
+            'createSpace_linkWallet',
+            'linkWalletToRootKey',
+            'linkCallerToRootKey',
+            'removeLink',
+            'transferTokens',
+            'withdraw',
+        ]
+
+        if (!spaceId && !doNotRequireSpaceId.includes(functionHashForPaymasterProxy)) {
+            const errorMessage = `[paymasterProxyMiddleware] spaceId is required for all user operations except ${doNotRequireSpaceId.join(
+                ', ',
+            )}`
             console.error(errorMessage)
             throw new Error(errorMessage)
         }
