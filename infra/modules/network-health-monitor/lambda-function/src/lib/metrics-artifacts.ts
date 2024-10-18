@@ -52,7 +52,29 @@ export class MetricsArtifacts {
         if (this.usageMetrics.spacesWithMemberships.kind === 'success') {
             const numMembershipsPerSpace = this.usageMetrics.spacesWithMemberships.result
                 .sort((b, a) => a.numMemberships - b.numMemberships)
-                .map(({ address, numMemberships }) => `${address}, ${numMemberships}`)
+                .map(({ address, numMemberships, numPaidMemberships, isPriced, spaceInfo }) =>
+                    [
+                        address,
+                        numMemberships,
+                        numPaidMemberships,
+                        spaceInfo?.name || '-',
+                        spaceInfo?.uri || '-',
+                        isPriced,
+                        spaceInfo?.shortDescription || '-',
+                        spaceInfo?.longDescription || '-',
+                    ]
+                        .map((x) =>
+                            typeof x === 'string' // prepare for csv
+                                ? `"${x.replace(/"/g, '""')}"`
+                                : x,
+                        )
+                        .join(','),
+                )
+
+            numMembershipsPerSpace.unshift(
+                'Address, Num Memberships, Num Paid Memberships, Name, URI, Is Priced, Short Description, Long Description',
+            )
+
             await fs.writeFile(destination, numMembershipsPerSpace.join('\n'))
             console.log(`Created: ${destination}`)
         }

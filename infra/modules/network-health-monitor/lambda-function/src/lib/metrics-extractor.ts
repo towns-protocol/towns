@@ -3,11 +3,11 @@ import {
     RiverRegistry,
     BaseRegistry,
     SpaceOwner,
-    SpaceRegistrar,
     SpaceDapp,
     findDynamicPricingModule,
     findFixedPricingModule,
     PricingModuleStruct,
+    ISpaceOwnerBase,
 } from '@river-build/web3'
 import { ethers } from 'ethers'
 import { Ping as Pinger } from './pinger'
@@ -19,12 +19,14 @@ import { IERC721ABase } from '@river-build/generated/dev/typings/IERC721AQueryab
 
 export type MetricsExtractorScrapeConfig = {
     getSpaceMemberships: boolean
+    getSpaceInfo: boolean
 }
 
 export type MetricsExtractorConfig = {
     baseChainRpcUrl: string
     riverChainRpcUrl: string
     environment: string
+    getSpaceInfo: boolean
 }
 
 export type NodeMetrics = Unpromisify<
@@ -36,6 +38,7 @@ export type UsageMetrics = Unpromisify<
 
 export type SpaceWithTokenOwners = {
     address: string
+    spaceInfo?: ISpaceOwnerBase.SpaceStruct
     numMemberships: number
     tokenOwnerships: IERC721ABase.TokenOwnershipStructOutput[]
     isPriced: boolean
@@ -68,6 +71,7 @@ export class MetricsExtractor {
         const metricsIntegrator = new MetricsIntegrator()
         const scrapeConfig = {
             getSpaceMemberships: config.environment === 'omega', // this is an incredibly expensive query, so we only do it for omega
+            getSpaceInfo: config.getSpaceInfo,
         }
 
         return new MetricsExtractor(
@@ -201,6 +205,10 @@ export class MetricsExtractor {
         const spaceAddress =
             await this.spaceDapp.spaceRegistrar.SpaceArchitect.read.getSpaceByTokenId(tokenId)
         const space = this.spaceDapp.spaceRegistrar.getSpace(spaceAddress)!
+        let spaceInfo: ISpaceOwnerBase.SpaceStruct | undefined
+        if (this.scrapeConfig.getSpaceInfo) {
+            spaceInfo = await space.getSpaceInfo()
+        }
         const numMembershipsBigInt = await space.ERC721A.read.totalSupply()
         const numMemberships = numMembershipsBigInt.toNumber()
         const membershipTokenIds = Array.from({ length: numMemberships }, (_, i) => i)
@@ -246,6 +254,7 @@ export class MetricsExtractor {
 
         return {
             address: spaceAddress,
+            spaceInfo,
             numMemberships,
             tokenOwnerships,
             isPriced,

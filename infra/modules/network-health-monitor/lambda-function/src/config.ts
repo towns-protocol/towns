@@ -9,6 +9,7 @@ function getEnvVars() {
         RIVER_CHAIN_RPC_URL_SECRET_ARN,
         BASE_CHAIN_RPC_URL_SECRET_ARN,
         EXTRACTED_METRICS_KIND,
+        GET_SPACE_INFO,
     } = process.env
     if (typeof ENVIRONMENT !== 'string' || !ENVIRONMENT.trim().length) {
         throw new Error('ENVIRONMENT is not defined')
@@ -50,6 +51,7 @@ function getEnvVars() {
         RIVER_CHAIN_RPC_URL_SECRET_ARN,
         BASE_CHAIN_RPC_URL_SECRET_ARN,
         EXTRACTED_METRICS_KIND,
+        GET_SPACE_INFO,
     }
 }
 
@@ -73,6 +75,7 @@ export async function getConfig() {
         BASE_CHAIN_RPC_URL_SECRET_ARN,
         ENVIRONMENT,
         EXTRACTED_METRICS_KIND,
+        GET_SPACE_INFO,
     } = getEnvVars()
     const datadogApiKey = await getSecretValue(DATADOG_API_KEY_SECRET_ARN)
     const datadogApplicationKey = await getSecretValue(DATADOG_APPLICATION_KEY_SECRET_ARN)
@@ -86,6 +89,7 @@ export async function getConfig() {
         baseChainRpcUrl,
         environment: ENVIRONMENT,
         extractedMetricsKind: EXTRACTED_METRICS_KIND,
+        getSpaceInfo: GET_SPACE_INFO === 'true',
     }
 }
 
