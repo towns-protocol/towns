@@ -1,16 +1,14 @@
-import { ChangeEvent, useCallback } from 'react'
+import { useCallback } from 'react'
 import { FieldValues, Path, PathValue, UseFormSetValue, UseFormTrigger } from 'react-hook-form'
 
-export function useEthInputChange<Schema extends FieldValues>(
+export function useEthInputChange<Schema extends FieldValues, PathType extends Path<Schema>>(
     price: string,
-    path: Path<Schema>,
+    path: PathType,
     setValue: UseFormSetValue<Schema>,
     trigger: UseFormTrigger<Schema>,
 ) {
     return useCallback(
-        (e: ChangeEvent<HTMLInputElement>) => {
-            const { value } = e.target as PathValue<Schema, Path<Schema>>
-
+        (value: PathValue<Schema, PathType>) => {
             if (value.includes('.')) {
                 const priceHasDecimalAlready = price.toString().includes('.')
                 const [, decimal] = value.split('.')

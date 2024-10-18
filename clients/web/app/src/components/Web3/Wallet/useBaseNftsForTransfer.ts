@@ -4,11 +4,15 @@ import { Token } from '@components/Tokens/TokenSelector/tokenSchemas'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { useNfts } from 'hooks/useNfts'
 
-export function useBaseNftsForTransfer(walletAddress: Address | undefined) {
+export function useBaseNftsForTransfer(args: {
+    walletAddress: Address | undefined
+    enabled?: boolean
+}) {
+    const { walletAddress, enabled } = args
     const { baseChain } = useEnvironment()
     const baseChainId = baseChain.id
 
-    const { nfts, ...rest } = useNfts(walletAddress)
+    const { nfts, ...rest } = useNfts({ walletAddress, enabled })
 
     const _nfts = useMemo(() => {
         return (

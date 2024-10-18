@@ -4,12 +4,12 @@ import { Panel } from '@components/Panel/Panel'
 import { PanelButton } from '@components/Panel/PanelButton'
 import { useBalance } from 'hooks/useBalance'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
-import { useGetWalletParam, useIsAAWallet } from './useGetWalletParam'
+import { useGetAssetSourceParam, useIsAAWallet } from './useGetWalletParam'
 import { NftsList } from './NftsList'
 
 export function SingleWalletPanel() {
     const isAAWallet = useIsAAWallet()
-    const walletAddress = useGetWalletParam()
+    const walletAddress = useGetAssetSourceParam()
     const { openPanel } = usePanelActions()
 
     const balance = useBalance({
@@ -18,7 +18,7 @@ export function SingleWalletPanel() {
     })
 
     const onTransferAsset = () => {
-        openPanel('transfer-assets', { wallet: walletAddress })
+        openPanel('transfer-assets', { assetSource: walletAddress })
     }
 
     if (!isAAWallet) {

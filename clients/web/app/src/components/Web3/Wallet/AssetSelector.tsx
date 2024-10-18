@@ -23,10 +23,10 @@ export const ETH_OPTION = {
 
 export function AssetSelector(props: {
     fromWallet: Address | undefined
-    aaWalletBalance: ReturnType<typeof useBalance>['data']
+    fromBalance: ReturnType<typeof useBalance>['data']
     nfts: Token[]
 }) {
-    const { aaWalletBalance, nfts } = props
+    const { fromBalance, nfts } = props
     const { watch, setValue } = useFormContext<TransferSchema>()
     const assetToTransfer = watch('assetToTransfer')
 
@@ -48,7 +48,7 @@ export function AssetSelector(props: {
         if (assetToTransfer === 'BASE_ETH') {
             return (
                 <AssetToTransfer onRemoveClick={onRemoveClick}>
-                    <EthDetail aaWalletBalance={aaWalletBalance} />
+                    <EthDetail fromBalance={fromBalance} />
                 </AssetToTransfer>
             )
         } else if (assetToTransfer) {
@@ -150,13 +150,13 @@ function EthOption(props: { onAddItem: () => void; address?: Address }) {
     )
 }
 
-function EthDetail(props: { aaWalletBalance?: ReturnType<typeof useBalance>['data'] }) {
-    const { aaWalletBalance } = props
+export function EthDetail(props: { fromBalance?: ReturnType<typeof useBalance>['data'] }) {
+    const { fromBalance } = props
     return (
         <Stack horizontal alignItems="center" gap="sm">
             <Icon type="base" size="square_x5" />
             <Stack gap="sm">
-                <Text>{aaWalletBalance ? aaWalletBalance.formatted : ''} ETH</Text>
+                <Text>{fromBalance ? fromBalance.formatted : ''} ETH</Text>
                 <Text size="sm" color="gray2">
                     Base
                 </Text>

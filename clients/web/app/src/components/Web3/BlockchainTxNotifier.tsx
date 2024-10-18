@@ -134,12 +134,14 @@ export function BlockchainTxNotifier() {
                         } catch (error) {
                             console.error(error)
                         }
-                    } else {
+                    } else if (data?.contractAddress) {
                         const label = data?.assetLabel ?? data?.contractAddress
                         const recipient = data?.recipient
                             ? `to ${shortAddress(data.recipient)}`
                             : ''
                         successMessage = `${label} was sent ${recipient}`
+                    } else if (data?.spaceAddress) {
+                        successMessage = `Town funds were sent to ${shortAddress(data.recipient)}`
                     }
 
                     generateToast({

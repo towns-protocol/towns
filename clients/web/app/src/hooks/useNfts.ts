@@ -3,15 +3,18 @@ import { isDefined } from '@river-build/sdk'
 import { useMemo } from 'react'
 import { useCollectionsForAddressesAcrossNetworks, useNftMetadata } from 'api/lib/tokenContracts'
 import { TokenType } from '@components/Tokens/types'
+import { isAddress } from '@components/Web3/Wallet/useGetWalletParam'
 
-export const useNfts = (walletAddress?: string) => {
+export const useNfts = (args: { walletAddress?: string; enabled?: boolean }) => {
+    const { walletAddress, enabled } = args
+    const _enabled = enabled !== undefined ? enabled : true
     const { data: wallets = [] } = useLinkedWalletsForWallet({
         walletAddress,
         enabled: !!walletAddress,
     })
     const { data: nfts, isFetching } = useCollectionsForAddressesAcrossNetworks({
         wallets: wallets.concat(walletAddress ?? []),
-        enabled: true,
+        enabled: isAddress(walletAddress) && _enabled,
     })
 
     return {

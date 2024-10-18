@@ -2826,7 +2826,14 @@ export class TownsClient
 
         try {
             if (this.isAccountAbstractionEnabled()) {
-                if (transferData.value) {
+                if (transferData.spaceAddress) {
+                    const spaceId = makeSpaceStreamId(transferData.spaceAddress)
+                    transaction = await this.userOps?.sendWithdrawSpaceFundsOp([
+                        spaceId,
+                        transferData.recipient,
+                        signer,
+                    ])
+                } else if (transferData.value) {
                     transaction = await this.userOps?.sendTransferEthOp(
                         {
                             recipient: transferData.recipient,
@@ -2834,7 +2841,7 @@ export class TownsClient
                         },
                         signer,
                     )
-                } else {
+                } else if (transferData.contractAddress) {
                     transaction = await this.userOps?.sendTransferAssetsOp(
                         {
                             contractAddress: transferData.contractAddress,

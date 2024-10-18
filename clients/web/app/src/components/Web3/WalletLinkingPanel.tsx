@@ -201,7 +201,7 @@ export function LinkedWallet({
 
     const onWalletClick = () => {
         if (isAbstractAccount) {
-            openPanel('wallet', { wallet: address })
+            openPanel('wallet', { assetSource: address })
         }
     }
 

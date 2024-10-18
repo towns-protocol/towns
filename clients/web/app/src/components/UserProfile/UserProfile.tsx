@@ -476,7 +476,7 @@ const NftProfilePicture = (props: {
     const { onHide, userId, streamId, currentNft } = props
 
     const { isTouch } = useDevice()
-    const { nfts, isFetching } = useNfts(userId)
+    const { nfts, isFetching } = useNfts({ walletAddress: userId })
     const { setNft } = useSetNftProfilePicture()
     const { openPanel } = usePanelActions()
     const [selectedNft, setSelectedNft] = useState<Nft | undefined>(currentNft)

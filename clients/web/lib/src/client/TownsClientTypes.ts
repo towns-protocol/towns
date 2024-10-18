@@ -73,12 +73,29 @@ export type TransactionContext<T> =
           error?: undefined
       }
 
-export type TransferAssetsData = {
-    contractAddress: string
-    recipient: string
-    tokenId: string
-    value?: BigNumberish
-}
+export type TransferAssetsData =
+    | {
+          // transfer nft/token
+          contractAddress: string
+          tokenId: string
+          recipient: string
+          spaceAddress?: never
+          value?: never
+      }
+    | {
+          // treasury withdraw
+          contractAddress?: never
+          spaceAddress: string
+          value?: never
+          recipient: string
+      }
+    | {
+          // transfer eth
+          contractAddress?: never
+          spaceAddress?: never
+          value: BigNumberish
+          recipient: string
+      }
 
 export type TransferAssetTransactionContext = TransactionContext<
     {

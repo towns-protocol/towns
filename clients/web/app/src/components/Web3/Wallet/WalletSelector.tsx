@@ -13,10 +13,11 @@ import { SingleSelectionSelector } from './SingleSelectionSelector'
 const LINK_WALLET = 'Link Wallet' as const
 
 export function WalletSelector(props: {
+    aaAddress?: Address
     fromWallet?: Address
     linkedWallets: string[] | undefined
 }) {
-    const { fromWallet, linkedWallets } = props
+    const { aaAddress, fromWallet, linkedWallets } = props
     const { watch, setValue } = useFormContext<TransferSchema>()
     const recipient = watch('recipient')
 
@@ -47,12 +48,13 @@ export function WalletSelector(props: {
         if (!recipient) {
             return
         }
+        const isAAWallet = aaAddress?.toLowerCase() === recipient.toLowerCase()
 
         return (
             <Stack padding background="level2" rounded="sm" data-testid="selected-wallet">
                 <WalletWithBalance
                     address={recipient}
-                    isAbstractAccount={false}
+                    isAbstractAccount={isAAWallet}
                     isDisabled={false}
                     onRemoveClick={onRemoveClick}
                 />
@@ -70,6 +72,7 @@ export function WalletSelector(props: {
                 optionRenderer={(args) => (
                     <WalletsOption
                         address={args.option.address}
+                        aaAddress={aaAddress}
                         onAddItem={() => onAddItem(args.option.address)}
                     />
                 )}
@@ -121,8 +124,12 @@ function EmptyWalletOption(props: {
     )
 }
 
-function WalletsOption(props: { address: string; onAddItem: (customKey?: string) => void }) {
-    const { address, onAddItem } = props
+function WalletsOption(props: {
+    address: string
+    onAddItem: (customKey?: string) => void
+    aaAddress?: Address
+}) {
+    const { address, onAddItem, aaAddress } = props
     const { openPanel } = usePanelActions()
     const balance = useBalance({
         address: address as Address,
@@ -137,6 +144,8 @@ function WalletsOption(props: { address: string; onAddItem: (customKey?: string)
         }
     }
 
+    const isAAWallet = aaAddress?.toLowerCase() === address.toLowerCase()
+
     return (
         <Stack
             horizontal
@@ -147,7 +156,12 @@ function WalletsOption(props: { address: string; onAddItem: (customKey?: string)
             data-testid={`linked-wallet-option-${address}`}
             onClick={onClick}
         >
-            <Text>{address === LINK_WALLET ? LINK_WALLET : shortAddress(address)}</Text>
+            <Stack gap="sm">
+                {isAAWallet && <Text>Towns Wallet</Text>}
+                <Text color={isAAWallet ? 'gray2' : 'gray1'} size={isAAWallet ? 'xs' : 'md'}>
+                    {address === LINK_WALLET ? LINK_WALLET : shortAddress(address)}
+                </Text>
+            </Stack>
             {address !== LINK_WALLET && (
                 <Stack horizontal gap="sm">
                     {balance.data?.formatted ?? 0} {balance.data?.symbol ?? ''}

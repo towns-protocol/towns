@@ -8,7 +8,7 @@ import { TokenSelectionDisplay } from '@components/Tokens/TokenSelector/TokenSel
 import { useBaseNftsForTransfer } from './useBaseNftsForTransfer'
 
 export function NftsList({ walletAddress }: { walletAddress: Address | undefined }) {
-    const { nfts, isFetching } = useBaseNftsForTransfer(walletAddress)
+    const { nfts, isFetching } = useBaseNftsForTransfer({ walletAddress })
 
     if (isFetching) {
         return <ButtonSpinner />

@@ -1,5 +1,6 @@
 import { useCallback, useContext, useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Address } from 'use-towns-client'
 import { PanelContext } from '@components/Panel/PanelContext'
 import { CHANNEL_INFO_PARAMS_VALUES } from 'routes'
 import { useDevice } from 'hooks/useDevice'
@@ -34,7 +35,7 @@ export const usePanelActions = () => {
                     roleId?: string
                     data?: string
                     roles?: 'new'
-                    wallet?: string
+                    assetSource?: Address
                 } = {},
             ) => {
                 const { stackId = contextStackId, ...restOptions } = options

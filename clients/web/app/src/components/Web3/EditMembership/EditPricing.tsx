@@ -182,7 +182,7 @@ export function EditPricing({
                                     ? 'negative'
                                     : undefined
                             }
-                            onChange={onCostChange}
+                            onChange={(e) => onCostChange(e.target.value)}
                         />
                     ) : null}
                 </RadioCard>

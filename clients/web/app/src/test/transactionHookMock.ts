@@ -67,6 +67,7 @@ type TransactionFnNames =
     | 'deleteRoleTransaction'
     | 'createRoleTransaction'
     | 'updateRoleTransaction'
+    | 'transferAsset'
 
 type UseMockTransactionReturn = {
     isLoading: boolean
@@ -102,6 +103,10 @@ export type UseMockUpdateRoleReturn = UseMockTransactionReturn & {
     updateRoleTransaction: Mock
 }
 
+export type UseMockTransferAssetReturn = UseMockTransactionReturn & {
+    transferAsset: Mock
+}
+
 type UseMockHookReturn =
     | UseMockCreateSpaceReturn
     | UseMockCreateChannelReturn
@@ -109,6 +114,7 @@ type UseMockHookReturn =
     | UseMockDeleteRoleReturn
     | UseMockCreateRoleReturn
     | UseMockUpdateRoleReturn
+    | UseMockTransferAssetReturn
 
 // useCreateSpaceTransaction/useCreateChannelTransaction contains calls to other lib functions whose references aren't replaced by mocking: createSpaceTransaction, waitForCreateSpaceTransaction, etc
 // Workarounds:
@@ -195,6 +201,11 @@ export const mockCreateTransactionWithSpy = (transactionFunctionName: Transactio
                 return {
                     ...txData,
                     updateRoleTransaction: createTransactionMockFn,
+                }
+            case 'transferAsset':
+                return {
+                    ...txData,
+                    transferAsset: createTransactionMockFn,
                 }
             default:
                 break

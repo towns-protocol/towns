@@ -1,9 +1,10 @@
-import { Permission } from '@river-build/web3'
+import { Address, Permission } from '@river-build/web3'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useSearchParams } from 'react-router-dom'
 import { useEvent } from 'react-use-event-hook'
 import {
+    LookupUser,
     TransactionStatus,
     useBannedWalletAddresses,
     useConnectivity,
@@ -23,13 +24,14 @@ import {
 import { isValidStreamId } from '@river-build/sdk'
 import { BigNumberish } from 'ethers'
 import { useGetEmbeddedSigner } from '@towns/privy'
+import { isAddress } from '@components/Web3/Wallet/useGetWalletParam'
 import { UploadImageRequestConfig } from '@components/UploadImage/useOnImageChangeEvent'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { PanelButton } from '@components/Panel/PanelButton'
 import { InteractiveSpaceIcon } from '@components/SpaceIcon'
 import { TownInfoModal } from '@components/TownInfoModal/TownInfoModal'
 import { LargeUploadImageTemplate } from '@components/UploadImage/LargeUploadImageTemplate'
-import { Box, FormRender, Icon, IconButton, Paragraph, Stack, Text } from '@ui'
+import { Box, FormRender, Icon, IconButton, Paragraph, Stack, Text, TextButton } from '@ui'
 import {
     toggleMuteSetting,
     useMuteSettings,
@@ -62,6 +64,7 @@ import { Token } from '@components/Tokens/TokenSelector/tokenSchemas'
 import { StandardToast } from '@components/Notifications/StandardToast'
 import { popupToast } from '@components/Notifications/popupToast'
 import { PrivyWrapper } from 'privy/PrivyProvider'
+import { useBalance } from 'hooks/useBalance'
 import { PublicTownPage } from './PublicTownPage/PublicTownPage'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
 
@@ -404,7 +407,9 @@ export const SpaceInfo = () => {
                     longDescription={longDescription}
                     onEdit={onEditTownInfoClick}
                 />
-                {!!owner && <TownOwnerButton contract={contractSpaceInfo} />}
+                <TownTreasury {...contractSpaceInfo} />
+
+                {!!owner && <TownOwner {...contractSpaceInfo} />}
                 <PanelButton disabled={isSettingNotification} onClick={onShowTownPreview}>
                     <Icon type="search" size="square_sm" color="gray2" />
                     <Paragraph color="default">Preview Town Page</Paragraph>
@@ -509,22 +514,103 @@ export const SpaceInfo = () => {
     )
 }
 
-const TownOwnerButton = (props: {
-    contract: { owner: string; address: string; tokenId: BigNumberish }
+type ContractProps = { owner?: string; address?: string; tokenId?: BigNumberish }
+
+const ContractWrap = (props: {
+    contract: ContractProps
+    label: string
+    onClick?: () => void
+    children: (props: {
+        contract: ContractProps
+        isOwner: boolean
+        ownerUser: LookupUser | undefined
+    }) => JSX.Element
 }) => {
-    const { owner, address, tokenId } = props.contract
+    const { children, label, onClick } = props
+    const { loggedInWalletAddress } = useConnectivity()
     // the owner in the contract is the smart account, we need to get the user id
     const { data: spaceOwnerRiverUserId } = useGetRootKeyFromLinkedWallet({
-        walletAddress: owner,
+        walletAddress: props.contract?.owner,
     })
 
     const ownerUser = useUser(spaceOwnerRiverUserId)
-    const { openPanel } = usePanelActions()
-    const openFounderPanel = useCallback(() => {
-        if (ownerUser) {
-            openPanel(CHANNEL_INFO_PARAMS.PROFILE, { profileId: owner })
+    const isOwner = ownerUser?.userId === loggedInWalletAddress
+
+    const _onClick = useCallback(() => {
+        if (!isOwner) {
+            return
         }
-    }, [openPanel, owner, ownerUser])
+        onClick?.()
+    }, [isOwner, onClick])
+
+    return (
+        <Stack padding="md" gap="sm" background="level2" rounded="sm">
+            <Stack horizontal justifyContent="spaceBetween">
+                <Paragraph strong color="default">
+                    {label}
+                </Paragraph>
+                {isOwner && onClick && <TextButton onClick={_onClick}>Transfer</TextButton>}
+            </Stack>
+            {children({
+                contract: props.contract,
+                ownerUser,
+                isOwner,
+            })}
+        </Stack>
+    )
+}
+
+const TownTreasury = (props: ContractProps) => {
+    const { owner, address, tokenId } = props
+    const { data: balance } = useBalance({ address: address as Address, refetchInterval: 30_000 })
+
+    const { openPanel } = usePanelActions()
+    const openTransferTreasury = useCallback(() => {
+        openPanel(CHANNEL_INFO_PARAMS.TRANSFER_ASSETS, {
+            assetSource: isAddress(address) ? address : undefined,
+        })
+    }, [address, openPanel])
+
+    if (!balance) {
+        return null
+    }
+
+    return (
+        <ContractWrap
+            contract={{
+                address,
+                owner,
+                tokenId,
+            }}
+            label="Town Treasury"
+            onClick={openTransferTreasury}
+        >
+            {() => (
+                <Stack horizontal gap="sm" alignItems="center">
+                    <Text as="span">
+                        {balance.formatted}{' '}
+                        <Text strong display="inline" as="span">
+                            ETH
+                        </Text>
+                    </Text>
+                    <Icon type="base" />
+                </Stack>
+            )}
+        </ContractWrap>
+    )
+}
+
+const TownOwner = (props: ContractProps) => {
+    const { owner, address, tokenId } = props
+    const { openPanel } = usePanelActions()
+    const openFounderPanel = useCallback(
+        (ownerUser: LookupUser) => {
+            if (ownerUser) {
+                openPanel(CHANNEL_INFO_PARAMS.PROFILE, { profileId: owner })
+            }
+        },
+        [openPanel, owner],
+    )
 
     const { spaceDapp } = useTownsClient()
     const ownerContract = spaceDapp?.config.addresses.spaceOwner
@@ -534,34 +620,44 @@ const TownOwnerButton = (props: {
         : undefined
 
     return (
-        <PanelButton height="auto">
-            <Stack gap="sm">
-                <Paragraph strong color="default">
-                    Founder
-                </Paragraph>
-                {ownerUser ? (
+        <ContractWrap
+            contract={{
+                address,
+                owner,
+                tokenId,
+            }}
+            label="Founder"
+        >
+            {({ ownerUser }) =>
+                ownerUser ? (
                     <Box horizontal gap="sm">
-                        <Box centerContent onClick={openFounderPanel}>
+                        <Box
+                            centerContent
+                            cursor="pointer"
+                            onClick={() => openFounderPanel(ownerUser)}
+                        >
                             {ownerUser && <Avatar size="avatar_x4" userId={ownerUser.userId} />}
                         </Box>
                         <Box overflow="hidden" paddingY="xs" gap="sm">
-                            <Box onClick={openFounderPanel}>
+                            <Box cursor="pointer" onClick={() => openFounderPanel(ownerUser)}>
                                 <Paragraph truncate data-testid="owner">
                                     {ownerUser && getPrettyDisplayName(ownerUser)}
                                 </Paragraph>
                             </Box>
-                            <ContractInfoButtons
-                                ownerAddress={owner}
-                                contractAddress={ownerContract ?? address}
-                                nft={openSeaNft}
-                            />
+                            {address && (
+                                <ContractInfoButtons
+                                    ownerAddress={owner}
+                                    contractAddress={ownerContract ?? address}
+                                    nft={openSeaNft}
+                                />
+                            )}
                         </Box>
                     </Box>
                 ) : (
                     <Paragraph color="gray2">{owner ? shortAddress(owner) : ''}</Paragraph>
-                )}
-            </Stack>
-        </PanelButton>
+                )
+            }
+        </ContractWrap>
     )
 }
 

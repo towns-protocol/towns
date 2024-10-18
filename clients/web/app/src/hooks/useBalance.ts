@@ -14,6 +14,7 @@ export function useBalance({
     staleTime,
     gcTime,
     fixedLength = 5,
+    refetchInterval,
 }: {
     address: Address | undefined
     enabled?: boolean
@@ -21,6 +22,7 @@ export function useBalance({
     gcTime?: number
     staleTime?: number
     fixedLength?: number
+    refetchInterval?: number
 }) {
     const { baseProvider } = useTownsContext()
     const queryClient = useQueryClient()
@@ -36,12 +38,16 @@ export function useBalance({
             return
         }
 
+        if (refetchInterval) {
+            return
+        }
+
         baseProvider.on('block', onBlock)
 
         return () => {
             baseProvider.off('block', onBlock)
         }
-    }, [baseProvider, enabled, onBlock, watch])
+    }, [baseProvider, enabled, onBlock, watch, refetchInterval])
 
     return useQuery({
         queryKey: _queryKey,
@@ -67,6 +73,7 @@ export function useBalance({
             }
         },
         enabled: enabled && !!address,
+        refetchInterval: watch ? undefined : refetchInterval,
         staleTime: staleTime ?? 10_000,
         gcTime: gcTime ?? 15_000,
     })
