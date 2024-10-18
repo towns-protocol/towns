@@ -32,6 +32,8 @@ import { useBalance } from 'hooks/useBalance'
 const log = debug('app:DebugBar')
 const anvilKey = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
 
+import { env } from 'utils'
+
 type ModalProps = {
     platform: string
     synced: boolean
@@ -243,7 +245,9 @@ const DebugModal = ({ environment }: ModalProps) => {
                         <Divider />
 
                         <Stack gap justifyContent="end">
-                            {ENVIRONMENTS.filter((env) => env.name !== 'omega').map((env) => (
+                            {ENVIRONMENTS.filter(
+                                (e) => env.VITE_PRIVY_CLIENT_ID || e.name !== 'omega',
+                            ).map((env) => (
                                 <Button
                                     key={env.name}
                                     size="button_xs"
