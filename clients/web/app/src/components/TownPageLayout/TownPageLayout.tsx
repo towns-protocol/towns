@@ -15,7 +15,6 @@ import { ToneName } from 'ui/styles/themes'
 import { getInviteUrl } from 'ui/utils/utils'
 import useCopyToClipboard from 'hooks/useCopyToClipboard'
 import { Entitlements, checkAnyoneCanJoin, useEntitlements } from 'hooks/useEntitlements'
-import { useGetSpaceIdentity } from 'hooks/useSpaceIdentity'
 import { usePublicPageLoginFlow } from 'routes/PublicTownPage/usePublicPageLoginFlow'
 import { useTokensWithMetadata } from 'api/lib/collectionMetadata'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
@@ -50,9 +49,8 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
     const { data: userId } = useGetRootKeyFromLinkedWallet({ walletAddress: owner })
     const [copiedLink, setCopiedLink] = useState(false)
     const [, copy] = useCopyToClipboard()
-    const { data: spaceIdentity } = useGetSpaceIdentity(spaceId)
-    const bio = spaceIdentity?.bio
-    const motto = spaceIdentity?.motto
+    const bio = spaceInfo?.shortDescription
+    const motto = spaceInfo?.longDescription
 
     useEffect(() => {
         if (copiedLink) {

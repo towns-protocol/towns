@@ -1,7 +1,12 @@
 import React, { useCallback } from 'react'
-import { Membership, useMyMembership, useSpaceData, useSpaceMembers } from 'use-towns-client'
+import {
+    Membership,
+    useContractSpaceInfo,
+    useMyMembership,
+    useSpaceData,
+    useSpaceMembers,
+} from 'use-towns-client'
 import { Box, Dot, Icon, IconButton, Paragraph, Stack, Text } from '@ui'
-import { useGetSpaceIdentity } from 'hooks/useSpaceIdentity'
 import { useShowHasUnreadBadgeForOtherSpaces } from 'hooks/useSpaceUnreadsIgnoreMuted'
 import { useMuteSettings } from 'api/lib/notificationSettings'
 import { BugReportButton } from '@components/BugReportButton/BugReportButton'
@@ -16,8 +21,8 @@ type Props = {
 export const TouchLayoutHeader = (props: Props) => {
     const space = useSpaceData()
     const { memberIds } = useSpaceMembers()
-    const { data: spaceIdentity } = useGetSpaceIdentity(space?.id)
     const currentSpaceId = space?.id
+    const { data: spaceInfo } = useContractSpaceInfo(currentSpaceId)
 
     const hasUnread = useShowHasUnreadBadgeForOtherSpaces(currentSpaceId)
 
@@ -74,7 +79,7 @@ export const TouchLayoutHeader = (props: Props) => {
                         </Stack>
                         <Paragraph truncate color="gray2" size="sm">
                             {`${memberIds.length} member${memberIds.length > 1 ? `s` : ``}`}
-                            {spaceIdentity ? ` · ${spaceIdentity.bio}` : ``}
+                            {spaceInfo?.shortDescription ? ` · ${spaceInfo?.shortDescription}` : ``}
                         </Paragraph>
                     </Stack>
                 ) : (
