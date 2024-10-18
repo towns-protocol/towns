@@ -505,36 +505,31 @@ export class StreamsMonitorService {
     }
 
     private async removeStaleStreams(): Promise<void> {
-        const channelIds = (
-            await database.userSettingsChannel.findMany({
-                select: { ChannelId: true },
-                distinct: ['ChannelId'],
-            })
-        ).map((s) => s.ChannelId)
-
-        const staleStreams = (
-            await database.syncedStream.findMany({
-                select: { StreamId: true },
-                where: {
-                    NOT: {
-                        StreamId: {
-                            in: channelIds,
-                        },
-                    },
-                },
-            })
-        ).map((s) => s.StreamId)
+        const staleStreamsRows = (await database.$queryRaw`
+            SELECT "StreamId"
+            FROM "SyncedStream"
+            WHERE "StreamId" NOT IN (
+                SELECT DISTINCT "ChannelId"
+                FROM "UserSettingsChannel"
+            );
+        `) as { StreamId: string }[]
+        const staleStreams = staleStreamsRows.map((s) => s.StreamId)
 
         if (staleStreams.length > 0) {
             logger.info('deleting stale streams from database', {
                 staleStreams,
             })
-            await database.syncedStream.deleteMany({
-                where: {
-                    StreamId: {
-                        in: staleStreams,
-                    },
-                },
+
+            const deletedCount = await database.$executeRaw`
+                DELETE FROM "SyncedStream"
+                WHERE "StreamId" NOT IN (
+                    SELECT DISTINCT "ChannelId"
+                    FROM "UserSettingsChannel"
+                );
+            `
+
+            logger.info('Deleted stale streams from the database', {
+                deletedCount,
             })
 
             logger.info('removing stale streams from sync', { staleStreams })
