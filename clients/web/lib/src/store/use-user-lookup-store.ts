@@ -16,7 +16,9 @@ type UserLookupStore = {
     fallbackUserLookups: Record<string, LookupUser>
     allUsers: Record<string, Record<string, LookupUser>>
     setSpaceUser: (userId: string, user: LookupUser, spaceId?: string) => void
+    setSpaceUsers: (records: { userId: string; user: LookupUser; spaceId?: string }[]) => void
     setChannelUser: (userId: string, user: LookupUser, channelId?: string) => void
+    setChannelUsers: (records: { userId: string; user: LookupUser; channelId?: string }[]) => void
     lookupUser: (userId: string, spaceId?: string, channelId?: string) => LookupUser | undefined
     updateUserEverywhere: (userId: string, updatedUser: (user: LookupUser) => LookupUser) => void
 }
@@ -74,6 +76,94 @@ const userLookupStorage: PersistStorage<UserLookupStoreData> = {
     },
 }
 
+function setSpaceUser(
+    state: UserLookupStore,
+    userId: string,
+    user: LookupUser,
+    spaceId?: string,
+): UserLookupStore {
+    const { allUsers, spaceUsers, fallbackUserLookups } = state
+    if (!spaceId) {
+        return state
+    }
+
+    // avoid mutation if user === stored users in all places
+    // this occurs a lot during initialization while unrolling
+    // streams upon persisted state
+    if (
+        allUsers[userId] &&
+        spaceUsers[spaceId]?.[userId] &&
+        fallbackUserLookups[userId] &&
+        isEqual(allUsers[userId][spaceId], user) &&
+        isEqual(spaceUsers[spaceId][userId], user) &&
+        isEqual(fallbackUserLookups[userId], user)
+    ) {
+        return state
+    }
+
+    const newAllUsers = { ...allUsers }
+    if (!newAllUsers[userId]) {
+        newAllUsers[userId] = {}
+    }
+    newAllUsers[userId] = {
+        ...newAllUsers[userId],
+        [spaceId]: { ...user },
+    }
+
+    const newSpaceUsers = { ...spaceUsers }
+    if (!newSpaceUsers[spaceId]) {
+        newSpaceUsers[spaceId] = {}
+    }
+    newSpaceUsers[spaceId] = {
+        ...newSpaceUsers[spaceId],
+        [userId]: { ...user },
+    }
+
+    const newFallbackUserLookups = { ...fallbackUserLookups }
+    if (
+        typeof user?.username === 'string' &&
+        user.username.length > 0 &&
+        !newFallbackUserLookups[userId]?.username
+    ) {
+        newFallbackUserLookups[userId] = { ...user }
+    }
+
+    return {
+        ...state,
+        allUsers: newAllUsers,
+        spaceUsers: newSpaceUsers,
+        fallbackUserLookups: newFallbackUserLookups,
+    }
+}
+
+function setChannelUser(
+    state: UserLookupStore,
+    userId: string,
+    user: LookupUser,
+    channelId?: string,
+): UserLookupStore {
+    if (!channelId) {
+        return state
+    }
+
+    if (state.channelUsers[channelId] && isEqual(state.channelUsers[channelId], user)) {
+        return state
+    }
+    const newChannelUsers = { ...state.channelUsers }
+    if (!newChannelUsers[channelId]) {
+        newChannelUsers[channelId] = {}
+    }
+    newChannelUsers[channelId] = {
+        ...newChannelUsers[channelId],
+        [userId]: { ...user },
+    }
+
+    return {
+        ...state,
+        channelUsers: newChannelUsers,
+    }
+}
+
 export const useUserLookupStore = createWithEqualityFn<UserLookupStore>()(
     persist(
         (set, get) => ({
@@ -83,85 +173,28 @@ export const useUserLookupStore = createWithEqualityFn<UserLookupStore>()(
             allUsers: {},
             setSpaceUser: (userId, user, spaceId) => {
                 set((state) => {
-                    const { allUsers, spaceUsers, fallbackUserLookups } = state
-                    if (!spaceId) {
-                        return state
+                    return setSpaceUser(state, userId, user, spaceId)
+                })
+            },
+            setSpaceUsers: (records) => {
+                set((state) => {
+                    for (const record of records) {
+                        state = setSpaceUser(state, record.userId, record.user, record.spaceId)
                     }
-
-                    // avoid mutation if user === stored users in all places
-                    // this occurs a lot during initialization while unrolling
-                    // streams upon persisted state
-                    if (
-                        allUsers[userId] &&
-                        spaceUsers[spaceId]?.[userId] &&
-                        fallbackUserLookups[userId] &&
-                        isEqual(allUsers[userId][spaceId], user) &&
-                        isEqual(spaceUsers[spaceId][userId], user) &&
-                        isEqual(fallbackUserLookups[userId], user)
-                    ) {
-                        return state
-                    }
-
-                    const newAllUsers = { ...allUsers }
-                    if (!newAllUsers[userId]) {
-                        newAllUsers[userId] = {}
-                    }
-                    newAllUsers[userId] = {
-                        ...newAllUsers[userId],
-                        [spaceId]: { ...user },
-                    }
-
-                    const newSpaceUsers = { ...spaceUsers }
-                    if (!newSpaceUsers[spaceId]) {
-                        newSpaceUsers[spaceId] = {}
-                    }
-                    newSpaceUsers[spaceId] = {
-                        ...newSpaceUsers[spaceId],
-                        [userId]: { ...user },
-                    }
-
-                    const newFallbackUserLookups = { ...fallbackUserLookups }
-                    if (
-                        typeof user?.username === 'string' &&
-                        user.username.length > 0 &&
-                        !newFallbackUserLookups[userId]?.username
-                    ) {
-                        newFallbackUserLookups[userId] = { ...user }
-                    }
-
-                    return {
-                        ...state,
-                        allUsers: newAllUsers,
-                        spaceUsers: newSpaceUsers,
-                        fallbackUserLookups: newFallbackUserLookups,
-                    }
+                    return state
                 })
             },
             setChannelUser: (userId, user, channelId) => {
                 set((state) => {
-                    if (!channelId) {
-                        return state
+                    return setChannelUser(state, userId, user, channelId)
+                })
+            },
+            setChannelUsers: (records) => {
+                set((state) => {
+                    for (const record of records) {
+                        state = setChannelUser(state, record.userId, record.user, record.channelId)
                     }
-
-                    if (
-                        state.channelUsers[channelId] &&
-                        isEqual(state.channelUsers[channelId], user)
-                    ) {
-                        return state
-                    }
-                    const newChannelUsers = { ...state.channelUsers }
-                    if (!newChannelUsers[channelId]) {
-                        newChannelUsers[channelId] = {}
-                    }
-                    newChannelUsers[channelId] = {
-                        ...newChannelUsers[channelId],
-                        [userId]: { ...user },
-                    }
-
-                    return {
-                        ...state,
-                        channelUsers: newChannelUsers,
-                    }
+                    return state
                 })
             },
             lookupUser: (userId, spaceId, channelId) => {

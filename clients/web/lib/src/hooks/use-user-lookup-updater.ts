@@ -61,7 +61,8 @@ export const useUserLookupUpdater = (
     townsClient?: TownsClient,
 ) => {
     const { ethMainnetRpcUrl } = townsOpts
-    const { setSpaceUser, setChannelUser, updateUserEverywhere } = useUserLookupStore()
+    const { setSpaceUsers, setSpaceUser, setChannelUser, setChannelUsers, updateUserEverywhere } =
+        useUserLookupStore()
     const { getEnsData } = useSpaceEnsLookup({ ethMainnetRpcUrl, townsClient })
 
     const onStreamMetadataUpdated = useCallback(
@@ -112,6 +113,8 @@ export const useUserLookupUpdater = (
                 return
             }
 
+            const spaceRecords: { userId: string; user: LookupUser; spaceId?: string }[] = []
+            const channelRecords: { userId: string; user: LookupUser; channelId?: string }[] = []
             for (const userId of stream.view.getMembers().participants() ?? []) {
                 const info = metadata.userInfo(userId)
                 if (isUserInfo(info)) {
@@ -123,13 +126,17 @@ export const useUserLookupUpdater = (
                         const lookupUser = createUserLookup(userId, info, ens)
                         switch (contentKind) {
                             case SnapshotCaseTypeValues.spaceContent:
-                                setSpaceUser(userId, lookupUser, streamId)
+                                spaceRecords.push({ userId, user: lookupUser, spaceId: streamId })
                                 break
 
                             case SnapshotCaseTypeValues.dmChannelContent:
                             case SnapshotCaseTypeValues.gdmChannelContent:
                                 if (meaningfulInfo(info)) {
-                                    setChannelUser(userId, lookupUser, streamId)
+                                    channelRecords.push({
+                                        userId,
+                                        user: lookupUser,
+                                        channelId: streamId,
+                                    })
                                 }
                                 break
                         }
@@ -137,8 +144,14 @@ export const useUserLookupUpdater = (
                     void update()
                 }
             }
+            if (spaceRecords.length > 0) {
+                setSpaceUsers(spaceRecords)
+            }
+            if (channelRecords.length > 0) {
+                setChannelUsers(channelRecords)
+            }
         },
-        [client?.streams, getEnsData, setChannelUser, setSpaceUser],
+        [client?.streams, getEnsData, setChannelUsers, setSpaceUsers],
     )
 
     const onWalletUnlinked = useCallback(
