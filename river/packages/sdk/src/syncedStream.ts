@@ -9,7 +9,7 @@ import { StreamEvents } from './streamEvents'
 import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from './id'
 import { ISyncedStream } from './syncedStreamsLoop'
 
-const CACHED_SCROLLBACK_COUNT = 3
+const MAX_CACHED_SCROLLBACK_COUNT = 3
 export class SyncedStream extends Stream implements ISyncedStream {
     log: DLogger
     isUpToDate = false
@@ -46,10 +46,18 @@ export class SyncedStream extends Stream implements ISyncedStream {
             return false
         }
 
-        const prependedMiniblocks = await this.cachedScrollback(
-            miniblocks[0].header.prevSnapshotMiniblockNum,
-            miniblocks[0].header.miniblockNum,
-        )
+        const isChannelStream =
+            isChannelStreamId(this.streamId) ||
+            isDMChannelStreamId(this.streamId) ||
+            isGDMChannelStreamId(this.streamId)
+        const prependedMiniblocks = isChannelStream
+            ? hasTopLevelRenderableEvent(miniblocks)
+                ? []
+                : await this.cachedScrollback(
+                      miniblocks[0].header.prevSnapshotMiniblockNum,
+                      miniblocks[0].header.miniblockNum,
+                  )
+            : []
 
         const snapshotEventIds = eventIdsFromSnapshot(snapshot)
         const eventIds = miniblocks.flatMap((mb) => mb.events.map((e) => e.hashStr))
@@ -210,7 +218,7 @@ export class SyncedStream extends Stream implements ISyncedStream {
             return []
         }
         let miniblocks: ParsedMiniblock[] = []
-        for (let i = 0; i < CACHED_SCROLLBACK_COUNT; i++) {
+        for (let i = 0; i < MAX_CACHED_SCROLLBACK_COUNT; i++) {
             if (toExclusive <= 0n) {
                 break
             }
@@ -223,6 +231,9 @@ export class SyncedStream extends Stream implements ISyncedStream {
                 miniblocks = [...result, ...miniblocks]
                 fromInclusive = result[0].header.prevSnapshotMiniblockNum
                 toExclusive = result[0].header.miniblockNum
+                if (hasTopLevelRenderableEvent(miniblocks)) {
+                    break
+                }
             } else {
                 break
             }
@@ -260,4 +271,30 @@ function eventIdsFromSnapshot(snapshot: Snapshot): string[] {
         default:
             return [...usernameEventIds, ...displayNameEventIds]
     }
+}
+
+function hasTopLevelRenderableEvent(miniblocks: ParsedMiniblock[]): boolean {
+    for (const mb of miniblocks) {
+        if (topLevelRenderableEventInMiniblock(mb)) {
+            return true
+        }
+    }
+    return false
+}
+
+function topLevelRenderableEventInMiniblock(miniblock: ParsedMiniblock): boolean {
+    for (const e of miniblock.events) {
+        switch (e.event.payload.case) {
+            case 'channelPayload':
+            case 'gdmChannelPayload':
+            case 'dmChannelPayload':
+                switch (e.event.payload.value.content.case) {
+                    case 'message':
+                        if (!e.event.payload.value.content.value.refEventId) {
+                            return true
+                        }
+                }
+        }
+    }
+    return false
 }

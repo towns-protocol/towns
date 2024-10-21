@@ -23,16 +23,16 @@ export const router = createBrowserRouter([
             {
                 path: '/t',
                 lazy: async () => {
-                    const { SelectSpaceRoute } = await import('./t/spaces')
+                    const { DashboardRoute } = await import('./t/dashboard')
                     return {
-                        Component: SelectSpaceRoute,
+                        Component: DashboardRoute,
                     }
                 },
             },
             {
                 path: '/t/:spaceId',
                 lazy: async () => {
-                    const { SelectChannelRoute } = await import('./t/channels')
+                    const { SelectChannelRoute } = await import('./t/space-channels')
                     return {
                         Component: SelectChannelRoute,
                     }
@@ -41,9 +41,29 @@ export const router = createBrowserRouter([
                     {
                         path: '/t/:spaceId/:channelId',
                         lazy: async () => {
-                            const { TimelineRoute } = await import('./t/timeline')
+                            const { ChannelTimelineRoute } = await import('./t/channel-timeline')
                             return {
-                                Component: TimelineRoute,
+                                Component: ChannelTimelineRoute,
+                            }
+                        },
+                    },
+                ],
+            },
+            {
+                path: '/m',
+                lazy: async () => {
+                    const { DashboardRoute } = await import('./t/dashboard')
+                    return {
+                        Component: DashboardRoute,
+                    }
+                },
+                children: [
+                    {
+                        path: '/m/:gdmStreamId',
+                        lazy: async () => {
+                            const { GdmTimelineRoute } = await import('./m/gdm-timeline')
+                            return {
+                                Component: GdmTimelineRoute,
                             }
                         },
                     },

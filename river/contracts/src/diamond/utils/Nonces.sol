@@ -58,9 +58,8 @@ library NoncesStorage {
   }
 
   function layout() internal pure returns (Layout storage l) {
-    bytes32 position = STORAGE_SLOT;
     assembly {
-      l.slot := position
+      l.slot := STORAGE_SLOT
     }
   }
 }

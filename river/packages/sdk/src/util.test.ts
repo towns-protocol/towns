@@ -826,7 +826,7 @@ export async function waitForSyncStreamsMessage(
         if (res.syncOp === SyncOp.SYNC_UPDATE) {
             const stream = res.stream
             if (stream) {
-                const env = await unpackStreamEnvelopes(stream)
+                const env = await unpackStreamEnvelopes(stream, undefined)
                 for (const e of env) {
                     if (e.event.payload.case === 'channelPayload') {
                         const p = e.event.payload.value.content

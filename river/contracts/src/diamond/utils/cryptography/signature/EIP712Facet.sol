@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IERC5267} from "../IERC5267.sol";
+import {IERC5267} from "@openzeppelin/contracts/interfaces/IERC5267.sol";
 
 // libraries
 import {EIP712Storage} from "./EIP712Storage.sol";
@@ -20,6 +20,7 @@ contract EIP712Facet is IERC5267, EIP712Base, Nonces, Facet {
     __EIP712_init_unchained(name, version);
   }
 
+  /// @inheritdoc IERC5267
   function eip712Domain()
     public
     view

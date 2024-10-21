@@ -16,6 +16,7 @@ const paramsSchema = z.object({
 		.refine(isValidEthereumAddress, {
 			message: 'Invalid spaceAddress format',
 		}),
+	eventId: z.string().optional(),
 })
 
 const CACHE_CONTROL = {
@@ -40,8 +41,8 @@ export async function fetchSpaceImage(request: FastifyRequest, reply: FastifyRep
 			.send({ error: 'Bad Request', message: errorMessage })
 	}
 
-	const { spaceAddress } = parseResult.data
-	logger.info({ spaceAddress }, 'Fetching space image')
+	const { spaceAddress, eventId } = parseResult.data
+	logger.info({ spaceAddress, eventId }, 'Fetching space image')
 
 	let stream: StreamStateView
 	try {

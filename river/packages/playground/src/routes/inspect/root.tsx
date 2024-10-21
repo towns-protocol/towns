@@ -11,7 +11,7 @@ import {
     isValidStreamId,
 } from '@river-build/sdk'
 import { useMemo, useState } from 'react'
-import { useRiverConnection, useSyncAgent } from '@river-build/react-sdk'
+import { useAgentConnection, useSyncAgent } from '@river-build/react-sdk'
 import { useQuery } from '@tanstack/react-query'
 import { SpaceAddressFromSpaceId } from '@river-build/web3'
 import { Input } from '@/components/ui/input'
@@ -128,7 +128,7 @@ const StreamInfo = ({ streamId }: { streamId: string }) => {
 }
 
 const SpaceInfo = ({ spaceId }: { spaceId: string }) => {
-    const { env } = useRiverConnection()
+    const { env } = useAgentConnection()
     const sync = useSyncAgent()
 
     const {

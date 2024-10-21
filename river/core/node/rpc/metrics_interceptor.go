@@ -7,11 +7,12 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+
 	"github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/infra"
 	"github.com/river-build/river/core/node/shared"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
 )
 
 type streamIdProvider interface {
@@ -21,10 +22,10 @@ type streamIdProvider interface {
 type metricsInterceptor struct {
 	rpcDuration             *prometheus.HistogramVec
 	unaryInflight           *prometheus.GaugeVec
-	unaryStatusCode         *prometheus.GaugeVec
+	unaryStatusCode         *prometheus.CounterVec
 	openClientStreams       *prometheus.GaugeVec
 	openServerStreams       *prometheus.GaugeVec
-	serverStreamsStatusCode *prometheus.GaugeVec
+	serverStreamsStatusCode *prometheus.CounterVec
 }
 
 func (s *Service) NewMetricsInterceptor() connect.Interceptor {
@@ -35,11 +36,29 @@ func (s *Service) NewMetricsInterceptor() connect.Interceptor {
 			infra.DefaultDurationBucketsSeconds,
 			"method",
 		),
-		unaryInflight:           s.metrics.NewGaugeVecEx("grpc_unary_inflight", "gRPC unary calls in flight", "method"),
-		unaryStatusCode:         s.metrics.NewGaugeVecEx("grpc_unary_status_code", "gRPC unary status code", "method", "status"),
-		openClientStreams:       s.metrics.NewGaugeVecEx("grpc_open_client_streams", "gRPC open client streams", "method"),
-		openServerStreams:       s.metrics.NewGaugeVecEx("grpc_open_server_streams", "gRPC open server streams", "method"),
-		serverStreamsStatusCode: s.metrics.NewGaugeVecEx("grpc_server_stream_status_code", "gRPC server stream status code", "method", "status"),
+		unaryInflight: s.metrics.NewGaugeVecEx("grpc_unary_inflight", "gRPC unary calls in flight", "method"),
+		unaryStatusCode: s.metrics.NewCounterVecEx(
+			"grpc_unary_status_code_counter",
+			"gRPC unary status code",
+			"method",
+			"status",
+		),
+		openClientStreams: s.metrics.NewGaugeVecEx(
+			"grpc_open_client_streams",
+			"gRPC open client streams",
+			"method",
+		),
+		openServerStreams: s.metrics.NewGaugeVecEx(
+			"grpc_open_server_streams",
+			"gRPC open server streams",
+			"method",
+		),
+		serverStreamsStatusCode: s.metrics.NewCounterVecEx(
+			"grpc_server_stream_status_code_counter",
+			"gRPC server stream status code",
+			"method",
+			"status",
+		),
 	}
 }
 

@@ -1,7 +1,7 @@
 import {
+    useAgentConnection,
     useRiver,
     useRiverAuthStatus,
-    useRiverConnection,
     useSyncAgent,
 } from '@river-build/react-sdk'
 import { useLocation, useParams } from 'react-router-dom'
@@ -15,7 +15,7 @@ import { UpdateMetadata } from '../form/metadata/update'
 export const LayoutHeader = () => {
     const location = useLocation()
     const isAuthRoute = location.pathname.startsWith('/auth')
-    const { isConnected } = useRiverConnection()
+    const { isAgentConnected } = useAgentConnection()
 
     return (
         <header className="flex justify-between border-b border-zinc-200 px-4 py-3">
@@ -25,7 +25,7 @@ export const LayoutHeader = () => {
             </div>
             <div className="flex items-center gap-6">
                 {!isAuthRoute && <RiverEnvSwitcher />}
-                {isConnected && <Profile />}
+                {isAgentConnected && <Profile />}
             </div>
         </header>
     )

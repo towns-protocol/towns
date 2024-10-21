@@ -32,7 +32,7 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
     readonly streamId: string
     readonly spaceChannelsMetadata = new Map<string, ParsedChannelProperties>()
     private spaceImage: ChunkedMedia | undefined
-    private encryptedSpaceImage: EncryptedData | undefined
+    public encryptedSpaceImage: { eventId: string; data: EncryptedData } | undefined
     private decryptionInProgress:
         | { encryptedData: EncryptedData; promise: Promise<ChunkedMedia | undefined> }
         | undefined
@@ -55,7 +55,7 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
         }
 
         if (content.spaceImage?.data) {
-            this.encryptedSpaceImage = content.spaceImage.data
+            this.encryptedSpaceImage = { data: content.spaceImage.data, eventId: eventHash }
         }
     }
 
@@ -125,7 +125,7 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
                 )
                 break
             case 'spaceImage':
-                this.encryptedSpaceImage = payload.content.value
+                this.encryptedSpaceImage = { data: payload.content.value, eventId: event.hashStr }
                 stateEmitter?.emit('spaceImageUpdated', this.streamId)
                 break
             case undefined:
@@ -138,7 +138,7 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
     public async getSpaceImage(): Promise<ChunkedMedia | undefined> {
         // if we have an encrypted space image, decrypt it
         if (this.encryptedSpaceImage) {
-            const encryptedData = this.encryptedSpaceImage
+            const encryptedData = this.encryptedSpaceImage?.data
             this.encryptedSpaceImage = undefined
             this.decryptionInProgress = {
                 promise: this.decryptSpaceImage(encryptedData),

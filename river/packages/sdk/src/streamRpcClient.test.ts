@@ -636,7 +636,7 @@ describe('streamRpcClient', () => {
         const channel = await alice.getStream({ streamId: channelId })
         let messageCount = 0
         if (!channel.stream) throw new Error('channel stream not found')
-        const envelopes = await unpackStreamEnvelopes(channel.stream)
+        const envelopes = await unpackStreamEnvelopes(channel.stream, undefined)
         envelopes.forEach((e) => {
             const p = e.event.payload
             if (p?.case === 'channelPayload' && p.value.content.case === 'message') {
@@ -1035,7 +1035,7 @@ const waitForEvent = async (
             stream?.nextSyncCookie?.streamId &&
             bin_equal(stream.nextSyncCookie.streamId, streamIdToBytes(streamId))
         ) {
-            const events = await unpackStreamEnvelopes(stream)
+            const events = await unpackStreamEnvelopes(stream, undefined)
             for (const e of events) {
                 if (matcher(e)) {
                     return stream.nextSyncCookie

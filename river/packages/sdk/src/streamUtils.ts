@@ -16,6 +16,7 @@ export function persistedEventToParsedEvent(event: PersistedEvent): ParsedEvent 
         event: event.event,
         hash: event.hash,
         hashStr: bin_toHexString(event.hash),
+        signature: event.signature,
         prevMiniblockHashStr:
             event.prevMiniblockHashStr.length > 0 ? event.prevMiniblockHashStr : undefined,
         creatorUserId: event.creatorUserId,
@@ -47,6 +48,7 @@ function parsedEventToPersistedEvent(event: ParsedEvent) {
     return new PersistedEvent({
         event: event.event,
         hash: event.hash,
+        signature: event.signature,
         prevMiniblockHashStr: event.prevMiniblockHashStr,
         creatorUserId: event.creatorUserId,
     })

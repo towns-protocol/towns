@@ -7,7 +7,7 @@ import {
 } from 'wagmi'
 
 import { foundry } from 'viem/chains'
-import { useRiverConnection } from '@river-build/react-sdk'
+import { useAgentConnection } from '@river-build/react-sdk'
 import { makeRiverConfig } from '@river-build/sdk'
 import { privateKeyToAccount } from 'viem/accounts'
 import { parseEther } from 'viem'
@@ -38,28 +38,32 @@ const environments = getWeb3Deployments().map((id) => ({
 export type Env = (typeof environments)[number]
 
 export const RiverEnvSwitcher = () => {
-    const { isConnected } = useRiverConnection()
+    const { isAgentConnected } = useAgentConnection()
+    const [open, setOpen] = useState(false)
 
     return (
-        <Dialog>
+        <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button variant="outline">
-                    {isConnected ? 'Switch environment or disconnect' : `Connect to River`}
+                <Button variant="outline" onClick={() => setOpen(true)}>
+                    {isAgentConnected ? 'Switch environment or disconnect' : `Connect to River`}
                 </Button>
             </DialogTrigger>
-            <RiverEnvSwitcherContent allowBearerToken />
+            <RiverEnvSwitcherContent allowBearerToken onClose={() => setOpen(false)} />
         </Dialog>
     )
 }
 
-export const RiverEnvSwitcherContent = (props: { allowBearerToken: boolean }) => {
+export const RiverEnvSwitcherContent = (props: {
+    allowBearerToken: boolean
+    onClose: () => void
+}) => {
     const {
         connect,
         connectUsingBearerToken,
         disconnect,
-        isConnected,
+        isAgentConnected,
         env: currentEnv,
-    } = useRiverConnection()
+    } = useAgentConnection()
     const { switchNetwork } = useSwitchNetwork()
     const { disconnect: disconnectWallet } = useDisconnect()
     const signer = useEthersSigner()
@@ -69,9 +73,11 @@ export const RiverEnvSwitcherContent = (props: { allowBearerToken: boolean }) =>
     return (
         <DialogContent className="gap-6">
             <DialogHeader>
-                <DialogTitle>{isConnected ? 'Switch environment' : 'Connect to River'}</DialogTitle>
+                <DialogTitle>
+                    {isAgentConnected ? 'Switch environment' : 'Connect to River'}
+                </DialogTitle>
                 <DialogDescription>
-                    {isConnected
+                    {isAgentConnected
                         ? 'Select the environment you want to switch to. You can also disconnect.'
                         : 'Select the environment you want to connect to.'}
                 </DialogDescription>
@@ -94,7 +100,7 @@ export const RiverEnvSwitcherContent = (props: { allowBearerToken: boolean }) =>
                         <DialogClose asChild key={id}>
                             <Button
                                 variant="outline"
-                                disabled={currentEnv === id && isConnected}
+                                disabled={currentEnv === id && isAgentConnected}
                                 onClick={async () => {
                                     const riverConfig = makeRiverConfig(id)
                                     if (props.allowBearerToken) {
@@ -121,16 +127,17 @@ export const RiverEnvSwitcherContent = (props: { allowBearerToken: boolean }) =>
                                             }
                                         })
                                     }
-                                    navigate('/t')
+                                    navigate('/')
+                                    props.onClose()
                                 }}
                             >
-                                {name} {isConnected && currentEnv === id && '(connected)'}
+                                {name} {isAgentConnected && currentEnv === id && '(connected)'}
                             </Button>
                         </DialogClose>
                     ))}
                     {currentEnv === 'local_multi' && <FundWallet />}
                 </div>
-                {isConnected && (
+                {isAgentConnected && (
                     <Button
                         className="w-full"
                         variant="destructive"
@@ -138,6 +145,8 @@ export const RiverEnvSwitcherContent = (props: { allowBearerToken: boolean }) =>
                             disconnect()
                             disconnectWallet()
                             deleteAuth()
+                            navigate('/')
+                            props.onClose()
                         }}
                     >
                         Disconnect

@@ -1,12 +1,12 @@
-import { useRiverConnection } from '@river-build/react-sdk'
+import { useAgentConnection } from '@river-build/react-sdk'
 import { Navigate } from 'react-router-dom'
+import { DashboardRoute } from './t/dashboard'
 
 export const IndexRoute = () => {
-    const { isConnected: isRiverConnected } = useRiverConnection()
+    const { isAgentConnected } = useAgentConnection()
 
-    if (isRiverConnected) {
-        return <Navigate to="/t" />
-    } else {
-        return <Navigate to="/auth" />
+    if (isAgentConnected) {
+        return <DashboardRoute />
     }
+    return <Navigate to="/auth" />
 }

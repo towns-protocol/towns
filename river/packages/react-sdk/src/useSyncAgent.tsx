@@ -6,7 +6,7 @@ export const useSyncAgent = () => {
 
     if (!river?.syncAgent) {
         throw new Error(
-            'No SyncAgent set, use RiverSyncProvider to set one or use useRiverConnection to check if connected',
+            'No SyncAgent set, use RiverSyncProvider to set one or use useAgentConnection to check if connected',
         )
     }
 

@@ -2,7 +2,7 @@ import debug from 'debug'
 import { DLogger, check, dlog, dlogError } from '@river-build/dlog'
 import { hasElements, isDefined } from './check'
 import { StreamRpcClient } from './makeStreamRpcClient'
-import { unpackMiniblock, unpackStream } from './sign'
+import { UnpackEnvelopeOpts, unpackMiniblock, unpackStream } from './sign'
 import { StreamStateView } from './streamStateView'
 import { ParsedMiniblock, StreamTimelineEvent } from './types'
 import { streamIdAsString, streamIdAsBytes, userIdFromAddress, makeUserStreamId } from './id'
@@ -15,11 +15,20 @@ export class UnauthenticatedClient {
     private readonly logCall: DLogger
     private readonly logEmitFromClient: DLogger
     private readonly logError: DLogger
+    private readonly unpackEnvelopeOpts: UnpackEnvelopeOpts
 
     private readonly userId = 'unauthenticatedClientUser'
     private getScrollbackRequests: Map<string, ReturnType<typeof this.scrollback>> = new Map()
 
-    constructor(rpcClient: StreamRpcClient, logNamespaceFilter?: string) {
+    constructor(
+        rpcClient: StreamRpcClient,
+        logNamespaceFilter?: string,
+        // this client is used for viewing public streams, disable signature and hash validation to make it as fast as possible
+        opts: UnpackEnvelopeOpts = {
+            disableSignatureValidation: true,
+            disableHashValidation: true,
+        },
+    ) {
         if (logNamespaceFilter) {
             debug.enable(logNamespaceFilter)
         }
@@ -31,6 +40,8 @@ export class UnauthenticatedClient {
         this.logCall = dlog('csb:cl:call').extend(shortId)
         this.logEmitFromClient = dlog('csb:cl:emit').extend(shortId)
         this.logError = dlogError('csb:cl:error').extend(shortId)
+
+        this.unpackEnvelopeOpts = opts
 
         this.logCall('new UnauthenticatedClient')
     }
@@ -65,6 +76,7 @@ export class UnauthenticatedClient {
             )
             const { streamAndCookie, snapshot, prevSnapshotMiniblockNum } = await unpackStream(
                 response.stream,
+                this.unpackEnvelopeOpts,
             )
             const streamView = new StreamStateView(this.userId, streamIdAsString(streamId))
 
@@ -200,7 +212,7 @@ export class UnauthenticatedClient {
 
         const unpackedMiniblocks: ParsedMiniblock[] = []
         for (const miniblock of response.miniblocks) {
-            const unpackedMiniblock = await unpackMiniblock(miniblock, { disableChecks: true })
+            const unpackedMiniblock = await unpackMiniblock(miniblock, this.unpackEnvelopeOpts)
             unpackedMiniblocks.push(unpackedMiniblock)
         }
         return {

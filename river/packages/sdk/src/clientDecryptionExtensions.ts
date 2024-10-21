@@ -130,7 +130,7 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         const multiplier = userId === this.userId ? 0.5 : 1
         const stream = this.client.stream(streamId)
         check(isDefined(stream), 'stream not found')
-        const numMembers = stream.view.getMembers().participants().size
+        const numMembers = stream.view.getMembers().joinedParticipants().size
         const maxWaitTimeSeconds = Math.max(5, Math.min(30, numMembers))
         const waitTime = maxWaitTimeSeconds * 1000 * Math.random() // this could be much better
         this.log.debug('getRespondDelayMSForKeySolicitation', { streamId, userId, waitTime })

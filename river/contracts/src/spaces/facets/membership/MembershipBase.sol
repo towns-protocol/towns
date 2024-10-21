@@ -50,22 +50,34 @@ abstract contract MembershipBase is IMembershipBase {
   function _collectProtocolFee(
     address buyer,
     uint256 membershipPrice
-  ) internal returns (uint256 protocolFeeBps) {
+  ) internal returns (uint256 protocolFee) {
     MembershipStorage.Layout storage ds = MembershipStorage.layout();
     IPlatformRequirements platform = IPlatformRequirements(ds.spaceFactory);
 
     address currency = ds.membershipCurrency;
     address platformRecipient = platform.getFeeRecipient();
-    uint16 bpsFee = platform.getMembershipBps();
-    protocolFeeBps = BasisPoints.calculate(membershipPrice, bpsFee);
+    protocolFee = _getProtocolFee(membershipPrice);
 
     //transfer the platform fee to the platform fee recipient
     CurrencyTransfer.transferCurrency(
       currency,
       buyer, // from
       platformRecipient, // to
-      protocolFeeBps
+      protocolFee
     );
+  }
+
+  function _getProtocolFee(
+    uint256 membershipPrice
+  ) internal view returns (uint256) {
+    IPlatformRequirements platform = IPlatformRequirements(_getSpaceFactory());
+
+    uint256 minPrice = platform.getMembershipMinPrice();
+    uint256 fixedFee = platform.getMembershipFee();
+
+    if (membershipPrice < minPrice) return fixedFee;
+
+    return BasisPoints.calculate(membershipPrice, platform.getMembershipBps());
   }
 
   function _transferIn(
@@ -130,9 +142,9 @@ abstract contract MembershipBase is IMembershipBase {
   //                           Pricing
   // =============================================================
   function _verifyPrice(uint256 newPrice) internal view {
-    uint256 minPrice = IPlatformRequirements(_getSpaceFactory())
-      .getMembershipMinPrice();
-    if (newPrice < minPrice) revert Membership__PriceTooLow();
+    uint256 minFee = IPlatformRequirements(_getSpaceFactory())
+      .getMembershipFee();
+    if (newPrice < minFee) revert Membership__PriceTooLow();
   }
 
   /// @dev Makes it virtual to allow other pricing strategies

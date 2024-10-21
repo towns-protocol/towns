@@ -147,6 +147,7 @@ describe('syncAgents.test.ts', () => {
         await Promise.all([bob.start(), alice.start(), charlie.start()])
         const { streamId } = await bob.gdms.createGDM([alice.userId, charlie.userId])
         const bobGdm = bob.gdms.getGdm(streamId)
+        await waitFor(() => expect(bobGdm.members.data.initialized).toBe(true))
         expect(bobGdm.members.data.userIds).toEqual(
             expect.arrayContaining([bob.userId, alice.userId, charlie.userId]),
         )

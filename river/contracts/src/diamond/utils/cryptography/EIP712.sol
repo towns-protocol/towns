@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IERC5267} from "./IERC5267.sol";
+import {IERC5267} from "@openzeppelin/contracts/interfaces/IERC5267.sol";
 
 // libraries
 import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";

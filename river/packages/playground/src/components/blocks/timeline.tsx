@@ -1,37 +1,49 @@
-import {
-    useDisplayName,
-    useSendMessage,
-    useSyncAgent,
-    useTimeline,
-    useUsername,
-} from '@river-build/react-sdk'
+import { useDisplayName, useSendMessage, useSyncAgent, useUsername } from '@river-build/react-sdk'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import type { TimelineEvent } from '@river-build/sdk'
 import { useMemo } from 'react'
-import { useCurrentSpaceId } from '@/hooks/current-space'
-import { useCurrentChannelId } from '@/hooks/current-channel'
 import { cn } from '@/utils'
 import { Form, FormControl, FormField, FormItem, FormMessage } from '../ui/form'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { ScrollArea } from '../ui/scroll-area'
 
-export const Timeline = () => {
-    const spaceId = useCurrentSpaceId()
-    const channelId = useCurrentChannelId()
-    const { data: timeline } = useTimeline(spaceId, channelId)
+type GdmOrChannel =
+    | {
+          type: 'gdm'
+          streamId: string
+      }
+    | {
+          type: 'channel'
+          spaceId: string
+          channelId: string
+      }
+
+type TimelineProps =
+    | {
+          type: 'gdm'
+          events: TimelineEvent[]
+          streamId: string
+      }
+    | {
+          type: 'channel'
+          events: TimelineEvent[]
+          spaceId: string
+          channelId: string
+      }
+export const Timeline = (props: TimelineProps) => {
     return (
         <div className="grid grid-rows-[auto,1fr] gap-2">
             <ScrollArea className="h-[calc(100dvh-172px)]">
                 <div className="flex flex-col gap-1.5">
-                    {timeline.map((event) => (
-                        <Message key={event.eventId} event={event} />
+                    {props.events.map((event) => (
+                        <Message key={event.eventId} {...props} event={event} />
                     ))}
                 </div>
             </ScrollArea>
-            <SendMessage />
+            <SendMessage {...props} />
         </div>
     )
 }
@@ -40,15 +52,12 @@ const formSchema = z.object({
     message: z.string(),
 })
 
-export const SendMessage = () => {
-    const spaceId = useCurrentSpaceId()
-    const channelId = useCurrentChannelId()
-    const { sendMessage, isPending } = useSendMessage(spaceId, channelId)
+export const SendMessage = (props: GdmOrChannel) => {
+    const { sendMessage, isPending } = useSendMessage(props)
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: { message: '' },
     })
-
     return (
         <Form {...form}>
             <form
@@ -75,13 +84,14 @@ export const SendMessage = () => {
     )
 }
 
-const Message = ({ event }: { event: TimelineEvent }) => {
+const Message = ({ event, ...props }: { event: TimelineEvent } & GdmOrChannel) => {
     const sync = useSyncAgent()
-    const spaceId = useCurrentSpaceId()
-    const member = useMemo(
-        () => sync.spaces.getSpace(spaceId).members.get(event.creatorUserId),
-        [sync, spaceId, event.creatorUserId],
-    )
+    const member = useMemo(() => {
+        if (props.type === 'gdm') {
+            return sync.gdms.getGdm(props.streamId).members.get(event.creatorUserId)
+        }
+        return sync.spaces.getSpace(props.spaceId).members.get(event.creatorUserId)
+    }, [props, sync.gdms, sync.spaces, event.creatorUserId])
     const { username } = useUsername(member)
     const { displayName } = useDisplayName(member)
     const prettyDisplayName = displayName || username

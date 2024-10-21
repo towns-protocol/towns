@@ -66,7 +66,7 @@ describe('syncStreams', () => {
                 events,
                 streamId,
             })
-            const response = await unpackStream(streamResponse.stream)
+            const response = await unpackStream(streamResponse.stream, undefined)
             return response
         }
 

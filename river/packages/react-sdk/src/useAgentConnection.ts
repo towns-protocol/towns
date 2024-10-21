@@ -4,8 +4,8 @@ import type { ethers } from 'ethers'
 import { connectRiverWithBearerToken, signAndConnect } from './connectRiver'
 import { useRiverSync } from './internals/useRiverSync'
 
-export const useRiverConnection = () => {
-    const [isConnecting, setConnecting] = useState(false)
+export const useAgentConnection = () => {
+    const [isAgentConnecting, setConnecting] = useState(false)
     const river = useRiverSync()
 
     const connect = useCallback(
@@ -43,14 +43,14 @@ export const useRiverConnection = () => {
 
     const disconnect = useCallback(() => river?.setSyncAgent(undefined), [river])
 
-    const isConnected = useMemo(() => !!river?.syncAgent, [river])
+    const isAgentConnected = useMemo(() => !!river?.syncAgent, [river])
 
     return {
         connect,
         connectUsingBearerToken,
         disconnect,
-        isConnecting,
-        isConnected,
+        isAgentConnecting,
+        isAgentConnected,
         env: river?.syncAgent?.config.riverConfig.environmentId,
     }
 }

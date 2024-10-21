@@ -55,6 +55,7 @@ export interface ParsedEvent {
     event: StreamEvent
     hash: Uint8Array
     hashStr: string
+    signature: Uint8Array | undefined
     prevMiniblockHashStr?: string
     creatorUserId: string
 }

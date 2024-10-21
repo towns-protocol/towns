@@ -132,7 +132,11 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
 
         snapshot.members?.pins.forEach((snappedPin) => {
             if (snappedPin.pin?.event) {
-                const parsedEvent = makeParsedEvent(snappedPin.pin.event, snappedPin.pin.eventId)
+                const parsedEvent = makeParsedEvent(
+                    snappedPin.pin.event,
+                    snappedPin.pin.eventId,
+                    undefined,
+                )
                 const remoteEvent = makeRemoteTimelineEvent({ parsedEvent, eventNum: 0n })
                 const cleartext = cleartexts?.[remoteEvent.hashStr]
                 this.addPin(
@@ -281,7 +285,7 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                 {
                     const pin = payload.content.value
                     check(isDefined(pin.event), 'invalid pin event')
-                    const parsedEvent = makeParsedEvent(pin.event, pin.eventId)
+                    const parsedEvent = makeParsedEvent(pin.event, pin.eventId, undefined)
                     const remoteEvent = makeRemoteTimelineEvent({ parsedEvent, eventNum: 0n })
                     this.addPin(
                         event.creatorUserId,

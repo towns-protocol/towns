@@ -1,5 +1,7 @@
 import { useAccount, useConnect } from 'wagmi'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useAgentConnection } from '@river-build/react-sdk'
+import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { RiverEnvSwitcherContent } from '@/components/dialog/env-switcher'
 import { Dialog } from '@/components/ui/dialog'
@@ -9,6 +11,14 @@ export const AuthRoute = () => {
         state: false,
         from: 'wallet',
     })
+
+    const { isAgentConnected } = useAgentConnection()
+    const navigate = useNavigate()
+    useEffect(() => {
+        if (isAgentConnected) {
+            navigate('/')
+        }
+    }, [isAgentConnected, navigate])
 
     return (
         <div className="flex flex-col items-center gap-6">
@@ -27,7 +37,10 @@ export const AuthRoute = () => {
                     open={open.state}
                     onOpenChange={(open) => setOpen((prev) => ({ ...prev, state: open }))}
                 >
-                    <RiverEnvSwitcherContent allowBearerToken={open.from === 'bearer'} />
+                    <RiverEnvSwitcherContent
+                        allowBearerToken={open.from === 'bearer'}
+                        onClose={() => setOpen((prev) => ({ ...prev, state: false }))}
+                    />
                 </Dialog>
                 <ChainConnectButton
                     onWalletConnect={() => setOpen({ state: true, from: 'wallet' })}

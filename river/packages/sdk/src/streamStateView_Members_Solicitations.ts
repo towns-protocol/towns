@@ -32,19 +32,19 @@ export class StreamStateView_Members_Solicitations {
         user.solicitations = user.solicitations.filter(
             (x) => x.deviceKey !== solicitation.deviceKey,
         )
-        user.solicitations.push({
+        const newSolicitation = {
             deviceKey: solicitation.deviceKey,
             fallbackKey: solicitation.fallbackKey,
             isNewDevice: solicitation.isNewDevice,
-            sessionIds: [...solicitation.sessionIds.sort()],
-        })
-
+            sessionIds: solicitation.sessionIds.toSorted(),
+        }
+        user.solicitations.push(newSolicitation)
         encryptionEmitter?.emit(
             'newKeySolicitation',
             this.streamId,
             user.userId,
             user.userAddress,
-            solicitation,
+            newSolicitation,
         )
     }
 
@@ -62,7 +62,7 @@ export class StreamStateView_Members_Solicitations {
             deviceKey: prev.deviceKey,
             fallbackKey: prev.fallbackKey,
             isNewDevice: false,
-            sessionIds: [...removeCommon(prev.sessionIds, fulfillment.sessionIds.sort())],
+            sessionIds: [...removeCommon(prev.sessionIds, fulfillment.sessionIds.toSorted())],
         }
         user.solicitations[index] = newEvent
         encryptionEmitter?.emit(

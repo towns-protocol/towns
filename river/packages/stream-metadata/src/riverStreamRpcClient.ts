@@ -1,6 +1,7 @@
 import {
 	ParsedStreamResponse,
 	StreamStateView,
+	UnpackEnvelopeOpts,
 	decryptAESGCM,
 	retryInterceptor,
 	streamIdAsBytes,
@@ -152,6 +153,7 @@ function stripHexPrefix(hexString: string): string {
 export async function getStream(
 	logger: FastifyBaseLogger,
 	streamId: string,
+	opts?: UnpackEnvelopeOpts,
 ): Promise<StreamStateView> {
 	const { client, lastMiniblockNum } = await getStreamClient(logger, `0x${streamId}`)
 	logger.info(
@@ -178,7 +180,7 @@ export async function getStream(
 			'getStream finished',
 		)
 
-		const unpackedResponse = await unpackStream(response.stream)
+		const unpackedResponse = await unpackStream(response.stream, opts)
 		return streamViewFromUnpackedResponse(streamId, unpackedResponse)
 	} catch (e) {
 		logger.error(
