@@ -268,6 +268,8 @@ export function CreateTownSubmit({
                     const trackedAnalytics = {
                         spaceName: createSpaceInfo.name,
                         spaceId: result.data.spaceId,
+                        channelId: result.data.channelId,
+                        channelName: createSpaceInfo.defaultChannelName ?? 'general',
                         everyone: data.gatingType === 'everyone',
                         pricingModule: isFixedPricing
                             ? 'fixed'

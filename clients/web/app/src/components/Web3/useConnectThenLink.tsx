@@ -61,6 +61,7 @@ export function useConnectThenLink({
         },
         onError: (error) => {
             console.error('[useConnectThenLink] error connecting wallet', error)
+
             popupToast(({ toast }) => (
                 <StandardToast.Error
                     toast={toast}
