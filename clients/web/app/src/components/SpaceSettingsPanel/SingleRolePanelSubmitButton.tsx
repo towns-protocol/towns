@@ -1,9 +1,10 @@
 import React, { useMemo } from 'react'
 import { SubmitErrorHandler, useFormContext } from 'react-hook-form'
-import { useCreateRoleTransaction, useUpdateRoleTransaction } from 'use-towns-client'
+import { queryClient, useCreateRoleTransaction, useUpdateRoleTransaction } from 'use-towns-client'
 import { isEqual } from 'lodash'
 import { useGetEmbeddedSigner } from '@towns/privy'
 import { useEvent } from 'react-use-event-hook'
+import { blockchainKeys } from 'use-towns-client/dist/query/query-keys'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { FancyButton } from '@ui'
 import { prepareGatedDataForSubmit } from '@components/Tokens/utils'
@@ -160,6 +161,11 @@ export function SingleRolePanelSubmitButton({
                 })
             }
         }
+
+        // Bust the cache for the role details
+        queryClient.invalidateQueries({
+            queryKey: blockchainKeys.roleDetails(spaceId, roleId ?? -1),
+        })
     })
 
     const onInvalid: SubmitErrorHandler<RoleFormSchemaType> = useEvent((errors) => {

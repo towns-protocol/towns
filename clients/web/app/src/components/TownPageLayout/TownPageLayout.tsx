@@ -1,5 +1,10 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { Address, useContractSpaceInfo, useGetRootKeyFromLinkedWallet } from 'use-towns-client'
+import {
+    Address,
+    EVERYONE_ADDRESS,
+    useContractSpaceInfo,
+    useGetRootKeyFromLinkedWallet,
+} from 'use-towns-client'
 import { useEvent } from 'react-use-event-hook'
 import { isAddress } from 'viem'
 import { InteractiveTownsToken } from '@components/TownsToken/InteractiveTownsToken'
@@ -342,6 +347,8 @@ const InformationBoxes = (props: {
     const tokens = useConvertEntitlementsToTokenWithBigInt(entitlements)
     const { data: tokensGatedBy, isLoading: isLoadingTokensData } = useTokensWithMetadata(tokens)
 
+    const usersGatedBy = entitlements?.users.filter((user) => user !== EVERYONE_ADDRESS) ?? []
+
     if (isLoadingTokensData) {
         return <ButtonSpinner />
     }
@@ -366,9 +373,9 @@ const InformationBoxes = (props: {
             <TokenInfoBox
                 title="Access"
                 subtitle={anyoneCanJoin ? 'Open' : 'Gated'}
-                anyoneCanJoin={anyoneCanJoin}
                 isEntitlementsLoading={isEntitlementsLoading}
                 tokensGatedBy={tokensGatedBy}
+                usersGatedBy={usersGatedBy}
                 dataTestId="town-preview-membership-info-bubble"
             />
             <InformationBox

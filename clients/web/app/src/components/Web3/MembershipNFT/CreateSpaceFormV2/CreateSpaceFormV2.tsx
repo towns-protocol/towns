@@ -183,6 +183,7 @@ function CreateSpaceFormV2WithoutAuth() {
                         price,
                         limit,
                         gatingType,
+                        usersGatedBy,
                         tokensGatedBy,
                         shortDescriptionValue,
                         longDescriptionValue,
@@ -194,6 +195,7 @@ function CreateSpaceFormV2WithoutAuth() {
                         'membershipCost',
                         'membershipLimit',
                         'gatingType',
+                        'usersGatedBy',
                         'tokensGatedBy',
                         'shortDescription',
                         'longDescription',
@@ -316,6 +318,7 @@ function CreateSpaceFormV2WithoutAuth() {
                                                             zIndex="layer"
                                                         >
                                                             <TokenInfoBox
+                                                                usersGatedBy={usersGatedBy}
                                                                 tokensGatedBy={tokensGatedBy}
                                                                 hasError={
                                                                     Boolean(
@@ -330,7 +333,6 @@ function CreateSpaceFormV2WithoutAuth() {
                                                                         ? 'Open'
                                                                         : 'Gated'
                                                                 }
-                                                                anyoneCanJoin={isEveryoneMembership}
                                                                 dataTestId="membership-token-type"
                                                                 onInfoBoxClick={onInfoBoxClick}
                                                             />

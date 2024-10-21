@@ -14,7 +14,7 @@ import {
 import { useEvent } from 'react-use-event-hook'
 import { useNavigate } from 'react-router'
 
-import { Box, Button, Icon, IconButton, Stack, Text } from '@ui'
+import { Box, Button, Icon, IconButton, Pill, Stack, Text } from '@ui'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { CHANNEL_INFO_PARAMS, PATHS } from 'routes'
 import { useChannelIdFromPathname } from 'hooks/useChannelIdFromPathname'
@@ -27,7 +27,6 @@ import { Analytics } from 'hooks/useAnalytics'
 import { useLeaveChannel } from 'hooks/useLeaveChannel'
 import { useNotificationSettings } from 'hooks/useNotificationSettings'
 import { useChannelEntitlements } from 'hooks/useChannelEntitlements'
-import { TokenTypePill } from '@components/Web3/TokenTypePill'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { addressFromSpaceId } from 'ui/utils/utils'
 
@@ -125,7 +124,7 @@ export const ChannelItem = ({
     const { createLink } = useCreateLink()
     const { isTouch } = useDevice()
 
-    const { tokenTypes, hasSomeEntitlement } = useChannelEntitlements({
+    const { hasSomeEntitlement } = useChannelEntitlements({
         spaceId: space?.id,
         channelId: channelNetworkId,
     })
@@ -211,9 +210,16 @@ export const ChannelItem = ({
                             <Text truncate color="gray1" textAlign="left">
                                 {name}{' '}
                             </Text>
-                            {tokenTypes?.map((t) => (
-                                <TokenTypePill key={t} type={t} />
-                            ))}
+                            {hasSomeEntitlement && (
+                                <Pill
+                                    paddingX={{ default: 'sm', mobile: 'xs' }}
+                                    color="default"
+                                    background="level3"
+                                    height={{ default: 'input_sm', mobile: 'x2' }}
+                                >
+                                    <Text fontSize="sm">Gated</Text>
+                                </Pill>
+                            )}
                             {showDot && (
                                 <Box
                                     shrink={false}

@@ -259,7 +259,7 @@ function Content({
                     <ConnectWalletThenLinkButton
                         tone="cta1"
                         width="100%"
-                        buttonText="Link a wallet with asset"
+                        buttonText="Link a wallet"
                         onLinkWallet={linkEOAToRootKeyTransaction}
                     />
 

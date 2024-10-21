@@ -20,6 +20,30 @@ export function TokenEditor(props: {
     const isNativeToken = token.data.address === constants.AddressZero
 
     const schema = z.object({
+        tokenId:
+            token.data.type === TokenType.ERC1155
+                ? z
+                      .string({
+                          required_error: 'Token ID is required',
+                          invalid_type_error: 'Token ID must be a string',
+                      })
+                      .min(0, 'Token ID is required')
+                      .refine(
+                          (val) => {
+                              const num = Number(val)
+                              return (
+                                  val === undefined ||
+                                  (val.length > 0 &&
+                                      !isNaN(num) &&
+                                      Number.isInteger(num) &&
+                                      num >= 0)
+                              )
+                          },
+                          {
+                              message: 'Token ID is required',
+                          },
+                      )
+                : z.string().optional(),
         quantity: z
             .string({
                 required_error: 'Quantity is required',
@@ -50,18 +74,6 @@ export function TokenEditor(props: {
                     message: 'Quantity is required',
                 },
             ),
-        tokenId:
-            token.data.type === TokenType.ERC1155
-                ? z.string().refine(
-                      (val) => {
-                          const num = Number(val)
-                          return !isNaN(num) && Number.isInteger(num) && num >= 0
-                      },
-                      {
-                          message: 'Token ID is required',
-                      },
-                  )
-                : z.string().optional(),
     })
 
     const {
@@ -165,6 +177,7 @@ export function TokenEditor(props: {
                         />
                     </Box>
                 )}
+                {errors.tokenId && <Text color="error">{errors.tokenId.message}</Text>}
                 <Box gap alignSelf="start" width="100%">
                     <Text>Quantity</Text>
                     <Controller
@@ -209,7 +222,6 @@ export function TokenEditor(props: {
                     />
                 </Box>
                 {errors.quantity && <Text color="error">{errors.quantity.message}</Text>}
-                {errors.tokenId && <Text color="error">{errors.tokenId.message}</Text>}
 
                 <Box centerContent>
                     <Button type="submit" tone="cta1" data-testid="add-tokens-button">

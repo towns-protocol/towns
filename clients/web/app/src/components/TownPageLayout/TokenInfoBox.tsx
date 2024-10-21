@@ -11,21 +11,21 @@ import { InformationBox } from './InformationBox'
 
 export const TokenInfoBox = ({
     tokensGatedBy,
+    usersGatedBy,
     onInfoBoxClick,
     hasError,
     title,
     subtitle,
-    anyoneCanJoin,
     isEntitlementsLoading,
     dataTestId,
 }: {
     tokensGatedBy: Token[]
+    usersGatedBy: string[]
     isEntitlementsLoading?: boolean
     onInfoBoxClick?: () => void
     title: string
     subtitle: string
     hasError?: boolean
-    anyoneCanJoin: boolean
     dataTestId?: string
 }) => {
     return (
@@ -35,33 +35,45 @@ export const TokenInfoBox = ({
             subtitle={subtitle}
             dataTestId={dataTestId}
             centerContent={
-                anyoneCanJoin ? (
-                    <Icon type="people" size="square_md" />
-                ) : isEntitlementsLoading ? (
+                isEntitlementsLoading ? (
                     <Box>
                         <ButtonSpinner height="x1" />
                     </Box>
-                ) : tokensGatedBy && tokensGatedBy.length > 0 ? (
-                    <Box position="relative" width="x3" aspectRatio="1/1">
-                        {tokensGatedBy.map((token, index) => (
-                            <Box
-                                key={`${token.data.address}-${token.chainId}-${token.data.tokenId}`}
-                                position="absolute"
-                                top="none"
-                                style={{
-                                    zIndex: +vars.zIndex.ui - index || 1,
-                                    transform: `translateX(${-(tokensGatedBy.length * 5) / 2}px)`,
-                                    left: index ? `${index * 10}px` : 0,
-                                }}
-                            >
-                                <SelectedToken
-                                    contractAddress={token.data.address as Address}
-                                    chainId={token.chainId}
-                                />
+                ) : (tokensGatedBy && tokensGatedBy.length > 0) ||
+                  (usersGatedBy && usersGatedBy.length > 0) ? (
+                    <Box horizontal gap="xs" alignItems="center">
+                        {usersGatedBy && usersGatedBy.length > 0 ? (
+                            <Box tooltip="Specific wallet addresses">
+                                <Icon type="wallet" size="square_md" />
                             </Box>
-                        ))}
+                        ) : null}
+                        {tokensGatedBy && tokensGatedBy.length > 0 ? (
+                            <Box position="relative" width="x3" aspectRatio="1/1">
+                                {tokensGatedBy.map((token, index) => (
+                                    <Box
+                                        key={`${token.data.address}-${token.chainId}-${token.data.tokenId}`}
+                                        position="absolute"
+                                        top="none"
+                                        style={{
+                                            zIndex: +vars.zIndex.ui - index || 1,
+                                            transform: `translateX(${
+                                                -(tokensGatedBy.length * 5) / 2
+                                            }px)`,
+                                            left: index ? `${index * 10}px` : 0,
+                                        }}
+                                    >
+                                        <SelectedToken
+                                            contractAddress={token.data.address as Address}
+                                            chainId={token.chainId}
+                                        />
+                                    </Box>
+                                ))}
+                            </Box>
+                        ) : null}
                     </Box>
-                ) : null
+                ) : (
+                    <Icon type="people" size="square_md" />
+                )
             }
             onClick={onInfoBoxClick}
         />
@@ -83,9 +95,12 @@ export function SelectedToken({
     return (
         <Box
             tooltip={
-                <Box centerContent gap="sm" padding="sm" background="level3" rounded="sm">
-                    <Text size="sm">{tokenDataWithChainId?.data.label}</Text>
-                    <NetworkName chainId={chainId} size="xs" color="initial" />
+                <Box centerContent gap="sm" padding="sm" background="level2" rounded="sm">
+                    <Box horizontal gap="xs" alignItems="center">
+                        <Text size="sm">{tokenDataWithChainId?.data.label}</Text>
+                        <Text size="sm">·</Text>
+                        <NetworkName chainId={chainId} size="sm" color="initial" />
+                    </Box>
                     <Text size="xs">{tokenDataWithChainId?.data.address}</Text>
                 </Box>
             }
