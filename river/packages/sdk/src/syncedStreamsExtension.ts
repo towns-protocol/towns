@@ -39,6 +39,7 @@ export class SyncedStreamsExtension {
 
     private startSyncRequested = false
     private didLoadStreamsFromPersistence = false
+    private didLoadHighPriorityStreams = false
     private streamCountRequiringNetworkAccess = 0
     private numStreamsLoadedFromCache = 0
     private numStreamsLoadedFromNetwork = 0
@@ -47,6 +48,7 @@ export class SyncedStreamsExtension {
     private loadedStreamCount = 0
 
     initStatus: ClientInitStatus = {
+        isHighPriorityDataLoaded: false,
         isLocalDataLoaded: false,
         isRemoteDataLoaded: false,
         progress: 0,
@@ -132,6 +134,7 @@ export class SyncedStreamsExtension {
     private async loadHighPriorityStreams() {
         const streamIds = Array.from(this.highPriorityIds)
         await Promise.all(streamIds.map((streamId) => this.loadStreamFromPersistence(streamId)))
+        this.didLoadHighPriorityStreams = true
         this.emitClientStatus()
     }
 
@@ -216,6 +219,7 @@ export class SyncedStreamsExtension {
     }
 
     private emitClientStatus() {
+        this.initStatus.isHighPriorityDataLoaded = this.didLoadHighPriorityStreams
         this.initStatus.isLocalDataLoaded = this.didLoadStreamsFromPersistence
         this.initStatus.isRemoteDataLoaded =
             this.didLoadStreamsFromPersistence && this.streamCountRequiringNetworkAccess === 0

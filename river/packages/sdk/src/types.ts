@@ -155,6 +155,7 @@ export interface ParsedStreamResponse {
 }
 
 export type ClientInitStatus = {
+    isHighPriorityDataLoaded: boolean
     isLocalDataLoaded: boolean
     isRemoteDataLoaded: boolean
     progress: number
