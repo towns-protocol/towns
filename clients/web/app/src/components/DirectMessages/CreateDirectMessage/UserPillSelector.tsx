@@ -190,6 +190,7 @@ export const UserPillSelector = (props: Props) => {
                             !numSelected ? 'Search people' : numSelected >= 1 ? 'Add people' : ''
                         }
                         optionRenderer={optionRenderer}
+                        optionPlaceholder={<UserOptionPlaceholder />}
                         pillRenderer={pillRenderer}
                         optionSorter={optionSorter}
                         getOptionKey={(o) => (isChannelOption(o) ? o.id : o.userId)}
@@ -246,6 +247,15 @@ export const UserOption = (props: { user: LookupUser; selected: boolean }) => {
         </Box>
     )
 }
+
+const UserOptionPlaceholder = () => (
+    <Box horizontal gap="sm" height="x6" alignItems="center">
+        <Box width="x4" height="x4" borderRadius="full" background="level3" />
+        <Box justifyContent="center">
+            <Box height="x2" width="200" borderRadius="xs" background="level3" />
+        </Box>
+    </Box>
+)
 
 const ChannelOption = (props: { dm: ChannelSearchItem; selected: boolean }) => {
     const { selected, dm: dm } = props
