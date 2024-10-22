@@ -43,7 +43,9 @@ jobs:
               env:
                   GITHUB_TOKEN: ${{ secrets.HARMONY_GITHUB_PAT }}
               run: |
+                  git fetch origin
                   git checkout -b ${{ env.RELEASE_BRANCH }}
+                  git rebase origin/omega
                   git push -u origin ${{ env.RELEASE_BRANCH }}
 
             - name: Create Pull Request using GitHub CLI
