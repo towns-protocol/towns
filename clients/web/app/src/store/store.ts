@@ -1,5 +1,10 @@
+import { UnpackEnvelopeOpts } from '@river-build/sdk'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+
+export const DEFAULT_UNPACK_ENVELOPE_OPTS: UnpackEnvelopeOpts = {
+    disableSignatureValidation: true, // signature validation is too slow for large spaces
+}
 
 interface AppState {
     getTheme: () => 'dark' | 'light'
@@ -14,6 +19,8 @@ interface AppState {
     setIsWindowFocused: (isWindowActive: boolean) => void
     setTownRouteBookmark: (spaceId: string, route: string) => void
     townRouteBookmarks: { [spaceId: string]: string }
+    setUnpackEnvelopeOpts: (unpackEnvelopeOpts: UnpackEnvelopeOpts | undefined) => void
+    unpackEnvelopeOpts?: UnpackEnvelopeOpts
     spaceIdBookmark?: string
     notificationRoute?: string
     setNotificationRoute: (route: string) => void
@@ -74,6 +81,10 @@ export const useStore = create(
                     spaceIdBookmark: spaceId ? spaceId : state.spaceIdBookmark,
                     townRouteBookmarks: { ...state.townRouteBookmarks, [spaceId]: route },
                 }))
+            },
+            unpackEnvelopeOpts: undefined,
+            setUnpackEnvelopeOpts: (unpackEnvelopeOpts) => {
+                set(() => ({ unpackEnvelopeOpts }))
             },
             notificationRoute: undefined,
             setNotificationRoute: (route) => {

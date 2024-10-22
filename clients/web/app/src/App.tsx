@@ -14,7 +14,7 @@ import { env } from 'utils'
 import { Figma } from 'ui/styles/palette'
 import { AppBadge, FaviconBadge } from '@components/AppBadges/AppBadges'
 import { AppNotifications } from '@components/AppNotifications/AppNotifications'
-import { useStore } from 'store/store'
+import { DEFAULT_UNPACK_ENVELOPE_OPTS, useStore } from 'store/store'
 import { RegisterPushSubscription } from '@components/RegisterPushSubscription/RegisterPushSubscription'
 import { AllRoutes } from 'AllRoutes'
 import { ServiceWorkerMetadataSyncer } from 'workers/ServiceWorkerMetadataSyncer'
@@ -44,6 +44,9 @@ export const App = () => {
     const mutedChannelIds = useStore((state) => state.mutedChannelIds)
     const spaceIdBookmark = useStore((state) => state.spaceIdBookmark)
     const townRouteBookmarks = useStore((state) => state.townRouteBookmarks)
+    const unpackEnvelopeOpts =
+        useStore((state) => state.unpackEnvelopeOpts) ?? DEFAULT_UNPACK_ENVELOPE_OPTS
+
     const { isTouch } = useDevice()
 
     const highPriorityStreamIds = useRef<string[]>([])
@@ -146,6 +149,7 @@ export const App = () => {
             pushNotificationWorkerUrl={env.VITE_WEB_PUSH_WORKER_URL}
             accountAbstractionConfig={environment.accountAbstractionConfig}
             highPriorityStreamIds={highPriorityStreamIds.current}
+            unpackEnvelopeOpts={unpackEnvelopeOpts}
             supportedXChainRpcMapping={supportedXChainRpcMapping}
             ethMainnetRpcUrl={env.VITE_ETHEREUM_RPC_URL}
             analytics={analyticsInstance}

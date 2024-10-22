@@ -314,6 +314,7 @@ export class TownsClient
             persistenceDbName,
             this.opts.logNamespaceFilter,
             this.opts.highPriorityStreamIds,
+            this.opts.unpackEnvelopeOpts,
         )
         this.casablancaClient.setMaxListeners(100)
 

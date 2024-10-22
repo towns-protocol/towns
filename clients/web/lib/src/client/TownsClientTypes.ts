@@ -4,6 +4,7 @@ import { RoleIdentifier, TProvider, TransactionOrUserOperation } from '../types/
 import { BaseChainConfig, RiverChainConfig } from '@river-build/web3'
 import { AccountAbstractionConfig } from '@towns/userops'
 import { TownsAnalytics } from 'types/TownsAnalytics'
+import { UnpackEnvelopeOpts } from '@river-build/sdk'
 
 export interface TownsOpts {
     environmentId: string
@@ -23,6 +24,7 @@ export interface TownsOpts {
     verbose?: boolean
     accountAbstractionConfig?: AccountAbstractionConfig
     highPriorityStreamIds?: string[]
+    unpackEnvelopeOpts?: UnpackEnvelopeOpts
     ethMainnetRpcUrl?: string
     analytics?: TownsAnalytics
     createLegacySpaces?: boolean

@@ -9,7 +9,7 @@ import { useCasablancaSpaceHierarchies } from '../hooks/TownsContext/useCasablan
 import { useTownsClientListener } from '../hooks/use-towns-client-listener'
 import { Room, SpaceHierarchies, SpaceItem } from '../types/towns-types'
 import { QueryProvider } from './QueryProvider'
-import { Client as CasablancaClient, SignerContext } from '@river-build/sdk'
+import { Client as CasablancaClient, SignerContext, UnpackEnvelopeOpts } from '@river-build/sdk'
 import { useCasablancaTimelines } from '../hooks/TownsContext/useCasablancaTimelines'
 import { useCasablancaRooms } from '../hooks/TownsContext/useCasablancaRooms'
 import { useCasablancaDMs } from '../hooks/CasablancClient/useCasablancaDMs'
@@ -83,6 +83,7 @@ interface TownsContextProviderProps {
     pushNotificationWorkerUrl?: string
     accountAbstractionConfig?: AccountAbstractionConfig
     highPriorityStreamIds?: string[]
+    unpackEnvelopeOpts?: UnpackEnvelopeOpts
     supportedXChainRpcMapping?: {
         [chainId: number]: string
     }
@@ -159,6 +160,7 @@ const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
             pushNotificationWorkerUrl: props.pushNotificationWorkerUrl,
             accountAbstractionConfig: props.accountAbstractionConfig,
             highPriorityStreamIds: props.highPriorityStreamIds,
+            unpackEnvelopeOpts: props.unpackEnvelopeOpts,
             supportedXChainRpcMapping: props.supportedXChainRpcMapping,
             ethMainnetRpcUrl: props.ethMainnetRpcUrl,
             analytics: props.analytics,
@@ -172,6 +174,7 @@ const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
         props.accountAbstractionConfig,
         props.ethMainnetRpcUrl,
         props.highPriorityStreamIds,
+        props.unpackEnvelopeOpts,
         props.pushNotificationAuthToken,
         props.pushNotificationWorkerUrl,
         props.supportedXChainRpcMapping,
