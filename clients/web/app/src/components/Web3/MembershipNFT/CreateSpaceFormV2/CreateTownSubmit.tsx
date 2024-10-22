@@ -213,7 +213,7 @@ export function CreateTownSubmit({
                         everyone: data.gatingType === 'everyone',
                         users: usersGatedBy,
                         ruleData: encodeRuleDataV2(ruleData),
-                        syncEntitlements: false,
+                        syncEntitlements: true,
                     },
                     permissions: [Permission.Read, Permission.Write, Permission.React],
                 }

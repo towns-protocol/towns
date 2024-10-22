@@ -168,16 +168,14 @@ export function SingleRolePanelWithoutAuth() {
                                                     {...form.register('name')}
                                                 />
 
-                                                {isDefaultMembershipRole ? null : (
-                                                    <Stack
-                                                        position="relative"
-                                                        zIndex="tooltipsAbove"
-                                                        gap="md"
-                                                    >
-                                                        <Text>Who Gets Access</Text>
-                                                        <EditGating isRole />
-                                                    </Stack>
-                                                )}
+                                                <Stack
+                                                    position="relative"
+                                                    zIndex="tooltipsAbove"
+                                                    gap="md"
+                                                >
+                                                    <Text>Who Gets Access</Text>
+                                                    <EditGating isRole />
+                                                </Stack>
 
                                                 <Stack gap="md" data-testid="channel-permissions">
                                                     <Text>Channel Permissions</Text>
