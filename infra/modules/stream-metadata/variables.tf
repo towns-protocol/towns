@@ -36,3 +36,14 @@ variable "origin_shield_enabled" {
   type        = bool
   default     = false
 }
+
+variable "river_env" {
+  description = "river environment name"
+  type        = string
+}
+
+variable "docker_image_tag" {
+  description = "The docker image tag to use"
+  type        = string
+  default     = "latest"
+}

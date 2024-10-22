@@ -159,7 +159,8 @@ module "node_metadata" {
 }
 
 module "stream_metadata" {
-  source = "../../modules/stream-metadata"
+  source    = "../../modules/stream-metadata"
+  river_env = terraform.workspace
 
   vpc_id = module.vpc.vpc_id
 

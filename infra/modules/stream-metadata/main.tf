@@ -253,7 +253,7 @@ resource "aws_ecs_task_definition" "fargate_task_definition" {
 
   container_definitions = jsonencode([{
     name  = local.service_name
-    image = "public.ecr.aws/h5v6m2x1/river-stream-metadata:latest"
+    image = "public.ecr.aws/h5v6m2x1/river-stream-metadata:${var.docker_image_tag}"
 
     portMappings = [{
       containerPort = local.service_port
@@ -284,6 +284,10 @@ resource "aws_ecs_task_definition" "fargate_task_definition" {
     environment = [
       {
         name  = "RIVER_ENV",
+        value = var.river_env
+      },
+      {
+        name  = "ENVIRONMENT",
         value = terraform.workspace
       },
       {
