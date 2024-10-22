@@ -14,71 +14,66 @@ import {MainnetDelegationStorage} from "./MainnetDelegationStorage.sol";
 abstract contract MainnetDelegationBase is IMainnetDelegationBase {
   using EnumerableSet for EnumerableSet.AddressSet;
 
-  function _removeDelegations(address[] memory delegators) internal {
+  function _removeDelegation(address delegator) internal {
     MainnetDelegationStorage.Layout storage ds = MainnetDelegationStorage
       .layout();
 
-    for (uint256 i = 0; i < delegators.length; i++) {
-      address delegator = delegators[i];
-      address operator = ds.delegationByDelegator[delegator].operator;
+    ds.delegators.remove(delegator);
+    address currentOperator = ds.delegationByDelegator[delegator].operator;
+    ds.delegatorsByOperator[currentOperator].remove(delegator);
+    delete ds.delegationByDelegator[delegator];
 
-      ds.delegatorsByOperator[operator].remove(delegator);
-      delete ds.delegationByDelegator[delegator];
-      delete ds.delegationByDelegator[delegator].operator;
-      delete ds.delegationByDelegator[delegator].quantity;
-      delete ds.delegationByDelegator[delegator].delegationTime;
-      delete ds.delegationByDelegator[delegator].delegator;
-
-      ds.delegators.remove(delegator);
-    }
+    emit DelegationRemoved(delegator);
   }
 
+  /// @dev Caller must ensure that operator != address(0)
   function _replaceDelegation(
     address delegator,
-    address claimer,
     address operator,
     uint256 quantity
   ) internal {
     MainnetDelegationStorage.Layout storage ds = MainnetDelegationStorage
       .layout();
 
-    // Remove the current delegator
-    ds.delegators.remove(delegator);
-
     Delegation storage delegation = ds.delegationByDelegator[delegator];
-    address currentClaimer = ds.claimerByDelegator[delegator];
+    address currentOperator = delegation.operator;
 
-    // Remove the current delegation if it exists
-    if (delegation.operator != address(0)) {
-      ds.delegatorsByOperator[delegation.operator].remove(delegator);
-
-      if (
-        ds.delegatorsByAuthorizedClaimer[currentClaimer].contains(delegator)
-      ) {
-        ds.delegatorsByAuthorizedClaimer[currentClaimer].remove(delegator);
+    if (currentOperator == address(0)) {
+      _addDelegation(delegator, operator, quantity);
+    } else {
+      if (currentOperator != operator) {
+        ds.delegatorsByOperator[currentOperator].remove(delegator);
+        ds.delegatorsByOperator[operator].add(delegator);
+        delegation.operator = operator;
+        delegation.delegationTime = block.timestamp;
+      } else if (delegation.quantity != quantity) {
+        delegation.delegationTime = block.timestamp;
       }
-    }
+      delegation.quantity = quantity;
 
-    // Set the new delegation
+      emit DelegationSet(delegator, operator, quantity);
+    }
+  }
+
+  function _addDelegation(
+    address delegator,
+    address operator,
+    uint256 quantity
+  ) internal {
+    MainnetDelegationStorage.Layout storage ds = MainnetDelegationStorage
+      .layout();
+
     ds.delegators.add(delegator);
     ds.delegatorsByOperator[operator].add(delegator);
+    Delegation storage delegation = ds.delegationByDelegator[delegator];
+    (
+      delegation.operator,
+      delegation.quantity,
+      delegation.delegator,
+      delegation.delegationTime
+    ) = (operator, quantity, delegator, block.timestamp);
 
-    if (delegation.operator != operator || delegation.quantity != quantity) {
-      delegation.delegationTime = block.timestamp;
-    }
-
-    delegation.operator = operator;
-    delegation.quantity = quantity;
-    delegation.delegator = delegator;
-
-    // Update the claimer if it has changed
-    if (claimer != currentClaimer) {
-      if (currentClaimer != address(0)) {
-        ds.delegatorsByAuthorizedClaimer[currentClaimer].remove(delegator);
-      }
-      ds.claimerByDelegator[delegator] = claimer;
-      ds.delegatorsByAuthorizedClaimer[claimer].add(delegator);
-    }
+    emit DelegationSet(delegator, operator, quantity);
   }
 
   function _setDelegation(
@@ -86,28 +81,10 @@ abstract contract MainnetDelegationBase is IMainnetDelegationBase {
     address operator,
     uint256 quantity
   ) internal {
-    MainnetDelegationStorage.Layout storage ds = MainnetDelegationStorage
-      .layout();
-
     if (operator == address(0)) {
-      Delegation memory delegation = ds.delegationByDelegator[delegator];
-      delete delegation.operator;
-      delete delegation.quantity;
-      delete delegation.delegationTime;
-      delete delegation.delegator;
-
-      delete ds.delegationByDelegator[delegator];
-      ds.delegatorsByOperator[delegation.operator].remove(delegator);
-      emit DelegationRemoved(delegator);
+      _removeDelegation(delegator);
     } else {
-      ds.delegatorsByOperator[operator].add(delegator);
-      ds.delegationByDelegator[delegator] = Delegation(
-        operator,
-        quantity,
-        delegator,
-        block.timestamp
-      );
-      emit DelegationSet(delegator, operator, quantity);
+      _replaceDelegation(delegator, operator, quantity);
     }
   }
 
@@ -125,9 +102,10 @@ abstract contract MainnetDelegationBase is IMainnetDelegationBase {
     EnumerableSet.AddressSet storage delegators = ds.delegatorsByOperator[
       operator
     ];
-    Delegation[] memory delegations = new Delegation[](delegators.length());
+    uint256 length = delegators.length();
+    Delegation[] memory delegations = new Delegation[](length);
 
-    for (uint256 i = 0; i < delegators.length(); i++) {
+    for (uint256 i; i < length; ++i) {
       address delegator = delegators.at(i);
       delegations[i] = ds.delegationByDelegator[delegator];
     }
@@ -142,7 +120,7 @@ abstract contract MainnetDelegationBase is IMainnetDelegationBase {
     Delegation[] memory delegations = _getMainnetDelegationsByOperator(
       operator
     );
-    for (uint256 i = 0; i < delegations.length; i++) {
+    for (uint256 i; i < delegations.length; ++i) {
       stake += delegations[i].quantity;
     }
     return stake;
@@ -153,13 +131,13 @@ abstract contract MainnetDelegationBase is IMainnetDelegationBase {
       .layout();
 
     address currentClaimer = ds.claimerByDelegator[delegator];
-
-    if (ds.delegatorsByAuthorizedClaimer[currentClaimer].contains(delegator)) {
+    if (currentClaimer != claimer) {
       ds.delegatorsByAuthorizedClaimer[currentClaimer].remove(delegator);
+      ds.claimerByDelegator[delegator] = claimer;
+      if (claimer != address(0)) {
+        ds.delegatorsByAuthorizedClaimer[claimer].add(delegator);
+      }
     }
-
-    ds.claimerByDelegator[delegator] = claimer;
-    ds.delegatorsByAuthorizedClaimer[claimer].add(delegator);
   }
 
   function _getDelegatorsByAuthorizedClaimer(

@@ -17,6 +17,11 @@ import { FastifyBaseLogger } from 'fastify'
 import { MediaContent, StreamIdHex } from './types'
 import { getNodeForStream } from './streamRegistry'
 
+const STREAM_METADATA_SERVICE_DEFAULT_UNPACK_OPTS: UnpackEnvelopeOpts = {
+	disableHashValidation: true,
+	disableSignatureValidation: true,
+}
+
 const clients = new Map<string, StreamRpcClient>()
 
 export type StreamRpcClient = PromiseClient<typeof StreamService> & { url?: string }
@@ -153,7 +158,7 @@ function stripHexPrefix(hexString: string): string {
 export async function getStream(
 	logger: FastifyBaseLogger,
 	streamId: string,
-	opts?: UnpackEnvelopeOpts,
+	opts: UnpackEnvelopeOpts = STREAM_METADATA_SERVICE_DEFAULT_UNPACK_OPTS,
 ): Promise<StreamStateView> {
 	const { client, lastMiniblockNum } = await getStreamClient(logger, `0x${streamId}`)
 	logger.info(
