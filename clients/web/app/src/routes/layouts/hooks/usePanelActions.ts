@@ -36,6 +36,8 @@ export const usePanelActions = () => {
                     data?: string
                     roles?: 'new'
                     assetSource?: Address
+                    eventId?: string
+                    streamId?: string
                 } = {},
             ) => {
                 const { stackId = contextStackId, ...restOptions } = options

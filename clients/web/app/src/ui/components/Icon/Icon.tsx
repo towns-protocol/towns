@@ -511,6 +511,21 @@ export const EmojiAddIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref)
     </svg>
 ))
 
+export const VerifySignatureIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" {...props} ref={ref}>
+        {/* Checkmark */}
+        <path d="M9 16l-4-4 1.41-1.41L9 13.17l8.59-8.59L19 6l-10 10z" fill="currentColor" />
+        {/* Stylized Signature */}
+        <path
+            d="M4 18c2-2 4 2 6 0s4-2 6 0 4-2 4-2"
+            stroke="currentColor"
+            strokeWidth="2"
+            fill="none"
+            strokeLinecap="round"
+        />
+    </svg>
+))
+
 export const EtherscanIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" {...props} ref={ref}>
         <g clipPath="url(#clip0_812_1290)">
@@ -1953,6 +1968,7 @@ const iconMap = {
     unpin: UnpinIcon,
     verified: VerifiedIcon,
     verifiedEnsName: VerifiedEnsNameIcon,
+    verifySignature: VerifySignatureIcon,
     wallet: WalletIcon,
     walletconnect: WalletConnectIcon,
     wand: Wand,

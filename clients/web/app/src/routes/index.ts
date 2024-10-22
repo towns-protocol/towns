@@ -58,6 +58,7 @@ export const CHANNEL_INFO_PARAMS = {
     TOWN_MEMBERS: 'town-members',
     SINGLE_WALLET: 'wallet',
     TRANSFER_ASSETS: 'transfer-assets',
+    VERIFY_EVENT_SIGNATURE: 'verify-event-signature',
 } as const
 
 export type CHANNEL_INFO_PARAMS_VALUES =

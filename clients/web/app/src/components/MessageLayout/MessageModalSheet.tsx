@@ -13,6 +13,8 @@ import { getLinkToMessage } from 'utils/getLinkToMessage'
 import useCopyToClipboard from 'hooks/useCopyToClipboard'
 import { useRouteParams } from 'hooks/useRouteParams'
 import { Analytics, getChannelType, getThreadReplyOrDmReply } from 'hooks/useAnalytics'
+import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
+import { CHANNEL_INFO_PARAMS } from 'routes'
 import { DeleteMessagePrompt } from './DeleteMessagePrompt'
 
 type Props = {
@@ -57,6 +59,7 @@ export const MessageModalSheet = (props: Props) => {
     const { redactEvent, sendReaction, sendReadReceipt, pinMessage, unpinMessage } =
         useTownsClient()
     const { threadId } = useRouteParams()
+    const { openPanel } = usePanelActions()
 
     const [isOpen, setIsOpen] = useState(false)
     useEffect(() => {
@@ -209,6 +212,10 @@ export const MessageModalSheet = (props: Props) => {
         }
     }, [channelId, closeSheet, eventId, pinMessage, spaceId, threadId])
 
+    const onVerifySignature = useCallback(() => {
+        openPanel(CHANNEL_INFO_PARAMS.VERIFY_EVENT_SIGNATURE, { eventId, streamId: channelId })
+    }, [openPanel, eventId, channelId])
+
     const onUnpinMessage = useCallback(() => {
         if (channelId && eventId) {
             const tracked = {
@@ -312,7 +319,7 @@ export const MessageModalSheet = (props: Props) => {
                                         <TableCell
                                             isError
                                             iconType="delete"
-                                            text="Delete Message"
+                                            text="Delete Message 2"
                                             onClick={onDeleteClick}
                                         />
                                     )}
@@ -332,6 +339,12 @@ export const MessageModalSheet = (props: Props) => {
                                             />
                                         )
                                     ) : null}
+
+                                    <TableCell
+                                        iconType="verified"
+                                        text="Verify Event Signature"
+                                        onClick={onVerifySignature}
+                                    />
                                 </Stack>
                             </Stack>
                         </Sheet.Scroller>

@@ -16,6 +16,8 @@ import { ShortcutAction, ShortcutActions } from 'data/shortcuts'
 import { ShortcutKeys } from '@components/Shortcuts/ShortcutKeys'
 import { TooltipContext } from 'ui/components/Tooltip/TooltipRenderer'
 import { isInputFocused } from '@components/RichTextPlate/utils/helpers'
+import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
+import { CHANNEL_INFO_PARAMS } from 'routes'
 import { useCreateUnreadMarker } from './hooks/useCreateUnreadMarker'
 import { DeleteMessagePrompt } from './DeleteMessagePrompt'
 
@@ -60,6 +62,7 @@ export const MessageContextMenu = (props: Props) => {
     const hasCopied = !!copiedText
     const { loggedInWalletAddress } = useConnectivity()
     const { threadId } = useRouteParams()
+    const { openPanel } = usePanelActions()
 
     const { hasPermission: canRedact } = useHasPermission({
         spaceId: spaceId ?? '',
@@ -109,6 +112,10 @@ export const MessageContextMenu = (props: Props) => {
         { enableOnContentEditable: false, enabled: !isInputFocused() },
         [],
     )
+
+    const onVerifySignature = useCallback(() => {
+        openPanel(CHANNEL_INFO_PARAMS.VERIFY_EVENT_SIGNATURE, { eventId, streamId: channelId })
+    }, [openPanel, eventId, channelId])
 
     const onDeleteCancel = useCallback(() => {
         setDeletePrompt(undefined)
@@ -283,6 +290,13 @@ export const MessageContextMenu = (props: Props) => {
             } as const)
         }
 
+        submenuItems.push({
+            key: 'verifySignature',
+            icon: 'verifySignature',
+            text: 'Verify Event Signature',
+            onClick: onVerifySignature,
+        } as const)
+
         return submenuItems
     }, [
         canRedact,
@@ -293,6 +307,7 @@ export const MessageContextMenu = (props: Props) => {
         onMarkAsUnreadClick,
         onPinMessage,
         onUnpinMessage,
+        onVerifySignature,
         props.canEdit,
         props.canPin,
         spaceId,
