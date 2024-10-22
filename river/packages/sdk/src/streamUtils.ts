@@ -6,7 +6,53 @@ import {
 } from '@river-build/proto'
 import { ParsedEvent, ParsedMiniblock } from './types'
 import { bin_toHexString } from '@river-build/dlog'
-import { isDefined } from './check'
+import { isDefined, logNever } from './check'
+
+export function isPersistedEvent(event: ParsedEvent, direction: 'forward' | 'backward'): boolean {
+    if (!event.event) {
+        return false
+    }
+
+    switch (event.event.payload.case) {
+        case 'channelPayload':
+            return true
+        case 'dmChannelPayload':
+            return true
+        case 'gdmChannelPayload':
+            return true
+        case 'mediaPayload':
+            return true
+        case 'userPayload':
+            return direction === 'forward' ? true : false
+        case 'userSettingsPayload':
+            return direction === 'forward' ? true : false
+        case 'miniblockHeader':
+            return true
+        case 'userMetadataPayload':
+            return direction === 'forward' ? true : false
+        case 'memberPayload': {
+            switch (event.event.payload.value.content.case) {
+                case 'keySolicitation':
+                    return direction === 'forward' ? true : false
+                case 'keyFulfillment':
+                    return direction === 'forward' ? true : false
+                case undefined:
+                    return false
+                default:
+                    return direction === 'forward' ? true : false
+            }
+        }
+        case 'spacePayload':
+            return direction === 'forward' ? true : false
+        case 'userInboxPayload':
+            return direction === 'forward' ? true : false
+        case undefined:
+            return false
+        default:
+            logNever(event.event.payload, `unsupported event payload ${event.event.payload}`)
+            return false
+    }
+}
 
 export function persistedEventToParsedEvent(event: PersistedEvent): ParsedEvent | undefined {
     if (!event.event) {
@@ -36,11 +82,16 @@ export function persistedMiniblockToParsedMiniblock(
     }
 }
 
-export function parsedMiniblockToPersistedMiniblock(miniblock: ParsedMiniblock) {
+export function parsedMiniblockToPersistedMiniblock(
+    miniblock: ParsedMiniblock,
+    direction: 'forward' | 'backward',
+) {
     return new PersistedMiniblock({
         hash: miniblock.hash,
         header: miniblock.header,
-        events: miniblock.events.map(parsedEventToPersistedEvent),
+        events: miniblock.events
+            .filter((event) => isPersistedEvent(event, direction))
+            .map(parsedEventToPersistedEvent),
     })
 }
 

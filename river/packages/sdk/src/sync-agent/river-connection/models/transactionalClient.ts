@@ -3,6 +3,7 @@ import { Client, ClientEvents } from '../../../client'
 import { StreamRpcClient } from '../../../makeStreamRpcClient'
 import { SignerContext } from '../../../signerContext'
 import { Store } from '../../../store/store'
+import { UnpackEnvelopeOpts } from '../../../sign'
 
 export class TransactionalClient extends Client {
     store: Store
@@ -15,6 +16,7 @@ export class TransactionalClient extends Client {
         persistenceStoreName?: string,
         logNamespaceFilter?: string,
         highPriorityStreamIds?: string[],
+        unpackEnvelopeOpts?: UnpackEnvelopeOpts,
     ) {
         super(
             signerContext,
@@ -24,6 +26,7 @@ export class TransactionalClient extends Client {
             persistenceStoreName,
             logNamespaceFilter,
             highPriorityStreamIds,
+            unpackEnvelopeOpts,
         )
         this.store = store
     }

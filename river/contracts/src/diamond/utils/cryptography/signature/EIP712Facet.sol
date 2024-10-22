@@ -20,6 +20,14 @@ contract EIP712Facet is IERC5267, EIP712Base, Nonces, Facet {
     __EIP712_init_unchained(name, version);
   }
 
+  function DOMAIN_SEPARATOR() external view virtual returns (bytes32) {
+    return _domainSeparatorV4();
+  }
+
+  function nonces(address owner) external view returns (uint256) {
+    return _latestNonce(owner);
+  }
+
   /// @inheritdoc IERC5267
   function eip712Domain()
     public

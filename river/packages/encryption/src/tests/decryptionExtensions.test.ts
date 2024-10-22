@@ -61,6 +61,7 @@ describe('TestDecryptionExtensions', () => {
             fallbackKey: aliceDex.userDevice.fallbackKey,
             isNewDevice: true,
             sessionIds: [sessionId],
+            srcEventId: '',
         }
         const keySolicitation = aliceClient.sendKeySolicitation(keySolicitationData)
         // pretend bob receives a key solicitation request from alice, and starts processing it.
@@ -284,6 +285,11 @@ class MockDecryptionExtensions extends BaseDecryptionExtensions {
     public hasStream(streamId: string): boolean {
         log('canProcessStream', streamId, true)
         return this._upToDateStreams.has(streamId)
+    }
+
+    public isValidEvent(streamId: string, eventId: string): { isValid: boolean; reason?: string } {
+        log('isValidEvent', streamId, eventId)
+        return { isValid: true }
     }
 
     public decryptGroupEvent(

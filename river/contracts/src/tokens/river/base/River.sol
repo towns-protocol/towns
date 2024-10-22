@@ -2,14 +2,14 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
+import {IERC5267} from "@openzeppelin/contracts/interfaces/IERC5267.sol";
+import {IERC6372} from "@openzeppelin/contracts/interfaces/IERC6372.sol";
+import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 import {IOptimismMintableERC20, ILegacyMintableERC20} from "contracts/src/tokens/river/base/IOptimismMintableERC20.sol";
 import {ISemver} from "contracts/src/tokens/river/base/ISemver.sol";
-import {IERC5805} from "@openzeppelin/contracts/interfaces/IERC5805.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
-import {IERC5805} from "@openzeppelin/contracts/interfaces/IERC5805.sol";
-import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {ILock} from "contracts/src/tokens/lock/ILock.sol";
 
 // libraries
@@ -81,7 +81,9 @@ contract River is
     _addInterface(type(IERC20).interfaceId);
     _addInterface(type(IERC20Metadata).interfaceId);
     _addInterface(type(IERC20Permit).interfaceId);
-    _addInterface(type(IERC5805).interfaceId);
+    _addInterface(type(IERC5267).interfaceId);
+    _addInterface(type(IERC6372).interfaceId);
+    _addInterface(type(IVotes).interfaceId);
     _addInterface(type(IOptimismMintableERC20).interfaceId);
     _addInterface(type(ILegacyMintableERC20).interfaceId);
     _addInterface(type(ISemver).interfaceId);

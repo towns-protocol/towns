@@ -3,11 +3,14 @@ pragma solidity ^0.8.23;
 
 //interfaces
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import {IERC5267} from "@openzeppelin/contracts/interfaces/IERC5267.sol";
+import {IERC6372} from "@openzeppelin/contracts/interfaces/IERC6372.sol";
+import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 import {ILockBase} from "contracts/src/tokens/lock/ILock.sol";
 import {IOwnableBase} from "contracts/src/diamond/facets/ownable/IERC173.sol";
-import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 
 //libraries
 
@@ -35,8 +38,12 @@ contract RiverBaseTest is BaseSetup, ILockBase, IOwnableBase {
     assertEq(riverFacet.symbol(), "RVR");
     assertEq(riverFacet.decimals(), 18);
     assertTrue(riverFacet.supportsInterface(type(IERC20).interfaceId));
-    assertTrue(riverFacet.supportsInterface(type(IERC20Permit).interfaceId));
     assertTrue(riverFacet.supportsInterface(type(IERC20Metadata).interfaceId));
+    assertTrue(riverFacet.supportsInterface(type(IERC20Permit).interfaceId));
+    assertTrue(riverFacet.supportsInterface(type(IERC165).interfaceId));
+    assertTrue(riverFacet.supportsInterface(type(IERC5267).interfaceId));
+    assertTrue(riverFacet.supportsInterface(type(IERC6372).interfaceId));
+    assertTrue(riverFacet.supportsInterface(type(IVotes).interfaceId));
   }
 
   modifier givenCallerHasBridgedTokens(address caller, uint256 amount) {

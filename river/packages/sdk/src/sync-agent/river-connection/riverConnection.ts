@@ -19,6 +19,7 @@ import { AuthStatus } from './models/authStatus'
 import { RetryParams } from '../../rpcInterceptors'
 import { Stream } from '../../stream'
 import { isDefined } from '../../check'
+import { UnpackEnvelopeOpts } from '../../sign'
 
 const logger = dlogger('csb:riverConnection')
 
@@ -31,6 +32,7 @@ export interface ClientParams {
     highPriorityStreamIds?: string[]
     rpcRetryParams?: RetryParams
     encryptionDevice?: EncryptionDeviceInitOpts
+    unpackEnvelopeOpts?: UnpackEnvelopeOpts
 }
 
 export type OnStoppedFn = () => void
@@ -62,7 +64,7 @@ export class RiverConnection extends PersistedObservable<RiverConnectionModel> {
         public spaceDapp: SpaceDapp,
         public riverRegistryDapp: RiverRegistry,
         private makeRpcClient: MakeRpcClientType,
-        private clientParams: ClientParams,
+        public clientParams: ClientParams,
     ) {
         super({ id: '0', userExists: false }, store, LoadPriority.high)
         this.riverChain = new RiverChain(store, riverRegistryDapp, this.userId)
@@ -160,6 +162,7 @@ export class RiverConnection extends PersistedObservable<RiverConnectionModel> {
             this.clientParams.persistenceStoreName,
             this.clientParams.logNamespaceFilter,
             this.clientParams.highPriorityStreamIds,
+            this.clientParams.unpackEnvelopeOpts,
         )
         client.setMaxListeners(100)
         this.client = client

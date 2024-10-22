@@ -59,6 +59,7 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
 
     // initialization
     applySnapshot(
+        eventId: string,
         snapshot: Snapshot,
         cleartexts: Record<string, string> | undefined,
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
@@ -80,6 +81,7 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                             fallbackKey: s.fallbackKey,
                             isNewDevice: s.isNewDevice,
                             sessionIds: [...s.sessionIds],
+                            srcEventId: eventId,
                         } satisfies KeySolicitationContent),
                 ),
                 encryptedUsername: member.username,
@@ -208,6 +210,7 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                     check(isDefined(stateMember), 'key solicitation from non-member')
                     this.solicitHelper.applySolicitation(
                         stateMember,
+                        event.hashStr,
                         payload.content.value,
                         encryptionEmitter,
                     )

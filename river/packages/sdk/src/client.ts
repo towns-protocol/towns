@@ -83,6 +83,7 @@ import {
     isUserId,
 } from './id'
 import {
+    checkEventSignature,
     makeEvent,
     UnpackEnvelopeOpts,
     unpackMiniblock,
@@ -192,6 +193,7 @@ export class Client
     private decryptionExtensions?: BaseDecryptionExtensions
     private syncedStreamsExtensions?: SyncedStreamsExtension
     private persistenceStore: IPersistenceStore
+    private validatedEvents: Record<string, { isValid: boolean; reason?: string }> = {}
 
     constructor(
         signerContext: SignerContext,
@@ -302,6 +304,45 @@ export class Client
         )
         this.streams.set(streamId, stream)
         return stream
+    }
+
+    isValidEvent(streamId: string, eventId: string): { isValid: boolean; reason?: string } {
+        // if we didn't disable signature validation, we can assume the event is valid
+        if (this.unpackEnvelopeOpts?.disableSignatureValidation !== true) {
+            return { isValid: true }
+        }
+        const stream = this.stream(streamId)
+        if (!stream) {
+            return { isValid: false, reason: 'stream not found' }
+        }
+        const event = stream.view.events.get(eventId)
+        if (!event) {
+            return { isValid: false, reason: 'event not found' }
+        }
+        if (!event.remoteEvent) {
+            return { isValid: false, reason: 'remote event not found' }
+        }
+        if (!event.remoteEvent.signature) {
+            return { isValid: false, reason: 'remote event signature not found' }
+        }
+        if (this.validatedEvents[eventId]) {
+            return this.validatedEvents[eventId]
+        }
+        try {
+            checkEventSignature(
+                event.remoteEvent.event,
+                event.remoteEvent.hash,
+                event.remoteEvent.signature,
+            )
+            const result = { isValid: true }
+            this.validatedEvents[eventId] = result
+            return result
+        } catch (err) {
+            // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+            const result = { isValid: false, reason: `error: ${err}` }
+            this.validatedEvents[eventId] = result
+            return result
+        }
     }
 
     private async initUserJoinedStreams() {
@@ -1840,7 +1881,11 @@ export class Client
             const unpackedMiniblock = await unpackMiniblock(miniblock, this.unpackEnvelopeOpts)
             unpackedMiniblocks.push(unpackedMiniblock)
         }
-        await this.persistenceStore.saveMiniblocks(streamIdAsString(streamId), unpackedMiniblocks)
+        await this.persistenceStore.saveMiniblocks(
+            streamIdAsString(streamId),
+            unpackedMiniblocks,
+            'backward',
+        )
         return {
             terminus: response.terminus,
             miniblocks: [...unpackedMiniblocks, ...cachedMiniblocks],

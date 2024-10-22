@@ -78,7 +78,11 @@ export interface IPersistenceStore {
     >
     saveSyncedStream(streamId: string, syncedStream: PersistedSyncedStream): Promise<void>
     saveMiniblock(streamId: string, miniblock: ParsedMiniblock): Promise<void>
-    saveMiniblocks(streamId: string, miniblocks: ParsedMiniblock[]): Promise<void>
+    saveMiniblocks(
+        streamId: string,
+        miniblocks: ParsedMiniblock[],
+        direction: 'forward' | 'backward',
+    ): Promise<void>
     getMiniblock(streamId: string, miniblockNum: bigint): Promise<ParsedMiniblock | undefined>
     getMiniblocks(
         streamId: string,
@@ -147,7 +151,7 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
 
     async saveMiniblock(streamId: string, miniblock: ParsedMiniblock) {
         log('saving miniblock', streamId)
-        const cachedMiniblock = parsedMiniblockToPersistedMiniblock(miniblock)
+        const cachedMiniblock = parsedMiniblockToPersistedMiniblock(miniblock, 'forward')
         await this.miniblocks.put({
             streamId: streamId,
             miniblockNum: miniblock.header.miniblockNum.toString(),
@@ -155,13 +159,17 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
         })
     }
 
-    async saveMiniblocks(streamId: string, miniblocks: ParsedMiniblock[]) {
+    async saveMiniblocks(
+        streamId: string,
+        miniblocks: ParsedMiniblock[],
+        direction: 'forward' | 'backward',
+    ) {
         await this.miniblocks.bulkPut(
             miniblocks.map((mb) => {
                 return {
                     streamId: streamId,
                     miniblockNum: mb.header.miniblockNum.toString(),
-                    data: parsedMiniblockToPersistedMiniblock(mb).toBinary(),
+                    data: parsedMiniblockToPersistedMiniblock(mb, direction).toBinary(),
                 }
             }),
         )
@@ -262,7 +270,11 @@ export class StubPersistenceStore implements IPersistenceStore {
         return Promise.resolve()
     }
 
-    async saveMiniblocks(streamId: string, miniblocks: ParsedMiniblock[]) {
+    async saveMiniblocks(
+        streamId: string,
+        miniblocks: ParsedMiniblock[],
+        direction: 'forward' | 'backward',
+    ) {
         return Promise.resolve()
     }
 

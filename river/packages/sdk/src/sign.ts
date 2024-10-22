@@ -189,34 +189,38 @@ export const unpackEnvelope = async (
     const event = StreamEvent.fromBinary(envelope.event)
     let hash = envelope.hash
 
-    const checkEventHash = opts?.disableHashValidation !== true
-    if (checkEventHash) {
+    const doCheckEventHash = opts?.disableHashValidation !== true
+    if (doCheckEventHash) {
         hash = riverHash(envelope.event)
         check(bin_equal(hash, envelope.hash), 'Event id is not valid', Err.BAD_EVENT_ID)
     }
 
-    const checkEventSignature = opts?.disableSignatureValidation !== true
-    if (checkEventSignature) {
-        const recoveredPubKey = riverRecoverPubKey(hash, envelope.signature)
-
-        if (!hasElements(event.delegateSig)) {
-            const address = publicKeyToAddress(recoveredPubKey)
-            check(
-                bin_equal(address, event.creatorAddress),
-                'Event signature is not valid',
-                Err.BAD_EVENT_SIGNATURE,
-            )
-        } else {
-            checkDelegateSig({
-                delegatePubKey: recoveredPubKey,
-                creatorAddress: event.creatorAddress,
-                delegateSig: event.delegateSig,
-                expiryEpochMs: event.delegateExpiryEpochMs,
-            })
-        }
+    const doCheckEventSignature = opts?.disableSignatureValidation !== true
+    if (doCheckEventSignature) {
+        checkEventSignature(event, hash, envelope.signature)
     }
 
     return makeParsedEvent(event, envelope.hash, envelope.signature)
+}
+
+export function checkEventSignature(event: StreamEvent, hash: Uint8Array, signature: Uint8Array) {
+    const recoveredPubKey = riverRecoverPubKey(hash, signature)
+
+    if (!hasElements(event.delegateSig)) {
+        const address = publicKeyToAddress(recoveredPubKey)
+        check(
+            bin_equal(address, event.creatorAddress),
+            'Event signature is not valid',
+            Err.BAD_EVENT_SIGNATURE,
+        )
+    } else {
+        checkDelegateSig({
+            delegatePubKey: recoveredPubKey,
+            creatorAddress: event.creatorAddress,
+            delegateSig: event.delegateSig,
+            expiryEpochMs: event.delegateExpiryEpochMs,
+        })
+    }
 }
 
 export function makeParsedEvent(

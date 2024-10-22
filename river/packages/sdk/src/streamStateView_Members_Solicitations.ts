@@ -3,6 +3,7 @@ import { MemberPayload_KeyFulfillment, MemberPayload_KeySolicitation } from '@ri
 import { StreamEncryptionEvents } from './streamEvents'
 import { StreamMember } from './streamStateView_Members'
 import { removeCommon } from './utils'
+import { KeySolicitationContent } from '@river-build/encryption'
 
 export class StreamStateView_Members_Solicitations {
     constructor(readonly streamId: string) {}
@@ -11,21 +12,20 @@ export class StreamStateView_Members_Solicitations {
         members: StreamMember[],
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ): void {
-        for (const member of members) {
-            for (const event of member.solicitations) {
-                encryptionEmitter?.emit(
-                    'newKeySolicitation',
-                    this.streamId,
-                    member.userId,
-                    member.userAddress,
-                    event,
-                )
-            }
-        }
+        encryptionEmitter?.emit(
+            'initKeySolicitations',
+            this.streamId,
+            members.map((member) => ({
+                userId: member.userId,
+                userAddress: member.userAddress,
+                solicitations: member.solicitations,
+            })),
+        )
     }
 
     applySolicitation(
         user: StreamMember,
+        eventId: string,
         solicitation: MemberPayload_KeySolicitation,
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ): void {
@@ -37,7 +37,8 @@ export class StreamStateView_Members_Solicitations {
             fallbackKey: solicitation.fallbackKey,
             isNewDevice: solicitation.isNewDevice,
             sessionIds: solicitation.sessionIds.toSorted(),
-        }
+            srcEventId: eventId,
+        } satisfies KeySolicitationContent
         user.solicitations.push(newSolicitation)
         encryptionEmitter?.emit(
             'newKeySolicitation',
@@ -63,7 +64,8 @@ export class StreamStateView_Members_Solicitations {
             fallbackKey: prev.fallbackKey,
             isNewDevice: false,
             sessionIds: [...removeCommon(prev.sessionIds, fulfillment.sessionIds.toSorted())],
-        }
+            srcEventId: prev.srcEventId,
+        } satisfies KeySolicitationContent
         user.solicitations[index] = newEvent
         encryptionEmitter?.emit(
             'updatedKeySolicitation',

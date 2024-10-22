@@ -70,11 +70,21 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
             keySolicitation: KeySolicitationContent,
         ) => this.enqueueKeySolicitation(streamId, fromUserId, fromUserAddress, keySolicitation)
 
+        const onInitKeySolicitations = (
+            streamId: string,
+            members: {
+                userId: string
+                userAddress: Uint8Array
+                solicitations: KeySolicitationContent[]
+            }[],
+        ) => this.enqueueInitKeySolicitations(streamId, members)
+
         client.on('streamUpToDate', onStreamUpToDate)
         client.on('newGroupSessions', onNewGroupSessions)
         client.on('newEncryptedContent', onNewEncryptedContent)
         client.on('newKeySolicitation', onKeySolicitation)
         client.on('updatedKeySolicitation', onKeySolicitation)
+        client.on('initKeySolicitations', onInitKeySolicitations)
         client.on('streamNewUserJoined', onMembershipChange)
 
         this._onStopFn = () => {
@@ -83,6 +93,7 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
             client.off('newEncryptedContent', onNewEncryptedContent)
             client.off('newKeySolicitation', onKeySolicitation)
             client.off('updatedKeySolicitation', onKeySolicitation)
+            client.off('initKeySolicitations', onInitKeySolicitations)
             client.off('streamNewUserJoined', onMembershipChange)
         }
         this.log.debug('new ClientDecryptionExtensions', { userDevice })
@@ -177,6 +188,10 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
             }
         }
         return true
+    }
+
+    public isValidEvent(streamId: string, eventId: string): { isValid: boolean; reason?: string } {
+        return this.client.isValidEvent(streamId, eventId)
     }
 
     public onDecryptionError(item: EncryptedContentItem, err: DecryptionSessionError): void {

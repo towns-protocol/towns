@@ -293,7 +293,7 @@ export class StreamStateView implements IStreamStateView {
             default:
                 logNever(snapshot.content)
         }
-        this.membershipContent.applySnapshot(snapshot, cleartexts, encryptionEmitter)
+        this.membershipContent.applySnapshot(eventHash, snapshot, cleartexts, encryptionEmitter)
     }
 
     private appendStreamAndCookie(

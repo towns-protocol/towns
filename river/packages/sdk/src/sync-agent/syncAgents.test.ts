@@ -86,6 +86,41 @@ describe('syncAgents.test.ts', () => {
         )
     })
 
+    test('syncAgents send a message with disableSignatureValidation=true', async () => {
+        const prevBobOpts = bob.riverConnection.clientParams.unpackEnvelopeOpts
+        const prevAliceOpts = alice.riverConnection.clientParams.unpackEnvelopeOpts
+        bob.riverConnection.clientParams.unpackEnvelopeOpts = {
+            disableSignatureValidation: true,
+        }
+        alice.riverConnection.clientParams.unpackEnvelopeOpts = {
+            disableSignatureValidation: true,
+        }
+        await Promise.all([bob.start(), alice.start()])
+        await waitFor(() => bob.spaces.value.status === 'loaded')
+        const spaceId = bob.spaces.data.spaceIds[0]
+        const space = bob.spaces.getSpace(spaceId)
+        const channelId = await space.createChannel('random', bobUser.signer)
+        const channel = space.getChannel(channelId)
+        await channel.sendMessage('Hello, World again!')
+
+        // join the channel, find the message
+        const aliceChannel = alice.spaces.getSpace(spaceId).getChannel(channel.data.id)
+        await aliceChannel.join()
+        logger.log(aliceChannel.timeline.events.value)
+        await waitFor(
+            () =>
+                expect(
+                    aliceChannel.timeline.events.value.find(
+                        (e) => e.text === 'Hello, World again!',
+                    ),
+                ).toBeDefined(),
+            { timeoutMS: 10000 },
+        )
+        // reset the unpackEnvelopeOpts
+        bob.riverConnection.clientParams.unpackEnvelopeOpts = prevBobOpts
+        alice.riverConnection.clientParams.unpackEnvelopeOpts = prevAliceOpts
+    })
+
     test('syncAgents pin a message', async () => {
         await Promise.all([bob.start(), alice.start()])
         await waitFor(() => bob.spaces.value.status === 'loaded')

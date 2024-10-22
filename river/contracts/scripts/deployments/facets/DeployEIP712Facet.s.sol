@@ -12,6 +12,8 @@ import {EIP712Facet} from "contracts/src/diamond/utils/cryptography/signature/EI
 
 contract DeployEIP712Facet is FacetHelper, Deployer {
   constructor() {
+    addSelector(EIP712Facet.DOMAIN_SEPARATOR.selector);
+    addSelector(EIP712Facet.nonces.selector);
     addSelector(EIP712Facet.eip712Domain.selector);
   }
 

@@ -43,6 +43,14 @@ export type StreamEncryptionEvents = {
         fromUserAddress: Uint8Array,
         event: KeySolicitationContent,
     ) => void
+    initKeySolicitations: (
+        streamId: string,
+        members: {
+            userId: string
+            userAddress: Uint8Array
+            solicitations: KeySolicitationContent[]
+        }[],
+    ) => void
     userDeviceKeyMessage: (streamId: string, userId: string, userDevice: UserDevice) => void
 }
 
