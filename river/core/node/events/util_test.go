@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
 
+	"github.com/river-build/river/core/config"
 	"github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/base/test"
 	"github.com/river-build/river/core/node/crypto"
@@ -114,6 +115,7 @@ func makeCacheTestContext(t *testing.T, p testParams) (context.Context, *cacheTe
 			RiverChain:              bc,
 			Registry:                registry,
 			ChainConfig:             btc.OnChainConfig,
+			Config:                  &config.Config{},
 			AppliedBlockNum:         blockNumber,
 			ChainMonitor:            bc.ChainMonitor,
 			Metrics:                 infra.NewMetricsFactory(nil, "", ""),

@@ -6,7 +6,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/panjf2000/ants/v2"
+	"github.com/gammazero/workerpool"
+
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/nodes"
@@ -16,20 +17,22 @@ import (
 
 type StreamSyncTasksProcessor struct {
 	pendingTasks sync.Map
-	workerPool   *ants.Pool
+	workerPool   *workerpool.WorkerPool
+}
+
+type StreamSyncTaskProcessorParams struct {
+	WorkerPoolSize int
 }
 
 // NewStreamSyncTasksProcessor creates a new sync task process that schedules and processes sync stream requests.
-func NewStreamSyncTasksProcessor() (*StreamSyncTasksProcessor, error) {
-	workerPool, err := ants.NewPool(32)
-	if err != nil {
-		return nil, WrapRiverError(Err_INTERNAL, err).
-			Message("Unable to create stream sync task worker processor").
-			Func("syncDatabaseWithRegistry")
-	}
-
+func NewStreamSyncTasksProcessor(
+	ctx context.Context,
+	params *StreamSyncTaskProcessorParams,
+) (*StreamSyncTasksProcessor, error) {
+	log := dlog.FromCtx(ctx).With("function", "NewStreamSyncTasksProcessor")
+	log.Debug("Starting StreamSyncTasksProcessor with workers", "workerPoolSize", params.WorkerPoolSize)
 	proc := &StreamSyncTasksProcessor{
-		workerPool: workerPool,
+		workerPool: workerpool.New(params.WorkerPoolSize),
 	}
 
 	return proc, nil
@@ -47,7 +50,7 @@ func (sst *StreamSyncTasksProcessor) Submit(
 
 	_, alreadyScheduled := sst.pendingTasks.LoadOrStore(stream.StreamId, task)
 	if !alreadyScheduled {
-		_ = sst.workerPool.Submit(func() {
+		sst.workerPool.Submit(func() {
 			sst.pendingTasks.Delete(task.stream)
 			task.process()
 		})

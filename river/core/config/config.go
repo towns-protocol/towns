@@ -37,6 +37,9 @@ func GetDefaultConfig() *Config {
 		},
 		// TODO: ArchitectContract: ContractConfig{},
 		// TODO: RegistryContract:  ContractConfig{},
+		StreamReconciliation: StreamReconciliationConfig{
+			WorkerPoolSize: 8,
+		},
 		Log: LogConfig{
 			Level:   "info", // NOTE: this default is replaced by flag value
 			Console: true,   // NOTE: this default is replaced by flag value
@@ -103,6 +106,9 @@ type Config struct {
 
 	// Scrubbing
 	Scrubbing ScrubbingConfig
+
+	// Stream reconciliation
+	StreamReconciliation StreamReconciliationConfig
 
 	// Network configuration
 	Network NetworkConfig
@@ -399,6 +405,10 @@ type ScrubbingConfig struct {
 	// to be re-scrubbed.
 	// If unset, it defaults to 1 hour.
 	ScrubEligibleDuration time.Duration
+}
+
+type StreamReconciliationConfig struct {
+	WorkerPoolSize int // If 0, default to 8.
 }
 
 type FilterConfig struct {

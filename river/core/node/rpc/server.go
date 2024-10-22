@@ -565,6 +565,7 @@ func (s *Service) initCacheAndSync() error {
 			RiverChain:              s.riverChain,
 			Registry:                s.registryContract,
 			ChainConfig:             s.chainConfig,
+			Config:                  s.config,
 			AppliedBlockNum:         s.riverChain.InitialBlockNum,
 			ChainMonitor:            s.riverChain.ChainMonitor,
 			Metrics:                 s.metrics,
