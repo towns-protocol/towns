@@ -121,6 +121,8 @@ services:
     build:
       context: .
       dockerfile: ./contracts/v0.6-stackup-paymaster.Dockerfile
+      args:
+        STACKUP_CONTRACTS_GIT_TOKEN: ${STACKUP_CONTRACTS_GIT_TOKEN}
     command: "deploy:VerifyingPaymaster --network devnet"
     depends_on:
       deploy-v0.6:
@@ -131,6 +133,8 @@ services:
     build:
       context: .
       dockerfile: ./contracts/v0.6-stackup-paymaster.Dockerfile
+      args:
+        STACKUP_CONTRACTS_GIT_TOKEN: ${STACKUP_CONTRACTS_GIT_TOKEN}
     command: |
       hardhat verifyingPaymaster:stake:add 0x42051Fa8F6c012102899c902aA214f1e97bD8aDb 0.3 --network devnet
     depends_on:
@@ -142,6 +146,8 @@ services:
     build:
       context: .
       dockerfile: ./contracts/v0.6-stackup-paymaster.Dockerfile
+      args:
+        STACKUP_CONTRACTS_GIT_TOKEN: ${STACKUP_CONTRACTS_GIT_TOKEN}
     command: |
       hardhat verifyingPaymaster:deposit:add 0x42051Fa8F6c012102899c902aA214f1e97bD8aDb 1 --network devnet
     depends_on:
@@ -153,6 +159,8 @@ services:
     build:
       context: .
       dockerfile: ./contracts/v0.6-stackup-paymaster.Dockerfile
+      args:
+        STACKUP_CONTRACTS_GIT_TOKEN: ${STACKUP_CONTRACTS_GIT_TOKEN}
     command: |
       hardhat verifyingPaymaster:deposit:get 0x42051Fa8F6c012102899c902aA214f1e97bD8aDb --network devnet
     depends_on:

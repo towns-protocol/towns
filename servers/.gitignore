@@ -17,3 +17,5 @@
 
 # Debug
 **/__debug_bin
+
+**/.env

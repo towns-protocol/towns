@@ -5,13 +5,13 @@ env:
     BASE_EXECUTION_CLIENT: geth_dev
 
 on:
-    # pull_request:
-    # paths:
-    #     - 'river/**'
-    #     - 'servers/4337/**'
-    #     - 'servers/workers/worker-common/**'
-    #     - 'servers/workers/stackup-worker/**'
-    #     - 'clients/web/userops/**'
+    pull_request:
+        paths:
+            - 'river/**'
+            - 'servers/4337/**'
+            - 'servers/workers/worker-common/**'
+            - 'servers/workers/stackup-worker/**'
+            - 'clients/web/userops/**'
     workflow_dispatch: # Allow manual trigger in GitHub UI
 
 jobs:
@@ -29,6 +29,11 @@ jobs:
                   node-version: '20'
                   cache: 'yarn'
 
+            - name: Set up Go
+              uses: actions/setup-go@v4
+              with:
+                  go-version: '1.22'
+
             - name: Install Foundry
               uses: foundry-rs/foundry-toolchain@v1
               with:
@@ -41,6 +46,8 @@ jobs:
               run: yarn workers:build
 
             - name: Start 4337
+              env:
+                  STACKUP_CONTRACTS_GIT_TOKEN: ${{ secrets.STACKUP_CONTRACTS_GIT_TOKEN }}
               run: ./scripts/start-4337.sh &
 
             - name: Wait for 4337
