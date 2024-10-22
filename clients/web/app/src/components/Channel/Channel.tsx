@@ -398,7 +398,7 @@ const Messages = (props: {
         }
         const streamIds = spaceId ? [channelId, spaceId] : [channelId]
         console.log('Set High Priority Streams', streamIds)
-        if (channelId) {
+        if (streamIds.length > 0) {
             setHighPriorityStreams(streamIds)
         }
     }, [client, spaceId, channelId, setHighPriorityStreams])

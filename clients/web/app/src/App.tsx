@@ -62,13 +62,10 @@ export const App = () => {
     const { spaceId, channelId } = useMemo(() => getRouteParams(channelBookmark), [channelBookmark])
     const [searchParams] = useSearchParams()
 
-    useEffect(() => {
-        if (didSetHighpriorityStreamIds.current) {
-            return
-        }
+    if (!didSetHighpriorityStreamIds.current) {
         didSetHighpriorityStreamIds.current = true
         highPriorityStreamIds.current = [channelId, spaceId].filter(isDefined)
-    }, [channelId, spaceId])
+    }
 
     useWindowListener()
 
