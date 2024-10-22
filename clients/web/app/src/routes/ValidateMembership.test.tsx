@@ -30,6 +30,7 @@ vi.mock('use-towns-client', async () => {
             clientStatus: {
                 isRemoteDataLoaded: true,
                 isLocalDataLoaded: true,
+                isHighPriorityDataLoaded: true,
             },
         }),
     }

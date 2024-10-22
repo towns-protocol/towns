@@ -35,7 +35,7 @@ import { usePublicPageLoginFlow } from './PublicTownPage/usePublicPageLoginFlow'
 export const ValidateMembership = () => {
     const space = useSpaceData()
     const { client, signerContext } = useTownsContext()
-    const { isLocalDataLoaded, isRemoteDataLoaded } = useDataLoaded()
+    const { isLocalDataLoaded, isRemoteDataLoaded, isHighPriorityDataLoaded } = useDataLoaded()
     const spaceIdFromPathname = useSpaceIdFromPathname()
     const usernameConfirmed = useUsernameConfirmed()
     const { spaceBeingJoined: isJoining } = usePublicPageLoginFlow()
@@ -49,6 +49,7 @@ export const ValidateMembership = () => {
             usernameConfirmed,
             isLocalDataLoaded,
             isRemoteDataLoaded,
+            isHighPriorityDataLoaded,
             client: client !== undefined,
             isJoining,
             space: space !== undefined,
@@ -60,6 +61,7 @@ export const ValidateMembership = () => {
         client,
         isLocalDataLoaded,
         isRemoteDataLoaded,
+        isHighPriorityDataLoaded,
         isJoining,
         signerContext,
         space,
@@ -147,7 +149,7 @@ export const ValidateMembership = () => {
         isMember,
     })
 
-    if (!isRemoteDataLoaded || !isLocalDataLoaded) {
+    if (!isHighPriorityDataLoaded) {
         Analytics.getInstance().trackOnce('load_local_data', {
             debug: true,
             isRemoteDataLoaded,
@@ -158,7 +160,7 @@ export const ValidateMembership = () => {
                 {/* <Outlet /> <- we can add the app in the background underneath the progress */}
                 <AppProgressOverlayTrigger
                     progressState={AppProgressState.InitializingWorkspace}
-                    debugSource={`isRemoteDataLoaded === ${isRemoteDataLoaded}, isLocalDataLoaded === ${isLocalDataLoaded}`}
+                    debugSource={`isHighPriorityDataLoaded === ${isHighPriorityDataLoaded}`}
                 />
             </>
         )
@@ -209,8 +211,13 @@ function useDataLoaded() {
         return {
             isLocalDataLoaded: clientStatus.isLocalDataLoaded,
             isRemoteDataLoaded: clientStatus.isRemoteDataLoaded,
+            isHighPriorityDataLoaded: clientStatus.isHighPriorityDataLoaded,
         }
-    }, [clientStatus.isLocalDataLoaded, clientStatus.isRemoteDataLoaded])
+    }, [
+        clientStatus.isLocalDataLoaded,
+        clientStatus.isRemoteDataLoaded,
+        clientStatus.isHighPriorityDataLoaded,
+    ])
 }
 
 function useSpaceDataIds() {

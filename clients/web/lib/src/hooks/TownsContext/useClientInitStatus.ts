@@ -6,6 +6,7 @@ export function useClientInitStatus(client?: CasablancaClient) {
         isLocalDataLoaded: false,
         isRemoteDataLoaded: false,
         streamSyncActive: false,
+        isHighPriorityDataLoaded: false,
     }))
 
     useEffect(() => {
@@ -32,7 +33,8 @@ export function useClientInitStatus(client?: CasablancaClient) {
             setClientStatus((prev) => {
                 if (
                     status.isLocalDataLoaded === prev.isLocalDataLoaded &&
-                    status.isRemoteDataLoaded === prev.isRemoteDataLoaded
+                    status.isRemoteDataLoaded === prev.isRemoteDataLoaded &&
+                    status.isHighPriorityDataLoaded === prev.isHighPriorityDataLoaded
                 ) {
                     return prev
                 } else {
@@ -40,6 +42,7 @@ export function useClientInitStatus(client?: CasablancaClient) {
                         isLocalDataLoaded: status.isLocalDataLoaded,
                         isRemoteDataLoaded: status.isRemoteDataLoaded,
                         streamSyncActive: prev.streamSyncActive,
+                        isHighPriorityDataLoaded: status.isHighPriorityDataLoaded,
                     }
                 }
             })
