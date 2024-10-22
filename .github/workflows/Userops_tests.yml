@@ -5,13 +5,13 @@ env:
     BASE_EXECUTION_CLIENT: geth_dev
 
 on:
-    pull_request:
-        paths:
-            - 'river/**'
-            - 'servers/4337/**'
-            - 'servers/workers/worker-common/**'
-            - 'servers/workers/stackup-worker/**'
-            - 'clients/web/userops/**'
+    # pull_request:
+    # paths:
+    #     - 'river/**'
+    #     - 'servers/4337/**'
+    #     - 'servers/workers/worker-common/**'
+    #     - 'servers/workers/stackup-worker/**'
+    #     - 'clients/web/userops/**'
     workflow_dispatch: # Allow manual trigger in GitHub UI
 
 jobs:
@@ -44,6 +44,7 @@ jobs:
               run: ./scripts/start-4337.sh &
 
             - name: Wait for 4337
+              timeout-minutes: 10
               run: ./scripts/wait-for-4337.sh
 
             - name: Start River blockchain
