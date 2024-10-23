@@ -7,7 +7,7 @@ import * as paymasterProxyMiddleware from '../src/middlewares/paymasterProxyMidd
 import * as promptUser from '../src/middlewares/promptUser'
 import { ISendUserOperationOpts, UserOperationBuilder } from 'userop'
 
-test('a sponsored userop that fails because of gas too low runs again', async () => {
+test('a sponsored userop that fails because of unknown connector runs again', async () => {
     const alice = new LocalhostWeb3Provider(
         process.env.AA_RPC_URL as string,
         generatePrivyWalletIfKey(process.env.PRIVY_WALLET_PRIVATE_KEY_1),
@@ -18,18 +18,18 @@ test('a sponsored userop that fails because of gas too low runs again', async ()
     const useropClient = await userOpsAlice.getUserOpClient()
 
     const sendSpy = vi.spyOn(useropClient, 'sendUserOperation')
-    const isGasTooLowSpy = vi.spyOn(errors, 'matchGasTooLowError')
+    const isUnknownConnectorSpy = vi.spyOn(errors, 'matchPrivyUnknownConnectorError')
     const paymasterProxyMiddlewareSpy = vi.spyOn(
         paymasterProxyMiddleware,
         'paymasterProxyMiddleware',
     )
-    isGasTooLowSpy.mockImplementation(() => ({
+    isUnknownConnectorSpy.mockImplementation(() => ({
         error: new errors.CodeException({
-            code: 1,
-            message: 'gas too low',
+            code: 'unknown',
+            message: 'Unknown connector',
             category: 'userop',
         }),
-        type: 'preverificationGas',
+        type: 'privy',
     }))
     sendSpy.mockImplementation(
         async (builder: UserOperationBuilder, opts?: ISendUserOperationOpts) => {
@@ -64,17 +64,17 @@ test('a non-sponsored userop that fails because of gas too low runs again', asyn
 
     const sendSpy = vi.spyOn(useropClient, 'sendUserOperation')
     let count = 0
-    const isGasTooLowSpy = vi.spyOn(errors, 'matchGasTooLowError')
+    const isUnknownConnectorSpy = vi.spyOn(errors, 'matchPrivyUnknownConnectorError')
     vi.spyOn(paymasterProxyMiddleware, 'paymasterProxyMiddleware').mockImplementation(() => {
         return Promise.resolve()
     })
-    isGasTooLowSpy.mockImplementation(() => ({
+    isUnknownConnectorSpy.mockImplementation(() => ({
         error: new errors.CodeException({
-            code: 1,
-            message: 'gas too low',
+            code: 'unknown',
+            message: 'Unknown connector',
             category: 'userop',
         }),
-        type: 'preverificationGas',
+        type: 'privy',
     }))
     sendSpy.mockImplementation(
         async (builder: UserOperationBuilder, opts?: ISendUserOperationOpts) => {

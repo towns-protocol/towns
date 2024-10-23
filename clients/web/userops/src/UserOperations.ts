@@ -23,7 +23,7 @@ import { userOpsStore } from './userOpsStore'
 // TODO: we can probably add these via @account-abrstraction/contracts if preferred
 import { EntryPoint__factory, SimpleAccountFactory__factory } from 'userop/dist/typechain'
 import { ERC4337 } from 'userop/dist/constants'
-import { CodeException, errorToCodeException, matchGasTooLowError } from './errors'
+import { CodeException } from './errors'
 import { UserOperationEventEvent } from 'userop/dist/typechain/EntryPoint'
 import { EVERYONE_ADDRESS, getFunctionSigHash, isUsingAlchemyBundler } from './utils'
 import { signUserOpHash } from './middlewares/signUserOpHash'
@@ -38,7 +38,7 @@ import { TownsSimpleAccount } from './TownsSimpleAccount'
 import { getGasPrice as getEthMaxPriorityFeePerGas } from 'userop/dist/preset/middleware'
 import { TownsUserOpClient, TownsUserOpClientSendUserOperationResponse } from './TownsUserOpClient'
 import { getTransferCallData } from './generateTransferCallData'
-import { datadogLogs } from '@datadog/browser-logs'
+import { sendUserOperationWithRetry } from './sendUserOperationWithRetry'
 
 export class UserOps {
     private bundlerUrl: string
@@ -217,76 +217,13 @@ export class UserOps {
 
         endInitClient?.()
 
-        const sendUserOperationWithRetry = async () => {
-            let attempt = 0
-            let shouldTry = true
-            let _error: CodeException | undefined = undefined
-            while (shouldTry && attempt < (args.retryCount ?? 3)) {
-                try {
-                    // Not tracking this event because it tracks all middlewares
-                    // This could include both a user hanging on the confirmation modal
-                    // As well as internal userop.js middlewares
-                    //
-                    // internal userop.js accounts for 1-2s of the total time
-                    //
-                    // instead, each middleware should be tracked individually
-                    // if we need to track internal userop.js middlewares and actual request for sending the user operation
-                    // then we need to extract the middlewares from userop.js, as well as the request
-                    //
-                    const res = await userOpClient.sendUserOperation(simpleAccount, {
-                        onBuild: (op) => {
-                            console.log('[UserOperations] Signed UserOperation:', op)
-                        },
-                    })
-                    console.log('[UserOperations] userOpHash:', res.userOpHash)
-                    return res
-                } catch (error) {
-                    const sponsoredOp = simpleAccount.getPaymasterAndData() !== '0x'
-                    _error = errorToCodeException(
-                        error,
-                        sponsoredOp ? 'userop_sponsored' : 'userop_non_sponsored',
-                    )
-                    // if any gas too low errors, retry
-                    // https://docs.stackup.sh/docs/bundler-errors
-                    const gasTooLowErrorType = matchGasTooLowError(error)
-                    if (gasTooLowErrorType) {
-                        this.middlewareVars.operationAttempt++
-
-                        datadogLogs.logger.error('[UserOperations] gas too low error', {
-                            error,
-                            codeException: _error,
-                            errorMessage: _error.message,
-                            gasTooLowErrorType,
-                            operationAttempt: this.middlewareVars.operationAttempt,
-                        })
-
-                        userOpsStore.setState({
-                            retryDetails: {
-                                type: 'gasTooLow',
-                                data: gasTooLowErrorType,
-                            },
-                        })
-
-                        await new Promise((resolve) => setTimeout(resolve, 500))
-                        // this is a paid op. just retry until the user dismisses
-                        if (
-                            simpleAccount.getPaymasterAndData() === '0x' &&
-                            !this.skipPromptUserOnPMRejectedOp
-                        ) {
-                            continue
-                        }
-
-                        attempt++
-                        continue
-                    } else {
-                        shouldTry = false
-                    }
-                }
-            }
-            throw _error
-        }
-
-        return sendUserOperationWithRetry()
+        return sendUserOperationWithRetry({
+            userOpClient,
+            simpleAccount,
+            retryCount: args.retryCount,
+            skipPromptUserOnPMRejectedOp: this.skipPromptUserOnPMRejectedOp,
+            middlewareVars: this.middlewareVars,
+        })
     }
 
     public async sendCreateLegacySpaceOp(

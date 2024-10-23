@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo } from 'react'
 import { create } from 'zustand'
 import { useShallow } from 'zustand/react/shallow'
-import { TSigner, sleep, useTownsClient, useTownsContext } from 'use-towns-client'
+import { TSigner, useTownsClient, useTownsContext } from 'use-towns-client'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { useStore } from 'store/store'
 import { mapToErrorMessage } from '@components/Web3/utils'
@@ -93,12 +93,15 @@ export function usePublicPageLoginFlow() {
             })
 
             try {
-                const result = await retryPrivyErrors(() =>
-                    clientSingleton.joinTown(spaceId, signer, signerContext, (status) => {
+                const result = await clientSingleton.joinTown(
+                    spaceId,
+                    signer,
+                    signerContext,
+                    (status) => {
                         if (status === 'membership-minted') {
                             setRecentlyMintedSpaceToken({ spaceId: spaceId, isOwner: false })
                         }
-                    }),
+                    },
                 )
 
                 if (result) {
@@ -290,34 +293,3 @@ export const publicPageLoginStore = create<{
         })
     },
 }))
-
-// Privy seems to misbehave and throw "Unknown connector error" when requesting another signature too quickly!!
-// This can happen on initial login from a public town page, when a user logs in with embedded wallet, other signature requests might come in (i.e. sign for river delegate key, sign for setting up userops, etc.)
-async function retryPrivyErrors<T>(
-    fn: () => Promise<T>,
-    maxRetries: number = 5,
-    initialDelay: number = 1000,
-): Promise<T> {
-    let retries = 0
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
-        try {
-            return await fn()
-        } catch (error) {
-            // Scoping this to only retry on "Unknown Connector" errors from Privy
-            // but we can expand to include all errors if needed - but errors could come from userops and/or river so for now lets just try privy
-            if (
-                !(error instanceof Error) ||
-                !error.message.includes('Unknown connector error') ||
-                retries >= maxRetries
-            ) {
-                throw error
-            }
-
-            retries++
-            const delay = initialDelay * Math.pow(2, retries)
-            console.warn(`Unknown connector error. Retry attempt ${retries + 1} after ${delay}ms`)
-            await sleep(delay)
-        }
-    }
-}

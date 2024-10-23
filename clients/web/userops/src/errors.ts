@@ -3,6 +3,7 @@ export const errorCategories = {
     userop_non_sponsored: 'userop_non_sponsored',
     userop: 'userop',
     misc: 'misc',
+    privy: 'privy',
 } as const
 
 export type ErrorCategory = keyof typeof errorCategories
@@ -25,9 +26,29 @@ export class CodeException extends Error {
     }
 }
 
+// Privy seems to misbehave and throw "Unknown connector error" when requesting another signature too quickly!!
+// This can happen on initial login from a public town page, when a user logs in with embedded wallet, other signature requests might come in (i.e. sign for river delegate key, sign for setting up userops, etc.)
+// It will also happen when https://auth.privy.io/api/v1/embedded_wallets/<address>/* fails
+// https://hntlabs.slack.com/archives/C05SSQJMK0V/p1723649868311309
+export function matchPrivyUnknownConnectorError(error: unknown):
+    | {
+          error: CodeException
+      }
+    | undefined {
+    const err = errorToCodeException(error, 'privy')
+    if (err.message.includes('Unknown connector error')) {
+        return { error: err }
+    }
+}
+
 // https://docs.stackup.sh/docs/bundler-errors
 // docs.alchemy.com/reference/bundler-api-errors
-export function matchGasTooLowError(error: unknown) {
+export function matchGasTooLowError(error: unknown):
+    | {
+          error: CodeException
+          type: string
+      }
+    | undefined {
     const err = errorToCodeException(error, 'misc')
     // alchemy
     if (err.code.toString().startsWith('-32')) {
@@ -47,7 +68,7 @@ export function matchGasTooLowError(error: unknown) {
         ]
         const match = possibleGasErrors.find((error) => err.message.includes(error))
         if (match) {
-            return match
+            return { error: err, type: match }
         }
     }
     // stackup
@@ -56,7 +77,7 @@ export function matchGasTooLowError(error: unknown) {
         typeof err.data === 'string' &&
         err.data.includes('preVerificationGas: below expected gas')
     if (isPreVerificationGasBelowExpected) {
-        return 'preVerificationGas'
+        return { error: err, type: 'preverificationGas' }
     }
 }
 
