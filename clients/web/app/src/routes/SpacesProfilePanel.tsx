@@ -44,6 +44,7 @@ import { PanelButton } from '@components/Panel/PanelButton'
 import { useBlockedUsers } from 'hooks/useBlockedUsers'
 import { UserPreferences } from '@components/UserProfile/UserPreferences'
 import { Analytics } from 'hooks/useAnalytics'
+import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
 
 export const SpaceProfilePanel = () => {
@@ -386,6 +387,7 @@ const SpaceProfileWithoutAuth = () => {
                     <BlockPanelButton userId={userId} isBlocked={isBlocked} />
                 )}
             </Stack>
+            <UserOpTxModal />
         </Stack>
     )
 }
