@@ -76,15 +76,13 @@ export class PushNotificationClient {
             }
             console.log('PUSH: sendNotificationTagIfAny', { attachmentKind, userIds })
 
-            tags.push(
-                this.createAttachmentNotificationParams({
-                    spaceId: options.parentSpaceId,
-                    tag: attachmentKind,
-                    channelId,
-                    userIds,
-                    threadId,
-                }),
-            )
+            tags.push({
+                spaceId: options.parentSpaceId,
+                channelId,
+                tag: attachmentKind,
+                userIds: Array.from(userIds),
+                threadId,
+            } satisfies AttachmentTagRequestParams)
         }
 
         const spaceId = options.parentSpaceId ?? ''
@@ -105,23 +103,22 @@ export class PushNotificationClient {
             userMentions = options.mentions.filter((mention) => !mention.atChannel)
             console.log('PUSH: sendNotificationTagIfAny', { channelMentions, userMentions })
             if (channelMentions.length > 0) {
-                tags.push(
-                    this.createAtChannelNotificationParams({
-                        spaceId,
-                        channelId,
-                        threadId,
-                    }),
-                )
+                tags.push({
+                    spaceId,
+                    channelId,
+                    threadId,
+                    tag: NotificationKind.AtChannel,
+                    userIds: [NotificationKind.AtChannel],
+                } satisfies AtChannelRequestParams)
             }
             if (userMentions.length > 0) {
-                tags.push(
-                    this.createUserMentionNotificationParams({
-                        mentions: userMentions,
-                        spaceId,
-                        channelId,
-                        threadId,
-                    }),
-                )
+                tags.push({
+                    spaceId,
+                    channelId,
+                    userIds: userMentions.map((mention) => mention.userId),
+                    threadId,
+                    tag: NotificationKind.Mention,
+                } satisfies MentionUsersRequestParams)
             }
         }
 
@@ -136,13 +133,12 @@ export class PushNotificationClient {
             })
             //console.log('sendNotificationTagIfAny', { threadParticipants })
             if (threadParticipants.size > 0) {
-                tags.push(
-                    this.createReplyToNotificationParams({
-                        participants: threadParticipants,
-                        spaceId,
-                        channelId,
-                    }),
-                )
+                tags.push({
+                    spaceId,
+                    channelId,
+                    userIds: Array.from(threadParticipants),
+                    tag: NotificationKind.ReplyTo,
+                } satisfies ReplyToUsersRequestParams)
             }
         }
 
@@ -174,11 +170,12 @@ export class PushNotificationClient {
     ): Promise<void> {
         const headers = this.createHttpHeaders()
         const body = [
-            this.createReactionNotificationParams({
+            {
                 channelId,
-                userId: creatorUserId,
+                userIds: [creatorUserId],
                 threadId,
-            }),
+                tag: NotificationKind.Reaction,
+            } satisfies ReactionRequestParams,
         ]
         const url = `${this.options.url}/api/tag`
         console.log('PUSH: sending reaction tag to Notification Service ...', url, body)
@@ -192,110 +189,6 @@ export class PushNotificationClient {
         } catch (error) {
             console.error('PUSH: error sending reaction tag to Notification Service', error)
         }
-    }
-
-    private createUserMentionNotificationParams({
-        spaceId,
-        channelId,
-        mentions,
-        threadId,
-    }: {
-        spaceId: string
-        channelId: string
-        mentions: Mention[]
-        threadId?: string
-    }): MentionUsersRequestParams {
-        const userIds = mentions.map((mention) => mention.userId)
-        const params: MentionUsersRequestParams = {
-            spaceId,
-            channelId,
-            userIds,
-            threadId,
-            tag: NotificationKind.Mention,
-        }
-        return params
-    }
-
-    private createAtChannelNotificationParams({
-        spaceId,
-        channelId,
-        threadId,
-    }: {
-        spaceId: string
-        channelId: string
-        threadId?: string
-    }): AtChannelRequestParams {
-        const params: AtChannelRequestParams = {
-            spaceId,
-            channelId,
-            threadId,
-            tag: NotificationKind.AtChannel,
-            userIds: [NotificationKind.AtChannel],
-        }
-        return params
-    }
-
-    private createAttachmentNotificationParams({
-        spaceId,
-        channelId,
-        tag,
-        userIds,
-        threadId,
-    }: {
-        spaceId?: string
-        channelId: string
-        tag: NotificationAttachmentKind
-        userIds: Set<string>
-        threadId?: string
-    }): AttachmentTagRequestParams {
-        const params: AttachmentTagRequestParams = {
-            spaceId,
-            channelId,
-            tag,
-            userIds: Array.from(userIds),
-            threadId,
-        }
-        return params
-    }
-
-    private createReplyToNotificationParams({
-        spaceId,
-        channelId,
-        participants,
-    }: {
-        spaceId: string
-        channelId: string
-        participants: Set<string>
-    }): ReplyToUsersRequestParams {
-        const userIds: string[] = []
-        for (const u of participants) {
-            userIds.push(u)
-        }
-        const params: ReplyToUsersRequestParams = {
-            spaceId,
-            channelId,
-            userIds,
-            tag: NotificationKind.ReplyTo,
-        }
-        return params
-    }
-
-    private createReactionNotificationParams({
-        channelId,
-        userId,
-        threadId,
-    }: {
-        channelId: string
-        userId: string
-        threadId?: string
-    }): ReactionRequestParams {
-        const params: ReactionRequestParams = {
-            channelId,
-            userIds: [userId],
-            threadId,
-            tag: NotificationKind.Reaction,
-        }
-        return params
     }
 
     private createHttpHeaders(): HeadersInit {
