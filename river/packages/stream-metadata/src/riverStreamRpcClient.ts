@@ -26,9 +26,7 @@ const clients = new Map<string, StreamRpcClient>()
 
 export type StreamRpcClient = PromiseClient<typeof StreamService> & { url?: string }
 
-function makeStreamRpcClient(logger: FastifyBaseLogger, url: string): StreamRpcClient {
-	logger.info({ url }, 'Connecting')
-
+export function makeStreamRpcClient(url: string): StreamRpcClient {
 	const options: ConnectTransportOptions = {
 		httpVersion: '2',
 		baseUrl: url,
@@ -45,8 +43,12 @@ function makeStreamRpcClient(logger: FastifyBaseLogger, url: string): StreamRpcC
 
 async function getStreamClient(logger: FastifyBaseLogger, streamId: `0x${string}`) {
 	const node = await getNodeForStream(logger, streamId)
-	const client = clients.get(node.url) || makeStreamRpcClient(logger, node.url)
-	clients.set(node.url, client)
+	let client = clients.get(node.url)
+	if (!client) {
+		logger.info({ url: node.url }, 'Connecting')
+		client = makeStreamRpcClient(node.url)
+		clients.set(node.url, client)
+	}
 
 	logger.info({ url: node.url }, 'client connected to node')
 

@@ -153,7 +153,7 @@ export const unpackStreamAndCookie = async (
         streamAndCookie.miniblocks.map(async (mb) => await unpackMiniblock(mb, opts)),
     )
     return {
-        events: await unpackEnvelopes(streamAndCookie.events),
+        events: await unpackEnvelopes(streamAndCookie.events, opts),
         nextSyncCookie: streamAndCookie.nextSyncCookie,
         miniblocks: miniblocks,
     }
@@ -243,7 +243,7 @@ export function makeParsedEvent(
 
 export const unpackEnvelopes = async (
     event: Envelope[],
-    opts?: UnpackEnvelopeOpts,
+    opts: UnpackEnvelopeOpts | undefined,
 ): Promise<ParsedEvent[]> => {
     const ret: ParsedEvent[] = []
     //let prevEventHash: Uint8Array | undefined = undefined
