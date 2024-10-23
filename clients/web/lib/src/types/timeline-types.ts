@@ -47,32 +47,24 @@ export enum EventStatus {
 export enum ZTEvent {
     BlockchainTransaction = 'blockchain.transaction',
     MiniblockHeader = 'm.miniblockheader',
-    Notice = 'm.notice',
     Reaction = 'm.reaction',
     Fulfillment = 'm.fulfillment',
     KeySolicitation = 'm.key_solicitation',
     Pin = 'm.pin',
     RedactedEvent = 'm.redacted_event',
     RedactionActionEvent = 'm.redaction_action',
-    RoomAvatar = 'm.room.avatar',
-    RoomCanonicalAlias = 'm.room.canonical_alias',
     RoomCreate = 'm.room.create',
-    RoomEncryption = 'm.room.encryption',
-    RoomHistoryVisibility = 'm.room.history_visibility',
     RoomJoinRules = 'm.room.join_rules',
     RoomMember = 'm.room.member',
     RoomMessage = 'm.room.message',
     RoomMessageEncrypted = 'm.room.encrypted',
     RoomMessageEncryptedWithRef = 'm.room.encrypted_with_ref',
     RoomMessageMissing = 'm.room.missing',
-    RoomName = 'm.room.name',
     RoomProperties = 'm.room.properties',
-    RoomTopic = 'm.room.topic',
     SpaceChild = 'm.space.child',
     SpaceUpdateAutojoin = 'm.space.update_autojoin',
     SpaceUpdateHideUserJoinLeaves = 'm.space.update_channel_hide_user_join_leaves',
     SpaceImage = 'm.space.image',
-    SpaceParent = 'm.space.parent',
     SpaceUsername = 'm.space.username',
     SpaceDisplayName = 'm.space.display_name',
     SpaceEnsAddress = 'm.space.ens_name',
@@ -83,29 +75,22 @@ export enum ZTEvent {
 /// a timeline event should have one or none of the following fields set
 export type TimelineEvent_OneOf =
     | MiniblockHeaderEvent
-    | NoticeEvent
     | ReactionEvent
     | FulfillmentEvent
     | KeySolicitationEvent
     | PinEvent
     | RedactedEvent
     | RedactionActionEvent
-    | RoomCanonicalAliasEvent
-    | RoomEncryptionEvent
-    | RoomAvatarEvent
     | RoomCreateEvent
     | RoomMessageEncryptedEvent
     | RoomMessageMissingEvent
     | RoomMemberEvent
     | RoomMessageEvent
-    | RoomNameEvent
     | RoomPropertiesEvent
-    | RoomTopicEvent
     | SpaceChildEvent
     | SpaceUpdateAutojoinEvent
     | SpaceUpdateHideUserJoinLeavesEvent
     | SpaceImageEvent
-    | SpaceParentEvent
     | SpaceUsernameEvent
     | SpaceDisplayNameEvent
     | SpaceEnsAddressEvent
@@ -139,18 +124,6 @@ export interface ReactionEvent {
     reaction: string
 }
 
-export interface RoomAvatarEvent {
-    kind: ZTEvent.RoomAvatar
-    url?: string
-    // NOTE spec includes an info field
-}
-
-export interface RoomCanonicalAliasEvent {
-    kind: ZTEvent.RoomCanonicalAlias
-    alias: string
-    altAliases?: string[]
-}
-
 export interface RoomCreateEvent {
     kind: ZTEvent.RoomCreate
     creator: string
@@ -162,15 +135,6 @@ export interface RoomCreateEvent {
 export interface RoomPropertiesEvent {
     kind: ZTEvent.RoomProperties
     properties: ChannelProperties
-}
-
-export interface RoomEncryptionEvent {
-    kind: ZTEvent.RoomEncryption
-    roomEncryption: {
-        algorithm: string
-        rotationPeriodMs?: number
-        rotationPeriodMsgs?: number
-    }
 }
 
 export interface RoomMessageEncryptedEvent {
@@ -275,16 +239,6 @@ export interface RoomMessageEvent {
     attachments?: Attachment[]
 }
 
-export interface RoomNameEvent {
-    kind: ZTEvent.RoomName
-    name: string
-}
-
-export interface RoomTopicEvent {
-    kind: ZTEvent.RoomTopic
-    topic: string
-}
-
 // original event: the event that was redacted
 export interface RedactedEvent {
     kind: ZTEvent.RedactedEvent
@@ -319,11 +273,6 @@ export interface SpaceUpdateHideUserJoinLeavesEvent {
 
 export interface SpaceImageEvent {
     kind: ZTEvent.SpaceImage
-}
-
-export interface SpaceParentEvent {
-    kind: ZTEvent.SpaceParent
-    parentId: string
 }
 
 export interface TimelineEvent {
@@ -393,14 +342,6 @@ export type MentionResult = {
     event: TimelineEvent
     thread?: TimelineEvent
 }
-
-export interface IgnoredNoticeEvent {
-    kind: ZTEvent.Notice
-    message: string
-    contentKind?: string
-}
-
-export type NoticeEvent = IgnoredNoticeEvent
 
 export type MediaInfo = Pick<
     MediaInfoStruct,
@@ -478,18 +419,8 @@ export function getFallbackContent(
             ).toString()}`
         case ZTEvent.Reaction:
             return `${senderDisplayName} reacted with ${content.reaction} to ${content.targetEventId}`
-        case ZTEvent.RoomAvatar:
-            return `url: ${content.url ?? 'undefined'}`
-        case ZTEvent.RoomCanonicalAlias: {
-            const alt = (content.altAliases ?? []).join(', ')
-            return `alias: ${content.alias}, alt alaises: ${alt}`
-        }
         case ZTEvent.RoomCreate:
             return content.type ? `type: ${content.type}` : ''
-        case ZTEvent.RoomEncryption:
-            return `algorithm: ${content.roomEncryption.algorithm} rotationMs: ${
-                content.roomEncryption.rotationPeriodMs?.toString() ?? 'N/A'
-            } rotationMsgs: ${content.roomEncryption.rotationPeriodMsgs?.toString() ?? 'N/A'}`
         case ZTEvent.RoomMessageEncrypted:
             return `Decrypting...`
         case ZTEvent.RoomMember: {
@@ -497,8 +428,6 @@ export function getFallbackContent(
         }
         case ZTEvent.RoomMessage:
             return `${senderDisplayName}: ${content.body}`
-        case ZTEvent.RoomName:
-            return `newValue: ${content.name}`
         case ZTEvent.RoomProperties:
             return `properties: ${content.properties.name ?? ''} ${content.properties.topic ?? ''}`
         case ZTEvent.SpaceUsername:
@@ -509,8 +438,6 @@ export function getFallbackContent(
             return `ensAddress: ${bin_toHexString(content.ensAddress)}`
         case ZTEvent.SpaceNft:
             return `contractAddress: ${content.contractAddress}, tokenId: ${content.tokenId}, chainId: ${content.chainId}`
-        case ZTEvent.RoomTopic:
-            return `newValue: ${content.topic}`
         case ZTEvent.RedactedEvent:
             return `~Redacted~`
         case ZTEvent.RedactionActionEvent:
@@ -526,12 +453,6 @@ export function getFallbackContent(
             return `channelId: ${content.channelId} hideUserJoinLeaves: ${content.hideUserJoinLeaves}`
         case ZTEvent.SpaceImage:
             return `SpaceImage`
-        case ZTEvent.SpaceParent:
-            return `parentId: ${content.parentId}`
-        case ZTEvent.Notice:
-            return `Notice: msgType: ${content.contentKind ?? 'unknown'}, message: ${
-                content.message
-            }`
         case ZTEvent.Fulfillment:
             return `Fulfillment sessionIds: ${
                 content.sessionIds.length ? content.sessionIds.join(',') : 'forNewDevice: true'

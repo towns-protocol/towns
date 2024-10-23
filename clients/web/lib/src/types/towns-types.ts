@@ -9,7 +9,6 @@ export enum Membership {
     Invite = 'invite',
     Leave = 'leave',
     Ban = 'ban',
-    Knock = 'knock',
     None = '',
 }
 
