@@ -38,7 +38,6 @@ db.version(1).stores({
 
 const debouncedSave = debounce(
     async (name: string, value: StorageValue<UserLookupStoreData>) => {
-        dlog.info('debouncedSave', name, value)
         const spaceUsers = value.state.spaceUsers
         const channelUsers = value.state.channelUsers
         const fallbackUserLookups = value.state.fallbackUserLookups
