@@ -96,7 +96,9 @@ export function GatedTownModal({ onHide, spaceId, joinSpace }: Props) {
                     linkedWallets={linkedWallets}
                     entitlements={entitlements}
                     joinSpace={joinSpace}
-                    onHide={() => onHide({ shouldEndLoginFlow: true })}
+                    onHide={(
+                        params: { shouldEndLoginFlow: boolean } = { shouldEndLoginFlow: true },
+                    ) => onHide(params)}
                 >
                     {linkedWallets && linkedWallets.length > 1 ? (
                         <Paragraph strong>Linked Wallets</Paragraph>

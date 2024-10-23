@@ -23,6 +23,7 @@ import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { ConnectWalletThenLinkButton } from './ConnectWalletThenLinkButton'
 import { WalletLinkingInfo } from './WalletLinkingInfo'
 import { WalletWithBalance } from './Wallet/WalletWithBalance'
+import { UserOpTxModal } from './UserOpTxModal/UserOpTxModal'
 
 export const WalletLinkingPanel = React.memo(() => {
     return (
@@ -150,6 +151,7 @@ function WalletLinkingPanelWithoutAuth() {
                     </Box>
                 </ModalContainer>
             )}
+            <UserOpTxModal />
         </Stack>
     )
 }
