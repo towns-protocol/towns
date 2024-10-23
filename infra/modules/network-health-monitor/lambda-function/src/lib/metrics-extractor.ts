@@ -10,12 +10,21 @@ import {
     ISpaceOwnerBase,
 } from '@river-build/web3'
 import { ethers } from 'ethers'
+import * as ss from 'simple-statistics'
 import { Ping as Pinger } from './pinger'
 import { getWalletBalances } from './wallet-balance'
 import { NodeStructOutput } from '@river-build/generated/dev/typings/INodeRegistry'
 import { Unpromisify, withQueue } from './utils'
 import { MetricsIntegrator } from './metrics-integrator'
 import { IERC721ABase } from '@river-build/generated/dev/typings/IERC721AQueryable'
+import * as d3 from 'd3-array'
+
+const NUM_RETRIES = 3
+const THROTTLE_LIMIT = 250 // num requests
+const THROTTLE_INTERVAL = 1000 // per ms
+const CONCURRENCY = 250
+
+const NUM_SPACE_PER_LOG = 100
 
 export type MetricsExtractorScrapeConfig = {
     getSpaceMemberships: boolean
@@ -128,11 +137,6 @@ export class MetricsExtractor {
     }
 
     private async getSpaceOwners(numTotalSpaces: number) {
-        const NUM_RETRIES = 3
-        const THROTTLE_LIMIT = 200 // num requests
-        const THROTTLE_INTERVAL = 1000 // per ms
-        const CONCURRENCY = 50
-
         console.log('getting space owners')
         const getSpaceOwnerArgs = Array.from({ length: numTotalSpaces }, (_, i) => i)
         const onFailedAttempt = (tokenId: number, error: Error) => {
@@ -151,11 +155,14 @@ export class MetricsExtractor {
             onFailedAttempt,
         }
 
-        const spaceOwners = await withQueue(
-            this.spaceOwner.erc721A.read.ownerOf,
-            getSpaceOwnerArgs,
-            options,
-        )
+        const getSpaceOwner = async (tokenId: number) => {
+            if (tokenId % NUM_SPACE_PER_LOG == 0) {
+                console.log(`getting space owner for token id ${tokenId}`)
+            }
+            return await this.spaceOwner.erc721A.read.ownerOf(tokenId)
+        }
+
+        const spaceOwners = await withQueue(getSpaceOwner, getSpaceOwnerArgs, options)
         console.log('got space owners')
         return spaceOwners
     }
@@ -202,6 +209,9 @@ export class MetricsExtractor {
         dynamicPricingModule: PricingModuleStruct
         v1DynamicPricingModule: PricingModuleStruct | undefined
     }): Promise<SpaceWithTokenOwners> {
+        if (tokenId % NUM_SPACE_PER_LOG == 0) {
+            console.log(`getting space memberships for token id ${tokenId}`)
+        }
         const spaceAddress =
             await this.spaceDapp.spaceRegistrar.SpaceArchitect.read.getSpaceByTokenId(tokenId)
         const space = this.spaceDapp.spaceRegistrar.getSpace(spaceAddress)!
@@ -286,11 +296,6 @@ export class MetricsExtractor {
     }
 
     private async getAllSpacesWithMemberships(numTotalSpaces: number) {
-        const NUM_RETRIES = 3
-        const THROTTLE_LIMIT = 200 // num requests
-        const THROTTLE_INTERVAL = 1000 // per ms
-        const CONCURRENCY = 50
-
         if (!this.scrapeConfig.getSpaceMemberships) {
             return {
                 kind: 'skipped' as const,
@@ -433,14 +438,77 @@ export class MetricsExtractor {
         }
     }
 
+    private getSpaceMembershipStats(data: number[]) {
+        const sortedData = data.slice().sort((a, b) => a - b)
+
+        const statsSummary = {
+            min: ss.min(sortedData),
+            max: ss.max(sortedData),
+            mean: ss.mean(sortedData),
+            median: ss.median(sortedData),
+            mode: ss.mode(sortedData),
+            variance: ss.variance(sortedData),
+            standardDeviation: ss.standardDeviation(sortedData),
+        }
+
+        const quantiles = {
+            p1: ss.quantile(sortedData, 0.01),
+            p5: ss.quantile(sortedData, 0.05),
+            p10: ss.quantile(sortedData, 0.1),
+            p25: ss.quantile(sortedData, 0.25),
+            p50: ss.quantile(sortedData, 0.5),
+            p75: ss.quantile(sortedData, 0.75),
+            p90: ss.quantile(sortedData, 0.9),
+            p95: ss.quantile(sortedData, 0.95),
+            p99: ss.quantile(sortedData, 0.99),
+            'p99.9': ss.quantile(sortedData, 0.999),
+            'p99.99': ss.quantile(sortedData, 0.9999),
+        }
+
+        const thresholds = [1, 5, 10, 50, 100, 250, 500, 1000, 2500, 5000, 10000]
+        const thresholdSet = new Set(thresholds)
+
+        const bins = d3.bin().thresholds(thresholds)(
+            // Number of bins (or thresholds can be customized)
+            sortedData,
+        )
+
+        const histogram = bins.map((bin) => {
+            let from = bin.x0!
+            let to = bin.x1!
+
+            // pick the closest threshold value that is greater than or equal to the bin's `to` value
+            if (!thresholdSet.has(to)) {
+                for (const threshold of thresholds) {
+                    if (threshold >= to) {
+                        to = threshold
+                        break
+                    }
+                }
+            }
+
+            return {
+                from,
+                to,
+                size: bin.length,
+            }
+        })
+
+        return {
+            quantiles,
+            histogram,
+            statsSummary,
+        }
+    }
+
     async extractUsageMetrics() {
         const [numTotalSpaces, numTotalStreams] = await Promise.all([
             this.getNumTotalSpaces(),
             this.getNumTotalStreams(),
         ])
 
+        // const spaceOwners = await this.getSpaceOwners(numTotalSpaces)
         const spacesWithMemberships = await this.getAllSpacesWithMemberships(numTotalSpaces)
-        const spaceOwners = await this.getSpaceOwners(numTotalSpaces)
 
         let numTotalSpaceMemberships = 0
         let memberAddressToNumMemberships: Map<string, number> = new Map()
@@ -477,12 +545,22 @@ export class MetricsExtractor {
                       .length
                 : 0
 
-        const numUniqueSpaceOwners = new Set(spaceOwners).size
+        const numSpaceMembersList =
+            spacesWithMemberships.kind === 'success'
+                ? spacesWithMemberships.result.map((space) => space.numMemberships)
+                : []
+
+        const spaceMembershipStats = this.getSpaceMembershipStats(numSpaceMembersList)
+
+        const numUserMembershipsList = Array.from(memberAddressToNumMemberships.values())
+        const userMembershipStats = this.getSpaceMembershipStats(numUserMembershipsList)
 
         return {
             spacesWithMemberships,
             memberAddressToNumMemberships,
-            aggregateUsageStats: {
+            spaceMembershipStats,
+            userMembershipStats,
+            usageTotals: {
                 numTotalSpaces,
                 numTotalStreams,
                 numTotalSpaceMemberships,
@@ -490,7 +568,7 @@ export class MetricsExtractor {
                 numTotalPricedSpaces,
                 numTotalPaidSpaceMemberships,
                 numTotalSpacesWithPaidMemberships,
-                numUniqueSpaceOwners,
+                // numUniqueSpaceOwners,
             },
         }
     }

@@ -9,7 +9,7 @@ locals {
     Service = local.lambda_function_service_name
   })
   global_remote_state = module.global_constants.global_remote_state.outputs
-  memory_size         = var.extracted_metrics_kind == "usage" ? 2048 : 1024
+  memory_size         = var.extracted_metrics_kind == "usage" ? 4096 : 1024
   schedule_expression = var.extracted_metrics_kind == "usage" ? "rate(1 day)" : "rate(5 minutes)"
 }
 
@@ -35,6 +35,8 @@ module "lambda_function" {
   trigger_on_package_timestamp = false
 
   memory_size = local.memory_size
+
+  maximum_retry_attempts = 0
 
   environment_variables = {
     DATADOG_API_KEY_SECRET_ARN         = local.global_remote_state.river_global_dd_agent_api_key.arn

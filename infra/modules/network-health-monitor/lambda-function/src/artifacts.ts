@@ -6,7 +6,6 @@ const envSchema = z.object({
     BASE_CHAIN_RPC_URL: z.string().url(),
     RIVER_CHAIN_RPC_URL: z.string().url(),
     ENVIRONMENT: z.string(),
-    GET_SPACE_INFO: z.boolean(),
 })
 
 // Fetches all metrics and prepares file artifacts for further analysis
@@ -17,7 +16,7 @@ const run = async () => {
         baseChainRpcUrl: env.BASE_CHAIN_RPC_URL,
         riverChainRpcUrl: env.RIVER_CHAIN_RPC_URL,
         environment: env.ENVIRONMENT,
-        getSpaceInfo: env.GET_SPACE_INFO,
+        getSpaceInfo: true,
     })
 
     const nodeMetrics = await extractor.extractNodeMetrics()

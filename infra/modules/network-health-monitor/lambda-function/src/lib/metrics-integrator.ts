@@ -3,8 +3,8 @@ import { BaseOperator, BaseNodeWithOperator } from '@river-build/web3'
 
 export type CombinedOperator = {
     operatorAddress: string
-    baseOperatorStatus: number
-    riverOperatorStatus: number
+    baseOperatorStatus: 'operational' | 'not operational' | 'not found'
+    riverOperatorStatus: 'operational' | 'not found'
 }
 
 export type CombinedNode = {
@@ -34,16 +34,18 @@ export class MetricsIntegrator {
         const combinedOperators: CombinedOperator[] = allOperatorAddresses.map(
             (operatorAddress) => {
                 const baseOperator = baseOperatorMap.get(operatorAddress)
-                let baseOperatorStatus = -1 // -1 means not found
+                let baseOperatorStatus: CombinedOperator['baseOperatorStatus'] = 'not found'
                 if (baseOperator) {
-                    baseOperatorStatus = baseOperator.status
+                    baseOperatorStatus =
+                        baseOperator.status === 3 ? 'operational' : 'not operational'
                 }
 
-                const riverOperatorStatus = riverOperatorAddressSet.has(operatorAddress) ? 1 : -1
                 return {
                     operatorAddress,
                     baseOperatorStatus,
-                    riverOperatorStatus,
+                    riverOperatorStatus: riverOperatorAddressSet.has(operatorAddress)
+                        ? 'operational'
+                        : 'not found',
                 }
             },
         )

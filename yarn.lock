@@ -11316,6 +11316,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/d3-array@npm:^3.2.1":
+  version: 3.2.1
+  resolution: "@types/d3-array@npm:3.2.1"
+  checksum: 8a41cee0969e53bab3f56cc15c4e6c9d76868d6daecb2b7d8c9ce71e0ececccc5a8239697cc52dadf5c665f287426de5c8ef31a49e7ad0f36e8846889a383df4
+  languageName: node
+  linkType: hard
+
 "@types/debug@npm:^4.0.0, @types/debug@npm:^4.1.12, @types/debug@npm:^4.1.7, @types/debug@npm:^4.1.8":
   version: 4.1.12
   resolution: "@types/debug@npm:4.1.12"
@@ -16712,6 +16719,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"d3-array@npm:^3.2.4":
+  version: 3.2.4
+  resolution: "d3-array@npm:3.2.4"
+  dependencies:
+    internmap: 1 - 2
+  checksum: a5976a6d6205f69208478bb44920dd7ce3e788c9dceb86b304dbe401a4bfb42ecc8b04c20facde486e9adcb488b5d1800d49393a3f81a23902b68158e12cddd0
+  languageName: node
+  linkType: hard
+
 "d@npm:1, d@npm:^1.0.1":
   version: 1.0.1
   resolution: "d@npm:1.0.1"
@@ -16972,6 +16988,13 @@ __metadata:
     babel-plugin-macros:
       optional: true
   checksum: 045b595557b2a8ea2eb9b0b4623d764e9a87326486fe2b61191b4342ed93dc01245644d8a09f3108a50c0ee7965f1eedd92e4a3a503ed89ea8e810566ea27f9a
+  languageName: node
+  linkType: hard
+
+"deeks@npm:3.1.0":
+  version: 3.1.0
+  resolution: "deeks@npm:3.1.0"
+  checksum: d4b92aea7bee3a77adad0d84da67c8afe9693cc22c89bf10e01bc30eb0dd5e53a7958ce12f6f0b5f1cbb0f54f0a7aa603555725688fc0eb3a6ce80e6950be05a
   languageName: node
   linkType: hard
 
@@ -17323,6 +17346,13 @@ __metadata:
   version: 1.1.3
   resolution: "dlv@npm:1.1.3"
   checksum: d7381bca22ed11933a1ccf376db7a94bee2c57aa61e490f680124fa2d1cd27e94eba641d9f45be57caab4f9a6579de0983466f620a2cd6230d7ec93312105ae7
+  languageName: node
+  linkType: hard
+
+"doc-path@npm:4.1.1":
+  version: 4.1.1
+  resolution: "doc-path@npm:4.1.1"
+  checksum: 41e7d59cb460073e1bc1ede88117e885d3e2fc53218cdc176820660465ebda59330355d12605b96fb13b88754826b471bfec2ec832f145d2f561f53ec3066a0f
   languageName: node
   linkType: hard
 
@@ -21761,6 +21791,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"internmap@npm:1 - 2":
+  version: 2.0.3
+  resolution: "internmap@npm:2.0.3"
+  checksum: 7ca41ec6aba8f0072fc32fa8a023450a9f44503e2d8e403583c55714b25efd6390c38a87161ec456bf42d7bc83aab62eb28f5aef34876b1ac4e60693d5e1d241
+  languageName: node
+  linkType: hard
+
 "interpret@npm:^1.0.0":
   version: 1.4.0
   resolution: "interpret@npm:1.4.0"
@@ -23342,6 +23379,16 @@ __metadata:
   bin:
     jsesc: bin/jsesc
   checksum: b8b44cbfc92f198ad972fba706ee6a1dfa7485321ee8c0b25f5cedd538dcb20cde3197de16a7265430fce8277a12db066219369e3d51055038946039f6e20e17
+  languageName: node
+  linkType: hard
+
+"json-2-csv@npm:^5.5.6":
+  version: 5.5.6
+  resolution: "json-2-csv@npm:5.5.6"
+  dependencies:
+    deeks: 3.1.0
+    doc-path: 4.1.1
+  checksum: 0be4068b68decc708742ff88c8154deba2e7e03dc84d9c9986a595d5e261ebf8a4b653a07516327f120153a4cfd0902f2cce4e5c84ca57e996a4df27da71bdde
   languageName: node
   linkType: hard
 
@@ -26783,12 +26830,16 @@ __metadata:
     "@river-build/generated": "workspace:^"
     "@river-build/web3": "workspace:^"
     "@types/aws-lambda": ^8.10.133
+    "@types/d3-array": ^3.2.1
+    d3-array: ^3.2.4
     esbuild: ^0.21.5
     ethers: ^5.7.2
+    json-2-csv: ^5.5.6
     p-queue: ^8.0.1
     p-retry: ^6.2.0
     p-throttle: ^6.1.0
     prettier: ^2.8.8
+    simple-statistics: ^7.8.7
     typescript: ^5.1.6
     zod: ^3.21.4
   languageName: unknown
@@ -30033,6 +30084,13 @@ __metadata:
   version: 4.1.0
   resolution: "signal-exit@npm:4.1.0"
   checksum: 64c757b498cb8629ffa5f75485340594d2f8189e9b08700e69199069c8e3070fb3e255f7ab873c05dc0b3cec412aea7402e10a5990cb6a050bd33ba062a6c549
+  languageName: node
+  linkType: hard
+
+"simple-statistics@npm:^7.8.7":
+  version: 7.8.7
+  resolution: "simple-statistics@npm:7.8.7"
+  checksum: 4409dc52c46d4725108b3a692ecab1ab60cbdcc6863911b41c57e59b64b7e02cbba36a4beb0c81cf5d040a461ca5ea2a3ebd6e7c2c1135ca5519875ee8558b64
   languageName: node
   linkType: hard
 

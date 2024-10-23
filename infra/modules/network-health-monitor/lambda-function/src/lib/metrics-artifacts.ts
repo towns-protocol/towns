@@ -1,7 +1,8 @@
-import { NodeMetrics, UsageMetrics } from './metrics-extractor'
+import { NodeMetrics, SpaceWithTokenOwners, UsageMetrics } from './metrics-extractor'
 import fs from 'fs/promises'
 import { exists } from './utils'
 import path from 'path'
+import converter from 'json-2-csv'
 
 const ARTIFACTS_ROOT_DIR = 'artifacts'
 
@@ -47,35 +48,49 @@ export class MetricsArtifacts {
         console.log(`Created: ${destination}`)
     }
 
+    private sanitizeCsvField(field: string) {
+        return field.replace(/,/g, '').replace(/\r?\n|\r/g, '\\n') || '-'
+    }
+
+    private getSpaceMembershipsJson(spacesWithTokenOwners: SpaceWithTokenOwners[]) {
+        return spacesWithTokenOwners
+            .sort((b, a) => a.numMemberships - b.numMemberships)
+            .map(({ address, numMemberships, numPaidMemberships, isPriced, spaceInfo }) => {
+                const name = typeof spaceInfo?.name === 'string' ? spaceInfo?.name : '-'
+                const uri = typeof spaceInfo?.uri === 'string' ? spaceInfo?.uri : '-'
+                const shortDescription =
+                    typeof spaceInfo?.shortDescription === 'string'
+                        ? spaceInfo?.shortDescription
+                        : '-'
+                const longDescription =
+                    typeof spaceInfo?.longDescription === 'string'
+                        ? spaceInfo?.longDescription
+                        : '-'
+
+                const row = {
+                    address,
+                    numMemberships,
+                    numPaidMemberships,
+                    isPriced,
+                    name: this.sanitizeCsvField(name),
+                    uri: this.sanitizeCsvField(uri),
+                    shortDescription: this.sanitizeCsvField(shortDescription),
+                    longDescription: this.sanitizeCsvField(longDescription),
+                }
+                return row
+            })
+    }
+
     private async generateNumMembershipsPerSpaceCSV() {
         const destination = path.join(this.artifactsDir, 'numMembershipsPerSpace.csv')
         if (this.usageMetrics.spacesWithMemberships.kind === 'success') {
-            const numMembershipsPerSpace = this.usageMetrics.spacesWithMemberships.result
-                .sort((b, a) => a.numMemberships - b.numMemberships)
-                .map(({ address, numMemberships, numPaidMemberships, isPriced, spaceInfo }) =>
-                    [
-                        address,
-                        numMemberships,
-                        numPaidMemberships,
-                        spaceInfo?.name || '-',
-                        spaceInfo?.uri || '-',
-                        isPriced,
-                        spaceInfo?.shortDescription || '-',
-                        spaceInfo?.longDescription || '-',
-                    ]
-                        .map((x) =>
-                            typeof x === 'string' // prepare for csv
-                                ? `"${x.replace(/"/g, '""')}"`
-                                : x,
-                        )
-                        .join(','),
-                )
-
-            numMembershipsPerSpace.unshift(
-                'Address, Num Memberships, Num Paid Memberships, Name, URI, Is Priced, Short Description, Long Description',
+            const numMembershipsPerSpace = this.getSpaceMembershipsJson(
+                this.usageMetrics.spacesWithMemberships.result,
             )
 
-            await fs.writeFile(destination, numMembershipsPerSpace.join('\n'))
+            const csv = converter.json2csv(numMembershipsPerSpace)
+            await fs.writeFile(destination, csv)
+
             console.log(`Created: ${destination}`)
         }
     }
@@ -103,10 +118,13 @@ export class MetricsArtifacts {
 
     private async generateSpaceMembershipsJSON() {
         const destination = path.join(this.artifactsDir, 'spaceMemberships.json')
-        await fs.writeFile(
-            destination,
-            JSON.stringify(this.usageMetrics.spacesWithMemberships, null, 2),
-        )
+        if (this.usageMetrics.spacesWithMemberships.kind === 'success') {
+            const numMembershipsPerSpace = this.getSpaceMembershipsJson(
+                this.usageMetrics.spacesWithMemberships.result,
+            )
+
+            await fs.writeFile(destination, JSON.stringify(numMembershipsPerSpace, null, 2))
+        }
         console.log(`Created: ${destination}`)
     }
 
@@ -116,8 +134,8 @@ export class MetricsArtifacts {
             destination,
             JSON.stringify(
                 {
-                    usage: this.usageMetrics.aggregateUsageStats,
-                    node: this.nodeMetrics.aggregateNodeStats,
+                    usage: this.usageMetrics,
+                    node: this.nodeMetrics,
                 },
                 null,
                 2,
