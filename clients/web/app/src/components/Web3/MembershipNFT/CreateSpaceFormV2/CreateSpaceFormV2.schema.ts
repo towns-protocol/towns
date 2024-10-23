@@ -24,6 +24,9 @@ export const membershipSettingsSchema = z
             })
             .min(1, {
                 message: 'Please enter a number greater than 0',
+            })
+            .max(1000, {
+                message: 'Please enter a number less than or equal to 1000',
             }),
         membershipPricingType: z.union([
             z.literal('dynamic', {

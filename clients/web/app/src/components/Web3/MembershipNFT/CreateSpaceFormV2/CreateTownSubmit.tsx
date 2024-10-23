@@ -325,6 +325,9 @@ export function CreateTownSubmit({
                 if (_errors.spaceIconFile || _errors.spaceName) {
                     setPanelType(undefined)
                 }
+                if (_errors.membershipLimit) {
+                    setPanelType(PanelType.all)
+                }
                 setTransactionDetails({
                     isTransacting: false,
                     townAddress: undefined,
