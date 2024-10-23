@@ -68,9 +68,11 @@ Then update `clients/web/app/.env.local` with the required (blank) keys.
 done
 ```
 
-> !! YOU CAN FIND A SAMPLE OF ALL THE REQUIRED VALUES FOR 1 AND 2 IN [THIS NOTION DOC](https://www.notion.so/herenottherelabs/env-files-for-local-dev-046b81ff5bb947d69b9c3cf107c3597d) !!
+4. Create an `.env` file in `servers/4337` with the required values.
 
-4. Create a Certificate Authority. Run `./river/core/scripts/register-ca.sh` from the root of the repository. This will create the required `$HOME/river-ca-cert.pem` and `$HOME/river-ca-key.pem` files.
+> !! YOU CAN FIND A SAMPLE OF ALL THE REQUIRED VALUES FOR THESE STEPS IN [THIS NOTION DOC](https://www.notion.so/herenottherelabs/env-files-for-local-dev-046b81ff5bb947d69b9c3cf107c3597d) !!
+
+5. Create a Certificate Authority. Run `./river/core/scripts/register-ca.sh` from the root of the repository. This will create the required `$HOME/river-ca-cert.pem` and `$HOME/river-ca-key.pem` files.
 
 ## Running everything locally
 
