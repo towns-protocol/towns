@@ -61,8 +61,21 @@ export function matchGasTooLowError(error: unknown) {
 }
 
 export function errorToCodeException(error: unknown, category: ErrorCategory) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const err = error as any
+    if (!isError) {
+        return new CodeException({
+            message: 'Unknown error',
+            code: '',
+            data: null,
+            category,
+        })
+    }
+
+    const err = error as {
+        message?: string
+        reason?: string
+        code?: number | string
+        data?: unknown
+    }
 
     const reason = err?.message || err?.reason
 
@@ -104,8 +117,8 @@ export function errorToCodeException(error: unknown, category: ErrorCategory) {
     }
 
     return new CodeException({
-        message: err?.message ?? 'Unknown error',
-        code: err.code,
+        message: err.message ?? 'Unknown error',
+        code: err.code ?? '',
         // alchemy might nest in revertData
         data: (containsRevertData(err.data) ? err.data.revertData : err.data) ?? null,
         category,
@@ -134,4 +147,13 @@ function isParsedErrorData(parsedData: unknown): parsedData is ParsedErrorData {
 
 function containsRevertData(data: unknown): data is { revertData: unknown } {
     return typeof data === 'object' && data !== null && 'revertData' in data
+}
+
+function isError(error: unknown): error is Error {
+    return (
+        error !== null &&
+        typeof error === 'object' &&
+        'message' in error &&
+        typeof (error as Error).message === 'string'
+    )
 }
