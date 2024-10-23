@@ -146,7 +146,7 @@ export async function startStressChat(opts: {
                         return { streamId, randomClients }
                     })
                     .catch((e) => {
-                        logStep(client, 'CREATE_GDM', false, { reason: e })
+                        logStep(client, 'CREATE_GDM', false, { err: e })
                         throw e
                     })
             }),
@@ -175,7 +175,7 @@ export async function startStressChat(opts: {
                     })
                     .catch((e) => {
                         errors.push(e)
-                        logStep(client, 'GDM_CHAT', false, { reason: e })
+                        logStep(client, 'GDM_CHAT', false, { err: e })
                         throw e
                     }),
             )

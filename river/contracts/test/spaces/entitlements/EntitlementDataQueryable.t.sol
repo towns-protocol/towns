@@ -10,27 +10,22 @@ import {IChannel} from "contracts/src/spaces/facets/channels/IChannel.sol";
 
 // libraries
 import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
-import {Vm} from "forge-std/Test.sol";
 
 // contracts
-
 import {MembershipBaseSetup} from "contracts/test/spaces/membership/MembershipBaseSetup.sol";
+import {EntitlementTestUtils} from "contracts/test/utils/EntitlementTestUtils.sol";
 
 // mocks
 import {MockUserEntitlement} from "contracts/test/mocks/MockUserEntitlement.sol";
 
 contract EntitlementDataQueryableTest is
+  EntitlementTestUtils,
   MembershipBaseSetup,
   IEntitlementDataQueryableBase,
   IRolesBase
 {
   IEntitlementDataQueryable internal entitlements;
   MockUserEntitlement internal mockEntitlement;
-
-  bytes32 internal constant CHECK_REQUESTED =
-    keccak256(
-      "EntitlementCheckRequested(address,address,bytes32,uint256,address[])"
-    );
 
   function setUp() public override {
     super.setUp();
@@ -103,10 +98,8 @@ contract EntitlementDataQueryableTest is
     vm.prank(user);
     membership.joinSpace(user);
 
-    Vm.Log[] memory requestLogs = vm.getRecordedLogs(); // Retrieve the recorded logs
-
     (, bytes32 transactionId, uint256 roleId, ) = _getRequestedEntitlementData(
-      requestLogs
+      vm.getRecordedLogs()
     );
 
     EntitlementData memory data = IEntitlementDataQueryable(userSpace)
@@ -114,32 +107,5 @@ contract EntitlementDataQueryableTest is
 
     assertTrue(data.entitlementData.length > 0);
     assertEq(data.entitlementType, "RuleEntitlementV2");
-  }
-
-  function _getRequestedEntitlementData(
-    Vm.Log[] memory requestLogs
-  )
-    internal
-    pure
-    returns (
-      address contractAddress,
-      bytes32 transactionId,
-      uint256 roleId,
-      address[] memory selectedNodes
-    )
-  {
-    for (uint256 i; i < requestLogs.length; ++i) {
-      if (
-        requestLogs[i].topics.length > 0 &&
-        requestLogs[i].topics[0] == CHECK_REQUESTED
-      ) {
-        (, contractAddress, transactionId, roleId, selectedNodes) = abi.decode(
-          requestLogs[i].data,
-          (address, address, bytes32, uint256, address[])
-        );
-        return (contractAddress, transactionId, roleId, selectedNodes);
-      }
-    }
-    revert("Entitlement check request not found");
   }
 }

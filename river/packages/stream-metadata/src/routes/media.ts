@@ -80,7 +80,7 @@ export async function fetchMedia(request: FastifyRequest, reply: FastifyReply) {
 			.header('Cache-Control', CACHE_CONTROL[200])
 			.send(Buffer.from(data))
 	} catch (error) {
-		logger.error({ mediaStreamId, error }, 'Failed to fetch media stream content')
+		logger.error({ mediaStreamId, err: error }, 'Failed to fetch media stream content')
 
 		return reply
 			.code(404)

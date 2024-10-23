@@ -46,7 +46,7 @@ export async function fetchUserProfileImage(request: FastifyRequest, reply: Fast
 	} catch (error) {
 		logger.error(
 			{
-				error,
+				err: error,
 				userId,
 			},
 			'Failed to get stream',
@@ -95,7 +95,7 @@ export async function fetchUserProfileImage(request: FastifyRequest, reply: Fast
 	} catch (error) {
 		logger.error(
 			{
-				error,
+				err: error,
 				userId,
 				mediaStreamId: profileImage.streamId,
 			},

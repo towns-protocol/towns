@@ -1,12 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-// utils
-
 //interfaces
-import {IEntitlementChecker} from "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol";
 import {IEntitlementCheckerBase} from "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol";
-import {IEntitlementGated} from "contracts/src/spaces/facets/gated/IEntitlementGated.sol";
 import {IEntitlementGatedBase} from "contracts/src/spaces/facets/gated/IEntitlementGated.sol";
 import {IRuleEntitlement} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
 
@@ -14,12 +10,12 @@ import {IRuleEntitlement} from "contracts/src/spaces/entitlements/rule/IRuleEnti
 import {RuleEntitlementUtil} from "./RuleEntitlementUtil.sol";
 
 //contracts
-import {EntitlementChecker} from "contracts/src/base/registry/facets/checker/EntitlementChecker.sol";
 import {MockEntitlementGated} from "contracts/test/mocks/MockEntitlementGated.sol";
-
+import {EntitlementTestUtils} from "contracts/test/utils/EntitlementTestUtils.sol";
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
 
 contract EntitlementGatedTest is
+  EntitlementTestUtils,
   BaseSetup,
   IEntitlementGatedBase,
   IEntitlementCheckerBase
@@ -168,15 +164,20 @@ contract EntitlementGatedTest is
   }
 
   function test_postEntitlementCheckResult_multipleRoleIds() external {
-    address[] memory nodes = entitlementChecker.getRandomNodes(5);
-
     uint256[] memory roleIds = new uint256[](2);
     roleIds[0] = 0;
     roleIds[1] = 1;
 
+    vm.recordLogs();
+
     bytes32 requestId = gated.requestEntitlementCheckV2(
       roleIds,
       RuleEntitlementUtil.getMockERC721RuleData()
+    );
+
+    // get the nodes that were selected
+    (, , , address[] memory nodes) = _getRequestedEntitlementData(
+      vm.getRecordedLogs()
     );
 
     // first roleId is not entitled

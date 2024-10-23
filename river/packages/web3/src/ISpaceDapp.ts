@@ -56,6 +56,11 @@ export interface UpdateChannelParams {
     disabled?: boolean
 }
 
+export interface RemoveChannelParams {
+    spaceId: string
+    channelId: string
+}
+
 export interface LegacyUpdateRoleParams {
     spaceNetworkId: string
     roleId: number
@@ -230,6 +235,11 @@ export interface ISpaceDapp {
     ) => Promise<(ethers.utils.LogDescription | undefined)[]>
     updateChannel: (
         params: UpdateChannelParams,
+        signer: SignerType,
+        txnOpts?: TransactionOpts,
+    ) => Promise<TransactionType>
+    removeChannel: (
+        params: RemoveChannelParams,
         signer: SignerType,
         txnOpts?: TransactionOpts,
     ) => Promise<TransactionType>

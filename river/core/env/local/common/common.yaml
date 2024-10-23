@@ -1,7 +1,7 @@
 # This config template is used for local and CI tests. Default production config is in default_config.yaml
 
 database:
-    url: postgres://postgres:postgres@localhost:5433/river?sslmode=disable&pool_max_conns=1000
+    url: postgres://postgres:postgres@localhost:5433/river?sslmode=disable&pool_max_conns=50
     isolationLevel: 'read committed'
 
 # Certificates for TLS

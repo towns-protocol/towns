@@ -41,7 +41,7 @@ export async function fetchUserBio(request: FastifyRequest, reply: FastifyReply)
 	} catch (error) {
 		logger.error(
 			{
-				error,
+				err: error,
 				userId,
 			},
 			'Failed to get stream',

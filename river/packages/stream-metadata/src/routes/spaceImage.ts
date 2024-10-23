@@ -51,7 +51,7 @@ export async function fetchSpaceImage(request: FastifyRequest, reply: FastifyRep
 	} catch (error) {
 		logger.error(
 			{
-				error,
+				err: error,
 				spaceAddress,
 			},
 			'Failed to get stream',
@@ -94,7 +94,7 @@ export async function fetchSpaceImage(request: FastifyRequest, reply: FastifyRep
 	} catch (error) {
 		logger.error(
 			{
-				error,
+				err: error,
 				spaceAddress,
 				mediaStreamId: spaceImage.streamId,
 			},

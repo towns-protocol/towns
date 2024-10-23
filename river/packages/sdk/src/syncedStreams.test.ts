@@ -58,7 +58,12 @@ describe('syncStreams', () => {
         const rpcClient = await makeTestRpcClient()
         const alicesContext = await makeRandomUserContext()
         const alicesUserId = userIdFromAddress(alicesContext.creatorAddress)
-        const alicesSyncedStreams = new SyncedStreams(alicesUserId, rpcClient, mockClientEmitter)
+        const alicesSyncedStreams = new SyncedStreams(
+            alicesUserId,
+            rpcClient,
+            mockClientEmitter,
+            undefined,
+        )
 
         // some helper functions
         const createStream = async (streamId: Uint8Array, events: PartialMessage<Envelope>[]) => {

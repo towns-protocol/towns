@@ -59,7 +59,7 @@ export async function userRefreshOnResponse(
 	} catch (error) {
 		logger.error(
 			{
-				error,
+				err: error,
 				userId,
 				target,
 				paths,

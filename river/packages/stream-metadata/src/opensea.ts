@@ -83,7 +83,7 @@ export const refreshOpenSea = async ({
 			.catch((error: unknown) => {
 				logger.error(
 					{
-						error,
+						err: error,
 						spaceAddress,
 					},
 					'Failed to refresh OpenSea',

@@ -21,6 +21,7 @@ import {
     UpdateRoleParams,
     SetChannelPermissionOverridesParams,
     ClearChannelPermissionOverridesParams,
+    RemoveChannelParams,
 } from '../ISpaceDapp'
 import { LOCALHOST_CHAIN_ID } from '../Web3Constants'
 import { IRolesBase } from './IRolesShim'
@@ -1057,6 +1058,21 @@ export class SpaceDapp implements ISpaceDapp {
             encodedCallData.push(callData)
         }
         return encodedCallData
+    }
+
+    public async removeChannel(
+        params: RemoveChannelParams,
+        signer: ethers.Signer,
+        txnOpts?: TransactionOpts,
+    ): Promise<ContractTransaction> {
+        const space = this.getSpace(params.spaceId)
+        if (!space) {
+            throw new Error(`Space with spaceId "${params.spaceId}" is not found.`)
+        }
+        return wrapTransaction(
+            () => space.Channels.write(signer).removeChannel(params.channelId),
+            txnOpts,
+        )
     }
 
     public async legacyUpdateRole(

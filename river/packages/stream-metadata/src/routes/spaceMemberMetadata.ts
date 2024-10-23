@@ -54,7 +54,7 @@ export async function fetchSpaceMemberMetadata(request: FastifyRequest, reply: F
 			.header('Cache-Control', CACHE_CONTROL[200])
 			.send(metadata)
 	} catch (error) {
-		logger.error({ spaceAddress, tokenId, error }, 'Failed to fetch space contract info')
+		logger.error({ spaceAddress, tokenId, err: error }, 'Failed to fetch space contract info')
 		return reply
 			.code(404)
 			.header('Cache-Control', CACHE_CONTROL['4xx'])

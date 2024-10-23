@@ -76,6 +76,52 @@ func setupStreamStorageTest() (context.Context, *PostgresStreamStore, *testStrea
 	return ctx, store, params
 }
 
+func TestSqlForStream(t *testing.T) {
+	streamIdString := "20864dd5d959460eec194e629507ab14403e86877549f4a5d6b3eb728adf75d1"
+	streamId := testutils.StreamIdFromString(streamIdString)
+	suffix := createTableSuffix(streamId)
+
+	// Sanity check
+	require.Equal(t, "80a8e1d562992f654ab5d6fd57bb1a545f12dadb6500c87fa02a897a", suffix)
+
+	tests := map[string]struct {
+		template string
+		expected string
+	}{
+		"simple example": {
+			template: "SELECT COALESCE(MAX(seq_num), -1) FROM {{miniblocks}} WHERE stream_id = $1",
+			expected: "SELECT COALESCE(MAX(seq_num), -1) FROM miniblocks_80a8e1d562992f654ab5d6fd57bb1a545f12dadb6500c87fa02a897a WHERE stream_id = $1",
+		},
+		"table name is a substring within other ranges of the query": {
+			template: `INSERT INTO es (stream_id, latest_snapshot_miniblock) VALUES ($1, -1);
+			CREATE TABLE {{miniblocks}} PARTITION OF miniblocks FOR VALUES IN ($1);`,
+			expected: `INSERT INTO es (stream_id, latest_snapshot_miniblock) VALUES ($1, -1);
+			CREATE TABLE miniblocks_80a8e1d562992f654ab5d6fd57bb1a545f12dadb6500c87fa02a897a PARTITION OF miniblocks FOR VALUES IN ($1);`,
+		},
+		"query containing non-templated references to table names": {
+			template: `select * from INSERT INTO es (stream_id, latest_snapshot_miniblock) VALUES ($1, 0);
+			CREATE TABLE {{miniblocks}} PARTITION OF miniblocks FOR VALUES IN ($1);
+			CREATE TABLE {{minipools}} PARTITION OF minipools FOR VALUES IN ($1);
+			CREATE TABLE {{miniblock_candidates}} PARTITION OF miniblock_candidates for values in ($1);
+			INSERT INTO {{miniblocks}} (stream_id, seq_num, blockdata) VALUES ($1, 0, $2);
+			INSERT INTO {{minipools}} (stream_id, generation, slot_num) VALUES ($1, 1, -1);`,
+			expected: `select * from INSERT INTO es (stream_id, latest_snapshot_miniblock) VALUES ($1, 0);
+			CREATE TABLE miniblocks_80a8e1d562992f654ab5d6fd57bb1a545f12dadb6500c87fa02a897a PARTITION OF miniblocks FOR VALUES IN ($1);
+			CREATE TABLE minipools_80a8e1d562992f654ab5d6fd57bb1a545f12dadb6500c87fa02a897a PARTITION OF minipools FOR VALUES IN ($1);
+			CREATE TABLE miniblock_candidates_80a8e1d562992f654ab5d6fd57bb1a545f12dadb6500c87fa02a897a PARTITION OF miniblock_candidates for values in ($1);
+			INSERT INTO miniblocks_80a8e1d562992f654ab5d6fd57bb1a545f12dadb6500c87fa02a897a (stream_id, seq_num, blockdata) VALUES ($1, 0, $2);
+			INSERT INTO minipools_80a8e1d562992f654ab5d6fd57bb1a545f12dadb6500c87fa02a897a (stream_id, generation, slot_num) VALUES ($1, 1, -1);`,
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			sql := sqlForStream(tc.template, streamId)
+			require.Equal(t, tc.expected, sql)
+		})
+	}
+}
+
 func TestPostgresStreamStore(t *testing.T) {
 	require := require.New(t)
 

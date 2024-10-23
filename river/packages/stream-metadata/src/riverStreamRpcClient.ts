@@ -189,7 +189,7 @@ export async function getStream(
 		return streamViewFromUnpackedResponse(streamId, unpackedResponse)
 	} catch (e) {
 		logger.error(
-			{ url: client.url, streamId, error: e },
+			{ url: client.url, streamId, err: e },
 			'getStream failed, removing client from cache',
 		)
 		removeClient(logger, client)

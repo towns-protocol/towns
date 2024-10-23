@@ -7,6 +7,7 @@ import { isDefined } from './check'
 import { streamIdAsString } from './id'
 import { PingInfo, SyncState, SyncedStreamsLoop } from './syncedStreamsLoop'
 import { SyncedStream } from './syncedStream'
+import { UnpackEnvelopeOpts } from './sign'
 
 export class SyncedStreams {
     private syncedStreamsLoop: SyncedStreamsLoop | undefined
@@ -27,6 +28,7 @@ export class SyncedStreams {
         userId: string,
         rpcClient: StreamRpcClient,
         clientEmitter: TypedEmitter<SyncedStreamEvents>,
+        private readonly unpackEnvelopeOpts: UnpackEnvelopeOpts | undefined,
     ) {
         this.userId = userId
         this.rpcClient = rpcClient
@@ -104,6 +106,7 @@ export class SyncedStreams {
             this.rpcClient,
             streamRecords,
             this.logNamespace,
+            this.unpackEnvelopeOpts,
         )
         await this.syncedStreamsLoop.start()
     }

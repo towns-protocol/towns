@@ -1,7 +1,7 @@
 import { Err, SyncCookie, SyncOp, SyncStreamsResponse } from '@river-build/proto'
 import { DLogger, dlog, dlogError } from '@river-build/dlog'
 import { StreamRpcClient } from './makeStreamRpcClient'
-import { unpackStream, unpackStreamAndCookie } from './sign'
+import { UnpackEnvelopeOpts, unpackStream, unpackStreamAndCookie } from './sign'
 import { SyncedStreamEvents } from './streamEvents'
 import TypedEmitter from 'typed-emitter'
 import { nanoid } from 'nanoid'
@@ -123,6 +123,7 @@ export class SyncedStreamsLoop {
         rpcClient: StreamRpcClient,
         streams: { syncCookie: SyncCookie; stream: ISyncedStream }[],
         logNamespace: string,
+        readonly unpackEnvelopeOpts: UnpackEnvelopeOpts | undefined,
     ) {
         this.rpcClient = rpcClient
         this.clientEmitter = clientEmitter
@@ -675,11 +676,14 @@ export class SyncedStreamsLoop {
                         this.log('sync got stream', streamId, 'NOT FOUND')
                     } else if (syncStream.syncReset) {
                         this.log('initStream from sync reset', streamId, 'RESET')
-                        const response = await unpackStream(syncStream, undefined)
+                        const response = await unpackStream(syncStream, this.unpackEnvelopeOpts)
                         streamRecord.syncCookie = response.streamAndCookie.nextSyncCookie
                         await streamRecord.stream.initializeFromResponse(response)
                     } else {
-                        const streamAndCookie = await unpackStreamAndCookie(syncStream, undefined)
+                        const streamAndCookie = await unpackStreamAndCookie(
+                            syncStream,
+                            this.unpackEnvelopeOpts,
+                        )
                         streamRecord.syncCookie = streamAndCookie.nextSyncCookie
                         await streamRecord.stream.appendEvents(
                             streamAndCookie.events,
