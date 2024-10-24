@@ -424,6 +424,7 @@ func (s *Service) runHttpServer() error {
 			"X-User-Agent",
 			"User-Agent",
 			"Connect-Protocol-Version",
+			"Connect-Timeout-Ms",
 			"x-river-request-id",
 		},
 	})

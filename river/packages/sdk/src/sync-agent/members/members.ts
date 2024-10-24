@@ -35,21 +35,21 @@ export class Members extends PersistedObservable<MembersModel> {
             client.on('streamNewUserJoined', this.onMemberJoin)
             client.on('streamNewUserInvited', this.onMemberInvite)
             client.on('streamUserLeft', this.onMemberLeave)
-            client.on('streamUsernameUpdated', this.onUsernameUpdated)
-            client.on('streamPendingUsernameUpdated', this.onUsernameUpdated)
-            client.on('streamNftUpdated', this.onNftUpdated)
-            client.on('streamEnsAddressUpdated', this.onEnsAddressUpdated)
-            client.on('streamDisplayNameUpdated', this.onDisplayNameUpdated)
+            client.on('streamUsernameUpdated', this.onStreamUsernameUpdated)
+            client.on('streamPendingUsernameUpdated', this.onStreamUsernameUpdated)
+            client.on('streamNftUpdated', this.onStreamNftUpdated)
+            client.on('streamEnsAddressUpdated', this.onStreamEnsAddressUpdated)
+            client.on('streamDisplayNameUpdated', this.onStreamDisplayNameUpdated)
             return () => {
                 client.off('streamInitialized', this.onStreamInitialized)
                 client.off('streamNewUserJoined', this.onMemberJoin)
                 client.off('streamNewUserInvited', this.onMemberInvite)
                 client.off('streamUserLeft', this.onMemberLeave)
-                client.off('streamUsernameUpdated', this.onUsernameUpdated)
-                client.off('streamPendingUsernameUpdated', this.onUsernameUpdated)
-                client.off('streamNftUpdated', this.onNftUpdated)
-                client.off('streamEnsAddressUpdated', this.onEnsAddressUpdated)
-                client.off('streamDisplayNameUpdated', this.onDisplayNameUpdated)
+                client.off('streamUsernameUpdated', this.onStreamUsernameUpdated)
+                client.off('streamPendingUsernameUpdated', this.onStreamUsernameUpdated)
+                client.off('streamNftUpdated', this.onStreamNftUpdated)
+                client.off('streamEnsAddressUpdated', this.onStreamEnsAddressUpdated)
+                client.off('streamDisplayNameUpdated', this.onStreamDisplayNameUpdated)
             }
         })
     }
@@ -109,11 +109,7 @@ export class Members extends PersistedObservable<MembersModel> {
         // We remove the member from the userIds array, so that we don't try to access it later.
         this.setData({ userIds: this.data.userIds.filter((id) => id !== userId) })
         if (this.members[userId]) {
-            this.members[userId].observables.membership.onStreamMembershipUpdated(
-                streamId,
-                userId,
-                MembershipOp.SO_LEAVE,
-            )
+            this.members[userId].onStreamMembershipUpdated(streamId, userId, MembershipOp.SO_LEAVE)
         }
     }
 
@@ -121,44 +117,36 @@ export class Members extends PersistedObservable<MembersModel> {
         if (streamId !== this.data.id) return
         this.setData({ userIds: [...this.data.userIds, userId] })
         const member = this.get(userId)
-        member.observables.membership.onStreamMembershipUpdated(
-            streamId,
-            userId,
-            MembershipOp.SO_JOIN,
-        )
+        member.onStreamMembershipUpdated(streamId, userId, MembershipOp.SO_JOIN)
     }
 
     private onMemberInvite = (streamId: string, userId: string): void => {
         if (streamId !== this.data.id) return
         this.setData({ userIds: [...this.data.userIds, userId] })
         const member = this.get(userId)
-        member.observables.membership.onStreamMembershipUpdated(
-            streamId,
-            userId,
-            MembershipOp.SO_INVITE,
-        )
+        member.onStreamMembershipUpdated(streamId, userId, MembershipOp.SO_INVITE)
     }
 
-    private onUsernameUpdated = (streamId: string, userId: string): void => {
+    private onStreamUsernameUpdated = (streamId: string, userId: string): void => {
         if (streamId !== this.data.id) return
         const member = this.get(userId)
-        member.onUsernameUpdated(streamId, userId)
+        member.onStreamUsernameUpdated(streamId, userId)
     }
 
-    private onDisplayNameUpdated = (streamId: string, userId: string): void => {
+    private onStreamDisplayNameUpdated = (streamId: string, userId: string): void => {
         if (streamId !== this.data.id) return
         const member = this.get(userId)
-        member.onDisplayNameUpdated(streamId, userId)
+        member.onStreamDisplayNameUpdated(streamId, userId)
     }
-    private onNftUpdated = (streamId: string, userId: string): void => {
+    private onStreamNftUpdated = (streamId: string, userId: string): void => {
         if (streamId !== this.data.id) return
         const member = this.get(userId)
-        member.onNftUpdated(streamId, userId)
+        member.onStreamNftUpdated(streamId, userId)
     }
 
-    private onEnsAddressUpdated = (streamId: string, userId: string): void => {
+    private onStreamEnsAddressUpdated = (streamId: string, userId: string): void => {
         if (streamId !== this.data.id) return
         const member = this.get(userId)
-        member.onEnsAddressUpdated(streamId, userId)
+        member.onStreamEnsAddressUpdated(streamId, userId)
     }
 }

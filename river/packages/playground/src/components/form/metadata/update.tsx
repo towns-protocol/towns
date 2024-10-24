@@ -1,13 +1,10 @@
 import {
-    useDisplayName,
-    useEnsAddress,
-    useNft,
+    useMember,
     useSetDisplayName,
     useSetEnsAddress,
     useSetNft,
     useSetUsername,
     useSyncAgent,
-    useUsername,
 } from '@river-build/react-sdk'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
@@ -55,10 +52,7 @@ export const UpdateMetadata = (props: {
         }
         return sync.spaces.getSpace(props.spaceId).members.myself
     }, [props.channelId, props.use, props.spaceId, sync.spaces])
-    const { username } = useUsername(myself)
-    const { displayName } = useDisplayName(myself)
-    const { ensAddress } = useEnsAddress(myself)
-    const { nft } = useNft(myself)
+    const { username, displayName, ensAddress, nft } = useMember(myself)
     const { setUsername, isPending: isPendingUsername } = useSetUsername(myself)
     const { setDisplayName, isPending: isPendingDisplayName } = useSetDisplayName(myself)
     const { setEnsAddress, isPending: isPendingEnsAddress } = useSetEnsAddress(myself)

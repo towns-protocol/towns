@@ -49,10 +49,12 @@ export async function userRefreshOnResponse(
 
 	logger.info({ userId, target }, 'Refreshing user')
 
-	const imagePath = `/user/${userId}/image`
-	const bioPath = `/user/${userId}/bio`
 	const paths =
-		target === 'image' ? [imagePath] : target === 'bio' ? [bioPath] : [imagePath, bioPath]
+		target === 'image'
+			? [`/user/${userId}/image`]
+			: target === 'bio'
+			? [`/user/${userId}/bio`]
+			: [`/user/${userId}/*`]
 
 	try {
 		await CloudfrontManager.createCloudfrontInvalidation({ paths, logger })

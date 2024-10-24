@@ -1,4 +1,4 @@
-import { useDisplayName, useSendMessage, useSyncAgent, useUsername } from '@river-build/react-sdk'
+import { useMember, useSendMessage, useSyncAgent } from '@river-build/react-sdk'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -92,8 +92,7 @@ const Message = ({ event, ...props }: { event: TimelineEvent } & GdmOrChannel) =
         }
         return sync.spaces.getSpace(props.spaceId).members.get(event.creatorUserId)
     }, [props, sync.gdms, sync.spaces, event.creatorUserId])
-    const { username } = useUsername(member)
-    const { displayName } = useDisplayName(member)
+    const { username, displayName } = useMember(member)
     const prettyDisplayName = displayName || username
 
     return (

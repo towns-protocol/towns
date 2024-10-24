@@ -1,78 +1,172 @@
+import { bin_toHexString, bin_toString, check } from '@river-build/dlog'
+import { isDefined } from '../../../check'
+import { PersistedObservable, persistedObservable } from '../../../observable/persistedObservable'
 import type { Store } from '../../../store/store'
 import type { RiverConnection } from '../../river-connection/riverConnection'
-import { MemberMembership } from './membership'
-import { MemberDisplayName } from './metadata/displayName'
-import { MemberEnsAddress } from './metadata/ensAddress'
-import { MemberNft } from './metadata/nft'
-import { MemberUsername } from './metadata/username'
 import { MembershipOp } from '@river-build/proto'
+import type { Address } from '@river-build/web3'
 
-export class Member {
-    observables: {
-        username: MemberUsername
-        displayName: MemberDisplayName
-        ensAddress: MemberEnsAddress
-        nft: MemberNft
-        membership: MemberMembership
-    }
+export type MemberModel = {
+    id: string
+    userId: string
+    streamId: string
+    initialized: boolean
+    // username
+    username: string
+    isUsernameConfirmed: boolean
+    isUsernameEncrypted: boolean
+    // displayName
+    displayName: string
+    isDisplayNameEncrypted?: boolean
+    // ensAddress
+    ensAddress?: string
+    // nft
+    nft?: NftModel
+    // membership
+    membership?: MembershipOp
+}
+
+export type NftModel = {
+    contractAddress: string
+    tokenId: string
+    chainId: number
+}
+
+@persistedObservable({ tableName: 'member' })
+export class Member extends PersistedObservable<MemberModel> {
     constructor(
-        userId: string,
+        private userId: string,
         streamId: string,
         protected riverConnection: RiverConnection,
         store: Store,
     ) {
-        this.observables = {
-            username: new MemberUsername(userId, streamId, this.riverConnection, store),
-            displayName: new MemberDisplayName(userId, streamId, this.riverConnection, store),
-            ensAddress: new MemberEnsAddress(userId, streamId, this.riverConnection, store),
-            nft: new MemberNft(userId, streamId, this.riverConnection, store),
-            membership: new MemberMembership(userId, streamId, this.riverConnection, store),
-        }
+        super(
+            {
+                id: `${userId}_${streamId}`,
+                userId,
+                streamId,
+                initialized: false,
+                username: '',
+                isUsernameConfirmed: false,
+                isUsernameEncrypted: false,
+                displayName: '',
+                isDisplayNameEncrypted: false,
+                ensAddress: undefined,
+                nft: undefined,
+                membership: undefined,
+            },
+            store,
+        )
     }
 
     onStreamInitialized(streamId: string) {
-        for (const model of Object.values(this.observables)) {
-            model.onStreamInitialized(streamId)
+        if (this.data.streamId === streamId) {
+            const streamView = this.riverConnection.client?.stream(this.data.streamId)?.view
+            check(isDefined(streamView), 'streamView is not defined')
+            const metadata = streamView.getMemberMetadata()
+            const usernameInfo = metadata?.usernames.info(this.userId)
+            const displayNameInfo = metadata?.displayNames.info(this.userId)
+            const ensAddress = metadata?.ensAddresses.info(this.userId)
+            const nft = metadata?.nfts.info(this.userId)
+            const membership = streamView.getMembers().membership.info(this.userId)
+
+            this.setData({
+                initialized: true,
+                username: usernameInfo?.username,
+                isUsernameConfirmed: usernameInfo?.usernameConfirmed,
+                isUsernameEncrypted: usernameInfo?.usernameEncrypted,
+                displayName: displayNameInfo?.displayName,
+                isDisplayNameEncrypted: displayNameInfo?.displayNameEncrypted,
+                ensAddress,
+                nft,
+                membership,
+            })
         }
     }
 
-    onUsernameUpdated(streamId: string, userId: string) {
-        this.observables.username.onStreamUsernameUpdated(streamId, userId)
+    onStreamUsernameUpdated(streamId: string, userId: string) {
+        if (this.data.userId === userId && this.data.streamId === streamId) {
+            const streamView = this.riverConnection.client?.stream(this.data.streamId)?.view
+            check(isDefined(streamView), 'streamView is not defined')
+            const usernameInfo = streamView.getMemberMetadata()?.usernames.info(this.userId)
+            this.setData({
+                username: usernameInfo?.username,
+                isUsernameConfirmed: usernameInfo?.usernameConfirmed,
+                isUsernameEncrypted: usernameInfo?.usernameEncrypted,
+            })
+        }
     }
 
-    onDisplayNameUpdated(streamId: string, userId: string) {
-        this.observables.displayName.onStreamDisplayNameUpdated(streamId, userId)
+    public onStreamNftUpdated = (streamId: string, userId: string) => {
+        if (streamId === this.data.streamId && userId === this.userId) {
+            const streamView = this.riverConnection.client?.stream(streamId)?.view
+            const metadata = streamView?.getMemberMetadata()
+            if (metadata) {
+                const nftPayload = metadata.nfts.confirmedNfts.get(userId)
+                const nft = nftPayload
+                    ? {
+                          contractAddress: bin_toHexString(nftPayload.contractAddress),
+                          tokenId: bin_toString(nftPayload.tokenId),
+                          chainId: nftPayload.chainId,
+                      }
+                    : undefined
+                this.setData({ nft })
+            }
+        }
     }
 
-    onEnsAddressUpdated(streamId: string, userId: string) {
-        this.observables.ensAddress.onStreamEnsAddressUpdated(streamId, userId)
+    public onStreamEnsAddressUpdated = (streamId: string, userId: string) => {
+        if (streamId === this.data.streamId && userId === this.userId) {
+            const stream = this.riverConnection.client?.streams.get(streamId)
+            const metadata = stream?.view.getMemberMetadata()
+            const ensAddress = metadata?.ensAddresses.info(userId)
+            if (ensAddress) {
+                this.setData({ ensAddress: ensAddress as Address })
+            }
+        }
     }
 
-    onNftUpdated(streamId: string, userId: string) {
-        this.observables.nft.onStreamNftUpdated(streamId, userId)
+    public onStreamDisplayNameUpdated = (streamId: string, userId: string) => {
+        if (streamId === this.data.streamId && userId === this.userId) {
+            const stream = this.riverConnection.client?.streams.get(streamId)
+            const metadata = stream?.view.getMemberMetadata()
+            const info = metadata?.displayNames.info(userId)
+            if (info) {
+                this.setData({
+                    displayName: info.displayName,
+                    isDisplayNameEncrypted: info.displayNameEncrypted,
+                })
+            }
+        }
     }
 
-    onMembershipUpdated(streamId: string, userId: string, op: MembershipOp) {
-        this.observables.membership.onStreamMembershipUpdated(streamId, userId, op)
+    public onStreamMembershipUpdated = (
+        streamId: string,
+        userId: string,
+        membership: MembershipOp,
+    ) => {
+        if (streamId === this.data.streamId && userId === this.userId) {
+            this.setData({ membership })
+        }
     }
 
     get username() {
-        return this.observables.username.data.username
+        return this.data.username
     }
 
     get displayName() {
-        return this.observables.displayName.data.displayName
+        return this.data.displayName
     }
 
     get ensAddress() {
-        return this.observables.ensAddress.data.ensAddress
+        return this.data.ensAddress
     }
 
     get nft() {
-        return this.observables.nft.data.nft
+        return this.data.nft
     }
 
     get membership() {
-        return this.observables.membership.data.op
+        return this.data.membership
     }
 }

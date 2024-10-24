@@ -1,10 +1,10 @@
 /**
  * @group with-entitlements
  */
-import { Bot } from '../../../utils/bot'
-import type { Myself } from '../myself'
+import { Bot } from '../../utils/bot'
+import type { Myself } from './myself'
 
-describe('metadata.test.ts', () => {
+describe('member.test.ts', () => {
     let bob: Myself
     beforeAll(async () => {
         const bobUser = new Bot()

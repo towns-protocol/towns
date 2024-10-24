@@ -1,9 +1,9 @@
 /**
  * @group with-entitlements
  */
-import { Bot } from '../../../utils/bot'
+import { Bot } from '../../utils/bot'
 
-describe('metadata.test.ts - queue update', () => {
+describe('member.test.ts - queue update', () => {
     test('queue update metadata', async () => {
         const testMetadata = {
             username: 'bob123',

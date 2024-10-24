@@ -10,8 +10,7 @@ const paramsSchema = z.object({
 })
 
 const CACHE_CONTROL = {
-	// cache for 1 year, allow data usage for 1 hour while revalidating
-	200: 'public, max-age=31536000, stale-while-revalidate=3600',
+	200: 'public, max-age=30, s-maxage=3600, stale-while-revalidate=3600',
 	404: 'public, max-age=5, s-maxage=3600',
 }
 

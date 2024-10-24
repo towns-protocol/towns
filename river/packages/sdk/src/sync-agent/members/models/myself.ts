@@ -1,18 +1,14 @@
 import type { Address } from '@river-build/web3'
 import type { RiverConnection } from '../../river-connection/riverConnection'
-import { type NftModel } from './metadata/nft'
 import { addressFromUserId } from '../../../id'
-import { Member } from './member'
+import { Member, type NftModel } from './member'
 
 export class Myself {
-    observables: Member['observables']
     constructor(
         public member: Member,
         protected streamId: string,
         protected riverConnection: RiverConnection,
-    ) {
-        this.observables = member.observables
-    }
+    ) {}
 
     get username() {
         return this.member.username
@@ -36,57 +32,60 @@ export class Myself {
 
     async setUsername(username: string) {
         const streamId = this.streamId
-        const usernameObservable = this.observables.username
-        const oldState = usernameObservable.data
-        usernameObservable.setData({
-            username,
-            isUsernameConfirmed: true,
-            isUsernameEncrypted: false,
-        })
+        const oldData = {
+            username: this.member.data.username,
+            isUsernameConfirmed: this.member.data.isUsernameConfirmed,
+            isUsernameEncrypted: this.member.data.isUsernameEncrypted,
+        }
+        this.member.setData({ username, isUsernameConfirmed: true, isUsernameEncrypted: false })
         return this.riverConnection
             .withStream(streamId)
             .call((client) => client.setUsername(streamId, username))
             .catch((e) => {
-                usernameObservable.setData(oldState)
+                this.member.setData(oldData)
                 throw e
             })
     }
 
     async setDisplayName(displayName: string) {
         const streamId = this.streamId
-        const displayNameObservable = this.observables.displayName
-        const oldState = displayNameObservable.data
-        displayNameObservable.setData({ displayName })
+        const oldData = {
+            displayName: this.member.data.displayName,
+            isDisplayNameEncrypted: this.member.data.isDisplayNameEncrypted,
+        }
+        this.member.setData({ displayName, isDisplayNameEncrypted: false })
         return this.riverConnection
             .withStream(streamId)
             .call((client) => client.setDisplayName(streamId, displayName))
             .catch((e) => {
-                displayNameObservable.setData(oldState)
+                this.member.setData(oldData)
                 throw e
             })
     }
 
     async setEnsAddress(ensAddress: Address) {
         const streamId = this.streamId
-        const ensAddressObservable = this.observables.ensAddress
-        const oldState = ensAddressObservable.data
-        ensAddressObservable.setData({ ensAddress })
+        const oldData = {
+            ensAddress: this.member.data.ensAddress,
+        }
+        this.member.setData({ ensAddress })
         const bytes = addressFromUserId(ensAddress as string)
         return this.riverConnection
             .withStream(streamId)
             .call((client) => client.setEnsAddress(streamId, bytes))
             .catch((e) => {
-                ensAddressObservable.setData(oldState)
+                this.member.setData(oldData)
                 throw e
             })
     }
 
     async setNft(nft: NftModel) {
         const streamId = this.streamId
-        const nftObservable = this.observables.nft
-        const oldState = nftObservable.data
+        const oldData = {
+            nft: this.member.data.nft,
+        }
         const { contractAddress, tokenId, chainId } = nft
-        nftObservable.setData({
+        this.member.setData({
             nft: {
                 contractAddress,
                 tokenId,
@@ -99,7 +98,7 @@ export class Myself {
                 client.setNft(streamId, nft.tokenId, nft.chainId, nft.contractAddress),
             )
             .catch((e) => {
-                nftObservable.setData(oldState)
+                this.member.setData(oldData)
                 throw e
             })
     }
