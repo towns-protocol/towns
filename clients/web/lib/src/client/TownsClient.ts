@@ -1502,7 +1502,7 @@ export class TownsClient
         const continueStoreTx = this.blockchainTransactionStore.begin({
             type: BlockchainTransactionType.ClearChannelPermissionOverrides,
             data: {
-                spaceNetworkId,
+                spaceStreamId: spaceNetworkId,
                 roleId,
                 channelId,
             },
@@ -1859,6 +1859,7 @@ export class TownsClient
         signer: ethers.Signer,
         signerContext?: SignerContext,
         onJoinFlowStatus?: (update: JoinFlowStatus) => void,
+        defaultUsername?: string,
     ) {
         if (!this.casablancaClient && !signerContext) {
             throw new Error('Casablanca client not initialized, pass signer context')
@@ -1888,8 +1889,28 @@ export class TownsClient
             // join the default channels
             const spaceContent = this.casablancaClient?.streams.get(spaceId)?.view.spaceContent
             if (spaceContent) {
-                await Promise.all(
-                    Array.from(spaceContent.spaceChannelsMetadata.entries())
+                // if a default username is provided we can try applying it
+                const defaultUsernamePromise = (async () => {
+                    if (!defaultUsername) {
+                        return
+                    }
+                    const isAvailable = await this.getIsUsernameAvailable(spaceId, defaultUsername)
+                    if (!isAvailable) {
+                        this.log('[joinTown] default usename already taken')
+                        return
+                    }
+                    try {
+                        this.log('[joinTown] setting default username')
+                        await this.casablancaClient?.setUsername(spaceId, defaultUsername)
+                        this.log('[joinTown] default usename set')
+                    } catch (e) {
+                        console.error('[joinTown] fail to set default username', e)
+                    }
+                })()
+
+                await Promise.all([
+                    defaultUsernamePromise,
+                    ...Array.from(spaceContent.spaceChannelsMetadata.entries())
                         .filter(([_, value]) => value.isDefault || value.isAutojoin)
                         .map(async ([key]) => {
                             onJoinFlowStatus?.(JoinFlowStatus.JoiningAutojoinChannels)
@@ -1907,7 +1928,7 @@ export class TownsClient
                             }
                             endJoinChannel?.()
                         }),
-                )
+                ])
             } else {
                 this.log('[joinTown] Error no space content found')
             }

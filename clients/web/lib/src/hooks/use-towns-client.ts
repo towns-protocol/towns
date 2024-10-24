@@ -15,6 +15,7 @@ import {
     CreateSpaceFlowStatus,
     CreateSpaceTransactionContext,
     ITownsServerVersions,
+    JoinFlowStatus,
     PrepayMembershipTransactionContext,
     RoleTransactionContext,
     TransactionContext,
@@ -207,7 +208,12 @@ interface TownsClientImpl {
         signer: TSigner,
         cbs?: CasablancaSignInCallbacks,
     ) => Promise<void>
-    joinTown: (spaceId: string, signer: TSigner) => Promise<StreamView | undefined>
+    joinTown: (
+        spaceId: string,
+        signer: TSigner,
+        onJoinFlowStatus?: (update: JoinFlowStatus) => void,
+        defaultUsername?: string,
+    ) => Promise<StreamView | undefined>
     pinMessage: (roomId: string, eventId: string) => Promise<void>
     unpinMessage: (roomId: string, eventId: string) => Promise<void>
     redactEvent: (roomId: string, eventId: string, reason?: string) => Promise<void>
@@ -323,12 +329,23 @@ export function useTownsClient(): TownsClientImpl {
         // if you call join town before you have a user in the stream node
         // join town will initialize your user after you have have minted in the space contract
         // capture and pass the space context here
-        (spaceId: string, signer: TSigner) => {
+        (
+            spaceId: string,
+            signer: TSigner,
+            onJoinFlowStatus?: (update: JoinFlowStatus) => void,
+            defaultUsername?: string,
+        ) => {
             if (!clientSingleton) {
                 console.error('clientSingleton is undefined')
                 return Promise.resolve(undefined)
             }
-            return clientSingleton.joinTown(spaceId, signer, signerContext)
+            return clientSingleton.joinTown(
+                spaceId,
+                signer,
+                signerContext,
+                onJoinFlowStatus,
+                defaultUsername,
+            )
         },
         [clientSingleton, signerContext],
     )

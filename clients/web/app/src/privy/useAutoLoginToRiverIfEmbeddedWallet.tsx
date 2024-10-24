@@ -27,10 +27,12 @@ export function useAutoLoginToRiverIfEmbeddedWallet({
     riverLogin,
     riverAuthError,
     isRiverAuthencticated,
+    defaultUsername,
 }: {
     riverLogin: UseConnectivtyReturnValue['login']
     riverAuthError: UseConnectivtyReturnValue['authError']
     isRiverAuthencticated: UseConnectivtyReturnValue['isAuthenticated']
+    defaultUsername?: string
 }) {
     const { getSigner } = useGetEmbeddedSigner()
     const { logout: privyLogout } = usePrivy()
@@ -140,6 +142,7 @@ export function useAutoLoginToRiverIfEmbeddedWallet({
                                                 clientSingleton,
                                                 signerContext: casablancaContext,
                                                 source: 'auto login to river',
+                                                defaultUsername,
                                             })
                                         } else {
                                             startJoinDoesNotMeetRequirements()

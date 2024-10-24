@@ -1,4 +1,4 @@
-import { Address, useConnectivity } from 'use-towns-client'
+import { Address, useConnectivity, useMyDefaultUsernames } from 'use-towns-client'
 import React, { createContext, useCallback, useContext, useMemo } from 'react'
 import { useLogin, usePrivy } from '@privy-io/react-auth'
 import { retryGetAccessToken, useEmbeddedWallet, useGetEmbeddedSigner } from '@towns/privy'
@@ -62,6 +62,7 @@ function useCombinedAuthContext(): CombinedAuthContext {
         authError,
     } = useConnectivity()
     const { logout: privyLogout } = usePrivy()
+    const defaultUsername: string | undefined = useMyDefaultUsernames()[0]
     const unsubscribeNotification = useUnsubscribeNotification()
 
     const { isAutoLoggingInToRiver, loginToRiverAfterPrivy, resetAutoLoginState } =
@@ -69,6 +70,7 @@ function useCombinedAuthContext(): CombinedAuthContext {
             riverLogin,
             riverAuthError: authError,
             isRiverAuthencticated: riverIsAuthenticated,
+            defaultUsername,
         })
 
     const { privyLogin } = usePrivyLoginWithErrorHandler({

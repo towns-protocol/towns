@@ -49,11 +49,13 @@ export function usePublicPageLoginFlow() {
             clientSingleton,
             signerContext,
             source,
+            defaultUsername,
         }: {
             signer: TSigner
             clientSingleton: TClientSingleton
             signerContext: TSignerContext
             source: string
+            defaultUsername?: string
         }) => {
             if (!spaceId || !clientSingleton || !signer || !signerContext) {
                 const missingParams: string[] = []
@@ -102,6 +104,7 @@ export function usePublicPageLoginFlow() {
                             setRecentlyMintedSpaceToken({ spaceId: spaceId, isOwner: false })
                         }
                     },
+                    defaultUsername,
                 )
 
                 if (result) {
@@ -153,11 +156,13 @@ export function usePublicPageLoginFlow() {
             clientSingleton,
             signerContext,
             source,
+            defaultUsername,
         }: {
             signer: TSigner
             clientSingleton: TClientSingleton
             signerContext: TSignerContext
             source: string
+            defaultUsername?: string
         }) => {
             if (!spaceId) {
                 return
@@ -175,6 +180,7 @@ export function usePublicPageLoginFlow() {
                     clientSingleton,
                     signerContext,
                     source,
+                    defaultUsername,
                 })
                 setDisableJoinUi(false)
             }

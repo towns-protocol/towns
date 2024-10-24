@@ -4,6 +4,7 @@ import {
     Permission,
     useConnectivity,
     useHasPermission,
+    useMyDefaultUsernames,
     useTownsContext,
 } from 'use-towns-client'
 import { useGetEmbeddedSigner } from '@towns/privy'
@@ -53,6 +54,8 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
             permission: Permission.JoinSpace,
         })
 
+    const defaultUsername = useMyDefaultUsernames()?.[0]
+
     const onJoinClick = useCallback(async () => {
         if (disableJoinUi) {
             return
@@ -73,6 +76,7 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
                 clientSingleton,
                 signerContext,
                 source: 'public pagejoin click',
+                defaultUsername,
             })
         } else {
             // show asset verification modal
@@ -94,6 +98,7 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
         startJoinMeetsRequirements,
         clientSingleton,
         signerContext,
+        defaultUsername,
         startJoinDoesNotMeetRequirements,
     ])
 
