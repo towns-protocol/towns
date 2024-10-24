@@ -461,7 +461,7 @@ export const CreateChannelForm = (props: Props) => {
                                 </Stack>
                             )}
                             {canEditRoles && (
-                                <PanelButton onClick={onCreateNewRole}>
+                                <PanelButton type="button" onClick={onCreateNewRole}>
                                     <Icon type="plus" size="square_sm" />
                                     Create new role
                                 </PanelButton>
@@ -509,7 +509,9 @@ export const CreateChannelForm = (props: Props) => {
                                     disabled={!isAbleToInteract}
                                     spinner={!isAbleToInteract}
                                 >
-                                    {!isAbleToInteract ? 'Creating' : 'Create Channel'}
+                                    {transactionStatus === TransactionStatus.None
+                                        ? 'Create Channel'
+                                        : 'Creating Channel'}
                                 </FancyButton>
                             </Stack>
                         ) : (
@@ -527,7 +529,9 @@ export const CreateChannelForm = (props: Props) => {
                                     disabled={!isAbleToInteract}
                                     spinner={!isAbleToInteract}
                                 >
-                                    {isAbleToInteract ? 'Create Channel' : 'Creating'}
+                                    {transactionStatus === TransactionStatus.None
+                                        ? 'Create Channel'
+                                        : 'Creating Channel'}
                                 </FancyButton>
                             </Stack>
                         )}
