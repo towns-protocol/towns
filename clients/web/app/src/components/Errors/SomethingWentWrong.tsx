@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { Box, BoxProps, Icon, Paragraph } from '@ui'
 
 export const SomethingWentWrong = ({
@@ -6,7 +6,9 @@ export const SomethingWentWrong = ({
     children,
     ...boxProps
 }: { error: Error } & BoxProps) => {
-    console.error('SomethingWentWrong', error)
+    useEffect(() => {
+        console.error('SomethingWentWrong', error)
+    }, [error])
     return (
         <Box horizontal alignItems="center" gap="sm" color="error" {...boxProps}>
             <Icon type="alert" size="square_sm" color="error" gap="sm" />
