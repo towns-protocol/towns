@@ -3,8 +3,8 @@ name: Create PR for Omega Release
 on:
     workflow_dispatch:
     schedule:
-        # Run every Thursday at 9:00 AM PT (16:00 UTC)
-        - cron: '0 16 * * 4'
+        # Run every Tuesday and Thursday at 9:00 AM PT (16:00 UTC)
+        - cron: '0 16 * * 2,4'
 
 jobs:
     create-pr:
@@ -43,6 +43,8 @@ jobs:
               env:
                   GITHUB_TOKEN: ${{ secrets.HARMONY_GITHUB_PAT }}
               run: |
+                  git config --global user.name "github-actions[bot]"
+                  git config --global user.email "github-actions[bot]@users.noreply.github.com"
                   git fetch origin
                   git checkout -b ${{ env.RELEASE_BRANCH }}
                   git rebase origin/omega
