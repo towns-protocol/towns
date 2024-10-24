@@ -30,17 +30,21 @@ export function TokenEditor(props: {
                       .min(0, 'Token ID is required')
                       .refine(
                           (val) => {
+                              if (val === '0') {
+                                  return true
+                              }
                               const num = Number(val)
                               return (
                                   val === undefined ||
                                   (val.length > 0 &&
                                       !isNaN(num) &&
                                       Number.isInteger(num) &&
-                                      num >= 0)
+                                      num > 0 &&
+                                      !val.startsWith('0'))
                               )
                           },
                           {
-                              message: 'Token ID is required',
+                              message: 'Token ID is invalid',
                           },
                       )
                 : z.string().optional(),
@@ -53,25 +57,25 @@ export function TokenEditor(props: {
             .refine(
                 (val) => {
                     if (token.data.type === TokenType.ERC20) {
-                        // For ERC20, allow decimal values
-                        const regex = /^\d*\.?\d*$/
+                        // For ERC20, allow decimal values without leading zeros
+                        const regex = /^(0|[1-9]\d*)(\.\d+)?$/
                         if (!regex.test(val)) {
                             return false
                         }
                         const number = parseFloat(val)
                         return !isNaN(number) && number > 0
                     } else {
-                        // For non-ERC20, keep the original integer check
-                        try {
-                            const bigIntValue = BigInt(val)
-                            return bigIntValue >= 1n
-                        } catch {
+                        // For non-ERC20, keep the integer check without leading zeros
+                        const regex = /^(0|[1-9]\d*)$/
+                        if (!regex.test(val)) {
                             return false
                         }
+                        const bigIntValue = BigInt(val)
+                        return bigIntValue >= 1n
                     }
                 },
                 {
-                    message: 'Quantity is required',
+                    message: 'Quantity is invalid',
                 },
             ),
     })

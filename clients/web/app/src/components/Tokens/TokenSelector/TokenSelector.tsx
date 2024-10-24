@@ -23,7 +23,7 @@ const NATIVE_TOKEN: Token = {
         label: 'ETH',
         symbol: 'ETH',
         decimals: 18,
-        imgSrc: '/public/eth-icon.svg',
+        imgSrc: '/eth-icon.svg',
     },
 }
 
