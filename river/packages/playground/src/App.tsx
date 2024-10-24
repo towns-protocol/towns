@@ -26,7 +26,12 @@ function App() {
     return (
         <WagmiConfig config={config}>
             <QueryClientProvider client={queryClient}>
-                <RiverSyncProvider syncAgent={syncAgent}>
+                <RiverSyncProvider
+                    syncAgent={syncAgent}
+                    config={{
+                        onTokenExpired: () => router.navigate('/auth'),
+                    }}
+                >
                     {!persistedAuth ? (
                         <RouterProvider router={router} />
                     ) : syncAgent && persistedAuth ? (

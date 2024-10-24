@@ -16,7 +16,7 @@ import { userIdFromAddress } from '../../id'
 import { TransactionalClient } from './models/transactionalClient'
 import { Observable } from '../../observable/observable'
 import { AuthStatus } from './models/authStatus'
-import { RetryParams } from '../../rpcInterceptors'
+import { RetryParams, expiryInterceptor } from '../../rpcInterceptors'
 import { Stream } from '../../stream'
 import { isDefined } from '../../check'
 import { UnpackEnvelopeOpts } from '../../sign'
@@ -32,6 +32,7 @@ export interface ClientParams {
     highPriorityStreamIds?: string[]
     rpcRetryParams?: RetryParams
     encryptionDevice?: EncryptionDeviceInitOpts
+    onTokenExpired?: () => void
     unpackEnvelopeOpts?: UnpackEnvelopeOpts
 }
 
@@ -150,8 +151,15 @@ export class RiverConnection extends PersistedObservable<RiverConnectionModel> {
             return
         }
         logger.log(`setting rpcClient with urls: "${urls}"`)
-        const rpcClient = this.makeRpcClient(urls, this.clientParams.rpcRetryParams, () =>
-            this.riverRegistryDapp.getOperationalNodeUrls(),
+        const rpcClient = this.makeRpcClient(
+            urls,
+            this.clientParams.rpcRetryParams,
+            () => this.riverRegistryDapp.getOperationalNodeUrls(),
+            [
+                expiryInterceptor({
+                    onTokenExpired: this.clientParams.onTokenExpired,
+                }),
+            ],
         )
         const client = new TransactionalClient(
             this.store,

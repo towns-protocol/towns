@@ -78,6 +78,20 @@ export const retryInterceptor: (retryParams: RetryParams) => Interceptor = (
         }
 }
 
+export const expiryInterceptor = (opts: { onTokenExpired?: () => void }): Interceptor => {
+    return (next) => async (req) => {
+        try {
+            const res = await next(req)
+            return res
+        } catch (e) {
+            if (e instanceof Error && e.message.includes('event delegate has expired')) {
+                opts.onTokenExpired?.()
+            }
+            throw e
+        }
+    }
+}
+
 export const loggingInterceptor: (transportId: number) => Interceptor = (transportId: number) => {
     // Histogram data structure
     const callHistogram: Record<string, { interval: number; total: number; error?: number }> = {}

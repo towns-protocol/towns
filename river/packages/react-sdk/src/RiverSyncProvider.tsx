@@ -5,6 +5,9 @@ import { RiverSyncContext } from './internals/RiverSyncContext'
 
 type RiverSyncProviderProps = {
     syncAgent?: SyncAgent
+    config?: {
+        onTokenExpired?: () => void
+    }
     children?: React.ReactNode
 }
 
@@ -29,6 +32,7 @@ export const RiverSyncProvider = (props: RiverSyncProviderProps) => {
     return (
         <RiverSyncContext.Provider
             value={{
+                config: props.config,
                 syncAgent,
                 setSyncAgent,
             }}

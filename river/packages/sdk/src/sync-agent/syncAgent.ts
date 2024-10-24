@@ -35,6 +35,7 @@ export interface SyncAgentConfig {
     baseProvider?: ethers.providers.Provider
     makeRpcClient?: MakeRpcClientType
     encryptionDevice?: EncryptionDeviceInitOpts
+    onTokenExpired?: () => void
 }
 
 export class SyncAgent {
@@ -87,6 +88,7 @@ export class SyncAgent {
                 highPriorityStreamIds: this.config.highPriorityStreamIds,
                 rpcRetryParams: config.retryParams,
                 encryptionDevice: config.encryptionDevice,
+                onTokenExpired: config.onTokenExpired,
             },
         )
 
