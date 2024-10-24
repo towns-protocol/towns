@@ -34,8 +34,13 @@ export function convertOperationTypeToTokenType(type: CheckOperationType) {
             return TokenType.ERC721
         case CheckOperationType.ERC20:
             return TokenType.ERC20
+        // Placeholder, needs fixing
+        // https://linear.app/hnt-labs/issue/TOWNS-14181/handle-towns-that-are-gated-by-eth-balance
+        case CheckOperationType.ETH_BALANCE:
+            return TokenType.UNKNOWN
         default:
-            throw new Error('convertOperationTypeToTokenType: Invalid operation type')
+            console.error('convertOperationTypeToTokenType: Invalid operation type', type)
+            return TokenType.UNKNOWN
     }
 }
 

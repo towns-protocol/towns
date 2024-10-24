@@ -16,7 +16,7 @@ import { Image } from '@unfurl-worker/types'
 import { isUrl } from 'utils/isUrl'
 import { ChunkedFile } from '@components/ChunkedFile/ChunkedFile'
 import { EmbeddedMessage } from '@components/EmbeddedMessageAttachement/EmbeddedMessage'
-import { Box, BoxProps, Heading, Paragraph, Stack, Text } from '@ui'
+import { Box, BoxProps, Heading, Icon, Paragraph, Stack, Text } from '@ui'
 import { isImageMimeType, isMediaMimeType, isVideoMimeType } from 'utils/isMediaMimeType'
 import { RatioedBackgroundImage } from '@components/RatioedBackgroundImage'
 import { getTownParamsFromUrl } from 'utils/getTownParamsFromUrl'
@@ -30,6 +30,7 @@ import { getPriceText } from '@components/TownPageLayout/townPageUtils'
 import { useEntitlements } from 'hooks/useEntitlements'
 import { SelectedToken } from '@components/TownPageLayout/TokenInfoBox'
 import { PATHS } from 'routes'
+import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
 import { MessageAttachmentsContext } from './MessageAttachmentsContext'
 
 const emptyArray: never[] = []
@@ -204,12 +205,16 @@ const UnfurledLinkAttachmentContainer = (
 ) => {
     const townData = getTownParamsFromUrl(props.url)
 
-    return townData?.townId && townData?.townPath ? (
-        <TownsContent {...props} {...townData} />
-    ) : (
-        <a href={props.url} rel="noopener noreferrer" target="_blank">
-            <GenericContent {...props} />
-        </a>
+    return (
+        <ErrorBoundary FallbackComponent={() => <UnfurlErrorContainer url={props.url} />}>
+            {townData?.townId && townData?.townPath ? (
+                <TownsContent {...props} {...townData} />
+            ) : (
+                <a href={props.url} rel="noopener noreferrer" target="_blank">
+                    <GenericContent {...props} />
+                </a>
+            )}
+        </ErrorBoundary>
     )
 }
 
@@ -439,4 +444,18 @@ const GenericContent = (props: {
 
 const LinkContainer = (props: BoxProps) => (
     <Box background="level2" borderRadius="md" maxWidth="300" {...props} />
+)
+
+const UnfurlErrorContainer = (props: { url: string }) => (
+    <Box gap="xs">
+        <Box as="a" color="cta2" href={props.url} rel="noopener noreferrer" target="_blank">
+            {props.url}
+        </Box>
+        <Box horizontal gap="xs" color="gray2" alignItems="center">
+            <Icon type="alert" size="square_xs" />
+            <Text size="sm" color="gray2">
+                Error loading link content
+            </Text>
+        </Box>
+    </Box>
 )
