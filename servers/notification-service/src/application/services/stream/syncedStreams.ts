@@ -239,7 +239,7 @@ export class SyncedStreams {
 
                     logger.info('calling syncStreams')
                     // Start an empty sync, streams will be added later
-                    const streams = this.rpcClient.syncStreams({})
+                    const streams = this.rpcClient.syncStreams({}, { timeoutMs: -1 })
 
                     logger.info('called syncStreams', { streams })
                     const iterator = streams[Symbol.asyncIterator]()
