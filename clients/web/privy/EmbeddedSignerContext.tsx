@@ -74,7 +74,7 @@ function useGetEmbeddedSignerContext(chainId: number) {
                 console.log('[useGetEmbeddedSignerContext]: timed out fetching signer')
                 resolve(undefined)
                 // different users on the same browser, same network, consistently had very different times for the signer to be ready
-            }, 5_000)
+            }, 10_000)
 
             const unsubscribe = store.subscribe(
                 (s) => s.embeddedWallet,
