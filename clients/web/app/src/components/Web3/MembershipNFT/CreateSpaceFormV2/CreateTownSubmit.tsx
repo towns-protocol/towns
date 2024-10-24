@@ -1,5 +1,10 @@
 import { UseFormReturn } from 'react-hook-form'
-import { MembershipStruct, Permission, encodeRuleDataV2 } from '@river-build/web3'
+import {
+    MembershipStruct,
+    Permission,
+    PricingModuleStruct,
+    encodeRuleDataV2,
+} from '@river-build/web3'
 import {
     Address,
     CreateSpaceInfo,
@@ -10,13 +15,11 @@ import {
     useTownsClient,
 } from 'use-towns-client'
 import { useNavigate } from 'react-router'
-import React, { useCallback, useEffect, useMemo } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef } from 'react'
 import { ethers } from 'ethers'
-import headlessToast, { Toast, toast } from 'react-hot-toast/headless'
 import { datadogRum } from '@datadog/browser-rum'
 import { useGetEmbeddedSigner } from '@towns/privy'
 import { CreateSpaceFlowStatus } from 'use-towns-client/dist/client/TownsClientTypes'
-import { Box, Icon, IconButton, Text } from '@ui'
 import { PATHS } from 'routes'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { prepareGatedDataForSubmit } from '@components/Tokens/utils'
@@ -25,6 +28,8 @@ import { Analytics } from 'hooks/useAnalytics'
 import { useNotificationSettings } from 'hooks/useNotificationSettings'
 import { usePlatformMinMembershipPriceInEth } from 'hooks/usePlatformMinMembershipPriceInEth'
 import { useUploadAttachment } from '@components/MediaDropContext/useUploadAttachment'
+import { StandardToast, dismissToast } from '@components/Notifications/StandardToast'
+import { popupToast } from '@components/Notifications/popupToast'
 import { PanelType, TransactionDetails } from './types'
 import { CreateSpaceFormV2SchemaType } from './CreateSpaceFormV2.schema'
 import { mapToErrorMessage } from '../../utils'
@@ -73,12 +78,15 @@ export function CreateTownSubmit({
         }
     }, [error, hasError])
 
+    const toastIdRef = useRef<string>()
+
     const onSubmit = useCallback(async () => {
         form.handleSubmit(
             async (data: CreateSpaceFormV2SchemaType) => {
-                toast.dismiss()
+                if (toastIdRef.current) {
+                    dismissToast(toastIdRef.current)
+                }
                 setRecentlyMintedSpaceToken(undefined)
-
                 setTransactionDetails({
                     isTransacting: true,
                     townAddress: undefined,
@@ -128,7 +136,29 @@ export function CreateTownSubmit({
                     return
                 }
 
-                const pricingModules = await spaceDapp?.listPricingModules()
+                let pricingModules: PricingModuleStruct[] | undefined
+
+                try {
+                    pricingModules = await spaceDapp?.listPricingModules()
+                } catch (e) {
+                    console.error(e)
+                    toastIdRef.current = popupToast(
+                        ({ toast }) => (
+                            <StandardToast.Error
+                                message="Error validating pricing modules on-chain. Check your network connection."
+                                toast={toast}
+                            />
+                        ),
+                        { duration: Infinity },
+                    )
+
+                    setTransactionDetails({
+                        isTransacting: false,
+                        townAddress: undefined,
+                    })
+                    return
+                }
+
                 const setPricingModuleError = () => {
                     form.setError('membershipPricingType', {
                         type: 'manual',
@@ -247,16 +277,11 @@ export function CreateTownSubmit({
                                 console.info('[analytics] error creating town:', errorMessage)
                             },
                         )
-                        toast.custom(
-                            (t) => (
-                                <TransactionErrorNotification
-                                    toast={t}
-                                    errorMessage={errorMessage}
-                                />
+                        toastIdRef.current = popupToast(
+                            ({ toast }) => (
+                                <StandardToast.Error message={errorMessage} toast={toast} />
                             ),
-                            {
-                                duration: Infinity,
-                            },
+                            { duration: Infinity },
                         )
                     }
                     return
@@ -362,22 +387,4 @@ export function CreateTownSubmit({
             membershipCostValue === '' ||
             (membershipPricingType === 'fixed' && Number(membershipCostValue) === 0),
     })
-}
-
-export const TransactionErrorNotification = ({
-    toast,
-    errorMessage,
-}: {
-    toast: Toast
-    errorMessage: string
-}) => {
-    return (
-        <Box horizontal gap width="300">
-            <Icon color="error" type="alert" />
-            <Box gap alignItems="end">
-                <Text size="sm">{errorMessage}</Text>
-            </Box>
-            <IconButton icon="close" onClick={() => headlessToast.dismiss(toast.id)} />
-        </Box>
-    )
 }
