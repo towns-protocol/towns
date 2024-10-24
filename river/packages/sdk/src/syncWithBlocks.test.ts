@@ -145,9 +145,12 @@ describe('syncWithBlocks', () => {
         log('addEvent response', { resp })
 
         // Bob starts sync on the channel
-        const syncStream = bob.syncStreams({
-            syncPos: [channel.stream!.nextSyncCookie!],
-        })
+        const syncStream = bob.syncStreams(
+            {
+                syncPos: [channel.stream!.nextSyncCookie!],
+            },
+            { timeoutMs: -1 },
+        )
 
         // If there is a message, next expect a miniblock header, and vise versa.
         let expectMessage = true

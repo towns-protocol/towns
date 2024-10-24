@@ -554,7 +554,7 @@ func (s *PostgresStreamStore) WriteEvent(
 // 1. Minipool has proper number of records including service one (equal to minipoolSlot)
 // 2. There are no gaps in seqNums and they start from 0 execpt service record with seqNum = -1
 // 3. All events in minipool have proper generation
-func (s *PostgresEventStore) writeEventTx(
+func (s *PostgresStreamStore) writeEventTx(
 	ctx context.Context,
 	tx pgx.Tx,
 	streamId StreamId,
@@ -1218,7 +1218,7 @@ func (s *PostgresStreamStore) initializeSingleNodeKeyTx(ctx context.Context, tx 
 // acquireListeningConnection returns a connection that listens for changes to the schema, or
 // a nil connection if the context is cancelled. In the event of failure to acquire a connection
 // or listen, it will retry indefinitely until success.
-func (s *PostgresEventStore) acquireListeningConnection(ctx context.Context) *pgxpool.Conn {
+func (s *PostgresStreamStore) acquireListeningConnection(ctx context.Context) *pgxpool.Conn {
 	var err error
 	var conn *pgxpool.Conn
 	log := dlog.FromCtx(ctx)

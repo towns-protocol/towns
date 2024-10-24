@@ -317,9 +317,12 @@ export class SyncedStreamsLoop {
                             // syncId needs to be reset before starting a new syncStreams
                             // syncStreams() should return a new syncId
                             this.syncId = undefined
-                            const streams = this.rpcClient.syncStreams({
-                                syncPos: syncCookies,
-                            })
+                            const streams = this.rpcClient.syncStreams(
+                                {
+                                    syncPos: syncCookies,
+                                },
+                                { timeoutMs: -1 },
+                            )
 
                             const iterator = streams[Symbol.asyncIterator]()
 

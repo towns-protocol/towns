@@ -26,6 +26,7 @@ export function makeStreamRpcClient(
             retryInterceptor({ ...retryParams, refreshNodeUrl }),
             loggingInterceptor(transportId),
         ],
+        defaultTimeoutMs: 30000, // this is a massive timeout, but we have very long requests that can take > 10 seconds to create a stream for example
     }
     if (getEnvVar('RIVER_DEBUG_TRANSPORT') !== 'true') {
         options.useBinaryFormat = true

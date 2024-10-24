@@ -26,6 +26,7 @@ export function makeHttp2StreamRpcClient(
             loggingInterceptor(transportId),
             retryInterceptor({ ...retryParams, refreshNodeUrl }),
         ],
+        defaultTimeoutMs: 30000,
     }
     if (!process.env.RIVER_DEBUG_TRANSPORT) {
         options.useBinaryFormat = true

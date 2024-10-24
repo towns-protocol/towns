@@ -149,9 +149,12 @@ export const bobTalksToHimself = async (
     log('Bob starts sync with sync cookie=', channel.stream?.nextSyncCookie)
 
     let syncCookie = channel.stream!.nextSyncCookie!
-    const bobSyncStreamIterable: AsyncIterable<SyncStreamsResponse> = bob.syncStreams({
-        syncPos: [syncCookie],
-    })
+    const bobSyncStreamIterable: AsyncIterable<SyncStreamsResponse> = bob.syncStreams(
+        {
+            syncPos: [syncCookie],
+        },
+        { timeoutMs: -1 },
+    )
     await expect(
         waitForSyncStreams(
             bobSyncStreamIterable,

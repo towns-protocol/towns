@@ -33,6 +33,7 @@ export function makeStreamRpcClient(url: string): StreamRpcClient {
 		interceptors: [
 			retryInterceptor({ maxAttempts: 3, initialRetryDelay: 2000, maxRetryDelay: 6000 }),
 		],
+		defaultTimeoutMs: 30000,
 	}
 
 	const transport = createConnectTransport(options)
