@@ -182,7 +182,7 @@ export const UserPillSelector = (props: Props) => {
                     <PillSelector
                         hideResultsWhenNotActive={disabled}
                         options={[...channelSuggestions, ...userSuggestions]}
-                        keys={['search']}
+                        keys={['search', 'userId']}
                         cta={ctaElement}
                         label={labelElement}
                         initialFocusIndex={isTouch ? -1 : 0}

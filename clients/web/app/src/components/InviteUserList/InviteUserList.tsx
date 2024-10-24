@@ -17,6 +17,7 @@ import {
     Divider,
     Icon,
     IconButton,
+    LazyList,
     MotionStack,
     Paragraph,
     Stack,
@@ -75,7 +76,7 @@ export const InviteUserList = (props: {
         const usersList = memberIds.map(lookupUser)
         return fuzzysort
             .go(searchTerm, usersList, {
-                keys: ['displayName', 'username'],
+                keys: ['displayName', 'username', 'userId'],
                 all: true,
             })
             .map((result) => result.obj) // Assuming `result.obj` contains the user object
@@ -165,6 +166,11 @@ export const InviteUserList = (props: {
     }, [activeIndex, memberIds.length, props, priorityList.length, totalListLength])
 
     const layout = isSettled ? 'position' : undefined
+
+    const searchItems = useMemo(
+        () => (searchTerm ? memberIds.filter((u) => filteredUserIds.includes(u)) : memberIds),
+        [filteredUserIds, memberIds, searchTerm],
+    )
 
     return (
         <MotionStack grow>
@@ -259,21 +265,23 @@ export const InviteUserList = (props: {
                                 <Paragraph>Everyone</Paragraph>
                             </Box>
                         )}
-                        {(searchTerm
-                            ? memberIds.filter((u) => filteredUserIds.includes(u))
-                            : memberIds
-                        ).map((u, index) => (
-                            <Participant
-                                key={u}
-                                id={`search-item-${priorityListLength + index}`}
-                                isHighlighted={priorityListLength + index === activeIndex}
-                                userId={u}
-                                selected={selectedUserIds.has(u)}
-                                isCheckbox={isMultiSelect}
-                                layout={layout}
-                                onToggle={toggleMember}
-                            />
-                        ))}
+
+                        <LazyList
+                            items={searchItems}
+                            pageSize={25}
+                            mapItems={(u, index) => (
+                                <Participant
+                                    key={u}
+                                    id={`search-item-${priorityListLength + index}`}
+                                    isHighlighted={priorityListLength + index === activeIndex}
+                                    userId={u}
+                                    selected={selectedUserIds.has(u)}
+                                    isCheckbox={isMultiSelect}
+                                    layout={layout}
+                                    onToggle={toggleMember}
+                                />
+                            )}
+                        />
                     </Stack>
                     {props.children}
                 </MotionStack>

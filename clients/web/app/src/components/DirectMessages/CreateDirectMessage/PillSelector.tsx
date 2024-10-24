@@ -10,7 +10,7 @@ import React, {
 } from 'react'
 import { isEqual, isEqualWith } from 'lodash'
 import { useInView } from 'react-intersection-observer'
-import { Box, Paragraph, Stack, TextField } from '@ui'
+import { Box, LazyList, Paragraph, Stack, TextField } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 
 /** lazy display starts above this threshold */
@@ -287,17 +287,6 @@ export const PillSelector = <T,>(props: Props<T>) => {
         onSelectionChangeRef.current?.(selection)
     }, [initialFocusIndex, selection])
 
-    const [maxShowingOptions, setMaxShowingOptions] = useState(LAZY_OPTIONS_PAGE_SIZE)
-
-    const onShowMoreOptions = useCallback(() => {
-        setMaxShowingOptions((s) =>
-            Math.max(
-                LAZY_OPTIONS_PAGE_SIZE,
-                Math.min(searchItems.length, s + LAZY_OPTIONS_PAGE_SIZE),
-            ),
-        )
-    }, [searchItems.length])
-
     // -------------------------------------------------------------------------
 
     return (
@@ -373,30 +362,29 @@ export const PillSelector = <T,>(props: Props<T>) => {
                         searchItemsRenderer(searchItems)
                     ) : (
                         <Stack gap="sm" ref={listRef} data-testid="suggested-people-list-entries">
-                            {searchItems.slice(0, maxShowingOptions).map((o, i) => {
-                                const view = () => {
-                                    return optionRenderer({
-                                        option: o,
-                                        selected: focusIndex === i,
-                                        onAddItem: (customKey?: string) =>
-                                            onAddItem(customKey ?? getOptionKey(o)),
-                                    })
-                                }
-                                return props.optionPlaceholder && i > LAZY_OPTIONS_THRESHOLD ? (
-                                    <LazyOptionRenderer
-                                        key={getOptionKey(o)}
-                                        placeholder={props.optionPlaceholder}
-                                    >
-                                        {view}
-                                    </LazyOptionRenderer>
-                                ) : (
-                                    <Box key={getOptionKey(o)}>{view()}</Box>
-                                )
-                            })}
-                            <ShowMoreOptions
-                                max={maxShowingOptions}
-                                current={searchItems.length}
-                                onShowMore={onShowMoreOptions}
+                            <LazyList
+                                items={searchItems}
+                                pageSize={LAZY_OPTIONS_PAGE_SIZE}
+                                mapItems={(o, i) => {
+                                    const view = () => {
+                                        return optionRenderer({
+                                            option: o,
+                                            selected: focusIndex === i,
+                                            onAddItem: (customKey?: string) =>
+                                                onAddItem(customKey ?? getOptionKey(o)),
+                                        })
+                                    }
+                                    return props.optionPlaceholder && i > LAZY_OPTIONS_THRESHOLD ? (
+                                        <LazyOptionRenderer
+                                            key={getOptionKey(o)}
+                                            placeholder={props.optionPlaceholder}
+                                        >
+                                            {view}
+                                        </LazyOptionRenderer>
+                                    ) : (
+                                        <Box key={getOptionKey(o)}>{view()}</Box>
+                                    )
+                                }}
                             />
                         </Stack>
                     )}
@@ -409,26 +397,6 @@ export const PillSelector = <T,>(props: Props<T>) => {
             )}
         </Stack>
     )
-}
-
-const ShowMoreOptions = ({
-    max,
-    current,
-    onShowMore,
-}: {
-    max: number
-    current: number
-    onShowMore: () => void
-}) => {
-    const onChange = (inView: boolean) => {
-        if (inView) {
-            if (current > max) {
-                onShowMore()
-            }
-        }
-    }
-    const { ref } = useInView({ rootMargin: '250px', delay: 100, onChange })
-    return current > max ? <div ref={ref} /> : <></>
 }
 
 const LazyOptionRenderer = React.memo(
