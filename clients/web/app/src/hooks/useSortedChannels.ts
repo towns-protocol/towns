@@ -52,7 +52,7 @@ const STICKY_UNREADS = false
  */
 export const useSortedChannels = ({ spaceId, currentRouteId }: Params) => {
     const { spaceUnreadChannelIds, dmUnreadChannelIds, dmChannels } = useTownsContext()
-    const mentions = useSpaceMentions()
+    const spaceMentions = useSpaceMentions()
     const channels = useSpaceChannels()
     const { memberIds } = useSpaceMembers()
     const { joinedChannels } = useJoinedChannels(spaceId)
@@ -69,7 +69,7 @@ export const useSortedChannels = ({ spaceId, currentRouteId }: Params) => {
     const channelItems: ChannelMenuItem[] = useMemo(() => {
         return channels
             .map((channel) => {
-                const mentionCount = mentions.reduce(
+                const mentionCount = spaceMentions.reduce(
                     (count, m) =>
                         m.unread && !m.thread && m.channelId === channel.id ? count + 1 : count,
                     0,
@@ -94,7 +94,14 @@ export const useSortedChannels = ({ spaceId, currentRouteId }: Params) => {
                 }
                 return a.channel.label.localeCompare(b.channel.label)
             })
-    }, [channels, joinedChannels, mentions, unreadChannelIds, favoriteChannelIds, mutedStreamIds])
+    }, [
+        channels,
+        joinedChannels,
+        spaceMentions,
+        unreadChannelIds,
+        favoriteChannelIds,
+        mutedStreamIds,
+    ])
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - collect and map all dms
 
@@ -246,6 +253,7 @@ export const useSortedChannels = ({ spaceId, currentRouteId }: Params) => {
     }, [unreadChannels])
 
     return {
+        spaceMentions,
         favoriteChannels,
         actualUnreadChannels,
         readChannels,

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useFullyReadMarkerStore } from '../store/use-fully-read-marker-store'
 import { TimelineStore, useTimelineStore } from '../store/use-timeline-store'
 import { MentionResult } from '../types/timeline-types'
@@ -91,9 +91,12 @@ export function useSpaceMentions(): MentionResult[] {
     return mentions
 }
 
-export function useSpaceUnreadThreadMentions(): number {
-    const mentions = useSpaceMentions()
-    return mentions.reduce((count, m) => {
-        return m.thread && m.unread ? count + 1 : count
-    }, 0)
+export function useSpaceUnreadThreadMentions(mentions: MentionResult[]): number {
+    return useMemo(
+        () =>
+            mentions.reduce((count, m) => {
+                return m.thread && m.unread ? count + 1 : count
+            }, 0),
+        [mentions],
+    )
 }

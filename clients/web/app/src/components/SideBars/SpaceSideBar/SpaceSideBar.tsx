@@ -75,8 +75,6 @@ export const SpaceSideBar = (props: Props) => {
         openPanel(CHANNEL_INFO_PARAMS.BROWSE_CHANNELS)
     })
 
-    const unreadThreadMentions = useSpaceUnreadThreadMentions()
-
     const { hasPermission: canCreateChannel } = useHasPermission({
         spaceId: space.id,
         walletAddress: loggedInWalletAddress ?? '',
@@ -107,11 +105,19 @@ export const SpaceSideBar = (props: Props) => {
     const params = useParams()
     const currentRouteId = params.channelSlug
 
-    const { favoriteChannels, unreadChannels, actualUnreadChannels, readChannels, readDms } =
-        useSortedChannels({
-            spaceId: space.id,
-            currentRouteId,
-        })
+    const {
+        favoriteChannels,
+        unreadChannels,
+        actualUnreadChannels,
+        readChannels,
+        readDms,
+        spaceMentions,
+    } = useSortedChannels({
+        spaceId: space.id,
+        currentRouteId,
+    })
+
+    const unreadThreadMentions = useSpaceUnreadThreadMentions(spaceMentions)
 
     const offscreenMarkers = useOffscreenMarkers({
         unreadChannels: actualUnreadChannels,

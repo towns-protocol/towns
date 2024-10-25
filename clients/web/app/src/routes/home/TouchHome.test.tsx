@@ -86,6 +86,7 @@ describe('<TouchHome />', () => {
                 dmItems: [],
                 channelItems: [],
                 favoriteChannels: [],
+                spaceMentions: [],
             }
         })
 
