@@ -15,6 +15,8 @@ import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
 import { PATHS } from 'routes'
 import { usePanels } from './hooks/usePanels'
 
+const config = ['spaces', 'primary-menu', 'secondary-menu', 'content']
+
 export const AppPanelLayout = () => {
     const allotemntRef = useRef<AllotmentHandle>(null)
     const messageRoute = useMatch({ path: `/${PATHS.MESSAGES}`, end: false })
@@ -22,14 +24,14 @@ export const AppPanelLayout = () => {
     const spacesNewRoute = useMatch({ path: `/${PATHS.SPACES}/new`, end: true })
 
     const space = useSpaceData()
-    const config = ['spaces', 'primary-menu', 'secondary-menu', 'content']
+
     const { onSizesChange, sizes } = usePersistPanes(config)
 
     const isMessagesRoute = !!messageRoute
 
     // we still want to show town drawer event when space is loading, so we
     // can't rely on `space` being defined
-    const hasTownRoute = !!useSpaceIdFromPathname() || space
+    const hasTownRoute = !!useSpaceIdFromPathname() || space !== undefined
 
     const displaySpacePanel = hasTownRoute && (!(spacesNewRoute || homeRoute) || isMessagesRoute)
 

@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { useCallback, useMemo } from 'react'
 import { useStore } from 'store/store'
 
 export const usePersistPanes = (config: string[]) => {
@@ -16,8 +16,10 @@ export const usePersistPanes = (config: string[]) => {
         [config, setPaneSize],
     )
 
+    const mappedSizes = useMemo(() => config.map((c) => sizes[c] ?? 0) || [], [sizes, config])
+
     return {
         onSizesChange,
-        sizes: config.map((c) => sizes[c] ?? 0) || [],
+        sizes: mappedSizes,
     }
 }
