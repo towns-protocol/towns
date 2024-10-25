@@ -14,10 +14,10 @@ export function Mentions(): JSX.Element {
             if (spaceId) {
                 if (mention.thread !== undefined) {
                     navigate(
-                        `/spaces/${spaceId}/threads/${mention.channel.id}/${mention.thread?.eventId}`,
+                        `/spaces/${spaceId}/threads/${mention.channelId}/${mention.thread?.eventId}`,
                     )
                 } else {
-                    navigate(`/spaces/${spaceId}/channels/${mention.channel.id}/`)
+                    navigate(`/spaces/${spaceId}/channels/${mention.channelId}/`)
                 }
             }
         },

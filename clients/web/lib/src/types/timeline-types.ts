@@ -337,7 +337,7 @@ export type MessageReactions = Record<string, Record<string, { eventId: string }
 export type MentionResult = {
     type: 'mention'
     unread: boolean
-    channel: Channel
+    channelId: string
     timestamp: number
     event: TimelineEvent
     thread?: TimelineEvent

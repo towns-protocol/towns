@@ -213,7 +213,7 @@ const MessageResultItem = (props: {
                       type: 'mention' as const,
                       unread: false,
                       event,
-                      channel,
+                      channelId: channel.id,
                       timestamp: event.createdAtEpochMs,
                       thread: threadStat?.parentEvent,
                   }

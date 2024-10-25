@@ -71,7 +71,7 @@ export const useSortedChannels = ({ spaceId, currentRouteId }: Params) => {
             .map((channel) => {
                 const mentionCount = mentions.reduce(
                     (count, m) =>
-                        m.unread && !m.thread && m.channel.id === channel.id ? count + 1 : count,
+                        m.unread && !m.thread && m.channelId === channel.id ? count + 1 : count,
                     0,
                 )
                 return {

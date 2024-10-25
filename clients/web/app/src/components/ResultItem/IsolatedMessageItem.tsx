@@ -53,14 +53,17 @@ export const IsolatedMessageItem = (
     const { result, padding = { touch: 'md', default: 'lg' }, ...boxProps } = props
     const { isTouch } = useDevice()
     const spaceSlug = useSpaceId() ?? ''
-    const channelSlug = result.channel.id
+    const channelSlug = result.channelId
 
     const content = getIsRoomMessageContent(result.event)
 
     const { lookupUser } = useUserLookupContext()
     const channels = useSpaceChannels()
     const dmChannels = useDmChannels()
-
+    const channel = useMemo(
+        () => channels.find((c) => c.id === result.channelId) ?? { label: 'loading...' },
+        [channels, result.channelId],
+    )
     const sender = lookupUser(result.event.sender.id)
     const ref = React.useRef<HTMLAnchorElement>(null)
 
@@ -70,12 +73,12 @@ export const IsolatedMessageItem = (
         }
         return createMessageLink(
             spaceSlug,
-            result.channel.id,
+            result.channelId,
             result.event.eventId,
             isTouch,
             result.thread?.eventId,
         )
-    }, [channelSlug, result.channel.id, result.event.eventId, result.thread, spaceSlug, isTouch])
+    }, [channelSlug, result.channelId, result.event.eventId, result.thread, spaceSlug, isTouch])
 
     useEffect(() => {
         if (props.selected && ref.current) {
@@ -83,17 +86,17 @@ export const IsolatedMessageItem = (
         }
     }, [props.selected])
 
-    const messageReactionsMap = useTimelineReactions(result.channel.id)
+    const messageReactionsMap = useTimelineReactions(result.channelId)
     const reactions = messageReactionsMap[result.event.eventId]
-    const onReaction = useHandleReaction(result.channel.id)
+    const onReaction = useHandleReaction(result.channelId)
 
     if (!content) {
         return null
     }
 
     const sourceAnnotation =
-        result.channel.label.length > 0
-            ? `${result.thread ? `Thread in` : ``} #${result.channel.label.toLowerCase()}`
+        channel.label.length > 0
+            ? `${result.thread ? `Thread in` : ``} #${channel.label.toLowerCase()}`
             : ''
 
     const item = (

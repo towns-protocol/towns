@@ -1,65 +1,94 @@
-import { useMemo } from 'react'
+import { useEffect, useState } from 'react'
 import { useFullyReadMarkerStore } from '../store/use-fully-read-marker-store'
-import { useTimelineStore } from '../store/use-timeline-store'
+import { TimelineStore, useTimelineStore } from '../store/use-timeline-store'
 import { MentionResult } from '../types/timeline-types'
-import { useChannels } from './use-channels'
+import isEqual from 'lodash/isEqual'
+import debounce from 'lodash/debounce'
+import { isChannelStreamId } from '@river-build/sdk'
 
 export function useSpaceMentions(): MentionResult[] {
-    const unreadMarkers = useFullyReadMarkerStore((state) => state.markers)
-    const { threadsStats, timelines } = useTimelineStore((state) => ({
-        threadsStats: state.threadsStats,
-        timelines: state.timelines,
-    }))
+    const [mentions, setMentions] = useState<MentionResult[]>([])
 
-    const channels = useChannels()
+    useEffect(() => {
+        const runUpdate = () => {
+            const unreadMarkers = useFullyReadMarkerStore.getState().markers
+            const threadsStats = useTimelineStore.getState().threadsStats
+            const timelines = useTimelineStore.getState().timelines
 
-    return useMemo(() => {
-        const mentions = [] as MentionResult[]
+            const mentions = [] as MentionResult[]
 
-        channels.forEach((channel) => {
-            const timeline = timelines[channel.id]
-            if (!timeline?.length) {
-                return
+            for (const [streamId, timeline] of Object.entries(timelines)) {
+                if (!isChannelStreamId(streamId)) {
+                    continue
+                }
+                const channelId = streamId
+                if (!timeline?.length) {
+                    return
+                }
+
+                const channelMentions = timeline
+                    .filter((event) => event.isMentioned)
+                    .map((event) => {
+                        const threadStat = event.threadParentId
+                            ? threadsStats[channelId]?.[event.threadParentId]
+                            : undefined
+                        const fullyReadMarker = unreadMarkers[event.threadParentId ?? channelId]
+                        return {
+                            type: 'mention' as const,
+                            unread:
+                                fullyReadMarker?.isUnread === true &&
+                                event.eventNum >= fullyReadMarker.eventNum,
+                            channelId,
+                            timestamp: event.createdAtEpochMs,
+                            event,
+                            thread: threadStat?.parentEvent,
+                        }
+                    })
+                mentions.push(...channelMentions)
             }
 
-            const channelMentions = timeline
-                .filter((event) => event.isMentioned)
-                .map((event) => {
-                    const threadStat = event.threadParentId
-                        ? threadsStats[channel.id]?.[event.threadParentId]
-                        : undefined
-                    const fullyReadMarker = unreadMarkers[event.threadParentId ?? channel.id]
-                    return {
-                        type: 'mention' as const,
-                        unread:
-                            fullyReadMarker?.isUnread === true &&
-                            event.eventNum >= fullyReadMarker.eventNum,
-                        channel,
-                        timestamp: event.createdAtEpochMs,
-                        event,
-                        thread: threadStat?.parentEvent,
+            mentions.sort(
+                //firstBy<MentionResult>((m) => (m.unread ? 0 : 1)).thenBy((a) => a.timestamp, -1),
+                (a: MentionResult, b: MentionResult): number => {
+                    if (a.unread && !b.unread) {
+                        return -1
+                    } else if (!a.unread && b.unread) {
+                        return 1
+                    } else if (a.timestamp > b.timestamp) {
+                        return -1
+                    } else if (a.timestamp < b.timestamp) {
+                        return 1
+                    } else {
+                        return 0
                     }
-                })
-            mentions.push(...channelMentions)
-        })
+                },
+            )
 
-        return mentions.sort(
-            //firstBy<MentionResult>((m) => (m.unread ? 0 : 1)).thenBy((a) => a.timestamp, -1),
-            (a: MentionResult, b: MentionResult): number => {
-                if (a.unread && !b.unread) {
-                    return -1
-                } else if (!a.unread && b.unread) {
-                    return 1
-                } else if (a.timestamp > b.timestamp) {
-                    return -1
-                } else if (a.timestamp < b.timestamp) {
-                    return 1
-                } else {
-                    return 0
-                }
-            },
-        )
-    }, [channels, threadsStats, timelines, unreadMarkers])
+            setMentions((prev) => (isEqual(prev, mentions) ? prev : mentions))
+        }
+
+        const debouncedRunUpdate = debounce(runUpdate, 2000)
+
+        const onTimelineStoreChange = (state: TimelineStore, prevState: TimelineStore) => {
+            if (
+                state.threadsStats !== prevState.threadsStats ||
+                state.timelines !== prevState.timelines
+            ) {
+                debouncedRunUpdate()
+            }
+        }
+
+        runUpdate()
+
+        const unsub1 = useFullyReadMarkerStore.subscribe(debouncedRunUpdate)
+        const unsub2 = useTimelineStore.subscribe(onTimelineStoreChange)
+        return () => {
+            unsub1()
+            unsub2()
+        }
+    }, [mentions])
+
+    return mentions
 }
 
 export function useSpaceUnreadThreadMentions(): number {

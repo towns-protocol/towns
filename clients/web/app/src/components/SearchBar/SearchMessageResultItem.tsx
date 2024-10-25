@@ -63,6 +63,10 @@ export const SearchMessagesResultItem = (
     const { lookupUser } = useUserLookupContext()
 
     const channels = useSpaceChannels()
+    const channel = useMemo(
+        () => channels.find((c) => c.id === result.channelId) ?? { label: 'loading...' },
+        [channels, result.channelId],
+    )
     const sender = lookupUser(result.event.sender.id)
     const ref = React.useRef<HTMLAnchorElement>(null)
 
@@ -73,12 +77,12 @@ export const SearchMessagesResultItem = (
     const link = useMemo(() => {
         return createMessageLink(
             isTouch,
-            result.channel.id,
+            result.channelId,
             result.event.eventId,
             result.thread?.eventId,
             spaceSlug,
         )
-    }, [isTouch, result.channel.id, result.event.eventId, result.thread?.eventId, spaceSlug])
+    }, [isTouch, result.channelId, result.event.eventId, result.thread?.eventId, spaceSlug])
 
     useEffect(() => {
         if (props.selected && ref.current) {
@@ -88,7 +92,7 @@ export const SearchMessagesResultItem = (
 
     const isMessageSearch = useContext(SearchContext) === 'messages'
 
-    const { counterParty, data } = useDMData(result.channel?.id)
+    const { counterParty, data } = useDMData(result.channelId)
 
     const userIds = useMemo(
         () => (data?.isGroup ? data.userIds ?? [] : [counterParty].filter(notUndefined)),
@@ -102,8 +106,8 @@ export const SearchMessagesResultItem = (
     const channelLabel =
         isMessageSearch && userIds.length > 0 ? (
             <UserList userIds={userIds} />
-        ) : result.channel.label.length > 0 ? (
-            `${result.thread ? `Thread in` : ``} #${result.channel.label.toLowerCase()}`
+        ) : channel.label.length > 0 ? (
+            `${result.thread ? `Thread in` : ``} #${channel.label.toLowerCase()}`
         ) : (
             ''
         )
