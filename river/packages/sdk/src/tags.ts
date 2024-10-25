@@ -25,8 +25,12 @@ function getMessageInteractionType(message: PlainMessage<ChannelMessage>): Messa
             } else if (message.payload.value.replyId) {
                 return MessageInteractionType.REPLY
             } else {
-                return MessageInteractionType.UNSPECIFIED
+                return MessageInteractionType.POST
             }
+        case 'edit':
+            return MessageInteractionType.EDIT
+        case 'redaction':
+            return MessageInteractionType.REDACTION
         default:
             return MessageInteractionType.UNSPECIFIED
     }

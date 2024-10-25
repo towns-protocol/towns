@@ -108,11 +108,13 @@ func NewStreamCache(
 	}
 
 	// schedule sync tasks for all local streams in the background
-	go func() {
-		for _, stream := range localStreamResults {
-			s.syncTasks.Submit(ctx, stream, s)
-		}
-	}()
+	if params.Config.StreamReconciliation.WorkerPoolSize > 0 {
+		go func() {
+			for _, stream := range localStreamResults {
+				s.syncTasks.Submit(ctx, stream, s)
+			}
+		}()
+	}
 
 	// load local streams in-memory cache
 	for _, stream := range localStreamResults {

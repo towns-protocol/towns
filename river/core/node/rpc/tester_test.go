@@ -215,6 +215,7 @@ func (st *serviceTester) getConfig(opts ...startOpts) *config.Config {
 		options = &opts[0]
 	}
 
+	// TODO: derive this config from the default config.
 	cfg := &config.Config{
 		DisableBaseChain: true,
 		DisableHttps:     true,
@@ -228,6 +229,9 @@ func (st *serviceTester) getConfig(opts ...startOpts) *config.Config {
 			NumRetries: 3,
 		},
 		ShutdownTimeout: 2 * time.Millisecond,
+		StreamReconciliation: config.StreamReconciliationConfig{
+			WorkerPoolSize: 8,
+		},
 	}
 
 	if options.configUpdater != nil {
