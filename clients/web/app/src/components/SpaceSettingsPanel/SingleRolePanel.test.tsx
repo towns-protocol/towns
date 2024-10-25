@@ -366,6 +366,11 @@ describe('SingleRolePanel', () => {
             const tokenEditor = await screen.findByTestId('token-editor')
             const tokenQuantityField = within(tokenEditor).getByPlaceholderText(/enter quantity/gi)
             await userEvent.type(tokenQuantityField, '1')
+
+            await waitFor(() => {
+                expect(tokenQuantityField).toHaveValue('1')
+            })
+
             const tokenEditorSubmit = within(tokenEditor).getByRole('button', { name: 'Add Token' })
             await userEvent.click(tokenEditorSubmit)
 
@@ -597,11 +602,11 @@ describe('SingleRolePanel', () => {
         const roleName = await getNameInput()
         await waitFor(() => expect(roleName).toHaveValue('Member'))
         const tokenSearch = await screen.findByTestId('token-search')
-        await waitFor(() =>
-            expect(within(tokenSearch).getAllByTestId(/^token-pill-selector-pill/i)).toHaveLength(
-                2,
-            ),
-        )
+        await waitFor(() => {
+            const tokenPills = within(tokenSearch).getAllByTestId(/^token-pill-selector-pill/i)
+            expect(tokenPills).toHaveLength(2)
+        })
+
         expect(screen.getByTestId('submit-button')).toBeDisabled()
 
         await userEvent.type(roleName, 'new name')

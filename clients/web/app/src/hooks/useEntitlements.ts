@@ -1,7 +1,7 @@
 import { convertRuleDataV1ToV2, useRoleDetails } from 'use-towns-client'
 import { useMemo } from 'react'
 import { isEveryoneAddress } from '@components/Web3/utils'
-import { convertRuleDataToTokenEntitlementSchema } from '@components/Tokens/utils'
+import { convertRuleDataToTokensAndEthBalance } from '@components/Tokens/utils'
 
 export type Entitlements = ReturnType<typeof useEntitlements>['data']
 
@@ -15,19 +15,25 @@ export const checkAnyoneCanJoin = (entitlements: Entitlements) =>
 export function useEntitlements(spaceId: string | undefined) {
     const { roleDetails: minterRoleDetails, ...rest } = useRoleDetails(spaceId ?? '', 1)
 
+    const ruleData =
+        minterRoleDetails?.ruleData.kind === 'v2'
+            ? minterRoleDetails.ruleData.rules
+            : minterRoleDetails?.ruleData.rules
+            ? convertRuleDataV1ToV2(minterRoleDetails.ruleData.rules)
+            : undefined
+
+    const { tokens, ethBalance } = ruleData
+        ? convertRuleDataToTokensAndEthBalance(ruleData)
+        : { tokens: [], ethBalance: undefined }
+
     return useMemo(() => {
         return {
             data: {
-                tokens: minterRoleDetails?.ruleData
-                    ? convertRuleDataToTokenEntitlementSchema(
-                          minterRoleDetails.ruleData.kind === 'v2'
-                              ? minterRoleDetails.ruleData.rules
-                              : convertRuleDataV1ToV2(minterRoleDetails.ruleData.rules),
-                      )
-                    : [],
+                tokens,
                 users: minterRoleDetails?.users ?? [],
+                ethBalance,
             },
             ...rest,
         }
-    }, [minterRoleDetails, rest])
+    }, [ethBalance, tokens, minterRoleDetails?.users, rest])
 }

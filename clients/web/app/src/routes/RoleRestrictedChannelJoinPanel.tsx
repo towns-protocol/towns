@@ -20,7 +20,7 @@ import { utils } from 'ethers'
 import { Panel } from '@components/Panel/Panel'
 import { Box, Button, Icon, MotionIcon, Pill, Stack, Text } from '@ui'
 import { Accordion } from 'ui/components/Accordion/Accordion'
-import { convertRuleDataToTokenEntitlementSchema } from '@components/Tokens/utils'
+import { convertRuleDataToTokensAndEthBalance } from '@components/Tokens/utils'
 import { Avatar } from '@components/Avatar/Avatar'
 import { Token, TokenEntitlement } from '@components/Tokens/TokenSelector/tokenSchemas'
 import { TokenImage } from '@components/Tokens/TokenSelector/TokenImage'
@@ -548,11 +548,14 @@ function extractRoleEntitlementDetails({
 }) {
     const hasUserEntitlement = role.users.length > 0 && !role.users.includes(EVERYONE_ADDRESS)
     const hasRuleEntitlement = role.ruleData.rules.checkOperations.length > 0
-    const tokens = convertRuleDataToTokenEntitlementSchema(
+
+    const ruleData =
         role.ruleData.kind === 'v2'
             ? role.ruleData.rules
-            : convertRuleDataV1ToV2(role.ruleData.rules),
-    )
+            : convertRuleDataV1ToV2(role.ruleData.rules)
+
+    const { tokens, ethBalance } = convertRuleDataToTokensAndEthBalance(ruleData)
+
     const tokenTypes = [...new Set(tokens.map((p) => p.type))].join(', or')
     const qualifiesForUserEntitlement =
         hasUserEntitlement && wallets?.some((w) => role.users.includes(w))
@@ -561,6 +564,7 @@ function extractRoleEntitlementDetails({
         hasUserEntitlement,
         hasRuleEntitlement,
         tokens,
+        ethBalance,
         tokenTypes,
         qualifiesForUserEntitlement,
     }

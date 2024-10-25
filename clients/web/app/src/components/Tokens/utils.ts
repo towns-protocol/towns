@@ -44,19 +44,44 @@ export function convertOperationTypeToTokenType(type: CheckOperationType) {
     }
 }
 
-export function convertRuleDataToTokenEntitlementSchema(
+export function convertRuleDataToTokensAndEthBalance(
     ruleData: IRuleEntitlementV2Base.RuleDataV2Struct,
-): TokenEntitlement[] {
-    return createDecodedCheckOperationFromTree(ruleData).map((p) => {
-        const { threshold, tokenId, ...rest } = p
-        return {
-            ...rest,
-            chainId: Number(p.chainId),
-            type: convertOperationTypeToTokenType(p.type),
-            quantity: threshold ?? 1n,
-            tokenIds: tokenId ? [Number(tokenId)] : [],
-        }
-    })
+): {
+    tokens: TokenEntitlement[]
+    ethBalance: string | undefined
+} {
+    const decodedCheckOperations = createDecodedCheckOperationFromTree(ruleData)
+
+    const ethBalanceEntitlement = decodedCheckOperations.find(
+        (p) => p.type === CheckOperationType.ETH_BALANCE,
+    )
+
+    const ethBalance = ethBalanceEntitlement?.threshold
+        ? formatUnits(ethBalanceEntitlement.threshold, 18)
+        : undefined
+
+    const tokens = decodedCheckOperations
+        .filter(
+            (p) =>
+                p.type === CheckOperationType.ERC1155 ||
+                p.type === CheckOperationType.ERC721 ||
+                p.type === CheckOperationType.ERC20,
+        )
+        .map((p) => {
+            const { threshold, tokenId, ...rest } = p
+            return {
+                ...rest,
+                chainId: Number(p.chainId),
+                type: convertOperationTypeToTokenType(p.type),
+                quantity: threshold ?? 1n,
+                tokenIds: tokenId ? [Number(tokenId)] : [],
+            }
+        })
+
+    return {
+        tokens,
+        ethBalance,
+    }
 }
 
 export const transformQuantityForSubmit = (

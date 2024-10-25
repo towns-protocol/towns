@@ -50,7 +50,7 @@ import { ModalContainer } from '@components/Modals/ModalContainer'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { PanelButton } from '@components/Panel/PanelButton'
 import { isChannelPermission } from '@components/SpaceSettingsPanel/rolePermissions.const'
-import { convertRuleDataToTokenEntitlementSchema } from '@components/Tokens/utils'
+import { convertRuleDataToTokensAndEthBalance } from '@components/Tokens/utils'
 import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
 import { Analytics } from 'hooks/useAnalytics'
 import { useContractRoles } from 'hooks/useContractRoles'
@@ -252,9 +252,10 @@ export const CreateChannelForm = (props: Props) => {
                                         ? convertRuleDataV1ToV2(ruleData.rules)
                                         : ruleData.rules
 
-                                const tokens = convertRuleDataToTokenEntitlementSchema(
-                                    ruleDataV2,
-                                ).map((t) => {
+                                const { tokens: convertedTokens } =
+                                    convertRuleDataToTokensAndEthBalance(ruleDataV2)
+
+                                const tokens = convertedTokens.map((t) => {
                                     return {
                                         chainId: t.chainId,
                                         contractAddress: t.address,
@@ -262,6 +263,7 @@ export const CreateChannelForm = (props: Props) => {
                                         threshold: t.quantity.toString(),
                                     } as ApiObject
                                 })
+
                                 return {
                                     id: r.id,
                                     name: r.name,

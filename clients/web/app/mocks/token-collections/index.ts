@@ -4,22 +4,21 @@ export function tokenCollections() {
     return MOCK_CONTRACT_METADATA_RESPONSE
 }
 
-export const TEST_NFT_COLLECTION_METADATA_ADDRESSES = [
-    '0xfA4D0250769B07FC132573ea38D758D159770998'.toLowerCase(),
+export const TEST_TOKEN_METADATA_ADDRESSES = [
+    '0x4d224452801ACEd8B2F0aebE155379bb5D594381'.toLowerCase(),
     '0xfA9937555Dc20A020A161232de4D2B109C62Aa9c'.toLowerCase(),
 ]
 
-// ERC1155 UI NOT SETUP YET
-export const DAISEN_MOCK = {
-    address: TEST_NFT_COLLECTION_METADATA_ADDRESSES[0],
-    name: 'Daisen.fi Investor Pass',
-    symbol: 'Daisen.fi Investor Pass',
+export const APECOIN_MOCK = {
+    address: TEST_TOKEN_METADATA_ADDRESSES[0],
+    name: 'ApeCoin',
+    symbol: 'APE',
     tokenType: 'ERC20',
-    imageUrl: 'https://i.seadn.io/gcs/files/65e3614fe54db77743b34bb1dccd8c85.jpg?w=500&auto=format',
+    imageUrl: 'https://etherscan.io/token/images/apecoin_32.png',
 }
 
 export const SUDOLETS_MOCK = {
-    address: TEST_NFT_COLLECTION_METADATA_ADDRESSES[1],
+    address: TEST_TOKEN_METADATA_ADDRESSES[1],
     name: 'Sudolets',
     symbol: 'LETS',
     tokenType: 'ERC721',
@@ -35,16 +34,16 @@ export const getContractMetadataMock: {
         imageUrl: string
     }
 } = {
-    [TEST_NFT_COLLECTION_METADATA_ADDRESSES[0]]: DAISEN_MOCK,
-    [TEST_NFT_COLLECTION_METADATA_ADDRESSES[1]]: SUDOLETS_MOCK,
+    [TEST_TOKEN_METADATA_ADDRESSES[0]]: APECOIN_MOCK,
+    [TEST_TOKEN_METADATA_ADDRESSES[1]]: SUDOLETS_MOCK,
 } as const
 
 export const getContractMetadataAcrossNetworksMock = {
-    [TEST_NFT_COLLECTION_METADATA_ADDRESSES[0]]: {
+    [TEST_TOKEN_METADATA_ADDRESSES[0]]: {
         chainId: 1,
-        data: DAISEN_MOCK,
+        data: APECOIN_MOCK,
     },
-    [TEST_NFT_COLLECTION_METADATA_ADDRESSES[1]]: {
+    [TEST_TOKEN_METADATA_ADDRESSES[1]]: {
         chainId: 1,
         data: SUDOLETS_MOCK,
     },

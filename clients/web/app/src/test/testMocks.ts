@@ -7,7 +7,7 @@ import { convertTokenTypeToOperationType } from '@components/Tokens/utils'
 import { TokenType } from '@components/Tokens/types'
 import { parseUnits } from 'hooks/useBalance'
 import { getWalletAddress } from './testUtils'
-import { TEST_NFT_COLLECTION_METADATA_ADDRESSES } from '../../mocks/token-collections'
+import { TEST_TOKEN_METADATA_ADDRESSES } from '../../mocks/token-collections'
 
 const CHANNEL_ID = 'channel1'
 const SPACE_ID = 'town1'
@@ -63,14 +63,16 @@ export const roleDataWithBothRolesAssignedToChannel: townsClient.RoleDetails[] =
             kind: 'v2',
             rules: townsClient.createOperationsTree([
                 {
-                    address: TEST_NFT_COLLECTION_METADATA_ADDRESSES[0] as townsClient.Address,
-                    chainId: BigInt(1),
+                    address: TEST_TOKEN_METADATA_ADDRESSES[0] as townsClient.Address,
+                    chainId: 1n,
                     type: convertTokenTypeToOperationType(TokenType.ERC20),
+                    threshold: parseUnits('1', 18),
                 },
                 {
-                    address: TEST_NFT_COLLECTION_METADATA_ADDRESSES[1] as townsClient.Address,
-                    chainId: BigInt(1),
+                    address: TEST_TOKEN_METADATA_ADDRESSES[1] as townsClient.Address,
+                    chainId: 1n,
                     type: convertTokenTypeToOperationType(TokenType.ERC721),
+                    threshold: 1n,
                 },
             ]),
         },

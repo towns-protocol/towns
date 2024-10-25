@@ -405,7 +405,7 @@ export const getErc20MetadataMock: ContractMetadata = {
     name: 'USDC',
     symbol: 'USDC',
     tokenType: TokenType.ERC20,
-    decimals: 18,
+    decimals: 6,
 }
 
 export const alchemyGetCollectionsMock = {
