@@ -1331,7 +1331,7 @@ contract RewardsDistributionTest is
 
   function _createEntities(
     uint256[] memory amountsPerUser
-  ) internal view returns (Entity[] memory) {
+  ) internal pure returns (Entity[] memory) {
     Entity[] memory users = new Entity[](amountsPerUser.length);
     for (uint256 i = 0; i < amountsPerUser.length; i++) {
       users[i] = Entity(_getRandomAddress(), amountsPerUser[i]);
@@ -1401,9 +1401,8 @@ contract RewardsDistributionTest is
     return number1 + randomNumber;
   }
 
-  function _getRandomAddress() internal view returns (address) {
-    address addr = _randomAddress();
-    return addr;
+  function _getRandomAddress() internal pure returns (address) {
+    return _randomAddress();
   }
 
   //used to test specific results given known input

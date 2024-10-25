@@ -12,7 +12,12 @@ import { IPricingModulesBase } from './v3/IPricingShim'
 import { RuleEntitlementV2Shim } from './v3/RuleEntitlementV2Shim'
 import { NoopRuleData } from './entitlement'
 
-import { CreateSpaceParams, CreateLegacySpaceParams } from './ISpaceDapp'
+import {
+    CreateSpaceParams,
+    CreateLegacySpaceParams,
+    UpdateChannelParams,
+    UpdateChannelStatusParams,
+} from './ISpaceDapp'
 
 export const Permission = {
     Undefined: 'Undefined', // No permission required
@@ -175,6 +180,15 @@ export function isRuleEntitlementV2(
     entitlement: EntitlementModule,
 ): entitlement is RuleEntitlementV2Shim {
     return entitlement.moduleType === EntitlementModuleType.RuleEntitlementV2
+}
+
+export const isUpdateChannelStatusParams = (
+    params: UpdateChannelParams,
+): params is UpdateChannelStatusParams => {
+    return (
+        'disabled' in params &&
+        !('roleIds' in params || 'channelName' in params || 'channelDescription' in params)
+    )
 }
 
 export function isStringArray(

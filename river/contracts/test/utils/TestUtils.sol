@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-// solhint-disable-next-line
-
 import "@prb/test/Helpers.sol" as Helpers;
 import {Test} from "forge-std/Test.sol";
+import {LibString} from "solady/utils/LibString.sol";
 
 contract TestUtils is Test {
   event LogNamedArray(string key, address[] value);
@@ -18,6 +17,12 @@ contract TestUtils is Test {
 
   address public constant NATIVE_TOKEN =
     address(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
+
+  bytes4 private constant RANDOM_ADDRESS_SIG =
+    bytes4(keccak256("randomAddress()"));
+  bytes4 private constant RANDOM_UINT_SIG_0 = bytes4(keccak256("randomUint()"));
+  bytes4 private constant RANDOM_UINT_SIG_2 =
+    bytes4(keccak256("randomUint(uint256,uint256)"));
 
   modifier onlyForked() {
     if (block.number > 1e6) {
@@ -59,24 +64,34 @@ contract TestUtils is Test {
     return string(abi.encodePacked(str));
   }
 
-  function _randomBytes32() internal view returns (bytes32) {
-    bytes memory seed = abi.encode(_NONCE, block.timestamp, gasleft());
-    return keccak256(seed);
+  function _randomBytes32() internal pure returns (bytes32) {
+    return bytes32(_randomUint256());
   }
 
-  function _randomUint256() internal view returns (uint256) {
-    return uint256(_randomBytes32());
+  function _randomUint256() internal pure returns (uint256) {
+    return
+      abi.decode(_callVm(abi.encodeWithSelector(RANDOM_UINT_SIG_0)), (uint256));
   }
 
-  function _randomAddress() internal view returns (address payable) {
-    return payable(address(uint160(_randomUint256())));
+  function _randomAddress() internal pure returns (address payable) {
+    return
+      payable(
+        abi.decode(
+          _callVm(abi.encodeWithSelector(RANDOM_ADDRESS_SIG)),
+          (address)
+        )
+      );
   }
 
   function _randomRange(
     uint256 lo,
     uint256 hi
-  ) internal view returns (uint256) {
-    return lo + (_randomUint256() % (hi - lo));
+  ) internal pure returns (uint256) {
+    return
+      abi.decode(
+        _callVm(abi.encodeWithSelector(RANDOM_UINT_SIG_2, lo, hi)),
+        (uint256)
+      );
   }
 
   function _toAddressArray(
@@ -101,23 +116,20 @@ contract TestUtils is Test {
     string memory s1,
     string memory s2
   ) public pure returns (bool) {
-    return keccak256(abi.encodePacked(s1)) == keccak256(abi.encodePacked(s2));
+    return LibString.eq(s1, s2);
   }
 
   function _isEqual(bytes32 s1, bytes32 s2) public pure returns (bool) {
-    return keccak256(abi.encodePacked(s1)) == keccak256(abi.encodePacked(s2));
+    return s1 == s2;
   }
 
   function _createAccounts(
-    uint256 amount
-  ) internal view returns (address[] memory) {
-    address[] memory accounts = new address[](amount);
-
-    for (uint256 i = 0; i < amount; i++) {
+    uint256 count
+  ) internal pure returns (address[] memory accounts) {
+    accounts = new address[](count);
+    for (uint256 i; i < count; ++i) {
       accounts[i] = _randomAddress();
     }
-
-    return accounts;
   }
 
   function isAnvil() internal view returns (bool) {
@@ -243,6 +255,45 @@ contract TestUtils is Test {
     if (!Helpers.contains(a, b)) {
       emit log_named_string("Error", err);
       assertContains(a, b);
+    }
+  }
+
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                       COMPILER TRICK                       */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+  function _callVm(bytes memory payload) internal pure returns (bytes memory) {
+    return _castVmPayloadToPure(_sendVmPayload)(payload);
+  }
+
+  function _castVmPayloadToPure(
+    function(bytes memory) internal returns (bytes memory) fnIn
+  )
+    internal
+    pure
+    returns (function(bytes memory) internal pure returns (bytes memory) fnOut)
+  {
+    assembly {
+      fnOut := fnIn
+    }
+  }
+
+  function _sendVmPayload(
+    bytes memory payload
+  ) private returns (bytes memory res) {
+    address vmAddress = address(VM_ADDRESS);
+    /// @solidity memory-safe-assembly
+    assembly {
+      let payloadLength := mload(payload)
+      let payloadStart := add(payload, 32)
+      if iszero(call(gas(), vmAddress, 0, payloadStart, payloadLength, 0, 0)) {
+        returndatacopy(0, 0, returndatasize())
+        revert(0, returndatasize())
+      }
+      res := mload(0x40)
+      mstore(0x40, and(add(add(res, returndatasize()), 0x3f), not(0x1f)))
+      mstore(res, returndatasize())
+      returndatacopy(add(res, 0x20), 0, returndatasize())
     }
   }
 }

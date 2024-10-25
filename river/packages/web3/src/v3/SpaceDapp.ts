@@ -4,6 +4,7 @@ import {
     ChannelMetadata,
     EntitlementModuleType,
     isPermission,
+    isUpdateChannelStatusParams,
     MembershipInfo,
     Permission,
     PricingModuleStruct,
@@ -16,12 +17,12 @@ import {
     CreateSpaceParams,
     ISpaceDapp,
     TransactionOpts,
-    UpdateChannelParams,
     LegacyUpdateRoleParams,
     UpdateRoleParams,
     SetChannelPermissionOverridesParams,
     ClearChannelPermissionOverridesParams,
     RemoveChannelParams,
+    UpdateChannelParams,
 } from '../ISpaceDapp'
 import { LOCALHOST_CHAIN_ID } from '../Web3Constants'
 import { IRolesBase } from './IRolesShim'
@@ -1033,10 +1034,19 @@ export class SpaceDapp implements ISpaceDapp {
     }
 
     public async encodedUpdateChannelData(space: Space, params: UpdateChannelParams) {
+        const channelId = ensureHexPrefix(params.channelId)
+
+        if (isUpdateChannelStatusParams(params)) {
+            // When enabling or disabling channels, passing names and roles is not required.
+            // To ensure the contract accepts this exception, the metadata argument should be left empty.
+            return [
+                space.Channels.interface.encodeFunctionData('updateChannel', [channelId, '', true]),
+            ]
+        }
+
         // data for the multicall
         const encodedCallData: BytesLike[] = []
 
-        const channelId = ensureHexPrefix(params.channelId)
         // update the channel metadata
         encodedCallData.push(
             space.Channels.interface.encodeFunctionData('updateChannel', [
