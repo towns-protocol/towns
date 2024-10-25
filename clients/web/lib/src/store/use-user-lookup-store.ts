@@ -106,7 +106,7 @@ function setSpaceUser(
     }
     newAllUsers[userId] = {
         ...newAllUsers[userId],
-        [spaceId]: { ...user },
+        [spaceId]: user,
     }
 
     const newSpaceUsers = { ...spaceUsers }
@@ -115,7 +115,7 @@ function setSpaceUser(
     }
     newSpaceUsers[spaceId] = {
         ...newSpaceUsers[spaceId],
-        [userId]: { ...user },
+        [userId]: user,
     }
 
     const newFallbackUserLookups = { ...fallbackUserLookups }
@@ -124,7 +124,55 @@ function setSpaceUser(
         user.username.length > 0 &&
         !newFallbackUserLookups[userId]?.username
     ) {
-        newFallbackUserLookups[userId] = { ...user }
+        newFallbackUserLookups[userId] = user
+    }
+
+    return {
+        ...state,
+        allUsers: newAllUsers,
+        spaceUsers: newSpaceUsers,
+        fallbackUserLookups: newFallbackUserLookups,
+    }
+}
+
+function setSpaceUsers(
+    state: UserLookupStore,
+    records: { userId: string; user: LookupUser; spaceId?: string }[],
+) {
+    // just assume these have changed
+    // this is copy pasta from setSpaceUser, but it's called a lot in a hot loop
+    // calling setSpaceUser in a loop is too slow because it does tons of garbage collection
+    const { allUsers, spaceUsers, fallbackUserLookups } = state
+    const newAllUsers = { ...allUsers }
+    const newSpaceUsers = { ...spaceUsers }
+    const newFallbackUserLookups = { ...fallbackUserLookups }
+
+    for (const record of records) {
+        const { userId, user, spaceId } = record
+        if (!spaceId) {
+            continue
+        }
+        if (!newAllUsers[userId]) {
+            newAllUsers[userId] = {}
+        } else if (newAllUsers[userId] === allUsers[userId]) {
+            newAllUsers[userId] = { ...allUsers[userId] }
+        }
+        newAllUsers[userId][spaceId] = user
+
+        if (!newSpaceUsers[spaceId]) {
+            newSpaceUsers[spaceId] = {}
+        } else if (newSpaceUsers[spaceId] === spaceUsers[spaceId]) {
+            newSpaceUsers[spaceId] = { ...spaceUsers[spaceId] }
+        }
+        newSpaceUsers[spaceId][userId] = user
+
+        if (
+            typeof user?.username === 'string' &&
+            user.username.length > 0 &&
+            !newFallbackUserLookups[userId]?.username
+        ) {
+            newFallbackUserLookups[userId] = user
+        }
     }
 
     return {
@@ -177,10 +225,7 @@ export const useUserLookupStore = createWithEqualityFn<UserLookupStore>()(
             },
             setSpaceUsers: (records) => {
                 set((state) => {
-                    for (const record of records) {
-                        state = setSpaceUser(state, record.userId, record.user, record.spaceId)
-                    }
-                    return state
+                    return setSpaceUsers(state, records)
                 })
             },
             setChannelUser: (userId, user, channelId) => {
