@@ -105,6 +105,16 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
             miniblocks: '[streamId+miniblockNum]',
         })
 
+        // Version 2: added a signature to the saved event, drop all saved miniblocks
+        this.version(2).upgrade((tx) => {
+            return tx.table('miniblocks').toCollection().delete()
+        })
+
+        // Version 3: added a signature to the saved event, drop all saved synced streams
+        this.version(3).upgrade((tx) => {
+            return tx.table('syncedStreams').toCollection().delete()
+        })
+
         this.requestPersistentStorage()
         this.logPersistenceStats()
     }
