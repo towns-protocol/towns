@@ -446,7 +446,7 @@ export async function createSpaceAndDefaultChannel(
     )
     const receipt = await transaction.wait()
     expect(receipt.status).toEqual(1)
-    const spaceAddress = spaceDapp.getSpaceAddress(receipt)
+    const spaceAddress = spaceDapp.getSpaceAddress(receipt, wallet.address)
     expect(spaceAddress).toBeDefined()
 
     const spaceId = makeSpaceStreamId(spaceAddress!)
@@ -600,7 +600,7 @@ export async function createUserStreamAndSyncClient(
     const transaction = await createVersionedSpace(spaceDapp, createSpaceParams, wallet)
     const receipt = await transaction.wait()
     expect(receipt.status).toEqual(1)
-    const spaceAddress = spaceDapp.getSpaceAddress(receipt)
+    const spaceAddress = spaceDapp.getSpaceAddress(receipt, wallet.address)
     expect(spaceAddress).toBeDefined()
 
     const spaceId = makeSpaceStreamId(spaceAddress!)

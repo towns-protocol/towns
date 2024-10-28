@@ -1,6 +1,11 @@
-import { LocalhostWeb3Provider } from '@river-build/web3'
+import { Address, LocalhostWeb3Provider } from '@river-build/web3'
 import { Permission } from '@river-build/web3'
-import { createSpaceDappAndUserops, createUngatedSpace, generatePrivyWalletIfKey } from './utils'
+import {
+    createSpaceDappAndUserops,
+    createUngatedSpace,
+    generatePrivyWalletIfKey,
+    getSpaceId,
+} from './utils'
 
 test('can send createSpace user op', async () => {
     const bob = new LocalhostWeb3Provider(
@@ -23,10 +28,12 @@ test('can send createSpace user op', async () => {
 
     const txReceipt = await bob.waitForTransaction(opReceipt!.transactionHash)
     expect(txReceipt?.status).toBe(1)
+    const aaAddress = await userOps.getAbstractAccountAddress({
+        rootKeyAddress: (await bob.wallet.getAddress()) as Address,
+    })
+    expect(aaAddress).toBeDefined()
 
-    const spaceAddress = spaceDapp.getSpaceAddress(txReceipt)
-    expect(spaceAddress).toBeDefined()
-    const spaceId = '10' + spaceAddress!.slice(2) + '0'.repeat(64 - spaceAddress!.length)
+    const spaceId = await getSpaceId(spaceDapp, txReceipt, bob.wallet.address, userOps)
     expect(spaceId).toBeDefined()
 
     let town

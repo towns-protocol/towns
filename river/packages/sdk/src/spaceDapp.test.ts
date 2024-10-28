@@ -32,7 +32,7 @@ describe('spaceDappTests', () => {
             baseProvider.signer,
         )
         const receipt = await tx.wait()
-        const spaceAddress = spaceDapp.getSpaceAddress(receipt)
+        const spaceAddress = spaceDapp.getSpaceAddress(receipt, baseProvider.wallet.address)
         if (!spaceAddress) {
             throw new Error('Space address not found')
         }

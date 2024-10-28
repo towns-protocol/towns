@@ -307,7 +307,7 @@ export interface ISpaceDapp {
     getMembershipSupply: (spaceId: string) => Promise<TotalSupplyInfo>
     getMembershipInfo: (spaceId: string) => Promise<MembershipInfo>
     getWalletLink: () => WalletLinkV3
-    getSpaceAddress: (receipt: ContractReceipt) => string | undefined
+    getSpaceAddress: (receipt: ContractReceipt, senderAddress: string) => string | undefined
     listPricingModules: () => Promise<PricingModuleStruct[]>
     setMembershipPrice: (
         spaceId: string,

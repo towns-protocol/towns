@@ -82,7 +82,7 @@ describe('membershipManagement', () => {
         const receipt = await transaction.wait()
         log('transaction receipt')
         expect(receipt.status).toEqual(1)
-        const spaceAddress = spaceDapp.getSpaceAddress(receipt)
+        const spaceAddress = spaceDapp.getSpaceAddress(receipt, bobProvider.wallet.address)
         expect(spaceAddress).toBeDefined()
         const spaceId = makeSpaceStreamId(spaceAddress!)
         expect(isValidStreamId(spaceId)).toBe(true)

@@ -35,7 +35,7 @@ test('can send banning user ops', async () => {
     const txReceipt = await waitForOpAndTx(createSpaceOp, alice)
     await sleepBetweenTxs()
 
-    const spaceId = await getSpaceId(spaceDapp, txReceipt)
+    const spaceId = await getSpaceId(spaceDapp, txReceipt, alice.wallet.address, userOpsAlice)
 
     // join space
     const joinOp = await userOpsBob.sendJoinSpaceOp([spaceId, bob.wallet.address, bob.wallet])

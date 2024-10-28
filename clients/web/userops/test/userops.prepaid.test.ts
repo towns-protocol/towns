@@ -39,7 +39,7 @@ test('can send prepay membership op, and user can join for free', async () => {
     const txReceipt = await bob.waitForTransaction(opReceipt!.transactionHash)
     expect(txReceipt?.status).toBe(1)
 
-    const spaceId = getSpaceId(spaceDapp, txReceipt)
+    const spaceId = await getSpaceId(spaceDapp, txReceipt, bob.wallet.address, userOpsBob)
 
     await expect(() =>
         userOpsAlice.sendJoinSpaceOp([spaceId, alice.wallet.address, alice.wallet]),

@@ -60,7 +60,7 @@ describe('integration/space/:spaceAddress', () => {
 		const receipt = await tx.wait()
 		expect(receipt.status).toBe(1)
 
-		const spaceAddress = spaceDapp.getSpaceAddress(receipt)
+		const spaceAddress = spaceDapp.getSpaceAddress(receipt, provider.wallet.address)
 		expect(spaceAddress).toBeDefined()
 		if (!spaceAddress) {
 			throw new Error('spaceAddress is undefined')
@@ -114,7 +114,7 @@ describe('integration/space/:spaceAddress', () => {
 		const receipt = await tx.wait()
 		expect(receipt.status).toBe(1)
 
-		const spaceAddress = spaceDapp.getSpaceAddress(receipt)
+		const spaceAddress = spaceDapp.getSpaceAddress(receipt, provider.wallet.address)
 		expect(spaceAddress).toBeDefined()
 		if (!spaceAddress) {
 			throw new Error('spaceAddress is undefined')

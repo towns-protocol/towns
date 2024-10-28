@@ -407,7 +407,10 @@ export class TownsClient
             this.log('[waitForCreateSpaceTransaction] space created on chain', txContext.data)
             try {
                 onCreateFlowStatus?.(CreateSpaceFlowStatus.CreatingSpace)
-                const spaceAddress = this.spaceDapp.getSpaceAddress(txContext.receipt)
+                const spaceAddress = this.spaceDapp.getSpaceAddress(
+                    txContext.receipt,
+                    txContext.data.senderAddress,
+                )
                 if (!spaceAddress) {
                     throw new Error('Space address not found')
                 }
@@ -516,6 +519,17 @@ export class TownsClient
             data: {},
         })
 
+        let senderAddress = await signer.getAddress()
+
+        if (this.isAccountAbstractionEnabled()) {
+            const aaAddress = await this.getAbstractAccountAddress({
+                rootKeyAddress: senderAddress as Address,
+            })
+            if (aaAddress) {
+                senderAddress = aaAddress
+            }
+        }
+
         if (this.createLegacySpaces) {
             this.log('[createCasablancaSpaceTransaction] creating legacy space', createSpaceInfo)
             // Downgrade the request parameters and create a legacy space
@@ -588,6 +602,7 @@ export class TownsClient
             data: transaction
                 ? {
                       spaceName: createSpaceInfo.name,
+                      senderAddress,
                   }
                 : undefined,
             error,

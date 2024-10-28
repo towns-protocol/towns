@@ -111,6 +111,7 @@ export type CreateSpaceTransactionContext = TransactionContext<{
     spaceName?: string
     spaceId?: string
     channelId?: string
+    senderAddress: string
 }>
 
 export type ChannelTransactionContext = TransactionContext<string>

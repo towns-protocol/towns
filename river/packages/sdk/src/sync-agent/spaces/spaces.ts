@@ -100,7 +100,7 @@ export class Spaces extends PersistedObservable<SpacesModel> {
         )
         const receipt = await transaction.wait()
         logger.log('transaction receipt', receipt)
-        const spaceAddress = this.spaceDapp.getSpaceAddress(receipt)
+        const spaceAddress = this.spaceDapp.getSpaceAddress(receipt, await signer.getAddress())
         if (!spaceAddress) {
             throw new Error('Space address not found')
         }

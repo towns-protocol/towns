@@ -34,7 +34,7 @@ test('can join an ungated space', async () => {
     const txReceipt = await waitForOpAndTx(createSpaceOp, alice)
     await sleepBetweenTxs()
 
-    const spaceId = getSpaceId(spaceDapp, txReceipt)
+    const spaceId = await getSpaceId(spaceDapp, txReceipt, alice.wallet.address, userOpsAlice)
 
     // join space
     const joinOp = await userOpsBob.sendJoinSpaceOp([spaceId, bob.wallet.address, bob.wallet])

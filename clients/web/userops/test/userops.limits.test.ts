@@ -62,7 +62,12 @@ test('will reject each userop if beyond the limit', async () => {
         }),
     ).rejects.toThrow()
 
-    const spaceId = getSpaceId(spaceDapp, createSpaceReceipt1)
+    const spaceId = await getSpaceId(
+        spaceDapp,
+        createSpaceReceipt1,
+        alice.wallet.address,
+        userOpsAlice,
+    )
 
     ////////////////////////////////////////
     // create role

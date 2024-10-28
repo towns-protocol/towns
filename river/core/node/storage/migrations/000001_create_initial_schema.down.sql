@@ -1,4 +1,0 @@
-DROP TABLE IF EXISTS es;
-DROP TABLE IF EXISTS miniblock;
-DROP TABLE IF EXISTS minipools;
-DROP TABLE IF EXISTS singlenodekey;

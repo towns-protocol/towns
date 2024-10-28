@@ -1589,23 +1589,23 @@ export class SpaceDapp implements ISpaceDapp {
         )
     }
 
-    public getSpaceAddress(receipt: ContractReceipt): string | undefined {
-        const eventName = 'SpaceCreated'
+    /**
+     * Get the space address from the receipt and sender address
+     * @param receipt - The receipt from the transaction
+     * @param senderAddress - The address of the sender. Required for the case of a receipt containing multiple events of the same type.
+     * @returns The space address or undefined if the receipt is not successful
+     */
+    public getSpaceAddress(receipt: ContractReceipt, senderAddress: string): string | undefined {
         if (receipt.status !== 1) {
             return undefined
         }
         for (const receiptLog of receipt.logs) {
-            try {
-                // Parse the log with the contract interface
-                const parsedLog = this.spaceRegistrar.SpaceArchitect.interface.parseLog(receiptLog)
-                if (parsedLog.name === eventName) {
-                    // If the log matches the event we're looking for, do something with it
-                    // parsedLog.args contains the event arguments as an object
-                    logger.log(`Event ${eventName} found: `, parsedLog.args)
-                    return parsedLog.args.space as string
-                }
-            } catch (error) {
-                // This log wasn't from the contract we're interested in
+            const spaceAddress = this.spaceRegistrar.SpaceArchitect.getSpaceAddressFromLog(
+                receiptLog,
+                senderAddress,
+            )
+            if (spaceAddress) {
+                return spaceAddress
             }
         }
         return undefined

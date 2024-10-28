@@ -21,7 +21,7 @@ describe('Legacy Space Detection', () => {
         )
         const receipt = await transaction.wait()
         expect(receipt.status).toEqual(1)
-        const spaceAddress = aliceSpaceDapp.getSpaceAddress(receipt)
+        const spaceAddress = aliceSpaceDapp.getSpaceAddress(receipt, aliceProvider.wallet.address)
         expect(spaceAddress).toBeDefined()
 
         await expect(aliceSpaceDapp.isLegacySpace(spaceAddress!)).resolves.toBeTruthy()
@@ -53,7 +53,7 @@ describe('Legacy Space Detection', () => {
         )
         const receipt = await transaction.wait()
         expect(receipt.status).toEqual(1)
-        const spaceAddress = aliceSpaceDapp.getSpaceAddress(receipt)
+        const spaceAddress = aliceSpaceDapp.getSpaceAddress(receipt, aliceProvider.wallet.address)
         expect(spaceAddress).toBeDefined()
 
         await expect(aliceSpaceDapp.isLegacySpace(spaceAddress!)).resolves.toBeFalsy()

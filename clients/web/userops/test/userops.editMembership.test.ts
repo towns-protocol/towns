@@ -46,7 +46,7 @@ test('should update ungated minter role to gated', async () => {
     const createSpaceTxReceipt = await waitForOpAndTx(createSpaceOp, alice)
     await sleepBetweenTxs()
 
-    const spaceId = await getSpaceId(spaceDapp, createSpaceTxReceipt)
+    const spaceId = await getSpaceId(spaceDapp, createSpaceTxReceipt, alice.wallet.address, userOps)
     const space = spaceDapp.getSpace(spaceId)
     expect(space).toBeDefined()
 
@@ -120,7 +120,7 @@ test('should update gated minter role to everyone', async () => {
     const createSpaceTxReceipt = await waitForOpAndTx(createSpaceOp, alice)
     await sleepBetweenTxs()
 
-    const spaceId = await getSpaceId(spaceDapp, createSpaceTxReceipt)
+    const spaceId = await getSpaceId(spaceDapp, createSpaceTxReceipt, alice.wallet.address, userOps)
     const space = spaceDapp.getSpace(spaceId)
     expect(space).toBeDefined()
 
@@ -190,7 +190,7 @@ test('should update free space to paid space', async () => {
     const createSpaceTxReceipt = await waitForOpAndTx(createSpaceOp, alice)
     await sleepBetweenTxs()
 
-    const spaceId = await getSpaceId(spaceDapp, createSpaceTxReceipt)
+    const spaceId = await getSpaceId(spaceDapp, createSpaceTxReceipt, alice.wallet.address, userOps)
     const space = spaceDapp.getSpace(spaceId)
     expect(space).toBeDefined()
 
@@ -279,7 +279,7 @@ test('should update membership price on a paid space', async () => {
     const createSpaceTxReceipt = await waitForOpAndTx(createSpaceOp, alice)
     await sleepBetweenTxs()
 
-    const spaceId = await getSpaceId(spaceDapp, createSpaceTxReceipt)
+    const spaceId = await getSpaceId(spaceDapp, createSpaceTxReceipt, alice.wallet.address, userOps)
     const space = spaceDapp.getSpace(spaceId)
     expect(space).toBeDefined()
 
@@ -357,7 +357,7 @@ test('should update limit on the membership', async () => {
     const createSpaceTxReceipt = await waitForOpAndTx(createSpaceOp, alice)
     await sleepBetweenTxs()
 
-    const spaceId = await getSpaceId(spaceDapp, createSpaceTxReceipt)
+    const spaceId = await getSpaceId(spaceDapp, createSpaceTxReceipt, alice.wallet.address, userOps)
     const space = spaceDapp.getSpace(spaceId)
     expect(space).toBeDefined()
 

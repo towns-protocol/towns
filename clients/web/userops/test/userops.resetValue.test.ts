@@ -61,8 +61,8 @@ test('userops with different values are sent correctly', async () => {
     expect(opReceipt2?.transactionHash).toBeDefined()
     expect(opReceipt2?.args.success).toBe(true)
 
-    const spaceId1 = getSpaceId(spaceDapp, spReceipt1)
-    const spaceId2 = getSpaceId(spaceDapp, spReceipt2)
+    const spaceId1 = await getSpaceId(spaceDapp, spReceipt1, alice.wallet.address, userOpsAlice)
+    const spaceId2 = await getSpaceId(spaceDapp, spReceipt2, alice.wallet.address, userOpsAlice)
 
     expect(userOpsBob.middlewareVars.txValue).toBe(undefined)
     const bobBuilder = await userOpsBob.getBuilder({ signer: bob.wallet })

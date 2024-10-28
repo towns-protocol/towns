@@ -49,7 +49,7 @@ describe('integration/space/:spaceAddress/token/:tokenId', () => {
 		const receipt = await tx.wait()
 		expect(receipt.status).toBe(1)
 
-		const spaceAddress = spaceDapp.getSpaceAddress(receipt)
+		const spaceAddress = spaceDapp.getSpaceAddress(receipt, provider.wallet.address)
 		expect(spaceAddress).toBeDefined()
 		const spaceStreamId = await bobsClient.createSpace(spaceAddress!)
 		expect(spaceStreamId).toBeDefined()

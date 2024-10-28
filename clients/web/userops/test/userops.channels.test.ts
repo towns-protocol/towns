@@ -33,7 +33,7 @@ test('can create and update channel', async () => {
     const txReceipt = await waitForOpAndTx(createSpaceOp, alice)
     await sleepBetweenTxs()
 
-    const spaceId = await getSpaceId(spaceDapp, txReceipt)
+    const spaceId = await getSpaceId(spaceDapp, txReceipt, alice.wallet.address, userOps)
 
     // create a channel
     const createChannelOp = await userOps.sendCreateChannelOp([
@@ -124,7 +124,7 @@ test('can create a channel with permission overrides', async () => {
     const txReceipt = await waitForOpAndTx(createSpaceOp, alice)
     await sleepBetweenTxs()
 
-    const spaceId = await getSpaceId(spaceDapp, txReceipt)
+    const spaceId = await getSpaceId(spaceDapp, txReceipt, alice.wallet.address, userOps)
 
     const roles = await spaceDapp.getRoles(spaceId)
     const everyoneRole = roles.find((r) => r.name === 'Everyone')
@@ -292,7 +292,7 @@ test("can create a channel when roles is gated by user's smart account", async (
     const txReceipt = await waitForOpAndTx(createSpaceOp, alice)
     await sleepBetweenTxs()
 
-    const spaceId = getSpaceId(spaceDapp, txReceipt)
+    const spaceId = await getSpaceId(spaceDapp, txReceipt, alice.wallet.address, userOpsAlice)
 
     // join space
     const joinOp = await userOpsBob.sendJoinSpaceOp([spaceId, bob.wallet.address, bob.wallet])

@@ -367,8 +367,17 @@ export const waitForOpAndTx = async (
     return txReceipt
 }
 
-export function getSpaceId(spaceDapp: ISpaceDapp, receipt: ethers.providers.TransactionReceipt) {
-    const spaceAddress = spaceDapp.getSpaceAddress(receipt)
+export async function getSpaceId(
+    spaceDapp: ISpaceDapp,
+    receipt: ethers.providers.TransactionReceipt,
+    rootKeyAddress: string,
+    userOps: TestUserOps,
+) {
+    const sender = await userOps.getAbstractAccountAddress({
+        rootKeyAddress: rootKeyAddress as Address,
+    })
+    expect(sender).toBeDefined()
+    const spaceAddress = spaceDapp.getSpaceAddress(receipt, sender!)
     expect(spaceAddress).toBeDefined()
     const spaceId = '10' + spaceAddress!.slice(2) + '0'.repeat(64 - spaceAddress!.length)
     expect(spaceId).toBeDefined()

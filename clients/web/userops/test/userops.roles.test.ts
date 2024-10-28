@@ -32,7 +32,7 @@ test('can create, update, and delete a role with user ops', async () => {
     const txReceipt = await waitForOpAndTx(createSpaceOp, alice)
     await sleepBetweenTxs()
 
-    const spaceId = await getSpaceId(spaceDapp, txReceipt)
+    const spaceId = await getSpaceId(spaceDapp, txReceipt, alice.wallet.address, userOps)
 
     // create a role
     const createRoleOp = await sendCreateRoleOp(
