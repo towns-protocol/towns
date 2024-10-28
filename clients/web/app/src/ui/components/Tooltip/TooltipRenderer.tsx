@@ -35,6 +35,7 @@ type Props = TooltipOptions & {
     tooltip: React.ReactNode | undefined
     onMouseEnter?: React.MouseEventHandler<HTMLElement>
     onMouseLeave?: React.MouseEventHandler<HTMLElement>
+    rootLayer?: HTMLElement
 }
 
 export type HoverTriggerProps = {
@@ -66,6 +67,7 @@ export const TooltipRenderer = (props: Props) => {
         tooltip: render,
         closeHandleRef,
         removeOnClick,
+        rootLayer,
     } = props
 
     const triggerRef = useRef<HTMLElement | null>(null)
@@ -101,7 +103,8 @@ export const TooltipRenderer = (props: Props) => {
         setActive(forceActive)
     }, [forceActive])
 
-    const root = useZLayerContext().rootLayerRef?.current
+    const rootDefault = useZLayerContext().rootLayerRef?.current
+    const root = rootLayer ?? rootDefault
     const [keepAlive, setKeepAlive] = useState(immediate ? true : false)
 
     useEffect(() => {

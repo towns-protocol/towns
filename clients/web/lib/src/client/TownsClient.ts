@@ -2863,7 +2863,7 @@ export class TownsClient
                         },
                         signer,
                     )
-                } else if (transferData.contractAddress) {
+                } else if (transferData.contractAddress && transferData.tokenId) {
                     transaction = await this.userOps?.sendTransferAssetsOp(
                         {
                             contractAddress: transferData.contractAddress,

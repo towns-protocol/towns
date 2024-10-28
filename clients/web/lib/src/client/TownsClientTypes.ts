@@ -1,7 +1,7 @@
 import { BigNumberish, ContractReceipt } from 'ethers'
 import { SendMessageOptions, UpdateChannelInfo } from '../types/towns-types'
 import { RoleIdentifier, TProvider, TransactionOrUserOperation } from '../types/web3-types'
-import { BaseChainConfig, RiverChainConfig } from '@river-build/web3'
+import { Address, BaseChainConfig, RiverChainConfig } from '@river-build/web3'
 import { AccountAbstractionConfig } from '@towns/userops'
 import { TownsAnalytics } from 'types/TownsAnalytics'
 import { UnpackEnvelopeOpts } from '@river-build/sdk'
@@ -78,25 +78,27 @@ export type TransactionContext<T> =
 export type TransferAssetsData =
     | {
           // transfer nft/token
-          contractAddress: string
+          contractAddress: Address
           tokenId: string
-          recipient: string
-          spaceAddress?: never
+          recipient: Address
+          spaceAddress?: Address
           value?: never
       }
     | {
           // treasury withdraw
-          contractAddress?: never
-          spaceAddress: string
+          contractAddress?: Address
+          tokenId?: never
+          spaceAddress: Address
           value?: never
-          recipient: string
+          recipient: Address
       }
     | {
           // transfer eth
-          contractAddress?: never
-          spaceAddress?: never
+          contractAddress?: Address
+          tokenId?: never
+          spaceAddress?: Address
           value: BigNumberish
-          recipient: string
+          recipient: Address
       }
 
 export type TransferAssetTransactionContext = TransactionContext<

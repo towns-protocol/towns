@@ -1,4 +1,4 @@
-import { TransferAssetTransactionContext } from 'use-towns-client'
+import { Address, TransferAssetTransactionContext } from 'use-towns-client'
 import { getCollectionsForAddressQueryData } from 'api/lib/tokenContracts'
 import { parseUnits } from 'hooks/useBalance'
 import { TransferSchema } from './transferAssetsSchema'
@@ -64,7 +64,7 @@ export function getNftTransferData(args: {
  */
 export function getTreasuryTransferData(args: {
     data: TransferSchema
-    spaceAddress: string | undefined
+    spaceAddress: Address | undefined
 }): TransferAssetTransactionContext['data'] {
     const { data, spaceAddress } = args
     if (!spaceAddress) {

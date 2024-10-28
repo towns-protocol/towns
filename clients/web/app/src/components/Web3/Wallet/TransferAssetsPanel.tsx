@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useMemo } from 'react'
-import { FormProvider, useFormContext } from 'react-hook-form'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { FormProvider, UseFormReturn, UseFormSetError, useFormContext } from 'react-hook-form'
 import { useGetEmbeddedSigner } from '@towns/privy'
 import {
     Address,
@@ -34,6 +34,7 @@ import {
     getNftTransferData,
     getTreasuryTransferData,
 } from './transferAssetsData'
+import { TreasuryOrNftConfirmModal } from './TreasuryOrNftConfirmModal'
 
 export const TransferAssetsPanel = React.memo(() => {
     return (
@@ -96,8 +97,9 @@ function TransferAssets() {
                         mode="onChange"
                         height="100%"
                     >
-                        {(form) => {
+                        {(form: UseFormReturn<TransferSchema>) => {
                             const isSubmitting = form.formState.isSubmitting
+                            const recipient = form.watch('recipient')
 
                             return (
                                 <FormProvider {...form}>
@@ -152,11 +154,14 @@ function TransferAssets() {
                                     {(isPendingTransferAsset || isSubmitting) && (
                                         <FullPanelOverlay withSpinner={false} />
                                     )}
+                                    <UserOpTxModal
+                                        toAddress={recipient}
+                                        requiresBalanceGreaterThanCost={false}
+                                    />
                                 </FormProvider>
                             )
                         }}
                     </FormRender>
-                    <UserOpTxModal requiresBalanceGreaterThanCost={false} />
                 </Stack>
             )}
         </Panel>
@@ -251,82 +256,95 @@ function EthInputField(props: {
     )
 }
 
-function SubmitButton(props: { source: string | undefined; isTreasuryTransfer: boolean }) {
+function SubmitButton(props: { source: Address | undefined; isTreasuryTransfer: boolean }) {
     const { source, isTreasuryTransfer } = props
-    const { handleSubmit, formState, watch, setError, reset } = useFormContext<TransferSchema>()
+    const { handleSubmit, formState, watch, setError, reset, getValues } =
+        useFormContext<TransferSchema>()
     const { getSigner, isPrivyReady } = useGetEmbeddedSigner()
     const allValues = watch()
     const { assetToTransfer, ethAmount, recipient } = allValues
     const { transferAsset } = useTransferAssetTransaction()
+    const [showTreasuryOrNftConfirm, setShowTreasuryOrNftConfirm] = useState(false)
 
     const isDisabled = useMemo(() => {
-        if (formState.isSubmitting) {
-            return true
-        }
-        if (!assetToTransfer) {
-            return true
-        }
-        if (assetToTransfer === 'BASE_ETH' && (formState.errors.ethAmount || !ethAmount)) {
-            return true
-        }
-        if (!recipient) {
+        if (
+            !isPrivyReady ||
+            formState.isSubmitting ||
+            !assetToTransfer ||
+            (assetToTransfer === 'BASE_ETH' && (formState.errors.ethAmount || !ethAmount)) ||
+            !recipient
+        ) {
             return true
         }
         return false
-    }, [assetToTransfer, ethAmount, recipient, formState.errors.ethAmount, formState.isSubmitting])
+    }, [
+        isPrivyReady,
+        formState.isSubmitting,
+        formState.errors.ethAmount,
+        assetToTransfer,
+        ethAmount,
+        recipient,
+    ])
+
+    const makeTransferTx = useCallback(
+        async (dataToSubmit: ReturnType<typeof getValidatedData>) => {
+            if (!dataToSubmit) {
+                return
+            }
+            const _isNftTransfer = isNftTransfer(dataToSubmit)
+            const signer = await getSigner()
+            if (!signer) {
+                createPrivyNotAuthenticatedNotification()
+                return
+            }
+
+            const context = await transferAsset(dataToSubmit, signer)
+            if (_isNftTransfer && source && context?.receipt?.status === 1) {
+                await invalidateCollectionsForAddressQueryData(source)
+                reset()
+            }
+        },
+        [getSigner, reset, source, transferAsset],
+    )
+
+    const onModalSubmit = useCallback(async () => {
+        setShowTreasuryOrNftConfirm(false)
+        const validData: TransferSchema = getValues()
+        const dataToSubmit = getValidatedData({
+            data: validData,
+            setError,
+            source,
+            isTreasuryTransfer,
+        })
+        await makeTransferTx(dataToSubmit)
+    }, [getValues, isTreasuryTransfer, setError, source, makeTransferTx])
 
     const onValid = useCallback(
         async (data: TransferSchema) => {
             if (!isPrivyReady) {
                 return
             }
+            const _isNftTransfer = isNftTransfer(data)
 
-            const signer = await getSigner()
-
-            if (!signer) {
-                createPrivyNotAuthenticatedNotification()
-                return
-            }
-            if (
-                !data.assetToTransfer ||
-                !data.recipient ||
-                (data.assetToTransfer === 'BASE_ETH' && (!data.ethAmount || data.tokenId)) ||
-                (data.assetToTransfer !== 'BASE_ETH' && (!data.tokenId || data.ethAmount))
-            ) {
-                return
-            }
-
-            const onParseError = () => {
-                setError('ethAmount', {
-                    type: 'manual',
-                    message: 'Please enter a valid eth value.',
-                })
-            }
-
-            const isNftTransfer = data.assetToTransfer !== 'BASE_ETH'
-            const dataToSubmit = isTreasuryTransfer
-                ? getTreasuryTransferData({ data, spaceAddress: source })
-                : isNftTransfer
-                ? getNftTransferData({ data, fromWallet: source })
-                : getEthTransferData({ data, onParseError })
+            const dataToSubmit = getValidatedData({
+                data,
+                setError,
+                source,
+                isTreasuryTransfer,
+            })
 
             if (!dataToSubmit) {
-                popupToast(({ toast }) => (
-                    <StandardToast.Error
-                        toast={toast}
-                        message="There was an error with your submission."
-                    />
-                ))
                 return
             }
 
-            const context = await transferAsset(dataToSubmit, signer)
-            if (isNftTransfer && source && context?.receipt?.status === 1) {
-                await invalidateCollectionsForAddressQueryData(source)
-                reset()
+            if (isTreasuryTransfer || _isNftTransfer) {
+                setShowTreasuryOrNftConfirm(true)
+                return
             }
+
+            await makeTransferTx(dataToSubmit)
         },
-        [isPrivyReady, getSigner, isTreasuryTransfer, source, transferAsset, setError, reset],
+        [isPrivyReady, isTreasuryTransfer, setError, source, makeTransferTx],
     )
 
     return (
@@ -339,6 +357,56 @@ function SubmitButton(props: { source: string | undefined; isTreasuryTransfer: b
             >
                 Send
             </FancyButton>
+            <TreasuryOrNftConfirmModal
+                data={allValues}
+                showModal={showTreasuryOrNftConfirm}
+                type={isTreasuryTransfer ? 'treasury' : 'nft'}
+                fromWallet={source}
+                onHide={() => setShowTreasuryOrNftConfirm(false)}
+                onSubmit={onModalSubmit}
+            />
         </Stack>
     )
 }
+
+function getValidatedData(args: {
+    data: TransferSchema
+    setError: UseFormSetError<TransferSchema>
+    source: Address | undefined
+    isTreasuryTransfer: boolean
+}) {
+    const { data, setError, source, isTreasuryTransfer } = args
+    const _isNftTransfer = isNftTransfer(data)
+    if (
+        !data.assetToTransfer ||
+        !data.recipient ||
+        (!_isNftTransfer && (!data.ethAmount || data.tokenId)) ||
+        (_isNftTransfer && (!data.tokenId || data.ethAmount))
+    ) {
+        return
+    }
+
+    const onParseError = () => {
+        setError('ethAmount', {
+            type: 'manual',
+            message: 'Please enter a valid eth value.',
+        })
+    }
+
+    const dataToSubmit = isTreasuryTransfer
+        ? getTreasuryTransferData({ data, spaceAddress: source })
+        : _isNftTransfer
+        ? getNftTransferData({ data, fromWallet: source })
+        : getEthTransferData({ data, onParseError })
+
+    if (!dataToSubmit) {
+        popupToast(({ toast }) => (
+            <StandardToast.Error toast={toast} message="There was an error with your submission." />
+        ))
+        return
+    }
+
+    return dataToSubmit
+}
+
+const isNftTransfer = (data: TransferSchema) => data.assetToTransfer !== 'BASE_ETH'

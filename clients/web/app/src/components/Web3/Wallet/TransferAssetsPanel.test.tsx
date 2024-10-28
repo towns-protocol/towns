@@ -135,6 +135,9 @@ const waitForLinkedWalletOption = () => screen.findByTestId(`linked-wallet-optio
 const waitForAssetToTransfer = () => screen.findByTestId('asset-to-transfer')
 const waitForEthAmount = () => screen.findByTestId('eth-amount')
 const waitForSelectedWallet = () => screen.findByTestId('selected-wallet')
+const waitForTreasuryOrNftConfirmModal = () => screen.findByTestId('treasury-or-nft-confirm-modal')
+const waitForTreasuryOrNftConfirmButton = (node: HTMLElement) =>
+    within(node).findByTestId('confirm-button')
 
 const sourceAAWalletParam = new URLSearchParams(`assetSource=${aaAddress}`)
 const sourceSpaceAddressParam = new URLSearchParams(`assetSource=${spaceAddress}`)
@@ -334,6 +337,9 @@ describe('TransferAssetsPanel', () => {
         const submitButton = await screen.findByTestId('submit-button')
         await waitFor(() => expect(submitButton).toBeEnabled())
         await userEvent.click(submitButton)
+        const treasuryOrNftConfirmModal = await waitForTreasuryOrNftConfirmModal()
+        const confirmButton = await waitForTreasuryOrNftConfirmButton(treasuryOrNftConfirmModal)
+        await userEvent.click(confirmButton)
         expect(transferAssetSpy).toHaveBeenCalledWith(
             {
                 assetLabel: NFT_METADATA_RESPONSE[0].data.collections[0].address,
@@ -366,6 +372,9 @@ describe('TransferAssetsPanel', () => {
         const submitButton = await screen.findByTestId('submit-button')
         await waitFor(() => expect(submitButton).toBeEnabled())
         await userEvent.click(submitButton)
+        const treasuryOrNftConfirmModal = await waitForTreasuryOrNftConfirmModal()
+        const confirmButton = await waitForTreasuryOrNftConfirmButton(treasuryOrNftConfirmModal)
+        await userEvent.click(confirmButton)
         expect(transferAssetSpy).toHaveBeenCalledWith(
             {
                 assetLabel: 'Base ETH',

@@ -4,7 +4,7 @@ import React, { useMemo, useState } from 'react'
 import { Address, useConnectivity } from 'use-towns-client'
 import { useShallow } from 'zustand/react/shallow'
 import { AboveAppProgressModalContainer } from '@components/AppProgressOverlay/AboveAppProgress/AboveAppProgress'
-import { Box, Button, Heading, Icon, IconButton, Paragraph, Text } from '@ui'
+import { Box, Button, Heading, Icon, IconButton, Paragraph, Text, Tooltip } from '@ui'
 import { BRIDGE_LEARN_MORE_LINK } from 'data/links'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { formatUnitsToFixedLength, useBalance } from 'hooks/useBalance'
@@ -14,12 +14,14 @@ import { usePublicPageLoginFlow } from 'routes/PublicTownPage/usePublicPageLogin
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { atoms } from 'ui/styles/atoms.css'
 import { shortAddress } from 'ui/utils/utils'
+import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { CopyWalletAddressButton } from '../GatedTownModal/Buttons'
 import { useWalletPrefix } from '../useWalletPrefix'
 
 type Props = {
     valueLabel?: string
     requiresBalanceGreaterThanCost?: boolean
+    toAddress?: Address
 }
 
 export function UserOpTxModal(props: Props) {
@@ -49,6 +51,7 @@ function UserOpTxModalContent({
     valueLabel,
     requiresBalanceGreaterThanCost,
     endPublicPageLoginFlow,
+    toAddress,
 }: Props & { endPublicPageLoginFlow: () => void }) {
     const _requiresBalanceGreaterThanCost = requiresBalanceGreaterThanCost ?? true
     const { currOpGas, currOpValue, confirm, deny, retryDetails } = userOpsStore(
@@ -220,7 +223,9 @@ function UserOpTxModalContent({
                         <Text strong> {totalInEth + ' ETH'}</Text>
                     </Box>
                 </Box>
+
                 <Box
+                    padding
                     color="default"
                     background="level3"
                     rounded="sm"
@@ -228,7 +233,13 @@ function UserOpTxModalContent({
                     gap="md"
                     border={balanceIsLessThanCost ? 'negative' : 'none'}
                 >
-                    <Box padding horizontal justifyContent="spaceBetween" alignItems="center">
+                    {toAddress && (
+                        <Box borderBottom="level4" paddingBottom="sm">
+                            <RecipientText sendingTo={toAddress} />
+                        </Box>
+                    )}
+
+                    <Box horizontal justifyContent="spaceBetween" alignItems="center">
                         <Box horizontal gap="sm">
                             <Box position="relative" width="x3">
                                 <Icon position="absoluteCenter" type="wallet" />{' '}
@@ -274,5 +285,34 @@ function UserOpTxModalContent({
                 {bottomContent()}
             </Box>
         </>
+    )
+}
+
+export function RecipientText(props: { sendingTo: string }) {
+    const { sendingTo } = props
+    const [container] = useState(() => document.getElementById('above-app-progress-root'))
+    if (!container) {
+        return null
+    }
+
+    return (
+        <Box horizontal gap="sm" alignItems="center" justifyContent="spaceBetween" width="100%">
+            <Box horizontal gap="sm" alignItems="center">
+                <Icon shrink={false} type="linkOutWithFrame" />
+                <Text>Sending to</Text>
+            </Box>
+            {sendingTo && (
+                <Box
+                    tooltipRootLayer={container}
+                    tooltip={<Tooltip zIndex="tooltipsAbove">{sendingTo}</Tooltip>}
+                >
+                    <ClipboardCopy
+                        color="default"
+                        label={shortAddress(sendingTo)}
+                        clipboardContent={sendingTo}
+                    />
+                </Box>
+            )}
+        </Box>
     )
 }
