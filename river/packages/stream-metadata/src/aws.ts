@@ -39,6 +39,7 @@ export class CloudfrontManager {
 		if (params.waitUntilFinished) {
 			await this.waitForInvalidation(invalidationCommand, params.paths)
 		}
+		return invalidationCommand
 	}
 
 	private async waitForInvalidation(
@@ -83,6 +84,46 @@ export class CloudfrontManager {
 				paths,
 			},
 			'CloudFront cache invalidation completed',
+		)
+	}
+
+	static async getInvalidation(params: { logger: FastifyBaseLogger; invalidationId: string }) {
+		const { invalidationId, logger } = params
+		if (!envConfig.cloudfront) {
+			logger.warn(
+				{ invalidationId },
+				'CloudFront distribution ID not set, skipping getInvalidation',
+			)
+			return
+		}
+		const cloudfrontManager = new CloudfrontManager(logger, envConfig.cloudfront)
+		return cloudfrontManager.cloudFront.getInvalidation({
+			DistributionId: envConfig.cloudfront.distributionId,
+			Id: invalidationId,
+		})
+	}
+
+	static async waitForInvalidation(params: {
+		invalidationId: string
+		logger: FastifyBaseLogger
+	}) {
+		const { invalidationId, logger } = params
+		if (!envConfig.cloudfront) {
+			logger.warn(
+				{ invalidationId },
+				'CloudFront distribution ID not set, skipping wait for invalidation',
+			)
+			return
+		}
+
+		const manager = new CloudfrontManager(logger, envConfig.cloudfront)
+		const invalidationCommand = await manager.cloudFront.getInvalidation({
+			DistributionId: envConfig?.cloudfront?.distributionId,
+			Id: invalidationId,
+		})
+		return manager.waitForInvalidation(
+			invalidationCommand,
+			invalidationCommand.Invalidation?.InvalidationBatch?.Paths?.Items ?? [],
 		)
 	}
 

@@ -3,6 +3,7 @@ import { z } from 'zod'
 
 import { isValidEthereumAddress } from '../validators'
 import { CloudfrontManager } from '../aws'
+import { HEADER_INVALIDATION_ID } from '../constants'
 
 const paramsSchema = z.object({
 	userId: z.string().min(1, 'userId parameter is required').refine(isValidEthereumAddress, {
@@ -14,12 +15,11 @@ const querySchema = z.object({
 	target: z.enum(['bio', 'image', 'all']).default('all'),
 })
 
-// This route handler validates the refresh request and quickly returns a 200 response.
+// This route handler validates the refresh request, initiates the CloudFront invalidation, and returns a 200 response.
 export async function userRefresh(request: FastifyRequest, reply: FastifyReply) {
 	const logger = request.log.child({ name: userRefresh.name })
 
 	const paramsParseResult = paramsSchema.safeParse(request.params)
-
 	if (!paramsParseResult.success) {
 		const errorMessage = paramsParseResult.error.errors[0]?.message || 'Invalid parameters'
 		logger.info(errorMessage)
@@ -33,19 +33,8 @@ export async function userRefresh(request: FastifyRequest, reply: FastifyReply) 
 		return reply.code(400).send({ error: 'Bad Request', message: errorMessage })
 	}
 
-	return reply.code(200).send({ ok: true })
-}
-
-// This onResponse hook does the actual heavy lifting of invalidating the CloudFront cache.
-export async function userRefreshOnResponse(
-	request: FastifyRequest,
-	reply: FastifyReply,
-	done: () => void,
-) {
-	const logger = request.log.child({ name: userRefreshOnResponse.name })
-
-	const { userId } = paramsSchema.parse(request.params)
-	const { target } = querySchema.parse(request.query)
+	const { userId } = paramsParseResult.data
+	const { target } = queryParamResult.data
 
 	logger.info({ userId, target }, 'Refreshing user')
 
@@ -57,7 +46,12 @@ export async function userRefreshOnResponse(
 			: [`/user/${userId}/*`]
 
 	try {
-		await CloudfrontManager.createCloudfrontInvalidation({ paths, logger })
+		const invalidation = await CloudfrontManager.createCloudfrontInvalidation({ paths, logger })
+		const invalidationId = invalidation?.Invalidation?.Id
+		return reply
+			.code(200)
+			.header(HEADER_INVALIDATION_ID, invalidationId)
+			.send({ ok: true, invalidationId })
 	} catch (error) {
 		logger.error(
 			{
@@ -68,7 +62,6 @@ export async function userRefreshOnResponse(
 			},
 			'Failed to refresh user',
 		)
+		return reply.code(500).send({ ok: false })
 	}
-
-	done()
 }

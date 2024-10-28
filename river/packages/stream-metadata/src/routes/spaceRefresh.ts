@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { isValidEthereumAddress } from '../validators'
 import { CloudfrontManager } from '../aws'
 import { refreshOpenSea } from '../opensea'
+import { HEADER_INVALIDATION_ID } from '../constants'
 
 const paramsSchema = z.object({
 	spaceAddress: z
@@ -14,7 +15,7 @@ const paramsSchema = z.object({
 		}),
 })
 
-// This route handler validates the refresh request and quickly returns a 200 response.
+// This route handler validates the refresh request, initiates the CloudFront invalidation, and returns a 200 response.
 export async function spaceRefresh(request: FastifyRequest, reply: FastifyReply) {
 	const logger = request.log.child({ name: spaceRefresh.name })
 
@@ -25,28 +26,35 @@ export async function spaceRefresh(request: FastifyRequest, reply: FastifyReply)
 		logger.info(errorMessage)
 		return reply.code(400).send({ error: 'Bad Request', message: errorMessage })
 	}
+	const { spaceAddress } = parseResult.data
+	try {
+		logger.info({ spaceAddress }, 'Refreshing space')
+		const invalidationId = await CloudfrontManager.createCloudfrontInvalidation({
+			paths: [`/space/${spaceAddress}/image*`],
+			logger,
+		}).then((invalidation) => invalidation?.Invalidation?.Id)
 
-	return reply.code(200).send({ ok: true })
+		return reply
+			.code(200)
+			.header(HEADER_INVALIDATION_ID, invalidationId)
+			.send({ ok: true, invalidationId })
+	} catch (error) {
+		logger.error({ err: error }, 'Failed to create CloudFront invalidation')
+		return reply.code(200).send({ ok: false })
+	}
 }
 
-// This onResponse hook does the actual heavy lifting of invalidating the CloudFront cache and refreshing OpenSea.
+// This onResponse hook does the actual heavy lifting of waiting for the CloudFront cache invalidation to complete and then refreshing OpenSea.
 export async function spaceRefreshOnResponse(
 	request: FastifyRequest,
 	reply: FastifyReply,
 	done: () => void,
 ) {
 	const logger = request.log.child({ name: spaceRefreshOnResponse.name })
-
 	const { spaceAddress } = paramsSchema.parse(request.params)
-
-	logger.info({ spaceAddress }, 'Refreshing space')
-
 	try {
-		await CloudfrontManager.createCloudfrontInvalidation({
-			paths: [`/space/${spaceAddress}/image*`],
-			logger,
-			waitUntilFinished: true,
-		})
+		const invalidationId = z.string().parse(reply.getHeader(HEADER_INVALIDATION_ID))
+		await CloudfrontManager.waitForInvalidation({ invalidationId, logger })
 		await refreshOpenSea({ spaceAddress, logger })
 	} catch (error) {
 		logger.error(
