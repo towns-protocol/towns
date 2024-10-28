@@ -1,6 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react'
 import { useChannelId } from 'use-towns-client'
-import { useGetEmbeddedSigner } from '@towns/privy'
 import { Panel } from '@components/Panel/Panel'
 import { Button, Stack, Text } from '@ui'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
@@ -10,6 +9,7 @@ import { EditableInputField } from '@components/SetUsernameDisplayName/EditableI
 import { useValidateUsername } from 'hooks/useValidateUsername'
 import { validateDisplayName, validateUsername } from '@components/SetUsernameForm/validateUsername'
 import { useErrorToast } from 'hooks/useErrorToast'
+import { GetSigner, WalletReady } from 'privy/WalletReady'
 
 export const MintBotPanel = ({ streamId }: { streamId: string }) => {
     const [loading, setLoading] = useState<boolean>(false)
@@ -17,7 +17,6 @@ export const MintBotPanel = ({ streamId }: { streamId: string }) => {
     const [displayName, setDisplayName] = React.useState<string>('')
     const { username, usernameErrorMessage, updateUsername } = useValidateUsername({ streamId })
     const mintBot = useMintBot()
-    const { isPrivyReady } = useGetEmbeddedSigner()
     const onUsernameChange = useCallback(
         async (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
             updateUsername(e.target.value)
@@ -37,7 +36,7 @@ export const MintBotPanel = ({ streamId }: { streamId: string }) => {
         [displayName],
     )
 
-    const onMintBot = async () => {
+    const onMintBot = async (getSigner: GetSigner) => {
         setErrorMessage('')
         if (usernameErrorMessage || displayNameErrorMessage || !username) {
             return
@@ -45,7 +44,7 @@ export const MintBotPanel = ({ streamId }: { streamId: string }) => {
 
         setLoading(true)
         try {
-            await mintBot(username, displayName)
+            await mintBot(getSigner, username, displayName)
             setDisplayName('')
             updateUsername('')
         } catch (e) {
@@ -57,13 +56,8 @@ export const MintBotPanel = ({ streamId }: { streamId: string }) => {
     }
 
     const isBtnDisabled = useMemo(() => {
-        return (
-            !isPrivyReady ||
-            !username ||
-            !validateUsername(username) ||
-            !validateDisplayName(displayName).valid
-        )
-    }, [displayName, isPrivyReady, username])
+        return !username || !validateUsername(username) || !validateDisplayName(displayName).valid
+    }, [displayName, username])
 
     useErrorToast({
         errorMessage,
@@ -97,9 +91,13 @@ export const MintBotPanel = ({ streamId }: { streamId: string }) => {
                             onChange={onUsernameChange}
                         />
                     </Stack>
-                    <Button disabled={isBtnDisabled} onClick={onMintBot}>
-                        Mint Bot
-                    </Button>
+                    <WalletReady>
+                        {({ getSigner }) => (
+                            <Button disabled={isBtnDisabled} onClick={() => onMintBot(getSigner)}>
+                                Mint Bot
+                            </Button>
+                        )}
+                    </WalletReady>
                 </>
             )}
         </Panel>

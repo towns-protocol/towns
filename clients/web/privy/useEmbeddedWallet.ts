@@ -1,11 +1,12 @@
 import { usePrivy, useWallets } from '@privy-io/react-auth'
 
 export function useEmbeddedWallet() {
-    const { ready: privyReady } = usePrivy()
-    const { wallets } = useWallets()
-    const privyWallet = privyReady
-        ? wallets.find((wallet) => wallet.walletClientType === 'privy')
-        : undefined
+    const { ready: privyReady, authenticated } = usePrivy()
+    const { wallets, ready: walletsReady } = useWallets()
 
-    return privyWallet
+    if (!privyReady || !walletsReady || !authenticated) {
+        return undefined
+    }
+
+    return wallets.find((wallet) => wallet.walletClientType === 'privy')
 }

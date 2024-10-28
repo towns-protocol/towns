@@ -8,13 +8,10 @@ import {
     useIsTransactionPending,
     useLinkEOAToRootKeyTransaction,
     useLinkedWallets,
-    useUnlinkWalletTransaction,
+    useTownsContext,
 } from 'use-towns-client'
-import { useGetEmbeddedSigner } from '@towns/privy'
 import { Button, IconButton, MotionBox, Paragraph, Stack, Text } from '@ui'
-import { useErrorToast } from 'hooks/useErrorToast'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
-import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { Entitlements, useEntitlements } from 'hooks/useEntitlements'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { TokenSelectionDisplayWithMetadata } from 'routes/RoleRestrictedChannelJoinPanel'
@@ -23,6 +20,9 @@ import { Analytics } from 'hooks/useAnalytics'
 import { popupToast } from '@components/Notifications/popupToast'
 import { StandardToast } from '@components/Notifications/StandardToast'
 import { useEnvironment } from 'hooks/useEnvironmnet'
+import { GetSigner, WalletReady } from 'privy/WalletReady'
+import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
+import { usePublicPageLoginFlow } from 'routes/PublicTownPage/usePublicPageLoginFlow'
 import { FullPanelOverlay, LinkedWallet } from '../WalletLinkingPanel'
 import { isEveryoneAddress, mapToErrorMessage } from '../utils'
 import { ConnectWalletThenLinkButton } from '../ConnectWalletThenLinkButton'
@@ -31,16 +31,14 @@ import { WalletLinkingInfo } from '../WalletLinkingInfo'
 type Props = {
     onHide: ({ shouldEndLoginFlow }: { shouldEndLoginFlow: boolean }) => void
     spaceId: string
-    joinSpace: () => Promise<void>
 }
 
-export function GatedTownModal({ onHide, spaceId, joinSpace }: Props) {
+export function GatedTownModal({ onHide, spaceId }: Props) {
     const { data: linkedWallets } = useLinkedWallets()
     const { loggedInWalletAddress } = useConnectivity()
     const { data: entitlements } = useEntitlements(spaceId)
     const tokensLength = entitlements?.tokens.length ?? 0
     const maxWidth = tokensLength > 2 ? 'auto' : '400'
-    const { getSigner } = useGetEmbeddedSigner()
     const { data: aaAddress } = useAbstractAccountAddress({
         rootKeyAddress: loggedInWalletAddress,
     })
@@ -51,29 +49,7 @@ export function GatedTownModal({ onHide, spaceId, joinSpace }: Props) {
         [entitlements],
     )
 
-    const {
-        isLoading: isLoadingUnlinkingWallet,
-        unlinkWalletTransaction,
-        error: errorUnlinkWallet,
-    } = useUnlinkWalletTransaction()
-
-    useErrorToast({
-        errorMessage: errorUnlinkWallet
-            ? mapToErrorMessage({
-                  error: errorUnlinkWallet,
-                  source: 'token verification unlink wallet',
-              })
-            : undefined,
-    })
-
-    async function onUnlinkClick(addressToUnlink: Address) {
-        const signer = await getSigner()
-        if (!signer) {
-            createPrivyNotAuthenticatedNotification()
-            return
-        }
-        unlinkWalletTransaction(signer, addressToUnlink)
-    }
+    const isWalletUnLinkingPending = useIsTransactionPending(BlockchainTransactionType.UnlinkWallet)
 
     return (
         <Stack position="relative" padding="lg" paddingTop="md" maxWidth={maxWidth} overflow="auto">
@@ -95,7 +71,6 @@ export function GatedTownModal({ onHide, spaceId, joinSpace }: Props) {
                 <Content
                     linkedWallets={linkedWallets}
                     entitlements={entitlements}
-                    joinSpace={joinSpace}
                     onHide={(
                         params: { shouldEndLoginFlow: boolean } = { shouldEndLoginFlow: true },
                     ) => onHide(params)}
@@ -115,14 +90,13 @@ export function GatedTownModal({ onHide, spaceId, joinSpace }: Props) {
                                             height="x7"
                                             address={a as Address}
                                             aaAddress={aaAddress ?? '0x'}
-                                            onUnlinkClick={onUnlinkClick}
                                         />
                                     </Stack>
                                 )
                             })}
                 </Content>
 
-                {isLoadingUnlinkingWallet && <FullPanelOverlay text="Unlinking Wallet" />}
+                {isWalletUnLinkingPending && <FullPanelOverlay text="Unlinking Wallet" />}
             </Stack>
         </Stack>
     )
@@ -133,7 +107,6 @@ function Content({
     linkedWallets,
     children,
     onHide,
-    joinSpace,
 }: PropsWithChildren<
     {
         linkedWallets: string[] | undefined
@@ -155,8 +128,34 @@ function Content({
 
     const { noAssets, tickNoAssets } = useNoAssetsState()
     const isJoinPending = useIsTransactionPending(BlockchainTransactionType.JoinSpace)
-    const { isPrivyReady } = useGetEmbeddedSigner()
     const { baseChain } = useEnvironment()
+    const { clientSingleton, signerContext } = useTownsContext()
+
+    const { joinTown } = usePublicPageLoginFlow()
+
+    const onTokenVerificationJoinClick = useCallback(
+        async (getSigner: GetSigner) => {
+            onHide({ shouldEndLoginFlow: false })
+
+            Analytics.getInstance().track('clicked join town on link wallet modal', {
+                spaceId,
+            })
+
+            const signer = await getSigner()
+
+            if (!signer) {
+                createPrivyNotAuthenticatedNotification()
+                return
+            }
+            joinTown({
+                signer,
+                clientSingleton,
+                signerContext,
+                source: 'token verification click',
+            })
+        },
+        [onHide, spaceId, joinTown, clientSingleton, signerContext],
+    )
 
     const { isLoading: isLoadingLinkingWallet, linkEOAToRootKeyTransaction } =
         useLinkEOAToRootKeyTransaction({
@@ -194,14 +193,6 @@ function Content({
             },
         })
 
-    const onJoinClick = useCallback(async () => {
-        onHide({ shouldEndLoginFlow: false })
-        Analytics.getInstance().track('clicked join town on link wallet modal', {
-            spaceId,
-        })
-        await joinSpace()
-    }, [joinSpace, onHide, spaceId])
-
     if (linkedWallets === undefined || isLoadingMeetsMembership) {
         return (
             <Stack centerContent height="x20">
@@ -229,15 +220,19 @@ function Content({
             </Stack>
 
             {meetsMembershipRequirements ? (
-                <Button
-                    disabled={!isPrivyReady || isJoinPending}
-                    tone="cta1"
-                    width="100%"
-                    type="button"
-                    onClick={onJoinClick}
-                >
-                    Join
-                </Button>
+                <WalletReady>
+                    {({ getSigner }) => (
+                        <Button
+                            disabled={isJoinPending}
+                            tone="cta1"
+                            width="100%"
+                            type="button"
+                            onClick={() => onTokenVerificationJoinClick(getSigner)}
+                        >
+                            Join
+                        </Button>
+                    )}
+                </WalletReady>
             ) : (
                 <>
                     {linkedWallets && linkedWallets.length > 1 ? (

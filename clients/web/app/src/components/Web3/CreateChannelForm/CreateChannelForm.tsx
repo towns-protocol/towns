@@ -1,32 +1,22 @@
-import { ApiObject } from '@rudderstack/analytics-js/*'
-import { useGetEmbeddedSigner } from '@towns/privy'
 import React, { useCallback, useMemo } from 'react'
-import { UseFormReturn } from 'react-hook-form'
-import { Toast, toast } from 'react-hot-toast/headless'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
-    CreateChannelInfo,
-    IRuleEntitlementV2Base,
     Permission,
     SignerUndefinedError,
     TransactionStatus,
     WalletDoesNotMatchSignedInAccountError,
-    convertRuleDataV1ToV2,
     useConnectivity,
     useCreateChannelTransaction,
     useHasPermission,
     useMultipleRoleDetails,
 } from 'use-towns-client'
-import { z } from 'zod'
 import {
     Box,
     Button,
     Checkbox,
     ErrorMessage,
-    FancyButton,
     FormRender,
     Icon,
-    IconButton,
     Paragraph,
     Stack,
     Text,
@@ -47,12 +37,9 @@ import { Spinner } from '@components/Spinner'
 
 import { useChangePermissionOverridesStore } from '@components/ChannelSettings/useChangePermissionOverridesStore'
 import { ModalContainer } from '@components/Modals/ModalContainer'
-import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { PanelButton } from '@components/Panel/PanelButton'
 import { isChannelPermission } from '@components/SpaceSettingsPanel/rolePermissions.const'
-import { convertRuleDataToTokensAndEthBalance } from '@components/Tokens/utils'
 import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
-import { Analytics } from 'hooks/useAnalytics'
 import { useContractRoles } from 'hooks/useContractRoles'
 import { useDevice } from 'hooks/useDevice'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
@@ -60,23 +47,16 @@ import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { PersistForm, usePeristedFormValue } from 'ui/components/Form/PersistForm'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { atoms } from 'ui/styles/atoms.css'
+import { WalletReady } from 'privy/WalletReady'
 import { mapToErrorMessage } from '../utils'
+import { CreateChannelFormSchema } from './createChannelFormSchema'
+import { CreateChannelSubmit } from './CreateChannelSubmit'
 
 type Props = {
     spaceId: string
     onCreateChannel: (roomId: string) => void
     onHide: () => void
 }
-
-type FormState = z.infer<typeof schema>
-
-const schema = z.object({
-    name: z.string().min(2, 'Channel names must have at least 2 characters'),
-    topic: z.string(),
-    roleIds: z.string().array().nonempty('Please select at least one role'),
-    autojoin: z.boolean().default(false),
-    hideUserJoinLeaveEvents: z.boolean().default(false),
-})
 
 export const CreateChannelForm = (props: Props) => {
     const { onCreateChannel, onHide, spaceId } = props
@@ -110,10 +90,8 @@ export const CreateChannelForm = (props: Props) => {
         openPanel('roles', { roles: 'new', stackId: 'main' })
     }, [openPanel])
 
-    const { getSigner, isPrivyReady } = useGetEmbeddedSigner()
-
     const transactionUIState = toTransactionUIStates(transactionStatus, Boolean(channelId))
-    const isAbleToInteract = isPrivyReady && transactionUIState === TransactionUIState.None
+    const isAbleToInteract = transactionUIState === TransactionUIState.None
 
     const { hasTransactionError, hasServerError } = useMemo(() => {
         return {
@@ -212,8 +190,8 @@ export const CreateChannelForm = (props: Props) => {
     const formData = usePeristedFormValue(channelFormId)
 
     return rolesWithDetails ? (
-        <FormRender<FormState>
-            schema={schema}
+        <FormRender<CreateChannelFormSchema>
+            schema={CreateChannelFormSchema}
             defaultValues={
                 formData ?? {
                     name: '',
@@ -221,103 +199,9 @@ export const CreateChannelForm = (props: Props) => {
                 }
             }
             mode="onChange"
-            onSubmit={async ({ name, topic, roleIds, autojoin, hideUserJoinLeaveEvents }) => {
-                const signer = await getSigner()
-                const _roleIds = roleIds.map((roleId) => Number(roleId))
-                const channelInfo = {
-                    name: name,
-                    topic: topic,
-                    parentSpaceId: props.spaceId,
-                    roles: _roleIds.map((r) => ({
-                        roleId: r,
-                        permissions: channelFormPermissionOverrides?.[r]?.permissions ?? [],
-                    })),
-                    channelSettings: {
-                        hideUserJoinLeaveEvents,
-                        autojoin,
-                    },
-                } satisfies CreateChannelInfo
-
-                const _rolesWithDetails =
-                    (_roleIds
-                        .map((roleId): ApiObject | undefined => {
-                            const r = rolesWithDetails?.find((role) => role.id === roleId)
-                            if (r) {
-                                const { ruleData } = r
-
-                                const ruleDataV2:
-                                    | IRuleEntitlementV2Base.RuleDataV2Struct
-                                    | undefined =
-                                    ruleData.kind === 'v1'
-                                        ? convertRuleDataV1ToV2(ruleData.rules)
-                                        : ruleData.rules
-
-                                const { tokens: convertedTokens } =
-                                    convertRuleDataToTokensAndEthBalance(ruleDataV2)
-
-                                const tokens = convertedTokens.map((t) => {
-                                    return {
-                                        chainId: t.chainId,
-                                        contractAddress: t.address,
-                                        opType: t.type,
-                                        threshold: t.quantity.toString(),
-                                    } as ApiObject
-                                })
-
-                                return {
-                                    id: r.id,
-                                    name: r.name,
-                                    permissions: r.permissions,
-                                    users: r.users,
-                                    tokens,
-                                }
-                            }
-                            return undefined
-                        })
-                        .filter((r) => r !== undefined) as ApiObject[]) ?? []
-                const tracked = {
-                    channelName: name,
-                    parentSpaceId: props.spaceId,
-                    rolesWithDetails: _rolesWithDetails,
-                }
-                Analytics.getInstance().track('submitting create channel form', tracked, () => {
-                    console.log('[analytics] submitting create channel form', tracked)
-                })
-
-                if (!signer) {
-                    createPrivyNotAuthenticatedNotification()
-                    return
-                }
-
-                const txResult = await createChannelTransaction(channelInfo, signer)
-
-                console.log('[CreateChannelForm]', 'createChannelTransaction result', txResult)
-                if (txResult?.status === TransactionStatus.Success) {
-                    invalidateQuery()
-                    const channelId = txResult.data
-                    const trackCreated = {
-                        ...tracked,
-                        channelId,
-                    }
-                    if (channelId) {
-                        Analytics.getInstance().track('created channel', trackCreated, () => {
-                            console.log('[analytics] created channel', trackCreated)
-                        })
-                        toast.custom((t) => {
-                            return (
-                                <ChannelCreatedToast
-                                    toast={t}
-                                    message={`#${name} was created and saved on chain.`}
-                                />
-                            )
-                        })
-                        onCreateChannel(channelId)
-                    }
-                }
-            }}
         >
             {(hookForm) => {
-                const _form = hookForm satisfies UseFormReturn<FormState>
+                const _form = hookForm
 
                 const { register, formState, setValue, setError, watch } = _form
 
@@ -347,7 +231,7 @@ export const CreateChannelForm = (props: Props) => {
                                 placeholder="channel-name"
                                 maxLength={30}
                                 message={
-                                    <ErrorMessage<FormState>
+                                    <ErrorMessage<CreateChannelFormSchema>
                                         preventSpace
                                         errors={formState.errors}
                                         fieldName="name"
@@ -505,16 +389,27 @@ export const CreateChannelForm = (props: Props) => {
                                     Cancel
                                 </Button>
 
-                                <FancyButton
-                                    cta={isAbleToInteract}
-                                    type="submit"
-                                    disabled={!isAbleToInteract}
-                                    spinner={!isAbleToInteract}
-                                >
-                                    {transactionStatus === TransactionStatus.None
-                                        ? 'Create Channel'
-                                        : 'Creating Channel'}
-                                </FancyButton>
+                                <WalletReady>
+                                    {({ getSigner }) => (
+                                        <CreateChannelSubmit
+                                            spaceId={spaceId}
+                                            channelFormPermissionOverrides={
+                                                channelFormPermissionOverrides
+                                            }
+                                            rolesWithDetails={rolesWithDetails}
+                                            createChannelTransaction={createChannelTransaction}
+                                            invalidateQuery={invalidateQuery}
+                                            getSigner={getSigner}
+                                            disabled={!isAbleToInteract}
+                                            text={
+                                                transactionStatus === TransactionStatus.None
+                                                    ? 'Create Channel'
+                                                    : 'Creating Channel'
+                                            }
+                                            onCreateChannel={onCreateChannel}
+                                        />
+                                    )}
+                                </WalletReady>
                             </Stack>
                         ) : (
                             <Stack
@@ -524,17 +419,27 @@ export const CreateChannelForm = (props: Props) => {
                                 left="none"
                                 right="none"
                             >
-                                <FancyButton
-                                    cta={isAbleToInteract && formState.isValid}
-                                    type="submit"
-                                    data-testid="create-channel-submit-button"
-                                    disabled={!isAbleToInteract}
-                                    spinner={!isAbleToInteract}
-                                >
-                                    {transactionStatus === TransactionStatus.None
-                                        ? 'Create Channel'
-                                        : 'Creating Channel'}
-                                </FancyButton>
+                                <WalletReady>
+                                    {({ getSigner }) => (
+                                        <CreateChannelSubmit
+                                            spaceId={spaceId}
+                                            channelFormPermissionOverrides={
+                                                channelFormPermissionOverrides
+                                            }
+                                            rolesWithDetails={rolesWithDetails}
+                                            createChannelTransaction={createChannelTransaction}
+                                            invalidateQuery={invalidateQuery}
+                                            getSigner={getSigner}
+                                            disabled={!isAbleToInteract}
+                                            text={
+                                                transactionStatus === TransactionStatus.None
+                                                    ? 'Create Channel'
+                                                    : 'Creating Channel'
+                                            }
+                                            onCreateChannel={onCreateChannel}
+                                        />
+                                    )}
+                                </WalletReady>
                             </Stack>
                         )}
                     </Stack>
@@ -651,28 +556,5 @@ export const CreateChannelFormModal = ({ spaceId, onHide }: Omit<Props, 'onCreat
                 <CreateChannelFormContainer hideOnCreation spaceId={spaceId} onHide={onHide} />
             </ModalContainer>
         </>
-    )
-}
-
-const ChannelCreatedToast = ({ toast: _toast, message }: { toast: Toast; message: string }) => {
-    return (
-        <Stack horizontal gap alignContent="center" data-testid="channel-created-toast-container">
-            <Box centerContent height="x4" width="x4" background="level3" rounded="sm">
-                <Icon color="gray2" type="tag" size="square_sm" />
-            </Box>
-            <Box width="200">
-                <Text size="sm" data-testid="channel-created-toast-message">
-                    {message}
-                </Text>
-            </Box>
-            <IconButton
-                icon="close"
-                insetTop="xs"
-                data-testid="channel-created-toast-close-button"
-                onClick={() => toast.dismiss(_toast.id)}
-            >
-                Dismiss
-            </IconButton>
-        </Stack>
     )
 }

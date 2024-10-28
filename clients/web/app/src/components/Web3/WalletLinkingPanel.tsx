@@ -1,5 +1,4 @@
 import React, { useMemo, useState } from 'react'
-import { useGetEmbeddedSigner } from '@towns/privy'
 import {
     Address,
     BlockchainTransactionType,
@@ -10,7 +9,7 @@ import {
     useUnlinkWalletTransaction,
 } from 'use-towns-client'
 import { PrivyWrapper } from 'privy/PrivyProvider'
-import { Box, BoxProps, Button, Icon, Paragraph, Stack, Text } from '@ui'
+import { Box, BoxProps, Button, Icon, IconButton, Paragraph, Stack, Text } from '@ui'
 import { PanelButton } from '@components/Panel/PanelButton'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { ModalContainer } from '@components/Modals/ModalContainer'
@@ -20,10 +19,13 @@ import {
 } from 'hooks/useAbstractAccountAddress'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
+import { GetSigner, LoginToPrivyIconButton, WalletReady } from 'privy/WalletReady'
+import { useErrorToast } from 'hooks/useErrorToast'
 import { ConnectWalletThenLinkButton } from './ConnectWalletThenLinkButton'
 import { WalletLinkingInfo } from './WalletLinkingInfo'
 import { WalletWithBalance } from './Wallet/WalletWithBalance'
 import { UserOpTxModal } from './UserOpTxModal/UserOpTxModal'
+import { mapToErrorMessage } from './utils'
 
 export const WalletLinkingPanel = React.memo(() => {
     return (
@@ -54,7 +56,6 @@ function WalletLinkingPanelWithoutAuth() {
     const { loggedInWalletAddress } = useConnectivity()
     const { linkEOAToRootKeyTransaction } = useLinkEOAToRootKeyTransaction()
     const { unlinkWalletTransaction } = useUnlinkWalletTransaction()
-    const { getSigner, isPrivyReady } = useGetEmbeddedSigner()
 
     const { data: aaAddress } = useAbstractAccountAddress({
         rootKeyAddress: loggedInWalletAddress,
@@ -69,7 +70,7 @@ function WalletLinkingPanelWithoutAuth() {
         [_linkedWallets, aaAddress],
     )
 
-    async function onUnlinkClick(addressToUnlink: Address) {
+    async function onUnlinkClick(addressToUnlink: Address, getSigner: GetSigner) {
         const signer = await getSigner()
         if (!signer) {
             createPrivyNotAuthenticatedNotification()
@@ -85,7 +86,7 @@ function WalletLinkingPanelWithoutAuth() {
         return null
     }
 
-    const isDisabled = !isPrivyReady || isWalletLinkingPending || isWalletUnLinkingPending
+    const isDisabled = isWalletLinkingPending || isWalletUnLinkingPending
 
     return (
         <Stack gap grow position="relative" overflow="auto">
@@ -136,17 +137,24 @@ function WalletLinkingPanelWithoutAuth() {
                             <Button tone="level2" onClick={hideUnlinkModal}>
                                 Cancel
                             </Button>
-                            <Button
-                                tone="negative"
-                                onClick={() => {
-                                    if (unlinkModal.addressToUnlink) {
-                                        onUnlinkClick(unlinkModal.addressToUnlink)
-                                        hideUnlinkModal()
-                                    }
-                                }}
-                            >
-                                Confirm
-                            </Button>
+                            <WalletReady>
+                                {({ getSigner }) => (
+                                    <Button
+                                        tone="negative"
+                                        onClick={() => {
+                                            if (unlinkModal.addressToUnlink) {
+                                                onUnlinkClick(
+                                                    unlinkModal.addressToUnlink,
+                                                    getSigner,
+                                                )
+                                                hideUnlinkModal()
+                                            }
+                                        }}
+                                    >
+                                        Confirm
+                                    </Button>
+                                )}
+                            </WalletReady>
                         </Box>
                     </Box>
                 </ModalContainer>
@@ -188,7 +196,6 @@ export function FullPanelOverlay({
 export function LinkedWallet({
     address,
     aaAddress,
-    onUnlinkClick,
     height = 'x8',
 }: {
     address: Address
@@ -209,8 +216,7 @@ export function LinkedWallet({
 
     const isWalletLinkingPending = useIsTransactionPending(BlockchainTransactionType.LinkWallet)
     const isWalletUnLinkingPending = useIsTransactionPending(BlockchainTransactionType.UnlinkWallet)
-    const { isPrivyReady } = useGetEmbeddedSigner()
-    const isDisabled = !isPrivyReady || isWalletLinkingPending || isWalletUnLinkingPending
+    const isDisabled = isWalletLinkingPending || isWalletUnLinkingPending
 
     // TODO: we have a privy wallet, and AA wallet. Probably we want to filter out the privy wallet, and only show AA wallet address. Do we need to have our own UI for AA wallet assets? Since you can't export it to MM
     return (
@@ -226,9 +232,50 @@ export function LinkedWallet({
             <WalletWithBalance
                 address={address}
                 isAbstractAccount={!!isAbstractAccount}
-                isDisabled={isDisabled}
-                onUnlinkClick={onUnlinkClick}
+                UnlinkButton={<UnlinkButton address={address} isDisabled={isDisabled} />}
             />
         </PanelButton>
+    )
+}
+
+function UnlinkButton({ address, isDisabled }: { address: Address; isDisabled: boolean }) {
+    const { unlinkWalletTransaction, error: errorUnlinkWallet } = useUnlinkWalletTransaction()
+
+    useErrorToast({
+        errorMessage: errorUnlinkWallet
+            ? mapToErrorMessage({
+                  error: errorUnlinkWallet,
+                  source: 'token verification unlink wallet',
+              })
+            : undefined,
+    })
+
+    async function onUnlinkClick(addressToUnlink: Address, getSigner: GetSigner) {
+        const signer = await getSigner()
+        if (!signer) {
+            createPrivyNotAuthenticatedNotification()
+            return
+        }
+        unlinkWalletTransaction(signer, addressToUnlink)
+    }
+
+    return (
+        <WalletReady
+            LoginButton={
+                <LoginToPrivyIconButton message="Unlinking a wallet requires re-authentication with Privy." />
+            }
+        >
+            {({ getSigner }) => (
+                <IconButton
+                    cursor={isDisabled ? 'not-allowed' : 'pointer'}
+                    disabled={isDisabled}
+                    opacity={isDisabled ? '0.5' : 'opaque'}
+                    icon="unlink"
+                    color="default"
+                    tooltip="Unlink Wallet"
+                    onClick={() => onUnlinkClick(address, getSigner)}
+                />
+            )}
+        </WalletReady>
     )
 }

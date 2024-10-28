@@ -8,11 +8,11 @@ import {
 } from 'use-towns-client'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { BigNumber } from 'ethers'
-import { useGetEmbeddedSigner } from '@towns/privy'
 import { ChannelRoleSettings, RolesSettings } from 'routes/ChannelRoleSettings'
 
 import { useAsyncButtonCallback } from '../hooks/use-async-button-callback'
 import { ChainSwitchingButton } from './Buttons/ChainSwitchingButton'
+import { GetSigner, WalletReady } from './WalletReady'
 
 interface Props {
     parentSpaceId: string
@@ -43,35 +43,36 @@ export function CreateChannelForm(props: Props): JSX.Element {
         setRoles(roles)
     }, [])
 
-    const { getSigner } = useGetEmbeddedSigner()
+    const onClickCreateChannel = useAsyncButtonCallback(
+        async (getSigner: GetSigner) => {
+            const signer = await getSigner()
+            if (!signer) {
+                console.error('No signer')
+                return
+            }
+            const createRoomInfo: CreateChannelInfo = {
+                name: channelName,
+                parentSpaceId: parentSpaceId,
+                roles: [],
+            }
 
-    const onClickCreateChannel = useAsyncButtonCallback(async () => {
-        const signer = await getSigner()
-        if (!signer) {
-            console.error('No signer')
-            return
-        }
-        const createRoomInfo: CreateChannelInfo = {
-            name: channelName,
-            parentSpaceId: parentSpaceId,
-            roles: [],
-        }
-
-        // Use the roles from the parent space to create the channel
-        if (spaceRoles) {
-            for (const r of spaceRoles) {
-                if (roles[r.name]?.isSelected) {
-                    console.log(`Adding role ${r.name} to channel`)
-                    createRoomInfo.roles.push({
-                        roleId: BigNumber.from(r.roleId).toNumber(),
-                        permissions: [],
-                    })
+            // Use the roles from the parent space to create the channel
+            if (spaceRoles) {
+                for (const r of spaceRoles) {
+                    if (roles[r.name]?.isSelected) {
+                        console.log(`Adding role ${r.name} to channel`)
+                        createRoomInfo.roles.push({
+                            roleId: BigNumber.from(r.roleId).toNumber(),
+                            permissions: [],
+                        })
+                    }
                 }
             }
-        }
 
-        await createChannelTransaction(createRoomInfo, signer)
-    }, [createChannelTransaction, onClick, parentSpaceId, channelName])
+            await createChannelTransaction(createRoomInfo, signer)
+        },
+        [createChannelTransaction, onClick, parentSpaceId, channelName],
+    )
 
     useEffect(() => {
         if (transactionStatus === TransactionStatus.Success && roomId) {
@@ -127,14 +128,18 @@ export function CreateChannelForm(props: Props): JSX.Element {
                 </Box>
                 <Box />
                 <Box display="flex" flexDirection="column" alignItems="center">
-                    <ChainSwitchingButton
-                        variant="contained"
-                        color="primary"
-                        disabled={disableCreateButton}
-                        onClick={onClickCreateChannel}
-                    >
-                        Create
-                    </ChainSwitchingButton>
+                    <WalletReady>
+                        {({ getSigner }) => (
+                            <ChainSwitchingButton
+                                variant="contained"
+                                color="primary"
+                                disabled={disableCreateButton}
+                                onClick={(e) => onClickCreateChannel(e, getSigner)}
+                            >
+                                Create
+                            </ChainSwitchingButton>
+                        )}
+                    </WalletReady>
                 </Box>
             </Box>
         </Box>

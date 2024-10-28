@@ -14,10 +14,10 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { makeStyles } from '@mui/styles'
 import { usePrivy } from '@privy-io/react-auth'
-import { useGetEmbeddedSigner } from '@towns/privy'
 import { useEnvironment } from 'hooks/use-environment'
 import { EnvironmentSelect } from './EnvironmentSelect'
 import { ChainSwitchingButton } from './Buttons/ChainSwitchingButton'
+import { GetSigner, WalletReady } from './WalletReady'
 
 const loginMsgToSign = `Click to sign in and accept the Harmony Terms of Service.`
 
@@ -64,14 +64,13 @@ function NetworkInfo() {
     const { authStatus: casablancaAuthStatus } = useCasablancaStore()
     const { id: environmentId } = useEnvironment()
     const { isAuthenticated } = useConnectivity()
-    const { getSigner } = useGetEmbeddedSigner()
 
     const onLoginCasablanca = useCallback(
-        async function () {
+        async function (getSigner: GetSigner) {
             const signer = await getSigner()
             loginWithWalletToCasablanca(loginMsgToSign, signer)
         },
-        [loginWithWalletToCasablanca, getSigner],
+        [loginWithWalletToCasablanca],
     )
 
     const casablancaButton = useMemo(() => {
@@ -79,14 +78,18 @@ function NetworkInfo() {
             return <CircularProgress size={56} />
         } else if (casablancaAuthStatus === AuthStatus.None || !isAuthenticated) {
             return (
-                <ChainSwitchingButton
-                    variant="contained"
-                    color="primary"
-                    sx={{ margin: '20px' }}
-                    onClick={onLoginCasablanca}
-                >
-                    Login (casablanca)
-                </ChainSwitchingButton>
+                <WalletReady>
+                    {({ getSigner }) => (
+                        <ChainSwitchingButton
+                            variant="contained"
+                            color="primary"
+                            sx={{ margin: '20px' }}
+                            onClick={() => onLoginCasablanca(getSigner)}
+                        >
+                            Login (casablanca)
+                        </ChainSwitchingButton>
+                    )}
+                </WalletReady>
             )
         } else {
             return (

@@ -43,6 +43,7 @@ vi.mock('@privy-io/react-auth', async () => {
             login: () => {},
         }),
         useWallets: (): { wallets: ConnectedWallet[] } => ({
+            ready: true,
             wallets: [
                 {
                     address: '0xc0ffee254729296a45a3885639AC7E10F9d54979',
@@ -71,15 +72,15 @@ vi.mock('@privy-io/react-auth', async () => {
 
 vi.mock('@towns/privy', async (importOriginal) => {
     const actual = await importOriginal<typeof import('@towns/privy')>()
+    const getSigner = () => Promise.resolve({} as EIP1193Provider)
     return {
         ...actual,
-        useGetEmbeddedSigner: () => {
-            //empty object for fake signer
-            return {
-                getSigner: () => ({} as EIP1193Provider),
-                isPrivyReady: true,
-            }
-        },
+        getSigner,
+        PrivyWalletReady: ({
+            children,
+        }: {
+            children: (args: { getSigner: () => Promise<EIP1193Provider> }) => JSX.Element
+        }) => children({ getSigner }),
     }
 })
 

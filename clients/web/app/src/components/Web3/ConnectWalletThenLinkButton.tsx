@@ -3,6 +3,7 @@ import { Signer } from 'ethers'
 import { Box, Button, ButtonProps, Icon, Text } from '@ui'
 import { isTouch } from 'hooks/useDevice'
 import { ModalContainer } from '@components/Modals/ModalContainer'
+import { GetSigner, WalletReady } from 'privy/WalletReady'
 import { useConnectThenLink } from './useConnectThenLink'
 import { WalletLinkingInfoLink } from './WalletLinkingInfo'
 
@@ -13,10 +14,19 @@ type Props = {
 } & Omit<ButtonProps, 'children' | 'onClick'>
 
 export function ConnectWalletThenLinkButton(props: Props) {
-    const { onLinkWallet, buttonText = 'Link Wallet', children, ...buttonProps } = props
+    return (
+        <WalletReady>
+            {({ getSigner }) => <ConnectWalletThenLinkInner {...props} getSigner={getSigner} />}
+        </WalletReady>
+    )
+}
+
+function ConnectWalletThenLinkInner(props: Props & { getSigner: GetSigner }) {
+    const { onLinkWallet, buttonText = 'Link Wallet', children, getSigner, ...buttonProps } = props
     const [showModal, setShowModal] = useState(false)
     const onConnect = useConnectThenLink({
         onLinkWallet,
+        getSigner,
     })
 
     const onClick = useCallback(() => {

@@ -7,7 +7,6 @@ import {
     useMyDefaultUsernames,
     useTownsContext,
 } from 'use-towns-client'
-import { useGetEmbeddedSigner } from '@towns/privy'
 import { Box, BoxProps, FancyButton, Icon, IconProps, Text } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
@@ -17,6 +16,7 @@ import { AboveAppProgressModalContainer } from '@components/AppProgressOverlay/A
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { popupToast } from '@components/Notifications/popupToast'
 import { StandardToast, dismissToast } from '@components/Notifications/StandardToast'
+import { GetSigner, WalletReady } from 'privy/WalletReady'
 import { usePublicPageLoginFlow } from './usePublicPageLoginFlow'
 
 const LoginComponent = React.lazy(() => import('@components/Login/LoginComponent'))
@@ -24,13 +24,11 @@ const LoginComponent = React.lazy(() => import('@components/Login/LoginComponent
 export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
     const isPreview = false
     const { isAuthenticated, loggedInWalletAddress } = useConnectivity()
-    const { getSigner } = useGetEmbeddedSigner()
     const { clientSingleton, signerContext } = useTownsContext()
 
     const {
         startJoinMeetsRequirements,
         startJoinPreLogin,
-        joinTown,
         end: endPublicPageLoginFlow,
         startJoinDoesNotMeetRequirements,
         spaceBeingJoined,
@@ -56,66 +54,53 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
 
     const defaultUsername = useMyDefaultUsernames()?.[0]
 
-    const onJoinClick = useCallback(async () => {
-        if (disableJoinUi) {
-            return
-        }
-        const signer = await getSigner()
+    const onJoinClick = useCallback(
+        async (getSigner: GetSigner) => {
+            if (disableJoinUi) {
+                return
+            }
+            const signer = await getSigner()
 
-        if (!signer) {
-            createPrivyNotAuthenticatedNotification()
-            return
-        }
-        Analytics.getInstance().track('clicked join town on town page', {
+            if (!signer) {
+                createPrivyNotAuthenticatedNotification()
+                return
+            }
+            Analytics.getInstance().track('clicked join town on town page', {
+                spaceId,
+                meetsMembershipRequirements,
+            })
+            if (meetsMembershipRequirements) {
+                startJoinMeetsRequirements({
+                    signer,
+                    clientSingleton,
+                    signerContext,
+                    source: 'public pagejoin click',
+                    defaultUsername,
+                })
+            } else {
+                // show asset verification modal
+                Analytics.getInstance().page(
+                    'requirements-modal',
+                    'viewed gated town requirements modal',
+                    {
+                        spaceId,
+                        meetsMembershipRequirements,
+                    },
+                )
+                startJoinDoesNotMeetRequirements()
+            }
+        },
+        [
+            disableJoinUi,
             spaceId,
             meetsMembershipRequirements,
-        })
-        if (meetsMembershipRequirements) {
-            startJoinMeetsRequirements({
-                signer,
-                clientSingleton,
-                signerContext,
-                source: 'public pagejoin click',
-                defaultUsername,
-            })
-        } else {
-            // show asset verification modal
-            Analytics.getInstance().page(
-                'requirements-modal',
-                'viewed gated town requirements modal',
-                {
-                    spaceId,
-                    meetsMembershipRequirements,
-                },
-            )
-            startJoinDoesNotMeetRequirements()
-        }
-    }, [
-        disableJoinUi,
-        getSigner,
-        spaceId,
-        meetsMembershipRequirements,
-        startJoinMeetsRequirements,
-        clientSingleton,
-        signerContext,
-        defaultUsername,
-        startJoinDoesNotMeetRequirements,
-    ])
-
-    const onTokenVerificationJoinClick = useCallback(async () => {
-        const signer = await getSigner()
-
-        if (!signer) {
-            createPrivyNotAuthenticatedNotification()
-            return
-        }
-        joinTown({
-            signer,
+            startJoinMeetsRequirements,
             clientSingleton,
             signerContext,
-            source: 'token verification click',
-        })
-    }, [getSigner, joinTown, clientSingleton, signerContext])
+            defaultUsername,
+            startJoinDoesNotMeetRequirements,
+        ],
+    )
 
     const onLoginClick = useCallback(() => {
         startJoinPreLogin()
@@ -153,15 +138,19 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
         })
 
         return (
-            <FancyButton
-                cta
-                type="button"
-                disabled={disableJoinUi}
-                spinner={!!spaceBeingJoined}
-                onClick={onJoinClick}
-            >
-                Join
-            </FancyButton>
+            <WalletReady>
+                {({ getSigner }) => (
+                    <FancyButton
+                        cta
+                        type="button"
+                        disabled={disableJoinUi}
+                        spinner={!!spaceBeingJoined}
+                        onClick={() => onJoinClick(getSigner)}
+                    >
+                        Join
+                    </FancyButton>
+                )}
+            </WalletReady>
         )
     }
 
@@ -176,11 +165,7 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
                     background="none"
                     onHide={() => hideAssetModal({ shouldEndLoginFlow: true })}
                 >
-                    <GatedTownModal
-                        spaceId={spaceId}
-                        joinSpace={onTokenVerificationJoinClick}
-                        onHide={hideAssetModal}
-                    />
+                    <GatedTownModal spaceId={spaceId} onHide={hideAssetModal} />
                 </AboveAppProgressModalContainer>
             )}
         </>

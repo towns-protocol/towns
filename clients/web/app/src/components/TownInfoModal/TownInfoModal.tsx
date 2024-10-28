@@ -8,7 +8,6 @@ import {
     useUpdateSpaceInfoTransaction,
 } from 'use-towns-client'
 import { z } from 'zod'
-import { useGetEmbeddedSigner } from '@towns/privy'
 import { Box, Button, ErrorMessage, FormRender, Heading, Stack, TextField } from '@ui'
 import { TransactionButton } from '@components/TransactionButton'
 import { ModalContainer } from '@components/Modals/ModalContainer'
@@ -19,6 +18,7 @@ import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { PrivyWrapper } from 'privy/PrivyProvider'
 import { buildSpaceMetadataUrl, refreshSpaceCache } from 'api/lib/fetchImage'
+import { GetSigner, WalletReady } from 'privy/WalletReady'
 
 type Props = {
     onHide: () => void
@@ -67,10 +67,8 @@ export const TownInfoModalWithoutAuth = (props: Props) => {
     const transactionUIState = toTransactionUIStates(transactionStatus, Boolean(data))
     const hasPendingTx = Boolean(transactionUIState != TransactionUIState.None)
 
-    const { getSigner } = useGetEmbeddedSigner()
-
     const onSubmit = useCallback(
-        async (changes: FormState) => {
+        async (changes: FormState, getSigner: GetSigner) => {
             const signer = await getSigner()
             if (!signer) {
                 createPrivyNotAuthenticatedNotification()
@@ -92,7 +90,7 @@ export const TownInfoModalWithoutAuth = (props: Props) => {
                 onHide()
             }
         },
-        [getSigner, data?.networkId, data?.address, updateSpaceInfoTransaction, onHide],
+        [data?.networkId, data?.address, updateSpaceInfoTransaction, onHide],
     )
 
     const hasTransactionError = Boolean(
@@ -150,9 +148,8 @@ export const TownInfoModalWithoutAuth = (props: Props) => {
                         schema={schema}
                         defaultValues={defaultValues}
                         mode="onChange"
-                        onSubmit={onSubmit}
                     >
-                        {({ register, formState, watch }) => {
+                        {({ register, formState, watch, handleSubmit }) => {
                             watch()
                             return (
                                 <Stack grow>
@@ -217,12 +214,19 @@ export const TownInfoModalWithoutAuth = (props: Props) => {
                                                 Cancel
                                             </Button>
 
-                                            <TransactionButton
-                                                transactionState={transactionUIState}
-                                                transactingText="Updating town"
-                                                successText="Town updated"
-                                                idleText="Save on chain"
-                                            />
+                                            <WalletReady>
+                                                {({ getSigner }) => (
+                                                    <TransactionButton
+                                                        transactionState={transactionUIState}
+                                                        transactingText="Updating town"
+                                                        successText="Town updated"
+                                                        idleText="Save on chain"
+                                                        onClick={handleSubmit((data) =>
+                                                            onSubmit(data, getSigner),
+                                                        )}
+                                                    />
+                                                )}
+                                            </WalletReady>
                                         </Stack>
                                     </Box>
                                     {errorBox}

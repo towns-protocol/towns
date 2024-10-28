@@ -1,23 +1,24 @@
 import React from 'react'
 import { useConnectWallet } from '@privy-io/react-auth'
-import { useGetEmbeddedSigner } from '@towns/privy'
 import { useLinkEOAToRootKeyTransaction } from 'use-towns-client'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { popupToast } from '@components/Notifications/popupToast'
 import { StandardToast } from '@components/Notifications/StandardToast'
 import { Analytics } from 'hooks/useAnalytics'
+import { GetSigner } from 'privy/WalletReady'
 
 export function useConnectThenLink({
     onLinkWallet,
+    getSigner,
 }: {
     onLinkWallet: (
         ...args: Parameters<
             ReturnType<typeof useLinkEOAToRootKeyTransaction>['linkEOAToRootKeyTransaction']
         >
     ) => void
+    getSigner: GetSigner
 }) {
-    const { getSigner } = useGetEmbeddedSigner()
     const { baseChain } = useEnvironment()
 
     const { connectWallet } = useConnectWallet({

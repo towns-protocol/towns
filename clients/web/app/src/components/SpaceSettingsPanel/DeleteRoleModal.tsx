@@ -1,10 +1,10 @@
 import React from 'react'
 import { useDeleteRoleTransaction } from 'use-towns-client'
-import { useGetEmbeddedSigner } from '@towns/privy'
 import { useEvent } from 'react-use-event-hook'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { Button, Paragraph, Stack } from '@ui'
+import { GetSigner, WalletReady } from 'privy/WalletReady'
 
 export function DeleteRoleModal({
     hideDeleteModal,
@@ -17,8 +17,7 @@ export function DeleteRoleModal({
 }) {
     // success and error statuses are handled by <BlockchainTxNotifier />
     const { deleteRoleTransaction } = useDeleteRoleTransaction()
-    const { getSigner, isPrivyReady } = useGetEmbeddedSigner()
-    const onDelete = useEvent(async () => {
+    const onDelete = useEvent(async (getSigner: GetSigner) => {
         if (!spaceId || !roleId) {
             return
         }
@@ -38,14 +37,17 @@ export function DeleteRoleModal({
                 <Paragraph>This action cannot be undone.</Paragraph>
                 <Stack horizontal gap alignSelf="end">
                     <Button onClick={hideDeleteModal}>Cancel</Button>
-                    <Button
-                        tone="error"
-                        data-testid="confirm-delete-role-button"
-                        disabled={!isPrivyReady}
-                        onClick={onDelete}
-                    >
-                        Delete
-                    </Button>
+                    <WalletReady>
+                        {({ getSigner }) => (
+                            <Button
+                                tone="negative"
+                                data-testid="confirm-delete-role-button"
+                                onClick={() => onDelete(getSigner)}
+                            >
+                                Delete
+                            </Button>
+                        )}
+                    </WalletReady>
                 </Stack>
             </Stack>
         </ModalContainer>

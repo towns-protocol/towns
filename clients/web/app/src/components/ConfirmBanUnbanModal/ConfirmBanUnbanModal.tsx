@@ -3,9 +3,10 @@ import { useSpaceData, useUserLookupContext } from 'use-towns-client'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { Box, Button, Stack, Text } from '@ui'
+import { GetSigner, WalletReady } from 'privy/WalletReady'
 
 export const ConfirmBanUnbanModal = (props: {
-    onConfirm: () => void
+    onConfirm: (getSigner: GetSigner) => void
     onCancel: () => void
     ban: boolean
     userId: string
@@ -29,8 +30,8 @@ export const ConfirmBanUnbanModal = (props: {
         : 'They will regain access to the town and their membership NFT will be unbanned.'
 
     return (
-        <ModalContainer minWidth="300" onHide={onCancel}>
-            <Stack padding="sm" gap="lg" alignItems="start" maxWidth="300">
+        <ModalContainer minWidth="auto" onHide={onCancel}>
+            <Stack padding="sm" gap="lg" alignItems="start" maxWidth="350">
                 <Text fontWeight="strong">{title}</Text>
                 <Text>{message}</Text>
                 <Stack horizontal gap width="100%">
@@ -38,9 +39,13 @@ export const ConfirmBanUnbanModal = (props: {
                     <Button tone="level2" onClick={onCancel}>
                         Cancel
                     </Button>
-                    <Button tone="negative" onClick={onConfirm}>
-                        Confirm
-                    </Button>
+                    <WalletReady>
+                        {({ getSigner }) => (
+                            <Button tone="negative" onClick={() => onConfirm(getSigner)}>
+                                Confirm
+                            </Button>
+                        )}
+                    </WalletReady>
                 </Stack>
             </Stack>
         </ModalContainer>

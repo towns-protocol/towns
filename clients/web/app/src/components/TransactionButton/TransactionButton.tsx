@@ -19,7 +19,6 @@ type Props = {
 
 export const TransactionButton = (props: Props) => {
     const {
-        type = 'submit',
         transactionState,
         transactingText,
         signingText = 'Waiting for Wallet',
@@ -55,7 +54,6 @@ export const TransactionButton = (props: Props) => {
             spinner={isProgress}
             disabled={isDisabled}
             form={formId}
-            type={type}
             className={className}
             data-testid="create-space-next-button"
             onClick={onClick}

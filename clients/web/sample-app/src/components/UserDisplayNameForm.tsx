@@ -59,7 +59,7 @@ export function UserDisplayNameForm(): JSX.Element {
                         variant="contained"
                         color="primary"
                         disabled={disableButton}
-                        onClick={onClickSave}
+                        onClick={(e) => onClickSave(e, displayNameEdit)}
                     >
                         Save
                     </Button>

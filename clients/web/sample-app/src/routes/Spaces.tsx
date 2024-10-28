@@ -1,5 +1,4 @@
 import { Button, Divider, Theme, Typography } from '@mui/material'
-import { useGetEmbeddedSigner } from '@towns/privy'
 import React, { useCallback } from 'react'
 import { Outlet, useParams } from 'react-router-dom'
 import {
@@ -8,22 +7,25 @@ import {
     useSpaceFromContract,
     useTownsClient,
 } from 'use-towns-client'
+import { GetSigner, WalletReady } from '@components/WalletReady'
 
 export const Spaces = () => {
     const { channelSlug } = useParams()
     const { joinTown } = useTownsClient()
     const { spaceId } = useSpaceContext()
     const space = useSpaceData()
-    const { getSigner } = useGetEmbeddedSigner()
 
-    const onClickJoinSpace = useCallback(async () => {
-        const signer = await getSigner()
-        if (spaceId && signer) {
-            await joinTown(spaceId, signer)
-        } else {
-            console.error('No spaceId')
-        }
-    }, [joinTown, getSigner, spaceId])
+    const onClickJoinSpace = useCallback(
+        async (getSigner: GetSigner) => {
+            const signer = await getSigner()
+            if (spaceId && signer) {
+                await joinTown(spaceId, signer)
+            } else {
+                console.error('No spaceId')
+            }
+        },
+        [joinTown, spaceId],
+    )
 
     // console.log("SPACE CONTENT", space?.id.networkId, channelSlug);
     if (space && channelSlug) {
@@ -48,7 +50,14 @@ export const Spaces = () => {
                 <h1>Unknown space Id</h1>
                 <h3>id: {spaceId}</h3>
                 <Divider />
-                <MissingSpaceInfo spaceId={spaceId} onJoinSpace={onClickJoinSpace} />
+                <WalletReady>
+                    {({ getSigner }) => (
+                        <MissingSpaceInfo
+                            spaceId={spaceId}
+                            onJoinSpace={() => onClickJoinSpace(getSigner)}
+                        />
+                    )}
+                </WalletReady>
             </>
         )
     } else {

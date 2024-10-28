@@ -18,7 +18,6 @@ import {
     useWalletAddressIsBanned,
 } from 'use-towns-client'
 import { useBanTransaction, useUnbanTransaction } from 'use-towns-client/dist/hooks/use-banning'
-import { useGetEmbeddedSigner } from '@towns/privy'
 import { PrivyWrapper } from 'privy/PrivyProvider'
 import { useGetUserBio } from 'hooks/useUserBio'
 import { Box, Button, Icon, Paragraph, Stack, Text } from '@ui'
@@ -45,6 +44,7 @@ import { useBlockedUsers } from 'hooks/useBlockedUsers'
 import { UserPreferences } from '@components/UserProfile/UserPreferences'
 import { Analytics } from 'hooks/useAnalytics'
 import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
+import { GetSigner } from 'privy/WalletReady'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
 
 export const SpaceProfilePanel = () => {
@@ -398,8 +398,6 @@ const BanPanelButton = (props: { walletAddress: string; space: SpaceData; isBann
     const { banTransaction } = useBanTransaction()
     const { unbanTransaction } = useUnbanTransaction()
 
-    const { getSigner, isPrivyReady } = useGetEmbeddedSigner()
-
     const onClick = useCallback(() => {
         setIsConfirmModalVisible(true)
     }, [setIsConfirmModalVisible])
@@ -408,33 +406,35 @@ const BanPanelButton = (props: { walletAddress: string; space: SpaceData; isBann
         setIsConfirmModalVisible(false)
     }, [setIsConfirmModalVisible])
 
-    const onConfirmClick = useCallback(() => {
-        setIsConfirmModalVisible(false)
-        if (!space?.id) {
-            return
-        }
-        async function performTransaction(spaceId: string, userId: string) {
-            const signer = await getSigner()
-            if (!signer) {
-                createPrivyNotAuthenticatedNotification()
+    const onConfirmClick = useCallback(
+        (getSigner: GetSigner) => {
+            setIsConfirmModalVisible(false)
+            if (!space?.id) {
                 return
             }
-            if (isBanned) {
-                unbanTransaction(signer, spaceId, userId)
-            } else {
-                banTransaction(signer, spaceId, userId)
+            async function performTransaction(spaceId: string, userId: string) {
+                const signer = await getSigner()
+                if (!signer) {
+                    createPrivyNotAuthenticatedNotification()
+                    return
+                }
+                if (isBanned) {
+                    unbanTransaction(signer, spaceId, userId)
+                } else {
+                    banTransaction(signer, spaceId, userId)
+                }
             }
-        }
-        void performTransaction(space.id, walletAddress)
-    }, [
-        space?.id,
-        walletAddress,
-        getSigner,
-        banTransaction,
-        unbanTransaction,
-        isBanned,
-        setIsConfirmModalVisible,
-    ])
+            void performTransaction(space.id, walletAddress)
+        },
+        [
+            space?.id,
+            walletAddress,
+            banTransaction,
+            unbanTransaction,
+            isBanned,
+            setIsConfirmModalVisible,
+        ],
+    )
 
     const isBanTransactionPending = useIsTransactionPending(BlockchainTransactionType.BanUser)
     const isUnbanTransactionPending = useIsTransactionPending(BlockchainTransactionType.UnbanUser)
@@ -442,7 +442,7 @@ const BanPanelButton = (props: { walletAddress: string; space: SpaceData; isBann
 
     return (
         <>
-            <PanelButton disabled={!isPrivyReady} tone="negative" onClick={onClick}>
+            <PanelButton tone="negative" onClick={onClick}>
                 <Icon type={isBanned ? 'unban' : 'ban'} size="square_sm" />
                 {isTransactionPending ? (
                     <Box grow>

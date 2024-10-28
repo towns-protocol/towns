@@ -1,5 +1,5 @@
 import React, { createContext, useContext } from 'react'
-import { EmbeddedSignerContextProvider, PrivyProvider as TownsPrivyProvider } from '@towns/privy'
+import { PrivyProvider as TownsPrivyProvider } from '@towns/privy'
 import uniqBy from 'lodash/uniqBy'
 import { env } from 'utils'
 import { ENVIRONMENTS, useEnvironment } from 'hooks/useEnvironmnet'
@@ -67,7 +67,6 @@ function useAncestorContext() {
  */
 export function PrivyWrapper({ children }: { children: JSX.Element }) {
     const hasAncestorContext = useAncestorContext()
-    const environment = useEnvironment()
 
     // If the parent is already a PrivyProvider, we don't need to wrap it again
     if (hasAncestorContext) {
@@ -78,9 +77,7 @@ export function PrivyWrapper({ children }: { children: JSX.Element }) {
     return (
         <AncestorContext.Provider value>
             <PrivyProvider>
-                <EmbeddedSignerContextProvider chainId={environment.baseChain.id}>
-                    <CombinedAuthContextProvider>{children}</CombinedAuthContextProvider>
-                </EmbeddedSignerContextProvider>
+                <CombinedAuthContextProvider>{children}</CombinedAuthContextProvider>
             </PrivyProvider>
         </AncestorContext.Provider>
     )

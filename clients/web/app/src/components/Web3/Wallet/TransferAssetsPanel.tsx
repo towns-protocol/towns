@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { FormProvider, UseFormReturn, UseFormSetError, useFormContext } from 'react-hook-form'
-import { useGetEmbeddedSigner } from '@towns/privy'
 import {
     Address,
     BlockchainTransactionType,
@@ -21,6 +20,7 @@ import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { popupToast } from '@components/Notifications/popupToast'
 import { StandardToast } from '@components/Notifications/StandardToast'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
+import { GetSigner, WalletReady } from 'privy/WalletReady'
 import { useGetAssetSourceParam, useIsAAWallet } from './useGetWalletParam'
 import { TransferSchema, transferSchema } from './transferAssetsSchema'
 import { WalletSelector } from './WalletSelector'
@@ -260,7 +260,6 @@ function SubmitButton(props: { source: Address | undefined; isTreasuryTransfer: 
     const { source, isTreasuryTransfer } = props
     const { handleSubmit, formState, watch, setError, reset, getValues } =
         useFormContext<TransferSchema>()
-    const { getSigner, isPrivyReady } = useGetEmbeddedSigner()
     const allValues = watch()
     const { assetToTransfer, ethAmount, recipient } = allValues
     const { transferAsset } = useTransferAssetTransaction()
@@ -268,7 +267,6 @@ function SubmitButton(props: { source: Address | undefined; isTreasuryTransfer: 
 
     const isDisabled = useMemo(() => {
         if (
-            !isPrivyReady ||
             formState.isSubmitting ||
             !assetToTransfer ||
             (assetToTransfer === 'BASE_ETH' && (formState.errors.ethAmount || !ethAmount)) ||
@@ -277,17 +275,10 @@ function SubmitButton(props: { source: Address | undefined; isTreasuryTransfer: 
             return true
         }
         return false
-    }, [
-        isPrivyReady,
-        formState.isSubmitting,
-        formState.errors.ethAmount,
-        assetToTransfer,
-        ethAmount,
-        recipient,
-    ])
+    }, [formState.isSubmitting, formState.errors.ethAmount, assetToTransfer, ethAmount, recipient])
 
     const makeTransferTx = useCallback(
-        async (dataToSubmit: ReturnType<typeof getValidatedData>) => {
+        async (dataToSubmit: ReturnType<typeof getValidatedData>, getSigner: GetSigner) => {
             if (!dataToSubmit) {
                 return
             }
@@ -304,26 +295,26 @@ function SubmitButton(props: { source: Address | undefined; isTreasuryTransfer: 
                 reset()
             }
         },
-        [getSigner, reset, source, transferAsset],
+        [reset, source, transferAsset],
     )
 
-    const onModalSubmit = useCallback(async () => {
-        setShowTreasuryOrNftConfirm(false)
-        const validData: TransferSchema = getValues()
-        const dataToSubmit = getValidatedData({
-            data: validData,
-            setError,
-            source,
-            isTreasuryTransfer,
-        })
-        await makeTransferTx(dataToSubmit)
-    }, [getValues, isTreasuryTransfer, setError, source, makeTransferTx])
+    const onModalSubmit = useCallback(
+        async (getSigner: GetSigner) => {
+            setShowTreasuryOrNftConfirm(false)
+            const validData: TransferSchema = getValues()
+            const dataToSubmit = getValidatedData({
+                data: validData,
+                setError,
+                source,
+                isTreasuryTransfer,
+            })
+            await makeTransferTx(dataToSubmit, getSigner)
+        },
+        [getValues, isTreasuryTransfer, setError, source, makeTransferTx],
+    )
 
     const onValid = useCallback(
-        async (data: TransferSchema) => {
-            if (!isPrivyReady) {
-                return
-            }
+        async (data: TransferSchema, getSigner: GetSigner) => {
             const _isNftTransfer = isNftTransfer(data)
 
             const dataToSubmit = getValidatedData({
@@ -338,33 +329,41 @@ function SubmitButton(props: { source: Address | undefined; isTreasuryTransfer: 
             }
 
             if (isTreasuryTransfer || _isNftTransfer) {
+                console.log('$$$$$$ evan.log::JJJ $$$$$$')
+
                 setShowTreasuryOrNftConfirm(true)
                 return
             }
 
-            await makeTransferTx(dataToSubmit)
+            await makeTransferTx(dataToSubmit, getSigner)
         },
-        [isPrivyReady, isTreasuryTransfer, setError, source, makeTransferTx],
+        [setError, source, isTreasuryTransfer, makeTransferTx],
     )
 
     return (
         <Stack padding>
-            <FancyButton
-                cta={!isDisabled}
-                data-testid="submit-button"
-                disabled={isDisabled}
-                onClick={handleSubmit(onValid)}
-            >
-                Send
-            </FancyButton>
-            <TreasuryOrNftConfirmModal
-                data={allValues}
-                showModal={showTreasuryOrNftConfirm}
-                type={isTreasuryTransfer ? 'treasury' : 'nft'}
-                fromWallet={source}
-                onHide={() => setShowTreasuryOrNftConfirm(false)}
-                onSubmit={onModalSubmit}
-            />
+            <WalletReady>
+                {({ getSigner }) => (
+                    <>
+                        <FancyButton
+                            cta={!isDisabled}
+                            data-testid="submit-button"
+                            disabled={isDisabled}
+                            onClick={handleSubmit((data) => onValid(data, getSigner))}
+                        >
+                            Send
+                        </FancyButton>
+                        <TreasuryOrNftConfirmModal
+                            data={allValues}
+                            showModal={showTreasuryOrNftConfirm}
+                            type={isTreasuryTransfer ? 'treasury' : 'nft'}
+                            fromWallet={source}
+                            onHide={() => setShowTreasuryOrNftConfirm(false)}
+                            onSubmit={() => onModalSubmit(getSigner)}
+                        />
+                    </>
+                )}
+            </WalletReady>
         </Stack>
     )
 }

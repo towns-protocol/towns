@@ -12,7 +12,6 @@ import {
     useUpdateChannelTransaction,
 } from 'use-towns-client'
 import React, { useCallback, useMemo, useState } from 'react'
-import { useGetEmbeddedSigner } from '@towns/privy'
 import { z } from 'zod'
 import { ChannelNameRegExp, isForbiddenError, isRejectionError } from 'ui/utils/utils'
 import { Box, Button, ErrorMessage, FormRender, Paragraph, Stack, TextField } from '@ui'
@@ -29,6 +28,7 @@ import { ModalContainer } from '@components/Modals/ModalContainer'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { CHANNEL_INFO_PARAMS } from 'routes'
 import { FullPanelOverlay } from '@components/Web3/WalletLinkingPanel'
+import { GetSigner, WalletReady } from 'privy/WalletReady'
 import { RoleCheckboxProps, RolesSection, getCheckedValuesForRoleIdsField } from './RolesSection'
 
 export type FormState = z.infer<typeof schema>
@@ -105,10 +105,8 @@ export function ChannelPermissionsNameDescriptionForm({
         }
     }, [transactionError, transactionHash])
 
-    const { getSigner, isPrivyReady } = useGetEmbeddedSigner()
-
     const onSubmit = useCallback(
-        async (changes: FormState) => {
+        async (changes: FormState, getSigner: GetSigner) => {
             const signer = await getSigner()
             if (!signer) {
                 createPrivyNotAuthenticatedNotification()
@@ -136,15 +134,7 @@ export function ChannelPermissionsNameDescriptionForm({
                 onSuccess?.()
             }
         },
-        [
-            getSigner,
-            hasPendingTx,
-            spaceId,
-            channelId,
-            updateChannelTransaction,
-            invalidateQuery,
-            onSuccess,
-        ],
+        [hasPendingTx, spaceId, channelId, updateChannelTransaction, invalidateQuery, onSuccess],
     )
 
     const onNameKeyDown = useCallback(async (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -233,12 +223,10 @@ export function ChannelPermissionsNameDescriptionForm({
                     roleIds: getCheckedValuesForRoleIdsField(rolesWithDetails),
                 }}
                 mode="onChange"
-                onSubmit={onSubmit}
             >
-                {({ register, formState, setValue, setError, resetField, watch }) => {
+                {({ register, formState, setValue, setError, resetField, watch, handleSubmit }) => {
                     const { onChange: onNameChange, ...restOfNameProps } = register('name')
-                    const isDisabled =
-                        !isPrivyReady || hasPendingTx || !formState.isDirty || !formState.isValid
+                    const isDisabled = hasPendingTx || !formState.isDirty || !formState.isValid
                     watch()
 
                     return (
@@ -328,14 +316,21 @@ export function ChannelPermissionsNameDescriptionForm({
                                 </Box>
                             )}
                             <Box gap="sm">
-                                <Button
-                                    type="submit"
-                                    tone={isDisabled ? 'level2' : 'cta1'}
-                                    disabled={isDisabled}
-                                >
-                                    {hasPendingTx ? 'Saving' : 'Save Channel'}
-                                    {hasPendingTx && <ButtonSpinner />}
-                                </Button>
+                                <WalletReady>
+                                    {({ getSigner }) => (
+                                        <Button
+                                            type="submit"
+                                            tone={isDisabled ? 'level2' : 'cta1'}
+                                            disabled={isDisabled}
+                                            onClick={handleSubmit((values) =>
+                                                onSubmit(values, getSigner),
+                                            )}
+                                        >
+                                            {hasPendingTx ? 'Saving' : 'Save Channel'}
+                                            {hasPendingTx && <ButtonSpinner />}
+                                        </Button>
+                                    )}
+                                </WalletReady>
                             </Box>
                         </Stack>
                     )

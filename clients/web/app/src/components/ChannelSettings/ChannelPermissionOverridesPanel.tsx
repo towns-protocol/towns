@@ -1,4 +1,3 @@
-import { useGetEmbeddedSigner } from '@towns/privy'
 import isEqual from 'lodash/isEqual'
 import React, { useMemo, useState } from 'react'
 import { FormProvider, SubmitErrorHandler, UseFormReturn, useFormContext } from 'react-hook-form'
@@ -28,6 +27,7 @@ import { Panel } from '@components/Panel/Panel'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { FadeIn } from '@components/Transitions'
+import { GetSigner, WalletReady } from 'privy/WalletReady'
 import { useChangePermissionOverridesStore } from './useChangePermissionOverridesStore'
 
 export const formSchema = z.object({
@@ -117,15 +117,14 @@ const UpdateExistingChannelPermissionsForm = (props: Props) => {
 
     const { clearPermissionOverrides } = useClearPermissionOverrides(spaceId, roleId, channelId)
 
-    const onClearPermissions = useEvent(() => {
-        clearPermissionOverrides()
+    const onClearPermissions = useEvent((getSigner: GetSigner) => {
+        clearPermissionOverrides(getSigner)
     })
 
-    const { getSigner, isPrivyReady } = useGetEmbeddedSigner()
     const { setChannelPermissionOverridesTransaction } = useSetChannelPermissionOverrides()
     const { clearChannelPermissionOverridesTransaction } = useClearChannelPermissionOverrides()
 
-    const onSubmit = useEvent(async (permissions: Permission[]) => {
+    const onSubmit = useEvent(async (permissions: Permission[], getSigner: GetSigner) => {
         const signer = await getSigner()
         if (!signer) {
             createPrivyNotAuthenticatedNotification()
@@ -167,7 +166,7 @@ const UpdateExistingChannelPermissionsForm = (props: Props) => {
             defaultPermissions={defaultPermissions}
             defaultResetPermissions={rolePermissions}
             hasOverrides={hasOverrides}
-            isDisabled={!isPrivyReady || transactionIsPending}
+            isDisabled={transactionIsPending}
             onClearPermissions={onClearPermissions}
             onSubmit={onSubmit}
         />
@@ -224,8 +223,8 @@ const PermissionForm = React.memo(
             defaultPermissions: Permission[]
             hasOverrides: boolean
             defaultResetPermissions: Permission[]
-            onClearPermissions: () => void
-            onSubmit: (permissions: Permission[]) => void
+            onClearPermissions: (getSigner: GetSigner) => void
+            onSubmit: (permissions: Permission[], getSigner: GetSigner) => void
             isDisabled?: boolean
         } & (
                 | {
@@ -296,16 +295,22 @@ const PermissionForm = React.memo(
                                             </Stack>
                                         </Stack>
 
-                                        <SubmitButton
-                                            permissions={_form.watch('channelPermissions')}
-                                            isDisabled={isDisabled}
-                                            defaultValues={{
-                                                channelPermissions: defaultPermissions,
-                                            }}
-                                            onSubmit={onSubmit}
-                                        >
-                                            Save
-                                        </SubmitButton>
+                                        <WalletReady>
+                                            {({ getSigner }) => (
+                                                <SubmitButton
+                                                    permissions={_form.watch('channelPermissions')}
+                                                    isDisabled={isDisabled}
+                                                    defaultValues={{
+                                                        channelPermissions: defaultPermissions,
+                                                    }}
+                                                    onSubmit={(permissions) =>
+                                                        onSubmit(permissions, getSigner)
+                                                    }
+                                                >
+                                                    Save
+                                                </SubmitButton>
+                                            )}
+                                        </WalletReady>
                                     </Stack>
                                 </FormProvider>
                             )
@@ -423,11 +428,8 @@ const SubmitButton = (props: {
 
 const useClearPermissionOverrides = (spaceId: string, roleId: number, channelId: string) => {
     const { clearChannelPermissionOverridesTransaction } = useClearChannelPermissionOverrides()
-    const { getSigner, isPrivyReady } = useGetEmbeddedSigner()
 
-    const isDisabled = !isPrivyReady
-
-    const clearPermissionOverrides = useEvent(async () => {
+    const clearPermissionOverrides = useEvent(async (getSigner: GetSigner) => {
         const signer = await getSigner()
 
         if (!signer) {
@@ -447,6 +449,5 @@ const useClearPermissionOverrides = (spaceId: string, roleId: number, channelId:
 
     return {
         clearPermissionOverrides,
-        isDisabled,
     }
 }

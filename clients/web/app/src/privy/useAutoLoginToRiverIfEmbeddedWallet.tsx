@@ -1,10 +1,9 @@
 import React, { useCallback } from 'react'
 import { useConnectivity, useFetchHasJoinPermission, useTownsClient } from 'use-towns-client'
-import { useGetEmbeddedSigner } from '@towns/privy'
+import { useGetSignerWithTimeout } from '@towns/privy'
 import useStateMachine from '@cassiozen/usestatemachine'
 import { Signer } from 'ethers'
 import { usePrivy } from '@privy-io/react-auth'
-import { clearEmbeddedWalletStorage } from '@towns/privy/EmbeddedSignerContext'
 import {
     publicPageLoginStore,
     usePublicPageLoginFlow,
@@ -13,6 +12,7 @@ import { trackError } from 'hooks/useAnalytics'
 import { popupToast } from '@components/Notifications/popupToast'
 import { StandardToast } from '@components/Notifications/StandardToast'
 import { mapToErrorMessage } from '@components/Web3/utils'
+import { useEnvironment } from 'hooks/useEnvironmnet'
 type UseConnectivtyReturnValue = ReturnType<typeof useConnectivity>
 
 // useStateMachine has issues w typescript 5.4
@@ -34,7 +34,8 @@ export function useAutoLoginToRiverIfEmbeddedWallet({
     isRiverAuthencticated: UseConnectivtyReturnValue['isAuthenticated']
     defaultUsername?: string
 }) {
-    const { getSigner } = useGetEmbeddedSigner()
+    const { baseChain } = useEnvironment()
+    const getSigner = useGetSignerWithTimeout({ chainId: baseChain.id })
     const { logout: privyLogout } = usePrivy()
     const {
         end: endPublicPageLoginFlow,
@@ -85,7 +86,6 @@ export function useAutoLoginToRiverIfEmbeddedWallet({
                 effect() {
                     async function _logout() {
                         clientSingleton?.userOps?.reset()
-                        clearEmbeddedWalletStorage()
                         await privyLogout()
                         send('RESET')
                     }

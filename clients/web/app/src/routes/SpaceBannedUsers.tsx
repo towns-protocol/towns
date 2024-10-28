@@ -8,7 +8,6 @@ import {
     useUnbanTransaction,
     useUserLookupContext,
 } from 'use-towns-client'
-import { useGetEmbeddedSigner } from '@towns/privy'
 import { Panel } from '@components/Panel/Panel'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { Box, Button, Paragraph, Stack } from '@ui'
@@ -22,6 +21,7 @@ import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { ConfirmBanUnbanModal } from '@components/ConfirmBanUnbanModal/ConfirmBanUnbanModal'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { PrivyWrapper } from 'privy/PrivyProvider'
+import { GetSigner } from 'privy/WalletReady'
 
 export const SpaceBannedUsers = React.memo(() => {
     return (
@@ -40,8 +40,6 @@ export const SpaceBannedUsersWithoutAuth = () => {
     const { unbanTransaction } = useUnbanTransaction()
     const unbanTransactionPending = useIsTransactionPending(BlockchainTransactionType.UnbanUser)
 
-    const { getSigner, isPrivyReady } = useGetEmbeddedSigner()
-
     const unbanClicked = useCallback(
         (userId: string) => {
             setSelectedUserId(userId)
@@ -55,30 +53,26 @@ export const SpaceBannedUsersWithoutAuth = () => {
         setShowConfirmModal(false)
     }, [setSelectedUserId])
 
-    const onConfirmUnban = useCallback(() => {
-        if (!spaceId || !selectedUserId || unbanTransactionPending) {
-            return
-        }
-        async function unban(spaceNetworkId: string, userId: string) {
-            const signer = await getSigner()
-            if (!signer) {
-                console.error('No signer')
-                createPrivyNotAuthenticatedNotification()
+    const onConfirmUnban = useCallback(
+        (getSigner: GetSigner) => {
+            if (!spaceId || !selectedUserId || unbanTransactionPending) {
                 return
             }
-            await unbanTransaction(signer, spaceNetworkId, userId)
-            setSelectedUserId(undefined)
-        }
-        void unban(spaceId, selectedUserId)
-        setShowConfirmModal(false)
-    }, [
-        spaceId,
-        selectedUserId,
-        getSigner,
-        unbanTransaction,
-        setSelectedUserId,
-        unbanTransactionPending,
-    ])
+            async function unban(spaceNetworkId: string, userId: string) {
+                const signer = await getSigner()
+                if (!signer) {
+                    console.error('No signer')
+                    createPrivyNotAuthenticatedNotification()
+                    return
+                }
+                await unbanTransaction(signer, spaceNetworkId, userId)
+                setSelectedUserId(undefined)
+            }
+            void unban(spaceId, selectedUserId)
+            setShowConfirmModal(false)
+        },
+        [spaceId, selectedUserId, unbanTransaction, setSelectedUserId, unbanTransactionPending],
+    )
 
     return (
         <Panel label="Banned Users" padding="none">
@@ -97,7 +91,7 @@ export const SpaceBannedUsersWithoutAuth = () => {
                                 transactionInProgress={
                                     unbanTransactionPending && userId === selectedUserId
                                 }
-                                disabled={!isPrivyReady || unbanTransactionPending}
+                                disabled={unbanTransactionPending}
                             />
                         ))
                     ) : (

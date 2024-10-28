@@ -2,7 +2,6 @@ import React, { useRef } from 'react'
 import { Route, Routes } from 'react-router-dom'
 import { TownsContextProvider } from 'use-towns-client'
 import { ThemeProvider } from '@mui/material/styles'
-import { EmbeddedSignerContextProvider } from '@towns/privy'
 import { WagmiConfig, createConfig } from 'wagmi'
 import { createPublicClient, http } from 'viem'
 import { foundry } from 'wagmi/chains'
@@ -86,36 +85,34 @@ const AppContent = () => {
                 riverConfig={riverChainConfig}
                 streamFilter={streamFilter}
             >
-                <EmbeddedSignerContextProvider chainId={baseChain.id}>
-                    <Routes>
-                        <Route element={<MainLayout />}>
-                            <Route element={<AuthenticatedContent />}>
-                                <Route index element={<Home />} />
-                                <Route path="spaces/new" element={<SpacesNew />} />
-                                <Route path="spaces/:spaceSlug" element={<Spaces />}>
-                                    <Route index element={<SpacesIndex />} />
-                                    <Route path="invite" element={<SpaceInvite />} />
-                                    <Route path="channels/new" element={<SpacesNewChannel />} />
-                                    <Route path="channels/:channelSlug" element={<Channels />}>
-                                        <Route index element={<ChannelsIndex />} />
-                                    </Route>
-                                    <Route path="threads" element={<Threads />} />
-                                    <Route
-                                        path="threads/:channelSlug/:threadParentId"
-                                        element={<Thread />}
-                                    />
-                                    <Route path="mentions" element={<Mentions />} />
+                <Routes>
+                    <Route element={<MainLayout />}>
+                        <Route element={<AuthenticatedContent />}>
+                            <Route index element={<Home />} />
+                            <Route path="spaces/new" element={<SpacesNew />} />
+                            <Route path="spaces/:spaceSlug" element={<Spaces />}>
+                                <Route index element={<SpacesIndex />} />
+                                <Route path="invite" element={<SpaceInvite />} />
+                                <Route path="channels/new" element={<SpacesNewChannel />} />
+                                <Route path="channels/:channelSlug" element={<Channels />}>
+                                    <Route index element={<ChannelsIndex />} />
                                 </Route>
-                                <Route path="web3" element={<Web3 />} />
-                                <Route path="wallet-linking" element={<WalletLinkingPage />} />
-                                <Route path="logins" element={<Login />} />
-                                <Route path="streams" element={<StreamsRoute />} />
-                                <Route path="streams/:streamId" element={<StreamRoute />} />
-                                <Route path="*" element={<NotFound />} />
+                                <Route path="threads" element={<Threads />} />
+                                <Route
+                                    path="threads/:channelSlug/:threadParentId"
+                                    element={<Thread />}
+                                />
+                                <Route path="mentions" element={<Mentions />} />
                             </Route>
+                            <Route path="web3" element={<Web3 />} />
+                            <Route path="wallet-linking" element={<WalletLinkingPage />} />
+                            <Route path="logins" element={<Login />} />
+                            <Route path="streams" element={<StreamsRoute />} />
+                            <Route path="streams/:streamId" element={<StreamRoute />} />
+                            <Route path="*" element={<NotFound />} />
                         </Route>
-                    </Routes>
-                </EmbeddedSignerContextProvider>
+                    </Route>
+                </Routes>
             </TownsContextProvider>
         </ThemeProvider>
     )

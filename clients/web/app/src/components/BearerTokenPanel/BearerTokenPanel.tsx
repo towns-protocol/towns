@@ -1,5 +1,4 @@
 import React, { useCallback, useState } from 'react'
-import { useGetEmbeddedSigner } from '@towns/privy'
 import { makeBearerToken } from '@river-build/sdk'
 import { z } from 'zod'
 import { Panel } from '@components/Panel/Panel'
@@ -7,6 +6,7 @@ import { Box, Button, Dropdown, Paragraph } from '@ui'
 import { PrivyWrapper } from 'privy/PrivyProvider'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
+import { GetSigner, WalletReady } from 'privy/WalletReady'
 
 const EXPIRY_OPTIONS = [
     {
@@ -80,7 +80,6 @@ const expiryToString = (expiry: ExpiryFormat) =>
         ([key, value]) => `${value} ${fixPlural(value, key.replace(/s$/, ''), key)}`,
     )
 const BearerTokenPanel = () => {
-    const { isPrivyReady, getSigner } = useGetEmbeddedSigner()
     const [bearerToken, setBearerToken] = useState<string | null>(null)
     const [expiry, setExpiry] = useState<{
         days?: number
@@ -90,8 +89,8 @@ const BearerTokenPanel = () => {
     } | null>(null)
     const [isLoading, setLoading] = useState(false)
 
-    const generateBearerToken = useCallback(
-        async (expiry: ExpiryFormat) => {
+    const generateBearerToken = useCallback(async (expiry: ExpiryFormat, getSigner: GetSigner) => {
+        try {
             setLoading(true)
             const signer = await getSigner()
             if (!signer) {
@@ -100,9 +99,12 @@ const BearerTokenPanel = () => {
             const token = await makeBearerToken(signer, expiry)
             setLoading(false)
             return token
-        },
-        [getSigner],
-    )
+        } catch (error) {
+            console.error('generateBearerToken: ', error)
+        } finally {
+            setLoading(false)
+        }
+    }, [])
 
     return (
         <Panel label="Bearer Token" gap="lg">
@@ -121,18 +123,21 @@ const BearerTokenPanel = () => {
                         setExpiry(parsedExpiry)
                     }}
                 />
-                <Button
-                    disabled={!isPrivyReady}
-                    onClick={async () => {
-                        if (!expiry) {
-                            return
-                        }
-                        const token = await generateBearerToken(expiry)
-                        setBearerToken(token ?? null)
-                    }}
-                >
-                    Generate your Bearer Token
-                </Button>
+                <WalletReady>
+                    {({ getSigner }) => (
+                        <Button
+                            onClick={async () => {
+                                if (!expiry) {
+                                    return
+                                }
+                                const token = await generateBearerToken(expiry, getSigner)
+                                setBearerToken(token ?? null)
+                            }}
+                        >
+                            Generate your Bearer Token
+                        </Button>
+                    )}
+                </WalletReady>
             </Box>
 
             {isLoading && <ButtonSpinner />}

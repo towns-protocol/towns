@@ -8,7 +8,6 @@ import {
     useRoleDetails,
 } from 'use-towns-client'
 import { SubmitErrorHandler, useFormContext } from 'react-hook-form'
-import { useGetEmbeddedSigner } from '@towns/privy'
 import isEqual from 'lodash/isEqual'
 import { useEvent } from 'react-use-event-hook'
 import { Button } from '@ui'
@@ -17,6 +16,7 @@ import { usePlatformMinMembershipPriceInEth } from 'hooks/usePlatformMinMembersh
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { prepareGatedDataForSubmit } from '@components/Tokens/utils'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
+import { GetSigner, WalletReady } from 'privy/WalletReady'
 import { EditMembershipSchemaType } from './editMembershipSchema'
 
 export function EditMembershipSubmitButton({
@@ -32,7 +32,6 @@ export function EditMembershipSubmitButton({
     const { defaultValues } = formState
     const watchAllFields = watch()
     // success and error statuses are handled by <BlockchainTxNotifier />
-    const { getSigner, isPrivyReady } = useGetEmbeddedSigner()
     const { editSpaceMembershipTransaction } = useEditSpaceMembershipTransaction()
     const { data: pricingModules, isLoading: isLoadingPricingModules } = usePricingModules()
     const { roleDetails, isLoading: isLoadingRoleDetails } = useRoleDetails(spaceId ?? '', 1)
@@ -51,7 +50,6 @@ export function EditMembershipSubmitButton({
     }, [defaultValues, watchAllFields])
 
     const isDisabled =
-        !isPrivyReady ||
         formState.isSubmitting ||
         isUnchanged ||
         Object.keys(formState.errors).length > 0 ||
@@ -67,7 +65,7 @@ export function EditMembershipSubmitButton({
 
     const { data: minimumMmebershipPrice } = usePlatformMinMembershipPriceInEth()
 
-    const onValid = useEvent(async (data: EditMembershipSchemaType) => {
+    const onValid = useEvent(async (data: EditMembershipSchemaType, getSigner: GetSigner) => {
         if (
             !spaceId ||
             !roleDetails ||
@@ -185,16 +183,20 @@ export function EditMembershipSubmitButton({
     })
 
     return (
-        <Button
-            data-testid="submit-button"
-            disabled={isDisabled}
-            tone={isDisabled ? 'level2' : 'cta1'}
-            style={{
-                pointerEvents: isDisabled ? 'none' : 'initial',
-            }}
-            onClick={handleSubmit(onValid, onInvalid)}
-        >
-            {children}
-        </Button>
+        <WalletReady>
+            {({ getSigner }) => (
+                <Button
+                    data-testid="submit-button"
+                    disabled={isDisabled}
+                    tone={isDisabled ? 'level2' : 'cta1'}
+                    style={{
+                        pointerEvents: isDisabled ? 'none' : 'initial',
+                    }}
+                    onClick={handleSubmit((data) => onValid(data, getSigner), onInvalid)}
+                >
+                    {children}
+                </Button>
+            )}
+        </WalletReady>
     )
 }

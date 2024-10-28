@@ -9,14 +9,12 @@ import { useWalletPrefix } from '../useWalletPrefix'
 export function WalletWithBalance({
     address,
     isAbstractAccount,
-    isDisabled,
-    onUnlinkClick,
+    UnlinkButton,
     onRemoveClick,
 }: {
     address: Address
     isAbstractAccount: boolean
-    isDisabled: boolean
-    onUnlinkClick?: (address: Address) => void
+    UnlinkButton?: React.ReactNode
     onRemoveClick?: (address: Address) => void
 }) {
     const balance = useBalance({
@@ -48,17 +46,7 @@ export function WalletWithBalance({
                             isAbstractAccount ? `${walletPrefix}:${address}` : address
                         }
                     />
-                    {onUnlinkClick && (
-                        <IconButton
-                            cursor={isDisabled ? 'not-allowed' : 'pointer'}
-                            disabled={isDisabled}
-                            opacity={isDisabled ? '0.5' : 'opaque'}
-                            icon="unlink"
-                            color="default"
-                            tooltip="Unlink Wallet"
-                            onClick={() => onUnlinkClick?.(address)}
-                        />
-                    )}
+                    {UnlinkButton}
                 </Stack>
             )}
             <Stack horizontal centerContent gap="sm">

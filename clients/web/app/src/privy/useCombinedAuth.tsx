@@ -1,13 +1,13 @@
 import { Address, useConnectivity, useMyDefaultUsernames } from 'use-towns-client'
 import React, { createContext, useCallback, useContext, useMemo } from 'react'
 import { useLogin, usePrivy } from '@privy-io/react-auth'
-import { retryGetAccessToken, useEmbeddedWallet, useGetEmbeddedSigner } from '@towns/privy'
-import { clearEmbeddedWalletStorage } from '@towns/privy/EmbeddedSignerContext'
+import { retryGetAccessToken, useEmbeddedWallet, useGetSignerWithTimeout } from '@towns/privy'
 import { usePublicPageLoginFlow } from 'routes/PublicTownPage/usePublicPageLoginFlow'
 import { useUnsubscribeNotification } from 'hooks/usePushSubscription'
 import { Analytics } from 'hooks/useAnalytics'
 import { popupToast } from '@components/Notifications/popupToast'
 import { StandardToast } from '@components/Notifications/StandardToast'
+import { useEnvironment } from 'hooks/useEnvironmnet'
 import { useAutoLoginToRiverIfEmbeddedWallet } from './useAutoLoginToRiverIfEmbeddedWallet'
 
 type CombinedAuthContext = {
@@ -15,11 +15,6 @@ type CombinedAuthContext = {
      * true after the callback from logging in to privy is called, while the signer is being set and the user is logging in to river
      */
     isAutoLoggingInToRiver: boolean
-    /**
-     * the user is logged in to privy and has an embedded wallet
-     */
-    isConnected: boolean
-
     /**
      * login to privy if not connected, otherwise login to river
      */
@@ -62,6 +57,7 @@ function useCombinedAuthContext(): CombinedAuthContext {
         authError,
     } = useConnectivity()
     const { logout: privyLogout } = usePrivy()
+    const embeddedWallet = useEmbeddedWallet()
     const defaultUsername: string | undefined = useMyDefaultUsernames()[0]
     const unsubscribeNotification = useUnsubscribeNotification()
 
@@ -78,18 +74,18 @@ function useCombinedAuthContext(): CombinedAuthContext {
         loginToRiverAfterPrivy,
     })
 
-    const { getSigner } = useGetEmbeddedSigner()
-    const isConnected = useIsConnected()
+    const { baseChain } = useEnvironment()
+    const getSigner = useGetSignerWithTimeout({ chainId: baseChain.id })
 
     const login = useCallback(async () => {
-        if (isConnected) {
+        if (embeddedWallet) {
             const signer = await getSigner()
             await riverLogin(signer)
         } else {
             // login to privy, kicking off useAutoLoginToRiverIfEmbeddedWallet
             privyLogin()
         }
-    }, [isConnected, riverLogin, getSigner, privyLogin])
+    }, [embeddedWallet, getSigner, riverLogin, privyLogin])
 
     const logout = useCallback(async () => {
         try {
@@ -99,7 +95,6 @@ function useCombinedAuthContext(): CombinedAuthContext {
             return
         }
         await privyLogout()
-        clearEmbeddedWalletStorage()
         resetAutoLoginState()
         await unsubscribeNotification()
     }, [privyLogout, resetAutoLoginState, unsubscribeNotification, riverLogout])
@@ -108,21 +103,11 @@ function useCombinedAuthContext(): CombinedAuthContext {
         () => ({
             login,
             logout,
-            isConnected, // isConnected means privy account is created and logged in
             isAutoLoggingInToRiver,
             privyLogin,
         }),
-        [isConnected, login, logout, isAutoLoggingInToRiver, privyLogin],
+        [login, logout, isAutoLoggingInToRiver, privyLogin],
     )
-}
-
-/**
- * the user is logged in to privy and has an embedded wallet
- */
-function useIsConnected(): CombinedAuthContext['isConnected'] {
-    const { ready: privyReady, authenticated: privyAuthenticated } = usePrivy()
-    const embeddedWallet = useEmbeddedWallet()
-    return privyReady && privyAuthenticated && !!embeddedWallet
 }
 
 function usePrivyLoginWithErrorHandler({

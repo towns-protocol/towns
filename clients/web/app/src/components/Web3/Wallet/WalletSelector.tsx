@@ -55,7 +55,6 @@ export function WalletSelector(props: {
                 <WalletWithBalance
                     address={recipient}
                     isAbstractAccount={isAAWallet}
-                    isDisabled={false}
                     onRemoveClick={onRemoveClick}
                 />
             </Stack>

@@ -2,15 +2,14 @@ import React, { useCallback } from 'react'
 import { useSpaceData, useTownsClient } from 'use-towns-client'
 import { useNavigate } from 'react-router-dom'
 
-import { useGetEmbeddedSigner } from '@towns/privy'
 import { MintMembershipToAddressForm } from '@components/mintMembershipToAddressForm'
+import { GetSigner, WalletReady } from '@components/WalletReady'
 import { InviteForm } from '../components/InviteForm'
 
 export function SpaceInvite() {
     const space = useSpaceData()
     const navigate = useNavigate()
     const { inviteUser, spaceDapp } = useTownsClient()
-    const { getSigner } = useGetEmbeddedSigner()
 
     const onClickSendInvite = useCallback(
         async (spaceId: string, inviteeId: string) => {
@@ -25,7 +24,7 @@ export function SpaceInvite() {
     }, [navigate, space?.id])
 
     const onClickMintMembership = useCallback(
-        async (spaceId: string, walletAddress: string) => {
+        async (spaceId: string, walletAddress: string, getSigner: GetSigner) => {
             if (!spaceDapp) {
                 console.error('No spaceDapp found')
                 return
@@ -38,17 +37,23 @@ export function SpaceInvite() {
             const { issued } = await spaceDapp.joinSpace(spaceId, walletAddress, signer)
             console.log('::transaction::', issued)
         },
-        [getSigner, spaceDapp],
+        [spaceDapp],
     )
 
     return space ? (
         <>
-            <MintMembershipToAddressForm
-                spaceId={space.id}
-                spaceName={space.name}
-                mintMembership={onClickMintMembership}
-                onClickCancel={onClickCancel}
-            />
+            <WalletReady>
+                {({ getSigner }) => (
+                    <MintMembershipToAddressForm
+                        spaceId={space.id}
+                        spaceName={space.name}
+                        mintMembership={(spaceId, walletAddress) =>
+                            onClickMintMembership(spaceId, walletAddress, getSigner)
+                        }
+                        onClickCancel={onClickCancel}
+                    />
+                )}
+            </WalletReady>
             <InviteForm
                 isSpace
                 streamId={space.id}

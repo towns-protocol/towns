@@ -1,4 +1,3 @@
-import { Allotment } from 'allotment'
 import { clsx } from 'clsx'
 import debug from 'debug'
 import React, { useCallback, useEffect, useMemo } from 'react'
@@ -9,7 +8,6 @@ import { getTownDataFromSSR } from 'utils/parseTownDataFromSSR'
 import { AppProgressState } from '@components/AppProgressOverlay/AppProgressState'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { LogoSingleLetter } from '@components/Logo/Logo'
-import { MainSideBar } from '@components/SideBars'
 import { BlurredBackground } from '@components/TouchLayoutHeader/BlurredBackground'
 import { TownPageActivity } from '@components/TownPageLayout/TownPageActivity'
 import { TownPageLayout } from '@components/TownPageLayout/TownPageLayout'
@@ -39,7 +37,6 @@ log.enabled = true
 const PublicTownPageWithoutAuth = (props: { isPreview?: boolean; onClosePreview?: () => void }) => {
     const { isPreview = false, onClosePreview } = props
     const spaceId = useSpaceIdFromPathname()
-    const { isConnected: connected } = useCombinedAuth()
 
     const { data: _spaceInfo, isLoading } = useContractSpaceInfoWithoutClient(spaceId)
 
@@ -110,19 +107,6 @@ const PublicTownPageWithoutAuth = (props: { isPreview?: boolean; onClosePreview?
             progressState={AppProgressState.LoggingIn}
             debugSource="public town page isLoading"
         />
-    ) : connected ? (
-        <Stack horizontal absoluteFill>
-            <Allotment>
-                <Allotment.Pane minSize={65} maxSize={65} preferredSize={65}>
-                    <MainSideBar />
-                </Allotment.Pane>
-                <Allotment.Pane>
-                    <Box absoluteFill centerContent>
-                        <TownNotFoundBox />
-                    </Box>
-                </Allotment.Pane>
-            </Allotment>
-        </Stack>
     ) : (
         <MessageBox>
             <TownNotFoundBox />

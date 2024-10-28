@@ -8,13 +8,16 @@ import { DependencyList, useCallback } from 'react'
  * @param callback - the function to call
  * @param deps - the dependencies to use for the callback
  */
-export const useAsyncButtonCallback = (callback: () => Promise<void>, deps: DependencyList) => {
+export const useAsyncButtonCallback = <T>(
+    callback: (args: T) => Promise<void>,
+    deps: DependencyList,
+) => {
     return useCallback(
-        async (event: React.MouseEvent<HTMLButtonElement>) => {
+        async (event: React.MouseEvent<HTMLButtonElement>, args: T) => {
             const button = event.currentTarget
             try {
                 button.disabled = true
-                return await callback()
+                return await callback(args)
             } finally {
                 button.disabled = false
             }

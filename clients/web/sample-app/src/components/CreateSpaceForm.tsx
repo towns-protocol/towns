@@ -21,9 +21,9 @@ import {
 } from '@river-build/web3'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ethers } from 'ethers'
-import { useGetEmbeddedSigner } from '@towns/privy'
 import { MembershipRequirement, SpaceRoleSettings } from 'routes/SpaceRoleSettings'
 import { ChainSwitchingButton } from './Buttons/ChainSwitchingButton'
+import { GetSigner, WalletReady } from './WalletReady'
 
 interface Props {
     onClick: (roomId: string, membership: Membership) => void
@@ -46,7 +46,6 @@ export const CreateSpaceForm = (props: Props) => {
     const { chain: walletChain } = useNetwork()
     const { authStatus: casablancaAuthStatus } = useCasablancaStore()
     const { spaceDapp } = useTownsClient()
-    const { getSigner } = useGetEmbeddedSigner()
 
     const [formValue, setFormValue] = useState<FormValues>({
         spaceName: '',
@@ -120,69 +119,71 @@ export const CreateSpaceForm = (props: Props) => {
         }
     }, [])
 
-    const onClickCreateSpace = useCallback(async () => {
-        const memberPermissions: Permission[] = [Permission.Read, Permission.Write]
-        // let everyonePermissions: Permission[] = []
-        switch (formValue.membershipRequirement) {
-            case MembershipRequirement.Everyone:
-                break
-            case MembershipRequirement.MemberNFT:
-                if (!councilNftAddress) {
-                    console.error('Cannot create space. No council NFT address.')
-                    return undefined
-                }
-                break
-            default:
-                throw new Error('Unhandled membership requirement')
-        }
+    const onClickCreateSpace = useCallback(
+        async (getSigner: GetSigner) => {
+            const memberPermissions: Permission[] = [Permission.Read, Permission.Write]
+            // let everyonePermissions: Permission[] = []
+            switch (formValue.membershipRequirement) {
+                case MembershipRequirement.Everyone:
+                    break
+                case MembershipRequirement.MemberNFT:
+                    if (!councilNftAddress) {
+                        console.error('Cannot create space. No council NFT address.')
+                        return undefined
+                    }
+                    break
+                default:
+                    throw new Error('Unhandled membership requirement')
+            }
 
-        const createSpaceInfo: CreateSpaceInfo = {
-            name: formValue.spaceName,
-        }
-        const signer = await getSigner()
+            const createSpaceInfo: CreateSpaceInfo = {
+                name: formValue.spaceName,
+            }
+            const signer = await getSigner()
 
-        if (!signer) {
-            console.error('Cannot create space. No signer.')
-            return undefined
-        }
-        if (!spaceDapp) {
-            console.error('Cannot create space. No spaceDapp.')
-            return undefined
-        }
-        const dynamicPricingModule = await getDynamicPricingModule(spaceDapp)
+            if (!signer) {
+                console.error('Cannot create space. No signer.')
+                return undefined
+            }
+            if (!spaceDapp) {
+                console.error('Cannot create space. No spaceDapp.')
+                return undefined
+            }
+            const dynamicPricingModule = await getDynamicPricingModule(spaceDapp)
 
-        const requirements: MembershipStruct = {
-            settings: {
-                name: 'Member',
-                symbol: 'MEMBER',
-                price: formValue.price,
-                maxSupply: formValue.limit,
-                duration: 0,
-                currency: ethers.constants.AddressZero,
-                feeRecipient: ethers.constants.AddressZero,
-                freeAllocation: 0,
-                pricingModule: dynamicPricingModule.module,
-            },
-            permissions: memberPermissions,
-            requirements: {
-                everyone: true,
-                users: [],
-                ruleData: EncodedNoopRuleData,
-                syncEntitlements: false,
-            },
-        }
+            const requirements: MembershipStruct = {
+                settings: {
+                    name: 'Member',
+                    symbol: 'MEMBER',
+                    price: formValue.price,
+                    maxSupply: formValue.limit,
+                    duration: 0,
+                    currency: ethers.constants.AddressZero,
+                    feeRecipient: ethers.constants.AddressZero,
+                    freeAllocation: 0,
+                    pricingModule: dynamicPricingModule.module,
+                },
+                permissions: memberPermissions,
+                requirements: {
+                    everyone: true,
+                    users: [],
+                    ruleData: EncodedNoopRuleData,
+                    syncEntitlements: false,
+                },
+            }
 
-        await createSpaceTransactionWithRole(createSpaceInfo, requirements, signer)
-    }, [
-        formValue.membershipRequirement,
-        formValue.spaceName,
-        formValue.price,
-        formValue.limit,
-        getSigner,
-        spaceDapp,
-        createSpaceTransactionWithRole,
-        councilNftAddress,
-    ])
+            await createSpaceTransactionWithRole(createSpaceInfo, requirements, signer)
+        },
+        [
+            formValue.membershipRequirement,
+            formValue.spaceName,
+            formValue.price,
+            formValue.limit,
+            spaceDapp,
+            createSpaceTransactionWithRole,
+            councilNftAddress,
+        ],
+    )
 
     useEffect(() => {
         if (transactionStatus === TransactionStatus.Success && txData && txData.spaceId) {
@@ -287,14 +288,18 @@ export const CreateSpaceForm = (props: Props) => {
                     marginTop="20px"
                 />
                 <Box display="flex" flexDirection="column" alignItems="center">
-                    <ChainSwitchingButton
-                        variant="contained"
-                        color="primary"
-                        disabled={disableCreateButton}
-                        onClick={onClickCreateSpace}
-                    >
-                        Create
-                    </ChainSwitchingButton>
+                    <WalletReady>
+                        {({ getSigner }) => (
+                            <ChainSwitchingButton
+                                variant="contained"
+                                color="primary"
+                                disabled={disableCreateButton}
+                                onClick={() => onClickCreateSpace(getSigner)}
+                            >
+                                Create
+                            </ChainSwitchingButton>
+                        )}
+                    </WalletReady>
                 </Box>
                 {(chain?.id === localhost.id ||
                     chain?.id === foundry.id ||

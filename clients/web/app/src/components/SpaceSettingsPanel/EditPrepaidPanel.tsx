@@ -8,7 +8,6 @@ import {
     usePrepayMembershipTransaction,
 } from 'use-towns-client'
 import { useEvent } from 'react-use-event-hook'
-import { useGetEmbeddedSigner } from '@towns/privy'
 import { Button, ErrorMessage, FormRender, Icon, Paragraph, Stack, Text, TextField } from '@ui'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
@@ -16,6 +15,7 @@ import { createPrivyNotAuthenticatedNotification } from '@components/Notificatio
 import { PrivyWrapper } from 'privy/PrivyProvider'
 import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
 import { FullPanelOverlay } from '@components/Web3/WalletLinkingPanel'
+import { GetSigner, WalletReady } from 'privy/WalletReady'
 
 const prepaidSchema = z.object({
     supply: z.coerce
@@ -38,7 +38,6 @@ export function EditPrepaidPanel() {
 export function EditPrepaidPanelWithoutAuth() {
     const spaceId = useSpaceIdFromPathname()
     const { data: prepaidSupply, isLoading: isLoadingPrepaidSupply } = usePrepaidSupply(spaceId)
-    const { getSigner, isPrivyReady } = useGetEmbeddedSigner()
     const isPendingTx = useIsTransactionPending(BlockchainTransactionType.PrepayMembership)
     const { prepayMembershipTransaction } = usePrepayMembershipTransaction()
     const onValid = useEvent(
@@ -47,6 +46,7 @@ export function EditPrepaidPanelWithoutAuth() {
             form: UseFormReturn<{
                 supply: number
             }>,
+            getSigner: GetSigner,
         ) => {
             const signer = await getSigner()
             if (!signer) {
@@ -81,7 +81,6 @@ export function EditPrepaidPanelWithoutAuth() {
                                     hookForm as unknown as UseFormReturn<PrepaidSchemaType>
 
                                 const disabled =
-                                    !isPrivyReady ||
                                     !!Object.keys(_form.formState.errors).length ||
                                     !_form.formState.isDirty ||
                                     isPendingTx
@@ -133,16 +132,20 @@ export function EditPrepaidPanelWithoutAuth() {
                                                     />
                                                 )}
                                             </Stack>
-                                            <Button
-                                                disabled={disabled}
-                                                tone={disabled ? 'level2' : 'cta1'}
-                                                style={{ marginTop: 'auto' }}
-                                                onClick={_form.handleSubmit((d) =>
-                                                    onValid(d, _form),
+                                            <WalletReady>
+                                                {({ getSigner }) => (
+                                                    <Button
+                                                        disabled={disabled}
+                                                        tone={disabled ? 'level2' : 'cta1'}
+                                                        style={{ marginTop: 'auto' }}
+                                                        onClick={_form.handleSubmit((d) =>
+                                                            onValid(d, _form, getSigner),
+                                                        )}
+                                                    >
+                                                        Update
+                                                    </Button>
                                                 )}
-                                            >
-                                                Update
-                                            </Button>
+                                            </WalletReady>
                                         </Stack>
                                         <UserOpTxModal
                                             valueLabel={`Seats x ${_form.getValues('supply')}`}

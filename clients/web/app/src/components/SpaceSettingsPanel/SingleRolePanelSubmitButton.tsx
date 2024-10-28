@@ -2,13 +2,13 @@ import React, { useMemo } from 'react'
 import { SubmitErrorHandler, useFormContext } from 'react-hook-form'
 import { queryClient, useCreateRoleTransaction, useUpdateRoleTransaction } from 'use-towns-client'
 import { isEqual } from 'lodash'
-import { useGetEmbeddedSigner } from '@towns/privy'
 import { useEvent } from 'react-use-event-hook'
 import { blockchainKeys } from 'use-towns-client/dist/query/query-keys'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { FancyButton } from '@ui'
 import { prepareGatedDataForSubmit } from '@components/Tokens/utils'
 import { Analytics } from 'hooks/useAnalytics'
+import { GetSigner, WalletReady } from 'privy/WalletReady'
 import { RoleFormSchemaType } from '../Web3/CreateSpaceForm/types'
 
 export function SingleRolePanelSubmitButton({
@@ -29,7 +29,6 @@ export function SingleRolePanelSubmitButton({
     const watchAllFields = watch()
     const { createRoleTransaction } = useCreateRoleTransaction()
     const { updateRoleTransaction } = useUpdateRoleTransaction()
-    const { getSigner, isPrivyReady } = useGetEmbeddedSigner()
 
     const isUnchanged = useMemo(() => {
         const def = structuredClone(defaultValues)
@@ -46,7 +45,6 @@ export function SingleRolePanelSubmitButton({
     }, [defaultValues, watchAllFields])
 
     const isDisabled =
-        !isPrivyReady ||
         formState.isSubmitting ||
         isUnchanged ||
         Object.keys(formState.errors).length > 0 ||
@@ -56,7 +54,7 @@ export function SingleRolePanelSubmitButton({
             !watchAllFields.ethBalanceGatedBy) ||
         transactionIsPending
 
-    const onValid = useEvent(async (data: RoleFormSchemaType) => {
+    const onValid = useEvent(async (data: RoleFormSchemaType, getSigner: GetSigner) => {
         if (!spaceId) {
             return
         }
@@ -173,13 +171,17 @@ export function SingleRolePanelSubmitButton({
     })
 
     return (
-        <FancyButton
-            cta
-            data-testid="submit-button"
-            disabled={isDisabled}
-            onClick={handleSubmit(onValid, onInvalid)}
-        >
-            {children}
-        </FancyButton>
+        <WalletReady>
+            {({ getSigner }) => (
+                <FancyButton
+                    cta
+                    data-testid="submit-button"
+                    disabled={isDisabled}
+                    onClick={handleSubmit((data) => onValid(data, getSigner), onInvalid)}
+                >
+                    {children}
+                </FancyButton>
+            )}
+        </WalletReady>
     )
 }

@@ -7,20 +7,19 @@ import {
     makeStreamRpcClient,
     userIdFromAddress,
 } from '@river-build/sdk'
-import { useGetEmbeddedSigner } from '@towns/privy'
 import { ethers } from 'ethers'
 import { useCallback } from 'react'
 import { useChannelId, useSpaceId, useTownsClient, useTownsContext } from 'use-towns-client'
+import { GetSigner } from 'privy/WalletReady'
 
 export const useMintBot = () => {
     const { spaceDapp, clientSingleton } = useTownsClient()
     const spaceId = useSpaceId()
     const channelId = useChannelId()
-    const { getSigner } = useGetEmbeddedSigner()
     const { riverProvider, riverConfig } = useTownsContext()
 
     const mintBot = useCallback(
-        async (botName: string, botDisplayName?: string) => {
+        async (getSigner: GetSigner, botName: string, botDisplayName?: string) => {
             const botWallet = ethers.Wallet.createRandom()
 
             if (!spaceId) {
@@ -84,7 +83,7 @@ export const useMintBot = () => {
                 `I'm ready! \n\`\`\` \nMNEMONIC="${botWallet.mnemonic.phrase}"\nSPACE_ID=${spaceId}\nCHANNEL_ID=${channelId}\n\`\`\``,
             )
         },
-        [spaceId, spaceDapp, getSigner, clientSingleton, channelId, riverProvider, riverConfig],
+        [spaceId, spaceDapp, clientSingleton, channelId, riverProvider, riverConfig],
     )
 
     return mintBot
