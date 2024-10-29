@@ -50,40 +50,51 @@ export async function fetchUserProfileImage(userId: string | undefined) {
     return { imageUrl: response.url }
 }
 
-export async function refreshSpaceCache(spaceId: string): Promise<{ ok: boolean }> {
+type RefreshCacheResponse = { ok: boolean; invalidationId?: string }
+
+export async function refreshSpaceCache(spaceId: string): Promise<RefreshCacheResponse> {
     const route = new URL(env.VITE_RIVER_STREAM_METADATA_URL)
     const contractAddress = contractAddressFromSpaceId(spaceId)
     route.pathname = `/space/${contractAddress}/refresh`
     try {
-        const { data } = await axiosClient.get(route.toString())
-        return { ok: data.ok }
+        const { data } = await axiosClient.get<RefreshCacheResponse>(route.toString())
+        return { ok: data.ok, invalidationId: data.invalidationId }
     } catch (e) {
         return { ok: false }
     }
 }
 
-export async function refreshUserImageCache(userId: string): Promise<{ ok: boolean }> {
+export async function refreshUserImageCache(userId: string): Promise<RefreshCacheResponse> {
     const route = new URL(env.VITE_RIVER_STREAM_METADATA_URL)
     route.pathname = `/user/${userId}/refresh`
     route.searchParams.set('target', 'image')
     try {
-        const { data } = await axiosClient.get(route.toString())
-        return { ok: data.ok }
+        const { data } = await axiosClient.get<RefreshCacheResponse>(route.toString())
+        return { ok: data.ok, invalidationId: data.invalidationId }
     } catch (e) {
         return { ok: false }
     }
 }
 
-export async function refreshUserBioCache(userId: string): Promise<{ ok: boolean }> {
+export async function refreshUserBioCache(userId: string): Promise<RefreshCacheResponse> {
     const route = new URL(env.VITE_RIVER_STREAM_METADATA_URL)
     route.pathname = `/user/${userId}/refresh`
     route.searchParams.set('target', 'bio')
     try {
-        const { data } = await axiosClient.get(route.toString())
-        return { ok: data.ok }
+        const { data } = await axiosClient.get<RefreshCacheResponse>(route.toString())
+        return { ok: data.ok, invalidationId: data.invalidationId }
     } catch (e) {
         return { ok: false }
     }
+}
+
+type RefreshStatusResponse = { status: 'completed' | 'pending' | 'unset' | 'error' }
+
+export async function getRefreshStatus(invalidationId: string) {
+    const route = new URL(env.VITE_RIVER_STREAM_METADATA_URL)
+    route.pathname = `/refreshStatus/${invalidationId}`
+    const { data } = await axiosClient.get<RefreshStatusResponse>(route.toString())
+    return data
 }
 
 export const buildSpaceMetadataUrl = (spaceAddress: string) => {

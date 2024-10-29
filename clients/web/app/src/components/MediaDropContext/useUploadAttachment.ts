@@ -202,9 +202,9 @@ export const useUploadAttachment = () => {
             spaceId: string,
             file: File,
             setProgress: (progress: number) => void,
-        ): Promise<boolean> => {
+        ): Promise<{ ok: boolean; invalidationId?: string }> => {
             if (!isImageMimeType(file.type)) {
-                return false
+                return { ok: false }
             }
             console.log('uploadTownImageToStream', { spaceId })
 
@@ -241,12 +241,12 @@ export const useUploadAttachment = () => {
                     result,
                 })
 
-                await refreshSpaceCache(spaceId)
+                const { invalidationId } = await refreshSpaceCache(spaceId)
                 // no issues uploading the image
-                return true
+                return { ok: true, invalidationId }
             } catch (e) {
                 console.error('Error uploading image to stream', e)
-                return false
+                return { ok: false }
             } finally {
                 // stop the spinner
                 setProgress(0)

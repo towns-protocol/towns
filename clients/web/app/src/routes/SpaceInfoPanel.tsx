@@ -65,6 +65,7 @@ import { popupToast } from '@components/Notifications/popupToast'
 import { PrivyWrapper } from 'privy/PrivyProvider'
 import { useBalance } from 'hooks/useBalance'
 import { ReauthenticateToast, WalletReady } from 'privy/WalletReady'
+import { useWaitForInvalidation } from 'hooks/useWaitForInvalidation'
 import { PublicTownPage } from './PublicTownPage/PublicTownPage'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
 
@@ -252,8 +253,53 @@ export const SpaceInfo = () => {
         reset: resetTxContext,
     } = useRefreshMetadataTx()
 
+    const [spaceImageInvalidationId, setSpaceImageInvalidationId] = useState<string | undefined>()
+    const { isSuccess: isSpaceImageRefreshed } = useWaitForInvalidation(spaceImageInvalidationId)
+
+    useEffect(() => {
+        if (!isSpaceImageRefreshed || !space?.id) {
+            return
+        }
+        popupToast(
+            ({ toast }) => (
+                <PrivyWrapper>
+                    <WalletReady
+                        LoginButton={
+                            <ReauthenticateToast
+                                toast={toast}
+                                message="Please reauthenticate to publish your space image to OpenSea"
+                                cta="Reauthenticate"
+                            />
+                        }
+                    >
+                        {({ getSigner }) => (
+                            <StandardToast
+                                message="Would you like to publish the space image to OpenSea?"
+                                toast={toast}
+                                ctaColor="positive"
+                                icon="openSeaPlain"
+                                iconProps={{ color: 'gray2' }}
+                                cta="Publish"
+                                onCtaClick={async ({ dismissToast }) => {
+                                    const signer = await getSigner()
+                                    if (!signer) {
+                                        return
+                                    }
+                                    // emit event to update the nft metadata
+                                    await refreshMetadataTransaction(space.id, signer)
+                                    dismissToast()
+                                }}
+                            />
+                        )}
+                    </WalletReady>
+                </PrivyWrapper>
+            ),
+            { duration: Infinity },
+        )
+    }, [isSpaceImageRefreshed, refreshMetadataTransaction, space?.id])
+
     const onUploadSpaceIcon = useCallback(
-        async ({ imageUrl, file, id: spaceId, type, setProgress }: UploadImageRequestConfig) => {
+        async ({ file, id: spaceId, type, setProgress }: UploadImageRequestConfig) => {
             if (isUploadingSpaceIconRef.current) {
                 return
             }
@@ -262,49 +308,18 @@ export const SpaceInfo = () => {
                 isUploadingSpaceIconRef.current = true
                 try {
                     // upload the space icon
-                    await uploadTownImageToStream(spaceId, file, setProgress)
-                    popupToast(
-                        ({ toast }) => (
-                            <PrivyWrapper>
-                                <WalletReady
-                                    LoginButton={
-                                        <ReauthenticateToast
-                                            toast={toast}
-                                            message="Please reauthenticate to publish your space image to OpenSea"
-                                            cta="Reauthenticate"
-                                        />
-                                    }
-                                >
-                                    {({ getSigner }) => (
-                                        <StandardToast
-                                            message="Would you like to publish the space image to OpenSea?"
-                                            toast={toast}
-                                            ctaColor="positive"
-                                            icon="openSeaPlain"
-                                            iconProps={{ color: 'gray2' }}
-                                            cta="Publish"
-                                            onCtaClick={async ({ dismissToast }) => {
-                                                const signer = await getSigner()
-                                                if (!signer) {
-                                                    return
-                                                }
-                                                // emit event to update the nft metadata
-                                                await refreshMetadataTransaction(spaceId, signer)
-                                                dismissToast()
-                                            }}
-                                        />
-                                    )}
-                                </WalletReady>
-                            </PrivyWrapper>
-                        ),
-                        { duration: Infinity },
+                    const { invalidationId } = await uploadTownImageToStream(
+                        spaceId,
+                        file,
+                        setProgress,
                     )
+                    setSpaceImageInvalidationId(invalidationId)
                 } finally {
                     isUploadingSpaceIconRef.current = false
                 }
             }
         },
-        [casablancaClient, refreshMetadataTransaction, uploadTownImageToStream],
+        [casablancaClient, uploadTownImageToStream],
     )
 
     useEffect(() => {
