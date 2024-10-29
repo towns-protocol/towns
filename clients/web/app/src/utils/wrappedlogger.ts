@@ -64,6 +64,11 @@ function stringifyReplacer(key: string, value: unknown) {
     if (typeof value === 'bigint') {
         return value.toString()
     }
+
+    if (value instanceof Error) {
+        return value.toString() + '\n' + value.stack
+    }
+
     if (value instanceof EventEmitter) {
         return undefined
     }
