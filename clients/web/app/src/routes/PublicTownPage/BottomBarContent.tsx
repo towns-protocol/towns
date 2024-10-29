@@ -36,6 +36,9 @@ export function BottomBarContent({
         }
     }, [isTouch])
 
+    const seatsLeft = (maxSupply && totalSupply && maxSupply - totalSupply) ?? 0
+    const maxSupplyReached = seatsLeft === 0
+
     const percentageFilled = useMemo(() => {
         if (!totalSupply || !maxSupply) {
             return 0
@@ -105,7 +108,9 @@ export function BottomBarContent({
                             )}
                         </Stack>
                     }
-                    rightColContent={<JoinLoginButton spaceId={spaceId} />}
+                    rightColContent={
+                        <JoinLoginButton spaceId={spaceId} maxSupplyReached={maxSupplyReached} />
+                    }
                 />
             </Stack>
             {isJoining && <JoiningOverlay />}

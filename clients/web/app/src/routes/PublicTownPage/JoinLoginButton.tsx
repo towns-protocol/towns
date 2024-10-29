@@ -21,7 +21,13 @@ import { usePublicPageLoginFlow } from './usePublicPageLoginFlow'
 
 const LoginComponent = React.lazy(() => import('@components/Login/LoginComponent'))
 
-export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
+export function JoinLoginButton({
+    spaceId,
+    maxSupplyReached,
+}: {
+    spaceId: string | undefined
+    maxSupplyReached: boolean
+}) {
     const isPreview = false
     const { isAuthenticated, loggedInWalletAddress } = useConnectivity()
     const { clientSingleton, signerContext } = useTownsContext()
@@ -103,8 +109,11 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
     )
 
     const onLoginClick = useCallback(() => {
+        if (maxSupplyReached) {
+            return
+        }
         startJoinPreLogin()
-    }, [startJoinPreLogin])
+    }, [startJoinPreLogin, maxSupplyReached])
 
     const isEvaluating = useWatchEvaluatingCredentialsAuthStatus()
 
@@ -140,15 +149,17 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
         return (
             <WalletReady>
                 {({ getSigner }) => (
-                    <FancyButton
-                        cta
-                        type="button"
-                        disabled={disableJoinUi}
-                        spinner={!!spaceBeingJoined}
-                        onClick={() => onJoinClick(getSigner)}
-                    >
-                        Join
-                    </FancyButton>
+                    <Box tooltip={maxSupplyReached ? 'No memberships left' : undefined}>
+                        <FancyButton
+                            cta
+                            type="button"
+                            disabled={disableJoinUi || maxSupplyReached}
+                            spinner={!!spaceBeingJoined}
+                            onClick={() => onJoinClick(getSigner)}
+                        >
+                            Join
+                        </FancyButton>
+                    </Box>
                 )}
             </WalletReady>
         )
