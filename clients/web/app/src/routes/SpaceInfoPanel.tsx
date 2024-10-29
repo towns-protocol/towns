@@ -281,7 +281,7 @@ export const SpaceInfo = () => {
                                             toast={toast}
                                             ctaColor="positive"
                                             icon="openSeaPlain"
-                                            iconColor="gray2"
+                                            iconProps={{ color: 'gray2' }}
                                             cta="Publish"
                                             onCtaClick={async ({ dismissToast }) => {
                                                 const signer = await getSigner()

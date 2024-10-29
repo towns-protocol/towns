@@ -32,6 +32,7 @@ import {
 } from 'data/rel'
 import { Analytics } from 'hooks/useAnalytics'
 import { useNotificationRoute } from 'hooks/useNotificationRoute'
+import { useOfflineToast } from '@components/Offline/OfflineToast'
 
 FontLoader.init()
 
@@ -102,6 +103,8 @@ export const App = () => {
     const navigateTo = useEvent((path: string) => {
         navigate(path, { state: { fromNotification: true } })
     })
+
+    useOfflineToast()
 
     useEffect(() => {
         // when the App is rendered for the first time, we need to check if we

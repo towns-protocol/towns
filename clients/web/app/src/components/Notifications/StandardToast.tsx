@@ -7,10 +7,11 @@ import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 export type Props<T extends IconProps['type'] | undefined = IconProps['type']> = {
     toast: Toast
     icon?: T
-    iconColor?: IconProps['color']
+    iconProps?: Partial<IconProps>
     imgSrc?: T extends IconProps['type'] ? never : string
     pending?: T extends IconProps['type'] ? never : boolean
     message: string
+    subMessage?: string
     cta?: string
     ctaColor?: TextProps['color']
     onCtaClick?: ({ dismissToast }: { dismissToast: () => void }) => void | Promise<void>
@@ -20,9 +21,10 @@ export type Props<T extends IconProps['type'] | undefined = IconProps['type']> =
 export function StandardToast<T extends IconProps['type'] | undefined>(props: Props<T>) {
     const {
         icon,
-        iconColor,
+        iconProps,
         imgSrc,
         message,
+        subMessage,
         onDismiss,
         toast,
         cta,
@@ -62,14 +64,21 @@ export function StandardToast<T extends IconProps['type'] | undefined>(props: Pr
                     rounded="sm"
                     aspectRatio="1/1"
                 >
-                    {icon && <Icon shrink={false} color={iconColor} type={icon} size="square_sm" />}
+                    {icon && <Icon shrink={false} {...iconProps} type={icon} size="square_sm" />}
                     {pending && <ButtonSpinner />}
                     {/* todo: style image */}
                     {imgSrc && <img src={imgSrc} alt="notification" />}
                 </Box>
             </Box>
             <Box gap grow>
-                <Text>{message}</Text>
+                <Box gap="sm">
+                    <Text>{message}</Text>
+                    {subMessage && (
+                        <Text color="gray2" size="sm">
+                            {subMessage}
+                        </Text>
+                    )}
+                </Box>
                 {cta && (
                     <Box horizontal gap alignItems="center">
                         {ctaActionLoading && <ButtonSpinner />}
@@ -105,11 +114,11 @@ export function StandardToast<T extends IconProps['type'] | undefined>(props: Pr
 }
 
 StandardToast.Success = (props: Props) => (
-    <StandardToast icon="check" iconColor="positive" ctaColor="positive" {...props} />
+    <StandardToast icon="check" iconProps={{ color: 'positive' }} ctaColor="positive" {...props} />
 )
 
 StandardToast.Error = (props: Props) => (
-    <StandardToast icon="alert" iconColor="error" ctaColor="negative" {...props} />
+    <StandardToast icon="alert" iconProps={{ color: 'error' }} ctaColor="negative" {...props} />
 )
 
 StandardToast.Pending = (props: Props<undefined>) => <StandardToast pending {...props} />
