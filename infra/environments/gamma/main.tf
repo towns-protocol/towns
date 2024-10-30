@@ -271,7 +271,6 @@ module "notification_service" {
 
 module "network_health_monitor" {
   source = "../../modules/network-health-monitor"
-  count  = 2
 
   subnet_ids                      = module.vpc.private_subnets
   river_registry_contract_address = module.system_parameters.river_registry_contract_address_parameter.value
@@ -280,7 +279,6 @@ module "network_health_monitor" {
 
   base_chain_rpc_url_secret_arn  = local.global_remote_state.base_sepolia_metrics_rpc_url_secret.arn
   river_chain_rpc_url_secret_arn = local.global_remote_state.river_sepolia_rpc_url_secret.arn
-  extracted_metrics_kind         = count.index == 0 ? "node" : "usage"
 }
 
 module "stress_tests" {

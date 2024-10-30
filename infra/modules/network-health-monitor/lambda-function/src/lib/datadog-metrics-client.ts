@@ -1,7 +1,7 @@
 import { client, v2 } from '@datadog/datadog-api-client'
 import { RiverNodeWalletBalance } from './wallet-balance'
 import { RiverNodePingResults } from './pinger'
-import { NodeMetrics, UsageMetrics } from './metrics-extractor'
+import { NodeMetrics } from './metrics-extractor'
 import { CombinedNode, CombinedOperator } from './metrics-integrator'
 import {
     GAUGE,
@@ -61,18 +61,6 @@ export class DatadogMetricsClient {
             this.postBaseOperatorStatus(combinedOperators),
             this.postRiverOperatorStatus(combinedOperators),
             this.postAggregateNodeStats(aggregateNodeStats),
-        ])
-    }
-
-    public async postUsageMetrics(metrics: UsageMetrics) {
-        await Promise.all([
-            this.postAggregateUsageTotals(metrics.usageTotals),
-            this.postSpaceMembershipStatsSummary(metrics.spaceMembershipStats.statsSummary),
-            this.postSpaceMembershipQuantiles(metrics.spaceMembershipStats.quantiles),
-            this.postSpaceMembershipHistogram(metrics.spaceMembershipStats.histogram),
-            this.postUserMembershipStatsSummary(metrics.userMembershipStats.statsSummary),
-            this.postUserMembershipQuantiles(metrics.userMembershipStats.quantiles),
-            this.postUserMembershipHistogram(metrics.userMembershipStats.histogram),
         ])
     }
 
@@ -218,6 +206,8 @@ export class DatadogMetricsClient {
             if (ping.response) {
                 tags.push(`version:${ping.response.version}`)
                 tags.push(`status:${ping.response.status}`)
+            } else {
+                tags.push(`status:down`)
             }
 
             return {
@@ -308,177 +298,6 @@ export class DatadogMetricsClient {
                 name: 'river_network.total_missing_nodes_on_river',
                 value: stats.numMissingNodesOnRiver,
             },
-        ]
-
-        const series: v2.MetricSeries[] = metrics.map(({ name, value }) => {
-            return {
-                type: GAUGE,
-                metric: name,
-                points: [{ timestamp: this.timestamp, value }],
-                tags: [`env:${this.env}`],
-            }
-        })
-
-        console.log('Series:', JSON.stringify(series, null, 2))
-        return this.postSeries(series)
-    }
-
-    private async postSpaceMembershipHistogram(
-        histogram: UsageMetrics['spaceMembershipStats']['histogram'],
-    ) {
-        console.log('Posting aggregate usage stats to Datadog:')
-
-        const histogramSeries: v2.MetricSeries[] = histogram.map((bin) => {
-            return {
-                type: GAUGE,
-                metric: `river_network.total_space_memberships_histogram`,
-                points: [{ timestamp: this.timestamp, value: bin.size }],
-                tags: [`env:${this.env}`, `from:${bin.from}`, `to:${bin.to}`],
-            }
-        })
-
-        console.log('Series:', JSON.stringify(histogramSeries, null, 2))
-        return this.postSeries(histogramSeries)
-    }
-
-    private async postSpaceMembershipQuantiles(
-        quantiles: UsageMetrics['spaceMembershipStats']['quantiles'],
-    ) {
-        console.log('Posting aggregate usage stats to Datadog:')
-
-        const quantileSeries: v2.MetricSeries[] = Object.entries(quantiles).map(
-            ([quantile, value]) => {
-                return {
-                    type: GAUGE,
-                    metric: `river_network.space_membership_quantile`,
-                    points: [{ timestamp: this.timestamp, value }],
-                    tags: [`env:${this.env}`, `quantile:${quantile}`],
-                }
-            },
-        )
-
-        console.log('Series:', JSON.stringify(quantileSeries, null, 2))
-        return this.postSeries(quantileSeries)
-    }
-
-    private async postSpaceMembershipStatsSummary(
-        summary: UsageMetrics['spaceMembershipStats']['statsSummary'],
-    ) {
-        console.log('Posting aggregate usage stats to Datadog:')
-
-        const series: v2.MetricSeries[] = Object.entries(summary).map(([name, value]) => {
-            return {
-                type: GAUGE,
-                metric: `river_network.space_membership_summary`,
-                points: [{ timestamp: this.timestamp, value }],
-                tags: [`env:${this.env}`, `summary:${name}`],
-            }
-        })
-
-        console.log('Series:', JSON.stringify(series, null, 2))
-        return this.postSeries(series)
-    }
-
-    private async postUserMembershipHistogram(
-        histogram: UsageMetrics['userMembershipStats']['histogram'],
-    ) {
-        console.log('Posting aggregate usage stats to Datadog:')
-
-        const histogramSeries: v2.MetricSeries[] = histogram.map((bin) => {
-            return {
-                type: GAUGE,
-                metric: `river_network.total_user_memberships_histogram`,
-                points: [{ timestamp: this.timestamp, value: bin.size }],
-                tags: [`env:${this.env}`, `from:${bin.from}`, `to:${bin.to}`],
-            }
-        })
-
-        console.log('Series:', JSON.stringify(histogramSeries, null, 2))
-        return this.postSeries(histogramSeries)
-    }
-
-    private async postUserMembershipQuantiles(
-        quantiles: UsageMetrics['spaceMembershipStats']['quantiles'],
-    ) {
-        console.log('Posting aggregate usage stats to Datadog:')
-
-        const quantileSeries: v2.MetricSeries[] = Object.entries(quantiles).map(
-            ([quantile, value]) => {
-                return {
-                    type: GAUGE,
-                    metric: `river_network.user_membership_quantile`,
-                    points: [{ timestamp: this.timestamp, value }],
-                    tags: [`env:${this.env}`, `quantile:${quantile}`],
-                }
-            },
-        )
-
-        console.log('Series:', JSON.stringify(quantileSeries, null, 2))
-        return this.postSeries(quantileSeries)
-    }
-
-    private async postUserMembershipStatsSummary(
-        summary: UsageMetrics['spaceMembershipStats']['statsSummary'],
-    ) {
-        console.log('Posting aggregate usage stats to Datadog:')
-
-        const series: v2.MetricSeries[] = Object.entries(summary).map(([name, value]) => {
-            return {
-                type: GAUGE,
-                metric: `river_network.user_membership_summary`,
-                points: [{ timestamp: this.timestamp, value }],
-                tags: [`env:${this.env}`, `summary:${name}`],
-            }
-        })
-
-        console.log('Series:', JSON.stringify(series, null, 2))
-        return this.postSeries(series)
-    }
-
-    private async postAggregateUsageTotals(totals: {
-        numTotalSpaces: number
-        numTotalStreams: number
-        numTotalSpaceMemberships: number
-        numTotalUniqueSpaceMembers: number
-        numTotalPricedSpaces: number
-        numTotalPaidSpaceMemberships: number
-        numTotalSpacesWithPaidMemberships: number
-        // numUniqueSpaceOwners: number
-    }) {
-        console.log('Posting aggregate network stats to Datadog:')
-        const metrics = [
-            {
-                name: 'river_network.total_spaces',
-                value: totals.numTotalSpaces,
-            },
-            {
-                name: 'river_network.total_streams',
-                value: totals.numTotalStreams,
-            },
-            {
-                name: 'river_network.total_space_memberships',
-                value: totals.numTotalSpaceMemberships,
-            },
-            {
-                name: 'river_network.total_unique_space_members',
-                value: totals.numTotalUniqueSpaceMembers,
-            },
-            {
-                name: 'river_network.total_priced_spaces',
-                value: totals.numTotalPricedSpaces,
-            },
-            {
-                name: 'river_network.total_paid_space_memberships',
-                value: totals.numTotalPaidSpaceMemberships,
-            },
-            {
-                name: 'river_network.total_spaces_with_paid_memberships',
-                value: totals.numTotalSpacesWithPaidMemberships,
-            },
-            // {
-            //     name: 'river_network.total_unique_space_owners',
-            //     value: stats.numUniqueSpaceOwners,
-            // },
         ]
 
         const series: v2.MetricSeries[] = metrics.map(({ name, value }) => {

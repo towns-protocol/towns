@@ -77,6 +77,7 @@ export class Ping {
             return {
                 result: 'error' as const,
                 message: `Failed to validate JSON response from node ${node.url}: ${parsedResponse.error}`,
+                rawResponse: jsonResponse,
             }
         }
 

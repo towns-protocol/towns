@@ -246,7 +246,6 @@ module "notification_service" {
 
 module "network_health_monitor" {
   source = "../../modules/network-health-monitor"
-  count  = 2
 
   subnet_ids = module.vpc.private_subnets
 
@@ -256,7 +255,6 @@ module "network_health_monitor" {
 
   base_chain_rpc_url_secret_arn  = local.global_remote_state.base_mainnet_metrics_rpc_url_secret.arn
   river_chain_rpc_url_secret_arn = local.global_remote_state.river_mainnet_rpc_url_secret.arn
-  extracted_metrics_kind         = count.index == 0 ? "node" : "usage"
 }
 module "operator_logs" {
   source      = "../../modules/operator-logs"

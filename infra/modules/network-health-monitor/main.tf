@@ -3,14 +3,14 @@ module "global_constants" {
 }
 
 locals {
-  base_name                    = "network-health-monitor-${var.extracted_metrics_kind}"
+  base_name                    = "network-health-monitor"
   lambda_function_service_name = "${local.base_name}-lambda-function"
   lambda_tags = merge(module.global_constants.tags, {
     Service = local.lambda_function_service_name
   })
   global_remote_state = module.global_constants.global_remote_state.outputs
-  memory_size         = var.extracted_metrics_kind == "usage" ? 4096 : 1024
-  schedule_expression = var.extracted_metrics_kind == "usage" ? "rate(1 day)" : "rate(5 minutes)"
+  memory_size         = 1024
+  schedule_expression = "rate(1 minute)"
 }
 
 module "lambda_function" {
@@ -44,7 +44,7 @@ module "lambda_function" {
     RIVER_CHAIN_RPC_URL_SECRET_ARN     = var.river_chain_rpc_url_secret_arn,
     BASE_CHAIN_RPC_URL_SECRET_ARN      = var.base_chain_rpc_url_secret_arn,
     ENVIRONMENT                        = terraform.workspace
-    EXTRACTED_METRICS_KIND             = var.extracted_metrics_kind
+    EXTRACTED_METRICS_KIND             = "node"
   }
 
   source_path = "${path.module}/lambda-function/dist"

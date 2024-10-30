@@ -13,10 +13,7 @@ export async function handleDatadogJob(config: Config) {
         env: environment,
     })
     const metricsExtractor = MetricsExtractor.init(config)
-    if (config.extractedMetricsKind === 'usage') {
-        const usageMetrics = await metricsExtractor.extractUsageMetrics()
-        await datadog.postUsageMetrics(usageMetrics)
-    } else if (config.extractedMetricsKind === 'node') {
+    if (config.extractedMetricsKind === 'node') {
         const nodeMetrics = await metricsExtractor.extractNodeMetrics()
         await datadog.postNodeMetrics(nodeMetrics)
     } else {
