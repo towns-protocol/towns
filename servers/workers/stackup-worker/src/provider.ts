@@ -43,20 +43,6 @@ export function createStaticProvider(
     })
 }
 
-export function createJsonProvider(
-    environment: Environment,
-    env: Env,
-): ethers.providers.JsonRpcProvider {
-    let providerUrl = providerMap.get(environment)
-    if (environment !== 'development') {
-        providerUrl = `${providerUrl}${env.ALCHEMY_API_KEY}`
-    }
-    return new ethers.providers.JsonRpcProvider({
-        url: providerUrl ?? '',
-        skipFetchSetup: true,
-    })
-}
-
 export async function createSpaceDappForNetwork(env: Env): Promise<ISpaceDapp | undefined> {
     const riverEnv = riverEnvMap.get(env.ENVIRONMENT)
     if (!riverEnv) {

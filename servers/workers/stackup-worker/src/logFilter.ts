@@ -1,6 +1,6 @@
 import { ethers } from 'ethers'
 import { Environment, isErrorType } from 'worker-common'
-import { createJsonProvider as createProvider } from './provider'
+import { createStaticProvider as createProvider } from './provider'
 import { Env } from '.'
 import { ContractName, EventName, FunctionName, Networks } from './types'
 import { createContractMap, isSpaceSpecificContract, spaceSpecificContracts } from './contractsMap'
