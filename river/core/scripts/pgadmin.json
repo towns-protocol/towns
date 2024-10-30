@@ -1,0 +1,14 @@
+{
+    "Servers": {
+        "1": {
+            "Name": "River Local Dev",
+            "Group": "River",
+            "Port": 5433,
+            "Username": "postgres",
+            "Password": "postgres",
+            "Host": "host.docker.internal",
+            "SSLMode": "disable",
+            "MaintenanceDB": "postgres"
+        }
+    }
+}

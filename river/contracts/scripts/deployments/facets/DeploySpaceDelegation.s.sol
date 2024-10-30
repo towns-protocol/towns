@@ -19,6 +19,8 @@ contract DeploySpaceDelegation is Deployer, FacetHelper {
     addSelector(SpaceDelegationFacet.setRiverToken.selector);
     addSelector(SpaceDelegationFacet.getTotalDelegation.selector);
     addSelector(SpaceDelegationFacet.setMainnetDelegation.selector);
+    addSelector(SpaceDelegationFacet.setSpaceFactory.selector);
+    addSelector(SpaceDelegationFacet.getSpaceFactory.selector);
   }
 
   function initializer() public pure override returns (bytes4) {

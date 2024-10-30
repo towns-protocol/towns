@@ -120,18 +120,13 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
      * Memberships are processed on block boundaries, so we need to wait for the next block to be processed
      * passing an undefined userId will wait for the membership to be updated for the current user
      */
-    public async waitForMembership(membership: MembershipOp, userId?: string) {
+    public async waitForMembership(membership: MembershipOp, inUserId?: string) {
         // check to see if we're already in that state
-        if (this._view.getMembers().isMember(membership, userId ?? this.userId)) {
-            return
-        }
+        const userId = inUserId ?? this.userId
         // wait for a membership updated event, event, check again
-        await this.waitFor('streamMembershipUpdated', (_streamId: string, iUserId: string) => {
-            return (
-                (userId === undefined || userId === iUserId) &&
-                this._view.getMembers().isMember(membership, userId ?? this.userId)
-            )
-        })
+        await this.waitFor('streamMembershipUpdated', () =>
+            this._view.getMembers().isMember(membership, userId),
+        )
     }
 
     /**
@@ -140,29 +135,36 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
      */
     public async waitFor<E extends keyof StreamEvents>(
         event: E,
-        fn?: (...args: Parameters<StreamEvents[E]>) => boolean,
+        condition: () => boolean,
         opts: { timeoutMs: number } = { timeoutMs: 20000 },
     ): Promise<void> {
+        if (condition()) {
+            return
+        }
         this.logEmitFromStream('waitFor', this.streamId, event)
         return new Promise((resolve, reject) => {
             // Set up the event listener
-            const handler = (...args: Parameters<StreamEvents[E]>): void => {
-                if (!fn || fn(...args)) {
+            const handler = (): void => {
+                if (condition()) {
                     this.logEmitFromStream('waitFor success', this.streamId, event)
-                    this.off(event, handler as StreamEvents[E])
+                    this.off(event, handler)
+                    this.off('streamInitialized', handler)
                     clearTimeout(timeout)
                     resolve()
                 }
             }
+
             const timeoutError = new Error(`waitFor timeout waiting for ${event}`)
             // Set up the timeout
             const timeout = setTimeout(() => {
                 this.logEmitFromStream('waitFor timeout', this.streamId, event)
-                this.off(event, handler as StreamEvents[E])
+                this.off(event, handler)
+                this.off('streamInitialized', handler)
                 reject(timeoutError)
             }, opts.timeoutMs)
 
-            this.on(event, handler as StreamEvents[E])
+            this.on(event, handler)
+            this.on('streamInitialized', handler)
         })
     }
 }

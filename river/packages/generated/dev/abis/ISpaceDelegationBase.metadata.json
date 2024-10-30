@@ -114,6 +114,19 @@
       {
         "inputs": [
           {
+            "internalType": "address",
+            "name": "spaceFactory",
+            "type": "address",
+            "indexed": true
+          }
+        ],
+        "type": "event",
+        "name": "SpaceFactoryChanged",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
             "internalType": "uint256",
             "name": "stakeRequirement",
             "type": "uint256",
@@ -163,10 +176,10 @@
   },
   "sources": {
     "contracts/src/base/registry/facets/delegation/ISpaceDelegation.sol": {
-      "keccak256": "0xb7796a50a2686902fb7bc6b25664b6a24c485092718c9eb8501a61b841a36c04",
+      "keccak256": "0x0f50eb9a8373cdb67aeaeed33b55c6fb753f220bc3fca63e812a5d47a7462f8b",
       "urls": [
-        "bzz-raw://a54b27f059faa0868c8df0757de492ad8559040cb6956ff71595c8e3f1c783c5",
-        "dweb:/ipfs/QmXy4KFpJEHDvDCNNyEdbeYhUGJtamd8DToKHTbBXuWwdp"
+        "bzz-raw://a3048af423c2885b2a7ad999b2e78cf848cf375bc2bfeb249e59c501278ae000",
+        "dweb:/ipfs/QmV1aAZRg4gNGJKkyaBFtFCm1cbEyG8VadwPS41JcVuMwB"
       ],
       "license": "MIT"
     }

@@ -114,6 +114,19 @@
       {
         "inputs": [
           {
+            "internalType": "address",
+            "name": "spaceFactory",
+            "type": "address",
+            "indexed": true
+          }
+        ],
+        "type": "event",
+        "name": "SpaceFactoryChanged",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
             "internalType": "uint256",
             "name": "stakeRequirement",
             "type": "uint256",
@@ -123,6 +136,23 @@
         "type": "event",
         "name": "StakeRequirementChanged",
         "anonymous": false
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "space",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "operator",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function",
+        "name": "addSpaceDelegation"
       },
       {
         "inputs": [
@@ -163,6 +193,19 @@
         ]
       },
       {
+        "inputs": [],
+        "stateMutability": "view",
+        "type": "function",
+        "name": "getSpaceFactory",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ]
+      },
+      {
         "inputs": [
           {
             "internalType": "address",
@@ -180,6 +223,31 @@
             "type": "uint256"
           }
         ]
+      },
+      {
+        "inputs": [],
+        "stateMutability": "view",
+        "type": "function",
+        "name": "mainnetDelegation",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ]
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "space",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function",
+        "name": "removeSpaceDelegation"
       },
       {
         "inputs": [],
@@ -221,6 +289,18 @@
       {
         "inputs": [
           {
+            "internalType": "address",
+            "name": "spaceFactory",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function",
+        "name": "setSpaceFactory"
+      },
+      {
+        "inputs": [
+          {
             "internalType": "uint256",
             "name": "stakeRequirement_",
             "type": "uint256"
@@ -229,16 +309,145 @@
         "stateMutability": "nonpayable",
         "type": "function",
         "name": "setStakeRequirement"
+      },
+      {
+        "inputs": [],
+        "stateMutability": "view",
+        "type": "function",
+        "name": "stakeRequirement",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ]
       }
     ],
     "devdoc": {
       "kind": "dev",
-      "methods": {},
+      "methods": {
+        "addSpaceDelegation(address,address)": {
+          "params": {
+            "operator": "The address of the operator",
+            "space": "The address of the space"
+          }
+        },
+        "getSpaceDelegation(address)": {
+          "params": {
+            "space": "The address of the space"
+          },
+          "returns": {
+            "_0": "The address of the operator delegated to the space"
+          }
+        },
+        "getSpaceDelegationsByOperator(address)": {
+          "params": {
+            "operator": "The address of the operator"
+          },
+          "returns": {
+            "_0": "An array of space addresses delegated to the operator"
+          }
+        },
+        "getSpaceFactory()": {
+          "returns": {
+            "_0": "The address of the space factory"
+          }
+        },
+        "getTotalDelegation(address)": {
+          "params": {
+            "operator": "The address of the operator"
+          },
+          "returns": {
+            "_0": "The total amount delegated to the operator"
+          }
+        },
+        "mainnetDelegation()": {
+          "returns": {
+            "_0": "The address of the mainnet delegation contract"
+          }
+        },
+        "removeSpaceDelegation(address)": {
+          "params": {
+            "space": "The address of the space"
+          }
+        },
+        "riverToken()": {
+          "returns": {
+            "_0": "The address of the River token contract"
+          }
+        },
+        "setMainnetDelegation(address)": {
+          "params": {
+            "mainnetDelegation_": "The address of the mainnet delegation contract"
+          }
+        },
+        "setRiverToken(address)": {
+          "params": {
+            "riverToken": "The address of the River token contract"
+          }
+        },
+        "setSpaceFactory(address)": {
+          "params": {
+            "spaceFactory": "The address of the space factory"
+          }
+        },
+        "setStakeRequirement(uint256)": {
+          "params": {
+            "stakeRequirement_": "The new stake requirement amount"
+          }
+        },
+        "stakeRequirement()": {
+          "returns": {
+            "_0": "The stake requirement amount"
+          }
+        }
+      },
       "version": 1
     },
     "userdoc": {
       "kind": "user",
-      "methods": {},
+      "methods": {
+        "addSpaceDelegation(address,address)": {
+          "notice": "Adds a space delegation to an operator"
+        },
+        "getSpaceDelegation(address)": {
+          "notice": "Gets the operator address for a given space"
+        },
+        "getSpaceDelegationsByOperator(address)": {
+          "notice": "Gets all spaces delegated to a specific operator"
+        },
+        "getSpaceFactory()": {
+          "notice": "Gets the address of the space factory"
+        },
+        "getTotalDelegation(address)": {
+          "notice": "Gets the total delegation for a specific operator"
+        },
+        "mainnetDelegation()": {
+          "notice": "Gets the address of the mainnet delegation contract"
+        },
+        "removeSpaceDelegation(address)": {
+          "notice": "Removes a space delegation from an operator"
+        },
+        "riverToken()": {
+          "notice": "Gets the address of the River token"
+        },
+        "setMainnetDelegation(address)": {
+          "notice": "Sets the address of the mainnet delegation contract"
+        },
+        "setRiverToken(address)": {
+          "notice": "Sets the address of the River token"
+        },
+        "setSpaceFactory(address)": {
+          "notice": "Sets the address of the space factory"
+        },
+        "setStakeRequirement(uint256)": {
+          "notice": "Sets the stake requirement for delegation"
+        },
+        "stakeRequirement()": {
+          "notice": "Gets the stake requirement for delegation"
+        }
+      },
       "version": 1
     }
   },
@@ -269,10 +478,10 @@
   },
   "sources": {
     "contracts/src/base/registry/facets/delegation/ISpaceDelegation.sol": {
-      "keccak256": "0xb7796a50a2686902fb7bc6b25664b6a24c485092718c9eb8501a61b841a36c04",
+      "keccak256": "0x0f50eb9a8373cdb67aeaeed33b55c6fb753f220bc3fca63e812a5d47a7462f8b",
       "urls": [
-        "bzz-raw://a54b27f059faa0868c8df0757de492ad8559040cb6956ff71595c8e3f1c783c5",
-        "dweb:/ipfs/QmXy4KFpJEHDvDCNNyEdbeYhUGJtamd8DToKHTbBXuWwdp"
+        "bzz-raw://a3048af423c2885b2a7ad999b2e78cf848cf375bc2bfeb249e59c501278ae000",
+        "dweb:/ipfs/QmV1aAZRg4gNGJKkyaBFtFCm1cbEyG8VadwPS41JcVuMwB"
       ],
       "license": "MIT"
     }

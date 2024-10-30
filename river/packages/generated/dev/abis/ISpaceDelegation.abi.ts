@@ -1,6 +1,24 @@
 export default [
   {
     "type": "function",
+    "name": "addSpaceDelegation",
+    "inputs": [
+      {
+        "name": "space",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "operator",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "getSpaceDelegation",
     "inputs": [
       {
@@ -39,6 +57,19 @@ export default [
   },
   {
     "type": "function",
+    "name": "getSpaceFactory",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "getTotalDelegation",
     "inputs": [
       {
@@ -55,6 +86,32 @@ export default [
       }
     ],
     "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "mainnetDelegation",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "removeSpaceDelegation",
+    "inputs": [
+      {
+        "name": "space",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
   },
   {
     "type": "function",
@@ -97,6 +154,19 @@ export default [
   },
   {
     "type": "function",
+    "name": "setSpaceFactory",
+    "inputs": [
+      {
+        "name": "spaceFactory",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "setStakeRequirement",
     "inputs": [
       {
@@ -107,6 +177,19 @@ export default [
     ],
     "outputs": [],
     "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "stakeRequirement",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
   },
   {
     "type": "event",
@@ -146,6 +229,19 @@ export default [
       },
       {
         "name": "operator",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "SpaceFactoryChanged",
+    "inputs": [
+      {
+        "name": "spaceFactory",
         "type": "address",
         "indexed": true,
         "internalType": "address"

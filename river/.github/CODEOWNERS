@@ -26,23 +26,21 @@
 ##
 
 # Order is important; the last matching pattern takes the most
-# precedence. 
+# precedence.
 
-/*.* @brianathere @texuf
+/*.* @texuf
 /.github/ @mechanical-turk
-/.github/CODEOWNERS @brianathere @sergekh2 @texuf
+/.github/CODEOWNERS @sergekh2 @texuf
 /.vscode/ @texuf
-/.yarn/ @brianathere
 /assets/ @texuf
-/contracts/ @pfives @giuseppecrj @brianathere @jterzis
-/contracts/src/node-network/ @pfives @giuseppecrj @mechanical-turk
+/contracts/ @pfives @giuseppecrj @jterzis @shuhuiluo
 /core/ @sergekh2
 /core/node/ @sergekh2 @bas-vk
 /core/node/events/ @sergekh2 @texuf
 /core/node/protocol/ @sergekh2 @texuf
 /core/node/protocol_extensions/ @sergekh2 @texuf
 /core/node/rules/ @sergekh2 @texuf
-/core/xchain/ @sergekh2 @bas-vk @clemire @brianathere
+/core/xchain/ @sergekh2 @bas-vk @clemire
 /infra/ @mechanical-turk
 /packages/ @sergekh2 @texuf
 /packages/generated/ @sergekh2 @giuseppecrj
@@ -51,7 +49,7 @@
 /packages/generated/dev/ @sergekh2 @giuseppecrj
 /packages/sdk/ @sergekh2 @texuf
 /packages/sdk/src/ @sergekh2 @texuf @erikolsson
-/packages/stream-metadata/ @brianathere @texuf
+/packages/stream-metadata/ @texuf
 /protocol/ @sergekh2 @texuf
 /scripts/ @texuf
 turbo.json @mechanical-turk

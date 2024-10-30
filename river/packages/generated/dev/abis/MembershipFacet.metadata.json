@@ -2023,10 +2023,10 @@
       "license": "MIT"
     },
     "contracts/src/spaces/facets/membership/MembershipBase.sol": {
-      "keccak256": "0x24a83f33b6aba917571d93e5d50b82f862181697d756275aae81994de7e1decc",
+      "keccak256": "0xdea0b577897c820429f8488fb4126d5dabec0763ad09930ef474fc569fd3bf48",
       "urls": [
-        "bzz-raw://19cc2af4b25833552a77b928df89a2f2f1a3d18758d19ba58dfbbccc24627cb1",
-        "dweb:/ipfs/QmRDijChijx8ebG36qXUUPRQAwWV8UNDdhYgfeNMz2mxAX"
+        "bzz-raw://97288b11e1f2de9f41f10cee717b4442b6e9410fdffd4099d600e280a68bf214",
+        "dweb:/ipfs/QmcosGxWKWje3RcU4tLVdRxEoRsxsdWCzuY8aYew6ZvTWy"
       ],
       "license": "MIT"
     },
@@ -2047,10 +2047,10 @@
       "license": "MIT"
     },
     "contracts/src/spaces/facets/membership/join/MembershipJoin.sol": {
-      "keccak256": "0x9561c8b66c2c133ab2cf6818de249251abe796931c19f6b2afca2fe82015eee8",
+      "keccak256": "0x5640c9553c04ee74667933534696e13655d72602968417fce7ccbde106138d76",
       "urls": [
-        "bzz-raw://a31df993ed6e91ee6c4b8f499ae51f1382ce317783dccba61090b47b58bb9a3f",
-        "dweb:/ipfs/QmfWcrpFC2QCRVowndHJzwRqhVTcrqNsE2DBXir2rxjUho"
+        "bzz-raw://bdbcb4e0e00cd2ddeefe244e489fc3dfd024a2b82b306756ace2b9c3abea765e",
+        "dweb:/ipfs/QmYeaqtycajpw9ZFa57msiZGyZp57NdHQRFYTNvn1cCzjC"
       ],
       "license": "MIT"
     },
@@ -2219,6 +2219,14 @@
       "urls": [
         "bzz-raw://ad85dd393ee0a1917c57046abc5155f51f77844b2c6a42c05c1b8dd26d6ff3c1",
         "dweb:/ipfs/QmNqYc8To2NdnpP6E1tGz7t6A7beuENde5yovwov5pW1fA"
+      ],
+      "license": "MIT"
+    },
+    "node_modules/solady/src/utils/FixedPointMathLib.sol": {
+      "keccak256": "0x3b2d21667478a864bf8b7c691986048c05f4c84712139d7b5175b6017874d3f0",
+      "urls": [
+        "bzz-raw://31ba5fd2e10d53a655b1f1af58ec40e831b84d1731dc6fefacf8097be0de8919",
+        "dweb:/ipfs/QmQucazZQwU8Qv26wYRXy4ME1XEqZHCF5Gbc9VcgdU4d5S"
       ],
       "license": "MIT"
     },

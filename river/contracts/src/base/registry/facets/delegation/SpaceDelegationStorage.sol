@@ -23,6 +23,7 @@ library SpaceDelegationStorage {
     mapping(address operator => EnumerableSet.AddressSet) spacesByOperator;
     mapping(address space => address operator) operatorBySpace;
     mapping(address space => uint256) spaceDelegationTime;
+    address spaceFactory;
   }
 
   function layout() internal pure returns (Layout storage s) {

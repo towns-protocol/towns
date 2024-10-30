@@ -1,0 +1,15 @@
+name: river
+services:
+    pgadmin:
+        container_name: pgadmin
+        image: dpage/pgadmin4:latest
+        restart: always
+        ports:
+            - '8080:80'
+        environment:
+            - PGADMIN_DEFAULT_EMAIL=localhost@localhost.localhost
+            - PGADMIN_DEFAULT_PASSWORD=postgres
+            - PGADMIN_CONFIG_SERVER_MODE=False
+            - PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED=False
+        volumes:
+            - ./pgadmin.json:/pgadmin4/servers.json

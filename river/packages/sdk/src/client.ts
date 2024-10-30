@@ -1771,8 +1771,8 @@ export class Client
 
         if (opts?.skipWaitForUserStreamUpdate !== true) {
             if (!userStream.view.userContent.isJoined(streamIdStr)) {
-                await userStream.waitFor('userStreamMembershipChanged', (streamId) =>
-                    userStream.view.userContent.isJoined(streamId),
+                await userStream.waitFor('userStreamMembershipChanged', () =>
+                    userStream.view.userContent.isJoined(streamIdStr),
                 )
             }
         }

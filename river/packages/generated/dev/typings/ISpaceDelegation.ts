@@ -29,26 +29,42 @@ import type {
 
 export interface ISpaceDelegationInterface extends utils.Interface {
   functions: {
+    "addSpaceDelegation(address,address)": FunctionFragment;
     "getSpaceDelegation(address)": FunctionFragment;
     "getSpaceDelegationsByOperator(address)": FunctionFragment;
+    "getSpaceFactory()": FunctionFragment;
     "getTotalDelegation(address)": FunctionFragment;
+    "mainnetDelegation()": FunctionFragment;
+    "removeSpaceDelegation(address)": FunctionFragment;
     "riverToken()": FunctionFragment;
     "setMainnetDelegation(address)": FunctionFragment;
     "setRiverToken(address)": FunctionFragment;
+    "setSpaceFactory(address)": FunctionFragment;
     "setStakeRequirement(uint256)": FunctionFragment;
+    "stakeRequirement()": FunctionFragment;
   };
 
   getFunction(
     nameOrSignatureOrTopic:
+      | "addSpaceDelegation"
       | "getSpaceDelegation"
       | "getSpaceDelegationsByOperator"
+      | "getSpaceFactory"
       | "getTotalDelegation"
+      | "mainnetDelegation"
+      | "removeSpaceDelegation"
       | "riverToken"
       | "setMainnetDelegation"
       | "setRiverToken"
+      | "setSpaceFactory"
       | "setStakeRequirement"
+      | "stakeRequirement"
   ): FunctionFragment;
 
+  encodeFunctionData(
+    functionFragment: "addSpaceDelegation",
+    values: [PromiseOrValue<string>, PromiseOrValue<string>]
+  ): string;
   encodeFunctionData(
     functionFragment: "getSpaceDelegation",
     values: [PromiseOrValue<string>]
@@ -58,7 +74,19 @@ export interface ISpaceDelegationInterface extends utils.Interface {
     values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
+    functionFragment: "getSpaceFactory",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "getTotalDelegation",
+    values: [PromiseOrValue<string>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "mainnetDelegation",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "removeSpaceDelegation",
     values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
@@ -74,10 +102,22 @@ export interface ISpaceDelegationInterface extends utils.Interface {
     values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
+    functionFragment: "setSpaceFactory",
+    values: [PromiseOrValue<string>]
+  ): string;
+  encodeFunctionData(
     functionFragment: "setStakeRequirement",
     values: [PromiseOrValue<BigNumberish>]
   ): string;
+  encodeFunctionData(
+    functionFragment: "stakeRequirement",
+    values?: undefined
+  ): string;
 
+  decodeFunctionResult(
+    functionFragment: "addSpaceDelegation",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "getSpaceDelegation",
     data: BytesLike
@@ -87,7 +127,19 @@ export interface ISpaceDelegationInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "getSpaceFactory",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "getTotalDelegation",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "mainnetDelegation",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "removeSpaceDelegation",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "riverToken", data: BytesLike): Result;
@@ -100,7 +152,15 @@ export interface ISpaceDelegationInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "setSpaceFactory",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "setStakeRequirement",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "stakeRequirement",
     data: BytesLike
   ): Result;
 
@@ -108,12 +168,14 @@ export interface ISpaceDelegationInterface extends utils.Interface {
     "MainnetDelegationChanged(address)": EventFragment;
     "RiverTokenChanged(address)": EventFragment;
     "SpaceDelegatedToOperator(address,address)": EventFragment;
+    "SpaceFactoryChanged(address)": EventFragment;
     "StakeRequirementChanged(uint256)": EventFragment;
   };
 
   getEvent(nameOrSignatureOrTopic: "MainnetDelegationChanged"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "RiverTokenChanged"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "SpaceDelegatedToOperator"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "SpaceFactoryChanged"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "StakeRequirementChanged"): EventFragment;
 }
 
@@ -150,6 +212,17 @@ export type SpaceDelegatedToOperatorEvent = TypedEvent<
 
 export type SpaceDelegatedToOperatorEventFilter =
   TypedEventFilter<SpaceDelegatedToOperatorEvent>;
+
+export interface SpaceFactoryChangedEventObject {
+  spaceFactory: string;
+}
+export type SpaceFactoryChangedEvent = TypedEvent<
+  [string],
+  SpaceFactoryChangedEventObject
+>;
+
+export type SpaceFactoryChangedEventFilter =
+  TypedEventFilter<SpaceFactoryChangedEvent>;
 
 export interface StakeRequirementChangedEventObject {
   stakeRequirement: BigNumber;
@@ -189,6 +262,12 @@ export interface ISpaceDelegation extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
+    addSpaceDelegation(
+      space: PromiseOrValue<string>,
+      operator: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     getSpaceDelegation(
       space: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -199,10 +278,19 @@ export interface ISpaceDelegation extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[string[]]>;
 
+    getSpaceFactory(overrides?: CallOverrides): Promise<[string]>;
+
     getTotalDelegation(
       operator: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
+
+    mainnetDelegation(overrides?: CallOverrides): Promise<[string]>;
+
+    removeSpaceDelegation(
+      space: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
 
     riverToken(overrides?: CallOverrides): Promise<[string]>;
 
@@ -216,11 +304,24 @@ export interface ISpaceDelegation extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    setSpaceFactory(
+      spaceFactory: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     setStakeRequirement(
       stakeRequirement_: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
+
+    stakeRequirement(overrides?: CallOverrides): Promise<[BigNumber]>;
   };
+
+  addSpaceDelegation(
+    space: PromiseOrValue<string>,
+    operator: PromiseOrValue<string>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
 
   getSpaceDelegation(
     space: PromiseOrValue<string>,
@@ -232,10 +333,19 @@ export interface ISpaceDelegation extends BaseContract {
     overrides?: CallOverrides
   ): Promise<string[]>;
 
+  getSpaceFactory(overrides?: CallOverrides): Promise<string>;
+
   getTotalDelegation(
     operator: PromiseOrValue<string>,
     overrides?: CallOverrides
   ): Promise<BigNumber>;
+
+  mainnetDelegation(overrides?: CallOverrides): Promise<string>;
+
+  removeSpaceDelegation(
+    space: PromiseOrValue<string>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
 
   riverToken(overrides?: CallOverrides): Promise<string>;
 
@@ -249,12 +359,25 @@ export interface ISpaceDelegation extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  setSpaceFactory(
+    spaceFactory: PromiseOrValue<string>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
   setStakeRequirement(
     stakeRequirement_: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  stakeRequirement(overrides?: CallOverrides): Promise<BigNumber>;
+
   callStatic: {
+    addSpaceDelegation(
+      space: PromiseOrValue<string>,
+      operator: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
     getSpaceDelegation(
       space: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -265,10 +388,19 @@ export interface ISpaceDelegation extends BaseContract {
       overrides?: CallOverrides
     ): Promise<string[]>;
 
+    getSpaceFactory(overrides?: CallOverrides): Promise<string>;
+
     getTotalDelegation(
       operator: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
+
+    mainnetDelegation(overrides?: CallOverrides): Promise<string>;
+
+    removeSpaceDelegation(
+      space: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<void>;
 
     riverToken(overrides?: CallOverrides): Promise<string>;
 
@@ -282,10 +414,17 @@ export interface ISpaceDelegation extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
+    setSpaceFactory(
+      spaceFactory: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
     setStakeRequirement(
       stakeRequirement_: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
+
+    stakeRequirement(overrides?: CallOverrides): Promise<BigNumber>;
   };
 
   filters: {
@@ -312,6 +451,13 @@ export interface ISpaceDelegation extends BaseContract {
       operator?: PromiseOrValue<string> | null
     ): SpaceDelegatedToOperatorEventFilter;
 
+    "SpaceFactoryChanged(address)"(
+      spaceFactory?: PromiseOrValue<string> | null
+    ): SpaceFactoryChangedEventFilter;
+    SpaceFactoryChanged(
+      spaceFactory?: PromiseOrValue<string> | null
+    ): SpaceFactoryChangedEventFilter;
+
     "StakeRequirementChanged(uint256)"(
       stakeRequirement?: null
     ): StakeRequirementChangedEventFilter;
@@ -321,6 +467,12 @@ export interface ISpaceDelegation extends BaseContract {
   };
 
   estimateGas: {
+    addSpaceDelegation(
+      space: PromiseOrValue<string>,
+      operator: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     getSpaceDelegation(
       space: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -331,9 +483,18 @@ export interface ISpaceDelegation extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    getSpaceFactory(overrides?: CallOverrides): Promise<BigNumber>;
+
     getTotalDelegation(
       operator: PromiseOrValue<string>,
       overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    mainnetDelegation(overrides?: CallOverrides): Promise<BigNumber>;
+
+    removeSpaceDelegation(
+      space: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
     riverToken(overrides?: CallOverrides): Promise<BigNumber>;
@@ -348,13 +509,26 @@ export interface ISpaceDelegation extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    setSpaceFactory(
+      spaceFactory: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     setStakeRequirement(
       stakeRequirement_: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
+
+    stakeRequirement(overrides?: CallOverrides): Promise<BigNumber>;
   };
 
   populateTransaction: {
+    addSpaceDelegation(
+      space: PromiseOrValue<string>,
+      operator: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
     getSpaceDelegation(
       space: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -365,9 +539,18 @@ export interface ISpaceDelegation extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
+    getSpaceFactory(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     getTotalDelegation(
       operator: PromiseOrValue<string>,
       overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    mainnetDelegation(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    removeSpaceDelegation(
+      space: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
     riverToken(overrides?: CallOverrides): Promise<PopulatedTransaction>;
@@ -382,9 +565,16 @@ export interface ISpaceDelegation extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
+    setSpaceFactory(
+      spaceFactory: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
     setStakeRequirement(
       stakeRequirement_: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
+
+    stakeRequirement(overrides?: CallOverrides): Promise<PopulatedTransaction>;
   };
 }
