@@ -1,15 +1,20 @@
 import { Env } from '.'
+import { ApiErrorDetail, ErrorCode } from './createResponse'
 import { isPrivyApiSearchResponse, searchPrivyForUserByDid, verifyPrivyAuthToken } from './privy'
 import { Overrides, isWhitelistStoredOperation, IOverrideOperation } from './types'
 import { TRANSACTION_LIMIT_DEFAULTS_PER_DAY } from './useropVerification'
 import { durationLogger } from './utils'
 //import { Permission } from '@river-build/web3'
 
-export interface IVerificationResult {
-    verified: boolean
-    maxActionsPerDay?: number
-    error?: string
-}
+export type IVerificationResult =
+    | {
+          verified: true
+          maxActionsPerDay?: number
+      }
+    | {
+          verified: false
+          errorDetail: ApiErrorDetail
+      }
 
 // Type guard for IEveryWalletCanMint
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -61,7 +66,13 @@ export async function checkLinkKVOverrides(
                 maxActionsPerDay: TRANSACTION_LIMIT_DEFAULTS_PER_DAY.linkWallet,
             }
         }
-        return { verified: false, error: 'address is not on whitelist' }
+        return {
+            verified: false,
+            errorDetail: {
+                code: ErrorCode.INVALID_WHITELISTED_WALLET,
+                description: 'address is not on whitelist',
+            },
+        }
     }
     return {
         verified: true,
@@ -91,12 +102,24 @@ export async function checkUseTownKVOverrides(
         })
         if (isWhitelistStoredOperation(townWhitelist)) {
             if (townWhitelist.data !== townId || !townWhitelist.enabled) {
-                return { verified: false, error: `TownId is not on whitelist` }
+                return {
+                    verified: false,
+                    errorDetail: {
+                        code: ErrorCode.INVALID_WHITELISTED_SPACE,
+                        description: 'TownId is not on whitelist',
+                    },
+                }
             } else {
                 return { verified: true }
             }
         }
-        return { verified: false, error: `TownId is not on whitelist` }
+        return {
+            verified: false,
+            errorDetail: {
+                code: ErrorCode.INVALID_WHITELISTED_SPACE,
+                description: 'TownId is not on whitelist',
+            },
+        }
     }
     return { verified: true }
 }
@@ -123,12 +146,24 @@ export async function checkjoinTownKVOverrides(
         })
         if (isWhitelistStoredOperation(townWhitelist)) {
             if (townWhitelist.data !== townId || !townWhitelist.enabled) {
-                return { verified: false, error: `TownId is not on whitelist` }
+                return {
+                    verified: false,
+                    errorDetail: {
+                        code: ErrorCode.INVALID_WHITELISTED_SPACE,
+                        description: 'TownId is not on whitelist',
+                    },
+                }
             } else {
                 return { verified: true }
             }
         }
-        return { verified: false, error: `TownId is not on whitelist` }
+        return {
+            verified: false,
+            errorDetail: {
+                code: ErrorCode.INVALID_WHITELISTED_SPACE,
+                description: 'TownId is not on whitelist',
+            },
+        }
     }
     return { verified: true }
 }
@@ -185,7 +220,10 @@ export async function checkMintKVOverrides(
             linkedDuration()
             return {
                 verified: false,
-                error: 'user not on email whitelist',
+                errorDetail: {
+                    code: ErrorCode.INVALID_WHITELISTED_EMAIL,
+                    description: 'user not on email whitelist',
+                },
             }
         }
     }
@@ -207,5 +245,11 @@ export function checkKVLinkedWallets(
             return { verified: true }
         }
     }
-    return { verified: false }
+    return {
+        verified: false,
+        errorDetail: {
+            code: ErrorCode.INVALID_WHITELISTED_WALLET,
+            description: 'address is not on whitelist',
+        },
+    }
 }

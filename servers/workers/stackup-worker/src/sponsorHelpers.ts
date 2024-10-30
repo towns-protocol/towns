@@ -18,6 +18,7 @@ import {
 import { isErrorType } from 'worker-common'
 import { verifyPrivyAuthToken } from './privy'
 import { createSpaceDappForNetwork } from './provider'
+import { createErrorResponse, createSuccessResponse, ErrorCode } from './createResponse'
 
 export async function handleVerifications(args: {
     request: WorkerRequest
@@ -36,7 +37,7 @@ export async function handleVerifications(args: {
     })
     endVerifyAuthTokenDuration()
     if (!verifiedClaims) {
-        return new Response(toJson({ error: 'invalid auth token' }), { status: 401 })
+        return createErrorResponse(401, 'invalid auth token', ErrorCode.INVALID_PRIVY_AUTH_TOKEN)
     }
 
     try {
@@ -59,12 +60,12 @@ export async function handleVerifications(args: {
             // todo: functionHash should be a keccak hash of the function signature
             case 'createSpaceWithPrepay':
             case 'createSpace': {
-                const { errorMessage, root, sender } = commonChecks({
+                const { errorDetail, root, sender } = commonChecks({
                     rootKeyAddress: rootKeyAddress,
                     sender: userOperation.sender,
                 })
-                if (errorMessage) {
-                    return new Response(toJson({ error: errorMessage }), { status: 400 })
+                if (errorDetail) {
+                    return createErrorResponse(400, errorDetail.description, errorDetail.code)
                 }
 
                 if (env.SKIP_TOWNID_VERIFICATION !== 'true') {
@@ -75,27 +76,31 @@ export async function handleVerifications(args: {
                         env,
                     })
                     if (!verification.verified) {
-                        return new Response(
-                            toJson({ error: `Unauthorized: ${verification.error}` }),
-                            { status: 401 },
+                        const errorDetail = verification.errorDetail
+                        return createErrorResponse(
+                            401,
+                            `Unauthorized: ${verification.errorDetail?.description}`,
+                            errorDetail?.code,
                         )
                     }
                 }
                 break
             }
             case 'joinSpace': {
-                const { errorMessage, root, sender } = commonChecks({
+                const { errorDetail, root, sender } = commonChecks({
                     rootKeyAddress: rootKeyAddress,
                     sender: userOperation.sender,
                 })
-                if (errorMessage) {
-                    return new Response(toJson({ error: errorMessage }), { status: 400 })
+                if (errorDetail) {
+                    return createErrorResponse(400, errorDetail.description, errorDetail.code)
                 }
 
                 if (!townId) {
-                    return new Response(invalidTownErrorMessage, {
-                        status: 400,
-                    })
+                    return createErrorResponse(
+                        400,
+                        invalidTownErrorMessage,
+                        ErrorCode.INVALID_SPACE,
+                    )
                 }
 
                 if (env.SKIP_TOWNID_VERIFICATION !== 'true') {
@@ -106,9 +111,10 @@ export async function handleVerifications(args: {
                         env,
                     })
                     if (!verification.verified) {
-                        return new Response(
-                            toJson({ error: `Unauthorized: ${verification.error}` }),
-                            { status: 401 },
+                        return createErrorResponse(
+                            401,
+                            `Unauthorized: ${verification.errorDetail.description}`,
+                            verification.errorDetail.code,
                         )
                     }
                 }
@@ -117,12 +123,12 @@ export async function handleVerifications(args: {
             case 'removeLink':
             case 'linkCallerToRootKey':
             case 'linkWalletToRootKey': {
-                const { errorMessage, root, sender } = commonChecks({
+                const { errorDetail, root, sender } = commonChecks({
                     rootKeyAddress: rootKeyAddress,
                     sender: userOperation.sender,
                 })
-                if (errorMessage) {
-                    return new Response(toJson({ error: errorMessage }), { status: 400 })
+                if (errorDetail) {
+                    return createErrorResponse(400, errorDetail.description, errorDetail.code)
                 }
 
                 if (env.SKIP_TOWNID_VERIFICATION !== 'true') {
@@ -133,9 +139,10 @@ export async function handleVerifications(args: {
                         env,
                     })
                     if (!verification.verified) {
-                        return new Response(
-                            toJson({ error: `Unauthorized: ${verification.error}` }),
-                            { status: 401 },
+                        return createErrorResponse(
+                            401,
+                            `Unauthorized: ${verification.errorDetail.description}`,
+                            verification.errorDetail.code,
                         )
                     }
                 }
@@ -158,19 +165,18 @@ export async function handleVerifications(args: {
             case 'removeChannel':
             case 'ban':
             case 'unban': {
-                const { errorMessage, root, sender } = commonChecks({
+                const { errorDetail, root, sender } = commonChecks({
                     rootKeyAddress: rootKeyAddress,
                     sender: userOperation.sender,
                 })
-                if (errorMessage) {
-                    return new Response(toJson({ error: errorMessage }), { status: 400 })
+                if (errorDetail) {
+                    return createErrorResponse(400, errorDetail.description, errorDetail.code)
                 }
                 if (!townId) {
-                    return new Response(
-                        toJson({ error: `Missing townId, cannot verify town exists` }),
-                        {
-                            status: 400,
-                        },
+                    return createErrorResponse(
+                        400,
+                        `Missing townId, cannot verify town exists`,
+                        ErrorCode.INVALID_SPACE,
                     )
                 }
                 if (env.SKIP_TOWNID_VERIFICATION !== 'true') {
@@ -182,28 +188,28 @@ export async function handleVerifications(args: {
                         transactionName: functionHash,
                     })
                     if (!verification.verified) {
-                        return new Response(
-                            toJson({ error: `Unauthorized: ${verification.error}` }),
-                            { status: 401 },
+                        return createErrorResponse(
+                            401,
+                            `Unauthorized: ${verification.errorDetail.description}`,
+                            verification.errorDetail.code,
                         )
                     }
                 }
                 break
             }
             case 'updateSpaceInfo': {
-                const { errorMessage, root, sender } = commonChecks({
+                const { errorDetail, root, sender } = commonChecks({
                     rootKeyAddress: rootKeyAddress,
                     sender: userOperation.sender,
                 })
-                if (errorMessage) {
-                    return new Response(toJson({ error: errorMessage }), { status: 400 })
+                if (errorDetail) {
+                    return createErrorResponse(400, errorDetail.description, errorDetail.code)
                 }
                 if (!townId) {
-                    return new Response(
-                        toJson({ error: `Missing townId, cannot verify town exists` }),
-                        {
-                            status: 400,
-                        },
+                    return createErrorResponse(
+                        400,
+                        `Missing townId, cannot verify town exists`,
+                        ErrorCode.INVALID_SPACE,
                     )
                 }
                 if (env.SKIP_TOWNID_VERIFICATION !== 'true') {
@@ -214,9 +220,10 @@ export async function handleVerifications(args: {
                         env,
                     })
                     if (!verification.verified) {
-                        return new Response(
-                            toJson({ error: `Unauthorized: ${verification.error}` }),
-                            { status: 401 },
+                        return createErrorResponse(
+                            401,
+                            `Unauthorized: ${verification.errorDetail.description}`,
+                            verification.errorDetail.code,
                         )
                     }
                 }
@@ -227,12 +234,12 @@ export async function handleVerifications(args: {
                 // they have not linked their wallet or joined or created a town yet
                 // therefore we don't need any checks
 
-                const { errorMessage } = commonChecks({
+                const { errorDetail } = commonChecks({
                     rootKeyAddress: rootKeyAddress,
                     sender: userOperation.sender,
                 })
-                if (errorMessage) {
-                    return new Response(toJson({ error: errorMessage }), { status: 400 })
+                if (errorDetail) {
+                    return createErrorResponse(400, errorDetail.description, errorDetail.code)
                 }
 
                 break
@@ -241,41 +248,37 @@ export async function handleVerifications(args: {
                 // this flow is specifically for a new user
                 // they have not linked their wallet or joined or created a town yet
                 // therefore we don't need any checks
-                const { errorMessage } = commonChecks({
+                const { errorDetail } = commonChecks({
                     rootKeyAddress: rootKeyAddress,
                     sender: userOperation.sender,
                 })
-                if (errorMessage) {
-                    return new Response(toJson({ error: errorMessage }), { status: 400 })
+                if (errorDetail) {
+                    return createErrorResponse(400, errorDetail.description, errorDetail.code)
                 }
 
                 if (!townId) {
-                    return new Response(
-                        toJson({
-                            error: `Missing townId, cannot verify that town does not exist`,
-                        }),
-                        {
-                            status: 400,
-                        },
+                    return createErrorResponse(
+                        400,
+                        `Missing townId, cannot verify that town does not exist`,
+                        ErrorCode.INVALID_SPACE,
                     )
                 }
 
                 break
             }
             case 'editMembershipSettings': {
-                const { errorMessage, root, sender } = commonChecks({
+                const { errorDetail, root, sender } = commonChecks({
                     rootKeyAddress: rootKeyAddress,
                     sender: userOperation.sender,
                 })
-                if (errorMessage) {
-                    return new Response(toJson({ error: errorMessage }), { status: 400 })
+                if (errorDetail) {
+                    return createErrorResponse(400, errorDetail.description, errorDetail.code)
                 }
                 if (!townId) {
-                    return new Response(
-                        toJson({ error: `Missing townId, cannot verify town exists` }),
-                        {
-                            status: 400,
-                        },
+                    return createErrorResponse(
+                        400,
+                        `Missing townId, cannot verify town exists`,
+                        ErrorCode.INVALID_SPACE,
                     )
                 }
 
@@ -288,16 +291,10 @@ export async function handleVerifications(args: {
                         transactionName: 'updateRole',
                     })
                     if (!verification.verified) {
-                        return new Response(
-                            toJson({ error: `Unauthorized: ${verification.error}` }),
-                            { status: 401 },
-                        )
-                    }
-
-                    if (!verification.verified) {
-                        return new Response(
-                            toJson({ error: `Unauthorized: ${verification.error}` }),
-                            { status: 401 },
+                        return createErrorResponse(
+                            401,
+                            `Unauthorized: ${verification.errorDetail.description}`,
+                            verification.errorDetail.code,
                         )
                     }
                 }
@@ -314,9 +311,11 @@ export async function handleVerifications(args: {
 
             default:
                 // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-                return new Response(toJson({ error: `Unknown functionHash ${functionHash}` }), {
-                    status: 404,
-                })
+                return createErrorResponse(
+                    404,
+                    `Unknown functionHash ${functionHash}`,
+                    ErrorCode.UNKNOWN_OPERATION,
+                )
         }
     } catch (error) {
         console.error(`KV returned error: ${isErrorType(error) ? error?.message : 'Unknown error'}`)
@@ -330,25 +329,25 @@ export async function handlePaymasterResponse(args: {
     townId?: string
 }): Promise<Response> {
     const { paymasterResponse, env, townId } = args
-    if (paymasterResponse.status !== 200) {
-        return new Response(toJson({ error: 'Invalid Paymaster Response' }), {
-            status: paymasterResponse.status,
-        })
-    }
     const json = await paymasterResponse.json()
     if (!isPaymasterResponse(json)) {
-        return new Response(toJson({ error: 'Invalid Paymaster Response' }), { status: 400 })
+        return createErrorResponse(
+            400,
+            'Invalid Paymaster Response',
+            ErrorCode.INVALID_PAYMASTER_RESPONSE,
+        )
     }
     const statusCode = paymasterResponse.status
     if (statusCode !== 200) {
-        return new Response(toJson({ error: 'Paymaster Error' }), {
-            status: statusCode,
-            statusText: `Error code ${json?.error?.code}, message ${json?.error?.message}`,
-        })
+        const limitExceeded = json?.error?.message.includes('exceeded')
+        return createErrorResponse(
+            statusCode,
+            `Invalid Paymaster Response: code ${json?.error?.code}, message ${json?.error?.message}`,
+            limitExceeded ? ErrorCode.PAYMASTER_LIMIT_REACHED : ErrorCode.PAYMASTER_ERROR,
+        )
     } else {
         if (json.error) {
             const spaceDapp = await createSpaceDappForNetwork(env)
-            const error = json.error
             let spaceDappError: Error | undefined
             if (spaceDapp) {
                 if (townId) {
@@ -363,19 +362,13 @@ export async function handlePaymasterResponse(args: {
             console.error(`PM API returned error: ${json.error.code}, ${json.error.message}`)
             console.error(`Parsed error from SpaceDapp: ${spaceDappErrorMessage}`)
 
-            return new Response(
-                toJson({
-                    error: spaceDappError ? spaceDappErrorMessage : 'Internal Service Error',
-                }),
-                {
-                    status: 500,
-                    statusText: `Error code ${json.error.code}, message ${
-                        spaceDappError ? spaceDappErrorMessage : json.error.message
-                    }`,
-                },
+            return createErrorResponse(
+                500,
+                spaceDappError ? spaceDappErrorMessage : 'Internal Service Error',
+                ErrorCode.UNKNOWN_ERROR,
             )
         }
         console.log('PM API response:', json.result)
-        return new Response(toJson(json.result), { status: 200 })
+        return createSuccessResponse(200, 'Success', json.result)
     }
 }

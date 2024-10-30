@@ -1,6 +1,7 @@
 import { AuthTokenClaims, PrivyClient } from '@privy-io/server-auth'
 import { Env } from '.'
 import { durationLogger, WorkerRequest } from './utils'
+import { createErrorResponse, ErrorCode } from './createResponse'
 
 const PRIVY_API_URL = 'https://auth.privy.io/api/v1'
 
@@ -123,15 +124,20 @@ export async function searchPrivyForUserByDid(
     completeDuration()
     console.log('responseFetched', responseFetched.status)
     if (responseFetched.status !== 200) {
-        return new Response('Invalid Privy Response', {
-            status: responseFetched.status,
-            statusText: responseFetched.statusText,
-        })
+        return createErrorResponse(
+            responseFetched.status,
+            'Invalid Privy Response',
+            ErrorCode.INVALID_PRIVY_RESPONSE,
+        )
     }
     const response = await responseFetched.json()
     if (!isPrivyApiSearchResponse(response)) {
         console.log('invalid privy response', JSON.stringify(response))
-        return new Response('Invalid Privy Response Format', { status: 400 })
+        return createErrorResponse(
+            400,
+            'Invalid Privy Response Format',
+            ErrorCode.INVALID_PRIVY_RESPONSE,
+        )
     }
     return response
 }

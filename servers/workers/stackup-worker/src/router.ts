@@ -25,6 +25,7 @@ import { createSpaceDappForNetwork, networkMap } from './provider'
 import { verifyPrivyAuthToken } from './privy'
 import { PrivyClient } from '@privy-io/server-auth'
 import { handlePaymasterResponse, handleVerifications } from './sponsorHelpers'
+import { createErrorResponse, createSuccessResponse, ErrorCode } from './createResponse'
 
 const router = Router()
 
@@ -41,7 +42,7 @@ router.post('/api/transaction-limits', async (request: WorkerRequest, env: Env) 
     // check payload is IUserOperation with townId
     const content = await getContentAsJson(request)
     if (!content || !isTransactionLimitRequest(content)) {
-        return new Response(toJson({ error: 'Bad Request' }), { status: 400 })
+        return createErrorResponse(400, 'Bad Request', ErrorCode.BAD_REQUEST)
     }
     const { environment, operation, rootAddress, blockLookbackNum, privyDid } = content
 
@@ -74,19 +75,18 @@ router.post('/api/transaction-limits', async (request: WorkerRequest, env: Env) 
                     townId: undefined,
                 })
                 if (!queryResult) {
-                    return new Response(toJson({ error: 'Internal Service Error' }), {
-                        status: 500,
-                    })
+                    return createErrorResponse(
+                        500,
+                        'unable to query for space',
+                        ErrorCode.QUERY_ERROR,
+                    )
                 }
                 const restricted = await checkMintKVOverrides(rootAddress, privyDid, env)
-                return new Response(
-                    toJson({
-                        ...queryResult,
-                        maxActionsPerDay: TRANSACTION_LIMIT_DEFAULTS_PER_DAY.createSpace,
-                        restricted: !restricted?.verified,
-                    }),
-                    { status: 200 },
-                )
+                return createSuccessResponse(200, 'Transaction Limits', {
+                    ...queryResult,
+                    maxActionsPerDay: TRANSACTION_LIMIT_DEFAULTS_PER_DAY.createSpace,
+                    restricted: !restricted?.verified,
+                })
             }
             case 'joinSpace': {
                 // default: if a town exists and membership price is $0, any wallet address that exists in HNT Privy DB
@@ -142,23 +142,29 @@ router.post('/api/transaction-limits', async (request: WorkerRequest, env: Env) 
 
             default:
                 // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-                return new Response(toJson({ error: `Unknown operation ${operation}` }), {
-                    status: 404,
-                })
+                return createErrorResponse(
+                    404,
+                    `Unknown operation ${operation}`,
+                    ErrorCode.UNKNOWN_OPERATION,
+                )
         }
     } catch (error) {
         console.error(`returned error: ${isErrorType(error) ? error?.message : 'Unknown error'}`)
-        return new Response(toJson({ error: 'Internal Service Error' }), { status: 500 })
+        return createErrorResponse(500, 'Internal Service Error', ErrorCode.UNKNOWN_ERROR)
     }
 })
 
 router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env, { privyClient }) => {
     if (env.REFUSE_ALL_OPS === 'true') {
-        return new Response(toJson({ error: 'User operations are not available' }), { status: 503 })
+        return createErrorResponse(
+            503,
+            'User operations are not available',
+            ErrorCode.UNKNOWN_ERROR,
+        )
     }
     const content = await getContentAsJson(request)
     if (!content || !isTownsUserOperation(content)) {
-        return new Response(toJson({ error: 'Bad Request' }), { status: 400 })
+        return createErrorResponse(400, 'Bad Request', ErrorCode.BAD_REQUEST)
     }
     const { data } = content
 
@@ -199,13 +205,15 @@ router.post(
     '/api/sponsor-userop/alchemy',
     async (request: WorkerRequest, env: Env, { privyClient }) => {
         if (env.REFUSE_ALL_OPS === 'true') {
-            return new Response(toJson({ error: 'User operations are not available' }), {
-                status: 503,
-            })
+            return createErrorResponse(
+                503,
+                'User operations are not available',
+                ErrorCode.UNKNOWN_ERROR,
+            )
         }
         const content = await getContentAsJson(request)
         if (!content || !isTownsUserOperation(content)) {
-            return new Response(toJson({ error: 'Bad Request' }), { status: 400 })
+            return createErrorResponse(400, 'Bad Request', ErrorCode.BAD_REQUEST)
         }
         const { data } = content
 
@@ -223,12 +231,18 @@ router.post(
         }
 
         if (!env.ALCHEMY_GM_POLICY_ID) {
-            return new Response(toJson({ error: 'ALCHEMY_GM_POLICY_ID not set' }), { status: 405 })
+            return createErrorResponse(
+                405,
+                'ALCHEMY_GM_POLICY_ID not set',
+                ErrorCode.MISSING_ENV_VARIABLE,
+            )
         }
         if (!env.ALCHEMY_PAYMASTER_RPC_URL) {
-            return new Response(toJson({ error: 'ALCHEMY_PAYMASTER_RPC_URL not set' }), {
-                status: 405,
-            })
+            return createErrorResponse(
+                405,
+                'ALCHEMY_PAYMASTER_RPC_URL not set',
+                ErrorCode.MISSING_ENV_VARIABLE,
+            )
         }
 
         const requestInit = createAlchemyRequestGasAndPaymasterDataRequest({
@@ -254,13 +268,15 @@ router.post(
     '/api/sponsor-userop/open',
     async (request: WorkerRequest, env: Env, { privyClient }) => {
         if (env.REFUSE_ALL_OPS === 'true') {
-            return new Response(toJson({ error: 'User operations are not available' }), {
-                status: 503,
-            })
+            return createErrorResponse(
+                503,
+                'User operations are not available',
+                ErrorCode.UNKNOWN_ERROR,
+            )
         }
         const content = await getContentAsJson(request)
         if (!content || !isTownsUserOperation(content)) {
-            return new Response(toJson({ error: 'Bad Request' }), { status: 400 })
+            return createErrorResponse(400, 'Bad Request', ErrorCode.BAD_REQUEST)
         }
 
         const endVerifyAuthTokenDuration = durationLogger('Verify Auth Token')
@@ -272,20 +288,28 @@ router.post(
         endVerifyAuthTokenDuration()
 
         if (!verifiedClaims) {
-            return new Response(toJson({ error: 'invalid auth token' }), { status: 401 })
+            return createErrorResponse(
+                401,
+                'invalid auth token',
+                ErrorCode.INVALID_PRIVY_AUTH_TOKEN,
+            )
         }
 
         const { townId, ...userOperation } = content.data
 
         if (!env.ALCHEMY_GM_POLICY_ID_OPEN) {
-            return new Response(toJson({ error: 'ALCHEMY_GM_POLICY_ID_OPEN not set' }), {
-                status: 405,
-            })
+            return createErrorResponse(
+                405,
+                'ALCHEMY_GM_POLICY_ID_OPEN not set',
+                ErrorCode.MISSING_ENV_VARIABLE,
+            )
         }
         if (!env.ALCHEMY_PAYMASTER_RPC_URL) {
-            return new Response(toJson({ error: 'ALCHEMY_PAYMASTER_RPC_URL not set' }), {
-                status: 405,
-            })
+            return createErrorResponse(
+                405,
+                'ALCHEMY_PAYMASTER_RPC_URL not set',
+                ErrorCode.MISSING_ENV_VARIABLE,
+            )
         }
 
         const requestInit = createAlchemyRequestGasAndPaymasterDataRequest({
@@ -310,7 +334,7 @@ router.post('/admin/api/add-override', async (request: WorkerRequest, env: Env) 
 
     const content = await getContentAsJson(request)
     if (!content || !isOverrideOperation(content)) {
-        return new Response(toJson({ error: 'Bad Request' }), { status: 400 })
+        return createErrorResponse(400, 'Bad Request', ErrorCode.BAD_REQUEST)
     }
     const { operation, enabled, n } = content
     switch (operation) {
@@ -334,11 +358,13 @@ router.post('/admin/api/add-override', async (request: WorkerRequest, env: Env) 
             break
         }
         default:
-            return new Response(toJson({ error: `Unknown operation ${operation}` }), {
-                status: 404,
-            })
+            return createErrorResponse(
+                404,
+                `Unknown operation ${operation}`,
+                ErrorCode.UNKNOWN_OPERATION,
+            )
     }
-    return new Response('Ok', { status: 200 })
+    return createSuccessResponse(200, 'Ok')
 })
 
 router.post('/admin/api/add-to-whitelist', async (request: WorkerRequest, env: Env) => {
@@ -346,7 +372,7 @@ router.post('/admin/api/add-to-whitelist', async (request: WorkerRequest, env: E
 
     const content = await getContentAsJson(request)
     if (!content || !isWhitelistOperation(content)) {
-        return new Response(toJson({ error: 'Bad Request' }), { status: 400 })
+        return createErrorResponse(400, 'Bad Request', ErrorCode.BAD_REQUEST)
     }
     const { operation, enabled, data } = content
     switch (operation) {
@@ -368,14 +394,16 @@ router.post('/admin/api/add-to-whitelist', async (request: WorkerRequest, env: E
             break
         }
         default:
-            return new Response(toJson({ error: `Unknown operation ${operation}` }), {
-                status: 404,
-            })
+            return createErrorResponse(
+                404,
+                `Unknown operation ${operation}`,
+                ErrorCode.UNKNOWN_OPERATION,
+            )
     }
-    return new Response('Ok', { status: 200 })
+    return createSuccessResponse(200, 'Ok')
 })
 
-router.get('*', () => new Response('Not Found', { status: 404 }))
+router.get('*', () => createErrorResponse(404, 'Not Found', ErrorCode.NOT_FOUND))
 
 export const handleRequest = (
     request: WorkerRequest,

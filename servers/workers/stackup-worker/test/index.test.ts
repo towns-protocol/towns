@@ -28,7 +28,7 @@ describe('http router', () => {
         expect(result.status).toBe(404)
 
         const text = await result.text()
-        expect(text).toBe('Not Found')
+        expect(text).toContain('Not Found')
     })
 
     // TODO: this test should mock/intercept anvil RPC calls

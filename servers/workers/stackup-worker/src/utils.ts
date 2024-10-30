@@ -2,6 +2,7 @@ import { IUserOperation } from 'userop.js'
 import { Request as IttyRequest } from 'itty-router'
 import { GasOverrides, isHexString } from './types'
 import { Address } from '@river-build/web3'
+import { ApiErrorDetail, ErrorCode } from './createResponse'
 
 export type WorkerRequest = Request & IttyRequest
 
@@ -102,20 +103,33 @@ export async function getContentAsJson(request: WorkerRequest): Promise<object |
     return null
 }
 
-export function commonChecks(args: { rootKeyAddress: string; sender: string }) {
+export function commonChecks(args: { rootKeyAddress: string; sender: string }): {
+    errorDetail?: ApiErrorDetail
+    root: Address
+    sender: Address
+} {
     const { rootKeyAddress, sender } = args
-    let errorMessage: string | undefined
+    let errorDetail: ApiErrorDetail | undefined
     if (!isHexString(rootKeyAddress)) {
-        errorMessage = `rootKeyAddress ${rootKeyAddress} not valid`
+        errorDetail = {
+            code: ErrorCode.INVALID_ROOT_KEY,
+            description: `rootKeyAddress ${rootKeyAddress} not valid`,
+        }
     }
     if (!isHexString(sender)) {
-        errorMessage = `userOperation.sender ${sender} not valid`
+        errorDetail = {
+            code: ErrorCode.INVALID_SENDER,
+            description: `userOperation.sender ${sender} not valid`,
+        }
     }
     if ('townId' in args && args.townId === undefined) {
-        errorMessage = `Missing townId, cannot verify that town exists`
+        errorDetail = {
+            code: ErrorCode.INVALID_SPACE,
+            description: `Missing townId, cannot verify that town exists`,
+        }
     }
     return {
-        errorMessage,
+        errorDetail,
         root: rootKeyAddress as Address,
         sender: sender as Address,
     }

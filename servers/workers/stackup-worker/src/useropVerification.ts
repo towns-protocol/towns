@@ -18,6 +18,7 @@ import {
 } from './checks'
 import { FunctionName } from './types'
 import { durationLogger } from './utils'
+import { ErrorCode } from './createResponse'
 
 interface ITownTransactionParams {
     rootKeyAddress: `0x${string}`
@@ -57,7 +58,13 @@ export async function verifyCreateSpace(
 ): Promise<IVerificationResult> {
     const spaceDapp = await createSpaceDappForNetwork(params.env)
     if (!spaceDapp) {
-        return { verified: false, error: 'Unable to create SpaceDapp' }
+        return {
+            verified: false,
+            errorDetail: {
+                code: ErrorCode.UNKNOWN_ERROR,
+                description: 'Unable to create SpaceDapp',
+            },
+        }
     }
     try {
         // check for whitelist overrides for user, email associated with privy account
@@ -68,7 +75,13 @@ export async function verifyCreateSpace(
             params.env,
         )
         if (isOverride == null) {
-            return { verified: false, error: 'user not allowed to mint towns with paymaster' }
+            return {
+                verified: false,
+                errorDetail: {
+                    code: ErrorCode.INVALID_WHITELISTED_WALLET,
+                    description: 'user not allowed to mint towns with paymaster',
+                },
+            }
         }
 
         const network = networkMap.get(params.env.ENVIRONMENT)
@@ -89,20 +102,38 @@ export async function verifyCreateSpace(
             townId: undefined,
         })
         if (!queryResult || !queryResult.events) {
-            return { verified: false, error: 'Unable to queryFilter for create town' }
+            return {
+                verified: false,
+                errorDetail: {
+                    code: ErrorCode.QUERY_ERROR,
+                    description: 'Unable to queryFilter for create town',
+                },
+            }
         }
 
         const limit =
             params.env.LIMIT_CREATE_SPACE ?? TRANSACTION_LIMIT_DEFAULTS_PER_DAY.createSpace
 
         if (queryResult.events.length >= limitOrSkipLimitVerification(params.env, limit)) {
-            return { verified: false, error: 'user has reached max mints' }
+            return {
+                verified: false,
+                errorDetail: {
+                    code: ErrorCode.DAILY_LIMIT_REACHED,
+                    /**
+                     * backwards compatibility message
+                     */
+                    description: 'user has reached max mints',
+                },
+            }
         }
         return { verified: true, maxActionsPerDay: limit }
     } catch (error) {
         return {
             verified: false,
-            error: isErrorType(error) ? error?.message : 'Unkown error',
+            errorDetail: {
+                code: ErrorCode.UNKNOWN_ERROR,
+                description: isErrorType(error) ? error?.message : 'Unkown error',
+            },
         }
     }
 }
@@ -123,7 +154,13 @@ export async function verifyCreateSpace(
 export async function verifyJoinTown(params: ITownTransactionParams): Promise<IVerificationResult> {
     const spaceDapp = await createSpaceDappForNetwork(params.env)
     if (!spaceDapp) {
-        return { verified: false, error: 'Unable to create SpaceDapp' }
+        return {
+            verified: false,
+            errorDetail: {
+                code: ErrorCode.UNKNOWN_ERROR,
+                description: 'Unable to create SpaceDapp',
+            },
+        }
     }
 
     try {
@@ -131,12 +168,24 @@ export async function verifyJoinTown(params: ITownTransactionParams): Promise<IV
         console.log(spaceDapp.config.chainId, params, await spaceDapp.provider?.getNetwork())
         const spaceInfo = await spaceDapp.getSpaceInfo(params.townId)
         if (!spaceInfo) {
-            return { verified: false, error: `Town ${params.townId} does not exist` }
+            return {
+                verified: false,
+                errorDetail: {
+                    code: ErrorCode.INVALID_SPACE,
+                    description: `Town ${params.townId} does not exist`,
+                },
+            }
         }
         // check for more restrictive rule and if town is on whitelist if so
         const override = await checkjoinTownKVOverrides(params.townId, params.env)
         if (override?.verified === false) {
-            return { verified: false, error: 'townId not on whitelist and restriction is set' }
+            return {
+                verified: false,
+                errorDetail: {
+                    code: ErrorCode.INVALID_WHITELISTED_SPACE,
+                    description: 'townId not on whitelist and restriction is set',
+                },
+            }
         }
 
         // check if user already has membership token
@@ -145,14 +194,23 @@ export async function verifyJoinTown(params: ITownTransactionParams): Promise<IV
             params.rootKeyAddress,
         )
         if (hasMembershipToken) {
-            return { verified: false, error: `User already has membership token for town` }
+            return {
+                verified: false,
+                errorDetail: {
+                    code: ErrorCode.HAS_MEMBERSHIP_TOKEN,
+                    description: `User already has membership token for town`,
+                },
+            }
         }
 
         const { maxSupply, price } = await spaceDapp.getMembershipInfo(params.townId)
         if (maxSupply === 0) {
             return {
                 verified: false,
-                error: 'max supply zero',
+                errorDetail: {
+                    code: ErrorCode.MAX_SUPPLY_ZERO,
+                    description: 'max supply zero',
+                },
             }
         }
 
@@ -162,7 +220,10 @@ export async function verifyJoinTown(params: ITownTransactionParams): Promise<IV
             if (BigNumber.from(prepaidSupply).eq(0)) {
                 return {
                     verified: false,
-                    error: 'prepaid membership supply is not depleted',
+                    errorDetail: {
+                        code: ErrorCode.PAID_SPACE,
+                        description: 'prepaid membership supply is not depleted',
+                    },
                 }
             }
         }
@@ -170,7 +231,13 @@ export async function verifyJoinTown(params: ITownTransactionParams): Promise<IV
         // 5. check if membership tokens still available to claim
         const { totalSupply: membershipSupply } = await spaceDapp.getMembershipSupply(params.townId)
         if (membershipSupply <= 0) {
-            return { verified: false, error: 'membership supply is depleted' }
+            return {
+                verified: false,
+                errorDetail: {
+                    code: ErrorCode.MEMBERSHIP_LIMIT_REACHED,
+                    description: 'membership supply is depleted',
+                },
+            }
         }
         // todo: check all linked wallets for entitlement through xchain ?
         /*
@@ -195,7 +262,10 @@ export async function verifyJoinTown(params: ITownTransactionParams): Promise<IV
     } catch (error) {
         return {
             verified: false,
-            error: isErrorType(error) ? error?.message : 'Unkown error',
+            errorDetail: {
+                code: ErrorCode.UNKNOWN_ERROR,
+                description: isErrorType(error) ? error?.message : 'Unkown error',
+            },
         }
     }
     return {
@@ -221,14 +291,26 @@ export async function verifyUseTown(
 ): Promise<IVerificationResult> {
     const spaceDapp = await createSpaceDappForNetwork(params.env)
     if (!spaceDapp) {
-        return { verified: false, error: 'Unable to create SpaceDapp' }
+        return {
+            verified: false,
+            errorDetail: {
+                code: ErrorCode.UNKNOWN_ERROR,
+                description: 'Unable to create SpaceDapp',
+            },
+        }
     }
     try {
         // check if town does not already exists
         try {
             const spaceInfo = await spaceDapp.getSpaceInfo(params.townId)
             if (!spaceInfo) {
-                return { verified: false, error: `Town ${params.townId} does not exists` }
+                return {
+                    verified: false,
+                    errorDetail: {
+                        code: ErrorCode.INVALID_SPACE,
+                        description: `Town ${params.townId} does not exists`,
+                    },
+                }
             }
         } catch (error) {
             console.error(error)
@@ -238,7 +320,13 @@ export async function verifyUseTown(
         const isOverride = await checkUseTownKVOverrides(params.rootKeyAddress, params.env)
         endCheckOverrides()
         if (isOverride !== null && isOverride.verified === false) {
-            return { verified: false, error: 'town not allowed to use channels with paymaster' }
+            return {
+                verified: false,
+                errorDetail: {
+                    code: ErrorCode.SPACE_DISABLED_FOR_PAYMASTER,
+                    description: 'town not allowed to use channels with paymaster',
+                },
+            }
         }
 
         const network = networkMap.get(params.env.ENVIRONMENT)
@@ -269,7 +357,13 @@ export async function verifyUseTown(
             townId: params.townId,
         })
         if (!queryResult || !queryResult.events) {
-            return { verified: false, error: 'Unable to queryFilter for use town' }
+            return {
+                verified: false,
+                errorDetail: {
+                    code: ErrorCode.QUERY_ERROR,
+                    description: 'Unable to queryFilter for use town',
+                },
+            }
         }
 
         let maxActionsPerDay: number | null = null
@@ -306,12 +400,27 @@ export async function verifyUseTown(
                 break
         }
         if (!maxActionsPerDay) {
-            return { verified: false, error: `transaction not supported ${params.transactionName}` }
+            return {
+                verified: false,
+                errorDetail: {
+                    code: ErrorCode.TRANSACTION_NOT_SUPPORTED,
+                    description: `transaction not supported ${params.transactionName}`,
+                },
+            }
         }
         if (
             queryResult.events.length >= limitOrSkipLimitVerification(params.env, maxActionsPerDay)
         ) {
-            return { verified: false, error: 'user has reached max mints' }
+            return {
+                verified: false,
+                errorDetail: {
+                    code: ErrorCode.DAILY_LIMIT_REACHED,
+                    /**
+                     * backwards compatibility message
+                     */
+                    description: 'user has reached max mints',
+                },
+            }
         }
         return {
             verified: true,
@@ -320,7 +429,10 @@ export async function verifyUseTown(
     } catch (error) {
         return {
             verified: false,
-            error: isErrorType(error) ? error?.message : 'Unkown error',
+            errorDetail: {
+                code: ErrorCode.UNKNOWN_ERROR,
+                description: isErrorType(error) ? error?.message : 'Unkown error',
+            },
         }
     }
 }
@@ -330,7 +442,13 @@ export async function verifyUpdateSpaceInfo(
 ): Promise<IVerificationResult> {
     const spaceDapp = await createSpaceDappForNetwork(params.env)
     if (!spaceDapp) {
-        return { verified: false, error: 'Unable to create SpaceDapp' }
+        return {
+            verified: false,
+            errorDetail: {
+                code: ErrorCode.UNKNOWN_ERROR,
+                description: 'Unable to create SpaceDapp',
+            },
+        }
     }
 
     try {
@@ -339,18 +457,33 @@ export async function verifyUpdateSpaceInfo(
         try {
             spaceInfo = await spaceDapp.getSpaceInfo(params.townId)
             if (!spaceInfo) {
-                return { verified: false, error: `Town ${params.townId} does not exists` }
+                return {
+                    verified: false,
+                    errorDetail: {
+                        code: ErrorCode.INVALID_SPACE,
+                        description: `Town ${params.townId} does not exists`,
+                    },
+                }
             }
         } catch (error) {
             console.error(error)
-            return { verified: false, error: `Town ${params.townId} does not exists` }
+            return {
+                verified: false,
+                errorDetail: {
+                    code: ErrorCode.INVALID_SPACE,
+                    description: `Town ${params.townId} does not exists`,
+                },
+            }
         }
         // check for restrictive rule which requires whitelist overrides for town
         const isOverride = await checkUseTownKVOverrides(params.rootKeyAddress, params.env)
         if (isOverride !== null && isOverride.verified === false) {
             return {
                 verified: false,
-                error: 'town not allowed to update space with paymaster',
+                errorDetail: {
+                    code: ErrorCode.SPACE_DISABLED_FOR_PAYMASTER,
+                    description: 'town not allowed to update space with paymaster',
+                },
             }
         }
 
@@ -377,7 +510,13 @@ export async function verifyUpdateSpaceInfo(
             townId: undefined,
         })
         if (!queryResult || !queryResult.events) {
-            return { verified: false, error: 'Unable to queryFilter for update space' }
+            return {
+                verified: false,
+                errorDetail: {
+                    code: ErrorCode.QUERY_ERROR,
+                    description: 'Unable to queryFilter for update space',
+                },
+            }
         }
 
         const maxActionsPerDay =
@@ -386,7 +525,16 @@ export async function verifyUpdateSpaceInfo(
         if (
             queryResult.events.length >= limitOrSkipLimitVerification(params.env, maxActionsPerDay)
         ) {
-            return { verified: false, error: 'user has reached max mints' }
+            return {
+                verified: false,
+                errorDetail: {
+                    code: ErrorCode.DAILY_LIMIT_REACHED,
+                    /**
+                     * backwards compatibility message
+                     */
+                    description: 'user has reached max mints',
+                },
+            }
         }
         return {
             verified: true,
@@ -395,7 +543,10 @@ export async function verifyUpdateSpaceInfo(
     } catch (error) {
         return {
             verified: false,
-            error: isErrorType(error) ? error?.message : 'Unkown error',
+            errorDetail: {
+                code: ErrorCode.UNKNOWN_ERROR,
+                description: isErrorType(error) ? error?.message : 'Unkown error',
+            },
         }
     }
 }
@@ -437,7 +588,13 @@ export async function verifyLinkWallet(
         const verification = await checkLinkKVOverrides(params.rootKeyAddress, params.env)
         if (verification !== null) {
             if (verification.verified === false) {
-                return { verified: false, error: verification.error }
+                return {
+                    verified: false,
+                    errorDetail: {
+                        code: ErrorCode.INVALID_WHITELISTED_WALLET,
+                        description: verification.errorDetail?.description,
+                    },
+                }
             }
         }
         // check max quota not exhausted
@@ -492,19 +649,37 @@ export async function verifyLinkWallet(
         }
 
         if (!queryResult || !queryResult.events) {
-            return { verified: false, error: 'Unable to queryFilter for wallet linking' }
+            return {
+                verified: false,
+                errorDetail: {
+                    code: ErrorCode.QUERY_ERROR,
+                    description: 'Unable to queryFilter for wallet linking',
+                },
+            }
         }
 
         const limit = params.env.LIMIT_LINK_WALLET ?? TRANSACTION_LIMIT_DEFAULTS_PER_DAY.linkWallet
 
         if (queryResult.events.length >= limitOrSkipLimitVerification(params.env, limit)) {
-            return { verified: false, error: 'user has reached max wallet links for the day' }
+            return {
+                verified: false,
+                errorDetail: {
+                    code: ErrorCode.DAILY_LIMIT_REACHED,
+                    /**
+                     * backwards compatibility message
+                     */
+                    description: 'user has reached max wallet links for the day',
+                },
+            }
         }
         return { verified: true, maxActionsPerDay: limit }
     } catch (error) {
         return {
             verified: false,
-            error: isErrorType(error) ? error?.message : 'Unkown error',
+            errorDetail: {
+                code: ErrorCode.UNKNOWN_ERROR,
+                description: isErrorType(error) ? error?.message : 'Unkown error',
+            },
         }
     }
 }
