@@ -15,22 +15,42 @@ const paramsSchema = z.object({
 		}),
 })
 
+const querySchema = z.object({
+	target: z.enum(['image', 'metadata', 'all']).default('all'),
+})
+
 // This route handler validates the refresh request, initiates the CloudFront invalidation, and returns a 200 response.
 export async function spaceRefresh(request: FastifyRequest, reply: FastifyReply) {
 	const logger = request.log.child({ name: spaceRefresh.name })
 
 	const parseResult = paramsSchema.safeParse(request.params)
-
 	if (!parseResult.success) {
 		const errorMessage = parseResult.error.errors[0]?.message || 'Invalid parameters'
 		logger.info(errorMessage)
 		return reply.code(400).send({ error: 'Bad Request', message: errorMessage })
 	}
+
+	const queryParseResult = querySchema.safeParse(request.query)
+	if (!queryParseResult.success) {
+		const errorMessage = queryParseResult.error.errors[0]?.message || 'Invalid query parameters'
+		logger.info(errorMessage)
+		return reply.code(400).send({ error: 'Bad Request', message: errorMessage })
+	}
+
 	const { spaceAddress } = parseResult.data
+	const { target } = queryParseResult.data
+
+	const paths =
+		target === 'metadata'
+			? [`/space/${spaceAddress}`, `/space/${spaceAddress}/token/*`]
+			: target === 'image'
+			? [`/space/${spaceAddress}/image*`]
+			: [`/space/${spaceAddress}*`]
+
 	try {
 		logger.info({ spaceAddress }, 'Refreshing space')
 		const invalidationId = await CloudfrontManager.createCloudfrontInvalidation({
-			paths: [`/space/${spaceAddress}/image*`],
+			paths,
 			logger,
 		}).then((invalidation) => invalidation?.Invalidation?.Id)
 
