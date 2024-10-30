@@ -12,6 +12,8 @@ interface IssueCreateInput {
     logFilename?: string
     logUrl?: string
     attachments?: Uploaded[]
+    version?: string
+    commitHash?: string
 }
 
 export async function createIssue({
@@ -25,6 +27,8 @@ export async function createIssue({
     logFilename,
     logUrl,
     attachments,
+    version,
+    commitHash,
 }: IssueCreateInput): Promise<void> {
     const mutation = `
 mutation CreateIssue($issueTitle: String!, $issueDescription: String!){
@@ -42,7 +46,7 @@ mutation CreateIssue($issueTitle: String!, $issueDescription: String!){
 }
 `
     const issueTitleCutoff = 80
-    const issueTitleRaw = `[${env}][User Feedback] ${comments}`
+    const issueTitleRaw = `[${env}][${version ?? '0.0.0'}][${commitHash ?? ''}] ${comments}`
     const issueTitle =
         issueTitleRaw.length > issueTitleCutoff
             ? issueTitleRaw.substring(0, issueTitleCutoff) + '...'

@@ -14,6 +14,8 @@ interface CreateLinearIssueInput {
     comments: string
     logJson: string
     attachments?: File[]
+    version?: string
+    commitHash?: string
 }
 
 export async function createLinearIssue({
@@ -26,6 +28,8 @@ export async function createLinearIssue({
     comments,
     logJson,
     attachments,
+    version,
+    commitHash,
 }: CreateLinearIssueInput) {
     const hasAttachments = attachments && attachments.length > 0
     const uploadAttachments = attachments?.map((file) => uploadFileToLinear({ config, file })) || []
@@ -45,6 +49,8 @@ export async function createLinearIssue({
         email,
         comments,
         id,
+        version,
+        commitHash,
         logFilename: log.filename,
         logUrl: log.fileUrl,
         attachments: uploadedAttachments,

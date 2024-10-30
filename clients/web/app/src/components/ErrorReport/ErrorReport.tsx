@@ -60,7 +60,9 @@ const schema = z.object({
         z.literal(''),
         z.string().email('Please enter a valid email address.'),
     ]),
-    [FormStateKeys.comments]: z.string().min(1, 'Please enter a description.'),
+    [FormStateKeys.comments]: z
+        .string()
+        .min(20, 'Please enter a description that is at least 20 characters long.'),
     [FormStateKeys.attachments]: z.array(z.instanceof(File)).optional(),
 })
 
@@ -89,6 +91,7 @@ async function postCustomError(data: FormState) {
     let deviceType = ''
 
     const userAgent = navigator.userAgent.toLowerCase()
+    const location = window.location.href
 
     if (userAgent.includes('android')) {
         deviceType = 'Android'
@@ -107,7 +110,8 @@ async function postCustomError(data: FormState) {
     deviceInfo += `* Release Date: ${new Date(VITE_APP_TIMESTAMP).toLocaleDateString()}\n`
     deviceInfo += `* Browser: ${getBrowserName() ?? navigator.userAgent}\n`
     deviceInfo += `* Device Type: ${deviceType}\n`
-    deviceInfo += `* PWA: ${PWAflag}`
+    deviceInfo += `* PWA: ${PWAflag}\n`
+    deviceInfo += `* Location: ${location}\n`
 
     const uuid = crypto.randomUUID()
 
@@ -115,6 +119,8 @@ async function postCustomError(data: FormState) {
     formData.append('env', ENV)
     formData.append('name', data.name)
     formData.append('email', data.email)
+    formData.append('version', VITE_APP_VERSION)
+    formData.append('commitHash', VITE_APP_COMMIT_HASH)
     formData.append('deviceInfo', deviceInfo)
     formData.append('comments', data.comments)
     formData.append('id', uuid)
