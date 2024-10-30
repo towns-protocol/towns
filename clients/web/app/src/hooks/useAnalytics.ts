@@ -255,6 +255,8 @@ export function trackError(args: {
             category,
             name,
             source,
+            appVersion: VITE_APP_COMMIT_HASH,
+            releaseTimestamp: VITE_APP_TIMESTAMP,
         },
         analytics: {
             commonProperties: getCommonAnalyticsProperties(),
