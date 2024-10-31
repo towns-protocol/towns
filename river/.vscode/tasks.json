@@ -193,50 +193,6 @@
       }
     },
     {
-      "label": "Configure Casablanca-Multinode ",
-      "type": "shell",
-      "command": "cd ./core && just RUN_ENV=multi config build",
-      "isBackground": true,
-      "problemMatcher": [],
-      "presentation": {
-        "group": "ephemeral",
-        "focus": true,
-        "panel": "shared",
-      }
-    },
-    {
-      "label": "Configure Casablanca-Multinode-No-Entitlements",
-      "type": "shell",
-      "command": "cd ./core && just RUN_ENV=multi_ne config build",
-      "isBackground": true,
-      "problemMatcher": [],
-      "presentation": {
-        "group": "ephemeral",
-        "focus": true,
-        "panel": "shared",
-      }
-    },
-    {
-      "label": "Casablanca-Multinode",
-      "type": "shell",
-      "command": "cd ./core && just RUN_ENV=multi run-and-tail",
-      "isBackground": true,
-      "problemMatcher": [],
-      "presentation": {
-        "group": "local-servers"
-      }
-    },
-    {
-      "label": "Casablanca-Multinode-No-Entitlements",
-      "type": "shell",
-      "command": "cd ./core && just RUN_ENV=multi_ne run-and-tail",
-      "isBackground": true,
-      "problemMatcher": [],
-      "presentation": {
-        "group": "local-servers"
-      }
-    },
-    {
       "label": "Stop Casablanca",
       "type": "shell",
       "command": "cd ./core && just RUN_ENV=multi stop && just RUN_ENV=multi_ne stop",

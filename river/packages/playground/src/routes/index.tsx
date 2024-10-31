@@ -59,11 +59,20 @@ export const router = createBrowserRouter([
                 },
                 children: [
                     {
-                        path: '/m/:gdmStreamId',
+                        path: '/m/gdm/:gdmStreamId',
                         lazy: async () => {
                             const { GdmTimelineRoute } = await import('./m/gdm-timeline')
                             return {
                                 Component: GdmTimelineRoute,
+                            }
+                        },
+                    },
+                    {
+                        path: '/m/dm/:dmStreamId',
+                        lazy: async () => {
+                            const { DmTimelineRoute } = await import('./m/dm-timeline')
+                            return {
+                                Component: DmTimelineRoute,
                             }
                         },
                     },

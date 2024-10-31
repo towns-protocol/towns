@@ -10,25 +10,21 @@ import (
 	"time"
 
 	"github.com/exaring/otelpgx"
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	"github.com/golang-migrate/migrate/v4/source/iofs"
+	"github.com/jackc/pgerrcode"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/river-build/river/core/config"
 	. "github.com/river-build/river/core/node/base"
+	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/infra"
 	. "github.com/river-build/river/core/node/protocol"
-
-	"github.com/river-build/river/core/node/dlog"
-
-	"github.com/jackc/pgerrcode"
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/jackc/pgx/v5/pgxpool"
-	"golang.org/x/sync/semaphore"
-
-	"github.com/golang-migrate/migrate/v4"
-	_ "github.com/golang-migrate/migrate/v4/database/postgres"
-	"github.com/golang-migrate/migrate/v4/source/iofs"
 )
 
 type PostgresEventStore struct {
@@ -37,9 +33,6 @@ type PostgresEventStore struct {
 	schemaName   string
 	dbUrl        string
 	migrationDir embed.FS
-
-	regularConnections   *semaphore.Weighted
-	streamingConnections *semaphore.Weighted
 
 	txCounter  *infra.StatusCounterVec
 	txDuration *prometheus.HistogramVec
@@ -451,9 +444,6 @@ func SetupPostgresMetrics(ctx context.Context, pool PgxPoolInfo, factory infra.M
 	}()
 }
 
-// Disallow allocating more than 30% of connections for streaming connections.
-var MaxStreamingConnectionsRatio float32 = 0.3
-
 func (s *PostgresEventStore) init(
 	ctx context.Context,
 	poolInfo *PgxPoolInfo,
@@ -462,37 +452,6 @@ func (s *PostgresEventStore) init(
 ) error {
 	log := dlog.FromCtx(ctx)
 
-	streamingConnectionRatio := poolInfo.Config.StreamingConnectionsRatio
-	// Bounds check the streaming connection ratio
-	// TODO: when we add streaming calls, we should make the minimum larger, perhaps 5%.
-	if streamingConnectionRatio < 0 {
-		log.Info(
-			"Invalid streaming connection ratio, setting to 0",
-			"streamingConnectionRatio",
-			streamingConnectionRatio,
-		)
-		streamingConnectionRatio = 0
-	}
-	// Limit the ratio of available connections reserved for streaming to 30%
-	if streamingConnectionRatio > MaxStreamingConnectionsRatio {
-		log.Info(
-			"Invalid streaming connection ratio, setting to maximum of 30%",
-			"streamingConnectionRatio",
-			streamingConnectionRatio,
-		)
-		streamingConnectionRatio = MaxStreamingConnectionsRatio
-	}
-
-	var totalReservableConns int64 = int64(poolInfo.Pool.Config().MaxConns) - 1 // reserve one connection for creating listeners
-	var numRegularConnections int64 = int64(float32(totalReservableConns) * (1 - streamingConnectionRatio))
-	var numStreamingConnections int64 = totalReservableConns - numRegularConnections
-
-	// Ensure there is at least one connection set aside for streaming queries even though we're not using them at
-	// this time.
-	if numStreamingConnections < 1 {
-		numStreamingConnections += 1
-		numRegularConnections -= 1
-	}
 	SetupPostgresMetrics(ctx, *poolInfo, metrics)
 
 	s.config = poolInfo.Config
@@ -500,8 +459,6 @@ func (s *PostgresEventStore) init(
 	s.schemaName = poolInfo.Schema
 	s.dbUrl = poolInfo.Url
 	s.migrationDir = migrations
-	s.regularConnections = semaphore.NewWeighted(numRegularConnections)
-	s.streamingConnections = semaphore.NewWeighted(numStreamingConnections)
 	s.txCounter = metrics.NewStatusCounterVecEx("dbtx_status", "PG transaction status", "name")
 	s.txDuration = metrics.NewHistogramVecEx(
 		"dbtx_duration_seconds",
@@ -529,27 +486,6 @@ func (s *PostgresEventStore) init(
 	if err != nil {
 		return err
 	}
-
-	// TODO: publish these as metrics
-	// stats thread
-	// go func() {
-	// 	for {
-	// 		timer := time.NewTimer(PG_REPORT_INTERVAL)
-	// 		select {
-	// 		case <-ctx.Done():
-	// 			timer.Stop()
-	// 			return
-	// 		case <-timer.C:
-	// 			stats := pool.Stat()
-	// 			log.Debug("PG pool stats",
-	// 				"acquireCount", stats.AcquireCount(),
-	// 				"acquiredConns", stats.AcquiredConns(),
-	// 				"idleConns", stats.IdleConns(),
-	// 				"totalConns", stats.TotalConns(),
-	// 			)
-	// 		}
-	// 	}
-	// }()
 
 	return nil
 }

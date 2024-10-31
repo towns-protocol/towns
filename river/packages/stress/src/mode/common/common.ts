@@ -6,6 +6,8 @@ import { generateWalletsFromSeed } from '../../utils/wallets'
 import { Wallet } from 'ethers'
 import { RedisStorage } from '../../utils/storage'
 
+export const probability = (p: number) => Math.random() < p
+
 function getStressDuration(): number {
     check(isSet(process.env.STRESS_DURATION), 'process.env.STRESS_DURATION')
     return parseInt(process.env.STRESS_DURATION)

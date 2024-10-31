@@ -1,4 +1,4 @@
-import { check } from '@river-build/dlog'
+import { check, dlogger } from '@river-build/dlog'
 import { isDefined } from '../../../check'
 import { PersistedObservable, persistedObservable } from '../../../observable/persistedObservable'
 import { Identifiable, LoadPriority, Store } from '../../../store/store'
@@ -12,15 +12,17 @@ import type {
 import type { PlainMessage } from '@bufbuild/protobuf'
 import { Timeline } from '../../timeline/timeline'
 
-export interface GdmModel extends Identifiable {
+const logger = dlogger('csb:dm')
+
+export interface DmModel extends Identifiable {
     id: string
     initialized: boolean
     isJoined: boolean
     metadata?: ChannelProperties
 }
 
-@persistedObservable({ tableName: 'gdm' })
-export class Gdm extends PersistedObservable<GdmModel> {
+@persistedObservable({ tableName: 'dm' })
+export class Dm extends PersistedObservable<DmModel> {
     timeline: Timeline
     members: Members
     constructor(id: string, private riverConnection: RiverConnection, store: Store) {
@@ -103,14 +105,15 @@ export class Gdm extends PersistedObservable<GdmModel> {
 
     private onStreamInitialized = (streamId: string) => {
         if (this.data.id === streamId) {
+            logger.info('Dm stream initialized', streamId)
             const stream = this.riverConnection.client?.stream(streamId)
             check(isDefined(stream), 'stream is not defined')
-            const view = stream.view.gdmChannelContent
+            const view = stream.view.dmChannelContent
             const hasJoined = stream.view.getMembers().isMemberJoined(this.riverConnection.userId)
             this.setData({
                 initialized: true,
                 isJoined: hasJoined,
-                metadata: view.channelMetadata.channelProperties,
+                metadata: view.getChannelMetadata()?.channelProperties,
             })
             this.timeline.initialize(stream)
         }

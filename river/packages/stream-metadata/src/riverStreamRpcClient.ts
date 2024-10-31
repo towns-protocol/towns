@@ -1,5 +1,6 @@
 import {
 	ParsedStreamResponse,
+	StreamRpcClient,
 	StreamStateView,
 	UnpackEnvelopeOpts,
 	decryptAESGCM,
@@ -8,7 +9,7 @@ import {
 	streamIdAsString,
 	unpackStream,
 } from '@river-build/sdk'
-import { PromiseClient, createPromiseClient } from '@connectrpc/connect'
+import { createPromiseClient } from '@connectrpc/connect'
 import { ConnectTransportOptions, createConnectTransport } from '@connectrpc/connect-node'
 import { StreamService } from '@river-build/proto'
 import { filetypemime } from 'magic-bytes.js'
@@ -24,8 +25,6 @@ const STREAM_METADATA_SERVICE_DEFAULT_UNPACK_OPTS: UnpackEnvelopeOpts = {
 
 const clients = new Map<string, StreamRpcClient>()
 
-export type StreamRpcClient = PromiseClient<typeof StreamService> & { url?: string }
-
 export function makeStreamRpcClient(url: string): StreamRpcClient {
 	const options: ConnectTransportOptions = {
 		httpVersion: '2',
@@ -37,8 +36,12 @@ export function makeStreamRpcClient(url: string): StreamRpcClient {
 	}
 
 	const transport = createConnectTransport(options)
-	const client: StreamRpcClient = createPromiseClient(StreamService, transport)
+	const client = createPromiseClient(StreamService, transport) as StreamRpcClient
 	client.url = url
+	client.opts = {
+		retryParams: { maxAttempts: 3, initialRetryDelay: 2000, maxRetryDelay: 6000 },
+		defaultTimeoutMs: options.defaultTimeoutMs,
+	}
 	return client
 }
 

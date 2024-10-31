@@ -10,6 +10,10 @@ export class Myself {
         protected riverConnection: RiverConnection,
     ) {}
 
+    get userId() {
+        return this.member.data.userId
+    }
+
     get username() {
         return this.member.username
     }

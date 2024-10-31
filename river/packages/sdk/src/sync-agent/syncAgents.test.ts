@@ -178,6 +178,25 @@ describe('syncAgents.test.ts', () => {
         expect(result3.error).toBeUndefined()
     })
 
+    test('dm', async () => {
+        await Promise.all([bob.start(), alice.start()])
+        const { streamId } = await bob.dms.createDM(alice.userId)
+        const bobAndAliceDm = bob.dms.getDm(streamId)
+        await waitFor(() => expect(bobAndAliceDm.members.data.initialized).toBe(true))
+        expect(bobAndAliceDm.members.data.userIds).toEqual(
+            expect.arrayContaining([bob.userId, alice.userId]),
+        )
+        await bobAndAliceDm.sendMessage('hi')
+        const aliceAndBobDm = alice.dms.getDmWithUserId(bob.userId)
+        await waitFor(
+            () =>
+                expect(
+                    aliceAndBobDm.timeline.events.value.find((e) => e.text === 'hi'),
+                ).toBeDefined(),
+            { timeoutMS: 10000 },
+        )
+    })
+
     test('gdm', async () => {
         await Promise.all([bob.start(), alice.start(), charlie.start()])
         const { streamId } = await bob.gdms.createGDM([alice.userId, charlie.userId])

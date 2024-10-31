@@ -12,6 +12,8 @@ import { User } from './user/user'
 import { Gdms } from './gdms/gdms'
 import { Gdm } from './gdms/models/gdm'
 import { Member } from './members/models/member'
+import { Dms } from './dms/dms'
+import { Dm } from './dms/models/dm'
 
 export const DB_VERSION = 1
 export const DB_MODELS = [
@@ -29,4 +31,6 @@ export const DB_MODELS = [
     Member,
     Gdms,
     Gdm,
+    Dms,
+    Dm,
 ]

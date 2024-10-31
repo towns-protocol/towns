@@ -301,16 +301,21 @@ export function getRpcErrorProperty(err: unknown, prop: string): string | undefi
     return undefined
 }
 
+export function getRetryDelayMs(attempts: number, retryParams: RetryParams): number {
+    return Math.min(
+        retryParams.maxRetryDelay,
+        retryParams.initialRetryDelay * Math.pow(2, attempts),
+    )
+}
+
 function getRetryDelay(error: unknown, attempts: number, retryParams: RetryParams): number {
     check(attempts >= 1, 'attempts must be >= 1')
     // aellis wondering if we should retry forever if there's no internet connection
     if (attempts > retryParams.maxAttempts) {
         return -1 // no more attempts
     }
-    const retryDelay = Math.min(
-        retryParams.maxRetryDelay,
-        retryParams.initialRetryDelay * Math.pow(2, attempts),
-    )
+    const retryDelay = getRetryDelayMs(attempts, retryParams)
+
     // we don't get a lot of info off of these errors... retry the ones that we know we need to
     if (error !== null && typeof error === 'object') {
         if ('message' in error) {
@@ -332,7 +337,21 @@ function getRetryDelay(error: unknown, attempts: number, retryParams: RetryParam
             return retryDelay
         } else if (errorContains(error, Err.DB_OPERATION_FAILURE)) {
             return retryDelay
+        } else if (errorContains(error, Err.DEADLINE_EXCEEDED)) {
+            return retryDelay
         }
     }
+
+    if (isIConnectError(error)) {
+        if (
+            error.code === (Code.DeadlineExceeded as number) ||
+            error.code === (Code.Unavailable as number) ||
+            error.code === (Code.ResourceExhausted as number)
+        ) {
+            // handle deadline_exceeded errors
+            return retryDelay
+        }
+    }
+
     return -1
 }

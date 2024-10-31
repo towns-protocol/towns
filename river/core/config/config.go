@@ -193,14 +193,13 @@ func (nc *NetworkConfig) GetHttpRequestTimeout() time.Duration {
 }
 
 type DatabaseConfig struct {
-	Url                       string `dlog:"omit" json:"-" yaml:"-"` // Sensitive data, omitted from logging.
-	Host                      string
-	Port                      int
-	User                      string
-	Password                  string `dlog:"omit" json:"-" yaml:"-"` // Sensitive data, omitted from logging.
-	Database                  string
-	Extra                     string
-	StreamingConnectionsRatio float32
+	Url      string `dlog:"omit" json:"-" yaml:"-"` // Sensitive data, omitted from logging.
+	Host     string
+	Port     int
+	User     string
+	Password string `dlog:"omit" json:"-" yaml:"-"` // Sensitive data, omitted from logging.
+	Database string
+	Extra    string
 
 	// StartupDelay is the time the node waits between taking control of the database and starting the server
 	// if other nodes' records are found in the database.

@@ -1,6 +1,5 @@
 #!/bin/bash
 set -e
-set -x 
 # Change to script's directory
 cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
 
@@ -17,7 +16,7 @@ if [ ! -d "$OUTPUT_DIR" ]; then
     echo "Directory '$OUTPUT_DIR' does not exist. Exiting."
     exit 1
 fi
-set -x
+
 # Variables
 CA_KEY_PATH=~/river-ca-key.pem
 CA_CERT_PATH=~/river-ca-cert.pem
@@ -76,3 +75,4 @@ if [[ $? -ne 0 ]]; then
     exit 1
 fi
 
+echo "Generated server certs in $OUTPUT_DIR"
