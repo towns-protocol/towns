@@ -120,3 +120,9 @@ variable "river_database_isolation_level" {
   type        = string
   default     = ""
 }
+
+variable "scrub_duration" {
+  description = "The duration for the scrubbing"
+  type        = number
+  default     = 3600000000000
+}

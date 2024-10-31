@@ -112,6 +112,7 @@ locals {
   global_remote_state = module.global_constants.global_remote_state.outputs
   base_chain_id       = 84532
   river_chain_id      = 6524490
+  scrub_duration      = 900000000000
 }
 
 module "system_parameters" {
@@ -182,6 +183,8 @@ module "river_node" {
 
   base_chain_id  = local.base_chain_id
   river_chain_id = local.river_chain_id
+
+  scrub_duration = local.scrub_duration
 
   ecs_cluster = {
     id   = aws_ecs_cluster.river_ecs_cluster.id

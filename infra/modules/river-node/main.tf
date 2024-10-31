@@ -438,6 +438,10 @@ resource "aws_ecs_task_definition" "river-fargate" {
         value = var.river_chain_id
       },
       {
+        name  = "SCRUBBINGCONFIG__SCRUBELIGIBLEDURATION",
+        value = var.scrub_duration
+      },
+      {
         name  = "METRICS__ENABLED",
         value = "true"
       },
@@ -470,7 +474,7 @@ resource "aws_ecs_task_definition" "river-fargate" {
         value = "true"
       },
       {
-        name = "RIVER_DATABASE_ISOLATIONLEVEL",
+        name  = "RIVER_DATABASE_ISOLATIONLEVEL",
         value = var.river_database_isolation_level
       },
       {
