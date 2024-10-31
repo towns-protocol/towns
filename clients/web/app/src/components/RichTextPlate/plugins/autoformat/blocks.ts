@@ -1,20 +1,20 @@
 import { AutoformatRule } from '@udecode/plate-autoformat'
-import { ELEMENT_BLOCKQUOTE } from '@udecode/plate-block-quote'
-import { ELEMENT_CODE_BLOCK } from '@udecode/plate-code-block'
+import { BlockquotePlugin } from '@udecode/plate-block-quote/react'
+import { CodeBlockPlugin } from '@udecode/plate-code-block/react'
 
 import { formatCodeBlock, isParagraph, preFormat } from './utils'
 
 export const autoformatBlocks: AutoformatRule[] = [
     {
         mode: 'block',
-        type: ELEMENT_BLOCKQUOTE,
+        type: BlockquotePlugin.key,
         match: '> ',
         query: isParagraph,
         preFormat,
     },
     {
         mode: 'block',
-        type: ELEMENT_CODE_BLOCK,
+        type: CodeBlockPlugin.key,
         match: '```',
         triggerAtBlockStart: false,
         query: isParagraph,

@@ -9,6 +9,7 @@ import mkcert from 'vite-plugin-mkcert'
 import { VitePWA } from 'vite-plugin-pwa'
 import { vitePWAOptions } from './vite-pwa-options.config'
 import { execSync } from 'child_process'
+import path from 'path'
 
 const commitHash = process.env.RENDER_GIT_COMMIT
     ? String(process.env.RENDER_GIT_COMMIT).substring(0, 7)
@@ -42,6 +43,7 @@ export default ({ mode }: { mode: string }) => {
 
     let config: UserConfig = {
         optimizeDeps: {
+            include: ['prismjs'],
             esbuildOptions: {
                 define: {
                     global: 'globalThis',
@@ -95,6 +97,7 @@ export default ({ mode }: { mode: string }) => {
         resolve: {
             alias: {
                 ...profiling,
+                ...plateImports,
             },
         },
     }
@@ -107,4 +110,103 @@ export default ({ mode }: { mode: string }) => {
     }
 
     return defineConfig(config)
+}
+
+/**
+ * Aliases for PlateJS v39.x packages. See discussion
+ *
+ * @see https://app.towns.com/t/0xc87bb04477151743070b45a3426938128896ac5d/channels/20c87bb04477151743070b45a3426938128896ac5d53732cf2c04b870fc0aa8a#1a1c6ef921fb17df0731115d861c27e3aa7d140696605673cecfc2d871ed9646
+ * @see https://github.com/HereNotThere/harmony/pull/8281
+ *
+ */
+export const plateImports = {
+    // Handle both base and /react suffixed imports
+    '@udecode/plate-common/react': path.resolve(
+        __dirname,
+        '../../../node_modules/@udecode/plate-common/dist/react',
+    ),
+    '@udecode/plate-core/react': path.resolve(
+        __dirname,
+        '../../../node_modules/@udecode/plate-core/dist/react',
+    ),
+    '@udecode/plate-list/react': path.resolve(
+        __dirname,
+        '../../../node_modules/@udecode/plate-list/dist/react',
+    ),
+    '@udecode/plate-link/react': path.resolve(
+        __dirname,
+        '../../../node_modules/@udecode/plate-link/dist/react',
+    ),
+    '@udecode/plate-basic-marks/react': path.resolve(
+        __dirname,
+        '../../../node_modules/@udecode/plate-basic-marks/dist/react',
+    ),
+    '@udecode/plate-combobox/react': path.resolve(
+        __dirname,
+        '../../../node_modules/@udecode/plate-combobox/dist/react',
+    ),
+    '@udecode/plate-code-block/react': path.resolve(
+        __dirname,
+        '../../../node_modules/@udecode/plate-code-block/dist/react',
+    ),
+    '@udecode/plate-block-quote/react': path.resolve(
+        __dirname,
+        '../../../node_modules/@udecode/plate-block-quote/dist/react',
+    ),
+    '@udecode/plate-reset-node/react': path.resolve(
+        __dirname,
+        '../../../node_modules/@udecode/plate-reset-node/dist/react',
+    ),
+    '@udecode/plate-mention/react': path.resolve(
+        __dirname,
+        '../../../node_modules/@udecode/plate-mention/dist/react',
+    ),
+    '@udecode/plate-autoformat/react': path.resolve(
+        __dirname,
+        '../../../node_modules/@udecode/plate-autoformat/dist/react',
+    ),
+    '@udecode/plate-break/react': path.resolve(
+        __dirname,
+        '../../../node_modules/@udecode/plate-break/dist/react',
+    ),
+    '@udecode/plate-utils/react': path.resolve(
+        __dirname,
+        '../../../node_modules/@udecode/plate-utils/dist/react',
+    ),
+
+    // Also include base package aliases for non-/react imports
+    '@udecode/plate-common': path.resolve(__dirname, '../../../node_modules/@udecode/plate-common'),
+    '@udecode/plate-core': path.resolve(__dirname, '../../../node_modules/@udecode/plate-core'),
+    '@udecode/plate-list': path.resolve(__dirname, '../../../node_modules/@udecode/plate-list'),
+    '@udecode/plate-link': path.resolve(__dirname, '../../../node_modules/@udecode/plate-link'),
+    '@udecode/plate-basic-marks': path.resolve(
+        __dirname,
+        '../../../node_modules/@udecode/plate-basic-marks',
+    ),
+    '@udecode/plate-combobox': path.resolve(
+        __dirname,
+        '../../../node_modules/@udecode/plate-combobox',
+    ),
+    '@udecode/plate-code-block': path.resolve(
+        __dirname,
+        '../../../node_modules/@udecode/plate-code-block',
+    ),
+    '@udecode/plate-block-quote': path.resolve(
+        __dirname,
+        '../../../node_modules/@udecode/plate-block-quote',
+    ),
+    '@udecode/plate-reset-node': path.resolve(
+        __dirname,
+        '../../../node_modules/@udecode/plate-reset-node',
+    ),
+    '@udecode/plate-mention': path.resolve(
+        __dirname,
+        '../../../node_modules/@udecode/plate-mention',
+    ),
+    '@udecode/plate-autoformat': path.resolve(
+        __dirname,
+        '../../../node_modules/@udecode/plate-autoformat',
+    ),
+    '@udecode/plate-break': path.resolve(__dirname, '../../../node_modules/@udecode/plate-break'),
+    '@udecode/plate-utils': path.resolve(__dirname, '../../../node_modules/@udecode/plate-utils'),
 }

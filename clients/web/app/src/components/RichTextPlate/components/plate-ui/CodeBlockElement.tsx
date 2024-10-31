@@ -1,5 +1,5 @@
 import React from 'react'
-import { PlateRenderElementProps } from '@udecode/plate-core'
+import { PlateRenderElementProps } from '@udecode/plate-core/react'
 import { codeBlock } from '@components/RichTextPlate/RichTextEditor.css'
 import { Box } from '@ui'
 

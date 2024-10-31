@@ -1,9 +1,9 @@
 import React, { useCallback } from 'react'
-import { useEditorRef, useEditorSelector } from '@udecode/plate-core'
-import { ELEMENT_DEFAULT, collapseSelection, toggleNodeType } from '@udecode/plate-common'
-import { ELEMENT_BLOCKQUOTE } from '@udecode/plate-block-quote'
+import { useEditorRef, useEditorSelector } from '@udecode/plate-common/react'
+import { collapseSelection } from '@udecode/plate-common'
+import { BaseBlockquotePlugin } from '@udecode/plate-block-quote'
 import { IconButton } from '@ui'
-import { focusEditorTowns, isBlockquoteElement } from '../../utils/helpers'
+import { isBlockquoteElement } from '../../utils/helpers'
 
 export const BlockQuoteToolbarButton = () => {
     const editor = useEditorRef()
@@ -13,9 +13,8 @@ export const BlockQuoteToolbarButton = () => {
     }, [])
 
     const onClick = useCallback(() => {
-        toggleNodeType(editor, { activeType: ELEMENT_BLOCKQUOTE, inactiveType: ELEMENT_DEFAULT })
+        editor.tf.toggle.block({ type: BaseBlockquotePlugin.key })
         collapseSelection(editor)
-        focusEditorTowns(editor, true)
     }, [editor])
 
     return (

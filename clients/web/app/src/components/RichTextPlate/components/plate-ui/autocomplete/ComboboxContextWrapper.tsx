@@ -1,9 +1,10 @@
 import React, { startTransition, useCallback, useState } from 'react'
 import { withRef } from '@udecode/cn'
+import { PlateElement } from '@udecode/plate-common/react'
 import { ComboboxProvider, useComboboxStore } from '@ariakit/react'
 import { ComboboxContextWrapperProps } from './types'
 
-export const ComboboxContextWrapper = withRef<'div', ComboboxContextWrapperProps>(
+export const ComboboxContextWrapper = withRef<typeof PlateElement, ComboboxContextWrapperProps>(
     ({ Component, ...props }, ref) => {
         const [query, setQuery] = useState('')
 

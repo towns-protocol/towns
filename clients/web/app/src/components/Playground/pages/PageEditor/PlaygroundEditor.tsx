@@ -1,5 +1,5 @@
 import React, { useCallback, useRef } from 'react'
-import { PlateEditor, Value } from '@udecode/plate-common'
+import { TPlateEditor } from '@udecode/plate-common/react'
 import { ChannelContextProvider, LookupUserFn, SendTextMessageOptions } from 'use-towns-client'
 import { RichTextEditor } from '@components/RichTextPlate/RichTextEditor'
 import { useEditorChannelData } from '@components/RichTextPlate/hooks/editorHooks'
@@ -12,7 +12,7 @@ import {
 import { channels, roomMembers } from './data'
 
 type Props = {
-    onChange: (editor: PlateEditor<Value>) => void
+    onChange: (editor: TPlateEditor) => void
     setMarkdown: React.Dispatch<React.SetStateAction<string>>
     setIsEditing: React.Dispatch<React.SetStateAction<boolean>>
     setAttachments: React.Dispatch<React.SetStateAction<FileUpload[]>>

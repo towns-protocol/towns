@@ -1,10 +1,6 @@
 import { Channel, Mention } from 'use-towns-client'
-import { PlateEditor, Value } from '@udecode/plate-common'
-import {
-    ELEMENT_MENTION,
-    MentionOnSelectItem,
-    getMentionOnSelectItem,
-} from '@udecode/plate-mention'
+import { SlateEditor } from '@udecode/plate-common'
+import { BaseMentionPlugin, MentionOnSelectItem } from '@udecode/plate-mention'
 import { UserWithDisplayName, getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import {
     AtChannelUser,
@@ -16,6 +12,7 @@ import {
     TUserWithChannel,
 } from './types'
 import { ELEMENT_MENTION_CHANNEL } from '../../../plugins/createChannelPlugin'
+import { getMentionOnSelectItem } from '../../../plugins/getMentionOnSelectItem'
 
 export const MAX_AUTOCOMPLETE_SUGGESTIONS = 15
 
@@ -33,7 +30,7 @@ const recursivelyGetNameAndId = (node: TUserMentionElement, mentions: Mention[])
         node.children.map((n) => recursivelyGetNameAndId(n as TUserMentionElement, mentions))
     }
 
-    if (node.type === ELEMENT_MENTION) {
+    if (node.type === BaseMentionPlugin.key) {
         mentions.push({
             displayName: (node as TUserMentionElement).value,
             userId: (node as TUserMentionElement).userId,
@@ -91,7 +88,7 @@ export const convertUserToCombobox = (
 })
 
 const onSelectItemUser: MentionOnSelectItem<TComboboxItemWithData> = getMentionOnSelectItem({
-    key: ELEMENT_MENTION,
+    key: BaseMentionPlugin.key,
 })
 
 const onSelectItemChannel: MentionOnSelectItem<TComboboxItemWithData> = getMentionOnSelectItem({
@@ -101,7 +98,7 @@ const onSelectItemChannel: MentionOnSelectItem<TComboboxItemWithData> = getMenti
  * On select emoji, insert the emoji as text into the editor, instead of creating a complex element as required for @user #channel mention.
  */
 const onSelectItemEmoji: MentionOnSelectItem<TComboboxItemWithData> = (
-    editor: PlateEditor<Value>,
+    editor: SlateEditor,
     item,
     _search?,
 ) => {

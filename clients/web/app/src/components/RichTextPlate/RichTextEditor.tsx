@@ -7,16 +7,8 @@ import {
     SendTextMessageOptions,
     UnfurledLinkAttachment,
 } from 'use-towns-client'
-import {
-    Plate,
-    PlateEditor,
-    TElement,
-    Value,
-    getPointAfter,
-    getPointBeforeLocation,
-    resetEditor,
-} from '@udecode/plate-common'
-import { ELEMENT_PARAGRAPH } from '@udecode/plate-paragraph'
+import { Plate, TPlateEditor } from '@udecode/plate-common/react'
+import { TElement, getPointAfter, getPointBeforeLocation, resetEditor } from '@udecode/plate-common'
 import noop from 'lodash/noop'
 import { UnfurledLinkAttachmentPreview } from '@components/EmbeddedMessageAttachement/EditorAttachmentPreview'
 import { Box, BoxProps, Stack } from '@ui'
@@ -34,18 +26,18 @@ import { SendMarkdownPlugin } from './components/SendMarkdownPlugin'
 import { focusEditorTowns, isInputFocused } from './utils/helpers'
 import { CaptureLinkAttachmentsPlugin } from './components/CaptureLinkAttachmentsPlugin'
 import { PasteFilePlugin } from './components/PasteFilePlugin'
+import { RichTextPlaceholder } from './components/RichTextPlaceholder'
 import { Editor } from './components/plate-ui/Editor'
 import { EditorToolbarTop } from './components/EditorToolbarTop'
 import { EditorToolbarBottom } from './components/EditorToolbarBottom'
-import { RichTextPlaceholder } from './components/RichTextEditorPlaceholder'
-import platePlugins from './plugins'
+import createTownsEditor from './plugins'
 import { deserializeMd } from './utils/deserializeMD'
 import { OnFocusPlugin } from './plugins/OnFocusPlugin'
 import { RememberInputPlugin } from './plugins/RememberInputPlugin'
 
 const EMPTY_NODE: TElement = {
     id: '1',
-    type: ELEMENT_PARAGRAPH,
+    type: 'p',
     children: [{ text: '' }],
 }
 
@@ -86,7 +78,7 @@ type RichTextEditorProps = {
         options: Pick<SendTextMessageOptions, 'mentions' | 'messageType'>,
     ) => void
     onCancel?: () => void
-    onChange?: (editor: PlateEditor<Value>) => void
+    onChange?: (editor: TPlateEditor) => void
     onArrowEscape?: (direction: 'up' | 'down') => void
 }
 
@@ -118,9 +110,8 @@ export const RichTextEditor = ({
     onChange = noop,
 }: RichTextEditorProps) => {
     /* refs */
-    const { isTouch } = useDevice()
+    const { isTouch, isAndroid } = useDevice()
     const storageId = useRef(_storageId ?? 'editor')
-    const editorRef = useRef<PlateEditor<TElement[]>>(null)
     const editableContainerRef = useRef<HTMLDivElement>(null)
 
     /* state */
@@ -131,24 +122,8 @@ export const RichTextEditor = ({
     const [isFormattingToolbarOpen, setIsFormattingToolbarOpen] = useState(false)
     const [isOtherInputFocused] = useState(isInputFocused)
 
-    const disabled = useMemo(() => !editable || isSendingMessage, [editable, isSendingMessage])
-    const disabledSend = useMemo(() => typeof onSend !== 'function', [onSend])
-
-    // hack: reset field + apply autoFocus when a new inline reply is opened
-    // using the builtin focusEditor won't scroll the field into view on iOS
-    const autoFocus = useMemo(
-        () => (isTouch && hasInlinePreview) || isEditing || _autoFocus,
-        [isTouch, hasInlinePreview, _autoFocus, isEditing],
-    )
-
     const valueFromStore = useInputStore((state) => state.channelMessageInputMap[storageId.current])
     const setInput = useInputStore((state) => state.setChannelmessageInput)
-
-    useEffect(() => {
-        if (autoFocus && !isInputFocused()) {
-            focusEditorTowns(editorRef.current, true)
-        }
-    }, [autoFocus])
 
     const initialValue = useMemo(() => {
         /* used when editing a message: convert initial value passed as prop from MD string to Plate JSON  */
@@ -163,6 +138,45 @@ export const RichTextEditor = ({
         return [{ ...EMPTY_NODE }]
     }, [_initialValue, channels, userHashMap, lookupUser, editable, valueFromStore])
 
+    const editorRef = useRef<TPlateEditor>(
+        createTownsEditor(
+            storageId.current,
+            channels,
+            userHashMap,
+            userMentions,
+            channelMentions,
+            initialValue,
+            lookupUser,
+        ),
+    )
+    const disabled = useMemo(() => !editable || isSendingMessage, [editable, isSendingMessage])
+    const disabledSend = useMemo(() => typeof onSend !== 'function', [onSend])
+
+    /**
+     * For Android devices, we need to show a placeholder as an absolute positioned JSX element
+     * because the native PlateJS placeholder causes issues with @mentions and #channels, where the
+     * caret position is moved to the left when user types a mention or channel
+     *
+     * For other devices, we just need to pass the placeholder string to the PlateJS <Editor /> component
+     */
+    const showAndroidPlaceholder = useMemo(
+        () => isAndroid() && editorText.length === 0,
+        [isAndroid, editorText],
+    )
+
+    // hack: reset field + apply autoFocus when a new inline reply is opened
+    // using the builtin focusEditor won't scroll the field into view on iOS
+    const autoFocus = useMemo(
+        () => (isTouch && hasInlinePreview) || isEditing || _autoFocus,
+        [isTouch, hasInlinePreview, _autoFocus, isEditing],
+    )
+
+    useEffect(() => {
+        if (autoFocus && !isInputFocused()) {
+            focusEditorTowns(editorRef.current, true)
+        }
+    }, [autoFocus])
+
     /** Reset the editor after sending a message and clear local storage value as well */
     const resetEditorAfterSend = useCallback(() => {
         setInput(storageId.current, '')
@@ -170,11 +184,11 @@ export const RichTextEditor = ({
             resetEditor(editorRef.current)
             // Delay focusing the editor to wait for the editor to reset and re-render
             setTimeout(() => {
-                focusEditorTowns(editorRef.current, true)
+                focusEditorTowns(editorRef.current, isTouch)
             }, 100)
         }
         setIsSendingMessage(false)
-    }, [setInput])
+    }, [setInput, isTouch])
 
     const onFocusChange = useCallback((focus: boolean) => {
         setFocused(focus)
@@ -203,16 +217,6 @@ export const RichTextEditor = ({
          * As a workaround, we set the editor text to a space character to remove the placeholder
          * on any manual input change. The reconciliation of the actual editor text is completed later
          */
-        if (!isTouch) {
-            /**
-             * For desktop, we set editor text `onChange`. However, we need to do this `onKeydown` for mobile
-             * to prevent the placeholder from showing up while typing, since soft keyboard `onChange` events
-             * are not quick enough, and leads to overlapping placeholders for a brief moment
-
-             * @see customKeydownHandler
-             */
-            startTransition(() => setEditorText(' '))
-        }
         if (editorRef.current) {
             onChange(editorRef.current)
             const text = toPlainText(editorRef.current.children)
@@ -222,7 +226,7 @@ export const RichTextEditor = ({
                 setIsEditorEmpty(currentTextEmpty)
             })
         }
-    }, [onChange, isTouch])
+    }, [onChange])
 
     const sendMessage = useCallback(async () => {
         if (!editorRef.current) {
@@ -237,6 +241,12 @@ export const RichTextEditor = ({
             resetEditorAfterSend()
         }
     }, [editorText, fileCount, onSend, resetEditorAfterSend])
+
+    // Update the editor text in the component state one time when the editor is initialized
+    // After the editor is initialized, the editor text is updated in the `onChange` handler
+    useEffect(() => {
+        onChangeHandler()
+    }, [onChangeHandler])
 
     /**
      * When the user presses the arrow keys, we want to exit the editor if the cursor is at the top or bottom
@@ -265,21 +275,26 @@ export const RichTextEditor = ({
         [onArrowEscape],
     )
 
+    /**
+     * We need to do this for Android ONLY, to prevent the placeholder from showing up while typing,
+     * since soft keyboard `onChange` events are not quick enough, and leads to overlapping placeholders
+     * for a brief moment.
+     *
+     * In this case, we set the editor text to a space character to remove the placeholder on any manual input change
+     *
+     * For other devices, we don't need to do this, as the placeholder is handled by the PlateJS library
+     * @see showAndroidPlaceholder
+     */
+    const hideAndroidPlaceholder = useCallback(() => {
+        if (editorText.length === 0 && isAndroid()) {
+            setEditorText(' ')
+        }
+    }, [editorText, isAndroid])
+
     const customKeydownHandler: React.KeyboardEventHandler = useCallback(
         async (event) => {
-            /**
-             * For desktop, we set editor text `onChange`. However, we need to do this `onKeydown` for mobile
-             * to prevent the placeholder from showing up while typing, since soft keyboard `onChange` events
-             * are not quick enough, and leads to overlapping placeholders for a brief moment
-             *
-             * /^.$/u.test(event.key) is used to check if the key pressed is a single Unicode character and not a
-             * special key (e.g. shift, ctrl, etc.)
-             *
-             * @see customKeydownHandler
-             */
-            if (isTouch && /^.$/u.test(event.key)) {
-                setEditorText(' ')
-            } else {
+            /** On desktop, we want to exit the editor if the user presses up/down  */
+            if (!isTouch && event.key.includes('Arrow')) {
                 exitEditorOnArrow(event)
             }
             if (
@@ -316,28 +331,35 @@ export const RichTextEditor = ({
     )
 
     // force show floating toolbar in desktop when user selects text in editor
-    const toolbarTop = (
-        <EditorToolbarTop
-            readOnly={!editable}
-            focused={focused || !isEditorEmpty}
-            editing={isEditing}
-            editorId={editorRef.current?.id ?? ''}
-            background={background}
-            threadId={threadId}
-            threadPreview={threadPreview}
-            showFormattingToolbar={isFormattingToolbarOpen}
-            setIsFormattingToolbarOpen={setIsFormattingToolbarOpen}
-        />
-    )
+    const toolbarTop = useMemo(() => {
+        return (
+            <EditorToolbarTop
+                readOnly={!editable}
+                focused={focused || !isEditorEmpty}
+                editing={isEditing}
+                background={background}
+                threadId={threadId}
+                threadPreview={threadPreview}
+                showFormattingToolbar={isFormattingToolbarOpen}
+                setIsFormattingToolbarOpen={setIsFormattingToolbarOpen}
+            />
+        )
+    }, [
+        editable,
+        background,
+        focused,
+        isEditorEmpty,
+        isEditing,
+        isFormattingToolbarOpen,
+        threadId,
+        threadPreview,
+    ])
 
     return (
         <Plate
-            normalizeInitialValue
-            plugins={platePlugins(channels, userHashMap, userMentions, channelMentions, lookupUser)}
-            editorRef={editorRef}
-            initialValue={initialValue}
+            editor={editorRef.current}
             key={`plate-${storageId.current}`}
-            onChange={onChangeHandler}
+            onValueChange={onChangeHandler}
         >
             {!isTouch && toolbarTop}
             <Box position="relative">
@@ -349,16 +371,16 @@ export const RichTextEditor = ({
                             autoFocus={autoFocus && !isOtherInputFocused}
                             tabIndex={tabIndex}
                             disabled={isSendingMessage}
-                            isTouch={isTouch}
+                            placeholder={placeholder}
                             isEditing={isEditing}
+                            hideAndroidPlaceholder={hideAndroidPlaceholder}
                             customKeydownHandler={customKeydownHandler}
                             onFocus={onFocus}
                             onBlur={onBlur}
                         />
-                        {editorText.length === 0 &&
-                            (!valueFromStore || valueFromStore.trim().length === 0) && (
-                                <RichTextPlaceholder placeholder={placeholder} />
-                            )}
+                        {showAndroidPlaceholder && (
+                            <RichTextPlaceholder placeholder={placeholder} />
+                        )}
                     </Box>
                     <OnFocusPlugin
                         autoFocus={autoFocus}

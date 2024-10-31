@@ -1,6 +1,6 @@
 import { visit } from 'unist-util-visit'
 import { Transformer } from 'unified'
-import { ELEMENT_LIC } from '@udecode/plate-list'
+import { ListItemContentPlugin } from '@udecode/plate-list/react'
 import { MdastNode, defaultNodeTypes } from './ast-types'
 
 /**
@@ -13,7 +13,7 @@ const remarkPreserveListContent = () => {
     const transformer: Transformer = (tree, _file) => {
         visit(tree, 'paragraph', (node: MdastNode, _index, parent: MdastNode) => {
             if (parent.type === defaultNodeTypes.listItem) {
-                node.type = ELEMENT_LIC
+                node.type = ListItemContentPlugin.key
             }
         })
 
@@ -24,7 +24,7 @@ const remarkPreserveListContent = () => {
          */
         visit(tree, 'code', (node: MdastNode, _index, parent: MdastNode) => {
             if (parent.type === defaultNodeTypes.listItem) {
-                node.type = ELEMENT_LIC
+                node.type = ListItemContentPlugin.key
                 node.children = [
                     {
                         type: 'text',

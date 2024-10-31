@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useEditorRef, useEditorSelector } from '@udecode/plate-core'
+import { useEditorRef, useEditorSelector } from '@udecode/plate-common/react'
 import { useInputStore } from 'store/store'
 import { SECOND_MS } from 'data/constants'
 import { useThrottledValue } from 'hooks/useThrottledValue'

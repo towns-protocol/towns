@@ -1,8 +1,14 @@
 import React from 'react'
-import { PlateRenderElementProps } from '@udecode/plate-core'
-import { ELEMENT_LI, ELEMENT_OL, ELEMENT_UL } from '@udecode/plate-list'
+import { PlateRenderElementProps } from '@udecode/plate-common/react'
+import { BulletedListPlugin, ListItemPlugin, NumberedListPlugin } from '@udecode/plate-list/react'
 import { Box } from '@ui'
 import { listitem, ol, ul } from '../../RichTextEditor.css'
+
+type ListTypes =
+    | typeof BulletedListPlugin.key
+    | typeof NumberedListPlugin.key
+    | typeof ListItemPlugin.key
+    | 'span'
 
 const classNameMap = {
     ul,
@@ -17,10 +23,14 @@ export const ListElement = ({
     element,
     start,
 }: React.PropsWithChildren<
-    { variant: keyof JSX.IntrinsicElements; start?: number } & Partial<PlateRenderElementProps>
+    { variant: ListTypes; start?: number } & Partial<PlateRenderElementProps>
 >) => {
     const Component = variant!
-    if (![ELEMENT_OL, ELEMENT_UL, ELEMENT_LI].includes(variant)) {
+    if (
+        !(
+            [BulletedListPlugin.key, NumberedListPlugin.key, ListItemPlugin.key] as ListTypes[]
+        ).includes(variant)
+    ) {
         return (
             <Box as="span" display="inline" paddingLeft="xxs" {...(attributes ?? {})}>
                 {children}
@@ -29,7 +39,7 @@ export const ListElement = ({
     }
 
     let olStartIndex = undefined
-    if (ELEMENT_OL === variant) {
+    if (NumberedListPlugin.key === variant) {
         olStartIndex = (element?.start as number) ?? start
     }
 

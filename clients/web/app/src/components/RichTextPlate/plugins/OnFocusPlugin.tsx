@@ -1,6 +1,5 @@
 import { RefObject, useEffect } from 'react'
-import { usePlateSelectors } from '@udecode/plate-core'
-import { PlateEditor } from '@udecode/plate-common'
+import { PlateEditor, usePlateSelectors } from '@udecode/plate-common/react'
 import { focusEditorTowns, isInputFocused } from '../utils/helpers'
 
 type Props = {

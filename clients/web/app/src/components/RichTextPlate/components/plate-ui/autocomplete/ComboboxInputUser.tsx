@@ -2,9 +2,11 @@ import React, { useCallback, useEffect, useMemo, useRef, useState, useTransition
 import { Channel } from 'use-towns-client'
 import { withRef } from '@udecode/cn'
 import { CollectionStore, useComboboxContext } from '@ariakit/react'
-import { PlateEditor, Value } from '@udecode/plate-common'
+import { PlateElement, TPlateEditor } from '@udecode/plate-common/react'
+import { Value } from '@udecode/plate-common'
 import { emojiSearch } from './emoji-search'
 import {
+    ComboboxContainerProps,
     ComboboxInputUserProps,
     ComboboxTypes,
     TComboboxItemWithData,
@@ -34,7 +36,7 @@ export const ComboboxItemUser = ({
     trigger,
 }: {
     trigger: string
-    editor: PlateEditor<Value>
+    editor: TPlateEditor<Value>
     item: TComboboxItemWithData<TUserWithChannel>
 }) => {
     const getItem = useCallback(
@@ -65,7 +67,7 @@ export const ComboboxItemGeneric = ({
     editor,
     trigger,
 }: {
-    editor: PlateEditor<Value>
+    editor: TPlateEditor<Value>
     item: TComboboxItemWithData<Channel>
     trigger: string
 }) => {
@@ -95,16 +97,16 @@ export const ComboboxItemGeneric = ({
 
 const EMPTY_ARRAY: TComboboxItemWithData<TUserWithChannel | Channel>[] = []
 
-export const ComboboxInput = withRef<'div', ComboboxInputUserProps>(
+export const ComboboxInput = withRef<typeof PlateElement, ComboboxInputUserProps>(
     ({ className, userMentions, channelMentions, ...props }, ref) => {
         const {
             query: searchQueryStore,
             editor,
             element: { trigger: propTrigger },
-        } = props
+        } = props as ComboboxContainerProps
         const [, startTransition] = useTransition()
 
-        const trigger = useRef(propTrigger)
+        const trigger = useRef<string>(propTrigger as string)
         const [filteredItems, setFilteredItems] = useState<TComboboxItemWithData[]>(EMPTY_ARRAY)
 
         const store = useComboboxContext()!

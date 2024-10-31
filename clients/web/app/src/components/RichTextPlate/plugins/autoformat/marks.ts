@@ -1,73 +1,61 @@
 import {
-    MARK_BOLD,
-    MARK_CODE,
-    MARK_ITALIC,
-    MARK_STRIKETHROUGH,
-    MARK_SUBSCRIPT,
-    MARK_SUPERSCRIPT,
-    MARK_UNDERLINE,
-} from '@udecode/plate-basic-marks'
+    BoldPlugin,
+    CodePlugin,
+    ItalicPlugin,
+    StrikethroughPlugin,
+    UnderlinePlugin,
+} from '@udecode/plate-basic-marks/react'
 import { AutoformatRule } from '@udecode/plate-autoformat'
 
 export const autoformatMarks: AutoformatRule[] = [
     {
-        mode: 'mark',
-        type: [MARK_BOLD, MARK_ITALIC],
         match: '***',
+        mode: 'mark',
+        type: [BoldPlugin.key, ItalicPlugin.key],
     },
     {
-        mode: 'mark',
-        type: [MARK_UNDERLINE, MARK_ITALIC],
         match: '__*',
+        mode: 'mark',
+        type: [UnderlinePlugin.key, ItalicPlugin.key],
     },
     {
-        mode: 'mark',
-        type: [MARK_UNDERLINE, MARK_BOLD],
         match: '__**',
+        mode: 'mark',
+        type: [UnderlinePlugin.key, BoldPlugin.key],
     },
     {
-        mode: 'mark',
-        type: [MARK_UNDERLINE, MARK_BOLD, MARK_ITALIC],
         match: '___***',
+        mode: 'mark',
+        type: [UnderlinePlugin.key, BoldPlugin.key, ItalicPlugin.key],
     },
     {
-        mode: 'mark',
-        type: MARK_BOLD,
         match: '**',
+        mode: 'mark',
+        type: BoldPlugin.key,
     },
     {
-        mode: 'mark',
-        type: MARK_UNDERLINE,
         match: '__',
+        mode: 'mark',
+        type: UnderlinePlugin.key,
     },
     {
-        mode: 'mark',
-        type: MARK_ITALIC,
         match: '*',
+        mode: 'mark',
+        type: ItalicPlugin.key,
     },
     {
-        mode: 'mark',
-        type: MARK_ITALIC,
         match: '_',
+        mode: 'mark',
+        type: ItalicPlugin.key,
     },
     {
-        mode: 'mark',
-        type: MARK_STRIKETHROUGH,
         match: '~~',
+        mode: 'mark',
+        type: StrikethroughPlugin.key,
     },
     {
-        mode: 'mark',
-        type: MARK_SUPERSCRIPT,
-        match: '^',
-    },
-    {
-        mode: 'mark',
-        type: MARK_SUBSCRIPT,
-        match: '~',
-    },
-    {
-        mode: 'mark',
-        type: MARK_CODE,
         match: '`',
+        mode: 'mark',
+        type: CodePlugin.key,
     },
 ]

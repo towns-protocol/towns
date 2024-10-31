@@ -3,8 +3,8 @@ import { Components, toJsxRuntime } from 'hast-util-to-jsx-runtime'
 // @ts-expect-error: untyped.
 import { Fragment, jsx, jsxs } from 'react/jsx-runtime'
 import { VFile } from 'vfile'
-import { ELEMENT_LIC } from '@udecode/plate-list'
-import { ELEMENT_MENTION } from '@udecode/plate-mention'
+import { ListItemContentPlugin } from '@udecode/plate-list/react'
+import { MentionPlugin } from '@udecode/plate-mention/react'
 import remarkRehype, { Options } from 'remark-rehype'
 import { Channel, useUserLookupContext } from 'use-towns-client'
 import markdown from 'remark-parse'
@@ -64,11 +64,16 @@ const MarkdownRenderer = ({
         .use(remarkEditedAnnotation(isEdited))
         .use(remarkTransformUserAndChannels(channels, userHashMap, lookupUser))
         .use(remarkRehype, {
-            passThrough: [ELEMENT_LIC, ELEMENT_MENTION, ELEMENT_MENTION_CHANNEL, 'abbr'],
+            passThrough: [
+                ListItemContentPlugin.key,
+                MentionPlugin.key,
+                ELEMENT_MENTION_CHANNEL,
+                'abbr',
+            ],
             handlers: {
-                [ELEMENT_MENTION]: userMentionHandler,
+                [MentionPlugin.key]: userMentionHandler,
                 [ELEMENT_MENTION_CHANNEL]: channelMentionHandler,
-                [ELEMENT_LIC]: listContentHandler,
+                [ListItemContentPlugin.key]: listContentHandler,
                 [ELEMENT_EDITED]: editedHandler,
             },
         } as unknown as Options)

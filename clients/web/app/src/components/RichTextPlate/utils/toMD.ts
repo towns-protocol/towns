@@ -1,10 +1,10 @@
-import { PlateEditor } from '@udecode/plate-common'
+import { TPlateEditor } from '@udecode/plate-common/react'
 import { Mention } from 'use-towns-client'
 import { TUserMentionElement } from '../components/plate-ui/autocomplete/types'
 import { serialize } from './remark'
 import { getMentions } from '../components/plate-ui/autocomplete/helpers'
 
-export const toMD = (editor: PlateEditor): Promise<{ message: string; mentions: Mention[] }> => {
+export const toMD = (editor: TPlateEditor): Promise<{ message: string; mentions: Mention[] }> => {
     return new Promise((resolve, reject) => {
         queueMicrotask(() => {
             try {

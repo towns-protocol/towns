@@ -1,5 +1,7 @@
-import { KEY_DESERIALIZE_HTML, createPluginFactory } from '@udecode/plate-common'
+import { HtmlPlugin } from '@udecode/plate-common'
+import { createPlatePlugin } from '@udecode/plate-common/react'
 import { Channel, useUserLookupContext } from 'use-towns-client'
+import { isCodeBlockElement } from '../utils/helpers'
 import remarkTransformUserAndChannels, {
     PasteTransformer,
 } from '../utils/remark/remarkTransformUserAndChannels'
@@ -10,32 +12,32 @@ export const KEY_PASTE_MENTIONS_PLUGIN = 'KEY_PASTE_MENTIONS_PLUGIN'
 /**
  * Invoked after user pastes text in editor. Enables pasting @mentions copied from Towns.
  */
-export const createPasteMentionsPlugin = (
+export const PasteMentionsPlugin = (
     channelList: Channel[],
     userHashMap: TUserIDNameMap,
     lookupUser?: ReturnType<typeof useUserLookupContext>['lookupUser'],
 ) =>
-    createPluginFactory({
+    createPlatePlugin({
         key: KEY_PASTE_MENTIONS_PLUGIN,
-        then: (_editor) => ({
-            inject: {
-                pluginsByKey: {
-                    // For handling pasting of text/html data
-                    [KEY_DESERIALIZE_HTML]: {
-                        editor: {
-                            insertData: {
-                                transformFragment: (fragment, { data }) => {
-                                    const transformMentions = remarkTransformUserAndChannels(
-                                        channelList,
-                                        userHashMap,
-                                        lookupUser,
-                                    )(true) as unknown as PasteTransformer
-                                    return transformMentions(fragment)
-                                },
-                            },
+        inject: {
+            plugins: {
+                // For handling pasting of text/html data
+                [HtmlPlugin.key]: {
+                    parser: {
+                        // If we're pasting in a code block, ignore this plugin
+                        query: ({ editor }) => {
+                            return !isCodeBlockElement(editor)
+                        },
+                        transformFragment: ({ fragment }) => {
+                            const transformMentions = remarkTransformUserAndChannels(
+                                channelList,
+                                userHashMap,
+                                lookupUser,
+                            )(true) as unknown as PasteTransformer
+                            return transformMentions(fragment)
                         },
                     },
                 },
             },
-        }),
+        },
     })

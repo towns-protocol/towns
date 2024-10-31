@@ -1,5 +1,5 @@
 import React from 'react'
-import { useLinkToolbarButton, useLinkToolbarButtonState } from '@udecode/plate-link'
+import { useLinkToolbarButton, useLinkToolbarButtonState } from '@udecode/plate-link/react'
 import { IconButton } from '@ui'
 
 type Props = {

@@ -3,6 +3,7 @@ import { vanillaExtractPlugin } from '@vanilla-extract/vite-plugin'
 import { defineConfig } from 'vitest/config'
 import { VitePWA } from 'vite-plugin-pwa'
 import tsconfigPaths from 'vite-tsconfig-paths'
+import { plateImports } from './vite.config'
 
 export default defineConfig({
     test: {
@@ -24,6 +25,11 @@ export default defineConfig({
                 'vitest-canvas-mock',
                 '@privy-io/js-sdk-core',
             ],
+        },
+    },
+    resolve: {
+        alias: {
+            ...plateImports,
         },
     },
     plugins: [tsconfigPaths(), vanillaExtractPlugin(), VitePWA()] as any,

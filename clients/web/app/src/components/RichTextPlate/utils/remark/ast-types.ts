@@ -1,5 +1,7 @@
-import { ELEMENT_MENTION, TMentionElement } from '@udecode/plate-mention'
-import { ELEMENT_CODE_BLOCK, ELEMENT_CODE_LINE, TCodeBlockElement } from '@udecode/plate-code-block'
+import { TMentionElement } from '@udecode/plate-mention'
+import { MentionPlugin } from '@udecode/plate-mention/react'
+import { TCodeBlockElement } from '@udecode/plate-code-block'
+import { CodeBlockPlugin, CodeLinePlugin } from '@udecode/plate-code-block/react'
 import { TChannelMentionElement, TMentionEmoji } from '../../components/plate-ui/autocomplete/types'
 import { ELEMENT_MENTION_EMOJI } from '../../plugins/createEmojiPlugin'
 import { ELEMENT_MENTION_CHANNEL } from '../../plugins/createChannelPlugin'
@@ -55,15 +57,15 @@ export type MdastNodeType =
     | 'break'
     | 'thematicBreak'
     | 'text'
-    | typeof ELEMENT_MENTION
+    | typeof MentionPlugin.key
     | typeof ELEMENT_MENTION_CHANNEL
     | typeof ELEMENT_MENTION_EMOJI
 
 export const defaultNodeTypes: NodeTypes = {
     paragraph: 'p',
     block_quote: 'blockquote',
-    code_block: ELEMENT_CODE_BLOCK,
-    code_line: ELEMENT_CODE_LINE,
+    code_block: CodeBlockPlugin.key,
+    code_line: CodeLinePlugin.key,
     link: 'a',
     ul_list: 'ul',
     ol_list: 'ol',
@@ -85,7 +87,7 @@ export const defaultNodeTypes: NodeTypes = {
     inline_code_mark: 'code',
     thematic_break: 'thematic_break',
     image: 'image',
-    mention: ELEMENT_MENTION,
+    mention: MentionPlugin.key,
     mention_channel: ELEMENT_MENTION_CHANNEL,
     mention_emoji: ELEMENT_MENTION_EMOJI,
 }

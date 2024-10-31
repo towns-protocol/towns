@@ -2,10 +2,10 @@ import { Transformer } from 'unified'
 import isEmpty from 'lodash/isEmpty'
 import pick from 'lodash/pick'
 import each from 'lodash/each'
-import { EElementOrText, Value } from '@udecode/plate-common'
+import { ElementOrTextOf, TEditor } from '@udecode/plate-common'
 import { findAndReplace } from 'mdast-util-find-and-replace'
 import { Channel, useUserLookupContext } from 'use-towns-client'
-import { ELEMENT_MENTION } from '@udecode/plate-mention'
+import { MentionPlugin } from '@udecode/plate-mention/react'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { ELEMENT_MENTION_CHANNEL } from '../../plugins/createChannelPlugin'
 import {
@@ -21,7 +21,7 @@ const SPACE_NODE = {
 }
 
 const userNameWithoutAt = (name: string) => name.replace(/^@/, '')
-export type PasteTransformer = (fragment: EElementOrText<Value>[]) => EElementOrText<Value>[]
+export type PasteTransformer = (fragment: ElementOrTextOf<TEditor>[]) => ElementOrTextOf<TEditor>[]
 /**
  * Find #channel and @user in Markdown AST and convert them to
  * `TChannelMentionElement` or `TUserMentionElement` respectively.
@@ -122,7 +122,7 @@ function remarkTransformUserAndChannels(
                     userId: user.userId,
                     atChannel: userName === AtChannelUser.displayName,
                     value: USER_TRIGGER + user.displayName,
-                    type: ELEMENT_MENTION,
+                    type: MentionPlugin.key,
                     children: [{ text: USER_TRIGGER + user.displayName }],
                 } as TUserMentionElement,
                 { ...SPACE_NODE },
@@ -161,8 +161,8 @@ function remarkTransformUserAndChannels(
         }
 
         type SanitizeFragmentType = {
-            (mentionFragment: ReturnType<typeof transformChannel>): EElementOrText<Value>
-            (mentionFragment: ReturnType<typeof transformUser>): EElementOrText<Value>
+            (mentionFragment: ReturnType<typeof transformChannel>): ElementOrTextOf<TEditor>
+            (mentionFragment: ReturnType<typeof transformUser>): ElementOrTextOf<TEditor>
         }
         const sanitizeFragment: SanitizeFragmentType = (mentionFragment) => {
             if (mentionFragment.length === 1) {
@@ -170,11 +170,11 @@ function remarkTransformUserAndChannels(
             }
 
             return mentionFragment.filter(
-                (f) => f.type === ELEMENT_MENTION || f.type === ELEMENT_MENTION_CHANNEL,
-            )[0] as EElementOrText<Value>
+                (f) => f.type === MentionPlugin.key || f.type === ELEMENT_MENTION_CHANNEL,
+            )[0] as ElementOrTextOf<TEditor>
         }
 
-        const recursivelyTransformMentions = (fragment: EElementOrText<Value>) => {
+        const recursivelyTransformMentions = (fragment: ElementOrTextOf<TEditor>) => {
             if (Array.isArray(fragment.children)) {
                 fragment.children = fragment.children.map(recursivelyTransformMentions)
             }

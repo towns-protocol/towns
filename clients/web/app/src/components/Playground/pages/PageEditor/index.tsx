@@ -1,7 +1,7 @@
 /* eslint-disable */
 // @ts-nocheck
-import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { PlateEditor, Value } from '@udecode/plate-common'
+import React, { useCallback, useRef, useState } from 'react'
+import { TPlateEditor } from '@udecode/plate-common/react'
 import { LookupUser } from 'use-towns-client'
 import { MediaDropContextProvider } from '@components/MediaDropContext/MediaDropContext'
 import { FileUpload, FileUploadFileContent } from '@components/MediaDropContext/mediaDropTypes'
@@ -19,19 +19,6 @@ type InputEvent = {
     dataTransfer: string
     ranges: string
 }
-
-const EVENTS_TO_CAPTURE = [
-    'beforeinput',
-    'compositionend',
-    'compositionstart',
-    'compositionupdate',
-    'keydown',
-    'keypress',
-    'keyup',
-    'input',
-    'paste',
-    'textInput',
-]
 
 const lookupUser = (userId: string) =>
     roomMembers.find((user) => user.userId === userId) as LookupUser
@@ -52,7 +39,7 @@ export const PageEditor = () => {
     const [events, setEvents] = useState<InputEvent[]>([])
 
     const onChange = useCallback(
-        (editor: PlateEditor<Value>) => {
+        (editor: TPlateEditor) => {
             setEditorChildren(editor.children)
         },
         [setEditorChildren],
@@ -64,61 +51,6 @@ export const PageEditor = () => {
 
     const clearEvents = useCallback(() => {
         setEvents([])
-    }, [setEvents])
-
-    useEffect(() => {
-        EVENTS_TO_CAPTURE.forEach((eventName) => {
-            ref.current
-                .querySelector('[contenteditable="true"]')
-                ?.addEventListener(eventName, (e: Event) => {
-                    let dataTransfer
-                    let ranges
-
-                    if (e.dataTransfer) {
-                        dataTransfer = {
-                            text: e.dataTransfer.getData('text/plain'),
-                            html: e.dataTransfer.getData('text/html'),
-                        }
-                    }
-
-                    if (e.getTargetRanges) {
-                        ranges = e.getTargetRanges().map((range) => {
-                            return {
-                                collapsed: range.collapsed,
-                                endContainer: range.endContainer.tagName || 'text',
-                                endOffset: range.endOffset,
-                                startContainer: range.startContainer.tagName || 'text',
-                                startOffset: range.startOffset,
-                            }
-                        })
-                    }
-
-                    setEvents((prev) => {
-                        return [
-                            ...prev,
-                            {
-                                type: eventName,
-                                inputType: e.inputType,
-                                code: e.code,
-                                data: e.data,
-                                dataTransfer: JSON.stringify(dataTransfer),
-                                ranges: JSON.stringify(ranges),
-                            },
-                        ]
-                    })
-                })
-        })
-
-        return () => {
-            if (!ref.current) {
-                return
-            }
-            EVENTS_TO_CAPTURE.forEach((eventName) => {
-                ref.current
-                    ?.querySelector('[contenteditable="true"]')
-                    ?.removeEventListener(eventName, () => {})
-            })
-        }
     }, [setEvents])
 
     return (
@@ -142,10 +74,10 @@ export const PageEditor = () => {
                     </Box>
                 </Box>
                 <Stack
+                    gap
                     width="50%"
                     height="100%"
                     minWidth="200"
-                    gap
                     justifyContent="end"
                     overflowY="scroll"
                     borderLeft="level4"
@@ -166,8 +98,8 @@ export const PageEditor = () => {
                                 <Text strong>Rich Text Preview</Text>
                                 <Button
                                     size="button_xs"
-                                    onClick={toggleEditMode}
                                     data-testid="toggle-edit"
+                                    onClick={toggleEditMode}
                                 >
                                     {isEditing ? 'Preview' : 'Edit'}
                                 </Button>
@@ -215,7 +147,6 @@ export const PageEditor = () => {
                             title=""
                         >
                             <PlaygroundEditor
-                                onChange={onChange}
                                 setMarkdown={setMarkdown}
                                 setAttachments={setAttachments}
                                 setIsEditing={setIsEditing}
@@ -223,6 +154,7 @@ export const PageEditor = () => {
                                 isEditing={isEditing}
                                 initialValue={isEditing ? markdown : undefined}
                                 key={isEditing ? 'edit' : 'preview'}
+                                onChange={onChange}
                             />
                         </MediaDropContextProvider>
                     </Box>
@@ -253,7 +185,7 @@ export const PageEditor = () => {
 
                     <tbody>
                         {events.map((event, index) => (
-                            <tr key={`kbdevent-${index}`}>
+                            <tr key={`kbdevent-${event.code}`}>
                                 <td width={15}>{index + 1}</td>
                                 <td width={100}>{event.type}</td>
                                 <td width={200}>{event.inputType}</td>

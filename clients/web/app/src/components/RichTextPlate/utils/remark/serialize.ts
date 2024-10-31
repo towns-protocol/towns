@@ -1,4 +1,3 @@
-import escapeHtml from 'escape-html'
 import { BlockType, LeafType, NodeTypes, defaultNodeTypes } from './ast-types'
 import { BREAK_TAG } from '../helpers'
 
@@ -177,10 +176,11 @@ export default function serialize(chunk: BlockType | LeafType, opts: Options = {
 
     switch (type) {
         case nodeTypes.block_quote:
-            // For some reason, marked is parsing blockquotes w/ one new line
-            // as contiued blockquotes, so adding two new lines ensures that doesn't
-            // happen
-            return `> ${children}\n\n`
+            /**
+             * We need to add `>` to the beginning of each line in the blockquote to ensure
+             * that it is properly formatted in markdown when rendered.
+             */
+            return `> ${children.trim().replace(/\s\s\n/g, '  \n>')}\n\n`
 
         case nodeTypes.code_block:
             return `\`\`\`${(chunk as BlockType).language || ''}\n${children}\`\`\`\n`
@@ -228,7 +228,7 @@ export default function serialize(chunk: BlockType | LeafType, opts: Options = {
             return `---\n`
 
         default:
-            return escapeHtml(children)
+            return children
     }
 }
 

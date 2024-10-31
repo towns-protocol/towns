@@ -1,5 +1,5 @@
 import React from 'react'
-import { useEditorSelector } from '@udecode/plate-core'
+import { useEditorSelector } from '@udecode/plate-core/react'
 import { isListRoot } from '@udecode/plate-list'
 import { isSelectionAtCodeBlockStart } from '@udecode/plate-code-block'
 import { Box } from '@ui'

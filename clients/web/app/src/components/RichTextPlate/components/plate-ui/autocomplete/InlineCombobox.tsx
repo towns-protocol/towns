@@ -8,21 +8,23 @@ import React, {
 } from 'react'
 import type { HTMLAttributes, ReactNode, RefObject } from 'react'
 import type { ComboboxItemProps } from '@ariakit/react'
-import type { UseComboboxInputResult } from '@udecode/plate-combobox'
 import type { TElement } from '@udecode/plate-common'
 import { clsx } from 'clsx'
 import { Combobox, ComboboxItem, ComboboxPopover, Portal, useComboboxContext } from '@ariakit/react'
-import { filterWords, useComboboxInput, useHTMLInputCursorState } from '@udecode/plate-combobox'
+import {
+    UseComboboxInputResult,
+    useComboboxInput,
+    useHTMLInputCursorState,
+} from '@udecode/plate-combobox/react'
+import { filterWords } from '@udecode/plate-combobox'
 import {
     createPointRef,
-    findNodePath,
     getPointBefore,
     insertText,
     isHotkey,
     moveSelection,
-    useComposedRef,
-    useEditorRef,
 } from '@udecode/plate-common'
+import { findNodePath, useComposedRef, useEditorRef } from '@udecode/plate-common/react'
 import { useDevice } from 'hooks/useDevice'
 import { Box } from '@ui'
 import { TypeaheadMenuItem, TypeaheadMenuItemProps } from './Typeahead'

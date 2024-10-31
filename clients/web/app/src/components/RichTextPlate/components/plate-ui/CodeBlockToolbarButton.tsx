@@ -1,6 +1,12 @@
 import React, { useCallback } from 'react'
-import { useEditorRef, useEditorSelector } from '@udecode/plate-core'
+import { useEditorRef, useEditorSelector } from '@udecode/plate-core/react'
 import { toggleCodeBlock } from '@udecode/plate-code-block'
+import {
+    BaseBulletedListPlugin,
+    BaseNumberedListPlugin,
+    someList,
+    unwrapList,
+} from '@udecode/plate-list'
 import { IconButton } from '@ui'
 import { isCodeBlockElement } from '../../utils/helpers'
 
@@ -12,6 +18,12 @@ export const CodeBlockToolbarButton = () => {
     }, [])
 
     const onClick = useCallback(() => {
+        if (
+            someList(editor, BaseNumberedListPlugin.key) ||
+            someList(editor, BaseBulletedListPlugin.key)
+        ) {
+            unwrapList(editor)
+        }
         toggleCodeBlock(editor)
     }, [editor])
 

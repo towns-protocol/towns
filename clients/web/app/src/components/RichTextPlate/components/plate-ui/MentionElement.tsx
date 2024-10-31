@@ -1,6 +1,7 @@
 import React, { useCallback, useRef } from 'react'
 import { withRef } from '@udecode/cn'
-import { PlateElement, getHandler, useElement } from '@udecode/plate-common'
+import { PlateElement, useElement } from '@udecode/plate-common/react'
+import { getHandler } from '@udecode/plate-common'
 import { Box } from '@ui'
 import { mentionInput } from '../../RichTextEditor.css'
 import { TUserMentionElement } from './autocomplete/types'

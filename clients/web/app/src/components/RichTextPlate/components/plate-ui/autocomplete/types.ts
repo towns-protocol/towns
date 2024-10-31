@@ -5,15 +5,17 @@ import {
     Channel,
     RoomMember,
 } from 'use-towns-client'
-import { PlateRenderElementProps, TDescendant, Value } from '@udecode/plate-common'
-import { TMentionElement, TMentionInputElement } from '@udecode/plate-mention'
+import { PluginConfig, TDescendant, TElement } from '@udecode/plate-common'
+import { PlateElementProps } from '@udecode/plate-common/react'
+import { TMentionElement } from '@udecode/plate-mention'
+import { type TriggerComboboxPluginOptions } from '@udecode/plate-combobox'
 
 export type ComboboxInputUserProps = Omit<ComboboxContainerProps, 'searchResults' | 'filter'> & {
     userMentions: TComboboxItemWithData<TUserWithChannel>[]
     channelMentions: TComboboxItemWithData<Channel>[]
 }
 
-export type ComboboxContainerProps = PlateRenderElementProps<Value, TMentionInputElement> & {
+export type ComboboxContainerProps = PlateElementProps<TElement> & {
     query: string
     setQuery: (query: string) => void
     searchResults?: React.ReactNode
@@ -23,7 +25,7 @@ export type ComboboxContainerProps = PlateRenderElementProps<Value, TMentionInpu
 
 export type ComboboxContextWrapperProps = ComboboxInputUserProps & {
     Component: (
-        props: ComboboxInputUserProps & { ref?: React.ForwardedRef<HTMLDivElement> },
+        props: ComboboxInputUserProps & { ref?: React.ForwardedRef<never> },
     ) => React.ReactNode
 }
 
@@ -73,3 +75,24 @@ export const AtChannelUser: TUserMention = {
     usernameEncrypted: false,
     atChannel: true,
 }
+
+/**
+ * Extended type definition from official PlateJS plugin
+ * @see https://github.com/udecode/plate/blob/main/packages/mention/src/lib/BaseMentionPlugin.ts#L13
+ */
+export type TownsMentionConfig = PluginConfig<
+    'mention',
+    {
+        insertSpaceAfterMention?: boolean
+    } & TriggerComboboxPluginOptions,
+    NonNullable<unknown>,
+    {
+        insert: {
+            mention: (options: {
+                item?: TComboboxItemWithData
+                search: string
+                value: string
+            }) => void
+        }
+    }
+>

@@ -223,7 +223,7 @@ export const blockquote = style([
         marginTop: vars.space.md,
         marginLeft: vars.space.md,
         marginBottom: 0,
-        paddingBottom: vars.space.xs,
+        paddingTop: vars.space.xs,
     },
 ])
 
@@ -329,3 +329,23 @@ globalStyle(`${richText} ${paragraph} + ${paragraph}`, {
 globalStyle(`${richText}${contentEditable} ${paragraph} + ${paragraph}`, {
     marginTop: vars.space.sm,
 })
+
+/**
+ * PlateJS placeholder positioning styles
+ */
+globalStyle(
+    `${richText}${contentEditable} ${paragraph}:first-child, ${richText}${contentEditable} ${ol}:first-child li, ${richText}${contentEditable} ${ul}:first-child li, ${richText}${contentEditable} ${codeBlock}:first-child .slate-code_line`,
+    {
+        position: 'relative',
+    },
+)
+
+globalStyle(`${richText}${contentEditable} ${blockquote}:first-child`, {
+    marginTop: 0,
+    position: 'relative',
+})
+
+globalStyle(`${richText}${contentEditable} ${blockquote} [data-slate-placeholder="true"]`, {
+    marginTop: vars.space.xxs + '!important',
+})
+/** Placeholder positioning styles end */

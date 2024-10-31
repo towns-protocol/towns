@@ -17,7 +17,46 @@
             "@ui": ["ui/components"],
             "@unfurl-worker/types": ["../../../../servers/workers/unfurl-worker/src/types"],
             "@token-worker/types": ["../../../../servers/workers/token-worker/src/types"],
-            "@notification-service/*": ["../../../../servers/notification-service/src/*"]
+            "@notification-service/*": ["../../../../servers/notification-service/src/*"],
+            "@udecode/plate-common/react": [
+                "../../../../node_modules/@udecode/plate-common/dist/react/index.d.ts"
+            ],
+            "@udecode/plate-core/react": [
+                "../../../../node_modules/@udecode/plate-core/dist/react/index.d.ts"
+            ],
+            "@udecode/plate-list/react": [
+                "../../../../node_modules/@udecode/plate-list/dist/react/index.d.ts"
+            ],
+            "@udecode/plate-link/react": [
+                "../../../../node_modules/@udecode/plate-link/dist/react/index.d.ts"
+            ],
+            "@udecode/plate-basic-marks/react": [
+                "../../../../node_modules/@udecode/plate-basic-marks/dist/react/index.d.ts"
+            ],
+            "@udecode/plate-combobox/react": [
+                "../../../../node_modules/@udecode/plate-combobox/dist/react/index.d.ts"
+            ],
+            "@udecode/plate-code-block/react": [
+                "../../../../node_modules/@udecode/plate-code-block/dist/react/index.d.ts"
+            ],
+            "@udecode/plate-block-quote/react": [
+                "../../../../node_modules/@udecode/plate-block-quote/dist/react/index.d.ts"
+            ],
+            "@udecode/plate-reset-node/react": [
+                "../../../../node_modules/@udecode/plate-reset-node/dist/react/index.d.ts"
+            ],
+            "@udecode/plate-mention/react": [
+                "../../../../node_modules/@udecode/plate-mention/dist/react/index.d.ts"
+            ],
+            "@udecode/plate-autoformat/react": [
+                "../../../../node_modules/@udecode/plate-autoformat/dist/react/index.d.ts"
+            ],
+            "@udecode/plate-break/react": [
+                "../../../../node_modules/@udecode/plate-break/dist/react/index.d.ts"
+            ],
+            "@udecode/plate-utils/react": [
+                "../../../../node_modules/@udecode/plate-utils/dist/react/index.d.ts"
+            ]
         },
         "resolveJsonModule": true,
         "skipLibCheck": true,
@@ -27,5 +66,5 @@
         "types": ["vite/client", "vite-plugin-pwa/client"]
     },
     "include": ["src", "*.config.ts", "server.js", "workbox.d.ts"],
-    "exclude": ["node_modules"]
+    "exclude": ["../../../node_modules"]
 }

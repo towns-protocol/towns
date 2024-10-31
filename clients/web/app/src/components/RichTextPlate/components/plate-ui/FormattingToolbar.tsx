@@ -1,15 +1,15 @@
 import React, { ComponentProps, useCallback, useMemo } from 'react'
 import { AnimationProps } from 'framer-motion'
-import { useEditorRef } from '@udecode/plate-common'
+import { useEditorRef } from '@udecode/plate-common/react'
 import { withRef } from '@udecode/cn'
 import {
-    MARK_BOLD,
-    MARK_CODE,
-    MARK_ITALIC,
-    MARK_STRIKETHROUGH,
-    MARK_UNDERLINE,
-} from '@udecode/plate-basic-marks'
-import { ListStyleType } from '@udecode/plate-indent-list'
+    BoldPlugin,
+    CodePlugin,
+    ItalicPlugin,
+    StrikethroughPlugin,
+    UnderlinePlugin,
+} from '@udecode/plate-basic-marks/react'
+import { BaseBulletedListPlugin, BaseNumberedListPlugin } from '@udecode/plate-list'
 import { Box, BoxProps, DividerEditorToolbar, IconButton, MotionBox, Stack } from '@ui'
 import { GiphyEntryDesktop } from '@components/Giphy/GiphyEntry'
 import { useDevice } from 'hooks/useDevice'
@@ -33,7 +33,7 @@ export type FormattingToolbarProps = {
     setIsFormattingToolbarOpen: (isFormattingToolbarOpen: boolean) => void
 } & ComponentProps<typeof GiphyEntryDesktop>
 
-export const FormattingToolbar = withRef<'div', FormattingToolbarProps>(
+export const FormattingToolbar = withRef<typeof MotionBox, FormattingToolbarProps>(
     (
         { showFormattingToolbar, setIsFormattingToolbarOpen, focused, isFloating, onLinkClick },
         ref,
@@ -124,35 +124,35 @@ export const FormattingToolbar = withRef<'div', FormattingToolbarProps>(
                                     />
                                 )}
                                 <MarkToolbarButton
-                                    nodeType={MARK_BOLD}
+                                    nodeType={BoldPlugin.key}
                                     icon="bold"
                                     tooltip={ShortcutTooltip({ action: 'BoldText' })}
                                 />
                                 <MarkToolbarButton
-                                    nodeType={MARK_ITALIC}
+                                    nodeType={ItalicPlugin.key}
                                     icon="italic"
                                     tooltip={ShortcutTooltip({ action: 'ItalicText' })}
                                 />
                                 <MarkToolbarButton
-                                    nodeType={MARK_UNDERLINE}
+                                    nodeType={UnderlinePlugin.key}
                                     icon="underline"
                                     tooltip={ShortcutTooltip({ action: 'UnderlineText' })}
                                 />
                                 <MarkToolbarButton
-                                    nodeType={MARK_STRIKETHROUGH}
+                                    nodeType={StrikethroughPlugin.key}
                                     icon="strikethrough"
                                     tooltip="Strikethrough"
                                 />
                                 <LinkToolbarButton onClick={onLinkClick} />
                                 <DividerEditorToolbar />
                                 <ListToolbarButton
-                                    nodeType={ListStyleType.Decimal}
+                                    nodeType={BaseNumberedListPlugin.key}
                                     icon="numberedlist"
                                     tooltip="Ordered list"
                                     editor={editor}
                                 />
                                 <ListToolbarButton
-                                    nodeType={ListStyleType.Disc}
+                                    nodeType={BaseBulletedListPlugin.key}
                                     icon="bulletedlist"
                                     tooltip="Bulleted list"
                                     editor={editor}
@@ -161,7 +161,7 @@ export const FormattingToolbar = withRef<'div', FormattingToolbarProps>(
                                 <BlockQuoteToolbarButton />
                                 <DividerEditorToolbar />
                                 <MarkToolbarButton
-                                    nodeType={MARK_CODE}
+                                    nodeType={CodePlugin.key}
                                     icon="code"
                                     tooltip="Code"
                                 />

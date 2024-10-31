@@ -1,21 +1,16 @@
 import linkifyit from 'linkify-it'
-import { ELEMENT_BLOCKQUOTE } from '@udecode/plate-block-quote'
-import { ELEMENT_CODE_LINE } from '@udecode/plate-code-block'
-import { ELEMENT_PARAGRAPH } from '@udecode/plate-paragraph'
-import { ELEMENT_LINK, TLinkElement, unwrapLink } from '@udecode/plate-link'
-import { ELEMENT_MENTION_INPUT, TMentionInputElement } from '@udecode/plate-mention'
+import { BaseBlockquotePlugin } from '@udecode/plate-block-quote'
+import { BaseCodeLinePlugin } from '@udecode/plate-code-block'
+import { BaseLinkPlugin, TLinkElement, unwrapLink } from '@udecode/plate-link'
+import { BaseMentionInputPlugin, TMentionInputElement } from '@udecode/plate-mention'
+import { TPlateEditor, focusEditor } from '@udecode/plate-common/react'
 import {
-    PlateEditor,
-    TElement,
     findNode,
-    focusEditor,
     getBlockAbove,
     getEndPoint,
     getNodeString,
     getPreviousSiblingNode,
-    isBlock,
     moveSelection,
-    setElements,
 } from '@udecode/plate-common'
 import { isType } from '@udecode/plate-utils'
 import { Channel } from 'use-towns-client'
@@ -76,7 +71,10 @@ export const isLinkMD = (link: linkifyit.Match, fullText: string) => {
  * */
 export const isExactlyUrl = (url: string) => {
     const matches = linkify.match(url)
-    return matches && matches[0].text === url
+    if (!matches || matches.length === 0) {
+        return false
+    }
+    return matches[0].text === url
 }
 
 /**
@@ -90,21 +88,20 @@ export const isExactlyUrl = (url: string) => {
 export const containsUrl = (text: string) => linkify.test(text)
 
 /**
- * Get a fully formed valid URL from a string. This function will decode the URL
- * as well as add linkify schema like `mailto:`, `tel:`, `http://`, `https://`
+ * Get a fully formed valid URL from a string. This function will add linkify schema like `mailto:`, `tel:`, `http://`, `https://`
  *
  * Only works if text is entirely a URL and not a part of a larger string
  * @example
  * getUrlHref('towns.com') => 'http://www.towns.com'
  * getUrlHref('test') => false
  * getUrlHref('towns.com is great') => false
- * getUrlHref('https://towns.com?test%2Dparam') => 'https://towns.com?test-param'
+ * getUrlHref('https://towns.com?test%2Dparam') => 'https://towns.com/?test%2Dparam'
  * getUrlHref('user@email.com') => 'mailto:user@email.com'
  */
 export const getUrlHref = (url: string) => {
     try {
         if (!url || url === '%' || !isExactlyUrl(url)) {
-            return false
+            return
         }
 
         let _url = url
@@ -112,18 +109,13 @@ export const getUrlHref = (url: string) => {
         if (linkSchema && linkSchema.url !== url) {
             _url = linkSchema.url
         }
-
-        const decodedUrl = decodeURI(url)
-        if (decodedUrl !== url) {
-            _url = decodedUrl
-        }
         return _url
     } catch (e) {
         return url
     }
 }
 
-export const getLinkURLAtSelection = (editor: PlateEditor) => {
+export const getLinkURLAtSelection = (editor: TPlateEditor) => {
     const linkNode = getLinkNodeAtSelection(editor)
     if (!linkNode || !linkNode?.[0]?.url) {
         return
@@ -137,13 +129,16 @@ export const getLinkURLAtSelection = (editor: PlateEditor) => {
  *
  * Exported as a debounced function below to prevent multiple calls in quick succession.
  */
-const unwrapLinkAtSelection = (editor: PlateEditor) => {
+const unwrapLinkAtSelection = (editor: TPlateEditor) => {
     const { selection } = editor
     if (!selection) {
         return
     }
     const previousNode = getPreviousSiblingNode(editor, selection.focus.path)
-    if (!Array.isArray(previousNode) || (previousNode[0] as TLinkElement).type !== ELEMENT_LINK) {
+    if (
+        !Array.isArray(previousNode) ||
+        (previousNode[0] as TLinkElement).type !== BaseLinkPlugin.key
+    ) {
         return
     }
     const previousNodeText = getNodeString(previousNode[0] as TLinkElement)
@@ -156,51 +151,30 @@ const unwrapLinkAtSelection = (editor: PlateEditor) => {
 
 export const debouncedUnwrapLinkAtSelection = debounce(unwrapLinkAtSelection, SECOND_MS / 10)
 
-export const getLinkNodeAtSelection = (editor: PlateEditor) => {
-    return findNode(editor, { match: { type: ELEMENT_LINK } })
+export const getLinkNodeAtSelection = (editor: TPlateEditor) => {
+    return findNode(editor, { match: { type: BaseLinkPlugin.key } })
 }
 
-export const isCodeBlockElement = (editor: PlateEditor) =>
-    isType(editor, getBlockAbove(editor)?.[0], ELEMENT_CODE_LINE)
+export const isCodeBlockElement = (editor: TPlateEditor) =>
+    isType(editor, getBlockAbove(editor)?.[0], BaseCodeLinePlugin.key)
 
-export const isBlockquoteElement = (editor: PlateEditor) =>
-    isType(editor, getBlockAbove(editor)?.[0], ELEMENT_BLOCKQUOTE)
+export const isBlockquoteElement = (editor: TPlateEditor) =>
+    isType(editor, getBlockAbove(editor)?.[0], BaseBlockquotePlugin.key)
 
-export const getMentionInputElement = (editor: PlateEditor) =>
+export const getMentionInputElement = (editor: TPlateEditor) =>
     findNode<TMentionInputElement>(editor, {
-        match: { type: ELEMENT_MENTION_INPUT },
+        match: { type: BaseMentionInputPlugin.key },
     })
 
-export const getLowestBlockquoteNode = (editor: PlateEditor) => {
-    return findNode(editor, {
-        match: { type: ELEMENT_BLOCKQUOTE },
-        mode: 'lowest',
-    })?.[0]
-}
-
-export const getLowestParagraphNode = (editor: PlateEditor) => {
-    return findNode(editor, {
-        match: { type: ELEMENT_PARAGRAPH },
-        mode: 'lowest',
-    })?.[0]
-}
-
-export const setNodeType = (editor: PlateEditor, type: string) => {
-    setElements(
-        editor,
-        { type },
-        {
-            match: (n) => isBlock(editor, n),
-            split: true,
-        },
-    )
-}
-
-export const focusEditorTowns = (editor?: PlateEditor<TElement[]> | null, end = false) => {
+export const focusEditorTowns = (editor?: TPlateEditor | null, end = false) => {
     if (!editor) {
         return
     }
-    focusEditor(editor, end ? getEndPoint(editor, []) : undefined)
+    try {
+        focusEditor(editor, end ? getEndPoint(editor, []) : undefined)
+    } catch (_error) {
+        /* empty */
+    }
 }
 
 export const dispatchMockEnterEvent = () => {

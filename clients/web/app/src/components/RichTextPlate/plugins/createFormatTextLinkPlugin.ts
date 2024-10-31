@@ -1,6 +1,6 @@
-import { createPluginFactory } from '@udecode/plate-common'
+import { createPlatePlugin } from '@udecode/plate-common/react'
 import { deserializeMd } from '../utils/deserializeMD'
-import { containsUrl, convertPlainTextLinksToMd } from '../utils/helpers'
+import { containsUrl, convertPlainTextLinksToMd, isCodeBlockElement } from '../utils/helpers'
 
 export const KEY_FORMAT_TEXT_LINK = 'KEY_FORMAT_TEXT_LINK'
 
@@ -20,25 +20,23 @@ export const KEY_FORMAT_TEXT_LINK = 'KEY_FORMAT_TEXT_LINK'
  * Also, we need to ensure that the link is not already in markdown or HTML format, because that is already
  * supported by the editor and we don't want to get into a conflict.
  */
-export const createFormatTextLinkPlugin = createPluginFactory({
+export const FormatTextLinkPlugin = createPlatePlugin({
     key: KEY_FORMAT_TEXT_LINK,
-    editor: {
-        // insertData is a function that is called when the user pastes data into the editor.
-        insertData: {
-            format: 'text/plain',
-            query: ({ data, dataTransfer }) => {
-                if (data.length < 2) {
-                    return false
-                }
+    parser: {
+        format: 'text/plain',
+        query: ({ data, dataTransfer, editor }) => {
+            // If we're pasting in a code block, ignore this plugin
+            if (data.length < 2 || isCodeBlockElement(editor)) {
+                return false
+            }
 
-                const isHTML =
-                    dataTransfer.types.includes('text/html') &&
-                    dataTransfer.getData('text/html').includes('<a')
-                return !isHTML && containsUrl(data)
-            },
-            getFragment: ({ data }) => {
-                return deserializeMd(convertPlainTextLinksToMd(data))
-            },
+            const isHTML =
+                dataTransfer.types.includes('text/html') &&
+                dataTransfer.getData('text/html').includes('<a')
+            return !isHTML && containsUrl(data)
+        },
+        deserialize: ({ data }) => {
+            return deserializeMd(convertPlainTextLinksToMd(data))
         },
     },
 })
@@ -52,22 +50,21 @@ export const KEY_IOS_PASTE_LINK = 'KEY_IOS_PASTE_LINK'
  *
  * @description We are using `linkify-it` to detect links in the text and then converting them to markdown links.
  */
-export const createIOSPasteLinkPlugin = createPluginFactory({
+export const IOSPasteLinkPlugin = createPlatePlugin({
     key: KEY_IOS_PASTE_LINK,
-    editor: {
+    parser: {
         // insertData is a function that is called when the user pastes data into the editor.
-        insertData: {
-            format: 'text/uri-list',
-            query: ({ data }) => {
-                if (data.length < 1) {
-                    return false
-                }
+        format: 'text/uri-list',
+        query: ({ data, editor }) => {
+            // If we're pasting in a code block, ignore this plugin
+            if (data.length < 2 || isCodeBlockElement(editor)) {
+                return false
+            }
 
-                return containsUrl(data)
-            },
-            getFragment: ({ data }) => {
-                return deserializeMd(convertPlainTextLinksToMd(data))
-            },
+            return containsUrl(data)
+        },
+        deserialize: ({ data }) => {
+            return deserializeMd(convertPlainTextLinksToMd(data))
         },
     },
 })

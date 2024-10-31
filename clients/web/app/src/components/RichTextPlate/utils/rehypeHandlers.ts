@@ -1,12 +1,12 @@
 import { Handler } from 'mdast-util-to-hast'
-import { ELEMENT_LIC } from '@udecode/plate-list'
-import { ELEMENT_MENTION } from '@udecode/plate-mention'
+import { ListItemContentPlugin } from '@udecode/plate-list/react'
+import { MentionPlugin } from '@udecode/plate-mention/react'
 import { ELEMENT_MENTION_CHANNEL } from '../plugins/createChannelPlugin'
 import { ELEMENT_EDITED } from './remark/remarkEditedAnnotation'
 
 export const userMentionHandler: Handler = (state, node) => ({
     type: 'element',
-    tagName: ELEMENT_MENTION,
+    tagName: MentionPlugin.key,
     value: String(node.value).trim(),
     userId: node.userId,
     children: state.all(node),
@@ -24,7 +24,7 @@ export const channelMentionHandler: Handler = (state, node) => ({
 
 export const listContentHandler: Handler = (state, node) => {
     node.type = 'element'
-    node.tagName = ELEMENT_LIC
+    node.tagName = ListItemContentPlugin.key
     node.children = state.all(node)
     return node
 }

@@ -1,44 +1,52 @@
-import { ELEMENT_BLOCKQUOTE } from '@udecode/plate-block-quote'
-import { exitBreak } from '@udecode/plate-break'
 import {
-    ELEMENT_CODE_BLOCK,
-    ELEMENT_CODE_SYNTAX,
-    isSelectionAtCodeBlockStart,
-    unwrapCodeBlock,
-} from '@udecode/plate-code-block'
-import {
-    getNodeString,
+    BaseParagraphPlugin,
     isBlockAboveEmpty,
     isSelectionAtBlockEnd,
     isSelectionAtBlockStart,
+    someNode,
 } from '@udecode/plate-common'
-import { MARK_CODE } from '@udecode/plate-basic-marks'
-import { isMarkActive, toggleMark } from '@udecode/slate-utils'
-import { ELEMENT_LI, ELEMENT_LIC, ELEMENT_OL, ELEMENT_UL, unwrapList } from '@udecode/plate-list'
-import { ELEMENT_PARAGRAPH } from '@udecode/plate-paragraph'
-import { ResetNodePluginRule } from '@udecode/plate-reset-node'
-import { getLowestBlockquoteNode } from '../utils/helpers'
+import { BaseBlockquotePlugin } from '@udecode/plate-block-quote'
+import { exitBreak } from '@udecode/plate-break'
 import {
-    isSelectionAtBlockQuoteEnd,
-    isSelectionAtCodeBlockEnd,
-} from '../utils/isSelectionAtCodeBlockEnd'
+    BaseCodeBlockPlugin,
+    BaseCodeSyntaxPlugin,
+    isSelectionAtCodeBlockStart,
+    unwrapCodeBlock,
+} from '@udecode/plate-code-block'
+import { BaseCodePlugin } from '@udecode/plate-basic-marks'
+import { isMarkActive, toggleMark } from '@udecode/slate-utils'
+import {
+    BaseBulletedListPlugin,
+    BaseListItemContentPlugin,
+    BaseListItemPlugin,
+    BaseNumberedListPlugin,
+    insertListItem,
+    unwrapList,
+} from '@udecode/plate-list'
+import { ResetNodePluginRule } from '@udecode/plate-reset-node'
+import { isSelectionAtCodeBlockEnd } from '../utils/isSelectionAtCodeBlockEnd'
 
 type ResetNodePluginRuleWithHotKey = ResetNodePluginRule & { hotkey: string | string[] }
 
 const resetBlockTypesCommonRule = {
-    types: [ELEMENT_BLOCKQUOTE],
-    defaultType: ELEMENT_PARAGRAPH,
+    types: [BaseBlockquotePlugin.key],
+    defaultType: BaseParagraphPlugin.key,
 }
 
 const resetBlockTypesCodeBlockRule = {
-    types: [ELEMENT_CODE_BLOCK],
-    defaultType: ELEMENT_PARAGRAPH,
+    types: [BaseCodeBlockPlugin.key],
+    defaultType: BaseParagraphPlugin.key,
     onReset: unwrapCodeBlock,
 }
 
 const resetListBlockRule = {
-    types: [ELEMENT_LI, ELEMENT_OL, ELEMENT_UL, ELEMENT_LIC],
-    defaultType: ELEMENT_PARAGRAPH,
+    types: [
+        BaseBulletedListPlugin.key,
+        BaseNumberedListPlugin.key,
+        BaseListItemPlugin.key,
+        BaseListItemContentPlugin.key,
+    ],
+    defaultType: BaseParagraphPlugin.key,
     onReset: unwrapList,
 }
 
@@ -66,37 +74,7 @@ export const nodeResetRules: ResetNodePluginRuleWithHotKey[] = [
         },
     },
     {
-        ...resetBlockTypesCommonRule,
-        hotkey: 'down',
-        predicate: (editor) => {
-            if (isSelectionAtBlockQuoteEnd(editor)) {
-                editor.insertNode({ type: ELEMENT_PARAGRAPH, children: [{ text: '' }] })
-                return true
-            }
-            return false
-        },
-    },
-    {
-        ...resetBlockTypesCommonRule,
-        hotkey: 'shift+enter',
-        predicate: (editor) => {
-            const blockQuoteNode = getLowestBlockquoteNode(editor)
-            if (!blockQuoteNode) {
-                return false
-            }
-            if (
-                isSelectionAtBlockQuoteEnd(editor) &&
-                getNodeString(blockQuoteNode).endsWith('\n')
-            ) {
-                editor.deleteBackward('character')
-                editor.insertNode({ type: ELEMENT_PARAGRAPH, children: [{ text: '' }] })
-                return true
-            }
-            return false
-        },
-    },
-    {
-        types: [ELEMENT_CODE_BLOCK],
+        types: [BaseCodeBlockPlugin.key],
         hotkey: 'up',
         predicate: isSelectionAtCodeBlockStart,
         onReset: (editor) => exitBreak(editor, { before: true }),
@@ -112,16 +90,22 @@ export const nodeResetRules: ResetNodePluginRuleWithHotKey[] = [
         predicate: isSelectionAtBlockStart,
     },
     {
-        types: [ELEMENT_CODE_SYNTAX],
+        types: [BaseCodeSyntaxPlugin.key],
         hotkey: 'right',
         predicate: (editor) => {
-            if (isMarkActive(editor, MARK_CODE) && isSelectionAtBlockEnd(editor)) {
-                toggleMark(editor, { key: MARK_CODE })
+            if (isMarkActive(editor, BaseCodePlugin.key) && isSelectionAtBlockEnd(editor)) {
+                toggleMark(editor, { key: BaseCodePlugin.key })
                 editor.insertText(' ')
             }
             // return false so that the default behavior of resetting the node
             // to paragraph is not triggered
             return false
         },
+    },
+    {
+        types: [BaseListItemContentPlugin.key],
+        hotkey: 'shift+enter',
+        predicate: (editor) => someNode(editor, { match: { type: BaseListItemPlugin.key } }),
+        onReset: insertListItem,
     },
 ]

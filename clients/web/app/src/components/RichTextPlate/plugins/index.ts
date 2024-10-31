@@ -1,42 +1,33 @@
 import { withProps } from '@udecode/cn'
-import memoize from 'lodash/memoize'
 import { Channel, useUserLookupContext } from 'use-towns-client'
-import { PlateLeaf, createPlugins } from '@udecode/plate-common'
-import { ELEMENT_PARAGRAPH, createParagraphPlugin } from '@udecode/plate-paragraph'
-import { ELEMENT_BLOCKQUOTE, createBlockquotePlugin } from '@udecode/plate-block-quote'
+import { AutoformatPlugin } from '@udecode/plate-autoformat/react'
 import {
-    ELEMENT_CODE_BLOCK,
-    ELEMENT_CODE_LINE,
-    ELEMENT_CODE_SYNTAX,
-    createCodeBlockPlugin,
-} from '@udecode/plate-code-block'
-import { ELEMENT_LINK, createLinkPlugin } from '@udecode/plate-link'
+    BoldPlugin,
+    CodePlugin,
+    ItalicPlugin,
+    StrikethroughPlugin,
+    UnderlinePlugin,
+} from '@udecode/plate-basic-marks/react'
+import { BlockquotePlugin } from '@udecode/plate-block-quote/react'
+import { ExitBreakPlugin, SoftBreakPlugin } from '@udecode/plate-break/react'
+import { CodeBlockPlugin, CodeLinePlugin, CodeSyntaxPlugin } from '@udecode/plate-code-block/react'
+import { Value } from '@udecode/plate-common'
+import { ParagraphPlugin, PlateLeaf, createPlateEditor } from '@udecode/plate-common/react'
+import { CsvPlugin } from '@udecode/plate-csv'
+import { DocxPlugin } from '@udecode/plate-docx'
+import { LinkPlugin } from '@udecode/plate-link/react'
 import {
-    ELEMENT_LI,
-    ELEMENT_LIC,
-    ELEMENT_OL,
-    ELEMENT_UL,
-    createListPlugin,
-} from '@udecode/plate-list'
-import { ELEMENT_MENTION, ELEMENT_MENTION_INPUT, createMentionPlugin } from '@udecode/plate-mention'
-import {
-    MARK_BOLD,
-    MARK_CODE,
-    MARK_ITALIC,
-    MARK_STRIKETHROUGH,
-    MARK_UNDERLINE,
-    createBoldPlugin,
-    createCodePlugin,
-    createItalicPlugin,
-    createStrikethroughPlugin,
-    createUnderlinePlugin,
-} from '@udecode/plate-basic-marks'
-import { createNormalizeTypesPlugin } from '@udecode/plate-normalizers'
-import { createResetNodePlugin } from '@udecode/plate-reset-node'
-import { createDeletePlugin } from '@udecode/plate-select'
-import { createExitBreakPlugin, createSoftBreakPlugin } from '@udecode/plate-break'
-import { createDeserializeMdPlugin } from '@udecode/plate-serializer-md'
-import { createAutoformatPlugin } from '@udecode/plate-autoformat'
+    BulletedListPlugin,
+    ListItemContentPlugin,
+    ListItemPlugin,
+    ListPlugin,
+    NumberedListPlugin,
+} from '@udecode/plate-list/react'
+import { MarkdownPlugin } from '@udecode/plate-markdown'
+import { MentionInputPlugin, MentionPlugin } from '@udecode/plate-mention/react'
+import { ResetNodePlugin } from '@udecode/plate-reset-node/react'
+import { DeletePlugin } from '@udecode/plate-select'
+import { TrailingBlockPlugin } from '@udecode/plate-trailing-block'
 
 import { BlockquoteElement } from '../components/plate-ui/BlockquoteElement'
 import { CodeBlockElement } from '../components/plate-ui/CodeBlockElement'
@@ -47,146 +38,141 @@ import { LinkElement } from '../components/plate-ui/LinkElement'
 import { ListElement } from '../components/plate-ui/ListElement'
 import { ChannelMentionElement } from '../components/plate-ui/ChannelMentionElement'
 import { MentionElement } from '../components/plate-ui/MentionElement'
+import { EmojiMentionElement } from '../components/plate-ui/EmojiMentionElement'
 import { ComboboxContextWrapper } from '../components/plate-ui/autocomplete/ComboboxContextWrapper'
 import { ComboboxInput } from '../components/plate-ui/autocomplete/ComboboxInputUser'
 import { ParagraphElement } from '../components/plate-ui/ParagraphElement'
-import { EmojiMentionElement } from '../components/plate-ui/EmojiMentionElement'
+import { ChannelMentionPlugin, ELEMENT_MENTION_CHANNEL } from './createChannelPlugin'
+import { UserMentionPlugin } from './createUserMentionPlugin'
 import { autoformatRules } from './autoformat'
 import { nodeResetRules } from './nodeReset'
-import { createEditorOverridesPlugin } from './createEditorOverridesPlugin'
-import { createFormatTextLinkPlugin, createIOSPasteLinkPlugin } from './createFormatTextLinkPlugin'
-import { ELEMENT_MENTION_CHANNEL, createChannelPlugin } from './createChannelPlugin'
-import { ELEMENT_MENTION_EMOJI, createEmojiPlugin } from './createEmojiPlugin'
-import { createErrorHandlingPlugin } from './WithErrorHandlingPlugin'
+import { EditorOverridesPlugin } from './createEditorOverridesPlugin'
+import { FormatTextLinkPlugin, IOSPasteLinkPlugin } from './createFormatTextLinkPlugin'
+import { PasteMentionsPlugin } from './createPasteMentionsPlugin'
+import { ELEMENT_MENTION_EMOJI, EmojiMentionPlugin } from './createEmojiPlugin'
+import { ErrorHandlingPlugin } from './createErrorHandlingPlugin'
 import {
-    ComboboxTypes,
     TComboboxItemWithData,
     TUserIDNameMap,
     TUserWithChannel,
 } from '../components/plate-ui/autocomplete/types'
 import { getUrlHref, isExactlyUrl } from '../utils/helpers'
-import { createPasteMentionsPlugin } from './createPasteMentionsPlugin'
 
-const platePlugins = (
+const createTownsEditor = (
+    uniqueId: string,
     channelList: Channel[],
     userHashMap: TUserIDNameMap,
     userMentions: TComboboxItemWithData<TUserWithChannel>[],
     channelMentions: TComboboxItemWithData<Channel>[],
+    initialValue: Value,
     lookupUser?: ReturnType<typeof useUserLookupContext>['lookupUser'],
 ) =>
-    createPlugins(
-        [
-            createAutoformatPlugin({
-                options: {
-                    rules: autoformatRules,
-                    enableUndoOnDelete: true,
-                },
-            }),
-            createParagraphPlugin(),
-            createBlockquotePlugin(),
-            createCodeBlockPlugin({
+    createPlateEditor({
+        plugins: [
+            BlockquotePlugin,
+            CodeBlockPlugin.configure({
                 options: { syntax: false },
             }),
-            createLinkPlugin({
+            LinkPlugin.configure({
                 options: {
                     isUrl: isExactlyUrl,
                     getUrlHref,
                 },
             }),
-            createListPlugin(),
-            createChannelPlugin(),
-            createEmojiPlugin(),
-            createMentionPlugin({
+            ParagraphPlugin,
+            ListPlugin,
+            BoldPlugin,
+            ItalicPlugin,
+            UnderlinePlugin,
+            StrikethroughPlugin,
+            CodePlugin.configure({
+                options: { hotkey: '' },
+            }),
+            AutoformatPlugin.configure({
                 options: {
-                    id: ComboboxTypes.userMention,
-                    insertSpaceAfterMention: true,
-                    triggerPreviousCharPattern: /^$|^[\s"']$/,
-                    createMentionNode: (item: TComboboxItemWithData<TUserWithChannel>) => ({
-                        value: '@' + item.text,
-                        userId: item.key,
-                        atChannel: item.data.atChannel,
-                        children: [{ text: '@' + item.text }],
-                    }),
+                    rules: autoformatRules,
+                    enableUndoOnDelete: true,
                 },
             }),
-            createBoldPlugin(),
-            createItalicPlugin(),
-            createUnderlinePlugin(),
-            createStrikethroughPlugin(),
-            createCodePlugin({
+            SoftBreakPlugin.configure({
                 options: {
-                    hotkey: '', // turn off the default hotkey for code (Cmd+E)
+                    rules: [
+                        {
+                            hotkey: 'shift+enter',
+                            query: {
+                                allow: [BlockquotePlugin.key],
+                            },
+                        },
+                    ],
                 },
             }),
-            createResetNodePlugin({
+            ExitBreakPlugin.configure({
+                options: {
+                    rules: [
+                        {
+                            hotkey: 'shift+enter',
+                            query: {
+                                allow: [CodeBlockPlugin.key],
+                            },
+                        },
+                    ],
+                },
+            }),
+            ChannelMentionPlugin,
+            UserMentionPlugin,
+            EmojiMentionPlugin,
+            ResetNodePlugin.configure({
                 options: {
                     rules: nodeResetRules,
                 },
             }),
-            createDeletePlugin(),
-            createSoftBreakPlugin({
-                options: {
-                    rules: [
-                        {
-                            hotkey: 'shift+enter',
-                            query: {
-                                allow: [ELEMENT_BLOCKQUOTE],
-                            },
-                        },
-                    ],
-                },
+            DeletePlugin,
+            TrailingBlockPlugin.configure({
+                options: { type: 'p', allow: [BlockquotePlugin.key] },
             }),
-            createEditorOverridesPlugin(),
-            createExitBreakPlugin({
-                options: {
-                    rules: [
-                        {
-                            hotkey: 'shift+enter',
-                            query: {
-                                exclude: [ELEMENT_LIC],
-                                allow: [ELEMENT_CODE_BLOCK],
-                            },
-                        },
-                    ],
-                },
-            }),
-            createDeserializeMdPlugin(), // should be before createFormatTextLinkPlugin
-            /* Following plugins should ALWAYS be placed after createDeserializeMdPlugin() */
-            createFormatTextLinkPlugin(),
-            createIOSPasteLinkPlugin(),
-            createPasteMentionsPlugin(channelList, userHashMap, lookupUser)(),
-            createNormalizeTypesPlugin(),
-            createErrorHandlingPlugin(),
+            DocxPlugin,
+            CsvPlugin,
+            MarkdownPlugin,
+            EditorOverridesPlugin,
+            ErrorHandlingPlugin,
+            FormatTextLinkPlugin,
+            IOSPasteLinkPlugin,
+            PasteMentionsPlugin(channelList, userHashMap, lookupUser),
         ],
-        {
+        override: {
             components: {
-                [ELEMENT_BLOCKQUOTE]: BlockquoteElement,
-                [ELEMENT_CODE_BLOCK]: CodeBlockElement,
-                [ELEMENT_CODE_LINE]: CodeLineElement,
-                [ELEMENT_CODE_SYNTAX]: CodeSyntaxLeaf,
-                [ELEMENT_LINK]: LinkElement,
-                [ELEMENT_UL]: withProps(ListElement, { variant: 'ul' }),
-                [ELEMENT_OL]: withProps(ListElement, { variant: 'ol' }),
-                [ELEMENT_LI]: withProps(ListElement, { variant: 'li' }),
-                [ELEMENT_LIC]: withProps(ListElement, { variant: 'span' }),
-                [ELEMENT_MENTION]: MentionElement,
-                [ELEMENT_MENTION_EMOJI]: EmojiMentionElement,
+                [BlockquotePlugin.key]: BlockquoteElement,
+                [CodeBlockPlugin.key]: CodeBlockElement,
+                [CodeLinePlugin.key]: CodeLineElement,
+                [CodeSyntaxPlugin.key]: CodeSyntaxLeaf,
+                [LinkPlugin.key]: LinkElement,
+                [BulletedListPlugin.key]: withProps(ListElement, { variant: 'ul' }),
+                [NumberedListPlugin.key]: withProps(ListElement, { variant: 'ol' }),
+                [ListItemPlugin.key]: withProps(ListElement, { variant: 'li' }),
+                [ListItemContentPlugin.key]: withProps(ListElement, { variant: 'span' }),
+                [MentionPlugin.key]: MentionElement,
                 [ELEMENT_MENTION_CHANNEL]: ChannelMentionElement,
-                [ELEMENT_MENTION_INPUT]: withProps(ComboboxContextWrapper, {
+                [ELEMENT_MENTION_EMOJI]: EmojiMentionElement,
+                [MentionInputPlugin.key]: withProps(ComboboxContextWrapper, {
                     Component: ComboboxInput,
                     userMentions,
                     channelMentions,
                 }),
-                [ELEMENT_PARAGRAPH]: ParagraphElement,
-                [MARK_BOLD]: withProps(PlateLeaf, { as: 'strong' }),
-                [MARK_CODE]: CodeLeaf,
-                [MARK_ITALIC]: withProps(PlateLeaf, { as: 'em', style: { fontStyle: 'italic' } }),
-                [MARK_STRIKETHROUGH]: withProps(PlateLeaf, { as: 's' }),
-                [MARK_UNDERLINE]: withProps(PlateLeaf, { as: 'u' }),
+                [ParagraphPlugin.key]: ParagraphElement,
+                [BoldPlugin.key]: withProps(PlateLeaf, { as: 'strong' }),
+                [CodePlugin.key]: CodeLeaf,
+                [ItalicPlugin.key]: withProps(PlateLeaf, {
+                    as: 'em',
+                    style: { fontStyle: 'italic' },
+                }),
+                [StrikethroughPlugin.key]: withProps(PlateLeaf, { as: 's' }),
+                [UnderlinePlugin.key]: withProps(PlateLeaf, { as: 'u' }),
             },
         },
-    )
+        id: uniqueId,
+        value: initialValue,
+        shouldNormalizeEditor: true,
+        autoSelect: 'end',
+    })
 
-const memoizedPlatePlugins = memoize(platePlugins)
-
-export default memoizedPlatePlugins
+export default createTownsEditor

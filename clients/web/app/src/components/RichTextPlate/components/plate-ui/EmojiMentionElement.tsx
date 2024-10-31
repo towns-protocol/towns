@@ -1,6 +1,6 @@
 import React from 'react'
 import { withRef } from '@udecode/cn'
-import { PlateElement, useElement } from '@udecode/plate-common'
+import { PlateElement, useElement } from '@udecode/plate-common/react'
 import { Box } from '@ui'
 import { TEmojiMentionElement } from './autocomplete/types'
 

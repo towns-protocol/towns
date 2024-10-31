@@ -1,42 +1,39 @@
 import React, { useCallback } from 'react'
-import { PlateEditor, Value, collapseSelection } from '@udecode/plate-common'
-import { ListStyleType } from '@udecode/plate-indent-list'
-import {
-    ELEMENT_OL,
-    ELEMENT_UL,
-    useListToolbarButton,
-    useListToolbarButtonState,
-} from '@udecode/plate-list'
+import { TPlateEditor } from '@udecode/plate-common/react'
+import { unwrapCodeBlock } from '@udecode/plate-code-block'
+import { useListToolbarButtonState } from '@udecode/plate-list/react'
 import { withRef } from '@udecode/cn'
+import { BaseBulletedListPlugin, BaseNumberedListPlugin, toggleList } from '@udecode/plate-list'
 import { IconButton, IconName } from '@ui'
+import { isCodeBlockElement } from '../../utils/helpers'
 
 type Props = {
-    nodeType: ListStyleType
+    nodeType: typeof BaseBulletedListPlugin.key | typeof BaseNumberedListPlugin.key
     icon: IconName
     tooltip: React.ReactNode
-    editor: PlateEditor<Value>
+    editor: TPlateEditor
 }
 
 export const ListToolbarButton = withRef<
     React.FC<Props>,
     {
-        nodeType?: ListStyleType
+        nodeType?: Props['nodeType']
     }
->(({ nodeType: _nodeType = ListStyleType.Disc, icon, tooltip, editor }, ref) => {
-    const { pressed, nodeType } = useListToolbarButtonState({
-        nodeType: _nodeType === ListStyleType.Disc ? ELEMENT_UL : ELEMENT_OL,
+>(({ nodeType: _nodeType = BaseBulletedListPlugin.key, icon, tooltip, editor }, ref) => {
+    const { pressed } = useListToolbarButtonState({
+        nodeType: _nodeType,
     })
-
-    const { props } = useListToolbarButton({ nodeType, pressed })
 
     const onClick = useCallback(
         (e: React.MouseEvent) => {
             e.preventDefault()
             e.stopPropagation()
-            props.onClick()
-            collapseSelection(editor)
+            if (isCodeBlockElement(editor)) {
+                unwrapCodeBlock(editor)
+            }
+            toggleList(editor, { type: _nodeType })
         },
-        [props, editor],
+        [_nodeType, editor],
     )
 
     return (

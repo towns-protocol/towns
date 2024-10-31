@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import linkifyit from 'linkify-it'
 import { useEvent } from 'react-use-event-hook'
-import { useEditorRef } from '@udecode/plate-common'
+import { useEditorRef } from '@udecode/plate-common/react'
 import { getEditorString } from '@udecode/slate'
 import { upsertLink } from '@udecode/plate-link'
 import { useDevice } from 'hooks/useDevice'
@@ -10,12 +10,10 @@ import { FloatingToolbar } from './plate-ui/FloatingToolbar'
 import { FormattingToolbar, FormattingToolbarProps } from './plate-ui/FormattingToolbar'
 import { focusEditorTowns, getLinkURLAtSelection } from '../utils/helpers'
 
-interface Props extends Omit<FormattingToolbarProps, 'onLinkClick'> {
-    editorId: string
-}
+interface Props extends Omit<FormattingToolbarProps, 'onLinkClick'> {}
 const linkify = linkifyit()
 
-export const EditorToolbarTop = ({ editorId, ...props }: Props) => {
+export const EditorToolbarTop = (props: Props) => {
     const [linkLinkModal, setLinkModal] = useState(false)
     const [existingLink, setExistingLink] = useState<string | undefined>(undefined)
 
@@ -67,7 +65,7 @@ export const EditorToolbarTop = ({ editorId, ...props }: Props) => {
         <>
             <FormattingToolbar {...props} onLinkClick={onLinkClick} />
             {!isTouch && (
-                <FloatingToolbar editorId={editorId} disabled={props.showFormattingToolbar}>
+                <FloatingToolbar disabled={props.showFormattingToolbar}>
                     <FormattingToolbar
                         {...props}
                         showFormattingToolbar

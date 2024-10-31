@@ -1,6 +1,7 @@
 import React from 'react'
 import { withRef } from '@udecode/cn'
-import { PlateElement, getHandler, useElement } from '@udecode/plate-common'
+import { getHandler } from '@udecode/plate-common'
+import { PlateElement, useElement } from '@udecode/plate-common/react'
 import { ChannelLink } from '../ChannelLink'
 import { mentionChannelInput } from '../../RichTextEditor.css'
 import { TChannelMentionElement } from './autocomplete/types'
@@ -8,11 +9,10 @@ import { TChannelMentionElement } from './autocomplete/types'
 export const ChannelMentionElement = withRef<
     typeof PlateElement,
     {
-        prefix?: string
         onClick?: (mentionNode: Record<never, never>) => void
         renderLabel?: (mentionable: TChannelMentionElement) => string
     }
->(({ children, prefix, renderLabel, className, onClick, ...props }, ref) => {
+>(({ children, renderLabel, className, onClick, ...props }, ref) => {
     const element = useElement<TChannelMentionElement>()
 
     return (
@@ -25,8 +25,8 @@ export const ChannelMentionElement = withRef<
             onClick={getHandler(onClick, element)}
             {...props}
         >
-            {prefix}
             <ChannelLink channel={element.channel} />
+            {children}
         </PlateElement>
     )
 })

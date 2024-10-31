@@ -1,5 +1,5 @@
 import React, { useCallback, useId } from 'react'
-import { useEditorRef, useEventEditorSelectors } from '@udecode/plate-common'
+import { useEditorRef, useEventEditorSelectors } from '@udecode/plate-common/react'
 import { GiphyEntryDesktop, GiphyEntryTouch } from '@components/Giphy/GiphyEntry'
 import { EmojiPickerButton, EmojiPickerButtonTouch } from '@components/EmojiPickerButton'
 import { useDevice } from 'hooks/useDevice'

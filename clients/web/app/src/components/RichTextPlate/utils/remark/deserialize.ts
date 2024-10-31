@@ -1,4 +1,4 @@
-import { ELEMENT_MENTION } from '@udecode/plate-mention'
+import { MentionPlugin } from '@udecode/plate-mention/react'
 import {
     BlockQuoteNode,
     CodeBlockNode,
@@ -102,7 +102,7 @@ export default function deserialize<T extends InputNodeTypes>(
                           }))
                         : [{ text: node.value }],
             } as CodeBlockNode<T>
-        case ELEMENT_MENTION:
+        case MentionPlugin.key:
         case ELEMENT_MENTION_CHANNEL: {
             return node
         }

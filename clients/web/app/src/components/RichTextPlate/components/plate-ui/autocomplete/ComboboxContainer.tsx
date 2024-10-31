@@ -1,12 +1,12 @@
 import React from 'react'
 import { withRef } from '@udecode/cn'
-import { PlateElement } from '@udecode/plate-common'
+import { PlateElement } from '@udecode/plate-common/react'
 import { InlineCombobox, InlineComboboxContent, InlineComboboxInput } from './InlineCombobox'
 import { ComboboxContainerProps } from './types'
 import { mentionInput } from '../../../RichTextEditor.css'
 import { typeaheadMenuWrapperHidden } from './Typeahead/Typeahead.css'
 
-export const ComboboxContainer = withRef<'div', ComboboxContainerProps>(
+export const ComboboxContainer = withRef<typeof PlateElement, ComboboxContainerProps>(
     (
         {
             className,
@@ -27,7 +27,7 @@ export const ComboboxContainer = withRef<'div', ComboboxContainerProps>(
                     showTrigger
                     element={element}
                     setValue={setQuery}
-                    trigger={element.trigger}
+                    trigger={element.trigger as string}
                     value={query}
                     filter={filter}
                 >

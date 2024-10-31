@@ -1,5 +1,5 @@
 import React, { ClassAttributes, useCallback, useMemo } from 'react'
-import { ELEMENT_MENTION } from '@udecode/plate-mention'
+import { MentionPlugin } from '@udecode/plate-mention/react'
 import every from 'lodash/every'
 import isEqual from 'lodash/isEqual'
 import { clsx } from 'clsx'
@@ -20,7 +20,7 @@ import { MentionElementWithoutPlate } from './components/plate-ui/MentionElement
 import { ChannelLinkForDisplay } from './components/ChannelLink'
 import * as fieldStyles from '../../ui/components/_internal/Field/Field.css'
 import { atoms } from '../../ui/styles/atoms.css'
-import { BlockquoteElement } from './components/plate-ui/BlockquoteElement'
+import { BlockquoteElementWithoutPlate } from './components/plate-ui/BlockquoteElement'
 import { CodeLeaf } from './components/plate-ui/CodeLeaf'
 import { LinkWithoutPlate } from './components/plate-ui/LinkElement'
 import { ListElement } from './components/plate-ui/ListElement'
@@ -121,9 +121,11 @@ export const RichTextPreviewInternal = ({
             ),
             code: CodeLeaf,
             pre: (props: React.PropsWithChildren) => <CodeBlockElement ref={ref} {...props} />,
-            blockquote: BlockquoteElement,
+            blockquote: BlockquoteElementWithoutPlate,
             a: LinkWithoutPlate,
-            [ELEMENT_MENTION]: (props: React.PropsWithChildren<{ node: TUserMentionElement }>) => (
+            [MentionPlugin.key]: (
+                props: React.PropsWithChildren<{ node: TUserMentionElement }>,
+            ) => (
                 <MentionElementWithoutPlate
                     value={props.node.value}
                     userId={props.node.userId}

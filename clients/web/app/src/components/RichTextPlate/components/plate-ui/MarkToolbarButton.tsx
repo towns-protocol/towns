@@ -1,5 +1,5 @@
 import React from 'react'
-import { useMarkToolbarButton, useMarkToolbarButtonState } from '@udecode/plate-common'
+import { useMarkToolbarButton, useMarkToolbarButtonState } from '@udecode/plate-common/react'
 import { IconButton } from '@ui'
 import { IconName } from 'ui/components/Icon'
 
