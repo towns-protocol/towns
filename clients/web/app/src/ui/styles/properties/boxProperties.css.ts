@@ -149,6 +149,14 @@ export const boxProperties = defineProperties({
                     },
                 },
             },
+            dropdown: {
+                boxShadow: `0 0 32px rgba(0, 0, 0, 0.25)`,
+                selectors: {
+                    [`${lightTheme} &`]: {
+                        boxShadow: `0 0 32px rgba(0, 0, 0, 0.15)`,
+                    },
+                },
+            },
             search: {
                 boxShadow: `0 8px 20px rgba(0, 0, 0, 0.5)`,
                 selectors: {

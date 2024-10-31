@@ -130,6 +130,7 @@ export const GiphyPickerCard = (props: GiphyPickerCardProps) => {
                 background={isTouch ? 'level1' : 'level2'}
                 borderRadius="sm"
                 style={{ width: width }}
+                boxShadow={isTouch ? undefined : 'dropdown'}
             >
                 <Box>
                     <GiphySearchBar />

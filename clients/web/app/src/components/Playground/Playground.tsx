@@ -17,6 +17,7 @@ import {
     IconLabelButton,
     IconName,
     Pill,
+    PopupMenu,
     RadioCard,
     RadioSelect,
     Stack,
@@ -193,6 +194,20 @@ export const Playground = () => {
                 />
             </Container>
 
+            <Container label="PopoverMenu" background="level1">
+                <PopupMenu
+                    options={[
+                        { value: 'birds', label: 'Birds' },
+                        { value: 'bears', label: 'Bears' },
+                        { value: 'horses', label: 'Horses' },
+                    ]}
+                    value={{ value: 'birds', label: 'Birds' }}
+                    renderMenu={(item) => item?.label}
+                    getKey={(item) => item?.value ?? ''}
+                    onChange={() => void 0}
+                />
+            </Container>
+
             <Container label="Tooltips">
                 <Box>
                     <TooltipRenderer trigger="hover" tooltip={<Tooltip>Hello</Tooltip>}>
@@ -350,7 +365,7 @@ export const Playground = () => {
             </Container>
 
             <Container darkOnly label="VList" padding="none">
-                <Stack>
+                <Stack position="relative" height="800">
                     <VListExample />
                 </Stack>
             </Container>

@@ -1,1 +1,1 @@
-export type Placement = 'vertical' | 'horizontal' | 'pointer'
+export type Placement = 'dropdown' | 'vertical' | 'horizontal' | 'pointer'

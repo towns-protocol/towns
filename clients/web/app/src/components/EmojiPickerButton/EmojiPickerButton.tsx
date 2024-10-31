@@ -69,11 +69,7 @@ export const EmojiPickerButton = (props: Props) => {
             toggleRef={toggleCardRef}
             tabIndex={props.tabIndex}
             placement="vertical"
-            render={
-                <Box paddingY="lg">
-                    <EmojiPickerContainer onEmojiSelect={onSelectEmoji} />
-                </Box>
-            }
+            render={<EmojiPickerContainer onEmojiSelect={onSelectEmoji} />}
         >
             {({ triggerProps }) => (
                 <Container

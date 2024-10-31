@@ -1,6 +1,5 @@
-import React, { useMemo, useRef } from 'react'
-import { useDebounce } from 'hooks/useDebounce'
-import { useSize } from 'ui/hooks/useSize'
+import React, { useMemo, useRef, useState } from 'react'
+import useResizeObserver from '@react-hook/resize-observer'
 
 import { Box } from '../Box/Box'
 import { Placement } from './types'
@@ -14,20 +13,29 @@ type OffsetContainerProps = {
     containerRef: React.MutableRefObject<HTMLDivElement | null>
 }
 
+type Position = 'top' | 'bottom' | 'left' | 'right'
+const positions: Position[] = ['top', 'bottom', 'left', 'right']
+
 const DEBUG = false
 
+const margin = 4
+
 export const OverlayContainer = (props: OffsetContainerProps) => {
-    const { triggerRect, hitPosition, render, placement, containerRef } = props
+    const { triggerRect, hitPosition, render, placement } = props
     const ref = useRef<HTMLDivElement>(null)
-    containerRef.current = ref.current
+    props.containerRef.current = ref.current
 
-    const targetSize = useSize(ref)
-    const undeferredSize = useMemo(() => {
-        return targetSize ?? { width: 0, height: 0 }
-    }, [targetSize])
+    const contentSizeRef = useRef<{ width: number; height: number }>({ width: 0, height: 0 })
+    const anchorRef = useRef<HTMLDivElement>(null)
+    const containerRef = useRef<HTMLDivElement>(null)
 
-    // use debounced value to avoid flickering
-    const size = useDebounce(undeferredSize, 100)
+    const anchorStyle: { [key: string]: number | string | undefined } = useMemo(
+        () => ({
+            position: 'absolute',
+            border: DEBUG ? `1px solid green` : undefined,
+        }),
+        [],
+    )
 
     const safeArea = useMemo(
         () => ({
@@ -39,20 +47,37 @@ export const OverlayContainer = (props: OffsetContainerProps) => {
         [],
     )
 
-    const isContainerEmpty = size.height === 0
-
-    const styles = useMemo(() => {
-        const margin = 4
-
-        const anchorStyle: { [key: string]: number | string | undefined } = {
+    const containerStyle: { [key: string]: number | string | undefined } = useMemo(
+        () => ({
             position: 'absolute',
-            border: DEBUG ? `1px solid green` : undefined,
+            border: DEBUG ? `1px solid pink` : undefined,
+            maxWidth: safeArea.right - safeArea.left - margin * 2,
+            minWidth:
+                placement === 'dropdown'
+                    ? `${Math.min(
+                          safeArea.right - safeArea.left - margin * 2,
+                          triggerRect.width,
+                      )}px`
+                    : undefined,
+        }),
+        [placement, safeArea, triggerRect.width],
+    )
+
+    const computeStyles = () => {
+        const size = contentSizeRef.current
+
+        const anchorStyle: Record<Position, number | undefined> = {
+            left: undefined,
+            right: undefined,
+            top: undefined,
+            bottom: undefined,
         }
 
-        const containerStyle: { [key: string]: number | string | undefined } = {
-            position: 'absolute',
-            opacity: isContainerEmpty ? 0 : 1,
-            border: DEBUG ? `1px solid pink` : undefined,
+        const containerStyle: Record<Position, number | undefined> = {
+            left: undefined,
+            right: undefined,
+            top: undefined,
+            bottom: undefined,
         }
 
         if (!triggerRect || (size.width === 0 && size.height === 0)) {
@@ -61,6 +86,28 @@ export const OverlayContainer = (props: OffsetContainerProps) => {
                 containerStyle,
             }
         }
+
+        if (placement === 'dropdown') {
+            const top = triggerRect.bottom
+            anchorStyle.top = top - Math.max(0, top + size.height - safeArea.bottom)
+            anchorStyle.left = triggerRect.left
+
+            const anchorRight = triggerRect.right
+            const fitsRight = anchorRight - size.width > safeArea.left
+
+            const anchorLeft = triggerRect.left
+            const fitsLeft = anchorLeft + size.width < safeArea.right
+
+            // ideally align horizontally on the right
+            if (fitsRight || !fitsLeft) {
+                anchorStyle.left = anchorRight
+                containerStyle.right = 0
+            } else {
+                anchorStyle.left = anchorLeft
+                containerStyle.left = 0
+            }
+        }
+
         if (placement === 'vertical') {
             anchorStyle.top = triggerRect.top
             const topDiff = Math.max(0, (size.height ?? 0) - anchorStyle.top)
@@ -104,22 +151,52 @@ export const OverlayContainer = (props: OffsetContainerProps) => {
             anchorStyle,
             containerStyle,
         }
-    }, [hitPosition, isContainerEmpty, placement, safeArea, size, triggerRect])
+    }
+
+    const updateStyles = () => {
+        const styles = computeStyles()
+        Object.values([
+            [anchorRef.current, styles.anchorStyle] as const,
+            [containerRef.current, styles.containerStyle] as const,
+        ]).forEach(([element, style]) => {
+            if (element) {
+                Object.values(positions).forEach((position) => {
+                    element.style[position] =
+                        typeof style[position] === 'number' ? `${style[position]}px` : ''
+                })
+            }
+        })
+    }
+
+    const [isSizeInitialized, setIsSizeInitialized] = useState(false)
+
+    useResizeObserver(ref, (targetSize) => {
+        const bounds = ref.current?.getBoundingClientRect()
+        if (bounds) {
+            contentSizeRef.current.width = bounds.width
+            contentSizeRef.current.height = bounds.height
+
+            updateStyles()
+            setIsSizeInitialized(true)
+        }
+    })
+
+    const initializedAnchorStyle = useMemo(
+        () => ({ ...anchorStyle, opacity: isSizeInitialized ? 1 : 0 }),
+        [anchorStyle, isSizeInitialized],
+    )
 
     return (
-        <>
-            {/* background covering pointerevents*/}
-            <Box absoluteFill pointerEvents="auto">
-                {/* anchor */}
-                <div style={styles?.anchorStyle}>
-                    {/* container */}
-                    <div style={styles?.containerStyle}>
+        <Box absoluteFill pointerEvents="auto">
+            {render && (
+                <div ref={anchorRef} style={initializedAnchorStyle}>
+                    <div ref={containerRef} style={containerStyle}>
                         <Box ref={ref} position="relative">
                             {render}
                         </Box>
                     </div>
                 </div>
-            </Box>
-        </>
+            )}
+        </Box>
     )
 }

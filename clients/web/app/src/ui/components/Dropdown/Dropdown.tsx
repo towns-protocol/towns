@@ -26,7 +26,7 @@ export const Dropdown = (props: Props) => {
         <Field
             {...fieldProps}
             background={fieldProps.background ?? 'level2'}
-            paddingX="none"
+            paddingX="md"
             paddingY="none"
         >
             {(overlays, { className, ...inputProps }) => (

@@ -22,15 +22,17 @@ export const EmojiPickerContainer = (props: {
     )
 
     return (
-        <Box className={emojiPickerClassName} insetX="xs" paddingTop="lg">
-            <Picker
-                autoFocus
-                data={data}
-                previewPosition="none"
-                theme="dark"
-                emojiButtonColors={[vars.color.background.level3]}
-                onEmojiSelect={onEmojiSelect}
-            />
+        <Box paddingY className={emojiPickerClassName} insetX="xs">
+            <Box borderRadius="md" boxShadow="dropdown">
+                <Picker
+                    autoFocus
+                    data={data}
+                    previewPosition="none"
+                    theme="dark"
+                    emojiButtonColors={[vars.color.background.level3]}
+                    onEmojiSelect={onEmojiSelect}
+                />
+            </Box>
         </Box>
     )
 }
