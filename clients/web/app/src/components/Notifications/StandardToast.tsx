@@ -70,11 +70,11 @@ export function StandardToast<T extends IconProps['type'] | undefined>(props: Pr
                     {imgSrc && <img src={imgSrc} alt="notification" />}
                 </Box>
             </Box>
-            <Box gap grow>
+            <Box gap grow overflowX="scroll" overflowY="hidden">
                 <Box gap="sm">
                     <Text>{message}</Text>
                     {subMessage && (
-                        <Text color="gray2" size="sm">
+                        <Text paddingBottom="xs" color="gray2" size="sm">
                             {subMessage}
                         </Text>
                     )}

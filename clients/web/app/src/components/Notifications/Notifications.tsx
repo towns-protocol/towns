@@ -36,17 +36,18 @@ export const Notifications = () => {
                             ref={ref}
                             position="absolute"
                             right="sm"
-                            bottom="sm"
                             transition={{
                                 duration: 0.2,
                             }}
                             variants={{
                                 hide: { opacity: 0 },
-                                show: { opacity: toast.visible ? 1 : 0, y: `${-offset}px` },
+                                show: { opacity: toast.visible ? 1 : 0 },
                             }}
                             initial="hide"
                             animate="show"
                             exit="hide"
+                            style={{ bottom: `${offset}px` }}
+                            {...toast.ariaProps}
                         >
                             <Box
                                 horizontal
