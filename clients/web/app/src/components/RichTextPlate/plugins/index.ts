@@ -172,7 +172,6 @@ const createTownsEditor = (
         id: uniqueId,
         value: initialValue,
         shouldNormalizeEditor: true,
-        autoSelect: 'end',
     })
 
 export default createTownsEditor

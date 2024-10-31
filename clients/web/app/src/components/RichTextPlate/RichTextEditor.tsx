@@ -184,11 +184,11 @@ export const RichTextEditor = ({
             resetEditor(editorRef.current)
             // Delay focusing the editor to wait for the editor to reset and re-render
             setTimeout(() => {
-                focusEditorTowns(editorRef.current, isTouch)
+                focusEditorTowns(editorRef.current, !isEditing || isTouch)
             }, 100)
         }
         setIsSendingMessage(false)
-    }, [setInput, isTouch])
+    }, [setInput, isEditing, isTouch])
 
     const onFocusChange = useCallback((focus: boolean) => {
         setFocused(focus)
