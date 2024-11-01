@@ -135,6 +135,10 @@ const SpaceProfileWithoutAuth = () => {
         openPanel(CHANNEL_INFO_PARAMS.WALLETS)
     })
 
+    const onIdentityClick = useEvent(() => {
+        openPanel(CHANNEL_INFO_PARAMS.IDENTITY)
+    })
+
     const onPreferencesClick = useEvent(() => {
         if (isTouch) {
             setModal(ModalType.Preferences)
@@ -280,6 +284,13 @@ const SpaceProfileWithoutAuth = () => {
                             <Icon type="wallet" size="square_sm" />
                         </Box>
                         <Paragraph>Wallets</Paragraph>
+                    </PanelButton>
+
+                    <PanelButton onClick={onIdentityClick}>
+                        <Box width="height_md" alignItems="center">
+                            <Icon type="wallet" size="square_sm" />
+                        </Box>
+                        <Paragraph>Identity</Paragraph>
                     </PanelButton>
 
                     {simplifiedPermissionState === 'soft-denied' && (

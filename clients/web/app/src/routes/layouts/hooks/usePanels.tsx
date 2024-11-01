@@ -35,6 +35,7 @@ import { TownMembersPanel } from '@components/TownMembersPanel/TownMembersPanel'
 import { SingleWalletPanel } from '@components/Web3/Wallet/SingleWalletPanel'
 import { TransferAssetsPanel } from '@components/Web3/Wallet/TransferAssetsPanel'
 import { VerifyEventSignaturePanel } from '@components/VerifyEventSignature/VerfiyEventSignature'
+import { PrivyIdentityPanel } from '@components/PrivyIdentity/PrivyIdentityPanel'
 
 export const usePanels = () => {
     const [searchParams] = useSearchParams()
@@ -105,6 +106,9 @@ export const usePanels = () => {
         }
         case CHANNEL_INFO_PARAMS.ROLES: {
             return <RolesPanel />
+        }
+        case CHANNEL_INFO_PARAMS.IDENTITY: {
+            return <PrivyIdentityPanel />
         }
         case CHANNEL_INFO_PARAMS.WALLETS: {
             return (
