@@ -146,6 +146,10 @@ export function CreateTownSubmit({
                             ({ toast }) => (
                                 <StandardToast.Error
                                     message="Error validating pricing modules on-chain. Check your network connection."
+                                    subMessage={mapToErrorMessage({
+                                        error: e as Error,
+                                        source: 'create town pricing modules',
+                                    })}
                                     toast={toast}
                                 />
                             ),
@@ -279,7 +283,11 @@ export function CreateTownSubmit({
                             )
                             toastIdRef.current = popupToast(
                                 ({ toast }) => (
-                                    <StandardToast.Error message={errorMessage} toast={toast} />
+                                    <StandardToast.Error
+                                        message={`Couldn't create town.`}
+                                        subMessage={errorMessage}
+                                        toast={toast}
+                                    />
                                 ),
                                 { duration: Infinity },
                             )

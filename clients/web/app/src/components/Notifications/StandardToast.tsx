@@ -74,7 +74,16 @@ export function StandardToast<T extends IconProps['type'] | undefined>(props: Pr
                 <Box gap="sm">
                     <Text>{message}</Text>
                     {subMessage && (
-                        <Text paddingBottom="xs" color="gray2" size="sm">
+                        <Text
+                            style={{
+                                display: '-webkit-box',
+                                WebkitLineClamp: 2,
+                                WebkitBoxOrient: 'vertical',
+                                overflow: 'hidden',
+                            }}
+                            color="gray2"
+                            size="sm"
+                        >
                             {subMessage}
                         </Text>
                     )}

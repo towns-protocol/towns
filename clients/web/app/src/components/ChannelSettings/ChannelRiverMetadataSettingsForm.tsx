@@ -11,6 +11,7 @@ import {
 import { popupToast } from '@components/Notifications/popupToast'
 import { StandardToast } from '@components/Notifications/StandardToast'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
+import { mapToErrorMessage } from '@components/Web3/utils'
 
 export type FormState = z.infer<typeof schema>
 
@@ -52,18 +53,35 @@ export function ChannelRiverMetadataSettingsForm(): JSX.Element {
 
                 let successMessage = ''
                 let errorMessage = ''
+                let errorSubMessage: string | undefined
                 if (hasAutojoinChange && hasHideUserJoinLeaveEventsChange) {
                     const results = await Promise.allSettled([autojoin(), hideUserJoinLeave()])
                     if (results.every((r) => r.status === 'fulfilled')) {
                         successMessage = 'Channel settings updated'
                     } else if (results.every((r) => r.status === 'rejected')) {
                         errorMessage = 'Failed to update channel settings'
+                        errorSubMessage = results
+                            .map((r) =>
+                                mapToErrorMessage({
+                                    error: r.status === 'rejected' ? r.reason : undefined,
+                                    source: 'channel settings both failed',
+                                }),
+                            )
+                            .join(', ')
                     } else if (results[0].status === 'rejected') {
                         successMessage = hideEventsSuccessMessage
                         errorMessage = autojoinFailureMessage
+                        errorSubMessage = mapToErrorMessage({
+                            error: results[0].status === 'rejected' ? results[0].reason : undefined,
+                            source: 'channel settings autojoin failed',
+                        })
                     } else if (results[1].status === 'rejected') {
                         successMessage = autojoinSuccessMessage
                         errorMessage = hideEventsFailureMessage
+                        errorSubMessage = mapToErrorMessage({
+                            error: results[1].status === 'rejected' ? results[1].reason : undefined,
+                            source: 'channel settings hide events failed',
+                        })
                     }
                 } else if (hasAutojoinChange) {
                     try {
@@ -71,6 +89,10 @@ export function ChannelRiverMetadataSettingsForm(): JSX.Element {
                         successMessage = autojoinSuccessMessage
                     } catch (error) {
                         errorMessage = autojoinFailureMessage
+                        errorSubMessage = mapToErrorMessage({
+                            error: error as Error,
+                            source: 'channel settings autojoin failed',
+                        })
                     }
                 } else if (hasHideUserJoinLeaveEventsChange) {
                     try {
@@ -78,6 +100,10 @@ export function ChannelRiverMetadataSettingsForm(): JSX.Element {
                         successMessage = hideEventsSuccessMessage
                     } catch (error) {
                         errorMessage = hideEventsFailureMessage
+                        errorSubMessage = mapToErrorMessage({
+                            error: error as Error,
+                            source: 'channel settings hide events failed',
+                        })
                     }
                 }
 
@@ -87,7 +113,11 @@ export function ChannelRiverMetadataSettingsForm(): JSX.Element {
                     ))
                 } else if (errorMessage) {
                     popupToast(({ toast }) => (
-                        <StandardToast.Error message={errorMessage} toast={toast} />
+                        <StandardToast.Error
+                            message={errorMessage}
+                            subMessage={errorSubMessage}
+                            toast={toast}
+                        />
                     ))
                 }
             }

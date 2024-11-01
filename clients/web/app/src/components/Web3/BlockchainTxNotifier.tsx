@@ -30,7 +30,7 @@ type ToastProps = {
     onlyShowPending?: boolean
     successMessage: string
     pendingMessage?: string
-    overrideErrorMessage?: string
+    errorMessage?: string
     onCtaClick?: (updatedTx: BlockchainStoreTx) => void
 } & Omit<StandardToastProps, 'toast' | 'message' | 'onCtaClick'>
 
@@ -54,6 +54,7 @@ export function BlockchainTxNotifier() {
                         tx,
                         pendingMessage: 'Linking wallet...',
                         successMessage: 'Wallet linked!',
+                        errorMessage: `Couldn't link wallet.`,
                         onlyShowPending:
                             currentlyOpenPanel === CHANNEL_INFO_PARAMS.ROLE_RESTRICTED_CHANNEL_JOIN,
                     })
@@ -67,6 +68,7 @@ export function BlockchainTxNotifier() {
                         tx,
                         pendingMessage: 'Unlinking wallet...',
                         successMessage: 'Unlinked your wallet!',
+                        errorMessage: `Couldn't unlink wallet.`,
                         onlyShowPending:
                             currentlyOpenPanel === CHANNEL_INFO_PARAMS.ROLE_RESTRICTED_CHANNEL_JOIN,
                     })
@@ -77,6 +79,7 @@ export function BlockchainTxNotifier() {
                         tx,
                         pendingMessage: `Creating ${roleName} role...`,
                         successMessage: `${roleName} role created!`,
+                        errorMessage: `Couldn't create ${roleName} role.`,
                     })
                     break
                 }
@@ -87,6 +90,7 @@ export function BlockchainTxNotifier() {
                         tx,
                         pendingMessage: `Updating ${roleName} role...`,
                         successMessage: `${roleName} role updated! Any permission changes may take up to 15 minutes to reflect.`,
+                        errorMessage: `Couldn't update ${roleName} role.`,
                     })
                     break
                 }
@@ -95,6 +99,7 @@ export function BlockchainTxNotifier() {
                         tx,
                         pendingMessage: `Deleting role...`,
                         successMessage: `Role deleted!`,
+                        errorMessage: `Couldn't delete role.`,
                     })
                     break
                 }
@@ -103,6 +108,7 @@ export function BlockchainTxNotifier() {
                         tx,
                         pendingMessage: 'Updating membership...',
                         successMessage: 'Membership updated!',
+                        errorMessage: `Couldn't update membership.`,
                     })
                     break
                 }
@@ -111,6 +117,7 @@ export function BlockchainTxNotifier() {
                         tx,
                         pendingMessage: 'Adding prepaid seats...',
                         successMessage: `${tx.data?.supply} Prepaid seats added!`,
+                        errorMessage: `Couldn't add prepaid seats.`,
                     })
                     break
                 }
@@ -119,6 +126,7 @@ export function BlockchainTxNotifier() {
                         tx,
                         pendingMessage: 'Updating channel...',
                         successMessage: 'Channel updated!',
+                        errorMessage: `Couldn't update channel.`,
                     })
                     break
 
@@ -148,6 +156,7 @@ export function BlockchainTxNotifier() {
                         tx,
                         pendingMessage: 'Transfer in progress...',
                         successMessage: successMessage,
+                        errorMessage: `Couldn't complete transfer.`,
                         cta: 'View Transaction',
                         onCtaClick: (updatedTx: BlockchainStoreTx) => {
                             window.open(
@@ -175,6 +184,7 @@ export function BlockchainTxNotifier() {
                     generateToast({
                         tx,
                         successMessage: '',
+                        errorMessage: `Couldn't create channel.`,
                     })
                     break
                 }
@@ -200,7 +210,7 @@ function MonitoringNotification(props: ToastProps & { toast: Toast }) {
         tx,
         successMessage,
         pendingMessage = 'Transaction pending...',
-        overrideErrorMessage,
+        errorMessage,
         cta,
         onCtaClick,
         toast,
@@ -214,7 +224,7 @@ function MonitoringNotification(props: ToastProps & { toast: Toast }) {
     const [updatedTx, setUpdatedTx] = useState(tx)
     const [searchParams] = useSearchParams()
     const rolesParam = searchParams.get('roles')
-    const errorMessage = mapToErrorMessage({ error: updatedTx.error, source: updatedTx.type })
+    const subErrorMessage = mapToErrorMessage({ error: updatedTx.error, source: updatedTx.type })
 
     const { message } = useMemo(() => {
         return updatedTx.status === 'pending' || updatedTx.status === 'potential'
@@ -226,9 +236,9 @@ function MonitoringNotification(props: ToastProps & { toast: Toast }) {
                   message: successMessage,
               }
             : {
-                  message: overrideErrorMessage ?? errorMessage,
+                  message: errorMessage,
               }
-    }, [updatedTx.status, pendingMessage, successMessage, errorMessage, overrideErrorMessage])
+    }, [updatedTx.status, pendingMessage, successMessage, errorMessage])
 
     const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -304,7 +314,13 @@ function MonitoringNotification(props: ToastProps & { toast: Toast }) {
     }
 
     if (updatedTx.status === 'failure') {
-        return <StandardToast.Error toast={toast} message={message ?? ''} />
+        return (
+            <StandardToast.Error
+                toast={toast}
+                message={message ?? ''}
+                subMessage={subErrorMessage}
+            />
+        )
     }
 
     return <StandardToast.Pending toast={toast} message={message ?? ''} />

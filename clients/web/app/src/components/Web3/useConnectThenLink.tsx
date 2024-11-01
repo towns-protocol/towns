@@ -7,6 +7,7 @@ import { popupToast } from '@components/Notifications/popupToast'
 import { StandardToast } from '@components/Notifications/StandardToast'
 import { Analytics } from 'hooks/useAnalytics'
 import { GetSigner } from 'privy/WalletReady'
+import { mapToErrorMessage } from './utils'
 
 export function useConnectThenLink({
     onLinkWallet,
@@ -37,6 +38,7 @@ export function useConnectThenLink({
 
                 const chainString = baseChain.id.toString()
 
+                let errorSubMessage: string | undefined = undefined
                 if (!wallet.chainId.includes(chainString)) {
                     try {
                         await wallet.switchChain(baseChain.id)
@@ -45,6 +47,10 @@ export function useConnectThenLink({
                             '[useConnectThenLink] error switching chain for connected wallet',
                             e,
                         )
+                        errorSubMessage = mapToErrorMessage({
+                            error: e as Error,
+                            source: 'connect then link switch chain',
+                        })
                     }
                 }
 
@@ -60,6 +66,7 @@ export function useConnectThenLink({
                         <StandardToast.Error
                             toast={toast}
                             message={`Please make sure your wallet supports and is connected to the ${baseChain.name} network.`}
+                            subMessage={errorSubMessage}
                         />
                     ))
                 }
@@ -80,6 +87,10 @@ export function useConnectThenLink({
                 <StandardToast.Error
                     toast={toast}
                     message={`Please make sure your wallet supports and is connected to the ${baseChain.name} network.`}
+                    subMessage={mapToErrorMessage({
+                        error: new Error(error),
+                        source: 'connect then link privy connect error',
+                    })}
                 />
             ))
         },

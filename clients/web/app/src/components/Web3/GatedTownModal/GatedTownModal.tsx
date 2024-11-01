@@ -181,13 +181,11 @@ function Content({
                 popupToast(({ toast }) => (
                     <StandardToast.Error
                         toast={toast}
-                        message={
-                            mapToErrorMessage({
-                                error,
-                                source: 'token verification link wallet',
-                            }) ??
-                            `There was an error linking your wallet. Make sure your wallet supports and is connected to the ${baseChain.name} network.`
-                        }
+                        message={`There was an error linking your wallet. Make sure your wallet supports and is connected to the ${baseChain.name} network.`}
+                        subMessage={mapToErrorMessage({
+                            error,
+                            source: 'token verification link wallet',
+                        })}
                     />
                 ))
             },

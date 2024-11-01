@@ -205,7 +205,7 @@ export function useAutoLoginToRiverIfEmbeddedWallet({
 }
 
 function alertPrivyError(pError: unknown | undefined) {
-    const displayText =
+    const subMessage =
         pError &&
         typeof pError === 'object' &&
         'message' in pError &&
@@ -217,15 +217,27 @@ function alertPrivyError(pError: unknown | undefined) {
         error: pError ?? new Error('privy_no_signer'),
         name: '',
         code: '',
-        displayText: displayText,
+        displayText: subMessage,
         category: 'privy',
         source: 'auto login to river',
     })
-    popupToast(({ toast }) => <StandardToast.Error toast={toast} message={displayText} />)
+    popupToast(({ toast }) => (
+        <StandardToast.Error
+            toast={toast}
+            message="There was an error logging in to Privy."
+            subMessage={subMessage}
+        />
+    ))
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function alertRiverError(e: any) {
     const errorMessage = mapToErrorMessage(e) ?? 'An error occurred logging in to River.'
-    popupToast(({ toast }) => <StandardToast.Error toast={toast} message={errorMessage} />)
+    popupToast(({ toast }) => (
+        <StandardToast.Error
+            toast={toast}
+            message="There was an error logging in to River."
+            subMessage={errorMessage}
+        />
+    ))
 }

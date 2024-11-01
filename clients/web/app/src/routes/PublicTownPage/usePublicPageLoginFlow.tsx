@@ -74,16 +74,15 @@ export function usePublicPageLoginFlow() {
                 popupToast(({ toast }) => (
                     <StandardToast.Error
                         toast={toast}
-                        message={
-                            mapToErrorMessage({
-                                error: new Error(
-                                    `[usePublicPageLoginFlow] missing params: ${missingParams.join(
-                                        ', ',
-                                    )} - ${source}`,
-                                ),
-                                source,
-                            }) ?? ''
-                        }
+                        message="There was an error joining the town."
+                        subMessage={mapToErrorMessage({
+                            error: new Error(
+                                `[usePublicPageLoginFlow] missing params: ${missingParams.join(
+                                    ', ',
+                                )} - ${source}`,
+                            ),
+                            source,
+                        })}
                     />
                 ))
                 end()
@@ -117,12 +116,11 @@ export function usePublicPageLoginFlow() {
                     popupToast(({ toast }) => (
                         <StandardToast.Error
                             toast={toast}
-                            message={
-                                mapToErrorMessage({
-                                    error: new Error('unable to join space unknown'),
-                                    source: 'join space',
-                                }) ?? ''
-                            }
+                            message="There was an error joining the town."
+                            subMessage={mapToErrorMessage({
+                                error: new Error('unable to join space unknown'),
+                                source: 'join space',
+                            })}
                         />
                     ))
                 }
@@ -133,7 +131,8 @@ export function usePublicPageLoginFlow() {
                 popupToast(({ toast }) => (
                     <StandardToast.Error
                         toast={toast}
-                        message={mapToErrorMessage({ error: _error, source: 'join space' }) ?? ''}
+                        message="There was an error joining the town."
+                        subMessage={mapToErrorMessage({ error: _error, source: 'join space' })}
                     />
                 ))
             }
