@@ -215,20 +215,31 @@ export const codeBlock = style([
 
 export const blockquote = style([
     atoms({
-        paddingLeft: 'sm',
         borderLeft: 'strong',
         fontStyle: 'italic',
+        paddingX: 'md',
+        paddingTop: 'md',
+        marginBottom: 'none',
+        marginLeft: 'md',
+        background: 'level3',
     }),
-    {
-        marginTop: vars.space.md,
-        marginLeft: vars.space.md,
-        marginBottom: 0,
-        paddingTop: vars.space.xs,
-    },
 ])
+
+globalStyle(
+    `${richText} ${blockquote}:has(+ *:not(${blockquote})), ${richText} ${blockquote}:last-child`,
+    {
+        paddingBottom: vars.space.md + ' !important',
+    },
+)
+
+globalStyle(`${richText} * + ${blockquote}`, {
+    marginTop: vars.space.md,
+})
 
 globalStyle(`${richText} ${blockquote} + ${blockquote}`, {
     marginTop: 0,
+    paddingTop: vars.space.xs,
+    paddingBottom: vars.space.xs,
 })
 
 globalStyle(`${richText} ${blockquote} + ${paragraph}`, {

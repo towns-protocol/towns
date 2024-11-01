@@ -56,7 +56,7 @@ import {
     TUserIDNameMap,
     TUserWithChannel,
 } from '../components/plate-ui/autocomplete/types'
-import { getUrlHref, isExactlyUrl } from '../utils/helpers'
+import { getUrlHref, isBlockquoteWithEmptyLines, isExactlyUrl } from '../utils/helpers'
 
 const createTownsEditor = (
     uniqueId: string,
@@ -94,18 +94,6 @@ const createTownsEditor = (
                     enableUndoOnDelete: true,
                 },
             }),
-            SoftBreakPlugin.configure({
-                options: {
-                    rules: [
-                        {
-                            hotkey: 'shift+enter',
-                            query: {
-                                allow: [BlockquotePlugin.key],
-                            },
-                        },
-                    ],
-                },
-            }),
             ExitBreakPlugin.configure({
                 options: {
                     rules: [
@@ -113,6 +101,25 @@ const createTownsEditor = (
                             hotkey: 'shift+enter',
                             query: {
                                 allow: [CodeBlockPlugin.key],
+                            },
+                        },
+                        {
+                            hotkey: 'shift+enter',
+                            query: {
+                                allow: [BlockquotePlugin.key],
+                                filter: isBlockquoteWithEmptyLines,
+                            },
+                        },
+                    ],
+                },
+            }),
+            SoftBreakPlugin.configure({
+                options: {
+                    rules: [
+                        {
+                            hotkey: 'shift+enter',
+                            query: {
+                                allow: [BlockquotePlugin.key],
                             },
                         },
                     ],

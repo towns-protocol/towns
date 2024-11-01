@@ -5,6 +5,7 @@ import { BaseLinkPlugin, TLinkElement, unwrapLink } from '@udecode/plate-link'
 import { BaseMentionInputPlugin, TMentionInputElement } from '@udecode/plate-mention'
 import { TPlateEditor, focusEditor } from '@udecode/plate-common/react'
 import {
+    type TNodeEntry,
     findNode,
     getBlockAbove,
     getEndPoint,
@@ -165,6 +166,15 @@ export const getMentionInputElement = (editor: TPlateEditor) =>
     findNode<TMentionInputElement>(editor, {
         match: { type: BaseMentionInputPlugin.key },
     })
+
+export const isBlockquoteWithEmptyLines = ([node]: TNodeEntry): boolean => {
+    const blockQuoteText = getNodeString(node)
+    if (blockQuoteText.endsWith('\n\n')) {
+        node.children = [{ text: blockQuoteText.trim() }]
+        return true
+    }
+    return false
+}
 
 export const focusEditorTowns = (editor?: TPlateEditor | null, end = false) => {
     if (!editor) {
