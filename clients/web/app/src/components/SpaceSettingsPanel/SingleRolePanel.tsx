@@ -8,7 +8,7 @@ import {
 } from 'use-towns-client'
 import { FormProvider, useFormContext } from 'react-hook-form'
 import { AnimatePresence } from 'framer-motion'
-import { PrivyWrapper } from 'privy/PrivyProvider'
+
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { Panel } from '@components/Panel/Panel'
 import { Button, ErrorMessage, FormRender, Icon, MotionStack, Stack, Text, TextField } from '@ui'
@@ -26,11 +26,7 @@ import { DeleteRoleModal } from './DeleteRoleModal'
 import { TownPermissionsToggles } from './TownPermissionsToggles'
 
 export const SingleRolePanel = React.memo(() => {
-    return (
-        <PrivyWrapper>
-            <SingleRolePanelWithoutAuth />
-        </PrivyWrapper>
-    )
+    return <SingleRolePanelWithoutAuth />
 })
 
 export function SingleRolePanelWithoutAuth() {

@@ -28,7 +28,7 @@ import { Panel } from '@components/Panel/Panel'
 
 import { useLeaveChannel } from 'hooks/useLeaveChannel'
 import { ChannelPermissionsNameDescriptionModal } from '@components/ChannelSettings/ChannelPermissionsNameDescriptionForm'
-import { PrivyWrapper } from 'privy/PrivyProvider'
+
 import { atoms } from 'ui/styles/atoms.css'
 import {
     channelPermissionDescriptions,
@@ -40,11 +40,9 @@ import { ChannelsRolesList } from './RoleRestrictedChannelJoinPanel'
 
 export const ChannelInfoPanel = React.memo(() => {
     return (
-        <PrivyWrapper>
-            <Panel label="Channel Info">
-                <ChannelInfo />
-            </Panel>
-        </PrivyWrapper>
+        <Panel label="Channel Info">
+            <ChannelInfo />
+        </Panel>
     )
 })
 

@@ -18,7 +18,7 @@ import {
     useWalletAddressIsBanned,
 } from 'use-towns-client'
 import { useBanTransaction, useUnbanTransaction } from 'use-towns-client/dist/hooks/use-banning'
-import { PrivyWrapper } from 'privy/PrivyProvider'
+
 import { useGetUserBio } from 'hooks/useUserBio'
 import { Box, Button, Icon, Paragraph, Stack, Text } from '@ui'
 import { UserProfile } from '@components/UserProfile/UserProfile'
@@ -55,11 +55,7 @@ export const SpaceProfilePanel = () => {
     )
 }
 
-export const SpaceProfile = React.memo(() => (
-    <PrivyWrapper>
-        <SpaceProfileWithoutAuth />
-    </PrivyWrapper>
-))
+export const SpaceProfile = React.memo(() => <SpaceProfileWithoutAuth />)
 
 enum ModalType {
     Wallets = 'wallets',

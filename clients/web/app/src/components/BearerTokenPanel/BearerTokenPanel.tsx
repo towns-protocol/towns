@@ -3,7 +3,6 @@ import { makeBearerToken } from '@river-build/sdk'
 import { z } from 'zod'
 import { Panel } from '@components/Panel/Panel'
 import { Box, Button, Dropdown, Paragraph } from '@ui'
-import { PrivyWrapper } from 'privy/PrivyProvider'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { GetSigner, WalletReady } from 'privy/WalletReady'
@@ -158,9 +157,5 @@ const BearerTokenPanel = () => {
 }
 
 export const BearerTokenPrivyWrapper = () => {
-    return (
-        <PrivyWrapper>
-            <BearerTokenPanel />
-        </PrivyWrapper>
-    )
+    return <BearerTokenPanel />
 }

@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router'
 import { useConnectivity, useImageStore, usePlatformMintLimit } from 'use-towns-client'
 import { CreateSpaceFlowStatus } from 'use-towns-client/dist/client/TownsClientTypes'
 import { AnimatePresence } from 'framer-motion'
-import { PrivyWrapper } from 'privy/PrivyProvider'
+
 import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
 import {
     Box,
@@ -79,11 +79,7 @@ function useColumnWidths({
 }
 
 export const CreateSpaceFormV2 = React.memo(() => {
-    return (
-        <PrivyWrapper>
-            <CreateSpaceFormV2WithoutAuth />
-        </PrivyWrapper>
-    )
+    return <CreateSpaceFormV2WithoutAuth />
 })
 
 function CreateSpaceFormV2WithoutAuth() {

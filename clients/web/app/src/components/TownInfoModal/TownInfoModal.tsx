@@ -16,7 +16,7 @@ import { isForbiddenError, isRejectionError } from 'ui/utils/utils'
 import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
 import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
-import { PrivyWrapper } from 'privy/PrivyProvider'
+
 import { buildSpaceMetadataUrl, refreshSpaceCache } from 'api/lib/fetchImage'
 import { GetSigner, WalletReady } from 'privy/WalletReady'
 
@@ -43,11 +43,7 @@ export const schema = z.object({
 })
 
 export const TownInfoModal = React.memo((props: Props) => {
-    return (
-        <PrivyWrapper>
-            <TownInfoModalWithoutAuth {...props} />
-        </PrivyWrapper>
-    )
+    return <TownInfoModalWithoutAuth {...props} />
 })
 
 export const TownInfoModalWithoutAuth = (props: Props) => {

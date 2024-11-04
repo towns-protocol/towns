@@ -8,7 +8,7 @@ import {
     useLinkedWallets,
     useUnlinkWalletTransaction,
 } from 'use-towns-client'
-import { PrivyWrapper } from 'privy/PrivyProvider'
+
 import { Box, BoxProps, Button, Icon, IconButton, Paragraph, Stack, Text } from '@ui'
 import { PanelButton } from '@components/Panel/PanelButton'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
@@ -28,11 +28,7 @@ import { UserOpTxModal } from './UserOpTxModal/UserOpTxModal'
 import { mapToErrorMessage } from './utils'
 
 export const WalletLinkingPanel = React.memo(() => {
-    return (
-        <PrivyWrapper>
-            <WalletLinkingPanelWithoutAuth />
-        </PrivyWrapper>
-    )
+    return <WalletLinkingPanelWithoutAuth />
 })
 
 function WalletLinkingPanelWithoutAuth() {

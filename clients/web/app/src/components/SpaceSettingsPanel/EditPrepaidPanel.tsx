@@ -12,7 +12,7 @@ import { Button, ErrorMessage, FormRender, Icon, Paragraph, Stack, Text, TextFie
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
-import { PrivyWrapper } from 'privy/PrivyProvider'
+
 import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
 import { FullPanelOverlay } from '@components/Web3/WalletLinkingPanel'
 import { GetSigner, WalletReady } from 'privy/WalletReady'
@@ -28,11 +28,7 @@ const prepaidSchema = z.object({
 type PrepaidSchemaType = z.infer<typeof prepaidSchema>
 
 export function EditPrepaidPanel() {
-    return (
-        <PrivyWrapper>
-            <EditPrepaidPanelWithoutAuth />
-        </PrivyWrapper>
-    )
+    return <EditPrepaidPanelWithoutAuth />
 }
 
 export function EditPrepaidPanelWithoutAuth() {

@@ -18,7 +18,6 @@ import { useClearChannelPermissionOverrides } from 'use-towns-client/dist/hooks/
 import { z } from 'zod'
 import { AnimatePresence } from 'framer-motion'
 import { atoms } from 'ui/styles/atoms.css'
-import { PrivyWrapper } from 'privy/PrivyProvider'
 import { Box, FancyButton, FormRender, Icon, Paragraph, Stack, Text, TextButton } from '@ui'
 import { FullPanelOverlay } from '@components/Web3/WalletLinkingPanel'
 import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
@@ -60,32 +59,30 @@ export const ChannelPermissionOverridesPanel = React.memo((props: { roleId: numb
     const [channelFormId] = useState(() => searchParams.get('channelFormId'))
 
     return (
-        <PrivyWrapper>
-            <Panel label="Edit Channel Permissions">
-                <Stack scroll>
-                    {channelFormId ? (
-                        <NewChannelPermissionOverridesMemoryForm
-                            spaceId={spaceId}
-                            roleId={roleId}
-                            channelFormId={channelFormId}
-                            roleDetails={roleDetails}
-                            rolePermissions={rolePermissions}
-                            isLoading={isLoading}
-                        />
-                    ) : (
-                        <UpdateExistingChannelPermissionsForm
-                            spaceId={spaceId}
-                            roleId={roleId}
-                            roleDetails={roleDetails}
-                            rolePermissions={rolePermissions}
-                            isLoading={isLoading}
-                        />
-                    )}
-                </Stack>
-                <UserOpTxModal />
-                {(hasPendingTx || isLoading) && <FullPanelOverlay />}
-            </Panel>
-        </PrivyWrapper>
+        <Panel label="Edit Channel Permissions">
+            <Stack scroll>
+                {channelFormId ? (
+                    <NewChannelPermissionOverridesMemoryForm
+                        spaceId={spaceId}
+                        roleId={roleId}
+                        channelFormId={channelFormId}
+                        roleDetails={roleDetails}
+                        rolePermissions={rolePermissions}
+                        isLoading={isLoading}
+                    />
+                ) : (
+                    <UpdateExistingChannelPermissionsForm
+                        spaceId={spaceId}
+                        roleId={roleId}
+                        roleDetails={roleDetails}
+                        rolePermissions={rolePermissions}
+                        isLoading={isLoading}
+                    />
+                )}
+            </Stack>
+            <UserOpTxModal />
+            {(hasPendingTx || isLoading) && <FullPanelOverlay />}
+        </Panel>
     )
 })
 

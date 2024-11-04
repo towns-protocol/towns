@@ -12,7 +12,7 @@ import {
 import { ErrorMessage, FancyButton, FormRender, Stack, Text, TextField } from '@ui'
 import { Panel } from '@components/Panel/Panel'
 import { formatUnits, parseUnits, useBalance } from 'hooks/useBalance'
-import { PrivyWrapper } from 'privy/PrivyProvider'
+
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { invalidateCollectionsForAddressQueryData } from 'api/lib/tokenContracts'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
@@ -37,11 +37,7 @@ import {
 import { TreasuryOrNftConfirmModal } from './TreasuryOrNftConfirmModal'
 
 export const TransferAssetsPanel = React.memo(() => {
-    return (
-        <PrivyWrapper>
-            <TransferAssets />
-        </PrivyWrapper>
-    )
+    return <TransferAssets />
 })
 
 function TransferAssets() {

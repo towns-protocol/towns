@@ -95,11 +95,6 @@
           {
             "name": "react-error-boundary",
             "message": "Use our dd-wrapped error boundary instead, via @components/ErrorBoundary/ErrorBoundary"
-          },
-          {
-            "name": "privy/useCombinedAuth",
-            "importNames": ["CombinedAuthContextProvider"],
-            "message": "Don't import CombinedAuthContextProvider directly. Wrap your components in PrivyWrapper from privy/PrivyProvider"
           }
         ]
       }

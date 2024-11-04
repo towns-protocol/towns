@@ -27,7 +27,7 @@ import { TokenImage } from '@components/Tokens/TokenSelector/TokenImage'
 import { useTokenMetadataForChainId } from 'api/lib/collectionMetadata'
 import { TokenSelectionDisplay } from '@components/Tokens/TokenSelector/TokenSelection'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
-import { PrivyWrapper } from 'privy/PrivyProvider'
+
 import { popupToast } from '@components/Notifications/popupToast'
 import { StandardToast } from '@components/Notifications/StandardToast'
 import { mapToErrorMessage } from '@components/Web3/utils'
@@ -39,11 +39,7 @@ import { usePanelActions } from './layouts/hooks/usePanelActions'
 import { useOnJoinChannel } from './AllChannelsList/AllChannelsList'
 
 export const RoleRestrictedChannelJoinPanel = React.memo(() => {
-    return (
-        <PrivyWrapper>
-            <RoleRestrictedChannelJoinPanelWithoutAuth />
-        </PrivyWrapper>
-    )
+    return <RoleRestrictedChannelJoinPanelWithoutAuth />
 })
 
 function RoleRestrictedChannelJoinPanelWithoutAuth() {

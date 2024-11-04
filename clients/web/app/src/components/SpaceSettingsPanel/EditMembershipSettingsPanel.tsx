@@ -13,7 +13,7 @@ import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { EditGating } from '@components/Web3/EditMembership/EditGating'
 import { EditPricing } from '@components/Web3/EditMembership/EditPricing'
 import { EditMembership } from '@components/Web3/EditMembership/EditMembership'
-import { PrivyWrapper } from 'privy/PrivyProvider'
+
 import { FullPanelOverlay } from '@components/Web3/WalletLinkingPanel'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
@@ -26,11 +26,7 @@ import { EditMembershipSubmitButton } from './EditMembershipSubmitButton'
 export const EDIT_MEMBERSHIP_SETTINGS_PANEL = 'editMembershipSettings'
 
 export const EditMembershipSettingsPanel = React.memo(() => {
-    return (
-        <PrivyWrapper>
-            <EditMembershipSettingsPanelWithoutAuth />
-        </PrivyWrapper>
-    )
+    return <EditMembershipSettingsPanelWithoutAuth />
 })
 
 function EditMembershipSettingsPanelWithoutAuth() {

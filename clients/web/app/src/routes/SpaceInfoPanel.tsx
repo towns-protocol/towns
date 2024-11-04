@@ -62,7 +62,7 @@ import { useConvertRuleDataToToken } from '@components/Tokens/hooks'
 import { Token } from '@components/Tokens/TokenSelector/tokenSchemas'
 import { StandardToast } from '@components/Notifications/StandardToast'
 import { popupToast } from '@components/Notifications/popupToast'
-import { PrivyWrapper } from 'privy/PrivyProvider'
+
 import { useBalance } from 'hooks/useBalance'
 import { ReauthenticateToast, WalletReady } from 'privy/WalletReady'
 import { useWaitForInvalidation } from 'hooks/useWaitForInvalidation'
@@ -72,9 +72,7 @@ import { usePanelActions } from './layouts/hooks/usePanelActions'
 export const SpaceInfoPanel = () => {
     return (
         <Panel label="Town Info">
-            <PrivyWrapper>
-                <SpaceInfo />
-            </PrivyWrapper>
+            <SpaceInfo />
         </Panel>
     )
 }
@@ -262,37 +260,35 @@ export const SpaceInfo = () => {
         }
         popupToast(
             ({ toast }) => (
-                <PrivyWrapper>
-                    <WalletReady
-                        LoginButton={
-                            <ReauthenticateToast
-                                toast={toast}
-                                message="Please reauthenticate to publish your space image to OpenSea"
-                                cta="Reauthenticate"
-                            />
-                        }
-                    >
-                        {({ getSigner }) => (
-                            <StandardToast
-                                message="Would you like to publish the space image to OpenSea?"
-                                toast={toast}
-                                ctaColor="positive"
-                                icon="openSeaPlain"
-                                iconProps={{ color: 'gray2' }}
-                                cta="Publish"
-                                onCtaClick={async ({ dismissToast }) => {
-                                    const signer = await getSigner()
-                                    if (!signer) {
-                                        return
-                                    }
-                                    // emit event to update the nft metadata
-                                    await refreshMetadataTransaction(space.id, signer)
-                                    dismissToast()
-                                }}
-                            />
-                        )}
-                    </WalletReady>
-                </PrivyWrapper>
+                <WalletReady
+                    LoginButton={
+                        <ReauthenticateToast
+                            toast={toast}
+                            message="Please reauthenticate to publish your space image to OpenSea"
+                            cta="Reauthenticate"
+                        />
+                    }
+                >
+                    {({ getSigner }) => (
+                        <StandardToast
+                            message="Would you like to publish the space image to OpenSea?"
+                            toast={toast}
+                            ctaColor="positive"
+                            icon="openSeaPlain"
+                            iconProps={{ color: 'gray2' }}
+                            cta="Publish"
+                            onCtaClick={async ({ dismissToast }) => {
+                                const signer = await getSigner()
+                                if (!signer) {
+                                    return
+                                }
+                                // emit event to update the nft metadata
+                                await refreshMetadataTransaction(space.id, signer)
+                                dismissToast()
+                            }}
+                        />
+                    )}
+                </WalletReady>
             ),
             { duration: Infinity },
         )
@@ -342,37 +338,35 @@ export const SpaceInfo = () => {
         }
         if (transactionStatus === TransactionStatus.Failed) {
             popupToast(({ toast }) => (
-                <PrivyWrapper>
-                    <WalletReady
-                        LoginButton={
-                            <ReauthenticateToast
-                                toast={toast}
-                                message="Please reauthenticate to publish your space image to OpenSea"
-                                cta="Reauthenticate"
-                            />
-                        }
-                    >
-                        {({ getSigner }) => (
-                            <StandardToast.Error
-                                message="Something went wrong while publishing your space image to OpenSea"
-                                toast={toast}
-                                cta={space?.id ? 'Try again' : undefined}
-                                onCtaClick={async ({ dismissToast }) => {
-                                    if (!space?.id) {
-                                        return
-                                    }
-                                    const signer = await getSigner()
-                                    if (!signer) {
-                                        return
-                                    }
-                                    resetTxContext()
-                                    await refreshMetadataTransaction(space.id, signer)
-                                    dismissToast()
-                                }}
-                            />
-                        )}
-                    </WalletReady>
-                </PrivyWrapper>
+                <WalletReady
+                    LoginButton={
+                        <ReauthenticateToast
+                            toast={toast}
+                            message="Please reauthenticate to publish your space image to OpenSea"
+                            cta="Reauthenticate"
+                        />
+                    }
+                >
+                    {({ getSigner }) => (
+                        <StandardToast.Error
+                            message="Something went wrong while publishing your space image to OpenSea"
+                            toast={toast}
+                            cta={space?.id ? 'Try again' : undefined}
+                            onCtaClick={async ({ dismissToast }) => {
+                                if (!space?.id) {
+                                    return
+                                }
+                                const signer = await getSigner()
+                                if (!signer) {
+                                    return
+                                }
+                                resetTxContext()
+                                await refreshMetadataTransaction(space.id, signer)
+                                dismissToast()
+                            }}
+                        />
+                    )}
+                </WalletReady>
             ))
         }
         resetTxContext()

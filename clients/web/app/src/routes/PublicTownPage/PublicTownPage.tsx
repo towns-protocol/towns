@@ -18,7 +18,7 @@ import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { Analytics } from 'hooks/useAnalytics'
 import { useDevice } from 'hooks/useDevice'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
-import { PrivyWrapper } from 'privy/PrivyProvider'
+
 import { useCombinedAuth } from 'privy/useCombinedAuth'
 import { atoms } from 'ui/styles/atoms.css'
 import { darkTheme } from 'ui/styles/vars.css'
@@ -116,11 +116,7 @@ const PublicTownPageWithoutAuth = (props: { isPreview?: boolean; onClosePreview?
 
 export const PublicTownPage = React.memo(
     (props: { isPreview?: boolean; onClosePreview?: () => void }) => {
-        return (
-            <PrivyWrapper>
-                <PublicTownPageWithoutAuth {...props} />
-            </PrivyWrapper>
-        )
+        return <PublicTownPageWithoutAuth {...props} />
     },
 )
 

@@ -13,7 +13,7 @@ import { isAddress } from 'ethers/lib/utils'
 import { usePrivy } from '@privy-io/react-auth'
 import { useEmbeddedWallet } from '@towns/privy'
 import { useNavigate } from 'react-router'
-import { PrivyWrapper } from 'privy/PrivyProvider'
+
 import { Box, Button, Divider, Stack, Text, TextField } from '@ui'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { shortAddress } from 'ui/utils/utils'
@@ -459,9 +459,5 @@ export const DebugRoute = React.memo(() => {
     const platform = !chain?.name ? ` ${serverName}` : `w: ${chain.id} | ${serverName}`
     const synced = environment.baseChain.id === connectedChainId
 
-    return (
-        <PrivyWrapper>
-            <DebugModal environment={environment} platform={platform} synced={synced} />
-        </PrivyWrapper>
-    )
+    return <DebugModal environment={environment} platform={platform} synced={synced} />
 })

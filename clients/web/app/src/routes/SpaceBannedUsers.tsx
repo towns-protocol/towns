@@ -20,15 +20,11 @@ import { shortAddress } from 'workers/utils'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { ConfirmBanUnbanModal } from '@components/ConfirmBanUnbanModal/ConfirmBanUnbanModal'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
-import { PrivyWrapper } from 'privy/PrivyProvider'
+
 import { GetSigner } from 'privy/WalletReady'
 
 export const SpaceBannedUsers = React.memo(() => {
-    return (
-        <PrivyWrapper>
-            <SpaceBannedUsersWithoutAuth />
-        </PrivyWrapper>
-    )
+    return <SpaceBannedUsersWithoutAuth />
 })
 
 export const SpaceBannedUsersWithoutAuth = () => {

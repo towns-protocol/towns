@@ -14,6 +14,7 @@ import { AboveAppProgressOverlay } from '@components/AppProgressOverlay/AboveApp
 import { AppBugReportOverlay } from '@components/AppBugReport/AppBugReportOverlay'
 import { PATHS } from 'routes'
 import { StartupProvider } from 'StartupProvider'
+import { TownsPrivyProvider } from 'privy/PrivyProvider'
 
 const App = React.lazy(() => import('App'))
 
@@ -26,6 +27,18 @@ const DebugRouter = ({ children }: { children: JSX.Element }) => {
     )
     return children
 }
+
+const PrivyAndErrorBoundary = ({ children }: { children: JSX.Element }) => {
+    return (
+        <>
+            <ErrorBoundary FallbackComponent={AppErrorFallback}>
+                <TownsPrivyProvider>{children}</TownsPrivyProvider>
+            </ErrorBoundary>
+            <AppBugReportOverlay />
+        </>
+    )
+}
+
 export const Main = () => {
     useRootTheme({
         ammendHTMLBody: true,
@@ -51,36 +64,33 @@ export const Main = () => {
     )
 
     return (
-        <>
-            <ErrorBoundary FallbackComponent={AppErrorFallback}>
-                <StartupProvider>
-                    <BrowserRouter>
-                        <DebugRouter>
-                            <Suspense
-                                fallback={
-                                    isHomeRoute ? (
-                                        <WelcomeLayout />
-                                    ) : isTownPageRoute ? (
-                                        <></>
-                                    ) : (
-                                        <AppProgressOverlayTrigger
-                                            progressState={AppProgressState.LoadingAssets}
-                                            debugSource="Main suspense fallback"
-                                        />
-                                    )
-                                }
-                            >
-                                <ZLayerProvider>
-                                    <App />
-                                </ZLayerProvider>
-                            </Suspense>
-                        </DebugRouter>
-                        <AppProgressOverlay />
-                        <AboveAppProgressOverlay />
-                    </BrowserRouter>
-                </StartupProvider>
-            </ErrorBoundary>
-            <AppBugReportOverlay />
-        </>
+        <PrivyAndErrorBoundary>
+            <StartupProvider>
+                <BrowserRouter>
+                    <DebugRouter>
+                        <Suspense
+                            fallback={
+                                isHomeRoute ? (
+                                    <WelcomeLayout />
+                                ) : isTownPageRoute ? (
+                                    <></>
+                                ) : (
+                                    <AppProgressOverlayTrigger
+                                        progressState={AppProgressState.LoadingAssets}
+                                        debugSource="Main suspense fallback"
+                                    />
+                                )
+                            }
+                        >
+                            <ZLayerProvider>
+                                <App />
+                            </ZLayerProvider>
+                        </Suspense>
+                    </DebugRouter>
+                    <AppProgressOverlay />
+                    <AboveAppProgressOverlay />
+                </BrowserRouter>
+            </StartupProvider>
+        </PrivyAndErrorBoundary>
     )
 }

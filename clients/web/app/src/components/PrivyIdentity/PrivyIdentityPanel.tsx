@@ -1,6 +1,5 @@
 import React from 'react'
 import { useLinkAccount, usePrivy } from '@privy-io/react-auth'
-import { PrivyWrapper } from 'privy/PrivyProvider'
 import { Box, BoxProps, Icon, IconProps, Paragraph, Stack, Text } from '@ui'
 import { PanelButton } from '@components/Panel/PanelButton'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
@@ -8,17 +7,9 @@ import { Panel } from '@components/Panel/Panel'
 import { popupToast } from '@components/Notifications/popupToast'
 import { StandardToast } from '@components/Notifications/StandardToast'
 
-export const PrivyIdentityPanel = React.memo(() => {
-    return (
-        <PrivyWrapper>
-            <_PrivyIdentityPanel />
-        </PrivyWrapper>
-    )
-})
-
 type LinkedAccount = NonNullable<ReturnType<typeof usePrivy>['user']>['linkedAccounts'][number]
 
-function _PrivyIdentityPanel() {
+export function PrivyIdentityPanel() {
     const { user } = usePrivy()
     const { linkEmail, linkPhone, linkGoogle, linkApple } = useLinkAccount({
         onSuccess: () => {

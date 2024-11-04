@@ -33,6 +33,7 @@ import {
 import { Analytics } from 'hooks/useAnalytics'
 import { useNotificationRoute } from 'hooks/useNotificationRoute'
 import { useOfflineToast } from '@components/Offline/OfflineToast'
+import { CombinedAuthContextProvider } from 'privy/useCombinedAuth'
 
 FontLoader.init()
 
@@ -158,38 +159,40 @@ export const App = () => {
             analytics={analyticsInstance}
             streamMetadataUrl={env.VITE_RIVER_STREAM_METADATA_URL}
         >
-            <>
-                <FaviconBadge />
-                <AppBadge />
-                <AppNotifications />
-                <RegisterPushSubscription />
-                <Helmet>
-                    <meta
-                        name="theme-color"
-                        content={
-                            isTouch
-                                ? theme === 'dark'
-                                    ? Figma.DarkMode.Level1
-                                    : Figma.LightMode.Level1
-                                : theme === 'dark'
-                                ? Figma.DarkMode.Readability
-                                : Figma.LightMode.Readability
-                        }
-                    />
-                </Helmet>
+            <CombinedAuthContextProvider>
                 <>
-                    {env.DEV && !env.VITE_DISABLE_DEBUG_BARS && <DebugBar {...environment} />}
-                    <AllRoutes />
+                    <FaviconBadge />
+                    <AppBadge />
+                    <AppNotifications />
+                    <RegisterPushSubscription />
+                    <Helmet>
+                        <meta
+                            name="theme-color"
+                            content={
+                                isTouch
+                                    ? theme === 'dark'
+                                        ? Figma.DarkMode.Level1
+                                        : Figma.LightMode.Level1
+                                    : theme === 'dark'
+                                    ? Figma.DarkMode.Readability
+                                    : Figma.LightMode.Readability
+                            }
+                        />
+                    </Helmet>
+                    <>
+                        {env.DEV && !env.VITE_DISABLE_DEBUG_BARS && <DebugBar {...environment} />}
+                        <AllRoutes />
+                    </>
+                    {!env.VITE_DISABLE_DEBUG_BARS && (
+                        <ReactQueryDevtools position="bottom" initialIsOpen={false} />
+                    )}
+                    <SyncNotificationSettings />
+                    <Notifications />
+                    <BlockchainTxNotifier />
+                    <ServiceWorkerMetadataSyncer />
+                    <MonitorJoinFlow />
                 </>
-                {!env.VITE_DISABLE_DEBUG_BARS && (
-                    <ReactQueryDevtools position="bottom" initialIsOpen={false} />
-                )}
-                <SyncNotificationSettings />
-                <Notifications />
-                <BlockchainTxNotifier />
-                <ServiceWorkerMetadataSyncer />
-                <MonitorJoinFlow />
-            </>
+            </CombinedAuthContextProvider>
         </TownsContextProvider>
     )
 }

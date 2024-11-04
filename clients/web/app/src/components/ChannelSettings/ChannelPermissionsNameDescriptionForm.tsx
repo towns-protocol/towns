@@ -23,7 +23,6 @@ import { mapToErrorMessage } from '@components/Web3/utils'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { Panel } from '@components/Panel/Panel'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
-import { PrivyWrapper } from 'privy/PrivyProvider'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { CHANNEL_INFO_PARAMS } from 'routes'
@@ -345,15 +344,10 @@ export const ChannelPermissionsNameDescriptionPanel = React.memo(() => {
     const hasPendingTx = useIsTransactionPending(BlockchainTransactionType.EditChannel)
 
     return (
-        <PrivyWrapper>
-            <Panel label="Edit Roles">
-                <Form
-                    editType="roles"
-                    onSuccess={() => openPanel(CHANNEL_INFO_PARAMS.CHANNEL_INFO)}
-                />
-                {hasPendingTx && <FullPanelOverlay />}
-            </Panel>
-        </PrivyWrapper>
+        <Panel label="Edit Roles">
+            <Form editType="roles" onSuccess={() => openPanel(CHANNEL_INFO_PARAMS.CHANNEL_INFO)} />
+            {hasPendingTx && <FullPanelOverlay />}
+        </Panel>
     )
 })
 

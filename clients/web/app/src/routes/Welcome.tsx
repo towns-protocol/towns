@@ -1,6 +1,6 @@
 import React, { Suspense, useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
-import { PrivyWrapper } from 'privy/PrivyProvider'
+
 import { Analytics } from 'hooks/useAnalytics'
 import { WelcomeLayout } from './layouts/WelcomeLayout'
 
@@ -16,12 +16,10 @@ export const WelcomeRoute = React.memo(() => {
     }, [location.pathname, location.search])
 
     return (
-        <PrivyWrapper>
-            <WelcomeLayout>
-                <Suspense>
-                    <LoginComponent />
-                </Suspense>
-            </WelcomeLayout>
-        </PrivyWrapper>
+        <WelcomeLayout>
+            <Suspense>
+                <LoginComponent />
+            </Suspense>
+        </WelcomeLayout>
     )
 })

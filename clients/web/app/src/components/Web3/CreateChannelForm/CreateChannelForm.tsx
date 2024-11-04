@@ -24,7 +24,7 @@ import {
     Toggle,
 } from '@ui'
 import { TransactionUIState, toTransactionUIStates } from 'hooks/TransactionUIState'
-import { PrivyWrapper } from 'privy/PrivyProvider'
+
 import { CHANNEL_INFO_PARAMS, PATHS } from 'routes'
 import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
 import {
@@ -536,16 +536,14 @@ export const CreateChannelFormContainer = ({
     )
 
     return (
-        <PrivyWrapper>
-            <>
-                <CreateChannelForm
-                    spaceId={spaceId}
-                    onHide={onHide}
-                    onCreateChannel={onCreateChannel}
-                />
-                <UserOpTxModal />
-            </>
-        </PrivyWrapper>
+        <>
+            <CreateChannelForm
+                spaceId={spaceId}
+                onHide={onHide}
+                onCreateChannel={onCreateChannel}
+            />
+            <UserOpTxModal />
+        </>
     )
 }
 
