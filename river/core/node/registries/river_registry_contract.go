@@ -290,7 +290,7 @@ func (c *RiverRegistryContract) ForAllStreams(
 	cb func(*GetStreamResult) bool,
 ) error {
 	// TODO: setting
-	const pageSize = int64(5000)
+	const pageSize = int64(1000)
 
 	lastPage := false
 	var err error

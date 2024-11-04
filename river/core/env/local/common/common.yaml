@@ -2,7 +2,7 @@
 
 database:
     url: postgres://postgres:postgres@localhost:5433/river?sslmode=disable&pool_max_conns=50
-    isolationLevel: 'read committed'
+    isolationLevel: 'serializable'
 
 # Certificates for TLS
 TLSConfig:

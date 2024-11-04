@@ -41,6 +41,11 @@ contract WalletLink is IWalletLink, WalletLinkBase, Facet {
     _removeLink(wallet, rootWallet, nonce);
   }
 
+  /// @inheritdoc IWalletLink
+  function removeCallerLink() external {
+    _removeCallerLink();
+  }
+
   /*
    * @inheritdoc IWalletLink
    */

@@ -182,6 +182,13 @@ const _abi = [
   },
   {
     type: "function",
+    name: "removeCallerLink",
+    inputs: [],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
     name: "removeLink",
     inputs: [
       {

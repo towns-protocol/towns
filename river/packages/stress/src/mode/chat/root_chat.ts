@@ -87,7 +87,9 @@ export async function startStressChat(opts: {
                 client,
                 'JOIN_CHAT',
                 r.status === 'fulfilled',
-                r.status === 'fulfilled' ? { span } : { reason: r.reason },
+                r.status === 'fulfilled'
+                    ? { clientIndex: i + index }
+                    : { clientIndex: i + index, reason: r.reason },
             )
         })
     }
@@ -107,7 +109,9 @@ export async function startStressChat(opts: {
                 client,
                 'UPDATE_PROFILE',
                 r.status === 'fulfilled',
-                r.status === 'fulfilled' ? { span } : { reason: r.reason },
+                r.status === 'fulfilled'
+                    ? { clientIndex: i + index }
+                    : { clientIndex: i + index, reason: r.reason },
             )
         })
     }

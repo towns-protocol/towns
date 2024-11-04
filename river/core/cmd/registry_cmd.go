@@ -22,7 +22,13 @@ import (
 
 func srStreamDump(cfg *config.Config, countOnly bool) error {
 	ctx := context.Background() // lint:ignore context.Background() is fine here
-	blockchain, err := crypto.NewBlockchain(ctx, &cfg.RiverChain, nil, infra.NewMetricsFactory(nil, "river", "cmdline"), nil)
+	blockchain, err := crypto.NewBlockchain(
+		ctx,
+		&cfg.RiverChain,
+		nil,
+		infra.NewMetricsFactory(nil, "river", "cmdline"),
+		nil,
+	)
 	if err != nil {
 		return err
 	}
@@ -43,27 +49,28 @@ func srStreamDump(cfg *config.Config, countOnly bool) error {
 		return nil
 	}
 
-	streams, err := registryContract.GetAllStreams(ctx, blockchain.InitialBlockNum)
-	if err != nil {
-		return err
-	}
-
-	for i, strm := range streams {
+	i := 0
+	err = registryContract.ForAllStreams(ctx, blockchain.InitialBlockNum, func(strm *registries.GetStreamResult) bool {
 		s := fmt.Sprintf("%4d %s", i, strm.StreamId.String())
 		fmt.Printf("%-69s %4d, %s\n", s, strm.LastMiniblockNum, strm.LastMiniblockHash.Hex())
 		for _, node := range strm.Nodes {
 			fmt.Printf("        %s\n", node.Hex())
 		}
+		i++
+		return true
+	})
+	if err != nil {
+		return err
 	}
 
-	if streamNum != int64(len(streams)) {
+	if streamNum != int64(i) {
 		return RiverError(
 			Err_INTERNAL,
 			"Stream count mismatch",
 			"GetStreamCount",
 			streamNum,
-			"GetAllStreams",
-			len(streams),
+			"ForAllStreams",
+			i,
 		)
 	}
 
@@ -73,7 +80,13 @@ func srStreamDump(cfg *config.Config, countOnly bool) error {
 func srStream(cfg *config.Config, streamId string) error {
 	ctx := context.Background() // lint:ignore context.Background() is fine here
 
-	blockchain, err := crypto.NewBlockchain(ctx, &cfg.RiverChain, nil, infra.NewMetricsFactory(nil, "river", "cmdline"), nil)
+	blockchain, err := crypto.NewBlockchain(
+		ctx,
+		&cfg.RiverChain,
+		nil,
+		infra.NewMetricsFactory(nil, "river", "cmdline"),
+		nil,
+	)
 	if err != nil {
 		return err
 	}
@@ -107,7 +120,13 @@ func srStream(cfg *config.Config, streamId string) error {
 func nodesDump(cfg *config.Config) error {
 	ctx := context.Background() // lint:ignore context.Background() is fine here
 
-	blockchain, err := crypto.NewBlockchain(ctx, &cfg.RiverChain, nil, infra.NewMetricsFactory(nil, "river", "cmdline"), nil)
+	blockchain, err := crypto.NewBlockchain(
+		ctx,
+		&cfg.RiverChain,
+		nil,
+		infra.NewMetricsFactory(nil, "river", "cmdline"),
+		nil,
+	)
 	if err != nil {
 		return err
 	}
@@ -140,7 +159,13 @@ func nodesDump(cfg *config.Config) error {
 func settingsDump(cfg *config.Config) error {
 	ctx := context.Background() // lint:ignore context.Background() is fine here
 
-	blockchain, err := crypto.NewBlockchain(ctx, &cfg.RiverChain, nil, infra.NewMetricsFactory(nil, "river", "cmdline"), nil)
+	blockchain, err := crypto.NewBlockchain(
+		ctx,
+		&cfg.RiverChain,
+		nil,
+		infra.NewMetricsFactory(nil, "river", "cmdline"),
+		nil,
+	)
 	if err != nil {
 		return err
 	}
@@ -179,7 +204,13 @@ func settingsDump(cfg *config.Config) error {
 func blockNumber(cfg *config.Config) error {
 	ctx := context.Background() // lint:ignore context.Background() is fine here
 
-	blockchain, err := crypto.NewBlockchain(ctx, &cfg.RiverChain, nil, infra.NewMetricsFactory(nil, "river", "cmdline"), nil)
+	blockchain, err := crypto.NewBlockchain(
+		ctx,
+		&cfg.RiverChain,
+		nil,
+		infra.NewMetricsFactory(nil, "river", "cmdline"),
+		nil,
+	)
 	if err != nil {
 		return err
 	}

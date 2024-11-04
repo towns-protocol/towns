@@ -49,6 +49,7 @@ export interface IWalletLinkInterface extends utils.Interface {
     "getWalletsByRootKey(address)": FunctionFragment;
     "linkCallerToRootKey((address,bytes,string),uint256)": FunctionFragment;
     "linkWalletToRootKey((address,bytes,string),(address,bytes,string),uint256)": FunctionFragment;
+    "removeCallerLink()": FunctionFragment;
     "removeLink(address,(address,bytes,string),uint256)": FunctionFragment;
   };
 
@@ -60,6 +61,7 @@ export interface IWalletLinkInterface extends utils.Interface {
       | "getWalletsByRootKey"
       | "linkCallerToRootKey"
       | "linkWalletToRootKey"
+      | "removeCallerLink"
       | "removeLink"
   ): FunctionFragment;
 
@@ -92,6 +94,10 @@ export interface IWalletLinkInterface extends utils.Interface {
     ]
   ): string;
   encodeFunctionData(
+    functionFragment: "removeCallerLink",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "removeLink",
     values: [
       PromiseOrValue<string>,
@@ -122,6 +128,10 @@ export interface IWalletLinkInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "linkWalletToRootKey",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "removeCallerLink",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "removeLink", data: BytesLike): Result;
@@ -219,6 +229,10 @@ export interface IWalletLink extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    removeCallerLink(
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     removeLink(
       wallet: PromiseOrValue<string>,
       rootWallet: IWalletLinkBase.LinkedWalletStruct,
@@ -258,6 +272,10 @@ export interface IWalletLink extends BaseContract {
     wallet: IWalletLinkBase.LinkedWalletStruct,
     rootWallet: IWalletLinkBase.LinkedWalletStruct,
     nonce: PromiseOrValue<BigNumberish>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  removeCallerLink(
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -302,6 +320,8 @@ export interface IWalletLink extends BaseContract {
       nonce: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
+
+    removeCallerLink(overrides?: CallOverrides): Promise<void>;
 
     removeLink(
       wallet: PromiseOrValue<string>,
@@ -366,6 +386,10 @@ export interface IWalletLink extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    removeCallerLink(
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     removeLink(
       wallet: PromiseOrValue<string>,
       rootWallet: IWalletLinkBase.LinkedWalletStruct,
@@ -406,6 +430,10 @@ export interface IWalletLink extends BaseContract {
       wallet: IWalletLinkBase.LinkedWalletStruct,
       rootWallet: IWalletLinkBase.LinkedWalletStruct,
       nonce: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    removeCallerLink(
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 

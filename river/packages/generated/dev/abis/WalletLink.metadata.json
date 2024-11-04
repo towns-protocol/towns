@@ -407,6 +407,12 @@
         "name": "linkWalletToRootKey"
       },
       {
+        "inputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function",
+        "name": "removeCallerLink"
+      },
+      {
         "inputs": [
           {
             "internalType": "address",
@@ -521,6 +527,9 @@
         "linkWalletToRootKey((address,bytes,string),(address,bytes,string),uint256)": {
           "notice": "Link a wallet to a root wallet"
         },
+        "removeCallerLink()": {
+          "notice": "Remove the caller's link to their root key"
+        },
         "removeLink(address,(address,bytes,string),uint256)": {
           "notice": "Called via the rootkey signing a message to a remove a wallet from itself"
         }
@@ -627,26 +636,26 @@
       "license": "MIT"
     },
     "contracts/src/factory/facets/wallet-link/IWalletLink.sol": {
-      "keccak256": "0x1c9084570c24d5297c09ae2ced5a7cc74b0d4525d82c50ab4837073d371492ee",
+      "keccak256": "0x5ed1537dfea0969be2cef70cfd3858695fa7c736a1df677db6c85c0180a0ea0c",
       "urls": [
-        "bzz-raw://c5a554705b2dd0483babbb512ac97bdfc24dfc9c0bc5ea80c6781c056fd03df0",
-        "dweb:/ipfs/QmNdURhnWUeSs5294Puz2FZq2bRikgPgfi4oNppd6pJSH5"
+        "bzz-raw://0305e0d8ba95c608fd848ce99c288bf80892cc61bc01d53bf8d6f79a4a6a550d",
+        "dweb:/ipfs/QmQoBXVdpRraU2BcA1Usw5HZB7e6cdnHvNyVhETKRUg4XC"
       ],
       "license": "MIT"
     },
     "contracts/src/factory/facets/wallet-link/WalletLink.sol": {
-      "keccak256": "0x4166d180ac3f6a1685bf58c215ae54da63951e5e313bae678dfc41d2e32f8a3d",
+      "keccak256": "0x52c6129400c811fd5e95b4e49693ebe2113bcd272f887734504a8af1b378f878",
       "urls": [
-        "bzz-raw://ec32743e989724e95ceb3948cb5aafe33d0d572548046cd9b7739d6de3c68643",
-        "dweb:/ipfs/QmUPafHY6nsnFKJZ65R1qFCjC7wTJdjN7jETR7xMJGYFQo"
+        "bzz-raw://b33cc09ca1c398ed2778c1cd226eabd366515d2270852ff484e43406e598e956",
+        "dweb:/ipfs/QmRJADuKisEeT28ZJtVXztDMN7BMLiz3HHquZhxfCn8ygw"
       ],
       "license": "MIT"
     },
     "contracts/src/factory/facets/wallet-link/WalletLinkBase.sol": {
-      "keccak256": "0xf7337660ec563b4efa2e696e4d3dc9d6f649add0c227e1683be26209bdd2923a",
+      "keccak256": "0x03e540d1d2946f9bf28f3dd698dffe878599d41a1c4939d7779ce8d05f676fc3",
       "urls": [
-        "bzz-raw://2205c012cf98e4f1965b028269f6e949aa203b938208f8c962bda96845759508",
-        "dweb:/ipfs/QmcKcz4BRmofobLWLdvUAjS5bsMbuNpcDVm8vz2iNKsujf"
+        "bzz-raw://b21614e5084c7502ebb1016c0aacf94a01b90d2ed5e2739e007f3e15736ee110",
+        "dweb:/ipfs/QmSQcLNYctxX4Qsy1rBkRWrR2dx6ySW1hz5661pA8J9mPK"
       ],
       "license": "MIT"
     },

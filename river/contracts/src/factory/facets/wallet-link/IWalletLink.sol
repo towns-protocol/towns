@@ -74,6 +74,11 @@ interface IWalletLink is IWalletLinkBase {
     uint256 nonce
   ) external;
 
+  /**
+   * @notice Remove the caller's link to their root key
+   */
+  function removeCallerLink() external;
+
   // =============================================================
   //                      External - Read
   // =============================================================

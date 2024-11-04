@@ -22,7 +22,7 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup {
     super.setUp();
 
     rootWallet = vm.createWallet("rootKey");
-    wallet = vm.createWallet("wallet");
+    wallet = vm.createWallet("eoaWallet");
     smartAccount = vm.createWallet("smartAccount");
   }
 
@@ -573,5 +573,32 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup {
       ),
       nonce: nonce
     });
+  }
+
+  // =============================================================
+  //                   removeCallerLink
+  // =============================================================
+
+  function test_removeCallerLink() external givenWalletIsLinkedViaCaller {
+    vm.startPrank(wallet.addr);
+    vm.expectEmit(address(walletLink));
+    emit RemoveLink(wallet.addr, rootWallet.addr);
+    walletLink.removeCallerLink();
+    vm.stopPrank();
+
+    assertFalse(walletLink.checkIfLinked(rootWallet.addr, wallet.addr));
+    assertEq(walletLink.getRootKeyForWallet(wallet.addr), address(0));
+  }
+
+  function test_revertWhen_removeCallerLinkNotLinked() external {
+    vm.prank(wallet.addr);
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        WalletLink__NotLinked.selector,
+        wallet.addr,
+        address(0)
+      )
+    );
+    walletLink.removeCallerLink();
   }
 }

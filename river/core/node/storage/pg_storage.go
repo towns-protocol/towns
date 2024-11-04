@@ -122,7 +122,7 @@ func (s *PostgresEventStore) txRunner(
 			pass := false
 
 			if pgErr, ok := err.(*pgconn.PgError); ok {
-				if pgErr.Code == pgerrcode.SerializationFailure {
+				if pgErr.Code == pgerrcode.SerializationFailure || pgErr.Code == pgerrcode.DeadlockDetected {
 					backoffErr := backoff.wait(ctx)
 					if backoffErr != nil {
 						return AsRiverError(backoffErr).Func(name).Message("Timed out waiting for backoff")

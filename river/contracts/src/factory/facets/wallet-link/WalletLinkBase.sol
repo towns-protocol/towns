@@ -170,6 +170,22 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
     emit RemoveLink(walletToRemove, msg.sender);
   }
 
+  function _removeCallerLink() internal {
+    WalletLinkStorage.Layout storage ds = WalletLinkStorage.layout();
+    address walletToRemove = msg.sender;
+    address rootWallet = ds.rootKeyByWallet[walletToRemove];
+
+    if (rootWallet == address(0)) {
+      revert WalletLink__NotLinked(walletToRemove, rootWallet);
+    }
+
+    // Remove the link in the walletToRemove to root keys map
+    ds.rootKeyByWallet[walletToRemove] = address(0);
+    ds.walletsByRootKey[rootWallet].remove(walletToRemove);
+
+    emit RemoveLink(walletToRemove, rootWallet);
+  }
+
   // =============================================================
   //                        Read
   // =============================================================

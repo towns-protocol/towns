@@ -1,4 +1,4 @@
-import type { AnyMessage } from '@bufbuild/protobuf'
+import type { AnyMessage, Message } from '@bufbuild/protobuf'
 import {
     type Interceptor,
     type UnaryRequest,
@@ -42,12 +42,17 @@ export const retryInterceptor: (retryParams: RetryParams) => Interceptor = (
         async (
             req: UnaryRequest<AnyMessage, AnyMessage> | StreamRequest<AnyMessage, AnyMessage>,
         ) => {
+            if (req.stream) {
+                return await next(req)
+            }
             let attempt = 0
             // eslint-disable-next-line no-constant-condition
             while (true) {
                 attempt++
                 try {
-                    return await next(req)
+                    // Clone the request before each attempt
+                    const clonedReq = cloneUnaryRequest(req)
+                    return await next(clonedReq)
                 } catch (e) {
                     const retryDelay = getRetryDelay(e, attempt, retryParams)
                     if (retryDelay <= 0) {
@@ -354,4 +359,26 @@ function getRetryDelay(error: unknown, attempts: number, retryParams: RetryParam
     }
 
     return -1
+}
+
+// Function to clone a UnaryRequest
+function cloneUnaryRequest<I extends Message<I>, O extends Message<O>>(
+    req: UnaryRequest<I, O>,
+): UnaryRequest<I, O> {
+    // Clone the message
+    const clonedMessage = req.message.clone()
+
+    // Clone headers
+    const clonedHeader = new Headers(req.header)
+
+    // Since RequestInit and ContextValues are typically immutable or not modified during the request,
+    // we can reuse them. However, if they are mutable in your implementation, consider cloning them as well.
+
+    // Return a new UnaryRequest with cloned properties
+    return {
+        ...req,
+        message: clonedMessage,
+        header: clonedHeader,
+        // Keep other properties as they are
+    }
 }

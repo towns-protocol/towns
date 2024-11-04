@@ -5,7 +5,6 @@ import (
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
-
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/events"
@@ -50,9 +49,12 @@ func newLocalSyncer(
 }
 
 func (s *localSyncer) Run() {
+	log := dlog.FromCtx(s.syncStreamCtx)
 	for _, cookie := range s.cookies {
 		streamID, _ := StreamIdFromBytes(cookie.GetStreamId())
-		_ = s.addStream(s.syncStreamCtx, streamID, cookie)
+		if err := s.addStream(s.syncStreamCtx, streamID, cookie); err != nil {
+			log.Error("Unable to add local sync stream", "stream", streamID, "err", err)
+		}
 	}
 
 	<-s.syncStreamCtx.Done()

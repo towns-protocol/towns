@@ -13,9 +13,6 @@ import {BasisPoints} from "contracts/src/utils/libraries/BasisPoints.sol";
 
 //contracts
 
-// debuggging
-import {console} from "forge-std/console.sol";
-
 contract MembershipJoinSpaceWithReferralTest is
   MembershipBaseSetup,
   IPartnerRegistryBase,
@@ -24,6 +21,7 @@ contract MembershipJoinSpaceWithReferralTest is
   modifier givenValidReferral(ReferralTypes memory referral) {
     vm.assume(referral.partner != address(0));
     vm.assume(referral.userReferral != address(0));
+    vm.assume(referral.partner != referral.userReferral);
     vm.assume(bytes(referral.referralCode).length > 0);
     _;
   }
@@ -46,6 +44,8 @@ contract MembershipJoinSpaceWithReferralTest is
   function test_joinSpaceWithReferral(
     ReferralTypes memory referral
   ) external givenValidReferral(referral) {
+    vm.assume(alice != referral.userReferral);
+
     vm.startPrank(alice);
     membership.joinSpaceWithReferral(alice, referral);
     vm.stopPrank();

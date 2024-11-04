@@ -28,7 +28,7 @@ import { makeBaseChainConfig } from './riverConfig'
 const log = dlog('csb:test:membershipManagement')
 
 describe('membershipManagement', () => {
-    test('annoint memberships', async () => {
+    test('anoint memberships', async () => {
         // make a space and mint some memberships for friends
 
         log('start')
