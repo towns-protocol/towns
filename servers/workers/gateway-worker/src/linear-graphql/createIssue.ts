@@ -61,11 +61,14 @@ mutation CreateIssue($issueTitle: String!, $issueDescription: String!){
         )
         .join('\n')
 
+    const date = new Date()
     const issueDescription = [
         `**Name**: ${name}`,
         `**Email**: ${email}`,
         `**Device Info**:`,
         deviceInfo,
+        `* Date UTC: ${date.toUTCString()}`,
+        `* Date PST: ${date.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })}`,
         '### User Feedback:',
         comments,
         '### Attachments:',

@@ -1,6 +1,6 @@
 export const getLinearPayloadFromFormData = (formData: FormData) => {
     const version = formData.get('version')
-    const commitHash = formData.get('commithash')
+    const commitHash = formData.get('commitHash')
     return {
         env: formData.get('env') as string,
         deviceInfo: formData.get('deviceInfo') as string,
