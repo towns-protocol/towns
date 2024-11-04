@@ -112,15 +112,23 @@ export class TownsUserOpClient {
                 async (): Promise<EthGetUserOperationReceiptResponse | null> => {
                     const polledAction = await this.poll<EthGetUserOperationReceiptResponse>({
                         action: async () => {
-                            const receipt = await this.provider.send(
-                                'eth_getUserOperationReceipt',
-                                [userOpHash],
-                            )
+                            try {
+                                const receipt = await this.provider.send(
+                                    'eth_getUserOperationReceipt',
+                                    [userOpHash],
+                                )
 
-                            if (isEthGetUserOperationReceiptResponse(receipt)) {
+                                if (isEthGetUserOperationReceiptResponse(receipt)) {
+                                    return receipt
+                                }
                                 return receipt
+                            } catch (error) {
+                                console.error(
+                                    '[TownsUserOpClient] Failed to get user operation receipt:',
+                                    error,
+                                )
+                                return null
                             }
-                            return receipt
                         },
                     })
 
