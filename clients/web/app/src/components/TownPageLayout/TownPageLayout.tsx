@@ -54,8 +54,8 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
     const { data: userId } = useGetRootKeyFromLinkedWallet({ walletAddress: owner })
     const [copiedLink, setCopiedLink] = useState(false)
     const [, copy] = useCopyToClipboard()
-    const bio = spaceInfo?.shortDescription
-    const motto = spaceInfo?.longDescription
+    const bio = spaceInfo?.longDescription
+    const motto = spaceInfo?.shortDescription
 
     useEffect(() => {
         if (copiedLink) {
