@@ -33,6 +33,7 @@ import {
 import { Analytics } from 'hooks/useAnalytics'
 import { useNotificationRoute } from 'hooks/useNotificationRoute'
 import { useOfflineToast } from '@components/Offline/OfflineToast'
+import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
 import { CombinedAuthContextProvider } from 'privy/useCombinedAuth'
 
 FontLoader.init()
@@ -191,6 +192,7 @@ export const App = () => {
                     <BlockchainTxNotifier />
                     <ServiceWorkerMetadataSyncer />
                     <MonitorJoinFlow />
+                    <UserOpTxModal />
                 </>
             </CombinedAuthContextProvider>
         </TownsContextProvider>

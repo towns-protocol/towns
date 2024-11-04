@@ -14,7 +14,6 @@ import { Panel } from '@components/Panel/Panel'
 import { Button, ErrorMessage, FormRender, Icon, MotionStack, Stack, Text, TextField } from '@ui'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { FullPanelOverlay } from '@components/Web3/WalletLinkingPanel'
-import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
 import { EditGating } from '@components/Web3/EditMembership/EditGating'
 import { RoleFormSchemaType } from '@components/Web3/CreateSpaceForm/types'
 import { convertToNumber } from './utils'
@@ -251,8 +250,6 @@ export function SingleRolePanelWithoutAuth() {
                     <FullPanelOverlay withSpinner={false} />
                 </Stack>
             )}
-
-            <UserOpTxModal />
         </Panel>
     )
 }

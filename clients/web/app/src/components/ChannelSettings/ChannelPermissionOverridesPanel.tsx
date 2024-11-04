@@ -20,7 +20,6 @@ import { AnimatePresence } from 'framer-motion'
 import { atoms } from 'ui/styles/atoms.css'
 import { Box, FancyButton, FormRender, Icon, Paragraph, Stack, Text, TextButton } from '@ui'
 import { FullPanelOverlay } from '@components/Web3/WalletLinkingPanel'
-import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
 import { ChannelPermissionsToggles } from '@components/SpaceSettingsPanel/ChannelPermissionsToggles'
 import { Panel } from '@components/Panel/Panel'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
@@ -80,7 +79,6 @@ export const ChannelPermissionOverridesPanel = React.memo((props: { roleId: numb
                     />
                 )}
             </Stack>
-            <UserOpTxModal />
             {(hasPendingTx || isLoading) && <FullPanelOverlay />}
         </Panel>
     )

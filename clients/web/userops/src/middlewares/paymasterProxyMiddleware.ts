@@ -4,23 +4,34 @@ import { IUserOperation, IUserOperationMiddlewareCtx } from 'userop'
 import { z } from 'zod'
 import { CodeException } from '../errors'
 import { isUsingAlchemyBundler } from '../utils'
+import { PaymasterErrorCode, userOpsStore } from '../userOpsStore'
 
 type PaymasterProxyResponse = {
-    paymasterAndData: string
-    preVerificationGas: string
-    verificationGasLimit: string
-    callGasLimit: string
-    maxPriorityFeePerGas?: string
-    maxFeePerGas?: string
+    data: {
+        paymasterAndData: string
+        preVerificationGas: string
+        verificationGasLimit: string
+        callGasLimit: string
+        maxPriorityFeePerGas?: string
+        maxFeePerGas?: string
+    }
 }
 
-const zSchema: z.ZodType<PaymasterProxyResponse> = z.object({
-    paymasterAndData: z.string().startsWith('0x'),
-    preVerificationGas: z.string().startsWith('0x'),
-    verificationGasLimit: z.string().startsWith('0x'),
-    callGasLimit: z.string().startsWith('0x'),
-    maxPriorityFeePerGas: z.string().startsWith('0x').optional(),
-    maxFeePerGas: z.string().startsWith('0x').optional(),
+const zSuccessSchema: z.ZodType<PaymasterProxyResponse> = z.object({
+    data: z.object({
+        paymasterAndData: z.string().startsWith('0x'),
+        preVerificationGas: z.string().startsWith('0x'),
+        verificationGasLimit: z.string().startsWith('0x'),
+        callGasLimit: z.string().startsWith('0x'),
+        maxPriorityFeePerGas: z.string().startsWith('0x').optional(),
+        maxFeePerGas: z.string().startsWith('0x').optional(),
+    }),
+})
+
+const zErrorSchema: z.ZodType<{ errorDetail: { code: PaymasterErrorCode } }> = z.object({
+    errorDetail: z.object({
+        code: z.nativeEnum(PaymasterErrorCode),
+    }),
 })
 
 type PaymasterProxyPostData = IUserOperation & {
@@ -135,6 +146,18 @@ export const paymasterProxyMiddleware = async (
         const json = await response.json()
 
         if (!response.ok) {
+            const errorParseResult = zErrorSchema.safeParse(json)
+
+            if (errorParseResult.success) {
+                userOpsStore
+                    .getState()
+                    .setRejectedSponsorshipReason(errorParseResult.data.errorDetail.code)
+            } else {
+                console.log(
+                    '[paymasterProxyMiddleware] errorParseResult.error, error may be missing in PaymasterErrorCode',
+                )
+            }
+
             throw new Error(
                 `[paymasterProxyMiddleware] Error getting paymaster proxy response:: ${
                     response.status
@@ -142,7 +165,7 @@ export const paymasterProxyMiddleware = async (
             )
         }
 
-        const parseResult = zSchema.safeParse(json)
+        const parseResult = zSuccessSchema.safeParse(json)
         if (!parseResult.success) {
             throw new Error(
                 `[paymasterProxyMiddleware] Error parsing PaymasterProxyResponse:: ${JSON.stringify(
@@ -151,24 +174,25 @@ export const paymasterProxyMiddleware = async (
             )
         }
 
+        const parsedData = parseResult.data.data
+
         // the op needs to be updated with the values returned from the paymaster call
         // if paymaster returns a response that includes fields that are missing here
         // then you'll likely encounter an invalid paymaster signature error
         // https://docs.stackup.sh/reference/pm-sponsoruseroperation
         // being explicity here instead of spreading the parseResult.data, for clarity
-        ctx.op.paymasterAndData = parseResult.data.paymasterAndData
-        ctx.op.preVerificationGas = parseResult.data.preVerificationGas
-        ctx.op.verificationGasLimit = parseResult.data.verificationGasLimit
-        ctx.op.callGasLimit = parseResult.data.callGasLimit
+        ctx.op.paymasterAndData = parsedData.paymasterAndData
+        ctx.op.preVerificationGas = parsedData.preVerificationGas
+        ctx.op.verificationGasLimit = parsedData.verificationGasLimit
+        ctx.op.callGasLimit = parsedData.callGasLimit
 
         // alchemy returns these as well, so we need to set them here
         // https://docs.alchemy.com/reference/alchemy-requestgasandpaymasteranddata
-        if (parseResult.data.maxFeePerGas && parseResult.data.maxPriorityFeePerGas) {
-            ctx.op.maxFeePerGas = parseResult.data.maxFeePerGas
-            ctx.op.maxPriorityFeePerGas = parseResult.data.maxPriorityFeePerGas
+        if (parsedData.maxFeePerGas && parsedData.maxPriorityFeePerGas) {
+            ctx.op.maxFeePerGas = parsedData.maxFeePerGas
+            ctx.op.maxPriorityFeePerGas = parsedData.maxPriorityFeePerGas
         }
     } catch (error) {
-        // if the paymaster responds with an error
-        // ignore, let subsequent middleware handle it
+        console.error('[paymasterProxyMiddleware] error', error)
     }
 }

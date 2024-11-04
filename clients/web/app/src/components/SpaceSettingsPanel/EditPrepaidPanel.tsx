@@ -12,8 +12,6 @@ import { Button, ErrorMessage, FormRender, Icon, Paragraph, Stack, Text, TextFie
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
-
-import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
 import { FullPanelOverlay } from '@components/Web3/WalletLinkingPanel'
 import { GetSigner, WalletReady } from 'privy/WalletReady'
 
@@ -143,9 +141,6 @@ export function EditPrepaidPanelWithoutAuth() {
                                                 )}
                                             </WalletReady>
                                         </Stack>
-                                        <UserOpTxModal
-                                            valueLabel={`Seats x ${_form.getValues('supply')}`}
-                                        />
                                     </FormProvider>
                                 )
                             }}

@@ -17,14 +17,14 @@ import { AppProgressOverlayTrigger } from '@components/AppProgressOverlay/AppPro
 
 export function JoiningOverlay() {
     const { isAuthenticated } = useConnectivity()
-    const { currOpGas } = userOpsStore()
+    const { currOp } = userOpsStore()
     const isJoining = useIsTransactionPending(BlockchainTransactionType.JoinSpace)
 
     function getAppProressState() {
         if (!isAuthenticated) {
             return AppProgressState.LoggingIn
         }
-        if (currOpGas) {
+        if (currOp) {
             // currOpGas means the confirmation tx modal is up
             return AppProgressState.Joining
         }
@@ -38,7 +38,7 @@ export function JoiningOverlay() {
 
         return AppProgressState.Joining
     }
-    console.log('[app progress] JoiningOverlay', { isAuthenticated, currOpGas, isJoining })
+    console.log('[app progress] JoiningOverlay', { isAuthenticated, currOp, isJoining })
 
     // probably want to delay this a sec to allow privy iframe to show up
     return (

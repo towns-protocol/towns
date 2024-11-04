@@ -39,7 +39,6 @@ import { useChangePermissionOverridesStore } from '@components/ChannelSettings/u
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { PanelButton } from '@components/Panel/PanelButton'
 import { isChannelPermission } from '@components/SpaceSettingsPanel/rolePermissions.const'
-import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
 import { useContractRoles } from 'hooks/useContractRoles'
 import { useDevice } from 'hooks/useDevice'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
@@ -542,7 +541,6 @@ export const CreateChannelFormContainer = ({
                 onHide={onHide}
                 onCreateChannel={onCreateChannel}
             />
-            <UserOpTxModal />
         </>
     )
 }

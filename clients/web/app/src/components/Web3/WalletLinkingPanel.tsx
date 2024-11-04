@@ -24,7 +24,6 @@ import { useErrorToast } from 'hooks/useErrorToast'
 import { ConnectWalletThenLinkButton } from './ConnectWalletThenLinkButton'
 import { WalletLinkingInfo } from './WalletLinkingInfo'
 import { WalletWithBalance } from './Wallet/WalletWithBalance'
-import { UserOpTxModal } from './UserOpTxModal/UserOpTxModal'
 import { mapToErrorMessage } from './utils'
 
 export const WalletLinkingPanel = React.memo(() => {
@@ -155,7 +154,6 @@ function WalletLinkingPanelWithoutAuth() {
                     </Box>
                 </ModalContainer>
             )}
-            <UserOpTxModal />
         </Stack>
     )
 }

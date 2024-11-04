@@ -6,8 +6,6 @@ import { useNavigate } from 'react-router'
 import { useConnectivity, useImageStore, usePlatformMintLimit } from 'use-towns-client'
 import { CreateSpaceFlowStatus } from 'use-towns-client/dist/client/TownsClientTypes'
 import { AnimatePresence } from 'framer-motion'
-
-import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
 import {
     Box,
     Button,
@@ -625,8 +623,6 @@ function CreateSpaceFormV2WithoutAuth() {
                 isTransacting={transactionDetails.isTransacting}
                 status={createFlowStatus}
             />
-
-            <UserOpTxModal />
         </Stack>
     )
 }

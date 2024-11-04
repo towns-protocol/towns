@@ -14,7 +14,6 @@ import { ModalContainer } from '@components/Modals/ModalContainer'
 import { TransactionUIState, toTransactionUIStates } from 'hooks/TransactionUIState'
 import { isForbiddenError, isRejectionError } from 'ui/utils/utils'
 import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
-import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 
 import { buildSpaceMetadataUrl, refreshSpaceCache } from 'api/lib/fetchImage'
@@ -232,7 +231,6 @@ export const TownInfoModalWithoutAuth = (props: Props) => {
                     </FormRender>
                 </Stack>
             </ModalContainer>
-            <UserOpTxModal />
         </>
     )
 }

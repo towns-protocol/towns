@@ -26,12 +26,16 @@ import { ERC4337 } from 'userop/dist/constants'
 import { CodeException } from './errors'
 import { UserOperationEventEvent } from 'userop/dist/typechain/EntryPoint'
 import { EVERYONE_ADDRESS, getFunctionSigHash, isUsingAlchemyBundler } from './utils'
-import { signUserOpHash } from './middlewares/signUserOpHash'
-import { estimateGasLimit } from './middlewares/estimateGasLimit'
-import { estimateAlchemyGasFees } from './middlewares/estimateAlchemyGasFees'
-import { subtractGasFromMaxValue } from './middlewares/substractGasFromValue'
-import { promptUser } from './middlewares/promptUser'
-import { paymasterProxyMiddleware } from './middlewares/paymasterProxyMiddleware'
+import {
+    signUserOpHash,
+    estimateGasLimit,
+    estimateAlchemyGasFees,
+    subtractGasFromMaxValue,
+    promptUser,
+    isSponsoredOp,
+    paymasterProxyMiddleware,
+    saveOpToUserOpsStore,
+} from './middlewares'
 import { MiddlewareVars } from './MiddlewareVars'
 import { abstractAddressMap } from './abstractAddressMap'
 import { TownsSimpleAccount } from './TownsSimpleAccount'
@@ -1644,7 +1648,6 @@ export class UserOps {
 
         const cost = await space.Prepay.read.calculateMembershipPrepayFee(prepaidSupply)
         const callData = space.Prepay.encodeFunctionData('prepayMembership', [prepaidSupply])
-
         return this.sendUserOp({
             toAddress: space.Prepay.address,
             callData,
@@ -1786,85 +1789,100 @@ export class UserOps {
         // stackup paymaster requires gas fee estimates to be included in the user operation
         // alchemy bundler does not require gas fee estimates b/c we are using alchemy_requestGasAndPaymasterAndData in the paymaster proxy server
         // https://docs.alchemy.com/reference/alchemy-requestgasandpaymasteranddata
-        if (!isUsingAlchemyBundler(this.bundlerUrl)) {
-            builder.useMiddleware(getEthMaxPriorityFeePerGas(builder.provider))
-        }
+        builder
+            .useMiddleware(async (ctx) => {
+                if (!isUsingAlchemyBundler(this.bundlerUrl)) {
+                    return getEthMaxPriorityFeePerGas(builder.provider)(ctx)
+                }
+            })
+            // pass user op with new gas data to paymaster.
+            // If approved, paymaster returns preverification gas and we assign it to the user operation.
+            // The userop fields can no longer be manipulated or else the paymaster sig will be invalid
+            //
+            // If rejected, gas must be estimated in later middleware
+            .useMiddleware(async (ctx) => {
+                if (this.paymasterProxyUrl && this.paymasterProxyAuthSecret) {
+                    const { sequenceName, functionHashForPaymasterProxy, spaceId, txValue } =
+                        this.middlewareVars
 
-        // pass user op with new gas data to paymaster.
-        // If approved, paymaster returns preverification gas and we assign it to the user operation.
-        // The userop fields can no longer be manipulated or else the paymaster sig will be invalid
-        //
-        // If rejected, gas must be estimated in later middleware
-        if (this.paymasterProxyUrl && this.paymasterProxyAuthSecret) {
-            builder.useMiddleware(async (ctx) => {
-                const { sequenceName, functionHashForPaymasterProxy, spaceId, txValue } =
-                    this.middlewareVars
+                    if (txValue && ethers.BigNumber.from(txValue).gt(0)) {
+                        return
+                    }
+                    let endPaymasterMiddleware: (() => void) | undefined
+                    if (sequenceName) {
+                        endPaymasterMiddleware = timeTracker?.startMeasurement(
+                            sequenceName,
+                            `userops_${functionHashForPaymasterProxy}_paymasterProxyMiddleware`,
+                        )
+                    }
+                    await paymasterProxyMiddleware({
+                        rootKeyAddress: await signer.getAddress(),
+                        userOpContext: ctx,
+                        paymasterProxyAuthSecret: this.paymasterProxyAuthSecret,
+                        paymasterProxyUrl: this.paymasterProxyUrl,
+                        functionHashForPaymasterProxy: functionHashForPaymasterProxy,
+                        spaceId,
+                        bundlerUrl: this.bundlerUrl,
+                        fetchAccessTokenFn: this.fetchAccessTokenFn,
+                    })
 
-                if (txValue && ethers.BigNumber.from(txValue).gt(0)) {
+                    endPaymasterMiddleware?.()
+                }
+            })
+            .useMiddleware(async (ctx) => {
+                if (isUsingAlchemyBundler(this.bundlerUrl)) {
+                    if (isSponsoredOp(ctx)) {
+                        return
+                    }
+                    return estimateAlchemyGasFees(ctx, builder.provider)
+                }
+            })
+            .useMiddleware(async (ctx) => {
+                const { spaceId } = this.middlewareVars
+                if (isSponsoredOp(ctx)) {
                     return
                 }
-                let endPaymasterMiddleware: (() => void) | undefined
-                if (sequenceName) {
-                    endPaymasterMiddleware = timeTracker?.startMeasurement(
-                        sequenceName,
-                        `userops_${functionHashForPaymasterProxy}_paymasterProxyMiddleware`,
-                    )
-                }
-                await paymasterProxyMiddleware({
-                    rootKeyAddress: await signer.getAddress(),
-                    userOpContext: ctx,
-                    paymasterProxyAuthSecret: this.paymasterProxyAuthSecret,
-                    paymasterProxyUrl: this.paymasterProxyUrl,
-                    functionHashForPaymasterProxy: functionHashForPaymasterProxy,
-                    spaceId,
+                return estimateGasLimit({
+                    ctx,
+                    provider: builder.provider,
                     bundlerUrl: this.bundlerUrl,
-                    fetchAccessTokenFn: this.fetchAccessTokenFn,
+                    spaceId,
+                    spaceDapp: this.spaceDapp,
                 })
-
-                endPaymasterMiddleware?.()
             })
-        }
-
-        // if the op isn't sponsored, we need to estimate the gas fees
-        if (isUsingAlchemyBundler(this.bundlerUrl)) {
-            builder.useMiddleware(async (ctx) => estimateAlchemyGasFees(ctx, builder.provider))
-        }
-
-        builder.useMiddleware(async (ctx) => {
-            const { spaceId } = this.middlewareVars
-
-            return estimateGasLimit({
-                ctx,
-                provider: builder.provider,
-                bundlerUrl: this.bundlerUrl,
-                spaceId,
-                spaceDapp: this.spaceDapp,
+            .useMiddleware(async (ctx) => {
+                const { functionHashForPaymasterProxy, txValue, spaceId } = this.middlewareVars
+                const space = spaceId ? this.spaceDapp?.getSpace(spaceId) : undefined
+                return saveOpToUserOpsStore(
+                    ctx,
+                    functionHashForPaymasterProxy,
+                    txValue,
+                    builder,
+                    space,
+                )
             })
-        })
-
-        // prompt user if the paymaster rejected. recalculate preverification gas
-        if (!this.skipPromptUserOnPMRejectedOp) {
-            builder.useMiddleware(async (ctx) => {
-                const { txValue } = this.middlewareVars
-                await promptUser(ctx, txValue)
+            // prompt user if the paymaster rejected
+            .useMiddleware(async (ctx) => {
+                if (!this.skipPromptUserOnPMRejectedOp) {
+                    if (isSponsoredOp(ctx)) {
+                        return
+                    }
+                    await promptUser()
+                }
             })
-        }
+            .useMiddleware(async (ctx) => {
+                const { txValue, functionHashForPaymasterProxy } = this.middlewareVars
+                if (!txValue || !functionHashForPaymasterProxy) {
+                    return
+                }
 
-        builder.useMiddleware(async (ctx) => {
-            const { txValue, functionHashForPaymasterProxy } = this.middlewareVars
-            if (!txValue || !functionHashForPaymasterProxy) {
-                return
-            }
-
-            return subtractGasFromMaxValue(ctx, signer, {
-                functionHash: functionHashForPaymasterProxy,
-                builder,
-                value: txValue,
+                return subtractGasFromMaxValue(ctx, signer, {
+                    functionHash: functionHashForPaymasterProxy,
+                    builder,
+                    value: txValue,
+                })
             })
-        })
-
-        // sign the user operation
-        builder.useMiddleware(async (ctx) => signUserOpHash(ctx, signer))
+            .useMiddleware(async (ctx) => signUserOpHash(ctx, signer))
     }
 
     /**

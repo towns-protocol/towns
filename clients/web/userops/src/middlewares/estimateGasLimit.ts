@@ -21,10 +21,6 @@ export async function estimateGasLimit(args: {
 }) {
     const { ctx, provider, bundlerUrl, spaceDapp, spaceId } = args
     const { sequenceName, timeTracker, stepPrefix } = args.timeTrackArgs ?? {}
-    // sponsored op, no need to prompt
-    if (ctx.op.paymasterAndData !== '0x') {
-        return
-    }
 
     try {
         // this is a new estimate because at this point the paymaster would have rejected our operation

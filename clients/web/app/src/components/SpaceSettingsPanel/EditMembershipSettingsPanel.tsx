@@ -16,7 +16,6 @@ import { EditMembership } from '@components/Web3/EditMembership/EditMembership'
 
 import { FullPanelOverlay } from '@components/Web3/WalletLinkingPanel'
 import { useEnvironment } from 'hooks/useEnvironmnet'
-import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
 import { formatUnits } from 'hooks/useBalance'
 import { EditPricingTitle } from '@components/Web3/EditMembership/EditPricingTitle'
 import { EditMembershipSchemaType, editMembershipSchema } from './editMembershipSchema'
@@ -156,7 +155,6 @@ function EditMembershipForm({
                     )
                 }}
             </FormRender>
-            <UserOpTxModal />
         </>
     )
 }

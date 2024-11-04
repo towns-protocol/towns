@@ -26,7 +26,6 @@ import { TransferSchema, transferSchema } from './transferAssetsSchema'
 import { WalletSelector } from './WalletSelector'
 import { AssetSelector, EthDetail } from './AssetSelector'
 import { useEthInputChange } from '../EditMembership/useEthInputChange'
-import { UserOpTxModal } from '../UserOpTxModal/UserOpTxModal'
 import { FullPanelOverlay } from '../WalletLinkingPanel'
 import { useBaseNftsForTransfer } from './useBaseNftsForTransfer'
 import {
@@ -95,7 +94,6 @@ function TransferAssets() {
                     >
                         {(form: UseFormReturn<TransferSchema>) => {
                             const isSubmitting = form.formState.isSubmitting
-                            const recipient = form.watch('recipient')
 
                             return (
                                 <FormProvider {...form}>
@@ -150,10 +148,6 @@ function TransferAssets() {
                                     {(isPendingTransferAsset || isSubmitting) && (
                                         <FullPanelOverlay withSpinner={false} />
                                     )}
-                                    <UserOpTxModal
-                                        toAddress={recipient}
-                                        requiresBalanceGreaterThanCost={false}
-                                    />
                                 </FormProvider>
                             )
                         }}
@@ -325,8 +319,6 @@ function SubmitButton(props: { source: Address | undefined; isTreasuryTransfer: 
             }
 
             if (isTreasuryTransfer || _isNftTransfer) {
-                console.log('$$$$$$ evan.log::JJJ $$$$$$')
-
                 setShowTreasuryOrNftConfirm(true)
                 return
             }

@@ -18,7 +18,6 @@ import { Box, Button, ErrorMessage, FormRender, Paragraph, Stack, TextField } fr
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
 import { useAllRoleDetails } from 'hooks/useAllRoleDetails'
-import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
 import { mapToErrorMessage } from '@components/Web3/utils'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { Panel } from '@components/Panel/Panel'
@@ -374,7 +373,6 @@ const Form = ({
                     onSuccess={onSuccess}
                 />
             </Stack>
-            <UserOpTxModal />
         </>
     ) : (
         <></>

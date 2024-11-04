@@ -7,10 +7,6 @@ export async function estimateAlchemyGasFees(
     ctx: IUserOperationMiddlewareCtx,
     provider: BundlerJsonRpcProvider,
 ) {
-    if (ctx.op.paymasterAndData !== '0x') {
-        return
-    }
-
     try {
         // https://docs.alchemy.com/reference/bundler-api-fee-logic
         const [fee, block] = await Promise.all([

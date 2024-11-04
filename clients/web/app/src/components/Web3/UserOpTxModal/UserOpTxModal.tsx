@@ -1,4 +1,4 @@
-import { userOpsStore } from '@towns/userops'
+import { PaymasterErrorCode, userOpsStore } from '@towns/userops'
 import { BigNumber } from 'ethers'
 import React, { useMemo, useState } from 'react'
 import { Address, useConnectivity } from 'use-towns-client'
@@ -18,18 +18,12 @@ import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { CopyWalletAddressButton } from '../GatedTownModal/Buttons'
 import { useWalletPrefix } from '../useWalletPrefix'
 
-type Props = {
-    valueLabel?: string
-    requiresBalanceGreaterThanCost?: boolean
-    toAddress?: Address
-}
-
-export function UserOpTxModal(props: Props) {
-    const { currOpGas, deny } = userOpsStore()
+export function UserOpTxModal() {
+    const { currOp, confirm, deny } = userOpsStore()
     const { end: endPublicPageLoginFlow } = usePublicPageLoginFlow()
     const { isTouch } = useDevice()
 
-    if (!currOpGas) {
+    if (typeof confirm !== 'function' || !currOp) {
         return null
     }
     return (
@@ -42,27 +36,66 @@ export function UserOpTxModal(props: Props) {
                 deny?.()
             }}
         >
-            <UserOpTxModalContent {...props} endPublicPageLoginFlow={endPublicPageLoginFlow} />
+            <UserOpTxModalContent endPublicPageLoginFlow={endPublicPageLoginFlow} />
         </AboveAppProgressModalContainer>
     )
 }
 
-function UserOpTxModalContent({
-    valueLabel,
-    requiresBalanceGreaterThanCost,
-    endPublicPageLoginFlow,
-    toAddress,
-}: Props & { endPublicPageLoginFlow: () => void }) {
-    const _requiresBalanceGreaterThanCost = requiresBalanceGreaterThanCost ?? true
-    const { currOpGas, currOpValue, confirm, deny, retryDetails } = userOpsStore(
+function UserOpTxModalContent({ endPublicPageLoginFlow }: { endPublicPageLoginFlow: () => void }) {
+    const {
+        currOp,
+        currOpDecodedCallData,
+        currOpValue,
+        confirm,
+        deny,
+        retryDetails,
+        rejectedSponsorshipReason,
+    } = userOpsStore(
         useShallow((s) => ({
-            currOpGas: s.currOpGas,
+            currOp: s.currOp,
             confirm: s.confirm,
             deny: s.deny,
             retryDetails: s.retryDetails,
             currOpValue: s.currOpValue,
+            currOpDecodedCallData: s.currOpDecodedCallData,
+            rejectedSponsorshipReason: s.rejectedSponsorshipReason,
         })),
     )
+
+    const rejectionMessage = useMemo(() => {
+        if (rejectedSponsorshipReason === PaymasterErrorCode.PAYMASTER_LIMIT_REACHED) {
+            return 'Maximum gas sponsorship reached.'
+        } else if (rejectedSponsorshipReason === PaymasterErrorCode.DAILY_LIMIT_REACHED) {
+            return 'Daily sponsored transactions reached.'
+        }
+    }, [rejectedSponsorshipReason])
+
+    // transferEth op, user can set the max amount of eth to transfer from their towns wallet
+    // in this case the gas will be substracted from their tx
+    // otherwise they'd get a warning that they don't have enough eth b/c max wallet eth would be lower than eth + gas fees
+    const _requiresBalanceGreaterThanCost = currOpDecodedCallData?.type !== 'transferEth'
+    const valueLabel = useMemo(() => {
+        if (currOpDecodedCallData?.type === 'prepayMembership' && currOpDecodedCallData.data) {
+            const { supply } = currOpDecodedCallData.data
+            return `Seats x ${supply}`
+        } else if (
+            currOpDecodedCallData?.type === 'joinSpace' ||
+            currOpDecodedCallData?.type === 'joinSpace_linkWallet'
+        ) {
+            return 'Membership'
+        }
+    }, [currOpDecodedCallData])
+
+    const toAddress = useMemo(() => {
+        const type = currOpDecodedCallData?.type
+        if (
+            (type === 'transferEth' || type === 'transferTokens' || type === 'withdraw') &&
+            currOpDecodedCallData?.data
+        ) {
+            return currOpDecodedCallData.data.recipient
+        }
+    }, [currOpDecodedCallData])
+
     const { loggedInWalletAddress } = useConnectivity()
 
     const { data: smartAccountAddress } = useAbstractAccountAddress({
@@ -73,10 +106,17 @@ function UserOpTxModalContent({
 
     const { isLoading: isSmartAccountDeployedLoading } = useIsSmartAccountDeployed()
 
+    const currOpGas = {
+        maxFeePerGas: currOp?.maxFeePerGas,
+        callGasLimit: currOp?.callGasLimit,
+        verificationGasLimit: currOp?.verificationGasLimit,
+        preVerificationGas: currOp?.preVerificationGas,
+    }
+
     const gasPrice = currOpGas?.maxFeePerGas ?? 0.0
     const gasLimit = currOpGas?.callGasLimit ?? 0.0
     const verificationGasLimit = currOpGas?.verificationGasLimit ?? 0.0
-    const preverificationGas = currOpGas?.preverificationGas ?? 0.0
+    const preverificationGas = currOpGas?.preVerificationGas ?? 0.0
 
     const sumGas = BigNumber.from(gasLimit)
         .add(BigNumber.from(preverificationGas))
@@ -184,7 +224,7 @@ function UserOpTxModalContent({
                 icon="close"
                 onClick={() => {
                     endPublicPageLoginFlow()
-                    deny()
+                    deny?.()
                 }}
             />
             <Box gap centerContent width={!_isTouch ? '400' : undefined} maxWidth="400">
@@ -261,6 +301,15 @@ function UserOpTxModalContent({
                         )}
                     </Box>
                 </Box>
+                {rejectedSponsorshipReason && (
+                    <Box padding horizontal gap background="level3" rounded="sm">
+                        <Icon type="info" color="gray1" shrink={false} />
+                        <Text>
+                            Gas sponsorship is not available for this transaction.{' '}
+                            {rejectionMessage}
+                        </Text>
+                    </Box>
+                )}
                 {retryDetails?.type === 'gasTooLow' && (
                     <Box
                         horizontal

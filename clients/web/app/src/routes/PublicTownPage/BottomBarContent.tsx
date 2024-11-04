@@ -4,7 +4,6 @@ import { BottomBarWithColWidths } from '@components/Web3/MembershipNFT/BottomBar
 import { Box, Stack, Text } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
-import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
 import { JoinLoginButton } from './JoinLoginButton'
 import { JoiningOverlay } from './JoiningOverlay'
 
@@ -114,7 +113,6 @@ export function BottomBarContent({
                 />
             </Stack>
             {isJoining && <JoiningOverlay />}
-            <UserOpTxModal valueLabel="Membership" />
         </>
     )
 }
