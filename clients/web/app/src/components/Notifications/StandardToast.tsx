@@ -72,9 +72,9 @@ export function StandardToast<T extends IconProps['type'] | undefined>(props: Pr
             </Box>
             <Box gap grow overflowX="scroll" overflowY="hidden">
                 <Box gap="sm">
-                    <Text>{message}</Text>
+                    <Box>{message}</Box>
                     {subMessage && (
-                        <Text
+                        <Box
                             style={{
                                 display: '-webkit-box',
                                 WebkitLineClamp: 2,
@@ -82,10 +82,10 @@ export function StandardToast<T extends IconProps['type'] | undefined>(props: Pr
                                 overflow: 'hidden',
                             }}
                             color="gray2"
-                            size="sm"
+                            fontSize="sm"
                         >
                             {subMessage}
-                        </Text>
+                        </Box>
                     )}
                 </Box>
                 {cta && (
