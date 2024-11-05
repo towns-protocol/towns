@@ -1,13 +1,12 @@
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useState } from 'react'
 import { Address } from 'use-towns-client'
 import { isAddress } from 'ethers/lib/utils'
 import { Box, Button, Stack, Text, TextField } from '@ui'
 import { CSVUploader } from '@components/CSVUploader/CSVUploader'
 import { useLookupUsersWithAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
-import { MultipleAddresses } from '@components/AddressSelection/MultipleAddresses'
-import { AddressSelectionDisplay } from '@components/AddressSelection/AddressSelectionDisplay'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { shortAddress } from 'ui/utils/utils'
+import { WalletMemberList } from './WalletMemberList'
 
 type Props = {
     isRole: boolean | undefined
@@ -20,27 +19,6 @@ export const WalletMemberSelector = (props: Props) => {
     const { walletMembers, onChange, isValidationError, isRole } = props
     const { data: users } = useLookupUsersWithAbstractAccountAddress()
     const [searchTerm, setSearchTerm] = useState('')
-
-    const { selectedAddresses, unselectedAddresses } = useMemo(() => {
-        if (isRole) {
-            const usersAddresses = users?.map((user) => user.abstractAccountAddress) || []
-            const selectedAddresses = walletMembers.filter((address) =>
-                usersAddresses.includes(address),
-            )
-            const unselectedAddresses = walletMembers.filter(
-                (address) => !usersAddresses.includes(address),
-            )
-            return {
-                selectedAddresses,
-                unselectedAddresses,
-            }
-        } else {
-            return {
-                selectedAddresses: [],
-                unselectedAddresses: walletMembers,
-            }
-        }
-    }, [users, walletMembers, isRole])
 
     const handleCSVAddresses = useCallback(
         (addresses: Address[]) => {
@@ -164,35 +142,12 @@ export const WalletMemberSelector = (props: Props) => {
                         </Box>
                     ) : null}
                 </Box>
-                <Box>
-                    {selectedAddresses.length <= 15 ? (
-                        <>
-                            {selectedAddresses.map((address) => (
-                                <AddressSelectionDisplay
-                                    key={address}
-                                    address={address}
-                                    onRemove={handleRemoveAddress}
-                                />
-                            ))}
-                            {selectedAddresses.length === 0 &&
-                                walletMembers.length <= 15 &&
-                                unselectedAddresses.map((address) => (
-                                    <AddressSelectionDisplay
-                                        key={address}
-                                        address={address}
-                                        onRemove={handleRemoveAddress}
-                                    />
-                                ))}
-                        </>
-                    ) : null}
-                    {walletMembers.length > 15 && (
-                        <MultipleAddresses
-                            walletMembers={walletMembers}
-                            selectedAddresses={selectedAddresses}
-                            removeAll={handleRemoveAllAddresses}
-                        />
-                    )}
-                </Box>
+                <WalletMemberList
+                    walletMembers={walletMembers}
+                    isRole={isRole}
+                    onRemove={handleRemoveAddress}
+                    onRemoveAll={handleRemoveAllAddresses}
+                />
             </Stack>
             {isValidationError && <Text color="error">Please add at least one valid address.</Text>}
         </Stack>

@@ -202,6 +202,7 @@ export const ChannelInfo = () => {
                             </Text>
                         </Stack>
                         <ChannelsRolesList
+                            spaceId={spaceId}
                             canJoin={canJoinChannel}
                             isLoadingCanJoin={isLoadingCanJoinChannel}
                             roles={roles}

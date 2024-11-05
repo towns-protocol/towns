@@ -5,7 +5,7 @@ import { Box, Card, Icon, IconButton, Text } from '@ui'
 type Props = {
     walletMembers: Address[]
     selectedAddresses: Address[]
-    removeAll: () => void
+    removeAll?: () => void
 }
 
 export const MultipleAddresses = ({ walletMembers, selectedAddresses, removeAll }: Props) => {
@@ -56,12 +56,14 @@ export const MultipleAddresses = ({ walletMembers, selectedAddresses, removeAll 
                     tooltip="Download all"
                     onClick={handleDownloadCSV}
                 />
-                <IconButton
-                    icon="close"
-                    size="square_xs"
-                    tooltip="Remove all"
-                    onClick={removeAll}
-                />
+                {removeAll && (
+                    <IconButton
+                        icon="close"
+                        size="square_xs"
+                        tooltip="Remove all"
+                        onClick={removeAll}
+                    />
+                )}
             </Box>
         </Card>
     )

@@ -319,7 +319,7 @@ export const MessageModalSheet = (props: Props) => {
                                         <TableCell
                                             isError
                                             iconType="delete"
-                                            text="Delete Message 2"
+                                            text="Delete Message"
                                             onClick={onDeleteClick}
                                         />
                                     )}

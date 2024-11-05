@@ -16,9 +16,10 @@ import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { FullPanelOverlay } from '@components/Web3/WalletLinkingPanel'
 import { EditGating } from '@components/Web3/EditMembership/EditGating'
 import { RoleFormSchemaType } from '@components/Web3/CreateSpaceForm/types'
+import { useEntitlements } from 'hooks/useEntitlements'
 import { convertToNumber } from './utils'
 import { formSchema } from './schema'
-import { useChannelAndTownRoleDetails, useGatingInfo } from './hooks'
+import { useChannelAndTownRoleDetails } from './hooks'
 import { SingleRolePanelSubmitButton } from './SingleRolePanelSubmitButton'
 import { ChannelPermissionsToggles } from './ChannelPermissionsToggles'
 import { DeleteRoleModal } from './DeleteRoleModal'
@@ -59,8 +60,8 @@ export function SingleRolePanelWithoutAuth() {
     const transactionIsPending =
         pendingCreateRoleTransaction || pendingUpdateRoleTransaction || pendingDeleteRoleTransaction
 
-    const { gatingType, usersGatedBy, tokensGatedBy, ethBalanceGatedBy, isTokensGatedByLoading } =
-        useGatingInfo(roleDetails)
+    const { data: entitlements, isLoading: isEntitlementsLoading } =
+        useEntitlements(spaceIdFromPath)
 
     const values: RoleFormSchemaType = useMemo(
         () => ({
@@ -69,24 +70,15 @@ export function SingleRolePanelWithoutAuth() {
                 ? [Permission.Read, Permission.React]
                 : defaultChannelPermissionsValues,
             townPermissions: townRoleDetails?.permissions ?? [],
-            gatingType,
-            tokensGatedBy,
-            usersGatedBy,
-            ethBalanceGatedBy,
+            gatingType: entitlements.hasEntitlements ? 'gated' : 'everyone',
+            tokensGatedBy: entitlements.tokens,
+            usersGatedBy: entitlements.users,
+            ethBalanceGatedBy: entitlements.ethBalance,
         }),
-        [
-            roleDetails,
-            isCreateRole,
-            defaultChannelPermissionsValues,
-            townRoleDetails,
-            gatingType,
-            usersGatedBy,
-            tokensGatedBy,
-            ethBalanceGatedBy,
-        ],
+        [roleDetails, isCreateRole, defaultChannelPermissionsValues, townRoleDetails, entitlements],
     )
 
-    if (isTokensGatedByLoading) {
+    if (isEntitlementsLoading) {
         return <ButtonSpinner />
     }
 

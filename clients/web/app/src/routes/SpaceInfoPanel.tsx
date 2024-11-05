@@ -13,7 +13,6 @@ import {
     useHasPermission,
     useIsSpaceOwner,
     useRefreshMetadataTx,
-    useRoleDetails,
     useSpaceData,
     useSpaceId,
     useSpaceMembers,
@@ -49,21 +48,18 @@ import { openSeaAssetUrl } from '@components/Web3/utils'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { Panel } from '@components/Panel/Panel'
 import { SpaceSettingsNavigationPanel } from '@components/SpaceSettingsPanel/SpaceSettingsNavigationPanel'
-import { TokenImage } from '@components/Tokens/TokenSelector/TokenImage'
-import { useTokensWithMetadata } from 'api/lib/collectionMetadata'
-import { NetworkName } from '@components/Tokens/TokenSelector/NetworkName'
 import { useAppProgressStore } from '@components/AppProgressOverlay/store/appProgressStore'
 import { useNotificationSettings } from 'hooks/useNotificationSettings'
 import { useUploadAttachment } from '@components/MediaDropContext/useUploadAttachment'
 import { EditTownInfo } from '@components/Panel/EditTownInfo'
 import { ContractInfoButtons } from '@components/Panel/ContractInfoButtons'
 import { Analytics } from 'hooks/useAnalytics'
-import { useConvertRuleDataToToken } from '@components/Tokens/hooks'
-import { Token } from '@components/Tokens/TokenSelector/tokenSchemas'
 import { StandardToast } from '@components/Notifications/StandardToast'
 import { popupToast } from '@components/Notifications/popupToast'
 
 import { useBalance } from 'hooks/useBalance'
+import { EntitlementsDisplay } from '@components/TownPageLayout/EntitlementsDisplay'
+import { useEntitlements } from 'hooks/useEntitlements'
 import { ReauthenticateToast, WalletReady } from 'privy/WalletReady'
 import { useWaitForInvalidation } from 'hooks/useWaitForInvalidation'
 import { PublicTownPage } from './PublicTownPage/PublicTownPage'
@@ -741,15 +737,9 @@ const TokensGatingSpace = ({
     canEdit: boolean
     onClick: () => void
 }) => {
-    const { isLoading: isLoadingRoleDetails, roleDetails } = useRoleDetails(spaceId ?? '', 1)
+    const { data: entitlements } = useEntitlements(spaceId ?? '')
 
-    const { tokens: initialTokenValues } = useConvertRuleDataToToken(roleDetails?.ruleData)
-
-    const { data: tokens, isLoading: isTokensLoading } = useTokensWithMetadata(
-        initialTokenValues.slice(0, 3),
-    )
-
-    if (isLoadingRoleDetails || tokens.length === 0 || isTokensLoading) {
+    if (!entitlements.hasEntitlements) {
         return null
     }
 
@@ -762,49 +752,29 @@ const TokensGatingSpace = ({
             cursor={canEdit ? 'pointer' : 'auto'}
             onClick={onClick}
         >
-            <Box horizontal gap="sm" alignItems="center" paddingY="sm" paddingX="md">
+            <Box
+                horizontal
+                gap="sm"
+                alignItems="center"
+                paddingY="sm"
+                paddingX="md"
+                justifyContent="spaceBetween"
+            >
                 <Box horizontal centerContent gap="sm">
                     <Icon type="lock" size="square_sm" color="gray2" />
                     <Paragraph size="sm" color="default">
                         Gated
                     </Paragraph>
                 </Box>
-                <Box
-                    horizontal
-                    gap="sm"
-                    style={{
-                        marginLeft: 'auto',
-                    }}
-                >
-                    {tokens.map((token) => (
-                        <TokenToDisplay key={token.data.address} token={token} />
-                    ))}
+                <Box horizontal gap="sm" alignItems="center">
+                    <Box>
+                        <EntitlementsDisplay entitlements={entitlements} />
+                    </Box>
+                    {canEdit && (
+                        <IconButton icon="edit" size="square_sm" color="gray2" onClick={onClick} />
+                    )}
                 </Box>
-                {canEdit && (
-                    <IconButton icon="edit" size="square_sm" color="gray2" onClick={onClick} />
-                )}
-                {initialTokenValues.length > 3 && `+${initialTokenValues.length - 3} more`}
             </Box>
         </Stack>
-    )
-}
-
-function TokenToDisplay({ token }: { token: Token }) {
-    return (
-        <Box
-            tooltip={
-                <Box centerContent background="level1" padding="sm" rounded="sm" gap="sm">
-                    <Text size="sm" textAlign="center">
-                        {token.data.label ?? 'Unknown Token'}
-                    </Text>
-                    <NetworkName chainId={token.chainId} />
-                    <Text size="sm" textAlign="center" color="gray2">
-                        {token.data.address}
-                    </Text>
-                </Box>
-            }
-        >
-            <TokenImage imgSrc={token.data.imgSrc} width="x3" />
-        </Box>
     )
 }

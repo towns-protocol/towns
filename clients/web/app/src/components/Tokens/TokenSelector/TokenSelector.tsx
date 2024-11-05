@@ -12,20 +12,9 @@ import { TokenEditor } from './TokenEditor'
 import { TokenOptions } from './TokenOptions'
 import { useValidAndSortedTokens } from '../hooks'
 import { TokenType } from '../types'
+import { NATIVE_TOKEN, useNativeTokenWithQuantity } from '../utils'
 
 const allowedTokenTypes = [TokenType.ERC721, TokenType.ERC20, TokenType.ERC1155]
-
-const NATIVE_TOKEN: Token = {
-    chainId: 1,
-    data: {
-        address: '0x0000000000000000000000000000000000000000',
-        type: TokenType.ERC20,
-        label: 'ETH',
-        symbol: 'ETH',
-        decimals: 18,
-        imgSrc: '/eth-icon.svg',
-    },
-}
 
 type Props = {
     isValidationError: boolean
@@ -42,6 +31,8 @@ export function TokenSelector(props: Props) {
     const [textFieldValue, setTextFieldValue] = useState('')
     const [tokenEditor, setTokenEditor] = useState<Token | undefined>()
     const containerRef = useRef<HTMLDivElement>(null)
+
+    const nativeTokenWithQuantity = useNativeTokenWithQuantity(ethBalance)
 
     const { data: tokenMetadata, isLoading: isTokenMetadataLoading } =
         useTokenMetadataAcrossNetworks(textFieldValue)
@@ -122,16 +113,6 @@ export function TokenSelector(props: Props) {
 
     const _isTouch = isTouch()
 
-    const nativeTokenWithQuantity: Token | undefined = useMemo(() => {
-        return {
-            ...NATIVE_TOKEN,
-            data: {
-                ...NATIVE_TOKEN.data,
-                quantity: ethBalance,
-            },
-        }
-    }, [ethBalance])
-
     return (
         <Box
             gap="sm"
@@ -158,12 +139,12 @@ export function TokenSelector(props: Props) {
                     padding="md"
                     rounded="sm"
                     data-testid="balance-gate-button"
-                    onClick={() => setTokenEditor(nativeTokenWithQuantity)}
+                    onClick={() => setTokenEditor(nativeTokenWithQuantity || NATIVE_TOKEN)}
                 />
             </Box>
 
             <Box gap="sm">
-                {nativeTokenWithQuantity && ethBalance !== '' && ethBalance !== '0' && (
+                {nativeTokenWithQuantity && (
                     <TokenSelectionInput
                         token={nativeTokenWithQuantity}
                         onDelete={onDelete}

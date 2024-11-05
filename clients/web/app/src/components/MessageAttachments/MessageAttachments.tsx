@@ -28,7 +28,6 @@ import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { useReadableMembershipInfo } from '@components/TownPageLayout/useReadableMembershipInfo'
 import { getPriceText } from '@components/TownPageLayout/townPageUtils'
 import { useEntitlements } from 'hooks/useEntitlements'
-import { SelectedToken } from '@components/TownPageLayout/TokenInfoBox'
 import { PATHS } from 'routes'
 import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
 import { MessageAttachmentsContext } from './MessageAttachmentsContext'
@@ -295,32 +294,16 @@ const TownsContent = (
                                 {(memberInfo?.totalSupply ?? 0) > 1 ? `s` : ``}
                             </Pill>
                         )}
-                        {priceText ? (
+                        {priceText && (
                             <Pill>
                                 {priceText?.value}
                                 {parseFloat(priceText.value) > 0 ? ' ETH' : ''}
                             </Pill>
-                        ) : (
-                            <></>
                         )}
-                        {(entitlements?.tokens.length ?? 0) > 0 ? (
+                        {entitlements?.hasEntitlements && (
                             <Pill position="relative" alignSelf="start">
-                                <Stack horizontal gap="xs">
-                                    {entitlements?.tokens.map((token, index) => (
-                                        <Box key={token.address + token.chainId}>
-                                            <SelectedToken
-                                                contractAddress={token.address}
-                                                chainId={token.chainId}
-                                                size="x2"
-                                                borderRadius="xs"
-                                            />
-                                        </Box>
-                                    ))}
-                                    {entitlements?.tokens.at(-1)?.type}
-                                </Stack>
+                                Gated
                             </Pill>
-                        ) : (
-                            <></>
                         )}
                     </Stack>
                 )}

@@ -18,8 +18,9 @@ import { FullPanelOverlay } from '@components/Web3/WalletLinkingPanel'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { formatUnits } from 'hooks/useBalance'
 import { EditPricingTitle } from '@components/Web3/EditMembership/EditPricingTitle'
+import { useEntitlements } from 'hooks/useEntitlements'
 import { EditMembershipSchemaType, editMembershipSchema } from './editMembershipSchema'
-import { useGatingInfo, useMembershipInfoAndRoleDetails } from './hooks'
+import { useMembershipInfoAndRoleDetails } from './hooks'
 import { EditMembershipSubmitButton } from './EditMembershipSubmitButton'
 
 export const EDIT_MEMBERSHIP_SETTINGS_PANEL = 'editMembershipSettings'
@@ -60,23 +61,22 @@ function EditMembershipForm({
     spaceId: string | undefined
 }) {
     const environment = useEnvironment()
-    const { membershipInfo, pricingModule, roleDetails } = defaultFormData
+    const { membershipInfo, pricingModule } = defaultFormData
     const transactionIsPending = useIsTransactionPending(
         BlockchainTransactionType.EditSpaceMembership,
     )
     const { data: freeAllocation } = useMembershipFreeAllocation(spaceId)
 
-    const { gatingType, usersGatedBy, tokensGatedBy, ethBalanceGatedBy, isTokensGatedByLoading } =
-        useGatingInfo(roleDetails)
+    const { data: entitlements, isLoading: isEntitlementsLoading } = useEntitlements(spaceId)
 
     const { data: pricingModules, isLoading: isLoadingPricingModules } = usePricingModules()
 
     const defaultValues: EditMembershipSchemaType = useMemo(
         () => ({
-            gatingType,
-            tokensGatedBy,
-            ethBalanceGatedBy,
-            usersGatedBy,
+            gatingType: entitlements.hasEntitlements ? 'gated' : 'everyone',
+            tokensGatedBy: entitlements.tokens,
+            ethBalanceGatedBy: entitlements.ethBalance,
+            usersGatedBy: entitlements.users,
             membershipLimit: Number(membershipInfo?.maxSupply) ?? 0,
             membershipCost: formatUnits((membershipInfo?.price as bigint) ?? 0n),
             membershipPricingType: pricingModule?.isFixed ? 'fixed' : 'dynamic',
@@ -84,10 +84,10 @@ function EditMembershipForm({
             membershipCurrency: (membershipInfo?.currency as string) ?? constants.AddressZero,
             prepaidMemberships: 0,
         }),
-        [gatingType, tokensGatedBy, usersGatedBy, membershipInfo, pricingModule, ethBalanceGatedBy],
+        [entitlements, membershipInfo, pricingModule],
     )
 
-    if (isTokensGatedByLoading) {
+    if (isEntitlementsLoading) {
         return <ButtonSpinner />
     }
 

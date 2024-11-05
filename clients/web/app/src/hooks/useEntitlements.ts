@@ -2,38 +2,58 @@ import { convertRuleDataV1ToV2, useRoleDetails } from 'use-towns-client'
 import { useMemo } from 'react'
 import { isEveryoneAddress } from '@components/Web3/utils'
 import { convertRuleDataToTokensAndEthBalance } from '@components/Tokens/utils'
+import { useTokensWithMetadata } from 'api/lib/collectionMetadata'
 
 export type Entitlements = ReturnType<typeof useEntitlements>['data']
 
-export const checkAnyoneCanJoin = (entitlements: Entitlements) =>
-    entitlements &&
-    entitlements.tokens.length === 0 &&
-    entitlements.users.length === 1 &&
-    isEveryoneAddress(entitlements.users[0])
-
-// returns a map of all token addresses assigned to the minter role, and their tokenIds if applicable
-export function useEntitlements(spaceId: string | undefined) {
-    const { roleDetails: minterRoleDetails, ...rest } = useRoleDetails(spaceId ?? '', 1)
+// returns a map of all token addresses assigned to the passed role or minter role by default, and their tokenIds if applicable
+export function useEntitlements(spaceId: string | undefined, roleId?: number | undefined) {
+    const {
+        roleDetails: roleDetails,
+        isLoading: isRoleDetailsLoading,
+        error: roleDetailsError,
+    } = useRoleDetails(spaceId ?? '', roleId ?? 1)
 
     const ruleData =
-        minterRoleDetails?.ruleData.kind === 'v2'
-            ? minterRoleDetails.ruleData.rules
-            : minterRoleDetails?.ruleData.rules
-            ? convertRuleDataV1ToV2(minterRoleDetails.ruleData.rules)
+        roleDetails?.ruleData.kind === 'v2'
+            ? roleDetails.ruleData.rules
+            : roleDetails?.ruleData.rules
+            ? convertRuleDataV1ToV2(roleDetails.ruleData.rules)
             : undefined
 
-    const { tokens, ethBalance } = ruleData
+    const { tokens: tokensFromRuleData, ethBalance: ethBalanceFromRuleData } = ruleData
         ? convertRuleDataToTokensAndEthBalance(ruleData)
-        : { tokens: [], ethBalance: undefined }
+        : { tokens: [], ethBalance: '' }
+
+    const {
+        data: tokens,
+        isLoading: isTokensLoading,
+        isError: isTokensError,
+    } = useTokensWithMetadata(tokensFromRuleData)
+
+    const users = (roleDetails?.users ?? []).filter((user) => !isEveryoneAddress(user))
+    const ethBalance = ethBalanceFromRuleData
 
     return useMemo(() => {
         return {
             data: {
                 tokens,
-                users: minterRoleDetails?.users ?? [],
+                users,
                 ethBalance,
+                hasEntitlements: Boolean(
+                    tokens.length > 0 || users.length > 0 || ethBalance.length > 0,
+                ),
             },
-            ...rest,
+            isLoading: isRoleDetailsLoading || isTokensLoading,
+            isError: !!roleDetailsError || isTokensError,
         }
-    }, [ethBalance, tokens, minterRoleDetails?.users, rest])
+    }, [
+        tokens,
+        users,
+        ethBalance,
+        isRoleDetailsLoading,
+        isTokensLoading,
+        roleDetailsError,
+        isTokensError,
+    ])
 }

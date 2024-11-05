@@ -1,17 +1,14 @@
-import React from 'react'
-import { Address } from 'use-towns-client'
-import { Box, BoxProps, Icon, Text } from '@ui'
-import { TokenImage } from '@components/Tokens/TokenSelector/TokenImage'
-import { useTokenMetadataForChainId } from 'api/lib/collectionMetadata'
-import { vars } from 'ui/styles/vars.css'
-import { NetworkName } from '@components/Tokens/TokenSelector/NetworkName'
-import { Token } from '@components/Tokens/TokenSelector/tokenSchemas'
+import React, { useMemo, useState } from 'react'
+import { Box } from '@ui'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
+import { Entitlements } from 'hooks/useEntitlements'
+import { RequirementsModal } from '@components/Modals/RequirementsModal'
 import { InformationBox } from './InformationBox'
+import { EntitlementsDisplay } from './EntitlementsDisplay'
 
 export const TokenInfoBox = ({
-    tokensGatedBy,
-    usersGatedBy,
+    spaceId,
+    entitlements,
     onInfoBoxClick,
     hasError,
     title,
@@ -19,8 +16,8 @@ export const TokenInfoBox = ({
     isEntitlementsLoading,
     dataTestId,
 }: {
-    tokensGatedBy: Token[]
-    usersGatedBy: string[]
+    spaceId: string | undefined
+    entitlements: Entitlements
     isEntitlementsLoading?: boolean
     onInfoBoxClick?: () => void
     title: string
@@ -28,93 +25,54 @@ export const TokenInfoBox = ({
     hasError?: boolean
     dataTestId?: string
 }) => {
-    return (
-        <InformationBox
-            border={hasError ? 'negative' : 'none'}
-            title={title}
-            subtitle={subtitle}
-            dataTestId={dataTestId}
-            centerContent={
-                isEntitlementsLoading ? (
-                    <Box>
-                        <ButtonSpinner height="x1" />
-                    </Box>
-                ) : (tokensGatedBy && tokensGatedBy.length > 0) ||
-                  (usersGatedBy && usersGatedBy.length > 0) ? (
-                    <Box horizontal gap="xs" alignItems="center">
-                        {usersGatedBy && usersGatedBy.length > 0 ? (
-                            <Box tooltip="Specific wallet addresses">
-                                <Icon type="wallet" size="square_md" />
-                            </Box>
-                        ) : null}
-                        {tokensGatedBy && tokensGatedBy.length > 0 ? (
-                            <Box position="relative" width="x3" aspectRatio="1/1">
-                                {tokensGatedBy.map((token, index) => (
-                                    <Box
-                                        key={`${token.data.address}-${token.chainId}-${token.data.tokenId}`}
-                                        position="absolute"
-                                        top="none"
-                                        style={{
-                                            zIndex: +vars.zIndex.ui - index || 1,
-                                            transform: `translateX(${
-                                                -(tokensGatedBy.length * 5) / 2
-                                            }px)`,
-                                            left: index ? `${index * 10}px` : 0,
-                                        }}
-                                    >
-                                        <SelectedToken
-                                            contractAddress={token.data.address as Address}
-                                            chainId={token.chainId}
-                                        />
-                                    </Box>
-                                ))}
-                            </Box>
-                        ) : null}
-                    </Box>
-                ) : (
-                    <Icon type="people" size="square_md" />
-                )
-            }
-            onClick={onInfoBoxClick}
-        />
+    const [showModal, setShowModal] = useState(false)
+
+    const isAccessOpen = useMemo(
+        () =>
+            entitlements.users.length === 0 &&
+            entitlements.tokens.length === 0 &&
+            entitlements.ethBalance.length > 0,
+        [entitlements.users.length, entitlements.tokens.length, entitlements.ethBalance],
     )
-}
 
-export function SelectedToken({
-    contractAddress,
-    chainId,
-    size = 'x3',
-    ...boxProps
-}: {
-    contractAddress: string
-    chainId: number
-    size?: BoxProps['width']
-} & Omit<BoxProps, 'size'>) {
-    const { data: tokenDataWithChainId } = useTokenMetadataForChainId(contractAddress, chainId)
+    const notClickable = useMemo(
+        () => spaceId !== undefined && (!isAccessOpen || isEntitlementsLoading),
+        [spaceId, isAccessOpen, isEntitlementsLoading],
+    )
+
+    const handleClick = () => {
+        if (notClickable) {
+            return
+        }
+        if (onInfoBoxClick) {
+            onInfoBoxClick()
+        } else {
+            setShowModal(true)
+        }
+    }
 
     return (
-        <Box
-            tooltip={
-                <Box centerContent gap="sm" padding="sm" background="level2" rounded="sm">
-                    <Box horizontal gap="xs" alignItems="center">
-                        <Text size="sm">{tokenDataWithChainId?.data.label}</Text>
-                        <Text size="sm">·</Text>
-                        <NetworkName chainId={chainId} size="sm" color="initial" />
-                    </Box>
-                    <Text size="xs">{tokenDataWithChainId?.data.address}</Text>
-                </Box>
-            }
-        >
-            {tokenDataWithChainId ? (
-                <TokenImage imgSrc={tokenDataWithChainId.data?.imgSrc} width={size} />
-            ) : (
-                <Box
-                    centerContent
-                    aspectRatio="1/1"
-                    background="level4"
-                    borderRadius="sm"
-                    width={size}
-                    {...boxProps}
+        <Box pointerEvents={notClickable ? 'none' : 'auto'}>
+            <InformationBox
+                border={hasError ? 'negative' : 'none'}
+                title={title}
+                subtitle={subtitle}
+                dataTestId={dataTestId}
+                centerContent={
+                    isEntitlementsLoading ? (
+                        <ButtonSpinner height="x1" />
+                    ) : (
+                        <EntitlementsDisplay isCentered entitlements={entitlements} />
+                    )
+                }
+                onClick={handleClick}
+            />
+            {showModal && (
+                <RequirementsModal
+                    spaceId={spaceId}
+                    title={title}
+                    entitlements={entitlements}
+                    onClose={() => setShowModal(false)}
                 />
             )}
         </Box>

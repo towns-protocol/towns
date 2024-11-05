@@ -84,15 +84,15 @@ export function CreateChannelSubmit(props: {
                                     ? convertRuleDataV1ToV2(ruleData.rules)
                                     : ruleData.rules
 
-                            const { tokens: convertedTokens } =
+                            const { tokens: convertedTokens, ethBalance } =
                                 convertRuleDataToTokensAndEthBalance(ruleDataV2)
 
                             const tokens = convertedTokens.map((t) => {
                                 return {
                                     chainId: t.chainId,
-                                    contractAddress: t.address,
-                                    opType: t.type,
-                                    threshold: t.quantity.toString(),
+                                    contractAddress: t.data.address,
+                                    opType: t.data.type,
+                                    threshold: t.data.quantity?.toString() ?? '',
                                 } as ApiObject
                             })
 
@@ -102,6 +102,7 @@ export function CreateChannelSubmit(props: {
                                 permissions: r.permissions,
                                 users: r.users,
                                 tokens,
+                                ethBalance,
                             }
                         }
                         return undefined

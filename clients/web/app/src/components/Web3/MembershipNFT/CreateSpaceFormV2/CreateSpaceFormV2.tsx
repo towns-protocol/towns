@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { FormProvider, UseFormReturn, useFormContext } from 'react-hook-form'
 import { ethers } from 'ethers'
-
 import { useNavigate } from 'react-router'
 import { useConnectivity, useImageStore, usePlatformMintLimit } from 'use-towns-client'
 import { CreateSpaceFlowStatus } from 'use-towns-client/dist/client/TownsClientTypes'
@@ -179,6 +178,7 @@ function CreateSpaceFormV2WithoutAuth() {
                         gatingType,
                         usersGatedBy,
                         tokensGatedBy,
+                        ethBalanceGatedBy,
                         shortDescriptionValue,
                         longDescriptionValue,
                         membershipPricingType,
@@ -191,6 +191,7 @@ function CreateSpaceFormV2WithoutAuth() {
                         'gatingType',
                         'usersGatedBy',
                         'tokensGatedBy',
+                        'ethBalanceGatedBy',
                         'shortDescription',
                         'longDescription',
                         'membershipPricingType',
@@ -312,8 +313,14 @@ function CreateSpaceFormV2WithoutAuth() {
                                                             zIndex="layer"
                                                         >
                                                             <TokenInfoBox
-                                                                usersGatedBy={usersGatedBy}
-                                                                tokensGatedBy={tokensGatedBy}
+                                                                /* // Undefined because we're creating  the space */
+                                                                spaceId={undefined}
+                                                                entitlements={{
+                                                                    users: usersGatedBy,
+                                                                    tokens: tokensGatedBy,
+                                                                    ethBalance: ethBalanceGatedBy,
+                                                                    hasEntitlements: false,
+                                                                }}
                                                                 hasError={
                                                                     Boolean(
                                                                         _form.formState.errors[

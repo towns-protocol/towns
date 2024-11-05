@@ -9,7 +9,7 @@ import { shortAddress } from 'workers/utils'
 
 type Props = {
     address: Address
-    onRemove: (address: Address) => void
+    onRemove?: (address: Address) => void
 }
 
 export const AddressSelectionDisplay = ({ address, onRemove }: Props) => {
@@ -42,12 +42,14 @@ export const AddressSelectionDisplay = ({ address, onRemove }: Props) => {
                     <ClipboardCopy clipboardContent={address} />
                 </Box>
             </Box>
-            <IconButton
-                icon="close"
-                size="square_xs"
-                data-testid={`remove-address-${address}`}
-                onClick={() => onRemove(address)}
-            />
+            {onRemove && (
+                <IconButton
+                    icon="close"
+                    size="square_xs"
+                    data-testid={`remove-address-${address}`}
+                    onClick={() => onRemove(address)}
+                />
+            )}
         </Card>
     )
 }

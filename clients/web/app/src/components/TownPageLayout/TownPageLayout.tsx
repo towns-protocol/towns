@@ -1,10 +1,5 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import {
-    Address,
-    EVERYONE_ADDRESS,
-    useContractSpaceInfo,
-    useGetRootKeyFromLinkedWallet,
-} from 'use-towns-client'
+import { Address, useContractSpaceInfo, useGetRootKeyFromLinkedWallet } from 'use-towns-client'
 import { useEvent } from 'react-use-event-hook'
 import { isAddress } from 'viem'
 import { InteractiveTownsToken } from '@components/TownsToken/InteractiveTownsToken'
@@ -12,16 +7,14 @@ import { ImageVariants, useImageSource } from '@components/UploadImage/useImageS
 import { Box, Button, Heading, Icon, IconButton, MotionStack, Paragraph, Stack, Text } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { AvatarTextHorizontal } from '@components/Avatar/AvatarTextHorizontal'
-import { useConvertEntitlementsToTokenWithBigInt } from '@components/Tokens/hooks'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { baseScanUrl, openSeaAssetUrl } from '@components/Web3/utils'
 import { vars } from 'ui/styles/vars.css'
 import { ToneName } from 'ui/styles/themes'
 import { getInviteUrl } from 'ui/utils/utils'
 import useCopyToClipboard from 'hooks/useCopyToClipboard'
-import { Entitlements, checkAnyoneCanJoin, useEntitlements } from 'hooks/useEntitlements'
+import { Entitlements, useEntitlements } from 'hooks/useEntitlements'
 import { usePublicPageLoginFlow } from 'routes/PublicTownPage/usePublicPageLoginFlow'
-import { useTokensWithMetadata } from 'api/lib/collectionMetadata'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { useReadableMembershipInfo } from './useReadableMembershipInfo'
 import { TokenInfoBox } from './TokenInfoBox'
@@ -87,8 +80,6 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
     const { data: membershipInfo } = useReadableMembershipInfo(spaceId)
 
     const { data: entitlements, isLoading: isEntitlementsLoading } = useEntitlements(spaceId)
-
-    const anyoneCanJoin = checkAnyoneCanJoin(entitlements)
 
     const { imageSrc } = useImageSource(spaceId, ImageVariants.thumbnail600)
     const leftColRef = useRef<HTMLDivElement>(null)
@@ -158,12 +149,12 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
                         </Stack>
                         {!isJoining && (
                             <InformationBoxes
+                                spaceId={spaceId}
                                 imageSrc={imageSrc}
                                 price={priceText}
                                 duration={durationText}
                                 address={address}
                                 chainId={chainId}
-                                anyoneCanJoin={anyoneCanJoin}
                                 isEntitlementsLoading={isEntitlementsLoading}
                                 entitlements={entitlements}
                             />
@@ -314,24 +305,17 @@ const Header = (props: {
 }
 
 const InformationBoxes = (props: {
+    spaceId: string
     imageSrc?: string
     price: { value: string; suffix: string } | undefined
     duration: { value: string; suffix: string } | undefined
     address?: `0x${string}`
     chainId: number
-    anyoneCanJoin: boolean
     isEntitlementsLoading: boolean
     entitlements?: Entitlements
 }) => {
-    const {
-        address,
-        anyoneCanJoin,
-        chainId,
-        duration,
-        isEntitlementsLoading,
-        price,
-        entitlements,
-    } = props
+    const { spaceId, address, chainId, duration, isEntitlementsLoading, price, entitlements } =
+        props
     const { isTouch } = useDevice()
     const onAddressClick = useEvent(() => {
         window.open(`${baseScanUrl(chainId)}/address/${address}`, '_blank', 'noopener,noreferrer')
@@ -344,12 +328,7 @@ const InformationBoxes = (props: {
         window.open(`${openSeaAssetUrl(chainId, address)}`, '_blank', 'noopener,noreferrer')
     })
 
-    const tokens = useConvertEntitlementsToTokenWithBigInt(entitlements)
-    const { data: tokensGatedBy, isLoading: isLoadingTokensData } = useTokensWithMetadata(tokens)
-
-    const usersGatedBy = entitlements?.users.filter((user) => user !== EVERYONE_ADDRESS) ?? []
-
-    if (isLoadingTokensData) {
+    if (isEntitlementsLoading || !entitlements) {
         return <ButtonSpinner />
     }
 
@@ -371,11 +350,11 @@ const InformationBoxes = (props: {
             }}
         >
             <TokenInfoBox
+                spaceId={spaceId}
                 title="Access"
-                subtitle={anyoneCanJoin ? 'Open' : 'Gated'}
+                subtitle={entitlements.hasEntitlements ? 'Gated' : 'Open'}
                 isEntitlementsLoading={isEntitlementsLoading}
-                tokensGatedBy={tokensGatedBy}
-                usersGatedBy={usersGatedBy}
+                entitlements={entitlements}
                 dataTestId="town-preview-membership-info-bubble"
             />
             <InformationBox

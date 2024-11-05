@@ -8,10 +8,38 @@ import {
     createOperationsTree,
 } from 'use-towns-client'
 import { constants } from 'ethers'
+import { useMemo } from 'react'
 import { formatUnits, parseUnits } from 'hooks/useBalance'
 import { EVERYONE_ADDRESS } from 'utils'
 import { TokenType } from './types'
-import { Token, TokenEntitlement } from './TokenSelector/tokenSchemas'
+import { Token, TokenWithBigInt } from './TokenSelector/tokenSchemas'
+
+export const NATIVE_TOKEN: Token = {
+    chainId: 1,
+    data: {
+        address: '0x0000000000000000000000000000000000000000',
+        type: TokenType.ERC20,
+        label: 'ETH',
+        symbol: 'ETH',
+        decimals: 18,
+        imgSrc: '/eth-icon.svg',
+    },
+}
+
+export const useNativeTokenWithQuantity = (ethBalance: string | undefined): Token | undefined => {
+    return useMemo(() => {
+        if (!ethBalance || ethBalance === '0' || ethBalance === '') {
+            return undefined
+        }
+        return {
+            ...NATIVE_TOKEN,
+            data: {
+                ...NATIVE_TOKEN.data,
+                quantity: ethBalance,
+            },
+        }
+    }, [ethBalance])
+}
 
 export function convertTokenTypeToOperationType(type: TokenType) {
     switch (type) {
@@ -34,8 +62,6 @@ export function convertOperationTypeToTokenType(type: CheckOperationType) {
             return TokenType.ERC721
         case CheckOperationType.ERC20:
             return TokenType.ERC20
-        // Placeholder, needs fixing
-        // https://linear.app/hnt-labs/issue/TOWNS-14181/handle-towns-that-are-gated-by-eth-balance
         case CheckOperationType.ETH_BALANCE:
             return TokenType.UNKNOWN
         default:
@@ -47,8 +73,8 @@ export function convertOperationTypeToTokenType(type: CheckOperationType) {
 export function convertRuleDataToTokensAndEthBalance(
     ruleData: IRuleEntitlementV2Base.RuleDataV2Struct,
 ): {
-    tokens: TokenEntitlement[]
-    ethBalance: string | undefined
+    tokens: TokenWithBigInt[]
+    ethBalance: string
 } {
     const decodedCheckOperations = createDecodedCheckOperationFromTree(ruleData)
 
@@ -56,9 +82,13 @@ export function convertRuleDataToTokensAndEthBalance(
         (p) => p.type === CheckOperationType.ETH_BALANCE,
     )
 
-    const ethBalance = ethBalanceEntitlement?.threshold
-        ? formatUnits(ethBalanceEntitlement.threshold, 18)
-        : undefined
+    const ethBalance = ethBalanceEntitlement
+        ? ethBalanceEntitlement.threshold
+            ? parseFloat(formatUnits(ethBalanceEntitlement.threshold, 18)) > 0
+                ? formatUnits(ethBalanceEntitlement.threshold, 18)
+                : ''
+            : ''
+        : ''
 
     const tokens = decodedCheckOperations
         .filter(
@@ -68,16 +98,17 @@ export function convertRuleDataToTokensAndEthBalance(
                 p.type === CheckOperationType.ERC20,
         )
         .map((p) => {
-            const { threshold, tokenId, ...rest } = p
+            const { threshold, tokenId, chainId, address, type } = p
             return {
-                ...rest,
-                chainId: Number(p.chainId),
-                type: convertOperationTypeToTokenType(p.type),
-                quantity: threshold ?? 1n,
-                tokenIds: tokenId ? [Number(tokenId)] : [],
+                chainId: Number(chainId),
+                data: {
+                    address: address,
+                    type: convertOperationTypeToTokenType(type),
+                    quantity: threshold,
+                    tokenId: tokenId ? BigInt(tokenId) : undefined,
+                },
             }
         })
-
     return {
         tokens,
         ethBalance,

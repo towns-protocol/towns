@@ -14,7 +14,6 @@ import { Button, IconButton, MotionBox, Paragraph, Stack, Text } from '@ui'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { Entitlements, useEntitlements } from 'hooks/useEntitlements'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
-import { TokenSelectionDisplayWithMetadata } from 'routes/RoleRestrictedChannelJoinPanel'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { Analytics } from 'hooks/useAnalytics'
 import { popupToast } from '@components/Notifications/popupToast'
@@ -23,6 +22,8 @@ import { useEnvironment } from 'hooks/useEnvironmnet'
 import { GetSigner, WalletReady } from 'privy/WalletReady'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { usePublicPageLoginFlow } from 'routes/PublicTownPage/usePublicPageLoginFlow'
+import { TokenSelectionDisplay } from '@components/Tokens/TokenSelector/TokenSelection'
+import { useNativeTokenWithQuantity } from '@components/Tokens/utils'
 import { FullPanelOverlay, LinkedWallet } from '../WalletLinkingPanel'
 import { isEveryoneAddress, mapToErrorMessage } from '../utils'
 import { ConnectWalletThenLinkButton } from '../ConnectWalletThenLinkButton'
@@ -121,7 +122,7 @@ function Content({
         invalidate: invalidateJoinSpace,
         getQueryData: getJoinSpaceQueryData,
     } = useHasPermission({
-        spaceId: spaceId,
+        spaceId,
         walletAddress: loggedInWalletAddress,
         permission: Permission.JoinSpace,
     })
@@ -156,6 +157,8 @@ function Content({
         },
         [onHide, spaceId, joinTown, clientSingleton, signerContext],
     )
+
+    const nativeTokenWithQuantity = useNativeTokenWithQuantity(entitlements?.ethBalance || '')
 
     const { isLoading: isLoadingLinkingWallet, linkEOAToRootKeyTransaction } =
         useLinkEOAToRootKeyTransaction({
@@ -202,19 +205,19 @@ function Content({
     return (
         <>
             <Stack width="100%" gap="sm">
-                {entitlements.tokens.map((token) => {
-                    return (
-                        <TokenSelectionDisplayWithMetadata
-                            wallets={linkedWallets}
-                            key={token.address as Address}
-                            token={token}
-                            passesEntitlement={
-                                meetsMembershipRequirements !== undefined &&
-                                meetsMembershipRequirements
-                            }
-                        />
-                    )
-                })}
+                {nativeTokenWithQuantity && (
+                    <TokenSelectionDisplay elevate token={nativeTokenWithQuantity} />
+                )}
+                {entitlements.tokens.map((token) => (
+                    <TokenSelectionDisplay
+                        elevate
+                        key={token.chainId + token.data.address + (token.data.tokenId ?? '')}
+                        token={token}
+                        userPassesEntitlement={
+                            meetsMembershipRequirements !== undefined && meetsMembershipRequirements
+                        }
+                    />
+                ))}
             </Stack>
 
             {meetsMembershipRequirements ? (

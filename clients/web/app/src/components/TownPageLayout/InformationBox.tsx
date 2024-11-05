@@ -50,7 +50,15 @@ export const InformationBox = (props: Props) => {
                             {props.title}
                         </Text>
                     </Box>
-                    <Box centerContent height="x3" width="100%">
+                    <Box
+                        centerContent
+                        height="x3"
+                        width="100%"
+                        alignItems="center"
+                        justifyContent="center"
+                        display="flex"
+                        textAlign="center"
+                    >
                         {props.centerContent}
                     </Box>
                     <Box centerContent height="x4">
