@@ -78,7 +78,9 @@ export function EditPricing({
             switch (preset) {
                 case 'dynamic': {
                     formProps.setValue('membershipPricingType', 'dynamic')
-                    formProps.setValue('prepaidMemberships', 0)
+                    formProps.setValue('prepaidMemberships', 0, {
+                        shouldValidate: true,
+                    })
                     formProps.setValue('membershipCost', '0.0', {
                         shouldValidate: true,
                     })
@@ -86,7 +88,9 @@ export function EditPricing({
                 }
                 case 'fixed': {
                     formProps.setValue('membershipPricingType', 'fixed')
-                    formProps.setValue('prepaidMemberships', 0)
+                    formProps.setValue('prepaidMemberships', 0, {
+                        shouldValidate: true,
+                    })
                     formProps.setValue(
                         'membershipCost',
                         presetRef.current.membershipCost ?? minimumMemebershipPrice ?? '',
@@ -98,6 +102,9 @@ export function EditPricing({
                 }
                 case 'prepaid': {
                     formProps.setValue('membershipPricingType', 'dynamic')
+                    formProps.setValue('membershipCost', '0.0', {
+                        shouldValidate: true,
+                    })
                     formProps.setValue(
                         'prepaidMemberships',
                         presetRef.current.prepaidMemberships ?? 0,
@@ -265,9 +272,11 @@ export function EditPricing({
                 <FadeInBox key="error">
                     <ErrorMessage errors={formState.errors} fieldName="membershipCost" />
                 </FadeInBox>
-            ) : (
-                <></>
-            )}
+            ) : formState.errors['prepaidMemberships'] ? (
+                <FadeInBox key="error">
+                    <ErrorMessage errors={formState.errors} fieldName="prepaidMemberships" />
+                </FadeInBox>
+            ) : null}
         </Stack>
     )
 }

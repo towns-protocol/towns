@@ -20,6 +20,9 @@ const prepaidSchema = z.object({
         .number({
             invalid_type_error: 'Please enter a number',
         })
+        .int({
+            message: 'Please enter an integer.',
+        })
         .positive(),
 })
 

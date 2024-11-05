@@ -341,9 +341,10 @@ function CreateSpaceFormV2WithoutAuth() {
                                                             <InformationBox
                                                                 title="Cost"
                                                                 border={
-                                                                    _form.formState.errors[
-                                                                        'membershipCost'
-                                                                    ]
+                                                                    _form.formState.errors
+                                                                        .membershipCost ||
+                                                                    _form.formState.errors
+                                                                        .prepaidMemberships
                                                                         ? 'negative'
                                                                         : 'none'
                                                                 }

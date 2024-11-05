@@ -64,7 +64,16 @@ export const membershipSettingsSchema = z
             }),
         ]),
         membershipCost: z.string(),
-        prepaidMemberships: z.number().optional().default(0),
+        prepaidMemberships: z
+            .number({
+                message: 'Please enter a number.',
+            })
+            .int({
+                message: 'Please enter an integer.',
+            })
+            .positive()
+            .optional()
+            .default(0),
     })
     .and(gatingSchema)
     .superRefine((data, ctx) => {
