@@ -322,7 +322,7 @@ resource "aws_ecs_task_definition" "fargate_task_definition" {
       },
       {
         name  = "LOG_LEVEL",
-        value = "debug"
+        value = "error"
       },
       {
         name  = "TRACING_ENABLED",

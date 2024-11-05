@@ -226,6 +226,7 @@ resource "aws_cloudwatch_log_subscription_filter" "river_log_group_filter" {
   log_group_name  = aws_cloudwatch_log_group.river_log_group.name
   filter_pattern  = ""
   destination_arn = module.global_constants.datadug_forwarder_stack_lambda.arn
+  count           = local.run_mode == "full" ? 1 : 0
 }
 
 resource "aws_iam_role_policy" "river_node_credentials" {
@@ -315,7 +316,6 @@ locals {
     name  = "RIVERCHAIN__NETWORKURL"
     value = var.river_chain_rpc_url_plaintext_override
   }]
-
 
   archive_mode_additional_td_env_config = local.run_mode == "archive" ? [{
     name  = "ARCHIVE__ARCHIVEID"
