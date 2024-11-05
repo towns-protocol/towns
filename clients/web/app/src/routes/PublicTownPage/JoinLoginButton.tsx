@@ -189,9 +189,24 @@ function useWatchEvaluatingCredentialsAuthStatus() {
     useEffect(() => {
         let timeoutId: NodeJS.Timeout | undefined
         let toastId: string | undefined
+        let isCurrentEffect = true
+
+        const cleanup = () => {
+            if (timeoutId) {
+                clearTimeout(timeoutId)
+                timeoutId = undefined
+            }
+            if (toastId) {
+                dismissToast(toastId)
+                toastId = undefined
+            }
+        }
 
         if (authStatus === AuthStatus.EvaluatingCredentials) {
             timeoutId = setTimeout(() => {
+                if (!isCurrentEffect) {
+                    return
+                }
                 const message =
                     '[useWatchEvaluatingCredentialsAuthStatus] timeout connecting to River'
                 trackError({
@@ -214,15 +229,12 @@ function useWatchEvaluatingCredentialsAuthStatus() {
                 )
             }, 10_000)
         } else {
-            if (toastId) {
-                dismissToast(toastId)
-            }
+            cleanup()
         }
 
         return () => {
-            if (timeoutId) {
-                clearTimeout(timeoutId)
-            }
+            isCurrentEffect = false
+            cleanup()
         }
     }, [authStatus])
 
