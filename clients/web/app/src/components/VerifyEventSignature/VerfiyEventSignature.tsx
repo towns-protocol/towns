@@ -127,6 +127,16 @@ const VerifyEventSignatureContent = () => {
                             error: {error}
                         </Paragraph>
                     )}
+                    {event && (
+                        <Paragraph color="gray2" size="sm" fontWeight="medium">
+                            BlockNumber: {event.miniblockNum?.toString() ?? 'unconfirmed'}
+                        </Paragraph>
+                    )}
+                    {event && (
+                        <Paragraph color="gray2" size="sm" fontWeight="medium">
+                            EventNumber: {event.confirmedEventNum?.toString() ?? 'unconfirmed'}
+                        </Paragraph>
+                    )}
                     {event?.remoteEvent?.creatorUserId && (
                         <Paragraph color="gray2" size="sm" fontWeight="medium">
                             creatorAddress:{' '}
