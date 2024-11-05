@@ -16,3 +16,7 @@ variable "pgadmin_security_group_id" {
   description = "The security group id of the pgadmin service"
   type        = string
 }
+
+variable "cluster_name_suffix" {
+  default = "-postgresql-cluster"
+}

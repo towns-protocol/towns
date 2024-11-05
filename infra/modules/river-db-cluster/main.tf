@@ -8,7 +8,7 @@ locals {
       Service = "river-postgres-db"
   })
 
-  cluster_name = "${terraform.workspace}-river-db-postgresql-cluster"
+  cluster_name = "${terraform.workspace}-river-db${var.cluster_name_suffix}"
 }
 
 data "aws_rds_engine_version" "postgresql" {

@@ -190,7 +190,7 @@ module "post_provision_config" {
   subnet_ids                              = var.private_subnets
   river_node_wallet_credentials_arn       = var.node_metadata.credentials.wallet_private_key.arn
   river_db_cluster_master_user_secret_arn = var.river_node_db.root_user_secret_arn
-  river_user_db_config                    = local.river_user_db_config
+  river_user_db_config                    = local.db_config
   rds_cluster_resource_id                 = var.river_node_db.rds_aurora_postgresql.cluster_resource_id
   vpc_id                                  = var.vpc_id
   security_group_id                       = aws_security_group.post_provision_config_lambda_function_sg.id
@@ -284,7 +284,8 @@ resource "aws_iam_role_policy" "river_node_credentials" {
 
 locals {
   db_user_prefix = local.run_mode == "full" ? "river" : "archive"
-  river_user_db_config = {
+
+  db_config = {
     host         = var.river_node_db.rds_aurora_postgresql.cluster_endpoint
     port         = "5432"
     database     = "river"
@@ -497,19 +498,19 @@ resource "aws_ecs_task_definition" "river-fargate" {
       },
       {
         name  = "DATABASE__HOST",
-        value = local.river_user_db_config.host
+        value = local.db_config.host
       },
       {
         name  = "DATABASE__PORT",
-        value = local.river_user_db_config.port
+        value = local.db_config.port
       },
       {
         name  = "DATABASE__USER",
-        value = local.river_user_db_config.user
+        value = local.db_config.user
       },
       {
         name  = "DATABASE__DATABASE",
-        value = local.river_user_db_config.database
+        value = local.db_config.database
       },
       {
         name  = "DATABASE__EXTRA"

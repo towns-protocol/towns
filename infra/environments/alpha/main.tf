@@ -83,6 +83,14 @@ module "river_db_cluster" {
   pgadmin_security_group_id = module.pgadmin.security_group_id
 }
 
+module "river_db" {
+  source                    = "../../modules/river-db-cluster"
+  database_subnets          = module.vpc.database_subnets
+  vpc_id                    = module.vpc.vpc_id
+  pgadmin_security_group_id = module.pgadmin.security_group_id
+  cluster_name_suffix       = "" // TODO: remove this
+}
+
 module "river_node_ssl_cert" {
   source                       = "../../modules/river-node-ssl-cert"
   subnet_ids                   = module.vpc.private_subnets
@@ -167,7 +175,8 @@ module "river_node" {
 
   river_node_ssl_cert_secret_arn = module.river_node_ssl_cert.river_node_ssl_cert_secret_arn
 
-  river_node_db                  = module.river_db_cluster
+  river_node_db = count.index == 0 ? module.river_db : module.river_db_cluster
+
   river_database_isolation_level = local.river_database_isolation_level
   max_db_connections             = local.river_max_db_connections
 
@@ -194,7 +203,6 @@ module "river_node" {
   lb = module.river_nlb[count.index]
 }
 
-
 module "archive_node_nlb" {
   source  = "../../modules/river-nlb"
   count   = local.num_archive_nodes
@@ -213,7 +221,8 @@ module "archive_node" {
 
   river_node_ssl_cert_secret_arn = module.river_node_ssl_cert.river_node_ssl_cert_secret_arn
 
-  river_node_db                  = module.river_db_cluster
+  river_node_db = count.index == 0 ? module.river_db : module.river_db_cluster
+
   river_database_isolation_level = local.river_database_isolation_level
   max_db_connections             = local.river_max_db_connections
 
