@@ -109,7 +109,9 @@ async function getShouldSkipPrompt() {
 
     if (
         window.location.pathname === '/' ||
-        window.location.pathname.match(new RegExp(`^/${PATHS.SPACES}/[0-9a-f]{64}/?$`))
+        window.location.pathname.match(
+            new RegExp(`^/${PATHS.SPACES}/(0x[0-9a-z]{40}|[0-9a-z]{64})/?$`),
+        )
     ) {
         log('usePeriodicUpdates: pathcheck: safe to skip prompt')
         return true
