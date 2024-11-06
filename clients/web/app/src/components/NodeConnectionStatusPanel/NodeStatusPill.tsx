@@ -21,6 +21,8 @@ export const NodeStatusPill = ({
     ...boxProps
 }: Props) => {
     const nodeStatus = NodeStatus[nodeData.status]
+    const responseStatus = nodeData.data?.http11?.response.status
+    const isDown = responseStatus && responseStatus !== 'OK'
 
     const [isToggled, setIsToggled] = useState(false)
 
@@ -54,8 +56,8 @@ export const NodeStatusPill = ({
                     </Box>
 
                     <Paragraph truncate>{nodeData.nodeUrl}</Paragraph>
-
-                    {nodeStatus && (
+                    {isDown && <Paragraph color="negative">{responseStatus}</Paragraph>}
+                    {!isDown && nodeStatus && (
                         <Box alignItems="end">
                             <Box
                                 fontSize="sm"
