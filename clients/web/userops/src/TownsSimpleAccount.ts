@@ -1,12 +1,4 @@
-import {
-    Signer,
-    constants,
-    utils as ethersUtils,
-    BigNumber,
-    Wallet,
-    BigNumberish,
-    BytesLike,
-} from 'ethers'
+import { Signer, constants, BigNumberish, BytesLike } from 'ethers'
 import {
     BundlerJsonRpcProvider,
     IPresetBuilderOpts,
@@ -22,7 +14,7 @@ import {
     SimpleAccountFactory__factory,
 } from 'userop/dist/typechain'
 import { ERC4337 } from './constants'
-
+import { getInitData, getSignature } from './workers'
 interface ISigner extends Pick<Signer, 'signMessage'> {}
 type EOASigner = ISigner & Pick<Signer, 'getAddress'>
 
@@ -77,32 +69,21 @@ export class TownsSimpleAccount extends UserOperationBuilder {
         opts?: IPresetBuilderOpts,
     ): Promise<TownsSimpleAccount> {
         const instance = new TownsSimpleAccount(signer, rpcUrl, opts)
+        const signerAddress = await signer.getAddress()
+        const aaData = await getInitData({
+            factoryAddress: instance.factory.address,
+            signerAddress,
+            rpcUrl,
+        })
+        instance.initCode = aaData.initCode
+        instance.proxy = SimpleAccount__factory.connect(aaData.addr, instance.provider)
 
-        try {
-            instance.initCode = await ethersUtils.hexConcat([
-                instance.factory.address,
-                instance.factory.interface.encodeFunctionData('createAccount', [
-                    await instance.signer.getAddress(),
-                    BigNumber.from(opts?.salt ?? 0),
-                ]),
-            ])
-            await instance.entryPoint.callStatic.getSenderAddress(instance.initCode)
-
-            throw new Error('getSenderAddress: unexpected result')
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (error: any) {
-            const addr = error?.errorArgs?.sender
-            if (!addr) throw error
-
-            instance.proxy = SimpleAccount__factory.connect(addr, instance.provider)
-        }
+        const defaultSignature = await getSignature()
 
         const base = instance
             .useDefaults({
                 sender: instance.proxy.address,
-                signature: await Wallet.createRandom().signMessage(
-                    ethersUtils.arrayify(ethersUtils.keccak256('0xdead')),
-                ),
+                signature: defaultSignature,
             })
             .useMiddleware(instance.resolveAccount)
 

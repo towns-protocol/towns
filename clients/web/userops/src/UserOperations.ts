@@ -20,8 +20,6 @@ import { ethers } from 'ethers'
 import isEqual from 'lodash/isEqual'
 import { UserOpsConfig, UserOpParams, FunctionHash, TimeTracker, TimeTrackerEvents } from './types'
 import { userOpsStore } from './userOpsStore'
-// TODO: we can probably add these via @account-abrstraction/contracts if preferred
-import { EntryPoint__factory, SimpleAccountFactory__factory } from 'userop/dist/typechain'
 import { ERC4337 } from 'userop/dist/constants'
 import { CodeException } from './errors'
 import { UserOperationEventEvent } from 'userop/dist/typechain/EntryPoint'
@@ -43,6 +41,7 @@ import { getGasPrice as getEthMaxPriorityFeePerGas } from 'userop/dist/preset/mi
 import { TownsUserOpClient, TownsUserOpClientSendUserOperationResponse } from './TownsUserOpClient'
 import { getTransferCallData } from './generateTransferCallData'
 import { sendUserOperationWithRetry } from './sendUserOperationWithRetry'
+import { getInitData } from './workers'
 
 export class UserOps {
     private bundlerUrl: string
@@ -93,49 +92,23 @@ export class UserOps {
             return abstractAddressMap.get(rootKeyAddress)
         }
 
-        // copied from userop.js
-        // easier b/c we don't need the signer, which we don't store
-        //
-        // alternative to this is calling TownsSimpleAccount.init with signer, no paymaster required,
-        // which can then call getSenderAddress
-        try {
-            if (!this.factoryAddress) {
-                throw new Error('factoryAddress is required')
-            }
-            if (!this.entryPointAddress) {
-                throw new Error('entryPointAddress is required')
-            }
-            if (!this.spaceDapp?.provider) {
-                throw new Error('spaceDapp is required')
-            }
-
-            const initCode = ethers.utils.hexConcat([
-                this.factoryAddress,
-                SimpleAccountFactory__factory.createInterface().encodeFunctionData(
-                    'createAccount',
-                    [
-                        rootKeyAddress,
-                        // ! salt must match whatever is used in initBuilder. If none, use 0, its the default for userop
-                        ethers.BigNumber.from(0),
-                    ],
-                ),
-            ])
-            const entryPoint = EntryPoint__factory.connect(
-                this.entryPointAddress,
-                this.spaceDapp.provider,
-            )
-
-            await entryPoint.callStatic.getSenderAddress(initCode)
-        } catch (error) {
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
-            const address = error?.errorArgs?.sender
-            if (!address) {
-                throw error
-            }
-            abstractAddressMap.set(rootKeyAddress, address)
-            return address as Address
+        if (!this.factoryAddress) {
+            throw new Error('factoryAddress is required')
         }
+        if (!this.entryPointAddress) {
+            throw new Error('entryPointAddress is required')
+        }
+        if (!this.spaceDapp?.provider) {
+            throw new Error('spaceDapp is required')
+        }
+        const result = await getInitData({
+            factoryAddress: this.factoryAddress,
+            signerAddress: rootKeyAddress,
+            rpcUrl: this.aaRpcUrl,
+        })
+
+        abstractAddressMap.set(rootKeyAddress, result.addr)
+        return result.addr as Address
     }
 
     public async getUserOpClient() {

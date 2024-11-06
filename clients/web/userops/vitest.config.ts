@@ -5,7 +5,7 @@ export default defineConfig({
     test: {
         restoreMocks: true,
         globals: true,
-        setupFiles: ['./vitest.setup.ts', 'dotenv/config'],
+        setupFiles: ['./vitest.setup.ts', 'dotenv/config', '@vitest/web-worker'],
         testTimeout: 180_000,
         environment: 'jsdom',
         poolOptions: {
