@@ -46,6 +46,7 @@ jobs:
                   git config --global user.name "github-actions[bot]"
                   git config --global user.email "github-actions[bot]@users.noreply.github.com"
                   git fetch origin
+                  git checkout ${{ env.COMMIT_SHA }}
                   git checkout -b ${{ env.RELEASE_BRANCH }}
                   git rebase origin/omega
                   git push -u origin ${{ env.RELEASE_BRANCH }}
