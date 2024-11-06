@@ -71,7 +71,6 @@ export const membershipSettingsSchema = z
             .int({
                 message: 'Please enter an integer.',
             })
-            .positive()
             .optional()
             .default(0),
     })
@@ -80,6 +79,18 @@ export const membershipSettingsSchema = z
         const membershipCostAsNumber = Number(data['membershipCost'])
         const membershipPricingType = data['membershipPricingType']
         const isFixedPricing = membershipPricingType === 'fixed'
+        const isPrepaidPricingSelected = data['clientPricingOption'] === 'prepaid'
+
+        if (isPrepaidPricingSelected) {
+            const prepaidMemberships = data['prepaidMemberships']
+            if (!Number.isInteger(prepaidMemberships) || prepaidMemberships < 1) {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    message: 'Please enter a valid number of additional prepaid memberships',
+                    path: ['prepaidMemberships'],
+                })
+            }
+        }
 
         // setting dynamic pricing sets the cost to 0
         // so we only need to perform checks if the pricing is fixed

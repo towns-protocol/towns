@@ -78,9 +78,7 @@ export function EditPricing({
             switch (preset) {
                 case 'dynamic': {
                     formProps.setValue('membershipPricingType', 'dynamic')
-                    formProps.setValue('prepaidMemberships', 0, {
-                        shouldValidate: true,
-                    })
+                    formProps.setValue('prepaidMemberships', 0)
                     formProps.setValue('membershipCost', '0.0', {
                         shouldValidate: true,
                     })
@@ -88,9 +86,7 @@ export function EditPricing({
                 }
                 case 'fixed': {
                     formProps.setValue('membershipPricingType', 'fixed')
-                    formProps.setValue('prepaidMemberships', 0, {
-                        shouldValidate: true,
-                    })
+                    formProps.setValue('prepaidMemberships', 0)
                     formProps.setValue(
                         'membershipCost',
                         presetRef.current.membershipCost ?? minimumMemebershipPrice ?? '',
@@ -108,9 +104,6 @@ export function EditPricing({
                     formProps.setValue(
                         'prepaidMemberships',
                         presetRef.current.prepaidMemberships ?? 0,
-                        {
-                            shouldValidate: true,
-                        },
                     )
                     break
                 }
