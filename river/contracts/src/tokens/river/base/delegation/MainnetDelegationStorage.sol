@@ -25,12 +25,12 @@ library MainnetDelegationStorage {
     mapping(address claimer => EnumerableSet.AddressSet delegators) delegatorsByAuthorizedClaimer;
     address proxyDelegation;
     EnumerableSet.AddressSet delegators;
+    mapping(address delegator => uint256 depositId) depositIdByDelegator;
   }
 
   function layout() internal pure returns (Layout storage s) {
-    bytes32 slot = STORAGE_SLOT;
     assembly {
-      s.slot := slot
+      s.slot := STORAGE_SLOT
     }
   }
 }

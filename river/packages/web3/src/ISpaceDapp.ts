@@ -56,13 +56,13 @@ export interface UpdateChannelMetadataParams {
     disabled?: boolean
 }
 
-export interface UpdateChannelStatusParams {
+export interface UpdateChannelAccessParams {
     spaceId: string
     channelId: string
     disabled: boolean
 }
 
-export type UpdateChannelParams = UpdateChannelMetadataParams | UpdateChannelStatusParams
+export type UpdateChannelParams = UpdateChannelMetadataParams | UpdateChannelAccessParams
 
 export interface RemoveChannelParams {
     spaceId: string
@@ -242,7 +242,7 @@ export interface ISpaceDapp {
         logs: ethers.providers.Log[],
     ) => Promise<(ethers.utils.LogDescription | undefined)[]>
     updateChannel: (
-        params: UpdateChannelMetadataParams,
+        params: UpdateChannelParams,
         signer: SignerType,
         txnOpts?: TransactionOpts,
     ) => Promise<TransactionType>

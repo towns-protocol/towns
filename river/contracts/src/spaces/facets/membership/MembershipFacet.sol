@@ -24,10 +24,18 @@ contract MembershipFacet is
   // =============================================================
 
   /// @inheritdoc IMembership
-  function withdraw(address account) external onlyOwner {
+  function withdraw(address account) external onlyOwner nonReentrant {
     if (account == address(0)) revert Membership__InvalidAddress();
+
+    // get the balance
     uint256 balance = _getCreatorBalance();
+
+    // verify the balance is not 0
     if (balance == 0) revert Membership__InsufficientPayment();
+
+    // reset the balance
+    _setCreatorBalance(0);
+
     CurrencyTransfer.transferCurrency(
       _getMembershipCurrency(),
       address(this),

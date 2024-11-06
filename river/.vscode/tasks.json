@@ -193,6 +193,30 @@
       }
     },
     {
+      "label": "Build Casablanca",
+      "type": "shell",
+      "command": "cd ./core && just RUN_ENV=multi build",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "ephemeral",
+        "focus": true,
+        "panel": "shared",
+      }
+    },
+    {
+      "label": "Build Casablanca-No-Entitlements",
+      "type": "shell",
+      "command": "cd ./core && just RUN_ENV=multi_ne build",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "ephemeral",
+        "focus": true,
+        "panel": "shared",
+      }
+    },
+    {
       "label": "Stop Casablanca",
       "type": "shell",
       "command": "cd ./core && just RUN_ENV=multi stop && just RUN_ENV=multi_ne stop",
@@ -220,6 +244,8 @@
       "dependsOn": [
         "Stop Casablanca",
         "DummyTask",
+        "Build Casablanca",
+        "Build Casablanca-No-Entitlements",
         "Both Casablancas"
       ],
       "group": {

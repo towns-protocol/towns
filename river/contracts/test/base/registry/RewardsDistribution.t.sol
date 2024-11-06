@@ -2,19 +2,16 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IOwnableBase} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 import {IERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
 import {IArchitectBase} from "contracts/src/factory/facets/architect/IArchitect.sol";
+import {ICreateSpace} from "contracts/src/factory/facets/create/ICreateSpace.sol";
 import {INodeOperator} from "contracts/src/base/registry/facets/operator/INodeOperator.sol";
 import {ISpaceDelegationBase} from "contracts/src/base/registry/facets/delegation/ISpaceDelegation.sol";
-import {IRewardsDistributionBase} from "contracts/src/base/registry/facets/distribution/IRewardsDistribution.sol";
+import {IRewardsDistributionBase} from "contracts/src/base/registry/facets/distribution/v1/IRewardsDistribution.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
-import {Architect} from "contracts/src/factory/facets/architect/Architect.sol";
-import {SpaceOwner} from "contracts/src/spaces/facets/owner/SpaceOwner.sol";
-import {IERC173} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 import {IMainnetDelegationBase} from "contracts/src/tokens/river/base/delegation/IMainnetDelegation.sol";
-import {IOwnableBase} from "contracts/src/diamond/facets/ownable/IERC173.sol";
+import {IERC173, IOwnableBase} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 import {INodeOperatorBase} from "contracts/src/base/registry/facets/operator/INodeOperator.sol";
 
 // structs
@@ -22,16 +19,12 @@ import {NodeOperatorStatus} from "contracts/src/base/registry/facets/operator/No
 
 // contracts
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
+import {Architect} from "contracts/src/factory/facets/architect/Architect.sol";
 import {NodeOperatorFacet} from "contracts/src/base/registry/facets/operator/NodeOperatorFacet.sol";
-import {OwnableFacet} from "contracts/src/diamond/facets/ownable/OwnableFacet.sol";
-import {IntrospectionFacet} from "contracts/src/diamond/facets/introspection/IntrospectionFacet.sol";
-import {ERC721A} from "contracts/src/diamond/facets/token/ERC721A/ERC721A.sol";
 import {River} from "contracts/src/tokens/river/base/River.sol";
 import {MainnetDelegation} from "contracts/src/tokens/river/base/delegation/MainnetDelegation.sol";
-import {RewardsDistribution} from "contracts/src/base/registry/facets/distribution/RewardsDistribution.sol";
+import {RewardsDistribution} from "contracts/src/base/registry/facets/distribution/v1/RewardsDistribution.sol";
 import {SpaceDelegationFacet} from "contracts/src/base/registry/facets/delegation/SpaceDelegationFacet.sol";
-
-import {ICreateSpace} from "contracts/src/factory/facets/create/ICreateSpace.sol";
 
 contract RewardsDistributionTest is
   BaseSetup,
@@ -41,14 +34,10 @@ contract RewardsDistributionTest is
   IERC721ABase
 {
   NodeOperatorFacet internal operator;
-  OwnableFacet internal ownable;
-  IntrospectionFacet internal introspection;
-  ERC721A internal erc721;
   River internal riverFacet;
   MainnetDelegation internal mainnetDelegationFacet;
   RewardsDistribution internal rewardsDistributionFacet;
   SpaceDelegationFacet internal spaceDelegationFacet;
-  SpaceOwner internal spaceOwnerFacet;
 
   //example test values with expected results
   uint256 exDistributionAmount;
@@ -88,14 +77,10 @@ contract RewardsDistributionTest is
     super.setUp();
 
     operator = NodeOperatorFacet(baseRegistry);
-    ownable = OwnableFacet(baseRegistry);
-    introspection = IntrospectionFacet(baseRegistry);
-    erc721 = ERC721A(baseRegistry);
     riverFacet = River(riverToken);
     mainnetDelegationFacet = MainnetDelegation(baseRegistry);
     rewardsDistributionFacet = RewardsDistribution(baseRegistry);
     spaceDelegationFacet = SpaceDelegationFacet(baseRegistry);
-    spaceOwnerFacet = SpaceOwner(spaceFactory);
 
     messenger.setXDomainMessageSender(mainnetProxyDelegation);
 

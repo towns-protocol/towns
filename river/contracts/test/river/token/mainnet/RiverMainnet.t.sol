@@ -13,15 +13,12 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 //contracts
 import {TestUtils} from "contracts/test/utils/TestUtils.sol";
+import {EIP712Utils} from "contracts/test/utils/EIP712Utils.sol";
 import {DeployRiverMainnet} from "contracts/scripts/deployments/utils/DeployRiverMainnet.s.sol";
 import {River} from "contracts/src/tokens/river/mainnet/River.sol";
 
-contract RiverMainnetTest is TestUtils, IRiverBase, ILockBase {
+contract RiverMainnetTest is TestUtils, EIP712Utils, IRiverBase, ILockBase {
   DeployRiverMainnet internal deployRiverMainnet = new DeployRiverMainnet();
-
-  /// @dev `keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)")`.
-  bytes32 private constant _PERMIT_TYPEHASH =
-    0x6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9;
 
   /// @dev initial supply is 10 billion tokens
   uint256 internal INITIAL_SUPPLY = 10_000_000_000 ether;
@@ -83,8 +80,9 @@ contract RiverMainnetTest is TestUtils, IRiverBase, ILockBase {
     vm.warp(block.timestamp + 100);
 
     uint256 deadline = block.timestamp + 100;
-    (uint8 v, bytes32 r, bytes32 s) = _signPermit(
+    (uint8 v, bytes32 r, bytes32 s) = signPermit(
       alicePrivateKey,
+      address(river),
       alice,
       bob,
       50,
@@ -378,26 +376,5 @@ contract RiverMainnetTest is TestUtils, IRiverBase, ILockBase {
       inflation.inflationDecreaseInterval;
     return
       inflation.initialInflationRate - (yearsSinceDeployment * decreatePerYear);
-  }
-
-  function _signPermit(
-    uint256 privateKey,
-    address owner,
-    address spender,
-    uint256 value,
-    uint256 deadline
-  ) internal view returns (uint8 v, bytes32 r, bytes32 s) {
-    bytes32 domainSeparator = river.DOMAIN_SEPARATOR();
-    uint256 nonces = river.nonces(owner);
-
-    bytes32 structHash = keccak256(
-      abi.encode(_PERMIT_TYPEHASH, owner, spender, value, nonces, deadline)
-    );
-
-    bytes32 typeDataHash = keccak256(
-      abi.encodePacked("\x19\x01", domainSeparator, structHash)
-    );
-
-    (v, r, s) = vm.sign(privateKey, typeDataHash);
   }
 }

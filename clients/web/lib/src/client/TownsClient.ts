@@ -1706,6 +1706,25 @@ export class TownsClient
 
     public async waitForBanUnbanTransaction(transactionContext: BanUnbanWalletTransactionContext) {
         const txnContext = await this._waitForBlockchainTransaction(transactionContext)
+
+        if (txnContext.status === TransactionStatus.Success && transactionContext.data?.isBan) {
+            try {
+                // Remove user from space if ban was successful
+                await this.removeUser(
+                    transactionContext.data.spaceId,
+                    transactionContext.data.walletAddress,
+                )
+            } catch (error) {
+                // if this errors they might still be a member of the space
+                // w/o being able to read in the space
+                // probably scrubber should fix this instead of client
+                console.warn(
+                    '[waitForBanTransaction] failed to remove user from River streams',
+                    error,
+                )
+            }
+        }
+
         logTxnResult('waitForBanTransaction', txnContext)
         return txnContext
     }

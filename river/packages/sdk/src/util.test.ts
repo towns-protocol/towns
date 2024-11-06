@@ -77,6 +77,7 @@ import {
     XchainConfig,
     UpdateRoleParams,
 } from '@river-build/web3'
+import { SyncState } from './syncedStreamsLoop'
 
 const log = dlog('csb:test:util')
 
@@ -634,6 +635,8 @@ export async function expectUserCanJoin(
     await client.initializeUser({ spaceId })
     client.startSync()
 
+    await waitFor(() => client.streams.syncState === SyncState.Syncing)
+
     await expect(client.joinStream(spaceId)).toResolve()
     await expect(client.joinStream(channelId)).toResolve()
 
@@ -702,6 +705,28 @@ export function twoNftRuleData(
     }
 
     return treeToRuleData(root)
+}
+
+export async function unlinkCaller(
+    rootSpaceDapp: ISpaceDapp,
+    rootWallet: ethers.Wallet,
+    caller: ethers.Wallet,
+) {
+    const walletLink = rootSpaceDapp.getWalletLink()
+    let txn: ContractTransaction | undefined
+    try {
+        txn = await walletLink.removeCallerLink(caller)
+    } catch (err: any) {
+        const parsedError = walletLink.parseError(err)
+        log('linkWallets error', parsedError)
+    }
+
+    expect(txn).toBeDefined()
+    const receipt = await txn?.wait()
+    expect(receipt!.status).toEqual(1)
+
+    const linkedWallets = await walletLink.getLinkedWallets(rootWallet.address)
+    expect(linkedWallets).not.toContain(caller.address)
 }
 
 export async function unlinkWallet(

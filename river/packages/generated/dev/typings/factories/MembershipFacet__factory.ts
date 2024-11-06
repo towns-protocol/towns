@@ -1149,6 +1149,11 @@ const _abi = [
   },
   {
     type: "error",
+    name: "Membership__Banned",
+    inputs: [],
+  },
+  {
+    type: "error",
     name: "Membership__InsufficientAllowance",
     inputs: [],
   },

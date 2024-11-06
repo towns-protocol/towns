@@ -106,7 +106,7 @@ export const SpaceInfo = () => {
     const { hasPermission: canBan } = useHasPermission({
         spaceId: space?.id ?? '',
         walletAddress: loggedInWalletAddress ?? '',
-        permission: Permission.Ban,
+        permission: Permission.ModifyBanning,
     })
 
     const { removeTownNotificationSettings } = useNotificationSettings()

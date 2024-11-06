@@ -12,7 +12,7 @@ import { SignerUndefinedError, toError } from '../types/error-types'
 import { ethers } from 'ethers'
 
 function useBanUnbanTransactionBuilder() {
-    const { waitForBanUnbanTransaction: waitForBanTransaction, client } = useTownsClient()
+    const { waitForBanUnbanTransaction: waitForBanTransaction } = useTownsClient()
     const [transactionContext, setTransactionContext] = useState<
         BanUnbanWalletTransactionContext | undefined
     >(undefined)
@@ -59,8 +59,7 @@ function useBanUnbanTransactionBuilder() {
                 // Perform side effects
                 if (
                     transactionContext?.status === TransactionStatus.Success &&
-                    transactionContext &&
-                    transactionContext.data
+                    transactionContext?.data
                 ) {
                     const spaceId = transactionContext.data.spaceId
                     const walletAddress = transactionContext.data.walletAddress
@@ -71,15 +70,10 @@ function useBanUnbanTransactionBuilder() {
                     await queryClient.invalidateQueries({
                         queryKey: blockchainKeys.bannedWalletAddresses(spaceId),
                     })
-
-                    // Remove user from space if ban was successful
-                    if (transactionContext.data.isBan) {
-                        await client?.removeUser(spaceId, walletAddress)
-                    }
                 }
             }
         },
-        [waitForBanTransaction, client],
+        [waitForBanTransaction],
     )
 
     return {

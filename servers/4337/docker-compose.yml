@@ -30,7 +30,7 @@ services:
       - "--dev.period=1"
       - "--allow-insecure-unlock"
       - "--rpc.allow-unprotected-txs"
-      - "--miner.gaslimit=12000000"
+      - "--miner.gaslimit=50000000"
 
   bundler:
     platform: ${DOCKER_PLATFORM:-linux/amd64}

@@ -6,6 +6,7 @@ import (
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/crypto"
 	. "github.com/river-build/river/core/node/protocol"
+	"github.com/river-build/river/core/node/storage"
 
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -105,6 +106,27 @@ func (b *MiniblockInfo) lastEvent() *ParsedEvent {
 		return b.events[len(b.events)-1]
 	} else {
 		return nil
+	}
+}
+
+func (b *MiniblockInfo) isSnapshot() bool {
+	return b.header().GetSnapshot() != nil
+}
+
+func (b *MiniblockInfo) asStorageMb() (*storage.WriteMiniblockData, error) {
+	bytes, err := b.ToBytes()
+	if err != nil {
+		return nil, err
+	}
+	return b.asStorageMbWithData(bytes), nil
+}
+
+func (b *MiniblockInfo) asStorageMbWithData(bytes []byte) *storage.WriteMiniblockData {
+	return &storage.WriteMiniblockData{
+		Number:   b.Ref.Num,
+		Hash:     b.Ref.Hash,
+		Snapshot: b.isSnapshot(),
+		Data:     bytes,
 	}
 }
 

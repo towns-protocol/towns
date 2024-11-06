@@ -173,7 +173,7 @@ const SpaceProfileWithoutAuth = () => {
     const { hasPermission: canBan } = useHasPermission({
         spaceId: space?.id ?? '',
         walletAddress: loggedInWalletAddress ?? '',
-        permission: Permission.Ban,
+        permission: Permission.ModifyBanning,
     })
 
     const { data: userBio } = useGetUserBio(user?.userId)

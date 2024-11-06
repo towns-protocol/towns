@@ -59,3 +59,15 @@ func (m *minipoolInstance) lastEvent() *ParsedEvent {
 func (m *minipoolInstance) nextSlotNumber() int {
 	return m.events.Len()
 }
+
+func (m *minipoolInstance) getEnvelopeBytes() ([][]byte, error) {
+	bytes := make([][]byte, m.events.Len())
+	for i, e := range m.events.Values {
+		b, err := e.GetEnvelopeBytes()
+		if err != nil {
+			return nil, err
+		}
+		bytes[i] = b
+	}
+	return bytes, nil
+}

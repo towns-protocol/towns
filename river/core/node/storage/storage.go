@@ -65,19 +65,23 @@ type StreamStorage interface {
 		blockNumber int64,
 	) ([]byte, error)
 
-	// Promote block candidate to miniblock
-	// Deletes current minipool at minipoolGeneration,
-	// creates new minipool at minipoolGeneration + 1,
-	// stores miniblock proposal with given hash at minipoolGeneration index and wipes all candidates for stream.
-	// If snapshotMiniblock is true, stores minipoolGeneration as last snapshot miniblock index,
-	// stores envelopes in the new minipool in slots starting with 0.
-	PromoteMiniblockCandidate(
+	// WriteMiniblocks writes miniblocks to the stream storage and creates new minipool.
+	//
+	// WriteMiniblocks checks that storage is in the consistent state matching the arguments.
+	//
+	// Old minipool is deleted, new miniblocks are inserted, new minipool is created,
+	// latest snapshot generation record is updated if required and old miniblock candidates are deleted.
+	//
+	// While miniblock number and minipool generations arguments are redundant to each other,
+	// they are used to confirm intention of the calling code and to make correctness checks easier.
+	WriteMiniblocks(
 		ctx context.Context,
 		streamId StreamId,
-		minipoolGeneration int64,
-		candidateBlockHash common.Hash,
-		snapshotMiniblock bool,
-		envelopes [][]byte,
+		miniblocks []*WriteMiniblockData,
+		newMinipoolGeneration int64,
+		newMinipoolEnvelopes [][]byte,
+		prevMinipoolGeneration int64,
+		prevMinipoolSize int,
 	) error
 
 	// CreateStreamArchiveStorage creates a new archive storage for the given stream.
@@ -109,13 +113,14 @@ type StreamStorage interface {
 	// StreamLastMiniBlock returns the last mini-block number for the given stream from storage.
 	StreamLastMiniBlock(ctx context.Context, streamID StreamId) (*MiniblockData, error)
 
-	// ImportMiniblocks imports raw blocks into the database.
-	//
-	// This bypasses the mini-block candidate/promotion approach and is meant to catch up the storage with the
-	// streams registry after the node was down.
-	ImportMiniblocks(ctx context.Context, miniBlocks []*MiniblockData) error
-
 	Close(ctx context.Context)
+}
+
+type WriteMiniblockData struct {
+	Number   int64
+	Hash     common.Hash
+	Snapshot bool
+	Data     []byte
 }
 
 type MiniblockData struct {

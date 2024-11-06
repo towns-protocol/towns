@@ -155,7 +155,7 @@ func (s *streamImpl) ApplyMiniblock(ctx context.Context, miniblock *MiniblockInf
 		return err
 	}
 
-	return s.applyMiniblockImplNoLock(ctx, miniblock)
+	return s.applyMiniblockImplNoLock(ctx, miniblock, nil)
 }
 
 // importMiniblocks imports the given miniblocks.
@@ -167,54 +167,56 @@ func (s *streamImpl) importMiniblocks(
 		return nil
 	}
 
-	blocksToWriteToStorage := make([]*storage.MiniblockData, len(miniblocks))
+	firstMbNum := miniblocks[0].Ref.Num
+	blocksToWriteToStorage := make([]*storage.WriteMiniblockData, len(miniblocks))
 	for i, miniblock := range miniblocks {
-		bytes, err := miniblock.ToBytes()
+		if miniblock.Ref.Num != firstMbNum+int64(i) {
+			return RiverError(Err_INTERNAL, "miniblock numbers are not sequential").Func("importMiniblocks")
+		}
+		mb, err := miniblock.asStorageMb()
 		if err != nil {
 			return err
 		}
-
-		blocksToWriteToStorage[i] = &storage.MiniblockData{
-			StreamID:      s.streamId,
-			Number:        miniblock.Ref.Num,
-			MiniBlockInfo: bytes,
-		}
+		blocksToWriteToStorage[i] = mb
 	}
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	if s.view == nil {
-		importFromGenesis := miniblocks[0].header().MiniblockNum == 0
-		if importFromGenesis {
-			if err := s.initFromGenesis(ctx, miniblocks[0], blocksToWriteToStorage[0]); err != nil {
+		// Do we have genesis miniblock?
+		if miniblocks[0].header().MiniblockNum == 0 {
+			err := s.initFromGenesis(ctx, miniblocks[0], blocksToWriteToStorage[0].Data)
+			if err != nil {
 				return err
 			}
 			miniblocks = miniblocks[1:]
 			blocksToWriteToStorage = blocksToWriteToStorage[1:]
 		}
 
-		if err := s.loadInternal(ctx); err != nil {
+		err := s.loadInternal(ctx)
+		if err != nil {
 			return err
 		}
 	}
 
-	// apply mini-blocks one by one on view, backup existing view in case
-	// applying/writing miniblocks fails rollback view.
-	var (
-		err  error
-		view = s.view
-	)
+	originalView := s.view
 
+	// Skip known blocks.
+	for len(miniblocks) > 0 && miniblocks[0].Ref.Num <= originalView.LastBlock().Ref.Num {
+		blocksToWriteToStorage = blocksToWriteToStorage[1:]
+		miniblocks = miniblocks[1:]
+	}
+	if len(miniblocks) == 0 {
+		return nil
+	}
+
+	currentView := originalView
+	var err error
+	var newEvents []*Envelope
 	allNewEvents := []*Envelope{}
 	for _, miniblock := range miniblocks {
-		if miniblock.Ref.Num <= view.LastBlock().Ref.Num {
-			blocksToWriteToStorage = blocksToWriteToStorage[1:]
-			continue
-		}
-
-		var newEvents []*Envelope
-		view, newEvents, err = view.copyAndApplyBlock(miniblock, s.params.ChainConfig.Get())
+		currentView, newEvents, err = currentView.copyAndApplyBlock(miniblock, s.params.ChainConfig.Get())
 		if err != nil {
 			return err
 		}
@@ -222,19 +224,36 @@ func (s *streamImpl) importMiniblocks(
 		allNewEvents = append(allNewEvents, miniblock.headerEvent.Envelope)
 	}
 
-	err = s.params.Storage.ImportMiniblocks(ctx, blocksToWriteToStorage)
+	newMinipoolBytes, err := currentView.minipool.getEnvelopeBytes()
 	if err != nil {
 		return err
 	}
 
-	prevSyncCookie := s.view.SyncCookie(s.params.Wallet.Address)
-	s.view = view
+	err = s.params.Storage.WriteMiniblocks(
+		ctx,
+		s.streamId,
+		blocksToWriteToStorage,
+		currentView.minipool.generation,
+		newMinipoolBytes,
+		originalView.minipool.generation,
+		originalView.minipool.events.Len(),
+	)
+	if err != nil {
+		return err
+	}
+
+	prevSyncCookie := originalView.SyncCookie(s.params.Wallet.Address)
+	s.view = currentView
 	newSyncCookie := s.view.SyncCookie(s.params.Wallet.Address)
 	s.notifySubscribers(allNewEvents, newSyncCookie, prevSyncCookie)
 	return nil
 }
 
-func (s *streamImpl) applyMiniblockImplNoLock(ctx context.Context, miniblock *MiniblockInfo) error {
+func (s *streamImpl) applyMiniblockImplNoLock(
+	ctx context.Context,
+	miniblock *MiniblockInfo,
+	miniblockBytes []byte,
+) error {
 	// Check if the miniblock is already applied.
 	if miniblock.Ref.Num <= s.view.LastBlock().Ref.Num {
 		return nil
@@ -244,27 +263,32 @@ func (s *streamImpl) applyMiniblockImplNoLock(ctx context.Context, miniblock *Mi
 	// TODO: tests for this.
 
 	// Lets see if this miniblock can be applied.
-	newSV, newEvents, err := s.view.copyAndApplyBlock(miniblock, s.params.ChainConfig.Get())
+	prevSV := s.view
+	newSV, newEvents, err := prevSV.copyAndApplyBlock(miniblock, s.params.ChainConfig.Get())
 	if err != nil {
 		return err
 	}
 
-	newMinipool := make([][]byte, 0, newSV.minipool.events.Len())
-	for _, e := range newSV.minipool.events.Values {
-		b, err := e.GetEnvelopeBytes()
+	newMinipool, err := newSV.minipool.getEnvelopeBytes()
+	if err != nil {
+		return err
+	}
+
+	if miniblockBytes == nil {
+		miniblockBytes, err = miniblock.ToBytes()
 		if err != nil {
 			return err
 		}
-		newMinipool = append(newMinipool, b)
 	}
 
-	err = s.params.Storage.PromoteMiniblockCandidate(
+	err = s.params.Storage.WriteMiniblocks(
 		ctx,
 		s.streamId,
-		s.view.minipool.generation,
-		miniblock.Ref.Hash,
-		miniblock.headerEvent.Event.GetMiniblockHeader().GetSnapshot() != nil,
+		[]*storage.WriteMiniblockData{miniblock.asStorageMbWithData(miniblockBytes)},
+		newSV.minipool.generation,
 		newMinipool,
+		prevSV.minipool.generation,
+		prevSV.minipool.events.Len(),
 	)
 	if err != nil {
 		return err
@@ -313,19 +337,19 @@ func (s *streamImpl) PromoteCandidate(ctx context.Context, mbHash common.Hash, m
 		return err
 	}
 
-	return s.applyMiniblockImplNoLock(ctx, miniblock)
+	return s.applyMiniblockImplNoLock(ctx, miniblock, miniblockBytes)
 }
 
 func (s *streamImpl) initFromGenesis(
 	ctx context.Context,
 	genesisInfo *MiniblockInfo,
-	genesis *storage.MiniblockData,
+	genesisBytes []byte,
 ) error {
-	if genesis.Number != 0 {
+	if genesisInfo.header().MiniblockNum != 0 {
 		return RiverError(Err_BAD_BLOCK, "init from genesis must be from block with num 0")
 	}
 
-	_, registeredGenesisHash, _, err := s.params.Registry.GetStreamWithGenesis(ctx, genesis.StreamID)
+	_, registeredGenesisHash, _, err := s.params.Registry.GetStreamWithGenesis(ctx, s.streamId)
 	if err != nil {
 		return err
 	}
@@ -336,7 +360,9 @@ func (s *streamImpl) initFromGenesis(
 			Func("initFromGenesis")
 	}
 
-	if err := s.params.Storage.CreateStreamStorage(ctx, s.streamId, genesis.MiniBlockInfo); err != nil {
+	if err := s.params.Storage.CreateStreamStorage(ctx, s.streamId, genesisBytes); err != nil {
+		// TODO: this error is not handle correctly here: if stream is in storage, caller of this initFromGenesis
+		// should read it from storage.
 		if AsRiverError(err).Code != Err_ALREADY_EXISTS {
 			return err
 		}
@@ -346,7 +372,7 @@ func (s *streamImpl) initFromGenesis(
 		ctx,
 		&storage.ReadStreamFromLastSnapshotResult{
 			StartMiniblockNumber: 0,
-			Miniblocks:           [][]byte{genesis.MiniBlockInfo},
+			Miniblocks:           [][]byte{genesisBytes},
 		},
 	)
 	if err != nil {

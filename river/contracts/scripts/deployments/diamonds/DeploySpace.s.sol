@@ -33,7 +33,7 @@ import {DeployChannels} from "contracts/scripts/deployments/facets/DeployChannel
 import {DeployTokenPausable} from "contracts/scripts/deployments/facets/DeployTokenPausable.s.sol";
 import {DeployPrepayFacet} from "contracts/scripts/deployments/facets/DeployPrepayFacet.s.sol";
 import {DeployReferrals} from "contracts/scripts/deployments/facets/DeployReferrals.s.sol";
-import {DeployERC721A} from "contracts/scripts/deployments/facets/DeployERC721A.s.sol";
+import {DeployMembershipToken} from "contracts/scripts/deployments/facets/DeployMembershipToken.s.sol";
 import {DeploySpaceEntitlementGated} from "contracts/scripts/deployments/facets/DeploySpaceEntitlementGated.s.sol";
 import {DeployMultiInit} from "contracts/scripts/deployments/utils/DeployMultiInit.s.sol";
 
@@ -60,7 +60,7 @@ contract DeploySpace is DiamondHelper, Deployer {
 
   DeployPrepayFacet prepayHelper = new DeployPrepayFacet();
   DeployReferrals referralsHelper = new DeployReferrals();
-  DeployERC721A erc721aHelper = new DeployERC721A();
+  DeployMembershipToken membershipTokenHelper = new DeployMembershipToken();
   DeploySpaceEntitlementGated entitlementGatedHelper =
     new DeploySpaceEntitlementGated();
   DeployMultiInit deployMultiInit = new DeployMultiInit();
@@ -77,7 +77,7 @@ contract DeploySpace is DiamondHelper, Deployer {
   address membershipReferral;
   address banning;
   address entitlementGated;
-  address erc721a;
+  address membershipToken;
   address erc721aQueryable;
   address membershipMetadata;
   address entitlementDataQueryable;
@@ -121,7 +121,7 @@ contract DeploySpace is DiamondHelper, Deployer {
   function diamondInitParams(
     address deployer
   ) public returns (Diamond.InitParams memory) {
-    erc721a = erc721aHelper.deploy(deployer);
+    membershipToken = membershipTokenHelper.deploy(deployer);
     erc721aQueryable = erc721aQueryableHelper.deploy(deployer);
     banning = banningHelper.deploy(deployer);
     membership = membershipHelper.deploy(deployer);
@@ -136,7 +136,7 @@ contract DeploySpace is DiamondHelper, Deployer {
     referrals = referralsHelper.deploy(deployer);
     entitlementGated = entitlementGatedHelper.deploy(deployer);
 
-    erc721aHelper.removeSelector(IERC721A.tokenURI.selector);
+    membershipTokenHelper.removeSelector(IERC721A.tokenURI.selector);
 
     addCut(
       entitlementsHelper.makeCut(entitlements, IDiamond.FacetCutAction.Add)
@@ -146,7 +146,12 @@ contract DeploySpace is DiamondHelper, Deployer {
       tokenPausableHelper.makeCut(tokenPausable, IDiamond.FacetCutAction.Add)
     );
     addCut(channelsHelper.makeCut(channels, IDiamond.FacetCutAction.Add));
-    addCut(erc721aHelper.makeCut(erc721a, IDiamond.FacetCutAction.Add));
+    addCut(
+      membershipTokenHelper.makeCut(
+        membershipToken,
+        IDiamond.FacetCutAction.Add
+      )
+    );
     addCut(membershipHelper.makeCut(membership, IDiamond.FacetCutAction.Add));
 
     addCut(banningHelper.makeCut(banning, IDiamond.FacetCutAction.Add));
@@ -196,10 +201,15 @@ contract DeploySpace is DiamondHelper, Deployer {
     for (uint256 i = 0; i < facets.length; i++) {
       bytes32 facetNameHash = keccak256(abi.encodePacked(facets[i]));
 
-      if (facetNameHash == keccak256(abi.encodePacked("ERC721A"))) {
-        erc721a = erc721aHelper.deploy(deployer);
-        erc721aHelper.removeSelector(IERC721A.tokenURI.selector);
-        addCut(erc721aHelper.makeCut(erc721a, IDiamond.FacetCutAction.Add));
+      if (facetNameHash == keccak256(abi.encodePacked("MembershipToken"))) {
+        membershipToken = membershipTokenHelper.deploy(deployer);
+        membershipTokenHelper.removeSelector(IERC721A.tokenURI.selector);
+        addCut(
+          membershipTokenHelper.makeCut(
+            membershipToken,
+            IDiamond.FacetCutAction.Add
+          )
+        );
       } else if (
         facetNameHash == keccak256(abi.encodePacked("ERC721AQueryable"))
       ) {

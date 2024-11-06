@@ -25,7 +25,7 @@ describe('create role', () => {
 
         /** Act */
         // create new role in space
-        const permissions = [Permission.Ban]
+        const permissions = [Permission.ModifyBanning]
         const users: string[] = []
 
         const roleIdentifier: RoleIdentifier | undefined = await alice.createRole(
@@ -56,7 +56,7 @@ describe('create role', () => {
 
         /** Act & Assert */
         // Try to create new role in space without permission
-        const permissions = [Permission.Ban]
+        const permissions = [Permission.ModifyBanning]
         const users: string[] = []
         const error = await getError<Error>(async function () {
             await tokenGrantedUser.createRole(roomId, 'newRole1', permissions, users, NoopRuleData)
@@ -92,7 +92,7 @@ describe('create role', () => {
 
         /** Act */
         // create new role in space
-        const permissions = [Permission.Ban]
+        const permissions = [Permission.ModifyBanning]
         const users: string[] = []
         const roleIdentifier: RoleIdentifier | undefined = await tokenGrantedUser.createRole(
             roomId,
@@ -115,7 +115,7 @@ describe('create role', () => {
         const roomId = await createTestSpaceGatedByTownsNfts(alice, [Permission.Read])
         /** Act */
         // create new role in space
-        const permissions = [Permission.Ban]
+        const permissions = [Permission.ModifyBanning]
         const users: string[] = []
         const roleIdentifier: RoleIdentifier | undefined = await alice.createRole(
             roomId,

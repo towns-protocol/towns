@@ -8,7 +8,7 @@ pragma solidity ^0.8.23;
 // helpers
 import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-import {RewardsDistribution} from "contracts/src/base/registry/facets/distribution/RewardsDistribution.sol";
+import {RewardsDistribution} from "contracts/src/base/registry/facets/distribution/v1/RewardsDistribution.sol";
 
 contract DeployRewardsDistribution is Deployer, FacetHelper {
   constructor() {

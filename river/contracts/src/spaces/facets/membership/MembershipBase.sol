@@ -11,7 +11,7 @@ import {IPricingModules} from "contracts/src/factory/facets/architect/pricing/IP
 // libraries
 import {CurrencyTransfer} from "contracts/src/utils/libraries/CurrencyTransfer.sol";
 import {MembershipStorage} from "./MembershipStorage.sol";
-
+import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 // contracts
 import {BasisPoints} from "contracts/src/utils/libraries/BasisPoints.sol";
 
@@ -109,7 +109,13 @@ abstract contract MembershipBase is IMembershipBase {
   }
 
   function _getCreatorBalance() internal view returns (uint256) {
-    return MembershipStorage.layout().tokenBalance;
+    MembershipStorage.Layout storage ds = MembershipStorage.layout();
+    uint256 contractBalance = address(this).balance;
+    return FixedPointMathLib.min(contractBalance, ds.tokenBalance);
+  }
+
+  function _setCreatorBalance(uint256 newBalance) internal {
+    MembershipStorage.layout().tokenBalance = newBalance;
   }
 
   // =============================================================

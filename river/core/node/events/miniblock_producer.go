@@ -365,8 +365,8 @@ func gatherRemoteProposals(
 	return nil, RiverError(Err_INTERNAL, "gatherRemoteProposals: no proposals and no errors")
 }
 
-// mbProduceCandiate is implemented as standalone function to allow calling from tests.
-func mbProduceCandiate(
+// mbProduceCandidate is implemented as standalone function to allow calling from tests.
+func mbProduceCandidate(
 	ctx context.Context,
 	params *StreamCacheParams,
 	stream *streamImpl,
@@ -482,7 +482,7 @@ func (p *miniblockProducer) jobStart(ctx context.Context, j *mbJob, forceSnapsho
 		return
 	}
 
-	candidate, err := mbProduceCandiate(ctx, p.streamCache.Params(), j.stream, forceSnapshot)
+	candidate, err := mbProduceCandidate(ctx, p.streamCache.Params(), j.stream, forceSnapshot)
 	if err != nil {
 		dlog.FromCtx(ctx).
 			Error("MiniblockProducer: jobStart: Error creating new miniblock proposal", "streamId", j.stream.streamId, "err", err)

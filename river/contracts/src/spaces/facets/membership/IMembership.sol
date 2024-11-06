@@ -50,6 +50,7 @@ interface IMembershipBase {
   error Membership__InsufficientAllowance();
   error Membership__InvalidPayment();
   error Membership__InvalidTransactionType();
+  error Membership__Banned();
 
   // =============================================================
   //                           Events

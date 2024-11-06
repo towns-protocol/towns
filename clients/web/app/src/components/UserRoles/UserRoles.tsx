@@ -37,7 +37,7 @@ export const UserRoles = (props: Props) => {
 const MODERATOR_PERMISSIONS: Permission[] = [
     Permission.Redact,
     Permission.PinMessage,
-    Permission.Ban,
+    Permission.ModifyBanning,
     Permission.AddRemoveChannels,
     Permission.ModifySpaceSettings,
 ]

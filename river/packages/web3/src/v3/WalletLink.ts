@@ -290,6 +290,13 @@ export class WalletLink {
         )
     }
 
+    /**
+     * Remove link from this caller to a root key
+     */
+    public async removeCallerLink(caller: ethers.Signer) {
+        return this.walletLinkShim.write(caller).removeCallerLink()
+    }
+
     public async encodeRemoveLink(rootKey: ethers.Signer, walletAddress: string) {
         const { rootKeyAddress, rootKeySignature, nonce } = await this.generateRemoveLinkData(
             rootKey,

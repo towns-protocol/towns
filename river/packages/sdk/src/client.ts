@@ -1824,7 +1824,15 @@ export class Client
                 if (
                     userStream.userContent.streamMemberships[channelId]?.op === MembershipOp.SO_JOIN
                 ) {
-                    await this.removeUser(channelId, userId)
+                    try {
+                        await this.removeUser(channelId, userId)
+                    } catch (error) {
+                        this.logError('Failed to remove user from channel', {
+                            channelId,
+                            userId,
+                            error,
+                        })
+                    }
                 }
             }
         }

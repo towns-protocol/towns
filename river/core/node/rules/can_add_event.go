@@ -970,6 +970,17 @@ func (ru *aeMembershipRules) channelMembershipEntitlements() (*auth.ChainAuthArg
 		return nil, err
 	}
 
+
+	// ModifyBanning is a space level permission
+	// but users with this entitlement should also be entitled to kick users from the channel
+	if permission == auth.PermissionModifyBanning {
+		return auth.NewChainAuthArgsForSpace(
+			spaceId,
+			permissionUser,
+			permission,
+		), nil
+	}
+
 	chainAuthArgs := auth.NewChainAuthArgsForChannel(
 		spaceId,
 		*ru.params.streamView.StreamId(),
@@ -1136,7 +1147,7 @@ func (ru *aeMembershipRules) getPermissionForMembershipOp() (auth.Permission, st
 			)
 		}
 		if userId != initiatorId {
-			return auth.PermissionBan, initiatorId, nil
+			return auth.PermissionModifyBanning, initiatorId, nil
 		} else {
 			return auth.PermissionUndefined, userId, nil
 		}

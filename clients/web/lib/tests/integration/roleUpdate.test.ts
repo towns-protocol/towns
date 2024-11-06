@@ -18,7 +18,7 @@ describe('update role', () => {
         /** Arrange */
         const { alice } = await registerAndStartClients(['alice'])
         await alice.fundWallet()
-        const roomId = await createTestSpaceGatedByTownNft(alice, [Permission.Ban])
+        const roomId = await createTestSpaceGatedByTownNft(alice, [Permission.ModifyBanning])
 
         // get current role details
         const spaceNetworkId = roomId
@@ -58,7 +58,7 @@ describe('update role', () => {
         /** Arrange */
         const { alice } = await registerAndStartClients(['alice'])
         await alice.fundWallet()
-        const roomId = await createTestSpaceGatedByTownsNfts(alice, [Permission.Ban])
+        const roomId = await createTestSpaceGatedByTownsNfts(alice, [Permission.ModifyBanning])
         if (!roomId) {
             throw new Error('roomId is undefined')
         }
@@ -108,7 +108,7 @@ describe('update role', () => {
             throw new Error('roomId is undefined')
         }
         // create a new role
-        const moderatorPermissions = [Permission.Read, Permission.Write, Permission.Ban]
+        const moderatorPermissions = [Permission.Read, Permission.Write, Permission.ModifyBanning]
         // replace the current moderator with this user
         const mod1 = await TestConstants.getWalletWithTestGatingNft()
         const moderatorUsers: string[] = [mod1.address]
@@ -196,7 +196,7 @@ describe('update role', () => {
         }
         console.log('roomId', roomId)
         // create a new role
-        const moderatorPermissions = [Permission.Read, Permission.Write, Permission.Ban]
+        const moderatorPermissions = [Permission.Read, Permission.Write, Permission.ModifyBanning]
         // replace the current moderator with this user
         const mod1 = await TestConstants.getWalletWithTestGatingNft()
         const moderatorUsers: string[] = [mod1.address]

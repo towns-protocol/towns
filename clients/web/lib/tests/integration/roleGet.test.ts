@@ -32,7 +32,12 @@ describe('get role details', () => {
             throw new Error('roomId is undefined')
         }
         // create new role in space
-        const permissions = [Permission.Ban, Permission.Read, Permission.Write, Permission.Redact]
+        const permissions = [
+            Permission.ModifyBanning,
+            Permission.Read,
+            Permission.Write,
+            Permission.Redact,
+        ]
         const users: string[] = []
         const roleName = 'newRole1'
         const roleId: RoleIdentifier | undefined = await alice.createRole(
@@ -70,7 +75,12 @@ describe('get role details', () => {
             throw new Error('roomId is undefined')
         }
         // create new role in space
-        const permissions = [Permission.Ban, Permission.Read, Permission.Write, Permission.Redact]
+        const permissions = [
+            Permission.ModifyBanning,
+            Permission.Read,
+            Permission.Write,
+            Permission.Redact,
+        ]
         const users: string[] = []
         const roleName = 'newRole1'
         const roleIdentifier: RoleIdentifier | undefined = await alice.createRole(

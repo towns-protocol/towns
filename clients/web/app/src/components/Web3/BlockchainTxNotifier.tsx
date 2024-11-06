@@ -129,6 +129,22 @@ export function BlockchainTxNotifier() {
                         errorMessage: `Couldn't update channel.`,
                     })
                     break
+                case BlockchainTransactionType.BanUser:
+                    generateToast({
+                        tx,
+                        pendingMessage: 'Banning user...',
+                        successMessage: 'User banned!',
+                        errorMessage: `Couldn't ban user.`,
+                    })
+                    break
+                case BlockchainTransactionType.UnbanUser:
+                    generateToast({
+                        tx,
+                        pendingMessage: 'Unbanning user...',
+                        successMessage: 'User unbanned!',
+                        errorMessage: `Couldn't unban user.`,
+                    })
+                    break
 
                 case BlockchainTransactionType.TransferAsset: {
                     const data = tx.data as TransferAssetTransactionContext['data']

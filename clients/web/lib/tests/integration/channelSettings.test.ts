@@ -43,7 +43,7 @@ describe('channel settings', () => {
         const moderatorRole: RoleEntitlements = {
             roleId: 4, // dummy
             name: 'moderator',
-            permissions: [Permission.Read, Permission.Write, Permission.Ban],
+            permissions: [Permission.Read, Permission.Write, Permission.ModifyBanning],
             ruleData: {
                 kind: 'v2',
                 rules: NoopRuleData,

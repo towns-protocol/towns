@@ -181,7 +181,9 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) err
 	}
 
 	for mbsInDb < mbsInContract {
+
 		toBlock := min(mbsInDb+int64(a.config.GetReadMiniblocksSize()), mbsInContract)
+
 		resp, err := stub.GetMiniblocks(
 			ctx,
 			connect.NewRequest(&GetMiniblocksRequest{
@@ -190,15 +192,22 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) err
 				ToExclusive:   toBlock,
 			}),
 		)
-		if err != nil {
+		if err != nil && AsRiverError(err).Code != Err_NOT_FOUND {
+			log.Warn(
+				"Error when calling GetMiniblocks on server",
+				"error",
+				err,
+				"streamId",
+				stream.streamId,
+			)
 			stream.nodes.AdvanceStickyPeer(nodeAddr)
 			return err
 		}
 
 		msg := resp.Msg
-		if len(msg.Miniblocks) == 0 {
+		if (err != nil && AsRiverError(err).Code == Err_NOT_FOUND) || len(msg.Miniblocks) == 0 {
 			log.Info(
-				"ArchiveStream: GetMiniblocks returned empty miniblocks, remote storage is not up-to-date with contract yet",
+				"ArchiveStream: GetMiniblocks did not return data, remote storage is not up-to-date with contract yet",
 				"streamId",
 				stream.streamId,
 				"fromInclusive",
@@ -301,6 +310,8 @@ func (a *Archiver) startImpl(ctx context.Context, once bool) error {
 			if a.tasksWG != nil {
 				a.tasksWG.Add(1)
 			}
+			log := dlog.FromCtx(ctx)
+			log.Debug("Adding stream via detecting presence in stream registry", "streamId", stream.Id)
 			a.addNewStream(ctx, stream.Id, &stream.Stream.Nodes, stream.Stream.LastMiniblockNum)
 		}
 	}

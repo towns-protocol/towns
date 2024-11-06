@@ -5,9 +5,11 @@ pragma solidity ^0.8.23;
 import {IMainnetDelegationBase} from "contracts/src/tokens/river/base/delegation/IMainnetDelegation.sol";
 
 // libraries
+import {NodeOperatorStatus} from "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
 
 // contracts
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
+import {NodeOperatorFacet} from "contracts/src/base/registry/facets/operator/NodeOperatorFacet.sol";
 
 // deps
 import {River} from "contracts/src/tokens/river/mainnet/River.sol";
@@ -22,6 +24,7 @@ contract ProxyBatchDelegationTest is BaseSetup, IMainnetDelegationBase {
   AuthorizedClaimers internal authorizedClaimers;
   River internal rvr;
   ICrossDomainMessenger internal crossDomainMessenger;
+  NodeOperatorFacet internal operatorFacet;
 
   address[] internal _users;
   address[] internal _operators;
@@ -30,9 +33,14 @@ contract ProxyBatchDelegationTest is BaseSetup, IMainnetDelegationBase {
 
   function setUp() public override {
     super.setUp();
+    operatorFacet = NodeOperatorFacet(baseRegistry);
 
     _users = _createAccounts(10);
     _operators = _createAccounts(5);
+    for (uint256 i; i < _operators.length; ++i) {
+      setOperator(_operators[i]);
+    }
+
     _claimers = _createAccounts(5);
     tokens = 10 ether;
 
@@ -42,6 +50,18 @@ contract ProxyBatchDelegationTest is BaseSetup, IMainnetDelegationBase {
 
     delegation = MainnetDelegation(baseRegistry);
     authorizedClaimers = AuthorizedClaimers(claimers);
+  }
+
+  function setOperator(address operator) internal {
+    vm.assume(operator != address(0));
+    if (!operatorFacet.isOperator(operator)) {
+      vm.prank(operator);
+      operatorFacet.registerOperator(operator);
+      vm.startPrank(deployer);
+      operatorFacet.setOperatorStatus(operator, NodeOperatorStatus.Approved);
+      operatorFacet.setOperatorStatus(operator, NodeOperatorStatus.Active);
+      vm.stopPrank();
+    }
   }
 
   modifier givenUsersHaveTokens() {
@@ -125,6 +145,8 @@ contract ProxyBatchDelegationTest is BaseSetup, IMainnetDelegationBase {
     rvr.transfer(delegators[0], tokens);
     rvr.transfer(delegators[1], tokens);
     vm.stopPrank();
+
+    setOperator(operator);
 
     // given delegators have delegated tokens
     vm.prank(delegators[0]);

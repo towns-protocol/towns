@@ -16,7 +16,7 @@ import {
     CreateSpaceParams,
     CreateLegacySpaceParams,
     UpdateChannelParams,
-    UpdateChannelStatusParams,
+    UpdateChannelAccessParams,
 } from './ISpaceDapp'
 
 export const Permission = {
@@ -26,7 +26,7 @@ export const Permission = {
     Invite: 'Invite',
     JoinSpace: 'JoinSpace',
     Redact: 'Redact',
-    Ban: 'Ban',
+    ModifyBanning: 'ModifyBanning',
     PinMessage: 'PinMessage',
     AddRemoveChannels: 'AddRemoveChannels',
     ModifySpaceSettings: 'ModifySpaceSettings',
@@ -184,7 +184,7 @@ export function isRuleEntitlementV2(
 
 export const isUpdateChannelStatusParams = (
     params: UpdateChannelParams,
-): params is UpdateChannelStatusParams => {
+): params is UpdateChannelAccessParams => {
     return (
         'disabled' in params &&
         !('roleIds' in params || 'channelName' in params || 'channelDescription' in params)

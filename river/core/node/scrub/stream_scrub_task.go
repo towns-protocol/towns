@@ -51,6 +51,7 @@ type streamScrubTaskProcessorImpl struct {
 	tracer       trace.Tracer
 
 	streamsScrubbed   prometheus.Counter
+	membershipChecks  prometheus.Counter
 	entitlementLosses prometheus.Counter
 	userBoots         prometheus.Counter
 	scrubQueueLength  prometheus.GaugeFunc
@@ -82,6 +83,10 @@ func NewStreamScrubTasksProcessor(
 			"streams_scrubbed",
 			"Number of streams scrubbed",
 		)
+		membership_checks := metrics.NewCounterEx(
+			"membership_checks",
+			"Number of channel membership checks performed during stream scrubbing",
+		)
 		entitlementLosses := metrics.NewCounterEx(
 			"entitlement_losses",
 			"Number of entitlement losses detected",
@@ -101,6 +106,7 @@ func NewStreamScrubTasksProcessor(
 		)
 		proc.scrubQueueLength = scrubQueueLength
 		proc.streamsScrubbed = streamsScrubbed
+		proc.membershipChecks = membership_checks
 		proc.entitlementLosses = entitlementLosses
 		proc.userBoots = userBoots
 	}
@@ -216,10 +222,14 @@ func (tp *streamScrubTaskProcessorImpl) processMember(
 				LogError(log)
 			return
 		}
+
+		if tp.userBoots != nil {
+			tp.userBoots.Inc()
+		}
 	}
 
-	if tp.userBoots != nil {
-		tp.userBoots.Inc()
+	if tp.membershipChecks != nil {
+		tp.membershipChecks.Inc()
 	}
 
 	return err

@@ -4,10 +4,11 @@
 
 import { dlog } from '@river-build/dlog'
 import { makeSpaceStreamId } from './id'
-import { makeRiverConfig } from './riverConfig'
-import { LocalhostWeb3Provider, SpaceDapp } from '@river-build/web3'
+import { makeBaseChainConfig, makeRiverConfig } from './riverConfig'
+import { createSpaceDapp, LocalhostWeb3Provider, SpaceDapp } from '@river-build/web3'
 import { ethers } from 'ethers'
 import { makeDefaultMembershipInfo } from './sync-agent/utils/spaceUtils'
+import { linkWallets, unlinkCaller } from './util.test'
 
 const log = dlog('csb:test:spaceDapp')
 
@@ -47,5 +48,33 @@ describe('spaceDappTests', () => {
 
         const memberURI = await spaceDapp.memberTokenURI(spaceId, membership2.tokenId)
         expect(memberURI).toBe(`http://localhost:3002/${spaceAddress}/token/${membership2.tokenId}`) // hardcoded in InteractSetDefaultUriLocalhost.s.sol
+    })
+
+    test('remove caller link', async () => {
+        const baseConfig = makeBaseChainConfig()
+
+        const rootProvider = new LocalhostWeb3Provider(
+            baseConfig.rpcUrl,
+            ethers.Wallet.createRandom(),
+        )
+        const linkedProvider = new LocalhostWeb3Provider(
+            baseConfig.rpcUrl,
+            ethers.Wallet.createRandom(),
+        )
+        await Promise.all([rootProvider.fundWallet(), linkedProvider.fundWallet()])
+        const spaceDapp = createSpaceDapp(rootProvider, baseConfig.chainConfig)
+
+        await linkWallets(spaceDapp, rootProvider.wallet, linkedProvider.wallet)
+        const linkedWallets = await spaceDapp.walletLink.getLinkedWallets(
+            rootProvider.wallet.address,
+        )
+        expect(linkedWallets.length).toBe(1)
+        expect(linkedWallets[0]).toBe(linkedProvider.wallet.address)
+
+        await unlinkCaller(spaceDapp, rootProvider.wallet, linkedProvider.wallet)
+        const linkedWalletsAfter = await spaceDapp.walletLink.getLinkedWallets(
+            rootProvider.wallet.address,
+        )
+        expect(linkedWalletsAfter.length).toBe(0)
     })
 })

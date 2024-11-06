@@ -16,14 +16,11 @@ import {IOwnableBase} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 
 //contracts
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
+import {EIP712Utils} from "contracts/test/utils/EIP712Utils.sol";
 import {River} from "contracts/src/tokens/river/base/River.sol";
 import {ERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 
-contract RiverBaseTest is BaseSetup, ILockBase, IOwnableBase {
-  /// @dev `keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)")`.
-  bytes32 private constant _PERMIT_TYPEHASH =
-    0x6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9;
-
+contract RiverBaseTest is BaseSetup, EIP712Utils, ILockBase, IOwnableBase {
   address internal ALICE = makeAddr("ALICE");
   address internal BOB = makeAddr("BOB");
   River internal riverFacet;
@@ -96,8 +93,9 @@ contract RiverBaseTest is BaseSetup, ILockBase, IOwnableBase {
     vm.warp(block.timestamp + 100);
 
     uint256 deadline = block.timestamp + 100;
-    (uint8 v, bytes32 r, bytes32 s) = _signPermit(
+    (uint8 v, bytes32 r, bytes32 s) = signPermit(
       alicePrivateKey,
+      riverToken,
       alice,
       bob,
       amount,
@@ -127,8 +125,9 @@ contract RiverBaseTest is BaseSetup, ILockBase, IOwnableBase {
     riverFacet.mint(alice, amount);
 
     uint256 deadline = block.timestamp + 100;
-    (uint8 v, bytes32 r, bytes32 s) = _signPermit(
+    (uint8 v, bytes32 r, bytes32 s) = signPermit(
       alicePrivateKey,
+      riverToken,
       alice,
       bob,
       amount,
@@ -303,30 +302,5 @@ contract RiverBaseTest is BaseSetup, ILockBase, IOwnableBase {
     riverFacet.transfer(bob, amountA);
 
     assertEq(riverFacet.getVotes(space), amountA + amountB);
-  }
-
-  // =============================================================
-  //                           Helpers
-  // =============================================================
-
-  function _signPermit(
-    uint256 privateKey,
-    address owner,
-    address spender,
-    uint256 value,
-    uint256 deadline
-  ) internal view returns (uint8 v, bytes32 r, bytes32 s) {
-    bytes32 domainSeparator = riverFacet.DOMAIN_SEPARATOR();
-    uint256 nonces = riverFacet.nonces(owner);
-
-    bytes32 structHash = keccak256(
-      abi.encode(_PERMIT_TYPEHASH, owner, spender, value, nonces, deadline)
-    );
-
-    bytes32 typeDataHash = keccak256(
-      abi.encodePacked("\x19\x01", domainSeparator, structHash)
-    );
-
-    (v, r, s) = vm.sign(privateKey, typeDataHash);
   }
 }

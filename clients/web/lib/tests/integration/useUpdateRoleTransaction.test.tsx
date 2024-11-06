@@ -47,7 +47,7 @@ describe('useUpdateRoleTransaction', () => {
         const roleName = 'Test Role'
         const permissions = [Permission.Read, Permission.Write]
         const moderatorRoleName = 'Moderator'
-        const moderatorPermissions = [Permission.Read, Permission.Write, Permission.Ban]
+        const moderatorPermissions = [Permission.Read, Permission.Write, Permission.ModifyBanning]
         const moderatorTokens: `0x${string}`[] = []
         const mod1 = await TestConstants.getWalletWithTestGatingNft()
         const mod2 = await TestConstants.getWalletWithTestGatingNft()
@@ -56,7 +56,7 @@ describe('useUpdateRoleTransaction', () => {
         const updatedModeratorPermissions = [
             Permission.Read,
             Permission.Write,
-            Permission.Ban,
+            Permission.ModifyBanning,
             Permission.Redact,
             Permission.AddRemoveChannels,
         ]

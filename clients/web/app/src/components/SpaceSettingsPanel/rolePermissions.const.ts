@@ -38,7 +38,7 @@ export const townPermissionDescriptions: {
         disabled?: boolean
     }
 } = {
-    [Permission.Ban]: {
+    [Permission.ModifyBanning]: {
         name: 'Ban members',
         description: 'Allow members to ban other members.',
     },

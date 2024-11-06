@@ -1138,6 +1138,11 @@ export default [
   },
   {
     "type": "error",
+    "name": "Membership__Banned",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "Membership__InsufficientAllowance",
     "inputs": []
   },
