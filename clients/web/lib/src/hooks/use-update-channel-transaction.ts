@@ -6,7 +6,7 @@ import {
 import { SignerUndefinedError, toError } from '../types/error-types'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-import { TSigner } from '../types/web3-types'
+import { BlockchainTransactionType, TSigner } from '../types/web3-types'
 import { blockchainKeys } from '../query/query-keys'
 import { UpdateChannelInfo } from 'types/towns-types'
 import { removeSyncedEntitledChannelsQueriesForSpace } from '../query/removeSyncedEntitledChannelQueries'
@@ -40,6 +40,9 @@ export function useUpdateChannelTransaction() {
         async function (
             updateChannelInfo: UpdateChannelInfo,
             signer: TSigner,
+            transactionType:
+                | BlockchainTransactionType.EditChannel
+                | BlockchainTransactionType.DeleteChannel = BlockchainTransactionType.EditChannel,
         ): Promise<ChannelUpdateTransactionContext | undefined> {
             if (isTransacting.current) {
                 console.warn('useUpdateChannelTransaction', 'Transaction already in progress')
@@ -63,7 +66,11 @@ export function useUpdateChannelTransaction() {
             setTransactionContext(transactionResult)
             removeSyncedEntitledChannelsQueriesForSpace(updateChannelInfo.parentSpaceId)
             try {
-                transactionResult = await updateChannelTransaction(updateChannelInfo, signer)
+                transactionResult = await updateChannelTransaction(
+                    updateChannelInfo,
+                    signer,
+                    transactionType,
+                )
                 setTransactionContext(transactionResult)
                 if (transactionResult?.status === TransactionStatus.Pending) {
                     // Wait for transaction to be mined

@@ -1,18 +1,27 @@
-import { useChannelData, useSetChannelAutojoin, useSetHideUserJoinLeave } from 'use-towns-client'
 import React, { useCallback, useEffect, useMemo } from 'react'
-import { z } from 'zod'
 import { UseFormReturn } from 'react-hook-form'
-import { Box, Button, FormRender, Paragraph, Stack } from '@ui'
+import {
+    Address,
+    Permission,
+    useChannelData,
+    useHasPermission,
+    useMyUserId,
+    useSetChannelAutojoin,
+    useSetHideUserJoinLeave,
+} from 'use-towns-client'
+import { z } from 'zod'
+import { popupToast } from '@components/Notifications/popupToast'
+import { StandardToast } from '@components/Notifications/StandardToast'
 import { Panel } from '@components/Panel/Panel'
 import {
     ToggleAutojoin,
     ToggleHideUserJoinLeaveEvents,
 } from '@components/Web3/CreateChannelForm/CreateChannelForm'
-import { popupToast } from '@components/Notifications/popupToast'
-import { StandardToast } from '@components/Notifications/StandardToast'
+import { Box, Button, FormRender, Paragraph, Stack } from '@ui'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { mapToErrorMessage } from '@components/Web3/utils'
-
+import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
+import { DeleteChannelButton } from './DeleteChannelButton'
 export type FormState = z.infer<typeof schema>
 
 export const schema = z.object({
@@ -31,6 +40,18 @@ export function ChannelRiverMetadataSettingsForm(): JSX.Element {
     const { mutateAsync: setHideUserJoinLeave, isPending: isPendingHide } =
         useSetHideUserJoinLeave()
     const isPending = isPendingJoin || isPendingHide
+
+    const userId = useMyUserId()
+
+    const { data: walletAddress } = useAbstractAccountAddress({
+        rootKeyAddress: userId as Address,
+    })
+
+    const { hasPermission: hasRemoveChannelPermission } = useHasPermission({
+        permission: Permission.AddRemoveChannels,
+        spaceId,
+        walletAddress,
+    })
 
     const onSubmit = useCallback(
         async (changes: FormState) => {
@@ -163,7 +184,7 @@ export function ChannelRiverMetadataSettingsForm(): JSX.Element {
                                 isAutojoin={channel.isAutojoin}
                                 hideUserJoinLeaveEvents={channel.hideUserJoinLeaveEvents}
                             />
-                            <Stack grow gap="sm">
+                            <Stack grow gap>
                                 <Box gap padding rounded="sm" background="level2">
                                     <ToggleAutojoin
                                         value={autojoinValue}
@@ -191,6 +212,9 @@ export function ChannelRiverMetadataSettingsForm(): JSX.Element {
                                         }}
                                     />
                                 </Box>
+                                {spaceId && hasRemoveChannelPermission && (
+                                    <DeleteChannelButton spaceId={spaceId} channelId={channel.id} />
+                                )}
                             </Stack>
 
                             <Box gap="sm">

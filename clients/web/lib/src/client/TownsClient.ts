@@ -64,6 +64,7 @@ import {
     SendTextMessageOptions,
     StreamView,
     UpdateChannelInfo,
+    isUpdateChannelAccessInfo,
     toMembership,
 } from '../types/towns-types'
 import { SignerContext } from '@river-build/sdk'
@@ -777,6 +778,9 @@ export class TownsClient
     public async updateChannelTransaction(
         updateChannelInfo: UpdateChannelInfo,
         signer: ethers.Signer | undefined,
+        transactionType:
+            | BlockchainTransactionType.DeleteChannel
+            | BlockchainTransactionType.EditChannel = BlockchainTransactionType.EditChannel,
     ): Promise<ChannelUpdateTransactionContext> {
         if (!signer) {
             const _error = new Error('signer is undefined')
@@ -791,7 +795,7 @@ export class TownsClient
         let error: Error | undefined = undefined
 
         const continueStoreTx = this.blockchainTransactionStore.begin({
-            type: BlockchainTransactionType.EditChannel,
+            type: transactionType,
             data: {
                 spaceStreamId: updateChannelInfo.parentSpaceId,
                 channeStreamId: updateChannelInfo.channelId,
@@ -799,24 +803,36 @@ export class TownsClient
         })
 
         try {
-            if (updateChannelInfo.updatedChannelName && updateChannelInfo.updatedRoleIds) {
-                const newChannelInfo = {
+            let updateChannelParams: UpdateChannelParams | undefined
+            if (isUpdateChannelAccessInfo(updateChannelInfo)) {
+                updateChannelParams = {
+                    spaceId: updateChannelInfo.parentSpaceId,
+                    channelId: updateChannelInfo.channelId,
+                    disabled: updateChannelInfo.disabled,
+                }
+            } else if (updateChannelInfo?.updatedChannelName && updateChannelInfo?.updatedRoleIds) {
+                updateChannelParams = {
                     spaceId: updateChannelInfo.parentSpaceId,
                     channelId: updateChannelInfo.channelId,
                     channelName: updateChannelInfo.updatedChannelName,
                     channelDescription: updateChannelInfo.updatedChannelTopic ?? '',
                     roleIds: updateChannelInfo.updatedRoleIds,
-                } satisfies UpdateChannelParams
-
-                if (this.isAccountAbstractionEnabled()) {
-                    transaction = await this.userOps?.sendUpdateChannelOp([newChannelInfo, signer])
-                } else {
-                    transaction = await this.spaceDapp.updateChannel(newChannelInfo, signer)
                 }
+            }
 
-                this.log(`[updateChannelTransaction] transaction created` /*, transaction*/)
+            if (updateChannelParams) {
+                if (this.isAccountAbstractionEnabled()) {
+                    transaction = await this.userOps?.sendUpdateChannelOp([
+                        updateChannelParams,
+                        signer,
+                    ])
+                } else {
+                    transaction = await this.spaceDapp.updateChannel(updateChannelParams, signer)
+                }
+                this.log(`[updateChannelTransaction] transaction created`)
             } else {
                 // this is an off chain state update
+                this.log(`[updateChannelTransaction] transaction skipped`)
             }
         } catch (err) {
             console.error('[updateChannelTransaction]', err)

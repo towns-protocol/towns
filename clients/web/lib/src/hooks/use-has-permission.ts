@@ -9,7 +9,7 @@ import { isAddress } from 'ethers/lib/utils'
 interface Props {
     spaceId: string | undefined
     channelId?: string
-    walletAddress?: string
+    walletAddress: string | undefined
     permission: Permission
 }
 

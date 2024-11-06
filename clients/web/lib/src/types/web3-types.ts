@@ -40,6 +40,7 @@ export type TSigner = Signer
 export enum BlockchainTransactionType {
     CreateSpace = 'createSpace',
     CreateChannel = 'createChannel',
+    DeleteChannel = 'deleteChannel',
     EditChannel = 'editChannel',
     UpdateRole = 'updateRole',
     SetChannelPermissionOverrides = 'setChannelPermissionOverrides',

@@ -146,6 +146,14 @@ export function BlockchainTxNotifier() {
                     })
                     break
 
+                case BlockchainTransactionType.DeleteChannel:
+                    generateToast({
+                        tx,
+                        pendingMessage: 'Deleting channel...',
+                        successMessage: 'Channel deleted!',
+                    })
+                    break
+
                 case BlockchainTransactionType.TransferAsset: {
                     const data = tx.data as TransferAssetTransactionContext['data']
 

@@ -35,6 +35,7 @@ export interface Channel {
     isAutojoin?: boolean
     isDefault?: boolean
     hideUserJoinLeaveEvents?: boolean
+    disabled?: boolean
 }
 
 export interface ChannelGroup {
@@ -147,12 +148,27 @@ export interface CreateChannelInfo {
     channelSettings?: PlainMessage<SpacePayload_ChannelSettings>
 }
 
-export interface UpdateChannelInfo {
+type UpdateChannelMetadataInfo = {
     parentSpaceId: string
     channelId: string
     updatedChannelName?: string
     updatedRoleIds?: number[]
     updatedChannelTopic?: string
+    disabled?: boolean
+}
+
+type UpdateChannelAccessInfo = {
+    parentSpaceId: string
+    channelId: string
+    disabled: boolean
+}
+
+export type UpdateChannelInfo = UpdateChannelMetadataInfo | UpdateChannelAccessInfo
+
+export function isUpdateChannelAccessInfo(
+    info: UpdateChannelInfo,
+): info is UpdateChannelAccessInfo {
+    return 'disabled' in info && !('updatedChannelName' in info || 'updatedRoleIds' in info)
 }
 
 export enum MessageType {

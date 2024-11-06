@@ -43,7 +43,7 @@ import {
 } from './use-casablanca-wallet-signin'
 import { create } from 'zustand'
 import { MembershipStruct, Permission, IRuleEntitlementV2Base } from '@river-build/web3'
-import { TSigner } from 'types/web3-types'
+import { BlockchainTransactionType, TSigner } from 'types/web3-types'
 import { SignerContext } from '@river-build/sdk'
 import { UserOps } from '@towns/userops'
 
@@ -92,6 +92,9 @@ interface TownsClientImpl {
     updateChannelTransaction: (
         updateChannelInfo: UpdateChannelInfo,
         signer: TSigner | undefined,
+        transactionType:
+            | BlockchainTransactionType.EditChannel
+            | BlockchainTransactionType.DeleteChannel,
     ) => Promise<ChannelUpdateTransactionContext | undefined>
     setChannelPermissionOverridesTransaction: (
         spaceNetworkId: string,

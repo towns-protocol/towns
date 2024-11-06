@@ -9,7 +9,9 @@ export const useSpaceChannels = (): Channel[] => {
     const spaceData = useSpaceData()
     return useMemo(
         () =>
-            spaceData?.channelGroups ? spaceData?.channelGroups.flatMap((cg) => cg.channels) : [],
+            spaceData?.channelGroups
+                ? spaceData?.channelGroups.flatMap((cg) => cg.channels).filter((c) => !c.disabled)
+                : [],
         [spaceData?.channelGroups],
     )
 }

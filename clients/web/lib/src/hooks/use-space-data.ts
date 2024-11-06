@@ -591,6 +591,7 @@ function rollupSpace(
                                 private: false,
                                 highlight: false,
                                 topic: channelMetadata[c.id]?.channel.description ?? '',
+                                disabled: channelMetadata[c.id]?.channel.disabled ?? false,
                             } satisfies Channel),
                     ),
             },
