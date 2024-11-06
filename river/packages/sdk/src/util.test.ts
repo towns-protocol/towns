@@ -68,6 +68,7 @@ import {
     isCreateLegacySpaceParams,
     convertRuleDataV1ToV2,
     encodeRuleDataV2,
+    decodeRuleDataV2,
     SignerType,
     IRuleEntitlementV2Base,
     isRuleDataV1,
@@ -487,16 +488,41 @@ export async function createVersionedSpaceFromMembership(
     name: string,
     membership: LegacyMembershipStruct | MembershipStruct,
 ): Promise<ethers.ContractTransaction> {
-    if (useLegacySpaces() && isLegacyMembershipType(membership)) {
-        return await spaceDapp.createLegacySpace(
-            {
-                spaceName: `${name}-space`,
-                uri: `${name}-space-metadata`,
-                channelName: 'general',
-                membership,
-            },
-            wallet,
-        )
+    if (useLegacySpaces()) {
+        if (isLegacyMembershipType(membership)) {
+            return await spaceDapp.createLegacySpace(
+                {
+                    spaceName: `${name}-space`,
+                    uri: `${name}-space-metadata`,
+                    channelName: 'general',
+                    membership,
+                },
+                wallet,
+            )
+        } else {
+            // Convert space params to legacy space params
+            const legacyMembership = {
+                settings: membership.settings,
+                permissions: membership.permissions,
+                requirements: {
+                    everyone: membership.requirements.everyone,
+                    users: membership.requirements.users,
+                    syncEntitlements: membership.requirements.syncEntitlements,
+                    ruleData: convertRuleDataV2ToV1(
+                        decodeRuleDataV2(membership.requirements.ruleData as `0x${string}`),
+                    ),
+                },
+            } as LegacyMembershipStruct
+            return await spaceDapp.createLegacySpace(
+                {
+                    spaceName: `${name}-space`,
+                    uri: `${name}-space-metadata`,
+                    channelName: 'general',
+                    membership: legacyMembership,
+                },
+                wallet,
+            )
+        }
     } else {
         if (isLegacyMembershipType(membership)) {
             // Convert legacy space params to current space params
