@@ -5,6 +5,7 @@ import { ModalContainer } from '@components/Modals/ModalContainer'
 import { Box, FancyButton, MotionText, Stack, Text, TextField } from '@ui'
 import { useSetUsername } from 'hooks/useSetUsername'
 import { Analytics } from 'hooks/useAnalytics'
+import { SECOND_MS } from 'data/constants'
 import { validateUsername } from './validateUsername'
 
 export type Props = {
@@ -19,15 +20,16 @@ export const SetUsernameFormWithClose = (props: Props) => {
 
 export const SetUsernameForm = (props: Props & { onHide: () => void }) => {
     const { spaceData } = props
-    const defaultUsernames = useMyDefaultUsernames()
+    const defaultUsername = useMyDefaultUsernames()?.[0]
     const { getIsUsernameAvailable } = useTownsClient()
     const { setUsername } = useSetUsername()
     const isModified = useRef<boolean>(false)
     const [requestInFlight, setRequestInFlight] = useState<boolean>(false)
 
+    const [ready, setReady] = useState<boolean>(false)
     const [value, setValue] = useState<string>('')
     const [usernameAvailable, setUsernameAvailable] = useState<boolean>(true)
-    const [loading, setLoading] = useState<boolean>(true)
+
     const onTextFieldChange = useCallback(
         async (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
             isModified.current = true
@@ -73,33 +75,52 @@ export const SetUsernameForm = (props: Props & { onHide: () => void }) => {
     // don't show the error message as the user starts typing
     const showInvalidUsernameError = value.length > 2 && !usernameValid
 
-    const checkAndSetDefaultUsername = useCallback(async () => {
-        for (const username of defaultUsernames) {
-            const available = await getIsUsernameAvailable(spaceData.id, username)
-            if (available) {
-                setValue(username)
-                setUsernameAvailable(true)
-                break
-            }
+    useEffect(() => {
+        const checkDefaultUsername = async () => {
+            console.log('[SetUsernameForm] checking defaultUsername')
+            // note: if the username is being set via join flow, it may appear as taken
+            const available = await getIsUsernameAvailable(spaceData.id, defaultUsername)
+
+            console.log(`[SetUsernameForm] a defaultUsername is available... ${available}`)
+            setValue(defaultUsername)
+            setUsernameAvailable(!!available)
+            setReady(true)
+
+            console.log('[SetUsernameForm] no defaultUsername available', defaultUsername)
         }
-        setLoading(false)
-    }, [defaultUsernames, getIsUsernameAvailable, spaceData.id])
+
+        if (defaultUsername) {
+            // A default username is set and may be in the process of being
+            // applied in parallel via the join flow.
+            // Check if it's available to potentially use as the default value
+            // This serves as a fallback if the default username setting times out
+            checkDefaultUsername()
+        } else {
+            console.info('[SetUsernameForm] scenario 2: no defaultUsername or adjacent space')
+            setReady(true)
+        }
+    }, [defaultUsername, getIsUsernameAvailable, spaceData.id])
+
+    const hasDefaultUsername = !!defaultUsername
 
     useEffect(() => {
-        // If user has modified the input field, don't set the default username
-        // This is to prevent the user from losing their input
-        // checkAndSetDefaultUsername mutates because props keep changing
-        if (isModified.current) {
-            return
+        if (hasDefaultUsername) {
+            console.info('[SetUsernameForm] grace period for setting defaultUsername')
+            const timeout = setTimeout(() => {
+                console.info('[SetUsernameForm] grace period timeout')
+                setReady(true)
+            }, SECOND_MS * 10)
+            return () => {
+                clearTimeout(timeout)
+            }
         }
-        checkAndSetDefaultUsername()
-    }, [checkAndSetDefaultUsername])
+    }, [hasDefaultUsername])
 
     const noop = useCallback(() => {
         // no-op
     }, [])
 
-    if (loading) {
+    if (!ready) {
         return null
     }
 

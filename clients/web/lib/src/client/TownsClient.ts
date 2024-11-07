@@ -1942,6 +1942,7 @@ export class TownsClient
                 // if a default username is provided we can try applying it
                 const defaultUsernamePromise = (async () => {
                     if (!defaultUsername) {
+                        this.log('[joinTown] no default username provided')
                         return
                     }
                     const isAvailable = await this.getIsUsernameAvailable(spaceId, defaultUsername)
