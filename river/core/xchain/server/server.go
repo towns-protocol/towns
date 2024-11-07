@@ -119,7 +119,12 @@ func New(
 		riverChain.StartChainMonitor(ctx)
 	}
 
-	registryContract, err := registries.NewRiverRegistryContract(ctx, riverChain, &cfg.RegistryContract)
+	registryContract, err := registries.NewRiverRegistryContract(
+		ctx,
+		riverChain,
+		&cfg.RegistryContract,
+		&cfg.RiverRegistry,
+	)
 	if err != nil {
 		return nil, err
 	}

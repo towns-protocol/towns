@@ -12,7 +12,8 @@ import (
 func TestMigrateExistingDb(t *testing.T) {
 	require := require.New(t)
 
-	ctx, _, testParams := setupStreamStorageTest()
+	testParams := setupStreamStorageTest(t, true)
+	ctx := testParams.ctx
 	defer testParams.closer()
 
 	pool, err := CreateAndValidatePgxPool(

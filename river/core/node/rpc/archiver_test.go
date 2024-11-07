@@ -229,7 +229,12 @@ func TestArchiveOneStream(t *testing.T) {
 
 	bc := tester.btc.NewWalletAndBlockchain(ctx)
 
-	registryContract, err := registries.NewRiverRegistryContract(ctx, bc, &archiveCfg.RegistryContract)
+	registryContract, err := registries.NewRiverRegistryContract(
+		ctx,
+		bc,
+		&archiveCfg.RegistryContract,
+		&archiveCfg.RiverRegistry,
+	)
 	require.NoError(err)
 
 	var nodeRegistry nodes.NodeRegistry

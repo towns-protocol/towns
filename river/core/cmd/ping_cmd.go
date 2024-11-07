@@ -41,7 +41,12 @@ func runPing(cfg *config.Config) error {
 		return err
 	}
 
-	registryContract, err := registries.NewRiverRegistryContract(ctx, riverChain, &cfg.RegistryContract)
+	registryContract, err := registries.NewRiverRegistryContract(
+		ctx,
+		riverChain,
+		&cfg.RegistryContract,
+		&cfg.RiverRegistry,
+	)
 	if err != nil {
 		return err
 	}

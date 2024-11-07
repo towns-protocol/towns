@@ -3,6 +3,7 @@
 database:
     url: postgres://postgres:postgres@localhost:5433/river?sslmode=disable&pool_max_conns=50
     isolationLevel: 'serializable'
+    migrateStreamCreation: true
 
 # Certificates for TLS
 TLSConfig:

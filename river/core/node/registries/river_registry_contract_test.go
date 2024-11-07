@@ -30,7 +30,12 @@ func TestNodeEvents(t *testing.T) {
 
 	bc := tt.GetBlockchain(ctx, 0)
 
-	rr, err := NewRiverRegistryContract(ctx, bc, &config.ContractConfig{Address: tt.RiverRegistryAddress})
+	rr, err := NewRiverRegistryContract(
+		ctx,
+		bc,
+		&config.ContractConfig{Address: tt.RiverRegistryAddress},
+		&config.GetDefaultConfig().RiverRegistry,
+	)
 	require.NoError(err)
 
 	num, err := bc.GetBlockNumber(ctx)
@@ -223,7 +228,12 @@ func TestStreamEvents(t *testing.T) {
 	require.NoError(err)
 	require.Equal(crypto.TransactionResultSuccess, receipt2.Status)
 
-	rr1, err := NewRiverRegistryContract(ctx, bc1, &config.ContractConfig{Address: tc.RiverRegistryAddress})
+	rr1, err := NewRiverRegistryContract(
+		ctx,
+		bc1,
+		&config.ContractConfig{Address: tc.RiverRegistryAddress},
+		&config.GetDefaultConfig().RiverRegistry,
+	)
 	require.NoError(err)
 
 	allocatedC := make(chan *river.StreamRegistryV1StreamAllocated, 10)

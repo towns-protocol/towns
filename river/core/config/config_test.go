@@ -22,13 +22,14 @@ func removeTextTimestamp(logOutput string) string {
 
 func TestDatabaseConfig_UrlAndPasswordDoesNotLog(t *testing.T) {
 	cfg := config.DatabaseConfig{
-		Url:      "pg://host:port",
-		Host:     "localhost",
-		Port:     5432,
-		User:     "user",
-		Password: "password",
-		Database: "testdb",
-		Extra:    "extra",
+		Url:           "pg://host:port",
+		Host:          "localhost",
+		Port:          5432,
+		User:          "user",
+		Password:      "password",
+		Database:      "testdb",
+		Extra:         "extra",
+		NumPartitions: 256,
 	}
 
 	tests := map[string]struct {

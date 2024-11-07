@@ -99,7 +99,12 @@ func makeCacheTestContext(t *testing.T, p testParams) (context.Context, *cacheTe
 		t.Cleanup(streamStore.Close)
 
 		cfg := btc.RegistryConfig()
-		registry, err := registries.NewRiverRegistryContract(ctx, bc, &cfg)
+		registry, err := registries.NewRiverRegistryContract(
+			ctx,
+			bc,
+			&cfg,
+			&config.GetDefaultConfig().RiverRegistry,
+		)
 		ctc.require.NoError(err)
 
 		blockNumber := btc.BlockNum(ctx)

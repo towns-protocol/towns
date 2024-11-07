@@ -33,7 +33,12 @@ func srStreamDump(cfg *config.Config, countOnly bool) error {
 		return err
 	}
 
-	registryContract, err := registries.NewRiverRegistryContract(ctx, blockchain, &cfg.RegistryContract)
+	registryContract, err := registries.NewRiverRegistryContract(
+		ctx,
+		blockchain,
+		&cfg.RegistryContract,
+		&cfg.RiverRegistry,
+	)
 	if err != nil {
 		return err
 	}
@@ -91,7 +96,12 @@ func srStream(cfg *config.Config, streamId string) error {
 		return err
 	}
 
-	registryContract, err := registries.NewRiverRegistryContract(ctx, blockchain, &cfg.RegistryContract)
+	registryContract, err := registries.NewRiverRegistryContract(
+		ctx,
+		blockchain,
+		&cfg.RegistryContract,
+		&cfg.RiverRegistry,
+	)
 	if err != nil {
 		return err
 	}
@@ -131,7 +141,12 @@ func nodesDump(cfg *config.Config) error {
 		return err
 	}
 
-	registryContract, err := registries.NewRiverRegistryContract(ctx, blockchain, &cfg.RegistryContract)
+	registryContract, err := registries.NewRiverRegistryContract(
+		ctx,
+		blockchain,
+		&cfg.RegistryContract,
+		&cfg.RiverRegistry,
+	)
 	if err != nil {
 		return err
 	}

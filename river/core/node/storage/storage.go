@@ -25,7 +25,7 @@ type StreamStorage interface {
 	// Minipool is set to generation number 1 (i.e. number of miniblock that is going to be produced next) and is empty.
 	CreateStreamStorage(ctx context.Context, streamId StreamId, genesisMiniblock []byte) error
 
-	// ReadStreamFromLastSnapshot reads last stream miniblocks and gurantees that last snapshot miniblock is included.
+	// ReadStreamFromLastSnapshot reads last stream miniblocks and guarantees that last snapshot miniblock is included.
 	// It attempts to read at least numToRead miniblocks, but may return less if there are not enough miniblocks in storage,
 	// or more, if there are more miniblocks since the last snapshot.
 	// Also returns minipool envelopes for the current minipool.
@@ -144,6 +144,7 @@ type EventDescriptor struct {
 type DebugReadStreamDataResult struct {
 	StreamId                   StreamId
 	LatestSnapshotMiniblockNum int64
+	Migrated                   bool
 	Miniblocks                 []MiniblockDescriptor
 	Events                     []EventDescriptor
 	MbCandidates               []MiniblockDescriptor

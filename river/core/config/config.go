@@ -17,7 +17,8 @@ func GetDefaultConfig() *Config {
 	return &Config{
 		Port: 443,
 		Database: DatabaseConfig{
-			StartupDelay: 2 * time.Second,
+			StartupDelay:  2 * time.Second,
+			NumPartitions: 256,
 		},
 		StorageType:  "postgres",
 		DisableHttps: false,
@@ -68,6 +69,13 @@ func GetDefaultConfig() *Config {
 		},
 		Scrubbing: ScrubbingConfig{
 			ScrubEligibleDuration: time.Hour,
+		},
+		RiverRegistry: RiverRegistryConfig{
+			PageSize:               1000,
+			MaxRetries:             100,
+			MaxRetryElapsedTime:    5 * time.Minute,
+			SingleCallTimeout:      30 * time.Second, // geth internal timeout is 30 seconds
+			ProgressReportInterval: 10 * time.Second,
 		},
 	}
 }
@@ -168,6 +176,9 @@ type Config struct {
 	EnableDebugEndpoints bool
 
 	DebugEndpoints DebugEndpointsConfig
+
+	// RiverRegistry contains settings for calling registry contract on River chain.
+	RiverRegistry RiverRegistryConfig
 }
 
 type TLSConfig struct {
@@ -212,6 +223,17 @@ type DatabaseConfig struct {
 	// If not set or value can't be parsed, defaults to "serializable".
 	// Intention is to migrate to "read committed" for performance reasons after testing is complete.
 	IsolationLevel string
+
+	// MigrateStreamCreation indicates to the database that all new streams should be allocated
+	// in one of the 256 pre-allocated stream partitions for either regular or media streams instead
+	// of allocating new tables per stream according to the legacy schema. If this flag is unset, a
+	// node will continue to allocate new tables for each stream as it is created.
+	MigrateStreamCreation bool
+
+	// NumPartitions specifies the number of partitions to use when creating the schema for stream
+	// data storage. If <= 0, a default value of 256 will be used. No more than 256 partitions is
+	// supported at this time.
+	NumPartitions int
 }
 
 func (c DatabaseConfig) GetUrl() string {
@@ -359,6 +381,23 @@ type DebugEndpointsConfig struct {
 	Stacks          bool
 	StacksMaxSizeKb int
 	TxPool          bool
+}
+
+type RiverRegistryConfig struct {
+	// PageSize is the number of streams to read from the contract at once using GetPaginatedStreams.
+	PageSize int
+
+	// If not 0, stop retrying failed GetPaginatedStreams calls after this number of retries.
+	MaxRetries int
+
+	// Stop retrying failed GetPaginatedStreams calls after this duration.
+	MaxRetryElapsedTime time.Duration
+
+	// Timeout for a singe call to GetPaginatedStreams.
+	SingleCallTimeout time.Duration
+
+	// ProgressReportInterval is the interval at which to report progress of the GetPaginatedStreams calls.
+	ProgressReportInterval time.Duration
 }
 
 func (ac *ArchiveConfig) GetReadMiniblocksSize() uint64 {

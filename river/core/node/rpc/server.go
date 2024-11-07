@@ -302,7 +302,12 @@ func (s *Service) initRiverChain() error {
 		}
 	}
 
-	s.registryContract, err = registries.NewRiverRegistryContract(ctx, s.riverChain, &s.config.RegistryContract)
+	s.registryContract, err = registries.NewRiverRegistryContract(
+		ctx,
+		s.riverChain,
+		&s.config.RegistryContract,
+		&s.config.RiverRegistry,
+	)
 	if err != nil {
 		return err
 	}
