@@ -149,8 +149,8 @@ export function BlockchainTxNotifier() {
                 case BlockchainTransactionType.DeleteChannel:
                     generateToast({
                         tx,
-                        pendingMessage: 'Deleting channel...',
-                        successMessage: 'Channel deleted!',
+                        pendingMessage: 'Disabling channel...',
+                        successMessage: 'Channel disabled!',
                     })
                     break
 

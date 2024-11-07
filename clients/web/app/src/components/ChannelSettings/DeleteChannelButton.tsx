@@ -54,7 +54,7 @@ export const DeleteChannelButton = (props: { spaceId: string; channelId: string 
             )
 
             if (txResult?.status === TransactionStatus.Success) {
-                closePanel({ preventPopStack: true })
+                closePanel({ preventPopStack: false })
             }
         },
         [channelId, closePanel, hasPendingTx, spaceId, updateChannelTransaction],
@@ -64,21 +64,21 @@ export const DeleteChannelButton = (props: { spaceId: string; channelId: string 
         <>
             <PanelButton
                 tone="negative"
-                label="Delete Channel"
+                label="Disable Channel"
                 disabled={isDisabled}
                 onClick={showPrompt}
             >
                 <Icon type="delete" size="square_xs" />
-                <Paragraph>Delete Channel</Paragraph>
+                <Paragraph>Disable Channel</Paragraph>
             </PanelButton>
             {isPromptShowing && (
                 <ModalContainer minWidth="auto" maxWidth="420" onHide={hidePrompt}>
                     <Box padding="sm" gap="lg">
                         <Paragraph size="lg" fontWeight="medium" maxWidth="300">
-                            Are you sure you want to delete this channel from the town?
+                            Are you sure you want to disable this channel from the town?
                         </Paragraph>
                         <Paragraph maxWidth="400" color="gray1">
-                            When you delete a channel, it means no one will be able to access it
+                            When you disable a channel, it means no one will be able to access it
                             again. You won’t be able to undo this.
                         </Paragraph>
                         <Box horizontal gap justifyContent="end">
@@ -92,7 +92,7 @@ export const DeleteChannelButton = (props: { spaceId: string; channelId: string 
                                         color="default"
                                         onClick={() => onSubmit(getSigner)}
                                     >
-                                        Delete
+                                        Disable
                                     </Button>
                                 )}
                             </WalletReady>

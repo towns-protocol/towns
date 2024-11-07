@@ -40,6 +40,7 @@ export function useChannelData(): ChannelData {
             isAutojoin: room?.isAutojoin,
             isDefault: room?.isDefault,
             hideUserJoinLeaveEvents: room?.hideUserJoinLeaveEvents,
+            disabled: channelChild.disabled,
         }
         return channel
     }, [

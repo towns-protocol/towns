@@ -43,6 +43,7 @@ import { BlockedUserBottomBanner } from './components/BlockedUserBottomBanner'
 import { UnjoinedChannelComponent } from './components/UnjoinedChannel'
 import { useChannelSend } from './hooks/useChannelSend'
 import { useMessageFieldPlaceholders } from './hooks/useMessageFieldPlaceholders'
+import { ChannelDisabledComponent } from './components/ChannelDisabledComponent'
 
 type Props = {
     onTouchClose?: () => void
@@ -66,6 +67,7 @@ export const Channel = (props: Props) => {
         loggedInWalletAddress,
     )?.isChannelWritable
 
+    const isChannelDisabled = channel?.disabled
     const isUserBlocked = useBlockedUsers()
     const isBlocked = useMemo(
         () => isDm && !!counterParty && isUserBlocked(counterParty),
@@ -115,6 +117,7 @@ export const Channel = (props: Props) => {
             channel={channel}
             counterParty={counterParty}
             isBlocked={isBlocked}
+            isChannelDisabled={isChannelDisabled}
             isChannelWritable={isChannelWritable}
             placeholders={placeholders}
             storageId={storageId}
@@ -206,6 +209,7 @@ type ExtendedProps = Omit<Props, 'channelId'> & {
     counterParty?: string
     isBlocked?: boolean
     isChannelWritable?: boolean
+    isChannelDisabled?: boolean
     placeholders: { placeholder: string; imageUploadTitle: string }
     storageId: string
     threadId?: string
@@ -220,6 +224,7 @@ export const ChannelLayout = (props: ExtendedProps) => {
         channel,
         counterParty,
         isBlocked = false,
+        isChannelDisabled = false,
         isChannelWritable = true,
         placeholders,
         showDMAcceptInvitation,
@@ -248,7 +253,9 @@ export const ChannelLayout = (props: ExtendedProps) => {
     return (
         <>
             {!isTouch && <RegisterChannelShortcuts />}
-            {showJoinChannel && channelId ? (
+            {isChannelDisabled ? (
+                <ChannelDisabledComponent channel={channel} />
+            ) : showJoinChannel && channelId ? (
                 <UnjoinedChannelComponent
                     channel={channel}
                     spaceId={spaceId}

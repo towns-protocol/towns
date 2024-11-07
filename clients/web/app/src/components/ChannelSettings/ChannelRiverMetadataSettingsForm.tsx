@@ -212,7 +212,7 @@ export function ChannelRiverMetadataSettingsForm(): JSX.Element {
                                         }}
                                     />
                                 </Box>
-                                {spaceId && hasRemoveChannelPermission && (
+                                {spaceId && hasRemoveChannelPermission && !channel.disabled && (
                                     <DeleteChannelButton spaceId={spaceId} channelId={channel.id} />
                                 )}
                             </Stack>
