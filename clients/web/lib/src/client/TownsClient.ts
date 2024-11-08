@@ -15,7 +15,7 @@ import {
     isChannelStreamId,
     isDMChannelStreamId,
 } from '@river-build/sdk'
-import { EntitlementsDelegate, DecryptionStatus } from '@river-build/encryption'
+import { EntitlementsDelegate } from '@river-build/encryption'
 import {
     convertRuleDataV2ToV1,
     CreateLegacySpaceParams,
@@ -335,13 +335,6 @@ export class TownsClient
 
         this._eventHandlers?.onRegister?.({
             userId: this.casablancaClient.userId,
-        })
-
-        this.casablancaClient.on('decryptionExtStatusChanged', (status: DecryptionStatus) => {
-            this.analytics?.trackOnce(`decryption_status_changed`, {
-                status,
-                debug: true,
-            })
         })
 
         const xChainRpcUrls = await this.getXchainConfig()

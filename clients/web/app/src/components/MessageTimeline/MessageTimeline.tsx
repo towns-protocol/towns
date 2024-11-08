@@ -12,7 +12,6 @@ import { notUndefined } from 'ui/utils/utils'
 import { useChannelType } from 'hooks/useChannelType'
 import { FullyReadObserver } from '@components/MessageTimeIineItem/items/FullyReadObserver'
 import { ScrollbackMarker } from '@components/Channel/components/ScrollbackMarker'
-import { Analytics } from 'hooks/useAnalytics'
 import { DateDivider } from '../MessageTimeIineItem/items/DateDivider'
 import { NewDivider } from '../MessageTimeIineItem/items/NewDivider'
 import { MessageTimelineType, useTimelineContext } from './MessageTimelineContext'
@@ -101,9 +100,6 @@ export const MessageTimeline = (props: Props) => {
 
     if (events.length > 0) {
         isStartupRef.current = false
-        Analytics.getInstance().trackOnce('message_timeline', {
-            debug: true,
-        })
     }
 
     const { fullyReadMarker, fullreadMarkerPersisted, onMarkAsRead, isUnreadMarkerFaded } =

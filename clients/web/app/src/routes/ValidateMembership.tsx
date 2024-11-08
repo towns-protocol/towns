@@ -94,14 +94,12 @@ export const ValidateMembership = () => {
     // if a user has hit the join/login button from the non-authenticated public town page
     // continue to show the public town page and let the page complete the join/login flow
     if (isJoining) {
-        trackPublicTownPage()
         return _PublicTownPage
     }
 
     // A user that has never joined a space will not have a client
     if (signerContext && !client) {
         // if we're "authenticated" but we don't have a client we need to show the public town page
-        trackPublicTownPage()
         return _PublicTownPage
     }
 
@@ -115,7 +113,6 @@ export const ValidateMembership = () => {
                 (spaceDataIds && !spaceDataIds.includes(spaceIdFromPathname))) &&
             !deferPublicPage
         ) {
-            trackPublicTownPage()
             return _PublicTownPage
         }
 
@@ -140,21 +137,10 @@ export const ValidateMembership = () => {
     const isMember = space.membership === Membership.Join
 
     if (!isMember && !deferPublicPage) {
-        trackPublicTownPage()
         return _PublicTownPage
     }
 
-    Analytics.getInstance().trackOnce('is_member', {
-        debug: true,
-        isMember,
-    })
-
     if (!isHighPriorityDataLoaded) {
-        Analytics.getInstance().trackOnce('load_local_data', {
-            debug: true,
-            isRemoteDataLoaded,
-            isLocalDataLoaded,
-        })
         return (
             <>
                 {/* <Outlet /> <- we can add the app in the background underneath the progress */}
@@ -229,10 +215,4 @@ function useSpaceDataIds() {
     }
 
     return newIds
-}
-
-function trackPublicTownPage() {
-    Analytics.getInstance().trackOnce('public_town_page', {
-        debug: true,
-    })
 }

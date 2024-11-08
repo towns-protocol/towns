@@ -37,7 +37,6 @@ import { SidebarLoadingAnimation } from './SpaceSideBarLoading'
 import { CondensedChannelNavItem } from './CondensedChannelNavItem'
 import { useOffscreenMarkers } from './hooks/useOffscreenMarkers'
 import { AppVersionText } from './AppVersionText'
-import { useTownMetadataAnalytics } from './hooks/useTownMetadataAnalytics'
 
 type Props = {
     space: SpaceData
@@ -124,8 +123,6 @@ export const SpaceSideBar = (props: Props) => {
         unreadThreadsCount,
         unreadThreadMentions,
     })
-
-    useTownMetadataAnalytics(favoriteChannels, unreadChannels, readChannels, space)
 
     const itemRenderer = useCallback(
         (u: (typeof unreadChannels)[0], isUnreadSection?: boolean) => {
