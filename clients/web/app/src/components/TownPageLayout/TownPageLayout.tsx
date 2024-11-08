@@ -14,8 +14,8 @@ import { ToneName } from 'ui/styles/themes'
 import { getInviteUrl } from 'ui/utils/utils'
 import useCopyToClipboard from 'hooks/useCopyToClipboard'
 import { Entitlements, useEntitlements } from 'hooks/useEntitlements'
-import { usePublicPageLoginFlow } from 'routes/PublicTownPage/usePublicPageLoginFlow'
-import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
+import { MotionBoxProps } from 'ui/components/Motion/MotionComponents'
+import { shimmerClass } from 'ui/styles/globals/shimmer.css'
 import { useReadableMembershipInfo } from './useReadableMembershipInfo'
 import { TokenInfoBox } from './TokenInfoBox'
 import { InformationBox } from './InformationBox'
@@ -85,7 +85,6 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
     const leftColRef = useRef<HTMLDivElement>(null)
     const rightColRef = useRef<HTMLDivElement>(null)
     const [leftColWidth, rightColWidth] = useColumnWidths({ leftColRef, rightColRef })
-    const isJoining = !!usePublicPageLoginFlow().spaceBeingJoined
 
     const priceText = useMemo(
         () => getPriceText(membershipInfo?.price, membershipInfo?.remainingFreeSupply),
@@ -147,18 +146,16 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
                                 motto={motto}
                             />
                         </Stack>
-                        {!isJoining && (
-                            <InformationBoxes
-                                spaceId={spaceId}
-                                imageSrc={imageSrc}
-                                price={priceText}
-                                duration={durationText}
-                                address={address}
-                                chainId={chainId}
-                                isEntitlementsLoading={isEntitlementsLoading}
-                                entitlements={entitlements}
-                            />
-                        )}
+                        <InformationBoxes
+                            spaceId={spaceId}
+                            imageSrc={imageSrc}
+                            price={priceText}
+                            duration={durationText}
+                            address={address}
+                            chainId={chainId}
+                            isEntitlementsLoading={isEntitlementsLoading}
+                            entitlements={entitlements}
+                        />
                         <Bio bio={bio} />
 
                         <Box>{props.activityContent}</Box>
@@ -304,6 +301,30 @@ const Header = (props: {
     )
 }
 
+const Placeholder = (props: MotionBoxProps) => {
+    const { isTouch } = useDevice()
+    return (
+        <MotionStack
+            horizontal
+            gap="sm"
+            height="x12"
+            minHeight="x12"
+            width="600"
+            alignItems="center"
+            overflowX="scroll"
+            scrollbars={false}
+            shrink={false}
+            layout="position"
+            style={{
+                paddingLeft: isTouch ? vars.space['lg'] : 'none',
+                marginLeft: isTouch ? vars.space['-lg'] : 'none',
+                marginRight: isTouch ? vars.space['-lg'] : 'none',
+            }}
+            {...props}
+        />
+    )
+}
+
 const InformationBoxes = (props: {
     spaceId: string
     imageSrc?: string
@@ -316,7 +337,7 @@ const InformationBoxes = (props: {
 }) => {
     const { spaceId, address, chainId, duration, isEntitlementsLoading, price, entitlements } =
         props
-    const { isTouch } = useDevice()
+
     const onAddressClick = useEvent(() => {
         window.open(`${baseScanUrl(chainId)}/address/${address}`, '_blank', 'noopener,noreferrer')
     })
@@ -329,26 +350,25 @@ const InformationBoxes = (props: {
     })
 
     if (isEntitlementsLoading || !entitlements) {
-        return <ButtonSpinner />
+        return (
+            <Placeholder>
+                {Array.from({ length: 5 })
+                    .map((_, i) => `key-${i}`)
+                    .map((k) => (
+                        <Box
+                            borderRadius="md"
+                            key={k}
+                            width="x12"
+                            height="x12"
+                            className={shimmerClass}
+                        />
+                    ))}
+            </Placeholder>
+        )
     }
 
     return (
-        <MotionStack
-            horizontal
-            gap="sm"
-            height="x12"
-            minHeight="x12"
-            alignItems="center"
-            overflowX="scroll"
-            scrollbars={false}
-            shrink={false}
-            layout="position"
-            style={{
-                paddingLeft: isTouch ? vars.space['lg'] : 'none',
-                marginLeft: isTouch ? vars.space['-lg'] : 'none',
-                marginRight: isTouch ? vars.space['-lg'] : 'none',
-            }}
-        >
+        <Placeholder>
             <TokenInfoBox
                 spaceId={spaceId}
                 title="Access"
@@ -403,7 +423,7 @@ const InformationBoxes = (props: {
                 />
             )}
             <Box width="x2" shrink={false} />
-        </MotionStack>
+        </Placeholder>
     )
 }
 

@@ -85,6 +85,17 @@ export const ValidateMembership = () => {
         }
     }, [userId])
 
+    const spaceId = useSpaceIdFromPathname()
+    const { setOptimisticSpaceInitialized } = useAppProgressStore()
+    const isMember = space?.membership === Membership.Join
+
+    useEffect(() => {
+        if (spaceId && isMember) {
+            console.log('[ValidateMembership] setting optimistic space initialized', spaceId)
+            setOptimisticSpaceInitialized(spaceId, true)
+        }
+    }, [isMember, setOptimisticSpaceInitialized, spaceId])
+
     const deferPublicPage = useDeferPublicPage({ spaceId: spaceIdFromPathname })
 
     if (!spaceIdFromPathname) {
@@ -133,8 +144,6 @@ export const ValidateMembership = () => {
             />
         )
     }
-
-    const isMember = space.membership === Membership.Join
 
     if (!isMember && !deferPublicPage) {
         return _PublicTownPage

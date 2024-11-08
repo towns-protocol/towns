@@ -94,7 +94,7 @@
     </script>
     <script>
       const matchTownsChannel = new RegExp(
-        `^/t/([a-f0-9]{64})/channels/([a-f0-9]{64})(?:/|$)`,
+        `^/t/(0x[a-f0-9]{40}|[a-f0-9]{64})/channels/([a-f0-9]{64})(?:/|$)`,
         "i",
       );
       if (matchTownsChannel.test(window.location.pathname)) {

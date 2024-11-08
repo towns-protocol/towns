@@ -30,6 +30,7 @@ import { getPriceText } from '@components/TownPageLayout/townPageUtils'
 import { useEntitlements } from 'hooks/useEntitlements'
 import { PATHS } from 'routes'
 import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
+import { addressFromSpaceId } from 'ui/utils/utils'
 import { MessageAttachmentsContext } from './MessageAttachmentsContext'
 
 const emptyArray: never[] = []
@@ -222,7 +223,9 @@ const TownsContent = (
 ) => {
     const { townPath, townId } = props
 
-    const channelId = townPath.match(new RegExp(`/${townId}/${PATHS.CHANNELS}/([0-9a-z]{64})`))?.[1]
+    const channelId = townPath.match(
+        new RegExp(`/${addressFromSpaceId(townId)}/${PATHS.CHANNELS}/([0-9a-z]{64})`),
+    )?.[1]
 
     const { data: spaceInfo } = useContractSpaceInfo(townId)
     const { data: memberInfo, isLoading } = useReadableMembershipInfo(townId)

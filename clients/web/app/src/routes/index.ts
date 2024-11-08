@@ -17,6 +17,11 @@ export const PATHS = {
     INVITES: 'invites',
 } as const
 
+export const PATHS_REGEX = {
+    SPACE_ID: '(0x[0-9a-f]{40}|[0-9a-f]{64})',
+    CHANNEL_ID: '([0-9a-f]{64})',
+}
+
 export const QUERY_PARAMS = {
     GALLERY_ID: 'galleryId',
     GALLERY_THREAD_ID: 'galleryThreadId',

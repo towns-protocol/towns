@@ -4,7 +4,7 @@ import { debug } from 'debug'
 import { useEvent } from 'react-use-event-hook'
 import { MINUTE_MS } from 'data/constants'
 import { env } from 'utils'
-import { PATHS } from 'routes'
+import { PATHS, PATHS_REGEX } from 'routes'
 
 const log = debug('app:updating')
 log.enabled = true
@@ -109,9 +109,7 @@ async function getShouldSkipPrompt() {
 
     if (
         window.location.pathname === '/' ||
-        window.location.pathname.match(
-            new RegExp(`^/${PATHS.SPACES}/(0x[0-9a-z]{40}|[0-9a-z]{64})/?$`),
-        )
+        window.location.pathname.match(new RegExp(`^/${PATHS.SPACES}/${PATHS_REGEX.SPACE_ID}/?$`))
     ) {
         log('usePeriodicUpdates: pathcheck: safe to skip prompt')
         return true

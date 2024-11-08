@@ -37,7 +37,7 @@ registerRoute(({ url }) => {
 }, new NetworkOnly())
 
 registerRoute(({ url }) => {
-    return url.pathname.match(new RegExp(`^/t/[0-9a-f]{64}/?$`))
+    return !!url.pathname.match(new RegExp(`^/t/(0x[a-f0-9]{40}|[a-f0-9]{64})/?$`))
 }, new NetworkFirst())
 
 // to allow work offline

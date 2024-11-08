@@ -7,6 +7,8 @@ import {
 } from 'use-towns-client'
 import { AppProgressState } from '@components/AppProgressOverlay/AppProgressState'
 import { AppProgressOverlayTrigger } from '@components/AppProgressOverlay/AppProgressOverlayTrigger'
+import { useAppProgressStore } from '@components/AppProgressOverlay/store/appProgressStore'
+import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 
 // 1. logging in
 // 2. joining - animation
@@ -18,6 +20,12 @@ import { AppProgressOverlayTrigger } from '@components/AppProgressOverlay/AppPro
 export function JoiningOverlay() {
     const { isAuthenticated } = useConnectivity()
     const { currOp } = userOpsStore()
+
+    const spaceId = useSpaceIdFromPathname()
+    const { isOptimisticInitialized } = useAppProgressStore(({ optimisticInitializedSpaces }) => ({
+        isOptimisticInitialized: optimisticInitializedSpaces.some((id) => id === spaceId),
+    }))
+
     const isJoining = useIsTransactionPending(BlockchainTransactionType.JoinSpace)
 
     function getAppProressState() {
@@ -28,12 +36,10 @@ export function JoiningOverlay() {
             // currOpGas means the confirmation tx modal is up
             return AppProgressState.Joining
         }
-        if (isJoining) {
-            return AppProgressState.Joining
-        }
-        if (isAuthenticated && !isJoining) {
-            // time between post-authentication and joining - isAuthenticated && !isJoining - what to put here?
-            return AppProgressState.Joining
+
+        if (isOptimisticInitialized) {
+            // we clicked on join but it seems like we're actually part of the town
+            return AppProgressState.LoggingIn
         }
 
         return AppProgressState.Joining

@@ -12,7 +12,7 @@ import { WelcomeLayout } from 'routes/layouts/WelcomeLayout'
 import { AppProgressOverlayTrigger } from '@components/AppProgressOverlay/AppProgressOverlayTrigger'
 import { AboveAppProgressOverlay } from '@components/AppProgressOverlay/AboveAppProgress/AboveAppProgress'
 import { AppBugReportOverlay } from '@components/AppBugReport/AppBugReportOverlay'
-import { PATHS } from 'routes'
+import { PATHS, PATHS_REGEX } from 'routes'
 import { StartupProvider } from 'StartupProvider'
 import { TownsPrivyProvider } from 'privy/PrivyProvider'
 
@@ -59,7 +59,10 @@ export const Main = () => {
 
     const isHomeRoute = useMemo(() => window.location.pathname === '/', [])
     const isTownPageRoute = useMemo(
-        () => window.location.pathname.match(new RegExp(`/${PATHS.SPACES}/[a-f0-9]{64}/?$`)),
+        () =>
+            window.location.pathname.match(
+                new RegExp(`/${PATHS.SPACES}/${PATHS_REGEX.SPACE_ID}/?$`),
+            ),
         [],
     )
 

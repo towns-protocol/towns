@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react'
-import { matchPath, useLocation } from 'react-router'
 import { useStartupTime } from 'StartupProvider'
 import { trackTime } from 'hooks/useAnalytics'
+import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { AppProgressState, AppStartupTrack } from './AppProgressState'
 import { useAppProgressStore } from './store/appProgressStore'
 
@@ -36,7 +36,7 @@ export const AppProgressOverlayTrigger = (props: {
         }
     }, [appStartTime, debugSource, progressState])
 
-    const spaceId = matchPath('/t/:spaceId/*', useLocation().pathname)?.params.spaceId
+    const spaceId = useSpaceIdFromPathname()
 
     useEffect(() => {
         setAppProgressOverlay(props.progressState)

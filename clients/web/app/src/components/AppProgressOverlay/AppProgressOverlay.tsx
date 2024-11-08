@@ -1,12 +1,12 @@
 import { AnimatePresence, MotionProps } from 'framer-motion'
 import React, { useEffect, useMemo } from 'react'
-import { matchPath, useLocation } from 'react-router'
 import { TransitionLogo } from '@components/Logo/Logo'
 import { SetupAnimation } from '@components/SetupAnimation/SetupAnimation'
 import { BoxProps, MotionStack, ZLayerProvider } from '@ui'
 import { useStore } from 'store/store'
 import { AppBugReportButton } from '@components/AppBugReport/AppBugReportButton'
 import { trackTime } from 'hooks/useAnalytics'
+import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { AppOverlayDebugger } from './AppOverlayDebugger'
 import { AppProgressOverlayKey, AppProgressState, toAppStartupTrack } from './AppProgressState'
 import { AppSkeletonView } from './AppSkeletonView'
@@ -15,11 +15,7 @@ import { useAppProgressStore } from './store/appProgressStore'
 export const AppProgressOverlay = (props: { debug?: boolean }) => {
     const spaceIdBookmark = useStore((s) => s.spaceIdBookmark)
 
-    const { pathname } = useLocation()
-
-    const spaceId = useMemo(() => {
-        return matchPath('/t/:spaceId/*', pathname)?.params.spaceId //|| spaceIdBookmark
-    }, [pathname])
+    const spaceId = useSpaceIdFromPathname()
 
     useEffect(() => {
         console.log('[routing] spaceIdBookmark:', spaceIdBookmark)

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef } from 'react'
+import { useConnectivity } from 'use-towns-client'
 import { useReadableMembershipInfo } from '@components/TownPageLayout/useReadableMembershipInfo'
 import { BottomBarWithColWidths } from '@components/Web3/MembershipNFT/BottomBar'
 import { Box, Stack, Text } from '@ui'
@@ -6,17 +7,22 @@ import { useDevice } from 'hooks/useDevice'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { JoinLoginButton } from './JoinLoginButton'
 import { JoiningOverlay } from './JoiningOverlay'
+import { usePublicPageLoginFlow } from './usePublicPageLoginFlow'
 
 export function BottomBarContent({
     leftColWidth,
     rightColWidth,
-    isJoining,
 }: {
     leftColWidth: number
     rightColWidth: number
-    isJoining: boolean
 }) {
     const spaceId = useSpaceIdFromPathname()
+
+    const isJoiningFlow = !!usePublicPageLoginFlow().spaceBeingJoined
+    const { isAuthenticated } = useConnectivity()
+    // we don't want to hide the public town page while authenticating
+    const preventJoiningOverlay = !isJoiningFlow || !isAuthenticated
+
     const { isTouch } = useDevice()
     const footerRef = useRef<HTMLDivElement>(null)
     const { data: membershipInfo } = useReadableMembershipInfo(spaceId ?? '')
@@ -71,7 +77,13 @@ export function BottomBarContent({
                         tablet: 'x4',
                     }}
                     leftColContent={
-                        <Stack grow centerContent gap={isTouch ? 'sm' : 'md'} color="default">
+                        <Stack
+                            grow
+                            centerContent
+                            gap={isTouch ? 'sm' : 'md'}
+                            color="default"
+                            width={{ default: '600', mobile: '100%' }}
+                        >
                             {totalSupply && maxSupply && (
                                 <>
                                     <Stack
@@ -112,7 +124,7 @@ export function BottomBarContent({
                     }
                 />
             </Stack>
-            {isJoining && <JoiningOverlay />}
+            {!preventJoiningOverlay && <JoiningOverlay />}
         </>
     )
 }

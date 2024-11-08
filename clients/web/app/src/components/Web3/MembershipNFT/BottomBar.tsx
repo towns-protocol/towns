@@ -110,30 +110,11 @@ const BottomBarLayout = ({
                     {!messageContent && <Box grow />}
                 </Box>
                 <Box grow />
-                {buttonContent && (
-                    <ButtonContainer horizontal gap minWidth={isTouch ? undefined : '300'}>
-                        {buttonContent}
-                    </ButtonContainer>
-                )}
+                {buttonContent}
             </Stack>
         </Stack>
     )
 }
-
-/**
- * @deprecated
- */
-const ButtonContainer = (boxProps: BoxProps) => (
-    <Box
-        shrink
-        centerContent
-        height={{
-            desktop: 'x12',
-            mobile: 'x10',
-        }}
-        {...boxProps}
-    />
-)
 
 export const BottomBarWithColWidths = ({
     leftColWidth,
@@ -168,7 +149,7 @@ export const BottomBarWithColWidths = ({
                 grow={isTouch}
                 position="relative"
                 style={{
-                    width: isTouch ? undefined : leftColWidth,
+                    width: isTouch ? undefined : 600,
                 }}
             >
                 {leftColContent}
@@ -177,7 +158,7 @@ export const BottomBarWithColWidths = ({
             <Box
                 position="relative"
                 style={{
-                    width: isTouch ? undefined : rightColWidth,
+                    width: isTouch ? undefined : 300,
                 }}
             >
                 {rightColContent}

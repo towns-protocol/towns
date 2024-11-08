@@ -29,7 +29,6 @@ import { AppBugReportButton } from '@components/AppBugReport/AppBugReportButton'
 import { useStartupTime } from 'StartupProvider'
 import { AppStoreBanner } from '@components/AppStoreBanner/AppStoreBanner'
 import { BottomBarContent } from './BottomBarContent'
-import { usePublicPageLoginFlow } from './usePublicPageLoginFlow'
 
 const log = debug('app:public-town')
 log.enabled = true
@@ -46,7 +45,6 @@ const PublicTownPageWithoutAuth = (props: { isPreview?: boolean; onClosePreview?
 
     const spaceInfo = _spaceInfo || spaceInfoFromSSR?.townData
     const className = clsx([darkTheme, atoms({ color: 'default' })])
-    const isJoining = !!usePublicPageLoginFlow().spaceBeingJoined
 
     const { isTouch } = useDevice()
     const location = useLocation()
@@ -88,15 +86,12 @@ const PublicTownPageWithoutAuth = (props: { isPreview?: boolean; onClosePreview?
                     headerContent={<Header isPreview={isPreview} onClosePreview={onClosePreview} />}
                     bottomContent={({ leftColWidth, rightColWidth }) => (
                         <BottomBarContent
-                            isJoining={isJoining}
                             leftColWidth={leftColWidth}
                             rightColWidth={rightColWidth}
                         />
                     )}
                     spaceInfo={spaceInfo}
-                    activityContent={
-                        !isJoining && <TownPageActivity townId={spaceInfo.networkId} />
-                    }
+                    activityContent={<TownPageActivity townId={spaceInfo.networkId} />}
                     isPreview={isPreview}
                     spaceId={spaceInfo.networkId}
                 />
