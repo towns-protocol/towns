@@ -38,7 +38,6 @@ export const NodeStatusPanel = () => {
         const scrollTop = e.currentTarget.scrollTop
         ref.current?.style.setProperty('--scroll-top', `${Math.max(0, scrollTop - 50) / 250}`)
     }, [])
-
     return (
         <Panel label="River Network" style={{ userSelect: 'none' }} onScroll={onScroll}>
             <Box centerContent ref={ref}>
