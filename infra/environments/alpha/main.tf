@@ -117,6 +117,7 @@ module "pgadmin" {
 locals {
   num_full_nodes      = 10
   num_archive_nodes   = 1
+  archive_enabled     = false
   global_remote_state = module.global_constants.global_remote_state.outputs
   base_chain_id       = 84532
   river_chain_id      = 6524490
@@ -205,7 +206,7 @@ module "river_node" {
 
 module "archive_node_nlb" {
   source  = "../../modules/river-nlb"
-  count   = local.num_archive_nodes
+  count   = local.archive_enabled ? 1 : 0
   subnets = module.vpc.public_subnets
   vpc_id  = module.vpc.vpc_id
   nlb_id  = "archive-${tostring(count.index + 1)}"
@@ -214,6 +215,7 @@ module "archive_node_nlb" {
 module "archive_node" {
   source = "../../modules/river-node"
   count  = local.num_archive_nodes
+  on     = local.archive_enabled
 
   node_metadata = module.node_metadata.archive_nodes[count.index]
 

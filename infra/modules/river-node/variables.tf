@@ -126,3 +126,8 @@ variable "scrub_duration" {
   type        = number
   default     = 3600000000000
 }
+
+variable "on" {
+  type    = bool
+  default = true
+}

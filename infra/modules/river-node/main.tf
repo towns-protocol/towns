@@ -588,7 +588,7 @@ resource "aws_ecs_service" "river-ecs-service" {
   name                               = "${local.node_name}-fargate-service"
   cluster                            = var.ecs_cluster.id
   task_definition                    = aws_ecs_task_definition.river-fargate.arn
-  desired_count                      = 1
+  desired_count                      = var.on ? 1 : 0
   deployment_minimum_healthy_percent = local.run_mode == "archive" ? 0 : 100
   deployment_maximum_percent         = local.run_mode == "archive" ? 100 : 200
 

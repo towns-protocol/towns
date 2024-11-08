@@ -47,7 +47,7 @@ module "rds_aurora_postgresql" {
 
   monitoring_interval          = 0
   create_monitoring_role       = false
-  performance_insights_enabled = true
+  performance_insights_enabled = false
 
   master_username = "root"
 
@@ -68,7 +68,7 @@ module "rds_aurora_postgresql" {
   db_cluster_parameter_group_name = aws_rds_cluster_parameter_group.river_db_paramater_group.name
 
   serverlessv2_scaling_configuration = {
-    min_capacity = 4
+    min_capacity = 0.5
     max_capacity = 20
   }
 
