@@ -299,7 +299,7 @@ describe('channel with roles and permissions', () => {
         await alice.joinRoom(channelId)
 
         // Remove the link between alice and carol wallets, causing Alice to lose her entitlement to the channel.
-        const tx = await alice.removeLink(alice.provider.wallet, carol.wallet.address)
+        const tx = await alice.unlinkViaRootKey(alice.provider.wallet, carol.wallet.address)
         await alice.waitWalletLinkTransaction(tx)
 
         // Await 5s for cached entitlement to be cleared on the stream server.

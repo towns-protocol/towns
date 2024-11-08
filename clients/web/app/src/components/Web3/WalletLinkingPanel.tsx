@@ -21,10 +21,11 @@ import { createPrivyNotAuthenticatedNotification } from '@components/Notificatio
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { GetSigner, LoginToPrivyIconButton, WalletReady } from 'privy/WalletReady'
 import { useErrorToast } from 'hooks/useErrorToast'
-import { ConnectWalletThenLinkButton } from './ConnectWalletThenLinkButton'
+import { ConnectWalletThenLinkButton } from './ConnectWallet/ConnectWalletThenLinkButton'
 import { WalletLinkingInfo } from './WalletLinkingInfo'
 import { WalletWithBalance } from './Wallet/WalletWithBalance'
 import { mapToErrorMessage } from './utils'
+import { ConnectWalletThenUnlinkViaCaller } from './ConnectWallet/ConnectWalletThenUnlinkViaCaller'
 
 export const WalletLinkingPanel = React.memo(() => {
     return <WalletLinkingPanelWithoutAuth />
@@ -113,6 +114,9 @@ function WalletLinkingPanelWithoutAuth() {
             </ConnectWalletThenLinkButton>
 
             <WalletLinkingInfo />
+            <Box grow justifyContent="end">
+                <ConnectWalletThenUnlinkViaCaller isDisabled={isDisabled} />
+            </Box>
 
             {/* {isLoadingLinkingWallet && <FullPanelOverlay text="Linking Wallet" />} */}
             {/* {isLoadingUnlinkingWallet && <FullPanelOverlay text="Unlinking Wallet" />} */}

@@ -26,7 +26,7 @@ import { TokenSelectionDisplay } from '@components/Tokens/TokenSelector/TokenSel
 import { useNativeTokenWithQuantity } from '@components/Tokens/utils'
 import { FullPanelOverlay, LinkedWallet } from '../WalletLinkingPanel'
 import { isEveryoneAddress, mapToErrorMessage } from '../utils'
-import { ConnectWalletThenLinkButton } from '../ConnectWalletThenLinkButton'
+import { ConnectWalletThenLinkButton } from '../ConnectWallet/ConnectWalletThenLinkButton'
 import { WalletLinkingInfo } from '../WalletLinkingInfo'
 
 type Props = {

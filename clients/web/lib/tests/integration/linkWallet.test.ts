@@ -57,7 +57,7 @@ describe('Link Wallet', () => {
         expect(txHashAgain).toBeUndefined()
 
         // remove link
-        const tx_remove = await alice.removeLink(
+        const tx_remove = await alice.unlinkViaRootKey(
             alice.provider.wallet,
             await metamaskWallet.getAddress(),
         )
@@ -131,7 +131,7 @@ describe('Link Wallet', () => {
         expect(txHashAgain).toBeUndefined()
 
         // remove link
-        const tx_remove = await alice.removeLink(
+        const tx_remove = await alice.unlinkViaRootKey(
             alice.provider.wallet,
             await metamaskWallet.getAddress(),
         )

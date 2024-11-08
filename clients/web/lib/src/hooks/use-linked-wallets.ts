@@ -82,7 +82,7 @@ export function useLinkCallerToRootKey() {
 
 export function useUnlinkWalletTransaction() {
     const { traceTransaction, ...rest } = useLinkTransactionBuilder()
-    const { removeLink } = useTownsClient()
+    const { unlinkViaRootKey } = useTownsClient()
     return {
         ...rest,
         unlinkWalletTransaction: useCallback(
@@ -99,10 +99,24 @@ export function useUnlinkWalletTransaction() {
                         })
                     }
                     // ok to proceed
-                    return removeLink(rootKey, walletAddress)
+                    return unlinkViaRootKey(rootKey, walletAddress)
                 })
             },
-            [removeLink, traceTransaction],
+            [unlinkViaRootKey, traceTransaction],
+        ),
+    }
+}
+
+export function useUnlinkViaCallerTransaction() {
+    const { traceTransaction, ...rest } = useLinkTransactionBuilder()
+    const { unlinkViaCaller } = useTownsClient()
+    return {
+        ...rest,
+        unlinkViaCallerTransaction: useCallback(
+            async function (caller: ethers.Signer) {
+                return traceTransaction(async () => unlinkViaCaller(caller))
+            },
+            [unlinkViaCaller, traceTransaction],
         ),
     }
 }

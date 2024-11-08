@@ -292,10 +292,12 @@ interface TownsClientImpl {
         rootKey: TSigner,
         wallet?: TSigner,
     ) => Promise<WalletLinkTransactionContext | undefined>
-    removeLink: (
+    unlinkViaRootKey: (
         rootKey: TSigner,
         walletAddress: string,
     ) => Promise<WalletLinkTransactionContext | undefined>
+    unlinkViaCaller: (caller: TSigner) => Promise<WalletLinkTransactionContext | undefined>
+
     getLinkedWallets: (rootKey: string) => Promise<string[] | undefined>
     waitWalletLinkTransaction: (
         transactionContext: WalletLinkTransactionContext,
@@ -467,7 +469,8 @@ export function useTownsClient(): TownsClientImpl {
         setUserBio: useWithCatch(clientSingleton?.setUserBio),
         linkEOAToRootKey: useWithCatch(clientSingleton?.linkEOAToRootKey),
         linkCallerToRootKey: useWithCatch(clientSingleton?.linkCallerToRootKey),
-        removeLink: useWithCatch(clientSingleton?.removeLink),
+        unlinkViaRootKey: useWithCatch(clientSingleton?.unlinkViaRootKey),
+        unlinkViaCaller: useWithCatch(clientSingleton?.unlinkViaCaller),
         getLinkedWallets: useWithCatch(clientSingleton?.getLinkedWallets),
         waitWalletLinkTransaction: useWithCatch(clientSingleton?.waitWalletLinkTransaction),
         getSupportedXChainIds: useWithCatch(clientSingleton?.getSupportedXChainIds),

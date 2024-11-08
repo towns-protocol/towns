@@ -19,8 +19,10 @@ export function WalletLinkingInfo(props: BoxProps) {
             gap="sm"
             {...props}
         >
-            <Icon type="info" size="square_sm" shrink={false} />
-            <WalletLinkingInfoLink />
+            <Box horizontal gap="sm">
+                <Icon type="info" size="square_sm" shrink={false} />
+                <WalletLinkingInfoLink />
+            </Box>
         </Box>
     )
 }

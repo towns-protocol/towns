@@ -124,7 +124,7 @@ export type RoleTransactionContext = TransactionContext<{
 }>
 
 export type WalletLinkTransactionContext = TransactionContext<{
-    rootKeyAddress: string
+    rootKeyAddress?: string
     walletAddress: string
 }>
 

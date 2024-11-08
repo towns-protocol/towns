@@ -112,6 +112,7 @@ export {
     useLinkEOAToRootKeyTransaction,
     useLinkCallerToRootKey,
     useUnlinkWalletTransaction,
+    useUnlinkViaCallerTransaction,
     useLinkedWallets,
     useLinkedWalletsForWallet,
     useGetRootKeyFromLinkedWallet,

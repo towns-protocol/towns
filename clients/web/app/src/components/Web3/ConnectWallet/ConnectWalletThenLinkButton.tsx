@@ -5,7 +5,7 @@ import { isTouch } from 'hooks/useDevice'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { GetSigner, WalletReady } from 'privy/WalletReady'
 import { useConnectThenLink } from './useConnectThenLink'
-import { WalletLinkingInfoLink } from './WalletLinkingInfo'
+import { WalletLinkingInfoLink } from '../WalletLinkingInfo'
 
 type Props = {
     onLinkWallet: (rootKey: Signer | undefined, wallet: Signer | undefined) => void

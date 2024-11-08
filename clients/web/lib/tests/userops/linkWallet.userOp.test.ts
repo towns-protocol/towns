@@ -38,7 +38,7 @@ test('can link a wallet with unfunded EOA', async () => {
     const aliceWallets = await alice.getLinkedWallets(alice.getUserId())
     expect(aliceWallets).toContain(metamaskAddress)
 
-    const unlinkTx = await alice.removeLink(alice.wallet, metamaskWallet.address)
+    const unlinkTx = await alice.unlinkViaRootKey(alice.wallet, metamaskWallet.address)
     await alice.waitWalletLinkTransaction(unlinkTx)
     await sleepBetweenTxs()
 
@@ -63,7 +63,7 @@ test('can link a smart account', async () => {
     // unlink aaAddress if previously linked
     if (process.env.PRIVY_WALLET_PRIVATE_KEY_1) {
         if ((await alice.getLinkedWallets(alice.getUserId())).includes(aaAddress)) {
-            const unlinkTx = await alice.removeLink(alice.wallet, aaAddress)
+            const unlinkTx = await alice.unlinkViaRootKey(alice.wallet, aaAddress)
             await alice.waitWalletLinkTransaction(unlinkTx)
             await sleepBetweenTxs()
         }
@@ -77,7 +77,7 @@ test('can link a smart account', async () => {
     const aliceWallets = await alice.getLinkedWallets(alice.getUserId())
     expect(aliceWallets).toContain(aaAddress)
 
-    const unlinkTx = await alice.removeLink(alice.wallet, aaAddress)
+    const unlinkTx = await alice.unlinkViaRootKey(alice.wallet, aaAddress)
     await alice.waitWalletLinkTransaction(unlinkTx)
     await sleepBetweenTxs()
 

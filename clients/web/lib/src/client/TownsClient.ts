@@ -2834,7 +2834,7 @@ export class TownsClient
         }
     }
 
-    public async removeLink(
+    public async unlinkViaRootKey(
         rootKey: ethers.Signer,
         walletAddress: string,
     ): Promise<WalletLinkTransactionContext> {
@@ -2873,6 +2873,41 @@ export class TownsClient
                 ? {
                       rootKeyAddress: await rootKey.getAddress(),
                       walletAddress,
+                  }
+                : undefined,
+            error,
+        }
+    }
+
+    public async unlinkViaCaller(caller: ethers.Signer): Promise<WalletLinkTransactionContext> {
+        const walletLink = this.spaceDapp.getWalletLink()
+
+        let transaction: TransactionOrUserOperation | undefined = undefined
+        let error: Error | undefined = undefined
+        const continueStoreTx = this.blockchainTransactionStore.begin({
+            type: BlockchainTransactionType.UnlinkWallet,
+        })
+
+        try {
+            transaction = await walletLink.removeCallerLink(caller)
+        } catch (err) {
+            const parsedError = walletLink.parseError(err)
+            error = parsedError
+        }
+
+        continueStoreTx({
+            hashOrUserOpHash: getTransactionHashOrUserOpHash(transaction),
+            transaction,
+            error,
+        })
+
+        return {
+            transaction,
+            receipt: undefined,
+            status: transaction ? TransactionStatus.Pending : TransactionStatus.Failed,
+            data: transaction
+                ? {
+                      walletAddress: await caller.getAddress(),
                   }
                 : undefined,
             error,
