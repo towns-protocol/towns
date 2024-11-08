@@ -123,6 +123,10 @@ resource "aws_secretsmanager_secret" "notification_service_db_password_secret" {
   description = "Notification service db password"
 }
 
+resource "aws_secretsmanager_secret" "notification_authentication_session_token_key" {
+  name = "notification-authentication-session-token-key"
+}
+
 resource "aws_secretsmanager_secret_version" "notification_service_db_password_secret" {
   secret_id     = aws_secretsmanager_secret.notification_service_db_password_secret.id
   secret_string = "DUMMY"

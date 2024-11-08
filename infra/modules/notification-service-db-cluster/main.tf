@@ -3,12 +3,14 @@ module "global_constants" {
 }
 
 locals {
+  prefix       = var.name_prefix == "" ? "" : "${var.name_prefix}-"
+  service_name = "${local.prefix}notification-service-db-cluster"
+  cluster_name = "${terraform.workspace}-${local.service_name}"
+
   tags = merge(
     module.global_constants.tags, {
-      Service = "notification-service-postgres-db"
+      Service = local.service_name
   })
-
-  cluster_name = "${terraform.workspace}-notification-service-db-cluster"
 }
 
 data "aws_rds_engine_version" "postgresql" {
@@ -45,10 +47,6 @@ module "rds_aurora_postgresql" {
 
   final_snapshot_identifier = "${local.cluster_name}-final-snapshot"
 
-  enabled_cloudwatch_logs_exports = ["postgresql"]
-
-  create_cloudwatch_log_group = true
-
   tags = local.tags
 
   deletion_protection = true
@@ -66,13 +64,6 @@ module "rds_aurora_postgresql" {
   publicly_accessible = false
 
   iam_database_authentication_enabled = false
-}
-
-resource "aws_cloudwatch_log_subscription_filter" "rds_log_group_filter" {
-  name            = "${local.cluster_name}-log-group"
-  log_group_name  = module.rds_aurora_postgresql.db_cluster_cloudwatch_log_groups["postgresql"].name
-  filter_pattern  = ""
-  destination_arn = module.global_constants.datadug_forwarder_stack_lambda.arn
 }
 
 resource "aws_vpc_security_group_ingress_rule" "allow_pgadmin_inbound_to_db" {

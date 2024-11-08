@@ -440,7 +440,7 @@ resource "aws_ecs_task_definition" "river-fargate" {
       },
       {
         name  = "SCRUBBINGCONFIG__SCRUBELIGIBLEDURATION",
-        value = var.scrub_duration
+        value = tostring(var.scrub_duration)
       },
       {
         name  = "METRICS__ENABLED",

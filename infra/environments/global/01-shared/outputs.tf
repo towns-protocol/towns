@@ -108,3 +108,7 @@ output "omega_chainsstring_secret" {
 output "opensea_api_key_secret" {
   value = aws_secretsmanager_secret.opensea_api_key_secret
 }
+
+output "notification_authentication_session_token_key_secret" {
+  value = aws_secretsmanager_secret.notification_authentication_session_token_key
+}

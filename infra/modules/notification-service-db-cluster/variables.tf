@@ -16,3 +16,9 @@ variable "pgadmin_security_group_id" {
   description = "The security group id of the pgadmin service"
   type        = string
 }
+
+variable "name_prefix" {
+  description = "The prefix to use for the name of the resources"
+  type        = string
+  default     = ""
+}

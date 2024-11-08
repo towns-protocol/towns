@@ -50,26 +50,6 @@ data "terraform_remote_state" "global_remote_state" {
   }
 }
 
-module "notification_service_db_config_lambda" {
-  source = "../notification-service-db-config-lambda"
-
-  vpc_id     = var.vpc_id
-  subnet_ids = var.subnets
-  db_cluster = var.db_cluster
-}
-
-resource "null_resource" "invoke_lambda" {
-  depends_on = [module.notification_service_db_config_lambda]
-
-  provisioner "local-exec" {
-    command = "aws lambda invoke --function-name ${module.notification_service_db_config_lambda.function_name} /dev/null"
-  }
-
-  lifecycle {
-    ignore_changes = all
-  }
-}
-
 resource "aws_iam_role" "ecs_task_execution_role" {
   name                = "${local.local_name}-ecsTaskExecutionRole"
   managed_policy_arns = ["arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"]
@@ -396,9 +376,6 @@ resource "aws_ecs_service" "river-ecs-service" {
   desired_count                      = 1
   deployment_minimum_healthy_percent = 50
   deployment_maximum_percent         = 200
-
-  # do not attempt to create the service before the lambda runs
-  depends_on = [module.notification_service_db_config_lambda]
 
   enable_execute_command = true
 
