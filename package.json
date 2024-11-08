@@ -131,7 +131,8 @@
                 "packages": [
                     "@river-build/stress",
                     "@river-build/sdk",
-                    "@river-build/debug-app"
+                    "@river-build/debug-app",
+                    "@river-build/playground"
                 ],
                 "dependencyTypes": [
                     "prod",
