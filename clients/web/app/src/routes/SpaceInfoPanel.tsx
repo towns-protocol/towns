@@ -1,18 +1,16 @@
 import { Address, Permission } from '@river-build/web3'
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useSearchParams } from 'react-router-dom'
 import { useEvent } from 'react-use-event-hook'
 import {
     LookupUser,
-    TransactionStatus,
     useBannedWalletAddresses,
     useConnectivity,
     useContractSpaceInfo,
     useGetRootKeyFromLinkedWallet,
     useHasPermission,
     useIsSpaceOwner,
-    useRefreshMetadataTx,
     useSpaceData,
     useSpaceId,
     useSpaceMembers,
@@ -54,14 +52,13 @@ import { useUploadAttachment } from '@components/MediaDropContext/useUploadAttac
 import { EditTownInfo } from '@components/Panel/EditTownInfo'
 import { ContractInfoButtons } from '@components/Panel/ContractInfoButtons'
 import { Analytics } from 'hooks/useAnalytics'
-import { StandardToast } from '@components/Notifications/StandardToast'
 import { popupToast } from '@components/Notifications/popupToast'
 
 import { useBalance } from 'hooks/useBalance'
-import { EntitlementsDisplay } from '@components/TownPageLayout/EntitlementsDisplay'
-import { useEntitlements } from 'hooks/useEntitlements'
-import { ReauthenticateToast, WalletReady } from 'privy/WalletReady'
 import { useWaitForInvalidation } from 'hooks/useWaitForInvalidation'
+import { useRefreshSpaceMember } from 'hooks/useRefreshSpaceMember'
+import { useEntitlements } from 'hooks/useEntitlements'
+import { EntitlementsDisplay } from '@components/TownPageLayout/EntitlementsDisplay'
 import { PublicTownPage } from './PublicTownPage/PublicTownPage'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
 
@@ -77,7 +74,6 @@ export const SpaceInfo = () => {
     const space = useSpaceData()
     const { isTouch } = useDevice()
     const [searchParams] = useSearchParams()
-    const { baseChain } = useEnvironment()
 
     // touch handles roles panel with modals
     const isRolesPanel = !isTouch && searchParams.get(CHANNEL_INFO_PARAMS.ROLES) != null
@@ -241,54 +237,12 @@ export const SpaceInfo = () => {
 
     const { uploadTownImageToStream } = useUploadAttachment()
     const isUploadingSpaceIconRef = useRef<boolean>(false)
-    const {
-        refreshMetadataTransaction,
-        transactionStatus,
-        reset: resetTxContext,
-    } = useRefreshMetadataTx()
+    const { toast } = useRefreshSpaceMember(space?.id)
 
     const [spaceImageInvalidationId, setSpaceImageInvalidationId] = useState<string | undefined>()
-    const { isSuccess: isSpaceImageRefreshed } = useWaitForInvalidation(spaceImageInvalidationId)
-
-    useEffect(() => {
-        if (!isSpaceImageRefreshed || !space?.id) {
-            return
-        }
-        popupToast(
-            ({ toast }) => (
-                <WalletReady
-                    LoginButton={
-                        <ReauthenticateToast
-                            toast={toast}
-                            message="Please reauthenticate to publish your space image to OpenSea"
-                            cta="Reauthenticate"
-                        />
-                    }
-                >
-                    {({ getSigner }) => (
-                        <StandardToast
-                            message="Would you like to publish the space image to OpenSea?"
-                            toast={toast}
-                            ctaColor="positive"
-                            icon="openSeaPlain"
-                            iconProps={{ color: 'gray2' }}
-                            cta="Publish"
-                            onCtaClick={async ({ dismissToast }) => {
-                                const signer = await getSigner()
-                                if (!signer) {
-                                    return
-                                }
-                                // emit event to update the nft metadata
-                                await refreshMetadataTransaction(space.id, signer)
-                                dismissToast()
-                            }}
-                        />
-                    )}
-                </WalletReady>
-            ),
-            { duration: Infinity },
-        )
-    }, [isSpaceImageRefreshed, refreshMetadataTransaction, space?.id])
+    useWaitForInvalidation(spaceImageInvalidationId, {
+        onSuccess: () => popupToast(toast, { duration: Infinity }),
+    })
 
     const onUploadSpaceIcon = useCallback(
         async ({ file, id: spaceId, type, setProgress }: UploadImageRequestConfig) => {
@@ -313,67 +267,6 @@ export const SpaceInfo = () => {
         },
         [casablancaClient, uploadTownImageToStream],
     )
-
-    useEffect(() => {
-        if (transactionStatus === TransactionStatus.Success) {
-            popupToast(({ toast }) => (
-                <StandardToast.Success
-                    message="Your space image has been published to OpenSea"
-                    cta="View on OpenSea"
-                    toast={toast}
-                    onCtaClick={({ dismissToast }) => {
-                        window.open(
-                            `${openSeaAssetUrl(baseChain.id, address)}`,
-                            '_blank',
-                            'noopener,noreferrer',
-                        )
-                        dismissToast()
-                    }}
-                />
-            ))
-        }
-        if (transactionStatus === TransactionStatus.Failed) {
-            popupToast(({ toast }) => (
-                <WalletReady
-                    LoginButton={
-                        <ReauthenticateToast
-                            toast={toast}
-                            message="Please reauthenticate to publish your space image to OpenSea"
-                            cta="Reauthenticate"
-                        />
-                    }
-                >
-                    {({ getSigner }) => (
-                        <StandardToast.Error
-                            message="Something went wrong while publishing your space image to OpenSea"
-                            toast={toast}
-                            cta={space?.id ? 'Try again' : undefined}
-                            onCtaClick={async ({ dismissToast }) => {
-                                if (!space?.id) {
-                                    return
-                                }
-                                const signer = await getSigner()
-                                if (!signer) {
-                                    return
-                                }
-                                resetTxContext()
-                                await refreshMetadataTransaction(space.id, signer)
-                                dismissToast()
-                            }}
-                        />
-                    )}
-                </WalletReady>
-            ))
-        }
-        resetTxContext()
-    }, [
-        transactionStatus,
-        refreshMetadataTransaction,
-        space?.id,
-        baseChain.id,
-        address,
-        resetTxContext,
-    ])
 
     return (
         <>

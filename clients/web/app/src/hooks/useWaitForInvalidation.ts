@@ -1,8 +1,14 @@
 import { useQuery } from '@tanstack/react-query'
+import { useEffect, useRef } from 'react'
 import { getRefreshStatus } from 'api/lib/fetchImage'
 
-export const useWaitForInvalidation = (invalidationId: string | undefined) => {
-    return useQuery({
+export const useWaitForInvalidation = (
+    invalidationId: string | undefined,
+    options?: {
+        onSuccess?: () => void
+    },
+) => {
+    const query = useQuery({
         queryKey: ['invalidation-status', invalidationId],
         queryFn: async () => {
             if (!invalidationId) {
@@ -20,4 +26,14 @@ export const useWaitForInvalidation = (invalidationId: string | undefined) => {
         retryDelay: (attempt) => Math.min(10_000 * Math.pow(1.5, attempt), 150_000),
         enabled: !!invalidationId,
     })
+
+    const hasRunOnce = useRef(false)
+    useEffect(() => {
+        if (query.isSuccess && options?.onSuccess && !hasRunOnce.current) {
+            options.onSuccess()
+            hasRunOnce.current = true
+        }
+    }, [options, options?.onSuccess, query.isSuccess])
+
+    return query
 }
