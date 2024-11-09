@@ -9,6 +9,7 @@ import {
 } from 'use-towns-client'
 import { constants } from 'ethers'
 import { useMemo } from 'react'
+import { NULL_ADDRESS } from 'use-towns-client/dist/types/web3-types'
 import { formatUnits, parseUnits } from 'hooks/useBalance'
 import { EVERYONE_ADDRESS } from 'utils'
 import { TokenType } from './types'
@@ -102,12 +103,12 @@ export function convertRuleDataToTokensAndEthBalance(
             return {
                 chainId: Number(chainId),
                 data: {
-                    address: address,
+                    address: address ? address : NULL_ADDRESS,
                     type: convertOperationTypeToTokenType(type),
                     quantity: threshold,
                     tokenId: tokenId ? BigInt(tokenId) : undefined,
                 },
-            }
+            } satisfies TokenWithBigInt
         })
     return {
         tokens,
