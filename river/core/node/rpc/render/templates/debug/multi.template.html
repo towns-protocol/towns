@@ -81,7 +81,6 @@
       <th>Operator</th>
       <th>River Eth Balance</th>
       <th>Base Eth Balance</th>
-      <th>Postgres Status</th>
     </tr>
 
     <!-- Data rows for each Node -->
@@ -132,28 +131,6 @@ UTC: {{.StartTime}}</pre>
       <td>{{.Record.Operator}}</td>
       <td>{{.RiverEthBalance}}</td>
       <td>{{.BaseEthBalance}}</td>
-      <td>
-        <span class="tooltip">
-          {{.PostgresStatus.TotalConns}} total connections
-          <span class="tooltiptext">
-            Version: {{.PostgresStatus.Version}}
-            SystemId: {{.PostgresStatus.SystemId}}
-            Total Connections: {{.PostgresStatus.TotalConns}}
-            Acquired Connections: {{.PostgresStatus.AcquiredConns}}
-            Idle Connections: {{.PostgresStatus.IdleConns}}
-            Constructing Connections: {{.PostgresStatus.ConstructingConns}}
-            Max Connections: {{.PostgresStatus.MaxConns}}
-            New Connections Count: {{.PostgresStatus.NewConnsCount}}
-            Acquire Count: {{.PostgresStatus.AcquireCount}}
-            Empty Acquire Count: {{.PostgresStatus.EmptyAcquireCount}}
-            Canceled Acquire Count: {{.PostgresStatus.CanceledAcquireCount}}
-            Acquire Duration: {{.PostgresStatus.AcquireDuration}}
-            Max Lifetime Destroy Count: {{.PostgresStatus.MaxLifetimeDestroyCount}}
-            Max Idle Destroy Count: {{.PostgresStatus.MaxIdleDestroyCount}}
-
-          </span>
-        </span>
-      </td>
     </tr>
     {{end}}
   </table>

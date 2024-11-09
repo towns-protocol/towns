@@ -1,14 +1,13 @@
 {
 	"name": "@river-build/stream-metadata",
 	"version": "0.0.0",
-	"packageManager": "yarn@3.8.0",
 	"private": true,
-	"main": "dist/node.cjs",
+	"packageManager": "yarn@3.8.0",
 	"type": "module",
+	"main": "dist/node.cjs",
 	"scripts": {
-		"compile": "node ./esbuild.config.mjs",
-		"typecheck": "tsc --noEmit",
 		"build": "yarn typecheck && yarn compile",
+		"compile": "node ./esbuild.config.mjs",
 		"cp-config": "cp ./.env.local-sample ./.env.local && echo .env.local file copied successfully",
 		"dev": "yarn dev:local_multi",
 		"dev:local_multi": "yarn cp-config && RIVER_ENV=local_multi PORT=3002 RIVER_STREAM_METADATA_BASE_URL=http://localhost:3002 yarn run-build",
@@ -21,7 +20,8 @@
 		"run-build": "yarn build && node ./dist/node_esbuild.cjs",
 		"start": "node ./dist/node_esbuild.cjs",
 		"test": "NODE_TLS_REJECT_UNAUTHORIZED=0 node --experimental-vm-modules $(yarn bin jest) --forceExit",
-		"test:integration": "yarn test --testNamePattern='integration/stream-metadata'"
+		"test:integration": "yarn test --testNamePattern='integration/stream-metadata'",
+		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
 		"@aws-sdk/client-cloudfront": "^3.645.0",

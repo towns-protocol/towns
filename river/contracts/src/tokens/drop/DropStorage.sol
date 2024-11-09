@@ -22,7 +22,6 @@ library DropStorage {
     address rewardsDistribution;
     uint48 conditionStartId;
     uint48 conditionCount;
-    uint48 highestConditionId;
     mapping(uint256 conditionId => mapping(address => SupplyClaim)) supplyClaimedByWallet;
     mapping(uint256 conditionId => IDropFacetBase.ClaimCondition) conditionById;
   }

@@ -1,16 +1,14 @@
 import {
-    useMember,
+    useMyMember,
     useSetDisplayName,
     useSetEnsAddress,
     useSetNft,
     useSetUsername,
-    useSyncAgent,
 } from '@river-build/react-sdk'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import type { Address } from 'viem'
-import { useMemo } from 'react'
 import {
     Form,
     FormControl,
@@ -44,19 +42,13 @@ export const UpdateMetadata = (props: {
     use: 'space' | 'channel'
     channelId?: string
 }) => {
-    const sync = useSyncAgent()
-
-    const myself = useMemo(() => {
-        if (props.channelId && props.use === 'channel') {
-            return sync.spaces.getSpace(props.spaceId).getChannel(props.channelId).members.myself
-        }
-        return sync.spaces.getSpace(props.spaceId).members.myself
-    }, [props.channelId, props.use, props.spaceId, sync.spaces])
-    const { username, displayName, ensAddress, nft } = useMember(myself)
-    const { setUsername, isPending: isPendingUsername } = useSetUsername(myself)
-    const { setDisplayName, isPending: isPendingDisplayName } = useSetDisplayName(myself)
-    const { setEnsAddress, isPending: isPendingEnsAddress } = useSetEnsAddress(myself)
-    const { setNft, isPending: isPendingNft } = useSetNft(myself)
+    const { spaceId, use, channelId } = props
+    const streamId = use === 'space' ? spaceId : channelId!
+    const { username, displayName, ensAddress, nft } = useMyMember(streamId)
+    const { setUsername, isPending: isPendingUsername } = useSetUsername(streamId)
+    const { setDisplayName, isPending: isPendingDisplayName } = useSetDisplayName(streamId)
+    const { setEnsAddress, isPending: isPendingEnsAddress } = useSetEnsAddress(streamId)
+    const { setNft, isPending: isPendingNft } = useSetNft(streamId)
 
     const isPending =
         isPendingDisplayName || isPendingUsername || isPendingEnsAddress || isPendingNft

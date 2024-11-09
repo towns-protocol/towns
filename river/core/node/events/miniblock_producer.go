@@ -384,6 +384,29 @@ func mbProduceCandidate(
 		return nil, err
 	}
 
+	mbInfo, err := mbProduceCandiate_Make(ctx, params, view, forceSnapshot, remoteNodes)
+	if err != nil {
+		return nil, err
+	}
+	if mbInfo == nil {
+		return nil, nil
+	}
+
+	err = mbProduceCandiate_Save(ctx, params, stream.streamId, mbInfo, remoteNodes)
+	if err != nil {
+		return nil, err
+	}
+
+	return mbInfo, nil
+}
+
+func mbProduceCandiate_Make(
+	ctx context.Context,
+	params *StreamCacheParams,
+	view *streamViewImpl,
+	forceSnapshot bool,
+	remoteNodes []common.Address,
+) (*MiniblockInfo, error) {
 	localProposal, err := view.ProposeNextMiniblock(ctx, params.ChainConfig.Get(), forceSnapshot)
 	if err != nil {
 		return nil, err
@@ -399,7 +422,7 @@ func mbProduceCandidate(
 			ctx,
 			params,
 			remoteNodes,
-			stream.streamId,
+			view.streamId,
 			forceSnapshot,
 		)
 		if err != nil {
@@ -445,6 +468,16 @@ func mbProduceCandidate(
 		return nil, err
 	}
 
+	return mbInfo, nil
+}
+
+func mbProduceCandiate_Save(
+	ctx context.Context,
+	params *StreamCacheParams,
+	streamId StreamId,
+	mbInfo *MiniblockInfo,
+	remoteNodes []common.Address,
+) error {
 	qp := NewQuorumPool(len(remoteNodes))
 
 	qp.GoLocal(func() error {
@@ -455,7 +488,7 @@ func mbProduceCandidate(
 
 		return params.Storage.WriteMiniblockCandidate(
 			ctx,
-			stream.streamId,
+			streamId,
 			mbInfo.Ref.Hash,
 			mbInfo.Ref.Num,
 			miniblockBytes,
@@ -464,16 +497,11 @@ func mbProduceCandidate(
 
 	for _, node := range remoteNodes {
 		qp.GoRemote(node, func(node common.Address) error {
-			return params.RemoteMiniblockProvider.SaveMbCandidate(ctx, node, stream.streamId, mbInfo.Proto)
+			return params.RemoteMiniblockProvider.SaveMbCandidate(ctx, node, streamId, mbInfo.Proto)
 		})
 	}
 
-	err = qp.Wait()
-	if err != nil {
-		return nil, err
-	}
-
-	return mbInfo, nil
+	return qp.Wait()
 }
 
 func (p *miniblockProducer) jobStart(ctx context.Context, j *mbJob, forceSnapshot bool) {

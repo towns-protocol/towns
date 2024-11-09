@@ -171,7 +171,7 @@ func TestLoad(t *testing.T) {
 	// with two new events, we should snapshot
 	assert.Equal(t, true, view.shouldSnapshot(ctx, cfg))
 	assert.Equal(t, 1, len(view.blocks))
-	assert.Equal(t, 2, len(view.blocks[0].events))
+	assert.Equal(t, 2, len(view.blocks[0].events()))
 	// and miniblocks should have non - nil snapshots
 
 	proposal, _ = view.ProposeNextMiniblock(ctx, cfg, false)

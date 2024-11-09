@@ -146,7 +146,7 @@ contract RewardsDistributionV2Test is
     uint256 commissionRate,
     address beneficiary
   ) public givenOperator(operator, commissionRate) returns (uint256 depositId) {
-    vm.assume(depositor != baseRegistry);
+    vm.assume(depositor != address(rewardsDistributionFacet));
     vm.assume(beneficiary != address(0) && beneficiary != operator);
     vm.assume(amount > 0);
     commissionRate = bound(commissionRate, 0, 10000);
@@ -155,6 +155,10 @@ contract RewardsDistributionV2Test is
 
     vm.startPrank(depositor);
     river.approve(address(rewardsDistributionFacet), amount);
+
+    vm.expectEmit(true, true, true, false, address(rewardsDistributionFacet));
+    emit Stake(depositor, operator, beneficiary, depositId, amount);
+
     depositId = rewardsDistributionFacet.stake(amount, operator, beneficiary);
     vm.stopPrank();
 
@@ -180,7 +184,7 @@ contract RewardsDistributionV2Test is
     givenSpaceHasPointedToOperator(space, operator)
     returns (uint256 depositId)
   {
-    vm.assume(depositor != baseRegistry);
+    vm.assume(depositor != address(rewardsDistributionFacet));
     vm.assume(
       beneficiary != address(0) &&
         beneficiary != operator &&
@@ -193,6 +197,10 @@ contract RewardsDistributionV2Test is
 
     vm.startPrank(depositor);
     river.approve(address(rewardsDistributionFacet), amount);
+
+    vm.expectEmit(true, true, true, false, address(rewardsDistributionFacet));
+    emit Stake(depositor, space, beneficiary, depositId, amount);
+
     depositId = rewardsDistributionFacet.stake(amount, space, beneficiary);
     vm.stopPrank();
 
@@ -231,6 +239,9 @@ contract RewardsDistributionV2Test is
       amount,
       deadline
     );
+
+    vm.expectEmit(true, true, true, false, address(rewardsDistributionFacet));
+    emit Stake(user, operator, beneficiary, 0, amount);
 
     vm.prank(user);
     uint256 depositId = rewardsDistributionFacet.permitAndStake(
@@ -313,6 +324,10 @@ contract RewardsDistributionV2Test is
     }
 
     river.approve(address(rewardsDistributionFacet), amount);
+
+    vm.expectEmit(true, true, true, false, address(rewardsDistributionFacet));
+    emit Stake(owner, operator, beneficiary, 0, amount);
+
     depositId = rewardsDistributionFacet.stakeOnBehalf(
       amount,
       operator,
@@ -364,6 +379,9 @@ contract RewardsDistributionV2Test is
       operator,
       beneficiary
     );
+
+    vm.expectEmit(address(rewardsDistributionFacet));
+    emit IncreaseStake(depositId, amount1);
 
     rewardsDistributionFacet.increaseStake(depositId, amount1);
 
@@ -417,6 +435,9 @@ contract RewardsDistributionV2Test is
       commissionRate0,
       address(this)
     );
+
+    vm.expectEmit(address(rewardsDistributionFacet));
+    emit Redelegate(depositId, operator1);
 
     rewardsDistributionFacet.redelegate(depositId, operator1);
 
@@ -477,6 +498,9 @@ contract RewardsDistributionV2Test is
       address(this)
     );
 
+    vm.expectEmit(address(rewardsDistributionFacet));
+    emit ChangeBeneficiary(depositId, beneficiary);
+
     rewardsDistributionFacet.changeBeneficiary(depositId, beneficiary);
 
     verifyStake(
@@ -508,6 +532,9 @@ contract RewardsDistributionV2Test is
     );
 
     resetOperatorCommissionRate(operator, commissionRate1);
+
+    vm.expectEmit(address(rewardsDistributionFacet));
+    emit ChangeBeneficiary(depositId, beneficiary);
 
     rewardsDistributionFacet.changeBeneficiary(depositId, beneficiary);
 
@@ -550,6 +577,9 @@ contract RewardsDistributionV2Test is
       commissionRate,
       beneficiary
     );
+
+    vm.expectEmit(address(rewardsDistributionFacet));
+    emit InitiateWithdraw(address(this), depositId, amount);
 
     rewardsDistributionFacet.initiateWithdraw(depositId);
 
@@ -717,6 +747,9 @@ contract RewardsDistributionV2Test is
 
     vm.warp(cd);
 
+    vm.expectEmit(address(rewardsDistributionFacet));
+    emit Withdraw(depositId, amount);
+
     rewardsDistributionFacet.withdraw(depositId);
 
     verifyWithdraw(address(this), depositId, 0, amount, operator, beneficiary);
@@ -772,6 +805,9 @@ contract RewardsDistributionV2Test is
   function test_fuzz_notifyRewardAmount(uint256 reward) public {
     reward = boundReward(reward);
     bridgeTokensForUser(address(rewardsDistributionFacet), reward);
+
+    vm.expectEmit(address(rewardsDistributionFacet));
+    emit NotifyRewardAmount(NOTIFIER, reward);
 
     vm.prank(NOTIFIER);
     rewardsDistributionFacet.notifyRewardAmount(reward);
@@ -843,7 +879,10 @@ contract RewardsDistributionV2Test is
     uint256 rewardAmount,
     uint256 timeLapse
   ) public {
-    vm.assume(depositor != address(this) && depositor != baseRegistry);
+    vm.assume(
+      depositor != address(this) &&
+        depositor != address(rewardsDistributionFacet)
+    );
     vm.assume(operator != OPERATOR && operator != address(this));
     vm.assume(
       beneficiary != operator &&
@@ -862,6 +901,9 @@ contract RewardsDistributionV2Test is
     vm.warp(block.timestamp + timeLapse);
 
     uint256 currentReward = rewardsDistributionFacet.currentReward(beneficiary);
+
+    vm.expectEmit(address(rewardsDistributionFacet));
+    emit ClaimReward(beneficiary, beneficiary, currentReward);
 
     vm.prank(beneficiary);
     uint256 reward = rewardsDistributionFacet.claimReward(
@@ -900,6 +942,9 @@ contract RewardsDistributionV2Test is
 
     uint256 currentReward = rewardsDistributionFacet.currentReward(operator);
 
+    vm.expectEmit(address(rewardsDistributionFacet));
+    emit ClaimReward(operator, operator, currentReward);
+
     vm.prank(operator);
     uint256 reward = rewardsDistributionFacet.claimReward(operator, operator);
 
@@ -933,6 +978,9 @@ contract RewardsDistributionV2Test is
     vm.warp(block.timestamp + timeLapse);
 
     uint256 currentReward = rewardsDistributionFacet.currentReward(space);
+
+    vm.expectEmit(address(rewardsDistributionFacet));
+    emit ClaimReward(space, operator, currentReward);
 
     vm.prank(operator);
     uint256 reward = rewardsDistributionFacet.claimReward(space, operator);

@@ -1,0 +1,44 @@
+{
+    "name": "worker-common",
+    "description": "Shared Cloudflare Worker Library",
+    "author": "john@hntlabs.com",
+    "packageManager": "yarn@3.8.0",
+    "type": "module",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "scripts": {
+        "build": "tsc",
+        "cb": "yarn clean && yarn build",
+        "clean": "rm -rf dist",
+        "lint": "yarn eslint --format unix ./src",
+        "lint:fix": "yarn lint --fix",
+        "my-jest": "yarn node -r ../../../scripts/node-no-warn.js --experimental-vm-modules $(yarn bin jest)",
+        "test": "yarn test:unit",
+        "test:ci": "yarn my-jest",
+        "test:debug": "DEBUG=test yarn my-jest",
+        "test:unit": "yarn my-jest",
+        "watch": "tsc --watch"
+    },
+    "dependencies": {
+        "@river-build/generated": "workspace:^",
+        "@river-build/web3": "workspace:^",
+        "ethers": "^5.7.2"
+    },
+    "devDependencies": {
+        "@cloudflare/workers-types": "^4.20241022.0",
+        "@types/jest": "^29.5.3",
+        "@typescript-eslint/eslint-plugin": "^6.10.0",
+        "@typescript-eslint/parser": "^7.14.1",
+        "eslint": "^8.53.0",
+        "jest": "^29.6.2",
+        "jest-environment-miniflare": "^2.14.2",
+        "miniflare": "^3.20240524.1",
+        "prettier": "^2.8.8",
+        "ts-jest": "^29.1.1",
+        "typescript": "^5.1.6",
+        "wrangler": "^3.60.3"
+    },
+    "files": [
+        "/dist"
+    ]
+}

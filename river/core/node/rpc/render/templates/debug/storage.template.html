@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Storage statistics</title>
+    <style>
+      body {
+        font-family: monospace;
+      }
+
+      table,
+      th,
+      td {
+        border: 1px solid black;
+        border-collapse: collapse;
+      }
+
+      th,
+      td {
+        padding: 8px;
+        text-align: center;
+      }
+
+      table tr th {
+        text-align: left;
+      }
+    </style>
+  </head>
+  <!-- prettier-ignore -->
+
+  <body>
+    <table>
+      <tr><th colspan="2"><h2>Storage statistics</h2></th></tr>
+      <tr><th>Total Connections</th><td>{{.Status.TotalConns}}</td></tr>
+      <tr><th>Version</th> <td>{{.Status.Version}}</td></tr>
+      <tr><th>SystemId</th><td>{{.Status.SystemId}}</td></tr>
+      <tr><th>Total Connections</th><td>{{.Status.TotalConns}}</td></tr>
+      <tr><th>Acquired Connections</th><td>{{.Status.AcquiredConns}}</td></tr>
+      <tr><th>Idle Connections</th><td>{{.Status.IdleConns}}</td></tr>
+      <tr><th>Constructing Connections</th><td>{{.Status.ConstructingConns}}</td></tr>
+      <tr><th>Max Connections</th><td>{{.Status.MaxConns}}</td></tr>
+      <tr><th>New Connections Count</th><td>{{.Status.NewConnsCount}}</td></tr>
+      <tr><th>Acquire Count</th><td>{{.Status.AcquireCount}}</td></tr>
+      <tr><th>Empty Acquire Count</th><td>{{.Status.EmptyAcquireCount}}</td></tr>
+      <tr><th>Canceled Acquire Count</th><td>{{.Status.CanceledAcquireCount}}</td></tr>
+      <tr><th>Acquire Duration</th><td>{{.Status.AcquireDuration}}</td></tr>
+      <tr><th>Max Lifetime Destroy Count</th><td>{{.Status.MaxLifetimeDestroyCount}}</td></tr>
+      <tr><th>Max Idle Destroy Count</th><td>{{.Status.MaxIdleDestroyCount}}</td></tr>
+      <tr><th>Unmigrated Streams</th><td>{{.Status.UnmigratedStreams}}</td></tr>
+      <tr><th>Migrated Streams</th><td>{{.Status.MigratedStreams}}</td></tr>
+      <tr><th>Partition Count</th><td>{{.Status.NumPartitions}}</td></tr>
+    </table>
+  </body>
+</html>

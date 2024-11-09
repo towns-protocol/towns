@@ -106,7 +106,7 @@ func MakeEvent(
 	return parsedEvent(t, envelope)
 }
 
-func addEvent(
+func addEventToStream(
 	t *testing.T,
 	ctx context.Context,
 	streamCacheParams *StreamCacheParams,
@@ -149,12 +149,12 @@ func mbTest(
 
 	stream, view := tt.createStream(spaceStreamId, genesisMb.Proto)
 
-	addEvent(t, ctx, tt.instances[0].params, stream, "1", view.LastBlock().Ref)
-	addEvent(t, ctx, tt.instances[0].params, stream, "2", view.LastBlock().Ref)
+	addEventToStream(t, ctx, tt.instances[0].params, stream, "1", view.LastBlock().Ref)
+	addEventToStream(t, ctx, tt.instances[0].params, stream, "2", view.LastBlock().Ref)
 
 	proposal, err := mbProduceCandidate(ctx, tt.instances[0].params, stream.(*streamImpl), false)
 	mb := proposal.headerEvent.Event.GetMiniblockHeader()
-	events := proposal.events
+	events := proposal.events()
 	require.NoError(err)
 	require.Equal(2, len(events))
 	require.Equal(2, len(mb.EventHashes))
@@ -162,7 +162,7 @@ func mbTest(
 	require.Equal(int64(1), mb.MiniblockNum)
 
 	if params.addAfterProposal {
-		addEvent(t, ctx, tt.instances[0].params, stream, "3", view.LastBlock().Ref)
+		addEventToStream(t, ctx, tt.instances[0].params, stream, "3", view.LastBlock().Ref)
 	}
 
 	require.NoError(err)
@@ -176,7 +176,7 @@ func mbTest(
 	require.NoError(err)
 	stats := view2.GetStats()
 	require.Equal(params.eventsInMinipool, stats.EventsInMinipool)
-	addEvent(t, ctx, tt.instances[0].params, stream, "4", view2.LastBlock().Ref)
+	addEventToStream(t, ctx, tt.instances[0].params, stream, "4", view2.LastBlock().Ref)
 
 	view2, err = stream.GetView(ctx)
 	require.NoError(err)

@@ -9,7 +9,6 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {DropStorage} from "./DropStorage.sol";
 import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 import {MerkleProofLib} from "solady/utils/MerkleProofLib.sol";
-import {SafeCastLib} from "solady/utils/SafeCastLib.sol";
 import {BasisPoints} from "contracts/src/utils/libraries/BasisPoints.sol";
 
 abstract contract DropFacetBase is IDropFacetBase {
@@ -19,14 +18,19 @@ abstract contract DropFacetBase is IDropFacetBase {
   function _getActiveConditionId(
     DropStorage.Layout storage ds
   ) internal view returns (uint256) {
-    uint256 conditionStartId = ds.conditionStartId;
-    uint256 conditionCount = ds.conditionCount;
+    (uint48 conditionStartId, uint48 conditionCount) = (
+      ds.conditionStartId,
+      ds.conditionCount
+    );
 
     if (conditionCount == 0) {
       CustomRevert.revertWith(DropFacet__NoActiveClaimCondition.selector);
     }
 
-    uint256 lastConditionId = conditionStartId + conditionCount - 1;
+    uint256 lastConditionId;
+    unchecked {
+      lastConditionId = conditionStartId + conditionCount - 1;
+    }
 
     for (uint256 i = lastConditionId; i >= conditionStartId; --i) {
       ClaimCondition storage condition = ds.conditionById[i];
@@ -43,13 +47,10 @@ abstract contract DropFacetBase is IDropFacetBase {
   }
 
   function _verifyClaim(
-    DropStorage.Layout storage ds,
+    ClaimCondition storage condition,
+    DropStorage.SupplyClaim storage claimed,
     Claim calldata claim
   ) internal view {
-    ClaimCondition storage condition = ds.getClaimConditionById(
-      claim.conditionId
-    );
-
     if (condition.merkleRoot == bytes32(0)) {
       CustomRevert.revertWith(DropFacet__MerkleRootNotSet.selector);
     }
@@ -82,9 +83,7 @@ abstract contract DropFacetBase is IDropFacetBase {
     }
 
     // check if already claimed
-    if (
-      ds.supplyClaimedByWallet[claim.conditionId][claim.account].claimed > 0
-    ) {
+    if (claimed.claimed > 0) {
       CustomRevert.revertWith(DropFacet__AlreadyClaimed.selector);
     }
 
@@ -142,40 +141,42 @@ abstract contract DropFacetBase is IDropFacetBase {
     }
 
     // Store the new condition
-    _updateClaimCondition(ds, newConditionId, newCondition);
+    _updateClaimCondition(ds.conditionById[newConditionId], newCondition);
 
-    // Update condition count and highest ID
+    // Update condition count
     ds.conditionCount = existingCount + 1;
-
-    if (newConditionId > ds.highestConditionId) {
-      ds.highestConditionId = newConditionId;
-    }
 
     emit DropFacet_ClaimConditionAdded(newCondition);
   }
 
+  function _getClaimConditions(
+    DropStorage.Layout storage ds
+  ) internal view returns (ClaimCondition[] memory conditions) {
+    conditions = new ClaimCondition[](ds.conditionCount);
+    for (uint256 i; i < ds.conditionCount; ++i) {
+      conditions[i] = ds.conditionById[ds.conditionStartId + i];
+    }
+    return conditions;
+  }
+
   function _setClaimConditions(
     DropStorage.Layout storage ds,
-    ClaimCondition[] calldata conditions,
-    bool resetEligibility
+    ClaimCondition[] calldata conditions
   ) internal {
     // get the existing claim condition count and start id
-    (uint48 existingStartId, uint48 existingConditionCount) = (
+    (uint48 newStartId, uint48 existingConditionCount) = (
       ds.conditionStartId,
       ds.conditionCount
     );
 
-    /// @dev If the claim conditions are being reset, we assign a new uid to the claim conditions.
-    /// which ends up resetting the eligibility of the claim conditions in `supplyClaimedByWallet`.
-    uint48 newStartId = existingStartId;
-    uint48 newConditionCount = SafeCastLib.toUint48(conditions.length);
-    if (resetEligibility) {
-      // Use highest condition id + 1 as the new start id when resetting
-      newStartId = ds.highestConditionId + 1;
+    if (uint256(newStartId) + conditions.length > type(uint48).max) {
+      CustomRevert.revertWith(DropFacet__CannotSetClaimConditions.selector);
     }
 
+    uint48 newConditionCount = uint48(conditions.length);
+
     uint48 lastConditionTimestamp;
-    for (uint48 i; i < newConditionCount; ++i) {
+    for (uint256 i; i < newConditionCount; ++i) {
       ClaimCondition calldata newCondition = conditions[i];
       if (lastConditionTimestamp >= newCondition.startTimestamp) {
         CustomRevert.revertWith(
@@ -183,10 +184,11 @@ abstract contract DropFacetBase is IDropFacetBase {
         );
       }
 
-      // cache the condition id
-      uint256 conditionId = newStartId + i;
       // check that amount already claimed is less than or equal to the max claimable supply
-      ClaimCondition storage condition = ds.conditionById[conditionId];
+      ClaimCondition storage condition;
+      unchecked {
+        condition = ds.conditionById[newStartId + i];
+      }
       uint256 amountAlreadyClaimed = condition.supplyClaimed;
 
       if (amountAlreadyClaimed > newCondition.maxClaimableSupply) {
@@ -194,39 +196,25 @@ abstract contract DropFacetBase is IDropFacetBase {
       }
 
       // copy the new condition to the storage except `supplyClaimed`
-      _updateClaimCondition(ds, conditionId, newCondition);
+      _updateClaimCondition(condition, newCondition);
       lastConditionTimestamp = newCondition.startTimestamp;
     }
 
-    ds.conditionCount = SafeCastLib.toUint48(newConditionCount);
-    ds.conditionStartId = newStartId;
+    ds.conditionCount = newConditionCount;
 
-    // Update highest condition id if needed
-    uint256 lastConditionId = newStartId + newConditionCount - 1;
-    if (lastConditionId > ds.highestConditionId) {
-      ds.highestConditionId = SafeCastLib.toUint48(lastConditionId);
-    }
-
-    // if resetEligibility is true, we assign new uids to the claim conditions
-    // so we delete claim conditions with UID < newStartId
-    if (resetEligibility) {
-      for (uint48 i = existingStartId; i < newStartId; i++) {
-        delete ds.conditionById[i];
-      }
-    } else {
-      if (existingConditionCount > newConditionCount) {
-        for (uint256 i = newConditionCount; i < existingConditionCount; i++) {
+    if (existingConditionCount > newConditionCount) {
+      for (uint256 i = newConditionCount; i < existingConditionCount; ++i) {
+        unchecked {
           delete ds.conditionById[newStartId + i];
         }
       }
     }
 
-    emit DropFacet_ClaimConditionsUpdated(conditions, resetEligibility);
+    emit DropFacet_ClaimConditionsUpdated(conditions);
   }
 
   function _updateClaimCondition(
-    DropStorage.Layout storage ds,
-    uint256 conditionId,
+    ClaimCondition storage condition,
     ClaimCondition calldata newCondition
   ) internal {
     _verifyEnoughBalance(
@@ -234,7 +222,6 @@ abstract contract DropFacetBase is IDropFacetBase {
       newCondition.maxClaimableSupply
     );
 
-    ClaimCondition storage condition = ds.conditionById[conditionId];
     condition.startTimestamp = newCondition.startTimestamp;
     condition.endTimestamp = newCondition.endTimestamp;
     condition.maxClaimableSupply = newCondition.maxClaimableSupply;
@@ -244,24 +231,21 @@ abstract contract DropFacetBase is IDropFacetBase {
   }
 
   function _updateClaim(
-    DropStorage.Layout storage ds,
-    uint256 conditionId,
-    address account,
+    ClaimCondition storage condition,
+    DropStorage.SupplyClaim storage claimed,
     uint256 amount
   ) internal {
-    ds.conditionById[conditionId].supplyClaimed += amount;
+    condition.supplyClaimed += amount;
     unchecked {
-      ds.supplyClaimedByWallet[conditionId][account].claimed += amount;
+      claimed.claimed += amount;
     }
   }
 
   function _updateDepositId(
-    DropStorage.Layout storage ds,
-    uint256 conditionId,
-    address account,
+    DropStorage.SupplyClaim storage claimed,
     uint256 depositId
   ) internal {
-    ds.supplyClaimedByWallet[conditionId][account].depositId = depositId;
+    claimed.depositId = depositId;
   }
 
   function _verifyEnoughBalance(
@@ -275,10 +259,9 @@ abstract contract DropFacetBase is IDropFacetBase {
 
   function _approveClaimToken(
     DropStorage.Layout storage ds,
-    uint256 conditionId,
+    ClaimCondition storage condition,
     uint256 amount
   ) internal {
-    ClaimCondition storage condition = ds.conditionById[conditionId];
     IERC20(condition.currency).approve(ds.rewardsDistribution, amount);
   }
 

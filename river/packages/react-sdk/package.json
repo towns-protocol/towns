@@ -1,35 +1,17 @@
 {
     "name": "@river-build/react-sdk",
-    "version": "0.0.99",
     "description": "React Hooks for River SDK",
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/river-build/river.git",
-        "directory": "packages/react"
-    },
+    "version": "0.0.100",
+    "type": "module",
+    "main": "./dist/esm/index.js",
+    "types": "./dist/types/index.d.ts",
     "scripts": {
         "build": "yarn run clean && yarn run build:esm+types",
         "build:esm+types": "tsc --project tsconfig.build.json --outDir ./dist/esm --declaration --declarationMap --declarationDir ./dist/types",
         "clean": "rm -rf dist tsconfig.tsbuildinfo",
-        "watch": "yarn build -w",
         "test:build": "publint --strict && attw --pack --ignore-rules cjs-resolves-to-esm",
-        "typecheck": "tsc --noEmit"
-    },
-    "files": [
-        "dist/**",
-        "!dist/**/*.tsbuildinfo",
-        "src/**/*.ts",
-        "!src/**/*.test.ts",
-        "!src/**/*.test-d.ts"
-    ],
-    "sideEffects": false,
-    "type": "module",
-    "main": "./dist/esm/index.js",
-    "types": "./dist/types/index.d.ts",
-    "typings": "./dist/types/index.d.ts",
-    "peerDependencies": {
-        "react": "^18.2.0",
-        "typescript": "^5.1.6"
+        "typecheck": "tsc --noEmit",
+        "watch": "yarn build -w"
     },
     "dependencies": {
         "@river-build/sdk": "workspace:^",
@@ -49,11 +31,29 @@
         "react-dom": "^18.2.0",
         "typescript": "^5.1.6"
     },
+    "files": [
+        "dist/**",
+        "!dist/**/*.tsbuildinfo",
+        "src/**/*.ts",
+        "!src/**/*.test.ts",
+        "!src/**/*.test-d.ts"
+    ],
     "keywords": [
-        "react",
-        "sdk",
         "hooks",
-        "web3",
-        "river"
-    ]
+        "react",
+        "river",
+        "sdk",
+        "web3"
+    ],
+    "peerDependencies": {
+        "react": "^18.2.0",
+        "typescript": "^5.1.6"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/river-build/river.git",
+        "directory": "packages/react"
+    },
+    "sideEffects": false,
+    "typings": "./dist/types/index.d.ts"
 }

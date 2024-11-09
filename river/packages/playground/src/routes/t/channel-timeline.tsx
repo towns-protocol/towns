@@ -14,7 +14,7 @@ export const ChannelTimelineRoute = () => {
             <h2 className="text-2xl font-bold">
                 Channel Timeline {channel.metadata?.name ? `#${channel.metadata.name}` : ''}
             </h2>
-            <Timeline events={timeline} type="channel" spaceId={spaceId} channelId={channelId!} />
+            <Timeline events={timeline} streamId={channelId!} />
         </ChannelProvider>
     )
 }

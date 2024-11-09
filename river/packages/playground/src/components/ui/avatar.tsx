@@ -16,7 +16,7 @@ export const Avatar = ({ userId, className }: { userId: string; className?: stri
             src={avatar}
             alt={`Avatar of user with user id ${userId}`}
             className={cn('object-cover', className)}
-            onError={() => setAvatar('/public/pp1.png')}
+            onError={() => setAvatar('/pp1.png')}
         />
     )
 }

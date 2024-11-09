@@ -3,12 +3,13 @@ package render
 import (
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/rpc/statusinfo"
+	"github.com/river-build/river/core/node/storage"
 )
 
 // RenderableData is the interface for all data that can be rendered
 type RenderableData interface {
 	*AvailableDebugHandlersData | *CacheData | *TransactionPoolData | *OnChainConfigData |
-		*GoRoutineData | *SystemStatsData | *InfoIndexData | *DebugMultiData
+		*GoRoutineData | *SystemStatsData | *InfoIndexData | *DebugMultiData | *StorageData
 
 	// TemplateName returns the name of the template to be used for rendering
 	TemplateName() string
@@ -110,6 +111,14 @@ type DebugMultiData struct {
 
 func (d DebugMultiData) TemplateName() string {
 	return "templates/debug/multi.template.html"
+}
+
+type StorageData struct {
+	Status *storage.PostgresStatusResult
+}
+
+func (s StorageData) TemplateName() string {
+	return "templates/debug/storage.template.html"
 }
 
 type OnChainConfigData struct {

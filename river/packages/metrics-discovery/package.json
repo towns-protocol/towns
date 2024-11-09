@@ -2,20 +2,20 @@
     "name": "@river-build/metrics-discovery",
     "description": "",
     "version": "0.0.15",
-    "packageManager": "yarn@3.8.0",
     "author": "",
     "license": "ISC",
+    "private": true,
+    "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "index.js",
-    "private": true,
     "scripts": {
+        "build": "yarn typecheck && yarn compile",
+        "compile": "esbuild src/index.ts --sourcemap=inline --bundle --platform=node --target=node20 --format=cjs --outfile=dist/index.cjs",
+        "dev": "yarn build && yarn start",
         "lint": "eslint . --ext .ts",
         "start": "node ./dist/index.cjs",
-        "typecheck": "tsc --noEmit",
-        "compile": "esbuild src/index.ts --sourcemap=inline --bundle --platform=node --target=node20 --format=cjs --outfile=dist/index.cjs",
-        "build": "yarn typecheck && yarn compile",
-        "dev": "yarn build && yarn start",
-        "test": "echo \"Error: no test specified\" && exit 1"
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "typecheck": "tsc --noEmit"
     },
     "dependencies": {
         "@river-build/generated": "workspace:^",

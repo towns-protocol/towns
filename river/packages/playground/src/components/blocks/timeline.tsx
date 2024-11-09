@@ -1,18 +1,17 @@
-import { getRoom, useMember, useSendMessage, useSyncAgent } from '@river-build/react-sdk'
+import { useMember, useSendMessage, useSyncAgent } from '@river-build/react-sdk'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
-import type { TimelineEvent } from '@river-build/sdk'
-import { useMemo } from 'react'
-import { type RiverRoom } from '@river-build/react-sdk'
+import { type TimelineEvent, isChannelStreamId, spaceIdFromChannelId } from '@river-build/sdk'
 import { cn } from '@/utils'
 import { Form, FormControl, FormField, FormItem, FormMessage } from '../ui/form'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { ScrollArea } from '../ui/scroll-area'
 
-type TimelineProps = RiverRoom & {
+type TimelineProps = {
     events: TimelineEvent[]
+    streamId: string
 }
 
 export const Timeline = (props: TimelineProps) => {
@@ -21,11 +20,11 @@ export const Timeline = (props: TimelineProps) => {
             <ScrollArea className="h-[calc(100dvh-172px)]">
                 <div className="flex flex-col gap-1.5">
                     {props.events.map((event) => (
-                        <Message key={event.eventId} {...props} event={event} />
+                        <Message key={event.eventId} streamId={props.streamId} event={event} />
                     ))}
                 </div>
             </ScrollArea>
-            <SendMessage {...props} />
+            <SendMessage streamId={props.streamId} />
         </div>
     )
 }
@@ -34,8 +33,8 @@ const formSchema = z.object({
     message: z.string(),
 })
 
-export const SendMessage = (props: RiverRoom) => {
-    const { sendMessage, isPending } = useSendMessage(props)
+export const SendMessage = ({ streamId }: { streamId: string }) => {
+    const { sendMessage, isPending } = useSendMessage(streamId)
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: { message: '' },
@@ -66,15 +65,16 @@ export const SendMessage = (props: RiverRoom) => {
     )
 }
 
-const Message = ({ event, ...props }: { event: TimelineEvent } & RiverRoom) => {
+const Message = ({ event, streamId }: { event: TimelineEvent; streamId: string }) => {
     const sync = useSyncAgent()
-    const member = useMemo(
-        () => getRoom(sync, props).members.get(event.creatorUserId),
-        [props, sync, event.creatorUserId],
-    )
-    const { username, displayName } = useMember(member)
+    const preferSpaceMember = isChannelStreamId(streamId)
+        ? spaceIdFromChannelId(streamId)
+        : streamId
+    const { username, displayName } = useMember({
+        streamId: preferSpaceMember,
+        userId: event.creatorUserId,
+    })
     const prettyDisplayName = displayName || username
-
     return (
         <div className="flex gap-1">
             {prettyDisplayName && (

@@ -56,7 +56,7 @@ abstract contract RewardsDistributionBase is IRewardsDistributionBase {
       ds.staking.stakeToken.safeTransferFrom(msg.sender, proxy, amount);
     }
 
-    emit Stake(depositId, delegatee, beneficiary, amount);
+    emit Stake(owner, delegatee, beneficiary, depositId, amount);
   }
 
   /// @dev Deploys a beacon proxy for the delegation

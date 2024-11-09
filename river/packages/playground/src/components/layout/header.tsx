@@ -75,7 +75,12 @@ const Profile = () => {
                                 </Button>
                             )}
                         </div>
-                        <UpdateMetadata spaceId={spaceId} use={using} />
+                        <UpdateMetadata
+                            key={using}
+                            spaceId={spaceId}
+                            use={using}
+                            channelId={channelId}
+                        />
                     </div>
                 )}
             </SheetContent>

@@ -22,8 +22,9 @@ CREATE TRIGGER notify_on_singlenodekey_upserts
     EXECUTE PROCEDURE notify_on_upsert();
 
 CREATE TABLE IF NOT EXISTS es (
-  stream_id CHAR(64) STORAGE PLAIN PRIMARY KEY,
+  stream_id CHAR(64) PRIMARY KEY,
   latest_snapshot_miniblock BIGINT NOT NULL);
+ALTER TABLE es ALTER COLUMN stream_id SET STORAGE PLAIN;
 
 CREATE TABLE IF NOT EXISTS miniblocks (
   stream_id CHAR(64) NOT NULL,

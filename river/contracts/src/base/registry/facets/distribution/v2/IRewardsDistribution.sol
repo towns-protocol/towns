@@ -1,12 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.18;
 
-// interfaces
-
-// libraries
 import {StakingRewards} from "./StakingRewards.sol";
-
-// contracts
 
 interface IRewardsDistributionBase {
   /// @notice The state of the staking rewards contract
@@ -75,14 +70,16 @@ interface IRewardsDistributionBase {
   event RewardNotifierSet(address indexed notifier, bool enabled);
 
   /// @notice Emitted when a deposit is staked
-  /// @param depositId The ID of the deposit
+  /// @param owner The address of the depositor
   /// @param delegatee The address of the delegatee
   /// @param beneficiary The address of the beneficiary
+  /// @param depositId The ID of the deposit
   /// @param amount The amount of stakeToken that is staked
   event Stake(
-    uint256 indexed depositId,
+    address indexed owner,
     address indexed delegatee,
     address indexed beneficiary,
+    uint256 depositId,
     uint96 amount
   );
 
@@ -105,9 +102,14 @@ interface IRewardsDistributionBase {
   );
 
   /// @notice Emitted when the withdrawal of a deposit is initiated
+  /// @param owner The address of the depositor
   /// @param depositId The ID of the deposit
   /// @param amount The amount of stakeToken that will be withdrawn
-  event InitiateWithdraw(uint256 indexed depositId, uint96 amount);
+  event InitiateWithdraw(
+    address indexed owner,
+    uint256 indexed depositId,
+    uint96 amount
+  );
 
   /// @notice Emitted when the stakeToken is withdrawn from a deposit
   /// @param depositId The ID of the deposit

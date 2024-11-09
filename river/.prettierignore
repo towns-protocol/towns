@@ -52,3 +52,4 @@ scripts/bytecode-diff/**/*.yaml
 scripts/bytecode-diff/**/*.html
 scripts/bytecode-diff/**/*.json
 packages/proto/src/protocol_*.ts
+packages/workers/**/*.json

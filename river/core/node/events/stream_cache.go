@@ -180,7 +180,10 @@ func (s *streamCacheImpl) onStreamLastMiniblockUpdated(
 		return
 	}
 
-	err = stream.PromoteCandidate(ctx, event.LastMiniblockHash, int64(event.LastMiniblockNum))
+	err = stream.promoteCandidate(ctx, &MiniblockRef{
+		Hash: event.LastMiniblockHash,
+		Num:  int64(event.LastMiniblockNum),
+	})
 	if err != nil {
 		dlog.FromCtx(ctx).Error("onStreamLastMiniblockUpdated: failed to promote candidate", "err", err)
 	}
@@ -352,7 +355,7 @@ func (s *streamCacheImpl) createStreamStorage(
 		if err != nil {
 			return nil, err
 		}
-		stream.view = view
+		stream.setView(view)
 		return stream, nil
 	} else {
 		// There was another record in the cache, use it.

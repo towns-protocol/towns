@@ -11,7 +11,7 @@ export const GdmTimelineRoute = () => {
             <h2 className="text-2xl font-bold">
                 Group Chat Timeline {gdm.metadata?.name ? `#${gdm.metadata.name}` : ''}
             </h2>
-            <Timeline events={timeline} type="gdm" streamId={gdmStreamId!} />
+            <Timeline events={timeline} streamId={gdmStreamId!} />
         </>
     )
 }

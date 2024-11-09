@@ -225,7 +225,6 @@ func getEthBalance(
 	}
 }
 
-
 func getPgxPoolStatus(
 	ctx context.Context,
 	result *storage.PostgresStatusResult,
@@ -309,9 +308,16 @@ func GetRiverNetworkStatus(
 			wg.Add(1)
 			go getEthBalance(ctx, &r.BaseEthBalance, baseChain, n.Address(), &wg)
 		}
-		if storagePoolInfo != nil {
+
+		// Report PostgresStatusResult for local node only iff storage debug endpoint is enabled
+		if n.Address() == riverChain.Wallet.Address &&
+			storagePoolInfo != nil &&
+			cfg.EnableDebugEndpoints &&
+			cfg.DebugEndpoints.EnableStorageEndpoint {
 			wg.Add(1)
-			go getPgxPoolStatus(ctx, &r.PostgresStatus, storagePoolInfo, &wg)
+
+			r.PostgresStatus = &storage.PostgresStatusResult{}
+			go getPgxPoolStatus(ctx, r.PostgresStatus, storagePoolInfo, &wg)
 		}
 	}
 
@@ -319,6 +325,28 @@ func GetRiverNetworkStatus(
 
 	data.Elapsed = formatDurationToMs(time.Since(startTime))
 	return data, nil
+}
+
+func (s *Service) handleDebugStorage(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log := s.defaultLogger
+
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	status := &storage.PostgresStatusResult{}
+
+	go getPgxPoolStatus(ctx, status, s.storagePoolInfo, &wg)
+
+	wg.Wait()
+
+	err := render.ExecuteAndWrite(&render.StorageData{Status: status}, w)
+	if !s.config.Log.Simplify {
+		log.Info("Node storage status", "data", status)
+	}
+	if err != nil {
+		log.Error("Error getting data or rendering template for debug/storage", "err", err)
+		http.Error(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
+	}
 }
 
 func (s *Service) handleDebugMulti(w http.ResponseWriter, r *http.Request) {

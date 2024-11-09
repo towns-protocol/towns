@@ -261,22 +261,56 @@ type PostgresStatusResult struct {
 	MaxIdleDestroyCount     int64         `json:"max_idle_destroy_count"`
 	Version                 string        `json:"version"`
 	SystemId                string        `json:"system_id"`
+
+	MigratedStreams   int64
+	UnmigratedStreams int64
+	NumPartitions     int64
 }
 
 func PreparePostgresStatus(ctx context.Context, pool PgxPoolInfo) PostgresStatusResult {
+	log := dlog.FromCtx(ctx)
 	poolStat := pool.Pool.Stat()
 	// Query to get PostgreSQL version
 	var version string
 	err := pool.Pool.QueryRow(ctx, "SELECT version()").Scan(&version)
 	if err != nil {
 		version = fmt.Sprintf("Error: %v", err)
-		dlog.FromCtx(ctx).Error("failed to get PostgreSQL version", "err", err)
+		log.Error("failed to get PostgreSQL version", "err", err)
 	}
 
 	var systemId string
 	err = pool.Pool.QueryRow(ctx, "SELECT system_identifier FROM pg_control_system()").Scan(&systemId)
 	if err != nil {
 		systemId = fmt.Sprintf("Error: %v", err)
+	}
+
+	// Note: the following statistics apply to stream stores, and not to pg stores generally.
+	// These tables may also not exist until migrations are run.
+	var migratedStreams, unmigratedStreams, numPartitions int64
+	err = pool.Pool.QueryRow(ctx, "SELECT count(*) FROM es WHERE migrated=false").Scan(&unmigratedStreams)
+	if err != nil {
+		// Ignore nonexistent table or missing column, which occurs when stats are collected before migration completes
+		if pgerr, ok := err.(*pgconn.PgError); ok && pgerr.Code != pgerrcode.UndefinedTable &&
+			pgerr.Code != pgerrcode.UndefinedColumn {
+			log.Error("Error calculating unmigrated stream count", "error", err)
+		}
+	}
+
+	err = pool.Pool.QueryRow(ctx, "SELECT count(*) FROM es WHERE migrated=true").Scan(&migratedStreams)
+	if err != nil {
+		// Ignore nonexistent table or missing column, which occurs when stats are collected before migration completes
+		if pgerr, ok := err.(*pgconn.PgError); ok && pgerr.Code != pgerrcode.UndefinedTable &&
+			pgerr.Code != pgerrcode.UndefinedColumn {
+			log.Error("Error calculating migrated stream count", "error", err)
+		}
+	}
+
+	err = pool.Pool.QueryRow(ctx, "SELECT num_partitions FROM settings WHERE single_row_key=true").Scan(&numPartitions)
+	if err != nil {
+		// Ignore nonexistent table, which occurs when stats are collected before migration
+		if pgerr, ok := err.(*pgconn.PgError); ok && pgerr.Code != pgerrcode.UndefinedTable {
+			log.Error("Error calculating partition count", "error", err)
+		}
 	}
 
 	return PostgresStatusResult{
@@ -294,6 +328,9 @@ func PreparePostgresStatus(ctx context.Context, pool PgxPoolInfo) PostgresStatus
 		MaxIdleDestroyCount:     poolStat.MaxIdleDestroyCount(),
 		Version:                 version,
 		SystemId:                systemId,
+		MigratedStreams:         migratedStreams,
+		UnmigratedStreams:       unmigratedStreams,
+		NumPartitions:           numPartitions,
 	}
 }
 
@@ -368,6 +405,21 @@ func SetupPostgresMetrics(ctx context.Context, pool PgxPoolInfo, factory infra.M
 			"postgres_max_idle_destroy_count",
 			"Total number of connections destroyed due to MaxConnIdleTime",
 			func(s PostgresStatusResult) float64 { return float64(s.MaxIdleDestroyCount) },
+		},
+		{
+			"postgres_unmigrated_streams",
+			"Total streams stored in legacy schema layout",
+			func(s PostgresStatusResult) float64 { return float64(s.UnmigratedStreams) },
+		},
+		{
+			"postgres_migrated_streams",
+			"Total streams stored in fixed partition schema layout",
+			func(s PostgresStatusResult) float64 { return float64(s.MigratedStreams) },
+		},
+		{
+			"postgres_num_stream_partitions",
+			"Total partitions used in fixed partition schema layout",
+			func(s PostgresStatusResult) float64 { return float64(s.NumPartitions) },
 		},
 	}
 

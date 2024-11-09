@@ -1,19 +1,20 @@
 'use client'
 
-import type { Channel, Gdm } from '@river-build/sdk'
+import { type Channel, Space, assert } from '@river-build/sdk'
 import { useMemo } from 'react'
 import { type ActionConfig, useAction } from './internals/useAction'
 import { useSyncAgent } from './useSyncAgent'
-import { type RiverRoom, getRoom } from './utils'
+import { getRoom } from './utils'
 
 export const useSendMessage = (
-    props: RiverRoom,
-    config?: (typeof props)['type'] extends 'gdm'
-        ? ActionConfig<Gdm['sendMessage']>
-        : ActionConfig<Channel['sendMessage']>,
+    streamId: string,
+    // TODO: now that we're using runtime check for room type, Gdm/Dm will have the same config as Channel.
+    // Its not a problem, both should be the same, but we need more abstractions around this on the SyncAgent
+    config?: ActionConfig<Channel['sendMessage']>,
 ) => {
     const sync = useSyncAgent()
-    const room = useMemo(() => getRoom(sync, props), [props, sync])
+    const room = useMemo(() => getRoom(sync, streamId), [streamId, sync])
+    assert(!(room instanceof Space), 'room cant be a space')
     const { action: sendMessage, ...rest } = useAction(room, 'sendMessage', config)
 
     return {

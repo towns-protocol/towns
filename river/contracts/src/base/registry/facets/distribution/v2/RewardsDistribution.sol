@@ -107,17 +107,20 @@ contract RewardsDistribution is
     bytes32 s
   ) external returns (uint256 depositId) {
     address stakeToken = RewardsDistributionStorage.layout().staking.stakeToken;
-    try
-      IERC20Permit(stakeToken).permit(
-        msg.sender,
-        address(this),
-        amount,
-        deadline,
-        v,
-        r,
-        s
-      )
-    {} catch {}
+    // try to call permit on the stake token
+    bytes4 selector = IERC20Permit.permit.selector;
+    assembly ("memory-safe") {
+      let fmp := mload(0x40)
+      mstore(fmp, selector)
+      mstore(add(fmp, 0x04), caller())
+      mstore(add(fmp, 0x24), address())
+      mstore(add(fmp, 0x44), amount)
+      mstore(add(fmp, 0x64), deadline)
+      mstore(add(fmp, 0x84), v)
+      mstore(add(fmp, 0xa4), r)
+      mstore(add(fmp, 0xc4), s)
+      pop(call(gas(), stakeToken, 0, fmp, 0xe4, 0, 0))
+    }
 
     depositId = _stake(amount, delegatee, beneficiary, msg.sender);
   }
@@ -269,7 +272,7 @@ contract RewardsDistribution is
 
     _sweepSpaceRewardsIfNecessary(delegatee);
 
-    emit InitiateWithdraw(depositId, amount);
+    emit InitiateWithdraw(owner, depositId, amount);
   }
 
   /// @inheritdoc IRewardsDistribution

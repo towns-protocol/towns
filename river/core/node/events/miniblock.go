@@ -91,10 +91,17 @@ func NextMiniblockTimestamp(prevBlockTimestamp *timestamppb.Timestamp) *timestam
 }
 
 type MiniblockInfo struct {
-	Ref         *MiniblockRef
-	headerEvent *ParsedEvent
-	events      []*ParsedEvent
-	Proto       *Miniblock
+	Ref                *MiniblockRef
+	headerEvent        *ParsedEvent
+	useGetterForEvents []*ParsedEvent // Use events(). Getter checks if events have been initialized.
+	Proto              *Miniblock
+}
+
+func (b *MiniblockInfo) events() []*ParsedEvent {
+	if len(b.useGetterForEvents) == 0 && len(b.Proto.Events) > 0 {
+		panic("DontParseEvents option was used, events are not initialized")
+	}
+	return b.useGetterForEvents
 }
 
 func (b *MiniblockInfo) header() *MiniblockHeader {
@@ -102,8 +109,9 @@ func (b *MiniblockInfo) header() *MiniblockHeader {
 }
 
 func (b *MiniblockInfo) lastEvent() *ParsedEvent {
-	if len(b.events) > 0 {
-		return b.events[len(b.events)-1]
+	events := b.events()
+	if len(events) > 0 {
+		return events[len(events)-1]
 	} else {
 		return nil
 	}
@@ -133,7 +141,7 @@ func (b *MiniblockInfo) asStorageMbWithData(bytes []byte) *storage.WriteMinibloc
 func (b *MiniblockInfo) forEachEvent(op func(e *ParsedEvent, minibockNum int64, eventNum int64) (bool, error)) error {
 	blockNum := b.header().MiniblockNum
 	eventNum := b.header().EventNumOffset
-	for _, event := range b.events {
+	for _, event := range b.events() {
 		c, err := op(event, blockNum, eventNum)
 		eventNum++
 		if !c {
@@ -212,9 +220,9 @@ func NewMiniblockInfoFromProto(pb *Miniblock, opts NewMiniblockInfoFromProtoOpts
 			Hash: headerEvent.Hash,
 			Num:  blockHeader.MiniblockNum,
 		},
-		headerEvent: headerEvent,
-		events:      events,
-		Proto:       pb,
+		headerEvent:        headerEvent,
+		useGetterForEvents: events,
+		Proto:              pb,
 	}, nil
 }
 
@@ -233,8 +241,8 @@ func NewMiniblockInfoFromParsed(headerEvent *ParsedEvent, events []*ParsedEvent)
 			Hash: headerEvent.Hash,
 			Num:  headerEvent.Event.GetMiniblockHeader().MiniblockNum,
 		},
-		headerEvent: headerEvent,
-		events:      events,
+		headerEvent:        headerEvent,
+		useGetterForEvents: events,
 		Proto: &Miniblock{
 			Header: headerEvent.Envelope,
 			Events: envelopes,

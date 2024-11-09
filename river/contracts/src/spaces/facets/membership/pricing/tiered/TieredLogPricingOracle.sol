@@ -128,13 +128,13 @@ contract TieredLogPricingOracle is IMembershipPricing, IntrospectionFacet {
     if (totalMinted > tier3) {
       return basePriceTier3;
     } else if (totalMinted > tier2) {
-      // Logarithmin scaling for tier 2
-      uint256 logScale = _calculateLogScale(totalMinted - tier2 + 1);
-      return logScale * 22 + basePriceTier2; // The multiplier 22 is an arbitrary scaling factor
+      // Logarithmic scaling for tier 2
+      uint256 logScale = _calculateLogScale(totalMinted);
+      return logScale * 22 + basePriceTier2;
     } else if (totalMinted > tier1) {
       // Logarithmic scaling for tier 1
-      uint256 logScale = _calculateLogScale(totalMinted - tier1 + 1);
-      return logScale * 3 + basePriceTier1; // The multiplier 3 is an arbitrary scaling factor
+      uint256 logScale = _calculateLogScale(totalMinted);
+      return logScale * 3 + basePriceTier1;
     } else {
       // Below tier 1
       if (freeAllocation > totalMinted) return 0;

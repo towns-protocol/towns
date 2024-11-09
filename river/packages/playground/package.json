@@ -1,11 +1,11 @@
 {
     "name": "@river-build/playground",
-    "private": true,
     "version": "0.0.0",
+    "private": true,
     "type": "module",
     "scripts": {
-        "dev": "vite",
         "build": "tsc && vite build",
+        "dev": "vite",
         "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
         "preview": "vite preview"
     },
@@ -58,6 +58,6 @@
         "tailwindcss": "^3.4.4",
         "typescript": "^5.1.6",
         "vite": "^5.3.1",
-        "vite-plugin-checker": "^0.6.4"
+        "vite-plugin-checker": "^0.8.0"
     }
 }

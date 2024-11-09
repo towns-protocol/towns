@@ -60,12 +60,13 @@ func GetDefaultConfig() *Config {
 			PrintStatsPeriod: 10 * time.Second,
 		},
 		DebugEndpoints: DebugEndpointsConfig{
-			Cache:           true,
-			Memory:          true,
-			PProf:           false,
-			Stacks:          true,
-			StacksMaxSizeKb: 5 * 1024,
-			TxPool:          true,
+			Cache:                 true,
+			Memory:                true,
+			PProf:                 false,
+			Stacks:                true,
+			StacksMaxSizeKb:       5 * 1024,
+			TxPool:                true,
+			EnableStorageEndpoint: true,
 		},
 		Scrubbing: ScrubbingConfig{
 			ScrubEligibleDuration: time.Hour,
@@ -381,6 +382,10 @@ type DebugEndpointsConfig struct {
 	Stacks          bool
 	StacksMaxSizeKb int
 	TxPool          bool
+
+	// Make storage statistics available via debug endpoints. This may involve running queries
+	// on the underlying database.
+	EnableStorageEndpoint bool
 }
 
 type RiverRegistryConfig struct {
