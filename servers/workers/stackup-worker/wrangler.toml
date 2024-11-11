@@ -12,6 +12,11 @@ kv_namespaces = [
   { binding = "TOWN_WHITELIST", id = "<ignored>", preview_id = "<ignored>" },
 ]
 
+[dev]
+ip = "localhost"
+port = 8686
+local_protocol = "http"
+
 [vars]
 # VAR_NAME = "some_value"
 ENVIRONMENT = "development"

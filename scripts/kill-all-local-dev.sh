@@ -95,6 +95,20 @@ do_killl anvil "$1"
 do_killl wrangler "$1"
 do_killl mitmweb "$1"
 
+# kill all workers on these ports. sometimes they don't die cleanly
+declare -A workers=(
+    [8004]="gateway-worker"
+    [8006]="token-worker"
+    [8007]="unfurl-worker"
+    [8686]="stackup-worker"
+)
+
+for port in "${!workers[@]}"; do
+    echo "Killing ${workers[$port]} on port $port"
+    do_killl "$port"
+done
+
+
 # Specify the name or ID of the Docker container you want to stop
 container_name="bullmq-redis"
 
