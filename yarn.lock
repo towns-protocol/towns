@@ -14824,10 +14824,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"attr-accept@npm:^2.2.2":
-  version: 2.2.2
-  resolution: "attr-accept@npm:2.2.2"
-  checksum: 496f7249354ab53e522510c1dc8f67a1887382187adde4dc205507d2f014836a247073b05e9d9ea51e2e9c7f71b0d2aa21730af80efa9af2d68303e5f0565c4d
+"attr-accept@npm:^2.2.4":
+  version: 2.2.4
+  resolution: "attr-accept@npm:2.2.4"
+  checksum: 7b0112e28e3eeb760f4f6bd4ecd8b2467fdb5df7d38d5f8b0a9e83af892023b1f84c594df337b446d5e5eb3f61e18b0470bd9f3aadf39e7853897cbd82cad20d
   languageName: node
   linkType: hard
 
@@ -20210,12 +20210,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"file-selector@npm:^0.6.0":
-  version: 0.6.0
-  resolution: "file-selector@npm:0.6.0"
+"file-selector@npm:^2.1.0":
+  version: 2.1.0
+  resolution: "file-selector@npm:2.1.0"
   dependencies:
-    tslib: ^2.4.0
-  checksum: 7d051b6e5d793f3c6e2ab287ba5e7c2c6a0971bccc9d56e044c8047ba483e18f60fc0b5771c951dc707c0d15f4f36ccb4f1f1aaf385d21ec8f7700dadf8325ba
+    tslib: ^2.7.0
+  checksum: f15203e72483ba263424540ca6ad672973f3ede03e73ff16de75325e4bbf93594ad0ea63e464e784e3b4f72762ed07aab31fbcd6cc571141a3d5860e436d584c
   languageName: node
   linkType: hard
 
@@ -21320,7 +21320,7 @@ __metadata:
     pino: ^8.17.1
     react: ^18.2.0
     react-dom: ^18.2.0
-    react-dropzone: ^14.2.3
+    react-dropzone: ^14.3.3
     react-error-boundary: ^4.0.11
     react-error-overlay: ^6.0.11
     react-helmet: ^6.1.0
@@ -28708,16 +28708,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-dropzone@npm:^14.2.3":
-  version: 14.2.3
-  resolution: "react-dropzone@npm:14.2.3"
+"react-dropzone@npm:^14.3.3":
+  version: 14.3.3
+  resolution: "react-dropzone@npm:14.3.3"
   dependencies:
-    attr-accept: ^2.2.2
-    file-selector: ^0.6.0
+    attr-accept: ^2.2.4
+    file-selector: ^2.1.0
     prop-types: ^15.8.1
   peerDependencies:
     react: ">= 16.8 || 18.0.0"
-  checksum: 174b744d5ca898cf3d84ec1aeb6cef5211c446697e45dc8ece8287a03d291f8d07253206d5a1247ef156fd385d65e7de666d4d5c2986020b8543b8f2434e8b40
+  checksum: 5933640ebdd48ac2a1664dd6f894ec141fd4f208a0182b978e706369daa641627a5697c23c1bb625b30f88bc37bb2de5834379f372ecb28e0dfebf41eb040e6b
   languageName: node
   linkType: hard
 
@@ -32236,6 +32236,13 @@ __metadata:
   version: 2.6.3
   resolution: "tslib@npm:2.6.3"
   checksum: 74fce0e100f1ebd95b8995fbbd0e6c91bdd8f4c35c00d4da62e285a3363aaa534de40a80db30ecfd388ed7c313c42d930ee0eaf108e8114214b180eec3dbe6f5
+  languageName: node
+  linkType: hard
+
+"tslib@npm:^2.7.0":
+  version: 2.8.1
+  resolution: "tslib@npm:2.8.1"
+  checksum: e4aba30e632b8c8902b47587fd13345e2827fa639e7c3121074d5ee0880723282411a8838f830b55100cbe4517672f84a2472667d355b81e8af165a55dc6203a
   languageName: node
   linkType: hard
 
