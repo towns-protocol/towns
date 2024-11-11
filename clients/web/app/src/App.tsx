@@ -35,6 +35,7 @@ import { useNotificationRoute } from 'hooks/useNotificationRoute'
 import { useOfflineToast } from '@components/Offline/OfflineToast'
 import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
 import { CombinedAuthContextProvider } from 'privy/useCombinedAuth'
+import { useRiverConnectedSuccessfullyAnalyticsEvent } from '@components/Analytics/useRiverConnectedSuccessfullyAnalyticsEvent'
 
 FontLoader.init()
 
@@ -193,6 +194,7 @@ export const App = () => {
                     <ServiceWorkerMetadataSyncer />
                     <MonitorJoinFlow />
                     <UserOpTxModal />
+                    <TrackRiverConnectedSuccessfully />
                 </>
             </CombinedAuthContextProvider>
         </TownsContextProvider>
@@ -236,4 +238,9 @@ const validateAndParse = (input: string): ParsedObject => {
     })
 
     return obj
+}
+
+function TrackRiverConnectedSuccessfully() {
+    useRiverConnectedSuccessfullyAnalyticsEvent()
+    return null
 }

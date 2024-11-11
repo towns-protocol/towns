@@ -1,5 +1,10 @@
 import React, { useCallback } from 'react'
-import { useConnectivity, useFetchHasJoinPermission, useTownsClient } from 'use-towns-client'
+import {
+    useConnectivity,
+    useContractSpaceInfoWithoutClient,
+    useFetchHasJoinPermission,
+    useTownsClient,
+} from 'use-towns-client'
 import { useGetSignerWithTimeout } from '@towns/privy'
 import useStateMachine from '@cassiozen/usestatemachine'
 import { Signer } from 'ethers'
@@ -44,6 +49,9 @@ export function useAutoLoginToRiverIfEmbeddedWallet({
     } = usePublicPageLoginFlow()
     const { clientSingleton } = useTownsClient()
     const fetchHasJoinPermission = useFetchHasJoinPermission()
+    const { data: spaceInfo } = useContractSpaceInfoWithoutClient(
+        publicPageLoginStore.getState().spaceBeingJoined,
+    )
 
     const userOps = clientSingleton?.userOps
 
@@ -143,6 +151,9 @@ export function useAutoLoginToRiverIfEmbeddedWallet({
                                                 signerContext: casablancaContext,
                                                 source: 'auto login to river',
                                                 defaultUsername,
+                                                analyticsData: {
+                                                    spaceName: spaceInfo?.name ?? '',
+                                                },
                                             })
                                         } else {
                                             startJoinDoesNotMeetRequirements()

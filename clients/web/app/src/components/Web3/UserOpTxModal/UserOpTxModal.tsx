@@ -1,7 +1,7 @@
 import { PaymasterErrorCode, userOpsStore } from '@towns/userops'
 import { BigNumber } from 'ethers'
-import React, { useMemo, useState } from 'react'
-import { Address, useConnectivity } from 'use-towns-client'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { Address, useConnectivity, useContractSpaceInfoWithoutClient } from 'use-towns-client'
 import { useShallow } from 'zustand/react/shallow'
 import { AboveAppProgressModalContainer } from '@components/AppProgressOverlay/AboveAppProgress/AboveAppProgress'
 import { Box, Button, Heading, Icon, IconButton, Paragraph, Text, Tooltip } from '@ui'
@@ -15,6 +15,8 @@ import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { atoms } from 'ui/styles/atoms.css'
 import { shortAddress } from 'ui/utils/utils'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
+import { useJoinFunnelAnalytics } from '@components/Analytics/useJoinFunnelAnalytics'
+import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { CopyWalletAddressButton } from '../GatedTownModal/Buttons'
 import { useWalletPrefix } from '../useWalletPrefix'
 
@@ -61,6 +63,18 @@ function UserOpTxModalContent({ endPublicPageLoginFlow }: { endPublicPageLoginFl
             rejectedSponsorshipReason: s.rejectedSponsorshipReason,
         })),
     )
+
+    const isJoiningSpace = !!usePublicPageLoginFlow().spaceBeingJoined
+    const { clickCopyWalletAddress, clickConfirmJoinTransaction } = useJoinFunnelAnalytics()
+    const spaceId = useSpaceIdFromPathname()
+    const { data: spaceInfo } = useContractSpaceInfoWithoutClient(spaceId)
+
+    const onConfirm = () => {
+        confirm?.()
+        if (isJoiningSpace) {
+            clickConfirmJoinTransaction()
+        }
+    }
 
     const rejectionMessage = useMemo(() => {
         if (rejectedSponsorshipReason === PaymasterErrorCode.PAYMASTER_LIMIT_REACHED) {
@@ -141,6 +155,13 @@ function UserOpTxModalContent({ endPublicPageLoginFlow }: { endPublicPageLoginFl
     const balanceIsLessThanCost =
         _requiresBalanceGreaterThanCost && balanceData && balanceData.value < totalCost.toBigInt()
 
+    useJoinTransactionModalShownAnalyticsEvent({
+        spaceId,
+        spaceName: spaceInfo?.name,
+        isJoiningSpace,
+        balanceIsLessThanCost: !!balanceIsLessThanCost,
+    })
+
     const formattedBalance = `${
         (balanceIsLessThanCost
             ? balanceData?.formatted ?? 0
@@ -162,6 +183,9 @@ function UserOpTxModalContent({ endPublicPageLoginFlow }: { endPublicPageLoginFl
 
     const onCopyClick = () => {
         setShowWalletWarning(true)
+        if (isJoiningSpace) {
+            clickCopyWalletAddress({ spaceId, spaceName: spaceInfo?.name })
+        }
     }
 
     const bottomContent = () => {
@@ -210,7 +234,7 @@ function UserOpTxModalContent({ endPublicPageLoginFlow }: { endPublicPageLoginFl
             )
         }
         return (
-            <Button tone="cta1" width="100%" onClick={confirm}>
+            <Button tone="cta1" width="100%" onClick={onConfirm}>
                 Confirm
             </Button>
         )
@@ -364,4 +388,26 @@ export function RecipientText(props: { sendingTo: string }) {
             )}
         </Box>
     )
+}
+
+export function useJoinTransactionModalShownAnalyticsEvent(args: {
+    spaceId: string | undefined
+    spaceName: string | undefined
+    isJoiningSpace: boolean
+    balanceIsLessThanCost: boolean
+}) {
+    const { spaceId, spaceName, isJoiningSpace, balanceIsLessThanCost } = args
+    const { joinTransactionModalShown } = useJoinFunnelAnalytics()
+    const triggered = useRef(false)
+
+    useEffect(() => {
+        if (isJoiningSpace && !triggered.current) {
+            joinTransactionModalShown({
+                spaceId,
+                spaceName,
+                funds: balanceIsLessThanCost ? 'insufficient' : 'sufficient',
+            })
+            triggered.current = true
+        }
+    }, [spaceId, spaceName, joinTransactionModalShown, balanceIsLessThanCost, isJoiningSpace])
 }

@@ -126,27 +126,15 @@ function usePrivyLoginWithErrorHandler({
             // BUG in privy: this hook is ALSO called when calling privy.useConnectWallet - and who knows when else
             // so we need to check if the user is already authenticated to river too (loggedInWalletAddress)
             if (!wasAlreadyAuthenticated && !loggedInWalletAddress) {
-                loginToRiverAfterPrivy?.()
-                console.log('[analytics] identify logged in user', {
+                Analytics.getInstance().identify({
                     loginMethod,
                 })
-                Analytics.getInstance().identify(
-                    {
-                        loginMethod,
-                    },
-                    () => {
-                        console.log('[analytics] identify logged in user', {
-                            loginMethod,
-                        })
-                    },
-                )
                 const tracked = {
                     isNewUser,
                     loginMethod,
                 }
-                Analytics.getInstance().track('login success', tracked, () => {
-                    console.log('[analytics] login success', tracked)
-                })
+                Analytics.getInstance().track('privy login success', tracked)
+                loginToRiverAfterPrivy?.()
             }
             // loginAccount is only present when onComplete is called by actual login component
             // if other components have mounted useCombinedAuth, onComplete still fires, but loginAccount is undefined
@@ -190,14 +178,12 @@ function usePrivyLoginWithErrorHandler({
         },
         onError: (error) => {
             endPublicPageLoginFlow()
-            const tracked = {
-                error,
-            }
-            Analytics.getInstance().track('login error', tracked, () => {
-                console.log('[analytics] login error', tracked)
-            })
             if (error === 'exited_auth_flow') {
-                return
+                Analytics.getInstance().track('exited privy modal')
+            } else {
+                Analytics.getInstance().track('privy login error', {
+                    error,
+                })
             }
         },
     })

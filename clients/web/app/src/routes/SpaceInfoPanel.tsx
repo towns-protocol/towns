@@ -59,7 +59,7 @@ import { useWaitForInvalidation } from 'hooks/useWaitForInvalidation'
 import { useRefreshSpaceMember } from 'hooks/useRefreshSpaceMember'
 import { useEntitlements } from 'hooks/useEntitlements'
 import { EntitlementsDisplay } from '@components/TownPageLayout/EntitlementsDisplay'
-import { PublicTownPage } from './PublicTownPage/PublicTownPage'
+import { PublicTownPageForAuthenticatedUser } from './PublicTownPage/PublicTownPage'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
 
 export const SpaceInfoPanel = () => {
@@ -410,7 +410,10 @@ export const SpaceInfo = () => {
                             width: isTouch ? '100%' : 'calc(100vw - 100px)',
                         }}
                     >
-                        <PublicTownPage isPreview onClosePreview={setModalUndefined} />
+                        <PublicTownPageForAuthenticatedUser
+                            isPreview
+                            onClosePreview={setModalUndefined}
+                        />
                     </Box>
                 </ModalContainer>
             )}

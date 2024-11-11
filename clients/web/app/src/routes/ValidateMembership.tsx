@@ -16,7 +16,8 @@ import { AppProgressState } from '@components/AppProgressOverlay/AppProgressStat
 import { AppProgressOverlayTrigger } from '@components/AppProgressOverlay/AppProgressOverlayTrigger'
 import { useAppProgressStore } from '@components/AppProgressOverlay/store/appProgressStore'
 import { SECOND_MS } from 'data/constants'
-import { PublicTownPage } from './PublicTownPage/PublicTownPage'
+import { usePublicTownsPageAnalyticsEvent } from '@components/Analytics/usePublicTownPageAnalyticsEvent'
+import { PublicTownPageForAuthenticatedUser } from './PublicTownPage/PublicTownPage'
 import { usePublicPageLoginFlow } from './PublicTownPage/usePublicPageLoginFlow'
 
 //  Aims to give the best experience to the most common user flow: a user who is a member of a space and loading the app.
@@ -39,7 +40,7 @@ export const ValidateMembership = () => {
     const spaceIdFromPathname = useSpaceIdFromPathname()
     const usernameConfirmed = useUsernameConfirmed()
     const { spaceBeingJoined: isJoining } = usePublicPageLoginFlow()
-    const [_PublicTownPage] = useState(<PublicTownPage />)
+    const [_PublicTownPage] = useState(<PublicTownPageForAuthenticatedUser />)
     const spaceDataIds = useSpaceDataIds()
 
     const userId = useMyUserId()
@@ -124,7 +125,7 @@ export const ValidateMembership = () => {
                 (spaceDataIds && !spaceDataIds.includes(spaceIdFromPathname))) &&
             !deferPublicPage
         ) {
-            return _PublicTownPage
+            return <TrackPublicTownPage>{_PublicTownPage}</TrackPublicTownPage>
         }
 
         return (
@@ -146,7 +147,7 @@ export const ValidateMembership = () => {
     }
 
     if (!isMember && !deferPublicPage) {
-        return _PublicTownPage
+        return <TrackPublicTownPage>{_PublicTownPage}</TrackPublicTownPage>
     }
 
     if (!isHighPriorityDataLoaded) {
@@ -224,4 +225,9 @@ function useSpaceDataIds() {
     }
 
     return newIds
+}
+
+function TrackPublicTownPage({ children }: { children: React.ReactNode }) {
+    usePublicTownsPageAnalyticsEvent({ authenticated: true })
+    return children
 }

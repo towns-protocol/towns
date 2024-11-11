@@ -4,6 +4,8 @@ import { Box, Button, ButtonProps, Icon, Text } from '@ui'
 import { isTouch } from 'hooks/useDevice'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { GetSigner, WalletReady } from 'privy/WalletReady'
+import { useJoinFunnelAnalytics } from '@components/Analytics/useJoinFunnelAnalytics'
+import { usePublicPageLoginFlow } from 'routes/PublicTownPage/usePublicPageLoginFlow'
 import { useConnectThenLink } from './useConnectThenLink'
 import { WalletLinkingInfoLink } from '../WalletLinkingInfo'
 
@@ -28,19 +30,28 @@ function ConnectWalletThenLinkInner(props: Props & { getSigner: GetSigner }) {
         onLinkWallet,
         getSigner,
     })
+    const { spaceBeingJoined } = usePublicPageLoginFlow()
+    const { clickedLinkWalletOnGatedTownRequirementsModal } = useJoinFunnelAnalytics()
+
+    const onConnectClick = useCallback(() => {
+        if (spaceBeingJoined) {
+            clickedLinkWalletOnGatedTownRequirementsModal({ spaceId: spaceBeingJoined })
+        }
+        onConnect()
+    }, [onConnect, spaceBeingJoined, clickedLinkWalletOnGatedTownRequirementsModal])
 
     const onClick = useCallback(() => {
         if (isTouch()) {
             setShowModal(true)
         } else {
-            onConnect()
+            onConnectClick()
         }
-    }, [onConnect])
+    }, [onConnectClick])
 
     const onModalConfirm = useCallback(() => {
-        onConnect()
+        onConnectClick()
         setShowModal(false)
-    }, [onConnect])
+    }, [onConnectClick])
 
     return (
         <>

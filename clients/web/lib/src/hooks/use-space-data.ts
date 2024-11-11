@@ -407,6 +407,7 @@ export function useContractSpaceInfoWithoutClient(spaceId: string | undefined) {
     const offlineSpaceInfoMap = useOfflineStore((s) => s.offlineSpaceInfoMap)
 
     const { baseProvider: provider, baseConfig: config } = useTownsContext()
+
     const spaceDapp = useSpaceDapp({
         config,
         provider,

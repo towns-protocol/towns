@@ -7,7 +7,7 @@ import { useStore } from 'store/store'
 import { mapToErrorMessage } from '@components/Web3/utils'
 import { popupToast } from '@components/Notifications/popupToast'
 import { StandardToast } from '@components/Notifications/StandardToast'
-import { Analytics } from 'hooks/useAnalytics'
+import { useJoinFunnelAnalytics } from '@components/Analytics/useJoinFunnelAnalytics'
 
 const JOIN = 'join'
 const PRIVY_OAUTH_STATE = 'privy_oauth_state'
@@ -18,7 +18,7 @@ type TSignerContext = ReturnType<typeof useTownsContext>['signerContext']
 export function usePublicPageLoginFlow() {
     const { setRecentlyMintedSpaceToken } = useStore()
     const spaceId = useSpaceIdFromPathname()
-
+    const { joiningTown, joinedTown } = useJoinFunnelAnalytics()
     const {
         spaceBeingJoined,
         setSpaceBeingJoined,
@@ -50,12 +50,16 @@ export function usePublicPageLoginFlow() {
             signerContext,
             source,
             defaultUsername,
+            analyticsData,
         }: {
             signer: TSigner
             clientSingleton: TClientSingleton
             signerContext: TSignerContext
             source: string
             defaultUsername?: string
+            analyticsData: {
+                spaceName: string | undefined
+            }
         }) => {
             if (!spaceId || !clientSingleton || !signer || !signerContext) {
                 const missingParams: string[] = []
@@ -89,9 +93,7 @@ export function usePublicPageLoginFlow() {
                 return
             }
 
-            Analytics.getInstance().track('joining town', {
-                spaceId,
-            })
+            joiningTown({ spaceId, spaceName: analyticsData.spaceName })
 
             try {
                 const result = await clientSingleton.joinTown(
@@ -107,10 +109,7 @@ export function usePublicPageLoginFlow() {
                 )
 
                 if (result) {
-                    // success
-                    Analytics.getInstance().track('joined town', {
-                        spaceId,
-                    })
+                    joinedTown({ spaceId, spaceName: analyticsData.spaceName })
                 } else {
                     end()
                     popupToast(({ toast }) => (
@@ -137,7 +136,7 @@ export function usePublicPageLoginFlow() {
                 ))
             }
         },
-        [spaceId, setRecentlyMintedSpaceToken, end],
+        [spaceId, joiningTown, end, setRecentlyMintedSpaceToken, joinedTown],
     )
 
     const startJoinDoesNotMeetRequirements = useCallback(() => {
@@ -156,12 +155,16 @@ export function usePublicPageLoginFlow() {
             signerContext,
             source,
             defaultUsername,
+            analyticsData,
         }: {
             signer: TSigner
             clientSingleton: TClientSingleton
             signerContext: TSignerContext
             source: string
             defaultUsername?: string
+            analyticsData: {
+                spaceName: string
+            }
         }) => {
             if (!spaceId) {
                 return
@@ -180,6 +183,7 @@ export function usePublicPageLoginFlow() {
                     signerContext,
                     source,
                     defaultUsername,
+                    analyticsData,
                 })
                 setDisableJoinUi(false)
             }

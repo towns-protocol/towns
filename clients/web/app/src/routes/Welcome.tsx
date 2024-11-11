@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect } from 'react'
+import React, { Suspense, useCallback, useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 
 import { Analytics } from 'hooks/useAnalytics'
@@ -15,10 +15,14 @@ export const WelcomeRoute = React.memo(() => {
         })
     }, [location.pathname, location.search])
 
+    const onLoginClick = useCallback(() => {
+        Analytics.getInstance().track('clicked login')
+    }, [])
+
     return (
         <WelcomeLayout>
             <Suspense>
-                <LoginComponent />
+                <LoginComponent onLoginClick={onLoginClick} />
             </Suspense>
         </WelcomeLayout>
     )

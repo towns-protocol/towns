@@ -86,6 +86,7 @@ export class Analytics implements TownsAnalytics {
     private readonly commonProperties: ApiObject
     private readonly commonOptions: ApiOptions
     private readonly trackedEvents: Set<string> = new Set()
+    private readonly trackedPages: Set<string> = new Set()
     private _user?: { userId: string | null }
 
     private constructor(analytics: IAnalyticsBackend) {
@@ -216,7 +217,7 @@ export class Analytics implements TownsAnalytics {
             this.trackedEvents.add(event)
         }
 
-        this.track(event, properties, callback)
+        this.backend.track(event, properties, callback)
     }
 }
 

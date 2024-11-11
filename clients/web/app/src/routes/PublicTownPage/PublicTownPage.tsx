@@ -25,6 +25,7 @@ import { darkTheme } from 'ui/styles/vars.css'
 import { shortAddress } from 'ui/utils/utils'
 import { AppProgressOverlayTrigger } from '@components/AppProgressOverlay/AppProgressOverlayTrigger'
 import { Avatar } from '@components/Avatar/Avatar'
+import { usePublicTownsPageAnalyticsEvent } from '@components/Analytics/usePublicTownPageAnalyticsEvent'
 import { AppBugReportButton } from '@components/AppBugReport/AppBugReportButton'
 import { useStartupTime } from 'StartupProvider'
 import { AppStoreBanner } from '@components/AppStoreBanner/AppStoreBanner'
@@ -33,7 +34,7 @@ import { BottomBarContent } from './BottomBarContent'
 const log = debug('app:public-town')
 log.enabled = true
 
-const PublicTownPageWithoutAuth = (props: { isPreview?: boolean; onClosePreview?: () => void }) => {
+const PublicTownPage = (props: { isPreview?: boolean; onClosePreview?: () => void }) => {
     const { isPreview = false, onClosePreview } = props
     const spaceId = useSpaceIdFromPathname()
 
@@ -61,19 +62,6 @@ const PublicTownPageWithoutAuth = (props: { isPreview?: boolean; onClosePreview?
         return () => {
             console.log('[app progress] public town page unmounting')
         }
-    }, [])
-
-    useEffect(() => {
-        if (isPreview) {
-            return
-        }
-        Analytics.getInstance().page('home-page', 'public town page', {
-            spaceId,
-        })
-    }, [isPreview, spaceId])
-
-    useEffect(() => {
-        console.log('[analytics]')
     }, [])
 
     return spaceInfo ? (
@@ -109,9 +97,16 @@ const PublicTownPageWithoutAuth = (props: { isPreview?: boolean; onClosePreview?
     )
 }
 
-export const PublicTownPage = React.memo(
+export const PublicTownPageForUnauthenticatedRoute = React.memo(
     (props: { isPreview?: boolean; onClosePreview?: () => void }) => {
-        return <PublicTownPageWithoutAuth {...props} />
+        usePublicTownsPageAnalyticsEvent({ authenticated: false })
+        return <PublicTownPage {...props} />
+    },
+)
+
+export const PublicTownPageForAuthenticatedUser = React.memo(
+    (props: { isPreview?: boolean; onClosePreview?: () => void }) => {
+        return <PublicTownPage {...props} />
     },
 )
 

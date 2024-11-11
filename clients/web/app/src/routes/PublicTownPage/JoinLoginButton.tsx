@@ -3,6 +3,7 @@ import {
     AuthStatus,
     Permission,
     useConnectivity,
+    useContractSpaceInfoWithoutClient,
     useHasPermission,
     useMyDefaultUsernames,
     useTownsContext,
@@ -11,12 +12,13 @@ import { Box, BoxProps, FancyButton, Icon, IconProps, Text } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { GatedTownModal } from '@components/Web3/GatedTownModal/GatedTownModal'
-import { Analytics, trackError } from 'hooks/useAnalytics'
+import { trackError } from 'hooks/useAnalytics'
 import { AboveAppProgressModalContainer } from '@components/AppProgressOverlay/AboveAppProgress/AboveAppProgress'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { popupToast } from '@components/Notifications/popupToast'
 import { StandardToast, dismissToast } from '@components/Notifications/StandardToast'
 import { GetSigner, WalletReady } from 'privy/WalletReady'
+import { useJoinFunnelAnalytics } from '@components/Analytics/useJoinFunnelAnalytics'
 import { usePublicPageLoginFlow } from './usePublicPageLoginFlow'
 
 const LoginComponent = React.lazy(() => import('@components/Login/LoginComponent'))
@@ -31,6 +33,7 @@ export function JoinLoginButton({
     const isPreview = false
     const { isAuthenticated, loggedInWalletAddress } = useConnectivity()
     const { clientSingleton, signerContext } = useTownsContext()
+    const { data: spaceInfo } = useContractSpaceInfoWithoutClient(spaceId)
 
     const {
         startJoinMeetsRequirements,
@@ -59,6 +62,8 @@ export function JoinLoginButton({
         })
 
     const defaultUsername = useMyDefaultUsernames()?.[0]
+    const { clickedJoinTownOnTownPage: clickedJoinTown, viewedGatedTownRequirementsModal } =
+        useJoinFunnelAnalytics()
 
     const onJoinClick = useCallback(
         async (getSigner: GetSigner) => {
@@ -71,10 +76,7 @@ export function JoinLoginButton({
                 createPrivyNotAuthenticatedNotification()
                 return
             }
-            Analytics.getInstance().track('clicked join town on town page', {
-                spaceId,
-                meetsMembershipRequirements,
-            })
+            clickedJoinTown({ meetsMembershipRequirements, spaceId })
             if (meetsMembershipRequirements) {
                 startJoinMeetsRequirements({
                     signer,
@@ -82,28 +84,30 @@ export function JoinLoginButton({
                     signerContext,
                     source: 'public pagejoin click',
                     defaultUsername,
+                    analyticsData: {
+                        spaceName: spaceInfo?.name ?? '',
+                    },
                 })
             } else {
                 // show asset verification modal
-                Analytics.getInstance().page(
-                    'requirements-modal',
-                    'viewed gated town requirements modal',
-                    {
-                        spaceId,
-                        meetsMembershipRequirements,
-                    },
-                )
+                viewedGatedTownRequirementsModal({
+                    spaceId,
+                    meetsMembershipRequirements: !!meetsMembershipRequirements,
+                })
                 startJoinDoesNotMeetRequirements()
             }
         },
         [
             disableJoinUi,
-            spaceId,
+            clickedJoinTown,
             meetsMembershipRequirements,
+            spaceId,
             startJoinMeetsRequirements,
             clientSingleton,
             signerContext,
             defaultUsername,
+            spaceInfo?.name,
+            viewedGatedTownRequirementsModal,
             startJoinDoesNotMeetRequirements,
         ],
     )
@@ -112,8 +116,9 @@ export function JoinLoginButton({
         if (maxSupplyReached) {
             return
         }
+        clickedJoinTown({ spaceId })
         startJoinPreLogin()
-    }, [startJoinPreLogin, maxSupplyReached])
+    }, [startJoinPreLogin, maxSupplyReached, spaceId, clickedJoinTown])
 
     const isEvaluating = useWatchEvaluatingCredentialsAuthStatus()
 
@@ -140,11 +145,6 @@ export function JoinLoginButton({
                 <LoadingStatusMessage spinner background="level2" message="Checking membership" />
             )
         }
-
-        Analytics.getInstance().trackOnce('join button shown', {
-            spaceId,
-            meetsMembershipRequirements,
-        })
 
         return (
             <WalletReady>

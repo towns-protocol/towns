@@ -4,6 +4,7 @@ import {
     BlockchainTransactionType,
     Permission,
     useConnectivity,
+    useContractSpaceInfoWithoutClient,
     useHasPermission,
     useIsTransactionPending,
     useLinkEOAToRootKeyTransaction,
@@ -24,6 +25,7 @@ import { createPrivyNotAuthenticatedNotification } from '@components/Notificatio
 import { usePublicPageLoginFlow } from 'routes/PublicTownPage/usePublicPageLoginFlow'
 import { TokenSelectionDisplay } from '@components/Tokens/TokenSelector/TokenSelection'
 import { useNativeTokenWithQuantity } from '@components/Tokens/utils'
+import { useJoinFunnelAnalytics } from '@components/Analytics/useJoinFunnelAnalytics'
 import { FullPanelOverlay, LinkedWallet } from '../WalletLinkingPanel'
 import { isEveryoneAddress, mapToErrorMessage } from '../utils'
 import { ConnectWalletThenLinkButton } from '../ConnectWallet/ConnectWalletThenLinkButton'
@@ -116,6 +118,9 @@ function Content({
 >) {
     const { loggedInWalletAddress } = useConnectivity()
     const spaceId = useSpaceIdFromPathname()
+    const { data: spaceInfo } = useContractSpaceInfoWithoutClient(spaceId)
+    const { clickedJoinTownOnGatedTownRequirementsModal, successfullyLinkedWallet } =
+        useJoinFunnelAnalytics()
     const {
         hasPermission: meetsMembershipRequirements,
         isLoading: isLoadingMeetsMembership,
@@ -141,6 +146,7 @@ function Content({
             Analytics.getInstance().track('clicked join town on link wallet modal', {
                 spaceId,
             })
+            clickedJoinTownOnGatedTownRequirementsModal({ spaceId })
 
             const signer = await getSigner()
 
@@ -153,9 +159,20 @@ function Content({
                 clientSingleton,
                 signerContext,
                 source: 'token verification click',
+                analyticsData: {
+                    spaceName: spaceInfo?.name ?? '',
+                },
             })
         },
-        [onHide, spaceId, joinTown, clientSingleton, signerContext],
+        [
+            onHide,
+            spaceId,
+            clickedJoinTownOnGatedTownRequirementsModal,
+            joinTown,
+            clientSingleton,
+            signerContext,
+            spaceInfo?.name,
+        ],
     )
 
     const nativeTokenWithQuantity = useNativeTokenWithQuantity(entitlements?.ethBalance || '')
@@ -170,10 +187,7 @@ function Content({
 
                 const canJoin = getJoinSpaceQueryData()
 
-                Analytics.getInstance().track('successfully linked wallet', {
-                    spaceId,
-                    meetsMembershipRequirements: canJoin,
-                })
+                successfullyLinkedWallet({ spaceId, meetsMembershipRequirements: !!canJoin })
 
                 if (!canJoin) {
                     tickNoAssets()

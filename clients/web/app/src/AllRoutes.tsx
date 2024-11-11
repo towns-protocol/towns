@@ -9,7 +9,7 @@ import { PATHS } from 'routes'
 import { AuthenticatedRoutes } from 'routes/AuthenticatedRoutes'
 import { NotificationRoute } from 'routes/NotificationRoute'
 import { PublicSupportPage } from 'routes/PublicSupportPage/PublicSupportPage'
-import { PublicTownPage } from 'routes/PublicTownPage/PublicTownPage'
+import { PublicTownPageForUnauthenticatedRoute } from 'routes/PublicTownPage/PublicTownPage'
 import { WelcomeRoute } from 'routes/Welcome'
 import { mobileAppClass } from 'ui/styles/globals/utils.css'
 import { env } from 'utils'
@@ -34,7 +34,7 @@ export const AllRoutes = React.memo(() => {
                                     />
                                     <Route
                                         path={`${PATHS.SPACES}/:spaceSlug/*`}
-                                        element={<PublicTownPage />}
+                                        element={<PublicTownPageForUnauthenticatedRoute />}
                                     />
                                     <Route path="*" element={<WelcomeRoute />} />
                                 </>
