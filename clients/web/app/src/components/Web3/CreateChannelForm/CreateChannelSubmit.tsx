@@ -18,6 +18,7 @@ import { createPrivyNotAuthenticatedNotification } from '@components/Notificatio
 import { FancyButton } from '@ui'
 import { popupToast } from '@components/Notifications/popupToast'
 import { StandardToast } from '@components/Notifications/StandardToast'
+import { getSpaceNameFromCache } from '@components/Analytics/getSpaceNameFromCache'
 import { CreateChannelFormSchema } from './createChannelFormSchema'
 
 export function CreateChannelSubmit(props: {
@@ -109,13 +110,13 @@ export function CreateChannelSubmit(props: {
                     })
                     .filter((r) => r !== undefined) as ApiObject[]) ?? []
             const tracked = {
+                spaceId,
+                spaceName: getSpaceNameFromCache(spaceId),
                 channelName: name,
                 parentSpaceId: spaceId,
                 rolesWithDetails: _rolesWithDetails,
             }
-            Analytics.getInstance().track('submitting create channel form', tracked, () => {
-                console.log('[analytics] submitting create channel form', tracked)
-            })
+            Analytics.getInstance().track('submitting create channel form', tracked)
 
             if (!signer) {
                 createPrivyNotAuthenticatedNotification()
@@ -133,9 +134,7 @@ export function CreateChannelSubmit(props: {
                     channelId,
                 }
                 if (channelId) {
-                    Analytics.getInstance().track('created channel', trackCreated, () => {
-                        console.log('[analytics] created channel', trackCreated)
-                    })
+                    Analytics.getInstance().track('created channel', trackCreated)
 
                     popupToast(({ toast }) => (
                         <StandardToast.Success

@@ -10,7 +10,7 @@ import { ShortcutTooltip } from '@components/Shortcuts/ShortcutTooltip'
 import useCopyToClipboard from 'hooks/useCopyToClipboard'
 import { ReplyToMessageContext } from '@components/ReplyToMessageContext/ReplyToMessageContext'
 import { getLinkToMessage } from 'utils/getLinkToMessage'
-import { Analytics, getChannelType, getThreadReplyOrDmReply } from 'hooks/useAnalytics'
+import { Analytics, getChannelType } from 'hooks/useAnalytics'
 import { useRouteParams } from 'hooks/useRouteParams'
 import { ShortcutAction, ShortcutActions } from 'data/shortcuts'
 import { ShortcutKeys } from '@components/Shortcuts/ShortcutKeys'
@@ -18,6 +18,7 @@ import { TooltipContext } from 'ui/components/Tooltip/TooltipRenderer'
 import { isInputFocused } from '@components/RichTextPlate/utils/helpers'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { CHANNEL_INFO_PARAMS } from 'routes'
+import { getThreadReplyOrDmReply, trackPostedMessage } from '@components/Analytics/postedMessage'
 import { useCreateUnreadMarker } from './hooks/useCreateUnreadMarker'
 import { DeleteMessagePrompt } from './DeleteMessagePrompt'
 
@@ -81,17 +82,14 @@ export const MessageContextMenu = (props: Props) => {
                 return
             }
             sendReaction(channelId, eventId, data.id, threadId)
-            Analytics.getInstance().track('posted message', {
+            trackPostedMessage({
                 spaceId,
                 channelId,
-                channelType: getChannelType(channelId),
-                reply: getThreadReplyOrDmReply({
-                    threadId,
-                    canReplyInline,
-                    replyToEventId,
-                }),
                 messageType: 'emoji reaction',
                 emojiId: data.id,
+                threadId,
+                canReplyInline,
+                replyToEventId,
             })
         },
         [canReplyInline, channelId, eventId, replyToEventId, sendReaction, spaceId, threadId],
@@ -158,30 +156,31 @@ export const MessageContextMenu = (props: Props) => {
     const onRedactConfirm = useCallback(() => {
         if (channelId) {
             redactEvent(channelId, eventId)
-            Analytics.getInstance().track('posted message', {
+
+            trackPostedMessage({
+                spaceId,
                 channelId,
-                channelType: getChannelType(channelId),
+                threadId,
+                canReplyInline,
+                replyToEventId,
                 messageType: 'redacted',
-                reply: getThreadReplyOrDmReply({
-                    threadId,
-                    canReplyInline,
-                    replyToEventId,
-                }),
             })
         }
-    }, [canReplyInline, channelId, eventId, redactEvent, replyToEventId, threadId])
+    }, [canReplyInline, channelId, eventId, redactEvent, replyToEventId, spaceId, threadId])
 
     const onAdminRedactConfirm = useCallback(() => {
         if (channelId && eventId) {
             adminRedactMessage(channelId, eventId)
-            Analytics.getInstance().track('posted message', {
+            trackPostedMessage({
+                spaceId,
                 channelId,
-                channelType: getChannelType(channelId),
+                threadId,
+                canReplyInline,
+                replyToEventId,
                 messageType: 'admin redacted',
-                reply: getThreadReplyOrDmReply({ threadId, canReplyInline, replyToEventId }),
             })
         }
-    }, [channelId, eventId, adminRedactMessage, threadId, canReplyInline, replyToEventId])
+    }, [canReplyInline, channelId, eventId, adminRedactMessage, replyToEventId, spaceId, threadId])
 
     const onCopyLinkToMessage = useShortcut(
         'CopyLinkToMessage',

@@ -20,13 +20,8 @@ import { atoms } from 'ui/styles/atoms.css'
 import { useDevice } from 'hooks/useDevice'
 import { Panel } from '@components/Panel/Panel'
 import { MediaDropContextProvider } from '@components/MediaDropContext/MediaDropContext'
-import {
-    Analytics,
-    getChannelType,
-    getPostedMessageType,
-    getThreadReplyOrDmReply,
-} from 'hooks/useAnalytics'
 import { useIsChannelReactable } from 'hooks/useIsChannelReactable'
+import { getPostedMessageType, trackPostedMessage } from '@components/Analytics/postedMessage'
 
 type Props = {
     messageId: string
@@ -51,17 +46,15 @@ export const MessageThreadPanel = (props: Props) => {
 
     const onSend = useCallback(
         (value: string, options: SendMessageOptions | undefined) => {
-            const tracked = {
+            trackPostedMessage({
                 spaceId,
                 channelId,
-                channelType: getChannelType(channelId),
-                reply: getThreadReplyOrDmReply({ threadId: 'threadId' }),
                 messageType: getPostedMessageType(value, {
                     messageType: options?.messageType,
                 }),
-            }
-            Analytics.getInstance().track('posted message', tracked, () => {
-                console.log('[analytics] posted message (thread)', tracked)
+                threadId: 'threadId',
+                canReplyInline: undefined,
+                replyToEventId: undefined,
             })
             const userIds = parent?.userIds ?? new Set<string>()
             if (parent?.parentEvent) {

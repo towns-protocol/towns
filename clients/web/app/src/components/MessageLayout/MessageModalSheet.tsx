@@ -12,9 +12,10 @@ import { ReplyToMessageContext } from '@components/ReplyToMessageContext/ReplyTo
 import { getLinkToMessage } from 'utils/getLinkToMessage'
 import useCopyToClipboard from 'hooks/useCopyToClipboard'
 import { useRouteParams } from 'hooks/useRouteParams'
-import { Analytics, getChannelType, getThreadReplyOrDmReply } from 'hooks/useAnalytics'
+import { Analytics, getChannelType } from 'hooks/useAnalytics'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { CHANNEL_INFO_PARAMS } from 'routes'
+import { getThreadReplyOrDmReply, trackPostedMessage } from '@components/Analytics/postedMessage'
 import { DeleteMessagePrompt } from './DeleteMessagePrompt'
 
 type Props = {
@@ -107,14 +108,16 @@ export const MessageModalSheet = (props: Props) => {
     const onDeleteConfirm = useCallback(() => {
         if (channelId) {
             redactEvent(channelId, eventId)
-            Analytics.getInstance().track('posted message', {
+            trackPostedMessage({
+                spaceId,
                 channelId,
-                channelType: getChannelType(channelId),
-                reply: getThreadReplyOrDmReply({ threadId, canReplyInline, replyToEventId }),
                 messageType: 'redacted',
+                threadId,
+                canReplyInline,
+                replyToEventId,
             })
         }
-    }, [canReplyInline, channelId, eventId, redactEvent, replyToEventId, threadId])
+    }, [canReplyInline, channelId, eventId, redactEvent, replyToEventId, spaceId, threadId])
 
     const onDeleteCancel = useCallback(() => {
         setActivePrompt(undefined)
@@ -147,15 +150,13 @@ export const MessageModalSheet = (props: Props) => {
                 return
             }
             sendReaction(channelId, eventId, id, threadId)
-            Analytics.getInstance().track('posted message', {
+            trackPostedMessage({
                 spaceId,
                 channelId,
-                channelType: getChannelType(channelId),
-                reply: getThreadReplyOrDmReply({
-                    threadId,
-                    canReplyInline,
-                    replyToEventId,
-                }),
+
+                threadId,
+                canReplyInline,
+                replyToEventId,
                 messageType: 'emoji reaction',
                 emojiId: id,
             })

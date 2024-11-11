@@ -2,10 +2,12 @@ import { useEvent } from 'react-use-event-hook'
 import { useTownsClient } from 'use-towns-client'
 import { useContext } from 'react'
 import { ReplyToMessageContext } from '@components/ReplyToMessageContext/ReplyToMessageContext'
+import { trackPostedMessage } from '@components/Analytics/postedMessage'
 import { useRouteParams } from './useRouteParams'
-import { Analytics, getChannelType, getThreadReplyOrDmReply } from './useAnalytics'
+import { useSpaceIdFromPathname } from './useSpaceInfoFromPathname'
 
 export const useHandleReaction = (channelId: string) => {
+    const spaceId = useSpaceIdFromPathname()
     const { sendReaction, redactEvent } = useTownsClient()
     const { threadId } = useRouteParams()
     const { canReplyInline, replyToEventId } = useContext(ReplyToMessageContext)
@@ -27,11 +29,14 @@ export const useHandleReaction = (channelId: string) => {
                 sendReaction(channelId, action.parentId, action.reactionName, threadId)
             } else if (action.type === 'redact') {
                 redactEvent(channelId, action.eventId)
-                Analytics.getInstance().track('posted message', {
+
+                trackPostedMessage({
+                    spaceId,
                     channelId,
-                    channelType: getChannelType(channelId),
-                    reply: getThreadReplyOrDmReply({ threadId, canReplyInline, replyToEventId }),
                     messageType: 'redacted',
+                    threadId,
+                    canReplyInline,
+                    replyToEventId,
                 })
             }
         },

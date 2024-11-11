@@ -166,6 +166,7 @@ export const ChannelItem = ({
             })
             Analytics.getInstance().track('clicked join gated channel button', {
                 spaceId: space.id,
+                spaceName: space.name,
                 channelId: channelIdentifier,
             })
             return

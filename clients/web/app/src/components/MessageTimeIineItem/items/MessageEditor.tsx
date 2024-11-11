@@ -29,7 +29,7 @@ export const TimelineMessageEditor = (props: Props) => {
     const { isTouch } = useDevice()
     const { attachments, initialValue, channelId, spaceId, eventId, eventContent } = props
     const { timelineActions } = useContext(MessageTimelineContext) ?? {}
-    const { editChannelMessage } = useEditMessage(channelId)
+    const { editChannelMessage } = useEditMessage({ channelId, spaceId })
 
     const onSend = useCallback(
         (value: string, options: SendTextMessageOptions | undefined) => {

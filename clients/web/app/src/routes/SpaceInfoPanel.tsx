@@ -197,8 +197,11 @@ export const SpaceInfo = () => {
 
     const onLeaveClick = useCallback(() => {
         setActiveModal('confirm-leave')
-        Analytics.getInstance().track('clicked leave town')
-    }, [setActiveModal])
+        Analytics.getInstance().track('clicked leave town', {
+            spaceId: spaceID,
+            spaceName: space?.name,
+        })
+    }, [space?.name, spaceID])
 
     const setOptimisticSpaceInitialized = useAppProgressStore(
         (state) => state.setOptimisticSpaceInitialized,

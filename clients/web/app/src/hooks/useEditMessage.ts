@@ -1,9 +1,10 @@
 import { useCallback, useContext } from 'react'
 import { RoomMessageEvent, SendTextMessageOptions, useTownsClient } from 'use-towns-client'
 import { ReplyToMessageContext } from '@components/ReplyToMessageContext/ReplyToMessageContext'
-import { Analytics, getChannelType, getThreadReplyOrDmReply } from './useAnalytics'
+import { trackPostedMessage } from '@components/Analytics/postedMessage'
 
-export const useEditMessage = (channelId?: string) => {
+export const useEditMessage = (args: { channelId?: string; spaceId?: string }) => {
+    const { channelId, spaceId } = args
     const { editMessage } = useTownsClient()
     const { canReplyInline, replyToEventId } = useContext(ReplyToMessageContext)
 
@@ -15,20 +16,19 @@ export const useEditMessage = (channelId?: string) => {
         ) => {
             if (value && eventId && channelId) {
                 editMessage(channelId, eventId, originalEventContent, value, msgOptions)
-                Analytics.getInstance().track('posted message', {
+
+                trackPostedMessage({
+                    spaceId,
                     eventId,
                     channelId,
-                    channelType: getChannelType(channelId),
-                    reply: getThreadReplyOrDmReply({
-                        threadId: originalEventContent.threadId,
-                        canReplyInline,
-                        replyToEventId,
-                    }),
+                    threadId: originalEventContent.threadId,
+                    canReplyInline,
+                    replyToEventId,
                     messageType: 'edited',
                 })
             }
         },
-        [canReplyInline, channelId, editMessage, replyToEventId],
+        [canReplyInline, channelId, editMessage, replyToEventId, spaceId],
     )
 
     return { editChannelMessage }

@@ -190,14 +190,14 @@ export const SpaceSideBarHeader = (props: {
                         ? `${membersCount} member${membersCount > 1 ? 's' : ''}`
                         : 'fetching members...'}
                 </Paragraph>
-                <ShareTownLinkButton spaceId={space.id} />
+                <ShareTownLinkButton spaceId={space.id} spaceName={space.name} />
             </Stack>
         </>
     )
 }
 
-const ShareTownLinkButton = (props: { spaceId: string }) => {
-    const { spaceId } = props
+const ShareTownLinkButton = (props: { spaceId: string; spaceName: string }) => {
+    const { spaceId, spaceName } = props
     const [, copy] = useCopyToClipboard()
     const inviteUrl = getInviteUrl({ spaceId })
     const [copyDisplay, setCopyDisplay] = useState(false)
@@ -206,8 +206,11 @@ const ShareTownLinkButton = (props: { spaceId: string }) => {
     const onCopyClick = useCallback(() => {
         copy(inviteUrl)
         setCopyDisplay(true)
-        Analytics.getInstance().track('clicked on share town link')
-    }, [copy, inviteUrl])
+        Analytics.getInstance().track('clicked on share town link', {
+            spaceId,
+            spaceName,
+        })
+    }, [copy, inviteUrl, spaceName, spaceId])
 
     useEffect(() => {
         if (copyDisplay) {

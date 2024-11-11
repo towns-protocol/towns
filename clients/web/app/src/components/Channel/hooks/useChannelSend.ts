@@ -1,13 +1,8 @@
 import { useCallback, useContext } from 'react'
 import { SendMessageOptions, useTownsClient } from 'use-towns-client'
-import {
-    Analytics,
-    getChannelType,
-    getPostedMessageType,
-    getThreadReplyOrDmReply,
-} from 'hooks/useAnalytics'
 import { ReplyToMessageContext } from '@components/ReplyToMessageContext/ReplyToMessageContext'
 import { useSlashCommand } from 'hooks/useSlashCommand'
+import { getPostedMessageType, trackPostedMessage } from '@components/Analytics/postedMessage'
 
 export const useChannelSend = (params: {
     channelId: string
@@ -29,22 +24,16 @@ export const useChannelSend = (params: {
                 return
             }
 
-            const tracked = {
+            trackPostedMessage({
                 spaceId,
                 channelId,
-                channelType: getChannelType(channelId),
-                reply: getThreadReplyOrDmReply({
-                    threadId,
-                    canReplyInline,
-                    replyToEventId,
-                }),
+                threadId,
+                canReplyInline,
+                replyToEventId,
                 messageType: getPostedMessageType(value, {
                     messageType: options?.messageType,
                     filesCount,
                 }),
-            }
-            Analytics.getInstance().track('posted message', tracked, () => {
-                console.log('[analytics] posted message', tracked)
             })
 
             // TODO: need to pass participants to sendReply in case of thread ?

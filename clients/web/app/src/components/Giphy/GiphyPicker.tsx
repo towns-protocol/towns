@@ -18,7 +18,8 @@ import { atoms } from 'ui/styles/atoms.css'
 import { themes } from 'ui/styles/themes'
 import { baseline } from 'ui/styles/vars.css'
 import { useDevice } from 'hooks/useDevice'
-import { Analytics, getChannelType, getThreadReplyOrDmReply } from 'hooks/useAnalytics'
+import { trackPostedMessage } from '@components/Analytics/postedMessage'
+import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { GiphySearchBar } from './GiphySearchBar'
 import { useGiphySearchContext } from './GiphySearchContext'
 import { GiphyTrendingContainer } from './GiphyTrendingPill'
@@ -49,6 +50,7 @@ export const GiphyPicker = (props: Props) => {
 
 export const GiphyPickerCard = (props: GiphyPickerCardProps) => {
     const theme = useStore((state) => state.getTheme())
+    const spaceId = useSpaceIdFromPathname()
 
     const { isTouch } = useDevice()
     const { closeCard, threadId, threadPreview } = props
@@ -110,14 +112,12 @@ export const GiphyPickerCard = (props: GiphyPickerCardProps) => {
             },
         } satisfies SendImageMessageOptions
         sendMessage(channelId, gifData.title, messageContent)
-        Analytics.getInstance().track('posted message', {
+        trackPostedMessage({
             channelId,
-            channelType: getChannelType(channelId),
-            reply: getThreadReplyOrDmReply({
-                threadId,
-                canReplyInline,
-                replyToEventId,
-            }),
+            spaceId,
+            threadId,
+            canReplyInline,
+            replyToEventId,
             messageType: 'gif',
         })
     }
