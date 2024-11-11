@@ -60,6 +60,19 @@ export const MainSideBar = () => {
                     {dmUnreadChannelIds.size > 0 && <Dot position="topRight" />}
                 </Box>
             </NavItem>
+            <TransitionItem key="explore">
+                <ActionNavItem
+                    id={`${PATHS.EXPLORE}`}
+                    link={`/${PATHS.EXPLORE}`}
+                    icon="explore"
+                    tooltip="Explore"
+                    tooltipOptions={{
+                        placement: 'horizontal',
+                        immediate: true,
+                    }}
+                    data-testid="explore"
+                />
+            </TransitionItem>
             <TransitionItem key="new">
                 <ActionNavItem
                     id={`${PATHS.SPACES}/new`}

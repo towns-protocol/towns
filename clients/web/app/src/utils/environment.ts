@@ -92,6 +92,7 @@ const envSchema = z.object({
     VITE_RUDDERSTACK_WRITE_KEY: z.string().optional(),
 
     VITE_XCHAIN_CONFIG: z.string().optional(),
+    VITE_EXPLORE_TOWNS: z.string().optional(),
 })
 
 const parsed = envSchema.safeParse(import.meta.env)

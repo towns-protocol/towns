@@ -208,7 +208,7 @@ const UnfurledLinkAttachmentContainer = (
     return (
         <ErrorBoundary FallbackComponent={() => <UnfurlErrorContainer url={props.url} />}>
             {townData?.townId && townData?.townPath ? (
-                <TownsContent {...props} {...townData} />
+                <TownsContent {...townData} />
             ) : (
                 <a href={props.url} rel="noopener noreferrer" target="_blank">
                     <GenericContent {...props} />
@@ -218,9 +218,7 @@ const UnfurledLinkAttachmentContainer = (
     )
 }
 
-const TownsContent = (
-    props: UnfurledLinkAttachment & { townPath: string; townId: string; channelId?: string },
-) => {
+const TownsContent = (props: { townPath: string; townId: string; channelId?: string }) => {
     const { townPath, townId } = props
 
     const channelId = townPath.match(

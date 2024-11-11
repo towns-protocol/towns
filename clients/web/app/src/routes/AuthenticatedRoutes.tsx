@@ -22,6 +22,7 @@ import { AppPanelLayout } from './layouts/AppPanelLayout'
 import { TouchSearchTab } from './TouchSearchTab'
 import { ValidateMembership } from './ValidateMembership'
 import { DirectMessages } from './DMRoute'
+import { ExplorePage } from './ExplorePage/ExplorePage'
 
 export const AuthenticatedRoutes = () => {
     const { isTouch } = useDevice()
@@ -90,6 +91,7 @@ export const AuthenticatedRoutes = () => {
                     <>
                         <Route element={<ValidateMembership />}>
                             <Route element={<AppPanelLayout />}>
+                                <Route path={PATHS.EXPLORE} element={<ExplorePage />} />
                                 <Route
                                     path={`${PATHS.SPACES}/new`}
                                     element={<CreateSpaceFormV2 />}

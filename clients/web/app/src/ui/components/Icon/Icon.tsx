@@ -1900,6 +1900,32 @@ const Apple = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
     </svg>
 ))
 
+const ExploreIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
+    <svg
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        {...props}
+        ref={ref}
+    >
+        <g clipPath="url(#clip0_explore)">
+            <path
+                fillRule="evenodd"
+                clipRule="evenodd"
+                d="M3.2 12C3.2 7.13991 7.13992 3.2 12 3.2C16.8601 3.2 20.8 7.13991 20.8 12C20.8 16.8601 16.8601 20.8 12 20.8C7.13992 20.8 3.2 16.8601 3.2 12ZM12 0.8C5.81443 0.8 0.8 5.81442 0.8 12C0.8 18.1856 5.81443 23.2 12 23.2C18.1856 23.2 23.2 18.1856 23.2 12C23.2 5.81442 18.1856 0.8 12 0.8ZM17.8111 8.29968C18.2252 6.99968 16.9999 5.77482 15.7003 6.18893L9.31445 8.22377C8.79563 8.38909 8.38912 8.79559 8.2238 9.31441L6.18895 15.7003C5.77485 16.9998 6.99971 18.2247 8.29972 17.811L14.6856 15.7762C15.2044 15.6109 15.6109 15.2044 15.7763 14.6856L17.8111 8.29968ZM10.3976 10.3975L15.1013 8.89869L13.6025 13.6025L8.89873 15.1013L10.3976 10.3975Z"
+                fill="currentColor"
+            />
+        </g>
+        <defs>
+            <clipPath id="clip0_explore">
+                <rect width="24" height="24" fill="white" />
+            </clipPath>
+        </defs>
+    </svg>
+))
+
 const iconMap = {
     alert: Alert,
     all: AllIcon,
@@ -2020,6 +2046,7 @@ const iconMap = {
     wand: Wand,
     google: Google,
     apple: Apple,
+    explore: ExploreIcon,
 } as const
 
 // this export breaks fast-refresh

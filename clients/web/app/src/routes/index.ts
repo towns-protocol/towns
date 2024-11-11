@@ -1,5 +1,6 @@
 export const PATHS = {
     SPACES: 't',
+    EXPLORE: 'explore',
     CHANNELS: 'channels',
     REPLIES: 'replies',
     REGISTER: 'register',
