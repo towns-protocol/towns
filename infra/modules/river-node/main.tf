@@ -443,6 +443,10 @@ resource "aws_ecs_task_definition" "river-fargate" {
         value = tostring(var.scrub_duration)
       },
       {
+        name  = "DATABASE__MIGRATESTREAMCREATION",
+        value = var.migrate_stream_creation ? "true" : "false"
+      },
+      {
         name  = "METRICS__ENABLED",
         value = "true"
       },
@@ -660,7 +664,7 @@ module "datadog_sythetics_test" {
   name    = "${local.node_name} - uptime"
   type    = "api"
   subtype = "http"
-  enabled = true
+  enabled = local.run_mode == "archive" ? true : false
 
   locations = ["aws:us-west-1"]
   tags      = ["created_by:terraform", "env:${terraform.workspace}", "node_url:${local.node_url}"]

@@ -172,7 +172,8 @@ module "river_node" {
 
   node_metadata = module.node_metadata.full_nodes[count.index]
 
-  enable_debug_endpoints = true
+  enable_debug_endpoints  = true
+  migrate_stream_creation = true
 
   river_node_ssl_cert_secret_arn = module.river_node_ssl_cert.river_node_ssl_cert_secret_arn
 
@@ -204,9 +205,10 @@ module "river_node" {
   lb = module.river_nlb[count.index]
 }
 
+// TODO: set count to 0 after migration
 module "archive_node_nlb" {
   source  = "../../modules/river-nlb"
-  count   = local.archive_enabled ? 1 : 0
+  count   = 1
   subnets = module.vpc.public_subnets
   vpc_id  = module.vpc.vpc_id
   nlb_id  = "archive-${tostring(count.index + 1)}"
@@ -219,7 +221,8 @@ module "archive_node" {
 
   node_metadata = module.node_metadata.archive_nodes[count.index]
 
-  enable_debug_endpoints = true
+  enable_debug_endpoints  = true
+  migrate_stream_creation = true
 
   river_node_ssl_cert_secret_arn = module.river_node_ssl_cert.river_node_ssl_cert_secret_arn
 
