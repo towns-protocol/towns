@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import {
     SignerUndefinedError,
     TransactionStatus,
@@ -18,6 +18,9 @@ import { createPrivyNotAuthenticatedNotification } from '@components/Notificatio
 
 import { buildSpaceMetadataUrl, refreshSpaceCache } from 'api/lib/fetchImage'
 import { GetSigner, WalletReady } from 'privy/WalletReady'
+import { useRefreshSpaceMember } from 'hooks/useRefreshSpaceMember'
+import { useWaitForInvalidation } from 'hooks/useWaitForInvalidation'
+import { popupToast } from '@components/Notifications/popupToast'
 
 type Props = {
     onHide: () => void
@@ -62,6 +65,12 @@ export const TownInfoModalWithoutAuth = (props: Props) => {
     const transactionUIState = toTransactionUIStates(transactionStatus, Boolean(data))
     const hasPendingTx = Boolean(transactionUIState != TransactionUIState.None)
 
+    const [invalidationId, setInvalidationId] = useState<string | undefined>()
+    const { toast } = useRefreshSpaceMember(space?.id)
+    useWaitForInvalidation(invalidationId, {
+        onSuccess: () => popupToast(toast, { duration: Infinity }),
+    })
+
     const onSubmit = useCallback(
         async (changes: FormState, getSigner: GetSigner) => {
             const signer = await getSigner()
@@ -74,7 +83,7 @@ export const TownInfoModalWithoutAuth = (props: Props) => {
             }
 
             const txResult = await updateSpaceInfoTransaction(
-                data?.networkId,
+                data.networkId,
                 changes[FormStateKeys.name],
                 buildSpaceMetadataUrl(data.address),
                 changes[FormStateKeys.motto],
@@ -83,6 +92,8 @@ export const TownInfoModalWithoutAuth = (props: Props) => {
             )
             if (txResult?.status === TransactionStatus.Success) {
                 onHide()
+                const { invalidationId } = await refreshSpaceCache(data.networkId)
+                setInvalidationId(invalidationId)
             }
         },
         [data?.networkId, data?.address, updateSpaceInfoTransaction, onHide],
