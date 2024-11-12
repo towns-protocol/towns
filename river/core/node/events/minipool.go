@@ -60,6 +60,10 @@ func (m *minipoolInstance) nextSlotNumber() int {
 	return m.events.Len()
 }
 
+func (m *minipoolInstance) size() int {
+	return m.events.Len()
+}
+
 func (m *minipoolInstance) getEnvelopeBytes() ([][]byte, error) {
 	bytes := make([][]byte, m.events.Len())
 	for i, e := range m.events.Values {

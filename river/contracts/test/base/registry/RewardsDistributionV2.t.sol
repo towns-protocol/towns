@@ -38,6 +38,7 @@ contract RewardsDistributionV2Test is
     keccak256(
       "Stake(uint96 amount,address delegatee,address beneficiary,address owner,uint256 nonce,uint256 deadline)"
     );
+  uint256 internal constant REASONABLE_TOKEN_SUPPLY = 1e38;
 
   NodeOperatorFacet internal operatorFacet;
   River internal river;
@@ -892,7 +893,6 @@ contract RewardsDistributionV2Test is
     );
     commissionRate = bound(commissionRate, 0, 10000);
     timeLapse = bound(timeLapse, 0, rewardDuration);
-    rewardAmount = boundReward(rewardAmount);
 
     test_fuzz_notifyRewardAmount(rewardAmount);
     test_stake();
@@ -927,7 +927,6 @@ contract RewardsDistributionV2Test is
     commissionRate = bound(commissionRate, 0, 10000);
     timeLapse = bound(timeLapse, 0, rewardDuration);
     amount = uint96(bound(amount, 1 ether, type(uint96).max));
-    rewardAmount = boundReward(rewardAmount);
 
     test_fuzz_notifyRewardAmount(rewardAmount);
     test_fuzz_stake(
@@ -964,7 +963,6 @@ contract RewardsDistributionV2Test is
     commissionRate = bound(commissionRate, 0, 10000);
     timeLapse = bound(timeLapse, 0, rewardDuration);
     amount = uint96(bound(amount, 1 ether, type(uint96).max));
-    rewardAmount = boundReward(rewardAmount);
 
     test_fuzz_notifyRewardAmount(rewardAmount);
     test_fuzz_stake_toSpace(
@@ -1141,9 +1139,12 @@ contract RewardsDistributionV2Test is
       bound(
         reward,
         rewardDuration,
-        rewardDuration.fullMulDiv(
-          type(uint256).max,
-          StakingRewards.SCALE_FACTOR
+        FixedPointMathLib.min(
+          rewardDuration.fullMulDiv(
+            type(uint256).max,
+            StakingRewards.SCALE_FACTOR
+          ),
+          REASONABLE_TOKEN_SUPPLY
         )
       );
   }

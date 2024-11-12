@@ -907,8 +907,7 @@ func (s *PostgresStreamStore) writeBlockProposalTxn(
 			migrated,
 		),
 		streamId,
-	).
-		Scan(&seqNum)
+	).Scan(&seqNum)
 	if err != nil {
 		return err
 	}
@@ -925,7 +924,7 @@ func (s *PostgresStreamStore) writeBlockProposalTxn(
 	_, err = tx.Exec(
 		ctx,
 		s.sqlForStream(
-			"INSERT INTO {{miniblock_candidates}} (stream_id, seq_num, block_hash, blockdata) VALUES ($1, $2, $3, $4) ON CONFLICT(stream_id, seq_num, block_hash) DO NOTHING",
+			"INSERT INTO {{miniblock_candidates}} (stream_id, seq_num, block_hash, blockdata) VALUES ($1, $2, $3, $4)",
 			streamId,
 			migrated,
 		),
@@ -934,7 +933,13 @@ func (s *PostgresStreamStore) writeBlockProposalTxn(
 		hex.EncodeToString(blockHash.Bytes()), // avoid leading '0x'
 		miniblock,
 	)
-	return err
+	if err != nil {
+		if pgErr, ok := err.(*pgconn.PgError); ok && pgErr.Code == pgerrcode.UniqueViolation {
+			return RiverError(Err_ALREADY_EXISTS, "Miniblock candidate already exists")
+		}
+		return err
+	}
+	return nil
 }
 
 func (s *PostgresStreamStore) ReadMiniblockCandidate(

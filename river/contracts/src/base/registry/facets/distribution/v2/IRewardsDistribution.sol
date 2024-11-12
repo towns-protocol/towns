@@ -134,11 +134,11 @@ interface IRewardsDistributionBase {
   /// @notice Emitted when space delegation rewards are swept to the operator
   /// @param space The address of the space
   /// @param operator The address of the operator
-  /// @param amount The amount of rewardToken that is swept
+  /// @param scaledReward The scaled amount of rewardToken that is swept
   event SpaceRewardsSwept(
     address indexed space,
     address indexed operator,
-    uint256 amount
+    uint256 scaledReward
   );
 }
 

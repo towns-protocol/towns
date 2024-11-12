@@ -38,7 +38,7 @@ library StakingRewards {
   /// @notice The account information for a beneficiary
   /// @param earningPower The amount of stakeToken that is yielding rewards
   /// @param rewardPerTokenAccumulated The scaled amount of rewardToken that has been accumulated per staked token
-  /// @param unclaimedRewardSnapshot The snapshot of the unclaimed reward
+  /// @param unclaimedRewardSnapshot The snapshot of the unclaimed reward scaled
   struct Treasure {
     uint96 earningPower;
     uint256 rewardPerTokenAccumulated;
@@ -118,7 +118,7 @@ library StakingRewards {
       FixedPointMathLib.fullMulDiv(rewardRate, elapsedTime, totalStaked);
   }
 
-  function currentReward(
+  function currentRewardScaled(
     Layout storage self,
     Treasure storage treasure
   ) internal view returns (uint256) {
@@ -130,11 +130,7 @@ library StakingRewards {
     }
     return
       treasure.unclaimedRewardSnapshot +
-      FixedPointMathLib.fullMulDiv(
-        treasure.earningPower,
-        rewardPerTokenGrowth,
-        SCALE_FACTOR
-      );
+      (uint256(treasure.earningPower) * rewardPerTokenGrowth);
   }
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -152,7 +148,7 @@ library StakingRewards {
     Layout storage self,
     Treasure storage treasure
   ) internal {
-    treasure.unclaimedRewardSnapshot = currentReward(self, treasure);
+    treasure.unclaimedRewardSnapshot = currentRewardScaled(self, treasure);
     treasure.rewardPerTokenAccumulated = self.rewardPerTokenAccumulated;
   }
 
@@ -328,9 +324,11 @@ library StakingRewards {
     Treasure storage treasure = self.treasureByBeneficiary[beneficiary];
     updateReward(self, treasure);
 
-    reward = treasure.unclaimedRewardSnapshot;
+    reward = treasure.unclaimedRewardSnapshot / SCALE_FACTOR;
     if (reward != 0) {
-      treasure.unclaimedRewardSnapshot = 0;
+      unchecked {
+        treasure.unclaimedRewardSnapshot -= reward * SCALE_FACTOR;
+      }
     }
   }
 

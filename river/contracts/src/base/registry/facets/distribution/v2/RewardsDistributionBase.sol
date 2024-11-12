@@ -121,17 +121,17 @@ abstract contract RewardsDistributionBase is IRewardsDistributionBase {
       .treasureByBeneficiary[space];
     staking.updateReward(spaceTreasure);
 
-    uint256 reward = spaceTreasure.unclaimedRewardSnapshot;
-    if (reward == 0) return;
+    uint256 scaledReward = spaceTreasure.unclaimedRewardSnapshot;
+    if (scaledReward == 0) return;
 
     address operator = _getOperatorBySpace(space);
     StakingRewards.Treasure storage operatorTreasure = staking
       .treasureByBeneficiary[operator];
 
-    operatorTreasure.unclaimedRewardSnapshot += reward;
+    operatorTreasure.unclaimedRewardSnapshot += scaledReward;
     spaceTreasure.unclaimedRewardSnapshot = 0;
 
-    emit SpaceRewardsSwept(space, operator, reward);
+    emit SpaceRewardsSwept(space, operator, scaledReward);
   }
 
   /// @dev Checks if the delegatee is a space
@@ -182,12 +182,9 @@ abstract contract RewardsDistributionBase is IRewardsDistributionBase {
       }
       total +=
         treasure.unclaimedRewardSnapshot +
-        FixedPointMathLib.fullMulDiv(
-          treasure.earningPower,
-          rewardPerTokenGrowth,
-          StakingRewards.SCALE_FACTOR
-        );
+        (uint256(treasure.earningPower) * rewardPerTokenGrowth);
     }
+    total /= StakingRewards.SCALE_FACTOR;
   }
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

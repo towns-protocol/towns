@@ -451,7 +451,9 @@ contract RewardsDistribution is
     RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage
       .layout();
     return
-      ds.staking.currentReward(ds.staking.treasureByBeneficiary[beneficiary]);
+      ds.staking.currentRewardScaled(
+        ds.staking.treasureByBeneficiary[beneficiary]
+      ) / StakingRewards.SCALE_FACTOR;
   }
 
   /// @inheritdoc IRewardsDistribution

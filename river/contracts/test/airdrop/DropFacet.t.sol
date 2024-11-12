@@ -5,8 +5,8 @@ pragma solidity ^0.8.19;
 import {Vm} from "forge-std/Test.sol";
 import {DeployDiamond} from "contracts/scripts/deployments/utils/DeployDiamond.s.sol";
 import {DeployMockERC20} from "contracts/scripts/deployments/utils/DeployMockERC20.s.sol";
-import {DeployDropFacet} from "contracts/scripts/deployments/facets/DeployDropFacet.s.sol";
 import {DeployRewardsDistributionV2} from "contracts/scripts/deployments/facets/DeployRewardsDistributionV2.s.sol";
+import {DeployRiverAirdrop} from "contracts/scripts/deployments/diamonds/DeployRiverAirdrop.s.sol";
 
 //interfaces
 import {IDiamond} from "contracts/src/diamond/Diamond.sol";
@@ -55,7 +55,7 @@ contract DropFacetTest is
   DeployDiamond internal rewardsDistributionDiamondHelper = new DeployDiamond();
   DeployDiamond internal aidropDiamondHelper = new DeployDiamond();
   DeployMockERC20 internal tokenHelper = new DeployMockERC20();
-  DeployDropFacet internal dropHelper = new DeployDropFacet();
+  DeployRiverAirdrop internal dropHelper = new DeployRiverAirdrop();
   DeployRewardsDistributionV2 internal rewardsDistributionHelper =
     new DeployRewardsDistributionV2();
   MerkleTree internal merkleTree = new MerkleTree();
@@ -91,15 +91,8 @@ contract DropFacetTest is
     _createTree();
 
     // Add the Drop facet to its own diamond
-    address dropAddress = dropHelper.deploy(deployer);
-    aidropDiamondHelper.addFacet(
-      dropHelper.makeCut(dropAddress, IDiamond.FacetCutAction.Add),
-      dropAddress,
-      dropHelper.makeInitData(baseRegistry)
-    );
-
-    // Deploy the diamond contract with the MerkleAirdrop facet
-    address diamond = aidropDiamondHelper.deploy(deployer);
+    dropHelper.setStakingContract(baseRegistry);
+    address diamond = dropHelper.deploy(deployer);
 
     // Initialize the Drop facet
     dropFacet = DropFacet(diamond);

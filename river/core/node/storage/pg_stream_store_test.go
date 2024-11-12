@@ -310,9 +310,8 @@ func testPromoteMiniblockCandidate(params *testStreamStoreParams) {
 	err = pgStreamStore.WriteMiniblockCandidate(ctx, streamId, candidateHash, 1, miniblock_bytes)
 	require.NoError(err)
 
-	// Double write with the same hash should produce no errors, it's possible multiple nodes may propose the same candidate.
 	err = pgStreamStore.WriteMiniblockCandidate(ctx, streamId, candidateHash, 1, miniblock_bytes)
-	require.NoError(err)
+	require.True(IsRiverErrorCode(err, Err_ALREADY_EXISTS))
 
 	err = pgStreamStore.WriteMiniblockCandidate(ctx, streamId, candidateHash2, 1, miniblock_bytes)
 	require.NoError(err)

@@ -11,12 +11,13 @@ import (
 
 	"github.com/exaring/otelpgx"
 	"github.com/golang-migrate/migrate/v4"
-	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	pgxmigrate "github.com/golang-migrate/migrate/v4/database/pgx/v5"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 
@@ -30,6 +31,7 @@ import (
 type PostgresEventStore struct {
 	config     *config.DatabaseConfig
 	pool       *pgxpool.Pool
+	poolConfig *pgxpool.Config
 	schemaName string
 	dbUrl      string
 
@@ -169,10 +171,11 @@ func (s *PostgresEventStore) txRunner(
 }
 
 type PgxPoolInfo struct {
-	Pool   *pgxpool.Pool
-	Url    string
-	Schema string
-	Config *config.DatabaseConfig
+	Pool       *pgxpool.Pool
+	PoolConfig *pgxpool.Config
+	Url        string
+	Schema     string
+	Config     *config.DatabaseConfig
 }
 
 func createAndValidatePgxPool(
@@ -213,10 +216,11 @@ func createAndValidatePgxPool(
 	}
 
 	return &PgxPoolInfo{
-		Pool:   pool,
-		Url:    databaseUrl,
-		Schema: databaseSchemaName,
-		Config: cfg,
+		Pool:       pool,
+		PoolConfig: poolConf,
+		Url:        databaseUrl,
+		Schema:     databaseSchemaName,
+		Config:     cfg,
 	}, nil
 }
 
@@ -511,6 +515,7 @@ func (s *PostgresEventStore) init(
 
 	s.config = poolInfo.Config
 	s.pool = poolInfo.Pool
+	s.poolConfig = poolInfo.PoolConfig
 	s.schemaName = poolInfo.Schema
 	s.dbUrl = poolInfo.Url
 
@@ -590,20 +595,6 @@ func (s *PostgresEventStore) createSchemaTx(ctx context.Context, tx pgx.Tx) erro
 	return nil
 }
 
-func getSSLMode(dbURL string) string {
-	if strings.Contains(dbURL, "sslmode=") {
-		startIndex := strings.Index(dbURL, "sslmode=") + len("sslmode=")
-		endIndex := strings.Index(dbURL[startIndex:], "&")
-		if endIndex == -1 {
-			endIndex = len(dbURL)
-		} else {
-			endIndex += startIndex
-		}
-		return dbURL[startIndex:endIndex]
-	}
-	return "disable"
-}
-
 func (s *PostgresEventStore) runMigrations(ctx context.Context) error {
 	// Run migrations
 	migrationsPath := "migrations"
@@ -612,12 +603,28 @@ func (s *PostgresEventStore) runMigrations(ctx context.Context) error {
 		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Error loading migrations")
 	}
 
-	dbUrlWithSchema := strings.Split(s.dbUrl, "?")[0] + fmt.Sprintf(
-		"?sslmode=%s&search_path=%v,public",
-		getSSLMode(s.dbUrl),
-		s.schemaName,
-	)
-	migration, err := migrate.NewWithSourceInstance("iofs", iofsMigrationsDir, dbUrlWithSchema)
+	// Create a new connection pool with the same configuration for migrations.
+	// Note: pgxmigrate.WithInstance takes ownership of the provided pool.
+	pool, err := pgxpool.NewWithConfig(ctx, s.poolConfig)
+	if err != nil {
+		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Failed to create pool for migrations")
+	}
+	defer pool.Close()
+
+	pgxDriver, err := pgxmigrate.WithInstance(
+		stdlib.OpenDBFromPool(pool),
+		&pgxmigrate.Config{
+			SchemaName: s.schemaName,
+		})
+	if err != nil {
+		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Failed to initialize pgx driver for migration")
+	}
+
+	migration, err := migrate.NewWithInstance("iofs", iofsMigrationsDir, "pgx", pgxDriver)
+	defer func() {
+		_, _ = migration.Close()
+	}()
+
 	if err != nil {
 		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Error creating migration instance")
 	}
