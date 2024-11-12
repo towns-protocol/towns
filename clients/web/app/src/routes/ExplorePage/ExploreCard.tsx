@@ -8,6 +8,7 @@ import { BlurredBackground } from '@components/TouchLayoutHeader/BlurredBackgrou
 import { ImageVariants, useImageSource } from '@components/UploadImage/useImageSource'
 import { useMobile } from 'hooks/useMobile'
 import { Analytics } from 'hooks/useAnalytics'
+import { PATHS } from 'routes'
 
 interface ExploreCardProps {
     address: string
@@ -27,8 +28,8 @@ export const ExploreCard = ({ address, variant }: ExploreCardProps) => {
             spaceId,
             featureSize: variant,
         })
-        navigate(spaceId ?? '', { state: { fromLink: true } })
-    }, [navigate, spaceId, variant])
+        navigate(`/${PATHS.SPACES}/${address}`)
+    }, [address, navigate, spaceId, variant])
 
     const imageVariant = ImageVariants.thumbnail600
     const { imageSrc } = useImageSource(spaceId, imageVariant)
