@@ -9,6 +9,8 @@ import { ImageVariants, useImageSource } from '@components/UploadImage/useImageS
 import { useMobile } from 'hooks/useMobile'
 import { Analytics } from 'hooks/useAnalytics'
 import { PATHS } from 'routes'
+import { useEntitlements } from 'hooks/useEntitlements'
+import { formatUnitsToFixedLength, parseUnits } from 'hooks/useBalance'
 
 interface ExploreCardProps {
     address: string
@@ -22,6 +24,7 @@ export const ExploreCard = ({ address, variant }: ExploreCardProps) => {
 
     const { data: spaceInfo, isLoading: isSpaceInfoLoading } = useContractSpaceInfo(spaceId)
     const { data: memberInfo } = useReadableMembershipInfo(spaceId ?? '')
+    const { data: entitlements } = useEntitlements(spaceId ?? '')
 
     const onClick = useCallback(() => {
         Analytics.getInstance().track('clicked town on explore', {
@@ -47,7 +50,6 @@ export const ExploreCard = ({ address, variant }: ExploreCardProps) => {
                 <Paragraph size={isBig ? 'md' : 'sm'}>{memberInfo?.totalSupply}</Paragraph>
             </Box>
         ) : null
-
     const PriceTag = () =>
         memberInfo?.price ? (
             <Pill
@@ -67,8 +69,12 @@ export const ExploreCard = ({ address, variant }: ExploreCardProps) => {
                         backgroundClip: 'text',
                     }}
                 >
-                    {memberInfo?.price !== 'Free'
-                        ? `${memberInfo?.price} ${memberInfo?.currency}`
+                    {entitlements.hasEntitlements
+                        ? 'Gated'
+                        : memberInfo?.price !== 'Free'
+                        ? `${formatUnitsToFixedLength(parseUnits(memberInfo?.price), 18, 3)} ${
+                              memberInfo?.currency
+                          }`
                         : 'Free'}
                 </span>
             </Pill>
