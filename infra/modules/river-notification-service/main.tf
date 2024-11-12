@@ -275,7 +275,7 @@ resource "aws_ecs_task_definition" "task_definition" {
         valueFrom = var.river_chain_rpc_url_secret_arn
       },
       {
-        name      = "NOTIFICATIONS__AUTHENTICATION__SESSION_TOKEN__KEY__KEY",
+        name      = "NOTIFICATIONS__AUTHENTICATION__SESSIONTOKEN__KEY__KEY",
         valueFrom = local.global_remote_state.notification_authentication_session_token_key_secret.arn
       }
     ]
@@ -352,15 +352,15 @@ resource "aws_ecs_task_definition" "task_definition" {
         value = "true"
       },
       {
-        name  = "NOTIFICATIONS__SUBSCRIPTION_EXPIRATION_DURATION",
+        name  = "NOTIFICATIONS__SUBSCRIPTIONEXPIRATIONDURATION",
         value = "2160h"
       },
       {
-        name  = "NOTIFICATIONS__AUTHENTICATION__SESSION_TOKEN__KEY__LIFETIME",
+        name  = "NOTIFICATIONS__AUTHENTICATION__SESSIONTOKEN__KEY__LIFETIME",
         value = "15m"
       },
       {
-        name  = "NOTIFICATIONS__AUTHENTICATION__SESSION_TOKEN__KEY__ALGORITHM",
+        name  = "NOTIFICATIONS__AUTHENTICATION__SESSIONTOKEN__KEY__ALGORITHM",
         value = "HS256"
       }
     ]
@@ -548,19 +548,22 @@ locals {
 ##################################################################
 
 resource "aws_lb_target_group" "target_group" {
-  name        = "notification-service-${terraform.workspace}-tg"
-  protocol    = "HTTP"
-  port        = 80
-  target_type = "ip"
-  vpc_id      = var.vpc_id
+  name             = "notification-service-${terraform.workspace}-tg"
+  protocol         = "HTTP"
+  protocol_version = "GRPC"
+  port             = 80
+  target_type      = "ip"
+  vpc_id           = var.vpc_id
 
 
   health_check {
-    path                = "/status"
-    interval            = 15
-    timeout             = 6
     healthy_threshold   = 2
     unhealthy_threshold = 2
+    timeout             = 6
+    interval            = 15
+    path                = "/status?blockchain=0"
+    protocol            = "HTTP"
+    matcher             = "0"
   }
 
   tags = module.global_constants.tags

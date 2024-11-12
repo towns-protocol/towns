@@ -726,6 +726,7 @@ resource "aws_lb_target_group" "river_node_target_group" {
   # this starts counting from the moment green is registered with the target group.
   # we set this to 5 minutes.
   deregistration_delay = 300
+  # TODO: check if this delay is still useful
 
   health_check {
     path                = "/status?blockchain=0"
