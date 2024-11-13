@@ -152,7 +152,7 @@ export function EditPricing({
                     name="clientPricingOption"
                     value="dynamic"
                     title="Dynamic"
-                    description={`Free for the first ${freeAllocation} members, then logarithmically increasing price`}
+                    description="Logarithmically increasing price"
                     dataTestId="membership-pricing-type-dynamic"
                     onClick={() => onSelectPricingPreset(PricingPreset.Dynamic)}
                     {...formProps}
