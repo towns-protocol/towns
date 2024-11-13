@@ -33,7 +33,7 @@ console.log('main-sw: precaching', manifest)
 precacheAndRoute(manifest)
 
 registerRoute(({ url }) => {
-    return url.pathname === '/version'
+    return url.pathname === '/version' || url.pathname.startsWith('/data/')
 }, new NetworkOnly())
 
 registerRoute(({ url }) => {

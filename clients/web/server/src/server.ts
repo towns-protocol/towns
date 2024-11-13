@@ -97,8 +97,12 @@ server.setNotFoundHandler(async (request, reply) => {
         const exactMatch = townId && isTownPageExactMatch(urlPath)
         const html = await updateTemplate({ townId, route: exactMatch ? 'town-page' : 'page' })
         return reply.header('Content-Type', 'text/html').send(html)
-    } else if (urlPath === '/version') {
+    } else if (urlPath === '/version' || urlPath === '/data/version') {
         return reply.header('Content-Type', 'text/json').send({ version: appPackageVersion })
+    } else if (urlPath === '/data/explore') {
+        return reply.header('Content-Type', 'text/json').send({
+            exploreTowns: config.VITE_EXPLORE_TOWNS,
+        })
     }
 
     const html = await updateTemplate()

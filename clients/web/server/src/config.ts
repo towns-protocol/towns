@@ -31,6 +31,12 @@ const envSchema = z.object({
     VITE_GITHUB_PR_NUMBER: z.string().optional(),
     PROFILING_ENABLED: boolish.optional().default(false),
     DD_AGENT_HOST: z.string().optional(),
+    VITE_EXPLORE_TOWNS: z
+        .string()
+        .optional()
+        .transform((value) =>
+            (value?.split(/[\n,\s]/g) ?? []).filter((a) => a.match(/^0x[a-f0-9]{40}$/i)),
+        ),
 })
 
 // eslint-disable-next-line no-process-env -- This is the only place we should access process.env
