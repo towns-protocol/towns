@@ -2,8 +2,6 @@ package storage
 
 import (
 	"context"
-	"fmt"
-	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -86,7 +84,8 @@ func setupStreamStorageTest(t *testing.T, migrateStreamCreation bool) *testStrea
 
 type testFunc func(*testStreamStoreParams)
 
-func TestStoreAgainstMigratedAndLegacySchemas(t *testing.T) {
+func TestStore(t *testing.T) {
+	t.Parallel()
 	tests := map[string]testFunc{
 		"TestPostgresStreamStore":                           testPostgresStreamStore,
 		"TestPromoteMiniblockCandidate":                     testPromoteMiniblockCandidate,
@@ -109,19 +108,25 @@ func TestStoreAgainstMigratedAndLegacySchemas(t *testing.T) {
 		"TestReadStreamFromLastSnapshot":                                       testReadStreamFromLastSnapshot,
 	}
 
-	for name, testFunc := range tests {
-		t.Run(fmt.Sprintf("%v_legacy", name), func(t *testing.T) {
-			params := setupStreamStorageTest(t, false)
-			testFunc(params)
-		})
-	}
+	t.Run("Legacy", func(t *testing.T) {
+		t.Parallel()
+		for name, testFunc := range tests {
+			t.Run(name, func(t *testing.T) {
+				params := setupStreamStorageTest(t, false)
+				testFunc(params)
+			})
+		}
+	})
 
-	for name, testFunc := range tests {
-		t.Run(fmt.Sprintf("%v_migrated", name), func(t *testing.T) {
-			params := setupStreamStorageTest(t, true)
-			testFunc(params)
-		})
-	}
+	t.Run("Migrated", func(t *testing.T) {
+		t.Parallel()
+		for name, testFunc := range tests {
+			t.Run(name, func(t *testing.T) {
+				params := setupStreamStorageTest(t, true)
+				testFunc(params)
+			})
+		}
+	})
 }
 
 func promoteMiniblockCandidate(
@@ -158,7 +163,6 @@ func testPostgresStreamStore(params *testStreamStoreParams) {
 
 	pgStreamStore := params.pgStreamStore
 	ctx := params.ctx
-	t := params.t
 	defer params.closer()
 
 	streamsNumber, err := pgStreamStore.GetStreamsNumber(ctx)
@@ -178,36 +182,24 @@ func testPostgresStreamStore(params *testStreamStoreParams) {
 	require.NoError(err)
 	require.Equal(1, streamsNumber)
 
-	streamFromLastSnaphot, streamRetrievalError := pgStreamStore.ReadStreamFromLastSnapshot(ctx, streamId1, 0)
-
-	if streamRetrievalError != nil {
-		t.Fatal(streamRetrievalError)
-	}
-
-	if len(streamFromLastSnaphot.Miniblocks) != 1 {
-		t.Fatal("Expected to find one miniblock, found different number")
-	}
-
-	if !reflect.DeepEqual(streamFromLastSnaphot.Miniblocks[0], genesisMiniblock) {
-		t.Fatal("Expected to find original genesis block, found different")
-	}
-
-	if len(streamFromLastSnaphot.MinipoolEnvelopes) != 0 {
-		t.Fatal("Expected minipool to be empty, found different", streamFromLastSnaphot.MinipoolEnvelopes)
-	}
+	streamFromLastSnaphot, err := pgStreamStore.ReadStreamFromLastSnapshot(ctx, streamId1, 0)
+	require.NoError(err)
+	require.Len(streamFromLastSnaphot.Miniblocks, 1, "Expected to find one miniblock, found different number")
+	require.EqualValues(
+		streamFromLastSnaphot.Miniblocks[0],
+		genesisMiniblock,
+		"Expected to find original genesis block, found different",
+	)
+	require.Len(streamFromLastSnaphot.MinipoolEnvelopes, 0, "Expected minipool to be empty, found different")
 
 	// Test that we cannot add second stream with same id
 	genesisMiniblock2 := []byte("genesisMiniblock2")
 	err = pgStreamStore.CreateStreamStorage(ctx, streamId1, genesisMiniblock2)
-	if err == nil {
-		t.Fatal(err)
-	}
+	require.Error(err)
 
 	// Test that we can add second stream and then GetStreams will return both
 	err = pgStreamStore.CreateStreamStorage(ctx, streamId2, genesisMiniblock2)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(err)
 
 	streams, err := pgStreamStore.GetStreams(ctx)
 	require.NoError(err)
@@ -216,67 +208,50 @@ func testPostgresStreamStore(params *testStreamStoreParams) {
 	// Test that we can delete stream and proper stream will be deleted
 	genesisMiniblock3 := []byte("genesisMiniblock3")
 	err = pgStreamStore.CreateStreamStorage(ctx, streamId3, genesisMiniblock3)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(err)
 
 	err = pgStreamStore.DeleteStream(ctx, streamId2)
-	if err != nil {
-		t.Fatal("Error of deleting stream", err)
-	}
+	require.NoError(err)
 
 	streams, err = pgStreamStore.GetStreams(ctx)
 	require.NoError(err)
 	require.ElementsMatch(streams, []StreamId{streamId1, streamId3})
 
 	// Test that we can add event to stream and then retrieve it
-	addEventError := pgStreamStore.WriteEvent(ctx, streamId1, 1, 0, []byte("event1"))
+	err = pgStreamStore.WriteEvent(ctx, streamId1, 1, 0, []byte("event1"))
+	require.NoError(err)
 
-	if addEventError != nil {
-		t.Fatal(streamRetrievalError)
-	}
+	streamFromLastSnaphot, err = pgStreamStore.ReadStreamFromLastSnapshot(ctx, streamId1, 0)
+	require.NoError(err)
+	require.Len(streamFromLastSnaphot.Miniblocks, 1, "Expected to find one miniblock, found different number")
+	require.EqualValues(
+		streamFromLastSnaphot.Miniblocks[0],
+		genesisMiniblock,
+		"Expected to find original genesis block, found different",
+	)
 
-	streamFromLastSnaphot, streamRetrievalError = pgStreamStore.ReadStreamFromLastSnapshot(ctx, streamId1, 0)
-
-	if streamRetrievalError != nil {
-		t.Fatal(streamRetrievalError)
-	}
-
-	if len(streamFromLastSnaphot.MinipoolEnvelopes) != 1 {
-		t.Fatal("Expected to find one miniblock, found different number")
-	}
-
-	if !reflect.DeepEqual(streamFromLastSnaphot.MinipoolEnvelopes[0], []byte("event1")) {
-		t.Fatal("Expected to find original genesis block, found different")
-	}
 	var testEnvelopes [][]byte
 	testEnvelopes = append(testEnvelopes, []byte("event2"))
 	blockHash := common.BytesToHash([]byte("block_hash"))
 	blockData := []byte("block1")
 	err = pgStreamStore.WriteMiniblockCandidate(ctx, streamId1, blockHash, 1, blockData)
-	if err != nil {
-		t.Fatal("error creating block candidate")
-	}
+	require.NoError(err)
+
 	mbBytes, err := pgStreamStore.ReadMiniblockCandidate(ctx, streamId1, blockHash, 1)
 	require.NoError(err)
 	require.EqualValues(blockData, mbBytes)
+
 	err = promoteMiniblockCandidate(ctx, pgStreamStore, streamId1, 1, blockHash, false, testEnvelopes)
-	if err != nil {
-		t.Fatal("error promoting block", err)
-	}
+	require.NoError(err)
 
 	var testEnvelopes2 [][]byte
 	testEnvelopes2 = append(testEnvelopes2, []byte("event3"))
 	blockHash2 := common.BytesToHash([]byte("block_hash_2"))
 	err = pgStreamStore.WriteMiniblockCandidate(ctx, streamId1, blockHash2, 2, []byte("block2"))
-	if err != nil {
-		t.Fatal("error creating block proposal with snapshot", err)
-	}
+	require.NoError(err)
 
 	err = promoteMiniblockCandidate(ctx, pgStreamStore, streamId1, 2, blockHash2, true, testEnvelopes2)
-	if err != nil {
-		t.Fatal("error promoting block with snapshot", err)
-	}
+	require.NoError(err)
 }
 
 func testPromoteMiniblockCandidate(params *testStreamStoreParams) {

@@ -94,7 +94,20 @@ export class Space extends PersistedObservable<SpaceModel> {
         })
     }
 
-    async createChannel(channelName: string, signer: ethers.Signer) {
+    /** Creates a channel in the space.
+     * @param channelName - The name of the channel.
+     * @param signer - The signer to use to create the channel.
+     * @param opts - Additional options for the channel creation.
+     * @returns The `channelId` of the created channel.
+     */
+    async createChannel(
+        channelName: string,
+        signer: ethers.Signer,
+        opts?: {
+            /** The topic of the channel. */
+            topic?: string
+        },
+    ) {
         const spaceId = this.data.id
         const channelId = makeUniqueChannelStreamId(spaceId)
         const roles = await this.spaceDapp.getRoles(spaceId)
@@ -109,7 +122,7 @@ export class Space extends PersistedObservable<SpaceModel> {
         const receipt = await tx.wait()
         logger.log('createChannel receipt', receipt)
         await this.riverConnection.call((client) =>
-            client.createChannel(spaceId, channelName, '', channelId),
+            client.createChannel(spaceId, channelName, opts?.topic ?? '', channelId),
         )
         return channelId
     }

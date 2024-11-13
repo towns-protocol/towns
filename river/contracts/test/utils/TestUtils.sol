@@ -30,6 +30,11 @@ contract TestUtils is Test {
     }
   }
 
+  modifier assumeEOA(address account) {
+    vm.assume(account != address(0) && account.code.length == 0);
+    _;
+  }
+
   constructor() {
     vm.setEnv("IN_TESTING", "true");
     vm.setEnv(

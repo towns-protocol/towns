@@ -180,12 +180,6 @@ contract BaseSetup is TestUtils, SpaceHelper {
     vm.stopPrank();
   }
 
-  /// @dev Skips the test run if the account is not an EOA
-  modifier assumeEOA(address account) {
-    vm.assume(account != address(0) && account.code.length == 0);
-    _;
-  }
-
   function _registerOperators() internal {
     for (uint256 i = 0; i < operators.length; i++) {
       vm.prank(operators[i]);

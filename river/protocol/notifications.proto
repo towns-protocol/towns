@@ -1,0 +1,339 @@
+syntax = "proto3";
+package river;
+option go_package = "github.com/river-build/river/core/node/protocol";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+// AuthenticationService provides client functionality to obtain a session token that can be used
+// in the NotificationService.
+service AuthenticationService {
+  // StartAuthentication returns a challenge that the client must sign to prove its identity.
+  rpc StartAuthentication(StartAuthenticationRequest) returns (StartAuthenticationResponse);
+  // FinishAuthentication expects the signed challenge and if valid returns a session token
+  // that can be used in the NotificationService.
+  rpc FinishAuthentication(FinishAuthenticationRequest) returns (FinishAuthenticationResponse);
+}
+
+message StartAuthenticationRequest {
+  // user id of the user that wants to authenticate
+  bytes user_id = 1;
+}
+
+message StartAuthenticationResponse {
+  // user id of the user that wants to authenticate
+  bytes user_id = 1;
+  // challenge that must be signed.
+  // clients must verify before signing that the challenge is >= 128 bits
+  bytes challenge = 2;
+  // timestamp until the challenge is valid
+  google.protobuf.Timestamp expiration = 3;
+}
+
+// note, challenge expiration is stored in the notification service and therefore doesn't have to be provided
+// in the request. Expiration is looked up through the challenge.
+message FinishAuthenticationRequest {
+  // user id of the user that wants to authenticate.
+  //
+  // For the response to be valid:
+  // If delegate_sig is present, user_id must match delegate_sig signer address.
+  // If delegate_sig is not present, user_id must match signature signer address.
+  bytes user_id = 1;
+
+  // signature is calculated with the delegate keypair with:
+  // ecdsa_sign(delegate_key, sha256(PREFIX || user_id || expiration || challenge)
+  // with
+  // PREFIX=NS_AUTH: (string with length 8)
+  // user_id raw user id bytes (160 bits)
+  // expiration is a 64 bits unix timestamp encoded in big endian
+  // || means concatenation
+  bytes signature = 2;
+
+  // delegate_sig contains signature of the
+  // public key of the delegate keypair + the delegate_expiry_epoch_ms.
+  // User's primary wallet is used to produce this signature.
+  bytes delegate_sig = 3;
+
+  // DelegateExpiry is the time when the delegate signature expires.
+  int64 delegate_expiry_epoch_ms = 4;
+
+  // challenge that must be signed to prove identity.
+  bytes challenge = 5;
+}
+
+message FinishAuthenticationResponse {
+  // session_token holds the token that must be provided in the AUTHORIZATION header when making
+  // rpc calls to the NotificationService.
+  string session_token = 1;
+}
+
+// NotificationService allows user to set notification related preferences for messages added to channels within a
+// space, DM and GDM channels.
+//
+// These functions are all authenticated and require a session token to be passed through the authorization metadata.
+// This session token can be obtained from the AuthenticationService. If the session token is missing or invalid an
+// Err_UNAUTHENTICATED (code=16) is returned.
+service NotificationService {
+  // GetSettings returns user stored notification settings.
+  rpc GetSettings(GetSettingsRequest) returns (GetSettingsResponse);
+  // SetSettings sets the notification settings, overwriting all existing settings.
+  rpc SetSettings(SetSettingsRequest) returns (SetSettingsResponse);
+  // SetDmGdmSettings updates global settings for DM/GDM channels.
+  rpc SetDmGdmSettings(SetDmGdmSettingsRequest) returns (SetDmGdmSettingsResponse);
+  // SetDmChannelSetting updates settings for a DM channel
+  rpc SetDmChannelSetting(SetDmChannelSettingRequest) returns (SetDmChannelSettingResponse);
+  // SetGdmChannelSetting updates settings for a GDM channel
+  rpc SetGdmChannelSetting(SetGdmChannelSettingRequest) returns (SetGdmChannelSettingResponse);
+  // SetSpaceSettings updates space setting that are applied to all channels within that stream.
+  rpc SetSpaceSettings(SetSpaceSettingsRequest) returns (SetSpaceSettingsResponse);
+  // SetSpaceChannelSettings updates settings for a channel that is part of a space.
+  rpc SetSpaceChannelSettings(SetSpaceChannelSettingsRequest) returns (SetSpaceChannelSettingsResponse);
+  // SubscribeWebPush subscribes a client to receive notifications through web push.
+  // If the given req.subscription is already associated with a web push subscription the user id is updated (upsert).
+  rpc SubscribeWebPush(SubscribeWebPushRequest) returns (SubscribeWebPushResponse);
+  // UnsubscribeWebPush deletes web push subscription.
+  rpc UnsubscribeWebPush(UnsubscribeWebPushRequest) returns (UnsubscribeWebPushResponse);
+  // SubscribeAPN subscribes a device to receive Apple Push Notifications.
+  // If the given device token is already associated with an APN subscription the user id is updated (upsert).
+  rpc SubscribeAPN(SubscribeAPNRequest) returns (SubscribeAPNResponse);
+  // UnsubscribeAPN unsubscribes a device from receiving Apple Push Notifications.
+  rpc UnsubscribeAPN(UnsubscribeAPNRequest) returns (UnsubscribeAPNResponse);
+}
+
+// DmChannelSettingValue specifies if the user wants to receive notifications for DM streams.
+// This can be overwritten with DM channel specific configuration.
+enum DmChannelSettingValue {
+  // DM_UNSPECIFIED not set, assumes DM_MESSAGES_YES as a default.
+  DM_UNSPECIFIED = 0;
+  // DM_MESSAGES_YES indicates that the user wants to receive notifications for DM channels.
+  DM_MESSAGES_YES = 1;
+  // DM_MESSAGES_NO indicates that the user doesn't want to receive notifications for DM channels.
+  DM_MESSAGES_NO = 2;
+  // DM_MESSAGES_NO_AND_MUTE indicates that the user doesn't want to receive notifications for DM channels
+  // and the UI should not render any feedback that a message was received.
+  DM_MESSAGES_NO_AND_MUTE = 3;
+}
+
+// GdmChannelSettingValue is a default setting that is applied to all GDM streams a user is in and can be
+// overwritten by GDM channel specific settings.
+enum GdmChannelSettingValue {
+  // GDM_UNSPECIFIED not set, assumes GDM_MESSAGES_ALL as a default.
+  GDM_UNSPECIFIED = 0;
+  // GDM_MESSAGES_NO indicates that the user will not receive notifications for GDM channels.
+  GDM_MESSAGES_NO = 1;
+  // GDM_MESSAGES_NO_AND_MUTE indicates that the user doesn't want to receive notifications for GDM channels
+  // and the UI should not render any feedback that a message was received.
+  GDM_MESSAGES_NO_AND_MUTE = 2;
+  // GDM_ONLY_MENTIONS_REPLIES_REACTIONS indicates that the user receives notifications for messages added to
+  // GDM channels that are either a direct reply or a reaction to his own messages.
+  GDM_ONLY_MENTIONS_REPLIES_REACTIONS = 3;
+  // GDM_MESSAGES_ALL indicates that the user receives notifications for all messages in GDM channels.
+  // This is the default.
+  GDM_MESSAGES_ALL = 4;
+}
+
+// SpaceSettingValue is a user specified setting that is applied to all channels in a space by default and can be
+// overwritten with channel specific settings.
+enum SpaceChannelSettingValue {
+  // SPACE_CHANNEL_SETTING_UNSPECIFIED not set, assumes SPACE_SETTING_ONLY_MENTIONS_REPLIES_REACTIONS as default.
+  SPACE_CHANNEL_SETTING_UNSPECIFIED = 0;
+  // SPACE_CHANNEL_SETTING_NO_MESSAGES indicates that the user won't receive notifications of any channel in the space.
+  SPACE_CHANNEL_SETTING_NO_MESSAGES = 1;
+  // SPACE_CHANNEL_SETTING_NO_MESSAGES_AND_MUTE indicates that the user won't receive notifications of any channel in
+  // the space and the UI must not render any feedback that a message was received.
+  SPACE_CHANNEL_SETTING_NO_MESSAGES_AND_MUTE = 2;
+  // SPACE_CHANNEL_SETTING_ONLY_MENTIONS_REPLIES_REACTIONS indicates that the user will receive notifications for
+  // messages that either the user is mentioned in or are a direct reply/reaction to his own message. This is the
+  // default.
+  SPACE_CHANNEL_SETTING_ONLY_MENTIONS_REPLIES_REACTIONS = 3;
+  // SPACE_CHANNEL_SETTING_MESSAGES_ALL indicates that the user will receive notifications for all types of
+  // messages/reactions for all channels in the space.
+  SPACE_CHANNEL_SETTING_MESSAGES_ALL = 4;
+}
+
+enum APNEnvironment {
+  // APN_ENVIRONMENT_UNSPECIFIED is invalid.
+  APN_ENVIRONMENT_UNSPECIFIED = 0;
+  // APN_ENVIRONMENT_PRODUCTION uses Apple's APN service to deliver notifications.
+  APN_ENVIRONMENT_PRODUCTION = 1;
+  // APN_ENVIRONMENT_SANDBOX uses Apple's sandbox environment to send notifications.
+  // Only used for development purposes.
+  APN_ENVIRONMENT_SANDBOX = 2;
+}
+
+message GetSettingsRequest {}
+
+message GetSettingsResponse {
+  // user id for which to retrieve settings
+  bytes user_id = 1;
+  // space holds specific settings for spaces and channels within a space
+  repeated SpaceSetting space = 2;
+  // dm_global is the default setting that is applied to all DM channels and can be overwritten by channel specific
+  // settings with dm_gdm_channels.
+  DmChannelSettingValue dm_global = 3;
+  // gdm_global is the default setting that is applied to all GDM channels and can be overwritten by channel specific
+  // settings with dm_gdm_channels.
+  GdmChannelSettingValue gdm_global = 4;
+  // dm_channels holds specific settings for DM channels
+  repeated DmChannelSetting dm_channels = 5;
+  // gdm_channels holds specific settings for GDM channels
+  repeated GdmChannelSetting gdm_channels = 6;
+  // web_subscriptions is the list of web push subscriptions
+  repeated WebPushSubscriptionObject web_subscriptions = 7;
+  // apn_subscriptions is the list of APN push subscriptions
+  repeated APNSubscription apn_subscriptions = 8;
+}
+
+message SetSettingsRequest {
+  // dm_global holds the default config setting that is applied to all DM channels unless overwritten by a DM specif
+  // preference.
+  DmChannelSettingValue dm_global = 1;
+  // dm_channels holds DM channel specific preferences that overwrite dm_global.
+  repeated DmChannelSetting dm_channels = 2;
+  // gdm_global is the default setting that is applied to all GDM channels and can be overwritten by channel specific
+  // settings with dm_gdm_channels.
+  GdmChannelSettingValue gdm_global = 3;
+  // dm_gdm_channels holds settings for GDM channels that overwrite the default setting in gdm_global.
+  repeated GdmChannelSetting gdm_channels = 4;
+  // spaces holds specific settings for spaces and their channels.
+  repeated SpaceSetting spaces = 5;
+}
+
+message SetSettingsResponse {}
+
+// DmChannelSetting hold settings specific for a DM.
+message DmChannelSetting {
+  // channel_id points to the channel for which this setting applies.
+  bytes channel_id = 1;
+  // setting indicates if the user wants to receive notifications for the channel within the space.
+  DmChannelSettingValue value = 2;
+}
+
+// GdmChannelSetting hold settings specific for a GDM.
+message GdmChannelSetting {
+  // channel_id points to the channel for which this setting applies.
+  bytes channel_id = 1;
+  // setting indicates if the user wants to receive notifications for the channel.
+  GdmChannelSettingValue value = 2;
+}
+
+message SpaceChannelSetting {
+  // channel_id points to the channel for which this setting applies.
+  bytes channel_id = 1;
+  // setting indicates if the user wants to receive notifications for the channel.
+  SpaceChannelSettingValue value = 2;
+}
+
+// SpaceSettings hold settings that applied to all streams within the space.
+// These can be overwritten by channel specific settings.
+message SpaceSetting {
+  // space channel id
+  bytes space_id = 1;
+  // value is applied to all channels within the space unless overwritten by a channel specific setting.
+  SpaceChannelSettingValue value = 2;
+  // channels holds channel specific settings for channels within the space
+  repeated SpaceChannelSetting channels = 3;
+}
+
+message SetDmGdmSettingsRequest {
+  // dm_global is the default setting that is applied to all DM channels and can be overwritten by channel specific
+  // settings
+  DmChannelSettingValue dm_global = 1;
+  // gdm_global is the default setting that is applied to all GDM channels and can be overwritten by channel specific
+  // settings
+  GdmChannelSettingValue gdm_global = 2;
+}
+
+message SetDmGdmSettingsResponse {}
+
+message SetDmChannelSettingRequest {
+  // dm channel id
+  bytes dm_channel_id = 1;
+  // dm setting
+  DmChannelSettingValue value = 2;
+}
+
+message SetDmChannelSettingResponse {}
+
+message SetGdmChannelSettingRequest{
+  // gdm channel id
+  bytes gdm_channel_id = 1;
+  // dm setting
+  GdmChannelSettingValue value = 2;
+}
+
+message SetGdmChannelSettingResponse {}
+
+message SetSpaceSettingsRequest {
+  // space channel id
+  bytes space_id = 1;
+  // value are applied to all channels within the space.
+  SpaceChannelSettingValue value = 2;
+}
+
+message SetSpaceSettingsResponse {}
+
+message SetSpaceChannelSettingsRequest {
+  // channel_id points to the channel for which this setting applies.
+  bytes channel_id = 1;
+  // space_id this channel is part of
+  bytes space_id = 2;
+  // value indicates the user overwritten value or a channel default must be used.
+  SpaceChannelSettingValue value = 3;
+}
+
+message SetSpaceChannelSettingsResponse {}
+
+message WebPushSubscriptionObjectKeys {
+  // An Elliptic curve Diffie–Hellman public key on the P-256 curve (that is, the NIST
+  // secp256r1 elliptic curve) and obtained from the browser when subscribing.
+  string p256dh = 1;
+  // An authentication secret and obtained from the browser when subscribing.
+  string auth = 2;
+}
+
+message WebPushSubscriptionObject {
+  // A string containing the endpoint associated with the push subscription.
+  string endpoint = 1;
+  // keys obtained from the browser when subscribing for notifications. The notifications
+  // service uses these details to protect the notifications content.
+  WebPushSubscriptionObjectKeys keys = 2;
+}
+
+message SubscribeWebPushRequest {
+  // subscription holds the subscribe data that is returned by the browser when subscribing
+  WebPushSubscriptionObject subscription = 1;
+}
+
+message SubscribeWebPushResponse {}
+
+message UnsubscribeWebPushRequest {
+  // subscription holds the subscribe data that is returned by the browser when subscribing
+  WebPushSubscriptionObject subscription = 1;
+}
+
+message UnsubscribeWebPushResponse {}
+
+message SubscribeAPNRequest {
+  // APN device token
+  bytes device_token = 1;
+  // environment indicates what type of environment the subscription is target.
+  APNEnvironment environment = 2;
+}
+
+message APNSubscription {
+  // APN device token
+  bytes device_token = 1;
+  // environment indicates what type of environment the subscription is target.
+  APNEnvironment environment = 2;
+}
+
+message SubscribeAPNResponse {}
+
+message UnsubscribeAPNRequest {
+  // APN device token
+  bytes device_token = 1;
+}
+
+message UnsubscribeAPNResponse {}
+

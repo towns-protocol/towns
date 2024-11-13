@@ -137,6 +137,14 @@ jobs:
                     exit 1
                   fi
 
+            - name: Docs checking broken links
+              working-directory: packages/docs
+              run: yarn docs:broken-links
+
+            - name: Docs spellcheck
+              working-directory: packages/docs
+              run: yarn spellcheck
+
             - name: Staticcheck River Node
               if: ${{ !cancelled() && steps.setup_success.outcome == 'success' }}
               uses: dominikh/staticcheck-action@v1
@@ -156,7 +164,6 @@ jobs:
             - name: Unit Tests
               if: ${{ !cancelled() && steps.setup_success.outcome == 'success' && steps.ts_build.outcome == 'success' }}
               run: yarn test:unit
-
     Multinode:
         permissions: write-all
         if: github.event_name != 'workflow_dispatch' || !inputs.skip_multinode

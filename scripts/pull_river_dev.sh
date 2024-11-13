@@ -81,6 +81,8 @@ function remove_river_yarn_files() {
     rm "${SUBTREE_PREFIX}/package.json" 2>/dev/null || echo "${SUBTREE_PREFIX}/package.json not found, skipping"
     git rm "${SUBTREE_PREFIX}/yarn.lock" 2>/dev/null || echo "${SUBTREE_PREFIX}/yarn.lock not found, skipping"
     rm "${SUBTREE_PREFIX}/yarn.lock" 2>/dev/null || echo "${SUBTREE_PREFIX}/yarn.lock not found, skipping"
+    git rm -rf "${SUBTREE_PREFIX}/packages/docs" # aellis docs uses different versions of slate and I don't want to deal with it
+    rm  -rf "${SUBTREE_PREFIX}/packages/docs" 2>/dev/null # aellis docs uses different versions of slate and I don't want to deal with it
 }
 
 function yarn_install_and_check() {
