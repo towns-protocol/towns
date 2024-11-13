@@ -17,6 +17,7 @@ import { genIdBlob, streamIdAsBytes, streamIdAsString, userIdFromAddress } from 
 import { ParsedEvent, ParsedMiniblock, ParsedStreamAndCookie, ParsedStreamResponse } from './types'
 import { SignerContext, checkDelegateSig } from './signerContext'
 import { keccak256 } from 'ethereum-cryptography/keccak'
+import { createHash } from 'crypto'
 
 export interface UnpackEnvelopeOpts {
     // the client recreates the hash from the event bytes in the envelope
@@ -297,11 +298,29 @@ function numberToUint8Array64LE(num: number): Uint8Array {
     return result
 }
 
-function bigintToUint8Array64LE(num: bigint): Uint8Array {
+function bigintToUint8Array64(num: bigint, endianMode: 'bigEndian' | 'littleEndian'): Uint8Array {
     const buffer = new ArrayBuffer(8)
     const view = new DataView(buffer)
-    view.setBigInt64(0, num, true) // true for little endian
+    view.setBigInt64(0, num, endianMode === 'littleEndian') // true for little endian
     return new Uint8Array(buffer)
+}
+
+// Returns the absolute value of this BigInt as a big-endian byte array
+function bigIntToBytes(value: bigint): Uint8Array {
+    const abs = value < 0n ? -value : value
+    // Calculate the byte length needed to represent the BigInt
+    const byteLength = Math.ceil(abs.toString(16).length / 2)
+
+    // Create a buffer of the required length
+    const buffer = new Uint8Array(byteLength)
+
+    // Fill the buffer with the big-endian representation of the BigInt
+    let temp = abs
+    for (let i = byteLength - 1; i >= 0; i--) {
+        buffer[i] = Number(temp & 0xffn) // Extract last 8 bits
+        temp >>= 8n // Shift right by 8 bits
+    }
+    return buffer
 }
 
 function pushByteToUint8Array(arr: Uint8Array, byte: number): Uint8Array {
@@ -337,7 +356,7 @@ export function riverDelegateHashSrc(
     assertBytes(devicePublicKey)
     check(expiryEpochMs >= 0, 'Expiry should be positive')
     check(devicePublicKey.length === 64 || devicePublicKey.length === 65, 'Bad public key')
-    const expiryBytes = bigintToUint8Array64LE(expiryEpochMs)
+    const expiryBytes = bigintToUint8Array64(expiryEpochMs, 'littleEndian')
     const retVal = new Uint8Array(
         RIVER_SIG_HEADER.length + devicePublicKey.length + expiryBytes.length,
     )
@@ -345,6 +364,25 @@ export function riverDelegateHashSrc(
     retVal.set(devicePublicKey, RIVER_SIG_HEADER.length)
     retVal.set(expiryBytes, RIVER_SIG_HEADER.length + devicePublicKey.length)
     return retVal
+}
+
+export function notificationServiceHash(
+    userId: Uint8Array,
+    expiration: bigint, // unix seconds
+    challenge: Uint8Array,
+) {
+    const PREFIX = 'NS_AUTH:'
+    const prefixBytes = new TextEncoder().encode(PREFIX)
+    const expirationBytes = bigIntToBytes(expiration)
+    // aellis - i don't understand why we need to slice here, the go and ios code both truncate the leading 0's
+    check(userId.length === 20, 'User ID should be 20 bytes')
+    check(challenge.length === 16, 'Challenge should be 16 bytes')
+    return createHash('sha256')
+        .update(prefixBytes)
+        .update(userId)
+        .update(expirationBytes)
+        .update(challenge)
+        .digest()
 }
 
 export async function riverSign(

@@ -1,7 +1,19 @@
 import 'fake-indexeddb/auto' // used to mock indexdb in dexie, don't remove
-import { isDecryptedEvent, makeRiverConfig, randomUrlSelector } from '@river-build/sdk'
+import {
+    isDecryptedEvent,
+    makeRiverConfig,
+    makeSignerContext,
+    NotificationService,
+    randomUrlSelector,
+} from '@river-build/sdk'
 import { check } from '@river-build/dlog'
-import { InfoRequest } from '@river-build/proto'
+import {
+    DmChannelSettingValue,
+    GdmChannelSettingValue,
+    GetSettingsRequest,
+    InfoRequest,
+    SetDmGdmSettingsRequest,
+} from '@river-build/proto'
 import { EncryptionDelegate } from '@river-build/encryption'
 import { makeStressClient } from './utils/stressClient'
 import { expect, isSet } from './utils/expect'
@@ -12,6 +24,7 @@ import { RedisStorage } from './utils/storage'
 import { makeHttp2StreamRpcClient } from './utils/rpc-http2'
 import { createRiverRegistry } from '@river-build/web3'
 import { getLogger } from './utils/logger'
+import { createConnectTransport, ConnectTransportOptions } from '@connectrpc/connect-node'
 
 check(isSet(process.env.RIVER_ENV), 'process.env.RIVER_ENV')
 
@@ -137,9 +150,49 @@ async function demoExternalStoreage() {
     }
 }
 
+const registerNotificationService = async () => {
+    // demo connecting to the notification service
+    const notificationServiceUrl = process.env.NOTIFICATION_SERVICE_URL // 'https://river-notification-service-alpha.towns.com/' // ?? 'http://localhost:4040
+    if (!notificationServiceUrl) {
+        logger.info('NOTIFICATION_SERVICE_URL is not set')
+        return
+    }
+
+    const wallet = ethers.Wallet.createRandom()
+    const delegateWallet = ethers.Wallet.createRandom()
+    const signerContext = await makeSignerContext(wallet, delegateWallet, { days: 1 })
+
+    const { startResponse, finishResponse, notificationRpcClient } =
+        await NotificationService.authenticate(signerContext, notificationServiceUrl, {
+            createConnectTransport: (opts) => {
+                const options: ConnectTransportOptions = {
+                    ...opts,
+                    httpVersion: '2',
+                }
+                return createConnectTransport(options)
+            },
+        })
+    logger.info({ startResponse, finishResponse }, 'authenticated')
+
+    let settings = await notificationRpcClient.getSettings(new GetSettingsRequest())
+    logger.info(settings.toJson(), 'settings')
+
+    const response = await notificationRpcClient.setDmGdmSettings(
+        new SetDmGdmSettingsRequest({
+            dmGlobal: DmChannelSettingValue.DM_MESSAGES_NO,
+            gdmGlobal: GdmChannelSettingValue.GDM_MESSAGES_NO,
+        }),
+    )
+    logger.info(response, 'set settings response')
+    settings = await notificationRpcClient.getSettings(new GetSettingsRequest())
+    logger.info(settings.toJson(), 'new settings')
+}
+
 logger.info(getSystemInfo(), 'system info')
 
 const run = async () => {
+    logger.debug('========================registerNotificationService========================')
+    await registerNotificationService()
     logger.debug('========================storage========================')
     await demoExternalStoreage()
     logger.debug('==========================spamInfo==========================')
