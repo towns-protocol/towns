@@ -183,7 +183,6 @@ function CreateSpaceFormV2WithoutAuth() {
                         longDescriptionValue,
                         membershipPricingType,
                         spaceIconUrl,
-                        prepaidMemberships,
                     ] = _form.watch([
                         'spaceName',
                         'membershipCost',
@@ -227,7 +226,7 @@ function CreateSpaceFormV2WithoutAuth() {
                             return '--'
                         }
                         if (membershipPricingType === 'dynamic') {
-                            return 'Free'
+                            return 'Dynamic'
                         }
 
                         if (price === '') {
@@ -358,17 +357,7 @@ function CreateSpaceFormV2WithoutAuth() {
                                                                         </Paragraph>
                                                                     </Box>
                                                                 }
-                                                                subtitle={
-                                                                    membershipPricingType ===
-                                                                    'dynamic'
-                                                                        ? `First ${
-                                                                              (platformMintLimit ??
-                                                                                  0) +
-                                                                              (prepaidMemberships ??
-                                                                                  0)
-                                                                          }`
-                                                                        : 'ETH'
-                                                                }
+                                                                subtitle="ETH"
                                                                 dataTestId="membership-cost-type"
                                                                 onClick={onInfoBoxClick}
                                                             />
