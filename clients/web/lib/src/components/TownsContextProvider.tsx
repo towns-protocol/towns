@@ -28,12 +28,17 @@ import { AccountAbstractionConfig } from '@towns/userops'
 import { useUserLookupUpdater } from '../hooks/use-user-lookup-updater'
 import { TownsAnalytics } from '../types/TownsAnalytics'
 import { useStreamMetadataUpdater } from '../hooks/use-stream-metadata-updater'
+import {
+    NotificationSettingsClient,
+    useNotificationSettingsClient,
+} from '../client/TownsNotifciationSettings'
 
 export type InitialSyncSortPredicate = (a: string, b: string) => number
 
 export interface ITownsContext {
     environmentId: string /// the environment id, used to manage local storage keys
     signerContext?: SignerContext // context you will use to auth to the river stream node
+    notificationSettingsClient?: NotificationSettingsClient
     client?: TownsClient /// only set when user is authenticated
     clientSingleton?: TownsClient /// always set, can be use for , this duplication can be removed once we transition to casablanca
     casablancaClient?: CasablancaClient /// set if we're logged in and casablanca client is started
@@ -81,6 +86,7 @@ interface TownsContextProviderProps {
     QueryClientProvider?: React.ElementType<{ children: JSX.Element }>
     pushNotificationAuthToken?: string
     pushNotificationWorkerUrl?: string
+    riverNotificationServiceUrl?: string
     accountAbstractionConfig?: AccountAbstractionConfig
     highPriorityStreamIds?: string[]
     unpackEnvelopeOpts?: UnpackEnvelopeOpts
@@ -187,6 +193,11 @@ const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
 
     const { client, clientSingleton, casablancaClient, signerContext } =
         useTownsClientListener(townsOpts)
+    const notificationSettingsClient = useNotificationSettingsClient(
+        signerContext,
+        environmentId,
+        props.riverNotificationServiceUrl,
+    )
     useSpacesIds(casablancaClient)
     useContentAwareTimelineDiffCasablanca(casablancaClient)
     const clientStatus = useClientInitStatus(casablancaClient)
@@ -224,6 +235,7 @@ const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
                 client,
                 clientSingleton,
                 casablancaClient,
+                notificationSettingsClient,
                 baseConfig,
                 baseChain,
                 baseProvider,

@@ -72,7 +72,7 @@ const envSchema = z.object({
 
     VITE_WEB_PUSH_APPLICATION_SERVER_KEY: z.string().optional(), // making this optional since we want to allow local development without it
     VITE_WEB_PUSH_WORKER_URL: z.string().optional(), // url to the web push worker
-
+    VITE_RIVER_NOTIFICATION_SERVICE_URL: z.string().optional(), // url to the river notification service
     VITE_DD_CLIENT_TOKEN: z.string().optional(), // used for datadog client side monitoring
     VITE_PRIVY_ID: z.string(),
     VITE_PRIVY_CLIENT_ID: z.string().optional(),

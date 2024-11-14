@@ -5,7 +5,7 @@ export type {
     TransferAssetTransactionContext,
 } from './client/TownsClientTypes'
 export { TransactionStatus } from './client/TownsClientTypes'
-
+export * from './client/TownsNotifciationSettings'
 export { ChannelContextProvider, useChannelContext } from './components/ChannelContextProvider'
 export { QueryProvider } from './components/QueryProvider'
 export * from './components/SpaceContextProvider'

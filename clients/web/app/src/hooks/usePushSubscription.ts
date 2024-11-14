@@ -1,30 +1,35 @@
 import { useCallback, useEffect } from 'react'
-import { useMyUserId } from 'use-towns-client'
+import { NotificationSettingsClient, useMyUserId, useTownsContext } from 'use-towns-client'
 import { axiosClient } from 'api/apiClient'
 import { env } from 'utils/environment'
 import { notificationsSupported } from './usePushNotifications'
 
 export const usePushSubscription = () => {
     const notificationsStatus = notificationsSupported() ? Notification.permission : undefined
-    const userId = useMyUserId()
-
+    const { notificationSettingsClient } = useTownsContext()
     useEffect(() => {
-        const abortController = new AbortController()
-        if (notificationsStatus !== 'granted' || !userId) {
+        console.log('PUSH: useEffect', {
+            notificationsStatus,
+            notificationSettingsClient: notificationSettingsClient !== undefined,
+        })
+        if (notificationsStatus !== 'granted' || !notificationSettingsClient) {
             return
         }
-        const register = async function () {
-            await registerForPushSubscription(userId, abortController.signal)
-        }
-        register()
+        const abortController = new AbortController()
+        void registerForPushSubscription(notificationSettingsClient, abortController.signal)
         return () => {
             abortController.abort()
         }
-    }, [notificationsStatus, userId])
+    }, [notificationsStatus, notificationSettingsClient])
 }
 
-async function registerForPushSubscription(userId: string, signal: AbortSignal) {
+async function registerForPushSubscription(
+    notificationSettingsClient: NotificationSettingsClient,
+    signal: AbortSignal,
+) {
     console.log('PUSH: registering for push notifications')
+    const userId = notificationSettingsClient.userId
+
     const subscription = await getOrRegisterPushSubscription()
     if (!subscription) {
         return
@@ -43,14 +48,35 @@ async function registerForPushSubscription(userId: string, signal: AbortSignal) 
         'endpoint',
         data.subscriptionObject.endpoint,
     )
+
+    // <BEGIN old way>
+    // try {
+    //     await axiosClient.post(`${url}/api/add-subscription`, data, {
+    //         signal: signal,
+    //     })
+    //     console.log('PUSH: did register for push notifications')
+    // } catch (e) {
+    //     console.error('PUSH: failed to send subscription to Push Notification Worker', e)
+    // }
+    // <END old way>
+
+    // <BEGIN new way>
     try {
-        await axiosClient.post(`${url}/api/add-subscription`, data, {
-            signal: signal,
+        if (!data.subscriptionObject.keys?.p256dh || !data.subscriptionObject.keys?.auth) {
+            console.error('PUSH: missing p256dh or auth', data.subscriptionObject.keys)
+            return
+        }
+        await notificationSettingsClient.subscribeWebPush({
+            endpoint: subscription.endpoint,
+            keys: {
+                p256dh: data.subscriptionObject.keys.p256dh,
+                auth: data.subscriptionObject.keys.auth,
+            },
         })
-        console.log('PUSH: did register for push notifications')
     } catch (e) {
-        console.error('PUSH: failed to send subscription to Push Notification Worker', e)
+        console.error('PUSH: failed to subscribe to web push', e)
     }
+    // <END new way>
 }
 
 async function getOrRegisterPushSubscription() {
