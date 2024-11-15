@@ -16,9 +16,9 @@ import { atoms } from 'ui/styles/atoms.css'
 import { shortAddress } from 'ui/utils/utils'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { useJoinFunnelAnalytics } from '@components/Analytics/useJoinFunnelAnalytics'
+import { useEnvironment } from 'hooks/useEnvironmnet'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { CopyWalletAddressButton } from '../GatedTownModal/Buttons'
-import { useWalletPrefix } from '../useWalletPrefix'
 
 export function UserOpTxModal() {
     const { currOp, confirm, deny } = userOpsStore()
@@ -63,6 +63,7 @@ function UserOpTxModalContent({ endPublicPageLoginFlow }: { endPublicPageLoginFl
             rejectedSponsorshipReason: s.rejectedSponsorshipReason,
         })),
     )
+    const chainName = useEnvironment().baseChain.name
 
     const isJoiningSpace = !!usePublicPageLoginFlow().spaceBeingJoined
     const { clickCopyWalletAddress, clickConfirmJoinTransaction } = useJoinFunnelAnalytics()
@@ -115,8 +116,6 @@ function UserOpTxModalContent({ endPublicPageLoginFlow }: { endPublicPageLoginFl
     const { data: smartAccountAddress } = useAbstractAccountAddress({
         rootKeyAddress: loggedInWalletAddress as Address,
     })
-
-    const walletPrefix = useWalletPrefix()
 
     const { isLoading: isSmartAccountDeployedLoading } = useIsSmartAccountDeployed()
 
@@ -176,11 +175,6 @@ function UserOpTxModalContent({ endPublicPageLoginFlow }: { endPublicPageLoginFl
 
     const _isTouch = isTouch()
 
-    const walletCopyText = useMemo(
-        () => `${walletPrefix}:${smartAccountAddress}`,
-        [smartAccountAddress, walletPrefix],
-    )
-
     const onCopyClick = () => {
         setShowWalletWarning(true)
         if (isJoiningSpace) {
@@ -217,7 +211,7 @@ function UserOpTxModalContent({ endPublicPageLoginFlow }: { endPublicPageLoginFl
 
                     <CopyWalletAddressButton
                         text="Copy Wallet Address"
-                        address={walletCopyText}
+                        address={smartAccountAddress}
                         onClick={onCopyClick}
                     />
 
@@ -225,8 +219,7 @@ function UserOpTxModalContent({ endPublicPageLoginFlow }: { endPublicPageLoginFl
                         <Box centerContent padding horizontal gap rounded="sm" background="level3">
                             <Icon shrink={false} type="alert" />
                             <Paragraph>
-                                Important! Only transfer assets on {walletPrefix} to your Towns
-                                wallet.
+                                Important! Only transfer assets on {chainName} to your Towns wallet.
                             </Paragraph>
                         </Box>
                     )}

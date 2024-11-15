@@ -4,7 +4,6 @@ import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { shortAddress } from 'ui/utils/utils'
 import { Icon, IconButton, Paragraph, Stack } from '@ui'
 import { useBalance } from 'hooks/useBalance'
-import { useWalletPrefix } from '../useWalletPrefix'
 
 export function WalletWithBalance({
     address,
@@ -21,7 +20,6 @@ export function WalletWithBalance({
         address: address,
         watch: true,
     })
-    const walletPrefix = useWalletPrefix()
 
     return (
         <Stack horizontal gap="sm" justifyContent="spaceBetween" alignItems="center" width="100%">
@@ -31,9 +29,7 @@ export function WalletWithBalance({
                     <ClipboardCopy
                         color={isAbstractAccount ? 'gray2' : 'gray1'}
                         label={shortAddress(address)}
-                        clipboardContent={
-                            isAbstractAccount ? `${walletPrefix}:${address}` : address
-                        }
+                        clipboardContent={address}
                     />
                 </Stack>
             )}
@@ -42,9 +38,7 @@ export function WalletWithBalance({
                     <ClipboardCopy
                         color={isAbstractAccount ? 'gray2' : 'gray1'}
                         label={shortAddress(address)}
-                        clipboardContent={
-                            isAbstractAccount ? `${walletPrefix}:${address}` : address
-                        }
+                        clipboardContent={address}
                     />
                     {UnlinkButton}
                 </Stack>
