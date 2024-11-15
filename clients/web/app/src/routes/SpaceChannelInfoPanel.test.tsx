@@ -87,7 +87,7 @@ describe('<SpaceChannelInfoPanel />', () => {
         expect(screen.getByText('Description')).toBeInTheDocument()
         expect(screen.getByText('Room Topic')).toBeInTheDocument()
         expect(screen.getByText('1 member')).toBeInTheDocument()
-        expect(screen.getByText('Mute #my-channel')).toBeInTheDocument()
+        expect(screen.getByTestId('notifications-settings-button')).toBeInTheDocument()
         expect(screen.getByText('Leave #my-channel')).toBeInTheDocument()
     })
 

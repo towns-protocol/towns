@@ -24,6 +24,7 @@ import { PanelButton } from '@components/Panel/PanelButton'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { Analytics } from 'hooks/useAnalytics'
+import { TownNotificationsButton } from '@components/NotificationSettings/NotificationsSettingsButton'
 import { ChannelMembersModal } from '../components/ChannelMembersPanel/ChannelMembersPanel'
 import { GDMChannelPermissionsModal } from './GDMChannelPermissions'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
@@ -165,14 +166,14 @@ export const DMChannelInfo = (props: { channelId?: string; data?: DMChannelIdent
                             </Text>
                         </PanelButton>
                     )}
-                    {/* {data?.isGroup && (
-                        <PanelButton onClick={onPermissionsClick}>
-                            <Icon type="people" size="square_sm" color="gray2" />
-                            <Text color="default" fontWeight="medium">
-                                Manage member permissions
-                            </Text>
-                        </PanelButton>
-                    )} */}
+
+                    {channelId && (
+                        <TownNotificationsButton
+                            type={isGDM ? 'gdm' : 'dm'}
+                            channelId={channelId}
+                        />
+                    )}
+
                     <PanelButton onClick={onLeaveClick}>
                         <Icon type="logout" color="error" size="square_sm" />
                         <Text color="error" fontWeight="medium">

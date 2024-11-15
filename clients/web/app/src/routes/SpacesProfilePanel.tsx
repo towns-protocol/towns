@@ -14,6 +14,7 @@ import {
     useMyProfile,
     useSpaceData,
     useTownsClient,
+    useTownsContext,
     useUserLookupContext,
     useWalletAddressIsBanned,
 } from 'use-towns-client'
@@ -44,6 +45,8 @@ import { useBlockedUsers } from 'hooks/useBlockedUsers'
 import { UserPreferences } from '@components/UserProfile/UserPreferences'
 import { Analytics } from 'hooks/useAnalytics'
 import { GetSigner } from 'privy/WalletReady'
+import { TownNotificationsButton } from '@components/NotificationSettings/NotificationsSettingsButton'
+import { useMatchingMessages } from '@components/DirectMessages/CreateDirectMessage/hooks/useMatchingMessages'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
 
 export const SpaceProfilePanel = () => {
@@ -209,6 +212,12 @@ const SpaceProfileWithoutAuth = () => {
             )
         }
     }, [isCurrentUser, simplifiedPermissionState, space?.id])
+
+    const { dmChannels } = useTownsContext()
+    const { matchingDM } = useMatchingMessages({
+        selectedUserArray: [userId ?? ''],
+        dmChannels,
+    })
 
     if (isLoadingRootKey) {
         return (
@@ -378,6 +387,10 @@ const SpaceProfileWithoutAuth = () => {
                         <Paragraph color="default">Send Message</Paragraph>
                     </PanelButton>
                 )}
+                {!isCurrentUser && matchingDM && (
+                    <TownNotificationsButton type="dm" channelId={matchingDM.id} />
+                )}
+
                 {!isCurrentUser &&
                     canBan &&
                     space &&

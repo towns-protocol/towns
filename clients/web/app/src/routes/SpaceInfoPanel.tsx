@@ -28,11 +28,7 @@ import { InteractiveSpaceIcon } from '@components/SpaceIcon'
 import { TownInfoModal } from '@components/TownInfoModal/TownInfoModal'
 import { LargeUploadImageTemplate } from '@components/UploadImage/LargeUploadImageTemplate'
 import { Box, FormRender, Icon, IconButton, Paragraph, Stack, Text, TextButton } from '@ui'
-import {
-    toggleMuteSetting,
-    useMuteSettings,
-    useSetMuteSettingForChannelOrSpace,
-} from 'api/lib/notificationSettings'
+import {} from 'api/lib/notificationSettings'
 import { useDevice } from 'hooks/useDevice'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { CHANNEL_INFO_PARAMS, TOWN_INFO_PARAMS } from 'routes'
@@ -59,6 +55,7 @@ import { useWaitForInvalidation } from 'hooks/useWaitForInvalidation'
 import { useRefreshSpaceMember } from 'hooks/useRefreshSpaceMember'
 import { useEntitlements } from 'hooks/useEntitlements'
 import { EntitlementsDisplay } from '@components/TownPageLayout/EntitlementsDisplay'
+import { TownNotificationsButton } from '@components/NotificationSettings/NotificationsSettingsButton'
 import { PublicTownPageForAuthenticatedUser } from './PublicTownPage/PublicTownPage'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
 
@@ -143,23 +140,7 @@ export const SpaceInfo = () => {
         } catch (_) {} // eslint-disable-line no-empty
     })
 
-    const spaceID = useSpaceId()
-    const { spaceIsMuted, spaceMuteSetting } = useMuteSettings({
-        spaceId: spaceID,
-    })
-    const { mutate: mutateNotificationSettings, isPending: isSettingNotification } =
-        useSetMuteSettingForChannelOrSpace()
-
-    const onToggleSpaceMuted = useCallback(() => {
-        if (!spaceID) {
-            return
-        }
-        // setSpaceMuted(spaceID.networkId, !spaceIsMuted)
-        mutateNotificationSettings({
-            spaceId: spaceID,
-            muteSetting: toggleMuteSetting(spaceMuteSetting),
-        })
-    }, [spaceID, mutateNotificationSettings, spaceMuteSetting])
+    const spaceId = useSpaceId()
 
     const onMembersClick = useCallback(() => {
         openPanel(CHANNEL_INFO_PARAMS.TOWN_MEMBERS)
@@ -168,7 +149,7 @@ export const SpaceInfo = () => {
     const onManageRolesClick = useEvent(() => {
         if (!isRolesPanel) {
             Analytics.getInstance().track('clicked on manage roles', {
-                spaceId: spaceID,
+                spaceId: spaceId,
             })
             openPanel(CHANNEL_INFO_PARAMS.ROLES)
             if (isTouch) {
@@ -198,27 +179,27 @@ export const SpaceInfo = () => {
     const onLeaveClick = useCallback(() => {
         setActiveModal('confirm-leave')
         Analytics.getInstance().track('clicked leave town', {
-            spaceId: spaceID,
+            spaceId,
             spaceName: space?.name,
         })
-    }, [space?.name, spaceID])
+    }, [space?.name, spaceId])
 
     const setOptimisticSpaceInitialized = useAppProgressStore(
         (state) => state.setOptimisticSpaceInitialized,
     )
     const leaveTown = useCallback(async () => {
-        if (!spaceID) {
+        if (!spaceId) {
             return
         }
 
-        await leaveRoom(spaceID)
-        await removeTownNotificationSettings(spaceID)
+        await leaveRoom(spaceId)
+        await removeTownNotificationSettings(spaceId)
 
         // clean up
-        setOptimisticSpaceInitialized(spaceID, false)
+        setOptimisticSpaceInitialized(spaceId, false)
 
         Analytics.getInstance().track('confirmed leave town', {
-            spaceId: spaceID,
+            spaceId: spaceId,
         })
 
         setTimeout(() => {
@@ -229,7 +210,7 @@ export const SpaceInfo = () => {
         navigate,
         removeTownNotificationSettings,
         setOptimisticSpaceInitialized,
-        spaceID,
+        spaceId,
     ])
 
     const onEditTownInfoClick = useCallback(() => {
@@ -321,7 +302,7 @@ export const SpaceInfo = () => {
             )}
             <Stack gap>
                 <TokensGatingSpace
-                    spaceId={spaceID}
+                    spaceId={spaceId}
                     canEdit={!!canEdit}
                     onClick={onEditSpaceSettingsClick}
                 />
@@ -337,7 +318,7 @@ export const SpaceInfo = () => {
                 <TownTreasury {...contractSpaceInfo} />
 
                 {!!owner && <TownOwner {...contractSpaceInfo} />}
-                <PanelButton disabled={isSettingNotification} onClick={onShowTownPreview}>
+                <PanelButton onClick={onShowTownPreview}>
                     <Icon type="search" size="square_sm" color="gray2" />
                     <Paragraph color="default">Preview Town Page</Paragraph>
                 </PanelButton>
@@ -360,18 +341,9 @@ export const SpaceInfo = () => {
                         {`${memberIds.length} member${memberIds.length > 1 ? `s` : ``}`}
                     </Paragraph>
                 </PanelButton>
-                {space?.name && (
-                    <PanelButton disabled={isSettingNotification} onClick={onToggleSpaceMuted}>
-                        <Icon
-                            type={spaceIsMuted ? 'muteActive' : 'muteInactive'}
-                            size="square_sm"
-                            color="gray2"
-                        />
-                        <Paragraph color="default">
-                            {spaceIsMuted ? 'Unmute' : 'Mute'} #{space.name}
-                        </Paragraph>
-                    </PanelButton>
-                )}
+
+                {spaceId && <TownNotificationsButton type="space" spaceId={spaceId} />}
+
                 <PanelButton disabled={channels.length === 0} onClick={onShowBrowseChannels}>
                     <Icon type="tag" size="square_sm" color="gray2" />
                     <Paragraph color="default">
@@ -380,7 +352,7 @@ export const SpaceInfo = () => {
                 </PanelButton>
 
                 {canBan && (
-                    <BannedUsersPanelButton spaceId={spaceID} onClick={onBannedUsersClick} />
+                    <BannedUsersPanelButton spaceId={spaceId} onClick={onBannedUsersClick} />
                 )}
                 <PanelButton tone="negative" onClick={onLeaveClick}>
                     <Icon type="logout" size="square_sm" />

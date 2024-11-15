@@ -18,11 +18,6 @@ import { EditChannelName } from '@components/Panel/EditChannelName'
 import { Box, Icon, Paragraph, Stack, Text, TextButton } from '@ui'
 import { CHANNEL_INFO_PARAMS, PATHS } from 'routes'
 import { useDevice } from 'hooks/useDevice'
-import {
-    toggleMuteSetting,
-    useMuteSettings,
-    useSetMuteSettingForChannelOrSpace,
-} from 'api/lib/notificationSettings'
 import { PanelButton } from '@components/Panel/PanelButton'
 import { Panel } from '@components/Panel/Panel'
 
@@ -34,6 +29,7 @@ import {
     channelPermissionDescriptions,
     isChannelPermission,
 } from '@components/SpaceSettingsPanel/rolePermissions.const'
+import { TownNotificationsButton } from '@components/NotificationSettings/NotificationsSettingsButton'
 import { ChannelMembersModal } from '../components/ChannelMembersPanel/ChannelMembersPanel'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
 import { ChannelsRolesList } from './RoleRestrictedChannelJoinPanel'
@@ -115,25 +111,6 @@ export const ChannelInfo = () => {
     const onOpenEditChannelSettingsPanel = useEvent(() => {
         openPanel(CHANNEL_INFO_PARAMS.EDIT_CHANNEL_RIVER_METADATA)
     })
-
-    const { mutate: mutateNotificationSettings, isPending: isSettingNotification } =
-        useSetMuteSettingForChannelOrSpace()
-
-    const { channelIsMuted, spaceIsMuted, channelMuteSetting } = useMuteSettings({
-        spaceId: spaceData?.id,
-        channelId: channel?.id,
-    })
-
-    const onToggleChannelMuted = useCallback(() => {
-        if (!spaceData || !channel) {
-            return
-        }
-        mutateNotificationSettings({
-            spaceId: spaceData.id,
-            channelId: channel.id,
-            muteSetting: toggleMuteSetting(channelMuteSetting),
-        })
-    }, [channel, channelMuteSetting, mutateNotificationSettings, spaceData])
 
     const info = useMemo(
         () => [
@@ -256,33 +233,12 @@ export const ChannelInfo = () => {
                             : `${memberIds.length} member${memberIds.length > 1 ? `s` : ``}`}
                     </Paragraph>
                 </PanelButton>
-
-                {channel && isUserChannelMember && (
-                    <>
-                        <PanelButton
-                            disabled={spaceIsMuted || isSettingNotification}
-                            cursor={spaceIsMuted ? 'default' : 'pointer'}
-                            opacity={spaceIsMuted ? '0.5' : 'opaque'}
-                            onClick={onToggleChannelMuted}
-                        >
-                            <Icon
-                                type={channelIsMuted ? 'muteActive' : 'muteInactive'}
-                                size="square_sm"
-                                color="gray2"
-                            />
-                            <Stack gap="sm">
-                                <Paragraph fontWeight="medium" color="default">
-                                    {spaceIsMuted ? (
-                                        spaceData?.name && <>{spaceData?.name} is muted</>
-                                    ) : (
-                                        <>
-                                            {channelIsMuted ? 'Unmute' : 'Mute'} #{channel?.label}
-                                        </>
-                                    )}
-                                </Paragraph>
-                            </Stack>
-                        </PanelButton>
-                    </>
+                {channelId && (
+                    <TownNotificationsButton
+                        type="channel"
+                        spaceId={spaceId}
+                        channelId={channelId}
+                    />
                 )}
 
                 {canEditChannel && (
