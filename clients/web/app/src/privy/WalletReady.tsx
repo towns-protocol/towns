@@ -21,7 +21,7 @@ export function WalletReady(props: Omit<PrivyWalletReadyProps, 'chainId'>) {
             chainId={baseChain.id}
             WaitForPrivy={WaitForPrivyOverride ?? <SpinnerFallback />}
             WaitForWallets={WaitForWalletsOverride ?? <SpinnerFallback />}
-            LoginButton={LoginButtonOverride ?? <LoginButton />}
+            LoginButton={LoginButtonOverride ?? <ReauthenticateButton />}
         >
             {children}
         </PrivyWalletReady>
@@ -36,10 +36,12 @@ function SpinnerFallback() {
     )
 }
 
-function LoginButton() {
+export function ReauthenticateButton(props: { message?: string }) {
     const { privyLogin } = useCombinedAuth()
+    const message =
+        props.message ?? 'For your security, please click to re-authenticate with Privy.'
     return (
-        <Box tooltip="For your security, please click to re-authenticate with Privy." width="100%">
+        <Box tooltip={message} width="100%">
             <Button tone="negativeSubtle" onClick={privyLogin}>
                 <Icon type="alert" size="square_inline" />
                 <Text>Reauthenticate</Text>

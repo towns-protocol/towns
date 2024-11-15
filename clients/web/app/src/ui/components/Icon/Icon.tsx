@@ -1926,6 +1926,50 @@ const ExploreIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
     </svg>
 ))
 
+const Mail = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
+    <svg
+        width="21"
+        height="20"
+        viewBox="0 0 21 20"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        {...props}
+        ref={ref}
+    >
+        <path
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="M3.83337 4.16667C3.37694 4.16667 3.00004 4.54357 3.00004 5V15C3.00004 15.4564 3.37694 15.8333 3.83337 15.8333H17.1667C17.6231 15.8333 18 15.4564 18 15V5C18 4.54357 17.6231 4.16667 17.1667 4.16667H3.83337ZM1.33337 5C1.33337 3.6231 2.45647 2.5 3.83337 2.5H17.1667C18.5436 2.5 19.6667 3.6231 19.6667 5V15C19.6667 16.3769 18.5436 17.5 17.1667 17.5H3.83337C2.45647 17.5 1.33337 16.3769 1.33337 15V5Z"
+            fill="currentColor"
+        />
+        <path
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="M1.48396 4.52215C1.74789 4.1451 2.2675 4.05341 2.64454 4.31734L10.5 9.81615L18.3554 4.31734C18.7325 4.05341 19.2521 4.1451 19.516 4.52215C19.7799 4.89919 19.6882 5.4188 19.3112 5.68272L10.9779 11.5161C10.6909 11.7169 10.309 11.7169 10.0221 11.5161L1.68877 5.68272C1.31173 5.4188 1.22003 4.89919 1.48396 4.52215Z"
+            fill="currentColor"
+        />
+    </svg>
+))
+
+const Phone = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
+    <svg
+        width="20"
+        height="20"
+        viewBox="0 0 20 20"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        {...props}
+        ref={ref}
+    >
+        <path
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="M6.66663 2.49634C5.28591 2.49634 4.16663 3.61563 4.16663 4.99634V14.9963C4.16663 16.3771 5.28591 17.4963 6.66663 17.4963H13.3333C14.714 17.4963 15.8333 16.3771 15.8333 14.9963V4.99634C15.8333 3.61563 14.714 2.49634 13.3333 2.49634H6.66663ZM5.83329 4.99634C5.83329 4.5361 6.20639 4.163 6.66663 4.163H13.3333C13.7935 4.163 14.1666 4.5361 14.1666 4.99634V14.9963C14.1666 15.4566 13.7935 15.8297 13.3333 15.8297H6.66663C6.20639 15.8297 5.83329 15.4566 5.83329 14.9963V4.99634ZM9.99996 14.8862C10.4602 14.8862 10.8333 14.5131 10.8333 14.0529C10.8333 13.5927 10.4602 13.2196 9.99996 13.2196C9.53972 13.2196 9.16663 13.5927 9.16663 14.0529C9.16663 14.5131 9.53972 14.8862 9.99996 14.8862Z"
+            fill="currentColor"
+        />
+    </svg>
+))
+
 const iconMap = {
     alert: Alert,
     all: AllIcon,
@@ -1981,6 +2025,7 @@ const iconMap = {
     linkOutWithFrame: LinkOutWithFrame,
     lock: LockIcon,
     logout: LogoutIcon,
+    mail: Mail,
     manifesto: Manifesto,
     message: MessageIcon,
     messageVariant: MessageVariantIcon,
@@ -2002,6 +2047,7 @@ const iconMap = {
     personAdd: PersonAdd,
     personEdit: PersonEdit,
     play: PlayIcon,
+    phone: Phone,
     pin: PinIcon,
     pinFill: PinFillIcon,
     plus: PlusIcon,

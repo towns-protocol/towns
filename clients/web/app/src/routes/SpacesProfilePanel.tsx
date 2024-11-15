@@ -283,9 +283,9 @@ const SpaceProfileWithoutAuth = () => {
 
                     <PanelButton onClick={onIdentityClick}>
                         <Box width="height_md" alignItems="center">
-                            <Icon type="wallet" size="square_sm" />
+                            <Icon type="link" size="square_sm" />
                         </Box>
-                        <Paragraph>Identity</Paragraph>
+                        <Paragraph>Linked Accounts</Paragraph>
                     </PanelButton>
 
                     {simplifiedPermissionState === 'soft-denied' && (
