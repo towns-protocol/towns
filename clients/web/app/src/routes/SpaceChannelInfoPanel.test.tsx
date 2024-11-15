@@ -4,21 +4,26 @@ import { render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 // eslint-disable-next-line no-restricted-imports
 import * as Lib from 'use-towns-client'
+import { genId, makeSpaceStreamId, makeUniqueChannelStreamId } from '@river-build/sdk'
 import { TestApp } from 'test/testUtils'
 import { roleDataWithBothRolesAssignedToChannel } from 'test/testMocks'
 import { ChannelInfoPanel } from './SpaceChannelInfoPanel'
 
+const spaceId = makeSpaceStreamId(genId(40))
+const channelId = makeUniqueChannelStreamId(spaceId)
+
 vi.mock('use-towns-client', async () => {
     const actual = (await vi.importActual('use-towns-client')) as typeof Lib
+
     return {
         ...actual,
         useChannelData: (): ReturnType<typeof Lib.useChannelData> => ({
             channel: {
-                id: 'channelId',
+                id: channelId,
                 label: 'my-channel',
             },
-            channelId: 'channelId',
-            spaceId: 'spaceId',
+            channelId: channelId,
+            spaceId: spaceId,
         }),
         useChannelMembers: (): ReturnType<typeof Lib.useChannelMembers> => ({
             memberIds: ['0x123'],
@@ -44,7 +49,7 @@ vi.mock('use-towns-client', async () => {
 const Wrapper = () => {
     return (
         <TestApp>
-            <Lib.SpaceContextProvider spaceId="spaceId">
+            <Lib.SpaceContextProvider spaceId={spaceId}>
                 <ChannelInfoPanel />
             </Lib.SpaceContextProvider>
         </TestApp>
@@ -119,8 +124,8 @@ describe('<SpaceChannelInfoPanel />', () => {
             isLoading: false,
             error: undefined,
             channelSettings: {
-                spaceNetworkId: 'spaceId',
-                channelNetworkId: 'channelId',
+                spaceNetworkId: spaceId,
+                channelNetworkId: channelId,
                 name: 'my-channel',
                 disabled: false,
                 roles: [
@@ -159,8 +164,8 @@ describe('<SpaceChannelInfoPanel />', () => {
             isLoading: false,
             error: undefined,
             channelSettings: {
-                spaceNetworkId: 'spaceId',
-                channelNetworkId: 'channelId',
+                spaceNetworkId: spaceId,
+                channelNetworkId: channelId,
                 name: 'my-channel',
                 disabled: false,
                 roles: [

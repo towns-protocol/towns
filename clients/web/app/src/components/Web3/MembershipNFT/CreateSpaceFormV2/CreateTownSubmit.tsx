@@ -24,7 +24,6 @@ import { createPrivyNotAuthenticatedNotification } from '@components/Notificatio
 import { prepareGatedDataForSubmit } from '@components/Tokens/utils'
 import { useStore } from 'store/store'
 import { Analytics } from 'hooks/useAnalytics'
-import { useNotificationSettings } from 'hooks/useNotificationSettings'
 import { usePlatformMinMembershipPriceInEth } from 'hooks/usePlatformMinMembershipPriceInEth'
 import { useUploadAttachment } from '@components/MediaDropContext/useUploadAttachment'
 import { StandardToast, dismissToast } from '@components/Notifications/StandardToast'
@@ -54,7 +53,6 @@ export function CreateTownSubmit({
         'membershipPricingType',
     ])
 
-    const { addChannelNotificationSettings } = useNotificationSettings()
     const { data: minimumMmebershipPrice } = usePlatformMinMembershipPriceInEth()
 
     // use the hook props instead of BlockchainStore/BlockchainTxNotifier
@@ -341,12 +339,6 @@ export function CreateTownSubmit({
 
                         setRecentlyMintedSpaceToken({ spaceId: networkId, isOwner: true })
 
-                        // update the notification settings for the newly created space and channel
-                        await addChannelNotificationSettings({
-                            channelId: result.data.channelId,
-                            spaceId: result.data.spaceId,
-                        })
-
                         setTimeout(() => {
                             navigate(newPath, {
                                 state: { fromCreateTown: true },
@@ -378,7 +370,6 @@ export function CreateTownSubmit({
             setPanelType,
             createSpaceTransactionWithRole,
             onCreateSpaceFlowStatus,
-            addChannelNotificationSettings,
             uploadTownImageToStream,
             spaceInfoCache,
             navigate,

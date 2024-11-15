@@ -32,7 +32,6 @@ import { useBlockedUsers } from 'hooks/useBlockedUsers'
 import { useDevice } from 'hooks/useDevice'
 import { useIsChannelReactable } from 'hooks/useIsChannelReactable'
 import { useIsChannelWritable } from 'hooks/useIsChannelWritable'
-import { useNotificationSettings } from 'hooks/useNotificationSettings'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { QUERY_PARAMS } from 'routes'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
@@ -387,17 +386,6 @@ const Messages = (props: {
     const galleryThreadId = searchParams.get(QUERY_PARAMS.GALLERY_THREAD_ID)
 
     // -------------------------------------------------------------------------
-
-    const { channelSettings, addChannelNotificationSettings } = useNotificationSettings()
-
-    useEffect(() => {
-        if (channelId && !channelSettings?.some((c) => c.channelId === channelId)) {
-            addChannelNotificationSettings({
-                channelId,
-                spaceId,
-            })
-        }
-    }, [addChannelNotificationSettings, channelId, channelSettings, spaceId])
 
     useEffect(() => {
         if (!client) {

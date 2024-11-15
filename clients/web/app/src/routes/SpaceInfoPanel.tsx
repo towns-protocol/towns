@@ -28,7 +28,6 @@ import { InteractiveSpaceIcon } from '@components/SpaceIcon'
 import { TownInfoModal } from '@components/TownInfoModal/TownInfoModal'
 import { LargeUploadImageTemplate } from '@components/UploadImage/LargeUploadImageTemplate'
 import { Box, FormRender, Icon, IconButton, Paragraph, Stack, Text, TextButton } from '@ui'
-import {} from 'api/lib/notificationSettings'
 import { useDevice } from 'hooks/useDevice'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { CHANNEL_INFO_PARAMS, TOWN_INFO_PARAMS } from 'routes'
@@ -43,7 +42,6 @@ import { useEnvironment } from 'hooks/useEnvironmnet'
 import { Panel } from '@components/Panel/Panel'
 import { SpaceSettingsNavigationPanel } from '@components/SpaceSettingsPanel/SpaceSettingsNavigationPanel'
 import { useAppProgressStore } from '@components/AppProgressOverlay/store/appProgressStore'
-import { useNotificationSettings } from 'hooks/useNotificationSettings'
 import { useUploadAttachment } from '@components/MediaDropContext/useUploadAttachment'
 import { EditTownInfo } from '@components/Panel/EditTownInfo'
 import { ContractInfoButtons } from '@components/Panel/ContractInfoButtons'
@@ -101,8 +99,6 @@ export const SpaceInfo = () => {
         walletAddress: loggedInWalletAddress ?? '',
         permission: Permission.ModifyBanning,
     })
-
-    const { removeTownNotificationSettings } = useNotificationSettings()
 
     const { memberIds } = useSpaceMembers()
     const [activeModal, setActiveModal] = useState<
@@ -193,7 +189,6 @@ export const SpaceInfo = () => {
         }
 
         await leaveRoom(spaceId)
-        await removeTownNotificationSettings(spaceId)
 
         // clean up
         setOptimisticSpaceInitialized(spaceId, false)
@@ -205,13 +200,7 @@ export const SpaceInfo = () => {
         setTimeout(() => {
             navigate('/')
         }, 1000)
-    }, [
-        leaveRoom,
-        navigate,
-        removeTownNotificationSettings,
-        setOptimisticSpaceInitialized,
-        spaceId,
-    ])
+    }, [leaveRoom, navigate, setOptimisticSpaceInitialized, spaceId])
 
     const onEditTownInfoClick = useCallback(() => {
         setActiveModal(TOWN_INFO_PARAMS.EDIT_TOWN_NAME)

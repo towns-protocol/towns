@@ -82,7 +82,6 @@ interface TownsContextProviderProps {
     timelineFilter?: Set<ZTEvent>
     streamFilter?: Set<SnapshotCaseType>
     children: JSX.Element
-    mutedChannelIds?: string[]
     QueryClientProvider?: React.ElementType<{ children: JSX.Element }>
     pushNotificationAuthToken?: string
     pushNotificationWorkerUrl?: string
@@ -121,15 +120,7 @@ const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
         }, [])
     }
 
-    const {
-        environmentId,
-        baseConfig,
-        baseChain,
-        riverConfig,
-        riverChain,
-        timelineFilter,
-        mutedChannelIds,
-    } = props
+    const { environmentId, baseConfig, baseChain, riverConfig, riverChain, timelineFilter } = props
 
     const previousProps = useRef<TownsContextProviderProps>()
 
@@ -211,7 +202,7 @@ const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
 
     const { spaceUnreads, spaceMentions, spaceUnreadChannelIds } = useSpaceUnreads({
         client,
-        mutedChannelIds,
+        notificationSettingsClient,
     })
 
     const { dmUnreadChannelIds } = useDMUnreads(casablancaClient, dmChannels)

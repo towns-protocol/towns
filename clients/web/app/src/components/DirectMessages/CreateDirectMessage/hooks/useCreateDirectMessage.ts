@@ -4,7 +4,6 @@ import { useSearchParams } from 'react-router-dom'
 import { useTownsClient, useTownsContext } from 'use-towns-client'
 import { useErrorToast } from 'hooks/useErrorToast'
 import { useCreateLink } from 'hooks/useCreateLink'
-import { useNotificationSettings } from 'hooks/useNotificationSettings'
 import { useMatchingMessages } from './useMatchingMessages'
 
 type Params = {
@@ -29,7 +28,6 @@ export const useCreateDirectMessage = (params: Params) => {
     const navigate = useNavigate()
 
     const [search] = useSearchParams()
-    const { addDmGdmNotificationSettings } = useNotificationSettings()
 
     const { matchingDM } = useMatchingMessages({
         selectedUserArray: userIds,
@@ -63,8 +61,6 @@ export const useCreateDirectMessage = (params: Params) => {
             console.log('create dm/gm: existingChannel', matchingDM)
             const link = createLink({ messageId: matchingDM.id })
             if (link) {
-                console.log('add dm notification settings', matchingDM.id)
-                void addDmGdmNotificationSettings(matchingDM.id)
                 if (onStreamCreated) {
                     onStreamCreated?.(matchingDM.id)
                 } else {
@@ -101,7 +97,6 @@ export const useCreateDirectMessage = (params: Params) => {
             console.log('create dm: created stream', streamId)
 
             console.log('add dm notification settings', streamId)
-            void addDmGdmNotificationSettings(streamId)
 
             if (onStreamCreated) {
                 console.log('create dm: apply stream to draft', streamId)
@@ -133,7 +128,6 @@ export const useCreateDirectMessage = (params: Params) => {
 
             if (link) {
                 console.log('add gdm notification settings', streamId)
-                void addDmGdmNotificationSettings(streamId)
 
                 if (onStreamCreated) {
                     console.log('create gm: apply stream to draft', streamId)
@@ -150,7 +144,6 @@ export const useCreateDirectMessage = (params: Params) => {
         userIds,
         matchingDM,
         createLink,
-        addDmGdmNotificationSettings,
         onStreamCreated,
         navigate,
         linkRef,

@@ -25,7 +25,6 @@ import { useUnseenChannelIds } from 'hooks/useUnseenChannelIdsCount'
 import { LinkParams, useCreateLink } from 'hooks/useCreateLink'
 import { Analytics } from 'hooks/useAnalytics'
 import { useLeaveChannel } from 'hooks/useLeaveChannel'
-import { useNotificationSettings } from 'hooks/useNotificationSettings'
 import { useChannelEntitlements } from 'hooks/useChannelEntitlements'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { addressFromSpaceId } from 'ui/utils/utils'
@@ -276,8 +275,6 @@ export function useOnJoinChannel(props: {
     const groups = useMyChannels(space)
     const myJoinedChannelsInSpace = useMemo(() => groups.flatMap((c) => c.channels), [groups])
     const { leaveChannel } = useLeaveChannel()
-    const { addChannelNotificationSettings, removeChannelNotificationSettings } =
-        useNotificationSettings()
     const navigate = useNavigate()
     const { client } = useTownsClient()
 
@@ -317,7 +314,6 @@ export function useOnJoinChannel(props: {
 
             if (isJoined) {
                 await leaveChannel(channelId, space.id)
-                await removeChannelNotificationSettings(channelId)
                 if (currentChannelId === channelId) {
                     // leaving the last channel
                     if (joinedChannels.length === 1) {
@@ -371,16 +367,6 @@ export function useOnJoinChannel(props: {
                         console.error('[AllChannelsList]', 'cannot join channel', room)
                         throw new Error('cannot join channel')
                     }
-                    addChannelNotificationSettings({
-                        channelId: channelId,
-                        spaceId: space.id,
-                    }).catch((error) => {
-                        console.warn(
-                            '[AllChannelList',
-                            'cannot add channel notification settings',
-                            error,
-                        )
-                    })
                     console.log('[AllChannelsList]', 'joined room', 'room', room)
                     return true
                 } catch (e) {
@@ -398,7 +384,6 @@ export function useOnJoinChannel(props: {
             }
         },
         [
-            addChannelNotificationSettings,
             channelId,
             client,
             closePanel,
@@ -408,7 +393,6 @@ export function useOnJoinChannel(props: {
             leaveChannel,
             myJoinedChannelsInSpace,
             navigate,
-            removeChannelNotificationSettings,
             setTownRouteBookmark,
             space,
         ],

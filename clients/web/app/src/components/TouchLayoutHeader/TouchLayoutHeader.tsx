@@ -2,13 +2,13 @@ import React, { useCallback } from 'react'
 import {
     Membership,
     useContractSpaceInfo,
+    useMuteSettings,
     useMyMembership,
     useSpaceData,
     useSpaceMembers,
 } from 'use-towns-client'
 import { Box, Dot, Icon, IconButton, Paragraph, Stack, Text } from '@ui'
 import { useShowHasUnreadBadgeForOtherSpaces } from 'hooks/useSpaceUnreadsIgnoreMuted'
-import { useMuteSettings } from 'api/lib/notificationSettings'
 import { BugReportButton } from '@components/BugReportButton/BugReportButton'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { CHANNEL_INFO_PARAMS } from 'routes'

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import { FullyReadMarker } from '@river-build/proto'
 import { TownsClient } from '../../client/TownsClient'
 import { useFullyReadMarkerStore } from '../../store/use-fully-read-marker-store'
@@ -7,13 +7,17 @@ import isEqual from 'lodash/isEqual'
 import debounce from 'lodash/debounce'
 import { isChannelStreamId, spaceIdFromChannelId } from '@river-build/sdk'
 import { useSpaceIdStore } from './useSpaceIds'
+import {
+    getMutedChannelIds,
+    NotificationSettingsClient,
+} from '../../client/TownsNotifciationSettings'
 
 export function useSpaceUnreads({
     client,
-    mutedChannelIds,
+    notificationSettingsClient,
 }: {
     client: TownsClient | undefined
-    mutedChannelIds?: string[]
+    notificationSettingsClient?: NotificationSettingsClient
 }) {
     const [state, setState] = useState<{
         spaceUnreads: Record<string, boolean>
@@ -22,6 +26,18 @@ export function useSpaceUnreads({
     }>({ spaceUnreads: {}, spaceMentions: {}, spaceUnreadChannelIds: {} })
 
     const { spaceIds } = useSpaceIdStore()
+
+    const settings = useSyncExternalStore(
+        (subscriber) => {
+            if (!notificationSettingsClient) {
+                return () => {}
+            }
+            return notificationSettingsClient?.data.subscribe(subscriber)
+        },
+        () => notificationSettingsClient?.data.value.settings,
+    )
+
+    const mutedChannelIds = useMemo(() => getMutedChannelIds(settings), [settings])
 
     useEffect(() => {
         if (!client) {
@@ -100,7 +116,7 @@ export function useSpaceUnreads({
                             }
                         }
                         if (marker.isUnread && isParticipatingThread(marker, threadsStats)) {
-                            const isMuted = mutedChannelIds?.includes(marker.channelId)
+                            const isMuted = mutedChannelIds?.has(marker.channelId)
                             if (!isMuted) {
                                 results[spaceId].mentions += marker.mentions
                                 results[spaceId].isUnread = true

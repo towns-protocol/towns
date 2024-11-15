@@ -2,6 +2,7 @@ import { useMemo, useRef } from 'react'
 import {
     Channel,
     DMChannelIdentifier,
+    useMutedStreamIds,
     useMyChannels,
     useSpaceDataWithId,
     useSpaceMembers,
@@ -10,7 +11,6 @@ import {
     useUserLookupStore,
 } from 'use-towns-client'
 import { isEqual } from 'lodash'
-import { useMutedStreamIds } from 'api/lib/notificationSettings'
 import { useSpaceChannels } from './useSpaceChannels'
 import { useFavoriteChannels } from './useFavoriteChannels'
 
@@ -57,7 +57,7 @@ export const useSortedChannels = ({ spaceId, currentRouteId }: Params) => {
     const { memberIds } = useSpaceMembers()
     const { joinedChannels } = useJoinedChannels(spaceId)
     const { favoriteChannelIds } = useFavoriteChannels()
-    const { mutedStreamIds } = useMutedStreamIds()
+    const mutedStreamIds = useMutedStreamIds()
 
     const unreadChannelIds = useMemo(
         () => (spaceId ? spaceUnreadChannelIds[spaceId] : new Set()),

@@ -4,6 +4,7 @@ import {
     useChannelMembers,
     useDMData,
     useMembers,
+    useMuteSettings,
     useMyUserId,
     useRoom,
     useStreamUpToDate,
@@ -16,7 +17,6 @@ import { ChannelUsersPill } from '@components/ChannelUserPill/ChannelUserPill'
 import { TouchNavBar } from '@components/TouchNavBar/TouchNavBar'
 import { useUserList } from '@components/UserList/UserList'
 import { Box, Button, CardHeader, Icon, IconButton, MotionStack, Paragraph, Stack, Text } from '@ui'
-import { useMuteSettings } from 'api/lib/notificationSettings'
 import { useChannelType } from 'hooks/useChannelType'
 import { useDevice } from 'hooks/useDevice'
 import { usePushNotifications } from 'hooks/usePushNotifications'

@@ -20,7 +20,6 @@ import { AllRoutes } from 'AllRoutes'
 import { ServiceWorkerMetadataSyncer } from 'workers/ServiceWorkerMetadataSyncer'
 import DebugBar from '@components/DebugBar/DebugBar'
 import { BlockchainTxNotifier } from '@components/Web3/BlockchainTxNotifier'
-import { SyncNotificationSettings } from '@components/SyncNotificationSettings/SyncNotificationSettings'
 import { MonitorJoinFlow } from 'routes/PublicTownPage/MontiorJoinFlow'
 import { getRouteParams } from 'routes/SpaceContextRoute'
 import {
@@ -45,7 +44,6 @@ const analyticsInstance = Analytics.getInstance()
 
 export const App = () => {
     const theme = useStore((state) => state.getTheme())
-    const mutedChannelIds = useStore((state) => state.mutedChannelIds)
     const spaceIdBookmark = useStore((state) => state.spaceIdBookmark)
     const townRouteBookmarks = useStore((state) => state.townRouteBookmarks)
     const unpackEnvelopeOpts =
@@ -144,7 +142,6 @@ export const App = () => {
 
     return (
         <TownsContextProvider
-            mutedChannelIds={mutedChannelIds}
             environmentId={environment.id}
             baseChain={environment.baseChain}
             baseConfig={environment.baseChainConfig}
@@ -189,7 +186,6 @@ export const App = () => {
                     {!env.VITE_DISABLE_DEBUG_BARS && (
                         <ReactQueryDevtools position="bottom" initialIsOpen={false} />
                     )}
-                    <SyncNotificationSettings />
                     <Notifications />
                     <BlockchainTxNotifier />
                     <ServiceWorkerMetadataSyncer />

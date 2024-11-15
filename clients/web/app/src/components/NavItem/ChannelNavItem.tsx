@@ -1,9 +1,8 @@
 import React from 'react'
 import { useParams } from 'react-router'
-import { Channel, SpaceData, useTownsContext } from 'use-towns-client'
+import { Channel, SpaceData, useMuteSettings, useTownsContext } from 'use-towns-client'
 import { PATHS } from 'routes'
 import { Badge, Box, ButtonText, Icon, Stack } from '@ui'
-import { useMuteSettings } from 'api/lib/notificationSettings'
 import { FavoriteChannelButton } from '@components/FavoriteChannelButton/FavoriteChannelButton'
 import { useChannelEntitlements } from 'hooks/useChannelEntitlements'
 import { addressFromSpaceId } from 'ui/utils/utils'
@@ -38,7 +37,6 @@ export const ChannelNavItem = (props: Props) => {
 
     const link = `/${PATHS.SPACES}/${addressFromSpaceId(space.id)}/channels/${channel.id}/`
     const isHighlight = channel.id === channelSlug
-
     const { channelIsMuted, spaceIsMuted } = useMuteSettings({
         spaceId: space.id,
         channelId: channel.id,

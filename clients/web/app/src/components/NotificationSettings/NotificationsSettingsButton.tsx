@@ -1,5 +1,7 @@
 import React, { useCallback, useMemo, useState } from 'react'
+import { useNotificationSettings } from 'use-towns-client'
 import { Box, Icon, Paragraph, PopupMenu, Stack } from '@ui'
+import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import {
     channelNotificationSettings,
     dmNotificationSettings,
@@ -21,37 +23,130 @@ type Props =
           channelId: string
       }
     | {
+          type: 'gdmGlobal'
+      }
+    | {
           type: 'dm'
           channelId: string
       }
+    | {
+          type: 'dmGlobal'
+      }
+
+function makeSettingsOptions<K, T extends { value: K }>(
+    options: T[],
+    currentValue: K,
+    setSetting: (newValue: K) => void,
+) {
+    let index = options.findIndex((option) => option.value === currentValue)
+    if (index === -1) {
+        console.error('NotificationSettingsButton: Invalid index', { options, currentValue, index })
+        index = 0
+    }
+    return {
+        options: options,
+        index: options.findIndex((option) => option.value === currentValue),
+        setSettingFn: (index: number) => {
+            const newOption = options[index]
+            return setSetting(newOption.value)
+        },
+    }
+}
 
 export function TownNotificationsButton(props: Props) {
-    const { type } = props
+    const {
+        isLoading,
+        notificationSettingsClient,
+        getSpaceSetting,
+        getChannelSetting,
+        getDmSetting,
+        getGdmSetting,
+        getGdmGlobalSetting,
+        getDmGlobalSetting,
+    } = useNotificationSettings()
 
-    const options = useMemo(() => {
-        switch (type) {
+    const { options, index, setSettingFn } = useMemo(() => {
+        switch (props.type) {
             case 'space': {
-                return channelNotificationSettings
+                return makeSettingsOptions(
+                    channelNotificationSettings,
+                    getSpaceSetting(props.spaceId),
+                    (value) => notificationSettingsClient?.setSpaceSetting(props.spaceId, value),
+                )
             }
             case 'channel': {
-                return channelNotificationSettings
+                return makeSettingsOptions(
+                    channelNotificationSettings,
+                    getChannelSetting(props.channelId),
+                    (value) =>
+                        notificationSettingsClient?.setChannelSetting(props.channelId, value),
+                )
             }
             case 'gdm': {
-                return gdmNotificationSettings
+                return makeSettingsOptions(
+                    gdmNotificationSettings,
+                    getGdmSetting(props.channelId),
+                    (value) =>
+                        notificationSettingsClient?.setGdmChannelSetting(props.channelId, value),
+                )
             }
             case 'dm': {
-                return dmNotificationSettings
+                return makeSettingsOptions(
+                    dmNotificationSettings,
+                    getDmSetting(props.channelId),
+                    (value) =>
+                        notificationSettingsClient?.setDmChannelSetting(props.channelId, value),
+                )
+            }
+            case 'gdmGlobal': {
+                return makeSettingsOptions(
+                    gdmNotificationSettings,
+                    getGdmGlobalSetting(),
+                    (value) => notificationSettingsClient?.setGdmGlobalSetting(value),
+                )
+            }
+            case 'dmGlobal': {
+                return makeSettingsOptions(dmNotificationSettings, getDmGlobalSetting(), (value) =>
+                    notificationSettingsClient?.setDmGlobalSetting(value),
+                )
             }
         }
-    }, [type])
+    }, [
+        getChannelSetting,
+        getDmGlobalSetting,
+        getDmSetting,
+        getGdmGlobalSetting,
+        getGdmSetting,
+        getSpaceSetting,
+        notificationSettingsClient,
+        props,
+    ])
+    console.log('TNS PUSH: notificationSettingsButton', { options, index })
+    const [value, setValue] = useState<(typeof options)[number]>(options[index])
 
-    const [value, setValue] = useState<(typeof options)[number]>(options[0])
+    const onChange = useCallback(
+        (option: (typeof options)[number]) => {
+            setValue(option)
+            const index = options.findIndex((o) => o.value === option.value)
+            if (index === -1) {
+                console.error('NotificationSettingsButton: Invalid index on press', {
+                    options,
+                    option,
+                    index,
+                })
+                return
+            }
+            setSettingFn(index)
+        },
+        [options, setSettingFn],
+    )
 
-    const onChange = useCallback((option: (typeof options)[number]) => {
-        setValue(option)
-    }, [])
-
-    return (
+    return isLoading ? (
+        <Stack horizontal data-testid="notifications-settings-button" gap="sm" alignItems="center">
+            <Icon type="notificationsOn" size="square_sm" color="gray2" />
+            <ButtonSpinner />
+        </Stack>
+    ) : (
         <PopupMenu
             options={options}
             value={value}

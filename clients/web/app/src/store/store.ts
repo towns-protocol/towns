@@ -30,8 +30,6 @@ interface AppState {
     setPushNotificationsPromptClosed: { (denied: boolean): void }
     setSearchTerms: (searchTerms: string) => void
     searchTerms: string
-    mutedChannelIds: string[]
-    setMutedChannelIds: (mutedChannelIds: string[]) => void
     sidePanel: string | null
     setSidePanel: (sidePanel: string | null) => void
     setBugReportCredentials: (value: Partial<{ name: string; email: string }>) => void
@@ -69,10 +67,6 @@ export const useStore = create(
             setSystemTheme: (systemTheme) => {
                 set(() => ({ systemTheme }))
             },
-            setMutedChannelIds: (mutedChannelIds: string[]) => {
-                set(() => ({ mutedChannelIds }))
-            },
-            mutedChannelIds: [],
             spaceIdBookmark: undefined,
             townRouteBookmarks: {},
             setTownRouteBookmark: (spaceId, route) => {
