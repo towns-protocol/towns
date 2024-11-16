@@ -19,8 +19,6 @@ export interface TownsOpts {
         [chainId: number]: string
     }
     logNamespaceFilter?: string
-    pushNotificationWorkerUrl?: string
-    pushNotificationAuthToken?: string
     verbose?: boolean
     accountAbstractionConfig?: AccountAbstractionConfig
     highPriorityStreamIds?: string[]

@@ -148,8 +148,6 @@ export const App = () => {
             riverChain={environment.riverChain}
             riverConfig={environment.riverChainConfig}
             timelineFilter={DEFAULT_TIMELINE_FILTER}
-            pushNotificationAuthToken={env.VITE_AUTH_WORKER_HEADER_SECRET}
-            pushNotificationWorkerUrl={env.VITE_WEB_PUSH_WORKER_URL}
             riverNotificationServiceUrl={env.VITE_RIVER_NOTIFICATION_SERVICE_URL}
             accountAbstractionConfig={environment.accountAbstractionConfig}
             highPriorityStreamIds={highPriorityStreamIds.current}

@@ -215,6 +215,13 @@ export class NotificationSettingsClient {
         })
     }
 
+    async unsubscribeWebPush(subscription: PlainMessage<WebPushSubscriptionObject>) {
+        return this.withClient(async (client) => {
+            console.log('TNS PUSH: unsubscribing to web push')
+            return client.unsubscribeWebPush({ subscription })
+        })
+    }
+
     async setDmGlobalSetting(value: DmChannelSettingValue) {
         return this.withClient(async (client) => {
             await client.setDmGdmSettings({

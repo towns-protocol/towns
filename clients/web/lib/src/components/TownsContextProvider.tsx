@@ -83,8 +83,6 @@ interface TownsContextProviderProps {
     streamFilter?: Set<SnapshotCaseType>
     children: JSX.Element
     QueryClientProvider?: React.ElementType<{ children: JSX.Element }>
-    pushNotificationAuthToken?: string
-    pushNotificationWorkerUrl?: string
     riverNotificationServiceUrl?: string
     accountAbstractionConfig?: AccountAbstractionConfig
     highPriorityStreamIds?: string[]
@@ -153,8 +151,6 @@ const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
             riverChainId: riverChain.chainId,
             riverConfig,
             riverProvider,
-            pushNotificationAuthToken: props.pushNotificationAuthToken,
-            pushNotificationWorkerUrl: props.pushNotificationWorkerUrl,
             accountAbstractionConfig: props.accountAbstractionConfig,
             highPriorityStreamIds: props.highPriorityStreamIds,
             unpackEnvelopeOpts: props.unpackEnvelopeOpts,
@@ -172,8 +168,6 @@ const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
         props.ethMainnetRpcUrl,
         props.highPriorityStreamIds,
         props.unpackEnvelopeOpts,
-        props.pushNotificationAuthToken,
-        props.pushNotificationWorkerUrl,
         props.supportedXChainRpcMapping,
         props.analytics,
         props.createLegacySpaces,

@@ -12,8 +12,6 @@ import {
     makeStreamRpcClient,
     userIdFromAddress,
     makeRiverRpcClient,
-    isChannelStreamId,
-    isDMChannelStreamId,
 } from '@river-build/sdk'
 import { EntitlementsDelegate } from '@river-build/encryption'
 import {
@@ -68,7 +66,6 @@ import {
     toMembership,
 } from '../types/towns-types'
 import { SignerContext } from '@river-build/sdk'
-import { PushNotificationClient } from './PushNotificationClient'
 import { getDefaultXChainIds, marshallXChainConfig } from './XChainConfig'
 import {
     addCategoryToError,
@@ -125,7 +122,6 @@ export class TownsClient
     protected casablancaClient?: CasablancaClient
     private _signerContext?: SignerContext
     protected _eventHandlers?: TownsClientEventHandlers
-    private pushNotificationClient?: PushNotificationClient
     public userOps: UserOps | undefined = undefined
     private supportedXChainIds: number[] | undefined
     private xchainConfig: XchainConfig | undefined
@@ -155,12 +151,6 @@ export class TownsClient
         }
         this.blockchainTransactionStore = new BlockchainTransactionStore(this.spaceDapp)
         this._eventHandlers = opts.eventHandlers
-        if (opts.pushNotificationWorkerUrl && opts.pushNotificationAuthToken) {
-            this.pushNotificationClient = new PushNotificationClient({
-                url: opts.pushNotificationWorkerUrl,
-                authToken: opts.pushNotificationAuthToken,
-            })
-        }
     }
 
     public get signerContext(): SignerContext | undefined {
@@ -2259,27 +2249,6 @@ export class TownsClient
             throw new Error('Casablanca client not initialized')
         }
 
-        const beforeSendEventHooks: Promise<void>[] = []
-
-        if (this.pushNotificationClient && options) {
-            const messageIsEmpty = message.trim() === ''
-            beforeSendEventHooks.push(
-                this.pushNotificationClient.sendNotificationTagIfAny(
-                    roomId,
-                    messageIsEmpty,
-                    options,
-                ),
-            )
-        }
-
-        if (options?.beforeSendEventHook) {
-            beforeSendEventHooks.push(options.beforeSendEventHook)
-        }
-
-        const beforeSendEventHook = beforeSendEventHooks.length
-            ? Promise.all(beforeSendEventHooks).then(() => undefined)
-            : undefined
-
         switch (options?.messageType) {
             case undefined:
             case MessageType.Text:
@@ -2311,7 +2280,7 @@ export class TownsClient
                             },
                         },
                         {
-                            beforeSendEventHook,
+                            beforeSendEventHook: options?.beforeSendEventHook,
                             onLocalEventAppended: options?.onLocalEventAppended,
                         },
                     )
@@ -2331,7 +2300,7 @@ export class TownsClient
                             thumbnail: options?.thumbnail,
                         },
                     },
-                    { beforeSendEventHook },
+                    { beforeSendEventHook: options?.beforeSendEventHook },
                 )
                 break
             case MessageType.GM:
@@ -2346,7 +2315,7 @@ export class TownsClient
                             typeUrl: message,
                         },
                     },
-                    { beforeSendEventHook },
+                    { beforeSendEventHook: options?.beforeSendEventHook },
                 )
                 break
             default:
@@ -2379,31 +2348,13 @@ export class TownsClient
         roomId: string,
         eventId: string,
         reaction: string,
-        threadId?: string,
+        _threadId?: string, // todo: aellis we need to send this to be able to deep link to a reaction in a thread
     ): Promise<void> {
         if (!this.casablancaClient) {
             throw new Error('Casablanca client not initialized')
         }
-        const creatorUserId = this.casablancaClient?.stream(roomId)?.view.events.get(eventId)
-            ?.remoteEvent?.creatorUserId
 
         const beforeSendEventHooks: Promise<void>[] = []
-
-        if (
-            this.pushNotificationClient &&
-            creatorUserId &&
-            (isChannelStreamId(roomId) ||
-                isGDMChannelStreamId(roomId) ||
-                isDMChannelStreamId(roomId))
-        ) {
-            beforeSendEventHooks.push(
-                this.pushNotificationClient.sendUserReactionToNotificationService(
-                    roomId,
-                    creatorUserId,
-                    threadId,
-                ),
-            )
-        }
 
         const beforeSendEventHook = beforeSendEventHooks.length
             ? Promise.all(beforeSendEventHooks).then(() => undefined)
