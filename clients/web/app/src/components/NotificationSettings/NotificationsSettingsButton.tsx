@@ -121,7 +121,7 @@ export function TownNotificationsButton(props: Props) {
         notificationSettingsClient,
         props,
     ])
-    console.log('TNS PUSH: notificationSettingsButton', { options, index })
+
     const [value, setValue] = useState<(typeof options)[number]>(options[index])
 
     const onChange = useCallback(
