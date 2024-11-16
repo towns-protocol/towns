@@ -72,7 +72,8 @@ func GetDefaultConfig() *Config {
 			ScrubEligibleDuration: time.Hour,
 		},
 		RiverRegistry: RiverRegistryConfig{
-			PageSize:               1000,
+			PageSize:               5000,
+			ParallelReaders:        8,
 			MaxRetries:             100,
 			MaxRetryElapsedTime:    5 * time.Minute,
 			SingleCallTimeout:      30 * time.Second, // geth internal timeout is 30 seconds
@@ -283,6 +284,9 @@ type ChainConfig struct {
 
 	TransactionPool TransactionPoolConfig
 
+	// DisableReplacePendingTransactionOnBoot will not try to replace transaction that are pending after start.
+	DisableReplacePendingTransactionOnBoot bool
+
 	// TODO: these need to be removed from here
 	LinkedWalletsLimit                        int
 	ContractCallsTimeoutMs                    int
@@ -391,6 +395,9 @@ type DebugEndpointsConfig struct {
 type RiverRegistryConfig struct {
 	// PageSize is the number of streams to read from the contract at once using GetPaginatedStreams.
 	PageSize int
+
+	// Number of parallel readers to use when reading streams from the contract.
+	ParallelReaders int
 
 	// If not 0, stop retrying failed GetPaginatedStreams calls after this number of retries.
 	MaxRetries int

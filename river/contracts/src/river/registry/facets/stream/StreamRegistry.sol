@@ -172,7 +172,7 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
   function placeStreamOnNode(
     bytes32 streamId,
     address nodeAddress
-  ) external onlyStream(streamId) onlyNode(nodeAddress) {
+  ) external onlyStream(streamId) onlyNode(msg.sender) {
     Stream storage stream = ds.streamById[streamId];
 
     // validate that the node is not already on the stream
@@ -191,7 +191,7 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
   function removeStreamFromNode(
     bytes32 streamId,
     address nodeAddress
-  ) external onlyStream(streamId) onlyNode(nodeAddress) {
+  ) external onlyStream(streamId) onlyNode(msg.sender) {
     Stream storage stream = ds.streamById[streamId];
 
     bool found = false;

@@ -16,9 +16,13 @@ import { Members } from '../../members/members'
 const logger = dlogger('csb:space')
 
 export interface SpaceModel extends Identifiable {
+    /** The River `spaceId` of the space. */
     id: string
+    /** Whether the SyncAgent has loaded this space data. */
     initialized: boolean
+    /** The ids of the channels in the space. */
     channelIds: string[]
+    /** The space metadata {@link SpaceInfo}. */
     metadata?: SpaceInfo
 }
 
@@ -77,6 +81,10 @@ export class Space extends PersistedObservable<SpaceModel> {
         }
     }
 
+    /** Joins the space.
+     * @param signer - The signer to use to join the space.
+     * @param opts - Additional options for the join.
+     */
     async join(signer: ethers.Signer, opts?: { skipMintMembership?: boolean }) {
         const spaceId = this.data.id
         if (opts?.skipMintMembership !== true) {
@@ -127,6 +135,10 @@ export class Space extends PersistedObservable<SpaceModel> {
         return channelId
     }
 
+    /** Gets a channel by its id.
+     * @param channelId - The `channelId` of the channel.
+     * @returns The {@link Channel} model.
+     */
     getChannel(channelId: string): Channel {
         check(isChannelStreamId(channelId), 'channelId is not a channel stream id')
         if (!this.channels[channelId]) {
@@ -141,6 +153,10 @@ export class Space extends PersistedObservable<SpaceModel> {
         return this.channels[channelId]
     }
 
+    /** Gets the default channel in the space.
+     * Every space has a default channel.
+     * @returns The {@link Channel} model.
+     */
     getDefaultChannel(): Channel {
         return this.channels[makeDefaultChannelStreamId(this.data.id)]
     }

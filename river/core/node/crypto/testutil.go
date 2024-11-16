@@ -451,9 +451,10 @@ func makeTestBlockchain(
 	bc, err := NewBlockchainWithClient(
 		ctx,
 		&config.ChainConfig{
-			ChainId:         chainID.Uint64(),
-			BlockTimeMs:     100,
-			TransactionPool: config.TransactionPoolConfig{}, // use defaults
+			ChainId:                                chainID.Uint64(),
+			BlockTimeMs:                            100,
+			TransactionPool:                        config.TransactionPoolConfig{}, // use defaults
+			DisableReplacePendingTransactionOnBoot: true,
 		},
 		wallet,
 		client,
@@ -637,6 +638,8 @@ func GetTestAddress() common.Address {
 
 type NoopChainMonitor struct{}
 
+var _ ChainMonitor = NoopChainMonitor{}
+
 func (NoopChainMonitor) RunWithBlockPeriod(
 	context.Context,
 	BlockchainClient,
@@ -648,6 +651,7 @@ func (NoopChainMonitor) RunWithBlockPeriod(
 
 func (NoopChainMonitor) OnHeader(OnChainNewHeader)                                         {}
 func (NoopChainMonitor) OnBlock(OnChainNewBlock)                                           {}
+func (NoopChainMonitor) OnBlockWithLogs(BlockNumber, OnChainNewBlockWithLogs)              {}
 func (NoopChainMonitor) OnAllEvents(BlockNumber, OnChainEventCallback)                     {}
 func (NoopChainMonitor) OnContractEvent(BlockNumber, common.Address, OnChainEventCallback) {}
 func (NoopChainMonitor) OnContractWithTopicsEvent(BlockNumber, common.Address, [][]common.Hash, OnChainEventCallback) {

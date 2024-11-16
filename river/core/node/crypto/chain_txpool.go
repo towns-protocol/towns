@@ -17,14 +17,13 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/prometheus/client_golang/prometheus"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
-
 	"github.com/river-build/river/core/config"
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/infra"
 	. "github.com/river-build/river/core/node/protocol"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type (
@@ -244,6 +243,7 @@ func (pool *pendingTransactionPool) closeTx(
 	if receipt != nil {
 		ptx.listener <- receipt
 	}
+
 	close(ptx.listener)
 
 	status := "failed"
@@ -340,7 +340,7 @@ func (pool *pendingTransactionPool) checkPendingTransactions(ctx context.Context
 			if ptx.receiptPolls > 15 {
 				// Receipt not available can be caused by the chain rpc node lagging behind the canonical chain at
 				// the time the transactions were created and an outdated nonce was retrieved from the rpc node. A tx
-				// with hat same nonce was already included in the canonical chain. When the rpc node caught up the tx
+				// with the same nonce was already included in the canonical chain. When the rpc node caught up the tx
 				// was dropped from the rpc node tx pool and therefor we never get a receipt for it. Closing
 				// ptx.listener will yield an error to the client waiting for the receipt that it is not available.
 				pool.transactionReceiptsMissing.Add(1)
@@ -413,6 +413,7 @@ func NewTransactionPoolWithPoliciesFromConfig(
 	wallet *Wallet,
 	chainMonitor ChainMonitor,
 	initialBlockNumber BlockNumber,
+	disableReplacePendingTransactionOnBoot bool,
 	metrics infra.MetricsFactory,
 	tracer trace.Tracer,
 ) (*transactionPool, error) {
@@ -435,7 +436,8 @@ func NewTransactionPoolWithPoliciesFromConfig(
 	)
 
 	return NewTransactionPoolWithPolicies(
-		ctx, riverClient, wallet, replacementPolicy, pricePolicy, chainMonitor, initialBlockNumber, metrics, tracer)
+		ctx, riverClient, wallet, replacementPolicy, pricePolicy, chainMonitor,
+		initialBlockNumber, disableReplacePendingTransactionOnBoot, metrics, tracer)
 }
 
 // NewTransactionPoolWithPolicies creates an in-memory transaction pool that tracks transactions that are submitted
@@ -451,6 +453,7 @@ func NewTransactionPoolWithPolicies(
 	pricePolicy TransactionPricePolicy,
 	chainMonitor ChainMonitor,
 	initialBlockNumber BlockNumber,
+	disableReplacePendingTransactionOnBoot bool,
 	metrics infra.MetricsFactory,
 	tracer trace.Tracer,
 ) (*transactionPool, error) {
@@ -496,7 +499,122 @@ func NewTransactionPoolWithPolicies(
 
 	chainMonitor.OnHeader(txPool.Balance)
 
+	if !disableReplacePendingTransactionOnBoot {
+		go txPool.sendReplacementTransactions(ctx)
+	}
+
 	return txPool, nil
+}
+
+// sendReplacementTransactions tries to send replacement transactions for pending/stuck transactions.
+func (r *transactionPool) sendReplacementTransactions(ctx context.Context) {
+	log := dlog.FromCtx(ctx)
+
+	nonce, err := r.client.NonceAt(ctx, r.wallet.Address, nil)
+	if err != nil {
+		log.Error("Unable to obtain nonce for replacement transactions", "err", err)
+	}
+
+	pendingNonce, err := r.client.PendingNonceAt(ctx, r.wallet.Address)
+	if err != nil {
+		log.Error("Unable to obtain pending nonce for replacement transactions", "err", err)
+	}
+
+	if nonce >= pendingNonce {
+		return
+	}
+
+	var (
+		signer   = types.LatestSignerForChainID(new(big.Int).SetUint64(r.chainID))
+		start    = time.Now()
+		createTx = func(opts *bind.TransactOpts) (*types.Transaction, error) {
+			head, err := r.client.HeaderByNumber(ctx, nil)
+			if err != nil {
+				return nil, err
+			}
+
+			gasTipCap, err := r.client.SuggestGasTipCap(ctx)
+			if err != nil {
+				return nil, err
+			}
+
+			gasTipCap = new(big.Int).Add(gasTipCap, gasTipCap)
+
+			gasFeeCap := new(big.Int).Add(
+				gasTipCap,
+				new(big.Int).Mul(head.BaseFee, big.NewInt(3)))
+
+			// Replaces the tx with a transaction that is guaranteed fo fail, deploy the following contract:
+			// contract AlwaysRevert { constructor() { revert(); } }
+			data, _ := hex.DecodeString("6080604052348015600e575f80fd5b5f80fdfe")
+
+			// try to cancel/replace the existing tx by sending a 0ETH tx to our self.
+			return types.SignNewTx(r.wallet.PrivateKeyStruct, signer, &types.DynamicFeeTx{
+				ChainID:   new(big.Int).SetUint64(r.chainID),
+				Nonce:     opts.Nonce.Uint64(),
+				GasTipCap: gasTipCap,
+				GasFeeCap: gasFeeCap,
+				Gas:       60_000,
+				To:        nil,
+				Data:      data,
+			})
+		}
+
+		lastPendingTx *txPoolPendingTransaction
+	)
+
+	log.Warn("Try to replace pending transactions from previous run",
+		"wallet", r.wallet.Address, "from", nonce, "to", pendingNonce)
+
+	for nonce < pendingNonce {
+		opts := &bind.TransactOpts{
+			Nonce: new(big.Int).SetUint64(nonce),
+		}
+
+		// send a replacement tx that is guaranteed to fail
+		tx, err := createTx(opts)
+		if err != nil {
+			log.Error("Unable to create replacement transaction", "err", err)
+			return
+		}
+
+		if err := r.client.SendTransaction(ctx, tx); err != nil {
+			log.Error("Unable to submit replacement transaction", "err", err)
+			return
+		}
+
+		log.Info("Try to replace pending transaction")
+
+		pendingTx := &txPoolPendingTransaction{
+			txHashes:    []common.Hash{tx.Hash()},
+			tx:          tx,
+			txOpts:      opts,
+			resubmit:    createTx,
+			name:        "ReplacePendingTxOnBoot",
+			firstSubmit: start,
+			lastSubmit:  start,
+			tracer:      r.tracer,
+			listener:    make(chan *types.Receipt, 1),
+		}
+
+		r.pendingTransactionPool.replacementsSent.Add(1)
+		r.pendingTransactionPool.addPendingTx <- pendingTx
+		lastPendingTx = pendingTx
+
+		nonce++
+	}
+
+	if lastPendingTx == nil {
+		return
+	}
+
+	// wait for pending tx to be included
+	if _, err := lastPendingTx.Wait(ctx); err != nil {
+		log.Error("Replacement transaction failed", "err", err)
+		return
+	}
+
+	log.Info("Replaced transaction during boot", "count", pendingNonce-nonce, "took", time.Since(start))
 }
 
 // Wait until the receipt is available for tx or until ctx expired.

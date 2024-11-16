@@ -10,6 +10,7 @@ import (
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/events"
 	"github.com/river-build/river/core/node/protocol"
+	. "github.com/river-build/river/core/node/shared"
 	"github.com/river-build/river/core/node/testutils"
 )
 
@@ -52,7 +53,7 @@ func TestReplAdd(t *testing.T) {
 	)
 	require.NoError(err)
 
-	require.NoError(addUserBlockedFillerEvent(ctx, wallet, client, streamId, events.MiniblockRefFromCookie(cookie)))
+	require.NoError(addUserBlockedFillerEvent(ctx, wallet, client, streamId, MiniblockRefFromCookie(cookie)))
 
 	tt.eventuallyCompareStreamDataInStorage(streamId, 1, 1)
 }
@@ -79,7 +80,7 @@ func TestReplMiniblock(t *testing.T) {
 	require.NoError(err)
 
 	for range 100 {
-		require.NoError(addUserBlockedFillerEvent(ctx, wallet, client, streamId, events.MiniblockRefFromCookie(cookie)))
+		require.NoError(addUserBlockedFillerEvent(ctx, wallet, client, streamId, MiniblockRefFromCookie(cookie)))
 	}
 
 	tt.eventuallyCompareStreamDataInStorage(streamId, 1, 100)
@@ -123,7 +124,7 @@ func TestStreamReconciliationFromGenesis(t *testing.T) {
 	mbChain := map[int64]common.Hash{0: common.BytesToHash(cookie.PrevMiniblockHash)}
 	latestMbNum := int64(0)
 
-	mbRef := events.MiniblockRefFromCookie(cookie)
+	mbRef := MiniblockRefFromCookie(cookie)
 	for range N {
 		require.NoError(addUserBlockedFillerEvent(ctx, wallet, client, streamId, mbRef))
 		mbRef, err = tt.nodes[2].service.mbProducer.TestMakeMiniblock(ctx, streamId, false)
@@ -208,7 +209,7 @@ func TestStreamReconciliationForKnownStreams(t *testing.T) {
 	latestMbNum := int64(0)
 
 	for range N {
-		require.NoError(addUserBlockedFillerEvent(ctx, wallet, client, streamId, events.MiniblockRefFromCookie(cookie)))
+		require.NoError(addUserBlockedFillerEvent(ctx, wallet, client, streamId, MiniblockRefFromCookie(cookie)))
 		mbRef, err := tt.nodes[2].service.mbProducer.TestMakeMiniblock(ctx, streamId, false)
 		require.NoError(err)
 
@@ -238,7 +239,7 @@ func TestStreamReconciliationForKnownStreams(t *testing.T) {
 	// create extra mini-blocks
 	N = 10
 	for range N {
-		require.NoError(addUserBlockedFillerEvent(ctx, wallet, client, streamId, &events.MiniblockRef{
+		require.NoError(addUserBlockedFillerEvent(ctx, wallet, client, streamId, &MiniblockRef{
 			Hash: mbChain[latestMbNum],
 			Num:  latestMbNum,
 		}))

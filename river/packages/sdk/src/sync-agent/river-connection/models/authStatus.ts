@@ -1,7 +1,7 @@
 export enum AuthStatus {
     /** Fetching river urls. */
     Initializing = 'Initializing',
-    /** Transition state: None -> EvaluatingCredentials -> [Credentialed OR ConnectedToRiver]
+    /** Transition state: None -\> EvaluatingCredentials -\> [Credentialed OR ConnectedToRiver]
      *  if a river user is found, will connect to river client, otherwise will just validate credentials.
      */
     EvaluatingCredentials = 'EvaluatingCredentials',

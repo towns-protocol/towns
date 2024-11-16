@@ -3,7 +3,6 @@
 /* eslint-disable */
 export * as iMockLegacyArchitectSol from "./IMockLegacyArchitect.sol";
 export * as iRuleEntitlementSol from "./IRuleEntitlement.sol";
-export * as cryptography from "./cryptography";
 export { IArchitect__factory } from "./IArchitect__factory";
 export { IBanning__factory } from "./IBanning__factory";
 export { IChannel__factory } from "./IChannel__factory";

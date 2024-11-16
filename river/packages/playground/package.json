@@ -10,6 +10,7 @@
         "preview": "vite preview"
     },
     "dependencies": {
+        "@emoji-mart/data": "^1.1.2",
         "@hookform/resolvers": "^3.6.0",
         "@radix-ui/react-dialog": "^1.1.1",
         "@radix-ui/react-hover-card": "^1.1.1",

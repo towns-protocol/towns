@@ -61,14 +61,14 @@ library StakingRewards {
   struct Layout {
     address rewardToken;
     address stakeToken;
-    uint256 totalStaked;
+    uint96 totalStaked;
     uint256 rewardDuration;
     uint256 rewardEndTime;
     uint256 lastUpdateTime;
     uint256 rewardRate;
     uint256 rewardPerTokenAccumulated;
     uint256 nextDepositId;
-    mapping(address depositor => uint256 amount) stakedByDepositor;
+    mapping(address depositor => uint96 amount) stakedByDepositor;
     mapping(address beneficiary => Treasure) treasureByBeneficiary;
     mapping(uint256 depositId => Deposit) depositById;
   }
@@ -97,7 +97,7 @@ library StakingRewards {
   ) internal view returns (uint256) {
     // cache storage reads
     (
-      uint256 totalStaked,
+      uint96 totalStaked,
       uint256 lastUpdateTime,
       uint256 rewardRate,
       uint256 rewardPerTokenAccumulated

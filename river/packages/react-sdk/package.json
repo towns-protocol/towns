@@ -1,13 +1,14 @@
 {
     "name": "@river-build/react-sdk",
     "description": "React Hooks for River SDK",
-    "version": "0.0.103",
+    "version": "0.0.106",
     "type": "module",
     "main": "./dist/esm/index.js",
     "types": "./dist/types/index.d.ts",
     "scripts": {
         "build": "yarn run clean && yarn run build:esm+types",
         "build:esm+types": "tsc --project tsconfig.build.json --outDir ./dist/esm --declaration --declarationMap --declarationDir ./dist/types",
+        "lint": "eslint ./src --max-warnings=0",
         "clean": "rm -rf dist tsconfig.tsbuildinfo",
         "test:build": "publint --strict && attw --pack --ignore-rules cjs-resolves-to-esm",
         "typecheck": "tsc --noEmit",
@@ -27,6 +28,7 @@
         "eslint-plugin-import": "^2.27.5",
         "eslint-plugin-react": "^7.32.2",
         "eslint-plugin-react-hooks": "^4.6.0",
+        "eslint-plugin-tsdoc": "^0.3.0",
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
         "typescript": "^5.1.6"

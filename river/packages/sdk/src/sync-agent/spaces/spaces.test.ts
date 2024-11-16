@@ -3,7 +3,7 @@
  */
 import { dlogger } from '@river-build/dlog'
 import { Bot } from '../utils/bot'
-import { waitFor } from '../../util.test'
+import { findMessageByText, waitFor } from '../../util.test'
 
 const logger = dlogger('csb:test:spaces')
 
@@ -32,7 +32,7 @@ describe('spaces.test.ts', () => {
         expect(channel.data.isJoined).toBe(true)
         await channel.sendMessage('hello world')
         expect(channel.timeline.events.value.length).toBeGreaterThan(1)
-        expect(channel.timeline.events.value.find((x) => x.text === 'hello world')).toBeDefined()
+        expect(findMessageByText(channel.timeline.events.value, 'hello world')).toBeDefined()
         await syncAgent.stop()
     })
 })

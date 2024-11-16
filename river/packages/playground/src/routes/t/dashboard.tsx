@@ -192,7 +192,7 @@ const DmInfo = ({
 
     return (
         <button className="flex items-center gap-2" onClick={() => onDmChange(dm.id)}>
-            <Avatar userId={userId} className="h-10 w-10 rounded-full border border-neutral-200" />
+            <Avatar userId={userId} className="size-10 border border-neutral-200" />
             <p className="font-mono text-sm font-medium">
                 {userId === sync.userId ? 'You' : displayName || username || shortenAddress(userId)}
             </p>

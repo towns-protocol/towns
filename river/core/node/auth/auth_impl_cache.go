@@ -49,12 +49,10 @@ func (ccv *timestampedCacheValue) GetTimestamp() time.Time {
 	return ccv.timestamp
 }
 
-type boolCacheResult struct {
-	allowed bool
-}
+type boolCacheResult bool
 
-func (scr *boolCacheResult) IsAllowed() bool {
-	return scr.allowed
+func (b boolCacheResult) IsAllowed() bool {
+	return bool(b)
 }
 
 func newEntitlementCache(ctx context.Context, cfg *config.ChainConfig) (*entitlementCache, error) {

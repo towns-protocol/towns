@@ -11,7 +11,7 @@
     ],
     "parser": "@typescript-eslint/parser",
     "parserOptions": { "project": ["./tsconfig.json"] },
-    "plugins": ["@typescript-eslint", "import"],
+    "plugins": ["@typescript-eslint", "import", "eslint-plugin-tsdoc"],
     "ignorePatterns": ["dist/**", ".turbo/**", "node_modules/**", "jest.config.ts"],
     "rules": {
         "no-console": "error",
@@ -48,8 +48,8 @@
                 "allow": ["arrowFunctions"]
             }
         ],
-
-        "@typescript-eslint/ban-ts-comment": "off"
+        "@typescript-eslint/ban-ts-comment": "off",
+        "tsdoc/syntax": "warn"
     },
     "overrides": [
         {
@@ -61,7 +61,8 @@
                 "jest/no-disabled-tests": "off",
                 "@typescript-eslint/no-unsafe-call": "off",
                 "@typescript-eslint/no-non-null-assertion": "off",
-                "@typescript-eslint/no-unsafe-argument": "off"
+                "@typescript-eslint/no-unsafe-argument": "off",
+                "tsdoc/syntax": "off"
             }
         }
     ]

@@ -20,20 +20,20 @@ export enum SyncState {
 }
 
 /**
- * See https://www.notion.so/herenottherelabs/RFC-Sync-hardening-e0552a4ed68a4d07b42ae34c69ee1bec?pvs=4#861081756f86423ea668c62b9eb76f4b
- Valid state transitions:
-	[*] --> NotSyncing
-	NotSyncing --> Starting
-	Starting --> Syncing
-	Starting --> Canceling: failed / stop sync
-	Starting --> Retrying: connection error 
-	Syncing --> Canceling: connection aborted / stop sync
-	Syncing --> Retrying: connection error
-    Syncing --> Syncing: resync
-	Retrying --> Canceling: stop sync
-	Retrying --> Syncing: resume
-    Retrying --> Retrying: still retrying
-	Canceling --> NotSyncing
+ * Valid state transitions:
+ * - [*] -\> NotSyncing
+ * - NotSyncing -\> Starting
+ * - Starting -\> Syncing
+ * - Starting -\> Canceling: failed / stop sync
+ * - Starting -\> Retrying: connection error
+ * - Syncing -\> Canceling: connection aborted / stop sync
+ * - Syncing -\> Retrying: connection error
+ * - Syncing -\> Syncing: resync
+ * - Retrying -\> Canceling: stop sync
+ * - Retrying -\> Syncing: resume
+ * - Retrying -\> Retrying: still retrying
+ * - Canceling -\> NotSyncing
+ * @see https://www.notion.so/herenottherelabs/RFC-Sync-hardening-e0552a4ed68a4d07b42ae34c69ee1bec?pvs=4#861081756f86423ea668c62b9eb76f4b
  */
 export const stateConstraints: Record<SyncState, Set<SyncState>> = {
     [SyncState.NotSyncing]: new Set([SyncState.Starting]),

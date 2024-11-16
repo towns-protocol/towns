@@ -35,8 +35,8 @@ func fillUserSettingsStreamWithData(
 	client protocolconnect.StreamServiceClient,
 	numMBs int,
 	numEventsPerMB int,
-	prevMB *events.MiniblockRef,
-) (*events.MiniblockRef, error) {
+	prevMB *MiniblockRef,
+) (*MiniblockRef, error) {
 	var err error
 	for i := 0; i < numMBs; i++ {
 		for j := 0; j < numEventsPerMB; j++ {
@@ -285,7 +285,7 @@ func TestArchiveOneStream(t *testing.T) {
 	require.Zero(num) // Only genesis miniblock is created
 
 	// Add event to the stream, create miniblock, and archive it
-	err = addUserBlockedFillerEvent(ctx, wallet, client, streamId, events.MiniblockRefFromContractRecord(&streamRecord))
+	err = addUserBlockedFillerEvent(ctx, wallet, client, streamId, MiniblockRefFromContractRecord(&streamRecord))
 	require.NoError(err)
 
 	mbRef, err := makeMiniblock(ctx, client, streamId, false, 0)

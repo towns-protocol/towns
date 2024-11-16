@@ -6085,6 +6085,25 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@microsoft/tsdoc-config@npm:0.17.0":
+  version: 0.17.0
+  resolution: "@microsoft/tsdoc-config@npm:0.17.0"
+  dependencies:
+    "@microsoft/tsdoc": 0.15.0
+    ajv: ~8.12.0
+    jju: ~1.4.0
+    resolve: ~1.22.2
+  checksum: dd2de8247d0fc29608da83edf4ab73a21370f6ce10d089853303e91b135fdb1436ccec3bd1024f235dd3180dfe5dae7342989eadd03af55cf06f0e974e5fc213
+  languageName: node
+  linkType: hard
+
+"@microsoft/tsdoc@npm:0.15.0":
+  version: 0.15.0
+  resolution: "@microsoft/tsdoc@npm:0.15.0"
+  checksum: 3f693cff07b220b68563e3f86e9f94a9c8d0791a7446f76149c7d62ae5ed5cb4578bb48b9b5f9baa3dd9a9f77be81903c74654a41e0ca4ecf78936654952a8d4
+  languageName: node
+  linkType: hard
+
 "@miniflare/cache@npm:2.14.2":
   version: 2.14.2
   resolution: "@miniflare/cache@npm:2.14.2"
@@ -8702,6 +8721,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@river-build/playground@workspace:river/packages/playground"
   dependencies:
+    "@emoji-mart/data": ^1.1.2
     "@hookform/resolvers": ^3.6.0
     "@radix-ui/react-dialog": ^1.1.1
     "@radix-ui/react-hover-card": ^1.1.1
@@ -8802,6 +8822,7 @@ __metadata:
     eslint-plugin-import: ^2.27.5
     eslint-plugin-react: ^7.32.2
     eslint-plugin-react-hooks: ^4.6.0
+    eslint-plugin-tsdoc: ^0.3.0
     ethers: ^5.7.2
     react: ^18.2.0
     react-dom: ^18.2.0
@@ -8841,6 +8862,7 @@ __metadata:
     eslint-import-resolver-typescript: ^3.5.5
     eslint-plugin-import: ^2.27.5
     eslint-plugin-jest: ^27.2.3
+    eslint-plugin-tsdoc: ^0.3.0
     ethereum-cryptography: ^1.2.0
     ethers: ^5.7.2
     fake-indexeddb: ^4.0.1
@@ -8898,6 +8920,7 @@ __metadata:
     fastify: ^4.28.1
     jest: ^29.6.2
     jest-transform-stub: ^2.0.0
+    lru-cache: ^11.0.1
     magic-bytes.js: ^1.10.0
     pino: ^8.17.1
     pino-pretty: ^10.2.3
@@ -14373,6 +14396,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"ajv@npm:~8.12.0":
+  version: 8.12.0
+  resolution: "ajv@npm:8.12.0"
+  dependencies:
+    fast-deep-equal: ^3.1.1
+    json-schema-traverse: ^1.0.0
+    require-from-string: ^2.0.2
+    uri-js: ^4.2.2
+  checksum: 4dc13714e316e67537c8b31bc063f99a1d9d9a497eb4bbd55191ac0dcd5e4985bbb71570352ad6f1e76684fb6d790928f96ba3b2d4fd6e10024be9612fe3f001
+  languageName: node
+  linkType: hard
+
 "alchemy-sdk@npm:^2.2.4":
   version: 2.12.0
   resolution: "alchemy-sdk@npm:2.12.0"
@@ -19180,6 +19215,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"eslint-plugin-tsdoc@npm:^0.3.0":
+  version: 0.3.0
+  resolution: "eslint-plugin-tsdoc@npm:0.3.0"
+  dependencies:
+    "@microsoft/tsdoc": 0.15.0
+    "@microsoft/tsdoc-config": 0.17.0
+  checksum: 31596d3991603a44d5fd368e16c0f4e11dc6d13cff5b86c91e78666344d9a264a0e25deeb3c76794775c41ba86ab991fe5f197c7fb635860b386e609e9c65412
+  languageName: node
+  linkType: hard
+
 "eslint-plugin-unused-imports@npm:^2.0.0":
   version: 2.0.0
   resolution: "eslint-plugin-unused-imports@npm:2.0.0"
@@ -23383,6 +23428,13 @@ __metadata:
   bin:
     jiti: bin/jiti.js
   checksum: 9ea4a70a7bb950794824683ed1c632e2ede26949fbd348e2ba5ec8dc5efa54dc42022d85ae229cadaa60d4b95012e80ea07d625797199b688cc22ab0e8891d32
+  languageName: node
+  linkType: hard
+
+"jju@npm:~1.4.0":
+  version: 1.4.0
+  resolution: "jju@npm:1.4.0"
+  checksum: 3790481bd2b7827dd6336e6e3dc2dcc6d425679ba7ebde7b679f61dceb4457ea0cda330972494de608571f4973c6dfb5f70fab6f3c5037dbab19ac449a60424f
   languageName: node
   linkType: hard
 
@@ -29567,7 +29619,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"resolve@npm:^1.1.6, resolve@npm:^1.1.7, resolve@npm:^1.12.0, resolve@npm:^1.14.2, resolve@npm:^1.17.0, resolve@npm:^1.19.0, resolve@npm:^1.20.0, resolve@npm:^1.22.1, resolve@npm:^1.22.2, resolve@npm:^1.22.4, resolve@npm:^1.22.8":
+"resolve@npm:^1.1.6, resolve@npm:^1.1.7, resolve@npm:^1.12.0, resolve@npm:^1.14.2, resolve@npm:^1.17.0, resolve@npm:^1.19.0, resolve@npm:^1.20.0, resolve@npm:^1.22.1, resolve@npm:^1.22.2, resolve@npm:^1.22.4, resolve@npm:^1.22.8, resolve@npm:~1.22.2":
   version: 1.22.8
   resolution: "resolve@npm:1.22.8"
   dependencies:
@@ -29600,7 +29652,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"resolve@patch:resolve@^1.1.6#~builtin<compat/resolve>, resolve@patch:resolve@^1.1.7#~builtin<compat/resolve>, resolve@patch:resolve@^1.12.0#~builtin<compat/resolve>, resolve@patch:resolve@^1.14.2#~builtin<compat/resolve>, resolve@patch:resolve@^1.17.0#~builtin<compat/resolve>, resolve@patch:resolve@^1.19.0#~builtin<compat/resolve>, resolve@patch:resolve@^1.20.0#~builtin<compat/resolve>, resolve@patch:resolve@^1.22.1#~builtin<compat/resolve>, resolve@patch:resolve@^1.22.2#~builtin<compat/resolve>, resolve@patch:resolve@^1.22.4#~builtin<compat/resolve>, resolve@patch:resolve@^1.22.8#~builtin<compat/resolve>":
+"resolve@patch:resolve@^1.1.6#~builtin<compat/resolve>, resolve@patch:resolve@^1.1.7#~builtin<compat/resolve>, resolve@patch:resolve@^1.12.0#~builtin<compat/resolve>, resolve@patch:resolve@^1.14.2#~builtin<compat/resolve>, resolve@patch:resolve@^1.17.0#~builtin<compat/resolve>, resolve@patch:resolve@^1.19.0#~builtin<compat/resolve>, resolve@patch:resolve@^1.20.0#~builtin<compat/resolve>, resolve@patch:resolve@^1.22.1#~builtin<compat/resolve>, resolve@patch:resolve@^1.22.2#~builtin<compat/resolve>, resolve@patch:resolve@^1.22.4#~builtin<compat/resolve>, resolve@patch:resolve@^1.22.8#~builtin<compat/resolve>, resolve@patch:resolve@~1.22.2#~builtin<compat/resolve>":
   version: 1.22.8
   resolution: "resolve@patch:resolve@npm%3A1.22.8#~builtin<compat/resolve>::version=1.22.8&hash=c3c19d"
   dependencies:

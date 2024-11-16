@@ -6,7 +6,12 @@ import { useSyncAgent } from './useSyncAgent'
 import { type ObservableConfig, useObservable } from './useObservable'
 
 /**
- *  Views a channel by its channelId and spaceId.
+ * Hook to get data about a channel.
+ * You can use this hook to get channel metadata and if the user has joined the channel.
+ * @param spaceId - The id of the space the channel belongs to.
+ * @param channelId - The id of the channel to get data about.
+ * @param config - Configuration options for the observable. @see {@link ObservableConfig.FromObservable}
+ * @returns The {@link ChannelModel} data.
  */
 export const useChannel = (
     spaceId: string,

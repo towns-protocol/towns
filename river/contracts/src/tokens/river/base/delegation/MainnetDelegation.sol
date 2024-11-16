@@ -60,6 +60,12 @@ contract MainnetDelegation is
     return address(_getProxyDelegation());
   }
 
+  function getDepositIdByDelegator(
+    address delegator
+  ) external view returns (uint256) {
+    return _getDepositIdByDelegator(delegator);
+  }
+
   // =============================================================
   //                       Remove Delegators
   // =============================================================

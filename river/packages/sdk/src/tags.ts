@@ -2,6 +2,7 @@ import { PlainMessage } from '@bufbuild/protobuf'
 import { ChannelMessage, GroupMentionType, MessageInteractionType, Tags } from '@river-build/proto'
 import { IStreamStateView } from './streamStateView'
 import { addressFromUserId } from './id'
+import { bin_fromHexString } from '@river-build/dlog'
 
 export function makeTags(
     message: PlainMessage<ChannelMessage>,
@@ -12,7 +13,30 @@ export function makeTags(
         groupMentionTypes: getGroupMentionTypes(message),
         mentionedUserAddresses: getMentionedUserAddresses(message),
         participatingUserAddresses: getParticipatingUserAddresses(message, streamView),
+        threadId: getThreadId(message, streamView),
     } satisfies PlainMessage<Tags>
+}
+
+function getThreadId(
+    message: PlainMessage<ChannelMessage>,
+    streamView: IStreamStateView,
+): Uint8Array | undefined {
+    switch (message.payload.case) {
+        case 'post':
+            if (message.payload.value.threadId) {
+                return bin_fromHexString(message.payload.value.threadId)
+            }
+            break
+        case 'reaction':
+            return getParentThreadId(message.payload.value.refEventId, streamView)
+        case 'edit':
+            return getParentThreadId(message.payload.value.refEventId, streamView)
+        case 'redaction':
+            return getParentThreadId(message.payload.value.refEventId, streamView)
+        default:
+            break
+    }
+    return undefined
 }
 
 function getMessageInteractionType(message: PlainMessage<ChannelMessage>): MessageInteractionType {
@@ -102,4 +126,26 @@ function getParticipatingUserAddresses(
         default:
             return []
     }
+}
+
+function getParentThreadId(
+    eventId: string | undefined,
+    streamView: IStreamStateView,
+): Uint8Array | undefined {
+    if (!eventId) {
+        return undefined
+    }
+    const event = streamView.events.get(eventId)
+    if (!event) {
+        return undefined
+    }
+    if (
+        event.decryptedContent?.kind === 'channelMessage' &&
+        event.decryptedContent.content.payload.case === 'post'
+    ) {
+        if (event.decryptedContent.content.payload.value.threadId) {
+            return bin_fromHexString(event.decryptedContent.content.payload.value.threadId)
+        }
+    }
+    return undefined
 }

@@ -10,22 +10,26 @@ import type {
     ChannelProperties,
 } from '@river-build/proto'
 import type { PlainMessage } from '@bufbuild/protobuf'
-import { Timeline } from '../../timeline/timeline'
+import { MessageTimeline } from '../../timeline/timeline'
 
 export interface GdmModel extends Identifiable {
+    /** The id of the DM. */
     id: string
+    /** Whether the SyncAgent has loaded this data. */
     initialized: boolean
+    /** Whether the current user has joined the DM. */
     isJoined: boolean
+    /** The metadata of the DM. @see {@link ChannelProperties} */
     metadata?: ChannelProperties
 }
 
 @persistedObservable({ tableName: 'gdm' })
 export class Gdm extends PersistedObservable<GdmModel> {
-    timeline: Timeline
+    timeline: MessageTimeline
     members: Members
     constructor(id: string, private riverConnection: RiverConnection, store: Store) {
         super({ id, isJoined: false, initialized: false }, store, LoadPriority.high)
-        this.timeline = new Timeline(riverConnection.userId)
+        this.timeline = new MessageTimeline(id, riverConnection.userId, riverConnection)
         this.members = new Members(id, riverConnection, store)
     }
 
@@ -99,6 +103,14 @@ export class Gdm extends PersistedObservable<GdmModel> {
             }),
         )
         return eventId
+    }
+
+    async redactEvent(eventId: string) {
+        const channelId = this.data.id
+        const result = await this.riverConnection
+            .withStream(channelId)
+            .call((client) => client.redactMessage(channelId, eventId))
+        return result
     }
 
     private onStreamInitialized = (streamId: string) => {

@@ -78,6 +78,7 @@ import {
     XchainConfig,
     UpdateRoleParams,
 } from '@river-build/web3'
+import { RiverTimelineEvent, type TimelineEvent } from './sync-agent/timeline/models/timeline-types'
 import { SyncState } from './syncedStreamsLoop'
 
 const log = dlog('csb:test:util')
@@ -1344,4 +1345,14 @@ export async function expectUserCannotJoinChannel(
 
     // Stream node should not allow the join
     await expect(client.joinStream(channelId)).rejects.toThrow(/7:PERMISSION_DENIED/)
+}
+
+export const findMessageByText = (
+    events: TimelineEvent[],
+    text: string,
+): TimelineEvent | undefined => {
+    return events.find(
+        (event) =>
+            event.content?.kind === RiverTimelineEvent.RoomMessage && event.content.body === text,
+    )
 }

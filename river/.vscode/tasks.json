@@ -313,7 +313,7 @@
     {
       "label": "BuildProtobufs",
       "type": "shell",
-      "command": "yarn csb:build",
+      "command": "./scripts/build-protobufs.sh",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {

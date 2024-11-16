@@ -273,7 +273,7 @@ func TestStreamEvents(t *testing.T) {
 	require.Len(placementC, 0)
 
 	// Update stream placement
-	tx, err := owner.TxPool.Submit(ctx, "UpdateStreamPlacement",
+	tx, err := bc1.TxPool.Submit(ctx, "UpdateStreamPlacement",
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
 			return tc.StreamRegistry.PlaceStreamOnNode(opts, streamId, nodeAddr2)
 		},

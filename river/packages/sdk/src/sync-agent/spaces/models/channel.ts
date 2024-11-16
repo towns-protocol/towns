@@ -3,7 +3,7 @@ import { PersistedObservable, persistedObservable } from '../../../observable/pe
 import { Identifiable, LoadPriority, Store } from '../../../store/store'
 import { RiverConnection } from '../../river-connection/riverConnection'
 import { ChannelMessage_Post_Attachment, ChannelMessage_Post_Mention } from '@river-build/proto'
-import { Timeline } from '../../timeline/timeline'
+import { MessageTimeline } from '../../timeline/timeline'
 import { check, dlogger } from '@river-build/dlog'
 import { isDefined } from '../../../check'
 import { ChannelDetails, SpaceDapp } from '@river-build/web3'
@@ -12,15 +12,19 @@ import { Members } from '../../members/members'
 const logger = dlogger('csb:channel')
 
 export interface ChannelModel extends Identifiable {
+    /** The River `channelId` of the channel. */
     id: string
+    /** The River `spaceId` which this channel belongs. */
     spaceId: string
+    /** Whether the SyncAgent has joined this channel. */
     isJoined: boolean
+    /** The channel metadata {@link ChannelDetails}. */
     metadata?: ChannelDetails
 }
 
 @persistedObservable({ tableName: 'channel' })
 export class Channel extends PersistedObservable<ChannelModel> {
-    timeline: Timeline
+    timeline: MessageTimeline
     members: Members
     constructor(
         id: string,
@@ -30,7 +34,7 @@ export class Channel extends PersistedObservable<ChannelModel> {
         store: Store,
     ) {
         super({ id, spaceId, isJoined: false }, store, LoadPriority.high)
-        this.timeline = new Timeline(riverConnection.userId)
+        this.timeline = new MessageTimeline(id, riverConnection.userId, riverConnection)
         this.members = new Members(id, riverConnection, store)
     }
 
@@ -67,6 +71,7 @@ export class Channel extends PersistedObservable<ChannelModel> {
         }
     }
 
+    /** Joins the channel. */
     async join() {
         const channelId = this.data.id
         await this.riverConnection.call(async (client) => {
@@ -74,12 +79,23 @@ export class Channel extends PersistedObservable<ChannelModel> {
         })
     }
 
+    /** Sends a message to the channel.
+     * @param message - The message to send.
+     * @param options - Additional options for the message.
+     * @returns The event id of the message.
+     */
     async sendMessage(
         message: string,
         options?: {
+            /** If set, this message will be linked to a thread with the specified message. */
             threadId?: string
+            /** If set, this message will be linked as a reply to the specified message. */
             replyId?: string
+            // TODO: would be great to improve the usability here. Its not that ergonomic to pass the `ChannelMessage_Post_Mention` payload itself
+            // and its a bit unclear about what are the intetion of the fields.
+            /** The users that are mentioned in the message */
             mentions?: PlainMessage<ChannelMessage_Post_Mention>[]
+            /** The attachments in the message. You can attach images, videos, links, files, or even other messages. */
             attachments?: PlainMessage<ChannelMessage_Post_Attachment>[]
         },
     ): Promise<{ eventId: string }> {
@@ -100,6 +116,10 @@ export class Channel extends PersistedObservable<ChannelModel> {
         return result
     }
 
+    /** Pins a message to the top of the channel.
+     * @param eventId - The event id of the message to pin.
+     * @returns The event id of the pin action.
+     */
     async pin(eventId: string) {
         const channelId = this.data.id
         const result = await this.riverConnection
@@ -108,6 +128,10 @@ export class Channel extends PersistedObservable<ChannelModel> {
         return result
     }
 
+    /** Unpins a message from the channel.
+     * @param eventId - The event id of the message to unpin.
+     * @returns The event id of the unpin action.
+     */
     async unpin(eventId: string) {
         const channelId = this.data.id
         const result = await this.riverConnection
@@ -116,6 +140,10 @@ export class Channel extends PersistedObservable<ChannelModel> {
         return result
     }
 
+    /** Sends a reaction to a message.
+     * @param refEventId - The event id of the message to react to.
+     * @param reaction - The reaction to send. Can be any string, including emoji, unicode characters.
+     */
     async sendReaction(refEventId: string, reaction: string) {
         const channelId = this.data.id
         const eventId = await this.riverConnection.call((client) =>
@@ -125,6 +153,14 @@ export class Channel extends PersistedObservable<ChannelModel> {
             }),
         )
         return eventId
+    }
+
+    async redactEvent(eventId: string) {
+        const channelId = this.data.id
+        const result = await this.riverConnection
+            .withStream(channelId)
+            .call((client) => client.redactMessage(channelId, eventId))
+        return result
     }
 
     private onStreamInitialized = (streamId: string) => {

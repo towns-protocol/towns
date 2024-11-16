@@ -3,7 +3,9 @@ package crypto_test
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -12,10 +14,11 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/stretchr/testify/require"
+
 	"github.com/river-build/river/core/contracts/river"
 	"github.com/river-build/river/core/node/base/test"
 	"github.com/river-build/river/core/node/crypto"
-	"github.com/stretchr/testify/require"
 )
 
 func TestChainMonitorBlocks(t *testing.T) {
@@ -501,6 +504,141 @@ func TestContractAllEventsFromPast(t *testing.T) {
 	require.EqualValues(events, historicalContractEvents, "unexpected logs")
 	require.Equal(nodeCount, len(historicalAllEvents), "unexpected NodeAdded logs count")
 	require.EqualValues(events, historicalContractEvents, "unexpected logs")
+}
+
+type onBlockCollector struct {
+	lastBlockNumber crypto.BlockNumber
+	allLogs         []*types.Log
+	mu              sync.Mutex
+}
+
+func (c *onBlockCollector) onBlock(ctx context.Context, blockNumber crypto.BlockNumber, logs []*types.Log) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.lastBlockNumber = blockNumber
+	c.allLogs = append(c.allLogs, logs...)
+}
+
+func (c *onBlockCollector) lastBlock() crypto.BlockNumber {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.lastBlockNumber
+}
+
+func (c *onBlockCollector) logs() []*types.Log {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return slices.Clone(c.allLogs)
+}
+
+func registerNodes(
+	t *testing.T,
+	ctx context.Context,
+	tc *crypto.BlockchainTestContext,
+	owner *crypto.Blockchain,
+	nodeCount int,
+) {
+	require := require.New(t)
+	// register several nodes
+	var pendingTx crypto.TransactionPoolPendingTransaction
+	for i := range nodeCount {
+		wallet, err := crypto.NewWallet(ctx)
+		require.NoError(err, "new wallet")
+		pendingTx, err = owner.TxPool.Submit(
+			ctx,
+			"RegisterNode",
+			func(opts *bind.TransactOpts) (*types.Transaction, error) {
+				return tc.NodeRegistry.RegisterNode(
+					opts,
+					wallet.Address,
+					fmt.Sprintf("https://node%d.river.test", i),
+					river.NodeStatus_NotInitialized,
+				)
+			},
+		)
+		require.NoError(err, "register node")
+	}
+
+	// generate some blocks
+	N := 5
+	for i := 0; i < N; i++ {
+		tc.Commit(ctx)
+	}
+
+	receipt, err := pendingTx.Wait(ctx)
+	require.NoError(err)
+	require.Equal(crypto.TransactionResultSuccess, receipt.Status)
+}
+
+func TestOnBlockWithLogs(t *testing.T) {
+	require := require.New(t)
+	ctx, cancel := test.NewTestContext()
+	defer cancel()
+
+	tc, err := crypto.NewBlockchainTestContext(ctx, crypto.TestParams{})
+	require.NoError(err)
+	defer tc.Close()
+
+	owner := tc.DeployerBlockchain
+	chainMonitor := tc.DeployerBlockchain.ChainMonitor
+	nodeCount := 5
+
+	var collector onBlockCollector
+	fromBlock := tc.BlockNum(ctx) + 1
+	chainMonitor.OnBlockWithLogs(fromBlock, collector.onBlock)
+
+	registerNodes(t, ctx, tc, owner, nodeCount)
+
+	currentBlock := tc.BlockNum(ctx)
+	// wait for the collector to receive the current block
+	require.Eventually(func() bool {
+		return collector.lastBlock() >= currentBlock
+	}, 10*time.Second, 10*time.Millisecond)
+
+	require.Len(collector.logs(), nodeCount, "unexpected NodeAdded logs count")
+
+	var futureCollector onBlockCollector
+	chainMonitor.OnBlockWithLogs(tc.BlockNum(ctx)+3, futureCollector.onBlock)
+
+	// get past futureCollector block
+	N := 5
+	for i := 0; i < N; i++ {
+		tc.Commit(ctx)
+	}
+
+	registerNodes(t, ctx, tc, owner, nodeCount)
+
+	currentBlock = tc.BlockNum(ctx)
+	// wait for the collectors to receive the current block
+	require.Eventually(func() bool {
+		return futureCollector.lastBlock() >= currentBlock && collector.lastBlock() >= currentBlock
+	}, 10*time.Second, 10*time.Millisecond)
+
+	require.Len(futureCollector.logs(), nodeCount, "unexpected NodeAdded logs count")
+	require.Len(collector.logs(), nodeCount*2, "unexpected NodeAdded logs count")
+
+	var pastCollector onBlockCollector
+	chainMonitor.OnBlockWithLogs(fromBlock, pastCollector.onBlock)
+	for i := 0; i < N; i++ {
+		tc.Commit(ctx)
+	}
+	require.Eventually(func() bool {
+		return pastCollector.lastBlock() >= currentBlock
+	}, 10*time.Second, 10*time.Millisecond)
+
+	require.Len(pastCollector.logs(), nodeCount*2, "unexpected NodeAdded logs count")
+
+	registerNodes(t, ctx, tc, owner, nodeCount)
+
+	currentBlock = tc.BlockNum(ctx)
+	require.Eventually(func() bool {
+		return pastCollector.lastBlock() >= currentBlock && futureCollector.lastBlock() >= currentBlock &&
+			collector.lastBlock() >= currentBlock
+	}, 10*time.Second, 10*time.Millisecond)
+
+	require.Len(pastCollector.logs(), nodeCount*3, "unexpected NodeAdded logs count")
+	require.Len(futureCollector.logs(), nodeCount*2, "unexpected NodeAdded logs count")
+	require.Len(collector.logs(), nodeCount*3, "unexpected NodeAdded logs count")
 }
 
 func TestContractEventsWithTopicsFromPast(t *testing.T) {

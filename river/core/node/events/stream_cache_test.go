@@ -11,8 +11,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/protocol"
-	"github.com/river-build/river/core/node/shared"
+	. "github.com/river-build/river/core/node/protocol"
+	. "github.com/river-build/river/core/node/shared"
 	"github.com/river-build/river/core/node/testutils"
 )
 
@@ -31,7 +31,7 @@ func TestStreamCacheViewEviction(t *testing.T) {
 	})
 
 	node := tc.getBC()
-	streamID := testutils.FakeStreamId(shared.STREAM_SPACE_BIN)
+	streamID := testutils.FakeStreamId(STREAM_SPACE_BIN)
 	_, genesisMiniblock := makeTestSpaceStream(t, node.Wallet, streamID, nil)
 
 	tc.createStreamNoCache(streamID, genesisMiniblock)
@@ -141,7 +141,7 @@ func TestCacheEvictionWithFilledMiniBlockPool(t *testing.T) {
 	})
 
 	node := tc.getBC()
-	streamID := testutils.FakeStreamId(shared.STREAM_SPACE_BIN)
+	streamID := testutils.FakeStreamId(STREAM_SPACE_BIN)
 	_, genesisMiniblock := makeTestSpaceStream(t, node.Wallet, streamID, nil)
 
 	tc.createStreamNoCache(streamID, genesisMiniblock)
@@ -210,12 +210,12 @@ func TestCacheEvictionWithFilledMiniBlockPool(t *testing.T) {
 }
 
 type testStreamCacheViewEvictionSub struct {
-	receivedStreamAndCookies []*protocol.StreamAndCookie
+	receivedStreamAndCookies []*StreamAndCookie
 	receivedErrors           []error
-	streamErrors             []shared.StreamId
+	streamErrors             []StreamId
 }
 
-func (sub *testStreamCacheViewEvictionSub) OnUpdate(sac *protocol.StreamAndCookie) {
+func (sub *testStreamCacheViewEvictionSub) OnUpdate(sac *StreamAndCookie) {
 	sub.receivedStreamAndCookies = append(sub.receivedStreamAndCookies, sac)
 }
 
@@ -223,7 +223,7 @@ func (sub *testStreamCacheViewEvictionSub) OnSyncError(err error) {
 	sub.receivedErrors = append(sub.receivedErrors, err)
 }
 
-func (sub *testStreamCacheViewEvictionSub) OnStreamSyncDown(streamID shared.StreamId) {
+func (sub *testStreamCacheViewEvictionSub) OnStreamSyncDown(streamID StreamId) {
 	sub.streamErrors = append(sub.streamErrors, streamID)
 }
 
@@ -257,12 +257,12 @@ func TestStreamMiniblockBatchProduction(t *testing.T) {
 	genesisBlocks := tc.allocateStreams(streamsCount)
 
 	// add events to ~50% of the streams
-	streamsWithEvents := make(map[shared.StreamId]int)
+	streamsWithEvents := make(map[StreamId]int)
 	var mu sync.Mutex
 	var wg sync.WaitGroup
 	for streamID, genesis := range genesisBlocks {
 		wg.Add(1)
-		go func(streamID shared.StreamId, genesis *protocol.Miniblock) {
+		go func(streamID StreamId, genesis *Miniblock) {
 			defer wg.Done()
 
 			streamSync, err := streamCache.GetStream(ctx, streamID)
@@ -383,8 +383,8 @@ func Disabled_TestStreamUnloadWithSubscribers(t *testing.T) {
 	var (
 		node                  = tc.getBC()
 		genesisBlocks         = tc.allocateStreams(streamsCount)
-		syncCookies           = make(map[shared.StreamId]*protocol.SyncCookie)
-		subscriptionReceivers = make(map[shared.StreamId]*testStreamCacheViewEvictionSub)
+		syncCookies           = make(map[StreamId]*SyncCookie)
+		subscriptionReceivers = make(map[StreamId]*testStreamCacheViewEvictionSub)
 	)
 
 	// obtain sync cookies for allocated streams
@@ -421,8 +421,8 @@ func Disabled_TestStreamUnloadWithSubscribers(t *testing.T) {
 	// add events to the first 2 streams and ensure that the receiver is notified even when the stream view is dropped.
 	var (
 		count                = 0
-		streamsWithEvents    = make(map[shared.StreamId]int)
-		streamsWithoutEvents = make(map[shared.StreamId]int)
+		streamsWithEvents    = make(map[StreamId]int)
+		streamsWithoutEvents = make(map[StreamId]int)
 	)
 
 	for streamID, genesis := range genesisBlocks {

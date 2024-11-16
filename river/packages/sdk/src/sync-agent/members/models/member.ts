@@ -7,28 +7,49 @@ import { MembershipOp } from '@river-build/proto'
 import type { Address } from '@river-build/web3'
 
 export type MemberModel = {
+    /**
+     * The store id of the member.
+     * @internal
+     */
     id: string
+    /** The id of the user. */
     userId: string
+    /** The id of the stream where the data belongs to. */
     streamId: string
+    /** Whether the SyncAgent has loaded this data. */
     initialized: boolean
-    // username
+    /** Username of the member. */
     username: string
+    /** Whether the username has been confirmed by the River node. */
     isUsernameConfirmed: boolean
+    /** Whether the username is encrypted. */
     isUsernameEncrypted: boolean
-    // displayName
+    /** Display name of the member. */
     displayName: string
+    /** Whether the display name is encrypted. */
     isDisplayNameEncrypted?: boolean
-    // ensAddress
+    /**
+     * ENS address of the member.
+     * Should not be trusted, as it can be spoofed.
+     * You should be validating it.
+     */
     ensAddress?: string
-    // nft
+    /**
+     * {@link NftModel} of the member.
+     * Should not be trusted, as it can be spoofed.
+     * You should be validating it.
+     */
     nft?: NftModel
-    // membership
+    /** {@link MembershipOp} of the member. */
     membership?: MembershipOp
 }
 
 export type NftModel = {
+    /** The contract address of the NFT. */
     contractAddress: string
+    /** The token id of the NFT. */
     tokenId: string
+    /** The chain id of the NFT. */
     chainId: number
 }
 

@@ -2,15 +2,15 @@ package events
 
 import (
 	"github.com/ethereum/go-ethereum/common"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/emptypb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/crypto"
 	. "github.com/river-build/river/core/node/protocol"
+	. "github.com/river-build/river/core/node/shared"
 	"github.com/river-build/river/core/node/storage"
-
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/emptypb"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func Make_GenesisMiniblockHeader(parsedEvents []*ParsedEvent) (*MiniblockHeader, error) {

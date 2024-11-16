@@ -3,6 +3,7 @@ package crypto
 import (
 	"context"
 	"slices"
+	"sync"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
@@ -11,18 +12,26 @@ import (
 
 // chainMonitorBuilder builds a chain monitor.
 type chainMonitorBuilder struct {
-	dirty            bool
-	cachedQuery      ethereum.FilterQuery
-	blockCallbacks   chainBlockCallbacks
-	eventCallbacks   chainEventCallbacks
-	headerCallbacks  chainHeaderCallbacks
-	stoppedCallbacks chainMonitorStoppedCallbacks
+	dirty                  bool
+	cachedQuery            ethereum.FilterQuery
+	blockCallbacks         chainBlockCallbacks
+	blockWithLogsCallbacks chainBlockWithLogsCallbacks
+	eventCallbacks         chainEventCallbacks
+	headerCallbacks        chainHeaderCallbacks
+	stoppedCallbacks       chainMonitorStoppedCallbacks
 }
 
 func (lfb *chainMonitorBuilder) Query() ethereum.FilterQuery {
 	if !lfb.dirty {
 		return lfb.cachedQuery
 	}
+
+	if len(lfb.blockWithLogsCallbacks) > 0 { // wants all events
+		lfb.dirty = false
+		lfb.cachedQuery = ethereum.FilterQuery{}
+		return lfb.cachedQuery
+	}
+
 	query := ethereum.FilterQuery{}
 	for _, cb := range lfb.eventCallbacks {
 		if cb.address == nil && len(cb.topics) == 0 { // wants all events
@@ -47,6 +56,14 @@ func (lfb *chainMonitorBuilder) OnHeader(cb OnChainNewHeader) {
 
 func (lfb *chainMonitorBuilder) OnBlock(cb OnChainNewBlock) {
 	lfb.blockCallbacks = append(lfb.blockCallbacks, &chainBlockCallback{handler: cb})
+	lfb.dirty = true
+}
+
+func (lfb *chainMonitorBuilder) OnBlockWithLogs(from BlockNumber, cb OnChainNewBlockWithLogs) {
+	lfb.blockWithLogsCallbacks = append(
+		lfb.blockWithLogsCallbacks,
+		&chainBlockWithLogsCallback{handler: cb, nextBlock: from},
+	)
 	lfb.dirty = true
 }
 
@@ -152,6 +169,44 @@ func (ebc chainBlockCallbacks) onBlockReceived(ctx context.Context, blockNumber 
 		if cb.fromBlock < blockNumber {
 			cb.handler(ctx, blockNumber)
 			cb.fromBlock = blockNumber
+		}
+	}
+}
+
+type chainBlockWithLogsCallback struct {
+	handler   OnChainNewBlockWithLogs
+	nextBlock BlockNumber
+}
+
+type chainBlockWithLogsCallbacks []*chainBlockWithLogsCallback
+
+func (ebc chainBlockWithLogsCallbacks) onBlockReceived(
+	ctx context.Context,
+	toBlock BlockNumber,
+	logs []types.Log,
+	wg *sync.WaitGroup,
+) {
+	l := make([]*types.Log, len(logs))
+	for i := range logs {
+		l[i] = &logs[i]
+	}
+	for _, cb := range ebc {
+		if cb.nextBlock <= toBlock {
+			wg.Add(1)
+			go func(nextBlock uint64) {
+				defer wg.Done()
+				// Filter logs for the blocks < cb.nextBlock
+				shouldFilterOut := func(log *types.Log) bool {
+					return log.BlockNumber < nextBlock
+				}
+				filteredLogs := l
+				if slices.ContainsFunc(filteredLogs, shouldFilterOut) {
+					filteredLogs = slices.Clone(filteredLogs)
+					filteredLogs = slices.DeleteFunc(filteredLogs, shouldFilterOut)
+				}
+				cb.handler(ctx, toBlock, filteredLogs)
+			}(cb.nextBlock.AsUint64())
+			cb.nextBlock = toBlock + 1
 		}
 	}
 }

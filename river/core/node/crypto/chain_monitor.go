@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/infra"
 )
@@ -30,6 +31,8 @@ type (
 		OnHeader(cb OnChainNewHeader)
 		// OnBlock adds a callback that is called for each new block
 		OnBlock(cb OnChainNewBlock)
+		// OnBlockWithLogs adds a callback that is called for each new block with the logs that were created in the block.
+		OnBlockWithLogs(from BlockNumber, cb OnChainNewBlockWithLogs)
 		// OnAllEvents matches all events for all contracts, e.g. all chain events.
 		OnAllEvents(from BlockNumber, cb OnChainEventCallback)
 		// OnContractEvent matches all events created by the contract on the given address.
@@ -48,7 +51,7 @@ type (
 	// OnChainEventCallback is called for each event that matches the filter.
 	// Note that the monitor doesn't care about errors in the callback and doesn't
 	// expect callbacks to change the received event.
-	OnChainEventCallback = func(context.Context, types.Log)
+	OnChainEventCallback = func(context.Context, types.Log) // TODO: *types.Log
 
 	// OnChainNewHeader is called when a new header is detected to be added to the chain.
 	// Note, it is NOT guaranteed to be called for every new header.
@@ -57,6 +60,13 @@ type (
 
 	// OnChainNewBlock is called for each new block that is added to the chain.
 	OnChainNewBlock = func(context.Context, BlockNumber)
+
+	// OnChainNewBlockWithLogs is called for new block that is added to the chain with the logs
+	// that were added to the all blocks that were created from the last call to this callback.
+	// I.e. while some block numbers may be skipped, all logs for the skipped block numbers are
+	// returned in the slice of logs on the next call to this callback.
+	// If new block is observed, but there are no logs, the slice of logs will be empty.
+	OnChainNewBlockWithLogs = func(context.Context, BlockNumber, []*types.Log)
 
 	// OnChainMonitorStoppedCallback is called after the chain monitor stopped monitoring the chain.
 	OnChainMonitorStoppedCallback = func(context.Context)
@@ -83,8 +93,10 @@ type (
 	}
 )
 
-var _ ChainMonitor = (*chainMonitor)(nil)
-var _ ChainMonitorPollInterval = (*defaultChainMonitorPollIntervalCalculator)(nil)
+var (
+	_ ChainMonitor             = (*chainMonitor)(nil)
+	_ ChainMonitorPollInterval = (*defaultChainMonitorPollIntervalCalculator)(nil)
+)
 
 // NewChainMonitor constructs an EVM chain monitor that can track state changes on an EVM chain.
 func NewChainMonitor() *chainMonitor {
@@ -162,6 +174,13 @@ func (cm *chainMonitor) OnBlock(cb OnChainNewBlock) {
 	cm.mu.Lock()
 	defer cm.mu.Unlock()
 	cm.builder.OnBlock(cb)
+}
+
+func (cm *chainMonitor) OnBlockWithLogs(from BlockNumber, cb OnChainNewBlockWithLogs) {
+	cm.mu.Lock()
+	defer cm.mu.Unlock()
+	cm.builder.OnBlockWithLogs(from, cb)
+	cm.setFromBlock(from.AsBigInt(), true)
 }
 
 func (cm *chainMonitor) OnAllEvents(from BlockNumber, cb OnChainEventCallback) {
@@ -341,7 +360,8 @@ func (cm *chainMonitor) RunWithBlockPeriod(
 				}
 			}
 
-			if len(cm.builder.eventCallbacks) > 0 { // collect events in new blocks
+			if len(cm.builder.eventCallbacks) > 0 ||
+				len(cm.builder.blockWithLogsCallbacks) > 0 { // collect events in new blocks
 				collectedLogs, err = client.FilterLogs(ctx, query)
 				if err != nil {
 					log.Warn("unable to retrieve logs", "error", err, "from", query.FromBlock, "to", query.ToBlock)
@@ -368,6 +388,15 @@ func (cm *chainMonitor) RunWithBlockPeriod(
 					}
 					callbacksExecuted.Done()
 				}()
+			}
+
+			if len(cm.builder.blockWithLogsCallbacks) > 0 {
+				cm.builder.blockWithLogsCallbacks.onBlockReceived(
+					ctx,
+					BlockNumberFromBigInt(query.ToBlock),
+					collectedLogs,
+					&callbacksExecuted,
+				)
 			}
 
 			if len(cm.builder.eventCallbacks) > 0 {
