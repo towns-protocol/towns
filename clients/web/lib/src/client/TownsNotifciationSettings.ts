@@ -171,7 +171,12 @@ export class NotificationSettingsClient {
             this._client = await this.initialize()
         }
         if (this._client) {
-            return fn(this._client)
+            try {
+                return await fn(this._client)
+            } catch (error) {
+                this.data.setValue({ ...this.data.value, error: error as Error })
+                throw error
+            }
         }
         // either an error is already logged or the initialize threw an error
         return undefined

@@ -56,6 +56,7 @@ function makeSettingsOptions<K, T extends { value: K }>(
 export function TownNotificationsButton(props: Props) {
     const {
         isLoading,
+        error,
         notificationSettingsClient,
         getSpaceSetting,
         getChannelSetting,
@@ -141,61 +142,89 @@ export function TownNotificationsButton(props: Props) {
         [options, setSettingFn],
     )
 
-    return isLoading ? (
-        <Stack horizontal data-testid="notifications-settings-button" gap="sm" alignItems="center">
-            <Icon type="notificationsOn" size="square_sm" color="gray2" />
-            <ButtonSpinner />
-        </Stack>
-    ) : (
-        <PopupMenu
-            options={options}
-            value={value}
-            getKey={(option) => option.title}
-            data-testid="notifications-settings-button"
-            renderButton={(option) => (
-                <Stack horizontal gap="sm" alignItems="center">
-                    <Icon type={option.icon} size="square_sm" color="gray2" />
-                    <Paragraph color="default">{option.title}</Paragraph>
-                </Stack>
-            )}
-            renderMenu={(option, isSelected) => (
-                <Stack horizontal gap="sm">
-                    {option?.icon && (
-                        <Box
-                            centerContent
-                            width={{ desktop: 'x4', mobile: 'x3' }}
-                            height={{ desktop: 'x4', mobile: 'x3' }}
-                            rounded="xs"
-                            background="level3"
-                            shrink={false}
-                        >
-                            <Icon type={option?.icon} size="square_sm" color="gray2" />
-                        </Box>
-                    )}
-                    <Stack grow gap="sm" shrink={false} justifyContent="center">
-                        <Paragraph color="default" size={{ desktop: 'md', mobile: 'sm' }}>
-                            {option?.title}
-                        </Paragraph>
-                        <Paragraph
-                            color="gray2"
-                            size={{ desktop: 'sm', mobile: 'xs' }}
-                            whiteSpace={{ desktop: 'nowrap', mobile: 'normal' }}
-                        >
-                            {option?.description}
-                        </Paragraph>
+    if (error) {
+        return (
+            <Stack
+                horizontal
+                padding
+                data-testid="notifications-settings-button"
+                gap="sm"
+                alignItems="center"
+                title={JSON.stringify(error, undefined, 2)}
+                background="level2"
+                rounded="sm"
+            >
+                <Icon type="notificationsOn" size="square_sm" color="gray2" />
+                <Paragraph color="error">Error loading settings</Paragraph>
+            </Stack>
+        )
+    } else if (isLoading) {
+        return (
+            <Stack
+                padding
+                horizontal
+                data-testid="notifications-settings-button"
+                gap="sm"
+                alignItems="center"
+                background="level2"
+                rounded="sm"
+            >
+                <Icon type="notificationsOn" size="square_sm" color="gray2" />
+                <ButtonSpinner />
+            </Stack>
+        )
+    } else {
+        return (
+            <PopupMenu
+                options={options}
+                value={value}
+                getKey={(option) => option.title}
+                data-testid="notifications-settings-button"
+                renderButton={(option) => (
+                    <Stack horizontal gap="sm" alignItems="center">
+                        <Icon type={option.icon} size="square_sm" color="gray2" />
+                        <Paragraph color="default">{option.title}</Paragraph>
                     </Stack>
-                    <Stack centerContent width={{ default: 'x3', mobile: 'x1' }} shrink={false}>
-                        {isSelected && (
-                            <Icon
-                                type="check"
-                                size={{ desktop: 'square_sm', mobile: 'square_xs' }}
-                                color="default"
-                            />
+                )}
+                renderMenu={(option, isSelected) => (
+                    <Stack horizontal gap="sm">
+                        {option?.icon && (
+                            <Box
+                                centerContent
+                                width={{ desktop: 'x4', mobile: 'x3' }}
+                                height={{ desktop: 'x4', mobile: 'x3' }}
+                                rounded="xs"
+                                background="level3"
+                                shrink={false}
+                            >
+                                <Icon type={option?.icon} size="square_sm" color="gray2" />
+                            </Box>
                         )}
+                        <Stack grow gap="sm" shrink={false} justifyContent="center">
+                            <Paragraph color="default" size={{ desktop: 'md', mobile: 'sm' }}>
+                                {option?.title}
+                            </Paragraph>
+                            <Paragraph
+                                color="gray2"
+                                size={{ desktop: 'sm', mobile: 'xs' }}
+                                whiteSpace={{ desktop: 'nowrap', mobile: 'normal' }}
+                            >
+                                {option?.description}
+                            </Paragraph>
+                        </Stack>
+                        <Stack centerContent width={{ default: 'x3', mobile: 'x1' }} shrink={false}>
+                            {isSelected && (
+                                <Icon
+                                    type="check"
+                                    size={{ desktop: 'square_sm', mobile: 'square_xs' }}
+                                    color="default"
+                                />
+                            )}
+                        </Stack>
                     </Stack>
-                </Stack>
-            )}
-            onChange={onChange}
-        />
-    )
+                )}
+                onChange={onChange}
+            />
+        )
+    }
 }
