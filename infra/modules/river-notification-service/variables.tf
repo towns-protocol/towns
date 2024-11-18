@@ -71,3 +71,12 @@ variable "pgadmin_security_group_id" {
   description = "The security group id of the pgadmin service"
   type        = string
 }
+
+variable "apns_auth_key_secret_arn" {
+  description = "The arn of the apns auth key secret"
+  type        = string
+}
+
+variable "apns_towns_app_identifier" {
+  type = string
+}

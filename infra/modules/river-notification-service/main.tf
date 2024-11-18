@@ -182,6 +182,7 @@ resource "aws_iam_role_policy" "service_iam_policy" {
         "Effect": "Allow",
         "Resource": [
           "${local.global_remote_state.notification_service_db_password_secret.arn}",
+          "${var.apns_auth_key_secret_arn}",
           "${local.global_remote_state.river_global_dd_agent_api_key.arn}",
           "${local.global_remote_state.river_sepolia_rpc_url_secret.arn}",
           "${local.global_remote_state.river_mainnet_rpc_url_secret.arn}",
@@ -277,6 +278,10 @@ resource "aws_ecs_task_definition" "task_definition" {
       {
         name      = "NOTIFICATIONS__AUTHENTICATION__SESSIONTOKEN__KEY__KEY",
         valueFrom = local.global_remote_state.notification_authentication_session_token_key_secret.arn
+      },
+      {
+        name      = "NOTIFICATIONS__APN__AUTHKEY",
+        valueFrom = var.apns_auth_key_secret_arn
       }
     ]
 
@@ -348,10 +353,6 @@ resource "aws_ecs_task_definition" "task_definition" {
         value = "?sslmode=disable&pool_max_conns=${tostring(var.max_db_connections)}"
       },
       {
-        name  = "NOTIFICATIONS__SIMULATE",
-        value = "true"
-      },
-      {
         name  = "NOTIFICATIONS__SUBSCRIPTIONEXPIRATIONDURATION",
         value = "2160h"
       },
@@ -362,7 +363,19 @@ resource "aws_ecs_task_definition" "task_definition" {
       {
         name  = "NOTIFICATIONS__AUTHENTICATION__SESSIONTOKEN__KEY__ALGORITHM",
         value = "HS256"
-      }
+      },
+      {
+        name  = "NOTIFICATIONS__APN__TEAMID",
+        value = "KG4HQQ5Y2X"
+      },
+      {
+        name  = "NOTIFICATIONS__APN__KEYID",
+        value = "M4QUBD2Q36"
+      },
+      {
+        name  = "NOTIFICATIONS__APN__APPBUNDLEID",
+        value = var.apns_towns_app_identifier
+      },
     ]
 
 
@@ -458,7 +471,13 @@ resource "aws_ecs_service" "ecs-service" {
   }
 
   load_balancer {
-    target_group_arn = aws_lb_target_group.target_group.arn
+    target_group_arn = aws_lb_target_group.grpc_target_group.arn
+    container_name   = "river-notification-service"
+    container_port   = local.http_port
+  }
+
+  load_balancer {
+    target_group_arn = aws_lb_target_group.http_target_group.arn
     container_name   = "river-notification-service"
     container_port   = local.http_port
   }
@@ -547,8 +566,55 @@ locals {
 # Load Balancer Routing
 ##################################################################
 
-resource "aws_lb_target_group" "target_group" {
-  name             = "notification-service-${terraform.workspace}-tg"
+
+resource "aws_lb_target_group" "http_target_group" {
+  name        = "notifications-http-${terraform.workspace}"
+  protocol    = "HTTP"
+  port        = 80
+  target_type = "ip"
+  vpc_id      = var.vpc_id
+
+
+  health_check {
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+    timeout             = 6
+    interval            = 15
+    path                = "/status?blockchain=0"
+    protocol            = "HTTP"
+  }
+
+  tags = module.global_constants.tags
+}
+
+resource "aws_lb_listener_rule" "http_rule" {
+  listener_arn = var.alb_https_listener_arn
+  priority     = 10 // http should be higher priority than grpc
+
+  lifecycle {
+    ignore_changes = [action]
+  }
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.http_target_group.arn
+  }
+
+  condition {
+    host_header {
+      values = [local.dns_host]
+    }
+  }
+
+  condition {
+    http_request_method {
+      values = ["OPTIONS"]
+    }
+  }
+}
+
+resource "aws_lb_target_group" "grpc_target_group" {
+  name             = "notifications-grpc-${terraform.workspace}"
   protocol         = "HTTP"
   protocol_version = "GRPC"
   port             = 80
@@ -569,8 +635,9 @@ resource "aws_lb_target_group" "target_group" {
   tags = module.global_constants.tags
 }
 
-resource "aws_lb_listener_rule" "http_rule" {
+resource "aws_lb_listener_rule" "grpc_rule" {
   listener_arn = var.alb_https_listener_arn
+  priority     = 20 // grpc should be lower priority than http
 
   lifecycle {
     ignore_changes = [action]
@@ -578,7 +645,7 @@ resource "aws_lb_listener_rule" "http_rule" {
 
   action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.target_group.arn
+    target_group_arn = aws_lb_target_group.grpc_target_group.arn
   }
 
   condition {
