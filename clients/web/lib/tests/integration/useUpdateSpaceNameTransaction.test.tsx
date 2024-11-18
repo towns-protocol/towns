@@ -12,16 +12,16 @@ import { RegisterWallet, TransactionInfo } from './helpers/TestComponents'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { TownsTestApp } from './helpers/TownsTestApp'
 import { TownsTestWeb3Provider } from './helpers/TownsTestWeb3Provider'
-import { createMembershipStruct, makeUniqueName } from './helpers/TestUtils'
+import {
+    createMembershipStruct,
+    getFreeSpacePricingSetup,
+    makeUniqueName,
+} from './helpers/TestUtils'
 import { useUpdateSpaceInfoTransaction } from '../../src/hooks/use-update-space-info-transaction'
 import { useCreateSpaceTransactionWithRetries } from '../../src/hooks/use-create-space-transaction'
 import { TestConstants } from './helpers/TestConstants'
 import { TransactionStatus } from '../../src/client/TownsClientTypes'
-import {
-    EncodedNoopRuleData,
-    getTestGatingNftAddress,
-    getDynamicPricingModule,
-} from '@river-build/web3'
+import { EncodedNoopRuleData, getTestGatingNftAddress } from '@river-build/web3'
 import { useContractSpaceInfo } from '../../src/hooks/use-space-data'
 import { TSigner } from '../../src/types/web3-types'
 import { useTownsClient } from '../../src/hooks/use-towns-client'
@@ -117,7 +117,8 @@ function TestComponent(args: {
     // handle click to create a space
     const onClickCreateSpace = useCallback(() => {
         const handleClick = async () => {
-            const dynamicPricingModule = await getDynamicPricingModule(spaceDapp)
+            const { fixedPricingModuleAddress, price, freeAllocation } =
+                await getFreeSpacePricingSetup(spaceDapp)
             await createSpaceTransactionWithRetries(
                 {
                     name: args.originalSpaceName,
@@ -131,7 +132,9 @@ function TestComponent(args: {
                         ruleData: EncodedNoopRuleData,
                         syncEntitlements: false,
                     },
-                    pricingModule: dynamicPricingModule.module,
+                    pricingModule: fixedPricingModuleAddress,
+                    freeAllocation,
+                    price,
                 }),
                 args.signer,
             )

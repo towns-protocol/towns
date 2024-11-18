@@ -17,16 +17,12 @@ import { TownsTestApp } from 'use-towns-client/tests/integration/helpers/TownsTe
 import { TownsTestWeb3Provider } from 'use-towns-client/tests/integration/helpers/TownsTestWeb3Provider'
 import {
     createMembershipStruct,
+    getFreeSpacePricingSetup,
     makeUniqueName,
 } from 'use-towns-client/tests/integration/helpers/TestUtils'
 import { useCreateSpaceTransactionWithRetries } from 'use-towns-client/src/hooks/use-create-space-transaction'
 import { useSpacesFromContract } from 'use-towns-client/src/hooks/use-spaces-from-contract'
-import {
-    getTestGatingNftAddress,
-    EncodedNoopRuleData,
-    Permission,
-    getDynamicPricingModule,
-} from '@river-build/web3'
+import { getTestGatingNftAddress, EncodedNoopRuleData, Permission } from '@river-build/web3'
 import { TSigner } from '../../src/types/web3-types'
 import { useTownsClient } from '../../src/hooks/use-towns-client'
 
@@ -57,7 +53,8 @@ describe('spaceManagerContractHooks', () => {
             // callback to create a space
             const onClickCreateSpace = useCallback(() => {
                 const handleClick = async () => {
-                    const dynamicPricingModule = await getDynamicPricingModule(spaceDapp)
+                    const { fixedPricingModuleAddress, price, freeAllocation } =
+                        await getFreeSpacePricingSetup(spaceDapp)
                     await createSpaceTransactionWithRetries(
                         {
                             name: spaceName,
@@ -71,7 +68,9 @@ describe('spaceManagerContractHooks', () => {
                                 ruleData: EncodedNoopRuleData,
                                 syncEntitlements: false,
                             },
-                            pricingModule: dynamicPricingModule.module,
+                            pricingModule: fixedPricingModuleAddress,
+                            freeAllocation,
+                            price,
                         }),
                         signer,
                     )
@@ -90,7 +89,8 @@ describe('spaceManagerContractHooks', () => {
                     if (!nftAddress) {
                         throw new Error('No towns token address')
                     }
-                    const dynamicPricingModule = await getDynamicPricingModule(spaceDapp)
+                    const { fixedPricingModuleAddress, price, freeAllocation } =
+                        await getFreeSpacePricingSetup(spaceDapp)
                     await createSpaceTransactionWithRetries(
                         {
                             name: tokenGatedSpaceName,
@@ -104,7 +104,9 @@ describe('spaceManagerContractHooks', () => {
                                 ruleData: EncodedNoopRuleData,
                                 syncEntitlements: false,
                             },
-                            pricingModule: dynamicPricingModule.module,
+                            pricingModule: fixedPricingModuleAddress,
+                            freeAllocation,
+                            price,
                         }),
                         signer,
                     )

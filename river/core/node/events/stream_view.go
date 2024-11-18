@@ -36,6 +36,7 @@ type StreamView interface {
 	MiniblocksFromLastSnapshot() []*Miniblock
 	SyncCookie(localNodeAddress common.Address) *SyncCookie
 	LastBlock() *MiniblockInfo
+	Blocks() []*MiniblockInfo
 	ValidateNextEvent(
 		ctx context.Context,
 		cfg *crypto.OnChainSettings,
@@ -68,8 +69,8 @@ func MakeStreamView(
 			return nil, err
 		}
 		miniblocks[i] = miniblock
-		lastMiniblockNumber = miniblock.header().MiniblockNum
-		if snapshotIndex == -1 && miniblock.header().Snapshot != nil {
+		lastMiniblockNumber = miniblock.Header().MiniblockNum
+		if snapshotIndex == -1 && miniblock.Header().Snapshot != nil {
 			snapshotIndex = i
 		}
 	}
@@ -107,7 +108,7 @@ func MakeStreamView(
 		}
 	}
 
-	lastBlockHeader := miniblocks[len(miniblocks)-1].header()
+	lastBlockHeader := miniblocks[len(miniblocks)-1].Header()
 	generation := lastBlockHeader.MiniblockNum + 1
 	eventNumOffset := lastBlockHeader.EventNumOffset + int64(
 		len(lastBlockHeader.EventHashes),
@@ -139,9 +140,9 @@ func MakeRemoteStreamView(ctx context.Context, resp *GetStreamResponse) (*stream
 		if err != nil {
 			return nil, err
 		}
-		lastMiniblockNumber = miniblock.header().MiniblockNum
+		lastMiniblockNumber = miniblock.Header().MiniblockNum
 		miniblocks[i] = miniblock
-		if miniblock.header().Snapshot != nil {
+		if miniblock.Header().Snapshot != nil {
 			snapshotIndex = i
 		}
 	}
@@ -170,7 +171,7 @@ func MakeRemoteStreamView(ctx context.Context, resp *GetStreamResponse) (*stream
 		}
 	}
 
-	lastBlockHeader := miniblocks[len(miniblocks)-1].header()
+	lastBlockHeader := miniblocks[len(miniblocks)-1].Header()
 	generation := lastBlockHeader.MiniblockNum + 1
 	eventNumOffset := lastBlockHeader.EventNumOffset + int64(
 		len(lastBlockHeader.EventHashes),
@@ -221,6 +222,10 @@ func (r *streamViewImpl) copyAndAddEvent(event *ParsedEvent) (*streamViewImpl, e
 
 func (r *streamViewImpl) LastBlock() *MiniblockInfo {
 	return r.blocks[len(r.blocks)-1]
+}
+
+func (r *streamViewImpl) Blocks() []*MiniblockInfo {
+	return r.blocks
 }
 
 func (r *streamViewImpl) ProposeNextMiniblock(
@@ -279,20 +284,20 @@ func (r *streamViewImpl) makeMiniblockHeader(
 
 	var snapshot *Snapshot
 	last := r.LastBlock()
-	eventNumOffset := last.header().EventNumOffset + int64(len(last.events())) + 1 // +1 for header
-	nextMiniblockNum := last.header().MiniblockNum + 1
-	miniblockNumOfPrevSnapshot := last.header().PrevSnapshotMiniblockNum
-	if last.header().Snapshot != nil {
-		miniblockNumOfPrevSnapshot = last.header().MiniblockNum
+	eventNumOffset := last.Header().EventNumOffset + int64(len(last.events())) + 1 // +1 for header
+	nextMiniblockNum := last.Header().MiniblockNum + 1
+	miniblockNumOfPrevSnapshot := last.Header().PrevSnapshotMiniblockNum
+	if last.Header().Snapshot != nil {
+		miniblockNumOfPrevSnapshot = last.Header().MiniblockNum
 	}
 	if proposal.ShouldSnapshot {
 		snapshot = proto.Clone(r.snapshot).(*Snapshot)
 		// update all blocks since last snapshot
 		for i := r.snapshotIndex + 1; i < len(r.blocks); i++ {
 			block := r.blocks[i]
-			miniblockNum := block.header().MiniblockNum
+			miniblockNum := block.Header().MiniblockNum
 			for j, e := range block.events() {
-				offset := block.header().EventNumOffset
+				offset := block.Header().EventNumOffset
 				err := Update_Snapshot(snapshot, e, miniblockNum, offset+int64(j))
 				if err != nil {
 					log.Error("Failed to update snapshot",
@@ -318,7 +323,7 @@ func (r *streamViewImpl) makeMiniblockHeader(
 
 	return &MiniblockHeader{
 		MiniblockNum:             nextMiniblockNum,
-		Timestamp:                NextMiniblockTimestamp(last.header().Timestamp),
+		Timestamp:                NextMiniblockTimestamp(last.Header().Timestamp),
 		EventHashes:              hashes,
 		PrevMiniblockHash:        last.headerEvent.Hash[:],
 		Snapshot:                 snapshot,
@@ -351,12 +356,12 @@ func (r *streamViewImpl) copyAndApplyBlock(
 	}
 
 	lastBlock := r.LastBlock()
-	if header.MiniblockNum != lastBlock.header().MiniblockNum+1 {
+	if header.MiniblockNum != lastBlock.Header().MiniblockNum+1 {
 		return nil, nil, RiverError(
 			Err_BAD_BLOCK,
 			"streamViewImpl: block number mismatch",
 			"expected",
-			lastBlock.header().MiniblockNum+1,
+			lastBlock.Header().MiniblockNum+1,
 			"actual",
 			header.MiniblockNum,
 		)
@@ -430,16 +435,16 @@ func (r *streamViewImpl) InceptionPayload() IsInceptionPayload {
 
 func (r *streamViewImpl) indexOfMiniblockWithNum(mininblockNum int64) (int, error) {
 	if len(r.blocks) > 0 {
-		diff := int(mininblockNum - r.blocks[0].header().MiniblockNum)
+		diff := int(mininblockNum - r.blocks[0].Header().MiniblockNum)
 		if diff >= 0 && diff < len(r.blocks) {
-			if r.blocks[diff].header().MiniblockNum != mininblockNum {
+			if r.blocks[diff].Header().MiniblockNum != mininblockNum {
 				return 0, RiverError(
 					Err_INTERNAL,
 					"indexOfMiniblockWithNum block number mismatch",
 					"requested",
 					mininblockNum,
 					"actual",
-					r.blocks[diff].header().MiniblockNum,
+					r.blocks[diff].Header().MiniblockNum,
 				)
 			}
 			return diff, nil
@@ -450,9 +455,9 @@ func (r *streamViewImpl) indexOfMiniblockWithNum(mininblockNum int64) (int, erro
 			"requested",
 			mininblockNum,
 			"min",
-			r.blocks[0].header().MiniblockNum,
+			r.blocks[0].Header().MiniblockNum,
 			"max",
-			r.blocks[len(r.blocks)-1].header().MiniblockNum,
+			r.blocks[len(r.blocks)-1].Header().MiniblockNum,
 		)
 	}
 	return 0, RiverError(
@@ -547,7 +552,7 @@ func (r *streamViewImpl) shouldSnapshot(ctx context.Context, cfg *crypto.OnChain
 	// count the events in blocks since the last snapshot
 	for i := len(r.blocks) - 1; i >= 0; i-- {
 		block := r.blocks[i]
-		if block.header().Snapshot != nil {
+		if block.Header().Snapshot != nil {
 			break
 		}
 		count += len(block.events())
@@ -671,7 +676,7 @@ func (r *streamViewImpl) isRecentBlock(
 	currentTime time.Time,
 ) bool {
 	maxAgeDuration := cfg.RecencyConstraintsAge
-	diff := currentTime.Sub(block.header().Timestamp.AsTime())
+	diff := currentTime.Sub(block.Header().Timestamp.AsTime())
 	return diff <= maxAgeDuration
 }
 
@@ -684,12 +689,12 @@ func (r *streamViewImpl) GetStats() StreamViewStats {
 
 	for _, block := range r.blocks {
 		stats.EventsInMiniblocks += len(block.events()) + 1 // +1 for header
-		if block.header().Snapshot != nil {
+		if block.Header().Snapshot != nil {
 			stats.SnapshotsInMiniblocks++
 		}
 	}
 
-	stats.TotalEventsEver = int(r.blocks[r.snapshotIndex].header().EventNumOffset)
+	stats.TotalEventsEver = int(r.blocks[r.snapshotIndex].Header().EventNumOffset)
 	for _, block := range r.blocks[r.snapshotIndex:] {
 		stats.TotalEventsEver += len(block.events()) + 1 // +1 for header
 	}

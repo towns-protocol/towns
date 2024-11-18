@@ -39,24 +39,17 @@ type RemoteMiniblockProvider interface {
 		mb *Miniblock,
 	) error
 
-	// GetMiniBlocksStreamed returns a stream of mini-blocks or an error for the given stream in the range
-	// [fromMiniBlockNum..toMiniBlockNum).
-	GetMbsStreamed(
+	GetMbs(
 		ctx context.Context,
 		node common.Address,
-		stream StreamId,
-		fromMiniBlockNum int64, // inclusive
-		toMiniBlockNum int64, // exclusive
-	) <-chan *MbOrError
-}
-
-type MbOrError struct {
-	Miniblock *Miniblock
-	Err       error
+		streamId StreamId,
+		fromInclusive int64,
+		toExclusive int64,
+	) ([]*Miniblock, error)
 }
 
 type MiniblockProducer interface {
-	scheduleCandidates(ctx context.Context) []*mbJob
+	scheduleCandidates(ctx context.Context, blockNum crypto.BlockNumber) []*mbJob
 	testCheckAllDone(jobs []*mbJob) bool
 
 	// TestMakeMiniblock is a debug function that creates a miniblock proposal, stores it in the registry, and applies it to the stream.
@@ -84,7 +77,8 @@ func NewMiniblockProducer(
 	opts *MiniblockProducerOpts,
 ) *miniblockProducer {
 	mb := &miniblockProducer{
-		streamCache: streamCache,
+		streamCache:      streamCache,
+		localNodeAddress: streamCache.Params().Wallet.Address,
 	}
 	if opts != nil {
 		mb.opts = *opts
@@ -98,8 +92,9 @@ func NewMiniblockProducer(
 }
 
 type miniblockProducer struct {
-	streamCache StreamCache
-	opts        MiniblockProducerOpts
+	streamCache      StreamCache
+	opts             MiniblockProducerOpts
+	localNodeAddress common.Address
 
 	// jobs is a maps of streamId to *mbJob
 	jobs sync.Map
@@ -165,36 +160,66 @@ func (p *candidateTracker) add(ctx context.Context, mp *miniblockProducer, j *mb
 // If the batch is full it submits the batch to the RiverRegistry#stream facet for registration and parses the resulting
 // logs to determine which mini block candidate was registered and which are not. For each registered mini block
 // candidate it applies the candidate to the stream.
-func (p *miniblockProducer) OnNewBlock(ctx context.Context, _ crypto.BlockNumber) {
+func (p *miniblockProducer) OnNewBlock(ctx context.Context, blockNum crypto.BlockNumber) {
 	// Try lock to have only one invocation at a time. Previous onNewBlock may still be running.
 	if !p.onNewBlockMutex.TryLock() {
 		return
 	}
-
 	// don't block the chain monitor
 	go func() {
 		defer p.onNewBlockMutex.Unlock()
-		_ = p.scheduleCandidates(ctx)
+		_ = p.scheduleCandidates(ctx, blockNum)
 	}()
 }
 
-func (p *miniblockProducer) scheduleCandidates(ctx context.Context) []*mbJob {
+func (p *miniblockProducer) scheduleCandidates(ctx context.Context, blockNum crypto.BlockNumber) []*mbJob {
+	log := dlog.FromCtx(ctx)
+
 	candidates := p.streamCache.GetMbCandidateStreams(ctx)
 
 	var scheduled []*mbJob
 
 	for _, stream := range candidates {
-		// TODO: actual logic
-		if !stream.nodes.LocalIsLeader() {
+		if !p.isLocalLeaderOnCurrentBlock(stream, blockNum) {
+			log.Debug(
+				"MiniblockProducer: OnNewBlock: Not a leader for stream",
+				"streamId",
+				stream.streamId,
+				"blockNum",
+				blockNum,
+			)
 			continue
 		}
 		j := p.trySchedule(ctx, stream)
 		if j != nil {
 			scheduled = append(scheduled, j)
+			log.Debug(
+				"MiniblockProducer: OnNewBlock: Scheduled miniblock production",
+				"streamId",
+				stream.streamId,
+			)
+		} else {
+			log.Debug(
+				"MiniblockProducer: OnNewBlock: Miniblock production already scheduled",
+				"streamId",
+				stream.streamId,
+			)
 		}
 	}
 
 	return scheduled
+}
+
+func (p *miniblockProducer) isLocalLeaderOnCurrentBlock(
+	stream *streamImpl,
+	blockNum crypto.BlockNumber,
+) bool {
+	streamNodes := stream.nodes.GetNodes()
+	if len(streamNodes) == 0 {
+		return false
+	}
+	index := blockNum.AsUint64() % uint64(len(streamNodes))
+	return streamNodes[index] == p.localNodeAddress
 }
 
 func (p *miniblockProducer) trySchedule(ctx context.Context, stream *streamImpl) *mbJob {

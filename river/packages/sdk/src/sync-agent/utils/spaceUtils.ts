@@ -26,7 +26,7 @@ export async function makeDefaultMembershipInfo(
             duration: 0,
             currency: ETH_ADDRESS,
             feeRecipient: feeRecipient,
-            freeAllocation: 0,
+            freeAllocation: 1000,
             pricingModule: pricingModule.module,
         },
         permissions: [Permission.Read, Permission.Write],

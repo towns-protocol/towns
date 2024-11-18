@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 
 	"golang.org/x/net/http2"
 
@@ -60,6 +61,8 @@ func GetHttpClient(ctx context.Context) (*http.Client, error) {
 	return &http.Client{
 		Transport: &http2.Transport{
 			TLSClientConfig: getTLSConfig(ctx),
+			ReadIdleTimeout: 20 * time.Second, // send http2 ping on idle connection for keep alive
+			PingTimeout:     15 * time.Second, // http2 ping must be received within 15s, if not connection is closed
 		},
 	}, nil
 }

@@ -5,3 +5,5 @@ linters-settings:
 linters:
     enable:
         - exhaustive
+    disable:
+        - staticcheck

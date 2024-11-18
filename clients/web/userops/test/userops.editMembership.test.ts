@@ -169,7 +169,7 @@ test('should update gated minter role to everyone', async () => {
     expect(updatedRoleData.ruleData.rules.checkOperations).toStrictEqual([])
 })
 
-test('should update free space to paid space', async () => {
+test('should update "free" paid space to paid space', async () => {
     const alice = new LocalhostWeb3Provider(
         process.env.AA_RPC_URL as string,
         generatePrivyWalletIfKey(process.env.PRIVY_WALLET_PRIVATE_KEY_1),
@@ -222,6 +222,7 @@ test('should update free space to paid space', async () => {
             ...ogMembershipData,
             pricingModule: fixedPricingModule!.module as string,
             membershipPrice: ethers.utils.parseEther('0.1'),
+            freeAllocation: 0,
         },
         alice.wallet,
     )
@@ -231,14 +232,10 @@ test('should update free space to paid space', async () => {
     expect(lastSendOpCall?.[0].toAddress).toStrictEqual([
         space!.Membership.address,
         space!.Membership.address,
-        space!.Membership.address,
     ])
     expect(lastSendOpCall?.[0].callData).toStrictEqual([
-        await space!.Membership.encodeFunctionData('setMembershipPricingModule', [
-            fixedPricingModule!.module,
-        ]),
-        await space!.Membership.encodeFunctionData('setMembershipFreeAllocation', [1]),
-        await space!.Membership.encodeFunctionData('setMembershipPrice', [
+        space!.Membership.encodeFunctionData('setMembershipFreeAllocation', [0]),
+        space!.Membership.encodeFunctionData('setMembershipPrice', [
             ethers.utils.parseEther('0.1').toString(),
         ]),
     ])
@@ -417,7 +414,7 @@ async function getMembershipData({
     spaceDapp: ISpaceDapp
     userOps: TestUserOps
 }) {
-    const { membershipInfo, roleEntitlements } =
+    const { membershipInfo, roleEntitlements, freeAllocation } =
         await userOps.getDetailsForEditingMembershipSettings(spaceId, space!)
 
     expect(roleEntitlements).toBeDefined()
@@ -439,6 +436,7 @@ async function getMembershipData({
         pricingModule: membershipInfo.pricingModule as string,
         membershipPrice: membershipInfo.price as ethers.BigNumberish,
         membershipSupply: membershipInfo.maxSupply as ethers.BigNumberish,
+        freeAllocation: freeAllocation,
     }
 
     return { roleData, membershipData }

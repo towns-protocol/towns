@@ -32,6 +32,8 @@ abstract contract MainnetDelegationBase is IMainnetDelegationBase {
 
   /// @dev Caller must ensure that operator != address(0)
   function _replaceDelegation(
+    Delegation storage delegation,
+    address currentOperator,
     address delegator,
     address operator,
     uint256 quantity
@@ -39,30 +41,24 @@ abstract contract MainnetDelegationBase is IMainnetDelegationBase {
     MainnetDelegationStorage.Layout storage ds = MainnetDelegationStorage
       .layout();
 
-    Delegation storage delegation = ds.delegationByDelegator[delegator];
-    address currentOperator = delegation.operator;
-
-    if (currentOperator == address(0)) {
-      _addDelegation(delegator, operator, quantity);
-    } else {
-      if (currentOperator != operator) {
-        ds.delegatorsByOperator[currentOperator].remove(delegator);
-        ds.delegatorsByOperator[operator].add(delegator);
-        delegation.operator = operator;
-        delegation.delegationTime = block.timestamp;
-      } else if (delegation.quantity != quantity) {
-        delegation.delegationTime = block.timestamp;
-      }
-      delegation.quantity = quantity;
-
-      _unstake(delegator);
-      _stake(delegator, operator, quantity);
-
-      emit DelegationSet(delegator, operator, quantity);
+    if (currentOperator != operator) {
+      ds.delegatorsByOperator[currentOperator].remove(delegator);
+      ds.delegatorsByOperator[operator].add(delegator);
+      delegation.operator = operator;
+      delegation.delegationTime = block.timestamp;
+    } else if (delegation.quantity != quantity) {
+      delegation.delegationTime = block.timestamp;
     }
+    delegation.quantity = quantity;
+
+    _unstake(delegator);
+    _stake(delegator, operator, quantity);
+
+    emit DelegationSet(delegator, operator, quantity);
   }
 
   function _addDelegation(
+    Delegation storage delegation,
     address delegator,
     address operator,
     uint256 quantity
@@ -72,7 +68,6 @@ abstract contract MainnetDelegationBase is IMainnetDelegationBase {
 
     ds.delegators.add(delegator);
     ds.delegatorsByOperator[operator].add(delegator);
-    Delegation storage delegation = ds.delegationByDelegator[delegator];
     (
       delegation.operator,
       delegation.quantity,
@@ -90,10 +85,24 @@ abstract contract MainnetDelegationBase is IMainnetDelegationBase {
     address operator,
     uint256 quantity
   ) internal {
-    if (operator == address(0)) {
+    MainnetDelegationStorage.Layout storage ds = MainnetDelegationStorage
+      .layout();
+
+    Delegation storage delegation = ds.delegationByDelegator[delegator];
+    address currentOperator = delegation.operator;
+
+    if (operator == address(0) || quantity == 0) {
       _removeDelegation(delegator);
+    } else if (currentOperator == address(0)) {
+      _addDelegation(delegation, delegator, operator, quantity);
     } else {
-      _replaceDelegation(delegator, operator, quantity);
+      _replaceDelegation(
+        delegation,
+        currentOperator,
+        delegator,
+        operator,
+        quantity
+      );
     }
   }
 

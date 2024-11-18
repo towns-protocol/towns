@@ -12,24 +12,24 @@ import (
 )
 
 const (
-	STREAM_CHANNEL_BIN            byte = 0x20
-	STREAM_CHANNEL_PREFIX              = "20"
-	STREAM_DM_CHANNEL_BIN         byte = 0x88
-	STREAM_DM_CHANNEL_PREFIX           = "88"
-	STREAM_GDM_CHANNEL_BIN        byte = 0x77
-	STREAM_GDM_CHANNEL_PREFIX          = "77"
-	STREAM_MEDIA_BIN              byte = 0xff
-	STREAM_MEDIA_PREFIX                = "ff"
-	STREAM_SPACE_BIN              byte = 0x10
-	STREAM_SPACE_PREFIX                = "10"
+	STREAM_CHANNEL_BIN              byte = 0x20
+	STREAM_CHANNEL_PREFIX                = "20"
+	STREAM_DM_CHANNEL_BIN           byte = 0x88
+	STREAM_DM_CHANNEL_PREFIX             = "88"
+	STREAM_GDM_CHANNEL_BIN          byte = 0x77
+	STREAM_GDM_CHANNEL_PREFIX            = "77"
+	STREAM_MEDIA_BIN                byte = 0xff
+	STREAM_MEDIA_PREFIX                  = "ff"
+	STREAM_SPACE_BIN                byte = 0x10
+	STREAM_SPACE_PREFIX                  = "10"
 	STREAM_USER_METADATA_KEY_BIN    byte = 0xad
 	STREAM_USER_METADATA_KEY_PREFIX      = "ad"
-	STREAM_USER_INBOX_BIN         byte = 0xa1
-	STREAM_USER_INBOX_PREFIX           = "a1"
-	STREAM_USER_BIN               byte = 0xa8
-	STREAM_USER_PREFIX                 = "a8"
-	STREAM_USER_SETTINGS_BIN      byte = 0xa5
-	STREAM_USER_SETTINGS_PREFIX        = "a5"
+	STREAM_USER_INBOX_BIN           byte = 0xa1
+	STREAM_USER_INBOX_PREFIX             = "a1"
+	STREAM_USER_BIN                 byte = 0xa8
+	STREAM_USER_PREFIX                   = "a8"
+	STREAM_USER_SETTINGS_BIN        byte = 0xa5
+	STREAM_USER_SETTINGS_PREFIX          = "a5"
 
 	STREAM_ID_BYTES_LENGTH  = 32
 	STREAM_ID_STRING_LENGTH = STREAM_ID_BYTES_LENGTH * 2

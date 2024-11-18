@@ -8,6 +8,7 @@ import {
     createTestSpaceGatedByTownsNfts,
     createTestSpaceGatedByTownNft,
     createPaidTestSpaceGatedByTownNft,
+    getFreeSpacePricingSetup,
 } from './helpers/TestUtils'
 
 import {
@@ -16,7 +17,6 @@ import {
     TestERC721,
     MembershipStruct,
     createExternalNFTStruct,
-    getDynamicPricingModule,
     LogicalOperationType,
     encodeRuleDataV2,
 } from '@river-build/web3'
@@ -244,19 +244,21 @@ test(
             // Carol has only token B
             await TestERC721.publicMint('tokenA', carol.walletAddress as Address),
         ])
-        const dynamicPricingModule = await getDynamicPricingModule(alice.spaceDapp)
+        const { fixedPricingModuleAddress, freeAllocation, price } = await getFreeSpacePricingSetup(
+            alice.spaceDapp,
+        )
 
         const membershipInfo: MembershipStruct = {
             settings: {
                 name: 'Member',
                 symbol: 'MEMBER',
-                price: 0,
+                price,
                 maxSupply: 100,
                 duration: 0,
                 currency: ethers.constants.AddressZero,
                 feeRecipient: ethers.constants.AddressZero,
-                freeAllocation: 0,
-                pricingModule: dynamicPricingModule.module,
+                freeAllocation,
+                pricingModule: fixedPricingModuleAddress,
             },
             permissions: [Permission.Read, Permission.Write],
             requirements: {
@@ -316,19 +318,21 @@ test('joinSpace gated with 2 NFTs, wallet linking', async () => {
         expect(receipt?.status).toEqual(1)
     }
     expect(tx_link.error).toBeUndefined()
-    const dynamicPricingModule = await getDynamicPricingModule(alice.spaceDapp)
+    const { fixedPricingModuleAddress, freeAllocation, price } = await getFreeSpacePricingSetup(
+        alice.spaceDapp,
+    )
 
     const membershipInfo: MembershipStruct = {
         settings: {
             name: 'Member',
             symbol: 'MEMBER',
-            price: 0,
+            price,
             maxSupply: 100,
             duration: 0,
             currency: ethers.constants.AddressZero,
             feeRecipient: ethers.constants.AddressZero,
-            freeAllocation: 0,
-            pricingModule: dynamicPricingModule.module,
+            freeAllocation,
+            pricingModule: fixedPricingModuleAddress,
         },
         permissions: [Permission.Read, Permission.Write],
         requirements: {

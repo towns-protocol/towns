@@ -8,7 +8,11 @@ import { RegisterWallet, TransactionInfo } from './helpers/TestComponents'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { TownsTestApp } from './helpers/TownsTestApp'
 import { TownsTestWeb3Provider } from './helpers/TownsTestWeb3Provider'
-import { createMembershipStruct, makeUniqueName } from './helpers/TestUtils'
+import {
+    createMembershipStruct,
+    getFreeSpacePricingSetup,
+    makeUniqueName,
+} from './helpers/TestUtils'
 import { useCreateSpaceTransactionWithRetries } from '../../src/hooks/use-create-space-transaction'
 import { useMultipleRoleDetails } from '../../src/hooks/use-role-details'
 import { useRoles } from '../../src/hooks/use-roles'
@@ -25,7 +29,6 @@ import {
     createOperationsTree,
     LOCALHOST_CHAIN_ID,
     CheckOperationType,
-    getDynamicPricingModule,
     encodeRuleDataV2,
     convertRuleDataV1ToV2,
     Operation,
@@ -167,7 +170,8 @@ function TestComponentMultiple(args: {
     // handle click to create a space
     const onClickCreateSpace = useCallback(() => {
         const handleClick = async () => {
-            const dynamicPricingModule = await getDynamicPricingModule(spaceDapp)
+            const { fixedPricingModuleAddress, price, freeAllocation } =
+                await getFreeSpacePricingSetup(spaceDapp)
             await createSpaceTransactionWithRetries(
                 {
                     name: args.spaceNames[0],
@@ -181,7 +185,9 @@ function TestComponentMultiple(args: {
                         ruleData: EncodedNoopRuleData,
                         syncEntitlements: false,
                     },
-                    pricingModule: dynamicPricingModule.module,
+                    pricingModule: fixedPricingModuleAddress,
+                    freeAllocation,
+                    price,
                 }),
                 args.signer,
             )
@@ -207,7 +213,9 @@ function TestComponentMultiple(args: {
                         ),
                         syncEntitlements: false,
                     },
-                    pricingModule: dynamicPricingModule.module,
+                    pricingModule: fixedPricingModuleAddress,
+                    freeAllocation,
+                    price,
                 }),
                 args.signer,
             )

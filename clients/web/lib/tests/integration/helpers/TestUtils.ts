@@ -22,6 +22,7 @@ import {
     VersionedRuleData,
     convertRuleDataV2ToV1,
     convertRuleDataV1ToV2,
+    ISpaceDapp,
 } from '@river-build/web3'
 import { makeRiverConfig } from '@river-build/sdk'
 
@@ -390,6 +391,8 @@ type CreateMembershipStructArgs = {
     permissions: Permission[]
     requirements: MembershipRequirementsStruct
     pricingModule: MembershipStruct['settings']['pricingModule']
+    freeAllocation: MembershipStruct['settings']['freeAllocation']
+    price: MembershipStruct['settings']['price']
 }
 
 export function createMembershipStruct({
@@ -397,17 +400,19 @@ export function createMembershipStruct({
     permissions,
     requirements,
     pricingModule,
+    freeAllocation,
+    price,
 }: CreateMembershipStructArgs): MembershipStruct {
     return {
         settings: {
             name,
             symbol: 'MEMBER',
-            price: 0,
+            price,
             maxSupply: 1000,
             duration: 0,
             currency: ethers.constants.AddressZero,
             feeRecipient: ethers.constants.AddressZero,
-            freeAllocation: 0,
+            freeAllocation,
             pricingModule,
         },
         permissions,
@@ -436,4 +441,21 @@ export function getRuleDataV2(versionedRuleData: VersionedRuleData) {
     return versionedRuleData.kind === 'v2'
         ? versionedRuleData.rules
         : convertRuleDataV1ToV2(versionedRuleData.rules)
+}
+
+export async function getFreeSpacePricingSetup(spaceDapp: ISpaceDapp | undefined): Promise<{
+    fixedPricingModuleAddress: string
+    freeAllocation: number
+    price: number
+}> {
+    if (!spaceDapp) {
+        throw new Error('getFreeSpacePricingSetup::spaceDapp is undefined')
+    }
+    const fixedPricingModule = await getFixedPricingModule(spaceDapp)
+    expect(fixedPricingModule).toBeDefined()
+    return {
+        price: 0,
+        fixedPricingModuleAddress: await fixedPricingModule.module,
+        freeAllocation: 1000,
+    }
 }

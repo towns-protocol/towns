@@ -16,6 +16,7 @@ contract DeploySpaceProxyInitializer is Deployer {
     vm.startBroadcast(deployer);
     SpaceProxyInitializer proxyInitializer = new SpaceProxyInitializer();
     vm.stopBroadcast();
+
     return address(proxyInitializer);
   }
 }

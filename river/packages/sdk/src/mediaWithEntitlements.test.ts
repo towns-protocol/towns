@@ -5,8 +5,8 @@
 import {
     makeUserContextFromWallet,
     makeTestClient,
-    getDynamicPricingModule,
     createVersionedSpace,
+    getFreeSpacePricingSetup,
 } from './util.test'
 import { makeDefaultChannelStreamId, makeSpaceStreamId } from './id'
 import { ethers, Wallet } from 'ethers'
@@ -59,22 +59,21 @@ describe('mediaWithEntitlements', () => {
         await provider.fundWallet()
         const spaceDapp = createSpaceDapp(provider, baseConfig.chainConfig)
 
-        const pricingModules = await spaceDapp.listPricingModules()
-        const dynamicPricingModule = getDynamicPricingModule(pricingModules)
-        expect(dynamicPricingModule).toBeDefined()
-
+        const { fixedPricingModuleAddress, freeAllocation, price } = await getFreeSpacePricingSetup(
+            spaceDapp,
+        )
         // create a space stream,
         const membershipInfo: LegacyMembershipStruct = {
             settings: {
                 name: 'Everyone',
                 symbol: 'MEMBER',
-                price: 0,
+                price,
                 maxSupply: 1000,
                 duration: 0,
                 currency: ETH_ADDRESS,
                 feeRecipient: bobClient.userId,
-                freeAllocation: 0,
-                pricingModule: dynamicPricingModule!.module,
+                freeAllocation,
+                pricingModule: fixedPricingModuleAddress,
             },
             permissions: [Permission.Read, Permission.Write],
             requirements: {
@@ -158,22 +157,22 @@ describe('mediaWithEntitlements', () => {
         await provider.fundWallet()
         const spaceDapp = createSpaceDapp(provider, baseConfig.chainConfig)
 
-        const pricingModules = await spaceDapp.listPricingModules()
-        const dynamicPricingModule = getDynamicPricingModule(pricingModules)
-        expect(dynamicPricingModule).toBeDefined()
+        const { fixedPricingModuleAddress, freeAllocation, price } = await getFreeSpacePricingSetup(
+            spaceDapp,
+        )
 
         // create a space stream,
         const membershipInfo: LegacyMembershipStruct = {
             settings: {
                 name: 'Everyone',
                 symbol: 'MEMBER',
-                price: 0,
+                price,
                 maxSupply: 1000,
                 duration: 0,
                 currency: ETH_ADDRESS,
                 feeRecipient: bobClient.userId,
-                freeAllocation: 0,
-                pricingModule: dynamicPricingModule!.module,
+                freeAllocation,
+                pricingModule: fixedPricingModuleAddress,
             },
             permissions: [Permission.Read, Permission.Write],
             requirements: {

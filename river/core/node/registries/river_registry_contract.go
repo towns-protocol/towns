@@ -3,6 +3,7 @@ package registries
 import (
 	"context"
 	"math/big"
+	"slices"
 	"sync/atomic"
 	"time"
 
@@ -51,7 +52,7 @@ type RiverRegistryContract struct {
 
 type EventInfo struct {
 	Name  string
-	Maker func() any
+	Maker func(*types.Log) any
 }
 
 func initContract[T any](
@@ -143,10 +144,13 @@ func NewRiverRegistryContract(
 		blockchain.Client,
 		river.NodeRegistryV1MetaData,
 		[]*EventInfo{
-			{"NodeAdded", func() any { return new(river.NodeRegistryV1NodeAdded) }},
-			{"NodeRemoved", func() any { return new(river.NodeRegistryV1NodeRemoved) }},
-			{"NodeStatusUpdated", func() any { return new(river.NodeRegistryV1NodeStatusUpdated) }},
-			{"NodeUrlUpdated", func() any { return new(river.NodeRegistryV1NodeUrlUpdated) }},
+			{"NodeAdded", func(log *types.Log) any { return &river.NodeRegistryV1NodeAdded{Raw: *log} }},
+			{"NodeRemoved", func(log *types.Log) any { return &river.NodeRegistryV1NodeRemoved{Raw: *log} }},
+			{
+				"NodeStatusUpdated",
+				func(log *types.Log) any { return &river.NodeRegistryV1NodeStatusUpdated{Raw: *log} },
+			},
+			{"NodeUrlUpdated", func(log *types.Log) any { return &river.NodeRegistryV1NodeUrlUpdated{Raw: *log} }},
 		},
 	)
 	if err != nil {
@@ -160,14 +164,17 @@ func NewRiverRegistryContract(
 		blockchain.Client,
 		river.StreamRegistryV1MetaData,
 		[]*EventInfo{
-			{river.Event_StreamAllocated, func() any { return new(river.StreamRegistryV1StreamAllocated) }},
+			{
+				river.Event_StreamAllocated,
+				func(log *types.Log) any { return &river.StreamRegistryV1StreamAllocated{Raw: *log} },
+			},
 			{
 				river.Event_StreamLastMiniblockUpdated,
-				func() any { return new(river.StreamRegistryV1StreamLastMiniblockUpdated) },
+				func(log *types.Log) any { return &river.StreamRegistryV1StreamLastMiniblockUpdated{Raw: *log} },
 			},
 			{
 				river.Event_StreamPlacementUpdated,
-				func() any { return new(river.StreamRegistryV1StreamPlacementUpdated) },
+				func(log *types.Log) any { return &river.StreamRegistryV1StreamPlacementUpdated{Raw: *log} },
 			},
 		},
 	)
@@ -252,8 +259,12 @@ func makeGetStreamResult(streamId StreamId, stream *river.Stream) *GetStreamResu
 	}
 }
 
-func (c *RiverRegistryContract) GetStream(ctx context.Context, streamId StreamId) (*GetStreamResult, error) {
-	stream, err := c.StreamRegistry.GetStream(c.callOpts(ctx), streamId)
+func (c *RiverRegistryContract) GetStream(
+	ctx context.Context,
+	streamId StreamId,
+	blockNum crypto.BlockNumber,
+) (*GetStreamResult, error) {
+	stream, err := c.StreamRegistry.GetStream(c.callOptsWithBlockNum(ctx, blockNum), streamId)
 	if err != nil {
 		return nil, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).Func("GetStream").Message("Call failed")
 	}
@@ -804,7 +815,7 @@ func (c *RiverRegistryContract) GetNodeEventsForBlock(ctx context.Context, block
 	}
 	var ret []any
 	for _, log := range logs {
-		ee, err := c.ParseEvent(ctx, c.NodeRegistry.BoundContract(), c.NodeEventInfo, log)
+		ee, err := c.ParseEvent(ctx, c.NodeRegistry.BoundContract(), c.NodeEventInfo, &log)
 		if err != nil {
 			return nil, err
 		}
@@ -817,7 +828,7 @@ func (c *RiverRegistryContract) ParseEvent(
 	ctx context.Context,
 	boundContract *bind.BoundContract,
 	info map[common.Hash]*EventInfo,
-	log types.Log,
+	log *types.Log,
 ) (any, error) {
 	if len(log.Topics) == 0 {
 		return nil, RiverError(Err_INTERNAL, "Empty topics in log", "log", log).Func("ParseEvent")
@@ -826,8 +837,8 @@ func (c *RiverRegistryContract) ParseEvent(
 	if !ok {
 		return nil, RiverError(Err_INTERNAL, "Event not found", "id", log.Topics[0]).Func("ParseEvent")
 	}
-	ee := eventInfo.Maker()
-	err := boundContract.UnpackLog(ee, eventInfo.Name, log)
+	ee := eventInfo.Maker(log)
+	err := boundContract.UnpackLog(ee, eventInfo.Name, *log)
 	if err != nil {
 		return nil, WrapRiverError(
 			Err_CANNOT_CALL_CONTRACT,
@@ -850,7 +861,7 @@ func (c *RiverRegistryContract) OnStreamEvent(
 		c.Address,
 		c.StreamEventTopics,
 		func(ctx context.Context, log types.Log) {
-			parsed, err := c.ParseEvent(ctx, c.StreamRegistry.BoundContract(), c.StreamEventInfo, log)
+			parsed, err := c.ParseEvent(ctx, c.StreamRegistry.BoundContract(), c.StreamEventInfo, &log)
 			if err != nil {
 				dlog.FromCtx(ctx).Error("Failed to parse event", "err", err, "log", log)
 				return
@@ -867,4 +878,21 @@ func (c *RiverRegistryContract) OnStreamEvent(
 			}
 		})
 	return nil
+}
+
+func (c *RiverRegistryContract) FilterStreamEvents(ctx context.Context, logs []*types.Log) ([]any, []error) {
+	ret := []any{}
+	var finalErrs []error
+	for _, log := range logs {
+		if log.Address != c.Address || len(log.Topics) == 0 || !slices.Contains(c.StreamEventTopics[0], log.Topics[0]) {
+			continue
+		}
+		parsed, err := c.ParseEvent(ctx, c.StreamRegistry.BoundContract(), c.StreamEventInfo, log)
+		if err != nil {
+			finalErrs = append(finalErrs, err)
+			continue
+		}
+		ret = append(ret, parsed)
+	}
+	return ret, finalErrs
 }

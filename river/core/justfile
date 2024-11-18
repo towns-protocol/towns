@@ -329,7 +329,7 @@ _wait-ctrl-c:
     echo "CTRL+C TO EXIT"
     bash -c 'trap "exit 0" INT TERM; while true; do sleep 1; done'
 
-# Tail logs from all instances
+# Tail logs from all instances starting with 500 last lines
 tail-logs:
     #!/usr/bin/env -S bash {{BASH_OPTS}}
     source ${ENV_FILE}
@@ -344,6 +344,14 @@ tail-logs-short:
     shopt -s nullglob
     LOGS=(${INSTANCE_BASE}/*/logs/tty.*.log)
     tail -n 10 -F ${LOGS[@]}
+
+# Tail new logs from all instances
+tail-logs-new:
+    #!/usr/bin/env -S bash {{BASH_OPTS}}
+    source ${ENV_FILE}
+    shopt -s nullglob
+    LOGS=(${INSTANCE_BASE}/*/logs/tty.*.log)
+    tail -n 0 -F ${LOGS[@]}
 
 # Print last 10 lines from each instance log
 print-logs:

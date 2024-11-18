@@ -12,8 +12,6 @@ import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 // contracts
 
-// debuggging
-
 contract AuthorizedClaimers is IAuthorizedClaimers, EIP712, Nonces {
   // keccak256("Authorize(address owner,address claimer,uint256 nonce,uint256 expiry)")
   bytes32 private constant _AUTHORIZE_TYPEHASH =

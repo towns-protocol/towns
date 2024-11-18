@@ -48,13 +48,16 @@ contract MembershipRenewTest is MembershipBaseSetup, IERC5643Base {
     assertEq(membershipToken.balanceOf(alice), 1);
     assertEq(membershipToken.ownerOf(tokenId), alice);
 
+    uint256 renewalPrice = membership.getMembershipRenewalPrice(tokenId);
+    vm.deal(alice, renewalPrice);
+
     uint256 expiration = membership.expiresAt(tokenId);
     vm.expectEmit(address(membership));
     emit SubscriptionUpdate(
       tokenId,
       uint64(expiration + membership.getMembershipDuration())
     );
-    membership.renewMembership(tokenId);
+    membership.renewMembership{value: renewalPrice}(tokenId);
 
     assertEq(membershipToken.balanceOf(alice), 1);
   }

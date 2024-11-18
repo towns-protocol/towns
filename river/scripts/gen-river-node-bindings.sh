@@ -3,8 +3,15 @@ cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
 cd ..
 
 if [ -z ${ABIGEN_VERSION+x} ]; then
-  ABIGEN_VERSION="v1.13.10"
+  ABIGEN_VERSION="v1.14.11"
 fi
+
+echo "Go version:"
+go version
+which go
+echo "abigen version: requested: ${ABIGEN_VERSION}"
+go run github.com/ethereum/go-ethereum/cmd/abigen@${ABIGEN_VERSION} --version
+echo "Generating bindings..."
 
 generate_go() {
     local DIR=$1

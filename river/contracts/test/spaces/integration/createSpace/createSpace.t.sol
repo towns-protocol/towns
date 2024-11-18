@@ -74,6 +74,7 @@ contract IntegrationCreateSpace is
 
     SpaceInfo memory spaceInfo = _createUserSpaceInfo(spaceId, users);
     spaceInfo.membership.settings.pricingModule = pricingModule;
+    spaceInfo.membership.settings.freeAllocation = FREE_ALLOCATION;
     spaceInfo.membership.permissions = new string[](1);
     spaceInfo.membership.permissions[0] = Permissions.Read;
 
@@ -154,6 +155,7 @@ contract IntegrationCreateSpace is
     // create space with default channel
     SpaceInfo memory spaceInfo = _createEveryoneSpaceInfo(spaceId);
     spaceInfo.membership.settings.pricingModule = pricingModule;
+    spaceInfo.membership.settings.freeAllocation = FREE_ALLOCATION;
 
     vm.prank(founder);
     address newSpace = createSpaceFacet.createSpace(spaceInfo);

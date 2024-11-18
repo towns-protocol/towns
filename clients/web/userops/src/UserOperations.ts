@@ -1253,6 +1253,7 @@ export class UserOps {
         const roleEntitlements = await space.getRoleEntitlements(entitlementShims, 1)
         return {
             membershipInfo,
+            freeAllocation: await space.Membership.read.getMembershipFreeAllocation(),
             roleEntitlements,
         }
     }
@@ -1264,7 +1265,7 @@ export class UserOps {
             pricingModule: string
             membershipPrice: ethers.BigNumberish // wei
             membershipSupply: ethers.BigNumberish
-            freeAllocationForPaidSpace?: ethers.BigNumberish
+            freeAllocation?: ethers.BigNumberish
         }
         signer: ethers.Signer
     }) {
@@ -1277,7 +1278,7 @@ export class UserOps {
             toAddress: string
         }[] = []
 
-        const space = await this.spaceDapp.getSpace(spaceId)
+        const space = this.spaceDapp.getSpace(spaceId)
 
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
@@ -1287,9 +1288,9 @@ export class UserOps {
             pricingModule: newPricingModule,
             membershipPrice: newMembershipPrice,
             membershipSupply: newMembershipSupply,
-            freeAllocationForPaidSpace: freeAllocation,
+            freeAllocation: freeAllocation,
         } = args.membershipParams
-        const newFreeAllocationForPaidSpace = freeAllocation ?? 1
+        const newFreeAllocation = freeAllocation ?? 0
 
         const newRuleData = args.updateRoleParams.ruleData
 
@@ -1320,16 +1321,19 @@ export class UserOps {
 
         ///////////////////////////////////////////////////////////////////////////////////
         //// update membership pricing ////////////////////////////////////////////////////
-        // To change a free membership to a paid membership:
-        // 1. pricing module must be changed to a non-fixed pricing module
-        // 2. freeAllocation must be > 0 (contract reverts otherwise). If set to 1 (recommended), the first membership on the paid space will be free
-        // 3. membership price must be set
+        // To change a "free" (paid w/ price = 0 + freeAllocation > 0) membership to a paid membership:
+        // 1. freeAllocation must be 0
+        // 2. membership price must be set
         //
         // Cannot change a paid space to a free space (contract reverts)
 
         const pricingModules = await this.spaceDapp.listPricingModules()
         const fixedPricingModule = findFixedPricingModule(pricingModules)
         const dynamicPricingModule = findDynamicPricingModule(pricingModules)
+        const currentFreeAllocation = await space.Membership.read.getMembershipFreeAllocation()
+        const { price: currentMembershipPrice } = await this.spaceDapp.getJoinSpacePriceDetails(
+            spaceId,
+        )
 
         if (!fixedPricingModule || !dynamicPricingModule) {
             throw new Error('Pricing modules not found')
@@ -1342,20 +1346,16 @@ export class UserOps {
         const newIsFixedPricing =
             newPricingModule.toLowerCase() === fixedPricingModule.module.toString().toLowerCase()
 
-        // switching to paid space
-        if (!currentIsFixedPricing && newIsFixedPricing) {
-            const pricingModuleCallData = await space.Membership.encodeFunctionData(
-                'setMembershipPricingModule',
-                [fixedPricingModule.module],
-            )
-            txs.push({
-                callData: pricingModuleCallData,
-                toAddress: space.Membership.address,
-            })
-
+        // fixed price of 0 ("free") to fixed price of non-zero
+        if (
+            currentIsFixedPricing &&
+            currentFreeAllocation.toBigInt() > 0n &&
+            newIsFixedPricing &&
+            newFreeAllocation === 0
+        ) {
             const freeAllocationCallData = await space.Membership.encodeFunctionData(
                 'setMembershipFreeAllocation',
-                [newFreeAllocationForPaidSpace],
+                [newFreeAllocation],
             )
             txs.push({
                 callData: freeAllocationCallData,
@@ -1371,17 +1371,25 @@ export class UserOps {
                 toAddress: space.Membership.address,
             })
         }
-        // switching to free space
+        // switching from fixed to dynamic space
         else if (currentIsFixedPricing && !newIsFixedPricing) {
             throw new CodeException({
-                message: 'Cannot change a paid space to a free space',
-                code: 'USER_OPS_CANNOT_CHANGE_TO_FREE_SPACE',
+                message: 'Cannot change a fixed pricing space to a dynamic pricing space',
+                code: 'USER_OPS_CANNOT_CHANGE_TO_DYNAMIC_PRICING_SPACE',
+                category: 'userop',
+            })
+        }
+        // switching from dynamic to fixed
+        else if (!currentIsFixedPricing && !newIsFixedPricing) {
+            throw new CodeException({
+                message: 'Cannot change a dynamic pricing space to a fixed pricing space',
+                code: 'USER_OPS_CANNOT_CHANGE_TO_FIXED_PRICING_SPACE',
                 category: 'userop',
             })
         }
         // price update only
-        else if (currentIsFixedPricing && newIsFixedPricing) {
-            const membershipPriceCallData = await space.Membership.encodeFunctionData(
+        else if (!currentMembershipPrice.eq(ethers.BigNumber.from(newMembershipPrice))) {
+            const membershipPriceCallData = space.Membership.encodeFunctionData(
                 'setMembershipPrice',
                 [newMembershipPrice],
             )
@@ -1389,10 +1397,6 @@ export class UserOps {
                 callData: membershipPriceCallData,
                 toAddress: space.Membership.address,
             })
-        }
-        // free space to free space
-        else if (!currentIsFixedPricing && !newIsFixedPricing) {
-            // do nothing
         }
 
         ///////////////////////////////////////////////////////////////////////////////////
@@ -1427,7 +1431,7 @@ export class UserOps {
             pricingModule: string
             membershipPrice: ethers.BigNumberish // wei
             membershipSupply: ethers.BigNumberish
-            freeAllocationForPaidSpace?: ethers.BigNumberish
+            freeAllocation?: ethers.BigNumberish
         }
         signer: ethers.Signer
     }) {
@@ -1440,7 +1444,7 @@ export class UserOps {
             toAddress: string
         }[] = []
 
-        const space = await this.spaceDapp.getSpace(spaceId)
+        const space = this.spaceDapp.getSpace(spaceId)
 
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
@@ -1450,9 +1454,9 @@ export class UserOps {
             pricingModule: newPricingModule,
             membershipPrice: newMembershipPrice,
             membershipSupply: newMembershipSupply,
-            freeAllocationForPaidSpace: freeAllocation,
+            freeAllocation: freeAllocation,
         } = args.membershipParams
-        const newFreeAllocationForPaidSpace = freeAllocation ?? 1
+        const newFreeAllocation = freeAllocation ?? 1
 
         const newRuleData = args.legacyUpdateRoleParams.ruleData
         const newUsers = args.legacyUpdateRoleParams.users
@@ -1517,6 +1521,10 @@ export class UserOps {
         const pricingModules = await this.spaceDapp.listPricingModules()
         const fixedPricingModule = findFixedPricingModule(pricingModules)
         const dynamicPricingModule = findDynamicPricingModule(pricingModules)
+        const currentFreeAllocation = await space.Membership.read.getMembershipFreeAllocation()
+        const { price: currentMembershipPrice } = await this.spaceDapp.getJoinSpacePriceDetails(
+            spaceId,
+        )
 
         if (!fixedPricingModule || !dynamicPricingModule) {
             throw new Error('Pricing modules not found')
@@ -1529,20 +1537,16 @@ export class UserOps {
         const newIsFixedPricing =
             newPricingModule.toLowerCase() === fixedPricingModule.module.toString().toLowerCase()
 
-        // switching to paid space
-        if (!currentIsFixedPricing && newIsFixedPricing) {
-            const pricingModuleCallData = await space.Membership.encodeFunctionData(
-                'setMembershipPricingModule',
-                [fixedPricingModule.module],
-            )
-            txs.push({
-                callData: pricingModuleCallData,
-                toAddress: space.Membership.address,
-            })
-
+        // fixed price of 0 ("free") to fixed price of non-zero
+        if (
+            currentIsFixedPricing &&
+            currentFreeAllocation.toBigInt() > 0n &&
+            newIsFixedPricing &&
+            newFreeAllocation === 0
+        ) {
             const freeAllocationCallData = await space.Membership.encodeFunctionData(
                 'setMembershipFreeAllocation',
-                [newFreeAllocationForPaidSpace],
+                [newFreeAllocation],
             )
             txs.push({
                 callData: freeAllocationCallData,
@@ -1558,17 +1562,25 @@ export class UserOps {
                 toAddress: space.Membership.address,
             })
         }
-        // switching to free space
+        // switching from fixed to dynamic space
         else if (currentIsFixedPricing && !newIsFixedPricing) {
             throw new CodeException({
-                message: 'Cannot change a paid space to a free space',
-                code: 'USER_OPS_CANNOT_CHANGE_TO_FREE_SPACE',
+                message: 'Cannot change a fixed pricing space to a dynamic pricing space',
+                code: 'USER_OPS_CANNOT_CHANGE_TO_DYNAMIC_PRICING_SPACE',
+                category: 'userop',
+            })
+        }
+        // switching from dynamic to fixed
+        else if (!currentIsFixedPricing && !newIsFixedPricing) {
+            throw new CodeException({
+                message: 'Cannot change a dynamic pricing space to a fixed pricing space',
+                code: 'USER_OPS_CANNOT_CHANGE_TO_FIXED_PRICING_SPACE',
                 category: 'userop',
             })
         }
         // price update only
-        else if (currentIsFixedPricing && newIsFixedPricing) {
-            const membershipPriceCallData = await space.Membership.encodeFunctionData(
+        else if (!currentMembershipPrice.eq(ethers.BigNumber.from(newMembershipPrice))) {
+            const membershipPriceCallData = space.Membership.encodeFunctionData(
                 'setMembershipPrice',
                 [newMembershipPrice],
             )
@@ -1576,10 +1588,6 @@ export class UserOps {
                 callData: membershipPriceCallData,
                 toAddress: space.Membership.address,
             })
-        }
-        // free space to free space
-        else if (!currentIsFixedPricing && !newIsFixedPricing) {
-            // do nothing
         }
 
         ///////////////////////////////////////////////////////////////////////////////////

@@ -1337,19 +1337,28 @@ export class SpaceDapp implements ISpaceDapp {
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
-        const prepaidSupply = await space.Prepay.read.prepaidMembershipSupply()
+        // membershipPrice is either the maximum of either the price set during space creation, or the PlatformRequirements membership fee
+        // it will alawys be a value regardless of whether the space has free allocations or prepaid memberships
         const membershipPrice = await space.Membership.read.getMembershipPrice()
-        const freeAllocation = await this.getMembershipFreeAllocation(spaceId)
-        const totalSupply = await space.ERC721A.read.totalSupply()
         // totalSupply = number of memberships minted
-        // freeAllocation = number of memberships that are free to mint, set during space creation
+        const totalSupply = await space.ERC721A.read.totalSupply()
+        // free allocation is set at space creation and is unchanging - it neither increases nor decreases
+        // if totalSupply < freeAllocation, the contracts won't charge for minting a membership nft,
+        // else it will charge the membershipPrice
+        const freeAllocation = await this.getMembershipFreeAllocation(spaceId)
         // prepaidSupply = number of additional prepaid memberships
+        // if any prepaid memberships have been purchased, the contracts won't charge for minting a membership nft,
+        // else it will charge the membershipPrice
+        const prepaidSupply = await space.Prepay.read.prepaidMembershipSupply()
+        // remainingFreeSupply
+        // if totalSupply < freeAllocation, freeAllocation + prepaid - minted memberships
+        // else the remaining prepaidSupply if any
         const remainingFreeSupply = totalSupply.lt(freeAllocation)
             ? freeAllocation.add(prepaidSupply).sub(totalSupply)
             : prepaidSupply
 
         return {
-            price: prepaidSupply.gt(0) ? ethers.BigNumber.from(0) : membershipPrice,
+            price: remainingFreeSupply.gt(0) ? ethers.BigNumber.from(0) : membershipPrice,
             prepaidSupply,
             remainingFreeSupply,
         }
@@ -1385,7 +1394,7 @@ export class SpaceDapp implements ISpaceDapp {
 
         logger.log('joinSpace before blockNumber', Date.now() - getSpaceStart, blockNumber)
         const getPriceStart = Date.now()
-        const price = await space.Membership.read.getMembershipPrice()
+        const { price } = await this.getJoinSpacePriceDetails(spaceId)
         logger.log('joinSpace getMembershipPrice', Date.now() - getPriceStart)
         const wrapStart = Date.now()
         const result = await wrapTransaction(async () => {

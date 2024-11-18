@@ -19,9 +19,7 @@ describe('syncAgents.test.ts', () => {
     let charlie: SyncAgent
 
     beforeEach(async () => {
-        await bobUser.fundWallet()
-        await aliceUser.fundWallet()
-        await charlieUser.fundWallet()
+        await Promise.all([bobUser.fundWallet(), aliceUser.fundWallet(), charlieUser.fundWallet()])
         bob = await bobUser.makeSyncAgent()
         alice = await aliceUser.makeSyncAgent()
         charlie = await charlieUser.makeSyncAgent()

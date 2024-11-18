@@ -15,8 +15,6 @@ import {DeployIntrospection} from "contracts/scripts/deployments/facets/DeployIn
 import {DeployManagedProxy} from "contracts/scripts/deployments/facets/DeployManagedProxy.s.sol";
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 
-// debuggging
-
 /// @title MockDiamondHelper
 /// @notice Used to create a diamond with all the facets we need for testing
 contract MockDiamondHelper {

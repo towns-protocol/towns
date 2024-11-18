@@ -52,7 +52,6 @@ func TestStreamNodes(t *testing.T) {
 				local,
 			)
 			require.Equal(t, tc.hasLocal, streamNodes.IsLocal())
-			require.Equal(t, tc.localFirst, streamNodes.LocalIsLeader())
 			require.ElementsMatch(t, nodeAddrs, streamNodes.GetNodes())
 			require.ElementsMatch(
 				t,
@@ -99,9 +98,7 @@ func TestStreamNodes(t *testing.T) {
 			require.NotNil(t, stickyPeer4)
 
 			// Multiple calls to advance with the same current sticky node should not advance
-			// the sticky peer. Local should continue to be considered the leader even as internal
-			// node ordering changes.
-			require.Equal(t, tc.localFirst, streamNodes.LocalIsLeader())
+			// the sticky peer.
 			require.Equal(t, stickyPeer4, streamNodes.AdvanceStickyPeer(stickyPeer3))
 			require.Equal(t, stickyPeer4, streamNodes.AdvanceStickyPeer(stickyPeer3))
 		})

@@ -108,14 +108,12 @@ func checkStreamState(
 		require.Equal(t, mbCandidate.Data, actualData)
 	}
 
-	// 5. StreamLastMiniblock
-	actualLastMiniblock, err := store.StreamLastMiniBlock(ctx, expected.StreamId)
+	// 5. GetLastMiniblockNumber
+	actualLastMiniblockNumber, err := store.GetLastMiniblockNumber(ctx, expected.StreamId)
 
 	require.NoError(t, err)
 	expectedLastMiniblock := expected.Miniblocks[len(expected.Miniblocks)-1]
-	require.Equal(t, expected.StreamId, actualLastMiniblock.StreamID)
-	require.Equal(t, expectedLastMiniblock.MiniblockNumber, actualLastMiniblock.Number)
-	require.Equal(t, expectedLastMiniblock.Data, actualLastMiniblock.MiniBlockInfo)
+	require.Equal(t, expectedLastMiniblock.MiniblockNumber, actualLastMiniblockNumber)
 }
 
 // Set up streams in various states before a migration and validate they read and mutate correctly

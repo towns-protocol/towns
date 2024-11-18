@@ -365,6 +365,7 @@ contract ArchitectTest is
 
     SpaceInfo memory spaceInfo = _createEveryoneSpaceInfo(spaceName);
     spaceInfo.membership.settings.pricingModule = pricingModule;
+    spaceInfo.membership.settings.freeAllocation = FREE_ALLOCATION;
 
     vm.prank(founder);
     address spaceInstance = createSpaceFacet.createSpace(spaceInfo);

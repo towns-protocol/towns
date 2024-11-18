@@ -45,6 +45,7 @@ import {DeployBaseRegistry} from "contracts/scripts/deployments/diamonds/DeployB
  * @dev - This contract is inherited by all other test contracts, it will create one diamond contract which represent the factory contract that creates all spaces
  */
 contract BaseSetup is TestUtils, SpaceHelper {
+  uint256 internal constant FREE_ALLOCATION = 1_000;
   string public constant LINKED_WALLET_MESSAGE = "Link your external wallet";
   bytes32 private constant _LINKED_WALLET_TYPEHASH =
     0x6bb89d031fcd292ecd4c0e6855878b7165cebc3a2f35bc6bbac48c088dd8325c;
@@ -86,7 +87,7 @@ contract BaseSetup is TestUtils, SpaceHelper {
 
   address internal pricingModule;
   address internal fixedPricingModule;
-
+  address internal tieredPricingModule;
   SimpleAccountFactory internal simpleAccountFactory;
 
   IEntitlementChecker internal entitlementChecker;
@@ -136,7 +137,7 @@ contract BaseSetup is TestUtils, SpaceHelper {
     legacyRuleEntitlement = deploySpaceFactory.legacyRuleEntitlement();
 
     spaceOwner = deploySpaceFactory.spaceOwner();
-    pricingModule = deploySpaceFactory.tieredLogPricing();
+    pricingModule = deploySpaceFactory.tieredLogPricingV3();
     fixedPricingModule = deploySpaceFactory.fixedPricing();
     walletLink = IWalletLink(spaceFactory);
     implementationRegistry = IImplementationRegistry(spaceFactory);
@@ -171,6 +172,7 @@ contract BaseSetup is TestUtils, SpaceHelper {
         "BaseSetupEveryoneSpace"
       );
     everyoneSpaceInfo.membership.settings.pricingModule = fixedPricingModule;
+    everyoneSpaceInfo.membership.settings.freeAllocation = FREE_ALLOCATION;
 
     vm.startPrank(founder);
     // create a dummy space so the next one starts at 1

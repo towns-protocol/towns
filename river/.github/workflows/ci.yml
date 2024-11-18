@@ -122,7 +122,7 @@ jobs:
               if: ${{ !cancelled() && steps.setup_success.outcome == 'success' }}
               uses: golangci/golangci-lint-action@v6
               with:
-                  version: v1.56.2
+                  version: v1.62.0
                   working-directory: core
                   args: --timeout=10m --config=.golangci.yml
 
@@ -149,7 +149,7 @@ jobs:
               if: ${{ !cancelled() && steps.setup_success.outcome == 'success' }}
               uses: dominikh/staticcheck-action@v1
               with:
-                  version: v0.5.0
+                  version: v0.5.1
                   working-directory: core
                   install-go: false
 

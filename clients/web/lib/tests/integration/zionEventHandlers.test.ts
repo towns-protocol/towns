@@ -5,6 +5,7 @@ import {
     createTestChannelWithSpaceRoles,
     createTestSpaceGatedByTownNft,
     createTestSpaceGatedByTownsNfts,
+    getFreeSpacePricingSetup,
     registerAndStartClients,
     waitForWithRetries,
 } from './helpers/TestUtils'
@@ -15,7 +16,6 @@ import {
     MembershipStruct,
     EncodedNoopRuleData,
     Permission,
-    getDynamicPricingModule,
 } from '@river-build/web3'
 import { ethers } from 'ethers'
 
@@ -47,19 +47,21 @@ describe('Towns event handlers test', () => {
         expect(testGatingNftAddress).toBeDefined()
         expect(testGatingNftAddress).not.toBe('')
 
-        const dynamicPricingModule = await getDynamicPricingModule(alice.spaceDapp)
+        const { fixedPricingModuleAddress, price, freeAllocation } = await getFreeSpacePricingSetup(
+            alice.spaceDapp,
+        )
 
         const membership: MembershipStruct = {
             settings: {
                 name: 'Member',
                 symbol: 'MEMBER',
-                price: 0,
+                price,
                 maxSupply: 100,
                 duration: 0,
                 currency: ethers.constants.AddressZero,
                 feeRecipient: ethers.constants.AddressZero,
-                freeAllocation: 0,
-                pricingModule: dynamicPricingModule.module,
+                freeAllocation,
+                pricingModule: fixedPricingModuleAddress,
             },
             permissions: [Permission.Read, Permission.Write],
             requirements: {

@@ -12,16 +12,32 @@ import (
 )
 
 type StreamNodes interface {
+	// IsLocal returns true if the local node is in the list of nodes.
 	IsLocal() bool
-	LocalIsLeader() bool
+
+	// GetNodes returns all nodes in the same order as in contract.
 	GetNodes() []common.Address
+
+	// GetRemotes returns all nodes except the local node.
 	GetRemotes() []common.Address
+
+	// NumRemotes returns the number of remote nodes.
 	NumRemotes() int
+
+	// GetRemotesAndIsLocal returns all remote nodes and true if the local node is in the list of nodes.
 	GetRemotesAndIsLocal() ([]common.Address, bool)
 
+	// GetStickyPeer returns the current sticky peer.
+	// If there are no remote nodes, it returns an empty address.
+	// The sticky peer is selected in a round-robin manner from the remote nodes.
 	GetStickyPeer() common.Address
+
+	// AdvanceStickyPeer advances the sticky peer to the next node in the round-robin manner.
+	// If the current sticky peer is the last node, it shuffles the nodes and resets the sticky peer to the first node.
 	AdvanceStickyPeer(currentPeer common.Address) common.Address
 
+	// Update updates the list of nodes.
+	// If the node is already in the list, it returns an error.
 	Update(n common.Address, isAdded bool) error
 }
 
@@ -83,13 +99,6 @@ func (s *streamNodesImpl) IsLocal() bool {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.isLocal
-}
-
-// LocalIsLeader is used for fake leader election currently.
-func (s *streamNodesImpl) LocalIsLeader() bool {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	return len(s.nodes) > 0 && s.nodes[0] == s.localNode
 }
 
 func (s *streamNodesImpl) GetNodes() []common.Address {
@@ -155,7 +164,10 @@ func (s *streamNodesImpl) NumRemotes() int {
 func (s *streamNodesImpl) Update(n common.Address, isAdded bool) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	return s.updateNoLock(n, isAdded)
+}
 
+func (s *streamNodesImpl) updateNoLock(n common.Address, isAdded bool) error {
 	var newNodes []common.Address
 	if isAdded {
 		if slices.Contains(s.nodes, n) {

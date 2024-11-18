@@ -7,24 +7,10 @@ pragma solidity ^0.8.23;
 
 //contracts
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-import {TieredLogPricingOracle} from "contracts/src/spaces/facets/membership/pricing/tiered/TieredLogPricingOracle.sol";
 import {MockAggregatorV3} from "contracts/test/mocks/MockAggregatorV3.sol";
 
-contract DeployTieredLogPricing is Deployer {
+abstract contract TieredLogPricing is Deployer {
   int256 public constant EXCHANGE_RATE = 222616000000;
-
-  function versionName() public pure override returns (string memory) {
-    return "tieredLogPricing";
-  }
-
-  function __deploy(address deployer) public override returns (address) {
-    address oracle = isAnvil()
-      ? _setupLocalOracle(deployer)
-      : _getOracleAddress();
-
-    vm.broadcast(deployer);
-    return address(new TieredLogPricingOracle(oracle));
-  }
 
   function _getOracleAddress() internal view returns (address) {
     if (block.chainid == 8453) {

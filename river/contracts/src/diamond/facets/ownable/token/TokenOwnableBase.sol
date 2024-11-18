@@ -25,7 +25,7 @@ abstract contract TokenOwnableBase is ITokenOwnableBase {
   }
 
   function _owner() internal view returns (address owner) {
-    TokenOwnableStorage.Layout memory ds = TokenOwnableStorage.layout();
+    TokenOwnableStorage.Layout storage ds = TokenOwnableStorage.layout();
     return IERC721(ds.collection).ownerOf(ds.tokenId);
   }
 
@@ -33,7 +33,7 @@ abstract contract TokenOwnableBase is ITokenOwnableBase {
     address oldOwner = _owner();
     if (newOwner == address(0)) revert Ownable__ZeroAddress();
 
-    TokenOwnableStorage.Layout memory ds = TokenOwnableStorage.layout();
+    TokenOwnableStorage.Layout storage ds = TokenOwnableStorage.layout();
 
     IERC721(ds.collection).safeTransferFrom(_owner(), newOwner, ds.tokenId);
     emit OwnershipTransferred(oldOwner, newOwner);

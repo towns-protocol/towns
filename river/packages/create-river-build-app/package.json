@@ -1,0 +1,26 @@
+{
+    "name": "create-river-build-app",
+    "version": "0.0.1",
+    "bin": "index.js",
+    "engines": {
+        "node": "^18.0.0 || >=20.0.0"
+    },
+    "files": [
+        "index.js",
+        "dist"
+    ],
+    "scripts": {
+        "build": "tsup"
+    },
+    "devDependencies": {
+        "@types/cross-spawn": "^6.0.6",
+        "@types/minimist": "^1.2.5",
+        "@types/prompts": "^2.4.9",
+        "cross-spawn": "^7.0.5",
+        "minimist": "^1.2.8",
+        "picocolors": "^1.1.1",
+        "prompts": "^2.4.2",
+        "tsup": "^8.3.5",
+        "typescript": "^5.1.6"
+    }
+}

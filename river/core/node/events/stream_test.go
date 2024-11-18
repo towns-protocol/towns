@@ -80,11 +80,11 @@ func MakeTestBlockForUserSettingsStream(
 
 	header := &MiniblockHeader{
 		MiniblockNum:             prevBlock.Ref.Num + 1,
-		Timestamp:                NextMiniblockTimestamp(prevBlock.header().Timestamp),
+		Timestamp:                NextMiniblockTimestamp(prevBlock.Header().Timestamp),
 		EventHashes:              [][]byte{event.Hash[:]},
 		PrevMiniblockHash:        prevBlock.Ref.Hash[:],
-		EventNumOffset:           prevBlock.header().EventNumOffset + 2,
-		PrevSnapshotMiniblockNum: prevBlock.header().PrevSnapshotMiniblockNum,
+		EventNumOffset:           prevBlock.Header().EventNumOffset + 2,
+		PrevSnapshotMiniblockNum: prevBlock.Header().PrevSnapshotMiniblockNum,
 		Content: &MiniblockHeader_None{
 			None: &emptypb.Empty{},
 		},

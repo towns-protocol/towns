@@ -1,15 +1,11 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import {
-    LegacyMembershipStruct,
-    NoopRuleData,
-    Permission,
-    getDynamicPricingModule,
-} from '@river-build/web3'
+import { LegacyMembershipStruct, NoopRuleData, Permission } from '@river-build/web3'
 import ethers from 'ethers'
 import { TownsTestClient } from '../tests/integration/helpers/TownsTestClient'
 import { Wallet } from 'ethers'
 import fs from 'fs'
+import { getFreeSpacePricingSetup } from '../tests/integration/helpers/TestUtils'
 
 /**
  * This is not an actual test, it's just a quick hack to create a dev town.
@@ -66,8 +62,10 @@ export async function createDevTown(client: TownsTestClient): Promise<string | u
     if (!client.spaceDapp) {
         throw new Error('no spaceDapp')
     }
-    const dynamicPricingModule = await getDynamicPricingModule(client.spaceDapp)
-    if (!dynamicPricingModule) {
+    const { fixedPricingModuleAddress, price, freeAllocation } = await getFreeSpacePricingSetup(
+        client.spaceDapp,
+    )
+    if (!fixedPricingModuleAddress) {
         throw new Error('no dynamicPricingModule')
     }
 
@@ -75,13 +73,13 @@ export async function createDevTown(client: TownsTestClient): Promise<string | u
         settings: {
             name: 'Everyone',
             symbol: 'MEMBER',
-            price: 0,
+            price,
             maxSupply: 100,
             duration: 0,
             currency: ethers.constants.AddressZero,
             feeRecipient: ethers.constants.AddressZero,
-            freeAllocation: 0,
-            pricingModule: dynamicPricingModule.module,
+            freeAllocation,
+            pricingModule: fixedPricingModuleAddress,
         },
         permissions: [Permission.Read, Permission.Write, Permission.AddRemoveChannels],
         requirements: {

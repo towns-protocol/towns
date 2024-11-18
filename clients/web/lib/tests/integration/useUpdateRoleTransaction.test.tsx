@@ -11,7 +11,11 @@ import { RegisterWallet, TransactionInfo } from './helpers/TestComponents'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { TownsTestApp } from './helpers/TownsTestApp'
 import { TownsTestWeb3Provider } from './helpers/TownsTestWeb3Provider'
-import { createMembershipStruct, makeUniqueName } from './helpers/TestUtils'
+import {
+    createMembershipStruct,
+    getFreeSpacePricingSetup,
+    makeUniqueName,
+} from './helpers/TestUtils'
 import { useCreateRoleTransaction } from '../../src/hooks/use-create-role-transaction'
 import { useCreateSpaceTransactionWithRetries } from '../../src/hooks/use-create-space-transaction'
 import { useRoleDetails } from '../../src/hooks/use-role-details'
@@ -28,7 +32,6 @@ import {
     EncodedNoopRuleData,
     ruleDataToOperations,
     OperationType,
-    getDynamicPricingModule,
     convertRuleDataV1ToV2,
     Operation,
     decodeThresholdParams,
@@ -185,7 +188,8 @@ function TestComponent(args: {
     // handle click to create a space
     const onClickCreateSpace = useCallback(() => {
         const handleClick = async () => {
-            const dynamicPricingModule = await getDynamicPricingModule(spaceDapp)
+            const { fixedPricingModuleAddress, price, freeAllocation } =
+                await getFreeSpacePricingSetup(spaceDapp)
             await createSpaceTransactionWithRetries(
                 {
                     name: args.spaceName,
@@ -199,7 +203,9 @@ function TestComponent(args: {
                         ruleData: EncodedNoopRuleData,
                         syncEntitlements: false,
                     },
-                    pricingModule: dynamicPricingModule.module,
+                    pricingModule: fixedPricingModuleAddress,
+                    freeAllocation,
+                    price,
                 }),
                 args.signer,
             )

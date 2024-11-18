@@ -85,7 +85,14 @@ export function checkNever(value: never, message?: string): never {
     throw new Error(message ?? `Unhandled switch value ${value}`)
 }
 
+/**
+ * @deprecated
+ * Use TIERED_PRICING_ORACLE_V2 or TIERED_PRICING_ORACLE_V3 instead
+ * Yes, the correct value for this constant is "TieredLogPricingOracleV2"
+ */
 export const TIERED_PRICING_ORACLE = 'TieredLogPricingOracleV2'
+export const TIERED_PRICING_ORACLE_V2 = 'TieredLogPricingOracleV2'
+export const TIERED_PRICING_ORACLE_V3 = 'TieredLogPricingOracleV3'
 export const FIXED_PRICING = 'FixedPricing'
 
 export const getDynamicPricingModule = async (spaceDapp: ISpaceDapp | undefined) => {
@@ -113,7 +120,10 @@ export const getFixedPricingModule = async (spaceDapp: ISpaceDapp | undefined) =
 }
 
 export const findDynamicPricingModule = (pricingModules: PricingModuleStruct[]) =>
-    pricingModules.find((module) => module.name === TIERED_PRICING_ORACLE)
+    pricingModules.find(
+        (module) =>
+            module.name === TIERED_PRICING_ORACLE_V3 || module.name === TIERED_PRICING_ORACLE_V2,
+    )
 
 export const findFixedPricingModule = (pricingModules: PricingModuleStruct[]) =>
     pricingModules.find((module) => module.name === FIXED_PRICING)

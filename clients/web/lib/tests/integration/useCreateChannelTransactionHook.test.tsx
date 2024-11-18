@@ -13,7 +13,11 @@ import { TestConstants } from './helpers/TestConstants'
 import { TransactionStatus } from '../../src/client/TownsClientTypes'
 import { TownsTestApp } from './helpers/TownsTestApp'
 import { TownsTestWeb3Provider } from './helpers/TownsTestWeb3Provider'
-import { createMembershipStruct, makeUniqueName } from './helpers/TestUtils'
+import {
+    createMembershipStruct,
+    getFreeSpacePricingSetup,
+    makeUniqueName,
+} from './helpers/TestUtils'
 import { useChannelData } from '../../src/hooks/use-channel-data'
 import { useCreateChannelTransaction } from '../../src/hooks/use-create-channel-transaction'
 import { useCreateSpaceTransactionWithRetries } from '../../src/hooks/use-create-space-transaction'
@@ -21,12 +25,7 @@ import { useRoles } from '../../src/hooks/use-roles'
 import { useSpacesFromContract } from '../../src/hooks/use-spaces-from-contract'
 import { useTransactionStore } from '../../src/store/use-transactions-store'
 import { useSpaceData } from '../../src/hooks/use-space-data'
-import {
-    getTestGatingNftAddress,
-    EncodedNoopRuleData,
-    Permission,
-    getDynamicPricingModule,
-} from '@river-build/web3'
+import { getTestGatingNftAddress, EncodedNoopRuleData, Permission } from '@river-build/web3'
 import { TSigner } from '../../src/types/web3-types'
 import { useTownsClient } from '../../src/hooks/use-towns-client'
 
@@ -111,7 +110,8 @@ describe('useCreateChannelTransactionHook', () => {
 
             const onClickCreateSpace = useCallback(() => {
                 const handleClick = async () => {
-                    const dynamicPricingModule = await getDynamicPricingModule(spaceDapp)
+                    const { fixedPricingModuleAddress, price, freeAllocation } =
+                        await getFreeSpacePricingSetup(spaceDapp)
                     await createSpaceTransactionWithRetries(
                         {
                             name: spaceName,
@@ -129,7 +129,9 @@ describe('useCreateChannelTransactionHook', () => {
                                 ruleData: EncodedNoopRuleData,
                                 syncEntitlements: false,
                             },
-                            pricingModule: dynamicPricingModule.module,
+                            pricingModule: fixedPricingModuleAddress,
+                            freeAllocation,
+                            price,
                         }),
                         signer,
                     )

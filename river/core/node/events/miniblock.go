@@ -104,7 +104,7 @@ func (b *MiniblockInfo) events() []*ParsedEvent {
 	return b.useGetterForEvents
 }
 
-func (b *MiniblockInfo) header() *MiniblockHeader {
+func (b *MiniblockInfo) Header() *MiniblockHeader {
 	return b.headerEvent.Event.GetMiniblockHeader()
 }
 
@@ -117,8 +117,8 @@ func (b *MiniblockInfo) lastEvent() *ParsedEvent {
 	}
 }
 
-func (b *MiniblockInfo) isSnapshot() bool {
-	return b.header().GetSnapshot() != nil
+func (b *MiniblockInfo) IsSnapshot() bool {
+	return b.Header().GetSnapshot() != nil
 }
 
 func (b *MiniblockInfo) asStorageMb() (*storage.WriteMiniblockData, error) {
@@ -133,14 +133,14 @@ func (b *MiniblockInfo) asStorageMbWithData(bytes []byte) *storage.WriteMinibloc
 	return &storage.WriteMiniblockData{
 		Number:   b.Ref.Num,
 		Hash:     b.Ref.Hash,
-		Snapshot: b.isSnapshot(),
+		Snapshot: b.IsSnapshot(),
 		Data:     bytes,
 	}
 }
 
 func (b *MiniblockInfo) forEachEvent(op func(e *ParsedEvent, minibockNum int64, eventNum int64) (bool, error)) error {
-	blockNum := b.header().MiniblockNum
-	eventNum := b.header().EventNumOffset
+	blockNum := b.Header().MiniblockNum
+	eventNum := b.Header().EventNumOffset
 	for _, event := range b.events() {
 		c, err := op(event, blockNum, eventNum)
 		eventNum++

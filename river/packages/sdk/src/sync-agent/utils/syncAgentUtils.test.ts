@@ -5,15 +5,7 @@ import { makeRiverConfig } from '../../riverConfig'
 import { RiverDbManager } from '../../riverDbManager'
 import { userIdFromAddress } from '../../id'
 import { Entitlements } from '../entitlements/entitlements'
-import {
-    ETH_ADDRESS,
-    LegacyMembershipStruct,
-    NoopRuleData,
-    Permission,
-    SpaceDapp,
-    getDynamicPricingModule,
-    getFixedPricingModule,
-} from '@river-build/web3'
+import { SpaceDapp } from '@river-build/web3'
 
 export async function makeRandomSyncAgentConfig(): Promise<SyncAgentConfig> {
     const context = await makeRandomUserContext()
@@ -55,35 +47,4 @@ export function makeTestSyncDbName(userId: string, deviceId?: string) {
 export function makeTestDbName(prefix: string, userId: string, deviceId?: string) {
     const suffix = deviceId ? `-${deviceId}` : ''
     return `${prefix}-${userId}${suffix}`
-}
-
-export async function makeTestMembershipInfo(
-    spaceDapp: SpaceDapp,
-    feeRecipient: string,
-    pricing: 'dynamic' | 'fixed' = 'dynamic',
-) {
-    const pricingModule =
-        pricing == 'dynamic'
-            ? await getDynamicPricingModule(spaceDapp)
-            : await getFixedPricingModule(spaceDapp)
-    return {
-        settings: {
-            name: 'Everyone',
-            symbol: 'MEMBER',
-            price: 0,
-            maxSupply: 1000,
-            duration: 0,
-            currency: ETH_ADDRESS,
-            feeRecipient: feeRecipient,
-            freeAllocation: 0,
-            pricingModule: pricingModule.module,
-        },
-        permissions: [Permission.Read, Permission.Write],
-        requirements: {
-            everyone: true,
-            users: [],
-            ruleData: NoopRuleData,
-            syncEntitlements: false,
-        },
-    } satisfies LegacyMembershipStruct
 }

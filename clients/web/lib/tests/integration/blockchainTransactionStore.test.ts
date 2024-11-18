@@ -2,14 +2,13 @@
  * @group core
  */
 import { jest } from '@jest/globals'
-import { registerAndStartClients, createTestSpaceGatedByTownsNfts } from './helpers/TestUtils'
-
 import {
-    MembershipStruct,
-    EncodedNoopRuleData,
-    Permission,
-    getDynamicPricingModule,
-} from '@river-build/web3'
+    registerAndStartClients,
+    createTestSpaceGatedByTownsNfts,
+    getFreeSpacePricingSetup,
+} from './helpers/TestUtils'
+
+import { MembershipStruct, EncodedNoopRuleData, Permission } from '@river-build/web3'
 import { waitFor } from '@testing-library/dom'
 import { ethers } from 'ethers'
 
@@ -56,7 +55,9 @@ test('should clear all promises when client stops', async () => {
         return infinitePromise
     })
 
-    const dynamicPricingModule = await getDynamicPricingModule(bob.spaceDapp)
+    const { fixedPricingModuleAddress, freeAllocation, price } = await getFreeSpacePricingSetup(
+        bob.spaceDapp,
+    )
 
     const blockchainStoreAbortSpy = jest.spyOn(
         bob.blockchainTransactionStore.abortController,
@@ -67,13 +68,13 @@ test('should clear all promises when client stops', async () => {
         settings: {
             name: 'Member',
             symbol: 'MEMBER',
-            price: 0,
+            price,
             maxSupply: 100,
             duration: 0,
             currency: ethers.constants.AddressZero,
             feeRecipient: ethers.constants.AddressZero,
-            freeAllocation: 0,
-            pricingModule: dynamicPricingModule.module,
+            freeAllocation,
+            pricingModule: fixedPricingModuleAddress,
         },
         permissions: [],
         requirements: {

@@ -13,7 +13,6 @@ import {
     Permission,
     SpaceDapp,
     createOperationsTree,
-    getDynamicPricingModule,
     getFixedPricingModule,
     getWeb3Deployment,
     NoopRuleData,
@@ -99,7 +98,7 @@ export async function createUngatedSpace({
     const { spaceName: generatedSpaceName, channelName: channelName } =
         getSpaceAndChannelName(signerAddress)
     const name = spaceName ?? generatedSpaceName
-    const dynamicPricingModule = await getDynamicPricingModule(spaceDapp)
+    const fixedPricingModule = await getFixedPricingModule(spaceDapp)
 
     if (userOps.createLegacySpaces()) {
         console.log('OPS creating legacy space')
@@ -112,8 +111,8 @@ export async function createUngatedSpace({
                 duration: 0,
                 currency: ethers.constants.AddressZero,
                 feeRecipient: ethers.constants.AddressZero,
-                freeAllocation: 0,
-                pricingModule: dynamicPricingModule.module,
+                freeAllocation: 100,
+                pricingModule: fixedPricingModule.module,
             },
             permissions: rolePermissions,
             requirements: {
@@ -143,8 +142,8 @@ export async function createUngatedSpace({
                 duration: 0,
                 currency: ethers.constants.AddressZero,
                 feeRecipient: ethers.constants.AddressZero,
-                freeAllocation: 0,
-                pricingModule: dynamicPricingModule.module,
+                freeAllocation: 100,
+                pricingModule: fixedPricingModule.module,
             },
             permissions: rolePermissions,
             requirements: {
@@ -182,7 +181,7 @@ export async function createGatedSpace({
         getSpaceAndChannelName(signerAddress)
     const name = spaceName ?? generatedSpaceName
 
-    const dynamicPricingModule = await getDynamicPricingModule(spaceDapp)
+    const fixedPricingModule = await getFixedPricingModule(spaceDapp)
 
     if (userOps.createLegacySpaces()) {
         console.log('OPS creating legacy space')
@@ -195,8 +194,8 @@ export async function createGatedSpace({
                 duration: 0,
                 currency: ethers.constants.AddressZero,
                 feeRecipient: ethers.constants.AddressZero,
-                freeAllocation: 0,
-                pricingModule: dynamicPricingModule.module,
+                freeAllocation: 100,
+                pricingModule: fixedPricingModule.module,
             },
             permissions: rolePermissions,
             requirements: {
@@ -226,8 +225,8 @@ export async function createGatedSpace({
                 duration: 0,
                 currency: ethers.constants.AddressZero,
                 feeRecipient: ethers.constants.AddressZero,
-                freeAllocation: 0,
-                pricingModule: dynamicPricingModule.module,
+                freeAllocation: 100,
+                pricingModule: fixedPricingModule.module,
             },
             permissions: rolePermissions,
             requirements: {
@@ -280,7 +279,7 @@ export async function createFixedPriceSpace({
                 duration: 0,
                 currency: ethers.constants.AddressZero,
                 feeRecipient: ethers.constants.AddressZero,
-                freeAllocation: 1, // needs to be > 0
+                freeAllocation: 0,
                 pricingModule: fixedPricingModule.module,
             },
             permissions: rolePermissions,
@@ -310,7 +309,7 @@ export async function createFixedPriceSpace({
                 duration: 0,
                 currency: ethers.constants.AddressZero,
                 feeRecipient: ethers.constants.AddressZero,
-                freeAllocation: 1, // needs to be > 0
+                freeAllocation: 0,
                 pricingModule: fixedPricingModule.module,
             },
             permissions: rolePermissions,
@@ -464,7 +463,7 @@ export async function sendEditMembershipSettingsOp(
         pricingModule: string
         membershipPrice: ethers.BigNumberish // wei
         membershipSupply: ethers.BigNumberish
-        freeAllocationForPaidSpace?: ethers.BigNumberish
+        freeAllocation?: ethers.BigNumberish
     },
     signer: ethers.Signer,
 ) {

@@ -12,7 +12,11 @@ import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { TestConstants } from './helpers/TestConstants'
 import { TownsTestApp } from './helpers/TownsTestApp'
 import { TownsTestWeb3Provider } from './helpers/TownsTestWeb3Provider'
-import { createMembershipStruct, makeUniqueName } from './helpers/TestUtils'
+import {
+    createMembershipStruct,
+    getFreeSpacePricingSetup,
+    makeUniqueName,
+} from './helpers/TestUtils'
 import { useCreateRoleTransaction } from '../../src/hooks/use-create-role-transaction'
 import { useCreateSpaceTransactionWithRetries } from '../../src/hooks/use-create-space-transaction'
 import { useRoleDetails } from '../../src/hooks/use-role-details'
@@ -29,7 +33,6 @@ import {
     createOperationsTree,
     LOCALHOST_CHAIN_ID,
     CheckOperationType,
-    getDynamicPricingModule,
     encodeRuleDataV2,
     Operation,
     convertRuleDataV1ToV2,
@@ -153,7 +156,8 @@ function TestComponent(args: {
     // handle click to create a space
     const onClickCreateSpace = useCallback(() => {
         const handleClick = async () => {
-            const dynamicPricingModule = await getDynamicPricingModule(spaceDapp)
+            const { fixedPricingModuleAddress, price, freeAllocation } =
+                await getFreeSpacePricingSetup(spaceDapp)
             await createSpaceTransactionWithRetries(
                 {
                     name: args.spaceName,
@@ -161,7 +165,9 @@ function TestComponent(args: {
                 createMembershipStruct({
                     name: args.roleName,
                     permissions: args.permissions,
-                    pricingModule: dynamicPricingModule.module,
+                    pricingModule: fixedPricingModuleAddress,
+                    freeAllocation,
+                    price,
                     requirements: {
                         everyone: true, // TODO: change to false when xchain is ready
                         users: [],

@@ -1697,65 +1697,57 @@ func (s *PostgresStreamStore) debugReadStreamData(
 	return result, nil
 }
 
-func (s *PostgresStreamStore) StreamLastMiniBlock(
+func (s *PostgresStreamStore) GetLastMiniblockNumber(
 	ctx context.Context,
 	streamID StreamId,
-) (*MiniblockData, error) {
-	var ret *MiniblockData
+) (int64, error) {
+	var ret int64
 	err := s.txRunnerWithUUIDCheck(
 		ctx,
-		"StreamLastMiniBlock",
+		"GetLastMiniblockNumber",
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
 			var err error
-			ret, err = s.streamLastMiniBlockTx(ctx, tx, streamID)
+			ret, err = s.getLastMiniblockNumberTx(ctx, tx, streamID)
 			return err
 		},
 		nil,
+		"streamId", streamID,
 	)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 	return ret, nil
 }
 
-func (s *PostgresStreamStore) streamLastMiniBlockTx(
+func (s *PostgresStreamStore) getLastMiniblockNumberTx(
 	ctx context.Context,
 	tx pgx.Tx,
 	streamID StreamId,
-) (*MiniblockData, error) {
+) (int64, error) {
 	_, migrated, err := s.lockStream(ctx, tx, streamID, false)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 
-	var (
-		maxSeqNum int64
-		blockData []byte
-	)
+	var maxSeqNum int64
 	err = tx.QueryRow(
 		ctx,
 		s.sqlForStream(
-			"SELECT seq_num, blockdata FROM {{miniblocks}} WHERE stream_id = $1 ORDER BY seq_num DESC LIMIT 1",
+			"SELECT MAX(seq_num) FROM {{miniblocks}} WHERE stream_id = $1",
 			streamID,
 			migrated,
 		),
 		streamID,
-	).Scan(&maxSeqNum, &blockData)
+	).Scan(&maxSeqNum)
 	if err != nil {
 		if err == pgx.ErrNoRows {
-			return nil, RiverError(Err_NOT_FOUND, "latest miniblock in DB not found for stream").
-				Tags("stream", streamID).
-				Func("lastMiniBlockForStream")
+			return 0, RiverError(Err_INTERNAL, "Stream exists in es table, but no miniblocks in DB")
 		}
-		return nil, err
+		return 0, err
 	}
 
-	return &MiniblockData{
-		StreamID:      streamID,
-		Number:        maxSeqNum,
-		MiniBlockInfo: blockData,
-	}, nil
+	return maxSeqNum, nil
 }
 
 func createTableSuffix(streamId StreamId) string {

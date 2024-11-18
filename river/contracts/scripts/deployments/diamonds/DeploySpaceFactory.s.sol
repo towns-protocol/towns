@@ -34,7 +34,8 @@ import {DeploySpaceOwner} from "contracts/scripts/deployments/diamonds/DeploySpa
 import {DeployRuleEntitlement} from "contracts/scripts/deployments/utils/DeployRuleEntitlement.s.sol";
 import {DeployRuleEntitlementV2} from "contracts/scripts/deployments/utils/DeployRuleEntitlementV2.s.sol";
 import {DeployWalletLink} from "contracts/scripts/deployments/facets/DeployWalletLink.s.sol";
-import {DeployTieredLogPricing} from "contracts/scripts/deployments/utils/DeployTieredLogPricing.s.sol";
+import {DeployTieredLogPricingV2} from "contracts/scripts/deployments/utils/DeployTieredLogPricingV2.s.sol";
+import {DeployTieredLogPricingV3} from "contracts/scripts/deployments/utils/DeployTieredLogPricingV3.s.sol";
 import {DeployFixedPricing} from "contracts/scripts/deployments/utils/DeployFixedPricing.s.sol";
 import {DeployPricingModules} from "contracts/scripts/deployments/facets/DeployPricingModules.s.sol";
 import {DeployImplementationRegistry} from "contracts/scripts/deployments/facets/DeployImplementationRegistry.s.sol";
@@ -81,7 +82,11 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
   DeployRuleEntitlementV2 deployRuleEntitlementV2 =
     new DeployRuleEntitlementV2();
 
-  DeployTieredLogPricing deployTieredLogPricing = new DeployTieredLogPricing();
+  DeployTieredLogPricingV2 deployTieredLogPricingV2 =
+    new DeployTieredLogPricingV2();
+  DeployTieredLogPricingV3 deployTieredLogPricingV3 =
+    new DeployTieredLogPricingV3();
+
   DeployFixedPricing deployFixedPricing = new DeployFixedPricing();
   DeploySpaceProxyInitializer deploySpaceProxyInitializer =
     new DeploySpaceProxyInitializer();
@@ -119,7 +124,8 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
   address public ruleEntitlement;
   address public spaceOwner;
   address public spaceProxyInitializer;
-  address public tieredLogPricing;
+  address public tieredLogPricingV2;
+  address public tieredLogPricingV3;
   address public fixedPricing;
   address[] pricingModules;
 
@@ -141,11 +147,13 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
     legacyRuleEntitlement = deployLegacyRuleEntitlement.deploy(deployer);
 
     // pricing modules
-    tieredLogPricing = deployTieredLogPricing.deploy(deployer);
+    tieredLogPricingV2 = deployTieredLogPricingV2.deploy(deployer);
+    tieredLogPricingV3 = deployTieredLogPricingV3.deploy(deployer);
     fixedPricing = deployFixedPricing.deploy(deployer);
 
     // pricing modules
-    pricingModules.push(tieredLogPricing);
+    pricingModules.push(tieredLogPricingV2);
+    pricingModules.push(tieredLogPricingV3);
     pricingModules.push(fixedPricing);
 
     multiInit = deployMultiInit.deploy(deployer);

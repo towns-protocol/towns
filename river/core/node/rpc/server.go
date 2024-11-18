@@ -334,12 +334,17 @@ func (s *Service) initRiverChain() error {
 		return err
 	}
 
-	s.streamRegistry = nodes.NewStreamRegistry(
+	s.streamRegistry, err = nodes.NewStreamRegistry(
+		ctx,
+		s.riverChain,
 		walletAddress,
 		s.nodeRegistry,
 		s.registryContract,
 		s.chainConfig,
 	)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

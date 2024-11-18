@@ -35,7 +35,7 @@ contract ForkCreateSpace is
     for (uint256 i = 0; i < modules.length; i++) {
       if (
         keccak256(abi.encodePacked(modules[i].name)) ==
-        keccak256(abi.encodePacked("TieredLogPricingOracleV2"))
+        keccak256(abi.encodePacked("TieredLogPricingOracleV3"))
       ) {
         return modules[i].module;
       }

@@ -7,7 +7,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { TownsTestApp } from './helpers/TownsTestApp'
 import { RegisterWallet, TransactionInfo } from './helpers/TestComponents'
 import { TownsTestWeb3Provider } from './helpers/TownsTestWeb3Provider'
-import { makeUniqueName } from './helpers/TestUtils'
+import { getFreeSpacePricingSetup, makeUniqueName } from './helpers/TestUtils'
 import { useSpaceDataWithId } from '../../src/hooks/use-space-data'
 import { useMyChannels } from '../../src/hooks/use-my-channels'
 import { useCreateSpaceTransactionWithRetries } from '../../src/hooks/use-create-space-transaction'
@@ -15,7 +15,7 @@ import { useCreateChannelTransaction } from '../../src/hooks/use-create-channel-
 import { CreateChannelInfo } from '../../src/types/towns-types'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { TestConstants } from './helpers/TestConstants'
-import { EncodedNoopRuleData, getDynamicPricingModule } from '@river-build/web3'
+import { EncodedNoopRuleData } from '@river-build/web3'
 import { useTownsClient } from '../../src/hooks/use-towns-client'
 import { ethers } from 'ethers'
 import { AuthStatus } from '../../src/hooks/login'
@@ -45,7 +45,8 @@ describe('createSpaceChannelHooks', () => {
                 const name = makeUniqueName('aliceSpace')
                 void (async () => {
                     // TODO: hook up pricing module to form pricing options
-                    const dynamicPricingModule = await getDynamicPricingModule(spaceDapp)
+                    const { fixedPricingModuleAddress, freeAllocation, price } =
+                        await getFreeSpacePricingSetup(spaceDapp)
 
                     const result = await createSpaceTransactionWithRetries(
                         {
@@ -55,13 +56,13 @@ describe('createSpaceChannelHooks', () => {
                             settings: {
                                 name,
                                 symbol: 'MEMBER',
-                                price: 0,
+                                price,
                                 maxSupply: 1000,
                                 duration: 0,
                                 currency: ethers.constants.AddressZero,
                                 feeRecipient: ethers.constants.AddressZero,
-                                freeAllocation: 0,
-                                pricingModule: dynamicPricingModule.module,
+                                freeAllocation,
+                                pricingModule: fixedPricingModuleAddress,
                             },
                             permissions: [],
                             requirements: {
