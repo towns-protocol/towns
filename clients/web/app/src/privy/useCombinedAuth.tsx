@@ -2,6 +2,10 @@ import { Address, useConnectivity, useMyDefaultUsernames } from 'use-towns-clien
 import React, { createContext, useCallback, useContext, useMemo } from 'react'
 import { useLogin, usePrivy } from '@privy-io/react-auth'
 import { retryGetAccessToken, useEmbeddedWallet, useGetSignerWithTimeout } from '@towns/privy'
+import {
+    getPrivyLoginMethodFromLocalStorage,
+    setPrivyLoginMethodToLocalStorage,
+} from '@towns/userops/src/middlewares'
 import { usePublicPageLoginFlow } from 'routes/PublicTownPage/usePublicPageLoginFlow'
 import { useUnsubscribeNotification } from 'hooks/usePushSubscription'
 import { Analytics } from 'hooks/useAnalytics'
@@ -122,6 +126,10 @@ function usePrivyLoginWithErrorHandler({
 
     const { login: privyLogin } = useLogin({
         async onComplete(user, isNewUser, wasAlreadyAuthenticated, loginMethod, loginAccount) {
+            // onComplete always fires - if already logged in and loading page, or if logging in
+            // loginMethod will only be present if actually logging in
+            savePrivyLoginMethodToLocalStorage(loginMethod)
+
             // don't call on page load when user already authenticated
             // BUG in privy: this hook is ALSO called when calling privy.useConnectWallet - and who knows when else
             // so we need to check if the user is already authenticated to river too (loggedInWalletAddress)
@@ -189,4 +197,17 @@ function usePrivyLoginWithErrorHandler({
     })
 
     return { privyLogin }
+}
+
+function savePrivyLoginMethodToLocalStorage(loginMethod: string | null) {
+    if (loginMethod) {
+        setPrivyLoginMethodToLocalStorage(loginMethod)
+        return
+    }
+    const pLoginMethod = getPrivyLoginMethodFromLocalStorage()
+
+    // for clients that are already logged in, this will set it to the last login method by parsing privy's local storage key
+    if (pLoginMethod) {
+        setPrivyLoginMethodToLocalStorage(pLoginMethod)
+    }
 }

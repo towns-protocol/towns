@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { CodeException } from '../errors'
 import { isUsingAlchemyBundler } from '../utils'
 import { PaymasterErrorCode, userOpsStore } from '../userOpsStore'
+import { getPrivyLoginMethodFromLocalStorage } from './privyLoginMethod'
 
 type PaymasterProxyResponse = {
     data: {
@@ -40,6 +41,8 @@ type PaymasterProxyPostData = IUserOperation & {
     townId: string | undefined
 }
 
+const NON_SPONSORED_LOGIN_METHODS = ['email']
+
 export const paymasterProxyMiddleware = async (
     args: {
         userOpContext: IUserOperationMiddlewareCtx
@@ -50,6 +53,12 @@ export const paymasterProxyMiddleware = async (
         fetchAccessTokenFn: (() => Promise<string | null>) | undefined
     } & Pick<UserOpsConfig, 'paymasterProxyUrl' | 'paymasterProxyAuthSecret'>,
 ) => {
+    const loginMethod = getPrivyLoginMethodFromLocalStorage()
+
+    if (loginMethod && NON_SPONSORED_LOGIN_METHODS.includes(loginMethod)) {
+        return
+    }
+
     const {
         userOpContext: ctx,
         rootKeyAddress,
