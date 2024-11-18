@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import {
     SignerUndefinedError,
     TransactionStatus,
@@ -18,12 +18,10 @@ import { createPrivyNotAuthenticatedNotification } from '@components/Notificatio
 
 import { buildSpaceMetadataUrl, refreshSpaceCache } from 'api/lib/fetchImage'
 import { GetSigner, WalletReady } from 'privy/WalletReady'
-import { useRefreshSpaceMember } from 'hooks/useRefreshSpaceMember'
-import { useWaitForInvalidation } from 'hooks/useWaitForInvalidation'
-import { popupToast } from '@components/Notifications/popupToast'
 
 type Props = {
     onHide: () => void
+    setInvalidationId: (invalidationId: string | undefined) => void
 }
 
 const FormStateKeys = {
@@ -49,7 +47,7 @@ export const TownInfoModal = React.memo((props: Props) => {
 })
 
 export const TownInfoModalWithoutAuth = (props: Props) => {
-    const { onHide } = props
+    const { onHide, setInvalidationId } = props
     const space = useSpaceData()
     const { data } = useContractSpaceInfo(space?.id)
 
@@ -64,12 +62,6 @@ export const TownInfoModalWithoutAuth = (props: Props) => {
 
     const transactionUIState = toTransactionUIStates(transactionStatus, Boolean(data))
     const hasPendingTx = Boolean(transactionUIState != TransactionUIState.None)
-
-    const [invalidationId, setInvalidationId] = useState<string | undefined>()
-    const { toast } = useRefreshSpaceMember(space?.id)
-    useWaitForInvalidation(invalidationId, {
-        onSuccess: () => popupToast(toast, { duration: Infinity }),
-    })
 
     const onSubmit = useCallback(
         async (changes: FormState, getSigner: GetSigner) => {
@@ -96,7 +88,7 @@ export const TownInfoModalWithoutAuth = (props: Props) => {
                 setInvalidationId(invalidationId)
             }
         },
-        [data?.networkId, data?.address, updateSpaceInfoTransaction, onHide],
+        [data?.networkId, data?.address, updateSpaceInfoTransaction, onHide, setInvalidationId],
     )
 
     const hasTransactionError = Boolean(

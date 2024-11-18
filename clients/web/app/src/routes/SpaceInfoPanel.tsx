@@ -213,6 +213,13 @@ export const SpaceInfo = () => {
     const { toast } = useRefreshSpaceMember(space?.id)
 
     const [spaceImageInvalidationId, setSpaceImageInvalidationId] = useState<string | undefined>()
+    const [townMetadataInvalidationId, setTownMetadataInvalidationId] = useState<
+        string | undefined
+    >()
+
+    useWaitForInvalidation(townMetadataInvalidationId, {
+        onSuccess: () => popupToast(toast, { duration: Infinity }),
+    })
     useWaitForInvalidation(spaceImageInvalidationId, {
         onSuccess: () => popupToast(toast, { duration: Infinity }),
     })
@@ -362,7 +369,10 @@ export const SpaceInfo = () => {
             )}
 
             {activeModal === TOWN_INFO_PARAMS.EDIT_TOWN_NAME && (
-                <TownInfoModal onHide={setModalUndefined} />
+                <TownInfoModal
+                    setInvalidationId={setTownMetadataInvalidationId}
+                    onHide={setModalUndefined}
+                />
             )}
 
             {activeModal === 'preview' && (

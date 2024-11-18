@@ -22,14 +22,14 @@ export const useRefreshSpaceMember = (spaceId: string | undefined) => {
                     LoginButton={
                         <ReauthenticateToast
                             toast={toast}
-                            message="Please reauthenticate to publish your space image to OpenSea"
+                            message="Please reauthenticate to publish your space metadata to OpenSea"
                             cta="Reauthenticate"
                         />
                     }
                 >
                     {({ getSigner }) => (
                         <StandardToast
-                            message="Would you like to publish the space image to OpenSea?"
+                            message="Would you like to publish the space metadata to OpenSea?"
                             toast={toast}
                             ctaColor="positive"
                             icon="openSeaPlain"
@@ -59,7 +59,7 @@ export const useRefreshSpaceMember = (spaceId: string | undefined) => {
         if (transactionStatus === TransactionStatus.Success) {
             popupToast(({ toast }) => (
                 <StandardToast.Success
-                    message="Your space image has been published to OpenSea"
+                    message="Your space metadata has been published to OpenSea"
                     cta="View on OpenSea"
                     toast={toast}
                     onCtaClick={({ dismissToast }) => {
@@ -79,14 +79,14 @@ export const useRefreshSpaceMember = (spaceId: string | undefined) => {
                     LoginButton={
                         <ReauthenticateToast
                             toast={toast}
-                            message="Please reauthenticate to publish your space image to OpenSea"
+                            message="Please reauthenticate to publish your space metadata to OpenSea"
                             cta="Reauthenticate"
                         />
                     }
                 >
                     {({ getSigner }) => (
                         <StandardToast.Error
-                            message="Something went wrong while publishing your space image to OpenSea"
+                            message="Something went wrong while publishing your space metadata to OpenSea"
                             toast={toast}
                             cta={spaceId ? 'Try again' : undefined}
                             onCtaClick={async ({ dismissToast }) => {
