@@ -43,6 +43,9 @@ export function StandardToast<T extends IconProps['type'] | undefined>(props: Pr
         })
         setCtaActionLoading(false)
     }
+
+    const isUnknownConnectorError = subMessage?.toLowerCase().includes('unknown connector')
+
     return (
         <Box
             horizontal
@@ -73,7 +76,11 @@ export function StandardToast<T extends IconProps['type'] | undefined>(props: Pr
             <Box gap grow overflowX="scroll" overflowY="hidden">
                 <Box gap="sm">
                     <Box>{message}</Box>
-                    {subMessage && (
+                    {isUnknownConnectorError && (
+                        <Box>(UC) Please try logging out and in again.</Box>
+                    )}
+
+                    {subMessage && !isUnknownConnectorError && (
                         <Box
                             style={{
                                 display: '-webkit-box',
