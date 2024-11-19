@@ -1,6 +1,4 @@
 import { z } from 'zod'
-import { getPlatformMinMembershipPriceFromQueryCache } from 'use-towns-client'
-import { ethers } from 'ethers'
 import { gatingSchema } from '@components/Web3/Gating/Gating.schema'
 
 export const MAX_LENGTH_SPACE_NAME = 32
@@ -104,18 +102,18 @@ export const membershipSettingsSchema = z
                 })
             }
 
-            const minimumMembershipCost = getPlatformMinMembershipPriceFromQueryCache()
-            const minCostInEth = minimumMembershipCost
-                ? ethers.utils.formatEther(minimumMembershipCost)
-                : undefined
+            // const minimumMembershipCost = getPlatformMinMembershipPriceFromQueryCache()
+            // const minCostInEth = minimumMembershipCost
+            //     ? ethers.utils.formatEther(minimumMembershipCost)
+            //     : undefined
 
-            if (minCostInEth !== undefined && membershipCostAsNumber < parseFloat(minCostInEth)) {
-                ctx.addIssue({
-                    code: z.ZodIssueCode.custom,
-                    message: `The cost of a membership must be at least ${minCostInEth} ETH.`,
-                    path: ['membershipCost'],
-                })
-            }
+            // if (minCostInEth !== undefined && membershipCostAsNumber < parseFloat(minCostInEth)) {
+            //     ctx.addIssue({
+            //         code: z.ZodIssueCode.custom,
+            //         message: `The cost of a membership must be at least ${minCostInEth} ETH.`,
+            //         path: ['membershipCost'],
+            //     })
+            // }
         }
     })
 

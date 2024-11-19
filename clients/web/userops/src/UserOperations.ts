@@ -1379,13 +1379,9 @@ export class UserOps {
                 category: 'userop',
             })
         }
-        // switching from dynamic to fixed
+        // dynamic to dynamic
         else if (!currentIsFixedPricing && !newIsFixedPricing) {
-            throw new CodeException({
-                message: 'Cannot change a dynamic pricing space to a fixed pricing space',
-                code: 'USER_OPS_CANNOT_CHANGE_TO_FIXED_PRICING_SPACE',
-                category: 'userop',
-            })
+            // do nothing
         }
         // price update only
         else if (!currentMembershipPrice.eq(ethers.BigNumber.from(newMembershipPrice))) {
@@ -1570,13 +1566,9 @@ export class UserOps {
                 category: 'userop',
             })
         }
-        // switching from dynamic to fixed
+        // dynamic to dynamic
         else if (!currentIsFixedPricing && !newIsFixedPricing) {
-            throw new CodeException({
-                message: 'Cannot change a dynamic pricing space to a fixed pricing space',
-                code: 'USER_OPS_CANNOT_CHANGE_TO_FIXED_PRICING_SPACE',
-                category: 'userop',
-            })
+            // do nothing
         }
         // price update only
         else if (!currentMembershipPrice.eq(ethers.BigNumber.from(newMembershipPrice))) {

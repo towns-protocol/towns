@@ -16,7 +16,7 @@ import {
 } from 'use-towns-client'
 import { useNavigate } from 'react-router'
 import React, { useCallback, useEffect, useMemo, useRef } from 'react'
-import { ethers } from 'ethers'
+import { BigNumber, ethers } from 'ethers'
 import { datadogRum } from '@datadog/browser-rum'
 import { CreateSpaceFlowStatus } from 'use-towns-client/dist/client/TownsClientTypes'
 import { PATHS } from 'routes'
@@ -24,7 +24,6 @@ import { createPrivyNotAuthenticatedNotification } from '@components/Notificatio
 import { prepareGatedDataForSubmit } from '@components/Tokens/utils'
 import { useStore } from 'store/store'
 import { Analytics } from 'hooks/useAnalytics'
-import { usePlatformMinMembershipPriceInEth } from 'hooks/usePlatformMinMembershipPriceInEth'
 import { useUploadAttachment } from '@components/MediaDropContext/useUploadAttachment'
 import { StandardToast, dismissToast } from '@components/Notifications/StandardToast'
 import { popupToast } from '@components/Notifications/popupToast'
@@ -39,12 +38,14 @@ export function CreateTownSubmit({
     setTransactionDetails,
     children,
     onCreateSpaceFlowStatus,
+    platformMintLimit,
 }: {
     form: UseFormReturn<CreateSpaceFormV2SchemaType>
     setPanelType: (panelType: PanelType | undefined) => void
     setTransactionDetails: ({ isTransacting }: TransactionDetails) => void
     children: (props: { onSubmit: () => void; disabled: boolean }) => React.JSX.Element
     onCreateSpaceFlowStatus?: (status: CreateSpaceFlowStatus) => void
+    platformMintLimit: number | undefined
 }) {
     const { spaceDapp } = useTownsClient()
     const { setRecentlyMintedSpaceToken } = useStore()
@@ -52,8 +53,6 @@ export function CreateTownSubmit({
         'membershipCost',
         'membershipPricingType',
     ])
-
-    const { data: minimumMmebershipPrice } = usePlatformMinMembershipPriceInEth()
 
     // use the hook props instead of BlockchainStore/BlockchainTxNotifier
     // b/c creating a space does a lot of things on river and we want to wait for those too, not just for the tx
@@ -187,33 +186,24 @@ export function CreateTownSubmit({
                     }
                     const isFixedPricing = membershipPricingType === 'fixed'
 
+                    const fixedPricingModuleAddress = await fixedPricingModule?.module
+                    const dynamicPricingModuleAddress = await dynamicPricingModule?.module
                     if (
-                        minimumMmebershipPrice !== undefined &&
-                        isFixedPricing &&
-                        priceInWei.lt(ethers.utils.parseEther(minimumMmebershipPrice))
+                        (isFixedPricing && !fixedPricingModuleAddress) ||
+                        !dynamicPricingModuleAddress
                     ) {
-                        form.setError('membershipPricingType', {
-                            type: 'manual',
-                            message: `Fixed price must be at least ${minimumMmebershipPrice} ETH`,
-                        })
-                        setPanelType(PanelType.all)
-                        setTransactionDetails({
-                            isTransacting: false,
-                            townAddress: undefined,
-                        })
-                        return
-                    }
-
-                    let pricingModuleToSubmit: string
-                    if (isFixedPricing && fixedPricingModule) {
-                        pricingModuleToSubmit = await fixedPricingModule.module
-                    } else if (dynamicPricingModule) {
-                        pricingModuleToSubmit = await dynamicPricingModule.module
-                    } else {
                         console.warn('No pricing module found')
                         setPricingModuleError()
                         return
                     }
+
+                    const { price, pricingModule, freeAllocation } = getPriceConfiguration({
+                        isFixedPricing,
+                        fixedPricingModuleAddress,
+                        dynamicPricingModuleAddress,
+                        platformMintLimit,
+                        price: priceInWei,
+                    })
 
                     const { tokensGatedBy, usersGatedBy, ruleData } = prepareGatedDataForSubmit(
                         data.gatingType,
@@ -229,17 +219,15 @@ export function CreateTownSubmit({
                         settings: {
                             name: createSpaceInfo.name + ' - Member',
                             symbol: 'MEMBER',
-                            price: priceInWei,
+                            price,
                             maxSupply: data.membershipLimit,
                             duration: 60 * 60 * 24 * 365, // 1 year in seconds
                             currency: ethers.constants.AddressZero,
                             // this value is no longer used in contract
                             // the fees go to the space contract
                             feeRecipient: ethers.constants.AddressZero,
-                            // when fixed pricing, freeAllocation is 1, meaning owner gets in for free and all future members must pay
-                            // dynamic pricing has it's own set of rules in contract and has historically been set as 0 here
-                            freeAllocation: isFixedPricing ? 1 : 0,
-                            pricingModule: pricingModuleToSubmit,
+                            freeAllocation,
+                            pricingModule,
                         },
                         requirements: {
                             everyone: data.gatingType === 'everyone',
@@ -361,15 +349,15 @@ export function CreateTownSubmit({
             )()
         },
         [
+            form,
             setRecentlyMintedSpaceToken,
             setTransactionDetails,
-            form,
-            spaceDapp,
             membershipPricingType,
-            minimumMmebershipPrice,
+            platformMintLimit,
             setPanelType,
             createSpaceTransactionWithRole,
             onCreateSpaceFlowStatus,
+            spaceDapp,
             uploadTownImageToStream,
             spaceInfoCache,
             navigate,
@@ -386,10 +374,60 @@ export function CreateTownSubmit({
                         !form.getValues().spaceIconFile ||
                         // !form.formState.isDirty ||
                         Object.keys(form.formState.errors).length > 0 ||
-                        membershipCostValue === '' ||
-                        (membershipPricingType === 'fixed' && Number(membershipCostValue) === 0),
+                        membershipCostValue === '',
                 })
             }
         </WalletReady>
     )
+}
+
+type PriceConfiguration = {
+    freeAllocation: number
+    pricingModule: string
+    price: ethers.BigNumberish
+}
+
+function getPriceConfiguration(args: {
+    isFixedPricing: boolean
+    fixedPricingModuleAddress: string | undefined
+    dynamicPricingModuleAddress: string | undefined
+    platformMintLimit: number | undefined
+    price: BigNumber
+}): PriceConfiguration {
+    const {
+        isFixedPricing,
+        fixedPricingModuleAddress,
+        dynamicPricingModuleAddress,
+        platformMintLimit,
+        price,
+    } = args
+    if (isFixedPricing) {
+        if (!fixedPricingModuleAddress) {
+            throw new Error('Fixed pricing module address is undefined')
+        }
+        if (price.toBigInt() === 0n) {
+            if (platformMintLimit === undefined) {
+                throw new Error('Platform mint limit is undefined')
+            }
+
+            return {
+                freeAllocation: platformMintLimit,
+                pricingModule: fixedPricingModuleAddress,
+                price: 0,
+            }
+        }
+        return {
+            freeAllocation: 0,
+            pricingModule: fixedPricingModuleAddress,
+            price,
+        }
+    }
+    if (!dynamicPricingModuleAddress) {
+        throw new Error('Dynamic pricing module address is undefined')
+    }
+    return {
+        freeAllocation: 0,
+        pricingModule: dynamicPricingModuleAddress,
+        price,
+    }
 }

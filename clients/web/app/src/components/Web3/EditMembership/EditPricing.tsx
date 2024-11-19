@@ -4,11 +4,9 @@ import {
     PricingModuleStruct,
     findDynamicPricingModule,
     findFixedPricingModule,
-    usePlatformMembershipPriceForSupplyInEth,
-    usePlatformMintLimit,
 } from 'use-towns-client'
 import { FadeInBox } from '@components/Transitions'
-import { Box, ErrorMessage, Paragraph, RadioCard, Stack, TextField } from '@ui'
+import { ErrorMessage, Paragraph, RadioCard, Stack, TextField } from '@ui'
 import { usePlatformMinMembershipPriceInEth } from 'hooks/usePlatformMinMembershipPriceInEth'
 import { shimmerClass } from 'ui/styles/globals/shimmer.css'
 import { MembershipSettingsSchemaType } from '../MembershipNFT/CreateSpaceFormV2/CreateSpaceFormV2.schema'
@@ -72,6 +70,9 @@ export function EditPricing({
 
     const onSelectPricingPreset = useCallback(
         (preset: typeof pricingPreset) => {
+            if (isEditMode) {
+                return
+            }
             setPricingPreset(preset)
             formProps.setValue('clientPricingOption', preset)
 
@@ -109,14 +110,14 @@ export function EditPricing({
                 }
             }
         },
-        [formProps, minimumMemebershipPrice],
+        [formProps, isEditMode, minimumMemebershipPrice],
     )
 
-    const { data: platformMintLimit } = usePlatformMintLimit()
+    // const { data: platformMintLimit } = usePlatformMintLimit()
 
-    const { data: membershipFee } = usePlatformMembershipPriceForSupplyInEth(1)
-    const { data: totalMembershipFee } =
-        usePlatformMembershipPriceForSupplyInEth(prepaidMemberships)
+    // const { data: membershipFee } = usePlatformMembershipPriceForSupplyInEth(1)
+    // const { data: totalMembershipFee } =
+    //     usePlatformMembershipPriceForSupplyInEth(prepaidMemberships)
 
     const enabledPricingModules = useMemo(() => {
         if (pricingModules) {
@@ -144,9 +145,17 @@ export function EditPricing({
         )
     }
 
+    const showDynamicPricing =
+        enabledPricingModules?.includes('dynamic') &&
+        (isEditMode ? pricingPreset === PricingPreset.Dynamic : true)
+
+    const showFixedPricing =
+        enabledPricingModules?.includes('fixed') &&
+        (isEditMode ? pricingPreset === PricingPreset.Fixed : true)
+
     return (
         <Stack gap="sm">
-            {enabledPricingModules?.includes('dynamic') && (
+            {showDynamicPricing && (
                 <RadioCard
                     selected={pricingPreset === PricingPreset.Dynamic}
                     name="clientPricingOption"
@@ -158,7 +167,7 @@ export function EditPricing({
                     {...formProps}
                 />
             )}
-            {enabledPricingModules?.includes('fixed') && (
+            {showFixedPricing && (
                 <RadioCard
                     selected={pricingPreset === PricingPreset.Fixed}
                     name="clientPricingOption"
@@ -187,7 +196,7 @@ export function EditPricing({
                     ) : null}
                 </RadioCard>
             )}
-            {!isEditMode && enabledPricingModules?.includes('dynamic') && (
+            {/* {!isEditMode && enabledPricingModules?.includes('dynamic') && (
                 <RadioCard
                     name="clientPricingOption"
                     value="prepaid"
@@ -260,7 +269,7 @@ export function EditPricing({
                         </Stack>
                     ) : null}
                 </RadioCard>
-            )}
+            )} */}
             {formState.errors['membershipCost'] ? (
                 <FadeInBox key="error">
                     <ErrorMessage errors={formState.errors} fieldName="membershipCost" />
@@ -268,6 +277,10 @@ export function EditPricing({
             ) : formState.errors['prepaidMemberships'] ? (
                 <FadeInBox key="error">
                     <ErrorMessage errors={formState.errors} fieldName="prepaidMemberships" />
+                </FadeInBox>
+            ) : formState.errors['membershipPricingType'] ? (
+                <FadeInBox key="error">
+                    <ErrorMessage errors={formState.errors} fieldName="membershipPricingType" />
                 </FadeInBox>
             ) : null}
         </Stack>

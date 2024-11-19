@@ -500,6 +500,7 @@ function CreateSpaceFormV2WithoutAuth() {
                                                     setPanelType={setPanelType}
                                                     form={_form}
                                                     setTransactionDetails={setTransactionDetails}
+                                                    platformMintLimit={platformMintLimit}
                                                     onCreateSpaceFlowStatus={
                                                         onCreateSpaceFlowStatus
                                                     }
@@ -560,6 +561,7 @@ function CreateSpaceFormV2WithoutAuth() {
                                                             setTransactionDetails={
                                                                 setTransactionDetails
                                                             }
+                                                            platformMintLimit={platformMintLimit}
                                                             onCreateSpaceFlowStatus={
                                                                 onCreateSpaceFlowStatus
                                                             }
@@ -598,6 +600,7 @@ function CreateSpaceFormV2WithoutAuth() {
                                                 setPanelType={setPanelType}
                                                 form={_form}
                                                 setTransactionDetails={setTransactionDetails}
+                                                platformMintLimit={platformMintLimit}
                                                 onCreateSpaceFlowStatus={onCreateSpaceFlowStatus}
                                             >
                                                 {({ onSubmit, disabled }) => (
