@@ -2,8 +2,13 @@ export const TPRLMK = 'TPRLMK'
 
 export function getPrivyLoginMethodFromLocalStorage() {
     try {
-        const b64LM = localStorage.getItem(TPRLMK) || findPrivyLoginMethod()
-        return b64LM ? atob(b64LM) : undefined
+        const storedValue = localStorage.getItem(TPRLMK)
+        if (storedValue) {
+            return atob(storedValue)
+        }
+
+        // Fallback to findPrivyLoginMethod which returns non-base64 string
+        return findPrivyLoginMethod()
     } catch (error) {
         console.error('TPRLMK decoding error:', error)
         return undefined
