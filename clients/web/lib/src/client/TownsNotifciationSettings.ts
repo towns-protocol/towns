@@ -18,6 +18,8 @@ import {
     spaceIdFromChannelId,
     streamIdAsBytes,
     streamIdAsString,
+    isDMChannelStreamId,
+    isGDMChannelStreamId,
 } from '@river-build/sdk'
 import { Message, PlainMessage } from '@bufbuild/protobuf'
 import { useCallback, useEffect, useMemo, useSyncExternalStore } from 'react'
@@ -536,18 +538,39 @@ export function useMuteSettings({
     spaceId: string | undefined
     channelId?: string
 }) {
-    const { getChannelSetting, getSpaceSetting } = useNotificationSettings()
-    return useMemo(
-        () => ({
-            channelIsMuted: channelId
-                ? getChannelSetting(channelId) ===
-                  SpaceChannelSettingValue.SPACE_CHANNEL_SETTING_NO_MESSAGES_AND_MUTE
-                : false,
-            spaceIsMuted: spaceId
-                ? getSpaceSetting(spaceId) ===
-                  SpaceChannelSettingValue.SPACE_CHANNEL_SETTING_NO_MESSAGES_AND_MUTE
-                : false,
-        }),
-        [spaceId, channelId, getChannelSetting, getSpaceSetting],
-    )
+    const { getChannelSetting, getSpaceSetting, getDmSetting, getGdmSetting } =
+        useNotificationSettings()
+    return useMemo(() => {
+        try {
+            if (channelId && isDMChannelStreamId(channelId)) {
+                return {
+                    channelIsMuted:
+                        getDmSetting(channelId) === DmChannelSettingValue.DM_MESSAGES_NO_AND_MUTE,
+                    spaceIsMuted: false,
+                }
+            } else if (channelId && isGDMChannelStreamId(channelId)) {
+                return {
+                    channelIsMuted:
+                        getGdmSetting(channelId) ===
+                        GdmChannelSettingValue.GDM_MESSAGES_NO_AND_MUTE,
+                    spaceIsMuted: false,
+                }
+            }
+            return {
+                channelIsMuted: channelId
+                    ? getChannelSetting(channelId) ===
+                      SpaceChannelSettingValue.SPACE_CHANNEL_SETTING_NO_MESSAGES_AND_MUTE
+                    : false,
+                spaceIsMuted: spaceId
+                    ? getSpaceSetting(spaceId) ===
+                      SpaceChannelSettingValue.SPACE_CHANNEL_SETTING_NO_MESSAGES_AND_MUTE
+                    : false,
+            }
+        } catch (error) {
+            return {
+                channelIsMuted: false,
+                spaceIsMuted: false,
+            }
+        }
+    }, [channelId, getChannelSetting, spaceId, getSpaceSetting, getDmSetting, getGdmSetting])
 }
