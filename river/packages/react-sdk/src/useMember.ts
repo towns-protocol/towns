@@ -9,8 +9,8 @@ import { getRoom } from './utils'
 /**
  * Hook to get data from a specific member of a Space, GDM, Channel, or DM.
  * @param props - The streamId and userId of the member to get data from.
- * @param config - Configuration options for the observable. @see {@link ObservableConfig.FromObservable}
- * @returns The {@link Member} data.
+ * @param config - Configuration options for the observable.
+ * @returns The Member data.
  */
 export const useMember = (
     props: { streamId: string; userId: string },

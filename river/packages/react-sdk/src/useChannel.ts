@@ -10,8 +10,8 @@ import { type ObservableConfig, useObservable } from './useObservable'
  * You can use this hook to get channel metadata and if the user has joined the channel.
  * @param spaceId - The id of the space the channel belongs to.
  * @param channelId - The id of the channel to get data about.
- * @param config - Configuration options for the observable. @see {@link ObservableConfig.FromObservable}
- * @returns The {@link ChannelModel} data.
+ * @param config - Configuration options for the observable.
+ * @returns The ChannelModel data.
  */
 export const useChannel = (
     spaceId: string,

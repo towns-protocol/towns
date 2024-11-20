@@ -81,6 +81,7 @@ import {
 } from '@river-build/web3'
 import { RiverTimelineEvent, type TimelineEvent } from './sync-agent/timeline/models/timeline-types'
 import { SyncState } from './syncedStreamsLoop'
+import { RetryParams } from './rpcInterceptors'
 
 const log = dlog('csb:test:util')
 
@@ -130,9 +131,9 @@ const getNextTestUrl = async (): Promise<{
     }
 }
 
-export const makeTestRpcClient = async () => {
+export const makeTestRpcClient = async (opts?: { retryParams?: RetryParams }) => {
     const { urls: url, refreshNodeUrl } = await getNextTestUrl()
-    return makeStreamRpcClient(url, undefined, refreshNodeUrl)
+    return makeStreamRpcClient(url, opts?.retryParams, refreshNodeUrl, undefined)
 }
 
 export const makeEvent_test = async (

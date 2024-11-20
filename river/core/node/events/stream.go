@@ -89,20 +89,26 @@ type streamImpl struct {
 	// of view is created, and copy is modified and stored.
 	mu sync.RWMutex
 
+	// lastAccessedTime keeps track of when the stream was last used by a client
+	lastAccessedTime time.Time
+
+	// local is not nil if stream is local to current node. local and all fields of local are protected by mu.
+	local *localStreamState
+}
+
+type localStreamState struct {
 	// useGetterAndSetterToGetView contains pointer to current immutable view, if loaded, nil otherwise.
 	// Use view() and setView() to access it.
 	useGetterAndSetterToGetView *streamViewImpl
 
-	// lastAccessedTime keeps track of when the stream was last used by a client
-	lastAccessedTime time.Time
 	// lastScrubbedTime keeps track of when the stream was last scrubbed. Streams that
 	// are never scrubbed will not have this value modified.
 	lastScrubbedTime time.Time
 
 	receivers mapset.Set[SyncResultReceiver]
 
-	// pendingCandidates contains list of miniblocks that should be applied immdediately when candidate is received.
-	// When StreamLastMiniblockUpdated is recevied and promoteCandidate is called,
+	// pendingCandidates contains list of miniblocks that should be applied immediately when candidate is received.
+	// When StreamLastMiniblockUpdated is received and promoteCandidate is called,
 	// if there is no candidate in local storage, request is stored in pendingCandidates.
 	// First element is the oldest candidate with block number view.LastBlock().Num + 1,
 	// second element is the next candidate with next block number and so on.
@@ -113,21 +119,27 @@ type streamImpl struct {
 
 var _ SyncStream = (*streamImpl)(nil)
 
+func (s *streamImpl) isLocal() bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.local != nil
+}
+
 func (s *streamImpl) view() *streamViewImpl {
-	return s.useGetterAndSetterToGetView
+	return s.local.useGetterAndSetterToGetView
 }
 
 func (s *streamImpl) setView(view *streamViewImpl) {
-	s.useGetterAndSetterToGetView = view
-	if view != nil && len(s.pendingCandidates) > 0 {
+	s.local.useGetterAndSetterToGetView = view
+	if view != nil && len(s.local.pendingCandidates) > 0 {
 		lastMbNum := view.LastBlock().Ref.Num
-		for i, candidate := range s.pendingCandidates {
+		for i, candidate := range s.local.pendingCandidates {
 			if candidate.Num > lastMbNum {
-				s.pendingCandidates = s.pendingCandidates[i:]
+				s.local.pendingCandidates = s.local.pendingCandidates[i:]
 				return
 			}
 		}
-		s.pendingCandidates = nil
+		s.local.pendingCandidates = nil
 	}
 }
 
@@ -135,14 +147,14 @@ func (s *streamImpl) LastScrubbedTime() time.Time {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	return s.lastScrubbedTime
+	return s.local.lastScrubbedTime
 }
 
 func (s *streamImpl) MarkScrubbed(ctx context.Context) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	s.lastScrubbedTime = time.Now()
+	s.local.lastScrubbedTime = time.Now()
 }
 
 // Should be called with lock held
@@ -385,17 +397,17 @@ func (s *streamImpl) promoteCandidate(ctx context.Context, mb *MiniblockRef) err
 }
 
 func (s *streamImpl) schedulePromotionNoLock(ctx context.Context, mb *MiniblockRef) error {
-	if len(s.pendingCandidates) == 0 {
+	if len(s.local.pendingCandidates) == 0 {
 		if mb.Num != s.view().LastBlock().Ref.Num+1 {
 			return RiverError(Err_INTERNAL, "schedulePromotionNoLock: next promotion is not for the next block")
 		}
-		s.pendingCandidates = append(s.pendingCandidates, mb)
+		s.local.pendingCandidates = append(s.local.pendingCandidates, mb)
 	} else {
-		lastPending := s.pendingCandidates[len(s.pendingCandidates)-1]
+		lastPending := s.local.pendingCandidates[len(s.local.pendingCandidates)-1]
 		if mb.Num != lastPending.Num+1 {
 			return RiverError(Err_INTERNAL, "schedulePromotionNoLock: pending candidates are not consecutive")
 		}
-		s.pendingCandidates = append(s.pendingCandidates, mb)
+		s.local.pendingCandidates = append(s.local.pendingCandidates, mb)
 	}
 	return nil
 }
@@ -524,7 +536,7 @@ func (s *streamImpl) tryGetView() StreamView {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	// Return nil interface, if implementation is nil. This is go for you.
-	if s.view() != nil {
+	if s.local != nil && s.view() != nil {
 		return s.view()
 	} else {
 		return nil
@@ -536,6 +548,11 @@ func (s *streamImpl) tryGetView() StreamView {
 func (s *streamImpl) tryCleanup(expiration time.Duration) bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	if s.local == nil {
+		// TODO: add purge from cache for non-local streams.
+		return false
+	}
 
 	// return immediately if the view is already purged or if the mini block creation routine is running for this stream
 	if s.view() == nil {
@@ -550,7 +567,7 @@ func (s *streamImpl) tryCleanup(expiration time.Duration) bool {
 		return false
 	}
 
-	if len(s.pendingCandidates) != 0 {
+	if len(s.local.pendingCandidates) != 0 {
 		return false
 	}
 
@@ -559,7 +576,7 @@ func (s *streamImpl) tryCleanup(expiration time.Duration) bool {
 }
 
 // Returns
-// miniblocks: with indexes from fromIndex inclusive, to toIndex exlusive
+// miniblocks: with indexes from fromIndex inclusive, to toIndex exclusive
 // terminus: true if fromIndex is 0, or if there are no more blocks because they've been garbage collected
 func (s *streamImpl) GetMiniblocks(
 	ctx context.Context,
@@ -600,14 +617,14 @@ func (s *streamImpl) AddEvent(ctx context.Context, event *ParsedEvent) error {
 
 // caller must have a RW lock on s.mu
 func (s *streamImpl) notifySubscribers(envelopes []*Envelope, newSyncCookie *SyncCookie, prevSyncCookie *SyncCookie) {
-	if s.receivers != nil && s.receivers.Cardinality() > 0 {
+	if s.local.receivers != nil && s.local.receivers.Cardinality() > 0 {
 		s.lastAccessedTime = time.Now()
 
 		resp := &StreamAndCookie{
 			Events:         envelopes,
 			NextSyncCookie: newSyncCookie,
 		}
-		for receiver := range s.receivers.Iter() {
+		for receiver := range s.local.receivers.Iter() {
 			receiver.OnUpdate(resp)
 		}
 	}
@@ -688,10 +705,10 @@ func (s *streamImpl) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncR
 			return RiverError(Err_BAD_SYNC_COOKIE, "Stream.Sub: bad slot")
 		}
 
-		if s.receivers == nil {
-			s.receivers = mapset.NewSet[SyncResultReceiver]()
+		if s.local.receivers == nil {
+			s.local.receivers = mapset.NewSet[SyncResultReceiver]()
 		}
-		s.receivers.Add(receiver)
+		s.local.receivers.Add(receiver)
 
 		envelopes := make([]*Envelope, 0, s.view().minipool.events.Len()-int(slot))
 		if slot < int64(s.view().minipool.events.Len()) {
@@ -708,10 +725,10 @@ func (s *streamImpl) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncR
 		)
 		return nil
 	} else {
-		if s.receivers == nil {
-			s.receivers = mapset.NewSet[SyncResultReceiver]()
+		if s.local.receivers == nil {
+			s.local.receivers = mapset.NewSet[SyncResultReceiver]()
 		}
-		s.receivers.Add(receiver)
+		s.local.receivers.Add(receiver)
 
 		miniblockIndex, err := s.view().indexOfMiniblockWithNum(cookie.MinipoolGen)
 		if err != nil {
@@ -756,8 +773,8 @@ func (s *streamImpl) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncR
 func (s *streamImpl) Unsub(receiver SyncResultReceiver) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if s.receivers != nil {
-		s.receivers.Remove(receiver)
+	if s.local.receivers != nil {
+		s.local.receivers.Remove(receiver)
 	}
 }
 
@@ -767,14 +784,19 @@ func (s *streamImpl) Unsub(receiver SyncResultReceiver) {
 func (s *streamImpl) ForceFlush(ctx context.Context) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	if s.local == nil {
+		return
+	}
+
 	s.setView(nil)
-	if s.receivers != nil && s.receivers.Cardinality() > 0 {
+	if s.local.receivers != nil && s.local.receivers.Cardinality() > 0 {
 		err := RiverError(Err_INTERNAL, "Stream unloaded")
-		for r := range s.receivers.Iter() {
+		for r := range s.local.receivers.Iter() {
 			r.OnSyncError(err)
 		}
 	}
-	s.receivers = nil
+	s.local.receivers = nil
 }
 
 func (s *streamImpl) canCreateMiniblock() bool {
@@ -782,7 +804,8 @@ func (s *streamImpl) canCreateMiniblock() bool {
 	defer s.mu.RUnlock()
 
 	// Loaded, has events in minipool, and periodic miniblock creation is not disabled in test settings.
-	return s.view() != nil &&
+	return s.local != nil &&
+		s.view() != nil &&
 		s.view().minipool.events.Len() > 0 &&
 		!s.view().snapshot.GetInceptionPayload().GetSettings().GetDisableMiniblockCreation()
 }
@@ -799,7 +822,7 @@ func (s *streamImpl) getStatus() *streamImplStatus {
 	defer s.mu.RUnlock()
 
 	ret := &streamImplStatus{
-		numSubscribers: s.receivers.Cardinality(),
+		numSubscribers: s.local.receivers.Cardinality(),
 		lastAccess:     s.lastAccessedTime,
 	}
 
@@ -869,16 +892,16 @@ func (s *streamImpl) tryApplyCandidate(ctx context.Context, mb *MiniblockInfo) (
 		)
 	}
 
-	if len(s.pendingCandidates) > 0 {
-		pending := s.pendingCandidates[0]
+	if len(s.local.pendingCandidates) > 0 {
+		pending := s.local.pendingCandidates[0]
 		if mb.Ref.Num == pending.Num && mb.Ref.Hash == pending.Hash {
 			err = s.importMiniblocksNoLock(ctx, []*MiniblockInfo{mb})
 			if err != nil {
 				return false, err
 			}
 
-			for len(s.pendingCandidates) > 0 {
-				pending = s.pendingCandidates[0]
+			for len(s.local.pendingCandidates) > 0 {
+				pending = s.local.pendingCandidates[0]
 				ok := s.tryReadAndApplyCandidateNoLock(ctx, pending)
 				if !ok {
 					break

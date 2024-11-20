@@ -7,13 +7,13 @@ import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC2
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 // libraries
-import {ERC20MetadataBase} from "contracts/src/diamond/facets/token/ERC20/metadata/ERC20MetadataBase.sol";
+import {ERC20Storage} from "./ERC20Storage.sol";
+
+// contracts
 import {ERC20PermitBase} from "contracts/src/diamond/facets/token/ERC20/permit/ERC20PermitBase.sol";
 import {Facet} from "contracts/src/diamond/facets/Facet.sol";
 
-// contracts
-
-abstract contract ERC20 is ERC20MetadataBase, ERC20PermitBase, Facet {
+abstract contract ERC20 is IERC20, IERC20Metadata, ERC20PermitBase, Facet {
   function __ERC20_init(
     string memory name_,
     string memory symbol_,
@@ -30,33 +30,27 @@ abstract contract ERC20 is ERC20MetadataBase, ERC20PermitBase, Facet {
     _addInterface(type(IERC20).interfaceId);
     _addInterface(type(IERC20Permit).interfaceId);
     _addInterface(type(IERC20Metadata).interfaceId);
-    __ERC20Metadata_init(name_, symbol_, decimals_);
+
+    ERC20Storage.Layout storage self = ERC20Storage.layout();
+    self.name = name_;
+    self.symbol = symbol_;
+    self.decimals = decimals_;
+
     __EIP712_init_unchained(name_, "1");
   }
 
-  /// @inheritdoc IERC20Metadata
-  function name() public view returns (string memory) {
-    return _name();
-  }
-
-  /// @inheritdoc IERC20Metadata
-  function symbol() public view returns (string memory) {
-    return _symbol();
-  }
-
-  /// @inheritdoc IERC20Metadata
-  function decimals() public view returns (uint8) {
-    return _decimals();
-  }
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                           ERC20                            */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
   /// @inheritdoc IERC20
   function totalSupply() public view returns (uint256) {
-    return _totalSupply();
+    return ERC20Storage.layout().inner.totalSupply;
   }
 
   /// @inheritdoc IERC20
   function balanceOf(address account) public view returns (uint256) {
-    return _balanceOf(account);
+    return ERC20Storage.layout().inner.balanceOf(account);
   }
 
   /// @inheritdoc IERC20
@@ -64,7 +58,7 @@ abstract contract ERC20 is ERC20MetadataBase, ERC20PermitBase, Facet {
     address owner,
     address spender
   ) public view virtual returns (uint256 result) {
-    return _allowance(owner, spender);
+    return ERC20Storage.layout().inner.allowance(owner, spender);
   }
 
   /// @inheritdoc IERC20
@@ -72,12 +66,14 @@ abstract contract ERC20 is ERC20MetadataBase, ERC20PermitBase, Facet {
     address spender,
     uint256 amount
   ) public virtual returns (bool) {
-    return _approve(spender, amount);
+    ERC20Storage.layout().inner.approve(spender, amount);
+    return true;
   }
 
   /// @inheritdoc IERC20
   function transfer(address to, uint256 amount) public virtual returns (bool) {
-    return _transfer(to, amount);
+    ERC20Storage.layout().inner.transfer(to, amount);
+    return true;
   }
 
   /// @inheritdoc IERC20
@@ -86,12 +82,32 @@ abstract contract ERC20 is ERC20MetadataBase, ERC20PermitBase, Facet {
     address to,
     uint256 amount
   ) public virtual returns (bool) {
-    return _transferFrom(from, to, amount);
+    ERC20Storage.layout().inner.transferFrom(from, to, amount);
+    return true;
   }
 
-  // =============================================================
-  //                           PERMIT
-  // =============================================================
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                       ERC20 METADATA                       */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+  /// @inheritdoc IERC20Metadata
+  function name() public view returns (string memory) {
+    return ERC20Storage.layout().name;
+  }
+
+  /// @inheritdoc IERC20Metadata
+  function symbol() public view returns (string memory) {
+    return ERC20Storage.layout().symbol;
+  }
+
+  /// @inheritdoc IERC20Metadata
+  function decimals() public view returns (uint8) {
+    return ERC20Storage.layout().decimals;
+  }
+
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                           PERMIT                           */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
   /// @inheritdoc IERC20Permit
   function nonces(address owner) external view returns (uint256 result) {

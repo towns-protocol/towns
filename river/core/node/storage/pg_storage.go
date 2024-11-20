@@ -37,6 +37,7 @@ type PostgresEventStore struct {
 
 	preMigrationTx func(context.Context, pgx.Tx) error
 	migrationDir   fs.FS
+	migrationPath  string
 
 	txCounter  *infra.StatusCounterVec
 	txDuration *prometheus.HistogramVec
@@ -235,19 +236,6 @@ func CreateAndValidatePgxPool(
 		return nil, AsRiverError(err, Err_DB_OPERATION_FAILURE).Func("CreateAndValidatePgxPool")
 	}
 	return r, nil
-}
-
-func NewPostgresEventStore(
-	ctx context.Context,
-	poolInfo *PgxPoolInfo,
-	instanceId string,
-	metrics infra.MetricsFactory,
-) (*PostgresEventStore, error) {
-	store := &PostgresEventStore{}
-	if err := store.init(ctx, poolInfo, metrics, nil, migrationsDir); err != nil {
-		return nil, AsRiverError(err).Func("NewPostgresEventStore")
-	}
-	return store, nil
 }
 
 type PostgresStatusResult struct {
@@ -508,6 +496,7 @@ func (s *PostgresEventStore) init(
 	metrics infra.MetricsFactory,
 	preMigrationTxn func(context.Context, pgx.Tx) error,
 	migrations fs.FS,
+	migrationsPath string,
 ) error {
 	log := dlog.FromCtx(ctx)
 
@@ -521,6 +510,7 @@ func (s *PostgresEventStore) init(
 
 	s.preMigrationTx = preMigrationTxn
 	s.migrationDir = migrations
+	s.migrationPath = migrationsPath
 
 	s.txCounter = metrics.NewStatusCounterVecEx("dbtx_status", "PG transaction status", "name")
 	s.txDuration = metrics.NewHistogramVecEx(
@@ -597,8 +587,7 @@ func (s *PostgresEventStore) createSchemaTx(ctx context.Context, tx pgx.Tx) erro
 
 func (s *PostgresEventStore) runMigrations(ctx context.Context) error {
 	// Run migrations
-	migrationsPath := "migrations"
-	iofsMigrationsDir, err := iofs.New(s.migrationDir, migrationsPath)
+	iofsMigrationsDir, err := iofs.New(s.migrationDir, s.migrationPath)
 	if err != nil {
 		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Error loading migrations")
 	}

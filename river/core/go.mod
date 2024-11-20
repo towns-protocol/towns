@@ -5,12 +5,14 @@ go 1.23.3
 require (
 	connectrpc.com/connect v1.17.0
 	connectrpc.com/otelconnect v0.7.1
+	github.com/SherClockHolmes/webpush-go v1.3.0
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/deckarep/golang-set/v2 v2.6.0
 	github.com/ethereum/go-ethereum v1.14.11
 	github.com/exaring/otelpgx v0.6.2
 	github.com/gammazero/workerpool v1.1.3
 	github.com/golang-migrate/migrate/v4 v4.18.1
+	github.com/google/go-cmp v0.6.0
 	github.com/hashicorp/golang-lru/arc/v2 v2.0.7
 	github.com/jackc/pgerrcode v0.0.0-20240316143900-6e2875d9b438
 	github.com/jackc/pgx/v5 v5.7.1
@@ -21,6 +23,7 @@ require (
 	github.com/puzpuzpuz/xsync/v3 v3.4.0
 	github.com/rogpeppe/go-internal v1.13.1
 	github.com/rs/cors v1.11.1
+	github.com/sideshow/apns2 v0.25.0
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.9.0
@@ -48,6 +51,7 @@ require (
 	github.com/getsentry/sentry-go v0.29.1 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
+	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.23.0 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
@@ -71,7 +75,7 @@ require (
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/VictoriaMetrics/fastcache v1.12.2 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/bits-and-blooms/bitset v1.15.0 // indirect
+	github.com/bits-and-blooms/bitset v1.14.2 // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.3.4 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0
 	github.com/cockroachdb/errors v1.11.3 // indirect
@@ -93,7 +97,7 @@ require (
 	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/gofrs/flock v0.12.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
-	github.com/golang-jwt/jwt/v4 v4.5.1 // indirect
+	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/golang/snappy v0.0.5-0.20220116011046-fa5810519dcb // indirect
 	github.com/google/pprof v0.0.0-20241101162523-b92577c0c142 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
@@ -152,9 +156,9 @@ require (
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/mod v0.22.0 // indirect
-	golang.org/x/sync v0.9.0 // indirect
+	golang.org/x/sync v0.9.0
 	golang.org/x/sys v0.27.0 // indirect
-	golang.org/x/time v0.8.0 // indirect
+	golang.org/x/time v0.5.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	rsc.io/tmplfunc v0.0.3 // indirect

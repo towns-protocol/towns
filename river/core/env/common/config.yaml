@@ -12,3 +12,15 @@ log:
 
 debugEndpoints:
     pprof: true
+
+# Notifications setting when node is run in notification mode
+notifications:
+    simulate: true
+    subscriptionExpirationDuration: 720h
+    authentication:
+        challengeTimeout: 30s
+        sessionToken:
+            lifetime: 30m
+            key:
+                algorithm: HS256
+                key: c69b1973792ad59bebb96a2ab1639aafc0c1e229a1c2138d91834f0f6953a544

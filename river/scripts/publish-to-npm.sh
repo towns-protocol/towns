@@ -45,6 +45,17 @@ if [ $exit_status_yarn -ne 0 ]; then
     exit 1
 fi
 
+yarn workspace @river-build/react-sdk gen
+exit_status_docgen=$?
+
+if [ $exit_status_docgen -ne 0 ]; then
+    echo "yarn workspace @river-build/react-sdk gen failed."
+    exit 1
+fi
+
+git add packages/docs/
+git commit -m "docs for version ${VERSION_PREFIX}"
+
 git push -u origin "${BRANCH_NAME}"
 
 # Get the new patch version from Lerna and tag it

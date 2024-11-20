@@ -1,5 +1,5 @@
 import { SyncCookie } from '@river-build/proto'
-import { DLogger, dlog, dlogError, shortenHexString } from '@river-build/dlog'
+import { DLogger, check, dlog, dlogError, shortenHexString } from '@river-build/dlog'
 import { StreamRpcClient } from './makeStreamRpcClient'
 import { SyncedStreamEvents } from './streamEvents'
 import TypedEmitter from 'typed-emitter'
@@ -62,7 +62,9 @@ export class SyncedStreams {
 
     public set(streamId: string | Uint8Array, stream: SyncedStream): void {
         this.log('stream set', streamId)
-        this.streams.set(streamIdAsString(streamId), stream)
+        const id = streamIdAsString(streamId)
+        check(id.length > 0, 'streamId cannot be empty')
+        this.streams.set(id, stream)
     }
 
     public delete(inStreamId: string | Uint8Array): void {

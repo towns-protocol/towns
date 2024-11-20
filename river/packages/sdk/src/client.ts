@@ -2101,12 +2101,14 @@ export class Client
         tags?: PlainMessage<Tags>,
         retryCount?: number,
     ): Promise<{ prevMiniblockHash: Uint8Array; eventId: string; error?: AddEventResponse_Error }> {
+        const streamIdStr = streamIdAsString(streamId)
+        check(isDefined(streamIdStr) && streamIdStr !== '', 'streamId must be defined')
         const event = await makeEvent(this.signerContext, payload, prevMiniblockHash)
         const eventId = bin_toHexString(event.hash)
         if (localId) {
             // when we have a localId, we need to update the local event with the eventId
             const stream = this.streams.get(streamId)
-            assert(stream !== undefined, 'unknown stream ' + streamIdAsString(streamId))
+            assert(stream !== undefined, 'unknown stream ' + streamIdStr)
             stream.updateLocalEvent(localId, eventId, 'sending')
         }
 

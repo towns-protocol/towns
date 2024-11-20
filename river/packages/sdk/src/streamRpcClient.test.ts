@@ -312,6 +312,16 @@ describe('streamRpcClient', () => {
         expect(result.graffiti).toEqual('River Node welcomes you!')
     })
 
+    test('ping', async () => {
+        // ping is a debug endpoint, so it's not available in production
+        const client = await makeTestRpcClient()
+        log('ping', 'url', client.url)
+        expect(client).toBeDefined()
+        const result = await client.info({ debug: ['ping'] })
+        expect(result).toBeDefined()
+        expect(result.graffiti).toEqual('pong')
+    })
+
     test('error', async () => {
         const client = await makeTestRpcClient()
         expect(client).toBeDefined()

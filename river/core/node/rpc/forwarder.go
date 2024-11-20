@@ -223,7 +223,7 @@ func (s *Service) getStreamImpl(
 		return nil, err
 	}
 
-	nodes, err := s.streamRegistry.GetStreamInfo(ctx, streamId)
+	nodes, err := s.cache.GetStreamInfo(ctx, streamId)
 	if err != nil && req.Msg.Optional && AsRiverError(err).Code == Err_NOT_FOUND {
 		return connect.NewResponse(&GetStreamResponse{}), nil
 	}
@@ -261,7 +261,7 @@ func (s *Service) getStreamExImpl(
 		return err
 	}
 
-	nodes, err := s.streamRegistry.GetStreamInfo(ctx, streamId)
+	nodes, err := s.cache.GetStreamInfo(ctx, streamId)
 	if err != nil {
 		return err
 	}
@@ -345,7 +345,7 @@ func (s *Service) getMiniblocksImpl(
 		return nil, err
 	}
 
-	nodes, err := s.streamRegistry.GetStreamInfo(ctx, streamId)
+	nodes, err := s.cache.GetStreamInfo(ctx, streamId)
 	if err != nil {
 		return nil, err
 	}
@@ -396,7 +396,7 @@ func (s *Service) getLastMiniblockHashImpl(
 		return nil, err
 	}
 
-	nodes, err := s.streamRegistry.GetStreamInfo(ctx, streamId)
+	nodes, err := s.cache.GetStreamInfo(ctx, streamId)
 	if err != nil {
 		return nil, err
 	}
@@ -447,7 +447,7 @@ func (s *Service) addEventImpl(
 		return nil, err
 	}
 
-	nodes, err := s.streamRegistry.GetStreamInfo(ctx, streamId)
+	nodes, err := s.cache.GetStreamInfo(ctx, streamId)
 	if err != nil {
 		return nil, err
 	}

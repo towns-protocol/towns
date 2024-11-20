@@ -3,8 +3,8 @@ import { ConnectTransportOptions, createConnectTransport } from '@connectrpc/con
 import { AuthenticationService } from '@river-build/proto'
 import { dlog } from '@river-build/dlog'
 import { getEnvVar, randomUrlSelector } from './utils'
-import { loggingInterceptor, retryInterceptor } from './rpcInterceptors'
-import { RpcOptions, DEFAULT_RETRY_PARAMS, DEFAULT_TIMEOUT_MS } from './rpcOptions'
+import { DEFAULT_RETRY_PARAMS, loggingInterceptor, retryInterceptor } from './rpcInterceptors'
+import { RpcOptions } from './rpcOptions'
 
 const logInfo = dlog('csb:auto-rpc:info')
 
@@ -18,7 +18,6 @@ export function makeAuthenticationRpcClient(
 ): AuthenticationRpcClient {
     const transportId = nextRpcClientNum++
     const retryParams = opts?.retryParams ?? DEFAULT_RETRY_PARAMS
-    const defaultTimeoutMs = opts?.defaultTimeoutMs ?? DEFAULT_TIMEOUT_MS
     const url = randomUrlSelector(dest)
     logInfo(
         'makeAuthenticationRpcClient: Connecting to url=',
@@ -31,11 +30,11 @@ export function makeAuthenticationRpcClient(
     const options: ConnectTransportOptions = {
         baseUrl: url,
         interceptors: [
-            retryInterceptor(retryParams),
-            loggingInterceptor(transportId, 'AuthenticationService'),
             ...(opts?.interceptors ?? []),
+            loggingInterceptor(transportId, 'AuthenticationService'),
+            retryInterceptor(retryParams),
         ],
-        defaultTimeoutMs: defaultTimeoutMs,
+        defaultTimeoutMs: undefined, // default timeout is undefined, we add a timeout in the retryInterceptor
     }
     if (getEnvVar('RIVER_DEBUG_TRANSPORT') !== 'true') {
         options.useBinaryFormat = true

@@ -46,6 +46,7 @@ chains: '31337:http://localhost:8545,31338:http://localhost:8546,84532:https://s
 xChainBlockchains: '31337,31338,84532,11155111'
 
 enableDebugEndpoints: true
+enableTestAPIs: true
 
 standByOnStart: false
 

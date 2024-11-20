@@ -66,6 +66,14 @@ func StreamIdFromHash(b common.Hash) (StreamId, error) {
 	return sid, nil
 }
 
+// SpaceID returns the space id that this stream is part of.
+// (only works for stream id's of type STREAM_CHANNEL_BIN)
+func (id StreamId) SpaceID() StreamId {
+	spaceID := StreamId{STREAM_SPACE_BIN}
+	copy(spaceID[1:], id[1:21])
+	return spaceID
+}
+
 func checkExpectedLength(b []byte) error {
 	if len(b) != STREAM_ID_BYTES_LENGTH {
 		return RiverError(Err_BAD_STREAM_ID, "invalid length", "streamId", b)

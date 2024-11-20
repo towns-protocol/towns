@@ -3,8 +3,13 @@ import { ConnectTransportOptions, createConnectTransport } from '@connectrpc/con
 import { NotificationService } from '@river-build/proto'
 import { dlog } from '@river-build/dlog'
 import { getEnvVar, randomUrlSelector } from './utils'
-import { DEFAULT_RETRY_PARAMS, DEFAULT_TIMEOUT_MS, RpcOptions } from './rpcOptions'
-import { loggingInterceptor, retryInterceptor, setHeaderInterceptor } from './rpcInterceptors'
+import { RpcOptions } from './rpcOptions'
+import {
+    DEFAULT_RETRY_PARAMS,
+    loggingInterceptor,
+    retryInterceptor,
+    setHeaderInterceptor,
+} from './rpcInterceptors'
 
 const logInfo = dlog('csb:rpc:info')
 
@@ -19,7 +24,6 @@ export function makeNotificationRpcClient(
 ): NotificationRpcClient {
     const transportId = nextRpcClientNum++
     const retryParams = opts?.retryParams ?? DEFAULT_RETRY_PARAMS
-    const defaultTimeoutMs = opts?.defaultTimeoutMs ?? DEFAULT_TIMEOUT_MS
     const url = randomUrlSelector(dest)
     logInfo(
         'makeNotificationRpcClient: Connecting to url=',
@@ -32,12 +36,12 @@ export function makeNotificationRpcClient(
     const options: ConnectTransportOptions = {
         baseUrl: url,
         interceptors: [
-            retryInterceptor(retryParams),
-            loggingInterceptor(transportId, 'NotificationService'),
-            setHeaderInterceptor({ Authorization: sessionToken }),
             ...(opts?.interceptors ?? []),
+            setHeaderInterceptor({ Authorization: sessionToken }),
+            loggingInterceptor(transportId, 'NotificationService'),
+            retryInterceptor(retryParams),
         ],
-        defaultTimeoutMs: defaultTimeoutMs,
+        defaultTimeoutMs: undefined, // default timeout is undefined, we add a timeout in the retryInterceptor
     }
     if (getEnvVar('RIVER_DEBUG_TRANSPORT') !== 'true') {
         options.useBinaryFormat = true

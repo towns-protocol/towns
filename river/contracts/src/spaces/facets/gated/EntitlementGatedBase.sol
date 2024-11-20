@@ -37,6 +37,7 @@ abstract contract EntitlementGatedBase is IEntitlementGatedBase {
   }
 
   function _requestEntitlementCheck(
+    address callerAddress,
     bytes32 transactionId,
     IRuleEntitlement entitlement,
     uint256 roleId
@@ -65,7 +66,7 @@ abstract contract EntitlementGatedBase is IEntitlementGatedBase {
     if (!transaction.hasBenSet) {
       transaction.hasBenSet = true;
       transaction.entitlement = entitlement;
-      transaction.clientAddress = msg.sender;
+      transaction.clientAddress = callerAddress;
     }
 
     transaction.roleIds.push(roleId);
@@ -79,7 +80,7 @@ abstract contract EntitlementGatedBase is IEntitlementGatedBase {
     }
 
     ds.entitlementChecker.requestEntitlementCheck(
-      msg.sender,
+      callerAddress,
       transactionId,
       roleId,
       selectedNodes

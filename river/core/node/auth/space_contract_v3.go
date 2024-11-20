@@ -307,7 +307,7 @@ func (sc *SpaceContractV3) GetSpaceEntitlementsForPermission(
 		&bind.CallOpts{Context: ctx},
 		permission.String(),
 	)
-	log.Info(
+	log.Debug(
 		"Got entitlement data",
 		"err",
 		err,

@@ -4,7 +4,7 @@
 
 import { Err, InfoRequest, InfoResponse } from '@river-build/proto'
 import { makeTestRpcClient } from './util.test'
-import { errorContains } from './rpcInterceptors'
+import { DEFAULT_RETRY_PARAMS, errorContains } from './rpcInterceptors'
 import { makeRiverRpcClient } from './makeRiverRpcClient'
 import { LocalhostWeb3Provider } from '@river-build/web3'
 import { makeRiverChainConfig } from './riverConfig'
@@ -31,6 +31,27 @@ describe('protocol 1', () => {
         } catch (err) {
             expect(errorContains(err, Err.DEBUG_ERROR)).toBe(true)
         }
+    })
+
+    test('timeout using makeStreamRpcClient', async () => {
+        // model some interesting behavior
+        // see two retires time out locally in the retryInterceptor
+        // and a third retry that times out when the global timeout passed to the .info request is reached
+        const client = await makeTestRpcClient({
+            retryParams: {
+                ...DEFAULT_RETRY_PARAMS,
+                initialRetryDelay: 10,
+                maxRetryDelay: 30,
+                defaultTimeoutMs: 1000,
+            },
+        })
+        expect(client).toBeDefined()
+
+        await client.info(new InfoRequest({ debug: ['ping'] }))
+
+        await expect(
+            client.info(new InfoRequest({ debug: ['sleep'] }), { timeoutMs: 2500 }),
+        ).rejects.toThrow()
     })
 
     describe('protocol 2', () => {

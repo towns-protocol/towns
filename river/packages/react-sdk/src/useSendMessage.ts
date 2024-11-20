@@ -9,7 +9,7 @@ import { getRoom } from './utils'
 /**
  * Hook to send a message to a stream. Can be used to send a message to a channel or a dm/group dm.
  * @param streamId - The id of the stream to send the message to.
- * @param config - Configuration options for the action. @see {@link ActionConfig}
+ * @param config - Configuration options for the action.
  * @returns The sendMessage action and the status of the action.
  */
 export const useSendMessage = (

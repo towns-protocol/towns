@@ -1,9 +1,11 @@
 import {
+	DEFAULT_RETRY_PARAMS,
 	ParsedStreamResponse,
 	StreamRpcClient,
 	StreamStateView,
 	UnpackEnvelopeOpts,
 	decryptAESGCM,
+	loggingInterceptor,
 	retryInterceptor,
 	streamIdAsBytes,
 	streamIdAsString,
@@ -30,22 +32,22 @@ const streamClientRequests = new Map<string, Promise<StreamRpcClient>>()
 const streamRequests = new Map<string, Promise<StreamStateView>>()
 const mediaRequests = new Map<string, Promise<MediaContent>>()
 
+let nextRpcClientNum = 0
 export function makeStreamRpcClient(url: string): StreamRpcClient {
+	const transportId = nextRpcClientNum++
+	const retryParams = DEFAULT_RETRY_PARAMS
 	const options: ConnectTransportOptions = {
 		httpVersion: '2',
 		baseUrl: url,
-		interceptors: [
-			retryInterceptor({ maxAttempts: 3, initialRetryDelay: 2000, maxRetryDelay: 6000 }),
-		],
-		defaultTimeoutMs: 30000,
+		interceptors: [loggingInterceptor(transportId), retryInterceptor(retryParams)],
+		defaultTimeoutMs: undefined, // default timeout is undefined, we add a timeout in the retryInterceptor
 	}
 
 	const transport = createConnectTransport(options)
 	const client = createPromiseClient(StreamService, transport) as StreamRpcClient
 	client.url = url
 	client.opts = {
-		retryParams: { maxAttempts: 3, initialRetryDelay: 2000, maxRetryDelay: 6000 },
-		defaultTimeoutMs: options.defaultTimeoutMs,
+		retryParams: retryParams,
 	}
 	return client
 }

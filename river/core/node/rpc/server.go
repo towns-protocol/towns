@@ -16,10 +16,6 @@ import (
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/rs/cors"
-	"golang.org/x/net/http2"
-	"golang.org/x/net/http2/h2c"
-
 	"github.com/river-build/river/core/config"
 	"github.com/river-build/river/core/node/auth"
 	. "github.com/river-build/river/core/node/base"
@@ -28,6 +24,7 @@ import (
 	"github.com/river-build/river/core/node/events"
 	"github.com/river-build/river/core/node/infra"
 	"github.com/river-build/river/core/node/nodes"
+	"github.com/river-build/river/core/node/notifications"
 	. "github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/protocol/protocolconnect"
 	"github.com/river-build/river/core/node/registries"
@@ -35,12 +32,16 @@ import (
 	"github.com/river-build/river/core/node/scrub"
 	"github.com/river-build/river/core/node/storage"
 	"github.com/river-build/river/core/xchain/entitlement"
+	"github.com/rs/cors"
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/h2c"
 )
 
 const (
-	ServerModeFull    = "full"
-	ServerModeInfo    = "info"
-	ServerModeArchive = "archive"
+	ServerModeFull         = "full"
+	ServerModeInfo         = "info"
+	ServerModeArchive      = "archive"
+	ServerModeNotification = "notification"
 )
 
 func (s *Service) httpServerClose() {
@@ -202,8 +203,8 @@ func (s *Service) initInstance(mode string) {
 	if !s.config.Log.Simplify {
 		s.defaultLogger = dlog.FromCtx(s.serverCtx).With(
 			"instanceId", s.instanceId,
-			"nodeType", "stream",
 			"mode", mode,
+			"nodeType", "stream",
 		)
 	} else {
 		s.defaultLogger = dlog.FromCtx(s.serverCtx).With(
@@ -211,16 +212,33 @@ func (s *Service) initInstance(mode string) {
 		)
 	}
 	s.serverCtx = dlog.CtxWithLog(s.serverCtx, s.defaultLogger)
+
+	var (
+		vapidPrivateKey        = s.config.Notifications.Web.Vapid.PrivateKey
+		apnPrivateAuthKey      = s.config.Notifications.APN.AuthKey
+		sessionTokenPrivateKey = s.config.Notifications.Authentication.SessionToken.Key.Key
+	)
+	s.config.Notifications.Web.Vapid.PrivateKey = "<hidden>"
+	s.config.Notifications.APN.AuthKey = "<hidden>"
+	s.config.Notifications.Authentication.SessionToken.Key.Key = "<hidden>"
+
 	s.defaultLogger.Info(
 		"Starting server",
 		"config", s.config,
 		"mode", mode,
 	)
 
+	s.config.Notifications.Web.Vapid.PrivateKey = vapidPrivateKey
+	s.config.Notifications.APN.AuthKey = apnPrivateAuthKey
+	s.config.Notifications.Authentication.SessionToken.Key.Key = sessionTokenPrivateKey
+
 	subsystem := mode
 	if mode == ServerModeFull {
 		subsystem = "stream"
+	} else if mode == ServerModeNotification {
+		subsystem = "notification"
 	}
+
 	metricsRegistry := prometheus.NewRegistry()
 	s.metrics = infra.NewMetricsFactory(metricsRegistry, "river", subsystem)
 	s.metricsPublisher = infra.NewMetricsPublisher(metricsRegistry)
@@ -358,6 +376,8 @@ func (s *Service) prepareStore() error {
 			schema = storage.DbSchemaNameFromAddress(s.wallet.Address.Hex())
 		case ServerModeArchive:
 			schema = storage.DbSchemaNameForArchive(s.config.Archive.ArchiveId)
+		case ServerModeNotification:
+			schema = storage.DbSchemaNameForNotifications(s.config.RiverChain.ChainId)
 		default:
 			return RiverError(
 				Err_BAD_CONFIG,
@@ -436,6 +456,7 @@ func (s *Service) runHttpServer() error {
 			"Connect-Protocol-Version",
 			"Connect-Timeout-Ms",
 			"x-river-request-id",
+			"Authorization",
 		},
 	})
 
@@ -566,6 +587,44 @@ func (s *Service) initStore() error {
 	}
 }
 
+func (s *Service) initNotificationsStore() error {
+	ctx := s.serverCtx
+	log := s.defaultLogger
+
+	switch s.config.StorageType {
+	case storage.NotificationStorageTypePostgres:
+		pgstore, err := storage.NewPostgresNotificationStore(
+			ctx,
+			s.storagePoolInfo,
+			s.exitSignal,
+			s.metrics,
+		)
+
+		if err != nil {
+			return err
+		}
+
+		s.notifications = notifications.NewUserPreferencesCache(pgstore)
+		s.onClose(pgstore.Close)
+
+		if !s.config.Log.Simplify {
+			log.Info(
+				"Created postgres notifications store",
+				"schema",
+				s.storagePoolInfo.Schema,
+			)
+		}
+		return nil
+	default:
+		return RiverError(
+			Err_BAD_CONFIG,
+			"Unknown storage type",
+			"storageType",
+			s.config.StorageType,
+		).Func("createStore")
+	}
+}
+
 func (s *Service) initCacheAndSync() error {
 	var err error
 	s.cache, err = events.NewStreamCache(
@@ -635,6 +694,34 @@ func (s *Service) initHandlers() {
 	s.mux.Handle(nodeServicePattern, newHttpHandler(nodeServiceHandler, s.defaultLogger))
 
 	s.registerDebugHandlers(s.config.EnableDebugEndpoints, s.config.DebugEndpoints)
+}
+
+func (s *Service) initNotificationHandlers() error {
+	var ii []connect.Interceptor
+	if s.otelConnectIterceptor != nil {
+		ii = append(ii, s.otelConnectIterceptor)
+	}
+	ii = append(ii, s.NewMetricsInterceptor())
+	ii = append(ii, NewTimeoutInterceptor(s.config.Network.RequestTimeout))
+
+	authInceptor, err := notifications.NewAuthenticationInterceptor(
+		s.config.Notifications.Authentication.SessionToken.Key.Algorithm,
+		s.config.Notifications.Authentication.SessionToken.Key.Key,
+	)
+	if err != nil {
+		return err
+	}
+
+	ii = append(ii, authInceptor)
+
+	interceptors := connect.WithInterceptors(ii...)
+	notificationServicePattern, notificationServiceHandler := protocolconnect.NewNotificationServiceHandler(s.NotificationService, interceptors)
+	notificationAuthServicePattern, notificationAuthServiceHandler := protocolconnect.NewAuthenticationServiceHandler(s.NotificationService, interceptors)
+
+	s.mux.Handle(notificationServicePattern, newHttpHandler(notificationServiceHandler, s.defaultLogger))
+	s.mux.Handle(notificationAuthServicePattern, newHttpHandler(notificationAuthServiceHandler, s.defaultLogger))
+
+	return nil
 }
 
 // StartServer starts the server with the given configuration.

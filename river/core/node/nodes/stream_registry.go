@@ -19,8 +19,6 @@ import (
 
 type StreamRegistry interface {
 	// GetStreamInfo: returns nodes, error
-	GetStreamInfo(ctx context.Context, streamId StreamId) (StreamNodes, error)
-	// GetStreamInfo: returns nodes, error
 	AllocateStream(
 		ctx context.Context,
 		streamId StreamId,

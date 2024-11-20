@@ -25,10 +25,7 @@ func TestStreamCacheViewEviction(t *testing.T) {
 
 	streamCache := tc.initCache(0, nil)
 
-	streamCache.cache.Range(func(key, value any) bool {
-		require.Fail("stream cache must be empty")
-		return true
-	})
+	require.Zero(streamCache.cache.Size(), "stream cache must be empty")
 
 	node := tc.getBC()
 	streamID := testutils.FakeStreamId(STREAM_SPACE_BIN)
@@ -44,9 +41,8 @@ func TestStreamCacheViewEviction(t *testing.T) {
 	// stream just loaded and should be with view in cache
 	streamWithoutLoadedView := 0
 	streamWithLoadedViewCount := 0
-	streamCache.cache.Range(func(key, value any) bool {
-		stream := value.(*streamImpl)
-		if stream.view() == nil {
+	streamCache.cache.Range(func(key StreamId, value *streamImpl) bool {
+		if value.view() == nil {
 			streamWithoutLoadedView++
 		} else {
 			streamWithLoadedViewCount++
@@ -71,9 +67,8 @@ func TestStreamCacheViewEviction(t *testing.T) {
 	// cache must have view dropped even there is a subscriber
 	streamWithoutLoadedView = 0
 	streamWithLoadedViewCount = 0
-	streamCache.cache.Range(func(key, value any) bool {
-		stream := value.(*streamImpl)
-		if stream.view() == nil {
+	streamCache.cache.Range(func(key StreamId, value *streamImpl) bool {
+		if value.view() == nil {
 			streamWithoutLoadedView++
 		} else {
 			streamWithLoadedViewCount++
@@ -94,9 +89,8 @@ func TestStreamCacheViewEviction(t *testing.T) {
 
 	streamWithoutLoadedView = 0
 	streamWithLoadedViewCount = 0
-	streamCache.cache.Range(func(key, value any) bool {
-		stream := value.(*streamImpl)
-		if stream.view() == nil {
+	streamCache.cache.Range(func(key StreamId, value *streamImpl) bool {
+		if value.view() == nil {
 			streamWithoutLoadedView++
 		} else {
 			streamWithLoadedViewCount++
@@ -113,9 +107,8 @@ func TestStreamCacheViewEviction(t *testing.T) {
 	require.NoError(err, "get view")
 	streamWithoutLoadedView = 0
 	streamWithLoadedViewCount = 0
-	streamCache.cache.Range(func(key, value any) bool {
-		stream := value.(*streamImpl)
-		if stream.view() == nil {
+	streamCache.cache.Range(func(key StreamId, value *streamImpl) bool {
+		if value.view() == nil {
 			streamWithoutLoadedView++
 		} else {
 			streamWithLoadedViewCount++
@@ -135,10 +128,7 @@ func TestCacheEvictionWithFilledMiniBlockPool(t *testing.T) {
 
 	streamCache := tc.initCache(0, nil)
 
-	streamCache.cache.Range(func(key, value any) bool {
-		require.Fail("stream cache must be empty")
-		return true
-	})
+	require.Zero(streamCache.cache.Size(), "stream cache must be empty")
 
 	node := tc.getBC()
 	streamID := testutils.FakeStreamId(STREAM_SPACE_BIN)
@@ -154,9 +144,8 @@ func TestCacheEvictionWithFilledMiniBlockPool(t *testing.T) {
 	// stream just loaded and should have view loaded
 	streamWithoutLoadedView := 0
 	streamWithLoadedViewCount := 0
-	streamCache.cache.Range(func(key, value any) bool {
-		stream := value.(*streamImpl)
-		if stream.view() == nil {
+	streamCache.cache.Range(func(key StreamId, value *streamImpl) bool {
+		if value.view() == nil {
 			streamWithoutLoadedView++
 		} else {
 			streamWithLoadedViewCount++
@@ -172,7 +161,7 @@ func TestCacheEvictionWithFilledMiniBlockPool(t *testing.T) {
 	streamCache.CacheCleanup(ctxShort, true, time.Millisecond)
 	cancelShort()
 	loadedStream, _ := streamCache.cache.Load(streamID)
-	require.Nil(loadedStream.(*streamImpl).view(), "view not unloaded")
+	require.Nil(loadedStream.view(), "view not unloaded")
 
 	// try to create a miniblock, pool is empty so it should not fail but also should not create a miniblock
 	_ = tc.makeMiniblock(0, streamID, false)
@@ -193,7 +182,7 @@ func TestCacheEvictionWithFilledMiniBlockPool(t *testing.T) {
 	streamCache.CacheCleanup(ctxShort, true, time.Millisecond)
 	cancelShort()
 	loadedStream, _ = streamCache.cache.Load(streamID)
-	require.NotNil(loadedStream.(*streamImpl).view(), "view unloaded")
+	require.NotNil(loadedStream.view(), "view unloaded")
 
 	// now it should be possible to create a miniblock
 	mbRef := tc.makeMiniblock(0, streamID, false)
@@ -206,7 +195,7 @@ func TestCacheEvictionWithFilledMiniBlockPool(t *testing.T) {
 	streamCache.CacheCleanup(ctxShort, true, time.Millisecond)
 	cancelShort()
 	loadedStream, _ = streamCache.cache.Load(streamID)
-	require.Nil(loadedStream.(*streamImpl).view(), "view loaded in cache")
+	require.Nil(loadedStream.view(), "view loaded in cache")
 }
 
 type testStreamCacheViewEvictionSub struct {
@@ -246,7 +235,7 @@ func TestStreamMiniblockBatchProduction(t *testing.T) {
 
 	streamCache := tc.initCache(0, nil)
 
-	streamCache.cache.Range(func(key, value any) bool {
+	streamCache.cache.Range(func(key StreamId, value *streamImpl) bool {
 		require.Fail("stream cache must be empty")
 		return true
 	})
@@ -265,12 +254,12 @@ func TestStreamMiniblockBatchProduction(t *testing.T) {
 		go func(streamID StreamId, genesis *Miniblock) {
 			defer wg.Done()
 
-			streamSync, err := streamCache.GetStream(ctx, streamID)
+			streamSync, err := streamCache.getStreamImpl(ctx, streamID)
 			require.NoError(err, "get stream")
 
 			// unload view for half of the streams
 			if streamID[1]%2 == 1 {
-				ss := streamSync.(*streamImpl)
+				ss := streamSync
 				ss.tryCleanup(time.Duration(0))
 			}
 
@@ -339,18 +328,13 @@ func TestStreamMiniblockBatchProduction(t *testing.T) {
 }
 
 func isCacheEmpty(streamCache *streamCacheImpl) bool {
-	empty := true
-	streamCache.cache.Range(func(key, value any) bool {
-		empty = false
-		return false
-	})
-	return empty
+	return streamCache.cache.Size() == 0
 }
 
 func cleanUpCache(streamCache *streamCacheImpl) bool {
 	cleanedUp := true
-	streamCache.cache.Range(func(key, streamVal any) bool {
-		cleanedUp = cleanedUp && streamVal.(*streamImpl).tryCleanup(0)
+	streamCache.cache.Range(func(key StreamId, streamVal *streamImpl) bool {
+		cleanedUp = cleanedUp && streamVal.tryCleanup(0)
 		return true
 	})
 	return cleanedUp
@@ -358,15 +342,15 @@ func cleanUpCache(streamCache *streamCacheImpl) bool {
 
 func areAllViewsDropped(streamCache *streamCacheImpl) bool {
 	allDropped := true
-	streamCache.cache.Range(func(key, streamVal any) bool {
-		st := streamVal.(*streamImpl).getStatus()
+	streamCache.cache.Range(func(key StreamId, streamVal *streamImpl) bool {
+		st := streamVal.getStatus()
 		allDropped = allDropped && !st.loaded
 		return true
 	})
 	return allDropped
 }
 
-// TODO: temp disable flacky test. Passes locally, often fails on CI.
+// TODO: temp disable flaky test. Passes locally, often fails on CI.
 func Disabled_TestStreamUnloadWithSubscribers(t *testing.T) {
 	require := require.New(t)
 	ctx, tc := makeCacheTestContext(t, testParams{})

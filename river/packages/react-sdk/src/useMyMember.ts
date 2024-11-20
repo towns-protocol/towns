@@ -10,8 +10,8 @@ const getMyMember = (sync: SyncAgent, streamId: string) => getRoom(sync, streamI
 /**
  * Hook to get the data of the current user in a stream.
  * @param streamId - The id of the stream to get the current user of.
- * @param config - Configuration options for the observable. @see {@link ObservableConfig.FromObservable}
- * @returns The {@link MemberModel} of the current user.
+ * @param config - Configuration options for the observable.
+ * @returns The MemberModel of the current user.
  */
 export const useMyMember = (streamId: string, config?: ObservableConfig.FromObservable<Member>) => {
     const sync = useSyncAgent()
@@ -26,7 +26,7 @@ export const useMyMember = (streamId: string, config?: ObservableConfig.FromObse
  * Hook to set the ENS address of the current user in a stream.
  * You should be validating if the ENS address belongs to the user before setting it.
  * @param streamId - The id of the stream to set the ENS address of.
- * @param config - Configuration options for the action. @see {@link ActionConfig}
+ * @param config - Configuration options for the action.
  * @returns The `setEnsAddress` action and its loading state.
  */
 export const useSetEnsAddress = (
@@ -42,7 +42,7 @@ export const useSetEnsAddress = (
 /**
  * Hook to set the username of the current user in a stream.
  * @param streamId - The id of the stream to set the username of.
- * @param config - Configuration options for the action. @see {@link ActionConfig}
+ * @param config - Configuration options for the action.
  * @returns The `setUsername` action and its loading state.
  */
 export const useSetUsername = (streamId: string, config?: ActionConfig<Myself['setUsername']>) => {
@@ -55,7 +55,7 @@ export const useSetUsername = (streamId: string, config?: ActionConfig<Myself['s
 /**
  * Hook to set the display name of the current user in a stream.
  * @param streamId - The id of the stream to set the display name of.
- * @param config - Configuration options for the action. @see {@link ActionConfig}
+ * @param config - Configuration options for the action.
  * @returns The `setDisplayName` action and its loading state.
  */
 export const useSetDisplayName = (
@@ -72,7 +72,7 @@ export const useSetDisplayName = (
  * Hook to set the NFT of the current user in a stream.
  * You should be validating if the NFT belongs to the user before setting it.
  * @param streamId - The id of the stream to set the NFT of.
- * @param config - Configuration options for the action. @see {@link ActionConfig}
+ * @param config - Configuration options for the action.
  * @returns The `setNft` action and its loading state.
  */
 export const useSetNft = (streamId: string, config?: ActionConfig<Myself['setNft']>) => {

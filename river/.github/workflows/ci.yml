@@ -137,6 +137,11 @@ jobs:
                     exit 1
                   fi
 
+            - name: Generate react-sdk docs
+              if: ${{ !cancelled() && steps.setup_success.outcome == 'success' }}
+              working-directory: packages/react-sdk
+              run: yarn gen
+
             - name: Docs checking broken links
               working-directory: packages/docs
               run: yarn docs:broken-links

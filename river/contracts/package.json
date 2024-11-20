@@ -16,18 +16,18 @@
         "test:unit": "make test"
     },
     "dependencies": {
-        "@openzeppelin/contracts": "^5.0.2",
-        "@openzeppelin/contracts-upgradeable": "^5.0.2",
-        "@prb/math": "^4.0.3",
+        "@openzeppelin/contracts": "^5.1.0",
+        "@openzeppelin/contracts-upgradeable": "^5.1.0",
+        "@prb/math": "^4.1.0",
         "account-abstraction": "github:eth-infinitism/account-abstraction",
-        "solady": "^0.0.228"
+        "solady": "^0.0.267"
     },
     "devDependencies": {
         "@prb/test": "^0.6.4",
         "ds-test": "github:dapphub/ds-test",
-        "forge-std": "github:foundry-rs/forge-std#v1.9.1",
+        "forge-std": "github:foundry-rs/forge-std#v1.9.4",
         "prettier": "^2.8.8",
-        "prettier-plugin-solidity": "^1.3.1",
-        "solhint": "^5.0.2"
+        "prettier-plugin-solidity": "^1.4.1",
+        "solhint": "^5.0.3"
     }
 }

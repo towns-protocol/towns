@@ -4,6 +4,7 @@ import { StreamService } from '@river-build/proto'
 import { dlog } from '@river-build/dlog'
 import { getEnvVar, randomUrlSelector } from './utils'
 import {
+    DEFAULT_RETRY_PARAMS,
     getRetryDelayMs,
     loggingInterceptor,
     retryInterceptor,
@@ -15,7 +16,6 @@ let nextRpcClientNum = 0
 
 export interface StreamRpcClientOptions {
     retryParams: RetryParams
-    defaultTimeoutMs?: number
 }
 
 export type StreamRpcClient = PromiseClient<typeof StreamService> & {
@@ -26,10 +26,9 @@ export type MakeRpcClientType = typeof makeStreamRpcClient
 
 export function makeStreamRpcClient(
     dest: string,
-    retryParams: RetryParams = { maxAttempts: 3, initialRetryDelay: 2000, maxRetryDelay: 6000 },
+    retryParams: RetryParams = DEFAULT_RETRY_PARAMS,
     refreshNodeUrl?: () => Promise<string>,
     interceptors?: Interceptor[],
-    defaultTimeoutMs?: number,
 ): StreamRpcClient {
     const transportId = nextRpcClientNum++
     logInfo('makeStreamRpcClient, transportId =', transportId)
@@ -38,11 +37,11 @@ export function makeStreamRpcClient(
     const options: ConnectTransportOptions = {
         baseUrl: url,
         interceptors: [
-            retryInterceptor({ ...retryParams, refreshNodeUrl }),
-            loggingInterceptor(transportId),
             ...(interceptors ?? []),
+            loggingInterceptor(transportId),
+            retryInterceptor({ ...retryParams, refreshNodeUrl }),
         ],
-        defaultTimeoutMs,
+        defaultTimeoutMs: undefined, // default timeout is undefined, we add a timeout in the retryInterceptor
     }
     if (getEnvVar('RIVER_DEBUG_TRANSPORT') !== 'true') {
         options.useBinaryFormat = true
@@ -58,14 +57,15 @@ export function makeStreamRpcClient(
 
     const client: StreamRpcClient = createPromiseClient(StreamService, transport) as StreamRpcClient
     client.url = url
-    client.opts = { retryParams, defaultTimeoutMs }
+    client.opts = { retryParams }
     return client
 }
 
 export function getMaxTimeoutMs(opts: StreamRpcClientOptions): number {
     let maxTimeoutMs = 0
     for (let i = 1; i <= opts.retryParams.maxAttempts; i++) {
-        maxTimeoutMs += opts.defaultTimeoutMs ?? 0 + getRetryDelayMs(i, opts.retryParams)
+        maxTimeoutMs +=
+            opts.retryParams.defaultTimeoutMs ?? 0 + getRetryDelayMs(i, opts.retryParams)
     }
     return maxTimeoutMs
 }

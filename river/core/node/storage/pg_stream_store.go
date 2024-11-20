@@ -125,6 +125,7 @@ func NewPostgresStreamStore(
 		metrics,
 		store.createSettingsTableTxnWithPartitions(poolInfo.Config.NumPartitions),
 		migrationsDir,
+		"migrations",
 	); err != nil {
 		return nil, AsRiverError(err).Func("NewPostgresStreamStore")
 	}

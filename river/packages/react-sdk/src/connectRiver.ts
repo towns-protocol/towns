@@ -9,6 +9,12 @@ import {
 } from '@river-build/sdk'
 import { ethers } from 'ethers'
 
+/**
+ * Sign and connect to River using a Signer and a random delegate wallet every time
+ * @param signer - The signer to use
+ * @param config - The configuration for the sync agent
+ * @returns The sync agent
+ */
 export const signAndConnect = async (
     signer: ethers.Signer,
     config: Omit<SyncAgentConfig, 'context'>,
@@ -18,6 +24,14 @@ export const signAndConnect = async (
     return new SyncAgent({ context: signerContext, ...config })
 }
 
+/**
+ * Connect to River using a SignerContext
+ *
+ * Useful for server side code: you can persist the signer context and use it to auth with River later
+ * @param signerContext - The signer context to use
+ * @param config - The configuration for the sync agent
+ * @returns The sync agent
+ */
 export const connectRiver = async (
     signerContext: SignerContext,
     config: Omit<SyncAgentConfig, 'context'>,
@@ -25,6 +39,15 @@ export const connectRiver = async (
     return new SyncAgent({ context: signerContext, ...config })
 }
 
+/**
+ * Connect to River using a Bearer Token
+ * River clients can use this to connect to River on behalf of a user
+ *
+ * Useful for server side code: you can persist the bearer token and use it to auth with River later
+ * @param token - The bearer token to use
+ * @param config - The configuration for the sync agent
+ * @returns The sync agent
+ */
 export const connectRiverWithBearerToken = async (
     token: string,
     config: Omit<SyncAgentConfig, 'context'>,

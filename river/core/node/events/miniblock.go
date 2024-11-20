@@ -148,6 +148,7 @@ func (b *MiniblockInfo) forEachEvent(op func(e *ParsedEvent, minibockNum int64, 
 			return err
 		}
 	}
+
 	c, err := op(b.headerEvent, blockNum, eventNum)
 	if !c {
 		return err

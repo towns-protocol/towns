@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"context"
+	"github.com/river-build/river/core/node/notifications"
 	"log/slog"
 	"net"
 	"net/http"
@@ -51,6 +52,9 @@ type Service struct {
 	syncHandler        river_sync.Handler
 	scrubTaskProcessor scrub.StreamScrubTaskProcessor
 
+	// Notifications
+	notifications notifications.UserPreferencesStore
+
 	// River chain
 	riverChain       *crypto.Blockchain
 	registryContract *registries.RiverRegistryContract
@@ -75,6 +79,9 @@ type Service struct {
 
 	// Archiver is not nil if running in archive mode
 	Archiver *Archiver
+
+	// NotificationService is not nil if running in notification mode
+	NotificationService *notifications.Service
 
 	// Metrics
 	metrics               infra.MetricsFactory

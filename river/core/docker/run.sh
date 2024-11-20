@@ -14,6 +14,10 @@ elif [ "$RUN_MODE" == "archive" ]; then
     echo "Running archive node"
     cd /riveruser/river_node
     exec /usr/bin/river_node archive
+elif [ "$RUN_MODE" == "notifications" ]; then
+    echo "Running notification service"
+    cd /riveruser/river_node
+    exec /usr/bin/river_node notifications
 else
     echo "Unknown RUN_MODE: $RUN_MODE"
     exit 1

@@ -62,11 +62,11 @@ const useMessageReaction = (streamId: string, eventId: string) => {
 type TimelineProps = {
     events: TimelineEvent[]
     showThreadMessages?: boolean
-    threadMap?: Record<string, TimelineEvent[]>
+    threads?: Record<string, TimelineEvent[]>
     streamId: string
 }
 
-export const Timeline = ({ streamId, showThreadMessages, threadMap, events }: TimelineProps) => {
+export const Timeline = ({ streamId, showThreadMessages, threads, events }: TimelineProps) => {
     const { scrollback, isPending } = useScrollback(streamId)
     return (
         <div className="grid grid-rows-[auto,1fr] gap-2">
@@ -85,7 +85,7 @@ export const Timeline = ({ streamId, showThreadMessages, threadMap, events }: Ti
                                       streamId={streamId}
                                       key={event.eventId}
                                       event={event}
-                                      thread={threadMap?.[event.eventId]}
+                                      thread={threads?.[event.eventId]}
                                   />,
                               ]
                             : [],
@@ -258,8 +258,8 @@ const Reaction = ({
         <button
             type="button"
             className={cn(
-                'flex h-8 w-full items-center justify-center gap-2 rounded-sm border border-neutral-200 bg-neutral-100 px-2',
-                isMyReaction && 'border-lime-200 bg-lime-100',
+                'flex h-8 w-full items-center justify-center gap-2 rounded-sm border border-neutral-200 bg-neutral-100 px-2 dark:border-neutral-800 dark:bg-neutral-900',
+                isMyReaction && 'border-lime-200 bg-lime-100 dark:border-lime-800 dark:bg-lime-900',
             )}
             onClick={() => {
                 if (isMyReaction) {

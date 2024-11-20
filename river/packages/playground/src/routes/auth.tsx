@@ -24,7 +24,7 @@ export const AuthRoute = () => {
         <div className="flex flex-col items-center gap-6">
             <div className="max-w-lg space-y-4">
                 <h1 className="text-center text-2xl font-bold">Connect to River</h1>
-                <p className="text-center text-sm  text-zinc-500">
+                <p className="text-center text-sm  text-zinc-500 dark:text-zinc-400">
                     You can use a bearer token, or connect straight to the network using your
                     wallet.
                 </p>

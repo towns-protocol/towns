@@ -6,7 +6,7 @@ import { useSyncAgent } from './useSyncAgent'
 
 /**
  * Hook to create a space.
- * @param config - Configuration options for the action. @see {@link ActionConfig}
+ * @param config - Configuration options for the action.
  * @returns The `createSpace` action and its loading state.
  */
 export const useCreateSpace = (config: ActionConfig<Spaces['createSpace']> = {}) => {

@@ -1,7 +1,7 @@
 {
     "name": "@river-build/react-sdk",
     "description": "React Hooks for River SDK",
-    "version": "0.0.108",
+    "version": "0.0.111",
     "type": "module",
     "main": "./dist/esm/index.js",
     "types": "./dist/types/index.d.ts",
@@ -9,6 +9,9 @@
         "build": "yarn run clean && yarn run build:esm+types",
         "build:esm+types": "tsc --project tsconfig.build.json --outDir ./dist/esm --declaration --declarationMap --declarationDir ./dist/types",
         "lint": "eslint ./src --max-warnings=0",
+        "gen": "yarn gen:extractor && yarn gen:docs",
+        "gen:docs": "tsx ./scripts/docgen/generate.ts",
+        "gen:extractor": "api-extractor run --local",
         "clean": "rm -rf dist tsconfig.tsbuildinfo",
         "test:build": "publint --strict && attw --pack --ignore-rules cjs-resolves-to-esm",
         "typecheck": "tsc --noEmit",
@@ -19,7 +22,12 @@
         "ethers": "^5.7.2"
     },
     "devDependencies": {
+        "@microsoft/api-extractor": "^7.47.7",
+        "@microsoft/api-extractor-model": "^7.29.6",
+        "@microsoft/tsdoc": "^0.15.0",
+        "@microsoft/tsdoc-config": "^0.17.0",
         "@testing-library/react": "^14.2.1",
+        "@types/node": "^20.5.0",
         "@types/react": "^18.2.11",
         "@types/react-dom": "^18.2.4",
         "@typescript-eslint/eslint-plugin": "^6.10.0",
@@ -31,6 +39,8 @@
         "eslint-plugin-tsdoc": "^0.3.0",
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
+        "ts-morph": "^24.0.0",
+        "tsx": "^4.7.1",
         "typescript": "^5.1.6"
     },
     "files": [

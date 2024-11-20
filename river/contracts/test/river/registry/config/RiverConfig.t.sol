@@ -32,11 +32,7 @@ contract RiverConfigTest is
     _;
   }
 
-  modifier setBytesConfig(
-    bytes32 key,
-    uint64 blockNumber,
-    bytes memory value
-  ) {
+  modifier setBytesConfig(bytes32 key, uint64 blockNumber, bytes memory value) {
     vm.assume(key != bytes32(0));
     vm.assume(blockNumber != type(uint64).max);
     vm.assume(value.length > 0);

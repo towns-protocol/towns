@@ -48,6 +48,8 @@ contract BanningTest is BaseSetup, IRolesBase, IMembershipBase {
   }
 
   modifier givenWalletIsBanned(address wallet) {
+    vm.assume(wallet != founder);
+
     uint256[] memory tokenIds = queryable.tokensOfOwner(wallet);
     uint256 tokenId = tokenIds[0];
 

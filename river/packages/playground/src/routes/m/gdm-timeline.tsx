@@ -1,11 +1,11 @@
-import { useGdm, useGdmTimeline } from '@river-build/react-sdk'
+import { useGdm, useTimeline } from '@river-build/react-sdk'
 import { useParams } from 'react-router-dom'
 import { Timeline } from '@/components/blocks/timeline'
 
 export const GdmTimelineRoute = () => {
     const { gdmStreamId } = useParams<{ gdmStreamId: string }>()
     const { data: gdm } = useGdm(gdmStreamId!)
-    const { data: timeline } = useGdmTimeline(gdmStreamId!)
+    const { data: timeline } = useTimeline(gdmStreamId!)
     return (
         <>
             <h2 className="text-2xl font-bold">

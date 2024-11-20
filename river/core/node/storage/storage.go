@@ -4,12 +4,12 @@ import (
 	"context"
 
 	"github.com/ethereum/go-ethereum/common"
-
 	. "github.com/river-build/river/core/node/shared"
 )
 
 const (
-	StreamStorageTypePostgres = "postgres"
+	StreamStorageTypePostgres       = "postgres"
+	NotificationStorageTypePostgres = "postgres"
 )
 
 type ReadStreamFromLastSnapshotResult struct {

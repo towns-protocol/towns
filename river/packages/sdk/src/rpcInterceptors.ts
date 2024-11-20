@@ -12,10 +12,18 @@ import { genShortId, streamIdAsString } from './id'
 import { isBaseUrlIncluded, isIConnectError } from './utils'
 import { dlog, dlogError, check } from '@river-build/dlog'
 
+export const DEFAULT_RETRY_PARAMS: RetryParams = {
+    maxAttempts: 3,
+    initialRetryDelay: 2000,
+    maxRetryDelay: 6000,
+    defaultTimeoutMs: 30000, // 30 seconds for long running requests
+}
+
 export type RetryParams = {
     maxAttempts: number
     initialRetryDelay: number
     maxRetryDelay: number
+    defaultTimeoutMs: number
     refreshNodeUrl?: () => Promise<string>
 }
 
@@ -38,6 +46,7 @@ const histogramIntervalMs = 5000
 export const retryInterceptor: (retryParams: RetryParams) => Interceptor = (
     retryParams: RetryParams,
 ) => {
+    logError('retryInterceptor', 'retryParams=', retryParams)
     return (next) =>
         async (
             req: UnaryRequest<AnyMessage, AnyMessage> | StreamRequest<AnyMessage, AnyMessage>,
@@ -45,17 +54,61 @@ export const retryInterceptor: (retryParams: RetryParams) => Interceptor = (
             if (req.stream) {
                 return await next(req)
             }
+            const requestStart = Date.now()
             let attempt = 0
+            const id = req.header.get('x-river-request-id')
+            if (!id) {
+                throw new Error(
+                    'No request id, expected header x-river-request-id which is set by loggingInterceptor',
+                )
+            }
+            const orignalAbortSignal = req.signal
             // eslint-disable-next-line no-constant-condition
             while (true) {
+                const loopStart = Date.now()
+                const abortController = new AbortController()
+                const signal = abortController.signal
+                const originalAbortHandler = () => {
+                    const elapsed = Date.now() - requestStart
+                    logError(
+                        'Orignial request aborted in retryInterceptor',
+                        'rpc:',
+                        req.method.name,
+                        id,
+                        'elapsed=',
+                        elapsed,
+                    )
+                    abortController.abort()
+                }
+                // listen to the original abort signal and abort the request if it's aborted
+                orignalAbortSignal?.addEventListener('abort', originalAbortHandler)
+                // set a timeout on the request
+                const requestTimeoutId = setTimeout(() => {
+                    const elapsed = Date.now() - loopStart
+                    logError(
+                        'Request timed out in retryInterceptor',
+                        'rpc:',
+                        req.method.name,
+                        id,
+                        'elapsed=',
+                        elapsed,
+                    )
+                    abortController.abort({
+                        message: 'The operation was aborted.',
+                        name: 'AbortError',
+                    })
+                }, retryParams.defaultTimeoutMs)
+
                 attempt++
                 try {
                     // Clone the request before each attempt
-                    const clonedReq = cloneUnaryRequest(req)
+                    const clonedReq = cloneUnaryRequest(req, signal)
                     return await next(clonedReq)
                 } catch (e) {
-                    const retryDelay = getRetryDelay(e, attempt, retryParams)
-                    if (retryDelay <= 0) {
+                    const elapsed = Date.now() - loopStart
+                    const retryDelay = getRetryDelay(e, signal.aborted, attempt, retryParams)
+                    // if the request was aborted, or we've run out of retries, throw the error
+                    if (orignalAbortSignal.aborted || retryDelay <= 0) {
                         throw e
                     }
                     if (retryParams.refreshNodeUrl) {
@@ -67,17 +120,25 @@ export const retryInterceptor: (retryParams: RetryParams) => Interceptor = (
                         }
                     }
                     logError(
-                        req.method.name,
                         'ERROR RETRYING',
+                        'rpc:',
+                        req.method.name,
+                        id,
+                        'attempt=',
                         attempt,
                         'of',
                         retryParams.maxAttempts,
+                        'elapsed:',
+                        elapsed,
                         'retryDelay:',
                         retryDelay,
                         'error:',
                         e,
                     )
                     await new Promise((resolve) => setTimeout(resolve, retryDelay))
+                } finally {
+                    clearTimeout(requestTimeoutId)
+                    orignalAbortSignal?.removeEventListener('abort', originalAbortHandler)
                 }
             }
         }
@@ -219,7 +280,7 @@ export const loggingInterceptor: (transportId: number, serviceName?: string) => 
                         e.code === (Code.NotFound as number)
                     )
                 ) {
-                    logError(req.method.name, 'ERROR', id, e)
+                    logError('ERROR calling rpc:', req.method.name, id, e)
                     updateHistogram(req.method.name, streamId, true)
                 }
                 throw e
@@ -329,13 +390,22 @@ export function getRetryDelayMs(attempts: number, retryParams: RetryParams): num
     )
 }
 
-function getRetryDelay(error: unknown, attempts: number, retryParams: RetryParams): number {
+function getRetryDelay(
+    error: unknown,
+    didTimeout: boolean,
+    attempts: number,
+    retryParams: RetryParams,
+): number {
     check(attempts >= 1, 'attempts must be >= 1')
     // aellis wondering if we should retry forever if there's no internet connection
     if (attempts > retryParams.maxAttempts) {
         return -1 // no more attempts
     }
     const retryDelay = getRetryDelayMs(attempts, retryParams)
+
+    if (didTimeout) {
+        return retryDelay
+    }
 
     // we don't get a lot of info off of these errors... retry the ones that we know we need to
     if (error !== null && typeof error === 'object') {
@@ -380,6 +450,7 @@ function getRetryDelay(error: unknown, attempts: number, retryParams: RetryParam
 // Function to clone a UnaryRequest
 function cloneUnaryRequest<I extends Message<I>, O extends Message<O>>(
     req: UnaryRequest<I, O>,
+    signal: AbortSignal,
 ): UnaryRequest<I, O> {
     // Clone the message
     const clonedMessage = req.message.clone()
@@ -387,14 +458,19 @@ function cloneUnaryRequest<I extends Message<I>, O extends Message<O>>(
     // Clone headers
     const clonedHeader = new Headers(req.header)
 
-    // Since RequestInit and ContextValues are typically immutable or not modified during the request,
-    // we can reuse them. However, if they are mutable in your implementation, consider cloning them as well.
+    // Clone init
+    const clonedInit = { ...req.init }
+
+    // Clone contextValues
+    const clonedContextValues = { ...req.contextValues }
 
     // Return a new UnaryRequest with cloned properties
     return {
         ...req,
         message: clonedMessage,
         header: clonedHeader,
-        // Keep other properties as they are
+        init: clonedInit,
+        contextValues: clonedContextValues,
+        signal: signal,
     }
 }

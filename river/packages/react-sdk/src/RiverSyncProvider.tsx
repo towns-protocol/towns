@@ -3,15 +3,13 @@ import type { SyncAgent } from '@river-build/sdk'
 import { useEffect, useState } from 'react'
 import { RiverSyncContext } from './internals/RiverSyncContext'
 
-type RiverSyncProviderProps = {
+export const RiverSyncProvider = (props: {
     syncAgent?: SyncAgent
     config?: {
         onTokenExpired?: () => void
     }
     children?: React.ReactNode
-}
-
-export const RiverSyncProvider = (props: RiverSyncProviderProps) => {
+}) => {
     const [syncAgent, setSyncAgent] = useState(() => props.syncAgent)
 
     useEffect(() => {

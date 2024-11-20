@@ -10,7 +10,7 @@ import {IMockFacet} from "contracts/test/mocks/MockFacet.sol";
 import {IOwnableBase} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 
 // libraries
-import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+import {Errors} from "@openzeppelin/contracts/utils/Errors.sol";
 
 // contracts
 import {DiamondCutSetup} from "contracts/test/diamond/cut/DiamondCutSetup.sol";
@@ -138,7 +138,7 @@ contract DiamondCutTest is DiamondCutSetup, IDiamondCutBase, IOwnableBase {
     );
 
     // cut diamond
-    vm.expectRevert(Address.FailedInnerCall.selector);
+    vm.expectRevert(Errors.FailedCall.selector);
     vm.prank(deployer);
     diamondCut.diamondCut(extensions, mockFacet, "");
   }

@@ -6,12 +6,12 @@ import (
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
-
 	. "github.com/river-build/river/core/node/base"
+
 	. "github.com/river-build/river/core/node/protocol"
 )
 
-func recoverEthereumMessageSignerAddress(hashSrc []byte, inSignature []byte) (*common.Address, error) {
+func RecoverEthereumMessageSignerPublicKey(hashSrc []byte, inSignature []byte) ([]byte, error) {
 	if len(inSignature) != 65 {
 		return nil, RiverError(
 			Err_BAD_EVENT_SIGNATURE,
@@ -40,6 +40,14 @@ func recoverEthereumMessageSignerAddress(hashSrc []byte, inSignature []byte) (*c
 			Message("Unable to recover public key").
 			Func("recoverEthereumMessageSignerAddress")
 	}
+	return recoveredKey, nil
+}
+
+func RecoverEthereumMessageSignerAddress(hashSrc []byte, inSignature []byte) (*common.Address, error) {
+	recoveredKey, err := RecoverEthereumMessageSignerPublicKey(hashSrc, inSignature)
+	if err != nil {
+		return nil, err
+	}
 	address := PublicKeyToAddress(recoveredKey)
 	return &address, nil
 }
@@ -49,7 +57,7 @@ func CheckDelegateSig(expectedAddress []byte, devicePubKey []byte, delegateSig [
 	if err != nil {
 		return err
 	}
-	recoveredAddress, err := recoverEthereumMessageSignerAddress(hashSrc, delegateSig)
+	recoveredAddress, err := RecoverEthereumMessageSignerAddress(hashSrc, delegateSig)
 	if err != nil {
 		return err
 	}
@@ -61,6 +69,8 @@ func CheckDelegateSig(expectedAddress []byte, devicePubKey []byte, delegateSig [
 			recoveredAddress,
 			"expected address",
 			expectedAddress,
+			"deviceAddress",
+			PublicKeyToAddress(devicePubKey),
 		)
 	}
 	return nil

@@ -143,6 +143,9 @@ type Config struct {
 	// Should be set if node is run in archive mode.
 	Archive ArchiveConfig
 
+	// Notifications must be set when run in notification mode.
+	Notifications NotificationsConfig
+
 	// Feature flags
 	// Used to disable functionality for some testing setups.
 
@@ -351,6 +354,68 @@ type ArchiveConfig struct {
 	WorkerPoolSize int // If 0, default to 20.
 
 	StreamsContractCallPageSize int64 // If 0, default to 5000.
+}
+
+type APNPushNotificationsConfig struct {
+	// IosAppBundleID is used as the topic ID for notifications.
+	AppBundleID string
+	// Expiration holds the duration in which the notification must be delivered. After that
+	// the server might drop the notification. If set to 0 a default of 12 hours is used.
+	Expiration time.Duration
+	// KeyID from developer account (Certificates, Identifiers & Profiles -> Keys)
+	KeyID string
+	// TeamID from developer account (View Account -> Membership)
+	TeamID string
+	// AuthKey contains the private key to authenticate the notification service with the APN service
+	AuthKey string
+}
+
+type WebPushVapidNotificationConfig struct {
+	// PrivateKey is the private key of the public key that is shared with the client
+	// and used to sign push notifications that allows the client to verify the incoming
+	// notification for origin and validity.
+	PrivateKey string
+	// PublicKey as shared with the client that is used for subscribing and verifying
+	// the incoming push notification.
+	PublicKey string
+	// Subject must either be a URL or a 'mailto:' address.
+	Subject string
+}
+
+type WebPushNotificationConfig struct {
+	Vapid WebPushVapidNotificationConfig
+}
+
+type NotificationsConfig struct {
+	// SubscriptionExpirationDuration if the client isn't seen within this duration stop sending
+	// notifications to it. Defaults to 90 days.
+	SubscriptionExpirationDuration time.Duration
+	// Simulate if set to true uses the simulator notification backend that doesn't
+	// send notifications to the client but only logs them.
+	// This is intended for development purposes. Defaults to false.
+	Simulate bool
+	// APN holds the Apple Push Notification settings
+	APN APNPushNotificationsConfig
+	// Web holds the Web Push notification settings
+	Web WebPushNotificationConfig `mapstructure:"webpush"`
+
+	// Authentication holds configuration for the Client API authentication service.
+	Authentication struct {
+		// ChallengeTimeout is the lifetime an authentication challenge is valid (default=30s).
+		ChallengeTimeout time.Duration
+		// SessionTokenKey contains the configuration for the JWT session token.
+		SessionToken struct {
+			// Lifetime indicates how long a session token is valid (default=30m).
+			Lifetime time.Duration
+			// Key holds the secret key that is used to sign the session token.
+			Key struct {
+				// Algorithm indicates how the session token is signed (only HS256 is supported)
+				Algorithm string
+				// Key holds the hex encoded key
+				Key string
+			}
+		}
+	}
 }
 
 type LogConfig struct {

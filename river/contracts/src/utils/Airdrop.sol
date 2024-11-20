@@ -39,9 +39,7 @@ contract Airdrop {
       // Loop through the addresses
       for {
         let addressOffset := addresses.offset
-      } 1 {
-
-      } {
+      } 1 {} {
         // to address
         mstore(0x24, calldataload(addressOffset))
         // tokenId
@@ -102,9 +100,7 @@ contract Airdrop {
       // Loop through the addresses
       for {
         let addressOffset := addresses.offset
-      } 1 {
-
-      } {
+      } 1 {} {
         // to address
         mstore(0x04, calldataload(addressOffset))
         // amount
@@ -144,11 +140,7 @@ contract Airdrop {
       let diff := sub(amounts.offset, addresses.offset)
 
       // Loop through the addresses
-      for {
-
-      } 1 {
-
-      } {
+      for {} 1 {} {
         // transfer the ETH
         if iszero(
           call(

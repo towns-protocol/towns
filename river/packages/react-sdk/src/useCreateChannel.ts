@@ -7,7 +7,7 @@ import { useSyncAgent } from './useSyncAgent'
 
 /**
  * Hook to create a channel.
- * @param config - Configuration options for the action. @see {@link ActionConfig}
+ * @param config - Configuration options for the action.
  * @returns The createChannel action and its loading state.
  */
 export const useCreateChannel = (

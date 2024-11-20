@@ -40,6 +40,7 @@ contract MockEntitlementGated is EntitlementGated {
       abi.encodePacked(tx.origin, block.number)
     );
     _requestEntitlementCheck(
+      msg.sender,
       transactionId,
       IRuleEntitlement(address(this)),
       roleId
@@ -60,6 +61,7 @@ contract MockEntitlementGated is EntitlementGated {
 
     for (uint256 i = 0; i < roleIds.length; i++) {
       _requestEntitlementCheck(
+        msg.sender,
         transactionId,
         IRuleEntitlement(address(this)),
         roleIds[i]

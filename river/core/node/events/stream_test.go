@@ -315,8 +315,8 @@ func TestCandidatePromotionCandidateIsDelayed(t *testing.T) {
 	view = getView(t, ctx, stream)
 	require.Equal(int64(0), view.LastBlock().Ref.Num)
 	require.Equal(2, view.minipool.size())
-	require.Len(stream.pendingCandidates, 1)
-	require.EqualValues(proposal1.Ref, stream.pendingCandidates[0])
+	require.Len(stream.local.pendingCandidates, 1)
+	require.EqualValues(proposal1.Ref, stream.local.pendingCandidates[0])
 
 	require.NoError(stream.SaveMiniblockCandidate(ctx, proposal1.Proto))
 
@@ -361,7 +361,7 @@ func TestCandidatePromotionCandidateIsDelayed(t *testing.T) {
 		require.NoError(stream.promoteCandidate(ctx, proposal2.Ref))
 		require.NoError(stream.promoteCandidate(ctx, proposal3.Ref))
 		require.NoError(stream.promoteCandidate(ctx, proposal4.Ref))
-		require.Len(stream.pendingCandidates, 3)
+		require.Len(stream.local.pendingCandidates, 3)
 
 		if i == 0 {
 			require.NoError(stream.SaveMiniblockCandidate(ctx, proposal2.Proto))

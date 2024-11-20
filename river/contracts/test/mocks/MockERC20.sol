@@ -4,6 +4,7 @@ pragma solidity ^0.8.24;
 // interfaces
 
 // libraries
+import {ERC20Storage} from "contracts/src/diamond/facets/token/ERC20/ERC20Storage.sol";
 
 // contracts
 import {ERC20} from "contracts/src/diamond/facets/token/ERC20/ERC20.sol";
@@ -15,6 +16,6 @@ contract MockERC20 is ERC20, IntrospectionFacet {
   }
 
   function mint(address account, uint256 amount) public {
-    _mint(account, amount);
+    ERC20Storage.layout().inner.mint(account, amount);
   }
 }

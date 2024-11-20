@@ -7,13 +7,14 @@ import {
     retryInterceptor,
     StreamRpcClient,
     type RetryParams,
+    DEFAULT_RETRY_PARAMS,
 } from '@river-build/sdk'
 
 let nextRpcClientNum = 0
 
 export function makeHttp2StreamRpcClient(
     urls: string,
-    retryParams: RetryParams = { maxAttempts: 3, initialRetryDelay: 2000, maxRetryDelay: 6000 },
+    retryParams: RetryParams = DEFAULT_RETRY_PARAMS,
     refreshNodeUrl?: () => Promise<string>,
 ): StreamRpcClient {
     const transportId = nextRpcClientNum++
@@ -25,7 +26,7 @@ export function makeHttp2StreamRpcClient(
             loggingInterceptor(transportId),
             retryInterceptor({ ...retryParams, refreshNodeUrl }),
         ],
-        defaultTimeoutMs: 20000,
+        defaultTimeoutMs: undefined, // default timeout is undefined, we add a timeout in the retryInterceptor
     }
     if (!process.env.RIVER_DEBUG_TRANSPORT) {
         options.useBinaryFormat = true
@@ -40,6 +41,6 @@ export function makeHttp2StreamRpcClient(
 
     const client = createPromiseClient(StreamService, transport) as StreamRpcClient
     client.url = url
-    client.opts = { retryParams, defaultTimeoutMs: options.defaultTimeoutMs }
+    client.opts = { retryParams }
     return client
 }

@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react'
 
 /**
  * Configuration options for an action.
- * It can be used to configure the behavior of the {@link useAction} hook.
+ * It can be used to configure the behavior of the useAction hook.
  */
 export type ActionConfig<Action> = {
     /** Callback function to be called when an error occurs while executing the action. */
@@ -25,7 +25,7 @@ type ReturnOf<T> = Awaited<ReturnType<ActionFn<T>>>
  * @internal
  * @param namespace - The namespace to create the action from.
  * @param fnName - The name of the action to create. Example: `Namespace.fnName`
- * @param config - Configuration options for the action. @see {@link ActionConfig}
+ * @param config - Configuration options for the action.
  * @returns The action and its loading state.
  */
 export const useAction = <Namespace, Key extends keyof Namespace, Fn extends Namespace[Key]>(

@@ -1,11 +1,11 @@
 import { useParams } from 'react-router-dom'
-import { useDm, useDmTimeline } from '@river-build/react-sdk'
+import { useDm, useTimeline } from '@river-build/react-sdk'
 import { Timeline } from '@/components/blocks/timeline'
 
 export const DmTimelineRoute = () => {
     const { dmStreamId } = useParams<{ dmStreamId: string }>()
     const { data: dm } = useDm(dmStreamId!)
-    const { data: timeline } = useDmTimeline(dmStreamId!)
+    const { data: timeline } = useTimeline(dmStreamId!)
     return (
         <>
             <h2 className="text-2xl font-bold">

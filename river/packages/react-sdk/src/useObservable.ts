@@ -1,14 +1,13 @@
 'use client'
 import { useEffect, useMemo, useSyncExternalStore } from 'react'
 import { type Observable, type PersistedModel } from '@river-build/sdk'
-import { isPersistedModel } from './utils'
+import { isPersistedModel } from './internals/utils'
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export declare namespace ObservableConfig {
     /**
      * Configuration options for an observable.
      * It can be used to configure the behavior of the `useObservable` hook.
-     * @see {@link useObservable}
      */
     export type FromObservable<Observable_> = Observable_ extends Observable<infer Data>
         ? FromData<Data>
@@ -20,7 +19,6 @@ export declare namespace ObservableConfig {
     /**
      * Create configuration options for an observable from the data type.
      * It can be used to configure the behavior of the `useObservable` hook.
-     * @see {@link useObservable}
      */
     export type FromData<Data> = Data extends PersistedModel<infer UnwrappedData>
         ? {
@@ -50,7 +48,7 @@ export declare namespace ObservableConfig {
 }
 
 /**
- * River SyncAgent models are wrapped in a {@link PersistedModel} when they are persisted.
+ * River SyncAgent models are wrapped in a PersistedModel when they are persisted.
  * This type is used to extract the actual data from the model.
  */
 type ObservableValue<Data> = Data extends PersistedModel<infer UnwrappedData>
@@ -60,7 +58,6 @@ type ObservableValue<Data> = Data extends PersistedModel<infer UnwrappedData>
           data: UnwrappedData
           /** If the model is in an error state, this will be the error. */
           error: Error | undefined
-          /** The status of the model. @see {@link PersistedModel.status} */
           status: PersistedModel<Data>['status']
           /** True if the model is in a loading state. */
           isLoading: boolean
@@ -89,7 +86,6 @@ type ObservableValue<Data> = Data extends PersistedModel<infer UnwrappedData>
  * @param observable - The observable to subscribe to.
  * @param config - Configuration options for the observable.
  * @returns The value of the observable.
- * @see {@link ObservableConfig.FromObservable}
  */
 export function useObservable<T>(
     observable: Observable<T>,

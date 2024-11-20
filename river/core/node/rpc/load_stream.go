@@ -21,7 +21,7 @@ type remoteStream struct {
 var _ Stream = (*remoteStream)(nil)
 
 func (s *Service) loadStream(ctx context.Context, streamId StreamId) (Stream, error) {
-	nodes, err := s.streamRegistry.GetStreamInfo(ctx, streamId)
+	nodes, err := s.cache.GetStreamInfo(ctx, streamId)
 	if err != nil {
 		return nil, err
 	}
