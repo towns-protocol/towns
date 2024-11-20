@@ -1,5 +1,6 @@
 import React, { useCallback, useContext, useMemo, useRef } from 'react'
 import { Permission, useConnectivity, useHasPermission, useTownsClient } from 'use-towns-client'
+import isError from 'lodash/isError'
 import { EmojiPickerButton } from '@components/EmojiPickerButton'
 import { Box, BoxProps, IconButton, IconName, MotionStack, Paragraph, Stack } from '@ui'
 import { useOpenMessageThread } from 'hooks/useOpenThread'
@@ -19,6 +20,8 @@ import { isInputFocused } from '@components/RichTextPlate/utils/helpers'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { CHANNEL_INFO_PARAMS } from 'routes'
 import { getThreadReplyOrDmReply, trackPostedMessage } from '@components/Analytics/postedMessage'
+import { popupToast } from '@components/Notifications/popupToast'
+import { StandardToast } from '@components/Notifications/StandardToast'
 import { useCreateUnreadMarker } from './hooks/useCreateUnreadMarker'
 import { DeleteMessagePrompt } from './DeleteMessagePrompt'
 
@@ -50,7 +53,7 @@ export const MessageContextMenu = (props: Props) => {
         redactEvent,
         sendReaction,
         sendReadReceipt,
-        adminRedactMessage,
+        clientSingleton,
         pinMessage,
         unpinMessage,
     } = useTownsClient()
@@ -69,6 +72,7 @@ export const MessageContextMenu = (props: Props) => {
         spaceId: spaceId ?? '',
         walletAddress: loggedInWalletAddress ?? '',
         permission: Permission.Redact,
+        channelId,
     })
 
     const onSelectEmoji = useCallback(
@@ -168,19 +172,30 @@ export const MessageContextMenu = (props: Props) => {
         }
     }, [canReplyInline, channelId, eventId, redactEvent, replyToEventId, spaceId, threadId])
 
-    const onAdminRedactConfirm = useCallback(() => {
+    const onAdminRedactConfirm = useCallback(async () => {
         if (channelId && eventId) {
-            adminRedactMessage(channelId, eventId)
-            trackPostedMessage({
-                spaceId,
-                channelId,
-                threadId,
-                canReplyInline,
-                replyToEventId,
-                messageType: 'admin redacted',
-            })
+            try {
+                await clientSingleton?.adminRedactMessage(channelId, eventId)
+                trackPostedMessage({
+                    spaceId,
+                    channelId,
+                    threadId,
+                    canReplyInline,
+                    replyToEventId,
+                    messageType: 'admin redacted',
+                })
+            } catch (error) {
+                console.error('onAdminRedactConfirm failed to redact message', error)
+                popupToast(({ toast }) => (
+                    <StandardToast.Error
+                        message="Failed to redact message"
+                        subMessage={isError(error) ? error.toString() : undefined}
+                        toast={toast}
+                    />
+                ))
+            }
         }
-    }, [canReplyInline, channelId, eventId, adminRedactMessage, replyToEventId, spaceId, threadId])
+    }, [channelId, eventId, clientSingleton, spaceId, threadId, canReplyInline, replyToEventId])
 
     const onCopyLinkToMessage = useShortcut(
         'CopyLinkToMessage',
