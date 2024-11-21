@@ -147,13 +147,21 @@ export class NotificationSettingsClient {
         }
         const startResponse = this.getLocalStartResponse()
         const finishResponse = this.getLocalFinishResponse()
+
         if (
             startResponse &&
             finishResponse &&
             startResponse.expiration &&
             startResponse.expiration.seconds > Date.now() / 1000
         ) {
-            return makeNotificationRpcClient(this.url, finishResponse.sessionToken, this.opts)
+            try {
+                return makeNotificationRpcClient(this.url, finishResponse.sessionToken, this.opts)
+            } catch (error) {
+                console.error(
+                    'TNS PUSH: error authenticating from local storage, will try from scratch',
+                    error,
+                )
+            }
         }
 
         const service = await NotificationService.authenticate(
