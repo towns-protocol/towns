@@ -179,77 +179,75 @@ export function EditGating({ isRole }: EditGatingProps) {
                     {...formProps}
                 >
                     {gatingType === 'gated' && (
-                        <Stack gap="md" background="level2">
-                            <Stack gap="md">
-                                <Stack background="level3" padding="md" rounded="md" gap="md">
-                                    <Stack horizontal grow gap as="label" cursor="pointer">
-                                        <Stack grow padding="xs">
-                                            <Paragraph strong>Digital Assets</Paragraph>
-                                            <Paragraph color="gray2">
-                                                Gate access based on token ownership
-                                            </Paragraph>
-                                        </Stack>
-                                        <Stack centerContent>
-                                            <Toggle
-                                                toggled={digitalAssetsEnabled}
-                                                background="level2"
-                                                data-testid="digital-assets-toggle"
-                                                onToggle={onDigitalAssetsToggle}
-                                            />
-                                        </Stack>
+                        <Stack gap="md">
+                            <Stack gap padding rounded="sm" background="lightHover">
+                                <Stack horizontal grow gap as="label" cursor="pointer">
+                                    <Stack grow padding="xs" gap="sm">
+                                        <Paragraph color="default">Digital Assets</Paragraph>
+                                        <Paragraph color="gray2" size="sm">
+                                            Gate access based on token ownership
+                                        </Paragraph>
                                     </Stack>
-
-                                    {digitalAssetsEnabled && (
-                                        <TokenSelector
-                                            isValidationError={
-                                                formState.errors.tokensGatedBy !== undefined &&
-                                                !!isTokenFieldTouched &&
-                                                !!isEthBalanceFieldTouched
-                                            }
-                                            inputRef={inputRef}
-                                            ethBalance={getValues('ethBalanceGatedBy')}
-                                            tokens={getValues('tokensGatedBy')}
-                                            onChange={onSelectedTokensChange}
-                                            onEthBalanceChange={onEthBalanceChange}
+                                    <Stack centerContent>
+                                        <Toggle
+                                            toggled={digitalAssetsEnabled}
+                                            background="level2"
+                                            data-testid="digital-assets-toggle"
+                                            onToggle={onDigitalAssetsToggle}
                                         />
-                                    )}
+                                    </Stack>
                                 </Stack>
 
-                                <Stack background="level3" padding="md" rounded="md" gap="md">
-                                    <Stack horizontal grow gap as="label" cursor="pointer">
-                                        <Stack grow padding="xs">
-                                            <Paragraph strong>
-                                                {isRole
-                                                    ? 'Members / Wallet Addresses'
-                                                    : 'Wallet Addresses'}
-                                            </Paragraph>
-                                            <Paragraph color="gray2">
-                                                Gate access based on specific wallet addresses{' '}
-                                                {isRole ? 'or members' : ''}
-                                            </Paragraph>
-                                        </Stack>
-                                        <Stack centerContent>
-                                            <Toggle
-                                                toggled={walletAddressesEnabled}
-                                                background="level2"
-                                                data-testid="wallet-addresses-toggle"
-                                                onToggle={onWalletAddressesToggle}
-                                            />
-                                        </Stack>
-                                    </Stack>
+                                {digitalAssetsEnabled && (
+                                    <TokenSelector
+                                        isValidationError={
+                                            formState.errors.tokensGatedBy !== undefined &&
+                                            !!isTokenFieldTouched &&
+                                            !!isEthBalanceFieldTouched
+                                        }
+                                        inputRef={inputRef}
+                                        ethBalance={getValues('ethBalanceGatedBy')}
+                                        tokens={getValues('tokensGatedBy')}
+                                        onChange={onSelectedTokensChange}
+                                        onEthBalanceChange={onEthBalanceChange}
+                                    />
+                                )}
+                            </Stack>
 
-                                    {walletAddressesEnabled && (
-                                        <WalletMemberSelector
-                                            isRole={isRole}
-                                            walletMembers={getValues('usersGatedBy') as Address[]}
-                                            isValidationError={
-                                                formState.errors.usersGatedBy !== undefined &&
-                                                !!formState.touchedFields.usersGatedBy
-                                            }
-                                            onChange={onUsersGatedByChange}
+                            <Stack padding gap background="lightHover" rounded="md">
+                                <Stack horizontal grow gap as="label" cursor="pointer">
+                                    <Stack grow padding="xs" gap="sm">
+                                        <Paragraph>
+                                            {isRole
+                                                ? 'Members / Wallet Addresses'
+                                                : 'Wallet Addresses'}
+                                        </Paragraph>
+                                        <Paragraph color="gray2" size="sm">
+                                            Gate access based on specific wallet addresses{' '}
+                                            {isRole ? 'or members' : ''}
+                                        </Paragraph>
+                                    </Stack>
+                                    <Stack centerContent>
+                                        <Toggle
+                                            toggled={walletAddressesEnabled}
+                                            background="level2"
+                                            data-testid="wallet-addresses-toggle"
+                                            onToggle={onWalletAddressesToggle}
                                         />
-                                    )}
+                                    </Stack>
                                 </Stack>
+
+                                {walletAddressesEnabled && (
+                                    <WalletMemberSelector
+                                        isRole={isRole}
+                                        walletMembers={getValues('usersGatedBy') as Address[]}
+                                        isValidationError={
+                                            formState.errors.usersGatedBy !== undefined &&
+                                            !!formState.touchedFields.usersGatedBy
+                                        }
+                                        onChange={onUsersGatedByChange}
+                                    />
+                                )}
                             </Stack>
                         </Stack>
                     )}

@@ -1,14 +1,19 @@
 import React, { useCallback } from 'react'
 import { Address } from 'use-towns-client'
-import { Box, Card, Icon, IconButton, Text } from '@ui'
+import { Box, BoxProps, Icon, IconButton, Text } from '@ui'
 
 type Props = {
     walletMembers: Address[]
     selectedAddresses: Address[]
     removeAll?: () => void
-}
+} & Pick<BoxProps, 'background'>
 
-export const MultipleAddresses = ({ walletMembers, selectedAddresses, removeAll }: Props) => {
+export const MultipleAddresses = ({
+    walletMembers,
+    selectedAddresses,
+    removeAll,
+    ...boxProps
+}: Props) => {
     const handleDownloadCSV = useCallback(() => {
         const csvContent = walletMembers.join('\n')
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
@@ -29,7 +34,7 @@ export const MultipleAddresses = ({ walletMembers, selectedAddresses, removeAll 
     }
 
     return (
-        <Card
+        <Box
             horizontal
             alignItems="center"
             justifyContent="spaceBetween"
@@ -37,6 +42,7 @@ export const MultipleAddresses = ({ walletMembers, selectedAddresses, removeAll 
             background="level1"
             rounded="sm"
             cursor="default"
+            {...boxProps}
         >
             <Box horizontal alignItems="center" gap="sm">
                 <Icon type="wallet" size="square_sm" />
@@ -65,6 +71,6 @@ export const MultipleAddresses = ({ walletMembers, selectedAddresses, removeAll 
                     />
                 )}
             </Box>
-        </Card>
+        </Box>
     )
 }

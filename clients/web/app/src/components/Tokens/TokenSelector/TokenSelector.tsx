@@ -1,7 +1,7 @@
 import React, { ChangeEvent, useCallback, useMemo, useRef, useState } from 'react'
 import { constants } from 'ethers'
 import { ModalContainer } from '@components/Modals/ModalContainer'
-import { Box, Icon, IconButton, Text, TextField } from '@ui'
+import { Box, BoxProps, Icon, IconButton, Text, TextField } from '@ui'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { useTokenMetadataAcrossNetworks } from 'api/lib/collectionMetadata'
 import { useClickedOrFocusedOutside } from 'hooks/useClickedOrFocusedOutside'
@@ -25,6 +25,8 @@ type Props = {
     onChange: (tokens: Token[]) => void
     onEthBalanceChange: (balance: string) => void
 }
+
+const optionBoxProps = { paddingY: 'sm', background: 'level3' } satisfies BoxProps
 
 export function TokenSelector(props: Props) {
     const { inputRef, allowedNetworks, tokens, onChange, onEthBalanceChange, ethBalance } = props
@@ -121,11 +123,11 @@ export function TokenSelector(props: Props) {
             zIndex="above"
             data-testid="token-search"
         >
-            <Box horizontal gap="xs" alignItems="center">
+            <Box horizontal gap="sm" alignItems="center">
                 <TextField
                     ref={inputRef}
                     data-testid="token-selector-input"
-                    background="level2"
+                    background="level3"
                     value={textFieldValue}
                     tone="none"
                     placeholder="Enter contract address"
@@ -136,7 +138,7 @@ export function TokenSelector(props: Props) {
                     centerContent
                     icon="eth"
                     tooltip="ETH Balance Gate"
-                    background="level2"
+                    background="level3"
                     rounded="sm"
                     data-testid="balance-gate-button"
                     width="x6"
@@ -149,6 +151,7 @@ export function TokenSelector(props: Props) {
                 {nativeTokenWithQuantity && (
                     <TokenSelectionInput
                         token={nativeTokenWithQuantity}
+                        optionBoxProps={optionBoxProps}
                         onDelete={onDelete}
                         onEdit={onEdit}
                     />
@@ -157,6 +160,7 @@ export function TokenSelector(props: Props) {
                     <TokenSelectionInput
                         key={token.chainId + token.data.address + (token.data.tokenId ?? '')}
                         token={token}
+                        optionBoxProps={optionBoxProps}
                         onDelete={onDelete}
                         onEdit={onEdit}
                     />
@@ -164,8 +168,18 @@ export function TokenSelector(props: Props) {
             </Box>
 
             {isTokenMetadataLoading && (
-                <Box centerContent position="absolute" bottom="-sm" width="100%">
-                    <ButtonSpinner />
+                <Box centerContent position="absolute" bottom="none" width="100%" height="none">
+                    <Box
+                        centerContent
+                        position="absolute"
+                        height="x7"
+                        top="none"
+                        width="100%"
+                        borderRadius="sm"
+                        background="level2"
+                    >
+                        <ButtonSpinner />
+                    </Box>
                 </Box>
             )}
 

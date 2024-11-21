@@ -77,7 +77,7 @@ function TokenDisplay(props: { data: TransferSchema; fromWallet: Address }) {
     return (
         <TokenSelection
             token={token}
-            wrapperBoxProps={{
+            optionBoxProps={{
                 background: 'level3',
                 width: '100%',
             }}

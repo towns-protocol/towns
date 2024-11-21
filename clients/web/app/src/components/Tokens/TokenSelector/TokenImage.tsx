@@ -2,13 +2,12 @@ import React from 'react'
 import { Box, BoxProps, Icon } from '@ui'
 import { TokenDataWithChainId } from '../types'
 
-export function TokenImage({
-    imgSrc,
-    width = 'x4',
-}: {
+type Props = {
     imgSrc: TokenDataWithChainId['data']['imgSrc'] | undefined
     width?: BoxProps['width']
-}) {
+} & BoxProps
+
+export function TokenImage({ imgSrc, width = 'x4', ...boxProps }: Props) {
     if (!imgSrc) {
         return (
             <Box
@@ -18,6 +17,7 @@ export function TokenImage({
                 rounded="sm"
                 width={width}
                 aspectRatio="square"
+                {...boxProps}
             >
                 <Icon type="token" size="square_md" color="gray2" />
             </Box>
@@ -31,6 +31,7 @@ export function TokenImage({
             rounded="sm"
             aspectRatio="square"
             background="level4"
+            {...boxProps}
         />
     )
 }

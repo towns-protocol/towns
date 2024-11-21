@@ -84,25 +84,30 @@ export const WalletMemberSelector = (props: Props) => {
 
     return (
         <Stack gap data-testid="user-search">
-            <Stack gap="xs">
+            <Stack gap="sm">
                 <Box position="relative">
-                    <Box horizontal gap="xs" alignItems="center">
+                    <Box horizontal gap="sm" alignItems="center">
                         <TextField
                             value={searchTerm}
                             placeholder={
                                 isRole ? 'Search members or enter address' : 'Enter wallet address'
                             }
-                            background="level2"
+                            background="level3"
                             data-testid="address-selection-input"
                             onChange={handleInputChange}
                             onKeyDown={handleInputKeyDown}
                         />
-                        {!isTouch && <CSVUploader handleCSVAddresses={handleCSVAddresses} />}
+                        {!isTouch && (
+                            <CSVUploader
+                                handleCSVAddresses={handleCSVAddresses}
+                                background="level3"
+                            />
+                        )}
                     </Box>
                     {searchTerm ? (
                         <Box
                             position="absolute"
-                            background="level1"
+                            background="level3"
                             padding="sm"
                             rounded="sm"
                             top="x4"
@@ -132,7 +137,7 @@ export const WalletMemberSelector = (props: Props) => {
                                         Add address: {shortAddress(searchTerm as Address)}
                                     </Button>
                                 ) : (
-                                    <Box padding="md">
+                                    <Box padding>
                                         <Text>
                                             {isRole
                                                 ? 'Not a member or valid address'

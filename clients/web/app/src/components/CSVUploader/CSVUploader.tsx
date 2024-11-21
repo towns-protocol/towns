@@ -3,14 +3,14 @@ import { Address } from 'use-towns-client'
 import { DropzoneOptions, useDropzone } from 'react-dropzone'
 import Papa from 'papaparse'
 import { getAddress, isAddress } from 'ethers/lib/utils'
-import { Box, Button, Card, FancyButton, IconButton, Paragraph, Stack, Text } from '@ui'
+import { Box, BoxProps, Button, Card, FancyButton, IconButton, Paragraph, Stack, Text } from '@ui'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { useDevice } from 'hooks/useDevice'
 import { CSVUploaderStyles } from './CSVUploader.css'
 
-interface Props {
+type Props = {
     handleCSVAddresses: (addresses: Address[]) => void
-}
+} & Pick<BoxProps, 'background'>
 
 const csvMimeTypes = [
     'text/csv',
@@ -22,7 +22,7 @@ const csvMimeTypes = [
     'text/x-comma-separated-values',
 ]
 
-export const CSVUploader = ({ handleCSVAddresses }: Props) => {
+export const CSVUploader = ({ handleCSVAddresses, ...boxProps }: Props) => {
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [uploadedCount, setUploadedCount] = useState(0)
     const [validAddresses, setValidAddresses] = useState<Address[]>([])
@@ -111,6 +111,7 @@ export const CSVUploader = ({ handleCSVAddresses }: Props) => {
                 width="x6"
                 height="x6"
                 onClick={() => setIsModalOpen(true)}
+                {...boxProps}
             />
             {isModalOpen && (
                 <ModalContainer onHide={() => setIsModalOpen(false)}>

@@ -60,7 +60,7 @@ export function AssetSelector(props: {
                 <AssetToTransfer onRemoveClick={onRemoveClick}>
                     <TokenSelection
                         token={asset}
-                        wrapperBoxProps={{ paddingY: 'none', paddingX: 'none' }}
+                        optionBoxProps={{ paddingY: 'none', paddingX: 'none' }}
                     />
                 </AssetToTransfer>
             )
@@ -127,7 +127,7 @@ function AssetOption(props: { token: Token; onAddItem: (customKey?: string) => v
             data-testid={`asset-option-${token.data.address}`}
             onClick={() => onAddItem(token.data.address)}
         >
-            <TokenSelection token={token} wrapperBoxProps={{ paddingY: 'sm', hoverable: true }} />
+            <TokenSelection token={token} optionBoxProps={{ paddingY: 'sm', hoverable: true }} />
         </Stack>
     )
 }

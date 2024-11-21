@@ -51,7 +51,7 @@ export const WalletMemberList: React.FC<Props> = ({
     }, [users, walletMembers, isRole])
 
     return (
-        <Box>
+        <Box gap="sm">
             {selectedAddresses.length <= 15 ? (
                 <>
                     {selectedAddresses.map((address) => (

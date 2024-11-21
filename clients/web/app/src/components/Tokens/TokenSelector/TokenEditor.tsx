@@ -135,6 +135,7 @@ export function TokenEditor(props: {
             </Stack>
 
             <TokenSelectionDisplay
+                optionBoxProps={{ paddingX: 'md' }}
                 token={{
                     ...token,
                     data: {
