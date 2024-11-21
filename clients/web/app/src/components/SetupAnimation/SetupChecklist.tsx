@@ -36,7 +36,7 @@ const ChecklistStep = (props: { step: string; state: 'progress' | 'done' | 'todo
             transition={{ duration: 0.6 }}
             padding="sm"
         >
-            <Box centerContent height="x4" width="x4">
+            <Box centerContent height="x3" width="x3">
                 {props.state === 'done' ? (
                     <Checkmark />
                 ) : props.state === 'progress' ? (

@@ -1,5 +1,5 @@
 import { clsx } from 'clsx'
-import React, { ChangeEvent, SelectHTMLAttributes, useRef } from 'react'
+import React, { ChangeEvent, PropsWithChildren, useCallback, useRef, useState } from 'react'
 import { RefCallBack } from 'react-hook-form'
 import { Text } from 'ui/components/Text/Text'
 import { Grid } from 'ui/components/Grid/Grid'
@@ -11,18 +11,18 @@ import { Box } from 'ui/components/Box/Box'
 import { FieldTone } from 'ui/components/_internal/Field/types'
 import * as styles from './RadioSelect.css'
 
-type Props = {
+type Props<T extends string> = {
     defaultValue?: string
-    render?: (value: string, selected: boolean) => JSX.Element
-    options: ({ label: string; value: string } | string)[]
+    render?: (value: T, selected: boolean, focused: boolean) => JSX.Element
+    options: readonly ({ label: string; value: T } | T)[]
     columns?: number | string
     onChange?: (e: ChangeEvent<HTMLSelectElement>) => void
     applyChildProps?: () => {
         ref: RefCallBack
-    } & Omit<SelectHTMLAttributes<HTMLSelectElement>, 'color'>
+    } & Omit<React.HTMLAttributes<HTMLInputElement>, 'color'>
 } & FieldBaseProps
 
-export const RadioSelect = (props: Props) => {
+export const RadioSelect = <T extends string>(props: Props<T>) => {
     const { options: _options, render, columns, applyChildProps, ...fieldProps } = props
 
     const options = _options.map((o) => (typeof o === 'string' ? { label: o, value: o } : o))
@@ -31,7 +31,7 @@ export const RadioSelect = (props: Props) => {
         <Field {...fieldProps} height="auto" paddingX="none">
             {(overlays, { className, ...inputProps }) => (
                 <>
-                    <Stack grow paddingTop="sm">
+                    <Stack grow role="radiogroup">
                         <Grid
                             columns={typeof columns === 'number' ? columns : undefined}
                             columnMinSize={typeof columns === 'string' ? columns : undefined}
@@ -61,32 +61,51 @@ export const RadioSelect = (props: Props) => {
     )
 }
 
-const Checkbox = (props: {
+const Checkbox = <T extends string>(props: {
     id?: string
     label: string
-    value: string
+    value: T
     tone: FieldTone
-    render?: (value: string, selected: boolean) => JSX.Element
-    applyChildProps: Props['applyChildProps']
+    render?: (value: T, selected: boolean, focused: boolean) => JSX.Element
+    applyChildProps: Props<T>['applyChildProps']
 }) => {
     const { label, value, id, render, applyChildProps } = props
     const labelId = `label-${value.replace(/[^a-z0-9]/i, '_')}`
 
     const fieldRef = useRef<HTMLInputElement | null>()
-    const { ref, ...childProps } = applyChildProps?.() ?? {}
+    const { ref, onFocus, onBlur, ...childProps } = applyChildProps?.() ?? {}
+
+    const isCustomRender = !!render
+
+    const [focused, setIsFocused] = useState(false)
+
+    const _onFocus = useCallback(
+        (e: React.FocusEvent<HTMLInputElement>) => {
+            setIsFocused(true)
+            onFocus?.(e)
+        },
+        [onFocus],
+    )
+    const _onBlur = useCallback(
+        (e: React.FocusEvent<HTMLInputElement>) => {
+            setIsFocused(false)
+            onBlur?.(e)
+        },
+        [onBlur],
+    )
 
     return (
         <Stack
             horizontal
             cursor="pointer"
             as="label"
-            gap="sm"
+            gap={!isCustomRender ? 'sm' : 'none'}
             color="gray1"
             alignItems="center"
             pointerEvents="all"
             key={labelId}
         >
-            <Stack horizontal position="relative">
+            <OutlineContainer {...props}>
                 <Box
                     as="input"
                     type="radio"
@@ -104,16 +123,32 @@ const Checkbox = (props: {
                         fieldRef.current = e as HTMLInputElement
                     }}
                     {...childProps}
+                    onBlur={_onBlur}
+                    onFocus={_onFocus}
                 />
-                {!render && (
-                    <FieldOutline tone={props.tone ?? 'neutral'} disabled={false} rounded="full" />
-                )}
-            </Stack>
+            </OutlineContainer>
+
             {render ? (
-                render(value, !!fieldRef?.current?.checked)
+                <Box grow position="relative">
+                    {render(value, !!fieldRef?.current?.checked, focused)}
+                    <FieldOutline tone={props.tone ?? 'neutral'} disabled={false} />
+                </Box>
             ) : (
                 <Text className={styles.radioLabel}>{String(label)}</Text>
             )}
+        </Stack>
+    )
+}
+
+const OutlineContainer = <T extends string>(
+    props: PropsWithChildren & Pick<Props<T>, 'tone' | 'render'>,
+) => {
+    return props.render ? (
+        props.children
+    ) : (
+        <Stack horizontal position="relative">
+            {props.children}
+            <FieldOutline tone={props.tone ?? 'neutral'} disabled={false} rounded="full" />
         </Stack>
     )
 }

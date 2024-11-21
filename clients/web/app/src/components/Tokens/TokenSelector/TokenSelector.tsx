@@ -128,17 +128,19 @@ export function TokenSelector(props: Props) {
                     background="level2"
                     value={textFieldValue}
                     tone="none"
-                    placeholder="Enter a contract address"
+                    placeholder="Enter contract address"
                     onChange={onTextFieldChange}
                 />
 
                 <IconButton
+                    centerContent
                     icon="eth"
                     tooltip="ETH Balance Gate"
                     background="level2"
-                    padding="md"
                     rounded="sm"
                     data-testid="balance-gate-button"
+                    width="x6"
+                    height="x6"
                     onClick={() => setTokenEditor(nativeTokenWithQuantity || NATIVE_TOKEN)}
                 />
             </Box>
@@ -198,6 +200,7 @@ export function TokenSelector(props: Props) {
                 <ModalContainer
                     asSheet={_isTouch}
                     minWidth={_isTouch ? '100%' : '400'}
+                    padding="none"
                     onHide={() => setTokenEditor(undefined)}
                 >
                     <TokenEditor

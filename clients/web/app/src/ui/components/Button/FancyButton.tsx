@@ -14,6 +14,7 @@ type FancyButtonProps = {
     disabled?: boolean
     icon?: IconName
     onClick?: () => void
+    onClickDisabled?: () => void
     borderRadius?: BoxProps['borderRadius']
     boxShadow?: BoxProps['boxShadow']
 } & Omit<
@@ -35,6 +36,7 @@ export const FancyButton = React.forwardRef<HTMLButtonElement, FancyButtonProps>
         disabled,
         boxShadow,
         borderRadius = 'sm',
+        onClickDisabled,
         ...buttonProps
     } = props
     const background = cta ? 'cta1' : 'level3'
@@ -57,16 +59,28 @@ export const FancyButton = React.forwardRef<HTMLButtonElement, FancyButtonProps>
         }
     }, [ripple])
 
-    const onTap = useCallback((event: React.PointerEvent) => {
-        const b = event.currentTarget.getBoundingClientRect()
-        setRipple((p) => ({
-            x: event.clientX - b.left,
-            y: event.clientY - b.top,
-            key: p ? p.key + 1 : 0,
-        }))
-    }, [])
+    const onTap = useCallback(
+        (event: React.PointerEvent) => {
+            if (disabled) {
+                onClickDisabled?.()
+            }
+            const b = event.currentTarget.getBoundingClientRect()
+            setRipple((p) => ({
+                x: event.clientX - b.left,
+                y: event.clientY - b.top,
+                key: p ? p.key + 1 : 0,
+            }))
+        },
+        [disabled, onClickDisabled],
+    )
 
     const fadedOpacity = disabled && !spinner ? 0.4 : 1
+
+    const onClick = useCallback(() => {
+        if (!disabled) {
+            props.onClick?.()
+        }
+    }, [disabled, props])
 
     return (
         <MotionBox
@@ -101,7 +115,7 @@ export const FancyButton = React.forwardRef<HTMLButtonElement, FancyButtonProps>
             // sets color defaults while hiding the background
             cursor={spinner ? 'wait' : disabled ? 'not-allowed' : 'pointer'}
             onPointerDown={onTap}
-            onClick={!disabled ? props.onClick : undefined}
+            onClick={onClick}
             {...buttonProps}
         >
             <AnimatePresence>

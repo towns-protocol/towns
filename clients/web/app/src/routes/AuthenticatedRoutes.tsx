@@ -4,10 +4,10 @@ import { PATHS } from 'routes'
 import { SpaceContextRoute } from 'routes/SpaceContextRoute'
 import { useDevice } from 'hooks/useDevice'
 import { DirectMessageThread } from '@components/DirectMessages/DirectMessageThread'
-import { CreateSpaceFormV2 } from '@components/Web3/MembershipNFT/CreateSpaceFormV2/CreateSpaceFormV2'
 import { Panel } from '@components/Panel/Panel'
 import { CardLabel } from '@ui'
 import { CreateMessage } from '@components/DirectMessages/CreateDirectMessage/CreateMessage'
+import { CreateTown } from '@components/Web3/CreateTown/CreateTown'
 import { SpaceHome, TouchHome } from './home'
 import { SpaceMentions } from './SpaceMentions'
 import { SpacesChannel, SpacesChannelRoute } from './SpacesChannel'
@@ -35,7 +35,7 @@ export const AuthenticatedRoutes = () => {
             <Route element={<SpaceContextRoute />}>
                 {isTouch ? (
                     <>
-                        <Route path={`${PATHS.SPACES}/new`} element={<CreateSpaceFormV2 />} />
+                        <Route path={`${PATHS.SPACES}/new`} element={<CreateTown />} />
                         <Route element={<ValidateMembership />}>
                             <Route path={`${PATHS.SPACES}/:spaceSlug`}>
                                 <Route path="" element={<TouchHome />}>
@@ -92,10 +92,8 @@ export const AuthenticatedRoutes = () => {
                         <Route element={<ValidateMembership />}>
                             <Route element={<AppPanelLayout />}>
                                 <Route path={PATHS.EXPLORE} element={<ExplorePage />} />
-                                <Route
-                                    path={`${PATHS.SPACES}/new`}
-                                    element={<CreateSpaceFormV2 />}
-                                />
+                                <Route path={`${PATHS.SPACES}/new`} element={<CreateTown />} />
+
                                 <Route path={`${PATHS.SPACES}/:spaceSlug`}>
                                     <Route index element={<SpaceHome />} />
                                     {messageRoutes}

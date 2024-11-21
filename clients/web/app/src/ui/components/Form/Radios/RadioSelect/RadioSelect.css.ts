@@ -41,7 +41,7 @@ export const radio = style({
 
 export const hiddenRadio = style({
     appearance: 'none',
-    display: 'none',
+    width: '0',
 })
 
 export const radioLabel = style({

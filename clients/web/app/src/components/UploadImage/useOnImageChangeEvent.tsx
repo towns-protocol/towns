@@ -1,5 +1,6 @@
 import { ChangeEvent, useMemo, useState } from 'react'
 import { FieldValues, Path, UseFormReturn } from 'react-hook-form'
+import { getImageDimensions } from './getImageDimensions'
 
 export type UploadImageRequestConfig = {
     id: string
@@ -93,13 +94,4 @@ export function useOnImageChangeEvent<T extends FieldValues>({
         onChange,
         isUploading,
     }
-}
-
-async function getImageDimensions(src: string): Promise<{ width: number; height: number }> {
-    return new Promise((resolve, reject) => {
-        const img = new Image()
-        img.onload = () => resolve({ width: img.width, height: img.height })
-        img.onerror = reject
-        img.src = src
-    })
 }

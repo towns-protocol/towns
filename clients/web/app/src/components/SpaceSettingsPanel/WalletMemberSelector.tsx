@@ -6,6 +6,7 @@ import { CSVUploader } from '@components/CSVUploader/CSVUploader'
 import { useLookupUsersWithAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { shortAddress } from 'ui/utils/utils'
+import { useDevice } from 'hooks/useDevice'
 import { WalletMemberList } from './WalletMemberList'
 
 type Props = {
@@ -19,6 +20,7 @@ export const WalletMemberSelector = (props: Props) => {
     const { walletMembers, onChange, isValidationError, isRole } = props
     const { data: users } = useLookupUsersWithAbstractAccountAddress()
     const [searchTerm, setSearchTerm] = useState('')
+    const { isTouch } = useDevice()
 
     const handleCSVAddresses = useCallback(
         (addresses: Address[]) => {
@@ -88,14 +90,14 @@ export const WalletMemberSelector = (props: Props) => {
                         <TextField
                             value={searchTerm}
                             placeholder={
-                                isRole ? 'Search members or enter address' : 'Enter address'
+                                isRole ? 'Search members or enter address' : 'Enter wallet address'
                             }
                             background="level2"
                             data-testid="address-selection-input"
                             onChange={handleInputChange}
                             onKeyDown={handleInputKeyDown}
                         />
-                        <CSVUploader handleCSVAddresses={handleCSVAddresses} />
+                        {!isTouch && <CSVUploader handleCSVAddresses={handleCSVAddresses} />}
                     </Box>
                     {searchTerm ? (
                         <Box

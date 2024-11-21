@@ -58,6 +58,7 @@ export type FieldBaseProps = {
     maxWidth?: BoxProps['maxWidth']
     rounded?: BoxProps['rounded']
     minHeight?: BoxProps['minHeight']
+    gap?: BoxProps['gap']
 }
 
 type PassthroughProps = 'id' | 'name' | 'disabled' | 'autoComplete' | 'autoFocus' | 'maxLength'

@@ -1,7 +1,9 @@
 import { defineProperties } from '@vanilla-extract/sprinkles'
 import { vars } from '../vars.css'
+import { responsivePropertiesMixin } from '../breakpoints'
 
 export const blockProperties = defineProperties({
+    ...responsivePropertiesMixin,
     properties: {
         position: {
             relative: 'relative',

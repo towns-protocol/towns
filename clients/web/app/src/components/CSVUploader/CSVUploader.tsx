@@ -100,13 +100,16 @@ export const CSVUploader = ({ handleCSVAddresses }: Props) => {
     return (
         <>
             <IconButton
+                centerContent
+                hoverable
                 icon="download"
                 tooltip="Upload CSV"
                 background="level2"
-                padding="md"
                 rounded="sm"
                 style={{ transform: 'rotate(180deg)' }}
                 data-testid="upload-csv-button"
+                width="x6"
+                height="x6"
                 onClick={() => setIsModalOpen(true)}
             />
             {isModalOpen && (

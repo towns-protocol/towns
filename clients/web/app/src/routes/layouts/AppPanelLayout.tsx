@@ -1,5 +1,5 @@
 import { Allotment, AllotmentHandle } from 'allotment'
-import React, { useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { Outlet, useMatch } from 'react-router'
 import { useSpaceData } from 'use-towns-client'
 import { DirectMessagesPanel } from '@components/DirectMessages/DirectMessages'
@@ -85,13 +85,16 @@ const CentralPanelLayout = () => {
 
     const panel = usePanels()
 
+    const [ready, setReady] = useState(false)
+    useEffect(() => {
+        setReady(true)
+    }, [])
+
     return (
         <Allotment onChange={onSizesChange}>
             <Allotment.Pane minSize={550}>
                 <ErrorBoundary FallbackComponent={ErrorFallbackComponent}>
-                    <Card absoluteFillSafeSafari>
-                        <Outlet />
-                    </Card>
+                    <Card absoluteFillSafeSafari>{ready && <Outlet />}</Card>
                 </ErrorBoundary>
             </Allotment.Pane>
             {panel && (
