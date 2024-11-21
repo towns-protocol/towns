@@ -191,6 +191,7 @@ export const ChannelInfo = () => {
                                         roleId={role.roleId}
                                         permissions={role.permissions}
                                         showDiff={canEditChannel}
+                                        key={role.roleId}
                                     />
                                 ) : (
                                     role.permissions
