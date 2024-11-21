@@ -142,8 +142,7 @@ export class NotificationSettingsClient {
 
     private async _initialize(): Promise<NotificationRpcClient | undefined> {
         if (!this.url) {
-            console.error('TNS PUSH: notification service url is unset')
-            return undefined
+            throw new Error('TNS PUSH: notification service url is unset')
         }
         const startResponse = this.getLocalStartResponse()
         const finishResponse = this.getLocalFinishResponse()

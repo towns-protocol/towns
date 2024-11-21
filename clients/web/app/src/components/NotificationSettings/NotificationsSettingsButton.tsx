@@ -150,7 +150,7 @@ export function TownNotificationsButton(props: Props) {
                 data-testid="notifications-settings-button"
                 gap="sm"
                 alignItems="center"
-                title={JSON.stringify(error, undefined, 2)}
+                title={formatError(error)}
                 background="level2"
                 rounded="sm"
             >
@@ -227,4 +227,12 @@ export function TownNotificationsButton(props: Props) {
             />
         )
     }
+}
+
+function formatError(error: Error) {
+    const jsonStr = JSON.stringify(error, undefined, 2)
+    if (jsonStr === '{}' || jsonStr === '') {
+        return `Error: ${error.message}`
+    }
+    return jsonStr
 }
