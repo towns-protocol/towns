@@ -6,7 +6,6 @@ import { InteractiveSpaceIcon } from '@components/SpaceIcon/SpaceIcon'
 import { Box, Heading, Icon, MotionBox, Paragraph, Pill, Stack } from '@ui'
 import { BlurredBackground } from '@components/TouchLayoutHeader/BlurredBackground'
 import { ImageVariants, useImageSource } from '@components/UploadImage/useImageSource'
-import { useMobile } from 'hooks/useMobile'
 import { Analytics } from 'hooks/useAnalytics'
 import { PATHS } from 'routes'
 import { useEntitlements } from 'hooks/useEntitlements'
@@ -19,7 +18,6 @@ interface ExploreCardProps {
 
 export const ExploreCard = ({ address, variant }: ExploreCardProps) => {
     const navigate = useNavigate()
-    const isMobile = useMobile()
     const spaceId = SpaceIdFromSpaceAddress(address)
 
     const { data: spaceInfo, isLoading: isSpaceInfoLoading } = useContractSpaceInfo(spaceId)
@@ -144,7 +142,6 @@ export const ExploreCard = ({ address, variant }: ExploreCardProps) => {
             padding="sm"
             gap="sm"
             width="100%"
-            style={{ maxWidth: isMobile ? '280px' : '100%' }}
             cursor="pointer"
             onClick={onClick}
         >

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-const MOBILE_BREAKPOINT = 740
+const MOBILE_BREAKPOINT = 992
 
 export const useMobile = () => {
     const [isMobile, setIsMobile] = useState(window.innerWidth < MOBILE_BREAKPOINT)

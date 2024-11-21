@@ -6,6 +6,7 @@ type Props = BoxProps & {
     columns?: number
     columnMinSize?: string
     columnMaxSize?: string
+    autoFit?: boolean
 }
 
 export const Grid = (props: Props) => {
@@ -13,6 +14,7 @@ export const Grid = (props: Props) => {
         columns,
         columnMinSize,
         columnMaxSize = '1fr',
+        autoFit = false,
         children,
         gap = 'md',
         ...boxProps
@@ -30,7 +32,9 @@ export const Grid = (props: Props) => {
                 rowGap: vars.space[rowGap],
                 gridTemplateColumns: columns
                     ? `repeat(${columns}, 1fr)`
-                    : `repeat(auto-fill,minmax(${columnMinSize}, ${columnMaxSize}))`,
+                    : `repeat(${
+                          autoFit ? 'auto-fit' : 'auto-fill'
+                      }, minmax(${columnMinSize}, ${columnMaxSize}))`,
             }}
             {...boxProps}
         >

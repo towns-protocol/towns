@@ -5,4 +5,5 @@ export enum TouchScrollToTopScrollId {
     ThreadsTabScrollId = 'threadsTabScrollId',
     SearchTabScrollId = 'searchTabScrollId',
     SearchTabInputId = 'searchTabInputId',
+    ExploreTabScrollId = 'exploreTabScrollId',
 }

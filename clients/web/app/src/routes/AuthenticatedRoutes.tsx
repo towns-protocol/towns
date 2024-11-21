@@ -22,7 +22,7 @@ import { AppPanelLayout } from './layouts/AppPanelLayout'
 import { TouchSearchTab } from './TouchSearchTab'
 import { ValidateMembership } from './ValidateMembership'
 import { DirectMessages } from './DMRoute'
-import { ExplorePage } from './ExplorePage/ExplorePage'
+import { ExploreMobile, ExplorePage } from './ExplorePage/ExplorePage'
 
 export const AuthenticatedRoutes = () => {
     const { isTouch } = useDevice()
@@ -73,6 +73,7 @@ export const AuthenticatedRoutes = () => {
                                         path={`${PATHS.PROFILE}/me`}
                                         element={<TouchProfile />}
                                     />
+                                    <Route path={PATHS.EXPLORE} element={<ExploreMobile />} />
                                     <Route
                                         path={`${PATHS.PROFILE}/:profileId`}
                                         element={<SpaceProfilePanel />}
@@ -83,6 +84,7 @@ export const AuthenticatedRoutes = () => {
                             <Route element={<TouchHome />}>
                                 <Route path="me" element={<SpaceProfilePanel />} />
                                 {/* catch all */}
+                                <Route path={PATHS.EXPLORE} element={<ExploreMobile />} />
                                 <Route path="*" element={<NoJoinedSpacesFallback />} />
                             </Route>
                         </Route>

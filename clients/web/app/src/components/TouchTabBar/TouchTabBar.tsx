@@ -1,5 +1,5 @@
 import React, { forwardRef, useCallback, useMemo, useRef } from 'react'
-import { useMyProfile, useSpaceData, useTownsContext } from 'use-towns-client'
+import { useMyProfile, useSpaceData, useSpaceDataStore, useTownsContext } from 'use-towns-client'
 import { matchRoutes, useLocation, useNavigate, useResolvedPath } from 'react-router'
 import { Box, Dot, Icon, IconButton, Stack, Text, Tooltip } from '@ui'
 import { SpaceIcon } from '@components/SpaceIcon'
@@ -19,6 +19,13 @@ export const TouchTabBar = () => {
     const space = useSpaceData()
     const userId = useMyProfile()?.userId
     const { showHasUnreadBadgeForCurrentSpace } = useShowHasUnreadBadgeForCurrentSpace()
+    const spaceIdBookmark = useStore((s) => {
+        return s.spaceIdBookmark
+    })
+    const { spaces } = useTownsContext()
+    const spaceId = space?.id || spaceIdBookmark || spaces[0]?.id
+    const cachedSpace = useSpaceDataStore((s) => s.spaceDataMap?.[spaceId ?? ''])
+    const spaceName = space?.name || cachedSpace?.name || spaces[0]?.name
 
     const { dmUnreadChannelIds } = useTownsContext()
     const recentlyMintedSpaceToken = useStore((s) => s.recentlyMintedSpaceToken)
@@ -40,34 +47,47 @@ export const TouchTabBar = () => {
                 <MintAnimation targetRef={targetRef} info={recentlyMintedSpaceToken} />
             )}
             <Stack horizontal width="100%" background="level2" paddingY="sm" alignContent="end">
-                <TabBarItem
-                    disabled={!space}
-                    title="Home"
-                    icon={(highlighted: boolean) => (
-                        <Box>
-                            <SpaceIcon
-                                letterFontSize="sm"
-                                border={highlighted ? 'iconHighlighted' : 'iconIdle'}
-                                inset="xxs"
-                                width="toolbar_icon"
-                                height="toolbar_icon"
-                                spaceId={space?.id ?? ''}
-                                firstLetterOfSpaceName={space?.name[0] ?? ''}
-                                overrideBorderRadius="sm"
-                                variant={ImageVariants.thumbnail50}
-                                fadeIn={false}
-                            />
+                {spaceId ? (
+                    <TabBarItem
+                        title="Home"
+                        icon={(highlighted: boolean) => (
+                            <Box>
+                                <SpaceIcon
+                                    letterFontSize="sm"
+                                    border={highlighted ? 'iconHighlighted' : 'iconIdle'}
+                                    inset="xxs"
+                                    width="toolbar_icon"
+                                    height="toolbar_icon"
+                                    spaceId={spaceId ?? ''}
+                                    firstLetterOfSpaceName={spaceName?.[0] ?? ''}
+                                    overrideBorderRadius="sm"
+                                    variant={ImageVariants.thumbnail50}
+                                    fadeIn={false}
+                                />
 
-                            {showHasUnreadBadgeForCurrentSpace && <Dot position="topRight" />}
-                        </Box>
-                    )}
-                    to={`/${PATHS.SPACES}/${space?.id}`}
-                    scrollToTopId={TouchScrollToTopScrollId.HomeTabScrollId}
-                    highlightPattern={`${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/*`}
-                />
+                                {showHasUnreadBadgeForCurrentSpace && <Dot position="topRight" />}
+                            </Box>
+                        )}
+                        to={`/${PATHS.SPACES}/${spaceId}`}
+                        scrollToTopId={TouchScrollToTopScrollId.HomeTabScrollId}
+                        highlightPattern={`${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/*`}
+                    />
+                ) : (
+                    <TabBarItem
+                        title="Create"
+                        icon={(highlighted: boolean) => (
+                            <Box>
+                                <Icon type="plus" size="toolbar_icon" padding="xxs" />
+                            </Box>
+                        )}
+                        to={`/${PATHS.SPACES}/new`}
+                        scrollToTopId={TouchScrollToTopScrollId.HomeTabScrollId}
+                        highlightPattern={`${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/*`}
+                    />
+                )}
 
                 <TabBarItem
-                    disabled={!space}
+                    disabled={!spaceId}
                     title="DMs"
                     icon={() => (
                         <Box>
@@ -75,7 +95,11 @@ export const TouchTabBar = () => {
                             {hasUnreadDMs && <Dot position="topRight" />}
                         </Box>
                     )}
-                    to={`${messageLink}?stackId=${PanelStack.DIRECT_MESSAGES}`}
+                    to={
+                        space
+                            ? `${messageLink}?stackId=${PanelStack.DIRECT_MESSAGES}`
+                            : `${PATHS.SPACES}/${spaceId}/${PATHS.MESSAGES}?stackId=${PanelStack.DIRECT_MESSAGES}`
+                    }
                     scrollToTopId={TouchScrollToTopScrollId.SearchTabScrollId}
                     onPressTwice={() => {
                         document.getElementById(TouchScrollToTopScrollId.SearchTabInputId)?.focus()
@@ -83,13 +107,19 @@ export const TouchTabBar = () => {
                 />
 
                 <TabBarItem
-                    disabled={!space}
-                    title="Search"
-                    icon={() => <Icon type="search" size="toolbar_icon" />}
-                    to={`/${PATHS.SPACES}/${space?.id}/${PATHS.SEARCH}`}
-                    scrollToTopId={TouchScrollToTopScrollId.SearchTabScrollId}
+                    title="Explore"
+                    icon={() => <Icon type="explore" size="toolbar_icon" padding="xxs" />}
+                    to={
+                        spaceId
+                            ? `/${PATHS.SPACES}/${spaceId}/${PATHS.EXPLORE}`
+                            : `/${PATHS.EXPLORE}`
+                    }
+                    scrollToTopId={TouchScrollToTopScrollId.ExploreTabScrollId}
+                    highlightPattern="/"
                     onPressTwice={() => {
-                        document.getElementById(TouchScrollToTopScrollId.SearchTabInputId)?.focus()
+                        document
+                            .getElementById(TouchScrollToTopScrollId.ExploreTabScrollId)
+                            ?.focus()
                     }}
                 />
 
@@ -101,7 +131,7 @@ export const TouchTabBar = () => {
                         </Box>
                     )}
                     scrollToTopId={TouchScrollToTopScrollId.ProfileTabScrollId}
-                    to={space ? `/${PATHS.SPACES}/${space?.id}/${PATHS.PROFILE}/me` : `/me`}
+                    to={spaceId ? `/${PATHS.SPACES}/${spaceId}/${PATHS.PROFILE}/me` : `/me`}
                     ref={targetRef}
                 />
             </Stack>
