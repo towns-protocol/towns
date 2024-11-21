@@ -25,12 +25,8 @@ jobs:
             - name: Get Latest Commit SHA
               id: sha
               run: |
-                  if [[ "${{ github.event_name }}" == "schedule" ]]; then
-                    LATEST_RC_TAG=$(git describe --tags --abbrev=0 --match "rc-*")
-                    echo "COMMIT_SHA=$(git rev-list -n 1 $LATEST_RC_TAG)" >> $GITHUB_ENV
-                  else
-                    echo "COMMIT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-                  fi
+                  LATEST_RC_TAG=$(git describe --tags --abbrev=0 --match "rc-*")
+                  echo "COMMIT_SHA=$(git rev-list -n 1 $LATEST_RC_TAG)" >> $GITHUB_ENV
 
             - name: Set Branch Name
               run: echo "RELEASE_BRANCH=omega-release/${{ env.DATE }}-${{ env.COMMIT_SHA }}" >> $GITHUB_ENV
