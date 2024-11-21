@@ -271,8 +271,6 @@ module "river_notification_service" {
   db_subnets      = module.vpc.database_subnets
   private_subnets = module.vpc.private_subnets
 
-  # TODO: remove after migration
-  docker_image_tag = "notifications-wip"
   ecs_cluster = {
     id   = aws_ecs_cluster.river_ecs_cluster.id
     name = aws_ecs_cluster.river_ecs_cluster.name
