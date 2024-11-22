@@ -9115,6 +9115,7 @@ __metadata:
     "@river-build/prettier-config": "workspace:^"
     "@river-build/react-sdk": "workspace:^"
     "@river-build/sdk": "workspace:^"
+    "@river-build/web3": "workspace:^"
     "@tanstack/react-query": ^5.51.15
     "@types/node": ^20.5.0
     "@types/react": ^18.2.11
@@ -9126,6 +9127,7 @@ __metadata:
     class-variance-authority: ^0.7.0
     clsx: ^2.1.1
     eslint: ^8.53.0
+    eslint-import-resolver-typescript: ^3.5.5
     eslint-plugin-import: ^2.27.5
     eslint-plugin-react: ^7.32.2
     eslint-plugin-react-hooks: ^4.6.0
@@ -9148,6 +9150,7 @@ __metadata:
     vite-plugin-checker: ^0.8.0
     vite-plugin-node-polyfills: ^0.22.0
     vite-plugin-replace: ^0.1.1
+    vite-tsconfig-paths: ^5.1.3
     wagmi: ^1.4.12
     zod: ^3.21.4
   languageName: unknown
@@ -17550,6 +17553,7 @@ __metadata:
     "@types/minimist": ^1.2.5
     "@types/prompts": ^2.4.9
     cross-spawn: ^7.0.5
+    jsonc-parser: ^3.3.1
     minimist: ^1.2.8
     picocolors: ^1.1.1
     prompts: ^2.4.2
@@ -24821,6 +24825,13 @@ __metadata:
   version: 3.2.0
   resolution: "jsonc-parser@npm:3.2.0"
   checksum: 946dd9a5f326b745aa326d48a7257e3f4a4b62c5e98ec8e49fa2bdd8d96cef7e6febf1399f5c7016114fd1f68a1c62c6138826d5d90bc650448e3cf0951c53c7
+  languageName: node
+  linkType: hard
+
+"jsonc-parser@npm:^3.3.1":
+  version: 3.3.1
+  resolution: "jsonc-parser@npm:3.3.1"
+  checksum: 81ef19d98d9c6bd6e4a37a95e2753c51c21705cbeffd895e177f4b542cca9cda5fda12fb942a71a2e824a9132cf119dc2e642e9286386055e1365b5478f49a47
   languageName: node
   linkType: hard
 
@@ -35340,6 +35351,22 @@ __metadata:
     vite:
       optional: true
   checksum: 7105ff641379f9f7055110f33067b236c8ee71b1390c0e6482412cdcc7a98c2e139c1c2a483d14fe9045d1977c14dc931e1ff302d6257ec919c70379db9d2419
+  languageName: node
+  linkType: hard
+
+"vite-tsconfig-paths@npm:^5.1.3":
+  version: 5.1.3
+  resolution: "vite-tsconfig-paths@npm:5.1.3"
+  dependencies:
+    debug: ^4.1.1
+    globrex: ^0.1.2
+    tsconfck: ^3.0.3
+  peerDependencies:
+    vite: "*"
+  peerDependenciesMeta:
+    vite:
+      optional: true
+  checksum: d4a172bb3e4db97e190868b381698151982f30d2699f4e395c5ed5fcbedbf7549e7686792d9ff520c31f4c6f788f14be527bc1f50b2153fae992e3a2859f8bd3
   languageName: node
   linkType: hard
 

@@ -19,11 +19,10 @@ export const buildRiverReactApp = async (cfg: CreateRiverBuildAppConfig) => {
     console.log(picocolors.green('\nVite project created successfully.'))
     console.log(picocolors.blue('\nAdding River SDK dependencies...'))
 
-    await addDependencies({
-        projectDir: cfg.projectDir,
+    await addDependencies(cfg.projectDir, () => ({
         dependencies: ['@river-build/react-sdk', '@river-build/sdk'],
         devDependencies: ['vite-plugin-node-polyfills'],
-    })
+    }))
 
     console.log(picocolors.green('\nRiver SDK dependencies added successfully.'))
     console.log(picocolors.blue('\nUpdating vite.config.ts...'))
@@ -34,7 +33,7 @@ export const buildRiverReactApp = async (cfg: CreateRiverBuildAppConfig) => {
 }
 
 const scaffoldViteReactApp = async (cfg: CreateRiverBuildAppConfig) => {
-    const { targetDir, packageName, viteTemplate } = cfg
+    const { targetDir, packageName, viteTemplate = 'react-ts' } = cfg
     const pkgManager = getPackageManager()
 
     const createViteCommand = (() => {

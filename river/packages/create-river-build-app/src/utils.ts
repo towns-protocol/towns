@@ -1,11 +1,12 @@
 import { readFileSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
+import playgroundPackageJson from '../../playground/package.json' assert { type: 'json' }
 
 export type CreateRiverBuildAppConfig = {
     projectDir: string
     packageName: string
     targetDir: string
-    viteTemplate: 'react-ts' | 'react'
+    viteTemplate?: 'react-ts' | 'react'
 }
 
 export const getPackageManager = () => {
@@ -20,22 +21,29 @@ export const getPackageManager = () => {
     return 'npm'
 }
 
-export const addDependencies = async (cfg: {
-    projectDir: string
-    dependencies: string[]
-    devDependencies?: string[]
-}) => {
-    const { projectDir, dependencies, devDependencies } = cfg
+type PackageJson = typeof playgroundPackageJson
 
+export const addDependencies = async (
+    projectDir: string,
+    cfg: (currentDeps: PackageJson) => {
+        dependencies: Array<string | string[]>
+        devDependencies?: Array<string | string[]>
+    },
+) => {
     const packageJsonPath = path.join(projectDir, 'package.json')
     const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'))
+    const { dependencies, devDependencies } = cfg(packageJson)
 
     if (devDependencies && devDependencies.length > 0) {
         if (!packageJson.devDependencies) {
             packageJson.devDependencies = {}
         }
         for (const dep of devDependencies) {
-            packageJson.devDependencies[dep] = 'latest'
+            if (Array.isArray(dep)) {
+                packageJson.devDependencies[dep[0]] = dep[1]
+            } else {
+                packageJson.devDependencies[dep] = 'latest'
+            }
         }
     }
 
@@ -43,7 +51,11 @@ export const addDependencies = async (cfg: {
         packageJson.dependencies = {}
     }
     for (const dep of dependencies) {
-        packageJson.dependencies[dep] = 'latest'
+        if (Array.isArray(dep)) {
+            packageJson.dependencies[dep[0]] = dep[1]
+        } else {
+            packageJson.dependencies[dep] = 'latest'
+        }
     }
 
     writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n')

@@ -80,7 +80,12 @@ contract PlatformRequirementsTest is
   // Membership Fee
   function test_getMembershipFee() public view {
     uint256 membershipFee = platformReqs.getMembershipFee();
-    assertEq(membershipFee, 0.005 ether);
+    assertEq(membershipFee, 0.001 ether);
+  }
+
+  function test_MembershipFee_lessThanMinPrice() public view {
+    uint256 membershipMinPrice = platformReqs.getMembershipMinPrice();
+    assertLt(platformReqs.getMembershipFee(), membershipMinPrice);
   }
 
   function test_setMembershipFee() public {

@@ -2,13 +2,14 @@ import minimist from 'minimist'
 import path from 'node:path'
 import picocolors from 'picocolors'
 import { getPackageManager, type CreateRiverBuildAppConfig, formatTargetDir } from './utils'
-import { buildRiverReactApp } from './modules/react'
+import { buildRiverReactApp } from './modules/vite-react'
+import { clonePlayground } from './modules/clone-playground'
 
 const argv = minimist<{
     template?: string
     help?: boolean
 }>(process.argv.slice(2), {
-    default: { help: false, template: 'react-ts' },
+    default: { help: false, template: 'playground' },
     alias: { h: 'help', t: 'template' },
     string: ['_'],
 })
@@ -24,15 +25,15 @@ Options:
   -t, --template NAME        use a specific template
 
 Available templates:
-${picocolors.yellow    ('react-ts       react'  )}
+${picocolors.yellow    ('react-ts       react        playground'  )}
 `
 
-type Template = 'react-ts' | 'react'
+type Template = 'react-ts' | 'react' | 'playground'
 
 const build = {
     'react-ts': buildRiverReactApp,
     react: buildRiverReactApp,
-    // if you need a new template, add it here
+    playground: clonePlayground,
 } satisfies Record<Template, (cfg: CreateRiverBuildAppConfig) => Promise<void>>
 
 async function init() {
@@ -40,7 +41,7 @@ async function init() {
     const packageName = targetDir === '.' ? path.basename(process.cwd()) : targetDir
     const projectDir = targetDir === '.' ? process.cwd() : path.join(process.cwd(), targetDir)
     const pkgManager = getPackageManager()
-    const template = ((argv.template || argv.t) ?? 'react-ts') as Template
+    const template = (argv.template || argv.t) as Template
 
     const help = argv.help
     if (help) {
@@ -53,7 +54,7 @@ async function init() {
         projectDir,
         packageName,
         targetDir,
-        viteTemplate: template,
+        viteTemplate: template !== 'playground' ? template : undefined,
     })
     console.log(picocolors.green('\nDone! 🎉'))
     console.log(picocolors.blue('\nNow run: cd ' + targetDir + ' && ' + pkgManager + ` install`))

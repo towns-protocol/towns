@@ -46,7 +46,6 @@ const histogramIntervalMs = 5000
 export const retryInterceptor: (retryParams: RetryParams) => Interceptor = (
     retryParams: RetryParams,
 ) => {
-    logError('retryInterceptor', 'retryParams=', retryParams)
     return (next) =>
         async (
             req: UnaryRequest<AnyMessage, AnyMessage> | StreamRequest<AnyMessage, AnyMessage>,
