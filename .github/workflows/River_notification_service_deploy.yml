@@ -98,11 +98,6 @@ jobs:
 
         needs: pre_deploy
 
-        strategy:
-            matrix:
-                iteration: ${{ fromJson(inputs.node_numbers) }}
-            fail-fast: false
-
         steps:
             - name: Checkout
               uses: actions/checkout@v4
