@@ -32,7 +32,10 @@ export async function decrypt(
     const plaintext = await decryptor.decrypt(channelId, encryptedData)
     log('decrypted plaintext', plaintext)
     // if the decryption is successful, plaintext has the string, else it's null
-    const plaintextBody = plaintext ? extractDetails(plaintext) : undefined
+    const plaintextBody = plaintext
+        ? extractDetails(plaintext, encryptedData.refEventId)
+        : undefined
+
     log('regex plaintext body', plaintextBody ?? 'null')
     return plaintextBody
 }
@@ -79,7 +82,7 @@ const mentionsRegex = /"mentions":(\[\{.*?\}\])(?=,|})/
 const threadIdRegex = /"threadId":"(.*?)"(?=,|})/
 const reactionRegex = /"reaction":"(.*?)"(?=,|})/
 
-function extractDetails(jsonString: string): PlaintextDetails {
+function extractDetails(jsonString: string, refEventId?: string): PlaintextDetails {
     const bodyMatch = jsonString.match(bodyRegex)
     const mentionsMatch = jsonString.match(mentionsRegex)
     const threadIdMatch = jsonString.match(threadIdRegex)
@@ -103,5 +106,6 @@ function extractDetails(jsonString: string): PlaintextDetails {
         mentions: mentionsMatch ? mentionsMatch[1] : undefined,
         threadId: threadIdMatch ? threadIdMatch[1] : undefined,
         reaction: reactionMatch ? reactionMatch[1] : undefined,
+        refEventId,
     }
 }

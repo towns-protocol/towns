@@ -1,4 +1,4 @@
-import { AppNotificationType } from 'workers/types.d'
+import { NotificationKind } from 'workers/types.d'
 
 // linked resource attributes
 export const LINKED_RESOURCE = 'rel'
@@ -15,7 +15,7 @@ export function getUrlWithParams(
     url: URL,
     path: string,
     relEntry: NotificationRelEntry,
-    notificationKind: AppNotificationType,
+    notificationKind: NotificationKind,
 ): URL {
     url.pathname = path
     url.searchParams.set(LINKED_RESOURCE, LINKED_NOTIFICATION_NAME)
@@ -28,7 +28,7 @@ export function getPathnameWithParams(
     url: URL,
     path: string,
     relEntry: NotificationRelEntry,
-    notificationKind: AppNotificationType,
+    notificationKind: NotificationKind,
 ): string {
     url.pathname = path
     url.searchParams.set(LINKED_RESOURCE, LINKED_NOTIFICATION_NAME)

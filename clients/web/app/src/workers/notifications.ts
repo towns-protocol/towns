@@ -3,17 +3,13 @@ import * as emoji from 'node-emoji'
 import { dlog, dlogError } from '@river-build/dlog'
 import { EncryptedData } from '@river-build/proto'
 
+import { isDMChannelStreamId, isGDMChannelStreamId, spaceIdFromChannelId } from '@river-build/sdk'
 import { UserRecord } from 'store/notificationSchema'
 import { getDDLogApiURL } from '../datadog'
 import {
     AppNotification,
-    AppNotificationType,
-    NotificationAttachmentKind,
     NotificationContent,
-    NotificationDM,
-    NotificationMention,
-    NotificationNewMessage,
-    NotificationReplyTo,
+    NotificationKind,
     WEB_PUSH_NAVIGATION_CHANNEL,
 } from './types.d'
 import { PlaintextDetails, decrypt } from './decryptionFn'
@@ -284,6 +280,7 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
 }
 
 function generateNewNotificationMessage({
+    kind,
     spaceId,
     townName,
     channelId,
@@ -292,6 +289,7 @@ function generateNewNotificationMessage({
     senderName,
     plaintext,
 }: {
+    kind: NotificationKind
     spaceId: string
     townName: string | undefined
     channelId: string
@@ -299,7 +297,7 @@ function generateNewNotificationMessage({
     channelName: string | undefined
     senderName: string | undefined
     plaintext: PlaintextDetails | undefined
-}): NotificationNewMessage {
+}): NotificationContent {
     const title = generateMentionTitle(senderName, townName, channelName)
     let body = plaintext?.body
     threadId = plaintext?.threadId ? plaintext.threadId : threadId ?? ''
@@ -320,7 +318,7 @@ function generateNewNotificationMessage({
         }
     }
     return {
-        kind: AppNotificationType.NewMessage,
+        kind,
         spaceId,
         channelId,
         threadId,
@@ -367,23 +365,21 @@ function generateDmTitle(
 }
 
 function generateDM(
+    kind: NotificationKind,
     channelId: string,
     dmChannelName: string | undefined,
     myUserId: string | undefined,
     sender: string | undefined,
     recipients: UserRecord[] | undefined,
     plaintext: PlaintextDetails | undefined,
-    attachmentKind?: NotificationAttachmentKind,
     reaction?: boolean,
-): NotificationDM | undefined {
+): NotificationContent {
     // if myUserId is available, remove it from the recipients list
     const recipientsExcludeMe =
         recipients?.filter((recipient) => (myUserId ? recipient.id !== myUserId : false)) ?? []
     const title = generateDmTitle(sender, recipientsExcludeMe, dmChannelName)
     let body = plaintext?.body
-    if (attachmentKind) {
-        body = generateAttachmentBody(attachmentKind)
-    } else if (!body) {
+    if (!body) {
         // always show something to avoid getting throttled
         // if there's no body, use the default message
         body =
@@ -410,22 +406,10 @@ function generateDM(
     }
     log('generateDM OUTPUT', { title, body })
     return {
-        kind: AppNotificationType.DirectMessage,
+        kind,
         channelId,
         title,
         body,
-    }
-}
-
-function generateAttachmentBody(attachmentKind: string) {
-    switch (attachmentKind) {
-        case NotificationAttachmentKind.Image:
-            return 'Sent an image'
-        case NotificationAttachmentKind.Gif:
-            return 'Sent a gif'
-        case NotificationAttachmentKind.File:
-        default:
-            return 'Sent a file'
     }
 }
 
@@ -452,6 +436,7 @@ function generateMentionTitle(
 }
 
 function generateMentionedMessage({
+    kind,
     spaceId,
     townName,
     channelId,
@@ -460,6 +445,7 @@ function generateMentionedMessage({
     senderName,
     plaintext,
 }: {
+    kind: NotificationKind
     spaceId: string
     townName: string | undefined
     channelId: string
@@ -467,7 +453,7 @@ function generateMentionedMessage({
     threadId: string | undefined
     senderName: string | undefined
     plaintext: PlaintextDetails | undefined
-}): NotificationMention {
+}): NotificationContent {
     const title = generateMentionTitle(senderName, townName, channelName)
     let body = plaintext?.body
     threadId = plaintext?.threadId ? plaintext.threadId : threadId ?? ''
@@ -488,7 +474,7 @@ function generateMentionedMessage({
         }
     }
     return {
-        kind: AppNotificationType.Mention,
+        kind,
         spaceId,
         channelId,
         threadId,
@@ -521,30 +507,31 @@ function generateReplyToTitle(
 }
 
 interface ReplyToMessageInput {
+    kind: NotificationKind
     spaceId: string
     townName: string | undefined
     channelId: string
     channelName: string | undefined
     senderName: string | undefined
     plaintext: PlaintextDetails | undefined
-    attachmentKind?: NotificationAttachmentKind
     reaction?: boolean
     threadId?: string
 }
 
 function generateReplyToMessage({
+    kind,
     spaceId,
     townName,
     channelId,
     channelName,
     senderName,
     plaintext,
-    attachmentKind,
     reaction,
     threadId,
-}: ReplyToMessageInput): NotificationReplyTo {
+}: ReplyToMessageInput): NotificationContent {
     const title = generateReplyToTitle(senderName, townName, channelName)
     let body = plaintext?.body
+    const refEventId = plaintext?.refEventId
     threadId = plaintext?.threadId ? plaintext.threadId : threadId ?? ''
     if (reaction) {
         const senderText = stringHasValue(senderName) ? `@${senderName}` : 'Someone'
@@ -560,8 +547,6 @@ function generateReplyToMessage({
             : `a channel you're in`
 
         body = `${senderText} ${reactText} to your post in ${formattedChannelName}`
-    } else if (attachmentKind) {
-        body = generateAttachmentBody(attachmentKind)
     } else if (!body) {
         switch (true) {
             case stringHasValue(channelName) && stringHasValue(senderName):
@@ -579,12 +564,13 @@ function generateReplyToMessage({
         }
     }
     return {
-        kind: AppNotificationType.ReplyTo,
+        kind,
         spaceId,
         channelId,
         threadId,
         title,
         body,
+        refEventId,
     }
 }
 
@@ -599,22 +585,24 @@ async function getNotificationContent(
     let currentUserId: string | undefined
     let currentUserDatabaseName: string | undefined
 
+    const kind = notification.content.kind
     const currentUser = await initCurrentUserNotificationStore()
     currentUserId = currentUser?.userId
     currentUserDatabaseName = currentUser?.databaseName
     const notificationStore = currentUserId ? notificationStores[currentUserId] : undefined
 
+    const [space, dmChannel, channel, sender] = await Promise.all([
+        notification.content.spaceId // space is only needed for non-DM notifications
+            ? notificationStore?.getSpace(notification.content.spaceId)
+            : undefined,
+        isDMChannelStreamId(notification.content.channelId) ||
+        isGDMChannelStreamId(notification.content.channelId) // dmChannel is only needed for DM notifications
+            ? notificationStore?.getDmChannel(notification.content.channelId)
+            : undefined,
+        notificationStore?.getChannel(notification.content.channelId),
+        notificationStore?.getUser(notification.content.senderId),
+    ])
     try {
-        const [space, dmChannel, channel, sender] = await Promise.all([
-            notification.content.kind !== AppNotificationType.DirectMessage // space is only needed for non-DM notifications
-                ? notificationStore?.getSpace(notification.content.spaceId)
-                : undefined,
-            notification.content.kind === AppNotificationType.DirectMessage // dmChannel is only needed for DM notifications
-                ? notificationStore?.getDmChannel(notification.content.channelId)
-                : undefined,
-            notificationStore?.getChannel(notification.content.channelId),
-            notificationStore?.getUser(notification.content.senderId),
-        ])
         townName = space?.name
         dmChannelName = dmChannel?.name
         channelName = channel?.name
@@ -625,7 +613,7 @@ async function getNotificationContent(
         senderName = getShortenedName(sender?.name)
 
         if (
-            notification.content.kind === AppNotificationType.DirectMessage &&
+            dmChannel &&
             notification.content.recipients &&
             notification.content.recipients.length > 0
         ) {
@@ -665,53 +653,56 @@ async function getNotificationContent(
             ? await tryDecryptEvent(currentUserId, currentUserDatabaseName, notification)
             : undefined
 
-    switch (notification.content.kind) {
-        case AppNotificationType.DirectMessage:
-            return generateDM(
-                notification.content.channelId,
-                dmChannelName,
-                currentUserId,
-                senderName,
-                recipients,
-                plaintext,
-                notification.content.attachmentOnly,
-                notification.content.reaction,
-            )
-        case AppNotificationType.NewMessage:
-            return generateNewNotificationMessage({
-                spaceId: notification.content.spaceId,
-                townName,
-                channelId: notification.content.channelId,
-                threadId: notification.content.threadId,
-                channelName,
-                senderName,
-                plaintext,
-            })
-        case AppNotificationType.Mention:
-            return generateMentionedMessage({
-                spaceId: notification.content.spaceId,
-                townName,
-                channelId: notification.content.channelId,
-                threadId: notification.content.threadId,
-                channelName,
-                senderName,
-                plaintext,
-            })
-        case AppNotificationType.ReplyTo:
-            return generateReplyToMessage({
-                spaceId: notification.content.spaceId,
-                townName,
-                channelId: notification.content.channelId,
-                channelName,
-                senderName,
-                plaintext,
-                attachmentKind: notification.content.attachmentOnly,
-                reaction: notification.content.reaction,
-                threadId: notification.content.threadId,
-            })
+    if (dmChannel) {
+        // dms and gdms
+        return generateDM(
+            kind,
+            notification.content.channelId,
+            dmChannelName,
+            currentUserId,
+            senderName,
+            recipients,
+            plaintext,
+        )
+    } else {
+        const spaceId =
+            notification.content.spaceId ?? spaceIdFromChannelId(notification.content.channelId)
 
-        default:
-            return undefined
+        if (kind === NotificationKind.Mention) {
+            return generateMentionedMessage({
+                kind,
+                spaceId,
+                townName,
+                channelId: notification.content.channelId,
+                threadId: notification.content.threadId,
+                channelName,
+                senderName,
+                plaintext,
+            })
+        } else if (notification.content.threadId) {
+            return generateReplyToMessage({
+                kind,
+                spaceId,
+                townName,
+                channelId: notification.content.channelId,
+                channelName,
+                senderName,
+                plaintext,
+                reaction: kind === NotificationKind.Reaction,
+                threadId: notification.content.threadId,
+            })
+        } else {
+            generateNewNotificationMessage({
+                kind,
+                spaceId,
+                townName,
+                channelId: notification.content.channelId,
+                threadId: notification.content.threadId,
+                channelName,
+                senderName,
+                plaintext,
+            })
+        }
     }
 }
 

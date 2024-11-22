@@ -1,40 +1,25 @@
 import * as z from 'zod'
 import { StreamEvent } from '@river-build/proto'
+import { bin_fromHexString } from '@river-build/dlog'
+import {
+    isChannelStreamId,
+    isDMChannelStreamId,
+    isGDMChannelStreamId,
+    spaceIdFromChannelId,
+} from '@river-build/sdk'
 import { NotificationClicked } from 'store/notificationCurrentUser'
 import { PATHS } from '../routes'
-import {
-    AppNotification,
-    AppNotificationType,
-    NotificationAttachmentKind,
-    NotificationContent,
-} from './types.d'
+import { AppNotification, NotificationContent, NotificationKind } from './types.d'
 
-const payloadMessage = z.object({
-    kind: z.enum([
-        AppNotificationType.NewMessage,
-        AppNotificationType.Mention,
-        AppNotificationType.ReplyTo,
-    ]),
-    spaceId: z.string(),
+const payload = z.object({
+    kind: z.nativeEnum(NotificationKind),
+    spaceId: z.string().optional(),
     channelId: z.string(),
     threadId: z.string().optional(),
     senderId: z.string(),
-    event: z.unknown(),
-    attachmentOnly: z.nativeEnum(NotificationAttachmentKind).optional(),
-    reaction: z.boolean().optional(),
-})
-
-const payloadDm = z.object({
-    kind: z.enum([AppNotificationType.DirectMessage]),
-    channelId: z.string(),
-    senderId: z.string(),
     recipients: z.array(z.string()),
-    event: z.unknown(),
-    attachmentOnly: z.nativeEnum(NotificationAttachmentKind).optional(),
-    reaction: z.boolean().optional(),
+    event: z.string(),
 })
-
-const payload = z.discriminatedUnion('kind', [payloadMessage, payloadDm])
 
 // this is obviously a bit overkill for now, but I think it can
 // be helpful as we add more notification types
@@ -44,60 +29,19 @@ const payloadSchema = z
         topic: z.string().optional(),
     })
     .transform((data): AppNotification | undefined => {
-        switch (data.content.kind) {
-            case AppNotificationType.DirectMessage:
-                return {
-                    topic: data.topic,
-                    content: {
-                        kind: AppNotificationType.DirectMessage,
-                        channelId: data.content.channelId,
-                        senderId: data.content.senderId,
-                        recipients: data.content.recipients ?? [],
-                        event: data.content.event as StreamEvent,
-                        attachmentOnly: data.content.attachmentOnly,
-                        reaction: data.content.reaction,
-                    },
-                }
-            case AppNotificationType.NewMessage:
-                return {
-                    topic: data.topic,
-                    content: {
-                        kind: AppNotificationType.NewMessage,
-                        spaceId: data.content.spaceId ?? '',
-                        channelId: data.content.channelId,
-                        threadId: data.content.threadId,
-                        senderId: data.content.senderId,
-                        event: data.content.event as StreamEvent,
-                    },
-                }
-            case AppNotificationType.Mention:
-                return {
-                    topic: data.topic,
-                    content: {
-                        kind: AppNotificationType.Mention,
-                        spaceId: data.content.spaceId ?? '',
-                        channelId: data.content.channelId,
-                        threadId: data.content.threadId,
-                        senderId: data.content.senderId,
-                        event: data.content.event as StreamEvent,
-                    },
-                }
-            case AppNotificationType.ReplyTo:
-                return {
-                    topic: data.topic,
-                    content: {
-                        kind: AppNotificationType.ReplyTo,
-                        spaceId: data.content.spaceId ?? '',
-                        channelId: data.content.channelId,
-                        senderId: data.content.senderId,
-                        threadId: data.content.threadId,
-                        event: data.content.event as StreamEvent,
-                        attachmentOnly: data.content.attachmentOnly,
-                        reaction: data.content.reaction,
-                    },
-                }
-            default:
-                return undefined
+        const eventBytes = bin_fromHexString(data.content.event)
+        const event = StreamEvent.fromBinary(eventBytes)
+        return {
+            topic: data.topic,
+            content: {
+                kind: data.content.kind,
+                channelId: data.content.channelId,
+                spaceId: data.content.spaceId,
+                threadId: data.content.threadId,
+                senderId: data.content.senderId,
+                recipients: data.content.recipients ?? [],
+                event: event,
+            },
         }
     })
 
@@ -113,73 +57,15 @@ export function appNotificationFromPushEvent(raw: string): AppNotification | und
     return parsed.data
 }
 
-const plaintextMessage = z.object({
-    kind: z.enum([AppNotificationType.NewMessage, AppNotificationType.Mention]),
-    spaceId: z.string(),
+const plaintextSchema = z.object({
+    kind: z.enum([NotificationKind.NewMessage, NotificationKind.Mention]),
+    spaceId: z.string().optional(),
     channelId: z.string(),
     threadId: z.string().optional(),
+    refEventId: z.string().optional(),
     title: z.string(),
     body: z.string(),
 })
-
-const plaintextReplyToMessage = z.object({
-    kind: z.enum([AppNotificationType.ReplyTo]),
-    spaceId: z.string(),
-    channelId: z.string(),
-    threadId: z.string(),
-    title: z.string(),
-    body: z.string(),
-})
-
-const plaintextDm = z.object({
-    kind: z.enum([AppNotificationType.DirectMessage]),
-    channelId: z.string(),
-    title: z.string(),
-    body: z.string(),
-})
-
-const plaintextSchema = z
-    .discriminatedUnion('kind', [plaintextMessage, plaintextReplyToMessage, plaintextDm])
-    .transform((data): NotificationContent | undefined => {
-        switch (data.kind) {
-            case AppNotificationType.DirectMessage:
-                return {
-                    kind: AppNotificationType.DirectMessage,
-                    channelId: data.channelId,
-                    title: data.title,
-                    body: data.body,
-                }
-            case AppNotificationType.NewMessage:
-                return {
-                    kind: AppNotificationType.NewMessage,
-                    spaceId: data.spaceId,
-                    channelId: data.channelId,
-                    threadId: data.threadId,
-                    title: data.title,
-                    body: data.body,
-                }
-            case AppNotificationType.Mention:
-                return {
-                    kind: AppNotificationType.Mention,
-                    spaceId: data.spaceId,
-                    channelId: data.channelId,
-                    threadId: data.threadId,
-                    title: data.title,
-                    body: data.body,
-                }
-            case AppNotificationType.ReplyTo:
-                return {
-                    kind: AppNotificationType.ReplyTo,
-                    spaceId: data.spaceId ?? '',
-                    channelId: data.channelId,
-                    threadId: data.threadId,
-                    title: data.title,
-                    body: data.body,
-                }
-            default:
-                return undefined
-        }
-    })
 
 export function notificationContentFromEvent(raw: string): NotificationContent | undefined {
     console.log('sw:push:notificationContentFromEvent', 'raw', raw)
@@ -200,94 +86,46 @@ export function notificationContentFromEvent(raw: string): NotificationContent |
 }
 
 export function pathFromAppNotification(notification: NotificationContent): NotificationClicked {
-    switch (notification.kind) {
-        case AppNotificationType.DirectMessage:
-            return {
-                notificationUrl:
-                    [PATHS.MESSAGES, encodeURIComponent(notification.channelId)].join('/') + '/',
-                channelId: notification.channelId,
-            }
-        case AppNotificationType.NewMessage:
-            if (notification.threadId) {
-                return {
-                    notificationUrl: [
-                        PATHS.SPACES,
-                        encodeURIComponent(notification.spaceId),
-                        PATHS.CHANNELS,
-                        encodeURIComponent(notification.channelId),
-                        PATHS.REPLIES,
-                        encodeURIComponent(notification.threadId),
-                    ].join('/'),
-                    spaceId: notification.spaceId,
-                    channelId: notification.channelId,
-                    threadId: notification.threadId,
-                }
-            }
+    if (
+        isDMChannelStreamId(notification.channelId) ||
+        isGDMChannelStreamId(notification.channelId)
+    ) {
+        return {
+            notificationUrl:
+                [PATHS.MESSAGES, encodeURIComponent(notification.channelId)].join('/') + '/',
+            channelId: notification.channelId,
+        }
+    } else if (isChannelStreamId(notification.channelId)) {
+        const spaceId = notification.spaceId ?? spaceIdFromChannelId(notification.channelId)
+        if (notification.threadId) {
             return {
                 notificationUrl: [
                     PATHS.SPACES,
-                    encodeURIComponent(notification.spaceId),
+                    encodeURIComponent(spaceId),
+                    PATHS.CHANNELS,
+                    encodeURIComponent(notification.channelId),
+                    PATHS.REPLIES,
+                    encodeURIComponent(notification.threadId),
+                ].join('/'),
+                spaceId: spaceId,
+                channelId: notification.channelId,
+                threadId: notification.threadId,
+            }
+        } else {
+            return {
+                notificationUrl: [
+                    PATHS.SPACES,
+                    encodeURIComponent(spaceId),
                     PATHS.CHANNELS,
                     encodeURIComponent(notification.channelId),
                 ].join('/'),
                 spaceId: notification.spaceId,
                 channelId: notification.channelId,
             }
-        case AppNotificationType.Mention:
-            if (notification.threadId) {
-                return {
-                    notificationUrl: [
-                        PATHS.SPACES,
-                        encodeURIComponent(notification.spaceId),
-                        PATHS.CHANNELS,
-                        encodeURIComponent(notification.channelId),
-                        PATHS.REPLIES,
-                        encodeURIComponent(notification.threadId),
-                    ].join('/'),
-                    spaceId: notification.spaceId,
-                    channelId: notification.channelId,
-                    threadId: notification.threadId,
-                }
-            }
-            return {
-                notificationUrl: [
-                    PATHS.SPACES,
-                    encodeURIComponent(notification.spaceId),
-                    PATHS.CHANNELS,
-                    encodeURIComponent(notification.channelId),
-                ].join('/'),
-                spaceId: notification.spaceId,
-                channelId: notification.channelId,
-            }
-        case AppNotificationType.ReplyTo:
-            if (notification.threadId) {
-                return {
-                    notificationUrl: [
-                        PATHS.SPACES,
-                        encodeURIComponent(notification.spaceId),
-                        PATHS.CHANNELS,
-                        encodeURIComponent(notification.channelId),
-                        PATHS.REPLIES,
-                        encodeURIComponent(notification.threadId),
-                    ].join('/'),
-                    spaceId: notification.spaceId,
-                    channelId: notification.channelId,
-                    threadId: notification.threadId,
-                }
-            }
-            return {
-                notificationUrl: [
-                    PATHS.SPACES,
-                    encodeURIComponent(notification.spaceId),
-                    PATHS.CHANNELS,
-                    encodeURIComponent(notification.channelId),
-                ].join('/'),
-                spaceId: notification.spaceId,
-                channelId: notification.channelId,
-            }
-        default:
-            return {
-                notificationUrl: '/',
-            }
+        }
+    } else {
+        return {
+            notificationUrl: '/',
+        }
     }
 }
