@@ -182,5 +182,5 @@ export function isAbstractAccountAddress({
 
 function useUserOps() {
     const { clientSingleton } = useTownsContext()
-    return clientSingleton?.userOps
+    return clientSingleton?.baseTransactor.userOps
 }

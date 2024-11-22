@@ -23,10 +23,12 @@ test('should clear promise from promise queue after transaction resolves', async
 
     await waitFor(() =>
         // we retry createSpace in tests, so this could be more than 0
-        expect(Object.keys(bob.blockchainTransactionStore.transactions).length).toBeGreaterThan(0),
+        expect(
+            Object.keys(bob.baseTransactor.blockchainTransactionStore.transactions).length,
+        ).toBeGreaterThan(0),
     )
 
-    expect(bob.blockchainTransactionStore.promiseQueue.length).toEqual(0)
+    expect(bob.baseTransactor.blockchainTransactionStore.promiseQueue.length).toEqual(0)
 })
 
 test('should clear all promises when client stops', async () => {
@@ -60,7 +62,7 @@ test('should clear all promises when client stops', async () => {
     )
 
     const blockchainStoreAbortSpy = jest.spyOn(
-        bob.blockchainTransactionStore.abortController,
+        bob.baseTransactor.blockchainTransactionStore.abortController,
         'abort',
     )
 
@@ -95,16 +97,18 @@ test('should clear all promises when client stops', async () => {
 
     await waitFor(() =>
         // we retry createSpace in tests, so this could be more than 0
-        expect(Object.keys(bob.blockchainTransactionStore.transactions).length).toBeGreaterThan(0),
+        expect(
+            Object.keys(bob.baseTransactor.blockchainTransactionStore.transactions).length,
+        ).toBeGreaterThan(0),
     )
 
     expect(bob.provider.listenerCount()).toBeGreaterThan(0)
-    expect(bob.blockchainTransactionStore.promiseQueue.length).toBeGreaterThan(0)
+    expect(bob.baseTransactor.blockchainTransactionStore.promiseQueue.length).toBeGreaterThan(0)
     expect(blockchainStoreAbortSpy).not.toHaveBeenCalled()
 
     await bob.stopClients()
     expect(bob.provider.listenerCount()).toEqual(0)
-    expect(bob.blockchainTransactionStore.promiseQueue.length).toEqual(0)
+    expect(bob.baseTransactor.blockchainTransactionStore.promiseQueue.length).toEqual(0)
     expect(blockchainStoreAbortSpy).toHaveBeenCalledTimes(1)
 
     // cleanup

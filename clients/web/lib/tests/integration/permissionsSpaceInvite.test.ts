@@ -110,7 +110,11 @@ describe('space invite', () => {
             Permission.Write,
         ])
 
-        await tokenGrantedUser.mintMembershipTransaction(roomId, tokenGrantedUser.wallet)
+        await tokenGrantedUser.baseTransactor.mintMembershipTransaction({
+            spaceId: roomId,
+            signer: tokenGrantedUser.wallet,
+            xchainConfig: await tokenGrantedUser.getXchainConfig(),
+        })
 
         const isEntitledRead = await tokenGrantedUser.isEntitled(
             roomId,

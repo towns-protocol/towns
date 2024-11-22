@@ -148,7 +148,11 @@ test('create space, and have user that already has membership NFT join ', async 
     // bob creates a space
     const spaceId = await createTestSpaceGatedByTownNft(bob, [Permission.Read, Permission.Write])
 
-    await alice.mintMembershipTransaction(spaceId, alice.wallet)
+    await alice.baseTransactor.mintMembershipTransaction({
+        spaceId,
+        signer: alice.wallet,
+        xchainConfig: await alice.getXchainConfig(),
+    })
     // alice joins the space
     await alice.joinTown(spaceId, alice.wallet)
     expect(alice.getRoomData(spaceId)?.id).toEqual(spaceId)

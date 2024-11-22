@@ -53,7 +53,7 @@ export function useAutoLoginToRiverIfEmbeddedWallet({
         publicPageLoginStore.getState().spaceBeingJoined,
     )
 
-    const userOps = clientSingleton?.userOps
+    const userOps = clientSingleton?.baseTransactor.userOps
 
     const _setupUserops = useCallback(
         async (signer: Signer) => {
@@ -93,7 +93,7 @@ export function useAutoLoginToRiverIfEmbeddedWallet({
                 },
                 effect() {
                     async function _logout() {
-                        clientSingleton?.userOps?.reset()
+                        clientSingleton?.baseTransactor.userOps?.reset()
                         await privyLogout()
                         send('RESET')
                     }

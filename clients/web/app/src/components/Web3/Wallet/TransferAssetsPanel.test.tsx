@@ -97,8 +97,10 @@ vi.mock('use-towns-client', async () => {
             return {
                 ...actual.useTownsContext(),
                 clientSingleton: {
-                    userOps: {
-                        getAbstractAccountAddress: () => aaAddress,
+                    baseTransactor: {
+                        userOps: {
+                            getAbstractAccountAddress: () => aaAddress,
+                        },
                     },
                 },
             }

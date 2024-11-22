@@ -13,10 +13,13 @@ export const useTransactionStore = () => {
             setTransactions((s) => ({ ...s, ...transactions }))
         }
 
-        clientSingleton?.blockchainTransactionStore.on('transactions', handleChange)
+        clientSingleton?.baseTransactor.blockchainTransactionStore.on('transactions', handleChange)
 
         return () => {
-            clientSingleton?.blockchainTransactionStore.off('transactions', handleChange)
+            clientSingleton?.baseTransactor.blockchainTransactionStore.off(
+                'transactions',
+                handleChange,
+            )
         }
     }, [clientSingleton])
 
@@ -35,9 +38,9 @@ export const useOnTransactionUpdated = (
 
     useEffect(() => {
         const cb = (args: BlockchainStoreTx) => cbRef.current(args)
-        clientSingleton?.blockchainTransactionStore.on('updatedTransaction', cb)
+        clientSingleton?.baseTransactor.blockchainTransactionStore.on('updatedTransaction', cb)
         return () => {
-            clientSingleton?.blockchainTransactionStore.off('updatedTransaction', cb)
+            clientSingleton?.baseTransactor.blockchainTransactionStore.off('updatedTransaction', cb)
             cleanupRef.current?.()
         }
     }, [clientSingleton])
