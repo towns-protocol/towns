@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react'
-import { SpaceIdFromSpaceAddress, useContractSpaceInfo } from 'use-towns-client'
+import { SpaceIdFromSpaceAddress, useContractSpaceInfoWithoutClient } from 'use-towns-client'
 import { useNavigate } from 'react-router-dom'
 import { useReadableMembershipInfo } from '@components/TownPageLayout/useReadableMembershipInfo'
 import { InteractiveSpaceIcon } from '@components/SpaceIcon/SpaceIcon'
@@ -20,7 +20,8 @@ export const ExploreCard = ({ address, variant }: ExploreCardProps) => {
     const navigate = useNavigate()
     const spaceId = SpaceIdFromSpaceAddress(address)
 
-    const { data: spaceInfo, isLoading: isSpaceInfoLoading } = useContractSpaceInfo(spaceId)
+    const { data: spaceInfo, isLoading: isSpaceInfoLoading } =
+        useContractSpaceInfoWithoutClient(spaceId)
     const { data: memberInfo } = useReadableMembershipInfo(spaceId ?? '')
     const { data: entitlements } = useEntitlements(spaceId ?? '')
 
