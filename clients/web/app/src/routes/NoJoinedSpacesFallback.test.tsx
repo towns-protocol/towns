@@ -70,7 +70,7 @@ describe('<SpaceHome />', () => {
 
         await waitFor(
             () => {
-                expect(screen.getByTestId('space-home-fallback-content')).toBeInTheDocument()
+                expect(screen.getByTestId('explore-page')).toBeInTheDocument()
             },
             {
                 timeout: 5000,

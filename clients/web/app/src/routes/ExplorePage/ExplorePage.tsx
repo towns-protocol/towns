@@ -27,7 +27,7 @@ export const ExplorePage = () => {
     const smallCardTowns = isMobile ? exploreTowns : exploreTowns.slice(2, 11)
 
     return (
-        <Box padding={{ mobile: 'xs', desktop: 'x4' }}>
+        <Box padding={{ mobile: 'xs', desktop: 'x4' }} data-testid="explore-page">
             {!isMobile && (
                 <Box marginBottom="lg">
                     <Heading level={3} color="default">

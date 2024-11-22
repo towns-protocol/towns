@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect } from 'react'
-import { useLocation, useNavigate } from 'react-router'
+import React, { useEffect } from 'react'
+import { useNavigate } from 'react-router'
 import {
     AuthStatus,
     Membership,
@@ -8,16 +8,14 @@ import {
     useTownsContext,
 } from 'use-towns-client'
 import { PATHS } from 'routes'
-import { Button, Heading, Icon, Stack, Text } from '@ui'
 
 import { useDevice } from 'hooks/useDevice'
 import { useStore } from 'store/store'
-import { Analytics } from 'hooks/useAnalytics'
 import { AppProgressState } from '@components/AppProgressOverlay/AppProgressState'
 import { AppProgressOverlayTrigger } from '@components/AppProgressOverlay/AppProgressOverlayTrigger'
 import { useDebounce } from 'hooks/useDebounce'
 import { SECOND_MS } from 'data/constants'
-import { TOWN_HALL_LINK } from 'data/links'
+import { ExploreMobile, ExplorePage } from './ExplorePage/ExplorePage'
 
 export const NoJoinedSpacesFallback = () => {
     const navigate = useNavigate()
@@ -31,22 +29,6 @@ export const NoJoinedSpacesFallback = () => {
     })
 
     const { isTouch } = useDevice()
-    const location = useLocation()
-
-    useEffect(() => {
-        console.log('[NoJoinedSpacesFallback][route]', 'route', {
-            deviceType: isTouch ? 'mobile' : 'desktop',
-            locationPathname: location.pathname,
-            locationSearch: location.search,
-            spaceIdBookmark,
-        })
-    }, [isTouch, location.pathname, location.search, spaceIdBookmark])
-
-    useEffect(() => {
-        Analytics.getInstance().page('home-page', 'no joined towns page', {}, () => {
-            console.log('[analytics] no joined towns page')
-        })
-    }, [location.pathname, location.search])
 
     // attempting a tiny debounce in case the spaces are still loading
     // TODO: may want to remove this
@@ -100,20 +82,6 @@ export const NoJoinedSpacesFallback = () => {
         }
     }, [client, hasSpaces, isTouch, navigate, spaceIdBookmark, spaces])
 
-    const openTownPanel = useCallback(() => {
-        Analytics.getInstance().track('clicked create a town', {}, () => {
-            console.log('[analytics] clicked create a town')
-        })
-        navigate(`/${PATHS.SPACES}/new`)
-    }, [navigate])
-
-    const openLearnMore = useCallback(() => {
-        Analytics.getInstance().track('clicked learn more', {}, () => {
-            console.log('[analytics] clicked learn more')
-        })
-        window.open(TOWN_HALL_LINK, '_blank', 'noopener,noreferrer')
-    }, [])
-
     // need to default spaceHierarchies to undefined and check for it here
     // to prevent flash on load
     // if (!spaceDataMap) {
@@ -145,33 +113,6 @@ export const NoJoinedSpacesFallback = () => {
             />
         )
     } else {
-        return (
-            <Stack
-                centerContent
-                data-testid="space-home-fallback-content"
-                paddingX="lg"
-                height="100%"
-            >
-                <Stack centerContent gap="x4">
-                    <Icon padding="md" size="square_xl" type="home" background="level2" />
-                    <Stack centerContent gap>
-                        <Heading level={3} textAlign="center">
-                            Start Your First Town
-                        </Heading>
-                        <Text textAlign="center" color="gray2">
-                            Build a town and invite your friends or community.
-                        </Text>
-                    </Stack>
-                    <Stack horizontal gap>
-                        <Button tone="cta1" width="auto" grow={false} onClick={openTownPanel}>
-                            Create a Town
-                        </Button>
-                        <Button tone="level2" width="auto" grow={false} onClick={openLearnMore}>
-                            Join Town Hall
-                        </Button>
-                    </Stack>
-                </Stack>
-            </Stack>
-        )
+        return isTouch ? <ExploreMobile /> : <ExplorePage />
     }
 }
