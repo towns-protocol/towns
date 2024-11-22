@@ -92,18 +92,18 @@ func TestWebPushWithVapid(t *testing.T) {
 		// 0xAc8828aD220471984e5Ae5B1243E8B591a58A05F endpoint
 		notifier, err = push.NewMessageNotifier(cfg, infra.NewMetricsFactory(nil, "", ""))
 		//subscription  = &webpush.Subscription{
-		//	Endpoint: "https://web.push.apple.com/QFZ_WHVoj3YhGbgQd9JYUqQgHnUvOA5lfTkuQ0fUfZa6vu_UbmS_CXe3IhovScieS2-ZBdjbhBfhGtb-D2rYmKklk6DEfkM0AClqH85bPH7N9wI6_-ydrhLBr5yn6SOvYP2bCgxE7Ob-1sI1Zd5VcJOKJpp-caC3VfF3wP7P40s",
+		//	Endpoint: "https://web.push.apple.com/QOQETJcYW8H9Gb5NTGsrt7-RjagHc__WlPJtgxbNQXYWVODhPJYnYPEQlSrsmIhSspetY6a2ojDAJ7Lan-Ab3Fn8z4yg8EG31XJ7i16L84Upay8xnYmDbbW9BBvplFll5I6ekuo7YVMFoaGRww8VyaXLhSessF6v8RQo9LVmOxA",
 		//	Keys: webpush.Keys{
-		//		Auth:   `K4GtYnxnyGQNm1QsypliQg`,
-		//		P256dh: `BCDQjdc3OB_elS32uVI96gJayYwYjj6JXTOizaXpgEvxOCqmdxz-0XNcuI2JZZnxi6adkBFy8ZrjMEcB7StQC_s`,
+		//		Auth:   `Kz-DEjmoRURwPQLqqyvgsg`,
+		//		P256dh: `BDv80sQKf0iT5H68196MUUG7rFGs_UjCkDqwj28KOhMk9EmgQrrKkuz3gmgdSOuBq3jL0nAtaAtOg5mShZrOABk`,
 		//	},
 		//}
 
 		subscription = &webpush.Subscription{
-			Endpoint: "https://fcm.googleapis.com/fcm/send/fOsW4EcoiMI:APA91bFe0AKQLJw8ghNXLz9bqE49EqRoneHO8oBqf_qZ32mZhluyE40tsy0vY3q2jlj_glYiyofTVE4J2DbE8tbO4EAR5szQR2fGfEVE6WilIP8O0ThfP5Gga5u0D2ChUTOs2CMnxN2d",
+			Endpoint: "https://fcm.googleapis.com/fcm/send/ftSKEPOm8L4:APA91bEjJ-OFjH9dc0qyJ0G0BXoUkYYYRyiIgbjqG59DPQZZDu-aCJ388m12BEz4IMBD9CIWtf5GhSD8Y1KBxTQiLJ7Sm-LLD0NwUHQoosaAmzr2LpbyluHzTeWxwVeDOUsSca4nBKnW",
 			Keys: webpush.Keys{
-				Auth:   `TZCAll5Dli8LOUYIXk9a1g`,
-				P256dh: `BJJnVK40pKFTSKK0wLSnJVVh_lIc-9Axu_tkL1fTgdC0_a6LrZ4Z9WePvgDAd13GEXONBwZ8fXqaAWwZoKKzL38`,
+				Auth:   `OYxQHvUEFZnhAU-ODg8omA`,
+				P256dh: `BAOatU6_ZNvMKjju2MAQUWoqkfeQFOrUSx1ubwI5IthSXxgmwKfCU2f8uv7s4yXyZgFOwycQpDK-7ILX0VknOKE`,
 			},
 		}
 		payload = []byte("Some message")

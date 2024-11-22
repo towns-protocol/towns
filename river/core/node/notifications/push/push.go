@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"encoding/hex"
 	"encoding/pem"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -206,7 +207,7 @@ func (n *MessageNotifications) SendWebPushNotification(
 		n.webPushSent.With(prometheus.Labels{"result": StatusFailure}).Inc()
 		return AsRiverError(err).
 			Message("Send notification with WebPush failed").
-			Func("SendAPNNotification")
+			Func("SendWebPushNotification")
 	}
 	defer res.Body.Close()
 
@@ -217,12 +218,18 @@ func (n *MessageNotifications) SendWebPushNotification(
 
 	n.webPushSent.With(prometheus.Labels{"result": StatusFailure}).Inc()
 
-	return RiverError(protocol.Err_UNAVAILABLE,
+	riverErr := RiverError(protocol.Err_UNAVAILABLE,
 		"Send notification with web push vapid failed",
 		"statusCode", res.StatusCode,
 		"status", res.Status,
 		"event", eventHash,
-	).Func("SendWebNotification")
+	).Func("SendWebPushNotification")
+
+	if resBody, err := io.ReadAll(res.Body); err == nil && len(resBody) > 0 {
+		riverErr = riverErr.Tag("msg", string(resBody))
+	}
+
+	return riverErr
 }
 
 func (n *MessageNotifications) SendApplePushNotification(

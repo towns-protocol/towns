@@ -8,6 +8,7 @@ import {IImplementationRegistry} from "contracts/src/factory/facets/registry/IIm
 import {IRolesBase} from "contracts/src/spaces/facets/roles/IRoles.sol";
 import {IRuleEntitlement} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
 import {IMembership} from "contracts/src/spaces/facets/membership/IMembership.sol";
+import {IRiverPointsBase} from "contracts/src/tokens/points/IRiverPoints.sol";
 
 // libraries
 import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
@@ -287,25 +288,6 @@ abstract contract MembershipJoin is
     );
   }
 
-  /// @notice Computes the points for the protocol fee
-  function _getPoints(uint256 protocolFee) internal pure returns (uint256) {
-    if (protocolFee <= 0.0003 ether) {
-      return protocolFee * 1_000_000;
-    } else if (protocolFee <= 0.001 ether) {
-      return protocolFee * 2_000_000;
-    } else {
-      return protocolFee * 3_000_000;
-    }
-  }
-
-  function _creditPoints(address receiver, uint256 points) internal {
-    address pointsToken = IImplementationRegistry(_getSpaceFactory())
-      .getLatestImplementation(bytes32("RiverAirdrop"));
-
-    // Equivalent to `pointsToken.mint(receiver, points);`
-    RiverPoints(pointsToken).mint(receiver, points);
-  }
-
   function _afterChargeForJoinSpace(
     bytes32 transactionId,
     address sender,
@@ -321,9 +303,18 @@ abstract contract MembershipJoin is
     _captureData(transactionId, "");
 
     // calculate points and credit them
-    uint256 points = _getPoints(protocolFee);
-    _creditPoints(sender, points);
-    _creditPoints(_owner(), points);
+    RiverPoints pointsToken = RiverPoints(
+      IImplementationRegistry(_getSpaceFactory()).getLatestImplementation(
+        bytes32("RiverAirdrop")
+      )
+    );
+    uint256 points = pointsToken.getPoints(
+      IRiverPointsBase.Action.JoinSpace,
+      abi.encode(protocolFee)
+    );
+
+    pointsToken.mint(sender, points);
+    pointsToken.mint(_owner(), points);
   }
 
   /// @notice Issues a membership token to the receiver

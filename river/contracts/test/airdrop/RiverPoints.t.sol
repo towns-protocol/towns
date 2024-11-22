@@ -7,6 +7,7 @@ import {DeployRiverAirdrop} from "contracts/scripts/deployments/diamonds/DeployR
 //interfaces
 import {IDiamond} from "contracts/src/diamond/Diamond.sol";
 import {IOwnableBase} from "contracts/src/diamond/facets/ownable/IERC173.sol";
+import {IRiverPointsBase} from "contracts/src/tokens/points/IRiverPoints.sol";
 
 //libraries
 
@@ -15,7 +16,12 @@ import {River} from "contracts/src/tokens/river/base/River.sol";
 import {RiverPoints} from "contracts/src/tokens/points/RiverPoints.sol";
 import {BaseRegistryTest} from "../base/registry/BaseRegistry.t.sol";
 
-contract RiverPointsTest is BaseRegistryTest, IOwnableBase, IDiamond {
+contract RiverPointsTest is
+  BaseRegistryTest,
+  IOwnableBase,
+  IDiamond,
+  IRiverPointsBase
+{
   RiverPoints internal pointsFacet;
 
   function setUp() public override {
@@ -39,7 +45,7 @@ contract RiverPointsTest is BaseRegistryTest, IOwnableBase, IDiamond {
   }
 
   function test_mint_revertIf_invalidSpace() public {
-    vm.expectRevert(RiverPoints.RiverPoints__InvalidSpace.selector);
+    vm.expectRevert(RiverPoints__InvalidSpace.selector);
     pointsFacet.mint(_randomAddress(), 1 ether);
   }
 
@@ -51,7 +57,7 @@ contract RiverPointsTest is BaseRegistryTest, IOwnableBase, IDiamond {
 
   function test_batchMintPoints_revertIf_invalidArrayLength() public {
     vm.prank(deployer);
-    vm.expectRevert(RiverPoints.RiverPoints__InvalidArrayLength.selector);
+    vm.expectRevert(RiverPoints__InvalidArrayLength.selector);
     pointsFacet.batchMintPoints(new address[](1), new uint256[](2));
   }
 

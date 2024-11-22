@@ -1,26 +1,18 @@
-After updating `river_migrate_db.env` with correct parameters, migration tool can be run like this:
+### Build migration tool
 
-    # source DB still can be in use at this point
-    go build -o river_migrate_db .
-    ./river_migrate_db help
-    ./river_migrate_db source test  # test source config
-    ./river_migrate_db target test  # test target config
-    ./river_migrate_db target create  # create target schema (i.e. db partition)
-    ./river_migrate_db target init  # create targe tables
-    ./river_migrate_db target partition  # create target partitions matching source
+Update `river_migrate_db.env` with correct parameters.
 
-    # shutdown container that is connected to source db
+Source DB still can be in use at this point.
 
-    ./river_migrate_db target partition  # create missing target partitions matching source since last run
-    ./river_migrate_db copy  # copy data from source to target
+go build -o river_migrate_db .
 
-    # Inspect specific stream content
-    ./river_migrate_db source inspect <streamId>
-    ./river_migrate_db target inspect <streamId>
+./river_migrate_db help
+./river_migrate_db source test # test source config
+./river_migrate_db target test # test target config
 
-    # reconfigure container to use target db
+Note: shutdown node process connected to source DB during migration process below.
 
-To run a stream data migration simultaneously, run the migration tool like so:
+### Run a stream data and schema migration simultaneously, run the migration tool like so:
 
     ./river_migrate_db target create # create target schema
 
@@ -45,6 +37,23 @@ To run a stream data migration simultaneously, run the migration tool like so:
     # Inspect specific stream content
     ./river_migrate_db source inspect <streamId>
     ./river_migrate_db target inspect <streamId>
+
+### Run migration tool creating target partitions matching source
+
+    ./river_migrate_db target create  # create target schema (i.e. db partition)
+    ./river_migrate_db target init  # create targe tables
+    ./river_migrate_db target partition  # create target partitions matching source
+
+    # shutdown container that is connected to source db
+
+    ./river_migrate_db target partition  # create missing target partitions matching source since last run
+    ./river_migrate_db copy  # copy data from source to target
+
+    # Inspect specific stream content
+    ./river_migrate_db source inspect <streamId>
+    ./river_migrate_db target inspect <streamId>
+
+    # reconfigure container to use target db
 
 For command-line options use `help` command.
 
