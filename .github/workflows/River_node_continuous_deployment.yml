@@ -18,6 +18,7 @@ on:
                     - gamma
                     - omega
                     - alpha
+                    - delta
                 default: gamma
 
     workflow_call:
@@ -90,6 +91,12 @@ jobs:
                     DOCKER_IMAGE_TAG=$(./scripts/river-node-tag/run.sh get)
                     FULL_NODE_NUMBERS="[1,2,3,4,5,6,7,8,9,10,11]"
                     ARCHIVE_NODE_NUMBERS="[1]"
+
+                  elif [ $ENV_NAME = "delta" ]; then
+
+                    DOCKER_IMAGE_TAG=$(./scripts/river-node-tag/run.sh get)
+                    FULL_NODE_NUMBERS="[1,2,3,4,5,6,7,8,9,10]"
+                    ARCHIVE_NODE_NUMBERS="[]"
 
                   elif [ $ENV_NAME = "alpha" ]; then
 
