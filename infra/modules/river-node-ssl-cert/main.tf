@@ -20,20 +20,20 @@ resource "aws_secretsmanager_secret" "river_node_ssl_cert" {
   description = "SSL certificate for the river node"
 }
 
-resource "null_resource" "build_lambda" {
-  triggers = {
-    build_trigger = "${sha256(file("${path.module}/lambda-function/src/index.ts"))}"
-    # time          = "${timestamp()}"
-  }
+# resource "null_resource" "build_lambda" {
+#   triggers = {
+#     build_trigger = "${sha256(file("${path.module}/lambda-function/src/index.ts"))}"
+#     # time          = "${timestamp()}"
+#   }
 
-  provisioner "local-exec" {
-    working_dir = "${path.module}/lambda-function" // Set the correct working directory
-    command     = "npm install && npm run build"
-  }
-}
+#   provisioner "local-exec" {
+#     working_dir = "${path.module}/lambda-function" // Set the correct working directory
+#     command     = "npm install && npm run build"
+#   }
+# }
 
 module "lambda_function" {
-  depends_on = [null_resource.build_lambda] // Ensure build completes before Lambda deployment
+  # depends_on = [null_resource.build_lambda] // Ensure build completes before Lambda deployment
 
   source                = "terraform-aws-modules/lambda/aws"
   version               = "7.2.0"

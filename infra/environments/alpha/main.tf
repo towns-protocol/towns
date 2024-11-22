@@ -208,7 +208,7 @@ module "river_node" {
 // TODO: set count to 0 after migration
 module "archive_node_nlb" {
   source  = "../../modules/river-nlb"
-  count   = 1
+  count   = local.num_archive_nodes
   subnets = module.vpc.public_subnets
   vpc_id  = module.vpc.vpc_id
   nlb_id  = "archive-${tostring(count.index + 1)}"
