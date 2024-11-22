@@ -3,13 +3,9 @@ pragma solidity ^0.8.19;
 
 // utils
 import {Vm} from "forge-std/Test.sol";
-import {DeployDiamond} from "contracts/scripts/deployments/utils/DeployDiamond.s.sol";
-import {DeployMockERC20} from "contracts/scripts/deployments/utils/DeployMockERC20.s.sol";
-import {DeployRewardsDistributionV2} from "contracts/scripts/deployments/facets/DeployRewardsDistributionV2.s.sol";
-import {DeployRiverAirdrop} from "contracts/scripts/deployments/diamonds/DeployRiverAirdrop.s.sol";
 
 //interfaces
-import {IDiamond} from "contracts/src/diamond/Diamond.sol";
+
 import {IDropFacetBase} from "contracts/src/tokens/drop/IDropFacet.sol";
 import {IOwnableBase} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 import {IRewardsDistributionBase} from "contracts/src/base/registry/facets/distribution/v2/IRewardsDistribution.sol";
@@ -52,12 +48,6 @@ contract DropFacetTest is
   uint256 internal constant TOTAL_TOKEN_AMOUNT = 1000;
   uint16 internal constant PENALTY_BPS = 5000;
 
-  DeployDiamond internal rewardsDistributionDiamondHelper = new DeployDiamond();
-  DeployDiamond internal aidropDiamondHelper = new DeployDiamond();
-  DeployMockERC20 internal tokenHelper = new DeployMockERC20();
-  DeployRiverAirdrop internal dropHelper = new DeployRiverAirdrop();
-  DeployRewardsDistributionV2 internal rewardsDistributionHelper =
-    new DeployRewardsDistributionV2();
   MerkleTree internal merkleTree = new MerkleTree();
 
   River internal river;
@@ -90,12 +80,8 @@ contract DropFacetTest is
     // Create the Merkle tree with accounts and amounts
     _createTree();
 
-    // Add the Drop facet to its own diamond
-    dropHelper.setStakingContract(baseRegistry);
-    address diamond = dropHelper.deploy(deployer);
-
     // Initialize the Drop facet
-    dropFacet = DropFacet(diamond);
+    dropFacet = DropFacet(riverAirdrop);
 
     // Initialize the River river
     river = River(riverToken);

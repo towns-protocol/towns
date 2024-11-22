@@ -29,8 +29,8 @@ import { customAlphabet } from 'nanoid'
 
 const log = dlog('test:decryptionExtensions:')
 
-describe('TestDecryptionExtensions', () => {
-    test('should be able to make key solicitation request', async () => {
+describe.concurrent('TestDecryptionExtensions', () => {
+    it('should be able to make key solicitation request', async () => {
         // arrange
         const clientDiscoveryService: ClientDiscoveryService = {}
         const streamId = genStreamId()
@@ -87,7 +87,7 @@ describe('TestDecryptionExtensions', () => {
         expect(aliceDex.seenStates).toContain(DecryptionStatus.processingNewGroupSessions)
     })
 
-    test('should be able to export/import stream room key', async () => {
+    it.concurrent('should be able to export/import stream room key', async () => {
         // arrange
         const clientDiscoveryService: ClientDiscoveryService = {}
         const streamId = genStreamId()

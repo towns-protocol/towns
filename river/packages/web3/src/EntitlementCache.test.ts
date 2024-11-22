@@ -37,7 +37,7 @@ class StringCacheResult implements CacheResult<string> {
 }
 
 describe('EntitlementsCacheTests', () => {
-    test('caches repeat positive values', async () => {
+    it('caches repeat positive values', async () => {
         const cache = new EntitlementCache<Key, boolean>({
             positiveCacheTTLSeconds: 10,
             negativeCacheTTLSeconds: 10,
@@ -59,7 +59,7 @@ describe('EntitlementsCacheTests', () => {
         expect(cacheHit2).toBe(true)
     })
 
-    test('caches repeat negative values', async () => {
+    it('caches repeat negative values', async () => {
         const cache = new EntitlementCache<Key, boolean>({
             positiveCacheTTLSeconds: 10,
             negativeCacheTTLSeconds: 10,
@@ -81,7 +81,7 @@ describe('EntitlementsCacheTests', () => {
         expect(cacheHit2).toBe(true)
     })
 
-    test('caches non-boolean positive values', async () => {
+    it('caches non-boolean positive values', async () => {
         const cache = new EntitlementCache<Key, string>({
             positiveCacheTTLSeconds: 10,
             negativeCacheTTLSeconds: 10,
@@ -103,7 +103,7 @@ describe('EntitlementsCacheTests', () => {
         expect(cacheHit2).toBe(true)
     })
 
-    test('caches non-boolean falsy keys', async () => {
+    it('caches non-boolean falsy keys', async () => {
         const cache = new EntitlementCache<Key, string>({
             positiveCacheTTLSeconds: 10,
             negativeCacheTTLSeconds: 10,
@@ -125,7 +125,7 @@ describe('EntitlementsCacheTests', () => {
         expect(cacheHit2).toBe(true)
     })
 
-    test('positive cache values expire after ttl', async () => {
+    it('positive cache values expire after ttl', async () => {
         const cache = new EntitlementCache<Key, boolean>({
             positiveCacheTTLSeconds: 1,
             negativeCacheTTLSeconds: 10,
@@ -150,7 +150,7 @@ describe('EntitlementsCacheTests', () => {
         expect(cacheHit2).toBe(false)
     })
 
-    test('negative cache values expire after ttl', async () => {
+    it('negative cache values expire after ttl', async () => {
         const cache = new EntitlementCache<Key, boolean>({
             positiveCacheTTLSeconds: 10,
             negativeCacheTTLSeconds: 1,

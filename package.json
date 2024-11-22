@@ -126,13 +126,18 @@
                     "@vitejs/plugin-react",
                     "rollup-plugin-visualizer",
                     "vite-plugin-checker",
-                    "vite-tsconfig-paths"
+                    "vite-tsconfig-paths",
+                    "vitest"
                 ],
                 "packages": [
                     "@river-build/stress",
                     "@river-build/sdk",
                     "@river-build/debug-app",
-                    "@river-build/playground"
+                    "@river-build/playground",
+                    "@river-build/encryption",
+                    "@river-build/dlog",
+                    "@river-build/stream-metadata",
+                    "@river-build/web3"
                 ],
                 "dependencyTypes": [
                     "prod",
@@ -144,7 +149,8 @@
             {
                 "label": "Different versions in /river & client",
                 "dependencies": [
-                    "@fastify/cors"
+                    "@fastify/cors",
+                    "vitest"
                 ],
                 "packages": [
                     "harmonyserver"

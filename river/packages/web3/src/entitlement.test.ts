@@ -61,7 +61,7 @@ function makeRandomOperation(depth: number): Operation {
     }
 }
 
-test('random', async () => {
+it('random', async () => {
     const operation = makeRandomOperation(0)
     // it takes a Uint8Array and returns a Uint8Array
     const controller = new AbortController()
@@ -270,7 +270,7 @@ const nftCases = [
     },
 ]
 
-test.each(nftCases)('erc721Check - $desc', async (props) => {
+it.concurrent.each(nftCases)('erc721Check - $desc', async (props) => {
     const { check, wallets, expectedResult } = props
     const controller = new AbortController()
 
@@ -489,7 +489,7 @@ const erc1155Cases = [
     },
 ]
 
-test.each(erc1155Cases)('ERC1155 Check - $desc', async (props) => {
+it.concurrent.each(erc1155Cases)('ERC1155 Check - $desc', async (props) => {
     const { check, wallets, expectedResult } = props
     const controller = new AbortController()
     const result = await evaluateTree(controller, wallets, xchainConfig, check)
@@ -533,7 +533,7 @@ const ethBalanceCases = [
     },
 ]
 
-test.each(ethBalanceCases)('Eth Balance Check - $desc', async (props) => {
+it.concurrent.each(ethBalanceCases)('Eth Balance Check - $desc', async (props) => {
     const { check, wallets, expectedResult } = props
     const controller = new AbortController()
     const result = await evaluateTree(controller, wallets, xchainConfig, check)
@@ -560,7 +560,7 @@ const ethBalanceCasesMinimalEtherChains = [
     },
 ]
 
-test.each(ethBalanceCasesMinimalEtherChains)(
+it.concurrent.each(ethBalanceCasesMinimalEtherChains)(
     'Eth Balance Check - Ether chains < xChain supported chains - $desc',
     async (props) => {
         const { check, wallets, expectedResult } = props
@@ -668,7 +668,7 @@ const erc20Cases = [
     },
 ]
 
-test.each(erc20Cases)('erc20Check - $desc', async (props) => {
+it.concurrent.each(erc20Cases)('erc20Check - $desc', async (props) => {
     const { check, wallets, expectedResult } = props
     const controller = new AbortController()
     const result = await evaluateTree(controller, wallets, xchainConfig, check)
@@ -805,7 +805,7 @@ const errorTests = [
     },
 ]
 
-test.each(errorTests)('error - $desc', async (props) => {
+it.concurrent.each(errorTests)('error - $desc', async (props) => {
     const { check, error } = props
     const controller = new AbortController()
     await expect(
@@ -833,7 +833,7 @@ const orCases = [
     { leftCheck: falseCheck, rightCheck: falseCheck, expectedResult: ethers.constants.AddressZero },
 ]
 
-test.each(orCases)('orOperation', async (props) => {
+it.concurrent.each(orCases)('orOperation', async (props) => {
     const { leftCheck, rightCheck, expectedResult } = props
     const orOperation: OrOperation = {
         opType: OperationType.LOGICAL,
@@ -874,7 +874,7 @@ const slowOrCases = [
     },
 ]
 
-test.each(slowOrCases)('slowOrOperation', async (props) => {
+it.concurrent.each(slowOrCases)('slowOrOperation', async (props) => {
     const { leftCheck, rightCheck, expectedResult, expectedTime } = props
     const operation: OrOperation = {
         opType: OperationType.LOGICAL,
@@ -898,7 +898,7 @@ const andCases = [
     { leftCheck: falseCheck, rightCheck: falseCheck, expectedResult: ethers.constants.AddressZero },
 ]
 
-test.each(andCases)('andOperation', async (props) => {
+it.concurrent.each(andCases)('andOperation', async (props) => {
     const { leftCheck, rightCheck, expectedResult } = props
     const operation: AndOperation = {
         opType: OperationType.LOGICAL,
@@ -939,7 +939,7 @@ const slowAndCases = [
     },
 ]
 
-test.each(slowAndCases)('slowAndOperation', async (props) => {
+it.concurrent.each(slowAndCases)('slowAndOperation', async (props) => {
     const { leftCheck, rightCheck, expectedResult, expectedTime } = props
     const operation: AndOperation = {
         opType: OperationType.LOGICAL,
@@ -957,13 +957,13 @@ test.each(slowAndCases)('slowAndOperation', async (props) => {
     expect(timeTaken).toBeCloseTo(expectedTime, -2)
 })
 
-test('empty', async () => {
+it('empty', async () => {
     const controller = new AbortController()
     const result = await evaluateTree(controller, [], xchainConfig, undefined)
     expect(result).toBe(ethers.constants.AddressZero)
 })
 
-test('true', async () => {
+it('true', async () => {
     const operation = trueCheck
 
     const controller = new AbortController()
@@ -971,7 +971,7 @@ test('true', async () => {
     expect(result).toBe(MOCK_ADDRESS)
 })
 
-test('false', async () => {
+it('false', async () => {
     const operation = falseCheck
 
     const controller = new AbortController()
@@ -979,7 +979,7 @@ test('false', async () => {
     expect(result).toBe(ethers.constants.AddressZero)
 })
 
-test('encode/decode rule data v2', async () => {
+it('encode/decode rule data v2', async () => {
     const randomTree = makeRandomOperation(5)
 
     const data = treeToRuleData(randomTree)
@@ -991,7 +991,7 @@ test('encode/decode rule data v2', async () => {
     expect(randomTree.opType === newTree.opType).toBeTruthy()
 })
 
-test('decode empty ruledata v2 to NoopRuleData v1', async () => {
+it('decode empty ruledata v2 to NoopRuleData v1', async () => {
     const converted = convertRuleDataV2ToV1(decodeRuleDataV2(EncodedNoopRuleData))
     expect(converted.operations).toHaveLength(0)
     expect(converted.checkOperations).toHaveLength(0)
@@ -1003,7 +1003,7 @@ function addressesEqual(a: string, b: string): boolean {
     return a.toLowerCase() === b.toLowerCase()
 }
 
-test('encode/decode rule data', async () => {
+it('encode/decode rule data', async () => {
     const randomTree = makeRandomOperation(5)
     const data = treeToRuleData(randomTree)
     const v1 = convertRuleDataV2ToV1(data)
@@ -1038,27 +1038,27 @@ test('encode/decode rule data', async () => {
     }
 })
 
-describe('threshold params', () => {
-    test('encode/decode', () => {
+describe.concurrent('threshold params', () => {
+    it('encode/decode', () => {
         const encodedParams = encodeThresholdParams({ threshold: BigInt(100) })
         const decodedParams = decodeThresholdParams(encodedParams)
         expect(decodedParams).toEqual({ threshold: BigInt(100) })
     })
 
-    test('encode invalid params', () => {
+    it('encode invalid params', () => {
         expect(() => encodeThresholdParams({ threshold: BigInt(-1) })).toThrow(
             'Invalid threshold -1: must be greater than or equal to 0',
         )
     })
 })
 
-describe('erc1155 params', () => {
-    test('encode invalid params', () => {
+describe.concurrent('erc1155 params', () => {
+    it('encode invalid params', () => {
         expect(() => encodeERC1155Params({ threshold: BigInt(-1), tokenId: BigInt(100) })).toThrow(
             'Invalid threshold -1: must be greater than or equal to 0',
         )
     })
-    test('encode/decode', () => {
+    it('encode/decode', () => {
         const encodedParams = encodeERC1155Params({ threshold: BigInt(200), tokenId: BigInt(100) })
         const decodedParams = decodeERC1155Params(encodedParams)
         expect(decodedParams).toEqual({ threshold: BigInt(200), tokenId: BigInt(100) })
@@ -1124,8 +1124,8 @@ function assertOperationsEqual(actual: Operation[], expected: Operation[]) {
     }
 }
 
-describe('createOperationsTree', () => {
-    test('empty', () => {
+describe.concurrent('createOperationsTree', () => {
+    it('empty', () => {
         const checkOp: DecodedCheckOperation[] = []
         const tree = createOperationsTree(checkOp)
         expect(tree).toEqual({
@@ -1139,7 +1139,7 @@ describe('createOperationsTree', () => {
         assertOperationsEqual(operations, [NoopOperation])
     })
 
-    test('custom entitlement check', () => {
+    it('custom entitlement check', () => {
         const checkOp: DecodedCheckOperation[] = [
             {
                 type: CheckOperationType.ISENTITLED,
@@ -1170,7 +1170,7 @@ describe('createOperationsTree', () => {
         })
     })
 
-    test('single check', () => {
+    it('single check', () => {
         const checkOp: DecodedCheckOperation[] = [
             {
                 type: CheckOperationType.ERC721,
@@ -1201,7 +1201,7 @@ describe('createOperationsTree', () => {
         })
     })
 
-    test('two checks', () => {
+    it('two checks', () => {
         const checkOp: DecodedCheckOperation[] = [
             {
                 type: CheckOperationType.ISENTITLED,
@@ -1286,7 +1286,7 @@ describe('createOperationsTree', () => {
         ])
     })
 
-    test('three checks', () => {
+    it('three checks', () => {
         const checkOp: DecodedCheckOperation[] = [
             {
                 type: CheckOperationType.ISENTITLED,
@@ -1411,14 +1411,14 @@ describe('createOperationsTree', () => {
     })
 })
 
-describe('DecodedCheckOpBuilder', () => {
-    test('Untyped', () => {
+describe.concurrent('DecodedCheckOpBuilder', () => {
+    it('Untyped', () => {
         expect(() => {
             new DecodedCheckOperationBuilder().build()
         }).toThrow('DecodedCheckOperation requires a type')
     })
 
-    test('ERC20s', () => {
+    it('ERC20s', () => {
         expect(() => {
             new DecodedCheckOperationBuilder()
                 .setType(CheckOperationType.ERC20)
@@ -1459,7 +1459,7 @@ describe('DecodedCheckOpBuilder', () => {
         } as DecodedCheckOperation)
     })
 
-    test('ERC721s', () => {
+    it('ERC721s', () => {
         expect(() => {
             new DecodedCheckOperationBuilder()
                 .setType(CheckOperationType.ERC721)
@@ -1500,7 +1500,7 @@ describe('DecodedCheckOpBuilder', () => {
         } as DecodedCheckOperation)
     })
 
-    test('ERC1155s', () => {
+    it('ERC1155s', () => {
         expect(() => {
             new DecodedCheckOperationBuilder()
                 .setType(CheckOperationType.ERC1155)
@@ -1555,7 +1555,7 @@ describe('DecodedCheckOpBuilder', () => {
         } as DecodedCheckOperation)
     })
 
-    test('ETH_BALANCE', () => {
+    it('ETH_BALANCE', () => {
         expect(() => {
             new DecodedCheckOperationBuilder().setType(CheckOperationType.ETH_BALANCE).build()
         }).toThrow('DecodedCheckOperation of type ETH_BALANCE requires a threshold')
@@ -1572,7 +1572,7 @@ describe('DecodedCheckOpBuilder', () => {
         } as DecodedCheckOperation)
     })
 
-    test('ISENTITLED', () => {
+    it('ISENTITLED', () => {
         expect(() => {
             new DecodedCheckOperationBuilder()
                 .setType(CheckOperationType.ISENTITLED)

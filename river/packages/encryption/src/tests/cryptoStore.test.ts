@@ -16,7 +16,7 @@ describe('ClientStoreTests', () => {
         store = new CryptoStore(name, userId)
     })
 
-    test('Add devices to store', async () => {
+    it('Add devices to store', async () => {
         const userId = nanoid()
         const userDevice: UserDevice = {
             deviceKey: nanoid(),
@@ -25,7 +25,7 @@ describe('ClientStoreTests', () => {
         await store.saveUserDevices(userId, [userDevice])
     })
 
-    test('Fetch devices from store', async () => {
+    it('Fetch devices from store', async () => {
         const userId = nanoid()
         const devices = [...Array(10).keys()].map(() => {
             const userDevice: UserDevice = {
@@ -44,7 +44,7 @@ describe('ClientStoreTests', () => {
         )
     })
 
-    test('Expired devices are not fetched', async () => {
+    it('Expired devices are not fetched', async () => {
         const userId = nanoid()
         const userDevice: UserDevice = {
             deviceKey: nanoid(),
@@ -61,7 +61,7 @@ describe('ClientStoreTests', () => {
         expect(devicesAfterTimeout.length).toEqual(0)
     })
 
-    test('Adding the same device id twice updates the expiration time', async () => {
+    it('Adding the same device id twice updates the expiration time', async () => {
         const userId = nanoid()
         const userDevice: UserDevice = {
             deviceKey: nanoid(),
@@ -84,7 +84,7 @@ describe('ClientStoreTests', () => {
     // This test is slightly articifical, but the idea is to make sure
     // that expired devices are always purged on init to make sure that the DB
     // doesn't just keep growing. We still need to remember to call initialize()
-    test('Expired devices are purged on init', async () => {
+    it('Expired devices are purged on init', async () => {
         const userId = nanoid()
         const userDevice: UserDevice = {
             deviceKey: nanoid(),
@@ -120,7 +120,7 @@ describe('EncryptionDevice import/export', () => {
         await device.init()
     })
 
-    test('Export and import device state', async () => {
+    it('Export and import device state', async () => {
         // Generate some initial state
         const initialCurve25519Key = device.deviceCurve25519Key
 

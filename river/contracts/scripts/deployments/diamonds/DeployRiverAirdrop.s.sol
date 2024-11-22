@@ -19,9 +19,12 @@ import {DeployDiamondLoupe} from "contracts/scripts/deployments/facets/DeployDia
 import {DeployIntrospection} from "contracts/scripts/deployments/facets/DeployIntrospection.s.sol";
 import {DeployOwnable} from "contracts/scripts/deployments/facets/DeployOwnable.s.sol";
 import {DeployDropFacet} from "contracts/scripts/deployments/facets/DeployDropFacet.s.sol";
+import {DeployRiverPoints} from "contracts/scripts/deployments/facets/DeployRiverPoints.s.sol";
+import {DeployMetadata} from "contracts/scripts/deployments/facets/DeployMetadata.s.sol";
 
 contract DeployRiverAirdrop is DiamondHelper, Deployer {
-  address internal STAKING_CONTRACT = address(0);
+  address internal BASE_REGISTRY = address(0);
+  address internal SPACE_FACTORY = address(0);
 
   DeployMultiInit deployMultiInit = new DeployMultiInit();
   DeployDiamondCut diamondCutHelper = new DeployDiamondCut();
@@ -29,6 +32,8 @@ contract DeployRiverAirdrop is DiamondHelper, Deployer {
   DeployIntrospection introspectionHelper = new DeployIntrospection();
   DeployOwnable ownableHelper = new DeployOwnable();
   DeployDropFacet dropHelper = new DeployDropFacet();
+  DeployRiverPoints pointsHelper = new DeployRiverPoints();
+  DeployMetadata metadataHelper = new DeployMetadata();
 
   address multiInit;
   address diamondCut;
@@ -37,18 +42,32 @@ contract DeployRiverAirdrop is DiamondHelper, Deployer {
   address ownable;
 
   address dropFacet;
+  address pointsFacet;
+  address metadata;
 
   function versionName() public pure override returns (string memory) {
     return "riverAirdrop";
   }
 
-  function setStakingContract(address stakingContract) external {
-    STAKING_CONTRACT = stakingContract;
+  function setSpaceFactory(address spaceFactory) external {
+    SPACE_FACTORY = spaceFactory;
   }
 
-  function getStakingContract() internal returns (address) {
-    if (STAKING_CONTRACT != address(0)) {
-      return STAKING_CONTRACT;
+  function getSpaceFactory() internal returns (address) {
+    if (SPACE_FACTORY != address(0)) {
+      return SPACE_FACTORY;
+    }
+
+    return getDeployment("spaceFactory");
+  }
+
+  function setBaseRegistry(address baseRegistry) external {
+    BASE_REGISTRY = baseRegistry;
+  }
+
+  function getBaseRegistry() internal returns (address) {
+    if (BASE_REGISTRY != address(0)) {
+      return BASE_REGISTRY;
     }
 
     return getDeployment("baseRegistry");
@@ -87,11 +106,23 @@ contract DeployRiverAirdrop is DiamondHelper, Deployer {
     address deployer
   ) public returns (Diamond.InitParams memory) {
     dropFacet = dropHelper.deploy(deployer);
+    pointsFacet = pointsHelper.deploy(deployer);
+    metadata = metadataHelper.deploy(deployer);
 
     addFacet(
       dropHelper.makeCut(dropFacet, IDiamond.FacetCutAction.Add),
       dropFacet,
-      dropHelper.makeInitData(getStakingContract())
+      dropHelper.makeInitData(getBaseRegistry())
+    );
+    addFacet(
+      pointsHelper.makeCut(pointsFacet, IDiamond.FacetCutAction.Add),
+      pointsFacet,
+      pointsHelper.makeInitData(getSpaceFactory())
+    );
+    addFacet(
+      metadataHelper.makeCut(metadata, IDiamond.FacetCutAction.Add),
+      metadata,
+      metadataHelper.makeInitData(bytes32("RiverAirdrop"), "")
     );
 
     return

@@ -4,6 +4,7 @@ pragma solidity ^0.8.23;
 // interfaces
 import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
 import {IPartnerRegistryBase, IPartnerRegistry} from "contracts/src/factory/facets/partner/IPartnerRegistry.sol";
+import {IImplementationRegistry} from "contracts/src/factory/facets/registry/IImplementationRegistry.sol";
 import {IRolesBase} from "contracts/src/spaces/facets/roles/IRoles.sol";
 import {IRuleEntitlement} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
 import {IMembership} from "contracts/src/spaces/facets/membership/IMembership.sol";
@@ -13,6 +14,7 @@ import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
 import {CurrencyTransfer} from "contracts/src/utils/libraries/CurrencyTransfer.sol";
 import {BasisPoints} from "contracts/src/utils/libraries/BasisPoints.sol";
 import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
+import {MembershipStorage} from "../MembershipStorage.sol";
 
 // contracts
 import {MembershipBase} from "contracts/src/spaces/facets/membership/MembershipBase.sol";
@@ -22,6 +24,7 @@ import {Entitled} from "contracts/src/spaces/facets/Entitled.sol";
 import {PrepayBase} from "contracts/src/spaces/facets/prepay/PrepayBase.sol";
 import {ReferralsBase} from "contracts/src/spaces/facets/referrals/ReferralsBase.sol";
 import {EntitlementGatedBase} from "contracts/src/spaces/facets/gated/EntitlementGatedBase.sol";
+import {RiverPoints} from "contracts/src/tokens/points/RiverPoints.sol";
 
 /// @title MembershipJoin
 /// @notice Handles the logic for joining a space, including entitlement checks and payment processing
@@ -284,12 +287,31 @@ abstract contract MembershipJoin is
     );
   }
 
+  /// @notice Computes the points for the protocol fee
+  function _getPoints(uint256 protocolFee) internal pure returns (uint256) {
+    if (protocolFee <= 0.0003 ether) {
+      return protocolFee * 1_000_000;
+    } else if (protocolFee <= 0.001 ether) {
+      return protocolFee * 2_000_000;
+    } else {
+      return protocolFee * 3_000_000;
+    }
+  }
+
+  function _creditPoints(address receiver, uint256 points) internal {
+    address pointsToken = IImplementationRegistry(_getSpaceFactory())
+      .getLatestImplementation(bytes32("RiverAirdrop"));
+
+    // Equivalent to `pointsToken.mint(receiver, points);`
+    RiverPoints(pointsToken).mint(receiver, points);
+  }
+
   function _afterChargeForJoinSpace(
     bytes32 transactionId,
     address sender,
     uint256 payment,
     uint256 surplus,
-    uint256
+    uint256 protocolFee
   ) internal {
     if (surplus > 0) {
       _transferIn(sender, surplus);
@@ -297,6 +319,11 @@ abstract contract MembershipJoin is
 
     _releaseCapturedValue(transactionId, payment);
     _captureData(transactionId, "");
+
+    // calculate points and credit them
+    uint256 points = _getPoints(protocolFee);
+    _creditPoints(sender, points);
+    _creditPoints(_owner(), points);
   }
 
   /// @notice Issues a membership token to the receiver

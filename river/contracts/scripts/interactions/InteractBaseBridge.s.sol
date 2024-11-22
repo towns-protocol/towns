@@ -16,10 +16,10 @@ contract InteractBaseBridge is Interaction {
   address l2StandardBridge = 0x4200000000000000000000000000000000000010;
 
   address riverOnSepolia = 0x40eF1bb984503bb5Adef041A88a4F9180e8586f9;
-  address riverOnBaseSepolia = 0x49442708a16Bf7917764F14A2D103f40Eb27BdD8;
+  address riverOnBaseSepolia = 0x24e3123E1b30E041E2df26Da9d6140c5B07Fe4F0;
   uint256 tokensToDeposit = 1_000_000 ether;
 
-  address oldRiverOnBaseSepolia = 0xDaF401580d509117738bF1F38D2CD4ABAEd3c2c5;
+  address oldRiverOnBaseSepolia = 0x49442708a16Bf7917764F14A2D103f40Eb27BdD8;
 
   function __interact(address deployer) internal override {
     // Bridge from Base Sepolia to Sepolia

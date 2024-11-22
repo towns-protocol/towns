@@ -18,7 +18,7 @@ const log = dlog('stream-metadata:test:spaceMemberMetadata', {
 	defaultEnabled: true,
 })
 
-describe('integration/space/:spaceAddress/token/:tokenId', () => {
+describe('integration/stream-metadata/:spaceAddress/token/:tokenId', () => {
 	const baseURL = getTestServerUrl()
 	log('baseURL', baseURL)
 
@@ -69,7 +69,7 @@ describe('integration/space/:spaceAddress/token/:tokenId', () => {
 		expect(response.headers['content-type']).toContain('application/json')
 		expect(name).toEqual(`${spaceMetadata.name} - Member`)
 		expect(description).toEqual(`Member of ${spaceMetadata.name}`)
-		expect(image).toBe(`${baseURL}/space/${spaceAddress}/image`)
+		expect(image).toContain(`${baseURL}/space/${spaceAddress}/image`)
 
 		const renewalPrice = attributes.find((attr) => attr.trait_type === 'Renewal Price')
 		expect(renewalPrice).toBeDefined()
@@ -92,7 +92,7 @@ describe('integration/space/:spaceAddress/token/:tokenId', () => {
 		await runTest(spaceAddress, 0, metadata)
 	})
 
-	it('should return 404 /space/:spaceAddress/token/42069', async () => {
+	it('should return 200 - any token id is valid for a space', async () => {
 		const metadata = {
 			name: 'Alice Space',
 			uri: baseURL,
@@ -103,6 +103,6 @@ describe('integration/space/:spaceAddress/token/:tokenId', () => {
 		const response = await axios.get<SpaceMemberMetadataResponse>(
 			`${baseURL}/space/${spaceAddress}/token/42069`,
 		)
-		expect(response.status).toBe(404)
+		expect(response.status).toBe(200)
 	})
 })

@@ -5,7 +5,7 @@ import { Account, Session } from '../encryptionTypes'
 
 const log = debug('test')
 
-describe('Encryption Protocol', () => {
+describe.concurrent('Encryption Protocol', () => {
     let aliceAccount: Account | undefined
     let bobAccount: Account | undefined
     let aliceSession: Session | undefined
@@ -42,7 +42,7 @@ describe('Encryption Protocol', () => {
         }
     })
 
-    test('shouldEncryptAndDecrypt', async () => {
+    it('shouldEncryptAndDecrypt', async () => {
         if (
             aliceAccount === undefined ||
             bobAccount === undefined ||
@@ -84,7 +84,7 @@ describe('Encryption Protocol', () => {
         expect(decrypted).toEqual(TEST_TEXT)
     })
 
-    test('shouldEncryptAndDecryptWithFallbackKey', async () => {
+    it('shouldEncryptAndDecryptWithFallbackKey', async () => {
         if (
             aliceAccount === undefined ||
             bobAccount === undefined ||
@@ -136,7 +136,7 @@ describe('Encryption Protocol', () => {
         expect(decrypted_2).toEqual(TEST_TEXT_2)
     })
 
-    test('shouldNotEncryptAndDecryptWithBadFallbackKey', async () => {
+    it('shouldNotEncryptAndDecryptWithBadFallbackKey', async () => {
         if (
             aliceAccount === undefined ||
             bobAccount === undefined ||

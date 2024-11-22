@@ -1,7 +1,20 @@
 import { EncryptionDelegate } from '../encryptionDelegate'
 import { Account } from '../encryptionTypes'
 
-describe('EncrytionDelegate', () => {
+function getFallbackKey(account: Account): string {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    return Object.values(
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        JSON.parse(account.unpublished_fallback_key())['curve25519'],
+    )[0] as string
+}
+
+function getIdentityKey(account: Account): string {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
+    return JSON.parse(account.identity_keys()).curve25519
+}
+
+describe.concurrent('EncrytionDelegate', () => {
     const delegate = new EncryptionDelegate()
     let bob: Account
     let alice: Account
@@ -14,20 +27,7 @@ describe('EncrytionDelegate', () => {
         alice.create()
     })
 
-    function getFallbackKey(account: Account): string {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        return Object.values(
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-            JSON.parse(account.unpublished_fallback_key())['curve25519'],
-        )[0] as string
-    }
-
-    function getIdentityKey(account: Account): string {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
-        return JSON.parse(account.identity_keys()).curve25519
-    }
-
-    test('encrypt decrypt', async () => {
+    it('encrypt decrypt', async () => {
         alice.generate_fallback_key()
         const aliceFallbackKey = getFallbackKey(alice)
         const aliceIdentityKey = getIdentityKey(alice)
@@ -45,7 +45,7 @@ describe('EncrytionDelegate', () => {
         expect(decrypted2).toEqual('alice to bob 1')
     })
 
-    test('decrypt same message twice', async () => {
+    it('decrypt same message twice', async () => {
         alice.generate_fallback_key()
         const aliceFallbackKey = getFallbackKey(alice)
         const aliceIdentityKey = getIdentityKey(alice)
@@ -62,7 +62,7 @@ describe('EncrytionDelegate', () => {
         expect(aliceToBob2.decrypt(encrypted.type, encrypted.body)).toEqual('bob to alice 1')
     })
 
-    test('decrypt same message twice throws', async () => {
+    it('decrypt same message twice throws', async () => {
         alice.generate_fallback_key()
         const aliceFallbackKey = getFallbackKey(alice)
         const aliceIdentityKey = getIdentityKey(alice)
@@ -76,7 +76,7 @@ describe('EncrytionDelegate', () => {
         expect(() => aliceToBob.decrypt(encrypted.type, encrypted.body)).toThrow()
     })
 
-    test('decrypt same messages out of order', async () => {
+    it('decrypt same messages out of order', async () => {
         alice.generate_fallback_key()
         const aliceFallbackKey = getFallbackKey(alice)
         const aliceIdentityKey = getIdentityKey(alice)

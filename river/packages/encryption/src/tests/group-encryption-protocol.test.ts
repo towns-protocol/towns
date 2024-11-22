@@ -4,7 +4,7 @@ import { InboundGroupSession, OutboundGroupSession } from '../encryptionTypes'
 
 const log = debug('test')
 
-describe('Group Encryption Protocol', () => {
+describe.concurrent('Group Encryption Protocol', () => {
     let aliceSession: OutboundGroupSession | undefined
     let bobSession: InboundGroupSession | undefined
     let eveSession: InboundGroupSession | undefined
@@ -26,7 +26,7 @@ describe('Group Encryption Protocol', () => {
         }
     })
 
-    test('noInitShouldFail', async () => {
+    it('noInitShouldFail', async () => {
         const delegate = new EncryptionDelegate()
         try {
             aliceSession = delegate.createOutboundGroupSession()
@@ -36,7 +36,7 @@ describe('Group Encryption Protocol', () => {
         expect(aliceSession).toBeUndefined()
     })
 
-    test('shouldEncryptAndDecryptGroup', async () => {
+    it('shouldEncryptAndDecryptGroup', async () => {
         const delegate = new EncryptionDelegate()
         await delegate.init()
         aliceSession = delegate.createOutboundGroupSession()
@@ -75,7 +75,7 @@ describe('Group Encryption Protocol', () => {
         expect(decrypted.message_index).toEqual(2)
     })
 
-    test('shouldEncryptAndDecryptGroupMultipleInit', async () => {
+    it('shouldEncryptAndDecryptGroupMultipleInit', async () => {
         const delegate = new EncryptionDelegate()
         await delegate.init()
         aliceSession = delegate.createOutboundGroupSession()

@@ -4,7 +4,7 @@ import { PkDecryption, PkEncryption, PkSigning } from '../encryptionTypes'
 
 const log = debug('test')
 
-describe('Pk Signing and Encryption', () => {
+describe.concurrent('Pk Signing and Encryption', () => {
     let encryption: PkEncryption | undefined
     let decryption: PkDecryption | undefined
     let signing: PkSigning | undefined
@@ -32,7 +32,7 @@ describe('Pk Signing and Encryption', () => {
         }
     })
 
-    test('shouldImportAndExportKeysFromPrivateParts', async () => {
+    it('shouldImportAndExportKeysFromPrivateParts', async () => {
         if (encryption === undefined || decryption === undefined) {
             throw new Error('key pairs not initialized')
         }
@@ -47,7 +47,7 @@ describe('Pk Signing and Encryption', () => {
         expect(alice_private_out).toEqual(alice_private)
     })
 
-    test('shouldEncryptAndDecrypt', async () => {
+    it('shouldEncryptAndDecrypt', async () => {
         if (encryption === undefined || decryption === undefined) {
             throw new Error('key pairs not initialized')
         }
@@ -67,7 +67,7 @@ describe('Pk Signing and Encryption', () => {
         expect(decrypted).toEqual(TEST_TEXT)
     })
 
-    test('shouldPickleAndUnpickleKey', async () => {
+    it('shouldPickleAndUnpickleKey', async () => {
         if (encryption === undefined || decryption === undefined || delegate === undefined) {
             throw new Error('key pairs not initialized')
         }
@@ -92,7 +92,7 @@ describe('Pk Signing and Encryption', () => {
         new_decryption.free()
     })
 
-    test('shouldSignAndVerify', async () => {
+    it('shouldSignAndVerify', async () => {
         if (signing === undefined || delegate === undefined) {
             throw new Error('key pairs not initialized')
         }

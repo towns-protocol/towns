@@ -2103,7 +2103,7 @@ export class Client
     ): Promise<{ prevMiniblockHash: Uint8Array; eventId: string; error?: AddEventResponse_Error }> {
         const streamIdStr = streamIdAsString(streamId)
         check(isDefined(streamIdStr) && streamIdStr !== '', 'streamId must be defined')
-        const event = await makeEvent(this.signerContext, payload, prevMiniblockHash)
+        const event = await makeEvent(this.signerContext, payload, prevMiniblockHash, tags)
         const eventId = bin_toHexString(event.hash)
         if (localId) {
             // when we have a localId, we need to update the local event with the eventId
@@ -2200,6 +2200,8 @@ export class Client
             throw new Error('userId must be set to reset crypto')
         }
         this.cryptoBackend = undefined
+        await this.decryptionExtensions?.stop()
+        this.decryptionExtensions = undefined
         await this.cryptoStore.deleteAccount(this.userId)
         await this.initCrypto()
         await this.uploadDeviceKeys()

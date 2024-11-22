@@ -9,7 +9,8 @@
 		"strict": true,
 		"outDir": "./dist",
 		"rootDir": "./src",
-		"sourceMap": true
+		"sourceMap": true,
+		"types": ["vitest/globals"]
 	},
 	"include": ["src/**/*.ts"],
 	"exclude": ["node_modules", "dist", "tests"]

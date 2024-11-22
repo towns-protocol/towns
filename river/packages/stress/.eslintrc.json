@@ -6,13 +6,12 @@
         "plugin:import/typescript",
         "plugin:@typescript-eslint/recommended",
         "plugin:@typescript-eslint/recommended-requiring-type-checking",
-        "plugin:prettier/recommended",
-        "plugin:jest/recommended"
+        "plugin:prettier/recommended"
     ],
     "parser": "@typescript-eslint/parser",
     "parserOptions": { "project": ["./tsconfig.json"] },
     "plugins": ["@typescript-eslint", "import"],
-    "ignorePatterns": ["dist/**", ".turbo/**", "node_modules/**", "jest.config.ts"],
+    "ignorePatterns": ["dist/**", ".turbo/**", "node_modules/**", "vitest.*"],
     "rules": {
         "no-console": "error",
         "import/no-extraneous-dependencies": [
@@ -56,10 +55,6 @@
         {
             "files": ["**/*.test.*", "**/*.test_util.*"],
             "rules": {
-                "jest/no-standalone-expect": "error",
-                "jest/expect-expect": "error",
-                "jest/no-conditional-expect": "off",
-                "jest/no-disabled-tests": "off",
                 "@typescript-eslint/no-unsafe-call": "error",
                 "@typescript-eslint/no-non-null-assertion": "error",
                 "@typescript-eslint/no-unsafe-argument": "error"

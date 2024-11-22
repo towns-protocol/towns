@@ -5,11 +5,11 @@ const log = debug('web3:test')
 
 describe('Web3Constants', () => {
     ;``
-    test('BASE_SEPOLIA', () => {
+    it('BASE_SEPOLIA', () => {
         expect(BASE_SEPOLIA).toBe(84532)
     })
 
-    test('instantiate provider', () => {
+    it('instantiate provider', () => {
         log('testing provider instanciation')
         const p = new LocalhostWeb3Provider('http://localhost:8545')
         expect(p).toBeDefined()

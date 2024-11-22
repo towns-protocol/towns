@@ -12,7 +12,6 @@ import {
 	makeTestClient,
 	SpaceMetadataParams,
 } from '../testUtils'
-import { config } from '../../src/environment'
 import { spaceMetadataBaseUrl, SpaceMetadataResponse } from '../../src/routes/spaceMetadata'
 import { spaceDapp } from '../../src/contract-utils'
 
@@ -21,7 +20,7 @@ const log = dlog('stream-metadata:test:spaceMetadata', {
 	defaultEnabled: true,
 })
 
-describe('integration/space/:spaceAddress', () => {
+describe('integration/stream-metadata/space/:spaceAddress', () => {
 	const baseURL = getTestServerUrl()
 	log('baseURL', baseURL)
 
@@ -138,7 +137,7 @@ describe('integration/space/:spaceAddress', () => {
 			imageData,
 		)
 
-		await bobsClient.setSpaceImage(spaceStreamId, chunkedMedia)
+		const { eventId } = await bobsClient.setSpaceImage(spaceStreamId, chunkedMedia)
 
 		/*
 		 * 4. fetch the space metadata from the stream-metadata server.
@@ -159,29 +158,15 @@ describe('integration/space/:spaceAddress', () => {
 			}
 		}
 
-		/*
-		 * 5. verify the response.
-		 */
-		if (spaceUri.trim() === '' || spaceUri.toLowerCase() === spaceMetadataBaseUrl) {
-			// 200 response case
-			const { name, description, image: imageUrl } = response.data
-			expect(response.status).toBe(200)
-			expect(response.headers['content-type']).toContain('application/json')
-			expect(name).toEqual(expectedMetadata.name)
-			const expectedDescription = `${expectedMetadata.shortDescription}<br><br>${expectedMetadata.longDescription}`
-			expect(description).toEqual(expectedDescription)
+		const { name, description, image: imageUrl } = response.data
+		expect(response.status).toBe(200)
+		expect(response.headers['content-type']).toContain('application/json')
+		expect(name).toEqual(expectedMetadata.name)
+		const expectedDescription = `${expectedMetadata.shortDescription}<br><br>${expectedMetadata.longDescription}`
+		expect(description).toEqual(expectedDescription)
 
-			let expectedImageUrl = spaceUri
-			if (spaceUri.trim() === '' || spaceUri === config.streamMetadataBaseUrl) {
-				expectedImageUrl = `${spaceMetadataBaseUrl}/${spaceAddress}/image`
-			}
-			expect(imageUrl.toLowerCase()).toEqual(expectedImageUrl.toLowerCase())
-		} else {
-			// 302 redirect case
-			expect(response.status).toBe(302)
-			expect(response.headers['location']).toBeDefined()
-			expect(response.headers['location']).toEqual(spaceUri.toLowerCase())
-		}
+		const expectedImageUrl = `${spaceMetadataBaseUrl}/${spaceAddress}/image/${eventId}`
+		expect(imageUrl.toLowerCase()).toEqual(expectedImageUrl.toLowerCase())
 	}
 
 	it('should return 404 /space', async () => {
@@ -238,7 +223,7 @@ describe('integration/space/:spaceAddress', () => {
 		await runSpaceImageTest(' ')
 	})
 
-	it('should return status 302 with spaceImage when uri is https://example.com', async () => {
+	it('should return status 200 even if spaceUri is https://example.com', async () => {
 		await runSpaceImageTest('https://example.com')
 	})
 })

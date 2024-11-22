@@ -1,4 +1,4 @@
-jest.config.ts
-jest.setup.ts
+vitest.config.ts
+vitest.setup.ts
 dist/
 node_modules/

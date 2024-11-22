@@ -178,20 +178,22 @@ export async function createTestSpaceGatedByTownNft(
     if (!client.walletAddress) {
         throw new Error('client.walletAddress is undefined')
     }
-    const dynamicPricingModule = await getDynamicPricingModule(client.spaceDapp)
+    const { fixedPricingModuleAddress, price, freeAllocation } = await getFreeSpacePricingSetup(
+        client.spaceDapp,
+    )
 
     // Everyone role
     const membershipInfo: MembershipStruct = {
         settings: {
             name: 'Everyone',
             symbol: 'MEMBER',
-            price: 0,
+            price,
             maxSupply: 100,
             duration: 0,
             currency: ethers.constants.AddressZero,
             feeRecipient: ethers.constants.AddressZero,
-            freeAllocation: 0,
-            pricingModule: dynamicPricingModule.module,
+            freeAllocation,
+            pricingModule: fixedPricingModuleAddress,
         },
         permissions: rolePermissions,
         requirements: {

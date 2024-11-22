@@ -39,6 +39,7 @@ import {DeploySpaceFactory} from "contracts/scripts/deployments/diamonds/DeployS
 import {DeployRiverBase} from "contracts/scripts/deployments/utils/DeployRiverBase.s.sol";
 import {DeployProxyBatchDelegation} from "contracts/scripts/deployments/utils/DeployProxyBatchDelegation.s.sol";
 import {DeployBaseRegistry} from "contracts/scripts/deployments/diamonds/DeployBaseRegistry.s.sol";
+import {DeployRiverAirdrop} from "contracts/scripts/deployments/diamonds/DeployRiverAirdrop.s.sol";
 
 /*
  * @notice - This is the base setup to start testing the entire suite of contracts
@@ -59,6 +60,7 @@ contract BaseSetup is TestUtils, SpaceHelper {
   DeployRiverBase internal deployRiverTokenBase = new DeployRiverBase();
   DeployProxyBatchDelegation internal deployProxyBatchDelegation =
     new DeployProxyBatchDelegation();
+  DeployRiverAirdrop internal deployRiverAirdrop = new DeployRiverAirdrop();
 
   address[] internal operators;
   address[] internal nodes;
@@ -88,6 +90,9 @@ contract BaseSetup is TestUtils, SpaceHelper {
   address internal pricingModule;
   address internal fixedPricingModule;
   address internal tieredPricingModule;
+
+  address internal riverAirdrop;
+
   SimpleAccountFactory internal simpleAccountFactory;
 
   IEntitlementChecker internal entitlementChecker;
@@ -135,7 +140,6 @@ contract BaseSetup is TestUtils, SpaceHelper {
     userEntitlement = deploySpaceFactory.userEntitlement();
     ruleEntitlement = deploySpaceFactory.ruleEntitlement();
     legacyRuleEntitlement = deploySpaceFactory.legacyRuleEntitlement();
-
     spaceOwner = deploySpaceFactory.spaceOwner();
     pricingModule = deploySpaceFactory.tieredLogPricingV3();
     fixedPricingModule = deploySpaceFactory.fixedPricing();
@@ -143,14 +147,19 @@ contract BaseSetup is TestUtils, SpaceHelper {
     implementationRegistry = IImplementationRegistry(spaceFactory);
     eip712Facet = EIP712Facet(spaceFactory);
 
-    // Base Registry Diamond
+    // River Airdrop
+    deployRiverAirdrop.setBaseRegistry(baseRegistry);
+    deployRiverAirdrop.setSpaceFactory(spaceFactory);
+    riverAirdrop = deployRiverAirdrop.deploy(deployer);
 
+    // Base Registry Diamond
     bridge = deployRiverTokenBase.bridgeBase();
 
     // POST DEPLOY
     vm.startPrank(deployer);
     ISpaceOwner(spaceOwner).setFactory(spaceFactory);
     IImplementationRegistry(spaceFactory).addImplementation(baseRegistry);
+    IImplementationRegistry(spaceFactory).addImplementation(riverAirdrop);
     ISpaceDelegation(baseRegistry).setRiverToken(riverToken);
     ISpaceDelegation(baseRegistry).setMainnetDelegation(baseRegistry);
     IMainnetDelegation(baseRegistry).setProxyDelegation(mainnetProxyDelegation);

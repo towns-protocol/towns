@@ -8,9 +8,8 @@
         "build-esbuild": "node esbuild.config.mjs",
         "demo": "node --enable-source-maps ./dist/demo.cjs",
         "lint": "eslint . --ext .ts",
-        "my-jest": "NODE_EXTRA_CA_CERTS=${HOME}/river-ca-cert.pem NODE_TLS_REJECT_UNAUTHORIZED=0 yarn node -r ../../scripts/node-no-warn.js --experimental-vm-modules $(yarn bin jest)",
         "start": "node --enable-source-maps ./dist/start.cjs",
-        "test:ci:with-entitlements": "RIVER_ENV=local_multi DEBUG='stress:*,csb:enc*,csb:dec*' DEBUG_DEPTH='10' yarn my-jest",
+        "test:ci:with-entitlements": "vitest run --config ./vitest.config.entitlements.ts --silent",
         "typecheck": "tsc --noEmit",
         "watch": "tsc --watch"
     },
@@ -32,11 +31,7 @@
         "pino-pretty": "^10.2.3"
     },
     "devDependencies": {
-        "@jest/globals": "^29.6.2",
-        "@testing-library/jest-dom": "^5.16.5",
-        "@testing-library/react": "^14.2.1",
         "@types/debug": "^4.1.8",
-        "@types/jest": "^29.5.3",
         "@types/lodash": "^4.14.186",
         "@types/node": "^20.5.0",
         "@typescript-eslint/eslint-plugin": "^6.10.0",
@@ -48,21 +43,12 @@
         "eslint-plugin-import": "^2.27.5",
         "eslint-plugin-jest": "^27.2.3",
         "fake-indexeddb": "^4.0.1",
-        "jest": "^29.6.2",
-        "jest-environment-jsdom": "^29.6.2",
-        "jest-extended": "^4.0.1",
-        "jest-mock-extended": "^3.0.4",
-        "jest-runner-groups": "^2.2.0",
         "msgpackr": "^1.10.1",
-        "ts-jest": "^29.1.1",
-        "ts-node": "^10.9.1",
         "typed-emitter": "^2.1.0",
-        "typescript": "^5.1.6"
+        "typescript": "^5.1.6",
+        "vitest": "^2.1.5"
     },
     "files": [
         "/dist"
-    ],
-    "resolutions": {
-        "jest-worker@^29.5.0": "patch:jest-worker@npm%3A29.5.0#./.yarn/patches/jest-worker-npm-29.5.0-70da3388f1.patch"
-    }
+    ]
 }

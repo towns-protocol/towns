@@ -13,7 +13,7 @@ describe('run.test.ts', () => {
     })
 
     // run a very short test
-    test('setup and run test', async () => {
+    it('setup and run test', async () => {
         const config = makeRiverConfig()
         const rootProvider = new LocalhostWeb3Provider(config.base.rpcUrl)
         await rootProvider.fundWallet()

@@ -1,13 +1,13 @@
 import { EncryptionDelegate } from '../encryptionDelegate'
 
-describe('EncryptionDelegate with group session', () => {
+describe.concurrent('EncryptionDelegate with group session', () => {
     const delegate = new EncryptionDelegate()
 
     beforeEach(async () => {
         await delegate.init()
     })
 
-    test('decrypt messages out of order', async () => {
+    it('decrypt messages out of order', async () => {
         const outboundSession = delegate.createOutboundGroupSession()
         outboundSession.create()
 

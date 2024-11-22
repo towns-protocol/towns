@@ -4,7 +4,7 @@ import { generateWalletsFromSeed } from './wallets'
 const logger = dlogger('stress:wallets')
 
 describe('wallets.test.ts', () => {
-    test('generates wallets from seed phrase', () => {
+    it('generates wallets from seed phrase', () => {
         // Example usage:
         const seedPhrase = 'test test test test test test test test test test test junk'
         const wallets = generateWalletsFromSeed(seedPhrase, 0, 3)
