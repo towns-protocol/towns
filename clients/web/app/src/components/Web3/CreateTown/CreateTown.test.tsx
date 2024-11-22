@@ -28,6 +28,10 @@ const Wrapper = (props: PropsWithChildren) => {
 }
 
 describe('CreateTown', () => {
+    afterAll(() => {
+        vi.resetAllMocks()
+    })
+
     it('should render', async () => {
         await actions.setup()
         expect(await screen.findByText('Town Name')).toBeInTheDocument()
