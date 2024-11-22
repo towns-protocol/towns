@@ -36,7 +36,7 @@ func TestAPNSPushNotification(t *testing.T) {
 				Vapid: config.WebPushVapidNotificationConfig{
 					PrivateKey: os.Getenv("TEST_WEB_PUSH_VAPID_PRIV_KEY"),
 					PublicKey:  os.Getenv("TEST_WEB_PUSH_VAPID_PUB_KEY"),
-					Subject:    "mailto:support@towns.com",
+					Subject:    "support@towns.com",
 				},
 			},
 		}
@@ -83,23 +83,33 @@ func TestWebPushWithVapid(t *testing.T) {
 				Vapid: config.WebPushVapidNotificationConfig{
 					PrivateKey: os.Getenv("TEST_WEB_PUSH_VAPID_PRIV_KEY"),
 					PublicKey:  os.Getenv("TEST_WEB_PUSH_VAPID_PUB_KEY"),
-					Subject:    "mailto:support@towns.com",
+					Subject:    "support@towns.com",
 				},
 			},
 		}
 
+		// adding token:  with auth:  and notification url:
+		// 0xAc8828aD220471984e5Ae5B1243E8B591a58A05F endpoint
 		notifier, err = push.NewMessageNotifier(cfg, infra.NewMetricsFactory(nil, "", ""))
-		subscription  = &webpush.Subscription{
-			Endpoint: "https://fcm.googleapis.com/fcm/send/foL7GIZIaxE:APA91bF0RzFgV4fY7S0fnUpby_ZJz-fpAqopN5JYIjW9qezB8nlx9RVf1uLhAX5D00QIkBmIFcw8xSU5T-NIPo8zQSxmpSJS6YC-AAyJ9xMVTGJMuKG4dw4GxAVZre6rdn-_ci65GnkR",
+		//subscription  = &webpush.Subscription{
+		//	Endpoint: "https://web.push.apple.com/QFZ_WHVoj3YhGbgQd9JYUqQgHnUvOA5lfTkuQ0fUfZa6vu_UbmS_CXe3IhovScieS2-ZBdjbhBfhGtb-D2rYmKklk6DEfkM0AClqH85bPH7N9wI6_-ydrhLBr5yn6SOvYP2bCgxE7Ob-1sI1Zd5VcJOKJpp-caC3VfF3wP7P40s",
+		//	Keys: webpush.Keys{
+		//		Auth:   `K4GtYnxnyGQNm1QsypliQg`,
+		//		P256dh: `BCDQjdc3OB_elS32uVI96gJayYwYjj6JXTOizaXpgEvxOCqmdxz-0XNcuI2JZZnxi6adkBFy8ZrjMEcB7StQC_s`,
+		//	},
+		//}
+
+		subscription = &webpush.Subscription{
+			Endpoint: "https://fcm.googleapis.com/fcm/send/fOsW4EcoiMI:APA91bFe0AKQLJw8ghNXLz9bqE49EqRoneHO8oBqf_qZ32mZhluyE40tsy0vY3q2jlj_glYiyofTVE4J2DbE8tbO4EAR5szQR2fGfEVE6WilIP8O0ThfP5Gga5u0D2ChUTOs2CMnxN2d",
 			Keys: webpush.Keys{
-				Auth:   `6w5p4KNcekzGWQ2nTau9Gw`,
-				P256dh: `BLfO-qNZbbEr9kNZ3AxmmHNWGyeXRxUR1rC6TXpMZd6oUeGb3xC2qskuEVEiuz5Aif55f8ysagYPN0LICuLMG70`,
+				Auth:   `TZCAll5Dli8LOUYIXk9a1g`,
+				P256dh: `BJJnVK40pKFTSKK0wLSnJVVh_lIc-9Axu_tkL1fTgdC0_a6LrZ4Z9WePvgDAd13GEXONBwZ8fXqaAWwZoKKzL38`,
 			},
 		}
 		payload = []byte("Some message")
 	)
 
-	if cfg.Web.Vapid.PrivateKey == "" || cfg.Web.Vapid.PublicKey == "" {
+	if cfg.Web.Vapid.PrivateKey == "" || cfg.Web.Vapid.PublicKey == "" || cfg.Web.Vapid.Subject == "" {
 		t.Skip("Missing required config to run this test")
 	}
 
@@ -107,5 +117,6 @@ func TestWebPushWithVapid(t *testing.T) {
 
 	//payload := payload2.NewPayload().Alert("Sry to bother you if this works...")
 
-	req.NoError(notifier.SendWebPushNotification(ctx, subscription, common.Hash{1}, payload), "send APN notification")
+	req.NoError(notifier.SendWebPushNotification(ctx, subscription, common.Hash{1}, payload),
+		"send web push notification")
 }

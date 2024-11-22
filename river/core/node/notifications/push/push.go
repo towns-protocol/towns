@@ -195,11 +195,10 @@ func (n *MessageNotifications) SendWebPushNotification(
 ) error {
 	options := &webpush.Options{
 		Subscriber:      n.vapidSubject,
-		VAPIDPublicKey:  n.vapidPublicKey,
-		VAPIDPrivateKey: n.vapidPrivateKey,
-		VapidExpiration: time.Now().Add(24 * time.Hour),
 		TTL:             30,
 		Urgency:         webpush.UrgencyHigh,
+		VAPIDPublicKey:  n.vapidPublicKey,
+		VAPIDPrivateKey: n.vapidPrivateKey,
 	}
 
 	res, err := webpush.SendNotificationWithContext(ctx, payload, subscription, options)

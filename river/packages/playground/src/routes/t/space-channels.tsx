@@ -74,7 +74,7 @@ const ChannelInfo = ({
     return (
         <div>
             <Button variant="outline" onClick={() => onChannelChange(channelId)}>
-                {channel.metadata?.name || 'Unnamed Channel'}
+                {channel.metadata?.name ? `#${channel.metadata.name}` : 'Unnamed Channel'}
             </Button>
         </div>
     )
