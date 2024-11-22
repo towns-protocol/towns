@@ -124,26 +124,41 @@ func NewMessageNotifier(
 
 	if authKey == "" {
 		return nil, RiverError(protocol.Err_BAD_CONFIG, "Missing APN auth key").
-			Func("NewPushMessageNotifications")
+			Func("NewMessageNotifier")
 	}
 
 	blockPrivateKey, _ := pem.Decode([]byte(authKey))
 	if blockPrivateKey == nil {
 		return nil, RiverError(protocol.Err_BAD_CONFIG, "Invalid APN auth key").
-			Func("NewPushMessageNotifications")
+			Func("NewMessageNotifier")
 	}
 
 	rawKey, err := x509.ParsePKCS8PrivateKey(blockPrivateKey.Bytes)
 	if err != nil {
 		return nil, AsRiverError(err).
 			Message("Unable to parse APN auth key").
-			Func("SendAPNNotification")
+			Func("NewMessageNotifier")
 	}
 
 	apnJwtSignKey, ok := rawKey.(*ecdsa.PrivateKey)
 	if !ok {
 		return nil, RiverError(protocol.Err_BAD_CONFIG, "Invalid APN JWT signing key").
-			Func("SendAPNNotification")
+			Func("NewMessageNotifier")
+	}
+
+	if cfg.Web.Vapid.PrivateKey == "" {
+		return nil, RiverError(protocol.Err_BAD_CONFIG, "Missing VAPID private key").
+			Func("NewMessageNotifier")
+	}
+
+	if cfg.Web.Vapid.PublicKey == "" {
+		return nil, RiverError(protocol.Err_BAD_CONFIG, "Missing VAPID public key").
+			Func("NewMessageNotifier")
+	}
+
+	if cfg.Web.Vapid.Subject == "" {
+		return nil, RiverError(protocol.Err_BAD_CONFIG, "Missing VAPID subject").
+			Func("NewMessageNotifier")
 	}
 
 	webPushSend := metricsFactory.NewCounterVecEx(
@@ -180,10 +195,11 @@ func (n *MessageNotifications) SendWebPushNotification(
 ) error {
 	options := &webpush.Options{
 		Subscriber:      n.vapidSubject,
-		TTL:             12 * 60 * 60, // 12h
-		Urgency:         webpush.UrgencyHigh,
 		VAPIDPublicKey:  n.vapidPublicKey,
 		VAPIDPrivateKey: n.vapidPrivateKey,
+		VapidExpiration: time.Now().Add(24 * time.Hour),
+		TTL:             30,
+		Urgency:         webpush.UrgencyHigh,
 	}
 
 	res, err := webpush.SendNotificationWithContext(ctx, payload, subscription, options)
@@ -201,10 +217,12 @@ func (n *MessageNotifications) SendWebPushNotification(
 	}
 
 	n.webPushSent.With(prometheus.Labels{"result": StatusFailure}).Inc()
+
 	return RiverError(protocol.Err_UNAVAILABLE,
 		"Send notification with web push vapid failed",
 		"statusCode", res.StatusCode,
 		"status", res.Status,
+		"event", eventHash,
 	).Func("SendWebNotification")
 }
 
@@ -256,12 +274,14 @@ func (n *MessageNotifications) SendApplePushNotification(
 	}
 
 	n.apnSent.With(prometheus.Labels{"result": StatusFailure}).Inc()
+
 	return RiverError(protocol.Err_UNAVAILABLE,
 		"Send notification to APNS failed",
 		"statusCode", res.StatusCode,
 		"apnsID", res.ApnsID,
 		"reason", res.Reason,
 		"deviceToken", sub.DeviceToken,
+		"event", eventHash,
 	).Func("SendAPNNotification")
 }
 
