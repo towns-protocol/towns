@@ -120,10 +120,8 @@ export const getFixedPricingModule = async (spaceDapp: ISpaceDapp | undefined) =
 }
 
 export const findDynamicPricingModule = (pricingModules: PricingModuleStruct[]) =>
-    pricingModules.find(
-        (module) =>
-            module.name === TIERED_PRICING_ORACLE_V3 || module.name === TIERED_PRICING_ORACLE_V2,
-    )
+    pricingModules.find((module) => module.name === TIERED_PRICING_ORACLE_V3) ||
+    pricingModules.find((module) => module.name === TIERED_PRICING_ORACLE_V2)
 
 export const findFixedPricingModule = (pricingModules: PricingModuleStruct[]) =>
     pricingModules.find((module) => module.name === FIXED_PRICING)
