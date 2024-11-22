@@ -80,7 +80,7 @@ export const CreateTownForm = (props: { form: UseFormReturn<CreateTownFormSchema
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     // Pagination
 
-    const { scrollRef, slideIndex, nextSlide } = usePaginationScroll({
+    const { scrollRef, slideIndex, nextSlide, scrollToSlide } = usePaginationScroll({
         numSlides: slides.length,
     })
 
@@ -177,6 +177,10 @@ export const CreateTownForm = (props: { form: UseFormReturn<CreateTownFormSchema
                         height="100%"
                         slideIndex={slideIndex}
                         slidesLength={slides.length}
+                        getDotActive={(slideIndex) => slideIndex < slides.length}
+                        onSelectDot={(slideIndex) => {
+                            scrollToSlide(slideIndex)
+                        }}
                     />
                 )}
             </AnimatePresence>

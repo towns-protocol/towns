@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react'
 import { Address } from 'use-towns-client'
 import { isAddress } from 'ethers/lib/utils'
-import { Box, Button, Stack, Text, TextField } from '@ui'
+import { Box, BoxProps, Button, Stack, Text, TextField } from '@ui'
 import { CSVUploader } from '@components/CSVUploader/CSVUploader'
 import { useLookupUsersWithAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
@@ -14,7 +14,7 @@ type Props = {
     walletMembers: Address[]
     onChange: (addresses: Address[]) => void
     isValidationError: boolean
-}
+} & Pick<BoxProps, 'background'>
 
 export const WalletMemberSelector = (props: Props) => {
     const { walletMembers, onChange, isValidationError, isRole } = props
@@ -92,7 +92,7 @@ export const WalletMemberSelector = (props: Props) => {
                             placeholder={
                                 isRole ? 'Search members or enter address' : 'Enter wallet address'
                             }
-                            background="level3"
+                            background={props.background ?? 'level3'}
                             data-testid="address-selection-input"
                             onChange={handleInputChange}
                             onKeyDown={handleInputKeyDown}
@@ -100,7 +100,7 @@ export const WalletMemberSelector = (props: Props) => {
                         {!isTouch && (
                             <CSVUploader
                                 handleCSVAddresses={handleCSVAddresses}
-                                background="level3"
+                                background={props.background ?? 'level3'}
                             />
                         )}
                     </Box>

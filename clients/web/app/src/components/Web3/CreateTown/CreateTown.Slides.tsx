@@ -369,6 +369,7 @@ export const GateByWalletAddress = (props: SlideProps) => {
         <SlideLayout title="Choose Wallet Addresses" {...slideProps}>
             <MotionBox layout="position">
                 <WalletMemberSelector
+                    background="level2"
                     isRole={false}
                     walletMembers={form.getValues('usersGatedBy') as Address[]}
                     isValidationError={

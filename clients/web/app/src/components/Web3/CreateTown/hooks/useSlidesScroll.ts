@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { SECOND_MS } from 'data/constants'
 
@@ -20,6 +20,7 @@ export const usePaginationScroll = (props: { numSlides: number }) => {
     }
 
     const scrollToNextRef = useRef<() => void>()
+    const scrollToSlideRef = useRef<(slideIndex: number) => void>()
 
     useEffect(() => {
         if (!scroller) {
@@ -56,18 +57,23 @@ export const usePaginationScroll = (props: { numSlides: number }) => {
             setSlideIndex(s)
         }
 
-        const nextSlide = () => {
+        const scrollToSlide = (slideIndex: number) => {
             nextSlideTimeout = setTimeout(() => {
                 const height = scroller.clientHeight ?? 0
-                const nextSlideIndex = slideIndexRef.current + 1
                 scroller.scrollTo({
-                    top: nextSlideIndex * height,
+                    top: slideIndex * height,
                     behavior: 'smooth',
                 })
             }, SECOND_MS * 0.15)
         }
 
+        const nextSlide = () => {
+            scrollToSlide(slideIndexRef.current + 1)
+        }
+
+        scrollToSlideRef.current = scrollToSlide
         scrollToNextRef.current = nextSlide
+
         scroller.addEventListener('scroll', onScroll)
 
         return () => {
@@ -75,5 +81,18 @@ export const usePaginationScroll = (props: { numSlides: number }) => {
         }
     }, [scroller])
 
-    return { scrollRef, slideIndex, nextSlide: scrollToNextRef.current }
+    const nextSlide = useCallback(() => {
+        scrollToNextRef.current?.()
+    }, [])
+
+    const scrollToSlide = useCallback((slideIndex: number) => {
+        scrollToSlideRef.current?.(slideIndex)
+    }, [])
+
+    return {
+        scrollRef,
+        slideIndex,
+        nextSlide,
+        scrollToSlide,
+    }
 }
