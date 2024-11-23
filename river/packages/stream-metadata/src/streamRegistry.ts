@@ -1,5 +1,6 @@
 import { BigNumber } from 'ethers'
 import { FastifyBaseLogger } from 'fastify'
+import { streamIdAsBytes } from '@river-build/sdk'
 
 import { StreamIdHex } from './types'
 import { getRiverRegistry } from './evmRpcClient'
@@ -28,7 +29,7 @@ export async function getNodeForStream(
 	}
 
 	const riverRegistry = getRiverRegistry()
-	const streamData = await riverRegistry.streamRegistry.read.getStream(streamId)
+	const streamData = await riverRegistry.getStream(streamIdAsBytes(streamId))
 
 	if (streamData.nodes.length === 0) {
 		const error = new Error(`No nodes found for stream ${streamId}`)

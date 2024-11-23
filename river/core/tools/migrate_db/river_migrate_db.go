@@ -402,12 +402,14 @@ var targetInitCmd = &cobra.Command{
 
 		iofsMigrationsDir, err := iofs.New(storage.GetRiverNodeDbMigrationSchemaFS(), "migrations")
 		if err != nil {
-			return wrapError("Failed to load migrations", err)
+			fmt.Println("Failed to load migrations", err)
+			os.Exit(1)
 		}
 
 		pool, info, err := getTargetDbPool(ctx, true)
 		if err != nil {
-			return wrapError("Failed to initialize target database pool", err)
+			fmt.Println("Failed to initialize target database pool:", err)
+			os.Exit(1)
 		}
 
 		pgxDriver, err := pgxmigrate.WithInstance(
@@ -416,18 +418,21 @@ var targetInitCmd = &cobra.Command{
 				SchemaName: info.schema,
 			})
 		if err != nil {
-			return wrapError("Failed to initialize target database migration driver", err)
+			fmt.Println("Failed to initialize target database migration driver:", err)
+			os.Exit(1)
 		}
 
 		migration, err := migrate.NewWithInstance("iofs", iofsMigrationsDir, "pgx", pgxDriver)
 		if err != nil {
-			return wrapError("Failed to initialize target database migration", err)
+			fmt.Println("Failed to initialize target database migration:", err)
+			os.Exit(1)
 		}
 
 		err = migration.Up()
 		if err != nil {
 			if err != migrate.ErrNoChange {
-				return wrapError("Error running migrations", err)
+				fmt.Println("Error running go migrations:", err)
+				os.Exit(1)
 			} else {
 				fmt.Println("WARN: schema already initialized")
 			}
