@@ -11,6 +11,7 @@ export enum NotificationKind {
 
 export type AppNotification = {
     topic?: string
+    channelId?: string
     content: {
         kind: NotificationKind
         spaceId?: string

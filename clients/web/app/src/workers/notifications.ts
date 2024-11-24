@@ -664,46 +664,44 @@ async function getNotificationContent(
             recipients,
             plaintext,
         )
-    } else {
-        const spaceId =
-            notification.content.spaceId ?? spaceIdFromChannelId(notification.content.channelId)
-
-        if (kind === NotificationKind.Mention) {
-            return generateMentionedMessage({
-                kind,
-                spaceId,
-                townName,
-                channelId: notification.content.channelId,
-                threadId: notification.content.threadId,
-                channelName,
-                senderName,
-                plaintext,
-            })
-        } else if (notification.content.threadId) {
-            return generateReplyToMessage({
-                kind,
-                spaceId,
-                townName,
-                channelId: notification.content.channelId,
-                channelName,
-                senderName,
-                plaintext,
-                reaction: kind === NotificationKind.Reaction,
-                threadId: notification.content.threadId,
-            })
-        } else {
-            generateNewNotificationMessage({
-                kind,
-                spaceId,
-                townName,
-                channelId: notification.content.channelId,
-                threadId: notification.content.threadId,
-                channelName,
-                senderName,
-                plaintext,
-            })
-        }
     }
+    const spaceId =
+        notification.content.spaceId ?? spaceIdFromChannelId(notification.content.channelId)
+
+    if (kind === NotificationKind.Mention) {
+        return generateMentionedMessage({
+            kind,
+            spaceId,
+            townName,
+            channelId: notification.content.channelId,
+            threadId: notification.content.threadId,
+            channelName,
+            senderName,
+            plaintext,
+        })
+    } else if (notification.content.threadId) {
+        return generateReplyToMessage({
+            kind,
+            spaceId,
+            townName,
+            channelId: notification.content.channelId,
+            channelName,
+            senderName,
+            plaintext,
+            reaction: kind === NotificationKind.Reaction,
+            threadId: notification.content.threadId,
+        })
+    }
+    return generateNewNotificationMessage({
+        kind,
+        spaceId,
+        townName,
+        channelId: notification.content.channelId,
+        threadId: notification.content.threadId,
+        channelName,
+        senderName,
+        plaintext,
+    })
 }
 
 async function tryDecryptEvent(
@@ -750,6 +748,9 @@ async function tryDecryptEvent(
 
     try {
         const encryptedData = getEncryptedData(event)
+        if (!encryptedData) {
+            return undefined
+        }
         await Promise.race([decryptPromise(encryptedData), timeoutPromise])
         if (plaintext) {
             plaintext.refEventId = encryptedData.refEventId

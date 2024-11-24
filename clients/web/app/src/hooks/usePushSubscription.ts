@@ -3,6 +3,8 @@ import { NotificationSettingsClient, useTownsContext } from 'use-towns-client'
 import { env } from 'utils/environment'
 import { notificationsSupported } from './usePushNotifications'
 
+const PUSH_SUBSCRIPTION_PUBLIC_KEY_ID = 'towns/public-push-key'
+
 export const usePushSubscription = () => {
     const notificationsStatus = notificationsSupported() ? Notification.permission : undefined
     const { notificationSettingsClient } = useTownsContext()
@@ -27,7 +29,7 @@ export const useUnsubscribeNotification = () => {
 
     const unsubscribeNotification = useCallback(async () => {
         if (notificationSettingsClient) {
-            await deletePushSubscription(notificationSettingsClient)
+            await getAndDeletePushSubscription(notificationSettingsClient)
         } else {
             console.error('PUSH: notificationSettingsClient not found')
         }
@@ -43,7 +45,28 @@ async function registerForPushSubscription(
     console.log('PUSH: registering for push notifications')
     const userId = notificationSettingsClient.userId
 
-    const subscription = await getOrRegisterPushSubscription()
+    const vapidPK = env.VITE_WEB_PUSH_APPLICATION_SERVER_KEY
+    if (!vapidPK) {
+        console.warn('PUSH: VITE_WEB_PUSH_APPLICATION_SERVER_KEY not set')
+        return
+    }
+
+    const push = await getLocalPushSubscription()
+
+    if (push.subscription && push.previousVapidPK !== vapidPK) {
+        console.log('PUSH: deleting previous subscription')
+        await deletePushSubscription(notificationSettingsClient, push.subscription)
+    }
+
+    let subscription: PushSubscription | undefined
+
+    if (push.subscription && push.previousVapidPK === vapidPK) {
+        console.log('PUSH: subscription previously registered')
+        subscription = push.subscription
+    } else {
+        subscription = await registerLocalPushSubscription(vapidPK, push.registration)
+    }
+
     if (!subscription) {
         return
     }
@@ -74,38 +97,61 @@ async function registerForPushSubscription(
     // <END new way>
 }
 
-async function getOrRegisterPushSubscription() {
-    console.log('PUSH: getting subscription')
+async function getLocalPushSubscription(): Promise<{
+    registration: ServiceWorkerRegistration
+    subscription: PushSubscription | null
+    previousVapidPK: string | null
+}> {
+    const registration = await navigator.serviceWorker.ready
     try {
-        const registration = await navigator.serviceWorker.ready
         console.log('PUSH: got registration')
         const subscription = await registration.pushManager.getSubscription()
         console.log('PUSH: got subscription')
-        if (subscription) {
-            return subscription
-        }
+        const previousVapidPK = localStorage.getItem(PUSH_SUBSCRIPTION_PUBLIC_KEY_ID)
+        return { registration, subscription, previousVapidPK }
+    } catch (e) {
+        console.error('PUSH: failed to get subscription', e)
+        return { registration, subscription: null, previousVapidPK: null }
+    }
+}
 
-        const applicationServerKey = env.VITE_WEB_PUSH_APPLICATION_SERVER_KEY
-        if (!applicationServerKey) {
-            console.warn('PUSH: VITE_WEB_PUSH_APPLICATION_SERVER_KEY not set')
-            return
-        }
-        return await registration.pushManager.subscribe({
+async function registerLocalPushSubscription(
+    vapidPK: string,
+    registration: ServiceWorkerRegistration,
+) {
+    console.log('PUSH: getting subscription')
+
+    const convertedKey = urlB64ToUint8Array(vapidPK)
+    console.log('PUSH: subscribing to push notifications', vapidPK)
+    console.log('PUSH: convertedKey', convertedKey)
+    try {
+        const result = await registration.pushManager.subscribe({
             userVisibleOnly: true,
-            applicationServerKey: urlB64ToUint8Array(applicationServerKey),
+            applicationServerKey: convertedKey,
         })
+        localStorage.setItem(PUSH_SUBSCRIPTION_PUBLIC_KEY_ID, vapidPK)
+        return result
     } catch (e) {
         console.error('PUSH: failed to get subscription', e)
     }
     return undefined
 }
 
-async function deletePushSubscription(notificationSettingsClient: NotificationSettingsClient) {
+async function getAndDeletePushSubscription(
+    notificationSettingsClient: NotificationSettingsClient,
+) {
     console.log('PUSH: delete push subscription')
-    const subscription = await getOrRegisterPushSubscription()
-    if (!subscription) {
+    const push = await getLocalPushSubscription()
+    if (!push.subscription) {
         return
     }
+    return deletePushSubscription(notificationSettingsClient, push.subscription)
+}
+
+async function deletePushSubscription(
+    notificationSettingsClient: NotificationSettingsClient,
+    subscription: PushSubscription,
+) {
     const userId = notificationSettingsClient.userId
     const data = { subscriptionObject: subscription.toJSON(), userId: userId }
     if (!data.subscriptionObject.keys?.p256dh || !data.subscriptionObject.keys?.auth) {
@@ -120,7 +166,8 @@ async function deletePushSubscription(notificationSettingsClient: NotificationSe
                 auth: data.subscriptionObject.keys.auth,
             },
         })
-        console.log('PUSH: deleted push subscription')
+        const unsubResult = await subscription.unsubscribe()
+        console.log('PUSH: deleted push subscription', { unsubResult })
     } catch (e) {
         console.error('PUSH: failed to delete push subscription', e)
     }

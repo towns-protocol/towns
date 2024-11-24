@@ -17,7 +17,7 @@ const payload = z.object({
     channelId: z.string(),
     threadId: z.string().optional(),
     senderId: z.string(),
-    recipients: z.array(z.string()),
+    recipients: z.array(z.string()).optional(),
     event: z.string(),
 })
 
@@ -25,21 +25,23 @@ const payload = z.object({
 // be helpful as we add more notification types
 const payloadSchema = z
     .object({
-        content: payload,
+        payload: payload,
         topic: z.string().optional(),
+        channelId: z.string().optional(),
     })
     .transform((data): AppNotification | undefined => {
-        const eventBytes = bin_fromHexString(data.content.event)
+        const eventBytes = bin_fromHexString(data.payload.event)
         const event = StreamEvent.fromBinary(eventBytes)
         return {
             topic: data.topic,
+            channelId: data.channelId, // aellis: not sure why we're doing double channelId at top level
             content: {
-                kind: data.content.kind,
-                channelId: data.content.channelId,
-                spaceId: data.content.spaceId,
-                threadId: data.content.threadId,
-                senderId: data.content.senderId,
-                recipients: data.content.recipients ?? [],
+                kind: data.payload.kind,
+                channelId: data.payload.channelId,
+                spaceId: data.payload.spaceId,
+                threadId: data.payload.threadId,
+                senderId: data.payload.senderId,
+                recipients: data.payload.recipients ?? [],
                 event: event,
             },
         }
