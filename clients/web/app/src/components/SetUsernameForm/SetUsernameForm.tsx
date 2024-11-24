@@ -102,12 +102,14 @@ export const SetUsernameForm = (props: Props & { onHide: () => void }) => {
 
     const hasDefaultUsername = !!defaultUsername
 
+    const [isGracePeriod, setIsGracePeriod] = useState<boolean>(hasDefaultUsername)
+
     useEffect(() => {
         if (hasDefaultUsername) {
             console.info('[SetUsernameForm] grace period for setting defaultUsername')
             const timeout = setTimeout(() => {
                 console.info('[SetUsernameForm] grace period timeout')
-                setReady(true)
+                setIsGracePeriod(false)
             }, SECOND_MS * 10)
             return () => {
                 clearTimeout(timeout)
@@ -119,7 +121,7 @@ export const SetUsernameForm = (props: Props & { onHide: () => void }) => {
         // no-op
     }, [])
 
-    if (!ready) {
+    if (!ready || isGracePeriod) {
         return null
     }
 
@@ -137,7 +139,7 @@ export const SetUsernameForm = (props: Props & { onHide: () => void }) => {
                 <Stack gap>
                     <Text fontWeight="strong">Username</Text>
                     <Text color="gray2">This is the username you will be using for this town.</Text>
-                    <form autoComplete="off" onSubmit={onSubmit}>
+                    <Box as="form" autoComplete="off" gap="sm" onSubmit={onSubmit}>
                         <TextField
                             autoFocus
                             name="username"
@@ -184,7 +186,7 @@ export const SetUsernameForm = (props: Props & { onHide: () => void }) => {
                                 {requestInFlight ? 'Joining Town' : 'Join Town'}
                             </FancyButton>
                         </Box>
-                    </form>
+                    </Box>
                 </Stack>
             </Stack>
         </ModalContainer>
