@@ -180,7 +180,7 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
                     data: JSON.stringify(content),
                     tag: notification.content.channelId,
                     silent: false,
-                    icon: `https://imagedelivery.net/qaaQ52YqlPXKEVQhjChiDA/${notification.content.senderId}/thumbnail100`,
+                    icon: getNotificationIcon(self.location.origin, notification),
                 }
                 await worker.registration.showNotification(content.title, options)
                 await sendLogToDatadog('info', 'Notification shown', { content })
@@ -763,4 +763,35 @@ async function tryDecryptEvent(
 
     log('tryDecryptEvent result:', plaintext)
     return plaintext
+}
+
+function getNotificationIcon(
+    origin: string | undefined,
+    _notification: AppNotification,
+): string | undefined {
+    if (!origin) {
+        return undefined
+    }
+    try {
+        const originUrl = new URL(origin)
+        const host = originUrl.hostname
+        let href = 'favicon.png'
+        if (host === 'app.alpha.towns.com') {
+            href = '/favicon-teal.png'
+        } else if (host === 'app.gamma.towns.com') {
+            href = '/favicon-blue.png'
+        } else if (host === 'app.delta.towns.com') {
+            href = '/favicon-brown.png'
+        } else if (host === 'fast-app.towns.com') {
+            href = '/favicon-black.png'
+        } else if (host === 'localhost') {
+            href = '/favicon-green.png'
+        }
+        const value = originUrl.protocol + '//' + originUrl.host + href
+        log('getNotificationIcon', { value })
+        return value
+    } catch (error) {
+        logError('error getting notification icon', error)
+        return undefined
+    }
 }
