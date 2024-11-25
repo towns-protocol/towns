@@ -31,6 +31,7 @@ import (
 	"github.com/river-build/river/core/node/rpc/sync"
 	"github.com/river-build/river/core/node/scrub"
 	"github.com/river-build/river/core/node/storage"
+	"github.com/river-build/river/core/river_node/version"
 	"github.com/river-build/river/core/xchain/entitlement"
 	"github.com/rs/cors"
 	"golang.org/x/net/http2"
@@ -226,6 +227,7 @@ func (s *Service) initInstance(mode string) {
 		"Starting server",
 		"config", s.config,
 		"mode", mode,
+		"version", version.GetFullVersion(),
 	)
 
 	s.config.Notifications.Web.Vapid.PrivateKey = vapidPrivateKey

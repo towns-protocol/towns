@@ -1076,7 +1076,7 @@ contract RewardsDistributionV2Test is
     bridgeTokensForUser(address(this), 1 ether * uint256(count));
     river.approve(address(rewardsDistributionFacet), type(uint256).max);
     for (uint256 i; i < count; ++i) {
-      address _space = deploySpace();
+      address _space = deploySpace(deployer);
       pointSpaceToOperator(_space, OPERATOR);
       rewardsDistributionFacet.stake(1 ether, _space, address(this));
     }

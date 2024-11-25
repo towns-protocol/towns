@@ -149,6 +149,12 @@ func NewStreamCache(
 
 	go s.runCacheCleanup(ctx)
 
+	go func() {
+		<-ctx.Done()
+		s.onlineSyncWorkerPool.Stop()
+		initialSyncWorkerPool.Stop()
+	}()
+
 	return s, nil
 }
 

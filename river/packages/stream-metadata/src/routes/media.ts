@@ -4,7 +4,6 @@ import { isValidStreamId } from '@river-build/sdk'
 import { bin_fromHexString } from '@river-build/dlog'
 
 import { getMediaStreamContent } from '../riverStreamRpcClient'
-import type { StreamIdHex } from '../types'
 
 const paramsSchema = z.object({
 	mediaStreamId: z
@@ -56,10 +55,9 @@ export async function fetchMedia(request: FastifyRequest, reply: FastifyReply) {
 	const { mediaStreamId } = paramsResult.data
 	const { key, iv } = queryResult.data
 	logger.info({ mediaStreamId, key, iv }, 'Fetching media stream content')
-	const fullStreamId: StreamIdHex = `0x${mediaStreamId}`
 
 	try {
-		const { data, mimeType } = await getMediaStreamContent(logger, fullStreamId, key, iv)
+		const { data, mimeType } = await getMediaStreamContent(logger, mediaStreamId, key, iv)
 		if (!data || !mimeType) {
 			logger.error(
 				{

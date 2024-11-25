@@ -2,7 +2,6 @@ import { BigNumber } from 'ethers'
 import { FastifyBaseLogger } from 'fastify'
 import { streamIdAsBytes } from '@river-build/sdk'
 
-import { StreamIdHex } from './types'
 import { getRiverRegistry } from './evmRpcClient'
 
 type CachedStreamData = {
@@ -16,7 +15,7 @@ const cache: Record<string, CachedStreamData> = {}
 // TODO: remove this entire file
 export async function getNodeForStream(
 	logger: FastifyBaseLogger,
-	streamId: StreamIdHex,
+	streamId: string,
 ): Promise<{ url: string; lastMiniblockNum: BigNumber }> {
 	logger.info({ streamId }, 'find node for stream')
 

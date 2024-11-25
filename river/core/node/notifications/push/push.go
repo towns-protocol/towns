@@ -213,6 +213,7 @@ func (n *MessageNotifications) SendWebPushNotification(
 
 	if res.StatusCode == http.StatusCreated {
 		n.webPushSent.With(prometheus.Labels{"result": StatusSuccess}).Inc()
+		dlog.FromCtx(ctx).Info("Web push notification sent", "event", eventHash)
 		return nil
 	}
 

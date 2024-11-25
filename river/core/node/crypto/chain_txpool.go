@@ -17,13 +17,14 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+
 	"github.com/river-build/river/core/config"
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/infra"
 	. "github.com/river-build/river/core/node/protocol"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
 )
 
 type (
@@ -141,6 +142,7 @@ var (
 )
 
 func newPendingTransactionPool(
+	ctx context.Context,
 	monitor ChainMonitor,
 	client BlockchainClient,
 	chainID *big.Int,
@@ -205,7 +207,7 @@ func newPendingTransactionPool(
 		transactionGasTip:                 transactionGasTip.MustCurryWith(curryLabels),
 	}
 
-	go ptp.run()
+	go ptp.run(ctx)
 
 	monitor.OnHeader(ptp.checkPendingTransactions)
 
@@ -216,17 +218,26 @@ func (pool *pendingTransactionPool) PendingTransactionsCount() int64 {
 	return pool.pendingTxCount.Load()
 }
 
-func (pool *pendingTransactionPool) run() {
-	for ptx := range pool.addPendingTx {
-		pool.pendingTxs.Store(ptx.tx.Nonce(), ptx)
-		pool.pendingTxCount.Add(1)
+func (pool *pendingTransactionPool) appendPendingTx(ctx context.Context, ptx *txPoolPendingTransaction) {
+	pool.pendingTxs.Store(ptx.tx.Nonce(), ptx)
+	pool.pendingTxCount.Add(1)
 
-		// metrics
-		gasCap, _ := ptx.tx.GasFeeCap().Float64()
-		tipCap, _ := ptx.tx.GasTipCap().Float64()
-		pool.transactionsPending.Add(1)
-		pool.transactionGasCap.With(prometheus.Labels{"replacement": "false"}).Set(gasCap)
-		pool.transactionGasTip.With(prometheus.Labels{"replacement": "false"}).Set(tipCap)
+	// metrics
+	gasCap, _ := ptx.tx.GasFeeCap().Float64()
+	tipCap, _ := ptx.tx.GasTipCap().Float64()
+	pool.transactionsPending.Add(1)
+	pool.transactionGasCap.With(prometheus.Labels{"replacement": "false"}).Set(gasCap)
+	pool.transactionGasTip.With(prometheus.Labels{"replacement": "false"}).Set(tipCap)
+}
+
+func (pool *pendingTransactionPool) run(ctx context.Context) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case ptx := <-pool.addPendingTx:
+			pool.appendPendingTx(ctx, ptx)
+		}
 	}
 }
 
@@ -494,7 +505,7 @@ func NewTransactionPoolWithPolicies(
 		transactionSubmitted: transactionsSubmittedCounter.MustCurryWith(curryLabels),
 		walletBalance:        walletBalance.With(curryLabels),
 		pendingTransactionPool: newPendingTransactionPool(
-			chainMonitor, client, chainID, wallet, replacePolicy, pricePolicy, metrics),
+			ctx, chainMonitor, client, chainID, wallet, replacePolicy, pricePolicy, metrics),
 	}
 
 	chainMonitor.OnHeader(txPool.Balance)

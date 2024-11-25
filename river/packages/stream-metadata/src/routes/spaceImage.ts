@@ -45,14 +45,15 @@ export async function fetchSpaceImage(request: FastifyRequest, reply: FastifyRep
 	logger.info({ spaceAddress, eventId }, 'Fetching space image')
 
 	let stream: StreamStateView
+	const streamId = makeStreamId(StreamPrefix.Space, spaceAddress)
 	try {
-		const streamId = makeStreamId(StreamPrefix.Space, spaceAddress)
 		stream = await getStream(logger, streamId)
 	} catch (error) {
 		logger.error(
 			{
 				err: error,
 				spaceAddress,
+				streamId,
 			},
 			'Failed to get stream',
 		)

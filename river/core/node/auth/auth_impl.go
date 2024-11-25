@@ -157,6 +157,7 @@ type chainAuth struct {
 	linkedWalletsLimit      int
 	contractCallsTimeoutMs  int
 	entitlementCache        *entitlementCache
+	membershipCache         *entitlementCache
 	entitlementManagerCache *entitlementCache
 
 	isEntitledToChannelCacheHit  prometheus.Counter
@@ -169,6 +170,8 @@ type chainAuth struct {
 	isChannelEnabledCacheMiss    prometheus.Counter
 	entitlementCacheHit          prometheus.Counter
 	entitlementCacheMiss         prometheus.Counter
+	membershipCacheHit           prometheus.Counter
+	membershipCacheMiss          prometheus.Counter
 }
 
 var _ ChainAuth = (*chainAuth)(nil)
@@ -198,6 +201,11 @@ func NewChainAuth(
 		return nil, err
 	}
 
+	membershipCache, err := newEntitlementCache(ctx, blockchain.Config)
+	if err != nil {
+		return nil, err
+	}
+
 	// seperate cache for entitlement manager as the timeouts are shorter
 	entitlementManagerCache, err := newEntitlementManagerCache(ctx, blockchain.Config)
 	if err != nil {
@@ -212,7 +220,7 @@ func NewChainAuth(
 	}
 
 	counter := metrics.NewCounterVecEx(
-		"entitlement_cache", "Cache hits and misses for entitelement cache", "function", "result")
+		"entitlement_cache", "Cache hits and misses for entitlement caches", "function", "result")
 
 	return &chainAuth{
 		blockchain:              blockchain,
@@ -222,6 +230,7 @@ func NewChainAuth(
 		linkedWalletsLimit:      linkedWalletsLimit,
 		contractCallsTimeoutMs:  contractCallsTimeoutMs,
 		entitlementCache:        entitlementCache,
+		membershipCache:         membershipCache,
 		entitlementManagerCache: entitlementManagerCache,
 
 		isEntitledToChannelCacheHit:  counter.WithLabelValues("isEntitledToChannel", "hit"),
@@ -234,6 +243,8 @@ func NewChainAuth(
 		isChannelEnabledCacheMiss:    counter.WithLabelValues("isChannelEnabled", "miss"),
 		entitlementCacheHit:          counter.WithLabelValues("entitlement", "hit"),
 		entitlementCacheMiss:         counter.WithLabelValues("entitlement", "miss"),
+		membershipCacheHit:           counter.WithLabelValues("membership", "hit"),
+		membershipCacheMiss:          counter.WithLabelValues("membership", "miss"),
 	}, nil
 }
 
@@ -676,8 +687,21 @@ func (ca *chainAuth) getLinkedWallets(ctx context.Context, wallet common.Address
 	return wallets, nil
 }
 
+func (ca *chainAuth) checkMembershipUncached(
+	ctx context.Context,
+	_ *config.Config,
+	args *ChainAuthArgs,
+) (CacheResult, error) {
+	isMember, err := ca.spaceContract.IsMember(ctx, args.spaceId, args.principal)
+	if err != nil {
+		return boolCacheResult(false), err
+	}
+	return boolCacheResult(isMember), nil
+}
+
 func (ca *chainAuth) checkMembership(
 	ctx context.Context,
+	cfg *config.Config,
 	address common.Address,
 	spaceId shared.StreamId,
 	results chan<- bool,
@@ -686,11 +710,22 @@ func (ca *chainAuth) checkMembership(
 ) {
 	log := dlog.FromCtx(ctx)
 	defer wg.Done()
-	isMember, err := ca.spaceContract.IsMember(ctx, spaceId, address)
+
+	args := ChainAuthArgs{
+		kind:      chainAuthKindIsSpaceMember,
+		spaceId:   spaceId,
+		principal: address,
+	}
+	result, cacheHit, err := ca.membershipCache.executeUsingCache(
+		ctx,
+		cfg,
+		&args,
+		ca.checkMembershipUncached,
+	)
 	if err != nil {
 		// Errors here could be due to context cancellation if another wallet evaluates as a member.
 		// However, these can also be informative. Anything that is not a context cancellation is
-		// an actual error, however the entitlement check may still be successful if at least one
+		// an actual error. However, the entitlement check may still be successful if at least one
 		// linked wallet resulted in a positive membership check.
 		log.Info(
 			"Error checking membership (due to early termination?)",
@@ -702,11 +737,20 @@ func (ca *chainAuth) checkMembership(
 			spaceId,
 		)
 		errors <- err
-	} else if isMember {
+		return
+	}
+
+	if cacheHit {
+		ca.membershipCacheHit.Inc()
+	} else {
+		ca.membershipCacheMiss.Inc()
+	}
+
+	if result.IsAllowed() {
 		results <- true
 	}
-	// We expect that all linked wallets except the membership wallet will evaluate to false here
-	// and don't bother logging here.
+	// We expect that all linked wallets except the wallet with the membership token will evaluate to
+	// false here and don't bother logging false membership checks.
 }
 
 func (ca *chainAuth) checkStreamIsEnabled(
@@ -772,7 +816,7 @@ func (ca *chainAuth) checkEntitlement(
 
 	for _, address := range wallets {
 		isMemberWg.Add(1)
-		go ca.checkMembership(isMemberCtx, address, args.spaceId, isMemberResults, isMemberError, &isMemberWg)
+		go ca.checkMembership(isMemberCtx, cfg, address, args.spaceId, isMemberResults, isMemberError, &isMemberWg)
 	}
 
 	// Wait for at least one true result or all to complete

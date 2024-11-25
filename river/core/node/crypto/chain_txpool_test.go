@@ -4,17 +4,19 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/ethereum/go-ethereum"
 	"math/big"
 	"testing"
 	"time"
 
+	"github.com/ethereum/go-ethereum"
+
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/stretchr/testify/require"
+
 	"github.com/river-build/river/core/node/base/test"
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/infra"
-	"github.com/stretchr/testify/require"
 )
 
 func TestNewTransactionPoolWithReplaceTx(t *testing.T) {
@@ -66,7 +68,11 @@ func TestNewTransactionPoolWithReplaceTx(t *testing.T) {
 		go func() {
 			for {
 				tc.Commit(ctx)
-				time.Sleep(time.Second)
+				select {
+				case <-ctx.Done():
+					return
+				case <-time.After(time.Second):
+				}
 			}
 		}()
 	}
@@ -87,7 +93,10 @@ func TestReplacementTxOnBoot(t *testing.T) {
 		require             = require.New(t)
 		ctx, cancel         = test.NewTestContext()
 		rootCtx, rootCancel = context.WithCancel(ctx)
-		tc, errTC           = crypto.NewBlockchainTestContext(rootCtx, crypto.TestParams{MineOnTx: false, AutoMine: false, NumKeys: 1})
+		tc, errTC           = crypto.NewBlockchainTestContext(
+			rootCtx,
+			crypto.TestParams{MineOnTx: false, AutoMine: false, NumKeys: 1},
+		)
 	)
 	defer cancel()
 	defer rootCancel()
@@ -192,7 +201,11 @@ func TestReplacementTxOnBoot(t *testing.T) {
 		infra.NewMetricsFactory(nil, "", ""))
 
 	resubmitPolicy := crypto.NewTransactionPoolDeadlinePolicy(250 * time.Millisecond)
-	repricePolicy := crypto.NewDefaultTransactionPricePolicy(0, 15_000_000_000, 0) // mint block and make sure that stuck transactions are replaced
+	repricePolicy := crypto.NewDefaultTransactionPricePolicy(
+		0,
+		15_000_000_000,
+		0,
+	) // mint block and make sure that stuck transactions are replaced
 	go func() {
 		<-time.After(3 * time.Second)
 		for {

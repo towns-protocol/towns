@@ -112,7 +112,8 @@ abstract contract RewardsDistributionBase is IRewardsDistributionBase {
   /// @dev Sweeps the rewards in the space delegation to the operator if necessary
   /// @dev Must be called after `StakingRewards.updateGlobalReward`
   function _sweepSpaceRewardsIfNecessary(address space) internal {
-    if (!_isSpace(space)) return;
+    address operator = _getOperatorBySpace(space);
+    if (operator == address(0)) return;
 
     StakingRewards.Layout storage staking = RewardsDistributionStorage
       .layout()
@@ -124,7 +125,6 @@ abstract contract RewardsDistributionBase is IRewardsDistributionBase {
     uint256 scaledReward = spaceTreasure.unclaimedRewardSnapshot;
     if (scaledReward == 0) return;
 
-    address operator = _getOperatorBySpace(space);
     StakingRewards.Treasure storage operatorTreasure = staking
       .treasureByBeneficiary[operator];
 

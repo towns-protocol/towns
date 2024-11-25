@@ -71,7 +71,7 @@ func GetDefaultConfig() *Config {
 			EnableStorageEndpoint: true,
 		},
 		Scrubbing: ScrubbingConfig{
-			ScrubEligibleDuration: time.Hour,
+			ScrubEligibleDuration: 4 * time.Hour,
 		},
 		RiverRegistry: RiverRegistryConfig{
 			PageSize:               5000,

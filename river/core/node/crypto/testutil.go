@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"math/big"
 	"os"
+	"slices"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -20,6 +22,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient/simulated"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/goleak"
 
 	"github.com/river-build/river/core/config"
 	"github.com/river-build/river/core/contracts/river"
@@ -55,9 +58,11 @@ func (w *autoMiningClientWrapper) SendTransaction(ctx context.Context, tx *types
 }
 
 type TestParams struct {
-	NumKeys  int
-	MineOnTx bool
-	AutoMine bool
+	NumKeys         int
+	MineOnTx        bool
+	AutoMine        bool
+	NoDeployer      bool
+	NoOnChainConfig bool
 }
 
 type BlockchainTestContext struct {
@@ -296,7 +301,9 @@ func NewBlockchainTestContext(ctx context.Context, params TestParams) (*Blockcha
 	}
 
 	// Add deployer as operator so it can register nodes
-	btc.DeployerBlockchain = makeTestBlockchain(ctx, wallets[len(wallets)-1], client)
+	if !params.NoDeployer {
+		btc.DeployerBlockchain = makeTestBlockchain(ctx, wallets[len(wallets)-1], client)
+	}
 
 	// commit the river registry deployment transaction
 	if !params.MineOnTx {
@@ -305,11 +312,13 @@ func NewBlockchainTestContext(ctx context.Context, params TestParams) (*Blockcha
 		}
 	}
 
-	blockNum := btc.BlockNum(ctx)
-	btc.OnChainConfig, err = NewOnChainConfig(
-		ctx, btc.Client(), btc.RiverRegistryAddress, blockNum, btc.DeployerBlockchain.ChainMonitor)
-	if err != nil {
-		return nil, err
+	if !params.NoOnChainConfig {
+		blockNum := btc.BlockNum(ctx)
+		btc.OnChainConfig, err = NewOnChainConfig(
+			ctx, btc.Client(), btc.RiverRegistryAddress, blockNum, btc.DeployerBlockchain.ChainMonitor)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return btc, nil
@@ -657,3 +666,44 @@ func (NoopChainMonitor) OnContractEvent(BlockNumber, common.Address, OnChainEven
 func (NoopChainMonitor) OnContractWithTopicsEvent(BlockNumber, common.Address, [][]common.Hash, OnChainEventCallback) {
 }
 func (NoopChainMonitor) OnStopped(OnChainMonitorStoppedCallback) {}
+
+// TestMainForLeaksIgnoreGeth is a helper function to check if there are goroutine leaks.
+// It ignores goroutines created by Geth's simulated backend.
+// It should be called in TestMain after m.Run().
+// If there are leaks, it will print the goroutine stacks and os.Exit with non-zero code.
+// Using t.Parallel() makes it impossible to test for leaks in individual tests,
+// so leak testing is done on package level from TestMain.
+// Run individual tests with -run to find specific leaking tests.
+func TestMainForLeaksIgnoreGeth() {
+	// Geth's simulated backend leaks a lot of goroutines.
+	// Unfortunately goleak doesn't have optiosn to ignore by module or package,
+	// so some custom error string parsing is required to filter them out.
+	now := time.Now()
+	err := goleak.Find()
+	elapsed := time.Since(now)
+	if err != nil {
+		msg := err.Error()
+
+		stacks := strings.Split(msg, "Goroutine ")
+		if len(stacks) > 1 {
+			stacks = stacks[1:]
+		}
+		stacks = slices.DeleteFunc(stacks, func(s string) bool {
+			return strings.Contains(s, "created by github.com/ethereum/go-ethereum/") ||
+				strings.Contains(s, "created by github.com/syndtr/goleveldb/")
+		})
+
+		if len(stacks) > 0 {
+			fmt.Println(
+				"goleak: Errors on successful test run: found unexpected goroutines =", len(stacks),
+				"elapsed =", elapsed,
+			)
+			for _, s := range stacks {
+				fmt.Println()
+				fmt.Println("Goroutine", s)
+				fmt.Println()
+			}
+			os.Exit(1)
+		}
+	}
+}

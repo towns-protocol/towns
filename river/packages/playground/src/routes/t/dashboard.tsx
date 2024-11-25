@@ -22,8 +22,15 @@ import { JoinSpace } from '@/components/form/space/join'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Avatar } from '@/components/ui/avatar'
 import { shortenAddress } from '@/utils/address'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog'
 import { Tooltip } from '@/components/ui/tooltip'
+import { CreateDm } from '@/components/form/dm/create'
 
 export const DashboardRoute = () => {
     const navigate = useNavigate()
@@ -32,6 +39,7 @@ export const DashboardRoute = () => {
     const { streamIds: dmStreamIds } = useUserDms()
     const [joinSpaceDialogOpen, setJoinSpaceDialogOpen] = useState(false)
     const [createSpaceDialogOpen, setCreateSpaceDialogOpen] = useState(false)
+    const [createDmDialogOpen, setCreateDmDialogOpen] = useState(false)
 
     const navigateToSpace = useCallback(
         (spaceId: string) => {
@@ -78,6 +86,9 @@ export const DashboardRoute = () => {
                                     <DialogHeader>
                                         <DialogTitle>Create a space</DialogTitle>
                                     </DialogHeader>
+                                    <DialogDescription>
+                                        Create a space to start messaging.
+                                    </DialogDescription>
                                     <CreateSpace onCreateSpace={navigateToSpace} />
                                 </DialogContent>
                             </Dialog>
@@ -98,6 +109,9 @@ export const DashboardRoute = () => {
                                     <DialogHeader>
                                         <DialogTitle>Join a space</DialogTitle>
                                     </DialogHeader>
+                                    <DialogDescription>
+                                        You can join a space and hop into an existing conversation.
+                                    </DialogDescription>
                                     <JoinSpace onJoinSpace={navigateToSpace} />
                                 </DialogContent>
                             </Dialog>
@@ -142,7 +156,31 @@ export const DashboardRoute = () => {
 
                     <hr className="my-2" />
 
-                    <span className="text-xs">Your direct messages</span>
+                    <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs">Your direct messages</span>
+                        <div className="flex items-center gap-2">
+                            <Dialog open={createDmDialogOpen} onOpenChange={setCreateDmDialogOpen}>
+                                <Tooltip title="Create a direct message">
+                                    <Button
+                                        variant="outline"
+                                        size="icon"
+                                        onClick={() => setCreateDmDialogOpen(true)}
+                                    >
+                                        <PlusIcon className="h-4 w-4" />
+                                    </Button>
+                                </Tooltip>
+                                <DialogContent>
+                                    <DialogHeader>
+                                        <DialogTitle>Create a direct message</DialogTitle>
+                                    </DialogHeader>
+                                    <DialogDescription>
+                                        Create a direct message with another user.
+                                    </DialogDescription>
+                                    <CreateDm onDmCreated={navigateToDm} />
+                                </DialogContent>
+                            </Dialog>
+                        </div>
+                    </div>
                     <ScrollArea className="flex min-h-max">
                         <div className="flex flex-col gap-2">
                             {dmStreamIds.map((dmStreamId) => (

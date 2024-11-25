@@ -1,6 +1,6 @@
 {
     "name": "create-river-build-app",
-    "version": "0.0.113",
+    "version": "0.0.114",
     "bin": "index.js",
     "engines": {
         "node": "^18.0.0 || >=20.0.0"

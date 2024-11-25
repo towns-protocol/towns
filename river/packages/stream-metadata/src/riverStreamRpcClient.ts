@@ -18,7 +18,7 @@ import { filetypemime } from 'magic-bytes.js'
 import { FastifyBaseLogger } from 'fastify'
 import { LRUCache } from 'lru-cache'
 
-import { MediaContent, StreamIdHex } from './types'
+import { MediaContent } from './types'
 import { getNodeForStream } from './streamRegistry'
 
 const STREAM_METADATA_SERVICE_DEFAULT_UNPACK_OPTS: UnpackEnvelopeOpts = {
@@ -52,7 +52,7 @@ export function makeStreamRpcClient(url: string): StreamRpcClient {
 	return client
 }
 
-async function _getStreamClient(logger: FastifyBaseLogger, streamId: `0x${string}`) {
+async function _getStreamClient(logger: FastifyBaseLogger, streamId: string) {
 	let url = streamLocationCache.get(streamId)
 	if (!url) {
 		const node = await getNodeForStream(logger, streamId)
@@ -70,7 +70,7 @@ async function _getStreamClient(logger: FastifyBaseLogger, streamId: `0x${string
 
 async function getStreamClient(
 	logger: FastifyBaseLogger,
-	streamId: `0x${string}`,
+	streamId: string,
 ): Promise<StreamRpcClient> {
 	const existing = streamClientRequests.get(streamId)
 	if (existing) {
@@ -178,19 +178,12 @@ async function mediaContentFromStreamView(
 	}
 }
 
-function stripHexPrefix(hexString: string): string {
-	if (hexString.startsWith('0x')) {
-		return hexString.slice(2)
-	}
-	return hexString
-}
-
 export async function _getStream(
 	logger: FastifyBaseLogger,
 	streamId: string,
 	opts: UnpackEnvelopeOpts = STREAM_METADATA_SERVICE_DEFAULT_UNPACK_OPTS,
 ): Promise<StreamStateView> {
-	const client = await getStreamClient(logger, `0x${streamId}`)
+	const client = await getStreamClient(logger, streamId)
 	logger.info(
 		{
 			nodeUrl: client.url,
@@ -244,11 +237,10 @@ export async function getStream(
 
 export async function _getMediaStreamContent(
 	logger: FastifyBaseLogger,
-	fullStreamId: StreamIdHex,
+	streamId: string,
 	secret: Uint8Array,
 	iv: Uint8Array,
 ): Promise<MediaContent> {
-	const streamId = stripHexPrefix(fullStreamId)
 	const sv = await getStream(logger, streamId)
 	const result = await mediaContentFromStreamView(logger, sv, secret, iv)
 	return result
@@ -256,17 +248,17 @@ export async function _getMediaStreamContent(
 
 export async function getMediaStreamContent(
 	logger: FastifyBaseLogger,
-	fullStreamId: StreamIdHex,
+	streamId: string,
 	secret: Uint8Array,
 	iv: Uint8Array,
 ): Promise<MediaContent> {
-	const existing = mediaRequests.get(fullStreamId)
+	const existing = mediaRequests.get(streamId)
 	if (existing) {
 		return existing
 	}
-	const promise = _getMediaStreamContent(logger, fullStreamId, secret, iv)
-	mediaRequests.set(fullStreamId, promise)
+	const promise = _getMediaStreamContent(logger, streamId, secret, iv)
+	mediaRequests.set(streamId, promise)
 	const result = await promise
-	mediaRequests.delete(fullStreamId)
+	mediaRequests.delete(streamId)
 	return result
 }

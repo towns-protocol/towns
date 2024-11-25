@@ -304,7 +304,6 @@ contract RewardsDistribution is
   }
 
   /// @inheritdoc IRewardsDistribution
-  // TODO: transfer rewards when a space redelegates
   function claimReward(
     address beneficiary,
     address recipient
