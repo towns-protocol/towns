@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import {
     BlockchainTransactionType,
+    EVERYONE_ADDRESS,
     Permission,
     RoleEntitlements,
     useChannelSettings,
@@ -233,26 +234,34 @@ export function ChannelsRolesList(props: {
 
     return (
         <>
-            {roles.map((role) => (
-                <Box
-                    key={role.roleId}
-                    background="level2"
-                    border="faint"
-                    padding="md"
-                    cursor="pointer"
-                    rounded="sm"
-                    onClick={() => setSelectedRole(role)}
-                >
-                    <RoleHeader
-                        roleId={role.roleId}
-                        spaceId={spaceId}
-                        title={role.name}
-                        subTitle={headerSubtitle?.(role) ?? ''}
-                        qualified={canJoin}
-                        onEditPermissions={onEditRolePermissions}
-                    />
-                </Box>
-            ))}
+            {roles.map((role) => {
+                const isEveryonePermission = role.users.includes(EVERYONE_ADDRESS)
+                return (
+                    <Box
+                        key={role.roleId}
+                        background="level2"
+                        border="faint"
+                        padding="md"
+                        cursor={isEveryonePermission ? 'default' : 'pointer'}
+                        rounded="sm"
+                        onClick={() => {
+                            if (isEveryonePermission) {
+                                return
+                            }
+                            setSelectedRole(role)
+                        }}
+                    >
+                        <RoleHeader
+                            roleId={role.roleId}
+                            spaceId={spaceId}
+                            title={role.name}
+                            subTitle={headerSubtitle?.(role) ?? ''}
+                            qualified={canJoin}
+                            onEditPermissions={onEditRolePermissions}
+                        />
+                    </Box>
+                )
+            })}
 
             {selectedRole && (
                 <RoleRequirementsModal

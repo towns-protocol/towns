@@ -22,10 +22,14 @@ export function useChannelEntitlements({
             (u) => u.length > 0 && !u.includes(EVERYONE_ADDRESS),
         )
 
+        const hasEveryoneEntitlement = userEntitlments?.some((u) => u.includes(EVERYONE_ADDRESS))
+
         return {
-            hasSomeEntitlement: hasRuleEntitlement || hasUserEntitlement,
+            hasSomeEntitlement:
+                !hasEveryoneEntitlement && (hasRuleEntitlement || hasUserEntitlement),
             hasRuleEntitlement,
             hasUserEntitlement,
+            hasEveryoneEntitlement,
             error,
             isLoading,
         }

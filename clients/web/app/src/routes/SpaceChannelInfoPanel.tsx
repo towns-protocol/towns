@@ -30,6 +30,7 @@ import {
     isChannelPermission,
 } from '@components/SpaceSettingsPanel/rolePermissions.const'
 import { TownNotificationsButton } from '@components/NotificationSettings/NotificationsSettingsButton'
+import { useChannelEntitlements } from 'hooks/useChannelEntitlements'
 import { ChannelMembersModal } from '../components/ChannelMembersPanel/ChannelMembersPanel'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
 import { ChannelsRolesList } from './RoleRestrictedChannelJoinPanel'
@@ -69,6 +70,11 @@ export const ChannelInfo = () => {
     }, [loggedInWalletAddress, memberIds])
 
     const { channelSettings } = useChannelSettings(spaceData?.id ?? '', channel?.id ?? '')
+
+    const { hasSomeEntitlement } = useChannelEntitlements({
+        spaceId: spaceData?.id,
+        channelId: channel?.id,
+    })
 
     const roles = channelSettings?.roles
     const roledIds = useMemo(() => roles?.map((r) => r.roleId) ?? [], [roles])
@@ -146,7 +152,7 @@ export const ChannelInfo = () => {
                     />
                 </Stack>
 
-                {roles && (
+                {roles && (canEditChannel || hasSomeEntitlement) && (
                     <Stack
                         padding
                         elevate
