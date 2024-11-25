@@ -133,6 +133,5 @@ variable "on" {
 }
 
 variable "migrate_stream_creation" {
-  type    = bool
-  default = false
+  type = bool
 }

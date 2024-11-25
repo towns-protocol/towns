@@ -252,6 +252,8 @@ module "archive_node" {
   lb = module.archive_node_nlb[count.index]
 }
 
+
+# TODO: delete me
 module "notification_service_db_cluster" {
   source = "../../modules/notification-service-db-cluster"
 

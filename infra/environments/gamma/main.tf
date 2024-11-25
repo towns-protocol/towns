@@ -76,11 +76,20 @@ resource "aws_ecs_cluster" "river_ecs_cluster" {
   tags = module.global_constants.tags
 }
 
+# TODO: delete this old db
 module "river_db_cluster" {
   source                    = "../../modules/river-db-cluster"
   database_subnets          = module.vpc.database_subnets
   vpc_id                    = module.vpc.vpc_id
   pgadmin_security_group_id = module.pgadmin.security_group_id
+}
+
+module "river_db" {
+  source                    = "../../modules/river-db-cluster"
+  database_subnets          = module.vpc.database_subnets
+  vpc_id                    = module.vpc.vpc_id
+  pgadmin_security_group_id = module.pgadmin.security_group_id
+  cluster_name_suffix       = "" // TODO: remove this
 }
 
 module "river_node_ssl_cert" {
@@ -161,7 +170,8 @@ module "river_node" {
 
   river_node_ssl_cert_secret_arn = module.river_node_ssl_cert.river_node_ssl_cert_secret_arn
 
-  river_node_db                  = module.river_db_cluster
+  river_node_db = module.river_db
+
   max_db_connections             = local.river_max_db_connections // As an experiment, we are setting this to 50 on gamma
   river_database_isolation_level = local.river_database_isolation_level
 
@@ -177,6 +187,8 @@ module "river_node" {
 
   base_chain_id  = local.base_chain_id
   river_chain_id = local.river_chain_id
+
+  migrate_stream_creation = true
 
   ecs_cluster = {
     id   = aws_ecs_cluster.river_ecs_cluster.id
