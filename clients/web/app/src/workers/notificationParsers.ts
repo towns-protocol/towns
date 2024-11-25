@@ -60,7 +60,7 @@ export function appNotificationFromPushEvent(raw: string): AppNotification | und
 }
 
 const plaintextSchema = z.object({
-    kind: z.enum([NotificationKind.NewMessage, NotificationKind.Mention]),
+    kind: z.nativeEnum(NotificationKind),
     spaceId: z.string().optional(),
     channelId: z.string(),
     threadId: z.string().optional(),

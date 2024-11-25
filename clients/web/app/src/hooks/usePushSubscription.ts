@@ -94,7 +94,6 @@ async function registerForPushSubscription(
     } catch (e) {
         console.error('PUSH: failed to subscribe to web push', e)
     }
-    // <END new way>
 }
 
 async function getLocalPushSubscription(): Promise<{
