@@ -181,6 +181,7 @@ resource "aws_iam_role_policy" "service_iam_policy" {
         ],
         "Effect": "Allow",
         "Resource": [
+          "${aws_secretsmanager_secret.notification_vapid_key.arn}",
           "${local.global_remote_state.notification_service_db_password_secret.arn}",
           "${var.apns_auth_key_secret_arn}",
           "${local.global_remote_state.river_global_dd_agent_api_key.arn}",
@@ -226,6 +227,11 @@ locals {
     user         = "notification_service"
     password_arn = local.global_remote_state.notification_service_db_password_secret.arn
   }
+}
+
+resource "aws_secretsmanager_secret" "notification_vapid_key" {
+  name        = "${local.local_name}-vapid-key"
+  description = "Key-pair for notification service"
 }
 
 resource "aws_ecs_task_definition" "task_definition" {
@@ -282,9 +288,16 @@ resource "aws_ecs_task_definition" "task_definition" {
       {
         name      = "NOTIFICATIONS__APN__AUTHKEY",
         valueFrom = var.apns_auth_key_secret_arn
+      },
+      {
+        name      = "NOTIFICATIONS__WEBPUSH__VAPID__PUBLICKEY",
+        valueFrom = "${aws_secretsmanager_secret.notification_vapid_key.arn}:publicKey::"
+      },
+      {
+        name      = "NOTIFICATIONS__WEBPUSH__VAPID__PRIVATEKEY",
+        valueFrom = "${aws_secretsmanager_secret.notification_vapid_key.arn}:privateKey::"
       }
     ]
-
 
     environment = [
       {
@@ -376,8 +389,11 @@ resource "aws_ecs_task_definition" "task_definition" {
         name  = "NOTIFICATIONS__APN__APPBUNDLEID",
         value = var.apns_towns_app_identifier
       },
+      {
+        name  = "NOTIFICATIONS__WEBPUSH__VAPID__SUBJECT",
+        value = "support@towns.com"
+      }
     ]
-
 
     logConfiguration = {
       logDriver = "awslogs"
