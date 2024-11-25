@@ -78,6 +78,9 @@ const expiryToString = (expiry: ExpiryFormat) =>
     Object.entries(expiry).map(
         ([key, value]) => `${value} ${fixPlural(value, key.replace(/s$/, ''), key)}`,
     )
+
+const defaultExpiry = '7d'
+
 const BearerTokenPanel = () => {
     const [bearerToken, setBearerToken] = useState<string | null>(null)
     const [expiry, setExpiry] = useState<{
@@ -85,7 +88,7 @@ const BearerTokenPanel = () => {
         hours?: number
         minutes?: number
         seconds?: number
-    } | null>(null)
+    } | null>(() => expiryStringSchema.parse(defaultExpiry))
     const [isLoading, setLoading] = useState(false)
 
     const generateBearerToken = useCallback(async (expiry: ExpiryFormat, getSigner: GetSigner) => {
@@ -114,7 +117,7 @@ const BearerTokenPanel = () => {
             <Box gap>
                 <Dropdown
                     label="Expiry Time"
-                    defaultValue="7d"
+                    defaultValue={defaultExpiry}
                     options={EXPIRY_OPTIONS}
                     onChange={(value) => {
                         const parsedExpiry = expiryStringSchema.parse(value)
