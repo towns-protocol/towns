@@ -141,6 +141,7 @@ jobs:
               working-directory: river/contracts
 
             - name: Run Base Sepolia Interaction
+              id: base_sepolia_interaction
               run: |
                   make interact-any-explicit \
                     context=alpha \
@@ -152,6 +153,15 @@ jobs:
               working-directory: river/contracts
               env:
                   INTERACTION_INPUT_PATH: ${{ env.INTERACTION_INPUT_PATH }}
+
+            - name: Verify Updated Facets on Basescan
+              if: success() && steps.base_sepolia_interaction.outcome == 'success'
+              run: |
+                  ../../scripts/verify-facets-basescan.sh "${INTERACTION_INPUT_PATH}"
+              working-directory: river/contracts
+              env:
+                  BASESCAN_SEPOLIA_URL: ${{ env.BASESCAN_SEPOLIA_URL }}
+                  BASESCAN_SEPOLIA_API_KEY: ${{ env.BASESCAN_SEPOLIA_API_KEY }}
 
             - name: Run River Devnet Interaction
               env:
@@ -204,6 +214,7 @@ jobs:
               run: yarn install --immutable
 
             - name: Run Base Sepolia Interaction
+              id: base_sepolia_interaction
               run: make interact-any-explicit \
                   context=alpha \
                   rpc=base_sepolia \
