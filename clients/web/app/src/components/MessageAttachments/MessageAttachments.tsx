@@ -31,6 +31,7 @@ import { useEntitlements } from 'hooks/useEntitlements'
 import { PATHS } from 'routes'
 import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
 import { addressFromSpaceId } from 'ui/utils/utils'
+import { minterRoleId } from '@components/SpaceSettingsPanel/rolePermissions.const'
 import { MessageAttachmentsContext } from './MessageAttachmentsContext'
 
 const emptyArray: never[] = []
@@ -227,7 +228,7 @@ const TownsContent = (props: { townPath: string; townId: string; channelId?: str
 
     const { data: spaceInfo } = useContractSpaceInfo(townId)
     const { data: memberInfo, isLoading } = useReadableMembershipInfo(townId)
-    const { data: entitlements } = useEntitlements(townId)
+    const { data: entitlements } = useEntitlements(townId, minterRoleId)
 
     const priceText = getPriceText(memberInfo?.price, memberInfo?.remainingFreeSupply)
 

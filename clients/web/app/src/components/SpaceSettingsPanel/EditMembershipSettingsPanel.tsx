@@ -22,6 +22,7 @@ import { useEntitlements } from 'hooks/useEntitlements'
 import { EditMembershipSchemaType, editMembershipSchema } from './editMembershipSchema'
 import { useMembershipInfoAndRoleDetails } from './hooks'
 import { EditMembershipSubmitButton } from './EditMembershipSubmitButton'
+import { minterRoleId } from './rolePermissions.const'
 
 export const EDIT_MEMBERSHIP_SETTINGS_PANEL = 'editMembershipSettings'
 
@@ -67,7 +68,10 @@ function EditMembershipForm({
     )
     const { data: freeAllocation } = useMembershipFreeAllocation(spaceId)
 
-    const { data: entitlements, isLoading: isEntitlementsLoading } = useEntitlements(spaceId)
+    const { data: entitlements, isLoading: isEntitlementsLoading } = useEntitlements(
+        spaceId,
+        minterRoleId,
+    )
 
     const { data: pricingModules, isLoading: isLoadingPricingModules } = usePricingModules()
 

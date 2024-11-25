@@ -10,6 +10,7 @@ import { Analytics } from 'hooks/useAnalytics'
 import { PATHS } from 'routes'
 import { useEntitlements } from 'hooks/useEntitlements'
 import { formatUnitsToFixedLength, parseUnits } from 'hooks/useBalance'
+import { minterRoleId } from '@components/SpaceSettingsPanel/rolePermissions.const'
 
 interface ExploreCardProps {
     address: string
@@ -23,7 +24,7 @@ export const ExploreCard = ({ address, variant }: ExploreCardProps) => {
     const { data: spaceInfo, isLoading: isSpaceInfoLoading } =
         useContractSpaceInfoWithoutClient(spaceId)
     const { data: memberInfo } = useReadableMembershipInfo(spaceId ?? '')
-    const { data: entitlements } = useEntitlements(spaceId ?? '')
+    const { data: entitlements } = useEntitlements(spaceId ?? '', minterRoleId)
 
     const onClick = useCallback(() => {
         Analytics.getInstance().track('clicked town on explore', {

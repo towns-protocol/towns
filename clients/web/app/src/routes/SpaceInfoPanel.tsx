@@ -54,6 +54,7 @@ import { useRefreshSpaceMember } from 'hooks/useRefreshSpaceMember'
 import { useEntitlements } from 'hooks/useEntitlements'
 import { EntitlementsDisplay } from '@components/TownPageLayout/EntitlementsDisplay'
 import { TownNotificationsButton } from '@components/NotificationSettings/NotificationsSettingsButton'
+import { minterRoleId } from '@components/SpaceSettingsPanel/rolePermissions.const'
 import { PublicTownPageForAuthenticatedUser } from './PublicTownPage/PublicTownPage'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
 
@@ -607,7 +608,7 @@ const TokensGatingSpace = ({
     canEdit: boolean
     onClick: () => void
 }) => {
-    const { data: entitlements } = useEntitlements(spaceId ?? '')
+    const { data: entitlements } = useEntitlements(spaceId ?? '', minterRoleId)
 
     if (!entitlements.hasEntitlements) {
         return null

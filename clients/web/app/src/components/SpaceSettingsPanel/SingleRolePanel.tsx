@@ -60,8 +60,10 @@ export function SingleRolePanelWithoutAuth() {
     const transactionIsPending =
         pendingCreateRoleTransaction || pendingUpdateRoleTransaction || pendingDeleteRoleTransaction
 
-    const { data: entitlements, isLoading: isEntitlementsLoading } =
-        useEntitlements(spaceIdFromPath)
+    const { data: entitlements, isLoading: isEntitlementsLoading } = useEntitlements(
+        spaceIdFromPath,
+        roleId,
+    )
 
     const values: RoleFormSchemaType = useMemo(
         () => ({

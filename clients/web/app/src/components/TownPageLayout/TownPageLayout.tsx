@@ -16,6 +16,7 @@ import useCopyToClipboard from 'hooks/useCopyToClipboard'
 import { Entitlements, useEntitlements } from 'hooks/useEntitlements'
 import { MotionBoxProps } from 'ui/components/Motion/MotionComponents'
 import { shimmerClass } from 'ui/styles/globals/shimmer.css'
+import { minterRoleId } from '@components/SpaceSettingsPanel/rolePermissions.const'
 import { useReadableMembershipInfo } from './useReadableMembershipInfo'
 import { TokenInfoBox } from './TokenInfoBox'
 import { InformationBox } from './InformationBox'
@@ -79,7 +80,10 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
 
     const { data: membershipInfo } = useReadableMembershipInfo(spaceId)
 
-    const { data: entitlements, isLoading: isEntitlementsLoading } = useEntitlements(spaceId)
+    const { data: entitlements, isLoading: isEntitlementsLoading } = useEntitlements(
+        spaceId,
+        minterRoleId,
+    )
 
     const { imageSrc } = useImageSource(spaceId, ImageVariants.thumbnail600)
     const leftColRef = useRef<HTMLDivElement>(null)

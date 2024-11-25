@@ -26,6 +26,7 @@ import { usePublicPageLoginFlow } from 'routes/PublicTownPage/usePublicPageLogin
 import { TokenSelectionDisplay } from '@components/Tokens/TokenSelector/TokenSelection'
 import { useNativeTokenWithQuantity } from '@components/Tokens/utils'
 import { useJoinFunnelAnalytics } from '@components/Analytics/useJoinFunnelAnalytics'
+import { minterRoleId } from '@components/SpaceSettingsPanel/rolePermissions.const'
 import { FullPanelOverlay, LinkedWallet } from '../WalletLinkingPanel'
 import { isEveryoneAddress, mapToErrorMessage } from '../utils'
 import { ConnectWalletThenLinkButton } from '../ConnectWallet/ConnectWalletThenLinkButton'
@@ -39,7 +40,7 @@ type Props = {
 export function GatedTownModal({ onHide, spaceId }: Props) {
     const { data: linkedWallets } = useLinkedWallets()
     const { loggedInWalletAddress } = useConnectivity()
-    const { data: entitlements } = useEntitlements(spaceId)
+    const { data: entitlements } = useEntitlements(spaceId, minterRoleId)
     const tokensLength = entitlements?.tokens.length ?? 0
     const maxWidth = tokensLength > 2 ? 'auto' : '400'
     const { data: aaAddress } = useAbstractAccountAddress({

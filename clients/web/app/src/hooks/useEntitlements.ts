@@ -7,12 +7,12 @@ import { useTokensWithMetadata } from 'api/lib/collectionMetadata'
 export type Entitlements = ReturnType<typeof useEntitlements>['data']
 
 // returns a map of all token addresses assigned to the passed role or minter role by default, and their tokenIds if applicable
-export function useEntitlements(spaceId: string | undefined, roleId?: number | undefined) {
+export function useEntitlements(spaceId: string | undefined, roleId: number | undefined) {
     const {
         roleDetails: roleDetails,
         isLoading: isRoleDetailsLoading,
         error: roleDetailsError,
-    } = useRoleDetails(spaceId ?? '', roleId ?? 1)
+    } = useRoleDetails(spaceId ?? '', roleId)
 
     const ruleData =
         roleDetails?.ruleData.kind === 'v2'
