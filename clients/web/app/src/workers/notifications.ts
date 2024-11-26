@@ -11,6 +11,7 @@ import {
     NotificationContent,
     NotificationKind,
     WEB_PUSH_NAVIGATION_CHANNEL,
+    WEB_PUSH_SUBSCRIPTIONS_CHANNEL,
 } from './types.d'
 import { PlaintextDetails, decrypt } from './decryptionFn'
 import {
@@ -29,6 +30,11 @@ import { NotificationRelEntry, getPathnameWithParams, getUrlWithParams } from '.
 const MIDDLE_DOT = '\u00B7'
 const log = dlog('sw:push')
 const logError = dlogError('sw:push')
+
+interface PushSubscriptionChangeEvent extends ExtendableEvent {
+    readonly newSubscription: PushSubscription | null
+    readonly oldSubscription: PushSubscription | null
+}
 
 const notificationStores: Record<string, NotificationStore> = {}
 let currentUserStore: NotificationCurrentUser | undefined = undefined
@@ -117,28 +123,33 @@ const sendLogToDatadog = async (
 
 export function handleNotifications(worker: ServiceWorkerGlobalScope) {
     const prod = !env.DEV
+
     if (prod) {
         sendLogToDatadog('info', 'handleNotifications() was called')
-        log(`handleNotifications() was called.`)
     }
+    log(`handleNotifications() was called.`)
 
-    if (prod) {
-        // print the various lifecycle / event hooks for debugging
-        worker.addEventListener('install', () => {
-            log('"install" event')
-        })
+    // print the various lifecycle / event hooks for debugging
+    worker.addEventListener('install', () => {
+        log('"install" event')
+    })
 
-        worker.addEventListener('pushsubscriptionchange', () => {
-            log('"pushsubscriptionchange" event')
+    worker.addEventListener('pushsubscriptionchange', (event) => {
+        log('"pushsubscriptionchange" event')
+        // dispatch an event to the main thread
+        const subscriptionsChannel = new BroadcastChannel(WEB_PUSH_SUBSCRIPTIONS_CHANNEL)
+        subscriptionsChannel.postMessage({
+            oldSubscription: (event as PushSubscriptionChangeEvent).oldSubscription,
+            newSubscription: (event as PushSubscriptionChangeEvent).newSubscription,
         })
+    })
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        worker.addEventListener('sync', (event: any) => {
-            // returns true if the user agent will not make further
-            // synchronization attempts after the current attempt.
-            log('"sync" event, lastChance:', event.lastChance)
-        })
-    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    worker.addEventListener('sync', (event: any) => {
+        // returns true if the user agent will not make further
+        // synchronization attempts after the current attempt.
+        log('"sync" event, lastChance:', event.lastChance)
+    })
 
     // `activate` fires once old service worker is gone and new one has taken control
     worker.addEventListener('activate', async () => {

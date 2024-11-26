@@ -34,6 +34,7 @@ export type NotificationContent = {
 }
 
 export const WEB_PUSH_NAVIGATION_CHANNEL = 'web-push-navigation-channel'
+export const WEB_PUSH_SUBSCRIPTIONS_CHANNEL = 'web-push-subscriptions-channel'
 
 export interface User {
     userId: string
