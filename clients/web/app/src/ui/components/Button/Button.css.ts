@@ -23,14 +23,6 @@ export const buttonStyle = recipe({
         size: 'button_md',
     },
     variants: {
-        rounded: {
-            sm: {
-                borderRadius: vars.borderRadius.sm,
-            },
-            md: {
-                borderRadius: vars.borderRadius.md,
-            },
-        },
         size: {
             inline: {
                 padding: atoms({ padding: 'none' }),
@@ -102,6 +94,17 @@ export const buttonStyle = recipe({
                         boxShadow: `none`,
                     },
                 },
+            },
+        },
+        rounded: {
+            sm: {
+                borderRadius: vars.borderRadius.sm,
+            },
+            md: {
+                borderRadius: vars.borderRadius.md,
+            },
+            lg: {
+                borderRadius: vars.borderRadius.lg,
             },
         },
     },

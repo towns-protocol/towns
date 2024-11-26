@@ -1519,6 +1519,17 @@ export const TrendingIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref)
     </svg>
 ))
 
+export const TryAgainIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" {...props} ref={ref}>
+        <path
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="M21.8948 3.54487L21.3764 9.47039C21.3523 9.74548 21.1098 9.94898 20.8347 9.92491L14.9092 9.4065C14.4654 9.36767 14.2901 8.81171 14.6314 8.52538L16.9307 6.59597C15.9605 5.83094 14.8085 5.31835 13.5781 5.11356C11.9846 4.84833 10.3481 5.11412 8.92048 5.87002C7.49283 6.62592 6.35315 7.83005 5.67684 9.29708C5.00053 10.7641 4.82507 12.4127 5.17746 13.9893C5.52985 15.5658 6.39057 16.9828 7.62714 18.0222C8.86372 19.0617 10.4076 19.666 12.0212 19.7421C13.6349 19.8181 15.2288 19.3619 16.5577 18.4434C17.8866 17.5249 18.8768 16.1952 19.376 14.6588C19.5467 14.1336 20.1109 13.8461 20.6361 14.0168C21.1614 14.1875 21.4488 14.7516 21.2782 15.2769C20.6435 17.2302 19.3844 18.9209 17.6948 20.0887C16.0052 21.2564 13.9786 21.8366 11.927 21.7398C9.87542 21.6431 7.91245 20.8748 6.34023 19.5532C4.76801 18.2316 3.67367 16.43 3.22563 14.4255C2.77758 12.4211 3.00067 10.325 3.86055 8.45976C4.72044 6.59453 6.16946 5.06357 7.98462 4.10249C9.79978 3.14141 11.8805 2.80348 13.9065 3.14071C15.6081 3.42393 17.1919 4.1702 18.4884 5.28892L21.0753 3.11827C21.4165 2.83194 21.9336 3.10111 21.8948 3.54487Z"
+            fill="currentColor"
+        />
+    </svg>
+))
+
 export const TreasuryIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
     <svg
         width="24"
@@ -2091,6 +2102,7 @@ const iconMap = {
     touchSendEnabled: TouchSendEnabledIcon,
     treasury: TreasuryIcon,
     trending: TrendingIcon,
+    tryagain: TryAgainIcon,
     type: TypeIcon,
     unban: UnbanIcon,
     underline: UnderlineIcon,
