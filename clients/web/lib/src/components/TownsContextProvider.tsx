@@ -28,10 +28,7 @@ import { AccountAbstractionConfig } from '@towns/userops'
 import { useUserLookupUpdater } from '../hooks/use-user-lookup-updater'
 import { TownsAnalytics } from '../types/TownsAnalytics'
 import { useStreamMetadataUpdater } from '../hooks/use-stream-metadata-updater'
-import {
-    NotificationSettingsClient,
-    useNotificationSettingsClient,
-} from '../client/TownsNotifciationSettings'
+import { NotificationSettingsClient } from '../client/TownsNotifciationSettings'
 
 export type InitialSyncSortPredicate = (a: string, b: string) => number
 
@@ -264,3 +261,17 @@ const TownsContextImplMemo = React.memo(
         return result
     },
 )
+
+// private singleton, not exported, to use the notification settings client get it from useTownsContext()
+function useNotificationSettingsClient(
+    signerContext: SignerContext | undefined,
+    environmentId: string,
+    url: string | undefined,
+): NotificationSettingsClient | undefined {
+    return useMemo(() => {
+        if (!signerContext) {
+            return undefined
+        }
+        return new NotificationSettingsClient(signerContext, environmentId, url)
+    }, [environmentId, signerContext, url])
+}
