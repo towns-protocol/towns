@@ -35,6 +35,9 @@ import {
     useFileDropContext,
 } from '@components/FileDropContext/FileDropContext'
 import { Analytics } from 'hooks/useAnalytics'
+import { useConnectionStatus } from '@components/NodeConnectionStatusPanel/hooks/useConnectionStatus'
+import { NodeData, useNodeData } from '@components/NodeConnectionStatusPanel/hooks/useNodeData'
+import { getNodeStatusFromNodeData } from '@components/NodeConnectionStatusPanel/NodeStatusPill'
 import * as fieldStyles from '../../ui/components/_internal/Field/Field.css'
 import { BugSubmittedToast } from './BugSubmittedToast'
 
@@ -73,7 +76,14 @@ const defaultValues = {
     [FormStateKeys.attachments]: [],
 }
 
-async function postCustomError(data: FormState) {
+async function postCustomError(
+    data: FormState,
+    nodeInfo: {
+        connectionStatus: string
+        nodeUrl: string | undefined
+        nodeConnections: NodeData[]
+    },
+) {
     Analytics.getInstance().track('submitting bug report')
 
     const ENV = env.VITE_RIVER_ENV ?? 'localhost'
@@ -112,6 +122,15 @@ async function postCustomError(data: FormState) {
     deviceInfo += `* Device Type: ${deviceType}\n`
     deviceInfo += `* PWA: ${PWAflag}\n`
     deviceInfo += `* Location: ${location}\n`
+    deviceInfo += `* Node Connection Status: ${nodeInfo.connectionStatus}\n`
+    deviceInfo += `* Node URL: ${nodeInfo.nodeUrl ?? 'undefined'}\n`
+    deviceInfo += `* Node Connections:\n ${nodeInfo.nodeConnections
+        .map((x) => {
+            const status = getNodeStatusFromNodeData(x)
+            return `${x.nodeUrl}: ${status.nodeStatus.statusText}/${status.responseStatus}`
+        })
+        .join('\n')}
+    `
 
     const uuid = crypto.randomUUID()
 
@@ -177,8 +196,19 @@ const _ErrorReportForm = (props: { onHide?: () => void; excludeDebugInfo?: boole
     const [success, setSuccess] = useState(false)
     const [isDragging, setIsDragging] = useState(false)
     const [errorMessage, setErrorMessage] = useState('')
+
+    const { connectionStatus, nodeUrl } = useConnectionStatus()
+    const nodeConnections = useNodeData(nodeUrl)
+
+    const doPostCustomError = useCallback(
+        (result: FormState) => {
+            return postCustomError(result, { connectionStatus, nodeUrl, nodeConnections })
+        },
+        [connectionStatus, nodeUrl, nodeConnections],
+    )
+
     const { mutate: doCustomError, isPending: isLoading } = useMutation({
-        mutationFn: postCustomError,
+        mutationFn: doPostCustomError,
         retry: 4, // retry N times
         retryDelay: (attempt) => Math.min(attempt > 1 ? 2 ** attempt * 1000 : 1000, 8 * 1000), // exponential backoff
     })

@@ -20,10 +20,7 @@ export const NodeStatusPill = ({
     connectionStatus,
     ...boxProps
 }: Props) => {
-    const nodeStatus = NodeStatus[nodeData.status]
-    const responseStatus = getResponseStatus(nodeData)
-    // if node is operational, but has a non-OK response, it's down
-    const isDown = nodeData.status === 2 && responseStatus && responseStatus !== 'OK'
+    const { nodeStatus, responseStatus, isDown } = getNodeStatusFromNodeData(nodeData)
 
     const [isToggled, setIsToggled] = useState(false)
 
@@ -213,3 +210,11 @@ const NodeStatus = [
         background: 'negativeSubtle',
     },
 ] as const
+
+export function getNodeStatusFromNodeData(nodeData: NodeData) {
+    const nodeStatus = NodeStatus[nodeData.status]
+    const responseStatus = getResponseStatus(nodeData)
+    // if node is operational, but has a non-OK response, it's down
+    const isDown = nodeData.status === 2 && responseStatus && responseStatus !== 'OK'
+    return { nodeStatus, responseStatus, isDown }
+}
