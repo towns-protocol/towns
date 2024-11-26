@@ -3,7 +3,6 @@ import {
     Attachment,
     Channel,
     EmbeddedMessageAttachment,
-    OTWMention,
     SendTextMessageOptions,
     UnfurledLinkAttachment,
     useChannelId,
@@ -25,7 +24,7 @@ import { LoadingUnfurledLinkAttachment } from 'hooks/useExtractInternalLinks'
 import { SECOND_MS } from 'data/constants'
 import { RichTextEditor } from './RichTextEditor'
 import { useEditorChannelData, useEditorMemberData } from './hooks/editorHooks'
-import { getChannelNames, getMentionIds } from './utils/helpers'
+import { getChannelNames } from './utils/helpers'
 import { EditorFallback } from './components/EditorFallback'
 import { unfurlLinksToAttachments } from './utils/unfurlLinks'
 
@@ -49,7 +48,7 @@ type Props = {
     threadPreview?: string
     channels: Channel[]
     spaceMemberIds: string[] // List of all users in the space, regardless of whether they are in the channel
-    mentions?: OTWMention[] // Used during editing - list of mentions in an existing message
+    draftUserIds?: string[]
     userId?: string
     isFullWidthOnTouch?: boolean
 } & Pick<BoxProps, 'background'>
@@ -67,8 +66,8 @@ const TownsTextEditorWithoutBoundary = ({
     onCancel,
     displayButtons,
     channels,
-    mentions,
     spaceMemberIds,
+    draftUserIds,
     initialValue,
     background = 'level2',
 }: Props) => {
@@ -84,7 +83,11 @@ const TownsTextEditorWithoutBoundary = ({
 
     const channelId = useChannelId()
     const { lookupUser } = useUserLookupContext()
-    const { userMentions, userHashMap } = useEditorMemberData(spaceMemberIds, channelId)
+    const { userMentions, userHashMap } = useEditorMemberData(
+        spaceMemberIds,
+        channelId,
+        draftUserIds,
+    )
     const { channelMentions } = useEditorChannelData(channels)
 
     const onRemoveMessageAttachment = useCallback(
@@ -259,7 +262,7 @@ const arePropsEqual = (prevProps: Props, nextProps: Props) => {
             isEqual(prevProps.isFullWidthOnTouch, nextProps.isFullWidthOnTouch),
             isEqual(getChannelNames(prevProps.channels), getChannelNames(nextProps.channels)),
             isEqual(prevProps.spaceMemberIds, nextProps.spaceMemberIds),
-            isEqual(getMentionIds(prevProps.mentions), getMentionIds(nextProps.mentions)),
+            isEqual(prevProps.draftUserIds, nextProps.draftUserIds),
         ],
         true,
     )

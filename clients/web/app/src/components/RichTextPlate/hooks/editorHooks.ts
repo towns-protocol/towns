@@ -11,25 +11,33 @@ import {
     TUserWithChannel,
 } from '../components/plate-ui/autocomplete/types'
 
-export const useEditorMemberData = (spaceMemberIds: string[], channelId: string) => {
+const stableArray: string[] = []
+
+export const useEditorMemberData = (
+    spaceMemberIds: string[],
+    channelId: string,
+    draftUserIds: string[] = stableArray,
+) => {
     const { memberIds: channelMemberIds } = useChannelMembers()
+    const isDraft = channelId === ''
     const isDMorGDM = useMemo(
         () => isDMChannelStreamId(channelId) || isGDMChannelStreamId(channelId),
         [channelId],
     )
+
     const availableMemberIds = useMemo(
-        () => uniq([...channelMemberIds, ...spaceMemberIds]),
-        [channelMemberIds, spaceMemberIds],
+        () => uniq([...draftUserIds, ...channelMemberIds, ...spaceMemberIds]),
+        [channelMemberIds, draftUserIds, spaceMemberIds],
     )
     const availableMembers = useUserLookupArray(availableMemberIds)
 
     // Array of users which is used to show the autocomplete popup on @
     const userMentions: TComboboxItemWithData<TUserWithChannel>[] = useMemo(() => {
-        return (isDMorGDM ? [] : [AtChannelUser])
+        return (isDMorGDM || isDraft ? [] : [AtChannelUser])
             .concat(availableMembers)
-            .map((user) => convertUserToCombobox(user, channelMemberIds))
+            .map((user) => convertUserToCombobox(user, [...draftUserIds, ...channelMemberIds]))
             .filter(notUndefined)
-    }, [isDMorGDM, availableMembers, channelMemberIds])
+    }, [isDMorGDM, isDraft, availableMembers, channelMemberIds, draftUserIds])
 
     // Hash map of user's displayName and userId. This is used to easily lookup and
     // convert @name mention to userId while pasting and editing in O(1) time

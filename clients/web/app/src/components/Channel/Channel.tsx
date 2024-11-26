@@ -123,6 +123,7 @@ export const Channel = (props: Props) => {
             threadId={threadId}
             showJoinChannel={showJoinChannel}
             showDMAcceptInvitation={showDMAcceptInvitation}
+            draftUserIds={userIds}
             onTouchClose={props.onTouchClose}
             onSend={onSend}
         />
@@ -173,7 +174,7 @@ export const DraftChannel = (props: { userIds: string[] } & Props) => {
     return (
         <>
             <ChannelLayout
-                userIds={userIds}
+                draftUserIds={userIds}
                 channel={
                     channel ?? {
                         id: '',
@@ -214,7 +215,7 @@ type ExtendedProps = Omit<Props, 'channelId'> & {
     threadId?: string
     showJoinChannel?: boolean
     showDMAcceptInvitation?: boolean
-    userIds?: string[]
+    draftUserIds?: string[]
     onSend?: (message: string, options?: SendMessageOptions) => void
 }
 
@@ -230,7 +231,7 @@ export const ChannelLayout = (props: ExtendedProps) => {
         showJoinChannel = false,
         storageId,
         threadId,
-        userIds,
+        draftUserIds,
     } = props
 
     const { isTouch } = useDevice()
@@ -278,18 +279,18 @@ export const ChannelLayout = (props: ExtendedProps) => {
                             />
                             {showDMAcceptInvitation && <DMAcceptInvitation channelId={channelId} />}
                         </>
-                    ) : userIds ? (
+                    ) : draftUserIds ? (
                         <>
                             {!props.hideHeader && (
                                 <CardHeader gap="sm">
-                                    <MessageAvatarTitleLayout userIds={userIds} />
+                                    <MessageAvatarTitleLayout userIds={draftUserIds} />
                                     <Stack grow horizontal justifyContent="end">
                                         <ButtonSpinner height="paragraph" />
                                     </Stack>
                                 </CardHeader>
                             )}
                             <Box paddingY grow justifyContent="end" gap="lg">
-                                <DMChannelIntro userIds={userIds} />
+                                <DMChannelIntro userIds={draftUserIds} />
                             </Box>
                         </>
                     ) : (
@@ -325,6 +326,7 @@ export const ChannelLayout = (props: ExtendedProps) => {
                                         channels={channels}
                                         userId={userId}
                                         spaceMemberIds={spaceMemberIds}
+                                        draftUserIds={draftUserIds}
                                         onSend={props.onSend}
                                     />
                                 </>
