@@ -9,6 +9,7 @@ export const clonePlayground = async (cfg: CreateRiverBuildAppConfig) => {
     console.log(picocolors.blue('\nCloning River Build Playground...'))
 
     const result = await cloneRepo(cfg)
+    if (!result) return
     if (result?.signal === 'SIGINT' || result?.signal === 'SIGTERM') {
         console.log('\nOperation cancelled')
         process.exit(1)
@@ -36,6 +37,12 @@ const cloneRepo = async (cfg: CreateRiverBuildAppConfig) => {
     const tempDir = `${targetDir}-temp`
 
     // Clone with minimal data to a temporary directory
+    const latestSdkTag = getLatestSdkTag()
+    if (!latestSdkTag) {
+        console.error(picocolors.red('\nFailed to get latest SDK tag.'))
+        return
+    }
+
     const cloneResult = spawn.sync(
         'git',
         [
@@ -44,6 +51,8 @@ const cloneRepo = async (cfg: CreateRiverBuildAppConfig) => {
             '--depth',
             '1',
             '--sparse',
+            '--branch',
+            latestSdkTag,
             'https://github.com/river-build/river.git',
             tempDir,
         ],
@@ -84,7 +93,7 @@ const cloneRepo = async (cfg: CreateRiverBuildAppConfig) => {
     }
     // Clean up temporary directory
     fs.rmSync(tempDir, { recursive: true, force: true })
-    return
+    return checkoutResult
 }
 
 const updateDependencies = async (cfg: CreateRiverBuildAppConfig) => {
@@ -129,4 +138,46 @@ const fixTsConfig = async (cfg: CreateRiverBuildAppConfig) => {
             fs.writeFileSync(tsConfigPath, updatedContent)
         }
     }
+}
+
+function getLatestSdkTag(): string | null {
+    const tagsResult = spawn.sync(
+        'git',
+        ['ls-remote', '--tags', 'https://github.com/river-build/river.git', 'sdk-*'],
+        { encoding: 'utf8' },
+    )
+
+    if (tagsResult.status !== 0 || !tagsResult.stdout) return null
+
+    const tags = tagsResult.stdout
+        .split('\n')
+        .filter(Boolean)
+        .map((line) => {
+            const [_hash, ref] = line.split('\t')
+            const tag = ref.replace('refs/tags/', '').replace(/\^{}$/, '')
+
+            // Extract version numbers from tags like sdk-hash-1.2.3
+            const match = tag.match(/^sdk-[0-9a-f]+-(\d+)\.(\d+)\.(\d+)$/)
+            if (!match) return null
+
+            return {
+                tag,
+                version: [parseInt(match[1]), parseInt(match[2]), parseInt(match[3])],
+            }
+        })
+        .filter(
+            (item): item is { tag: string; version: number[] } =>
+                item !== null && Array.isArray(item.version) && item.version.length === 3,
+        )
+        .sort((a, b) => {
+            // Compare version numbers
+            for (let i = 0; i < 3; i++) {
+                if (a.version[i] !== b.version[i]) {
+                    return b.version[i] - a.version[i]
+                }
+            }
+            return 0
+        })
+
+    return tags.length > 0 ? tags[0].tag : null
 }

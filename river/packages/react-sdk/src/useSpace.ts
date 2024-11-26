@@ -15,6 +15,8 @@ import { type ObservableConfig, useObservable } from './useObservable'
  * You can use this hook to display the data about a space:
  *
  * ```tsx
+ * import { useSpace } from '@river-build/react-sdk'
+ *
  * const Space = ({ spaceId }: { spaceId: string }) => {
  *     const { data: space } = useSpace(spaceId)
  *     return <div>{space.metadata?.name || 'Unnamed Space'}</div>

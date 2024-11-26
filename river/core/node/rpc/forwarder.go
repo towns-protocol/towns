@@ -2,6 +2,8 @@ package rpc
 
 import (
 	"context"
+	"errors"
+	"net"
 
 	"github.com/river-build/river/core/node/utils"
 
@@ -56,7 +58,22 @@ func peerNodeRequestWithRetries[T any](
 			return resp, nil
 		}
 
-		if IsConnectNetworkError(err) {
+		retry := false
+		// TODO: move to a helper function.
+		if connectErr := new(connect.Error); errors.As(err, &connectErr) {
+			if connect.IsWireError(connectErr) {
+				// Error is received from another node. TODO: classify into retryable and non-retryable.
+				retry = true
+			} else {
+				// Error is produced locally.
+				// Check if it's a network error and retry in this case.
+				if networkError := new(net.OpError); errors.As(connectErr, &networkError) {
+					retry = true
+				}
+			}
+		}
+
+		if retry {
 			// Mark peer as unavailable.
 			nodes.AdvanceStickyPeer(peer)
 		} else {
@@ -116,6 +133,7 @@ func peerNodeStreamingResponseWithRetries(
 			return nil
 		}
 
+		// TODO: fix to same logic as peerNodeRequestWithRetries.
 		if IsConnectNetworkError(err) && !hasStreamed {
 			// Mark peer as unavailable.
 			nodes.AdvanceStickyPeer(peer)

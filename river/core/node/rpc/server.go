@@ -16,6 +16,10 @@ import (
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/rs/cors"
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/h2c"
+
 	"github.com/river-build/river/core/config"
 	"github.com/river-build/river/core/node/auth"
 	. "github.com/river-build/river/core/node/base"
@@ -33,9 +37,6 @@ import (
 	"github.com/river-build/river/core/node/storage"
 	"github.com/river-build/river/core/river_node/version"
 	"github.com/river-build/river/core/xchain/entitlement"
-	"github.com/rs/cors"
-	"golang.org/x/net/http2"
-	"golang.org/x/net/http2/h2c"
 )
 
 const (
@@ -47,38 +48,48 @@ const (
 
 func (s *Service) httpServerClose() {
 	timeout := s.config.ShutdownTimeout
-	if timeout == 0 {
-		timeout = time.Second
-	} else if timeout <= time.Millisecond {
+	if timeout < 0 {
 		timeout = 0
 	}
-	ctx := s.serverCtx
 	if timeout > 0 {
 		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(s.serverCtx, timeout)
+		ctx, cancel := context.WithTimeout(s.serverCtx, timeout)
 		defer cancel()
-	}
-	if !s.config.Log.Simplify {
-		s.defaultLogger.Info("Shutting down http server", "timeout", timeout)
-	}
-	err := s.httpServer.Shutdown(ctx)
-	if err != nil {
-		if err != context.DeadlineExceeded {
-			s.defaultLogger.Error("failed to shutdown http server", "error", err)
+		if !s.config.Log.Simplify {
+			s.defaultLogger.Info("Shutting down http server", "timeout", timeout)
 		}
-		s.defaultLogger.Warn("forcing http server close")
-		err = s.httpServer.Close()
+		err := s.httpServer.Shutdown(ctx)
 		if err != nil {
-			s.defaultLogger.Error("failed to close http server", "error", err)
+			if err != context.DeadlineExceeded {
+				s.defaultLogger.Error("failed to shutdown http server", "error", err)
+			}
+			s.defaultLogger.Warn("forcing http server close")
+			err = s.httpServer.Close()
+			if err != nil {
+				s.defaultLogger.Error("failed to close http server", "error", err)
+			}
+		} else {
+			if !s.config.Log.Simplify {
+				s.defaultLogger.Info("http server shutdown")
+			}
 		}
 	} else {
 		if !s.config.Log.Simplify {
-			s.defaultLogger.Info("http server shutdown")
+			s.defaultLogger.Info("shutting down http server immediately")
+		}
+		err := s.httpServer.Close()
+		if err != nil {
+			s.defaultLogger.Error("failed to close http server", "error", err)
+		}
+		if !s.config.Log.Simplify {
+			s.defaultLogger.Info("http server closed")
 		}
 	}
 }
 
 func (s *Service) Close() {
+	s.serverCtxCancel()
+
 	onClose := s.onCloseFuncs
 	slices.Reverse(onClose)
 	for _, f := range onClose {
@@ -601,7 +612,6 @@ func (s *Service) initNotificationsStore() error {
 			s.exitSignal,
 			s.metrics,
 		)
-
 		if err != nil {
 			return err
 		}
@@ -717,12 +727,20 @@ func (s *Service) initNotificationHandlers() error {
 	ii = append(ii, authInceptor)
 
 	interceptors := connect.WithInterceptors(ii...)
-	notificationServicePattern, notificationServiceHandler := protocolconnect.NewNotificationServiceHandler(s.NotificationService, interceptors)
-	notificationAuthServicePattern, notificationAuthServiceHandler := protocolconnect.NewAuthenticationServiceHandler(s.NotificationService, interceptors)
+	notificationServicePattern, notificationServiceHandler := protocolconnect.NewNotificationServiceHandler(
+		s.NotificationService,
+		interceptors,
+	)
+	notificationAuthServicePattern, notificationAuthServiceHandler := protocolconnect.NewAuthenticationServiceHandler(
+		s.NotificationService,
+		interceptors,
+	)
 
 	s.mux.Handle(notificationServicePattern, newHttpHandler(notificationServiceHandler, s.defaultLogger))
 	s.mux.Handle(notificationAuthServicePattern, newHttpHandler(notificationAuthServiceHandler, s.defaultLogger))
 
+	s.registerDebugHandlers(s.config.EnableDebugEndpoints, s.config.DebugEndpoints)
+	
 	return nil
 }
 
@@ -739,13 +757,15 @@ func StartServer(
 	listener net.Listener,
 ) (*Service, error) {
 	ctx = config.CtxWithConfig(ctx, cfg)
+	ctx, ctxCancel := context.WithCancel(ctx)
 
 	streamService := &Service{
-		serverCtx:  ctx,
-		config:     cfg,
-		riverChain: riverChain,
-		listener:   listener,
-		exitSignal: make(chan error, 16),
+		serverCtx:       ctx,
+		serverCtxCancel: ctxCancel,
+		config:          cfg,
+		riverChain:      riverChain,
+		listener:        listener,
+		exitSignal:      make(chan error, 16),
 	}
 
 	err := streamService.start()

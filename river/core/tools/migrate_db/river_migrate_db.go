@@ -227,8 +227,11 @@ func init() {
 }
 
 var (
-	sourceListCmdCount bool
-	sourceListCmd      = &cobra.Command{
+	sourceListCmdCount                bool
+	sourceListCommandMigrated         bool
+	sourceListCommandFilterUnmigrated bool
+	targetListCommandMigrated         bool
+	sourceListCmd                     = &cobra.Command{
 		Use:   "list",
 		Short: "List source database schemas",
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -280,16 +283,37 @@ var (
 				return err
 			}
 
-			streamIds, _, err := getStreamIds(ctx, pool)
+			streamIds, _, migrated, err := getStreamIds(ctx, pool)
 			if err != nil {
 				fmt.Println("Error reading stream ids:", err)
 				os.Exit(1)
 			}
 
-			fmt.Println("Stream Ids")
-			fmt.Println("==========")
-			for _, id := range streamIds {
-				fmt.Println(id)
+			if sourceListCommandFilterUnmigrated && verbose {
+				fmt.Println("Printing only unmigrated streams...")
+				fmt.Println()
+			}
+
+			if sourceListCommandMigrated {
+				fmt.Println("Stream Ids, migrated")
+				fmt.Println("====================")
+
+			} else {
+				fmt.Println("Stream Ids")
+				fmt.Println("==========")
+			}
+
+			for i, id := range streamIds {
+				streamMigrated := migrated[i]
+				if sourceListCommandFilterUnmigrated && streamMigrated {
+					continue
+				}
+
+				if sourceListCommandMigrated {
+					fmt.Println(id, streamMigrated)
+				} else {
+					fmt.Println(id)
+				}
 			}
 			fmt.Println()
 
@@ -307,16 +331,26 @@ var (
 				return err
 			}
 
-			streamIds, _, err := getStreamIds(ctx, pool)
+			streamIds, _, migrated, err := getStreamIds(ctx, pool)
 			if err != nil {
 				fmt.Println("Error reading stream ids:", err)
 				os.Exit(1)
 			}
 
-			fmt.Println("Stream Ids")
-			fmt.Println("==========")
-			for _, id := range streamIds {
-				fmt.Println(id)
+			if targetListCommandMigrated {
+				fmt.Println("Stream Ids, migrated")
+				fmt.Println("====================")
+
+			} else {
+				fmt.Println("Stream Ids")
+				fmt.Println("==========")
+			}
+			for i, id := range streamIds {
+				if targetListCommandMigrated {
+					fmt.Println(id, migrated[i])
+				} else {
+					fmt.Println(id)
+				}
 			}
 			fmt.Println()
 
@@ -326,7 +360,13 @@ var (
 )
 
 func init() {
+	sourceListStreamsCmd.Flags().
+		BoolVarP(&sourceListCommandMigrated, "migrated", "m", false, "Show stream migration status")
+	sourceListStreamsCmd.Flags().
+		BoolVarP(&sourceListCommandFilterUnmigrated, "filter_unmigrated", "f", false, "Show only unmigrated streams")
 	sourceCmd.AddCommand(sourceListStreamsCmd)
+	targetListStreamsCmd.Flags().
+		BoolVarP(&targetListCommandMigrated, "migrated", "m", false, "Show stream migration status")
 	targetCmd.AddCommand(targetListStreamsCmd)
 }
 
@@ -833,22 +873,25 @@ func executeSql(ctx context.Context, pool *pgxpool.Pool, sql []string, progressC
 	return nil
 }
 
-func getStreamIds(ctx context.Context, pool *pgxpool.Pool) ([]string, []int64, error) {
-	rows, _ := pool.Query(ctx, "SELECT stream_id, latest_snapshot_miniblock FROM es ORDER BY stream_id")
+func getStreamIds(ctx context.Context, pool *pgxpool.Pool) ([]string, []int64, []bool, error) {
+	rows, _ := pool.Query(ctx, "SELECT stream_id, latest_snapshot_miniblock, migrated FROM es ORDER BY stream_id")
 
 	var ids []string
 	var miniblocks []int64
+	var migrateds []bool
 	var id string
 	var miniblock int64
-	_, err := pgx.ForEachRow(rows, []any{&id, &miniblock}, func() error {
+	var migrated bool
+	_, err := pgx.ForEachRow(rows, []any{&id, &miniblock, &migrated}, func() error {
 		ids = append(ids, id)
 		miniblocks = append(miniblocks, miniblock)
+		migrateds = append(migrateds, migrated)
 		return nil
 	})
 	if err != nil {
-		return nil, nil, wrapError("Failed to read es table", err)
+		return nil, nil, nil, wrapError("Failed to read es table", err)
 	}
-	return ids, miniblocks, nil
+	return ids, miniblocks, migrateds, nil
 }
 
 func getNumPartitionSettings(ctx context.Context, pool *pgxpool.Pool) (int, error) {
@@ -1103,7 +1146,7 @@ func createPartitionsFast(
 	sourcePool *pgxpool.Pool,
 	targetPool *pgxpool.Pool,
 ) error {
-	stream_ids, _, err := getStreamIds(ctx, sourcePool)
+	stream_ids, _, _, err := getStreamIds(ctx, sourcePool)
 	if err != nil {
 		return wrapError("Failed to get stream ids from source", err)
 	}
@@ -1168,7 +1211,7 @@ func createPartitionsSlow(
 	sourcePool *pgxpool.Pool,
 	targetPool *pgxpool.Pool,
 ) error {
-	stream_ids, _, err := getStreamIds(ctx, sourcePool)
+	stream_ids, _, _, err := getStreamIds(ctx, sourcePool)
 	if err != nil {
 		return wrapError("Failed to get stream ids from source", err)
 	}
@@ -1364,7 +1407,7 @@ var targetWipeCmd = &cobra.Command{
 			return err
 		}
 
-		streamIds, _, err := getStreamIds(ctx, pool)
+		streamIds, _, _, err := getStreamIds(ctx, pool)
 		if err != nil {
 			return wrapError("Failed to get stream ids from target", err)
 		}
@@ -1560,6 +1603,104 @@ func copyPart(
 	return nil
 }
 
+func migratePart(
+	ctx context.Context,
+	pool *pgxpool.Conn,
+	tx pgx.Tx,
+	streamId string,
+	table string,
+	dbInfo *dbInfo,
+	dbSchemaMetadata schemaMetadata,
+) error {
+	partition := getTableName(table, streamId)
+	targetPartition := getPartitionName(table, streamId, dbSchemaMetadata.numPartitions)
+
+	if verbose {
+		fmt.Printf(
+			"  migrating %s data from %s to %s for stream_id %s\n",
+			table,
+			partition,
+			targetPartition,
+			streamId,
+		)
+	}
+
+	// check for existence of miniblock_candidates table since we did not migrate legacy streams to have
+	// partitions for these. Do not consider the copy an error if they do not exist.
+	if table == "miniblock_candidates" {
+		exists, err := tableExists(ctx, pool, dbInfo, partition)
+		if err != nil {
+			return fmt.Errorf("error determining %v table existence: %w", partition, err)
+		}
+		if !exists {
+			if verbose {
+				fmt.Printf(
+					"WARN: miniblock_candidates partition %s does not exist for stream %s, skipping copy\n",
+					partition,
+					streamId,
+				)
+			}
+			return nil
+		}
+	}
+
+	rows, err := pool.Query(
+		ctx,
+		fmt.Sprintf("SELECT * FROM %s WHERE stream_id = $1", partition),
+		streamId,
+	)
+	if err != nil {
+		return fmt.Errorf("error: Failed to query %s on source db for stream %s: %w", partition, streamId, err)
+	}
+	defer rows.Close()
+
+	columnNames := []string{}
+	for _, desc := range rows.FieldDescriptions() {
+		columnNames = append(columnNames, desc.Name)
+	}
+
+	var rowData [][]any
+	if copyBypass {
+		_, err = tx.CopyFrom(ctx, pgx.Identifier{targetPartition}, columnNames, rows)
+	} else {
+		rowData, err = pgx.CollectRows(rows, func(r pgx.CollectableRow) ([]any, error) {
+			return r.Values()
+		})
+		if err == nil {
+			_, err = tx.CopyFrom(ctx, pgx.Identifier{targetPartition}, columnNames, pgx.CopyFromRows(rowData))
+		}
+	}
+	if err != nil {
+		if verbose {
+			fmt.Println("DEBUG: columns", columnNames)
+			if rowData != nil {
+				fmt.Println("DEBUG: rows", rowData)
+			}
+		}
+		return fmt.Errorf(
+			"failed to migrate data from %s to %s for stream %s: %w",
+			partition,
+			targetPartition,
+			streamId,
+			err,
+		)
+	}
+
+	// Drop old table
+	_, err = tx.Exec(
+		ctx,
+		fmt.Sprintf(
+			`DROP TABLE IF EXISTS %s`,
+			partition,
+		),
+	)
+	if err != nil {
+		return fmt.Errorf("error deleting table %s: %w", partition, err)
+	}
+
+	return nil
+}
+
 func copyStream(
 	ctx context.Context,
 	source *pgxpool.Conn,
@@ -1604,6 +1745,61 @@ func copyStream(
 		return err
 	}
 	err = copyPart(ctx, source, tx, streamId, "miniblock_candidates", force, sourceInfo, targetSchemaMetadata)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func migrateStream(
+	ctx context.Context,
+	pool *pgxpool.Conn,
+	tx pgx.Tx,
+	streamId string,
+	dbInfo *dbInfo,
+	dbSchemaMetadata schemaMetadata,
+) error {
+	if verbose {
+		fmt.Println("Migrate stream:", streamId)
+	}
+
+	var latestSnapshotMiniblock int64
+	var migrated bool
+	err := tx.QueryRow(ctx, "SELECT latest_snapshot_miniblock, migrated FROM es WHERE stream_id = $1 FOR UPDATE", streamId).
+		Scan(&latestSnapshotMiniblock, &migrated)
+	if err != nil {
+		return wrapError("Failed to read latest snapshot miniblock for stream "+streamId, err)
+	}
+
+	// Unexpected, but log anyway just in case.
+	if migrated {
+		fmt.Printf("  WARN: stream %s already migrated\n", streamId)
+		return nil
+	}
+
+	tag, err := tx.Exec(
+		ctx,
+		`UPDATE es 
+		SET migrated=true
+		WHERE stream_id = $1;`,
+		streamId,
+	)
+	if err != nil {
+		return wrapError("Failed to insert into es for stream "+streamId, err)
+	}
+	if tag.RowsAffected() != 1 {
+		return fmt.Errorf("unexpected es update for stream %s: expected 1 row, saw %d", streamId, tag.RowsAffected())
+	}
+
+	err = migratePart(ctx, pool, tx, streamId, "minipools", dbInfo, dbSchemaMetadata)
+	if err != nil {
+		return err
+	}
+	err = migratePart(ctx, pool, tx, streamId, "miniblocks", dbInfo, dbSchemaMetadata)
+	if err != nil {
+		return err
+	}
+	err = migratePart(ctx, pool, tx, streamId, "miniblock_candidates", dbInfo, dbSchemaMetadata)
 	if err != nil {
 		return err
 	}
@@ -1664,6 +1860,54 @@ func copyStreams(
 	return nil
 }
 
+func migrateStreams(
+	ctx context.Context,
+	pool *pgxpool.Pool,
+	streamIds []string,
+	dbInfo *dbInfo,
+	dbSchemaMetadata schemaMetadata,
+	progressCounter *atomic.Int64,
+) error {
+	if verbose {
+		fmt.Println("Streams migrated: ", progressCounter.Load())
+		fmt.Println("Migrating streams on source: ", streamIds)
+	}
+
+	dbConn, err := pool.Acquire(ctx)
+	if err != nil {
+		return wrapError("Failed to acquire source connection", err)
+	}
+	defer dbConn.Release()
+
+	tx, err := pool.BeginTx(
+		ctx,
+		pgx.TxOptions{
+			IsoLevel:   pgx.ReadCommitted,
+			AccessMode: pgx.ReadWrite,
+		},
+	)
+	if err != nil {
+		return wrapError("Failed to begin transaction", err)
+	}
+	defer rollbackTx(ctx, tx)
+
+	for _, id := range streamIds {
+		err = migrateStream(ctx, dbConn, tx, id, dbInfo, dbSchemaMetadata)
+		if err != nil {
+			return wrapError("Failed to copy stream "+id, err)
+		}
+	}
+
+	err = tx.Commit(ctx)
+	if err != nil {
+		return wrapError("Failed to commit transaction", err)
+	}
+
+	progressCounter.Add(int64(len(streamIds)))
+
+	return nil
+}
+
 func copyData(
 	ctx context.Context,
 	source *pgxpool.Pool,
@@ -1672,12 +1916,12 @@ func copyData(
 	sourceInfo *dbInfo,
 	migrateStreamSchema bool,
 ) error {
-	sourceStreamIds, _, err := getStreamIds(ctx, source)
+	sourceStreamIds, _, _, err := getStreamIds(ctx, source)
 	if err != nil {
 		return wrapError("Failed to get stream ids from source", err)
 	}
 
-	existingStreamIds, _, err := getStreamIds(ctx, target)
+	existingStreamIds, _, _, err := getStreamIds(ctx, target)
 	if err != nil {
 		return wrapError("Failed to get stream ids from target", err)
 	}
@@ -1753,6 +1997,72 @@ func copyData(
 	return nil
 }
 
+func migrateData(
+	ctx context.Context,
+	pool *pgxpool.Pool,
+	dbInfo *dbInfo,
+) error {
+	streamIds, _, migrated, err := getStreamIds(ctx, pool)
+	if err != nil {
+		return wrapError("Failed to get stream ids from source db", err)
+	}
+
+	streamsToMigrate := make([]string, 0, len(streamIds))
+	for i, id := range streamIds {
+		if !migrated[i] {
+			streamsToMigrate = append(streamsToMigrate, id)
+		}
+	}
+
+	fmt.Println("Streams to migrate:", len(streamsToMigrate))
+
+	if verbose {
+		for streamId := range streamsToMigrate {
+			fmt.Println(streamId)
+		}
+		fmt.Println()
+	}
+
+	numWorkers := viper.GetInt("RIVER_DB_NUM_WORKERS")
+	txSize := viper.GetInt("RIVER_DB_TX_SIZE")
+	if txSize <= 0 {
+		txSize = 1
+	}
+
+	fmt.Println("Reading partition settings from source database...")
+	numPartitions, err := getNumPartitionSettings(ctx, pool)
+	if err != nil {
+		return fmt.Errorf("error reading partition settings: %w", err)
+	}
+	fmt.Println("Source database partitions:", numPartitions)
+	dbSchemaMetadata := schemaMetadata{
+		migrated:      true,
+		numPartitions: numPartitions,
+	}
+
+	workerPool := workerpool.New(numWorkers)
+	workItems := chunk2(streamsToMigrate, txSize)
+
+	var progressCounter atomic.Int64
+	for _, workItem := range workItems {
+		workerPool.Submit(func() {
+			err := migrateStreams(ctx, pool, workItem, dbInfo, dbSchemaMetadata, &progressCounter)
+			if err != nil {
+				fmt.Println("ERROR:", err)
+				os.Exit(1)
+			}
+		})
+	}
+
+	go reportProgress(ctx, "Streams migrated:", &progressCounter)
+
+	workerPool.StopWait()
+
+	fmt.Println("Final: Streams migrated:", progressCounter.Load())
+
+	return nil
+}
+
 var (
 	copyCmdForce        bool
 	migrateStreamSchema bool
@@ -1801,6 +2111,28 @@ func init() {
 	copyCmd.Flags().BoolVar(&copyBypass, "bypass", false, "Bypass reading data into memory (another copy method)")
 	copyCmd.Flags().
 		BoolVarP(&migrateStreamSchema, "migrate_stream_schema", "m", false, "Copy stream data into migrated tables on target db")
+}
+
+var migrateCmd = &cobra.Command{
+	Use:   "migrate",
+	Short: "Migrate data in-plce on the source database",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := cmd.Context()
+		sourcePool, sourceInfo, err := getSourceDbPool(ctx, true)
+		if err != nil {
+			return err
+		}
+		err = testDbConnection(ctx, sourcePool, sourceInfo)
+		if err != nil {
+			return err
+		}
+
+		return migrateData(ctx, sourcePool, sourceInfo)
+	},
+}
+
+func init() {
+	rootCmd.AddCommand(migrateCmd)
 }
 
 func compareTableCounts(
@@ -2004,7 +2336,7 @@ func compareMiniblockContents(
 	}
 
 	if verbose {
-		fmt.Printf("  stream %s miniblocks match\n", streamId)
+		fmt.Printf("  stream %s miniblock contents match\n", streamId)
 	}
 	return nil
 }
@@ -2188,7 +2520,7 @@ func compareMiniblockCandidateContents(
 	}
 
 	if verbose {
-		fmt.Printf("  stream %s miniblock candidates match\n", streamId)
+		fmt.Printf("  stream %s miniblock candidate contents match\n", streamId)
 	}
 	return nil
 }
@@ -2380,12 +2712,12 @@ var validateCmd = &cobra.Command{
 			return err
 		}
 
-		sourceStreamIds, sourceLatest, err := getStreamIds(ctx, sourcePool)
+		sourceStreamIds, sourceLatest, _, err := getStreamIds(ctx, sourcePool)
 		if err != nil {
 			return err
 		}
 
-		targetStreamIds, targetLatest, err := getStreamIds(ctx, targetPool)
+		targetStreamIds, targetLatest, _, err := getStreamIds(ctx, targetPool)
 		if err != nil {
 			return err
 		}
@@ -2440,7 +2772,7 @@ var validateCmd = &cobra.Command{
 
 		workerPool.StopWait()
 
-		fmt.Println("All tables have matching stream counts")
+		fmt.Println("All tables have matching stream contents")
 		return nil
 	},
 }

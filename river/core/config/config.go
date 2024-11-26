@@ -134,7 +134,7 @@ type Config struct {
 	// ShutdownTimeout is the time the node waits for the graceful shutdown of the server.
 	// Then all active connections are closed and the node exits.
 	// If StandByOnStart is true, it's recommended to set it to the half of DatabaseConfig.StartupDelay.
-	// If set to 0, then default value is used. To disable the timeout set to 1ms or less.
+	// If set to 0, timeout is disabled and node will close all connections immediately.
 	ShutdownTimeout time.Duration
 
 	// Graffiti is returned in status and info requests.

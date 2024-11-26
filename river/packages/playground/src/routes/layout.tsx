@@ -2,14 +2,26 @@ import { Outlet } from 'react-router-dom'
 import { Suspense } from 'react'
 import { LayoutHeader } from '@/components/layout/header'
 import { ThemeProvider } from '@/components/theme-provider'
+import { cn } from '@/utils'
 
-export const RootLayout = () => {
+export const RootLayout = (props: { center?: boolean; noHeader?: boolean }) => {
     return (
         <ThemeProvider defaultTheme="system">
-            <div className="flex h-[100dvh] flex-col">
-                <LayoutHeader />
+            <div
+                className={cn(
+                    'grid h-[100dvh]',
+                    !props.center && !props.noHeader && 'grid-rows-[auto_1fr]',
+                )}
+            >
+                {!props.noHeader && <LayoutHeader />}
                 <Suspense>
-                    <Outlet />
+                    {props.center ? (
+                        <main className="grid h-full place-items-center">
+                            <Outlet />
+                        </main>
+                    ) : (
+                        <Outlet />
+                    )}
                 </Suspense>
             </div>
         </ThemeProvider>

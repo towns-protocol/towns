@@ -30,6 +30,7 @@
         "watch": "tsc --watch"
     },
     "dependencies": {
+        "@river-build/dlog": "workspace:^",
         "@river-build/generated": "workspace:^",
         "@river-build/proto": "workspace:^",
         "@river-build/sdk": "workspace:^",

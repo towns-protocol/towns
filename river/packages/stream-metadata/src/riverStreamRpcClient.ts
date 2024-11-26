@@ -76,11 +76,13 @@ async function getStreamClient(
 	if (existing) {
 		return existing
 	}
-	const promise = _getStreamClient(logger, streamId)
-	streamClientRequests.set(streamId, promise)
-	const result = await promise
-	streamClientRequests.delete(streamId)
-	return result
+	try {
+		const promise = _getStreamClient(logger, streamId)
+		streamClientRequests.set(streamId, promise)
+		return await promise
+	} finally {
+		streamClientRequests.delete(streamId)
+	}
 }
 
 function removeClient(logger: FastifyBaseLogger, clientToRemove: StreamRpcClient) {
@@ -228,11 +230,13 @@ export async function getStream(
 	if (existing) {
 		return existing
 	}
-	const promise = _getStream(logger, streamId, opts)
-	streamRequests.set(streamId, promise)
-	const result = await promise
-	streamRequests.delete(streamId)
-	return result
+	try {
+		const promise = _getStream(logger, streamId, opts)
+		streamRequests.set(streamId, promise)
+		return await promise
+	} finally {
+		streamRequests.delete(streamId)
+	}
 }
 
 export async function _getMediaStreamContent(
@@ -256,9 +260,11 @@ export async function getMediaStreamContent(
 	if (existing) {
 		return existing
 	}
-	const promise = _getMediaStreamContent(logger, streamId, secret, iv)
-	mediaRequests.set(streamId, promise)
-	const result = await promise
-	mediaRequests.delete(streamId)
-	return result
+	try {
+		const promise = _getMediaStreamContent(logger, streamId, secret, iv)
+		mediaRequests.set(streamId, promise)
+		return await promise
+	} finally {
+		mediaRequests.delete(streamId)
+	}
 }

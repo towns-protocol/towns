@@ -6,8 +6,8 @@ import { dlog, dlogError } from '../dlog'
 import debug from 'debug'
 import { bin_fromHexString } from '../binary'
 
-describe('dlogTest', () => {
-    test('basic', () => {
+describe.concurrent('dlogTest', () => {
+    it('basic', () => {
         const longHex = bin_fromHexString('0102030405060708090a0b0c0d0e0f101112131415161718191a')
         const obj = {
             a: 1,
@@ -58,7 +58,7 @@ describe('dlogTest', () => {
         })
     })
 
-    test('extend', () => {
+    it('extend', () => {
         const base_log = dlog('test:dlog')
         const log = base_log.extend('extend')
         log('extend')
@@ -67,7 +67,7 @@ describe('dlogTest', () => {
         log('gonna print more', '44 =', 44)
     })
 
-    test('enabled1', () => {
+    it('enabled1', () => {
         const log = dlog('test:dlog')
         if (log.enabled) {
             log('enabled', log.enabled)
@@ -82,7 +82,7 @@ describe('dlogTest', () => {
         }
     })
 
-    test('circularReference', () => {
+    it('circularReference', () => {
         const log = dlog('test:dlog')
         class A {
             b: B
@@ -100,12 +100,12 @@ describe('dlogTest', () => {
         log('test circular:', { a })
     })
 
-    test('numbers', () => {
+    it('numbers', () => {
         const log = dlog('test:dlog')
         log('test same number:', { a: 1, b: 1, c: 1, d: 2 })
     })
 
-    test('error', () => {
+    it('error', () => {
         const log = dlogError('test:dlog:error')
         log('test same number:', { a: 1, b: 1, c: 1, d: 2 })
         log(new Error('test error'))
@@ -127,7 +127,7 @@ describe('dlogTest', () => {
         }
     })
 
-    test('set', () => {
+    it('set', () => {
         const s = new Set([111, 222, { aaa: 333 }])
         dlog('test:dlog')(s)
 
@@ -148,7 +148,7 @@ describe('dlogTest', () => {
         expect(output).toContain('aaa')
     })
 
-    test('map', () => {
+    it('map', () => {
         const s = new Map<string, any>([
             ['aaa', 111],
             ['bbb', 222],
@@ -175,7 +175,7 @@ describe('dlogTest', () => {
         expect(output).toContain('ccc')
     })
 
-    test('enabled2', () => {
+    it('enabled2', () => {
         const ns = 'uniqueLogName'
 
         // Override

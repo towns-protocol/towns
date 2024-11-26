@@ -14,13 +14,16 @@
       "processId": "river_node"
     },
     {
-      "name": "Jest: current file in 'packages/dlog/'",
+      "name": "Vitest: current file in 'packages/dlog/'",
       "type": "node",
       "request": "launch",
-      "env": { "NODE_ENV": "development", "NODE_TLS_REJECT_UNAUTHORIZED": "0", "NODE_EXTRA_CA_CERTS":"~/river-ca-cert.pem" },
-      "program": "${workspaceFolder}/node_modules/.bin/jest",
-      "runtimeArgs": ["--experimental-vm-modules", "--experimental-wasm-modules"],
-      "args": ["${file}", "--config", "${workspaceFolder}/packages/dlog/jest.config.ts", "-i", "--no-cache", "--forceExit"],
+      "env": { "NODE_ENV": "development" },
+      "program": "${workspaceFolder}/node_modules/vitest/vitest.mjs",
+      "cwd": "${workspaceFolder}/packages/dlog",
+      "autoAttachChildProcesses": true,
+      "skipFiles": ["<node_internals>/**", "**/node_modules/**"],
+      "smartStep": true,
+      "args": ["run", "${fileBasename}", "--config", "vitest.config.ts"],
       "console": "integratedTerminal",
     },
     {

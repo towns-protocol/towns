@@ -1,24 +1,26 @@
 import { createBrowserRouter } from 'react-router-dom'
 import { RootLayout } from './layout'
 import { IndexRoute } from './root'
+import { AuthRoute } from './auth'
 
 export const router = createBrowserRouter([
+    {
+        path: '/auth',
+        element: <RootLayout center noHeader />,
+        children: [
+            {
+                index: true,
+                element: <AuthRoute />,
+            },
+        ],
+    },
     {
         path: '/',
         element: <RootLayout />,
         children: [
             {
-                path: '/',
+                index: true,
                 element: <IndexRoute />,
-            },
-            {
-                path: '/auth',
-                lazy: async () => {
-                    const { AuthRoute } = await import('./auth')
-                    return {
-                        Component: AuthRoute,
-                    }
-                },
             },
             {
                 path: '/t',

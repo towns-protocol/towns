@@ -1,6 +1,6 @@
 import { keccak256 } from 'ethereum-cryptography/keccak'
 import { Permission } from '@river-build/web3'
-import { bin_toHexString, isJest, isNodeEnv } from '@river-build/dlog'
+import { bin_toHexString, isTestEnv, isNodeEnv } from '@river-build/dlog'
 import { isBrowser, isNode } from 'browser-or-node'
 
 export function unsafeProp<K extends keyof any | undefined>(prop: K): boolean {
@@ -44,10 +44,6 @@ export function isIConnectError(obj: unknown): obj is { code: number } {
     return obj !== null && typeof obj === 'object' && 'code' in obj && typeof obj.code === 'number'
 }
 
-export function isTestEnv(): boolean {
-    return Boolean(process.env.JEST_WORKER_ID)
-}
-
 export class MockEntitlementsDelegate {
     async isEntitled(
         _spaceId: string | undefined,
@@ -86,7 +82,7 @@ export function removeCommon(x: string[], y: string[]): string[] {
 }
 
 export function getEnvVar(key: string, defaultValue: string = ''): string {
-    if (isNode || isJest()) {
+    if (isNode || isTestEnv()) {
         return process.env[key] ?? defaultValue
     }
 

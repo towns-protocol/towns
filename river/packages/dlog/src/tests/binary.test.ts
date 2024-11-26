@@ -4,8 +4,8 @@
 
 import { bin_fromBase64, bin_fromHexString, isHexString } from '../binary'
 
-describe('types', () => {
-    test('bin_fromHexString', () => {
+describe.concurrent('types', () => {
+    it('bin_fromHexString', () => {
         const expected = new Uint8Array([1, 35, 69, 103, 137, 171, 205, 239])
         expect(bin_fromHexString('0123456789abcdef')).toEqual(expected)
         expect(bin_fromHexString('0123456789ABCDEF')).toEqual(expected)
@@ -24,7 +24,7 @@ describe('types', () => {
         expect(() => bin_fromHexString('11223')).toThrow()
     })
 
-    test('bin_fromBase64String', () => {
+    it('bin_fromBase64String', () => {
         const expected = new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9])
         const expected2 = new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5, 6, 7, 8, 9])
         expect(bin_fromBase64('AQIDBAUGBwgJ')).toEqual(expected)
@@ -33,7 +33,7 @@ describe('types', () => {
         expect(bin_fromBase64('AA==')).toEqual(new Uint8Array([0]))
     })
 
-    test('isHexString', () => {
+    it('isHexString', () => {
         expect(isHexString('0123456789abcdef')).toBeTruthy()
         expect(isHexString('0123456789ABCDEF')).toBeTruthy()
         expect(isHexString('0x0123456789abcdef')).toBeTruthy()

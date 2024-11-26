@@ -1026,7 +1026,6 @@ func TestForwardingWithRetries(t *testing.T) {
 			// Stream registry seems biased to allocate locally so we'll make requests from a different node
 			// to increase likelyhood of retries.
 			client0 := serviceTester.testClient(0)
-			client4 := serviceTester.testClient(4)
 
 			// Allocate TestStreams user streams
 			for i := 0; i < TestStreams; i++ {
@@ -1051,6 +1050,7 @@ func TestForwardingWithRetries(t *testing.T) {
 			serviceTester.CloseNode(0)
 			serviceTester.CloseNode(1)
 
+			client4 := serviceTester.testClient(4)
 			// All stream requests should succeed.
 			for _, streamId := range userStreamIds {
 				requester(t, ctx, client4, streamId)

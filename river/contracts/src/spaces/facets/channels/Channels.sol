@@ -70,7 +70,7 @@ contract Channels is IChannel, ChannelBase, RolesBase, Entitled, Facet {
   }
 
   function addRoleToChannel(bytes32 channelId, uint256 roleId) external {
-    _validateChannelPermission(channelId, Permissions.AddRemoveChannels);
+    _validatePermission(Permissions.AddRemoveChannels);
     _addRoleToChannel(channelId, roleId);
   }
 
@@ -81,7 +81,7 @@ contract Channels is IChannel, ChannelBase, RolesBase, Entitled, Facet {
   }
 
   function removeRoleFromChannel(bytes32 channelId, uint256 roleId) external {
-    _validateChannelPermission(channelId, Permissions.AddRemoveChannels);
+    _validatePermission(Permissions.AddRemoveChannels);
     _removeRoleFromChannel(channelId, roleId);
   }
 }

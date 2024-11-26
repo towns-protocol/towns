@@ -51,13 +51,14 @@ func (n *testNodeRecord) Close(ctx context.Context, dbUrl string) {
 }
 
 type serviceTester struct {
-	ctx     context.Context
-	t       *testing.T
-	require *require.Assertions
-	dbUrl   string
-	btc     *crypto.BlockchainTestContext
-	nodes   []*testNodeRecord
-	opts    serviceTesterOpts
+	ctx       context.Context
+	ctxCancel context.CancelFunc
+	t         *testing.T
+	require   *require.Assertions
+	dbUrl     string
+	btc       *crypto.BlockchainTestContext
+	nodes     []*testNodeRecord
+	opts      serviceTesterOpts
 }
 
 type serviceTesterOpts struct {
@@ -83,12 +84,13 @@ func newServiceTester(t *testing.T, opts serviceTesterOpts) *serviceTester {
 	require := require.New(t)
 
 	st := &serviceTester{
-		ctx:     ctx,
-		t:       t,
-		require: require,
-		dbUrl:   dbtestutils.GetTestDbUrl(),
-		nodes:   make([]*testNodeRecord, opts.numNodes),
-		opts:    opts,
+		ctx:       ctx,
+		ctxCancel: ctxCancel,
+		t:         t,
+		require:   require,
+		dbUrl:     dbtestutils.GetTestDbUrl(),
+		nodes:     make([]*testNodeRecord, opts.numNodes),
+		opts:      opts,
 	}
 
 	btc, err := crypto.NewBlockchainTestContext(
@@ -215,29 +217,27 @@ func (st *serviceTester) getConfig(opts ...startOpts) *config.Config {
 		options = &opts[0]
 	}
 
-	// TODO: derive this config from the default config.
-	cfg := &config.Config{
-		DisableBaseChain: true,
-		DisableHttps:     true,
-		RegistryContract: st.btc.RegistryConfig(),
-		Database: config.DatabaseConfig{
-			Url:                   st.dbUrl,
-			StartupDelay:          2 * time.Millisecond,
-			NumPartitions:         4,
-			MigrateStreamCreation: true,
-		},
-		StorageType: "postgres",
-		Network: config.NetworkConfig{
-			NumRetries: 3,
-		},
-		ShutdownTimeout: 2 * time.Millisecond,
-		StreamReconciliation: config.StreamReconciliationConfig{
-			InitialWorkerPoolSize: 4,
-			OnlineWorkerPoolSize:  8,
-			GetMiniblocksPageSize: 4,
-		},
-		RiverRegistry: config.GetDefaultConfig().RiverRegistry,
+	cfg := config.GetDefaultConfig()
+	cfg.DisableBaseChain = true
+	cfg.DisableHttps = true
+	cfg.RegistryContract = st.btc.RegistryConfig()
+	cfg.Database = config.DatabaseConfig{
+		Url:                   st.dbUrl,
+		StartupDelay:          2 * time.Millisecond,
+		NumPartitions:         4,
+		MigrateStreamCreation: true,
 	}
+	cfg.Network = config.NetworkConfig{
+		NumRetries: 3,
+	}
+	cfg.ShutdownTimeout = 2 * time.Millisecond
+	cfg.StreamReconciliation = config.StreamReconciliationConfig{
+		InitialWorkerPoolSize: 4,
+		OnlineWorkerPoolSize:  8,
+		GetMiniblocksPageSize: 4,
+	}
+	cfg.StandByOnStart = false
+	cfg.ShutdownTimeout = 0
 
 	if options.configUpdater != nil {
 		options.configUpdater(cfg)
@@ -273,6 +273,10 @@ func (st *serviceTester) startSingle(i int, opts ...startOpts) error {
 	st.nodes[i].address = bc.Wallet.Address
 
 	st.t.Cleanup(func() {
+		// Cancel context here: t.Cleanup calls functions in reverse order,
+		// but it's better to cancel context first.
+		// Since it's ok to cancel context multiple times, it's safe to cancel it here.
+		st.ctxCancel()
 		st.nodes[i].Close(st.ctx, st.dbUrl)
 	})
 

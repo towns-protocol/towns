@@ -1,7 +1,7 @@
 import { bin_toHexString, isHexString, shortenHexString } from './binary'
 import debug, { Debugger } from 'debug'
 
-import { isJest } from './utils'
+import { isTestEnv } from './utils'
 
 // Works as debug.enabled, but falls back on options if not explicitly set in env instead of returning false.
 debug.enabled = (ns: string): boolean => {
@@ -23,7 +23,7 @@ debug.enabled = (ns: string): boolean => {
 
     const opts = allDlogs.get(ns)?.opts
     if (opts !== undefined) {
-        if (!opts.allowJest && isJest()) {
+        if (!opts.allowJest && isTestEnv()) {
             return false
         } else {
             return opts.defaultEnabled ?? false
