@@ -18,7 +18,7 @@ const payload = z.object({
     threadId: z.string().optional(),
     senderId: z.string(),
     recipients: z.array(z.string()).optional(),
-    event: z.string(),
+    event: z.string().optional(),
 })
 
 // this is obviously a bit overkill for now, but I think it can
@@ -30,8 +30,8 @@ const payloadSchema = z
         channelId: z.string().optional(),
     })
     .transform((data): AppNotification | undefined => {
-        const eventBytes = bin_fromHexString(data.payload.event)
-        const event = StreamEvent.fromBinary(eventBytes)
+        const eventBytes = data.payload.event ? bin_fromHexString(data.payload.event) : undefined
+        const event = eventBytes ? StreamEvent.fromBinary(eventBytes) : undefined
         return {
             topic: data.topic,
             channelId: data.channelId, // aellis: not sure why we're doing double channelId at top level

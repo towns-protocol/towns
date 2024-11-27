@@ -19,7 +19,7 @@ export type AppNotification = {
         threadId?: string
         senderId: string
         recipients: string[]
-        event: StreamEvent
+        event?: StreamEvent
     }
 }
 

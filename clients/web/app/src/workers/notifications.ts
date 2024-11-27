@@ -724,6 +724,9 @@ async function tryDecryptEvent(
     if (!userId) {
         return undefined
     }
+    if (!notification.content.event) {
+        return undefined
+    }
 
     const { event, channelId } = notification.content
     let plaintext: PlaintextDetails | undefined
