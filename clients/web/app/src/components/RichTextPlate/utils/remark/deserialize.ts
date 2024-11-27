@@ -1,4 +1,5 @@
 import { MentionPlugin } from '@udecode/plate-mention/react'
+import { LinkPlugin } from '@udecode/plate-link/dist/react'
 import {
     BlockQuoteNode,
     CodeBlockNode,
@@ -6,7 +7,6 @@ import {
     HeadingNode,
     ImageNode,
     InputNodeTypes,
-    ItalicNode,
     LinkNode,
     ListItemNode,
     ListNode,
@@ -18,6 +18,8 @@ import {
     defaultNodeTypes,
 } from './ast-types'
 import { ELEMENT_MENTION_CHANNEL } from '../../plugins/createChannelPlugin'
+
+const PRESERVE_AS_LEAF = [MentionPlugin.key, ELEMENT_MENTION_CHANNEL, LinkPlugin.key]
 
 export default function deserialize<T extends InputNodeTypes>(
     node: MdastNode,
@@ -117,29 +119,48 @@ export default function deserialize<T extends InputNodeTypes>(
             return { type: 'paragraph', children: [{ text: node.value || '' }] }
 
         case 'emphasis':
-            return {
-                [types.emphasis_mark as string]: true,
-                ...forceLeafNode(children as Array<TextNode>),
-                ...persistLeafFormats(children as Array<MdastNode>),
-            } as unknown as ItalicNode<T>
         case 'strong':
-            return {
-                [types.strong_mark as string]: true,
-                ...forceLeafNode(children as Array<TextNode>),
-                ...persistLeafFormats(children as Array<MdastNode>),
-            }
         case 'underline':
-            return {
-                [types.underline_mark as string]: true,
-                ...forceLeafNode(children as Array<TextNode>),
-                ...persistLeafFormats(children as Array<MdastNode>),
+        case 'delete': {
+            const markType =
+                node.type === 'emphasis'
+                    ? types.emphasis_mark
+                    : node.type === 'strong'
+                    ? types.strong_mark
+                    : node.type === 'underline'
+                    ? types.underline_mark
+                    : types.delete_mark
+
+            // Split children around mention nodes
+            const result: Array<DeserializedNode<T>> = []
+            let currentTextNodes: Array<TextNode> = []
+
+            children.forEach((child) => {
+                if ('type' in child && PRESERVE_AS_LEAF.includes(child.type)) {
+                    if (currentTextNodes.length > 0) {
+                        result.push({
+                            [markType as string]: true,
+                            ...forceLeafNode(currentTextNodes),
+                            ...persistLeafFormats(currentTextNodes as Array<MdastNode>),
+                        })
+                        currentTextNodes = []
+                    }
+                    result.push(child)
+                } else {
+                    currentTextNodes.push(child as TextNode)
+                }
+            })
+
+            if (currentTextNodes.length > 0) {
+                result.push({
+                    [markType as string]: true,
+                    ...forceLeafNode(currentTextNodes),
+                    ...persistLeafFormats(currentTextNodes as Array<MdastNode>),
+                })
             }
-        case 'delete':
-            return {
-                [types.delete_mark as string]: true,
-                ...forceLeafNode(children as Array<TextNode>),
-                ...persistLeafFormats(children as Array<MdastNode>),
-            }
+
+            return result.length === 1 ? result[0] : result
+        }
         case 'inlineCode':
             return {
                 [types.inline_code_mark as string]: true,

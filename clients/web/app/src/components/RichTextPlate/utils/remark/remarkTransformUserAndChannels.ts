@@ -125,7 +125,6 @@ function remarkTransformUserAndChannels(
                     type: MentionPlugin.key,
                     children: [{ text: USER_TRIGGER + user.displayName }],
                 } as TUserMentionElement,
-                { ...SPACE_NODE },
             ]
         }
 
