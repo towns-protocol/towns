@@ -1,10 +1,10 @@
 import { Box, Typography } from '@mui/material'
 import React from 'react'
 import { useTownsContext } from 'use-towns-client'
-import { useNetwork } from 'wagmi'
+import { useAccount } from 'wagmi'
 
 export const DebugBar = () => {
-    const { chain } = useNetwork()
+    const { chain } = useAccount()
     const { environmentId } = useTownsContext()
     return (
         <Box paddingX="md" paddingTop={2} flexDirection="row">

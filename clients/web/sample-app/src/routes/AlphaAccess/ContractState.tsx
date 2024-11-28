@@ -1,5 +1,5 @@
 import React from 'react'
-import { Chain } from 'wagmi'
+import { Chain } from 'viem'
 
 export const ContractState = (props: { chain: Chain | undefined; etherscanBaseURL: string }) => {
     return (

@@ -68,8 +68,6 @@ function _makeBaseChain(chain: Chain, rpcUrl: string, wsUrl?: string): Chain {
     const baseChain = addRpcUrlOverrideToChain(chain, rpcUrl)
     return {
         ...baseChain,
-        // this one is for type correctness b/c addRpcUrlOverrideToChain doesn't return a Chain
-        network: chain.network,
         rpcUrls: {
             ...baseChain.rpcUrls,
             // and these are required too b/c w/o them privy still flip flops between the public and the override urls, probably some priority/quorom thing

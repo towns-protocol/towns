@@ -21,7 +21,6 @@
         "@types/react-dom": "^18.2.4",
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
-        "use-towns-client": "workspace:^",
-        "wagmi": "^1.4.12"
+        "use-towns-client": "workspace:^"
     }
 }

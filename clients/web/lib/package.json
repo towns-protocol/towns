@@ -47,7 +47,7 @@
         "marked": "^12.0.2",
         "marked-plaintify": "^1.0.1",
         "node-emoji": "^1.11.0",
-        "viem": "^1.18.2",
+        "viem": "^2.21.49",
         "zustand": "^4.5.4"
     },
     "devDependencies": {

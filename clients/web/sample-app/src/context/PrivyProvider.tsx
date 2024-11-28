@@ -1,10 +1,10 @@
 import React from 'react'
-import { configureChains } from 'wagmi'
-import { publicProvider } from 'wagmi/providers/public'
 import { PrivyProvider as _PrivyProvider } from '@privy-io/react-auth'
 import { PrivyProvider as TownsPrivyProvider } from '@towns/privy'
 import uniqBy from 'lodash/uniqBy'
-import { PrivyWagmiConnector } from '@privy-io/wagmi-connector'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { WagmiProvider, createConfig } from '@privy-io/wagmi'
+import { Chain, http } from 'viem'
 import { useEnvironment } from 'hooks/use-environment'
 import { ENVIRONMENTS } from 'utils/environment'
 
@@ -15,9 +15,11 @@ const SUPPORTED_CHAINS = uniqBy(
     (x) => x.id,
 )
 
-// the chains are custom configured to include the rpcUrls we want to use, the publicProvider is a function that just checks null for us
-const wagmiChainsConfig = configureChains(SUPPORTED_CHAINS, [publicProvider()], {
-    retryCount: 5,
+const queryClient = new QueryClient()
+
+const config = createConfig({
+    chains: SUPPORTED_CHAINS as [Chain, ...Chain[]],
+    transports: Object.fromEntries(SUPPORTED_CHAINS.map((chain) => [chain.id, http()])),
 })
 export function PrivyProvider({ children }: { children: JSX.Element }) {
     const { baseChain: chain } = useEnvironment()
@@ -35,9 +37,9 @@ export function PrivyProvider({ children }: { children: JSX.Element }) {
                 loginMethods: ['sms', 'google', 'twitter', 'apple'],
             }}
         >
-            <PrivyWagmiConnector wagmiChainsConfig={wagmiChainsConfig}>
-                {children}
-            </PrivyWagmiConnector>
+            <QueryClientProvider client={queryClient}>
+                <WagmiProvider config={config}>{children}</WagmiProvider>
+            </QueryClientProvider>
         </TownsPrivyProvider>
     ) : null
 }

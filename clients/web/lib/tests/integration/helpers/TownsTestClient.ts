@@ -85,7 +85,7 @@ export class TownsTestClient extends TownsClient {
                 eventHandlers: props?.eventHandlers,
                 accountAbstractionConfig: props?.accountAbstractionConfig,
                 supportedXChainRpcMapping: {
-                    [foundry.id]: String(foundry.rpcUrls.public.http),
+                    [foundry.id]: String(foundry.rpcUrls.default.http),
                 },
                 verbose: true,
                 createLegacySpaces: process.env.CREATE_LEGACY_SPACES === 'true',

@@ -1,6 +1,7 @@
 import { Box, Button, Chip, Paper, TextField, Theme, Typography } from '@mui/material'
-import { Address, useBalance, useNetwork } from 'wagmi'
-import { foundry, hardhat, localhost } from 'wagmi/chains'
+import { useAccount, useBalance, useBlockNumber } from 'wagmi'
+import { foundry, hardhat, localhost } from 'viem/chains'
+import { Address } from 'viem'
 import {
     CreateSpaceInfo,
     Membership,
@@ -21,6 +22,7 @@ import {
 } from '@river-build/web3'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ethers } from 'ethers'
+import { useQueryClient } from '@tanstack/react-query'
 import { MembershipRequirement, SpaceRoleSettings } from 'routes/SpaceRoleSettings'
 import { ChainSwitchingButton } from './Buttons/ChainSwitchingButton'
 import { GetSigner, WalletReady } from './WalletReady'
@@ -43,7 +45,7 @@ export const CreateSpaceForm = (props: Props) => {
     const chainId = chain.id
     const chainName = chain.name
     const { loggedInWalletAddress } = useConnectivity()
-    const { chain: walletChain } = useNetwork()
+    const { chain: walletChain } = useAccount()
     const { authStatus: casablancaAuthStatus } = useCasablancaStore()
     const { spaceDapp } = useTownsClient()
 
@@ -314,15 +316,18 @@ export const CreateSpaceForm = (props: Props) => {
 
 const LocalhostWalletInfo = (props: { accountId: Address }) => {
     const { baseProvider: provider, baseChain: chain, baseConfig: config } = useTownsContext()
+    const queryClient = useQueryClient()
+    const { data: blockNumber } = useBlockNumber({ watch: true })
     const chainId = chain.id
     const { accountId } = props
     const balance = useBalance({
         address: accountId,
-        watch: true,
-        onError: (error) => {
-            console.log('Error', error)
-        },
     })
+
+    useEffect(() => {
+        queryClient.invalidateQueries({ queryKey: balance.queryKey })
+    }, [balance.queryKey, blockNumber, queryClient])
+
     const txInProgress = useRef(false)
 
     const onClickFundWallet = useCallback(
@@ -386,8 +391,8 @@ const LocalhostWalletInfo = (props: { accountId: Address }) => {
                     {balance.isLoading
                         ? 'loading...'
                         : balance.isError
-                        ? 'Error: ' + balance.error ?? '??'
-                        : balance.data?.formatted + ' : ' + balance.data?.symbol}
+                        ? `Error: ${balance.error?.message || 'Unknown error'}`
+                        : `${balance.data?.formatted || '0'} ${balance.data?.symbol || ''}`}
                 </Typography>
                 <Button
                     variant="contained"

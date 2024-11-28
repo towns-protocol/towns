@@ -2,8 +2,8 @@ import React, { useRef } from 'react'
 import { Route, Routes } from 'react-router-dom'
 import { TownsContextProvider } from 'use-towns-client'
 import { ThemeProvider } from '@mui/material/styles'
-import { WagmiConfig, createConfig } from 'wagmi'
-import { createPublicClient, http } from 'viem'
+import { WagmiProvider, createConfig } from 'wagmi'
+import { http } from 'viem'
 import { foundry } from 'wagmi/chains'
 import { SnapshotCaseType } from '@river-build/proto'
 import { Thread } from 'routes/Thread'
@@ -33,17 +33,16 @@ import { AuthenticatedContent } from './routes/AuthenticatedContent'
 export const TestApp = () => {
     return (
         // Using WagmiConfig instead of Privy/PrivyWagmi b/c needs a lot of mocking and we don't actually need a wallet for any of our unit tests
-        <WagmiConfig
+        <WagmiProvider
             config={createConfig({
-                autoConnect: true,
-                publicClient: createPublicClient({
-                    chain: foundry,
-                    transport: http(),
-                }),
+                chains: [foundry],
+                transports: {
+                    [foundry.id]: http(),
+                },
             })}
         >
             <AppContent />
-        </WagmiConfig>
+        </WagmiProvider>
     )
 }
 

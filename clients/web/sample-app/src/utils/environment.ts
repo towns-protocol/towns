@@ -1,4 +1,4 @@
-import { Chain, base, baseSepolia, foundry } from 'wagmi/chains'
+import { Chain, base, baseSepolia, foundry } from 'viem/chains'
 import {
     BaseChainConfig,
     IChainConfig,

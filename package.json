@@ -127,7 +127,9 @@
                     "rollup-plugin-visualizer",
                     "vite-plugin-checker",
                     "vite-tsconfig-paths",
-                    "vitest"
+                    "vitest",
+                    "wagmi",
+                    "viem"
                 ],
                 "packages": [
                     "@river-build/stress",
@@ -137,7 +139,8 @@
                     "@river-build/encryption",
                     "@river-build/dlog",
                     "@river-build/stream-metadata",
-                    "@river-build/web3"
+                    "@river-build/web3",
+                    "@river-build/react-sdk"
                 ],
                 "dependencyTypes": [
                     "prod",
@@ -147,13 +150,42 @@
                 "isIgnored": true
             },
             {
-                "label": "Different versions in /river & client",
+                "label": "Different versions in harmonyserver",
                 "dependencies": [
                     "@fastify/cors",
-                    "vitest"
+                    "vitest",
+                    "viem"
                 ],
                 "packages": [
                     "harmonyserver"
+                ],
+                "dependencyTypes": [
+                    "prod",
+                    "dev",
+                    "peer"
+                ]
+            },
+            {
+                "label": "Different versions in token-worker",
+                "dependencies": [
+                    "viem"
+                ],
+                "packages": [
+                    "token-worker"
+                ],
+                "dependencyTypes": [
+                    "prod",
+                    "dev",
+                    "peer"
+                ]
+            },
+            {
+                "label": "Different versions in sample-app",
+                "dependencies": [
+                    "wagmi"
+                ],
+                "packages": [
+                    "sample-app"
                 ],
                 "dependencyTypes": [
                     "prod",

@@ -6,7 +6,7 @@ import { TownsTestWeb3Provider } from './TownsTestWeb3Provider'
 import { foundry } from 'viem/chains'
 import { useTownsErrorStore } from '../../../src/hooks/use-towns-client'
 import { IChainConfig } from '../../../src/types/web3-types'
-import { Chain } from 'viem'
+import { defineChain } from 'viem'
 
 interface Props {
     provider: TownsTestWeb3Provider
@@ -28,16 +28,15 @@ export const TownsTestApp = (props: Props) => {
         value: provider,
         writable: true,
     })
-    const baseChain = {
+    const baseChain = defineChain({
         id: provider.config.base.chainConfig.chainId,
         name: 'base_chain',
-        network: 'base_chain_network',
         nativeCurrency: foundry.nativeCurrency,
         rpcUrls: {
             default: { http: [provider.config.base.rpcUrl] },
             public: { http: [provider.config.base.rpcUrl] },
         },
-    } satisfies Chain
+    })
 
     return (
         <TownsContextProvider

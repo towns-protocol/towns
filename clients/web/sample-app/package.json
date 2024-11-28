@@ -4,7 +4,7 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "build": "tsc && vite build",
+        "build": "tsc && NODE_OPTIONS=--max_old_space_size=32768 vite build",
         "coverage": "vitest run --coverage",
         "dev": "vite",
         "lint": "eslint . --cache --max-warnings=0",
@@ -21,9 +21,11 @@
         "@mui/material": "^5.10.10",
         "@mui/styles": "^5.10.10",
         "@privy-io/react-auth": "1.92.2",
+        "@privy-io/wagmi": "^0.2.12",
         "@privy-io/wagmi-connector": "^0.1.13",
         "@river-build/generated": "workspace:^",
         "@river-build/web3": "workspace:^",
+        "@tanstack/react-query": "^5.51.15",
         "@towns/privy": "workspace:^",
         "@towns/userops": "workspace:^",
         "@types/node": "^20.5.0",
@@ -40,7 +42,8 @@
         "react-router-dom": "^6.4.2",
         "typescript": "^5.1.6",
         "use-towns-client": "workspace:^",
-        "wagmi": "^1.4.12",
+        "viem": "^2.21.49",
+        "wagmi": "^2.13.0",
         "zustand": "^4.5.4"
     },
     "devDependencies": {

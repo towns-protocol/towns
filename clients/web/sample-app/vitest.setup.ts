@@ -3,7 +3,7 @@ import 'vitest-canvas-mock'
 import { vi } from 'vitest'
 import { ResizeObserver } from '@juggle/resize-observer' // dependency of react-hook/resize-observer
 import { ConnectedWallet } from '@privy-io/react-auth'
-import { Chain } from 'wagmi'
+import { Chain } from 'viem'
 
 beforeAll(() => {
     globalThis.ResizeObserver = ResizeObserver
