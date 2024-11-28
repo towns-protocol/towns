@@ -116,7 +116,7 @@ module "pgadmin" {
 
 locals {
   num_full_nodes      = 10
-  num_archive_nodes   = 1
+  num_archive_nodes   = 0
   archive_enabled     = false
   global_remote_state = module.global_constants.global_remote_state.outputs
   base_chain_id       = 84532
@@ -204,54 +204,6 @@ module "river_node" {
 
   lb = module.river_nlb[count.index]
 }
-
-// TODO: set count to 0 after migration
-module "archive_node_nlb" {
-  source  = "../../modules/river-nlb"
-  count   = local.num_archive_nodes
-  subnets = module.vpc.public_subnets
-  vpc_id  = module.vpc.vpc_id
-  nlb_id  = "archive-${tostring(count.index + 1)}"
-}
-
-module "archive_node" {
-  source = "../../modules/river-node"
-  count  = local.num_archive_nodes
-  on     = local.archive_enabled
-
-  node_metadata = module.node_metadata.archive_nodes[count.index]
-
-  enable_debug_endpoints  = true
-  migrate_stream_creation = true
-
-  river_node_ssl_cert_secret_arn = module.river_node_ssl_cert.river_node_ssl_cert_secret_arn
-
-  river_node_db = count.index == 0 ? module.river_db : module.river_db_cluster
-
-  river_database_isolation_level = local.river_database_isolation_level
-  max_db_connections             = local.river_max_db_connections
-
-  public_subnets  = module.vpc.public_subnets
-  private_subnets = module.vpc.private_subnets
-  vpc_id          = module.vpc.vpc_id
-
-  system_parameters = module.system_parameters
-
-  base_chain_rpc_url_secret_arn  = local.global_remote_state.base_sepolia_rpc_url_secret.arn
-  river_chain_rpc_url_secret_arn = local.global_remote_state.river_sepolia_rpc_url_secret.arn
-  chainsstring_secret_arn        = local.global_remote_state.gamma_chainsstring_secret.arn
-
-  base_chain_id  = local.base_chain_id
-  river_chain_id = local.river_chain_id
-
-  ecs_cluster = {
-    id   = aws_ecs_cluster.river_ecs_cluster.id
-    name = aws_ecs_cluster.river_ecs_cluster.name
-  }
-
-  lb = module.archive_node_nlb[count.index]
-}
-
 
 # TODO: delete me
 module "notification_service_db_cluster" {

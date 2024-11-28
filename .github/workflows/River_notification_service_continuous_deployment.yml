@@ -1,11 +1,11 @@
 name: 'River notification service continuous deployment'
 
 on:
-    # push:
-    #     branches:
-    #         - main
-    #     paths:
-    #         - 'scripts/river-node-tag/tag.txt'
+    push:
+        branches:
+            - main
+        paths:
+            - 'scripts/river-node-tag/tag.txt'
 
     workflow_dispatch:
         inputs:

@@ -20,7 +20,7 @@ output "function_name" {
 }
 
 resource "aws_security_group" "lambda_function_sg" {
-  name        = "${local.service_name}_sg"
+  name        = "${local.function_name}-sg"
   description = "Security group for the lambda function to configure the notification service database"
   vpc_id      = var.vpc_id
 

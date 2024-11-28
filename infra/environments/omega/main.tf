@@ -184,6 +184,8 @@ module "archive_node" {
 
   docker_image_tag = "mainnet"
 
+  migrate_stream_creation = false
+
   node_metadata = module.node_metadata.archive_nodes[count.index]
 
   river_node_ssl_cert_secret_arn = module.river_node_ssl_cert.river_node_ssl_cert_secret_arn
@@ -211,6 +213,7 @@ module "archive_node" {
   lb = module.archive_node_nlb[count.index]
 }
 
+# TODO: delete me
 module "notification_service_db_cluster" {
   source = "../../modules/notification-service-db-cluster"
 
@@ -219,6 +222,7 @@ module "notification_service_db_cluster" {
   pgadmin_security_group_id = module.pgadmin.security_group_id
 }
 
+# TODO: delete me
 module "notification_service" {
   source = "../../modules/notification-service"
 
@@ -242,6 +246,35 @@ module "notification_service" {
   river_node_url = "https://hnt-labs-1.staking.production.figment.io"
 
   db_cluster = module.notification_service_db_cluster
+}
+
+module "river_notification_service" {
+  source           = "../../modules/river-notification-service"
+  docker_image_tag = "mainnet"
+
+  alb_security_group_id  = module.river_alb.security_group_id
+  alb_dns_name           = module.river_alb.lb_dns_name
+  alb_https_listener_arn = module.river_alb.lb_https_listener_arn
+
+  vpc_id          = module.vpc.vpc_id
+  db_subnets      = module.vpc.database_subnets
+  private_subnets = module.vpc.private_subnets
+
+  ecs_cluster = {
+    id   = aws_ecs_cluster.river_ecs_cluster.id
+    name = aws_ecs_cluster.river_ecs_cluster.name
+  }
+
+  apns_auth_key_secret_arn  = local.global_remote_state.notification_apns_auth_key_secret.arn
+  apns_towns_app_identifier = "com.towns.ios"
+
+  pgadmin_security_group_id      = module.pgadmin.security_group_id
+  river_chain_id                 = local.river_chain_id
+  river_chain_rpc_url_secret_arn = local.global_remote_state.river_mainnet_rpc_url_secret.arn
+  system_parameters              = module.system_parameters
+
+  cpu    = 4096
+  memory = 30720
 }
 
 module "network_health_monitor" {

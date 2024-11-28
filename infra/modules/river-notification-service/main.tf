@@ -48,8 +48,8 @@ locals {
 
   dd_required_tags = "env:${terraform.workspace}"
 
-  total_vcpu   = 1024
-  total_memory = 8192
+  total_vcpu   = var.cpu
+  total_memory = var.memory
 
   dd_agent_cpu = 128
   service_cpu  = local.total_vcpu - local.dd_agent_cpu
@@ -346,6 +346,14 @@ resource "aws_ecs_task_definition" "task_definition" {
         value = "true"
       },
       {
+        name  = "PERFORMANCETRACKING__PROFILINGENABLED"
+        value = "true"
+      },
+      {
+        name  = "DD_TAGS",
+        value = local.dd_required_tags
+      },
+      {
         name  = "DATABASE__HOST",
         value = local.db_config.host
       },
@@ -440,6 +448,14 @@ resource "aws_ecs_task_definition" "task_definition" {
         },
         {
           name  = "ECS_FARGATE",
+          value = "true"
+        },
+        {
+          name  = "DD_APM_ENABLED",
+          value = "true"
+        },
+        {
+          name  = "DD_PROFILING_ENABLED",
           value = "true"
         },
         {

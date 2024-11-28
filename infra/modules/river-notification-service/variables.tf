@@ -80,3 +80,13 @@ variable "apns_auth_key_secret_arn" {
 variable "apns_towns_app_identifier" {
   type = string
 }
+
+variable "memory" {
+  type    = number
+  default = 8192
+}
+
+variable "cpu" {
+  type    = number
+  default = 1024
+}
