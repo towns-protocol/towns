@@ -3,12 +3,9 @@ package rpc
 import (
 	"bytes"
 	"context"
-	"crypto/tls"
 	"errors"
 	"fmt"
 	"math/rand"
-	"net"
-	"net/http"
 	"os"
 	"slices"
 	"strconv"
@@ -17,20 +14,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/river-build/river/core/node/base"
-
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/common"
 	eth_crypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/net/http2"
 	"google.golang.org/protobuf/proto"
 
+	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/events"
-	"github.com/river-build/river/core/node/nodes"
 	"github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/protocol/protocolconnect"
 	river_sync "github.com/river-build/river/core/node/rpc/sync"
@@ -38,24 +32,7 @@ import (
 	"github.com/river-build/river/core/node/testutils"
 )
 
-func setupTestHttpClient() {
-	nodes.TestHttpClientMaker = func() *http.Client {
-		return &http.Client{
-			Transport: &http2.Transport{
-				// So http2.Transport doesn't complain the URL scheme isn't 'https'
-				AllowHTTP: true,
-				// Pretend we are dialing a TLS endpoint. (Note, we ignore the passed tls.Config)
-				DialTLSContext: func(ctx context.Context, network, addr string, cfg *tls.Config) (net.Conn, error) {
-					var d net.Dialer
-					return d.DialContext(ctx, network, addr)
-				},
-			},
-		}
-	}
-}
-
 func TestMain(m *testing.M) {
-	setupTestHttpClient()
 	os.Exit(m.Run())
 }
 
@@ -320,7 +297,9 @@ func makeMiniblock(
 		},
 	}))
 	if err != nil {
-		return nil, err
+		return nil, AsRiverError(err, protocol.Err_INTERNAL).
+			Message("client.Info make_miniblock failed").
+			Func("makeMiniblock")
 	}
 	var hashBytes []byte
 	if resp.Msg.Graffiti != "" {
@@ -1594,7 +1573,7 @@ func TestSyncSubscriptionWithTooSlowClient(t *testing.T) {
 		wallets  []*crypto.Wallet
 		users    []*protocol.SyncCookie
 		channels []*protocol.SyncCookie
-		syncID   = base.GenNanoid()
+		syncID   = GenNanoid()
 	)
 
 	// create users that will join and add messages to channels.
@@ -1720,7 +1699,7 @@ func TestSyncSubscriptionWithTooSlowClient(t *testing.T) {
 	req.Eventuallyf(func() bool {
 		select {
 		case err := <-syncOpResult:
-			var riverErr *base.RiverErrorImpl
+			var riverErr *RiverErrorImpl
 			if errors.As(err, &riverErr) {
 				req.Equal(riverErr.Code, protocol.Err_BUFFER_FULL, "unexpected error code")
 				return true

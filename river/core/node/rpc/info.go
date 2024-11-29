@@ -85,7 +85,7 @@ func (s *Service) info(
 					Graffiti: "exiting...",
 				}), nil
 			} else if debug == "sleep" {
-				sleepDuration := 30 * time.Second 
+				sleepDuration := 30 * time.Second
 				log.Info("SLEEPING FOR", "sleepDuration", sleepDuration)
 				select {
 				case <-time.After(sleepDuration):

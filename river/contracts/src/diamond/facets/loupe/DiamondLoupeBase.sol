@@ -10,11 +10,11 @@ import {DiamondCutStorage} from "../cut/DiamondCutStorage.sol";
 
 // contracts
 
-abstract contract DiamondLoupeBase is IDiamondLoupeBase {
+library DiamondLoupeBase {
   using EnumerableSet for EnumerableSet.AddressSet;
   using EnumerableSet for EnumerableSet.Bytes32Set;
 
-  function _facetSelectors(
+  function facetSelectors(
     address facet
   ) internal view returns (bytes4[] memory selectors) {
     EnumerableSet.Bytes32Set storage facetSelectors_ = DiamondCutStorage
@@ -32,25 +32,36 @@ abstract contract DiamondLoupeBase is IDiamondLoupeBase {
     }
   }
 
-  function _facetAddresses() internal view returns (address[] memory) {
+  function facetAddresses()
+    internal
+    view
+    returns (address[] memory _facetAddresses)
+  {
     return DiamondCutStorage.layout().facets.values();
   }
 
-  function _facetAddress(
+  function facetAddress(
     bytes4 selector
-  ) internal view returns (address facetAddress) {
+  ) internal view returns (address _facetAddress) {
     return DiamondCutStorage.layout().facetBySelector[selector];
   }
 
-  function _facets() internal view returns (Facet[] memory facets) {
-    address[] memory facetAddresses = _facetAddresses();
-    uint256 facetCount = facetAddresses.length;
-    facets = new Facet[](facetCount);
+  function facets()
+    internal
+    view
+    returns (IDiamondLoupeBase.Facet[] memory _facets)
+  {
+    address[] memory _facetAddresses = facetAddresses();
+    uint256 facetCount = _facetAddresses.length;
+    _facets = new IDiamondLoupeBase.Facet[](facetCount);
 
     for (uint256 i; i < facetCount; ) {
-      address facetAddress = facetAddresses[i];
-      bytes4[] memory selectors = _facetSelectors(facetAddress);
-      facets[i] = Facet({facet: facetAddress, selectors: selectors});
+      address _facetAddress = _facetAddresses[i];
+      bytes4[] memory selectors = facetSelectors(_facetAddress);
+      _facets[i] = IDiamondLoupeBase.Facet({
+        facet: _facetAddress,
+        selectors: selectors
+      });
 
       unchecked {
         i++;

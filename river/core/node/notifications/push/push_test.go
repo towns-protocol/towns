@@ -61,8 +61,10 @@ func TestAPNSPushNotification(t *testing.T) {
 		Environment: protocol.APNEnvironment_APN_ENVIRONMENT_SANDBOX,
 	}
 
-	req.NoError(notifier.SendApplePushNotification(
-		ctx, &sub, common.Hash{1}, payload), "send APN notification")
+	expired, err := notifier.SendApplePushNotification(
+		ctx, &sub, common.Hash{1}, payload)
+	req.False(expired, "subscription should not be expired")
+	req.NoError(err, "send APN notification")
 }
 
 func TestWebPushWithVapid(t *testing.T) {
@@ -117,6 +119,7 @@ func TestWebPushWithVapid(t *testing.T) {
 
 	//payload := payload2.NewPayload().Alert("Sry to bother you if this works...")
 
-	req.NoError(notifier.SendWebPushNotification(ctx, subscription, common.Hash{1}, payload),
-		"send web push notification")
+	expired, err := notifier.SendWebPushNotification(ctx, subscription, common.Hash{1}, payload)
+	req.False(expired, "expired")
+	req.NoError(err, "send web push notification")
 }

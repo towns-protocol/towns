@@ -28,6 +28,8 @@ import (
 	"github.com/river-build/river/core/xchain/entitlement"
 )
 
+type HttpClientMakerFunc = func(context.Context, *config.Config) (*http.Client, error)
+
 type Service struct {
 	// Context and config
 	serverCtx       context.Context
@@ -72,9 +74,10 @@ type Service struct {
 	entitlementEvaluator *entitlement.Evaluator
 
 	// Network
-	listener   net.Listener
-	httpServer *http.Server
-	mux        httpMux
+	listener        net.Listener
+	httpServer      *http.Server
+	mux             httpMux
+	httpClientMaker HttpClientMakerFunc
 
 	// Status string
 	status atomic.Pointer[string]

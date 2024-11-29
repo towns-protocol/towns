@@ -666,7 +666,7 @@ jobs:
               working-directory: core
 
             - name: Run node tests
-              run: go test -race -timeout 12m ./...
+              run: go test -race -timeout 24m -v -parallel 1 -count 1 -p 8 ./...
               working-directory: core
 
     XChain_Integration:

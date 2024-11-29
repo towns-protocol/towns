@@ -5,20 +5,15 @@ pragma solidity ^0.8.23;
 import {IDiamond} from "./IDiamond.sol";
 
 // libraries
+import {DiamondCutBase} from "./facets/cut/DiamondCutBase.sol";
 
 // contracts
 import {Proxy} from "./proxy/Proxy.sol";
-import {DiamondCutBase} from "./facets/cut/DiamondCutBase.sol";
+
 import {DiamondLoupeBase} from "./facets/loupe/DiamondLoupeBase.sol";
 import {Initializable} from "./facets/initializable/Initializable.sol";
 
-contract Diamond is
-  IDiamond,
-  Proxy,
-  DiamondCutBase,
-  DiamondLoupeBase,
-  Initializable
-{
+contract Diamond is IDiamond, Proxy, Initializable {
   struct InitParams {
     FacetCut[] baseFacets;
     address init;
@@ -26,7 +21,7 @@ contract Diamond is
   }
 
   constructor(InitParams memory initDiamondCut) initializer {
-    _diamondCut(
+    DiamondCutBase.diamondCut(
       initDiamondCut.baseFacets,
       initDiamondCut.init,
       initDiamondCut.initData
@@ -45,7 +40,7 @@ contract Diamond is
     override
     returns (address facet)
   {
-    facet = _facetAddress(msg.sig);
+    facet = DiamondLoupeBase.facetAddress(msg.sig);
     if (facet == address(0)) revert Diamond_UnsupportedFunction();
   }
 }

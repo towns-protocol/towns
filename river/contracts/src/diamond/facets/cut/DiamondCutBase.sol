@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.23;
 
 // interfaces
-import {IDiamondCutBase} from "contracts/src/diamond/facets/cut/IDiamondCut.sol";
+import {IDiamondCutBase} from "./IDiamondCut.sol";
 import {IDiamond} from "contracts/src/diamond/IDiamond.sol";
 
 // libraries
@@ -10,17 +10,20 @@ import {DiamondCutStorage} from "./DiamondCutStorage.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 
-abstract contract DiamondCutBase is IDiamondCutBase {
+// contracts
+
+library DiamondCutBase {
   using EnumerableSet for EnumerableSet.AddressSet;
   using EnumerableSet for EnumerableSet.Bytes32Set;
 
   /// @dev Performs a diamond cut.
-  function _diamondCut(
+  function diamondCut(
     IDiamond.FacetCut[] memory facetCuts,
     address init,
     bytes memory initPayload
   ) internal {
-    if (facetCuts.length == 0) revert DiamondCut_InvalidFacetCutLength();
+    if (facetCuts.length == 0)
+      revert IDiamondCutBase.DiamondCut_InvalidFacetCutLength();
 
     for (uint256 i; i < facetCuts.length; i++) {
       IDiamond.FacetCut memory facetCut = facetCuts[i];
@@ -36,7 +39,7 @@ abstract contract DiamondCutBase is IDiamondCutBase {
       }
     }
 
-    emit DiamondCut(facetCuts, init, initPayload);
+    emit IDiamondCutBase.DiamondCut(facetCuts, init, initPayload);
 
     _initializeDiamondCut(facetCuts, init, initPayload);
   }
@@ -57,11 +60,11 @@ abstract contract DiamondCutBase is IDiamondCutBase {
       bytes4 selector = selectors[i];
 
       if (selector == bytes4(0)) {
-        revert DiamondCut_InvalidSelector();
+        revert IDiamondCutBase.DiamondCut_InvalidSelector();
       }
 
       if (ds.facetBySelector[selector] != address(0)) {
-        revert DiamondCut_FunctionAlreadyExists(selector);
+        revert IDiamondCutBase.DiamondCut_FunctionAlreadyExists(selector);
       }
 
       ds.facetBySelector[selector] = facet;
@@ -79,19 +82,21 @@ abstract contract DiamondCutBase is IDiamondCutBase {
   function _removeFacet(address facet, bytes4[] memory selectors) internal {
     DiamondCutStorage.Layout storage ds = DiamondCutStorage.layout();
 
-    if (facet == address(this)) revert DiamondCut_ImmutableFacet();
+    if (facet == address(this))
+      revert IDiamondCutBase.DiamondCut_ImmutableFacet();
 
-    if (!ds.facets.contains(facet)) revert DiamondCut_InvalidFacet(facet);
+    if (!ds.facets.contains(facet))
+      revert IDiamondCutBase.DiamondCut_InvalidFacet(facet);
 
     for (uint256 i; i < selectors.length; i++) {
       bytes4 selector = selectors[i];
 
       if (selector == bytes4(0)) {
-        revert DiamondCut_InvalidSelector();
+        revert IDiamondCutBase.DiamondCut_InvalidSelector();
       }
 
       if (ds.facetBySelector[selector] != facet) {
-        revert DiamondCut_InvalidFacetRemoval(facet, selector);
+        revert IDiamondCutBase.DiamondCut_InvalidFacetRemoval(facet, selector);
       }
 
       delete ds.facetBySelector[selector];
@@ -110,7 +115,8 @@ abstract contract DiamondCutBase is IDiamondCutBase {
   function _replaceFacet(address facet, bytes4[] memory selectors) internal {
     DiamondCutStorage.Layout storage ds = DiamondCutStorage.layout();
 
-    if (facet == address(this)) revert DiamondCut_ImmutableFacet();
+    if (facet == address(this))
+      revert IDiamondCutBase.DiamondCut_ImmutableFacet();
 
     if (!ds.facets.contains(facet)) ds.facets.add(facet);
 
@@ -120,19 +126,22 @@ abstract contract DiamondCutBase is IDiamondCutBase {
       bytes4 selector = selectors[i];
 
       if (selector == bytes4(0)) {
-        revert DiamondCut_InvalidSelector();
+        revert IDiamondCutBase.DiamondCut_InvalidSelector();
       }
 
       address oldFacet = ds.facetBySelector[selector];
 
-      if (oldFacet == address(this)) revert DiamondCut_ImmutableFacet();
+      if (oldFacet == address(this))
+        revert IDiamondCutBase.DiamondCut_ImmutableFacet();
 
       if (oldFacet == address(0)) {
-        revert DiamondCut_FunctionDoesNotExist(facet);
+        revert IDiamondCutBase.DiamondCut_FunctionDoesNotExist(facet);
       }
 
       if (oldFacet == facet) {
-        revert DiamondCut_FunctionFromSameFacetAlreadyExists(selector);
+        revert IDiamondCutBase.DiamondCut_FunctionFromSameFacetAlreadyExists(
+          selector
+        );
       }
 
       // overwrite selector to new facet
@@ -156,18 +165,20 @@ abstract contract DiamondCutBase is IDiamondCutBase {
   /// @param facetCut The facet cut to validate
   function _validateFacetCut(IDiamond.FacetCut memory facetCut) internal view {
     if (facetCut.facetAddress == address(0)) {
-      revert DiamondCut_InvalidFacet(facetCut.facetAddress);
+      revert IDiamondCutBase.DiamondCut_InvalidFacet(facetCut.facetAddress);
     }
 
     if (
       facetCut.facetAddress != address(this) &&
       facetCut.facetAddress.code.length == 0
     ) {
-      revert DiamondCut_InvalidFacet(facetCut.facetAddress);
+      revert IDiamondCutBase.DiamondCut_InvalidFacet(facetCut.facetAddress);
     }
 
     if (facetCut.functionSelectors.length == 0) {
-      revert DiamondCut_InvalidFacetSelectors(facetCut.facetAddress);
+      revert IDiamondCutBase.DiamondCut_InvalidFacetSelectors(
+        facetCut.facetAddress
+      );
     }
   }
 
@@ -182,7 +193,7 @@ abstract contract DiamondCutBase is IDiamondCutBase {
     if (init == address(0)) return;
 
     if (init.code.length == 0) {
-      revert DiamondCut_InvalidContract(init);
+      revert IDiamondCutBase.DiamondCut_InvalidContract(init);
     }
 
     Address.functionDelegateCall(init, initPayload);

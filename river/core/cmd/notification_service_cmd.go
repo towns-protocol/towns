@@ -10,7 +10,7 @@ import (
 func runNotificationService(cmd *cobra.Command, args []string) error {
 	ctx := context.Background() // lint:ignore context.Background() is fine here
 
-	err := setupProfiler(ctx, cmdConfig)
+	err := setupProfiler(ctx, "notification-node", cmdConfig)
 	if err != nil {
 		return err
 	}

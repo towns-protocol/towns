@@ -12,7 +12,7 @@ import {Facet} from "contracts/src/diamond/facets/Facet.sol";
 import {DiamondCutBase} from "./DiamondCutBase.sol";
 import {OwnableBase} from "contracts/src/diamond/facets/ownable/OwnableBase.sol";
 
-contract DiamondCutFacet is IDiamondCut, DiamondCutBase, OwnableBase, Facet {
+contract DiamondCutFacet is IDiamondCut, OwnableBase, Facet {
   function __DiamondCut_init() external onlyInitializing {
     _addInterface(type(IDiamondCut).interfaceId);
   }
@@ -23,6 +23,6 @@ contract DiamondCutFacet is IDiamondCut, DiamondCutBase, OwnableBase, Facet {
     address init,
     bytes memory initPayload
   ) external onlyOwner reinitializer(_nextVersion()) {
-    _diamondCut(facetCuts, init, initPayload);
+    DiamondCutBase.diamondCut(facetCuts, init, initPayload);
   }
 }

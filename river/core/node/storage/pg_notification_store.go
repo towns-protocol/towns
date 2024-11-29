@@ -97,7 +97,14 @@ type (
 			webPushSubscription *webpush.Subscription,
 		) error
 
-		// RemoveWebPushSubscription deleted a web push subscription.
+		// RemoveExpiredWebPushSubscription deletes a web push subscription with an expired endpoint.
+		RemoveExpiredWebPushSubscription(
+			ctx context.Context,
+			userID common.Address,
+			webPushSubscription *webpush.Subscription,
+		) error
+
+		// RemoveWebPushSubscription deletes a web push subscription.
 		RemoveWebPushSubscription(
 			ctx context.Context,
 			userID common.Address,
@@ -626,6 +633,42 @@ func (s *PostgresNotificationStore) addWebPushSubscription(
 		webPushSubscription.Keys.P256dh,
 		webPushSubscription.Endpoint,
 		hex.EncodeToString(userID[:]),
+	)
+
+	return err
+}
+
+// RemoveExpiredWebPushSubscription deleted an expired web push subscription.
+// This ensures that the record is only deleted when it was not changed to
+// prevent a race condition when the user refreshed the subscription.
+func (s *PostgresNotificationStore) RemoveExpiredWebPushSubscription(
+	ctx context.Context,
+	userID common.Address,
+	webPushSubscription *webpush.Subscription,
+) error {
+	return s.txRunner(
+		ctx,
+		"RemoveExpiredWebPushSubscription",
+		pgx.ReadWrite,
+		func(ctx context.Context, tx pgx.Tx) error {
+			return s.removeExpiredWebPushSubscription(ctx, tx, webPushSubscription)
+		},
+		nil,
+		"userID", userID,
+	)
+}
+
+func (s *PostgresNotificationStore) removeExpiredWebPushSubscription(
+	ctx context.Context,
+	tx pgx.Tx,
+	webPushSubscription *webpush.Subscription,
+) error {
+	_, err := tx.Exec(
+		ctx,
+		`DELETE FROM webpushsubscriptions where key_auth=$1 AND key_p256dh=$2 AND endpoint=$3`,
+		webPushSubscription.Keys.Auth,
+		webPushSubscription.Keys.P256dh,
+		webPushSubscription.Endpoint,
 	)
 
 	return err

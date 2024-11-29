@@ -5,37 +5,37 @@ pragma solidity ^0.8.23;
 import {IDiamondLoupe} from "./IDiamondLoupe.sol";
 
 // libraries
+import {DiamondLoupeBase} from "./DiamondLoupeBase.sol";
 
 // contracts
-import {DiamondLoupeBase} from "./DiamondLoupeBase.sol";
 import {Facet} from "../Facet.sol";
 
-contract DiamondLoupeFacet is IDiamondLoupe, DiamondLoupeBase, Facet {
+contract DiamondLoupeFacet is IDiamondLoupe, Facet {
   function __DiamondLoupe_init() external onlyInitializing {
     _addInterface(type(IDiamondLoupe).interfaceId);
   }
 
   /// @inheritdoc IDiamondLoupe
   function facets() external view override returns (Facet[] memory) {
-    return _facets();
+    return DiamondLoupeBase.facets();
   }
 
   /// @inheritdoc IDiamondLoupe
   function facetFunctionSelectors(
     address facet
   ) external view override returns (bytes4[] memory) {
-    return _facetSelectors(facet);
+    return DiamondLoupeBase.facetSelectors(facet);
   }
 
   /// @inheritdoc IDiamondLoupe
   function facetAddresses() external view override returns (address[] memory) {
-    return _facetAddresses();
+    return DiamondLoupeBase.facetAddresses();
   }
 
   /// @inheritdoc IDiamondLoupe
   function facetAddress(
     bytes4 selector
   ) external view override returns (address) {
-    return _facetAddress(selector);
+    return DiamondLoupeBase.facetAddress(selector);
   }
 }

@@ -144,6 +144,13 @@ func newArgsForEnabledChannel(spaceId shared.StreamId, channelId shared.StreamId
 	}
 }
 
+// Used as a cache key for linked wallets, which span multiple spaces and channels.
+func newArgsForLinkedWallets(principal common.Address) *ChainAuthArgs {
+	return &ChainAuthArgs{
+		principal: principal,
+	}
+}
+
 const (
 	DEFAULT_REQUEST_TIMEOUT_MS = 5000
 	DEFAULT_MAX_WALLETS        = 10
@@ -159,6 +166,7 @@ type chainAuth struct {
 	entitlementCache        *entitlementCache
 	membershipCache         *entitlementCache
 	entitlementManagerCache *entitlementCache
+	linkedWalletCache       *entitlementCache
 
 	isEntitledToChannelCacheHit  prometheus.Counter
 	isEntitledToChannelCacheMiss prometheus.Counter
@@ -170,6 +178,9 @@ type chainAuth struct {
 	isChannelEnabledCacheMiss    prometheus.Counter
 	entitlementCacheHit          prometheus.Counter
 	entitlementCacheMiss         prometheus.Counter
+	linkedWalletCacheHit         prometheus.Counter
+	linkedWalletCacheMiss        prometheus.Counter
+	linkedWalletCacheBust        prometheus.Counter
 	membershipCacheHit           prometheus.Counter
 	membershipCacheMiss          prometheus.Counter
 }
@@ -212,6 +223,11 @@ func NewChainAuth(
 		return nil, err
 	}
 
+	linkedWalletCache, err := newLinkedWalletCache(ctx, blockchain.Config)
+	if err != nil {
+		return nil, err
+	}
+
 	if linkedWalletsLimit <= 0 {
 		linkedWalletsLimit = DEFAULT_MAX_WALLETS
 	}
@@ -232,6 +248,7 @@ func NewChainAuth(
 		entitlementCache:        entitlementCache,
 		membershipCache:         membershipCache,
 		entitlementManagerCache: entitlementManagerCache,
+		linkedWalletCache:       linkedWalletCache,
 
 		isEntitledToChannelCacheHit:  counter.WithLabelValues("isEntitledToChannel", "hit"),
 		isEntitledToChannelCacheMiss: counter.WithLabelValues("isEntitledToChannel", "miss"),
@@ -243,6 +260,9 @@ func NewChainAuth(
 		isChannelEnabledCacheMiss:    counter.WithLabelValues("isChannelEnabled", "miss"),
 		entitlementCacheHit:          counter.WithLabelValues("entitlement", "hit"),
 		entitlementCacheMiss:         counter.WithLabelValues("entitlement", "miss"),
+		linkedWalletCacheHit:         counter.WithLabelValues("linkedWallet", "hit"),
+		linkedWalletCacheMiss:        counter.WithLabelValues("linkedWallet", "miss"),
+		linkedWalletCacheBust:        counter.WithLabelValues("linkedWallet", "bust"),
 		membershipCacheHit:           counter.WithLabelValues("membership", "hit"),
 		membershipCacheMiss:          counter.WithLabelValues("membership", "miss"),
 	}, nil
@@ -259,6 +279,7 @@ func (ca *chainAuth) IsEntitled(ctx context.Context, cfg *config.Config, args *C
 	if err != nil {
 		return false, AsRiverError(err).Func("IsEntitled")
 	}
+
 	return result.IsAllowed(), nil
 }
 
@@ -670,21 +691,64 @@ func (ca *chainAuth) isEntitledToChannel(ctx context.Context, cfg *config.Config
 	return isEntitled.IsAllowed(), nil
 }
 
-func (ca *chainAuth) getLinkedWallets(ctx context.Context, wallet common.Address) ([]common.Address, error) {
+func (ca *chainAuth) getLinkedWalletsUncached(
+	ctx context.Context,
+	_ *config.Config,
+	args *ChainAuthArgs,
+) (CacheResult, error) {
+	log := dlog.FromCtx(ctx)
+
+	wallets, err := entitlement.GetLinkedWallets(ctx, args.principal, ca.walletLinkContract, nil, nil, nil)
+	if err != nil {
+		log.Error("Failed to get linked wallets", "err", err, "wallet", args.principal.Hex())
+		return nil, err
+	}
+
+	return &linkedWalletCacheValue{
+		wallets: wallets,
+	}, nil
+}
+
+func (ca *chainAuth) getLinkedWallets(
+	ctx context.Context,
+	cfg *config.Config,
+	args *ChainAuthArgs,
+) ([]common.Address, error) {
 	log := dlog.FromCtx(ctx)
 
 	if ca.walletLinkContract == nil {
 		log.Warn("Wallet link contract is not setup properly, returning root key only")
-		return []common.Address{wallet}, nil
+		return []common.Address{args.principal}, nil
 	}
 
-	wallets, err := entitlement.GetLinkedWallets(ctx, wallet, ca.walletLinkContract, nil, nil, nil)
+	userCacheKey := newArgsForLinkedWallets(args.principal)
+	// We want fresh linked wallets when evaluating space and channel joins, key solicitations,
+	// and user scrubs, all of which request the Read permission.
+	// Note: space joins seem to request Read on the space, but they should probably actually
+	// be sending chain auth args with kind set to chainAuthKindIsSpaceMember.
+	if args.permission == PermissionRead || args.kind == chainAuthKindIsSpaceMember {
+		ca.linkedWalletCache.bust(userCacheKey)
+		ca.linkedWalletCacheBust.Inc()
+	}
+
+	result, cacheHit, err := ca.linkedWalletCache.executeUsingCache(
+		ctx,
+		cfg,
+		userCacheKey,
+		ca.getLinkedWalletsUncached,
+	)
 	if err != nil {
-		log.Error("Failed to get linked wallets", "err", err, "wallet", wallet.Hex())
+		log.Error("Failed to get linked wallets", "err", err, "wallet", args.principal.Hex())
 		return nil, err
 	}
 
-	return wallets, nil
+	if cacheHit {
+		ca.linkedWalletCacheHit.Inc()
+	} else {
+		ca.linkedWalletCacheMiss.Inc()
+	}
+
+	return result.(*timestampedCacheValue).result.(*linkedWalletCacheValue).wallets, nil
 }
 
 func (ca *chainAuth) checkMembershipUncached(
@@ -799,7 +863,7 @@ func (ca *chainAuth) checkEntitlement(
 	}
 
 	// Get all linked wallets.
-	wallets, err := ca.getLinkedWallets(ctx, args.principal)
+	wallets, err := ca.getLinkedWallets(ctx, cfg, args)
 	if err != nil {
 		return nil, err
 	}

@@ -11,16 +11,15 @@ import (
 
 	"github.com/river-build/river/core/config"
 	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/dlog"
 	. "github.com/river-build/river/core/node/protocol"
 )
 
-func (s *Service) startArchiveMode(once bool) error {
+func (s *Service) startArchiveMode(opts *ServerStartOpts, once bool) error {
 	var err error
 	s.startTime = time.Now()
 
-	s.initInstance(ServerModeArchive)
+	s.initInstance(ServerModeArchive, opts)
 
 	if s.config.Archive.ArchiveId == "" {
 		return RiverError(Err_BAD_CONFIG, "ArchiveId must be set").LogError(s.defaultLogger)
@@ -77,19 +76,16 @@ func (s *Service) initArchiver(once bool) error {
 func StartServerInArchiveMode(
 	ctx context.Context,
 	cfg *config.Config,
-	riverChain *crypto.Blockchain,
-	listener net.Listener,
+	opts *ServerStartOpts,
 	once bool,
 ) (*Service, error) {
 	streamService := &Service{
 		serverCtx:  ctx,
 		config:     cfg,
-		riverChain: riverChain,
-		listener:   listener,
 		exitSignal: make(chan error, 1),
 	}
 
-	err := streamService.startArchiveMode(once)
+	err := streamService.startArchiveMode(opts, once)
 	if err != nil {
 		streamService.Close()
 		return nil, err
@@ -104,7 +100,7 @@ func RunArchive(ctx context.Context, cfg *config.Config, once bool) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	service, err := StartServerInArchiveMode(ctx, cfg, nil, nil, once)
+	service, err := StartServerInArchiveMode(ctx, cfg, nil, once)
 	if err != nil {
 		log.Error("Failed to start server", "error", err)
 		return err

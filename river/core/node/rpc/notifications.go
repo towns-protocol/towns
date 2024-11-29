@@ -10,20 +10,20 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/river-build/river/core/config"
 	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/nodes"
 	"github.com/river-build/river/core/node/notifications"
 	"github.com/river-build/river/core/node/notifications/push"
 )
 
-func (s *Service) startNotificationMode(notifier push.MessageNotifier) error {
+func (s *Service) startNotificationMode(notifier push.MessageNotifier, opts *ServerStartOpts) error {
 	var err error
 	s.startTime = time.Now()
 
-	s.initInstance(ServerModeNotification)
+	s.initInstance(ServerModeNotification, opts)
 
 	err = s.initRiverChain()
 	if err != nil {
@@ -59,6 +59,11 @@ func (s *Service) startNotificationMode(notifier push.MessageNotifier) error {
 		notifier,
 	)
 
+	httpClient, err := s.httpClientMaker(s.serverCtx, s.config)
+	if err != nil {
+		return err
+	}
+
 	var registries []nodes.NodeRegistry
 	for range 10 {
 		registry, err := nodes.LoadNodeRegistry(
@@ -67,8 +72,9 @@ func (s *Service) startNotificationMode(notifier push.MessageNotifier) error {
 			common.Address{},
 			s.riverChain.InitialBlockNum,
 			s.riverChain.ChainMonitor,
-			s.otelConnectIterceptor)
-
+			httpClient,
+			s.otelConnectIterceptor,
+		)
 		if err != nil {
 			return err
 		}
@@ -120,19 +126,16 @@ func (s *Service) startNotificationMode(notifier push.MessageNotifier) error {
 func StartServerInNotificationMode(
 	ctx context.Context,
 	cfg *config.Config,
-	riverChain *crypto.Blockchain,
-	listener net.Listener,
 	notifier push.MessageNotifier,
+	opts *ServerStartOpts,
 ) (*Service, error) {
 	notificationService := &Service{
 		serverCtx:  ctx,
 		config:     cfg,
-		riverChain: riverChain,
-		listener:   listener,
 		exitSignal: make(chan error, 1),
 	}
 
-	err := notificationService.startNotificationMode(notifier)
+	err := notificationService.startNotificationMode(notifier, opts)
 	if err != nil {
 		notificationService.Close()
 		return nil, err
@@ -147,7 +150,7 @@ func RunNotificationService(ctx context.Context, cfg *config.Config) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	service, err := StartServerInNotificationMode(ctx, cfg, nil, nil, nil)
+	service, err := StartServerInNotificationMode(ctx, cfg, nil, nil)
 	if err != nil {
 		log.Error("Failed to start server", "error", err)
 		return err
@@ -163,6 +166,6 @@ func RunNotificationService(ctx context.Context, cfg *config.Config) error {
 	}()
 
 	err = <-service.exitSignal
-	//log.Info("Notification stats", "stats", service.Archiver.GetStats())
+	// log.Info("Notification stats", "stats", service.Archiver.GetStats())
 	return err
 }

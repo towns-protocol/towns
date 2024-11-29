@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"connectrpc.com/connect"
+
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/events"
@@ -23,14 +24,16 @@ func TestServerShutdown(t *testing.T) {
 	stub := tester.testClient(0)
 	url := tester.nodes[0].url
 
-	_, err := stub.Info(ctx, connect.NewRequest(&protocol.InfoRequest{}))
+	resp, err := stub.Info(ctx, connect.NewRequest(&protocol.InfoRequest{}))
 	require.NoError(err)
+	require.NotNil(resp)
+	require.Equal("HTTP/2.0", resp.Header().Get("X-Http-Version"), "expected HTTP/2.0")
 
 	log.Info("Shutting down server")
 	tester.nodes[0].Close(ctx, tester.dbUrl)
 	log.Info("Server shut down")
 
-	stub2 := testClient(url)
+	stub2 := tester.testClientForUrl(url)
 	_, err = stub2.Info(ctx, connect.NewRequest(&protocol.InfoRequest{}))
 	require.Error(err)
 }
@@ -67,7 +70,6 @@ func createGDMChannel(
 			),
 			nil,
 		)
-
 		if err != nil {
 			return nil, nil, err
 		}
@@ -79,7 +81,6 @@ func createGDMChannel(
 		Events:   envelopes,
 		StreamId: channelID[:],
 	}))
-
 	if err != nil {
 		return nil, nil, err
 	}
@@ -109,7 +110,6 @@ func createDMChannel(
 		),
 		nil,
 	)
-
 	if err != nil {
 		return nil, nil, err
 	}
@@ -123,7 +123,6 @@ func createDMChannel(
 		),
 		nil,
 	)
-
 	if err != nil {
 		return nil, nil, err
 	}
@@ -137,7 +136,6 @@ func createDMChannel(
 		),
 		nil,
 	)
-
 	if err != nil {
 		return nil, nil, err
 	}
@@ -146,7 +144,6 @@ func createDMChannel(
 		Events:   []*protocol.Envelope{channel, join1, join2},
 		StreamId: channelStreamId[:],
 	}))
-
 	if err != nil {
 		return nil, nil, err
 	}
