@@ -205,15 +205,6 @@ module "river_node" {
   lb = module.river_nlb[count.index]
 }
 
-# TODO: delete me
-module "notification_service_db_cluster" {
-  source = "../../modules/notification-service-db-cluster"
-
-  vpc_id                    = module.vpc.vpc_id
-  database_subnets          = module.vpc.database_subnets
-  pgadmin_security_group_id = module.pgadmin.security_group_id
-}
-
 module "river_notification_service" {
   source = "../../modules/river-notification-service"
 

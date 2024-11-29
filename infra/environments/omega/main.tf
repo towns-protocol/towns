@@ -213,41 +213,6 @@ module "archive_node" {
   lb = module.archive_node_nlb[count.index]
 }
 
-# TODO: delete me
-module "notification_service_db_cluster" {
-  source = "../../modules/notification-service-db-cluster"
-
-  vpc_id                    = module.vpc.vpc_id
-  database_subnets          = module.vpc.database_subnets
-  pgadmin_security_group_id = module.pgadmin.security_group_id
-}
-
-# TODO: delete me
-module "notification_service" {
-  source = "../../modules/notification-service"
-
-  alb_security_group_id  = module.river_alb.security_group_id
-  alb_dns_name           = module.river_alb.lb_dns_name
-  alb_https_listener_arn = module.river_alb.lb_https_listener_arn
-
-  ecs_cluster = {
-    id   = aws_ecs_cluster.river_ecs_cluster.id
-    name = aws_ecs_cluster.river_ecs_cluster.name
-  }
-
-  subnets = module.vpc.private_subnets
-  vpc_id  = module.vpc.vpc_id
-
-  apns_auth_key_secret_arn  = local.global_remote_state.notification_apns_auth_key_secret.arn
-  apns_towns_app_identifier = "com.towns.ios"
-
-  vapid_subject = "mailto:support@towns.com"
-
-  river_node_url = "https://hnt-labs-1.staking.production.figment.io"
-
-  db_cluster = module.notification_service_db_cluster
-}
-
 module "river_notification_service" {
   source           = "../../modules/river-notification-service"
   docker_image_tag = "mainnet"
