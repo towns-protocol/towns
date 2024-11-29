@@ -202,7 +202,6 @@
         "river/contracts",
         "river/packages/*",
         "servers/workers/*",
-        "servers/notification-service",
         "infra/modules/network-health-monitor/lambda-function"
     ]
 }

@@ -1,8 +1,0 @@
-dist/
-node_modules
-**/node_modules
-*.json
-.yarn/*
-yarn.lock
-
-mocks
