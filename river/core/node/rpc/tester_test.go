@@ -2,11 +2,13 @@ package rpc
 
 import (
 	"context"
-	"fmt"
+	"crypto/tls"
 	"hash/fnv"
+	"io"
 	"log"
 	"math/big"
 	"net"
+	"net/http"
 	"slices"
 	"testing"
 	"time"
@@ -22,11 +24,11 @@ import (
 	"github.com/river-build/river/core/contracts/river"
 	"github.com/river-build/river/core/node/base/test"
 	"github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/nodes"
 	"github.com/river-build/river/core/node/protocol/protocolconnect"
 	. "github.com/river-build/river/core/node/shared"
 	"github.com/river-build/river/core/node/storage"
 	"github.com/river-build/river/core/node/testutils/dbtestutils"
+	"github.com/river-build/river/core/node/testutils/testcert"
 )
 
 type testNodeRecord struct {
@@ -67,6 +69,14 @@ type serviceTesterOpts struct {
 	start             bool
 }
 
+func makeTestListener(t *testing.T) (net.Listener, string) {
+	listener, err := net.Listen("tcp", "localhost:0")
+	require.NoError(t, err)
+	listener = tls.NewListener(listener, testcert.GetHttp2LocalhostTLSConfig())
+	t.Cleanup(func() { _ = listener.Close() })
+	return listener, "https://" + listener.Addr().String()
+}
+
 func newServiceTester(t *testing.T, opts serviceTesterOpts) *serviceTester {
 	t.Parallel()
 
@@ -103,17 +113,7 @@ func newServiceTester(t *testing.T, opts serviceTesterOpts) *serviceTester {
 
 	for i := 0; i < opts.numNodes; i++ {
 		st.nodes[i] = &testNodeRecord{}
-
-		// This is a hack to get the port number of the listener
-		// so we can register it in the contract before starting
-		// the server
-		listener, err := net.Listen("tcp", "localhost:0")
-		require.NoError(err)
-		st.nodes[i].listener = listener
-
-		port := listener.Addr().(*net.TCPAddr).Port
-
-		st.nodes[i].url = fmt.Sprintf("http://localhost:%d", port)
+		st.nodes[i].listener, st.nodes[i].url = makeTestListener(t)
 	}
 
 	st.startAutoMining()
@@ -219,7 +219,7 @@ func (st *serviceTester) getConfig(opts ...startOpts) *config.Config {
 
 	cfg := config.GetDefaultConfig()
 	cfg.DisableBaseChain = true
-	cfg.DisableHttps = true
+	cfg.DisableHttps = false
 	cfg.RegistryContract = st.btc.RegistryConfig()
 	cfg.Database = config.DatabaseConfig{
 		Url:                   st.dbUrl,
@@ -260,7 +260,11 @@ func (st *serviceTester) startSingle(i int, opts ...startOpts) error {
 	}
 
 	bc := st.btc.GetBlockchain(st.ctx, i)
-	service, err := StartServer(st.ctx, cfg, bc, listener)
+	service, err := StartServer(st.ctx, cfg, &ServerStartOpts{
+		RiverChain:      bc,
+		Listener:        listener,
+		HttpClientMaker: testcert.GetHttp2LocalhostTLSClient,
+	})
 	if err != nil {
 		if service != nil {
 			// Sanity check
@@ -272,23 +276,32 @@ func (st *serviceTester) startSingle(i int, opts ...startOpts) error {
 	st.nodes[i].service = service
 	st.nodes[i].address = bc.Wallet.Address
 
+	var nodeRecord testNodeRecord = *st.nodes[i]
+
 	st.t.Cleanup(func() {
 		// Cancel context here: t.Cleanup calls functions in reverse order,
 		// but it's better to cancel context first.
 		// Since it's ok to cancel context multiple times, it's safe to cancel it here.
 		st.ctxCancel()
-		st.nodes[i].Close(st.ctx, st.dbUrl)
+		nodeRecord.Close(st.ctx, st.dbUrl)
 	})
 
 	return nil
 }
 
 func (st *serviceTester) testClient(i int) protocolconnect.StreamServiceClient {
-	return testClient(st.nodes[i].url)
+	return st.testClientForUrl(st.nodes[i].url)
 }
 
-func testClient(url string) protocolconnect.StreamServiceClient {
-	return protocolconnect.NewStreamServiceClient(nodes.TestHttpClientMaker(), url, connect.WithGRPCWeb())
+func (st *serviceTester) testClientForUrl(url string) protocolconnect.StreamServiceClient {
+	httpClient, _ := testcert.GetHttp2LocalhostTLSClient(st.ctx, st.getConfig())
+	return protocolconnect.NewStreamServiceClient(httpClient, url, connect.WithGRPCWeb())
+}
+
+func (st *serviceTester) httpClient() *http.Client {
+	c, err := testcert.GetHttp2LocalhostTLSClient(st.ctx, st.getConfig())
+	st.require.NoError(err)
+	return c
 }
 
 func bytesHash(b []byte) uint64 {
@@ -407,4 +420,13 @@ func (st *serviceTester) eventuallyCompareStreamDataInStorage(
 		20*time.Second,
 		100*time.Millisecond,
 	)
+}
+
+func (st *serviceTester) httpGet(url string) string {
+	resp, err := st.httpClient().Get(url)
+	st.require.NoError(err)
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	st.require.NoError(err)
+	return string(body)
 }

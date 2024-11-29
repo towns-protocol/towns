@@ -320,6 +320,22 @@ func (up *UserPreferencesCache) AddWebPushSubscription(
 	return nil
 }
 
+func (up *UserPreferencesCache) RemoveExpiredWebPushSubscription(
+	ctx context.Context,
+	userID common.Address,
+	webPushSubscription *webpush.Subscription,
+) error {
+	err := up.persistent.RemoveExpiredWebPushSubscription(ctx, userID, webPushSubscription)
+	if err != nil {
+		return err
+	}
+
+	// force reload next time user userPreferencesCache are requested
+	up.userPreferencesCache.Delete(userID)
+
+	return nil
+}
+
 // RemoveWebPushSubscription deleted a web push subscription.
 func (up *UserPreferencesCache) RemoveWebPushSubscription(
 	ctx context.Context,

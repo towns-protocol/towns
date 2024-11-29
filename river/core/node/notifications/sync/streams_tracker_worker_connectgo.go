@@ -43,7 +43,7 @@ func channelLabelType(streamID shared.StreamId) string {
 }
 
 func (s *StreamTrackerConnectGo) Run(
-	ctx context.Context,
+	rootCtx context.Context,
 	stream *registries.GetStreamResult,
 	nodeRegistry nodes.NodeRegistry,
 	workerPool *semaphore.Weighted,
@@ -52,21 +52,23 @@ func (s *StreamTrackerConnectGo) Run(
 	userPreferences events.UserPreferencesStore,
 	metrics *streamsTrackerWorkerMetrics,
 ) {
-	restartSyncSessionCounter := 0
-	remotes := nodes.NewStreamNodes(stream.Nodes, common.Address{})
+	var (
+		promLabels                = prometheus.Labels{"type": channelLabelType(stream.StreamId)}
+		remotes                   = nodes.NewStreamNodes(stream.Nodes, common.Address{})
+		restartSyncSessionCounter = 0
+	)
+
+	metrics.TotalStreams.With(promLabels).Inc()
 
 	for {
 		var (
 			sticky              = remotes.GetStickyPeer()
-			log                 = dlog.FromCtx(ctx).With("stream", stream.StreamId, "remote", sticky)
-			syncCtx, syncCancel = context.WithCancel(ctx)
+			log                 = dlog.FromCtx(rootCtx).With("stream", stream.StreamId, "remote", sticky)
+			syncCtx, syncCancel = context.WithCancel(rootCtx)
 			lastReceivedPong    atomic.Int64
 			syncID              string
 			trackedStream       *events.TrackedNotificationStreamView
-			promLabels          = prometheus.Labels{"type": channelLabelType(stream.StreamId)}
 		)
-
-		metrics.TotalStreams.With(promLabels).Inc()
 
 		var (
 			client     protocolconnect.StreamServiceClient
@@ -88,7 +90,7 @@ func (s *StreamTrackerConnectGo) Run(
 		if client == nil {
 			syncCancel()
 			log.Error("unable to obtain stream service client", "err", err)
-			if s.waitMaxOrUntilCancel(syncCtx, time.Minute, 2*time.Minute) {
+			if s.waitMaxOrUntilCancel(rootCtx, time.Minute, 2*time.Minute) {
 				return
 			}
 			continue
@@ -100,8 +102,10 @@ func (s *StreamTrackerConnectGo) Run(
 		if err := workerPool.Acquire(syncCtx, 1); err != nil {
 			metrics.SyncSessionInFlight.Dec()
 			syncCancel()
-			log.Error("unable to acquire worker pool task", "err", err)
-			if s.waitMaxOrUntilCancel(ctx, 10*time.Second, 30*time.Second) {
+			if !errors.Is(err, context.Canceled) {
+				log.Error("unable to acquire worker pool task", "err", err)
+			}
+			if s.waitMaxOrUntilCancel(rootCtx, 10*time.Second, 30*time.Second) {
 				return
 			}
 			continue
@@ -110,7 +114,7 @@ func (s *StreamTrackerConnectGo) Run(
 		restartSyncSessionCounter++
 
 		if restartSyncSessionCounter > 1 {
-			log.Info("restart sync session", "times", restartSyncSessionCounter)
+			log.Debug("restart sync session", "times", restartSyncSessionCounter)
 		}
 
 		syncPos := []*protocol.SyncCookie{{
@@ -133,9 +137,9 @@ func (s *StreamTrackerConnectGo) Run(
 			remotes.AdvanceStickyPeer(remoteAddr)
 			syncCancel()
 			if !errors.Is(err, context.Canceled) {
-				log.Error("unable to start stream sync session", "err", err)
+				log.Debug("unable to start stream sync session", "err", err)
 			}
-			if s.waitMaxOrUntilCancel(ctx, time.Minute, 2*time.Minute) {
+			if s.waitMaxOrUntilCancel(rootCtx, time.Minute, 2*time.Minute) {
 				return
 			}
 			continue
@@ -147,13 +151,13 @@ func (s *StreamTrackerConnectGo) Run(
 		go func(log *slog.Logger) {
 			select {
 			case <-time.After(30 * time.Second):
-				log.Warn("Didn't receive sync id within 30s, cancel sync session")
+				log.Debug("Didn't receive sync id within 30s, cancel sync session")
 				syncCancel() // cancel sync session
 				syncIDGot()
 				return
 			case <-syncIDCtx.Done(): // cancelled when syncID is received within 30s
 				return
-			case <-ctx.Done():
+			case <-rootCtx.Done():
 				return
 			}
 		}(log)
@@ -162,8 +166,10 @@ func (s *StreamTrackerConnectGo) Run(
 			firstMsg := streamUpdates.Msg()
 			if firstMsg.GetSyncOp() != protocol.SyncOp_SYNC_NEW {
 				syncCancel()
-				log.Error("Stream sync session didn't start with SyncOp_SYNC_NEW")
-				if s.waitMaxOrUntilCancel(syncCtx, 10*time.Second, 30*time.Second) {
+				if !errors.Is(err, context.Canceled) {
+					log.Error("Stream sync session didn't start with SyncOp_SYNC_NEW")
+				}
+				if s.waitMaxOrUntilCancel(rootCtx, 10*time.Second, 30*time.Second) {
 					return
 				}
 				continue
@@ -173,11 +179,12 @@ func (s *StreamTrackerConnectGo) Run(
 
 		if err := streamUpdates.Err(); err != nil {
 			if !errors.Is(err, context.Canceled) {
-				log.Error("Unable to receive first sync message", "err", err)
+				// if remote node is down this gets fired
+				log.Debug("Unable to receive first sync message", "err", err)
 			}
 			syncCancel()
 			remotes.AdvanceStickyPeer(remoteAddr)
-			if s.waitMaxOrUntilCancel(syncCtx, time.Minute, 2*time.Minute) {
+			if s.waitMaxOrUntilCancel(rootCtx, time.Minute, 2*time.Minute) {
 				return
 			}
 			continue
@@ -187,7 +194,7 @@ func (s *StreamTrackerConnectGo) Run(
 			syncCancel()
 			remotes.AdvanceStickyPeer(remoteAddr)
 			log.Error("Received empty syncID")
-			if s.waitMaxOrUntilCancel(syncCtx, time.Minute, 2*time.Minute) {
+			if s.waitMaxOrUntilCancel(rootCtx, time.Minute, 2*time.Minute) {
 				return
 			}
 			continue
@@ -263,17 +270,17 @@ func (s *StreamTrackerConnectGo) Run(
 
 				// apply update
 				for _, event := range update.GetStream().GetEvents() {
-					if err := trackedStream.HandleEvent(event); err != nil {
+					if err := trackedStream.HandleEvent(syncCtx, event); err != nil {
 						log.Error("Unable to handle event", "stream", streamID, "err", err)
 					}
 				}
 
 			case protocol.SyncOp_SYNC_DOWN:
-				log.Info("Stream reported as down")
+				log.Debug("Stream reported as down")
 				metrics.SyncDown.Inc()
 				syncCancel()
 			case protocol.SyncOp_SYNC_CLOSE:
-				log.Info("Got stream close")
+				log.Debug("Got stream close")
 				syncCancel()
 			case protocol.SyncOp_SYNC_UNSPECIFIED:
 				log.Warn("Got stream unspecified")
@@ -303,12 +310,12 @@ func (s *StreamTrackerConnectGo) Run(
 
 		if err := streamUpdates.Err(); err != nil {
 			select {
-			case <-ctx.Done(): // if parent ctx is cancelled -> service shutdown is initiated
+			case <-rootCtx.Done(): // if parent ctx is cancelled -> service shutdown is initiated
 				syncCancel()
 				return
 			default:
 				if !errors.Is(err, context.Canceled) {
-					log.Error("Stream sync session ended unexpected", "err", err)
+					log.Debug("Stream sync session ended unexpected", "err", err)
 				}
 			}
 		}
@@ -316,7 +323,7 @@ func (s *StreamTrackerConnectGo) Run(
 		syncCancel()
 		remotes.AdvanceStickyPeer(remoteAddr)
 
-		if s.waitMaxOrUntilCancel(ctx, 10*time.Second, 30*time.Second) {
+		if s.waitMaxOrUntilCancel(rootCtx, 10*time.Second, 30*time.Second) {
 			return
 		}
 	}

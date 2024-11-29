@@ -180,11 +180,6 @@ export default [
   },
   {
     "type": "error",
-    "name": "DiamondCut_InvalidFacetCutAction",
-    "inputs": []
-  },
-  {
-    "type": "error",
     "name": "DiamondCut_InvalidFacetCutLength",
     "inputs": []
   },

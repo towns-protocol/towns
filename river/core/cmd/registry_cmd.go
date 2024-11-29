@@ -192,7 +192,7 @@ func srStream(cfg *config.Config, streamId string, validate bool) error {
 	var httpClient *http.Client
 	var err error
 	if validate {
-		httpClient, err = http_client.GetHttpClient(ctx)
+		httpClient, err = http_client.GetHttpClient(ctx, cfg)
 		if err != nil {
 			return err
 		}

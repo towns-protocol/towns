@@ -17,8 +17,9 @@ func GetDefaultConfig() *Config {
 	return &Config{
 		Port: 443,
 		Database: DatabaseConfig{
-			StartupDelay:  2 * time.Second,
-			NumPartitions: 256,
+			StartupDelay:          2 * time.Second,
+			NumPartitions:         256,
+			MigrateStreamCreation: true,
 		},
 		StorageType:  "postgres",
 		DisableHttps: false,
@@ -303,6 +304,8 @@ type ChainConfig struct {
 	PositiveEntitlementManagerCacheTTLSeconds int
 	NegativeEntitlementManagerCacheSize       int
 	NegativeEntitlementManagerCacheTTLSeconds int
+	LinkedWalletCacheSize                     int
+	LinkedWalletCacheTTLSeconds               int
 }
 
 func (c ChainConfig) BlockTime() time.Duration {

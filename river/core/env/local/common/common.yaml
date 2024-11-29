@@ -3,7 +3,6 @@
 database:
     url: postgres://postgres:postgres@localhost:5433/river?sslmode=disable&pool_max_conns=50
     isolationLevel: 'serializable'
-    migrateStreamCreation: true
 
 # Certificates for TLS
 TLSConfig:
@@ -16,6 +15,8 @@ baseChain:
     networkUrl: 'http://127.0.0.1:8545'
     blockTimeMs: 1000
     positiveEntitlementCacheTTLSeconds: 5 # Short TTL for testing
+    linkedWalletCacheTTLSeconds: 5 # short TTL for testing
+
 riverChain:
     chainId: 31338
     networkUrl: 'http://127.0.0.1:8546'

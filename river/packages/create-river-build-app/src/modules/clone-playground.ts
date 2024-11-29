@@ -108,10 +108,11 @@ const updateDependencies = async (cfg: CreateRiverBuildAppConfig) => {
             dep.startsWith('@river-build'),
         )
         return {
-            dependencies: [...allRiverBuildDeps, ['@wagmi/core', json.dependencies.wagmi]],
+            dependencies: allRiverBuildDeps,
             devDependencies: [
                 ...allRiverBuildDevDeps,
-                // hardcoded for now. ^5.1.6 will make npm install to get the latest 5.x.x
+                // hardcoded for now. if we add ^ in front of the version (e.g. ^5.1.6)
+                // it will make npm install to get the latest 5.x.x
                 ['typescript', '5.1.6'],
             ],
         }

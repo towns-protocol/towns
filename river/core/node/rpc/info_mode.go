@@ -11,15 +11,14 @@ import (
 
 	"github.com/river-build/river/core/config"
 	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/dlog"
 )
 
-func (s *Service) startInfoMode() error {
+func (s *Service) startInfoMode(opts *ServerStartOpts) error {
 	var err error
 	s.startTime = time.Now()
 
-	s.initInstance(ServerModeInfo)
+	s.initInstance(ServerModeInfo, opts)
 
 	// TODO: no need for base chain yet in the info mode
 	// err = s.initBaseChain()
@@ -57,18 +56,15 @@ func (s *Service) startInfoMode() error {
 func StartServerInInfoMode(
 	ctx context.Context,
 	cfg *config.Config,
-	riverChain *crypto.Blockchain,
-	listener net.Listener,
+	opts *ServerStartOpts,
 ) (*Service, error) {
 	streamService := &Service{
 		serverCtx:  ctx,
 		config:     cfg,
-		riverChain: riverChain,
-		listener:   listener,
 		exitSignal: make(chan error, 1),
 	}
 
-	err := streamService.startInfoMode()
+	err := streamService.startInfoMode(opts)
 	if err != nil {
 		streamService.Close()
 		return nil, err
@@ -83,7 +79,7 @@ func RunInfoMode(ctx context.Context, cfg *config.Config) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	service, error := StartServerInInfoMode(ctx, cfg, nil, nil)
+	service, error := StartServerInInfoMode(ctx, cfg, nil)
 	if error != nil {
 		log.Error("Failed to start server", "error", error)
 		return error

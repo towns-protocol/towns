@@ -1,7 +1,7 @@
 import {
     IRuleEntitlement as LocalhostIRuleEntitlement,
     IRuleEntitlementBase,
-} from '@river-build/generated/dev/typings/IRuleEntitlement'
+} from '@river-build/generated/dev/typings/IRuleEntitlement.sol/IRuleEntitlement'
 
 import LocalhostEntitlementAbi from '@river-build/generated/dev/abis/IRuleEntitlement.abi'
 

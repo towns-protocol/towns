@@ -2,7 +2,7 @@ import {
     IRuleEntitlement as LocalhostContract,
     IRuleEntitlementBase as LocalhostBase,
     IRuleEntitlementInterface as LocalhostInterface,
-} from '@river-build/generated/dev/typings/IRuleEntitlement'
+} from '@river-build/generated/dev/typings/IRuleEntitlement.sol/IRuleEntitlement'
 
 import LocalhostAbi from '@river-build/generated/dev/abis/IRuleEntitlement.abi.json' assert { type: 'json' }
 

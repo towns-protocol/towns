@@ -261,14 +261,14 @@ func GetRiverNetworkStatus(
 	}
 	http11client.Timeout = cfg.Network.GetHttpRequestTimeout()
 
-	http20client, err := http_client.GetHttpClient(ctx)
+	http20client, err := http_client.GetHttpClient(ctx, cfg)
 	if err != nil {
 		return nil, err
 	}
 	defer http20client.CloseIdleConnections()
 	http20client.Timeout = cfg.Network.GetHttpRequestTimeout()
 
-	grpcHttpClient, err := http_client.GetHttpClient(ctx)
+	grpcHttpClient, err := http_client.GetHttpClient(ctx, cfg)
 	if err != nil {
 		return nil, err
 	}

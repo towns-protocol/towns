@@ -143,7 +143,7 @@ func TestStreamReconciliationFromGenesis(t *testing.T) {
 		stream, err := tt.btc.StreamRegistry.GetStream(nil, streamId)
 		require.NoError(err)
 		return stream.LastMiniblockNum == uint64(latestMbNum)
-	}, 20*time.Second, 100*time.Millisecond, "expected to receive latest miniblock")
+	}, 10*time.Second, 100*time.Millisecond, "expected to receive latest miniblock")
 
 	// start up last node that must reconcile and load the created stream on boot
 	tt.startNodes(opts.numNodes-1, opts.numNodes)
@@ -160,7 +160,7 @@ func TestStreamReconciliationFromGenesis(t *testing.T) {
 			}
 		}
 		return false
-	}, 20*time.Second, 1000*time.Millisecond, "catching up with stream failed within reasonable time")
+	}, 10*time.Second, 100*time.Millisecond, "catching up with stream failed within reasonable time")
 
 	// verify that loaded miniblocks match with blocks in expected mbChain
 	miniBlocks, _, err := stream.GetMiniblocks(ctx, 0, latestMbNum+1)

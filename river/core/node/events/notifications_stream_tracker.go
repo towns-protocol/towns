@@ -40,6 +40,7 @@ type (
 
 	StreamEventListener interface {
 		OnMessageEvent(
+			ctx context.Context,
 			streamID shared.StreamId,
 			parentStreamID *shared.StreamId, // only
 			members mapset.Set[string],
@@ -90,7 +91,10 @@ func NewNotificationsStreamTrackerFromStreamAndCookie(
 	return ts, nil
 }
 
-func (ts *TrackedNotificationStreamView) HandleEvent(event *Envelope) error {
+func (ts *TrackedNotificationStreamView) HandleEvent(
+	ctx context.Context,
+	event *Envelope,
+) error {
 	parsedEvent, err := ParseEvent(event)
 	if err != nil {
 		return err
@@ -101,14 +105,14 @@ func (ts *TrackedNotificationStreamView) HandleEvent(event *Envelope) error {
 	}
 
 	// add event calls the message listener that send notifications when needed
-	return ts.addEvent(parsedEvent)
+	return ts.addEvent(ctx, parsedEvent)
 }
 
 func (ts *TrackedNotificationStreamView) LatestSyncCookie() *SyncCookie {
 	return ts.view.SyncCookie(common.Address{})
 }
 
-func (ts *TrackedNotificationStreamView) addEvent(event *ParsedEvent) error {
+func (ts *TrackedNotificationStreamView) addEvent(ctx context.Context, event *ParsedEvent) error {
 	if ts.view.minipool.events.Has(event.Hash) {
 		return nil
 	}
@@ -143,7 +147,7 @@ func (ts *TrackedNotificationStreamView) addEvent(event *ParsedEvent) error {
 		return err
 	}
 
-	ts.listener.OnMessageEvent(ts.streamID, view.StreamParentId(), *members, event)
+	ts.listener.OnMessageEvent(ctx, ts.streamID, view.StreamParentId(), *members, event)
 
 	return nil
 }

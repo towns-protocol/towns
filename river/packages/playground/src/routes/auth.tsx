@@ -9,6 +9,10 @@ import { RiverEnvSwitcherContent } from '@/components/dialog/env-switcher'
 import { Dialog } from '@/components/ui/dialog'
 import { Block } from '@/components/ui/block'
 import { RiverBeaver } from '@/components/river-beaver'
+import { TownsIcon } from '@/components/towns-icon'
+import { cn } from '@/utils'
+
+const isDev = import.meta.env.DEV
 
 export const AuthRoute = () => {
     const [open, setOpen] = useState<{ state: boolean; from: 'wallet' | 'bearer' }>({
@@ -27,7 +31,7 @@ export const AuthRoute = () => {
     return (
         <div className="container mx-auto px-4 py-8">
             {/* Main Content */}
-            <div className="mx-auto max-w-3xl space-y-6 text-center">
+            <div className={cn('mx-auto max-w-3xl space-y-6 text-center', isDev && 'max-w-4xl')}>
                 <h1 className="text-4xl font-bold tracking-tight sm:text-6xl">
                     Welcome to River Playground
                 </h1>
@@ -44,44 +48,79 @@ export const AuthRoute = () => {
                 </p>
 
                 {/* Quick Links */}
-                <div className="my-12 grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <Block variant="primary" className="p-6 transition-shadow hover:shadow-md">
+                <div
+                    className={cn(
+                        'my-12 grid grid-cols-1 gap-4 md:grid-cols-2',
+                        isDev && 'md:grid-cols-3',
+                    )}
+                >
+                    <Block
+                        variant="primary"
+                        className="flex flex-col justify-between p-6 transition-shadow hover:shadow-md"
+                    >
                         <div className="space-y-4">
                             <GitHubLogoIcon className="mx-auto h-8 w-8" />
                             <h2 className="text-xl font-semibold">Open Source</h2>
                             <p className="text-sm text-muted-foreground">
                                 View the source code on GitHub and contribute to the project
                             </p>
+                        </div>
+                        <a
+                            className={buttonVariants({
+                                variant: 'outline',
+                                className: 'mt-4 w-full',
+                            })}
+                            href="https://github.com/river-build/river/tree/main/packages/playground"
+                            target="_blank"
+                        >
+                            View Repository <ExternalLink className="ml-2 size-4" />
+                        </a>
+                    </Block>
+                    {isDev && (
+                        <Block
+                            variant="primary"
+                            className="flex flex-col justify-between p-6 transition-shadow hover:shadow-md"
+                        >
+                            <div className="space-y-4">
+                                <TownsIcon className="mx-auto h-8 w-8" />
+                                <h2 className="text-xl font-semibold">Community</h2>
+                                <p className="text-sm text-muted-foreground">
+                                    Join the River Developer Community on Towns for support
+                                </p>
+                            </div>
                             <a
                                 className={buttonVariants({
                                     variant: 'outline',
-                                    className: 'w-full',
+                                    className: 'mt-4 w-full',
                                 })}
-                                href="https://github.com/river-build/river/tree/main/packages/playground"
+                                href="https://app.towns.com/t/0xb089fc1acdea8b1da28463a2272d6fd3fe66a75b/"
                                 target="_blank"
                             >
-                                View Repository <ExternalLink className="ml-2 size-4" />
+                                Join Community <ExternalLink className="ml-2 size-4" />
                             </a>
-                        </div>
-                    </Block>
-                    <Block variant="primary" className="p-6 transition-shadow hover:shadow-md">
+                        </Block>
+                    )}
+                    <Block
+                        variant="primary"
+                        className="flex flex-col justify-between p-6 transition-shadow hover:shadow-md"
+                    >
                         <div className="space-y-4">
                             <Book className="mx-auto h-8 w-8" />
                             <h2 className="text-xl font-semibold">Documentation</h2>
                             <p className="text-sm text-muted-foreground">
                                 Learn how to use River Protocol with our comprehensive docs
                             </p>
-                            <a
-                                className={buttonVariants({
-                                    variant: 'outline',
-                                    className: 'w-full',
-                                })}
-                                href="https://docs.river.build"
-                                target="_blank"
-                            >
-                                Read Docs <ExternalLink className="ml-2 size-4" />
-                            </a>
                         </div>
+                        <a
+                            className={buttonVariants({
+                                variant: 'outline',
+                                className: 'mt-4 w-full',
+                            })}
+                            href="https://docs.river.build"
+                            target="_blank"
+                        >
+                            Read Docs <ExternalLink className="ml-2 size-4" />
+                        </a>
                     </Block>
                 </div>
 
@@ -146,12 +185,14 @@ export const AuthRoute = () => {
 
 const ChainConnectButton = (props: { onWalletConnect: () => void; className?: string }) => {
     const { connector: activeConnector } = useAccount()
-    const { connectors, connect, error, isLoading } = useConnect({
-        onSuccess: props.onWalletConnect,
+    const { connectors, connect, error, isPending } = useConnect({
+        mutation: {
+            onSuccess: props.onWalletConnect,
+        },
     })
 
     return (
-        <div>
+        <div className="space-y-1.5">
             {connectors.map((connector) => (
                 <Button
                     className={props.className}
@@ -167,7 +208,7 @@ const ChainConnectButton = (props: { onWalletConnect: () => void; className?: st
                     {activeConnector?.id === connector.id
                         ? `Continue with ${connector.name}`
                         : connector.name}
-                    {isLoading && ' (connecting)'}
+                    {isPending && ' (connecting)'}
                 </Button>
             ))}
             {error && <div>{error.message}</div>}

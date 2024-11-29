@@ -69,4 +69,58 @@ func TestCache(t *testing.T) {
 	assert.True(t, result.IsAllowed())
 	assert.True(t, cacheHit)
 	assert.False(t, cacheMissForReal)
+
+	// Bust negative cache, validate next computation was a cache miss with expected
+	// result
+	c.bust(NewChainAuthArgsForChannel(spaceId, channelId, "3", PermissionWrite))
+
+	cacheMissForReal = false
+	result, cacheHit, err = c.executeUsingCache(
+		ctx,
+		cfg,
+		NewChainAuthArgsForChannel(spaceId, channelId, "3", PermissionWrite),
+		func(context.Context, *config.Config, *ChainAuthArgs) (CacheResult, error) {
+			cacheMissForReal = true
+			return &simpleCacheResult{allowed: true}, nil
+		},
+	)
+	assert.NoError(t, err)
+	assert.True(t, result.IsAllowed())
+	assert.False(t, cacheHit)
+	assert.True(t, cacheMissForReal)
+
+	// This next result should be a cache hit
+	cacheMissForReal = false
+	result, cacheHit, err = c.executeUsingCache(
+		ctx,
+		cfg,
+		NewChainAuthArgsForChannel(spaceId, channelId, "3", PermissionWrite),
+		func(context.Context, *config.Config, *ChainAuthArgs) (CacheResult, error) {
+			cacheMissForReal = true
+			return &simpleCacheResult{allowed: true}, nil
+		},
+	)
+	assert.NoError(t, err)
+	assert.True(t, result.IsAllowed())
+	assert.True(t, cacheHit)
+	assert.False(t, cacheMissForReal)
+
+	// Bust positive cache, validate next computation was a cache miss with expected
+	// result
+	c.bust(NewChainAuthArgsForChannel(spaceId, channelId, "3", PermissionWrite))
+
+	cacheMissForReal = false
+	result, cacheHit, err = c.executeUsingCache(
+		ctx,
+		cfg,
+		NewChainAuthArgsForChannel(spaceId, channelId, "3", PermissionWrite),
+		func(context.Context, *config.Config, *ChainAuthArgs) (CacheResult, error) {
+			cacheMissForReal = true
+			return &simpleCacheResult{allowed: true}, nil
+		},
+	)
+	assert.NoError(t, err)
+	assert.True(t, result.IsAllowed())
+	assert.False(t, cacheHit)
+	assert.True(t, cacheMissForReal)
 }

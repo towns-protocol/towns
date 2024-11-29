@@ -10,11 +10,10 @@ import (
 
 	"github.com/river-build/river/core/config"
 	"github.com/river-build/river/core/river_node/version"
-
 	"gopkg.in/DataDog/dd-trace-go.v1/profiler"
 )
 
-func setupProfiler(ctx context.Context, cfg *config.Config) error {
+func setupProfiler(ctx context.Context, serviceName string, cfg *config.Config) error {
 	// we overwrite the DD_TAGS environment variable, because this is the best way to pass them down to the tracer
 	setDDTagsEnv()
 
@@ -24,7 +23,7 @@ func setupProfiler(ctx context.Context, cfg *config.Config) error {
 
 			err := profiler.Start(
 				profiler.WithEnv(getEnvFromDDTags()),
-				profiler.WithService("river-node"),
+				profiler.WithService(serviceName),
 				profiler.WithVersion(version.GetFullVersion()),
 				profiler.WithProfileTypes(
 					profiler.CPUProfile,

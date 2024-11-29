@@ -11,6 +11,7 @@ export default class JSDOMEnvironmentWithBuffer extends JSDOMEnvironment {
         this.global.TextEncoder = TextEncoder
         this.global.TextDecoder = TextDecoder
         this.global.fetch = fetch
+        this.global.Request = Request
         this.global.ReadableStream = ReadableStream
     }
 }

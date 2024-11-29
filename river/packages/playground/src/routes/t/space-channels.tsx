@@ -65,7 +65,10 @@ export const SelectChannelRoute = () => {
                                         </DialogDescription>
                                         <CreateChannel
                                             spaceId={space.id}
-                                            onChannelCreated={onChannelChange}
+                                            onChannelCreated={(channelId) => {
+                                                onChannelChange(channelId)
+                                                setCreateChannelDialogOpen(false)
+                                            }}
                                         />
                                     </DialogContent>
                                 </Dialog>

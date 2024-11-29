@@ -5,15 +5,15 @@ import (
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/spf13/cobra"
 
 	"github.com/river-build/river/core/config"
 	"github.com/river-build/river/core/node/crypto"
+	"github.com/river-build/river/core/node/http_client"
 	"github.com/river-build/river/core/node/infra"
 	"github.com/river-build/river/core/node/nodes"
 	"github.com/river-build/river/core/node/registries"
 	"github.com/river-build/river/core/node/rpc"
-
-	"github.com/spf13/cobra"
 )
 
 func runPing(cfg *config.Config) error {
@@ -51,8 +51,13 @@ func runPing(cfg *config.Config) error {
 		return err
 	}
 
+	httpClient, err := http_client.GetHttpClient(ctx, cfg)
+	if err != nil {
+		return err
+	}
+
 	nodeRegistry, err := nodes.LoadNodeRegistry(
-		ctx, registryContract, common.Address{}, riverChain.InitialBlockNum, riverChain.ChainMonitor, nil)
+		ctx, registryContract, common.Address{}, riverChain.InitialBlockNum, riverChain.ChainMonitor, httpClient, nil)
 	if err != nil {
 		return err
 	}
