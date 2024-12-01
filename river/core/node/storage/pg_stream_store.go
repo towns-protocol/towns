@@ -801,6 +801,8 @@ func (s *PostgresStreamStore) ReadMiniblocks(
 		},
 		nil,
 		"streamId", streamId,
+		"fromInclusive", fromInclusive,
+		"toExclusive", toExclusive,
 	)
 	if err != nil {
 		return nil, err

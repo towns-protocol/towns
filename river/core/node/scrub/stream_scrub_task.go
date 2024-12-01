@@ -8,7 +8,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gammazero/workerpool"
 	"github.com/prometheus/client_golang/prometheus"
-
 	"go.opentelemetry.io/otel/attribute"
 	otelCodes "go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -77,6 +76,11 @@ func NewStreamScrubTasksProcessor(
 
 		tracer: tracer,
 	}
+
+	go func() {
+		<-ctx.Done()
+		proc.workerPool.Stop()
+	}()
 
 	if metrics != nil {
 		streamsScrubbed := metrics.NewCounterEx(

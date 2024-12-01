@@ -22,7 +22,7 @@ func TestShutdown(t *testing.T) {
 		exitStatus <- firstExit
 	}()
 
-	listener, _ := makeTestListener(tester.t)
+	listener, _ := tester.makeTestListener()
 
 	// Start the second node with same address
 	require.NoError(tester.startSingle(0, startOpts{listeners: []net.Listener{listener}}))

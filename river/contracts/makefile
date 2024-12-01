@@ -68,6 +68,12 @@ deploy-any :;
 	forge script scripts/deployments/${type}/${contract}.s.sol:${contract} \
 	--ffi --rpc-url ${rpc} --private-key ${private_key} --broadcast --verify
 
+deploy-any-blockscout :;
+	@echo "Running $(contract) on remote network"
+	@SAVE_DEPLOYMENTS=1 $(if $(context),DEPLOYMENT_CONTEXT=$(context)) \
+	forge script scripts/deployments/${type}/${contract}.s.sol:${contract} \
+	--ffi --rpc-url ${rpc} --private-key ${private_key} --broadcast --verify --verifier=blockscout --verifier-url=${verifier}
+
 deploy-any-explicit :;
 	@echo "Running $(contract) on remote network"
 	@SAVE_DEPLOYMENTS=1 $(if $(context),DEPLOYMENT_CONTEXT=$(context)) \
@@ -197,7 +203,7 @@ deploy-ledger-base-sepolia :;
 	@$(MAKE) resume-any-ledger rpc=base_sepolia hd_path=${HD_PATH} sender=${SENDER_ADDRESS} verifier=${BASESCAN_SEPOLIA_URL} etherscan=${BASESCAN_API_KEY}
 
 deploy-base-sepolia :;
-	@$(MAKE) deploy-any rpc=base_sepolia private_key=${TESTNET_PRIVATE_KEY}
+	@$(MAKE) deploy-any-blockscout rpc=base_sepolia private_key=${TESTNET_PRIVATE_KEY} verifier=${BLOCKSCOUT_SEPOLIA_URL}
 	@$(MAKE) resume-any rpc=base_sepolia private_key=${TESTNET_PRIVATE_KEY} verifier=${BASESCAN_SEPOLIA_URL} etherscan=${BASESCAN_API_KEY}
 
 interact-base-sepolia :;
@@ -285,14 +291,17 @@ deploy-alpha-sepolia :;
 	@$(MAKE) deploy-any context=alpha rpc=sepolia private_key=${TESTNET_PRIVATE_KEY}
 
 deploy-alpha-base-sepolia :;
-	@$(MAKE) deploy-any context=alpha rpc=base_sepolia private_key=${TESTNET_PRIVATE_KEY}
-	@$(MAKE) resume-any context=alpha rpc=base_sepolia private_key=${TESTNET_PRIVATE_KEY} verifier=${BASESCAN_SEPOLIA_URL} etherscan=${BASESCAN_API_KEY}
+	@$(MAKE) deploy-any-blockscout context=alpha rpc=base_sepolia private_key=${TESTNET_PRIVATE_KEY} verifier=${BLOCKSCOUT_SEPOLIA_URL}
+	@$(MAKE) resume-any rpc=base_sepolia private_key=${TESTNET_PRIVATE_KEY} verifier=${BASESCAN_SEPOLIA_URL} etherscan=${BASESCAN_API_KEY}
 
 interact-alpha-base-sepolia :;
-	$(MAKE) interact-any context=alpha rpc=base_sepolia private_key=${TESTNET_PRIVATE_KEY}
+	@$(MAKE) interact-any context=alpha rpc=base_sepolia private_key=${TESTNET_PRIVATE_KEY}
 
 deploy-alpha-river-testnet :;
 	@$(MAKE) deploy-any context=alpha rpc=river_devnet private_key=${TESTNET_PRIVATE_KEY}
+
+fork-alpha-base-sepolia :;
+	@$(MAKE) fork-any context=alpha rpc=base_sepolia private_key=${TESTNET_PRIVATE_KEY}
 
 # ===========================
 # 				OMEGA

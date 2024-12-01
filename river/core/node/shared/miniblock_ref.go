@@ -3,7 +3,6 @@ package shared
 import (
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/river-build/river/core/contracts/river"
 	. "github.com/river-build/river/core/node/protocol"
 )
 
@@ -23,12 +22,5 @@ func MiniblockRefFromLastHash(resp *GetLastMiniblockHashResponse) *MiniblockRef 
 	return &MiniblockRef{
 		Hash: common.BytesToHash(resp.GetHash()),
 		Num:  resp.GetMiniblockNum(),
-	}
-}
-
-func MiniblockRefFromContractRecord(stream *river.Stream) *MiniblockRef {
-	return &MiniblockRef{
-		Hash: stream.LastMiniblockHash,
-		Num:  int64(stream.LastMiniblockNum),
 	}
 }

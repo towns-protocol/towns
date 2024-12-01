@@ -42,7 +42,7 @@ func NewNotificationMessageProcessor(
 	notifier push.MessageNotifier,
 ) *MessageToNotificationsProcessor {
 	subscriptionExpiration := 90 * 24 * time.Hour // 90 days default
-	if config.SubscriptionExpirationDuration != time.Duration(0) {
+	if config.SubscriptionExpirationDuration > time.Duration(0) {
 		subscriptionExpiration = config.SubscriptionExpirationDuration
 	}
 
@@ -322,6 +322,14 @@ func (p *MessageToNotificationsProcessor) sendNotification(
 
 		for _, sub := range userPref.Subscriptions.WebPush {
 			if time.Since(sub.LastSeen) >= p.subscriptionExpiration {
+				p.log.Warn("Ignore WebPush subscription due to no activity",
+					"user", user,
+					"event", event.Hash,
+					"channelID", channelID,
+					"lastSeen", sub.LastSeen,
+					"since", time.Since(sub.LastSeen),
+					"sub.expiration", p.subscriptionExpiration,
+				)
 				continue
 			}
 
@@ -372,6 +380,14 @@ func (p *MessageToNotificationsProcessor) sendNotification(
 
 		for _, sub := range userPref.Subscriptions.APNPush {
 			if time.Since(sub.LastSeen) >= p.subscriptionExpiration {
+				p.log.Warn("Ignore APN subscription due to no activity",
+					"user", user,
+					"event", event.Hash,
+					"channelID", channelID,
+					"lastSeen", sub.LastSeen,
+					"since", time.Since(sub.LastSeen),
+					"sub.expiration", p.subscriptionExpiration,
+				)
 				continue
 			}
 

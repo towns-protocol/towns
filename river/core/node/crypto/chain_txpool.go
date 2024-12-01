@@ -696,10 +696,10 @@ func (r *transactionPool) Submit(
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	return r.submitNoLock(ctx, name, createTx, true)
+	return r.submitLocked(ctx, name, createTx, true)
 }
 
-func (r *transactionPool) submitNoLock(
+func (r *transactionPool) submitLocked(
 	ctx context.Context,
 	name string,
 	createTx CreateTransaction,
@@ -746,7 +746,7 @@ func (r *transactionPool) submitNoLock(
 		// caught up the fetched nonce can be too low. Fetch the nonce again recovers from this scenario.
 		if canRetry && strings.Contains(strings.ToLower(err.Error()), "nonce too low") {
 			r.lastNonce = nil
-			return r.submitNoLock(ctx, name, createTx, false)
+			return r.submitLocked(ctx, name, createTx, false)
 		}
 		return nil, err
 	}

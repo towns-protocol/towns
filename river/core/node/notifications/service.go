@@ -232,7 +232,7 @@ func (s *Service) SetSpaceSettings(
 
 	err = s.userPreferences.SetSpaceSettings(ctx, userID, spaceID, value)
 	if err != nil {
-		return nil, AsRiverError(err).Func("UpdateSpaceSettings")
+		return nil, AsRiverError(err).Func("SetSpaceSettings")
 	}
 
 	return connect.NewResponse(&SetSpaceSettingsResponse{}), nil
@@ -254,7 +254,7 @@ func (s *Service) SetDmChannelSetting(
 
 	channelID, err := shared.StreamIdFromBytes(msg.GetDmChannelId())
 	if err != nil {
-		return nil, AsRiverError(err).Func("SetSpaceChannelSettings")
+		return nil, AsRiverError(err).Func("SetDmChannelSetting")
 	}
 
 	if channelID.Type() != shared.STREAM_DM_CHANNEL_BIN {

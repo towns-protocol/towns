@@ -15,8 +15,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getWeb3Deployment, getWeb3Deployments } from '@river-build/web3'
 import { deleteAuth, storeAuth } from '@/utils/persist-auth'
-import { getEthersSigner } from '@/utils/viem-to-ethers'
-import { wagmiConfig } from '@/config/wagmi'
+import { useEthersSigner } from '@/utils/viem-to-ethers'
 import { Button } from '../ui/button'
 import {
     Dialog,
@@ -69,6 +68,7 @@ export const RiverEnvSwitcherContent = (props: {
     const { disconnect: disconnectWallet } = useDisconnect()
     const [bearerToken, setBearerToken] = useState('')
     const navigate = useNavigate()
+    const signer = useEthersSigner()
 
     return (
         <DialogContent className="gap-6">
@@ -115,9 +115,9 @@ export const RiverEnvSwitcherContent = (props: {
                                         }
                                     } else {
                                         switchChain?.({ chainId })
-                                        const signer = await getEthersSigner(wagmiConfig, {
-                                            chainId,
-                                        })
+                                        if (!signer) {
+                                            return
+                                        }
                                         await connect(signer, {
                                             riverConfig,
                                         }).then((sync) => {

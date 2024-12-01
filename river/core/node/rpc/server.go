@@ -385,7 +385,6 @@ func (s *Service) initRiverChain() error {
 	s.streamRegistry, err = nodes.NewStreamRegistry(
 		ctx,
 		s.riverChain,
-		walletAddress,
 		s.nodeRegistry,
 		s.registryContract,
 		s.chainConfig,

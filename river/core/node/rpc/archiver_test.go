@@ -11,6 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/river-build/river/core/contracts/river"
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/events"
@@ -261,6 +262,7 @@ func TestArchiveOneStream(t *testing.T) {
 
 	pool, err := storage.CreateAndValidatePgxPool(ctx, dbCfg, schema, nil)
 	require.NoError(err)
+	tester.cleanup(pool.Pool.Close)
 
 	streamStorage, err := storage.NewPostgresStreamStore(
 		ctx,
@@ -292,7 +294,7 @@ func TestArchiveOneStream(t *testing.T) {
 	require.Zero(num) // Only genesis miniblock is created
 
 	// Add event to the stream, create miniblock, and archive it
-	err = addUserBlockedFillerEvent(ctx, wallet, client, streamId, MiniblockRefFromContractRecord(&streamRecord))
+	err = addUserBlockedFillerEvent(ctx, wallet, client, streamId, river.MiniblockRefFromContractRecord(&streamRecord))
 	require.NoError(err)
 
 	mbRef, err := makeMiniblock(ctx, client, streamId, false, 0)
@@ -334,7 +336,7 @@ func TestArchiveOneStream(t *testing.T) {
 }
 
 func makeTestServerOpts(tester *serviceTester) *ServerStartOpts {
-	listener, _ := makeTestListener(tester.t)
+	listener, _ := tester.makeTestListener()
 	return &ServerStartOpts{
 		RiverChain:      tester.btc.NewWalletAndBlockchain(tester.ctx),
 		Listener:        listener,
@@ -366,6 +368,7 @@ func TestArchive100Streams(t *testing.T) {
 		true,
 	)
 	require.NoError(err)
+	tester.cleanup(arch.Close)
 
 	arch.Archiver.WaitForStart()
 	require.Len(arch.ExitSignal(), 0)
@@ -398,6 +401,7 @@ func TestArchive100StreamsWithData(t *testing.T) {
 	serverCtx, serverCancel := context.WithCancel(ctx)
 	arch, err := StartServerInArchiveMode(serverCtx, archiveCfg, makeTestServerOpts(tester), true)
 	require.NoError(err)
+	tester.cleanup(arch.Close)
 
 	arch.Archiver.WaitForStart()
 	require.Len(arch.ExitSignal(), 0)
@@ -438,7 +442,7 @@ func TestArchiveContinuous(t *testing.T) {
 	serverCtx, serverCancel := context.WithCancel(ctx)
 	arch, err := StartServerInArchiveMode(serverCtx, archiveCfg, makeTestServerOpts(tester), false)
 	require.NoError(err)
-
+	tester.cleanup(arch.Close)
 	arch.Archiver.WaitForStart()
 	require.Len(arch.ExitSignal(), 0)
 

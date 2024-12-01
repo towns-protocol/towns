@@ -3,6 +3,7 @@ package rpc
 import (
 	"context"
 	"crypto/tls"
+	"fmt"
 	"hash/fnv"
 	"io"
 	"log"
@@ -69,12 +70,17 @@ type serviceTesterOpts struct {
 	start             bool
 }
 
-func makeTestListener(t *testing.T) (net.Listener, string) {
+func makeTestListenerNoCleanup(t *testing.T) (net.Listener, string) {
 	listener, err := net.Listen("tcp", "localhost:0")
 	require.NoError(t, err)
 	listener = tls.NewListener(listener, testcert.GetHttp2LocalhostTLSConfig())
-	t.Cleanup(func() { _ = listener.Close() })
 	return listener, "https://" + listener.Addr().String()
+}
+
+func makeTestListener(t *testing.T) (net.Listener, string) {
+	l, url := makeTestListenerNoCleanup(t)
+	t.Cleanup(func() { _ = l.Close() })
+	return l, url
 }
 
 func newServiceTester(t *testing.T, opts serviceTesterOpts) *serviceTester {
@@ -89,8 +95,6 @@ func newServiceTester(t *testing.T, opts serviceTesterOpts) *serviceTester {
 	}
 
 	ctx, ctxCancel := test.NewTestContext()
-	t.Cleanup(ctxCancel)
-
 	require := require.New(t)
 
 	st := &serviceTester{
@@ -103,17 +107,20 @@ func newServiceTester(t *testing.T, opts serviceTesterOpts) *serviceTester {
 		opts:      opts,
 	}
 
+	// Cleanup context on test completion even if no other cleanups are registered.
+	st.cleanup(func() {})
+
 	btc, err := crypto.NewBlockchainTestContext(
 		st.ctx,
 		crypto.TestParams{NumKeys: opts.numNodes, MineOnTx: true, AutoMine: true},
 	)
 	require.NoError(err)
 	st.btc = btc
-	t.Cleanup(st.btc.Close)
+	st.cleanup(st.btc.Close)
 
 	for i := 0; i < opts.numNodes; i++ {
 		st.nodes[i] = &testNodeRecord{}
-		st.nodes[i].listener, st.nodes[i].url = makeTestListener(t)
+		st.nodes[i].listener, st.nodes[i].url = st.makeTestListener()
 	}
 
 	st.startAutoMining()
@@ -133,7 +140,61 @@ func newServiceTester(t *testing.T, opts serviceTesterOpts) *serviceTester {
 	return st
 }
 
-func (st serviceTester) CloseNode(i int) {
+// Returns a new serviceTester instance for a makeSubtest.
+//
+// The new instance shares nodes with the parent instance,
+// if parallel tests are run, node restarts or other changes should not be performed.
+func (st *serviceTester) makeSubtest(t *testing.T) *serviceTester {
+	var sub serviceTester = *st
+	sub.t = t
+	sub.ctx, sub.ctxCancel = context.WithCancel(st.ctx)
+	sub.require = require.New(t)
+
+	// Cleanup context on subtest completion even if no other cleanups are registered.
+	sub.cleanup(func() {})
+
+	return &sub
+}
+
+func (st *serviceTester) parallelSubtest(name string, test func(*serviceTester)) {
+	st.t.Run(name, func(t *testing.T) {
+		t.Parallel()
+		test(st.makeSubtest(t))
+	})
+}
+
+func (st *serviceTester) sequentialSubtest(name string, test func(*serviceTester)) {
+	st.t.Run(name, func(t *testing.T) {
+		test(st.makeSubtest(t))
+	})
+}
+
+func (st *serviceTester) cleanup(f any) {
+	st.t.Cleanup(func() {
+		st.t.Helper()
+		// On first cleanup call cancel context for the current test, so relevant shutdowns are started.
+		if st.ctxCancel != nil {
+			st.ctxCancel()
+			st.ctxCancel = nil
+		}
+		switch f := f.(type) {
+		case func():
+			f()
+		case func() error:
+			_ = f()
+		default:
+			panic(fmt.Sprintf("unsupported cleanup type: %T", f))
+		}
+	})
+}
+
+func (st *serviceTester) makeTestListener() (net.Listener, string) {
+	l, url := makeTestListenerNoCleanup(st.t)
+	st.cleanup(l.Close)
+	return l, url
+}
+
+func (st *serviceTester) CloseNode(i int) {
 	if st.nodes[i] != nil {
 		st.nodes[i].Close(st.ctx, st.dbUrl)
 	}
@@ -278,13 +339,7 @@ func (st *serviceTester) startSingle(i int, opts ...startOpts) error {
 
 	var nodeRecord testNodeRecord = *st.nodes[i]
 
-	st.t.Cleanup(func() {
-		// Cancel context here: t.Cleanup calls functions in reverse order,
-		// but it's better to cancel context first.
-		// Since it's ok to cancel context multiple times, it's safe to cancel it here.
-		st.ctxCancel()
-		nodeRecord.Close(st.ctx, st.dbUrl)
-	})
+	st.cleanup(func() { nodeRecord.Close(st.ctx, st.dbUrl) })
 
 	return nil
 }

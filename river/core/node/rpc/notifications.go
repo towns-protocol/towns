@@ -129,10 +129,14 @@ func StartServerInNotificationMode(
 	notifier push.MessageNotifier,
 	opts *ServerStartOpts,
 ) (*Service, error) {
+	ctx = config.CtxWithConfig(ctx, cfg)
+	ctx, ctxCancel := context.WithCancel(ctx)
+
 	notificationService := &Service{
-		serverCtx:  ctx,
-		config:     cfg,
-		exitSignal: make(chan error, 1),
+		serverCtx:       ctx,
+		serverCtxCancel: ctxCancel,
+		config:          cfg,
+		exitSignal:      make(chan error, 1),
 	}
 
 	err := notificationService.startNotificationMode(notifier, opts)

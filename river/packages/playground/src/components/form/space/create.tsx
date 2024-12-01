@@ -13,8 +13,7 @@ import {
 } from '@/components/ui/form'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { getEthersSigner } from '@/utils/viem-to-ethers'
-import { wagmiConfig } from '@/config/wagmi'
+import { useEthersSigner } from '@/utils/viem-to-ethers'
 
 const createSpaceFormSchema = z.object({
     spaceName: z.string().min(1, { message: 'Space name is required' }),
@@ -23,7 +22,7 @@ const createSpaceFormSchema = z.object({
 export const CreateSpace = (props: { onCreateSpace: (spaceId: string) => void }) => {
     const { onCreateSpace } = props
     const { createSpace, isPending } = useCreateSpace()
-
+    const signer = useEthersSigner()
     const form = useForm<z.infer<typeof createSpaceFormSchema>>({
         resolver: zodResolver(createSpaceFormSchema),
         defaultValues: { spaceName: '' },
@@ -34,7 +33,9 @@ export const CreateSpace = (props: { onCreateSpace: (spaceId: string) => void })
             <form
                 className="space-y-3"
                 onSubmit={form.handleSubmit(async ({ spaceName }) => {
-                    const signer = await getEthersSigner(wagmiConfig)
+                    if (!signer) {
+                        return
+                    }
                     const { spaceId } = await createSpace({ spaceName }, signer)
                     onCreateSpace(spaceId)
                 })}

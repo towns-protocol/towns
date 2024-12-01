@@ -11,7 +11,7 @@ import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {River} from "contracts/src/tokens/river/base/River.sol";
 
 contract DeployRiverBase is Deployer, IRiverBase {
-  address public bridgeBase = 0x4200000000000000000000000000000000000010; // L2StandardBridge
+  address public bridgeBase; // L2StandardBridge
   address public l1Token;
 
   function versionName() public pure override returns (string memory) {
@@ -20,9 +20,18 @@ contract DeployRiverBase is Deployer, IRiverBase {
 
   function __deploy(address deployer) public override returns (address) {
     l1Token = _getToken();
+    bridgeBase = _getBridge(deployer);
 
     vm.broadcast(deployer);
     return address(new River({_bridge: bridgeBase, _remoteToken: l1Token}));
+  }
+
+  function _getBridge(address deployer) internal view returns (address) {
+    if (block.chainid == 31337 || block.chainid == 31338) {
+      return deployer;
+    } else {
+      return 0x4200000000000000000000000000000000000010;
+    }
   }
 
   function _getToken() internal view returns (address) {

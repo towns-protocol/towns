@@ -11,6 +11,8 @@ import {SpaceDelegationFacet} from "contracts/src/base/registry/facets/delegatio
 
 // contracts
 import {Interaction} from "contracts/scripts/common/Interaction.s.sol";
+import {River} from "contracts/src/tokens/river/base/River.sol";
+import {MAX_CLAIMABLE_SUPPLY} from "./InteractClaimCondition.s.sol";
 
 // deployments
 import {DeploySpaceOwner} from "contracts/scripts/deployments/diamonds/DeploySpaceOwner.s.sol";
@@ -28,6 +30,7 @@ contract InteractPostDeploy is Interaction {
   DeployProxyBatchDelegation deployProxyDelegation =
     new DeployProxyBatchDelegation();
   DeployRiverAirdrop deployRiverAirdrop = new DeployRiverAirdrop();
+
   function __interact(address deployer) internal override {
     address spaceOwner = deploySpaceOwner.deploy(deployer);
     address spaceFactory = deploySpaceFactory.deploy(deployer);
@@ -35,7 +38,10 @@ contract InteractPostDeploy is Interaction {
     address riverBaseToken = deployRiverBaseToken.deploy(deployer);
     address mainnetProxyDelegation = deployProxyDelegation.deploy(deployer);
     address riverAirdrop = deployRiverAirdrop.deploy(deployer);
+
     vm.startBroadcast(deployer);
+    // this is for anvil deployment only
+    River(riverBaseToken).mint(riverAirdrop, MAX_CLAIMABLE_SUPPLY);
     ISpaceOwner(spaceOwner).setFactory(spaceFactory);
     IImplementationRegistry(spaceFactory).addImplementation(baseRegistry);
     IImplementationRegistry(spaceFactory).addImplementation(riverAirdrop);

@@ -2,7 +2,7 @@ import { useJoinSpace } from '@river-build/react-sdk'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
-import { getEthersSigner } from '@/utils/viem-to-ethers'
+import { useEthersSigner } from '@/utils/viem-to-ethers'
 import {
     Form,
     FormControl,
@@ -13,7 +13,6 @@ import {
 } from '@/components/ui/form'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { wagmiConfig } from '@/config/wagmi'
 
 const joinSpaceFormSchema = z.object({
     spaceId: z.string().min(1, { message: 'Space Id is required' }),
@@ -22,7 +21,7 @@ const joinSpaceFormSchema = z.object({
 export const JoinSpace = (props: { onJoinSpace: (spaceId: string) => void }) => {
     const { onJoinSpace } = props
     const { joinSpace, isPending } = useJoinSpace()
-
+    const signer = useEthersSigner()
     const form = useForm<z.infer<typeof joinSpaceFormSchema>>({
         resolver: zodResolver(joinSpaceFormSchema),
         defaultValues: { spaceId: '' },
@@ -33,7 +32,9 @@ export const JoinSpace = (props: { onJoinSpace: (spaceId: string) => void }) => 
             <form
                 className="space-y-4"
                 onSubmit={form.handleSubmit(async ({ spaceId }) => {
-                    const signer = await getEthersSigner(wagmiConfig)
+                    if (!signer) {
+                        return
+                    }
                     joinSpace(spaceId, signer).then(() => {
                         onJoinSpace(spaceId)
                     })

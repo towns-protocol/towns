@@ -61,11 +61,11 @@ func NewStreamNodes(nodes []common.Address, localNode common.Address) StreamNode
 	streamNodes := &streamNodesImpl{
 		localNode: localNode,
 	}
-	streamNodes.resetNoLock(nodes)
+	streamNodes.resetLocked(nodes)
 	return streamNodes
 }
 
-func (s *streamNodesImpl) resetNoLock(nodes []common.Address) {
+func (s *streamNodesImpl) resetLocked(nodes []common.Address) {
 	var lastStickyAddr common.Address
 	if s.stickyPeerIndex < len(s.remotes) {
 		lastStickyAddr = s.remotes[s.stickyPeerIndex]
@@ -164,10 +164,10 @@ func (s *streamNodesImpl) NumRemotes() int {
 func (s *streamNodesImpl) Update(n common.Address, isAdded bool) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	return s.updateNoLock(n, isAdded)
+	return s.updateLocked(n, isAdded)
 }
 
-func (s *streamNodesImpl) updateNoLock(n common.Address, isAdded bool) error {
+func (s *streamNodesImpl) updateLocked(n common.Address, isAdded bool) error {
 	var newNodes []common.Address
 	if isAdded {
 		if slices.Contains(s.nodes, n) {
@@ -189,6 +189,6 @@ func (s *streamNodesImpl) updateNoLock(n common.Address, isAdded bool) error {
 		newNodes = slices.Concat(s.nodes[:index], s.nodes[index+1:])
 	}
 
-	s.resetNoLock(newNodes)
+	s.resetLocked(newNodes)
 	return nil
 }

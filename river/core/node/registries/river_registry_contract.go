@@ -275,17 +275,23 @@ func (c *RiverRegistryContract) GetStream(
 func (c *RiverRegistryContract) GetStreamWithGenesis(
 	ctx context.Context,
 	streamId StreamId,
-) (*GetStreamResult, common.Hash, []byte, error) {
-	stream, mbHash, mb, err := c.StreamRegistry.GetStreamWithGenesis(c.callOpts(ctx), streamId)
+) (*GetStreamResult, common.Hash, []byte, crypto.BlockNumber, error) {
+	blockNum, err := c.Blockchain.GetBlockNumber(ctx)
 	if err != nil {
-		return nil, common.Hash{}, nil, WrapRiverError(
+		return nil, common.Hash{}, nil, blockNum, err
+	}
+
+	stream, mbHash, mb, err := c.StreamRegistry.GetStreamWithGenesis(c.callOptsWithBlockNum(ctx, blockNum), streamId)
+	if err != nil {
+		return nil, common.Hash{}, nil, blockNum, WrapRiverError(
 			Err_CANNOT_CALL_CONTRACT,
 			err,
 		).Func("GetStream").
-			Message("Call failed")
+			Message("Call failed").
+			Tag("blockNum", blockNum)
 	}
 	ret := makeGetStreamResult(streamId, &stream)
-	return ret, mbHash, mb, nil
+	return ret, mbHash, mb, blockNum, nil
 }
 
 func (c *RiverRegistryContract) GetStreamCount(ctx context.Context, blockNum crypto.BlockNumber) (int64, error) {
@@ -880,8 +886,11 @@ func (c *RiverRegistryContract) OnStreamEvent(
 	return nil
 }
 
-func (c *RiverRegistryContract) FilterStreamEvents(ctx context.Context, logs []*types.Log) ([]any, []error) {
-	ret := []any{}
+func (c *RiverRegistryContract) FilterStreamEvents(
+	ctx context.Context,
+	logs []*types.Log,
+) (map[StreamId][]river.EventWithStreamId, []error) {
+	ret := map[StreamId][]river.EventWithStreamId{}
 	var finalErrs []error
 	for _, log := range logs {
 		if log.Address != c.Address || len(log.Topics) == 0 || !slices.Contains(c.StreamEventTopics[0], log.Topics[0]) {
@@ -892,7 +901,16 @@ func (c *RiverRegistryContract) FilterStreamEvents(ctx context.Context, logs []*
 			finalErrs = append(finalErrs, err)
 			continue
 		}
-		ret = append(ret, parsed)
+		withStreamId, ok := parsed.(river.EventWithStreamId)
+		if !ok {
+			finalErrs = append(
+				finalErrs,
+				RiverError(Err_INTERNAL, "Event does not implement EventWithStreamId", "event", parsed),
+			)
+			continue
+		}
+		streamId := withStreamId.GetStreamId()
+		ret[streamId] = append(ret[streamId], withStreamId)
 	}
 	return ret, finalErrs
 }

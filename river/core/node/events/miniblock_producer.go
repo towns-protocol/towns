@@ -301,18 +301,47 @@ func (p *miniblockProducer) TestMakeMiniblock(
 }
 
 func combineProposals(
+	ctx context.Context,
 	remoteQuorumNum int,
 	local *MiniblockProposal,
 	remote []*MiniblockProposal,
 ) (*MiniblockProposal, error) {
+	log := dlog.FromCtx(ctx)
 	// Filter remotes that don't match local prerequisites.
 	remote = slices.DeleteFunc(remote, func(p *MiniblockProposal) bool {
-		return p.NewMiniblockNum != local.NewMiniblockNum || !bytes.Equal(p.PrevMiniblockHash, local.PrevMiniblockHash)
+		if p.NewMiniblockNum != local.NewMiniblockNum {
+			log.Info(
+				"combineProposals: ignoring remote proposal: mb number mismatch",
+				"remoteNum",
+				p.NewMiniblockNum,
+				"localNum",
+				local.NewMiniblockNum,
+			)
+			return true
+		}
+		if !bytes.Equal(p.PrevMiniblockHash, local.PrevMiniblockHash) {
+			log.Info(
+				"combineProposals: ignoring remote proposal: prev hash mismatch",
+				"remoteHash",
+				p.PrevMiniblockHash,
+				"localHash",
+				local.PrevMiniblockHash,
+			)
+			return true
+		}
+		return false
 	})
 
 	// Check if we have enough remote proposals.
 	if len(remote) < remoteQuorumNum {
-		return nil, RiverError(Err_INTERNAL, "combineProposals: not enough remote proposals")
+		return nil, RiverError(
+			Err_INTERNAL,
+			"combineProposals: not enough remote proposals",
+			"remoteNum",
+			len(remote),
+			"remoteQuorumNum",
+			remoteQuorumNum,
+		)
 	}
 
 	all := append(remote, local)
@@ -463,7 +492,7 @@ func mbProduceCandiate_Make(
 			return nil, RiverError(Err_INTERNAL, "mbProposeAndStore: not enough remote proposals")
 		}
 
-		combinedProposal, err = combineProposals(remoteQuorumNum, localProposal, remoteProposals)
+		combinedProposal, err = combineProposals(ctx, remoteQuorumNum, localProposal, remoteProposals)
 		if err != nil {
 			return nil, err
 		}

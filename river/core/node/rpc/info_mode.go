@@ -58,10 +58,14 @@ func StartServerInInfoMode(
 	cfg *config.Config,
 	opts *ServerStartOpts,
 ) (*Service, error) {
+	ctx = config.CtxWithConfig(ctx, cfg)
+	ctx, ctxCancel := context.WithCancel(ctx)
+
 	streamService := &Service{
-		serverCtx:  ctx,
-		config:     cfg,
-		exitSignal: make(chan error, 1),
+		serverCtx:       ctx,
+		serverCtxCancel: ctxCancel,
+		config:          cfg,
+		exitSignal:      make(chan error, 1),
 	}
 
 	err := streamService.startInfoMode(opts)
