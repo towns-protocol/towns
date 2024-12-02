@@ -4,7 +4,10 @@ import {
     Address,
     LookupUser,
     MessageReactions,
+    Permission,
     ThreadStats,
+    useConnectivity,
+    useHasPermission,
     useMyUserId,
     useUserLookup,
 } from 'use-towns-client'
@@ -105,6 +108,15 @@ export const MessageLayout = (props: Props) => {
         pin,
         ...boxProps
     } = props
+
+    const { loggedInWalletAddress } = useConnectivity()
+
+    const { hasPermission: canRedact } = useHasPermission({
+        spaceId: spaceId ?? '',
+        walletAddress: loggedInWalletAddress ?? '',
+        permission: Permission.Redact,
+        channelId,
+    })
 
     const ref = useRef<HTMLDivElement>(null)
     const { isTouch } = useDevice()
@@ -300,6 +312,7 @@ export const MessageLayout = (props: Props) => {
                         canReact={isChannelReactable}
                         canPin={canPin}
                         canReply={canReply && isChannelWritable}
+                        canRedact={canRedact}
                         channelId={channelId}
                         eventId={eventId}
                         latestEventId={latestEventId}
@@ -315,6 +328,7 @@ export const MessageLayout = (props: Props) => {
                     canPin={canPin}
                     canReply={canReply && isChannelWritable}
                     canReact={isChannelReactable}
+                    canRedact={canRedact}
                     channelId={channelId}
                     spaceId={spaceId}
                     eventId={eventId}

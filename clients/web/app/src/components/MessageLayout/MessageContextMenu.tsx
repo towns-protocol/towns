@@ -1,6 +1,5 @@
 import React, { useCallback, useContext, useMemo, useRef } from 'react'
-import { Permission, useConnectivity, useHasPermission, useTownsClient } from 'use-towns-client'
-import isError from 'lodash/isError'
+import { useTownsClient } from 'use-towns-client'
 import { EmojiPickerButton } from '@components/EmojiPickerButton'
 import { Box, BoxProps, IconButton, IconName, MotionStack, Paragraph, Stack } from '@ui'
 import { useOpenMessageThread } from 'hooks/useOpenThread'
@@ -20,10 +19,9 @@ import { isInputFocused } from '@components/RichTextPlate/utils/helpers'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { CHANNEL_INFO_PARAMS } from 'routes'
 import { getThreadReplyOrDmReply, trackPostedMessage } from '@components/Analytics/postedMessage'
-import { popupToast } from '@components/Notifications/popupToast'
-import { StandardToast } from '@components/Notifications/StandardToast'
 import { useCreateUnreadMarker } from './hooks/useCreateUnreadMarker'
 import { DeleteMessagePrompt } from './DeleteMessagePrompt'
+import { useRedactMessage } from './hooks/useRedactMessage'
 
 type Props = {
     eventId: string
@@ -35,6 +33,7 @@ type Props = {
     canPin?: boolean
     canReply?: boolean
     canReact?: boolean
+    canRedact?: boolean
     isFocused?: boolean
     isPinned?: boolean
 }
@@ -46,17 +45,18 @@ const style = {
 }
 
 export const MessageContextMenu = (props: Props) => {
-    const { eventId, latestEventId, channelId, spaceId, threadParentId, isFocused, isPinned } =
-        props
-
     const {
-        redactEvent,
-        sendReaction,
-        sendReadReceipt,
-        clientSingleton,
-        pinMessage,
-        unpinMessage,
-    } = useTownsClient()
+        eventId,
+        latestEventId,
+        channelId,
+        spaceId,
+        threadParentId,
+        isFocused,
+        isPinned,
+        canRedact,
+    } = props
+
+    const { sendReaction, sendReadReceipt, pinMessage, unpinMessage } = useTownsClient()
     const timelineContext = useContext(MessageTimelineContext)
 
     const { canReplyInline, replyToEventId, setReplyToEventId } = useContext(ReplyToMessageContext)
@@ -64,15 +64,22 @@ export const MessageContextMenu = (props: Props) => {
 
     const [copiedText, copy] = useCopyToClipboard()
     const hasCopied = !!copiedText
-    const { loggedInWalletAddress } = useConnectivity()
     const { threadId } = useRouteParams()
     const { openPanel } = usePanelActions()
-
-    const { hasPermission: canRedact } = useHasPermission({
-        spaceId: spaceId ?? '',
-        walletAddress: loggedInWalletAddress ?? '',
-        permission: Permission.Redact,
+    const {
+        onRedactSelfConfirm,
+        onRedactOtherConfirm,
+        setDeletePromptToRedactSelf,
+        setDeletePromptToRedactOther,
+        setDeletePromptToUndefined,
+        deletePrompt,
+    } = useRedactMessage({
         channelId,
+        eventId,
+        spaceId,
+        threadId,
+        canReplyInline,
+        replyToEventId: replyToEventId ?? undefined,
     })
 
     const onSelectEmoji = useCallback(
@@ -100,28 +107,9 @@ export const MessageContextMenu = (props: Props) => {
     )
     const ref = useRef<HTMLDivElement>(null)
 
-    const [deletePrompt, setDeletePrompt] = React.useState<
-        'adminRedaction' | 'redaction' | undefined
-    >(undefined)
-
-    const onDeleteClick = useShortcut(
-        'DeleteMessage',
-        useCallback(() => {
-            if (channelId && eventId) {
-                setDeletePrompt('redaction')
-            }
-        }, [channelId, eventId, setDeletePrompt]),
-        { enableOnContentEditable: false, enabled: !isInputFocused() },
-        [],
-    )
-
     const onVerifySignature = useCallback(() => {
         openPanel(CHANNEL_INFO_PARAMS.VERIFY_EVENT_SIGNATURE, { eventId, streamId: channelId })
     }, [openPanel, eventId, channelId])
-
-    const onDeleteCancel = useCallback(() => {
-        setDeletePrompt(undefined)
-    }, [])
 
     const timeline = timelineContext?.events
 
@@ -157,46 +145,6 @@ export const MessageContextMenu = (props: Props) => {
         [],
     )
 
-    const onRedactConfirm = useCallback(() => {
-        if (channelId) {
-            redactEvent(channelId, eventId)
-
-            trackPostedMessage({
-                spaceId,
-                channelId,
-                threadId,
-                canReplyInline,
-                replyToEventId,
-                messageType: 'redacted',
-            })
-        }
-    }, [canReplyInline, channelId, eventId, redactEvent, replyToEventId, spaceId, threadId])
-
-    const onAdminRedactConfirm = useCallback(async () => {
-        if (channelId && eventId) {
-            try {
-                await clientSingleton?.adminRedactMessage(channelId, eventId)
-                trackPostedMessage({
-                    spaceId,
-                    channelId,
-                    threadId,
-                    canReplyInline,
-                    replyToEventId,
-                    messageType: 'admin redacted',
-                })
-            } catch (error) {
-                console.error('onAdminRedactConfirm failed to redact message', error)
-                popupToast(({ toast }) => (
-                    <StandardToast.Error
-                        message="Failed to redact message"
-                        subMessage={isError(error) ? error.toString() : undefined}
-                        toast={toast}
-                    />
-                ))
-            }
-        }
-    }, [channelId, eventId, clientSingleton, spaceId, threadId, canReplyInline, replyToEventId])
-
     const onCopyLinkToMessage = useShortcut(
         'CopyLinkToMessage',
         useCallback(() => {
@@ -220,10 +168,6 @@ export const MessageContextMenu = (props: Props) => {
         { enableOnContentEditable: false, enabled: !isInputFocused() },
         [],
     )
-
-    const onAdminRedact = useCallback(() => {
-        setDeletePrompt('adminRedaction')
-    }, [setDeletePrompt])
 
     const onPinMessage = useCallback(() => {
         const e = latestEventId ?? eventId
@@ -300,7 +244,7 @@ export const MessageContextMenu = (props: Props) => {
                 text: 'Delete message',
                 color: 'error',
                 shortcutAction: 'DeleteMessage' as const,
-                onClick: props.canEdit ? onDeleteClick : onAdminRedact,
+                onClick: props.canEdit ? setDeletePromptToRedactSelf : setDeletePromptToRedactOther,
             } as const)
         }
 
@@ -315,8 +259,6 @@ export const MessageContextMenu = (props: Props) => {
     }, [
         canRedact,
         isPinned,
-        onAdminRedact,
-        onDeleteClick,
         onEditClick,
         onMarkAsUnreadClick,
         onPinMessage,
@@ -324,6 +266,8 @@ export const MessageContextMenu = (props: Props) => {
         onVerifySignature,
         props.canEdit,
         props.canPin,
+        setDeletePromptToRedactOther,
+        setDeletePromptToRedactSelf,
         spaceId,
     ])
 
@@ -397,9 +341,9 @@ export const MessageContextMenu = (props: Props) => {
 
             {deletePrompt && (
                 <DeleteMessagePrompt
-                    onDeleteCancel={onDeleteCancel}
+                    onDeleteCancel={setDeletePromptToUndefined}
                     onDeleteConfirm={
-                        deletePrompt === 'adminRedaction' ? onAdminRedactConfirm : onRedactConfirm
+                        deletePrompt === 'redactOther' ? onRedactOtherConfirm : onRedactSelfConfirm
                     }
                 />
             )}

@@ -17,6 +17,7 @@ import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { CHANNEL_INFO_PARAMS } from 'routes'
 import { getThreadReplyOrDmReply, trackPostedMessage } from '@components/Analytics/postedMessage'
 import { DeleteMessagePrompt } from './DeleteMessagePrompt'
+import { useRedactMessage } from './hooks/useRedactMessage'
 
 type Props = {
     onClose: () => void
@@ -27,6 +28,7 @@ type Props = {
     canPin?: boolean
     canReply?: boolean
     canReact?: boolean
+    canRedact?: boolean
     messageBody?: string
     threadParentId?: string
     isPinned?: boolean
@@ -52,13 +54,13 @@ export const MessageModalSheet = (props: Props) => {
         canEdit,
         canPin,
         canReact,
+        canRedact,
         isPinned,
         messageBody,
         threadParentId,
     } = props
     const [isHidden, setIsHidden] = React.useState(false)
-    const { redactEvent, sendReaction, sendReadReceipt, pinMessage, unpinMessage } =
-        useTownsClient()
+    const { sendReaction, sendReadReceipt, pinMessage, unpinMessage } = useTownsClient()
     const { threadId } = useRouteParams()
     const { openPanel } = usePanelActions()
 
@@ -96,33 +98,23 @@ export const MessageModalSheet = (props: Props) => {
         }
     }, [canReplyInline, eventId, onClose, onOpenMessageThread, setReplyToEventId])
 
+    const {
+        onRedactSelfConfirm,
+        onRedactOtherConfirm,
+        setDeletePromptToRedactSelf,
+        setDeletePromptToRedactOther,
+        setDeletePromptToUndefined,
+        deletePrompt,
+    } = useRedactMessage({
+        channelId,
+        eventId,
+        spaceId,
+        threadId,
+        canReplyInline,
+        replyToEventId: replyToEventId ?? undefined,
+    })
+
     const [activePrompt, setActivePrompt] = useState<'emoji' | 'delete' | undefined>(undefined)
-
-    const onDeleteClick = useCallback(() => {
-        if (channelId && eventId) {
-            setActivePrompt('delete')
-            setIsHidden(true)
-        }
-    }, [channelId, eventId])
-
-    const onDeleteConfirm = useCallback(() => {
-        if (channelId) {
-            redactEvent(channelId, eventId)
-            trackPostedMessage({
-                spaceId,
-                channelId,
-                messageType: 'redacted',
-                threadId,
-                canReplyInline,
-                replyToEventId,
-            })
-        }
-    }, [canReplyInline, channelId, eventId, redactEvent, replyToEventId, spaceId, threadId])
-
-    const onDeleteCancel = useCallback(() => {
-        setActivePrompt(undefined)
-        setIsHidden(false)
-    }, [])
 
     const onCancelEmoji = useCallback(() => {
         setActivePrompt(undefined)
@@ -316,12 +308,19 @@ export const MessageModalSheet = (props: Props) => {
                                             onClick={onEditClick}
                                         />
                                     )}
-                                    {canEdit && (
+                                    {(canEdit || (canRedact && spaceId)) && (
                                         <TableCell
                                             isError
                                             iconType="delete"
                                             text="Delete Message"
-                                            onClick={onDeleteClick}
+                                            onClick={() => {
+                                                setIsHidden(true)
+                                                if (canEdit) {
+                                                    setDeletePromptToRedactSelf()
+                                                } else {
+                                                    setDeletePromptToRedactOther()
+                                                }
+                                            }}
                                         />
                                     )}
 
@@ -354,10 +353,19 @@ export const MessageModalSheet = (props: Props) => {
                 <Sheet.Backdrop onTap={closeSheet} />
             </Sheet>
 
-            {activePrompt == 'delete' && (
+            {deletePrompt && (
                 <DeleteMessagePrompt
-                    onDeleteCancel={onDeleteCancel}
-                    onDeleteConfirm={onDeleteConfirm}
+                    onDeleteCancel={() => {
+                        setIsHidden(false)
+                        setDeletePromptToUndefined()
+                    }}
+                    onDeleteConfirm={async () => {
+                        if (deletePrompt === 'redactOther') {
+                            await onRedactOtherConfirm()
+                        } else {
+                            onRedactSelfConfirm()
+                        }
+                    }}
                 />
             )}
 
