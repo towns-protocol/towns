@@ -62,6 +62,13 @@ export const ChannelInfo = () => {
         walletAddress: loggedInWalletAddress ?? '',
         permission: Permission.AddRemoveChannels,
     })
+
+    const { hasPermission: canEditRoles } = useHasPermission({
+        spaceId: spaceData?.id ?? '',
+        walletAddress: loggedInWalletAddress ?? '',
+        permission: Permission.ModifySpaceSettings,
+    })
+
     const navigate = useNavigate()
     const { leaveChannel } = useLeaveChannel()
 
@@ -152,7 +159,7 @@ export const ChannelInfo = () => {
                     />
                 </Stack>
 
-                {roles && (canEditChannel || hasSomeEntitlement) && (
+                {roles && (canEditRoles || hasSomeEntitlement) && (
                     <Stack
                         padding
                         elevate
@@ -196,7 +203,7 @@ export const ChannelInfo = () => {
                                         channelId={channelId}
                                         roleId={role.roleId}
                                         permissions={role.permissions}
-                                        showDiff={canEditChannel}
+                                        showDiff={canEditRoles}
                                         key={role.roleId}
                                     />
                                 ) : (
@@ -205,9 +212,7 @@ export const ChannelInfo = () => {
                                         .join(', ')
                                 )
                             }
-                            onEditRolePermissions={
-                                canEditChannel ? onEditRolePermissions : undefined
-                            }
+                            onEditRolePermissions={canEditRoles ? onEditRolePermissions : undefined}
                         />
                     </Stack>
                 )}
