@@ -25,6 +25,7 @@ import (
 	"github.com/river-build/river/core/contracts/river"
 	"github.com/river-build/river/core/node/base/test"
 	"github.com/river-build/river/core/node/crypto"
+	"github.com/river-build/river/core/node/events"
 	"github.com/river-build/river/core/node/protocol/protocolconnect"
 	. "github.com/river-build/river/core/node/shared"
 	"github.com/river-build/river/core/node/storage"
@@ -263,6 +264,7 @@ func (st *serviceTester) startAutoMining() {
 type startOpts struct {
 	configUpdater func(cfg *config.Config)
 	listeners     []net.Listener
+	scrubberMaker func(ctx context.Context, s *Service) events.Scrubber
 }
 
 func (st *serviceTester) startNodes(start, stop int, opts ...startOpts) {
@@ -325,6 +327,7 @@ func (st *serviceTester) startSingle(i int, opts ...startOpts) error {
 		RiverChain:      bc,
 		Listener:        listener,
 		HttpClientMaker: testcert.GetHttp2LocalhostTLSClient,
+		ScrubberMaker:   options.scrubberMaker,
 	})
 	if err != nil {
 		if service != nil {

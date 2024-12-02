@@ -349,10 +349,10 @@ func (p *MessageToNotificationsProcessor) sendNotification(
 				)
 			} else {
 				if err := p.cache.RemoveExpiredWebPushSubscription(ctx, userPref.UserID, sub.Sub); err != nil {
-					p.log.Error("Unable to remove expired webpush subscription from cache",
+					p.log.Error("Unable to remove expired webpush subscription",
 						"user", userPref.UserID, "err", err)
 				} else {
-					p.log.Debug("Removed expired webpush subscription from cache", "user", userPref.UserID)
+					p.log.Info("Removed expired webpush subscription", "user", userPref.UserID)
 				}
 			}
 		}
@@ -412,11 +412,10 @@ func (p *MessageToNotificationsProcessor) sendNotification(
 					"err", err)
 			} else {
 				if err := p.cache.RemoveAPNSubscription(ctx, sub.DeviceToken, userPref.UserID); err != nil {
-					p.log.Error("Unable to remove expired APN subscription from cache",
-						"user", userPref.UserID, "deviceToken", sub.DeviceToken, "err", err)
+					p.log.Error("Unable to remove expired APN subscription",
+						"user", userPref.UserID, "err", err)
 				} else {
-					p.log.Debug("Removed expired APN subscription from cache",
-						"user", userPref.UserID, "deviceToken", sub.DeviceToken)
+					p.log.Info("Removed expired APN subscription", "user", userPref.UserID)
 				}
 			}
 		}

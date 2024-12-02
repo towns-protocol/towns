@@ -11,7 +11,6 @@ import (
 
 	. "github.com/river-build/river/core/node/base"
 	. "github.com/river-build/river/core/node/protocol"
-	"github.com/river-build/river/core/node/shared"
 	"github.com/river-build/river/core/node/utils"
 )
 
@@ -53,22 +52,6 @@ func (s *Service) SyncStreams(
 			LogLevel(log, level).
 			AsConnectError()
 	} else {
-		for _, cookie := range req.Msg.SyncPos {
-			streamId, err := shared.StreamIdFromBytes(cookie.StreamId)
-			if err != nil {
-				log.Error(
-					"Unable to derive stream id from sync cookie for scrubbing",
-					"rawStreamId",
-					cookie.StreamId,
-				)
-				continue
-			}
-
-			// If the added stream is local, schedule a scrub.
-			if stream, _ := s.cache.GetStream(ctx, streamId); stream != nil {
-				_, _ = s.scrubTaskProcessor.TryScheduleScrub(ctx, stream, false)
-			}
-		}
 		log.Debug("SyncStreams DONE", "syncId", syncId, "duration", time.Since(startTime))
 	}
 	return err
@@ -91,20 +74,6 @@ func (s *Service) AddStreamToSync(
 			Tags("syncId", req.Msg.GetSyncId(), "streamId", req.Msg.GetSyncPos().GetStreamId()).
 			LogWarn(log).
 			AsConnectError()
-	} else {
-		streamId, err := shared.StreamIdFromBytes(req.Msg.SyncPos.StreamId)
-		if err != nil {
-			log.Error(
-				"Unable to derive stream id from sync cookie for scrubbing",
-				"rawStreamId",
-				req.Msg.SyncPos.StreamId,
-			)
-		} else {
-			// If the stream is local, schedule a scrub.
-			if stream, _ := s.cache.GetStream(ctx, streamId); stream != nil {
-				_, _ = s.scrubTaskProcessor.TryScheduleScrub(ctx, stream, false)
-			}
-		}
 	}
 	return res, err
 }

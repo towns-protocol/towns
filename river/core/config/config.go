@@ -523,7 +523,7 @@ func (ac *ArchiveConfig) GetStreamsContractCallPageSize() int64 {
 type ScrubbingConfig struct {
 	// ScrubEligibleDuration is the minimum length of time that must pass before a stream is eligible
 	// to be re-scrubbed.
-	// If unset, it defaults to 1 hour.
+	// If 0, scrubbing is disabled.
 	ScrubEligibleDuration time.Duration
 }
 

@@ -179,7 +179,7 @@ func (s *Service) start(opts *ServerStartOpts) error {
 		return AsRiverError(err).Message("Failed to init store").LogError(s.defaultLogger)
 	}
 
-	err = s.initCacheAndSync()
+	err = s.initCacheAndSync(opts)
 	if err != nil {
 		return AsRiverError(err).Message("Failed to init cache and sync").LogError(s.defaultLogger)
 	}
@@ -187,10 +187,6 @@ func (s *Service) start(opts *ServerStartOpts) error {
 	s.riverChain.StartChainMonitor(s.serverCtx)
 
 	s.initHandlers()
-
-	if err := s.initScrubbing(s.serverCtx); err != nil {
-		return AsRiverError(err).Message("Failed to initialize scrubbing").LogError(s.defaultLogger)
-	}
 
 	s.SetStatus("OK")
 
@@ -661,23 +657,39 @@ func (s *Service) initNotificationsStore() error {
 	}
 }
 
-func (s *Service) initCacheAndSync() error {
-	var err error
-	s.cache, err = events.NewStreamCache(
-		s.serverCtx,
-		&events.StreamCacheParams{
-			Storage:                 s.storage,
-			Wallet:                  s.wallet,
-			RiverChain:              s.riverChain,
-			Registry:                s.registryContract,
-			ChainConfig:             s.chainConfig,
-			Config:                  s.config,
-			AppliedBlockNum:         s.riverChain.InitialBlockNum,
-			ChainMonitor:            s.riverChain.ChainMonitor,
-			Metrics:                 s.metrics,
-			RemoteMiniblockProvider: s,
-		},
-	)
+func (s *Service) initCacheAndSync(opts *ServerStartOpts) error {
+	cacheParams := &events.StreamCacheParams{
+		Storage:                 s.storage,
+		Wallet:                  s.wallet,
+		RiverChain:              s.riverChain,
+		Registry:                s.registryContract,
+		ChainConfig:             s.chainConfig,
+		Config:                  s.config,
+		AppliedBlockNum:         s.riverChain.InitialBlockNum,
+		ChainMonitor:            s.riverChain.ChainMonitor,
+		Metrics:                 s.metrics,
+		RemoteMiniblockProvider: s,
+	}
+
+	s.cache = events.NewStreamCache(s.serverCtx, cacheParams)
+
+	// There is circular dependency between cache and scrubber, so scurbber
+	// needs to be patched into cache params after cache is created.
+	if opts != nil && opts.ScrubberMaker != nil {
+		cacheParams.Scrubber = opts.ScrubberMaker(s.serverCtx, s)
+	} else {
+		cacheParams.Scrubber = scrub.NewStreamScrubTasksProcessor(
+			s.serverCtx,
+			s.cache,
+			s,
+			s.chainAuth,
+			s.config,
+			s.metrics,
+			s.otelTracer,
+		)
+	}
+
+	err := s.cache.Start(s.serverCtx)
 	if err != nil {
 		return err
 	}
@@ -691,26 +703,6 @@ func (s *Service) initCacheAndSync() error {
 		s.otelTracer,
 	)
 
-	return nil
-}
-
-func (s *Service) initScrubbing(ctx context.Context) (err error) {
-	ctx, cancel := context.WithCancel(ctx)
-	s.onClose(cancel)
-
-	s.scrubTaskProcessor, err = scrub.NewStreamScrubTasksProcessor(
-		ctx,
-		s.cache,
-		s,
-		s.chainAuth,
-		s.config,
-		s.metrics,
-		s.otelTracer,
-		s.wallet.Address,
-	)
-	if err != nil {
-		return AsRiverError(err, Err_BAD_CONFIG).Message("Unable to instantiate stream scrub task processor")
-	}
 	return nil
 }
 
@@ -772,6 +764,7 @@ type ServerStartOpts struct {
 	RiverChain      *crypto.Blockchain
 	Listener        net.Listener
 	HttpClientMaker HttpClientMakerFunc
+	ScrubberMaker   func(context.Context, *Service) events.Scrubber
 }
 
 // StartServer starts the server with the given configuration.

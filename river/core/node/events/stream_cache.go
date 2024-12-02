@@ -24,6 +24,12 @@ import (
 	"github.com/river-build/river/core/node/storage"
 )
 
+type Scrubber interface {
+	// Scrub schedules a scrub for the given channel.
+	// Returns true if the scrub was scheduled, false if it was already pending.
+	Scrub(channelId StreamId) bool
+}
+
 type StreamCacheParams struct {
 	Storage                 storage.StreamStorage
 	Wallet                  *crypto.Wallet
@@ -35,9 +41,11 @@ type StreamCacheParams struct {
 	ChainMonitor            crypto.ChainMonitor // TODO: delete and use RiverChain.ChainMonitor
 	Metrics                 infra.MetricsFactory
 	RemoteMiniblockProvider RemoteMiniblockProvider
+	Scrubber                Scrubber
 }
 
 type StreamCache interface {
+	Start(ctx context.Context) error
 	Params() *StreamCacheParams
 	GetStream(ctx context.Context, streamId StreamId) (SyncStream, error)
 	GetStreamInfo(ctx context.Context, streamId StreamId) (StreamNodes, error) // TODO: to be unified with GetStream
@@ -72,8 +80,8 @@ var _ StreamCache = (*streamCacheImpl)(nil)
 func NewStreamCache(
 	ctx context.Context,
 	params *StreamCacheParams,
-) (*streamCacheImpl, error) {
-	s := &streamCacheImpl{
+) *streamCacheImpl {
+	return &streamCacheImpl{
 		params: params,
 		cache:  xsync.NewMapOf[StreamId, *streamImpl](),
 		streamCacheSizeGauge: params.Metrics.NewGaugeVecEx(
@@ -100,31 +108,37 @@ func NewStreamCache(
 		chainConfig:          params.ChainConfig,
 		onlineSyncWorkerPool: workerpool.New(params.Config.StreamReconciliation.OnlineWorkerPoolSize),
 	}
+}
 
+func (s *streamCacheImpl) Start(ctx context.Context) error {
 	// schedule sync tasks for all streams that are local to this node.
 	// these tasks sync up the local db with the latest block in the registry.
 	var localStreamResults []*registries.GetStreamResult
-	err := params.Registry.ForAllStreams(ctx, s.params.AppliedBlockNum, func(stream *registries.GetStreamResult) bool {
-		if slices.Contains(stream.Nodes, params.Wallet.Address) {
-			localStreamResults = append(localStreamResults, stream)
-		}
-		return true
-	})
+	err := s.params.Registry.ForAllStreams(
+		ctx,
+		s.params.AppliedBlockNum,
+		func(stream *registries.GetStreamResult) bool {
+			if slices.Contains(stream.Nodes, s.params.Wallet.Address) {
+				localStreamResults = append(localStreamResults, stream)
+			}
+			return true
+		},
+	)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// load local streams in-memory cache
-	initialSyncWorkerPool := workerpool.New(params.Config.StreamReconciliation.InitialWorkerPoolSize)
+	initialSyncWorkerPool := workerpool.New(s.params.Config.StreamReconciliation.InitialWorkerPoolSize)
 	for _, stream := range localStreamResults {
 		s.cache.Store(stream.StreamId, &streamImpl{
-			params:              params,
+			params:              s.params,
 			streamId:            stream.StreamId,
-			nodes:               NewStreamNodes(stream.Nodes, params.Wallet.Address),
-			lastAppliedBlockNum: params.AppliedBlockNum,
+			nodes:               NewStreamNodes(stream.Nodes, s.params.Wallet.Address),
+			lastAppliedBlockNum: s.params.AppliedBlockNum,
 			local:               &localStreamState{},
 		})
-		if params.Config.StreamReconciliation.InitialWorkerPoolSize > 0 {
+		if s.params.Config.StreamReconciliation.InitialWorkerPoolSize > 0 {
 			s.submitSyncStreamTask(
 				ctx,
 				initialSyncWorkerPool,
@@ -145,7 +159,7 @@ func NewStreamCache(
 	}()
 
 	// TODO: add buffered channel to avoid blocking ChainMonitor
-	params.RiverChain.ChainMonitor.OnBlockWithLogs(
+	s.params.RiverChain.ChainMonitor.OnBlockWithLogs(
 		s.params.AppliedBlockNum+1,
 		s.onBlockWithLogs,
 	)
@@ -158,7 +172,7 @@ func NewStreamCache(
 		initialSyncWorkerPool.Stop()
 	}()
 
-	return s, nil
+	return nil
 }
 
 func (s *streamCacheImpl) onBlockWithLogs(ctx context.Context, blockNum crypto.BlockNumber, logs []*types.Log) {

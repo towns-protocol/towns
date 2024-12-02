@@ -390,7 +390,8 @@ func Disabled_TestStreamUnloadWithSubscribers(t *testing.T) {
 	tc.instances[0].params.AppliedBlockNum = blockNum
 
 	// create fresh stream cache and subscribe
-	streamCache, err = NewStreamCache(ctx, tc.instances[0].params)
+	streamCache = NewStreamCache(ctx, tc.instances[0].params)
+	err = streamCache.Start(ctx)
 	require.NoError(err, "instantiating stream cache")
 	mpProducer := NewMiniblockProducer(ctx, streamCache, &MiniblockProducerOpts{TestDisableMbProdcutionOnBlock: true})
 
