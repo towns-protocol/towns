@@ -36,19 +36,17 @@ export function TownsPrivyProvider({ children }: { children: JSX.Element }) {
                 embeddedWallets: {
                     createOnLogin: 'all-users',
                 },
-                // !! DISABLED until privy fixes the bug where this configuration causes wallets not to be listed when connecting wallets during link wallet flow
-                // // Order of login methods:
-                // // Google
-                // // X
-                // // Farcaster
-                // // Apple (can we hide behind a "more" link"?)
-                // // SMS (can we hide behind a "more" link"?)
-                // // Email (can we hide behind a "more" link"?)
-                // loginMethodsAndOrder: {
-                //     primary: ['google', 'twitter', 'farcaster'],
-
-                //     overflow: ['apple', 'sms', 'email'],
-                // },
+                // Order of login methods:
+                // Google
+                // X
+                // Farcaster
+                // Apple (can we hide behind a "more" link"?)
+                // SMS (can we hide behind a "more" link"?)
+                // Email (can we hide behind a "more" link"?)
+                loginMethodsAndOrder: {
+                    primary: ['google', 'twitter', 'farcaster'],
+                    overflow: ['apple', 'sms', 'email'],
+                },
             }}
         >
             {children}

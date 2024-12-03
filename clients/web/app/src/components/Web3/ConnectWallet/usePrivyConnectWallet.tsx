@@ -26,6 +26,14 @@ export function usePrivyConnectWallet(callbacks: Callbacks) {
 
     return useCallback(() => {
         connectInitiatedRef.current = true
-        return privyConnectWallet()
+        return privyConnectWallet({
+            walletList: [
+                'detected_wallets',
+                'metamask',
+                'coinbase_wallet',
+                'rainbow',
+                'wallet_connect',
+            ],
+        })
     }, [privyConnectWallet])
 }
