@@ -447,10 +447,6 @@ resource "aws_ecs_task_definition" "task_definition" {
           value = "datadoghq.com"
         },
         {
-          name  = "ECS_FARGATE",
-          value = "true"
-        },
-        {
           name  = "DD_APM_ENABLED",
           value = "true"
         },

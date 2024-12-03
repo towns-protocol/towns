@@ -571,10 +571,6 @@ resource "aws_ecs_task_definition" "river-fargate" {
           value = "datadoghq.com"
         },
         {
-          name  = "ECS_FARGATE",
-          value = "true"
-        },
-        {
           name  = "DD_TAGS",
           value = local.dd_required_tags
         },
