@@ -3,6 +3,7 @@ import { useTownsClient } from 'use-towns-client'
 import { useContext } from 'react'
 import { ReplyToMessageContext } from '@components/ReplyToMessageContext/ReplyToMessageContext'
 import { trackPostedMessage } from '@components/Analytics/postedMessage'
+import { useGatherSpaceDetailsAnalytics } from '@components/Analytics/useGatherSpaceDetailsAnalytics'
 import { useRouteParams } from './useRouteParams'
 import { useSpaceIdFromPathname } from './useSpaceInfoFromPathname'
 
@@ -11,6 +12,10 @@ export const useHandleReaction = (channelId: string) => {
     const { sendReaction, redactEvent } = useTownsClient()
     const { threadId } = useRouteParams()
     const { canReplyInline, replyToEventId } = useContext(ReplyToMessageContext)
+    const spaceDetailsAnalytics = useGatherSpaceDetailsAnalytics({
+        spaceId,
+        channelId,
+    })
 
     const handleReaction = useEvent(
         (
@@ -37,6 +42,7 @@ export const useHandleReaction = (channelId: string) => {
                     threadId,
                     canReplyInline,
                     replyToEventId,
+                    ...spaceDetailsAnalytics,
                 })
             }
         },

@@ -19,6 +19,7 @@ import { themes } from 'ui/styles/themes'
 import { baseline } from 'ui/styles/vars.css'
 import { useDevice } from 'hooks/useDevice'
 import { trackPostedMessage } from '@components/Analytics/postedMessage'
+import { useGatherSpaceDetailsAnalytics } from '@components/Analytics/useGatherSpaceDetailsAnalytics'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { GiphySearchBar } from './GiphySearchBar'
 import { useGiphySearchContext } from './GiphySearchContext'
@@ -63,6 +64,11 @@ export const GiphyPickerCard = (props: GiphyPickerCardProps) => {
     const channelId = useChannelId()
     const { parent } = useTimelineThread(channelId, threadId)
     const gutterWidth = baseline * 0.75
+
+    const spaceDetailsAnalytics = useGatherSpaceDetailsAnalytics({
+        spaceId,
+        channelId,
+    })
 
     // small hack with "-2px" on mobile to get rid of horizontal scrollbar
     const width = isTouch ? window.innerWidth - 2 : 350
@@ -119,6 +125,7 @@ export const GiphyPickerCard = (props: GiphyPickerCardProps) => {
             canReplyInline,
             replyToEventId,
             messageType: 'gif',
+            ...spaceDetailsAnalytics,
         })
     }
 

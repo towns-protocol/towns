@@ -22,6 +22,7 @@ import { Panel } from '@components/Panel/Panel'
 import { MediaDropContextProvider } from '@components/MediaDropContext/MediaDropContext'
 import { useIsChannelReactable } from 'hooks/useIsChannelReactable'
 import { getPostedMessageType, trackPostedMessage } from '@components/Analytics/postedMessage'
+import { useGatherSpaceDetailsAnalytics } from '@components/Analytics/useGatherSpaceDetailsAnalytics'
 
 type Props = {
     messageId: string
@@ -43,6 +44,10 @@ export const MessageThreadPanel = (props: Props) => {
     const { memberIds } = useSpaceMembers()
 
     const { sendReply } = useSendReply(messageId)
+    const spaceDetailsAnalytics = useGatherSpaceDetailsAnalytics({
+        spaceId,
+        channelId,
+    })
 
     const onSend = useCallback(
         (value: string, options: SendMessageOptions | undefined) => {
@@ -55,6 +60,7 @@ export const MessageThreadPanel = (props: Props) => {
                 threadId: 'threadId',
                 canReplyInline: undefined,
                 replyToEventId: undefined,
+                ...spaceDetailsAnalytics,
             })
             const userIds = parent?.userIds ?? new Set<string>()
             if (parent?.parentEvent) {
@@ -62,7 +68,7 @@ export const MessageThreadPanel = (props: Props) => {
             }
             sendReply(value, channelId, options, userIds)
         },
-        [channelId, parent, sendReply, spaceId],
+        [channelId, parent, sendReply, spaceDetailsAnalytics, spaceId],
     )
 
     const userId = useMyProfile()?.userId

@@ -16,6 +16,7 @@ import { Analytics, getChannelType } from 'hooks/useAnalytics'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { CHANNEL_INFO_PARAMS } from 'routes'
 import { getThreadReplyOrDmReply, trackPostedMessage } from '@components/Analytics/postedMessage'
+import { useGatherSpaceDetailsAnalytics } from '@components/Analytics/useGatherSpaceDetailsAnalytics'
 import { DeleteMessagePrompt } from './DeleteMessagePrompt'
 import { useRedactMessage } from './hooks/useRedactMessage'
 
@@ -131,6 +132,11 @@ export const MessageModalSheet = (props: Props) => {
         closeSheet()
     }, [closeSheet, messageBody])
 
+    const spaceDetailsAnalytics = useGatherSpaceDetailsAnalytics({
+        spaceId,
+        channelId,
+    })
+
     const sendEmoji = useCallback(
         (id: string) => {
             if (!channelId) {
@@ -151,6 +157,7 @@ export const MessageModalSheet = (props: Props) => {
                 replyToEventId,
                 messageType: 'emoji reaction',
                 emojiId: id,
+                ...spaceDetailsAnalytics,
             })
             onClose()
         },
@@ -162,6 +169,7 @@ export const MessageModalSheet = (props: Props) => {
             spaceId,
             canReplyInline,
             replyToEventId,
+            spaceDetailsAnalytics,
             onClose,
         ],
     )

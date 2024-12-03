@@ -3,6 +3,7 @@ import { SendMessageOptions, useTownsClient } from 'use-towns-client'
 import { ReplyToMessageContext } from '@components/ReplyToMessageContext/ReplyToMessageContext'
 import { useSlashCommand } from 'hooks/useSlashCommand'
 import { getPostedMessageType, trackPostedMessage } from '@components/Analytics/postedMessage'
+import { useGatherSpaceDetailsAnalytics } from '@components/Analytics/useGatherSpaceDetailsAnalytics'
 
 export const useChannelSend = (params: {
     channelId: string
@@ -13,6 +14,10 @@ export const useChannelSend = (params: {
     const { sendMessage } = useTownsClient()
     const { canReplyInline, replyToEventId, setReplyToEventId } = useContext(ReplyToMessageContext)
     const { parseAndExecuteCommand } = useSlashCommand()
+    const spaceDetailsAnalytics = useGatherSpaceDetailsAnalytics({
+        spaceId,
+        channelId,
+    })
 
     const onSend = useCallback(
         (value: string, options: SendMessageOptions | undefined, filesCount: number = 0) => {
@@ -34,6 +39,7 @@ export const useChannelSend = (params: {
                     messageType: options?.messageType,
                     filesCount,
                 }),
+                ...spaceDetailsAnalytics,
             })
 
             // TODO: need to pass participants to sendReply in case of thread ?
@@ -63,6 +69,7 @@ export const useChannelSend = (params: {
             replyToEventId,
             sendMessage,
             setReplyToEventId,
+            spaceDetailsAnalytics,
         ],
     )
 

@@ -1,5 +1,6 @@
 import { useCallback } from 'react'
 import { Analytics } from 'hooks/useAnalytics'
+import { TokenGatedByAnalytics } from './useGatherSpaceDetailsAnalytics'
 
 ////////////////////////////////////////////////////
 // For a logged out brand new user w/o redirect:
@@ -157,11 +158,16 @@ export const useJoinFunnelAnalytics = () => {
             },
             [],
         ),
-
         joinedTown: useCallback(
-            (args: { spaceId: string | undefined; spaceName: string | undefined }) => {
-                const { spaceId, spaceName } = args
-                Analytics.getInstance().track('joined town', { spaceId, spaceName })
+            (args: {
+                spaceId: string | undefined
+                spaceName: string | undefined
+                gatedSpace: boolean | undefined
+                pricingModule: 'fixed' | 'dynamic' | 'free'
+                priceInWei: string | undefined
+                tokensGatedBy: TokenGatedByAnalytics[] | undefined
+            }) => {
+                Analytics.getInstance().track('joined town', args)
             },
             [],
         ),

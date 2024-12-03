@@ -8,7 +8,7 @@ import { Box, Stack } from '@ui'
 import { useStore } from 'store/store'
 import { Figma } from 'ui/styles/palette'
 import { AppProgressState } from '@components/AppProgressOverlay/AppProgressState'
-import { JoinStep, usePublicPageLoginFlow } from 'routes/PublicTownPage/usePublicPageLoginFlow'
+import { JoinStep, publicPageLoginStore } from 'routes/PublicTownPage/usePublicPageLoginFlow'
 import { useDummyNodes } from './hooks/useDummyNodes'
 import { RotatingText } from './components/RotatingText'
 import { SetupChecklist } from './SetupChecklist'
@@ -29,7 +29,7 @@ export const SetupAnimation = (props: Props) => {
     const dummyNodes = useDummyNodes()
     const someNodeUrl = dummyNodes[1].nodeUrl
 
-    const { joinStep } = usePublicPageLoginFlow()
+    const joinStep = publicPageLoginStore((s) => s.joinStep)
 
     const nodeUrl = useMemo(() => {
         if (mode === AppProgressState.Joining) {
@@ -108,7 +108,7 @@ const JoiningChecklist = () => {
         ],
         [],
     )
-    const { joinStep } = usePublicPageLoginFlow()
+    const joinStep = publicPageLoginStore((s) => s.joinStep)
 
     const step = useMemo(() => {
         switch (joinStep) {

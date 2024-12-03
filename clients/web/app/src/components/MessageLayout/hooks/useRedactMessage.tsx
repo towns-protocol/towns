@@ -6,6 +6,7 @@ import { popupToast } from '@components/Notifications/popupToast'
 import { StandardToast } from '@components/Notifications/StandardToast'
 import { useShortcut } from 'hooks/useShortcut'
 import { isInputFocused } from '@components/RichTextPlate/utils/helpers'
+import { useGatherSpaceDetailsAnalytics } from '@components/Analytics/useGatherSpaceDetailsAnalytics'
 
 type Props = {
     channelId: string | undefined
@@ -43,6 +44,10 @@ export function useRedactMessage(props: Props) {
     }, [])
 
     const { redactEvent, clientSingleton } = useTownsClient()
+    const spaceDetailsAnalytics = useGatherSpaceDetailsAnalytics({
+        spaceId,
+        channelId,
+    })
 
     const onRedactSelfConfirm = useCallback(() => {
         if (channelId) {
@@ -55,9 +60,19 @@ export function useRedactMessage(props: Props) {
                 canReplyInline,
                 replyToEventId,
                 messageType: 'redacted',
+                ...spaceDetailsAnalytics,
             })
         }
-    }, [canReplyInline, channelId, eventId, redactEvent, replyToEventId, spaceId, threadId])
+    }, [
+        canReplyInline,
+        channelId,
+        eventId,
+        redactEvent,
+        replyToEventId,
+        spaceDetailsAnalytics,
+        spaceId,
+        threadId,
+    ])
 
     const onRedactOtherConfirm = useCallback(async () => {
         if (channelId && eventId) {
@@ -70,6 +85,7 @@ export function useRedactMessage(props: Props) {
                     canReplyInline,
                     replyToEventId,
                     messageType: 'admin redacted',
+                    ...spaceDetailsAnalytics,
                 })
             } catch (error) {
                 console.error('onRedactOtherConfirm failed to redact message', error)
@@ -82,7 +98,16 @@ export function useRedactMessage(props: Props) {
                 ))
             }
         }
-    }, [channelId, eventId, clientSingleton, spaceId, threadId, canReplyInline, replyToEventId])
+    }, [
+        channelId,
+        eventId,
+        clientSingleton,
+        spaceDetailsAnalytics,
+        spaceId,
+        threadId,
+        canReplyInline,
+        replyToEventId,
+    ])
 
     return {
         onRedactSelfConfirm,

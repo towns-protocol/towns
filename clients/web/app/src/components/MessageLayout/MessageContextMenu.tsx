@@ -19,6 +19,7 @@ import { isInputFocused } from '@components/RichTextPlate/utils/helpers'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { CHANNEL_INFO_PARAMS } from 'routes'
 import { getThreadReplyOrDmReply, trackPostedMessage } from '@components/Analytics/postedMessage'
+import { useGatherSpaceDetailsAnalytics } from '@components/Analytics/useGatherSpaceDetailsAnalytics'
 import { useCreateUnreadMarker } from './hooks/useCreateUnreadMarker'
 import { DeleteMessagePrompt } from './DeleteMessagePrompt'
 import { useRedactMessage } from './hooks/useRedactMessage'
@@ -82,6 +83,11 @@ export const MessageContextMenu = (props: Props) => {
         replyToEventId: replyToEventId ?? undefined,
     })
 
+    const spaceDetailsAnalytics = useGatherSpaceDetailsAnalytics({
+        spaceId,
+        channelId,
+    })
+
     const onSelectEmoji = useCallback(
         (data: { id: string }) => {
             if (!channelId) {
@@ -101,9 +107,19 @@ export const MessageContextMenu = (props: Props) => {
                 threadId,
                 canReplyInline,
                 replyToEventId,
+                ...spaceDetailsAnalytics,
             })
         },
-        [canReplyInline, channelId, eventId, replyToEventId, sendReaction, spaceId, threadId],
+        [
+            canReplyInline,
+            channelId,
+            eventId,
+            replyToEventId,
+            sendReaction,
+            spaceDetailsAnalytics,
+            spaceId,
+            threadId,
+        ],
     )
     const ref = useRef<HTMLDivElement>(null)
 

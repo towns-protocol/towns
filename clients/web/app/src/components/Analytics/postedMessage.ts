@@ -2,6 +2,7 @@ import { MessageType, useSpaceDataStore } from 'use-towns-client'
 import { Analytics, getChannelType } from 'hooks/useAnalytics'
 import { isEmoji } from 'utils/isEmoji'
 import { getExternalLinks } from 'hooks/useExtractInternalLinks'
+import { useGatherSpaceDetailsAnalytics } from './useGatherSpaceDetailsAnalytics'
 
 export type PostedMessageOptions = {
     messageType?: MessageType | 'emoji reaction' | 'gif' | 'redacted' | 'admin redacted' | 'edited'
@@ -24,7 +25,7 @@ export type PostedMessage = {
     replyToEventId: string | undefined | null
     eventId?: string
     emojiId?: string
-}
+} & ReturnType<typeof useGatherSpaceDetailsAnalytics>
 
 export const trackPostedMessage = (tr: PostedMessage) => {
     const tracked: PostedMessage & {

@@ -8,6 +8,7 @@ import { mapToErrorMessage } from '@components/Web3/utils'
 import { popupToast } from '@components/Notifications/popupToast'
 import { StandardToast } from '@components/Notifications/StandardToast'
 import { useJoinFunnelAnalytics } from '@components/Analytics/useJoinFunnelAnalytics'
+import { useGatherSpaceDetailsAnalytics } from '@components/Analytics/useGatherSpaceDetailsAnalytics'
 
 const JOIN = 'join'
 const PRIVY_OAUTH_STATE = 'privy_oauth_state'
@@ -19,6 +20,9 @@ export function usePublicPageLoginFlow() {
     const { setRecentlyMintedSpaceToken } = useStore()
     const spaceId = useSpaceIdFromPathname()
     const { joiningTown, joinedTown } = useJoinFunnelAnalytics()
+    const { gatedSpace, priceInWei, pricingModule, tokensGatedBy } = useGatherSpaceDetailsAnalytics(
+        { spaceId },
+    )
     const {
         spaceBeingJoined,
         setSpaceBeingJoined,
@@ -109,7 +113,14 @@ export function usePublicPageLoginFlow() {
                 )
 
                 if (result) {
-                    joinedTown({ spaceId, spaceName: analyticsData.spaceName })
+                    joinedTown({
+                        spaceId,
+                        spaceName: analyticsData.spaceName,
+                        gatedSpace,
+                        pricingModule,
+                        priceInWei,
+                        tokensGatedBy,
+                    })
                 } else {
                     end()
                     popupToast(({ toast }) => (
@@ -136,7 +147,17 @@ export function usePublicPageLoginFlow() {
                 ))
             }
         },
-        [spaceId, joiningTown, end, setRecentlyMintedSpaceToken, joinedTown],
+        [
+            spaceId,
+            joiningTown,
+            end,
+            setRecentlyMintedSpaceToken,
+            joinedTown,
+            gatedSpace,
+            pricingModule,
+            priceInWei,
+            tokensGatedBy,
+        ],
     )
 
     const startJoinDoesNotMeetRequirements = useCallback(() => {

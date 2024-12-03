@@ -32,6 +32,7 @@ export function useChannelEntitlements({
             hasEveryoneEntitlement,
             error,
             isLoading,
+            channelName: channelSettings?.name,
         }
     }, [channelSettings, error, isLoading])
 }
