@@ -211,6 +211,9 @@ module "archive_node" {
   }
 
   lb = module.archive_node_nlb[count.index]
+
+  cpu    = 1024
+  memory = 8192
 }
 
 module "river_notification_service" {

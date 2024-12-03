@@ -188,6 +188,9 @@ module "river_node" {
   }
 
   lb = module.river_nlb[count.index]
+
+  cpu    = 512
+  memory = 1024
 }
 
 

@@ -135,3 +135,11 @@ variable "on" {
 variable "migrate_stream_creation" {
   type = bool
 }
+
+variable "memory" {
+  type = number
+}
+
+variable "cpu" {
+  type = number
+}
