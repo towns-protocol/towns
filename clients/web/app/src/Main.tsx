@@ -33,8 +33,8 @@ const PrivyAndErrorBoundary = ({ children }: { children: JSX.Element }) => {
         <>
             <ErrorBoundary FallbackComponent={AppErrorFallback}>
                 <TownsPrivyProvider>{children}</TownsPrivyProvider>
+                <AppBugReportOverlay />
             </ErrorBoundary>
-            <AppBugReportOverlay />
         </>
     )
 }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { useNetworkStatus, useTownsContext } from 'use-towns-client'
+import { useNetworkStatus } from 'use-towns-client'
+import { useSafeTownsContext } from './useSafeTownsContext'
 
 /**
  * TODO: placeholder / ideally this hook should include logic from decryption
@@ -7,7 +8,7 @@ import { useNetworkStatus, useTownsContext } from 'use-towns-client'
  */
 export const useConnectionStatus = () => {
     const { isOffline } = useNetworkStatus()
-    const { casablancaClient, clientStatus } = useTownsContext()
+    const { casablancaClient, clientStatus } = useSafeTownsContext()
 
     const nodeUrl = casablancaClient?.rpcClient.url
     const [unsyncedStreams, setUnsyncedStreams] = useState<Set<string>>(() => new Set())
@@ -42,7 +43,7 @@ export const useConnectionStatus = () => {
 
     const status = isOffline
         ? ('disconnected' as const)
-        : !clientStatus.streamSyncActive || unsyncedStreams.size > 0
+        : !clientStatus?.streamSyncActive || unsyncedStreams.size > 0
         ? ('syncing' as const)
         : ('synced' as const)
 

@@ -2,9 +2,10 @@ import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import { z } from 'zod'
 import { Color } from 'three'
-import { createRiverRegistry, useTownsContext } from 'use-towns-client'
+import { createRiverRegistry } from 'use-towns-client'
 import { dlogger } from '@river-build/dlog'
 import { SECOND_MS } from 'data/constants'
+import { useSafeTownsContext } from './useSafeTownsContext'
 
 const logger = dlogger('useNodeData')
 
@@ -36,7 +37,7 @@ export type NodeData = {
 }
 
 export const useNodeData = (connectedNode: string | undefined) => {
-    const { riverProvider, riverConfig } = useTownsContext()
+    const { riverProvider, riverConfig } = useSafeTownsContext()
 
     const { data } = useQuery<NodeStatusSchema>({
         queryKey: ['nodeStatus'],
@@ -58,6 +59,13 @@ export const useNodeData = (connectedNode: string | undefined) => {
                         `Failed to fetch from connected node ${connectedNode}, trying random nodes`,
                     )
                 }
+            }
+
+            if (!riverProvider || !riverConfig) {
+                logger.error(
+                    `Failed to fetch from connected node ${connectedNode}, trying random nodes`,
+                )
+                return
             }
 
             const riverRegistry = createRiverRegistry(riverProvider, riverConfig)
