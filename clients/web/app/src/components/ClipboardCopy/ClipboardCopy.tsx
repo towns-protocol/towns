@@ -11,12 +11,8 @@ type Props = {
     children?: React.ReactNode
 }
 
-export const ClipboardCopy = forwardRef<HTMLDivElement, Props>((props, ref) => {
-    const { fontSize = 'md' } = props
+export function useCopied() {
     const [copied, setCopied] = useState(false)
-    const [, copy] = useCopyToClipboard()
-    const color = props.color ?? 'gray2'
-
     const closeHandleRef = useRef<undefined | (() => void)>()
 
     useEffect(() => {
@@ -31,17 +27,35 @@ export const ClipboardCopy = forwardRef<HTMLDivElement, Props>((props, ref) => {
         }
     }, [copied])
 
+    return [copied, setCopied, closeHandleRef] as const
+}
+
+export function CopyIcon({ copied, color }: { copied: boolean; color: TextProps['color'] }) {
+    return !copied ? (
+        <Icon type="copy" color={color} size="square_xs" />
+    ) : (
+        <Icon type="check" color="positive" size="square_xs" />
+    )
+}
+
+export const ClipboardCopy = forwardRef<HTMLDivElement, Props>((props, ref) => {
+    const { fontSize = 'md' } = props
+    const [, copy] = useCopyToClipboard()
+    const color = props.color ?? 'gray2'
+
+    const [copied, setCopied, closeHandleRef] = useCopied()
+
     const onCopy = useCallback(
         (e: React.MouseEvent) => {
             e.stopPropagation()
             e.preventDefault()
             const asyncCopy = async () => {
-                const copied = await copy(props.clipboardContent ?? props.label ?? '')
-                setCopied(copied)
+                const _copied = await copy(props.clipboardContent ?? props.label ?? '')
+                setCopied(_copied)
             }
             asyncCopy()
         },
-        [copy, props.clipboardContent, props.label],
+        [copy, props.clipboardContent, props.label, setCopied],
     )
 
     const iconRef = useRef<HTMLDivElement>(null)
@@ -67,11 +81,7 @@ export const ClipboardCopy = forwardRef<HTMLDivElement, Props>((props, ref) => {
                     {props.children || props.label}
                 </Text>
                 <Box centerContent ref={iconRef} pointerEvents="none" height="paragraph">
-                    {!copied ? (
-                        <Icon type="copy" color={color} size="square_xs" />
-                    ) : (
-                        <Icon type="check" color="positive" size="square_xs" />
-                    )}
+                    <CopyIcon copied={copied} color={color} />
                 </Box>
             </Stack>
         </Box>

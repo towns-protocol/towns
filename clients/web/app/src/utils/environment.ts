@@ -92,6 +92,8 @@ const envSchema = z.object({
 
     VITE_XCHAIN_CONFIG: z.string().optional(),
     VITE_EXPLORE_TOWNS: z.string().optional(),
+
+    VITE_DECENT_API_KEY: z.string().optional(),
 })
 
 const parsed = envSchema.safeParse(import.meta.env)

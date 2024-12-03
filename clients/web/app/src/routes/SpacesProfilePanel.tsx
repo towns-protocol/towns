@@ -47,6 +47,7 @@ import { Analytics } from 'hooks/useAnalytics'
 import { GetSigner } from 'privy/WalletReady'
 import { TownNotificationsButton } from '@components/NotificationSettings/NotificationsSettingsButton'
 import { useMatchingMessages } from '@components/DirectMessages/CreateDirectMessage/hooks/useMatchingMessages'
+import { TownsWallet } from '@components/Web3/Wallet/TownsWallet'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
 
 export const SpaceProfilePanel = () => {
@@ -282,12 +283,13 @@ const SpaceProfileWithoutAuth = () => {
             )}
             {isCurrentUser && (
                 <Stack gap paddingBottom="md" paddingTop="none">
+                    <TownsWallet />
                     {/* wallets */}
                     <PanelButton onClick={onWalletLinkingClick}>
                         <Box width="height_md" alignItems="center">
                             <Icon type="wallet" size="square_sm" />
                         </Box>
-                        <Paragraph>Wallets</Paragraph>
+                        <Paragraph>Linked Wallets</Paragraph>
                     </PanelButton>
 
                     <PanelButton onClick={onIdentityClick}>

@@ -36,6 +36,7 @@ import { SingleWalletPanel } from '@components/Web3/Wallet/SingleWalletPanel'
 import { TransferAssetsPanel } from '@components/Web3/Wallet/TransferAssetsPanel'
 import { VerifyEventSignaturePanel } from '@components/VerifyEventSignature/VerfiyEventSignature'
 import { PrivyIdentityPanel } from '@components/PrivyIdentity/PrivyIdentityPanel'
+import { FundWalletPanel } from '@components/Web3/Wallet/FundWalletPanel'
 
 export const usePanels = () => {
     const [searchParams] = useSearchParams()
@@ -68,6 +69,9 @@ export const usePanels = () => {
     switch (panel) {
         default: {
             break
+        }
+        case CHANNEL_INFO_PARAMS.FUND_WALLET: {
+            return <FundWalletPanel />
         }
         case CHANNEL_INFO_PARAMS.TRANSFER_ASSETS: {
             return <TransferAssetsPanel />

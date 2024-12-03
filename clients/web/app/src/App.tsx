@@ -5,6 +5,7 @@ import { Helmet } from 'react-helmet'
 import { isDefined } from '@river-build/sdk'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useEvent } from 'react-use-event-hook'
+import { WagmiProvider } from 'wagmi'
 import { Notifications } from '@components/Notifications/Notifications'
 import { useDevice } from 'hooks/useDevice'
 import { ENVIRONMENTS, useEnvironment } from 'hooks/useEnvironmnet'
@@ -35,6 +36,8 @@ import { useOfflineToast } from '@components/Offline/OfflineToast'
 import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
 import { CombinedAuthContextProvider } from 'privy/useCombinedAuth'
 import { useRiverConnectedSuccessfullyAnalyticsEvent } from '@components/Analytics/useRiverConnectedSuccessfullyAnalyticsEvent'
+import { validateAndParseXChainConfig } from 'utils/validateAndParseXChainConfig'
+import { wagmiConfig } from './wagmiConfig'
 
 FontLoader.init()
 
@@ -90,7 +93,7 @@ export const App = () => {
             console.warn('No XCHAIN config found')
             return {}
         }
-        return validateAndParse(config)
+        return validateAndParseXChainConfig(config)
     }, [])
 
     const { rel, notificationEntry, notificationKind } = useMemo(() => {
@@ -141,99 +144,66 @@ export const App = () => {
     })
 
     return (
-        <TownsContextProvider
-            environmentId={environment.id}
-            baseChain={environment.baseChain}
-            baseConfig={environment.baseChainConfig}
-            riverChain={environment.riverChain}
-            riverConfig={environment.riverChainConfig}
-            timelineFilter={DEFAULT_TIMELINE_FILTER}
-            riverNotificationServiceUrl={env.VITE_RIVER_NOTIFICATION_SERVICE_URL}
-            accountAbstractionConfig={environment.accountAbstractionConfig}
-            highPriorityStreamIds={highPriorityStreamIds.current}
-            unpackEnvelopeOpts={unpackEnvelopeOpts}
-            supportedXChainRpcMapping={supportedXChainRpcMapping}
-            ethMainnetRpcUrl={env.VITE_ETHEREUM_RPC_URL}
-            analytics={analyticsInstance}
-            streamMetadataUrl={env.VITE_RIVER_STREAM_METADATA_URL}
-        >
-            <CombinedAuthContextProvider>
-                <>
-                    <FaviconBadge />
-                    <AppBadge />
-                    <AppNotifications />
-                    <RegisterPushSubscription />
-                    <Helmet>
-                        <meta
-                            name="theme-color"
-                            content={
-                                isTouch
-                                    ? theme === 'dark'
-                                        ? Figma.DarkMode.Level1
-                                        : Figma.LightMode.Level1
-                                    : theme === 'dark'
-                                    ? Figma.DarkMode.Readability
-                                    : Figma.LightMode.Readability
-                            }
-                        />
-                    </Helmet>
+        <WagmiProvider config={wagmiConfig}>
+            <TownsContextProvider
+                environmentId={environment.id}
+                baseChain={environment.baseChain}
+                baseConfig={environment.baseChainConfig}
+                riverChain={environment.riverChain}
+                riverConfig={environment.riverChainConfig}
+                timelineFilter={DEFAULT_TIMELINE_FILTER}
+                riverNotificationServiceUrl={env.VITE_RIVER_NOTIFICATION_SERVICE_URL}
+                accountAbstractionConfig={environment.accountAbstractionConfig}
+                highPriorityStreamIds={highPriorityStreamIds.current}
+                unpackEnvelopeOpts={unpackEnvelopeOpts}
+                supportedXChainRpcMapping={supportedXChainRpcMapping}
+                ethMainnetRpcUrl={env.VITE_ETHEREUM_RPC_URL}
+                analytics={analyticsInstance}
+                streamMetadataUrl={env.VITE_RIVER_STREAM_METADATA_URL}
+            >
+                <CombinedAuthContextProvider>
                     <>
-                        {env.DEV && !env.VITE_DISABLE_DEBUG_BARS && <DebugBar {...environment} />}
-                        <AllRoutes />
+                        <FaviconBadge />
+                        <AppBadge />
+                        <AppNotifications />
+                        <RegisterPushSubscription />
+                        <Helmet>
+                            <meta
+                                name="theme-color"
+                                content={
+                                    isTouch
+                                        ? theme === 'dark'
+                                            ? Figma.DarkMode.Level1
+                                            : Figma.LightMode.Level1
+                                        : theme === 'dark'
+                                        ? Figma.DarkMode.Readability
+                                        : Figma.LightMode.Readability
+                                }
+                            />
+                        </Helmet>
+                        <>
+                            {env.DEV && !env.VITE_DISABLE_DEBUG_BARS && (
+                                <DebugBar {...environment} />
+                            )}
+                            <AllRoutes />
+                        </>
+                        {!env.VITE_DISABLE_DEBUG_BARS && (
+                            <ReactQueryDevtools position="bottom" initialIsOpen={false} />
+                        )}
+                        <Notifications />
+                        <BlockchainTxNotifier />
+                        <ServiceWorkerMetadataSyncer />
+                        <MonitorJoinFlow />
+                        <UserOpTxModal />
+                        <TrackRiverConnectedSuccessfully />
                     </>
-                    {!env.VITE_DISABLE_DEBUG_BARS && (
-                        <ReactQueryDevtools position="bottom" initialIsOpen={false} />
-                    )}
-                    <Notifications />
-                    <BlockchainTxNotifier />
-                    <ServiceWorkerMetadataSyncer />
-                    <MonitorJoinFlow />
-                    <UserOpTxModal />
-                    <TrackRiverConnectedSuccessfully />
-                </>
-            </CombinedAuthContextProvider>
-        </TownsContextProvider>
+                </CombinedAuthContextProvider>
+            </TownsContextProvider>
+        </WagmiProvider>
     )
 }
 
 export default App
-
-interface ParsedObject {
-    [key: number]: string
-}
-
-const validateAndParse = (input: string): ParsedObject => {
-    const obj: ParsedObject = {}
-    const urlPattern: RegExp = /^(http|https):\/\/[^\s/$.?#].[^\s]*$/
-    const pairs: string[] = input.split(',')
-
-    pairs.forEach((pair) => {
-        const colonIndex = pair.indexOf(':')
-        if (colonIndex === -1) {
-            throw new Error(`Invalid pair: "${pair}". Each pair must be in the format key:url.`)
-        }
-        const key = pair.substring(0, colonIndex)
-        const value = pair.substring(colonIndex + 1)
-
-        if (!key || !value) {
-            throw new Error(`Invalid pair: "${pair}". Each pair must be in the format key:url.`)
-        }
-
-        const keyNumber = Number(key)
-
-        if (isNaN(keyNumber)) {
-            throw new Error(`Invalid key: "${key}". Key must be a number.`)
-        }
-
-        if (!urlPattern.test(value)) {
-            throw new Error(`Invalid URL: "${value}". Value must be a valid URL.`)
-        }
-
-        obj[keyNumber] = value
-    })
-
-    return obj
-}
 
 function TrackRiverConnectedSuccessfully() {
     useRiverConnectedSuccessfullyAnalyticsEvent()

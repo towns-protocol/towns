@@ -66,6 +66,7 @@ export const CHANNEL_INFO_PARAMS = {
     TRANSFER_ASSETS: 'transfer-assets',
     VERIFY_EVENT_SIGNATURE: 'verify-event-signature',
     IDENTITY: 'identity',
+    FUND_WALLET: 'fund-wallet',
 } as const
 
 export type CHANNEL_INFO_PARAMS_VALUES =

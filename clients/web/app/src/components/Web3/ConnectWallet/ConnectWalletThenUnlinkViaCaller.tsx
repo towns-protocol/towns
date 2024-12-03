@@ -5,9 +5,13 @@ import { isTouch } from 'hooks/useDevice'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { WalletReady } from 'privy/WalletReady'
 import { useEnvironment } from 'hooks/useEnvironmnet'
+import { popupToast } from '@components/Notifications/popupToast'
+import { StandardToast } from '@components/Notifications/StandardToast'
+import { Analytics } from 'hooks/useAnalytics'
 import { WalletLinkingInfoLink } from '../WalletLinkingInfo'
 import { switchConnectedWalletChain } from './switchConnectedWalletChain'
 import { usePrivyConnectWallet } from './usePrivyConnectWallet'
+import { mapToErrorMessage } from '../utils'
 
 type Props = Omit<ButtonProps, 'children' | 'onClick'> & {
     isDisabled: boolean
@@ -86,6 +90,9 @@ export function useConnectThenUnlinkViaCaller() {
 
     return usePrivyConnectWallet({
         onSuccess: async (wallet) => {
+            Analytics.getInstance().track('connected wallet', {
+                walletName: wallet.meta.name,
+            })
             switchConnectedWalletChain({
                 wallet,
                 baseChain,
@@ -93,6 +100,19 @@ export function useConnectThenUnlinkViaCaller() {
                     unlinkViaCallerTransaction(signer)
                 },
             })
+        },
+        onError: (error) => {
+            console.error('[useConnectThenUnlinkViaCaller] error connecting wallet', error)
+            popupToast(({ toast }) => (
+                <StandardToast.Error
+                    toast={toast}
+                    message={`Please make sure your wallet supports and is connected to the ${baseChain.name} network.`}
+                    subMessage={mapToErrorMessage({
+                        error: new Error(error),
+                        source: 'useConnectThenUnlinkViaCaller privy connect error',
+                    })}
+                />
+            ))
         },
     })
 }
