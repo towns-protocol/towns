@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNotificationSettings } from 'use-towns-client'
 import { Box, Icon, Paragraph, PopupMenu, Stack } from '@ui'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
@@ -124,6 +124,13 @@ export function TownNotificationsButton(props: Props) {
     ])
 
     const [value, setValue] = useState<(typeof options)[number]>(options[index])
+
+    useEffect(() => {
+        // use effect here to update the state for the first load
+        // of the latest notification settings ( user launches towns.com, initial settings
+        // load from local storage, we make a request for the latest settings and update the state
+        setValue(options[index])
+    }, [options, index])
 
     const onChange = useCallback(
         (option: (typeof options)[number]) => {

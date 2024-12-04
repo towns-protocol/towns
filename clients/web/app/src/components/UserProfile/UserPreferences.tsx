@@ -20,7 +20,7 @@ export function UserPreferences() {
                         Group Message Notifications
                     </Text>
                 </Box>
-                <TownNotificationsButton type="dmGlobal" />
+                <TownNotificationsButton type="gdmGlobal" />
             </Stack>
             <EventSignatureValidationCheckbox />
         </>

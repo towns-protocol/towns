@@ -245,7 +245,7 @@ export class NotificationSettingsClient {
             })
             this.updateLocalSettings((current) => ({
                 ...current,
-                settings: { ...current, dmGlobal: value },
+                dmGlobal: value,
             }))
         })
     }
@@ -260,7 +260,7 @@ export class NotificationSettingsClient {
 
             this.updateLocalSettings((current) => ({
                 ...current,
-                settings: { ...current, gdmGlobal: value },
+                gdmGlobal: value,
             }))
         })
     }
