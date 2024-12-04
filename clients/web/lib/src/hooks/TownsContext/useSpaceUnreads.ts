@@ -116,7 +116,10 @@ export function useSpaceUnreads({
                             }
                         }
                         if (marker.isUnread && isParticipatingThread(marker, threadsStats)) {
-                            const isMuted = mutedChannelIds?.has(marker.channelId)
+                            const isMuted =
+                                mutedChannelIds?.has(marker.channelId) ||
+                                mutedChannelIds?.has(spaceId)
+
                             if (!isMuted) {
                                 results[spaceId].mentions += marker.mentions
                                 results[spaceId].isUnread = true
