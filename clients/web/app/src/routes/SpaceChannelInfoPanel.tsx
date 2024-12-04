@@ -159,7 +159,7 @@ export const ChannelInfo = () => {
                     />
                 </Stack>
 
-                {roles && (canEditRoles || hasSomeEntitlement) && (
+                {roles && (
                     <Stack
                         padding
                         elevate
@@ -181,16 +181,18 @@ export const ChannelInfo = () => {
                                 </TextButton>
                             )}
                         </Stack>
-                        <Stack horizontal alignItems="center" gap="xs" color="gray2">
-                            <Icon type="lock" size="square_xs" color="gray2" />
-                            <Text
-                                size={{
-                                    mobile: 'sm',
-                                }}
-                            >
-                                Only members of these roles can access:
-                            </Text>
-                        </Stack>
+                        {hasSomeEntitlement && (
+                            <Stack horizontal alignItems="center" gap="xs" color="gray2">
+                                <Icon type="lock" size="square_xs" color="gray2" />
+                                <Text
+                                    size={{
+                                        mobile: 'sm',
+                                    }}
+                                >
+                                    Only members of these roles can access:
+                                </Text>
+                            </Stack>
+                        )}
                         <ChannelsRolesList
                             spaceId={spaceId}
                             canJoin={canJoinChannel}
