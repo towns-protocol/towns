@@ -268,28 +268,41 @@ const Header = (props: {
     })
 
     return (
-        <Stack gap width="100%" justifyContent="spaceBetween" paddingTop={isTouch ? 'sm' : 'none'}>
-            <Stack gap>
-                <Heading
-                    level={2}
-                    style={{ textTransform: 'none' }}
-                    data-testid="town-preview-header"
-                >
-                    {name}
-                </Heading>
-                {motto && <Text color="gray2">{motto}</Text>}
+        <Stack horizontal width="100%">
+            <Stack
+                justifyContent={{
+                    mobile: motto ? 'spaceBetween' : 'center',
+                }}
+                gap={{
+                    desktop: 'md',
+                    mobile: 'sm',
+                }}
+                paddingTop={isTouch ? 'sm' : 'none'}
+            >
+                <Stack gap>
+                    <Heading
+                        level={2}
+                        style={{ textTransform: 'none' }}
+                        data-testid="town-preview-header"
+                    >
+                        {name}
+                    </Heading>
+                    {motto && <Text color="gray2">{motto}</Text>}
+                </Stack>
+                <Stack horizontal justifySelf="end" height="x4">
+                    {userId && (
+                        <AvatarTextHorizontal
+                            userId={userId}
+                            abstractAccountaddress={owner as Address}
+                            prepend={<Text color="gray2">By </Text>}
+                        />
+                    )}
+                </Stack>
             </Stack>
-            <Stack horizontal justifySelf="end" height="x4">
-                {userId && (
-                    <AvatarTextHorizontal
-                        userId={userId}
-                        abstractAccountaddress={owner as Address}
-                        prepend={<Text color="gray2">By </Text>}
-                    />
-                )}
-                {isTouch && !isPreview && (
-                    <>
-                        <Box grow />
+
+            {isTouch && !isPreview && (
+                <Box grow justifyContent="end" alignItems="end">
+                    <Box width="x4" height="x4" rounded="sm">
                         <IconButton
                             centerContent
                             icon="share"
@@ -298,9 +311,9 @@ const Header = (props: {
                             aspectRatio="1/1"
                             onClick={onTouchSharePressed}
                         />
-                    </>
-                )}
-            </Stack>
+                    </Box>
+                </Box>
+            )}
         </Stack>
     )
 }
