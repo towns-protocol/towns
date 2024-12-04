@@ -1081,6 +1081,80 @@ export class TownsClient
         await this.casablancaClient.removeUser(streamId, userId)
     }
 
+    public async joinRiverSpaceAndDefaultChannels(
+        spaceId: string,
+        signerContext?: SignerContext,
+        onJoinFlowStatus?: (update: JoinFlowStatus) => void,
+        defaultUsername?: string,
+    ) {
+        if (!this.casablancaClient && signerContext) {
+            await this.localStartCasablancaClientWithRetries(
+                signerContext,
+                { spaceId },
+                TimeTrackerEvents.JOIN_SPACE,
+            )
+        }
+        onJoinFlowStatus?.(JoinFlowStatus.JoiningRoom)
+        const endJoinSpace = getTimeTracker().startMeasurement(
+            TimeTrackerEvents.JOIN_SPACE,
+            'river_joinroom_space',
+        )
+        const room = await this.joinRoom(spaceId, undefined, {
+            skipWaitForMiniblockConfirmation: true,
+            skipWaitForUserStreamUpdate: true,
+        })
+        endJoinSpace?.()
+        this.log('[joinTown] room', room)
+        // join the default channels
+        const spaceContent = this.casablancaClient?.streams.get(spaceId)?.view.spaceContent
+        if (spaceContent) {
+            // if a default username is provided we can try applying it
+            const defaultUsernamePromise = (async () => {
+                if (!defaultUsername) {
+                    this.log('[joinTown] no default username provided')
+                    return
+                }
+                const isAvailable = await this.getIsUsernameAvailable(spaceId, defaultUsername)
+                if (!isAvailable) {
+                    this.log('[joinTown] default usename already taken')
+                    return
+                }
+                try {
+                    this.log('[joinTown] setting default username')
+                    await this.casablancaClient?.setUsername(spaceId, defaultUsername)
+                    this.log('[joinTown] default usename set')
+                } catch (e) {
+                    console.error('[joinTown] fail to set default username', e)
+                }
+            })()
+
+            await Promise.all([
+                defaultUsernamePromise,
+                ...Array.from(spaceContent.spaceChannelsMetadata.entries())
+                    .filter(([_, value]) => value.isDefault || value.isAutojoin)
+                    .map(async ([key]) => {
+                        onJoinFlowStatus?.(JoinFlowStatus.JoiningAutojoinChannels)
+                        const endJoinChannel = getTimeTracker().startMeasurement(
+                            TimeTrackerEvents.JOIN_SPACE,
+                            'river_joinroom_channel',
+                        )
+                        try {
+                            await this.joinRoom(key, undefined, {
+                                skipWaitForMiniblockConfirmation: true,
+                                skipWaitForUserStreamUpdate: true,
+                            })
+                        } catch (e) {
+                            console.error('[joinTown] Failed auto-joining channel', e)
+                        }
+                        endJoinChannel?.()
+                    }),
+            ])
+        } else {
+            this.log('[joinTown] Error no space content found')
+        }
+        return room
+    }
+
     /************************************************
      * joinTown
      * - mints membership if needed
@@ -1099,75 +1173,6 @@ export class TownsClient
         const userId = await signer.getAddress()
         const linkedWallets = await this.getLinkedWallets(userId)
 
-        const joinRiverRoom = async () => {
-            if (!this.casablancaClient && signerContext) {
-                await this.localStartCasablancaClientWithRetries(
-                    signerContext,
-                    { spaceId },
-                    TimeTrackerEvents.JOIN_SPACE,
-                )
-            }
-            onJoinFlowStatus?.(JoinFlowStatus.JoiningRoom)
-            const endJoinSpace = getTimeTracker().startMeasurement(
-                TimeTrackerEvents.JOIN_SPACE,
-                'river_joinroom_space',
-            )
-            const room = await this.joinRoom(spaceId, undefined, {
-                skipWaitForMiniblockConfirmation: true,
-                skipWaitForUserStreamUpdate: true,
-            })
-            endJoinSpace?.()
-            this.log('[joinTown] room', room)
-            // join the default channels
-            const spaceContent = this.casablancaClient?.streams.get(spaceId)?.view.spaceContent
-            if (spaceContent) {
-                // if a default username is provided we can try applying it
-                const defaultUsernamePromise = (async () => {
-                    if (!defaultUsername) {
-                        this.log('[joinTown] no default username provided')
-                        return
-                    }
-                    const isAvailable = await this.getIsUsernameAvailable(spaceId, defaultUsername)
-                    if (!isAvailable) {
-                        this.log('[joinTown] default usename already taken')
-                        return
-                    }
-                    try {
-                        this.log('[joinTown] setting default username')
-                        await this.casablancaClient?.setUsername(spaceId, defaultUsername)
-                        this.log('[joinTown] default usename set')
-                    } catch (e) {
-                        console.error('[joinTown] fail to set default username', e)
-                    }
-                })()
-
-                await Promise.all([
-                    defaultUsernamePromise,
-                    ...Array.from(spaceContent.spaceChannelsMetadata.entries())
-                        .filter(([_, value]) => value.isDefault || value.isAutojoin)
-                        .map(async ([key]) => {
-                            onJoinFlowStatus?.(JoinFlowStatus.JoiningAutojoinChannels)
-                            const endJoinChannel = getTimeTracker().startMeasurement(
-                                TimeTrackerEvents.JOIN_SPACE,
-                                'river_joinroom_channel',
-                            )
-                            try {
-                                await this.joinRoom(key, undefined, {
-                                    skipWaitForMiniblockConfirmation: true,
-                                    skipWaitForUserStreamUpdate: true,
-                                })
-                            } catch (e) {
-                                console.error('[joinTown] Failed auto-joining channel', e)
-                            }
-                            endJoinChannel?.()
-                        }),
-                ])
-            } else {
-                this.log('[joinTown] Error no space content found')
-            }
-            return room
-        }
-
         // check membership nft first to avoid uncessary mint attempts on rejoins
         try {
             const allPromises = linkedWallets
@@ -1178,7 +1183,12 @@ export class TownsClient
                 onJoinFlowStatus?.(JoinFlowStatus.AlreadyMember)
                 this.log('[joinTown] already have member nft')
 
-                const room = await joinRiverRoom()
+                const room = await this.joinRiverSpaceAndDefaultChannels(
+                    spaceId,
+                    signerContext,
+                    onJoinFlowStatus,
+                    defaultUsername,
+                )
                 return room
             }
         } catch (error) {
@@ -1220,7 +1230,12 @@ export class TownsClient
         }
 
         try {
-            const room = await joinRiverRoom()
+            const room = await this.joinRiverSpaceAndDefaultChannels(
+                spaceId,
+                signerContext,
+                onJoinFlowStatus,
+                defaultUsername,
+            )
             return room
         } catch (error) {
             addCategoryToError(error, 'river')

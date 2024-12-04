@@ -226,6 +226,105 @@ export function usePublicPageLoginFlow() {
         setSpaceBeingJoined(spaceId)
     }, [spaceBeingJoined, setSpaceBeingJoined, spaceId])
 
+    const joinAfterSuccessfulCrossmint = useCallback(
+        async ({
+            clientSingleton,
+            signerContext,
+            analyticsData,
+        }: {
+            clientSingleton: TClientSingleton
+            signerContext: TSignerContext
+            analyticsData: {
+                spaceName: string
+            }
+        }) => {
+            if (!spaceId || !clientSingleton || !signerContext) {
+                const missingParams: string[] = []
+                if (!spaceId) {
+                    missingParams.push('spaceId')
+                }
+                if (!clientSingleton) {
+                    missingParams.push('clientSingleton')
+                }
+                if (!signerContext) {
+                    missingParams.push('signerContext')
+                }
+                popupToast(({ toast }) => (
+                    <StandardToast.Error
+                        toast={toast}
+                        message="There was an error joining the town."
+                        subMessage={mapToErrorMessage({
+                            error: new Error(
+                                `[usePublicPageLoginFlow] missing params: ${missingParams.join(
+                                    ', ',
+                                )} - crossmintSuccess`,
+                            ),
+                            source: 'crossmintSuccess',
+                        })}
+                    />
+                ))
+                end()
+                return
+            }
+            joiningTown({ spaceId, spaceName: analyticsData.spaceName })
+
+            try {
+                const result = await clientSingleton?.joinRiverSpaceAndDefaultChannels(
+                    spaceId,
+                    signerContext,
+                    (update) => {
+                        console.log('[joinTown] join flow status', update)
+                    },
+                    undefined,
+                )
+
+                if (result) {
+                    joinedTown({
+                        spaceId,
+                        spaceName: analyticsData.spaceName,
+                        gatedSpace,
+                        pricingModule,
+                        priceInWei,
+                        tokensGatedBy,
+                    })
+                } else {
+                    end()
+                    popupToast(({ toast }) => (
+                        <StandardToast.Error
+                            toast={toast}
+                            message="There was an error joining the town."
+                            subMessage={mapToErrorMessage({
+                                error: new Error('unable to join space unknown'),
+                                source: 'join space',
+                            })}
+                        />
+                    ))
+                }
+            } catch (error) {
+                end()
+                const _error = error as Error
+
+                popupToast(({ toast }) => (
+                    <StandardToast.Error
+                        toast={toast}
+                        message="There was an error joining the town."
+                        subMessage={mapToErrorMessage({ error: _error, source: 'join space' })}
+                    />
+                ))
+            }
+        },
+        [
+            end,
+            gatedSpace,
+            joinedTown,
+            joiningTown,
+            priceInWei,
+            pricingModule,
+            spaceId,
+            tokensGatedBy,
+        ],
+    )
+
     return useMemo(
         () => ({
             startJoinPreLogin,
@@ -238,6 +337,7 @@ export function usePublicPageLoginFlow() {
             startJoinDoesNotMeetRequirements,
             disableJoinUi,
             setDisableJoinUi,
+            joinAfterSuccessfulCrossmint,
             assetModal,
             setAssetModal,
         }),
@@ -251,6 +351,7 @@ export function usePublicPageLoginFlow() {
             setJoinStep,
             disableJoinUi,
             setDisableJoinUi,
+            joinAfterSuccessfulCrossmint,
             assetModal,
             setAssetModal,
             startJoinDoesNotMeetRequirements,
