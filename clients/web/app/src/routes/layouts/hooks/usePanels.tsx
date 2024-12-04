@@ -154,7 +154,7 @@ export const usePanels = () => {
 
         case CHANNEL_INFO_PARAMS.PREFERENCES: {
             return (
-                <Panel padding="lg" label="Preferences">
+                <Panel label="Preferences">
                     <UserPreferences />
                 </Panel>
             )

@@ -378,7 +378,9 @@ const SpaceProfileWithoutAuth = () => {
 
             {modal === ModalType.Preferences && (
                 <ModalContainer touchTitle="Preferences" onHide={() => setModal(undefined)}>
-                    <UserPreferences />
+                    <Box padding gap>
+                        <UserPreferences />
+                    </Box>
                 </ModalContainer>
             )}
 

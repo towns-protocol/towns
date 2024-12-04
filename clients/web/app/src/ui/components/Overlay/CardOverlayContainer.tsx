@@ -187,7 +187,7 @@ export const OverlayContainer = (props: OffsetContainerProps) => {
     )
 
     return (
-        <Box absoluteFill pointerEvents="auto">
+        <Box absoluteFill pointerEvents="auto" zIndex="tooltips">
             {render && (
                 <div ref={anchorRef} style={initializedAnchorStyle}>
                     <div ref={containerRef} style={containerStyle}>

@@ -6,7 +6,7 @@ import { TownNotificationsButton } from '@components/NotificationSettings/Notifi
 export function UserPreferences() {
     return (
         <>
-            <Stack padding gap background="level2" rounded="sm">
+            <Stack padding gap elevate background="level2" rounded="sm">
                 <Box display="flex">
                     <Text fontWeight="strong" color="default">
                         Direct Message Notifications
@@ -14,7 +14,7 @@ export function UserPreferences() {
                 </Box>
                 <TownNotificationsButton type="dmGlobal" />
             </Stack>
-            <Stack padding gap background="level2" rounded="sm">
+            <Stack padding elevate gap background="level2" rounded="sm">
                 <Box display="flex">
                     <Text fontWeight="strong" color="default">
                         Group Message Notifications
