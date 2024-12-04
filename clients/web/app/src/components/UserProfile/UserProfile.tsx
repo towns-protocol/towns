@@ -189,9 +189,13 @@ export const UserProfile = (props: Props) => {
                         background="level2"
                         width="100%"
                         alignItems="center"
-                        cursor="pointer"
+                        cursor={canEdit ? 'pointer' : 'default'}
                         tooltip={<VerifiedOnChainAssetTooltip userId={userId} />}
-                        onClick={() => setShowNftProfilePicture(true)}
+                        onClick={() => {
+                            if (canEdit) {
+                                setShowNftProfilePicture(true)
+                            }
+                        }}
                     >
                         <Icon type="verifiedEnsName" size="square_sm" />
                         {resolvedNft ? (
