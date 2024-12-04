@@ -130,7 +130,7 @@ export const ChannelItem = ({
 
     const { loggedInWalletAddress } = useConnectivity()
 
-    const { hasPermission: canJoinChannel } = useHasPermission({
+    const { hasPermission: canJoinChannel, isLoading: isLoadingCanJoinChannel } = useHasPermission({
         walletAddress: loggedInWalletAddress,
         spaceId: space.id,
         channelId: channelNetworkId,
@@ -239,7 +239,7 @@ export const ChannelItem = ({
                 </Stack>
 
                 <Button
-                    disabled={syncingSpace}
+                    disabled={syncingSpace || isLoadingCanJoinChannel}
                     minWidth="100"
                     size="button_sm"
                     rounded="sm"
