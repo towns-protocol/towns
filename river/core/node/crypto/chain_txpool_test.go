@@ -42,7 +42,6 @@ func TestNewTransactionPoolWithReplaceTx(t *testing.T) {
 		resubmitPolicy,
 		repricePolicy,
 		tc.DeployerBlockchain.ChainMonitor,
-		tc.DeployerBlockchain.InitialBlockNum,
 		true,
 		infra.NewMetricsFactory(nil, "", ""),
 		nil,
@@ -226,7 +225,6 @@ func TestReplacementTxOnBoot(t *testing.T) {
 		resubmitPolicy,
 		repricePolicy,
 		monitor,
-		crypto.BlockNumber(blockNum),
 		disableReplacePendingTransactionOnBoot,
 		infra.NewMetricsFactory(nil, "", ""),
 		nil)

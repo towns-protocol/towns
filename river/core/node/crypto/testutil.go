@@ -217,7 +217,7 @@ func NewBlockchainTestContext(ctx context.Context, params TestParams) (*Blockcha
 	var client BlockchainClient
 	client = ethClient
 	if backend != nil {
-		client = backend.Client()
+		client = NewWrappedSimulatedClient(backend.Client())
 	}
 
 	chainId, err := client.ChainID(ctx)

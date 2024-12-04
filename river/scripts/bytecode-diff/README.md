@@ -6,6 +6,7 @@ Bytecode-Diff is a tool to retrieve and display contract bytecode diff for Base 
 
 - Go 1.22 or later
 - Base RPC Provider URL
+- River Chain RPC Provider URL
 - Basescan API Key
 
 ## Usage
@@ -134,6 +135,8 @@ You can also set the following environment variables instead of using flags:
 
 - `BASE_RPC_URL`: Base RPC provider URL
 - `BASE_SEPOLIA_RPC_URL`: Base Sepolia RPC provider URL
+- `RIVER_RPC_URL`: River Chain RPC provider URL
+- `RIVER_TESTNET_RPC_URL`: River Testnet RPC provider URL
 - `FACET_SOURCE_PATH`: Path to facet source files
 - `BASESCAN_API_KEY`: Your API key for BaseScan.
 - `COMPILED_FACETS_PATH`: (Optional) Path to compiled facets

@@ -46,6 +46,7 @@ type SourceFacetDiff struct {
 	Diamond   string            `yaml:"diamond"`
 	Facets    []FacetSourceDiff `yaml:"facets"`
 	NumFacets uint              `yaml:"numFacets"`
+	ChainName string            `yaml:"chainName"`
 }
 
 type SourceDiffReport struct {
@@ -81,15 +82,16 @@ type FacetFile struct {
 type Diamond string
 
 const (
-	BaseRegistry Diamond = "baseRegistry"
-	Space        Diamond = "space"
-	SpaceFactory Diamond = "spaceFactory"
-	SpaceOwner   Diamond = "spaceOwner"
+	BaseRegistry  Diamond = "baseRegistry"
+	Space         Diamond = "space"
+	SpaceFactory  Diamond = "spaceFactory"
+	SpaceOwner    Diamond = "spaceOwner"
+	RiverRegistry Diamond = "riverRegistry"
 )
 
 // GetFacetFiles walks the given path and returns a slice of FacetFile structs
 // containing information about the facet files.
-func GetFacetFiles(facetSourcePath string) ([]FacetFile, error) {
+func GetFacetFiles(facetSourcePath string, verbose bool) ([]FacetFile, error) {
 	var facetFiles []FacetFile
 
 	err := filepath.Walk(facetSourcePath, func(path string, info os.FileInfo, err error) error {
@@ -99,6 +101,9 @@ func GetFacetFiles(facetSourcePath string) ([]FacetFile, error) {
 
 		if strings.Contains(path, "facets") {
 			if !info.IsDir() && strings.HasSuffix(info.Name(), ".sol") && !strings.HasPrefix(info.Name(), "I") {
+				if verbose {
+					Log.Info().Msgf("Found facet file: %s", info.Name())
+				}
 				facetFiles = append(facetFiles, FacetFile{
 					Path:     path,
 					Filename: info.Name(),
@@ -218,9 +223,10 @@ func generateReport(
 	for diamond, facets := range envFacets {
 		updatedFacets := []FacetSourceDiff{}
 		existingFacets := []FacetSourceDiff{}
-
+		var chainName string
 		for _, facet := range facets {
 			facetName := FacetName(facet.ContractName)
+			chainName = facet.ChainName
 			currentHash, exists := currentHashes[facetName]
 			if !exists {
 				continue // Skip if the facet is not in the compiled hashes
@@ -245,6 +251,7 @@ func generateReport(
 				Diamond:   string(diamond),
 				Facets:    updatedFacets,
 				NumFacets: uint(len(updatedFacets)),
+				ChainName: chainName,
 			})
 		}
 		if len(existingFacets) > 0 {
@@ -252,6 +259,7 @@ func generateReport(
 				Diamond:   string(diamond),
 				Facets:    existingFacets,
 				NumFacets: uint(len(existingFacets)),
+				ChainName: chainName,
 			})
 		}
 	}
@@ -563,11 +571,16 @@ func Contains(slice []string, item string) bool {
 	return false
 }
 
-func GetDiamondAddresses(basePath string, diamonds []Diamond, verbose bool) (map[Diamond]string, error) {
+func GetDiamondAddresses(
+	basePath string,
+	diamonds []Diamond,
+	chain ChainName,
+	verbose bool,
+) (map[Diamond]string, error) {
 	diamondAddresses := make(map[Diamond]string)
 
 	for _, diamond := range diamonds {
-		filePath := filepath.Join(basePath, "base", "addresses", fmt.Sprintf("%s.json", diamond))
+		filePath := filepath.Join(basePath, string(chain), "addresses", fmt.Sprintf("%s.json", diamond))
 
 		data, err := os.ReadFile(filePath)
 		if err != nil {

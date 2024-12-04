@@ -241,18 +241,20 @@ func (tp *streamScrubTaskProcessorImpl) processTaskImpl(
 	streamId StreamId,
 ) error {
 	if !ValidChannelStreamId(&streamId) {
-		return RiverError(Err_INTERNAL, "Scrub schedule for non-channel stream", "streamId", streamId)
+		return RiverError(Err_INTERNAL, "Scrub scheduled for non-channel stream", "streamId", streamId)
 	}
 
-	stream, err := tp.cache.GetStream(ctx, streamId)
+	stream, err := tp.cache.GetStreamNoWait(ctx, streamId)
 	if err != nil {
 		return err
 	}
 
-	// TODO: GetViewIfLocal
-	view, err := stream.GetView(tp.ctx)
+	view, err := stream.GetViewIfLocal(tp.ctx)
 	if err != nil {
 		return err
+	}
+	if view == nil {
+		return RiverError(Err_INTERNAL, "Scrub scheduled for non-local stream", "streamId", streamId)
 	}
 
 	joinableView, ok := view.(events.JoinableStreamView)

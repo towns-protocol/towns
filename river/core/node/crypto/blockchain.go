@@ -2,11 +2,13 @@ package crypto
 
 import (
 	"context"
-	"go.opentelemetry.io/otel/trace"
 	"math/big"
 	"time"
 
+	"go.opentelemetry.io/otel/trace"
+
 	"github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/ethclient"
 
 	"github.com/river-build/river/core/config"
@@ -15,11 +17,16 @@ import (
 	. "github.com/river-build/river/core/node/protocol"
 )
 
-// BlockchainClient is an interface that covers common functionality
-// between ethclient.Client and simulated.Backend.
+// BlockchainClient is an interface that covers common functionality needed
+// between ethclient.Client and simulated.Backend to satisfy the requirements
+// of generated abi contract code and the chain monitor.
 // go-ethereum splits functionality into multiple implicit interfaces,
 // but there is no explicit interface for client.
+// Note: the simulated client does not implement the BlockHashContractCaller
+// interface, so we wrap it with NewWrappedSimulatedClient in tests to provide the
+// full suite of methods.
 type BlockchainClient interface {
+	bind.BlockHashContractCaller
 	ethereum.BlockNumberReader
 	ethereum.ChainReader
 	ethereum.ChainStateReader
@@ -75,12 +82,8 @@ func NewBlockchain(
 			Func("NewBlockchain")
 	}
 
-	if tracer != nil {
-		instrumentedClient := NewInstrumentedEthClient(client, tracer)
-		return NewBlockchainWithClient(ctx, cfg, wallet, instrumentedClient, instrumentedClient, metrics, tracer)
-	}
-
-	return NewBlockchainWithClient(ctx, cfg, wallet, client, client, metrics, tracer)
+	instrumentedClient := NewInstrumentedEthClient(client, cfg.ChainId, metrics, tracer)
+	return NewBlockchainWithClient(ctx, cfg, wallet, instrumentedClient, instrumentedClient, metrics, tracer)
 }
 
 func NewBlockchainWithClient(
@@ -134,7 +137,7 @@ func NewBlockchainWithClient(
 	if wallet != nil {
 		bc.Wallet = wallet
 		bc.TxPool, err = NewTransactionPoolWithPoliciesFromConfig(
-			ctx, cfg, bc.Client, wallet, bc.ChainMonitor, initialBlockNum,
+			ctx, cfg, bc.Client, wallet, bc.ChainMonitor,
 			cfg.DisableReplacePendingTransactionOnBoot, metrics, tracer)
 		if err != nil {
 			return nil, err

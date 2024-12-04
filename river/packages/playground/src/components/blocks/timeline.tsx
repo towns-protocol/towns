@@ -31,7 +31,7 @@ const useMessageReaction = (streamId: string, eventId: string) => {
     const { data: reactionMap } = useReactions(streamId)
     const reactions = reactionMap?.[eventId]
     const { sendReaction } = useSendReaction(streamId)
-    const { redactEvent } = useRedact(streamId)
+    const { redact } = useRedact(streamId)
     const onReact = useCallback(
         (
             params:
@@ -47,10 +47,10 @@ const useMessageReaction = (streamId: string, eventId: string) => {
             if (params.type === 'add') {
                 sendReaction(eventId, params.reaction)
             } else {
-                redactEvent(params.refEventId)
+                redact(params.refEventId)
             }
         },
-        [sendReaction, redactEvent, eventId],
+        [sendReaction, redact, eventId],
     )
 
     return {
@@ -154,7 +154,7 @@ const Message = ({
     const prettyDisplayName = displayName || username
     const isMyMessage = event.sender.id === sync.userId
     const { reactions, onReact } = useMessageReaction(streamId, event.eventId)
-    const { redactEvent } = useRedact(streamId)
+    const { redact } = useRedact(streamId)
 
     return (
         <div className="flex w-full gap-3.5">
@@ -187,7 +187,7 @@ const Message = ({
                         👍
                     </Button>
                     {isMyMessage && (
-                        <Button variant="ghost" onClick={() => redactEvent(event.eventId)}>
+                        <Button variant="ghost" onClick={() => redact(event.eventId)}>
                             ❌
                         </Button>
                     )}

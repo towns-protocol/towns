@@ -56,10 +56,24 @@ var AddHashesCmd = &cobra.Command{
 				Msg("Base Sepolia RPC URL not provided. Set it using --base-sepolia-rpc-url flag or BASE_SEPOLIA_RPC_URL environment variable")
 		}
 
+		if riverRpcUrl == "" {
+			log.Fatal().
+				Msg("River RPC URL not provided. Set it using --river-rpc-url flag or RIVER_RPC_URL environment variable")
+		}
+
+		if riverDevnetRpcUrl == "" {
+			log.Fatal().
+				Msg("River Devnet RPC URL not provided. Set it using --river-devnet-rpc-url flag or RIVER_DEVNET_RPC_URL environment variable")
+		}
+
 		// Create Ethereum client
 		clients, err := utils.CreateEthereumClients(
-			baseRpcUrl,
-			baseSepoliaRpcUrl,
+			struct {
+				BaseMainnetRpcUrl  string
+				BaseSepoliaRpcUrl  string
+				RiverMainnetRpcUrl string
+				RiverTestnetRpcUrl string
+			}{baseRpcUrl, baseSepoliaRpcUrl, riverRpcUrl, riverDevnetRpcUrl},
 			environment,
 			"",
 			false,
@@ -67,7 +81,8 @@ var AddHashesCmd = &cobra.Command{
 		if err != nil {
 			log.Fatal().Err(err).Msg("Failed to create Ethereum client")
 		}
-		defer clients[environment].Close()
+		defer clients[environment].BaseRpcClient.Close()
+		defer clients[environment].RiverRpcClient.Close()
 
 		// Read YAML file
 		yamlData, err := os.ReadFile(yamlFilePath)
@@ -97,7 +112,7 @@ var AddHashesCmd = &cobra.Command{
 		// Process deployments
 		deployments, ok := data["deployments"].(map[string]interface{})
 		if !ok {
-			log.Fatal().Msg("Invalid YAML structure: 'deployments' field not found or not a map")
+			log.Error().Msg("Invalid YAML structure: 'deployments' field not found or not a map")
 		}
 
 		for name, deployment := range deployments {
@@ -114,7 +129,7 @@ var AddHashesCmd = &cobra.Command{
 			}
 
 			addressBytes := common.HexToAddress(address)
-			hash, err := utils.GetContractCodeHash(clients[environment], addressBytes)
+			hash, err := utils.GetContractCodeHash(clients[environment].BaseRpcClient, addressBytes)
 			if err != nil {
 				log.Error().Err(err).Str("name", name).Str("address", address).Msg("Failed to get contract code hash")
 				continue
@@ -204,5 +219,8 @@ func init() {
 	AddHashesCmd.Flags().StringVar(&baseRpcUrl, "base-rpc-url", os.Getenv("BASE_RPC_URL"), "Base RPC URL")
 	AddHashesCmd.Flags().
 		StringVar(&baseSepoliaRpcUrl, "base-sepolia-rpc-url", os.Getenv("BASE_SEPOLIA_RPC_URL"), "Base Sepolia RPC URL")
+	AddHashesCmd.Flags().StringVar(&riverRpcUrl, "river-rpc-url", os.Getenv("RIVER_RPC_URL"), "River RPC URL")
+	AddHashesCmd.Flags().
+		StringVar(&riverDevnetRpcUrl, "river-devnet-rpc-url", os.Getenv("RIVER_DEVNET_RPC_URL"), "River Devnet RPC URL")
 	AddHashesCmd.Flags().BoolVar(&htmlRender, "html-render", true, "Render output as HTML")
 }

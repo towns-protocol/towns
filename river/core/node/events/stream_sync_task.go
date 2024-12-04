@@ -35,7 +35,7 @@ func (s *streamCacheImpl) syncStreamFromPeers(
 	streamId StreamId,
 	lastMbInContract *MiniblockRef,
 ) error {
-	stream, err := s.getStreamImpl(ctx, streamId)
+	stream, err := s.getStreamImpl(ctx, streamId, false)
 	if err != nil {
 		return err
 	}
@@ -56,20 +56,19 @@ func (s *streamCacheImpl) syncStreamFromPeers(
 	fromInclusive := lastMiniblockNum + 1
 	toExclusive := lastMbInContract.Num + 1
 
-	numRemotes := stream.nodes.NumRemotes()
-
-	if numRemotes == 0 {
+	remotes, _ := stream.GetRemotesAndIsLocal()
+	if len(remotes) == 0 {
 		return RiverError(Err_UNAVAILABLE, "Stream has no remotes", "stream", streamId)
 	}
 
-	remote := stream.nodes.GetStickyPeer()
+	remote := stream.GetStickyPeer()
 	var nextFromInclusive int64
-	for range numRemotes {
+	for range remotes {
 		nextFromInclusive, err = s.syncStreamFromSinglePeer(ctx, stream, remote, fromInclusive, toExclusive)
 		if err == nil && nextFromInclusive >= toExclusive {
 			return nil
 		}
-		remote = stream.nodes.AdvanceStickyPeer(remote)
+		remote = stream.AdvanceStickyPeer(remote)
 	}
 
 	return AsRiverError(err, Err_UNAVAILABLE).

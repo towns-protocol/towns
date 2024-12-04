@@ -282,13 +282,13 @@ func TestScrubStreamTaskProcessor(t *testing.T) {
 				func(t *assert.CollectT) {
 					assert := assert.New(t)
 
-					stream, err := streamCache.GetStream(ctx, channelId)
+					stream, err := streamCache.GetStreamNoWait(ctx, channelId)
 					if !assert.NoError(err) || !assert.NotNil(stream) {
 						return
 					}
 
 					// Grab the updated view, this triggers a scrub since scrub time was set to 300ms.
-					view, err := stream.GetView(ctx)
+					view, err := stream.GetViewIfLocal(ctx)
 					joinableView, ok := view.(events.JoinableStreamView)
 					if assert.NoError(err) && assert.NotNil(view) && assert.True(ok) {
 						for _, wallet := range allWallets {

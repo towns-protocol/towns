@@ -2,10 +2,12 @@ package client
 
 import (
 	"context"
-	"github.com/river-build/river/core/node/dlog"
 	"sync"
 
+	"github.com/river-build/river/core/node/dlog"
+
 	"github.com/ethereum/go-ethereum/common"
+
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/events"
 	"github.com/river-build/river/core/node/nodes"
@@ -161,12 +163,6 @@ func NewSyncers(
 }
 
 func (ss *SyncerSet) Run() {
-	ss.muSyncers.Lock()
-	for _, syncer := range ss.syncers {
-		ss.startSyncer(syncer)
-	}
-	ss.muSyncers.Unlock()
-
 	<-ss.ctx.Done() // sync cancelled by client, client conn dropped or client send buffer full
 
 	ss.muSyncers.Lock()
@@ -177,7 +173,20 @@ func (ss *SyncerSet) Run() {
 	close(ss.messages)    // close will cause the sync operation to send the SYNC_CLOSE message to the client
 }
 
-func (ss *SyncerSet) AddStream(ctx context.Context, nodeAddress common.Address, streamID StreamId, cookie *SyncCookie) error {
+func (ss *SyncerSet) AddInitialStreams() {
+	ss.muSyncers.Lock()
+	for _, syncer := range ss.syncers {
+		ss.startSyncer(syncer)
+	}
+	ss.muSyncers.Unlock()
+}
+
+func (ss *SyncerSet) AddStream(
+	ctx context.Context,
+	nodeAddress common.Address,
+	streamID StreamId,
+	cookie *SyncCookie,
+) error {
 	ss.muSyncers.Lock()
 	defer ss.muSyncers.Unlock()
 

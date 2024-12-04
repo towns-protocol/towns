@@ -5,6 +5,7 @@ import (
 
 	"github.com/SherClockHolmes/webpush-go"
 	"github.com/ethereum/go-ethereum/common"
+
 	. "github.com/river-build/river/core/node/base"
 	. "github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/shared"
@@ -285,7 +286,19 @@ func (up *UserPreferences) WantNotificationForSpaceChannelMessage(
 	// determine if for the type of message the user wants to receive a notification
 	switch setting {
 	case SpaceChannelSettingValue_SPACE_CHANNEL_SETTING_MESSAGES_ALL:
-		return true
+		switch msgInteractionType {
+		case MessageInteractionType_MESSAGE_INTERACTION_TYPE_REPLY:
+			return participating || mentioned
+		case MessageInteractionType_MESSAGE_INTERACTION_TYPE_REACTION:
+			return participating
+		case MessageInteractionType_MESSAGE_INTERACTION_TYPE_POST,
+			MessageInteractionType_MESSAGE_INTERACTION_TYPE_UNSPECIFIED:
+			return true
+		case MessageInteractionType_MESSAGE_INTERACTION_TYPE_EDIT,
+			MessageInteractionType_MESSAGE_INTERACTION_TYPE_REDACTION:
+			return false
+		}
+
 	case SpaceChannelSettingValue_SPACE_CHANNEL_SETTING_ONLY_MENTIONS_REPLIES_REACTIONS:
 		return mentioned ||
 			(participating && msgInteractionType == MessageInteractionType_MESSAGE_INTERACTION_TYPE_REACTION) ||

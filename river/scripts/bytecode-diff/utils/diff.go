@@ -10,6 +10,7 @@ type FacetDiff struct {
 	TargetContractName      string         `yaml:"targetContractName,omitempty"`
 	SourceContractAddress   common.Address `yaml:"sourceFacetAddress"`
 	TargetContractAddresses []string       `yaml:"targetContractAddresses,omitempty"`
+	TargetChain             string         `yaml:"targetChain,omitempty"`
 	SelectorsDiff           []string       `yaml:"selectorsDiff"`
 	SourceBytecodeHash      string         `yaml:"sourceBytecodeHash,omitempty"`
 	TargetBytecodeHashes    []string       `yaml:"targetBytecodeHashes,omitempty"`
@@ -75,6 +76,7 @@ func CompareFacets(source, target map[string][]Facet) map[string][]FacetDiff {
 						SourceBytecodeHash:      o.BytecodeHash,
 						TargetBytecodeHashes:    t.BytecodeHashes,
 						TargetContractAddresses: t.ContractAddresses,
+						TargetChain:             t.ChainName,
 						SourceVerified:          true,
 						TargetVerified:          true,
 					})

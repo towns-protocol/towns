@@ -36,7 +36,7 @@ type ArchiveStream struct {
 func NewArchiveStream(streamId StreamId, nn *[]common.Address, lastKnownMiniblock uint64) *ArchiveStream {
 	stream := &ArchiveStream{
 		streamId: streamId,
-		nodes:    nodes.NewStreamNodes(*nn, common.Address{}),
+		nodes:    nodes.NewStreamNodesWithLock(*nn, common.Address{}),
 	}
 	stream.numBlocksInContract.Store(int64(lastKnownMiniblock + 1))
 	stream.numBlocksInDb.Store(-1)
@@ -353,7 +353,7 @@ func (a *Archiver) onStreamPlacementUpdated(
 		return
 	}
 	stream := record.(*ArchiveStream)
-	_ = stream.nodes.Update(event.NodeAddress, event.IsAdded)
+	_ = stream.nodes.Update(event, common.Address{})
 }
 
 func (a *Archiver) onStreamLastMiniblockUpdated(

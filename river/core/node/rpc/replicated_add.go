@@ -23,24 +23,24 @@ type replicatedStream struct {
 var _ AddableStream = (*replicatedStream)(nil)
 
 func (r *replicatedStream) AddEvent(ctx context.Context, event *ParsedEvent) error {
-	numRemotes := r.nodes.NumRemotes()
+	remotes, _ := r.nodes.GetRemotesAndIsLocal()
 	// TODO: remove
-	if numRemotes == 0 {
+	if len(remotes) == 0 {
 		return r.localStream.AddEvent(ctx, event)
 	}
 
-	sender := NewQuorumPool(numRemotes)
+	sender := NewQuorumPool(len(remotes))
 
 	sender.GoLocal(func() error {
 		return r.localStream.AddEvent(ctx, event)
 	})
 
-	if numRemotes > 0 {
+	if len(remotes) > 0 {
 		streamId, err := shared.StreamIdFromString(r.streamId)
 		if err != nil {
 			return err
 		}
-		for _, n := range r.nodes.GetRemotes() {
+		for _, n := range remotes {
 			sender.GoRemote(
 				n,
 				func(node common.Address) error {

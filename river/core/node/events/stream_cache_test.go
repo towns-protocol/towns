@@ -33,7 +33,7 @@ func TestStreamCacheViewEviction(t *testing.T) {
 
 	tc.createStreamNoCache(streamID, genesisMiniblock)
 
-	streamSync, err := streamCache.GetStream(ctx, streamID)
+	streamSync, err := streamCache.GetStreamWaitForLocal(ctx, streamID)
 	require.NoError(err, "loading stream record")
 	streamView, err := streamSync.GetView(ctx)
 	require.NoError(err)
@@ -101,7 +101,7 @@ func TestStreamCacheViewEviction(t *testing.T) {
 	require.Equal(0, streamWithLoadedViewCount, "stream cache must have ne loaded stream")
 
 	// stream view must be loaded again in cache
-	stream, err := streamCache.GetStream(ctx, streamID)
+	stream, err := streamCache.GetStreamWaitForLocal(ctx, streamID)
 	require.NoError(err, "loading stream record")
 	_, err = stream.GetView(ctx)
 	require.NoError(err, "get view")
@@ -136,7 +136,7 @@ func TestCacheEvictionWithFilledMiniBlockPool(t *testing.T) {
 
 	tc.createStreamNoCache(streamID, genesisMiniblock)
 
-	streamSync, err := streamCache.GetStream(ctx, streamID)
+	streamSync, err := streamCache.GetStreamWaitForLocal(ctx, streamID)
 	require.NoError(err, "loading stream record")
 	_, err = streamSync.GetView(ctx)
 	require.NoError(err, "get view")
@@ -254,7 +254,7 @@ func TestStreamMiniblockBatchProduction(t *testing.T) {
 		go func(streamID StreamId, genesis *Miniblock) {
 			defer wg.Done()
 
-			streamSync, err := streamCache.getStreamImpl(ctx, streamID)
+			streamSync, err := streamCache.getStreamImpl(ctx, streamID, true)
 			require.NoError(err, "get stream")
 
 			// unload view for half of the streams
@@ -294,7 +294,7 @@ func TestStreamMiniblockBatchProduction(t *testing.T) {
 			// quit loop when all added events are included in mini-blocks
 			miniblocksProduced := 0
 			for streamID := range genesisBlocks {
-				stream, err := streamCache.GetStream(ctx, streamID)
+				stream, err := streamCache.GetStreamWaitForLocal(ctx, streamID)
 				require.NoError(err, "get stream")
 				view, err := stream.GetView(ctx)
 				require.NoError(err, "get view")
@@ -378,7 +378,7 @@ func Disabled_TestStreamUnloadWithSubscribers(t *testing.T) {
 	// obtain sync cookies for allocated streams
 	for streamID := range genesisBlocks {
 		// get sync cookies so we can start from somewhere
-		stream, err := streamCache.GetStream(ctx, streamID)
+		stream, err := streamCache.GetStreamWaitForLocal(ctx, streamID)
 		require.NoError(err, "get stream")
 		streamView, err := stream.GetView(ctx)
 		require.NoError(err, "get view")
@@ -396,7 +396,7 @@ func Disabled_TestStreamUnloadWithSubscribers(t *testing.T) {
 	mpProducer := NewMiniblockProducer(ctx, streamCache, &MiniblockProducerOpts{TestDisableMbProdcutionOnBlock: true})
 
 	for streamID, syncCookie := range syncCookies {
-		streamSync, err := streamCache.GetStream(ctx, streamID)
+		streamSync, err := streamCache.GetStreamWaitForLocal(ctx, streamID)
 		require.NoError(err, "get sync stream")
 		subscriptionReceivers[streamID] = new(testStreamCacheViewEvictionSub)
 		err = streamSync.Sub(ctx, syncCookie, subscriptionReceivers[streamID])
@@ -417,7 +417,7 @@ func Disabled_TestStreamUnloadWithSubscribers(t *testing.T) {
 	for streamID, genesis := range genesisBlocks {
 		count++
 		if count < 2 {
-			streamSync, err := streamCache.GetStream(ctx, streamID)
+			streamSync, err := streamCache.GetStreamWaitForLocal(ctx, streamID)
 			require.NoError(err, "get sync stream")
 			for i := 0; i < 1+int(streamID[3]%50); i++ {
 				addEventToStream(t, ctx, streamCache.params, streamSync,

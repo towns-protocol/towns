@@ -107,7 +107,34 @@ export class Dm extends PersistedObservable<DmModel> {
         return eventId
     }
 
-    async redactEvent(eventId: string) {
+    /** Redacts your own event.
+     * @param eventId - The event id of the message to redact
+     * @param reason - The reason for the redaction
+     */
+    async redact(eventId: string, reason?: string) {
+        const channelId = this.data.id
+        const result = await this.riverConnection.withStream(channelId).call((client, stream) => {
+            const event = stream.view.events.get(eventId)
+            if (!event) {
+                throw new Error(`ref event not found: ${eventId}`)
+            }
+            if (event.remoteEvent?.creatorUserId !== this.riverConnection.userId) {
+                throw new Error(
+                    `You can only redact your own messages: ${eventId} - userId: ${this.riverConnection.userId}`,
+                )
+            }
+            return client.sendChannelMessage_Redaction(channelId, {
+                refEventId: eventId,
+                reason,
+            })
+        })
+        return result
+    }
+
+    /** Redacts any message as an admin.
+     * @param eventId - The event id of the message to redact
+     */
+    async adminRedact(eventId: string) {
         const channelId = this.data.id
         const result = await this.riverConnection
             .withStream(channelId)
@@ -117,7 +144,7 @@ export class Dm extends PersistedObservable<DmModel> {
 
     private onStreamInitialized = (streamId: string) => {
         if (this.data.id === streamId) {
-            logger.info('Dm stream initialized', streamId)
+            logger.log('Dm stream initialized', streamId)
             const stream = this.riverConnection.client?.stream(streamId)
             check(isDefined(stream), 'stream is not defined')
             const view = stream.view.dmChannelContent

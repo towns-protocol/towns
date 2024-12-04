@@ -9,6 +9,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/prometheus/client_golang/prometheus"
+	"golang.org/x/sync/semaphore"
+
 	"github.com/river-build/river/core/contracts/river"
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/dlog"
@@ -17,7 +19,6 @@ import (
 	"github.com/river-build/river/core/node/nodes"
 	"github.com/river-build/river/core/node/registries"
 	"github.com/river-build/river/core/node/shared"
-	"golang.org/x/sync/semaphore"
 )
 
 // maxConcurrentNodeRequests is the maximum number of concurrent
@@ -154,7 +155,8 @@ func (tracker *StreamsTracker) Run(ctx context.Context) error {
 			// start stream sync session for stream if it hasn't seen before
 			_, loaded := tracker.tracked.LoadOrStore(stream.StreamId, struct{}{})
 			if !loaded {
-				sticky := nodes.NewStreamNodes(stream.Nodes, common.Address{}).GetStickyPeer()
+				// TODO: this is not correct, nodes should be saved and use to track working peer
+				sticky := nodes.NewStreamNodesWithLock(stream.Nodes, common.Address{}).GetStickyPeer()
 
 				// worker pool is a semaphore that prevents making too many concurrent requests
 				// at the same time to a node and overwhelming it.
@@ -178,7 +180,6 @@ func (tracker *StreamsTracker) Run(ctx context.Context) error {
 
 			return true
 		})
-
 	if err != nil {
 		return err
 	}
@@ -219,7 +220,8 @@ func (tracker *StreamsTracker) OnStreamAllocated(
 
 	_, loaded := tracker.tracked.LoadOrStore(streamID, struct{}{})
 	if !loaded {
-		sticky := nodes.NewStreamNodes(event.Nodes, common.Address{}).GetStickyPeer()
+		// TODO: this is not correct, nodes should be saved and use to track working peer
+		sticky := nodes.NewStreamNodesWithLock(event.Nodes, common.Address{}).GetStickyPeer()
 		workerPool, found := tracker.workerPool[sticky]
 		if !found {
 			workerPool = semaphore.NewWeighted(maxConcurrentNodeRequests)

@@ -94,7 +94,7 @@ func (s *Service) createStream(ctx context.Context, req *CreateStreamRequest) (*
 			return nil, RiverError(Err_PERMISSION_DENIED, "invalid user id", "requiredUser", userAddress)
 		}
 		userStreamId := UserStreamIdFromAddr(addr)
-		_, err = s.cache.GetStreamInfo(ctx, userStreamId)
+		_, err = s.cache.GetStreamNoWait(ctx, userStreamId)
 		if err != nil {
 			return nil, RiverError(Err_PERMISSION_DENIED, "user does not exist", "requiredUser", userAddress)
 		}
@@ -156,13 +156,14 @@ func (s *Service) createReplicatedStream(
 		return nil, err
 	}
 
-	nodes := NewStreamNodes(nodesList, s.wallet.Address)
-	sender := NewQuorumPool(nodes.NumRemotes())
+	nodes := NewStreamNodesWithLock(nodesList, s.wallet.Address)
+	remotes, isLocal := nodes.GetRemotesAndIsLocal()
+	sender := NewQuorumPool(len(remotes))
 
 	var localSyncCookie *SyncCookie
-	if nodes.IsLocal() {
+	if isLocal {
 		sender.GoLocal(func() error {
-			st, err := s.cache.GetStream(ctx, streamId)
+			st, err := s.cache.GetStreamNoWait(ctx, streamId)
 			if err != nil {
 				return err
 			}
@@ -177,8 +178,8 @@ func (s *Service) createReplicatedStream(
 
 	var remoteSyncCookie *SyncCookie
 	var remoteSyncCookieOnce sync.Once
-	if nodes.NumRemotes() > 0 {
-		for _, n := range nodes.GetRemotes() {
+	if len(remotes) > 0 {
+		for _, n := range remotes {
 			sender.GoRemote(
 				n,
 				func(node common.Address) error {

@@ -4,7 +4,7 @@ import "github.com/prometheus/client_golang/prometheus"
 
 // StatusCounterVec is a wrapper around prometheus.CounterVec
 // that adds "status" as last label.
-// IncPass, InfFail are convenience methods
+// IncPass, IncFail are convenience methods
 // to increment the counter with the corresponding status.
 type StatusCounterVec struct {
 	*prometheus.CounterVec

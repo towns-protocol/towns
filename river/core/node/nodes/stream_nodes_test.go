@@ -47,16 +47,17 @@ func TestStreamNodes(t *testing.T) {
 			} else {
 				nodeAddrs = slices.Clone(remotes)
 			}
-			streamNodes := nodes.NewStreamNodes(
+			streamNodes := nodes.NewStreamNodesWithLock(
 				nodeAddrs,
 				local,
 			)
-			require.Equal(t, tc.hasLocal, streamNodes.IsLocal())
+			rr, isLocal := streamNodes.GetRemotesAndIsLocal()
+			require.Equal(t, tc.hasLocal, isLocal)
 			require.ElementsMatch(t, nodeAddrs, streamNodes.GetNodes())
 			require.ElementsMatch(
 				t,
 				remotes,
-				streamNodes.GetRemotes(),
+				rr,
 			)
 
 			seenPeers := map[common.Address]struct{}{}

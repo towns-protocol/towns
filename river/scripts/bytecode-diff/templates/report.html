@@ -61,6 +61,7 @@
                         <th>Source Address</th>
                         <th>Source Bytecode Hash</th>
                         <th>Target Addresses</th>
+                        <th>Target Chain</th>
                         <th>Target Bytecode Hashes</th>
                         <th>Selectors Missing on {{$.environment}}</th>
                         <th>Source Verified</th>
@@ -91,6 +92,7 @@
                                 {{end}}
                             {{end}}
                         </td>
+                        <td>{{$facet.targetChain}}</td>
                         <td>
                             {{range $hash := $facet.targetBytecodeHashes}}
                                 {{$hash}}<br>

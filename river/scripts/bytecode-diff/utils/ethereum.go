@@ -14,19 +14,35 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/rs/zerolog/log"
 )
 
 // Facet represents the struct returned by the facets() function
 type Facet struct {
 	FacetAddress common.Address
 	Selectors    [][4]byte `json:",omitempty"`
-	SelectorsHex []string  `abi:"-"`
+	SelectorsHex []string  `                  abi:"-"`
 	ContractName string    `json:",omitempty"`
 	BytecodeHash string    `json:",omitempty"`
+	ChainName    string    `json:",omitempty"`
+}
+
+type ScanChain interface {
+	GetContractName(url, address, apiKey string) (string, error)
+	GetChainScanInfo(*ethclient.Client) (struct {
+		URL       string
+		ChainName string
+	}, error)
 }
 
 // ReadAllFacets reads all the facets from the given Diamond contract address
-func ReadAllFacets(client *ethclient.Client, contractAddress string, basescanAPIKey string, fetchBytecode bool) ([]Facet, error) {
+func ReadAllFacets(
+	client *ethclient.Client,
+	contractAddress string,
+	scanAPIKey string,
+	fetchBytecode bool,
+	scanChain ScanChain,
+) ([]Facet, error) {
 	if client == nil {
 		return nil, fmt.Errorf("Ethereum client is nil")
 	}
@@ -84,25 +100,27 @@ func ReadAllFacets(client *ethclient.Client, contractAddress string, basescanAPI
 		return nil, fmt.Errorf("failed to unpack result: %w", err)
 	}
 
-	basescanUrl, err := GetBasescanUrl(client)
+	chain, err := scanChain.GetChainScanInfo(client)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get Basescan URL: %w", err)
+		return nil, fmt.Errorf("failed to get ChainScan URL: %w", err)
 	}
 
 	for i, facet := range facets {
 		// Throttle API calls to 2 per second to avoid being rate limited
 		time.Sleep(500 * time.Millisecond)
 
-		// read contract name from basescan source code api
-		contractName, err := GetContractNameFromBasescan(basescanUrl, facet.FacetAddress.Hex(), basescanAPIKey)
+		// read contract name from chainscan source code api
+		contractName, err := scanChain.GetContractName(chain.URL, facet.FacetAddress.Hex(), scanAPIKey)
 		if err != nil {
-			return nil, fmt.Errorf(
-				"failed to get contract name from Basescan: %w",
-				err,
-			)
+			log.Warn().
+				Str("chainScanUrl", chain.URL).
+				Err(err).
+				Msg("Failed to get contract name from ChainScan API, continuing")
+			continue
 		}
 
 		facets[i].ContractName = contractName
+		facets[i].ChainName = chain.ChainName
 
 		if fetchBytecode {
 			data, err := contractABI.Pack("facetFunctionSelectors", facet.FacetAddress)
@@ -138,28 +156,49 @@ func ReadAllFacets(client *ethclient.Client, contractAddress string, basescanAPI
 }
 
 func CreateEthereumClients(
-	baseRpcUrl string,
-	baseSepoliaRpcUrl string,
+	chainConfig struct {
+		BaseMainnetRpcUrl  string
+		BaseSepoliaRpcUrl  string
+		RiverMainnetRpcUrl string
+		RiverTestnetRpcUrl string
+	},
 	sourceEnvironment string,
 	targetEnvironment string,
 	verbose bool,
-) (map[string]*ethclient.Client, error) {
-	clients := make(map[string]*ethclient.Client)
+) (map[string]struct {
+	BaseRpcClient  *ethclient.Client
+	RiverRpcClient *ethclient.Client
+}, error,
+) {
+	clients := make(map[string]struct {
+		BaseRpcClient  *ethclient.Client
+		RiverRpcClient *ethclient.Client
+	})
 
 	for _, env := range []string{sourceEnvironment, targetEnvironment} {
-		var rpcUrl string
+		var baseRpcUrl string
+		var riverRpcUrl string
 		if env == "alpha" || env == "gamma" {
-			rpcUrl = baseSepoliaRpcUrl
+			baseRpcUrl = chainConfig.BaseSepoliaRpcUrl
+			riverRpcUrl = chainConfig.RiverTestnetRpcUrl
 		} else {
-			rpcUrl = baseRpcUrl
+			baseRpcUrl = chainConfig.BaseMainnetRpcUrl
+			riverRpcUrl = chainConfig.RiverMainnetRpcUrl
 		}
 
-		client, err := ethclient.Dial(rpcUrl)
+		baseClient, err := ethclient.Dial(baseRpcUrl)
+		if err != nil {
+			return nil, fmt.Errorf("failed to connect to the Ethereum client for %s: %w", env, err)
+		}
+		riverClient, err := ethclient.Dial(riverRpcUrl)
 		if err != nil {
 			return nil, fmt.Errorf("failed to connect to the Ethereum client for %s: %w", env, err)
 		}
 
-		clients[env] = client
+		clients[env] = struct {
+			BaseRpcClient  *ethclient.Client
+			RiverRpcClient *ethclient.Client
+		}{baseClient, riverClient}
 
 		if verbose {
 			Log.Info().Msgf("Successfully connected to Ethereum client for %s", env)
@@ -178,25 +217,43 @@ func CreateEthereumClient(rpcUrl string) (*ethclient.Client, error) {
 	return client, nil
 }
 
-// GetBasescanUrl determines the appropriate Basescan API URL based on the chain ID
-func GetBasescanUrl(client *ethclient.Client) (string, error) {
+type BaseChainScan struct{}
+
+// GetChainScanInfo determines the appropriate ChainScan API URL based on the chain ID
+func (b *BaseChainScan) GetChainScanInfo(client *ethclient.Client) (struct {
+	URL       string
+	ChainName string
+}, error,
+) {
 	chainID, err := client.ChainID(context.Background())
 	if err != nil {
-		return "", fmt.Errorf("failed to get chain ID: %w", err)
+		return struct {
+			URL       string
+			ChainName string
+		}{}, fmt.Errorf("failed to get chain ID: %w", err)
 	}
 
 	switch chainID.Int64() {
 	case 8453: // Base Mainnet
-		return "https://api.basescan.org", nil
+		return struct {
+			URL       string
+			ChainName string
+		}{"https://api.basescan.org", "Base Mainnet"}, nil
 	case 84532: // Base Sepolia
-		return "https://api-sepolia.basescan.org", nil
+		return struct {
+			URL       string
+			ChainName string
+		}{"https://api-sepolia.basescan.org", "Base Sepolia"}, nil
 	default:
-		return "", fmt.Errorf("unsupported chain ID: %d", chainID)
+		return struct {
+			URL       string
+			ChainName string
+		}{}, fmt.Errorf("unsupported chain ID: %d", chainID)
 	}
 }
 
-// GetContractNameFromBasescan retrieves the contract name for a given address using the appropriate Basescan API
-func GetContractNameFromBasescan(baseURL, address, apiKey string) (string, error) {
+// GetContractName retrieves the contract name for a given address using the appropriate Basescan API
+func (b *BaseChainScan) GetContractName(baseURL, address, apiKey string) (string, error) {
 	url := fmt.Sprintf("%s/api?module=contract&action=getsourcecode&address=%s&apikey=%s", baseURL, address, apiKey)
 
 	resp, err := http.Get(url)
@@ -238,6 +295,83 @@ func GetContractNameFromBasescan(baseURL, address, apiKey string) (string, error
 	}
 
 	return result.Result[0].ContractName, nil
+}
+
+type RiverChainScan struct{}
+
+// GetChainScanInfo determines the appropriate ChainScan API URL based on the chain ID
+func (b *RiverChainScan) GetChainScanInfo(client *ethclient.Client) (struct {
+	URL       string
+	ChainName string
+}, error,
+) {
+	chainID, err := client.ChainID(context.Background())
+	if err != nil {
+		return struct {
+			URL       string
+			ChainName string
+		}{}, fmt.Errorf("failed to get chain ID: %w", err)
+	}
+
+	switch chainID.Int64() {
+	case 6524490: // River Devnet
+		return struct {
+			URL       string
+			ChainName string
+		}{"https://testnet.explorer.river.build/api/v2", "River Testnet"}, nil
+	case 550: // River Mainnet
+		return struct {
+			URL       string
+			ChainName string
+		}{"https://explorer.river.build/api/v2", "River Mainnet"}, nil
+	default:
+		return struct {
+			URL       string
+			ChainName string
+		}{}, fmt.Errorf("unsupported chain ID: %d", chainID)
+	}
+}
+
+// GetContractName retrieves the contract name for a given address using the appropriate Riverscan API
+func (b *RiverChainScan) GetContractName(riverscanURL, address, apiKey string) (string, error) {
+	url := fmt.Sprintf("%s/smart-contracts?q=%s&filter=solidity", riverscanURL, address)
+
+	resp, err := http.Get(url)
+	if err != nil {
+		return "", fmt.Errorf("failed to make request to Riverscan API: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("Riverscan API returned non-200 status code: %d", resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	Log.Debug().Msgf("Raw Riverscan JSON response: %s", string(body))
+
+	var result struct {
+		Items []struct {
+			Address struct {
+				Hash string `json:"hash"`
+				Name string `json:"name"`
+			} `json:"address"`
+		} `json:"items"`
+	}
+
+	err = json.Unmarshal(body, &result)
+	if err != nil {
+		return "", fmt.Errorf("failed to unmarshal JSON response: %w", err)
+	}
+
+	if len(result.Items) == 0 {
+		return "", fmt.Errorf("no contract found for address %s", address)
+	}
+
+	return result.Items[0].Address.Name, nil
 }
 
 // GetContractCodeHash fetches the deployed code and calculates its keccak256 hash

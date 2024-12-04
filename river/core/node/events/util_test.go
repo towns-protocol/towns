@@ -187,7 +187,7 @@ func (ctc *cacheTestContext) createReplStream() (StreamId, []common.Address, *Mi
 		var s SyncStream
 		var err error
 		for {
-			s, err = ctc.instancesByAddr[n].cache.GetStream(ctc.ctx, streamId)
+			s, err = ctc.instancesByAddr[n].cache.GetStreamWaitForLocal(ctc.ctx, streamId)
 			if !IsRiverErrorCode(err, Err_NOT_FOUND) {
 				break
 			}
@@ -221,7 +221,7 @@ func (ctc *cacheTestContext) addReplEvent(
 	ctc.require.NoError(err)
 
 	for _, n := range nodes {
-		stream, err := ctc.instancesByAddr[n].cache.GetStream(ctc.ctx, streamId)
+		stream, err := ctc.instancesByAddr[n].cache.GetStreamWaitForLocal(ctc.ctx, streamId)
 		ctc.require.NoError(err)
 
 		err = stream.AddEvent(ctc.ctx, ev)
@@ -252,7 +252,7 @@ func (ctc *cacheTestContext) createStream(
 	genesisMiniblock *Miniblock,
 ) (SyncStream, StreamView) {
 	ctc.createStreamNoCache(streamId, genesisMiniblock)
-	s, err := ctc.instances[0].cache.GetStream(ctc.ctx, streamId)
+	s, err := ctc.instances[0].cache.GetStreamWaitForLocal(ctc.ctx, streamId)
 	ctc.require.NoError(err)
 	v, err := s.GetView(ctc.ctx)
 	ctc.require.NoError(err)
@@ -300,14 +300,17 @@ func (ctc *cacheTestContext) GetMbProposal(
 ) (*MiniblockProposal, error) {
 	inst := ctc.instancesByAddr[node]
 
-	stream, err := inst.cache.getStreamImpl(ctx, streamId)
+	stream, err := inst.cache.getStreamImpl(ctx, streamId, true)
 	if err != nil {
 		return nil, err
 	}
 
-	view, err := stream.getView(ctx)
+	view, err := stream.getViewIfLocal(ctx)
 	if err != nil {
 		return nil, err
+	}
+	if view == nil {
+		return nil, RiverError(Err_INTERNAL, "GetMbProposal: stream is not local")
 	}
 
 	proposal, err := view.ProposeNextMiniblock(ctx, inst.params.ChainConfig.Get(), forceSnapshot)
@@ -325,7 +328,7 @@ func (ctc *cacheTestContext) SaveMbCandidate(
 ) error {
 	inst := ctc.instancesByAddr[node]
 
-	stream, err := inst.cache.getStreamImpl(ctx, streamId)
+	stream, err := inst.cache.getStreamImpl(ctx, streamId, true)
 	if err != nil {
 		return err
 	}
@@ -342,7 +345,7 @@ func (ctc *cacheTestContext) GetMbs(
 ) ([]*Miniblock, error) {
 	for _, instance := range ctc.instances {
 		if node == instance.params.Wallet.Address {
-			stream, err := instance.cache.getStreamImpl(ctx, streamId)
+			stream, err := instance.cache.getStreamImpl(ctx, streamId, true)
 			if err != nil {
 				return nil, err
 			}

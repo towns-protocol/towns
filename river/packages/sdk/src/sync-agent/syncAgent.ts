@@ -24,6 +24,7 @@ import { makeStreamRpcClient, type MakeRpcClientType } from '../makeStreamRpcCli
 import type { EncryptionDeviceInitOpts } from '@river-build/encryption'
 import { Gdms, type GdmsModel } from './gdms/gdms'
 import { Dms, DmsModel } from './dms/dms'
+import { UnpackEnvelopeOpts } from '../sign'
 
 export interface SyncAgentConfig {
     context: SignerContext
@@ -37,6 +38,7 @@ export interface SyncAgentConfig {
     makeRpcClient?: MakeRpcClientType
     encryptionDevice?: EncryptionDeviceInitOpts
     onTokenExpired?: () => void
+    unpackEnvelopeOpts?: UnpackEnvelopeOpts
 }
 
 export class SyncAgent {
@@ -92,6 +94,7 @@ export class SyncAgent {
                 rpcRetryParams: config.retryParams,
                 encryptionDevice: config.encryptionDevice,
                 onTokenExpired: config.onTokenExpired,
+                unpackEnvelopeOpts: config.unpackEnvelopeOpts,
             },
         )
 

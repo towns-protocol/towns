@@ -21,16 +21,17 @@ type remoteStream struct {
 var _ Stream = (*remoteStream)(nil)
 
 func (s *Service) loadStream(ctx context.Context, streamId StreamId) (Stream, error) {
-	nodes, err := s.cache.GetStreamInfo(ctx, streamId)
+	stream, err := s.cache.GetStreamNoWait(ctx, streamId)
 	if err != nil {
 		return nil, err
 	}
 
-	if nodes.IsLocal() {
-		return s.cache.GetStream(ctx, streamId)
+	if stream.IsLocal() {
+		return stream, nil
 	}
 
-	targetNode := nodes.GetStickyPeer()
+	// TODO: REPLICATION: retries here
+	targetNode := stream.GetStickyPeer()
 	stub, err := s.nodeRegistry.GetStreamServiceClientForAddress(targetNode)
 	if err != nil {
 		return nil, err
@@ -92,4 +93,8 @@ func (s *remoteStream) AddEvent(ctx context.Context, event *ParsedEvent) error {
 
 func (s *remoteStream) GetView(ctx context.Context) (StreamView, error) {
 	return s.view, nil
+}
+
+func (s *remoteStream) GetViewIfLocal(ctx context.Context) (StreamView, error) {
+	return nil, nil
 }

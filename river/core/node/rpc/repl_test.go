@@ -153,7 +153,7 @@ func TestStreamReconciliationFromGenesis(t *testing.T) {
 	// this happens as a background task, therefore wait till all mini-blocks are imported.
 	var stream events.SyncStream
 	require.Eventuallyf(func() bool {
-		stream, err = lastStartedNode.service.cache.GetStream(ctx, streamId)
+		stream, err = lastStartedNode.service.cache.GetStreamNoWait(ctx, streamId)
 		if err == nil {
 			if miniBlocks, _, err := stream.GetMiniblocks(ctx, 0, latestMbNum+1); err == nil {
 				return len(miniBlocks) == len(mbChain)
@@ -223,7 +223,7 @@ func TestStreamReconciliationForKnownStreams(t *testing.T) {
 
 	// ensure that the node we bring down has at least 1 mini-block for the test stream
 	require.Eventuallyf(func() bool {
-		stream, err := tt.nodes[opts.numNodes-1].service.cache.GetStream(ctx, streamId)
+		stream, err := tt.nodes[opts.numNodes-1].service.cache.GetStreamNoWait(ctx, streamId)
 		require.NoError(err)
 		view, err := stream.GetView(ctx)
 		require.NoError(err)
@@ -264,7 +264,7 @@ func TestStreamReconciliationForKnownStreams(t *testing.T) {
 	require.NoError(tt.startSingle(len(tt.nodes) - 1))
 	restartedNode := tt.nodes[opts.numNodes-1]
 
-	_, err = restartedNode.service.cache.GetStream(ctx, streamId)
+	_, err = restartedNode.service.cache.GetStreamWaitForLocal(ctx, streamId)
 	require.NoError(err)
 
 	// create a new instance of a stream cache for the last node and ensure that when it is created it syncs stream
@@ -279,13 +279,13 @@ func TestStreamReconciliationForKnownStreams(t *testing.T) {
 
 	// grab mini-blocks from node that is already up and running and ensure that the just restarted node has the
 	// same miniblocks after it catches up.
-	stream, err = tt.nodes[opts.numNodes-2].service.cache.GetStream(ctx, streamId)
+	stream, err = tt.nodes[opts.numNodes-2].service.cache.GetStreamWaitForLocal(ctx, streamId)
 	require.NoError(err)
 	expectedMiniblocks, _, err := stream.GetMiniblocks(ctx, 0, latestMbNum+1)
 	require.NoError(err)
 
 	require.Eventuallyf(func() bool {
-		syncStream, err := streamCache.GetStream(ctx, streamId)
+		syncStream, err := streamCache.GetStreamNoWait(ctx, streamId)
 		if err != nil {
 			return false
 		}
@@ -304,7 +304,7 @@ func TestStreamReconciliationForKnownStreams(t *testing.T) {
 		fetchedMbChain[int64(i)] = common.BytesToHash(blk.GetHeader().GetHash())
 	}
 
-	stream, err = streamCache.GetStream(ctx, streamId)
+	stream, err = streamCache.GetStreamNoWait(ctx, streamId)
 	require.NoError(err)
 	view, err := stream.GetView(ctx)
 	require.NoError(err)

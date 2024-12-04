@@ -82,6 +82,10 @@ type XChain interface {
 
 // New creates a new xchain instance that reads entitlement requests from Base,
 // processes the requests and writes the results back to Base.
+// Note: sometimes we pass in a shared baseChain created by the stream service.
+// The stream service does not monitor the base chain for events, so in instances
+// where the provided baseChain is not nil we expect the xchain service to be
+// responsible for chain monitoring.
 func New(
 	ctx context.Context,
 	cfg *config.Config,
@@ -172,18 +176,18 @@ func New(
 		if err != nil {
 			return nil, err
 		}
-		// determine from which block to start processing entitlement check requests
-		startBlock, err := util.StartBlockNumberWithHistory(ctx, baseChain.Client, cfg.History)
-		if err != nil {
-			return nil, err
-		}
-		if startBlock < baseChain.InitialBlockNum.AsUint64() {
-			baseChain.InitialBlockNum = crypto.BlockNumber(startBlock)
-		}
-
-		log.Info("Start processing entitlement check requests", "startBlock", baseChain.InitialBlockNum)
-		baseChain.StartChainMonitor(ctx)
 	}
+	// determine from which block to start processing entitlement check requests
+	startBlock, err := util.StartBlockNumberWithHistory(ctx, baseChain.Client, cfg.History)
+	if err != nil {
+		return nil, err
+	}
+	if startBlock < baseChain.InitialBlockNum.AsUint64() {
+		baseChain.InitialBlockNum = crypto.BlockNumber(startBlock)
+	}
+
+	log.Info("Start processing entitlement check requests", "startBlock", baseChain.InitialBlockNum)
+	baseChain.StartChainMonitor(ctx)
 
 	decoder, err := crypto.NewEVMErrorDecoder(
 		base.IEntitlementCheckerMetaData,

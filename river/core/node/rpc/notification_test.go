@@ -132,11 +132,94 @@ func testGDMNotifications(
 	authClient protocolconnect.AuthenticationServiceClient,
 	notifications *notificationCapture,
 ) {
-	tester.sequentialSubtest("MessageWithNoMentionsRepliesAndReaction", func(tester *serviceTester) {
+	tester.parallelSubtest("MessageWithNoMentionsRepliesAndReaction", func(tester *serviceTester) {
 		ctx := tester.ctx
 		test := setupGDMNotificationTest(ctx, tester, notificationClient, authClient)
 		testGDMMessageWithNoMentionsRepliesAndReaction(ctx, test, notifications)
 	})
+
+	tester.parallelSubtest("APNUnsubscribe", func(tester *serviceTester) {
+		ctx := tester.ctx
+		test := setupGDMNotificationTest(ctx, tester, notificationClient, authClient)
+		testGDMAPNNotificationAfterUnsubscribe(ctx, test, notifications)
+	})
+}
+
+func testGDMAPNNotificationAfterUnsubscribe(
+	ctx context.Context,
+	test *gdmChannelNotificationsTestContext,
+	nc *notificationCapture,
+) {
+	// user A and B share an Apple device.
+	// user A and C join a GDM channel.
+	// User A unsubscribes from APN notifications on the device.
+	// User B uses the same device and subscribes for notification but is not part of the GDM channel that A and C share
+	// User C sends a message to the GDM channel and tags user A in it.
+	// Expected outcome is that A (not subscribed) and B (not a GDM member) don't receive a notification.
+	userA := test.members[4]
+	userB, err := crypto.NewWallet(ctx)
+	test.req.NoError(err, "new wallet")
+	userC := test.members[5]
+
+	// userA subscribes for APN
+	test.subscribeApnPush(ctx, userA)
+
+	// send a message from userC that userA must receive a notification for because A is a member of GDM.
+	expectedUsersToReceiveNotification := map[common.Address]int{userA.Address: 1}
+	event := test.sendMessageWithTags(ctx, userC, "hi!", &Tags{})
+	eventHash := common.BytesToHash(event.Hash)
+
+	test.req.Eventuallyf(func() bool {
+		nc.ApnPushNotificationsMu.Lock()
+		defer nc.ApnPushNotificationsMu.Unlock()
+
+		notificationsForEvent := nc.ApnPushNotifications[eventHash]
+
+		return cmp.Equal(notificationsForEvent, expectedUsersToReceiveNotification)
+	}, 10*time.Second, 2500*time.Millisecond, "Didn't receive expected notifications")
+
+	// userA unsubscribes and userB subscribes using the same device.
+	// for tests the deviceToken is the users wallet address, in this case
+	// userB "reuses" the device with deviceToken which is userA wallet address.
+	test.unsubscribeApnPush(ctx, userA)
+
+	request := connect.NewRequest(&SubscribeAPNRequest{
+		DeviceToken: userA.Address[:],
+		Environment: APNEnvironment_APN_ENVIRONMENT_SANDBOX,
+	})
+
+	authorize(ctx, test.req, test.authClient, userB, request)
+	_, err = test.notificationClient.SubscribeAPN(ctx, request)
+	test.req.NoError(err, "SubscribeAPN failed")
+
+	// make sure userA has no APN subscriptions and userB has the just created sub
+	getSettingsRequest := connect.NewRequest(&GetSettingsRequest{})
+	authorize(ctx, test.req, test.authClient, userA, getSettingsRequest)
+	resp, err := test.notificationClient.GetSettings(ctx, getSettingsRequest)
+	test.req.NoError(err, "GetSettings failed")
+	test.req.Empty(resp.Msg.GetApnSubscriptions(), "got APN subs")
+
+	authorize(ctx, test.req, test.authClient, userB, getSettingsRequest)
+	resp, err = test.notificationClient.GetSettings(ctx, getSettingsRequest)
+	test.req.NoError(err, "GetSettings failed")
+	test.req.Equal(1, len(resp.Msg.GetApnSubscriptions()), "got no APN subs")
+
+	// userC sends another message and Tags userA in it.
+	event = test.sendMessageWithTags(ctx, userC, "hi!", &Tags{
+		MentionedUserAddresses: [][]byte{userA.Address[:]},
+	})
+	eventHash = common.BytesToHash(event.Hash)
+
+	// Ensure that no notifications are received for this event because none of the user in the GDM
+	// has an APN subscription and userB isn't a member of the GDM.
+	test.req.Never(func() bool {
+		nc.ApnPushNotificationsMu.Lock()
+		defer nc.ApnPushNotificationsMu.Unlock()
+
+		notificationsForEvent := nc.ApnPushNotifications[eventHash]
+
+		return len(notificationsForEvent) != 0
+	}, 10*time.Second, 2500*time.Millisecond, "Receive unexpected notification")
 }
 
 func testGDMMessageWithNoMentionsRepliesAndReaction(
@@ -1052,6 +1135,20 @@ func (tc *gdmChannelNotificationsTestContext) subscribeApnPush(
 	_, err := tc.notificationClient.SubscribeAPN(ctx, request)
 
 	tc.req.NoError(err, "SubscribeAPN failed")
+}
+
+func (tc *gdmChannelNotificationsTestContext) unsubscribeApnPush(
+	ctx context.Context,
+	user *crypto.Wallet,
+) {
+	request := connect.NewRequest(&UnsubscribeAPNRequest{
+		DeviceToken: user.Address[:], // (ab)used to determine who received a notification
+	})
+
+	authorize(ctx, tc.req, tc.authClient, user, request)
+	_, err := tc.notificationClient.UnsubscribeAPN(ctx, request)
+
+	tc.req.NoError(err, "UnsubscribeAPN failed")
 }
 
 func (tc *dmChannelNotificationsTestContext) sendMessageWithTags(

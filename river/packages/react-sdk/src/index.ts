@@ -3,6 +3,7 @@
  **************************************************************************/
 export * from './RiverSyncProvider'
 export * from './connectRiver'
+export * from './useAdminRedact'
 export * from './useAgentConnection'
 export * from './useChannel'
 export * from './useCreateChannel'

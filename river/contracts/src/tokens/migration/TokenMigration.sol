@@ -50,8 +50,8 @@ contract TokenMigrationFacet is
     if (oldToken.allowance(account, address(this)) < currentBalance)
       CustomRevert.revertWith(TokenMigration__InvalidAllowance.selector);
 
-    // Transfer old tokens from user to zero address (burn)
-    address(oldToken).safeTransferFrom(account, address(0), currentBalance);
+    // Transfer old tokens from user to here
+    address(oldToken).safeTransferFrom(account, address(this), currentBalance);
 
     // Transfer new tokens to user
     address(newToken).safeTransfer(account, currentBalance);

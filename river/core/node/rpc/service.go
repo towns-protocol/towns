@@ -125,3 +125,11 @@ func (s *Service) Storage() storage.StreamStorage {
 func (s *Service) MetricsRegistry() *prometheus.Registry {
 	return s.metrics.Registry()
 }
+
+func (s *Service) BaseChain() *crypto.Blockchain {
+	return s.baseChain
+}
+
+func (s *Service) RiverChain() *crypto.Blockchain {
+	return s.riverChain
+}

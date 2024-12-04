@@ -103,6 +103,8 @@ func (syncOp *StreamSyncOperation) Run(
 		return err
 	}
 
+	syncers.AddInitialStreams()
+
 	go syncers.Run()
 
 	for {

@@ -6,7 +6,7 @@ import { getLogger } from './utils/logger'
 
 const logger = getLogger('stress:test')
 
-describe('run.test.ts', () => {
+describe('start.test.ts', () => {
     it('just runs', () => {
         logger.info(getSystemInfo(), 'systemInfo')
         expect(true).toBe(true)

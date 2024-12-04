@@ -214,7 +214,7 @@ func (p *miniblockProducer) isLocalLeaderOnCurrentBlock(
 	stream *streamImpl,
 	blockNum crypto.BlockNumber,
 ) bool {
-	streamNodes := stream.nodes.GetNodes()
+	streamNodes := stream.GetNodes()
 	if len(streamNodes) == 0 {
 		return false
 	}
@@ -256,7 +256,7 @@ func (p *miniblockProducer) TestMakeMiniblock(
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	stream, err := p.streamCache.GetStream(ctx, streamId)
+	stream, err := p.streamCache.GetStreamWaitForLocal(ctx, streamId)
 	if err != nil {
 		return nil, err
 	}
@@ -429,16 +429,19 @@ func mbProduceCandidate(
 	stream *streamImpl,
 	forceSnapshot bool,
 ) (*MiniblockInfo, error) {
-	remoteNodes, isLocal := stream.nodes.GetRemotesAndIsLocal()
+	remoteNodes, isLocal := stream.GetRemotesAndIsLocal()
 	// TODO: this is a sanity check, but in general mb production code needs to be hardened
 	// to handle scenario when local node is removed from the stream.
 	if !isLocal {
 		return nil, RiverError(Err_INTERNAL, "Not a local stream")
 	}
 
-	view, err := stream.getView(ctx)
+	view, err := stream.getViewIfLocal(ctx)
 	if err != nil {
 		return nil, err
+	}
+	if view == nil {
+		return nil, RiverError(Err_INTERNAL, "mbProduceCandidate: stream is not local")
 	}
 
 	mbInfo, err := mbProduceCandiate_Make(ctx, params, view, forceSnapshot, remoteNodes)

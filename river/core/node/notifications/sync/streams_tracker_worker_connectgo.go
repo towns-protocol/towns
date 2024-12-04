@@ -14,6 +14,8 @@ import (
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/prometheus/client_golang/prometheus"
+	"golang.org/x/sync/semaphore"
+
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/events"
@@ -22,7 +24,6 @@ import (
 	"github.com/river-build/river/core/node/protocol/protocolconnect"
 	"github.com/river-build/river/core/node/registries"
 	"github.com/river-build/river/core/node/shared"
-	"golang.org/x/sync/semaphore"
 )
 
 type StreamTrackerConnectGo struct{}
@@ -54,7 +55,7 @@ func (s *StreamTrackerConnectGo) Run(
 ) {
 	var (
 		promLabels                = prometheus.Labels{"type": channelLabelType(stream.StreamId)}
-		remotes                   = nodes.NewStreamNodes(stream.Nodes, common.Address{})
+		remotes                   = nodes.NewStreamNodesWithLock(stream.Nodes, common.Address{})
 		restartSyncSessionCounter = 0
 	)
 
@@ -77,7 +78,8 @@ func (s *StreamTrackerConnectGo) Run(
 		)
 
 		// loop over the nodes responsible for the stream and try to connect to one of them
-		for range remotes.NumRemotes() {
+		remotesNodes, _ := remotes.GetRemotesAndIsLocal()
+		for range remotesNodes {
 			remoteAddr = remotes.GetStickyPeer()
 			client, err = nodeRegistry.GetStreamServiceClientForAddress(remoteAddr)
 			if client != nil {
@@ -215,7 +217,7 @@ func (s *StreamTrackerConnectGo) Run(
 		// cancel the sync session causing a new session to be started.
 		var gotSyncResetUpdate atomic.Bool
 		// TODO: determine if this can be dropped now http2 pings are enabled
-		//go s.liveness(log, syncCtx, syncCancel, &gotSyncResetUpdate,
+		// go s.liveness(log, syncCtx, syncCancel, &gotSyncResetUpdate,
 		//	workerPool, stream.StreamId, syncID, client, &lastReceivedPong, metrics)
 
 		for streamUpdates.Receive() {

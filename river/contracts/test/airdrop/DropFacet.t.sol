@@ -223,7 +223,7 @@ contract DropFacetTest is
   // getActiveClaimConditionId
   function test_getActiveClaimConditionId()
     external
-    givenTokensMinted(TOTAL_TOKEN_AMOUNT)
+    givenTokensMinted(TOTAL_TOKEN_AMOUNT * 3)
   {
     ClaimCondition[] memory conditions = new ClaimCondition[](3);
     conditions[0] = _createClaimCondition(
@@ -827,7 +827,7 @@ contract DropFacetTest is
   // we reach the end of the second condition, and try to claim from it, this should fail
   function test_endToEnd_claimWithPenalty()
     external
-    givenTokensMinted(TOTAL_TOKEN_AMOUNT)
+    givenTokensMinted(TOTAL_TOKEN_AMOUNT * 2)
   {
     ClaimCondition[] memory conditions = new ClaimCondition[](2);
     conditions[0] = _createClaimCondition(
@@ -931,7 +931,7 @@ contract DropFacetTest is
 
   function test_resetClaimConditions()
     external
-    givenTokensMinted(TOTAL_TOKEN_AMOUNT * 2)
+    givenTokensMinted(TOTAL_TOKEN_AMOUNT * 3)
   {
     // Setup initial conditions
     ClaimCondition[] memory initialConditions = new ClaimCondition[](3);

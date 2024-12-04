@@ -135,7 +135,7 @@ deploy-any-ledger :;
 	@SAVE_DEPLOYMENTS=1 $(if $(context),DEPLOYMENT_CONTEXT=$(context)) \
 	forge script scripts/deployments/${type}/${contract}.s.sol:${contract} \
 	--ledger --hd-paths ${hd_path} --sender ${sender} \
-	--ffi --rpc-url ${rpc} --broadcast --verify
+	--ffi --rpc-url ${rpc} --broadcast --verify --verifier=blockscout --verifier-url=${verifier}
 
 resume-any-ledger :;
 	@forge script scripts/deployments/${type}/${contract}.s.sol:${contract} \
@@ -248,7 +248,7 @@ interact-river :;
 # 				 		Base
 # ===========================
 deploy-base :;
-	@$(MAKE) deploy-any-ledger rpc=base hd_path=${HD_PATH} sender=${SENDER_ADDRESS}
+	@$(MAKE) deploy-any-ledger rpc=base hd_path=${HD_PATH} sender=${SENDER_ADDRESS} verifier=${BLOCKSCOUT_BASE_URL}
 	@$(MAKE) resume-any-ledger rpc=base hd_path=${HD_PATH} sender=${SENDER_ADDRESS} verifier=${BASESCAN_URL} etherscan=${BASESCAN_API_KEY}
 
 interact-base :;

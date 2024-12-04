@@ -7,22 +7,14 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
+	"github.com/river-build/river/core/contracts/river"
 	. "github.com/river-build/river/core/node/base"
 	. "github.com/river-build/river/core/node/protocol"
 )
 
 type StreamNodes interface {
-	// IsLocal returns true if the local node is in the list of nodes.
-	IsLocal() bool
-
 	// GetNodes returns all nodes in the same order as in contract.
 	GetNodes() []common.Address
-
-	// GetRemotes returns all nodes except the local node.
-	GetRemotes() []common.Address
-
-	// NumRemotes returns the number of remote nodes.
-	NumRemotes() int
 
 	// GetRemotesAndIsLocal returns all remote nodes and true if the local node is in the list of nodes.
 	GetRemotesAndIsLocal() ([]common.Address, bool)
@@ -38,16 +30,12 @@ type StreamNodes interface {
 
 	// Update updates the list of nodes.
 	// If the node is already in the list, it returns an error.
-	Update(n common.Address, isAdded bool) error
+	Update(event *river.StreamPlacementUpdated, localNode common.Address) error
 }
 
-type streamNodesImpl struct {
-	mu sync.RWMutex
-
+type StreamNodesWithoutLock struct {
 	// nodes contains all streams nodes in the same order as in contract.
-	nodes     []common.Address
-	localNode common.Address
-	isLocal   bool
+	nodes []common.Address
 
 	// remotes are all nodes except the local node.
 	// remotes are shuffled to avoid the same node being selected as the sticky peer.
@@ -55,17 +43,9 @@ type streamNodesImpl struct {
 	stickyPeerIndex int
 }
 
-var _ StreamNodes = (*streamNodesImpl)(nil)
+var _ StreamNodes = (*StreamNodesWithoutLock)(nil)
 
-func NewStreamNodes(nodes []common.Address, localNode common.Address) StreamNodes {
-	streamNodes := &streamNodesImpl{
-		localNode: localNode,
-	}
-	streamNodes.resetLocked(nodes)
-	return streamNodes
-}
-
-func (s *streamNodesImpl) resetLocked(nodes []common.Address) {
+func (s *StreamNodesWithoutLock) Reset(nodes []common.Address, localNode common.Address) {
 	var lastStickyAddr common.Address
 	if s.stickyPeerIndex < len(s.remotes) {
 		lastStickyAddr = s.remotes[s.stickyPeerIndex]
@@ -73,13 +53,11 @@ func (s *streamNodesImpl) resetLocked(nodes []common.Address) {
 
 	s.nodes = slices.Clone(nodes)
 
-	localIndex := slices.Index(nodes, s.localNode)
+	localIndex := slices.Index(nodes, localNode)
 
 	if localIndex >= 0 {
-		s.isLocal = true
 		s.remotes = slices.Concat(nodes[:localIndex], nodes[localIndex+1:])
 	} else {
-		s.isLocal = false
 		s.remotes = slices.Clone(nodes)
 	}
 
@@ -95,33 +73,19 @@ func (s *streamNodesImpl) resetLocked(nodes []common.Address) {
 	}
 }
 
-func (s *streamNodesImpl) IsLocal() bool {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	return s.isLocal
+func (s *StreamNodesWithoutLock) GetNodes() []common.Address {
+	return s.nodes
 }
 
-func (s *streamNodesImpl) GetNodes() []common.Address {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	return slices.Clone(s.nodes)
+func (s *StreamNodesWithoutLock) GetRemotesAndIsLocal() ([]common.Address, bool) {
+	return s.remotes, len(s.nodes) > len(s.remotes)
 }
 
-func (s *streamNodesImpl) GetRemotes() []common.Address {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	return slices.Clone(s.remotes)
+func (s *StreamNodesWithoutLock) IsLocal() bool {
+	return len(s.nodes) > len(s.remotes)
 }
 
-func (s *streamNodesImpl) GetRemotesAndIsLocal() ([]common.Address, bool) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	return slices.Clone(s.remotes), s.isLocal
-}
-
-func (s *streamNodesImpl) GetStickyPeer() common.Address {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
+func (s *StreamNodesWithoutLock) GetStickyPeer() common.Address {
 	if len(s.remotes) > 0 {
 		return s.remotes[s.stickyPeerIndex]
 	} else {
@@ -129,10 +93,7 @@ func (s *streamNodesImpl) GetStickyPeer() common.Address {
 	}
 }
 
-func (s *streamNodesImpl) AdvanceStickyPeer(currentPeer common.Address) common.Address {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
+func (s *StreamNodesWithoutLock) AdvanceStickyPeer(currentPeer common.Address) common.Address {
 	if len(s.remotes) == 0 {
 		return common.Address{}
 	}
@@ -155,40 +116,72 @@ func (s *streamNodesImpl) AdvanceStickyPeer(currentPeer common.Address) common.A
 	return s.remotes[s.stickyPeerIndex]
 }
 
-func (s *streamNodesImpl) NumRemotes() int {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	return len(s.remotes)
-}
-
-func (s *streamNodesImpl) Update(n common.Address, isAdded bool) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	return s.updateLocked(n, isAdded)
-}
-
-func (s *streamNodesImpl) updateLocked(n common.Address, isAdded bool) error {
+func (s *StreamNodesWithoutLock) Update(event *river.StreamPlacementUpdated, localNode common.Address) error {
 	var newNodes []common.Address
-	if isAdded {
-		if slices.Contains(s.nodes, n) {
+	if event.IsAdded {
+		if slices.Contains(s.nodes, event.NodeAddress) {
 			return RiverError(
 				Err_INTERNAL,
 				"StreamNodes.Update(add): node already exists in stream nodes",
 				"nodes",
 				s.nodes,
 				"node",
-				n,
+				event.NodeAddress,
 			)
 		}
-		newNodes = append(s.nodes, n)
+		newNodes = append(s.nodes, event.NodeAddress)
 	} else {
-		index := slices.Index(s.nodes, n)
+		index := slices.Index(s.nodes, event.NodeAddress)
 		if index < 0 {
-			return RiverError(Err_INTERNAL, "StreamNodes.Update(delete): node does not exist in stream nodes", "nodes", s.nodes, "node", n)
+			return RiverError(Err_INTERNAL, "StreamNodes.Update(delete): node does not exist in stream nodes", "nodes", s.nodes, "node", event.NodeAddress)
 		}
 		newNodes = slices.Concat(s.nodes[:index], s.nodes[index+1:])
 	}
 
-	s.resetLocked(newNodes)
+	s.Reset(newNodes, localNode)
 	return nil
+}
+
+type StreamNodesWithLock struct {
+	n  StreamNodesWithoutLock
+	mu sync.RWMutex
+}
+
+var _ StreamNodes = (*StreamNodesWithLock)(nil)
+
+func NewStreamNodesWithLock(nodes []common.Address, localNode common.Address) *StreamNodesWithLock {
+	ret := &StreamNodesWithLock{}
+	ret.n.Reset(nodes, localNode)
+	return ret
+}
+
+func (s *StreamNodesWithLock) GetNodes() []common.Address {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return slices.Clone(s.n.GetNodes())
+}
+
+func (s *StreamNodesWithLock) GetRemotesAndIsLocal() ([]common.Address, bool) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	r, l := s.n.GetRemotesAndIsLocal()
+	return slices.Clone(r), l
+}
+
+func (s *StreamNodesWithLock) GetStickyPeer() common.Address {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.n.GetStickyPeer()
+}
+
+func (s *StreamNodesWithLock) AdvanceStickyPeer(currentPeer common.Address) common.Address {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.n.AdvanceStickyPeer(currentPeer)
+}
+
+func (s *StreamNodesWithLock) Update(event *river.StreamPlacementUpdated, localNode common.Address) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.n.Update(event, localNode)
 }

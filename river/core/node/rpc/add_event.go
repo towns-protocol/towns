@@ -11,7 +11,6 @@ import (
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/dlog"
 	. "github.com/river-build/river/core/node/events"
-	. "github.com/river-build/river/core/node/nodes"
 	. "github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/rules"
 	. "github.com/river-build/river/core/node/shared"
@@ -20,7 +19,8 @@ import (
 func (s *Service) localAddEvent(
 	ctx context.Context,
 	req *connect.Request[AddEventRequest],
-	nodes StreamNodes,
+	localStream SyncStream,
+	streamView StreamView,
 ) (*connect.Response[AddEventResponse], error) {
 	log := dlog.FromCtx(ctx)
 
@@ -36,7 +36,7 @@ func (s *Service) localAddEvent(
 
 	log.Debug("localAddEvent", "parsedEvent", parsedEvent)
 
-	err = s.addParsedEvent(ctx, streamId, parsedEvent, nodes)
+	err = s.addParsedEvent(ctx, streamId, parsedEvent, localStream, streamView)
 	if err != nil && req.Msg.Optional {
 		// aellis 5/2024 - we only want to wrap errors from canAddEvent,
 		// currently this is catching all errors, which is not ideal
@@ -59,17 +59,10 @@ func (s *Service) addParsedEvent(
 	ctx context.Context,
 	streamId StreamId,
 	parsedEvent *ParsedEvent,
-	nodes StreamNodes,
+	localStream SyncStream,
+	streamView StreamView,
 ) error {
-	localStream, err := s.cache.GetStream(ctx, streamId)
-	if err != nil {
-		return err
-	}
-
-	streamView, err := localStream.GetView(ctx)
-	if err != nil {
-		return err
-	}
+	// TODO: here it should loop and re-check the rules if view was updated in the meantime.
 
 	canAddEvent, chainAuthArgsList, sideEffects, err := rules.CanAddEvent(
 		ctx,
@@ -128,7 +121,7 @@ func (s *Service) addParsedEvent(
 	stream := &replicatedStream{
 		streamId:    streamId.String(),
 		localStream: localStream,
-		nodes:       nodes,
+		nodes:       localStream,
 		service:     s,
 	}
 

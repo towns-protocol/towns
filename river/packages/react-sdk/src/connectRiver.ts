@@ -9,6 +9,12 @@ import {
 } from '@river-build/sdk'
 import { ethers } from 'ethers'
 
+const defaultConfig: Partial<SyncAgentConfig> = {
+    unpackEnvelopeOpts: {
+        disableSignatureValidation: true,
+    },
+}
+
 /**
  * Sign and connect to River using a Signer and a random delegate wallet every time
  * @param signer - The signer to use
@@ -21,7 +27,7 @@ export const signAndConnect = async (
 ): Promise<SyncAgent> => {
     const delegateWallet = ethers.Wallet.createRandom()
     const signerContext = await makeSignerContext(signer, delegateWallet)
-    return new SyncAgent({ context: signerContext, ...config })
+    return new SyncAgent({ context: signerContext, ...defaultConfig, ...config })
 }
 
 /**
@@ -36,7 +42,7 @@ export const connectRiver = async (
     signerContext: SignerContext,
     config: Omit<SyncAgentConfig, 'context'>,
 ): Promise<SyncAgent> => {
-    return new SyncAgent({ context: signerContext, ...config })
+    return new SyncAgent({ context: signerContext, ...defaultConfig, ...config })
 }
 
 /**
@@ -53,5 +59,5 @@ export const connectRiverWithBearerToken = async (
     config: Omit<SyncAgentConfig, 'context'>,
 ): Promise<SyncAgent> => {
     const signerContext = await makeSignerContextFromBearerToken(token)
-    return new SyncAgent({ context: signerContext, ...config })
+    return new SyncAgent({ context: signerContext, ...defaultConfig, ...config })
 }
