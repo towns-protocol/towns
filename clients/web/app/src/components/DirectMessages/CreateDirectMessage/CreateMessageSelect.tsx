@@ -7,6 +7,7 @@ import {
     ChannelContextProvider,
     DMChannelContextUserLookupProvider,
     DMChannelIdentifier,
+    SpaceContextProvider,
     useTownsContext,
     useUserLookupContext,
 } from 'use-towns-client'
@@ -200,16 +201,18 @@ export const MessageContainerLayout = React.forwardRef<
             <Box grow ref={ref}>
                 <AnimatePresence mode="sync">
                     <FadeBox grow position="relative" key={props.storageId}>
-                        <DMChannelContextUserLookupProvider channelId={props.streamId ?? ''}>
-                            <ChannelContextProvider channelId={props.streamId ?? ''}>
-                                <DraftChannel
-                                    preventAutoFocus={props.preventAutoFocus}
-                                    userIds={props.userIds}
-                                    storageId={props.storageId}
-                                    hideHeader={props.hideHeader}
-                                />
-                            </ChannelContextProvider>
-                        </DMChannelContextUserLookupProvider>
+                        <SpaceContextProvider spaceId={undefined}>
+                            <DMChannelContextUserLookupProvider channelId={props.streamId ?? ''}>
+                                <ChannelContextProvider channelId={props.streamId ?? ''}>
+                                    <DraftChannel
+                                        preventAutoFocus={props.preventAutoFocus}
+                                        userIds={props.userIds}
+                                        storageId={props.storageId}
+                                        hideHeader={props.hideHeader}
+                                    />
+                                </ChannelContextProvider>
+                            </DMChannelContextUserLookupProvider>
+                        </SpaceContextProvider>
                     </FadeBox>
                 </AnimatePresence>
             </Box>
