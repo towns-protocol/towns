@@ -21,6 +21,7 @@
         "@ariakit/react": "^0.4.13",
         "@capsizecss/vanilla-extract": "^1.0.0",
         "@cassiozen/usestatemachine": "^1.0.1",
+        "@crossmint/client-sdk-react-ui": "^1.11.3",
         "@datadog/browser-logs": "^4.48.1",
         "@datadog/browser-rum": "^5.8.0",
         "@decent.xyz/the-box": "^4.0.1",
@@ -197,6 +198,12 @@
         "workbox-routing": "^7.1.0",
         "workbox-strategies": "^7.1.0",
         "workbox-window": "^7.1.0"
+    },
+    "overrides": {
+        "sharp": "0.32.6"
+    },
+    "resolutions": {
+        "sharp": "0.32.6"
     },
     "msw": {
         "workerDirectory": "public"

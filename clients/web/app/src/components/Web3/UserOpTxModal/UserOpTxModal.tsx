@@ -1,24 +1,31 @@
 import { PaymasterErrorCode, userOpsStore } from '@towns/userops'
 import { BigNumber } from 'ethers'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { Address, useConnectivity, useContractSpaceInfoWithoutClient } from 'use-towns-client'
+import {
+    Address,
+    useConnectivity,
+    useContractSpaceInfoWithoutClient,
+    useTownsClient,
+} from 'use-towns-client'
 import { useShallow } from 'zustand/react/shallow'
 import { AboveAppProgressModalContainer } from '@components/AppProgressOverlay/AboveAppProgress/AboveAppProgress'
+import { useJoinFunnelAnalytics } from '@components/Analytics/useJoinFunnelAnalytics'
+import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
+import { CrossmintPayment } from '@components/CrossmintPayment'
 import { Box, Button, Heading, Icon, IconButton, Paragraph, Text, Tooltip } from '@ui'
 import { BRIDGE_LEARN_MORE_LINK } from 'data/links'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
-import { formatUnitsToFixedLength, useBalance } from 'hooks/useBalance'
+import { formatUnits, formatUnitsToFixedLength, useBalance } from 'hooks/useBalance'
 import { isTouch, useDevice } from 'hooks/useDevice'
+import { useEnvironment } from 'hooks/useEnvironmnet'
 import { useIsSmartAccountDeployed } from 'hooks/useIsSmartAccountDeployed'
+import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { usePublicPageLoginFlow } from 'routes/PublicTownPage/usePublicPageLoginFlow'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { atoms } from 'ui/styles/atoms.css'
 import { shortAddress } from 'ui/utils/utils'
-import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
-import { useJoinFunnelAnalytics } from '@components/Analytics/useJoinFunnelAnalytics'
-import { useEnvironment } from 'hooks/useEnvironmnet'
-import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { CopyWalletAddressButton } from '../GatedTownModal/Buttons'
+import { PayWithCardButton } from './PayWithCardButton'
 
 export function UserOpTxModal() {
     const { currOp, confirm, deny } = userOpsStore()
@@ -43,7 +50,13 @@ export function UserOpTxModal() {
     )
 }
 
-function UserOpTxModalContent({ endPublicPageLoginFlow }: { endPublicPageLoginFlow: () => void }) {
+function UserOpTxModalContent({
+    endPublicPageLoginFlow,
+}: {
+    endPublicPageLoginFlow: () => void
+}): JSX.Element {
+    const [showCrossmintPayment, setShowCrossmintPayment] = useState(false)
+    const [showEthPayment, setShowEthPayment] = useState(false)
     const {
         currOp,
         currOpDecodedCallData,
@@ -145,6 +158,9 @@ function UserOpTxModalContent({ endPublicPageLoginFlow }: { endPublicPageLoginFl
         : undefined
     const [showWalletWarning, setShowWalletWarning] = useState(false)
 
+    const { clientSingleton, signerContext } = useTownsClient()
+    const { joinAfterSuccessfulCrossmint } = usePublicPageLoginFlow()
+
     const { data: balanceData, isLoading: isLoadingBalance } = useBalance({
         address: smartAccountAddress,
         enabled: !!smartAccountAddress,
@@ -182,7 +198,36 @@ function UserOpTxModalContent({ endPublicPageLoginFlow }: { endPublicPageLoginFl
         }
     }
 
-    const bottomContent = () => {
+    const handleCrossmintComplete = async () => {
+        setShowCrossmintPayment(false)
+        if (clientSingleton && signerContext && spaceInfo?.name) {
+            await joinAfterSuccessfulCrossmint({
+                clientSingleton,
+                signerContext,
+                analyticsData: { spaceName: spaceInfo.name },
+            })
+        } else {
+            console.warn(
+                'Unable to join after Crossmint payment:',
+                clientSingleton ? null : 'clientSingleton is undefined',
+                signerContext ? null : 'signerContext is undefined',
+                spaceInfo?.name ? null : 'spaceInfo.name is undefined',
+            )
+        }
+        endPublicPageLoginFlow()
+        userOpsStore.setState({ currOp: undefined, confirm: undefined, deny: undefined })
+    }
+
+    const isJoinSpace =
+        currOpDecodedCallData?.type === 'joinSpace' ||
+        currOpDecodedCallData?.type === 'joinSpace_linkWallet'
+
+    const handleBack = () => {
+        setShowCrossmintPayment(false)
+        setShowEthPayment(false)
+    }
+
+    const bottomContent = (): JSX.Element => {
         if (!balanceData) {
             return <Box centerContent height="x4" width="100%" />
         }
@@ -191,11 +236,23 @@ function UserOpTxModalContent({ endPublicPageLoginFlow }: { endPublicPageLoginFl
             return <ButtonSpinner />
         }
 
-        if (balanceIsLessThanCost) {
+        if (showCrossmintPayment && spaceInfo?.address) {
             return (
-                <>
+                <CrossmintPayment
+                    contractAddress={spaceInfo.address}
+                    townWalletAddress={smartAccountAddress || ''}
+                    price={formatUnits(BigInt(currOpValue?.toString() ?? 0), 18)}
+                    onComplete={handleCrossmintComplete}
+                />
+            )
+        }
+
+        if (showEthPayment && balanceIsLessThanCost) {
+            return (
+                <Box paddingTop="md" gap="md" maxWidth="400">
                     <Text size="sm" color="error">
-                        You need to bridge ETH on Base and then transfer to your towns wallet.{' '}
+                        You need to bridge ETH on Base and then transfer to your towns wallet to pay{' '}
+                        with ETH.{' '}
                         <Box
                             as="a"
                             gap="xs"
@@ -206,7 +263,6 @@ function UserOpTxModalContent({ endPublicPageLoginFlow }: { endPublicPageLoginFl
                         >
                             Learn how
                         </Box>
-                        .
                     </Text>
 
                     <CopyWalletAddressButton
@@ -223,133 +279,192 @@ function UserOpTxModalContent({ endPublicPageLoginFlow }: { endPublicPageLoginFl
                             </Paragraph>
                         </Box>
                     )}
-                </>
+                </Box>
             )
         }
+
         return (
-            <Button tone="cta1" width="100%" onClick={onConfirm}>
-                Confirm
-            </Button>
+            <Box gap="md" width="100%" paddingTop="md">
+                {isJoinSpace && spaceInfo?.address && (
+                    <PayWithCardButton
+                        contractAddress={spaceInfo.address}
+                        onClick={() => setShowCrossmintPayment(true)}
+                    />
+                )}
+                <Button
+                    tone="level3"
+                    rounded="lg"
+                    onClick={() => {
+                        if (balanceIsLessThanCost) {
+                            setShowEthPayment(true)
+                        } else {
+                            onConfirm()
+                        }
+                    }}
+                >
+                    <Box
+                        display="flex"
+                        direction="row"
+                        alignItems="center"
+                        justifyContent="center"
+                        gap="sm"
+                        style={{
+                            background: 'linear-gradient(90deg, #21E078 0%, #1FDBF1 100%)',
+                            textOverflow: 'clip',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                            backgroundClip: 'text',
+                        }}
+                    >
+                        <Icon type="greenEth" />
+                        Pay with ETH
+                    </Box>
+                </Button>
+            </Box>
         )
     }
 
     return (
         <>
-            <IconButton
-                padding="xs"
-                alignSelf="end"
-                icon="close"
-                onClick={() => {
-                    endPublicPageLoginFlow()
-                    deny?.()
-                }}
-            />
-            <Box gap centerContent width={!_isTouch ? '400' : undefined} maxWidth="400">
-                <Box paddingBottom="sm">
-                    <Text strong size="lg">
-                        Confirm Transaction
-                    </Text>
-                </Box>
-                <Heading level={balanceIsLessThanCost ? 3 : 2}>{totalInEth + ' ETH'}</Heading>
-                <Box padding background="level3" rounded="sm" width="100%" gap="md" color="default">
-                    <Box horizontal width="100%" justifyContent="spaceBetween">
-                        <Text>
-                            Gas{' '}
-                            <Text color="gray2" as="span" display="inline">
-                                (estimated)
-                            </Text>
-                        </Text>
-                        <Text> {gasInEth + ' ETH'}</Text>
-                    </Box>
-                    {/* {isLoadingMembershipPrice ? <ButtonSpinner /> : null} */}
-                    {currOpValue ? (
-                        <Box horizontal width="100%" justifyContent="spaceBetween">
-                            <Text>{valueLabel} </Text>
-                            <Text> {currOpValueInEth + ' ETH'}</Text>
-                        </Box>
-                    ) : null}
-
+            <Box horizontal justifyContent="spaceBetween">
+                {showCrossmintPayment || showEthPayment ? (
                     <Box
                         horizontal
-                        paddingTop="md"
-                        borderTop="level4"
-                        width="100%"
-                        justifyContent="spaceBetween"
+                        alignItems="center"
+                        gap="sm"
+                        cursor="pointer"
+                        onClick={handleBack}
                     >
-                        <Text strong>Total</Text>
-                        <Text strong> {totalInEth + ' ETH'}</Text>
+                        <Icon type="arrowLeft" />
                     </Box>
-                </Box>
+                ) : (
+                    <Box width="x3" />
+                )}
+                <IconButton
+                    padding="xs"
+                    alignSelf="end"
+                    icon="close"
+                    onClick={() => {
+                        endPublicPageLoginFlow()
+                        deny?.()
+                    }}
+                />
+            </Box>
+            {!showCrossmintPayment && (
+                <Box gap centerContent width={!_isTouch ? '400' : undefined} maxWidth="400">
+                    <Box paddingBottom="sm">
+                        <Text strong size="lg">
+                            Confirm Payment
+                        </Text>
+                    </Box>
+                    <Heading level={balanceIsLessThanCost ? 3 : 2}>{totalInEth + ' ETH'}</Heading>
+                    <Box
+                        padding
+                        background="level3"
+                        rounded="sm"
+                        width="100%"
+                        gap="md"
+                        color="default"
+                    >
+                        <Box horizontal width="100%" justifyContent="spaceBetween">
+                            <Text>
+                                Gas{' '}
+                                <Text color="gray2" as="span" display="inline">
+                                    (estimated)
+                                </Text>
+                            </Text>
+                            <Text> {gasInEth + ' ETH'}</Text>
+                        </Box>
+                        {currOpValue ? (
+                            <Box horizontal width="100%" justifyContent="spaceBetween">
+                                <Text>{valueLabel} </Text>
+                                <Text> {currOpValueInEth + ' ETH'}</Text>
+                            </Box>
+                        ) : null}
 
-                <Box
-                    padding
-                    color="default"
-                    background="level3"
-                    rounded="sm"
-                    width="100%"
-                    gap="md"
-                    border={balanceIsLessThanCost ? 'negative' : 'none'}
-                >
-                    {toAddress && (
-                        <Box borderBottom="level4" paddingBottom="sm">
-                            <RecipientText sendingTo={toAddress} />
+                        <Box
+                            horizontal
+                            paddingTop="md"
+                            borderTop="level4"
+                            width="100%"
+                            justifyContent="spaceBetween"
+                        >
+                            <Text strong>Total</Text>
+                            <Text strong> {totalInEth + ' ETH'}</Text>
+                        </Box>
+                    </Box>
+
+                    {showEthPayment && (
+                        <Box
+                            padding
+                            color="default"
+                            background="level3"
+                            rounded="sm"
+                            width="100%"
+                            gap="md"
+                            border={balanceIsLessThanCost ? 'negative' : 'none'}
+                        >
+                            {toAddress && (
+                                <Box borderBottom="level4" paddingBottom="sm">
+                                    <RecipientText sendingTo={toAddress} />
+                                </Box>
+                            )}
+
+                            <Box horizontal justifyContent="spaceBetween" alignItems="center">
+                                <Box horizontal gap="sm">
+                                    <Box position="relative" width="x3">
+                                        <Icon position="absoluteCenter" type="wallet" />{' '}
+                                    </Box>
+                                    <Text>
+                                        {isLoadingBalance
+                                            ? 'Fetching balance...'
+                                            : smartAccountAddress
+                                            ? shortAddress(smartAccountAddress)
+                                            : ''}
+                                    </Text>
+                                </Box>
+                                {formattedBalance ? (
+                                    <Text size={balanceIsLessThanCost ? 'sm' : 'md'}>
+                                        {formattedBalance} Available
+                                    </Text>
+                                ) : (
+                                    <ButtonSpinner />
+                                )}
+                            </Box>
                         </Box>
                     )}
-
-                    <Box horizontal justifyContent="spaceBetween" alignItems="center">
-                        <Box horizontal gap="sm">
-                            <Box position="relative" width="x3">
-                                <Icon position="absoluteCenter" type="wallet" />{' '}
-                            </Box>
+                    {rejectedSponsorshipReason && (
+                        <Box padding horizontal gap background="level3" rounded="sm">
+                            <Icon type="info" color="gray1" shrink={false} />
                             <Text>
-                                {isLoadingBalance
-                                    ? 'Fetching balance...'
-                                    : smartAccountAddress
-                                    ? shortAddress(smartAccountAddress)
-                                    : ''}
+                                Gas sponsorship is not available for this transaction.{' '}
+                                {rejectionMessage}
                             </Text>
                         </Box>
-                        {formattedBalance ? (
-                            <Text size={balanceIsLessThanCost ? 'sm' : 'md'}>
-                                {formattedBalance} Available
+                    )}
+                    {retryDetails?.type === 'gasTooLow' && (
+                        <Box
+                            horizontal
+                            padding
+                            gap
+                            centerContent
+                            rounded="sm"
+                            background="level2"
+                            width="100%"
+                        >
+                            <Icon type="alert" color="error" shrink={false} />
+                            <Text color="error">
+                                Estimated gas was too low{' '}
+                                {typeof retryDetails?.data === 'string'
+                                    ? `for ${retryDetails.data}`
+                                    : ''}
+                                . Would you like to try this transaction again?
                             </Text>
-                        ) : (
-                            <ButtonSpinner />
-                        )}
-                    </Box>
+                        </Box>
+                    )}
                 </Box>
-                {rejectedSponsorshipReason && (
-                    <Box padding horizontal gap background="level3" rounded="sm">
-                        <Icon type="info" color="gray1" shrink={false} />
-                        <Text>
-                            Gas sponsorship is not available for this transaction.{' '}
-                            {rejectionMessage}
-                        </Text>
-                    </Box>
-                )}
-                {retryDetails?.type === 'gasTooLow' && (
-                    <Box
-                        horizontal
-                        padding
-                        gap
-                        centerContent
-                        rounded="sm"
-                        background="level2"
-                        width="100%"
-                    >
-                        <Icon type="alert" color="error" shrink={false} />
-                        <Text color="error">
-                            Estimated gas was too low{' '}
-                            {typeof retryDetails?.data === 'string'
-                                ? `for ${retryDetails.data}`
-                                : ''}
-                            . Would you like to try this transaction again?
-                        </Text>
-                    </Box>
-                )}
-
-                {bottomContent()}
-            </Box>
+            )}
+            {bottomContent()}
         </>
     )
 }

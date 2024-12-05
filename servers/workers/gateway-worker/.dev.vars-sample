@@ -4,3 +4,4 @@ AUTH_SECRET=foo
 IMAGE_HASH= cloudflare images account hash
 API_TOKEN= images api token
 LINEAR_API_KEY=
+CROSSMINT_API_KEY=

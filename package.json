@@ -95,7 +95,8 @@
         ]
     },
     "resolutions": {
-        "jest-worker@^29.5.0": "patch:jest-worker@npm%3A29.5.0#./.yarn/patches/jest-worker-npm-29.5.0-70da3388f1.patch"
+        "jest-worker@^29.5.0": "patch:jest-worker@npm%3A29.5.0#./.yarn/patches/jest-worker-npm-29.5.0-70da3388f1.patch",
+        "sharp": "0.32.6"
     },
     "syncpack": {
         "dependencyTypes": [
@@ -203,5 +204,8 @@
         "river/packages/*",
         "servers/workers/*",
         "infra/modules/network-health-monitor/lambda-function"
-    ]
+    ],
+    "dependencies": {
+        "node-gyp": "^11.0.0"
+    }
 }

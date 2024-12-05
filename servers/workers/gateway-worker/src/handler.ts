@@ -8,6 +8,72 @@ const router = Router()
 
 type WorkerRequest = Request & IttyRequest
 
+interface CrossmintContractRegistrationRequest {
+    contractAddress: string
+}
+
+router.post('/crossmint/register-contract', async (request: WorkerRequest, env: Env) => {
+    const body = (await request.json()) as CrossmintContractRegistrationRequest
+    if (!body.contractAddress) {
+        return new Response(JSON.stringify({ error: 'Contract address is required' }), {
+            status: 400,
+        })
+    }
+
+    const isOmega = env.ENVIRONMENT === 'omega'
+
+    const chain = isOmega ? 'base' : 'base-sepolia'
+    const baseUrl = isOmega ? 'https://crossmint.com' : 'https://staging.crossmint.com'
+
+    const response = await fetch(`${baseUrl}/api/v1-alpha1/collections`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-API-KEY': env.CROSSMINT_API_KEY,
+        },
+        body: JSON.stringify({
+            chain,
+            contractType: 'erc-721',
+            args: {
+                contractAddress: body.contractAddress,
+                abi: [
+                    {
+                        inputs: [
+                            {
+                                internalType: 'address',
+                                name: 'receiver',
+                                type: 'address',
+                            },
+                        ],
+                        name: 'joinSpace',
+                        outputs: [],
+                        stateMutability: 'payable',
+                        type: 'function',
+                    },
+                ],
+                mintFunctionName: 'joinSpace(address)',
+                toParamName: 'receiver',
+            },
+            metadata: {
+                title: body.contractAddress,
+                name: body.contractAddress,
+                description: `On Base${env.ENVIRONMENT !== 'omega' ? ' Sepolia' : ''}`,
+            },
+            ownership: 'self',
+            category: 'other',
+            scopes: ['payments:credit-card', 'payments:cross-chain'],
+        }),
+    })
+
+    if (!response.ok) {
+        const errorText = await response.text()
+        return new Response('helloooo', { status: 504 })
+    }
+
+    const responseData = await response.json()
+    return new Response(JSON.stringify(responseData), { status: 200 })
+})
+
 router.post('/space/:id/identity', async (request: WorkerRequest, env) => {
     // https://linear.app/hnt-labs/issue/HNT-7392/disabling-gateway-worker-post-requests
     return new Response(JSON.stringify({ error: 'Not allowed' }), {

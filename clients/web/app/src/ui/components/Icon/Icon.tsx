@@ -1948,6 +1948,72 @@ const ExploreIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
     </svg>
 ))
 
+const CreditCard = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
+    <svg
+        width="21"
+        height="21"
+        viewBox="0 0 21 21"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        {...props}
+        ref={ref}
+    >
+        <path
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="M3.83331 4.66667C3.37688 4.66667 2.99998 5.04357 2.99998 5.5V7.16667H18V5.5C18 5.04357 17.6231 4.66667 17.1666 4.66667H3.83331ZM2.99998 15.5V8.83333H18V15.5C18 15.9564 17.6231 16.3333 17.1666 16.3333H3.83331C3.37688 16.3333 2.99998 15.9564 2.99998 15.5ZM1.33331 5.5C1.33331 4.1231 2.45641 3 3.83331 3H17.1666C18.5435 3 19.6666 4.1231 19.6666 5.5V15.5C19.6666 16.8769 18.5435 18 17.1666 18H3.83331C2.45641 18 1.33331 16.8769 1.33331 15.5V5.5ZM5.49998 10.5C5.03974 10.5 4.66665 10.8731 4.66665 11.3333C4.66665 11.7936 5.03974 12.1667 5.49998 12.1667H8.83331C9.29355 12.1667 9.66665 11.7936 9.66665 11.3333C9.66665 10.8731 9.29355 10.5 8.83331 10.5H5.49998Z"
+            fill="currentColor"
+        />
+    </svg>
+))
+
+const GreenEth = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
+    <svg
+        width="20"
+        height="21"
+        viewBox="0 0 20 21"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        {...props}
+        ref={ref}
+    >
+        <g>
+            <path
+                d="M10 2.10156L15.1172 10.6172L10 13.6641L4.84375 10.6172L10 2.10156Z"
+                fill="url(#paint0_linear_28866_2087)"
+            />
+            <path
+                d="M4.84375 11.5937L10 14.6406L15.1172 11.5937L10 18.8203L4.84375 11.5937Z"
+                fill="url(#paint1_linear_28866_2087)"
+            />
+        </g>
+        <defs>
+            <linearGradient
+                id="paint0_linear_28866_2087"
+                x1="4.84375"
+                y1="10.4609"
+                x2="15.1172"
+                y2="10.4609"
+                gradientUnits="userSpaceOnUse"
+            >
+                <stop stopColor="#21E078" />
+                <stop offset="1" stopColor="#1FDBF1" />
+            </linearGradient>
+            <linearGradient
+                id="paint1_linear_28866_2087"
+                x1="4.84375"
+                y1="10.4609"
+                x2="15.1172"
+                y2="10.4609"
+                gradientUnits="userSpaceOnUse"
+            >
+                <stop stopColor="#21E078" />
+                <stop offset="1" stopColor="#1FDBF1" />
+            </linearGradient>
+        </defs>
+    </svg>
+))
+
 const Mail = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
     <svg
         width="21"
@@ -2118,6 +2184,8 @@ const iconMap = {
     google: Google,
     apple: Apple,
     explore: ExploreIcon,
+    creditCard: CreditCard,
+    greenEth: GreenEth,
 } as const
 
 // this export breaks fast-refresh
