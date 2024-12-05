@@ -23,7 +23,7 @@ router.post('/crossmint/register-contract', async (request: WorkerRequest, env: 
     const isOmega = env.ENVIRONMENT === 'omega'
 
     const chain = isOmega ? 'base' : 'base-sepolia'
-    const baseUrl = isOmega ? 'https://crossmint.com' : 'https://staging.crossmint.com'
+    const baseUrl = isOmega ? 'https://www.crossmint.com' : 'https://staging.crossmint.com'
 
     const response = await fetch(`${baseUrl}/api/v1-alpha1/collections`, {
         method: 'POST',
