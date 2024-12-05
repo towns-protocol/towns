@@ -12,6 +12,7 @@ import { Analytics } from 'hooks/useAnalytics'
 import { popupToast } from '@components/Notifications/popupToast'
 import { StandardToast } from '@components/Notifications/StandardToast'
 import { useEnvironment } from 'hooks/useEnvironmnet'
+import { usePrepareRedirect } from 'hooks/usePrepareRedirect'
 import { useAutoLoginToRiverIfEmbeddedWallet } from './useAutoLoginToRiverIfEmbeddedWallet'
 
 type CombinedAuthContext = {
@@ -123,6 +124,7 @@ function usePrivyLoginWithErrorHandler({
 }) {
     const { end: endPublicPageLoginFlow } = usePublicPageLoginFlow()
     const { logout: privyLogout } = usePrivy()
+    const { prepareRedirect } = usePrepareRedirect()
 
     const { login: privyLogin } = useLogin({
         async onComplete(user, isNewUser, wasAlreadyAuthenticated, loginMethod, loginAccount) {
@@ -196,7 +198,14 @@ function usePrivyLoginWithErrorHandler({
         },
     })
 
-    return { privyLogin }
+    // runs the prepareRedirect hook right before `privyLogin` is called,
+    // see usePrepareRedirect.ts for more info
+    const loginWithoutRedirect = useCallback(() => {
+        prepareRedirect()
+        privyLogin()
+    }, [privyLogin, prepareRedirect])
+
+    return { privyLogin: loginWithoutRedirect }
 }
 
 function savePrivyLoginMethodToLocalStorage(loginMethod: string | null) {
