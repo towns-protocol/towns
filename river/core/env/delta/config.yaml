@@ -1,0 +1,17 @@
+# Blockchain configuration
+baseChain:
+    chainId: 84532
+    networkUrl: 'https://sepolia.base.org'
+    blockTimeMs: 2000
+riverChain:
+    chainId: 6524490
+    networkUrl: 'https://devnet.rpc.river.build'
+    blockTimeMs: 2000
+
+# Base contracts
+architectContract:
+    address: '0xa7932228e6dAfb7A74dc8085F8bADAa993d4c592'
+
+# River contracts
+registryContract:
+    address: '0x9Db19dB285cEd37099D40d27D51B75C4dFa05652'

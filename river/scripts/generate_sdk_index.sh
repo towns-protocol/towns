@@ -27,7 +27,7 @@ for dir in "${dirs[@]}"; do
 
   # Loop through each TypeScript file to append an export statement to the array
   # Skip files that have ".test." in their name, the existing index.ts file, and directories
-  for file in $(find . -type f \( -name "*.ts" -o -name "*.tsx" \) ! -name "*.test*" ! -name "*.d.ts" ! -name "index.ts" ! -path "*/internals/*" | sort); do
+  for file in $(find . -type f \( -name "*.ts" -o -name "*.tsx" \) ! -name "*.test*" ! -name "*.d.ts" ! -name "index.ts" ! -path "*/tests/*" ! -path "*/internals/*" | sort); do
     # Remove the './' prefix and '.tsx' or '.ts' suffix from the file path
     file_without_slash=${file#./}
     file_without_tsx=${file_without_slash%.tsx}

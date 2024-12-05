@@ -34,10 +34,12 @@ describe('channelsTests', () => {
 
     test('clientsCanSendRedactionEvents', async () => {
         const spaceId = makeUniqueSpaceStreamId()
-        await expect(bobsClient.createSpace(spaceId)).toResolve()
+        await expect(bobsClient.createSpace(spaceId)).resolves.not.toThrow()
 
         const channelId = makeUniqueChannelStreamId(spaceId)
-        await expect(bobsClient.createChannel(spaceId, 'Channel', 'Topic', channelId)).toResolve()
+        await expect(
+            bobsClient.createChannel(spaceId, 'Channel', 'Topic', channelId),
+        ).resolves.not.toThrow()
         await bobsClient.sendMessage(channelId, 'Very bad message!')
         const channelStream = await bobsClient.waitForStream(channelId)
         let eventId: string | undefined
@@ -53,7 +55,7 @@ describe('channelsTests', () => {
         expect(channelStream).toBeDefined()
         expect(eventId).toBeDefined()
 
-        await expect(bobsClient.redactMessage(channelId, eventId!)).toResolve()
+        await expect(bobsClient.redactMessage(channelId, eventId!)).resolves.not.toThrow()
         await waitFor(() => {
             const event = channelStream.view.timeline.find(
                 (e) =>

@@ -1,7 +1,7 @@
 {
     "name": "@river-build/react-sdk",
     "description": "React Hooks for River SDK",
-    "version": "0.0.122",
+    "version": "0.0.123",
     "type": "module",
     "main": "./dist/esm/index.js",
     "types": "./dist/types/index.d.ts",

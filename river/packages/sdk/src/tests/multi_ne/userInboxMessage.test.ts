@@ -28,10 +28,10 @@ describe('inboxMessageTest', () => {
     test('bobSendsAliceInboxMessage', async () => {
         log('bobSendsAliceInboxMessage')
         // Bob gets created, creates a space, and creates a channel.
-        await expect(bobsClient.initializeUser()).toResolve()
+        await expect(bobsClient.initializeUser()).resolves.not.toThrow()
         bobsClient.startSync()
         // Alice gets created.
-        await expect(alicesClient.initializeUser()).toResolve()
+        await expect(alicesClient.initializeUser()).resolves.not.toThrow()
         const aliceUserStreamId = alicesClient.userStreamId
         log('aliceUserStreamId', aliceUserStreamId)
         alicesClient.startSync()
@@ -70,7 +70,7 @@ describe('inboxMessageTest', () => {
                 ],
                 recipients,
             ),
-        ).toResolve()
+        ).resolves.not.toThrow()
         await aliceSelfInbox.expectToSucceed()
     })
 })

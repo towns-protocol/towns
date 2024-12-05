@@ -161,7 +161,7 @@ export const bobTalksToHimself = async (
             bobSyncStreamIterable,
             async (res) => res.syncOp === SyncOp.SYNC_NEW && res.syncId !== undefined,
         ),
-    ).toResolve()
+    ).resolves.not.toThrow()
 
     if (flush || presync) {
         log('Flush or presync, wait for sync to return initial events')

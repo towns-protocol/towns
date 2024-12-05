@@ -36,9 +36,7 @@ describe('util.test', () => {
             })
         } catch (err: any) {
             const errorMsg = stripAnsiColors(String(err))
-            expect(errorMsg).toContain(
-                'Error: expect(received).toEqual(expected) // deep equality\n\nExpected: 4\nReceived: 0',
-            )
+            expect(errorMsg).toContain('AssertionError: expected +0 to deeply equal 4')
         }
         expect(r).toBeUndefined()
     })

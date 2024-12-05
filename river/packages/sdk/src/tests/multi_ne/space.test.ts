@@ -37,13 +37,15 @@ describe('spaceTests', () => {
         log('bobKicksAlice')
 
         const spaceId = makeUniqueSpaceStreamId()
-        await expect(bobsClient.createSpace(spaceId)).toResolve()
+        await expect(bobsClient.createSpace(spaceId)).resolves.not.toThrow()
 
         const channelId = makeUniqueChannelStreamId(spaceId)
-        await expect(bobsClient.createChannel(spaceId, 'name', 'topic', channelId)).toResolve()
+        await expect(
+            bobsClient.createChannel(spaceId, 'name', 'topic', channelId),
+        ).resolves.not.toThrow()
 
-        await expect(alicesClient.joinStream(spaceId)).toResolve()
-        await expect(alicesClient.joinStream(channelId)).toResolve()
+        await expect(alicesClient.joinStream(spaceId)).resolves.not.toThrow()
+        await expect(alicesClient.joinStream(channelId)).resolves.not.toThrow()
 
         const userStreamView = alicesClient.stream(alicesClient.userStreamId!)!.view
         await waitFor(() => {
@@ -52,7 +54,7 @@ describe('spaceTests', () => {
         })
 
         // Bob can kick Alice
-        await expect(bobsClient.removeUser(spaceId, alicesClient.userId)).toResolve()
+        await expect(bobsClient.removeUser(spaceId, alicesClient.userId)).resolves.not.toThrow()
 
         // Alice is no longer a member of the space or channel
         await waitFor(() => {
@@ -64,7 +66,7 @@ describe('spaceTests', () => {
     test('channelMetadata', async () => {
         log('channelMetadata')
         const spaceId = makeUniqueSpaceStreamId()
-        await expect(bobsClient.createSpace(spaceId)).toResolve()
+        await expect(bobsClient.createSpace(spaceId)).resolves.not.toThrow()
         const spaceStream = await bobsClient.waitForStream(spaceId)
 
         // assert assumptions
@@ -76,7 +78,9 @@ describe('spaceTests', () => {
 
         // create a new channel
         const channelId = makeUniqueChannelStreamId(spaceId)
-        await expect(bobsClient.createChannel(spaceId, 'name', 'topic', channelId)).toResolve()
+        await expect(
+            bobsClient.createChannel(spaceId, 'name', 'topic', channelId),
+        ).resolves.not.toThrow()
 
         // our space channels metatdata should reflect the new channel
         await waitFor(() => {
@@ -139,7 +143,7 @@ describe('spaceTests', () => {
             count: 0,
         }
         const spaceId = makeUniqueSpaceStreamId()
-        await expect(bobsClient.createSpace(spaceId)).toResolve()
+        await expect(bobsClient.createSpace(spaceId)).resolves.not.toThrow()
         const spaceStream = await bobsClient.waitForStream(spaceId)
 
         // assert assumptions

@@ -33,16 +33,16 @@ describe('memberMetadataTests', () => {
     })
 
     test('clientCanSetDisplayNamesInSpace', async () => {
-        await expect(bobsClient.initializeUser()).toResolve()
+        await expect(bobsClient.initializeUser()).resolves.not.toThrow()
         bobsClient.startSync()
-        await expect(alicesClient.initializeUser()).toResolve()
+        await expect(alicesClient.initializeUser()).resolves.not.toThrow()
         alicesClient.startSync()
 
         const streamId = makeUniqueSpaceStreamId()
         await bobsClient.createSpace(streamId)
         await bobsClient.waitForStream(streamId)
         await bobsClient.inviteUser(streamId, alicesClient.userId)
-        await expect(alicesClient.joinStream(streamId)).toResolve()
+        await expect(alicesClient.joinStream(streamId)).resolves.not.toThrow()
 
         const bobPromise = makeDonePromise()
         bobsClient.on('streamDisplayNameUpdated', (updatedStreamId, userId) => {
@@ -75,15 +75,15 @@ describe('memberMetadataTests', () => {
     })
 
     test('clientCanSetDisplayNamesInDM', async () => {
-        await expect(bobsClient.initializeUser()).toResolve()
+        await expect(bobsClient.initializeUser()).resolves.not.toThrow()
         bobsClient.startSync()
-        await expect(alicesClient.initializeUser()).toResolve()
+        await expect(alicesClient.initializeUser()).resolves.not.toThrow()
         alicesClient.startSync()
 
         const { streamId } = await bobsClient.createDMChannel(alicesClient.userId)
         const stream = await bobsClient.waitForStream(streamId)
         await alicesClient.waitForStream(streamId)
-        await expect(alicesClient.joinStream(streamId)).toResolve()
+        await expect(alicesClient.joinStream(streamId)).resolves.not.toThrow()
         await waitFor(() => {
             expect(stream.view.getMembers().membership.joinedUsers).toEqual(
                 new Set([bobsClient.userId, alicesClient.userId]),
@@ -91,7 +91,7 @@ describe('memberMetadataTests', () => {
         })
 
         const bobDisplayName = 'bob display name'
-        await expect(bobsClient.setDisplayName(streamId, bobDisplayName)).toResolve()
+        await expect(bobsClient.setDisplayName(streamId, bobDisplayName)).resolves.not.toThrow()
 
         const expected = new Map<string, string>([[bobsClient.userId, bobDisplayName]])
 
@@ -122,11 +122,11 @@ describe('memberMetadataTests', () => {
     })
 
     test('clientCanSetDisplayNamesInGDM', async () => {
-        await expect(bobsClient.initializeUser()).toResolve()
+        await expect(bobsClient.initializeUser()).resolves.not.toThrow()
         bobsClient.startSync()
-        await expect(alicesClient.initializeUser()).toResolve()
+        await expect(alicesClient.initializeUser()).resolves.not.toThrow()
         alicesClient.startSync()
-        await expect(evesClient.initializeUser()).toResolve()
+        await expect(evesClient.initializeUser()).resolves.not.toThrow()
         evesClient.startSync()
 
         const { streamId } = await bobsClient.createGDMChannel([
@@ -134,8 +134,8 @@ describe('memberMetadataTests', () => {
             evesClient.userId,
         ])
         const stream = await bobsClient.waitForStream(streamId)
-        await expect(alicesClient.joinStream(streamId)).toResolve()
-        await expect(evesClient.joinStream(streamId)).toResolve()
+        await expect(alicesClient.joinStream(streamId)).resolves.not.toThrow()
+        await expect(evesClient.joinStream(streamId)).resolves.not.toThrow()
         await waitFor(() => {
             expect(stream.view.getMembers().membership.joinedUsers).toEqual(
                 new Set([bobsClient.userId, alicesClient.userId, evesClient.userId]),
@@ -143,7 +143,7 @@ describe('memberMetadataTests', () => {
         })
 
         const bobDisplayName = 'bob display name'
-        await expect(bobsClient.setDisplayName(streamId, bobDisplayName)).toResolve()
+        await expect(bobsClient.setDisplayName(streamId, bobDisplayName)).resolves.not.toThrow()
 
         const expected = new Map<string, string>([[bobsClient.userId, bobDisplayName]])
 
@@ -182,17 +182,17 @@ describe('memberMetadataTests', () => {
     })
 
     test('clientsPickUpDisplayNamesAfterJoin', async () => {
-        await expect(bobsClient.initializeUser()).toResolve()
+        await expect(bobsClient.initializeUser()).resolves.not.toThrow()
         bobsClient.startSync()
         const streamId = makeUniqueSpaceStreamId()
         await bobsClient.createSpace(streamId)
         await bobsClient.waitForStream(streamId)
         await bobsClient.setDisplayName(streamId, 'bob')
 
-        await expect(alicesClient.initializeUser()).toResolve()
+        await expect(alicesClient.initializeUser()).resolves.not.toThrow()
         alicesClient.startSync()
         await bobsClient.inviteUser(streamId, alicesClient.userId)
-        await expect(alicesClient.joinStream(streamId)).toResolve()
+        await expect(alicesClient.joinStream(streamId)).resolves.not.toThrow()
 
         const alicePromise = makeDonePromise()
         alicesClient.on('streamDisplayNameUpdated', (updatedStreamId, userId) => {
@@ -210,16 +210,16 @@ describe('memberMetadataTests', () => {
     })
 
     test('clientCanSetUsernamesInSpaces', async () => {
-        await expect(bobsClient.initializeUser()).toResolve()
+        await expect(bobsClient.initializeUser()).resolves.not.toThrow()
         bobsClient.startSync()
-        await expect(alicesClient.initializeUser()).toResolve()
+        await expect(alicesClient.initializeUser()).resolves.not.toThrow()
         alicesClient.startSync()
 
         const streamId = makeUniqueSpaceStreamId()
         await bobsClient.createSpace(streamId)
         await bobsClient.waitForStream(streamId)
         await bobsClient.inviteUser(streamId, alicesClient.userId)
-        await expect(alicesClient.joinStream(streamId)).toResolve()
+        await expect(alicesClient.joinStream(streamId)).resolves.not.toThrow()
 
         const bobPromise = makeDonePromise()
         bobsClient.on('streamUsernameUpdated', (updatedStreamId, userId) => {
@@ -265,15 +265,15 @@ describe('memberMetadataTests', () => {
     })
 
     test('clientCanSetUsernamesInDMs', async () => {
-        await expect(bobsClient.initializeUser()).toResolve()
+        await expect(bobsClient.initializeUser()).resolves.not.toThrow()
         bobsClient.startSync()
-        await expect(alicesClient.initializeUser()).toResolve()
+        await expect(alicesClient.initializeUser()).resolves.not.toThrow()
         alicesClient.startSync()
 
         const { streamId } = await bobsClient.createDMChannel(alicesClient.userId)
         const stream = await bobsClient.waitForStream(streamId)
         await alicesClient.waitForStream(streamId)
-        await expect(alicesClient.joinStream(streamId)).toResolve()
+        await expect(alicesClient.joinStream(streamId)).resolves.not.toThrow()
 
         await waitFor(() => {
             expect(stream.view.getMembers().membership.joinedUsers).toEqual(
@@ -309,11 +309,11 @@ describe('memberMetadataTests', () => {
     })
 
     test('clientCanSetUsernamesInGDMs', async () => {
-        await expect(bobsClient.initializeUser()).toResolve()
+        await expect(bobsClient.initializeUser()).resolves.not.toThrow()
         bobsClient.startSync()
-        await expect(alicesClient.initializeUser()).toResolve()
+        await expect(alicesClient.initializeUser()).resolves.not.toThrow()
         alicesClient.startSync()
-        await expect(evesClient.initializeUser()).toResolve()
+        await expect(evesClient.initializeUser()).resolves.not.toThrow()
         evesClient.startSync()
 
         const { streamId } = await bobsClient.createGDMChannel([
@@ -325,8 +325,8 @@ describe('memberMetadataTests', () => {
         await alicesClient.waitForStream(streamId)
         await evesClient.waitForStream(streamId)
 
-        await expect(alicesClient.joinStream(streamId)).toResolve()
-        await expect(evesClient.joinStream(streamId)).toResolve()
+        await expect(alicesClient.joinStream(streamId)).resolves.not.toThrow()
+        await expect(evesClient.joinStream(streamId)).resolves.not.toThrow()
 
         await waitFor(() => {
             expect(stream.view.getMembers().membership.joinedUsers).toEqual(
@@ -370,16 +370,16 @@ describe('memberMetadataTests', () => {
     })
 
     test('clientCanSetEnsAddressesInSpace', async () => {
-        await expect(bobsClient.initializeUser()).toResolve()
+        await expect(bobsClient.initializeUser()).resolves.not.toThrow()
         bobsClient.startSync()
-        await expect(alicesClient.initializeUser()).toResolve()
+        await expect(alicesClient.initializeUser()).resolves.not.toThrow()
         alicesClient.startSync()
 
         const streamId = makeUniqueSpaceStreamId()
         await bobsClient.createSpace(streamId)
         await bobsClient.waitForStream(streamId)
         await bobsClient.inviteUser(streamId, alicesClient.userId)
-        await expect(alicesClient.joinStream(streamId)).toResolve()
+        await expect(alicesClient.joinStream(streamId)).resolves.not.toThrow()
         await alicesClient.waitForStream(streamId)
 
         const bobPromise = makeDonePromise()
@@ -414,15 +414,15 @@ describe('memberMetadataTests', () => {
     })
 
     test('clientCanSetEnsAddressesInDM', async () => {
-        await expect(bobsClient.initializeUser()).toResolve()
+        await expect(bobsClient.initializeUser()).resolves.not.toThrow()
         bobsClient.startSync()
-        await expect(alicesClient.initializeUser()).toResolve()
+        await expect(alicesClient.initializeUser()).resolves.not.toThrow()
         alicesClient.startSync()
 
         const { streamId } = await bobsClient.createDMChannel(alicesClient.userId)
         const stream = await bobsClient.waitForStream(streamId)
         await alicesClient.waitForStream(streamId)
-        await expect(alicesClient.joinStream(streamId)).toResolve()
+        await expect(alicesClient.joinStream(streamId)).resolves.not.toThrow()
         await waitFor(() => {
             expect(stream.view.getMembers().membership.joinedUsers).toEqual(
                 new Set([bobsClient.userId, alicesClient.userId]),
@@ -444,7 +444,7 @@ describe('memberMetadataTests', () => {
         })
 
         const ensAddress = makeRandomUserAddress()
-        await expect(bobsClient.setEnsAddress(streamId, ensAddress)).toResolve()
+        await expect(bobsClient.setEnsAddress(streamId, ensAddress)).resolves.not.toThrow()
         const expected = new Map<string, string>([
             [bobsClient.userId, userIdFromAddress(ensAddress)],
         ])
@@ -461,11 +461,11 @@ describe('memberMetadataTests', () => {
     })
 
     test('clientCanSetEnsAddressesInGDM', async () => {
-        await expect(bobsClient.initializeUser()).toResolve()
+        await expect(bobsClient.initializeUser()).resolves.not.toThrow()
         bobsClient.startSync()
-        await expect(alicesClient.initializeUser()).toResolve()
+        await expect(alicesClient.initializeUser()).resolves.not.toThrow()
         alicesClient.startSync()
-        await expect(evesClient.initializeUser()).toResolve()
+        await expect(evesClient.initializeUser()).resolves.not.toThrow()
         evesClient.startSync()
 
         const { streamId } = await bobsClient.createGDMChannel([
@@ -473,8 +473,8 @@ describe('memberMetadataTests', () => {
             evesClient.userId,
         ])
         const stream = await bobsClient.waitForStream(streamId)
-        await expect(alicesClient.joinStream(streamId)).toResolve()
-        await expect(evesClient.joinStream(streamId)).toResolve()
+        await expect(alicesClient.joinStream(streamId)).resolves.not.toThrow()
+        await expect(evesClient.joinStream(streamId)).resolves.not.toThrow()
         await waitFor(() => {
             expect(stream.view.getMembers().membership.joinedUsers).toEqual(
                 new Set([bobsClient.userId, alicesClient.userId, evesClient.userId]),
@@ -503,7 +503,7 @@ describe('memberMetadataTests', () => {
         })
 
         const ensAddress = makeRandomUserAddress()
-        await expect(bobsClient.setEnsAddress(streamId, ensAddress)).toResolve()
+        await expect(bobsClient.setEnsAddress(streamId, ensAddress)).resolves.not.toThrow()
         const expected = new Map<string, string>([
             [bobsClient.userId, userIdFromAddress(ensAddress)],
         ])
@@ -521,7 +521,7 @@ describe('memberMetadataTests', () => {
     })
 
     test('clientCannotSetInvalidEnsAddresses', async () => {
-        await expect(bobsClient.initializeUser()).toResolve()
+        await expect(bobsClient.initializeUser()).resolves.not.toThrow()
         bobsClient.startSync()
 
         const streamId = makeUniqueSpaceStreamId()
@@ -535,7 +535,7 @@ describe('memberMetadataTests', () => {
     })
 
     test('clientCanClearEnsAddress', async () => {
-        await expect(bobsClient.initializeUser()).toResolve()
+        await expect(bobsClient.initializeUser()).resolves.not.toThrow()
         bobsClient.startSync()
 
         const streamId = makeUniqueSpaceStreamId()
@@ -543,20 +543,20 @@ describe('memberMetadataTests', () => {
         await bobsClient.waitForStream(streamId)
 
         const ensAddress = new Uint8Array()
-        await expect(bobsClient.setEnsAddress(streamId, ensAddress)).toResolve()
+        await expect(bobsClient.setEnsAddress(streamId, ensAddress)).resolves.not.toThrow()
     })
 
     test('clientCanSetNftInSpace', async () => {
-        await expect(bobsClient.initializeUser()).toResolve()
+        await expect(bobsClient.initializeUser()).resolves.not.toThrow()
         bobsClient.startSync()
-        await expect(alicesClient.initializeUser()).toResolve()
+        await expect(alicesClient.initializeUser()).resolves.not.toThrow()
         alicesClient.startSync()
 
         const streamId = makeUniqueSpaceStreamId()
         await bobsClient.createSpace(streamId)
         await bobsClient.waitForStream(streamId)
         await bobsClient.inviteUser(streamId, alicesClient.userId)
-        await expect(alicesClient.joinStream(streamId)).toResolve()
+        await expect(alicesClient.joinStream(streamId)).resolves.not.toThrow()
         await alicesClient.waitForStream(streamId)
 
         const bobPromise = makeDonePromise()
@@ -598,7 +598,7 @@ describe('memberMetadataTests', () => {
     })
 
     test('clientCannotSetNftsInvalidContractAddress', async () => {
-        await expect(bobsClient.initializeUser()).toResolve()
+        await expect(bobsClient.initializeUser()).resolves.not.toThrow()
         bobsClient.startSync()
         const streamId = makeUniqueSpaceStreamId()
         await bobsClient.createSpace(streamId)
@@ -616,7 +616,7 @@ describe('memberMetadataTests', () => {
     })
 
     test('clientCannotSetNftsInvalidChainId', async () => {
-        await expect(bobsClient.initializeUser()).toResolve()
+        await expect(bobsClient.initializeUser()).resolves.not.toThrow()
         bobsClient.startSync()
         const streamId = makeUniqueSpaceStreamId()
         await bobsClient.createSpace(streamId)
@@ -633,7 +633,7 @@ describe('memberMetadataTests', () => {
     })
 
     test('clientCannotSetNftsInvalidTokenId', async () => {
-        await expect(bobsClient.initializeUser()).toResolve()
+        await expect(bobsClient.initializeUser()).resolves.not.toThrow()
         bobsClient.startSync()
         const streamId = makeUniqueSpaceStreamId()
         await bobsClient.createSpace(streamId)
@@ -651,12 +651,12 @@ describe('memberMetadataTests', () => {
     })
 
     test('clientCanClearNft', async () => {
-        await expect(bobsClient.initializeUser()).toResolve()
+        await expect(bobsClient.initializeUser()).resolves.not.toThrow()
         bobsClient.startSync()
         const streamId = makeUniqueSpaceStreamId()
         await bobsClient.createSpace(streamId)
         await bobsClient.waitForStream(streamId)
 
-        await expect(bobsClient.setNft(streamId, '', 0, '')).toResolve()
+        await expect(bobsClient.setNft(streamId, '', 0, '')).resolves.not.toThrow()
     })
 })

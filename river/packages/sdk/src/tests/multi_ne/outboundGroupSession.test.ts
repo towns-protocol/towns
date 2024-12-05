@@ -23,15 +23,17 @@ describe('outboundSessionTests', () => {
     // This test is a bit of a false positive, since it's not actually using the IndexedDB
     // store, but instead the local-storage store.
     test('sameOutboundSessionIsUsedBetweenClientSessions', async () => {
-        await expect(bobsClient.initializeUser()).toResolve()
+        await expect(bobsClient.initializeUser()).resolves.not.toThrow()
         bobsClient.startSync()
 
         const spaceId = makeUniqueSpaceStreamId()
-        await expect(bobsClient.createSpace(spaceId)).toResolve()
+        await expect(bobsClient.createSpace(spaceId)).resolves.not.toThrow()
 
         const channelId = makeUniqueChannelStreamId(spaceId)
-        await expect(bobsClient.createChannel(spaceId, 'Channel', 'Topic', channelId)).toResolve()
-        await expect(bobsClient.waitForStream(channelId)).toResolve()
+        await expect(
+            bobsClient.createChannel(spaceId, 'Channel', 'Topic', channelId),
+        ).resolves.not.toThrow()
+        await expect(bobsClient.waitForStream(channelId)).resolves.not.toThrow()
 
         const message = new ChannelMessage({
             payload: {
@@ -49,7 +51,7 @@ describe('outboundSessionTests', () => {
             context: bobsClient.signerContext,
             deviceId: bobsDeviceId,
         })
-        await expect(bobsOtherClient.initializeUser()).toResolve()
+        await expect(bobsOtherClient.initializeUser()).resolves.not.toThrow()
         bobsOtherClient.startSync()
 
         const encrypted1 = await bobsClient.encryptGroupEvent(message, channelId)
@@ -63,19 +65,19 @@ describe('outboundSessionTests', () => {
     })
 
     test('differentOutboundSessionIdsForDifferentStreams', async () => {
-        await expect(bobsClient.initializeUser()).toResolve()
+        await expect(bobsClient.initializeUser()).resolves.not.toThrow()
         bobsClient.startSync()
 
         const spaceId = makeUniqueSpaceStreamId()
-        await expect(bobsClient.createSpace(spaceId)).toResolve()
+        await expect(bobsClient.createSpace(spaceId)).resolves.not.toThrow()
 
         const channelId1 = makeUniqueChannelStreamId(spaceId)
-        await expect(bobsClient.createChannel(spaceId, '', '', channelId1)).toResolve()
-        await expect(bobsClient.waitForStream(channelId1)).toResolve()
+        await expect(bobsClient.createChannel(spaceId, '', '', channelId1)).resolves.not.toThrow()
+        await expect(bobsClient.waitForStream(channelId1)).resolves.not.toThrow()
 
         const channelId2 = makeUniqueChannelStreamId(spaceId)
-        await expect(bobsClient.createChannel(spaceId, '', '', channelId2)).toResolve()
-        await expect(bobsClient.waitForStream(channelId2)).toResolve()
+        await expect(bobsClient.createChannel(spaceId, '', '', channelId2)).resolves.not.toThrow()
+        await expect(bobsClient.waitForStream(channelId2)).resolves.not.toThrow()
 
         const message = new ChannelMessage({
             payload: {

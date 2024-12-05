@@ -37,7 +37,7 @@ import {
 } from '@river-build/proto'
 import { PartialMessage, type PlainMessage } from '@bufbuild/protobuf'
 import { CallOptions } from '@connectrpc/connect'
-import { jest } from '@jest/globals'
+import { vi } from 'vitest'
 import {
     DecryptedTimelineEvent,
     make_ChannelPayload_Message,
@@ -125,17 +125,17 @@ describe('clientTest', () => {
     })
 
     test('bobTalksToHimself-noflush', async () => {
-        await expect(bobsClient.initializeUser()).toResolve()
+        await expect(bobsClient.initializeUser()).resolves.not.toThrow()
         bobsClient.startSync()
 
         const bobsSpaceId = makeUniqueSpaceStreamId()
         const channelId = makeUniqueChannelStreamId(bobsSpaceId)
         const bobsChannelName = 'Bobs channel'
         const bobsChannelTopic = 'Bobs channel topic'
-        await expect(bobsClient.createSpace(bobsSpaceId)).toResolve()
+        await expect(bobsClient.createSpace(bobsSpaceId)).resolves.not.toThrow()
         await expect(
             bobsClient.createChannel(bobsSpaceId, bobsChannelName, bobsChannelTopic, channelId),
-        ).toResolve()
+        ).resolves.not.toThrow()
 
         const stream = await bobsClient.waitForStream(channelId)
         await bobsClient.sendMessage(channelId, 'Hello, world!')
@@ -152,23 +152,23 @@ describe('clientTest', () => {
 
         log('pass1 done')
 
-        await expect(bobCanReconnect(bobsClient.signerContext)).toResolve()
+        await expect(bobCanReconnect(bobsClient.signerContext)).resolves.not.toThrow()
 
         log('pass2 done')
     })
 
     test('bobSendsBadPrevMiniblockHashShouldResolve', async () => {
-        await expect(bobsClient.initializeUser()).toResolve()
+        await expect(bobsClient.initializeUser()).resolves.not.toThrow()
         bobsClient.startSync()
 
         const bobsSpaceId = makeUniqueSpaceStreamId()
         const channelId = makeUniqueChannelStreamId(bobsSpaceId)
         const bobsChannelName = 'Bobs channel'
         const bobsChannelTopic = 'Bobs channel topic'
-        await expect(bobsClient.createSpace(bobsSpaceId)).toResolve()
+        await expect(bobsClient.createSpace(bobsSpaceId)).resolves.not.toThrow()
         await expect(
             bobsClient.createChannel(bobsSpaceId, bobsChannelName, bobsChannelTopic, channelId),
-        ).toResolve()
+        ).resolves.not.toThrow()
 
         await bobsClient.waitForStream(channelId)
 
@@ -195,19 +195,19 @@ describe('clientTest', () => {
                 message,
                 Uint8Array.from(Array(32).fill(0)), // just going to throw any old thing in there... the retry should pick it up
             ),
-        ).toResolve()
+        ).resolves.not.toThrow()
     })
 
     test('clientsCanBeClosedNoSync', async () => {})
 
     test('clientsRetryOnSyncErrorDuringStart', async () => {
-        await expect(alicesClient.initializeUser()).toResolve()
+        await expect(alicesClient.initializeUser()).resolves.not.toThrow()
         const done = makeDonePromise()
 
         let syncOpCount = 0
 
         const generator = createMockSyncGenerator(() => syncOpCount++ < 2)
-        const spy = jest
+        const spy = vi
             .spyOn(alicesClient.rpcClient, 'syncStreams')
             .mockImplementation(
                 (
@@ -225,8 +225,8 @@ describe('clientTest', () => {
         })
         alicesClient.startSync()
 
-        await expect(done.expectToSucceed()).toResolve()
-        const cancelSyncSpy = jest
+        await expect(done.expectToSucceed()).resolves.not.toThrow()
+        const cancelSyncSpy = vi
             .spyOn(alicesClient.rpcClient, 'cancelSync')
             .mockImplementation(
                 (
@@ -245,7 +245,7 @@ describe('clientTest', () => {
     })
 
     test('clientsResetsRetryCountAfterSyncSuccess', async () => {
-        await expect(alicesClient.initializeUser()).toResolve()
+        await expect(alicesClient.initializeUser()).resolves.not.toThrow()
         const done = makeDonePromise()
 
         let syncOpCount = 0
@@ -254,7 +254,7 @@ describe('clientTest', () => {
             () => syncOpCount > 2 && syncOpCount < 4,
             () => syncOpCount++,
         )
-        const spy = jest
+        const spy = vi
             .spyOn(alicesClient.rpcClient, 'syncStreams')
             .mockImplementation(
                 (
@@ -272,8 +272,8 @@ describe('clientTest', () => {
         })
         alicesClient.startSync()
 
-        await expect(done.expectToSucceed()).toResolve()
-        const cancelSyncSpy = jest
+        await expect(done.expectToSucceed()).resolves.not.toThrow()
+        const cancelSyncSpy = vi
             .spyOn(alicesClient.rpcClient, 'cancelSync')
             .mockImplementation(
                 (
@@ -291,7 +291,7 @@ describe('clientTest', () => {
         cancelSyncSpy.mockRestore()
     })
     test('clientCreatesStreamsForNewUser', async () => {
-        await expect(bobsClient.initializeUser()).toResolve()
+        await expect(bobsClient.initializeUser()).resolves.not.toThrow()
         expect(bobsClient.streams.size()).toEqual(4)
         expect(bobsClient.streams.get(makeUserSettingsStreamId(bobsClient.userId))).toBeDefined()
         expect(bobsClient.streams.get(makeUserStreamId(bobsClient.userId))).toBeDefined()
@@ -300,9 +300,9 @@ describe('clientTest', () => {
     })
 
     test('clientCreatesStreamsForExistingUser', async () => {
-        await expect(bobsClient.initializeUser()).toResolve()
+        await expect(bobsClient.initializeUser()).resolves.not.toThrow()
         const bobsAnotherClient = await makeTestClient({ context: bobsClient.signerContext })
-        await expect(bobsAnotherClient.initializeUser()).toResolve()
+        await expect(bobsAnotherClient.initializeUser()).resolves.not.toThrow()
         expect(bobsAnotherClient.streams.size()).toEqual(4)
         expect(
             bobsAnotherClient.streams.get(makeUserSettingsStreamId(bobsClient.userId)),
@@ -314,7 +314,7 @@ describe('clientTest', () => {
     })
 
     test('bobCanSendMemberPayload', async () => {
-        await expect(bobsClient.initializeUser()).toResolve()
+        await expect(bobsClient.initializeUser()).resolves.not.toThrow()
         bobsClient.startSync()
         expect(bobsClient.userSettingsStreamId).toBeDefined()
 
@@ -348,7 +348,7 @@ describe('clientTest', () => {
         })
         await expect(
             bobsClient.makeEventAndAddToStream(bobsClient.userSettingsStreamId!, payload),
-        ).toResolve()
+        ).resolves.not.toThrow()
 
         // fulfillment should resolve
         payload = make_MemberPayload_KeyFulfillment({
@@ -358,7 +358,7 @@ describe('clientTest', () => {
         })
         await expect(
             bobsClient.makeEventAndAddToStream(bobsClient.userSettingsStreamId!, payload),
-        ).toResolve()
+        ).resolves.not.toThrow()
 
         await waitFor(() => {
             const lastEvent = bobsClient.streams
@@ -389,19 +389,19 @@ describe('clientTest', () => {
         log('bobCreatesUnamedSpace')
 
         // Bob gets created, creates a space without providing an ID, and a channel without providing an ID.
-        await expect(bobsClient.initializeUser()).toResolve()
+        await expect(bobsClient.initializeUser()).resolves.not.toThrow()
         bobsClient.startSync()
 
         const spaceId = makeUniqueSpaceStreamId()
         const spacePromise = bobsClient.createSpace(spaceId)
-        await expect(spacePromise).toResolve()
+        await expect(spacePromise).resolves.not.toThrow()
         const channelName = 'Bobs channel'
         const channelTopic = 'Bobs channel topic'
         const channelId = makeUniqueChannelStreamId(spaceId)
         await expect(
             bobsClient.createChannel(spaceId, channelName, channelTopic, channelId),
-        ).toResolve()
-        await expect(bobsClient.stopSync()).toResolve()
+        ).resolves.not.toThrow()
+        await expect(bobsClient.stopSync()).resolves.not.toThrow()
     })
 
     const bobCanReconnect = async (signer: SignerContext) => {
@@ -472,11 +472,11 @@ describe('clientTest', () => {
             }
         }
         bobsAnotherClient.on('streamInitialized', onStreamInitialized)
-        await expect(bobsAnotherClient.initializeUser()).toResolve()
+        await expect(bobsAnotherClient.initializeUser()).resolves.not.toThrow()
         bobsAnotherClient.startSync()
 
         bobsOneMoreAnotherClient.on('eventDecrypted', onEventDecrypted)
-        await expect(bobsOneMoreAnotherClient.initializeUser()).toResolve()
+        await expect(bobsOneMoreAnotherClient.initializeUser()).resolves.not.toThrow()
         bobsOneMoreAnotherClient.startSync()
 
         await channelWithContentIdPromise.expectToSucceed()
@@ -495,11 +495,11 @@ describe('clientTest', () => {
         log('bobSendsSingleMessage')
 
         // Bob gets created, creates a space, and creates a channel.
-        await expect(bobsClient.initializeUser()).toResolve()
+        await expect(bobsClient.initializeUser()).resolves.not.toThrow()
         bobsClient.startSync()
 
         const bobsSpaceId = makeUniqueSpaceStreamId()
-        await expect(bobsClient.createSpace(bobsSpaceId)).toResolve()
+        await expect(bobsClient.createSpace(bobsSpaceId)).resolves.not.toThrow()
 
         const bobsChannelId = makeUniqueChannelStreamId(bobsSpaceId)
         const bobsChannelName = 'Bobs channel'
@@ -507,12 +507,14 @@ describe('clientTest', () => {
 
         await expect(
             bobsClient.createChannel(bobsSpaceId, bobsChannelName, bobsChannelTopic, bobsChannelId),
-        ).toResolve()
+        ).resolves.not.toThrow()
 
         // Bob can send a message.
         const stream = await bobsClient.waitForStream(bobsChannelId)
 
-        await expect(bobsClient.sendMessage(bobsChannelId, 'Hello, world from Bob!')).toResolve()
+        await expect(
+            bobsClient.sendMessage(bobsChannelId, 'Hello, world from Bob!'),
+        ).resolves.not.toThrow()
         await waitFor(() => {
             const event = stream.view.timeline.find(
                 (e) =>
@@ -530,11 +532,11 @@ describe('clientTest', () => {
         log('bobPinsAMessage')
 
         // Bob gets created, creates a space, and creates a channel.
-        await expect(bobsClient.initializeUser()).toResolve()
+        await expect(bobsClient.initializeUser()).resolves.not.toThrow()
         bobsClient.startSync()
 
         const bobsSpaceId = makeUniqueSpaceStreamId()
-        await expect(bobsClient.createSpace(bobsSpaceId)).toResolve()
+        await expect(bobsClient.createSpace(bobsSpaceId)).resolves.not.toThrow()
 
         const bobsChannelId = makeUniqueChannelStreamId(bobsSpaceId)
         const bobsChannelName = 'Bobs channel'
@@ -542,7 +544,7 @@ describe('clientTest', () => {
 
         await expect(
             bobsClient.createChannel(bobsSpaceId, bobsChannelName, bobsChannelTopic, bobsChannelId),
-        ).toResolve()
+        ).resolves.not.toThrow()
 
         // Bob can send a message.
         const channelStream = await bobsClient.waitForStream(bobsChannelId)
@@ -620,11 +622,11 @@ describe('clientTest', () => {
         log('bobAndAliceConverse')
 
         // Bob gets created, creates a space, and creates a channel.
-        await expect(bobsClient.initializeUser()).toResolve()
+        await expect(bobsClient.initializeUser()).resolves.not.toThrow()
         bobsClient.startSync()
 
         const bobsSpaceId = makeUniqueSpaceStreamId()
-        await expect(bobsClient.createSpace(bobsSpaceId)).toResolve()
+        await expect(bobsClient.createSpace(bobsSpaceId)).resolves.not.toThrow()
 
         const bobsChannelId = makeUniqueChannelStreamId(bobsSpaceId)
         const bobsChannelName = 'Bobs channel'
@@ -632,11 +634,11 @@ describe('clientTest', () => {
 
         await expect(
             bobsClient.createChannel(bobsSpaceId, bobsChannelName, bobsChannelTopic, bobsChannelId),
-        ).toResolve()
-        await expect(bobsClient.waitForStream(bobsChannelId)).toResolve()
+        ).resolves.not.toThrow()
+        await expect(bobsClient.waitForStream(bobsChannelId)).resolves.not.toThrow()
 
         // Alice gest created.
-        await expect(alicesClient.initializeUser()).toResolve()
+        await expect(alicesClient.initializeUser()).resolves.not.toThrow()
         alicesClient.startSync()
 
         // Alice can't sent a message to Bob's channel.
@@ -652,7 +654,7 @@ describe('clientTest', () => {
             void (async () => {
                 try {
                     expect(streamId).toBe(bobsChannelId)
-                    await expect(alicesClient.joinStream(streamId)).toResolve()
+                    await expect(alicesClient.joinStream(streamId)).resolves.not.toThrow()
                     aliceJoined.done()
                 } catch (e) {
                     aliceJoined.reject(e)
@@ -699,7 +701,7 @@ describe('clientTest', () => {
                         ) {
                             const body = clearEvent.content.payload?.value?.content.value?.body
                             // @ts-ignore
-                            expect(body).toBeOneOf(conversation)
+                            expect(conversation).toContain(body)
                             if (body === 'Hello, Alice!') {
                                 await alicesClient.sendMessage(channelId, 'Hello, Bob!')
                             } else if (body === 'Weather nice?') {
@@ -740,7 +742,7 @@ describe('clientTest', () => {
                         ) {
                             const body = clearEvent.content?.payload?.value?.content.value?.body
                             // @ts-ignore
-                            expect(body).toBeOneOf(conversation)
+                            expect(conversation).toContain(body)
                             if (body === 'Hello, Bob!') {
                                 await bobsClient.sendMessage(channelId, 'Weather nice?')
                             } else if (body === 'Sun and rain!') {
@@ -757,8 +759,10 @@ describe('clientTest', () => {
             },
         )
 
-        await expect(bobsClient.sendMessage(bobsChannelId, 'Hello, world from Bob!')).toResolve()
-        await expect(bobsClient.sendMessage(bobsChannelId, 'Hello, Alice!')).toResolve()
+        await expect(
+            bobsClient.sendMessage(bobsChannelId, 'Hello, world from Bob!'),
+        ).resolves.not.toThrow()
+        await expect(bobsClient.sendMessage(bobsChannelId, 'Hello, Alice!')).resolves.not.toThrow()
 
         log('Waiting for Alice to get messages...')
         await aliceGetsMessage.expectToSucceed()
@@ -770,7 +774,7 @@ describe('clientTest', () => {
     test('bobUploadsDeviceKeys', async () => {
         log('bobUploadsDeviceKeys')
         // Bob gets created, starts syncing, and uploads his device keys.
-        await expect(bobsClient.initializeUser()).toResolve()
+        await expect(bobsClient.initializeUser()).resolves.not.toThrow()
         bobsClient.startSync()
         const bobsUserId = bobsClient.userId
         const bobSelfInbox = makeDonePromise()
@@ -792,7 +796,7 @@ describe('clientTest', () => {
     test('bobDownloadsOwnDeviceKeys', async () => {
         log('bobDownloadsOwnDeviceKeys')
         // Bob gets created, starts syncing, and uploads his device keys.
-        await expect(bobsClient.initializeUser()).toResolve()
+        await expect(bobsClient.initializeUser()).resolves.not.toThrow()
         bobsClient.startSync()
         const bobsUserId = bobsClient.userId
         const bobSelfInbox = makeDonePromise()
@@ -816,8 +820,8 @@ describe('clientTest', () => {
     test('bobDownloadsAlicesDeviceKeys', async () => {
         log('bobDownloadsAlicesDeviceKeys')
         // Bob gets created, starts syncing, and uploads his device keys.
-        await expect(bobsClient.initializeUser()).toResolve()
-        await expect(alicesClient.initializeUser()).toResolve()
+        await expect(bobsClient.initializeUser()).resolves.not.toThrow()
+        await expect(alicesClient.initializeUser()).resolves.not.toThrow()
         bobsClient.startSync()
         alicesClient.startSync()
         const alicesUserId = alicesClient.userId
@@ -841,8 +845,8 @@ describe('clientTest', () => {
     test('bobDownloadsAlicesAndOwnDeviceKeys', async () => {
         log('bobDownloadsAlicesAndOwnDeviceKeys')
         // Bob, Alice get created, starts syncing, and uploads respective device keys.
-        await expect(bobsClient.initializeUser()).toResolve()
-        await expect(alicesClient.initializeUser()).toResolve()
+        await expect(bobsClient.initializeUser()).resolves.not.toThrow()
+        await expect(alicesClient.initializeUser()).resolves.not.toThrow()
         bobsClient.startSync()
         alicesClient.startSync()
         const bobsUserId = bobsClient.userId
@@ -872,8 +876,8 @@ describe('clientTest', () => {
         log('bobDownloadsAlicesAndOwnFallbackKeys')
         // Bob, Alice get created, starts syncing, and uploads respective device keys, including
         // fallback keys.
-        await expect(bobsClient.initializeUser()).toResolve()
-        await expect(alicesClient.initializeUser()).toResolve()
+        await expect(bobsClient.initializeUser()).resolves.not.toThrow()
+        await expect(alicesClient.initializeUser()).resolves.not.toThrow()
         bobsClient.startSync()
         alicesClient.startSync()
         const bobsUserId = bobsClient.userId
@@ -903,8 +907,8 @@ describe('clientTest', () => {
         log('bobDownloadsAlicesFallbackKeys')
         // Bob, Alice get created, starts syncing, and uploads respective device keys, including
         // fallback keys.
-        await expect(bobsClient.initializeUser()).toResolve()
-        await expect(alicesClient.initializeUser()).toResolve()
+        await expect(bobsClient.initializeUser()).resolves.not.toThrow()
+        await expect(alicesClient.initializeUser()).resolves.not.toThrow()
         bobsClient.startSync()
         alicesClient.startSync()
         await waitFor(() => {
@@ -925,11 +929,11 @@ describe('clientTest', () => {
         log('aliceLeavesChannelsWhenLeavingSpace')
 
         // Bob gets created, creates a space, and creates a channel.
-        await expect(bobsClient.initializeUser()).toResolve()
+        await expect(bobsClient.initializeUser()).resolves.not.toThrow()
         bobsClient.startSync()
 
         const bobsSpaceId = makeUniqueSpaceStreamId()
-        await expect(bobsClient.createSpace(bobsSpaceId)).toResolve()
+        await expect(bobsClient.createSpace(bobsSpaceId)).resolves.not.toThrow()
 
         const bobsChannelId = makeUniqueChannelStreamId(bobsSpaceId)
         const bobsChannelName = 'Bobs channel'
@@ -937,15 +941,15 @@ describe('clientTest', () => {
 
         await expect(
             bobsClient.createChannel(bobsSpaceId, bobsChannelName, bobsChannelTopic, bobsChannelId),
-        ).toResolve()
-        await expect(bobsClient.waitForStream(bobsChannelId)).toResolve()
+        ).resolves.not.toThrow()
+        await expect(bobsClient.waitForStream(bobsChannelId)).resolves.not.toThrow()
 
         // Alice gest created.
-        await expect(alicesClient.initializeUser()).toResolve()
+        await expect(alicesClient.initializeUser()).resolves.not.toThrow()
         alicesClient.startSync()
 
-        await expect(alicesClient.joinStream(bobsSpaceId)).toResolve()
-        await expect(alicesClient.joinStream(bobsChannelId)).toResolve()
+        await expect(alicesClient.joinStream(bobsSpaceId)).resolves.not.toThrow()
+        await expect(alicesClient.joinStream(bobsChannelId)).resolves.not.toThrow()
         const channelStream = bobsClient.stream(bobsChannelId)
         expect(channelStream).toBeDefined()
         await waitFor(() => {
@@ -954,7 +958,7 @@ describe('clientTest', () => {
             )
         })
         // leave the space
-        await expect(alicesClient.leaveStream(bobsSpaceId)).toResolve()
+        await expect(alicesClient.leaveStream(bobsSpaceId)).resolves.not.toThrow()
 
         // the channel should be left as well
         await waitFor(() => {
@@ -966,17 +970,19 @@ describe('clientTest', () => {
     })
 
     test('clientReturnsKnownDevicesForUserId', async () => {
-        await expect(bobsClient.initializeUser()).toResolve()
+        await expect(bobsClient.initializeUser()).resolves.not.toThrow()
         bobsClient.startSync()
 
-        await expect(alicesClient.initializeUser()).toResolve()
+        await expect(alicesClient.initializeUser()).resolves.not.toThrow()
         alicesClient.startSync()
         await waitFor(() => {
             // @ts-ignore
             expect(alicesClient.decryptionExtensions?.status).toEqual(DecryptionStatus.idle)
         })
 
-        await expect(bobsClient.downloadUserDeviceInfo([alicesClient.userId])).toResolve()
+        await expect(
+            bobsClient.downloadUserDeviceInfo([alicesClient.userId]),
+        ).resolves.not.toThrow()
         const knownDevices = await bobsClient.knownDevicesForUserId(alicesClient.userId)
 
         expect(knownDevices.length).toBe(1)
@@ -988,7 +994,7 @@ describe('clientTest', () => {
     // Make sure that the client only uploads device keys
     // if this exact device key does not exist.
     test('clientOnlyUploadsDeviceKeysOnce', async () => {
-        await expect(await bobsClient.initializeUser()).toResolve()
+        await expect(bobsClient.initializeUser()).resolves.not.toThrow()
         bobsClient.startSync()
         const stream = bobsClient.stream(bobsClient.userMetadataStreamId!)!
 
@@ -1007,7 +1013,7 @@ describe('clientTest', () => {
     })
 
     test('setUserProfilePicture', async () => {
-        await expect(await bobsClient.initializeUser()).toResolve()
+        await expect(bobsClient.initializeUser()).resolves.not.toThrow()
         bobsClient.startSync()
         const streamId = bobsClient.userMetadataStreamId!
         const userMetadataStream = await bobsClient.waitForStream(streamId)
@@ -1048,7 +1054,7 @@ describe('clientTest', () => {
     })
 
     test('setUserBio', async () => {
-        await expect(await bobsClient.initializeUser()).toResolve()
+        await expect(bobsClient.initializeUser()).resolves.not.toThrow()
         bobsClient.startSync()
         const streamId = bobsClient.userMetadataStreamId!
         const userMetadataStream = await bobsClient.waitForStream(streamId)
@@ -1068,7 +1074,7 @@ describe('clientTest', () => {
     })
 
     test('setUserBio empty', async () => {
-        await expect(await bobsClient.initializeUser()).toResolve()
+        await expect(bobsClient.initializeUser()).resolves.not.toThrow()
         bobsClient.startSync()
         const streamId = bobsClient.userMetadataStreamId!
         const userMetadataStream = await bobsClient.waitForStream(streamId)

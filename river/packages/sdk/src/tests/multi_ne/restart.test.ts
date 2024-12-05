@@ -94,7 +94,7 @@ describe.skip('nodeRestart', () => {
         )
 
         log('Restarting node')
-        await expect(bob.info({ debug: ['exit'] })).toResolve()
+        await expect(bob.info({ debug: ['exit'] })).resolves.not.toThrow()
 
         log('Waiting a bit')
         await setTimeout(1000)
@@ -112,7 +112,7 @@ describe.skip('nodeRestart', () => {
         log('Connected again, node restarted')
 
         log('Reading back the channel, looking for hello')
-        await expect(getStreamAndExpectHello(bob, channelId)).toResolve()
+        await expect(getStreamAndExpectHello(bob, channelId)).resolves.not.toThrow()
 
         log('Creating another channel, post hello')
         const { channelId: channelId2 } = await createNewChannelAndPostHello(
@@ -121,7 +121,7 @@ describe.skip('nodeRestart', () => {
             bobsUserId,
             bob,
         )
-        await expect(getStreamAndExpectHello(bob, channelId2)).toResolve()
+        await expect(getStreamAndExpectHello(bob, channelId2)).resolves.not.toThrow()
 
         await countStreamBlocksAndSnapshots(bob, bobsUserStreamId)
         await countStreamBlocksAndSnapshots(bob, spacedStreamId)
@@ -194,7 +194,7 @@ const createNewChannelAndPostHello = async (
                 streamId: channelId,
                 event: e,
             }),
-        ).toResolve()
+        ).resolves.not.toThrow()
         nextHash = (await bob.getLastMiniblockHash({ streamId: channelId })).hash
     }
 
@@ -213,7 +213,7 @@ const createNewChannelAndPostHello = async (
             streamId: channelId,
             event: helloEvent,
         }),
-    ).toResolve()
+    ).resolves.not.toThrow()
 
     return { channelId, lastHash }
 }

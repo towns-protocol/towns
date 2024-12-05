@@ -133,7 +133,7 @@ describe('mediaWithEntitlements', () => {
          */
         await expect(
             bobClient.createMediaStream(channelId, spaceStreamId, undefined, 10),
-        ).toResolve()
+        ).resolves.not.toThrow()
         await bobClient.stop()
 
         await aliceClient.initializeUser({ spaceId: space2Id })
@@ -142,7 +142,7 @@ describe('mediaWithEntitlements', () => {
         // Alice is NOT a member of the channel is prevented from creating a media stream
         await expect(
             aliceClient.createMediaStream(channelId, spaceStreamId, undefined, 10),
-        ).toReject()
+        ).rejects.toThrow()
         await aliceClient.stop()
     })
 
@@ -209,7 +209,7 @@ describe('mediaWithEntitlements', () => {
          */
         await expect(
             bobClient.createMediaStream(undefined, undefined, bobClient.userId, 10),
-        ).toResolve()
+        ).resolves.not.toThrow()
         await bobClient.stop()
     })
 })

@@ -18,6 +18,13 @@ import (
 	"github.com/river-build/river/core/node/shared"
 )
 
+const (
+	RiverNoForwardHeader = "X-River-No-Forward"
+	RiverNoForwardValue  = "true"
+	RiverFromNodeHeader  = "X-River-From-Node"
+	RiverToNodeHeader    = "X-River-To-Node"
+)
+
 // peerNodeRequestWithRetries makes a request to as many as each of the remote nodes, returning the first response
 // that is not a network unavailability error.
 func peerNodeRequestWithRetries[T any](
@@ -184,7 +191,7 @@ func executeConnectHandler[Req, Res any](
 	if e != nil {
 		err := AsRiverError(e).
 			Tags(
-				"nodeAddress", service.wallet.Address,
+				"nodeAddress", service.wallet.Address.Hex(),
 				"nodeUrl", service.config.Address,
 				"elapsed", elapsed,
 			).
@@ -456,7 +463,17 @@ func (s *Service) addEventImpl(
 		return s.localAddEvent(ctx, req, stream, view)
 	}
 
+	if req.Header().Get(RiverNoForwardHeader) == RiverNoForwardValue {
+		return nil, RiverError(Err_UNAVAILABLE, "Forwarding disabled by request header").
+			Func("service.addEventImpl").
+			Tags("streamId", req.Msg.StreamId,
+				RiverFromNodeHeader, req.Header().Get(RiverFromNodeHeader),
+				RiverToNodeHeader, req.Header().Get(RiverToNodeHeader),
+			)
+	}
+
 	// TODO: smarter remote select? random?
+	// TODO: retry?
 	firstRemote := stream.GetStickyPeer()
 	dlog.FromCtx(ctx).Debug("Forwarding request", "nodeAddress", firstRemote)
 	stub, err := s.nodeRegistry.GetStreamServiceClientForAddress(firstRemote)
@@ -464,7 +481,11 @@ func (s *Service) addEventImpl(
 		return nil, err
 	}
 
-	ret, err := stub.AddEvent(ctx, req)
+	newReq := connect.NewRequest(req.Msg)
+	newReq.Header().Set(RiverNoForwardHeader, RiverNoForwardValue)
+	newReq.Header().Set(RiverFromNodeHeader, s.wallet.Address.Hex())
+	newReq.Header().Set(RiverToNodeHeader, firstRemote.Hex())
+	ret, err := stub.AddEvent(ctx, newReq)
 	if err != nil {
 		return nil, err
 	}

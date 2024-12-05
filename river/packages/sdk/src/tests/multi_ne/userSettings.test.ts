@@ -37,7 +37,9 @@ describe('userSettingsTests', () => {
         // bob blocks alice
         await bobsClient.updateUserBlock(alicesClient.userId, true)
         check(bobsClient.userSettingsStreamId !== undefined)
-        await expect(bobsClient.waitForStream(bobsClient.userSettingsStreamId)).toResolve()
+        await expect(
+            bobsClient.waitForStream(bobsClient.userSettingsStreamId),
+        ).resolves.not.toThrow()
         await waitFor(() => {
             expect(
                 bobsClient.stream(bobsClient.userSettingsStreamId!)?.view?.userSettingsContent
@@ -91,7 +93,9 @@ describe('userSettingsTests', () => {
         // bob blocks alice
         await bobsClient.updateUserBlock(alicesClient.userId, true)
         check(bobsClient.userSettingsStreamId !== undefined)
-        await expect(bobsClient.waitForStream(bobsClient.userSettingsStreamId)).toResolve()
+        await expect(
+            bobsClient.waitForStream(bobsClient.userSettingsStreamId),
+        ).resolves.not.toThrow()
         await waitFor(() => {
             expect(
                 bobsClient
@@ -101,10 +105,10 @@ describe('userSettingsTests', () => {
         })
 
         // alice sends three messages during being blocked, total blocked message should be 3
-        await expect(alicesClient.waitForStream(streamId)).toResolve()
-        await expect(alicesClient.sendMessage(streamId, 'hello 1st')).toResolve()
-        await expect(alicesClient.sendMessage(streamId, 'hello 2nd')).toResolve()
-        await expect(alicesClient.sendMessage(streamId, 'hello 3rd')).toResolve()
+        await expect(alicesClient.waitForStream(streamId)).resolves.not.toThrow()
+        await expect(alicesClient.sendMessage(streamId, 'hello 1st')).resolves.not.toThrow()
+        await expect(alicesClient.sendMessage(streamId, 'hello 2nd')).resolves.not.toThrow()
+        await expect(alicesClient.sendMessage(streamId, 'hello 3rd')).resolves.not.toThrow()
 
         // verify in bob's client, there are 3 blocked messages from alice
         await waitFor(() => {
@@ -126,7 +130,7 @@ describe('userSettingsTests', () => {
         // bob unblocks alice
         await bobsClient.updateUserBlock(alicesClient.userId, false)
         // alice sends one more message after being unblocked, total blocked message should still be 3
-        await expect(alicesClient.sendMessage(streamId, 'hello 4th')).toResolve()
+        await expect(alicesClient.sendMessage(streamId, 'hello 4th')).resolves.not.toThrow()
 
         await waitFor(() => {
             expect(
@@ -139,8 +143,8 @@ describe('userSettingsTests', () => {
         // bob blocks alice again
         await bobsClient.updateUserBlock(alicesClient.userId, true)
         // alice sends two messages after being blocked again, total blocked message should be 5
-        await expect(alicesClient.sendMessage(streamId, 'hello 5th')).toResolve()
-        await expect(alicesClient.sendMessage(streamId, 'hello 6th')).toResolve()
+        await expect(alicesClient.sendMessage(streamId, 'hello 5th')).resolves.not.toThrow()
+        await expect(alicesClient.sendMessage(streamId, 'hello 6th')).resolves.not.toThrow()
 
         await waitFor(() => {
             expect(

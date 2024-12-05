@@ -25,9 +25,9 @@ describe('clientCrypto', () => {
     })
 
     test('clientCanEncryptDecryptEvent', async () => {
-        await expect(bobsClient.initializeUser()).toResolve()
+        await expect(bobsClient.initializeUser()).resolves.not.toThrow()
         bobsClient.startSync()
-        await expect(alicesClient.initializeUser()).toResolve()
+        await expect(alicesClient.initializeUser()).resolves.not.toThrow()
         expect(
             alicesClient.encryptionDevice.deviceCurve25519Key !==
                 bobsClient.encryptionDevice.deviceCurve25519Key,
@@ -51,9 +51,9 @@ describe('clientCrypto', () => {
     })
 
     test('clientCanEncryptDecryptInboxMultipleEventObjects', async () => {
-        await expect(bobsClient.initializeUser()).toResolve()
+        await expect(bobsClient.initializeUser()).resolves.not.toThrow()
         bobsClient.startSync()
-        await expect(alicesClient.initializeUser()).toResolve()
+        await expect(alicesClient.initializeUser()).resolves.not.toThrow()
         expect(
             alicesClient.encryptionDevice.deviceCurve25519Key !==
                 bobsClient.encryptionDevice.deviceCurve25519Key,

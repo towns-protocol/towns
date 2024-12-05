@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-redundant-type-constituents */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable jest/no-standalone-expect */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { _impl_makeEvent_impl_, publicKeyToAddress, unpackStreamEnvelopes } from '../sign'
 
@@ -473,7 +472,7 @@ export async function createSpaceAndDefaultChannel(
 
     const returnVal = await client.createSpace(spaceId)
     expect(returnVal.streamId).toEqual(spaceId)
-    expect(userStreamView.userContent.isMember(spaceId, MembershipOp.SO_JOIN)).toBeTrue()
+    expect(userStreamView.userContent.isMember(spaceId, MembershipOp.SO_JOIN)).toBe(true)
 
     const channelReturnVal = await client.createChannel(
         spaceId,
@@ -482,7 +481,7 @@ export async function createSpaceAndDefaultChannel(
         channelId,
     )
     expect(channelReturnVal.streamId).toEqual(channelId)
-    expect(userStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN)).toBeTrue()
+    expect(userStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN)).toBe(true)
 
     return {
         spaceId,
@@ -667,7 +666,7 @@ export async function expectUserCanJoin(
     expect(entitledWallet).toBeDefined()
 
     const { issued } = await spaceDapp.joinSpace(spaceId, address, wallet)
-    expect(issued).toBeTrue()
+    expect(issued).toBe(true)
     log(`${name} joined space ${spaceId}`, Date.now() - joinStart)
 
     await client.initializeUser({ spaceId })
@@ -675,13 +674,13 @@ export async function expectUserCanJoin(
 
     await waitFor(() => expect(client.streams.syncState).toBe(SyncState.Syncing))
 
-    await expect(client.joinStream(spaceId)).toResolve()
-    await expect(client.joinStream(channelId)).toResolve()
+    await expect(client.joinStream(spaceId)).resolves.not.toThrow()
+    await expect(client.joinStream(channelId)).resolves.not.toThrow()
 
     const userStreamView = client.stream(client.userStreamId!)!.view
     await waitFor(() => {
-        expect(userStreamView.userContent.isMember(spaceId, MembershipOp.SO_JOIN)).toBeTrue()
-        expect(userStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN)).toBeTrue()
+        expect(userStreamView.userContent.isMember(spaceId, MembershipOp.SO_JOIN)).toBe(true)
+        expect(userStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN)).toBe(true)
     })
 }
 
@@ -1365,7 +1364,7 @@ export async function setupChannelWithCustomRole(
     )
     expect(channelStreamId).toEqual(channelId)
     // As the space owner, Bob should always be able to join the channel regardless of the custom role.
-    await expect(bob.joinStream(channelId!)).toResolve()
+    await expect(bob.joinStream(channelId!)).resolves.not.toThrow()
 
     // Join alice to the town so she can attempt to join the role-gated channel.
     // Alice should have no issue joining the space and default channel for an "everyone" town.
@@ -1428,7 +1427,7 @@ export async function expectUserCanJoinChannel(
     ).resolves.toBeTruthy()
 
     // Stream node should allow the join
-    await expect(client.joinStream(channelId)).toResolve()
+    await expect(client.joinStream(channelId)).resolves.not.toThrow()
     const userStreamView = (await client.waitForStream(makeUserStreamId(client.userId))!).view
     // Wait for alice's user stream to have the join
     await waitFor(() => userStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN))

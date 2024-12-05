@@ -97,7 +97,7 @@ describe('withEntitlements', () => {
         const channelId = makeDefaultChannelStreamId(spaceAddress!)
         expect(isValidStreamId(channelId)).toBe(true)
         // then on the river node
-        await expect(bob.initializeUser({ spaceId })).toResolve()
+        await expect(bob.initializeUser({ spaceId })).resolves.not.toThrow()
         bob.startSync()
         const returnVal = await bob.createSpace(spaceId)
         expect(returnVal.streamId).toEqual(spaceId)
@@ -130,7 +130,7 @@ describe('withEntitlements', () => {
         expect(bobUserStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN)).toBe(true)
 
         // todo  getDevicesInRoom is randomly failing in ci renable https://linear.app/hnt-labs/issue/HNT-3439/getdevicesinroom-is-randomly-failing-in-ci
-        // await expect(bob.sendMessage(channelId, 'Hello, world from Bob!')).toResolve()
+        // await expect(bob.sendMessage(channelId, 'Hello, world from Bob!')).resolves.not.toThrow()
 
         // join alice
         const alicesWallet = ethers.Wallet.createRandom()
@@ -162,12 +162,14 @@ describe('withEntitlements', () => {
 
         await alice.initializeUser({ spaceId })
         alice.startSync()
-        await expect(alice.joinStream(spaceId)).toResolve()
-        await expect(alice.joinStream(channelId)).toResolve()
+        await expect(alice.joinStream(spaceId)).resolves.not.toThrow()
+        await expect(alice.joinStream(channelId)).resolves.not.toThrow()
 
-        await expect(alice.sendMessage(channelId, 'Hello, world from Alice!')).toResolve()
+        await expect(
+            alice.sendMessage(channelId, 'Hello, world from Alice!'),
+        ).resolves.not.toThrow()
 
-        await expect(alice.leaveStream(channelId)).toResolve()
+        await expect(alice.leaveStream(channelId)).resolves.not.toThrow()
 
         // kill the clients
         await bob.stopSync()

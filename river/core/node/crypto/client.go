@@ -182,7 +182,7 @@ func extractCallErrorStatus(err error) string {
 
 func getMethodName(data []byte) string {
 	var methodName string
-	if len(data) > 4 {
+	if len(data) >= 4 {
 		selector := binary.BigEndian.Uint32(data)
 		var defined bool
 		methodName, defined = GetSelectorMethodName(selector)

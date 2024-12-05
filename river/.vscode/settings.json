@@ -50,5 +50,7 @@
     "@prb/test/=node_modules/@prb/test/src/",
     "solady/=node_modules/solady/src/",
     "hardhat-deploy/=node_modules/hardhat-deploy/"
-  ]
+  ],
+  "vitest.maximumConfigs": 15,
+  "vitest.disableWorkspaceWarning": true
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/river-build/river/core/xchain/bindings/erc1155"
 	"github.com/river-build/river/core/xchain/bindings/erc20"
 	"github.com/river-build/river/core/xchain/bindings/erc721"
+	"github.com/river-build/river/core/xchain/bindings/ierc5313"
 )
 
 // ContractNameMap maps selectors found in contract ABI code to the contract's method name.
@@ -87,6 +88,8 @@ func init() {
 	nameMap.RegisterABI("RuleEntitlementV2", abi)
 	abi, _ = base.WalletLinkMetaData.GetAbi()
 	nameMap.RegisterABI("WalletLink", abi)
+	abi, _ = ierc5313.Ierc5313MetaData.GetAbi()
+	nameMap.RegisterABI("Ierc5313", abi)
 
 	// Entitlement-related. These may also occur on other chains.
 	abi, _ = erc721.Erc721MetaData.GetAbi()

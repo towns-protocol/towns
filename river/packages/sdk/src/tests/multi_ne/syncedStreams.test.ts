@@ -2,7 +2,6 @@
  * @group main
  */
 
-/* eslint-disable jest/no-commented-out-tests */
 import { makeEvent, unpackStream } from '../../sign'
 import { SyncedStreams } from '../../syncedStreams'
 import { SyncState, stateConstraints } from '../../syncedStreamsLoop'
@@ -280,7 +279,7 @@ describe('syncStreams', () => {
 //         await alicesSyncedStreams.addStreamToSync(streamAndCookie.nextSyncCookie)
 
 //         /** Assert */
-//         await expect(done.expectToSucceed()).toResolve()
+//         await expect(done.expectToSucceed()).resolves.not.toThrow()
 //         expect(syncId).toBeDefined()
 //         expect(endedSyncId).toEqual(syncId)
 //         expect(statesSeen).toEqual(

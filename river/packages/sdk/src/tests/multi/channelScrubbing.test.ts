@@ -49,7 +49,7 @@ describe('channelScrubbing', () => {
 
         // When bob's join event is added to the stream, it should trigger a scrub, and Alice
         // should be booted from the stream since she unlinked her entitled wallet.
-        await expect(bob.joinStream(channelId!)).toResolve()
+        await expect(bob.joinStream(channelId!)).resolves.not.toThrow()
 
         const userStreamView = (await alice.waitForStream(makeUserStreamId(alice.userId))!).view
         // Wait for alice's user stream to have the leave event

@@ -268,7 +268,9 @@ describe('channelSpaceSettingsTests', () => {
         )
 
         // Carol's update should succeed
-        await expect(carol.updateChannelAutojoin(spaceId, defaultChannelId, false)).toResolve()
+        await expect(
+            carol.updateChannelAutojoin(spaceId, defaultChannelId, false),
+        ).resolves.not.toThrow()
 
         // Validate autojoin event was applied on client
         await waitFor(() => {
@@ -411,7 +413,7 @@ describe('channelSpaceSettingsTests', () => {
         // Carol's update should succeed
         await expect(
             carol.updateChannelHideUserJoinLeaveEvents(spaceId, defaultChannelId, true),
-        ).toResolve()
+        ).resolves.not.toThrow()
 
         // Validate updateHideUserJoinLeaveEvents event was applied on client
         await waitFor(() => {

@@ -140,7 +140,7 @@ describe('streamRpcClient using v2 sync', () => {
                 syncId = res.syncId
                 return res.syncOp === SyncOp.SYNC_NEW && res.syncId !== undefined
             }),
-        ).toResolve()
+        ).resolves.not.toThrow()
 
         await alice.cancelSync({ syncId })
 
@@ -565,7 +565,7 @@ describe('streamRpcClient', () => {
                 syncId = res.syncId
                 return res.syncOp === SyncOp.SYNC_NEW && res.syncId !== undefined
             }),
-        ).toResolve()
+        ).resolves.not.toThrow()
 
         // Bob invites Alice to the channel
         log('Bob invites Alice to the channel')
@@ -695,7 +695,7 @@ describe('streamRpcClient', () => {
                     e.event.payload?.value.content.case === 'message' &&
                     e.event.payload?.value.content.value.ciphertext === 'Hello, Alice!',
             ),
-        ).toResolve()
+        ).resolves.not.toThrow()
 
         await alice.cancelSync({ syncId })
     })
@@ -742,7 +742,7 @@ describe('streamRpcClient', () => {
                 message: expect.stringContaining('7:PERMISSION_DENIED'),
             }),
         )
-        await expect(makeUserStreamWith(jimmysGoodContext)).toResolve()
+        await expect(makeUserStreamWith(jimmysGoodContext)).resolves.not.toThrow()
 
         // create a space
         const spacedStreamId = streamIdToBytes(makeUniqueSpaceStreamId())
@@ -786,7 +786,7 @@ describe('streamRpcClient', () => {
                 message: expect.stringContaining('7:PERMISSION_DENIED'),
             }),
         )
-        await expect(addEventWith(jimmysGoodContext)).toResolve()
+        await expect(addEventWith(jimmysGoodContext)).resolves.not.toThrow()
     })
 
     test('cantAddWithBadHash', async () => {
@@ -806,7 +806,7 @@ describe('streamRpcClient', () => {
                 ],
                 streamId: bobsUserStreamId,
             }),
-        ).toResolve()
+        ).resolves.not.toThrow()
         log('Bob created user, about to create space')
 
         // Bob creates space and channel
@@ -897,7 +897,7 @@ describe('streamRpcClient', () => {
                 streamId: channelId,
                 event: messageEvent,
             }),
-        ).toResolve()
+        ).resolves.not.toThrow()
 
         log('Bob fails to add event with empty hash')
         await expect(
@@ -936,7 +936,7 @@ describe('streamRpcClient', () => {
                 ],
                 streamId: bobsUserStreamId,
             }),
-        ).toResolve()
+        ).resolves.not.toThrow()
         log('Bob created user, about to create space')
 
         // Bob creates space and channel
@@ -994,7 +994,7 @@ describe('streamRpcClient', () => {
                 streamId: channelId,
                 event: messageEvent,
             }),
-        ).toResolve()
+        ).resolves.not.toThrow()
 
         log('Bob fails to add message twice')
         await expect(

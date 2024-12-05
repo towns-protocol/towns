@@ -50,7 +50,7 @@ describe('deviceKeyMessageTest', () => {
     test('bobDownloadsOwnDeviceKeys', async () => {
         log('bobDownloadsOwnDeviceKeys')
         // Bob gets created, starts syncing, and uploads his device keys.
-        await expect(bobsClient.initializeUser()).toResolve()
+        await expect(bobsClient.initializeUser()).resolves.not.toThrow()
         bobsClient.startSync()
         const bobsUserId = bobsClient.userId
         const bobSelfDeviceKeyDone = makeDonePromise()
@@ -74,8 +74,8 @@ describe('deviceKeyMessageTest', () => {
     test('bobDownloadsAlicesDeviceKeys', async () => {
         log('bobDownloadsAlicesDeviceKeys')
         // Bob gets created, starts syncing, and uploads his device keys.
-        await expect(bobsClient.initializeUser()).toResolve()
-        await expect(alicesClient.initializeUser()).toResolve()
+        await expect(bobsClient.initializeUser()).resolves.not.toThrow()
+        await expect(alicesClient.initializeUser()).resolves.not.toThrow()
         bobsClient.startSync()
         alicesClient.startSync()
         const alicesUserId = alicesClient.userId
@@ -99,8 +99,8 @@ describe('deviceKeyMessageTest', () => {
     test('bobDownloadsAlicesAndOwnDeviceKeys', async () => {
         log('bobDownloadsAlicesAndOwnDeviceKeys')
         // Bob, Alice get created, starts syncing, and uploads respective device keys.
-        await expect(bobsClient.initializeUser()).toResolve()
-        await expect(alicesClient.initializeUser()).toResolve()
+        await expect(bobsClient.initializeUser()).resolves.not.toThrow()
+        await expect(alicesClient.initializeUser()).resolves.not.toThrow()
         bobsClient.startSync()
         alicesClient.startSync()
         const bobsUserId = bobsClient.userId
@@ -130,8 +130,8 @@ describe('deviceKeyMessageTest', () => {
     test('bobDownloadsAlicesMultipleAndOwnDeviceKeys', async () => {
         log('bobDownloadsAlicesAndOwnDeviceKeys')
         // Bob, Alice get created, starts syncing, and uploads respective device keys.
-        await expect(bobsClient.initializeUser()).toResolve()
-        await expect(alicesClient.initializeUser()).toResolve()
+        await expect(bobsClient.initializeUser()).resolves.not.toThrow()
+        await expect(alicesClient.initializeUser()).resolves.not.toThrow()
         bobsClient.startSync()
         alicesClient.startSync()
         const bobsUserId = bobsClient.userId

@@ -13,7 +13,7 @@ describe('persistenceStoreTests', () => {
     test('cleartextIsStored', async () => {
         const cleartext = 'decrypted event cleartext goes here'
         const eventId = genId()
-        await expect(await store.saveCleartext(eventId, cleartext)).toResolve()
+        await expect(store.saveCleartext(eventId, cleartext)).resolves.not.toThrow()
         const cacheHit = await store.getCleartext(eventId)
         expect(cacheHit).toBe(cleartext)
     })

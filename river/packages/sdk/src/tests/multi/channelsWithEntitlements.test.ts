@@ -192,7 +192,7 @@ describe('channelsWithEntitlements', () => {
             alice.sendChannelMessage_Redaction(channelId!, {
                 refEventId: eventId,
             }),
-        ).toResolve()
+        ).resolves.not.toThrow()
 
         // Replying to Bob's message should not be allowed.
         await expect(
@@ -242,7 +242,7 @@ describe('channelsWithEntitlements', () => {
             alice.sendChannelMessage_Redaction(channelId!, {
                 refEventId: eventId,
             }),
-        ).toResolve()
+        ).resolves.not.toThrow()
 
         // Replying to Bob's message should be allowed.
         await expect(
@@ -254,10 +254,10 @@ describe('channelsWithEntitlements', () => {
                 },
                 threadId: refEventId, // reply to Bob's message
             }),
-        ).toResolve()
+        ).resolves.not.toThrow()
 
         // Top-level post currently allowed.
-        await expect(alice.sendMessage(channelId!, 'Hello, world!')).toResolve()
+        await expect(alice.sendMessage(channelId!, 'Hello, world!')).resolves.not.toThrow()
 
         const doneStart = Date.now()
         // kill the clients
@@ -288,7 +288,7 @@ describe('channelsWithEntitlements', () => {
             alice.sendChannelMessage_Redaction(channelId!, {
                 refEventId: eventId,
             }),
-        ).toResolve()
+        ).resolves.not.toThrow()
 
         // Replying to Bob's message should be allowed.
         await expect(
@@ -300,10 +300,10 @@ describe('channelsWithEntitlements', () => {
                 },
                 threadId: refEventId, // reply to Bob's message
             }),
-        ).toResolve()
+        ).resolves.not.toThrow()
 
         // Top-level post currently allowed.
-        await expect(alice.sendMessage(channelId!, 'Hello, world!')).toResolve()
+        await expect(alice.sendMessage(channelId!, 'Hello, world!')).resolves.not.toThrow()
 
         const doneStart = Date.now()
         // kill the clients
@@ -1258,7 +1258,7 @@ describe('channelsWithEntitlements', () => {
         expect(stream).toBeDefined()
         expect(eventId).toBeDefined()
 
-        await expect(bob.redactMessage(defaultChannelId, eventId!)).toResolve()
+        await expect(bob.redactMessage(defaultChannelId, eventId!)).resolves.not.toThrow()
         await expect(alice.redactMessage(defaultChannelId, eventId!)).rejects.toThrow(
             /PERMISSION_DENIED/,
         )
