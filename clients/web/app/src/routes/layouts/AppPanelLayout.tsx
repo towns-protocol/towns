@@ -13,6 +13,7 @@ import { TopBar } from '@components/TopBar/TopBar'
 import { SomethingWentWrong } from '@components/Errors/SomethingWentWrong'
 import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
 import { PATHS } from 'routes'
+import { AppStoreBanner } from '@components/AppStoreBanner/AppStoreBanner'
 import { usePanels } from './hooks/usePanels'
 
 const config = ['spaces', 'primary-menu', 'secondary-menu', 'content']
@@ -38,6 +39,9 @@ export const AppPanelLayout = () => {
     return (
         <>
             <Stack absoluteFill padding="xs">
+                <Box insetX="xxs" insetTop="xxs">
+                    <AppStoreBanner />
+                </Box>
                 <TopBar />
                 <Allotment
                     // proportionalLayout

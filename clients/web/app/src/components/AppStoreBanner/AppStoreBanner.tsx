@@ -1,21 +1,34 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useState } from 'react'
 import { Box, Icon, Paragraph } from '@ui'
 import { TOWNS_IOS_APP } from 'data/links'
-import { isIOS, isSafari } from 'hooks/useDevice'
+import { isIOS, isMacOS, isSafari } from 'hooks/useDevice'
 import { useStore } from 'store/store'
+import { Analytics } from 'hooks/useAnalytics'
 
+const BANNER_PRESENTATION_LIMIT = 3
 export const AppStoreBanner = () => {
-    const { setAppStoreBanner, appStoreBanner } = useStore()
+    const { setAppStoreBannerPresentedCount, appStoreBannerPresentedCount } = useStore()
+    const [didDismiss, setDidDismiss] = useState(false) // only dismiss once per session
+
     const onDismiss = () => {
-        setAppStoreBanner(false)
+        Analytics.getInstance().track('clicked dismiss app store banner')
+        setDidDismiss(true)
+        setAppStoreBannerPresentedCount(appStoreBannerPresentedCount + 1)
     }
     const onOpen = () => {
+        Analytics.getInstance().track('clicked app store banner')
         window.open(TOWNS_IOS_APP)
     }
 
     const display = useMemo(() => {
-        return appStoreBanner && isIOS() && !isSafari()
-    }, [appStoreBanner])
+        if (appStoreBannerPresentedCount >= BANNER_PRESENTATION_LIMIT) {
+            return false
+        }
+        if (didDismiss) {
+            return false
+        }
+        return isMacOS() || (isIOS() && !isSafari())
+    }, [appStoreBannerPresentedCount, didDismiss])
 
     if (!display) {
         return <></>
