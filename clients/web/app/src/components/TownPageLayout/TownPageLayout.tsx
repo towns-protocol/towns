@@ -271,11 +271,11 @@ const Header = (props: {
         <Stack horizontal width="100%">
             <Stack
                 justifyContent={{
-                    mobile: motto ? 'spaceBetween' : 'center',
+                    mobile: 'center',
                 }}
                 gap={{
                     desktop: 'md',
-                    mobile: 'sm',
+                    mobile: motto ? 'sm' : 'md',
                 }}
                 paddingTop={isTouch ? 'sm' : 'none'}
             >
