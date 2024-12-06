@@ -9,4 +9,4 @@ export const BRIDGE_LEARN_MORE_LINK =
 export const MESSAGING_IN_TOWNS_LINK =
     'https://townhall.towns.com/Messaging-in-Towns-4eb893c9e34444b49ad49e368b9ab123?pvs=4'
 
-export const TOWNS_IOS_APP = 'https://apps.apple.com/se/app/towns-permissionless-chat/id6504000393'
+export const TOWNS_IOS_APP = 'https://apps.apple.com/app/apple-store/id6504000393?pt=120981930&mt=8'
