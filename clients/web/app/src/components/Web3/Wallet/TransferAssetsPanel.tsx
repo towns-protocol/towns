@@ -9,6 +9,7 @@ import {
     useLinkedWallets,
     useTransferAssetTransaction,
 } from 'use-towns-client'
+import { BigNumber } from 'ethers'
 import { ErrorMessage, FancyButton, FormRender, Stack, Text, TextField } from '@ui'
 import { Panel } from '@components/Panel/Panel'
 import { formatUnits, parseUnits, useBalance } from 'hooks/useBalance'
@@ -385,6 +386,14 @@ function getValidatedData(args: {
         : _isNftTransfer
         ? getNftTransferData({ data, fromWallet: source })
         : getEthTransferData({ data, onParseError })
+
+    if (dataToSubmit?.value && BigNumber.from(dataToSubmit.value).lte(0)) {
+        setError('ethAmount', {
+            type: 'manual',
+            message: 'Please enter a positive number.',
+        })
+        return
+    }
 
     if (!dataToSubmit) {
         popupToast(({ toast }) => (
