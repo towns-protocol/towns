@@ -5,7 +5,7 @@ import {
     CrossmintProvider,
     useCrossmintCheckout,
 } from '@crossmint/client-sdk-react-ui'
-import { EmailWithMetadata, usePrivy } from '@privy-io/react-auth'
+import { usePrivy } from '@privy-io/react-auth'
 import { BASE_MAINNET, SpaceAddressFromSpaceId } from 'use-towns-client'
 import { Box, Stack } from '@ui'
 import { useEnvironment } from 'hooks/useEnvironmnet'
@@ -19,6 +19,8 @@ import { getSpaceNameFromCache } from './Analytics/getSpaceNameFromCache'
 
 interface CrossmintPaymentProps {
     contractAddress: string
+    onPaymentStart?: () => void
+    onPaymentFailure?: () => void
     onComplete?: () => void
     townWalletAddress?: string
     price: string
@@ -29,6 +31,8 @@ const CrossmintPaymentContent = ({
     onComplete,
     townWalletAddress,
     price,
+    onPaymentStart,
+    onPaymentFailure,
 }: CrossmintPaymentProps) => {
     const { baseChain } = useEnvironment()
     const network = baseChain.id === BASE_MAINNET ? 'base' : 'base-sepolia'
@@ -47,11 +51,18 @@ const CrossmintPaymentContent = ({
     const receiptEmail = useMemo(() => {
         const linkedAccounts = user?.linkedAccounts
 
-        const emailAccount = linkedAccounts?.find(
-            (account) => account.type === 'email',
-        ) as EmailWithMetadata
+        const email = linkedAccounts?.reduce<string | undefined>((acc, account) => {
+            // don't include apple oauth email b/c it's a masked email like "939djsjs@privaterelay.appleid.com"
+            if (account.type === 'email') {
+                acc = account.address
+            } else if (account.type === 'google_oauth') {
+                acc = account.email
+            }
+            return acc
+        }, undefined)
 
-        return emailAccount?.address || ''
+        // do not default to empty string b/c crossmint modal errors on initial load
+        return email
     }, [user?.linkedAccounts])
 
     const tracked = useMemo(
@@ -66,17 +77,32 @@ const CrossmintPaymentContent = ({
     )
 
     useEffect(() => {
-        if (order?.phase === 'payment' && !hasTriggeredPayment.current) {
-            Analytics.getInstance().track('clicked submit card payment', tracked)
-            hasTriggeredPayment.current = true
-        }
         if (order?.phase === 'completed' && onComplete && !hasTriggeredComplete.current) {
             Analytics.getInstance().track('crossmint order completed', tracked)
             setIsLoading(true)
             onComplete()
             hasTriggeredComplete.current = true
         }
-    }, [order?.phase, onComplete, tracked])
+    }, [order?.phase, onComplete, tracked, onPaymentStart])
+
+    useEffect(() => {
+        // 'awaiting-payment' status is the first status, while showing form
+        // 'in-progress'is a status listed as a type, but it is never this status in my experience
+        // 'completed' is the last status, after payment processed, before beginning of nft delivery
+        // there is a time gap after clicking the crossmint button and the status updating to this
+        if (order?.payment.status === 'completed' && !hasTriggeredPayment.current) {
+            Analytics.getInstance().track('clicked submit card payment', tracked)
+            onPaymentStart?.()
+            hasTriggeredPayment.current = true
+        }
+    }, [onPaymentStart, order?.payment, tracked])
+
+    // i can only hope that this works
+    useEffect(() => {
+        if (order?.payment.failureReason) {
+            onPaymentFailure?.()
+        }
+    }, [onPaymentFailure, order?.payment.failureReason])
 
     useEffect(() => {
         // Give the component a moment to initialize
@@ -147,9 +173,6 @@ const CrossmintPaymentContent = ({
                             DestinationInput: {
                                 display: 'hidden',
                             },
-                            ReceiptEmailInput: {
-                                display: receiptEmail ? 'hidden' : undefined,
-                            },
                         },
                     }}
                     lineItems={{
@@ -183,6 +206,8 @@ const CrossmintPaymentContent = ({
 export const CrossmintPayment: React.FC<CrossmintPaymentProps> = ({
     contractAddress,
     onComplete,
+    onPaymentStart,
+    onPaymentFailure,
     townWalletAddress,
     price,
 }) => {
@@ -200,6 +225,8 @@ export const CrossmintPayment: React.FC<CrossmintPaymentProps> = ({
                     townWalletAddress={townWalletAddress}
                     price={price}
                     onComplete={onComplete}
+                    onPaymentStart={onPaymentStart}
+                    onPaymentFailure={onPaymentFailure}
                 />
             </CrossmintCheckoutProvider>
         </CrossmintProvider>

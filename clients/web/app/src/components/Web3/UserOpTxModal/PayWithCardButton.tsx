@@ -8,15 +8,17 @@ import { registerContractWithCrossmint } from 'api/crossmint'
 
 interface PayWithCardButtonProps {
     contractAddress: string
+    spaceDetailsAnalytics: ReturnType<typeof useGatherSpaceDetailsAnalytics>
     onClick: () => void
 }
 
-export function PayWithCardButton({ contractAddress, onClick }: PayWithCardButtonProps) {
+export function PayWithCardButton({
+    contractAddress,
+    onClick,
+    spaceDetailsAnalytics,
+}: PayWithCardButtonProps) {
     const hasAttemptedRegistration = useRef(false)
     const spaceId = SpaceAddressFromSpaceId(contractAddress)
-    const analytics = useGatherSpaceDetailsAnalytics({
-        spaceId,
-    })
 
     useEffect(() => {
         const registerContract = async () => {
@@ -40,9 +42,9 @@ export function PayWithCardButton({ contractAddress, onClick }: PayWithCardButto
         Analytics.getInstance().track('clicked pay with card', {
             spaceName: getSpaceNameFromCache(spaceId),
             spaceId,
-            gatedSpace: analytics.gatedSpace,
-            pricingModule: analytics.pricingModule,
-            priceInWei: analytics.priceInWei,
+            gatedSpace: spaceDetailsAnalytics.gatedSpace,
+            pricingModule: spaceDetailsAnalytics.pricingModule,
+            priceInWei: spaceDetailsAnalytics.priceInWei,
         })
     }
 

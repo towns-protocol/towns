@@ -25,13 +25,18 @@ import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { atoms } from 'ui/styles/atoms.css'
 import { shortAddress } from 'ui/utils/utils'
 import { useStore } from 'store/store'
-import { CopyWalletAddressButton } from '../GatedTownModal/Buttons'
+import { Analytics } from 'hooks/useAnalytics'
+import { useGatherSpaceDetailsAnalytics } from '@components/Analytics/useGatherSpaceDetailsAnalytics'
+import { getSpaceNameFromCache } from '@components/Analytics/getSpaceNameFromCache'
 import { PayWithCardButton } from './PayWithCardButton'
+import { CopyWalletAddressButton } from '../GatedTownModal/Buttons'
 
 export function UserOpTxModal() {
     const { currOp, confirm, deny } = userOpsStore()
     const { end: endPublicPageLoginFlow } = usePublicPageLoginFlow()
     const { isTouch } = useDevice()
+    const [disableUiWhileCrossmintPaymentPhase, setDisableUiWhileCrossmintPaymentPhase] =
+        useState(false)
 
     if (typeof confirm !== 'function' || !currOp) {
         return null
@@ -42,23 +47,36 @@ export function UserOpTxModal() {
             minWidth="auto"
             background={isTouch ? undefined : 'none'}
             onHide={() => {
+                // prevent close while crossmint payment is in progress
+                if (disableUiWhileCrossmintPaymentPhase) {
+                    return
+                }
                 endPublicPageLoginFlow()
                 deny?.()
             }}
         >
-            <UserOpTxModalContent endPublicPageLoginFlow={endPublicPageLoginFlow} />
+            <UserOpTxModalContent
+                endPublicPageLoginFlow={endPublicPageLoginFlow}
+                disableUiWhileCrossmintPaymentPhase={disableUiWhileCrossmintPaymentPhase}
+                setDisableUiWhileCrossmintPaymentPhase={setDisableUiWhileCrossmintPaymentPhase}
+            />
         </AboveAppProgressModalContainer>
     )
 }
 
 function UserOpTxModalContent({
     endPublicPageLoginFlow,
+    disableUiWhileCrossmintPaymentPhase,
+    setDisableUiWhileCrossmintPaymentPhase,
 }: {
     endPublicPageLoginFlow: () => void
+    disableUiWhileCrossmintPaymentPhase: boolean
+    setDisableUiWhileCrossmintPaymentPhase: (value: boolean) => void
 }): JSX.Element {
     const [showCrossmintPayment, setShowCrossmintPayment] = useState(false)
     const [showEthPayment, setShowEthPayment] = useState(false)
     const { setRecentlyMintedSpaceToken } = useStore()
+
     const {
         currOp,
         currOpDecodedCallData,
@@ -83,6 +101,9 @@ function UserOpTxModalContent({
     const isJoiningSpace = !!usePublicPageLoginFlow().spaceBeingJoined
     const { clickCopyWalletAddress, clickConfirmJoinTransaction } = useJoinFunnelAnalytics()
     const spaceId = useSpaceIdFromPathname()
+    const analytics = useGatherSpaceDetailsAnalytics({
+        spaceId,
+    })
     const { data: spaceInfo } = useContractSpaceInfoWithoutClient(spaceId)
 
     const onConfirm = () => {
@@ -200,6 +221,14 @@ function UserOpTxModalContent({
         }
     }
 
+    const handleCrossmintPaymentStart = () => {
+        setDisableUiWhileCrossmintPaymentPhase(true)
+    }
+
+    const handleCrossmintFailure = () => {
+        setDisableUiWhileCrossmintPaymentPhase(false)
+    }
+
     const handleCrossmintComplete = async () => {
         if (clientSingleton && signerContext && spaceInfo?.name) {
             await joinAfterSuccessfulCrossmint({
@@ -251,6 +280,8 @@ function UserOpTxModalContent({
                     townWalletAddress={smartAccountAddress || ''}
                     price={formatUnits(BigInt(currOpValue?.toString() ?? 0), 18)}
                     onComplete={handleCrossmintComplete}
+                    onPaymentStart={handleCrossmintPaymentStart}
+                    onPaymentFailure={handleCrossmintFailure}
                 />
             )
         }
@@ -295,6 +326,7 @@ function UserOpTxModalContent({
             <Box gap="md" width="100%" paddingTop="md">
                 {isJoinSpace && spaceInfo?.address && (
                     <PayWithCardButton
+                        spaceDetailsAnalytics={analytics}
                         contractAddress={spaceInfo.address}
                         onClick={() => setShowCrossmintPayment(true)}
                     />
@@ -303,9 +335,17 @@ function UserOpTxModalContent({
                     tone="level3"
                     rounded="lg"
                     onClick={() => {
+                        // add analytics
                         if (balanceIsLessThanCost) {
                             setShowEthPayment(true)
                         } else {
+                            Analytics.getInstance().track('clicked pay with card', {
+                                spaceName: getSpaceNameFromCache(spaceId),
+                                spaceId,
+                                gatedSpace: analytics.gatedSpace,
+                                pricingModule: analytics.pricingModule,
+                                priceInWei: analytics.priceInWei,
+                            })
                             onConfirm()
                         }
                     }}
@@ -336,27 +376,27 @@ function UserOpTxModalContent({
         <>
             <Box horizontal justifyContent="spaceBetween">
                 {showCrossmintPayment || showEthPayment ? (
-                    <Box
-                        horizontal
-                        alignItems="center"
-                        gap="sm"
-                        cursor="pointer"
-                        onClick={handleBack}
+                    <PlaceholderOrIcon
+                        disableUiWhileCrossmintPaymentPhase={disableUiWhileCrossmintPaymentPhase}
                     >
-                        <Icon type="arrowLeft" />
-                    </Box>
+                        <IconButton icon="arrowLeft" onClick={handleBack} />
+                    </PlaceholderOrIcon>
                 ) : (
                     <Box width="x3" />
                 )}
-                <IconButton
-                    padding="xs"
-                    alignSelf="end"
-                    icon="close"
-                    onClick={() => {
-                        endPublicPageLoginFlow()
-                        deny?.()
-                    }}
-                />
+                <PlaceholderOrIcon
+                    disableUiWhileCrossmintPaymentPhase={disableUiWhileCrossmintPaymentPhase}
+                >
+                    <IconButton
+                        padding="xs"
+                        alignSelf="end"
+                        icon="close"
+                        onClick={() => {
+                            endPublicPageLoginFlow()
+                            deny?.()
+                        }}
+                    />
+                </PlaceholderOrIcon>
             </Box>
             {!showCrossmintPayment && (
                 <Box gap centerContent width={!_isTouch ? '400' : undefined}>
@@ -563,4 +603,17 @@ export function useJoinTransactionModalShownAnalyticsEvent(args: {
             triggered.current = true
         }
     }, [spaceId, spaceName, joinTransactionModalShown, balanceIsLessThanCost, isJoiningSpace])
+}
+
+function PlaceholderOrIcon({
+    disableUiWhileCrossmintPaymentPhase,
+    children,
+}: {
+    disableUiWhileCrossmintPaymentPhase: boolean
+    children: React.ReactNode
+}) {
+    if (disableUiWhileCrossmintPaymentPhase) {
+        return <Box style={{ width: '28px', height: '28px' }} />
+    }
+    return children
 }
