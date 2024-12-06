@@ -5,5 +5,10 @@ export function isNodeEnv(): boolean {
 }
 
 export function isTestEnv(): boolean {
-    return isNode && (process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID !== undefined)
+    return (
+        isNode &&
+        (process.env.NODE_ENV === 'test' ||
+            process.env.JEST_WORKER_ID !== undefined ||
+            process.env.TS_JEST === '1')
+    )
 }

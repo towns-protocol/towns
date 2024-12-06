@@ -243,7 +243,11 @@ func (up *UserPreferences) WantsNotificationForGDMMessage(
 	// determine if for the type of message the user wants to receive a notification
 	switch setting {
 	case GdmChannelSettingValue_GDM_MESSAGES_ALL:
-		return true
+		return mentioned ||
+			msgInteractionType == MessageInteractionType_MESSAGE_INTERACTION_TYPE_UNSPECIFIED ||
+			msgInteractionType == MessageInteractionType_MESSAGE_INTERACTION_TYPE_REPLY ||
+			msgInteractionType == MessageInteractionType_MESSAGE_INTERACTION_TYPE_POST ||
+			(isParticipating && msgInteractionType == MessageInteractionType_MESSAGE_INTERACTION_TYPE_REACTION)
 	case GdmChannelSettingValue_GDM_ONLY_MENTIONS_REPLIES_REACTIONS:
 		return mentioned ||
 			(isParticipating && msgInteractionType == MessageInteractionType_MESSAGE_INTERACTION_TYPE_REACTION) ||

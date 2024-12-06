@@ -28,14 +28,6 @@ import {
 import { config } from '../src/environment'
 import { getRiverRegistry } from '../src/evmRpcClient'
 
-export function isTest(): boolean {
-	return (
-		process.env.NODE_ENV === 'test' ||
-		process.env.TS_JEST === '1' ||
-		process.env.JEST_WORKER_ID !== undefined
-	)
-}
-
 export function makeUniqueSpaceStreamId(): string {
 	return makeSpaceStreamId(genId(40))
 }

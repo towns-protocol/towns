@@ -75,6 +75,12 @@ func testGDMNotifications(
 		testGDMMessageWithNoMentionsRepliesAndReaction(ctx, test, notifications)
 	})
 
+	tester.parallelSubtest("ReactionMessage", func(tester *serviceTester) {
+		ctx := tester.ctx
+		test := setupGDMNotificationTest(ctx, tester, notificationClient, authClient)
+		testGDMReactionMessage(ctx, test, notifications)
+	})
+
 	tester.parallelSubtest("APNUnsubscribe", func(tester *serviceTester) {
 		ctx := tester.ctx
 		test := setupGDMNotificationTest(ctx, tester, notificationClient, authClient)
@@ -237,6 +243,54 @@ func testGDMMessageWithNoMentionsRepliesAndReaction(
 		return !cmp.Equal(nc.WebPushNotifications[eventHash], expectedUsersToReceiveNotification) ||
 			!cmp.Equal(nc.ApnPushNotifications[eventHash], expectedUsersToReceiveNotification)
 	}, time.Second, 100*time.Millisecond, "Received unexpected notifications")
+}
+
+// User A, B and C in GDM
+// User A in GDM posts a message
+// User B reacts to user A
+// User A should get a reaction notification, but user C should not
+func testGDMReactionMessage(
+	ctx context.Context,
+	test *gdmChannelNotificationsTestContext,
+	nc *notificationCapture,
+) {
+	userA := test.members[0]
+	userB := test.members[1]
+	userC := test.members[2]
+
+	test.subscribeWebPush(ctx, userA)
+	test.subscribeWebPush(ctx, userB)
+	test.subscribeWebPush(ctx, userC)
+
+	// reaction on a GDM message
+	event := test.sendMessageWithTags(ctx, userB, "hi!", &Tags{
+		MessageInteractionType:     MessageInteractionType_MESSAGE_INTERACTION_TYPE_REACTION,
+		ParticipatingUserAddresses: [][]byte{userA.Address[:]},
+	})
+
+	eventHash := common.BytesToHash(event.Hash)
+	expectedUsersToReceiveNotification := map[common.Address]int{userA.Address: 1}
+
+	// ensure that user A received notificaton
+	test.req.Eventuallyf(func() bool {
+		nc.WebPushNotificationsMu.Lock()
+		defer nc.WebPushNotificationsMu.Unlock()
+
+		return cmp.Equal(nc.WebPushNotifications[eventHash], expectedUsersToReceiveNotification)
+	}, 15*time.Second, 100*time.Millisecond, "user A Didn't receive expected notification")
+
+	// ensure that user B and C never get a notification
+	test.req.Never(func() bool {
+		nc.ApnPushNotificationsMu.Lock()
+		gotAPN := len(nc.ApnPushNotifications[eventHash]) > 0
+		nc.ApnPushNotificationsMu.Unlock()
+
+		nc.WebPushNotificationsMu.Lock()
+		notEqual := !cmp.Equal(nc.WebPushNotifications[eventHash], expectedUsersToReceiveNotification)
+		nc.WebPushNotificationsMu.Unlock()
+
+		return gotAPN || notEqual
+	}, 5*time.Second, 100*time.Millisecond, "Received unexpected notifications")
 }
 
 func testDMNotifications(

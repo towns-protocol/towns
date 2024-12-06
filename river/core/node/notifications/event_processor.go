@@ -159,7 +159,6 @@ func (p *MessageToNotificationsProcessor) OnMessageEvent(
 		case *StreamEvent_GdmChannelPayload:
 			if p.onGDMChannelPayload(channelID, participant, pref, event) {
 				usersToNotify[participant] = pref
-				kind = "direct_message"
 			}
 			recipients.Add(participant)
 		case *StreamEvent_ChannelPayload:
