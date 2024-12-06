@@ -30,9 +30,9 @@ type TokenSelectionProps = TokenSelectionInputProps | TokenSelectionDisplayProps
 export function TokenSelection(props: TokenSelectionProps) {
     const { elevate = false, token, optionBoxProps: wrapperBoxProps } = props
 
-    const tokenNameAndQuantity = `${token.data.quantity !== '0' ? token.data.quantity : ''} ${
-        token.data.label?.length ? token.data.label : 'Unknown Token'
-    }`
+    const tokenNameAndQuantity = `${
+        token.data.quantity && token.data.quantity !== '0' ? token.data.quantity : ''
+    } ${token.data.label?.length ? token.data.label : 'Unknown Token'}`
 
     return (
         <Stack
