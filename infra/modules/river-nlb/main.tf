@@ -57,7 +57,7 @@ module "nlb" {
 
   security_groups = [aws_security_group.nlb_security_group.id]
 
-  enable_deletion_protection = true
+  enable_deletion_protection = false
 
   tags = local.tags
 }

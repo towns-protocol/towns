@@ -239,12 +239,8 @@ module "public_ecr" {
   version = "1.2.0"
 
   image_names = [
-    "river-node",
-    "forked-chain-service",
-    "notification-service",
     "hnt-infra",
-    "hnt-load-test-node",
-    "hnt-ecs-service-discovery"
+    "hnt-load-test-node"
   ]
   repository_type = "public"
   tags            = module.global_constants.tags

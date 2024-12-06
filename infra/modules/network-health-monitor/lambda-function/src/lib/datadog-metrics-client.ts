@@ -176,13 +176,6 @@ export class DatadogMetricsClient {
                         points: [{ timestamp: this.timestamp, value: latency }],
                         tags: currentTags,
                     })
-
-                    series.push({
-                        type: GAUGE,
-                        metric: `river_node.chain.latest_block_number`,
-                        points: [{ timestamp: this.timestamp, value: chain.block }],
-                        tags: currentTags,
-                    })
                 })
             }
         })

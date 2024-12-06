@@ -31,10 +31,6 @@ data "aws_vpc" "vpc" {
   id = var.vpc_id
 }
 
-data "aws_acm_certificate" "primary_hosted_zone_cert" {
-  domain = module.global_constants.primary_hosted_zone_name
-}
-
 resource "aws_cloudwatch_log_group" "pgadmin_log_group" {
   name = "/ecs/pgadmin/${local.name}"
 

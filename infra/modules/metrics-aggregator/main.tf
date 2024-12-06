@@ -371,9 +371,10 @@ resource "aws_ecs_task_definition" "fargate_task_definition" {
 }
 
 resource "aws_ecs_service" "river-ecs-service" {
-  name                               = "${local.local_name}-fargate-service"
-  cluster                            = var.ecs_cluster.id
-  task_definition                    = aws_ecs_task_definition.fargate_task_definition.arn
+  name            = "${local.local_name}-fargate-service"
+  cluster         = var.ecs_cluster.id
+  task_definition = aws_ecs_task_definition.fargate_task_definition.arn
+
   desired_count                      = 1
   deployment_minimum_healthy_percent = 50
   deployment_maximum_percent         = 200

@@ -610,8 +610,8 @@ resource "aws_ecs_service" "river-ecs-service" {
 
   network_configuration {
     security_groups  = [module.river_internal_sg.security_group_id]
-    subnets          = var.public_subnets
-    assign_public_ip = true
+    subnets          = var.private_subnets
+    assign_public_ip = false
   }
 
   load_balancer {
@@ -701,7 +701,7 @@ module "datadog_sythetics_test" {
 # Load Balancer Routing
 ##################################################################
 
-resource "aws_lb_listener" "transient_lb_listener" {
+resource "aws_lb_listener" "lb_listener" {
   load_balancer_arn = var.lb.lb_arn
   port              = local.rpc_https_port
   protocol          = "TCP_UDP"

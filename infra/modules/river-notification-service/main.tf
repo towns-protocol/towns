@@ -594,53 +594,6 @@ locals {
 # Load Balancer Routing
 ##################################################################
 
-
-resource "aws_lb_target_group" "http_target_group" {
-  name        = "notifications-http-${terraform.workspace}"
-  protocol    = "HTTP"
-  port        = 80
-  target_type = "ip"
-  vpc_id      = var.vpc_id
-
-
-  health_check {
-    healthy_threshold   = 2
-    unhealthy_threshold = 2
-    timeout             = 6
-    interval            = 15
-    path                = "/status?blockchain=0"
-    protocol            = "HTTP"
-  }
-
-  tags = module.global_constants.tags
-}
-
-resource "aws_lb_listener_rule" "http_rule" {
-  listener_arn = var.alb_https_listener_arn
-  priority     = 10 // http should be higher priority than grpc
-
-  lifecycle {
-    ignore_changes = [action]
-  }
-
-  action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.http_target_group.arn
-  }
-
-  condition {
-    host_header {
-      values = [local.dns_host]
-    }
-  }
-
-  condition {
-    http_request_method {
-      values = ["OPTIONS"]
-    }
-  }
-}
-
 resource "aws_lb_target_group" "grpc_target_group" {
   name             = "notifications-grpc-${terraform.workspace}"
   protocol         = "HTTP"
@@ -665,7 +618,7 @@ resource "aws_lb_target_group" "grpc_target_group" {
 
 resource "aws_lb_listener_rule" "grpc_rule" {
   listener_arn = var.alb_https_listener_arn
-  priority     = 20 // grpc should be lower priority than http
+  priority     = 10 // grpc should be higher priority than http
 
   lifecycle {
     ignore_changes = [action]
@@ -674,6 +627,52 @@ resource "aws_lb_listener_rule" "grpc_rule" {
   action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.grpc_target_group.arn
+  }
+
+  condition {
+    host_header {
+      values = [local.dns_host]
+    }
+  }
+
+  condition {
+    http_request_method {
+      values = ["POST"]
+    }
+  }
+}
+
+resource "aws_lb_target_group" "http_target_group" {
+  name        = "notifications-http-${terraform.workspace}"
+  protocol    = "HTTP"
+  port        = 80
+  target_type = "ip"
+  vpc_id      = var.vpc_id
+
+
+  health_check {
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+    timeout             = 6
+    interval            = 15
+    path                = "/status?blockchain=0"
+    protocol            = "HTTP"
+  }
+
+  tags = module.global_constants.tags
+}
+
+resource "aws_lb_listener_rule" "http_rule" {
+  listener_arn = var.alb_https_listener_arn
+  priority     = 20 // http should be lower priority than grpc
+
+  lifecycle {
+    ignore_changes = [action]
+  }
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.http_target_group.arn
   }
 
   condition {

@@ -6,6 +6,10 @@ data "aws_vpc" "vpc" {
   id = var.vpc_id
 }
 
+locals {
+  global_remote_state = module.global_constants.global_remote_state.outputs
+}
+
 module "river_alb_sg" {
   source = "terraform-aws-modules/security-group/aws"
 
@@ -66,17 +70,13 @@ module "river_alb" {
   idle_timeout = 1800
 }
 
-data "aws_acm_certificate" "primary_hosted_zone_cert" {
-  domain = module.global_constants.primary_hosted_zone_name
-}
-
 resource "aws_lb_listener" "https_listener" {
   load_balancer_arn = module.river_alb.lb_arn
   port              = "443"
   protocol          = "HTTPS"
   ssl_policy        = "ELBSecurityPolicy-2016-08"
 
-  certificate_arn = data.aws_acm_certificate.primary_hosted_zone_cert.arn
+  certificate_arn = local.global_remote_state.primary_hosted_zone_cert.arn
 
   default_action {
     type = "fixed-response"

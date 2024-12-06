@@ -89,9 +89,12 @@ resource "aws_cloudfront_distribution" "this" {
   origin {
     domain_name = var.origin_domain_name
     origin_id   = local.origin_id
-    origin_shield {
-      enabled              = var.origin_shield_enabled
-      origin_shield_region = "us-east-1"
+    dynamic "origin_shield" {
+      for_each = var.origin_shield_enabled ? [true] : []
+      content {
+        enabled              = true
+        origin_shield_region = "us-east-1"
+      }
     }
 
     custom_origin_config {
