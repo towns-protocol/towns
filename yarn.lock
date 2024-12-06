@@ -3836,66 +3836,66 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@decent.xyz/box-common@npm:4.0.4":
-  version: 4.0.4
-  resolution: "@decent.xyz/box-common@npm:4.0.4"
+"@decent.xyz/box-common@npm:4.0.5":
+  version: 4.0.5
+  resolution: "@decent.xyz/box-common@npm:4.0.5"
   peerDependencies:
     "@wagmi/core": 2.x
     react: ^18.0.0
     viem: 2.x
     wagmi: 2.x
-  checksum: ba089195bf03cf28358920860461d7f5fb31e26e38b94b48b26e7e74c4f5c0deb7fd8130df60ce7c4673c56c4997f7cbc9835c4668dfc109c2eef81a4071ef83
+  checksum: 092a1205a3f8fff2f1a3e5c5dd329c77e75fda079ff169d3d1b74a88ecdc5bdcc94a1ab035b047b46eab60f677e434b2064ea9b22b98067fb44205ff9a65cbe3
   languageName: node
   linkType: hard
 
-"@decent.xyz/box-evm@npm:4.0.4":
-  version: 4.0.4
-  resolution: "@decent.xyz/box-evm@npm:4.0.4"
+"@decent.xyz/box-evm@npm:4.0.5":
+  version: 4.0.5
+  resolution: "@decent.xyz/box-evm@npm:4.0.5"
   dependencies:
-    "@decent.xyz/box-common": 4.0.4
-    "@decent.xyz/box-hooks": 4.0.4
+    "@decent.xyz/box-common": 4.0.5
+    "@decent.xyz/box-hooks": 4.0.5
   peerDependencies:
     "@wagmi/core": 2.x
     react: ^18.0.0
     viem: 2.x
     wagmi: 2.x
-  checksum: 23456e024ad3108b18c723b7f63539e1d5a76d2b48080f0daac9de4f4a99e8d02399bdc9b7fdf1acd20a756ebc3e1c07786f86e235d31ed9818b305f3ca12797
+  checksum: 981b9d5612f96dab9582426f803589fd2fc9f37d89613eaf677c732beb1adb906d118be5506e889c884ceb0ad4ed49dbed891879cb2abfed5762ddfe42c7052a
   languageName: node
   linkType: hard
 
-"@decent.xyz/box-hooks@npm:4.0.4":
-  version: 4.0.4
-  resolution: "@decent.xyz/box-hooks@npm:4.0.4"
+"@decent.xyz/box-hooks@npm:4.0.5":
+  version: 4.0.5
+  resolution: "@decent.xyz/box-hooks@npm:4.0.5"
   dependencies:
-    "@decent.xyz/box-common": 4.0.4
+    "@decent.xyz/box-common": 4.0.5
     swr: ^2.2.0
   peerDependencies:
     "@wagmi/core": 2.x
     react: ^18.0.0
-  checksum: 6a5a7569ca3b2c8227546c3382118d5995f601b0c12071ec3691814c5a79b996263b6cd8120c6afb87e12a21ee7c6aa0f732c4fe14ed1fffc039edf880127f20
+  checksum: 71f9d887ba7656066c9b337d0851be00a8131e5b05161543d0ad4826c0806d19bf8017290d3d2ede487f40c4fd55e3ebfaf89d71755634fa3c722b9a35464b37
   languageName: node
   linkType: hard
 
-"@decent.xyz/box-ui@npm:4.0.4":
-  version: 4.0.4
-  resolution: "@decent.xyz/box-ui@npm:4.0.4"
+"@decent.xyz/box-ui@npm:4.0.5":
+  version: 4.0.5
+  resolution: "@decent.xyz/box-ui@npm:4.0.5"
   dependencies:
-    "@decent.xyz/box-common": 4.0.4
-    "@decent.xyz/box-hooks": 4.0.4
+    "@decent.xyz/box-common": 4.0.5
+    "@decent.xyz/box-hooks": 4.0.5
   peerDependencies:
     react: ^18.0.0
-  checksum: af5a099475301e5ee8550530dfefa5565360a70fbeb133d9bf1979bb5866c7b4c6303a811546caad896db7d50ca9c418181096cfad4e97d44328827b20a0afed
+  checksum: b4744501a3f5ec4e74950f0fa12ccd55d5eeb75be8361dfdd9fe2834a11374c8a5f82bda21ebf8df6e0ba724fa1cf07798e7241e470471a766c0ac26dfe785ad
   languageName: node
   linkType: hard
 
-"@decent.xyz/the-box@npm:^4.0.1":
-  version: 4.0.4
-  resolution: "@decent.xyz/the-box@npm:4.0.4"
+"@decent.xyz/the-box@npm:^4.0.5":
+  version: 4.0.5
+  resolution: "@decent.xyz/the-box@npm:4.0.5"
   dependencies:
-    "@decent.xyz/box-common": 4.0.4
-    "@decent.xyz/box-evm": 4.0.4
-    "@decent.xyz/box-hooks": 4.0.4
-    "@decent.xyz/box-ui": 4.0.4
+    "@decent.xyz/box-common": 4.0.5
+    "@decent.xyz/box-evm": 4.0.5
+    "@decent.xyz/box-hooks": 4.0.5
+    "@decent.xyz/box-ui": 4.0.5
     swr: ^2.2.0
   peerDependencies:
     "@wagmi/core": 2.x
@@ -3903,7 +3903,7 @@ __metadata:
     react-dom: ">=18"
     viem: 2.x
     wagmi: 2.x
-  checksum: 8c794e4764ce08c87c4d6189bfb4af9636ab2f81f50a5558d3d3af2c84d91d9802a6f09cbe42cf6a640d209b1957c36b57da0be6cdc5160ec93c6b3ff58cc5a2
+  checksum: 1d7966b1a325186fc212425cd176d44decd4d2acf492cf739b7c082b8b70e2e3484eb683d54409445ab767bf8c9fb5b51291c5a7c24c8e3379d4f1c94599e49c
   languageName: node
   linkType: hard
 
@@ -23839,7 +23839,7 @@ __metadata:
     "@crossmint/client-sdk-react-ui": ^1.11.3
     "@datadog/browser-logs": ^4.48.1
     "@datadog/browser-rum": ^5.8.0
-    "@decent.xyz/the-box": ^4.0.1
+    "@decent.xyz/the-box": ^4.0.5
     "@emoji-mart/data": ^1.1.2
     "@emoji-mart/react": ^1.1.1
     "@giphy/js-fetch-api": ^4.4.0

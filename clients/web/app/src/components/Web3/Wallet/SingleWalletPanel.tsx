@@ -7,7 +7,7 @@ import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { CopyIcon, useCopied } from '@components/ClipboardCopy/ClipboardCopy'
 import { shortAddress } from 'ui/utils/utils'
 import useCopyToClipboard from 'hooks/useCopyToClipboard'
-// import { Analytics } from 'hooks/useAnalytics'
+import { Analytics } from 'hooks/useAnalytics'
 import { useGetAssetSourceParam, useIsAAWallet } from './useGetWalletParam'
 import { NftsList } from './NftsList'
 import { FundWalletModal } from './FundWalletModal'
@@ -27,10 +27,10 @@ export function SingleWalletPanel() {
         openPanel('transfer-assets', { assetSource: walletAddress })
     }
 
-    // const onFundWallet = () => {
-    //     Analytics.getInstance().track('clicked add funds single wallet panel')
-    //     setIsFundWalletModalOpen(true)
-    // }
+    const onFundWallet = () => {
+        Analytics.getInstance().track('clicked add funds single wallet panel')
+        setIsFundWalletModalOpen(true)
+    }
     const [, copy] = useCopyToClipboard()
     const [copied, setCopied] = useCopied()
 
@@ -55,10 +55,10 @@ export function SingleWalletPanel() {
                 <Icon type="linkOutWithFrame" size="square_sm" color="gray2" />
                 <Text strong>Transfer Asset</Text>
             </PanelButton>
-            {/* <PanelButton cursor="pointer" onClick={onFundWallet}>
+            <PanelButton cursor="pointer" onClick={onFundWallet}>
                 <Icon type="plus" size="square_sm" color="gray2" />
                 <Text strong>Fund Wallet</Text>
-            </PanelButton> */}
+            </PanelButton>
             <PanelButton hoverable={false} as="div" cursor="auto" height="auto">
                 <Box width="height_md" alignItems="center">
                     <Icon type="base" size="square_lg" />
