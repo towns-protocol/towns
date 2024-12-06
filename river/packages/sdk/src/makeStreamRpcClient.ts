@@ -1,5 +1,5 @@
-import { PromiseClient, createPromiseClient, type Interceptor } from '@connectrpc/connect'
-import { ConnectTransportOptions, createConnectTransport } from '@connectrpc/connect-web'
+import { PromiseClient, createPromiseClient } from '@connectrpc/connect'
+import { ConnectTransportOptions as ConnectTransportOptionsWeb } from '@connectrpc/connect-web'
 import { StreamService } from '@river-build/proto'
 import { dlog } from '@river-build/dlog'
 import { getEnvVar, randomUrlSelector } from './utils'
@@ -10,6 +10,7 @@ import {
     retryInterceptor,
     type RetryParams,
 } from './rpcInterceptors'
+import { RpcOptions, createHttp2ConnectTransport } from './rpcCommon'
 
 const logInfo = dlog('csb:rpc:info')
 let nextRpcClientNum = 0
@@ -26,18 +27,18 @@ export type MakeRpcClientType = typeof makeStreamRpcClient
 
 export function makeStreamRpcClient(
     dest: string,
-    retryParams: RetryParams = DEFAULT_RETRY_PARAMS,
     refreshNodeUrl?: () => Promise<string>,
-    interceptors?: Interceptor[],
+    opts?: RpcOptions,
 ): StreamRpcClient {
     const transportId = nextRpcClientNum++
+    const retryParams = opts?.retryParams ?? DEFAULT_RETRY_PARAMS
     logInfo('makeStreamRpcClient, transportId =', transportId)
     const url = randomUrlSelector(dest)
     logInfo('makeStreamRpcClient: Connecting to url=', url, ' allUrls=', dest)
-    const options: ConnectTransportOptions = {
+    const options: ConnectTransportOptionsWeb = {
         baseUrl: url,
         interceptors: [
-            ...(interceptors ?? []),
+            ...(opts?.interceptors ?? []),
             loggingInterceptor(transportId),
             retryInterceptor({ ...retryParams, refreshNodeUrl }),
         ],
@@ -53,7 +54,7 @@ export function makeStreamRpcClient(
             useProtoFieldName: true,
         }
     }
-    const transport = createConnectTransport(options)
+    const transport = createHttp2ConnectTransport(options)
 
     const client: StreamRpcClient = createPromiseClient(StreamService, transport) as StreamRpcClient
     client.url = url

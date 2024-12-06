@@ -35,9 +35,7 @@ describe('casablanca', () => {
             provider.config.river.chainConfig,
         )
         const urls = await riverRegistry.getOperationalNodeUrls()
-        const rpcClient = makeStreamRpcClient(urls, undefined, () =>
-            riverRegistry.getOperationalNodeUrls(),
-        )
+        const rpcClient = makeStreamRpcClient(urls, () => riverRegistry.getOperationalNodeUrls())
         const cryptoStore = RiverDbManager.getCryptoDb('abc')
         const entitlementsDelegate = new MockEntitlementsDelegate()
         const client = new CasablancaClient(context, rpcClient, cryptoStore, entitlementsDelegate)

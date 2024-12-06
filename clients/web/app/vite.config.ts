@@ -50,6 +50,7 @@ export default ({ mode }: { mode: string }) => {
                 },
                 target: 'esnext',
             },
+            exclude: ['@connectrpc/connect-node'],
         },
         build: {
             target: 'esnext',

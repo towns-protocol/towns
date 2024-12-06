@@ -4,7 +4,7 @@ import { bin_fromHexString, check } from '@river-build/dlog'
 import { notificationServiceHash, riverSign } from './sign'
 import { isDefined } from './check'
 import { Signer } from 'ethers'
-import { RpcOptions } from './rpcOptions'
+import { RpcOptions } from './rpcCommon'
 import { SignerContext } from './signerContext'
 import { hashPersonalMessage } from '@ethereumjs/util'
 
@@ -35,15 +35,15 @@ export class NotificationService {
             signature,
             ...extraFinishAuthParams,
         })
-
+        const notificationRpcClient = makeNotificationRpcClient(
+            serviceUrl,
+            finishResponse.sessionToken,
+            opts,
+        )
         return {
             startResponse,
             finishResponse,
-            notificationRpcClient: makeNotificationRpcClient(
-                serviceUrl,
-                finishResponse.sessionToken,
-                opts,
-            ),
+            notificationRpcClient,
         }
     }
 

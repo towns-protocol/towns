@@ -1,9 +1,9 @@
 import { PromiseClient, createPromiseClient } from '@connectrpc/connect'
-import { ConnectTransportOptions, createConnectTransport } from '@connectrpc/connect-web'
+import { ConnectTransportOptions } from '@connectrpc/connect-web'
 import { NotificationService } from '@river-build/proto'
 import { dlog } from '@river-build/dlog'
 import { getEnvVar, randomUrlSelector } from './utils'
-import { RpcOptions } from './rpcOptions'
+import { createHttp2ConnectTransport, RpcOptions } from './rpcCommon'
 import {
     DEFAULT_RETRY_PARAMS,
     loggingInterceptor,
@@ -53,7 +53,7 @@ export function makeNotificationRpcClient(
             useProtoFieldName: true,
         }
     }
-    const transport = opts?.createConnectTransport?.(options) ?? createConnectTransport(options)
+    const transport = createHttp2ConnectTransport(options)
     const client: NotificationRpcClient = createPromiseClient(
         NotificationService,
         transport,

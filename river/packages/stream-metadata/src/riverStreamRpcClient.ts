@@ -1,19 +1,14 @@
 import {
-	DEFAULT_RETRY_PARAMS,
 	ParsedStreamResponse,
 	StreamRpcClient,
 	StreamStateView,
 	UnpackEnvelopeOpts,
 	decryptAESGCM,
-	loggingInterceptor,
-	retryInterceptor,
+	makeStreamRpcClient,
 	streamIdAsBytes,
 	streamIdAsString,
 	unpackStream,
 } from '@river-build/sdk'
-import { createPromiseClient } from '@connectrpc/connect'
-import { ConnectTransportOptions, createConnectTransport } from '@connectrpc/connect-node'
-import { StreamService } from '@river-build/proto'
 import { filetypemime } from 'magic-bytes.js'
 import { FastifyBaseLogger } from 'fastify'
 import { LRUCache } from 'lru-cache'
@@ -31,26 +26,6 @@ const clients = new Map<string, StreamRpcClient>()
 const streamClientRequests = new Map<string, Promise<StreamRpcClient>>()
 const streamRequests = new Map<string, Promise<StreamStateView>>()
 const mediaRequests = new Map<string, Promise<MediaContent>>()
-
-let nextRpcClientNum = 0
-export function makeStreamRpcClient(url: string): StreamRpcClient {
-	const transportId = nextRpcClientNum++
-	const retryParams = DEFAULT_RETRY_PARAMS
-	const options: ConnectTransportOptions = {
-		httpVersion: '2',
-		baseUrl: url,
-		interceptors: [loggingInterceptor(transportId), retryInterceptor(retryParams)],
-		defaultTimeoutMs: undefined, // default timeout is undefined, we add a timeout in the retryInterceptor
-	}
-
-	const transport = createConnectTransport(options)
-	const client = createPromiseClient(StreamService, transport) as StreamRpcClient
-	client.url = url
-	client.opts = {
-		retryParams: retryParams,
-	}
-	return client
-}
 
 async function _getStreamClient(logger: FastifyBaseLogger, streamId: string) {
 	let url = streamLocationCache.get(streamId)

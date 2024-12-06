@@ -1,10 +1,10 @@
 import { PromiseClient, createPromiseClient } from '@connectrpc/connect'
-import { ConnectTransportOptions, createConnectTransport } from '@connectrpc/connect-web'
+import { ConnectTransportOptions } from '@connectrpc/connect-web'
 import { AuthenticationService } from '@river-build/proto'
 import { dlog } from '@river-build/dlog'
 import { getEnvVar, randomUrlSelector } from './utils'
 import { DEFAULT_RETRY_PARAMS, loggingInterceptor, retryInterceptor } from './rpcInterceptors'
-import { RpcOptions } from './rpcOptions'
+import { createHttp2ConnectTransport, RpcOptions } from './rpcCommon'
 
 const logInfo = dlog('csb:auto-rpc:info')
 
@@ -46,7 +46,7 @@ export function makeAuthenticationRpcClient(
             useProtoFieldName: true,
         }
     }
-    const transport = opts?.createConnectTransport?.(options) ?? createConnectTransport(options)
+    const transport = createHttp2ConnectTransport(options)
     const client: AuthenticationRpcClient = createPromiseClient(
         AuthenticationService,
         transport,

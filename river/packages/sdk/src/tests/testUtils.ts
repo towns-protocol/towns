@@ -87,7 +87,7 @@ import {
     type TimelineEvent,
 } from '../sync-agent/timeline/models/timeline-types'
 import { SyncState } from '../syncedStreamsLoop'
-import { RetryParams } from '../rpcInterceptors'
+import { RpcOptions } from '../rpcCommon'
 
 const log = dlog('csb:test:util')
 
@@ -137,9 +137,9 @@ const getNextTestUrl = async (): Promise<{
     }
 }
 
-export const makeTestRpcClient = async (opts?: { retryParams?: RetryParams }) => {
+export const makeTestRpcClient = async (opts?: RpcOptions) => {
     const { urls: url, refreshNodeUrl } = await getNextTestUrl()
-    return makeStreamRpcClient(url, opts?.retryParams, refreshNodeUrl, undefined)
+    return makeStreamRpcClient(url, refreshNodeUrl, opts)
 }
 
 export const makeEvent_test = async (

@@ -8,6 +8,7 @@ import {
 	genId,
 	makeSignerContext,
 	makeSpaceStreamId,
+	makeStreamRpcClient,
 	MockEntitlementsDelegate,
 	RiverDbManager,
 	SignerContext,
@@ -26,7 +27,6 @@ import {
 
 import { config } from '../src/environment'
 import { getRiverRegistry } from '../src/evmRpcClient'
-import { makeStreamRpcClient } from '../src/riverStreamRpcClient'
 
 export function isTest(): boolean {
 	return (

@@ -10192,8 +10192,6 @@ __metadata:
     "@bufbuild/buf": ^1.32.0
     "@bufbuild/protobuf": ^1.9.0
     "@bufbuild/protoc-gen-es": ^1.9.0
-    "@connectrpc/connect": ^1.4.0
-    "@connectrpc/connect-web": ^1.4.0
     "@connectrpc/protoc-gen-connect-es": ^1.4.0
     "@river-build/proto-source": "workspace:^"
     "@types/jest": ^29.5.3
@@ -10245,6 +10243,7 @@ __metadata:
   dependencies:
     "@bufbuild/protobuf": ^1.9.0
     "@connectrpc/connect": ^1.4.0
+    "@connectrpc/connect-node": ^1.4.0
     "@connectrpc/connect-web": ^1.4.0
     "@ethereumjs/util": ^8.0.1
     "@river-build/dlog": "workspace:^"
@@ -10288,8 +10287,6 @@ __metadata:
     "@aws-sdk/client-cloudfront": ^3.645.0
     "@bufbuild/buf": ^1.32.0
     "@bufbuild/protobuf": ^1.9.0
-    "@connectrpc/connect": ^1.4.0
-    "@connectrpc/connect-node": ^1.4.0
     "@fastify/cors": ^9.0.1
     "@river-build/dlog": "workspace:^"
     "@river-build/encryption": "workspace:^"
@@ -10332,8 +10329,6 @@ __metadata:
   dependencies:
     "@babel/node": ^7.23.9
     "@bufbuild/protobuf": ^1.9.0
-    "@connectrpc/connect": ^1.4.0
-    "@connectrpc/connect-node": ^1.4.0
     "@river-build/dlog": "workspace:^"
     "@river-build/encryption": "workspace:^"
     "@river-build/proto": "workspace:^"

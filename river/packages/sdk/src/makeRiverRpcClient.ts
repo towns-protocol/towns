@@ -1,17 +1,15 @@
 import { RiverChainConfig, createRiverRegistry } from '@river-build/web3'
 import { StreamRpcClient, makeStreamRpcClient } from './makeStreamRpcClient'
-import { RetryParams } from './rpcInterceptors'
 import { ethers } from 'ethers'
+import { RpcOptions } from './rpcCommon'
 
 export async function makeRiverRpcClient(
     provider: ethers.providers.Provider,
     config: RiverChainConfig,
-    retryParams?: RetryParams,
+    opts?: RpcOptions,
 ): Promise<StreamRpcClient> {
     const riverRegistry = createRiverRegistry(provider, config)
     const urls = await riverRegistry.getOperationalNodeUrls()
-    const rpcClient = makeStreamRpcClient(urls, retryParams, () =>
-        riverRegistry.getOperationalNodeUrls(),
-    )
+    const rpcClient = makeStreamRpcClient(urls, () => riverRegistry.getOperationalNodeUrls(), opts)
     return rpcClient
 }

@@ -1,5 +1,5 @@
 import { RiverRegistry, SpaceDapp } from '@river-build/web3'
-import { MakeRpcClientType } from '../../makeStreamRpcClient'
+import { makeStreamRpcClient } from '../../makeStreamRpcClient'
 import { RiverChain } from './models/riverChain'
 import { Identifiable, LoadPriority, Store } from '../../store/store'
 import { check, dlogger } from '@river-build/dlog'
@@ -64,7 +64,6 @@ export class RiverConnection extends PersistedObservable<RiverConnectionModel> {
         store: Store,
         public spaceDapp: SpaceDapp,
         public riverRegistryDapp: RiverRegistry,
-        private makeRpcClient: MakeRpcClientType,
         public clientParams: ClientParams,
     ) {
         super({ id: '0', userExists: false }, store, LoadPriority.high)
@@ -84,7 +83,7 @@ export class RiverConnection extends PersistedObservable<RiverConnectionModel> {
             this.riverChain.urls(),
             this.riverChain.userStreamExists(),
         ])
-        this.createStreamsClient(urls)
+        await this.createStreamsClient(urls)
         if (userStreamExists) {
             await this.login()
         } else {
@@ -140,7 +139,7 @@ export class RiverConnection extends PersistedObservable<RiverConnectionModel> {
         this.views.push(viewFn)
     }
 
-    private createStreamsClient(urls: string): void {
+    private async createStreamsClient(urls: string): Promise<void> {
         if (this.client !== undefined) {
             // this is wired up to be reactive to changes in the urls
             logger.log('RiverConnection: rpc urls changed, client already set', urls)
@@ -151,15 +150,17 @@ export class RiverConnection extends PersistedObservable<RiverConnectionModel> {
             return
         }
         logger.log(`setting rpcClient with urls: "${urls}"`)
-        const rpcClient = this.makeRpcClient(
+        const rpcClient = makeStreamRpcClient(
             urls,
-            this.clientParams.rpcRetryParams,
             () => this.riverRegistryDapp.getOperationalNodeUrls(),
-            [
-                expiryInterceptor({
-                    onTokenExpired: this.clientParams.onTokenExpired,
-                }),
-            ],
+            {
+                retryParams: this.clientParams.rpcRetryParams,
+                interceptors: [
+                    expiryInterceptor({
+                        onTokenExpired: this.clientParams.onTokenExpired,
+                    }),
+                ],
+            },
         )
         const client = new TransactionalClient(
             this.store,

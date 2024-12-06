@@ -3,6 +3,7 @@ import {
     isDecryptedEvent,
     makeRiverConfig,
     makeSignerContext,
+    makeStreamRpcClient,
     NotificationService,
     randomUrlSelector,
 } from '@river-build/sdk'
@@ -21,10 +22,8 @@ import { getSystemInfo } from './utils/systemInfo'
 import { waitFor } from './utils/waitFor'
 import { ethers, Wallet } from 'ethers'
 import { RedisStorage } from './utils/storage'
-import { makeHttp2StreamRpcClient } from './utils/rpc-http2'
 import { createRiverRegistry } from '@river-build/web3'
 import { getLogger } from './utils/logger'
-import { createConnectTransport, ConnectTransportOptions } from '@connectrpc/connect-node'
 
 check(isSet(process.env.RIVER_ENV), 'process.env.RIVER_ENV')
 
@@ -44,9 +43,7 @@ async function spamInfo(count: number) {
     const riverRegistry = createRiverRegistry(staticRiverProvider, config.river.chainConfig)
     const urls = await riverRegistry.getOperationalNodeUrls()
     const selectedUrl = randomUrlSelector(urls)
-    const rpcClient = makeHttp2StreamRpcClient(selectedUrl, undefined, () =>
-        riverRegistry.getOperationalNodeUrls(),
-    )
+    const rpcClient = makeStreamRpcClient(selectedUrl, () => riverRegistry.getOperationalNodeUrls())
     for (let i = 0; i < count; i++) {
         logger.debug({ iteration: i }, 'iteration')
         const info = await rpcClient.info(new InfoRequest({}), {
@@ -152,7 +149,7 @@ async function demoExternalStoreage() {
 
 const registerNotificationService = async () => {
     // demo connecting to the notification service
-    const notificationServiceUrl = process.env.NOTIFICATION_SERVICE_URL // 'https://river-notification-service-alpha.towns.com/' // ?? 'http://localhost:4040
+    const notificationServiceUrl = 'https://river-notification-service-alpha.towns.com/' // ?? 'http://localhost:4040
     if (!notificationServiceUrl) {
         logger.info('NOTIFICATION_SERVICE_URL is not set')
         return
@@ -163,15 +160,7 @@ const registerNotificationService = async () => {
     const signerContext = await makeSignerContext(wallet, delegateWallet, { days: 1 })
 
     const { startResponse, finishResponse, notificationRpcClient } =
-        await NotificationService.authenticate(signerContext, notificationServiceUrl, {
-            createConnectTransport: (opts) => {
-                const options: ConnectTransportOptions = {
-                    ...opts,
-                    httpVersion: '2',
-                }
-                return createConnectTransport(options)
-            },
-        })
+        await NotificationService.authenticate(signerContext, notificationServiceUrl)
     logger.info({ startResponse, finishResponse }, 'authenticated')
 
     let settings = await notificationRpcClient.getSettings(new GetSettingsRequest())

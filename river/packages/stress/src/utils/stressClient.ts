@@ -13,7 +13,6 @@ import { PlainMessage } from '@bufbuild/protobuf'
 import { ChannelMessage_Post_Attachment, ChannelMessage_Post_Mention } from '@river-build/proto'
 import { waitFor } from './waitFor'
 import { IStorage } from './storage'
-import { makeHttp2StreamRpcClient } from './rpc-http2'
 import { sha256 } from 'ethers/lib/utils'
 import { getLogger } from './logger'
 
@@ -41,7 +40,6 @@ export async function makeStressClient(
     const botPrivateKey = bot.rootWallet.privateKey
     const agent = await bot.makeSyncAgent({
         disablePersistenceStore: true,
-        makeRpcClient: makeHttp2StreamRpcClient,
         unpackEnvelopeOpts: {
             disableHashValidation: true,
             disableSignatureValidation: true,
