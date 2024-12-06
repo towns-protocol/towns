@@ -30,6 +30,7 @@
         "watch": "tsc --watch"
     },
     "dependencies": {
+        "@bufbuild/protobuf": "^1.9.0",
         "@river-build/dlog": "workspace:^",
         "@river-build/generated": "workspace:^",
         "@river-build/proto": "workspace:^",

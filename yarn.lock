@@ -37159,6 +37159,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "use-towns-client@workspace:clients/web/lib"
   dependencies:
+    "@bufbuild/protobuf": ^1.9.0
     "@river-build/dlog": "workspace:^"
     "@river-build/generated": "workspace:^"
     "@river-build/proto": "workspace:^"
