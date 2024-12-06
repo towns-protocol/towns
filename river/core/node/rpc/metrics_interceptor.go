@@ -33,7 +33,7 @@ func (s *Service) NewMetricsInterceptor() connect.Interceptor {
 		rpcDuration: s.metrics.NewHistogramVecEx(
 			"rpc_duration_seconds",
 			"RPC duration in seconds",
-			infra.DefaultDurationBucketsSeconds,
+			infra.DefaultRpcDurationBucketsSeconds,
 			"method",
 		),
 		unaryInflight: s.metrics.NewGaugeVecEx("grpc_unary_inflight", "gRPC unary calls in flight", "method"),

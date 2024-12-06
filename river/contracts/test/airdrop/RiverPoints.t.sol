@@ -2,7 +2,6 @@
 pragma solidity ^0.8.19;
 
 // utils
-import {DeployRiverAirdrop} from "contracts/scripts/deployments/diamonds/DeployRiverAirdrop.s.sol";
 
 //interfaces
 import {IDiamond} from "contracts/src/diamond/Diamond.sol";
@@ -10,6 +9,7 @@ import {IOwnableBase} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 import {IRiverPointsBase} from "contracts/src/tokens/points/IRiverPoints.sol";
 
 //libraries
+import {CheckIn} from "contracts/src/tokens/points/CheckIn.sol";
 
 // contracts
 import {River} from "contracts/src/tokens/river/base/River.sol";
@@ -83,5 +83,74 @@ contract RiverPointsTest is
     uint256[] memory _values = toDyn(values);
     vm.prank(deployer);
     pointsFacet.batchMintPoints(_accounts, _values);
+  }
+
+  modifier givenCheckedIn(address user) {
+    vm.assume(user != address(0));
+    vm.prank(user);
+    pointsFacet.checkIn();
+    _;
+  }
+
+  modifier givenUserCheckInAfterMaxStreak(address user) {
+    vm.assume(user != address(0));
+    uint256 currentTime = block.timestamp;
+    for (uint256 i; i < CheckIn.MAX_STREAK_PER_CHECKIN; ++i) {
+      vm.warp(currentTime + CheckIn.CHECK_IN_WAIT_PERIOD + 1);
+      vm.prank(user);
+      pointsFacet.checkIn();
+      currentTime = block.timestamp;
+    }
+    _;
+  }
+
+  function test_checkInFirstTime(address user) external givenCheckedIn(user) {
+    assertEq(pointsFacet.balanceOf(user), 1 ether);
+    assertEq(pointsFacet.getCurrentStreak(user), 1);
+    assertEq(pointsFacet.getLastCheckIn(user), block.timestamp);
+  }
+
+  function test_checkIn_revertIf_checkInPeriodNotPassed(
+    address user
+  ) external givenCheckedIn(user) {
+    vm.prank(user);
+    vm.expectRevert(RiverPoints__CheckInPeriodNotPassed.selector);
+    pointsFacet.checkIn();
+  }
+
+  function test_checkIn_afterTimePeriodPassed(
+    address user
+  ) external givenCheckedIn(user) {
+    vm.warp(block.timestamp + CheckIn.CHECK_IN_WAIT_PERIOD + 1);
+
+    uint256 currentStreak = pointsFacet.getCurrentStreak(user);
+    uint256 currentPoints = pointsFacet.balanceOf(user);
+    (uint256 pointsToAward, uint256 newStreak) = CheckIn.getPointsAndStreak(
+      pointsFacet.getLastCheckIn(user),
+      currentStreak,
+      block.timestamp
+    );
+
+    vm.prank(user);
+    pointsFacet.checkIn();
+
+    assertEq(pointsFacet.balanceOf(user), currentPoints + pointsToAward);
+    assertEq(pointsFacet.getCurrentStreak(user), newStreak);
+  }
+
+  function test_checkIn_afterMaxStreak(
+    address user
+  ) external givenUserCheckInAfterMaxStreak(user) {
+    uint256 currentPoints = pointsFacet.balanceOf(user);
+
+    vm.warp(block.timestamp + CheckIn.CHECK_IN_WAIT_PERIOD + 1);
+
+    vm.prank(user);
+    pointsFacet.checkIn();
+
+    assertEq(
+      pointsFacet.balanceOf(user),
+      currentPoints + CheckIn.MAX_POINTS_PER_CHECKIN
+    );
   }
 }

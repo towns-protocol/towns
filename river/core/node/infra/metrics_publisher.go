@@ -13,23 +13,26 @@ import (
 	"github.com/river-build/river/core/node/dlog"
 )
 
-var DefaultDurationBucketsSeconds = []float64{
-	0.001,
-	0.002,
-	0.005,
+// In practice, most rpc calls seem to land between 10 and 50ms, sometimes up to 100ms.
+// Entitlement calls can sometimes take up to 2s.
+var DefaultRpcDurationBucketsSeconds = []float64{
 	0.01,
-	0.02,
-	0.03,
-	0.06,
-	0.12,
-	0.3,
-	0.6,
-	1.2,
-	1.8,
-	2.8,
-	3.6,
-	4.8,
-	10,
+	0.05,
+	0.1,
+	0.5,
+	1.0,
+	5.0,
+}
+
+// Most db operations appear to complete in <= 60ms in practice.
+var DefaultDbTxDurationBucketsSeconds = []float64{
+	.001,
+	.003,
+	.005,
+	.01,
+	.05,
+	.1,
+	1,
 }
 
 // MetricsPublisher both provides handler to publish metrics from the given registry

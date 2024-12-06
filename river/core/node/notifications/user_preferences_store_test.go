@@ -77,6 +77,9 @@ func TestUserPreferencesStore(t *testing.T) {
 	t.Run("subscribeAPN", func(t *testing.T) {
 		subscribeAPN(req, ctx, store)
 	})
+	t.Run("webPushExpired", func(t *testing.T) {
+		webPushExpired(req, ctx, store)
+	})
 }
 
 func userPreferencesNotExists(req *require.Assertions, ctx context.Context, store *storage.PostgresNotificationStore) {
@@ -256,4 +259,42 @@ func subscribeAPN(req *require.Assertions, ctx context.Context, store *storage.P
 	} else {
 		req.Equal(deviceToken1[:], subs[0].DeviceToken)
 	}
+}
+
+func webPushExpired(req *require.Assertions, ctx context.Context, store *storage.PostgresNotificationStore) {
+	wallet, err := crypto.NewWallet(ctx)
+	req.NoError(err)
+
+	exp1 := webpush.Subscription{
+		Endpoint: fmt.Sprintf("https://%s.local.1", wallet.Address),
+		Keys: webpush.Keys{
+			Auth:   "test.auth.1",
+			P256dh: "p256dh.test.1",
+		},
+	}
+
+	exp2 := webpush.Subscription{
+		Endpoint: fmt.Sprintf("https://%s.local.2", wallet.Address),
+		Keys: webpush.Keys{
+			Auth:   "test.auth.2",
+			P256dh: "p256dh.test.2",
+		},
+	}
+
+	err = store.AddWebPushSubscription(ctx, wallet.Address, &exp1)
+	req.NoError(err)
+	err = store.AddWebPushSubscription(ctx, wallet.Address, &exp2)
+	req.NoError(err)
+
+	got, err := store.GetWebPushSubscriptions(ctx, wallet.Address)
+	req.NoError(err)
+
+	req.Equal(2, len(got))
+
+	req.NoError(store.RemoveExpiredWebPushSubscription(ctx, wallet.Address, &exp1))
+	got, err = store.GetWebPushSubscriptions(ctx, wallet.Address)
+	req.NoError(err)
+
+	req.Equal(1, len(got))
+	req.Equal(exp2.Endpoint, got[0].Sub.Endpoint)
 }

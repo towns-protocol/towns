@@ -47,7 +47,7 @@ func NewEvaluatorFromConfigWithBlockchainInfo(
 		evalHistrogram: metrics.NewHistogramVecEx(
 			"entitlement_op_duration_seconds",
 			"Duration of entitlement evaluation",
-			infra.DefaultDurationBucketsSeconds,
+			infra.DefaultRpcDurationBucketsSeconds,
 			"operation",
 		),
 		ethChainIds: config.GetEtherBasedBlockchains(

@@ -237,7 +237,7 @@ func New(
 		callDurations: metrics.NewHistogramVecEx(
 			"call_duration_seconds",
 			"Durations of contract calls",
-			infra.DefaultDurationBucketsSeconds,
+			infra.DefaultRpcDurationBucketsSeconds,
 			"op",
 		),
 	}

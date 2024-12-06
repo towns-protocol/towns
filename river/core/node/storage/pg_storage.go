@@ -516,7 +516,7 @@ func (s *PostgresEventStore) init(
 	s.txDuration = metrics.NewHistogramVecEx(
 		"dbtx_duration_seconds",
 		"PG transaction duration",
-		infra.DefaultDurationBucketsSeconds,
+		infra.DefaultDbTxDurationBucketsSeconds,
 		"name",
 	)
 
