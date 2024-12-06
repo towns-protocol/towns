@@ -24,6 +24,7 @@ import { usePublicPageLoginFlow } from 'routes/PublicTownPage/usePublicPageLogin
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { atoms } from 'ui/styles/atoms.css'
 import { shortAddress } from 'ui/utils/utils'
+import { useStore } from 'store/store'
 import { CopyWalletAddressButton } from '../GatedTownModal/Buttons'
 import { PayWithCardButton } from './PayWithCardButton'
 
@@ -57,6 +58,7 @@ function UserOpTxModalContent({
 }): JSX.Element {
     const [showCrossmintPayment, setShowCrossmintPayment] = useState(false)
     const [showEthPayment, setShowEthPayment] = useState(false)
+    const { setRecentlyMintedSpaceToken } = useStore()
     const {
         currOp,
         currOpDecodedCallData,
@@ -199,13 +201,18 @@ function UserOpTxModalContent({
     }
 
     const handleCrossmintComplete = async () => {
-        setShowCrossmintPayment(false)
         if (clientSingleton && signerContext && spaceInfo?.name) {
             await joinAfterSuccessfulCrossmint({
                 clientSingleton,
                 signerContext,
                 analyticsData: { spaceName: spaceInfo.name },
             })
+            if (spaceId) {
+                setRecentlyMintedSpaceToken({
+                    spaceId,
+                    isOwner: false,
+                })
+            }
         } else {
             console.warn(
                 'Unable to join after Crossmint payment:',
@@ -214,8 +221,9 @@ function UserOpTxModalContent({
                 spaceInfo?.name ? null : 'spaceInfo.name is undefined',
             )
         }
-        endPublicPageLoginFlow()
         userOpsStore.setState({ currOp: undefined, confirm: undefined, deny: undefined })
+        endPublicPageLoginFlow()
+        setShowCrossmintPayment(false)
     }
 
     const isJoinSpace =
@@ -249,7 +257,7 @@ function UserOpTxModalContent({
 
         if (showEthPayment && balanceIsLessThanCost) {
             return (
-                <Box paddingTop="md" gap="md" maxWidth="400">
+                <Box paddingTop="md" gap="md" width={!_isTouch ? '400' : undefined}>
                     <Text size="sm" color="error">
                         You need to bridge ETH on Base and then transfer to your towns wallet to pay{' '}
                         with ETH.{' '}
@@ -351,7 +359,7 @@ function UserOpTxModalContent({
                 />
             </Box>
             {!showCrossmintPayment && (
-                <Box gap centerContent width={!_isTouch ? '400' : undefined} maxWidth="400">
+                <Box gap centerContent width={!_isTouch ? '400' : undefined}>
                     <Box paddingBottom="sm">
                         <Text strong size="lg">
                             Confirm Payment
@@ -394,7 +402,7 @@ function UserOpTxModalContent({
                         </Box>
                     </Box>
 
-                    {showEthPayment && (
+                    {showEthPayment ? (
                         <Box
                             padding
                             color="default"
@@ -432,6 +440,43 @@ function UserOpTxModalContent({
                                 )}
                             </Box>
                         </Box>
+                    ) : (
+                        !balanceIsLessThanCost && (
+                            <Box
+                                padding
+                                color="default"
+                                background="level3"
+                                rounded="sm"
+                                width="100%"
+                                gap="md"
+                            >
+                                {toAddress && (
+                                    <Box borderBottom="level4" paddingBottom="sm">
+                                        <RecipientText sendingTo={toAddress} />
+                                    </Box>
+                                )}
+
+                                <Box horizontal justifyContent="spaceBetween" alignItems="center">
+                                    <Box horizontal gap="sm">
+                                        <Box position="relative" width="x3">
+                                            <Icon position="absoluteCenter" type="wallet" />{' '}
+                                        </Box>
+                                        <Text>
+                                            {isLoadingBalance
+                                                ? 'Fetching balance...'
+                                                : smartAccountAddress
+                                                ? shortAddress(smartAccountAddress)
+                                                : ''}
+                                        </Text>
+                                    </Box>
+                                    {formattedBalance ? (
+                                        <Text size="md">{formattedBalance} Available</Text>
+                                    ) : (
+                                        <ButtonSpinner />
+                                    )}
+                                </Box>
+                            </Box>
+                        )
                     )}
                     {rejectedSponsorshipReason && (
                         <Box padding horizontal gap background="level3" rounded="sm">

@@ -1,16 +1,19 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import {
     CrossmintCheckoutProvider,
     CrossmintEmbeddedCheckout,
     CrossmintProvider,
     useCrossmintCheckout,
 } from '@crossmint/client-sdk-react-ui'
+import { EmailWithMetadata, usePrivy } from '@privy-io/react-auth'
 import { BASE_MAINNET, SpaceAddressFromSpaceId } from 'use-towns-client'
 import { Box, Stack } from '@ui'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { Spinner } from 'ui/components/Spinner'
+import { vars } from 'ui/styles/vars.css'
 import { env } from 'utils/environment'
 import { Analytics } from 'hooks/useAnalytics'
+import { isTouch } from 'hooks/useDevice'
 import { useGatherSpaceDetailsAnalytics } from './Analytics/useGatherSpaceDetailsAnalytics'
 import { getSpaceNameFromCache } from './Analytics/getSpaceNameFromCache'
 
@@ -35,6 +38,21 @@ const CrossmintPaymentContent = ({
     const analytics = useGatherSpaceDetailsAnalytics({
         spaceId,
     })
+    const _isTouch = isTouch()
+    const hasTriggeredPayment = useRef(false)
+    const hasTriggeredComplete = useRef(false)
+
+    const { user } = usePrivy()
+
+    const receiptEmail = useMemo(() => {
+        const linkedAccounts = user?.linkedAccounts
+
+        const emailAccount = linkedAccounts?.find(
+            (account) => account.type === 'email',
+        ) as EmailWithMetadata
+
+        return emailAccount?.address || ''
+    }, [user?.linkedAccounts])
 
     const tracked = useMemo(
         () => ({
@@ -48,16 +66,17 @@ const CrossmintPaymentContent = ({
     )
 
     useEffect(() => {
-        if (order?.phase === 'payment') {
+        if (order?.phase === 'payment' && !hasTriggeredPayment.current) {
             Analytics.getInstance().track('clicked submit card payment', tracked)
+            hasTriggeredPayment.current = true
         }
-        if (order?.phase === 'completed' && onComplete) {
+        if (order?.phase === 'completed' && onComplete && !hasTriggeredComplete.current) {
             Analytics.getInstance().track('crossmint order completed', tracked)
+            setIsLoading(true)
             onComplete()
+            hasTriggeredComplete.current = true
         }
     }, [order?.phase, onComplete, tracked])
-
-    console.log({ price, priceInWei: analytics.priceInWei })
 
     useEffect(() => {
         // Give the component a moment to initialize
@@ -70,7 +89,13 @@ const CrossmintPaymentContent = ({
     }
 
     return (
-        <Box background="level1" paddingTop="sm" position="relative" minHeight="400" minWidth="400">
+        <Box
+            background="level1"
+            paddingTop="sm"
+            position="relative"
+            minHeight="400"
+            width={!_isTouch ? '400' : undefined}
+        >
             {isLoading ? (
                 <Stack centerContent height="250">
                     <Spinner />
@@ -82,25 +107,35 @@ const CrossmintPaymentContent = ({
                             fontFamily: 'Inter, system-ui, sans-serif',
                             colors: {
                                 backgroundPrimary: '#1A1A1A',
-                                textPrimary: '#FFFFFF',
+                                textPrimary: '#fff',
                                 textSecondary: '#A0A0A0',
-                                borderPrimary: '#333333',
+                                borderPrimary: vars.color.layer.level3,
                                 accent: '#21E078',
                             },
                         },
                         rules: {
                             Input: {
                                 colors: {
-                                    background: '#2D2D2D',
+                                    background: vars.color.background.level2,
                                     border: '#404040',
-                                    text: '#FFFFFF',
+                                    text: '#fff',
                                     placeholder: '#666666',
+                                },
+                                hover: {
+                                    colors: {
+                                        background: vars.color.background.level3,
+                                    },
+                                },
+                                focus: {
+                                    colors: {
+                                        background: vars.color.background.level3,
+                                    },
                                 },
                             },
                             PrimaryButton: {
                                 colors: {
                                     background: '#21E078',
-                                    text: '#000',
+                                    text: vars.color.text.onTone,
                                 },
                                 hover: {
                                     colors: {
@@ -111,6 +146,9 @@ const CrossmintPaymentContent = ({
                             },
                             DestinationInput: {
                                 display: 'hidden',
+                            },
+                            ReceiptEmailInput: {
+                                display: receiptEmail ? 'hidden' : undefined,
                             },
                         },
                     }}
@@ -134,6 +172,7 @@ const CrossmintPaymentContent = ({
                                 googlePay: true,
                             },
                         },
+                        receiptEmail,
                     }}
                 />
             )}
