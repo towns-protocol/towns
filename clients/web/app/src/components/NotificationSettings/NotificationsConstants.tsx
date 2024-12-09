@@ -5,6 +5,7 @@ import {
     GdmChannelSettingValue,
     SpaceChannelSettingValue,
 } from '@river-build/proto'
+import { staticAssertNever } from 'use-towns-client'
 import { IconName } from '@ui'
 
 const MenuConfig = {
@@ -55,6 +56,44 @@ export const channelNotificationSettings: ChannelNotificationSetting[] = [
         ...MenuConfig.muted,
     },
 ]
+
+export function resetToSpaceDefault(spaceDefault: SpaceChannelSettingValue) {
+    const menuConfig = () => {
+        switch (spaceDefault) {
+            case SpaceChannelSettingValue.SPACE_CHANNEL_SETTING_MESSAGES_ALL:
+                return {
+                    ...MenuConfig.all,
+                    title: `Reset to Space Default (${MenuConfig.all.title})`,
+                }
+            case SpaceChannelSettingValue.SPACE_CHANNEL_SETTING_ONLY_MENTIONS_REPLIES_REACTIONS:
+                return {
+                    ...MenuConfig.mentionsRepliesReactions,
+                    title: `Reset to Space Default (${MenuConfig.mentionsRepliesReactions.title})`,
+                }
+            case SpaceChannelSettingValue.SPACE_CHANNEL_SETTING_NO_MESSAGES:
+                return {
+                    ...MenuConfig.notificationsOff,
+                    title: `Reset to Space Default (${MenuConfig.notificationsOff.title})`,
+                }
+            case SpaceChannelSettingValue.SPACE_CHANNEL_SETTING_NO_MESSAGES_AND_MUTE:
+                return {
+                    ...MenuConfig.muted,
+                    title: `Reset to Space Default (${MenuConfig.muted.title})`,
+                }
+            case SpaceChannelSettingValue.SPACE_CHANNEL_SETTING_UNSPECIFIED:
+                return {
+                    ...MenuConfig.mentionsRepliesReactions,
+                    title: `Reset to Space Default (${MenuConfig.mentionsRepliesReactions.title})`,
+                }
+            default:
+                staticAssertNever(spaceDefault)
+        }
+    }
+    return {
+        value: SpaceChannelSettingValue.SPACE_CHANNEL_SETTING_UNSPECIFIED, // reset channel to unspecified so that it picks up the space default
+        ...menuConfig(),
+    }
+}
 
 export const gdmNotificationSettings: {
     value: GdmChannelSettingValue

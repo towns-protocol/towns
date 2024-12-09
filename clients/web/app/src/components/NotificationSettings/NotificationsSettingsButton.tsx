@@ -1,11 +1,14 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNotificationSettings } from 'use-towns-client'
+import { SpaceChannelSettingValue } from '@river-build/proto'
+import { spaceIdFromChannelId } from '@river-build/sdk'
 import { Box, Icon, Paragraph, PopupMenu, Stack } from '@ui'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import {
     channelNotificationSettings,
     dmNotificationSettings,
     gdmNotificationSettings,
+    resetToSpaceDefault,
 } from './NotificationsConstants'
 
 type Props =
@@ -60,6 +63,7 @@ export function TownNotificationsButton(props: Props) {
         notificationSettingsClient,
         getSpaceSetting,
         getChannelSetting,
+        getRawChannelSetting,
         getDmSetting,
         getGdmSetting,
         getGdmGlobalSetting,
@@ -76,11 +80,15 @@ export function TownNotificationsButton(props: Props) {
                 )
             }
             case 'channel': {
-                return makeSettingsOptions(
-                    channelNotificationSettings,
-                    getChannelSetting(props.channelId),
-                    (value) =>
-                        notificationSettingsClient?.setChannelSetting(props.channelId, value),
+                const rawValue = getRawChannelSetting(props.channelId)
+                let settings = channelNotificationSettings
+                if (rawValue !== SpaceChannelSettingValue.SPACE_CHANNEL_SETTING_UNSPECIFIED) {
+                    const spaceId = spaceIdFromChannelId(props.channelId)
+                    const spaceValue = getSpaceSetting(spaceId)
+                    settings = [...channelNotificationSettings, resetToSpaceDefault(spaceValue)]
+                }
+                return makeSettingsOptions(settings, getChannelSetting(props.channelId), (value) =>
+                    notificationSettingsClient?.setChannelSetting(props.channelId, value),
                 )
             }
             case 'gdm': {
@@ -118,6 +126,7 @@ export function TownNotificationsButton(props: Props) {
         getDmSetting,
         getGdmGlobalSetting,
         getGdmSetting,
+        getRawChannelSetting,
         getSpaceSetting,
         notificationSettingsClient,
         props,

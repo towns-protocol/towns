@@ -433,6 +433,26 @@ export function useNotificationSettings() {
         [data.settings?.space],
     )
 
+    const getRawChannelSetting = useCallback(
+        (channelId: string): SpaceChannelSettingValue => {
+            const spaceId = spaceIdFromChannelId(channelId)
+            const spaceSetting = data.settings?.space.find(
+                (s) => streamIdAsString(s.spaceId) === spaceId,
+            )
+            if (spaceSetting) {
+                const channelSetting = spaceSetting.channels.find(
+                    (c) => streamIdAsString(c.channelId) === channelId,
+                )
+                // if channel is set
+                if (channelSetting) {
+                    return channelSetting.value
+                }
+            }
+            return SpaceChannelSettingValue.SPACE_CHANNEL_SETTING_UNSPECIFIED
+        },
+        [data.settings],
+    )
+
     const getDmGlobalSetting = useCallback((): DmChannelSettingValue => {
         if (data.settings && data.settings.dmGlobal !== DmChannelSettingValue.DM_UNSPECIFIED) {
             return data.settings?.dmGlobal
@@ -480,6 +500,7 @@ export function useNotificationSettings() {
         settings: data.settings,
         getSpaceSetting,
         getChannelSetting,
+        getRawChannelSetting,
         getDmSetting,
         getDmGlobalSetting,
         getGdmSetting,
