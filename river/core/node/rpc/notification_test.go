@@ -17,6 +17,9 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	eth_crypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/google/go-cmp/cmp"
+	payload2 "github.com/sideshow/apns2/payload"
+	"github.com/stretchr/testify/require"
+
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/events"
 	"github.com/river-build/river/core/node/notifications/push"
@@ -26,8 +29,6 @@ import (
 	. "github.com/river-build/river/core/node/shared"
 	"github.com/river-build/river/core/node/testutils"
 	"github.com/river-build/river/core/node/testutils/testcert"
-	payload2 "github.com/sideshow/apns2/payload"
-	"github.com/stretchr/testify/require"
 )
 
 // TestNotifications is designed in such a way that all tests are run in parallel
@@ -1564,4 +1565,32 @@ func spaceChannelSettings(
 
 	test.req.Equal(request3.Msg.ChannelId, channel2.ChannelId)
 	test.req.Equal(request3.Msg.Value, channel2.Value)
+
+	request5 := connect.NewRequest(&SetSpaceChannelSettingsRequest{
+		ChannelId: channel2ID[:],
+		SpaceId:   test.spaceID[:],
+		Value:     SpaceChannelSettingValue_SPACE_CHANNEL_SETTING_UNSPECIFIED,
+	})
+	authorize(ctx, test.req, test.authClient, user, request5)
+
+	_, err = test.notificationClient.SetSpaceChannelSettings(ctx, request5)
+	test.req.NoError(err, "SetSpaceChannelSettings failed")
+
+	authorize(ctx, test.req, test.authClient, user, request4)
+
+	_, err = test.notificationClient.SetSpaceSettings(ctx, request4)
+	test.req.NoError(err, "SetSpaceSettings failed")
+
+	// ensure that the settings are correct applied
+	settingsResp, err = test.notificationClient.GetSettings(ctx, request1)
+	test.req.NoError(err, "GetSettings failed")
+
+	settings = settingsResp.Msg
+
+	space = settings.GetSpace()[0]
+	// channel2 should have been removed, only channel1 should be left
+	test.req.Equal(1, len(space.Channels))
+	// channel1 is the one that was set to messages all, make sure it's still there
+	test.req.Equal(space.Channels[0].ChannelId, channel1.ChannelId)
+	test.req.Equal(space.Channels[0].Value, SpaceChannelSettingValue_SPACE_CHANNEL_SETTING_MESSAGES_ALL)
 }

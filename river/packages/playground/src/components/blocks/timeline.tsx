@@ -14,7 +14,7 @@ import {
     isChannelStreamId,
     spaceIdFromChannelId,
 } from '@river-build/sdk'
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -77,19 +77,28 @@ export const Timeline = ({ streamId, showThreadMessages, threads, events }: Time
                             {isPending ? 'Loading more...' : 'Scrollback'}
                         </Button>
                     )}
-                    {events.flatMap((event) =>
-                        event.content?.kind === RiverTimelineEvent.RoomMessage &&
-                        (showThreadMessages || !event.threadParentId)
-                            ? [
-                                  <Message
-                                      streamId={streamId}
-                                      key={event.eventId}
-                                      event={event}
-                                      thread={threads?.[event.eventId]}
-                                  />,
-                              ]
-                            : [],
-                    )}
+                    {events.map((event) => {
+                        if (event.content?.kind === RiverTimelineEvent.RoomMessage) {
+                            if (showThreadMessages || !event.threadParentId) {
+                                return (
+                                    <Message
+                                        streamId={streamId}
+                                        key={event.eventId}
+                                        event={event}
+                                        thread={threads?.[event.eventId]}
+                                    />
+                                )
+                            }
+                            return null
+                        }
+                        if (
+                            event.content?.kind === RiverTimelineEvent.RoomMessageEncrypted ||
+                            event.content?.kind === RiverTimelineEvent.RoomMessageEncryptedWithRef
+                        ) {
+                            return <EncryptedMessage key={event.eventId} />
+                        }
+                        return null
+                    })}
                 </div>
             </ScrollArea>
             <SendMessage streamId={streamId} />
@@ -272,5 +281,21 @@ const Reaction = ({
             <span className="text-sm">{getNativeEmojiFromName(reaction)}</span>
             <span className="text-xs">{Object.keys(users).length}</span>
         </button>
+    )
+}
+
+const EncryptedMessage = () => {
+    const [random] = useState(Math.random())
+    return (
+        <div
+            className={cn(
+                'flex rounded-sm border border-foreground/10 bg-muted px-4 py-2',
+                random < 0.2 ? 'w-3/4' : random < 0.4 ? 'w-2/4' : random < 0.6 ? 'w-1/4' : 'w-3/4',
+            )}
+        >
+            <span className="animate-pulse text-sm text-muted-foreground">
+                Decrypting message...
+            </span>
+        </div>
     )
 }

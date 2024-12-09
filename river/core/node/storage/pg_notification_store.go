@@ -344,6 +344,9 @@ func (s *PostgresNotificationStore) SetChannelSetting(
 	channelID shared.StreamId,
 	value SpaceChannelSettingValue,
 ) error {
+	if value == SpaceChannelSettingValue_SPACE_CHANNEL_SETTING_UNSPECIFIED {
+		return s.RemoveChannelSetting(ctx, userID, channelID)
+	}
 	return s.txRunner(
 		ctx,
 		"SetChannelSetting",
@@ -385,7 +388,7 @@ func (s *PostgresNotificationStore) RemoveChannelSetting(
 		"RemoveChannelSetting",
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
-			return s.removeChannelSetting(ctx, tx, userID, channelID)
+			return s.removeChannelSettingTx(ctx, tx, userID, channelID)
 		},
 		nil,
 		"userID", userID,
@@ -393,7 +396,7 @@ func (s *PostgresNotificationStore) RemoveChannelSetting(
 	)
 }
 
-func (s *PostgresNotificationStore) removeChannelSetting(
+func (s *PostgresNotificationStore) removeChannelSettingTx(
 	ctx context.Context,
 	tx pgx.Tx,
 	userID common.Address,

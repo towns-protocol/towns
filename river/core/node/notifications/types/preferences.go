@@ -283,7 +283,9 @@ func (up *UserPreferences) WantNotificationForSpaceChannelMessage(
 
 		// if there is a channel specific setting use that
 		if chanSetting, found := spacePreferences.Channels[channel]; found {
-			setting = chanSetting
+			if chanSetting != SpaceChannelSettingValue_SPACE_CHANNEL_SETTING_UNSPECIFIED {
+				setting = chanSetting
+			}
 		}
 	}
 
