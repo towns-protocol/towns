@@ -1,12 +1,12 @@
 import React, { useMemo, useState } from 'react'
-import { Box, Icon, Paragraph } from '@ui'
+import { Box, BoxProps, Icon, Paragraph } from '@ui'
 import { TOWNS_IOS_APP } from 'data/links'
 import { isIOS, isMacOS, isSafari } from 'hooks/useDevice'
 import { useStore } from 'store/store'
 import { Analytics } from 'hooks/useAnalytics'
 
 const BANNER_PRESENTATION_LIMIT = 3
-export const AppStoreBanner = () => {
+export const AppStoreBanner = (props: BoxProps) => {
     const { setAppStoreBannerPresentedCount, appStoreBannerPresentedCount } = useStore()
     const [didDismiss, setDidDismiss] = useState(false) // only dismiss once per session
 
@@ -35,53 +35,56 @@ export const AppStoreBanner = () => {
     }
 
     return (
-        <Box
-            horizontal
-            paddingY
-            paddingX="sm"
-            gap="sm"
-            width="100%"
-            height="x8"
-            background="level2"
-            alignItems="center"
-        >
-            <Box width="x2" onClick={onDismiss}>
-                <Icon type="close" size="square_xs" />
-            </Box>
+        <Box {...props}>
             <Box
-                width="x5"
-                height="x5"
-                padding="sm"
-                background="level1"
-                overflow="hidden"
-                borderRadius="sm"
+                horizontal
+                paddingY
+                paddingX="sm"
+                gap="sm"
+                width="100%"
+                height="x8"
+                background="level2"
+                alignItems="center"
             >
+                <Box width="x2" cursor="pointer" onClick={onDismiss}>
+                    <Icon type="close" size="square_xs" />
+                </Box>
                 <Box
-                    grow
-                    style={{
-                        backgroundImage: 'url(/t.svg)',
-                        backgroundSize: 'cover',
-                        backgroundRepeat: 'none',
-                    }}
-                />
-            </Box>
-            <Box grow gap="sm" onClick={onOpen}>
-                <Paragraph fontWeight="medium" color="default">
-                    Towns
-                </Paragraph>
-                <Paragraph size="sm">Permissionless Group Chat</Paragraph>
-            </Box>
-            <Box onClick={onOpen}>
-                <Box
-                    background="cta2"
-                    color="default"
+                    width="x5"
+                    height="x5"
                     padding="sm"
-                    borderRadius="lg"
-                    fontWeight="medium"
+                    background="level1"
+                    overflow="hidden"
+                    borderRadius="sm"
                 >
-                    <Paragraph size="xs" textTransform="uppercase">
-                        Use app
+                    <Box
+                        grow
+                        style={{
+                            backgroundImage: 'url(/t.svg)',
+                            backgroundSize: 'cover',
+                            backgroundRepeat: 'none',
+                        }}
+                    />
+                </Box>
+                <Box grow gap="sm" cursor="pointer" onClick={onOpen}>
+                    <Paragraph fontWeight="medium" color="default">
+                        Towns
                     </Paragraph>
+                    <Paragraph size="sm">Permissionless Group Chat</Paragraph>
+                </Box>
+                <Box onClick={onOpen}>
+                    <Box
+                        background="cta2"
+                        color="default"
+                        padding="sm"
+                        borderRadius="lg"
+                        fontWeight="medium"
+                        cursor="pointer"
+                    >
+                        <Paragraph size="xs" textTransform="uppercase">
+                            Use app
+                        </Paragraph>
+                    </Box>
                 </Box>
             </Box>
         </Box>

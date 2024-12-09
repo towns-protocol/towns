@@ -39,9 +39,7 @@ export const AppPanelLayout = () => {
     return (
         <>
             <Stack absoluteFill padding="xs">
-                <Box insetX="xxs" insetTop="xxs">
-                    <AppStoreBanner />
-                </Box>
+                <AppStoreBanner insetX="xxs" insetTop="xxs" />
                 <TopBar />
                 <Allotment
                     // proportionalLayout
