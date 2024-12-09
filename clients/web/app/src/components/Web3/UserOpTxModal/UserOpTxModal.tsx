@@ -339,7 +339,7 @@ function UserOpTxModalContent({
                         if (balanceIsLessThanCost) {
                             setShowEthPayment(true)
                         } else {
-                            Analytics.getInstance().track('clicked pay with card', {
+                            Analytics.getInstance().track('clicked pay with ETH', {
                                 spaceName: getSpaceNameFromCache(spaceId),
                                 spaceId,
                                 gatedSpace: analytics.gatedSpace,
