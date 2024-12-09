@@ -581,7 +581,7 @@ func (ru *aeMembershipRules) validMembershipLimit() (bool, error) {
 		if err != nil {
 			return false, err
 		}
-		if ru.params.streamMembershipLimit > 0 && (*members).Cardinality() >= ru.params.streamMembershipLimit {
+		if ru.params.streamMembershipLimit > 0 && members.Cardinality() >= ru.params.streamMembershipLimit {
 			return false, RiverError(
 				Err_INVALID_ARGUMENT,
 				"membership limit reached",
@@ -976,7 +976,6 @@ func (ru *aeMembershipRules) channelMembershipEntitlements() (*auth.ChainAuthArg
 	if err != nil {
 		return nil, err
 	}
-
 
 	// ModifyBanning is a space level permission
 	// but users with this entitlement should also be entitled to kick users from the channel

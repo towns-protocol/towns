@@ -11,6 +11,7 @@ import (
 
 	"github.com/river-build/river/core/node/base/test"
 	"github.com/river-build/river/core/node/crypto"
+	"github.com/river-build/river/core/node/testutils/testfmt"
 )
 
 // TestStartBlockNumberRange ensures that utils.StartBlockNumber ensures that the duration to go back falls within an
@@ -65,7 +66,7 @@ func TestStartBlockNumber(t *testing.T) {
 		header, err := client.HeaderByNumber(ctx, nil)
 		require.NoError(err, "get header by number")
 		blocks = append(blocks, header)
-		t.Logf("block %d: %d", header.Number.Uint64(), header.Time)
+		testfmt.Logf(t, "block %d: %d", header.Number.Uint64(), header.Time)
 	}
 
 	for _, b := range blocks {

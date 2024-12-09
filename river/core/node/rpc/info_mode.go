@@ -36,8 +36,6 @@ func (s *Service) startInfoMode(opts *ServerStartOpts) error {
 		return AsRiverError(err).Message("Failed to run http server").LogError(s.defaultLogger)
 	}
 
-	s.riverChain.StartChainMonitor(s.serverCtx)
-
 	s.registerDebugHandlers(s.config.EnableDebugEndpoints, s.config.DebugEndpoints)
 
 	s.SetStatus("OK")

@@ -17,9 +17,8 @@ import (
 type (
 	// ChainMonitor monitors the EVM chain for new blocks and/or events.
 	ChainMonitor interface {
-		// RunWithBlockPeriod the monitor until the given ctx expires using the client to interact
-		// with the chain.
-		RunWithBlockPeriod(
+		// Start starts the chain monitor in background. Goroutine is going to be running until the given ctx is cancelled.
+		Start(
 			ctx context.Context,
 			client BlockchainClient,
 			initialBlock BlockNumber,
@@ -75,6 +74,7 @@ type (
 		mu        sync.Mutex
 		builder   chainMonitorBuilder
 		fromBlock *big.Int
+		started   bool
 	}
 
 	// ChainMonitorPollInterval determines the next poll interval for the chain monitor
@@ -215,6 +215,23 @@ func (cm *chainMonitor) OnStopped(cb OnChainMonitorStoppedCallback) {
 	cm.builder.OnChainMonitorStopped(cb)
 }
 
+func (cm *chainMonitor) Start(
+	ctx context.Context,
+	client BlockchainClient,
+	initialBlock BlockNumber,
+	blockPeriod time.Duration,
+	metrics infra.MetricsFactory,
+) {
+	cm.mu.Lock()
+	defer cm.mu.Unlock()
+	if cm.started {
+		dlog.FromCtx(ctx).Error("chain monitor already started")
+		return
+	}
+	cm.started = true
+	go cm.runWithBlockPeriod(ctx, client, initialBlock, blockPeriod, metrics)
+}
+
 // RunWithBlockPeriod monitors the chain the given client is connected to and calls the
 // associated callback for each event that matches its filter.
 //
@@ -225,7 +242,7 @@ func (cm *chainMonitor) OnStopped(cb OnChainMonitorStoppedCallback) {
 // Callbacks are called in the order they were added and
 // aren't called concurrently to ensure that events are processed in the order
 // they were received.
-func (cm *chainMonitor) RunWithBlockPeriod(
+func (cm *chainMonitor) runWithBlockPeriod(
 	ctx context.Context,
 	client BlockchainClient,
 	initialBlock BlockNumber,

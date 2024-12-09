@@ -12,6 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/jackc/pgx/v5"
 	. "github.com/river-build/river/core/node/base"
+	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/infra"
 	"github.com/river-build/river/core/node/notifications/types"
 	. "github.com/river-build/river/core/node/protocol"
@@ -814,7 +815,7 @@ func (s *PostgresNotificationStore) RemoveAPNSubscription(ctx context.Context,
 		"RemoveAPNSubscription",
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
-			return s.removeAPNSubscription(ctx, tx, deviceToken)
+			return s.removeAPNSubscription(ctx, tx, deviceToken, userID)
 		},
 		nil,
 		"userID", userID,
@@ -825,12 +826,16 @@ func (s *PostgresNotificationStore) removeAPNSubscription(
 	ctx context.Context,
 	tx pgx.Tx,
 	deviceToken []byte,
+	userID common.Address,
 ) error {
-	_, err := tx.Exec(
+	result, err := tx.Exec(
 		ctx,
 		`DELETE FROM apnpushsubscriptions where device_token=$1`,
 		deviceToken,
 	)
+
+	dlog.FromCtx(ctx).Info("remove APN subscription",
+		"userID", userID, "records", result.RowsAffected(), "err", err)
 
 	return err
 }

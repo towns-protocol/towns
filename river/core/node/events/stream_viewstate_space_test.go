@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
 
@@ -333,10 +332,10 @@ func TestChannelViewState_JoinedMembers(t *testing.T) {
 
 	/* Assert */
 	require.NoError(t, err)
-	require.Equal(t, (*allJoinedMembers).Cardinality(), 3)
-	require.Equal(t, (*allJoinedMembers).Contains(alice), true)
-	require.Equal(t, (*allJoinedMembers).Contains(bob), true)
-	require.Equal(t, (*allJoinedMembers).Contains(carol), true)
+	require.Equal(t, allJoinedMembers.Cardinality(), 3)
+	require.Equal(t, allJoinedMembers.Contains(alice), true)
+	require.Equal(t, allJoinedMembers.Contains(bob), true)
+	require.Equal(t, allJoinedMembers.Contains(carol), true)
 }
 
 func TestChannelViewState_RemainingMembers(t *testing.T) {
@@ -395,8 +394,8 @@ func TestChannelViewState_RemainingMembers(t *testing.T) {
 
 	/* Assert */
 	require.NoError(t, err)
-	assert.Equal(t, 2, (*allJoinedMembers).Cardinality())
-	assert.Equal(t, true, (*allJoinedMembers).Contains(alice))
-	assert.Equal(t, false, (*allJoinedMembers).Contains(bob))
-	assert.Equal(t, true, (*allJoinedMembers).Contains(carol))
+	require.Equal(t, 2, allJoinedMembers.Cardinality())
+	require.Equal(t, true, allJoinedMembers.Contains(alice))
+	require.Equal(t, false, allJoinedMembers.Contains(bob))
+	require.Equal(t, true, allJoinedMembers.Contains(carol))
 }

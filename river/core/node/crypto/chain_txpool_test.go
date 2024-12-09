@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum"
-
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/stretchr/testify/require"
@@ -195,7 +194,7 @@ func TestReplacementTxOnBoot(t *testing.T) {
 	monitor := crypto.NewChainMonitor()
 	blockNum, err := bc.Client.BlockNumber(ctx)
 	require.NoError(err, "unable to get block number")
-	go monitor.RunWithBlockPeriod(
+	monitor.Start(
 		ctx, bc.Client, crypto.BlockNumber(blockNum), 100*time.Millisecond,
 		infra.NewMetricsFactory(nil, "", ""))
 

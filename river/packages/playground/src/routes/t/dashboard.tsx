@@ -19,7 +19,6 @@ import { GridSidePanel } from '@/components/layout/grid-side-panel'
 import { Button } from '@/components/ui/button'
 import { CreateSpace } from '@/components/form/space/create'
 import { JoinSpace } from '@/components/form/space/join'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { Avatar } from '@/components/ui/avatar'
 import { shortenAddress } from '@/utils/address'
 import {
@@ -117,17 +116,15 @@ export const DashboardRoute = () => {
                             </Dialog>
                         </div>
                     </div>
-                    <ScrollArea className="flex min-h-max">
-                        <div className="flex flex-col gap-1">
-                            {spaceIds.map((spaceId) => (
-                                <SpaceInfo
-                                    key={spaceId}
-                                    spaceId={spaceId}
-                                    onSpaceChange={navigateToSpace}
-                                />
-                            ))}
-                        </div>
-                    </ScrollArea>
+                    <div className="flex flex-col gap-1">
+                        {spaceIds.map((spaceId) => (
+                            <SpaceInfo
+                                key={spaceId}
+                                spaceId={spaceId}
+                                onSpaceChange={navigateToSpace}
+                            />
+                        ))}
+                    </div>
                     {spaceIds.length === 0 && (
                         <p className="pt-4 text-center text-sm text-secondary-foreground">
                             You're not in any spaces yet.
@@ -137,17 +134,15 @@ export const DashboardRoute = () => {
                     <hr className="my-2" />
 
                     <span className="text-xs">Your group chats</span>
-                    <ScrollArea className="flex min-h-max">
-                        <div className="flex flex-col gap-1">
-                            {gdmStreamIds.map((gdmStreamId) => (
-                                <GdmInfo
-                                    key={gdmStreamId}
-                                    gdmStreamId={gdmStreamId}
-                                    onGdmChange={navigateToGdm}
-                                />
-                            ))}
-                        </div>
-                    </ScrollArea>
+                    <div className="flex flex-col gap-1">
+                        {gdmStreamIds.map((gdmStreamId) => (
+                            <GdmInfo
+                                key={gdmStreamId}
+                                gdmStreamId={gdmStreamId}
+                                onGdmChange={navigateToGdm}
+                            />
+                        ))}
+                    </div>
                     {gdmStreamIds.length === 0 && (
                         <p className="pt-4 text-center text-sm text-secondary-foreground">
                             You're not in any group chats yet.
@@ -181,19 +176,17 @@ export const DashboardRoute = () => {
                             </Dialog>
                         </div>
                     </div>
-                    <ScrollArea className="flex min-h-max">
-                        <div className="flex flex-col gap-2">
-                            {dmStreamIds.map((dmStreamId) => (
-                                <Suspense key={dmStreamId} fallback={<div>Loading...</div>}>
-                                    <NoSuspenseDmInfo
-                                        key={dmStreamId}
-                                        dmStreamId={dmStreamId}
-                                        onDmChange={navigateToDm}
-                                    />
-                                </Suspense>
-                            ))}
-                        </div>
-                    </ScrollArea>
+                    <div className="flex flex-col gap-2">
+                        {dmStreamIds.map((dmStreamId) => (
+                            <Suspense key={dmStreamId} fallback={<div>Loading...</div>}>
+                                <NoSuspenseDmInfo
+                                    key={dmStreamId}
+                                    dmStreamId={dmStreamId}
+                                    onDmChange={navigateToDm}
+                                />
+                            </Suspense>
+                        ))}
+                    </div>
                     {dmStreamIds.length === 0 && (
                         <p className="pt-4 text-center text-sm text-secondary-foreground">
                             You don't have any direct messages yet.

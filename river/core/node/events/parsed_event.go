@@ -139,6 +139,7 @@ func ParseEvents(events []*Envelope) ([]*ParsedEvent, error) {
 	return parsedEvents, nil
 }
 
+// TODO: doesn't belong here, refactor
 func (e *ParsedEvent) GetChannelMessage() *ChannelPayload_Message {
 	switch payload := e.Event.Payload.(type) {
 	case *StreamEvent_ChannelPayload:

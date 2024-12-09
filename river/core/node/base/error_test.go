@@ -12,6 +12,7 @@ import (
 	"github.com/river-build/river/core/node/base/test"
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/protocol"
+	"github.com/river-build/river/core/node/testutils/testfmt"
 )
 
 func TestRiverError(t *testing.T) {
@@ -33,12 +34,12 @@ func TestRiverError(t *testing.T) {
 		"bytes", []byte("test 123213 123123 12312312312 123"),
 		"error", errors.New("test error"),
 	).Func("TestRiverError").Tag("int", 3)
-	println(e.Error())
+	testfmt.Println(t, e.Error())
 	log.Error("test error", "error", e)
 	_ = e.Log(log)
 
 	e = AsRiverError(errors.New("base error"))
-	println(e.Error())
+	testfmt.Println(t, e.Error())
 	log.Error("test error", "error", e)
 	_ = e.LogInfo(log)
 
@@ -75,10 +76,10 @@ func TestRiverErrorBytes(t *testing.T) {
 	assert := assert.New(t)
 	slice := []byte{1, 2, 3, 15}
 	err := RiverError(protocol.Err_INTERNAL, "bytes", "val", slice)
-	println(err.Error())
+	testfmt.Println(t, err.Error())
 	assert.Contains(err.Error(), "0102030f")
 	err = RiverError(protocol.Err_INTERNAL, "bytesPtr", "val", &slice)
-	println(err.Error())
+	testfmt.Println(t, err.Error())
 	assert.Contains(err.Error(), "0102030f")
 }
 

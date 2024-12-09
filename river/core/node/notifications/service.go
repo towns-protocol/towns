@@ -433,6 +433,8 @@ func (s *Service) UnsubscribeAPN(
 		return nil, RiverError(Err_INVALID_ARGUMENT, "Invalid user id")
 	}
 
+	dlog.FromCtx(ctx).Info("remove APN subscription", "userID", userID)
+
 	if err := s.userPreferences.RemoveAPNSubscription(ctx, deviceToken, userID); err != nil {
 		return nil, err
 	}

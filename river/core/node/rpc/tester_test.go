@@ -7,10 +7,12 @@ import (
 	"hash/fnv"
 	"io"
 	"log"
+	"maps"
 	"math/big"
 	"net"
 	"net/http"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -25,10 +27,13 @@ import (
 	"github.com/river-build/river/core/contracts/river"
 	"github.com/river-build/river/core/node/base/test"
 	"github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/events"
+	"github.com/river-build/river/core/node/dlog"
+	. "github.com/river-build/river/core/node/events"
+	"github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/protocol/protocolconnect"
 	. "github.com/river-build/river/core/node/shared"
 	"github.com/river-build/river/core/node/storage"
+	"github.com/river-build/river/core/node/testutils"
 	"github.com/river-build/river/core/node/testutils/dbtestutils"
 	"github.com/river-build/river/core/node/testutils/testcert"
 )
@@ -69,6 +74,7 @@ type serviceTesterOpts struct {
 	numNodes          int
 	replicationFactor int
 	start             bool
+	btcParams         *crypto.TestParams
 }
 
 func makeTestListenerNoCleanup(t *testing.T) (net.Listener, string) {
@@ -111,9 +117,15 @@ func newServiceTester(t *testing.T, opts serviceTesterOpts) *serviceTester {
 	// Cleanup context on test completion even if no other cleanups are registered.
 	st.cleanup(func() {})
 
+	btcParams := opts.btcParams
+	if btcParams == nil {
+		btcParams = &crypto.TestParams{NumKeys: opts.numNodes, MineOnTx: true, AutoMine: true}
+	} else if btcParams.NumKeys == 0 {
+		btcParams.NumKeys = opts.numNodes
+	}
 	btc, err := crypto.NewBlockchainTestContext(
 		st.ctx,
-		crypto.TestParams{NumKeys: opts.numNodes, MineOnTx: true, AutoMine: true},
+		*btcParams,
 	)
 	require.NoError(err)
 	st.btc = btc
@@ -264,7 +276,7 @@ func (st *serviceTester) startAutoMining() {
 type startOpts struct {
 	configUpdater func(cfg *config.Config)
 	listeners     []net.Listener
-	scrubberMaker func(ctx context.Context, s *Service) events.Scrubber
+	scrubberMaker func(ctx context.Context, s *Service) Scrubber
 }
 
 func (st *serviceTester) startNodes(start, stop int, opts ...startOpts) {
@@ -290,6 +302,7 @@ func (st *serviceTester) getConfig(opts ...startOpts) *config.Config {
 		NumPartitions:         4,
 		MigrateStreamCreation: true,
 	}
+	cfg.Log.Simplify = true
 	cfg.Network = config.NetworkConfig{
 		NumRetries: 3,
 	}
@@ -322,18 +335,18 @@ func (st *serviceTester) startSingle(i int, opts ...startOpts) error {
 		listener = options.listeners[i]
 	}
 
-	bc := st.btc.GetBlockchain(st.ctx, i)
-	service, err := StartServer(st.ctx, cfg, &ServerStartOpts{
+	logger := dlog.FromCtx(st.ctx).With("nodeNum", i, "test", st.t.Name())
+	ctx := dlog.CtxWithLog(st.ctx, logger)
+
+	bc := st.btc.GetBlockchain(ctx, i)
+	service, err := StartServer(ctx, cfg, &ServerStartOpts{
 		RiverChain:      bc,
 		Listener:        listener,
 		HttpClientMaker: testcert.GetHttp2LocalhostTLSClient,
 		ScrubberMaker:   options.scrubberMaker,
 	})
 	if err != nil {
-		if service != nil {
-			// Sanity check
-			panic("service should be nil")
-		}
+		st.require.Nil(service)
 		return err
 	}
 
@@ -487,4 +500,456 @@ func (st *serviceTester) httpGet(url string) string {
 	body, err := io.ReadAll(resp.Body)
 	st.require.NoError(err)
 	return string(body)
+}
+
+type testClient struct {
+	t            *testing.T
+	ctx          context.Context
+	assert       *assert.Assertions
+	require      *require.Assertions
+	client       protocolconnect.StreamServiceClient
+	wallet       *crypto.Wallet
+	userId       common.Address
+	userStreamId StreamId
+	name         string
+}
+
+func (st *serviceTester) newTestClient(i int) *testClient {
+	wallet, err := crypto.NewWallet(st.ctx)
+	st.require.NoError(err)
+	return &testClient{
+		t:            st.t,
+		ctx:          st.ctx,
+		assert:       assert.New(st.t),
+		require:      st.require,
+		client:       st.testClient(i),
+		wallet:       wallet,
+		userId:       wallet.Address,
+		userStreamId: UserStreamIdFromAddr(wallet.Address),
+		name:         fmt.Sprintf("%d-%s", i, wallet.Address.Hex()[2:8]),
+	}
+}
+
+// newTestClients creates a testClients with clients connected to nodes in round-robin fashion.
+func (st *serviceTester) newTestClients(numClients int) testClients {
+	clients := make(testClients, numClients)
+	for i := range clients {
+		clients[i] = st.newTestClient(i % st.opts.numNodes)
+	}
+	clients.parallelForAll(func(tc *testClient) {
+		tc.createUserStream()
+	})
+	return clients
+}
+
+func (tc *testClient) withRequireFor(t require.TestingT) *testClient {
+	var tcc testClient = *tc
+	tcc.require = require.New(t)
+	tcc.assert = assert.New(t)
+	return &tcc
+}
+
+func (tc *testClient) createUserStream(
+	streamSettings ...*protocol.StreamSettings,
+) *MiniblockRef {
+	var ss *protocol.StreamSettings
+	if len(streamSettings) > 0 {
+		ss = streamSettings[0]
+	}
+	cookie, _, err := createUser(tc.ctx, tc.wallet, tc.client, ss)
+	tc.require.NoError(err)
+	return &MiniblockRef{
+		Hash: common.BytesToHash(cookie.PrevMiniblockHash),
+		Num:  cookie.MinipoolGen - 1,
+	}
+}
+
+func (tc *testClient) createSpace(
+	streamSettings ...*protocol.StreamSettings,
+) (StreamId, *MiniblockRef) {
+	spaceId := testutils.FakeStreamId(STREAM_SPACE_BIN)
+	var ss *protocol.StreamSettings
+	if len(streamSettings) > 0 {
+		ss = streamSettings[0]
+	}
+	cookie, _, err := createSpace(tc.ctx, tc.wallet, tc.client, spaceId, ss)
+	tc.require.NoError(err)
+	tc.require.NotNil(cookie)
+	return spaceId, &MiniblockRef{
+		Hash: common.BytesToHash(cookie.PrevMiniblockHash),
+		Num:  cookie.MinipoolGen - 1,
+	}
+}
+
+func (tc *testClient) createChannel(
+	spaceId StreamId,
+	streamSettings ...*protocol.StreamSettings,
+) (StreamId, *MiniblockRef) {
+	channelId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+	var ss *protocol.StreamSettings
+	if len(streamSettings) > 0 {
+		ss = streamSettings[0]
+	}
+	cookie, _, err := createChannel(tc.ctx, tc.wallet, tc.client, spaceId, channelId, ss)
+	tc.require.NoError(err)
+	return channelId, &MiniblockRef{
+		Hash: common.BytesToHash(cookie.PrevMiniblockHash),
+		Num:  cookie.MinipoolGen - 1,
+	}
+}
+
+func (tc *testClient) joinChannel(spaceId StreamId, channelId StreamId, mb *MiniblockRef) {
+	userJoin, err := MakeEnvelopeWithPayload(
+		tc.wallet,
+		Make_UserPayload_Membership(
+			protocol.MembershipOp_SO_JOIN,
+			channelId,
+			nil,
+			spaceId[:],
+		),
+		mb,
+	)
+	tc.require.NoError(err)
+
+	userStreamId := UserStreamIdFromAddr(tc.wallet.Address)
+	_, err = tc.client.AddEvent(
+		tc.ctx,
+		connect.NewRequest(
+			&protocol.AddEventRequest{
+				StreamId: userStreamId[:],
+				Event:    userJoin,
+			},
+		),
+	)
+	tc.require.NoError(err)
+}
+
+func (tc *testClient) getLastMiniblockHash(streamId StreamId) *MiniblockRef {
+	resp, err := tc.client.GetLastMiniblockHash(tc.ctx, connect.NewRequest(&protocol.GetLastMiniblockHashRequest{
+		StreamId: streamId[:],
+	}))
+	tc.require.NoError(err)
+	return &MiniblockRef{
+		Hash: common.BytesToHash(resp.Msg.GetHash()),
+		Num:  resp.Msg.GetMiniblockNum(),
+	}
+}
+
+func (tc *testClient) say(channelId StreamId, message string) {
+	ref := tc.getLastMiniblockHash(channelId)
+	envelope, err := MakeEnvelopeWithPayload(tc.wallet, Make_ChannelPayload_Message(message), ref)
+	tc.require.NoError(err)
+	_, err = tc.client.AddEvent(tc.ctx, connect.NewRequest(&protocol.AddEventRequest{
+		StreamId: channelId[:],
+		Event:    envelope,
+	}))
+	tc.require.NoError(err)
+}
+
+type usersMessage struct {
+	userId  common.Address
+	message string
+}
+
+func (um usersMessage) String() string {
+	return fmt.Sprintf("%s: '%s'\n", um.userId.Hex()[2:8], um.message)
+}
+
+type userMessages []usersMessage
+
+func flattenUserMessages(userIds []common.Address, messages [][]string) userMessages {
+	um := userMessages{}
+	for _, msg := range messages {
+		for j, m := range msg {
+			if m != "" {
+				um = append(um, usersMessage{userId: userIds[j], message: m})
+			}
+		}
+	}
+	return um
+}
+
+func (um userMessages) String() string {
+	if len(um) == 0 {
+		return " EMPTY"
+	}
+	lines := []string{"\n[[[\n"}
+	for _, m := range um {
+		lines = append(lines, m.String())
+	}
+	lines = append(lines, "]]]\n")
+	return strings.Join(lines, "")
+}
+
+func diffUserMessages(expected, actual userMessages) (userMessages, userMessages) {
+	expectedSet := map[string]usersMessage{}
+	for _, m := range expected {
+		expectedSet[m.String()] = m
+	}
+	actualExtra := userMessages{}
+	for _, m := range actual {
+		key := m.String()
+		_, ok := expectedSet[key]
+		if ok {
+			delete(expectedSet, key)
+		} else {
+			actualExtra = append(actualExtra, m)
+		}
+	}
+	expectedExtra := slices.Collect(maps.Values(expectedSet))
+	return expectedExtra, actualExtra
+}
+
+func TestDiffUserMessages(t *testing.T) {
+	assert := assert.New(t)
+
+	um1 := usersMessage{common.Address{0x1}, "A"}
+	um2 := usersMessage{common.Address{0x1}, "B"}
+	um3 := usersMessage{common.Address{0x2}, "A"}
+	um4 := usersMessage{common.Address{0x2}, "B"}
+	umAll := userMessages{um1, um2, um3, um4}
+
+	a, b := diffUserMessages(umAll, umAll)
+	assert.Len(a, 0)
+	assert.Len(b, 0)
+
+	a, b = diffUserMessages(umAll, umAll[:3])
+	assert.ElementsMatch(a, umAll[3:])
+	assert.Len(b, 0)
+
+	a, b = diffUserMessages(umAll[1:], umAll)
+	assert.Len(a, 0)
+	assert.ElementsMatch(b, umAll[:1])
+
+	a, b = diffUserMessages(umAll[1:], umAll[:3])
+	assert.ElementsMatch(a, umAll[3:])
+	assert.ElementsMatch(b, umAll[:1])
+
+	a, b = diffUserMessages(umAll[2:], umAll[:2])
+	assert.ElementsMatch(a, umAll[2:])
+	assert.ElementsMatch(b, umAll[:2])
+}
+
+func (tc *testClient) getAllMessages(channelId StreamId) userMessages {
+	_, view := tc.getStreamAndView(channelId, true)
+
+	messages := userMessages{}
+	for e := range view.AllEvents() {
+		payload := e.GetChannelMessage()
+		if payload != nil {
+			messages = append(messages, usersMessage{
+				userId:  crypto.PublicKeyToAddress(e.SignerPubKey),
+				message: string(payload.Message.Ciphertext),
+			})
+		}
+	}
+
+	return messages
+}
+
+func (tc *testClient) eventually(f func(*testClient), t ...time.Duration) {
+	waitFor := 5 * time.Second
+	if len(t) > 0 {
+		waitFor = t[0]
+	}
+	tick := 100 * time.Millisecond
+	if len(t) > 1 {
+		tick = t[1]
+	}
+	tc.require.EventuallyWithT(func(t *assert.CollectT) {
+		f(tc.withRequireFor(t))
+	}, waitFor, tick)
+}
+
+func (tc *testClient) listen(channelId StreamId, userIds []common.Address, messages [][]string) {
+	expected := flattenUserMessages(userIds, messages)
+	tc.listenImpl(channelId, expected)
+}
+
+var _ = (*testClient)(nil).listen // Suppress unused warning TODO: remove once used
+
+func (tc *testClient) listenImpl(channelId StreamId, expected userMessages) {
+	actual := tc.getAllMessages(channelId)
+	tc.eventually(func(tc *testClient) {
+		expectedExtra, actualExtra := diffUserMessages(expected, actual)
+		if len(expectedExtra) > 0 {
+			tc.require.FailNow(
+				"Didn't receive all messages",
+				"client %s\nexpectedExtra:%vactualExtra:%v",
+				tc.name,
+				expectedExtra,
+				actualExtra,
+			)
+		}
+		if len(actualExtra) > 0 {
+			tc.require.FailNow("Received unexpected messages", "actualExtra:%v", actualExtra)
+		}
+	})
+}
+
+func (tc *testClient) getStream(streamId StreamId) *protocol.StreamAndCookie {
+	resp, err := tc.client.GetStream(tc.ctx, connect.NewRequest(&protocol.GetStreamRequest{
+		StreamId: streamId[:],
+	}))
+	tc.require.NoError(err)
+	tc.require.NotNil(resp.Msg)
+	tc.require.NotNil(resp.Msg.Stream)
+	return resp.Msg.Stream
+}
+
+func (tc *testClient) getStreamAndView(
+	streamId StreamId,
+	history ...bool,
+) (*protocol.StreamAndCookie, JoinableStreamView) {
+	stream := tc.getStream(streamId)
+	var view JoinableStreamView
+	var err error
+	view, err = MakeRemoteStreamView(tc.ctx, stream)
+	tc.require.NoError(err)
+	tc.require.NotNil(view)
+
+	if len(history) > 0 && history[0] {
+		mbs := view.Miniblocks()
+		tc.require.NotEmpty(mbs)
+		if mbs[0].Ref.Num > 0 {
+			view = tc.addHistoryToView(view)
+		}
+	}
+	return stream, view
+}
+
+func (tc *testClient) getMiniblocks(streamId StreamId, fromInclusive, toExclusive int64) []*MiniblockInfo {
+	resp, err := tc.client.GetMiniblocks(tc.ctx, connect.NewRequest(&protocol.GetMiniblocksRequest{
+		StreamId:      streamId[:],
+		FromInclusive: fromInclusive,
+		ToExclusive:   toExclusive,
+	}))
+	tc.require.NoError(err)
+	mbs, err := NewMiniblocksInfoFromProtos(resp.Msg.Miniblocks, NewMiniblockInfoFromProtoOpts{
+		ExpectedBlockNumber: fromInclusive,
+	})
+	tc.require.NoError(err)
+	return mbs
+}
+
+func (tc *testClient) addHistoryToView(
+	view JoinableStreamView,
+) JoinableStreamView {
+	firstMbNum := view.Miniblocks()[0].Ref.Num
+	if firstMbNum == 0 {
+		return view
+	}
+
+	mbs := tc.getMiniblocks(*view.StreamId(), 0, firstMbNum)
+	newView, err := view.CopyAndPrependMiniblocks(mbs)
+	tc.require.NoError(err)
+	return newView.(JoinableStreamView)
+}
+
+func (tc *testClient) requireMembership(streamId StreamId, expectedMemberships []common.Address) {
+	tc.eventually(func(tc *testClient) {
+		_, view := tc.getStreamAndView(streamId)
+		members, err := view.GetChannelMembers()
+		tc.require.NoError(err)
+		actualMembers := []common.Address{}
+		for _, a := range members.ToSlice() {
+			actualMembers = append(actualMembers, common.HexToAddress(a))
+		}
+		tc.require.ElementsMatch(expectedMemberships, actualMembers)
+	})
+}
+
+type testClients []*testClient
+
+func (tcs testClients) requireMembership(streamId StreamId, expectedMemberships ...[]common.Address) {
+	var expected []common.Address
+	if len(expectedMemberships) > 0 {
+		expected = expectedMemberships[0]
+	} else {
+		expected = tcs.userIds()
+	}
+	tcs.parallelForAll(func(tc *testClient) {
+		tc.requireMembership(streamId, expected)
+	})
+}
+
+func (tcs testClients) userIds() []common.Address {
+	userIds := []common.Address{}
+	for _, tc := range tcs {
+		userIds = append(userIds, tc.userId)
+	}
+	return userIds
+}
+
+func (tcs testClients) listen(channelId StreamId, messages [][]string) {
+	expected := flattenUserMessages(tcs.userIds(), messages)
+	tcs.parallelForAll(func(tc *testClient) {
+		tc.listenImpl(channelId, expected)
+	})
+}
+
+func (tcs testClients) say(channelId StreamId, messages ...string) {
+	parallel(tcs, func(tc *testClient, msg string) {
+		if msg != "" {
+			tc.say(channelId, msg)
+		}
+	}, messages...)
+}
+
+// parallel spreads params over clients calling provided function in parallel.
+func parallel[Params any](tcs testClients, f func(*testClient, Params), params ...Params) {
+	tcs[0].require.LessOrEqual(len(params), len(tcs))
+	resultC := make(chan int, len(params))
+	for i, p := range params {
+		go func() {
+			defer func() {
+				resultC <- i
+			}()
+			f(tcs[i], p)
+		}()
+	}
+	for range params {
+		i := <-resultC
+		if tcs[i].t.Failed() {
+			tcs[i].t.Fatalf("client %s failed", tcs[i].name)
+			return
+		}
+	}
+}
+
+func (tcs testClients) parallelForAll(f func(*testClient)) {
+	resultC := make(chan int, len(tcs))
+	for i, tc := range tcs {
+		go func() {
+			defer func() {
+				resultC <- i
+			}()
+			f(tc)
+		}()
+	}
+	for range tcs {
+		i := <-resultC
+		if tcs[i].t.Failed() {
+			tcs[i].t.Fatalf("client %s failed", tcs[i].name)
+			return
+		}
+	}
+}
+
+// setupChannelWithClients creates a channel and returns a testClients with clients connected to it.
+// First client is creator of both space and channel.
+// Other clients join the channel.
+// Clients are connected to nodes in round-robin fashion.
+func (tcs testClients) createChannelAndJoin(spaceId StreamId) StreamId {
+	alice := tcs[0]
+	channelId, _ := alice.createChannel(spaceId)
+
+	tcs[1:].parallelForAll(func(tc *testClient) {
+		userLastMb := tc.getLastMiniblockHash(tc.userStreamId)
+		tc.joinChannel(spaceId, channelId, userLastMb)
+	})
+
+	tcs.requireMembership(channelId)
+
+	return channelId
 }

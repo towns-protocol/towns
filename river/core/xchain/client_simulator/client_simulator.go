@@ -163,7 +163,6 @@ func New(
 		if err != nil {
 			return nil, err
 		}
-		baseChain.StartChainMonitor(ctx)
 	}
 
 	decoder, err := node_crypto.NewEVMErrorDecoder(

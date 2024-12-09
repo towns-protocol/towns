@@ -30,6 +30,7 @@ import (
 	river_sync "github.com/river-build/river/core/node/rpc/sync"
 	. "github.com/river-build/river/core/node/shared"
 	"github.com/river-build/river/core/node/testutils"
+	"github.com/river-build/river/core/node/testutils/testfmt"
 )
 
 func TestMain(m *testing.M) {
@@ -1094,7 +1095,7 @@ func TestUnstableStreams(t *testing.T) {
 
 	syncRes.Receive()
 	syncID := syncRes.Msg().SyncId
-	t.Logf("subscription %s created on node: %s", syncID, services.nodes[1].address)
+	testfmt.Logf(t, "subscription %s created on node: %s", syncID, services.nodes[1].address)
 
 	// collect sync cookie updates for channels
 	var (
@@ -1111,7 +1112,7 @@ func TestUnstableStreams(t *testing.T) {
 			switch msg.GetSyncOp() {
 			case protocol.SyncOp_SYNC_NEW:
 				syncID := msg.GetSyncId()
-				t.Logf("start stream sync %s ", syncID)
+				testfmt.Logf(t, "start stream sync %s ", syncID)
 			case protocol.SyncOp_SYNC_UPDATE:
 				req.Equal(syncID, msg.GetSyncId(), "sync id")
 				req.NotNil(msg.GetStream(), "stream")
@@ -1208,7 +1209,7 @@ func TestUnstableStreams(t *testing.T) {
 	// send a bunch of messages and ensure that all are received
 	sendMessagesAndReceive(100, wallets, channels, req, client0, ctx, messages, func(StreamId) bool { return false })
 
-	t.Logf("first messages batch received")
+	testfmt.Logf(t, "first messages batch received")
 
 	// bring ~25% of the streams down
 	streamsDownCounter := 0
@@ -1226,7 +1227,7 @@ func TestUnstableStreams(t *testing.T) {
 
 		streamsDownCounter++
 
-		t.Logf("bring stream %s down", streamID)
+		testfmt.Logf(t, "bring stream %s down", streamID)
 
 		if i > TestStreams/4 {
 			break
@@ -1242,7 +1243,7 @@ func TestUnstableStreams(t *testing.T) {
 		return count == streamsDownCounter
 	}, 20*time.Second, 100*time.Millisecond, "didn't receive for all streams a down message")
 
-	t.Logf("received SyncOp_Down message for all expected streams")
+	testfmt.Logf(t, "received SyncOp_Down message for all expected streams")
 
 	// make sure that no more stream down messages are received
 	req.Never(func() bool {
@@ -1261,7 +1262,7 @@ func TestUnstableStreams(t *testing.T) {
 		return found
 	})
 
-	t.Logf("second messages batch received")
+	testfmt.Logf(t, "second messages batch received")
 
 	// resubscribe to the head on down streams and ensure that messages are received for all streams again
 	mu.Lock()
@@ -1280,12 +1281,12 @@ func TestUnstableStreams(t *testing.T) {
 	}
 	mu.Unlock()
 
-	t.Logf("resubscribed to streams that where brought down")
+	testfmt.Logf(t, "resubscribed to streams that where brought down")
 
 	// ensure that messages for all streams are received again
 	sendMessagesAndReceive(100, wallets, channels, req, client0, ctx, messages, func(StreamId) bool { return false })
 
-	t.Logf("third messages batch received")
+	testfmt.Logf(t, "third messages batch received")
 
 	// unsub from ~25% streams and ensure that no updates are received again
 	unsubbedStreams := make(map[StreamId]struct{})
@@ -1300,7 +1301,7 @@ func TestUnstableStreams(t *testing.T) {
 
 		unsubbedStreams[streamID] = struct{}{}
 
-		t.Logf("unsubbed from stream %s", streamID)
+		testfmt.Logf(t, "unsubbed from stream %s", streamID)
 
 		if i > TestStreams/4 {
 			break
@@ -1312,7 +1313,7 @@ func TestUnstableStreams(t *testing.T) {
 		return found
 	})
 
-	t.Logf("fourth messages batch received")
+	testfmt.Logf(t, "fourth messages batch received")
 
 	// resubscribe to the head on down streams and ensure that messages are received for all streams again
 	mu.Lock()
@@ -1331,13 +1332,13 @@ func TestUnstableStreams(t *testing.T) {
 	}
 	mu.Unlock()
 
-	t.Logf("resubscribed to streams that where brought down")
+	testfmt.Logf(t, "resubscribed to streams that where brought down")
 
 	sendMessagesAndReceive(100, wallets, channels, req, client0, ctx, messages, func(streamID StreamId) bool {
 		return false
 	})
 
-	t.Logf("fifth messages batch received")
+	testfmt.Logf(t, "fifth messages batch received")
 
 	// drop all streams from a node
 	var (
@@ -1374,7 +1375,7 @@ func TestUnstableStreams(t *testing.T) {
 		return count == len(targetStreams)
 	}, 20*time.Second, 100*time.Millisecond, "didn't receive for all streams a down message")
 
-	t.Logf("received SyncOp_Down message for all expected streams")
+	testfmt.Logf(t, "received SyncOp_Down message for all expected streams")
 
 	sendMessagesAndReceive(100, wallets, channels, req, client0, ctx, messages, func(streamID StreamId) bool {
 		mu.Lock()
@@ -1383,7 +1384,7 @@ func TestUnstableStreams(t *testing.T) {
 		return found
 	})
 
-	t.Logf("sixt messages batch received")
+	testfmt.Logf(t, "sixt messages batch received")
 
 	// make sure we can resubscribe to these streams
 	for _, streamID := range targetStreams {
@@ -1404,18 +1405,18 @@ func TestUnstableStreams(t *testing.T) {
 		return false
 	})
 
-	t.Logf("seventh messages batch received")
+	testfmt.Logf(t, "seventh messages batch received")
 
 	_, err = client1.CancelSync(ctx, connect.NewRequest(&protocol.CancelSyncRequest{SyncId: syncID}))
 	req.NoError(err, "cancel sync")
 
-	t.Logf("Streams subscription cancelled")
+	testfmt.Logf(t, "Streams subscription cancelled")
 
 	sendMessagesAndReceive(100, wallets, channels, req, client0, ctx, messages, func(streamID StreamId) bool {
 		return true
 	})
 
-	t.Logf("eight messages batch received")
+	testfmt.Logf(t, "eight messages batch received")
 
 	// make sure that SyncOp_Close msg is received (messages is closed)
 	req.Eventuallyf(func() bool {
@@ -1612,7 +1613,7 @@ func TestSyncSubscriptionWithTooSlowClient(t *testing.T) {
 	}
 
 	// subscribe to channel updates on node 1 direct through a sync op to have better control over it
-	t.Logf("subscribe on node %s", node1.address)
+	testfmt.Logf(t, "subscribe on node %s", node1.address)
 	syncPos := append(users, channels...)
 	syncOp, err := river_sync.NewStreamsSyncOperation(
 		ctx, syncID, node1.address, node1.service.cache, node1.service.nodeRegistry)

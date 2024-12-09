@@ -12,7 +12,7 @@ import (
 
 type JoinableStreamView interface {
 	StreamView
-	GetChannelMembers() (*mapset.Set[string], error)
+	GetChannelMembers() (mapset.Set[string], error)
 	GetMembership(userAddress []byte) (protocol.MembershipOp, error)
 	GetKeySolicitations(userAddress []byte) ([]*protocol.MemberPayload_KeySolicitation, error)
 	GetPinnedMessages() ([]*protocol.MemberPayload_SnappedPin, error)
@@ -20,7 +20,7 @@ type JoinableStreamView interface {
 
 var _ JoinableStreamView = (*streamViewImpl)(nil)
 
-func (r *streamViewImpl) GetChannelMembers() (*mapset.Set[string], error) {
+func (r *streamViewImpl) GetChannelMembers() (mapset.Set[string], error) {
 	members := mapset.NewSet[string]()
 
 	for _, member := range r.snapshot.Members.Joined {
@@ -57,7 +57,7 @@ func (r *streamViewImpl) GetChannelMembers() (*mapset.Set[string], error) {
 		return nil, err
 	}
 
-	return &members, nil
+	return members, nil
 }
 
 func (r *streamViewImpl) GetMembership(userAddress []byte) (protocol.MembershipOp, error) {

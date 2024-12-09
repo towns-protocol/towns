@@ -34,6 +34,7 @@ import {DeployPrepayFacet} from "contracts/scripts/deployments/facets/DeployPrep
 import {DeployReferrals} from "contracts/scripts/deployments/facets/DeployReferrals.s.sol";
 import {DeployMembershipToken} from "contracts/scripts/deployments/facets/DeployMembershipToken.s.sol";
 import {DeploySpaceEntitlementGated} from "contracts/scripts/deployments/facets/DeploySpaceEntitlementGated.s.sol";
+import {DeployTipping} from "contracts/scripts/deployments/facets/DeployTipping.s.sol";
 import {DeployMultiInit} from "contracts/scripts/deployments/utils/DeployMultiInit.s.sol";
 
 contract DeploySpace is DiamondHelper, Deployer {
@@ -63,7 +64,7 @@ contract DeploySpace is DiamondHelper, Deployer {
   DeploySpaceEntitlementGated entitlementGatedHelper =
     new DeploySpaceEntitlementGated();
   DeployMultiInit deployMultiInit = new DeployMultiInit();
-
+  DeployTipping tippingHelper = new DeployTipping();
   address tokenOwnable;
   address diamondCut;
   address diamondLoupe;
@@ -83,6 +84,7 @@ contract DeploySpace is DiamondHelper, Deployer {
   address ownablePending;
   address prepay;
   address referrals;
+  address tipping;
   address multiInit;
 
   function versionName() public pure override returns (string memory) {
@@ -134,7 +136,7 @@ contract DeploySpace is DiamondHelper, Deployer {
     prepay = prepayHelper.deploy(deployer);
     referrals = referralsHelper.deploy(deployer);
     entitlementGated = entitlementGatedHelper.deploy(deployer);
-
+    tipping = tippingHelper.deploy(deployer);
     membershipTokenHelper.removeSelector(IERC721A.tokenURI.selector);
 
     addCut(
@@ -180,6 +182,7 @@ contract DeploySpace is DiamondHelper, Deployer {
     );
     addCut(prepayHelper.makeCut(prepay, IDiamond.FacetCutAction.Add));
     addCut(referralsHelper.makeCut(referrals, IDiamond.FacetCutAction.Add));
+    addCut(tippingHelper.makeCut(tipping, IDiamond.FacetCutAction.Add));
 
     return
       Diamond.InitParams({

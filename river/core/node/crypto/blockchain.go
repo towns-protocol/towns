@@ -144,6 +144,14 @@ func NewBlockchainWithClient(
 		}
 	}
 
+	monitor.Start(
+		ctx,
+		client,
+		initialBlockNum,
+		time.Duration(cfg.BlockTimeMs)*time.Millisecond,
+		metrics,
+	)
+
 	return bc, nil
 }
 
@@ -159,15 +167,4 @@ func (b *Blockchain) GetBlockNumber(ctx context.Context) (BlockNumber, error) {
 		return 0, AsRiverError(err, Err_CANNOT_CONNECT).Message("Cannot retrieve block number").Func("GetBlockNumber")
 	}
 	return BlockNumber(n), nil
-}
-
-// TODO: refactor to start chain monitor in NewBlockchainWithClient
-func (b *Blockchain) StartChainMonitor(ctx context.Context) {
-	go b.ChainMonitor.RunWithBlockPeriod(
-		ctx,
-		b.Client,
-		b.InitialBlockNum,
-		time.Duration(b.Config.BlockTimeMs)*time.Millisecond,
-		b.Metrics,
-	)
 }

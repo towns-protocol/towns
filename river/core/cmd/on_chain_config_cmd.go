@@ -246,7 +246,6 @@ func submitConfig(ctx context.Context, cfg *config.Config, args []setArgs) error
 	if err != nil {
 		return err
 	}
-	blockchain.StartChainMonitor(ctx)
 
 	caller, err := river.NewRiverConfigV1Transactor(cfg.RegistryContract.Address, blockchain.Client)
 	if err != nil {

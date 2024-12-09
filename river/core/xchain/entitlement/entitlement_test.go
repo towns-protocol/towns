@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/river-build/river/core/config"
+	"github.com/river-build/river/core/node/base/test"
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/infra"
 	"github.com/river-build/river/core/xchain/examples"
@@ -353,6 +354,9 @@ var (
 )
 
 func TestAndOperation(t *testing.T) {
+	ctx, cancel := test.NewTestContext()
+	defer cancel()
+
 	testCases := []struct {
 		description  string
 		a            Operation
@@ -415,7 +419,7 @@ func TestAndOperation(t *testing.T) {
 
 			callerAddress := common.Address{}
 
-			result, actualErr := evaluator.evaluateOp(context.Background(), tree, []common.Address{callerAddress})
+			result, actualErr := evaluator.evaluateOp(ctx, tree, []common.Address{callerAddress})
 			elapsedTime := time.Since(startTime)
 			if tc.expectedErr != nil {
 				require.EqualError(t, actualErr, tc.expectedErr.Error(), "Expected error was not found")
@@ -436,6 +440,9 @@ func TestAndOperation(t *testing.T) {
 }
 
 func TestOrOperation(t *testing.T) {
+	ctx, cancel := test.NewTestContext()
+	defer cancel()
+
 	testCases := []struct {
 		description  string
 		a            Operation
@@ -498,7 +505,7 @@ func TestOrOperation(t *testing.T) {
 
 			callerAddress := common.Address{}
 
-			result, actualErr := evaluator.evaluateOp(context.Background(), tree, []common.Address{callerAddress})
+			result, actualErr := evaluator.evaluateOp(ctx, tree, []common.Address{callerAddress})
 			elapsedTime := time.Since(startTime)
 			if tc.expectedErr != nil {
 				require.EqualError(t, actualErr, tc.expectedErr.Error(), "Expected error was not found")
@@ -527,6 +534,9 @@ func areDurationsClose(d1, d2, threshold time.Duration) bool {
 }
 
 func TestCheckOperation(t *testing.T) {
+	ctx, cancel := test.NewTestContext()
+	defer cancel()
+
 	testCases := []struct {
 		a            Operation
 		wallets      []common.Address
@@ -542,7 +552,7 @@ func TestCheckOperation(t *testing.T) {
 	for _, tc := range testCases {
 		startTime := time.Now() // Get the current time
 
-		result, err := evaluator.evaluateOp(context.Background(), tc.a, tc.wallets)
+		result, err := evaluator.evaluateOp(ctx, tc.a, tc.wallets)
 		elapsedTime := time.Since(startTime)
 
 		if err != nil {

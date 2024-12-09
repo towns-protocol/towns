@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/river-build/river/core/node/dlog"
+	"github.com/river-build/river/core/node/testutils/testfmt"
 )
 
 type Data2 struct {
@@ -61,6 +62,9 @@ func makeTestData2() *Data2 {
 }
 
 func TestDlog(t *testing.T) {
+	if !testfmt.Enabled() {
+		t.SkipNow()
+	}
 	log := slog.New(dlog.NewPrettyTextHandler(os.Stderr, &dlog.PrettyHandlerOptions{
 		AddSource:   false,
 		ReplaceAttr: nil,

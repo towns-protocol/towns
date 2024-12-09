@@ -316,9 +316,9 @@ func (pool *pendingTransactionPool) checkPendingTransactions(ctx context.Context
 
 	log := dlog.FromCtx(ctx).With("chain", pool.chainID)
 
-	// grab the latest nonce, pending transactions with a nonce lower or equal are included in the chain and should
+	// grab the latest nonce, pending transactions with a nonce lower are included in the chain and should
 	// have a receipt available.
-	nonce, err := pool.client.NonceAt(ctx, pool.wallet.Address, nil)
+	nonce, err := pool.client.NonceAt(ctx, pool.wallet.Address, head.Number)
 	if err != nil {
 		log.Warn("unable to get tx pool nonce", "err", err)
 		return
@@ -327,7 +327,7 @@ func (pool *pendingTransactionPool) checkPendingTransactions(ctx context.Context
 	// drop transactions that have a receipt available from the pool and check others if it is time to send a
 	// replacement transactions
 	pool.pendingTxs.Range(func(ptxNonce uint64, ptx *txPoolPendingTransaction) bool {
-		ptxConfirmed := ptxNonce <= nonce
+		ptxConfirmed := ptxNonce < nonce
 
 		if ptxConfirmed {
 			ptx.receiptPolls++

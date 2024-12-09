@@ -267,7 +267,7 @@ func (tp *streamScrubTaskProcessorImpl) processTaskImpl(
 		return err
 	}
 
-	for member := range (*members).Iter() {
+	for member := range members.Iter() {
 		tp.processMember(ctx, streamId, member)
 	}
 

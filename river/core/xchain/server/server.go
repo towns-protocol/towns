@@ -120,7 +120,6 @@ func New(
 		if err != nil {
 			return nil, err
 		}
-		riverChain.StartChainMonitor(ctx)
 	}
 
 	registryContract, err := registries.NewRiverRegistryContract(
@@ -187,7 +186,6 @@ func New(
 	}
 
 	log.Info("Start processing entitlement check requests", "startBlock", baseChain.InitialBlockNum)
-	baseChain.StartChainMonitor(ctx)
 
 	decoder, err := crypto.NewEVMErrorDecoder(
 		base.IEntitlementCheckerMetaData,

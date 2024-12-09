@@ -58,11 +58,12 @@ func (w *autoMiningClientWrapper) SendTransaction(ctx context.Context, tx *types
 }
 
 type TestParams struct {
-	NumKeys         int
-	MineOnTx        bool
-	AutoMine        bool
-	NoDeployer      bool
-	NoOnChainConfig bool
+	NumKeys          int
+	MineOnTx         bool
+	AutoMine         bool
+	AutoMineInterval time.Duration
+	NoDeployer       bool
+	NoOnChainConfig  bool
 }
 
 type BlockchainTestContext struct {
@@ -260,11 +261,15 @@ func NewBlockchainTestContext(ctx context.Context, params TestParams) (*Blockcha
 
 	if params.AutoMine && btc.Backend != nil {
 		go func() {
+			interval := params.AutoMineInterval
+			if interval == 0 {
+				interval = 50 * time.Millisecond
+			}
 			for {
 				select {
 				case <-ctx.Done():
 					return
-				case <-time.After(50 * time.Millisecond):
+				case <-time.After(interval):
 					_ = btc.mineBlock(ctx)
 				}
 			}
@@ -475,8 +480,6 @@ func makeTestBlockchain(
 		panic(err)
 	}
 
-	bc.StartChainMonitor(ctx)
-
 	return bc
 }
 
@@ -649,7 +652,7 @@ type NoopChainMonitor struct{}
 
 var _ ChainMonitor = NoopChainMonitor{}
 
-func (NoopChainMonitor) RunWithBlockPeriod(
+func (NoopChainMonitor) Start(
 	context.Context,
 	BlockchainClient,
 	BlockNumber,

@@ -227,6 +227,22 @@ func NewMiniblockInfoFromProto(pb *Miniblock, opts NewMiniblockInfoFromProtoOpts
 	}, nil
 }
 
+func NewMiniblocksInfoFromProtos(pbs []*Miniblock, opts NewMiniblockInfoFromProtoOpts) ([]*MiniblockInfo, error) {
+	var err error
+	mbs := make([]*MiniblockInfo, len(pbs))
+	for i, pb := range pbs {
+		o := opts
+		if o.ExpectedBlockNumber >= 0 {
+			o.ExpectedBlockNumber += int64(i)
+		}
+		mbs[i], err = NewMiniblockInfoFromProto(pb, o)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return mbs, nil
+}
+
 func NewMiniblockInfoFromParsed(headerEvent *ParsedEvent, events []*ParsedEvent) (*MiniblockInfo, error) {
 	if headerEvent.Event.GetMiniblockHeader() == nil {
 		return nil, RiverError(Err_BAD_EVENT, "header event must be a block header")

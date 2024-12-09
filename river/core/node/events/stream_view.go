@@ -3,6 +3,7 @@ package events
 import (
 	"bytes"
 	"context"
+	"iter"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -33,6 +34,7 @@ type StreamView interface {
 	InceptionPayload() IsInceptionPayload
 	LastEvent() *ParsedEvent
 	MinipoolEnvelopes() []*Envelope
+	Miniblocks() []*MiniblockInfo
 	MiniblocksFromLastSnapshot() []*Miniblock
 	SyncCookie(localNodeAddress common.Address) *SyncCookie
 	LastBlock() *MiniblockInfo
@@ -50,6 +52,8 @@ type StreamView interface {
 		forceSnapshot bool,
 	) (*MiniblockProposal, error)
 	IsMember(userAddress []byte) (bool, error)
+	CopyAndPrependMiniblocks(mbs []*MiniblockInfo) (StreamView, error)
+	AllEvents() iter.Seq[*ParsedEvent]
 }
 
 func MakeStreamView(
@@ -123,16 +127,19 @@ func MakeStreamView(
 	}, nil
 }
 
-func MakeRemoteStreamView(ctx context.Context, resp *GetStreamResponse) (*streamViewImpl, error) {
-	if len(resp.Stream.Miniblocks) <= 0 {
+func MakeRemoteStreamView(ctx context.Context, stream *StreamAndCookie) (*streamViewImpl, error) {
+	if stream == nil {
+		return nil, RiverError(Err_STREAM_EMPTY, "no stream").Func("MakeStreamViewFromRemote")
+	}
+	if len(stream.Miniblocks) <= 0 {
 		return nil, RiverError(Err_STREAM_EMPTY, "no blocks").Func("MakeStreamViewFromRemote")
 	}
 
-	miniblocks := make([]*MiniblockInfo, len(resp.Stream.Miniblocks))
+	miniblocks := make([]*MiniblockInfo, len(stream.Miniblocks))
 	// +1 below will make it -1 for the first iteration so block number is not enforced.
 	lastMiniblockNumber := int64(-2)
 	snapshotIndex := 0
-	for i, binMiniblock := range resp.Stream.Miniblocks {
+	for i, binMiniblock := range stream.Miniblocks {
 		miniblock, err := NewMiniblockInfoFromProto(
 			binMiniblock,
 			NewMiniblockInfoFromProtoOpts{ExpectedBlockNumber: lastMiniblockNumber + 1},
@@ -156,8 +163,8 @@ func MakeRemoteStreamView(ctx context.Context, resp *GetStreamResponse) (*stream
 		return nil, RiverError(Err_STREAM_BAD_EVENT, "bad streamId").Func("MakeStreamView")
 	}
 
-	minipoolEvents := NewOrderedMap[common.Hash, *ParsedEvent](len(resp.Stream.Events))
-	for _, e := range resp.Stream.Events {
+	minipoolEvents := NewOrderedMap[common.Hash, *ParsedEvent](len(stream.Events))
+	for _, e := range stream.Events {
 		parsed, err := ParseEvent(e)
 		if err != nil {
 			return nil, err
@@ -522,6 +529,10 @@ func (r *streamViewImpl) MinipoolEnvelopes() []*Envelope {
 	return envelopes
 }
 
+func (r *streamViewImpl) Miniblocks() []*MiniblockInfo {
+	return r.blocks
+}
+
 func (r *streamViewImpl) MiniblocksFromLastSnapshot() []*Miniblock {
 	miniblocks := make([]*Miniblock, 0, len(r.blocks)-r.snapshotIndex)
 	for i := r.snapshotIndex; i < len(r.blocks); i++ {
@@ -729,5 +740,49 @@ func GetStreamParentId(inception IsInceptionPayload) []byte {
 		return inceptionContent.SpaceId
 	default:
 		return nil
+	}
+}
+
+func (r *streamViewImpl) CopyAndPrependMiniblocks(mbs []*MiniblockInfo) (StreamView, error) {
+	if len(mbs) == 0 {
+		return r, nil
+	}
+
+	for i := 1; i < len(mbs); i++ {
+		if mbs[i].Ref.Num != mbs[i-1].Ref.Num+1 {
+			return nil, RiverError(Err_INVALID_ARGUMENT, "miniblocks are not sequential")
+		}
+	}
+
+	if mbs[len(mbs)-1].Ref.Num+1 != r.blocks[0].Ref.Num {
+		return nil, RiverError(Err_INVALID_ARGUMENT, "miniblocks do not match the first block in the stream")
+	}
+
+	return &streamViewImpl{
+		streamId:      r.streamId,
+		blocks:        append(mbs, r.blocks...),
+		minipool:      r.minipool,
+		snapshot:      r.snapshot,
+		snapshotIndex: r.snapshotIndex + len(mbs),
+	}, nil
+}
+
+func (r *streamViewImpl) AllEvents() iter.Seq[*ParsedEvent] {
+	return func(yield func(*ParsedEvent) bool) {
+		for _, block := range r.blocks {
+			for _, event := range block.events() {
+				if !yield(event) {
+					return
+				}
+			}
+			if !yield(block.headerEvent) {
+				return
+			}
+		}
+		for _, event := range r.minipool.events.Values {
+			if !yield(event) {
+				return
+			}
+		}
 	}
 }

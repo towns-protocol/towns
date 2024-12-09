@@ -106,9 +106,7 @@ abstract contract MembershipBase is IMembershipBase {
   }
 
   function _getCreatorBalance() internal view returns (uint256) {
-    MembershipStorage.Layout storage ds = MembershipStorage.layout();
-    uint256 contractBalance = address(this).balance;
-    return FixedPointMathLib.min(contractBalance, ds.tokenBalance);
+    return MembershipStorage.layout().tokenBalance;
   }
 
   function _setCreatorBalance(uint256 newBalance) internal {

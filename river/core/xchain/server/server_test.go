@@ -29,6 +29,7 @@ import (
 	"github.com/river-build/river/core/node/crypto"
 	node_crypto "github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/dlog"
+	"github.com/river-build/river/core/node/testutils/testfmt"
 	"github.com/stretchr/testify/require"
 
 	contract_types "github.com/river-build/river/core/contracts/types"
@@ -944,7 +945,7 @@ func TestCrossChainEntitlements(t *testing.T) {
 
 			// Deploy mock crosschain entitlement contract to anvil chain
 			auth, contractAddress, crossChainEntitlement := deployMockCrossChainEntitlement(require, st)
-			t.Log("Deployed crosschain entitlement contract", contractAddress.Hex(), ChainID)
+			testfmt.Log(t, "Deployed crosschain entitlement contract", contractAddress.Hex(), ChainID)
 
 			check := func(
 				check base.IRuleEntitlementBaseRuleDataV2,

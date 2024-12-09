@@ -107,7 +107,6 @@ func (s *Service) startNotificationMode(notifier push.MessageNotifier, opts *Ser
 		return err
 	}
 
-	s.riverChain.StartChainMonitor(s.serverCtx)
 	s.NotificationService.Start(s.serverCtx)
 
 	// Retrieve the TCP address of the listener

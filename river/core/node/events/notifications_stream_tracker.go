@@ -3,8 +3,10 @@ package events
 import (
 	"bytes"
 	"context"
+
 	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/ethereum/go-ethereum/common"
+
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/crypto"
 	. "github.com/river-build/river/core/node/protocol"
@@ -60,10 +62,7 @@ func NewNotificationsStreamTrackerFromStreamAndCookie(
 	userPreferences UserPreferencesStore,
 ) (*TrackedNotificationStreamView, error) {
 	// lint:ignore context.Background() is fine here
-	view, err := MakeRemoteStreamView(ctx, &GetStreamResponse{
-		Stream: stream,
-	})
-
+	view, err := MakeRemoteStreamView(ctx, stream)
 	if err != nil {
 		return nil, err
 	}
@@ -147,7 +146,7 @@ func (ts *TrackedNotificationStreamView) addEvent(ctx context.Context, event *Pa
 		return err
 	}
 
-	ts.listener.OnMessageEvent(ctx, ts.streamID, view.StreamParentId(), *members, event)
+	ts.listener.OnMessageEvent(ctx, ts.streamID, view.StreamParentId(), members, event)
 
 	return nil
 }
