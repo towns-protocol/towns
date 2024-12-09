@@ -1,9 +1,13 @@
 import {
+    DmChannelSetting,
     DmChannelSettingValue,
     FinishAuthenticationResponse,
+    GdmChannelSetting,
     GdmChannelSettingValue,
     GetSettingsResponse,
+    SpaceChannelSetting,
     SpaceChannelSettingValue,
+    SpaceSetting,
     StartAuthenticationResponse,
     WebPushSubscriptionObject,
 } from '@river-build/proto'
@@ -48,7 +52,7 @@ class LocalStorageNotificationStore implements INotificationStore {
 
 export interface NotificationSettingsModel {
     fetchedAtMs: number | undefined // Date.now()
-    settings: PlainMessage<GetSettingsResponse> | undefined
+    settings: GetSettingsResponse | undefined
     error: Error | undefined
 }
 
@@ -113,14 +117,13 @@ export class NotificationSettingsClient {
         this.store.setItem(this.settingsKey, settings)
     }
 
-    private updateLocalSettings(
-        fn: (current: PlainMessage<GetSettingsResponse>) => PlainMessage<GetSettingsResponse>,
-    ) {
+    private updateLocalSettings(fn: (current: GetSettingsResponse) => void) {
         if (!this.data.value.settings) {
             throw new Error('TNS PUSH: settings has not been fetched')
         }
-        const newSettings = fn(this.data.value.settings)
-        this.setLocalSettings(new GetSettingsResponse(newSettings))
+        const newSettings = this.data.value.settings.clone()
+        fn(newSettings)
+        this.setLocalSettings(newSettings)
         this.data.setValue({ ...this.data.value, settings: newSettings })
     }
 
@@ -243,10 +246,9 @@ export class NotificationSettingsClient {
                 gdmGlobal:
                     this.data.value.settings?.gdmGlobal ?? GdmChannelSettingValue.GDM_UNSPECIFIED,
             })
-            this.updateLocalSettings((current) => ({
-                ...current,
-                dmGlobal: value,
-            }))
+            this.updateLocalSettings((settings) => {
+                settings.dmGlobal = value
+            })
         })
     }
 
@@ -258,10 +260,9 @@ export class NotificationSettingsClient {
                 gdmGlobal: value,
             })
 
-            this.updateLocalSettings((current) => ({
-                ...current,
-                gdmGlobal: value,
-            }))
+            this.updateLocalSettings((settings) => {
+                settings.gdmGlobal = value
+            })
         })
     }
 
@@ -271,15 +272,13 @@ export class NotificationSettingsClient {
                 dmChannelId: streamIdAsBytes(channelId),
                 value,
             })
-            this.updateLocalSettings((current) => {
-                const newDmChannels = current.dmChannels.filter(
+            this.updateLocalSettings((settings) => {
+                settings.dmChannels = settings.dmChannels.filter(
                     (c) => streamIdAsString(c.channelId) !== channelId,
                 )
-                newDmChannels.push({ channelId: streamIdAsBytes(channelId), value })
-                return {
-                    ...current,
-                    dmChannels: newDmChannels,
-                }
+                settings.dmChannels.push(
+                    new DmChannelSetting({ channelId: streamIdAsBytes(channelId), value }),
+                )
             })
         })
     }
@@ -289,12 +288,13 @@ export class NotificationSettingsClient {
                 gdmChannelId: streamIdAsBytes(channelId),
                 value,
             })
-            this.updateLocalSettings((current) => {
-                const newGdmChannels = current.gdmChannels.filter(
+            this.updateLocalSettings((settings) => {
+                settings.gdmChannels = settings.gdmChannels.filter(
                     (c) => streamIdAsString(c.channelId) !== channelId,
                 )
-                newGdmChannels.push({ channelId: streamIdAsBytes(channelId), value })
-                return { ...current, gdmChannels: newGdmChannels }
+                settings.gdmChannels.push(
+                    new GdmChannelSetting({ channelId: streamIdAsBytes(channelId), value }),
+                )
             })
         })
     }
@@ -302,17 +302,21 @@ export class NotificationSettingsClient {
     async setSpaceSetting(spaceId: string, value: SpaceChannelSettingValue) {
         return this.withClient(async (client) => {
             await client.setSpaceSettings({ spaceId: streamIdAsBytes(spaceId), value })
-            this.updateLocalSettings((current) => {
-                const newSpaces = [...current.space]
-                const spaceIndex = newSpaces.findIndex(
-                    (s) => streamIdAsString(s.spaceId) !== spaceId,
+            this.updateLocalSettings((settings) => {
+                const spaceIndex = settings.space.findIndex(
+                    (s) => streamIdAsString(s.spaceId) === spaceId,
                 )
                 if (spaceIndex != -1) {
-                    newSpaces[spaceIndex].value = value
+                    settings.space[spaceIndex].value = value
                 } else {
-                    newSpaces.push({ spaceId: streamIdAsBytes(spaceId), value, channels: [] })
+                    settings.space.push(
+                        new SpaceSetting({
+                            spaceId: streamIdAsBytes(spaceId),
+                            value,
+                            channels: [],
+                        }),
+                    )
                 }
-                return { ...current, space: newSpaces }
             })
         })
     }
@@ -325,31 +329,30 @@ export class NotificationSettingsClient {
                 channelId: streamIdAsBytes(channelId),
                 value,
             })
-            this.updateLocalSettings((current) => {
-                const newSpaces = [...current.space]
-                const newChannel = { channelId: streamIdAsBytes(channelId), value }
-                const spaceIndex = newSpaces.findIndex(
-                    (s) => streamIdAsString(s.spaceId) !== spaceId,
+            this.updateLocalSettings((settings) => {
+                let spaceIndex = settings.space.findIndex(
+                    (s) => streamIdAsString(s.spaceId) === spaceId,
                 )
-                if (spaceIndex != -1) {
-                    const newChannels = [...newSpaces[spaceIndex].channels]
-                    const channelIndex = newChannels.findIndex(
-                        (c) => streamIdAsString(c.channelId) === channelId,
+                if (spaceIndex == -1) {
+                    spaceIndex = settings.space.length
+                    settings.space.push(
+                        new SpaceSetting({
+                            spaceId: streamIdAsBytes(spaceId),
+                            value: SpaceChannelSettingValue.SPACE_CHANNEL_SETTING_UNSPECIFIED,
+                            channels: [],
+                        }),
                     )
-                    if (channelIndex != -1) {
-                        newChannels[channelIndex] = newChannel
-                    } else {
-                        newChannels.push(newChannel)
-                    }
-                    newSpaces[spaceIndex].channels = newChannels
-                } else {
-                    newSpaces.push({
-                        spaceId: streamIdAsBytes(spaceId),
-                        value,
-                        channels: [newChannel],
-                    })
                 }
-                return { ...current, space: newSpaces }
+                const channelIndex = settings.space[spaceIndex].channels.findIndex(
+                    (c) => streamIdAsString(c.channelId) === channelId,
+                )
+                if (channelIndex == -1) {
+                    settings.space[spaceIndex].channels.push(
+                        new SpaceChannelSetting({ channelId: streamIdAsBytes(channelId), value }),
+                    )
+                } else {
+                    settings.space[spaceIndex].channels[channelIndex].value = value
+                }
             })
         })
     }

@@ -37,12 +37,12 @@ export const ChannelNavItem = (props: Props) => {
 
     const link = `/${PATHS.SPACES}/${addressFromSpaceId(space.id)}/channels/${channel.id}/`
     const isHighlight = channel.id === channelSlug
-    const { channelIsMuted, spaceIsMuted } = useMuteSettings({
+    const { channelIsMuted } = useMuteSettings({
         spaceId: space.id,
         channelId: channel.id,
     })
 
-    const isMuted = channelIsMuted || spaceIsMuted
+    const isMuted = channelIsMuted
 
     const { spaceUnreadChannelIds } = useTownsContext()
     const showUnread = spaceUnreadChannelIds[space.id]?.has(channel.id)

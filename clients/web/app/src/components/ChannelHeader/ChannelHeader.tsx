@@ -96,11 +96,11 @@ const DesktopChannelHeader = (props: Props & HeaderProps) => {
         usePushNotifications()
     const topic = useRoom(channel.id)?.topic
 
-    const { channelIsMuted, spaceIsMuted } = useMuteSettings({
+    const { channelIsMuted } = useMuteSettings({
         spaceId: spaceId,
         channelId: channel.id,
     })
-    const isMuted = channelIsMuted || spaceIsMuted
+    const isMuted = channelIsMuted
     const channelType = useChannelType(channel.id)
     const onInfoPressed = useChannelInfoButton(channelType, channel.id)
 
@@ -285,13 +285,13 @@ const TouchChannelHeader = (props: Props & HeaderProps) => {
     const { displayNotificationBanner, requestPushPermission, denyPushPermission } =
         usePushNotifications()
     const channelType = useChannelType(channel.id)
-    const { channelIsMuted, spaceIsMuted } = useMuteSettings({
+    const { channelIsMuted } = useMuteSettings({
         spaceId: spaceId,
         channelId: channel?.id,
     })
 
     const isFavorite = favoriteChannelIds.has(channel.id)
-    const isMuted = channelIsMuted || spaceIsMuted
+    const isMuted = channelIsMuted
     const infoButtonPressed = useChannelInfoButton(channelType, channel.id)
 
     const showMembersCount = memberIds.length > 0
