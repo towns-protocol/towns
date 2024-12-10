@@ -10,10 +10,11 @@ import { BASE_MAINNET, SpaceAddressFromSpaceId } from 'use-towns-client'
 import { Box, Stack } from '@ui'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { Spinner } from 'ui/components/Spinner'
-import { vars } from 'ui/styles/vars.css'
 import { env } from 'utils/environment'
 import { Analytics } from 'hooks/useAnalytics'
 import { isTouch } from 'hooks/useDevice'
+import { useStore } from 'store/store'
+import { Figma } from 'ui/styles/palette'
 import { useGatherSpaceDetailsAnalytics } from './Analytics/useGatherSpaceDetailsAnalytics'
 import { getSpaceNameFromCache } from './Analytics/getSpaceNameFromCache'
 
@@ -45,6 +46,7 @@ const CrossmintPaymentContent = ({
     const _isTouch = isTouch()
     const hasTriggeredPayment = useRef(false)
     const hasTriggeredComplete = useRef(false)
+    const theme = useStore((s) => s.getTheme())
 
     const { user } = usePrivy()
 
@@ -114,6 +116,8 @@ const CrossmintPaymentContent = ({
         return null
     }
 
+    const isDark = theme === 'dark'
+
     return (
         <Box
             background="level1"
@@ -132,39 +136,54 @@ const CrossmintPaymentContent = ({
                         variables: {
                             fontFamily: 'Inter, system-ui, sans-serif',
                             colors: {
-                                backgroundPrimary: '#1A1A1A',
-                                textPrimary: '#fff',
-                                textSecondary: '#A0A0A0',
-                                borderPrimary: vars.color.layer.level3,
-                                accent: '#21E078',
+                                backgroundPrimary: isDark
+                                    ? Figma.DarkMode.Level2
+                                    : Figma.LightMode.Level2,
+                                textPrimary: isDark ? Figma.Colors.White : Figma.Colors.Black,
+                                textSecondary: isDark
+                                    ? Figma.DarkMode.Secondary
+                                    : Figma.LightMode.Secondary,
+                                borderPrimary: isDark
+                                    ? Figma.DarkMode.Level3
+                                    : Figma.LightMode.Level3,
+                                accent: Figma.Colors.Green,
                             },
                         },
                         rules: {
                             Input: {
                                 colors: {
-                                    background: vars.color.background.level2,
-                                    border: '#404040',
-                                    text: '#fff',
-                                    placeholder: '#666666',
+                                    background: isDark
+                                        ? Figma.DarkMode.Level2
+                                        : Figma.LightMode.Level2,
+                                    text: isDark ? Figma.Colors.White : Figma.Colors.Black,
+                                    border: isDark ? Figma.DarkMode.Level3 : Figma.LightMode.Level3,
+                                    placeholder: isDark
+                                        ? Figma.DarkMode.Secondary
+                                        : Figma.LightMode.Secondary,
                                 },
                                 hover: {
                                     colors: {
-                                        background: vars.color.background.level3,
+                                        background: isDark
+                                            ? Figma.DarkMode.Level3
+                                            : Figma.LightMode.Level3,
                                     },
                                 },
                                 focus: {
                                     colors: {
-                                        background: vars.color.background.level3,
+                                        background: isDark
+                                            ? Figma.DarkMode.Level3
+                                            : Figma.LightMode.Level3,
                                     },
                                 },
                             },
                             PrimaryButton: {
                                 colors: {
-                                    background: '#21E078',
-                                    text: vars.color.text.onTone,
+                                    background: Figma.Colors.Green,
+                                    text: isDark ? Figma.Colors.Black : Figma.Colors.Black,
                                 },
                                 hover: {
                                     colors: {
+                                        text: isDark ? Figma.Colors.Black : Figma.Colors.Black,
                                         background: 'rgba(33, 224, 120, 0.8)',
                                     },
                                 },

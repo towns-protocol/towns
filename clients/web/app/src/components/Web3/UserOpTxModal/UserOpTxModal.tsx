@@ -263,6 +263,7 @@ function UserOpTxModalContent({
         setShowCrossmintPayment(false)
         setShowEthPayment(false)
     }
+    const theme = useStore((s) => s.getTheme())
 
     const bottomContent = (): JSX.Element => {
         if (!balanceData) {
@@ -332,8 +333,9 @@ function UserOpTxModalContent({
                     />
                 )}
                 <Button
-                    tone="level3"
+                    tone={theme === 'dark' ? 'level3' : 'none'}
                     rounded="lg"
+                    border={theme === 'dark' ? undefined : 'level4'}
                     onClick={() => {
                         // add analytics
                         if (balanceIsLessThanCost) {
@@ -350,23 +352,8 @@ function UserOpTxModalContent({
                         }
                     }}
                 >
-                    <Box
-                        display="flex"
-                        direction="row"
-                        alignItems="center"
-                        justifyContent="center"
-                        gap="sm"
-                        style={{
-                            background: 'linear-gradient(90deg, #21E078 0%, #1FDBF1 100%)',
-                            textOverflow: 'clip',
-                            WebkitBackgroundClip: 'text',
-                            WebkitTextFillColor: 'transparent',
-                            backgroundClip: 'text',
-                        }}
-                    >
-                        <Icon type="greenEth" />
-                        Pay with ETH
-                    </Box>
+                    <Icon type="greenEth" />
+                    Pay with ETH
                 </Button>
             </Box>
         )
