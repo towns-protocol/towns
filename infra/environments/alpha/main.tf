@@ -76,6 +76,7 @@ resource "aws_ecs_cluster" "river_ecs_cluster" {
   tags = module.global_constants.tags
 }
 
+# TODO: delete me
 module "river_db_cluster" {
   source                    = "../../modules/river-db-cluster"
   database_subnets          = module.vpc.database_subnets
@@ -83,12 +84,21 @@ module "river_db_cluster" {
   pgadmin_security_group_id = module.pgadmin.security_group_id
 }
 
+# TODO: delete me
 module "river_db" {
   source                    = "../../modules/river-db-cluster"
   database_subnets          = module.vpc.database_subnets
   vpc_id                    = module.vpc.vpc_id
   pgadmin_security_group_id = module.pgadmin.security_group_id
   cluster_name_suffix       = "" // TODO: remove this
+}
+
+module "river_db_post_stream_migration" {
+  source                    = "../../modules/river-db-cluster"
+  database_subnets          = module.vpc.database_subnets
+  vpc_id                    = module.vpc.vpc_id
+  pgadmin_security_group_id = module.pgadmin.security_group_id
+  cluster_name_suffix       = "post-stream-migration" // TODO: remove this
 }
 
 module "river_node_ssl_cert" {
@@ -177,7 +187,7 @@ module "river_node" {
 
   river_node_ssl_cert_secret_arn = module.river_node_ssl_cert.river_node_ssl_cert_secret_arn
 
-  river_node_db = count.index == 0 ? module.river_db : module.river_db_cluster
+  river_node_db = module.river_db_post_stream_migration
 
   river_database_isolation_level = local.river_database_isolation_level
   max_db_connections             = local.river_max_db_connections
