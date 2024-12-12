@@ -1,6 +1,7 @@
 export * from './src/types'
 export * from './src/UserOperations'
 export * from './src/middlewares/paymasterProxyMiddleware'
+export * from './src/middlewares/balance'
 export * from './src/utils'
 export * from './src/userOpsStore'
 export * from './src/TownsUserOpClient'

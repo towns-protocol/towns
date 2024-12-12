@@ -8,7 +8,7 @@ import { isTouch } from 'hooks/useDevice'
 import { formatUnitsToFixedLength, parseUnits } from 'hooks/useBalance'
 import { TransferSchema } from './transferAssetsSchema'
 import { convertTokenDataWithChainIdToToken } from './useBaseNftsForTransfer'
-import { RecipientText } from '../UserOpTxModal/UserOpTxModal'
+import { RecipientText } from '../UserOpTxModal/RecipientText'
 
 export function TreasuryOrNftConfirmModal(props: {
     showModal: boolean
