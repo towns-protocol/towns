@@ -1345,15 +1345,17 @@ export class UserOps {
             fixedPricingModule.module.toString().toLowerCase()
         const newIsFixedPricing =
             newPricingModule.toLowerCase() === fixedPricingModule.module.toString().toLowerCase()
+        const newMembershipPriceBigNumber = ethers.BigNumber.from(newMembershipPrice)
 
         // fixed price of 0 ("free") to fixed price of non-zero
         if (
             currentIsFixedPricing &&
             currentFreeAllocation.toBigInt() > 0n &&
             newIsFixedPricing &&
+            newMembershipPriceBigNumber.gt(0) &&
             newFreeAllocation === 0
         ) {
-            const freeAllocationCallData = await space.Membership.encodeFunctionData(
+            const freeAllocationCallData = space.Membership.encodeFunctionData(
                 'setMembershipFreeAllocation',
                 [newFreeAllocation],
             )
@@ -1362,7 +1364,7 @@ export class UserOps {
                 toAddress: space.Membership.address,
             })
 
-            const membershipPriceCallData = await space.Membership.encodeFunctionData(
+            const membershipPriceCallData = space.Membership.encodeFunctionData(
                 'setMembershipPrice',
                 [newMembershipPrice],
             )
@@ -1384,7 +1386,7 @@ export class UserOps {
             // do nothing
         }
         // price update only
-        else if (!currentMembershipPrice.eq(ethers.BigNumber.from(newMembershipPrice))) {
+        else if (!currentMembershipPrice.eq(newMembershipPriceBigNumber)) {
             const membershipPriceCallData = space.Membership.encodeFunctionData(
                 'setMembershipPrice',
                 [newMembershipPrice],
@@ -1532,15 +1534,17 @@ export class UserOps {
             fixedPricingModule.module.toString().toLowerCase()
         const newIsFixedPricing =
             newPricingModule.toLowerCase() === fixedPricingModule.module.toString().toLowerCase()
+        const newMembershipPriceBigNumber = ethers.BigNumber.from(newMembershipPrice)
 
         // fixed price of 0 ("free") to fixed price of non-zero
         if (
             currentIsFixedPricing &&
             currentFreeAllocation.toBigInt() > 0n &&
             newIsFixedPricing &&
+            newMembershipPriceBigNumber.gt(0) &&
             newFreeAllocation === 0
         ) {
-            const freeAllocationCallData = await space.Membership.encodeFunctionData(
+            const freeAllocationCallData = space.Membership.encodeFunctionData(
                 'setMembershipFreeAllocation',
                 [newFreeAllocation],
             )
@@ -1549,7 +1553,7 @@ export class UserOps {
                 toAddress: space.Membership.address,
             })
 
-            const membershipPriceCallData = await space.Membership.encodeFunctionData(
+            const membershipPriceCallData = space.Membership.encodeFunctionData(
                 'setMembershipPrice',
                 [newMembershipPrice],
             )
@@ -1571,7 +1575,7 @@ export class UserOps {
             // do nothing
         }
         // price update only
-        else if (!currentMembershipPrice.eq(ethers.BigNumber.from(newMembershipPrice))) {
+        else if (!currentMembershipPrice.eq(newMembershipPriceBigNumber)) {
             const membershipPriceCallData = space.Membership.encodeFunctionData(
                 'setMembershipPrice',
                 [newMembershipPrice],

@@ -112,10 +112,14 @@ export function EditMembershipSubmitButton({
         }
 
         const isFixedPricing = watchAllFields.membershipPricingType === 'fixed'
+        const defaultPriceInWei = parseUnits(defaultValues?.membershipCost ?? '0')
 
+        // fixed price space that was not created with a minimum price must be at least the minimum price
+        // or else the contract will revert
         if (
             minimumMmebershipPrice !== undefined &&
             isFixedPricing &&
+            defaultPriceInWei !== 0n &&
             priceInWei < parseUnits(minimumMmebershipPrice)
         ) {
             setError('membershipPricingType', {
