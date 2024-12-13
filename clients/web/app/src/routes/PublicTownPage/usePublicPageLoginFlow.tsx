@@ -138,11 +138,17 @@ export function usePublicPageLoginFlow() {
                 end()
                 const _error = error as Error
 
+                const errorMessage = mapToErrorMessage({ error: _error, source: 'join space' })
+
+                if (errorMessage === 'ACTION_REJECTED') {
+                    return
+                }
+
                 popupToast(({ toast }) => (
                     <StandardToast.Error
                         toast={toast}
                         message="There was an error joining the town."
-                        subMessage={mapToErrorMessage({ error: _error, source: 'join space' })}
+                        subMessage={errorMessage}
                     />
                 ))
             }

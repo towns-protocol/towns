@@ -62,7 +62,7 @@ export function mapToErrorMessage(args: {
     const errorCode = getErrorCode(error)
 
     if (errorCode === 'ACTION_REJECTED' || errorCode === 4001 || isRejectedErrorMessage(error)) {
-        return
+        return 'ACTION_REJECTED'
     }
 
     // category is used for analytics tracking purposes
