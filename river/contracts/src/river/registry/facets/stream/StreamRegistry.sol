@@ -92,7 +92,7 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
 
   function setStreamLastMiniblock(
     bytes32 streamId,
-    bytes32 /*prevMiniBlockHash*/,
+    bytes32 prevMiniBlockHash,
     bytes32 lastMiniblockHash,
     uint64 lastMiniblockNum,
     bool isSealed
@@ -103,6 +103,20 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     }
 
     Stream storage stream = ds.streamById[streamId];
+
+    // Check if the stream is already sealed using bitwise AND
+    if ((stream.flags & StreamFlags.SEALED) != 0) {
+      revert(RiverRegistryErrors.STREAM_SEALED);
+    }
+
+    // Check if the lastMiniblockNum is the next expected miniblock and
+    // the prevMiniblockHash is correct
+    if (
+      stream.lastMiniblockNum + 1 != lastMiniblockNum ||
+      stream.lastMiniblockHash != prevMiniBlockHash
+    ) {
+      revert(RiverRegistryErrors.BAD_ARG);
+    }
 
     // Update the stream information
     stream.lastMiniblockHash = lastMiniblockHash;
@@ -145,6 +159,32 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
       }
 
       Stream storage stream = ds.streamById[miniblock.streamId];
+
+      // Check if the stream is already sealed using bitwise AND
+      if ((stream.flags & StreamFlags.SEALED) != 0) {
+        emit StreamLastMiniblockUpdateFailed(
+          miniblock.streamId,
+          miniblock.lastMiniblockHash,
+          miniblock.lastMiniblockNum,
+          RiverRegistryErrors.STREAM_SEALED
+        );
+        continue;
+      }
+
+      // Check if the lastMiniblockNum is the next expected miniblock and
+      // the prevMiniblockHash is correct
+      if (
+        stream.lastMiniblockNum + 1 != miniblock.lastMiniblockNum ||
+        stream.lastMiniblockHash != miniblock.prevMiniBlockHash
+      ) {
+        emit StreamLastMiniblockUpdateFailed(
+          miniblock.streamId,
+          miniblock.lastMiniblockHash,
+          miniblock.lastMiniblockNum,
+          RiverRegistryErrors.BAD_ARG
+        );
+        continue;
+      }
 
       // Update the stream information
       stream.lastMiniblockHash = miniblock.lastMiniblockHash;

@@ -1,3 +1,7 @@
+# WARNING
+
+This script has been updated to remove all data migration logic after all public networks migrated to the current stream schema. However, it has not been carefully tested since this change and should be relied upon with caution.
+
 ### Build migration tool
 
 Update `river_migrate_db.env` with correct parameters.
@@ -12,48 +16,20 @@ go build -o river_migrate_db .
 
 Note: shutdown node process connected to source DB during migration process below.
 
-### Run a stream data and schema migration simultaneously, run the migration tool like so:
-
-    ./river_migrate_db target create # create target schema
-
-    ./river_migrate_db target init # Run sql migrations on target to apply the current schema
-
-    # No need to partition the target as the migrated schema consists of a fixed
-    # set of pre-allocated tables created by `init`
-
-    # Copy source data to target, copying stream data into the migrated schema on the target database
-    ./river_migrate_db copy --migrate_stream_schema
-
-    # Validate target data against source database, searching for target stream
-    # data in migrated schema
-    ./river_migrate_db validate -m
-
-    # To validate with a binary comparison of stream contents:
-    ./river_migrate_db validate -m -b
-
-    #... with verbose log output:
-    ./river_migrate_db validate -m -b -v
-
-    # Inspect specific stream content
-    ./river_migrate_db source inspect <streamId>
-    ./river_migrate_db target inspect <streamId>
-
-### Run migration tool creating target partitions matching source
+### Run migration tool
 
     ./river_migrate_db target create  # create target schema (i.e. db partition)
     ./river_migrate_db target init  # create targe tables
-    ./river_migrate_db target partition  # create target partitions matching source
 
     # shutdown container that is connected to source db
 
-    ./river_migrate_db target partition  # create missing target partitions matching source since last run
     ./river_migrate_db copy  # copy data from source to target
 
     # Inspect specific stream content
     ./river_migrate_db source inspect <streamId>
     ./river_migrate_db target inspect <streamId>
 
-    # reconfigure container to use target db
+    # reconfigure node container to use target db & estart node
 
 For command-line options use `help` command.
 

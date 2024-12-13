@@ -604,7 +604,7 @@ contract RewardsDistributionV2Test is
     vm.prank(depositors[0]);
     rewardsDistributionFacet.initiateWithdraw(depositId0);
 
-    vm.warp(block.timestamp + timeLapse);
+    skip(timeLapse);
 
     // poke the second depositor
     vm.prank(depositors[1]);
@@ -701,7 +701,7 @@ contract RewardsDistributionV2Test is
       beneficiary
     );
 
-    vm.warp(block.timestamp + timeLapse);
+    skip(timeLapse);
 
     vm.expectEmit(address(rewardsDistributionFacet));
     emit InitiateWithdraw(address(this), depositId, amount);
@@ -913,7 +913,7 @@ contract RewardsDistributionV2Test is
     test_stake();
     test_fuzz_stake(depositor, amount, operator, commissionRate, beneficiary);
 
-    vm.warp(block.timestamp + timeLapse);
+    skip(timeLapse);
 
     uint256 currentReward = rewardsDistributionFacet.currentReward(beneficiary);
 
@@ -956,7 +956,7 @@ contract RewardsDistributionV2Test is
       vm.stopPrank();
     }
 
-    vm.warp(block.timestamp + timeLapse);
+    skip(timeLapse);
 
     uint256 currentReward = rewardsDistributionFacet.currentReward(beneficiary);
 
@@ -994,7 +994,7 @@ contract RewardsDistributionV2Test is
       address(this)
     );
 
-    vm.warp(block.timestamp + timeLapse);
+    skip(timeLapse);
 
     uint256 currentReward = rewardsDistributionFacet.currentReward(operator);
 
@@ -1029,7 +1029,7 @@ contract RewardsDistributionV2Test is
       address(this)
     );
 
-    vm.warp(block.timestamp + timeLapse);
+    skip(timeLapse);
 
     uint256 currentReward = rewardsDistributionFacet.currentReward(space);
 

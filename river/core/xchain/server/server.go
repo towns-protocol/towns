@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"math/big"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 
@@ -33,15 +34,16 @@ import (
 type (
 	// xchain reads entitlement requests from base chain and writes the result after processing back to base.
 	xchain struct {
-		workerID        int
-		checker         *base.IEntitlementChecker
-		checkerABI      *abi.ABI
-		checkerContract *bind.BoundContract
-		baseChain       *crypto.Blockchain
-		evmErrDecoder   *crypto.EvmErrorDecoder
-		config          *config.Config
-		cancel          context.CancelFunc
-		evaluator       *entitlement.Evaluator
+		workerID            int
+		checker             *base.IEntitlementChecker
+		checkerABI          *abi.ABI
+		checkerContract     *bind.BoundContract
+		baseChain           *crypto.Blockchain
+		baseChainStartBlock crypto.BlockNumber
+		evmErrDecoder       *crypto.EvmErrorDecoder
+		config              *config.Config
+		cancel              context.CancelFunc
+		evaluator           *entitlement.Evaluator
 
 		riverChain       *crypto.Blockchain
 		registryContract *registries.RiverRegistryContract
@@ -79,6 +81,9 @@ type XChain interface {
 	Run(ctx context.Context)
 	Stop()
 }
+
+// MaxHistoricalBlockOffset is the maximum number of blocks to go back when searching for a start block.
+const MaxHistoricalBlockOffset crypto.BlockNumber = 100
 
 // New creates a new xchain instance that reads entitlement requests from Base,
 // processes the requests and writes the results back to Base.
@@ -176,16 +181,22 @@ func New(
 			return nil, err
 		}
 	}
-	// determine from which block to start processing entitlement check requests
-	startBlock, err := util.StartBlockNumberWithHistory(ctx, baseChain.Client, cfg.History)
-	if err != nil {
-		return nil, err
-	}
-	if startBlock < baseChain.InitialBlockNum.AsUint64() {
-		baseChain.InitialBlockNum = crypto.BlockNumber(startBlock)
+
+	baseChainStartBlock := baseChain.InitialBlockNum
+
+	if cfg.History > 0 {
+		history := min(cfg.History, time.Minute)
+		blockTime := time.Duration(baseChain.Config.BlockTimeMs) * time.Millisecond
+		numBlocksToSubtract := crypto.BlockNumber(history/blockTime + 1)
+		numBlocksToSubtract = min(numBlocksToSubtract, MaxHistoricalBlockOffset)
+		if baseChainStartBlock > numBlocksToSubtract {
+			baseChainStartBlock = baseChainStartBlock - numBlocksToSubtract
+		} else {
+			baseChainStartBlock = 1
+		}
 	}
 
-	log.Info("Start processing entitlement check requests", "startBlock", baseChain.InitialBlockNum)
+	log.Info("Start processing entitlement check requests", "startBlock", baseChainStartBlock)
 
 	decoder, err := crypto.NewEVMErrorDecoder(
 		base.IEntitlementCheckerMetaData,
@@ -204,14 +215,15 @@ func New(
 		"name",
 	)
 	x := &xchain{
-		workerID:        workerID,
-		checker:         checker,
-		checkerABI:      checkerABI,
-		checkerContract: checkerContract,
-		baseChain:       baseChain,
-		evmErrDecoder:   decoder,
-		config:          cfg,
-		evaluator:       evaluator,
+		workerID:            workerID,
+		checker:             checker,
+		checkerABI:          checkerABI,
+		checkerContract:     checkerContract,
+		baseChain:           baseChain,
+		baseChainStartBlock: baseChainStartBlock,
+		evmErrDecoder:       decoder,
+		config:              cfg,
+		evaluator:           evaluator,
 
 		riverChain:       riverChain,
 		registryContract: registryContract,
@@ -313,7 +325,7 @@ func (x *xchain) Run(ctx context.Context) {
 
 	// register callback for Base EntitlementCheckRequested events
 	x.baseChain.ChainMonitor.OnContractWithTopicsEvent(
-		x.baseChain.InitialBlockNum,
+		x.baseChainStartBlock,
 		entitlementAddress,
 		[][]common.Hash{{x.checkerABI.Events["EntitlementCheckRequested"].ID}},
 		onEntitlementCheckRequestedCallback)

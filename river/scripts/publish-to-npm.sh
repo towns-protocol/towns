@@ -45,6 +45,7 @@ if [ $exit_status_yarn -ne 0 ]; then
     exit 1
 fi
 
+# build docs
 yarn workspace @river-build/react-sdk gen
 exit_status_docgen=$?
 
@@ -55,6 +56,11 @@ fi
 
 git add packages/docs/
 git commit -m "docs for version ${VERSION_PREFIX}"
+
+# copy contracts
+./packages/generated/scripts/copy-addresses.sh
+git add packages/generated/deployments
+git commit -m "deployments for version ${VERSION_PREFIX}"
 
 git push -u origin "${BRANCH_NAME}"
 

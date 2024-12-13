@@ -249,8 +249,9 @@ interface IRewardsDistribution is IRewardsDistributionBase {
   function withdraw(uint256 depositId) external returns (uint96 amount);
 
   /// @notice Claims the reward for a beneficiary
-  /// @dev The beneficiary may be the caller. If not, the beneficiary must be a space or operator
-  /// while the caller must be the authorized claimer.
+  /// @dev The beneficiary may be the caller.
+  /// @dev If not, the caller may be the authorized claimer of the beneficiary.
+  /// @dev If not, the beneficiary must be a space or operator while the caller must be the authorized claimer.
   /// @param beneficiary The address of the beneficiary
   /// @param recipient The address of the recipient
   /// @return reward The amount of rewardToken that is claimed

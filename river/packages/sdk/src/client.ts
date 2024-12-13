@@ -56,7 +56,7 @@ import {
     makeSessionKeys,
     type EncryptionDeviceInitOpts,
 } from '@river-build/encryption'
-import { getMaxTimeoutMs, StreamRpcClient } from './makeStreamRpcClient'
+import { getMaxTimeoutMs, StreamRpcClient, getMiniblocks } from './makeStreamRpcClient'
 import { errorContains, getRpcErrorProperty } from './rpcInterceptors'
 import { assert, isDefined } from './check'
 import EventEmitter from 'events'
@@ -86,7 +86,6 @@ import {
     checkEventSignature,
     makeEvent,
     UnpackEnvelopeOpts,
-    unpackMiniblock,
     unpackStream,
     unpackStreamEx,
 } from './sign'
@@ -1909,25 +1908,23 @@ export class Client
             }
         }
 
-        const response = await this.rpcClient.getMiniblocks({
-            streamId: streamIdAsBytes(streamId),
+        const { miniblocks, terminus } = await getMiniblocks(
+            this.rpcClient,
+            streamId,
             fromInclusive,
             toExclusive,
-        })
+            this.unpackEnvelopeOpts,
+        )
 
-        const unpackedMiniblocks: ParsedMiniblock[] = []
-        for (const miniblock of response.miniblocks) {
-            const unpackedMiniblock = await unpackMiniblock(miniblock, this.unpackEnvelopeOpts)
-            unpackedMiniblocks.push(unpackedMiniblock)
-        }
         await this.persistenceStore.saveMiniblocks(
             streamIdAsString(streamId),
-            unpackedMiniblocks,
+            miniblocks,
             'backward',
         )
+
         return {
-            terminus: response.terminus,
-            miniblocks: [...unpackedMiniblocks, ...cachedMiniblocks],
+            terminus: terminus,
+            miniblocks: [...cachedMiniblocks, ...miniblocks],
         }
     }
 

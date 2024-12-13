@@ -43,6 +43,8 @@ type PostgresEventStore struct {
 	txDuration *prometheus.HistogramVec
 
 	isolationLevel pgx.TxIsoLevel
+
+	txTracker pgTxTracker
 }
 
 // var _ StreamStorage = (*PostgresEventStore)(nil)
@@ -121,6 +123,7 @@ func (s *PostgresEventStore) txRunner(
 	defer prometheus.NewTimer(s.txDuration.WithLabelValues(name)).ObserveDuration()
 
 	var backoff backoffTracker
+	s.txTracker.track("START", name, tags...)
 	for {
 		err := s.txRunnerInner(ctx, accessMode, txFn, opts)
 		if err != nil {
@@ -128,14 +131,18 @@ func (s *PostgresEventStore) txRunner(
 
 			if pgErr, ok := err.(*pgconn.PgError); ok {
 				if pgErr.Code == pgerrcode.SerializationFailure || pgErr.Code == pgerrcode.DeadlockDetected {
-					backoffErr := backoff.wait(ctx)
-					if backoffErr != nil {
-						return AsRiverError(backoffErr).Func(name).Message("Timed out waiting for backoff")
-					}
+					s.txTracker.track("RETRY", name, tags...)
 					log.Warn(
 						"pg.txRunner: retrying transaction due to serialization failure",
 						"pgErr", pgErr,
+						"txTracker", s.txTracker.dump(),
 					)
+
+					backoffErr := backoff.wait(ctx)
+					if backoffErr != nil {
+						s.txTracker.track("RETRY_TIMEOUT", name, tags...)
+						return AsRiverError(backoffErr).Func(name).Message("Timed out waiting for backoff")
+					}
 					s.txCounter.WithLabelValues(name, "retry").Inc()
 					continue
 				}
@@ -156,6 +163,7 @@ func (s *PostgresEventStore) txRunner(
 				s.txCounter.IncFail(name)
 			}
 
+			s.txTracker.track("ERROR", name, tags...)
 			return WrapRiverError(
 				Err_DB_OPERATION_FAILURE,
 				err,
@@ -167,6 +175,7 @@ func (s *PostgresEventStore) txRunner(
 
 		log.Debug("pg.txRunner: transaction succeeded")
 		s.txCounter.IncPass(name)
+		s.txTracker.track("DONE", name, tags...)
 		return nil
 	}
 }
@@ -533,6 +542,10 @@ func (s *PostgresEventStore) init(
 
 	if s.isolationLevel != pgx.Serializable {
 		log.Info("PostgresEventStore: using isolation level", "level", s.isolationLevel)
+	}
+
+	if s.config.DebugTransactions {
+		s.txTracker.enable()
 	}
 
 	err := s.InitStorage(ctx)

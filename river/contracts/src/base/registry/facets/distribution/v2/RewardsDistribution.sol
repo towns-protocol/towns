@@ -18,12 +18,14 @@ import {OwnableBase} from "contracts/src/diamond/facets/ownable/OwnableBase.sol"
 import {UpgradeableBeaconBase} from "contracts/src/diamond/facets/beacon/UpgradeableBeacon.sol";
 import {Nonces} from "contracts/src/diamond/utils/Nonces.sol";
 import {EIP712Base} from "contracts/src/diamond/utils/cryptography/signature/EIP712Base.sol";
+import {MainnetDelegationBase} from "contracts/src/tokens/river/base/delegation/MainnetDelegationBase.sol";
 import {DelegationProxy} from "./DelegationProxy.sol";
 import {RewardsDistributionBase} from "./RewardsDistributionBase.sol";
 
 contract RewardsDistribution is
   IRewardsDistribution,
   RewardsDistributionBase,
+  MainnetDelegationBase,
   OwnableBase,
   UpgradeableBeaconBase,
   EIP712Base,
@@ -311,19 +313,20 @@ contract RewardsDistribution is
     RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage
       .layout();
     // If the beneficiary is the caller (user or operator), they can claim the reward
-    if (msg.sender != beneficiary) {
-      // If the beneficiary is a space, only the operator can claim the reward
-      if (_isSpace(beneficiary)) {
-        // the operator may not be active but is still allowed to claim the reward
-        address operator = _getOperatorBySpace(beneficiary);
-        _revertIfNotClaimer(operator);
-      }
-      // If the beneficiary is an operator, only the claimer can claim the reward
-      else if (_isOperator(beneficiary)) {
-        _revertIfNotClaimer(beneficiary);
-      } else {
-        CustomRevert.revertWith(RewardsDistribution__NotBeneficiary.selector);
-      }
+    if (msg.sender == beneficiary) {}
+    // If the caller is the authorized claimer, they can claim the reward
+    else if (msg.sender == _getAuthorizedClaimer(beneficiary)) {}
+    // If the beneficiary is a space, only the operator can claim the reward
+    else if (_isSpace(beneficiary)) {
+      // the operator may not be active but is still allowed to claim the reward
+      address operator = _getOperatorBySpace(beneficiary);
+      _revertIfNotOperatorClaimer(operator);
+    }
+    // If the beneficiary is an operator, only the claimer can claim the reward
+    else if (_isOperator(beneficiary)) {
+      _revertIfNotOperatorClaimer(beneficiary);
+    } else {
+      CustomRevert.revertWith(RewardsDistribution__NotBeneficiary.selector);
     }
     reward = ds.staking.claimReward(beneficiary);
     if (reward != 0) {

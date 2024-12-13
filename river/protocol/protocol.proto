@@ -712,6 +712,8 @@ message GetMiniblocksResponse {
     repeated Miniblock miniblocks = 1;
     // terminus: true if there are no more blocks to fetch because they've been garbage collected, or you've reached block 0
     bool terminus = 2;
+    int64 from_inclusive = 3;
+    int64 limit = 4;
 }
 
 message GetLastMiniblockHashRequest {

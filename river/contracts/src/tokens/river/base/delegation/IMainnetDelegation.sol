@@ -24,6 +24,7 @@ interface IMainnetDelegationBase {
   // =============================================================
   //                           Events
   // =============================================================
+
   event DelegationSet(
     address indexed delegator,
     address indexed operator,
@@ -32,9 +33,12 @@ interface IMainnetDelegationBase {
 
   event DelegationRemoved(address indexed delegator);
 
+  event ClaimerSet(address indexed delegator, address indexed claimer);
+
   // =============================================================
   //                           Errors
   // =============================================================
+
   error InvalidDelegator(address delegator);
   error InvalidOperator(address operator);
   error InvalidQuantity(uint256 quantity);

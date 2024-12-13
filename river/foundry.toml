@@ -22,6 +22,7 @@ fs_permissions = [
 ] # Configures permissions for cheatcodes that touch the filesystem
 extra_output = ["metadata", "abi", "bin"]
 extra_output_files = ["metadata", "abi", "bin"]
+ffi = true
 
 
 [etherscan]

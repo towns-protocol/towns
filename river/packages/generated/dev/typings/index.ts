@@ -27,10 +27,12 @@ export type { IOperatorRegistry } from "./IOperatorRegistry";
 export type { IPausable } from "./IPausable";
 export type { IPricingModules } from "./IPricingModules";
 export type { IProxyManager } from "./IProxyManager";
+export type { IRiverPoints } from "./IRiverPoints";
 export type { IRoles } from "./IRoles";
 export type { ISpaceDelegation } from "./ISpaceDelegation";
 export type { ISpaceOwner } from "./ISpaceOwner";
 export type { IStreamRegistry } from "./IStreamRegistry";
+export type { ITipping } from "./ITipping";
 export type { IWalletLink } from "./IWalletLink";
 export type { Member } from "./Member";
 export type { MembershipFacet } from "./MembershipFacet";
@@ -66,6 +68,7 @@ export { IOperatorRegistry__factory } from "./factories/IOperatorRegistry__facto
 export { IPausable__factory } from "./factories/IPausable__factory";
 export { IPricingModules__factory } from "./factories/IPricingModules__factory";
 export { IProxyManager__factory } from "./factories/IProxyManager__factory";
+export { IRiverPoints__factory } from "./factories/IRiverPoints__factory";
 export { IRoles__factory } from "./factories/IRoles__factory";
 export type { IRuleEntitlement } from "./IRuleEntitlement.sol/IRuleEntitlement";
 export { IRuleEntitlement__factory } from "./factories/IRuleEntitlement.sol/IRuleEntitlement__factory";
@@ -74,6 +77,7 @@ export { IRuleEntitlementV2__factory } from "./factories/IRuleEntitlement.sol/IR
 export { ISpaceDelegation__factory } from "./factories/ISpaceDelegation__factory";
 export { ISpaceOwner__factory } from "./factories/ISpaceOwner__factory";
 export { IStreamRegistry__factory } from "./factories/IStreamRegistry__factory";
+export { ITipping__factory } from "./factories/ITipping__factory";
 export { IWalletLink__factory } from "./factories/IWalletLink__factory";
 export { Member__factory } from "./factories/Member__factory";
 export { MembershipFacet__factory } from "./factories/MembershipFacet__factory";

@@ -161,6 +161,50 @@ contract MainnetDelegationTest is BaseRegistryTest, IMainnetDelegationBase {
     );
   }
 
+  function test_fuzz_claimReward(
+    address delegator,
+    uint96 amount,
+    address operator,
+    uint256 commissionRate,
+    address claimer,
+    uint256 rewardAmount,
+    uint256 timeLapse
+  ) public {
+    vm.assume(
+      claimer != address(0) &&
+        claimer != delegator &&
+        claimer != address(rewardsDistributionFacet)
+    );
+    vm.assume(river.balanceOf(claimer) == 0);
+    rewardAmount = bound(rewardAmount, rewardDuration, 1e27);
+    timeLapse = bound(timeLapse, 0, rewardDuration);
+
+    test_fuzz_setDelegation(delegator, amount, operator, commissionRate);
+
+    vm.expectEmit(baseRegistry);
+    emit ClaimerSet(delegator, claimer);
+
+    vm.prank(address(messenger));
+    mainnetDelegationFacet.setAuthorizedClaimer(delegator, claimer);
+
+    deal(address(river), address(rewardsDistributionFacet), rewardAmount, true);
+
+    vm.prank(NOTIFIER);
+    rewardsDistributionFacet.notifyRewardAmount(rewardAmount);
+
+    skip(timeLapse);
+
+    uint256 currentReward = rewardsDistributionFacet.currentReward(delegator);
+
+    vm.expectEmit(address(rewardsDistributionFacet));
+    emit ClaimReward(delegator, claimer, currentReward);
+
+    vm.prank(claimer);
+    uint256 reward = rewardsDistributionFacet.claimReward(delegator, claimer);
+
+    verifyClaim(delegator, claimer, reward, currentReward, timeLapse);
+  }
+
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                    SET BATCH DELEGATION                    */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/

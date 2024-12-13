@@ -9,6 +9,7 @@ import {IERC721A} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol"
 
 //contracts
 import {DiamondHelper} from "contracts/test/diamond/Diamond.t.sol";
+import {IDiamondInitHelper} from "contracts/test/diamond/Diamond.t.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 
 import {TokenPausableHelper} from "contracts/test/diamond/pausable/token/TokenPausableSetup.sol";
@@ -297,6 +298,14 @@ contract DeploySpace is DiamondHelper, Deployer {
         );
       }
     }
+  }
+
+  function diamondInitHelper(
+    address deployer,
+    string[] memory facetNames
+  ) external override returns (FacetCut[] memory) {
+    diamondInitParamsFromFacets(deployer, facetNames);
+    return this.getCuts();
   }
 
   function __deploy(address deployer) public override returns (address) {

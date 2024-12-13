@@ -10,7 +10,7 @@ import { ethers } from 'ethers'
 import { makeDefaultMembershipInfo } from '../../sync-agent/utils/spaceUtils'
 import { linkWallets, unlinkCaller } from '../testUtils'
 
-const log = dlog('csb:test:spaceDapp')
+const log = dlog('test:spaceDapp')
 
 describe('spaceDappTests', () => {
     test('spaceDapp URI', async () => {

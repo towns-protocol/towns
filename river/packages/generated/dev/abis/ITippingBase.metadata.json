@@ -1,0 +1,142 @@
+{
+  "compiler": {
+    "version": "0.8.24+commit.e11b9ed9"
+  },
+  "language": "Solidity",
+  "output": {
+    "abi": [
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "AmountIsZero"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "CannotTipSelf"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "CurrencyIsZero"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "ReceiverIsNotMember"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "SenderIsNotMember"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "TokenDoesNotExist"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256",
+            "indexed": true
+          },
+          {
+            "internalType": "address",
+            "name": "currency",
+            "type": "address",
+            "indexed": true
+          },
+          {
+            "internalType": "address",
+            "name": "sender",
+            "type": "address",
+            "indexed": false
+          },
+          {
+            "internalType": "address",
+            "name": "receiver",
+            "type": "address",
+            "indexed": false
+          },
+          {
+            "internalType": "uint256",
+            "name": "amount",
+            "type": "uint256",
+            "indexed": false
+          }
+        ],
+        "type": "event",
+        "name": "Tip",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "bytes32",
+            "name": "messageId",
+            "type": "bytes32",
+            "indexed": true
+          },
+          {
+            "internalType": "bytes32",
+            "name": "channelId",
+            "type": "bytes32",
+            "indexed": true
+          }
+        ],
+        "type": "event",
+        "name": "TipMessage",
+        "anonymous": false
+      }
+    ],
+    "devdoc": {
+      "kind": "dev",
+      "methods": {},
+      "version": 1
+    },
+    "userdoc": {
+      "kind": "user",
+      "methods": {},
+      "version": 1
+    }
+  },
+  "settings": {
+    "remappings": [
+      "@openzeppelin/=node_modules/@openzeppelin/",
+      "@prb/math/=node_modules/@prb/math/src/",
+      "@prb/test/=node_modules/@prb/test/src/",
+      "account-abstraction/=node_modules/account-abstraction/contracts/",
+      "ds-test/=node_modules/ds-test/src/",
+      "forge-std/=node_modules/forge-std/src/",
+      "hardhat-deploy/=node_modules/hardhat-deploy/",
+      "solady/=node_modules/solady/src/"
+    ],
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "metadata": {
+      "bytecodeHash": "none",
+      "appendCBOR": false
+    },
+    "compilationTarget": {
+      "contracts/src/spaces/facets/tipping/ITipping.sol": "ITippingBase"
+    },
+    "evmVersion": "paris",
+    "libraries": {}
+  },
+  "sources": {
+    "contracts/src/spaces/facets/tipping/ITipping.sol": {
+      "keccak256": "0x8bfc4f6d2405a8438f09085e0f6d918abc45bf4f1a486c903f3736f4e0e9102c",
+      "urls": [
+        "bzz-raw://e56e221ee9f88e221c4c05d542c98581a1fa44ce46a0a147ecfba854961861dd",
+        "dweb:/ipfs/QmQvAgxi5T4kBpPxzkJ4wdCWei2arhd7cWt2UNxSEvQVAR"
+      ],
+      "license": "MIT"
+    }
+  },
+  "version": 1
+}

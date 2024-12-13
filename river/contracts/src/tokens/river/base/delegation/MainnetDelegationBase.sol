@@ -199,6 +199,8 @@ abstract contract MainnetDelegationBase is IMainnetDelegationBase {
       if (claimer != address(0)) {
         ds.delegatorsByAuthorizedClaimer[claimer].add(delegator);
       }
+
+      emit ClaimerSet(delegator, claimer);
     }
   }
 

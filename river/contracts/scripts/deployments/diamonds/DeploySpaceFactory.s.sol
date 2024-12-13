@@ -436,6 +436,14 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
     }
   }
 
+  function diamondInitHelper(
+    address deployer,
+    string[] memory facetNames
+  ) external override returns (FacetCut[] memory) {
+    diamondInitParamsFromFacets(deployer, facetNames);
+    return this.getCuts();
+  }
+
   function __deploy(address deployer) public override returns (address) {
     addImmutableCuts(deployer);
 

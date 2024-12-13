@@ -297,10 +297,9 @@ func (st *serviceTester) getConfig(opts ...startOpts) *config.Config {
 	cfg.DisableHttps = false
 	cfg.RegistryContract = st.btc.RegistryConfig()
 	cfg.Database = config.DatabaseConfig{
-		Url:                   st.dbUrl,
-		StartupDelay:          2 * time.Millisecond,
-		NumPartitions:         4,
-		MigrateStreamCreation: true,
+		Url:           st.dbUrl,
+		StartupDelay:  2 * time.Millisecond,
+		NumPartitions: 4,
 	}
 	cfg.Log.Simplify = true
 	cfg.Network = config.NetworkConfig{
@@ -795,6 +794,18 @@ func (tc *testClient) getStream(streamId StreamId) *protocol.StreamAndCookie {
 	tc.require.NotNil(resp.Msg)
 	tc.require.NotNil(resp.Msg.Stream)
 	return resp.Msg.Stream
+}
+
+func (tc *testClient) getStreamEx(streamId StreamId, onEachMb func(*protocol.Miniblock)) {
+	resp, err := tc.client.GetStreamEx(tc.ctx, connect.NewRequest(&protocol.GetStreamExRequest{
+		StreamId: streamId[:],
+	}))
+	tc.require.NoError(err)
+	for resp.Receive() {
+		onEachMb(resp.Msg().GetMiniblock())
+	}
+	tc.require.NoError(resp.Err())
+	tc.require.NoError(resp.Close())
 }
 
 func (tc *testClient) getStreamAndView(

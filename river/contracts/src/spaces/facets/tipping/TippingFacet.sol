@@ -60,6 +60,20 @@ contract TippingFacet is ITipping, ERC721ABase, Facet {
     return TippingBase.tipsByCurrencyByTokenId(tokenId, currency);
   }
 
+  /// @inheritdoc ITipping
+  function totalTipsByCurrency(
+    address currency
+  ) external view returns (uint256) {
+    return TippingBase.totalTipsByCurrency(currency);
+  }
+
+  /// @inheritdoc ITipping
+  function tipAmountByCurrency(
+    address currency
+  ) external view returns (uint256) {
+    return TippingBase.tipAmountByCurrency(currency);
+  }
+
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                         Internal                           */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/

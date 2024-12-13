@@ -207,7 +207,7 @@ abstract contract RewardsDistributionBase is IRewardsDistributionBase {
   }
 
   /// @dev Checks if the caller is the claimer of the operator
-  function _revertIfNotClaimer(address operator) internal view {
+  function _revertIfNotOperatorClaimer(address operator) internal view {
     NodeOperatorStorage.Layout storage nos = NodeOperatorStorage.layout();
     address claimer = nos.claimerByOperator[operator];
     if (msg.sender != claimer) {

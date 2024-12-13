@@ -66,4 +66,18 @@ interface ITipping is ITippingBase {
   /// @notice Gets the list of currencies that have been tipped to the space
   /// @return An array of currency addresses
   function tippingCurrencies() external view returns (address[] memory);
+
+  /// @notice Gets the total number of tips received in a specific currency
+  /// @param currency The currency address to get tips for
+  /// @return The total number of tips received in the specified currency
+  function totalTipsByCurrency(
+    address currency
+  ) external view returns (uint256);
+
+  /// @notice Gets the total amount of tips received in a specific currency
+  /// @param currency The currency address to get tips for
+  /// @return The total amount of tips received in the specified currency
+  function tipAmountByCurrency(
+    address currency
+  ) external view returns (uint256);
 }

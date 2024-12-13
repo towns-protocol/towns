@@ -10,7 +10,10 @@ import {
     retryInterceptor,
     type RetryParams,
 } from './rpcInterceptors'
+import { UnpackEnvelopeOpts, unpackMiniblock } from './sign'
 import { RpcOptions, createHttp2ConnectTransport } from './rpcCommon'
+import { streamIdAsBytes } from './id'
+import { ParsedMiniblock } from './types'
 
 const logInfo = dlog('csb:rpc:info')
 let nextRpcClientNum = 0
@@ -69,4 +72,70 @@ export function getMaxTimeoutMs(opts: StreamRpcClientOptions): number {
             opts.retryParams.defaultTimeoutMs ?? 0 + getRetryDelayMs(i, opts.retryParams)
     }
     return maxTimeoutMs
+}
+
+export async function getMiniblocks(
+    client: StreamRpcClient,
+    streamId: string | Uint8Array,
+    fromInclusive: bigint,
+    toExclusive: bigint,
+    unpackEnvelopeOpts: UnpackEnvelopeOpts | undefined,
+): Promise<{ miniblocks: ParsedMiniblock[]; terminus: boolean }> {
+    const allMiniblocks: ParsedMiniblock[] = []
+    let currentFromInclusive = fromInclusive
+    let reachedTerminus = false
+
+    while (currentFromInclusive < toExclusive) {
+        const { miniblocks, terminus, nextFromInclusive } = await fetchMiniblocksFromRpc(
+            client,
+            streamId,
+            currentFromInclusive,
+            toExclusive,
+            unpackEnvelopeOpts,
+        )
+
+        allMiniblocks.push(...miniblocks)
+        currentFromInclusive = nextFromInclusive
+
+        // Set the terminus to true if we got at least one response with reached terminus
+        // The behaviour around this flag is not implemented yet
+        if (terminus && !reachedTerminus) {
+            reachedTerminus = true
+        }
+    }
+
+    return {
+        miniblocks: allMiniblocks,
+        terminus: reachedTerminus,
+    }
+}
+
+export async function fetchMiniblocksFromRpc(
+    client: StreamRpcClient,
+    streamId: string | Uint8Array,
+    fromInclusive: bigint,
+    toExclusive: bigint,
+    unpackEnvelopeOpts: UnpackEnvelopeOpts | undefined,
+): Promise<{
+    miniblocks: ParsedMiniblock[]
+    terminus: boolean
+    nextFromInclusive: bigint
+}> {
+    const response = await client.getMiniblocks({
+        streamId: streamIdAsBytes(streamId),
+        fromInclusive,
+        toExclusive,
+    })
+
+    const miniblocks: ParsedMiniblock[] = []
+    for (const miniblock of response.miniblocks) {
+        const unpackedMiniblock = await unpackMiniblock(miniblock, unpackEnvelopeOpts)
+        miniblocks.push(unpackedMiniblock)
+    }
+
+    return {
+        miniblocks: miniblocks,
+        terminus: response.terminus,
+        nextFromInclusive: response.fromInclusive + BigInt(response.miniblocks.length),
+    }
 }

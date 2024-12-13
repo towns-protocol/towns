@@ -15,6 +15,8 @@ contract DeployTipping is FacetHelper, Deployer {
     addSelector(TippingFacet.tip.selector);
     addSelector(TippingFacet.tipsByCurrencyAndTokenId.selector);
     addSelector(TippingFacet.tippingCurrencies.selector);
+    addSelector(TippingFacet.totalTipsByCurrency.selector);
+    addSelector(TippingFacet.tipAmountByCurrency.selector);
   }
 
   function initializer() public pure override returns (bytes4) {

@@ -228,7 +228,7 @@ abstract contract MembershipJoin is
     uint256 payment = _getCapturedValue(transactionId);
     if (payment == 0) revert Membership__InsufficientPayment();
 
-    (bytes4 selector, address sender, , ) = abi.decode(
+    (bytes4 selector, address sender, address receiver, ) = abi.decode(
       _getCapturedData(transactionId),
       (bytes4, address, address, bytes)
     );
@@ -243,6 +243,7 @@ abstract contract MembershipJoin is
     _afterChargeForJoinSpace(
       transactionId,
       sender,
+      receiver,
       payment,
       surplus,
       protocolFee
@@ -255,10 +256,15 @@ abstract contract MembershipJoin is
     uint256 payment = _getCapturedValue(transactionId);
     if (payment == 0) revert Membership__InsufficientPayment();
 
-    (bytes4 selector, address sender, , bytes memory referralData) = abi.decode(
-      _getCapturedData(transactionId),
-      (bytes4, address, address, bytes)
-    );
+    (
+      bytes4 selector,
+      address sender,
+      address receiver,
+      bytes memory referralData
+    ) = abi.decode(
+        _getCapturedData(transactionId),
+        (bytes4, address, address, bytes)
+      );
 
     if (selector != IMembership.joinSpaceWithReferral.selector) {
       revert Membership__InvalidTransactionType();
@@ -282,6 +288,7 @@ abstract contract MembershipJoin is
     _afterChargeForJoinSpace(
       transactionId,
       sender,
+      receiver,
       payment,
       surplus,
       protocolFee
@@ -291,6 +298,7 @@ abstract contract MembershipJoin is
   function _afterChargeForJoinSpace(
     bytes32 transactionId,
     address sender,
+    address receiver,
     uint256 payment,
     uint256 surplus,
     uint256 protocolFee
@@ -313,7 +321,7 @@ abstract contract MembershipJoin is
       abi.encode(protocolFee)
     );
 
-    pointsToken.mint(sender, points);
+    pointsToken.mint(receiver, points);
     pointsToken.mint(_owner(), points);
   }
 

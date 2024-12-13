@@ -1,42 +1,78 @@
 package events
 
 import (
+	"context"
+	"errors"
+
 	"github.com/ethereum/go-ethereum/common"
+
+	"github.com/river-build/river/core/node/dlog"
 )
 
 type QuorumPool struct {
 	localErrChannel  chan error
 	remotes          int
 	remoteErrChannel chan error
+	tags             []any
 }
 
-func NewQuorumPool(maxRemotes int) *QuorumPool {
-	var remoteErrChannel chan error
-	if maxRemotes > 0 {
-		remoteErrChannel = make(chan error, maxRemotes)
-	}
+func NewQuorumPool(tags ...any) *QuorumPool {
 	return &QuorumPool{
-		remoteErrChannel: remoteErrChannel,
+		tags: tags,
 	}
 }
 
-func (q *QuorumPool) GoLocal(f func() error) {
+func (q *QuorumPool) GoLocal(ctx context.Context, f func(ctx context.Context) error) {
 	q.localErrChannel = make(chan error, 1)
 	go func() {
-		err := f()
+		err := f(ctx)
 		q.localErrChannel <- err
+		if err != nil {
+			tags := []any{"error", err}
+			tags = append(tags, q.tags...)
+			dlog.FromCtx(ctx).Warn("QuorumPool: GoLocal: Error", tags...)
+		}
 	}()
 }
 
-func (q *QuorumPool) GoRemote(node common.Address, f func(node common.Address) error) {
-	q.remotes++
-	go func(node common.Address) {
-		err := f(node)
-		q.remoteErrChannel <- err
-	}(node)
+func (q *QuorumPool) GoRemotes(
+	ctx context.Context,
+	nodes []common.Address,
+	f func(ctx context.Context, node common.Address) error,
+) {
+	if len(nodes) == 0 {
+		return
+	}
+	q.remoteErrChannel = make(chan error, len(nodes))
+	q.remotes += len(nodes)
+	for _, node := range nodes {
+		go q.executeRemote(ctx, node, f)
+	}
+}
+
+func (q *QuorumPool) executeRemote(
+	ctx context.Context,
+	node common.Address,
+	f func(ctx context.Context, node common.Address) error,
+) {
+	err := f(ctx, node)
+	q.remoteErrChannel <- err
+
+	// Cancel error is expected here: Wait() returns once quorum is achieved
+	// and some remotes are still in progress.
+	// Eventually Wait caller is going to cancel the context.
+	// On the receiver side, write operations should be detached from cancelable contexts
+	// (grpc transmits context cancellation from client to server), i.e. once local write
+	// operation is started, it should not be cancelled and should proceed to completion.
+	if err != nil && !errors.Is(err, context.Canceled) {
+		tags := []any{"error", err, "node", node}
+		tags = append(tags, q.tags...)
+		dlog.FromCtx(ctx).Warn("QuorumPool: GoRemotes: Error", tags...)
+	}
 }
 
 func (q *QuorumPool) Wait() error {
+	// TODO: FIX: REPLICATION: succeed if enough remotes succeed even if local fails.
 	// First wait for local if any.
 	if q.localErrChannel != nil {
 		if err := <-q.localErrChannel; err != nil {

@@ -1645,6 +1645,40 @@ export class SpaceDapp implements ISpaceDapp {
 
         return space.Membership.listenForMembershipToken(receiver, abortController)
     }
+
+    public async tip(
+        args: {
+            spaceId: string
+            receiver: string
+            currency: string
+            amount: bigint
+            messageId: string
+            channelId: string
+        },
+        signer: ethers.Signer,
+    ): Promise<ContractTransaction> {
+        const { spaceId, receiver, currency, amount, messageId, channelId } = args
+        const space = this.getSpace(spaceId)
+        if (!space) {
+            throw new Error(`Space with spaceId "${spaceId}" is not found.`)
+        }
+        const tokenId = (await space.getTokenIdsOfOwner(receiver))[0]
+        if (!tokenId) {
+            throw new Error(`TokenId for receiver "${receiver}" is not found.`)
+        }
+        return space.Tipping.write(signer).tip(
+            {
+                tokenId,
+                currency,
+                amount,
+                messageId,
+                channelId,
+            },
+            {
+                value: amount,
+            },
+        )
+    }
 }
 
 // Retry submitting the transaction N times (3 by default in jest, 0 by default elsewhere)

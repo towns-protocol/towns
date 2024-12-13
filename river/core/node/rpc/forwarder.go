@@ -6,8 +6,6 @@ import (
 	"net"
 	"time"
 
-	"github.com/river-build/river/core/node/utils"
-
 	"connectrpc.com/connect"
 
 	. "github.com/river-build/river/core/node/base"
@@ -16,6 +14,7 @@ import (
 	. "github.com/river-build/river/core/node/protocol"
 	. "github.com/river-build/river/core/node/protocol/protocolconnect"
 	"github.com/river-build/river/core/node/shared"
+	"github.com/river-build/river/core/node/utils"
 )
 
 const (
@@ -210,6 +209,8 @@ func (s *Service) CreateStream(
 	ctx context.Context,
 	req *connect.Request[CreateStreamRequest],
 ) (*connect.Response[CreateStreamResponse], error) {
+	ctx, cancel := utils.UncancelContext(ctx, 20*time.Second, 40*time.Second)
+	defer cancel()
 	return executeConnectHandler(ctx, req, s, s.createStreamImpl, "CreateStream")
 }
 
@@ -437,6 +438,8 @@ func (s *Service) AddEvent(
 	ctx context.Context,
 	req *connect.Request[AddEventRequest],
 ) (*connect.Response[AddEventResponse], error) {
+	ctx, cancel := utils.UncancelContext(ctx, 10*time.Second, 20*time.Second)
+	defer cancel()
 	return executeConnectHandler(ctx, req, s, s.addEventImpl, "AddEvent")
 }
 

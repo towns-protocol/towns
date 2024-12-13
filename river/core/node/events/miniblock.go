@@ -138,22 +138,22 @@ func (b *MiniblockInfo) asStorageMbWithData(bytes []byte) *storage.WriteMinibloc
 	}
 }
 
-func (b *MiniblockInfo) forEachEvent(op func(e *ParsedEvent, minibockNum int64, eventNum int64) (bool, error)) error {
+func (b *MiniblockInfo) forEachEvent(op func(e *ParsedEvent, minibockNum int64, eventNum int64) (bool, error)) (bool, error) {
 	blockNum := b.Header().MiniblockNum
 	eventNum := b.Header().EventNumOffset
 	for _, event := range b.events() {
 		c, err := op(event, blockNum, eventNum)
 		eventNum++
-		if !c {
-			return err
+		if err != nil || !c {
+			return false, err
 		}
 	}
 
 	c, err := op(b.headerEvent, blockNum, eventNum)
-	if !c {
-		return err
+	if err != nil || !c {
+		return false, err
 	}
-	return nil
+	return true, nil
 }
 
 func NewMiniblockInfoFromBytes(bytes []byte, expectedBlockNumber int64) (*MiniblockInfo, error) {

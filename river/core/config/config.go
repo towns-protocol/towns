@@ -19,7 +19,6 @@ func GetDefaultConfig() *Config {
 		Database: DatabaseConfig{
 			StartupDelay:          2 * time.Second,
 			NumPartitions:         256,
-			MigrateStreamCreation: true,
 		},
 		StorageType:  "postgres",
 		DisableHttps: false,
@@ -232,16 +231,13 @@ type DatabaseConfig struct {
 	// Intention is to migrate to "read committed" for performance reasons after testing is complete.
 	IsolationLevel string
 
-	// MigrateStreamCreation indicates to the database that all new streams should be allocated
-	// in one of the 256 pre-allocated stream partitions for either regular or media streams instead
-	// of allocating new tables per stream according to the legacy schema. If this flag is unset, a
-	// node will continue to allocate new tables for each stream as it is created.
-	MigrateStreamCreation bool
-
 	// NumPartitions specifies the number of partitions to use when creating the schema for stream
 	// data storage. If <= 0, a default value of 256 will be used. No more than 256 partitions is
 	// supported at this time.
 	NumPartitions int
+
+	// DebugTransactions enables tracking of few last transactions in the database.
+	DebugTransactions bool
 }
 
 func (c DatabaseConfig) GetUrl() string {

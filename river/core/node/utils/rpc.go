@@ -3,6 +3,7 @@ package utils
 import (
 	"context"
 	"log/slog"
+	"time"
 
 	"connectrpc.com/connect"
 
@@ -33,4 +34,25 @@ func CtxAndLogForRequest[T any](ctx context.Context, req *connect.Request[T]) (c
 	}
 
 	return ctx, log
+}
+
+// UncancelContext returns a new context without original parent cancel.
+// Write operations should not be cancelled even if RPC context is cancelled.
+// Deadline is re-used from original context. If it's smaller than minTimeout, it's increased.
+// If original context has no deadline, it's set to defaultTimeout.
+func UncancelContext(
+	ctx context.Context,
+	minTimeout, defaultTimeout time.Duration,
+) (context.Context, context.CancelFunc) {
+	deadline, ok := ctx.Deadline()
+	now := time.Now()
+	if ok {
+		if deadline.Before(now.Add(minTimeout)) {
+			deadline = now.Add(minTimeout)
+		}
+	} else {
+		deadline = now.Add(defaultTimeout)
+	}
+	ctx = context.WithoutCancel(ctx)
+	return context.WithDeadline(ctx, deadline)
 }

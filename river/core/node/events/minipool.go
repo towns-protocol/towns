@@ -41,7 +41,7 @@ func (m *minipoolInstance) forEachEvent(
 	for _, e := range m.events.Values {
 		cont, err := op(e, m.generation, eventNum)
 		eventNum++
-		if !cont {
+		if err != nil || !cont {
 			return err
 		}
 	}

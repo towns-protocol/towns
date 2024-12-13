@@ -7,6 +7,7 @@ import {IDiamondCut} from "contracts/src/diamond/facets/cut/IDiamondCut.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IERC173} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 import {IOwnablePending} from "contracts/src/diamond/facets/ownable/pending/IOwnablePending.sol";
+import {IDiamondInitHelper} from "contracts/test/diamond/Diamond.t.sol";
 
 import {Diamond} from "contracts/src/diamond/Diamond.sol";
 import {DiamondHelper} from "contracts/test/diamond/Diamond.t.sol";
@@ -27,10 +28,14 @@ import {DeploySpaceOwner} from "contracts/scripts/deployments/diamonds/DeploySpa
 contract InteractAlphaSparse is AlphaHelper {
   using stdJson for string;
 
-  DeploySpace deploySpace = new DeploySpace();
-  DeploySpaceFactory deploySpaceFactory = new DeploySpaceFactory();
-  DeployBaseRegistry deployBaseRegistry = new DeployBaseRegistry();
-  DeploySpaceOwner deploySpaceOwner = new DeploySpaceOwner();
+  mapping(string => address) private diamondDeployments;
+
+  constructor() {
+    diamondDeployments["space"] = address(new DeploySpace());
+    diamondDeployments["spaceFactory"] = address(new DeploySpaceFactory());
+    diamondDeployments["baseRegistry"] = address(new DeployBaseRegistry());
+    diamondDeployments["spaceOwner"] = address(new DeploySpaceOwner());
+  }
 
   string constant DEFAULT_JSON_FILE = "compiled_source_diff.json";
   string constant DEFAULT_REPORT_PATH = "/scripts/bytecode-diff/source-diffs/";
@@ -123,7 +128,7 @@ contract InteractAlphaSparse is AlphaHelper {
     for (uint256 i = 0; i < diamonds.length; i++) {
       console.log("interact::diamondName", diamonds[i].diamond);
       string memory diamondName = diamonds[i].diamond;
-      address diamondAddress;
+      address diamondDeployedAddress;
       FacetCut[] memory newCuts;
       uint256 numFacets = diamonds[i].facets.length;
       string[] memory facetNames = new string[](numFacets);
@@ -135,43 +140,23 @@ contract InteractAlphaSparse is AlphaHelper {
         facetNames[j] = facetData.facetName;
       }
 
-      bytes32 diamondNameHash = keccak256(abi.encodePacked(diamondName));
+      address diamondHelper = diamondDeployments[diamondName];
+      if (diamondHelper != address(0)) {
+        console.log("interact::diamondDeployedName", diamondName);
+        diamondDeployedAddress = getDeployment(diamondName);
+        removeRemoteFacetsByAddresses(
+          deployer,
+          diamondDeployedAddress,
+          facetAddresses
+        );
+        newCuts = IDiamondInitHelper(diamondHelper).diamondInitHelper(
+          deployer,
+          facetNames
+        );
 
-      if (diamondNameHash == keccak256(abi.encodePacked("space"))) {
-        // deploy space diamond by facets
-        diamondAddress = getDeployment("space");
-        removeRemoteFacetsByAddresses(deployer, diamondAddress, facetAddresses);
-        deploySpace.diamondInitParamsFromFacets(deployer, facetNames);
-        newCuts = deploySpace.getCuts();
-      } else if (diamondNameHash == keccak256(abi.encodePacked("spaceOwner"))) {
-        //  deploy spaceOwner diamond by facets
-        diamondAddress = getDeployment("spaceOwner");
-        removeRemoteFacetsByAddresses(deployer, diamondAddress, facetAddresses);
-        deploySpaceOwner.diamondInitParamsFromFacets(deployer, facetNames);
-        newCuts = deploySpaceOwner.getCuts();
-      } else if (
-        diamondNameHash == keccak256(abi.encodePacked("spaceFactory"))
-      ) {
-        // deploy spaceFactory diamond by facets
-        diamondAddress = getDeployment("spaceFactory");
-        removeRemoteFacetsByAddresses(deployer, diamondAddress, facetAddresses);
-        deploySpaceFactory.diamondInitParamsFromFacets(deployer, facetNames);
-        newCuts = deploySpaceFactory.getCuts();
-      } else if (
-        diamondNameHash == keccak256(abi.encodePacked("baseRegistry"))
-      ) {
-        // deploy baseRegistry diamond by facets
-        diamondAddress = getDeployment("baseRegistry");
-        removeRemoteFacetsByAddresses(deployer, diamondAddress, facetAddresses);
-        deployBaseRegistry.diamondInitParamsFromFacets(deployer, facetNames);
-        newCuts = deployBaseRegistry.getCuts();
-      } else {
-        console.log("Unknown diamond:", diamondName);
-        continue;
+        vm.broadcast(deployer);
+        IDiamondCut(diamondDeployedAddress).diamondCut(newCuts, address(0), "");
       }
-
-      vm.broadcast(deployer);
-      IDiamondCut(diamondAddress).diamondCut(newCuts, address(0), "");
     }
   }
 }

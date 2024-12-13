@@ -175,7 +175,7 @@
     {
       "label": "Casablanca",
       "type": "shell",
-      "command": "sleep 3 && cd ./core && just RUN_ENV=multi run-and-tail",
+      "command": "sleep 1 && cd ./core && just RUN_ENV=multi run-and-tail",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -185,7 +185,7 @@
     {
       "label": "Casablanca-No-Entitlements",
       "type": "shell",
-      "command": "sleep 5 && cd ./core && just RUN_ENV=multi_ne run-and-tail",
+      "command": "sleep 2 && cd ./core && just RUN_ENV=multi_ne run-and-tail",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -219,7 +219,7 @@
     {
       "label": "Stop Casablanca",
       "type": "shell",
-      "command": "cd ./core && just RUN_ENV=multi stop && just RUN_ENV=multi_ne stop",
+      "command": "echo 'killing multi && multi_ne' && kill $(ps -ax | grep 'run_files/multi' | awk '{print $1}') && kill $(ps -ax | grep 'run_files/multi_ne' | awk '{print $1}') && cd ./core && just RUN_ENV=multi stop && just RUN_ENV=multi_ne stop",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -243,7 +243,6 @@
       "label": "Restart Casablanca",
       "dependsOn": [
         "Stop Casablanca",
-        "DummyTask",
         "Build Casablanca",
         "Build Casablanca-No-Entitlements",
         "Both Casablancas"

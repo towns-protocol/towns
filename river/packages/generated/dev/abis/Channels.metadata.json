@@ -1335,10 +1335,10 @@
       "license": "MIT"
     },
     "contracts/src/spaces/facets/channels/Channels.sol": {
-      "keccak256": "0xc24b60555f86e5331e7b116e99c9f417371b143cb70ec3d8ea4e23c99656c286",
+      "keccak256": "0x99b9a9bd531adad9001b11f7faa1985002f8fd1f0e731cb8f2df078813258dba",
       "urls": [
-        "bzz-raw://172b40ceac0f54debbb3a8f18a3123f582545ce632aae1f09e65ac759ed0958e",
-        "dweb:/ipfs/QmQYq348YBwtQxHCS5UXenGtnucZ5YCcJqhh6rr8LDDXAw"
+        "bzz-raw://248a3f534a0759867f8f2d3abfccaee153fc5eec675c849215202f674b6961ca",
+        "dweb:/ipfs/QmSbFGUTm1UyW7qgNKBTTTCFsjBtCxPNx9xd6rzmPr9FPE"
       ],
       "license": "MIT"
     },

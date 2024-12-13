@@ -19,6 +19,7 @@ import (
 	"github.com/river-build/river/core/contracts/river"
 	"github.com/river-build/river/core/node/base/test"
 	"github.com/river-build/river/core/node/crypto"
+	"github.com/river-build/river/core/node/infra"
 )
 
 func TestChainMonitorBlocks(t *testing.T) {
@@ -504,6 +505,122 @@ func TestContractAllEventsFromPast(t *testing.T) {
 	require.EqualValues(events, historicalContractEvents, "unexpected logs")
 	require.Equal(nodeCount, len(historicalAllEvents), "unexpected NodeAdded logs count")
 	require.EqualValues(events, historicalContractEvents, "unexpected logs")
+}
+
+func TestContracEventsWithTopicsBeforeStart(t *testing.T) {
+	require := require.New(t)
+	ctx, cancel := test.NewTestContext()
+	defer cancel()
+
+	tc, err := crypto.NewBlockchainTestContext(ctx, crypto.TestParams{})
+	require.NoError(err)
+	defer tc.Close()
+
+	var (
+		owner     = tc.DeployerBlockchain
+		nodeCount = 5
+
+		nodeRegistryABI, _ = abi.JSON(strings.NewReader(river.NodeRegistryV1MetaData.ABI))
+	)
+
+	// register several nodes
+	var (
+		pendingTx     crypto.TransactionPoolPendingTransaction
+		nodeAddresses = make([]common.Address, nodeCount)
+	)
+	for i := range nodeCount {
+		wallet, err := crypto.NewWallet(ctx)
+		require.NoError(err, "new wallet")
+		nodeAddresses[i] = wallet.Address
+		pendingTx, err = owner.TxPool.Submit(
+			ctx,
+			"RegisterNode",
+			func(opts *bind.TransactOpts) (*types.Transaction, error) {
+				return tc.NodeRegistry.RegisterNode(
+					opts,
+					wallet.Address,
+					fmt.Sprintf("https://node%d.river.test", i),
+					river.NodeStatus_NotInitialized,
+				)
+			},
+		)
+		require.NoError(err, "register node")
+	}
+
+	require.NoError(err)
+
+	// generate some blocks
+	N := 5
+	for i := 0; i < N; i++ {
+		tc.Commit(ctx)
+	}
+
+	receipt, err := pendingTx.Wait(ctx)
+	require.NoError(err)
+	require.Equal(crypto.TransactionResultSuccess, receipt.Status)
+
+	events1C := make(chan types.Log, nodeCount)
+	tc.DeployerBlockchain.ChainMonitor.OnContractWithTopicsEvent(
+		0,
+		tc.RiverRegistryAddress,
+		[][]common.Hash{{nodeRegistryABI.Events["NodeAdded"].ID}},
+		func(ctx context.Context, event types.Log) {
+			events1C <- event
+		},
+	)
+
+	events1 := []types.Log{}
+	require.Eventually(func() bool {
+		for {
+			select {
+			case event := <-events1C:
+				events1 = append(events1, event)
+			default:
+				return len(events1) == nodeCount
+			case <-ctx.Done():
+				panic("context cancelled")
+			}
+		}
+	}, 10*time.Second, 10*time.Millisecond, "unexpected NodeAdded logs count: first monitor reading historical events")
+
+	for i := 0; i < N; i++ {
+		tc.Commit(ctx)
+	}
+
+	// Create a new chain monitor and start it.
+	chainMonitor := crypto.NewChainMonitor()
+	chainMonitor.Start(ctx, tc.Client(), tc.BlockNum(ctx), 100*time.Millisecond, infra.NewMetricsFactory(nil, "", ""))
+
+	events2C := make(chan types.Log, nodeCount)
+
+	// register a callback from block 0, which is before starting block for the new monitor
+	chainMonitor.OnContractWithTopicsEvent(
+		crypto.BlockNumber(0),
+		tc.RiverRegistryAddress,
+		[][]common.Hash{{nodeRegistryABI.Events["NodeAdded"].ID}},
+		func(ctx context.Context, event types.Log) {
+			events2C <- event
+		},
+	)
+
+	events2 := []types.Log{}
+	require.Eventually(func() bool {
+		for {
+			select {
+			case event := <-events2C:
+				events2 = append(events2, event)
+			default:
+				return len(events2) == nodeCount
+			case <-ctx.Done():
+				panic("context cancelled")
+			}
+		}
+	}, 10*time.Second, 10*time.Millisecond, "unexpected NodeAdded logs count: second monitor reading pre-start events")
+
+	require.EqualValues(events1, events2, "historical events mismatch pre-start events")
+
+	require.Empty(events1C, "unexpected events")
+	require.Empty(events2C, "unexpected events")
 }
 
 type onBlockCollector struct {

@@ -17,19 +17,8 @@ func mbDataForNumb(n int64) []byte {
 }
 
 func TestArchive(t *testing.T) {
-	t.Run("TestArchive_legacy", func(t *testing.T) {
-		params := setupStreamStorageTest(t, false)
-		testArchive(params)
-	})
-
-	t.Run("TestArchive_migrated", func(t *testing.T) {
-		params := setupStreamStorageTest(t, true)
-		testArchive(params)
-	})
-}
-
-func testArchive(params *testStreamStoreParams) {
-	require := require.New(params.t)
+	params := setupStreamStorageTest(t)
+	require := require.New(t)
 
 	ctx := params.ctx
 	pgStreamStore := params.pgStreamStore

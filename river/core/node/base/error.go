@@ -222,7 +222,7 @@ func IsConnectNetworkError(err error) bool {
 	return false
 }
 
-// IsConnectNetworkError identifies connect codes that indicate a network error occurred during
+// IsConnectNetworkErrorCode identifies connect codes that indicate a network error occurred during
 // a connect call to a downstream client.
 func IsConnectNetworkErrorCode(code connect.Code) bool {
 	return code == connect.CodeUnavailable

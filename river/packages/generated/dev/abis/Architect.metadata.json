@@ -1028,10 +1028,10 @@
       "license": "MIT"
     },
     "contracts/src/spaces/facets/membership/MembershipBase.sol": {
-      "keccak256": "0x4a175878616c1d537ba64ee16bc56976e2f128f67febddc62eba26ab218f0bca",
+      "keccak256": "0x8f9aef80079d987d86c471b1c70d18efe7b54988b71270a3680dc29e50c92972",
       "urls": [
-        "bzz-raw://f3abfd7c44af0363230deecde0d7fbefe9e3e8364cf829755d11005af0522404",
-        "dweb:/ipfs/QmRMk9xHZjapKsUvK73FHMbLWdPzPactbYxp1rMfWCUzKH"
+        "bzz-raw://bcf8c2521e2949652e0d2c8c30826795987818f3b53ee5e066b2ebeae80a8619",
+        "dweb:/ipfs/QmR5PReJawjcGitiScZr6LuDQ4py8wjeu43XDXYx1yyVjj"
       ],
       "license": "MIT"
     },
