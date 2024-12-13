@@ -3,10 +3,8 @@ import { SpaceInfo } from 'use-towns-client'
 import { userOpsStore } from '@towns/userops'
 import { useJoinFunnelAnalytics } from '@components/Analytics/useJoinFunnelAnalytics'
 import { useGatherSpaceDetailsAnalytics } from '@components/Analytics/useGatherSpaceDetailsAnalytics'
-import { usePublicPageLoginFlow } from 'routes/PublicTownPage/usePublicPageLoginFlow'
 import { getSpaceNameFromCache } from '@components/Analytics/getSpaceNameFromCache'
 import { Box, Button, Icon } from '@ui'
-import { Analytics } from 'hooks/useAnalytics'
 import { useStore } from 'store/store'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { PayWithCardButton } from './PayWithCardButton'
@@ -28,16 +26,8 @@ export function PaymentChoices(props: {
         currOpDecodedCallData?.type === 'joinSpace' ||
         currOpDecodedCallData?.type === 'joinSpace_linkWallet'
     const theme = useStore((s) => s.getTheme())
-    const confirm = userOpsStore((s) => s.confirm)
-    const { clickConfirmJoinTransaction } = useJoinFunnelAnalytics()
-    const isJoiningSpace = !!usePublicPageLoginFlow().spaceBeingJoined
-
-    const onPayWithEth = () => {
-        confirm?.()
-        if (isJoiningSpace) {
-            clickConfirmJoinTransaction()
-        }
-    }
+    const confirmUserOp = userOpsStore((s) => s.confirm)
+    const { clickedPayWithEth } = useJoinFunnelAnalytics()
     return (
         <Box gap="md" width="100%" paddingTop="md">
             {isJoinSpace && spaceInfo?.address && (
@@ -56,14 +46,14 @@ export function PaymentChoices(props: {
                     if (balanceIsLessThanCost) {
                         setShowWalletBalance(true)
                     } else {
-                        Analytics.getInstance().track('clicked pay with ETH', {
+                        clickedPayWithEth({
                             spaceName: getSpaceNameFromCache(spaceId),
                             spaceId,
                             gatedSpace: analytics.gatedSpace,
                             pricingModule: analytics.pricingModule,
                             priceInWei: analytics.priceInWei,
                         })
-                        onPayWithEth()
+                        confirmUserOp?.()
                     }
                 }}
             >

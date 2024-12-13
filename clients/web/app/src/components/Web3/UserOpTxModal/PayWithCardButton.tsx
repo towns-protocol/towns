@@ -1,10 +1,10 @@
 import React, { useEffect, useRef } from 'react'
 import { SpaceAddressFromSpaceId } from 'use-towns-client'
 import { Button, Icon } from '@ui'
-import { Analytics } from 'hooks/useAnalytics'
 import { useGatherSpaceDetailsAnalytics } from '@components/Analytics/useGatherSpaceDetailsAnalytics'
 import { getSpaceNameFromCache } from '@components/Analytics/getSpaceNameFromCache'
 import { registerContractWithCrossmint } from 'api/crossmint'
+import { useJoinFunnelAnalytics } from '@components/Analytics/useJoinFunnelAnalytics'
 
 interface PayWithCardButtonProps {
     contractAddress: string
@@ -19,6 +19,7 @@ export function PayWithCardButton({
 }: PayWithCardButtonProps) {
     const hasAttemptedRegistration = useRef(false)
     const spaceId = SpaceAddressFromSpaceId(contractAddress)
+    const { clickedPayWithCard } = useJoinFunnelAnalytics()
 
     useEffect(() => {
         const registerContract = async () => {
@@ -39,7 +40,7 @@ export function PayWithCardButton({
 
     const handleClick = () => {
         onClick()
-        Analytics.getInstance().track('clicked pay with card', {
+        clickedPayWithCard({
             spaceName: getSpaceNameFromCache(spaceId),
             spaceId,
             gatedSpace: spaceDetailsAnalytics.gatedSpace,

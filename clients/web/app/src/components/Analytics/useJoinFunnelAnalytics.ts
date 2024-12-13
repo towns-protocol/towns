@@ -60,7 +60,6 @@ import { TokenGatedByAnalytics } from './useGatherSpaceDetailsAnalytics'
 // joining town
 // join transaction modal
 // click copy wallet address
-// click confirm join transaction
 // ... typical flow
 
 ////////////////////////////////////////////////////
@@ -86,8 +85,18 @@ export const useJoinFunnelAnalytics = () => {
                 spaceName: string | undefined
                 pricingModel: 'free' | 'paid'
                 postOAuthRedirect: boolean
+                gatedSpace: boolean
+                pricingModule: 'fixed' | 'dynamic' | 'free'
             }) => {
-                const { authenticated, spaceId, spaceName, pricingModel, postOAuthRedirect } = args
+                const {
+                    authenticated,
+                    spaceId,
+                    spaceName,
+                    pricingModel,
+                    postOAuthRedirect,
+                    gatedSpace,
+                    pricingModule,
+                } = args
                 Analytics.getInstance().page('home-page', 'public town page', {
                     authenticated,
                     spaceId,
@@ -95,6 +104,8 @@ export const useJoinFunnelAnalytics = () => {
                     pricingModel,
                     // A user may redirect to oauth page, then return to the app and see the public town page again
                     postOAuthRedirect,
+                    gatedSpace,
+                    pricingModule,
                 })
             },
             [],
@@ -208,9 +219,45 @@ export const useJoinFunnelAnalytics = () => {
             [],
         ),
 
-        clickConfirmJoinTransaction: useCallback(() => {
-            Analytics.getInstance().track('click confirm join transaction')
-        }, []),
+        clickedPayWithEth: useCallback(
+            (args: {
+                spaceName: string | undefined
+                spaceId: string | undefined
+                gatedSpace: boolean
+                pricingModule: 'free' | 'fixed' | 'dynamic'
+                priceInWei: string
+            }) => {
+                const { spaceName, spaceId, gatedSpace, pricingModule, priceInWei } = args
+                Analytics.getInstance().track('clicked pay with ETH', {
+                    spaceName,
+                    spaceId,
+                    gatedSpace,
+                    pricingModule,
+                    priceInWei,
+                })
+            },
+            [],
+        ),
+
+        clickedPayWithCard: useCallback(
+            (args: {
+                spaceName: string | undefined
+                spaceId: string | undefined
+                gatedSpace: boolean
+                pricingModule: 'free' | 'fixed' | 'dynamic'
+                priceInWei: string
+            }) => {
+                const { spaceName, spaceId, gatedSpace, pricingModule, priceInWei } = args
+                Analytics.getInstance().track('clicked pay with card', {
+                    spaceName,
+                    spaceId,
+                    gatedSpace,
+                    pricingModule,
+                    priceInWei,
+                })
+            },
+            [],
+        ),
 
         viewedGatedTownRequirementsModal: useCallback(
             (args: { spaceId: string | undefined; meetsMembershipRequirements: boolean }) => {
