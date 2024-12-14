@@ -3,6 +3,7 @@ name: Continuous Integration
 env:
     FOUNDRY_VERSION: nightly
     RIVER_BLOCK_TIME: 1
+    CGO_ENABLED: 1 # required for go race
 on:
     schedule:
         # Run every hour
@@ -30,7 +31,7 @@ jobs:
     Common_CI:
         permissions: write-all
         if: github.event_name != 'workflow_dispatch' || !inputs.skip_common_ci
-        runs-on: ubuntu-latest-8-cores
+        runs-on: ['arc-runners']
         timeout-minutes: 30
 
         steps:
@@ -57,10 +58,23 @@ jobs:
               with:
                   version: ${{ env.FOUNDRY_VERSION }}
 
+            - name: Install Make
+              run: sudo apt-get update && sudo apt-get -y install make
+
             - uses: actions/setup-node@v4
               with:
                   node-version: '20'
-                  cache: 'yarn'
+
+            - name: Setup yarn
+              run: npm install -g yarn
+
+            - name: Maintain Turbo cache
+              uses: actions/cache@v4
+              with:
+                  path: .turbo
+                  key: ${{ runner.os }}-turbo-${{ github.ref_name}}
+                  restore-keys: |
+                      ${{ runner.os }}-turbo-main
 
             - name: Install node dependencies
               run: yarn install --immutable
@@ -75,14 +89,6 @@ jobs:
 
             - name: Start and configure blockchains
               run: ./river/scripts/bc-all-start.sh
-
-            - name: Maintain Turbo cache
-              uses: actions/cache@v4
-              with:
-                  path: .turbo
-                  key: ${{ runner.os }}-turbo-${{ github.ref_name}}
-                  restore-keys: |
-                      ${{ runner.os }}-turbo-main
 
             - name: Syncpack
               run: yarn syncpack:check
@@ -102,7 +108,7 @@ jobs:
     Multinode_Ent:
         permissions: write-all
         if: github.event_name != 'workflow_dispatch' || !inputs.skip_multinode_ent
-        runs-on: ubuntu-latest-8-cores
+        runs-on: ['arc-runners']
         timeout-minutes: 30
         services:
             postgres-core:
@@ -128,6 +134,9 @@ jobs:
               uses: styfle/cancel-workflow-action@0.12.1
               with:
                   access_token: ${{ github.token }}
+
+            - name: Install psql
+              run: sudo apt update && sudo apt-get install -y postgresql-client
 
             - name: Show PostgreSQL max_connections
               run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
@@ -164,10 +173,30 @@ jobs:
               with:
                   version: ${{ env.FOUNDRY_VERSION }}
 
+            - name: Install Make
+              run: sudo apt-get update && sudo apt-get -y install make
+
+            - name: Install GCC
+              run: sudo apt-get install gcc -y
+
+            - name: Install netcat
+              run: sudo apt-get install -y netcat
+
             - uses: actions/setup-node@v4
               with:
                   node-version: '20'
-                  cache: 'yarn'
+
+            - name: Setup yarn
+              run: npm install -g yarn
+
+            # TODO: enable after merging the gcp pr
+            # - name: Maintain Turbo cache
+            #   uses: actions/cache@v4
+            #   with:
+            #       path: .turbo
+            #       key: ${{ runner.os }}-turbo-${{ github.ref_name}}
+            #       restore-keys: |
+            #           ${{ runner.os }}-turbo-main
 
             - name: Install node dependencies
               run: yarn install --immutable
@@ -220,7 +249,7 @@ jobs:
     Multinode_Ent_Legacy:
         permissions: write-all
         if: github.event_name != 'workflow_dispatch' || !inputs.skip_multinode_ent_legacy
-        runs-on: ubuntu-latest-8-cores
+        runs-on: ['arc-runners']
         timeout-minutes: 30
         services:
             postgres-core:
@@ -246,6 +275,9 @@ jobs:
               uses: styfle/cancel-workflow-action@0.12.1
               with:
                   access_token: ${{ github.token }}
+
+            - name: Install psql
+              run: sudo apt update && sudo apt-get install -y postgresql-client
 
             - name: Show PostgreSQL max_connections
               run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
@@ -282,13 +314,33 @@ jobs:
               with:
                   version: ${{ env.FOUNDRY_VERSION }}
 
+            - name: Install Make
+              run: sudo apt-get update && sudo apt-get -y install make
+
+            - name: Install GCC
+              run: sudo apt-get install gcc -y
+
+            - name: Install netcat
+              run: sudo apt-get install -y netcat
+
             - uses: actions/setup-node@v4
               with:
                   node-version: '20'
-                  cache: 'yarn'
+
+            - name: Setup yarn
+              run: npm install -g yarn
 
             - name: Install node dependencies
               run: yarn install --immutable
+
+            # TODO: enable after merging the gcp pr
+            # - name: Maintain Turbo cache
+            #   uses: actions/cache@v4
+            #   with:
+            #       path: .turbo
+            #       key: ${{ runner.os }}-turbo-${{ github.ref_name}}
+            #       restore-keys: |
+            #           ${{ runner.os }}-turbo-main
 
             - name: Print versions
               run: ./river/scripts/print-versions.sh

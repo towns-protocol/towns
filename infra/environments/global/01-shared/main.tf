@@ -4,6 +4,14 @@ terraform {
       source  = "hashicorp/aws"
       version = ">= 5.13.1"
     }
+    google-beta = {
+      source  = "hashicorp/google-beta"
+      version = ">= 5.45.0"
+    }
+    google = {
+      source  = "hashicorp/google"
+      version = ">= 5.45.0"
+    }
   }
 
   backend "s3" {}
@@ -11,9 +19,57 @@ terraform {
   required_version = ">= 1.0.3"
 }
 
+locals {
+  project_id         = "hnt-arc-runners-444719"
+  k8s_config_context = "gke_hnt-arc-runners-444719_us-east4-a_gh-runner-k8s"
+}
+
 provider "aws" {
   region  = "us-east-1"
   profile = "harmony-github-actions"
+}
+
+provider "google-beta" {
+  project = local.project_id
+  region  = "us-central1"
+}
+
+provider "google" {
+  project = local.project_id
+  region  = "us-central1"
+}
+
+provider "kubernetes" {
+  config_path    = "~/.kube/config"
+  config_context = local.k8s_config_context
+}
+
+provider "helm" {
+  kubernetes {
+    config_path    = "~/.kube/config"
+    config_context = local.k8s_config_context
+  }
+}
+
+module "runner-gke" {
+  source = "../../../modules/gh-runner-gke"
+
+  project_id             = local.project_id
+  create_network         = true
+  cluster_suffix         = "k8s"
+  gh_app_id              = "1084993"
+  gh_app_installation_id = "58274334"
+  gh_app_private_key     = var.gh_app_private_key
+  gh_config_url          = "https://github.com/HereNotThere"
+  arc_container_mode     = "dind"
+
+  min_node_count = 1
+  max_node_count = 100
+
+  # TODO: uncomment
+  arc_runners_values = [
+    file("${path.module}/values.yaml")
+  ]
 }
 
 module "global_constants" {
