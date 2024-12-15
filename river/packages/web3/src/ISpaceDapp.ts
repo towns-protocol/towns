@@ -349,7 +349,7 @@ export interface ISpaceDapp {
     tip: (
         args: {
             spaceId: string
-            receiver: string
+            tokenId: string
             currency: string
             amount: bigint
             messageId: string
@@ -357,4 +357,6 @@ export interface ISpaceDapp {
         },
         signer: SignerType,
     ) => Promise<TransactionType>
+    getLinkedWallets: (wallet: string) => Promise<string[]>
+    getTokenIdOfOwner: (spaceId: string, owner: string) => Promise<string | undefined>
 }

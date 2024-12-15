@@ -97,11 +97,15 @@ type MiniblockInfo struct {
 	Proto              *Miniblock
 }
 
-func (b *MiniblockInfo) events() []*ParsedEvent {
+func (b *MiniblockInfo) Events() []*ParsedEvent {
 	if len(b.useGetterForEvents) == 0 && len(b.Proto.Events) > 0 {
 		panic("DontParseEvents option was used, events are not initialized")
 	}
 	return b.useGetterForEvents
+}
+
+func (b *MiniblockInfo) HeaderEvent() *ParsedEvent {
+	return b.headerEvent
 }
 
 func (b *MiniblockInfo) Header() *MiniblockHeader {
@@ -109,7 +113,7 @@ func (b *MiniblockInfo) Header() *MiniblockHeader {
 }
 
 func (b *MiniblockInfo) lastEvent() *ParsedEvent {
-	events := b.events()
+	events := b.Events()
 	if len(events) > 0 {
 		return events[len(events)-1]
 	} else {
@@ -141,7 +145,7 @@ func (b *MiniblockInfo) asStorageMbWithData(bytes []byte) *storage.WriteMinibloc
 func (b *MiniblockInfo) forEachEvent(op func(e *ParsedEvent, minibockNum int64, eventNum int64) (bool, error)) (bool, error) {
 	blockNum := b.Header().MiniblockNum
 	eventNum := b.Header().EventNumOffset
-	for _, event := range b.events() {
+	for _, event := range b.Events() {
 		c, err := op(event, blockNum, eventNum)
 		eventNum++
 		if err != nil || !c {

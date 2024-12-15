@@ -16,6 +16,21 @@ import {DiamondHelper} from "contracts/test/diamond/Diamond.t.sol";
 // contracts
 import {Interaction} from "contracts/scripts/common/Interaction.s.sol";
 
+// note: struct fields must be in alphabetical order for the json parser to work
+// see: https://book.getfoundry.sh/cheatcodes/parse-json
+struct DiamondFacetData {
+  string chainName;
+  string diamond;
+  FacetData[] facets;
+  uint256 numFacets;
+}
+
+struct FacetData {
+  address deployedAddress;
+  string facetName;
+  bytes32 sourceHash;
+}
+
 abstract contract AlphaHelper is Interaction, DiamondHelper, IDiamondLoupeBase {
   function removeRemoteFacets(address deployer, address diamond) internal {
     Facet[] memory facets = IDiamondLoupe(diamond).facets();

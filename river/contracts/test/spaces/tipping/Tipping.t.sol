@@ -38,6 +38,9 @@ contract TippingTest is BaseSetup, ITippingBase, IERC721ABase {
   }
 
   modifier givenUsersAreMembers(address sender, address receiver) {
+    assumeNotPrecompile(sender);
+    assumeNotPrecompile(receiver);
+
     vm.assume(sender != receiver);
     vm.assume(sender != address(0) && sender.code.length == 0);
     vm.assume(receiver != address(0) && receiver.code.length == 0);

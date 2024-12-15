@@ -34,6 +34,7 @@ type StreamView interface {
 	InceptionPayload() IsInceptionPayload
 	LastEvent() *ParsedEvent
 	MinipoolEnvelopes() []*Envelope
+	MinipoolEvents() []*ParsedEvent
 	Miniblocks() []*MiniblockInfo
 	MiniblocksFromLastSnapshot() []*Miniblock
 	SyncCookie(localNodeAddress common.Address) *SyncCookie
@@ -291,7 +292,7 @@ func (r *streamViewImpl) makeMiniblockHeader(
 
 	var snapshot *Snapshot
 	last := r.LastBlock()
-	eventNumOffset := last.Header().EventNumOffset + int64(len(last.events())) + 1 // +1 for header
+	eventNumOffset := last.Header().EventNumOffset + int64(len(last.Events())) + 1 // +1 for header
 	nextMiniblockNum := last.Header().MiniblockNum + 1
 	miniblockNumOfPrevSnapshot := last.Header().PrevSnapshotMiniblockNum
 	if last.Header().Snapshot != nil {
@@ -303,7 +304,7 @@ func (r *streamViewImpl) makeMiniblockHeader(
 		for i := r.snapshotIndex + 1; i < len(r.blocks); i++ {
 			block := r.blocks[i]
 			miniblockNum := block.Header().MiniblockNum
-			for j, e := range block.events() {
+			for j, e := range block.Events() {
 				offset := block.Header().EventNumOffset
 				err := Update_Snapshot(snapshot, e, miniblockNum, offset+int64(j))
 				if err != nil {
@@ -390,7 +391,7 @@ func (r *streamViewImpl) copyAndApplyBlock(
 	}
 
 	newEvents := []*Envelope{}
-	for _, e := range miniblock.events() {
+	for _, e := range miniblock.Events() {
 		if _, ok := remaining[e.Hash]; ok {
 			delete(remaining, e.Hash)
 		} else {
@@ -529,6 +530,10 @@ func (r *streamViewImpl) MinipoolEnvelopes() []*Envelope {
 	return envelopes
 }
 
+func (r *streamViewImpl) MinipoolEvents() []*ParsedEvent {
+	return r.minipool.events.Values
+}
+
 func (r *streamViewImpl) Miniblocks() []*MiniblockInfo {
 	return r.blocks
 }
@@ -566,7 +571,7 @@ func (r *streamViewImpl) shouldSnapshot(ctx context.Context, cfg *crypto.OnChain
 		if block.Header().Snapshot != nil {
 			break
 		}
-		count += len(block.events())
+		count += len(block.Events())
 		if count >= minEventsPerSnapshot {
 			return true
 		}
@@ -652,7 +657,7 @@ func (r *streamViewImpl) ValidateNextEvent(
 	// loop forwards from foundBlockAt and check for duplicate event
 	for i := foundBlockAt + 1; i < len(r.blocks); i++ {
 		block := r.blocks[i]
-		for _, e := range block.events() {
+		for _, e := range block.Events() {
 			if e.Hash == parsedEvent.Hash {
 				return RiverError(
 					Err_DUPLICATE_EVENT,
@@ -699,7 +704,7 @@ func (r *streamViewImpl) GetStats() StreamViewStats {
 	}
 
 	for _, block := range r.blocks {
-		stats.EventsInMiniblocks += len(block.events()) + 1 // +1 for header
+		stats.EventsInMiniblocks += len(block.Events()) + 1 // +1 for header
 		if block.Header().Snapshot != nil {
 			stats.SnapshotsInMiniblocks++
 		}
@@ -707,7 +712,7 @@ func (r *streamViewImpl) GetStats() StreamViewStats {
 
 	stats.TotalEventsEver = int(r.blocks[r.snapshotIndex].Header().EventNumOffset)
 	for _, block := range r.blocks[r.snapshotIndex:] {
-		stats.TotalEventsEver += len(block.events()) + 1 // +1 for header
+		stats.TotalEventsEver += len(block.Events()) + 1 // +1 for header
 	}
 	stats.TotalEventsEver += r.minipool.events.Len()
 
@@ -770,7 +775,7 @@ func (r *streamViewImpl) CopyAndPrependMiniblocks(mbs []*MiniblockInfo) (StreamV
 func (r *streamViewImpl) AllEvents() iter.Seq[*ParsedEvent] {
 	return func(yield func(*ParsedEvent) bool) {
 		for _, block := range r.blocks {
-			for _, event := range block.events() {
+			for _, event := range block.Events() {
 				if !yield(event) {
 					return
 				}

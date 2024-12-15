@@ -18,7 +18,7 @@ import "forge-std/console.sol";
 
 // contracts
 import {DeployHelpers} from "../common/DeployHelpers.s.sol";
-import {AlphaHelper} from "contracts/scripts/interactions/helpers/AlphaHelper.sol";
+import {AlphaHelper, DiamondFacetData, FacetData} from "contracts/scripts/interactions/helpers/AlphaHelper.sol";
 
 import {DeploySpace} from "contracts/scripts/deployments/diamonds/DeploySpace.s.sol";
 import {DeploySpaceFactory} from "contracts/scripts/deployments/diamonds/DeploySpaceFactory.s.sol";
@@ -40,18 +40,6 @@ contract InteractAlphaSparse is AlphaHelper {
   string constant DEFAULT_JSON_FILE = "compiled_source_diff.json";
   string constant DEFAULT_REPORT_PATH = "/scripts/bytecode-diff/source-diffs/";
 
-  struct DiamondFacets {
-    string diamond;
-    FacetData[] facets;
-    uint256 numFacets;
-  }
-
-  struct FacetData {
-    address deployedAddress;
-    string facetName;
-    bytes32 sourceHash;
-  }
-
   string private jsonData;
 
   function readJSON(string memory jsonPath) internal {
@@ -62,28 +50,30 @@ contract InteractAlphaSparse is AlphaHelper {
    * @notice Decodes diamond and facet data from a JSON file output by the bytecode-diff script
    * @dev Reads the JSON file specified by the DEFAULT_JSON_FILE constant
    *      and parses it to extract information about updated diamonds and their facets
-   * @return An array of DiamondFacets structs containing the decoded information
+   * @return An array of DiamondFacetData structs containing the decoded information
    */
 
   function decodeDiamondsFromJSON()
     internal
     view
-    returns (DiamondFacets[] memory)
+    returns (DiamondFacetData[] memory)
   {
     uint256 updatedDiamondLen = abi.decode(
       vm.parseJson(jsonData, ".numUpdated"),
       (uint256)
     );
-    DiamondFacets[] memory diamonds = new DiamondFacets[](updatedDiamondLen);
+    DiamondFacetData[] memory diamonds = new DiamondFacetData[](
+      updatedDiamondLen
+    );
 
     for (uint256 i = 0; i < updatedDiamondLen; i++) {
       // Decode diamond name and number of facets
-      DiamondFacets memory diamondData = abi.decode(
+      DiamondFacetData memory diamondData = abi.decode(
         vm.parseJson(
           jsonData,
           string.concat("$.updated[", vm.toString(i), "]")
         ),
-        (DiamondFacets)
+        (DiamondFacetData)
       );
 
       diamonds[i] = diamondData;
@@ -122,7 +112,8 @@ contract InteractAlphaSparse is AlphaHelper {
 
     readJSON(jsonPath);
 
-    DiamondFacets[] memory diamonds = decodeDiamondsFromJSON();
+    DiamondFacetData[] memory diamonds = decodeDiamondsFromJSON();
+    console.log("interact::diamonds decoded", diamonds.length);
 
     // Iterate over diamonds array and process each diamond
     for (uint256 i = 0; i < diamonds.length; i++) {

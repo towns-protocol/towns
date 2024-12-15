@@ -839,7 +839,7 @@ func (s *PostgresStreamStore) ReadMiniblocksByStream(
 		func(ctx context.Context, tx pgx.Tx) error {
 			return s.readMiniblocksByStreamTx(ctx, tx, streamId, onEachMb)
 		},
-		nil,
+		&txRunnerOpts{useStreamingPool: true},
 		"streamId", streamId,
 	)
 }

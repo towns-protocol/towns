@@ -473,9 +473,12 @@ export class Space {
         }
     }
 
-    public async getTokenIdsOfOwner(ownerAddress: string): Promise<string[]> {
-        const tokens = await this.erc721AQueryable.read.tokensOfOwner(ownerAddress)
-        return tokens.map((token) => token.toString())
+    public async getTokenIdsOfOwner(linkedWallets: string[]): Promise<string[]> {
+        const tokenPromises = linkedWallets.map((wallet) =>
+            this.erc721AQueryable.read.tokensOfOwner(wallet),
+        )
+        const allTokenArrays = await Promise.all(tokenPromises)
+        return allTokenArrays.flat().map((token) => token.toString())
     }
 
     /**

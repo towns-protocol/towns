@@ -263,6 +263,7 @@ func TestArchiveOneStream(t *testing.T) {
 	pool, err := storage.CreateAndValidatePgxPool(ctx, dbCfg, schema, nil)
 	require.NoError(err)
 	tester.cleanup(pool.Pool.Close)
+	tester.cleanup(pool.StreamingPool.Close)
 
 	streamStorage, err := storage.NewPostgresStreamStore(
 		ctx,

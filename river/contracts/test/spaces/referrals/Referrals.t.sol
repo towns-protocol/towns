@@ -28,6 +28,7 @@ abstract contract ReferralsFacetTest is MembershipBaseSetup, IReferralsBase {
     vm.assume(referral.recipient != address(0));
     vm.assume(referral.basisPoints > 0 && referral.basisPoints <= REFERRAL_BPS);
     vm.assume(bytes(referral.referralCode).length > 0);
+    assumeNotPrecompile(referral.recipient);
 
     vm.prank(founder);
     vm.expectEmit(address(userSpace));

@@ -11,6 +11,8 @@ import (
 	"math/big"
 	"net"
 	"net/http"
+	"os"
+	"runtime"
 	"slices"
 	"strings"
 	"testing"
@@ -29,13 +31,15 @@ import (
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/dlog"
 	. "github.com/river-build/river/core/node/events"
-	"github.com/river-build/river/core/node/protocol"
+	"github.com/river-build/river/core/node/events/dumpevents"
+	. "github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/protocol/protocolconnect"
 	. "github.com/river-build/river/core/node/shared"
 	"github.com/river-build/river/core/node/storage"
 	"github.com/river-build/river/core/node/testutils"
 	"github.com/river-build/river/core/node/testutils/dbtestutils"
 	"github.com/river-build/river/core/node/testutils/testcert"
+	"github.com/river-build/river/core/node/testutils/testfmt"
 )
 
 type testNodeRecord struct {
@@ -549,9 +553,9 @@ func (tc *testClient) withRequireFor(t require.TestingT) *testClient {
 }
 
 func (tc *testClient) createUserStream(
-	streamSettings ...*protocol.StreamSettings,
+	streamSettings ...*StreamSettings,
 ) *MiniblockRef {
-	var ss *protocol.StreamSettings
+	var ss *StreamSettings
 	if len(streamSettings) > 0 {
 		ss = streamSettings[0]
 	}
@@ -564,10 +568,10 @@ func (tc *testClient) createUserStream(
 }
 
 func (tc *testClient) createSpace(
-	streamSettings ...*protocol.StreamSettings,
+	streamSettings ...*StreamSettings,
 ) (StreamId, *MiniblockRef) {
 	spaceId := testutils.FakeStreamId(STREAM_SPACE_BIN)
-	var ss *protocol.StreamSettings
+	var ss *StreamSettings
 	if len(streamSettings) > 0 {
 		ss = streamSettings[0]
 	}
@@ -582,10 +586,10 @@ func (tc *testClient) createSpace(
 
 func (tc *testClient) createChannel(
 	spaceId StreamId,
-	streamSettings ...*protocol.StreamSettings,
+	streamSettings ...*StreamSettings,
 ) (StreamId, *MiniblockRef) {
 	channelId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
-	var ss *protocol.StreamSettings
+	var ss *StreamSettings
 	if len(streamSettings) > 0 {
 		ss = streamSettings[0]
 	}
@@ -601,7 +605,7 @@ func (tc *testClient) joinChannel(spaceId StreamId, channelId StreamId, mb *Mini
 	userJoin, err := MakeEnvelopeWithPayload(
 		tc.wallet,
 		Make_UserPayload_Membership(
-			protocol.MembershipOp_SO_JOIN,
+			MembershipOp_SO_JOIN,
 			channelId,
 			nil,
 			spaceId[:],
@@ -614,7 +618,7 @@ func (tc *testClient) joinChannel(spaceId StreamId, channelId StreamId, mb *Mini
 	_, err = tc.client.AddEvent(
 		tc.ctx,
 		connect.NewRequest(
-			&protocol.AddEventRequest{
+			&AddEventRequest{
 				StreamId: userStreamId[:],
 				Event:    userJoin,
 			},
@@ -624,7 +628,7 @@ func (tc *testClient) joinChannel(spaceId StreamId, channelId StreamId, mb *Mini
 }
 
 func (tc *testClient) getLastMiniblockHash(streamId StreamId) *MiniblockRef {
-	resp, err := tc.client.GetLastMiniblockHash(tc.ctx, connect.NewRequest(&protocol.GetLastMiniblockHashRequest{
+	resp, err := tc.client.GetLastMiniblockHash(tc.ctx, connect.NewRequest(&GetLastMiniblockHashRequest{
 		StreamId: streamId[:],
 	}))
 	tc.require.NoError(err)
@@ -638,7 +642,7 @@ func (tc *testClient) say(channelId StreamId, message string) {
 	ref := tc.getLastMiniblockHash(channelId)
 	envelope, err := MakeEnvelopeWithPayload(tc.wallet, Make_ChannelPayload_Message(message), ref)
 	tc.require.NoError(err)
-	_, err = tc.client.AddEvent(tc.ctx, connect.NewRequest(&protocol.AddEventRequest{
+	_, err = tc.client.AddEvent(tc.ctx, connect.NewRequest(&AddEventRequest{
 		StreamId: channelId[:],
 		Event:    envelope,
 	}))
@@ -760,16 +764,15 @@ func (tc *testClient) eventually(f func(*testClient), t ...time.Duration) {
 	}, waitFor, tick)
 }
 
+//nolint:unused
 func (tc *testClient) listen(channelId StreamId, userIds []common.Address, messages [][]string) {
 	expected := flattenUserMessages(userIds, messages)
 	tc.listenImpl(channelId, expected)
 }
 
-var _ = (*testClient)(nil).listen // Suppress unused warning TODO: remove once used
-
 func (tc *testClient) listenImpl(channelId StreamId, expected userMessages) {
-	actual := tc.getAllMessages(channelId)
 	tc.eventually(func(tc *testClient) {
+		actual := tc.getAllMessages(channelId)
 		expectedExtra, actualExtra := diffUserMessages(expected, actual)
 		if len(expectedExtra) > 0 {
 			tc.require.FailNow(
@@ -786,8 +789,8 @@ func (tc *testClient) listenImpl(channelId StreamId, expected userMessages) {
 	})
 }
 
-func (tc *testClient) getStream(streamId StreamId) *protocol.StreamAndCookie {
-	resp, err := tc.client.GetStream(tc.ctx, connect.NewRequest(&protocol.GetStreamRequest{
+func (tc *testClient) getStream(streamId StreamId) *StreamAndCookie {
+	resp, err := tc.client.GetStream(tc.ctx, connect.NewRequest(&GetStreamRequest{
 		StreamId: streamId[:],
 	}))
 	tc.require.NoError(err)
@@ -796,8 +799,8 @@ func (tc *testClient) getStream(streamId StreamId) *protocol.StreamAndCookie {
 	return resp.Msg.Stream
 }
 
-func (tc *testClient) getStreamEx(streamId StreamId, onEachMb func(*protocol.Miniblock)) {
-	resp, err := tc.client.GetStreamEx(tc.ctx, connect.NewRequest(&protocol.GetStreamExRequest{
+func (tc *testClient) getStreamEx(streamId StreamId, onEachMb func(*Miniblock)) {
+	resp, err := tc.client.GetStreamEx(tc.ctx, connect.NewRequest(&GetStreamExRequest{
 		StreamId: streamId[:],
 	}))
 	tc.require.NoError(err)
@@ -811,7 +814,7 @@ func (tc *testClient) getStreamEx(streamId StreamId, onEachMb func(*protocol.Min
 func (tc *testClient) getStreamAndView(
 	streamId StreamId,
 	history ...bool,
-) (*protocol.StreamAndCookie, JoinableStreamView) {
+) (*StreamAndCookie, JoinableStreamView) {
 	stream := tc.getStream(streamId)
 	var view JoinableStreamView
 	var err error
@@ -826,11 +829,38 @@ func (tc *testClient) getStreamAndView(
 			view = tc.addHistoryToView(view)
 		}
 	}
+
 	return stream, view
 }
 
+func (tc *testClient) maybeDumpStreamView(view StreamView) {
+	if os.Getenv("RIVER_TEST_DUMP_STREAM") != "" {
+		testfmt.Print(
+			tc.t,
+			tc.name,
+			"Dumping stream view",
+			"\n",
+			dumpevents.DumpStreamView(view, dumpevents.DumpOpts{EventContent: true, TestMessages: true}),
+		)
+	}
+}
+
+var _ = (*testClient)(nil).maybeDumpStreamView // Suppress unused warning TODO: remove once used
+
+func (tc *testClient) maybeDumpStream(stream *StreamAndCookie) {
+	if os.Getenv("RIVER_TEST_DUMP_STREAM") != "" {
+		testfmt.Print(
+			tc.t,
+			tc.name,
+			"Dumping stream",
+			"\n",
+			dumpevents.DumpStream(tc.ctx, stream, dumpevents.DumpOpts{EventContent: true, TestMessages: true}),
+		)
+	}
+}
+
 func (tc *testClient) getMiniblocks(streamId StreamId, fromInclusive, toExclusive int64) []*MiniblockInfo {
-	resp, err := tc.client.GetMiniblocks(tc.ctx, connect.NewRequest(&protocol.GetMiniblocksRequest{
+	resp, err := tc.client.GetMiniblocks(tc.ctx, connect.NewRequest(&GetMiniblocksRequest{
 		StreamId:      streamId[:],
 		FromInclusive: fromInclusive,
 		ToExclusive:   toExclusive,
@@ -947,6 +977,33 @@ func (tcs testClients) parallelForAll(f func(*testClient)) {
 	}
 }
 
+func (tcs testClients) parallelForAllT(t require.TestingT, f func(*testClient)) {
+	collects := make([]*collectT, len(tcs))
+	for i := range tcs {
+		collects[i] = &collectT{}
+	}
+	resultC := make(chan int, len(tcs))
+	for i, tc := range tcs {
+		go func() {
+			defer func() {
+				resultC <- i
+			}()
+			f(tc.withRequireFor(collects[i]))
+		}()
+	}
+	failed := false
+	for range tcs {
+		i := <-resultC
+		if collects[i].Failed() {
+			collects[i].copyErrorsTo(t)
+			failed = true
+		}
+	}
+	if failed {
+		t.FailNow()
+	}
+}
+
 // setupChannelWithClients creates a channel and returns a testClients with clients connected to it.
 // First client is creator of both space and channel.
 // Other clients join the channel.
@@ -963,4 +1020,111 @@ func (tcs testClients) createChannelAndJoin(spaceId StreamId) StreamId {
 	tcs.requireMembership(channelId)
 
 	return channelId
+}
+
+func (tcs testClients) compareNowImpl(t require.TestingT, streamId StreamId) []*StreamAndCookie {
+	assert := assert.New(t)
+	streamC := make(chan *StreamAndCookie, len(tcs))
+	tcs.parallelForAllT(t, func(tc *testClient) {
+		streamC <- tc.getStream(streamId)
+	})
+	streams := []*StreamAndCookie{}
+	for range tcs {
+		streams = append(streams, <-streamC)
+	}
+	testfmt.Println(tcs[0].t, "compareNowImpl: Got all streams")
+	first := streams[0]
+	var success bool
+	for i, stream := range streams[1:] {
+		success = assert.Equal(
+			len(first.Miniblocks),
+			len(stream.Miniblocks),
+			"different number of miniblocks, 0 and %d",
+			i+1,
+		)
+		success = success &&
+			assert.Equal(len(first.Events), len(stream.Events), "different number of events, 0 and %d", i+1)
+		success = success && assert.Equal(
+			common.BytesToHash(first.NextSyncCookie.PrevMiniblockHash).Hex(),
+			common.BytesToHash(stream.NextSyncCookie.PrevMiniblockHash).Hex(),
+			"different prev miniblock hash, 0 and %d",
+			i+1,
+		)
+		success = success && assert.Equal(
+			first.NextSyncCookie.MinipoolGen,
+			stream.NextSyncCookie.MinipoolGen,
+			"different minipool gen, 0 and %d",
+			i+1,
+		)
+		success = success && assert.Equal(
+			first.NextSyncCookie.MinipoolSlot,
+			stream.NextSyncCookie.MinipoolSlot,
+			"different minipool slot, 0 and %d",
+			i+1,
+		)
+
+	}
+	if !success {
+		return streams
+	}
+	return nil
+}
+
+//nolint:unused
+func (tcs testClients) compareNow(streamId StreamId) {
+	if len(tcs) < 2 {
+		panic("need at least 2 clients to compare")
+	}
+	streams := tcs.compareNowImpl(tcs[0].t, streamId)
+	if streams != nil {
+		for i, s := range streams {
+			tcs[i].maybeDumpStream(s)
+		}
+		tcs[0].t.FailNow()
+	}
+}
+
+func (tcs testClients) compare(streamId StreamId) {
+	if len(tcs) < 2 {
+		panic("need at least 2 clients to compare")
+	}
+	var streams []*StreamAndCookie
+	success := tcs[0].assert.EventuallyWithT(func(t *assert.CollectT) {
+		streams = tcs.compareNowImpl(t, streamId)
+	}, 10*time.Second, 100*time.Millisecond)
+	for i, s := range streams {
+		tcs[i].maybeDumpStream(s)
+	}
+	if !success {
+		tcs[0].t.FailNow()
+	}
+}
+
+type collectT struct {
+	errors []error
+}
+
+func (c *collectT) Errorf(format string, args ...interface{}) {
+	c.errors = append(c.errors, fmt.Errorf(format, args...))
+}
+
+func (c *collectT) FailNow() {
+	c.Fail()
+	runtime.Goexit()
+}
+
+func (c *collectT) Fail() {
+	if !c.Failed() {
+		c.errors = []error{} // Make it non-nil to mark a failure.
+	}
+}
+
+func (c *collectT) Failed() bool {
+	return c.errors != nil
+}
+
+func (c *collectT) copyErrorsTo(t require.TestingT) {
+	for _, err := range c.errors {
+		t.Errorf("%v", err)
+	}
 }

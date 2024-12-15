@@ -1,6 +1,8 @@
 package shared
 
 import (
+	"fmt"
+
 	"github.com/ethereum/go-ethereum/common"
 
 	. "github.com/river-build/river/core/node/protocol"
@@ -23,4 +25,12 @@ func MiniblockRefFromLastHash(resp *GetLastMiniblockHashResponse) *MiniblockRef 
 		Hash: common.BytesToHash(resp.GetHash()),
 		Num:  resp.GetMiniblockNum(),
 	}
+}
+
+func (m MiniblockRef) String() string {
+	return fmt.Sprintf("MB %d %s", m.Num, m.Hash.Hex())
+}
+
+func (m MiniblockRef) GoString() string {
+	return m.String()
 }

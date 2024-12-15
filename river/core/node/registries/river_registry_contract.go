@@ -4,7 +4,6 @@ import (
 	"context"
 	"math/big"
 	"slices"
-	"sync/atomic"
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
@@ -521,9 +520,9 @@ func (c *RiverRegistryContract) forAllStreamsParallel(
 
 	startTime := time.Now()
 	lastReport := time.Now()
-	var taskCounter atomic.Int64
+	taskCounter := 0
 	for i := int64(0); i < numStreams; i += pageSize {
-		taskCounter.Add(1)
+		taskCounter++
 		pool.Submit(func() {
 			streams, _, err := c.callGetPaginatedStreamsWithBackoff(ctx, blockNum, i, i+pageSize)
 			if err == nil {
@@ -537,7 +536,6 @@ func (c *RiverRegistryContract) forAllStreamsParallel(
 				case <-ctx.Done():
 				}
 			}
-			taskCounter.Add(-1)
 		})
 	}
 
@@ -569,7 +567,8 @@ OuterLoop:
 					break OuterLoop
 				}
 			}
-			if taskCounter.Load() == 0 {
+			taskCounter--
+			if taskCounter == 0 {
 				break OuterLoop
 			}
 		case receivedErr := <-chErrors:

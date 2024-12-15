@@ -181,7 +181,7 @@ func TestStreamReconciliationFromGenesis(t *testing.T) {
 // TestStreamReconciliationForKnownStreams ensures that a node reconciles local streams that it already knows
 // but advanced when the node was down.
 func TestStreamReconciliationForKnownStreams(t *testing.T) {
-	t.Skip("SKIPPED: TODO: REPLICATION: fix")
+	//	t.Skip("SKIPPED: TODO: REPLICATION: fix")
 
 	var (
 		opts    = serviceTesterOpts{numNodes: 5, replicationFactor: 5, start: true}

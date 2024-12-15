@@ -4,6 +4,7 @@ import { default as checker } from 'vite-plugin-checker'
 import { nodePolyfills } from 'vite-plugin-node-polyfills'
 import { replaceCodePlugin } from 'vite-plugin-replace'
 import tsconfigPaths from 'vite-tsconfig-paths'
+import wasm from 'vite-plugin-wasm'
 import path from 'path'
 
 // https://vitejs.dev/config/
@@ -19,6 +20,7 @@ export default ({ mode }: { mode: string }) => {
             exclude: ['@connectrpc/connect-node'],
         },
         plugins: [
+            wasm(),
             tsconfigPaths(),
             replaceCodePlugin({
                 replacements: [

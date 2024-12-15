@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"sync/atomic"
 	"time"
 
 	"connectrpc.com/connect"
@@ -60,20 +61,20 @@ func srStreamDump(cfg *config.Config, countOnly, timeOnly bool) error {
 		return nil
 	}
 
-	i := 0
+	var i atomic.Int64
 	startTime := time.Now()
 	err = registryContract.ForAllStreams(ctx, blockchain.InitialBlockNum, func(strm *registries.GetStreamResult) bool {
+		curI := i.Add(1)
 		if !timeOnly {
-			s := fmt.Sprintf("%4d %s", i, strm.StreamId.String())
+			s := fmt.Sprintf("%4d %s", curI-1, strm.StreamId.String())
 			fmt.Printf("%-69s %4d, %s\n", s, strm.LastMiniblockNum, strm.LastMiniblockHash.Hex())
 			for _, node := range strm.Nodes {
 				fmt.Printf("        %s\n", node.Hex())
 			}
 		}
-		i++
-		if timeOnly && i%50000 == 0 && i > 0 {
+		if timeOnly && curI%50000 == 0 {
 			elapsed := time.Since(startTime)
-			fmt.Printf("Received %d streams in %s (%.1f streams/s)\n", i, elapsed, float64(i)/elapsed.Seconds())
+			fmt.Printf("Received %d streams in %s (%.1f streams/s)\n", curI, elapsed, float64(curI)/elapsed.Seconds())
 		}
 		return true
 	})
@@ -81,16 +82,17 @@ func srStreamDump(cfg *config.Config, countOnly, timeOnly bool) error {
 		return err
 	}
 	elapsed := time.Since(startTime)
-	fmt.Printf("TOTAL: %d ELAPSED: %s (%.1f streams/s)\n", i, elapsed, float64(i)/elapsed.Seconds())
+	finalI := i.Load()
+	fmt.Printf("TOTAL: %d ELAPSED: %s (%.1f streams/s)\n", finalI, elapsed, float64(finalI)/elapsed.Seconds())
 
-	if streamNum != int64(i) {
+	if streamNum != finalI {
 		return RiverError(
 			Err_INTERNAL,
 			"Stream count mismatch",
 			"GetStreamCount",
 			streamNum,
 			"ForAllStreams",
-			i,
+			finalI,
 		)
 	}
 

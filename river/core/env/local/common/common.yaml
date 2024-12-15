@@ -53,3 +53,7 @@ standByOnStart: false
 
 scrubbing:
     scrubEligibleDuration: 5s
+
+riverRegistry:
+    pageSize: 200
+    parallelReaders: 2
