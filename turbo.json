@@ -3,19 +3,19 @@
     "tasks": {
         "test": {
             "dependsOn": ["build"],
-            "cache": true
+            "cache": false
         },
         "test:ci": {
             "dependsOn": ["build"],
-            "cache": true
+            "cache": false
         },
         "test:ci:legacy": {
             "dependsOn": ["build"],
-            "cache": true
+            "cache": false
         },
         "test:unit": {
             "dependsOn": ["build"],
-            "cache": true
+            "cache": false
         },
         "build": {
             // note: output globs are relative to each package's `package.json`
