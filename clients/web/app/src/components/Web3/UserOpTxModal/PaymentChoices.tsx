@@ -38,7 +38,7 @@ export function PaymentChoices(props: {
                 />
             )}
             <Button
-                tone={theme === 'dark' ? 'level3' : 'none'}
+                tone={theme === 'dark' ? 'level3' : 'default'}
                 rounded="lg"
                 border={theme === 'dark' ? undefined : 'level4'}
                 onClick={() => {
