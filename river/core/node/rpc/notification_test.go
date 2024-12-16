@@ -31,6 +31,8 @@ import (
 	"github.com/river-build/river/core/node/testutils/testcert"
 )
 
+var notificationDeliveryDelay = 30 * time.Second
+
 // TestNotifications is designed in such a way that all tests are run in parallel
 // and share the same set of nodes, notification service and client.
 func TestNotifications(t *testing.T) {
@@ -120,7 +122,7 @@ func testGDMAPNNotificationAfterUnsubscribe(
 		notificationsForEvent := nc.ApnPushNotifications[eventHash]
 
 		return cmp.Equal(notificationsForEvent, expectedUsersToReceiveNotification)
-	}, 10*time.Second, 2500*time.Millisecond, "Didn't receive expected notifications")
+	}, notificationDeliveryDelay, 2500*time.Millisecond, "Didn't receive expected notifications for stream %s", test.gdmStreamID)
 
 	// userA unsubscribes and userB subscribes using the same device.
 	// for tests the deviceToken is the users wallet address, in this case
@@ -163,7 +165,7 @@ func testGDMAPNNotificationAfterUnsubscribe(
 		notificationsForEvent := nc.ApnPushNotifications[eventHash]
 
 		return len(notificationsForEvent) != 0
-	}, 10*time.Second, 2500*time.Millisecond, "Receive unexpected notification")
+	}, notificationDeliveryDelay, 2500*time.Millisecond, "Receive unexpected notification")
 }
 
 func testGDMMessageWithNoMentionsRepliesAndReaction(
@@ -232,7 +234,7 @@ func testGDMMessageWithNoMentionsRepliesAndReaction(
 
 		return cmp.Equal(webNotifications, expectedUsersToReceiveNotification) &&
 			cmp.Equal(apnNotifications, expectedUsersToReceiveNotification)
-	}, 10*time.Second, 2500*time.Millisecond, "Didn't receive expected notifications")
+	}, notificationDeliveryDelay, 2500*time.Millisecond, "Didn't receive expected notifications for stream %s", test.gdmStreamID)
 
 	// Wait a bit to ensure that no more notifications come in
 	test.req.Never(func() bool {
@@ -278,7 +280,7 @@ func testGDMReactionMessage(
 		defer nc.WebPushNotificationsMu.Unlock()
 
 		return cmp.Equal(nc.WebPushNotifications[eventHash], expectedUsersToReceiveNotification)
-	}, 15*time.Second, 100*time.Millisecond, "user A Didn't receive expected notification")
+	}, notificationDeliveryDelay, 100*time.Millisecond, "user A Didn't receive expected notification for stream %s", test.gdmStreamID)
 
 	// ensure that user B and C never get a notification
 	test.req.Never(func() bool {
@@ -426,7 +428,7 @@ func testDMMessageWithDefaultUserNotificationsPreferences(
 
 		return cmp.Equal(webNotifications, expectedUsersToReceiveNotification) &&
 			cmp.Equal(apnNotifications, expectedUsersToReceiveNotification)
-	}, 20*time.Second, 100*time.Millisecond, "Didn't receive expected notifications")
+	}, notificationDeliveryDelay, 100*time.Millisecond, "Didn't receive expected notifications for stream %s", test.dmStreamID[:])
 
 	// Wait a bit to ensure that no more notifications come in
 	test.req.Never(func() bool {
@@ -560,7 +562,7 @@ func testSpaceChannelPlainMessage(
 
 		return cmp.Equal(webNotifications, expectedUsersToReceiveNotification) &&
 			cmp.Equal(apnNotifications, expectedUsersToReceiveNotification)
-	}, 20*time.Second, 100*time.Millisecond, "Didn't receive expected notifications")
+	}, notificationDeliveryDelay, 100*time.Millisecond, "Didn't receive expected notifications for stream %s", test.channelID[:])
 
 	// Wait a bit to ensure that no more notifications come in
 	test.req.Never(func() bool {
@@ -639,7 +641,7 @@ func testSpaceChannelAtChannelTag(
 
 		return cmp.Equal(webNotifications, expectedUsersToReceiveNotification) &&
 			cmp.Equal(apnNotifications, expectedUsersToReceiveNotification)
-	}, 20*time.Second, 100*time.Millisecond, "Didn't receive expected notifications")
+	}, notificationDeliveryDelay, 100*time.Millisecond, "Didn't receive expected notifications for stream %s", test.channelID[:])
 
 	// Wait a bit to ensure that no more notifications come in
 	test.req.Never(func() bool {
@@ -720,7 +722,7 @@ func testSpaceChannelMentionTag(
 
 		return webCount == len(expectedUsersToReceiveNotification) ||
 			apnCount == len(expectedUsersToReceiveNotification)
-	}, 20*time.Second, 100*time.Millisecond, "Didn't receive expected notifications")
+	}, notificationDeliveryDelay, 100*time.Millisecond, "Didn't receive expected notifications for stream %s", test.channelID)
 
 	// Wait a bit to ensure that no more notifications come in
 	test.req.Never(func() bool {

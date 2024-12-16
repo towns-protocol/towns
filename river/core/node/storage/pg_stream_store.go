@@ -31,6 +31,7 @@ type PostgresStreamStore struct {
 	exitSignal        chan error
 	nodeUUID          string
 	cleanupListenFunc func()
+	cleanupLockFunc   func()
 
 	numPartitions int
 }
@@ -141,7 +142,194 @@ func NewPostgresStreamStore(
 	return store, nil
 }
 
+// computeLockIdFromSchema computes an int64 which is a hash of the schema name.
+// We will use this int64 as the key of a pg advisory lock to ensure only one
+// node has R/W access to the schema at a time.
+func (s *PostgresStreamStore) computeLockIdFromSchema() int64 {
+	return (int64)(xxhash.Sum64String(s.schemaName))
+}
+
+// maintainSchemaLock periodically checks the connection that established the
+// lock on the schema and will attempt to establish a new connection and take
+// the lock again if the connection is lost. If the lock is lost and cannot be
+// re-established, the store will send an exit signal to shut down the node.
+// This is blocking and is intended to be launched as a go routine.
+func (s *PostgresStreamStore) maintainSchemaLock(
+	ctx context.Context,
+	conn *pgxpool.Conn,
+) {
+	log := dlog.FromCtx(ctx)
+	defer conn.Release()
+
+	lockId := s.computeLockIdFromSchema()
+
+	count := 0
+	for {
+		// Check for connection health with a ping. Also, maintain the connection in the
+		// case of idle timeouts.
+		err := conn.Ping(ctx)
+		count++
+
+		if count%100 == 0 {
+			log.Debug("DB Ping!", "error", err)
+		}
+
+		if err != nil {
+			// We expect cancellation only on node shutdown. In this case,
+			// do not send an error signal.
+			if errors.Is(err, context.Canceled) {
+				return
+			}
+
+			log.Warn("Error pinging pgx connection maintaining the session lock, closing connection", "error", err)
+
+			// Close the connection to encourage the db server to immediately clean up the
+			// session so we can go ahead and re-take the lock from a new session.
+			conn.Conn().Close(ctx)
+			// Fine to call multiple times.
+			conn.Release()
+
+			// Attempt to re-acquire a connection
+			conn, err = s.acquireConnection(ctx)
+
+			// Shutdown the node for non-cancellation errors
+			if errors.Is(err, context.Canceled) {
+				return
+			} else if err != nil {
+				err = AsRiverError(err, Err_RESOURCE_EXHAUSTED).
+					Message("Lost connection and unable to re-acquire a connection").
+					Func("maintainSchemaLock").
+					Tag("schema", s.schemaName).
+					Tag("lockId", lockId).
+					LogError(dlog.FromCtx(ctx))
+				s.exitSignal <- err
+				return
+			}
+
+			log.Info("maintainSchemaLock: reacquired connection, re-establishing session lock")
+			defer conn.Release()
+
+			// Attempt to re-establish the lock
+			var acquired bool
+			err := conn.QueryRow(
+				ctx,
+				"select pg_try_advisory_lock($1)",
+				lockId,
+			).Scan(&acquired)
+
+			// Shutdown the node for non-cancellation errors.
+			if errors.Is(err, context.Canceled) {
+				return
+			} else if err != nil {
+				err = AsRiverError(err, Err_RESOURCE_EXHAUSTED).
+					Message("Lost connection and unable to re-acquire schema lock").
+					Func("maintainSchemaLock").
+					Tag("schema", s.schemaName).
+					Tag("lockId", lockId).
+					LogError(dlog.FromCtx(ctx))
+				s.exitSignal <- err
+			}
+
+			if !acquired {
+				err = AsRiverError(fmt.Errorf("schema lock was not available"), Err_RESOURCE_EXHAUSTED).
+					Message("Lost connection and unable to re-acquire schema lock").
+					Func("maintainSchemaLock").
+					Tag("schema", s.schemaName).
+					Tag("lockId", lockId).
+					LogError(dlog.FromCtx(ctx))
+				s.exitSignal <- err
+			}
+
+			if err = SleepWithContext(ctx, 1*time.Second); err != nil {
+				return
+			}
+		}
+	}
+}
+
+// acquireSchemaLock waits until it is able to acquire a session-wide pg advisory lock
+// on the integer id derived from the hash of this node's schema name, and launches a
+// go routine to periodically check the connection maintaining the lock.
+func (s *PostgresStreamStore) acquireSchemaLock(ctx context.Context) error {
+	log := dlog.FromCtx(ctx)
+	lockId := s.computeLockIdFromSchema()
+
+	// Acquire connection
+	conn, err := s.acquireConnection(ctx)
+	if err != nil {
+		return err
+	}
+
+	log.Info("Acquiring lock on database schema", "lockId", lockId, "nodeUUID", s.nodeUUID)
+
+	var lockWasUnavailable bool
+	for {
+		var acquired bool
+		err := conn.QueryRow(
+			ctx,
+			"select pg_try_advisory_lock($1)",
+			lockId,
+		).Scan(&acquired)
+		if err != nil {
+			return AsRiverError(
+				err,
+				Err_DB_OPERATION_FAILURE,
+			).Message("Could not acquire lock on schema").
+				Func("acquireSchemaLock").
+				Tag("lockId", lockId).
+				Tag("nodeUUID", s.nodeUUID).
+				LogError(log)
+		}
+
+		if acquired {
+			log.Info("Schema lock acquired", "lockId", lockId, "nodeUUID", s.nodeUUID)
+			break
+		}
+
+		lockWasUnavailable = true
+		if err = SleepWithContext(ctx, 1*time.Second); err != nil {
+			return err
+		}
+
+		log.Info(
+			"Unable to acquire lock on schema, retrying...",
+			"lockId",
+			lockId,
+			"nodeUUID",
+			s.nodeUUID,
+		)
+	}
+
+	// If we were not initially able to acquire the lock, delay startup after lock
+	// acquisition to give the other node any needed time to fully release all resources.
+	if lockWasUnavailable {
+		delay := s.config.StartupDelay
+		if delay == 0 {
+			delay = 2 * time.Second
+		} else if delay <= time.Millisecond {
+			delay = 0
+		}
+		if delay > 0 {
+			log.Info(
+				"schema lock could not be immediately acquired; Delaying startup to let other instance exit",
+				"delay",
+				delay,
+			)
+
+			// Be responsive to context cancellations
+			if err = SleepWithContext(ctx, delay); err != nil {
+				return err
+			}
+		}
+	}
+
+	// maintainSchemaLock is responsible for connection cleanup.
+	go s.maintainSchemaLock(ctx, conn)
+	return nil
+}
+
 func (s *PostgresStreamStore) initStreamStorage(ctx context.Context) error {
+	dlog.FromCtx(ctx).Info("Detecting other instances")
 	err := s.txRunner(
 		ctx,
 		"listOtherInstances",
@@ -153,13 +341,32 @@ func (s *PostgresStreamStore) initStreamStorage(ctx context.Context) error {
 		return err
 	}
 
-	return s.txRunner(
+	dlog.FromCtx(ctx).Info("Establishing database usage")
+	err = s.txRunner(
 		ctx,
 		"initializeSingleNodeKey",
 		pgx.ReadWrite,
 		s.initializeSingleNodeKeyTx,
 		nil,
 	)
+	if err != nil {
+		return err
+	}
+
+	// After writing to the singlenodekey table, wait until we acquire the schema lock.
+	// In the meantime, any other nodes should detect the new entry in the table and
+	// shut themselves down.
+	ctx, cancel := context.WithCancel(ctx)
+	err = s.acquireSchemaLock(ctx)
+	s.cleanupLockFunc = cancel
+
+	if err != nil {
+		return AsRiverError(err, Err_DB_OPERATION_FAILURE).
+			Message("Unable to acquire lock on database schema").
+			Func("initStreamStorage")
+	}
+
+	return nil
 }
 
 // txRunner runs transactions against the underlying postgres store. This override
@@ -178,31 +385,6 @@ func (s *PostgresStreamStore) txRunner(
 		name,
 		accessMode,
 		txFn,
-		opts,
-		tags...,
-	)
-}
-
-// txRunnerWithUUIDCheck conditionally run the transaction only if a check against the
-// singlenodekey table shows that this is still the only node writing to the database.
-func (s *PostgresStreamStore) txRunnerWithUUIDCheck(
-	ctx context.Context,
-	name string,
-	accessMode pgx.TxAccessMode,
-	txFn func(context.Context, pgx.Tx) error,
-	opts *txRunnerOpts,
-	tags ...any,
-) error {
-	return s.txRunner(
-		ctx,
-		name,
-		accessMode,
-		func(ctx context.Context, txn pgx.Tx) error {
-			if err := s.compareUUID(ctx, txn); err != nil {
-				return err
-			}
-			return txFn(ctx, txn)
-		},
 		opts,
 		tags...,
 	)
@@ -256,7 +438,7 @@ func (s *PostgresStreamStore) CreateStreamStorage(
 	streamId StreamId,
 	genesisMiniblock []byte,
 ) error {
-	return s.txRunnerWithUUIDCheck(
+	return s.txRunner(
 		ctx,
 		"CreateStreamStorage",
 		pgx.ReadWrite,
@@ -328,7 +510,7 @@ func (s *PostgresStreamStore) CreateStreamArchiveStorage(
 	ctx context.Context,
 	streamId StreamId,
 ) error {
-	return s.txRunnerWithUUIDCheck(
+	return s.txRunner(
 		ctx,
 		"CreateStreamArchiveStorage",
 		pgx.ReadWrite,
@@ -361,7 +543,7 @@ func (s *PostgresStreamStore) GetMaxArchivedMiniblockNumber(
 	streamId StreamId,
 ) (int64, error) {
 	var maxArchivedMiniblockNumber int64
-	err := s.txRunnerWithUUIDCheck(
+	err := s.txRunner(
 		ctx,
 		"GetMaxArchivedMiniblockNumber",
 		pgx.ReadWrite,
@@ -423,7 +605,7 @@ func (s *PostgresStreamStore) WriteArchiveMiniblocks(
 	startMiniblockNum int64,
 	miniblocks [][]byte,
 ) error {
-	return s.txRunnerWithUUIDCheck(
+	return s.txRunner(
 		ctx,
 		"WriteArchiveMiniblocks",
 		pgx.ReadWrite,
@@ -487,7 +669,7 @@ func (s *PostgresStreamStore) ReadStreamFromLastSnapshot(
 	numToRead int,
 ) (*ReadStreamFromLastSnapshotResult, error) {
 	var ret *ReadStreamFromLastSnapshotResult
-	err := s.txRunnerWithUUIDCheck(
+	err := s.txRunner(
 		ctx,
 		"ReadStreamFromLastSnapshot",
 		pgx.ReadWrite,
@@ -575,7 +757,7 @@ func (s *PostgresStreamStore) readStreamFromLastSnapshotTx(
 	if !(readFirstSeqNum <= snapshotMiniblockIndex && snapshotMiniblockIndex <= readLastSeqNum) {
 		return nil, RiverError(
 			Err_INTERNAL,
-			"Miniblocks consistency violation - snapshotMiniblocIndex is out of range",
+			"Miniblocks consistency violation - snapshotMiniblockIndex is out of range",
 			"snapshotMiniblockIndex", snapshotMiniblockIndex,
 			"readFirstSeqNum", readFirstSeqNum,
 			"readLastSeqNum", readLastSeqNum)
@@ -646,7 +828,7 @@ func (s *PostgresStreamStore) WriteEvent(
 	minipoolSlot int,
 	envelope []byte,
 ) error {
-	return s.txRunnerWithUUIDCheck(
+	return s.txRunner(
 		ctx,
 		"WriteEvent",
 		pgx.ReadWrite,
@@ -702,8 +884,7 @@ func (s *PostgresStreamStore) writeEventTx(
 		}
 		if generation != minipoolGeneration {
 			return RiverError(Err_DB_OPERATION_FAILURE, "Wrong event generation in minipool").
-				Tag("ExpectedGeneration", minipoolGeneration).Tag("ActualGeneration", generation).
-				Tag("SlotNumber", slotNum)
+				Tag("ExpectedGeneration", minipoolGeneration).Tag("ActualGeneration", generation)
 		}
 		if slotNum != counter {
 			return RiverError(Err_DB_OPERATION_FAILURE, "Wrong slot number in minipool").
@@ -751,7 +932,7 @@ func (s *PostgresStreamStore) ReadMiniblocks(
 	toExclusive int64,
 ) ([][]byte, error) {
 	var miniblocks [][]byte
-	err := s.txRunnerWithUUIDCheck(
+	err := s.txRunner(
 		ctx,
 		"ReadMiniblocks",
 		pgx.ReadWrite,
@@ -832,7 +1013,7 @@ func (s *PostgresStreamStore) ReadMiniblocksByStream(
 	streamId StreamId,
 	onEachMb func(blockdata []byte, seqNum int) error,
 ) error {
-	return s.txRunnerWithUUIDCheck(
+	return s.txRunner(
 		ctx,
 		"ReadMiniblocksByStream",
 		pgx.ReadWrite,
@@ -894,7 +1075,7 @@ func (s *PostgresStreamStore) WriteMiniblockCandidate(
 	blockNumber int64,
 	miniblock []byte,
 ) error {
-	return s.txRunnerWithUUIDCheck(
+	return s.txRunner(
 		ctx,
 		"WriteMiniblockCandidate",
 		pgx.ReadWrite,
@@ -972,7 +1153,7 @@ func (s *PostgresStreamStore) ReadMiniblockCandidate(
 	blockNumber int64,
 ) ([]byte, error) {
 	var miniblock []byte
-	err := s.txRunnerWithUUIDCheck(
+	err := s.txRunner(
 		ctx,
 		"ReadMiniblockCandidate",
 		pgx.ReadWrite,
@@ -1055,7 +1236,7 @@ func (s *PostgresStreamStore) WriteMiniblocks(
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	return s.txRunnerWithUUIDCheck(
+	return s.txRunner(
 		ctx,
 		"WriteMiniblocks",
 		pgx.ReadWrite,
@@ -1265,7 +1446,7 @@ func (s *PostgresStreamStore) writeMiniblocksTx(
 
 func (s *PostgresStreamStore) GetStreamsNumber(ctx context.Context) (int, error) {
 	var count int
-	err := s.txRunnerWithUUIDCheck(
+	err := s.txRunner(
 		ctx,
 		"GetStreamsNumber",
 		pgx.ReadOnly,
@@ -1293,39 +1474,6 @@ func (s *PostgresStreamStore) getStreamsNumberTx(ctx context.Context, tx pgx.Tx)
 	return count, nil
 }
 
-func (s *PostgresStreamStore) compareUUID(ctx context.Context, tx pgx.Tx) error {
-	log := dlog.FromCtx(ctx)
-
-	rows, err := tx.Query(ctx, "SELECT uuid FROM singlenodekey")
-	if err != nil {
-		return err
-	}
-	defer rows.Close()
-
-	allIds := []string{}
-	for rows.Next() {
-		var id string
-		err = rows.Scan(&id)
-		if err != nil {
-			return err
-		}
-		allIds = append(allIds, id)
-	}
-
-	if len(allIds) == 1 && allIds[0] == s.nodeUUID {
-		return nil
-	}
-
-	err = RiverError(Err_RESOURCE_EXHAUSTED, "No longer a current node, shutting down").
-		Func("pg.compareUUID").
-		Tag("currentUUID", s.nodeUUID).
-		Tag("schema", s.schemaName).
-		Tag("newUUIDs", allIds).
-		LogError(log)
-	s.exitSignal <- err
-	return err
-}
-
 // Close removes instance record from singlenodekey table, releases the listener connection, and
 // closes the postgres connection pool
 func (s *PostgresStreamStore) Close(ctx context.Context) {
@@ -1335,6 +1483,9 @@ func (s *PostgresStreamStore) Close(ctx context.Context) {
 		log.Error("Error when deleting singlenodekey entry", "error", err)
 	}
 
+	// Cancel the go process that maintains the connection holding the session-wide schema lock
+	// and release it back to the pool.
+	s.cleanupLockFunc()
 	// Cancel the notify listening func to release the listener connection before closing the pool.
 	s.cleanupListenFunc()
 
@@ -1359,7 +1510,7 @@ func (s *PostgresStreamStore) cleanupStreamStorageTx(ctx context.Context, tx pgx
 // GetStreams returns a list of all event streams
 func (s *PostgresStreamStore) GetStreams(ctx context.Context) ([]StreamId, error) {
 	var streams []StreamId
-	err := s.txRunnerWithUUIDCheck(
+	err := s.txRunner(
 		ctx,
 		"GetStreams",
 		pgx.ReadOnly,
@@ -1403,7 +1554,7 @@ func (s *PostgresStreamStore) getStreamsTx(ctx context.Context, tx pgx.Tx) ([]St
 }
 
 func (s *PostgresStreamStore) DeleteStream(ctx context.Context, streamId StreamId) error {
-	return s.txRunnerWithUUIDCheck(
+	return s.txRunner(
 		ctx,
 		"DeleteStream",
 		pgx.ReadWrite,
@@ -1527,6 +1678,7 @@ func (s *PostgresStreamStore) acquireListeningConnection(ctx context.Context) *p
 				conn.Release()
 			}
 		}
+		// Expect cancellations if node is shut down
 		if err == context.Canceled {
 			return nil
 		}
@@ -1537,9 +1689,56 @@ func (s *PostgresStreamStore) acquireListeningConnection(ctx context.Context) *p
 	}
 }
 
-// Call with a cancellable context and pgx should terminate when the context is
-// cancelled. Call after storage has been initialized in order to not receive a
-// notification when this node updates the table.
+// acquireConnection acquires a connection from the pgx pool. In the event of a failure to obtain
+// a connection, the method retries multiple times to compensate for intermittent networking errors.
+// If a connection cannot be obtained after multiple retries, it returns the error. Callers should
+// make sure to release the connection when it is no longer being used.
+func (s *PostgresStreamStore) acquireConnection(ctx context.Context) (*pgxpool.Conn, error) {
+	var err error
+	var conn *pgxpool.Conn
+
+	log := dlog.FromCtx(ctx)
+
+	// 20 retries * 1s delay = 20s of connection attempts
+	retries := 20
+	for i := 0; i < retries; i++ {
+		conn, err = s.pool.Acquire(ctx)
+		if err == nil {
+			return conn, nil
+		}
+
+		// Expect cancellations if node is shut down, abort retries and return wrapped error
+		if errors.Is(err, context.Canceled) {
+			break
+		}
+
+		log.Info(
+			"Failed to acquire pgx connection, retrying",
+			"error",
+			err,
+			"nthRetry",
+			i+1,
+		)
+
+		// In the event of networking issues, wait a small period of time for recovery.
+		time.Sleep(500 * time.Millisecond)
+	}
+
+	log.Error("Failed to acquire pgx connection", "error", err)
+
+	// Assume final error is representative and return it.
+	return nil, AsRiverError(
+		err,
+		Err_DB_OPERATION_FAILURE,
+	).Message("Could not acquire postgres connection").
+		Func("acquireConnection")
+}
+
+// listenForNewNodes maintains an open connection with postgres that listens for
+// changes to the singlenodekey table in order to detect startup of competing nodes.
+// Call it with a cancellable context and the method will return when the context is
+// cancelled. Call it after storage has been initialized in order to not receive a
+// notification when this node updates the table with it's own entry.
 func (s *PostgresStreamStore) listenForNewNodes(ctx context.Context) {
 	conn := s.acquireListeningConnection(ctx)
 	if conn == nil {
@@ -1572,6 +1771,7 @@ func (s *PostgresStreamStore) listenForNewNodes(ctx context.Context) {
 			err = RiverError(Err_RESOURCE_EXHAUSTED, "No longer a current node, shutting down").
 				Func("listenForNewNodes").
 				Tag("schema", s.schemaName).
+				Tag("nodeUUID", s.nodeUUID).
 				LogWarn(dlog.FromCtx(ctx))
 
 			// In the event of detecting node conflict, send the error to the main thread to shut down.
@@ -1586,7 +1786,7 @@ func (s *PostgresStreamStore) DebugReadStreamData(
 	streamId StreamId,
 ) (*DebugReadStreamDataResult, error) {
 	var ret *DebugReadStreamDataResult
-	err := s.txRunnerWithUUIDCheck(
+	err := s.txRunner(
 		ctx,
 		"DebugReadStreamData",
 		pgx.ReadWrite,
@@ -1700,7 +1900,7 @@ func (s *PostgresStreamStore) GetLastMiniblockNumber(
 	streamID StreamId,
 ) (int64, error) {
 	var ret int64
-	err := s.txRunnerWithUUIDCheck(
+	err := s.txRunner(
 		ctx,
 		"GetLastMiniblockNumber",
 		pgx.ReadWrite,
