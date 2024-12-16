@@ -81,6 +81,8 @@ export const FunctionHash = {
     transferEth: 'transferEth',
     refreshMetadata: 'refreshMetadata',
     withdraw: 'withdraw',
+    // ITipping.sol
+    tip: 'tip',
 } as const
 
 export type FunctionHash = keyof typeof FunctionHash

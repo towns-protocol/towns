@@ -39,6 +39,7 @@ import {
     JoinFlowStatus,
     CreateSpaceFlowStatus,
     TransferAssetTransactionContext,
+    TipTransactionContext,
 } from './TownsClientTypes'
 import {
     CreateChannelInfo,
@@ -50,6 +51,7 @@ import {
     SendMessageOptions,
     SendTextMessageOptions,
     StreamView,
+    TipParams,
     UpdateChannelInfo,
     toMembership,
 } from '../types/towns-types'
@@ -1745,6 +1747,22 @@ export class TownsClient
             transactionContext,
         )
         logTxnResult('waitTransferAssetTransaction', txnContext)
+        return txnContext
+    }
+
+    public tipTransaction(args: TipParams): Promise<TipTransactionContext | undefined> {
+        return this.baseTransactor.tipTransaction(args)
+    }
+
+    public async waitForTipTransaction(
+        transactionContext: TipTransactionContext,
+    ): Promise<TipTransactionContext | undefined> {
+        const txnContext = await this.baseTransactor.waitForBlockchainTransaction(
+            transactionContext,
+        )
+        logTxnResult('waitTipTransaction', txnContext)
+        // TODO: river
+
         return txnContext
     }
 

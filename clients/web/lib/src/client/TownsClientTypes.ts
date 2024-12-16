@@ -137,6 +137,12 @@ export type PrepayMembershipTransactionContext = TransactionContext<{
     supply: number
 }>
 
+export type TipTransactionContext = TransactionContext<{
+    receiverUsername: string
+    messageId: string
+    channelId: string
+}>
+
 export type TownsClientEventHandlers = {
     onCreateSpace?: (roomId: string) => void
     onJoinRoom?: (roomId: string, spaceId: string) => void

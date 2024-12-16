@@ -1735,6 +1735,42 @@ export class UserOps {
         })
     }
 
+    public async sendTipOp(args: Parameters<SpaceDapp['tip']>) {
+        const [{ spaceId, tokenId, currency, amount, messageId, channelId }, signer] = args
+        const space = this.spaceDapp?.getSpace(spaceId)
+        if (!space) {
+            throw new Error(`Space with spaceId "${spaceId}" is not found.`)
+        }
+
+        // const linkedWallets = await this.spaceDapp?.getLinkedWallets(receiver)
+        // if (!linkedWallets) {
+        //     throw new Error(`Linked wallets for receiver "${receiver}" are not found.`)
+        // }
+        // const tokenId = (await space.getTokenIdsOfOwner(linkedWallets))[0]
+        // if (!tokenId) {
+        //     throw new Error(`TokenId for receiver "${receiver}" is not found.`)
+        // }
+
+        const callData = space.Tipping.encodeFunctionData('tip', [
+            {
+                tokenId,
+                currency,
+                amount,
+                messageId,
+                channelId,
+            },
+        ])
+
+        return this.sendUserOp({
+            toAddress: space.Address,
+            callData,
+            signer,
+            spaceId,
+            value: amount,
+            functionHashForPaymasterProxy: 'tip',
+        })
+    }
+
     public async getBuilder(args: { signer: ethers.Signer }) {
         if (!this.builder) {
             const { signer } = args

@@ -3,6 +3,7 @@ import { MembershipOp, SpacePayload_ChannelSettings, StreamSettings } from '@riv
 import { Attachment } from './timeline-types'
 import { staticAssertNever } from '../utils/towns-utils'
 import { Permission } from '@river-build/web3'
+import { TSigner } from './web3-types'
 
 export enum Membership {
     Join = 'join',
@@ -237,6 +238,17 @@ export interface SendTownsReactionOptions {
 
 export interface SpaceIdOptions {
     parentSpaceId?: string
+}
+
+export type TipParams = {
+    spaceId: string
+    receiverTokenId: string
+    receiverUsername: string
+    currency: string
+    amount: bigint
+    messageId: string
+    channelId: string
+    signer: TSigner
 }
 
 export type SendMessageOptions = SendTextMessageOptions | SendGMOptions | SendImageMessageOptions

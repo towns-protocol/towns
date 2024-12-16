@@ -17,6 +17,7 @@ import {
     CreateChannelInfo,
     CreateSpaceInfo,
     isUpdateChannelAccessInfo,
+    TipParams,
     UpdateChannelInfo,
 } from '../types/towns-types'
 import {
@@ -35,6 +36,7 @@ import {
     createTransactionContext,
     PrepayMembershipTransactionContext,
     RoleTransactionContext,
+    TipTransactionContext,
     TransactionContext,
     TransactionStatus,
     TransferAssetTransactionContext,
@@ -1608,6 +1610,61 @@ export class BaseTransactor {
             receipt,
             error,
         })
+    }
+
+    public async tipTransaction(args: TipParams): Promise<TipTransactionContext> {
+        const { signer, receiverTokenId, receiverUsername, ...tipArgs } = args
+        let transaction: TransactionOrUserOperation | undefined = undefined
+        let error: Error | undefined = undefined
+        const continueStoreTx = this.blockchainTransactionStore.begin({
+            type: BlockchainTransactionType.Tip,
+            data: {
+                receiverTokenId,
+                receiverUsername,
+                messageId: tipArgs.messageId,
+                channelId: tipArgs.channelId,
+            },
+        })
+
+        // Ensure the string only contains valid hex characters
+        if (!/^[0-9a-fA-F]*$/.test(args.messageId)) {
+            throw new Error('Invalid hex string for messageId')
+        }
+        // Convert to bytes
+        const formattedArgs = {
+            ...tipArgs,
+            messageId: `0x${args.messageId}`,
+            channelId: `0x${args.channelId}`,
+            tokenId: receiverTokenId,
+        }
+        try {
+            if (this.isAccountAbstractionEnabled()) {
+                transaction = await this.userOps?.sendTipOp([formattedArgs, signer])
+            } else {
+                transaction = await this.spaceDapp.tip(formattedArgs, signer)
+            }
+            this.log(`[linkEOAToRootKey] transaction created` /*, transaction*/)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (err: unknown) {
+            error = this.getDecodedErrorForSpace(tipArgs.spaceId, err)
+        }
+        continueStoreTx({
+            hashOrUserOpHash: getTransactionHashOrUserOpHash(transaction),
+            transaction,
+            error,
+        })
+
+        return {
+            transaction,
+            receipt: undefined,
+            status: transaction ? TransactionStatus.Pending : TransactionStatus.Failed,
+            data: {
+                receiverUsername,
+                messageId: tipArgs.messageId,
+                channelId: tipArgs.channelId,
+            },
+            error,
+        }
     }
 
     /*

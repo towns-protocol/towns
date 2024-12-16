@@ -58,6 +58,7 @@ export enum BlockchainTransactionType {
     PrepayMembership = 'prepayMembership',
     TransferAsset = 'transferAsset',
     RefreshMetadata = 'refreshMetadata',
+    Tip = 'tip',
 }
 
 export type BlockchainTransaction = {

@@ -18,6 +18,7 @@ import {
     JoinFlowStatus,
     PrepayMembershipTransactionContext,
     RoleTransactionContext,
+    TipTransactionContext,
     TransactionContext,
     TransferAssetTransactionContext,
     WalletLinkTransactionContext,
@@ -29,6 +30,7 @@ import {
     SendMessageOptions,
     SendTextMessageOptions,
     StreamView,
+    TipParams,
     UpdateChannelInfo,
 } from '../types/towns-types'
 import { RoomMessageEvent } from '../types/timeline-types'
@@ -317,6 +319,10 @@ interface TownsClientImpl {
     waitForTransferAssetTransaction: (
         transactionContext: TransferAssetTransactionContext,
     ) => Promise<TransferAssetTransactionContext | undefined>
+    tipTransaction: (args: TipParams) => Promise<TipTransactionContext | undefined>
+    waitForTipTransaction: (
+        transactionContext: TipTransactionContext,
+    ) => Promise<TipTransactionContext | undefined>
 }
 
 export function useTownsClient(): TownsClientImpl {
@@ -486,6 +492,8 @@ export function useTownsClient(): TownsClientImpl {
         waitForRefreshMetadataTransaction: useWithCatch(
             clientSingleton?.waitForRefreshMetadataTransaction,
         ),
+        tipTransaction: useWithCatch(clientSingleton?.tipTransaction),
+        waitForTipTransaction: useWithCatch(clientSingleton?.waitForTipTransaction),
     }
 }
 
