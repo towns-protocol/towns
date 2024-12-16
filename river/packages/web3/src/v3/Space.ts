@@ -180,6 +180,20 @@ export class Space {
         return this.tipping
     }
 
+    public async totalTips({ currency }: { currency: string }): Promise<{
+        count: bigint
+        amount: bigint
+    }> {
+        const [count, amount] = await Promise.all([
+            this.tipping.totalTipsByCurrency(currency),
+            this.tipping.tipAmountByCurrency(currency),
+        ])
+        return {
+            count,
+            amount,
+        }
+    }
+
     public getSpaceInfo(): Promise<ISpaceOwnerBase.SpaceStruct> {
         return this.spaceOwner.read.getSpaceInfo(this.address)
     }

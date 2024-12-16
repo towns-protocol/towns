@@ -3,8 +3,9 @@ package cmd
 import (
 	"context"
 
-	"github.com/river-build/river/core/node/rpc"
 	"github.com/spf13/cobra"
+
+	"github.com/river-build/river/core/node/rpc"
 )
 
 func runNotificationService(cmd *cobra.Command, args []string) error {

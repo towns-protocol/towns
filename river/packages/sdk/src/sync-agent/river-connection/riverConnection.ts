@@ -45,7 +45,7 @@ export interface RiverConnectionModel extends Identifiable {
 }
 
 class LoginContext {
-    constructor(public client: Client, public cancelled: boolean = false) {}
+    constructor(public cancelled: boolean = false) {}
 }
 
 @persistedObservable({ tableName: 'riverConnection' })
@@ -83,7 +83,10 @@ export class RiverConnection extends PersistedObservable<RiverConnectionModel> {
             this.riverChain.urls(),
             this.riverChain.userStreamExists(),
         ])
-        await this.createStreamsClient(urls)
+        if (!urls) {
+            throw new Error('riverConnection::start urls is not set')
+        }
+        await this.createStreamsClient()
         if (userStreamExists) {
             await this.login()
         } else {
@@ -139,7 +142,9 @@ export class RiverConnection extends PersistedObservable<RiverConnectionModel> {
         this.views.push(viewFn)
     }
 
-    private async createStreamsClient(urls: string): Promise<void> {
+    private async createStreamsClient(): Promise<void> {
+        const urls = await this.riverChain.urls()
+
         if (this.client !== undefined) {
             // this is wired up to be reactive to changes in the urls
             logger.log('RiverConnection: rpc urls changed, client already set', urls)
@@ -185,10 +190,6 @@ export class RiverConnection extends PersistedObservable<RiverConnectionModel> {
     }
 
     async login(newUserMetadata?: { spaceId: Uint8Array | string }) {
-        if (!this.client) {
-            logger.error('login called before client is set')
-            return
-        }
         this.newUserMetadata = newUserMetadata ?? this.newUserMetadata
         logger.log('login', { newUserMetadata })
         await this.loginWithRetries()
@@ -204,23 +205,23 @@ export class RiverConnection extends PersistedObservable<RiverConnectionModel> {
         if (this.authStatus.value === AuthStatus.ConnectedToRiver) {
             return
         }
-        if (!this.client) {
-            logger.info('riverConnection::login client is not defined, exiting loop')
-            return
-        }
-        const loginContext = new LoginContext(this.client)
+        const loginContext = new LoginContext()
         this.authStatus.setValue(AuthStatus.EvaluatingCredentials)
         const login = async () => {
             let retryCount = 0
             const MAX_RETRY_COUNT = 20
             while (!loginContext.cancelled) {
+                check(
+                    isDefined(this.client),
+                    'riverConnection::loginWithRetries client is not defined',
+                )
                 try {
                     logger.log('logging in', {
                         userExists: this.data.userExists,
                         newUserMetadata: this.newUserMetadata,
                     })
-                    const { client } = loginContext
                     this.authStatus.setValue(AuthStatus.ConnectingToRiver)
+                    const client = this.client
                     await client.initializeUser({
                         spaceId: this.newUserMetadata?.spaceId,
                         encryptionDeviceInit: this.clientParams.encryptionDevice,
@@ -236,6 +237,15 @@ export class RiverConnection extends PersistedObservable<RiverConnectionModel> {
                     retryCount++
                     this.loginError = err as Error
                     logger.log('encountered exception while initializing', err)
+
+                    for (const fn of this.onStoppedFns) {
+                        fn()
+                    }
+                    this.onStoppedFns = []
+                    await this.client.stop()
+                    this.client = undefined
+                    await this.createStreamsClient()
+
                     if (loginContext.cancelled) {
                         logger.log('login cancelled after error')
                         break

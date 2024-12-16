@@ -108,7 +108,12 @@ func make_Space_Image(
 	return parsed
 }
 
-func make_Space_Username(wallet *crypto.Wallet, username string, prevMiniblock *MiniblockRef, t *testing.T) *ParsedEvent {
+func make_Space_Username(
+	wallet *crypto.Wallet,
+	username string,
+	prevMiniblock *MiniblockRef,
+	t *testing.T,
+) *ParsedEvent {
 	envelope, err := MakeEnvelopeWithPayload(
 		wallet,
 		Make_MemberPayload_Username(

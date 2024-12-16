@@ -252,7 +252,13 @@ func createAndValidatePgxPool(
 	}
 
 	// This connection pool is used to select large number of rows and stream them directly into a client
-	streamingPool, streamingPoolConf, err := createPgxPool(ctx, databaseUrl, databaseSchemaName, tracerProvider, "streaming")
+	streamingPool, streamingPoolConf, err := createPgxPool(
+		ctx,
+		databaseUrl,
+		databaseSchemaName,
+		tracerProvider,
+		"streaming",
+	)
 	if err != nil {
 		return nil, err
 	}

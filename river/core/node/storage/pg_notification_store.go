@@ -11,6 +11,7 @@ import (
 	"github.com/SherClockHolmes/webpush-go"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/jackc/pgx/v5"
+
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/infra"
@@ -203,28 +204,52 @@ func (s *PostgresNotificationStore) setUserPreferencesTx(
 	batch.Queue(`DELETE FROM spaces WHERE user_id = $1`, userID)
 	batch.Queue(`DELETE FROM channels WHERE user_id = $1`, userID)
 
-	batch.Queue(`INSERT INTO userpreferences (user_id, dm, gdm) VALUES ($1,$2,$3) ON CONFLICT (user_id) DO UPDATE SET dm = $2, gdm = $3`, userID, int16(preferences.DM), int16(preferences.GDM))
+	batch.Queue(
+		`INSERT INTO userpreferences (user_id, dm, gdm) VALUES ($1,$2,$3) ON CONFLICT (user_id) DO UPDATE SET dm = $2, gdm = $3`,
+		userID,
+		int16(preferences.DM),
+		int16(preferences.GDM),
+	)
 
 	for spaceID, space := range preferences.Spaces {
-		batch.Queue(`INSERT INTO spaces (user_id, space_id, setting) VALUES ($1,$2,$3)`, userID, spaceID, int16(space.Setting))
+		batch.Queue(
+			`INSERT INTO spaces (user_id, space_id, setting) VALUES ($1,$2,$3)`,
+			userID,
+			spaceID,
+			int16(space.Setting),
+		)
 		for channelID, pref := range space.Channels {
-			batch.Queue(`INSERT INTO channels (user_id, channel_id, setting) VALUES ($1,$2,$3)`, userID, channelID, int16(pref))
+			batch.Queue(
+				`INSERT INTO channels (user_id, channel_id, setting) VALUES ($1,$2,$3)`,
+				userID,
+				channelID,
+				int16(pref),
+			)
 		}
 	}
 
 	for channelID, pref := range preferences.DMChannels {
-		batch.Queue(`INSERT INTO channels (user_id, channel_id, setting) VALUES ($1,$2,$3)`, userID, channelID, int16(pref))
+		batch.Queue(
+			`INSERT INTO channels (user_id, channel_id, setting) VALUES ($1,$2,$3)`,
+			userID,
+			channelID,
+			int16(pref),
+		)
 	}
 
 	for channelID, pref := range preferences.GDMChannels {
-		batch.Queue(`INSERT INTO channels (user_id, channel_id, setting) VALUES ($1,$2,$3)`, userID, channelID, int16(pref))
+		batch.Queue(
+			`INSERT INTO channels (user_id, channel_id, setting) VALUES ($1,$2,$3)`,
+			userID,
+			channelID,
+			int16(pref),
+		)
 	}
 
 	br := tx.SendBatch(ctx, batch)
 
 	_, _ = br.Exec()
 	err := br.Close()
-
 	if err != nil {
 		return err // returns the cause why br.Exec failed
 	}
@@ -293,7 +318,6 @@ func (s *PostgresNotificationStore) setSpaceSettingsTx(
 	spaceID shared.StreamId,
 	value SpaceChannelSettingValue,
 ) error {
-
 	_, err := tx.Exec(
 		ctx,
 		`INSERT INTO spaces (user_id, space_id, setting) VALUES ($1, $2, $3) ON CONFLICT (user_id, space_id) DO UPDATE SET setting = $3`,
@@ -411,6 +435,7 @@ func (s *PostgresNotificationStore) removeChannelSettingTx(
 
 	return err
 }
+
 func (s *PostgresNotificationStore) GetUserPreferences(
 	ctx context.Context,
 	userID common.Address,
@@ -431,7 +456,6 @@ func (s *PostgresNotificationStore) GetUserPreferences(
 		},
 		nil,
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -740,7 +764,9 @@ func (s *PostgresNotificationStore) getAPNSubscriptions(
 	userID common.Address,
 ) ([]*types.APNPushSubscription, error) {
 	var subs []*types.APNPushSubscription
-	rows, err := tx.Query(ctx, "select device_token, environment, last_seen, user_id from apnpushsubscriptions where user_id=$1",
+	rows, err := tx.Query(
+		ctx,
+		"select device_token, environment, last_seen, user_id from apnpushsubscriptions where user_id=$1",
 		hex.EncodeToString(userID[:]),
 	)
 	if err != nil {

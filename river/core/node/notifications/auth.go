@@ -14,11 +14,12 @@ import (
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/golang-jwt/jwt/v4"
+	"google.golang.org/protobuf/types/known/timestamppb"
+
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/dlog"
 	. "github.com/river-build/river/core/node/protocol"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 const (
@@ -43,8 +44,16 @@ func (c authenticationChallenge) Verify(
 ) error {
 	// ensure that the auth challenge nor the delegateExpiryEpoch hasn't expired.
 	now := time.Now()
-	if now.After(c.expires) || (len(delegateSig) > 0 && delegateExpiryEpochMs > 0 && now.After(time.Unix(delegateExpiryEpochMs/1000, 0))) {
-		return RiverError(Err_UNAUTHENTICATED, "authentication expired", "expires", c.expires, "delegateExpiryEpochMs", delegateExpiryEpochMs)
+	if now.After(c.expires) ||
+		(len(delegateSig) > 0 && delegateExpiryEpochMs > 0 && now.After(time.Unix(delegateExpiryEpochMs/1000, 0))) {
+		return RiverError(
+			Err_UNAUTHENTICATED,
+			"authentication expired",
+			"expires",
+			c.expires,
+			"delegateExpiryEpochMs",
+			delegateExpiryEpochMs,
+		)
 	}
 
 	// ensure that the signature that was calculated with:
@@ -75,7 +84,6 @@ func (c authenticationChallenge) Verify(
 		} else {
 			return RiverError(Err_UNAUTHENTICATED, "user id mismatch", "user", c.userID, "signer", signerAddress)
 		}
-
 	}
 
 	return crypto.CheckDelegateSig(c.userID[:], signerPubKey, delegateSig, delegateExpiryEpochMs)
@@ -190,7 +198,6 @@ func (i *jwtAuthenticationInterceptor) authorize(sessionTokenString string) (com
 	token, err := jwt.Parse(sessionTokenString, func(token *jwt.Token) (interface{}, error) {
 		return i.sessionTokenSigningKey, nil
 	}, jwt.WithJSONNumber(), jwt.WithValidMethods([]string{"HS256"}))
-
 	if err != nil {
 		return common.Address{}, RiverError(Err_UNAUTHENTICATED, "Invalid session token")
 	}
@@ -254,7 +261,9 @@ func (i *jwtAuthenticationInterceptor) WrapUnary(next connect.UnaryFunc) connect
 	}
 }
 
-func (i *jwtAuthenticationInterceptor) WrapStreamingClient(next connect.StreamingClientFunc) connect.StreamingClientFunc {
+func (i *jwtAuthenticationInterceptor) WrapStreamingClient(
+	next connect.StreamingClientFunc,
+) connect.StreamingClientFunc {
 	return func(
 		ctx context.Context,
 		spec connect.Spec,
@@ -263,7 +272,9 @@ func (i *jwtAuthenticationInterceptor) WrapStreamingClient(next connect.Streamin
 	}
 }
 
-func (i *jwtAuthenticationInterceptor) WrapStreamingHandler(next connect.StreamingHandlerFunc) connect.StreamingHandlerFunc {
+func (i *jwtAuthenticationInterceptor) WrapStreamingHandler(
+	next connect.StreamingHandlerFunc,
+) connect.StreamingHandlerFunc {
 	return func(
 		ctx context.Context,
 		conn connect.StreamingHandlerConn,

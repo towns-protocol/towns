@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"github.com/SherClockHolmes/webpush-go"
+	"github.com/stretchr/testify/require"
+
 	"github.com/river-build/river/core/node/base/test"
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/infra"
@@ -17,7 +19,6 @@ import (
 	"github.com/river-build/river/core/node/shared"
 	"github.com/river-build/river/core/node/storage"
 	"github.com/river-build/river/core/node/testutils/dbtestutils"
-	"github.com/stretchr/testify/require"
 )
 
 func prepareNotificationsDB(ctx context.Context) (*storage.PostgresNotificationStore, func()) {
@@ -98,7 +99,11 @@ func userPreferencesNotExists(req *require.Assertions, ctx context.Context, stor
 	req.Empty(preferences.Subscriptions.APNPush)
 }
 
-func setAndRetrieveUserPreferences(req *require.Assertions, ctx context.Context, store *storage.PostgresNotificationStore) {
+func setAndRetrieveUserPreferences(
+	req *require.Assertions,
+	ctx context.Context,
+	store *storage.PostgresNotificationStore,
+) {
 	wallet, err := crypto.NewWallet(ctx)
 	req.NoError(err)
 
@@ -123,7 +128,11 @@ func setAndRetrieveUserPreferences(req *require.Assertions, ctx context.Context,
 				},
 			},
 			APNPush: []*types.APNPushSubscription{
-				{DeviceToken: []byte{0, 1, 2, 3, 4}, LastSeen: time.Now(), Environment: APNEnvironment_APN_ENVIRONMENT_SANDBOX},
+				{
+					DeviceToken: []byte{0, 1, 2, 3, 4},
+					LastSeen:    time.Now(),
+					Environment: APNEnvironment_APN_ENVIRONMENT_SANDBOX,
+				},
 			},
 		},
 	}
@@ -170,7 +179,9 @@ func setAndRetrieveUserPreferences(req *require.Assertions, ctx context.Context,
 		req.NoError(store.AddWebPushSubscription(ctx, expected.UserID, webSub.Sub))
 	}
 	for _, apnSub := range expected.Subscriptions.APNPush {
-		req.NoError(store.AddAPNSubscription(ctx, expected.UserID, apnSub.DeviceToken, APNEnvironment_APN_ENVIRONMENT_SANDBOX))
+		req.NoError(
+			store.AddAPNSubscription(ctx, expected.UserID, apnSub.DeviceToken, APNEnvironment_APN_ENVIRONMENT_SANDBOX),
+		)
 	}
 
 	got, err := store.GetUserPreferences(ctx, expected.UserID)

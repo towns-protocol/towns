@@ -9,13 +9,14 @@ import (
 
 	"github.com/SherClockHolmes/webpush-go"
 	"github.com/ethereum/go-ethereum/common"
+	payload2 "github.com/sideshow/apns2/payload"
+	"github.com/stretchr/testify/require"
+
 	"github.com/river-build/river/core/config"
 	"github.com/river-build/river/core/node/infra"
 	"github.com/river-build/river/core/node/notifications/push"
 	"github.com/river-build/river/core/node/notifications/types"
 	"github.com/river-build/river/core/node/protocol"
-	payload2 "github.com/sideshow/apns2/payload"
-	"github.com/stretchr/testify/require"
 )
 
 func TestAPNSPushNotification(t *testing.T) {
@@ -117,7 +118,7 @@ func TestWebPushWithVapid(t *testing.T) {
 
 	req.NoError(err, "instantiate Web push notifications client")
 
-	//payload := payload2.NewPayload().Alert("Sry to bother you if this works...")
+	// payload := payload2.NewPayload().Alert("Sry to bother you if this works...")
 
 	expired, err := notifier.SendWebPushNotification(ctx, subscription, common.Hash{1}, payload)
 	req.False(expired, "expired")

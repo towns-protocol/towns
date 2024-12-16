@@ -142,7 +142,9 @@ func (b *MiniblockInfo) asStorageMbWithData(bytes []byte) *storage.WriteMinibloc
 	}
 }
 
-func (b *MiniblockInfo) forEachEvent(op func(e *ParsedEvent, minibockNum int64, eventNum int64) (bool, error)) (bool, error) {
+func (b *MiniblockInfo) forEachEvent(
+	op func(e *ParsedEvent, minibockNum int64, eventNum int64) (bool, error),
+) (bool, error) {
 	blockNum := b.Header().MiniblockNum
 	eventNum := b.Header().EventNumOffset
 	for _, event := range b.Events() {

@@ -12,6 +12,9 @@ import (
 	"github.com/SherClockHolmes/webpush-go"
 	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/sideshow/apns2/payload"
+	"google.golang.org/protobuf/proto"
+
 	"github.com/river-build/river/core/config"
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/events"
@@ -19,8 +22,6 @@ import (
 	"github.com/river-build/river/core/node/notifications/types"
 	. "github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/shared"
-	"github.com/sideshow/apns2/payload"
-	"google.golang.org/protobuf/proto"
 )
 
 // MessageToNotificationsProcessor implements events.StreamEventListener and for each stream event determines
@@ -107,7 +108,10 @@ func (p *MessageToNotificationsProcessor) OnMessageEvent(
 	members.Each(func(member string) bool {
 		var (
 			participant = common.HexToAddress(member)
-			pref, err   = p.cache.GetUserPreferences(context.Background(), participant) // lint:ignore context.Background() is fine here
+			pref, err   = p.cache.GetUserPreferences(
+				context.Background(),
+				participant,
+			) // lint:ignore context.Background() is fine here
 		)
 
 		if slices.ContainsFunc(tags.GetMentionedUserAddresses(), func(member []byte) bool {

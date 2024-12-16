@@ -226,7 +226,7 @@ func (ru *csParams) canCreateStream() ruleBuilderCS {
 			params:    ru,
 			inception: inception,
 		}
-		
+
 		if shared.ValidUserIdBytes(inception.UserId) {
 			return builder.
 				check(
@@ -541,7 +541,8 @@ func (ru *csMediaRules) checkMediaInceptionPayload() error {
 		)
 	}
 
-	if len(ru.inception.ChannelId) == 0 && len(ru.inception.SpaceId) == 0 && shared.ValidUserIdBytes(ru.inception.UserId) {
+	if len(ru.inception.ChannelId) == 0 && len(ru.inception.SpaceId) == 0 &&
+		shared.ValidUserIdBytes(ru.inception.UserId) {
 		return nil
 	}
 

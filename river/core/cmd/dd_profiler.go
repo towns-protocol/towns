@@ -8,9 +8,10 @@ import (
 	"strings"
 	"time"
 
+	"gopkg.in/DataDog/dd-trace-go.v1/profiler"
+
 	"github.com/river-build/river/core/config"
 	"github.com/river-build/river/core/river_node/version"
-	"gopkg.in/DataDog/dd-trace-go.v1/profiler"
 )
 
 func setupProfiler(ctx context.Context, serviceName string, cfg *config.Config) error {

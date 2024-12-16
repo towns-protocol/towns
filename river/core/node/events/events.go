@@ -217,7 +217,8 @@ func Make_DmChannelPayload_Inception(
 					Settings:           settings,
 				},
 			},
-		}}
+		},
+	}
 }
 
 func Make_GdmChannelPayload_Inception(
@@ -230,7 +231,8 @@ func Make_GdmChannelPayload_Inception(
 				Inception: &GdmChannelPayload_Inception{
 					StreamId: streamId[:],
 					Settings: settings,
-				}},
+				},
+			},
 		},
 	}
 }
