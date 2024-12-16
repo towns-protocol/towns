@@ -1924,7 +1924,7 @@ export class Client
 
         return {
             terminus: terminus,
-            miniblocks: [...cachedMiniblocks, ...miniblocks],
+            miniblocks: [...miniblocks, ...cachedMiniblocks],
         }
     }
 
