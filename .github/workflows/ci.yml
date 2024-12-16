@@ -58,8 +58,8 @@ jobs:
               with:
                   version: ${{ env.FOUNDRY_VERSION }}
 
-            - name: Install Make
-              run: sudo apt-get update && sudo apt-get -y install make
+            - name: Install Binaries
+              run: sudo apt-get update && sudo apt-get -y install make zstd
 
             - uses: actions/setup-node@v4
               with:
@@ -68,13 +68,19 @@ jobs:
             - name: Setup yarn
               run: npm install -g yarn
 
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: '20'
+                  cache: 'yarn'
+
             - name: Maintain Turbo cache
               uses: actions/cache@v4
               with:
                   path: .turbo
-                  key: ${{ runner.os }}-turbo-${{ github.ref_name}}
+                  key: ${{ runner.os }}-turbo-common-${{ github.ref_name}}
                   restore-keys: |
-                      ${{ runner.os }}-turbo-main
+                      ${{ runner.os }}-turbo-common-main
+                      ${{ runner.os }}-turbo-common-
 
             - name: Install node dependencies
               run: yarn install --immutable
@@ -93,17 +99,20 @@ jobs:
             - name: Syncpack
               run: yarn syncpack:check
 
+            # Build all packages except for the river-build packages, unless they are a dependency of another required package
             - name: Build
-              run: yarn build
+              run: yarn run turbo build --filter="\!@river-build/*"
 
             - name: Prettier
               run: yarn prettier:check
 
+            # Lint all packages except for the river-build packages
             - name: Lint
-              run: yarn lint
+              run: yarn run turbo lint --filter="\!@river-build/*"
 
+            # Run unit tests for all packages except for the river-build packages
             - name: Unit Tests
-              run: yarn test:unit
+              run: yarn run turbo test:unit --filter="\!@river-build/*"
 
     Multinode_Ent:
         permissions: write-all
@@ -135,8 +144,8 @@ jobs:
               with:
                   access_token: ${{ github.token }}
 
-            - name: Install psql
-              run: sudo apt update && sudo apt-get install -y postgresql-client
+            - name: Install Binaries
+              run: sudo apt update && sudo apt-get install -y postgresql-client zstd make gcc netcat
 
             - name: Show PostgreSQL max_connections
               run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
@@ -173,15 +182,6 @@ jobs:
               with:
                   version: ${{ env.FOUNDRY_VERSION }}
 
-            - name: Install Make
-              run: sudo apt-get update && sudo apt-get -y install make
-
-            - name: Install GCC
-              run: sudo apt-get install gcc -y
-
-            - name: Install netcat
-              run: sudo apt-get install -y netcat
-
             - uses: actions/setup-node@v4
               with:
                   node-version: '20'
@@ -189,14 +189,20 @@ jobs:
             - name: Setup yarn
               run: npm install -g yarn
 
-            # TODO: enable after merging the gcp pr
-            # - name: Maintain Turbo cache
-            #   uses: actions/cache@v4
-            #   with:
-            #       path: .turbo
-            #       key: ${{ runner.os }}-turbo-${{ github.ref_name}}
-            #       restore-keys: |
-            #           ${{ runner.os }}-turbo-main
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: '20'
+                  cache: 'yarn'
+
+            - name: Maintain Turbo cache
+              uses: actions/cache/@v4
+              with:
+                  path: .turbo
+                  key: ${{ runner.os }}-turbo-multinode-ent-${{ github.ref_name}}
+                  restore-keys: |
+                      ${{ runner.os }}-turbo-common-${{ github.ref_name}}
+                      ${{ runner.os }}-turbo-common-main
+                      ${{ runner.os }}-turbo-common-
 
             - name: Install node dependencies
               run: yarn install --immutable
@@ -276,8 +282,8 @@ jobs:
               with:
                   access_token: ${{ github.token }}
 
-            - name: Install psql
-              run: sudo apt update && sudo apt-get install -y postgresql-client
+            - name: Install Binaries
+              run: sudo apt update && sudo apt-get install -y postgresql-client zstd make gcc netcat
 
             - name: Show PostgreSQL max_connections
               run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
@@ -314,15 +320,6 @@ jobs:
               with:
                   version: ${{ env.FOUNDRY_VERSION }}
 
-            - name: Install Make
-              run: sudo apt-get update && sudo apt-get -y install make
-
-            - name: Install GCC
-              run: sudo apt-get install gcc -y
-
-            - name: Install netcat
-              run: sudo apt-get install -y netcat
-
             - uses: actions/setup-node@v4
               with:
                   node-version: '20'
@@ -330,17 +327,23 @@ jobs:
             - name: Setup yarn
               run: npm install -g yarn
 
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: '20'
+                  cache: 'yarn'
+
             - name: Install node dependencies
               run: yarn install --immutable
 
-            # TODO: enable after merging the gcp pr
-            # - name: Maintain Turbo cache
-            #   uses: actions/cache@v4
-            #   with:
-            #       path: .turbo
-            #       key: ${{ runner.os }}-turbo-${{ github.ref_name}}
-            #       restore-keys: |
-            #           ${{ runner.os }}-turbo-main
+            - name: Maintain Turbo cache
+              uses: actions/cache/@v4
+              with:
+                  path: .turbo
+                  key: ${{ runner.os }}-turbo-multinode-ent-legacy-${{ github.ref_name}}
+                  restore-keys: |
+                      ${{ runner.os }}-turbo-common-${{ github.ref_name}}
+                      ${{ runner.os }}-turbo-common-main
+                      ${{ runner.os }}-turbo-common-
 
             - name: Print versions
               run: ./river/scripts/print-versions.sh

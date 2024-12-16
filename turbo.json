@@ -2,16 +2,20 @@
     "$schema": "https://turborepo.org/schema.json",
     "tasks": {
         "test": {
-            "dependsOn": ["build"]
+            "dependsOn": ["build"],
+            "cache": true
         },
         "test:ci": {
-            "dependsOn": ["build"]
+            "dependsOn": ["build"],
+            "cache": true
         },
         "test:ci:legacy": {
-            "dependsOn": ["build"]
+            "dependsOn": ["build"],
+            "cache": true
         },
         "test:unit": {
-            "dependsOn": ["build"]
+            "dependsOn": ["build"],
+            "cache": true
         },
         "build": {
             // note: output globs are relative to each package's `package.json`
@@ -20,6 +24,8 @@
             "cache": true,
             "dependsOn": ["^build"]
         },
-        "lint": {}
+        "lint": {
+            "cache": true
+        }
     }
 }
