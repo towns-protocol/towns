@@ -355,6 +355,14 @@ function toTownsContent_MemberPayload(
                     unpinnedEventId: bin_toHexString(value.content.value.eventId),
                 } satisfies UnpinEvent,
             }
+        case 'mls':
+            return {
+                content: {
+                    kind: RiverTimelineEvent.Mls,
+                },
+            }
+            break
+
         case undefined:
             return { error: `Undefined payload case: ${description}` }
         default:
@@ -918,6 +926,8 @@ export function getFallbackContent(
             return `pinnedEventId: ${content.pinnedEventId} by: ${content.userId}`
         case RiverTimelineEvent.Unpin:
             return `unpinnedEventId: ${content.unpinnedEventId} by: ${content.userId}`
+        case RiverTimelineEvent.Mls:
+            return `mlsEvent`
     }
 }
 

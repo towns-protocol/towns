@@ -27,8 +27,8 @@ ffi = true
 
 [etherscan]
 sepolia = { chain = 11155111, key = "${ETHERSCAN_API_KEY}" }
-base_sepolia = { chain = 84532, key = "${BLOCKSCOUT_SEPOLIA_API_KEY}", url = "${BLOCKSCOUT_SEPOLIA_URL}/v2" }
-base = { chain = 8453, key = "${BLOCKSCOUT_BASE_API_KEY}", url = "${BLOCKSCOUT_BASE_URL}/v2" }
+base_sepolia = { chain = 84532, key = "${BLOCKSCOUT_SEPOLIA_API_KEY}", url = "${BLOCKSCOUT_SEPOLIA_URL}" }
+base = { chain = 8453, key = "${BLOCKSCOUT_BASE_API_KEY}", url = "${BLOCKSCOUT_BASE_URL}" }
 river_devnet = { chain = 6524490, key = "${RIVERSCAN_API_KEY}", url = "${RIVERSCAN_DEVNET_URL}" }
 river = { chain = 550, key = "${RIVERSCAN_API_KEY}", url = "${RIVERSCAN_URL}" }
 mainnet = { chain = 1, key = "${ETHERSCAN_API_KEY}" }

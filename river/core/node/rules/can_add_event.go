@@ -513,6 +513,9 @@ func (params *aeParams) canAddMemberPayload(payload *StreamEvent_MemberPayload) 
 				check(params.creatorIsMember).
 				check(unpinRules.validUnpin)
 		}
+	case *MemberPayload_Mls_:
+		return aeBuilder().
+			check(params.creatorIsMember)
 	default:
 		return aeBuilder().
 			fail(unknownContentType(content))

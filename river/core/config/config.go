@@ -58,9 +58,6 @@ func GetDefaultConfig() *Config {
 		StandByPollPeriod: 500 * time.Millisecond,
 		ShutdownTimeout:   1 * time.Second,
 		History:           30 * time.Second,
-		Archive: ArchiveConfig{
-			PrintStatsPeriod: 10 * time.Second,
-		},
 		DebugEndpoints: DebugEndpointsConfig{
 			Cache:                 true,
 			Memory:                true,
@@ -345,9 +342,6 @@ type ArchiveConfig struct {
 	// Number of miniblocks to read at once from the remote node.
 	ReadMiniblocksSize uint64
 
-	DisablePrintStats bool
-	PrintStatsPeriod  time.Duration // If 0, default to 1 minute.
-
 	TaskQueueSize int // If 0, default to 100000.
 
 	WorkerPoolSize int // If 0, default to 20.
@@ -483,16 +477,6 @@ func (ac *ArchiveConfig) GetReadMiniblocksSize() uint64 {
 		return 100
 	}
 	return ac.ReadMiniblocksSize
-}
-
-func (ac *ArchiveConfig) GetPrintStatsPeriod() time.Duration {
-	if ac.DisablePrintStats {
-		return 0
-	}
-	if ac.PrintStatsPeriod <= 0 {
-		return time.Minute
-	}
-	return ac.PrintStatsPeriod
 }
 
 func (ac *ArchiveConfig) GetTaskQueueSize() int {

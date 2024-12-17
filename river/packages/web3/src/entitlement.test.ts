@@ -26,6 +26,7 @@ import {
     XchainConfig,
     EncodedNoopRuleData,
     DecodedCheckOperationBuilder,
+    evaluateOperationsForEntitledWallet,
 } from './entitlement'
 import { MOCK_ADDRESS, MOCK_ADDRESS_2, MOCK_ADDRESS_3 } from './Utils'
 import { zeroAddress } from 'viem'
@@ -1408,6 +1409,56 @@ describe.concurrent('createOperationsTree', () => {
         }
 
         assertOperationsEqual(operations, [check1, check2, logical1, check3, logical2])
+    })
+})
+
+describe.concurrent('evaluateOperationsForEntitledWallet', () => {
+    it.concurrent('4 checks - evaluateOperationsForEntitledWallet', async () => {
+        const checkOp: DecodedCheckOperation[] = [
+            // pass
+            {
+                type: CheckOperationType.ERC1155,
+                chainId: baseSepoliaChainId,
+                address: baseSepoliaErc1155Contract,
+                threshold: BigInt(700),
+                tokenId: 0n,
+            },
+            // fail
+            {
+                type: CheckOperationType.ISENTITLED,
+                chainId: 1n,
+                address: MOCK_ADDRESS,
+                byteEncodedParams: `0xabcdef`,
+            },
+            // fail
+            {
+                type: CheckOperationType.ERC1155,
+                chainId: baseSepoliaChainId,
+                address: baseSepoliaErc1155Contract,
+                threshold: BigInt(900),
+                tokenId: 0n,
+            },
+            // fail
+            {
+                type: CheckOperationType.ERC1155,
+                chainId: baseSepoliaChainId,
+                address: baseSepoliaErc1155Contract,
+                threshold: BigInt(10_000),
+                tokenId: 1n,
+            },
+        ]
+
+        const tree = createOperationsTree(checkOp)
+        const operations = ruleDataToOperations(tree)
+
+        // if evaluateOperationsForEntitledWallet does not internally create a postOrderArrayToTree,
+        // this will fail past a threshold of 4 Check operations
+        const result = await evaluateOperationsForEntitledWallet(
+            operations,
+            [baseSepoliaErc1155Wallet_TokenId0_700Tokens],
+            xchainConfig,
+        )
+        expect(result).not.toEqual(zeroAddress)
     })
 })
 

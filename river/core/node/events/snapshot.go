@@ -141,6 +141,7 @@ func make_SnapshotMembers(iInception IsInceptionPayload, creatorAddress []byte) 
 			}, &MemberPayload_Snapshot_Member{
 				UserAddress: inception.SecondPartyAddress,
 			}),
+			Mls: &MemberPayload_Snapshot_Mls{},
 		}, nil
 	case *MediaPayload_Inception:
 		return &MemberPayload_Snapshot{

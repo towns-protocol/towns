@@ -519,6 +519,10 @@ function toTownsContent_MemberPayload(
                     unpinnedEventId: bin_toHexString(value.content.value.eventId),
                 } satisfies UnpinEvent,
             }
+        case 'mls':
+            return {
+                error: `MLS not supported: ${description}`,
+            }
         case undefined:
             return { error: `Undefined payload case: ${description}` }
         default:

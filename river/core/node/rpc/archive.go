@@ -67,7 +67,7 @@ func (s *Service) startArchiveMode(opts *ServerStartOpts, once bool) error {
 
 func (s *Service) initArchiver(once bool) error {
 	s.Archiver = NewArchiver(&s.config.Archive, s.registryContract, s.nodeRegistry, s.storage)
-	go s.Archiver.Start(s.serverCtx, once, s.exitSignal)
+	go s.Archiver.Start(s.serverCtx, once, s.metrics, s.exitSignal)
 	return nil
 }
 

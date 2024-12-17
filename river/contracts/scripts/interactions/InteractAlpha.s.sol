@@ -16,12 +16,14 @@ import {DeploySpace} from "contracts/scripts/deployments/diamonds/DeploySpace.s.
 import {DeploySpaceFactory} from "contracts/scripts/deployments/diamonds/DeploySpaceFactory.s.sol";
 import {DeployBaseRegistry} from "contracts/scripts/deployments/diamonds/DeployBaseRegistry.s.sol";
 import {DeploySpaceOwner} from "contracts/scripts/deployments/diamonds/DeploySpaceOwner.s.sol";
+import {DeployRiverAirdrop} from "contracts/scripts/deployments/diamonds/DeployRiverAirdrop.s.sol";
 
 contract InteractAlpha is AlphaHelper {
   DeploySpace deploySpace = new DeploySpace();
   DeploySpaceFactory deploySpaceFactory = new DeploySpaceFactory();
   DeployBaseRegistry deployBaseRegistry = new DeployBaseRegistry();
   DeploySpaceOwner deploySpaceOwner = new DeploySpaceOwner();
+  DeployRiverAirdrop deployRiverAirdrop = new DeployRiverAirdrop();
 
   function __interact(address deployer) internal override {
     vm.setEnv("OVERRIDE_DEPLOYMENTS", "1");
@@ -29,14 +31,14 @@ contract InteractAlpha is AlphaHelper {
     address spaceOwner = getDeployment("spaceOwner");
     address spaceFactory = getDeployment("spaceFactory");
     address baseRegistry = getDeployment("baseRegistry");
-
+    address riverAirdrop = getDeployment("riverAirdrop");
     FacetCut[] memory newCuts;
 
     removeRemoteFacets(deployer, space);
     removeRemoteFacets(deployer, spaceOwner);
     removeRemoteFacets(deployer, spaceFactory);
     removeRemoteFacets(deployer, baseRegistry);
-
+    removeRemoteFacets(deployer, riverAirdrop);
     // Deploy Space
     deploySpace.diamondInitParams(deployer);
     newCuts = deploySpace.getCuts();
@@ -62,5 +64,11 @@ contract InteractAlpha is AlphaHelper {
     newCuts = deployBaseRegistry.getCuts();
     vm.broadcast(deployer);
     IDiamondCut(baseRegistry).diamondCut(newCuts, address(0), "");
+
+    // Deploy River Airdrop
+    deployRiverAirdrop.diamondInitParams(deployer);
+    newCuts = deployRiverAirdrop.getCuts();
+    vm.broadcast(deployer);
+    IDiamondCut(riverAirdrop).diamondCut(newCuts, address(0), "");
   }
 }

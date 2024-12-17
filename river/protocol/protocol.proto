@@ -156,6 +156,12 @@ message MiniblockHeader {
 */
 message MemberPayload {
     message Snapshot {
+
+        // contains the current MLS group state
+        message Mls {
+            
+        }
+
         message Member {
             bytes user_address = 1;
             int64 miniblock_num = 2;
@@ -169,6 +175,7 @@ message MemberPayload {
         
         repeated Member joined = 1;
         repeated SnappedPin pins = 2;
+        Mls mls = 3;
     }
 
     message Membership {
@@ -211,6 +218,10 @@ message MemberPayload {
         bytes event_id = 1;
     }
 
+    message Mls {
+
+    }
+
     oneof content {
         Membership membership = 1;
         KeySolicitation key_solicitation = 2;
@@ -221,6 +232,7 @@ message MemberPayload {
         Nft nft = 7;
         Pin pin = 8;
         Unpin unpin = 9;
+        Mls mls = 10;
     }
 }
 

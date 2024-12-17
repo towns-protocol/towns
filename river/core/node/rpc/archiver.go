@@ -10,12 +10,14 @@ import (
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/river-build/river/core/config"
 	"github.com/river-build/river/core/contracts/river"
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/events"
+	"github.com/river-build/river/core/node/infra"
 	"github.com/river-build/river/core/node/nodes"
 	. "github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/registries"
@@ -23,11 +25,46 @@ import (
 	"github.com/river-build/river/core/node/storage"
 )
 
+// nodeUpdateGracePeriod describes the maximum delay we would expect to see
+// when a stream's miniblocks updates in the registry before we consider a
+// node behind of it does not have the latest miniblock.
+// Two blocks plus change
+var nodeUpdateGracePeriod = 5 * time.Second
+
+type contractState struct {
+	// Everything in the registry state is protected by this mutex.
+	mu                  sync.Mutex
+	numBlocksInContract int64
+	// This is the last time we saw an event to update the miniblock count for the
+	// stream. lastContractMiniblockUpdate should always be updated with numBlocksInContract.
+	lastContractMiniblockUpdate time.Time
+}
+
+func (cs *contractState) UpdateNumBlocksInContract(blocks int64) {
+	cs.mu.Lock()
+	defer cs.mu.Unlock()
+
+	cs.numBlocksInContract = blocks
+	cs.lastContractMiniblockUpdate = time.Now()
+}
+
+func (cs *contractState) NumBlocksInContract() (int64, time.Time) {
+	cs.mu.Lock()
+	defer cs.mu.Unlock()
+
+	return cs.numBlocksInContract, cs.lastContractMiniblockUpdate
+}
+
 type ArchiveStream struct {
-	streamId            StreamId
-	nodes               nodes.StreamNodes
-	numBlocksInContract atomic.Int64
-	numBlocksInDb       atomic.Int64 // -1 means not loaded
+	streamId StreamId
+	nodes    nodes.StreamNodes
+
+	// registryState describes the state of the stream as reported by the stream
+	// registry.
+	registryState contractState
+	numBlocksInDb atomic.Int64 // -1 means not loaded
+
+	stale atomic.Bool
 
 	// Mutex is used so only one archive operation is performed at a time.
 	mu sync.Mutex
@@ -38,7 +75,7 @@ func NewArchiveStream(streamId StreamId, nn *[]common.Address, lastKnownMinibloc
 		streamId: streamId,
 		nodes:    nodes.NewStreamNodesWithLock(*nn, common.Address{}),
 	}
-	stream.numBlocksInContract.Store(int64(lastKnownMiniblock + 1))
+	stream.registryState.UpdateNumBlocksInContract(int64(lastKnownMiniblock + 1))
 	stream.numBlocksInDb.Store(-1)
 
 	return stream
@@ -61,6 +98,7 @@ type Archiver struct {
 	// set to done when archiver has started
 	startedWG sync.WaitGroup
 
+	// Statistics
 	streamsExamined            atomic.Uint64
 	streamsCreated             atomic.Uint64
 	streamsUpToDate            atomic.Uint64
@@ -70,6 +108,10 @@ type Archiver struct {
 	newStreamAllocated         atomic.Uint64
 	streamPlacementUpdated     atomic.Uint64
 	streamLastMiniblockUpdated atomic.Uint64
+
+	// metrics
+	nodeBehindEvents *prometheus.CounterVec
+	nodeAdvances     *prometheus.CounterVec
 }
 
 type ArchiverStats struct {
@@ -101,6 +143,84 @@ func NewArchiver(
 	return a
 }
 
+func (a *Archiver) setupStatisticsMetrics(factory infra.MetricsFactory) {
+	factory.NewGaugeFunc(
+		prometheus.GaugeOpts{
+			Name: "stats_streams_examined",
+			Help: "Total streams monitored by the archiver",
+		},
+		func() float64 { return float64(a.streamsExamined.Load()) },
+	)
+	factory.NewGaugeFunc(
+		prometheus.GaugeOpts{
+			Name: "stats_streams_created",
+			Help: "Total streams allocated on disk by the archiver since the last boot",
+		},
+		func() float64 { return float64(a.streamsCreated.Load()) },
+	)
+	factory.NewGaugeFunc(
+		prometheus.GaugeOpts{
+			Name: "stats_streams_up_to_date",
+			Help: "Total ArchiveStream executions that did not see stream updates",
+		},
+		func() float64 { return float64(a.streamsUpToDate.Load()) },
+	)
+	factory.NewGaugeFunc(
+		prometheus.GaugeOpts{
+			Name: "stats_success_ops_count",
+			Help: "Total successful ArchiveStream executions",
+		},
+		func() float64 { return float64(a.successOpsCount.Load()) },
+	)
+	factory.NewGaugeFunc(
+		prometheus.GaugeOpts{
+			Name: "stats_failed_ops_count",
+			Help: "Total failed ArchiveStream executions",
+		},
+		func() float64 { return float64(a.failedOpsCount.Load()) },
+	)
+	factory.NewGaugeFunc(
+		prometheus.GaugeOpts{
+			Name: "stats_miniblocks_processed",
+			Help: "Total miniblocks downloaded and stored since the last boot",
+		},
+		func() float64 { return float64(a.miniblocksProcessed.Load()) },
+	)
+	factory.NewGaugeFunc(
+		prometheus.GaugeOpts{
+			Name: "stats_new_stream_allocated",
+			Help: "Total streams allocated in response to detected stream allocation events",
+		},
+		func() float64 { return float64(a.newStreamAllocated.Load()) },
+	)
+	factory.NewGaugeFunc(
+		prometheus.GaugeOpts{
+			Name: "stats_stream_placement_updated",
+			Help: "Total stream placement changes",
+		},
+		func() float64 { return float64(a.streamPlacementUpdated.Load()) },
+	)
+	factory.NewGaugeFunc(
+		prometheus.GaugeOpts{
+			Name: "stats_stream_last_miniblock_updated",
+			Help: "Total miniblock update events",
+		},
+		func() float64 { return float64(a.streamLastMiniblockUpdated.Load()) },
+	)
+
+	a.nodeBehindEvents = factory.NewCounterVecEx(
+		"node_behind_events",
+		"Total times a node was considered to have an out of date stream record",
+		"node_address",
+	)
+
+	a.nodeAdvances = factory.NewCounterVecEx(
+		"node_advances",
+		"Total times a node was advanced, indicating it was behind or returned an error response",
+		"node_address",
+	)
+}
+
 func (a *Archiver) addNewStream(
 	ctx context.Context,
 	streamId StreamId,
@@ -120,6 +240,24 @@ func (a *Archiver) addNewStream(
 	a.streamsExamined.Add(1)
 }
 
+func (a *Archiver) onNodeBehind(
+	stream *ArchiveStream,
+	nodeAddr common.Address,
+) {
+	// Mark the stream as stale and advance the node pointer.
+	stream.stale.Store(true)
+	// We now consider this node behind for this stream. Let's advance it.
+	if a.nodeAdvances != nil {
+		nodeAddress := prometheus.Labels{"node_address": nodeAddr.String()}
+		a.nodeAdvances.With(nodeAddress).Inc()
+		a.nodeBehindEvents.With(nodeAddress).Inc()
+	}
+	stream.nodes.AdvanceStickyPeer(nodeAddr)
+}
+
+// ArchiveStream attempts to add all new miniblocks seen, according to the registry contract,
+// since the last time the stream was archived into storage.  It creates a new stream for
+// streams that have not yet been seen.
 func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) error {
 	log := dlog.FromCtx(ctx)
 
@@ -155,7 +293,7 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) err
 		}
 	}
 
-	mbsInContract := stream.numBlocksInContract.Load()
+	mbsInContract, contractMbsUpdated := stream.registryState.NumBlocksInContract()
 	if mbsInDb >= mbsInContract {
 		a.streamsUpToDate.Add(1)
 		return nil
@@ -198,20 +336,31 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) err
 				"streamId",
 				stream.streamId,
 			)
+			if a.nodeAdvances != nil {
+				a.nodeAdvances.With(prometheus.Labels{"node_address": nodeAddr.String()}).Inc()
+			}
 			stream.nodes.AdvanceStickyPeer(nodeAddr)
 			return err
 		}
 
 		if (err != nil && AsRiverError(err).Code == Err_NOT_FOUND) || resp.Msg == nil || len(resp.Msg.Miniblocks) == 0 {
-			log.Info(
-				"ArchiveStream: GetMiniblocks did not return data, remote storage is not up-to-date with contract yet",
-				"streamId",
-				stream.streamId,
-				"fromInclusive",
-				mbsInDb,
-				"toExclusive",
-				toBlock,
-			)
+			if time.Since(contractMbsUpdated) > nodeUpdateGracePeriod {
+				a.onNodeBehind(
+					stream,
+					nodeAddr,
+				)
+			} else {
+				log.Debug(
+					"ArchiveStream: GetMiniblocks did not return data, remote storage is not up-to-date with contract yet",
+					"streamId",
+					stream.streamId,
+					"fromInclusive",
+					mbsInDb,
+					"toExclusive",
+					toBlock,
+				)
+			}
+
 			// Reschedule with delay.
 			streamId := stream.streamId
 			time.AfterFunc(time.Second, func() {
@@ -255,20 +404,26 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) err
 
 		a.miniblocksProcessed.Add(uint64(len(serialized)))
 	}
+
+	// All blocks processed, mark stream as current
+	stream.stale.Store(false)
+
 	return nil
 }
 
-func (a *Archiver) Start(ctx context.Context, once bool, exitSignal chan<- error) {
+func (a *Archiver) Start(ctx context.Context, once bool, metrics infra.MetricsFactory, exitSignal chan<- error) {
 	defer a.startedWG.Done()
-	err := a.startImpl(ctx, once)
+	err := a.startImpl(ctx, once, metrics)
 	if err != nil {
 		exitSignal <- err
 	}
 }
 
-func (a *Archiver) startImpl(ctx context.Context, once bool) error {
+func (a *Archiver) startImpl(ctx context.Context, once bool, metrics infra.MetricsFactory) error {
 	if once {
 		a.tasksWG = &sync.WaitGroup{}
+	} else if metrics != nil {
+		a.setupStatisticsMetrics(metrics)
 	}
 
 	numWorkers := a.config.GetWorkerPoolSize()
@@ -280,6 +435,9 @@ func (a *Archiver) startImpl(ctx context.Context, once bool) error {
 	pageSize := a.config.GetStreamsContractCallPageSize()
 
 	blockNum := a.contract.Blockchain.InitialBlockNum
+
+	log := dlog.FromCtx(ctx)
+	log.Info("Reading stream registry for contract state of streams", "blockNum", blockNum, "pageSize", pageSize)
 
 	callOpts := &bind.CallOpts{
 		Context:     ctx,
@@ -313,9 +471,21 @@ func (a *Archiver) startImpl(ctx context.Context, once bool) error {
 			log.Debug("Adding stream via detecting presence in stream registry", "streamId", stream.Id)
 			a.addNewStream(ctx, stream.Id, &stream.Stream.Nodes, stream.Stream.LastMiniblockNum)
 		}
+		if lastPage {
+			log.Info(
+				"Iterated through all contract streams",
+				"pageSize",
+				pageSize,
+				"numStreams",
+				i+int64(len(streams)),
+				"blockNum",
+				blockNum,
+			)
+		}
 	}
 
 	if !once {
+		log.Info("Listening to stream events", "blockNum", blockNum+1)
 		err = a.contract.OnStreamEvent(
 			ctx,
 			blockNum+1,
@@ -326,8 +496,6 @@ func (a *Archiver) startImpl(ctx context.Context, once bool) error {
 		if err != nil {
 			return err
 		}
-
-		go a.printStats(ctx)
 	}
 
 	return nil
@@ -369,7 +537,7 @@ func (a *Archiver) onStreamLastMiniblockUpdated(
 		return
 	}
 	stream := record.(*ArchiveStream)
-	stream.numBlocksInContract.Store(int64(event.LastMiniblockNum + 1))
+	stream.registryState.UpdateNumBlocksInContract(int64(event.LastMiniblockNum + 1))
 	a.tasks <- id
 }
 
@@ -425,24 +593,6 @@ func (a *Archiver) worker(ctx context.Context) {
 			if a.tasksWG != nil {
 				a.tasksWG.Done()
 			}
-		}
-	}
-}
-
-func (a *Archiver) printStats(ctx context.Context) {
-	log := dlog.FromCtx(ctx)
-	period := a.config.GetPrintStatsPeriod()
-	if period <= 0 {
-		return
-	}
-	ticker := time.NewTicker(period)
-	defer ticker.Stop()
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-ticker.C:
-			log.Info("Archiver stats", "stats", a.GetStats())
 		}
 	}
 }
