@@ -1,22 +1,20 @@
-import { RefObject, useEffect } from 'react'
+import { useEffect } from 'react'
 import { PlateEditor, usePlateSelectors } from '@udecode/plate-common/react'
 import { focusEditorTowns, isInputFocused } from '../utils/helpers'
 
 type Props = {
     autoFocus?: boolean
     onFocusChange: (focus: boolean) => void
-    editorRef: RefObject<PlateEditor>
+    editor: PlateEditor
 }
 
-export const OnFocusPlugin = ({ autoFocus, onFocusChange, editorRef }: Props) => {
+export const OnFocusPlugin = ({ autoFocus, onFocusChange, editor }: Props) => {
     const isRendered = usePlateSelectors().isMounted()
 
     useEffect(() => {
         if (!autoFocus) {
             return
         }
-
-        const editor = editorRef.current
 
         if (isRendered && editor) {
             const timeout = setTimeout(() => {
@@ -30,7 +28,7 @@ export const OnFocusPlugin = ({ autoFocus, onFocusChange, editorRef }: Props) =>
                 clearTimeout(timeout)
             }
         }
-    }, [isRendered, autoFocus, onFocusChange, editorRef])
+    }, [isRendered, autoFocus, onFocusChange, editor])
 
     return null
 }

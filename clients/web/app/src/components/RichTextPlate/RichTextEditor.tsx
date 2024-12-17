@@ -138,7 +138,7 @@ export const RichTextEditor = ({
         return [{ ...EMPTY_NODE }]
     }, [_initialValue, channels, userHashMap, lookupUser, editable, valueFromStore])
 
-    const editorRef = useRef<TPlateEditor>(
+    const [editor] = useState<TPlateEditor>(() =>
         createTownsEditor(
             storageId.current,
             channels,
@@ -173,22 +173,22 @@ export const RichTextEditor = ({
 
     useEffect(() => {
         if (autoFocus && !isInputFocused()) {
-            focusEditorTowns(editorRef.current, true)
+            focusEditorTowns(editor, true)
         }
-    }, [autoFocus])
+    }, [autoFocus, editor])
 
     /** Reset the editor after sending a message and clear local storage value as well */
     const resetEditorAfterSend = useCallback(() => {
         setInput(storageId.current, '')
-        if (editorRef.current) {
-            resetEditor(editorRef.current)
+        if (editor) {
+            resetEditor(editor)
             // Delay focusing the editor to wait for the editor to reset and re-render
             setTimeout(() => {
-                focusEditorTowns(editorRef.current, !isEditing || isTouch)
+                focusEditorTowns(editor, !isEditing || isTouch)
             }, 100)
         }
         setIsSendingMessage(false)
-    }, [setInput, isEditing, isTouch])
+    }, [setInput, editor, isEditing, isTouch])
 
     const onFocusChange = useCallback((focus: boolean) => {
         setFocused(focus)
@@ -217,30 +217,30 @@ export const RichTextEditor = ({
          * As a workaround, we set the editor text to a space character to remove the placeholder
          * on any manual input change. The reconciliation of the actual editor text is completed later
          */
-        if (editorRef.current) {
-            onChange(editorRef.current)
-            const text = toPlainText(editorRef.current.children)
+        if (editor) {
+            onChange(editor)
+            const text = toPlainText(editor.children)
             const currentTextEmpty = text.trim().length === 0
             startTransition(() => {
                 setEditorText(text)
                 setIsEditorEmpty(currentTextEmpty)
             })
         }
-    }, [onChange])
+    }, [editor, onChange])
 
     const sendMessage = useCallback(async () => {
-        if (!editorRef.current) {
+        if (!editor) {
             return
         }
         if (editorText.length > 0 || fileCount > 0) {
-            const { message, mentions } = await toMD(editorRef.current)
+            const { message, mentions } = await toMD(editor)
             onSend(message, {
                 messageType: MessageType.Text,
                 mentions: mentions.length > 0 ? mentions : undefined,
             })
             resetEditorAfterSend()
         }
-    }, [editorText, fileCount, onSend, resetEditorAfterSend])
+    }, [editor, editorText.length, fileCount, onSend, resetEditorAfterSend])
 
     // Update the editor text in the component state one time when the editor is initialized
     // After the editor is initialized, the editor text is updated in the `onChange` handler
@@ -256,23 +256,17 @@ export const RichTextEditor = ({
      */
     const exitEditorOnArrow: React.KeyboardEventHandler = useCallback(
         (event) => {
-            if (!onArrowEscape || !editorRef.current || !editorRef.current.selection) {
+            if (!onArrowEscape || !editor || !editor.selection) {
                 return
             }
 
-            if (
-                event.key === 'ArrowUp' &&
-                !getPointBeforeLocation(editorRef.current, editorRef.current.selection)
-            ) {
+            if (event.key === 'ArrowUp' && !getPointBeforeLocation(editor, editor.selection)) {
                 onArrowEscape('up')
-            } else if (
-                event.key === 'ArrowDown' &&
-                !getPointAfter(editorRef.current, editorRef.current.selection)
-            ) {
+            } else if (event.key === 'ArrowDown' && !getPointAfter(editor, editor.selection)) {
                 onArrowEscape('down')
             }
         },
-        [onArrowEscape],
+        [editor, onArrowEscape],
     )
 
     /**
@@ -298,7 +292,7 @@ export const RichTextEditor = ({
                 exitEditorOnArrow(event)
             }
             if (
-                !editorRef.current ||
+                !editor ||
                 isTouch ||
                 disabledSend ||
                 disabled ||
@@ -313,7 +307,16 @@ export const RichTextEditor = ({
                 await sendMessage()
             }
         },
-        [isEditorEmpty, sendMessage, isTouch, disabled, disabledSend, fileCount, exitEditorOnArrow],
+        [
+            isTouch,
+            editor,
+            disabledSend,
+            disabled,
+            isEditorEmpty,
+            fileCount,
+            exitEditorOnArrow,
+            sendMessage,
+        ],
     )
 
     const sendButtons = (
@@ -356,11 +359,7 @@ export const RichTextEditor = ({
     ])
 
     return (
-        <Plate
-            editor={editorRef.current}
-            key={`plate-${storageId.current}`}
-            onValueChange={onChangeHandler}
-        >
+        <Plate editor={editor} key={`plate-${storageId.current}`} onValueChange={onChangeHandler}>
             {!isTouch && toolbarTop}
             <Box position="relative">
                 <Stack horizontal width="100%" paddingRight="sm" alignItems="end">
@@ -384,7 +383,7 @@ export const RichTextEditor = ({
                     </Box>
                     <OnFocusPlugin
                         autoFocus={autoFocus}
-                        editorRef={editorRef}
+                        editor={editor}
                         onFocusChange={onFocusChange}
                     />
                     <CaptureLinkAttachmentsPlugin onUpdate={onMessageLinksUpdated} />
