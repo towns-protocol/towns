@@ -24,6 +24,7 @@ library RewardsDistributionStorage {
     mapping(uint256 depositId => address proxy) proxyById;
     mapping(address rewardNotifier => bool) isRewardNotifier;
     mapping(address depositor => EnumerableSet.UintSet) depositsByDepositor;
+    uint256 periodRewardAmount;
   }
 
   function layout() internal pure returns (Layout storage s) {

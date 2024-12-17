@@ -14,6 +14,7 @@ contract DeployRewardsDistributionV2 is Deployer, FacetHelper {
   constructor() {
     addSelector(RewardsDistribution.upgradeDelegationProxy.selector);
     addSelector(RewardsDistribution.setRewardNotifier.selector);
+    addSelector(RewardsDistribution.setPeriodRewardAmount.selector);
     addSelector(RewardsDistribution.stake.selector);
     addSelector(RewardsDistribution.permitAndStake.selector);
     addSelector(RewardsDistribution.stakeOnBehalf.selector);
@@ -36,6 +37,7 @@ contract DeployRewardsDistributionV2 is Deployer, FacetHelper {
     addSelector(RewardsDistribution.currentReward.selector);
     addSelector(RewardsDistribution.currentSpaceDelegationReward.selector);
     addSelector(RewardsDistribution.implementation.selector);
+    addSelector(RewardsDistribution.getPeriodRewardAmount.selector);
   }
 
   function initializer() public pure override returns (bytes4) {

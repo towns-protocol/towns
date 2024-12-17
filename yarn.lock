@@ -10030,6 +10030,7 @@ __metadata:
     prettier-plugin-solidity: ^1.4.1
     solady: ^0.0.267
     solhint: ^5.0.3
+    turbo: ^2.0.12
   languageName: unknown
   linkType: soft
 

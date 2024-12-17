@@ -42,6 +42,45 @@ contract RewardsDistributionV2Test is
   }
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                       ADMIN FUNCTIONS                      */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+  function test_setRewardNotifier_revertIf_notOwner() public {
+    address caller = _randomAddress();
+    vm.prank(caller);
+    vm.expectRevert(abi.encodeWithSelector(Ownable__NotOwner.selector, caller));
+    rewardsDistributionFacet.setRewardNotifier(caller, true);
+  }
+
+  function test_fuzz_setRewardNotifier(
+    address notifier,
+    bool isRewardNotifier
+  ) public {
+    vm.expectEmit(address(rewardsDistributionFacet));
+    emit RewardNotifierSet(notifier, isRewardNotifier);
+
+    vm.prank(deployer);
+    rewardsDistributionFacet.setRewardNotifier(notifier, isRewardNotifier);
+  }
+
+  function test_setPeriodRewardAmount_revertIf_notOwner() public {
+    address caller = _randomAddress();
+    vm.prank(caller);
+    vm.expectRevert(abi.encodeWithSelector(Ownable__NotOwner.selector, caller));
+    rewardsDistributionFacet.setPeriodRewardAmount(1);
+  }
+
+  function test_fuzz_setPeriodRewardAmount(uint256 reward) public {
+    vm.expectEmit(address(rewardsDistributionFacet));
+    emit PeriodRewardAmountSet(reward);
+
+    vm.prank(deployer);
+    rewardsDistributionFacet.setPeriodRewardAmount(reward);
+
+    assertEq(rewardsDistributionFacet.getPeriodRewardAmount(), reward);
+  }
+
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                      DELEGATION PROXY                      */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -53,7 +92,7 @@ contract RewardsDistributionV2Test is
   }
 
   function test_fuzz_upgradeDelegationProxy(address newImplementation) public {
-    vm.assume(uint160(newImplementation) > 10);
+    assumeNotPrecompile(newImplementation);
     vm.assume(newImplementation.code.length == 0);
     vm.etch(newImplementation, type(DelegationProxy).runtimeCode);
 

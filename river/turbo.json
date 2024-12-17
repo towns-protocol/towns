@@ -2,24 +2,50 @@
     "$schema": "https://turborepo.org/schema.json",
     "tasks": {
         "test": {
-            "dependsOn": ["build"]
+            "dependsOn": ["build"],
+            "cache": false
         },
         "test:ci": {
-            "dependsOn": ["build"]
+            "dependsOn": ["build"],
+            "cache": false
+        },
+        "test:integration": {
+            "dependsOn": ["build"],
+            "cache": false
+        },
+        "test:ci:multi:ne": {
+            "dependsOn": ["build"],
+            "cache": false
+        },
+        "test:ci:multi:ent": {
+            "dependsOn": ["build"],
+            "cache": false
+        },
+        "test:ci:multi:ent:legacy": {
+            "dependsOn": ["build"],
+            "cache": false
+        },
+        "test:ci:with-entitlements": {
+            "dependsOn": ["build"],
+            "cache": false
         },
         "test:unit": {
-            "dependsOn": ["build"]
+            "dependsOn": ["build"],
+            "cache": false
         },
         "test:build": {
-            "dependsOn": ["build"]
+            "dependsOn": ["build"],
+            "cache": false
         },
         "build": {
             // note: output globs are relative to each package's `package.json`
             // (and not the monorepo root
-            "outputs": ["dist/**", "build/**", "out/**"],
+            "outputs": ["dist/**", "build/**", "out/**", "cache/**"],
             "cache": true,
             "dependsOn": ["^build"]
         },
-        "lint": {}
+        "lint": {
+            "cache": true
+        }
     }
 }

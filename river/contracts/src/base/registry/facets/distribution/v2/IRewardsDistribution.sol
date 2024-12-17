@@ -69,6 +69,10 @@ interface IRewardsDistributionBase {
   /// @param enabled The whitelist status
   event RewardNotifierSet(address indexed notifier, bool enabled);
 
+  /// @notice Emitted when the reward amount for a period is set
+  /// @param amount The amount of rewardToken to distribute
+  event PeriodRewardAmountSet(uint256 amount);
+
   /// @notice Emitted when a deposit is staked
   /// @param owner The address of the depositor
   /// @param delegatee The address of the delegatee
@@ -159,6 +163,11 @@ interface IRewardsDistribution is IRewardsDistributionBase {
   /// @param notifier The address of the notifier
   /// @param enabled The whitelist status
   function setRewardNotifier(address notifier, bool enabled) external;
+
+  /// @notice Sets the reward amount for a period
+  /// @dev Only the owner can call this function
+  /// @param amount The amount of rewardToken to distribute
+  function setPeriodRewardAmount(uint256 amount) external;
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                       STATE MUTATING                       */
@@ -352,4 +361,7 @@ interface IRewardsDistribution is IRewardsDistributionBase {
 
   /// @notice Returns the implementation stored in the beacon
   function implementation() external view returns (address);
+
+  /// @notice Returns the period reward amount
+  function getPeriodRewardAmount() external view returns (uint256);
 }

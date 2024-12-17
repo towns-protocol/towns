@@ -58,12 +58,12 @@ var AddHashesCmd = &cobra.Command{
 
 		if riverRpcUrl == "" {
 			log.Fatal().
-				Msg("River RPC URL not provided. Set it using --river-rpc-url flag or RIVER_RPC_URL environment variable")
+				Msg("River RPC URL not provided. Set it using --river-rpc-url flag")
 		}
 
 		if riverDevnetRpcUrl == "" {
 			log.Fatal().
-				Msg("River Devnet RPC URL not provided. Set it using --river-devnet-rpc-url flag or RIVER_DEVNET_RPC_URL environment variable")
+				Msg("River Devnet RPC URL not provided. Set it using --river-devnet-rpc-url flag")
 		}
 
 		// Create Ethereum client
@@ -219,8 +219,9 @@ func init() {
 	AddHashesCmd.Flags().StringVar(&baseRpcUrl, "base-rpc-url", os.Getenv("BASE_RPC_URL"), "Base RPC URL")
 	AddHashesCmd.Flags().
 		StringVar(&baseSepoliaRpcUrl, "base-sepolia-rpc-url", os.Getenv("BASE_SEPOLIA_RPC_URL"), "Base Sepolia RPC URL")
-	AddHashesCmd.Flags().StringVar(&riverRpcUrl, "river-rpc-url", os.Getenv("RIVER_RPC_URL"), "River RPC URL")
 	AddHashesCmd.Flags().
-		StringVar(&riverDevnetRpcUrl, "river-devnet-rpc-url", os.Getenv("RIVER_DEVNET_RPC_URL"), "River Devnet RPC URL")
+		StringVar(&riverRpcUrl, "river-rpc-url", "https://mainnet.rpc.river.build/http", "River RPC URL")
+	AddHashesCmd.Flags().
+		StringVar(&riverDevnetRpcUrl, "river-devnet-rpc-url", "https://testnet.rpc.river.build/http", "River Devnet RPC URL")
 	AddHashesCmd.Flags().BoolVar(&htmlRender, "html-render", true, "Render output as HTML")
 }

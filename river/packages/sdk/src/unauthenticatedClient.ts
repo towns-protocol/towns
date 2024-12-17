@@ -1,8 +1,8 @@
 import debug from 'debug'
 import { DLogger, check, dlog, dlogError } from '@river-build/dlog'
 import { hasElements, isDefined } from './check'
-import { StreamRpcClient, getMiniblocks } from './makeStreamRpcClient'
-import { UnpackEnvelopeOpts, unpackStream } from './sign'
+import { StreamRpcClient } from './makeStreamRpcClient'
+import { UnpackEnvelopeOpts, unpackMiniblock, unpackStream } from './sign'
 import { StreamStateView } from './streamStateView'
 import { ParsedMiniblock, StreamTimelineEvent } from './types'
 import { streamIdAsString, streamIdAsBytes, userIdFromAddress, makeUserStreamId } from './id'
@@ -204,17 +204,20 @@ export class UnauthenticatedClient {
             }
         }
 
-        const { miniblocks, terminus } = await getMiniblocks(
-            this.rpcClient,
-            streamId,
+        const response = await this.rpcClient.getMiniblocks({
+            streamId: streamIdAsBytes(streamId),
             fromInclusive,
             toExclusive,
-            this.unpackEnvelopeOpts,
-        )
+        })
 
+        const unpackedMiniblocks: ParsedMiniblock[] = []
+        for (const miniblock of response.miniblocks) {
+            const unpackedMiniblock = await unpackMiniblock(miniblock, this.unpackEnvelopeOpts)
+            unpackedMiniblocks.push(unpackedMiniblock)
+        }
         return {
-            terminus: terminus,
-            miniblocks: miniblocks,
+            terminus: response.terminus,
+            miniblocks: unpackedMiniblocks,
         }
     }
 

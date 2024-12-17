@@ -49,8 +49,10 @@ func init() {
 		StringVar(&logLevel, "log-level", "info", "Set the logging level (debug, info, warn, error)")
 	rootCmd.Flags().StringVarP(&baseRpcUrl, "base-rpc", "b", "", "Base RPC provider URL")
 	rootCmd.Flags().StringVarP(&baseSepoliaRpcUrl, "base-sepolia-rpc", "", "", "Base Sepolia RPC provider URL")
-	rootCmd.Flags().StringVarP(&riverRpcUrl, "river-rpc", "r", "", "River RPC provider URL")
-	rootCmd.Flags().StringVarP(&riverDevnetRpcUrl, "river-devnet-rpc", "", "", "River Devnet RPC provider URL")
+	rootCmd.Flags().
+		StringVarP(&riverRpcUrl, "river-rpc", "r", "https://mainnet.rpc.river.build/http", "River RPC provider URL")
+	rootCmd.Flags().
+		StringVarP(&riverDevnetRpcUrl, "river-devnet-rpc", "", "https://testnet.rpc.river.build/http", "River Devnet RPC provider URL")
 	rootCmd.Flags().BoolVarP(&sourceDiff, "source-diff-only", "s", false, "Run source code diff")
 	rootCmd.Flags().StringVar(&sourceDiffDir, "source-diff-log", "source-diffs", "Path to diff log file")
 	rootCmd.Flags().StringVar(&compiledFacetsPath, "compiled-facets", "../../contracts/out", "Path to compiled facets")

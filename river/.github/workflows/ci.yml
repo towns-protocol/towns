@@ -92,10 +92,11 @@ jobs:
             - name: Maintain Turbo cache
               uses: actions/cache@v4
               with:
-                  path: node_modules/.cache/turbo
-                  key: ${{ runner.os }}-turbo-${{ github.run_id }}
+                  path: .turbo
+                  key: ${{ runner.os }}-turbo-common-${{ github.ref_name}}
                   restore-keys: |
-                      ${{ runner.os }}-turbo-
+                      ${{ runner.os }}-turbo-common-main
+                      ${{ runner.os }}-turbo-common-
 
             - name: Setup Done
               id: setup_success
@@ -105,14 +106,14 @@ jobs:
               if: ${{ !cancelled() && steps.setup_success.outcome == 'success' }}
               run: yarn syncpack:check
 
+            - name: Prettier
+              if: ${{ !cancelled() && steps.setup_success.outcome == 'success' }}
+              run: yarn prettier:check
+
             - name: Build
               id: ts_build
               if: ${{ !cancelled() && steps.setup_success.outcome == 'success' }}
               run: yarn build
-
-            - name: Prettier
-              if: ${{ !cancelled() && steps.setup_success.outcome == 'success' }}
-              run: yarn prettier:check
 
             - name: Lint
               if: ${{ !cancelled() && steps.setup_success.outcome == 'success' }}
@@ -244,6 +245,16 @@ jobs:
             - name: Install node dependencies
               run: yarn install --immutable
 
+            - name: Maintain Turbo cache
+              uses: actions/cache@v4
+              with:
+                  path: .turbo
+                  key: ${{ runner.os }}-turbo-multinode-${{ github.ref_name}}
+                  restore-keys: |
+                      ${{ runner.os }}-turbo-common-${{ github.ref_name}}
+                      ${{ runner.os }}-turbo-common-main
+                      ${{ runner.os }}-turbo-common-
+
             - name: Build all packages
               run: yarn build
 
@@ -260,14 +271,6 @@ jobs:
 
             - name: Print Yarn package versions
               run: yarn info --name-only --all
-
-            - name: Maintain Turbo cache
-              uses: actions/cache@v4
-              with:
-                  path: node_modules/.cache/turbo
-                  key: ${{ runner.os }}-turbo-${{ github.run_id }}
-                  restore-keys: |
-                      ${{ runner.os }}-turbo-
 
             - name: create db
               run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql
@@ -289,8 +292,7 @@ jobs:
               run: just RUN_ENV=multi_ne config-and-start
 
             - name: Run SDK Tests (without entitlements)
-              working-directory: packages/sdk
-              run: yarn test:ci:multi:ne
+              run: yarn turbo run test:ci:multi:ne --filter=@river-build/sdk
 
             - name: Run Stream Metadata Nodes
               run: |
@@ -298,8 +300,7 @@ jobs:
                   yarn wait-on http://localhost:3003/health --timeout=120000 --i=5000 --verbose
 
             - name: Run Stream Metadata Tests (without entitlements)
-              working-directory: packages/stream-metadata
-              run: yarn test:integration
+              run: yarn turbo run test:integration --filter=@river-build/stream-metadata
 
             - name: Archive River Node Logs and Settings
               if: always()
@@ -400,10 +401,12 @@ jobs:
             - name: Maintain Turbo cache
               uses: actions/cache@v4
               with:
-                  path: node_modules/.cache/turbo
-                  key: ${{ runner.os }}-turbo-${{ github.run_id }}
+                  path: .turbo
+                  key: ${{ runner.os }}-turbo-multinode-ent-${{ github.ref_name}}
                   restore-keys: |
-                      ${{ runner.os }}-turbo-
+                      ${{ runner.os }}-turbo-common-${{ github.ref_name}}
+                      ${{ runner.os }}-turbo-common-main
+                      ${{ runner.os }}-turbo-common-
 
             - name: create db
               run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql
@@ -428,10 +431,10 @@ jobs:
               run: yarn csb:turbo-no-sdk
 
             - name: Run River Tests (with entitlements)
-              run: yarn workspace @river-build/sdk run test:ci:multi:ent
+              run: yarn turbo run test:ci:multi:ent --filter=@river-build/sdk
 
             - name: Run Stress Test Tests (yarn) (with entitlements)
-              run: yarn workspace @river-build/stress run test:ci:with-entitlements
+              run: yarn turbo run test:ci:multi:ent --filter=@river-build/stress
 
             - name: Run Stress Test Demo (node) (with entitlements)
               run: ./packages/stress/scripts/localhost_demo.sh
@@ -535,10 +538,12 @@ jobs:
             - name: Maintain Turbo cache
               uses: actions/cache@v4
               with:
-                  path: node_modules/.cache/turbo
-                  key: ${{ runner.os }}-turbo-${{ github.run_id }}
+                  path: .turbo
+                  key: ${{ runner.os }}-turbo-multinode-ent-legacy-${{ github.ref_name}}
                   restore-keys: |
-                      ${{ runner.os }}-turbo-
+                      ${{ runner.os }}-turbo-common-${{ github.ref_name}}
+                      ${{ runner.os }}-turbo-common-main
+                      ${{ runner.os }}-turbo-common-
 
             - name: create db
               run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql
@@ -563,7 +568,7 @@ jobs:
               run: yarn csb:turbo-no-sdk
 
             - name: Run River Tests Against Legacy Spaces (with entitlements)
-              run: yarn workspace @river-build/sdk run test:ci:multi:ent:legacy
+              run: yarn turbo run test:ci:multi:ent:legacy --filter=@river-build/sdk
 
             - name: Archive River Node Logs and Settings
               if: always()
@@ -715,21 +720,21 @@ jobs:
             - name: Print Yarn package versions
               run: yarn info --name-only --all
 
-            - name: Maintain Turbo cache
-              uses: actions/cache@v4
-              with:
-                  path: node_modules/.cache/turbo
-                  key: ${{ runner.os }}-turbo-${{ github.run_id }}
-                  restore-keys: |
-                      ${{ runner.os }}-turbo-
-
             - name: Run Integration Tests
               run: make integration_tests
               working-directory: core/xchain
 
     Slack_Notification:
         # NOTE: We should make sure that new jobs get added here
-        needs: [Common_CI, Multinode, Multinode_Ent, Go_Tests, XChain_Integration]
+        needs:
+            [
+                Common_CI,
+                Multinode,
+                Multinode_Ent,
+                Multinode_Ent_Legacy,
+                Go_Tests,
+                XChain_Integration,
+            ]
         if: failure()
         runs-on: ubuntu-latest
         steps:

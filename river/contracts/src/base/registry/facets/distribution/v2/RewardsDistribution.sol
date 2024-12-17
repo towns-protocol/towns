@@ -85,6 +85,13 @@ contract RewardsDistribution is
     emit RewardNotifierSet(notifier, enabled);
   }
 
+  /// @inheritdoc IRewardsDistribution
+  function setPeriodRewardAmount(uint256 amount) external onlyOwner {
+    RewardsDistributionStorage.layout().periodRewardAmount = amount;
+
+    emit PeriodRewardAmountSet(amount);
+  }
+
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                       STATE MUTATING                       */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -473,5 +480,10 @@ contract RewardsDistribution is
     assembly {
       result := sload(_UPGRADEABLE_BEACON_IMPLEMENTATION_SLOT)
     }
+  }
+
+  /// @inheritdoc IRewardsDistribution
+  function getPeriodRewardAmount() external view returns (uint256) {
+    return RewardsDistributionStorage.layout().periodRewardAmount;
   }
 }
