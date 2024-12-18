@@ -95,6 +95,8 @@ const envSchema = z.object({
 
     VITE_DECENT_API_KEY: z.string().optional(),
     VITE_CROSSMINT_CLIENT_API_KEY: z.string().optional(),
+
+    VITE_TIPS_ENABLED: boolish.default(false),
 })
 
 const parsed = envSchema.safeParse(import.meta.env)

@@ -1,9 +1,25 @@
-import { style } from '@vanilla-extract/css'
+import { style, styleVariants } from '@vanilla-extract/css'
 import { vars } from 'ui/styles/vars.css'
 
-export const iconButton = style({
+const base = style({
     cursor: 'pointer',
-    ':hover': {
-        color: vars.color.foreground.default,
-    },
+})
+
+export const iconButton = styleVariants({
+    default: [
+        base,
+        {
+            ':hover': {
+                color: vars.color.foreground.default,
+            },
+        },
+    ],
+    cta1: [
+        base,
+        {
+            ':hover': {
+                color: vars.color.background.cta1,
+            },
+        },
+    ],
 })

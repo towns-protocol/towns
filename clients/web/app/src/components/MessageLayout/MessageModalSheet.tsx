@@ -1,6 +1,6 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react'
 import { Sheet } from 'react-modal-sheet'
-import { useTownsClient } from 'use-towns-client'
+import { LookupUser, useTownsClient } from 'use-towns-client'
 import { useCreateUnreadMarker } from '@components/MessageLayout/hooks/useCreateUnreadMarker'
 import { modalSheetClass } from 'ui/styles/globals/sheet.css'
 import { Button, Divider, Icon, Stack, useZLayerContext } from '@ui'
@@ -17,8 +17,10 @@ import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { CHANNEL_INFO_PARAMS } from 'routes'
 import { getThreadReplyOrDmReply, trackPostedMessage } from '@components/Analytics/postedMessage'
 import { useGatherSpaceDetailsAnalytics } from '@components/Analytics/useGatherSpaceDetailsAnalytics'
+import { env } from 'utils'
 import { DeleteMessagePrompt } from './DeleteMessagePrompt'
 import { useRedactMessage } from './hooks/useRedactMessage'
+import { TipSheet } from './tips/TipSheet'
 
 type Props = {
     onClose: () => void
@@ -33,6 +35,7 @@ type Props = {
     messageBody?: string
     threadParentId?: string
     isPinned?: boolean
+    senderUser: LookupUser
 }
 
 const emojis: { id: string; native: string }[] = [
@@ -59,6 +62,7 @@ export const MessageModalSheet = (props: Props) => {
         isPinned,
         messageBody,
         threadParentId,
+        senderUser,
     } = props
     const [isHidden, setIsHidden] = React.useState(false)
     const { sendReaction, sendReadReceipt, pinMessage, unpinMessage } = useTownsClient()
@@ -81,6 +85,22 @@ export const MessageModalSheet = (props: Props) => {
         closeSheet()
         timelineContext?.timelineActions.onSelectEditingMessage(eventId)
     }, [eventId, timelineContext, closeSheet])
+
+    const onTipClick = useCallback(() => {
+        setIsHidden(true)
+        setActivePrompt('tip')
+    }, [])
+
+    const onCloseTip = useCallback(
+        (args: { closeMessageMenu?: boolean }) => {
+            setIsHidden(false)
+            setActivePrompt(undefined)
+            if (args.closeMessageMenu) {
+                closeSheet()
+            }
+        },
+        [closeSheet],
+    )
 
     const { onOpenMessageThread } = useOpenMessageThread(spaceId, channelId)
     const { createUnreadMarker: markAsUnread } = useCreateUnreadMarker({
@@ -115,7 +135,9 @@ export const MessageModalSheet = (props: Props) => {
         replyToEventId: replyToEventId ?? undefined,
     })
 
-    const [activePrompt, setActivePrompt] = useState<'emoji' | 'delete' | undefined>(undefined)
+    const [activePrompt, setActivePrompt] = useState<'emoji' | 'delete' | 'tip' | undefined>(
+        undefined,
+    )
 
     const onCancelEmoji = useCallback(() => {
         setActivePrompt(undefined)
@@ -292,6 +314,15 @@ export const MessageModalSheet = (props: Props) => {
                                             onClick={onThreadClick}
                                         />
                                     )}
+
+                                    {env.VITE_TIPS_ENABLED && !props.canEdit && (
+                                        <TableCell
+                                            iconType="dollar"
+                                            iconColor="cta1"
+                                            text="Tip Message"
+                                            onClick={onTipClick}
+                                        />
+                                    )}
                                     <TableCell
                                         iconType="messageUnread"
                                         text="Mark as Unread"
@@ -382,6 +413,10 @@ export const MessageModalSheet = (props: Props) => {
                     onEmojiSelect={onSelectEmoji}
                     onCancel={onCancelEmoji}
                 />
+            )}
+
+            {activePrompt == 'tip' && (
+                <TipSheet senderUser={senderUser} eventId={eventId} onCloseTip={onCloseTip} />
             )}
         </>
     )

@@ -1,5 +1,5 @@
 import React, { useCallback, useContext, useMemo, useRef } from 'react'
-import { useTownsClient } from 'use-towns-client'
+import { LookupUser, useTownsClient } from 'use-towns-client'
 import { EmojiPickerButton } from '@components/EmojiPickerButton'
 import { Box, BoxProps, IconButton, IconName, MotionStack, Paragraph, Stack } from '@ui'
 import { useOpenMessageThread } from 'hooks/useOpenThread'
@@ -20,9 +20,11 @@ import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { CHANNEL_INFO_PARAMS } from 'routes'
 import { getThreadReplyOrDmReply, trackPostedMessage } from '@components/Analytics/postedMessage'
 import { useGatherSpaceDetailsAnalytics } from '@components/Analytics/useGatherSpaceDetailsAnalytics'
+import { env } from 'utils'
 import { useCreateUnreadMarker } from './hooks/useCreateUnreadMarker'
 import { DeleteMessagePrompt } from './DeleteMessagePrompt'
 import { useRedactMessage } from './hooks/useRedactMessage'
+import { TipTooltipPopup } from './tips/TipTooltipPopup'
 
 type Props = {
     eventId: string
@@ -37,6 +39,7 @@ type Props = {
     canRedact?: boolean
     isFocused?: boolean
     isPinned?: boolean
+    senderUser: LookupUser
 }
 
 const style = {
@@ -55,6 +58,7 @@ export const MessageContextMenu = (props: Props) => {
         isFocused,
         isPinned,
         canRedact,
+        senderUser,
     } = props
 
     const { sendReaction, sendReadReceipt, pinMessage, unpinMessage } = useTownsClient()
@@ -122,6 +126,7 @@ export const MessageContextMenu = (props: Props) => {
         ],
     )
     const ref = useRef<HTMLDivElement>(null)
+    const menuRef = useRef<HTMLDivElement>(null)
 
     const onVerifySignature = useCallback(() => {
         openPanel(CHANNEL_INFO_PARAMS.VERIFY_EVENT_SIGNATURE, { eventId, streamId: channelId })
@@ -304,6 +309,7 @@ export const MessageContextMenu = (props: Props) => {
                     width="auto"
                     alignContent="center"
                     alignItems="center"
+                    ref={menuRef}
                 >
                     {props.canReact && (
                         <EmojiPickerButton
@@ -327,6 +333,14 @@ export const MessageContextMenu = (props: Props) => {
                             }
                             data-testid="message-reply--button"
                             onClick={onReply}
+                        />
+                    )}
+
+                    {env.VITE_TIPS_ENABLED && !props.canEdit && (
+                        <TipTooltipPopup
+                            wrapperRef={menuRef}
+                            senderUser={senderUser}
+                            eventId={eventId}
                         />
                     )}
 

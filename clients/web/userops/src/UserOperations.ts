@@ -33,6 +33,8 @@ import {
     isSponsoredOp,
     paymasterProxyMiddleware,
     saveOpToUserOpsStore,
+    totalCostOfUserOp,
+    balanceOf,
 } from './middlewares'
 import { MiddlewareVars } from './MiddlewareVars'
 import { abstractAddressMap } from './abstractAddressMap'
@@ -1742,15 +1744,6 @@ export class UserOps {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
 
-        // const linkedWallets = await this.spaceDapp?.getLinkedWallets(receiver)
-        // if (!linkedWallets) {
-        //     throw new Error(`Linked wallets for receiver "${receiver}" are not found.`)
-        // }
-        // const tokenId = (await space.getTokenIdsOfOwner(linkedWallets))[0]
-        // if (!tokenId) {
-        //     throw new Error(`TokenId for receiver "${receiver}" is not found.`)
-        // }
-
         const callData = space.Tipping.encodeFunctionData('tip', [
             {
                 tokenId,
@@ -1876,10 +1869,30 @@ export class UserOps {
             })
             // prompt user if the paymaster rejected
             .useMiddleware(async (ctx) => {
-                if (!this.skipPromptUserOnPMRejectedOp) {
-                    if (isSponsoredOp(ctx)) {
-                        return
+                if (this.skipPromptUserOnPMRejectedOp || isSponsoredOp(ctx)) {
+                    return
+                }
+                const { functionHashForPaymasterProxy, txValue } = this.middlewareVars
+
+                // tip is a special case
+                // - it is not sponsored
+                // - it will make tx without prompting user
+                // - we only want to prompt user if not enough balance in sender wallet
+                if (functionHashForPaymasterProxy === 'tip') {
+                    const op = ctx.op
+                    const totalCost = totalCostOfUserOp({
+                        gasLimit: op.callGasLimit,
+                        preVerificationGas: op.preVerificationGas,
+                        verificationGasLimit: op.verificationGasLimit,
+                        gasPrice: op.maxFeePerGas,
+                        value: txValue,
+                    })
+                    const balance = await balanceOf(op.sender, builder.provider)
+
+                    if (balance.lt(totalCost)) {
+                        await promptUser()
                     }
+                } else {
                     await promptUser()
                 }
             })

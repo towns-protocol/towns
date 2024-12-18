@@ -157,6 +157,7 @@ export const MessageLayout = (props: Props) => {
         rootKeyAddress: senderId as Address | undefined,
     })
     const profileLink = createLink({ profileId: abstractAccountAddress })
+    const senderUser = useUserLookup(senderId ?? '')
 
     const hasReplies = replies && replies.replyEventIds.size > 0 && eventId
     const numReactions = reactions ? Object.values(reactions).length : 0
@@ -320,6 +321,7 @@ export const MessageLayout = (props: Props) => {
                         isPinned={!!pin}
                         spaceId={spaceId}
                         threadParentId={threadParentId}
+                        senderUser={senderUser}
                     />
                 )}
             </Stack>
@@ -336,6 +338,7 @@ export const MessageLayout = (props: Props) => {
                     messageBody={messageBody}
                     threadParentId={threadParentId}
                     isPinned={!!pin}
+                    senderUser={senderUser}
                     onClose={() => setIsModalSheetVisible(false)}
                 />
             )}

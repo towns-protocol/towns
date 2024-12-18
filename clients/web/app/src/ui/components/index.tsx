@@ -37,3 +37,4 @@ export {
 export { CardOpener } from './Overlay/CardOpener'
 export * from './ZLayer/ZLayer'
 export { ZLayerProvider } from './ZLayer/ZLayerProvider'
+export type { TriggerProps as CardOpenerTriggerProps } from './Overlay/CardOpener'

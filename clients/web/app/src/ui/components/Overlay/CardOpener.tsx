@@ -20,9 +20,14 @@ type Props = {
     onClose?: () => void
     tabIndex?: number
     toggleRef?: React.MutableRefObject<(() => void) | undefined>
+    /**
+     * If provided, the positioning of the overlay will be relative to this ref, instead of the children()'s ref
+     */
+    overrideTriggerRef?: React.RefObject<HTMLDivElement>
+    onIsAbove?: (isAbove: boolean) => void
 }
 
-type TriggerProps = {
+export type TriggerProps = {
     ref: (ref: HTMLElement | null) => void
     onClick?: (e: React.MouseEvent) => void
     onKeyDown?: (e: React.KeyboardEvent) => void
@@ -50,6 +55,7 @@ export const CardOpener = (props: Props) => {
         onClose,
         tabIndex,
         toggleRef,
+        overrideTriggerRef,
     } = props
 
     const { rootLayerRef } = useZLayerContext()
@@ -86,9 +92,11 @@ export const CardOpener = (props: Props) => {
         if (!triggerRef || !active) {
             return
         }
-        const domRect = triggerRef.getBoundingClientRect()
+        const domRect = overrideTriggerRef
+            ? overrideTriggerRef.current?.getBoundingClientRect()
+            : triggerRef.getBoundingClientRect()
         setTriggerRect(domRect)
-    }, [triggerRef, bounds, active])
+    }, [triggerRef, bounds, active, overrideTriggerRef])
 
     const updateCoordsFromEvent = useEvent((e: React.MouseEvent) => {
         if (triggerRef) {
@@ -189,6 +197,15 @@ export const CardOpener = (props: Props) => {
         setActive(false)
     }, [])
 
+    const [isAbove, setIsAbove] = useState(false)
+    const { onIsAbove } = props
+
+    useEffect(() => {
+        if (onIsAbove) {
+            onIsAbove(isAbove)
+        }
+    }, [isAbove, onIsAbove])
+
     return !children ? null : (
         <CardOpenerContext.Provider value={{ placement, closeCard }}>
             {children({
@@ -211,6 +228,7 @@ export const CardOpener = (props: Props) => {
                         triggerRect={triggerRect}
                         hitPosition={hitPosition}
                         placement={placement}
+                        setIsAbove={setIsAbove}
                     />,
                     root,
                 )}

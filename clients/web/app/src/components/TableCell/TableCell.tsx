@@ -1,15 +1,16 @@
 import React from 'react'
-import { Box, Icon, IconName, Stack, Text } from '@ui'
+import { Box, Icon, IconName, IconProps, Stack, Text } from '@ui'
 
 type TableCellProps = {
     iconType: IconName
+    iconColor?: IconProps['color']
     text: string
     isError?: boolean
     onClick: () => void
 }
 
 export const TableCell = (props: TableCellProps) => {
-    const { iconType, text, isError, onClick } = props
+    const { iconType, text, isError, onClick, iconColor } = props
 
     return (
         <Stack
@@ -26,7 +27,7 @@ export const TableCell = (props: TableCellProps) => {
                     type={iconType}
                     size="square_md"
                     background="level2"
-                    color={isError ? 'error' : 'gray2'}
+                    color={isError ? 'error' : iconColor || 'gray2'}
                 />
             </Box>
             <Text color={isError ? 'error' : 'default'}>{text}</Text>

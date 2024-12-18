@@ -30,6 +30,7 @@ import { FormRender } from 'ui/components/Form/Form'
 import { vars } from 'ui/styles/vars.css'
 import { BottomBar } from '@components/Web3/MembershipNFT/BottomBar'
 import { Avatar } from '@components/Avatar/Avatar'
+import { TipBurst } from '@components/MessageLayout/tips/TipBurst'
 import { VListExample } from './pages/example/VListExample'
 import { Container } from './components/PlaygroundContainer'
 import { PageColors } from './pages/PageColors'
@@ -43,6 +44,7 @@ export const Playground = () => {
     return (
         <Stack position="relative">
             <PageText />
+            <TipBurst active />
             <Container label="Notification">
                 <Button
                     onClick={() =>

@@ -95,6 +95,10 @@ export const Shortcuts = {
             keys: 'L',
             description: 'Copy link to message',
         },
+        TipMessage: {
+            keys: 'T',
+            description: 'Tip message',
+        },
     },
     Editor: {
         BoldText: {

@@ -12,6 +12,8 @@ export function useValueLabel() {
             currOpDecodedCallData?.type === 'joinSpace_linkWallet'
         ) {
             return 'Membership'
+        } else if (currOpDecodedCallData?.type === 'tip') {
+            return 'Tip'
         }
     }, [currOpDecodedCallData])
 

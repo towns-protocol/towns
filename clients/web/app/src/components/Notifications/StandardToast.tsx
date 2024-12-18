@@ -10,12 +10,14 @@ export type Props<T extends IconProps['type'] | undefined = IconProps['type']> =
     iconProps?: Partial<IconProps>
     imgSrc?: T extends IconProps['type'] ? never : string
     pending?: T extends IconProps['type'] ? never : boolean
+    success?: boolean
     message: string
     subMessage?: string
     cta?: string
     ctaColor?: TextProps['color']
     onCtaClick?: ({ dismissToast }: { dismissToast: () => void }) => void | Promise<void>
     onDismiss?: () => void
+    iconAnimation?: JSX.Element
 }
 
 export function StandardToast<T extends IconProps['type'] | undefined>(props: Props<T>) {
@@ -31,6 +33,8 @@ export function StandardToast<T extends IconProps['type'] | undefined>(props: Pr
         ctaColor,
         onCtaClick,
         pending,
+        iconAnimation,
+        success,
     } = props
     const [ctaActionLoading, setCtaActionLoading] = useState(false)
     const _onCtaClick = async () => {
@@ -58,6 +62,7 @@ export function StandardToast<T extends IconProps['type'] | undefined>(props: Pr
             justifyContent="spaceBetween"
         >
             <Box alignSelf="start">
+                {success && iconAnimation ? <Box position="absolute"> {iconAnimation} </Box> : null}
                 <Box
                     horizontal
                     gap

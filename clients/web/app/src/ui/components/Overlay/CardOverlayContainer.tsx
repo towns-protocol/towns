@@ -11,6 +11,7 @@ type OffsetContainerProps = {
     hitPosition: [number, number] | undefined
     animatePresence?: boolean
     containerRef: React.MutableRefObject<HTMLDivElement | null>
+    setIsAbove: (isAbove: boolean) => void
 }
 
 type Position = 'top' | 'bottom' | 'left' | 'right'
@@ -21,7 +22,7 @@ const DEBUG = false
 const margin = 4
 
 export const OverlayContainer = (props: OffsetContainerProps) => {
-    const { triggerRect, hitPosition, render, placement } = props
+    const { triggerRect, hitPosition, render, placement, setIsAbove } = props
     const ref = useRef<HTMLDivElement>(null)
     props.containerRef.current = ref.current
 
@@ -89,7 +90,10 @@ export const OverlayContainer = (props: OffsetContainerProps) => {
 
         if (placement === 'dropdown') {
             const top = triggerRect.bottom
-            anchorStyle.top = top - Math.max(0, top + size.height - safeArea.bottom)
+            // Check if dropdown would overflow bottom of screen
+            const wouldOverflowBottom = top + size.height > safeArea.bottom
+            // If it would overflow bottom, position above the trigger instead
+            anchorStyle.top = wouldOverflowBottom ? triggerRect.top - size.height : top
             anchorStyle.left = triggerRect.left
 
             const anchorRight = triggerRect.right
@@ -97,6 +101,8 @@ export const OverlayContainer = (props: OffsetContainerProps) => {
 
             const anchorLeft = triggerRect.left
             const fitsLeft = anchorLeft + size.width < safeArea.right
+
+            setIsAbove(anchorStyle.top < triggerRect.top)
 
             // ideally align horizontally on the right
             if (fitsRight || !fitsLeft) {

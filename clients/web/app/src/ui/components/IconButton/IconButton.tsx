@@ -10,6 +10,7 @@ type Props = {
     opaque?: boolean
     active?: boolean
     icon: IconName
+    hoverColor?: 'default' | 'cta1'
     size?: IconAtoms['size']
     'data-testid'?: string
 } & Omit<BoxProps, 'size'> &
@@ -21,6 +22,7 @@ export const IconButton = forwardRef<HTMLDivElement, Props>((props, ref) => {
         active: isActive,
         opaque: isOpaque,
         type = 'button',
+        hoverColor = 'default',
         background,
         tooltip,
         tooltipOptions,
@@ -35,7 +37,7 @@ export const IconButton = forwardRef<HTMLDivElement, Props>((props, ref) => {
             type={type}
             ref={ref}
             role="button"
-            className={styles.iconButton}
+            className={styles.iconButton[hoverColor]}
             background={
                 background ?? {
                     default: !isOpaque ? 'inherit' : isActive ? 'level3' : 'level2',

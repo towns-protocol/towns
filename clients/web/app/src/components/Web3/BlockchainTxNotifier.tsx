@@ -9,7 +9,10 @@ import {
 
 import headlessToast, { Toast } from 'react-hot-toast/headless'
 import { useSearchParams } from 'react-router-dom'
-import { TransferAssetTransactionContext } from 'use-towns-client/dist/client/TownsClientTypes'
+import {
+    TipTransactionContext,
+    TransferAssetTransactionContext,
+} from 'use-towns-client/dist/client/TownsClientTypes'
 import { BigNumber } from 'ethers'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
@@ -19,6 +22,7 @@ import { StandardToast, Props as StandardToastProps } from '@components/Notifica
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { formatUnits } from 'hooks/useBalance'
 import { shortAddress } from 'ui/utils/utils'
+import { TipBurst } from '@components/MessageLayout/tips/TipBurst'
 import { baseScanUrl, mapToErrorMessage } from './utils'
 
 type ToastProps = {
@@ -153,6 +157,18 @@ export function BlockchainTxNotifier() {
                         successMessage: 'Channel disabled!',
                     })
                     break
+
+                case BlockchainTransactionType.Tip: {
+                    const data = tx.data as TipTransactionContext['data']
+
+                    generateToast({
+                        tx,
+                        pendingMessage: `Sending tip to @${data?.receiverUsername}...`,
+                        successMessage: `You tipped @${data?.receiverUsername}.`,
+                        errorMessage: `Couldn't send tip.`,
+                    })
+                    break
+                }
 
                 case BlockchainTransactionType.TransferAsset: {
                     const data = tx.data as TransferAssetTransactionContext['data']
@@ -327,6 +343,19 @@ function MonitoringNotification(props: ToastProps & { toast: Toast }) {
     }
 
     if (updatedTx.status === 'success') {
+        if (updatedTx.type === BlockchainTransactionType.Tip) {
+            return (
+                <StandardToast.Success
+                    success
+                    toast={toast}
+                    message={message ?? ''}
+                    iconAnimation={<TipBurst active />}
+                    icon="dollar"
+                    cta={cta}
+                    onCtaClick={() => onCtaClick?.(updatedTx)}
+                />
+            )
+        }
         return (
             <StandardToast.Success
                 toast={toast}
