@@ -49,13 +49,11 @@ interface IMainnetDelegationBase {
 }
 
 interface IMainnetDelegation is IMainnetDelegationBase {
-  /**
-   * @notice Set batch cross-chain delegation
-   * @param delegators The delegator address
-   * @param delegates The address the delegator is delegating to
-   * @param claimers The address the delegator is allowing to claim
-   * @param quantities The quantity to delegate
-   */
+  /// @notice Set batch cross-chain delegation
+  /// @param delegators The delegator address
+  /// @param delegates The address the delegator is delegating to
+  /// @param claimers The address the delegator is allowing to claim
+  /// @param quantities The quantity to delegate
   function setBatchDelegation(
     address[] calldata delegators,
     address[] calldata delegates,
@@ -63,73 +61,75 @@ interface IMainnetDelegation is IMainnetDelegationBase {
     uint256[] calldata quantities
   ) external;
 
-  /**
-   * @notice Set batch authorized claimers
-   * @param delegators The delegator address
-   * @param claimers The address the delegator is allowing to claim
-   */
+  /// @notice Set batch authorized claimers
+  /// @param delegators The delegator address
+  /// @param claimers The address the delegator is allowing to claim
   function setBatchAuthorizedClaimers(
     address[] calldata delegators,
     address[] calldata claimers
   ) external;
 
-  /**
-   * @notice Set delegation of a delegator to a operator
-   * @param delegator The delegator address
-   * @param operator The operator address to delegate to
-   * @param quantity The quantity to delegate
-   */
+  /// @notice Set delegation of a delegator to a operator
+  /// @param delegator The delegator address
+  /// @param operator The operator address to delegate to
+  /// @param quantity The quantity to delegate
   function setDelegation(
     address delegator,
     address operator,
     uint256 quantity
   ) external;
 
-  /**
-   * @notice Remove delegation of a delegator
-   * @param delegators The delegator address
-   */
+  /// @notice Remove delegation of a delegator
+  /// @param delegators The delegator address
   function removeDelegations(address[] memory delegators) external;
 
-  /**
-   * @notice Get delegation of a delegator
-   * @param delegator The delegator address
-   * @return Delegation delegation struct
-   */
+  /// @notice Get delegation of a delegator
+  /// @param delegator The delegator address
+  /// @return Delegation delegation struct
   function getDelegationByDelegator(
     address delegator
   ) external view returns (Delegation memory);
 
-  /**
-   * @notice Get delegation of a operator
-   * @param operator The operator address
-   * @return Delegation delegation struct
-   */
+  /// @notice Get delegation of a operator
+  /// @param operator The operator address
+  /// @return Delegation delegation struct
   function getMainnetDelegationsByOperator(
     address operator
   ) external view returns (Delegation[] memory);
 
-  /**
-   * @notice Get delegated stake of a operator
-   * @param operator The operator address
-   * @return uint256 The delegated stake
-   */
+  /// @notice Get delegated stake of a operator
+  /// @param operator The operator address
+  /// @return uint256 The delegated stake
   function getDelegatedStakeByOperator(
     address operator
   ) external view returns (uint256);
 
-  /**
-   * @notice Set authorized claimer
-   * @param owner The owner address
-   * @param claimer The claimer address
-   */
+  /// @notice Set authorized claimer
+  /// @param owner The owner address
+  /// @param claimer The claimer address
   function setAuthorizedClaimer(address owner, address claimer) external;
 
-  /**
-   * @notice Get authorized claimer
-   * @param owner The owner address
-   */
+  /// @notice Get authorized claimer
+  /// @param owner The owner address
+  /// @return address The claimer address
   function getAuthorizedClaimer(address owner) external view returns (address);
 
+  /// @notice Set proxy delegation
+  /// @param proxyDelegation The proxy delegation address
   function setProxyDelegation(address proxyDelegation) external;
+
+  /// @notice Get proxy delegation
+  /// @return address The proxy delegation address
+  function getProxyDelegation() external view returns (address);
+
+  /// @notice Get the L2 messenger address
+  /// @return address The L2 messenger address
+  function getMessenger() external view returns (address);
+
+  /// @notice Get the deposit ID by delegator
+  /// @param delegator The mainnet delegator address
+  /// @return uint256 The deposit ID
+  function getDepositIdByDelegator(
+    address delegator
+  ) external view returns (uint256);
 }

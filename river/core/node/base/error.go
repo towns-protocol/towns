@@ -267,21 +267,23 @@ func AsRiverError(err error, defaultCode ...protocol.Err) *RiverErrorImpl {
 	if de, ok := err.(rpc.DataError); ok {
 		var tags []RiverErrorTag
 		if de.ErrorData() != nil {
-			hexStr := de.ErrorData().(string)
-			hexStr = strings.TrimPrefix(hexStr, "0x")
-			revert, e := hex.DecodeString(hexStr)
-			if e == nil {
-				reason, e := abi.UnpackRevert(revert)
+			hexStr, ok := de.ErrorData().(string)
+			if ok {
+				hexStr = strings.TrimPrefix(hexStr, "0x")
+				revert, e := hex.DecodeString(hexStr)
 				if e == nil {
-					tags = []RiverErrorTag{{"revert_reason", reason}}
-					if reason == ContractErrorStreamNotFound {
-						code = protocol.Err_NOT_FOUND
-					} else if reason == ContractErrorNodeNotFound {
-						code = protocol.Err_UNKNOWN_NODE
-					} else if reason == ContractErrorAlreadyExists {
-						code = protocol.Err_ALREADY_EXISTS
-					} else if reason == ContractErrorOutOfBounds {
-						code = protocol.Err_INVALID_ARGUMENT
+					reason, e := abi.UnpackRevert(revert)
+					if e == nil {
+						tags = []RiverErrorTag{{"revert_reason", reason}}
+						if reason == ContractErrorStreamNotFound {
+							code = protocol.Err_NOT_FOUND
+						} else if reason == ContractErrorNodeNotFound {
+							code = protocol.Err_UNKNOWN_NODE
+						} else if reason == ContractErrorAlreadyExists {
+							code = protocol.Err_ALREADY_EXISTS
+						} else if reason == ContractErrorOutOfBounds {
+							code = protocol.Err_INVALID_ARGUMENT
+						}
 					}
 				}
 			}

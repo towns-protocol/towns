@@ -24,7 +24,7 @@ import {DeploySpace} from "contracts/scripts/deployments/diamonds/DeploySpace.s.
 import {DeploySpaceFactory} from "contracts/scripts/deployments/diamonds/DeploySpaceFactory.s.sol";
 import {DeployBaseRegistry} from "contracts/scripts/deployments/diamonds/DeployBaseRegistry.s.sol";
 import {DeploySpaceOwner} from "contracts/scripts/deployments/diamonds/DeploySpaceOwner.s.sol";
-import {DeployRiverAirdrop} from "contracts/scripts/deployments/diamonds/DeployRiverAirdrop.s.sol";
+//import {DeployRiverAirdrop} from "contracts/scripts/deployments/diamonds/DeployRiverAirdrop.s.sol";
 
 contract InteractAlphaSparse is AlphaHelper {
   using stdJson for string;
@@ -36,7 +36,8 @@ contract InteractAlphaSparse is AlphaHelper {
     diamondDeployments["spaceFactory"] = address(new DeploySpaceFactory());
     diamondDeployments["baseRegistry"] = address(new DeployBaseRegistry());
     diamondDeployments["spaceOwner"] = address(new DeploySpaceOwner());
-    diamondDeployments["riverAirdrop"] = address(new DeployRiverAirdrop());
+    // todo: implement river airdrop here
+    //diamondDeployments["riverAirdrop"] = address(new DeployRiverAirdrop());
   }
 
   string constant DEFAULT_JSON_FILE = "compiled_source_diff.json";

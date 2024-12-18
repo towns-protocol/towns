@@ -170,8 +170,6 @@ jobs:
             - name: Unit Tests
               if: ${{ !cancelled() && steps.setup_success.outcome == 'success' && steps.ts_build.outcome == 'success' }}
               run: yarn test:unit
-              env:
-                  BASE_RPC_URL: ${{ secrets.BASE_RPC_URL }}
     Multinode:
         permissions: write-all
         if: github.event_name != 'workflow_dispatch' || !inputs.skip_multinode

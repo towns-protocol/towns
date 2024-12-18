@@ -8,8 +8,9 @@ pragma solidity ^0.8.0;
 //contracts
 import {Script} from "forge-std/Script.sol";
 import {DeployHelpers} from "./DeployHelpers.s.sol";
+import {Context} from "./Context.sol";
 
-contract DeployBase is DeployHelpers, Script {
+contract DeployBase is Context, DeployHelpers, Script {
   string internal constant DEPLOYMENT_CACHE_PATH = "contracts/deployments";
 
   constructor() {
@@ -36,14 +37,6 @@ contract DeployBase is DeployHelpers, Script {
         name: "river_devnet",
         chainId: 6524490,
         rpcUrl: "https://devnet.rpc.river.build"
-      })
-    );
-    setChain(
-      "base_sepolia",
-      ChainData({
-        name: "base_sepolia",
-        chainId: 84532,
-        rpcUrl: "https://sepolia.base.org"
       })
     );
   }
@@ -136,18 +129,6 @@ contract DeployBase is DeployHelpers, Script {
     );
     debug("saving deployment to: ", path);
     vm.writeJson(contractJson, path);
-  }
-
-  function isAnvil() internal view returns (bool) {
-    return block.chainid == 31337 || block.chainid == 31338;
-  }
-
-  function isRiver() internal view returns (bool) {
-    return block.chainid == 6524490;
-  }
-
-  function isTesting() internal view returns (bool) {
-    return vm.envOr("IN_TESTING", false);
   }
 
   // Utils

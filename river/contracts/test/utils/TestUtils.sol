@@ -4,8 +4,9 @@ pragma solidity ^0.8.0;
 import "@prb/test/Helpers.sol" as Helpers;
 import {Test} from "forge-std/Test.sol";
 import {LibString} from "solady/utils/LibString.sol";
+import {Context} from "contracts/scripts/common/Context.sol";
 
-contract TestUtils is Test {
+contract TestUtils is Context, Test {
   event LogNamedArray(string key, address[] value);
   event LogNamedArray(string key, bool[] value);
   event LogNamedArray(string key, bytes32[] value);
@@ -135,14 +136,6 @@ contract TestUtils is Test {
     for (uint256 i; i < count; ++i) {
       accounts[i] = _randomAddress();
     }
-  }
-
-  function isAnvil() internal view returns (bool) {
-    return block.chainid == 31337 || block.chainid == 31338;
-  }
-
-  function isTesting() internal view returns (bool) {
-    return vm.envOr("IN_TESTING", false);
   }
 
   function getDeployer() internal view returns (address) {

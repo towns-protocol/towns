@@ -212,9 +212,6 @@ func (ru *csParams) canCreateStream() ruleBuilderCS {
 				ru.params.eventCountMatches(2),
 				ru.validateChannelJoinEvent,
 			).
-			requireMembership(
-				inception.SpaceId,
-			).
 			requireChainAuth(ru.getCreateChannelChainAuth).
 			requireDerivedEvent(
 				ru.derivedChannelSpaceParentEvent,

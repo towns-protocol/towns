@@ -12,7 +12,9 @@ update:; forge update
 
 build:; forge build
 
-test :; forge test --ffi
+test :; forge test --ffi --nmc Fork
+
+fork-test :; forge test --ffi --mc Fork
 
 snapshot :; forge snapshot --isolate
 

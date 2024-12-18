@@ -10,11 +10,8 @@ import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {Diamond} from "contracts/src/diamond/Diamond.sol";
 
 // helpers
-import {OwnableHelper} from "contracts/test/diamond/ownable/OwnableSetup.sol";
-import {IntrospectionHelper} from "contracts/test/diamond/introspection/IntrospectionSetup.sol";
 
 // facets
-import {MainnetDelegation} from "contracts/src/tokens/river/base/delegation/MainnetDelegation.sol";
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 
 // deployers

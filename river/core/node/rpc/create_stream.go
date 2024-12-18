@@ -64,6 +64,17 @@ func (s *Service) createStream(ctx context.Context, req *CreateStreamRequest) (*
 		return nil, err
 	}
 
+	// check that streams exist for derived events that will be added later
+	if csRules.DerivedEvents != nil {
+		for _, event := range csRules.DerivedEvents {
+			streamIdBytes := event.StreamId
+			stream, err := s.cache.GetStreamNoWait(ctx, streamIdBytes)
+			if err != nil || stream == nil {
+				return nil, RiverError(Err_PERMISSION_DENIED, "stream does not exist", "streamId", streamIdBytes)
+			}
+		}
+	}
+
 	// check that the creator satisfies the required memberships reqirements
 	if csRules.RequiredMemberships != nil {
 		// load the creator's user stream

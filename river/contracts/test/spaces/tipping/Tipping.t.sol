@@ -43,7 +43,9 @@ contract TippingTest is BaseSetup, ITippingBase, IERC721ABase {
 
     vm.assume(sender != receiver);
     vm.assume(sender != address(0) && sender.code.length == 0);
-    vm.assume(receiver != address(0) && receiver.code.length == 0);
+    // exclude precompiles
+    vm.assume(uint256(uint160(receiver)) > 10);
+    vm.assume(receiver.code.length == 0);
 
     vm.prank(sender);
     membership.joinSpace(sender);
