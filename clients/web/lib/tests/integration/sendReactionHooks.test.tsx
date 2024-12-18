@@ -25,13 +25,11 @@ import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { TownsTestApp } from './helpers/TownsTestApp'
 import { TownsTestWeb3Provider } from './helpers/TownsTestWeb3Provider'
 import { useChannelId } from '../../src/hooks/use-channel-id'
-import { useChannelReactions } from '../../src/hooks/use-channel-reactions'
+import { useTimelineReactions } from '../../src/hooks/use-timeline-reactions'
 import { useChannelTimeline } from '../../src/hooks/use-channel-timeline'
 import { useTownsClient } from '../../src/hooks/use-towns-client'
 import { TestConstants } from './helpers/TestConstants'
 import { TSigner } from '../../src/types/web3-types'
-
-// TODO Zustand https://docs.pmnd.rs/zustand/testing
 
 describe('sendReactionHooks', () => {
     test('user can join a room, see messages, and send messages', async () => {
@@ -62,7 +60,7 @@ describe('sendReactionHooks', () => {
             const { sendReaction } = useTownsClient()
             const channelId = useChannelId()
             const { timeline } = useChannelTimeline()
-            const reactions = useChannelReactions()
+            const reactions = useTimelineReactions(channelId)
             const messages = timeline.filter(
                 (x) =>
                     x.content?.kind === ZTEvent.RoomMessage || x.content?.kind === ZTEvent.Reaction,
