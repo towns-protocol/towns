@@ -1,13 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useEvent } from 'react-use-event-hook'
-import {
-    Membership,
-    SpaceData,
-    useContractSpaceInfo,
-    useMyMembership,
-    useSpaceMembers,
-} from 'use-towns-client'
+import { Membership, SpaceData, useContractSpaceInfo, useMyMembership } from 'use-towns-client'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { useSizeContext } from 'ui/hooks/useSizeContext'
 import { Box, Icon, IconButton, Paragraph, Stack } from '@ui'
@@ -19,7 +13,6 @@ import { useDevice } from 'hooks/useDevice'
 import useCopyToClipboard from 'hooks/useCopyToClipboard'
 import { SECOND_MS } from 'data/constants'
 import { Analytics } from 'hooks/useAnalytics'
-import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import * as styles from './SpaceSideBar.css'
 
 export const SpaceSideBarHeader = (props: {
@@ -31,11 +24,8 @@ export const SpaceSideBarHeader = (props: {
     const { baseChain } = useEnvironment()
     const chainId = baseChain.id
 
-    const { memberIds } = useSpaceMembers()
     const { data: spaceInfo } = useContractSpaceInfo(space.id)
     const myMembership = useMyMembership(space.id)
-
-    const membersCount = memberIds.length
 
     const navigate = useNavigate()
 
@@ -61,17 +51,10 @@ export const SpaceSideBarHeader = (props: {
     })
 
     const hasName = space && myMembership === Membership.Join && !!space.name
-    const hasMembers = membersCount > 0
 
     const size = useSizeContext()
     const isSmall = size.lessThan(200)
     const { isReduceMotion } = useDevice()
-
-    const { openPanel } = usePanelActions()
-
-    const onTownMembersClick = useEvent(() => {
-        openPanel('town-members')
-    })
 
     return (
         <>
@@ -179,17 +162,6 @@ export const SpaceSideBarHeader = (props: {
             </Stack>
 
             <Stack paddingX gap="md" insetX="xs" paddingY="xs" cursor="pointer">
-                <Paragraph
-                    data-testid="all-town-members-list-button"
-                    textAlign="center"
-                    color="cta2"
-                    size="sm"
-                    onClick={onTownMembersClick}
-                >
-                    {hasMembers
-                        ? `${membersCount} member${membersCount > 1 ? 's' : ''}`
-                        : 'fetching members...'}
-                </Paragraph>
                 <ShareTownLinkButton spaceId={space.id} spaceName={space.name} />
             </Stack>
         </>

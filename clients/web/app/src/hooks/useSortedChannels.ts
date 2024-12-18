@@ -258,6 +258,7 @@ export const useSortedChannels = ({ spaceId, currentRouteId }: Params) => {
         actualUnreadChannels,
         readChannels,
         readDms,
+        spaceMemberIds: memberIds,
         unreadChannels,
         unjoinedChannels,
         dmItems,

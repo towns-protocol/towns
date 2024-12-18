@@ -15,6 +15,7 @@ type Props = {
     tooltipOptions?: TooltipOptions
     minHeight?: BoxProps['minHeight']
     onClick?: (e: React.MouseEvent) => void
+    exact?: boolean
     children?: React.ReactNode
 }
 
@@ -31,6 +32,7 @@ export const ActionNavItem = (props: Props) => {
         tooltipOptions,
         minHeight,
         children,
+        exact,
         ...restProps
     } = props
 
@@ -42,7 +44,7 @@ export const ActionNavItem = (props: Props) => {
             tooltipOptions={tooltipOptions}
             to={link}
             id={id}
-            exact={false}
+            exact={exact}
             cursor="pointer"
             paddingY="xxs"
             minHeight={minHeight}

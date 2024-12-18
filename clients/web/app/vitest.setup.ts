@@ -118,6 +118,11 @@ Object.defineProperty(window, 'matchMedia', {
     })),
 })
 
+Object.defineProperty(URL, 'createObjectURL', {
+    writable: true,
+    value: vi.fn(),
+})
+
 // https://zustand.docs.pmnd.rs/guides/testing
 //////////////////////
 // ZUSTAND STORES ////

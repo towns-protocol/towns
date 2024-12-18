@@ -37,6 +37,8 @@ import { SidebarLoadingAnimation } from './SpaceSideBarLoading'
 import { CondensedChannelNavItem } from './CondensedChannelNavItem'
 import { useOffscreenMarkers } from './hooks/useOffscreenMarkers'
 import { AppVersionText } from './AppVersionText'
+import { useMembersNotInDMs } from './hooks/useMembersNotInDMs'
+import { MemberNotInDMsNavItem } from './MemberNotInDMsNavItem'
 
 type Props = {
     space: SpaceData
@@ -68,6 +70,10 @@ export const SpaceSideBar = (props: Props) => {
 
     const { openPanel } = usePanelActions()
 
+    const onTownMembersClick = useEvent(() => {
+        openPanel('town-members')
+    })
+
     const onShowBrowseChannels = useEvent(() => {
         Analytics.getInstance().track('clicked browse channels', { spaceId: space.id }, () => {
             console.log('[analytics] clicked browse channels', { spaceId: space.id })
@@ -93,14 +99,18 @@ export const SpaceSideBar = (props: Props) => {
 
     const navigate = useNavigate()
 
-    const onDisplayCreate = useCallback(() => {
-        const link = createLink({ messageId: 'new' })
-        if (link) {
-            navigate(link)
-        }
-    }, [createLink, navigate])
+    const onDisplayCreate = useCallback(
+        (e?: React.MouseEvent<HTMLElement>) => {
+            e?.stopPropagation()
+            const link = createLink({ messageId: 'new' })
+            if (link) {
+                navigate(link)
+            }
+        },
+        [createLink, navigate],
+    )
 
-    useShortcut('CreateMessage', onDisplayCreate)
+    useShortcut('CreateMessage', () => onDisplayCreate())
 
     const params = useParams()
     const currentRouteId = params.channelSlug
@@ -112,10 +122,14 @@ export const SpaceSideBar = (props: Props) => {
         readChannels,
         readDms,
         spaceMentions,
+        dmItems,
+        spaceMemberIds,
     } = useSortedChannels({
         spaceId: space.id,
         currentRouteId,
     })
+
+    const membersNotInDMs = useMembersNotInDMs({ dmItems, memberIds: spaceMemberIds })
 
     const unreadThreadMentions = useSpaceUnreadThreadMentions(spaceMentions)
 
@@ -126,14 +140,19 @@ export const SpaceSideBar = (props: Props) => {
     })
 
     const itemRenderer = useCallback(
-        (u: (typeof unreadChannels)[0], isUnreadSection?: boolean) => {
+        (
+            u: (typeof unreadChannels)[0] | (typeof membersNotInDMs.data)[0],
+            isUnreadSection?: boolean,
+        ) => {
             const key = `${u.id}`
             // dm items can get expensive to render, use intersection observer
             const checkVisibility = u.type === 'dm'
             return (
                 <SpaceSideBarListItem key={key} checkVisibility={checkVisibility}>
                     <OffscreenMarker id={key} containerMarginTop={HEADER_MARGIN} />
-                    {u.type === 'dm' ? (
+                    {u.type === 'memberNotInDMs' ? (
+                        <MemberNotInDMsNavItem {...u} />
+                    ) : u.type === 'dm' ? (
                         <CondensedChannelNavItem
                             unread={u.unread}
                             key={key}
@@ -156,7 +175,7 @@ export const SpaceSideBar = (props: Props) => {
                 </SpaceSideBarListItem>
             )
         },
-        [space],
+        [membersNotInDMs, space],
     )
 
     return (
@@ -278,6 +297,7 @@ export const SpaceSideBar = (props: Props) => {
                                             </Stack>
                                         }
                                         key="channels"
+                                        onClick={onShowBrowseChannels}
                                     />
                                 </MenuGroup>
                                 <MenuGroup>
@@ -296,7 +316,7 @@ export const SpaceSideBar = (props: Props) => {
                                     )}
 
                                     <SpaceSideBarSectionHeader
-                                        label="Direct Messages"
+                                        label={`${spaceMemberIds.length} Members`}
                                         headerContent={
                                             <IconButton
                                                 size="square_sm"
@@ -308,8 +328,18 @@ export const SpaceSideBar = (props: Props) => {
                                             />
                                         }
                                         key="direct-messages"
+                                        onClick={onTownMembersClick}
                                     />
                                     {readDms.map((channel) => itemRenderer(channel))}
+                                    {membersNotInDMs.isLoading ? (
+                                        <>
+                                            <DirectMessageItemSkeleton />
+                                            <DirectMessageItemSkeleton />
+                                            <DirectMessageItemSkeleton />
+                                        </>
+                                    ) : (
+                                        membersNotInDMs.data.map((member) => itemRenderer(member))
+                                    )}
                                 </MenuGroup>
                             </>
                         )}
@@ -404,6 +434,7 @@ const SpaceSideBarSectionHeader = (props: {
     hidden?: boolean
     headerContent?: React.ReactNode
     dataTestId?: string
+    onClick?: () => void
 }) => {
     return props.hidden ? null : (
         <SpaceSideBarListItem key={props.label}>
@@ -411,6 +442,7 @@ const SpaceSideBarSectionHeader = (props: {
                 label={props.label}
                 badgeValue={props.badgeValue}
                 dataTestId={props.dataTestId}
+                onClick={props.onClick}
             >
                 {props.headerContent}
             </ChannelNavGroup>
