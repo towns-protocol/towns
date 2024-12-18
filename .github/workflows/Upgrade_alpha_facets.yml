@@ -166,10 +166,11 @@ jobs:
             - name: Run River Devnet Interaction
               env:
                   ETHERSCAN_API_KEY: ${{ env.RIVERSCAN_DEVNET_API_KEY }}
+                  INTERACTION_INPUT_PATH: ${{ env.INTERACTION_INPUT_PATH }}
               run: make interact-any-explicit-blockscout \
                   context=alpha \
                   rpc=river_devnet \
-                  contract=InteractRiverAlpha \
+                  contract=InteractRiverAlphaSparse \
                   private_key=${{ env.ALPHA_BASE_SEPOLIA_DEPLOYER_PK }} \
                   verifier=${{ env.RIVERSCAN_DEVNET_URL }}
               working-directory: river/contracts
