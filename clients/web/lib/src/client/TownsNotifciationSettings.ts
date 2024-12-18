@@ -68,7 +68,7 @@ export class NotificationSettingsClient {
     private startResponseKey: string
     private finishResponseKey: string
     private settingsKey: string
-    private initializePromise: Promise<NotificationRpcClient | undefined> | undefined
+    private getClientPromise: Promise<NotificationRpcClient | undefined> | undefined
     private getSettingsPromise: Promise<GetSettingsResponse | undefined> | undefined
 
     constructor(
@@ -127,37 +127,50 @@ export class NotificationSettingsClient {
         this.data.setValue({ ...this.data.value, settings: newSettings })
     }
 
-    private async initialize(): Promise<NotificationRpcClient | undefined> {
-        if (this.initializePromise) {
-            return this.initializePromise
+    private async getClient(): Promise<NotificationRpcClient | undefined> {
+        if (this.getClientPromise) {
+            return this.getClientPromise
         }
-        this.initializePromise = this._initialize()
+        this.getClientPromise = this._getClient()
         try {
-            const result = await this.initializePromise
-            this.initializePromise = undefined
+            const result = await this.getClientPromise
+            this.getClientPromise = undefined
             return result
         } catch (error) {
             this.data.setValue({ ...this.data.value, error: error as Error })
-            this.initializePromise = undefined
+            this.getClientPromise = undefined
             return undefined
         }
     }
 
-    private async _initialize(): Promise<NotificationRpcClient | undefined> {
+    private async _getClient(): Promise<NotificationRpcClient | undefined> {
         if (!this.url) {
             throw new Error('TNS PUSH: notification service url is unset')
         }
         const startResponse = this.getLocalStartResponse()
         const finishResponse = this.getLocalFinishResponse()
 
+        // if we have a valid start response and finish response, and the start response is still valid,
+        // we can re-create the client from the local storage
+        // and cache it locally to leverage http2 connection pooling
         if (
             startResponse &&
             finishResponse &&
             startResponse.expiration &&
             startResponse.expiration.seconds > Date.now() / 1000
         ) {
+            if (this._client) {
+                // if everything is still valid, and we have the client, return the client
+                return this._client
+            }
             try {
-                return makeNotificationRpcClient(this.url, finishResponse.sessionToken, this.opts)
+                const client = makeNotificationRpcClient(
+                    this.url,
+                    finishResponse.sessionToken,
+                    this.opts,
+                )
+                this._client = client
+                return client
             } catch (error) {
                 console.error(
                     'TNS PUSH: error authenticating from local storage, will try from scratch',
@@ -165,7 +178,7 @@ export class NotificationSettingsClient {
                 )
             }
         }
-
+        // if we don't have a valid client, or if the client has expired,we need to authenticate from scratch
         const service = await NotificationService.authenticate(
             this.signerContext,
             this.url,
@@ -179,12 +192,10 @@ export class NotificationSettingsClient {
     private async withClient<T>(
         fn: (client: NotificationRpcClient) => Promise<T>,
     ): Promise<T | undefined> {
-        if (!this._client) {
-            this._client = await this.initialize()
-        }
-        if (this._client) {
+        const client = await this.getClient()
+        if (client) {
             try {
-                return await fn(this._client)
+                return await fn(client)
             } catch (error) {
                 this.data.setValue({ ...this.data.value, error: error as Error })
                 throw error
