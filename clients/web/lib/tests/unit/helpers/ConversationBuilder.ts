@@ -1,4 +1,5 @@
 import {
+    MemberBlockchainTransactionEvent,
     OTWMention,
     RedactionActionEvent,
     RoomMessageEvent,
@@ -14,6 +15,9 @@ import {
     getReactionParentId,
     getThreadParentId,
 } from '../../../src/store/use-timeline-store'
+import { BlockchainTransactionKind } from '@river-build/proto'
+import { hexToBytes } from 'viem'
+import { randomBytes } from 'crypto'
 
 export class ConversationBuilder {
     events: TimelineEvent[] = []
@@ -63,6 +67,31 @@ export class ConversationBuilder {
                     threadId: params.threadId,
                 }),
                 userId: params.from,
+            }),
+        )
+        return this
+    }
+
+    sendTip(params: {
+        tip: number
+        ref: `0x${string}`
+        id?: string
+        from: string
+        to: string
+    }): ConversationBuilder {
+        const refEvent = this.events.find((e) => e.eventId === params.ref)
+        if (!refEvent) {
+            throw new Error(`Could not find event ${params.ref}`)
+        }
+        this.events.push(
+            this.makeEvent({
+                eventId: params.id,
+                content: makeTip({
+                    tip: params.tip,
+                    refEventId: params.ref,
+                    fromUserId: params.from,
+                    toUserId: params.to,
+                }),
             }),
         )
         return this
@@ -184,5 +213,25 @@ function makeRedaction(params: { redacts: string; isAdmin?: boolean }): Redactio
         kind: ZTEvent.RedactionActionEvent,
         refEventId: params.redacts,
         adminRedaction: params.isAdmin ?? false,
+    }
+}
+
+function makeTip(params: {
+    tip: number
+    refEventId: `0x${string}`
+    fromUserId: string
+    toUserId?: string
+}): MemberBlockchainTransactionEvent {
+    return {
+        kind: ZTEvent.MemberBlockchainTransaction,
+        transaction: {
+            kind: BlockchainTransactionKind.TIP,
+            quantity: BigInt(params.tip),
+            refEventId: hexToBytes(params.refEventId),
+        },
+        transactionHash: randomBytes(32).toString('hex'),
+        fromUserId: params.fromUserId,
+        refEventId: params.refEventId,
+        toUserId: params.toUserId, // I'm cheating here and not putting it into the transaction because we use readable names for ids
     }
 }

@@ -1,6 +1,8 @@
 import { createWithEqualityFn } from 'zustand/traditional'
 import {
     MessageReactions,
+    MessageTipEvent,
+    MessageTips,
     RedactedEvent,
     RoomMessageEvent,
     ThreadStats,
@@ -9,6 +11,7 @@ import {
     TimelineEvent_OneOf,
     ZTEvent,
     getFallbackContent,
+    isMessageTipEvent,
 } from '../types/timeline-types'
 import reverse from 'lodash/reverse'
 
@@ -20,7 +23,9 @@ export type ThreadStatsMap = Record<string, Record<string, ThreadStats>>
 export type ThreadsMap = Record<string, TimelinesMap>
 /// ReactionsMap: { streamId: { eventId: MessageReactions } }
 export type ReactionsMap = Record<string, Record<string, MessageReactions>>
-
+/// TipsMap: { streamId: { eventId: MessageTips } }
+export type TipsMap = Record<string, Record<string, MessageTips>>
+// store states
 export type TimelineStoreStates = {
     timelines: TimelinesMap
     replacedEvents: Record<string, { oldEvent: TimelineEvent; newEvent: TimelineEvent }[]>
@@ -28,6 +33,7 @@ export type TimelineStoreStates = {
     threadsStats: ThreadStatsMap
     threads: ThreadsMap
     reactions: ReactionsMap
+    tips: TipsMap
     lastestEventByUser: { [userId: string]: TimelineEvent }
 }
 
@@ -57,6 +63,7 @@ export const useTimelineStore = createWithEqualityFn<TimelineStore>((set) => ({
     threadsStats: {},
     threads: {},
     reactions: {},
+    tips: {},
     lastestEventByUser: {},
     setState: makeTimelineStoreInterface(
         (fn: (prevState: TimelineStoreStates) => TimelineStoreStates) => {
@@ -73,8 +80,8 @@ function makeTimelineStoreInterface(
             threadStats: {} as Record<string, ThreadStats>,
             threads: {} as Record<string, TimelineEvent[]>,
             reactions: {} as Record<string, MessageReactions>,
+            tips: {} as Record<string, MessageTips>,
         }
-
         setState((state) => ({
             timelines: { ...state.timelines, [streamId]: [] },
             replacedEvents: state.replacedEvents,
@@ -91,6 +98,10 @@ function makeTimelineStoreInterface(
                 ...state.reactions,
                 [streamId]: aggregated.reactions,
             },
+            tips: {
+                ...state.tips,
+                [streamId]: aggregated.tips,
+            },
             lastestEventByUser: state.lastestEventByUser,
         }))
     }
@@ -104,6 +115,7 @@ function makeTimelineStoreInterface(
                 delete prev.threadsStats[streamId]
                 delete prev.threads[streamId]
                 delete prev.reactions[streamId]
+                delete prev.tips[streamId]
             }
             return prev
         })
@@ -121,6 +133,7 @@ function makeTimelineStoreInterface(
             threadsStats: removeThreadStat(streamId, event, state.threadsStats),
             threads: removeThreadEvent(streamId, event, state.threads),
             reactions: removeReaction(streamId, event, state.reactions),
+            tips: removeTip(streamId, event, state.tips),
             lastestEventByUser: state.lastestEventByUser,
         }
     }
@@ -143,6 +156,7 @@ function makeTimelineStoreInterface(
             ),
             threads: insertThreadEvent(streamId, timelineEvent, state.threads),
             reactions: addReactions(streamId, timelineEvent, state.reactions),
+            tips: addTips(streamId, timelineEvent, state.tips, 'append'),
             lastestEventByUser: state.lastestEventByUser,
         }
     }
@@ -171,6 +185,7 @@ function makeTimelineStoreInterface(
             ),
             threads: insertThreadEvent(streamId, timelineEvent, state.threads),
             reactions: addReactions(streamId, timelineEvent, state.reactions),
+            tips: addTips(streamId, timelineEvent, state.tips, 'prepend'),
             lastestEventByUser: state.lastestEventByUser,
         }
     }
@@ -269,6 +284,7 @@ function makeTimelineStoreInterface(
                 newEvent,
                 removeReaction(streamId, oldEvent, state.reactions),
             ),
+            tips: addTips(streamId, newEvent, removeTip(streamId, oldEvent, state.tips), 'append'), // not sure one will ever replace a tip
             lastestEventByUser: state.lastestEventByUser,
         }
     }
@@ -328,6 +344,7 @@ function makeTimelineStoreInterface(
                       }
                     : state.threads,
             reactions: state.reactions,
+            tips: state.tips,
             lastestEventByUser: state.lastestEventByUser,
         }
     }
@@ -665,6 +682,64 @@ function removeThreadStat(
         }
     }
     return { ...threadsStats, [streamId]: updated }
+}
+
+function addTips(
+    streamId: string,
+    event: TimelineEvent,
+    tips: TipsMap,
+    direction: 'append' | 'prepend',
+): TipsMap {
+    if (!isMessageTipEvent(event)) {
+        return tips
+    }
+    // note to future self, if anyone starts uploading the same transaction multiple times,
+    // store the tips in a Record keyed by transactionHash instead of eventId
+    return {
+        ...tips,
+        [streamId]: addTip(event, tips[streamId], direction),
+    }
+}
+
+function addTip(
+    event: MessageTipEvent,
+    tips: Record<string, MessageTips> | undefined,
+    direction: 'append' | 'prepend',
+): Record<string, MessageTips> {
+    const refEventId = event.content.refEventId
+    if (!tips) {
+        return {
+            [refEventId]: [event],
+        }
+    }
+    if (direction === 'append') {
+        return {
+            ...tips,
+            [refEventId]: [...(tips[refEventId] ?? []), event],
+        }
+    } else {
+        return {
+            ...tips,
+            [refEventId]: [event, ...(tips[refEventId] ?? [])],
+        }
+    }
+}
+
+function removeTip(streamId: string, event: TimelineEvent, tips: TipsMap): TipsMap {
+    if (!isMessageTipEvent(event)) {
+        return tips
+    }
+    const refEventId = event.content.refEventId
+    if (!tips[streamId]?.[refEventId]) {
+        return tips
+    }
+    return {
+        ...tips,
+        [streamId]: {
+            ...tips[streamId],
+            [refEventId]: tips[streamId][refEventId].filter((t) => t.eventId !== event.eventId),
+        },
+    }
 }
 
 function addReactions(

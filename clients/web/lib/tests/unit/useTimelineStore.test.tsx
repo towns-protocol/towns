@@ -3,7 +3,12 @@
  */
 
 import { useTimelineStore } from '../../src/store/use-timeline-store'
-import { RoomMessageEvent, ThreadStats, TimelineEvent } from '../../src/types/timeline-types'
+import {
+    RoomMessageEvent,
+    ThreadStats,
+    TimelineEvent,
+    MessageTips,
+} from '../../src/types/timeline-types'
 import { ConversationBuilder } from './helpers/ConversationBuilder'
 
 export {}
@@ -26,6 +31,23 @@ function describeThreads(threads?: Record<string, TimelineEvent[]>) {
     }, {} as Record<string, string[]>)
 }
 
+function describeTips(tipsMap?: Record<string, MessageTips>): Record<string, string[]> | undefined {
+    if (!tipsMap) {
+        return undefined
+    }
+    const returnValue: Record<string, string[]> = {}
+    for (const [eventId, tips] of Object.entries(tipsMap)) {
+        const described = tips.map(
+            (t) =>
+                `${t.eventId} quantity: ${
+                    t.content.transaction?.quantity?.toString() ?? '??'
+                } from: ${t.content.fromUserId} to: ${t.content.toUserId}`,
+        )
+        returnValue[eventId] = described
+    }
+    return returnValue
+}
+
 function execute(
     userId: string,
     events: TimelineEvent[],
@@ -33,6 +55,7 @@ function execute(
         timeline: string[]
         threads?: Record<string, string[]>
         threadStats?: Record<string, ThreadStats>
+        tips?: Record<string, string[]>
     },
 ) {
     const { setState } = useTimelineStore.getState()
@@ -46,6 +69,7 @@ function execute(
             timelines: timelinesAppended,
             threads: threadsAppended,
             threadsStats: threadStatsAppended,
+            tips: tipsAppended,
         } = useTimelineStore.getState()
         // assert the timeline events are in the correct order
         expect(describeEvents(timelinesAppended[channelId])).toEqual(expected.timeline)
@@ -56,6 +80,10 @@ function execute(
         // thread stats
         if (expected.threadStats) {
             expect(threadStatsAppended[channelId]).toEqual(expected.threadStats)
+        }
+        // check tips
+        if (expected.tips) {
+            expect(describeTips(tipsAppended[channelId])).toEqual(expected.tips)
         }
     }
     // clear the timeline
@@ -69,6 +97,7 @@ function execute(
             timelines: timelinesPrepended,
             threads: threadsPrepended,
             threadsStats: threadStatsPrepended,
+            tips: tipsPrepended,
         } = useTimelineStore.getState()
         // assert the timeline events are in the correct order
         expect(describeEvents(timelinesPrepended[channelId])).toEqual(expected.timeline)
@@ -79,6 +108,10 @@ function execute(
         // thread stats
         if (expected.threadStats) {
             expect(threadStatsPrepended[channelId]).toEqual(expected.threadStats)
+        }
+        // check tips
+        if (expected.tips) {
+            expect(describeTips(tipsPrepended[channelId])).toEqual(expected.tips)
         }
     }
 }
@@ -170,6 +203,39 @@ describe('UseTimelineStore', () => {
                         parentMessageContent: events[0].content as RoomMessageEvent,
                         isParticipating: true,
                     },
+                },
+            })
+        }),
+        test('test tip', () => {
+            // ids must be hex
+            const msgId_0 = '0x1234'
+            const msgId_1 = '0x1235'
+            const tipId_a = '0x1236'
+            const tipId_b = '0x1237'
+            const tipId_c = '0x1238'
+            // events
+            const events = new ConversationBuilder()
+                .sendMessage({ id: msgId_0, from: 'alice', body: 'hi bob!' })
+                .sendMessage({ id: msgId_1, from: 'bob', body: 'hi alice!' })
+                .sendTip({ tip: 10, ref: msgId_1, id: tipId_a, from: 'bob', to: 'alice' })
+                .sendTip({ tip: 10, ref: msgId_0, id: tipId_b, from: 'alice', to: 'bob' })
+                .sendTip({ tip: 10, ref: msgId_0, id: tipId_c, from: 'alice', to: 'bob' })
+                .getEvents()
+            // results
+            execute('alice', events, {
+                timeline: [
+                    `${msgId_0} alice: hi bob!`,
+                    `${msgId_1} bob: hi alice!`,
+                    `${tipId_a} kind: 1 fromUserId: bob refEventId: ${msgId_1} toUserId: alice quantity: 10`,
+                    `${tipId_b} kind: 1 fromUserId: alice refEventId: ${msgId_0} toUserId: bob quantity: 10`,
+                    `${tipId_c} kind: 1 fromUserId: alice refEventId: ${msgId_0} toUserId: bob quantity: 10`,
+                ],
+                tips: {
+                    [msgId_1]: [`${tipId_a} quantity: 10 from: bob to: alice`],
+                    [msgId_0]: [
+                        `${tipId_b} quantity: 10 from: alice to: bob`,
+                        `${tipId_c} quantity: 10 from: alice to: bob`,
+                    ],
                 },
             })
         }),

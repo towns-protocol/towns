@@ -14,6 +14,7 @@ import {
     SpacePayload_ChannelSettings,
     BlockchainTransaction,
     UserPayload_ReceivedBlockchainTransaction,
+    BlockchainTransactionKind,
 } from '@river-build/proto'
 import { PlainMessage } from '@bufbuild/protobuf'
 import { Channel, Membership, Mention, MessageType } from './towns-types'
@@ -107,8 +108,11 @@ export type TimelineEvent_OneOf =
 
 export interface MemberBlockchainTransactionEvent {
     kind: ZTEvent.MemberBlockchainTransaction
-    transaction?: PlainMessage<BlockchainTransaction>
+    transaction: PlainMessage<BlockchainTransaction>
+    transactionHash: string
     fromUserId: string
+    refEventId: string
+    toUserId?: string
 }
 
 export interface UserBlockchainTransactionEvent {
@@ -356,6 +360,19 @@ export interface ThreadResult {
 /// MessageReactions: { reactionName: { userId: { eventId: string } } }
 export type MessageReactions = Record<string, Record<string, { eventId: string }>>
 
+export type MessageTipEvent = Omit<TimelineEvent, 'content'> & {
+    content: MemberBlockchainTransactionEvent
+}
+// array of timeline events that all have content of type MemberBlockchainTransactionEvent
+export type MessageTips = MessageTipEvent[]
+
+export function isMessageTipEvent(event: TimelineEvent): event is MessageTipEvent {
+    return (
+        event.content?.kind === ZTEvent.MemberBlockchainTransaction &&
+        event.content.transaction?.kind === BlockchainTransactionKind.TIP
+    )
+}
+
 export type MentionResult = {
     type: 'mention'
     unread: boolean
@@ -493,17 +510,9 @@ export function getFallbackContent(
         case ZTEvent.Unpin:
             return `unpinnedEventId: ${content.unpinnedEventId} by: ${content.userId}`
         case ZTEvent.MemberBlockchainTransaction:
-            return `kind: ${content.transaction?.kind} fromUserAddress: ${
+            return `kind: ${content.transaction?.kind} fromUserId: ${
                 content.fromUserId
-            } refEventId: ${
-                content.transaction?.refEventId
-                    ? bin_toHexString(content.transaction.refEventId)
-                    : ''
-            } toUserAddress: ${
-                content.transaction?.toUserAddress
-                    ? bin_toHexString(content.transaction?.toUserAddress)
-                    : ''
-            } quantity: ${
+            } refEventId: ${content.refEventId} toUserId: ${content.toUserId} quantity: ${
                 content.transaction?.quantity ? content.transaction?.quantity.toString() : ''
             }`
         case ZTEvent.UserBlockchainTransaction:

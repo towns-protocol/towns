@@ -522,14 +522,30 @@ function toTownsContent_MemberPayload(
                     unpinnedEventId: bin_toHexString(value.content.value.eventId),
                 } satisfies UnpinEvent,
             }
-        case 'memberBlockchainTransaction':
+        case 'memberBlockchainTransaction': {
+            const transaction = value.content.value.transaction
+            if (!transaction) {
+                return { error: `${description} no transaction` }
+            }
+            if (!transaction?.refEventId) {
+                return { error: `${description} no refEventId` }
+            }
+            if (!transaction.receipt?.transactionHash) {
+                return { error: `${description} no transactionHash` }
+            }
             return {
                 content: {
                     kind: ZTEvent.MemberBlockchainTransaction,
-                    transaction: value.content.value.transaction,
+                    transaction: transaction,
+                    transactionHash: bin_toHexString(transaction.receipt.transactionHash),
                     fromUserId: bin_toHexString(value.content.value.fromUserAddress),
+                    refEventId: bin_toHexString(transaction.refEventId),
+                    toUserId: transaction.toUserAddress
+                        ? bin_toHexString(transaction.toUserAddress)
+                        : undefined,
                 } satisfies MemberBlockchainTransactionEvent,
             }
+        }
         case 'mls':
             return {
                 error: `MLS not supported: ${description}`,

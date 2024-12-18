@@ -92,6 +92,7 @@ export { useSpacesFromContract, useSpaceFromContract } from './hooks/use-spaces-
 export { useStreamUpToDate } from './hooks/use-stream-up-to-date'
 export { useTimeline } from './hooks/use-timeline'
 export { useTimelineReactions } from './hooks/use-timeline-reactions'
+export { useTimelineTips } from './hooks/use-timeline-tips'
 export { useTimelineThread } from './hooks/use-timeline-thread'
 export { useTimelineThreadStats } from './hooks/use-timeline-thread-stats'
 export { useUpdateChannelTransaction } from './hooks/use-update-channel-transaction'
