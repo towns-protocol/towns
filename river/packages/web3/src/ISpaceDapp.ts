@@ -21,6 +21,7 @@ import {
     SpaceRegistrar,
     IRuleEntitlementBase,
     IRuleEntitlementV2Base,
+    RiverAirdropDapp,
 } from './v3'
 import { PricingModules } from './v3/PricingModules'
 import { BaseChainConfig } from './IStaticContractsInfo'
@@ -121,6 +122,8 @@ export interface ISpaceDapp {
     readonly walletLink: WalletLinkV3
     readonly pricingModules: PricingModules
     readonly platformRequirements: PlatformRequirements
+    readonly airdrop: RiverAirdropDapp | undefined
+
     isLegacySpace: (spaceId: string) => Promise<boolean>
     addRoleToChannel: (
         spaceId: string,
