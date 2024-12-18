@@ -14,7 +14,8 @@ import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
 contract DeployTokenMigration is FacetHelper, Deployer {
   constructor() {
     addSelector(TokenMigrationFacet.migrate.selector);
-    addSelector(TokenMigrationFacet.withdrawTokens.selector);
+    addSelector(TokenMigrationFacet.emergencyWithdraw.selector);
+    addSelector(TokenMigrationFacet.tokens.selector);
   }
 
   function initializer() public pure override returns (bytes4) {

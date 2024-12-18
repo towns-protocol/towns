@@ -1697,8 +1697,8 @@ export class SpaceDapp implements ISpaceDapp {
                 tokenId,
                 currency,
                 amount,
-                messageId,
-                channelId,
+                messageId: ensureHexPrefix(messageId),
+                channelId: ensureHexPrefix(channelId),
             },
             {
                 value: amount,

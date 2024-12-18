@@ -28,6 +28,8 @@ contract TokenMigrationFacet is
     IERC20 oldToken,
     IERC20 newToken
   ) external onlyInitializing {
+    _validateTokens(oldToken, newToken);
+
     TokenMigrationStorage.Layout storage ds = TokenMigrationStorage.layout();
     (ds.oldToken, ds.newToken) = (oldToken, newToken);
     _pause();
@@ -39,18 +41,21 @@ contract TokenMigrationFacet is
 
     TokenMigrationStorage.Layout storage ds = TokenMigrationStorage.layout();
 
-    IERC20 oldToken = ds.oldToken;
-    IERC20 newToken = ds.newToken;
+    (IERC20 oldToken, IERC20 newToken) = (ds.oldToken, ds.newToken);
 
     uint256 currentBalance = oldToken.balanceOf(account);
-
     if (currentBalance == 0)
       CustomRevert.revertWith(TokenMigration__InvalidBalance.selector);
 
     if (oldToken.allowance(account, address(this)) < currentBalance)
       CustomRevert.revertWith(TokenMigration__InvalidAllowance.selector);
 
-    // Transfer old tokens from user to here
+    // check that contract has enough balance of new token
+    uint256 newTokenBalance = newToken.balanceOf(address(this));
+    if (newTokenBalance < currentBalance)
+      CustomRevert.revertWith(TokenMigration__NotEnoughTokenBalance.selector);
+
+    // Transfer old tokens from user to this contract
     address(oldToken).safeTransferFrom(account, address(this), currentBalance);
 
     // Transfer new tokens to user
@@ -60,18 +65,29 @@ contract TokenMigrationFacet is
   }
 
   /// @inheritdoc ITokenMigration
-  function withdrawTokens() external onlyOwner {
-    TokenMigrationStorage.Layout storage ds = TokenMigrationStorage.layout();
+  function emergencyWithdraw(
+    IERC20 token,
+    address to
+  ) external onlyOwner whenPaused {
+    uint256 balance = token.balanceOf(address(this));
+    address(token).safeTransfer(to, balance);
+    emit EmergencyWithdraw(address(token), to, balance);
+  }
 
-    (IERC20 oldToken, IERC20 newToken) = (ds.oldToken, ds.newToken);
-    address owner = _owner();
+  /// @inheritdoc ITokenMigration
+  function tokens() external view returns (IERC20 oldToken, IERC20 newToken) {
+    return (
+      TokenMigrationStorage.layout().oldToken,
+      TokenMigrationStorage.layout().newToken
+    );
+  }
 
-    uint256 oldTokenBalance = oldToken.balanceOf(address(this));
-    if (oldTokenBalance > 0)
-      address(oldToken).safeTransfer(owner, oldTokenBalance);
+  // =============================================================
+  //                           Internal
+  // =============================================================
 
-    uint256 newTokenBalance = newToken.balanceOf(address(this));
-    if (newTokenBalance > 0)
-      address(newToken).safeTransfer(owner, newTokenBalance);
+  function _validateTokens(IERC20 oldToken, IERC20 newToken) internal pure {
+    if (address(oldToken) == address(0) || address(newToken) == address(0))
+      CustomRevert.revertWith(TokenMigration__InvalidTokens.selector);
   }
 }

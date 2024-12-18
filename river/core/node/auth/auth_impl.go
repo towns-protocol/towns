@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"strings"
@@ -11,7 +12,7 @@ import (
 
 	"github.com/river-build/river/core/config"
 	"github.com/river-build/river/core/contracts/base"
-	"github.com/river-build/river/core/contracts/types"
+	types "github.com/river-build/river/core/contracts/types"
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/dlog"
@@ -21,6 +22,7 @@ import (
 	"github.com/river-build/river/core/xchain/entitlement"
 
 	"github.com/ethereum/go-ethereum/common"
+	ethTypes "github.com/ethereum/go-ethereum/core/types"
 )
 
 type ChainAuth interface {
@@ -45,6 +47,7 @@ type ChainAuth interface {
 			linked wallets are entitled to the channel, the permission check passes. Otherwise, it fails.
 	*/
 	IsEntitled(ctx context.Context, cfg *config.Config, args *ChainAuthArgs) (bool, error)
+	VerifyReceipt(ctx context.Context, cfg *config.Config, receipt *BlockchainTransactionReceipt) (bool, error)
 }
 
 var everyone = common.HexToAddress("0x1") // This represents an Ethereum address of "0x1"
@@ -81,6 +84,17 @@ func NewChainAuthArgsForIsSpaceMember(spaceId shared.StreamId, userId string) *C
 	}
 }
 
+func NewChainAuthArgsForIsWalletLinked(
+	userId []byte,
+	walletAddress []byte,
+) *ChainAuthArgs {
+	return &ChainAuthArgs{
+		kind:          chainAuthKindIsWalletLinked,
+		principal:     common.BytesToAddress(userId),
+		walletAddress: common.BytesToAddress(walletAddress),
+	}
+}
+
 type chainAuthKind int
 
 const (
@@ -89,6 +103,7 @@ const (
 	chainAuthKindSpaceEnabled
 	chainAuthKindChannelEnabled
 	chainAuthKindIsSpaceMember
+	chainAuthKindIsWalletLinked
 )
 
 type ChainAuthArgs struct {
@@ -98,6 +113,7 @@ type ChainAuthArgs struct {
 	principal     common.Address
 	permission    Permission
 	linkedWallets string // a serialized list of linked wallets to comply with the cache key constraints
+	walletAddress common.Address
 }
 
 func (args *ChainAuthArgs) Principal() common.Address {
@@ -106,13 +122,14 @@ func (args *ChainAuthArgs) Principal() common.Address {
 
 func (args *ChainAuthArgs) String() string {
 	return fmt.Sprintf(
-		"ChainAuthArgs{kind: %d, spaceId: %s, channelId: %s, principal: %s, permission: %s, linkedWallets: %s}",
+		"ChainAuthArgs{kind: %d, spaceId: %s, channelId: %s, principal: %s, permission: %s, linkedWallets: %s, walletAddress: %s}",
 		args.kind,
 		args.spaceId,
 		args.channelId,
 		args.principal.Hex(),
 		args.permission,
 		args.linkedWallets,
+		args.walletAddress.Hex(),
 	)
 }
 
@@ -266,6 +283,124 @@ func NewChainAuth(
 		membershipCacheHit:           counter.WithLabelValues("membership", "hit"),
 		membershipCacheMiss:          counter.WithLabelValues("membership", "miss"),
 	}, nil
+}
+
+func (ca *chainAuth) VerifyReceipt(
+	ctx context.Context,
+	cfg *config.Config,
+	userReceipt *BlockchainTransactionReceipt,
+) (bool, error) {
+	client, err := ca.evaluator.GetClient(userReceipt.GetChainId())
+	if err != nil {
+		return false, err
+	}
+	txHash := common.BytesToHash(userReceipt.GetTransactionHash())
+	chainReceipt, err := client.TransactionReceipt(ctx, txHash)
+	if err != nil {
+		return false, err
+	}
+	// Check if the block number matches:
+	if chainReceipt.BlockNumber.Uint64() != userReceipt.BlockNumber {
+		return false, RiverError(Err_PERMISSION_DENIED, "Block number mismatch", "got",
+			chainReceipt.BlockNumber.Uint64(), "user uploaded", userReceipt.BlockNumber)
+	}
+
+	// Check logs count and match the event log data
+	if len(chainReceipt.Logs) != len(userReceipt.Logs) {
+		return false, RiverError(Err_PERMISSION_DENIED, "Log count mismatch: chain:",
+			len(chainReceipt.Logs), "uploaded:", len(userReceipt.Logs))
+	}
+
+	// For each log, check address, topics, data
+	for i, chainLog := range chainReceipt.Logs {
+		uploadedLog := userReceipt.Logs[i]
+		if !bytes.Equal(chainLog.Address[:], uploadedLog.Address) {
+			return false, RiverError(
+				Err_PERMISSION_DENIED,
+				"Log address mismatch:",
+				i,
+				"address:",
+				chainLog.Address.Hex(),
+				"uploaded:",
+				uploadedLog.Address,
+			)
+		}
+
+		if len(chainLog.Topics) != len(uploadedLog.Topics) {
+			return false, RiverError(Err_PERMISSION_DENIED, "Log topics count mismatch", i)
+		}
+
+		for j, topic := range chainLog.Topics {
+			if !bytes.Equal(topic[:], uploadedLog.Topics[j]) {
+				return false, RiverError(Err_PERMISSION_DENIED, "Log topic mismatch",
+					i, "topic index: ", j, "chain: ", topic.Hex(), "uploaded: ", uploadedLog.Topics[j])
+			}
+		}
+
+		if !bytes.Equal(chainLog.Data, uploadedLog.Data) {
+			return false, RiverError(Err_PERMISSION_DENIED, "Log data mismatch", i)
+		}
+	}
+
+	// get the transaction
+	tx, isPending, err := client.TransactionByHash(ctx, txHash)
+	if err != nil {
+		return false, err
+	}
+	if isPending {
+		return false, RiverError(Err_PERMISSION_DENIED, "Transaction is pending", "txHash", txHash.Hex())
+	}
+
+	// check the to address
+	if !bytes.Equal(tx.To()[:], userReceipt.GetTo()) {
+		return false, RiverError(
+			Err_PERMISSION_DENIED,
+			"To address mismatch",
+			"chain",
+			tx.To().Hex(),
+			"uploaded",
+			userReceipt.To,
+		)
+	}
+
+	// check the from addresses
+	signer := ethTypes.LatestSignerForChainID(tx.ChainId())
+	sender, err := signer.Sender(tx)
+	if err != nil {
+		return false, err
+	}
+	if !bytes.Equal(sender.Bytes(), userReceipt.GetFrom()) {
+		return false, RiverError(
+			Err_PERMISSION_DENIED,
+			"From address mismatch",
+			"chain",
+			sender.Hex(),
+			"uploaded",
+			userReceipt.From,
+		)
+	}
+
+	// If we reach here, the logs match exactly.
+
+	// 3) Check the number of confirmations
+	latestBlockNumber, err := ca.blockchain.Client.BlockNumber(ctx)
+	if err != nil {
+		return false, RiverError(Err_PERMISSION_DENIED, "Failed to get latest block number: %v", err)
+	}
+
+	confirmations := latestBlockNumber - chainReceipt.BlockNumber.Uint64()
+	if confirmations < 1 {
+		return false, RiverError(
+			Err_PERMISSION_DENIED,
+			"Transaction has 0 confirmations.",
+			"latestBlockNumber",
+			latestBlockNumber,
+			"uploaded:",
+			chainReceipt.BlockNumber.Uint64(),
+		)
+	}
+
+	return true, nil
 }
 
 func (ca *chainAuth) IsEntitled(ctx context.Context, cfg *config.Config, args *ChainAuthArgs) (bool, error) {
@@ -723,10 +858,11 @@ func (ca *chainAuth) getLinkedWallets(
 
 	userCacheKey := newArgsForLinkedWallets(args.principal)
 	// We want fresh linked wallets when evaluating space and channel joins, key solicitations,
-	// and user scrubs, all of which request the Read permission.
+	// user scrubs, and checking if a wallet is linked, all of which request the Read permission.
 	// Note: space joins seem to request Read on the space, but they should probably actually
 	// be sending chain auth args with kind set to chainAuthKindIsSpaceMember.
-	if args.permission == PermissionRead || args.kind == chainAuthKindIsSpaceMember {
+	if args.permission == PermissionRead || args.kind == chainAuthKindIsSpaceMember ||
+		args.kind == chainAuthKindIsWalletLinked {
 		ca.linkedWalletCache.bust(userCacheKey)
 		ca.linkedWalletCacheBust.Inc()
 	}
@@ -834,6 +970,8 @@ func (ca *chainAuth) checkStreamIsEnabled(
 			return false, err
 		}
 		return isEnabled, nil
+	} else if args.kind == chainAuthKindIsWalletLinked {
+		return true, nil
 	} else {
 		return false, RiverError(Err_INTERNAL, "Unknown chain auth kind").Func("checkStreamIsEnabled")
 	}
@@ -866,6 +1004,16 @@ func (ca *chainAuth) checkEntitlement(
 	wallets, err := ca.getLinkedWallets(ctx, cfg, args)
 	if err != nil {
 		return nil, err
+	}
+
+	// handle checking if the user is linked to a specific wallet
+	if args.kind == chainAuthKindIsWalletLinked {
+		for _, wallet := range wallets {
+			if wallet == args.walletAddress {
+				return boolCacheResult(true), nil
+			}
+		}
+		return boolCacheResult(false), nil
 	}
 
 	args = args.withLinkedWallets(wallets)

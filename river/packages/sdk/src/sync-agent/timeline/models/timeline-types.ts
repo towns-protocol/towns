@@ -11,6 +11,8 @@ import type {
     ChannelOp,
     SpacePayload_ChannelSettings,
     ChannelProperties,
+    BlockchainTransaction,
+    UserPayload_ReceivedBlockchainTransaction,
 } from '@river-build/proto'
 import type { PlainMessage } from '@bufbuild/protobuf'
 import type { DecryptionSessionError } from '@river-build/encryption'
@@ -61,37 +63,40 @@ export interface TimelineEvent {
 
 /// a timeline event should have one or none of the following fields set
 export type TimelineEvent_OneOf =
-    | MiniblockHeaderEvent
-    | ReactionEvent
+    | ChannelCreateEvent
     | FulfillmentEvent
     | KeySolicitationEvent
+    | MiniblockHeaderEvent
+    | MemberBlockchainTransactionEvent
     | PinEvent
+    | ReactionEvent
     | RedactedEvent
     | RedactionActionEvent
     | RoomCreateEvent
-    | RoomMessageEncryptedEvent
-    | RoomMessageMissingEvent
     | RoomMemberEvent
+    | RoomMessageEncryptedEvent
+    | RoomMessageEncryptedRefEvent
     | RoomMessageEvent
+    | RoomMessageMissingEvent
     | RoomPropertiesEvent // TODO: maybe change this to ChannelPropertiesEvent (?)
-    | ChannelCreateEvent
-    | SpaceUpdateAutojoinEvent
-    | SpaceUpdateHideUserJoinLeavesEvent
-    | SpaceImageEvent
-    | SpaceUsernameEvent
     | SpaceDisplayNameEvent
     | SpaceEnsAddressEvent
+    | SpaceImageEvent
     | SpaceNftEvent
-    | RoomMessageEncryptedRefEvent
+    | SpaceUpdateAutojoinEvent
+    | SpaceUpdateHideUserJoinLeavesEvent
+    | SpaceUsernameEvent
+    | UserBlockchainTransactionEvent
+    | UserReceivedBlockchainTransactionEvent
     | UnpinEvent
     | MlsEvent
 
 export enum RiverTimelineEvent {
-    BlockchainTransaction = 'blockchain.transaction',
     MiniblockHeader = 'm.miniblockheader',
     Reaction = 'm.reaction',
     Fulfillment = 'm.fulfillment',
     KeySolicitation = 'm.key_solicitation',
+    MemberBlockchainTransaction = 'm.member_blockchain_transaction',
     Pin = 'm.pin',
     RedactedEvent = 'm.redacted_event',
     RedactionActionEvent = 'm.redaction_action',
@@ -112,6 +117,8 @@ export enum RiverTimelineEvent {
     SpaceEnsAddress = 'm.space.ens_name',
     SpaceNft = 'm.space.nft',
     Unpin = 'm.unpin',
+    UserBlockchainTransaction = 'm.user_blockchain_transaction',
+    UserReceivedBlockchainTransaction = 'm.user_received_blockchain_transaction',
     Mls = 'm.mls',
 }
 
@@ -249,6 +256,22 @@ export interface RoomMemberEvent {
     initiatorId: string
     membership: Membership
     streamId?: string // in a case of an invitation to a channel with a streamId
+}
+
+export interface UserBlockchainTransactionEvent {
+    kind: RiverTimelineEvent.UserBlockchainTransaction
+    transaction: PlainMessage<BlockchainTransaction>
+}
+
+export interface UserReceivedBlockchainTransactionEvent {
+    kind: RiverTimelineEvent.UserReceivedBlockchainTransaction
+    receivedTransaction: PlainMessage<UserPayload_ReceivedBlockchainTransaction>
+}
+
+export interface MemberBlockchainTransactionEvent {
+    kind: RiverTimelineEvent.MemberBlockchainTransaction
+    transaction?: PlainMessage<BlockchainTransaction>
+    fromUserId: string
 }
 
 export enum MessageType {

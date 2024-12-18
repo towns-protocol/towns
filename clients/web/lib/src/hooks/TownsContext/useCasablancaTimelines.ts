@@ -69,6 +69,9 @@ import {
     SpaceImageEvent,
     SpaceUpdateAutojoinEvent,
     SpaceUpdateHideUserJoinLeavesEvent,
+    UserBlockchainTransactionEvent,
+    UserReceivedBlockchainTransactionEvent,
+    MemberBlockchainTransactionEvent,
 } from '../../types/timeline-types'
 import { useCallback } from 'react'
 import { bin_toHexString, check } from '@river-build/dlog'
@@ -519,6 +522,14 @@ function toTownsContent_MemberPayload(
                     unpinnedEventId: bin_toHexString(value.content.value.eventId),
                 } satisfies UnpinEvent,
             }
+        case 'memberBlockchainTransaction':
+            return {
+                content: {
+                    kind: ZTEvent.MemberBlockchainTransaction,
+                    transaction: value.content.value.transaction,
+                    fromUserId: bin_toHexString(value.content.value.fromUserAddress),
+                } satisfies MemberBlockchainTransactionEvent,
+            }
         case 'mls':
             return {
                 error: `MLS not supported: ${description}`,
@@ -573,6 +584,23 @@ function toTownsContent_UserPayload(
                     initiatorId: event.remoteEvent.creatorUserId,
                     membership: toMembership(payload.op),
                 } satisfies RoomMemberEvent,
+            }
+        }
+
+        case 'blockchainTransaction': {
+            return {
+                content: {
+                    kind: ZTEvent.UserBlockchainTransaction,
+                    transaction: value.content.value,
+                } satisfies UserBlockchainTransactionEvent,
+            }
+        }
+        case 'receivedBlockchainTransaction': {
+            return {
+                content: {
+                    kind: ZTEvent.UserReceivedBlockchainTransaction,
+                    receivedTransaction: value.content.value,
+                } satisfies UserReceivedBlockchainTransactionEvent,
             }
         }
 

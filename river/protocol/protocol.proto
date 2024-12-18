@@ -222,6 +222,11 @@ message MemberPayload {
 
     }
 
+    message MemberBlockchainTransaction {
+        BlockchainTransaction transaction = 1;
+        bytes from_user_address = 2;
+    }
+
     oneof content {
         Membership membership = 1;
         KeySolicitation key_solicitation = 2;
@@ -233,6 +238,7 @@ message MemberPayload {
         Pin pin = 8;
         Unpin unpin = 9;
         Mls mls = 10;
+        MemberBlockchainTransaction member_blockchain_transaction = 11;
     }
 }
 
@@ -402,10 +408,19 @@ message UserPayload {
         optional bytes stream_parent_id = 4;
     }
 
+    // derived event, only send from nodes
+    message ReceivedBlockchainTransaction {
+        ReceivedBlockchainTransactionKind kind = 1;
+        BlockchainTransaction transaction = 2;
+        bytes from_user_address = 3;
+    }
+
     oneof content {
         Inception inception = 1;
         UserMembership user_membership = 2;
         UserMembershipAction user_membership_action = 3;
+        BlockchainTransaction blockchain_transaction = 4; // added by user
+        ReceivedBlockchainTransaction received_blockchain_transaction = 5; // added by nodes
     }
 }
 
@@ -587,6 +602,33 @@ message Snapshot {
         GdmChannelPayload.Snapshot gdm_channel_content = 108;
         UserInboxPayload.Snapshot user_inbox_content = 109;
     }
+}
+
+message BlockchainTransaction {
+    BlockchainTransactionKind kind = 1;
+    BlockchainTransactionReceipt receipt = 2;
+    
+    // optional metadata
+    optional bytes stream_id = 101;
+    optional bytes ref_event_id = 102;
+    optional bytes to_user_address = 103;
+    optional uint64 quantity = 104;
+    optional bytes currency = 105;
+}
+
+/** blockchain transaction receipt */
+message BlockchainTransactionReceipt {
+    message Log {
+        bytes address = 1;
+        repeated bytes topics = 2;
+        bytes data = 3;
+    }
+    uint64 chain_id = 1;
+    bytes transaction_hash = 2;
+    uint64 block_number = 3;
+    bytes to = 4;
+    bytes from = 5;
+    repeated Log logs = 6;
 }
 
 /**
@@ -910,6 +952,15 @@ enum GroupMentionType {
     GROUP_MENTION_TYPE_AT_CHANNEL = 1;
 }
 
+enum BlockchainTransactionKind {
+    BLOCKCHAIN_TRANSACTION_KIND_UNSPECIFIED = 0;
+    BLOCKCHAIN_TRANSACTION_KIND_TIP = 1;
+}
+
+enum ReceivedBlockchainTransactionKind {
+    RECEIVED_BLOCKCHAIN_TRANSACTION_KIND_UNSPECIFIED = 0;
+    RECEIVED_BLOCKCHAIN_TRANSACTION_KIND_TIP = 1;
+}
 
 // Codes from 1 to 16 match gRPC/Connect codes.
 enum Err {

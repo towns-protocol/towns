@@ -57,3 +57,7 @@ func NewEvaluatorFromConfigWithBlockchainInfo(
 		),
 	}, nil
 }
+
+func (e *Evaluator) GetClient(chainId uint64) (crypto.BlockchainClient, error) {
+	return e.clients.Get(chainId)
+}

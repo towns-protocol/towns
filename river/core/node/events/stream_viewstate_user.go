@@ -1,6 +1,8 @@
 package events
 
 import (
+	"bytes"
+
 	. "github.com/river-build/river/core/node/base"
 	. "github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/shared"
@@ -10,6 +12,7 @@ type UserStreamView interface {
 	GetUserInception() (*UserPayload_Inception, error)
 	GetUserMembership(streamId shared.StreamId) (MembershipOp, error)
 	IsMemberOf(streamId shared.StreamId) bool
+	HasTransaction(receipt *BlockchainTransactionReceipt) (bool, error)
 }
 
 var _ UserStreamView = (*streamViewImpl)(nil)
@@ -80,5 +83,41 @@ func (r *streamViewImpl) GetUserMembership(streamId shared.StreamId) (Membership
 	}
 
 	err = r.forEachEvent(r.snapshotIndex+1, updateFn)
+	return retValue, err
+}
+
+// handles transactions for user streams and member payload of any stream
+func (r *streamViewImpl) HasTransaction(receipt *BlockchainTransactionReceipt) (bool, error) {
+	retValue := false
+	updateFn := func(e *ParsedEvent, minibockNum int64, eventNum int64) (bool, error) {
+		switch payload := e.Event.Payload.(type) {
+		case *StreamEvent_UserPayload:
+			switch payload := payload.UserPayload.Content.(type) {
+			case *UserPayload_BlockchainTransaction:
+				if bytes.Equal(payload.BlockchainTransaction.Receipt.TransactionHash, receipt.TransactionHash) {
+					retValue = true
+					return false, nil
+				}
+			case *UserPayload_ReceivedBlockchainTransaction_:
+				if bytes.Equal(payload.ReceivedBlockchainTransaction.Transaction.Receipt.TransactionHash, receipt.TransactionHash) {
+					retValue = true
+					return false, nil
+				}
+			}
+
+		case *StreamEvent_MemberPayload:
+			switch payload := payload.MemberPayload.Content.(type) {
+			case *MemberPayload_MemberBlockchainTransaction_:
+				if bytes.Equal(payload.MemberBlockchainTransaction.Transaction.Receipt.TransactionHash, receipt.TransactionHash) {
+					retValue = true
+					return false, nil
+				}
+			}
+		}
+
+		return true, nil
+	}
+
+	err := r.forEachEvent(0, updateFn)
 	return retValue, err
 }

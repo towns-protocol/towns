@@ -12,6 +12,8 @@ import {
     MiniblockHeader,
     PayloadCaseType,
     SpacePayload_ChannelSettings,
+    BlockchainTransaction,
+    UserPayload_ReceivedBlockchainTransaction,
 } from '@river-build/proto'
 import { PlainMessage } from '@bufbuild/protobuf'
 import { Channel, Membership, Mention, MessageType } from './towns-types'
@@ -45,11 +47,11 @@ export enum EventStatus {
 
 // Towns Timeline Event
 export enum ZTEvent {
-    BlockchainTransaction = 'blockchain.transaction',
     MiniblockHeader = 'm.miniblockheader',
     Reaction = 'm.reaction',
     Fulfillment = 'm.fulfillment',
     KeySolicitation = 'm.key_solicitation',
+    MemberBlockchainTransaction = 'm.member_blockchain_transaction',
     Pin = 'm.pin',
     RedactedEvent = 'm.redacted_event',
     RedactionActionEvent = 'm.redaction_action',
@@ -70,10 +72,13 @@ export enum ZTEvent {
     SpaceEnsAddress = 'm.space.ens_name',
     SpaceNft = 'm.space.nft',
     Unpin = 'm.unpin',
+    UserBlockchainTransaction = 'm.user_blockchain_transaction',
+    UserReceivedBlockchainTransaction = 'm.user_received_blockchain_transaction',
 }
 
 /// a timeline event should have one or none of the following fields set
 export type TimelineEvent_OneOf =
+    | MemberBlockchainTransactionEvent
     | MiniblockHeaderEvent
     | ReactionEvent
     | FulfillmentEvent
@@ -97,6 +102,23 @@ export type TimelineEvent_OneOf =
     | SpaceNftEvent
     | RoomMessageEncryptedRefEvent
     | UnpinEvent
+    | UserBlockchainTransactionEvent
+    | UserReceivedBlockchainTransactionEvent
+
+export interface MemberBlockchainTransactionEvent {
+    kind: ZTEvent.MemberBlockchainTransaction
+    transaction?: PlainMessage<BlockchainTransaction>
+    fromUserId: string
+}
+
+export interface UserBlockchainTransactionEvent {
+    kind: ZTEvent.UserBlockchainTransaction
+    transaction: PlainMessage<BlockchainTransaction>
+}
+export interface UserReceivedBlockchainTransactionEvent {
+    kind: ZTEvent.UserReceivedBlockchainTransaction
+    receivedTransaction: PlainMessage<UserPayload_ReceivedBlockchainTransaction>
+}
 
 export interface MiniblockHeaderEvent {
     kind: ZTEvent.MiniblockHeader
@@ -470,6 +492,39 @@ export function getFallbackContent(
             return `pinnedEventId: ${content.pinnedEventId} by: ${content.userId}`
         case ZTEvent.Unpin:
             return `unpinnedEventId: ${content.unpinnedEventId} by: ${content.userId}`
+        case ZTEvent.MemberBlockchainTransaction:
+            return `kind: ${content.transaction?.kind} fromUserAddress: ${
+                content.fromUserId
+            } refEventId: ${
+                content.transaction?.refEventId
+                    ? bin_toHexString(content.transaction.refEventId)
+                    : ''
+            } toUserAddress: ${
+                content.transaction?.toUserAddress
+                    ? bin_toHexString(content.transaction?.toUserAddress)
+                    : ''
+            } quantity: ${
+                content.transaction?.quantity ? content.transaction?.quantity.toString() : ''
+            }`
+        case ZTEvent.UserBlockchainTransaction:
+            return `kind: ${content.transaction.kind} refEventId: ${
+                content.transaction.refEventId
+                    ? bin_toHexString(content.transaction.refEventId)
+                    : ''
+            } toUserAddress: ${
+                content.transaction?.toUserAddress
+                    ? bin_toHexString(content.transaction?.toUserAddress)
+                    : ''
+            } quantity: ${
+                content.transaction?.quantity ? content.transaction.quantity.toString() : ''
+            }`
+
+        case ZTEvent.UserReceivedBlockchainTransaction:
+            return `kind: ${content.receivedTransaction.kind} fromUserAddress: ${
+                content.receivedTransaction.fromUserAddress
+                    ? bin_toHexString(content.receivedTransaction.fromUserAddress)
+                    : ''
+            }`
         default:
             staticAssertNever(content)
     }

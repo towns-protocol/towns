@@ -201,6 +201,22 @@ func Make_MemberPayload_DisplayName(displayName *EncryptedData) *StreamEvent_Mem
 	}
 }
 
+func Make_MemberPayload_BlockchainTransaction(
+	fromUserAddress []byte,
+	transaction *BlockchainTransaction,
+) *StreamEvent_MemberPayload {
+	return &StreamEvent_MemberPayload{
+		MemberPayload: &MemberPayload{
+			Content: &MemberPayload_MemberBlockchainTransaction_{
+				MemberBlockchainTransaction: &MemberPayload_MemberBlockchainTransaction{
+					Transaction:     transaction,
+					FromUserAddress: fromUserAddress,
+				},
+			},
+		},
+	}
+}
+
 func Make_DmChannelPayload_Inception(
 	streamId StreamId,
 	firstPartyAddress common.Address,
@@ -468,6 +484,24 @@ func Make_UserPayload_Membership(
 					Op:             op,
 					Inviter:        inviter,
 					StreamParentId: streamParentId,
+				},
+			},
+		},
+	}
+}
+
+func Make_UserPayload_ReceivedBlockchainTransaction(
+	kind ReceivedBlockchainTransactionKind,
+	fromUserAddress []byte,
+	transaction *BlockchainTransaction,
+) *StreamEvent_UserPayload {
+	return &StreamEvent_UserPayload{
+		UserPayload: &UserPayload{
+			Content: &UserPayload_ReceivedBlockchainTransaction_{
+				ReceivedBlockchainTransaction: &UserPayload_ReceivedBlockchainTransaction{
+					Kind:            kind,
+					Transaction:     transaction,
+					FromUserAddress: fromUserAddress,
 				},
 			},
 		},

@@ -2,13 +2,11 @@ package rpc
 
 import (
 	"context"
-	"math/big"
 	"sync"
 	"sync/atomic"
 	"time"
 
 	"connectrpc.com/connect"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/prometheus/client_golang/prometheus"
 
@@ -423,6 +421,7 @@ func (a *Archiver) startImpl(ctx context.Context, once bool, metrics infra.Metri
 	if once {
 		a.tasksWG = &sync.WaitGroup{}
 	} else if metrics != nil {
+		dlog.FromCtx(ctx).Info("Setting up metrics")
 		a.setupStatisticsMetrics(metrics)
 	}
 
@@ -432,61 +431,45 @@ func (a *Archiver) startImpl(ctx context.Context, once bool, metrics infra.Metri
 		go a.worker(ctx)
 	}
 
-	pageSize := a.config.GetStreamsContractCallPageSize()
-
 	blockNum := a.contract.Blockchain.InitialBlockNum
-
-	log := dlog.FromCtx(ctx)
-	log.Info("Reading stream registry for contract state of streams", "blockNum", blockNum, "pageSize", pageSize)
-
-	callOpts := &bind.CallOpts{
-		Context:     ctx,
-		BlockNumber: blockNum.AsBigInt(),
+	totalCount, err := a.contract.GetStreamCount(ctx, blockNum)
+	if err != nil {
+		return err
 	}
 
-	lastPage := false
-	var err error
-	var streams []river.StreamWithId
-	for i := int64(0); !lastPage; i += pageSize {
-		streams, lastPage, err = a.contract.StreamRegistry.GetPaginatedStreams(
-			callOpts,
-			big.NewInt(i),
-			big.NewInt(i+pageSize),
-		)
-		if err != nil {
-			return WrapRiverError(
-				Err_CANNOT_CALL_CONTRACT,
-				err,
-			).Func("archiver.start").
-				Message("StreamRegistry.GetPaginatedStreamsGetPaginatedStreams smart contract call failed")
-		}
-		for _, stream := range streams {
-			if stream.Id == registries.ZeroBytes32 {
-				continue
+	log := dlog.FromCtx(ctx)
+	log.Info(
+		"Reading stream registry for contract state of streams",
+		"blockNum",
+		blockNum,
+		"totalCount",
+		totalCount,
+	)
+
+	// Copy page size to the river registry contract for implicit use with ForAllStreams
+	a.contract.Settings.PageSize = int(a.config.GetStreamsContractCallPageSize())
+
+	if err := a.contract.ForAllStreams(
+		ctx,
+		blockNum,
+		func(stream *registries.GetStreamResult) bool {
+			if stream.StreamId == registries.ZeroBytes32 {
+				return true
 			}
 			if a.tasksWG != nil {
 				a.tasksWG.Add(1)
 			}
-			log := dlog.FromCtx(ctx)
-			log.Debug("Adding stream via detecting presence in stream registry", "streamId", stream.Id)
-			a.addNewStream(ctx, stream.Id, &stream.Stream.Nodes, stream.Stream.LastMiniblockNum)
-		}
-		if lastPage {
-			log.Info(
-				"Iterated through all contract streams",
-				"pageSize",
-				pageSize,
-				"numStreams",
-				i+int64(len(streams)),
-				"blockNum",
-				blockNum,
-			)
-		}
+
+			a.addNewStream(ctx, stream.StreamId, &stream.Nodes, stream.LastMiniblockNum)
+			return true
+		},
+	); err != nil {
+		return err
 	}
 
 	if !once {
 		log.Info("Listening to stream events", "blockNum", blockNum+1)
-		err = a.contract.OnStreamEvent(
+		err := a.contract.OnStreamEvent(
 			ctx,
 			blockNum+1,
 			a.onStreamAllocated,

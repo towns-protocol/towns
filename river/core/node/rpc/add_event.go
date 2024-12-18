@@ -64,7 +64,7 @@ func (s *Service) addParsedEvent(
 ) error {
 	// TODO: here it should loop and re-check the rules if view was updated in the meantime.
 
-	canAddEvent, chainAuthArgsList, sideEffects, err := rules.CanAddEvent(
+	canAddEvent, verifications, sideEffects, err := rules.CanAddEvent(
 		ctx,
 		s.chainConfig,
 		s.nodeRegistry.GetValidNodeAddresses(),
@@ -77,11 +77,11 @@ func (s *Service) addParsedEvent(
 		return err
 	}
 
-	if len(chainAuthArgsList) > 0 {
+	if len(verifications.OneOfChainAuths) > 0 {
 		isEntitled := false
 		var err error
 		// Determine if any chainAuthArgs grant entitlement
-		for _, chainAuthArgs := range chainAuthArgsList {
+		for _, chainAuthArgs := range verifications.OneOfChainAuths {
 			isEntitled, err = s.chainAuth.IsEntitled(ctx, s.config, chainAuthArgs)
 			if err != nil {
 				return err
@@ -106,7 +106,22 @@ func (s *Service) addParsedEvent(
 				Err_PERMISSION_DENIED,
 				"IsEntitled failed",
 				"chainAuthArgsList",
-				chainAuthArgsList,
+				verifications.OneOfChainAuths,
+			).Func("addParsedEvent")
+		}
+	}
+
+	if verifications.Receipt != nil {
+		isVerified, err := s.chainAuth.VerifyReceipt(ctx, s.config, verifications.Receipt)
+		if err != nil {
+			return err
+		}
+		if !isVerified {
+			return RiverError(
+				Err_PERMISSION_DENIED,
+				"VerifyReceipt failed",
+				"receipt",
+				verifications.Receipt,
 			).Func("addParsedEvent")
 		}
 	}

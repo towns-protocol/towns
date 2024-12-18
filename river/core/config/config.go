@@ -495,7 +495,7 @@ func (ac *ArchiveConfig) GetWorkerPoolSize() int {
 
 func (ac *ArchiveConfig) GetStreamsContractCallPageSize() int64 {
 	if ac.StreamsContractCallPageSize <= 0 {
-		return 5000
+		return 1000
 	}
 	return ac.StreamsContractCallPageSize
 }

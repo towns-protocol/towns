@@ -8,6 +8,7 @@ import {TestUtils} from "contracts/test/utils/TestUtils.sol";
 import {IPausableBase} from "contracts/src/diamond/facets/pausable/IPausable.sol";
 import {ITokenMigrationBase} from "contracts/src/tokens/migration/ITokenMigration.sol";
 import {IOwnableBase} from "contracts/src/diamond/facets/ownable/IERC173.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 //libraries
 import {Validator__InvalidAddress} from "contracts/src/utils/Validator.sol";
@@ -42,6 +43,9 @@ contract TokenMigrationTest is
     riverMigrationHelper = new DeployRiverMigration();
     oldToken = new MockERC20("Old Token", "OLD");
     newToken = new MockERC20("New Token", "NEW");
+
+    vm.label(address(oldToken), "Old Token");
+    vm.label(address(newToken), "New Token");
 
     riverMigrationHelper.setTokens(address(oldToken), address(newToken));
     diamond = riverMigrationHelper.deploy(deployer);
@@ -132,8 +136,8 @@ contract TokenMigrationTest is
     tokenMigration.migrate(account);
   }
 
-  // withdrawTokens
-  function test_withdrawTokens(
+  // emergencyWithdraw
+  function testFuzz_emergencyWithdraw(
     address account,
     uint256 amount
   )
@@ -141,16 +145,20 @@ contract TokenMigrationTest is
     assumeEOA(account)
     givenContractIsUnpaused
     givenAccountHasOldTokens(account, amount)
-    givenAllowanceIsSet(account, amount)
     givenContractHasNewTokens(amount)
+    givenAllowanceIsSet(account, amount)
     givenAccountMigrated(account, amount)
   {
-    vm.prank(deployer);
-    tokenMigration.withdrawTokens();
+    vm.startPrank(deployer);
+    pausable.pause();
+    tokenMigration.emergencyWithdraw(IERC20(address(oldToken)), deployer);
+    tokenMigration.emergencyWithdraw(IERC20(address(newToken)), deployer);
+    vm.stopPrank();
 
     assertEq(oldToken.balanceOf(address(tokenMigration)), 0);
     assertEq(newToken.balanceOf(address(tokenMigration)), 0);
     assertEq(oldToken.balanceOf(address(deployer)), amount);
+    assertEq(newToken.balanceOf(address(account)), amount);
   }
 
   function test_revertWhen_withdrawTokensNotOwner() external {
@@ -163,6 +171,6 @@ contract TokenMigrationTest is
         randomAddress
       )
     );
-    tokenMigration.withdrawTokens();
+    tokenMigration.emergencyWithdraw(IERC20(address(oldToken)), deployer);
   }
 }

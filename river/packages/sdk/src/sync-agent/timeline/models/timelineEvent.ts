@@ -47,6 +47,9 @@ import {
     type SpaceUpdateAutojoinEvent,
     type SpaceUpdateHideUserJoinLeavesEvent,
     type SpaceImageEvent,
+    UserBlockchainTransactionEvent,
+    MemberBlockchainTransactionEvent,
+    UserReceivedBlockchainTransactionEvent,
 } from './timeline-types'
 import type { PlainMessage } from '@bufbuild/protobuf'
 import { userIdFromAddress, streamIdFromBytes, streamIdAsString } from '../../../id'
@@ -362,7 +365,14 @@ function toTownsContent_MemberPayload(
                 },
             }
             break
-
+        case 'memberBlockchainTransaction':
+            return {
+                content: {
+                    kind: RiverTimelineEvent.MemberBlockchainTransaction,
+                    transaction: value.content.value.transaction,
+                    fromUserId: bin_toHexString(value.content.value.fromUserAddress),
+                } satisfies MemberBlockchainTransactionEvent,
+            }
         case undefined:
             return { error: `Undefined payload case: ${description}` }
         default:
@@ -414,7 +424,24 @@ function toTownsContent_UserPayload(
                 } satisfies RoomMemberEvent,
             }
         }
-
+        case 'blockchainTransaction': {
+            const payload = value.content.value
+            return {
+                content: {
+                    kind: RiverTimelineEvent.UserBlockchainTransaction,
+                    transaction: payload,
+                } satisfies UserBlockchainTransactionEvent,
+            }
+        }
+        case 'receivedBlockchainTransaction': {
+            const payload = value.content.value
+            return {
+                content: {
+                    kind: RiverTimelineEvent.UserReceivedBlockchainTransaction,
+                    receivedTransaction: payload,
+                } satisfies UserReceivedBlockchainTransactionEvent,
+            }
+        }
         case undefined: {
             return { error: `Undefined payload case: ${description}` }
         }
@@ -928,6 +955,38 @@ export function getFallbackContent(
             return `unpinnedEventId: ${content.unpinnedEventId} by: ${content.userId}`
         case RiverTimelineEvent.Mls:
             return `mlsEvent`
+        case RiverTimelineEvent.UserBlockchainTransaction:
+            return `kind: ${content.transaction.kind} refEventId: ${
+                content.transaction.refEventId
+                    ? bin_toHexString(content.transaction.refEventId)
+                    : ''
+            } toUserAddress: ${
+                content.transaction?.toUserAddress
+                    ? bin_toHexString(content.transaction?.toUserAddress)
+                    : ''
+            } quantity: ${
+                content.transaction?.quantity ? content.transaction.quantity.toString() : ''
+            }`
+        case RiverTimelineEvent.MemberBlockchainTransaction:
+            return `kind: ${content.transaction?.kind} fromUserAddress: ${
+                content.fromUserId
+            } refEventId: ${
+                content.transaction?.refEventId
+                    ? bin_toHexString(content.transaction.refEventId)
+                    : ''
+            } toUserAddress: ${
+                content.transaction?.toUserAddress
+                    ? bin_toHexString(content.transaction?.toUserAddress)
+                    : ''
+            } quantity: ${
+                content.transaction?.quantity ? content.transaction?.quantity.toString() : ''
+            }`
+        case RiverTimelineEvent.UserReceivedBlockchainTransaction:
+            return `kind: ${content.receivedTransaction.kind} fromUserAddress: ${
+                content.receivedTransaction.fromUserAddress
+                    ? bin_toHexString(content.receivedTransaction.fromUserAddress)
+                    : ''
+            }`
     }
 }
 

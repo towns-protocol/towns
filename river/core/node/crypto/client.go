@@ -166,16 +166,18 @@ func (ic *otelEthClient) BlockByNumber(ctx context.Context, number *big.Int) (*t
 // "fail" for other types of errors.
 func extractCallErrorStatus(err error) string {
 	if de, ok := err.(rpc.DataError); ok {
-		hexStr := de.ErrorData().(string)
-		hexStr = strings.TrimPrefix(hexStr, "0x")
-		revert, e := hex.DecodeString(hexStr)
-		if e == nil {
-			reason, e := abi.UnpackRevert(revert)
+		hexStr, ok := de.ErrorData().(string)
+		if ok {
+			hexStr = strings.TrimPrefix(hexStr, "0x")
+			revert, e := hex.DecodeString(hexStr)
 			if e == nil {
-				return reason
+				reason, e := abi.UnpackRevert(revert)
+				if e == nil {
+					return reason
+				}
 			}
+			return "revert"
 		}
-		return "revert"
 	}
 	return "fail"
 }

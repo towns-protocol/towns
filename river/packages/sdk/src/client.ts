@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-redundant-type-constituents */
-import { Message, PlainMessage } from '@bufbuild/protobuf'
+import { Message, PartialMessage, PlainMessage } from '@bufbuild/protobuf'
 import { Permission } from '@river-build/web3'
 import {
     MembershipOp,
@@ -30,6 +30,8 @@ import {
     ChunkedMedia,
     UserBio,
     Tags,
+    BlockchainTransaction,
+    BlockchainTransactionKind,
 } from '@river-build/proto'
 import {
     bin_fromHexString,
@@ -56,7 +58,7 @@ import {
     makeSessionKeys,
     type EncryptionDeviceInitOpts,
 } from '@river-build/encryption'
-import { getMaxTimeoutMs, StreamRpcClient } from './makeStreamRpcClient'
+import { getMaxTimeoutMs, StreamRpcClient, getMiniblocks } from './makeStreamRpcClient'
 import { errorContains, getRpcErrorProperty } from './rpcInterceptors'
 import { assert, isDefined } from './check'
 import EventEmitter from 'events'
@@ -86,7 +88,6 @@ import {
     checkEventSignature,
     makeEvent,
     UnpackEnvelopeOpts,
-    unpackMiniblock,
     unpackStream,
     unpackStreamEx,
 } from './sign'
@@ -134,6 +135,8 @@ import {
     make_SpacePayload_SpaceImage,
     make_UserMetadataPayload_ProfileImage,
     make_UserMetadataPayload_Bio,
+    make_UserPayload_BlockchainTransaction,
+    ContractReceipt,
 } from './types'
 
 import debug from 'debug'
@@ -1878,6 +1881,54 @@ export class Client
         )
     }
 
+    // upload transactions made on the base chain
+    async addTransaction(
+        chainId: number,
+        receipt: ContractReceipt,
+        metadata?: Omit<PartialMessage<BlockchainTransaction>, 'receipt'>,
+    ): Promise<{ eventId: string }> {
+        check(isDefined(this.userStreamId))
+        const transaction = {
+            kind: metadata?.kind ?? BlockchainTransactionKind.UNSPECIFIED,
+            receipt: {
+                chainId: BigInt(chainId),
+                transactionHash: bin_fromHexString(receipt.transactionHash),
+                blockNumber: BigInt(receipt.blockNumber),
+                to: bin_fromHexString(receipt.to),
+                from: bin_fromHexString(receipt.from),
+                logs: receipt.logs.map((log) => ({
+                    address: bin_fromHexString(log.address),
+                    topics: log.topics.map(bin_fromHexString),
+                    data: bin_fromHexString(log.data),
+                })),
+            },
+            ...metadata,
+        } satisfies PlainMessage<BlockchainTransaction>
+        const event = make_UserPayload_BlockchainTransaction(transaction)
+        return this.makeEventAndAddToStream(this.userStreamId, event, {
+            method: 'addTransaction',
+        })
+    }
+
+    async addTransaction_Tip(
+        chainId: number,
+        receipt: ContractReceipt,
+        streamId: string | Uint8Array,
+        refEventId: string,
+        toUserId: string,
+        quantity: bigint,
+        currency: string,
+    ): Promise<{ eventId: string }> {
+        return this.addTransaction(chainId, receipt, {
+            kind: BlockchainTransactionKind.TIP,
+            streamId: streamIdAsBytes(streamId),
+            refEventId: bin_fromHexString(refEventId),
+            toUserAddress: addressFromUserId(toUserId),
+            quantity: quantity,
+            currency: bin_fromHexString(currency),
+        })
+    }
+
     async getMiniblocks(
         streamId: string | Uint8Array,
         fromInclusive: bigint,
@@ -1909,25 +1960,23 @@ export class Client
             }
         }
 
-        const response = await this.rpcClient.getMiniblocks({
-            streamId: streamIdAsBytes(streamId),
+        const { miniblocks, terminus } = await getMiniblocks(
+            this.rpcClient,
+            streamId,
             fromInclusive,
             toExclusive,
-        })
+            this.unpackEnvelopeOpts,
+        )
 
-        const unpackedMiniblocks: ParsedMiniblock[] = []
-        for (const miniblock of response.miniblocks) {
-            const unpackedMiniblock = await unpackMiniblock(miniblock, this.unpackEnvelopeOpts)
-            unpackedMiniblocks.push(unpackedMiniblock)
-        }
         await this.persistenceStore.saveMiniblocks(
             streamIdAsString(streamId),
-            unpackedMiniblocks,
+            miniblocks,
             'backward',
         )
+
         return {
-            terminus: response.terminus,
-            miniblocks: [...unpackedMiniblocks, ...cachedMiniblocks],
+            terminus: terminus,
+            miniblocks: [...miniblocks, ...cachedMiniblocks],
         }
     }
 

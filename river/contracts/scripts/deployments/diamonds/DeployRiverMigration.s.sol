@@ -23,7 +23,7 @@ import {DeployTokenMigration} from "contracts/scripts/deployments/facets/DeployT
 
 contract DeployRiverMigration is DiamondHelper, Deployer {
   address OLD_TOKEN = 0x0000000000000000000000000000000000000000;
-  address NEW_TOKEN = 0x0000000000000000000000000000000000000001;
+  address NEW_TOKEN = 0x0000000000000000000000000000000000000000;
 
   DeployMultiInit deployMultiInit = new DeployMultiInit();
   DeployDiamondCut diamondCutHelper = new DeployDiamondCut();
@@ -48,6 +48,14 @@ contract DeployRiverMigration is DiamondHelper, Deployer {
   function setTokens(address _oldToken, address _newToken) external {
     OLD_TOKEN = _oldToken;
     NEW_TOKEN = _newToken;
+  }
+
+  function getTokens() public returns (address, address) {
+    if (OLD_TOKEN == address(0) && NEW_TOKEN == address(0)) {
+      return (getDeployment("oldRiver"), getDeployment("river"));
+    }
+
+    return (OLD_TOKEN, NEW_TOKEN);
   }
 
   function addImmutableCuts(address deployer) internal {
@@ -90,10 +98,12 @@ contract DeployRiverMigration is DiamondHelper, Deployer {
   ) public returns (Diamond.InitParams memory) {
     tokenMigration = tokenMigrationHelper.deploy(deployer);
 
+    (address oldToken, address newToken) = getTokens();
+
     addFacet(
       tokenMigrationHelper.makeCut(tokenMigration, IDiamond.FacetCutAction.Add),
       tokenMigration,
-      tokenMigrationHelper.makeInitData(OLD_TOKEN, NEW_TOKEN)
+      tokenMigrationHelper.makeInitData(oldToken, newToken)
     );
 
     return
