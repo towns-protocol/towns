@@ -468,9 +468,23 @@ export function useNotificationSettings() {
             if (dmSetting && dmSetting.value !== DmChannelSettingValue.DM_UNSPECIFIED) {
                 return dmSetting.value
             }
+            // global
+            if (data.settings && data.settings?.dmGlobal !== DmChannelSettingValue.DM_UNSPECIFIED) {
+                return data.settings.dmGlobal
+            }
+            // default
             return DmChannelSettingValue.DM_MESSAGES_YES
         },
-        [data.settings?.dmChannels],
+        [data.settings],
+    )
+    const getRawDmSetting = useCallback(
+        (channelId: string): DmChannelSettingValue => {
+            const dmSetting = data.settings?.dmChannels.find(
+                (c) => streamIdAsString(c.channelId) === channelId,
+            )
+            return dmSetting?.value ?? DmChannelSettingValue.DM_UNSPECIFIED
+        },
+        [data.settings],
     )
 
     const getGdmGlobalSetting = useCallback((): GdmChannelSettingValue => {
@@ -488,9 +502,26 @@ export function useNotificationSettings() {
             if (gdmSetting && gdmSetting.value !== GdmChannelSettingValue.GDM_UNSPECIFIED) {
                 return gdmSetting.value
             }
+            // global
+            if (
+                data.settings &&
+                data.settings.gdmGlobal !== GdmChannelSettingValue.GDM_UNSPECIFIED
+            ) {
+                return data.settings.gdmGlobal
+            }
+            // default
             return GdmChannelSettingValue.GDM_MESSAGES_ALL
         },
-        [data.settings?.gdmChannels],
+        [data.settings],
+    )
+    const getRawGdmSetting = useCallback(
+        (channelId: string): GdmChannelSettingValue => {
+            const gdmSetting = data.settings?.gdmChannels.find(
+                (c) => streamIdAsString(c.channelId) === channelId,
+            )
+            return gdmSetting?.value ?? GdmChannelSettingValue.GDM_UNSPECIFIED
+        },
+        [data.settings],
     )
 
     return {
@@ -502,8 +533,10 @@ export function useNotificationSettings() {
         getChannelSetting,
         getRawChannelSetting,
         getDmSetting,
-        getDmGlobalSetting,
+        getRawDmSetting,
         getGdmSetting,
+        getRawGdmSetting,
+        getDmGlobalSetting,
         getGdmGlobalSetting,
     }
 }

@@ -95,6 +95,77 @@ export function resetToSpaceDefault(spaceDefault: SpaceChannelSettingValue) {
     }
 }
 
+export function resetToGdmDefault(gdmGlobalDefault: GdmChannelSettingValue) {
+    const menuConfig = () => {
+        switch (gdmGlobalDefault) {
+            case GdmChannelSettingValue.GDM_MESSAGES_ALL:
+                return {
+                    ...MenuConfig.all,
+                    title: `Reset to GDM Default (${MenuConfig.all.title})`,
+                }
+            case GdmChannelSettingValue.GDM_ONLY_MENTIONS_REPLIES_REACTIONS:
+                return {
+                    ...MenuConfig.mentionsRepliesReactions,
+                    title: `Reset to GDM Default (${MenuConfig.mentionsRepliesReactions.title})`,
+                }
+            case GdmChannelSettingValue.GDM_MESSAGES_NO:
+                return {
+                    ...MenuConfig.notificationsOff,
+                    title: `Reset to GDM Default (${MenuConfig.notificationsOff.title})`,
+                }
+            case GdmChannelSettingValue.GDM_MESSAGES_NO_AND_MUTE:
+                return {
+                    ...MenuConfig.muted,
+                    title: `Reset to GDM Default (${MenuConfig.muted.title})`,
+                }
+            case GdmChannelSettingValue.GDM_UNSPECIFIED:
+                return {
+                    ...MenuConfig.all,
+                    title: `Reset to GDM Default (${MenuConfig.all.title})`,
+                }
+            default:
+                staticAssertNever(gdmGlobalDefault)
+        }
+    }
+    return {
+        value: GdmChannelSettingValue.GDM_UNSPECIFIED, // reset channel to unspecified so that it picks up the gdm default
+        ...menuConfig(),
+    }
+}
+
+export function resetToDmDefault(dmGlobalDefault: DmChannelSettingValue) {
+    const menuConfig = () => {
+        switch (dmGlobalDefault) {
+            case DmChannelSettingValue.DM_MESSAGES_YES:
+                return {
+                    ...MenuConfig.all,
+                    title: `Reset to DM Default (${MenuConfig.all.title})`,
+                }
+            case DmChannelSettingValue.DM_MESSAGES_NO:
+                return {
+                    ...MenuConfig.notificationsOff,
+                    title: `Reset to DM Default (${MenuConfig.notificationsOff.title})`,
+                }
+            case DmChannelSettingValue.DM_MESSAGES_NO_AND_MUTE:
+                return {
+                    ...MenuConfig.muted,
+                    title: `Reset to DM Default (${MenuConfig.muted.title})`,
+                }
+            case DmChannelSettingValue.DM_UNSPECIFIED:
+                return {
+                    ...MenuConfig.all,
+                    title: `Reset to DM Default (${MenuConfig.all.title})`,
+                }
+            default:
+                staticAssertNever(dmGlobalDefault)
+        }
+    }
+    return {
+        value: DmChannelSettingValue.DM_UNSPECIFIED, // reset channel to unspecified so that it picks up the dm default
+        ...menuConfig(),
+    }
+}
+
 export const gdmNotificationSettings: {
     value: GdmChannelSettingValue
     title: string

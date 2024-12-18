@@ -1,6 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNotificationSettings } from 'use-towns-client'
-import { SpaceChannelSettingValue } from '@river-build/proto'
+import {
+    DmChannelSettingValue,
+    GdmChannelSettingValue,
+    SpaceChannelSettingValue,
+} from '@river-build/proto'
 import { spaceIdFromChannelId } from '@river-build/sdk'
 import { Box, Icon, Paragraph, PopupMenu, Stack } from '@ui'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
@@ -8,6 +12,8 @@ import {
     channelNotificationSettings,
     dmNotificationSettings,
     gdmNotificationSettings,
+    resetToDmDefault,
+    resetToGdmDefault,
     resetToSpaceDefault,
 } from './NotificationsConstants'
 
@@ -65,7 +71,9 @@ export function TownNotificationsButton(props: Props) {
         getChannelSetting,
         getRawChannelSetting,
         getDmSetting,
+        getRawDmSetting,
         getGdmSetting,
+        getRawGdmSetting,
         getGdmGlobalSetting,
         getDmGlobalSetting,
     } = useNotificationSettings()
@@ -92,19 +100,25 @@ export function TownNotificationsButton(props: Props) {
                 )
             }
             case 'gdm': {
-                return makeSettingsOptions(
-                    gdmNotificationSettings,
-                    getGdmSetting(props.channelId),
-                    (value) =>
-                        notificationSettingsClient?.setGdmChannelSetting(props.channelId, value),
+                const rawValue = getRawGdmSetting(props.channelId)
+                let settings = gdmNotificationSettings
+                if (rawValue !== GdmChannelSettingValue.GDM_UNSPECIFIED) {
+                    const gdmGlobal = getGdmGlobalSetting()
+                    settings = [...gdmNotificationSettings, resetToGdmDefault(gdmGlobal)]
+                }
+                return makeSettingsOptions(settings, getGdmSetting(props.channelId), (value) =>
+                    notificationSettingsClient?.setGdmChannelSetting(props.channelId, value),
                 )
             }
             case 'dm': {
-                return makeSettingsOptions(
-                    dmNotificationSettings,
-                    getDmSetting(props.channelId),
-                    (value) =>
-                        notificationSettingsClient?.setDmChannelSetting(props.channelId, value),
+                const rawValue = getRawDmSetting(props.channelId)
+                let settings = dmNotificationSettings
+                if (rawValue !== DmChannelSettingValue.DM_UNSPECIFIED) {
+                    const dmGlobal = getDmGlobalSetting()
+                    settings = [...dmNotificationSettings, resetToDmDefault(dmGlobal)]
+                }
+                return makeSettingsOptions(settings, getDmSetting(props.channelId), (value) =>
+                    notificationSettingsClient?.setDmChannelSetting(props.channelId, value),
                 )
             }
             case 'gdmGlobal': {
@@ -127,6 +141,8 @@ export function TownNotificationsButton(props: Props) {
         getGdmGlobalSetting,
         getGdmSetting,
         getRawChannelSetting,
+        getRawDmSetting,
+        getRawGdmSetting,
         getSpaceSetting,
         notificationSettingsClient,
         props,
