@@ -51,10 +51,9 @@ abstract contract RewardsDistributionBase is IRewardsDistributionBase {
 
     if (owner != address(this)) {
       address proxy = _deployDelegationProxy(depositId, delegatee);
-      ds.depositsByDepositor[owner].add(depositId);
-
       ds.staking.stakeToken.safeTransferFrom(msg.sender, proxy, amount);
     }
+    ds.depositsByDepositor[owner].add(depositId);
 
     emit Stake(owner, delegatee, beneficiary, depositId, amount);
   }

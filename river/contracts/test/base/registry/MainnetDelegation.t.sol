@@ -67,6 +67,11 @@ contract MainnetDelegationTest is BaseRegistryTest, IMainnetDelegationBase {
     totalStaked += amount;
 
     depositId = mainnetDelegationFacet.getDepositIdByDelegator(delegator);
+    uint256[] memory deposits = rewardsDistributionFacet.getDepositsByDepositor(
+      baseRegistry
+    );
+    assertEq(deposits.length, 1);
+    assertEq(deposits[0], depositId);
     verifyDelegation(depositId, delegator, operator, amount, commissionRate);
   }
 
@@ -117,6 +122,13 @@ contract MainnetDelegationTest is BaseRegistryTest, IMainnetDelegationBase {
       delegator
     );
     assertEq(newDepositId, depositId);
+
+    uint256[] memory deposits = rewardsDistributionFacet.getDepositsByDepositor(
+      baseRegistry
+    );
+    assertEq(deposits.length, 1);
+    assertEq(deposits[0], depositId);
+
     verifyDelegation(depositId, delegator, operator, amount, commissionRate);
   }
 
@@ -151,6 +163,12 @@ contract MainnetDelegationTest is BaseRegistryTest, IMainnetDelegationBase {
     vm.prank(address(messenger));
     mainnetDelegationFacet.setDelegation(delegator, operators[1], amounts[1]);
     totalStaked = totalStaked - amounts[0] + amounts[1];
+
+    uint256[] memory deposits = rewardsDistributionFacet.getDepositsByDepositor(
+      baseRegistry
+    );
+    assertEq(deposits.length, 1);
+    assertEq(deposits[0], depositId);
 
     verifyDelegation(
       depositId,
@@ -400,10 +418,16 @@ contract MainnetDelegationTest is BaseRegistryTest, IMainnetDelegationBase {
     uint256[] memory commissionRates
   ) internal view {
     uint256 len = delegators.length;
+    uint256[] memory deposits = rewardsDistributionFacet.getDepositsByDepositor(
+      baseRegistry
+    );
+    assertEq(deposits.length, len);
+
     for (uint256 i; i < len; ++i) {
       uint256 depositId = mainnetDelegationFacet.getDepositIdByDelegator(
         delegators[i]
       );
+      assertEq(deposits[i], depositId);
       verifyDelegation(
         depositId,
         delegators[i],
