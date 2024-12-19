@@ -58,7 +58,8 @@ export const SpaceSideBar = (props: Props) => {
 
     const [isCreateChannelModalVisible, setCreateChannelModalVisible] = useState(false)
     const onHideCreateChannel = useEvent(() => setCreateChannelModalVisible(false))
-    const onShowCreateChannel = useEvent(() => {
+    const onShowCreateChannel = useEvent((e: React.MouseEvent) => {
+        e.stopPropagation()
         Analytics.getInstance().track('clicked new channel', {
             spaceId: space.id,
             spaceName: space.name,
