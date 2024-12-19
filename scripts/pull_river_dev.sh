@@ -93,6 +93,10 @@ function yarn_install_and_check() {
         # Run yarn to check for build breakages and update the lockfile
         echo "Running yarn install..."
         yarn install
+
+        YARN_INSTALL_COMMIT_MESSAGE="$(RIVER_ALLOW_COMMIT=true git commit --dry-run)"
+        git commit -m "Yarn Install Modifications" -m "$YARN_INSTALL_COMMIT_MESSAGE"
+
         exit_status_yarn=$?
         if [ $exit_status_yarn -eq 0 ]; then
             break
@@ -168,12 +172,6 @@ echo "Merging from ${SUBTREE_REPO} at branch '${SUBTREE_BRANCH}' commit: $COMMIT
 echo
 echo
 
-BRANCH_NAME="${ORIGINAL_BRANCH}_${SHORT_HASH}"
-
-git fetch --all
-
-# checkout a new working branch
-git checkout -b "${BRANCH_NAME}"
 
 # Pull the latest changes from the subtree, blasting away any local changes
 rm -rf river
@@ -193,7 +191,7 @@ confirmContinue "Subtree pull compelte. Continue with the merge?"
 
 # Commit the changes if there are any
 if ! git diff main --quiet --cached; then
-
+    echo "Subtree changes detected."
     SUBTREE_MERGE_MESSAGE="$(RIVER_ALLOW_COMMIT=true git commit --dry-run)"
     RIVER_ALLOW_COMMIT=true git commit -m "./pull_river_dev.sh --prefix=${SUBTREE_PREFIX} ${SUBTREE_REPO} ${SUBTREE_BRANCH} --squash" -m "$SUBTREE_MERGE_MESSAGE"
     echo "Subtree changes committed."
@@ -201,18 +199,10 @@ if ! git diff main --quiet --cached; then
     # Run yarn, commit new yarn.lock, and check for build breakages
     yarn_install_and_check
 
-    # squash and merge back onto the original branch
-    git checkout "$ORIGINAL_BRANCH"
-    git merge --squash "$BRANCH_NAME"
 
-    confirmContinue "Merge to original branch complete. Continue with the merge?"
-
-    COMMIT_MERGE_MESSAGE="$(RIVER_ALLOW_COMMIT=true git commit --dry-run)"
-    RIVER_ALLOW_COMMIT=true git commit -m "Dev - merged ${SUBTREE_PREFIX} at ${SHORT_HASH}" -m "$COMMIT_MERGE_MESSAGE"
+    echo "Pull river dev complete."
 else
     echo "No changes to commit."
 fi
 
-git checkout "$ORIGINAL_BRANCH"
-git branch -D "$BRANCH_NAME"
 
