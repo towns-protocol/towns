@@ -6,14 +6,14 @@ pragma solidity ^0.8.23;
 // libraries
 
 // contracts
-import {IDiamond, Diamond} from "contracts/src/diamond/Diamond.sol";
+import {IDiamond, Diamond} from "@river-build/diamond/src/Diamond.sol";
 
 import {DeployOwnable} from "contracts/scripts/deployments/facets/DeployOwnable.s.sol";
 import {DeployDiamondCut} from "contracts/scripts/deployments/facets/DeployDiamondCut.s.sol";
 import {DeployDiamondLoupe} from "contracts/scripts/deployments/facets/DeployDiamondLoupe.s.sol";
 import {DeployIntrospection} from "contracts/scripts/deployments/facets/DeployIntrospection.s.sol";
 import {DeployManagedProxy} from "contracts/scripts/deployments/facets/DeployManagedProxy.s.sol";
-import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
+import {MultiInit} from "@river-build/diamond/src/initializers/MultiInit.sol";
 
 /// @title MockDiamondHelper
 /// @notice Used to create a diamond with all the facets we need for testing

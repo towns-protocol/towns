@@ -2,12 +2,12 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IDiamond} from "contracts/src/diamond/IDiamond.sol";
+import {IDiamond} from "@river-build/diamond/src/IDiamond.sol";
 
 // helpers
 import {DiamondHelper} from "contracts/test/diamond/Diamond.t.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-import {Diamond} from "contracts/src/diamond/Diamond.sol";
+import {Diamond} from "@river-build/diamond/src/Diamond.sol";
 import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
 import {DeployDiamondCut} from "contracts/scripts/deployments/facets/DeployDiamondCut.s.sol";
 import {DeployDiamondLoupe} from "contracts/scripts/deployments/facets/DeployDiamondLoupe.s.sol";
@@ -25,7 +25,7 @@ import {DeployOperatorRegistry} from "contracts/scripts/deployments/facets/Deplo
 import {OperatorRegistry} from "contracts/src/river/registry/facets/operator/OperatorRegistry.sol";
 import {RiverConfig} from "contracts/src/river/registry/facets/config/RiverConfig.sol";
 
-import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
+import {MultiInit} from "@river-build/diamond/src/initializers/MultiInit.sol";
 
 contract DeployRiverRegistry is DiamondHelper, Deployer {
   DeployDiamondCut internal cutHelper = new DeployDiamondCut();

@@ -9,8 +9,8 @@ import {ERC20Storage} from "../ERC20Storage.sol";
 
 // contracts
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import {Nonces} from "contracts/src/diamond/utils/Nonces.sol";
-import {EIP712} from "contracts/src/diamond/utils/cryptography/EIP712.sol";
+import {Nonces} from "@river-build/diamond/src/utils/Nonces.sol";
+import {EIP712} from "@river-build/diamond/src/utils/cryptography/EIP712.sol";
 
 abstract contract ERC20PermitBase is IERC20PermitBase, EIP712, Nonces {
   /// @dev `keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)")`.

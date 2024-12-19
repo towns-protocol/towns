@@ -22,7 +22,7 @@ import {ICreateSpace} from "contracts/src/factory/facets/create/ICreateSpace.sol
 import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
 // contracts
-import {EIP712Facet} from "contracts/src/diamond/utils/cryptography/signature/EIP712Facet.sol";
+import {EIP712Facet} from "@river-build/diamond/src/utils/cryptography/signature/EIP712Facet.sol";
 import {NodeOperatorStatus} from "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
 import {MockMessenger} from "contracts/test/mocks/MockMessenger.sol";
 

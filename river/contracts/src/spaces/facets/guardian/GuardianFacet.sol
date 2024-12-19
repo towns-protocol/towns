@@ -8,8 +8,8 @@ import {IGuardian} from "./IGuardian.sol";
 
 // contracts
 import {GuardianBase} from "./GuardianBase.sol";
-import {OwnableBase} from "contracts/src/diamond/facets/ownable/OwnableBase.sol";
-import {Facet} from "contracts/src/diamond/facets/Facet.sol";
+import {OwnableBase} from "@river-build/diamond/src/facets/ownable/OwnableBase.sol";
+import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
 
 contract GuardianFacet is IGuardian, GuardianBase, OwnableBase, Facet {
   function __GuardianFacet_init(uint256 cooldown) external onlyInitializing {

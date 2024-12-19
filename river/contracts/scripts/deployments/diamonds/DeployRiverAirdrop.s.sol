@@ -2,17 +2,17 @@
 pragma solidity ^0.8.19;
 
 //interfaces
-import {IDiamond} from "contracts/src/diamond/IDiamond.sol";
+import {IDiamond} from "@river-build/diamond/src/IDiamond.sol";
 
 //libraries
 
 //contracts
-import {Diamond} from "contracts/src/diamond/Diamond.sol";
+import {Diamond} from "@river-build/diamond/src/Diamond.sol";
 import {DiamondHelper} from "contracts/test/diamond/Diamond.t.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 
 // deployers
-import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
+import {MultiInit} from "@river-build/diamond/src/initializers/MultiInit.sol";
 import {DeployMultiInit} from "contracts/scripts/deployments/utils/DeployMultiInit.s.sol";
 import {DeployDiamondCut} from "contracts/scripts/deployments/facets/DeployDiamondCut.s.sol";
 import {DeployDiamondLoupe} from "contracts/scripts/deployments/facets/DeployDiamondLoupe.s.sol";

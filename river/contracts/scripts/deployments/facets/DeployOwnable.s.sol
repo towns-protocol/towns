@@ -6,9 +6,9 @@ pragma solidity ^0.8.23;
 //libraries
 
 //contracts
-import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
+import {FacetHelper} from "@river-build/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-import {OwnableFacet} from "contracts/src/diamond/facets/ownable/OwnableFacet.sol";
+import {OwnableFacet} from "@river-build/diamond/src/facets/ownable/OwnableFacet.sol";
 
 contract DeployOwnable is FacetHelper, Deployer {
   constructor() {

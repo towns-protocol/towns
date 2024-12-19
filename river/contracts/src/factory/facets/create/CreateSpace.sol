@@ -7,10 +7,10 @@ import {ICreateSpace} from "contracts/src/factory/facets/create/ICreateSpace.sol
 // libraries
 
 // contracts
-import {Facet} from "contracts/src/diamond/facets/Facet.sol";
+import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
 import {ArchitectBase} from "contracts/src/factory/facets/architect/ArchitectBase.sol";
-import {PausableBase} from "contracts/src/diamond/facets/pausable/PausableBase.sol";
-import {ReentrancyGuard} from "contracts/src/diamond/facets/reentrancy/ReentrancyGuard.sol";
+import {PausableBase} from "@river-build/diamond/src/facets/pausable/PausableBase.sol";
+import {ReentrancyGuard} from "@river-build/diamond/src/facets/reentrancy/ReentrancyGuard.sol";
 
 contract CreateSpaceFacet is
   ICreateSpace,

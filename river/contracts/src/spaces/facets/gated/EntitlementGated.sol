@@ -10,8 +10,8 @@ import {IEntitlementChecker} from "contracts/src/base/registry/facets/checker/IE
 
 // contracts
 import {EntitlementGatedBase} from "./EntitlementGatedBase.sol";
-import {Facet} from "contracts/src/diamond/facets/Facet.sol";
-import {ReentrancyGuard} from "contracts/src/diamond/facets/reentrancy/ReentrancyGuard.sol";
+import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
+import {ReentrancyGuard} from "@river-build/diamond/src/facets/reentrancy/ReentrancyGuard.sol";
 
 contract EntitlementGated is
   IEntitlementGated,

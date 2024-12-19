@@ -11,7 +11,7 @@ import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
 import {Entitled} from "contracts/src/spaces/facets/Entitled.sol";
 import {ERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/ERC721ABase.sol";
 import {BanningBase} from "./BanningBase.sol";
-import {Facet} from "contracts/src/diamond/facets/Facet.sol";
+import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
 
 contract Banning is IBanning, BanningBase, ERC721ABase, Entitled, Facet {
   function ban(uint256 tokenId) external {

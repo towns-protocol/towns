@@ -117,18 +117,26 @@ abstract contract MainnetDelegationBase is IMainnetDelegationBase {
 
     uint256 depositId = ds.depositIdByDelegator[delegator];
     if (depositId == 0) {
-      depositId = IRewardsDistribution(address(this)).stake(
-        SafeCastLib.toUint96(quantity),
-        operator,
-        delegator
+      (bool success, bytes memory retData) = address(this).call(
+        abi.encodeCall(
+          IRewardsDistribution.stake,
+          (SafeCastLib.toUint96(quantity), operator, delegator)
+        )
       );
-      ds.depositIdByDelegator[delegator] = depositId;
+      if (success) {
+        depositId = abi.decode(retData, (uint256));
+        ds.depositIdByDelegator[delegator] = depositId;
+      }
     } else {
-      IRewardsDistribution(address(this)).redelegate(depositId, operator);
-      IRewardsDistribution(address(this)).increaseStake(
-        depositId,
-        SafeCastLib.toUint96(quantity)
+      (bool success, ) = address(this).call(
+        abi.encodeCall(IRewardsDistribution.redelegate, (depositId, operator))
       );
+      if (success) {
+        IRewardsDistribution(address(this)).increaseStake(
+          depositId,
+          SafeCastLib.toUint96(quantity)
+        );
+      }
     }
   }
 

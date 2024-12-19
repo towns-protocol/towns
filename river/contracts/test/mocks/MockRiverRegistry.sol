@@ -10,7 +10,7 @@ import {NodeRegistry} from "contracts/src/river/registry/facets/node/NodeRegistr
 import {OperatorRegistry} from "contracts/src/river/registry/facets/operator/OperatorRegistry.sol";
 import {StreamRegistry} from "contracts/src/river/registry/facets/stream/StreamRegistry.sol";
 import {RiverConfig} from "contracts/src/river/registry/facets/config/RiverConfig.sol";
-import {OwnableBase} from "contracts/src/diamond/facets/ownable/OwnableBase.sol";
+import {OwnableBase} from "@river-build/diamond/src/facets/ownable/OwnableBase.sol";
 
 contract MockRiverRegistry is
   OwnableBase,

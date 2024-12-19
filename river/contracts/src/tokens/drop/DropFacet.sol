@@ -12,9 +12,9 @@ import {CurrencyTransfer} from "contracts/src/utils/libraries/CurrencyTransfer.s
 import {SafeCastLib} from "solady/utils/SafeCastLib.sol";
 
 // contracts
-import {Facet} from "contracts/src/diamond/facets/Facet.sol";
+import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
 import {DropFacetBase} from "contracts/src/tokens/drop/DropFacetBase.sol";
-import {OwnableBase} from "contracts/src/diamond/facets/ownable/OwnableBase.sol";
+import {OwnableBase} from "@river-build/diamond/src/facets/ownable/OwnableBase.sol";
 
 contract DropFacet is IDropFacet, DropFacetBase, OwnableBase, Facet {
   using DropStorage for DropStorage.Layout;

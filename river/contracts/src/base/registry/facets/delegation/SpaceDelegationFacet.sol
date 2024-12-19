@@ -4,7 +4,7 @@ pragma solidity ^0.8.23;
 // interfaces
 import {ISpaceDelegation} from "contracts/src/base/registry/facets/delegation/ISpaceDelegation.sol";
 import {IMainnetDelegation} from "contracts/src/tokens/river/base/delegation/IMainnetDelegation.sol";
-import {IERC173} from "contracts/src/diamond/facets/ownable/IERC173.sol";
+import {IERC173} from "@river-build/diamond/src/facets/ownable/IERC173.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IVotesEnumerable} from "contracts/src/diamond/facets/governance/votes/enumerable/IVotesEnumerable.sol";
 import {IArchitect} from "contracts/src/factory/facets/architect/IArchitect.sol";
@@ -19,8 +19,8 @@ import {StakingRewards} from "contracts/src/base/registry/facets/distribution/v2
 import {RewardsDistributionStorage} from "contracts/src/base/registry/facets/distribution/v2/RewardsDistributionStorage.sol";
 
 // contracts
-import {OwnableBase} from "contracts/src/diamond/facets/ownable/OwnableBase.sol";
-import {Facet} from "contracts/src/diamond/facets/Facet.sol";
+import {OwnableBase} from "@river-build/diamond/src/facets/ownable/OwnableBase.sol";
+import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
 
 contract SpaceDelegationFacet is
   ISpaceDelegation,

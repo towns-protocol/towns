@@ -9,10 +9,10 @@ import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet
 import {NodeOperatorStorage, NodeOperatorStatus} from "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
 
 // contracts
-import {OwnableBase} from "contracts/src/diamond/facets/ownable/OwnableBase.sol";
+import {OwnableBase} from "@river-build/diamond/src/facets/ownable/OwnableBase.sol";
 import {ERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/ERC721ABase.sol";
 
-import {Facet} from "contracts/src/diamond/facets/Facet.sol";
+import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
 
 contract NodeOperatorFacet is INodeOperator, OwnableBase, ERC721ABase, Facet {
   using EnumerableSet for EnumerableSet.AddressSet;

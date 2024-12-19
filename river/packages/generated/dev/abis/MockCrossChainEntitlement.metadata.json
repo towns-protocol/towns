@@ -117,6 +117,7 @@
       "@openzeppelin/=node_modules/@openzeppelin/",
       "@prb/math/=node_modules/@prb/math/src/",
       "@prb/test/=node_modules/@prb/test/src/",
+      "@river-build/diamond/=node_modules/@river-build/diamond/",
       "account-abstraction/=node_modules/account-abstraction/contracts/",
       "ds-test/=node_modules/ds-test/src/",
       "forge-std/=node_modules/forge-std/src/",

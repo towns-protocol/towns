@@ -8,7 +8,7 @@ import {ILock} from "./ILock.sol";
 
 // contracts
 import {LockBase} from "contracts/src/tokens/lock/LockBase.sol";
-import {Facet} from "contracts/src/diamond/facets/Facet.sol";
+import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
 
 abstract contract LockFacet is ILock, LockBase, Facet {
   function __LockFacet_init(uint256 cooldown) external onlyInitializing {

@@ -9,7 +9,7 @@ import {IERC5643} from "./IERC5643.sol";
 // contracts
 import {ERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/ERC721ABase.sol";
 import {ERC5643Base} from "contracts/src/diamond/facets/token/ERC5643/ERC5643Base.sol";
-import {Facet} from "contracts/src/diamond/facets/Facet.sol";
+import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
 
 contract ERC5643 is IERC5643, ERC5643Base, ERC721ABase, Facet {
   function __ERC5643_init() external onlyInitializing {

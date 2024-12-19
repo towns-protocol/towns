@@ -7,7 +7,7 @@ import {IEntitlementBase} from "contracts/src/spaces/entitlements/IEntitlement.s
 import {IERC721ABase, IERC721A} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
 import {IArchitectBase} from "contracts/src/factory/facets/architect/IArchitect.sol";
 import {IPlatformRequirements} from "contracts/src/factory/facets/platform/requirements/IPlatformRequirements.sol";
-import {IOwnableBase} from "contracts/src/diamond/facets/ownable/IERC173.sol";
+import {IOwnableBase} from "@river-build/diamond/src/facets/ownable/IERC173.sol";
 import {IEntitlementsManager, IEntitlementsManagerBase} from "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
 import {IRoles, IRolesBase} from "contracts/src/spaces/facets/roles/IRoles.sol";
 import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";

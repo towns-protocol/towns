@@ -10,8 +10,8 @@ import {RiverRegistryErrors} from "contracts/src/river/registry/libraries/Regist
 
 // contracts
 import {RegistryModifiers} from "contracts/src/river/registry/libraries/RegistryStorage.sol";
-import {OwnableBase} from "contracts/src/diamond/facets/ownable/OwnableBase.sol";
-import {Facet} from "contracts/src/diamond/facets/Facet.sol";
+import {OwnableBase} from "@river-build/diamond/src/facets/ownable/OwnableBase.sol";
+import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
 
 contract OperatorRegistry is
   IOperatorRegistry,

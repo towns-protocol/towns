@@ -10,7 +10,7 @@ import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 
 // contracts
 import {ERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/ERC721ABase.sol";
-import {Facet} from "contracts/src/diamond/facets/Facet.sol";
+import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
 
 contract TippingFacet is ITipping, ERC721ABase, Facet {
   function __Tipping_init() external onlyInitializing {

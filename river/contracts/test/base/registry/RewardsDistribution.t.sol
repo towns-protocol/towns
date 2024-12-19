@@ -11,7 +11,7 @@ import {IRewardsDistributionBase} from "contracts/src/base/registry/facets/distr
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 import {IMainnetDelegationBase} from "contracts/src/tokens/river/base/delegation/IMainnetDelegation.sol";
-import {IERC173, IOwnableBase} from "contracts/src/diamond/facets/ownable/IERC173.sol";
+import {IERC173, IOwnableBase} from "@river-build/diamond/src/facets/ownable/IERC173.sol";
 import {INodeOperatorBase} from "contracts/src/base/registry/facets/operator/INodeOperator.sol";
 
 // structs

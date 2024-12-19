@@ -6,9 +6,9 @@ pragma solidity ^0.8.23;
 //libraries
 
 //contracts
-import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
+import {FacetHelper} from "@river-build/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-import {TokenPausableFacet} from "contracts/src/diamond/facets/pausable/token/TokenPausableFacet.sol";
+import {TokenPausableFacet} from "@river-build/diamond/src/facets/pausable/token/TokenPausableFacet.sol";
 
 contract DeployTokenPausable is FacetHelper, Deployer {
   constructor() {

@@ -86,12 +86,12 @@ func NewChainAuthArgsForIsSpaceMember(spaceId shared.StreamId, userId string) *C
 
 func NewChainAuthArgsForIsWalletLinked(
 	userId []byte,
-	walletAddress []byte,
+	receipt *BlockchainTransactionReceipt,
 ) *ChainAuthArgs {
 	return &ChainAuthArgs{
 		kind:          chainAuthKindIsWalletLinked,
 		principal:     common.BytesToAddress(userId),
-		walletAddress: common.BytesToAddress(walletAddress),
+		receipt:       receipt,
 	}
 }
 
@@ -113,7 +113,7 @@ type ChainAuthArgs struct {
 	principal     common.Address
 	permission    Permission
 	linkedWallets string // a serialized list of linked wallets to comply with the cache key constraints
-	walletAddress common.Address
+	receipt       *BlockchainTransactionReceipt
 }
 
 func (args *ChainAuthArgs) Principal() common.Address {
@@ -122,14 +122,14 @@ func (args *ChainAuthArgs) Principal() common.Address {
 
 func (args *ChainAuthArgs) String() string {
 	return fmt.Sprintf(
-		"ChainAuthArgs{kind: %d, spaceId: %s, channelId: %s, principal: %s, permission: %s, linkedWallets: %s, walletAddress: %s}",
+		"ChainAuthArgs{kind: %d, spaceId: %s, channelId: %s, principal: %s, permission: %s, linkedWallets: %s, receipt: %s}",
 		args.kind,
 		args.spaceId,
 		args.channelId,
 		args.principal.Hex(),
 		args.permission,
 		args.linkedWallets,
-		args.walletAddress.Hex(),
+		args.receipt,
 	)
 }
 
@@ -1009,8 +1009,20 @@ func (ca *chainAuth) checkEntitlement(
 	// handle checking if the user is linked to a specific wallet
 	if args.kind == chainAuthKindIsWalletLinked {
 		for _, wallet := range wallets {
-			if wallet == args.walletAddress {
+			   // Check the transaction sender (for regular transactions)
+			if bytes.Equal(args.receipt.From, wallet.Bytes()) {
 				return boolCacheResult(true), nil
+			}
+			// Check each log in the receipt
+			for _, logEntry := range args.receipt.Logs {
+				// The sender is typically in the first topic (after the event signature)
+				if len(logEntry.Topics) > 1 { // First topic is event signature, second is usually sender
+					// Convert the topic (which is 32 bytes) to an address (20 bytes) by taking the last 20 bytes
+					senderFromTopic := common.BytesToAddress(logEntry.Topics[1])
+					if bytes.Equal(senderFromTopic.Bytes(), wallet.Bytes()) {
+						return boolCacheResult(true), nil
+					}
+				}
 			}
 		}
 		return boolCacheResult(false), nil

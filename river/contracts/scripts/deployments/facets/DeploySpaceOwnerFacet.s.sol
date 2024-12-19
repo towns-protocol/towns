@@ -10,11 +10,12 @@ import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
 
 import {SpaceOwner} from "contracts/src/spaces/facets/owner/SpaceOwner.sol";
-import {ERC721AHelper} from "contracts/test/diamond/erc721a/ERC721ASetup.sol";
 import {VotesHelper} from "contracts/test/governance/votes/VotesSetup.sol";
 
+import {DeployERC721A} from "contracts/scripts/deployments/facets/DeployERC721A.s.sol";
+
 contract DeploySpaceOwnerFacet is FacetHelper, Deployer {
-  ERC721AHelper erc721aHelper = new ERC721AHelper();
+  DeployERC721A erc721aHelper = new DeployERC721A();
   VotesHelper votesHelper = new VotesHelper();
 
   constructor() {

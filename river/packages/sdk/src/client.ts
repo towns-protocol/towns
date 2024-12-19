@@ -1,6 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-redundant-type-constituents */
 import { Message, PartialMessage, PlainMessage } from '@bufbuild/protobuf'
 import { Permission } from '@river-build/web3'
 import {

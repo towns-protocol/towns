@@ -13,8 +13,8 @@ import {RiverPointsStorage} from "./RiverPointsStorage.sol";
 import {CheckIn} from "./CheckIn.sol";
 
 // contracts
-import {Facet} from "contracts/src/diamond/facets/Facet.sol";
-import {OwnableBase} from "contracts/src/diamond/facets/ownable/OwnableBase.sol";
+import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
+import {OwnableBase} from "@river-build/diamond/src/facets/ownable/OwnableBase.sol";
 
 contract RiverPoints is IERC20Metadata, IRiverPoints, OwnableBase, Facet {
   function __RiverPoints_init(address spaceFactory) external onlyInitializing {

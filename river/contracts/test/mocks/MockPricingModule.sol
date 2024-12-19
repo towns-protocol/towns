@@ -7,7 +7,7 @@ import {IMembershipPricing} from "contracts/src/spaces/facets/membership/pricing
 // libraries
 
 // contracts
-import {IntrospectionFacet} from "contracts/src/diamond/facets/introspection/IntrospectionFacet.sol";
+import {IntrospectionFacet} from "@river-build/diamond/src/facets/introspection/IntrospectionFacet.sol";
 
 contract MockPricingModule is IMembershipPricing, IntrospectionFacet {
   string public name = "MockPricingModule";

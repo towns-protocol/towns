@@ -2,14 +2,14 @@
 pragma solidity ^0.8.23;
 
 //interfaces
-import {ITokenOwnableBase} from "contracts/src/diamond/facets/ownable/token/ITokenOwnable.sol";
+import {ITokenOwnableBase} from "@river-build/diamond/src/facets/ownable/token/ITokenOwnable.sol";
 
 //libraries
 
 //contracts
-import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
+import {FacetHelper} from "@river-build/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-import {TokenOwnableFacet} from "contracts/src/diamond/facets/ownable/token/TokenOwnableFacet.sol";
+import {TokenOwnableFacet} from "@river-build/diamond/src/facets/ownable/token/TokenOwnableFacet.sol";
 
 contract DeployTokenOwnable is FacetHelper, Deployer, ITokenOwnableBase {
   constructor() {

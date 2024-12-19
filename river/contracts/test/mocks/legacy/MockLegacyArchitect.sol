@@ -8,9 +8,9 @@ import {ILegacyArchitect} from "./IMockLegacyArchitect.sol";
 
 // contracts
 import {LegacyArchitectBase} from "./MockLegacyArchitectBase.sol";
-import {ReentrancyGuard} from "contracts/src/diamond/facets/reentrancy/ReentrancyGuard.sol";
-import {PausableBase} from "contracts/src/diamond/facets/pausable/PausableBase.sol";
-import {Facet} from "contracts/src/diamond/facets/Facet.sol";
+import {ReentrancyGuard} from "@river-build/diamond/src/facets/reentrancy/ReentrancyGuard.sol";
+import {PausableBase} from "@river-build/diamond/src/facets/pausable/PausableBase.sol";
+import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
 
 contract MockLegacyArchitect is
   ILegacyArchitect,

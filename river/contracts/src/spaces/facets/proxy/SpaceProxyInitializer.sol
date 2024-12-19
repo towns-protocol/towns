@@ -4,18 +4,18 @@ pragma solidity ^0.8.23;
 // interfaces
 import {ISpaceProxyInitializer} from "contracts/src/spaces/facets/proxy/ISpaceProxyInitializer.sol";
 import {IERC5643} from "contracts/src/diamond/facets/token/ERC5643/IERC5643.sol";
-import {IERC173} from "contracts/src/diamond/facets/ownable/IERC173.sol";
+import {IERC173} from "@river-build/diamond/src/facets/ownable/IERC173.sol";
 import {IMembership} from "contracts/src/spaces/facets/membership/IMembership.sol";
 
 // libraries
 
 // contracts
-import {TokenOwnableBase} from "contracts/src/diamond/facets/ownable/token/TokenOwnableBase.sol";
+import {TokenOwnableBase} from "@river-build/diamond/src/facets/ownable/token/TokenOwnableBase.sol";
 import {MembershipBase} from "contracts/src/spaces/facets/membership/MembershipBase.sol";
 import {ERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/ERC721ABase.sol";
-import {IntrospectionBase} from "contracts/src/diamond/facets/introspection/IntrospectionBase.sol";
+import {IntrospectionBase} from "@river-build/diamond/src/facets/introspection/IntrospectionBase.sol";
 import {EntitlementGatedBase} from "contracts/src/spaces/facets/gated/EntitlementGatedBase.sol";
-import {Initializable} from "contracts/src/diamond/facets/initializable/Initializable.sol";
+import {Initializable} from "@river-build/diamond/src/facets/initializable/Initializable.sol";
 
 contract SpaceProxyInitializer is
   ISpaceProxyInitializer,

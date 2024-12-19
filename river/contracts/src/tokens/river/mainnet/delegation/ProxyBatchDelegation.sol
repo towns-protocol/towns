@@ -7,6 +7,7 @@ import {IMainnetDelegation} from "contracts/src/tokens/river/base/delegation/IMa
 import {IProxyBatchDelegation} from "./IProxyBatchDelegation.sol";
 
 // libraries
+import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
 
 // contracts
 import {River} from "contracts/src/tokens/river/mainnet/River.sol";
@@ -32,26 +33,12 @@ contract ProxyBatchDelegation is IProxyBatchDelegation {
     TARGET = _target;
   }
 
-  function removeDelegators() external {
-    address[] memory delegators = new address[](2);
-    delegators[0] = 0x204f1aA5B666d0eAc07228D3065a461e92AC399c;
-    delegators[1] = 0x3541F646d321CACbc0fF4A7cCcB583E8B6E413da;
-
-    ICrossDomainMessenger(MESSENGER).sendMessage(
-      TARGET,
-      abi.encodeWithSelector(
-        IMainnetDelegation.removeDelegations.selector,
-        delegators
-      ),
-      200_000
-    );
-  }
-
-  function sendAuthorizedClaimers() external {
+  function sendAuthorizedClaimers(uint32 minGasLimit) external {
     address[] memory delegators = rvr.getDelegators();
-    address[] memory authorizedClaimers = new address[](delegators.length);
+    uint256 length = delegators.length;
+    address[] memory authorizedClaimers = new address[](length);
 
-    for (uint256 i = 0; i < delegators.length; i++) {
+    for (uint256 i; i < length; ++i) {
       authorizedClaimers[i] = claimers.getAuthorizedClaimer(delegators[i]);
     }
 
@@ -62,20 +49,22 @@ contract ProxyBatchDelegation is IProxyBatchDelegation {
         delegators,
         authorizedClaimers
       ),
-      200_000
+      minGasLimit
     );
   }
 
-  function sendDelegators() external {
+  function sendDelegators(uint32 minGasLimit) external {
     address[] memory delegators = rvr.getDelegators();
-    address[] memory delegates = new address[](delegators.length);
-    address[] memory authorizedClaimers = new address[](delegators.length);
-    uint256[] memory quantities = new uint256[](delegators.length);
+    uint256 length = delegators.length;
+    address[] memory delegates = new address[](length);
+    address[] memory authorizedClaimers = new address[](length);
+    uint256[] memory quantities = new uint256[](length);
 
-    for (uint256 i = 0; i < delegators.length; i++) {
-      authorizedClaimers[i] = claimers.getAuthorizedClaimer(delegators[i]);
-      delegates[i] = rvr.delegates(delegators[i]);
-      quantities[i] = rvr.balanceOf(delegators[i]);
+    for (uint256 i; i < length; ++i) {
+      address delegator = delegators[i];
+      authorizedClaimers[i] = claimers.getAuthorizedClaimer(delegator);
+      delegates[i] = _delegates(address(rvr), delegator);
+      quantities[i] = SafeTransferLib.balanceOf(address(rvr), delegator);
     }
 
     ICrossDomainMessenger(MESSENGER).sendMessage(
@@ -87,7 +76,29 @@ contract ProxyBatchDelegation is IProxyBatchDelegation {
         authorizedClaimers,
         quantities
       ),
-      5_000_000
+      minGasLimit
     );
+  }
+
+  /// @dev Returns the delegate that `account` has chosen.
+  /// Returns zero if the `token` does not exist.
+  function _delegates(
+    address token,
+    address account
+  ) internal view returns (address delegatee) {
+    /// @solidity memory-safe-assembly
+    assembly {
+      mstore(0x14, account) // Store the `account` argument.
+      mstore(0x00, 0x587cde1e000000000000000000000000) // `delegates(address)`.
+      delegatee := mul(
+        // The arguments of `mul` are evaluated from right to left.
+        mload(0x20),
+        and(
+          // The arguments of `and` are evaluated from right to left.
+          gt(returndatasize(), 0x1f), // At least 32 bytes returned.
+          staticcall(gas(), token, 0x10, 0x24, 0x20, 0x20)
+        )
+      )
+    }
   }
 }

@@ -7,12 +7,12 @@ import {IERC721A} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol"
 import {IMembershipMetadata} from "./IMembershipMetadata.sol";
 
 // libraries
-import {TokenOwnableStorage} from "contracts/src/diamond/facets/ownable/token/TokenOwnableStorage.sol";
+import {TokenOwnableStorage} from "@river-build/diamond/src/facets/ownable/token/TokenOwnableStorage.sol";
 import {LibString} from "solady/utils/LibString.sol";
 
 // contracts
 import {ERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/ERC721ABase.sol";
-import {Facet} from "contracts/src/diamond/facets/Facet.sol";
+import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
 
 contract MembershipMetadata is IMembershipMetadata, ERC721ABase, Facet {
   /// @inheritdoc IMembershipMetadata

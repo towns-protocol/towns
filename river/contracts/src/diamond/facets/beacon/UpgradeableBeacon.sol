@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {Facet} from "contracts/src/diamond/facets/Facet.sol";
-import {OwnableBase} from "contracts/src/diamond/facets/ownable/OwnableBase.sol";
+import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
+import {OwnableBase} from "@river-build/diamond/src/facets/ownable/OwnableBase.sol";
 
-contract UpgradeableBeaconBase {
+abstract contract UpgradeableBeaconBase {
   /// @dev The new implementation is not a deployed contract.
   error NewImplementationHasNoCode();
 

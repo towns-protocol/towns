@@ -9,8 +9,8 @@ import {IImplementationRegistry} from "contracts/src/factory/facets/registry/IIm
 import {ImplementationRegistryStorage} from "./ImplementationRegistryStorage.sol";
 
 // contracts
-import {OwnableBase} from "contracts/src/diamond/facets/ownable/OwnableBase.sol";
-import {Facet} from "contracts/src/diamond/facets/Facet.sol";
+import {OwnableBase} from "@river-build/diamond/src/facets/ownable/OwnableBase.sol";
+import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
 
 contract ImplementationRegistryFacet is
   IImplementationRegistry,

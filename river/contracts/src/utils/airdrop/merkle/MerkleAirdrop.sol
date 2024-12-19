@@ -12,9 +12,9 @@ import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
 import {MerkleAirdropStorage} from "./MerkleAirdropStorage.sol";
 
 // contracts
-import {EIP712Base} from "contracts/src/diamond/utils/cryptography/signature/EIP712Base.sol";
+import {EIP712Base} from "@river-build/diamond/src/utils/cryptography/signature/EIP712Base.sol";
 import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
-import {Facet} from "contracts/src/diamond/facets/Facet.sol";
+import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
 
 contract MerkleAirdrop is IMerkleAirdrop, EIP712Base, Facet {
   // keccak256("AirdropClaim(address account,uint256 amount,address receiver)");

@@ -2,14 +2,14 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IDiamondLoupe, IDiamondLoupeBase} from "contracts/src/diamond/facets/loupe/IDiamondLoupe.sol";
-import {IDiamondCut} from "contracts/src/diamond/facets/cut/IDiamondCut.sol";
+import {IDiamondLoupe, IDiamondLoupeBase} from "@river-build/diamond/src/facets/loupe/IDiamondLoupe.sol";
+import {IDiamondCut} from "@river-build/diamond/src/facets/cut/IDiamondCut.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-import {IERC173} from "contracts/src/diamond/facets/ownable/IERC173.sol";
-import {IOwnablePending} from "contracts/src/diamond/facets/ownable/pending/IOwnablePending.sol";
+import {IERC173} from "@river-build/diamond/src/facets/ownable/IERC173.sol";
+import {IOwnablePending} from "@river-build/diamond/src/facets/ownable/pending/IOwnablePending.sol";
 
-import {Diamond} from "contracts/src/diamond/Diamond.sol";
-import {DiamondHelper} from "contracts/test/diamond/Diamond.t.sol";
+import {Diamond} from "@river-build/diamond/src/Diamond.sol";
+import {DiamondHelper} from "@river-build/diamond/scripts/common/helpers/DiamondHelper.s.sol";
 
 // libraries
 

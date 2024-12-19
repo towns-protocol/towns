@@ -10,9 +10,9 @@ import {IRuleEntitlementV2} from "contracts/src/spaces/entitlements/rule/IRuleEn
 import {IRoles, IRolesBase} from "contracts/src/spaces/facets/roles/IRoles.sol";
 import {IChannel} from "contracts/src/spaces/facets/channels/IChannel.sol";
 import {IEntitlementsManager} from "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
-import {IProxyManager} from "contracts/src/diamond/proxy/manager/IProxyManager.sol";
-import {ITokenOwnableBase} from "contracts/src/diamond/facets/ownable/token/ITokenOwnable.sol";
-import {IManagedProxyBase} from "contracts/src/diamond/proxy/managed/IManagedProxy.sol";
+import {IProxyManager} from "@river-build/diamond/src/proxy/manager/IProxyManager.sol";
+import {ITokenOwnableBase} from "@river-build/diamond/src/facets/ownable/token/ITokenOwnable.sol";
+import {IManagedProxyBase} from "@river-build/diamond/src/proxy/managed/IManagedProxy.sol";
 import {IMembershipBase} from "contracts/src/spaces/facets/membership/IMembership.sol";
 import {IERC721A} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
 import {ISpaceOwner} from "contracts/src/spaces/facets/owner/ISpaceOwner.sol";

@@ -54,6 +54,7 @@
       "@openzeppelin/=node_modules/@openzeppelin/",
       "@prb/math/=node_modules/@prb/math/src/",
       "@prb/test/=node_modules/@prb/test/src/",
+      "@river-build/diamond/=node_modules/@river-build/diamond/",
       "account-abstraction/=node_modules/account-abstraction/contracts/",
       "ds-test/=node_modules/ds-test/src/",
       "forge-std/=node_modules/forge-std/src/",
@@ -69,13 +70,13 @@
       "appendCBOR": false
     },
     "compilationTarget": {
-      "contracts/src/diamond/utils/IMulticall.sol": "IMulticall"
+      "contracts/src/utils/IMulticall.sol": "IMulticall"
     },
     "evmVersion": "paris",
     "libraries": {}
   },
   "sources": {
-    "contracts/src/diamond/utils/IMulticall.sol": {
+    "contracts/src/utils/IMulticall.sol": {
       "keccak256": "0x6dc9ea0a61c25be2ccf2812ae27c4044d2471b113862f242ef5d11fba1167ec1",
       "urls": [
         "bzz-raw://31d7c5626cb8817e9a638b42dac9d19eafdbb5e7db50a54a667bf9a8e469e0e8",

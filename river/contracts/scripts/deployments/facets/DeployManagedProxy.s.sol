@@ -7,8 +7,8 @@ pragma solidity ^0.8.19;
 
 //contracts
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
-import {ManagedProxyFacet} from "contracts/src/diamond/proxy/managed/ManagedProxyFacet.sol";
+import {FacetHelper} from "@river-build/diamond/scripts/common/helpers/FacetHelper.s.sol";
+import {ManagedProxyFacet} from "@river-build/diamond/src/proxy/managed/ManagedProxyFacet.sol";
 
 contract DeployManagedProxy is FacetHelper, Deployer {
   constructor() {

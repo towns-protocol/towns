@@ -11,7 +11,7 @@ import {ERC20Storage} from "./ERC20Storage.sol";
 
 // contracts
 import {ERC20PermitBase} from "contracts/src/diamond/facets/token/ERC20/permit/ERC20PermitBase.sol";
-import {Facet} from "contracts/src/diamond/facets/Facet.sol";
+import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
 
 abstract contract ERC20 is IERC20, IERC20Metadata, ERC20PermitBase, Facet {
   function __ERC20_init(

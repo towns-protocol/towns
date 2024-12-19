@@ -4,7 +4,7 @@ pragma solidity ^0.8.23;
 import {IERC721A} from "./IERC721A.sol";
 import {ERC721AStorage} from "./ERC721AStorage.sol";
 import {ERC721ABase} from "./ERC721ABase.sol";
-import {Facet} from "contracts/src/diamond/facets/Facet.sol";
+import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
 
 /**
  * @title ERC721A

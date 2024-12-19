@@ -8,7 +8,7 @@ import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
 
 // contracts
 import {Entitled} from "contracts/src/spaces/facets/Entitled.sol";
-import {Facet} from "contracts/src/diamond/facets/Facet.sol";
+import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
 import {IReferrals} from "./IReferrals.sol";
 import {ReferralsBase} from "./ReferralsBase.sol";
 

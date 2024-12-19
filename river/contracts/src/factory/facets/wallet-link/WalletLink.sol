@@ -7,7 +7,7 @@ import {IWalletLink} from "./IWalletLink.sol";
 // libraries
 
 // contracts
-import {Facet} from "contracts/src/diamond/facets/Facet.sol";
+import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
 import {WalletLinkBase} from "./WalletLinkBase.sol";
 
 contract WalletLink is IWalletLink, WalletLinkBase, Facet {

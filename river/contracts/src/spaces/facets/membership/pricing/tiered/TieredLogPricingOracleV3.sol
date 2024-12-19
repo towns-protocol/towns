@@ -9,7 +9,7 @@ import {AggregatorV3Interface} from "contracts/src/utils/interfaces/AggregatorV3
 import {UD60x18, Casting, log10} from "@prb/math/UD60x18.sol";
 
 // contracts
-import {IntrospectionFacet} from "contracts/src/diamond/facets/introspection/IntrospectionFacet.sol";
+import {IntrospectionFacet} from "@river-build/diamond/src/facets/introspection/IntrospectionFacet.sol";
 
 /**
  * @title TieredLogPricingOracle

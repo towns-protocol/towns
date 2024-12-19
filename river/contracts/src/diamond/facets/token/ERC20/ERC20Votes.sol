@@ -11,8 +11,8 @@ import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 // contracts
-import {Nonces} from "contracts/src/diamond/utils/Nonces.sol";
-import {EIP712} from "contracts/src/diamond/utils/cryptography/EIP712.sol";
+import {Nonces} from "@river-build/diamond/src/utils/Nonces.sol";
+import {EIP712} from "@river-build/diamond/src/utils/cryptography/EIP712.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 abstract contract ERC20Votes is IERC5805, EIP712, Nonces {

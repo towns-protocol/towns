@@ -7,8 +7,8 @@ pragma solidity ^0.8.23;
 
 //contracts
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-import {DiamondLoupeFacet} from "contracts/src/diamond/facets/loupe/DiamondLoupeFacet.sol";
-import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
+import {DiamondLoupeFacet} from "@river-build/diamond/src/facets/loupe/DiamondLoupeFacet.sol";
+import {FacetHelper} from "@river-build/diamond/scripts/common/helpers/FacetHelper.s.sol";
 
 contract DeployDiamondLoupe is FacetHelper, Deployer {
   constructor() {

@@ -17,7 +17,7 @@ import {StringSet} from "contracts/src/utils/StringSet.sol";
 
 // contracts
 import {RolesBase} from "contracts/src/spaces/facets/roles/RolesBase.sol";
-import {Facet} from "contracts/src/diamond/facets/Facet.sol";
+import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
 
 contract EntitlementDataQueryable is
   IRolesBase,

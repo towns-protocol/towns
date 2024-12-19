@@ -8,7 +8,7 @@ import {IMembershipPricing} from "contracts/src/spaces/facets/membership/pricing
 import {FixedPricingStorage} from "./FixedPricingStorage.sol";
 
 // contracts
-import {IntrospectionFacet} from "contracts/src/diamond/facets/introspection/IntrospectionFacet.sol";
+import {IntrospectionFacet} from "@river-build/diamond/src/facets/introspection/IntrospectionFacet.sol";
 
 contract FixedPricing is IMembershipPricing, IntrospectionFacet {
   string public name = "FixedPricing";

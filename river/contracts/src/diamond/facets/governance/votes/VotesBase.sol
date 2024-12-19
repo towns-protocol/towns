@@ -11,9 +11,9 @@ import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 // contracts
-import {Nonces} from "contracts/src/diamond/utils/Nonces.sol";
+import {Nonces} from "@river-build/diamond/src/utils/Nonces.sol";
 import {Context} from "contracts/src/diamond/utils/Context.sol";
-import {EIP712} from "contracts/src/diamond/utils/cryptography/EIP712.sol";
+import {EIP712} from "@river-build/diamond/src/utils/cryptography/EIP712.sol";
 
 /**
  * @dev This is a base abstract contract that tracks voting units, which are a measure of voting power that can be

@@ -7,7 +7,7 @@ import {Vm} from "forge-std/Test.sol";
 //interfaces
 
 import {IDropFacetBase} from "contracts/src/tokens/drop/IDropFacet.sol";
-import {IOwnableBase} from "contracts/src/diamond/facets/ownable/IERC173.sol";
+import {IOwnableBase} from "@river-build/diamond/src/facets/ownable/IERC173.sol";
 import {IRewardsDistributionBase} from "contracts/src/base/registry/facets/distribution/v2/IRewardsDistribution.sol";
 
 //libraries
@@ -24,7 +24,7 @@ import {NodeOperatorStatus} from "contracts/src/base/registry/facets/operator/No
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
 import {River} from "contracts/src/tokens/river/base/River.sol";
 import {NodeOperatorFacet} from "contracts/src/base/registry/facets/operator/NodeOperatorFacet.sol";
-import {EIP712Facet} from "contracts/src/diamond/utils/cryptography/signature/EIP712Facet.sol";
+import {EIP712Facet} from "@river-build/diamond/src/utils/cryptography/signature/EIP712Facet.sol";
 import {StakingRewards} from "contracts/src/base/registry/facets/distribution/v2/StakingRewards.sol";
 
 contract DropFacetTest is

@@ -10,8 +10,8 @@ import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {WalletLinkStorage} from "./WalletLinkStorage.sol";
 
 // contracts
-import {Nonces} from "contracts/src/diamond/utils/Nonces.sol";
-import {EIP712Base} from "contracts/src/diamond/utils/cryptography/signature/EIP712Base.sol";
+import {Nonces} from "@river-build/diamond/src/utils/Nonces.sol";
+import {EIP712Base} from "@river-build/diamond/src/utils/cryptography/signature/EIP712Base.sol";
 
 abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
   using EnumerableSet for EnumerableSet.AddressSet;

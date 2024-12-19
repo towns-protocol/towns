@@ -29,7 +29,7 @@
         "@ethereumjs/util": "^8.0.1",
         "@river-build/dlog": "workspace:^",
         "@river-build/encryption": "workspace:^",
-        "@river-build/mls-rs-wasm": "^0.0.4",
+        "@river-build/mls-rs-wasm": "^0.0.7",
         "@river-build/proto": "workspace:^",
         "@river-build/web3": "workspace:^",
         "browser-or-node": "^3.0.0",

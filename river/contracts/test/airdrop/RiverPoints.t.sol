@@ -4,8 +4,8 @@ pragma solidity ^0.8.19;
 // utils
 
 //interfaces
-import {IDiamond} from "contracts/src/diamond/Diamond.sol";
-import {IOwnableBase} from "contracts/src/diamond/facets/ownable/IERC173.sol";
+import {IDiamond} from "@river-build/diamond/src/Diamond.sol";
+import {IOwnableBase} from "@river-build/diamond/src/facets/ownable/IERC173.sol";
 import {IRiverPointsBase} from "contracts/src/tokens/points/IRiverPoints.sol";
 
 //libraries

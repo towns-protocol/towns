@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 // interface
-import {IDiamond, Diamond} from "contracts/src/diamond/Diamond.sol";
+import {IDiamond, Diamond} from "@river-build/diamond/src/Diamond.sol";
 
 // libraries
 

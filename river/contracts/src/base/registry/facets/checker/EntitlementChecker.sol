@@ -10,7 +10,7 @@ import {EntitlementCheckerStorage} from "./EntitlementCheckerStorage.sol";
 import {NodeOperatorStorage, NodeOperatorStatus} from "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
 
 // contracts
-import {Facet} from "contracts/src/diamond/facets/Facet.sol";
+import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
 
 contract EntitlementChecker is IEntitlementChecker, Facet {
   using EnumerableSet for EnumerableSet.AddressSet;

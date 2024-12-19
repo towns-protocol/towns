@@ -2,8 +2,8 @@
 pragma solidity ^0.8.23;
 
 //interfaces
-import {IDiamondCut} from "contracts/src/diamond/facets/cut/IDiamondCut.sol";
-import {IDiamond} from "contracts/src/diamond/IDiamond.sol";
+import {IDiamondCut} from "@river-build/diamond/src/facets/cut/IDiamondCut.sol";
+import {IDiamond} from "@river-build/diamond/src/Diamond.sol";
 //libraries
 
 //contracts

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IOwnableBase} from "contracts/src/diamond/facets/ownable/IERC173.sol";
+import {IOwnableBase} from "@river-build/diamond/src/facets/ownable/IERC173.sol";
 import {IERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
 import {INodeOperator, INodeOperatorBase} from "contracts/src/base/registry/facets/operator/INodeOperator.sol";
 import {ISpaceDelegationBase} from "contracts/src/base/registry/facets/delegation/ISpaceDelegation.sol";
@@ -14,8 +14,8 @@ import {NodeOperatorStatus} from "contracts/src/base/registry/facets/operator/No
 
 // contracts
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
-import {OwnableFacet} from "contracts/src/diamond/facets/ownable/OwnableFacet.sol";
-import {IntrospectionFacet} from "contracts/src/diamond/facets/introspection/IntrospectionFacet.sol";
+import {OwnableFacet} from "@river-build/diamond/src/facets/ownable/OwnableFacet.sol";
+import {IntrospectionFacet} from "@river-build/diamond/src/facets/introspection/IntrospectionFacet.sol";
 import {ERC721A} from "contracts/src/diamond/facets/token/ERC721A/ERC721A.sol";
 import {River} from "contracts/src/tokens/river/base/River.sol";
 

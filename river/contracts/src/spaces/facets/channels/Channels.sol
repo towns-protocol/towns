@@ -8,7 +8,7 @@ import {IChannel} from "./IChannel.sol";
 import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
 
 // contracts
-import {Facet} from "contracts/src/diamond/facets/Facet.sol";
+import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
 import {Entitled} from "contracts/src/spaces/facets/Entitled.sol";
 import {ChannelBase} from "./ChannelBase.sol";
 import {RolesBase} from "contracts/src/spaces/facets/roles/RolesBase.sol";

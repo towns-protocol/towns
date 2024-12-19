@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 import {Multicallable} from "solady/utils/Multicallable.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
-import {ManagedProxyBase} from "contracts/src/diamond/proxy/managed/ManagedProxyBase.sol";
+import {ManagedProxyBase} from "@river-build/diamond/src/proxy/managed/ManagedProxyBase.sol";
 
 contract SpaceProxy is ManagedProxyBase, Multicallable {
   constructor(

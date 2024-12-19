@@ -8,5 +8,6 @@ pragma solidity ^0.8.23;
 // contracts
 
 interface IProxyBatchDelegation {
-  function sendDelegators() external;
+  function sendAuthorizedClaimers(uint32 minGasLimit) external;
+  function sendDelegators(uint32 minGasLimit) external;
 }

@@ -6,8 +6,8 @@ pragma solidity ^0.8.23;
 //libraries
 
 //contracts
-import {IDiamond, Diamond} from "contracts/src/diamond/Diamond.sol";
-import {DiamondHelper} from "contracts/test/diamond/Diamond.t.sol";
+import {IDiamond, Diamond} from "@river-build/diamond/src/Diamond.sol";
+import {DiamondHelper} from "@river-build/diamond/scripts/common/helpers/DiamondHelper.s.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 
 import {DeployDiamondCut} from "contracts/scripts/deployments/facets/DeployDiamondCut.s.sol";
@@ -17,7 +17,7 @@ import {DeployOwnable} from "contracts/scripts/deployments/facets/DeployOwnable.
 
 // utils
 import {DeployMultiInit} from "contracts/scripts/deployments/utils/DeployMultiInit.s.sol";
-import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
+import {MultiInit} from "@river-build/diamond/src/initializers/MultiInit.sol";
 
 contract DeployDiamond is DiamondHelper, Deployer {
   DeployMultiInit private multiInitHelper = new DeployMultiInit();

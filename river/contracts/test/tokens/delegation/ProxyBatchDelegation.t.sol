@@ -102,7 +102,7 @@ contract ProxyBatchDelegationTest is BaseSetup, IMainnetDelegationBase {
 
     // Send values across the bridge to base
     vm.prank(_randomAddress());
-    proxyDelegation.sendAuthorizedClaimers();
+    proxyDelegation.sendAuthorizedClaimers(200_000);
 
     // Check if the claimer is the same on both sides
     assertEq(
@@ -118,7 +118,7 @@ contract ProxyBatchDelegationTest is BaseSetup, IMainnetDelegationBase {
     givenUsersHaveDelegatedTokens
   {
     vm.prank(_randomAddress());
-    proxyDelegation.sendDelegators();
+    proxyDelegation.sendDelegators(5_000_000);
 
     address randomUser = _getRandomValue(_users);
 
@@ -131,52 +131,6 @@ contract ProxyBatchDelegationTest is BaseSetup, IMainnetDelegationBase {
       authorizedClaimers.getAuthorizedClaimer(randomUser),
       delegation.getAuthorizedClaimer(randomUser)
     );
-  }
-
-  function test_removeDelegators() external {
-    address operator = 0x09285F179a9bA06CEBA12DeCd1755Ac6942A8cf4;
-
-    address[] memory delegators = new address[](2);
-    delegators[0] = 0x204f1aA5B666d0eAc07228D3065a461e92AC399c;
-    delegators[1] = 0x3541F646d321CACbc0fF4A7cCcB583E8B6E413da;
-
-    // given delegators have tokens
-    vm.startPrank(vault);
-    rvr.transfer(delegators[0], tokens);
-    rvr.transfer(delegators[1], tokens);
-    vm.stopPrank();
-
-    setOperator(operator);
-
-    // given delegators have delegated tokens
-    vm.prank(delegators[0]);
-    rvr.delegate(operator);
-
-    vm.prank(delegators[1]);
-    rvr.delegate(operator);
-
-    vm.prank(_randomAddress());
-    proxyDelegation.sendDelegators();
-
-    Delegation memory delegator = delegation.getDelegationByDelegator(
-      delegators[0]
-    );
-
-    assertEq(rvr.delegates(delegators[0]), delegator.operator);
-
-    vm.prank(_randomAddress());
-    proxyDelegation.removeDelegators();
-
-    delegator = delegation.getDelegationByDelegator(delegators[0]);
-
-    assertEq(delegator.operator, address(0));
-    assertEq(delegator.quantity, 0);
-    assertEq(delegator.delegator, address(0));
-
-    Delegation[] memory mainneDelegators = delegation
-      .getMainnetDelegationsByOperator(operator);
-
-    assertEq(mainneDelegators.length, 0);
   }
 
   function _getRandomValue(

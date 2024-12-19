@@ -30,7 +30,17 @@ export function usePricingModules() {
     )
 }
 
-export function usePricingModuleForMembership(spaceId: string | undefined) {
+export function usePricingModuleForMembership(spaceId: string | undefined):
+    | {
+          isLoading: boolean
+          data: undefined
+      }
+    | {
+          isLoading: boolean
+          data: {
+              isFixed: boolean
+          }
+      } {
     const { data: membershipInfo, isLoading: isLoadingMembershipInfo } = useMembershipInfo(
         spaceId ?? '',
     )

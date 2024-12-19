@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IERC173} from "contracts/src/diamond/facets/ownable/IERC173.sol";
+import {IERC173} from "@river-build/diamond/src/facets/ownable/IERC173.sol";
 import {IArchitectBase} from "contracts/src/factory/facets/architect/IArchitect.sol";
 import {ICreateSpace} from "contracts/src/factory/facets/create/ICreateSpace.sol";
 
@@ -13,7 +13,7 @@ import {NodeOperatorStatus} from "contracts/src/base/registry/facets/operator/No
 
 // contracts
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
-import {EIP712Facet} from "contracts/src/diamond/utils/cryptography/signature/EIP712Facet.sol";
+import {EIP712Facet} from "@river-build/diamond/src/utils/cryptography/signature/EIP712Facet.sol";
 import {NodeOperatorFacet} from "contracts/src/base/registry/facets/operator/NodeOperatorFacet.sol";
 import {River} from "contracts/src/tokens/river/base/River.sol";
 import {MainnetDelegation} from "contracts/src/tokens/river/base/delegation/MainnetDelegation.sol";

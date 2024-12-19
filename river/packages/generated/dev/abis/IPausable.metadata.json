@@ -83,6 +83,7 @@
       "@openzeppelin/=node_modules/@openzeppelin/",
       "@prb/math/=node_modules/@prb/math/src/",
       "@prb/test/=node_modules/@prb/test/src/",
+      "@river-build/diamond/=node_modules/@river-build/diamond/",
       "account-abstraction/=node_modules/account-abstraction/contracts/",
       "ds-test/=node_modules/ds-test/src/",
       "forge-std/=node_modules/forge-std/src/",
@@ -98,13 +99,13 @@
       "appendCBOR": false
     },
     "compilationTarget": {
-      "contracts/src/diamond/facets/pausable/IPausable.sol": "IPausable"
+      "node_modules/@river-build/diamond/src/facets/pausable/IPausable.sol": "IPausable"
     },
     "evmVersion": "paris",
     "libraries": {}
   },
   "sources": {
-    "contracts/src/diamond/facets/pausable/IPausable.sol": {
+    "node_modules/@river-build/diamond/src/facets/pausable/IPausable.sol": {
       "keccak256": "0x3df1579165cc634718d4619e0760ea3c492b2766c2e42328208a38457e103ca1",
       "urls": [
         "bzz-raw://1c6d3f4e3a3437075fb09c4875cfbf640af5cdc50c31b64e77ff5678dc1a8684",

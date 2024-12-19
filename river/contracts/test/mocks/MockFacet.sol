@@ -8,8 +8,8 @@ pragma solidity ^0.8.23;
 // contracts
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
-import {TokenOwnableBase} from "contracts/src/diamond/facets/ownable/token/TokenOwnableBase.sol";
-import {Facet} from "contracts/src/diamond/facets/Facet.sol";
+import {TokenOwnableBase} from "@river-build/diamond/src/facets/ownable/token/TokenOwnableBase.sol";
+import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
 
 interface IMockFacet {
   function mockFunction() external pure returns (uint256);

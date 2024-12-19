@@ -11,9 +11,9 @@ import {CurrencyTransfer} from "contracts/src/utils/libraries/CurrencyTransfer.s
 
 // contracts
 import {PrepayBase} from "./PrepayBase.sol";
-import {ReentrancyGuard} from "contracts/src/diamond/facets/reentrancy/ReentrancyGuard.sol";
+import {ReentrancyGuard} from "@river-build/diamond/src/facets/reentrancy/ReentrancyGuard.sol";
 import {Entitled} from "contracts/src/spaces/facets/Entitled.sol";
-import {Facet} from "contracts/src/diamond/facets/Facet.sol";
+import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
 
 contract PrepayFacet is IPrepay, PrepayBase, ReentrancyGuard, Entitled, Facet {
   function __PrepayFacet_init() external onlyInitializing {

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IOwnableBase} from "contracts/src/diamond/facets/ownable/IERC173.sol";
+import {IOwnableBase} from "@river-build/diamond/src/facets/ownable/IERC173.sol";
 import {INodeRegistry} from "contracts/src/river/registry/facets/node/INodeRegistry.sol";
 import {IOperatorRegistry} from "contracts/src/river/registry/facets/operator/IOperatorRegistry.sol";
 import {IRiverConfig} from "contracts/src/river/registry/facets/config/IRiverConfig.sol";

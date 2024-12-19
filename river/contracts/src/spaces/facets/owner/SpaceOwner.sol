@@ -11,7 +11,7 @@ import {IMembershipMetadata} from "contracts/src/spaces/facets/membership/metada
 // contracts
 import {ERC721A} from "contracts/src/diamond/facets/token/ERC721A/ERC721A.sol";
 import {SpaceOwnerBase} from "./SpaceOwnerBase.sol";
-import {OwnableBase} from "contracts/src/diamond/facets/ownable/OwnableBase.sol";
+import {OwnableBase} from "@river-build/diamond/src/facets/ownable/OwnableBase.sol";
 import {GuardianBase} from "contracts/src/spaces/facets/guardian/GuardianBase.sol";
 import {Votes} from "contracts/src/diamond/facets/governance/votes/Votes.sol";
 import {SpaceOwnerUriBase} from "./SpaceOwnerUriBase.sol";

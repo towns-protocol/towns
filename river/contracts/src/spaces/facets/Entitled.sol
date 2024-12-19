@@ -14,8 +14,8 @@ import {ERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/ERC721ABas
 import {WalletLinkProxyBase} from "contracts/src/spaces/facets/delegation/WalletLinkProxyBase.sol";
 
 // contracts
-import {TokenOwnableBase} from "contracts/src/diamond/facets/ownable/token/TokenOwnableBase.sol";
-import {PausableBase} from "contracts/src/diamond/facets/pausable/PausableBase.sol";
+import {TokenOwnableBase} from "@river-build/diamond/src/facets/ownable/token/TokenOwnableBase.sol";
+import {PausableBase} from "@river-build/diamond/src/facets/pausable/PausableBase.sol";
 import {BanningBase} from "contracts/src/spaces/facets/banning/BanningBase.sol";
 import {ERC5643Base} from "contracts/src/diamond/facets/token/ERC5643/ERC5643Base.sol";
 

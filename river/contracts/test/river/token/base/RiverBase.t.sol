@@ -10,7 +10,7 @@ import {IERC5267} from "@openzeppelin/contracts/interfaces/IERC5267.sol";
 import {IERC6372} from "@openzeppelin/contracts/interfaces/IERC6372.sol";
 import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 import {ILockBase} from "contracts/src/tokens/lock/ILock.sol";
-import {IOwnableBase} from "contracts/src/diamond/facets/ownable/IERC173.sol";
+import {IOwnableBase} from "@river-build/diamond/src/facets/ownable/IERC173.sol";
 
 //libraries
 

@@ -6,8 +6,8 @@ import {IAuthorizedClaimers} from "./IAuthorizedClaimers.sol";
 
 // libraries
 import {AuthorizedClaimerStorage} from "./AuthorizedClaimerStorage.sol";
-import {EIP712} from "contracts/src/diamond/utils/cryptography/EIP712.sol";
-import {Nonces} from "contracts/src/diamond/utils/Nonces.sol";
+import {EIP712} from "@river-build/diamond/src/utils/cryptography/EIP712.sol";
+import {Nonces} from "@river-build/diamond/src/utils/Nonces.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 // contracts

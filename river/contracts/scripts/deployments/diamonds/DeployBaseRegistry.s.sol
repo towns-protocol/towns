@@ -2,17 +2,16 @@
 pragma solidity ^0.8.23;
 
 //interfaces
-import {IDiamond} from "contracts/src/diamond/IDiamond.sol";
+import {IDiamond} from "@river-build/diamond/src/IDiamond.sol";
 
 //contracts
 import {DiamondHelper} from "contracts/test/diamond/Diamond.t.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-import {Diamond} from "contracts/src/diamond/Diamond.sol";
-
-// helpers
+import {Diamond} from "@river-build/diamond/src/Diamond.sol";
 
 // facets
-import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
+import {MainnetDelegation} from "contracts/src/tokens/river/base/delegation/MainnetDelegation.sol";
+import {MultiInit} from "@river-build/diamond/src/initializers/MultiInit.sol";
 
 // deployers
 import {DeployMultiInit} from "contracts/scripts/deployments/utils/DeployMultiInit.s.sol";
