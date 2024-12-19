@@ -137,7 +137,7 @@ deploy-any-ledger :;
 	@SAVE_DEPLOYMENTS=1 $(if $(context),DEPLOYMENT_CONTEXT=$(context)) \
 	forge script scripts/deployments/${type}/${contract}.s.sol:${contract} \
 	--ledger --hd-paths ${hd_path} --sender ${sender} \
-	--ffi --rpc-url ${rpc} --broadcast --verify --verifier=blockscout --verifier-url=${verifier}
+	--ffi --rpc-url ${rpc} --broadcast --verify --verifier=blockscout --verifier-url=${verifier} --etherscan-api-key ${etherscan}
 
 resume-any-ledger :;
 	@forge script scripts/deployments/${type}/${contract}.s.sol:${contract} \
@@ -201,7 +201,7 @@ verify-river-testnet :;
 # 				 Base Sepolia
 # ===========================
 deploy-ledger-base-sepolia :;
-	@$(MAKE) deploy-any-ledger rpc=base_sepolia hd_path=${HD_PATH} sender=${SENDER_ADDRESS}
+	@$(MAKE) deploy-any-ledger rpc=base_sepolia hd_path=${HD_PATH} sender=${SENDER_ADDRESS} verifier=${BLOCKSCOUT_SEPOLIA_URL} etherscan=${BLOCKSCOUT_SEPOLIA_API_KEY}
 	@$(MAKE) resume-any-ledger rpc=base_sepolia hd_path=${HD_PATH} sender=${SENDER_ADDRESS} verifier=${BASESCAN_SEPOLIA_URL} etherscan=${BASESCAN_API_KEY}
 
 deploy-base-sepolia :;
@@ -250,7 +250,7 @@ interact-river :;
 # 				 		Base
 # ===========================
 deploy-base :;
-	@$(MAKE) deploy-any-ledger rpc=base hd_path=${HD_PATH} sender=${SENDER_ADDRESS} verifier=${BLOCKSCOUT_BASE_URL}
+	@$(MAKE) deploy-any-ledger rpc=base hd_path=${HD_PATH} sender=${SENDER_ADDRESS} verifier=${BLOCKSCOUT_BASE_URL} etherscan=${BLOCKSCOUT_BASE_API_KEY}
 	@$(MAKE) resume-any-ledger rpc=base hd_path=${HD_PATH} sender=${SENDER_ADDRESS} verifier=${BASESCAN_URL} etherscan=${BASESCAN_API_KEY}
 
 interact-base :;

@@ -315,7 +315,7 @@ func (s *streamCacheImpl) tryLoadStreamRecord(
 		for {
 			select {
 			case <-ctx.Done():
-				return nil, AsRiverError(ctx.Err(), Err_INTERNAL).Message("Timeout waiting for cache record to be created")
+				return nil, ctx.Err()
 			case <-time.After(delay):
 				stream, _ := s.cache.Load(streamId)
 				if stream != nil {

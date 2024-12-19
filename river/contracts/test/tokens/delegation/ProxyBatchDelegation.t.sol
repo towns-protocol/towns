@@ -111,16 +111,28 @@ contract ProxyBatchDelegationTest is BaseSetup, IMainnetDelegationBase {
     );
   }
 
-  function test_sendDelegations()
+  function test_sendDelegations(
+    bool firstHalf,
+    uint256 seed
+  )
     external
     givenUsersHaveTokens
     givenUsersHaveAuthorizedClaimers
     givenUsersHaveDelegatedTokens
   {
     vm.prank(_randomAddress());
-    proxyDelegation.sendDelegators(5_000_000);
+    proxyDelegation.sendDelegators(5_000_000, firstHalf);
 
-    address randomUser = _getRandomValue(_users);
+    uint256 length = _users.length;
+    (uint256 start, uint256 end) = firstHalf
+      ? (0, length / 2)
+      : (length / 2, length);
+    uint256 halfSize = end - start;
+
+    // Pick a random index within the chosen half
+    uint256 randomIndex = start + (seed % halfSize);
+
+    address randomUser = _users[randomIndex];
 
     Delegation memory delegator = delegation.getDelegationByDelegator(
       randomUser

@@ -276,10 +276,7 @@ func (p *miniblockProducer) TestMakeMiniblock(
 
 		err = SleepWithContext(ctx, 10*time.Millisecond)
 		if err != nil {
-			return nil, AsRiverError(err, Err_INTERNAL).
-				Func("TestMakeMiniblock").
-				Message("Timed out while waiting for make_miniblock job to be scheduled").
-				Tag("streamId", streamId)
+			return nil, err
 		}
 	}
 
@@ -291,10 +288,7 @@ func (p *miniblockProducer) TestMakeMiniblock(
 
 		err = SleepWithContext(ctx, 10*time.Millisecond)
 		if err != nil {
-			return nil, AsRiverError(err, Err_INTERNAL).
-				Func("TestMakeMiniblock").
-				Message("Timed out while waiting for make_miniblock job to terminate").
-				Tag("streamId", streamId)
+			return nil, err
 		}
 	}
 

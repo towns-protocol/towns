@@ -679,17 +679,10 @@ func (NoopChainMonitor) OnStopped(OnChainMonitorStoppedCallback) {}
 // Run individual tests with -run to find specific leaking tests.
 func TestMainForLeaksIgnoreGeth() {
 	// Geth's simulated backend leaks a lot of goroutines.
-	// Unfortunately goleak doesn't have options to ignore by module or package,
+	// Unfortunately goleak doesn't have optiosn to ignore by module or package,
 	// so some custom error string parsing is required to filter them out.
-
-	// pgx also sometimes has a "leaked" goroutine that takes about 500ms to terminate after
-	// a pool is closed. Here we can configure ignoring this as it is a specific function.
-	ignorePgxPoolHealthCheck := goleak.IgnoreAnyFunction(
-		"github.com/jackc/pgx/v5/pgxpool.(*Pool).triggerHealthCheck.func1",
-	)
-
 	now := time.Now()
-	err := goleak.Find(ignorePgxPoolHealthCheck)
+	err := goleak.Find()
 	elapsed := time.Since(now)
 	if err != nil {
 		msg := err.Error()

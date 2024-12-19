@@ -14,11 +14,7 @@ func TestMigrateExistingDb(t *testing.T) {
 
 	testParams := setupStreamStorageTest(t)
 	ctx := testParams.ctx
-
-	// Tear down the store and defer remaining cleanup
-	testParams.pgStreamStore.Close(ctx)
-	defer testParams.ctxCloser()
-	defer testParams.schemaDeleter()
+	defer testParams.closer()
 
 	pool, err := CreateAndValidatePgxPool(
 		ctx,
