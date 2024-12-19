@@ -12,6 +12,7 @@ import {
     type SpacePayload,
     type UserPayload,
     MembershipOp,
+    BlockchainTransaction,
 } from '@river-build/proto'
 import { isDefined, logNever } from '../../../check'
 import {
@@ -963,31 +964,11 @@ export function getFallbackContent(
         case RiverTimelineEvent.Mls:
             return `mlsEvent`
         case RiverTimelineEvent.UserBlockchainTransaction:
-            return `kind: ${content.transaction.kind} refEventId: ${
-                content.transaction.refEventId
-                    ? bin_toHexString(content.transaction.refEventId)
-                    : ''
-            } toUserAddress: ${
-                content.transaction?.toUserAddress
-                    ? bin_toHexString(content.transaction?.toUserAddress)
-                    : ''
-            } quantity: ${
-                content.transaction?.quantity ? content.transaction.quantity.toString() : ''
-            }`
+            return getFallbackContent_BlockchainTransaction(content.transaction)
         case RiverTimelineEvent.MemberBlockchainTransaction:
-            return `kind: ${content.transaction?.kind} fromUserAddress: ${
+            return `memberTransaction from: ${
                 content.fromUserId
-            } refEventId: ${
-                content.transaction?.refEventId
-                    ? bin_toHexString(content.transaction.refEventId)
-                    : ''
-            } toUserAddress: ${
-                content.transaction?.toUserAddress
-                    ? bin_toHexString(content.transaction?.toUserAddress)
-                    : ''
-            } quantity: ${
-                content.transaction?.quantity ? content.transaction?.quantity.toString() : ''
-            }`
+            } ${getFallbackContent_BlockchainTransaction(content.transaction)}`
         case RiverTimelineEvent.UserReceivedBlockchainTransaction:
             return `kind: ${content.receivedTransaction.kind} fromUserAddress: ${
                 content.receivedTransaction.fromUserAddress
@@ -996,6 +977,24 @@ export function getFallbackContent(
             }`
         case RiverTimelineEvent.StreamEncryptionAlgorithm:
             return `algorithm: ${content.algorithm}`
+    }
+}
+
+function getFallbackContent_BlockchainTransaction(
+    transaction: PlainMessage<BlockchainTransaction> | undefined,
+) {
+    if (!transaction) {
+        return '??'
+    }
+    switch (transaction.content.case) {
+        case 'tip':
+            return `kind: ${transaction.content.case} refEventId: ${bin_toHexString(
+                transaction.content.value.refEventId,
+            )} toUserAddress: ${bin_toHexString(
+                transaction.content.value.toUserAddress,
+            )} quantity: ${transaction.content.value.quantity.toString()}`
+        default:
+            return `kind: ${transaction.content.case ?? 'unspecified'}`
     }
 }
 

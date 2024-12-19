@@ -611,15 +611,21 @@ message Snapshot {
 }
 
 message BlockchainTransaction {
-    BlockchainTransactionKind kind = 1;
-    BlockchainTransactionReceipt receipt = 2;
+    message Tip {
+        bytes stream_id = 1;
+        bytes ref_event_id = 2;
+        bytes to_user_address = 3;
+        uint64 quantity = 4;
+        bytes currency = 5;
+    }
     
-    // optional metadata
-    optional bytes stream_id = 101;
-    optional bytes ref_event_id = 102;
-    optional bytes to_user_address = 103;
-    optional uint64 quantity = 104;
-    optional bytes currency = 105;
+    // required fields
+    BlockchainTransactionReceipt receipt = 1;
+    
+    // optional metadata to be verified by the node
+    oneof content {
+        Tip tip = 101;
+    }
 }
 
 /** blockchain transaction receipt */
@@ -956,11 +962,6 @@ enum MessageInteractionType {
 enum GroupMentionType {
     GROUP_MENTION_TYPE_UNSPECIFIED = 0;
     GROUP_MENTION_TYPE_AT_CHANNEL = 1;
-}
-
-enum BlockchainTransactionKind {
-    BLOCKCHAIN_TRANSACTION_KIND_UNSPECIFIED = 0;
-    BLOCKCHAIN_TRANSACTION_KIND_TIP = 1;
 }
 
 enum ReceivedBlockchainTransactionKind {

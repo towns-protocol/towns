@@ -606,31 +606,31 @@ func (params *aeParams) creatorIsMember() (bool, error) {
 
 func (ru *aeMemberBlockchainTransactionRules) validMemberBlockchainTransaction_ReceiptMetadata() (bool, error) {
 	// check creator
-	switch ru.memberTransaction.Transaction.Kind {
-	case BlockchainTransactionKind_BLOCKCHAIN_TRANSACTION_KIND_UNSPECIFIED:
+	switch content := ru.memberTransaction.Transaction.Content.(type) {
+	case nil:
 		// only accept typed transactions
-		return false, RiverError(Err_INVALID_ARGUMENT, "member transaction kind is unspecified")
-	case BlockchainTransactionKind_BLOCKCHAIN_TRANSACTION_KIND_TIP:
+		return false, RiverError(Err_INVALID_ARGUMENT, "member transaction content is nil")
+	case *BlockchainTransaction_Tip_:
 		// make sure everyone is a member
-		err := checkIsMember(ru.params, ru.memberTransaction.FromUserAddress)
+		err := checkIsMember(ru.params, ru.memberTransaction.GetFromUserAddress())
 		if err != nil {
 			return false, err
 		}
-		err = checkIsMember(ru.params, ru.memberTransaction.Transaction.ToUserAddress)
+		err = checkIsMember(ru.params, content.Tip.GetToUserAddress())
 		if err != nil {
 			return false, err
 		}
 		// we need a ref event id
-		if ru.memberTransaction.Transaction.RefEventId == nil {
+		if content.Tip.GetRefEventId() == nil {
 			return false, RiverError(Err_INVALID_ARGUMENT, "tip transaction ref event id is nil")
 		}
 		return true, nil
 	default:
 		return false, RiverError(
 			Err_INVALID_ARGUMENT,
-			"unknown transaction kind",
-			"kind",
-			ru.memberTransaction.Transaction.Kind,
+			"unknown transaction content",
+			"content",
+			content,
 		)
 	}
 }
@@ -690,12 +690,12 @@ func (ru *aeBlockchainTransactionRules) validBlockchainTransaction_IsUnique() (b
 
 func (ru *aeBlockchainTransactionRules) validBlockchainTransaction_ReceiptMetadata() (bool, error) {
 	// check creator
-	switch ru.transaction.Kind {
-	case BlockchainTransactionKind_BLOCKCHAIN_TRANSACTION_KIND_UNSPECIFIED:
+	switch content := ru.transaction.Content.(type) {
+	case nil:
 		// for unspecified types, we don't need to check anything specific
 		// the other checks should make sure the transaction is valid and from this user
 		return true, nil
-	case BlockchainTransactionKind_BLOCKCHAIN_TRANSACTION_KIND_TIP:
+	case *BlockchainTransaction_Tip_:
 		// todo
 		return true, nil
 	default:
@@ -703,7 +703,7 @@ func (ru *aeBlockchainTransactionRules) validBlockchainTransaction_ReceiptMetada
 			Err_INVALID_ARGUMENT,
 			"unknown transaction type",
 			"transactionType",
-			ru.transaction.Kind,
+			content,
 		)
 	}
 }
@@ -719,11 +719,16 @@ func (ru *aeReceivedBlockchainTransactionRules) parentEventForReceivedBlockchain
 		return nil, RiverError(Err_INVALID_ARGUMENT, "transaction kind is unspecified")
 	case ReceivedBlockchainTransactionKind_RECEIVED_BLOCKCHAIN_TRANSACTION_KIND_TIP:
 		// received tips wrap the original tip transaction, grab the stream id
-		if transaction.StreamId == nil {
+		// cast content to tip and check error
+		content, ok := transaction.Content.(*BlockchainTransaction_Tip_)
+		if !ok {
+			return nil, RiverError(Err_INVALID_ARGUMENT, "content is not a tip")
+		}
+		if content.Tip.GetStreamId() == nil {
 			return nil, RiverError(Err_INVALID_ARGUMENT, "transaction stream id is nil")
 		}
 		// convert to stream id
-		streamId, err := shared.StreamIdFromBytes(transaction.StreamId)
+		streamId, err := shared.StreamIdFromBytes(content.Tip.GetStreamId())
 		if err != nil {
 			return nil, err
 		}
@@ -741,17 +746,17 @@ func (ru *aeReceivedBlockchainTransactionRules) parentEventForReceivedBlockchain
 }
 
 func (ru *aeBlockchainTransactionRules) parentEventForBlockchainTransaction() (*DerivedEvent, error) {
-	switch ru.transaction.Kind {
-	case BlockchainTransactionKind_BLOCKCHAIN_TRANSACTION_KIND_UNSPECIFIED:
+	switch content := ru.transaction.Content.(type) {
+	case nil:
 		// unspecified just stays in the user stream
 		return nil, nil
-	case BlockchainTransactionKind_BLOCKCHAIN_TRANSACTION_KIND_TIP:
+	case *BlockchainTransaction_Tip_:
 		// forward a "tip received" event to the user stream of the toUserAddress
-		userStreamId, err := shared.UserStreamIdFromBytes(ru.transaction.ToUserAddress)
+		userStreamId, err := shared.UserStreamIdFromBytes(content.Tip.GetToUserAddress())
 		if err != nil {
 			return nil, err
 		}
-		toStreamId, err := shared.StreamIdFromBytes(ru.transaction.GetStreamId())
+		toStreamId, err := shared.StreamIdFromBytes(content.Tip.GetStreamId())
 		if err != nil {
 			return nil, err
 		}
@@ -779,7 +784,7 @@ func (ru *aeBlockchainTransactionRules) parentEventForBlockchainTransaction() (*
 			Err_INVALID_ARGUMENT,
 			"unknown transaction type",
 			"transactionType",
-			ru.transaction.Kind,
+			content,
 		)
 	}
 }

@@ -71,7 +71,7 @@ import {
     SpaceUpdateHideUserJoinLeavesEvent,
     UserBlockchainTransactionEvent,
     UserReceivedBlockchainTransactionEvent,
-    MemberBlockchainTransactionEvent,
+    TipEvent,
 } from '../../types/timeline-types'
 import { useCallback } from 'react'
 import { bin_toHexString, check } from '@river-build/dlog'
@@ -527,23 +527,27 @@ function toTownsContent_MemberPayload(
             if (!transaction) {
                 return { error: `${description} no transaction` }
             }
-            if (!transaction?.refEventId) {
-                return { error: `${description} no refEventId` }
-            }
             if (!transaction.receipt?.transactionHash) {
                 return { error: `${description} no transactionHash` }
             }
-            return {
-                content: {
-                    kind: ZTEvent.MemberBlockchainTransaction,
-                    transaction: transaction,
-                    transactionHash: bin_toHexString(transaction.receipt.transactionHash),
-                    fromUserId: userIdFromAddress(value.content.value.fromUserAddress),
-                    refEventId: bin_toHexString(transaction.refEventId),
-                    toUserId: transaction.toUserAddress
-                        ? userIdFromAddress(transaction.toUserAddress)
-                        : undefined,
-                } satisfies MemberBlockchainTransactionEvent,
+            switch (transaction.content.case) {
+                case 'tip':
+                    return {
+                        content: {
+                            kind: ZTEvent.TipEvent,
+                            transaction: transaction,
+                            tip: transaction.content.value,
+                            transactionHash: bin_toHexString(transaction.receipt.transactionHash),
+                            fromUserId: userIdFromAddress(value.content.value.fromUserAddress),
+                            refEventId: bin_toHexString(transaction.content.value.refEventId),
+                            toUserId: userIdFromAddress(transaction.content.value.toUserAddress),
+                        } satisfies TipEvent,
+                    }
+                case undefined:
+                    return { error: `${description} no transaction content` }
+                default:
+                    logNever(transaction.content)
+                    return { error: `${description} unknown transaction content` }
             }
         }
         case 'mls':

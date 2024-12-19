@@ -1,4 +1,4 @@
-import { Message, PartialMessage, PlainMessage } from '@bufbuild/protobuf'
+import { Message, PlainMessage } from '@bufbuild/protobuf'
 import { Permission } from '@river-build/web3'
 import {
     MembershipOp,
@@ -28,7 +28,6 @@ import {
     UserBio,
     Tags,
     BlockchainTransaction,
-    BlockchainTransactionKind,
 } from '@river-build/proto'
 import {
     bin_fromHexString,
@@ -1906,11 +1905,10 @@ export class Client
     async addTransaction(
         chainId: number,
         receipt: ContractReceipt,
-        metadata?: Omit<PartialMessage<BlockchainTransaction>, 'receipt'>,
+        content?: PlainMessage<BlockchainTransaction>['content'],
     ): Promise<{ eventId: string }> {
         check(isDefined(this.userStreamId))
         const transaction = {
-            kind: metadata?.kind ?? BlockchainTransactionKind.UNSPECIFIED,
             receipt: {
                 chainId: BigInt(chainId),
                 transactionHash: bin_fromHexString(receipt.transactionHash),
@@ -1923,7 +1921,7 @@ export class Client
                     data: bin_fromHexString(log.data),
                 })),
             },
-            ...metadata,
+            content: content ?? { case: undefined },
         } satisfies PlainMessage<BlockchainTransaction>
         const event = make_UserPayload_BlockchainTransaction(transaction)
         return this.makeEventAndAddToStream(this.userStreamId, event, {
@@ -1941,12 +1939,14 @@ export class Client
         currency: string,
     ): Promise<{ eventId: string }> {
         return this.addTransaction(chainId, receipt, {
-            kind: BlockchainTransactionKind.TIP,
-            streamId: streamIdAsBytes(streamId),
-            refEventId: bin_fromHexString(refEventId),
-            toUserAddress: addressFromUserId(toUserId),
-            quantity: quantity,
-            currency: bin_fromHexString(currency),
+            case: 'tip',
+            value: {
+                streamId: streamIdAsBytes(streamId),
+                refEventId: bin_fromHexString(refEventId),
+                toUserAddress: addressFromUserId(toUserId),
+                quantity: quantity,
+                currency: bin_fromHexString(currency),
+            },
         })
     }
 

@@ -39,9 +39,9 @@ function describeTips(tipsMap?: Record<string, MessageTips>): Record<string, str
     for (const [eventId, tips] of Object.entries(tipsMap)) {
         const described = tips.map(
             (t) =>
-                `${t.eventId} quantity: ${
-                    t.content.transaction?.quantity?.toString() ?? '??'
-                } from: ${t.content.fromUserId} to: ${t.content.toUserId}`,
+                `${t.eventId} quantity: ${t.content.tip.quantity.toString()} from: ${
+                    t.content.fromUserId
+                } to: ${t.content.toUserId}`,
         )
         returnValue[eventId] = described
     }
@@ -226,9 +226,9 @@ describe('UseTimelineStore', () => {
                 timeline: [
                     `${msgId_0} alice: hi bob!`,
                     `${msgId_1} bob: hi alice!`,
-                    `${tipId_a} kind: 1 fromUserId: bob refEventId: ${msgId_1} toUserId: alice quantity: 10`,
-                    `${tipId_b} kind: 1 fromUserId: alice refEventId: ${msgId_0} toUserId: bob quantity: 10`,
-                    `${tipId_c} kind: 1 fromUserId: alice refEventId: ${msgId_0} toUserId: bob quantity: 10`,
+                    `${tipId_a} tip from: bob to: alice refEventId: ${msgId_1} quantity: 10`,
+                    `${tipId_b} tip from: alice to: bob refEventId: ${msgId_0} quantity: 10`,
+                    `${tipId_c} tip from: alice to: bob refEventId: ${msgId_0} quantity: 10`,
                 ],
                 tips: {
                     [msgId_1]: [`${tipId_a} quantity: 10 from: bob to: alice`],

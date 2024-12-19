@@ -1,5 +1,5 @@
 import {
-    MemberBlockchainTransactionEvent,
+    TipEvent,
     OTWMention,
     RedactionActionEvent,
     RoomMessageEvent,
@@ -15,9 +15,11 @@ import {
     getReactionParentId,
     getThreadParentId,
 } from '../../../src/store/use-timeline-store'
-import { BlockchainTransactionKind } from '@river-build/proto'
 import { hexToBytes } from 'viem'
 import { randomBytes } from 'crypto'
+import { ETH_ADDRESS } from '@river-build/web3'
+import { BlockchainTransaction_Tip } from '@river-build/proto'
+import { PlainMessage } from '@bufbuild/protobuf'
 
 export class ConversationBuilder {
     events: TimelineEvent[] = []
@@ -220,18 +222,27 @@ function makeTip(params: {
     tip: number
     refEventId: `0x${string}`
     fromUserId: string
-    toUserId?: string
-}): MemberBlockchainTransactionEvent {
+    toUserId: string
+}): TipEvent {
+    const tip = {
+        quantity: BigInt(params.tip),
+        refEventId: hexToBytes(params.refEventId),
+        streamId: randomBytes(32), // this makes no sense, these test ignore it
+        toUserAddress: randomBytes(0), // this makes no sense, these test ignore it
+        currency: hexToBytes(ETH_ADDRESS),
+    } satisfies PlainMessage<BlockchainTransaction_Tip>
     return {
-        kind: ZTEvent.MemberBlockchainTransaction,
+        kind: ZTEvent.TipEvent,
         transaction: {
-            kind: BlockchainTransactionKind.TIP,
-            quantity: BigInt(params.tip),
-            refEventId: hexToBytes(params.refEventId),
+            content: {
+                case: 'tip',
+                value: tip,
+            },
         },
+        tip,
         transactionHash: randomBytes(32).toString('hex'),
         fromUserId: params.fromUserId,
         refEventId: params.refEventId,
         toUserId: params.toUserId, // I'm cheating here and not putting it into the transaction because we use readable names for ids
-    }
+    } satisfies TipEvent
 }
