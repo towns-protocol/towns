@@ -68,8 +68,15 @@ contract TippingTest is BaseSetup, ITippingBase, IERC721ABase {
     uint256 tokenId = tokens[0];
     hoax(sender, amount);
     vm.expectEmit(address(tipping));
-    emit Tip(tokenId, CurrencyTransfer.NATIVE_TOKEN, sender, receiver, amount);
-    emit TipMessage(messageId, channelId);
+    emit Tip(
+      tokenId,
+      CurrencyTransfer.NATIVE_TOKEN,
+      sender,
+      receiver,
+      amount,
+      messageId,
+      channelId
+    );
     vm.startSnapshotGas("tipEth");
     tipping.tip{value: amount}(
       TipRequest({
@@ -114,8 +121,15 @@ contract TippingTest is BaseSetup, ITippingBase, IERC721ABase {
     vm.startPrank(sender);
     mockERC20.approve(address(tipping), amount);
     vm.expectEmit(address(tipping));
-    emit Tip(tokenId, address(mockERC20), sender, receiver, amount);
-    emit TipMessage(messageId, channelId);
+    emit Tip(
+      tokenId,
+      address(mockERC20),
+      sender,
+      receiver,
+      amount,
+      messageId,
+      channelId
+    );
     vm.startSnapshotGas("tipERC20");
     tipping.tip(
       TipRequest({

@@ -41,10 +41,10 @@ contract TippingFacet is ITipping, ERC721ABase, Facet {
       tipRequest.currency,
       msg.sender,
       receiver,
-      tipRequest.amount
+      tipRequest.amount,
+      tipRequest.messageId,
+      tipRequest.channelId
     );
-
-    emit TipMessage(tipRequest.messageId, tipRequest.channelId);
   }
 
   /// @inheritdoc ITipping

@@ -29,7 +29,9 @@ interface ITippingBase {
     address indexed currency,
     address sender,
     address receiver,
-    uint256 amount
+    uint256 amount,
+    bytes32 messageId,
+    bytes32 channelId
   );
 
   event TipMessage(bytes32 indexed messageId, bytes32 indexed channelId);

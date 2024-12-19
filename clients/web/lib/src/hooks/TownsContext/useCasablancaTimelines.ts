@@ -550,6 +550,10 @@ function toTownsContent_MemberPayload(
             return {
                 error: `MLS not supported: ${description}`,
             }
+        case 'encryptionAlgorithm':
+            return {
+                error: `Encryption Algorithm not supported: ${description}`,
+            }
         case undefined:
             return { error: `Undefined payload case: ${description}` }
         default:

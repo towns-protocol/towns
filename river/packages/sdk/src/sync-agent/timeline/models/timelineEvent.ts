@@ -50,6 +50,7 @@ import {
     UserBlockchainTransactionEvent,
     MemberBlockchainTransactionEvent,
     UserReceivedBlockchainTransactionEvent,
+    StreamEncryptionAlgorithmEvent,
 } from './timeline-types'
 import type { PlainMessage } from '@bufbuild/protobuf'
 import { userIdFromAddress, streamIdFromBytes, streamIdAsString } from '../../../id'
@@ -364,7 +365,13 @@ function toTownsContent_MemberPayload(
                     kind: RiverTimelineEvent.Mls,
                 },
             }
-            break
+        case 'encryptionAlgorithm':
+            return {
+                content: {
+                    kind: RiverTimelineEvent.StreamEncryptionAlgorithm,
+                    algorithm: value.content.value.algorithm,
+                } satisfies StreamEncryptionAlgorithmEvent,
+            }
         case 'memberBlockchainTransaction':
             return {
                 content: {
@@ -987,6 +994,8 @@ export function getFallbackContent(
                     ? bin_toHexString(content.receivedTransaction.fromUserAddress)
                     : ''
             }`
+        case RiverTimelineEvent.StreamEncryptionAlgorithm:
+            return `algorithm: ${content.algorithm}`
     }
 }
 

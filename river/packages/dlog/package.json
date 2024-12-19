@@ -1,6 +1,6 @@
 {
     "name": "@river-build/dlog",
-    "version": "0.0.135",
+    "version": "0.0.136",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "dist/index.js",

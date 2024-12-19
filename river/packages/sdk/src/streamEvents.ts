@@ -120,6 +120,7 @@ export type StreamStateEvents = {
     streamEnsAddressUpdated: (streamId: string, userId: string) => void
     streamNftUpdated: (streamId: string, userId: string) => void
     streamChannelPropertiesUpdated: (streamId: string) => void
+    streamEncryptionAlgorithmUpdated: (streamId: string, encryptionAlgorithm?: string) => void
 }
 
 export type StreamEvents = StreamEncryptionEvents & StreamStateEvents & SyncedStreamEvents

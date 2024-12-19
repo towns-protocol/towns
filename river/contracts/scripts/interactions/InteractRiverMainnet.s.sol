@@ -13,7 +13,7 @@ import {River} from "contracts/src/tokens/river/mainnet/River.sol";
 import {console} from "forge-std/console.sol";
 
 contract InteractRiverMainnet is Interaction {
-  function __interact(address) internal override {
+  function __interact(address) internal view override {
     address river = 0x53319181e003E7f86fB79f794649a2aB680Db244;
 
     address[] memory delegators = River(river).getDelegators();

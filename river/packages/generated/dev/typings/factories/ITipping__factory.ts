@@ -156,6 +156,18 @@ const _abi = [
         indexed: false,
         internalType: "uint256",
       },
+      {
+        name: "messageId",
+        type: "bytes32",
+        indexed: false,
+        internalType: "bytes32",
+      },
+      {
+        name: "channelId",
+        type: "bytes32",
+        indexed: false,
+        internalType: "bytes32",
+      },
     ],
     anonymous: false,
   },

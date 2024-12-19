@@ -784,6 +784,22 @@ export const make_ChannelPayload_Redaction = (
     }
 }
 
+export const make_MemberPayload_EncryptionAlgorithm = (
+    content?: string,
+): PlainMessage<StreamEvent>['payload'] => {
+    return {
+        case: 'memberPayload',
+        value: {
+            content: {
+                case: 'encryptionAlgorithm',
+                value: {
+                    algorithm: content,
+                },
+            },
+        },
+    }
+}
+
 export const make_MemberPayload_KeyFulfillment = (
     value: PlainMessage<MemberPayload_KeyFulfillment>,
 ): PlainMessage<StreamEvent>['payload'] => {

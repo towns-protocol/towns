@@ -4,7 +4,7 @@
 
 import { MemberPayload_Nft } from '@river-build/proto'
 import { Client } from '../../client'
-import { userIdFromAddress } from '../../id'
+import { makeUniqueChannelStreamId, userIdFromAddress } from '../../id'
 import {
     makeDonePromise,
     makeRandomUserAddress,
@@ -658,5 +658,54 @@ describe('memberMetadataTests', () => {
         await bobsClient.waitForStream(streamId)
 
         await expect(bobsClient.setNft(streamId, '', 0, '')).resolves.not.toThrow()
+    })
+
+    test('clientCanSetStreamEncryptionAlgorithm', async () => {
+        await expect(bobsClient.initializeUser()).resolves.not.toThrow()
+        bobsClient.startSync()
+        const spaceId = makeUniqueSpaceStreamId()
+        const channelId = makeUniqueChannelStreamId(spaceId)
+        await bobsClient.createSpace(spaceId)
+        await bobsClient.waitForStream(spaceId)
+
+        await bobsClient.createChannel(spaceId, 'secret channel', 'messaging like spies', channelId)
+        await bobsClient.waitForStream(channelId)
+
+        // initial value is "undefined"
+        expect(bobsClient.stream(channelId)?.view.membershipContent.encryptionAlgorithm).toBe(
+            undefined,
+        )
+
+        // set mls enabled to mls_0.0.1
+        const truePromise = makeDonePromise()
+        bobsClient.once('streamEncryptionAlgorithmUpdated', (updatedStreamId, value) => {
+            expect(updatedStreamId).toBe(channelId)
+            expect(value).toBe('mls_0.0.1')
+            truePromise.done()
+        })
+
+        await expect(
+            bobsClient.setStreamEncryptionAlgorithm(channelId, 'mls_0.0.1'),
+        ).resolves.not.toThrow()
+        await truePromise.expectToSucceed()
+        expect(bobsClient.stream(channelId)?.view.membershipContent.encryptionAlgorithm).toBe(
+            'mls_0.0.1',
+        )
+
+        // toggle back to to undefined
+        const falsePromise = makeDonePromise()
+        bobsClient.once('streamEncryptionAlgorithmUpdated', (updatedStreamId, value) => {
+            expect(updatedStreamId).toBe(channelId)
+            expect(value).toBe(undefined)
+            falsePromise.done()
+        })
+
+        await expect(
+            bobsClient.setStreamEncryptionAlgorithm(channelId, undefined),
+        ).resolves.not.toThrow()
+        await falsePromise.expectToSucceed()
+        expect(bobsClient.stream(channelId)?.view.membershipContent.encryptionAlgorithm).toBe(
+            undefined,
+        )
     })
 })

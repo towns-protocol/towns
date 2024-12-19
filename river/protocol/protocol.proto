@@ -176,6 +176,7 @@ message MemberPayload {
         repeated Member joined = 1;
         repeated SnappedPin pins = 2;
         Mls mls = 3;
+        EncryptionAlgorithm encryption_algorithm = 4;
     }
 
     message Membership {
@@ -222,6 +223,10 @@ message MemberPayload {
 
     }
 
+    message EncryptionAlgorithm {
+        optional string algorithm = 1;
+    }
+
     message MemberBlockchainTransaction {
         BlockchainTransaction transaction = 1;
         bytes from_user_address = 2;
@@ -239,6 +244,7 @@ message MemberPayload {
         Unpin unpin = 9;
         Mls mls = 10;
         MemberBlockchainTransaction member_blockchain_transaction = 11;
+        EncryptionAlgorithm encryption_algorithm = 12;
     }
 }
 

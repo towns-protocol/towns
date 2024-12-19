@@ -545,6 +545,9 @@ func update_Snapshot_Member(
 		}
 		snapshot.Pins = snapPins
 		return nil
+	case *MemberPayload_EncryptionAlgorithm_:
+		snapshot.EncryptionAlgorithm.Algorithm = content.EncryptionAlgorithm.Algorithm
+		return nil
 	default:
 		return RiverError(Err_INVALID_ARGUMENT, "unknown membership payload type %T", memberPayload.Content)
 	}

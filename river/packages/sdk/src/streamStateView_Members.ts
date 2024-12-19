@@ -48,6 +48,7 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
     readonly solicitHelper: StreamStateView_Members_Solicitations
     readonly memberMetadata: StreamStateView_MemberMetadata
     readonly pins: Pin[] = []
+    encryptionAlgorithm?: string = undefined
 
     constructor(streamId: string) {
         super()
@@ -150,6 +151,8 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                 )
             }
         })
+
+        this.encryptionAlgorithm = snapshot.members.encryptionAlgorithm?.algorithm
     }
 
     prependEvent(
@@ -309,6 +312,14 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                 break
             case 'mls':
                 break
+            case 'encryptionAlgorithm':
+                this.encryptionAlgorithm = payload.content.value.algorithm
+                stateEmitter?.emit(
+                    'streamEncryptionAlgorithmUpdated',
+                    this.streamId,
+                    this.encryptionAlgorithm,
+                )
+                break
             case undefined:
                 break
             default:
@@ -361,6 +372,8 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
             case 'memberBlockchainTransaction':
                 break
             case 'mls':
+                break
+            case 'encryptionAlgorithm':
                 break
             case undefined:
                 break

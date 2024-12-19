@@ -109,7 +109,7 @@ export interface ITippingInterface extends utils.Interface {
   ): Result;
 
   events: {
-    "Tip(uint256,address,address,address,uint256)": EventFragment;
+    "Tip(uint256,address,address,address,uint256,bytes32,bytes32)": EventFragment;
     "TipMessage(bytes32,bytes32)": EventFragment;
   };
 
@@ -123,9 +123,11 @@ export interface TipEventObject {
   sender: string;
   receiver: string;
   amount: BigNumber;
+  messageId: string;
+  channelId: string;
 }
 export type TipEvent = TypedEvent<
-  [BigNumber, string, string, string, BigNumber],
+  [BigNumber, string, string, string, BigNumber, string, string],
   TipEventObject
 >;
 
@@ -242,19 +244,23 @@ export interface ITipping extends BaseContract {
   };
 
   filters: {
-    "Tip(uint256,address,address,address,uint256)"(
+    "Tip(uint256,address,address,address,uint256,bytes32,bytes32)"(
       tokenId?: PromiseOrValue<BigNumberish> | null,
       currency?: PromiseOrValue<string> | null,
       sender?: null,
       receiver?: null,
-      amount?: null
+      amount?: null,
+      messageId?: null,
+      channelId?: null
     ): TipEventFilter;
     Tip(
       tokenId?: PromiseOrValue<BigNumberish> | null,
       currency?: PromiseOrValue<string> | null,
       sender?: null,
       receiver?: null,
-      amount?: null
+      amount?: null,
+      messageId?: null,
+      channelId?: null
     ): TipEventFilter;
 
     "TipMessage(bytes32,bytes32)"(

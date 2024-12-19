@@ -845,10 +845,10 @@
   },
   "sources": {
     "contracts/src/base/registry/facets/distribution/v2/IRewardsDistribution.sol": {
-      "keccak256": "0x671a6bc75625ae22a1f2acbe646d897cdcfe406ef46220029b2709a70c77a866",
+      "keccak256": "0x7c3e7dfd78b9131e69ddeac57b3923a004f7ddc7df4b2172f4496d29f226e1e6",
       "urls": [
-        "bzz-raw://10a55a9871a3c07d03fa2cd54b69d2bc41c2fc570941bc99e8d9cf9c590fac86",
-        "dweb:/ipfs/QmY7XDgXtLyocW2GHDuoiVVujr9GkfoGuLTzThnK35q4T9"
+        "bzz-raw://d262840d9ba5f389bf6f4ee89d03e10b831c99dd1bf50f26073d74b3860d5e91",
+        "dweb:/ipfs/QmWSdFJHEvJDBEAoDg8j1SDJTf3eFk8k4YdgpidabVcNxm"
       ],
       "license": "MIT"
     },

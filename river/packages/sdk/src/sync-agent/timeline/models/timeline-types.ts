@@ -90,6 +90,7 @@ export type TimelineEvent_OneOf =
     | UserReceivedBlockchainTransactionEvent
     | UnpinEvent
     | MlsEvent
+    | StreamEncryptionAlgorithmEvent
 
 export enum RiverTimelineEvent {
     MiniblockHeader = 'm.miniblockheader',
@@ -120,6 +121,7 @@ export enum RiverTimelineEvent {
     UserBlockchainTransaction = 'm.user_blockchain_transaction',
     UserReceivedBlockchainTransaction = 'm.user_received_blockchain_transaction',
     Mls = 'm.mls',
+    StreamEncryptionAlgorithm = 'm.stream_encryption_algorithm',
 }
 
 export interface MiniblockHeaderEvent {
@@ -219,6 +221,11 @@ export interface UnpinEvent {
 
 export interface MlsEvent {
     kind: RiverTimelineEvent.Mls
+}
+
+export interface StreamEncryptionAlgorithmEvent {
+    kind: RiverTimelineEvent.StreamEncryptionAlgorithm
+    algorithm?: string
 }
 
 export interface RoomMessageEncryptedEvent {

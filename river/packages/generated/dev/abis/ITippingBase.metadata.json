@@ -66,6 +66,18 @@
             "name": "amount",
             "type": "uint256",
             "indexed": false
+          },
+          {
+            "internalType": "bytes32",
+            "name": "messageId",
+            "type": "bytes32",
+            "indexed": false
+          },
+          {
+            "internalType": "bytes32",
+            "name": "channelId",
+            "type": "bytes32",
+            "indexed": false
           }
         ],
         "type": "event",
@@ -131,10 +143,10 @@
   },
   "sources": {
     "contracts/src/spaces/facets/tipping/ITipping.sol": {
-      "keccak256": "0x8bfc4f6d2405a8438f09085e0f6d918abc45bf4f1a486c903f3736f4e0e9102c",
+      "keccak256": "0x0a1e0e1dc4348db9f99eb011c2cb879e4a4ad9e59a4018e94f25ffd8df109e39",
       "urls": [
-        "bzz-raw://e56e221ee9f88e221c4c05d542c98581a1fa44ce46a0a147ecfba854961861dd",
-        "dweb:/ipfs/QmQvAgxi5T4kBpPxzkJ4wdCWei2arhd7cWt2UNxSEvQVAR"
+        "bzz-raw://5529fb17761ab16bec83418a868ac9ec378c6f0cb4d9716a82e4f2881b32e672",
+        "dweb:/ipfs/QmSCae7ame2HxXmi2XbdTAZXVUiuqANZExKn3EK6ZfrFRr"
       ],
       "license": "MIT"
     }
