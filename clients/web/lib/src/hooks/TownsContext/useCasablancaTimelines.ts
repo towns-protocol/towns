@@ -538,10 +538,10 @@ function toTownsContent_MemberPayload(
                     kind: ZTEvent.MemberBlockchainTransaction,
                     transaction: transaction,
                     transactionHash: bin_toHexString(transaction.receipt.transactionHash),
-                    fromUserId: bin_toHexString(value.content.value.fromUserAddress),
+                    fromUserId: userIdFromAddress(value.content.value.fromUserAddress),
                     refEventId: bin_toHexString(transaction.refEventId),
                     toUserId: transaction.toUserAddress
-                        ? bin_toHexString(transaction.toUserAddress)
+                        ? userIdFromAddress(transaction.toUserAddress)
                         : undefined,
                 } satisfies MemberBlockchainTransactionEvent,
             }
