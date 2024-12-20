@@ -539,8 +539,8 @@ function toTownsContent_MemberPayload(
                             tip: transaction.content.value,
                             transactionHash: bin_toHexString(transaction.receipt.transactionHash),
                             fromUserId: userIdFromAddress(value.content.value.fromUserAddress),
-                            refEventId: bin_toHexString(transaction.content.value.refEventId),
-                            toUserId: userIdFromAddress(transaction.content.value.toUserAddress),
+                            refEventId: bin_toHexString(transaction.content.value.messageId),
+                            toUserId: userIdFromAddress(transaction.content.value.receiver),
                         } satisfies TipEvent,
                     }
                 case undefined:

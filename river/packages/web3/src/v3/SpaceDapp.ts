@@ -53,6 +53,7 @@ import { PlatformRequirements } from './PlatformRequirements'
 import { EntitlementDataStructOutput } from './IEntitlementDataQueryableShim'
 import { CacheResult, EntitlementCache, Keyable } from '../EntitlementCache'
 import { RuleEntitlementV2Shim } from './RuleEntitlementV2Shim'
+import { TipEventObject } from '@river-build/generated/dev/typings/ITipping'
 
 const logger = dlogger('csb:SpaceDapp:debug')
 
@@ -1621,6 +1622,18 @@ export class SpaceDapp implements ISpaceDapp {
             }
         }
         return undefined
+    }
+
+    public getTipEvent(
+        spaceId: string,
+        receipt: ContractReceipt,
+        senderAddress: string,
+    ): TipEventObject | undefined {
+        const space = this.getSpace(spaceId)
+        if (!space) {
+            throw new Error(`Space with spaceId "${spaceId}" is not found.`)
+        }
+        return space.Tipping.getTipEvent(receipt, senderAddress)
     }
 
     public withdrawSpaceFunds(spaceId: string, recipient: string, signer: ethers.Signer) {

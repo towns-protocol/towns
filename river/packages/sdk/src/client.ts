@@ -149,6 +149,7 @@ import { SyncedStreamsExtension } from './syncedStreamsExtension'
 import { SignerContext } from './signerContext'
 import { decryptAESGCM, deriveKeyAndIV, encryptAESGCM, uint8ArrayToBase64 } from './crypto_utils'
 import { makeTags } from './tags'
+import { TipEventObject } from '@river-build/generated/dev/typings/ITipping'
 
 export type ClientEvents = StreamEvents & DecryptionEvents
 
@@ -1932,20 +1933,18 @@ export class Client
     async addTransaction_Tip(
         chainId: number,
         receipt: ContractReceipt,
-        streamId: string | Uint8Array,
-        refEventId: string,
-        toUserId: string,
-        quantity: bigint,
-        currency: string,
+        event: TipEventObject,
     ): Promise<{ eventId: string }> {
         return this.addTransaction(chainId, receipt, {
             case: 'tip',
             value: {
-                streamId: streamIdAsBytes(streamId),
-                refEventId: bin_fromHexString(refEventId),
-                toUserAddress: addressFromUserId(toUserId),
-                quantity: quantity,
-                currency: bin_fromHexString(currency),
+                tokenId: event.tokenId.toBigInt(),
+                currency: bin_fromHexString(event.currency),
+                sender: addressFromUserId(event.sender),
+                receiver: addressFromUserId(event.receiver),
+                amount: event.amount.toBigInt(),
+                messageId: bin_fromHexString(event.messageId),
+                channelId: streamIdAsBytes(event.channelId),
             },
         })
     }

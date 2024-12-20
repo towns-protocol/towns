@@ -90,7 +90,7 @@ export class ConversationBuilder {
                 eventId: params.id,
                 content: makeTip({
                     tip: params.tip,
-                    refEventId: params.ref,
+                    messageId: params.ref,
                     fromUserId: params.from,
                     toUserId: params.to,
                 }),
@@ -220,15 +220,17 @@ function makeRedaction(params: { redacts: string; isAdmin?: boolean }): Redactio
 
 function makeTip(params: {
     tip: number
-    refEventId: `0x${string}`
+    messageId: `0x${string}`
     fromUserId: string
     toUserId: string
 }): TipEvent {
     const tip = {
-        quantity: BigInt(params.tip),
-        refEventId: hexToBytes(params.refEventId),
-        streamId: randomBytes(32), // this makes no sense, these test ignore it
-        toUserAddress: randomBytes(0), // this makes no sense, these test ignore it
+        tokenId: 0n, // not used in this test
+        amount: BigInt(params.tip),
+        messageId: hexToBytes(params.messageId),
+        channelId: randomBytes(32), // not used in this test
+        sender: randomBytes(0), // not used in this test
+        receiver: randomBytes(0), // not used in this test
         currency: hexToBytes(ETH_ADDRESS),
     } satisfies PlainMessage<BlockchainTransaction_Tip>
     return {
@@ -242,7 +244,7 @@ function makeTip(params: {
         tip,
         transactionHash: randomBytes(32).toString('hex'),
         fromUserId: params.fromUserId,
-        refEventId: params.refEventId,
+        refEventId: params.messageId,
         toUserId: params.toUserId, // I'm cheating here and not putting it into the transaction because we use readable names for ids
     } satisfies TipEvent
 }

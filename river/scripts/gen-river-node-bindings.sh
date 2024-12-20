@@ -52,6 +52,7 @@ generate_go base base IEntitlementGated i_entitlement_gated
 generate_go base base IEntitlement i_entitlement
 generate_go base base ICrossChainEntitlement i_cross_chain_entitlement
 generate_go base base IRoles i_roles
+generate_go base base ITipping tipping
 
 
 # Full Base (and other) contracts for deployment from tests

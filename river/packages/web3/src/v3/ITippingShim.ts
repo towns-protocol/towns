@@ -1,14 +1,15 @@
 import {
-    ITipping as LocalhostContract,
-    ITippingInterface as LocalhostInterface,
+    ITipping,
+    ITippingInterface,
+    TipEventObject,
 } from '@river-build/generated/dev/typings/ITipping'
 
-import { ethers } from 'ethers'
+import { ContractReceipt, ethers } from 'ethers'
 import { BaseContractShim } from './BaseContractShim'
 
 import DevAbi from '@river-build/generated/dev/abis/ITipping.abi.json' assert { type: 'json' }
 
-export class ITippingShim extends BaseContractShim<LocalhostContract, LocalhostInterface> {
+export class ITippingShim extends BaseContractShim<ITipping, ITippingInterface> {
     constructor(address: string, provider: ethers.providers.Provider | undefined) {
         super(address, provider, DevAbi)
     }
@@ -31,5 +32,31 @@ export class ITippingShim extends BaseContractShim<LocalhostContract, LocalhostI
     public async tipAmountByCurrency(currency: string): Promise<bigint> {
         const tips = await this.read.tipAmountByCurrency(currency)
         return tips.toBigInt()
+    }
+
+    public getTipEvent(
+        receipt: ContractReceipt,
+        senderAddress: string,
+    ): TipEventObject | undefined {
+        for (const log of receipt.logs) {
+            if (log.address === this.address) {
+                const parsedLog = this.interface.parseLog(log)
+                if (
+                    parsedLog.name === 'Tip' &&
+                    (parsedLog.args.sender as string).toLowerCase() === senderAddress.toLowerCase()
+                ) {
+                    return {
+                        tokenId: parsedLog.args.tokenId,
+                        currency: parsedLog.args.currency,
+                        sender: parsedLog.args.sender,
+                        receiver: parsedLog.args.receiver,
+                        amount: parsedLog.args.amount,
+                        messageId: parsedLog.args.messageId,
+                        channelId: parsedLog.args.channelId,
+                    } satisfies TipEventObject
+                }
+            }
+        }
+        return undefined
     }
 }
