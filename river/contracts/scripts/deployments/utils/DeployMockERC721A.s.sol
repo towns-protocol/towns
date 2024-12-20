@@ -22,16 +22,9 @@ contract DeployMockERC721A is Deployer, FacetHelper {
   }
 
   function __deploy(address deployer) public override returns (address) {
-    bytes32 salt = bytes32(uint256(uint160(deployer))); // create a salt from address
-
-    bytes32 initCodeHash = hashInitCode(type(MockERC721A).creationCode);
-    address predeterminedAddress = vm.computeCreate2Address(salt, initCodeHash);
-
     vm.startBroadcast(deployer);
-    MockERC721A deployment = new MockERC721A{salt: salt}();
+    MockERC721A deployment = new MockERC721A();
     vm.stopBroadcast();
-
-    require(predeterminedAddress == address(deployment));
 
     return address(deployment);
   }

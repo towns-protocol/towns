@@ -1385,6 +1385,7 @@
   "settings": {
     "remappings": [
       "@openzeppelin/=node_modules/@openzeppelin/",
+      "@prb/=node_modules/@prb/",
       "@prb/math/=node_modules/@prb/math/src/",
       "@prb/test/=node_modules/@prb/test/src/",
       "@river-build/diamond/=node_modules/@river-build/diamond/",
@@ -1786,10 +1787,10 @@
       "license": "MIT"
     },
     "node_modules/@river-build/diamond/src/utils/cryptography/EIP712.sol": {
-      "keccak256": "0xef01570d5891c87e5ac162ea8d37d771944150878da42c789228f449b8117aa3",
+      "keccak256": "0x70463eaed8e7b80bd62948d0f1993c181290d618b21c173f3d25857a41f78d0b",
       "urls": [
-        "bzz-raw://9947aacbd7ee80a0a2572b2881ca1943188c3c10d55a4fdc21619e1fb521f446",
-        "dweb:/ipfs/QmVVHMJWdJi3BDygtKhFC8ULypHobNfn7omb4FnGUSMMR2"
+        "bzz-raw://9feb0babd6ecc782337d5b13c9e03733b7f099d4b62df28586c0340f47449d09",
+        "dweb:/ipfs/QmRDSLeTC4R5mNgzeRsJmpv6ascU52vgmfRx4u3gkatfiJ"
       ],
       "license": "MIT"
     },

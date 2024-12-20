@@ -8,7 +8,7 @@ import {ILegacyArchitect} from "./IMockLegacyArchitect.sol";
 
 // contracts
 import {LegacyArchitectBase} from "./MockLegacyArchitectBase.sol";
-import {ReentrancyGuard} from "@river-build/diamond/src/facets/reentrancy/ReentrancyGuard.sol";
+import {ReentrancyGuard} from "solady/utils/ReentrancyGuard.sol";
 import {PausableBase} from "@river-build/diamond/src/facets/pausable/PausableBase.sol";
 import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
 

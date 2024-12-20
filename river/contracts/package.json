@@ -19,7 +19,7 @@
         "@openzeppelin/contracts": "^5.1.0",
         "@openzeppelin/contracts-upgradeable": "^5.1.0",
         "@prb/math": "^4.1.0",
-        "@river-build/diamond": "github:river-build/diamond#8341c4888cf74329663abe4d34b96a07c21c7677",
+        "@river-build/diamond": "github:river-build/diamond#5b9f60d7ff0d4ff99c560d95c15a5e7e8caf922a",
         "account-abstraction": "github:eth-infinitism/account-abstraction",
         "solady": "^0.0.267"
     },

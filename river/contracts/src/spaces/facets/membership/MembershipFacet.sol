@@ -9,7 +9,7 @@ import {IMembershipPricing} from "./pricing/IMembershipPricing.sol";
 import {CurrencyTransfer} from "contracts/src/utils/libraries/CurrencyTransfer.sol";
 
 // contracts
-import {ReentrancyGuard} from "@river-build/diamond/src/facets/reentrancy/ReentrancyGuard.sol";
+import {ReentrancyGuard} from "solady/utils/ReentrancyGuard.sol";
 import {MembershipJoin} from "./join/MembershipJoin.sol";
 import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
 

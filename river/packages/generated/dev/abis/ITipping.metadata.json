@@ -87,25 +87,6 @@
       {
         "inputs": [
           {
-            "internalType": "bytes32",
-            "name": "messageId",
-            "type": "bytes32",
-            "indexed": true
-          },
-          {
-            "internalType": "bytes32",
-            "name": "channelId",
-            "type": "bytes32",
-            "indexed": true
-          }
-        ],
-        "type": "event",
-        "name": "TipMessage",
-        "anonymous": false
-      },
-      {
-        "inputs": [
-          {
             "internalType": "struct ITippingBase.TipRequest",
             "name": "tipRequest",
             "type": "tuple",
@@ -222,7 +203,7 @@
       "kind": "dev",
       "methods": {
         "tip((uint256,address,uint256,bytes32,bytes32))": {
-          "details": "Requires sender and receiver to be members of the spaceRequires amount > 0 and valid currency addressEmits Tip and TipMessage events",
+          "details": "Requires sender and receiver to be members of the spaceRequires amount > 0 and valid currency addressEmits Tip event",
           "params": {
             "tipRequest": "The tip request containing token ID, currency, amount, message ID and channel ID"
           }
@@ -285,6 +266,7 @@
   "settings": {
     "remappings": [
       "@openzeppelin/=node_modules/@openzeppelin/",
+      "@prb/=node_modules/@prb/",
       "@prb/math/=node_modules/@prb/math/src/",
       "@prb/test/=node_modules/@prb/test/src/",
       "@river-build/diamond/=node_modules/@river-build/diamond/",
@@ -310,10 +292,10 @@
   },
   "sources": {
     "contracts/src/spaces/facets/tipping/ITipping.sol": {
-      "keccak256": "0x0a1e0e1dc4348db9f99eb011c2cb879e4a4ad9e59a4018e94f25ffd8df109e39",
+      "keccak256": "0xd355586e5c85f3ea4e394862e8f8e8902b6ef9024a06a6b0c88546371dd6a97a",
       "urls": [
-        "bzz-raw://5529fb17761ab16bec83418a868ac9ec378c6f0cb4d9716a82e4f2881b32e672",
-        "dweb:/ipfs/QmSCae7ame2HxXmi2XbdTAZXVUiuqANZExKn3EK6ZfrFRr"
+        "bzz-raw://cd77ed121cffdc5121a16dd4f367dec96c8d5b34a8b5bd64f72feea87d393148",
+        "dweb:/ipfs/Qmefw7ESa4WPE4RKyC6HE3sxsMgZS5PepJp8YpWYC7DeAU"
       ],
       "license": "MIT"
     }

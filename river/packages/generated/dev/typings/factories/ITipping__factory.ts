@@ -172,25 +172,6 @@ const _abi = [
     anonymous: false,
   },
   {
-    type: "event",
-    name: "TipMessage",
-    inputs: [
-      {
-        name: "messageId",
-        type: "bytes32",
-        indexed: true,
-        internalType: "bytes32",
-      },
-      {
-        name: "channelId",
-        type: "bytes32",
-        indexed: true,
-        internalType: "bytes32",
-      },
-    ],
-    anonymous: false,
-  },
-  {
     type: "error",
     name: "AmountIsZero",
     inputs: [],

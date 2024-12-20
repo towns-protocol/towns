@@ -11,7 +11,7 @@ import {CurrencyTransfer} from "contracts/src/utils/libraries/CurrencyTransfer.s
 
 // contracts
 import {PrepayBase} from "./PrepayBase.sol";
-import {ReentrancyGuard} from "@river-build/diamond/src/facets/reentrancy/ReentrancyGuard.sol";
+import {ReentrancyGuard} from "solady/utils/ReentrancyGuard.sol";
 import {Entitled} from "contracts/src/spaces/facets/Entitled.sol";
 import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
 

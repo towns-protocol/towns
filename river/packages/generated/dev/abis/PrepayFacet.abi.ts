@@ -514,7 +514,7 @@ export default [
   },
   {
     "type": "error",
-    "name": "ReentrancyGuard__ReentrantCall",
+    "name": "Reentrancy",
     "inputs": []
   },
   {

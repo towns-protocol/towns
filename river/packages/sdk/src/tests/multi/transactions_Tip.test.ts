@@ -8,6 +8,10 @@ import { ETH_ADDRESS, LocalhostWeb3Provider } from '@river-build/web3'
 import { makeRiverConfig } from '../../riverConfig'
 import { SyncAgent } from '../../sync-agent/syncAgent'
 import { Bot } from '../../sync-agent/utils/bot'
+import { waitFor } from '../testUtils'
+import { StreamTimelineEvent } from '../../types'
+import { ReceivedBlockchainTransactionKind } from '@river-build/proto'
+import { userIdFromAddress } from '../../id'
 
 const base_log = dlog('csb:test:transactions_Tip')
 
@@ -102,19 +106,71 @@ describe('transactions_Tip', () => {
     })
 
     test('bobSeesTipInUserStream', async () => {
-        // soon
+        const stream = await bob.riverConnection.client!.getStream(
+            bob.riverConnection.client!.userStreamId!,
+        )
+        const tipEvent = await waitFor(() => {
+            const isUserBlockchainTransaction = (e: StreamTimelineEvent) =>
+                e.remoteEvent?.event.payload.case === 'userPayload' &&
+                e.remoteEvent.event.payload.value.content.case === 'blockchainTransaction'
+            const tipEvents = stream.timeline.filter(isUserBlockchainTransaction)
+            expect(tipEvents.length).toBeGreaterThan(0)
+            const tip = tipEvents[0]
+            // make it compile
+            if (
+                !tip ||
+                tip.remoteEvent?.event.payload.value?.content.case !== 'blockchainTransaction'
+            )
+                throw new Error('no tip event found')
+            return tip.remoteEvent.event.payload.value.content.value
+        })
+        expect(tipEvent?.receipt).toBeDefined()
     })
 
     test('aliceSeesTipReceivedInUserStream', async () => {
-        // soon
+        const stream = await alice.riverConnection.client!.getStream(
+            alice.riverConnection.client!.userStreamId!,
+        )
+        const tipEvent = await waitFor(() => {
+            const isUserReceivedBlockchainTransaction = (e: StreamTimelineEvent) =>
+                e.remoteEvent?.event.payload.case === 'userPayload' &&
+                e.remoteEvent.event.payload.value.content.case === 'receivedBlockchainTransaction'
+            const tipEvents = stream.timeline.filter(isUserReceivedBlockchainTransaction)
+            expect(tipEvents.length).toBeGreaterThan(0)
+            const tip = tipEvents[0]
+            // make it compile
+            if (
+                !tip ||
+                tip.remoteEvent?.event.payload.value?.content.case !==
+                    'receivedBlockchainTransaction'
+            )
+                throw new Error('no tip event found')
+            return tip.remoteEvent.event.payload.value.content.value
+        })
+        if (!tipEvent) throw new Error('no tip event found')
+        expect(tipEvent.transaction?.receipt).toBeDefined()
+        expect(tipEvent?.kind).toEqual(ReceivedBlockchainTransactionKind.TIP)
     })
 
     test('bobSeesOnMessageInChannel', async () => {
-        // soon
-    })
-
-    test('aliceSeesOnMessageInChannel', async () => {
-        // soon
+        const stream = await bob.riverConnection.client!.getStream(defaultChannelId)
+        const tipEvent = await waitFor(() => {
+            const isMemberBlockchainTransaction = (e: StreamTimelineEvent) =>
+                e.remoteEvent?.event.payload.case === 'memberPayload' &&
+                e.remoteEvent.event.payload.value.content.case === 'memberBlockchainTransaction'
+            const tipEvents = stream.timeline.filter(isMemberBlockchainTransaction)
+            expect(tipEvents.length).toBeGreaterThan(0)
+            const tip = tipEvents[0]
+            // make it compile
+            if (
+                !tip ||
+                tip.remoteEvent?.event.payload.value?.content.case !== 'memberBlockchainTransaction'
+            )
+                throw new Error('no tip event found')
+            return tip.remoteEvent.event.payload.value.content.value
+        })
+        expect(tipEvent?.transaction?.receipt).toBeDefined()
+        expect(userIdFromAddress(tipEvent!.fromUserAddress)).toEqual(bobIdentity.rootWallet.address)
     })
 
     test('cantAddTipWithBadMetadata', async () => {

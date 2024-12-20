@@ -110,11 +110,9 @@ export interface ITippingInterface extends utils.Interface {
 
   events: {
     "Tip(uint256,address,address,address,uint256,bytes32,bytes32)": EventFragment;
-    "TipMessage(bytes32,bytes32)": EventFragment;
   };
 
   getEvent(nameOrSignatureOrTopic: "Tip"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "TipMessage"): EventFragment;
 }
 
 export interface TipEventObject {
@@ -132,17 +130,6 @@ export type TipEvent = TypedEvent<
 >;
 
 export type TipEventFilter = TypedEventFilter<TipEvent>;
-
-export interface TipMessageEventObject {
-  messageId: string;
-  channelId: string;
-}
-export type TipMessageEvent = TypedEvent<
-  [string, string],
-  TipMessageEventObject
->;
-
-export type TipMessageEventFilter = TypedEventFilter<TipMessageEvent>;
 
 export interface ITipping extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
@@ -262,15 +249,6 @@ export interface ITipping extends BaseContract {
       messageId?: null,
       channelId?: null
     ): TipEventFilter;
-
-    "TipMessage(bytes32,bytes32)"(
-      messageId?: PromiseOrValue<BytesLike> | null,
-      channelId?: PromiseOrValue<BytesLike> | null
-    ): TipMessageEventFilter;
-    TipMessage(
-      messageId?: PromiseOrValue<BytesLike> | null,
-      channelId?: PromiseOrValue<BytesLike> | null
-    ): TipMessageEventFilter;
   };
 
   estimateGas: {

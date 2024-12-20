@@ -15,7 +15,6 @@ import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
 import {CurrencyTransfer} from "contracts/src/utils/libraries/CurrencyTransfer.sol";
 import {BasisPoints} from "contracts/src/utils/libraries/BasisPoints.sol";
 import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
-import {MembershipStorage} from "../MembershipStorage.sol";
 
 // contracts
 import {MembershipBase} from "contracts/src/spaces/facets/membership/MembershipBase.sol";
