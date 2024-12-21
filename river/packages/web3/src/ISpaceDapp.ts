@@ -26,6 +26,7 @@ import {
 import { PricingModules } from './v3/PricingModules'
 import { BaseChainConfig } from './IStaticContractsInfo'
 import { PlatformRequirements } from './v3/PlatformRequirements'
+import { TipEventObject } from '@river-build/generated/dev/typings/ITipping'
 
 export type SignerType = ethers.Signer
 
@@ -362,4 +363,9 @@ export interface ISpaceDapp {
     ) => Promise<TransactionType>
     getLinkedWallets: (wallet: string) => Promise<string[]>
     getTokenIdOfOwner: (spaceId: string, owner: string) => Promise<string | undefined>
+    getTipEvent: (
+        spaceId: string,
+        receipt: ContractReceipt,
+        senderAddress: string,
+    ) => TipEventObject | undefined
 }
