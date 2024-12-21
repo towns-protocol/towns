@@ -11,11 +11,12 @@ import {
     usePermissionOverrides,
     useRoom,
     useSpaceData,
+    useStreamEncryptionAlgorithm,
 } from 'use-towns-client'
 
 import { usePrefetchMultipleRoleDetails } from 'use-towns-client/dist/hooks/use-role-details'
 import { EditChannelName } from '@components/Panel/EditChannelName'
-import { Box, Icon, Paragraph, Stack, Text, TextButton } from '@ui'
+import { Box, Icon, Paragraph, Stack, Text, TextButton, Toggle } from '@ui'
 import { CHANNEL_INFO_PARAMS, PATHS } from 'routes'
 import { useDevice } from 'hooks/useDevice'
 import { PanelButton } from '@components/Panel/PanelButton'
@@ -31,6 +32,7 @@ import {
 } from '@components/SpaceSettingsPanel/rolePermissions.const'
 import { TownNotificationsButton } from '@components/NotificationSettings/NotificationsSettingsButton'
 import { useChannelEntitlements } from 'hooks/useChannelEntitlements'
+import { useEnvironment } from 'hooks/useEnvironmnet'
 import { ChannelMembersModal } from '../components/ChannelMembersPanel/ChannelMembersPanel'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
 import { ChannelsRolesList } from './RoleRestrictedChannelJoinPanel'
@@ -77,7 +79,11 @@ export const ChannelInfo = () => {
     }, [loggedInWalletAddress, memberIds])
 
     const { channelSettings } = useChannelSettings(spaceData?.id ?? '', channel?.id ?? '')
-
+    const { streamEncryptionAlgorithm, setEncryptionAlgorithm } = useStreamEncryptionAlgorithm(
+        channel?.id,
+    )
+    const { name: environmentName } = useEnvironment()
+    const showMlsSettings = environmentName === 'alpha' || environmentName === 'gamma'
     const { hasSomeEntitlement } = useChannelEntitlements({
         spaceId: spaceData?.id,
         channelId: channel?.id,
@@ -87,7 +93,7 @@ export const ChannelInfo = () => {
     const roledIds = useMemo(() => roles?.map((r) => r.roleId) ?? [], [roles])
     usePrefetchMultipleRoleDetails(spaceData?.id, roledIds)
 
-    const isEncrypted = channel !== undefined
+    const channelExists = channel !== undefined
     const room = useRoom(channel?.id)
     const [activeModal, setActiveModal] = useState<'members' | 'settings' | undefined>(undefined)
 
@@ -129,10 +135,10 @@ export const ChannelInfo = () => {
         () => [
             {
                 title: 'Encryption',
-                content: `This channel ${isEncrypted ? `is` : `is not`} end-to-end encrypted`,
+                content: `This channel ${channelExists ? `is` : `is not`} end-to-end encrypted`,
             },
         ],
-        [isEncrypted],
+        [channelExists],
     )
 
     const onEditRolePermissions = useCallback(
@@ -273,6 +279,31 @@ export const ChannelInfo = () => {
                         <Icon type="logout" size="square_sm" />
                         <Paragraph color="error">Leave #{channel?.label}</Paragraph>
                     </PanelButton>
+                )}
+
+                {channelExists && showMlsSettings && (
+                    <Stack gap padding background="level2" rounded="sm">
+                        <Paragraph fontWeight="medium" color="default">
+                            Encryption Algorithm
+                        </Paragraph>
+
+                        <Stack horizontal alignItems="center">
+                            <Paragraph color="gray2" fontWeight="medium">
+                                Enable MLS
+                            </Paragraph>
+                            <Box grow />
+                            <Toggle
+                                toggled={streamEncryptionAlgorithm == 'mls_0.0.1'}
+                                onToggle={(toggled) =>
+                                    setEncryptionAlgorithm(toggled ? 'mls_0.0.1' : undefined)
+                                }
+                            />
+                        </Stack>
+
+                        <Paragraph color="gray2" size="sm">
+                            This setting is used on Gamma and Alpha for debugging MLS.
+                        </Paragraph>
+                    </Stack>
                 )}
             </Stack>
 
