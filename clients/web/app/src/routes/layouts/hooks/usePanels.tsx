@@ -1,6 +1,7 @@
 import { useMatch } from 'react-router'
 import { useSearchParams } from 'react-router-dom'
 import React from 'react'
+import { RiverPointsPanel } from '@components/PointsPanel/PointsPanel'
 import { RoleRestrictedChannelJoinPanel } from 'routes/RoleRestrictedChannelJoinPanel'
 import { MintBotPrivyWrapper } from '@components/MintBotPanel/MintBotPanel'
 import { BrowseChannelsPanel } from '@components/BrowseChannelsPanel/BrowseChannelsPanel'
@@ -197,6 +198,9 @@ export const usePanels = () => {
         }
         case CHANNEL_INFO_PARAMS.VERIFY_EVENT_SIGNATURE: {
             return <VerifyEventSignaturePanel />
+        }
+        case CHANNEL_INFO_PARAMS.RIVER_POINTS: {
+            return <RiverPointsPanel />
         }
     }
 

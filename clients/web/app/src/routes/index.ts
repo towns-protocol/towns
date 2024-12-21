@@ -67,6 +67,7 @@ export const CHANNEL_INFO_PARAMS = {
     VERIFY_EVENT_SIGNATURE: 'verify-event-signature',
     IDENTITY: 'identity',
     FUND_WALLET: 'fund-wallet',
+    RIVER_POINTS: 'river-points',
 } as const
 
 export type CHANNEL_INFO_PARAMS_VALUES =

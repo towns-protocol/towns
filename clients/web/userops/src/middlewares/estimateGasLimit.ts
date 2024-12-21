@@ -6,6 +6,7 @@ import { BigNumber, BigNumberish } from 'ethers'
 import { errorCategories, errorToCodeException } from '../errors'
 import { ISpaceDapp } from '@river-build/web3'
 import { OpToJSON } from '../utils'
+import { MiddlewareVars } from '../MiddlewareVars'
 
 export async function estimateGasLimit(args: {
     ctx: IUserOperationMiddlewareCtx
@@ -18,6 +19,7 @@ export async function estimateGasLimit(args: {
         timeTracker?: TimeTracker | undefined
         stepPrefix?: string | undefined
     }
+    functionHashForPaymasterProxy?: MiddlewareVars['functionHashForPaymasterProxy']
 }) {
     const { ctx, provider, bundlerUrl, spaceDapp, spaceId } = args
     const { sequenceName, timeTracker, stepPrefix } = args.timeTrackArgs ?? {}
@@ -32,6 +34,7 @@ export async function estimateGasLimit(args: {
                 `userops_${stepPrefix}_estimate_user_operation_gas`,
             )
         }
+
         const estimate = await estimateUserOperationGas(
             {
                 ...ctx,
@@ -62,8 +65,14 @@ export async function estimateGasLimit(args: {
     } catch (error) {
         const exception = errorToCodeException(error, errorCategories.userop_non_sponsored)
 
+        let parsedError: Error | undefined
+
+        if (args.functionHashForPaymasterProxy === 'checkIn') {
+            parsedError = spaceDapp?.airdrop?.riverPoints?.parseError(exception)
+        }
+
         // better logs
-        const spaceDappError = spaceDapp?.parseAllContractErrors({
+        parsedError = spaceDapp?.parseAllContractErrors({
             spaceId,
             error: exception,
         })
@@ -71,7 +80,7 @@ export async function estimateGasLimit(args: {
         console.error('[promptUser] calling estimateUserOperationGas failed:', {
             op: OpToJSON(ctx.op),
             originalError: exception,
-            parsedError: spaceDappError,
+            parsedError,
         })
 
         throw exception

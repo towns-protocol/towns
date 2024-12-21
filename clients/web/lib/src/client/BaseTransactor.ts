@@ -1667,6 +1667,39 @@ export class BaseTransactor {
         }
     }
 
+    public async checkInTransaction(signer: TSigner): Promise<TransactionContext<void>> {
+        let transaction: TransactionOrUserOperation | undefined = undefined
+        let error: Error | undefined = undefined
+        const continueStoreTx = this.blockchainTransactionStore.begin({
+            type: BlockchainTransactionType.CheckIn,
+        })
+        try {
+            if (this.isAccountAbstractionEnabled()) {
+                transaction = await this.userOps?.sendCheckInOp([signer])
+            } else {
+                transaction = await this.spaceDapp?.airdrop?.checkIn(signer)
+            }
+            this.log(`[check in] transaction created`)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (err: unknown) {
+            error = this.getDecodedErrorForRiverPoints(err)
+        }
+
+        continueStoreTx({
+            hashOrUserOpHash: getTransactionHashOrUserOpHash(transaction),
+            transaction,
+            error,
+        })
+        //
+        return {
+            transaction,
+            receipt: undefined,
+            status: transaction ? TransactionStatus.Pending : TransactionStatus.Failed,
+            data: undefined,
+            error,
+        }
+    }
+
     /*
      * Error when baseProvider.waitForTransaction receipt has a status of 0
      */
@@ -1763,6 +1796,40 @@ export class BaseTransactor {
                 return newErr
             } else {
                 return new Error(`[getDecodedErrorForSpaceFactory] cannot decode error`)
+            }
+        }
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    private getDecodedErrorForRiverPoints(error: any): Error | undefined {
+        if (skipErrorDecoding(error)) {
+            return error
+        }
+        try {
+            return this.spaceDapp.airdrop?.riverPoints?.parseError(error)
+        } catch (e: unknown) {
+            if (e instanceof Error) {
+                return e
+            }
+            if (
+                typeof e === 'object' &&
+                e !== null &&
+                'name' in e &&
+                typeof e.name === 'string' &&
+                'message' in e &&
+                typeof e.message === 'string' &&
+                e.message !== undefined
+            ) {
+                const newErr = new Error(e.message)
+                newErr.name = e.name
+                if ('code' in e) {
+                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                    // @ts-ignore
+                    newErr.code = e.code
+                }
+                return newErr
+            } else {
+                return new Error(`[getDecodedErrorForRiverPoints] cannot decode error`)
             }
         }
     }

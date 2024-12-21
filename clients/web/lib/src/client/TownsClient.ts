@@ -1766,6 +1766,18 @@ export class TownsClient
         return txnContext
     }
 
+    public async checkInTransaction(
+        signer: TSigner,
+    ): Promise<TransactionContext<void> | undefined> {
+        return this.baseTransactor.checkInTransaction(signer)
+    }
+
+    public async waitForCheckInTransaction(
+        transactionContext: TransactionContext<void>,
+    ): Promise<TransactionContext<void> | undefined> {
+        return this.baseTransactor.waitForBlockchainTransaction(transactionContext)
+    }
+
     public async getLinkedWallets(walletAddress: string): Promise<string[]> {
         return this.baseTransactor.getLinkedWallets(walletAddress)
     }

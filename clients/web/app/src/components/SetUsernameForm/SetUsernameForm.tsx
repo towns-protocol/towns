@@ -18,7 +18,7 @@ export const SetUsernameFormWithClose = (props: Props) => {
     return showModal && <SetUsernameForm onHide={hide} {...props} />
 }
 
-export const SetUsernameForm = (props: Props & { onHide: () => void }) => {
+const SetUsernameForm = (props: Props & { onHide: () => void }) => {
     const { spaceData } = props
     const defaultUsername = useMyDefaultUsernames()?.[0]
     const { getIsUsernameAvailable } = useTownsClient()

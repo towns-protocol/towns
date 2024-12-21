@@ -323,6 +323,10 @@ interface TownsClientImpl {
     waitForTipTransaction: (
         transactionContext: TipTransactionContext,
     ) => Promise<TipTransactionContext | undefined>
+    checkInTransaction: (signer: TSigner) => Promise<TransactionContext<void> | undefined>
+    waitForCheckInTransaction: (
+        transactionContext: TransactionContext<void>,
+    ) => Promise<TransactionContext<void> | undefined>
 }
 
 export function useTownsClient(): TownsClientImpl {
@@ -494,6 +498,8 @@ export function useTownsClient(): TownsClientImpl {
         ),
         tipTransaction: useWithCatch(clientSingleton?.tipTransaction),
         waitForTipTransaction: useWithCatch(clientSingleton?.waitForTipTransaction),
+        checkInTransaction: useWithCatch(clientSingleton?.checkInTransaction),
+        waitForCheckInTransaction: useWithCatch(clientSingleton?.waitForCheckInTransaction),
     }
 }
 

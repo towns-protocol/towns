@@ -1764,6 +1764,26 @@ export class UserOps {
         })
     }
 
+    public async sendCheckInOp(args: Parameters<SpaceDapp['airdrop']['checkIn']>) {
+        const [signer] = args
+
+        const riverPoints = this.spaceDapp?.airdrop?.riverPoints
+
+        if (!riverPoints?.address) {
+            throw new Error('riverPoints is required')
+        }
+
+        const callData = riverPoints.encodeFunctionData('checkIn', [])
+
+        return this.sendUserOp({
+            toAddress: riverPoints.address,
+            spaceId: undefined,
+            callData,
+            signer,
+            functionHashForPaymasterProxy: 'checkIn',
+        })
+    }
+
     public async getBuilder(args: { signer: ethers.Signer }) {
         if (!this.builder) {
             const { signer } = args
@@ -1814,7 +1834,12 @@ export class UserOps {
                     if (txValue && ethers.BigNumber.from(txValue).gt(0)) {
                         return
                     }
+                    if (this.middlewareVars.functionHashForPaymasterProxy === 'checkIn') {
+                        return
+                    }
+
                     let endPaymasterMiddleware: (() => void) | undefined
+
                     if (sequenceName) {
                         endPaymasterMiddleware = timeTracker?.startMeasurement(
                             sequenceName,
@@ -1854,6 +1879,8 @@ export class UserOps {
                     bundlerUrl: this.bundlerUrl,
                     spaceId,
                     spaceDapp: this.spaceDapp,
+                    functionHashForPaymasterProxy:
+                        this.middlewareVars.functionHashForPaymasterProxy,
                 })
             })
             .useMiddleware(async (ctx) => {

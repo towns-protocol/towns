@@ -251,6 +251,10 @@ export type TipParams = {
     signer: TSigner
 }
 
+export type CheckInParams = {
+    signer: TSigner
+}
+
 export type SendMessageOptions = SendTextMessageOptions | SendGMOptions | SendImageMessageOptions
 
 export function isMentionedTextMessageOptions(

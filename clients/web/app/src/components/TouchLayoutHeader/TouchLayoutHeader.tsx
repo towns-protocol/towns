@@ -13,6 +13,7 @@ import { BugReportButton } from '@components/BugReportButton/BugReportButton'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { CHANNEL_INFO_PARAMS } from 'routes'
 import { NodeStatusButton } from '@components/NodeConnectionStatusPanel/ConnectionStatusButton'
+import { PointsButton } from '@components/TopBar/PointsButton'
 
 type Props = {
     onDisplayMainPanel: () => void
@@ -97,6 +98,7 @@ export const TouchLayoutHeader = (props: Props) => {
                         onClick={onTokenClick}
                     />
                 )}
+                <PointsButton />
             </Stack>
         </Box>
     )

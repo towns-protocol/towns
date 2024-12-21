@@ -83,6 +83,7 @@ export const FunctionHash = {
     withdraw: 'withdraw',
     // ITipping.sol
     tip: 'tip',
+    checkIn: 'checkIn',
 } as const
 
 export type FunctionHash = keyof typeof FunctionHash

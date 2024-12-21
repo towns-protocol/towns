@@ -2,6 +2,7 @@ import { clsx } from 'clsx'
 import React, { forwardRef } from 'react'
 import { Box, BoxProps } from '../Box/Box'
 import { IconAtoms, iconAtoms, iconBaseStyle } from './Icon.css'
+import beaverImage from './assets/beaver16x.png'
 
 type SVGIconProps = React.SVGProps<SVGSVGElement>
 
@@ -199,6 +200,10 @@ export const BellIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => 
             fill="currentColor"
         />
     </svg>
+))
+
+export const BeaverIcon = forwardRef<HTMLImageElement>((props, ref) => (
+    <img src={beaverImage} {...props} ref={ref} />
 ))
 
 export const BellOffIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
@@ -2098,6 +2103,7 @@ const iconMap = {
     ban: BanIcon,
     base: BaseIcon,
     bell: BellIcon,
+    beaver: BeaverIcon,
     blockquote: BlockQuoteIcon,
     blockHand: BlockHandIcon,
     unblockHand: UnblockHandIcon,

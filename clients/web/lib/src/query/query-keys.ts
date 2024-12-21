@@ -87,4 +87,9 @@ export const blockchainKeys = {
         spaceId ?? 'waitingForSpaceId',
     ],
     membershipFee: () => ['membershipFee'],
+    riverPoints: (chainId: number, walletAddress: string) => [
+        'riverPoints',
+        chainId ?? 'waitingForChainId',
+        walletAddress,
+    ],
 }
