@@ -865,8 +865,8 @@ func (ru *aeBlockchainTransactionRules) blockchainTransaction_ChainAuth() (*auth
 		// tips can be sent through a bundler, verify the tip sender
 		// as specified in the tip content and verified against the logs in blockchainTransaction_CheckReceiptMetadata
 		return auth.NewChainAuthArgsForIsWalletLinked(
+			ru.params.parsedEvent.Event.CreatorAddress,
 			content.Tip.GetSender(),
-			ru.transaction.Receipt.From,
 		), nil
 	default:
 		return nil, RiverError(
