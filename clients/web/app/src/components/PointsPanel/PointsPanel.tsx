@@ -64,7 +64,7 @@ export const RiverPointsPanel = () => {
     }
 
     return (
-        <Panel label="River Points" position="relative">
+        <Panel label="Towns Points" position="relative">
             <Suspense fallback={<BeaverLoader />}>
                 <>
                     <PixelFontLoader>

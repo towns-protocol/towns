@@ -17,7 +17,7 @@ export const BeaverHead = (props: Props) => {
             ref={imageRef}
             as="img"
             src={isActive ? beaver : beaverBlink}
-            alt="River Points"
+            alt="Towns Points"
             height="x2"
         />
     )
