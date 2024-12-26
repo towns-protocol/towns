@@ -1,5 +1,5 @@
 import React, { Suspense, useCallback, useEffect, useRef, useState } from 'react'
-import { useConnectivity, useRiverPoints } from 'use-towns-client'
+import { useConnectivity, useRiverPoints, useSpaceId } from 'use-towns-client'
 import { useRiverPointsCheckIn } from 'use-towns-client/dist/hooks/use-river-points'
 import { AnimatePresence } from 'framer-motion'
 import { Signer } from 'ethers'
@@ -14,6 +14,7 @@ import { FadeInBox } from '@components/Transitions'
 import { useCombinedAuth } from 'privy/useCombinedAuth'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
+import { Analytics } from 'hooks/useAnalytics'
 import { CountdownPill, RiverPointsPill, StreakPill } from './PointsPanelPills'
 
 const BeaverAnimation = React.lazy(() =>
@@ -146,6 +147,8 @@ const useHandleCheckin = (abstractAccountAddress: `0x${string}` | undefined) => 
     const isAwaitingPointsRef = useRef(false)
     const [isSubmitting, setIsSubmitting] = useState(false)
 
+    const spaceId = useSpaceId()
+
     useEffect(() => {
         if (
             !isAwaitingPointsRef.current ||
@@ -177,7 +180,10 @@ const useHandleCheckin = (abstractAccountAddress: `0x${string}` | undefined) => 
         setIsSubmitting(false)
         isAwaitingPointsRef.current = true
         currentPointsRef.current = data?.riverPoints ?? 0
-    }, [data?.riverPoints])
+        Analytics.getInstance().track('completed belly rub', {
+            spaceId,
+        })
+    }, [data?.riverPoints, spaceId])
 
     const onError = useCallback((error: Error | undefined) => {
         console.log('[river-points] onError', error)
@@ -220,10 +226,13 @@ const useHandleCheckin = (abstractAccountAddress: `0x${string}` | undefined) => 
 
     const checkIn = useCallback(
         (signer: Signer) => {
+            Analytics.getInstance().track('clicked on beaver', {
+                spaceId,
+            })
             currentPointsRef.current = data?.riverPoints
             checkInTransaction({ signer })
         },
-        [checkInTransaction, data?.riverPoints],
+        [checkInTransaction, data?.riverPoints, spaceId],
     )
 
     return {
