@@ -33,7 +33,7 @@ export function useRiverPoints(loggedInWalletAddress: `0x${string}`) {
                     const valueInWei = (+value).toLocaleString('fullwide', {
                         useGrouping: false,
                     })
-                    return Number(ethers.utils.formatEther(valueInWei))
+                    return Math.round(Number(ethers.utils.formatEther(valueInWei)))
                 }),
                 dapp.getCurrentStreak(loggedInWalletAddress).then((value) => Number(value)),
                 dapp.getLastCheckIn(loggedInWalletAddress).then((value) => {
