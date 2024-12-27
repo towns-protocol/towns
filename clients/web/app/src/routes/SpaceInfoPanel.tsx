@@ -156,6 +156,9 @@ export const SpaceInfo = () => {
     })
 
     const onEditSpaceSettingsClick = useEvent(() => {
+        if (!isOwner) {
+            return
+        }
         if (!isSpaceSettingsPanel) {
             openPanel(CHANNEL_INFO_PARAMS.SPACE_SETTINGS_NAVIGATION)
             if (isTouch) {
@@ -300,7 +303,7 @@ export const SpaceInfo = () => {
             <Stack gap>
                 <TokensGatingSpace
                     spaceId={spaceId}
-                    canEdit={!!canEdit}
+                    canEdit={!!isOwner}
                     onClick={onEditSpaceSettingsClick}
                 />
                 <EditTownInfo
