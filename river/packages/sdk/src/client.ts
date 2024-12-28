@@ -1934,17 +1934,21 @@ export class Client
         chainId: number,
         receipt: ContractReceipt,
         event: TipEventObject,
+        toUserId: string,
     ): Promise<{ eventId: string }> {
         return this.addTransaction(chainId, receipt, {
             case: 'tip',
             value: {
-                tokenId: event.tokenId.toBigInt(),
-                currency: bin_fromHexString(event.currency),
-                sender: addressFromUserId(event.sender),
-                receiver: addressFromUserId(event.receiver),
-                amount: event.amount.toBigInt(),
-                messageId: bin_fromHexString(event.messageId),
-                channelId: streamIdAsBytes(event.channelId),
+                event: {
+                    tokenId: event.tokenId.toBigInt(),
+                    currency: bin_fromHexString(event.currency),
+                    sender: addressFromUserId(event.sender),
+                    receiver: addressFromUserId(event.receiver),
+                    amount: event.amount.toBigInt(),
+                    messageId: bin_fromHexString(event.messageId),
+                    channelId: streamIdAsBytes(event.channelId),
+                },
+                toUserAddress: addressFromUserId(toUserId),
             },
         })
     }

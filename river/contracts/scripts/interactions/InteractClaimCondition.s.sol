@@ -43,7 +43,7 @@ contract InteractClaimCondition is IDropFacetBase, Interaction {
       supplyClaimed: 0,
       merkleRoot: root,
       currency: address(riverBase),
-      penaltyBps: 0
+      penaltyBps: 1000 // 10%
     });
 
     vm.startBroadcast(deployer);

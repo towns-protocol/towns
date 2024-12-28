@@ -416,9 +416,8 @@ message UserPayload {
 
     // derived event, only send from nodes
     message ReceivedBlockchainTransaction {
-        ReceivedBlockchainTransactionKind kind = 1;
-        BlockchainTransaction transaction = 2;
-        bytes from_user_address = 3;
+        BlockchainTransaction transaction = 1;
+        bytes from_user_address = 2;
     }
 
     oneof content {
@@ -611,19 +610,22 @@ message Snapshot {
 }
 
 message BlockchainTransaction {
+    // metadata for tip transactions
     message Tip {
-        uint64 token_id = 1;
-        bytes currency = 2;
-        bytes sender = 3;
-        bytes receiver = 4;
-        uint64 amount = 5;
-        bytes message_id = 6;
-        bytes channel_id = 7;
+        message Event {
+            uint64 token_id = 1;
+            bytes currency = 2;
+            bytes sender = 3; // wallet that sent funds
+            bytes receiver = 4; // wallet that received funds
+            uint64 amount = 5;
+            bytes message_id = 6;
+            bytes channel_id = 7;
+        }
+        Event event = 1; // event emitted by the tipping facet
+        bytes toUserAddress = 2; // user that received funds
     }
-    
     // required fields
     BlockchainTransactionReceipt receipt = 1;
-    
     // optional metadata to be verified by the node
     oneof content {
         Tip tip = 101;
@@ -964,11 +966,6 @@ enum MessageInteractionType {
 enum GroupMentionType {
     GROUP_MENTION_TYPE_UNSPECIFIED = 0;
     GROUP_MENTION_TYPE_AT_CHANNEL = 1;
-}
-
-enum ReceivedBlockchainTransactionKind {
-    RECEIVED_BLOCKCHAIN_TRANSACTION_KIND_UNSPECIFIED = 0;
-    RECEIVED_BLOCKCHAIN_TRANSACTION_KIND_TIP = 1;
 }
 
 // Codes from 1 to 16 match gRPC/Connect codes.

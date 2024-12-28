@@ -39,7 +39,7 @@ function describeTips(tipsMap?: Record<string, MessageTips>): Record<string, str
     for (const [eventId, tips] of Object.entries(tipsMap)) {
         const described = tips.map(
             (t) =>
-                `${t.eventId} amount: ${t.content.tip.amount.toString()} from: ${
+                `${t.eventId} amount: ${t.content.tip.event?.amount.toString() ?? '??'} from: ${
                     t.content.fromUserId
                 } to: ${t.content.toUserId}`,
         )

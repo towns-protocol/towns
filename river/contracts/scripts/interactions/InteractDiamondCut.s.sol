@@ -8,22 +8,21 @@ import {IDiamond} from "@river-build/diamond/src/Diamond.sol";
 
 //contracts
 import {Interaction} from "../common/Interaction.s.sol";
-import {DeployTokenMigration} from "contracts/scripts/deployments/facets/DeployTokenMigration.s.sol";
 import {DiamondHelper} from "contracts/test/diamond/Diamond.t.sol";
 
+// facet
+import {DeployRiverPoints} from "contracts/scripts/deployments/facets/DeployRiverPoints.s.sol";
+
 contract InteractDiamondCut is Interaction, DiamondHelper {
-  DeployTokenMigration tokenMigrationHelper = new DeployTokenMigration();
+  DeployRiverPoints riverPointsHelper = new DeployRiverPoints();
 
   function __interact(address deployer) internal override {
-    address diamond = getDeployment("riverMigration");
+    address diamond = getDeployment("riverAirdrop");
 
-    address tokenMigration = tokenMigrationHelper.deploy(deployer);
+    address riverPoints = riverPointsHelper.deploy(deployer);
 
     addCut(
-      tokenMigrationHelper.makeCut(
-        tokenMigration,
-        IDiamond.FacetCutAction.Replace
-      )
+      riverPointsHelper.makeCut(riverPoints, IDiamond.FacetCutAction.Replace)
     );
 
     vm.broadcast(deployer);

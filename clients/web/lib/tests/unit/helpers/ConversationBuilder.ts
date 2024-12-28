@@ -225,13 +225,16 @@ function makeTip(params: {
     toUserId: string
 }): TipEvent {
     const tip = {
-        tokenId: 0n, // not used in this test
-        amount: BigInt(params.tip),
-        messageId: hexToBytes(params.messageId),
-        channelId: randomBytes(32), // not used in this test
-        sender: randomBytes(0), // not used in this test
-        receiver: randomBytes(0), // not used in this test
-        currency: hexToBytes(ETH_ADDRESS),
+        event: {
+            tokenId: 0n, // not used in this test
+            amount: BigInt(params.tip),
+            messageId: hexToBytes(params.messageId),
+            channelId: randomBytes(32), // not used in this test
+            sender: randomBytes(0), // not used in this test
+            receiver: randomBytes(0), // not used in this test
+            currency: hexToBytes(ETH_ADDRESS),
+        },
+        toUserAddress: randomBytes(0), // not used in this test
     } satisfies PlainMessage<BlockchainTransaction_Tip>
     return {
         kind: ZTEvent.TipEvent,

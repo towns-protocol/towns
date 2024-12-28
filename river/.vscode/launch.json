@@ -120,5 +120,18 @@
       "args": ["run", "${fileBasename}", "--config", "vitest.config.ts"],
       "console": "integratedTerminal",
     },
+    {
+      "name": "Vitest: current file in 'packages/sdk/' (unit)",
+      "type": "node",
+      "request": "launch",
+      "env": { "NODE_ENV": "development", "DEBUG": "csb:*,test:*", "DEBUG_DEPTH":"10" },
+      "program": "${workspaceFolder}/node_modules/vitest/vitest.mjs",
+      "cwd": "${workspaceFolder}/packages/sdk",
+      "autoAttachChildProcesses": true,
+      "skipFiles": ["<node_internals>/**", "**/node_modules/**"],
+      "smartStep": true,
+      "args": ["run", "${fileBasename}", "--config", "vitest.config.unit.ts"],
+      "console": "integratedTerminal",
+    }
   ]
 }

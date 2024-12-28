@@ -523,6 +523,7 @@ function toTownsContent_MemberPayload(
                 } satisfies UnpinEvent,
             }
         case 'memberBlockchainTransaction': {
+            const fromUserAddress = value.content.value.fromUserAddress
             const transaction = value.content.value.transaction
             if (!transaction) {
                 return { error: `${description} no transaction` }
@@ -531,18 +532,23 @@ function toTownsContent_MemberPayload(
                 return { error: `${description} no transactionHash` }
             }
             switch (transaction.content.case) {
-                case 'tip':
+                case 'tip': {
+                    const tipContent = transaction.content.value
+                    if (!tipContent.event) {
+                        return { error: `${description} no event in tip` }
+                    }
                     return {
                         content: {
                             kind: ZTEvent.TipEvent,
                             transaction: transaction,
-                            tip: transaction.content.value,
+                            tip: tipContent,
                             transactionHash: bin_toHexString(transaction.receipt.transactionHash),
-                            fromUserId: userIdFromAddress(value.content.value.fromUserAddress),
-                            refEventId: bin_toHexString(transaction.content.value.messageId),
-                            toUserId: userIdFromAddress(transaction.content.value.receiver),
+                            fromUserId: userIdFromAddress(fromUserAddress),
+                            refEventId: bin_toHexString(tipContent.event.messageId),
+                            toUserId: userIdFromAddress(tipContent.toUserAddress),
                         } satisfies TipEvent,
                     }
+                }
                 case undefined:
                     return { error: `${description} no transaction content` }
                 default:

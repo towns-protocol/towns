@@ -85,12 +85,12 @@ func NewChainAuthArgsForIsSpaceMember(spaceId shared.StreamId, userId string) *C
 }
 
 func NewChainAuthArgsForIsWalletLinked(
-	userId []byte,
+	userAddress []byte,
 	walletAddress []byte,
 ) *ChainAuthArgs {
 	return &ChainAuthArgs{
 		kind:          chainAuthKindIsWalletLinked,
-		principal:     common.BytesToAddress(userId),
+		principal:     common.BytesToAddress(userAddress),
 		walletAddress: common.BytesToAddress(walletAddress),
 	}
 }

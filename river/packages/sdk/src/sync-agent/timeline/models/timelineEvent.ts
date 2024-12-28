@@ -970,7 +970,9 @@ export function getFallbackContent(
                 content.fromUserId
             } ${getFallbackContent_BlockchainTransaction(content.transaction)}`
         case RiverTimelineEvent.UserReceivedBlockchainTransaction:
-            return `kind: ${content.receivedTransaction.kind} fromUserAddress: ${
+            return `kind: ${
+                content.receivedTransaction.transaction?.content?.case ?? '??'
+            } fromUserAddress: ${
                 content.receivedTransaction.fromUserAddress
                     ? bin_toHexString(content.receivedTransaction.fromUserAddress)
                     : ''
@@ -988,11 +990,14 @@ function getFallbackContent_BlockchainTransaction(
     }
     switch (transaction.content.case) {
         case 'tip':
+            if (!transaction.content.value?.event) {
+                return '??'
+            }
             return `kind: ${transaction.content.case} messageId: ${bin_toHexString(
-                transaction.content.value.messageId,
+                transaction.content.value.event.messageId,
             )} receiver: ${bin_toHexString(
-                transaction.content.value.receiver,
-            )} amount: ${transaction.content.value.amount.toString()}`
+                transaction.content.value.event.receiver,
+            )} amount: ${transaction.content.value.event.amount.toString()}`
         default:
             return `kind: ${transaction.content.case ?? 'unspecified'}`
     }

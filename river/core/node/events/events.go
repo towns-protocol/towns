@@ -491,7 +491,6 @@ func Make_UserPayload_Membership(
 }
 
 func Make_UserPayload_ReceivedBlockchainTransaction(
-	kind ReceivedBlockchainTransactionKind,
 	fromUserAddress []byte,
 	transaction *BlockchainTransaction,
 ) *StreamEvent_UserPayload {
@@ -499,7 +498,6 @@ func Make_UserPayload_ReceivedBlockchainTransaction(
 		UserPayload: &UserPayload{
 			Content: &UserPayload_ReceivedBlockchainTransaction_{
 				ReceivedBlockchainTransaction: &UserPayload_ReceivedBlockchainTransaction{
-					Kind:            kind,
 					Transaction:     transaction,
 					FromUserAddress: fromUserAddress,
 				},

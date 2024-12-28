@@ -10,7 +10,6 @@ import { SyncAgent } from '../../sync-agent/syncAgent'
 import { Bot } from '../../sync-agent/utils/bot'
 import { waitFor } from '../testUtils'
 import { StreamTimelineEvent } from '../../types'
-import { ReceivedBlockchainTransactionKind } from '@river-build/proto'
 import { userIdFromAddress, makeUniqueChannelStreamId } from '../../id'
 import { randomBytes } from 'crypto'
 import { TipEventObject } from '@river-build/generated/dev/typings/ITipping'
@@ -22,12 +21,13 @@ const base_log = dlog('csb:test:transactions_Tip')
 describe('transactions_Tip', () => {
     const riverConfig = makeRiverConfig()
     const bobIdentity = new Bot(undefined, riverConfig)
-    const aliceIdentity = new Bot(undefined, riverConfig)
     const bobsOtherWallet = ethers.Wallet.createRandom()
     const bobsOtherWalletProvider = new LocalhostWeb3Provider(
         riverConfig.base.rpcUrl,
         bobsOtherWallet,
     )
+    const aliceIdentity = new Bot(undefined, riverConfig)
+    const alicesOtherWallet = ethers.Wallet.createRandom()
     const chainId = riverConfig.base.chainConfig.chainId
 
     // updated once and shared between tests
@@ -63,6 +63,10 @@ describe('transactions_Tip', () => {
             bob.riverConnection.spaceDapp.walletLink.linkWalletToRootKey(
                 bobIdentity.signer,
                 bobsOtherWallet,
+            ),
+            alice.riverConnection.spaceDapp.walletLink.linkWalletToRootKey(
+                aliceIdentity.signer,
+                alicesOtherWallet,
             ),
         ])
 
@@ -137,7 +141,12 @@ describe('transactions_Tip', () => {
         )
         expect(tipEvent).toBeDefined()
         await expect(
-            bob.riverConnection.client!.addTransaction_Tip(chainId, receipt, tipEvent!),
+            bob.riverConnection.client!.addTransaction_Tip(
+                chainId,
+                receipt,
+                tipEvent!,
+                aliceIdentity.rootWallet.address,
+            ),
         ).resolves.not.toThrow()
     })
 
@@ -185,7 +194,7 @@ describe('transactions_Tip', () => {
         })
         if (!tipEvent) throw new Error('no tip event found')
         expect(tipEvent.transaction?.receipt).toBeDefined()
-        expect(tipEvent?.kind).toEqual(ReceivedBlockchainTransactionKind.TIP)
+        expect(tipEvent?.transaction?.content?.case).toEqual('tip')
     })
 
     test('bobSeesOnMessageInChannel', async () => {
@@ -213,7 +222,12 @@ describe('transactions_Tip', () => {
         const event = cloneDeep(dummyTipEvent)
         event.channelId = makeUniqueChannelStreamId(spaceId)
         await expect(
-            bob.riverConnection.client!.addTransaction_Tip(chainId, dummyReceipt, event),
+            bob.riverConnection.client!.addTransaction_Tip(
+                chainId,
+                dummyReceipt,
+                event,
+                aliceIdentity.rootWallet.address,
+            ),
         ).rejects.toThrow('matching tip event not found in receipt logs')
     })
 
@@ -221,15 +235,38 @@ describe('transactions_Tip', () => {
         const event = cloneDeep(dummyTipEvent)
         event.messageId = randomBytes(32).toString('hex')
         await expect(
-            bob.riverConnection.client!.addTransaction_Tip(chainId, dummyReceipt, event),
+            bob.riverConnection.client!.addTransaction_Tip(
+                chainId,
+                dummyReceipt,
+                event,
+                aliceIdentity.rootWallet.address,
+            ),
         ).rejects.toThrow('matching tip event not found in receipt logs')
     })
 
-    test('cantAddTipWithBadFromUserAddress', async () => {
+    test('cantAddTipWithBadSender', async () => {
         const event = cloneDeep(dummyTipEvent)
         event.sender = aliceIdentity.rootWallet.address
         await expect(
-            bob.riverConnection.client!.addTransaction_Tip(chainId, dummyReceipt, event),
+            bob.riverConnection.client!.addTransaction_Tip(
+                chainId,
+                dummyReceipt,
+                event,
+                aliceIdentity.rootWallet.address,
+            ),
+        ).rejects.toThrow('matching tip event not found in receipt logs')
+    })
+
+    test('cantAddTipWithBadReceiver', async () => {
+        const event = cloneDeep(dummyTipEvent)
+        event.receiver = bobIdentity.rootWallet.address
+        await expect(
+            bob.riverConnection.client!.addTransaction_Tip(
+                chainId,
+                dummyReceipt,
+                event,
+                aliceIdentity.rootWallet.address,
+            ),
         ).rejects.toThrow('matching tip event not found in receipt logs')
     })
 
@@ -237,7 +274,12 @@ describe('transactions_Tip', () => {
         const event = cloneDeep(dummyTipEvent)
         event.amount = BigNumber.from(10000000n)
         await expect(
-            bob.riverConnection.client!.addTransaction_Tip(chainId, dummyReceipt, event),
+            bob.riverConnection.client!.addTransaction_Tip(
+                chainId,
+                dummyReceipt,
+                event,
+                aliceIdentity.rootWallet.address,
+            ),
         ).rejects.toThrow('matching tip event not found in receipt logs')
     })
 
@@ -245,7 +287,24 @@ describe('transactions_Tip', () => {
         const event = cloneDeep(dummyTipEvent)
         event.currency = '0x0000000000000000000000000000000000000000'
         await expect(
-            bob.riverConnection.client!.addTransaction_Tip(chainId, dummyReceipt, event),
+            bob.riverConnection.client!.addTransaction_Tip(
+                chainId,
+                dummyReceipt,
+                event,
+                aliceIdentity.rootWallet.address,
+            ),
         ).rejects.toThrow('matching tip event not found in receipt logs')
+    })
+
+    test('cantAddTipWithBadToUserAddress', async () => {
+        const event = cloneDeep(dummyTipEvent)
+        await expect(
+            bob.riverConnection.client!.addTransaction_Tip(
+                chainId,
+                dummyReceipt,
+                event,
+                bobIdentity.rootWallet.address,
+            ),
+        ).rejects.toThrow('IsEntitled failed')
     })
 })

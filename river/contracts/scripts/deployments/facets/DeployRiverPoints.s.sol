@@ -30,7 +30,7 @@ contract DeployRiverPoints is Deployer, FacetHelper {
 
   // Deploying
   function versionName() public pure override returns (string memory) {
-    return "riverPointsFacet";
+    return "pointsFacet";
   }
 
   function initializer() public pure override returns (bytes4) {
