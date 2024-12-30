@@ -1460,6 +1460,7 @@ export const findMessageByText = (
 ): TimelineEvent | undefined => {
     return events.find(
         (event) =>
-            event.content?.kind === RiverTimelineEvent.RoomMessage && event.content.body === text,
+            event.content?.kind === RiverTimelineEvent.ChannelMessage &&
+            event.content.body === text,
     )
 }

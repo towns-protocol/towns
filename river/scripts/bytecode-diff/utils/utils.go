@@ -87,6 +87,7 @@ const (
 	SpaceFactory  Diamond = "spaceFactory"
 	SpaceOwner    Diamond = "spaceOwner"
 	RiverRegistry Diamond = "riverRegistry"
+	RiverAirdrop  Diamond = "riverAirdrop"
 )
 
 // GetFacetFiles walks the given path and returns a slice of FacetFile structs

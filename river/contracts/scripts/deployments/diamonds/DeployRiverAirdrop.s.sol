@@ -7,6 +7,7 @@ import {IDiamond} from "@river-build/diamond/src/IDiamond.sol";
 //libraries
 
 //contracts
+import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
 import {Diamond} from "@river-build/diamond/src/Diamond.sol";
 import {DiamondHelper} from "contracts/test/diamond/Diamond.t.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
@@ -44,6 +45,14 @@ contract DeployRiverAirdrop is DiamondHelper, Deployer {
   address dropFacet;
   address pointsFacet;
   address metadata;
+
+  mapping(string => address) private facetDeployments;
+
+  constructor() {
+    facetDeployments["dropHelper"] = address(dropHelper);
+    facetDeployments["pointsHelper"] = address(pointsHelper);
+    facetDeployments["metadataHelper"] = address(metadataHelper);
+  }
 
   function versionName() public pure override returns (string memory) {
     return "riverAirdrop";
@@ -135,6 +144,36 @@ contract DeployRiverAirdrop is DiamondHelper, Deployer {
           _initDatas
         )
       });
+  }
+
+  function diamondInitParamsFromFacets(
+    address deployer,
+    string[] memory facets
+  ) public {
+    for (uint256 i = 0; i < facets.length; i++) {
+      string memory facetName = facets[i];
+      address facetHelperAddress = facetDeployments[facetName];
+      if (facetHelperAddress != address(0)) {
+        // deploy facet
+        address facetAddress = Deployer(facetHelperAddress).deploy(deployer);
+        (FacetCut memory cut, bytes memory config) = FacetHelper(
+          facetHelperAddress
+        ).facetInitHelper(deployer, facetAddress);
+        if (config.length > 0) {
+          addFacet(cut, facetAddress, config);
+        } else {
+          addCut(cut);
+        }
+      }
+    }
+  }
+
+  function diamondInitHelper(
+    address deployer,
+    string[] memory facetNames
+  ) external override returns (FacetCut[] memory) {
+    diamondInitParamsFromFacets(deployer, facetNames);
+    return this.getCuts();
   }
 
   function __deploy(address deployer) public override returns (address) {

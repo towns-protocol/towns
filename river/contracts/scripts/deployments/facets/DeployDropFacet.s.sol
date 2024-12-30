@@ -2,8 +2,10 @@
 pragma solidity ^0.8.23;
 
 //interfaces
+import {IDiamond} from "@river-build/diamond/src/IDiamond.sol";
 
 //libraries
+import "forge-std/console.sol";
 
 //contracts
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
@@ -37,6 +39,18 @@ contract DeployDropFacet is Deployer, FacetHelper {
     address stakingContract
   ) public pure returns (bytes memory) {
     return abi.encodeWithSelector(initializer(), stakingContract);
+  }
+
+  function facetInitHelper(
+    address deployer,
+    address facetAddress
+  ) external override returns (FacetCut memory, bytes memory) {
+    IDiamond.FacetCut memory facetCut = this.makeCut(
+      facetAddress,
+      IDiamond.FacetCutAction.Add
+    );
+    console.log("facetInitHelper: deployer", deployer);
+    return (facetCut, makeInitData(getDeployment("baseRegistry")));
   }
 
   function __deploy(address deployer) public override returns (address) {

@@ -41,7 +41,7 @@ describe('timeline.test.ts', () => {
         await waitFor(async () => {
             const e = findMessageByText(bobChannel.timeline.events.value, 'Hi @bob')
             expect(
-                e?.content?.kind === RiverTimelineEvent.RoomMessage &&
+                e?.content?.kind === RiverTimelineEvent.ChannelMessage &&
                     e?.content?.body === 'Hi @bob' &&
                     e?.content?.mentions != undefined &&
                     e?.content?.mentions.length > 0 &&
@@ -174,7 +174,7 @@ describe('timeline.test.ts', () => {
         await waitFor(async () => {
             const event = findMessageByText(aliceChannel.timeline.events.value, 'hey!')
             expect(
-                event?.content?.kind === RiverTimelineEvent.RoomMessage &&
+                event?.content?.kind === RiverTimelineEvent.ChannelMessage &&
                     event?.content?.body === 'hey!',
             ).toEqual(true)
         })
@@ -238,12 +238,12 @@ describe('timeline.test.ts', () => {
                     'hey alice, ready to sew?',
                 )
                 expect(
-                    event?.content?.kind === RiverTimelineEvent.RoomMessage &&
+                    event?.content?.kind === RiverTimelineEvent.ChannelMessage &&
                         event?.content?.body === 'hey alice, ready to sew?',
                 ).toEqual(true)
             })
             const event = aliceChannel.timeline.events.getLatestEvent(
-                RiverTimelineEvent.RoomMessage,
+                RiverTimelineEvent.ChannelMessage,
             )!
             // a non threaded message should not have a thread parent id
             expect(event?.threadParentId).toBeUndefined()
@@ -260,11 +260,11 @@ describe('timeline.test.ts', () => {
                 expect(thread).toBeTruthy()
                 expect(
                     thread?.find((e) => e.eventId === firstReply.eventId)?.content?.kind ===
-                        RiverTimelineEvent.RoomMessage,
+                        RiverTimelineEvent.ChannelMessage,
                 ).toBeTruthy()
                 expect(
                     thread?.find((e) => e.eventId === secondReply.eventId)?.content?.kind ===
-                        RiverTimelineEvent.RoomMessage,
+                        RiverTimelineEvent.ChannelMessage,
                 ).toBeTruthy()
             })
             // alice deletes the first reply
@@ -278,7 +278,7 @@ describe('timeline.test.ts', () => {
                 ).toBeTruthy()
                 expect(
                     thread.find((e) => e.eventId === secondReply.eventId)?.content?.kind ===
-                        RiverTimelineEvent.RoomMessage,
+                        RiverTimelineEvent.ChannelMessage,
                 ).toBeTruthy()
             })
         },

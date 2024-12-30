@@ -78,7 +78,7 @@ export const Timeline = ({ streamId, showThreadMessages, threads, events }: Time
                         </Button>
                     )}
                     {events.map((event) => {
-                        if (event.content?.kind === RiverTimelineEvent.RoomMessage) {
+                        if (event.content?.kind === RiverTimelineEvent.ChannelMessage) {
                             if (showThreadMessages || !event.threadParentId) {
                                 return (
                                     <Message
@@ -92,8 +92,9 @@ export const Timeline = ({ streamId, showThreadMessages, threads, events }: Time
                             return null
                         }
                         if (
-                            event.content?.kind === RiverTimelineEvent.RoomMessageEncrypted ||
-                            event.content?.kind === RiverTimelineEvent.RoomMessageEncryptedWithRef
+                            event.content?.kind === RiverTimelineEvent.ChannelMessageEncrypted ||
+                            event.content?.kind ===
+                                RiverTimelineEvent.ChannelMessageEncryptedWithRef
                         ) {
                             return <EncryptedMessage key={event.eventId} />
                         }
@@ -183,7 +184,7 @@ const Message = ({
                         </span>
                     </div>
                     <span>
-                        {event.content?.kind === RiverTimelineEvent.RoomMessage
+                        {event.content?.kind === RiverTimelineEvent.ChannelMessage
                             ? event.content.body
                             : ''}
                     </span>

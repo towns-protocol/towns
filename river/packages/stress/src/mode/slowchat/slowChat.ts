@@ -59,7 +59,7 @@ export async function slowChat(client: StressClient, chatConfig: ChatConfig) {
             )
         for (const message of messages) {
             const messageBody =
-                message.content?.kind === RiverTimelineEvent.RoomMessage
+                message.content?.kind === RiverTimelineEvent.ChannelMessage
                     ? message.content?.body
                     : ''
             if (!seenMessages.includes(messageBody)) {
@@ -88,4 +88,5 @@ export async function slowChat(client: StressClient, chatConfig: ChatConfig) {
 }
 
 const checkTextInMessageEvent = (event: TimelineEvent, message: string) =>
-    event.content?.kind === RiverTimelineEvent.RoomMessage && event.content?.body.includes(message)
+    event.content?.kind === RiverTimelineEvent.ChannelMessage &&
+    event.content?.body.includes(message)

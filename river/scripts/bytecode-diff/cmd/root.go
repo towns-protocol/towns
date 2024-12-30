@@ -35,6 +35,7 @@ var baseDiamonds = []utils.Diamond{
 	utils.Space,
 	utils.SpaceFactory,
 	utils.SpaceOwner,
+	utils.RiverAirdrop,
 }
 
 var riverDiamonds = []utils.Diamond{

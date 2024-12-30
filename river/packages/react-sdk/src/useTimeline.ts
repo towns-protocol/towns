@@ -17,7 +17,7 @@ import { useSyncAgent } from './useSyncAgent'
  * const { data: events } = useTimeline(streamId)
  *
  * // You can filter the events by their kind
- * const messages = events.filter((event) => event.content?.kind === RiverTimelineEvent.RoomMessage)
+ * const messages = events.filter((event) => event.content?.kind === RiverTimelineEvent.ChannelMessage)
  * ```
  *
  * @param streamId - The id of the stream to get the timeline events from.

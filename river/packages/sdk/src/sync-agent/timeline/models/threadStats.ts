@@ -1,6 +1,6 @@
 import { Observable } from '../../../observable/observable'
 import { RiverTimelineEvent, TimelineEvent, ThreadStatsData } from './timeline-types'
-import { getMessageSenderId, getRoomMessageContent } from './timelineEvent'
+import { getMessageSenderId, getChannelMessageContent } from './timelineEvent'
 
 // eventId -> threadStats
 export type ThreadStatsMap = Record<string, ThreadStatsData>
@@ -45,7 +45,7 @@ export class ThreadStats extends Observable<ThreadStatsMap> {
                 [event.eventId]: {
                     ...current[event.eventId],
                     parentEvent: event,
-                    parentMessageContent: getRoomMessageContent(event),
+                    parentMessageContent: getChannelMessageContent(event),
                     isParticipating:
                         this.value?.[event.eventId]?.isParticipating ||
                         (event.content?.kind !== RiverTimelineEvent.RedactedEvent &&
@@ -112,7 +112,7 @@ function makeNewThreadStats(
         latestTs: event.createdAtEpochMs,
         parentId,
         parentEvent: parent,
-        parentMessageContent: getRoomMessageContent(parent),
+        parentMessageContent: getChannelMessageContent(parent),
         isParticipating: false,
     }
 }
