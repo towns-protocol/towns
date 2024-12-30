@@ -1256,7 +1256,12 @@ export class BaseTransactor {
                 }
             }
         } catch (err) {
-            error = err as Error
+            if (transferData.spaceAddress) {
+                const spaceId = makeSpaceStreamId(transferData.spaceAddress)
+                error = this.getDecodedErrorForSpace(spaceId, err)
+            } else {
+                error = err as Error
+            }
         }
 
         continueStoreTx({
