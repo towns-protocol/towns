@@ -33,6 +33,7 @@ const log = debug('app:DebugBar')
 const anvilKey = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
 
 import { env } from 'utils'
+import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 
 type ModalProps = {
     platform: string
@@ -157,6 +158,12 @@ const DebugModal = ({ environment }: ModalProps) => {
     const { loggedInWalletAddress } = useConnectivity()
     const { setEnvironment, clearEnvironment } = environment
 
+    const { data: abstractAccountAddress } = useAbstractAccountAddress({
+        rootKeyAddress: loggedInWalletAddress,
+    })
+
+    const walletToFund = abstractAccountAddress ?? loggedInWalletAddress
+
     const persistenceDbName = useMemo(
         () => (signerContext ? clientSingleton?.persistenceDbName(signerContext) : undefined),
         [clientSingleton, signerContext],
@@ -231,10 +238,10 @@ const DebugModal = ({ environment }: ModalProps) => {
                                 Accounts
                             </Text>
                             <br />
-                            {loggedInWalletAddress && (
+                            {walletToFund && (
                                 <FundButton
-                                    key={loggedInWalletAddress}
-                                    accountId={loggedInWalletAddress}
+                                    key={walletToFund}
+                                    accountId={walletToFund}
                                     disabled={walletChain.id !== 31337}
                                     provider={provider}
                                     chainId={environment.baseChain.id}
