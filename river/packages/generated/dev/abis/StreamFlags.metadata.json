@@ -19,7 +19,6 @@
   "settings": {
     "remappings": [
       "@openzeppelin/=node_modules/@openzeppelin/",
-      "@prb/=node_modules/@prb/",
       "@prb/math/=node_modules/@prb/math/src/",
       "@prb/test/=node_modules/@prb/test/src/",
       "@river-build/diamond/=node_modules/@river-build/diamond/",
@@ -53,10 +52,10 @@
       "license": "MIT"
     },
     "contracts/src/river/registry/facets/stream/StreamRegistry.sol": {
-      "keccak256": "0x8fee7af1ff8be12620707bd5d2f99b0a3fe71f35a84f9a58ad4fc9cb09e95510",
+      "keccak256": "0x3258b47e57716f51d704a76cb1436280c078c81569367f42fdd7556a2d1442e1",
       "urls": [
-        "bzz-raw://75dbd976251a59928fb42fae614c0ab62e279e718611340457df60a72e48f533",
-        "dweb:/ipfs/QmYPEZg8V9QUgwQ9FScopwTyms5L4fcLsiwM7pPx1NZq5s"
+        "bzz-raw://64d57f132da298ed824565df2640d2a6a7562eb717c41cd45c386fe4a1a32897",
+        "dweb:/ipfs/QmYevtJUKTYAoHB9BfoFNPjmmRPmacy8Xw7v9sQ6E6LDh5"
       ],
       "license": "MIT"
     },

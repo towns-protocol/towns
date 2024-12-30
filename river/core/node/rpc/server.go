@@ -682,7 +682,7 @@ func (s *Service) initCacheAndSync(opts *ServerStartOpts) error {
 		return err
 	}
 
-	s.mbProducer = events.NewMiniblockProducer(s.serverCtx, s.cache, nil)
+	s.mbProducer = events.NewMiniblockProducer(s.serverCtx, s.cache, s.chainConfig, nil)
 
 	s.syncHandler = sync.NewHandler(
 		s.wallet.Address,
@@ -763,11 +763,11 @@ type ServerStartOpts struct {
 // and server must exit.
 func StartServer(
 	ctx context.Context,
+	ctxCancel context.CancelFunc,
 	cfg *config.Config,
 	opts *ServerStartOpts,
 ) (*Service, error) {
 	ctx = config.CtxWithConfig(ctx, cfg)
-	ctx, ctxCancel := context.WithCancel(ctx)
 
 	streamService := &Service{
 		serverCtx:       ctx,

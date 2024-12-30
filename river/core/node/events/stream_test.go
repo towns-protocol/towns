@@ -180,7 +180,7 @@ func mbTest(
 	addEventToStream(t, ctx, tt.instances[0].params, stream, "1", view.LastBlock().Ref)
 	addEventToStream(t, ctx, tt.instances[0].params, stream, "2", view.LastBlock().Ref)
 
-	proposal, err := mbProduceCandidate(ctx, tt.instances[0].params, stream.(*streamImpl), false)
+	proposal, _, err := mbProduceCandidate(ctx, tt.instances[0].params, stream.(*streamImpl), false)
 	mb := proposal.headerEvent.Event.GetMiniblockHeader()
 	events := proposal.Events()
 	require.NoError(err)

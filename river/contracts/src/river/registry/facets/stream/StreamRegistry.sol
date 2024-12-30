@@ -109,12 +109,8 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
       revert(RiverRegistryErrors.STREAM_SEALED);
     }
 
-    // Check if the lastMiniblockNum is the next expected miniblock and
-    // the prevMiniblockHash is correct
-    if (
-      stream.lastMiniblockNum + 1 != lastMiniblockNum ||
-      stream.lastMiniblockHash != prevMiniBlockHash
-    ) {
+    // Ensure that the lastMiniblockNum is newer than the current head.
+    if (stream.lastMiniblockNum >= lastMiniblockNum) {
       revert(RiverRegistryErrors.BAD_ARG);
     }
 
@@ -127,8 +123,8 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
       stream.flags |= StreamFlags.SEALED;
     }
 
-    // Delete genesis miniblock bytes if the stream is moving beyond genesis
-    if (lastMiniblockNum == 1) {
+    // Delete genesis miniblock if `stream` still contains the genesis block after `stream` has advanced since genesis.
+    if (stream.lastMiniblockNum == 0) {
       delete ds.genesisMiniblockByStreamId[streamId];
     }
 

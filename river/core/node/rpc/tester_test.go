@@ -340,9 +340,10 @@ func (st *serviceTester) startSingle(i int, opts ...startOpts) error {
 
 	logger := dlog.FromCtx(st.ctx).With("nodeNum", i, "test", st.t.Name())
 	ctx := dlog.CtxWithLog(st.ctx, logger)
+	ctx, ctxCancel := context.WithCancel(ctx)
 
 	bc := st.btc.GetBlockchain(ctx, i)
-	service, err := StartServer(ctx, cfg, &ServerStartOpts{
+	service, err := StartServer(ctx, ctxCancel, cfg, &ServerStartOpts{
 		RiverChain:      bc,
 		Listener:        listener,
 		HttpClientMaker: testcert.GetHttp2LocalhostTLSClient,

@@ -202,7 +202,6 @@
   "settings": {
     "remappings": [
       "@openzeppelin/=node_modules/@openzeppelin/",
-      "@prb/=node_modules/@prb/",
       "@prb/math/=node_modules/@prb/math/src/",
       "@prb/test/=node_modules/@prb/test/src/",
       "@river-build/diamond/=node_modules/@river-build/diamond/",

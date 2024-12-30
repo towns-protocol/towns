@@ -34,7 +34,7 @@ func runServices(ctx context.Context, cfg *config.Config, stream bool, xchain bo
 	var baseChain *crypto.Blockchain
 	var riverChain *crypto.Blockchain
 	if stream {
-		streamService, err = rpc.StartServer(ctx, cfg, nil)
+		streamService, err = rpc.StartServer(ctx, cancel, cfg, nil)
 		if err != nil {
 			log.Error("Failed to start server", "error", err)
 			return err
