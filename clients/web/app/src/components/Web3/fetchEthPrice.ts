@@ -16,17 +16,17 @@ const zodSchema = z.object({
 })
 
 export async function fetchEthPrice() {
-    const response = await fetch(
-        `https://api.g.alchemy.com/prices/v1/${env.VITE_BASE_CHAIN_RPC_URL?.split(
-            '/',
-        ).pop()}/tokens/by-symbol?symbols=ETH`,
-        {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+    const priceApiUrl = env.VITE_TOKEN_PRICES_API_URL
+    if (!priceApiUrl) {
+        throw new Error('fetchEthPrice: VITE_TOKEN_PRICES_API_URL is not set')
+    }
+
+    const response = await fetch(`${priceApiUrl}/tokens/by-symbol?symbols=ETH`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
         },
-    )
+    })
 
     const data = await response.json()
     const parsed = zodSchema.safeParse(data)

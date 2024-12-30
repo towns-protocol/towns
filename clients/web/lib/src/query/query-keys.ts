@@ -93,4 +93,9 @@ export const blockchainKeys = {
         walletAddress,
     ],
     spaceTotalTips: (spaceId: string) => ['spaceTotalTips', spaceId],
+    tokenIdOfOwner: (spaceId: string | undefined, ownerAddress: string) => [
+        'tokenIdOfOwner',
+        spaceId ?? 'waitingForSpaceId',
+        ownerAddress,
+    ],
 }

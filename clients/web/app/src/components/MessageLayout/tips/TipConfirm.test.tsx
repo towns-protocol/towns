@@ -103,6 +103,11 @@ vi.mock('use-towns-client', async () => {
             ...actual.useConnectivity(),
             loggedInWalletAddress: '0x123',
         }),
+        useTokenIdOfOwner: () => ({
+            data: '1',
+            isLoading: false,
+            isError: false,
+        }),
     }
 })
 

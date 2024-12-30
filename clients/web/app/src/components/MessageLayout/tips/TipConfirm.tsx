@@ -5,7 +5,7 @@ import {
     LookupUser,
     useConnectivity,
     useTipTransaction,
-    useTownsClient,
+    useTokenIdOfOwner,
 } from 'use-towns-client'
 import { Box, Button, Stack, Text } from '@ui'
 import { GetSigner, WalletReady } from 'privy/WalletReady'
@@ -38,11 +38,15 @@ export function TipConfirm(props: {
         enabled: !!tipValue,
         refetchInterval: 8_000,
     })
-    const loading = isLoadingPrice || !price
     const spaceId = useSpaceIdFromPathname()
     const channelId = useChannelIdFromPathname()
-    const { clientSingleton } = useTownsClient()
     const { loggedInWalletAddress } = useConnectivity()
+    const {
+        data: tokenId,
+        isLoading: isLoadingTokenId,
+        isError: isErrorTokenId,
+    } = useTokenIdOfOwner(spaceId, messageOwner.userId)
+    const loading = isLoadingPrice || !price || isLoadingTokenId
 
     const { data: messageOwnerAbstractAccount } = useAbstractAccountAddress({
         rootKeyAddress: messageOwner.userId as Address,
@@ -95,11 +99,6 @@ export function TipConfirm(props: {
             return
         }
 
-        const tokenId = await clientSingleton?.spaceDapp.getTokenIdOfOwner(
-            spaceId,
-            messageOwnerAbstractAccount,
-        )
-
         if (!tokenId) {
             popupToast(({ toast }) => (
                 <StandardToast.Error message="Cannot process tip" toast={toast} />
@@ -127,7 +126,7 @@ export function TipConfirm(props: {
 
     return (
         <Stack gap="sm">
-            {loading && !isErrorPrice ? (
+            {loading && !isErrorPrice && !isErrorTokenId ? (
                 <Loading />
             ) : ethAmount && balance && balance.value <= ethAmount.value ? (
                 <InsufficientTipBalance
@@ -139,6 +138,7 @@ export function TipConfirm(props: {
                     tipValue={tipValue}
                     ethAmount={ethAmount}
                     isErrorPrice={isErrorPrice}
+                    isErrorTokenId={isErrorTokenId}
                     loading={loading}
                     messageOwner={messageOwner}
                     setTipValue={setTipValue}
@@ -188,12 +188,22 @@ function Summary(props: {
     tipValue: TipOption
     ethAmount: { value: bigint; formatted: string } | undefined
     isErrorPrice: boolean
+    isErrorTokenId: boolean
     loading: boolean
     messageOwner: LookupUser
     onTip: (getSigner: GetSigner) => void
     setTipValue: (tipValue: TipOption | undefined) => void
 }) {
-    const { tipValue, ethAmount, isErrorPrice, loading, messageOwner, onTip, setTipValue } = props
+    const {
+        tipValue,
+        ethAmount,
+        isErrorPrice,
+        isErrorTokenId,
+        loading,
+        messageOwner,
+        onTip,
+        setTipValue,
+    } = props
     return (
         <>
             <Box gap="md">
@@ -203,6 +213,10 @@ function Summary(props: {
                 {isErrorPrice ? (
                     <Text textAlign="center" color="negative" paddingBottom="sm">
                         Failed to fetch ETH price
+                    </Text>
+                ) : isErrorTokenId ? (
+                    <Text textAlign="center" color="negative" paddingBottom="sm">
+                        {`Failed to fetch token id for ${messageOwner.username}`}
                     </Text>
                 ) : loading ? (
                     <Loading />
