@@ -70,20 +70,13 @@ module "river_alb" {
   vpc_id  = module.vpc.vpc_id
 }
 
-# TODO: delete me
-module "river_db_cluster" {
-  source                    = "../../modules/river-db-cluster"
-  database_subnets          = module.vpc.database_subnets
-  vpc_id                    = module.vpc.vpc_id
-  pgadmin_security_group_id = module.pgadmin.security_group_id
-}
-
 module "river_db" {
   source                    = "../../modules/river-db-cluster"
   database_subnets          = module.vpc.database_subnets
   vpc_id                    = module.vpc.vpc_id
   pgadmin_security_group_id = module.pgadmin.security_group_id
   cluster_name_suffix       = ""
+  max_capacity              = 30
 }
 
 module "river_node_ssl_cert" {
@@ -130,17 +123,6 @@ resource "aws_security_group" "post_provision_config_lambda_function_sg" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
-}
-
-# TODO: delete me
-resource "aws_security_group_rule" "allow_post_provision_config_lambda_inbound_to_db" {
-  type      = "ingress"
-  from_port = 5432
-  to_port   = 5432
-  protocol  = "tcp"
-
-  security_group_id        = module.river_db_cluster.rds_aurora_postgresql.security_group_id
-  source_security_group_id = aws_security_group.post_provision_config_lambda_function_sg.id
 }
 
 module "system_parameters" {

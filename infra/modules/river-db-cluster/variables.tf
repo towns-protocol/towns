@@ -20,3 +20,13 @@ variable "pgadmin_security_group_id" {
 variable "cluster_name_suffix" {
   default = "-postgresql-cluster"
 }
+
+variable "min_capacity" {
+  type    = number
+  default = 0.5
+}
+
+variable "max_capacity" {
+  type    = number
+  default = 20
+}

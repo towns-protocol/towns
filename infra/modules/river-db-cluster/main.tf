@@ -68,8 +68,8 @@ module "rds_aurora_postgresql" {
   db_cluster_parameter_group_name = aws_rds_cluster_parameter_group.river_db_paramater_group.name
 
   serverlessv2_scaling_configuration = {
-    min_capacity = 0.5
-    max_capacity = 20
+    min_capacity = var.min_capacity
+    max_capacity = var.max_capacity
   }
 
   instance_class = "db.serverless"
