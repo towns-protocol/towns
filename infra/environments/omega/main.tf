@@ -70,11 +70,20 @@ module "river_alb" {
   vpc_id  = module.vpc.vpc_id
 }
 
+# TODO: delete me
 module "river_db_cluster" {
   source                    = "../../modules/river-db-cluster"
   database_subnets          = module.vpc.database_subnets
   vpc_id                    = module.vpc.vpc_id
   pgadmin_security_group_id = module.pgadmin.security_group_id
+}
+
+module "river_db" {
+  source                    = "../../modules/river-db-cluster"
+  database_subnets          = module.vpc.database_subnets
+  vpc_id                    = module.vpc.vpc_id
+  pgadmin_security_group_id = module.pgadmin.security_group_id
+  cluster_name_suffix       = ""
 }
 
 module "river_node_ssl_cert" {
@@ -123,6 +132,7 @@ resource "aws_security_group" "post_provision_config_lambda_function_sg" {
   }
 }
 
+# TODO: delete me
 resource "aws_security_group_rule" "allow_post_provision_config_lambda_inbound_to_db" {
   type      = "ingress"
   from_port = 5432
@@ -184,13 +194,13 @@ module "archive_node" {
 
   docker_image_tag = "mainnet"
 
-  migrate_stream_creation = false
+  migrate_stream_creation = true
 
   node_metadata = module.node_metadata.archive_nodes[count.index]
 
   river_node_ssl_cert_secret_arn = module.river_node_ssl_cert.river_node_ssl_cert_secret_arn
 
-  river_node_db = module.river_db_cluster
+  river_node_db = module.river_db
 
   public_subnets  = module.vpc.public_subnets
   private_subnets = module.vpc.private_subnets
@@ -212,7 +222,7 @@ module "archive_node" {
 
   lb = module.archive_node_nlb[count.index]
 
-  cpu    = 1024
+  cpu    = 2048
   memory = 8192
 }
 

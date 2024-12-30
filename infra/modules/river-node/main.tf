@@ -226,7 +226,7 @@ resource "aws_cloudwatch_log_subscription_filter" "river_log_group_filter" {
   log_group_name  = aws_cloudwatch_log_group.river_log_group.name
   filter_pattern  = ""
   destination_arn = module.global_constants.datadug_forwarder_stack_lambda.arn
-  count           = local.run_mode == "full" ? 1 : 0
+  count           = 1
 }
 
 resource "aws_iam_role_policy" "river_node_credentials" {
