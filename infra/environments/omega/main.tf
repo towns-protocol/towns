@@ -251,8 +251,8 @@ module "river_notification_service" {
   river_chain_rpc_url_secret_arn = local.global_remote_state.river_mainnet_rpc_url_secret.arn
   system_parameters              = module.system_parameters
 
-  cpu    = 4096
-  memory = 30720
+  cpu    = 8192
+  memory = 49152
 }
 
 module "network_health_monitor" {
