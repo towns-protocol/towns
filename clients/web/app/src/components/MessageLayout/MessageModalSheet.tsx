@@ -35,7 +35,7 @@ type Props = {
     messageBody?: string
     threadParentId?: string
     isPinned?: boolean
-    senderUser: LookupUser
+    messageOwner: LookupUser
 }
 
 const emojis: { id: string; native: string }[] = [
@@ -62,7 +62,7 @@ export const MessageModalSheet = (props: Props) => {
         isPinned,
         messageBody,
         threadParentId,
-        senderUser,
+        messageOwner,
     } = props
     const [isHidden, setIsHidden] = React.useState(false)
     const { sendReaction, sendReadReceipt, pinMessage, unpinMessage } = useTownsClient()
@@ -416,7 +416,7 @@ export const MessageModalSheet = (props: Props) => {
             )}
 
             {activePrompt == 'tip' && (
-                <TipSheet senderUser={senderUser} eventId={eventId} onCloseTip={onCloseTip} />
+                <TipSheet messageOwner={messageOwner} eventId={eventId} onCloseTip={onCloseTip} />
             )}
         </>
     )

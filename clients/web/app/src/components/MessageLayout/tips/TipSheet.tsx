@@ -7,7 +7,7 @@ import { TipConfirm } from './TipConfirm'
 
 export function TipSheet(
     props: {
-        senderUser: LookupUser
+        messageOwner: LookupUser
         eventId: string
         onCloseTip: (args: { closeMessageMenu?: boolean }) => void
     } & PropsWithChildren,
@@ -24,9 +24,12 @@ export function TipSheet(
                     <TipConfirm
                         tipValue={tipValue}
                         setTipValue={setTipValue}
-                        senderUser={props.senderUser}
+                        messageOwner={props.messageOwner}
                         eventId={props.eventId}
                         onTip={() => props.onCloseTip({ closeMessageMenu: true })}
+                        onInsufficientBalance={() => {
+                            props.onCloseTip({ closeMessageMenu: true })
+                        }}
                     />
                 }
             />

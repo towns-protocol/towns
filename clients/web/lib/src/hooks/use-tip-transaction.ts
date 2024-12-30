@@ -3,6 +3,8 @@ import {
     TransactionStatus,
     TipTransactionContext,
 } from '../client/TownsClientTypes'
+import { queryClient } from '../query/queryClient'
+import { blockchainKeys } from '../query/query-keys'
 import { SignerUndefinedError, toError } from '../types/error-types'
 import { useCallback, useMemo, useRef, useState } from 'react'
 
@@ -72,6 +74,11 @@ export function useTipTransaction() {
                 setTransactionContext(transactionResult)
             } finally {
                 isTransacting.current = false
+                if (transactionResult?.status === TransactionStatus.Success) {
+                    await queryClient.invalidateQueries({
+                        queryKey: blockchainKeys.spaceTotalTips(args.spaceId),
+                    })
+                }
             }
             return transactionResult
         },

@@ -21,7 +21,7 @@ import isEqual from 'lodash/isEqual'
 import { UserOpsConfig, UserOpParams, FunctionHash, TimeTracker, TimeTrackerEvents } from './types'
 import { userOpsStore } from './userOpsStore'
 import { ERC4337 } from 'userop/dist/constants'
-import { CodeException } from './errors'
+import { CodeException, InsufficientTipBalanceException } from './errors'
 import { UserOperationEventEvent } from 'userop/dist/typechain/EntryPoint'
 import { EVERYONE_ADDRESS, getFunctionSigHash, isUsingAlchemyBundler } from './utils'
 import {
@@ -1917,7 +1917,7 @@ export class UserOps {
                     const balance = await balanceOf(op.sender, builder.provider)
 
                     if (balance.lt(totalCost)) {
-                        await promptUser()
+                        throw new InsufficientTipBalanceException()
                     }
                 } else {
                     await promptUser()

@@ -3,6 +3,7 @@ import {
     Address,
     ETH_ADDRESS,
     LookupUser,
+    useConnectivity,
     useTipTransaction,
     useTownsClient,
 } from 'use-towns-client'
@@ -16,16 +17,19 @@ import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { popupToast } from '@components/Notifications/popupToast'
 import { StandardToast } from '@components/Notifications/StandardToast'
+import { useBalance } from 'hooks/useBalance'
+import { useStore } from 'store/store'
 import { TipOption } from './types'
 
 export function TipConfirm(props: {
     tipValue: TipOption | undefined
     setTipValue: (tipValue: TipOption | undefined) => void
-    senderUser: LookupUser
+    messageOwner: LookupUser
     eventId: string
     onTip?: () => void
+    onInsufficientBalance?: () => void
 }) {
-    const { tipValue, setTipValue, senderUser, eventId, onTip } = props
+    const { tipValue, setTipValue, messageOwner, eventId, onTip, onInsufficientBalance } = props
     const {
         data: price,
         isLoading: isLoadingPrice,
@@ -38,9 +42,19 @@ export function TipConfirm(props: {
     const spaceId = useSpaceIdFromPathname()
     const channelId = useChannelIdFromPathname()
     const { clientSingleton } = useTownsClient()
+    const { loggedInWalletAddress } = useConnectivity()
 
-    const { data: senderAbstractAccount } = useAbstractAccountAddress({
-        rootKeyAddress: senderUser.userId as Address,
+    const { data: messageOwnerAbstractAccount } = useAbstractAccountAddress({
+        rootKeyAddress: messageOwner.userId as Address,
+    })
+
+    const { data: myAbstractAccount } = useAbstractAccountAddress({
+        rootKeyAddress: loggedInWalletAddress as Address,
+    })
+
+    const { data: balance } = useBalance({
+        address: myAbstractAccount,
+        enabled: !!myAbstractAccount,
     })
 
     const ethAmount =
@@ -60,9 +74,16 @@ export function TipConfirm(props: {
             createPrivyNotAuthenticatedNotification()
             return
         }
-        if (!senderAbstractAccount || !spaceId || !channelId || !tipValue || !ethAmount) {
+        if (
+            !messageOwnerAbstractAccount ||
+            !spaceId ||
+            !channelId ||
+            !tipValue ||
+            !ethAmount ||
+            !myAbstractAccount
+        ) {
             console.error('Missing required data for tip transaction', {
-                senderAbstractAccount,
+                messageOwnerAbstractAccount,
                 spaceId,
                 channelId,
                 tipValue,
@@ -76,7 +97,7 @@ export function TipConfirm(props: {
 
         const tokenId = await clientSingleton?.spaceDapp.getTokenIdOfOwner(
             spaceId,
-            senderAbstractAccount,
+            messageOwnerAbstractAccount,
         )
 
         if (!tokenId) {
@@ -86,10 +107,12 @@ export function TipConfirm(props: {
             return
         }
 
-        tip({
+        await tip({
             spaceId,
             receiverTokenId: tokenId,
-            receiverUsername: senderUser.username,
+            receiverUserId: messageOwner.userId,
+            receiverUsername: messageOwner.username,
+            senderAddress: myAbstractAccount,
             messageId: eventId,
             channelId,
             currency: ETH_ADDRESS,
@@ -104,6 +127,75 @@ export function TipConfirm(props: {
 
     return (
         <Stack gap="sm">
+            {loading && !isErrorPrice ? (
+                <Loading />
+            ) : ethAmount && balance && balance.value <= ethAmount.value ? (
+                <InsufficientTipBalance
+                    setTipValue={setTipValue}
+                    onInsufficientBalance={onInsufficientBalance}
+                />
+            ) : (
+                <Summary
+                    tipValue={tipValue}
+                    ethAmount={ethAmount}
+                    isErrorPrice={isErrorPrice}
+                    loading={loading}
+                    messageOwner={messageOwner}
+                    setTipValue={setTipValue}
+                    onTip={_onTip}
+                />
+            )}
+        </Stack>
+    )
+}
+
+function Loading() {
+    return (
+        <Box centerContent height="x8">
+            <ButtonSpinner color="gray2" />
+        </Box>
+    )
+}
+
+function InsufficientTipBalance(props: {
+    setTipValue: (tipValue: TipOption | undefined) => void
+    onInsufficientBalance?: () => void
+}) {
+    const { setTipValue, onInsufficientBalance } = props
+    const setFundWalletModalOpen = useStore((state) => state.setFundWalletModalOpen)
+    return (
+        <Box centerContent gap="md">
+            <Text strong textAlign="center">
+                {`You don't have enough ETH`}
+            </Text>
+            <Button
+                tone="cta1"
+                rounded="md"
+                size="button_sm"
+                onClick={() => {
+                    setTipValue(undefined)
+                    onInsufficientBalance?.()
+                    setFundWalletModalOpen(true)
+                }}
+            >
+                Add Funds
+            </Button>
+        </Box>
+    )
+}
+
+function Summary(props: {
+    tipValue: TipOption
+    ethAmount: { value: bigint; formatted: string } | undefined
+    isErrorPrice: boolean
+    loading: boolean
+    messageOwner: LookupUser
+    onTip: (getSigner: GetSigner) => void
+    setTipValue: (tipValue: TipOption | undefined) => void
+}) {
+    const { tipValue, ethAmount, isErrorPrice, loading, messageOwner, onTip, setTipValue } = props
+    return (
+        <>
             <Box gap="md">
                 <Text strong textAlign="center">
                     Confirm Tip
@@ -113,14 +205,12 @@ export function TipConfirm(props: {
                         Failed to fetch ETH price
                     </Text>
                 ) : loading ? (
-                    <Box centerContent height="x6">
-                        <ButtonSpinner color="gray2" />
-                    </Box>
+                    <Loading />
                 ) : (
                     <Box paddingBottom="sm">
                         <Text textAlign="center" color="gray2" size="sm">
                             {tipValue.label} ({ethAmount?.formatted} ETH) will be sent to @
-                            {senderUser.username}?
+                            {messageOwner.username}?
                         </Text>
                     </Box>
                 )}
@@ -133,7 +223,7 @@ export function TipConfirm(props: {
                         rounded="md"
                         size="button_sm"
                         disabled={loading}
-                        onClick={() => _onTip(getSigner)}
+                        onClick={() => onTip(getSigner)}
                     >
                         Send
                     </Button>
@@ -149,6 +239,6 @@ export function TipConfirm(props: {
             >
                 Cancel
             </Button>
-        </Stack>
+        </>
     )
 }

@@ -99,6 +99,7 @@ const Wrapper = ({ messageContent }: { messageContent: MessageContent }) => {
                     sendReadReceipt: () => new Promise(() => null),
                     type: MessageTimelineType.Channel,
                     memberIds: [],
+                    channelTips: {},
                 }}
             >
                 <MessageTimelineItem itemData={generateMessageRenderEvent(messageContent)} />

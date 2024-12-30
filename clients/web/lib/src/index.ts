@@ -135,6 +135,7 @@ export { useSetHideUserJoinLeave } from './hooks/use-set-hide-user-join-leave'
 export { useTransferAssetTransaction } from './hooks/use-transfer-asset-transaction'
 export { useTipTransaction } from './hooks/use-tip-transaction'
 export { useCheckInTransaction } from './hooks/use-checkin-transaction'
+export { useSpaceTips } from './hooks/use-space-tips'
 
 export { useCasablancaStore } from './store/use-casablanca-store'
 export { useFullyReadMarkerStore } from './store/use-fully-read-marker-store'

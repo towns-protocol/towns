@@ -46,6 +46,7 @@ import { BlockchainTransactionStore } from './BlockchainTransactionStore'
 import {
     AccountAbstractionConfig,
     getTransactionHashOrUserOpHash,
+    isInsufficientTipBalanceException,
     isUserOpResponse,
     UserOps,
 } from '@towns/userops'
@@ -1517,6 +1518,7 @@ export class BaseTransactor {
     public async waitForBlockchainTransaction<TxnContext>(
         context: TransactionContext<TxnContext> | undefined,
         sequenceName?: TimeTrackerEvents,
+        confirmations?: number,
     ): Promise<TransactionContext<TxnContext>> {
         if (!context?.transaction) {
             return createTransactionContext<TxnContext>({
@@ -1569,6 +1571,7 @@ export class BaseTransactor {
                     }
                     receipt = await this.baseProvider?.waitForTransaction(
                         userOpReceipt.receipt?.transactionHash,
+                        confirmations,
                     )
                     if (endWaitForTxConfirmation) {
                         endWaitForTxConfirmation()
@@ -1613,17 +1616,23 @@ export class BaseTransactor {
     }
 
     public async tipTransaction(args: TipParams): Promise<TipTransactionContext> {
-        const { signer, receiverTokenId, receiverUsername, ...tipArgs } = args
+        const { signer, receiverTokenId, receiverUsername, receiverUserId, ...tipArgs } = args
         let transaction: TransactionOrUserOperation | undefined = undefined
         let error: Error | undefined = undefined
+
+        const txContextData = {
+            receiverUsername,
+            spaceId: tipArgs.spaceId,
+            senderAddress: tipArgs.senderAddress,
+            messageId: tipArgs.messageId,
+            channelId: tipArgs.channelId,
+            receiverUserId,
+            amount: tipArgs.amount,
+            currency: tipArgs.currency,
+        }
         const continueStoreTx = this.blockchainTransactionStore.begin({
             type: BlockchainTransactionType.Tip,
-            data: {
-                receiverTokenId,
-                receiverUsername,
-                messageId: tipArgs.messageId,
-                channelId: tipArgs.channelId,
-            },
+            data: txContextData,
         })
 
         // Ensure the string only contains valid hex characters
@@ -1646,7 +1655,9 @@ export class BaseTransactor {
             this.log(`[linkEOAToRootKey] transaction created` /*, transaction*/)
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: unknown) {
-            error = this.getDecodedErrorForSpace(tipArgs.spaceId, err)
+            error = isInsufficientTipBalanceException(err)
+                ? err
+                : this.getDecodedErrorForSpace(tipArgs.spaceId, err)
         }
         continueStoreTx({
             hashOrUserOpHash: getTransactionHashOrUserOpHash(transaction),
@@ -1658,11 +1669,7 @@ export class BaseTransactor {
             transaction,
             receipt: undefined,
             status: transaction ? TransactionStatus.Pending : TransactionStatus.Failed,
-            data: {
-                receiverUsername,
-                messageId: tipArgs.messageId,
-                channelId: tipArgs.channelId,
-            },
+            data: txContextData,
             error,
         }
     }

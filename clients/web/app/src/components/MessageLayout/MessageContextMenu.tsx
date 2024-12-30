@@ -24,7 +24,7 @@ import { env } from 'utils'
 import { useCreateUnreadMarker } from './hooks/useCreateUnreadMarker'
 import { DeleteMessagePrompt } from './DeleteMessagePrompt'
 import { useRedactMessage } from './hooks/useRedactMessage'
-import { TipTooltipPopup } from './tips/TipTooltipPopup'
+import { TipIcoButton, TipTooltipPopup } from './tips/TipTooltipPopup'
 
 type Props = {
     eventId: string
@@ -39,7 +39,7 @@ type Props = {
     canRedact?: boolean
     isFocused?: boolean
     isPinned?: boolean
-    senderUser: LookupUser
+    messageOwner: LookupUser
 }
 
 const style = {
@@ -58,7 +58,7 @@ export const MessageContextMenu = (props: Props) => {
         isFocused,
         isPinned,
         canRedact,
-        senderUser,
+        messageOwner,
     } = props
 
     const { sendReaction, sendReadReceipt, pinMessage, unpinMessage } = useTownsClient()
@@ -339,9 +339,14 @@ export const MessageContextMenu = (props: Props) => {
                     {env.VITE_TIPS_ENABLED && !props.canEdit && (
                         <TipTooltipPopup
                             wrapperRef={menuRef}
-                            senderUser={senderUser}
+                            messageOwner={messageOwner}
                             eventId={eventId}
-                        />
+                            tooltip={<ShortcutTooltip action="TipMessage" />}
+                        >
+                            {({ triggerProps, tipPending }) => (
+                                <TipIcoButton tipPending={tipPending} triggerProps={triggerProps} />
+                            )}
+                        </TipTooltipPopup>
                     )}
 
                     <IconButton

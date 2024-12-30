@@ -37,6 +37,7 @@ import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
 import { CombinedAuthContextProvider } from 'privy/useCombinedAuth'
 import { useRiverConnectedSuccessfullyAnalyticsEvent } from '@components/Analytics/useRiverConnectedSuccessfullyAnalyticsEvent'
 import { validateAndParseXChainConfig } from 'utils/validateAndParseXChainConfig'
+import { FundWalletModal } from '@components/Web3/Wallet/FundWalletModal'
 import { wagmiConfig } from './wagmiConfig'
 
 FontLoader.init()
@@ -195,6 +196,7 @@ export const App = () => {
                         <ServiceWorkerMetadataSyncer />
                         <MonitorJoinFlow />
                         <UserOpTxModal />
+                        <FundWalletModal />
                         <TrackRiverConnectedSuccessfully />
                     </>
                 </CombinedAuthContextProvider>

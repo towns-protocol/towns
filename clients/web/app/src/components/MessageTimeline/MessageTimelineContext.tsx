@@ -1,12 +1,14 @@
 import React, { createContext, useCallback, useMemo } from 'react'
 import {
     Channel,
+    MessageTips,
     TimelineEvent,
     useMyProfile,
     usePins,
     useSpaceMembers,
     useTimelineReactions,
     useTimelineThreadStats,
+    useTimelineTips,
     useTownsClient,
 } from 'use-towns-client'
 import { useNavigate } from 'react-router-dom'
@@ -48,6 +50,7 @@ export const MessageTimelineContext = createContext<{
     memberIds: string[]
     onMentionClick?: (mentionName: string) => void
     pins: Pin[] | undefined
+    channelTips: Record<string, MessageTips>
 } | null>(null)
 
 export const useTimelineContext = () => {
@@ -125,6 +128,7 @@ export const MessageTimelineWrapper = (props: {
         },
         [createLink, getAbstractAccountAddress, navigate],
     )
+    const channelTips = useTimelineTips(channelId)
 
     const value = useMemo(() => {
         return {
@@ -147,6 +151,7 @@ export const MessageTimelineWrapper = (props: {
             timelineActions,
             type,
             userId,
+            channelTips,
         }
     }, [
         channelId,
@@ -168,6 +173,7 @@ export const MessageTimelineWrapper = (props: {
         timelineActions,
         type,
         userId,
+        channelTips,
     ])
 
     return (

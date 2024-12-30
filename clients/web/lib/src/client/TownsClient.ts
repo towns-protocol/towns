@@ -59,7 +59,7 @@ import { SignerContext } from '@river-build/sdk'
 import { getDefaultXChainIds, marshallXChainConfig } from './XChainConfig'
 import { addCategoryToError, SignerUndefinedError } from '../types/error-types'
 import { makeSpaceStreamId, makeDefaultChannelStreamId } from '@river-build/sdk'
-import { staticAssertNever } from '../utils/towns-utils'
+import { retryOperation, staticAssertNever } from '../utils/towns-utils'
 import { toStreamView } from './casablanca/CasablancaUtils'
 import { RoleIdentifier, BlockchainTransactionType, Address, TSigner } from '../types/web3-types'
 import { MembershipStruct, Permission, SpaceInfo } from '@river-build/web3'
@@ -1759,9 +1759,58 @@ export class TownsClient
     ): Promise<TipTransactionContext | undefined> {
         const txnContext = await this.baseTransactor.waitForBlockchainTransaction(
             transactionContext,
+            undefined,
+            // wait for at least 2 confirmations seems to be reliable enough for river verification
+            2,
         )
         logTxnResult('waitTipTransaction', txnContext)
-        // TODO: river
+        const receipt = txnContext.receipt
+        const chainId = this.spaceDapp?.config.chainId
+        if (
+            txnContext.status === TransactionStatus.Success &&
+            receipt &&
+            chainId &&
+            txnContext.data
+        ) {
+            const tipEvent = this.spaceDapp?.getTipEvent(
+                txnContext.data.spaceId,
+                receipt,
+                txnContext.data.senderAddress,
+            )
+            const toUserId = txnContext.data.receiverUserId
+
+            if (tipEvent) {
+                try {
+                    await retryOperation(
+                        async () => {
+                            await this.casablancaClient?.addTransaction_Tip(
+                                chainId,
+                                receipt,
+                                tipEvent,
+                                toUserId,
+                            )
+                        },
+                        {
+                            onError: (error, retryCount) => {
+                                this.log('[waitForTipTransaction::addTransaction_Tip] error', {
+                                    error,
+                                    retryCount,
+                                })
+                            },
+                            onRetry: (retryCount) => {
+                                this.log('[waitForTipTransaction::addTransaction_Tip] retrying', {
+                                    retryCount,
+                                })
+                            },
+                        },
+                    )
+                } catch (error) {
+                    console.error('waitForTipTransaction:: Failed to add transaction_tip', error)
+                }
+            } else {
+                console.error('waitForTipTransaction:: No tip event found')
+            }
+        }
 
         return txnContext
     }

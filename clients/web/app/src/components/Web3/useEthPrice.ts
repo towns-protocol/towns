@@ -1,57 +1,18 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect } from 'react'
 import { useTownsContext } from 'use-towns-client'
-import { z } from 'zod'
-import { env } from 'utils'
 import { formatUnitsToFixedLength, parseUnits } from 'hooks/useBalance'
-
-const zodSchema = z.object({
-    data: z.array(
-        z.object({
-            symbol: z.string(),
-            prices: z.array(
-                z.object({
-                    value: z.string(),
-                    currency: z.string(),
-                    lastUpdatedAt: z.string(),
-                }),
-            ),
-        }),
-    ),
-})
-
-async function fetchEthPrice() {
-    const response = await fetch(
-        `https://api.g.alchemy.com/prices/v1/${env.VITE_BASE_CHAIN_RPC_URL?.split(
-            '/',
-        ).pop()}/tokens/by-symbol?symbols=ETH`,
-        {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        },
-    )
-
-    const data = await response.json()
-    const parsed = zodSchema.safeParse(data)
-
-    if (!parsed.success) {
-        throw new Error(`Failed to fetch ETH price, zod parse failed: ${parsed.error}`)
-    }
-
-    const priceInUsd = parsed.data.data[0].prices[0].value
-
-    return priceInUsd
-}
+import { fetchEthPrice } from './fetchEthPrice'
 
 const queryKey = () => ['ethPrice']
 
-export function useEthPrice(args: {
-    enabled?: boolean
-    refetchInterval?: number
-    watch?: boolean
-}) {
+export function useEthPrice(
+    args: {
+        enabled?: boolean
+        refetchInterval?: number
+        watch?: boolean
+    } = {},
+) {
     const { enabled = true, refetchInterval, watch = false } = args
     const { baseProvider } = useTownsContext()
     const queryClient = useQueryClient()
@@ -99,4 +60,39 @@ export function calculateEthAmountFromUsd(args: { cents: number; ethPriceInUsd: 
         value: ethAmountBigInt,
         formatted: formatUnitsToFixedLength(ethAmountBigInt),
     }
+}
+
+export function calculateUsdAmountFromEth(args: {
+    ethAmount: bigint | undefined
+    ethPriceInUsd: string | undefined
+}) {
+    const { ethAmount, ethPriceInUsd } = args
+    if (!ethAmount || !ethPriceInUsd) {
+        return undefined
+    }
+    const ethPriceInUsdBigInt = parseUnits(ethPriceInUsd, 18)
+    const usdValueBigInt = (ethAmount * ethPriceInUsdBigInt) / BigInt(1e18)
+    return formatUnitsToFixedLength(usdValueBigInt)
+}
+
+export function useEthToUsdFormatted(args: {
+    ethAmount: bigint | undefined
+    refetchInterval?: number
+}) {
+    const { ethAmount, refetchInterval = 8_000 } = args
+    const { data: ethPrice } = useEthPrice({
+        refetchInterval: refetchInterval,
+    })
+    const amount = calculateUsdAmountFromEth({
+        ethAmount: ethAmount,
+        ethPriceInUsd: ethPrice?.toString(),
+    })
+    return (
+        `$` +
+        new Intl.NumberFormat('en-US', {
+            style: 'decimal',
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        }).format(parseFloat(amount || '0'))
+    )
 }

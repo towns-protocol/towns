@@ -15,10 +15,11 @@ type Props = {
     userId?: string | null
     parentId?: string
     onReaction?: ReturnType<typeof useHandleReaction>
+    tipReaction?: JSX.Element
 }
 
 export const Reactions = (props: Props) => {
-    const { userId, parentId, reactions, onReaction } = props
+    const { userId, parentId, reactions, onReaction, tipReaction } = props
 
     const onReactionPicker = useCallback(
         (data: EmojiPickerSelection) => {
@@ -42,6 +43,7 @@ export const Reactions = (props: Props) => {
                     userId={userId}
                     parentId={parentId}
                     reactions={reactions}
+                    tipReaction={tipReaction}
                     onReaction={onReaction}
                 />
             </Suspense>
@@ -63,11 +65,13 @@ const ReactionRow = ({
     userId,
     onReaction,
     parentId,
+    tipReaction,
 }: {
     reactions: MessageReactions
     userId?: Props['userId']
     onReaction?: Props['onReaction']
     parentId?: Props['parentId']
+    tipReaction?: JSX.Element
 }) => {
     const onReact = useCallback(
         (reactionName: string, remove: boolean) => {
@@ -104,7 +108,7 @@ const ReactionRow = ({
               />
           ))
         : undefined
-    return <>{map}</>
+    return <>{[tipReaction, ...(map ? [map] : [])]}</>
 }
 
 const Reaction = (props: {

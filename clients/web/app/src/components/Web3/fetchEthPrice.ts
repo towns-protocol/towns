@@ -1,0 +1,41 @@
+import { z } from 'zod'
+import { env } from 'utils'
+const zodSchema = z.object({
+    data: z.array(
+        z.object({
+            symbol: z.string(),
+            prices: z.array(
+                z.object({
+                    value: z.string(),
+                    currency: z.string(),
+                    lastUpdatedAt: z.string(),
+                }),
+            ),
+        }),
+    ),
+})
+
+export async function fetchEthPrice() {
+    const response = await fetch(
+        `https://api.g.alchemy.com/prices/v1/${env.VITE_BASE_CHAIN_RPC_URL?.split(
+            '/',
+        ).pop()}/tokens/by-symbol?symbols=ETH`,
+        {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        },
+    )
+
+    const data = await response.json()
+    const parsed = zodSchema.safeParse(data)
+
+    if (!parsed.success) {
+        throw new Error(`Failed to fetch ETH price, zod parse failed: ${parsed.error}`)
+    }
+
+    const priceInUsd = parsed.data.data[0].prices[0].value
+
+    return priceInUsd
+}

@@ -1,7 +1,6 @@
 import React, { useCallback, useState } from 'react'
 import { BlockchainTransactionType, LookupUser, useIsTransactionPending } from 'use-towns-client'
-import { ShortcutTooltip } from '@components/Shortcuts/ShortcutTooltip'
-import { Box, CardOpener, CardOpenerTriggerProps, IconButton } from '@ui'
+import { Box, BoxProps, CardOpener, CardOpenerTriggerProps, IconButton } from '@ui'
 import { useShortcut } from 'hooks/useShortcut'
 import { useCardOpenerContext } from 'ui/components/Overlay/CardOpenerContext'
 import { TipMenu } from './TipMenu'
@@ -10,18 +9,23 @@ import { TipConfirm } from './TipConfirm'
 
 export function TipTooltipPopup(props: {
     wrapperRef: React.RefObject<HTMLDivElement>
-    senderUser: LookupUser
+    messageOwner: LookupUser
+    tooltip: React.ReactNode
     eventId: string
+    wrapperStyles?: (
+        isAbove: boolean,
+    ) => Pick<BoxProps, 'justifyContent' | 'paddingBottom' | 'paddingTop'>
+    children: (props: {
+        triggerProps: CardOpenerTriggerProps
+        tipPending: boolean
+    }) => React.ReactNode
 }) {
-    const { wrapperRef, senderUser, eventId } = props
+    const { wrapperRef, messageOwner, tooltip, eventId, wrapperStyles, children } = props
     const [isAbove, setIsAbove] = useState(false)
     const [tipValue, setTipValue] = useState<TipOption | undefined>()
     const tipPending = useIsTransactionPending(BlockchainTransactionType.Tip)
     return (
-        <Box
-            tooltip={<ShortcutTooltip action="TipMessage" />}
-            tooltipOptions={{ removeOnClick: true, disabled: !!tipValue }}
-        >
+        <Box tooltip={tooltip} tooltipOptions={{ removeOnClick: true, disabled: !!tipValue }}>
             <CardOpener
                 placement="dropdown"
                 overrideTriggerRef={wrapperRef}
@@ -33,6 +37,7 @@ export function TipTooltipPopup(props: {
                         justifyContent={isAbove ? 'end' : 'start'}
                         paddingBottom={isAbove ? 'sm' : undefined}
                         paddingTop={isAbove ? undefined : 'sm'}
+                        {...wrapperStyles?.(isAbove)}
                     >
                         <TipMenu
                             tipValue={tipValue}
@@ -41,7 +46,7 @@ export function TipTooltipPopup(props: {
                                 <TipConfirmWithCardContext
                                     tipValue={tipValue}
                                     setTipValue={setTipValue}
-                                    senderUser={senderUser}
+                                    messageOwner={messageOwner}
                                     eventId={eventId}
                                 />
                             }
@@ -54,34 +59,34 @@ export function TipTooltipPopup(props: {
                 }}
             >
                 {({ triggerProps }) => {
-                    return <TipIcoButton tipPending={tipPending} triggerProps={triggerProps} />
+                    return children({ triggerProps, tipPending })
                 }}
             </CardOpener>
         </Box>
     )
 }
 
-function TipConfirmWithCardContext(props: {
+export function TipConfirmWithCardContext(props: {
     tipValue: TipOption | undefined
     setTipValue: (tipValue: TipOption | undefined) => void
-    senderUser: LookupUser
+    messageOwner: LookupUser
     eventId: string
 }) {
-    const { tipValue, setTipValue, senderUser, eventId } = props
+    const { tipValue, setTipValue, messageOwner, eventId } = props
     const { closeCard } = useCardOpenerContext()
 
     return (
         <TipConfirm
             tipValue={tipValue}
             setTipValue={setTipValue}
-            senderUser={senderUser}
+            messageOwner={messageOwner}
             eventId={eventId}
             onTip={closeCard}
         />
     )
 }
 
-function TipIcoButton(props: { tipPending: boolean; triggerProps: CardOpenerTriggerProps }) {
+export function TipIcoButton(props: { tipPending: boolean; triggerProps: CardOpenerTriggerProps }) {
     const { tipPending, triggerProps } = props
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { cursor, onClick: onTriggerClick, ...rest } = triggerProps

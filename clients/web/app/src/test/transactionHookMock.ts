@@ -68,6 +68,7 @@ type TransactionFnNames =
     | 'createRoleTransaction'
     | 'updateRoleTransaction'
     | 'transferAsset'
+    | 'tipTransaction'
 
 type UseMockTransactionReturn = {
     isLoading: boolean
@@ -107,6 +108,10 @@ export type UseMockTransferAssetReturn = UseMockTransactionReturn & {
     transferAsset: Mock
 }
 
+export type UseMockTipReturn = UseMockTransactionReturn & {
+    tip: Mock
+}
+
 type UseMockHookReturn =
     | UseMockCreateSpaceReturn
     | UseMockCreateChannelReturn
@@ -115,7 +120,7 @@ type UseMockHookReturn =
     | UseMockCreateRoleReturn
     | UseMockUpdateRoleReturn
     | UseMockTransferAssetReturn
-
+    | UseMockTipReturn
 // useCreateSpaceTransaction/useCreateChannelTransaction contains calls to other lib functions whose references aren't replaced by mocking: createSpaceTransaction, waitForCreateSpaceTransaction, etc
 // Workarounds:
 // 1. Could mock a logged in state - useWithCatch wrapped around createSpaceTransaction is failing b/c not logged in, and ultimately causes test failures
@@ -206,6 +211,11 @@ export const mockCreateTransactionWithSpy = (transactionFunctionName: Transactio
                 return {
                     ...txData,
                     transferAsset: createTransactionMockFn,
+                }
+            case 'tipTransaction':
+                return {
+                    ...txData,
+                    tip: createTransactionMockFn,
                 }
             default:
                 break

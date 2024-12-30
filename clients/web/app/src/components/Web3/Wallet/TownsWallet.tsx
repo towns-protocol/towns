@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { useConnectivity } from 'use-towns-client'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
@@ -7,14 +7,14 @@ import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { shortAddress } from 'ui/utils/utils'
 import { useBalance } from 'hooks/useBalance'
 import { Analytics } from 'hooks/useAnalytics'
-import { FundWalletModal } from './FundWalletModal'
+import { useStore } from 'store/store'
 
 export function TownsWallet() {
     const { loggedInWalletAddress } = useConnectivity()
     const { data: aaAddress } = useAbstractAccountAddress({
         rootKeyAddress: loggedInWalletAddress,
     })
-    const [isFundWalletModalOpen, setIsFundWalletModalOpen] = useState(false)
+    const setFundWalletModalOpen = useStore((state) => state.setFundWalletModalOpen)
     const balance = useBalance({
         address: aaAddress,
         watch: true,
@@ -60,7 +60,7 @@ export function TownsWallet() {
                                 color="cta1"
                                 onClick={() => {
                                     Analytics.getInstance().track('clicked add funds')
-                                    setIsFundWalletModalOpen(true)
+                                    setFundWalletModalOpen(true)
                                 }}
                             >
                                 Add funds
@@ -75,7 +75,6 @@ export function TownsWallet() {
                     onClick={() => openPanel('wallet', { assetSource: aaAddress })}
                 />
             </Box>
-            <FundWalletModal isOpen={isFundWalletModalOpen} setIsOpen={setIsFundWalletModalOpen} />
         </>
     )
 }

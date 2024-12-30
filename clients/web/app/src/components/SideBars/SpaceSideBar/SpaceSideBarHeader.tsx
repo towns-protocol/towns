@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useEvent } from 'react-use-event-hook'
 import { Membership, SpaceData, useContractSpaceInfo, useMyMembership } from 'use-towns-client'
+import { SpaceTotalTips } from '@components/MessageLayout/tips/SpaceTotalTips'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { useSizeContext } from 'ui/hooks/useSizeContext'
 import { Box, Icon, IconButton, Paragraph, Stack } from '@ui'
@@ -13,6 +14,7 @@ import { useDevice } from 'hooks/useDevice'
 import useCopyToClipboard from 'hooks/useCopyToClipboard'
 import { SECOND_MS } from 'data/constants'
 import { Analytics } from 'hooks/useAnalytics'
+import { env } from 'utils'
 import * as styles from './SpaceSideBar.css'
 
 export const SpaceSideBarHeader = (props: {
@@ -161,7 +163,8 @@ export const SpaceSideBarHeader = (props: {
                 </Box>
             </Stack>
 
-            <Stack paddingX gap="md" insetX="xs" paddingY="xs" cursor="pointer">
+            <Stack paddingX gap="md" insetX="xs" paddingY="xs">
+                {env.VITE_TIPS_ENABLED && <SpaceTotalTips spaceId={space.id} />}
                 <ShareTownLinkButton spaceId={space.id} spaceName={space.name} />
             </Stack>
         </>

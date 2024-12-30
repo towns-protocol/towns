@@ -7,6 +7,7 @@ import {
 } from './token-collections'
 import { env } from '../src/utils'
 import { NFT_METADATA_RESPONSE } from './token-contracts'
+import { ethPriceAlchemyMock } from './ethPrice'
 
 export const browserHandlers = [
     rest.get('/mock-endpoint', (req, res, ctx) => {
@@ -96,5 +97,10 @@ export const testHandlers = [
     }),
     rest.post('http://127.0.0.1:8545/', (_req, res, ctx) => {
         return res(ctx.status(200), ctx.json('empty'))
+    }),
+
+    // ETH PRICE ///////////////
+    rest.get(`https://api.g.alchemy.com/prices/v1/*`, (_req, res, ctx) => {
+        return res(ctx.status(200), ctx.json(ethPriceAlchemyMock))
     }),
 ]

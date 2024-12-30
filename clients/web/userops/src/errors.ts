@@ -178,3 +178,24 @@ function isError(error: unknown): error is Error {
         typeof (error as Error).message === 'string'
     )
 }
+
+export class InsufficientTipBalanceException extends CodeException {
+    constructor() {
+        super({
+            message: 'Insufficient balance',
+            code: 'tip_insufficient_balance',
+            category: 'userop',
+        })
+    }
+}
+
+export function isInsufficientTipBalanceException(
+    error: unknown,
+): error is InsufficientTipBalanceException {
+    return (
+        typeof error === 'object' &&
+        error !== null &&
+        'code' in error &&
+        error.code === 'tip_insufficient_balance'
+    )
+}

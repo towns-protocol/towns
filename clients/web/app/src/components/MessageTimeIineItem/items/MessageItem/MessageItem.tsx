@@ -277,6 +277,7 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
         threadParentId,
         type,
         userId,
+        channelTips,
     } = timelineContext
 
     const isOwn = event.content?.kind == ZTEvent.RoomMessage && sender.id === userId
@@ -348,6 +349,7 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
             paddingX="md"
             spaceId={spaceId}
             reactions={reactions}
+            tips={channelTips[event.eventId]}
             relativeDate={isRelativeDate}
             replies={replies}
             messageBody={body}
@@ -357,7 +359,6 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
             onReaction={handleReaction}
         >
             {props.children}
-
             {attachments && attachments.length > 0 && (
                 <MessageAttachments
                     attachments={attachments}

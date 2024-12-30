@@ -44,3 +44,39 @@ export function getChainName(chainId: number): string {
     }
     throw new Error(`ChainId ${chainId} not found`)
 }
+
+export async function retryOperation<T>(
+    operation: () => Promise<T>,
+    options: {
+        maxRetries?: number
+        getRetryDelay?: (retryCount: number) => number
+        onError?: (error: unknown, retryCount: number) => void
+        onRetry?: (retryCount: number) => void
+    } = {},
+): Promise<T> {
+    const maxRetries = options.maxRetries ?? 3
+    const getRetryDelay =
+        options.getRetryDelay ??
+        ((retryCount: number) => {
+            return Math.min(1000 * 2 ** retryCount, 20000) // 2, 4, 8 seconds if max retries is 3
+        })
+
+    let retryCount = 0
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+        try {
+            return await operation()
+        } catch (error) {
+            retryCount++
+            options.onError?.(error, retryCount)
+
+            if (retryCount > maxRetries) {
+                throw error
+            }
+
+            const retryDelay = getRetryDelay(retryCount)
+            options.onRetry?.(retryCount)
+            await new Promise((resolve) => setTimeout(resolve, retryDelay))
+        }
+    }
+}

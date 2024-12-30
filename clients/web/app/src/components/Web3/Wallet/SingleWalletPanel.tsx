@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { Box, Icon, Text } from '@ui'
 import { Panel } from '@components/Panel/Panel'
 import { PanelButton } from '@components/Panel/PanelButton'
@@ -8,15 +8,15 @@ import { CopyIcon, useCopied } from '@components/ClipboardCopy/ClipboardCopy'
 import { shortAddress } from 'ui/utils/utils'
 import useCopyToClipboard from 'hooks/useCopyToClipboard'
 import { Analytics } from 'hooks/useAnalytics'
+import { useStore } from 'store/store'
 import { useGetAssetSourceParam, useIsAAWallet } from './useGetWalletParam'
 import { NftsList } from './NftsList'
-import { FundWalletModal } from './FundWalletModal'
 
 export function SingleWalletPanel() {
     const isAAWallet = useIsAAWallet()
     const walletAddress = useGetAssetSourceParam()
     const { openPanel } = usePanelActions()
-    const [isFundWalletModalOpen, setIsFundWalletModalOpen] = useState(false)
+    const setFundWalletModalOpen = useStore((state) => state.setFundWalletModalOpen)
 
     const balance = useBalance({
         address: walletAddress || undefined,
@@ -29,7 +29,7 @@ export function SingleWalletPanel() {
 
     const onFundWallet = () => {
         Analytics.getInstance().track('clicked add funds single wallet panel')
-        setIsFundWalletModalOpen(true)
+        setFundWalletModalOpen(true)
     }
     const [, copy] = useCopyToClipboard()
     const [copied, setCopied] = useCopied()
@@ -73,7 +73,6 @@ export function SingleWalletPanel() {
                 </Box>
             </PanelButton>
             <NftsList walletAddress={walletAddress} />
-            <FundWalletModal isOpen={isFundWalletModalOpen} setIsOpen={setIsFundWalletModalOpen} />
         </Panel>
     )
 }

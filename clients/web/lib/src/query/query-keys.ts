@@ -92,4 +92,5 @@ export const blockchainKeys = {
         chainId ?? 'waitingForChainId',
         walletAddress,
     ],
+    spaceTotalTips: (spaceId: string) => ['spaceTotalTips', spaceId],
 }

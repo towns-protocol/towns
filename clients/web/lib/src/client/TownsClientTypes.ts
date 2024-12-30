@@ -141,6 +141,11 @@ export type TipTransactionContext = TransactionContext<{
     receiverUsername: string
     messageId: string
     channelId: string
+    receiverUserId: string
+    senderAddress: string
+    spaceId: string
+    amount: bigint
+    currency: string
 }>
 
 export type TownsClientEventHandlers = {

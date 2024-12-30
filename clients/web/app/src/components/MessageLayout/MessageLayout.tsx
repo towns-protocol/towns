@@ -4,6 +4,7 @@ import {
     Address,
     LookupUser,
     MessageReactions,
+    MessageTips,
     Permission,
     ThreadStats,
     useConnectivity,
@@ -29,10 +30,12 @@ import { ZRoomMessageRedactedEvent } from '@components/MessageTimeline/util/getE
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { useResolveNft } from 'hooks/useNfts'
+import { env } from 'utils'
 import { MessageContextMenu } from './MessageContextMenu'
 import { MessageModalSheet } from './MessageModalSheet'
 import { SendStatus, SendStatusIndicator } from './SendStatusIndicator'
 import { DecryptionDebugger } from './DecryptionDebugger'
+import { TipReaction } from './tips/TipReaction'
 
 type Props = {
     userId?: string | null
@@ -69,6 +72,7 @@ type Props = {
     sessionId?: string
     pin?: Pin
     canPin?: boolean
+    tips?: MessageTips
 } & BoxProps
 
 export type MessageLayoutProps = Props
@@ -106,6 +110,7 @@ export const MessageLayout = (props: Props) => {
         children,
         sessionId,
         pin,
+        tips,
         ...boxProps
     } = props
 
@@ -157,7 +162,7 @@ export const MessageLayout = (props: Props) => {
         rootKeyAddress: senderId as Address | undefined,
     })
     const profileLink = createLink({ profileId: abstractAccountAddress })
-    const senderUser = useUserLookup(senderId ?? '')
+    const messageOwner = useUserLookup(senderId ?? '')
 
     const hasReplies = replies && replies.replyEventIds.size > 0 && eventId
     const numReactions = reactions ? Object.values(reactions).length : 0
@@ -279,7 +284,7 @@ export const MessageLayout = (props: Props) => {
                             {messageSourceAnnotation}
                         </ButtonText>
                     )}
-                    {hasReactions || hasReplies ? (
+                    {hasReactions || hasReplies || tips ? (
                         <Stack
                             alignItems={displayButtonsInRow ? 'center' : undefined}
                             flexDirection={displayButtonsInRow ? 'row' : 'columnReverse'}
@@ -297,8 +302,30 @@ export const MessageLayout = (props: Props) => {
                                     userId={userId}
                                     parentId={eventId}
                                     reactions={reactions}
+                                    tipReaction={
+                                        env.VITE_TIPS_ENABLED ? (
+                                            <TipReaction
+                                                isTippable={!isEditable}
+                                                tips={tips}
+                                                eventId={eventId}
+                                                messageOwner={messageOwner}
+                                                key={`tip-${eventId}`}
+                                            />
+                                        ) : (
+                                            <></>
+                                        )
+                                    }
                                     onReaction={onReaction}
                                 />
+                            ) : tips && env.VITE_TIPS_ENABLED ? (
+                                <Box alignSelf="start">
+                                    <TipReaction
+                                        isTippable={!isEditable}
+                                        tips={tips}
+                                        eventId={eventId}
+                                        messageOwner={messageOwner}
+                                    />
+                                </Box>
                             ) : null}
                         </Stack>
                     ) : (
@@ -321,7 +348,7 @@ export const MessageLayout = (props: Props) => {
                         isPinned={!!pin}
                         spaceId={spaceId}
                         threadParentId={threadParentId}
-                        senderUser={senderUser}
+                        messageOwner={messageOwner}
                     />
                 )}
             </Stack>
@@ -338,7 +365,7 @@ export const MessageLayout = (props: Props) => {
                     messageBody={messageBody}
                     threadParentId={threadParentId}
                     isPinned={!!pin}
-                    senderUser={senderUser}
+                    messageOwner={messageOwner}
                     onClose={() => setIsModalSheetVisible(false)}
                 />
             )}

@@ -14,6 +14,7 @@ import {
     TransferAssetTransactionContext,
 } from 'use-towns-client/dist/client/TownsClientTypes'
 import { BigNumber } from 'ethers'
+import { isInsufficientTipBalanceException } from '@towns/userops'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { CHANNEL_INFO_PARAMS } from 'routes'
@@ -23,6 +24,7 @@ import { useEnvironment } from 'hooks/useEnvironmnet'
 import { formatUnits } from 'hooks/useBalance'
 import { shortAddress } from 'ui/utils/utils'
 import { TipBurst } from '@components/MessageLayout/tips/TipBurst'
+import { useStore } from 'store/store'
 import { baseScanUrl, mapToErrorMessage } from './utils'
 
 type ToastProps = {
@@ -265,6 +267,7 @@ function MonitoringNotification(props: ToastProps & { toast: Toast }) {
     const [searchParams] = useSearchParams()
     const rolesParam = searchParams.get('roles')
     const subErrorMessage = mapToErrorMessage({ error: updatedTx.error, source: updatedTx.type })
+    const setFundWalletModalOpen = useStore((state) => state.setFundWalletModalOpen)
 
     const { message } = useMemo(() => {
         return updatedTx.status === 'pending' || updatedTx.status === 'potential'
@@ -367,6 +370,22 @@ function MonitoringNotification(props: ToastProps & { toast: Toast }) {
     }
 
     if (updatedTx.status === 'failure') {
+        if (isInsufficientTipBalanceException(updatedTx.error)) {
+            return (
+                <StandardToast.Error
+                    toast={toast}
+                    message={
+                        `Including gas, you don't have enough ETH to tip @${updatedTx.data?.receiverUsername}` ??
+                        ''
+                    }
+                    cta="Add Funds"
+                    onCtaClick={() => {
+                        headlessToast.dismiss(toast.id)
+                        setFundWalletModalOpen(true)
+                    }}
+                />
+            )
+        }
         return (
             <StandardToast.Error
                 toast={toast}

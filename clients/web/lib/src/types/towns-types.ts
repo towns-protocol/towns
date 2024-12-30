@@ -242,12 +242,14 @@ export interface SpaceIdOptions {
 
 export type TipParams = {
     spaceId: string
+    receiverUserId: string
     receiverTokenId: string
     receiverUsername: string
     currency: string
     amount: bigint
     messageId: string
     channelId: string
+    senderAddress: string
     signer: TSigner
 }
 

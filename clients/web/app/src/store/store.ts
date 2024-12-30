@@ -42,6 +42,8 @@ interface AppState {
     setFavoriteChannelIds: (favoriteChannelIds: string[]) => void
     setAppStoreBannerPresentedCount: (count: number) => void
     appStoreBannerPresentedCount: number
+    fundWalletModalOpen: boolean
+    setFundWalletModalOpen: (open: boolean) => void
 }
 
 export const GLOBAL_STORE_NAME = 'towns/global'
@@ -145,6 +147,10 @@ export const useStore = create(
             setAppStoreBannerPresentedCount: (appStoreBannerPresentedCount: number) => {
                 set(() => ({ appStoreBannerPresentedCount }))
             },
+            fundWalletModalOpen: false,
+            setFundWalletModalOpen: (fundWalletModalOpen) => {
+                set(() => ({ fundWalletModalOpen }))
+            },
         }),
         {
             name: GLOBAL_STORE_NAME,
@@ -159,6 +165,10 @@ export const useStore = create(
                     getTheme,
                     // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     recentlyMintedSpaceToken,
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                    fundWalletModalOpen,
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                    setFundWalletModalOpen,
                     ...rest
                 } = state
                 return rest as AppState
