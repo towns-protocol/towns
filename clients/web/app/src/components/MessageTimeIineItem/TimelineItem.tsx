@@ -1,7 +1,7 @@
 import React from 'react'
 import { staticAssertNever } from 'use-towns-client'
 import { useChannelType } from 'hooks/useChannelType'
-import { AccumulatedRoomMemberEvent } from './items/AccumulatedMembers'
+import { AccumulatedStreamMemberEvent } from './items/AccumulatedMembers'
 import { TimelineChannelCreateEvent } from './items/ChannelCreated'
 import { TimelineGenericEvent } from './items/GenericItem'
 import { MessageItem } from './items/MessageItem/MessageItem'
@@ -38,9 +38,9 @@ export const MessageTimelineItem = React.memo(
                 )
             }
 
-            case RenderEventType.AccumulatedRoomMembers: {
+            case RenderEventType.AccumulatedStreamMembers: {
                 return (
-                    <AccumulatedRoomMemberEvent
+                    <AccumulatedStreamMemberEvent
                         event={itemData}
                         key={itemData.key}
                         channelType={channelType}
@@ -51,7 +51,7 @@ export const MessageTimelineItem = React.memo(
                 )
             }
 
-            case RenderEventType.RoomMember: {
+            case RenderEventType.StreamMember: {
                 return <TimelineGenericEvent event={itemData.event} key={itemData.event.eventId} />
             }
 
@@ -61,7 +61,7 @@ export const MessageTimelineItem = React.memo(
                 )
             }
 
-            case RenderEventType.RoomCreate: {
+            case RenderEventType.Inception: {
                 return (
                     <RoomCreate
                         event={itemData.event}
@@ -72,7 +72,7 @@ export const MessageTimelineItem = React.memo(
                 )
             }
 
-            case RenderEventType.RoomProperties: {
+            case RenderEventType.ChannelProperties: {
                 return <RoomProperties event={itemData.event} userId={userId} />
             }
 

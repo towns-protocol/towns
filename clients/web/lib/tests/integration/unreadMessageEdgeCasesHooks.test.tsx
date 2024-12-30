@@ -3,7 +3,7 @@
  * @group core
  */
 import React, { useCallback, useEffect } from 'react'
-import { RoomMessageEvent, TimelineEvent, ZTEvent } from '../../src/types/timeline-types'
+import { ChannelMessageEvent, TimelineEvent, ZTEvent } from '../../src/types/timeline-types'
 import {
     createTestChannelWithSpaceRoles,
     createTestSpaceGatedByTownNft,
@@ -52,7 +52,7 @@ describe('unreadMessageCountEdgeCases', () => {
             const channelFullyReadMarker = useFullyReadMarker(channelId)
             const { timeline } = useChannelTimeline()
             const spaceHasUnread = spaceUnreads[spaceId]
-            const messages = timeline.filter((x) => x.content?.kind === ZTEvent.RoomMessage)
+            const messages = timeline.filter((x) => x.content?.kind === ZTEvent.ChannelMessage)
             const [upToDateStreams, setUpToDateStreams] = React.useState<string[]>([])
             // send message
             const onMarkAsRead = useCallback(() => {
@@ -165,7 +165,7 @@ describe('unreadMessageCountEdgeCases', () => {
         // have jane delete the message
         const event = await waitFor(() => {
             const event = jane
-                .getEvents_Typed<RoomMessageEvent>(channelId, ZTEvent.RoomMessage)
+                .getEvents_Typed<ChannelMessageEvent>(channelId, ZTEvent.ChannelMessage)
                 .find(
                     (x) =>
                         x.content.body ===
@@ -229,7 +229,7 @@ describe('unreadMessageCountEdgeCases', () => {
 
         const deletedEvent1 = await waitFor(() => {
             const event = jane
-                .getEvents_Typed<RoomMessageEvent>(channelId, ZTEvent.RoomMessage)
+                .getEvents_Typed<ChannelMessageEvent>(channelId, ZTEvent.ChannelMessage)
                 .find(
                     (x) =>
                         x.content.body ===
@@ -241,7 +241,7 @@ describe('unreadMessageCountEdgeCases', () => {
 
         const deletedEvent2_eventId = await waitFor(() => {
             const eventId = jane
-                .getEvents_Typed<RoomMessageEvent>(channelId, ZTEvent.RoomMessage)
+                .getEvents_Typed<ChannelMessageEvent>(channelId, ZTEvent.ChannelMessage)
                 .find(
                     (x) =>
                         x.content.body ===
@@ -288,7 +288,7 @@ describe('unreadMessageCountEdgeCases', () => {
 
         const deletedEventWithMention = await waitFor(() => {
             const event = jane
-                .getEvents_Typed<RoomMessageEvent>(channelId, ZTEvent.RoomMessage)
+                .getEvents_Typed<ChannelMessageEvent>(channelId, ZTEvent.ChannelMessage)
                 .find(
                     (x) =>
                         x.content.body ===
@@ -300,7 +300,7 @@ describe('unreadMessageCountEdgeCases', () => {
 
         const deletedEventWithoutMention_eventId = await waitFor(() => {
             const eventId = jane
-                .getEvents_Typed<RoomMessageEvent>(channelId, ZTEvent.RoomMessage)
+                .getEvents_Typed<ChannelMessageEvent>(channelId, ZTEvent.ChannelMessage)
                 .find(
                     (x) =>
                         x.content.body ===
@@ -347,7 +347,7 @@ describe('unreadMessageCountEdgeCases', () => {
 
         const deletedEventWithMention2 = await waitFor(() => {
             const event = jane
-                .getEvents_Typed<RoomMessageEvent>(channelId, ZTEvent.RoomMessage)
+                .getEvents_Typed<ChannelMessageEvent>(channelId, ZTEvent.ChannelMessage)
                 .find(
                     (x) =>
                         x.content.body ===
@@ -359,7 +359,7 @@ describe('unreadMessageCountEdgeCases', () => {
 
         const deletedEventWithoutMention2_eventId = await waitFor(() => {
             const returnVal = jane
-                .getEvents_Typed<RoomMessageEvent>(channelId, ZTEvent.RoomMessage)
+                .getEvents_Typed<ChannelMessageEvent>(channelId, ZTEvent.ChannelMessage)
                 .find(
                     (x) =>
                         x.content.body ===

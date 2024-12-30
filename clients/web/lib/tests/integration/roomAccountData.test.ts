@@ -50,7 +50,7 @@ describe('roomAccountData', () => {
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
         const event = bob
-            .getEvents_TypedRoomMessage(channelId)
+            .getEvents_TypedChannelMessage(channelId)
             .find((event) => event.content.body === 'GM Bob')!
 
         const fullyRead: Record<string, FullyReadMarker> = {

@@ -40,7 +40,7 @@ describe('presence', () => {
         await waitForWithRetries(() => alice.sendMessage(channelId, 'Hi @bob'))
 
         await waitFor(() =>
-            expect(bob.getEvents_TypedRoomMessage(channelId).at(-1)?.content?.body).toEqual(
+            expect(bob.getEvents_TypedChannelMessage(channelId).at(-1)?.content?.body).toEqual(
                 'Hi @bob',
             ),
         )

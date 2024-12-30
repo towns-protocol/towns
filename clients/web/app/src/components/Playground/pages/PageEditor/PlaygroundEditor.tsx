@@ -9,7 +9,7 @@ import {
     convertUserToCombobox,
     getUserHashMap,
 } from '@components/RichTextPlate/components/plate-ui/autocomplete/helpers'
-import { channels, roomMembers } from './data'
+import { channels, streamMembers } from './data'
 
 type Props = {
     onChange: (editor: TPlateEditor) => void
@@ -30,9 +30,9 @@ export const PlaygroundEditor = ({
     setIsEditing,
 }: Props) => {
     const userMentions = useRef(
-        roomMembers.map((user) => convertUserToCombobox(user, ['1', '2', '5', '6'])),
+        streamMembers.map((user) => convertUserToCombobox(user, ['1', '2', '5', '6'])),
     )
-    const userHashMap = useRef(getUserHashMap(roomMembers))
+    const userHashMap = useRef(getUserHashMap(streamMembers))
     const { channelMentions } = useEditorChannelData(channels)
     const { files, clearFiles } = useMediaDropContext()
 

@@ -32,9 +32,9 @@ We've implemented integration tests that run against a live server. See Start Lo
               if (!t.content) { return undefined; }
               // switch over the kind type
               switch (t.content.kind) {
-                case ZTEvent.RoomMessage:
-                  // through the magic of union type differentiation, content is now typed to RoomMessageEvent
-                  return makeRoomMessageCompoennt(t.content)
+                case ZTEvent.ChannelMessage:
+                  // through the magic of union type differentiation, content is now typed to ChannelMessageEvent
+                  return makeChannelMessageCompoennt(t.content)
                 default:
                   staticAssertNever(t.content) // optional, will enforce compile time check for enum exhaustion
                   return defaultComponent(t.fallbackContent)

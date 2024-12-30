@@ -13,7 +13,7 @@ import {
 
 import { Permission } from '@river-build/web3'
 import { waitFor } from '@testing-library/dom'
-import { RoomMessageEvent } from '../../src/types/timeline-types'
+import { ChannelMessageEvent } from '../../src/types/timeline-types'
 
 describe('sendThreadedMessage', () => {
     // usefull for debugging or running against cloud servers
@@ -48,7 +48,7 @@ describe('sendThreadedMessage', () => {
         await bob.sendMessage(channelId, 'Hello Alice!')
         // wait for alice to receive the message
         await waitFor(async () => {
-            const e = await alice.getLatestEvent<RoomMessageEvent>(channelId)
+            const e = await alice.getLatestEvent<ChannelMessageEvent>(channelId)
             expect(e?.content?.body).toEqual('Hello Alice!')
         })
         // event
@@ -61,7 +61,7 @@ describe('sendThreadedMessage', () => {
         )
         // bob should receive the message & thread id should be set to parent event id
         await waitFor(async () => {
-            const e = await bob.getLatestEvent<RoomMessageEvent>(channelId)
+            const e = await bob.getLatestEvent<ChannelMessageEvent>(channelId)
             expect(e?.content?.body).toEqual('Hello Bob!')
             expect(e?.content?.threadId).toEqual(event?.eventId)
         })

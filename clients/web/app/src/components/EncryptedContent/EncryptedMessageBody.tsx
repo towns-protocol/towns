@@ -1,11 +1,11 @@
 import React from 'react'
-import { RoomMessageEncryptedEvent } from 'use-towns-client'
+import { ChannelMessageEncryptedEvent } from 'use-towns-client'
 import { Paragraph, Stack } from '@ui'
 import { MESSAGING_IN_TOWNS_LINK } from 'data/links'
 import { atoms } from 'ui/styles/atoms.css'
 
 export const TimelineEncryptedContent = React.memo(
-    (props: { event: { createdAtEpochMs: number }; content: RoomMessageEncryptedEvent }) => {
+    (props: { event: { createdAtEpochMs: number }; content: ChannelMessageEncryptedEvent }) => {
         const { content } = props
 
         return (

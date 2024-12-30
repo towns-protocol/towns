@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react'
 import {
     Channel,
+    ChannelMessageMissingEvent,
     LookupUser,
-    RoomMessageMissingEvent,
     SendMessageOptions,
     TimelineEvent,
     ZTEvent,
@@ -58,9 +58,9 @@ export const MessageThread = (props: {
             isRedacted: false,
             sender: { id: '', displayName: '' },
             content: {
-                kind: ZTEvent.RoomMessageMissing,
+                kind: ZTEvent.ChannelMessageMissing,
                 eventId: parentId,
-            } satisfies RoomMessageMissingEvent,
+            } satisfies ChannelMessageMissingEvent,
         } satisfies TimelineEvent
     }
 
@@ -92,7 +92,7 @@ export const MessageThread = (props: {
 
     const involvedUsers = useMemo(() => {
         const userIds = messagesWithParent
-            .filter((m) => m.content?.kind === ZTEvent.RoomMessage)
+            .filter((m) => m.content?.kind === ZTEvent.ChannelMessage)
             .map((m) => m.sender?.id)
             .filter((id) => id)
 

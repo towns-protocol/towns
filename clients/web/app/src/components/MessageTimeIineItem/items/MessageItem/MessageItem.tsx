@@ -36,8 +36,8 @@ import {
     MessageRenderEvent,
     RedactedMessageRenderEvent,
     RenderEventType,
-    isRedactedRoomMessage,
-    isRoomMessage,
+    isChannelMessage,
+    isRedactedChannelMessage,
 } from '@components/MessageTimeline/util/getEventsByDate'
 import { TimelineEncryptedContent } from '@components/EncryptedContent/EncryptedMessageBody'
 import { ReplyToMessageContext } from '@components/ReplyToMessageContext/ReplyToMessageContext'
@@ -101,7 +101,7 @@ export const MessageItem = (props: Props) => {
 
     const attachedLinks = useMemo(() => {
         return (
-            (event.content.kind === ZTEvent.RoomMessage &&
+            (event.content.kind === ZTEvent.ChannelMessage &&
                 event.content.attachments?.filter(isUrlAttachement).map((a) => a.url)) ||
             []
         )
@@ -116,7 +116,7 @@ export const MessageItem = (props: Props) => {
 
     const isMessage = itemData.type === RenderEventType.Message
     const isEncryptedMessage = itemData.type === RenderEventType.EncryptedMessage
-    const isRedacted = isRedactedRoomMessage(event)
+    const isRedacted = isRedactedChannelMessage(event)
 
     const displayContext = isMessage || isEncryptedMessage ? itemData.displayContext : 'single'
     const isEditing = event.eventId === timelineActions.editingMessageId
@@ -160,7 +160,7 @@ export const MessageItem = (props: Props) => {
 
             {isEncryptedMessage ? (
                 <TimelineEncryptedContent event={event} content={itemData.event.content} />
-            ) : event.content.kind === ZTEvent.RoomMessage ? (
+            ) : event.content.kind === ZTEvent.ChannelMessage ? (
                 isEditing ? (
                     <>
                         <TimelineMessageEditor
@@ -263,7 +263,7 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
     const { isTouch } = useDevice()
     const user = useUserLookup(sender.id)
 
-    const body = event.content?.kind === ZTEvent.RoomMessage ? event.content.body : undefined
+    const body = event.content?.kind === ZTEvent.ChannelMessage ? event.content.body : undefined
 
     const {
         channelId,
@@ -280,7 +280,7 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
         channelTips,
     } = timelineContext
 
-    const isOwn = event.content?.kind == ZTEvent.RoomMessage && sender.id === userId
+    const isOwn = event.content?.kind == ZTEvent.ChannelMessage && sender.id === userId
 
     const isRelativeDate = type === MessageTimelineType.Thread
 
@@ -299,7 +299,7 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
         [event.isEncrypting, event.isLocalPending, event.isSendFailed, event.localEventId],
     )
 
-    const attachments = isRoomMessage(event) ? event.content.attachments : undefined
+    const attachments = isChannelMessage(event) ? event.content.attachments : undefined
     const [, setSearchParams] = useSearchParams()
     const onAttachmentClick = useCallback(
         (attachmentId: string) => {

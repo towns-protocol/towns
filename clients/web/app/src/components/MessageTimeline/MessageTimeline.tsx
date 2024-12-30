@@ -24,9 +24,9 @@ import {
     RedactedMessageRenderEvent,
     RenderEventType,
     getEventsByDate,
+    isChannelMessage,
     isMissingMessage,
-    isRedactedRoomMessage,
-    isRoomMessage,
+    isRedactedChannelMessage,
 } from './util/getEventsByDate'
 import { usePersistedUnreadMarkers } from './hooks/usePersistedUnreadMarkers'
 import { useScrollback } from './hooks/useScrollback'
@@ -75,11 +75,11 @@ export const MessageTimeline = (props: Props) => {
         // the decrypted content when ready. However, the bar will appear if
         // it takes to long or if newer messages are getting decrypted
         const lastDecryptedIndex = filtered.findLastIndex(
-            (e) => e.content?.kind === ZTEvent.RoomMessage,
+            (e) => e.content?.kind === ZTEvent.ChannelMessage,
         )
         filtered = filtered.filter(
             (e, index) =>
-                e.content?.kind !== ZTEvent.RoomMessageEncrypted ||
+                e.content?.kind !== ZTEvent.ChannelMessageEncrypted ||
                 index < lastDecryptedIndex ||
                 e.createdAtEpochMs < Date.now() - SECOND_MS * 10,
         )
@@ -156,7 +156,7 @@ export const MessageTimeline = (props: Props) => {
             const height = r.item.events.reduce((height, item) => {
                 const itemHeight =
                     !item.isRedacted &&
-                    item.content.kind === ZTEvent.RoomMessage &&
+                    item.content.kind === ZTEvent.ChannelMessage &&
                     item.content.content.msgType === MessageType.Image
                         ? 400
                         : 60
@@ -167,7 +167,7 @@ export const MessageTimeline = (props: Props) => {
         if (r.type === 'message') {
             const height = [r.item.event].reduce((height, item) => {
                 const itemHeight =
-                    isRoomMessage(item) && item.content.content.msgType === MessageType.Image
+                    isChannelMessage(item) && item.content.content.msgType === MessageType.Image
                         ? 400
                         : 60
                 return height + itemHeight
@@ -222,7 +222,7 @@ export const MessageTimeline = (props: Props) => {
                 if (e.type === RenderEventType.UserMessages) {
                     // if all consecutive messages are encrypted, we can group them
                     const displayEncrypted = e.events.every(
-                        (e) => e.content.kind === ZTEvent.RoomMessageEncrypted,
+                        (e) => e.content.kind === ZTEvent.ChannelMessageEncrypted,
                     )
                     // only picks 1 message (last) of an encrypted group
                     const filtered = displayEncrypted
@@ -239,7 +239,7 @@ export const MessageTimeline = (props: Props) => {
                                 | RedactedMessageRenderEvent
                                 | MissingMessageRenderEvent
 
-                            if (isRoomMessage(event)) {
+                            if (isChannelMessage(event)) {
                                 item = {
                                     type: RenderEventType.Message,
                                     key: stableKey,
@@ -247,7 +247,7 @@ export const MessageTimeline = (props: Props) => {
                                     displayContext: getMessageDisplayContext(index, events.length),
                                     attachments: event.content.attachments,
                                 }
-                            } else if (isRedactedRoomMessage(event)) {
+                            } else if (isRedactedChannelMessage(event)) {
                                 if (repliesMap?.[event.eventId]) {
                                     item = {
                                         type: RenderEventType.RedactedMessage,
@@ -340,8 +340,8 @@ export const MessageTimeline = (props: Props) => {
                             userId !== prev.lastUserId ||
                             date !== prev.lastDate ||
                             // count if message is an image
-                            (!isRedactedRoomMessage(curr.item.event) &&
-                                curr.item.event.content.kind === ZTEvent.RoomMessage &&
+                            (!isRedactedChannelMessage(curr.item.event) &&
+                                curr.item.event.content.kind === ZTEvent.ChannelMessage &&
                                 curr.item.event.content.content.msgType === MessageType.Image)
                         ) {
                             prev.chunkCount++

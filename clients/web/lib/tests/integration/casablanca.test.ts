@@ -11,7 +11,7 @@ import {
     makeSignerContext,
 } from '@river-build/sdk'
 import { ethers } from 'ethers'
-import { RoomMessageEvent, ZTEvent } from '../../src/types/timeline-types'
+import { ChannelMessageEvent, ZTEvent } from '../../src/types/timeline-types'
 import {
     createTestChannelWithSpaceRoles,
     createTestSpaceGatedByTownNft,
@@ -72,7 +72,10 @@ describe('casablanca', () => {
         log("Bob sent a message, checking that it's received")
         log(bob.casablancaClient?.stream(channelId)?.view)
         await waitFor(async () => {
-            const event = await bob.getLatestEvent<RoomMessageEvent>(channelId, ZTEvent.RoomMessage)
+            const event = await bob.getLatestEvent<ChannelMessageEvent>(
+                channelId,
+                ZTEvent.ChannelMessage,
+            )
             log('latest event=', event)
             expect(event?.content?.body).toEqual('Hello, world from Bob!')
         })
@@ -115,9 +118,9 @@ describe('casablanca', () => {
         log('Bob sent a message, waiting for Alice to receive it')
 
         await waitFor(async () => {
-            const event = await alice.getLatestEvent<RoomMessageEvent>(
+            const event = await alice.getLatestEvent<ChannelMessageEvent>(
                 channelId,
-                ZTEvent.RoomMessage,
+                ZTEvent.ChannelMessage,
             )
             expect(event?.content?.body).toEqual('Hello, world from Bob!')
         })
@@ -161,9 +164,9 @@ describe('casablanca', () => {
         log('Bob sent a message, waiting for Alice to receive it')
 
         await waitFor(async () => {
-            const event = await alice.getLatestEvent<RoomMessageEvent>(
+            const event = await alice.getLatestEvent<ChannelMessageEvent>(
                 channelId,
-                ZTEvent.RoomMessage,
+                ZTEvent.ChannelMessage,
             )
             expect(event?.content?.body).toEqual(message)
         })

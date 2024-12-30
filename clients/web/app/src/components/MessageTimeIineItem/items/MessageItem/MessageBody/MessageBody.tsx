@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react'
-import { Channel, EventStatus, RoomMessageEvent, TimelineEvent } from 'use-towns-client'
+import { Channel, ChannelMessageEvent, EventStatus, TimelineEvent } from 'use-towns-client'
 import { RichTextPreview as PlateRichTextPreview } from '@components/RichTextPlate/RichTextPreview'
 import { getMessageBody } from 'utils/ztevent_util'
 import { useDevice } from 'hooks/useDevice'
@@ -9,7 +9,7 @@ import { MessageStatusAnnotation } from '../MessageStatusAnnotation'
 
 type Props = {
     event: TimelineEvent
-    eventContent: RoomMessageEvent
+    eventContent: ChannelMessageEvent
     attachedLinks: string[]
     channels: Channel[]
     onMentionClick?: (mentionName: string) => void

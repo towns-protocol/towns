@@ -9,7 +9,7 @@ import { PlaygroundEditor } from '@components/Playground/pages/PageEditor/Playgr
 import { code, codeBlock } from '@components/RichTextPlate/RichTextEditor.css'
 import { RichTextPreviewInternal } from '@components/RichTextPlate/RichTextPreview'
 import { Box, Button, Paragraph, Stack, Text, ZLayerProvider } from '@ui'
-import { channels, roomMembers } from './data'
+import { channels, streamMembers } from './data'
 
 type InputEvent = {
     type: string
@@ -21,7 +21,7 @@ type InputEvent = {
 }
 
 const lookupUser = (userId: string) =>
-    roomMembers.find((user) => user.userId === userId) as LookupUser
+    streamMembers.find((user) => user.userId === userId) as LookupUser
 
 const getAttachmentDetails = (attachments: FileUpload[]) => {
     return attachments.map((attachment) => {
@@ -113,7 +113,7 @@ export const PageEditor = () => {
                             >
                                 <RichTextPreviewInternal
                                     channels={channels}
-                                    mentions={roomMembers}
+                                    mentions={streamMembers}
                                     content={markdown}
                                     lookupUser={lookupUser}
                                 />

@@ -111,7 +111,7 @@ export const roleDataWithMemberAssignedToChannel = [
 const address1 = getWalletAddress()
 const address2 = getWalletAddress()
 
-export const mockMembers: townsClient.RoomMember[] = [
+export const mockMembers: townsClient.TownsStreamMember[] = [
     {
         userId: address1,
         username: 'User 1',
@@ -135,4 +135,4 @@ export const mockMemberIds = mockMembers.map((m) => m.userId)
 export const mockUsersMap = mockMembers.reduce((acc, curr) => {
     acc[curr.userId] = curr
     return acc
-}, {} as { [key: string]: townsClient.RoomMember })
+}, {} as { [key: string]: townsClient.TownsStreamMember })

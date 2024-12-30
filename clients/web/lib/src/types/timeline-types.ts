@@ -51,18 +51,16 @@ export enum ZTEvent {
     MiniblockHeader = 'm.miniblockheader',
     Reaction = 'm.reaction',
     Fulfillment = 'm.fulfillment',
+    Inception = 'm.inception',
     KeySolicitation = 'm.key_solicitation',
     Pin = 'm.pin',
     RedactedEvent = 'm.redacted_event',
     RedactionActionEvent = 'm.redaction_action',
-    RoomCreate = 'm.room.create',
-    RoomJoinRules = 'm.room.join_rules',
-    RoomMember = 'm.room.member',
-    RoomMessage = 'm.room.message',
-    RoomMessageEncrypted = 'm.room.encrypted',
-    RoomMessageEncryptedWithRef = 'm.room.encrypted_with_ref',
-    RoomMessageMissing = 'm.room.missing',
-    RoomProperties = 'm.room.properties',
+    ChannelMessage = 'm.channel.message',
+    ChannelMessageEncrypted = 'm.channel.encrypted',
+    ChannelMessageEncryptedWithRef = 'm.channel.encrypted_with_ref',
+    ChannelMessageMissing = 'm.channel.missing',
+    ChannelProperties = 'm.channel.properties',
     SpaceChild = 'm.space.child',
     SpaceUpdateAutojoin = 'm.space.update_autojoin',
     SpaceUpdateHideUserJoinLeaves = 'm.space.update_channel_hide_user_join_leaves',
@@ -71,6 +69,7 @@ export enum ZTEvent {
     SpaceDisplayName = 'm.space.display_name',
     SpaceEnsAddress = 'm.space.ens_name',
     SpaceNft = 'm.space.nft',
+    StreamMembership = 'm.stream.membership',
     TipEvent = 'm.tip_event',
     Unpin = 'm.unpin',
     UserBlockchainTransaction = 'm.user_blockchain_transaction',
@@ -79,19 +78,20 @@ export enum ZTEvent {
 
 /// a timeline event should have one or none of the following fields set
 export type TimelineEvent_OneOf =
+    | ChannelMessageEncryptedEvent
+    | ChannelMessageEncryptedRefEvent
+    | ChannelMessageMissingEvent
+    | ChannelMessageEvent
+    | ChannelPropertiesEvent
+    | FulfillmentEvent
+    | InceptionEvent
+    | KeySolicitationEvent
     | MiniblockHeaderEvent
     | ReactionEvent
-    | FulfillmentEvent
-    | KeySolicitationEvent
     | PinEvent
     | RedactedEvent
     | RedactionActionEvent
-    | RoomCreateEvent
-    | RoomMessageEncryptedEvent
-    | RoomMessageMissingEvent
-    | RoomMemberEvent
-    | RoomMessageEvent
-    | RoomPropertiesEvent
+    | StreamMembershipEvent
     | SpaceChildEvent
     | SpaceUpdateAutojoinEvent
     | SpaceUpdateHideUserJoinLeavesEvent
@@ -100,7 +100,6 @@ export type TimelineEvent_OneOf =
     | SpaceDisplayNameEvent
     | SpaceEnsAddressEvent
     | SpaceNftEvent
-    | RoomMessageEncryptedRefEvent
     | TipEvent
     | UnpinEvent
     | UserBlockchainTransactionEvent
@@ -151,31 +150,31 @@ export interface ReactionEvent {
     reaction: string
 }
 
-export interface RoomCreateEvent {
-    kind: ZTEvent.RoomCreate
+export interface InceptionEvent {
+    kind: ZTEvent.Inception
     creator: string
     predecessor?: { event_id: string; room_id: string }
     type?: PayloadCaseType
     spaceId?: string // valid on casablanca channel streams
 }
 
-export interface RoomPropertiesEvent {
-    kind: ZTEvent.RoomProperties
+export interface ChannelPropertiesEvent {
+    kind: ZTEvent.ChannelProperties
     properties: ChannelProperties
 }
 
-export interface RoomMessageEncryptedEvent {
-    kind: ZTEvent.RoomMessageEncrypted
+export interface ChannelMessageEncryptedEvent {
+    kind: ZTEvent.ChannelMessageEncrypted
     error?: DecryptionSessionError
 }
 
-export interface RoomMessageMissingEvent {
-    kind: ZTEvent.RoomMessageMissing
+export interface ChannelMessageMissingEvent {
+    kind: ZTEvent.ChannelMessageMissing
     eventId: string
 }
 
-export interface RoomMemberEvent {
-    kind: ZTEvent.RoomMember
+export interface StreamMembershipEvent {
+    kind: ZTEvent.StreamMembership
     userId: string
     initiatorId: string
     membership: Membership
@@ -220,8 +219,8 @@ export interface UnpinEvent {
     unpinnedEventId: string
 }
 
-export interface RoomMessageEncryptedRefEvent {
-    kind: ZTEvent.RoomMessageEncryptedWithRef
+export interface ChannelMessageEncryptedRefEvent {
+    kind: ZTEvent.ChannelMessageEncryptedWithRef
     refEventId: string
 }
 
@@ -229,7 +228,7 @@ export interface RoomMessageEncryptedRefEvent {
 // and we can't guarantee that it will be there (we have issues in prod as i write this)
 export type OTWMention = Omit<Mention, 'userId'> & { userId?: string }
 
-export interface RoomMessageEventContent_Image {
+export interface ChannelMessageEventContent_Image {
     msgType: MessageType.Image
     info?:
         | ChannelMessage_Post_Content_Image_Info
@@ -239,22 +238,22 @@ export interface RoomMessageEventContent_Image {
         | PlainMessage<ChannelMessage_Post_Content_Image_Info>
 }
 
-export interface RoomMessageEventContent_GM {
+export interface ChannelMessageEventContent_GM {
     msgType: MessageType.GM
     data?: Uint8Array
 }
 
-export interface RoomMessageEventContent_Text {
+export interface ChannelMessageEventContent_Text {
     msgType: MessageType.Text
 }
 
-export type RoomMessageEventContentOneOf =
-    | RoomMessageEventContent_Image
-    | RoomMessageEventContent_GM
-    | RoomMessageEventContent_Text
+export type ChannelMessageEventContentOneOf =
+    | ChannelMessageEventContent_Image
+    | ChannelMessageEventContent_GM
+    | ChannelMessageEventContent_Text
 
-export interface RoomMessageEvent {
-    kind: ZTEvent.RoomMessage
+export interface ChannelMessageEvent {
+    kind: ZTEvent.ChannelMessage
     threadId?: string
     threadPreview?: string
     replyId?: string
@@ -262,7 +261,7 @@ export interface RoomMessageEvent {
     body: string
     mentions: OTWMention[]
     editsEventId?: string
-    content: RoomMessageEventContentOneOf
+    content: ChannelMessageEventContentOneOf
     attachments?: Attachment[]
 }
 
@@ -344,7 +343,7 @@ export interface ThreadStats {
     latestTs: number
     parentId: string
     parentEvent?: TimelineEvent
-    parentMessageContent?: RoomMessageEvent
+    parentMessageContent?: ChannelMessageEvent
     isParticipating: boolean
 }
 
@@ -416,7 +415,7 @@ export type EmbeddedMessageAttachment = {
     type: 'embedded_message'
     url: string
     post?: ChannelMessage_Post | PlainMessage<ChannelMessage_Post>
-    roomMessageEvent?: RoomMessageEvent
+    channelMessageEvent?: ChannelMessageEvent
     info: PlainMessage<ChannelMessage_Post_Content_EmbeddedMessage_Info>
     staticInfo?: PlainMessage<ChannelMessage_Post_Content_EmbeddedMessage_StaticInfo>
     id: string
@@ -459,16 +458,16 @@ export function getFallbackContent(
             ).toString()}`
         case ZTEvent.Reaction:
             return `${senderDisplayName} reacted with ${content.reaction} to ${content.targetEventId}`
-        case ZTEvent.RoomCreate:
+        case ZTEvent.Inception:
             return content.type ? `type: ${content.type}` : ''
-        case ZTEvent.RoomMessageEncrypted:
+        case ZTEvent.ChannelMessageEncrypted:
             return `Decrypting...`
-        case ZTEvent.RoomMember: {
+        case ZTEvent.StreamMembership: {
             return `[${content.membership}] userId: ${content.userId} initiatorId: ${content.initiatorId}`
         }
-        case ZTEvent.RoomMessage:
+        case ZTEvent.ChannelMessage:
             return `${senderDisplayName}: ${content.body}`
-        case ZTEvent.RoomProperties:
+        case ZTEvent.ChannelProperties:
             return `properties: ${content.properties.name ?? ''} ${content.properties.topic ?? ''}`
         case ZTEvent.SpaceUsername:
             return `username: ${content.username}`
@@ -502,9 +501,9 @@ export function getFallbackContent(
                 return `KeySolicitation deviceKey: ${content.deviceKey}, newDevice: true`
             }
             return `KeySolicitation deviceKey: ${content.deviceKey} sessionIds: ${content.sessionIds.length}`
-        case ZTEvent.RoomMessageMissing:
+        case ZTEvent.ChannelMessageMissing:
             return `eventId: ${content.eventId}`
-        case ZTEvent.RoomMessageEncryptedWithRef:
+        case ZTEvent.ChannelMessageEncryptedWithRef:
             return `refEventId: ${content.refEventId}`
         case ZTEvent.Pin:
             return `pinnedEventId: ${content.pinnedEventId} by: ${content.userId}`
@@ -597,18 +596,18 @@ export function transformAttachments(attachments?: Attachment[]): ChannelMessage
                         },
                     })
                 case 'embedded_message': {
-                    const { roomMessageEvent, ...content } = attachment
-                    if (!roomMessageEvent) {
+                    const { channelMessageEvent, ...content } = attachment
+                    if (!channelMessageEvent) {
                         return
                     }
                     const post = new ChannelMessage_Post({
-                        threadId: roomMessageEvent.threadId,
-                        threadPreview: roomMessageEvent.threadPreview,
+                        threadId: channelMessageEvent.threadId,
+                        threadPreview: channelMessageEvent.threadPreview,
                         content: {
                             case: 'text' as const,
                             value: {
-                                ...roomMessageEvent,
-                                attachments: transformAttachments(roomMessageEvent.attachments),
+                                ...channelMessageEvent,
+                                attachments: transformAttachments(channelMessageEvent.attachments),
                             },
                         },
                     })

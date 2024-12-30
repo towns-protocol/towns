@@ -8,8 +8,8 @@ import {
     DMChannelContextUserLookupProvider,
     Membership,
     Permission,
-    RoomMember,
     SpaceData,
+    TownsStreamMember,
     useConnectivity,
     useDMLatestMessage,
     useHasPermission,
@@ -599,7 +599,7 @@ export const TouchChannelResultRow = (props: {
     )
 }
 
-const UserList = (props: { members: RoomMember[] }) => {
+const UserList = (props: { members: TownsStreamMember[] }) => {
     const { members } = props
 
     return (
@@ -611,7 +611,7 @@ const UserList = (props: { members: RoomMember[] }) => {
     )
 }
 
-export const TouchUserResultRow = (props: { member: RoomMember }) => {
+export const TouchUserResultRow = (props: { member: TownsStreamMember }) => {
     const { member } = props
     const { data: abstractAccountAddress } = useAbstractAccountAddress({
         rootKeyAddress: member.userId as Address | undefined,

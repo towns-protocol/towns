@@ -45,7 +45,7 @@ export const PinnedMessage = (props: { channelId: string; pin: TimelinePin }) =>
 const PinContent = (props: { pin: TimelinePin }) => {
     const event = props.pin.timelineEvent
 
-    if (event.content?.kind === ZTEvent.RoomMessage) {
+    if (event.content?.kind === ZTEvent.ChannelMessage) {
         const info = toMessageInfo(event)
         return info ? <MessageContentSummary info={info} /> : null
     }

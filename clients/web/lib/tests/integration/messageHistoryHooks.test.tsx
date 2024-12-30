@@ -63,7 +63,7 @@ describe('messageHistoryHooks', () => {
             const TestComponent = ({ signer }: { signer: TSigner }) => {
                 const { scrollback } = useTownsClient()
                 const { timeline } = useChannelTimeline()
-                const messages = timeline.filter((x) => x.content?.kind === ZTEvent.RoomMessage)
+                const messages = timeline.filter((x) => x.content?.kind === ZTEvent.ChannelMessage)
                 const onClickScrollback = useCallback(() => {
                     void (async () => {
                         // eslint-disable-next-line no-constant-condition

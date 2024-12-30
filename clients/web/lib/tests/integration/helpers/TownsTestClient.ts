@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {
     RedactionActionEvent,
-    RoomMessageEvent,
+    ChannelMessageEvent,
     TimelineEvent,
     TimelineEvent_OneOf,
     ZTEvent,
@@ -277,12 +277,12 @@ export class TownsTestClient extends TownsClient {
         return events.map((e) => e as Omit<TimelineEvent, 'content'> & { content: T })
     }
 
-    public getEvents_TypedRoomMessage(roomId: string) {
-        return this.getEvents_Typed<RoomMessageEvent>(roomId, ZTEvent.RoomMessage)
+    public getEvents_TypedChannelMessage(roomId: string) {
+        return this.getEvents_Typed<ChannelMessageEvent>(roomId, ZTEvent.ChannelMessage)
     }
 
     public getMessages(roomId: string): string[] {
-        const messages = this.getEvents_Typed<RoomMessageEvent>(roomId, ZTEvent.RoomMessage)
+        const messages = this.getEvents_Typed<ChannelMessageEvent>(roomId, ZTEvent.ChannelMessage)
         const redactions = new Set(
             this.getEvents_Typed<RedactionActionEvent>(roomId, ZTEvent.RedactionActionEvent)
                 .map((e) => e.content.refEventId)
@@ -293,7 +293,7 @@ export class TownsTestClient extends TownsClient {
 
     public async getLatestEvent<T extends TimelineEvent_OneOf>(
         roomId: string,
-        eventType: T['kind'] | undefined = ZTEvent.RoomMessage,
+        eventType: T['kind'] | undefined = ZTEvent.ChannelMessage,
     ): Promise<
         | (Omit<TimelineEvent, 'content'> & {
               content: T

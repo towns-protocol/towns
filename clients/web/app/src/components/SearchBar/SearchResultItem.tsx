@@ -4,7 +4,7 @@ import { Channel, DMChannelIdentifier, useMyProfile } from 'use-towns-client'
 import { ThreadStatsMap } from 'use-towns-client/dist/store/use-timeline-store'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { Box, BoxProps, Icon, Paragraph } from '@ui'
-import { ZRoomMessageEvent } from '@components/MessageTimeline/util/getEventsByDate'
+import { ZChannelMessageEvent } from '@components/MessageTimeline/util/getEventsByDate'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { useDevice } from 'hooks/useDevice'
 import { TouchChannelResultRow, TouchUserResultRow } from 'routes/home/TouchHome'
@@ -187,7 +187,7 @@ const ItemContainer = (props: BoxProps) => (
 )
 
 const MessageResultItem = (props: {
-    event: ZRoomMessageEvent
+    event: ZChannelMessageEvent
     highlightedTerms?: string[]
     channelId: string
     misc: { channels: Channel[]; threadsStats: ThreadStatsMap }

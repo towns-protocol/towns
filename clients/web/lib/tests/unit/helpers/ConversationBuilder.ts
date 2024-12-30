@@ -2,8 +2,8 @@ import {
     TipEvent,
     OTWMention,
     RedactionActionEvent,
-    RoomMessageEvent,
-    RoomMessageEventContent_Text,
+    ChannelMessageEvent,
+    ChannelMessageEventContent_Text,
     TimelineEvent,
     TimelineEvent_OneOf,
     ZTEvent,
@@ -184,16 +184,16 @@ function makeMessage(params: {
     editsEventId?: string
     threadId?: string
     mentions?: OTWMention[]
-}): RoomMessageEvent {
+}): ChannelMessageEvent {
     return {
-        kind: ZTEvent.RoomMessage,
+        kind: ZTEvent.ChannelMessage,
         body: params.body,
         threadId: params.threadId,
         threadPreview: undefined,
         mentions: [],
         editsEventId: params.editsEventId,
-        content: { msgType: MessageType.Text } satisfies RoomMessageEventContent_Text,
-    } satisfies RoomMessageEvent
+        content: { msgType: MessageType.Text } satisfies ChannelMessageEventContent_Text,
+    } satisfies ChannelMessageEvent
 }
 
 function makeEdit(params: {
@@ -201,7 +201,7 @@ function makeEdit(params: {
     edits: string
     threadId?: string
     mentions?: OTWMention[]
-}): RoomMessageEvent {
+}): ChannelMessageEvent {
     return makeMessage({
         body: params.body,
         editsEventId: params.edits,

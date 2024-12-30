@@ -17,7 +17,7 @@ export const useInlineReplyAttchmentPreview = (params?: { onNewInlineReply?: () 
     const parentEvent = useTimelineStore((state) => {
         if (replyToEventId) {
             const event = state.timelines[channelId]?.find((e) => e.eventId === replyToEventId)
-            if (event?.content?.kind === ZTEvent.RoomMessage) {
+            if (event?.content?.kind === ZTEvent.ChannelMessage) {
                 return {
                     event,
                     eventContent: event.content,

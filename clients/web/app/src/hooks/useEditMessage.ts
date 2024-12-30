@@ -1,5 +1,5 @@
 import { useCallback, useContext } from 'react'
-import { RoomMessageEvent, SendTextMessageOptions, useTownsClient } from 'use-towns-client'
+import { ChannelMessageEvent, SendTextMessageOptions, useTownsClient } from 'use-towns-client'
 import { ReplyToMessageContext } from '@components/ReplyToMessageContext/ReplyToMessageContext'
 import { trackPostedMessage } from '@components/Analytics/postedMessage'
 import { useGatherSpaceDetailsAnalytics } from '@components/Analytics/useGatherSpaceDetailsAnalytics'
@@ -16,7 +16,7 @@ export const useEditMessage = (args: { channelId?: string; spaceId?: string }) =
     const editChannelMessage = useCallback(
         (
             { value, eventId }: { value: string; eventId: string },
-            originalEventContent: RoomMessageEvent,
+            originalEventContent: ChannelMessageEvent,
             msgOptions: SendTextMessageOptions | undefined,
         ) => {
             if (value && eventId && channelId) {

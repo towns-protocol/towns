@@ -7,10 +7,11 @@ import { setTimeout } from 'timers/promises'
 import { FullyReadMarker } from '@river-build/proto'
 import { Permission } from '@river-build/web3'
 import {
-    RoomMessageEvent,
+    ChannelMessageEvent,
     ThreadResult,
     ThreadStats,
     TimelineEvent,
+    ZTEvent,
 } from '../../src/types/timeline-types'
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import {
@@ -350,7 +351,7 @@ describe('sendThreadedMessageHooks', () => {
         const unreadInProgress = screen.getByTestId('unreadInProgress')
 
         // - bob renders channel_1
-        await waitFor(() => expect(channelMessages).toHaveTextContent('m.room.create'))
+        await waitFor(() => expect(channelMessages).toHaveTextContent(`${ZTEvent.Inception}`))
 
         // - bob sends a message in each channel
         fireEvent.click(sendInitialMessagesButton)
@@ -373,7 +374,7 @@ describe('sendThreadedMessageHooks', () => {
             console.log(`jane hello channels sent`)
         })
         const channel_1_message_0 = jane
-            .getEvents_TypedRoomMessage(channel_1)!
+            .getEvents_TypedChannelMessage(channel_1)!
             .find((e) => e.content.body === 'hello channel_1')!
         await waitFor(() => expect(channel_1_message_0.eventId.startsWith('~')).toBe(false))
 
@@ -409,7 +410,7 @@ describe('sendThreadedMessageHooks', () => {
             TestConstants.DoubleDefaultWaitForTimeout,
         )
         const channel_2_message_1 = jane
-            .getEvents_TypedRoomMessage(channel_2)!
+            .getEvents_TypedChannelMessage(channel_2)!
             .find((e) => e.content.body === 'hello jane in channel_2')!
 
         await act(async () => {
@@ -488,10 +489,11 @@ describe('sendThreadedMessageHooks', () => {
 
         // get our threaded message...
         await waitFor(
-            async () => expect(await jane.getLatestEvent<RoomMessageEvent>(channel_2)).toBeTruthy(),
+            async () =>
+                expect(await jane.getLatestEvent<ChannelMessageEvent>(channel_2)).toBeTruthy(),
             TestConstants.DoubleDefaultWaitForTimeout,
         )
-        let event = await jane.getLatestEvent<RoomMessageEvent>(channel_2)
+        let event = await jane.getLatestEvent<ChannelMessageEvent>(channel_2)
         expect(event?.threadParentId).toBe(channel_2_message_1.eventId)
         expect(event?.content.body).toContain('whats up bob!')
 
@@ -514,7 +516,7 @@ describe('sendThreadedMessageHooks', () => {
 
         // refetch the event
         const ogEventId = event?.eventId
-        event = await jane.getLatestEvent<RoomMessageEvent>(channel_2)
+        event = await jane.getLatestEvent<ChannelMessageEvent>(channel_2)
         expect(event?.threadParentId).toBe(channel_2_message_1.eventId)
         expect(event?.content.body).toContain('Im a turtle!')
         expect(event?.content.editsEventId).toBe(ogEventId)

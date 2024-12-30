@@ -31,7 +31,7 @@ export function StreamView(props: Props): JSX.Element {
     const { timeline } = useTimeline(streamId)
     const canLoadMore =
         timeline.length === 0 ||
-        (timeline[0].content?.kind !== ZTEvent.RoomCreate && !hasReachedTerminus)
+        (timeline[0].content?.kind !== ZTEvent.Inception && !hasReachedTerminus)
     const messagesEndRef = useRef<HTMLDivElement>(null)
     const messagesStartRef = useRef<HTMLDivElement>(null)
     const isLoadingMore = useRef<boolean>(false)
@@ -216,7 +216,7 @@ export default JsonDisplay
 
 function formatEvent(event: TimelineEvent): string {
     switch (event.content?.kind) {
-        case ZTEvent.RoomMessage:
+        case ZTEvent.ChannelMessage:
             return `${event.sender.displayName}: ${event.content.body}`
         default:
             return event.fallbackContent

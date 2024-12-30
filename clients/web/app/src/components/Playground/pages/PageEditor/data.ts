@@ -1,7 +1,7 @@
-import { Channel, RoomMember } from 'use-towns-client'
+import { Channel, TownsStreamMember } from 'use-towns-client'
 
 /* 10 mock users */
-export const roomMembers: RoomMember[] = [
+export const streamMembers: TownsStreamMember[] = [
     {
         userId: '1',
         displayName: 'John Doe',

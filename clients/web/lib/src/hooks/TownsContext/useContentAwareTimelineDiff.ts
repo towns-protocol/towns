@@ -299,7 +299,7 @@ function diffAdded(
 
 function isCountedAsUnread(event: TimelineEvent, myUserId: string): boolean {
     switch (event.content?.kind) {
-        case ZTEvent.RoomMessage:
+        case ZTEvent.ChannelMessage:
             return event.sender.id !== myUserId
         default:
             return false

@@ -16,7 +16,7 @@ import { RichTextPreview } from '@components/RichTextPlate/RichTextPreview'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { Box, Icon, IconButton, Paragraph, Stack } from '@ui'
 import { MessageAttachments } from '@components/MessageAttachments/MessageAttachments'
-import { isRoomMessage } from '@components/MessageTimeline/util/getEventsByDate'
+import { isChannelMessage } from '@components/MessageTimeline/util/getEventsByDate'
 import { useIsChannelPinnable } from 'hooks/useIsChannelPinnable'
 import { useDevice } from 'hooks/useDevice'
 
@@ -100,7 +100,7 @@ const PinnedMessage = (props: { pin: TimelinePin; channelId: string; canPin?: bo
             timestamp={Number(timelineEvent.createdAtEpochMs)}
             onClick={onMessageClick}
         >
-            {isRoomMessage(timelineEvent) ? (
+            {isChannelMessage(timelineEvent) ? (
                 <>
                     <RichTextPreview
                         mentions={timelineEvent.content.mentions}

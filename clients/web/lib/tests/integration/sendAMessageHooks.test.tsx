@@ -60,7 +60,7 @@ describe('sendMessageHooks', () => {
         })
 
         // create a veiw for bob
-        const TestRoomMessages = ({ signer }: { signer: TSigner }) => {
+        const TestChannelMessages = ({ signer }: { signer: TSigner }) => {
             const { sendMessage, editMessage, redactEvent } = useTownsClient()
             const channelId = useChannelId()
             const { timeline } = useChannelTimeline()
@@ -71,7 +71,7 @@ describe('sendMessageHooks', () => {
                 () =>
                     timeline.filter(
                         (x) =>
-                            x.content?.kind === ZTEvent.RoomMessage ||
+                            x.content?.kind === ZTEvent.ChannelMessage ||
                             x.content?.kind === ZTEvent.RedactionActionEvent,
                     ),
                 [timeline],
@@ -92,7 +92,7 @@ describe('sendMessageHooks', () => {
                 })
                 void (async () => {
                     console.log(`onEdit`, messagesOrRedactions[1].eventId)
-                    if (messagesOrRedactions[1].content?.kind !== ZTEvent.RoomMessage) {
+                    if (messagesOrRedactions[1].content?.kind !== ZTEvent.ChannelMessage) {
                         throw new Error('not a message')
                     }
                     await editMessage(
@@ -116,7 +116,7 @@ describe('sendMessageHooks', () => {
             // format for easy reading
             const formatMessage = useCallback((e: TimelineEvent) => {
                 const prefix = `#:${e.eventNum} ✅:${e.confirmedEventNum ?? '??'}`
-                if (e.content?.kind === ZTEvent.RoomMessage) {
+                if (e.content?.kind === ZTEvent.ChannelMessage) {
                     return `${prefix} ${e.content.body} eventId: ${e.eventId} isLocalPending: ${
                         e.isLocalPending ? 'true' : 'false'
                     }`
@@ -159,7 +159,7 @@ describe('sendMessageHooks', () => {
             <TownsTestApp provider={bobProvider}>
                 <SpaceContextProvider spaceId={janesSpaceId}>
                     <ChannelContextProvider channelId={janesChannelId}>
-                        <TestRoomMessages signer={bobProvider.wallet} />
+                        <TestChannelMessages signer={bobProvider.wallet} />
                     </ChannelContextProvider>
                 </SpaceContextProvider>
             </TownsTestApp>,

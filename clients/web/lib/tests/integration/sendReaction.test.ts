@@ -17,7 +17,7 @@ import {
 } from './helpers/TestUtils'
 
 import { Permission } from '@river-build/web3'
-import { ReactionEvent, RoomMessageEvent, ZTEvent } from '../../src/types/timeline-types'
+import { ReactionEvent, ChannelMessageEvent, ZTEvent } from '../../src/types/timeline-types'
 
 describe('sendReaction', () => {
     // test:
@@ -51,7 +51,7 @@ describe('sendReaction', () => {
 
         // wait for alice to receive the message
         await waitFor(async () => {
-            const event = await alice.getLatestEvent<RoomMessageEvent>(channelId)
+            const event = await alice.getLatestEvent<ChannelMessageEvent>(channelId)
             expect(event?.content?.body).toEqual('Hello, world from Bob!')
         })
 

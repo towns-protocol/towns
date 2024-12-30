@@ -8,10 +8,10 @@ import { AvatarStack } from 'routes/AvatarStack'
 import { UserList } from '@components/UserList/UserList'
 import { useChannelType } from 'hooks/useChannelType'
 import { UserWithTooltip } from '@components/ChannelIntro/UserWithTooltip'
-import { AccumulatedRoomMemberRenderEvent } from '../../MessageTimeline/util/getEventsByDate'
+import { AccumulatedStreamMemberRenderEvent } from '../../MessageTimeline/util/getEventsByDate'
 
 type Props = {
-    event: AccumulatedRoomMemberRenderEvent
+    event: AccumulatedStreamMemberRenderEvent
     channelName?: string
     channelType?: ReturnType<typeof useChannelType>
     channelEncrypted?: boolean
@@ -26,7 +26,7 @@ const Verbs = {
 
 const MAX_AVATARS = 3
 
-export const AccumulatedRoomMemberEvent = (props: Props) => {
+export const AccumulatedStreamMemberEvent = (props: Props) => {
     const { lookupUser } = useUserLookupContext()
     const { event, channelName, channelType, userId, channelEncrypted: isChannelEncrypted } = props
     const senderId = event.events[0]?.content?.initiatorId

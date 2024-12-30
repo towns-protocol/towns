@@ -2,14 +2,14 @@ import { firstBy } from 'thenby'
 import {
     Attachment,
     ChannelData,
+    ChannelMessageEncryptedEvent,
+    ChannelMessageEvent,
+    ChannelMessageMissingEvent,
+    ChannelPropertiesEvent,
+    InceptionEvent,
     Membership,
     RedactedEvent,
-    RoomCreateEvent,
-    RoomMemberEvent,
-    RoomMessageEncryptedEvent,
-    RoomMessageEvent,
-    RoomMessageMissingEvent,
-    RoomPropertiesEvent,
+    StreamMembershipEvent,
     ThreadStats,
     TimelineEvent,
     ZTEvent,
@@ -23,52 +23,56 @@ export enum RenderEventType {
     EncryptedMessage = 'EncryptedMessage',
     RedactedMessage = 'RedactedMessage',
     MissingMessage = 'MissingMessage',
-    RoomMember = 'RoomMember',
-    AccumulatedRoomMembers = 'AccumulatedRoomMembers',
-    RoomCreate = 'RoomCreate',
+    StreamMember = 'StreamMember',
+    AccumulatedStreamMembers = 'AccumulatedStreamMembers',
+    Inception = 'Inception',
     ChannelHeader = 'ChannelHeader',
     NewDivider = 'NewDivider',
     ThreadUpdate = 'ThreadUpdate',
-    RoomProperties = 'RoomProperties',
+    ChannelProperties = 'ChannelProperties',
 }
 
 interface BaseEvent {
     type: RenderEventType
 }
 
-export type ZRoomMessageEvent = Omit<TimelineEvent, 'content'> & {
-    content: RoomMessageEvent
+export type ZChannelMessageEvent = Omit<TimelineEvent, 'content'> & {
+    content: ChannelMessageEvent
     isRedacted: false
 }
 
-export type ZRoomMessageEncryptedEvent = Omit<TimelineEvent, 'content'> & {
-    content: RoomMessageEncryptedEvent
+export type ZChannelMessageEncryptedEvent = Omit<TimelineEvent, 'content'> & {
+    content: ChannelMessageEncryptedEvent
     isRedacted: false
 }
 
-export type ZRoomMessageRedactedEvent = Omit<TimelineEvent, 'content'> & {
+export type ZChannelMessageRedactedEvent = Omit<TimelineEvent, 'content'> & {
     content: RedactedEvent
     isRedacted: true
 }
 
 export type ZRoomMissingMessageEvent = Omit<TimelineEvent, 'content'> & {
-    content: RoomMessageMissingEvent
+    content: ChannelMessageMissingEvent
     isRedacted: false
 }
 
-export type ZRoomMemberEvent = Omit<TimelineEvent, 'content'> & { content: RoomMemberEvent }
+export type ZStreamMembershipEvent = Omit<TimelineEvent, 'content'> & {
+    content: StreamMembershipEvent
+}
 
-export type ZRoomCreateEvent = Omit<TimelineEvent, 'content'> & { content: RoomCreateEvent }
+export type ZInceptionEvent = Omit<TimelineEvent, 'content'> & { content: InceptionEvent }
 
-export type ZRoomPropertiesEvent = Omit<TimelineEvent, 'content'> & { content: RoomPropertiesEvent }
+export type ZChannelPropertiesEvent = Omit<TimelineEvent, 'content'> & {
+    content: ChannelPropertiesEvent
+}
 
 export interface UserMessagesRenderEvent extends BaseEvent {
     type: RenderEventType.UserMessages
     key: string
     events: (
-        | ZRoomMessageEvent
-        | ZRoomMessageEncryptedEvent
-        | ZRoomMessageRedactedEvent
+        | ZChannelMessageEvent
+        | ZChannelMessageEncryptedEvent
+        | ZChannelMessageRedactedEvent
         | ZRoomMissingMessageEvent
     )[]
 }
@@ -76,7 +80,7 @@ export interface UserMessagesRenderEvent extends BaseEvent {
 export interface MessageRenderEvent extends BaseEvent {
     type: RenderEventType.Message
     key: string
-    event: ZRoomMessageEvent
+    event: ZChannelMessageEvent
     displayContext: 'single' | 'head' | 'body' | 'tail'
     isHighlight?: boolean
     attachments?: Attachment[]
@@ -85,14 +89,14 @@ export interface MessageRenderEvent extends BaseEvent {
 export interface EncryptedMessageRenderEvent extends BaseEvent {
     type: RenderEventType.EncryptedMessage
     key: string
-    event: ZRoomMessageEncryptedEvent
+    event: ZChannelMessageEncryptedEvent
     displayContext: 'single' | 'head' | 'body' | 'tail'
 }
 
 export interface RedactedMessageRenderEvent extends BaseEvent {
     type: RenderEventType.RedactedMessage
     key: string
-    event: ZRoomMessageRedactedEvent
+    event: ZChannelMessageRedactedEvent
     displayContext: 'single' | 'head' | 'body' | 'tail'
 }
 
@@ -103,35 +107,35 @@ export interface MissingMessageRenderEvent extends BaseEvent {
     displayContext: 'single' | 'head' | 'body' | 'tail'
 }
 
-export interface RoomMemberRenderEvent extends BaseEvent {
-    type: RenderEventType.RoomMember
+export interface StreamMemberRenderEvent extends BaseEvent {
+    type: RenderEventType.StreamMember
     key: string
-    event: ZRoomMemberEvent
+    event: ZStreamMembershipEvent
 }
 
-export interface AccumulatedRoomMemberRenderEvent extends BaseEvent {
-    type: RenderEventType.AccumulatedRoomMembers
+export interface AccumulatedStreamMemberRenderEvent extends BaseEvent {
+    type: RenderEventType.AccumulatedStreamMembers
     membershipType: Membership
     key: string
-    events: ZRoomMemberEvent[]
+    events: ZStreamMembershipEvent[]
 }
 
 export interface ChannelHeaderRenderEvent extends BaseEvent {
     type: RenderEventType.ChannelHeader
     key: string
-    event: ZRoomCreateEvent
+    event: ZInceptionEvent
 }
 
 export interface RoomCreateRenderEvent extends BaseEvent {
-    type: RenderEventType.RoomCreate
+    type: RenderEventType.Inception
     key: string
-    event: ZRoomCreateEvent
+    event: ZInceptionEvent
 }
 
 export interface RoomPropertiesRenderEvent extends BaseEvent {
-    type: RenderEventType.RoomProperties
+    type: RenderEventType.ChannelProperties
     key: string
-    event: ZRoomPropertiesEvent
+    event: ZChannelPropertiesEvent
 }
 
 export interface NewDividerRenderEvent extends BaseEvent {
@@ -142,37 +146,39 @@ export interface NewDividerRenderEvent extends BaseEvent {
 export interface ThreadUpdateRenderEvent extends BaseEvent {
     type: RenderEventType.ThreadUpdate
     key: string
-    events: ZRoomMessageEvent[]
+    events: ZChannelMessageEvent[]
 }
 
-const isRoomCreate = (event: TimelineEvent): event is ZRoomCreateEvent => {
-    return event.content?.kind === ZTEvent.RoomCreate
+const isInception = (event: TimelineEvent): event is ZInceptionEvent => {
+    return event.content?.kind === ZTEvent.Inception
 }
 
-const isRoomProperties = (event: TimelineEvent): event is ZRoomPropertiesEvent => {
-    return event.content?.kind === ZTEvent.RoomProperties
+const isChannelProperties = (event: TimelineEvent): event is ZChannelPropertiesEvent => {
+    return event.content?.kind === ZTEvent.ChannelProperties
 }
 
-export const isRoomMessage = (event: TimelineEvent): event is ZRoomMessageEvent => {
-    return event.content?.kind === ZTEvent.RoomMessage
+export const isChannelMessage = (event: TimelineEvent): event is ZChannelMessageEvent => {
+    return event.content?.kind === ZTEvent.ChannelMessage
 }
 
-export const isRedactedRoomMessage = (event: TimelineEvent): event is ZRoomMessageRedactedEvent => {
+export const isRedactedChannelMessage = (
+    event: TimelineEvent,
+): event is ZChannelMessageRedactedEvent => {
     return event.isRedacted
 }
 
-export const isEncryptedRoomMessage = (
+export const isEncryptedChannelMessage = (
     event: TimelineEvent,
-): event is ZRoomMessageEncryptedEvent => {
-    return event.content?.kind === ZTEvent.RoomMessageEncrypted
+): event is ZChannelMessageEncryptedEvent => {
+    return event.content?.kind === ZTEvent.ChannelMessageEncrypted
 }
 
 export const isMissingMessage = (event: TimelineEvent): event is ZRoomMissingMessageEvent => {
-    return event.content?.kind === ZTEvent.RoomMessageMissing
+    return event.content?.kind === ZTEvent.ChannelMessageMissing
 }
 
-const isRoomMember = (event: TimelineEvent): event is ZRoomMemberEvent => {
-    return event.content?.kind === ZTEvent.RoomMember
+const isStreamMembership = (event: TimelineEvent): event is ZStreamMembershipEvent => {
+    return event.content?.kind === ZTEvent.StreamMembership
 }
 
 export type DateGroup = {
@@ -189,7 +195,7 @@ export type DateGroup = {
 }
 
 export type RenderEvent =
-    | AccumulatedRoomMemberRenderEvent
+    | AccumulatedStreamMemberRenderEvent
     | ChannelHeaderRenderEvent
     | EncryptedMessageRenderEvent
     | MissingMessageRenderEvent
@@ -197,7 +203,7 @@ export type RenderEvent =
     | MessageRenderEvent
     | RedactedMessageRenderEvent
     | RoomCreateRenderEvent
-    | RoomMemberRenderEvent
+    | StreamMemberRenderEvent
     | ThreadUpdateRenderEvent
     | UserMessagesRenderEvent
     | RoomPropertiesRenderEvent
@@ -276,7 +282,11 @@ export const getEventsByDate = (
             /**
              * accumulate messages by the same user
              */
-            if (isRoomMessage(event) || isEncryptedRoomMessage(event) || isMissingMessage(event)) {
+            if (
+                isChannelMessage(event) ||
+                isEncryptedChannelMessage(event) ||
+                isMissingMessage(event)
+            ) {
                 if (!isThread && event.threadParentId) {
                     // skip messages from threads if not applicable
                     return result
@@ -325,22 +335,22 @@ export const getEventsByDate = (
                     })
                 }
             } else if (
-                isRoomMember(event) &&
+                isStreamMembership(event) &&
                 channelType !== 'dm' &&
                 !channelData.channel?.hideUserJoinLeaveEvents
             ) {
                 let accumulatedEvents = renderEvents.find(
                     (e) =>
-                        e.type === RenderEventType.AccumulatedRoomMembers &&
+                        e.type === RenderEventType.AccumulatedStreamMembers &&
                         e.membershipType === event.content.membership &&
                         // separate groups by who invited/added the user to
                         // channel for GDMs (e.g. x added y, y added x and z)
                         (channelType !== 'gdm' || e.events[0]?.sender.id === event.sender.id),
-                ) as AccumulatedRoomMemberRenderEvent | undefined
+                ) as AccumulatedStreamMemberRenderEvent | undefined
 
                 if (!accumulatedEvents) {
                     accumulatedEvents = {
-                        type: RenderEventType.AccumulatedRoomMembers,
+                        type: RenderEventType.AccumulatedStreamMembers,
                         membershipType: event.content.membership,
                         key: event.eventId,
                         events: [],
@@ -350,7 +360,7 @@ export const getEventsByDate = (
                 }
 
                 renderEvents.sort((a) =>
-                    a.type === RenderEventType.AccumulatedRoomMembers
+                    a.type === RenderEventType.AccumulatedStreamMembers
                         ? a.membershipType === Membership.Invite
                             ? -1
                             : 0
@@ -358,7 +368,7 @@ export const getEventsByDate = (
                 )
 
                 accumulatedEvents.events.push(event)
-            } else if (isRoomCreate(event)) {
+            } else if (isInception(event)) {
                 renderEvents.push({
                     type: RenderEventType.ChannelHeader,
                     key: `channel-header-${event.eventId}`,
@@ -367,14 +377,14 @@ export const getEventsByDate = (
 
                 if (channelType !== 'dm') {
                     renderEvents.push({
-                        type: RenderEventType.RoomCreate,
+                        type: RenderEventType.Inception,
                         key: `room-create-${event.eventId}`,
                         event,
                     })
                 }
-            } else if (isRoomProperties(event)) {
+            } else if (isChannelProperties(event)) {
                 renderEvents.push({
-                    type: RenderEventType.RoomProperties,
+                    type: RenderEventType.ChannelProperties,
                     key: `room-properties-${event.eventId}`,
                     event,
                 })
@@ -393,8 +403,8 @@ export const getEventsByDate = (
             g.events.some(
                 (e) =>
                     e.type === RenderEventType.ChannelHeader ||
-                    e.type === RenderEventType.AccumulatedRoomMembers ||
-                    e.type === RenderEventType.RoomProperties ||
+                    e.type === RenderEventType.AccumulatedStreamMembers ||
+                    e.type === RenderEventType.ChannelProperties ||
                     (e.type === RenderEventType.UserMessages &&
                         // keep redacted messages with replies
                         !e.events.every((e) => e.isRedacted && !replyMap?.[e.eventId])),
@@ -407,8 +417,8 @@ export const getEventsByDate = (
     result.dateGroups.forEach((g) =>
         g.events.sort(
             firstBy((e: RenderEvent) => e.type !== RenderEventType.ChannelHeader)
-                .thenBy((e: RenderEvent) => e.type !== RenderEventType.RoomCreate)
-                .thenBy((e: RenderEvent) => e.type !== RenderEventType.AccumulatedRoomMembers),
+                .thenBy((e: RenderEvent) => e.type !== RenderEventType.Inception)
+                .thenBy((e: RenderEvent) => e.type !== RenderEventType.AccumulatedStreamMembers),
         ),
     )
 

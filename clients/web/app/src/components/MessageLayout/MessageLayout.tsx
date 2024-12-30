@@ -26,7 +26,7 @@ import { AvatarAtoms } from 'components/Avatar/Avatar.css'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { useDevice } from 'hooks/useDevice'
 import { useFocused } from 'hooks/useFocused'
-import { ZRoomMessageRedactedEvent } from '@components/MessageTimeline/util/getEventsByDate'
+import { ZChannelMessageRedactedEvent } from '@components/MessageTimeline/util/getEventsByDate'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { useResolveNft } from 'hooks/useNfts'
@@ -396,7 +396,7 @@ const UserName = ({ user }: { user?: LookupUser }) => {
 }
 
 export const RedactedMessageLayout = (props: {
-    event: ZRoomMessageRedactedEvent
+    event: ZChannelMessageRedactedEvent
     replies?: ThreadStats
 }) => {
     const { event, replies } = props

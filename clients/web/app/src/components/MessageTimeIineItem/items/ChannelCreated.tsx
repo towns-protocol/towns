@@ -2,10 +2,10 @@ import React from 'react'
 import { useMyProfile, useUserLookupContext } from 'use-towns-client'
 import { Paragraph, Stack } from '@ui'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
-import { ZRoomCreateEvent } from '../../MessageTimeline/util/getEventsByDate'
+import { ZInceptionEvent } from '../../MessageTimeline/util/getEventsByDate'
 
 export const TimelineChannelCreateEvent = (props: {
-    event: ZRoomCreateEvent
+    event: ZInceptionEvent
     channelName?: string
 }) => {
     const { event, channelName } = props

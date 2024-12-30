@@ -33,7 +33,7 @@ import {
     TipParams,
     UpdateChannelInfo,
 } from '../types/towns-types'
-import { RoomMessageEvent } from '../types/timeline-types'
+import { ChannelMessageEvent } from '../types/timeline-types'
 import { TownsClient } from '../client/TownsClient'
 import { useLogout } from './use-logout'
 import { useResetFullyReadMarkers } from './TownsContext/useResetFullyReadMarkers'
@@ -194,7 +194,7 @@ interface TownsClientImpl {
     editMessage: (
         roomId: string,
         eventId: string,
-        originalEventContent: RoomMessageEvent,
+        originalEventContent: ChannelMessageEvent,
         message: string,
         options: SendTextMessageOptions | undefined,
     ) => Promise<void>

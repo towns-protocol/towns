@@ -1,7 +1,7 @@
 import { useTimeline } from './use-timeline'
 import {
     Attachment,
-    RoomMessageEncryptedEvent,
+    ChannelMessageEncryptedEvent,
     TimelineEvent,
     ZTEvent,
 } from '../types/timeline-types'
@@ -44,7 +44,7 @@ export interface MostRecentMessageInfoText {
 
 export interface MostRecentMessageEncrypted {
     kind: 'encrypted'
-    content: RoomMessageEncryptedEvent
+    content: ChannelMessageEncryptedEvent
 }
 
 export interface MostRecentMemberAdded {
@@ -145,14 +145,14 @@ export function useDMLatestMessage(roomId: string, ignoreThreads = true) {
 
 export function toMessageInfo(message: TimelineEvent): MostRecentMessageInfo_OneOf | undefined {
     const { content, sender } = message
-    if (content?.kind === ZTEvent.RoomMessageEncrypted) {
+    if (content?.kind === ZTEvent.ChannelMessageEncrypted) {
         return {
             kind: 'encrypted',
             content,
         }
     }
 
-    if (content?.kind === ZTEvent.RoomCreate) {
+    if (content?.kind === ZTEvent.Inception) {
         if (content.type === 'dmChannelPayload') {
             return {
                 kind: 'dm_created',
@@ -167,7 +167,7 @@ export function toMessageInfo(message: TimelineEvent): MostRecentMessageInfo_One
         }
     }
 
-    if (content?.kind === ZTEvent.RoomMember) {
+    if (content?.kind === ZTEvent.StreamMembership) {
         if (content.membership === Membership.Join) {
             return {
                 kind: 'member_added',
@@ -189,7 +189,7 @@ export function toMessageInfo(message: TimelineEvent): MostRecentMessageInfo_One
             }
         }
     }
-    if (content?.kind !== ZTEvent.RoomMessage) {
+    if (content?.kind !== ZTEvent.ChannelMessage) {
         return undefined
     }
 

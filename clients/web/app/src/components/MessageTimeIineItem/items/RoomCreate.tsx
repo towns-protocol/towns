@@ -5,10 +5,10 @@ import { Avatar } from '@components/Avatar/Avatar'
 import { Box, Paragraph, Stack } from '@ui'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { ProfileHoverCard } from '@components/ProfileHoverCard/ProfileHoverCard'
-import { ZRoomCreateEvent } from '../../MessageTimeline/util/getEventsByDate'
+import { ZInceptionEvent } from '../../MessageTimeline/util/getEventsByDate'
 
 type Props = {
-    event: ZRoomCreateEvent
+    event: ZInceptionEvent
     channelName?: string
     channelEncrypted?: boolean
     userId?: string

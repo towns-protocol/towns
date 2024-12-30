@@ -34,7 +34,7 @@ function toDummyThreadStats(
     cache: React.MutableRefObject<Record<string, ThreadStats>>,
     event?: TimelineEvent,
 ): ThreadStats | undefined {
-    const content = event?.content?.kind === ZTEvent.RoomMessage ? event.content : undefined
+    const content = event?.content?.kind === ZTEvent.ChannelMessage ? event.content : undefined
     if (!event || !content) {
         return undefined
     }

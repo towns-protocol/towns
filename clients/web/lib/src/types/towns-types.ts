@@ -84,7 +84,7 @@ export interface StreamView {
     // the current user's membership, tracted in the userStream
     membership: Membership
     // the members of the stream
-    members: RoomMember[]
+    members: TownsStreamMember[]
 }
 
 export interface Room {
@@ -104,7 +104,7 @@ export interface Rooms {
     [slug: string]: Room
 }
 
-export interface RoomMember {
+export interface TownsStreamMember {
     userId: string
     username: string
     usernameConfirmed: boolean
@@ -124,7 +124,7 @@ export interface Nft {
 }
 
 export interface UserIdToMember {
-    [userId: string]: RoomMember | undefined
+    [userId: string]: TownsStreamMember | undefined
 }
 
 export interface CreateSpaceInfo {

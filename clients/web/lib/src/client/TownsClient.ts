@@ -2,7 +2,7 @@ import { Empty, PlainMessage } from '@bufbuild/protobuf'
 import { BigNumber, ethers } from 'ethers'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
-import { RoomMessageEvent, transformAttachments } from '../types/timeline-types'
+import { ChannelMessageEvent, transformAttachments } from '../types/timeline-types'
 import {
     Client as CasablancaClient,
     RiverDbManager,
@@ -47,7 +47,7 @@ import {
     MediaStreamBlockInfo,
     Membership,
     MessageType,
-    RoomMember,
+    TownsStreamMember,
     SendMessageOptions,
     SendTextMessageOptions,
     StreamView,
@@ -1434,7 +1434,7 @@ export class TownsClient
     public async editMessage(
         roomId: string,
         eventId: string,
-        originalEventContent: RoomMessageEvent,
+        originalEventContent: ChannelMessageEvent,
         message: string,
         options: SendTextMessageOptions | undefined,
     ) {
@@ -1523,10 +1523,10 @@ export class TownsClient
     }
 
     /************************************************
-     * getRoomMember
+     * getStreamMember
      * - This function is primarily intended for testing purposes
      * **********************************************/
-    public getRoomMember(roomId: string, userId: string): RoomMember | undefined {
+    public getStreamMember(roomId: string, userId: string): TownsStreamMember | undefined {
         const roomData = this.getRoomData(roomId)
         return roomData?.members.find((x) => x.userId === userId)
     }

@@ -14,7 +14,7 @@ import { Box, BoxProps, Stack, Text } from '@ui'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { PATHS } from 'routes'
 import { atoms } from 'ui/styles/atoms.css'
-import { getIsRoomMessageContent, getMessageBody } from 'utils/ztevent_util'
+import { getIsChannelMessageContent, getMessageBody } from 'utils/ztevent_util'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { Avatar } from '@components/Avatar/Avatar'
 import { SearchContext } from '@components/SearchContext/SearchContext'
@@ -58,7 +58,7 @@ export const SearchMessagesResultItem = (
 ) => {
     const { result } = props
     const spaceSlug = useSpaceId() ?? ''
-    const content = getIsRoomMessageContent(result.event)
+    const content = getIsChannelMessageContent(result.event)
 
     const { lookupUser } = useUserLookupContext()
 

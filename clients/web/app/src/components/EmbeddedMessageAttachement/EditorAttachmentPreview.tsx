@@ -22,7 +22,7 @@ type MessageAttachmentPreviewProps = {
 
 export const MessageAttachmentPreview = (props: MessageAttachmentPreviewProps) => {
     const { attachment, onRemove } = props
-    const roomMessageEvent = attachment.roomMessageEvent
+    const channelMessageEvent = attachment.channelMessageEvent
 
     const { lookupUser } = useUserLookupContext()
 
@@ -30,7 +30,7 @@ export const MessageAttachmentPreview = (props: MessageAttachmentPreviewProps) =
         onRemove(attachment.id)
     }, [attachment.id, onRemove])
 
-    if (!roomMessageEvent) {
+    if (!channelMessageEvent) {
         return
     }
 
@@ -40,10 +40,10 @@ export const MessageAttachmentPreview = (props: MessageAttachmentPreviewProps) =
         <MessageAttachmentsContext.Provider value={{ isMessageAttachementContext: true }}>
             <EditorAttachmentPreview
                 type="forward"
-                attachments={roomMessageEvent.attachments}
+                attachments={channelMessageEvent.attachments}
                 displayName={displayName}
-                body={roomMessageEvent.body}
-                mentions={roomMessageEvent.mentions}
+                body={channelMessageEvent.body}
+                mentions={channelMessageEvent.mentions}
                 onRemoveClick={onRemoveClick}
             />
         </MessageAttachmentsContext.Provider>

@@ -1,13 +1,13 @@
 import {
+    ChannelMessageEvent,
     MessageType,
     ReactionEvent,
-    RoomMessageEvent,
     TimelineEvent,
     ZTEvent,
 } from 'use-towns-client'
 
-export const getIsRoomMessageContent = (e?: TimelineEvent): RoomMessageEvent | undefined => {
-    if (e?.content?.kind === ZTEvent.RoomMessage) {
+export const getIsChannelMessageContent = (e?: TimelineEvent): ChannelMessageEvent | undefined => {
+    if (e?.content?.kind === ZTEvent.ChannelMessage) {
         return e.content
     }
 }
@@ -18,7 +18,7 @@ export const getIsReactionContent = (e?: TimelineEvent): ReactionEvent | undefin
     }
 }
 
-export const getMessageBody = (eventId: string, message: RoomMessageEvent): string => {
+export const getMessageBody = (eventId: string, message: ChannelMessageEvent): string => {
     switch (message.content.msgType) {
         case MessageType.GM:
             return `${message.body} 

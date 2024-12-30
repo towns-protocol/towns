@@ -10,7 +10,7 @@ import {
 } from './helpers/TestUtils'
 
 import { waitFor } from '@testing-library/dom'
-import { RoomMessageEvent } from '../../src/types/timeline-types'
+import { ChannelMessageEvent } from '../../src/types/timeline-types'
 import { Permission } from '@river-build/web3'
 
 describe('editMessage', () => {
@@ -45,18 +45,18 @@ describe('editMessage', () => {
 
         // wait for alice to receive the message
         await waitFor(async () => {
-            const e = await alice.getLatestEvent<RoomMessageEvent>(channelId)
+            const e = await alice.getLatestEvent<ChannelMessageEvent>(channelId)
             expect(e?.content?.body).toEqual('Hello Balice!')
         })
 
         // this is hack to ensure csb cache loads bob's message in bob's client
         await waitFor(async () => {
-            const e = await bob.getLatestEvent<RoomMessageEvent>(channelId)
+            const e = await bob.getLatestEvent<ChannelMessageEvent>(channelId)
             expect(e?.content?.body).toEqual('Hello Balice!')
         })
 
         // bob get the last message
-        const event = await bob.getLatestEvent<RoomMessageEvent>(channelId)
+        const event = await bob.getLatestEvent<ChannelMessageEvent>(channelId)
         if (!event) {
             throw new Error('event is undefined')
         }
@@ -67,14 +67,14 @@ describe('editMessage', () => {
 
         // bob should see the edited msg.
         await waitFor(async () => {
-            const e = await bob.getLatestEvent<RoomMessageEvent>(channelId)
+            const e = await bob.getLatestEvent<ChannelMessageEvent>(channelId)
             expect(e?.content?.body).toEqual('Hello Alice!')
             expect(e?.content?.editsEventId).toEqual(event?.eventId)
         })
 
         // wait for alice to receive the edited message
         await waitFor(async () => {
-            const e = await alice.getLatestEvent<RoomMessageEvent>(channelId)
+            const e = await alice.getLatestEvent<ChannelMessageEvent>(channelId)
             expect(e?.content?.body).toEqual('Hello Alice!')
             expect(e?.content?.editsEventId).toEqual(event?.eventId)
         })

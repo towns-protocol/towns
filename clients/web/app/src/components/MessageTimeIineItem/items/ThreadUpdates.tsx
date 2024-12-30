@@ -12,10 +12,10 @@ import { useHover } from 'hooks/useHover'
 import { useOpenMessageThread } from 'hooks/useOpenThread'
 import { notUndefined } from 'ui/utils/utils'
 import { Avatar } from '@components/Avatar/Avatar'
-import { ZRoomMessageEvent } from '../../MessageTimeline/util/getEventsByDate'
+import { ZChannelMessageEvent } from '../../MessageTimeline/util/getEventsByDate'
 
 type Props = {
-    events: ZRoomMessageEvent[]
+    events: ZChannelMessageEvent[]
 }
 export const TimelineThreadUpdates = React.memo((props: Props) => {
     const { events } = props
@@ -30,7 +30,7 @@ export const TimelineThreadUpdates = React.memo((props: Props) => {
             }
         }
         return acc
-    }, {} as Record<string, ZRoomMessageEvent[]>)
+    }, {} as Record<string, ZChannelMessageEvent[]>)
 
     return (
         <Stack paddingY="md" gap="sm">
@@ -45,7 +45,7 @@ export const TimelineThreadUpdates = React.memo((props: Props) => {
     )
 })
 
-const ThreadRootPreview2 = (props: { threadParentId: string; events: ZRoomMessageEvent[] }) => {
+const ThreadRootPreview2 = (props: { threadParentId: string; events: ZChannelMessageEvent[] }) => {
     const { events, threadParentId } = props
     const ref = useRef<HTMLDivElement>(null)
     const { isHover, onMouseEnter } = useHover(ref)

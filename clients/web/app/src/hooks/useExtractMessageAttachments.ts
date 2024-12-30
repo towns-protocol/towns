@@ -15,7 +15,7 @@ export const useExtractMessageAttachments = (text: string) => {
                     const event = state.timelines[link.channelId]?.find(
                         (e) => e.eventId === link.messageId,
                     )
-                    if (event?.content?.kind !== ZTEvent.RoomMessage) {
+                    if (event?.content?.kind !== ZTEvent.ChannelMessage) {
                         return
                     }
 
@@ -27,7 +27,7 @@ export const useExtractMessageAttachments = (text: string) => {
                         type: 'embedded_message' as const,
                         id: `${spaceId}${channelId}${messageId}`,
                         url,
-                        roomMessageEvent: {
+                        channelMessageEvent: {
                             ...event.content,
                         },
                         info: {

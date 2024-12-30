@@ -52,7 +52,7 @@ describe('mentions', () => {
         await waitFor(async () => {
             const e = await bob.getLatestEvent(channelId)
             expect(
-                e?.content?.kind === ZTEvent.RoomMessage &&
+                e?.content?.kind === ZTEvent.ChannelMessage &&
                     e?.content?.body === 'Hi @bob' &&
                     e?.content?.mentions != undefined &&
                     e?.content?.mentions.length > 0 &&

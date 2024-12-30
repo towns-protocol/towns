@@ -46,7 +46,7 @@ describe('encryptionDecrypt', () => {
         })
 
         // create a veiw for bob
-        const TestRoomMessages = () => {
+        const TestChannelMessages = () => {
             const { sendMessage, logout } = useTownsClient()
 
             const [isRegistration, setIsRegistration] = useState(true)
@@ -103,7 +103,7 @@ describe('encryptionDecrypt', () => {
             <TownsTestApp provider={bobProvider}>
                 <SpaceContextProvider spaceId={janesSpaceId}>
                     <ChannelContextProvider channelId={janesChannelId}>
-                        <TestRoomMessages />
+                        <TestChannelMessages />
                     </ChannelContextProvider>
                 </SpaceContextProvider>
             </TownsTestApp>,

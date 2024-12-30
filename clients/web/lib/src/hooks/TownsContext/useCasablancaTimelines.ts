@@ -44,10 +44,10 @@ import {
     ReactionEvent,
     FulfillmentEvent,
     RedactionActionEvent,
-    RoomCreateEvent,
-    RoomMemberEvent,
-    RoomMessageEncryptedEvent,
-    RoomMessageEvent,
+    InceptionEvent,
+    StreamMembershipEvent,
+    ChannelMessageEncryptedEvent,
+    ChannelMessageEvent,
     SpaceChildEvent,
     SpaceDisplayNameEvent,
     SpaceUsernameEvent,
@@ -55,7 +55,7 @@ import {
     TimelineEvent_OneOf,
     ZTEvent,
     KeySolicitationEvent,
-    RoomPropertiesEvent,
+    ChannelPropertiesEvent,
     Attachment,
     ChunkedMediaAttachment,
     EmbeddedMediaAttachment,
@@ -439,11 +439,11 @@ function toTownsContent_MemberPayload(
         case 'membership':
             return {
                 content: {
-                    kind: ZTEvent.RoomMember,
+                    kind: ZTEvent.StreamMembership,
                     userId: userIdFromAddress(value.content.value.userAddress),
                     initiatorId: userIdFromAddress(value.content.value.initiatorAddress),
                     membership: toMembership(value.content.value.op),
-                } satisfies RoomMemberEvent,
+                } satisfies StreamMembershipEvent,
             }
         case 'keySolicitation':
             return {
@@ -584,11 +584,11 @@ function toTownsContent_UserPayload(
         case 'inception': {
             return {
                 content: {
-                    kind: ZTEvent.RoomCreate,
+                    kind: ZTEvent.Inception,
                     creator: message.creatorUserId,
                     predecessor: undefined, // todo is this needed?
                     type: message.event.payload.case,
-                } satisfies RoomCreateEvent,
+                } satisfies InceptionEvent,
             }
         }
         case 'userMembership': {
@@ -596,12 +596,12 @@ function toTownsContent_UserPayload(
             const streamId = streamIdFromBytes(payload.streamId)
             return {
                 content: {
-                    kind: ZTEvent.RoomMember,
+                    kind: ZTEvent.StreamMembership,
                     userId: '', // this is just the current user
                     initiatorId: '',
                     membership: toMembership(payload.op),
                     streamId: streamId,
-                } satisfies RoomMemberEvent,
+                } satisfies StreamMembershipEvent,
             }
         }
         case 'userMembershipAction': {
@@ -609,11 +609,11 @@ function toTownsContent_UserPayload(
             const payload = value.content.value
             return {
                 content: {
-                    kind: ZTEvent.RoomMember,
+                    kind: ZTEvent.StreamMembership,
                     userId: userIdFromAddress(payload.userId),
                     initiatorId: event.remoteEvent.creatorUserId,
                     membership: toMembership(payload.op),
-                } satisfies RoomMemberEvent,
+                } satisfies StreamMembershipEvent,
             }
         }
 
@@ -657,11 +657,11 @@ function toTownsContent_ChannelPayload(
         case 'inception': {
             return {
                 content: {
-                    kind: ZTEvent.RoomCreate,
+                    kind: ZTEvent.Inception,
                     creator: message.creatorUserId,
                     predecessor: undefined, // todo is this needed?
                     type: message.event.payload.case,
-                } satisfies RoomCreateEvent,
+                } satisfies InceptionEvent,
             }
         }
         case 'message': {
@@ -766,7 +766,7 @@ function toTownsContent_ChannelPayload_Message(
         if (payload.refEventId) {
             return {
                 content: {
-                    kind: ZTEvent.RoomMessageEncryptedWithRef,
+                    kind: ZTEvent.ChannelMessageEncryptedWithRef,
                     refEventId: payload.refEventId,
                 },
             }
@@ -774,9 +774,9 @@ function toTownsContent_ChannelPayload_Message(
         return {
             // if payload is an EncryptedData message, than it is encrypted content kind
             content: {
-                kind: ZTEvent.RoomMessageEncrypted,
+                kind: ZTEvent.ChannelMessageEncrypted,
                 error: timelineEvent.decryptedContentError,
-            } satisfies RoomMessageEncryptedEvent,
+            } satisfies ChannelMessageEncryptedEvent,
         }
     }
     // do not handle non-encrypted messages that should be encrypted
@@ -791,9 +791,9 @@ function toTownsContent_ChannelPayload_ChannelProperties(
     if (timelineEvent.decryptedContent?.kind === 'channelProperties') {
         return {
             content: {
-                kind: ZTEvent.RoomProperties,
+                kind: ZTEvent.ChannelProperties,
                 properties: timelineEvent.decryptedContent.content,
-            } satisfies RoomPropertiesEvent,
+            } satisfies ChannelPropertiesEvent,
         }
     }
     // If the payload is encrypted, we display nothing.
@@ -810,7 +810,7 @@ function toTownsContent_ChannelPayload_Message_Post(
         case 'text':
             return {
                 content: {
-                    kind: ZTEvent.RoomMessage,
+                    kind: ZTEvent.ChannelMessage,
                     body: value.content.value.body,
                     threadId: value.threadId,
                     threadPreview: value.threadPreview,
@@ -822,12 +822,12 @@ function toTownsContent_ChannelPayload_Message_Post(
                         msgType: MessageType.Text,
                     },
                     attachments: toAttachments(value.content.value.attachments, eventId),
-                } satisfies RoomMessageEvent,
+                } satisfies ChannelMessageEvent,
             }
         case 'image':
             return {
                 content: {
-                    kind: ZTEvent.RoomMessage,
+                    kind: ZTEvent.ChannelMessage,
                     body: value.content.value.title,
                     threadId: value.threadId,
                     threadPreview: value.threadPreview,
@@ -838,13 +838,13 @@ function toTownsContent_ChannelPayload_Message_Post(
                         info: value.content.value.info,
                         thumbnail: value.content.value.thumbnail,
                     },
-                } satisfies RoomMessageEvent,
+                } satisfies ChannelMessageEvent,
             }
 
         case 'gm':
             return {
                 content: {
-                    kind: ZTEvent.RoomMessage,
+                    kind: ZTEvent.ChannelMessage,
                     body: value.content.value.typeUrl,
                     threadId: value.threadId,
                     threadPreview: value.threadPreview,
@@ -854,7 +854,7 @@ function toTownsContent_ChannelPayload_Message_Post(
                         msgType: MessageType.GM,
                         data: value.content.value.value,
                     },
-                } satisfies RoomMessageEvent,
+                } satisfies ChannelMessageEvent,
             }
         case undefined:
             return { error: `Undefined payload case: ${description}` }
@@ -874,11 +874,11 @@ function toTownsContent_SpacePayload(
         case 'inception': {
             return {
                 content: {
-                    kind: ZTEvent.RoomCreate,
+                    kind: ZTEvent.Inception,
                     creator: message.creatorUserId,
                     predecessor: undefined, // todo is this needed?
                     type: message.event.payload.case,
-                } satisfies RoomCreateEvent,
+                } satisfies InceptionEvent,
             }
         }
         case 'channel': {
@@ -1033,19 +1033,19 @@ function toAttachment(
             if (!content?.post || !content?.info) {
                 return undefined
             }
-            const roomMessageEvent = toTownsContent_ChannelPayload_Message_Post(
+            const channelMessageEvent = toTownsContent_ChannelPayload_Message_Post(
                 content.post,
                 content.info.messageId,
                 undefined,
                 '',
             ).content
 
-            return roomMessageEvent?.kind === ZTEvent.RoomMessage
+            return channelMessageEvent?.kind === ZTEvent.ChannelMessage
                 ? ({
                       type: 'embedded_message',
                       ...content,
                       info: content.info,
-                      roomMessageEvent,
+                      channelMessageEvent: channelMessageEvent,
                       id,
                   } satisfies EmbeddedMessageAttachment)
                 : undefined

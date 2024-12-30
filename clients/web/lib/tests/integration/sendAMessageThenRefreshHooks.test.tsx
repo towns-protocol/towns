@@ -51,20 +51,20 @@ describe('sendAMessageThenRefresh.hooks', () => {
         const janesProvider = jane.provider
         await jane.logout()
         // create a veiw for bob
-        const TestRoomMessages = ({ signer }: { signer: TSigner }) => {
+        const TestChannelMessages = ({ signer }: { signer: TSigner }) => {
             const channelId = useChannelId()
             const myChannelMembership = useMyMembership(channelId)
             const { timeline } = useChannelTimeline()
 
             const messages = useMemo(
-                () => timeline.filter((x) => x.content?.kind === ZTEvent.RoomMessage),
+                () => timeline.filter((x) => x.content?.kind === ZTEvent.ChannelMessage),
                 [timeline],
             )
             // send message
 
             // format for easy reading
             const formatMessage = useCallback((e: TimelineEvent) => {
-                if (e.content?.kind === ZTEvent.RoomMessage) {
+                if (e.content?.kind === ZTEvent.ChannelMessage) {
                     return `${e.content.body} eventId: ${e.eventId} isLocalPending: ${
                         e.isLocalPending ? 'true' : 'false'
                     }`
@@ -93,7 +93,7 @@ describe('sendAMessageThenRefresh.hooks', () => {
             <TownsTestApp provider={janesProvider}>
                 <SpaceContextProvider spaceId={janesSpaceId}>
                     <ChannelContextProvider channelId={janesChannelId}>
-                        <TestRoomMessages signer={janesProvider.wallet} />
+                        <TestChannelMessages signer={janesProvider.wallet} />
                     </ChannelContextProvider>
                 </SpaceContextProvider>
             </TownsTestApp>,

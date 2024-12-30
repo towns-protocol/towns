@@ -57,7 +57,7 @@ describe('messageTypes', () => {
         await waitFor(() => expect(bob.getMessages(channelId)).toContain('GM'))
         expect(
             bob
-                .getEvents_TypedRoomMessage(channelId)
+                .getEvents_TypedChannelMessage(channelId)
                 .find((event) => event.content.content.msgType === MessageType.GM),
         ).toBeDefined()
     }) // end test
@@ -113,7 +113,7 @@ describe('messageTypes', () => {
         await waitFor(() => {
             expect(bob.getMessages(channelId)).toContain('what.jpg')
             const imageMessage = bob
-                .getEvents_TypedRoomMessage(channelId)
+                .getEvents_TypedChannelMessage(channelId)
                 .find((event) => event.content?.content.msgType === MessageType.Image)
 
             expect(imageMessage).toBeDefined()

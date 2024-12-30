@@ -1,10 +1,10 @@
 import { Stream, StreamMember } from '@river-build/sdk'
-import { Membership, RoomMember, StreamView } from '../../types/towns-types'
+import { Membership, TownsStreamMember, StreamView } from '../../types/towns-types'
 
 export function toStreamView(stream: Stream, membership: Membership): StreamView {
     const metadata = stream.view.getMemberMetadata()
 
-    const members: RoomMember[] = Array.from(stream.view.getMembers().joined.values()).map(
+    const members: TownsStreamMember[] = Array.from(stream.view.getMembers().joined.values()).map(
         (streamMember: StreamMember) => {
             const info = metadata.userInfo(streamMember.userId)
             return {

@@ -27,7 +27,7 @@ export const FullScreenMedia = (props: Props) => {
         return filteredEvents
             .map((e) => {
                 if (
-                    e.content?.kind === ZTEvent.RoomMessage &&
+                    e.content?.kind === ZTEvent.ChannelMessage &&
                     e.content.attachments &&
                     e.content.attachments.length > 0
                 ) {

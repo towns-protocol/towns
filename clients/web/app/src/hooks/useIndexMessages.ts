@@ -1,7 +1,7 @@
 import debug from 'debug'
 import { useDeferredValue, useMemo } from 'react'
 import { useTimelineStore } from 'use-towns-client'
-import { isRoomMessage } from '@components/MessageTimeline/util/getEventsByDate'
+import { isChannelMessage } from '@components/MessageTimeline/util/getEventsByDate'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { useThrottledValue } from 'hooks/useThrottledValue'
 import { notUndefined } from 'ui/utils/utils'
@@ -24,7 +24,7 @@ export const useIndexMessages = () => {
         return (channels ?? [])
             .flatMap((channel) => {
                 return timelines[channel.id]
-                    ?.filter(isRoomMessage)
+                    ?.filter(isChannelMessage)
                     .filter((e) => e.content?.body)
                     .map((e) => ({
                         key: e.eventId,
@@ -41,7 +41,7 @@ export const useIndexMessages = () => {
         return dmChannels
             .flatMap((channel) => {
                 return timelines[channel.id]
-                    ?.filter(isRoomMessage)
+                    ?.filter(isChannelMessage)
                     .filter((e) => e.content?.body)
                     .map((e) => ({
                         key: e.eventId,

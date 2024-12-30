@@ -4,7 +4,7 @@ import {
     MessageTipEvent,
     MessageTips,
     RedactedEvent,
-    RoomMessageEvent,
+    ChannelMessageEvent,
     ThreadStats,
     TimelineEvent,
     TimelineEventConfirmation,
@@ -480,8 +480,8 @@ function toReplacedMessageEvent(prev: TimelineEvent, next: TimelineEvent): Timel
     if (!canReplaceEvent(prev, next)) {
         return prev
     } else if (
-        next.content?.kind === ZTEvent.RoomMessage &&
-        prev.content?.kind === ZTEvent.RoomMessage
+        next.content?.kind === ZTEvent.ChannelMessage &&
+        prev.content?.kind === ZTEvent.ChannelMessage
     ) {
         // when we replace an event, we copy the content up to the root event
         // so we keep the prev id, but use the next content
@@ -599,7 +599,7 @@ function addThreadStats(
                 [timelineEvent.eventId]: {
                     ...threadsStats[streamId][timelineEvent.eventId],
                     parentEvent: timelineEvent,
-                    parentMessageContent: getRoomMessageContent(timelineEvent),
+                    parentMessageContent: getChannelMessageContent(timelineEvent),
                     isParticipating:
                         threadsStats[streamId][timelineEvent.eventId].isParticipating ||
                         (timelineEvent.content?.kind !== ZTEvent.RedactedEvent &&
@@ -625,7 +625,7 @@ function makeNewThreadStats(
         latestTs: event.createdAtEpochMs,
         parentId,
         parentEvent: parent,
-        parentMessageContent: getRoomMessageContent(parent),
+        parentMessageContent: getChannelMessageContent(parent),
         isParticipating: false,
     }
 }
@@ -909,19 +909,19 @@ function replaceTimelineEvent(
     }
 }
 
-function getRoomMessageContent(event?: TimelineEvent): RoomMessageEvent | undefined {
-    return event?.content?.kind === ZTEvent.RoomMessage ? event.content : undefined
+function getChannelMessageContent(event?: TimelineEvent): ChannelMessageEvent | undefined {
+    return event?.content?.kind === ZTEvent.ChannelMessage ? event.content : undefined
 }
 
 function getMessageSenderId(event: TimelineEvent): string | undefined {
-    if (!getRoomMessageContent(event)) {
+    if (!getChannelMessageContent(event)) {
         return undefined
     }
     return event.sender.id
 }
 
 export function getEditsId(content: TimelineEvent_OneOf | undefined): string | undefined {
-    return content?.kind === ZTEvent.RoomMessage ? content.editsEventId : undefined
+    return content?.kind === ZTEvent.ChannelMessage ? content.editsEventId : undefined
 }
 
 export function getRedactsId(content: TimelineEvent_OneOf | undefined): string | undefined {
@@ -929,11 +929,11 @@ export function getRedactsId(content: TimelineEvent_OneOf | undefined): string |
 }
 
 export function getThreadParentId(content: TimelineEvent_OneOf | undefined): string | undefined {
-    return content?.kind === ZTEvent.RoomMessage ? content.threadId : undefined
+    return content?.kind === ZTEvent.ChannelMessage ? content.threadId : undefined
 }
 
 export function getReplyParentId(content: TimelineEvent_OneOf | undefined): string | undefined {
-    return content?.kind === ZTEvent.RoomMessage ? content.replyId : undefined
+    return content?.kind === ZTEvent.ChannelMessage ? content.replyId : undefined
 }
 
 export function getReactionParentId(content: TimelineEvent_OneOf | undefined): string | undefined {
@@ -942,7 +942,7 @@ export function getReactionParentId(content: TimelineEvent_OneOf | undefined): s
 
 export function getIsMentioned(content: TimelineEvent_OneOf | undefined, userId: string): boolean {
     //TODO: comparison below should be changed as soon as this HNT-1576 will be resolved
-    return content?.kind === ZTEvent.RoomMessage
+    return content?.kind === ZTEvent.ChannelMessage
         ? content.mentions.findIndex(
               (x) =>
                   (x.userId ?? '')

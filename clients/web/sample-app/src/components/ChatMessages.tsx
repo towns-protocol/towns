@@ -31,7 +31,7 @@ export function ChatMessages(props: Props): JSX.Element {
     const [scrollToBottom, setScrollToBottom] = useState<boolean>(true)
     const canLoadMore =
         timeline.length === 0 ||
-        (timeline[0].content?.kind !== ZTEvent.RoomCreate && !hasReachedTerminus)
+        (timeline[0].content?.kind !== ZTEvent.Inception && !hasReachedTerminus)
     const messagesEndRef = useRef<HTMLDivElement>(null)
     const messagesStartRef = useRef<HTMLDivElement>(null)
     const isLoadingMore = useRef<boolean>(false)
@@ -275,7 +275,7 @@ function ChatMessage(props: { event: TimelineEvent }) {
 
 function formatEvent(event: TimelineEvent): string {
     switch (event.content?.kind) {
-        case ZTEvent.RoomMessage:
+        case ZTEvent.ChannelMessage:
             return `${event.sender.displayName}: ${event.content.body}`
         default:
             return event.fallbackContent

@@ -8,14 +8,14 @@ export function useCasablancaStreamMembership(
     userId?: string,
 ): Membership | undefined {
     const channelStream = useCasablancaStream(roomId)
-    const [roomMember, setRoomMember] = useState<Membership>()
+    const [streamMember, setStreamMember] = useState<Membership>()
 
     useEffect(() => {
         if (!userId || !roomId || !channelStream) {
             return
         }
         const updateMember = () => {
-            setRoomMember(getCasablancaMembership(channelStream, userId))
+            setStreamMember(getCasablancaMembership(channelStream, userId))
         }
 
         updateMember()
@@ -45,7 +45,7 @@ export function useCasablancaStreamMembership(
         }
     }, [roomId, channelStream, userId])
 
-    return roomMember
+    return streamMember
 }
 
 function getCasablancaMembership(stream: Stream, userId: string): Membership {

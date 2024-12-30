@@ -1,7 +1,7 @@
 import React, { useCallback, useContext } from 'react'
 import {
     Attachment,
-    RoomMessageEvent,
+    ChannelMessageEvent,
     SendTextMessageOptions,
     useMyProfile,
     useSpaceMembers,
@@ -18,7 +18,7 @@ import { MediaDropContextProvider } from '@components/MediaDropContext/MediaDrop
 type Props = {
     eventId: string
     latestEventId: string
-    eventContent: RoomMessageEvent
+    eventContent: ChannelMessageEvent
     channelId: string
     spaceId: string | undefined
     initialValue: string

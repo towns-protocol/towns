@@ -24,8 +24,8 @@ export const EmbeddedMessage = (props: {
 }) => {
     const { attachment } = props
     const attachedMessage =
-        attachment.roomMessageEvent?.content?.msgType === MessageType.Text
-            ? attachment.roomMessageEvent
+        attachment.channelMessageEvent?.content?.msgType === MessageType.Text
+            ? attachment.channelMessageEvent
             : undefined
 
     const channel = useRoom(attachment.info.channelId)

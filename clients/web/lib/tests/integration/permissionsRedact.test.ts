@@ -55,11 +55,11 @@ describe('redact messages', () => {
         const message = 'Hello me, myself, and alice!'
         await alice.sendMessage(channelId, message)
         await waitFor(async () => {
-            const event = await alice.getLatestEvent(channelId, ZTEvent.RoomMessage)
+            const event = await alice.getLatestEvent(channelId, ZTEvent.ChannelMessage)
             expect(event).toBeDefined()
             expect(event?.isLocalPending).toBe(false)
         })
-        const messageEvent = await alice.getLatestEvent(channelId, ZTEvent.RoomMessage)
+        const messageEvent = await alice.getLatestEvent(channelId, ZTEvent.ChannelMessage)
         if (!messageEvent) {
             throw new Error(`Failed to get message event ${alice.getEventsDescription(channelId)}`)
         }
@@ -137,7 +137,7 @@ describe('redact messages', () => {
         // use a scrollback to get the message event
         await waitFor(() => expect(bob.getMessages(channelId)).toContain(message))
         const messageEvent = bob
-            .getEvents_TypedRoomMessage(channelId)
+            .getEvents_TypedChannelMessage(channelId)
             .find((event) => event.content.body === message)
         if (!messageEvent) {
             throw new Error(`Failed to get message event: ${bob.getEventsDescription(channelId)}`)

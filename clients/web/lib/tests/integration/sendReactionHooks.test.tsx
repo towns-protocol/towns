@@ -56,14 +56,15 @@ describe('sendReactionHooks', () => {
             roles: [],
         })
         // create a veiw for bob
-        const TestRoomMessages = ({ signer }: { signer: TSigner }) => {
+        const TestChannelMessages = ({ signer }: { signer: TSigner }) => {
             const { sendReaction } = useTownsClient()
             const channelId = useChannelId()
             const { timeline } = useChannelTimeline()
             const reactions = useTimelineReactions(channelId)
             const messages = timeline.filter(
                 (x) =>
-                    x.content?.kind === ZTEvent.RoomMessage || x.content?.kind === ZTEvent.Reaction,
+                    x.content?.kind === ZTEvent.ChannelMessage ||
+                    x.content?.kind === ZTEvent.Reaction,
             )
             const onSendReaction = useCallback(() => {
                 void sendReaction(channelId, messages[0].eventId, '👍')
@@ -104,7 +105,7 @@ describe('sendReactionHooks', () => {
             <TownsTestApp provider={bobProvider}>
                 <SpaceContextProvider spaceId={janesSpaceId}>
                     <ChannelContextProvider channelId={janesChannelId}>
-                        <TestRoomMessages signer={bobProvider.wallet} />
+                        <TestChannelMessages signer={bobProvider.wallet} />
                     </ChannelContextProvider>
                 </SpaceContextProvider>
             </TownsTestApp>,

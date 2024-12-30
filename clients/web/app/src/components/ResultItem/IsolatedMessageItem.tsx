@@ -16,7 +16,7 @@ import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { PATHS } from 'routes'
 import { atoms } from 'ui/styles/atoms.css'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
-import { getIsRoomMessageContent, getMessageBody } from 'utils/ztevent_util'
+import { getIsChannelMessageContent, getMessageBody } from 'utils/ztevent_util'
 import { useDmChannels } from 'hooks/useDMChannels'
 import { useHandleReaction } from 'hooks/useReactions'
 import { addressFromSpaceId } from 'ui/utils/utils'
@@ -55,7 +55,7 @@ export const IsolatedMessageItem = (
     const spaceSlug = useSpaceId() ?? ''
     const channelSlug = result.channelId
 
-    const content = getIsRoomMessageContent(result.event)
+    const content = getIsChannelMessageContent(result.event)
 
     const { lookupUser } = useUserLookupContext()
     const channels = useSpaceChannels()

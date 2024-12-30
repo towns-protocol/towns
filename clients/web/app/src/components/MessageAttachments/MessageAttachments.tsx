@@ -179,8 +179,8 @@ const EmbeddedMessageContainer = (props: {
 }) => {
     const { attachment } = props
     const attachedMessage =
-        attachment.roomMessageEvent?.content?.msgType === MessageType.Text
-            ? attachment.roomMessageEvent
+        attachment.channelMessageEvent?.content?.msgType === MessageType.Text
+            ? attachment.channelMessageEvent
             : undefined
 
     if (!attachedMessage) {
@@ -192,7 +192,7 @@ const EmbeddedMessageContainer = (props: {
             attachment={attachment}
             attachmentChildren={
                 <MessageAttachments
-                    attachments={attachment.roomMessageEvent?.attachments}
+                    attachments={attachment.channelMessageEvent?.attachments}
                     onAttachmentClick={props.onAttachmentClick}
                     onClick={props.onClick}
                 />

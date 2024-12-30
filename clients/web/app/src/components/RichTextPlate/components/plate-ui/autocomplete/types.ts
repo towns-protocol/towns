@@ -3,7 +3,7 @@ import {
     AT_CHANNEL_MENTION,
     AT_CHANNEL_MENTION_DISPLAY,
     Channel,
-    RoomMember,
+    TownsStreamMember,
 } from 'use-towns-client'
 import { PluginConfig, TDescendant, TElement } from '@udecode/plate-common'
 import { PlateElementProps } from '@udecode/plate-common/react'
@@ -30,9 +30,13 @@ export type ComboboxContextWrapperProps = ComboboxInputUserProps & {
 }
 
 export type FilterFn = (item: { keywords?: string[]; value: string }, search: string) => boolean
-export type TUserIDNameMap = { [key: RoomMember['displayName']]: RoomMember['userId'] }
+export type TUserIDNameMap = {
+    [key: TownsStreamMember['displayName']]: TownsStreamMember['userId']
+}
 export type TMentionEmoji = { name: string; emoji: string }
-export type TUserWithChannel = RoomMember & { isChannelMember: boolean } & { atChannel?: boolean }
+export type TUserWithChannel = TownsStreamMember & { isChannelMember: boolean } & {
+    atChannel?: boolean
+}
 export type TMentionComboboxTypes = Channel | TUserWithChannel | TMentionEmoji
 export type TComboboxAllData = Channel & TUserWithChannel & TMentionEmoji
 export type TEmojiMentionElement = TMentionElement & { emoji: TMentionEmoji }
@@ -62,7 +66,7 @@ export function isComboboxType(value: string): value is ComboboxTypes {
     return Object.values(ComboboxTypes).includes(value as ComboboxTypes)
 }
 
-export type TUserMention = RoomMember & { atChannel?: boolean } // | { atRole?: number }
+export type TUserMention = TownsStreamMember & { atChannel?: boolean } // | { atRole?: number }
 export type TUserNameId = { displayName: string; userId: string }
 
 export const AtChannelUser: TUserMention = {

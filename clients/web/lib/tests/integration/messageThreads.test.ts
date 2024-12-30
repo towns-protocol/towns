@@ -47,7 +47,7 @@ describe('messageThreads', () => {
 
         // get the message id
         const messageId = bob
-            .getEvents_TypedRoomMessage(channelId)!
+            .getEvents_TypedChannelMessage(channelId)!
             .find((event) => event.content?.body === 'hi Bob!')!.eventId
         // bob sends a threaded message
         await bob.sendMessage(channelId, 'hi Alice!', { threadId: messageId })
@@ -55,7 +55,7 @@ describe('messageThreads', () => {
         await waitFor(() =>
             expect(
                 alice
-                    .getEvents_TypedRoomMessage(channelId)
+                    .getEvents_TypedChannelMessage(channelId)
                     .find((event) => event.content && event.content.threadId === messageId),
             ).toBeDefined(),
         )

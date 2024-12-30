@@ -2,7 +2,7 @@
 /**
  * @group dendrite
  */
-import { Membership, RoomMember } from '../../src/types/towns-types'
+import { Membership, TownsStreamMember } from '../../src/types/towns-types'
 import React, { useCallback } from 'react'
 import {
     createTestChannelWithSpaceRoles,
@@ -64,7 +64,9 @@ describe('userProfileHooks', () => {
             const userId = alice.getUserId()
             const alicesMemberInfo = userId ? lookupUser(userId) : undefined
             const { timeline } = useChannelTimeline()
-            const roomMessages = timeline.filter((x) => x.content?.kind === ZTEvent.RoomMessage)
+            const channelMessages = timeline.filter(
+                (x) => x.content?.kind === ZTEvent.ChannelMessage,
+            )
             const onClickSetProfileInfo = useCallback(() => {
                 void (async () => {
                     await setDisplayName(alicesSpaceId, "Bob's your uncle")
@@ -86,8 +88,8 @@ describe('userProfileHooks', () => {
                         {alicesMemberInfo?.avatarUrl ?? 'unknown'}
                     </div>
                     <div data-testid="messageSender">
-                        {roomMessages[0]?.content?.kind === ZTEvent.RoomMessage
-                            ? roomMessages[0].sender.displayName
+                        {channelMessages[0]?.content?.kind === ZTEvent.ChannelMessage
+                            ? channelMessages[0].sender.displayName
                             : 'none'}
                     </div>
                     <div data-testid="allMessages">
@@ -138,7 +140,7 @@ describe('userProfileHooks', () => {
             expect(
                 alice
                     .getRoomData(alicesChannelId)
-                    ?.members.some((x: RoomMember) => x.displayName === "Bob's your uncle"),
+                    ?.members.some((x: TownsStreamMember) => x.displayName === "Bob's your uncle"),
             ).toBe(true),
         )
         // have alice send a message

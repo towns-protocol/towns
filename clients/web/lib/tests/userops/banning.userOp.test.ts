@@ -37,7 +37,7 @@ test('can ban a user from a space via userop', async () => {
     await waitForWithRetries(() => isSmartAccountDeployed(alice))
     await sleepBetweenTxs()
 
-    expect(alice.getRoomMember(spaceId!, alice.getUserId())).toBeTruthy()
+    expect(alice.getStreamMember(spaceId!, alice.getUserId())).toBeTruthy()
 
     const room = await bob.joinTown(spaceId!, bob.wallet)
     await waitForWithRetries(() => isSmartAccountDeployed(bob))

@@ -1,9 +1,9 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import React from 'react'
 import {
+    ChannelMessageEvent,
+    ChannelMessageEventContentOneOf,
     MessageType,
-    RoomMessageEvent,
-    RoomMessageEventContentOneOf,
     TimelineEvent,
     ZTEvent,
 } from 'use-towns-client'
@@ -19,7 +19,7 @@ import { MessageTimelineItem } from './TimelineItem'
 
 interface MessageContent {
     msgtype?: MessageType
-    content?: RoomMessageEventContentOneOf
+    content?: ChannelMessageEventContentOneOf
     body: string
 }
 
@@ -58,7 +58,7 @@ function generateMessageRenderEvent(messageContent: MessageContent): MessageRend
             isMentioned: false,
             isRedacted: false,
             isSendFailed: false,
-            content: generateRoomMessageEvent(messageContent),
+            content: generateChannelMessageEvent(messageContent),
             sender: {
                 id: 'sender-id',
                 displayName: 'beavis',
@@ -67,9 +67,9 @@ function generateMessageRenderEvent(messageContent: MessageContent): MessageRend
     }
 }
 
-function generateRoomMessageEvent(messageContent: MessageContent): RoomMessageEvent {
+function generateChannelMessageEvent(messageContent: MessageContent): ChannelMessageEvent {
     return {
-        kind: ZTEvent.RoomMessage,
+        kind: ZTEvent.ChannelMessage,
         body: messageContent.body,
         mentions: [],
         content: messageContent.content ?? { msgType: MessageType.Text },

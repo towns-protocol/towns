@@ -19,7 +19,7 @@ export const ChannelUsersPill = (props: { spaceId: string | undefined; channelId
         const eventIds = timelineContext?.events ?? []
         const lastUniqueIds: string[] = []
         for (let i = eventIds.length - 1; i >= 0 && lastUniqueIds.length < NUM_USERS; i--) {
-            if (eventIds[i].content?.kind !== ZTEvent.RoomMessage) {
+            if (eventIds[i].content?.kind !== ZTEvent.ChannelMessage) {
                 continue
             }
             const senderId = eventIds[i].sender.id

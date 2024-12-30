@@ -8,7 +8,7 @@ import { useTimelineContext } from '@components/MessageTimeline/MessageTimelineC
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { htmlToText } from 'workers/data_transforms'
-import { isRoomMessage } from '@components/MessageTimeline/util/getEventsByDate'
+import { isChannelMessage } from '@components/MessageTimeline/util/getEventsByDate'
 import { MessageAttachments } from '@components/MessageAttachments/MessageAttachments'
 import { MessageAttachmentsContext } from '@components/MessageAttachments/MessageAttachmentsContext'
 
@@ -26,7 +26,7 @@ export const QuotedMessage = (props: Props) => {
 
     if (!event) {
         return <Box>Quoted message not found</Box>
-    } else if (!isRoomMessage(event)) {
+    } else if (!isChannelMessage(event)) {
         return <Box>No preview available</Box>
     }
 
@@ -38,7 +38,7 @@ export const QuotedMessage = (props: Props) => {
             messageId: timelineContext.channelId,
         }) + `#${eventId}`
 
-    const attachments = isRoomMessage(event) ? event.content.attachments : undefined
+    const attachments = isChannelMessage(event) ? event.content.attachments : undefined
 
     return (
         <Box gap="sm">

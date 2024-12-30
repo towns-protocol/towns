@@ -2,13 +2,13 @@ import React from 'react'
 import { useUserLookupContext } from 'use-towns-client'
 import { Link } from 'react-router-dom'
 import { Box, Paragraph, Stack, Text } from '@ui'
-import { ZRoomPropertiesEvent } from '@components/MessageTimeline/util/getEventsByDate'
+import { ZChannelPropertiesEvent } from '@components/MessageTimeline/util/getEventsByDate'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { ProfileHoverCard } from '@components/ProfileHoverCard/ProfileHoverCard'
 import { Avatar } from '@components/Avatar/Avatar'
 
 export type Props = {
-    event: ZRoomPropertiesEvent
+    event: ZChannelPropertiesEvent
     userId?: string
 }
 

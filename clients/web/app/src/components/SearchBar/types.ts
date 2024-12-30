@@ -1,6 +1,6 @@
-import { RoomMember } from 'use-towns-client'
+import { TownsStreamMember } from 'use-towns-client'
 import { SearchResult } from 'minisearch'
-import { ZRoomMessageEvent } from '@components/MessageTimeline/util/getEventsByDate'
+import { ZChannelMessageEvent } from '@components/MessageTimeline/util/getEventsByDate'
 import { IconName } from '@ui'
 
 export type EventDocument =
@@ -16,7 +16,7 @@ export type MessageEventDocument = {
     key: string
     channelId: string
     body: string
-    source: ZRoomMessageEvent
+    source: ZChannelMessageEvent
 }
 
 export type DMMessageEventDocument = {
@@ -24,7 +24,7 @@ export type DMMessageEventDocument = {
     key: string
     channelId: string
     body: string
-    source: ZRoomMessageEvent
+    source: ZChannelMessageEvent
 }
 
 export type ChannelEventDocument = {
@@ -45,7 +45,7 @@ export type UserEventDocument = {
     type: 'user'
     key: string
     body: string
-    source: RoomMember
+    source: TownsStreamMember
 }
 
 type ChannelType = {

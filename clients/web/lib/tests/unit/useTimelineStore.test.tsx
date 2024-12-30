@@ -4,7 +4,7 @@
 
 import { useTimelineStore } from '../../src/store/use-timeline-store'
 import {
-    RoomMessageEvent,
+    ChannelMessageEvent,
     ThreadStats,
     TimelineEvent,
     MessageTips,
@@ -200,7 +200,7 @@ describe('UseTimelineStore', () => {
                         latestTs: events[2].createdAtEpochMs,
                         parentId: events[0].eventId,
                         parentEvent: events[0],
-                        parentMessageContent: events[0].content as RoomMessageEvent,
+                        parentMessageContent: events[0].content as ChannelMessageEvent,
                         isParticipating: true,
                     },
                 },
@@ -259,7 +259,7 @@ describe('UseTimelineStore', () => {
                         latestTs: events[1].createdAtEpochMs,
                         parentId: events[0].eventId,
                         parentEvent: events[0],
-                        parentMessageContent: events[0].content as RoomMessageEvent,
+                        parentMessageContent: events[0].content as ChannelMessageEvent,
                         isParticipating: true,
                     },
                 },
@@ -289,7 +289,7 @@ describe('UseTimelineStore', () => {
                         latestTs: events[1].createdAtEpochMs,
                         parentId: events[0].eventId,
                         parentEvent: events[0],
-                        parentMessageContent: events[0].content as RoomMessageEvent,
+                        parentMessageContent: events[0].content as ChannelMessageEvent,
                         isParticipating: false,
                     },
                 },
