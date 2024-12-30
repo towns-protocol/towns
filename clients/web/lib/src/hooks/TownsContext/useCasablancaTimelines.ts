@@ -62,6 +62,7 @@ import {
     ImageAttachment,
     EventStatus,
     EmbeddedMessageAttachment,
+    MemberBlockchainTransactionEvent,
     SpaceEnsAddressEvent,
     SpaceNftEvent,
     PinEvent,
@@ -550,7 +551,13 @@ function toTownsContent_MemberPayload(
                     }
                 }
                 case undefined:
-                    return { error: `${description} no transaction content` }
+                    return {
+                        content: {
+                            kind: ZTEvent.MemberBlockchainTransaction,
+                            transaction: value.content.value.transaction,
+                            fromUserId: bin_toHexString(value.content.value.fromUserAddress),
+                        } satisfies MemberBlockchainTransactionEvent,
+                    }
                 default:
                     logNever(transaction.content)
                     return { error: `${description} unknown transaction content` }

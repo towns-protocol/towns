@@ -53,6 +53,7 @@ export enum ZTEvent {
     Fulfillment = 'm.fulfillment',
     Inception = 'm.inception',
     KeySolicitation = 'm.key_solicitation',
+    MemberBlockchainTransaction = 'm.member_blockchain_transaction',
     Pin = 'm.pin',
     RedactedEvent = 'm.redacted_event',
     RedactionActionEvent = 'm.redaction_action',
@@ -86,6 +87,7 @@ export type TimelineEvent_OneOf =
     | FulfillmentEvent
     | InceptionEvent
     | KeySolicitationEvent
+    | MemberBlockchainTransactionEvent
     | MiniblockHeaderEvent
     | ReactionEvent
     | PinEvent
@@ -122,6 +124,12 @@ export interface UserBlockchainTransactionEvent {
 export interface UserReceivedBlockchainTransactionEvent {
     kind: ZTEvent.UserReceivedBlockchainTransaction
     receivedTransaction: PlainMessage<UserPayload_ReceivedBlockchainTransaction>
+}
+
+export interface MemberBlockchainTransactionEvent {
+    kind: ZTEvent.MemberBlockchainTransaction
+    transaction?: PlainMessage<BlockchainTransaction>
+    fromUserId: string
 }
 
 export interface MiniblockHeaderEvent {
@@ -513,6 +521,10 @@ export function getFallbackContent(
             return `tip from: ${content.fromUserId} to: ${content.toUserId} refEventId: ${
                 content.refEventId
             } amount: ${content.tip.event?.amount.toString() ?? '??'}`
+        case ZTEvent.MemberBlockchainTransaction:
+            return `memberTransaction from: ${
+                content.fromUserId
+            } ${getFallbackContent_BlockchainTransaction(content.transaction)}`
         case ZTEvent.UserBlockchainTransaction:
             return getFallbackContent_BlockchainTransaction(content.transaction)
         case ZTEvent.UserReceivedBlockchainTransaction:
