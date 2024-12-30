@@ -93,11 +93,8 @@ function yarn_install_and_check() {
         # Run yarn to check for build breakages and update the lockfile
         echo "Running yarn install..."
         yarn install
-
-        YARN_INSTALL_COMMIT_MESSAGE="$(RIVER_ALLOW_COMMIT=true git commit --dry-run)"
-        git commit -m "Yarn Install Modifications" -m "$YARN_INSTALL_COMMIT_MESSAGE"
-
         exit_status_yarn=$?
+
         if [ $exit_status_yarn -eq 0 ]; then
             break
         fi
@@ -110,18 +107,7 @@ function yarn_install_and_check() {
 
     # if you run on a fresh repo, the yarn lock file can get re-created
     remove_river_yarn_files
-
-    confirmContinue "Yarn install complete. Continue with the merge?"
-
-    # check for changes after running yarn
-    if [[ "$(git status --porcelain)" != "" ]]; then
-        echo "Commiting yarn changes."
-        git add .
-        YARN_FIXUP_MESSAGE="$(RIVER_ALLOW_COMMIT=true git commit --dry-run)"
-        RIVER_ALLOW_COMMIT=true git commit -m "Yarn Install Fix-Ups" -m "$YARN_FIXUP_MESSAGE"
-    fi
 }
-
 
 #
 #
