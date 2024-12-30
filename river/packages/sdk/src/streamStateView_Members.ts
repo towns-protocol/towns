@@ -17,12 +17,15 @@ import { isDefined, logNever } from './check'
 import { userIdFromAddress } from './id'
 import { StreamStateView_Members_Membership } from './streamStateView_Members_Membership'
 import { StreamStateView_Members_Solicitations } from './streamStateView_Members_Solicitations'
-import { bin_toHexString, check } from '@river-build/dlog'
+import { bin_toHexString, check, dlog } from '@river-build/dlog'
 import { DecryptedContent } from './encryptedContentTypes'
 import { StreamStateView_MemberMetadata } from './streamStateView_MemberMetadata'
 import { KeySolicitationContent } from '@river-build/encryption'
 import { makeParsedEvent } from './sign'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
+import { utils } from 'ethers'
+
+const log = dlog('csb:streamStateView_Members')
 
 export type StreamMember = {
     userId: string
@@ -48,6 +51,7 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
     readonly solicitHelper: StreamStateView_Members_Solicitations
     readonly memberMetadata: StreamStateView_MemberMetadata
     readonly pins: Pin[] = []
+    tips: { [key: string]: bigint } = {}
     encryptionAlgorithm?: string = undefined
 
     constructor(streamId: string) {
@@ -151,7 +155,7 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                 )
             }
         })
-
+        this.tips = { ...snapshot.members.tips }
         this.encryptionAlgorithm = snapshot.members.encryptionAlgorithm?.algorithm
     }
 
@@ -183,7 +187,12 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                     const userId = userIdFromAddress(membership.userAddress)
                     switch (membership.op) {
                         case MembershipOp.SO_JOIN:
-                            check(!this.joined.has(userId), 'user already joined')
+                            if (this.joined.has(userId)) {
+                                // aellis 12/24 there is a real bug here, not sure why we
+                                // are getting duplicate join events
+                                log('user already joined', this.streamId, userId)
+                                return
+                            }
                             this.joined.set(userId, {
                                 userId,
                                 userAddress: membership.userAddress,
@@ -308,8 +317,31 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                     this.removePin(eventId, stateEmitter)
                 }
                 break
-            case 'memberBlockchainTransaction':
+            case 'memberBlockchainTransaction': {
+                const transactionContent = payload.content.value.transaction?.content
+                switch (transactionContent?.case) {
+                    case undefined:
+                        break
+                    case 'tip': {
+                        const tipEvent = transactionContent.value.event
+                        if (!tipEvent) {
+                            return
+                        }
+                        const currency = utils.getAddress(bin_toHexString(tipEvent.currency))
+                        this.tips[currency] = (this.tips[currency] ?? 0n) + tipEvent.amount
+                        stateEmitter?.emit(
+                            'streamTipped',
+                            this.streamId,
+                            event.hashStr,
+                            transactionContent.value,
+                        )
+                        break
+                    }
+                    default:
+                        logNever(transactionContent)
+                }
                 break
+            }
             case 'mls':
                 break
             case 'encryptionAlgorithm':

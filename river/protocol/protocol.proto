@@ -177,6 +177,8 @@ message MemberPayload {
         repeated SnappedPin pins = 2;
         Mls mls = 3;
         EncryptionAlgorithm encryption_algorithm = 4;
+        // tips sent in this stream: map<currency, amount>
+        map<string, uint64> tips = 5;
     }
 
     message Membership {
@@ -391,6 +393,10 @@ message UserPayload {
         Inception inception = 1;
         // memberships, sorted by stream_id
         repeated UserMembership memberships = 2;
+        // tips sent by this user: map<currency, amount>
+        map<string, uint64> tips_sent = 3;
+        // tips received by this user: map<currency, amount>
+        map<string, uint64> tips_received = 4;
     }
 
     message Inception {

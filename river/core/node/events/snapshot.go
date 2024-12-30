@@ -2,9 +2,12 @@ package events
 
 import (
 	"bytes"
+	"fmt"
 	"slices"
 
 	"google.golang.org/protobuf/proto"
+
+	"github.com/ethereum/go-ethereum/common"
 
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/events/migrations"
@@ -113,7 +116,7 @@ func make_SnapshotContent(iInception IsInceptionPayload) (IsSnapshot_Content, er
 			},
 		}, nil
 	default:
-		return nil, RiverError(Err_INVALID_ARGUMENT, "unknown inception type %T", iInception)
+		return nil, RiverError(Err_INVALID_ARGUMENT, fmt.Sprintf("unknown inception type %T", iInception))
 	}
 }
 
@@ -179,7 +182,7 @@ func Update_Snapshot(iSnapshot *Snapshot, event *ParsedEvent, miniblockNum int64
 	case *StreamEvent_MediaPayload:
 		return RiverError(Err_BAD_PAYLOAD, "Media payload snapshots are not supported")
 	default:
-		return RiverError(Err_INVALID_ARGUMENT, "unknown payload type %T", event.Event.Payload)
+		return RiverError(Err_INVALID_ARGUMENT, fmt.Sprintf("unknown payload type %T", event.Event.Payload))
 	}
 }
 
@@ -247,7 +250,7 @@ func update_Snapshot_Space(
 		}
 		return nil
 	default:
-		return RiverError(Err_INVALID_ARGUMENT, "unknown space payload type %T", spacePayload.Content)
+		return RiverError(Err_INVALID_ARGUMENT, fmt.Sprintf("unknown space payload type %T", spacePayload.Content))
 	}
 }
 
@@ -263,7 +266,7 @@ func update_Snapshot_Channel(iSnapshot *Snapshot, channelPayload *ChannelPayload
 	case *ChannelPayload_Message:
 		return nil
 	default:
-		return RiverError(Err_INVALID_ARGUMENT, "unknown channel payload type %T", content)
+		return RiverError(Err_INVALID_ARGUMENT, fmt.Sprintf("unknown channel payload type %T", content))
 	}
 }
 
@@ -281,7 +284,7 @@ func update_Snapshot_DmChannel(
 	case *DmChannelPayload_Message:
 		return nil
 	default:
-		return RiverError(Err_INVALID_ARGUMENT, "unknown dm channel payload type %T", content)
+		return RiverError(Err_INVALID_ARGUMENT, fmt.Sprintf("unknown dm channel payload type %T", content))
 	}
 }
 
@@ -305,7 +308,7 @@ func update_Snapshot_GdmChannel(
 	case *GdmChannelPayload_Message:
 		return nil
 	default:
-		return RiverError(Err_INVALID_ARGUMENT, "unknown channel payload type %T", channelPayload.Content)
+		return RiverError(Err_INVALID_ARGUMENT, fmt.Sprintf("unknown channel payload type %T", channelPayload.Content))
 	}
 }
 
@@ -322,8 +325,46 @@ func update_Snapshot_User(iSnapshot *Snapshot, userPayload *UserPayload) error {
 		return nil
 	case *UserPayload_UserMembershipAction_:
 		return nil
+	case *UserPayload_BlockchainTransaction:
+		// for sent transactions, sum up things like tips sent
+		switch transactionContent := content.BlockchainTransaction.Content.(type) {
+		case nil:
+			return nil
+		case *BlockchainTransaction_Tip_:
+			if snapshot.UserContent.TipsSent == nil {
+				snapshot.UserContent.TipsSent = make(map[string]uint64)
+			}
+			currencyAddress := common.BytesToAddress(transactionContent.Tip.GetEvent().GetCurrency())
+			currency := currencyAddress.Hex()
+			if _, ok := snapshot.UserContent.TipsSent[currency]; !ok {
+				snapshot.UserContent.TipsSent[currency] = 0
+			}
+			snapshot.UserContent.TipsSent[currency] += transactionContent.Tip.GetEvent().GetAmount()
+			return nil
+		default:
+			return RiverError(Err_INVALID_ARGUMENT, fmt.Sprintf("unknown blockchain transaction type %T", transactionContent))
+		}
+	case *UserPayload_ReceivedBlockchainTransaction_:
+		// for received transactions, sum up things like tips received
+		switch transactionContent := content.ReceivedBlockchainTransaction.Transaction.Content.(type) {
+		case nil:
+			return nil
+		case *BlockchainTransaction_Tip_:
+			if snapshot.UserContent.TipsReceived == nil {
+				snapshot.UserContent.TipsReceived = make(map[string]uint64)
+			}
+			currencyAddress := common.BytesToAddress(transactionContent.Tip.GetEvent().GetCurrency())
+			currency := currencyAddress.Hex()
+			if _, ok := snapshot.UserContent.TipsReceived[currency]; !ok {
+				snapshot.UserContent.TipsReceived[currency] = 0
+			}
+			snapshot.UserContent.TipsReceived[currency] += transactionContent.Tip.GetEvent().GetAmount()
+			return nil
+		default:
+			return RiverError(Err_INVALID_ARGUMENT, fmt.Sprintf("unknown received blockchain transaction type %T", transactionContent))
+		}
 	default:
-		return RiverError(Err_INVALID_ARGUMENT, "unknown user payload type %T", userPayload.Content)
+		return RiverError(Err_INVALID_ARGUMENT, fmt.Sprintf("unknown user payload type %T", userPayload.Content))
 	}
 }
 
@@ -342,7 +383,7 @@ func update_Snapshot_UserSettings(iSnapshot *Snapshot, userSettingsPayload *User
 		snapshot.UserSettingsContent.UserBlocksList = insertUserBlock(snapshot.UserSettingsContent.UserBlocksList, content.UserBlock)
 		return nil
 	default:
-		return RiverError(Err_INVALID_ARGUMENT, "unknown user settings payload type %T", userSettingsPayload.Content)
+		return RiverError(Err_INVALID_ARGUMENT, fmt.Sprintf("unknown user settings payload type %T", userSettingsPayload.Content))
 	}
 }
 
@@ -388,7 +429,7 @@ func update_Snapshot_UserMetadata(
 		snapshot.UserMetadataContent.Bio = &WrappedEncryptedData{Data: content.Bio, EventNum: eventNum, EventHash: eventHash}
 		return nil
 	default:
-		return RiverError(Err_INVALID_ARGUMENT, "unknown user metadata payload type %T", userMetadataPayload.Content)
+		return RiverError(Err_INVALID_ARGUMENT, fmt.Sprintf("unknown user metadata payload type %T", userMetadataPayload.Content))
 	}
 }
 
@@ -438,7 +479,7 @@ func update_Snapshot_UserInbox(
 		cleanup_Snapshot_UserInbox(snapshot, miniblockNum)
 		return nil
 	default:
-		return RiverError(Err_INVALID_ARGUMENT, "unknown user to device payload type %T", userInboxPayload.Content)
+		return RiverError(Err_INVALID_ARGUMENT, fmt.Sprintf("unknown user to device payload type %T", userInboxPayload.Content))
 	}
 }
 
@@ -548,8 +589,26 @@ func update_Snapshot_Member(
 	case *MemberPayload_EncryptionAlgorithm_:
 		snapshot.EncryptionAlgorithm.Algorithm = content.EncryptionAlgorithm.Algorithm
 		return nil
+	case *MemberPayload_MemberBlockchainTransaction_:
+		switch transactionContent := content.MemberBlockchainTransaction.Transaction.Content.(type) {
+		case nil:
+			return nil
+		case *BlockchainTransaction_Tip_:
+			if snapshot.Tips == nil {
+				snapshot.Tips = make(map[string]uint64)
+			}
+			currencyAddress := common.BytesToAddress(transactionContent.Tip.GetEvent().GetCurrency())
+			currency := currencyAddress.Hex()
+			if _, ok := snapshot.Tips[currency]; !ok {
+				snapshot.Tips[currency] = 0
+			}
+			snapshot.Tips[currency] += transactionContent.Tip.GetEvent().GetAmount()
+			return nil
+		default:
+			return RiverError(Err_INVALID_ARGUMENT, fmt.Sprintf("unknown member blockchain transaction type %T", transactionContent))
+		}
 	default:
-		return RiverError(Err_INVALID_ARGUMENT, "unknown membership payload type %T", memberPayload.Content)
+		return RiverError(Err_INVALID_ARGUMENT, fmt.Sprintf("unknown membership payload type %T", memberPayload.Content))
 	}
 }
 

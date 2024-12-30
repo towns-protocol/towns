@@ -5,6 +5,7 @@ import {
     UserSettingsPayload_UserBlock,
     UserPayload_UserMembership,
     UserInboxPayload_Snapshot_DeviceSummary,
+    BlockchainTransaction_Tip,
 } from '@river-build/proto'
 
 import {
@@ -80,6 +81,13 @@ export type StreamStateEvents = {
         summary: UserInboxPayload_Snapshot_DeviceSummary,
     ) => void
     userDeviceKeysUpdated: (streamId: string, deviceKeys: UserDevice[]) => void
+    userTipSent: (streamId: string, currency: string, amount: bigint) => void
+    userTipReceived: (streamId: string, currency: string, amount: bigint) => void
+    streamTipped: (
+        streamId: string,
+        eventId: string,
+        transaction: BlockchainTransaction_Tip,
+    ) => void
     spaceChannelCreated: (spaceId: string, channelId: string) => void
     spaceChannelUpdated: (spaceId: string, channelId: string, updatedAtEventNum: bigint) => void
     spaceChannelAutojoinUpdated: (spaceId: string, channelId: string, autojoin: boolean) => void

@@ -6,14 +6,14 @@ pragma solidity ^0.8.19;
 //interfaces
 import {IDiamond} from "@river-build/diamond/src/Diamond.sol";
 import {IOwnableBase} from "@river-build/diamond/src/facets/ownable/IERC173.sol";
-import {IRiverPointsBase} from "contracts/src/tokens/points/IRiverPoints.sol";
+import {IRiverPointsBase} from "contracts/src/airdrop/points/IRiverPoints.sol";
 
 //libraries
-import {CheckIn} from "contracts/src/tokens/points/CheckIn.sol";
+import {CheckIn} from "contracts/src/airdrop/points/CheckIn.sol";
 
 // contracts
 import {River} from "contracts/src/tokens/river/base/River.sol";
-import {RiverPoints} from "contracts/src/tokens/points/RiverPoints.sol";
+import {RiverPoints} from "contracts/src/airdrop/points/RiverPoints.sol";
 import {BaseRegistryTest} from "../base/registry/BaseRegistry.t.sol";
 
 contract RiverPointsTest is

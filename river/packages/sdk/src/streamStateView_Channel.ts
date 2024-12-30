@@ -10,6 +10,7 @@ import { streamIdFromBytes } from './id'
 export class StreamStateView_Channel extends StreamStateView_AbstractContent {
     readonly streamId: string
     spaceId: string = ''
+    readonlytips: { [key: string]: bigint } = {}
     private reachedRenderableContent = false
 
     constructor(streamId: string) {

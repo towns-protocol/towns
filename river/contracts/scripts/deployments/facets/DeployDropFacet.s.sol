@@ -8,7 +8,7 @@ pragma solidity ^0.8.23;
 //contracts
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
-import {DropFacet} from "contracts/src/tokens/drop/DropFacet.sol";
+import {DropFacet} from "contracts/src/airdrop/drop/DropFacet.sol";
 
 contract DeployDropFacet is Deployer, FacetHelper {
   // FacetHelper

@@ -2,18 +2,18 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IDropFacet} from "contracts/src/tokens/drop/IDropFacet.sol";
+import {IDropFacet} from "contracts/src/airdrop/drop/IDropFacet.sol";
 import {IRewardsDistribution} from "contracts/src/base/registry/facets/distribution/v2/IRewardsDistribution.sol";
 
 // libraries
-import {DropStorage} from "contracts/src/tokens/drop/DropStorage.sol";
+import {DropStorage} from "contracts/src/airdrop/drop/DropStorage.sol";
 import {CurrencyTransfer} from "contracts/src/utils/libraries/CurrencyTransfer.sol";
 
 import {SafeCastLib} from "solady/utils/SafeCastLib.sol";
 
 // contracts
 import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
-import {DropFacetBase} from "contracts/src/tokens/drop/DropFacetBase.sol";
+import {DropFacetBase} from "contracts/src/airdrop/drop/DropFacetBase.sol";
 import {OwnableBase} from "@river-build/diamond/src/facets/ownable/OwnableBase.sol";
 
 contract DropFacet is IDropFacet, DropFacetBase, OwnableBase, Facet {

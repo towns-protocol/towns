@@ -6,17 +6,17 @@ import {Vm} from "forge-std/Test.sol";
 
 //interfaces
 
-import {IDropFacetBase} from "contracts/src/tokens/drop/IDropFacet.sol";
+import {IDropFacetBase} from "contracts/src/airdrop/drop/IDropFacet.sol";
 import {IOwnableBase} from "@river-build/diamond/src/facets/ownable/IERC173.sol";
 import {IRewardsDistributionBase} from "contracts/src/base/registry/facets/distribution/v2/IRewardsDistribution.sol";
 
 //libraries
 import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 import {MerkleTree} from "contracts/test/utils/MerkleTree.sol";
-import {DropFacet} from "contracts/src/tokens/drop/DropFacet.sol";
+import {DropFacet} from "contracts/src/airdrop/drop/DropFacet.sol";
 import {RewardsDistribution} from "contracts/src/base/registry/facets/distribution/v2/RewardsDistribution.sol";
 import {BasisPoints} from "contracts/src/utils/libraries/BasisPoints.sol";
-import {DropStorage} from "contracts/src/tokens/drop/DropStorage.sol";
+import {DropStorage} from "contracts/src/airdrop/drop/DropStorage.sol";
 import {EIP712Utils} from "contracts/test/utils/EIP712Utils.sol";
 import {NodeOperatorStatus} from "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
 

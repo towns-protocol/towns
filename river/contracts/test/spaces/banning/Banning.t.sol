@@ -67,6 +67,8 @@ contract BanningTest is BaseSetup, IRolesBase, IMembershipBase {
   function test_ban(
     address wallet
   ) external assumeEOA(wallet) givenWalletHasJoinedSpace(wallet) {
+    vm.assume(wallet != founder);
+
     uint256[] memory tokenIds = queryable.tokensOfOwner(wallet);
     uint256 tokenId = tokenIds[0];
 

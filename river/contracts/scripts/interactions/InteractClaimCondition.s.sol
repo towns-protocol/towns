@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IDropFacetBase, IDropFacet} from "contracts/src/tokens/drop/IDropFacet.sol";
+import {IDropFacetBase, IDropFacet} from "contracts/src/airdrop/drop/IDropFacet.sol";
 
 // libraries
 import {MerkleTree} from "contracts/test/utils/MerkleTree.sol";

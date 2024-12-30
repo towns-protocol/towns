@@ -9,13 +9,16 @@ import {
 } from '@river-build/proto'
 import { StreamEncryptionEvents, StreamEvents, StreamStateEvents } from './streamEvents'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
-import { check } from '@river-build/dlog'
+import { bin_toHexString, check } from '@river-build/dlog'
 import { logNever } from './check'
 import { streamIdFromBytes } from './id'
+import { utils } from 'ethers'
 
 export class StreamStateView_User extends StreamStateView_AbstractContent {
     readonly streamId: string
     readonly streamMemberships: { [key: string]: UserPayload_UserMembership } = {}
+    tipsSent: { [key: string]: bigint } = {}
+    tipsReceived: { [key: string]: bigint } = {}
 
     constructor(streamId: string) {
         super()
@@ -31,6 +34,8 @@ export class StreamStateView_User extends StreamStateView_AbstractContent {
         for (const payload of content.memberships) {
             this.addUserPayload_userMembership(payload, encryptionEmitter)
         }
+        this.tipsSent = { ...content.tipsSent }
+        this.tipsReceived = { ...content.tipsReceived }
     }
 
     prependEvent(
@@ -50,7 +55,6 @@ export class StreamStateView_User extends StreamStateView_AbstractContent {
             case 'userMembershipAction':
                 break
             case 'blockchainTransaction':
-                // todo save transactions
                 break
             case 'receivedBlockchainTransaction':
                 break
@@ -77,10 +81,49 @@ export class StreamStateView_User extends StreamStateView_AbstractContent {
                 break
             case 'userMembershipAction':
                 break
-            case 'blockchainTransaction':
+            case 'blockchainTransaction': {
+                const transactionContent = payload.content.value.content
+                switch (transactionContent?.case) {
+                    case undefined:
+                        break
+                    case 'tip': {
+                        const event = transactionContent.value.event
+                        if (!event) {
+                            return
+                        }
+                        const currency = utils.getAddress(bin_toHexString(event.currency))
+                        this.tipsSent[currency] = this.tipsSent[currency] ?? 0n + event.amount
+                        stateEmitter?.emit('userTipSent', this.streamId, currency, event.amount)
+                        break
+                    }
+                    default:
+                        logNever(transactionContent)
+                        break
+                }
                 break
-            case 'receivedBlockchainTransaction':
+            }
+            case 'receivedBlockchainTransaction': {
+                const transactionContent = payload.content.value.transaction?.content
+                switch (transactionContent?.case) {
+                    case undefined:
+                        break
+                    case 'tip': {
+                        const event = transactionContent.value.event
+                        if (!event) {
+                            return
+                        }
+                        const currency = utils.getAddress(bin_toHexString(event.currency))
+                        this.tipsReceived[currency] =
+                            this.tipsReceived[currency] ?? 0n + event.amount
+                        stateEmitter?.emit('userTipReceived', this.streamId, currency, event.amount)
+                        break
+                    }
+                    default:
+                        logNever(transactionContent)
+                        break
+                }
                 break
+            }
             case undefined:
                 break
             default:

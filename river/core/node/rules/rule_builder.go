@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"fmt"
 	"time"
 
 	. "github.com/river-build/river/core/node/base"
@@ -16,15 +17,15 @@ type DerivedEvent struct {
 }
 
 func unknownPayloadType(payload any) error {
-	return RiverError(Err_INVALID_ARGUMENT, "unknown payload type %T", payload)
+	return RiverError(Err_INVALID_ARGUMENT, fmt.Sprintf("unknown payload type %T", payload))
 }
 
 func unknownContentType(content any) error {
-	return RiverError(Err_INVALID_ARGUMENT, "unknown content type %T", content)
+	return RiverError(Err_INVALID_ARGUMENT, fmt.Sprintf("unknown content type %T", content))
 }
 
 func invalidContentType(content any) error {
-	return RiverError(Err_INVALID_ARGUMENT, "invalid contemt type %T", content)
+	return RiverError(Err_INVALID_ARGUMENT, fmt.Sprintf("invalid contemt type %T", content))
 }
 
 func isPastExpiry(currentTime time.Time, expiryEpochMs int64) bool {
