@@ -10,6 +10,7 @@ import { useDevice } from 'hooks/useDevice'
 import { useChannelIdFromPathname } from 'hooks/useChannelIdFromPathname'
 import { TipTooltipPopup } from './TipTooltipPopup'
 import { TipSheet } from './TipSheet'
+import { trackTipOnMessage } from './tipAnalytics'
 
 const emptyTips: MessageTips = []
 
@@ -85,6 +86,7 @@ export function TipReaction({
                                         if (tipPending || !isTippable) {
                                             return
                                         }
+                                        trackTipOnMessage('messageReaction')
                                         if (isTouch) {
                                             setIsMobileSheetOpen(true)
                                         } else {

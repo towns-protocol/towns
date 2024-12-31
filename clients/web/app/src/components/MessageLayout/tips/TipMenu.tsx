@@ -2,6 +2,7 @@ import React from 'react'
 import { env } from 'utils'
 import { Button, MotionBox, Stack, Text } from '@ui'
 import type { TipOption } from './types'
+import { trackTipAmount } from './tipAnalytics'
 
 const tipOptions: TipOption[] = [
     {
@@ -73,6 +74,7 @@ function TipOption(props: { option: TipOption; setTipValue: (option: TipOption) 
             key={option.amountInCents}
             onClick={(e) => {
                 e.stopPropagation()
+                trackTipAmount(option.amountInCents)
                 setTipValue(option)
             }}
         >

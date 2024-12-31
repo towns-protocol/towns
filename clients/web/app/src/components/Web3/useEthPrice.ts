@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect } from 'react'
-import { useTownsContext } from 'use-towns-client'
+import { queryClient, useTownsContext } from 'use-towns-client'
 import { formatUnitsToFixedLength, parseUnits } from 'hooks/useBalance'
 import { fetchEthPrice } from './fetchEthPrice'
 
@@ -46,6 +46,13 @@ export function useEthPrice(
         refetchInterval: watch ? undefined : refetchInterval,
         staleTime: 5_000,
         gcTime: 10_000,
+    })
+}
+
+export function ensureEthPrice() {
+    return queryClient.ensureQueryData({
+        queryKey: queryKey(),
+        queryFn: fetchEthPrice,
     })
 }
 

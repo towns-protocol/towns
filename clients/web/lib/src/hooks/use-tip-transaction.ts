@@ -11,6 +11,7 @@ import { useCallback, useMemo, useRef, useState } from 'react'
 import { useTownsClient } from './use-towns-client'
 import { getTransactionHashOrUserOpHash } from '@towns/userops'
 import { TipParams } from '../types/towns-types'
+import { TipEventObject } from '@river-build/generated/dev/typings/ITipping'
 
 /**
  * Hook to create a role with a transaction.
@@ -20,7 +21,7 @@ export function useTipTransaction() {
         undefined,
     )
     const isTransacting = useRef<boolean>(false)
-    const { tipTransaction, waitForTipTransaction } = useTownsClient()
+    const { tipTransaction, waitForTipTransaction, clientSingleton } = useTownsClient()
 
     const { data, isLoading, transactionHash, transactionStatus, error } = useMemo(() => {
         return {
@@ -34,7 +35,16 @@ export function useTipTransaction() {
 
     // update role with new permissions, tokens, and users
     const _tip = useCallback(
-        async function (args: TipParams): Promise<TipTransactionContext | undefined> {
+        async function (
+            args: TipParams,
+            {
+                onSuccess,
+                onError,
+            }: {
+                onSuccess?: (tipEvent: TipEventObject) => void
+                onError?: (error: Error) => void
+            } = {},
+        ): Promise<TipTransactionContext | undefined> {
             const { signer } = args
             if (isTransacting.current) {
                 console.warn('useTipTransaction', 'Transaction already in progress')
@@ -75,14 +85,31 @@ export function useTipTransaction() {
             } finally {
                 isTransacting.current = false
                 if (transactionResult?.status === TransactionStatus.Success) {
+                    if (transactionResult.data?.senderAddress) {
+                        try {
+                            const tipEvent = clientSingleton?.spaceDapp.getTipEvent(
+                                args.spaceId,
+                                transactionResult.receipt,
+                                transactionResult.data.senderAddress,
+                            )
+                            if (tipEvent) {
+                                onSuccess?.(tipEvent)
+                            }
+                        } catch (error) {
+                            console.warn('useTipTransaction', 'Failed to parse tip event', error)
+                        }
+                    }
+
                     await queryClient.invalidateQueries({
                         queryKey: blockchainKeys.spaceTotalTips(args.spaceId),
                     })
+                } else {
+                    onError?.(transactionResult?.error ?? new Error('Unknown error'))
                 }
             }
             return transactionResult
         },
-        [tipTransaction, waitForTipTransaction],
+        [clientSingleton?.spaceDapp, tipTransaction, waitForTipTransaction],
     )
 
     return {

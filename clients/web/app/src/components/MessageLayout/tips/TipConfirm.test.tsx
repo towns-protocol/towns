@@ -178,18 +178,23 @@ describe('TipConfirm', () => {
         expect(onTip).toHaveBeenCalled()
 
         await waitFor(() => {
-            expect(tipTransactionSpy).toHaveBeenCalledWith({
-                amount: 304059935028219n,
-                currency: Lib.ETH_ADDRESS,
-                messageId: eventId,
-                spaceId: spaceRoomIdentifier,
-                channelId: channelRoomIdentifier,
-                receiverUserId: mockMessageOwner.userId,
-                receiverTokenId: '1',
-                receiverUsername: mockMessageOwner.username,
-                senderAddress: Lib.MOCK_ADDRESS,
-                signer: {},
-            })
+            expect(tipTransactionSpy).toHaveBeenCalledWith(
+                {
+                    amount: 304059935028219n,
+                    currency: Lib.ETH_ADDRESS,
+                    messageId: eventId,
+                    spaceId: spaceRoomIdentifier,
+                    channelId: channelRoomIdentifier,
+                    receiverUserId: mockMessageOwner.userId,
+                    receiverTokenId: '1',
+                    receiverUsername: mockMessageOwner.username,
+                    senderAddress: Lib.MOCK_ADDRESS,
+                    signer: {},
+                },
+                {
+                    onSuccess: expect.any(Function),
+                },
+            )
         })
     })
 })

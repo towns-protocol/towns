@@ -21,6 +21,7 @@ import { env } from 'utils'
 import { DeleteMessagePrompt } from './DeleteMessagePrompt'
 import { useRedactMessage } from './hooks/useRedactMessage'
 import { TipSheet } from './tips/TipSheet'
+import { trackTipOnMessage } from './tips/tipAnalytics'
 
 type Props = {
     onClose: () => void
@@ -89,6 +90,7 @@ export const MessageModalSheet = (props: Props) => {
     const onTipClick = useCallback(() => {
         setIsHidden(true)
         setActivePrompt('tip')
+        trackTipOnMessage('messageActions')
     }, [])
 
     const onCloseTip = useCallback(

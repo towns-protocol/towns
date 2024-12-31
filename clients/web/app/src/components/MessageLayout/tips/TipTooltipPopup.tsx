@@ -8,6 +8,7 @@ import { useChannelIdFromPathname } from 'hooks/useChannelIdFromPathname'
 import { TipMenu } from './TipMenu'
 import { TipOption } from './types'
 import { TipConfirm } from './TipConfirm'
+import { trackTipOnMessage } from './tipAnalytics'
 
 export function TipTooltipPopup(props: {
     wrapperRef: React.RefObject<HTMLDivElement>
@@ -111,6 +112,7 @@ export function TipIcoButton(props: { tipPending: boolean; triggerProps: CardOpe
                     view: window,
                 }) as unknown as React.MouseEvent,
             )
+            trackTipOnMessage('messageActions')
         }, [onTriggerClick]),
     )
 

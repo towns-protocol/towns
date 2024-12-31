@@ -4,6 +4,7 @@ import {
     ETH_ADDRESS,
     LookupUser,
     useConnectivity,
+    useContractSpaceInfoWithoutClient,
     useTipTransaction,
     useTokenIdOfOwner,
 } from 'use-towns-client'
@@ -19,7 +20,9 @@ import { popupToast } from '@components/Notifications/popupToast'
 import { StandardToast } from '@components/Notifications/StandardToast'
 import { useBalance } from 'hooks/useBalance'
 import { useStore } from 'store/store'
+import { useGatherSpaceDetailsAnalytics } from '@components/Analytics/useGatherSpaceDetailsAnalytics'
 import { TipOption } from './types'
+import { trackPostedTip } from './tipAnalytics'
 
 export function TipConfirm(props: {
     tipValue: TipOption | undefined
@@ -30,6 +33,7 @@ export function TipConfirm(props: {
     onInsufficientBalance?: () => void
 }) {
     const { tipValue, setTipValue, messageOwner, eventId, onTip, onInsufficientBalance } = props
+
     const {
         data: price,
         isLoading: isLoadingPrice,
@@ -71,6 +75,12 @@ export function TipConfirm(props: {
 
     const { tip } = useTipTransaction()
 
+    const spaceDetailsAnalytics = useGatherSpaceDetailsAnalytics({
+        spaceId: spaceId,
+        channelId: channelId,
+    })
+    const { data: spaceInfo } = useContractSpaceInfoWithoutClient(spaceId)
+
     const _onTip = async (getSigner: GetSigner) => {
         onTip?.()
         const signer = await getSigner()
@@ -106,18 +116,32 @@ export function TipConfirm(props: {
             return
         }
 
-        await tip({
-            spaceId,
-            receiverTokenId: tokenId,
-            receiverUserId: messageOwner.userId,
-            receiverUsername: messageOwner.username,
-            senderAddress: myAbstractAccount,
-            messageId: eventId,
-            channelId,
-            currency: ETH_ADDRESS,
-            amount: ethAmount.value,
-            signer,
-        })
+        await tip(
+            {
+                spaceId,
+                receiverTokenId: tokenId,
+                receiverUserId: messageOwner.userId,
+                receiverUsername: messageOwner.username,
+                senderAddress: myAbstractAccount,
+                messageId: eventId,
+                channelId,
+                currency: ETH_ADDRESS,
+                amount: ethAmount.value,
+                signer,
+            },
+            {
+                onSuccess: (tipEvent) => {
+                    trackPostedTip({
+                        tipAmount: ethAmount.formatted,
+                        receipient: tipEvent.receiver,
+                        spaceName: spaceInfo?.name ?? '',
+                        spaceId,
+                        isGated: spaceDetailsAnalytics.gatedSpace,
+                        pricingModule: spaceDetailsAnalytics.pricingModule,
+                    })
+                },
+            },
+        )
     }
 
     if (!tipValue) {
