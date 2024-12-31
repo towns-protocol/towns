@@ -104,7 +104,6 @@ func TestMiniBlockProductionFrequency(t *testing.T) {
 	var conversation [][]string
 	tt.require.Eventually(func() bool {
 		i++
-		var logsFound []*river.StreamRegistryV1StreamLastMiniblockUpdated
 
 		msg := fmt.Sprint("hi!", i)
 		conversation = append(conversation, []string{msg})
@@ -118,6 +117,7 @@ func TestMiniBlockProductionFrequency(t *testing.T) {
 		})
 		tt.require.NoError(err)
 
+		var logsFound []*river.StreamRegistryV1StreamLastMiniblockUpdated
 		for logs.Next() {
 			log := logs.Event
 			logsFound = append(logsFound, log)
@@ -126,6 +126,9 @@ func TestMiniBlockProductionFrequency(t *testing.T) {
 		if testfmt.Enabled() {
 			mbs := alice.getMiniblocks(channelId, 0, 100)
 			testfmt.Print(t, "iter", i, "logsFound", len(logsFound), "mbs", len(mbs))
+			for _, l := range logsFound {
+				testfmt.Print(t, "    log", l.LastMiniblockNum)
+			}
 		}
 
 		if len(logsFound) < 3 {

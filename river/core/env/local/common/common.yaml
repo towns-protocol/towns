@@ -21,6 +21,8 @@ riverChain:
     chainId: 31338
     networkUrl: 'http://127.0.0.1:8546'
     blockTimeMs: 1000
+    transactionPool:
+        gasFeeCap: 1000000000
 
 # Logging
 log:

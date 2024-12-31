@@ -720,11 +720,12 @@ func (r *transactionPool) submitLocked(
 	}
 
 	opts := &bind.TransactOpts{
-		From:    r.wallet.Address,
-		Nonce:   new(big.Int).SetUint64(nonce),
-		Signer:  r.signerFn,
-		Context: ctx,
-		NoSend:  true,
+		From:      r.wallet.Address,
+		Nonce:     new(big.Int).SetUint64(nonce),
+		Signer:    r.signerFn,
+		Context:   ctx,
+		NoSend:    true,
+		GasFeeCap: r.pricePolicy.GasFeeCap(),
 	}
 
 	tx, err := createTx(opts)
@@ -736,12 +737,13 @@ func (r *transactionPool) submitLocked(
 		span.SetAttributes(attribute.String("tx_hash", tx.Hash().String()))
 	}
 
+	// TODO: disabling this check for now
 	// ensure that tx gas price is not higher than node operator has defined in the config he is willing to pay
-	if tx.GasFeeCap() != nil && r.pricePolicy.GasFeeCap() != nil && tx.GasFeeCap().Cmp(r.pricePolicy.GasFeeCap()) > 0 {
-		return nil, RiverError(Err_BAD_CONFIG, "Transaction too expensive").
-			Tags("tx.GasFeeCap", tx.GasFeeCap().String(), "user.GasFeeCap", r.pricePolicy.GasFeeCap().String(), "name", name).
-			Func("Submit")
-	}
+	// if tx.GasFeeCap() != nil && r.pricePolicy.GasFeeCap() != nil && tx.GasFeeCap().Cmp(r.pricePolicy.GasFeeCap()) > 0 {
+	// 	return nil, RiverError(Err_BAD_CONFIG, "Transaction too expensive").
+	// 		Tags("tx.GasFeeCap", tx.GasFeeCap().String(), "user.GasFeeCap", r.pricePolicy.GasFeeCap().String(), "name", name).
+	// 		Func("Submit")
+	// }
 
 	if err := r.client.SendTransaction(ctx, tx); err != nil {
 		// force fetching the latest nonce from the rpc node again when it was reported to be too low. This can be
@@ -779,11 +781,12 @@ func (r *transactionPool) submitLocked(
 	r.transactionSubmitted.With(prometheus.Labels{"method_name": methodName}).Add(1)
 
 	log := dlog.FromCtx(ctx)
-	log.Debug(
+	log.Info(
 		"TxPool: Transaction SENT",
 		"txHash", tx.Hash(),
 		"chain", r.chainID,
 		"name", name,
+		"method", methodName,
 		"nonce", tx.Nonce(),
 		"from", opts.From,
 		"to", tx.To(),

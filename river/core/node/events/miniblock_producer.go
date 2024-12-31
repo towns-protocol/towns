@@ -607,14 +607,15 @@ func (p *miniblockProducer) submitProposalBatch(ctx context.Context, proposals [
 	// Only register miniblocks when it's time. If it's not time assume registration was successful.
 	// This is to reduce the number of transactions/calldata size.
 	var success []StreamId
+	var failed []StreamId
 	var filteredProposals []*mbJob
-	for _, job := range proposals {
-		freq := int64(p.cfg.Get().StreamMiniblockRegistrationFrequency)
-		if freq <= 0 {
-			freq = 1
-		}
+	freq := int64(p.cfg.Get().StreamMiniblockRegistrationFrequency)
+	if freq <= 0 {
+		freq = 1
+	}
 
-		if job.replicated || job.candidate.Ref.Num%freq == 0 {
+	for _, job := range proposals {
+		if job.replicated || job.candidate.Ref.Num%freq == 0 { //|| job.candidate.Ref.Num == 1 {
 			filteredProposals = append(filteredProposals, job)
 		} else {
 			success = append(success, job.stream.streamId)
@@ -624,24 +625,7 @@ func (p *miniblockProducer) submitProposalBatch(ctx context.Context, proposals [
 		}
 	}
 
-	if len(filteredProposals) == 1 {
-		job := filteredProposals[0]
-
-		err := p.streamCache.Params().Registry.SetStreamLastMiniblock(
-			ctx,
-			job.stream.streamId,
-			job.candidate.headerEvent.MiniblockRef.Hash,
-			job.candidate.headerEvent.Hash,
-			uint64(job.candidate.Ref.Num),
-			false,
-		)
-		if err != nil {
-			log.Error("submitProposalBatch: Error registering miniblock", "streamId", job.stream.streamId, "err", err)
-		} else {
-			success = append(success, job.stream.streamId)
-		}
-
-	} else {
+	if len(filteredProposals) > 0 {
 		var mbs []river.SetMiniblock
 		for _, job := range filteredProposals {
 			mbs = append(
@@ -656,7 +640,6 @@ func (p *miniblockProducer) submitProposalBatch(ctx context.Context, proposals [
 			)
 		}
 
-		var failed []StreamId
 		var err error
 		successRegistered, failed, err := p.streamCache.Params().Registry.SetStreamLastMiniblockBatch(ctx, mbs)
 		if err == nil {
@@ -668,6 +651,14 @@ func (p *miniblockProducer) submitProposalBatch(ctx context.Context, proposals [
 			log.Error("processMiniblockProposalBatch: Error registering miniblock batch", "err", err)
 		}
 	}
+
+	log.Info("processMiniblockProposalBatch: Submitted SetStreamLastMiniblockBatch",
+		"total", len(proposals),
+		"actualSubmitted", len(filteredProposals),
+		"success", len(success),
+		"failed", len(failed),
+		"mbFrequency", freq,
+	)
 
 	for _, job := range proposals {
 		if slices.Contains(success, job.stream.streamId) {

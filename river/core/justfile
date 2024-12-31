@@ -55,6 +55,11 @@ _anvil-start $NAME $PORT $CHAIN_ID:
         nohup anvil --chain-id ${CHAIN_ID} \
             --port ${PORT} \
             --block-time 1 \
+            --block-base-fee-per-gas 1 \
+            --disable-block-gas-limit \
+            --disable-code-size-limit \
+            --disable-min-priority-fee \
+            --gas-price 1 \
             > ./run_files/anvil/${NAME}.log 2>&1 &
         ../scripts/wait-for-port.sh ${PORT} anvil_${NAME}
     fi
