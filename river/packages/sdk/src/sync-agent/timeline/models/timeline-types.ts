@@ -323,6 +323,16 @@ export type ChannelMessageEventContentOneOf =
     | ChannelMessageEventContent_GM
     | ChannelMessageEventContent_Text
 
+export interface Mention {
+    displayName: string
+    userId: string
+    atChannel?: boolean
+}
+
+// mentions should always have a user id, but it's data over the wire
+// and we can't guarantee that it will be there (we have issues in prod as i write this)
+export type OTWMention = Omit<Mention, 'userId'> & { userId?: string }
+
 export interface ChannelMessageEvent {
     kind: RiverTimelineEvent.ChannelMessage
     threadId?: string
@@ -330,14 +340,7 @@ export interface ChannelMessageEvent {
     replyId?: string
     replyPreview?: string
     body: string
-    mentions: {
-        // mentions should always have a user id, but it's data over the wire
-        // and we can't guarantee that it will be there (we have issues in prod as i write this)
-        // TODO: would be nice to preprocess and dont add the mention if the user id is not there
-        userId: string | undefined
-        displayName: string
-        atChannel?: boolean
-    }[]
+    mentions: OTWMention[]
     editsEventId?: string
     content: ChannelMessageEventContentOneOf
     attachments?: Attachment[]

@@ -926,7 +926,7 @@ export function getFallbackContent(
     senderDisplayName: string,
     content?: TimelineEvent_OneOf,
     error?: string,
-) {
+): string {
     if (error) {
         return error
     }
@@ -1016,7 +1016,7 @@ export function getFallbackContent(
         case RiverTimelineEvent.StreamEncryptionAlgorithm:
             return `algorithm: ${content.algorithm}`
         default:
-            checkNever(content)
+            checkNever(content) // these are client side after parsing events, everything should be covered
     }
 }
 
@@ -1132,6 +1132,9 @@ export function transformAttachments(attachments?: Attachment[]): ChannelMessage
                             },
                         },
                     })
+                default:
+                    logNever(attachment)
+                    return undefined
             }
         })
         .filter(isDefined)

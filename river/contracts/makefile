@@ -186,7 +186,7 @@ interact-river-anvil :;
 # 			River Testnet
 # ===========================
 deploy-river-testnet :;
-	@$(MAKE) deploy-any rpc=river_devnet private_key=${TESTNET_PRIVATE_KEY}
+	@$(MAKE) deploy-any rpc=river_devnet private_key=${TESTNET_PRIVATE_KEY} verifier=${RIVERSCAN_DEVNET_URL}
 
 interact-river-testnet :;
 	@$(MAKE) interact-any rpc=river_devnet private_key=${TESTNET_PRIVATE_KEY}
@@ -241,7 +241,7 @@ verify-sepolia :;
 # 				 	River
 # ===========================
 deploy-river :;
-	@$(MAKE) deploy-any-ledger rpc=river hd_path=${HD_PATH} sender=${SENDER_ADDRESS}
+	@$(MAKE) deploy-any-ledger rpc=river hd_path=${HD_PATH} sender=${SENDER_ADDRESS} verifier=${RIVERSCAN_URL} etherscan=${RIVERSCAN_API_KEY}
 
 interact-river :;
 	@$(MAKE) interact-any-ledger rpc=river hd_path=${HD_PATH} sender=${SENDER_ADDRESS}

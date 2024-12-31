@@ -92,7 +92,7 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
 
   function setStreamLastMiniblock(
     bytes32 streamId,
-    bytes32 prevMiniBlockHash,
+    bytes32, // prevMiniblockHash
     bytes32 lastMiniblockHash,
     uint64 lastMiniblockNum,
     bool isSealed
@@ -165,11 +165,13 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
         continue;
       }
 
+      // TODO: This check is currently relaxed to allow reduction of write volume.
       // Check if the lastMiniblockNum is the next expected miniblock and
       // the prevMiniblockHash is correct
       if (
-        stream.lastMiniblockNum + 1 != miniblock.lastMiniblockNum ||
-        stream.lastMiniblockHash != miniblock.prevMiniBlockHash
+        // stream.lastMiniblockNum + 1 != miniblock.lastMiniblockNum ||
+        // stream.lastMiniblockHash != miniblock.prevMiniBlockHash
+        stream.lastMiniblockNum >= miniblock.lastMiniblockNum
       ) {
         emit StreamLastMiniblockUpdateFailed(
           miniblock.streamId,
@@ -180,6 +182,11 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
         continue;
       }
 
+      // Delete genesis miniblock bytes if the stream is moving beyond genesis
+      if (stream.lastMiniblockNum == 0) {
+        delete ds.genesisMiniblockByStreamId[miniblock.streamId];
+      }
+
       // Update the stream information
       stream.lastMiniblockHash = miniblock.lastMiniblockHash;
       stream.lastMiniblockNum = miniblock.lastMiniblockNum;
@@ -187,11 +194,6 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
       // Set the sealed flag if requested
       if (miniblock.isSealed) {
         stream.flags |= StreamFlags.SEALED;
-      }
-
-      // Delete genesis miniblock bytes if the stream is moving beyond genesis
-      if (miniblock.lastMiniblockNum == 1) {
-        delete ds.genesisMiniblockByStreamId[miniblock.streamId];
       }
 
       emit StreamLastMiniblockUpdated(
