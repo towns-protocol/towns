@@ -1,5 +1,6 @@
 import React from 'react'
 import { Box, BoxProps, MotionBox } from '@ui'
+import { GATING_ENABLED } from '../createTown.schema'
 
 const noopTrue = () => true
 
@@ -13,9 +14,11 @@ export const Dots = (
 ) => {
     const { slideIndex, slidesLength, onSelectDot, getDotActive = noopTrue, ...boxProps } = props
 
+    const minSlides = GATING_ENABLED ? 3 : 2
+
     return (
         <Box centerContent paddingX={{ mobile: 'sm', default: 'x4' }} {...boxProps}>
-            {Array.from({ length: Math.max(3, slidesLength) })
+            {Array.from({ length: Math.max(minSlides, slidesLength) })
                 .map((_, index) => `section-${index}`)
                 .map((sectionId, index) => (
                     <Box

@@ -129,7 +129,7 @@ export const CreateTownForm = (props: { form: UseFormReturn<CreateTownFormSchema
             <MobileNavigationHeader />
             <Box absoluteFill centerContent>
                 <SlidesContainer ref={scrollRef} style={scrollStyle}>
-                    {slides.map((Slide, index, arr) => {
+                    {slides.map((Slide, index) => {
                         const isLastSlide = numSlides === index + 1
                         return (
                             <Slide

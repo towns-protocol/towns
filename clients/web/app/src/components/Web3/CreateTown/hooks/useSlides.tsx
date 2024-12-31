@@ -2,6 +2,7 @@ import { UseFormReturn } from 'react-hook-form'
 import { useMemo } from 'react'
 import * as Slides from '../CreateTown.Slides'
 import { CreateTownFormSchema } from '../types'
+import { GATING_ENABLED } from '../createTown.schema'
 
 export const useSlides = (form: UseFormReturn<CreateTownFormSchema>, isLoading: boolean) => {
     const [clientTownType, clientMembershipFee, clientCanJoin, clientGateBy] = form.watch([
@@ -31,23 +32,25 @@ export const useSlides = (form: UseFormReturn<CreateTownFormSchema>, isLoading: 
             }
         }
 
-        slides.push(Slides.WhoCanJoin)
+        if (GATING_ENABLED) {
+            slides.push(Slides.WhoCanJoin)
 
-        if (clientMembershipFee) {
-            if (errors.clientCanJoin) {
-                return slides
-            }
-        }
-
-        if (clientCanJoin === 'gated') {
-            slides.push(Slides.GateBy)
-
-            if (clientGateBy === 'digitalAssets') {
-                slides.push(Slides.GateByDigitalAssets)
+            if (clientMembershipFee) {
+                if (errors.clientCanJoin) {
+                    return slides
+                }
             }
 
-            if (clientGateBy === 'walletAddress') {
-                slides.push(Slides.GateByWalletAddress)
+            if (clientCanJoin === 'gated') {
+                slides.push(Slides.GateBy)
+
+                if (clientGateBy === 'digitalAssets') {
+                    slides.push(Slides.GateByDigitalAssets)
+                }
+
+                if (clientGateBy === 'walletAddress') {
+                    slides.push(Slides.GateByWalletAddress)
+                }
             }
         }
 

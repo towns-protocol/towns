@@ -3,6 +3,8 @@ import { z } from 'zod'
 import { zodUnionFromArray } from 'utils/zodUnionFromArray'
 import { gatingSchema } from '../Gating/Gating.schema'
 
+export const GATING_ENABLED = false
+
 export const DEFAULT_MEMBERSHIP_LIMIT = 1000
 export const MAX_LENGTH_SPACE_NAME = 32
 export const MAX_LENGTH_SPACE_BIO = 240
@@ -107,7 +109,7 @@ export const useRefinedCreateTownShema = ({
                 }
             }
         }
-        if (data.clientCanJoin === null) {
+        if (GATING_ENABLED && data.clientCanJoin === null) {
             ctx.addIssue({
                 code: z.ZodIssueCode.custom,
                 path: ['clientCanJoin'],

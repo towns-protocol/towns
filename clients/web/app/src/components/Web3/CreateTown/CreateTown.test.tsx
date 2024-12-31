@@ -10,6 +10,7 @@ import { TestApp } from 'test/testUtils'
 import { UseMockCreateSpaceReturn, mockCreateTransactionWithSpy } from 'test/transactionHookMock'
 import { YEAR_MS } from 'data/constants'
 import { CreateTownForm, CreateTownFormRender } from './CreateTown'
+import { GATING_ENABLED } from './createTown.schema'
 
 const Wrapper = (props: PropsWithChildren) => {
     return (
@@ -62,7 +63,12 @@ describe('CreateTown', () => {
 
     it('should setup free town slides', async () => {
         await actions.setupFree()
-        expect(await screen.findByText('Who can join your town?')).toBeInTheDocument()
+        if (GATING_ENABLED) {
+            expect(await screen.findByText('Who can join your town?')).toBeInTheDocument()
+        } else {
+            const createButton = await screen.findByTestId('create-town-button')
+            expect(createButton).toBeEnabled()
+        }
     })
 
     it('should setup paid town slides', async () => {
@@ -72,12 +78,22 @@ describe('CreateTown', () => {
 
     it('should setup paid with fixed slides', async () => {
         await actions.setupPaidWithFixedFee(1.1)
-        expect(await screen.findByText('Who can join your town?')).toBeInTheDocument()
+        if (GATING_ENABLED) {
+            expect(await screen.findByText('Who can join your town?')).toBeInTheDocument()
+        } else {
+            const createButton = await screen.findByTestId('create-town-button')
+            expect(createButton).toBeEnabled()
+        }
     })
 
     it('should setup paid with dynamic slides', async () => {
         await actions.setupPaidWithDynamicFee()
-        expect(await screen.findByText('Who can join your town?')).toBeInTheDocument()
+        if (GATING_ENABLED) {
+            expect(await screen.findByText('Who can join your town?')).toBeInTheDocument()
+        } else {
+            const createButton = await screen.findByTestId('create-town-button')
+            expect(createButton).toBeEnabled()
+        }
     })
 
     it('should create a free town without gating', async () => {
@@ -87,8 +103,10 @@ describe('CreateTown', () => {
 
         await actions.setupFree()
 
-        const anyone = await screen.findByTestId('option-canjoin-anyone')
-        await userEvent.click(anyone)
+        if (GATING_ENABLED) {
+            const anyone = await screen.findByTestId('option-canjoin-anyone')
+            await userEvent.click(anyone)
+        }
 
         const createButton = await screen.findByTestId('create-town-button')
         expect(createButton).toBeEnabled()
@@ -121,8 +139,10 @@ describe('CreateTown', () => {
 
         await actions.setupPaidWithFixedFee(1.1)
 
-        const anyone = await screen.findByTestId('option-canjoin-anyone')
-        await userEvent.click(anyone)
+        if (GATING_ENABLED) {
+            const anyone = await screen.findByTestId('option-canjoin-anyone')
+            await userEvent.click(anyone)
+        }
 
         const createButton = await screen.findByTestId('create-town-button')
         expect(createButton).toBeEnabled()
@@ -157,8 +177,10 @@ describe('CreateTown', () => {
 
         await actions.setupPaidWithDynamicFee()
 
-        const anyone = await screen.findByTestId('option-canjoin-anyone')
-        await userEvent.click(anyone)
+        if (GATING_ENABLED) {
+            const anyone = await screen.findByTestId('option-canjoin-anyone')
+            await userEvent.click(anyone)
+        }
 
         const createButton = await screen.findByTestId('create-town-button')
         expect(createButton).toBeEnabled()

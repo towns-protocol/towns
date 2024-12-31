@@ -18,6 +18,7 @@ import { WalletMemberSelector } from '@components/SpaceSettingsPanel/WalletMembe
 import { useDevice } from 'hooks/useDevice'
 import { CreateTownFormReturn } from './types'
 import {
+    GATING_ENABLED,
     clientCanJoinOptions,
     clientGateByOptions,
     clientMembershipFeeOptions,
@@ -204,7 +205,16 @@ export const MembershipFees = (props: SlideProps) => {
                                                     ? 'error'
                                                     : undefined
                                             }
-                                            {...form.register('slideMembership.membershipCost')}
+                                            {...form.register('slideMembership.membershipCost', {
+                                                onChange: (e) => {
+                                                    if (e.target.value > 0) {
+                                                        setHasSubmitted(true)
+                                                    }
+                                                },
+                                                onBlur: (e) => {
+                                                    setHasSubmitted(true)
+                                                },
+                                            })}
                                         />
                                         {hasSubmitted && (
                                             <ErrorMessage
@@ -220,7 +230,7 @@ export const MembershipFees = (props: SlideProps) => {
                 )}
                 onChange={onChange}
             />
-            {hasOptions && (
+            {GATING_ENABLED && hasOptions && (
                 <NextButton
                     form={form}
                     disabled={!!errors.slideMembership}
