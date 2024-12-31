@@ -52,7 +52,7 @@ function querySetup({
                 rootKeyAddress,
             })
             if (returnVal) {
-                console.log('setting offline wallet address', rootKeyAddress, returnVal)
+                // console.log('setting offline wallet address', rootKeyAddress, returnVal)
                 setOfflineWalletAddress(rootKeyAddress, returnVal)
             }
             return returnVal
