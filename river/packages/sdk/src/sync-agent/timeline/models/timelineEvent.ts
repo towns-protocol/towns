@@ -14,7 +14,7 @@ import {
     MembershipOp,
     BlockchainTransaction,
 } from '@river-build/proto'
-import { isDefined, logNever } from '../../../check'
+import { isDefined, logNever, checkNever } from '../../../check'
 import {
     type TimelineEvent_OneOf,
     type Attachment,
@@ -52,6 +52,7 @@ import {
     MemberBlockchainTransactionEvent,
     UserReceivedBlockchainTransactionEvent,
     StreamEncryptionAlgorithmEvent,
+    TipEvent,
 } from './timeline-types'
 import type { PlainMessage } from '@bufbuild/protobuf'
 import { userIdFromAddress, streamIdFromBytes, streamIdAsString } from '../../../id'
@@ -63,7 +64,6 @@ import {
     type RemoteTimelineEvent,
     isCiphertext,
 } from '../../../types'
-import { checkNever } from '@river-build/web3'
 
 type SuccessResult = {
     content: TimelineEvent_OneOf
@@ -373,14 +373,46 @@ function toTownsContent_MemberPayload(
                     algorithm: value.content.value.algorithm,
                 } satisfies StreamEncryptionAlgorithmEvent,
             }
-        case 'memberBlockchainTransaction':
-            return {
-                content: {
-                    kind: RiverTimelineEvent.MemberBlockchainTransaction,
-                    transaction: value.content.value.transaction,
-                    fromUserId: bin_toHexString(value.content.value.fromUserAddress),
-                } satisfies MemberBlockchainTransactionEvent,
+        case 'memberBlockchainTransaction': {
+            const fromUserAddress = value.content.value.fromUserAddress
+            const transaction = value.content.value.transaction
+            if (!transaction) {
+                return { error: `${description} no transaction` }
             }
+            if (!transaction.receipt?.transactionHash) {
+                return { error: `${description} no transactionHash` }
+            }
+            switch (transaction.content.case) {
+                case 'tip': {
+                    const tipContent = transaction.content.value
+                    if (!tipContent.event) {
+                        return { error: `${description} no event in tip` }
+                    }
+                    return {
+                        content: {
+                            kind: RiverTimelineEvent.TipEvent,
+                            transaction: transaction,
+                            tip: tipContent,
+                            transactionHash: bin_toHexString(transaction.receipt.transactionHash),
+                            fromUserId: userIdFromAddress(fromUserAddress),
+                            refEventId: bin_toHexString(tipContent.event.messageId),
+                            toUserId: userIdFromAddress(tipContent.toUserAddress),
+                        } satisfies TipEvent,
+                    }
+                }
+                case undefined:
+                    return {
+                        content: {
+                            kind: RiverTimelineEvent.MemberBlockchainTransaction,
+                            transaction: value.content.value.transaction,
+                            fromUserId: bin_toHexString(value.content.value.fromUserAddress),
+                        } satisfies MemberBlockchainTransactionEvent,
+                    }
+                default:
+                    logNever(transaction.content)
+                    return { error: `${description} unknown transaction content` }
+            }
+        }
         case undefined:
             return { error: `Undefined payload case: ${description}` }
         default:
@@ -969,6 +1001,10 @@ export function getFallbackContent(
             return `memberTransaction from: ${
                 content.fromUserId
             } ${getFallbackContent_BlockchainTransaction(content.transaction)}`
+        case RiverTimelineEvent.TipEvent:
+            return `tip from: ${content.fromUserId} to: ${content.toUserId} refEventId: ${
+                content.refEventId
+            } amount: ${content.tip.event?.amount.toString() ?? '??'}`
         case RiverTimelineEvent.UserReceivedBlockchainTransaction:
             return `kind: ${
                 content.receivedTransaction.transaction?.content?.case ?? '??'
@@ -979,6 +1015,8 @@ export function getFallbackContent(
             }`
         case RiverTimelineEvent.StreamEncryptionAlgorithm:
             return `algorithm: ${content.algorithm}`
+        default:
+            checkNever(content)
     }
 }
 

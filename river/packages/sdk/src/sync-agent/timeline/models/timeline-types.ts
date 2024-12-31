@@ -13,6 +13,7 @@ import type {
     ChannelProperties,
     BlockchainTransaction,
     UserPayload_ReceivedBlockchainTransaction,
+    BlockchainTransaction_Tip,
 } from '@river-build/proto'
 import type { PlainMessage } from '@bufbuild/protobuf'
 import type { DecryptionSessionError } from '@river-build/encryption'
@@ -88,6 +89,7 @@ export type TimelineEvent_OneOf =
     | SpaceUpdateAutojoinEvent
     | SpaceUpdateHideUserJoinLeavesEvent
     | SpaceUsernameEvent
+    | TipEvent
     | UserBlockchainTransactionEvent
     | UserReceivedBlockchainTransactionEvent
     | UnpinEvent
@@ -118,6 +120,7 @@ export enum RiverTimelineEvent {
     SpaceNft = 'm.space.nft',
     StreamEncryptionAlgorithm = 'm.stream_encryption_algorithm',
     StreamMembership = 'm.stream_membership',
+    TipEvent = 'm.tip_event',
     Unpin = 'm.unpin',
     UserBlockchainTransaction = 'm.user_blockchain_transaction',
     UserReceivedBlockchainTransaction = 'm.user_received_blockchain_transaction',
@@ -278,6 +281,16 @@ export interface MemberBlockchainTransactionEvent {
     kind: RiverTimelineEvent.MemberBlockchainTransaction
     transaction?: PlainMessage<BlockchainTransaction>
     fromUserId: string
+}
+
+export interface TipEvent {
+    kind: RiverTimelineEvent.TipEvent
+    transaction: PlainMessage<BlockchainTransaction>
+    tip: PlainMessage<BlockchainTransaction_Tip>
+    transactionHash: string
+    fromUserId: string
+    refEventId: string
+    toUserId: string
 }
 
 export enum MessageType {
