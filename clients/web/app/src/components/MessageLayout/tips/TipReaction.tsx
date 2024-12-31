@@ -1,11 +1,13 @@
 import React, { useMemo, useRef, useState } from 'react'
 import { LookupUser, MessageTips, useMyUserId, useUserLookupArray } from 'use-towns-client'
+import { isDMChannelStreamId, isGDMChannelStreamId } from '@river-build/sdk'
 import { Box, Icon, Paragraph, Pill, Text, Tooltip } from '@ui'
 import { useStore } from 'store/store'
 import { atoms } from 'ui/styles/atoms.css'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { useEthToUsdFormatted } from '@components/Web3/useEthPrice'
 import { useDevice } from 'hooks/useDevice'
+import { useChannelIdFromPathname } from 'hooks/useChannelIdFromPathname'
 import { TipTooltipPopup } from './TipTooltipPopup'
 import { TipSheet } from './TipSheet'
 
@@ -30,8 +32,15 @@ export function TipReaction({
     const iconColor = !isTippable ? 'cta1' : undefined
     const [isMobileSheetOpen, setIsMobileSheetOpen] = useState(false)
     const { isTouch } = useDevice()
+    const channelId = useChannelIdFromPathname()
+    const isDmOrGDM =
+        !!channelId && (isDMChannelStreamId(channelId) || isGDMChannelStreamId(channelId))
 
     if (!isTippable && !tippers.length) {
+        return null
+    }
+
+    if (!channelId || isDmOrGDM) {
         return null
     }
 
