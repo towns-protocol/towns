@@ -688,12 +688,16 @@ export class TownsClient
             // https://linear.app/hnt-labs/issue/HNT-3112/implement-entitlement-checks
             isEntitled = true
         }
-        this.log(`[isEntitled] is user entitled for channel and space for permission`, isEntitled, {
-            user,
-            spaceId: spaceId,
-            channelId: channelId,
-            permission: permission,
-        })
+        this.debug(
+            `[isEntitled] is user entitled for channel and space for permission`,
+            isEntitled,
+            {
+                user,
+                spaceId: spaceId,
+                channelId: channelId,
+                permission: permission,
+            },
+        )
         return isEntitled
     }
 
@@ -1843,11 +1847,11 @@ export class TownsClient
         return this.baseTransactor.getRootKeyFromLinkedWallet(walletAddress)
     }
 
-    /************************************************
-     * log
-     *************************************************/
     protected log(message: string, ...optionalParams: unknown[]) {
         console.log(message, ...optionalParams)
+    }
+    protected debug(message: string, ...optionalParams: unknown[]) {
+        console.debug(message, ...optionalParams)
     }
 
     public setEventHandlers(eventHandlers: TownsClientEventHandlers | undefined) {

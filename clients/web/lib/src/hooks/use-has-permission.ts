@@ -28,7 +28,7 @@ function querySetup(
                     walletAddress,
                     permission,
                 )
-                console.log(
+                console.debug(
                     '[useHasPermission]',
                     'getHasPermission() from network',
                     new Date().toString(),
