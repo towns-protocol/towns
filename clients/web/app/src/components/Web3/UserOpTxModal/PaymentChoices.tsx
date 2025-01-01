@@ -46,13 +46,15 @@ export function PaymentChoices(props: {
                     if (balanceIsLessThanCost) {
                         setShowWalletBalance(true)
                     } else {
-                        clickedPayWithEth({
-                            spaceName: getSpaceNameFromCache(spaceId),
-                            spaceId,
-                            gatedSpace: analytics.gatedSpace,
-                            pricingModule: analytics.pricingModule,
-                            priceInWei: analytics.priceInWei,
-                        })
+                        if (isJoinSpace) {
+                            clickedPayWithEth({
+                                spaceName: getSpaceNameFromCache(spaceId),
+                                spaceId,
+                                gatedSpace: analytics.gatedSpace,
+                                pricingModule: analytics.pricingModule,
+                                priceInWei: analytics.priceInWei,
+                            })
+                        }
                         confirmUserOp?.()
                     }
                 }}
