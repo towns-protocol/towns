@@ -565,6 +565,9 @@ resource "aws_ecs_task_definition" "river-fargate" {
         valueFrom = local.global_remote_state.river_global_dd_agent_api_key.arn
       }]
 
+      // if archive node add the datadog agent labels for openmetrics, otherwise leave empty
+      dockerLabels = local.run_mode == "archive" ? local.archive_node_docker_labels : {}
+
       environment = [
         {
           name  = "DD_SITE",
@@ -653,6 +656,12 @@ locals {
   datadog_monitor_slack_message = "${local.datadog_monitor_slack_channel} {{#is_alert}}${local.datadog_monitor_slack_mention}{{/is_alert}}"
 
   datadog_monitor_alert_min_duration_minutes = local.run_mode == "archive" ? 8 : 2
+
+  archive_node_docker_labels = {
+      "com.datadoghq.ad.check_names"  = "[\"openmetrics\"]",
+      "com.datadoghq.ad.init_configs" = "[{}]",
+      "com.datadoghq.ad.instances"    = "[{\"prometheus_url\": \"${local.node_url}/metrics\", \"namespace\": \"archive_node\", \"metrics\": [\"*\"]}]"
+  }
 }
 
 module "datadog_sythetics_test" {
