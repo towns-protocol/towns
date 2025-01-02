@@ -3,14 +3,13 @@ import {
     MessageType,
     ThreadStats,
     TimelineEvent,
-    ZTEvent,
     staticAssertNever,
     useTownsClient,
     useUserLookup,
 } from 'use-towns-client'
 import { useSearchParams } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
-import { Pin } from '@river-build/sdk'
+import { Pin, RiverTimelineEvent } from '@river-build/sdk'
 import {
     MessageLayout,
     MessageLayoutProps,
@@ -101,7 +100,7 @@ export const MessageItem = (props: Props) => {
 
     const attachedLinks = useMemo(() => {
         return (
-            (event.content.kind === ZTEvent.ChannelMessage &&
+            (event.content.kind === RiverTimelineEvent.ChannelMessage &&
                 event.content.attachments?.filter(isUrlAttachement).map((a) => a.url)) ||
             []
         )
@@ -160,7 +159,7 @@ export const MessageItem = (props: Props) => {
 
             {isEncryptedMessage ? (
                 <TimelineEncryptedContent event={event} content={itemData.event.content} />
-            ) : event.content.kind === ZTEvent.ChannelMessage ? (
+            ) : event.content.kind === RiverTimelineEvent.ChannelMessage ? (
                 isEditing ? (
                     <>
                         <TimelineMessageEditor
@@ -263,7 +262,8 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
     const { isTouch } = useDevice()
     const user = useUserLookup(sender.id)
 
-    const body = event.content?.kind === ZTEvent.ChannelMessage ? event.content.body : undefined
+    const body =
+        event.content?.kind === RiverTimelineEvent.ChannelMessage ? event.content.body : undefined
 
     const {
         channelId,
@@ -280,7 +280,7 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
         channelTips,
     } = timelineContext
 
-    const isOwn = event.content?.kind == ZTEvent.ChannelMessage && sender.id === userId
+    const isOwn = event.content?.kind == RiverTimelineEvent.ChannelMessage && sender.id === userId
 
     const isRelativeDate = type === MessageTimelineType.Thread
 

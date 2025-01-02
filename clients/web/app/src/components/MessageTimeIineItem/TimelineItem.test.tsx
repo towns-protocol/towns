@@ -3,12 +3,11 @@ import React from 'react'
 import {
     ChannelMessageEvent,
     ChannelMessageEventContentOneOf,
-    EventStatus,
     MessageType,
     TimelineEvent,
-    ZTEvent,
 } from 'use-towns-client'
 import { describe, expect, test, vi } from 'vitest'
+import { EventStatus, RiverTimelineEvent } from '@river-build/sdk'
 import { TestApp } from 'test/testUtils'
 import { image, normal, twitter } from '../../../mocks/unfurl/data'
 import {
@@ -71,7 +70,7 @@ function generateMessageRenderEvent(messageContent: MessageContent): MessageRend
 
 function generateChannelMessageEvent(messageContent: MessageContent): ChannelMessageEvent {
     return {
-        kind: ZTEvent.ChannelMessage,
+        kind: RiverTimelineEvent.ChannelMessage,
         body: messageContent.body,
         mentions: [],
         content: messageContent.content ?? { msgType: MessageType.Text },

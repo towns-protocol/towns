@@ -9,9 +9,10 @@ import {
     makeStreamRpcClient,
     MockEntitlementsDelegate,
     makeSignerContext,
+    RiverTimelineEvent,
 } from '@river-build/sdk'
 import { ethers } from 'ethers'
-import { ChannelMessageEvent, ZTEvent } from '../../src/types/timeline-types'
+import { ChannelMessageEvent } from '../../src/types/timeline-types'
 import {
     createTestChannelWithSpaceRoles,
     createTestSpaceGatedByTownNft,
@@ -74,7 +75,7 @@ describe('casablanca', () => {
         await waitFor(async () => {
             const event = await bob.getLatestEvent<ChannelMessageEvent>(
                 channelId,
-                ZTEvent.ChannelMessage,
+                RiverTimelineEvent.ChannelMessage,
             )
             log('latest event=', event)
             expect(event?.content?.body).toEqual('Hello, world from Bob!')
@@ -120,7 +121,7 @@ describe('casablanca', () => {
         await waitFor(async () => {
             const event = await alice.getLatestEvent<ChannelMessageEvent>(
                 channelId,
-                ZTEvent.ChannelMessage,
+                RiverTimelineEvent.ChannelMessage,
             )
             expect(event?.content?.body).toEqual('Hello, world from Bob!')
         })
@@ -166,7 +167,7 @@ describe('casablanca', () => {
         await waitFor(async () => {
             const event = await alice.getLatestEvent<ChannelMessageEvent>(
                 channelId,
-                ZTEvent.ChannelMessage,
+                RiverTimelineEvent.ChannelMessage,
             )
             expect(event?.content?.body).toEqual(message)
         })

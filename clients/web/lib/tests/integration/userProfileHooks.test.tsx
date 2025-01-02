@@ -16,7 +16,6 @@ import { ChannelContextProvider } from '../../src/components/ChannelContextProvi
 import { Permission } from '@river-build/web3'
 import { RegisterAndJoinSpace } from './helpers/TestComponents'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
-import { ZTEvent } from '../../src/types/timeline-types'
 import { TownsTestApp } from './helpers/TownsTestApp'
 import { TownsTestWeb3Provider } from './helpers/TownsTestWeb3Provider'
 import { useChannelTimeline } from '../../src/hooks/use-channel-timeline'
@@ -24,6 +23,7 @@ import { useMyProfile } from '../../src/hooks/use-my-profile'
 import { useTownsClient } from '../../src/hooks/use-towns-client'
 import { TSigner } from '../../src/types/web3-types'
 import { useUserLookupContext } from '../../src/hooks/use-user-lookup-context'
+import { RiverTimelineEvent } from '@river-build/sdk'
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
@@ -65,7 +65,7 @@ describe('userProfileHooks', () => {
             const alicesMemberInfo = userId ? lookupUser(userId) : undefined
             const { timeline } = useChannelTimeline()
             const channelMessages = timeline.filter(
-                (x) => x.content?.kind === ZTEvent.ChannelMessage,
+                (x) => x.content?.kind === RiverTimelineEvent.ChannelMessage,
             )
             const onClickSetProfileInfo = useCallback(() => {
                 void (async () => {
@@ -88,7 +88,7 @@ describe('userProfileHooks', () => {
                         {alicesMemberInfo?.avatarUrl ?? 'unknown'}
                     </div>
                     <div data-testid="messageSender">
-                        {channelMessages[0]?.content?.kind === ZTEvent.ChannelMessage
+                        {channelMessages[0]?.content?.kind === RiverTimelineEvent.ChannelMessage
                             ? channelMessages[0].sender.displayName
                             : 'none'}
                     </div>

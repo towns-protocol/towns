@@ -1,6 +1,6 @@
 import React, { useCallback, useContext, useMemo } from 'react'
-import { ZTEvent } from 'use-towns-client'
 import { uniq } from 'lodash'
+import { RiverTimelineEvent } from '@river-build/sdk'
 import { Box, Icon, Paragraph, Stack } from '@ui'
 import { CopySpaceLink } from '@components/CopySpaceLink/CopySpaceLink'
 import { MessageTimelineContext } from '@components/MessageTimeline/MessageTimelineContext'
@@ -19,7 +19,7 @@ export const ChannelUsersPill = (props: { spaceId: string | undefined; channelId
         const eventIds = timelineContext?.events ?? []
         const lastUniqueIds: string[] = []
         for (let i = eventIds.length - 1; i >= 0 && lastUniqueIds.length < NUM_USERS; i--) {
-            if (eventIds[i].content?.kind !== ZTEvent.ChannelMessage) {
+            if (eventIds[i].content?.kind !== RiverTimelineEvent.ChannelMessage) {
                 continue
             }
             const senderId = eventIds[i].sender.id

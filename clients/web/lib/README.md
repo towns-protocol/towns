@@ -32,7 +32,7 @@ We've implemented integration tests that run against a live server. See Start Lo
               if (!t.content) { return undefined; }
               // switch over the kind type
               switch (t.content.kind) {
-                case ZTEvent.ChannelMessage:
+                case RiverTimelineEvent.ChannelMessage:
                   // through the magic of union type differentiation, content is now typed to ChannelMessageEvent
                   return makeChannelMessageCompoennt(t.content)
                 default:

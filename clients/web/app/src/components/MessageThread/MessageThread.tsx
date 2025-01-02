@@ -2,11 +2,9 @@ import React, { useMemo } from 'react'
 import {
     Channel,
     ChannelMessageMissingEvent,
-    EventStatus,
     LookupUser,
     SendMessageOptions,
     TimelineEvent,
-    ZTEvent,
     useConnectivity,
     useMyProfile,
     useSpaceMembers,
@@ -15,7 +13,13 @@ import {
 } from 'use-towns-client'
 import { firstBy } from 'thenby'
 import { Link, useSearchParams } from 'react-router-dom'
-import { isDMChannelStreamId, isDefined, isGDMChannelStreamId } from '@river-build/sdk'
+import {
+    EventStatus,
+    RiverTimelineEvent,
+    isDMChannelStreamId,
+    isDefined,
+    isGDMChannelStreamId,
+} from '@river-build/sdk'
 import { MessageTimeline } from '@components/MessageTimeline/MessageTimeline'
 import { MessageTimelineWrapper } from '@components/MessageTimeline/MessageTimelineContext'
 import { TownsEditorContainer } from '@components/RichTextPlate/TownsEditorContainer'
@@ -60,7 +64,7 @@ export const MessageThread = (props: {
             isRedacted: false,
             sender: { id: '', displayName: '' },
             content: {
-                kind: ZTEvent.ChannelMessageMissing,
+                kind: RiverTimelineEvent.ChannelMessageMissing,
                 eventId: parentId,
             } satisfies ChannelMessageMissingEvent,
         } satisfies TimelineEvent
@@ -94,7 +98,7 @@ export const MessageThread = (props: {
 
     const involvedUsers = useMemo(() => {
         const userIds = messagesWithParent
-            .filter((m) => m.content?.kind === ZTEvent.ChannelMessage)
+            .filter((m) => m.content?.kind === RiverTimelineEvent.ChannelMessage)
             .map((m) => m.sender?.id)
             .filter((id) => id)
 

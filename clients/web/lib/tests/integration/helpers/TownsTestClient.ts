@@ -4,7 +4,6 @@ import {
     ChannelMessageEvent,
     TimelineEvent,
     TimelineEvent_OneOf,
-    ZTEvent,
 } from '../../../src/types/timeline-types'
 import {
     TransactionStatus,
@@ -21,6 +20,7 @@ import { makeUniqueName } from './TestUtils'
 import { toEvent } from '../../../src/hooks/TownsContext/useCasablancaTimelines'
 import {
     Client as CasablancaClient,
+    RiverTimelineEvent,
     SignerContext,
     UnauthenticatedClient,
     makeRiverRpcClient,
@@ -257,13 +257,13 @@ export class TownsTestClient extends TownsClient {
             return toEvent(event, userId)
         })
         if (options?.excludeMiniblockHeaders === true) {
-            return events.filter((x) => x.content?.kind !== ZTEvent.MiniblockHeader)
+            return events.filter((x) => x.content?.kind !== RiverTimelineEvent.MiniblockHeader)
         } else {
             return events
         }
     }
 
-    public getEventsOfType(roomId: string, eventType: ZTEvent): TimelineEvent[] {
+    public getEventsOfType(roomId: string, eventType: RiverTimelineEvent): TimelineEvent[] {
         return this.getEvents(roomId).filter((e) => e?.content?.kind === eventType)
     }
 
@@ -278,13 +278,19 @@ export class TownsTestClient extends TownsClient {
     }
 
     public getEvents_TypedChannelMessage(roomId: string) {
-        return this.getEvents_Typed<ChannelMessageEvent>(roomId, ZTEvent.ChannelMessage)
+        return this.getEvents_Typed<ChannelMessageEvent>(roomId, RiverTimelineEvent.ChannelMessage)
     }
 
     public getMessages(roomId: string): string[] {
-        const messages = this.getEvents_Typed<ChannelMessageEvent>(roomId, ZTEvent.ChannelMessage)
+        const messages = this.getEvents_Typed<ChannelMessageEvent>(
+            roomId,
+            RiverTimelineEvent.ChannelMessage,
+        )
         const redactions = new Set(
-            this.getEvents_Typed<RedactionActionEvent>(roomId, ZTEvent.RedactionActionEvent)
+            this.getEvents_Typed<RedactionActionEvent>(
+                roomId,
+                RiverTimelineEvent.RedactionActionEvent,
+            )
                 .map((e) => e.content.refEventId)
                 .filter((e) => e),
         )
@@ -293,7 +299,7 @@ export class TownsTestClient extends TownsClient {
 
     public async getLatestEvent<T extends TimelineEvent_OneOf>(
         roomId: string,
-        eventType: T['kind'] | undefined = ZTEvent.ChannelMessage,
+        eventType: T['kind'] | undefined = RiverTimelineEvent.ChannelMessage,
     ): Promise<
         | (Omit<TimelineEvent, 'content'> & {
               content: T

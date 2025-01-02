@@ -1,8 +1,8 @@
 import React, { useCallback, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Attachment, TimelineEvent, ZTEvent } from 'use-towns-client'
+import { Attachment, TimelineEvent } from 'use-towns-client'
 import { Lightbox, ViewCallbackProps } from 'yet-another-react-lightbox'
-import { isDefined } from '@river-build/sdk'
+import { RiverTimelineEvent, isDefined } from '@river-build/sdk'
 import { QUERY_PARAMS } from 'routes'
 import { atoms } from 'ui/styles/atoms.css'
 import { Icon } from '@ui'
@@ -27,7 +27,7 @@ export const FullScreenMedia = (props: Props) => {
         return filteredEvents
             .map((e) => {
                 if (
-                    e.content?.kind === ZTEvent.ChannelMessage &&
+                    e.content?.kind === RiverTimelineEvent.ChannelMessage &&
                     e.content.attachments &&
                     e.content.attachments.length > 0
                 ) {

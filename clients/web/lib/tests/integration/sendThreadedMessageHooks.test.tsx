@@ -11,7 +11,6 @@ import {
     ThreadResult,
     ThreadStats,
     TimelineEvent,
-    ZTEvent,
 } from '../../src/types/timeline-types'
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import {
@@ -35,6 +34,7 @@ import { useTownsClient } from '../../src/hooks/use-towns-client'
 import { useTimeline } from '../../src/hooks/use-timeline'
 import { TestConstants } from './helpers/TestConstants'
 import { TSigner } from '../../src/types/web3-types'
+import { RiverTimelineEvent } from '@river-build/sdk'
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
@@ -351,7 +351,9 @@ describe('sendThreadedMessageHooks', () => {
         const unreadInProgress = screen.getByTestId('unreadInProgress')
 
         // - bob renders channel_1
-        await waitFor(() => expect(channelMessages).toHaveTextContent(`${ZTEvent.Inception}`))
+        await waitFor(() =>
+            expect(channelMessages).toHaveTextContent(`${RiverTimelineEvent.Inception}`),
+        )
 
         // - bob sends a message in each channel
         fireEvent.click(sendInitialMessagesButton)

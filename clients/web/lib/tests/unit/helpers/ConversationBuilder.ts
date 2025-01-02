@@ -6,9 +6,7 @@ import {
     ChannelMessageEventContent_Text,
     TimelineEvent,
     TimelineEvent_OneOf,
-    ZTEvent,
     getFallbackContent,
-    EventStatus,
 } from '../../../src/types/timeline-types'
 import { MessageType } from '../../../src/types/towns-types'
 import {
@@ -21,6 +19,7 @@ import { randomBytes } from 'crypto'
 import { ETH_ADDRESS } from '@river-build/web3'
 import { BlockchainTransaction_Tip } from '@river-build/proto'
 import { PlainMessage } from '@bufbuild/protobuf'
+import { EventStatus, RiverTimelineEvent } from '@river-build/sdk'
 
 export class ConversationBuilder {
     events: TimelineEvent[] = []
@@ -187,7 +186,7 @@ function makeMessage(params: {
     mentions?: OTWMention[]
 }): ChannelMessageEvent {
     return {
-        kind: ZTEvent.ChannelMessage,
+        kind: RiverTimelineEvent.ChannelMessage,
         body: params.body,
         threadId: params.threadId,
         threadPreview: undefined,
@@ -213,7 +212,7 @@ function makeEdit(params: {
 
 function makeRedaction(params: { redacts: string; isAdmin?: boolean }): RedactionActionEvent {
     return {
-        kind: ZTEvent.RedactionActionEvent,
+        kind: RiverTimelineEvent.RedactionActionEvent,
         refEventId: params.redacts,
         adminRedaction: params.isAdmin ?? false,
     }
@@ -238,7 +237,7 @@ function makeTip(params: {
         toUserAddress: randomBytes(0), // not used in this test
     } satisfies PlainMessage<BlockchainTransaction_Tip>
     return {
-        kind: ZTEvent.TipEvent,
+        kind: RiverTimelineEvent.TipEvent,
         transaction: {
             content: {
                 case: 'tip',

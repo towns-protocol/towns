@@ -1,16 +1,12 @@
 import { useTimeline } from './use-timeline'
-import {
-    Attachment,
-    ChannelMessageEncryptedEvent,
-    TimelineEvent,
-    ZTEvent,
-} from '../types/timeline-types'
+import { Attachment, ChannelMessageEncryptedEvent, TimelineEvent } from '../types/timeline-types'
 
 import { Membership, MessageType } from '../types/towns-types'
 import { useFullyReadMarkerStore } from '../store/use-fully-read-marker-store'
 import { useEffect, useMemo, useState } from 'react'
 import { markdownToPlainText } from '../utils/markdownToPlainText'
 import { isMediaMimeType } from '../utils/isMediaMimeType'
+import { RiverTimelineEvent } from '@river-build/sdk'
 
 export type MostRecentMessageInfo_OneOf =
     | MostRecentMessageInfoImage
@@ -145,14 +141,14 @@ export function useDMLatestMessage(roomId: string, ignoreThreads = true) {
 
 export function toMessageInfo(message: TimelineEvent): MostRecentMessageInfo_OneOf | undefined {
     const { content, sender } = message
-    if (content?.kind === ZTEvent.ChannelMessageEncrypted) {
+    if (content?.kind === RiverTimelineEvent.ChannelMessageEncrypted) {
         return {
             kind: 'encrypted',
             content,
         }
     }
 
-    if (content?.kind === ZTEvent.Inception) {
+    if (content?.kind === RiverTimelineEvent.Inception) {
         if (content.type === 'dmChannelPayload') {
             return {
                 kind: 'dm_created',
@@ -167,7 +163,7 @@ export function toMessageInfo(message: TimelineEvent): MostRecentMessageInfo_One
         }
     }
 
-    if (content?.kind === ZTEvent.StreamMembership) {
+    if (content?.kind === RiverTimelineEvent.StreamMembership) {
         if (content.membership === Membership.Join) {
             return {
                 kind: 'member_added',
@@ -189,7 +185,7 @@ export function toMessageInfo(message: TimelineEvent): MostRecentMessageInfo_One
             }
         }
     }
-    if (content?.kind !== ZTEvent.ChannelMessage) {
+    if (content?.kind !== RiverTimelineEvent.ChannelMessage) {
         return undefined
     }
 

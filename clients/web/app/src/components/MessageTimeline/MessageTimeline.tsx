@@ -1,6 +1,7 @@
 import { isEqual, uniqBy } from 'lodash'
 import React, { useCallback, useMemo, useRef, useState } from 'react'
-import { MessageType, TimelineEvent, ZTEvent, useChannelData } from 'use-towns-client'
+import { MessageType, TimelineEvent, useChannelData } from 'use-towns-client'
+import { RiverTimelineEvent } from '@river-build/sdk'
 import { MessageTimelineItem } from '@components/MessageTimeIineItem/TimelineItem'
 import { useVisualViewportContext } from '@components/VisualViewportContext/VisualViewportContext'
 import { Box, Divider, Paragraph, SizeBox } from '@ui'
@@ -42,7 +43,11 @@ type Props = {
 
 const emptyTimeline: TimelineEvent[] = []
 
-const unhandledEventKinds = [ZTEvent.MiniblockHeader, ZTEvent.Fulfillment, ZTEvent.KeySolicitation]
+const unhandledEventKinds = [
+    RiverTimelineEvent.MiniblockHeader,
+    RiverTimelineEvent.Fulfillment,
+    RiverTimelineEvent.KeySolicitation,
+]
 
 export const MessageTimeline = (props: Props) => {
     const { groupByUser = true, displayAsSimpleList: displaySimpleList = false } = props
@@ -75,11 +80,11 @@ export const MessageTimeline = (props: Props) => {
         // the decrypted content when ready. However, the bar will appear if
         // it takes to long or if newer messages are getting decrypted
         const lastDecryptedIndex = filtered.findLastIndex(
-            (e) => e.content?.kind === ZTEvent.ChannelMessage,
+            (e) => e.content?.kind === RiverTimelineEvent.ChannelMessage,
         )
         filtered = filtered.filter(
             (e, index) =>
-                e.content?.kind !== ZTEvent.ChannelMessageEncrypted ||
+                e.content?.kind !== RiverTimelineEvent.ChannelMessageEncrypted ||
                 index < lastDecryptedIndex ||
                 e.createdAtEpochMs < Date.now() - SECOND_MS * 10,
         )
@@ -156,7 +161,7 @@ export const MessageTimeline = (props: Props) => {
             const height = r.item.events.reduce((height, item) => {
                 const itemHeight =
                     !item.isRedacted &&
-                    item.content.kind === ZTEvent.ChannelMessage &&
+                    item.content.kind === RiverTimelineEvent.ChannelMessage &&
                     item.content.content.msgType === MessageType.Image
                         ? 400
                         : 60
@@ -222,7 +227,7 @@ export const MessageTimeline = (props: Props) => {
                 if (e.type === RenderEventType.UserMessages) {
                     // if all consecutive messages are encrypted, we can group them
                     const displayEncrypted = e.events.every(
-                        (e) => e.content.kind === ZTEvent.ChannelMessageEncrypted,
+                        (e) => e.content.kind === RiverTimelineEvent.ChannelMessageEncrypted,
                     )
                     // only picks 1 message (last) of an encrypted group
                     const filtered = displayEncrypted
@@ -341,7 +346,8 @@ export const MessageTimeline = (props: Props) => {
                             date !== prev.lastDate ||
                             // count if message is an image
                             (!isRedactedChannelMessage(curr.item.event) &&
-                                curr.item.event.content.kind === ZTEvent.ChannelMessage &&
+                                curr.item.event.content.kind ===
+                                    RiverTimelineEvent.ChannelMessage &&
                                 curr.item.event.content.content.msgType === MessageType.Image)
                         ) {
                             prev.chunkCount++

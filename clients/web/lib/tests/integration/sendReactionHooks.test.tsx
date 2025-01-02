@@ -9,7 +9,7 @@
 
 import { Membership } from '../../src/types/towns-types'
 import React, { useCallback } from 'react'
-import { TimelineEvent, ZTEvent } from '../../src/types/timeline-types'
+import { TimelineEvent } from '../../src/types/timeline-types'
 import {
     createTestChannelWithSpaceRoles,
     createTestSpaceGatedByTownNft,
@@ -30,6 +30,7 @@ import { useChannelTimeline } from '../../src/hooks/use-channel-timeline'
 import { useTownsClient } from '../../src/hooks/use-towns-client'
 import { TestConstants } from './helpers/TestConstants'
 import { TSigner } from '../../src/types/web3-types'
+import { RiverTimelineEvent } from '@river-build/sdk'
 
 describe('sendReactionHooks', () => {
     test('user can join a room, see messages, and send messages', async () => {
@@ -63,8 +64,8 @@ describe('sendReactionHooks', () => {
             const reactions = useTimelineReactions(channelId)
             const messages = timeline.filter(
                 (x) =>
-                    x.content?.kind === ZTEvent.ChannelMessage ||
-                    x.content?.kind === ZTEvent.Reaction,
+                    x.content?.kind === RiverTimelineEvent.ChannelMessage ||
+                    x.content?.kind === RiverTimelineEvent.Reaction,
             )
             const onSendReaction = useCallback(() => {
                 void sendReaction(channelId, messages[0].eventId, '👍')
@@ -136,14 +137,14 @@ describe('sendReactionHooks', () => {
         // have bob send a message to jane
         fireEvent.click(sendReactionButton)
         // expect it to render as well
-        await waitFor(() => expect(message1).toHaveTextContent(ZTEvent.Reaction))
+        await waitFor(() => expect(message1).toHaveTextContent(RiverTimelineEvent.Reaction))
         // expect the reaction to show in the message
         await waitFor(() => expect(message0).toHaveTextContent('reactions: (👍)'))
         // expect jane to recieve the message
         await waitFor(
             () =>
                 expect(jane.getEvents(janesChannelId).map((x) => x.content?.kind)).toContain(
-                    ZTEvent.Reaction,
+                    RiverTimelineEvent.Reaction,
                 ),
             TestConstants.DecaDefaultWaitForTimeout,
         )

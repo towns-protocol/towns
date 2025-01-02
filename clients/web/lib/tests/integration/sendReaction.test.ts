@@ -17,7 +17,8 @@ import {
 } from './helpers/TestUtils'
 
 import { Permission } from '@river-build/web3'
-import { ReactionEvent, ChannelMessageEvent, ZTEvent } from '../../src/types/timeline-types'
+import { ReactionEvent, ChannelMessageEvent } from '../../src/types/timeline-types'
+import { RiverTimelineEvent } from '@river-build/sdk'
 
 describe('sendReaction', () => {
     // test:
@@ -65,9 +66,12 @@ describe('sendReaction', () => {
 
         // wait for bob to receive the reaction
         await waitFor(async () => {
-            const e = await bob.getLatestEvent<ReactionEvent>(channelId, ZTEvent.Reaction)
+            const e = await bob.getLatestEvent<ReactionEvent>(
+                channelId,
+                RiverTimelineEvent.Reaction,
+            )
             bob.logEvents(channelId)
-            expect(e?.content?.kind).toEqual(ZTEvent.Reaction)
+            expect(e?.content?.kind).toEqual(RiverTimelineEvent.Reaction)
             expect(e?.content?.reaction).toEqual('👍')
         })
     }) // end test

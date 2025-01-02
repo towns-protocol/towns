@@ -1,13 +1,12 @@
 import React, { useEffect, useMemo } from 'react'
 import { NavLink } from 'react-router-dom'
 import {
-    EventStatus,
     MentionResult as MessageResult,
     useSpaceId,
     useTimelineReactions,
     useUserLookupContext,
 } from 'use-towns-client'
-import { isDMChannelStreamId, isGDMChannelStreamId } from '@river-build/sdk'
+import { EventStatus, isDMChannelStreamId, isGDMChannelStreamId } from '@river-build/sdk'
 import { MessageLayout } from '@components/MessageLayout'
 import { RichTextPreview } from '@components/RichTextPlate/RichTextPreview'
 import { Box, BoxProps } from '@ui'

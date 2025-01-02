@@ -1,5 +1,6 @@
 import { useCallback, useContext, useEffect, useMemo, useRef } from 'react'
-import { ZTEvent, useChannelId, useTimelineStore, useUserLookupContext } from 'use-towns-client'
+import { useChannelId, useTimelineStore, useUserLookupContext } from 'use-towns-client'
+import { RiverTimelineEvent } from '@river-build/sdk'
 import { ReplyToMessageContext } from '@components/ReplyToMessageContext/ReplyToMessageContext'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 
@@ -17,7 +18,7 @@ export const useInlineReplyAttchmentPreview = (params?: { onNewInlineReply?: () 
     const parentEvent = useTimelineStore((state) => {
         if (replyToEventId) {
             const event = state.timelines[channelId]?.find((e) => e.eventId === replyToEventId)
-            if (event?.content?.kind === ZTEvent.ChannelMessage) {
+            if (event?.content?.kind === RiverTimelineEvent.ChannelMessage) {
                 return {
                     event,
                     eventContent: event.content,

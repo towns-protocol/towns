@@ -9,14 +9,18 @@ import { useCasablancaSpaceHierarchies } from '../hooks/TownsContext/useCasablan
 import { useTownsClientListener } from '../hooks/use-towns-client-listener'
 import { Room, SpaceHierarchies, SpaceItem } from '../types/towns-types'
 import { QueryProvider } from './QueryProvider'
-import { Client as CasablancaClient, SignerContext, UnpackEnvelopeOpts } from '@river-build/sdk'
+import {
+    Client as CasablancaClient,
+    RiverTimelineEvent,
+    SignerContext,
+    UnpackEnvelopeOpts,
+} from '@river-build/sdk'
 import { useCasablancaTimelines } from '../hooks/TownsContext/useCasablancaTimelines'
 import { useCasablancaRooms } from '../hooks/TownsContext/useCasablancaRooms'
 import { useCasablancaDMs } from '../hooks/CasablancClient/useCasablancaDMs'
 import { DMChannelIdentifier } from '../types/dm-channel-identifier'
 import { useDMUnreads } from '../hooks/TownsContext/useDMUnreads'
 import { useTimelineFilter } from '../store/use-timeline-filter'
-import { ZTEvent } from '../types/timeline-types'
 import { useClientInitStatus } from '../hooks/TownsContext/useClientInitStatus'
 import { TownsOpts } from '../client/TownsClientTypes'
 import { Chain } from 'viem/chains'
@@ -76,7 +80,7 @@ interface TownsContextProviderProps {
     baseChain: Chain
     riverConfig: RiverChainConfig
     riverChain: IChainConfig
-    timelineFilter?: Set<ZTEvent>
+    timelineFilter?: Set<RiverTimelineEvent>
     streamFilter?: Set<SnapshotCaseType>
     children: JSX.Element
     QueryClientProvider?: React.ElementType<{ children: JSX.Element }>

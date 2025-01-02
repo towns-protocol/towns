@@ -6,7 +6,6 @@
 import { Box, Divider, Theme, Typography } from '@mui/material'
 import {
     TimelineEvent,
-    ZTEvent,
     toRoomIdentifier,
     useTimeline,
     useTimelineFilter,
@@ -15,6 +14,7 @@ import {
 } from 'use-towns-client'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { cloneAndFormat } from '@river-build/dlog'
+import { RiverTimelineEvent } from '@river-build/sdk'
 
 interface Props {
     streamId: string
@@ -31,7 +31,7 @@ export function StreamView(props: Props): JSX.Element {
     const { timeline } = useTimeline(streamId)
     const canLoadMore =
         timeline.length === 0 ||
-        (timeline[0].content?.kind !== ZTEvent.Inception && !hasReachedTerminus)
+        (timeline[0].content?.kind !== RiverTimelineEvent.Inception && !hasReachedTerminus)
     const messagesEndRef = useRef<HTMLDivElement>(null)
     const messagesStartRef = useRef<HTMLDivElement>(null)
     const isLoadingMore = useRef<boolean>(false)
@@ -216,7 +216,7 @@ export default JsonDisplay
 
 function formatEvent(event: TimelineEvent): string {
     switch (event.content?.kind) {
-        case ZTEvent.ChannelMessage:
+        case RiverTimelineEvent.ChannelMessage:
             return `${event.sender.displayName}: ${event.content.body}`
         default:
             return event.fallbackContent

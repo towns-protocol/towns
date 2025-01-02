@@ -2,13 +2,14 @@ import { useEffect } from 'react'
 import { FullyReadMarker } from '@river-build/proto'
 import {
     Client as CasablancaClient,
+    RiverTimelineEvent,
     Stream,
     isChannelStreamId,
     isDMChannelStreamId,
     isDefined,
     isGDMChannelStreamId,
 } from '@river-build/sdk'
-import { TimelineEvent, ZTEvent } from '../../types/timeline-types'
+import { TimelineEvent } from '../../types/timeline-types'
 import { useFullyReadMarkerStore } from '../../store/use-fully-read-marker-store'
 import { TimelineStore, useTimelineStore } from '../../store/use-timeline-store'
 import { check } from '@river-build/dlog'
@@ -299,7 +300,7 @@ function diffAdded(
 
 function isCountedAsUnread(event: TimelineEvent, myUserId: string): boolean {
     switch (event.content?.kind) {
-        case ZTEvent.ChannelMessage:
+        case RiverTimelineEvent.ChannelMessage:
             return event.sender.id !== myUserId
         default:
             return false

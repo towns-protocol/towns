@@ -10,9 +10,9 @@ import {
     findRoleByName,
 } from 'use-towns-client/tests/integration/helpers/TestUtils'
 
-import { ZTEvent } from '../../src/types/timeline-types'
 import { waitFor } from '@testing-library/dom'
 import { NoopRuleData, Permission } from '@river-build/web3'
+import { RiverTimelineEvent } from '@river-build/sdk'
 
 const EveryoneRoleName = 'Everyone'
 const MemberRoleName = 'Member'
@@ -55,11 +55,14 @@ describe('redact messages', () => {
         const message = 'Hello me, myself, and alice!'
         await alice.sendMessage(channelId, message)
         await waitFor(async () => {
-            const event = await alice.getLatestEvent(channelId, ZTEvent.ChannelMessage)
+            const event = await alice.getLatestEvent(channelId, RiverTimelineEvent.ChannelMessage)
             expect(event).toBeDefined()
             expect(event?.isLocalPending).toBe(false)
         })
-        const messageEvent = await alice.getLatestEvent(channelId, ZTEvent.ChannelMessage)
+        const messageEvent = await alice.getLatestEvent(
+            channelId,
+            RiverTimelineEvent.ChannelMessage,
+        )
         if (!messageEvent) {
             throw new Error(`Failed to get message event ${alice.getEventsDescription(channelId)}`)
         }

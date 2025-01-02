@@ -9,7 +9,7 @@
 
 import { Membership } from '../../src/types/towns-types'
 import React, { useCallback, useMemo } from 'react'
-import { TimelineEvent, ZTEvent } from '../../src/types/timeline-types'
+import { TimelineEvent } from '../../src/types/timeline-types'
 import {
     createTestChannelWithSpaceRoles,
     createTestSpaceGatedByTownNft,
@@ -29,6 +29,7 @@ import { useChannelTimeline } from '../../src/hooks/use-channel-timeline'
 import { useTownsClient } from '../../src/hooks/use-towns-client'
 import { TestConstants } from './helpers/TestConstants'
 import { TSigner } from '../../src/types/web3-types'
+import { RiverTimelineEvent } from '@river-build/sdk'
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
@@ -71,8 +72,8 @@ describe('sendMessageHooks', () => {
                 () =>
                     timeline.filter(
                         (x) =>
-                            x.content?.kind === ZTEvent.ChannelMessage ||
-                            x.content?.kind === ZTEvent.RedactionActionEvent,
+                            x.content?.kind === RiverTimelineEvent.ChannelMessage ||
+                            x.content?.kind === RiverTimelineEvent.RedactionActionEvent,
                     ),
                 [timeline],
             )
@@ -92,7 +93,9 @@ describe('sendMessageHooks', () => {
                 })
                 void (async () => {
                     console.log(`onEdit`, messagesOrRedactions[1].eventId)
-                    if (messagesOrRedactions[1].content?.kind !== ZTEvent.ChannelMessage) {
+                    if (
+                        messagesOrRedactions[1].content?.kind !== RiverTimelineEvent.ChannelMessage
+                    ) {
                         throw new Error('not a message')
                     }
                     await editMessage(
@@ -116,7 +119,7 @@ describe('sendMessageHooks', () => {
             // format for easy reading
             const formatMessage = useCallback((e: TimelineEvent) => {
                 const prefix = `#:${e.eventNum} ✅:${e.confirmedEventNum ?? '??'}`
-                if (e.content?.kind === ZTEvent.ChannelMessage) {
+                if (e.content?.kind === RiverTimelineEvent.ChannelMessage) {
                     return `${prefix} ${e.content.body} eventId: ${e.eventId} isLocalPending: ${
                         e.isLocalPending ? 'true' : 'false'
                     }`
@@ -234,6 +237,8 @@ describe('sendMessageHooks', () => {
         // redact the event
         fireEvent.click(redactButton)
         // exect the message to be empty
-        await waitFor(() => expect(message1).toHaveTextContent(ZTEvent.RedactionActionEvent))
+        await waitFor(() =>
+            expect(message1).toHaveTextContent(RiverTimelineEvent.RedactionActionEvent),
+        )
     })
 })

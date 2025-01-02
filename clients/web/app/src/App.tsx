@@ -1,8 +1,8 @@
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import React, { useEffect, useMemo, useRef } from 'react'
-import { TownsContextProvider, ZTEvent } from 'use-towns-client'
+import { TownsContextProvider } from 'use-towns-client'
 import { Helmet } from 'react-helmet'
-import { isDefined } from '@river-build/sdk'
+import { RiverTimelineEvent, isDefined } from '@river-build/sdk'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useEvent } from 'react-use-event-hook'
 import { WagmiProvider } from 'wagmi'
@@ -42,7 +42,10 @@ import { wagmiConfig } from './wagmiConfig'
 
 FontLoader.init()
 
-const DEFAULT_TIMELINE_FILTER = new Set([ZTEvent.Fulfillment, ZTEvent.KeySolicitation]) // we don't need to see these in the ui
+const DEFAULT_TIMELINE_FILTER = new Set([
+    RiverTimelineEvent.Fulfillment,
+    RiverTimelineEvent.KeySolicitation,
+]) // we don't need to see these in the ui
 
 const analyticsInstance = Analytics.getInstance()
 

@@ -1,16 +1,16 @@
-import { ZTEvent } from '../types/timeline-types'
+import { RiverTimelineEvent } from '@river-build/sdk'
 import { create } from 'zustand'
 
 export type TimelineFilterStates = {
-    eventFilter?: Set<ZTEvent>
-    filterEvent: (eventType: ZTEvent, isDisabled: boolean) => void
+    eventFilter?: Set<RiverTimelineEvent>
+    filterEvent: (eventType: RiverTimelineEvent, isDisabled: boolean) => void
 }
 
 export const useTimelineFilter = create<TimelineFilterStates>((set) => ({
-    eventFilter: new Set<ZTEvent>(),
-    filterEvent: (eventType: ZTEvent, isDisabled: boolean) => {
+    eventFilter: new Set<RiverTimelineEvent>(),
+    filterEvent: (eventType: RiverTimelineEvent, isDisabled: boolean) => {
         set((state) => {
-            const filter = new Set<ZTEvent>(state.eventFilter)
+            const filter = new Set<RiverTimelineEvent>(state.eventFilter)
             if (isDisabled) {
                 filter.add(eventType)
             } else {

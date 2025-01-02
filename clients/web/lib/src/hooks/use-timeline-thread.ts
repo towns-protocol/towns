@@ -1,6 +1,7 @@
 import { useCallback, useRef } from 'react'
-import { ThreadStats, TimelineEvent, ZTEvent } from '../types/timeline-types'
+import { ThreadStats, TimelineEvent } from '../types/timeline-types'
 import { TimelineStoreStates, useTimelineStore } from '../store/use-timeline-store'
+import { RiverTimelineEvent } from '@river-build/sdk'
 
 const EMPTY_TIMELINE: TimelineEvent[] = []
 
@@ -34,7 +35,8 @@ function toDummyThreadStats(
     cache: React.MutableRefObject<Record<string, ThreadStats>>,
     event?: TimelineEvent,
 ): ThreadStats | undefined {
-    const content = event?.content?.kind === ZTEvent.ChannelMessage ? event.content : undefined
+    const content =
+        event?.content?.kind === RiverTimelineEvent.ChannelMessage ? event.content : undefined
     if (!event || !content) {
         return undefined
     }

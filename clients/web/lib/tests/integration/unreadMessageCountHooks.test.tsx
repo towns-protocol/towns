@@ -4,7 +4,7 @@
  */
 import { Membership } from '../../src/types/towns-types'
 import React, { useCallback } from 'react'
-import { TimelineEvent, ZTEvent } from '../../src/types/timeline-types'
+import { TimelineEvent } from '../../src/types/timeline-types'
 import {
     createTestChannelWithSpaceRoles,
     createTestSpaceGatedByTownNft,
@@ -25,6 +25,7 @@ import { useTownsClient } from '../../src/hooks/use-towns-client'
 import { useTownsContext } from '../../src/components/TownsContextProvider'
 import { TSigner } from '../../src/types/web3-types'
 import { TestConstants } from './helpers/TestConstants'
+import { RiverTimelineEvent } from '@river-build/sdk'
 
 describe('unreadMessageCountHooks', () => {
     test('user can join a room, see messages, and send messages', async () => {
@@ -64,7 +65,9 @@ describe('unreadMessageCountHooks', () => {
             const mySpaceMembership = useMyMembership(janesSpaceId)
             const myChannelMembership = useMyMembership(janesChannelId)
             const { timeline } = useChannelTimeline()
-            const messages = timeline.filter((x) => x.content?.kind === ZTEvent.ChannelMessage)
+            const messages = timeline.filter(
+                (x) => x.content?.kind === RiverTimelineEvent.ChannelMessage,
+            )
             // handle join
             const onClickJoinSpace = useCallback(() => {
                 void joinTown(janesSpaceId, bobProvider.wallet)

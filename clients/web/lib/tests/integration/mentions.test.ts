@@ -4,12 +4,12 @@
  */
 import { waitFor } from '@testing-library/dom'
 import { Permission } from '@river-build/web3'
-import { ZTEvent } from '../../src/types/timeline-types'
 import {
     createTestChannelWithSpaceRoles,
     createTestSpaceGatedByTownNft,
     registerAndStartClients,
 } from './helpers/TestUtils'
+import { RiverTimelineEvent } from '@river-build/sdk'
 
 describe('mentions', () => {
     test('send and receive a mention', async () => {
@@ -52,7 +52,7 @@ describe('mentions', () => {
         await waitFor(async () => {
             const e = await bob.getLatestEvent(channelId)
             expect(
-                e?.content?.kind === ZTEvent.ChannelMessage &&
+                e?.content?.kind === RiverTimelineEvent.ChannelMessage &&
                     e?.content?.body === 'Hi @bob' &&
                     e?.content?.mentions != undefined &&
                     e?.content?.mentions.length > 0 &&

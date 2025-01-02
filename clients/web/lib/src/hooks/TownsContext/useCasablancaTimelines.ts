@@ -1,6 +1,7 @@
 import { PlainMessage } from '@bufbuild/protobuf'
 import {
     Client as CasablancaClient,
+    EventStatus,
     ParsedEvent,
     StreamTimelineEvent,
     isCiphertext,
@@ -14,6 +15,7 @@ import {
     userIdFromAddress,
     streamIdFromBytes,
     streamIdAsString,
+    RiverTimelineEvent,
 } from '@river-build/sdk'
 import {
     ChannelMessage_Post,
@@ -53,14 +55,12 @@ import {
     SpaceUsernameEvent,
     TimelineEvent,
     TimelineEvent_OneOf,
-    ZTEvent,
     KeySolicitationEvent,
     ChannelPropertiesEvent,
     Attachment,
     ChunkedMediaAttachment,
     EmbeddedMediaAttachment,
     ImageAttachment,
-    EventStatus,
     EmbeddedMessageAttachment,
     MemberBlockchainTransactionEvent,
     SpaceEnsAddressEvent,
@@ -91,7 +91,7 @@ type TownsContentResult = SuccessResult | ErrorResult
 
 export function useCasablancaTimelines(
     casablancaClient: CasablancaClient | undefined,
-    eventFilter?: Set<ZTEvent>,
+    eventFilter?: Set<RiverTimelineEvent>,
     streamFilter?: Set<SnapshotCaseType>,
 ) {
     const hasTimelineContent = useCallback(
@@ -424,7 +424,7 @@ function toTownsContent_MiniblockHeader(
 ): TownsContentResult {
     return {
         content: {
-            kind: ZTEvent.MiniblockHeader,
+            kind: RiverTimelineEvent.MiniblockHeader,
             message: value,
         } satisfies MiniblockHeaderEvent,
     }
@@ -440,7 +440,7 @@ function toTownsContent_MemberPayload(
         case 'membership':
             return {
                 content: {
-                    kind: ZTEvent.StreamMembership,
+                    kind: RiverTimelineEvent.StreamMembership,
                     userId: userIdFromAddress(value.content.value.userAddress),
                     initiatorId: userIdFromAddress(value.content.value.initiatorAddress),
                     membership: toMembership(value.content.value.op),
@@ -449,7 +449,7 @@ function toTownsContent_MemberPayload(
         case 'keySolicitation':
             return {
                 content: {
-                    kind: ZTEvent.KeySolicitation,
+                    kind: RiverTimelineEvent.KeySolicitation,
                     sessionIds: value.content.value.sessionIds,
                     deviceKey: value.content.value.deviceKey,
                     isNewDevice: value.content.value.isNewDevice,
@@ -458,7 +458,7 @@ function toTownsContent_MemberPayload(
         case 'keyFulfillment':
             return {
                 content: {
-                    kind: ZTEvent.Fulfillment,
+                    kind: RiverTimelineEvent.Fulfillment,
                     sessionIds: value.content.value.sessionIds,
                     deviceKey: value.content.value.deviceKey,
                     to: userIdFromAddress(value.content.value.userAddress),
@@ -469,7 +469,7 @@ function toTownsContent_MemberPayload(
         case 'displayName':
             return {
                 content: {
-                    kind: ZTEvent.SpaceDisplayName,
+                    kind: RiverTimelineEvent.SpaceDisplayName,
                     userId: message.creatorUserId,
                     displayName:
                         event.decryptedContent?.kind === 'text'
@@ -481,7 +481,7 @@ function toTownsContent_MemberPayload(
         case 'username':
             return {
                 content: {
-                    kind: ZTEvent.SpaceUsername,
+                    kind: RiverTimelineEvent.SpaceUsername,
                     userId: message.creatorUserId,
                     username:
                         event.decryptedContent?.kind === 'text'
@@ -492,7 +492,7 @@ function toTownsContent_MemberPayload(
         case 'ensAddress':
             return {
                 content: {
-                    kind: ZTEvent.SpaceEnsAddress,
+                    kind: RiverTimelineEvent.SpaceEnsAddress,
                     userId: message.creatorUserId,
                     ensAddress: value.content.value,
                 } satisfies SpaceEnsAddressEvent,
@@ -500,7 +500,7 @@ function toTownsContent_MemberPayload(
         case 'nft':
             return {
                 content: {
-                    kind: ZTEvent.SpaceNft,
+                    kind: RiverTimelineEvent.SpaceNft,
                     userId: message.creatorUserId,
                     contractAddress: bin_toHexString(value.content.value.contractAddress),
                     tokenId: bin_toHexString(value.content.value.tokenId),
@@ -510,7 +510,7 @@ function toTownsContent_MemberPayload(
         case 'pin':
             return {
                 content: {
-                    kind: ZTEvent.Pin,
+                    kind: RiverTimelineEvent.Pin,
                     userId: message.creatorUserId,
                     pinnedEventId: bin_toHexString(value.content.value.eventId),
                 } satisfies PinEvent,
@@ -518,7 +518,7 @@ function toTownsContent_MemberPayload(
         case 'unpin':
             return {
                 content: {
-                    kind: ZTEvent.Unpin,
+                    kind: RiverTimelineEvent.Unpin,
                     userId: message.creatorUserId,
                     unpinnedEventId: bin_toHexString(value.content.value.eventId),
                 } satisfies UnpinEvent,
@@ -540,7 +540,7 @@ function toTownsContent_MemberPayload(
                     }
                     return {
                         content: {
-                            kind: ZTEvent.TipEvent,
+                            kind: RiverTimelineEvent.TipEvent,
                             transaction: transaction,
                             tip: tipContent,
                             transactionHash: bin_toHexString(transaction.receipt.transactionHash),
@@ -553,7 +553,7 @@ function toTownsContent_MemberPayload(
                 case undefined:
                     return {
                         content: {
-                            kind: ZTEvent.MemberBlockchainTransaction,
+                            kind: RiverTimelineEvent.MemberBlockchainTransaction,
                             transaction: value.content.value.transaction,
                             fromUserId: bin_toHexString(value.content.value.fromUserAddress),
                         } satisfies MemberBlockchainTransactionEvent,
@@ -591,7 +591,7 @@ function toTownsContent_UserPayload(
         case 'inception': {
             return {
                 content: {
-                    kind: ZTEvent.Inception,
+                    kind: RiverTimelineEvent.Inception,
                     creator: message.creatorUserId,
                     predecessor: undefined, // todo is this needed?
                     type: message.event.payload.case,
@@ -603,7 +603,7 @@ function toTownsContent_UserPayload(
             const streamId = streamIdFromBytes(payload.streamId)
             return {
                 content: {
-                    kind: ZTEvent.StreamMembership,
+                    kind: RiverTimelineEvent.StreamMembership,
                     userId: '', // this is just the current user
                     initiatorId: '',
                     membership: toMembership(payload.op),
@@ -616,7 +616,7 @@ function toTownsContent_UserPayload(
             const payload = value.content.value
             return {
                 content: {
-                    kind: ZTEvent.StreamMembership,
+                    kind: RiverTimelineEvent.StreamMembership,
                     userId: userIdFromAddress(payload.userId),
                     initiatorId: event.remoteEvent.creatorUserId,
                     membership: toMembership(payload.op),
@@ -627,7 +627,7 @@ function toTownsContent_UserPayload(
         case 'blockchainTransaction': {
             return {
                 content: {
-                    kind: ZTEvent.UserBlockchainTransaction,
+                    kind: RiverTimelineEvent.UserBlockchainTransaction,
                     transaction: value.content.value,
                 } satisfies UserBlockchainTransactionEvent,
             }
@@ -635,7 +635,7 @@ function toTownsContent_UserPayload(
         case 'receivedBlockchainTransaction': {
             return {
                 content: {
-                    kind: ZTEvent.UserReceivedBlockchainTransaction,
+                    kind: RiverTimelineEvent.UserReceivedBlockchainTransaction,
                     receivedTransaction: value.content.value,
                 } satisfies UserReceivedBlockchainTransactionEvent,
             }
@@ -664,7 +664,7 @@ function toTownsContent_ChannelPayload(
         case 'inception': {
             return {
                 content: {
-                    kind: ZTEvent.Inception,
+                    kind: RiverTimelineEvent.Inception,
                     creator: message.creatorUserId,
                     predecessor: undefined, // todo is this needed?
                     type: message.event.payload.case,
@@ -693,7 +693,7 @@ function toTownsContent_ChannelPayload(
         case 'redaction':
             return {
                 content: {
-                    kind: ZTEvent.RedactionActionEvent,
+                    kind: RiverTimelineEvent.RedactionActionEvent,
                     refEventId: bin_toHexString(value.content.value.eventId),
                     adminRedaction: true,
                 } satisfies RedactionActionEvent,
@@ -727,7 +727,7 @@ function toTownsContent_FromChannelMessage(
         case 'reaction':
             return {
                 content: {
-                    kind: ZTEvent.Reaction,
+                    kind: RiverTimelineEvent.Reaction,
                     reaction: channelMessage.payload.value.reaction,
                     targetEventId: channelMessage.payload.value.refEventId,
                 } satisfies ReactionEvent,
@@ -735,7 +735,7 @@ function toTownsContent_FromChannelMessage(
         case 'redaction':
             return {
                 content: {
-                    kind: ZTEvent.RedactionActionEvent,
+                    kind: RiverTimelineEvent.RedactionActionEvent,
                     refEventId: channelMessage.payload.value.refEventId,
                     adminRedaction: false,
                 } satisfies RedactionActionEvent,
@@ -773,7 +773,7 @@ function toTownsContent_ChannelPayload_Message(
         if (payload.refEventId) {
             return {
                 content: {
-                    kind: ZTEvent.ChannelMessageEncryptedWithRef,
+                    kind: RiverTimelineEvent.ChannelMessageEncryptedWithRef,
                     refEventId: payload.refEventId,
                 },
             }
@@ -781,7 +781,7 @@ function toTownsContent_ChannelPayload_Message(
         return {
             // if payload is an EncryptedData message, than it is encrypted content kind
             content: {
-                kind: ZTEvent.ChannelMessageEncrypted,
+                kind: RiverTimelineEvent.ChannelMessageEncrypted,
                 error: timelineEvent.decryptedContentError,
             } satisfies ChannelMessageEncryptedEvent,
         }
@@ -798,7 +798,7 @@ function toTownsContent_ChannelPayload_ChannelProperties(
     if (timelineEvent.decryptedContent?.kind === 'channelProperties') {
         return {
             content: {
-                kind: ZTEvent.ChannelProperties,
+                kind: RiverTimelineEvent.ChannelProperties,
                 properties: timelineEvent.decryptedContent.content,
             } satisfies ChannelPropertiesEvent,
         }
@@ -817,7 +817,7 @@ function toTownsContent_ChannelPayload_Message_Post(
         case 'text':
             return {
                 content: {
-                    kind: ZTEvent.ChannelMessage,
+                    kind: RiverTimelineEvent.ChannelMessage,
                     body: value.content.value.body,
                     threadId: value.threadId,
                     threadPreview: value.threadPreview,
@@ -834,7 +834,7 @@ function toTownsContent_ChannelPayload_Message_Post(
         case 'image':
             return {
                 content: {
-                    kind: ZTEvent.ChannelMessage,
+                    kind: RiverTimelineEvent.ChannelMessage,
                     body: value.content.value.title,
                     threadId: value.threadId,
                     threadPreview: value.threadPreview,
@@ -851,7 +851,7 @@ function toTownsContent_ChannelPayload_Message_Post(
         case 'gm':
             return {
                 content: {
-                    kind: ZTEvent.ChannelMessage,
+                    kind: RiverTimelineEvent.ChannelMessage,
                     body: value.content.value.typeUrl,
                     threadId: value.threadId,
                     threadPreview: value.threadPreview,
@@ -881,7 +881,7 @@ function toTownsContent_SpacePayload(
         case 'inception': {
             return {
                 content: {
-                    kind: ZTEvent.Inception,
+                    kind: RiverTimelineEvent.Inception,
                     creator: message.creatorUserId,
                     predecessor: undefined, // todo is this needed?
                     type: message.event.payload.case,
@@ -893,7 +893,7 @@ function toTownsContent_SpacePayload(
             const childId = streamIdAsString(payload.channelId)
             return {
                 content: {
-                    kind: ZTEvent.SpaceChild,
+                    kind: RiverTimelineEvent.ChannelCreate,
                     childId: childId,
                     channelOp: payload.op,
                     channelSettings: payload.settings,
@@ -905,7 +905,7 @@ function toTownsContent_SpacePayload(
             const channelId = streamIdAsString(payload.channelId)
             return {
                 content: {
-                    kind: ZTEvent.SpaceUpdateAutojoin,
+                    kind: RiverTimelineEvent.SpaceUpdateAutojoin,
                     autojoin: payload.autojoin,
                     channelId: channelId,
                 } satisfies SpaceUpdateAutojoinEvent,
@@ -916,7 +916,7 @@ function toTownsContent_SpacePayload(
             const channelId = streamIdAsString(payload.channelId)
             return {
                 content: {
-                    kind: ZTEvent.SpaceUpdateHideUserJoinLeaves,
+                    kind: RiverTimelineEvent.SpaceUpdateHideUserJoinLeaves,
                     hideUserJoinLeaves: payload.hideUserJoinLeaveEvents,
                     channelId: channelId,
                 } satisfies SpaceUpdateHideUserJoinLeavesEvent,
@@ -925,7 +925,7 @@ function toTownsContent_SpacePayload(
         case 'spaceImage': {
             return {
                 content: {
-                    kind: ZTEvent.SpaceImage,
+                    kind: RiverTimelineEvent.SpaceImage,
                 } satisfies SpaceImageEvent,
             }
         }
@@ -1047,7 +1047,7 @@ function toAttachment(
                 '',
             ).content
 
-            return channelMessageEvent?.kind === ZTEvent.ChannelMessage
+            return channelMessageEvent?.kind === RiverTimelineEvent.ChannelMessage
                 ? ({
                       type: 'embedded_message',
                       ...content,

@@ -1,8 +1,9 @@
 import { Divider, List, ListItem } from '@mui/material'
-import { MentionResult, ZTEvent, useSpaceId, useSpaceMentions } from 'use-towns-client'
+import { MentionResult, useSpaceId, useSpaceMentions } from 'use-towns-client'
 import React, { useCallback } from 'react'
 
 import { useNavigate } from 'react-router-dom'
+import { RiverTimelineEvent } from '@river-build/sdk'
 
 export function Mentions(): JSX.Element {
     const spaceId = useSpaceId()
@@ -44,7 +45,7 @@ export function Mentions(): JSX.Element {
 
 function formatMention(mention: MentionResult): string {
     switch (mention.event.content?.kind) {
-        case ZTEvent.ChannelMessage:
+        case RiverTimelineEvent.ChannelMessage:
             return `${mention.event.sender.displayName}: ${mention.event.content?.body}`
         default:
             return mention.event.fallbackContent

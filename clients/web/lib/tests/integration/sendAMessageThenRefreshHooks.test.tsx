@@ -10,7 +10,7 @@ import {
 } from './helpers/TestUtils'
 import { useChannelId } from '../../src/hooks/use-channel-id'
 import { useChannelTimeline } from '../../src/hooks/use-channel-timeline'
-import { TimelineEvent, ZTEvent } from '../../src/types/timeline-types'
+import { TimelineEvent } from '../../src/types/timeline-types'
 import { useCallback, useMemo } from 'react'
 import { LoginWithWallet } from './helpers/TestComponents'
 import { TownsTestApp } from './helpers/TownsTestApp'
@@ -22,6 +22,7 @@ import { TestConstants } from './helpers/TestConstants'
 import { Membership } from '../../src/types/towns-types'
 import { useMyMembership } from '../../src/hooks/use-my-membership'
 import { TSigner } from '../../src/types/web3-types'
+import { RiverTimelineEvent } from '@river-build/sdk'
 
 describe('sendAMessageThenRefresh.hooks', () => {
     // test that when loading a user that is participating in a channel, the existing channel messages decrypt and render properly
@@ -57,14 +58,14 @@ describe('sendAMessageThenRefresh.hooks', () => {
             const { timeline } = useChannelTimeline()
 
             const messages = useMemo(
-                () => timeline.filter((x) => x.content?.kind === ZTEvent.ChannelMessage),
+                () => timeline.filter((x) => x.content?.kind === RiverTimelineEvent.ChannelMessage),
                 [timeline],
             )
             // send message
 
             // format for easy reading
             const formatMessage = useCallback((e: TimelineEvent) => {
-                if (e.content?.kind === ZTEvent.ChannelMessage) {
+                if (e.content?.kind === RiverTimelineEvent.ChannelMessage) {
                     return `${e.content.body} eventId: ${e.eventId} isLocalPending: ${
                         e.isLocalPending ? 'true' : 'false'
                     }`

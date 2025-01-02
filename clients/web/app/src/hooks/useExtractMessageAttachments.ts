@@ -1,6 +1,7 @@
-import { ZTEvent, useTimelineStore, useTownsContext, useUserLookupStore } from 'use-towns-client'
+import { useTimelineStore, useTownsContext, useUserLookupStore } from 'use-towns-client'
 import { isEqual } from 'lodash'
 import { useCallback } from 'react'
+import { RiverTimelineEvent } from '@river-build/sdk'
 import { notUndefined } from 'ui/utils/utils'
 import { useExtractInternalLinks } from './useExtractInternalLinks'
 
@@ -15,7 +16,7 @@ export const useExtractMessageAttachments = (text: string) => {
                     const event = state.timelines[link.channelId]?.find(
                         (e) => e.eventId === link.messageId,
                     )
-                    if (event?.content?.kind !== ZTEvent.ChannelMessage) {
+                    if (event?.content?.kind !== RiverTimelineEvent.ChannelMessage) {
                         return
                     }
 

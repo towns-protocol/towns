@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react'
-import { TimelinePin, ZTEvent, toMessageInfo, useMyUserId, useUserLookup } from 'use-towns-client'
+import { TimelinePin, toMessageInfo, useMyUserId, useUserLookup } from 'use-towns-client'
+import { RiverTimelineEvent } from '@river-build/sdk'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { Box, Icon, Paragraph } from '@ui'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
@@ -45,7 +46,7 @@ export const PinnedMessage = (props: { channelId: string; pin: TimelinePin }) =>
 const PinContent = (props: { pin: TimelinePin }) => {
     const event = props.pin.timelineEvent
 
-    if (event.content?.kind === ZTEvent.ChannelMessage) {
+    if (event.content?.kind === RiverTimelineEvent.ChannelMessage) {
         const info = toMessageInfo(event)
         return info ? <MessageContentSummary info={info} /> : null
     }

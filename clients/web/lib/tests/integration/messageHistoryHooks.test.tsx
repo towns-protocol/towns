@@ -20,8 +20,8 @@ import { useChannelTimeline } from '../../src/hooks/use-channel-timeline'
 import { useTownsClient } from '../../src/hooks/use-towns-client'
 import { TestConstants } from './helpers/TestConstants'
 import { Permission } from '@river-build/web3'
-import { ZTEvent } from '../../src/types/timeline-types'
 import { TSigner } from '../../src/types/web3-types'
+import { RiverTimelineEvent } from '@river-build/sdk'
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
@@ -63,7 +63,9 @@ describe('messageHistoryHooks', () => {
             const TestComponent = ({ signer }: { signer: TSigner }) => {
                 const { scrollback } = useTownsClient()
                 const { timeline } = useChannelTimeline()
-                const messages = timeline.filter((x) => x.content?.kind === ZTEvent.ChannelMessage)
+                const messages = timeline.filter(
+                    (x) => x.content?.kind === RiverTimelineEvent.ChannelMessage,
+                )
                 const onClickScrollback = useCallback(() => {
                     void (async () => {
                         // eslint-disable-next-line no-constant-condition

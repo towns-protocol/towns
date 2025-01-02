@@ -1,19 +1,14 @@
-import {
-    ChannelMessageEvent,
-    MessageType,
-    ReactionEvent,
-    TimelineEvent,
-    ZTEvent,
-} from 'use-towns-client'
+import { RiverTimelineEvent } from '@river-build/sdk'
+import { ChannelMessageEvent, MessageType, ReactionEvent, TimelineEvent } from 'use-towns-client'
 
 export const getIsChannelMessageContent = (e?: TimelineEvent): ChannelMessageEvent | undefined => {
-    if (e?.content?.kind === ZTEvent.ChannelMessage) {
+    if (e?.content?.kind === RiverTimelineEvent.ChannelMessage) {
         return e.content
     }
 }
 
 export const getIsReactionContent = (e?: TimelineEvent): ReactionEvent | undefined => {
-    if (e?.content?.kind === ZTEvent.Reaction) {
+    if (e?.content?.kind === RiverTimelineEvent.Reaction) {
         return e.content
     }
 }

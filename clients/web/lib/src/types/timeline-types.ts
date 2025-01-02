@@ -20,7 +20,7 @@ import { PlainMessage } from '@bufbuild/protobuf'
 import { Channel, Membership, Mention, MessageType } from './towns-types'
 import { staticAssertNever } from '../utils/towns-utils'
 import { DecryptionSessionError } from '@river-build/encryption'
-import { isDefined } from '@river-build/sdk'
+import { EventStatus, isDefined, RiverTimelineEvent } from '@river-build/sdk'
 import { bin_toHexString } from '@river-build/dlog'
 
 /**************************************************************************
@@ -30,54 +30,6 @@ import { bin_toHexString } from '@river-build/dlog'
  * here: https://www.typescriptlang.org/docs/handbook/unions-and-intersections.html
  * and here: https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#union-types
  **************************************************************************/
-
-export enum EventStatus {
-    /** The event was not sent and will no longer be retried. */
-    NOT_SENT = 'not_sent',
-    /** The message is being encrypted */
-    ENCRYPTING = 'encrypting',
-    /** The event is in the process of being sent. */
-    SENDING = 'sending',
-    /** The event is in a queue waiting to be sent. */
-    QUEUED = 'queued',
-    /** The event has been sent to the server, but we have not yet received the echo. */
-    SENT = 'sent',
-    /** The event was cancelled before it was successfully sent. */
-    CANCELLED = 'cancelled',
-    /** We received this event */
-    RECEIVED = 'received',
-}
-
-// Towns Timeline Event
-export enum ZTEvent {
-    MiniblockHeader = 'm.miniblockheader',
-    Reaction = 'm.reaction',
-    Fulfillment = 'm.fulfillment',
-    Inception = 'm.inception',
-    KeySolicitation = 'm.key_solicitation',
-    MemberBlockchainTransaction = 'm.member_blockchain_transaction',
-    Pin = 'm.pin',
-    RedactedEvent = 'm.redacted_event',
-    RedactionActionEvent = 'm.redaction_action',
-    ChannelMessage = 'm.channel.message',
-    ChannelMessageEncrypted = 'm.channel.encrypted',
-    ChannelMessageEncryptedWithRef = 'm.channel.encrypted_with_ref',
-    ChannelMessageMissing = 'm.channel.missing',
-    ChannelProperties = 'm.channel.properties',
-    SpaceChild = 'm.space.child',
-    SpaceUpdateAutojoin = 'm.space.update_autojoin',
-    SpaceUpdateHideUserJoinLeaves = 'm.space.update_channel_hide_user_join_leaves',
-    SpaceImage = 'm.space.image',
-    SpaceUsername = 'm.space.username',
-    SpaceDisplayName = 'm.space.display_name',
-    SpaceEnsAddress = 'm.space.ens_name',
-    SpaceNft = 'm.space.nft',
-    StreamMembership = 'm.stream.membership',
-    TipEvent = 'm.tip_event',
-    Unpin = 'm.unpin',
-    UserBlockchainTransaction = 'm.user_blockchain_transaction',
-    UserReceivedBlockchainTransaction = 'm.user_received_blockchain_transaction',
-}
 
 /// a timeline event should have one or none of the following fields set
 export type TimelineEvent_OneOf =
@@ -110,7 +62,7 @@ export type TimelineEvent_OneOf =
     | UserReceivedBlockchainTransactionEvent
 
 export interface TipEvent {
-    kind: ZTEvent.TipEvent
+    kind: RiverTimelineEvent.TipEvent
     transaction: PlainMessage<BlockchainTransaction>
     tip: PlainMessage<BlockchainTransaction_Tip>
     transactionHash: string
@@ -120,27 +72,27 @@ export interface TipEvent {
 }
 
 export interface UserBlockchainTransactionEvent {
-    kind: ZTEvent.UserBlockchainTransaction
+    kind: RiverTimelineEvent.UserBlockchainTransaction
     transaction: PlainMessage<BlockchainTransaction>
 }
 export interface UserReceivedBlockchainTransactionEvent {
-    kind: ZTEvent.UserReceivedBlockchainTransaction
+    kind: RiverTimelineEvent.UserReceivedBlockchainTransaction
     receivedTransaction: PlainMessage<UserPayload_ReceivedBlockchainTransaction>
 }
 
 export interface MemberBlockchainTransactionEvent {
-    kind: ZTEvent.MemberBlockchainTransaction
+    kind: RiverTimelineEvent.MemberBlockchainTransaction
     transaction?: PlainMessage<BlockchainTransaction>
     fromUserId: string
 }
 
 export interface MiniblockHeaderEvent {
-    kind: ZTEvent.MiniblockHeader
+    kind: RiverTimelineEvent.MiniblockHeader
     message: MiniblockHeader
 }
 
 export interface FulfillmentEvent {
-    kind: ZTEvent.Fulfillment
+    kind: RiverTimelineEvent.Fulfillment
     sessionIds: string[]
     deviceKey: string
     to: string
@@ -148,20 +100,20 @@ export interface FulfillmentEvent {
 }
 
 export interface KeySolicitationEvent {
-    kind: ZTEvent.KeySolicitation
+    kind: RiverTimelineEvent.KeySolicitation
     sessionIds: string[]
     deviceKey: string
     isNewDevice: boolean
 }
 
 export interface ReactionEvent {
-    kind: ZTEvent.Reaction
+    kind: RiverTimelineEvent.Reaction
     targetEventId: string
     reaction: string
 }
 
 export interface InceptionEvent {
-    kind: ZTEvent.Inception
+    kind: RiverTimelineEvent.Inception
     creator: string
     predecessor?: { event_id: string; room_id: string }
     type?: PayloadCaseType
@@ -169,22 +121,22 @@ export interface InceptionEvent {
 }
 
 export interface ChannelPropertiesEvent {
-    kind: ZTEvent.ChannelProperties
+    kind: RiverTimelineEvent.ChannelProperties
     properties: ChannelProperties
 }
 
 export interface ChannelMessageEncryptedEvent {
-    kind: ZTEvent.ChannelMessageEncrypted
+    kind: RiverTimelineEvent.ChannelMessageEncrypted
     error?: DecryptionSessionError
 }
 
 export interface ChannelMessageMissingEvent {
-    kind: ZTEvent.ChannelMessageMissing
+    kind: RiverTimelineEvent.ChannelMessageMissing
     eventId: string
 }
 
 export interface StreamMembershipEvent {
-    kind: ZTEvent.StreamMembership
+    kind: RiverTimelineEvent.StreamMembership
     userId: string
     initiatorId: string
     membership: Membership
@@ -192,25 +144,25 @@ export interface StreamMembershipEvent {
 }
 
 export interface SpaceUsernameEvent {
-    kind: ZTEvent.SpaceUsername
+    kind: RiverTimelineEvent.SpaceUsername
     userId: string
     username: string
 }
 
 export interface SpaceDisplayNameEvent {
-    kind: ZTEvent.SpaceDisplayName
+    kind: RiverTimelineEvent.SpaceDisplayName
     userId: string
     displayName: string
 }
 
 export interface SpaceEnsAddressEvent {
-    kind: ZTEvent.SpaceEnsAddress
+    kind: RiverTimelineEvent.SpaceEnsAddress
     userId: string
     ensAddress: Uint8Array
 }
 
 export interface SpaceNftEvent {
-    kind: ZTEvent.SpaceNft
+    kind: RiverTimelineEvent.SpaceNft
     userId: string
     contractAddress: string
     tokenId: string
@@ -218,19 +170,19 @@ export interface SpaceNftEvent {
 }
 
 export interface PinEvent {
-    kind: ZTEvent.Pin
+    kind: RiverTimelineEvent.Pin
     userId: string
     pinnedEventId: string
 }
 
 export interface UnpinEvent {
-    kind: ZTEvent.Unpin
+    kind: RiverTimelineEvent.Unpin
     userId: string
     unpinnedEventId: string
 }
 
 export interface ChannelMessageEncryptedRefEvent {
-    kind: ZTEvent.ChannelMessageEncryptedWithRef
+    kind: RiverTimelineEvent.ChannelMessageEncryptedWithRef
     refEventId: string
 }
 
@@ -263,7 +215,7 @@ export type ChannelMessageEventContentOneOf =
     | ChannelMessageEventContent_Text
 
 export interface ChannelMessageEvent {
-    kind: ZTEvent.ChannelMessage
+    kind: RiverTimelineEvent.ChannelMessage
     threadId?: string
     threadPreview?: string
     replyId?: string
@@ -277,38 +229,38 @@ export interface ChannelMessageEvent {
 
 // original event: the event that was redacted
 export interface RedactedEvent {
-    kind: ZTEvent.RedactedEvent
+    kind: RiverTimelineEvent.RedactedEvent
     isAdminRedaction: boolean
 }
 
 // the event that redacted the original event
 export interface RedactionActionEvent {
-    kind: ZTEvent.RedactionActionEvent
+    kind: RiverTimelineEvent.RedactionActionEvent
     refEventId: string
     adminRedaction: boolean
 }
 
 export interface SpaceChildEvent {
-    kind: ZTEvent.SpaceChild
+    kind: RiverTimelineEvent.ChannelCreate
     childId: string
     channelOp?: ChannelOp
     channelSettings?: SpacePayload_ChannelSettings
 }
 
 export interface SpaceUpdateAutojoinEvent {
-    kind: ZTEvent.SpaceUpdateAutojoin
+    kind: RiverTimelineEvent.SpaceUpdateAutojoin
     channelId: string
     autojoin: boolean
 }
 
 export interface SpaceUpdateHideUserJoinLeavesEvent {
-    kind: ZTEvent.SpaceUpdateHideUserJoinLeaves
+    kind: RiverTimelineEvent.SpaceUpdateHideUserJoinLeaves
     channelId: string
     hideUserJoinLeaves: boolean
 }
 
 export interface SpaceImageEvent {
-    kind: ZTEvent.SpaceImage
+    kind: RiverTimelineEvent.SpaceImage
 }
 
 export interface TimelineEvent {
@@ -378,7 +330,7 @@ export type MessageTips = MessageTipEvent[]
 
 export function isMessageTipEvent(event: TimelineEvent): event is MessageTipEvent {
     return (
-        event.content?.kind === ZTEvent.TipEvent &&
+        event.content?.kind === RiverTimelineEvent.TipEvent &&
         event.content.transaction?.content.case === 'tip'
     )
 }
@@ -460,76 +412,76 @@ export function getFallbackContent(
         throw new Error('Either content or error should be defined')
     }
     switch (content.kind) {
-        case ZTEvent.MiniblockHeader:
+        case RiverTimelineEvent.MiniblockHeader:
             return `Miniblock miniblockNum:${content.message.miniblockNum}, hasSnapshot:${(content
                 .message.snapshot
                 ? true
                 : false
             ).toString()}`
-        case ZTEvent.Reaction:
+        case RiverTimelineEvent.Reaction:
             return `${senderDisplayName} reacted with ${content.reaction} to ${content.targetEventId}`
-        case ZTEvent.Inception:
+        case RiverTimelineEvent.Inception:
             return content.type ? `type: ${content.type}` : ''
-        case ZTEvent.ChannelMessageEncrypted:
+        case RiverTimelineEvent.ChannelMessageEncrypted:
             return `Decrypting...`
-        case ZTEvent.StreamMembership: {
+        case RiverTimelineEvent.StreamMembership: {
             return `[${content.membership}] userId: ${content.userId} initiatorId: ${content.initiatorId}`
         }
-        case ZTEvent.ChannelMessage:
+        case RiverTimelineEvent.ChannelMessage:
             return `${senderDisplayName}: ${content.body}`
-        case ZTEvent.ChannelProperties:
+        case RiverTimelineEvent.ChannelProperties:
             return `properties: ${content.properties.name ?? ''} ${content.properties.topic ?? ''}`
-        case ZTEvent.SpaceUsername:
+        case RiverTimelineEvent.SpaceUsername:
             return `username: ${content.username}`
-        case ZTEvent.SpaceDisplayName:
+        case RiverTimelineEvent.SpaceDisplayName:
             return `username: ${content.displayName}`
-        case ZTEvent.SpaceEnsAddress:
+        case RiverTimelineEvent.SpaceEnsAddress:
             return `ensAddress: ${bin_toHexString(content.ensAddress)}`
-        case ZTEvent.SpaceNft:
+        case RiverTimelineEvent.SpaceNft:
             return `contractAddress: ${content.contractAddress}, tokenId: ${content.tokenId}, chainId: ${content.chainId}`
-        case ZTEvent.RedactedEvent:
+        case RiverTimelineEvent.RedactedEvent:
             return `~Redacted~`
-        case ZTEvent.RedactionActionEvent:
+        case RiverTimelineEvent.RedactionActionEvent:
             return `Redacts ${content.refEventId} adminRedaction: ${content.adminRedaction}`
-        case ZTEvent.SpaceChild:
+        case RiverTimelineEvent.ChannelCreate:
             if (content.channelSettings !== undefined) {
                 return `childId: ${content.childId} autojoin: ${content.channelSettings.autojoin} hideUserJoinLeaves: ${content.channelSettings.hideUserJoinLeaveEvents}`
             }
             return `childId: ${content.childId}`
-        case ZTEvent.SpaceUpdateAutojoin:
+        case RiverTimelineEvent.SpaceUpdateAutojoin:
             return `channelId: ${content.channelId} autojoin: ${content.autojoin}`
-        case ZTEvent.SpaceUpdateHideUserJoinLeaves:
+        case RiverTimelineEvent.SpaceUpdateHideUserJoinLeaves:
             return `channelId: ${content.channelId} hideUserJoinLeaves: ${content.hideUserJoinLeaves}`
-        case ZTEvent.SpaceImage:
+        case RiverTimelineEvent.SpaceImage:
             return `SpaceImage`
-        case ZTEvent.Fulfillment:
+        case RiverTimelineEvent.Fulfillment:
             return `Fulfillment sessionIds: ${
                 content.sessionIds.length ? content.sessionIds.join(',') : 'forNewDevice: true'
             }, from: ${content.from} to: ${content.deviceKey}`
-        case ZTEvent.KeySolicitation:
+        case RiverTimelineEvent.KeySolicitation:
             if (content.isNewDevice) {
                 return `KeySolicitation deviceKey: ${content.deviceKey}, newDevice: true`
             }
             return `KeySolicitation deviceKey: ${content.deviceKey} sessionIds: ${content.sessionIds.length}`
-        case ZTEvent.ChannelMessageMissing:
+        case RiverTimelineEvent.ChannelMessageMissing:
             return `eventId: ${content.eventId}`
-        case ZTEvent.ChannelMessageEncryptedWithRef:
+        case RiverTimelineEvent.ChannelMessageEncryptedWithRef:
             return `refEventId: ${content.refEventId}`
-        case ZTEvent.Pin:
+        case RiverTimelineEvent.Pin:
             return `pinnedEventId: ${content.pinnedEventId} by: ${content.userId}`
-        case ZTEvent.Unpin:
+        case RiverTimelineEvent.Unpin:
             return `unpinnedEventId: ${content.unpinnedEventId} by: ${content.userId}`
-        case ZTEvent.TipEvent:
+        case RiverTimelineEvent.TipEvent:
             return `tip from: ${content.fromUserId} to: ${content.toUserId} refEventId: ${
                 content.refEventId
             } amount: ${content.tip.event?.amount.toString() ?? '??'}`
-        case ZTEvent.MemberBlockchainTransaction:
+        case RiverTimelineEvent.MemberBlockchainTransaction:
             return `memberTransaction from: ${
                 content.fromUserId
             } ${getFallbackContent_BlockchainTransaction(content.transaction)}`
-        case ZTEvent.UserBlockchainTransaction:
+        case RiverTimelineEvent.UserBlockchainTransaction:
             return getFallbackContent_BlockchainTransaction(content.transaction)
-        case ZTEvent.UserReceivedBlockchainTransaction:
+        case RiverTimelineEvent.UserReceivedBlockchainTransaction:
             return `kind: ${
                 content.receivedTransaction.transaction?.content.case ?? '??'
             } fromUserAddress: ${

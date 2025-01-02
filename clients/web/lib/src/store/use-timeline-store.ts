@@ -9,11 +9,11 @@ import {
     TimelineEvent,
     TimelineEventConfirmation,
     TimelineEvent_OneOf,
-    ZTEvent,
     getFallbackContent,
     isMessageTipEvent,
 } from '../types/timeline-types'
 import reverse from 'lodash/reverse'
+import { RiverTimelineEvent } from '@river-build/sdk'
 
 /// TimelinesMap: { streamId: TimelineEvent[] }
 export type TimelinesMap = Record<string, TimelineEvent[]>
@@ -466,7 +466,7 @@ function makeTimelineStoreInterface(
 }
 
 function canReplaceEvent(prev: TimelineEvent, next: TimelineEvent): boolean {
-    if (next.content?.kind === ZTEvent.RedactedEvent && next.content.isAdminRedaction) {
+    if (next.content?.kind === RiverTimelineEvent.RedactedEvent && next.content.isAdminRedaction) {
         return true
     }
     if (next.sender.id === prev.sender.id) {
@@ -480,8 +480,8 @@ function toReplacedMessageEvent(prev: TimelineEvent, next: TimelineEvent): Timel
     if (!canReplaceEvent(prev, next)) {
         return prev
     } else if (
-        next.content?.kind === ZTEvent.ChannelMessage &&
-        prev.content?.kind === ZTEvent.ChannelMessage
+        next.content?.kind === RiverTimelineEvent.ChannelMessage &&
+        prev.content?.kind === RiverTimelineEvent.ChannelMessage
     ) {
         // when we replace an event, we copy the content up to the root event
         // so we keep the prev id, but use the next content
@@ -506,7 +506,7 @@ function toReplacedMessageEvent(prev: TimelineEvent, next: TimelineEvent): Timel
             reactionParentId: prev.reactionParentId,
             sender: prev.sender,
         }
-    } else if (next.content?.kind === ZTEvent.RedactedEvent) {
+    } else if (next.content?.kind === RiverTimelineEvent.RedactedEvent) {
         // for redacted events, carry over previous pointers to content
         // we don't want to lose thread info
         return {
@@ -522,7 +522,7 @@ function toReplacedMessageEvent(prev: TimelineEvent, next: TimelineEvent): Timel
             threadParentId: prev.threadParentId,
             reactionParentId: prev.reactionParentId,
         }
-    } else if (prev.content?.kind === ZTEvent.RedactedEvent) {
+    } else if (prev.content?.kind === RiverTimelineEvent.RedactedEvent) {
         // replacing a redacted event should maintain the redacted state
         return {
             ...prev,
@@ -549,11 +549,11 @@ function toReplacedMessageEvent(prev: TimelineEvent, next: TimelineEvent): Timel
 }
 
 function makeRedactionEvent(redactionAction: TimelineEvent): TimelineEvent {
-    if (redactionAction.content?.kind !== ZTEvent.RedactionActionEvent) {
+    if (redactionAction.content?.kind !== RiverTimelineEvent.RedactionActionEvent) {
         throw new Error('makeRedactionEvent called with non-redaction action event')
     }
     const newContent = {
-        kind: ZTEvent.RedactedEvent,
+        kind: RiverTimelineEvent.RedactedEvent,
         isAdminRedaction: redactionAction.content.adminRedaction,
     } satisfies RedactedEvent
 
@@ -602,7 +602,7 @@ function addThreadStats(
                     parentMessageContent: getChannelMessageContent(timelineEvent),
                     isParticipating:
                         threadsStats[streamId][timelineEvent.eventId].isParticipating ||
-                        (timelineEvent.content?.kind !== ZTEvent.RedactedEvent &&
+                        (timelineEvent.content?.kind !== RiverTimelineEvent.RedactedEvent &&
                             threadsStats[streamId][timelineEvent.eventId].replyEventIds.size > 0 &&
                             (timelineEvent.sender.id === userId || timelineEvent.isMentioned)),
                 },
@@ -638,7 +638,7 @@ function addThreadStat(
     userId: string,
 ): ThreadStats {
     const updated = entry ? { ...entry } : makeNewThreadStats(event, parentId, timeline)
-    if (event.content?.kind === ZTEvent.RedactedEvent) {
+    if (event.content?.kind === RiverTimelineEvent.RedactedEvent) {
         return updated
     }
     updated.replyEventIds.add(event.eventId)
@@ -761,7 +761,7 @@ function addReactions(
 }
 
 function addReaction(event: TimelineEvent, entry?: MessageReactions): MessageReactions {
-    const content = event.content?.kind === ZTEvent.Reaction ? event.content : undefined
+    const content = event.content?.kind === RiverTimelineEvent.Reaction ? event.content : undefined
     if (!content) {
         return entry ?? {}
     }
@@ -788,7 +788,7 @@ function removeReaction(
     if (!reactions[streamId]?.[parentId]) {
         return reactions
     }
-    const content = event.content?.kind === ZTEvent.Reaction ? event.content : undefined
+    const content = event.content?.kind === RiverTimelineEvent.Reaction ? event.content : undefined
     if (!content) {
         return reactions
     }
@@ -910,7 +910,7 @@ function replaceTimelineEvent(
 }
 
 function getChannelMessageContent(event?: TimelineEvent): ChannelMessageEvent | undefined {
-    return event?.content?.kind === ZTEvent.ChannelMessage ? event.content : undefined
+    return event?.content?.kind === RiverTimelineEvent.ChannelMessage ? event.content : undefined
 }
 
 function getMessageSenderId(event: TimelineEvent): string | undefined {
@@ -921,28 +921,30 @@ function getMessageSenderId(event: TimelineEvent): string | undefined {
 }
 
 export function getEditsId(content: TimelineEvent_OneOf | undefined): string | undefined {
-    return content?.kind === ZTEvent.ChannelMessage ? content.editsEventId : undefined
+    return content?.kind === RiverTimelineEvent.ChannelMessage ? content.editsEventId : undefined
 }
 
 export function getRedactsId(content: TimelineEvent_OneOf | undefined): string | undefined {
-    return content?.kind === ZTEvent.RedactionActionEvent ? content.refEventId : undefined
+    return content?.kind === RiverTimelineEvent.RedactionActionEvent
+        ? content.refEventId
+        : undefined
 }
 
 export function getThreadParentId(content: TimelineEvent_OneOf | undefined): string | undefined {
-    return content?.kind === ZTEvent.ChannelMessage ? content.threadId : undefined
+    return content?.kind === RiverTimelineEvent.ChannelMessage ? content.threadId : undefined
 }
 
 export function getReplyParentId(content: TimelineEvent_OneOf | undefined): string | undefined {
-    return content?.kind === ZTEvent.ChannelMessage ? content.replyId : undefined
+    return content?.kind === RiverTimelineEvent.ChannelMessage ? content.replyId : undefined
 }
 
 export function getReactionParentId(content: TimelineEvent_OneOf | undefined): string | undefined {
-    return content?.kind === ZTEvent.Reaction ? content.targetEventId : undefined
+    return content?.kind === RiverTimelineEvent.Reaction ? content.targetEventId : undefined
 }
 
 export function getIsMentioned(content: TimelineEvent_OneOf | undefined, userId: string): boolean {
     //TODO: comparison below should be changed as soon as this HNT-1576 will be resolved
-    return content?.kind === ZTEvent.ChannelMessage
+    return content?.kind === RiverTimelineEvent.ChannelMessage
         ? content.mentions.findIndex(
               (x) =>
                   (x.userId ?? '')

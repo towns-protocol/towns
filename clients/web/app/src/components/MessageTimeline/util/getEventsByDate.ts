@@ -12,8 +12,8 @@ import {
     StreamMembershipEvent,
     ThreadStats,
     TimelineEvent,
-    ZTEvent,
 } from 'use-towns-client'
+import { RiverTimelineEvent } from '@river-build/sdk'
 import { ExperimentsState } from 'store/experimentsStore'
 import { MINUTE_MS } from 'data/constants'
 
@@ -150,15 +150,15 @@ export interface ThreadUpdateRenderEvent extends BaseEvent {
 }
 
 const isInception = (event: TimelineEvent): event is ZInceptionEvent => {
-    return event.content?.kind === ZTEvent.Inception
+    return event.content?.kind === RiverTimelineEvent.Inception
 }
 
 const isChannelProperties = (event: TimelineEvent): event is ZChannelPropertiesEvent => {
-    return event.content?.kind === ZTEvent.ChannelProperties
+    return event.content?.kind === RiverTimelineEvent.ChannelProperties
 }
 
 export const isChannelMessage = (event: TimelineEvent): event is ZChannelMessageEvent => {
-    return event.content?.kind === ZTEvent.ChannelMessage
+    return event.content?.kind === RiverTimelineEvent.ChannelMessage
 }
 
 export const isRedactedChannelMessage = (
@@ -170,15 +170,15 @@ export const isRedactedChannelMessage = (
 export const isEncryptedChannelMessage = (
     event: TimelineEvent,
 ): event is ZChannelMessageEncryptedEvent => {
-    return event.content?.kind === ZTEvent.ChannelMessageEncrypted
+    return event.content?.kind === RiverTimelineEvent.ChannelMessageEncrypted
 }
 
 export const isMissingMessage = (event: TimelineEvent): event is ZRoomMissingMessageEvent => {
-    return event.content?.kind === ZTEvent.ChannelMessageMissing
+    return event.content?.kind === RiverTimelineEvent.ChannelMessageMissing
 }
 
 const isStreamMembership = (event: TimelineEvent): event is ZStreamMembershipEvent => {
-    return event.content?.kind === ZTEvent.StreamMembership
+    return event.content?.kind === RiverTimelineEvent.StreamMembership
 }
 
 export type DateGroup = {

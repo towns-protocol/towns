@@ -2,12 +2,12 @@ import { Box, Button, Divider, TextField, Theme, Typography } from '@mui/materia
 import {
     Membership,
     TimelineEvent,
-    ZTEvent,
     useFullyReadMarker,
     useTimelineFilter,
     useTownsClient,
 } from 'use-towns-client'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { RiverTimelineEvent } from '@river-build/sdk'
 import { AcceptInvitation } from './AcceptInvitation'
 
 interface Props {
@@ -31,7 +31,7 @@ export function ChatMessages(props: Props): JSX.Element {
     const [scrollToBottom, setScrollToBottom] = useState<boolean>(true)
     const canLoadMore =
         timeline.length === 0 ||
-        (timeline[0].content?.kind !== ZTEvent.Inception && !hasReachedTerminus)
+        (timeline[0].content?.kind !== RiverTimelineEvent.Inception && !hasReachedTerminus)
     const messagesEndRef = useRef<HTMLDivElement>(null)
     const messagesStartRef = useRef<HTMLDivElement>(null)
     const isLoadingMore = useRef<boolean>(false)
@@ -275,7 +275,7 @@ function ChatMessage(props: { event: TimelineEvent }) {
 
 function formatEvent(event: TimelineEvent): string {
     switch (event.content?.kind) {
-        case ZTEvent.ChannelMessage:
+        case RiverTimelineEvent.ChannelMessage:
             return `${event.sender.displayName}: ${event.content.body}`
         default:
             return event.fallbackContent
