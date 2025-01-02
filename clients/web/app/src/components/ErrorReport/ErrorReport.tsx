@@ -5,6 +5,7 @@ import { useMutation } from '@tanstack/react-query'
 import { toast } from 'react-hot-toast/headless'
 import { useShallow } from 'zustand/react/shallow'
 import { Controller, UseFormReturn } from 'react-hook-form'
+import { useConnectivity } from 'use-towns-client'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import {
     Box,
@@ -38,6 +39,7 @@ import { Analytics } from 'hooks/useAnalytics'
 import { useConnectionStatus } from '@components/NodeConnectionStatusPanel/hooks/useConnectionStatus'
 import { NodeData, useNodeData } from '@components/NodeConnectionStatusPanel/hooks/useNodeData'
 import { getNodeStatusFromNodeData } from '@components/NodeConnectionStatusPanel/NodeStatusPill'
+import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import * as fieldStyles from '../../ui/components/_internal/Field/Field.css'
 import { BugSubmittedToast } from './BugSubmittedToast'
 
@@ -78,10 +80,12 @@ const defaultValues = {
 
 async function postCustomError(
     data: FormState,
-    nodeInfo: {
+    info: {
         connectionStatus: string
         nodeUrl: string | undefined
         nodeConnections: NodeData[]
+        loggedInWalletAddress: string | undefined
+        abstractAccountAddress: string | undefined
     },
 ) {
     Analytics.getInstance().track('submitting bug report')
@@ -122,9 +126,11 @@ async function postCustomError(
     deviceInfo += `* Device Type: ${deviceType}\n`
     deviceInfo += `* PWA: ${PWAflag}\n`
     deviceInfo += `* Location: ${location}\n`
-    deviceInfo += `* Node Connection Status: ${nodeInfo.connectionStatus}\n`
-    deviceInfo += `* Node URL: ${nodeInfo.nodeUrl ?? 'undefined'}\n`
-    deviceInfo += `* Node Connections:\n ${nodeInfo.nodeConnections
+    deviceInfo += `* Logged In Wallet Address: ${info.loggedInWalletAddress ?? 'undefined'}\n`
+    deviceInfo += `* Abstract Account Address: ${info.abstractAccountAddress ?? 'undefined'}\n`
+    deviceInfo += `* Node Connection Status: ${info.connectionStatus}\n`
+    deviceInfo += `* Node URL: ${info.nodeUrl ?? 'undefined'}\n`
+    deviceInfo += `* Node Connections:\n ${info.nodeConnections
         .map((x) => {
             const status = getNodeStatusFromNodeData(x)
             return `${x.nodeUrl}: ${status.nodeStatus.statusText}/${status.responseStatus}`
@@ -199,12 +205,22 @@ const _ErrorReportForm = (props: { onHide?: () => void; excludeDebugInfo?: boole
 
     const { connectionStatus, nodeUrl } = useConnectionStatus()
     const nodeConnections = useNodeData(nodeUrl)
+    const { loggedInWalletAddress } = useConnectivity()
+    const { data: abstractAccountAddress } = useAbstractAccountAddress({
+        rootKeyAddress: loggedInWalletAddress,
+    })
 
     const doPostCustomError = useCallback(
         (result: FormState) => {
-            return postCustomError(result, { connectionStatus, nodeUrl, nodeConnections })
+            return postCustomError(result, {
+                connectionStatus,
+                nodeUrl,
+                nodeConnections,
+                loggedInWalletAddress,
+                abstractAccountAddress,
+            })
         },
-        [connectionStatus, nodeUrl, nodeConnections],
+        [connectionStatus, nodeUrl, nodeConnections, loggedInWalletAddress, abstractAccountAddress],
     )
 
     const { mutate: doCustomError, isPending: isLoading } = useMutation({
