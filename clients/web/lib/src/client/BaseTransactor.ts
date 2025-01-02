@@ -1222,8 +1222,22 @@ export class BaseTransactor {
     ): Promise<TransferAssetTransactionContext | undefined> {
         let transaction: TransactionOrUserOperation | undefined = undefined
         let error: Error | undefined = undefined
+
+        let type: BlockchainTransactionType | undefined = undefined
+        if (transferData.spaceAddress) {
+            type = BlockchainTransactionType.WithdrawTreasury
+        } else if (transferData.value) {
+            type = BlockchainTransactionType.TransferBaseEth
+        } else if (transferData.contractAddress && transferData.tokenId) {
+            type = BlockchainTransactionType.TransferNft
+        }
+
+        if (!type) {
+            throw new Error('Invalid transfer data')
+        }
+
         const continueStoreTx = this.blockchainTransactionStore.begin({
-            type: BlockchainTransactionType.TransferAsset,
+            type,
             data: transferData,
         })
 

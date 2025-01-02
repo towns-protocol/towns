@@ -172,7 +172,9 @@ export function BlockchainTxNotifier() {
                     break
                 }
 
-                case BlockchainTransactionType.TransferAsset: {
+                case BlockchainTransactionType.TransferNft:
+                case BlockchainTransactionType.WithdrawTreasury:
+                case BlockchainTransactionType.TransferBaseEth: {
                     const data = tx.data as TransferAssetTransactionContext['data']
 
                     let successMessage: string = 'Transfer complete!'

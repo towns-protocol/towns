@@ -95,7 +95,7 @@ export type TransferAssetsData =
           contractAddress?: Address
           tokenId?: never
           spaceAddress?: Address
-          value: BigNumberish
+          value: bigint
           recipient: Address
       }
 

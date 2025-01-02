@@ -56,7 +56,9 @@ export enum BlockchainTransactionType {
     // not a single tx, but a series of txs exectued in a single user operation
     EditSpaceMembership = 'editSpaceMembership',
     PrepayMembership = 'prepayMembership',
-    TransferAsset = 'transferAsset',
+    TransferNft = 'transferNft',
+    WithdrawTreasury = 'withdrawTreasury',
+    TransferBaseEth = 'transferBaseEth',
     RefreshMetadata = 'refreshMetadata',
     Tip = 'tip',
     CheckIn = 'checkIn',

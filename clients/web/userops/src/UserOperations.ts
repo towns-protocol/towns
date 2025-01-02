@@ -1654,6 +1654,15 @@ export class UserOps {
             throw new Error('Failed to get AA address')
         }
 
+        console.log('[UserOperations] sendTransferEthOp', {
+            toAddress: recipient,
+            callData: '0x',
+            functionHashForPaymasterProxy: 'transferEth',
+            signer,
+            spaceId: undefined,
+            value,
+        })
+
         return this.sendUserOp({
             toAddress: recipient,
             callData: '0x',
@@ -1831,8 +1840,11 @@ export class UserOps {
                     const { sequenceName, functionHashForPaymasterProxy, spaceId, txValue } =
                         this.middlewareVars
 
-                    if (txValue && ethers.BigNumber.from(txValue).gt(0)) {
-                        return
+                    if (txValue) {
+                        const bigNumber = ethers.BigNumber.from(txValue)
+                        if (bigNumber.gt(0) || bigNumber.isNegative()) {
+                            return
+                        }
                     }
                     if (this.middlewareVars.functionHashForPaymasterProxy === 'checkIn') {
                         return

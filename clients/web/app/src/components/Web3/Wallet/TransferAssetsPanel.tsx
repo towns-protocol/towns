@@ -9,7 +9,6 @@ import {
     useLinkedWallets,
     useTransferAssetTransaction,
 } from 'use-towns-client'
-import { BigNumber } from 'ethers'
 import { ErrorMessage, FancyButton, FormRender, Stack, Text, TextField } from '@ui'
 import { Panel } from '@components/Panel/Panel'
 import { formatUnits, parseUnits, useBalance } from 'hooks/useBalance'
@@ -47,7 +46,15 @@ function TransferAssets() {
     const isAAWallet = useIsAAWallet()
     const isTreasuryTransfer = spaceAddress?.toLowerCase() === assetSourceParam?.toLowerCase()
     const source = isTreasuryTransfer ? spaceAddress : isAAWallet ? assetSourceParam : undefined
-    const isPendingTransferAsset = useIsTransactionPending(BlockchainTransactionType.TransferAsset)
+    const isPendingTransferBaseEth = useIsTransactionPending(
+        BlockchainTransactionType.TransferBaseEth,
+    )
+    const isPendingTransferNft = useIsTransactionPending(BlockchainTransactionType.TransferNft)
+    const isPendingWithdrawTreasury = useIsTransactionPending(
+        BlockchainTransactionType.WithdrawTreasury,
+    )
+    const isPendingTransferAsset =
+        isPendingTransferBaseEth || isPendingTransferNft || isPendingWithdrawTreasury
 
     const { loggedInWalletAddress } = useConnectivity()
     const { data: aaAddress } = useAbstractAccountAddress({
@@ -315,6 +322,8 @@ function SubmitButton(props: { source: Address | undefined; isTreasuryTransfer: 
                 isTreasuryTransfer,
             })
 
+            console.log('TransferAssetsPanel::onValid', dataToSubmit)
+
             if (!dataToSubmit) {
                 return
             }
@@ -387,7 +396,7 @@ function getValidatedData(args: {
         ? getNftTransferData({ data, fromWallet: source })
         : getEthTransferData({ data, onParseError })
 
-    if (dataToSubmit?.value && BigNumber.from(dataToSubmit.value).lte(0)) {
+    if (dataToSubmit?.value !== undefined && dataToSubmit.value <= 0n) {
         setError('ethAmount', {
             type: 'manual',
             message: 'Please enter a positive number.',
@@ -402,7 +411,7 @@ function getValidatedData(args: {
         return
     }
 
-    return dataToSubmit
+    return Object.freeze(dataToSubmit)
 }
 
 const isNftTransfer = (data: TransferSchema) => data.assetToTransfer !== 'BASE_ETH'
