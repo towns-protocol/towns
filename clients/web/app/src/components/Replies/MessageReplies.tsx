@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo } from 'react'
 import {
-    ThreadStats,
+    ThreadStatsData,
     useChannelId,
     useFullyReadMarker,
     useSpaceId,
@@ -12,7 +12,7 @@ import { notUndefined } from 'ui/utils/utils'
 import { Avatar } from '@components/Avatar/Avatar'
 
 type Props = {
-    threadStats: ThreadStats
+    threadStats: ThreadStatsData
     eventId: string
 }
 

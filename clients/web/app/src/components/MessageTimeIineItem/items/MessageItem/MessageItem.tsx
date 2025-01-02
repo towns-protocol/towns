@@ -1,7 +1,7 @@
 import React, { useCallback, useContext, useMemo, useRef, useState } from 'react'
 import {
     MessageType,
-    ThreadStats,
+    ThreadStatsData,
     TimelineEvent,
     staticAssertNever,
     useTownsClient,
@@ -250,7 +250,7 @@ type MessageWrapperProps = {
     highlight?: boolean
     selectable?: boolean
     children: React.ReactNode
-    replies?: ThreadStats
+    replies?: ThreadStatsData
     onMediaClick: (e: React.MouseEvent) => void
     pin?: Pin
 }

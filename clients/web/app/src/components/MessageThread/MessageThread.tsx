@@ -62,7 +62,7 @@ export const MessageThread = (props: {
             isSendFailed: false,
             isMentioned: false,
             isRedacted: false,
-            sender: { id: '', displayName: '' },
+            sender: { id: '' },
             content: {
                 kind: RiverTimelineEvent.ChannelMessageMissing,
                 eventId: parentId,

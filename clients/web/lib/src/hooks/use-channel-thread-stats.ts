@@ -1,8 +1,8 @@
 import { useChannelContext } from '../components/ChannelContextProvider'
-import { ThreadStats } from '../types/timeline-types'
+import { ThreadStatsData } from '../types/timeline-types'
 import { useTimelineThreadStats } from './use-timeline-thread-stats'
 
-export function useChannelThreadStats(): Record<string, ThreadStats> {
+export function useChannelThreadStats(): Record<string, ThreadStatsData> {
     const { channelId } = useChannelContext()
     return useTimelineThreadStats(channelId)
 }

@@ -5,7 +5,7 @@ import {
     MessageTips,
     RedactedEvent,
     ChannelMessageEvent,
-    ThreadStats,
+    ThreadStatsData,
     TimelineEvent,
     TimelineEventConfirmation,
     TimelineEvent_OneOf,
@@ -18,7 +18,7 @@ import { RiverTimelineEvent } from '@river-build/sdk'
 /// TimelinesMap: { streamId: TimelineEvent[] }
 export type TimelinesMap = Record<string, TimelineEvent[]>
 /// ThreadStatsMap: { streamId: { eventId: ThreadStats } }
-export type ThreadStatsMap = Record<string, Record<string, ThreadStats>>
+export type ThreadStatsMap = Record<string, Record<string, ThreadStatsData>>
 /// ThreadContentMap: { streamId: { eventId: ThreadContent } }
 export type ThreadsMap = Record<string, TimelinesMap>
 /// ReactionsMap: { streamId: { eventId: MessageReactions } }
@@ -77,7 +77,7 @@ function makeTimelineStoreInterface(
 ): TimelineStoreInterface {
     const initializeStream = (userId: string, streamId: string) => {
         const aggregated = {
-            threadStats: {} as Record<string, ThreadStats>,
+            threadStats: {} as Record<string, ThreadStatsData>,
             threads: {} as Record<string, TimelineEvent[]>,
             reactions: {} as Record<string, MessageReactions>,
             tips: {} as Record<string, MessageTips>,
@@ -617,7 +617,7 @@ function makeNewThreadStats(
     event: TimelineEvent,
     parentId: string,
     timeline?: TimelineEvent[],
-): ThreadStats {
+): ThreadStatsData {
     const parent = timeline?.find((t) => t.eventId === parentId) // one time lookup of the parent message for the first reply
     return {
         replyEventIds: new Set<string>(),
@@ -633,10 +633,10 @@ function makeNewThreadStats(
 function addThreadStat(
     event: TimelineEvent,
     parentId: string,
-    entry: ThreadStats | undefined,
+    entry: ThreadStatsData | undefined,
     timeline: TimelineEvent[] | undefined,
     userId: string,
-): ThreadStats {
+): ThreadStatsData {
     const updated = entry ? { ...entry } : makeNewThreadStats(event, parentId, timeline)
     if (event.content?.kind === RiverTimelineEvent.RedactedEvent) {
         return updated

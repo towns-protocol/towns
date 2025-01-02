@@ -62,7 +62,6 @@ function generateMessageRenderEvent(messageContent: MessageContent): MessageRend
             content: generateChannelMessageEvent(messageContent),
             sender: {
                 id: 'sender-id',
-                displayName: 'beavis',
             },
         } satisfies TimelineEvent,
     }

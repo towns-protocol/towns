@@ -50,7 +50,7 @@ import {
     StreamMembershipEvent,
     ChannelMessageEncryptedEvent,
     ChannelMessageEvent,
-    SpaceChildEvent,
+    ChannelCreateEvent,
     SpaceDisplayNameEvent,
     SpaceUsernameEvent,
     TimelineEvent,
@@ -245,13 +245,11 @@ export function toEvent(timelineEvent: StreamTimelineEvent, userId: string): Tim
 
     const sender = {
         id: senderId,
-        displayName: senderId, // todo displayName
-        avatarUrl: undefined, // todo avatarUrl
     }
 
     const { content, error } = toTownsContent(timelineEvent)
     const isSender = sender.id === userId
-    const fbc = `${content?.kind ?? '??'} ${getFallbackContent(sender.displayName, content, error)}`
+    const fbc = `${content?.kind ?? '??'} ${getFallbackContent(sender.id, content, error)}`
 
     function extractSessionId(event: StreamTimelineEvent): string | undefined {
         const payload = event.remoteEvent?.event.payload
@@ -592,8 +590,7 @@ function toTownsContent_UserPayload(
             return {
                 content: {
                     kind: RiverTimelineEvent.Inception,
-                    creator: message.creatorUserId,
-                    predecessor: undefined, // todo is this needed?
+                    creatorId: message.creatorUserId,
                     type: message.event.payload.case,
                 } satisfies InceptionEvent,
             }
@@ -665,8 +662,7 @@ function toTownsContent_ChannelPayload(
             return {
                 content: {
                     kind: RiverTimelineEvent.Inception,
-                    creator: message.creatorUserId,
-                    predecessor: undefined, // todo is this needed?
+                    creatorId: message.creatorUserId,
                     type: message.event.payload.case,
                 } satisfies InceptionEvent,
             }
@@ -882,8 +878,7 @@ function toTownsContent_SpacePayload(
             return {
                 content: {
                     kind: RiverTimelineEvent.Inception,
-                    creator: message.creatorUserId,
-                    predecessor: undefined, // todo is this needed?
+                    creatorId: message.creatorUserId,
                     type: message.event.payload.case,
                 } satisfies InceptionEvent,
             }
@@ -894,10 +889,11 @@ function toTownsContent_SpacePayload(
             return {
                 content: {
                     kind: RiverTimelineEvent.ChannelCreate,
-                    childId: childId,
+                    creatorId: message.creatorUserId,
+                    channelId: childId,
                     channelOp: payload.op,
                     channelSettings: payload.settings,
-                } satisfies SpaceChildEvent,
+                } satisfies ChannelCreateEvent,
             }
         }
         case 'updateChannelAutojoin': {

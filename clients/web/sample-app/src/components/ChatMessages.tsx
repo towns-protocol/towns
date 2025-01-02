@@ -276,7 +276,7 @@ function ChatMessage(props: { event: TimelineEvent }) {
 function formatEvent(event: TimelineEvent): string {
     switch (event.content?.kind) {
         case RiverTimelineEvent.ChannelMessage:
-            return `${event.sender.displayName}: ${event.content.body}`
+            return `${event.sender.id}: ${event.content.body}`
         default:
             return event.fallbackContent
     }

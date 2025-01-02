@@ -152,13 +152,13 @@ export function toMessageInfo(message: TimelineEvent): MostRecentMessageInfo_One
         if (content.type === 'dmChannelPayload') {
             return {
                 kind: 'dm_created',
-                creatorId: content.creator,
+                creatorId: content.creatorId,
             }
         }
         if (content.type === 'gdmChannelPayload') {
             return {
                 kind: 'gdm_created',
-                creatorId: content.creator,
+                creatorId: content.creatorId,
             }
         }
     }

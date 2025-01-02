@@ -5,7 +5,7 @@
 import { useTimelineStore } from '../../src/store/use-timeline-store'
 import {
     ChannelMessageEvent,
-    ThreadStats,
+    ThreadStatsData,
     TimelineEvent,
     MessageTips,
 } from '../../src/types/timeline-types'
@@ -54,7 +54,7 @@ function execute(
     expected: {
         timeline: string[]
         threads?: Record<string, string[]>
-        threadStats?: Record<string, ThreadStats>
+        threadStats?: Record<string, ThreadStatsData>
         tips?: Record<string, string[]>
     },
 ) {

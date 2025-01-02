@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { FullyReadMarker } from '@river-build/proto'
 import { useTimelineStore } from '../store/use-timeline-store'
-import { ThreadResult, ThreadStats } from '../types/timeline-types'
+import { ThreadResult, ThreadStatsData } from '../types/timeline-types'
 import { useFullyReadMarkerStore } from '../store/use-fully-read-marker-store'
 import { useChannels } from './use-channels'
 
@@ -15,7 +15,8 @@ export function useSpaceThreadRoots(): ThreadResult[] {
         const threads = [] as ThreadResult[]
 
         channels.forEach((channel) => {
-            const channelThreadStats: Record<string, ThreadStats> = threadsStats[channel.id] || {}
+            const channelThreadStats: Record<string, ThreadStatsData> =
+                threadsStats[channel.id] || {}
 
             const channelThreads = Object.values(channelThreadStats)
                 .filter((thread) => thread.isParticipating)

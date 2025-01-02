@@ -9,7 +9,7 @@ import { Permission } from '@river-build/web3'
 import {
     ChannelMessageEvent,
     ThreadResult,
-    ThreadStats,
+    ThreadStatsData,
     TimelineEvent,
 } from '../../src/types/timeline-types'
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
@@ -200,7 +200,7 @@ describe('sendThreadedMessageHooks', () => {
                 sendReadReceipt,
             ])
 
-            const formatThreadParent = useCallback((t: ThreadStats) => {
+            const formatThreadParent = useCallback((t: ThreadStatsData) => {
                 return `replyCount: (${t.replyEventIds.size}) parentId: (${t.parentId}) message: (${
                     t.parentMessageContent?.body ?? ''
                 })`
@@ -230,7 +230,7 @@ describe('sendThreadedMessageHooks', () => {
                 },
                 [channelThreadStats],
             )
-            const formatThreadStats = useCallback((k: string, v: ThreadStats) => {
+            const formatThreadStats = useCallback((k: string, v: ThreadStatsData) => {
                 return `${k} (replyCount:${v.replyEventIds.size} userIds:${[...v.userIds].join(
                     ',',
                 )})`

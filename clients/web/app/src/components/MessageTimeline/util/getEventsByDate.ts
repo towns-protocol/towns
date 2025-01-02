@@ -10,7 +10,7 @@ import {
     Membership,
     RedactedEvent,
     StreamMembershipEvent,
-    ThreadStats,
+    ThreadStatsData,
     TimelineEvent,
 } from 'use-towns-client'
 import { RiverTimelineEvent } from '@river-build/sdk'
@@ -243,7 +243,7 @@ export const getEventsByDate = (
     channelData: ChannelData,
     fullyReadMarkerEventId?: string,
     isThread?: boolean,
-    replyMap?: Record<string, ThreadStats>,
+    replyMap?: Record<string, ThreadStatsData>,
     experiments?: ExperimentsState,
     groupByUser: boolean = DEBUG_NO_GROUP_BY_USER,
     inlinedReplies: boolean = true,

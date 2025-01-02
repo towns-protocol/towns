@@ -6,7 +6,7 @@ import {
     MessageReactions,
     MessageTips,
     Permission,
-    ThreadStats,
+    ThreadStatsData,
     useConnectivity,
     useHasPermission,
     useMyUserId,
@@ -46,7 +46,7 @@ type Props = {
     messageSourceAnnotation?: string
     messageBody?: string
     reactions?: MessageReactions
-    replies?: ThreadStats
+    replies?: ThreadStatsData
     canReply?: boolean
     timestamp?: number
     editing?: boolean
@@ -397,7 +397,7 @@ const UserName = ({ user }: { user?: LookupUser }) => {
 
 export const RedactedMessageLayout = (props: {
     event: ZChannelMessageRedactedEvent
-    replies?: ThreadStats
+    replies?: ThreadStatsData
 }) => {
     const { event, replies } = props
     const { isTouch } = useDevice()

@@ -1,5 +1,5 @@
 import { useCallback, useRef } from 'react'
-import { ThreadStats, TimelineEvent } from '../types/timeline-types'
+import { ThreadStatsData, TimelineEvent } from '../types/timeline-types'
 import { TimelineStoreStates, useTimelineStore } from '../store/use-timeline-store'
 import { RiverTimelineEvent } from '@river-build/sdk'
 
@@ -10,9 +10,9 @@ export function useTimelineThread(
     eventId?: string,
 ): {
     messages: TimelineEvent[]
-    parent: ThreadStats | undefined
+    parent: ThreadStatsData | undefined
 } {
-    const dummyThreadStatCache = useRef<Record<string, ThreadStats>>({})
+    const dummyThreadStatCache = useRef<Record<string, ThreadStatsData>>({})
     const callback = useCallback(
         (state: TimelineStoreStates) =>
             eventId
@@ -32,9 +32,9 @@ export function useTimelineThread(
 }
 
 function toDummyThreadStats(
-    cache: React.MutableRefObject<Record<string, ThreadStats>>,
+    cache: React.MutableRefObject<Record<string, ThreadStatsData>>,
     event?: TimelineEvent,
-): ThreadStats | undefined {
+): ThreadStatsData | undefined {
     const content =
         event?.content?.kind === RiverTimelineEvent.ChannelMessage ? event.content : undefined
     if (!event || !content) {

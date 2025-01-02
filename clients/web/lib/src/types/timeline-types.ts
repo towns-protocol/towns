@@ -48,7 +48,7 @@ export type TimelineEvent_OneOf =
     | RedactedEvent
     | RedactionActionEvent
     | StreamMembershipEvent
-    | SpaceChildEvent
+    | ChannelCreateEvent
     | SpaceUpdateAutojoinEvent
     | SpaceUpdateHideUserJoinLeavesEvent
     | SpaceImageEvent
@@ -114,8 +114,7 @@ export interface ReactionEvent {
 
 export interface InceptionEvent {
     kind: RiverTimelineEvent.Inception
-    creator: string
-    predecessor?: { event_id: string; room_id: string }
+    creatorId: string
     type?: PayloadCaseType
     spaceId?: string // valid on casablanca channel streams
 }
@@ -240,9 +239,10 @@ export interface RedactionActionEvent {
     adminRedaction: boolean
 }
 
-export interface SpaceChildEvent {
+export interface ChannelCreateEvent {
     kind: RiverTimelineEvent.ChannelCreate
-    childId: string
+    creatorId: string
+    channelId: string
     channelOp?: ChannelOp
     channelSettings?: SpacePayload_ChannelSettings
 }
@@ -285,8 +285,6 @@ export interface TimelineEvent {
     isMentioned: boolean
     isRedacted: boolean
     sender: {
-        displayName: string
-        avatarUrl?: string
         id: string
     }
     sessionId?: string
@@ -298,7 +296,7 @@ export interface TimelineEventConfirmation {
     confirmedInBlockNum: bigint
 }
 
-export interface ThreadStats {
+export interface ThreadStatsData {
     /// Thread Parent
     replyEventIds: Set<string>
     userIds: Set<string>
@@ -314,7 +312,7 @@ export interface ThreadResult {
     isNew: boolean
     isUnread: boolean
     fullyReadMarker?: FullyReadMarker
-    thread: ThreadStats
+    thread: ThreadStatsData
     channel: Channel
     timestamp: number
 }
@@ -445,9 +443,9 @@ export function getFallbackContent(
             return `Redacts ${content.refEventId} adminRedaction: ${content.adminRedaction}`
         case RiverTimelineEvent.ChannelCreate:
             if (content.channelSettings !== undefined) {
-                return `childId: ${content.childId} autojoin: ${content.channelSettings.autojoin} hideUserJoinLeaves: ${content.channelSettings.hideUserJoinLeaveEvents}`
+                return `childId: ${content.channelId} autojoin: ${content.channelSettings.autojoin} hideUserJoinLeaves: ${content.channelSettings.hideUserJoinLeaveEvents}`
             }
-            return `childId: ${content.childId}`
+            return `childId: ${content.channelId}`
         case RiverTimelineEvent.SpaceUpdateAutojoin:
             return `channelId: ${content.channelId} autojoin: ${content.autojoin}`
         case RiverTimelineEvent.SpaceUpdateHideUserJoinLeaves:

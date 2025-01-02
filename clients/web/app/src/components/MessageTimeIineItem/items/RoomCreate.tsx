@@ -18,7 +18,7 @@ export const RoomCreate = (props: Props) => {
     const { lookupUser } = useUserLookupContext()
     const { event, channelName, userId } = props
 
-    const creator = event.content.creator
+    const creator = event.content.creatorId
 
     const creatorUser = lookupUser(creator)
     const name = getPrettyDisplayName(creatorUser)
