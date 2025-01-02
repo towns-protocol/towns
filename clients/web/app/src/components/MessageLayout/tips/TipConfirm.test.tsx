@@ -89,6 +89,11 @@ vi.mock('use-towns-client', async () => {
             }
         },
 
+        useChannelData: () => {
+            return {
+                channelId: channelRoomIdentifier,
+            }
+        },
         useUserLookupContext: () => {
             return {
                 lookupUser: (userId: string) => mockMembers.find((m) => m.userId === userId),

@@ -1,10 +1,14 @@
 import React, { useCallback, useState } from 'react'
-import { BlockchainTransactionType, LookupUser, useIsTransactionPending } from 'use-towns-client'
+import {
+    BlockchainTransactionType,
+    LookupUser,
+    useChannelData,
+    useIsTransactionPending,
+} from 'use-towns-client'
 import { isDMChannelStreamId, isGDMChannelStreamId } from '@river-build/sdk'
 import { Box, BoxProps, CardOpener, CardOpenerTriggerProps, IconButton } from '@ui'
 import { useShortcut } from 'hooks/useShortcut'
 import { useCardOpenerContext } from 'ui/components/Overlay/CardOpenerContext'
-import { useChannelIdFromPathname } from 'hooks/useChannelIdFromPathname'
 import { TipMenu } from './TipMenu'
 import { TipOption } from './types'
 import { TipConfirm } from './TipConfirm'
@@ -27,7 +31,8 @@ export function TipTooltipPopup(props: {
     const [isAbove, setIsAbove] = useState(false)
     const [tipValue, setTipValue] = useState<TipOption | undefined>()
     const tipPending = useIsTransactionPending(BlockchainTransactionType.Tip)
-    const channelId = useChannelIdFromPathname()
+    const channelData = useChannelData()
+    const channelId = channelData?.channelId
     const isDmOrGDM =
         !!channelId && (isDMChannelStreamId(channelId) || isGDMChannelStreamId(channelId))
 

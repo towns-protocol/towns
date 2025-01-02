@@ -3,6 +3,7 @@ import {
     Address,
     ETH_ADDRESS,
     LookupUser,
+    useChannelData,
     useConnectivity,
     useContractSpaceInfoWithoutClient,
     useTipTransaction,
@@ -13,7 +14,6 @@ import { GetSigner, WalletReady } from 'privy/WalletReady'
 import { calculateEthAmountFromUsd, useEthPrice } from '@components/Web3/useEthPrice'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
-import { useChannelIdFromPathname } from 'hooks/useChannelIdFromPathname'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { popupToast } from '@components/Notifications/popupToast'
@@ -43,7 +43,8 @@ export function TipConfirm(props: {
         refetchInterval: 8_000,
     })
     const spaceId = useSpaceIdFromPathname()
-    const channelId = useChannelIdFromPathname()
+    const channelData = useChannelData()
+    const channelId = channelData?.channelId
     const { loggedInWalletAddress } = useConnectivity()
     const {
         data: tokenId,
