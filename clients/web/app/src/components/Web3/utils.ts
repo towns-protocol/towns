@@ -45,6 +45,7 @@ const walletNotLinkedError = new WalletNotLinkedError()
 
 type AuthError = ReturnType<(typeof useCasablancaStore)['getState']>['authError']
 type ErrorTypes = (Error | AuthError) & { category?: string }
+export const ACTION_REJECTED = 'ACTION_REJECTED'
 
 /**
  * Blockchain, River, and other errors might be passed in during a transaction.
@@ -61,8 +62,8 @@ export function mapToErrorMessage(args: {
 
     const errorCode = getErrorCode(error)
 
-    if (errorCode === 'ACTION_REJECTED' || errorCode === 4001 || isRejectedErrorMessage(error)) {
-        return 'ACTION_REJECTED'
+    if (errorCode === ACTION_REJECTED || errorCode === 4001 || isRejectedErrorMessage(error)) {
+        return ACTION_REJECTED
     }
 
     // category is used for analytics tracking purposes

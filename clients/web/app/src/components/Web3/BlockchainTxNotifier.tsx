@@ -25,7 +25,7 @@ import { formatUnits } from 'hooks/useBalance'
 import { shortAddress } from 'ui/utils/utils'
 import { TipBurst } from '@components/MessageLayout/tips/TipBurst'
 import { useStore } from 'store/store'
-import { baseScanUrl, mapToErrorMessage } from './utils'
+import { ACTION_REJECTED, baseScanUrl, mapToErrorMessage } from './utils'
 
 type ToastProps = {
     tx: BlockchainStoreTx
@@ -306,8 +306,7 @@ function MonitoringNotification(props: ToastProps & { toast: Toast }) {
 
             if (_tx.status === 'failure') {
                 const errorMessage = mapToErrorMessage({ error: _tx.error, source: _tx.type })
-                // if the error message is empty, the user rejected the tx and we can dismiss the toast
-                if (!errorMessage) {
+                if (errorMessage === ACTION_REJECTED) {
                     headlessToast.dismiss(toast.id)
                     return
                 }
@@ -341,7 +340,10 @@ function MonitoringNotification(props: ToastProps & { toast: Toast }) {
     }, [closePanel, rolesParam, tx.type])
 
     // prevent flash when user rejects tx
-    if (updatedTx.status === 'failure' && !errorMessage) {
+    if (
+        updatedTx.status === 'failure' &&
+        (errorMessage === ACTION_REJECTED || subErrorMessage === ACTION_REJECTED)
+    ) {
         return null
     }
 
