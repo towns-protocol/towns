@@ -55,6 +55,8 @@ import { useEntitlements } from 'hooks/useEntitlements'
 import { EntitlementsDisplay } from '@components/TownPageLayout/EntitlementsDisplay'
 import { TownNotificationsButton } from '@components/NotificationSettings/NotificationsSettingsButton'
 import { minterRoleId } from '@components/SpaceSettingsPanel/rolePermissions.const'
+import { SpaceTotalTips } from '@components/MessageLayout/tips/SpaceTotalTips'
+import { env } from 'utils'
 import { PublicTownPageForAuthenticatedUser } from './PublicTownPage/PublicTownPage'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
 
@@ -316,6 +318,7 @@ export const SpaceInfo = () => {
                     onEdit={onEditTownInfoClick}
                 />
                 <TownTreasury {...contractSpaceInfo} />
+                <TownTips spaceId={spaceId} />
 
                 {!!owner && <TownOwner {...contractSpaceInfo} />}
                 <PanelButton onClick={onShowTownPreview}>
@@ -502,6 +505,23 @@ const TownTreasury = (props: ContractProps) => {
                 </Stack>
             )}
         </ContractWrap>
+    )
+}
+
+const TownTips = (props: { spaceId: string | undefined }) => {
+    const { spaceId } = props
+    if (!env.VITE_TIPS_ENABLED || !spaceId) {
+        return null
+    }
+    return (
+        <PanelButton height={undefined}>
+            <Stack gap="sm">
+                <Paragraph strong color="default">
+                    Tips
+                </Paragraph>
+                <SpaceTotalTips spaceId={spaceId} />
+            </Stack>
+        </PanelButton>
     )
 }
 
