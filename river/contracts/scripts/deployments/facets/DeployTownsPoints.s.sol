@@ -10,24 +10,24 @@ import "forge-std/console.sol";
 //contracts
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
-import {RiverPoints} from "contracts/src/airdrop/points/RiverPoints.sol";
+import {TownsPoints} from "contracts/src/airdrop/points/TownsPoints.sol";
 
-contract DeployRiverPoints is Deployer, FacetHelper {
+contract DeployTownsPoints is Deployer, FacetHelper {
   // FacetHelper
   constructor() {
-    addSelector(RiverPoints.mint.selector);
-    addSelector(RiverPoints.batchMintPoints.selector);
-    addSelector(RiverPoints.getPoints.selector);
-    addSelector(RiverPoints.balanceOf.selector);
-    addSelector(RiverPoints.totalSupply.selector);
-    addSelector(RiverPoints.name.selector);
-    addSelector(RiverPoints.symbol.selector);
-    addSelector(RiverPoints.decimals.selector);
+    addSelector(TownsPoints.mint.selector);
+    addSelector(TownsPoints.batchMintPoints.selector);
+    addSelector(TownsPoints.getPoints.selector);
+    addSelector(TownsPoints.balanceOf.selector);
+    addSelector(TownsPoints.totalSupply.selector);
+    addSelector(TownsPoints.name.selector);
+    addSelector(TownsPoints.symbol.selector);
+    addSelector(TownsPoints.decimals.selector);
 
     // CheckIn
-    addSelector(RiverPoints.checkIn.selector);
-    addSelector(RiverPoints.getCurrentStreak.selector);
-    addSelector(RiverPoints.getLastCheckIn.selector);
+    addSelector(TownsPoints.checkIn.selector);
+    addSelector(TownsPoints.getCurrentStreak.selector);
+    addSelector(TownsPoints.getLastCheckIn.selector);
   }
 
   // Deploying
@@ -36,7 +36,7 @@ contract DeployRiverPoints is Deployer, FacetHelper {
   }
 
   function initializer() public pure override returns (bytes4) {
-    return RiverPoints.__RiverPoints_init.selector;
+    return TownsPoints.__TownsPoints_init.selector;
   }
 
   function makeInitData(
@@ -59,7 +59,7 @@ contract DeployRiverPoints is Deployer, FacetHelper {
 
   function __deploy(address deployer) public override returns (address) {
     vm.startBroadcast(deployer);
-    RiverPoints riverPointsFacet = new RiverPoints();
+    TownsPoints riverPointsFacet = new TownsPoints();
     vm.stopBroadcast();
     return address(riverPointsFacet);
   }

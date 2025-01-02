@@ -3,7 +3,9 @@ package events
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"slices"
+	"strings"
 	"sync"
 	"time"
 
@@ -734,7 +736,20 @@ func (s *streamImpl) addEventLocked(ctx context.Context, event *ParsedEvent) err
 	// TODO: for some classes of errors, it's not clear if event was added or not
 	// for those, perhaps entire Stream structure should be scrapped and reloaded
 	if err != nil {
-		return err
+		eventsStr := fmt.Sprintf("[...%d events]", len(s.view().minipool.events.Map))
+		if len(s.view().minipool.events.Map) <= 16 {
+			var sb strings.Builder
+			sb.WriteString("[\n")
+			for hash, event := range s.view().minipool.events.Map {
+				sb.WriteString(fmt.Sprintf("  %s %s,\n", hash, event.ShortDebugStr()))
+			}
+			sb.WriteString("]")
+			eventsStr = sb.String()
+		}
+
+		return AsRiverError(err, Err_DB_OPERATION_FAILURE).
+			Tag("inMemoryBlocks", len(s.view().blocks)).
+			Tag("inMemoryEvents", eventsStr)
 	}
 
 	s.setView(newSV)

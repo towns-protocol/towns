@@ -235,6 +235,9 @@ jobs:
               with:
                   version: ${{ env.FOUNDRY_VERSION }}
 
+            - name: Install Protoc
+              uses: arduino/setup-protoc@v3
+
             - uses: actions/setup-node@v4
               with:
                   node-version: '20'
@@ -374,6 +377,9 @@ jobs:
               with:
                   version: ${{ env.FOUNDRY_VERSION }}
 
+            - name: Install Protoc
+              uses: arduino/setup-protoc@v3
+
             - uses: actions/setup-node@v4
               with:
                   node-version: '20'
@@ -511,6 +517,9 @@ jobs:
               with:
                   version: ${{ env.FOUNDRY_VERSION }}
 
+            - name: Install Protoc
+              uses: arduino/setup-protoc@v3
+
             - uses: actions/setup-node@v4
               with:
                   node-version: '20'
@@ -635,6 +644,9 @@ jobs:
                   go-version-file: 'go.work'
                   cache-dependency-path: '**/*.sum'
 
+            - name: Install Protoc
+              uses: arduino/setup-protoc@v3
+
             - name: Install Foundry
               uses: foundry-rs/foundry-toolchain@v1
               with:
@@ -670,8 +682,11 @@ jobs:
               run: ./scripts/register-ca.sh
               working-directory: core
 
+            - name: Build MLS libs
+              run: ./scripts/build-mls.sh
+
             - name: Run node tests
-              run: go test -race -timeout 24m -v -parallel 1 -count 1 -p 8 ./...
+              run: CGO_LDFLAGS="./libmls_lib.a -ldl" go test -race -timeout 24m -v -parallel 1 -count 1 -p 8 ./...
               working-directory: core
 
     XChain_Integration:

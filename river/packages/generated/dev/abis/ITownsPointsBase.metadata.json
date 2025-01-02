@@ -8,17 +8,17 @@
       {
         "inputs": [],
         "type": "error",
-        "name": "RiverPoints__CheckInPeriodNotPassed"
+        "name": "TownsPoints__CheckInPeriodNotPassed"
       },
       {
         "inputs": [],
         "type": "error",
-        "name": "RiverPoints__InvalidArrayLength"
+        "name": "TownsPoints__InvalidArrayLength"
       },
       {
         "inputs": [],
         "type": "error",
-        "name": "RiverPoints__InvalidSpace"
+        "name": "TownsPoints__InvalidSpace"
       },
       {
         "inputs": [
@@ -84,17 +84,17 @@
       "appendCBOR": false
     },
     "compilationTarget": {
-      "contracts/src/airdrop/points/IRiverPoints.sol": "IRiverPointsBase"
+      "contracts/src/airdrop/points/ITownsPoints.sol": "ITownsPointsBase"
     },
     "evmVersion": "paris",
     "libraries": {}
   },
   "sources": {
-    "contracts/src/airdrop/points/IRiverPoints.sol": {
-      "keccak256": "0x37aced5d0b00c4056f4a54753e250e926d6878e3a7db848d26b953b84057d50f",
+    "contracts/src/airdrop/points/ITownsPoints.sol": {
+      "keccak256": "0xf507ad2a91ab58166c2e850b93085320bc483e12a3fe2aef808c0b254a0b656e",
       "urls": [
-        "bzz-raw://7e7933a760287b666680510f3db10e4d3ddc4b62f86a21e48589ce789a86c12f",
-        "dweb:/ipfs/QmRaWy1fF4Uf1X5u24PjFn7MnZsXk4XdGkwaWEhR6RqBgp"
+        "bzz-raw://5dc159159e4cbe755e18661831ce80a4ca183a43edc21a01504585e73e595ebc",
+        "dweb:/ipfs/QmUELy6xZ8fpcpYfV1VV7oGbF5UAButoYteUNMX1ZAUsj7"
       ],
       "license": "MIT"
     }

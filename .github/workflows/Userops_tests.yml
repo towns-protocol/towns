@@ -34,6 +34,13 @@ jobs:
               with:
                   go-version: '1.22'
 
+            - name: Install Protoc
+              uses: arduino/setup-protoc@v3
+
+            - uses: actions-rs/toolchain@v1
+              with:
+                  toolchain: stable
+
             - name: Install Foundry
               uses: foundry-rs/foundry-toolchain@v1
               with:

@@ -69,7 +69,7 @@ export default [
       {
         "name": "action",
         "type": "uint8",
-        "internalType": "enum IRiverPointsBase.Action"
+        "internalType": "enum ITownsPointsBase.Action"
       },
       {
         "name": "data",
@@ -137,17 +137,17 @@ export default [
   },
   {
     "type": "error",
-    "name": "RiverPoints__CheckInPeriodNotPassed",
+    "name": "TownsPoints__CheckInPeriodNotPassed",
     "inputs": []
   },
   {
     "type": "error",
-    "name": "RiverPoints__InvalidArrayLength",
+    "name": "TownsPoints__InvalidArrayLength",
     "inputs": []
   },
   {
     "type": "error",
-    "name": "RiverPoints__InvalidSpace",
+    "name": "TownsPoints__InvalidSpace",
     "inputs": []
   }
 ] as const

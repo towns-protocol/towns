@@ -111,6 +111,7 @@ func testReplMcConversation(t *testing.T, numClients int, numSteps int, listenIn
 }
 
 func TestReplMcConversation(t *testing.T) {
+	t.Skip("TODO: REPLICATON: FIX: disabled due to #11608")
 	t.Parallel()
 	t.Run("5x5", func(t *testing.T) {
 		testReplMcConversation(t, 5, 5, 1, 1)

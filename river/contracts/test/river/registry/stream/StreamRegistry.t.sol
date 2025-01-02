@@ -4,7 +4,7 @@ pragma solidity ^0.8.23;
 import {IOwnableBase} from "@river-build/diamond/src/facets/ownable/IERC173.sol";
 // structs
 // libraries
-import {StreamWithId} from "contracts/src/river/registry/libraries/RegistryStorage.sol";
+import {Stream, StreamWithId, SetMiniblock} from "contracts/src/river/registry/libraries/RegistryStorage.sol";
 import {RiverRegistryErrors} from "contracts/src/river/registry/libraries/RegistryErrors.sol";
 
 // contracts
@@ -14,8 +14,8 @@ import {RiverRegistryBaseSetup} from "contracts/test/river/registry/RiverRegistr
 contract StreamRegistryTest is RiverRegistryBaseSetup, IOwnableBase {
   string url1 = "https://node1.com";
   string url2 = "https://node2.com";
-  address node1 = address(0x1);
-  address node2 = address(0x2);
+  address node1 = _randomAddress();
+  address node2 = _randomAddress();
 
   // =============================================================
   //                        allocateStream
@@ -111,12 +111,6 @@ contract StreamRegistryTest is RiverRegistryBaseSetup, IOwnableBase {
       dynamicStreamIds[i] = [streamIdOne, streamIdTwo, streamIdThree][i];
     }
     assertEq(streamRegistry.getStreamCount(), 2);
-    (uint256 foundCount, StreamWithId[] memory foundStreams) = streamRegistry
-      .getStreams(dynamicStreamIds);
-
-    assertEq(foundCount, 2);
-    assertEq(foundStreams[0].id, streamIdOne);
-    assertEq(foundStreams[1].id, streamIdTwo);
   }
 
   function allocateStream(
@@ -242,8 +236,6 @@ contract StreamRegistryTest is RiverRegistryBaseSetup, IOwnableBase {
     bytes32 streamIdTwo = 0x0000000000000000000000000000000000000000000000000000000000000002;
     bytes32 genesisMiniblockHash = 0;
 
-    assertEq(streamRegistry.getStreamCountOnNode(node), 0);
-
     vm.prank(node);
     streamRegistry.allocateStream(
       streamIdOne,
@@ -252,8 +244,6 @@ contract StreamRegistryTest is RiverRegistryBaseSetup, IOwnableBase {
       genesisMiniblock
     );
 
-    assertEq(streamRegistry.getStreamCountOnNode(node), 1);
-
     vm.prank(node);
     streamRegistry.allocateStream(
       streamIdTwo,
@@ -261,7 +251,37 @@ contract StreamRegistryTest is RiverRegistryBaseSetup, IOwnableBase {
       genesisMiniblockHash,
       genesisMiniblock
     );
+  }
 
-    assertEq(streamRegistry.getStreamCountOnNode(node), 2);
+  function test_setStreamLastMiniblockBatch(
+    address nodeOperator,
+    bytes32 genesisMiniblockHash,
+    bytes memory genesisMiniblock,
+    SetMiniblock[] memory miniblocks
+  )
+    external
+    givenNodeOperatorIsApproved(nodeOperator)
+    givenNodeIsRegistered(nodeOperator, node1, url1)
+  {
+    vm.assume(miniblocks.length < 500);
+    vm.assume(miniblocks.length > 0);
+
+    address[] memory nodes = new address[](1);
+    nodes[0] = node1;
+
+    for (uint256 i = 0; i < miniblocks.length; i++) {
+      vm.assume(streamRegistry.isStream(miniblocks[i].streamId) == false);
+
+      vm.prank(node1);
+      streamRegistry.allocateStream(
+        miniblocks[i].streamId,
+        nodes,
+        genesisMiniblockHash,
+        genesisMiniblock
+      );
+    }
+
+    vm.prank(node1);
+    streamRegistry.setStreamLastMiniblockBatch(miniblocks);
   }
 }

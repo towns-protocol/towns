@@ -716,8 +716,19 @@ func (s *PostgresStreamStore) writeEventTx(
 	// At this moment counter should be equal to minipoolSlot otherwise it is discrepancy of actual and expected records in minipool
 	// Keep in mind that there is service record with seqNum equal to -1
 	if counter != minipoolSlot {
+		var seqNum int
+		// Sometimes this transaction fails due to timeouts, but since we're rolling back the transaction
+		// anyway, we might as well try to add this metadata to the returned error for debugging purposes.
+		// Occasionally we see this error in local testing and there may be a race condition in our stream
+		// caching logic that is causing this inconsistency.
+		mbErr := tx.QueryRow(
+			ctx,
+			s.sqlForStream("select max(seq_num) from {{miniblocks}} where stream_id = $1", streamId),
+			streamId,
+		).Scan(&seqNum)
 		return RiverError(Err_DB_OPERATION_FAILURE, "Wrong number of records in minipool").
-			Tag("ActualRecordsNumber", counter).Tag("ExpectedRecordsNumber", minipoolSlot)
+			Tag("ActualRecordsNumber", counter).Tag("ExpectedRecordsNumber", minipoolSlot).
+			Tag("maxSeqNum", seqNum).Tag("mbErr", mbErr)
 	}
 
 	// All checks passed - we need to insert event into minipool

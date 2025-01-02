@@ -4,7 +4,7 @@ pragma solidity ^0.8.23;
 //interfaces
 
 //libraries
-import "forge-std/console.sol";
+import {console} from "forge-std/console.sol";
 
 //contracts
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
@@ -17,19 +17,21 @@ contract DeployStreamRegistry is FacetHelper, Deployer {
   constructor() {
     addSelector(StreamRegistry.allocateStream.selector);
     addSelector(StreamRegistry.getStream.selector);
-    addSelector(StreamRegistry.getStreams.selector);
-    addSelector(StreamRegistry.getStreamByIndex.selector);
     addSelector(StreamRegistry.getStreamWithGenesis.selector);
     addSelector(StreamRegistry.setStreamLastMiniblock.selector);
-    addSelector(StreamRegistry.setStreamLastMiniblockBatch.selector);
-    addSelector(StreamRegistry.placeStreamOnNode.selector);
+    addSelector(StreamRegistry.setStreamLastMiniblockBatch.selector); // reduce to only this
+    addSelector(StreamRegistry.placeStreamOnNode.selector); // future
     addSelector(StreamRegistry.removeStreamFromNode.selector);
-    addSelector(StreamRegistry.getStreamCount.selector);
-    addSelector(StreamRegistry.getAllStreamIds.selector);
-    addSelector(StreamRegistry.getAllStreams.selector);
-    addSelector(StreamRegistry.getPaginatedStreams.selector);
-    addSelector(StreamRegistry.getStreamsOnNode.selector);
+    addSelector(StreamRegistry.getStreamCount.selector); // monitoring
+    addSelector(StreamRegistry.getPaginatedStreams.selector); // only interested for stream on a single node
+    addSelector(StreamRegistry.isStream.selector); // returns if stream exists
     addSelector(StreamRegistry.getStreamCountOnNode.selector);
+
+    // addSelector(StreamRegistry.getStreams.selector);
+    // addSelector(StreamRegistry.getStreamByIndex.selector);
+    // addSelector(StreamRegistry.getAllStreamIds.selector);
+    // addSelector(StreamRegistry.getAllStreams.selector);
+    // addSelector(StreamRegistry.getStreamsOnNode.selector);
   }
 
   function versionName() public pure override returns (string memory) {

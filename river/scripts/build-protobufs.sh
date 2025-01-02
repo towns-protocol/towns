@@ -13,3 +13,6 @@ popd
 # golang
 cd ../core/node
 go generate -v -x protocol/gen.go
+
+cd mls_service
+./gen.sh

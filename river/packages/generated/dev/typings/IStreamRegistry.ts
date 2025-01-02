@@ -84,16 +84,12 @@ export type SetMiniblockStructOutput = [
 export interface IStreamRegistryInterface extends utils.Interface {
   functions: {
     "allocateStream(bytes32,address[],bytes32,bytes)": FunctionFragment;
-    "getAllStreamIds()": FunctionFragment;
-    "getAllStreams()": FunctionFragment;
     "getPaginatedStreams(uint256,uint256)": FunctionFragment;
     "getStream(bytes32)": FunctionFragment;
-    "getStreamByIndex(uint256)": FunctionFragment;
     "getStreamCount()": FunctionFragment;
     "getStreamCountOnNode(address)": FunctionFragment;
     "getStreamWithGenesis(bytes32)": FunctionFragment;
-    "getStreams(bytes32[])": FunctionFragment;
-    "getStreamsOnNode(address)": FunctionFragment;
+    "isStream(bytes32)": FunctionFragment;
     "placeStreamOnNode(bytes32,address)": FunctionFragment;
     "removeStreamFromNode(bytes32,address)": FunctionFragment;
     "setStreamLastMiniblock(bytes32,bytes32,bytes32,uint64,bool)": FunctionFragment;
@@ -103,16 +99,12 @@ export interface IStreamRegistryInterface extends utils.Interface {
   getFunction(
     nameOrSignatureOrTopic:
       | "allocateStream"
-      | "getAllStreamIds"
-      | "getAllStreams"
       | "getPaginatedStreams"
       | "getStream"
-      | "getStreamByIndex"
       | "getStreamCount"
       | "getStreamCountOnNode"
       | "getStreamWithGenesis"
-      | "getStreams"
-      | "getStreamsOnNode"
+      | "isStream"
       | "placeStreamOnNode"
       | "removeStreamFromNode"
       | "setStreamLastMiniblock"
@@ -129,24 +121,12 @@ export interface IStreamRegistryInterface extends utils.Interface {
     ]
   ): string;
   encodeFunctionData(
-    functionFragment: "getAllStreamIds",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getAllStreams",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
     functionFragment: "getPaginatedStreams",
     values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
     functionFragment: "getStream",
     values: [PromiseOrValue<BytesLike>]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getStreamByIndex",
-    values: [PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
     functionFragment: "getStreamCount",
@@ -161,12 +141,8 @@ export interface IStreamRegistryInterface extends utils.Interface {
     values: [PromiseOrValue<BytesLike>]
   ): string;
   encodeFunctionData(
-    functionFragment: "getStreams",
-    values: [PromiseOrValue<BytesLike>[]]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getStreamsOnNode",
-    values: [PromiseOrValue<string>]
+    functionFragment: "isStream",
+    values: [PromiseOrValue<BytesLike>]
   ): string;
   encodeFunctionData(
     functionFragment: "placeStreamOnNode",
@@ -196,22 +172,10 @@ export interface IStreamRegistryInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "getAllStreamIds",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getAllStreams",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "getPaginatedStreams",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "getStream", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "getStreamByIndex",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(
     functionFragment: "getStreamCount",
     data: BytesLike
@@ -224,11 +188,7 @@ export interface IStreamRegistryInterface extends utils.Interface {
     functionFragment: "getStreamWithGenesis",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "getStreams", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "getStreamsOnNode",
-    data: BytesLike
-  ): Result;
+  decodeFunctionResult(functionFragment: "isStream", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "placeStreamOnNode",
     data: BytesLike
@@ -350,12 +310,6 @@ export interface IStreamRegistry extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
-    getAllStreamIds(overrides?: CallOverrides): Promise<[string[]]>;
-
-    getAllStreams(
-      overrides?: CallOverrides
-    ): Promise<[StreamWithIdStructOutput[]]>;
-
     getPaginatedStreams(
       start: PromiseOrValue<BigNumberish>,
       stop: PromiseOrValue<BigNumberish>,
@@ -366,11 +320,6 @@ export interface IStreamRegistry extends BaseContract {
       streamId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<[StreamStructOutput]>;
-
-    getStreamByIndex(
-      i: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<[StreamWithIdStructOutput]>;
 
     getStreamCount(overrides?: CallOverrides): Promise<[BigNumber]>;
 
@@ -384,17 +333,10 @@ export interface IStreamRegistry extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[StreamStructOutput, string, string]>;
 
-    getStreams(
-      streamIds: PromiseOrValue<BytesLike>[],
+    isStream(
+      streamId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
-    ): Promise<
-      [BigNumber, StreamWithIdStructOutput[]] & { foundCount: BigNumber }
-    >;
-
-    getStreamsOnNode(
-      nodeAddress: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<[StreamWithIdStructOutput[]]>;
+    ): Promise<[boolean]>;
 
     placeStreamOnNode(
       streamId: PromiseOrValue<BytesLike>,
@@ -431,10 +373,6 @@ export interface IStreamRegistry extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
-  getAllStreamIds(overrides?: CallOverrides): Promise<string[]>;
-
-  getAllStreams(overrides?: CallOverrides): Promise<StreamWithIdStructOutput[]>;
-
   getPaginatedStreams(
     start: PromiseOrValue<BigNumberish>,
     stop: PromiseOrValue<BigNumberish>,
@@ -445,11 +383,6 @@ export interface IStreamRegistry extends BaseContract {
     streamId: PromiseOrValue<BytesLike>,
     overrides?: CallOverrides
   ): Promise<StreamStructOutput>;
-
-  getStreamByIndex(
-    i: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<StreamWithIdStructOutput>;
 
   getStreamCount(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -463,17 +396,10 @@ export interface IStreamRegistry extends BaseContract {
     overrides?: CallOverrides
   ): Promise<[StreamStructOutput, string, string]>;
 
-  getStreams(
-    streamIds: PromiseOrValue<BytesLike>[],
+  isStream(
+    streamId: PromiseOrValue<BytesLike>,
     overrides?: CallOverrides
-  ): Promise<
-    [BigNumber, StreamWithIdStructOutput[]] & { foundCount: BigNumber }
-  >;
-
-  getStreamsOnNode(
-    nodeAddress: PromiseOrValue<string>,
-    overrides?: CallOverrides
-  ): Promise<StreamWithIdStructOutput[]>;
+  ): Promise<boolean>;
 
   placeStreamOnNode(
     streamId: PromiseOrValue<BytesLike>,
@@ -510,12 +436,6 @@ export interface IStreamRegistry extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    getAllStreamIds(overrides?: CallOverrides): Promise<string[]>;
-
-    getAllStreams(
-      overrides?: CallOverrides
-    ): Promise<StreamWithIdStructOutput[]>;
-
     getPaginatedStreams(
       start: PromiseOrValue<BigNumberish>,
       stop: PromiseOrValue<BigNumberish>,
@@ -526,11 +446,6 @@ export interface IStreamRegistry extends BaseContract {
       streamId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<StreamStructOutput>;
-
-    getStreamByIndex(
-      i: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<StreamWithIdStructOutput>;
 
     getStreamCount(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -544,17 +459,10 @@ export interface IStreamRegistry extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[StreamStructOutput, string, string]>;
 
-    getStreams(
-      streamIds: PromiseOrValue<BytesLike>[],
+    isStream(
+      streamId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
-    ): Promise<
-      [BigNumber, StreamWithIdStructOutput[]] & { foundCount: BigNumber }
-    >;
-
-    getStreamsOnNode(
-      nodeAddress: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<StreamWithIdStructOutput[]>;
+    ): Promise<boolean>;
 
     placeStreamOnNode(
       streamId: PromiseOrValue<BytesLike>,
@@ -644,10 +552,6 @@ export interface IStreamRegistry extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
-    getAllStreamIds(overrides?: CallOverrides): Promise<BigNumber>;
-
-    getAllStreams(overrides?: CallOverrides): Promise<BigNumber>;
-
     getPaginatedStreams(
       start: PromiseOrValue<BigNumberish>,
       stop: PromiseOrValue<BigNumberish>,
@@ -656,11 +560,6 @@ export interface IStreamRegistry extends BaseContract {
 
     getStream(
       streamId: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getStreamByIndex(
-      i: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
@@ -676,13 +575,8 @@ export interface IStreamRegistry extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    getStreams(
-      streamIds: PromiseOrValue<BytesLike>[],
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getStreamsOnNode(
-      nodeAddress: PromiseOrValue<string>,
+    isStream(
+      streamId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
@@ -722,10 +616,6 @@ export interface IStreamRegistry extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
-    getAllStreamIds(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    getAllStreams(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
     getPaginatedStreams(
       start: PromiseOrValue<BigNumberish>,
       stop: PromiseOrValue<BigNumberish>,
@@ -734,11 +624,6 @@ export interface IStreamRegistry extends BaseContract {
 
     getStream(
       streamId: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getStreamByIndex(
-      i: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
@@ -754,13 +639,8 @@ export interface IStreamRegistry extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    getStreams(
-      streamIds: PromiseOrValue<BytesLike>[],
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getStreamsOnNode(
-      nodeAddress: PromiseOrValue<string>,
+    isStream(
+      streamId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 

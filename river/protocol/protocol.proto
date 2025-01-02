@@ -222,7 +222,15 @@ message MemberPayload {
     }
 
     message Mls {
+        message InitializeGroup {
+            bytes device_key = 1;
+            bytes group_info_message = 2;
+            bytes external_group_snapshot = 3;
+        }
 
+        oneof content {
+            InitializeGroup initialize_group = 1;
+        }
     }
 
     message EncryptionAlgorithm {

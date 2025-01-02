@@ -177,6 +177,13 @@ jobs:
                   go-version-file: 'river/go.work'
                   cache-dependency-path: '**/*.sum'
 
+            - name: Install Protoc
+              uses: arduino/setup-protoc@v3
+
+            - uses: actions-rs/toolchain@v1
+              with:
+                  toolchain: stable
+
             - name: Install Foundry
               uses: foundry-rs/foundry-toolchain@v1
               with:
@@ -314,6 +321,13 @@ jobs:
               with:
                   go-version-file: 'river/go.work'
                   cache-dependency-path: '**/*.sum'
+
+            - name: Install Protoc
+              uses: arduino/setup-protoc@v3
+
+            - uses: actions-rs/toolchain@v1
+              with:
+                  toolchain: stable
 
             - name: Install Foundry
               uses: foundry-rs/foundry-toolchain@v1

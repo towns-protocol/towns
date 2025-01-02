@@ -281,7 +281,10 @@ func (p *miniblockProducer) TestMakeMiniblock(
 
 		err = SleepWithContext(ctx, 10*time.Millisecond)
 		if err != nil {
-			return nil, err
+			return nil, AsRiverError(err, Err_INTERNAL).
+				Func("TestMakeMiniblock").
+				Message("Timed out while waiting for make_miniblock job to be scheduled").
+				Tag("streamId", streamId)
 		}
 	}
 
@@ -293,7 +296,10 @@ func (p *miniblockProducer) TestMakeMiniblock(
 
 		err = SleepWithContext(ctx, 10*time.Millisecond)
 		if err != nil {
-			return nil, err
+			return nil, AsRiverError(err, Err_INTERNAL).
+				Func("TestMakeMiniblock").
+				Message("Timed out while waiting for make_miniblock job to terminate").
+				Tag("streamId", streamId)
 		}
 	}
 
@@ -577,7 +583,13 @@ func (p *miniblockProducer) jobStart(ctx context.Context, j *mbJob, forceSnapsho
 	candidate, replicated, err := mbProduceCandidate(ctx, p.streamCache.Params(), j.stream, forceSnapshot)
 	if err != nil {
 		dlog.FromCtx(ctx).
-			Error("MiniblockProducer: jobStart: Error creating new miniblock proposal", "streamId", j.stream.streamId, "err", err)
+			Error(
+				"MiniblockProducer: jobStart: Error creating new miniblock proposal",
+				"streamId",
+				j.stream.streamId,
+				"err",
+				err,
+			)
 		p.jobDone(ctx, j)
 		return
 	}

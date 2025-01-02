@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {MinimalERC20Storage} from "contracts/src/primitive/ERC20.sol";
+import {MinimalERC20Storage} from "@river-build/diamond/src/primitive/ERC20.sol";
 
-library RiverPointsStorage {
+library TownsPointsStorage {
   // keccak256(abi.encode(uint256(keccak256("tokens.points.storage")) - 1)) & ~bytes32(uint256(0xff))
   bytes32 internal constant STORAGE_SLOT =
     0x25a22d57af6f735dc617e9781981413da3bc5a71376b4237270a04c144aaf700;

@@ -4,10 +4,10 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"net"
 	"net/http"
 	"strings"
-
-	"golang.org/x/net/http2"
+	"time"
 
 	"github.com/river-build/river/core/config"
 )
@@ -98,10 +98,24 @@ func GetHttp2LocalhostTLSConfig() *tls.Config {
 
 func GetHttp2LocalhostTLSClient(ctx context.Context, cfg *config.Config) (*http.Client, error) {
 	return &http.Client{
-		Transport: &http2.Transport{
+		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
 				RootCAs: LocalhostCertPool,
 			},
+
+			// Node-2-node connections to local nodes in tests sometimes seem to hang if the
+			// local node is down, although they do terminate when the http service is torn down.
+			// This setting limits the duration of attempting to establish a connection to
+			// another node.
+			DialContext: (&net.Dialer{
+				Timeout:   2 * time.Second,
+				KeepAlive: 30 * time.Second,
+			}).DialContext,
+
+			// ForceAttemptHTTP2 ensures the transport negotiates HTTP/2 if possible.
+			// This allows us to use the http.Transport, whose DialContext timeout is
+			// respected by the service.
+			ForceAttemptHTTP2: true,
 		},
 	}, nil
 }

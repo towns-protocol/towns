@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-interface IRiverPointsBase {
+interface ITownsPointsBase {
   enum Action {
     JoinSpace,
     CheckIn
@@ -20,16 +20,16 @@ interface IRiverPointsBase {
   );
 
   /// @notice Error thrown when the space is invalid
-  error RiverPoints__InvalidSpace();
+  error TownsPoints__InvalidSpace();
 
   /// @notice Error thrown when the array length is invalid
-  error RiverPoints__InvalidArrayLength();
+  error TownsPoints__InvalidArrayLength();
 
   /// @notice Error thrown when a user attempts to check in too soon after their last check-in
-  error RiverPoints__CheckInPeriodNotPassed();
+  error TownsPoints__CheckInPeriodNotPassed();
 }
 
-interface IRiverPoints is IRiverPointsBase {
+interface ITownsPoints is ITownsPointsBase {
   /// @notice Batch mint points to multiple users
   /// @dev Only callable by the owner
   /// @param accounts The addresses to mint the points to

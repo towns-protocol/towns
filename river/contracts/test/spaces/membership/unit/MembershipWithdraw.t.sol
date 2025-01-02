@@ -11,7 +11,7 @@ import {IPlatformRequirements} from "contracts/src/factory/facets/platform/requi
 import {BasisPoints} from "contracts/src/utils/libraries/BasisPoints.sol";
 
 //contracts
-
+import {console} from "forge-std/console.sol";
 contract MembershipWithdraw is MembershipBaseSetup {
   function test_withdraw()
     external
@@ -23,6 +23,11 @@ contract MembershipWithdraw is MembershipBaseSetup {
       MEMBERSHIP_PRICE,
       IPlatformRequirements(spaceFactory).getMembershipBps()
     );
+
+    uint256 expectedRevenue = MEMBERSHIP_PRICE - protocolFee;
+
+    uint256 revenue = membership.revenue();
+    assertEq(revenue, expectedRevenue);
 
     vm.prank(founder);
     membership.withdraw(multisig);

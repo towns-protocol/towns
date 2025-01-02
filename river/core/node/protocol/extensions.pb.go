@@ -17,6 +17,7 @@ type IsMediaPayload_Content = isMediaPayload_Content
 type IsSnapshot_Content = isSnapshot_Content
 type IsBlockchainTransaction_Content = isBlockchainTransaction_Content
 type IsGetStreamExResponse_Data = isGetStreamExResponse_Data
+type IsMemberPayload_Mls_Content = isMemberPayload_Mls_Content
 
 type IsInceptionPayload interface {
 	isInceptionPayload()

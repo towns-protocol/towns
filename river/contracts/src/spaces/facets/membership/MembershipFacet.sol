@@ -20,7 +20,7 @@ contract MembershipFacet is
   Facet
 {
   // =============================================================
-  //                           Withdrawal
+  //                           Funds
   // =============================================================
 
   /// @inheritdoc IMembership
@@ -42,6 +42,11 @@ contract MembershipFacet is
       account,
       balance
     );
+  }
+
+  /// @inheritdoc IMembership
+  function revenue() external view returns (uint256) {
+    return _getCreatorBalance();
   }
 
   // =============================================================

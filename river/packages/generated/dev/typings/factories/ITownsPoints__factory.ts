@@ -4,7 +4,7 @@
 
 import { Contract, Signer, utils } from "ethers";
 import type { Provider } from "@ethersproject/providers";
-import type { IRiverPoints, IRiverPointsInterface } from "../IRiverPoints";
+import type { ITownsPoints, ITownsPointsInterface } from "../ITownsPoints";
 
 const _abi = [
   {
@@ -77,7 +77,7 @@ const _abi = [
       {
         name: "action",
         type: "uint8",
-        internalType: "enum IRiverPointsBase.Action",
+        internalType: "enum ITownsPointsBase.Action",
       },
       {
         name: "data",
@@ -145,30 +145,30 @@ const _abi = [
   },
   {
     type: "error",
-    name: "RiverPoints__CheckInPeriodNotPassed",
+    name: "TownsPoints__CheckInPeriodNotPassed",
     inputs: [],
   },
   {
     type: "error",
-    name: "RiverPoints__InvalidArrayLength",
+    name: "TownsPoints__InvalidArrayLength",
     inputs: [],
   },
   {
     type: "error",
-    name: "RiverPoints__InvalidSpace",
+    name: "TownsPoints__InvalidSpace",
     inputs: [],
   },
 ] as const;
 
-export class IRiverPoints__factory {
+export class ITownsPoints__factory {
   static readonly abi = _abi;
-  static createInterface(): IRiverPointsInterface {
-    return new utils.Interface(_abi) as IRiverPointsInterface;
+  static createInterface(): ITownsPointsInterface {
+    return new utils.Interface(_abi) as ITownsPointsInterface;
   }
   static connect(
     address: string,
     signerOrProvider: Signer | Provider
-  ): IRiverPoints {
-    return new Contract(address, _abi, signerOrProvider) as IRiverPoints;
+  ): ITownsPoints {
+    return new Contract(address, _abi, signerOrProvider) as ITownsPoints;
   }
 }

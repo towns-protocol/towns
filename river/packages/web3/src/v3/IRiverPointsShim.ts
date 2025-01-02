@@ -1,9 +1,9 @@
 import {
-    IRiverPoints as DevContract,
-    IRiverPointsInterface as DevInterface,
-} from '@river-build/generated/dev/typings/IRiverPoints'
+    ITownsPoints as DevContract,
+    ITownsPointsInterface as DevInterface,
+} from '@river-build/generated/dev/typings/ITownsPoints'
 
-import DevAbi from '@river-build/generated/dev/abis/IRiverPoints.abi.json' assert { type: 'json' }
+import DevAbi from '@river-build/generated/dev/abis/ITownsPoints.abi.json' assert { type: 'json' }
 
 import { ethers } from 'ethers'
 import { BaseContractShim } from './BaseContractShim'

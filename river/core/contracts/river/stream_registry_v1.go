@@ -55,7 +55,7 @@ type StreamWithId struct {
 
 // StreamRegistryV1MetaData contains all meta data concerning the StreamRegistryV1 contract.
 var StreamRegistryV1MetaData = &bind.MetaData{
-	ABI: "[{\"type\":\"function\",\"name\":\"allocateStream\",\"inputs\":[{\"name\":\"streamId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"nodes\",\"type\":\"address[]\",\"internalType\":\"address[]\"},{\"name\":\"genesisMiniblockHash\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"genesisMiniblock\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"getAllStreamIds\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getAllStreams\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"tuple[]\",\"internalType\":\"structStreamWithId[]\",\"components\":[{\"name\":\"id\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"stream\",\"type\":\"tuple\",\"internalType\":\"structStream\",\"components\":[{\"name\":\"lastMiniblockHash\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"lastMiniblockNum\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"reserved0\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"flags\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"nodes\",\"type\":\"address[]\",\"internalType\":\"address[]\"}]}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getPaginatedStreams\",\"inputs\":[{\"name\":\"start\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"stop\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"tuple[]\",\"internalType\":\"structStreamWithId[]\",\"components\":[{\"name\":\"id\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"stream\",\"type\":\"tuple\",\"internalType\":\"structStream\",\"components\":[{\"name\":\"lastMiniblockHash\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"lastMiniblockNum\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"reserved0\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"flags\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"nodes\",\"type\":\"address[]\",\"internalType\":\"address[]\"}]}]},{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getStream\",\"inputs\":[{\"name\":\"streamId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structStream\",\"components\":[{\"name\":\"lastMiniblockHash\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"lastMiniblockNum\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"reserved0\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"flags\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"nodes\",\"type\":\"address[]\",\"internalType\":\"address[]\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getStreamByIndex\",\"inputs\":[{\"name\":\"i\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structStreamWithId\",\"components\":[{\"name\":\"id\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"stream\",\"type\":\"tuple\",\"internalType\":\"structStream\",\"components\":[{\"name\":\"lastMiniblockHash\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"lastMiniblockNum\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"reserved0\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"flags\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"nodes\",\"type\":\"address[]\",\"internalType\":\"address[]\"}]}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getStreamCount\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getStreamCountOnNode\",\"inputs\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getStreamWithGenesis\",\"inputs\":[{\"name\":\"streamId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structStream\",\"components\":[{\"name\":\"lastMiniblockHash\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"lastMiniblockNum\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"reserved0\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"flags\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"nodes\",\"type\":\"address[]\",\"internalType\":\"address[]\"}]},{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getStreams\",\"inputs\":[{\"name\":\"streamIds\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"}],\"outputs\":[{\"name\":\"foundCount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"\",\"type\":\"tuple[]\",\"internalType\":\"structStreamWithId[]\",\"components\":[{\"name\":\"id\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"stream\",\"type\":\"tuple\",\"internalType\":\"structStream\",\"components\":[{\"name\":\"lastMiniblockHash\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"lastMiniblockNum\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"reserved0\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"flags\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"nodes\",\"type\":\"address[]\",\"internalType\":\"address[]\"}]}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getStreamsOnNode\",\"inputs\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"tuple[]\",\"internalType\":\"structStreamWithId[]\",\"components\":[{\"name\":\"id\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"stream\",\"type\":\"tuple\",\"internalType\":\"structStream\",\"components\":[{\"name\":\"lastMiniblockHash\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"lastMiniblockNum\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"reserved0\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"flags\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"nodes\",\"type\":\"address[]\",\"internalType\":\"address[]\"}]}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"placeStreamOnNode\",\"inputs\":[{\"name\":\"streamId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"nodeAddress\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"removeStreamFromNode\",\"inputs\":[{\"name\":\"streamId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"nodeAddress\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setStreamLastMiniblock\",\"inputs\":[{\"name\":\"streamId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"prevMiniBlockHash\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"lastMiniblockHash\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"lastMiniblockNum\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"isSealed\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setStreamLastMiniblockBatch\",\"inputs\":[{\"name\":\"miniblocks\",\"type\":\"tuple[]\",\"internalType\":\"structSetMiniblock[]\",\"components\":[{\"name\":\"streamId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"prevMiniBlockHash\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"lastMiniblockHash\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"lastMiniblockNum\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"isSealed\",\"type\":\"bool\",\"internalType\":\"bool\"}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"StreamAllocated\",\"inputs\":[{\"name\":\"streamId\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"},{\"name\":\"nodes\",\"type\":\"address[]\",\"indexed\":false,\"internalType\":\"address[]\"},{\"name\":\"genesisMiniblockHash\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"},{\"name\":\"genesisMiniblock\",\"type\":\"bytes\",\"indexed\":false,\"internalType\":\"bytes\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"StreamLastMiniblockUpdateFailed\",\"inputs\":[{\"name\":\"streamId\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"},{\"name\":\"lastMiniblockHash\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"},{\"name\":\"lastMiniblockNum\",\"type\":\"uint64\",\"indexed\":false,\"internalType\":\"uint64\"},{\"name\":\"reason\",\"type\":\"string\",\"indexed\":false,\"internalType\":\"string\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"StreamLastMiniblockUpdated\",\"inputs\":[{\"name\":\"streamId\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"},{\"name\":\"lastMiniblockHash\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"},{\"name\":\"lastMiniblockNum\",\"type\":\"uint64\",\"indexed\":false,\"internalType\":\"uint64\"},{\"name\":\"isSealed\",\"type\":\"bool\",\"indexed\":false,\"internalType\":\"bool\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"StreamPlacementUpdated\",\"inputs\":[{\"name\":\"streamId\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"},{\"name\":\"nodeAddress\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"isAdded\",\"type\":\"bool\",\"indexed\":false,\"internalType\":\"bool\"}],\"anonymous\":false}]",
+	ABI: "[{\"type\":\"function\",\"name\":\"allocateStream\",\"inputs\":[{\"name\":\"streamId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"nodes\",\"type\":\"address[]\",\"internalType\":\"address[]\"},{\"name\":\"genesisMiniblockHash\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"genesisMiniblock\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"getPaginatedStreams\",\"inputs\":[{\"name\":\"start\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"stop\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"tuple[]\",\"internalType\":\"structStreamWithId[]\",\"components\":[{\"name\":\"id\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"stream\",\"type\":\"tuple\",\"internalType\":\"structStream\",\"components\":[{\"name\":\"lastMiniblockHash\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"lastMiniblockNum\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"reserved0\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"flags\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"nodes\",\"type\":\"address[]\",\"internalType\":\"address[]\"}]}]},{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getStream\",\"inputs\":[{\"name\":\"streamId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structStream\",\"components\":[{\"name\":\"lastMiniblockHash\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"lastMiniblockNum\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"reserved0\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"flags\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"nodes\",\"type\":\"address[]\",\"internalType\":\"address[]\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getStreamCount\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getStreamCountOnNode\",\"inputs\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getStreamWithGenesis\",\"inputs\":[{\"name\":\"streamId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structStream\",\"components\":[{\"name\":\"lastMiniblockHash\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"lastMiniblockNum\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"reserved0\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"flags\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"nodes\",\"type\":\"address[]\",\"internalType\":\"address[]\"}]},{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isStream\",\"inputs\":[{\"name\":\"streamId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"placeStreamOnNode\",\"inputs\":[{\"name\":\"streamId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"nodeAddress\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"removeStreamFromNode\",\"inputs\":[{\"name\":\"streamId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"nodeAddress\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setStreamLastMiniblock\",\"inputs\":[{\"name\":\"streamId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"prevMiniBlockHash\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"lastMiniblockHash\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"lastMiniblockNum\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"isSealed\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setStreamLastMiniblockBatch\",\"inputs\":[{\"name\":\"miniblocks\",\"type\":\"tuple[]\",\"internalType\":\"structSetMiniblock[]\",\"components\":[{\"name\":\"streamId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"prevMiniBlockHash\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"lastMiniblockHash\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"lastMiniblockNum\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"isSealed\",\"type\":\"bool\",\"internalType\":\"bool\"}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"StreamAllocated\",\"inputs\":[{\"name\":\"streamId\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"},{\"name\":\"nodes\",\"type\":\"address[]\",\"indexed\":false,\"internalType\":\"address[]\"},{\"name\":\"genesisMiniblockHash\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"},{\"name\":\"genesisMiniblock\",\"type\":\"bytes\",\"indexed\":false,\"internalType\":\"bytes\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"StreamLastMiniblockUpdateFailed\",\"inputs\":[{\"name\":\"streamId\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"},{\"name\":\"lastMiniblockHash\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"},{\"name\":\"lastMiniblockNum\",\"type\":\"uint64\",\"indexed\":false,\"internalType\":\"uint64\"},{\"name\":\"reason\",\"type\":\"string\",\"indexed\":false,\"internalType\":\"string\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"StreamLastMiniblockUpdated\",\"inputs\":[{\"name\":\"streamId\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"},{\"name\":\"lastMiniblockHash\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"},{\"name\":\"lastMiniblockNum\",\"type\":\"uint64\",\"indexed\":false,\"internalType\":\"uint64\"},{\"name\":\"isSealed\",\"type\":\"bool\",\"indexed\":false,\"internalType\":\"bool\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"StreamPlacementUpdated\",\"inputs\":[{\"name\":\"streamId\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"},{\"name\":\"nodeAddress\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"isAdded\",\"type\":\"bool\",\"indexed\":false,\"internalType\":\"bool\"}],\"anonymous\":false}]",
 }
 
 // StreamRegistryV1ABI is the input ABI used to generate the binding from.
@@ -204,68 +204,6 @@ func (_StreamRegistryV1 *StreamRegistryV1TransactorRaw) Transact(opts *bind.Tran
 	return _StreamRegistryV1.Contract.contract.Transact(opts, method, params...)
 }
 
-// GetAllStreamIds is a free data retrieval call binding the contract method 0x86789fc6.
-//
-// Solidity: function getAllStreamIds() view returns(bytes32[])
-func (_StreamRegistryV1 *StreamRegistryV1Caller) GetAllStreamIds(opts *bind.CallOpts) ([][32]byte, error) {
-	var out []interface{}
-	err := _StreamRegistryV1.contract.Call(opts, &out, "getAllStreamIds")
-
-	if err != nil {
-		return *new([][32]byte), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new([][32]byte)).(*[][32]byte)
-
-	return out0, err
-
-}
-
-// GetAllStreamIds is a free data retrieval call binding the contract method 0x86789fc6.
-//
-// Solidity: function getAllStreamIds() view returns(bytes32[])
-func (_StreamRegistryV1 *StreamRegistryV1Session) GetAllStreamIds() ([][32]byte, error) {
-	return _StreamRegistryV1.Contract.GetAllStreamIds(&_StreamRegistryV1.CallOpts)
-}
-
-// GetAllStreamIds is a free data retrieval call binding the contract method 0x86789fc6.
-//
-// Solidity: function getAllStreamIds() view returns(bytes32[])
-func (_StreamRegistryV1 *StreamRegistryV1CallerSession) GetAllStreamIds() ([][32]byte, error) {
-	return _StreamRegistryV1.Contract.GetAllStreamIds(&_StreamRegistryV1.CallOpts)
-}
-
-// GetAllStreams is a free data retrieval call binding the contract method 0x3bd84c0c.
-//
-// Solidity: function getAllStreams() view returns((bytes32,(bytes32,uint64,uint64,uint64,address[]))[])
-func (_StreamRegistryV1 *StreamRegistryV1Caller) GetAllStreams(opts *bind.CallOpts) ([]StreamWithId, error) {
-	var out []interface{}
-	err := _StreamRegistryV1.contract.Call(opts, &out, "getAllStreams")
-
-	if err != nil {
-		return *new([]StreamWithId), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new([]StreamWithId)).(*[]StreamWithId)
-
-	return out0, err
-
-}
-
-// GetAllStreams is a free data retrieval call binding the contract method 0x3bd84c0c.
-//
-// Solidity: function getAllStreams() view returns((bytes32,(bytes32,uint64,uint64,uint64,address[]))[])
-func (_StreamRegistryV1 *StreamRegistryV1Session) GetAllStreams() ([]StreamWithId, error) {
-	return _StreamRegistryV1.Contract.GetAllStreams(&_StreamRegistryV1.CallOpts)
-}
-
-// GetAllStreams is a free data retrieval call binding the contract method 0x3bd84c0c.
-//
-// Solidity: function getAllStreams() view returns((bytes32,(bytes32,uint64,uint64,uint64,address[]))[])
-func (_StreamRegistryV1 *StreamRegistryV1CallerSession) GetAllStreams() ([]StreamWithId, error) {
-	return _StreamRegistryV1.Contract.GetAllStreams(&_StreamRegistryV1.CallOpts)
-}
-
 // GetPaginatedStreams is a free data retrieval call binding the contract method 0xca78c41a.
 //
 // Solidity: function getPaginatedStreams(uint256 start, uint256 stop) view returns((bytes32,(bytes32,uint64,uint64,uint64,address[]))[], bool)
@@ -327,37 +265,6 @@ func (_StreamRegistryV1 *StreamRegistryV1Session) GetStream(streamId [32]byte) (
 // Solidity: function getStream(bytes32 streamId) view returns((bytes32,uint64,uint64,uint64,address[]))
 func (_StreamRegistryV1 *StreamRegistryV1CallerSession) GetStream(streamId [32]byte) (Stream, error) {
 	return _StreamRegistryV1.Contract.GetStream(&_StreamRegistryV1.CallOpts, streamId)
-}
-
-// GetStreamByIndex is a free data retrieval call binding the contract method 0x68b454df.
-//
-// Solidity: function getStreamByIndex(uint256 i) view returns((bytes32,(bytes32,uint64,uint64,uint64,address[])))
-func (_StreamRegistryV1 *StreamRegistryV1Caller) GetStreamByIndex(opts *bind.CallOpts, i *big.Int) (StreamWithId, error) {
-	var out []interface{}
-	err := _StreamRegistryV1.contract.Call(opts, &out, "getStreamByIndex", i)
-
-	if err != nil {
-		return *new(StreamWithId), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(StreamWithId)).(*StreamWithId)
-
-	return out0, err
-
-}
-
-// GetStreamByIndex is a free data retrieval call binding the contract method 0x68b454df.
-//
-// Solidity: function getStreamByIndex(uint256 i) view returns((bytes32,(bytes32,uint64,uint64,uint64,address[])))
-func (_StreamRegistryV1 *StreamRegistryV1Session) GetStreamByIndex(i *big.Int) (StreamWithId, error) {
-	return _StreamRegistryV1.Contract.GetStreamByIndex(&_StreamRegistryV1.CallOpts, i)
-}
-
-// GetStreamByIndex is a free data retrieval call binding the contract method 0x68b454df.
-//
-// Solidity: function getStreamByIndex(uint256 i) view returns((bytes32,(bytes32,uint64,uint64,uint64,address[])))
-func (_StreamRegistryV1 *StreamRegistryV1CallerSession) GetStreamByIndex(i *big.Int) (StreamWithId, error) {
-	return _StreamRegistryV1.Contract.GetStreamByIndex(&_StreamRegistryV1.CallOpts, i)
 }
 
 // GetStreamCount is a free data retrieval call binding the contract method 0xc0f22084.
@@ -455,67 +362,35 @@ func (_StreamRegistryV1 *StreamRegistryV1CallerSession) GetStreamWithGenesis(str
 	return _StreamRegistryV1.Contract.GetStreamWithGenesis(&_StreamRegistryV1.CallOpts, streamId)
 }
 
-// GetStreams is a free data retrieval call binding the contract method 0x72e1a68b.
+// IsStream is a free data retrieval call binding the contract method 0xd0c27c4f.
 //
-// Solidity: function getStreams(bytes32[] streamIds) view returns(uint256 foundCount, (bytes32,(bytes32,uint64,uint64,uint64,address[]))[])
-func (_StreamRegistryV1 *StreamRegistryV1Caller) GetStreams(opts *bind.CallOpts, streamIds [][32]byte) (*big.Int, []StreamWithId, error) {
+// Solidity: function isStream(bytes32 streamId) view returns(bool)
+func (_StreamRegistryV1 *StreamRegistryV1Caller) IsStream(opts *bind.CallOpts, streamId [32]byte) (bool, error) {
 	var out []interface{}
-	err := _StreamRegistryV1.contract.Call(opts, &out, "getStreams", streamIds)
+	err := _StreamRegistryV1.contract.Call(opts, &out, "isStream", streamId)
 
 	if err != nil {
-		return *new(*big.Int), *new([]StreamWithId), err
+		return *new(bool), err
 	}
 
-	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
-	out1 := *abi.ConvertType(out[1], new([]StreamWithId)).(*[]StreamWithId)
-
-	return out0, out1, err
-
-}
-
-// GetStreams is a free data retrieval call binding the contract method 0x72e1a68b.
-//
-// Solidity: function getStreams(bytes32[] streamIds) view returns(uint256 foundCount, (bytes32,(bytes32,uint64,uint64,uint64,address[]))[])
-func (_StreamRegistryV1 *StreamRegistryV1Session) GetStreams(streamIds [][32]byte) (*big.Int, []StreamWithId, error) {
-	return _StreamRegistryV1.Contract.GetStreams(&_StreamRegistryV1.CallOpts, streamIds)
-}
-
-// GetStreams is a free data retrieval call binding the contract method 0x72e1a68b.
-//
-// Solidity: function getStreams(bytes32[] streamIds) view returns(uint256 foundCount, (bytes32,(bytes32,uint64,uint64,uint64,address[]))[])
-func (_StreamRegistryV1 *StreamRegistryV1CallerSession) GetStreams(streamIds [][32]byte) (*big.Int, []StreamWithId, error) {
-	return _StreamRegistryV1.Contract.GetStreams(&_StreamRegistryV1.CallOpts, streamIds)
-}
-
-// GetStreamsOnNode is a free data retrieval call binding the contract method 0x32705ac4.
-//
-// Solidity: function getStreamsOnNode(address nodeAddress) view returns((bytes32,(bytes32,uint64,uint64,uint64,address[]))[])
-func (_StreamRegistryV1 *StreamRegistryV1Caller) GetStreamsOnNode(opts *bind.CallOpts, nodeAddress common.Address) ([]StreamWithId, error) {
-	var out []interface{}
-	err := _StreamRegistryV1.contract.Call(opts, &out, "getStreamsOnNode", nodeAddress)
-
-	if err != nil {
-		return *new([]StreamWithId), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new([]StreamWithId)).(*[]StreamWithId)
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
 
 	return out0, err
 
 }
 
-// GetStreamsOnNode is a free data retrieval call binding the contract method 0x32705ac4.
+// IsStream is a free data retrieval call binding the contract method 0xd0c27c4f.
 //
-// Solidity: function getStreamsOnNode(address nodeAddress) view returns((bytes32,(bytes32,uint64,uint64,uint64,address[]))[])
-func (_StreamRegistryV1 *StreamRegistryV1Session) GetStreamsOnNode(nodeAddress common.Address) ([]StreamWithId, error) {
-	return _StreamRegistryV1.Contract.GetStreamsOnNode(&_StreamRegistryV1.CallOpts, nodeAddress)
+// Solidity: function isStream(bytes32 streamId) view returns(bool)
+func (_StreamRegistryV1 *StreamRegistryV1Session) IsStream(streamId [32]byte) (bool, error) {
+	return _StreamRegistryV1.Contract.IsStream(&_StreamRegistryV1.CallOpts, streamId)
 }
 
-// GetStreamsOnNode is a free data retrieval call binding the contract method 0x32705ac4.
+// IsStream is a free data retrieval call binding the contract method 0xd0c27c4f.
 //
-// Solidity: function getStreamsOnNode(address nodeAddress) view returns((bytes32,(bytes32,uint64,uint64,uint64,address[]))[])
-func (_StreamRegistryV1 *StreamRegistryV1CallerSession) GetStreamsOnNode(nodeAddress common.Address) ([]StreamWithId, error) {
-	return _StreamRegistryV1.Contract.GetStreamsOnNode(&_StreamRegistryV1.CallOpts, nodeAddress)
+// Solidity: function isStream(bytes32 streamId) view returns(bool)
+func (_StreamRegistryV1 *StreamRegistryV1CallerSession) IsStream(streamId [32]byte) (bool, error) {
+	return _StreamRegistryV1.Contract.IsStream(&_StreamRegistryV1.CallOpts, streamId)
 }
 
 // AllocateStream is a paid mutator transaction binding the contract method 0x6b883c39.

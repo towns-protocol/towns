@@ -5,20 +5,20 @@ pragma solidity ^0.8.23;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {IArchitect} from "contracts/src/factory/facets/architect/IArchitect.sol";
-import {IRiverPoints} from "./IRiverPoints.sol";
+import {ITownsPoints} from "./ITownsPoints.sol";
 
 // libraries
 import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
-import {RiverPointsStorage} from "./RiverPointsStorage.sol";
+import {TownsPointsStorage} from "./TownsPointsStorage.sol";
 import {CheckIn} from "./CheckIn.sol";
 
 // contracts
 import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
 import {OwnableBase} from "@river-build/diamond/src/facets/ownable/OwnableBase.sol";
 
-contract RiverPoints is IERC20Metadata, IRiverPoints, OwnableBase, Facet {
-  function __RiverPoints_init(address spaceFactory) external onlyInitializing {
-    RiverPointsStorage.Layout storage ds = RiverPointsStorage.layout();
+contract TownsPoints is IERC20Metadata, ITownsPoints, OwnableBase, Facet {
+  function __TownsPoints_init(address spaceFactory) external onlyInitializing {
+    TownsPointsStorage.Layout storage ds = TownsPointsStorage.layout();
     ds.spaceFactory = spaceFactory;
     _addInterface(type(IERC20).interfaceId);
     _addInterface(type(IERC20Metadata).interfaceId);
@@ -29,29 +29,29 @@ contract RiverPoints is IERC20Metadata, IRiverPoints, OwnableBase, Facet {
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
   modifier onlySpace() {
-    address spaceFactory = RiverPointsStorage.layout().spaceFactory;
+    address spaceFactory = TownsPointsStorage.layout().spaceFactory;
     if (IArchitect(spaceFactory).getTokenIdBySpace(msg.sender) == 0) {
-      CustomRevert.revertWith(RiverPoints__InvalidSpace.selector);
+      CustomRevert.revertWith(TownsPoints__InvalidSpace.selector);
     }
     _;
   }
 
-  /// @inheritdoc IRiverPoints
+  /// @inheritdoc ITownsPoints
   function batchMintPoints(
     address[] calldata accounts,
     uint256[] calldata values
   ) external onlyOwner {
     if (accounts.length != values.length) {
-      CustomRevert.revertWith(RiverPoints__InvalidArrayLength.selector);
+      CustomRevert.revertWith(TownsPoints__InvalidArrayLength.selector);
     }
 
-    RiverPointsStorage.Layout storage self = RiverPointsStorage.layout();
+    TownsPointsStorage.Layout storage self = TownsPointsStorage.layout();
     for (uint256 i; i < accounts.length; ++i) {
       self.inner.mint(accounts[i], values[i]);
     }
   }
 
-  /// @inheritdoc IRiverPoints
+  /// @inheritdoc ITownsPoints
   function getPoints(
     Action action,
     bytes calldata data
@@ -80,7 +80,7 @@ contract RiverPoints is IERC20Metadata, IRiverPoints, OwnableBase, Facet {
   /*                           CHECKIN                          */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-  /// @inheritdoc IRiverPoints
+  /// @inheritdoc ITownsPoints
   function checkIn() external {
     CheckIn.CheckInData storage userCheckIn = CheckIn
       .layout()
@@ -94,23 +94,23 @@ contract RiverPoints is IERC20Metadata, IRiverPoints, OwnableBase, Facet {
 
     // Must wait at least 24 hours between check-ins
     if (pointsToAward == 0 && newStreak == 0) {
-      CustomRevert.revertWith(RiverPoints__CheckInPeriodNotPassed.selector);
+      CustomRevert.revertWith(TownsPoints__CheckInPeriodNotPassed.selector);
     }
 
     (userCheckIn.streak, userCheckIn.lastCheckIn) = (
       newStreak,
       block.timestamp
     );
-    RiverPointsStorage.layout().inner.mint(msg.sender, pointsToAward);
+    TownsPointsStorage.layout().inner.mint(msg.sender, pointsToAward);
     emit CheckedIn(msg.sender, pointsToAward, newStreak, block.timestamp);
   }
 
-  /// @inheritdoc IRiverPoints
+  /// @inheritdoc ITownsPoints
   function getCurrentStreak(address user) external view returns (uint256) {
     return CheckIn.getCurrentStreak(user);
   }
 
-  /// @inheritdoc IRiverPoints
+  /// @inheritdoc ITownsPoints
   function getLastCheckIn(address user) external view returns (uint256) {
     return CheckIn.getLastCheckIn(user);
   }
@@ -121,18 +121,18 @@ contract RiverPoints is IERC20Metadata, IRiverPoints, OwnableBase, Facet {
 
   /// @inheritdoc IERC20
   function approve(address spender, uint256 value) external returns (bool) {
-    RiverPointsStorage.layout().inner.approve(spender, value);
+    TownsPointsStorage.layout().inner.approve(spender, value);
     return true;
   }
 
-  /// @inheritdoc IRiverPoints
+  /// @inheritdoc ITownsPoints
   function mint(address to, uint256 value) external onlySpace {
-    RiverPointsStorage.layout().inner.mint(to, value);
+    TownsPointsStorage.layout().inner.mint(to, value);
   }
 
   /// @inheritdoc IERC20
   function transfer(address to, uint256 value) external returns (bool) {
-    RiverPointsStorage.layout().inner.transfer(to, value);
+    TownsPointsStorage.layout().inner.transfer(to, value);
     return true;
   }
 
@@ -142,7 +142,7 @@ contract RiverPoints is IERC20Metadata, IRiverPoints, OwnableBase, Facet {
     address to,
     uint256 value
   ) external returns (bool) {
-    RiverPointsStorage.layout().inner.transferFrom(from, to, value);
+    TownsPointsStorage.layout().inner.transferFrom(from, to, value);
     return true;
   }
 
@@ -151,17 +151,17 @@ contract RiverPoints is IERC20Metadata, IRiverPoints, OwnableBase, Facet {
     address owner,
     address spender
   ) external view returns (uint256) {
-    return RiverPointsStorage.layout().inner.allowance(owner, spender);
+    return TownsPointsStorage.layout().inner.allowance(owner, spender);
   }
 
   /// @inheritdoc IERC20
   function balanceOf(address account) external view returns (uint256) {
-    return RiverPointsStorage.layout().inner.balanceOf(account);
+    return TownsPointsStorage.layout().inner.balanceOf(account);
   }
 
   /// @inheritdoc IERC20
   function totalSupply() external view returns (uint256) {
-    return RiverPointsStorage.layout().inner.totalSupply;
+    return TownsPointsStorage.layout().inner.totalSupply;
   }
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

@@ -6,27 +6,26 @@ pragma solidity ^0.8.19;
 //interfaces
 import {IDiamond} from "@river-build/diamond/src/Diamond.sol";
 import {IOwnableBase} from "@river-build/diamond/src/facets/ownable/IERC173.sol";
-import {IRiverPointsBase} from "contracts/src/airdrop/points/IRiverPoints.sol";
+import {ITownsPointsBase} from "contracts/src/airdrop/points/ITownsPoints.sol";
 
 //libraries
 import {CheckIn} from "contracts/src/airdrop/points/CheckIn.sol";
 
 // contracts
-import {River} from "contracts/src/tokens/river/base/River.sol";
-import {RiverPoints} from "contracts/src/airdrop/points/RiverPoints.sol";
+import {TownsPoints} from "contracts/src/airdrop/points/TownsPoints.sol";
 import {BaseRegistryTest} from "../base/registry/BaseRegistry.t.sol";
 
-contract RiverPointsTest is
+contract TownsPointsTest is
   BaseRegistryTest,
   IOwnableBase,
   IDiamond,
-  IRiverPointsBase
+  ITownsPointsBase
 {
-  RiverPoints internal pointsFacet;
+  TownsPoints internal pointsFacet;
 
   function setUp() public override {
     super.setUp();
-    pointsFacet = RiverPoints(riverAirdrop);
+    pointsFacet = TownsPoints(riverAirdrop);
   }
 
   function test_approve_reverts() public {
@@ -45,7 +44,7 @@ contract RiverPointsTest is
   }
 
   function test_mint_revertIf_invalidSpace() public {
-    vm.expectRevert(RiverPoints__InvalidSpace.selector);
+    vm.expectRevert(TownsPoints__InvalidSpace.selector);
     pointsFacet.mint(_randomAddress(), 1 ether);
   }
 
@@ -57,7 +56,7 @@ contract RiverPointsTest is
 
   function test_batchMintPoints_revertIf_invalidArrayLength() public {
     vm.prank(deployer);
-    vm.expectRevert(RiverPoints__InvalidArrayLength.selector);
+    vm.expectRevert(TownsPoints__InvalidArrayLength.selector);
     pointsFacet.batchMintPoints(new address[](1), new uint256[](2));
   }
 
@@ -114,7 +113,7 @@ contract RiverPointsTest is
     address user
   ) external givenCheckedIn(user) {
     vm.prank(user);
-    vm.expectRevert(RiverPoints__CheckInPeriodNotPassed.selector);
+    vm.expectRevert(TownsPoints__CheckInPeriodNotPassed.selector);
     pointsFacet.checkIn();
   }
 

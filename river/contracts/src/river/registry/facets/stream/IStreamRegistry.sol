@@ -43,6 +43,8 @@ interface IStreamRegistry {
   //                           Streams
   // =============================================================
 
+  function isStream(bytes32 streamId) external view returns (bool);
+
   function allocateStream(
     bytes32 streamId,
     address[] memory nodes,
@@ -51,10 +53,6 @@ interface IStreamRegistry {
   ) external;
 
   function getStream(bytes32 streamId) external view returns (Stream memory);
-
-  function getStreamByIndex(
-    uint256 i
-  ) external view returns (StreamWithId memory);
 
   /// @return stream, genesisMiniblockHash, genesisMiniblock
   function getStreamWithGenesis(
@@ -79,23 +77,9 @@ interface IStreamRegistry {
 
   function getStreamCount() external view returns (uint256);
 
-  /**
-   * @notice Return array containing all stream ids
-   * @dev WARNING: This operation will copy the entire storage to memory, which can be quite expensive. This is designed
-   * to mostly be used by view accessors that are queried without any gas fees. Developers should keep in mind that
-   * this function has an unbounded cost, and using it as part of a state-changing function may render the function
-   * uncallable if the map grows to a point where copying to memory consumes too much gas to fit in a block.
-   */
-  function getAllStreamIds() external view returns (bytes32[] memory);
-
-  /**
-   * @notice Return array containing all streams
-   * @dev WARNING: This operation will copy the entire storage to memory, which can be quite expensive. This is designed
-   * to mostly be used by view accessors that are queried without any gas fees. Developers should keep in mind that
-   * this function has an unbounded cost, and using it as part of a state-changing function may render the function
-   * uncallable if the map grows to a point where copying to memory consumes too much gas to fit in a block.
-   */
-  function getAllStreams() external view returns (StreamWithId[] memory);
+  function getStreamCountOnNode(
+    address nodeAddress
+  ) external view returns (uint256);
 
   /**
    * @dev Recommended range is 5000 streams, returns true if on the last page.
@@ -104,20 +88,4 @@ interface IStreamRegistry {
     uint256 start,
     uint256 stop
   ) external view returns (StreamWithId[] memory, bool);
-
-  /**
-   * @dev Fetch a batch of streams. Returns how many were found, and the streams found.
-   * Results may be a subset of requested streams.
-   */
-  function getStreams(
-    bytes32[] calldata streamIds
-  ) external view returns (uint256 foundCount, StreamWithId[] memory);
-
-  function getStreamsOnNode(
-    address nodeAddress
-  ) external view returns (StreamWithId[] memory);
-
-  function getStreamCountOnNode(
-    address nodeAddress
-  ) external view returns (uint256);
 }

@@ -3,10 +3,12 @@ package events
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/river-build/river/core/node/dlog"
+	"github.com/river-build/river/core/node/utils"
 )
 
 type QuorumPool struct {
@@ -46,7 +48,11 @@ func (q *QuorumPool) GoRemotes(
 	q.remoteErrChannel = make(chan error, len(nodes))
 	q.remotes += len(nodes)
 	for _, node := range nodes {
-		go q.executeRemote(ctx, node, f)
+		ctx, cancel := utils.UncancelContext(ctx, 5*time.Second, 10*time.Second)
+		go func() {
+			defer cancel()
+			q.executeRemote(ctx, node, f)
+		}()
 	}
 }
 

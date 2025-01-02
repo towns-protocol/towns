@@ -29,71 +29,6 @@
   },
   {
     "type": "function",
-    "name": "getAllStreamIds",
-    "inputs": [],
-    "outputs": [
-      {
-        "name": "",
-        "type": "bytes32[]",
-        "internalType": "bytes32[]"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "getAllStreams",
-    "inputs": [],
-    "outputs": [
-      {
-        "name": "",
-        "type": "tuple[]",
-        "internalType": "struct StreamWithId[]",
-        "components": [
-          {
-            "name": "id",
-            "type": "bytes32",
-            "internalType": "bytes32"
-          },
-          {
-            "name": "stream",
-            "type": "tuple",
-            "internalType": "struct Stream",
-            "components": [
-              {
-                "name": "lastMiniblockHash",
-                "type": "bytes32",
-                "internalType": "bytes32"
-              },
-              {
-                "name": "lastMiniblockNum",
-                "type": "uint64",
-                "internalType": "uint64"
-              },
-              {
-                "name": "reserved0",
-                "type": "uint64",
-                "internalType": "uint64"
-              },
-              {
-                "name": "flags",
-                "type": "uint64",
-                "internalType": "uint64"
-              },
-              {
-                "name": "nodes",
-                "type": "address[]",
-                "internalType": "address[]"
-              }
-            ]
-          }
-        ]
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
     "name": "getPaginatedStreams",
     "inputs": [
       {
@@ -208,64 +143,6 @@
   },
   {
     "type": "function",
-    "name": "getStreamByIndex",
-    "inputs": [
-      {
-        "name": "i",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "",
-        "type": "tuple",
-        "internalType": "struct StreamWithId",
-        "components": [
-          {
-            "name": "id",
-            "type": "bytes32",
-            "internalType": "bytes32"
-          },
-          {
-            "name": "stream",
-            "type": "tuple",
-            "internalType": "struct Stream",
-            "components": [
-              {
-                "name": "lastMiniblockHash",
-                "type": "bytes32",
-                "internalType": "bytes32"
-              },
-              {
-                "name": "lastMiniblockNum",
-                "type": "uint64",
-                "internalType": "uint64"
-              },
-              {
-                "name": "reserved0",
-                "type": "uint64",
-                "internalType": "uint64"
-              },
-              {
-                "name": "flags",
-                "type": "uint64",
-                "internalType": "uint64"
-              },
-              {
-                "name": "nodes",
-                "type": "address[]",
-                "internalType": "address[]"
-              }
-            ]
-          }
-        ]
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
     "name": "getStreamCount",
     "inputs": [],
     "outputs": [
@@ -354,121 +231,19 @@
   },
   {
     "type": "function",
-    "name": "getStreams",
+    "name": "isStream",
     "inputs": [
       {
-        "name": "streamIds",
-        "type": "bytes32[]",
-        "internalType": "bytes32[]"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "foundCount",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "",
-        "type": "tuple[]",
-        "internalType": "struct StreamWithId[]",
-        "components": [
-          {
-            "name": "id",
-            "type": "bytes32",
-            "internalType": "bytes32"
-          },
-          {
-            "name": "stream",
-            "type": "tuple",
-            "internalType": "struct Stream",
-            "components": [
-              {
-                "name": "lastMiniblockHash",
-                "type": "bytes32",
-                "internalType": "bytes32"
-              },
-              {
-                "name": "lastMiniblockNum",
-                "type": "uint64",
-                "internalType": "uint64"
-              },
-              {
-                "name": "reserved0",
-                "type": "uint64",
-                "internalType": "uint64"
-              },
-              {
-                "name": "flags",
-                "type": "uint64",
-                "internalType": "uint64"
-              },
-              {
-                "name": "nodes",
-                "type": "address[]",
-                "internalType": "address[]"
-              }
-            ]
-          }
-        ]
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "getStreamsOnNode",
-    "inputs": [
-      {
-        "name": "nodeAddress",
-        "type": "address",
-        "internalType": "address"
+        "name": "streamId",
+        "type": "bytes32",
+        "internalType": "bytes32"
       }
     ],
     "outputs": [
       {
         "name": "",
-        "type": "tuple[]",
-        "internalType": "struct StreamWithId[]",
-        "components": [
-          {
-            "name": "id",
-            "type": "bytes32",
-            "internalType": "bytes32"
-          },
-          {
-            "name": "stream",
-            "type": "tuple",
-            "internalType": "struct Stream",
-            "components": [
-              {
-                "name": "lastMiniblockHash",
-                "type": "bytes32",
-                "internalType": "bytes32"
-              },
-              {
-                "name": "lastMiniblockNum",
-                "type": "uint64",
-                "internalType": "uint64"
-              },
-              {
-                "name": "reserved0",
-                "type": "uint64",
-                "internalType": "uint64"
-              },
-              {
-                "name": "flags",
-                "type": "uint64",
-                "internalType": "uint64"
-              },
-              {
-                "name": "nodes",
-                "type": "address[]",
-                "internalType": "address[]"
-              }
-            ]
-          }
-        ]
+        "type": "bool",
+        "internalType": "bool"
       }
     ],
     "stateMutability": "view"

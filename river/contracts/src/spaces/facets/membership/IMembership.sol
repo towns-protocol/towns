@@ -78,6 +78,12 @@ interface IMembership is IMembershipBase {
    */
   function withdraw(address receiver) external;
 
+  /**
+   * @notice Get the current balance of funds held by the space
+   * @return The current balance of funds held by the space
+   */
+  function revenue() external view returns (uint256);
+
   // =============================================================
   //                           Minting
   // =============================================================

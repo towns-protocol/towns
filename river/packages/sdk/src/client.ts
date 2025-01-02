@@ -28,6 +28,7 @@ import {
     UserBio,
     Tags,
     BlockchainTransaction,
+    MemberPayload_Mls,
 } from '@river-build/proto'
 import {
     bin_fromHexString,
@@ -134,6 +135,7 @@ import {
     make_UserPayload_BlockchainTransaction,
     ContractReceipt,
     make_MemberPayload_EncryptionAlgorithm,
+    make_MemberPayload_Mls,
 } from './types'
 
 import debug from 'debug'
@@ -2496,5 +2498,14 @@ export class Client
 
     public async debugDropStream(syncId: string, streamId: string): Promise<void> {
         await this.rpcClient.info({ debug: ['drop_stream', syncId, streamId] })
+    }
+
+    public async _debugSendMls(
+        streamId: string | Uint8Array,
+        payload: PlainMessage<MemberPayload_Mls>,
+    ) {
+        return this.makeEventAndAddToStream(streamId, make_MemberPayload_Mls(payload), {
+            method: 'mls',
+        })
     }
 }

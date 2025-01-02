@@ -1,32 +1,15 @@
 services:
     river-node:
-        # image: public.ecr.aws/h5v6m2x1/river:latest
         build:
-            dockerfile: ../Dockerfile
-        environment:
-            - BASECHAIN__CHAINID=31337
-            - STORAGE_TYPE=postgres
-            - DATABASE__USER=postgres
-            - DATABASE__DATABASE=river
-            - DATABASE__PASSWORD=postgres
-            - DATABASE__EXTRA=?sslmode=disable&pool_max_conns=1000
-            - DATABASE__HOST=host.docker.internal
-            - RUN_MODE=archive
-            - ARCHIVE__ARCHIVEID=1
-            - DATABASE__PORT=5433
-            - LOG__FORMAT=json
-            - LOG__NOCOLOR=true
-            - MODE=multi-node
-            - ARCHITECTCONTRACT__VERSION=v3
-            - METRICS__ENABLED=false
-            - PERFORMANCETRACKING__TRACINGENABLED=false
-            - PERFORMANCETRACKING__PROFILINGENABLED=false
-            - SKIP_GENKEY=true
-            - LOG__LEVEL=debug
-            - PORT=5001
-            - USEBLOCKCHAINSTREAMREGISTRY=true
-            - BASECHAIN__NETWORKURL=http://host.docker.internal:8545
-            - RIVERCHAIN__NETWORKURL=http://host.docker.internal:8546
-            - ARCHITECTCONTRACT__ADDRESS=0x2552FcE4D398492E4fd063e6aA77186e5c6d0EF1
-            - REGISTRYCONTRACT__ADDRESS=0x531Faa70a60e151d20395E0E4ce9A32FB767Ca00
-            - ENTITLEMENT_CONTRACT__ADDRESS=0x2bdCC0de6bE1f7D2ee689a0342D76F52E8EFABa3
+            dockerfile: ./Dockerfile
+            context: ../
+        ports:
+            - '5180:5180'
+        extra_hosts:
+            - 'localhost:host-gateway'
+        volumes:
+            # attach local run_files to the container
+            - ../run_files:/run_files
+            - $HOME/river-ca-cert.pem:/root/river-ca-cert.pem
+            - $HOME/river-ca-key.pem:/root/river-ca-key.pem
+            - ../scripts/register-ca.sh:/register-ca.sh

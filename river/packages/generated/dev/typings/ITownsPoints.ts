@@ -27,7 +27,7 @@ import type {
   PromiseOrValue,
 } from "./common";
 
-export interface IRiverPointsInterface extends utils.Interface {
+export interface ITownsPointsInterface extends utils.Interface {
   functions: {
     "batchMintPoints(address[],uint256[])": FunctionFragment;
     "checkIn()": FunctionFragment;
@@ -105,12 +105,12 @@ export type CheckedInEvent = TypedEvent<
 
 export type CheckedInEventFilter = TypedEventFilter<CheckedInEvent>;
 
-export interface IRiverPoints extends BaseContract {
+export interface ITownsPoints extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
   attach(addressOrName: string): this;
   deployed(): Promise<this>;
 
-  interface: IRiverPointsInterface;
+  interface: ITownsPointsInterface;
 
   queryFilter<TEvent extends TypedEvent>(
     event: TypedEventFilter<TEvent>,
