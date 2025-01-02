@@ -3,6 +3,7 @@ import React from 'react'
 import {
     ChannelMessageEvent,
     ChannelMessageEventContentOneOf,
+    EventStatus,
     MessageType,
     TimelineEvent,
     ZTEvent,
@@ -49,6 +50,7 @@ function generateMessageRenderEvent(messageContent: MessageContent): MessageRend
         event: {
             eventId: 'event-id',
             eventNum: 0n,
+            status: EventStatus.RECEIVED,
             latestEventId: 'event-id',
             latestEventNum: 0n,
             createdAtEpochMs: 0,

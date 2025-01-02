@@ -8,6 +8,7 @@ import {
     TimelineEvent_OneOf,
     ZTEvent,
     getFallbackContent,
+    EventStatus,
 } from '../../../src/types/timeline-types'
 import { MessageType } from '../../../src/types/towns-types'
 import {
@@ -162,7 +163,7 @@ export class ConversationBuilder {
             eventNum: BigInt(this.index),
             latestEventId: eventId,
             latestEventNum: BigInt(this.index),
-            status: params.isSender ? undefined : undefined, // todo: set status for events this user sent
+            status: params.isSender ? EventStatus.SENT : EventStatus.RECEIVED,
             createdAtEpochMs: timestamp,
             updatedAtEpochMs: timestamp,
             content: params.content,

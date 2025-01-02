@@ -2,6 +2,7 @@ import React, { useMemo } from 'react'
 import {
     Channel,
     ChannelMessageMissingEvent,
+    EventStatus,
     LookupUser,
     SendMessageOptions,
     TimelineEvent,
@@ -47,6 +48,7 @@ export const MessageThread = (props: {
         parentMessage = {
             eventId: parentId,
             eventNum: 0n,
+            status: EventStatus.RECEIVED,
             latestEventId: parentId,
             latestEventNum: 0n,
             createdAtEpochMs: 0,

@@ -44,6 +44,8 @@ export enum EventStatus {
     SENT = 'sent',
     /** The event was cancelled before it was successfully sent. */
     CANCELLED = 'cancelled',
+    /** We received this event */
+    RECEIVED = 'received',
 }
 
 // Towns Timeline Event
@@ -315,7 +317,7 @@ export interface TimelineEvent {
     eventNum: bigint
     latestEventId: string // if a message was edited or deleted, this will be set to the latest event id
     latestEventNum: bigint // if a message was edited or deleted, this will be set to the latest event id
-    status?: EventStatus
+    status: EventStatus
     createdAtEpochMs: number // created at times are generated client side, do not trust them
     updatedAtEpochMs?: number // updated at times are generated client side, do not trust them
     content?: TimelineEvent_OneOf
