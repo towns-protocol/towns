@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"context"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -23,35 +24,9 @@ import (
 	"github.com/river-build/river/core/node/storage"
 )
 
-// nodeUpdateGracePeriod describes the maximum delay we would expect to see
-// when a stream's miniblocks updates in the registry before we consider a
-// node behind of it does not have the latest miniblock.
-// Two blocks plus change
-var nodeUpdateGracePeriod = 5 * time.Second
-
-type contractState struct {
-	// Everything in the registry state is protected by this mutex.
-	mu                  sync.Mutex
-	numBlocksInContract int64
-	// This is the last time we saw an event to update the miniblock count for the
-	// stream. lastContractMiniblockUpdate should always be updated with numBlocksInContract.
-	lastContractMiniblockUpdate time.Time
-}
-
-func (cs *contractState) UpdateNumBlocksInContract(blocks int64) {
-	cs.mu.Lock()
-	defer cs.mu.Unlock()
-
-	cs.numBlocksInContract = blocks
-	cs.lastContractMiniblockUpdate = time.Now()
-}
-
-func (cs *contractState) NumBlocksInContract() (int64, time.Time) {
-	cs.mu.Lock()
-	defer cs.mu.Unlock()
-
-	return cs.numBlocksInContract, cs.lastContractMiniblockUpdate
-}
+// maxFailedConsecutiveUpdates is the maximum number of consecutive update failures allowed
+// before a stream is considered corrupt.
+var maxFailedConsecutiveUpdates = uint32(50)
 
 type ArchiveStream struct {
 	streamId StreamId
@@ -59,13 +34,26 @@ type ArchiveStream struct {
 
 	// registryState describes the state of the stream as reported by the stream
 	// registry.
-	registryState contractState
-	numBlocksInDb atomic.Int64 // -1 means not loaded
+	numBlocksInContract atomic.Int64
+	numBlocksInDb       atomic.Int64 // -1 means not loaded
 
-	stale atomic.Bool
+	corrupt                   atomic.Bool
+	consecutiveUpdateFailures atomic.Uint32
 
 	// Mutex is used so only one archive operation is performed at a time.
 	mu sync.Mutex
+}
+
+func (as *ArchiveStream) IncrementConsecutiveFailures() {
+	as.consecutiveUpdateFailures.Add(1)
+	if as.consecutiveUpdateFailures.Load() >= maxFailedConsecutiveUpdates {
+		as.corrupt.Store(true)
+	}
+}
+
+func (as *ArchiveStream) ResetConsecutiveFailures() {
+	as.consecutiveUpdateFailures.Store(0)
+	as.corrupt.Store(false)
 }
 
 func NewArchiveStream(streamId StreamId, nn *[]common.Address, lastKnownMiniblock uint64) *ArchiveStream {
@@ -73,7 +61,7 @@ func NewArchiveStream(streamId StreamId, nn *[]common.Address, lastKnownMinibloc
 		streamId: streamId,
 		nodes:    nodes.NewStreamNodesWithLock(*nn, common.Address{}),
 	}
-	stream.registryState.UpdateNumBlocksInContract(int64(lastKnownMiniblock + 1))
+	stream.numBlocksInContract.Store(int64(lastKnownMiniblock + 1))
 	stream.numBlocksInDb.Store(-1)
 
 	return stream
@@ -108,8 +96,7 @@ type Archiver struct {
 	streamLastMiniblockUpdated atomic.Uint64
 
 	// metrics
-	nodeBehindEvents *prometheus.CounterVec
-	nodeAdvances     *prometheus.CounterVec
+	nodeAdvances *prometheus.CounterVec
 }
 
 type ArchiverStats struct {
@@ -206,17 +193,35 @@ func (a *Archiver) setupStatisticsMetrics(factory infra.MetricsFactory) {
 		func() float64 { return float64(a.streamLastMiniblockUpdated.Load()) },
 	)
 
-	a.nodeBehindEvents = factory.NewCounterVecEx(
-		"node_behind_events",
-		"Total times a node was considered to have an out of date stream record",
-		"node_address",
-	)
-
 	a.nodeAdvances = factory.NewCounterVecEx(
 		"node_advances",
 		"Total times a node was advanced, indicating it was behind or returned an error response",
 		"node_address",
 	)
+}
+
+// getCorruptStreams iterates over all streams in the in-memory cache and collects ids for
+// streams that are considered corrupt. This list does not represent a snapshot of the archiver
+// at any particular state, as the cache iteration is not thread-safe. However, for the purposes
+// of generating a periodic report of corrupt streams, this is good enough.
+func (a *Archiver) getCorruptStreams(ctx context.Context) map[StreamId]*ArchiveStream {
+	corruptStreams := make(map[StreamId]*ArchiveStream, 0)
+
+	a.streams.Range(
+		func(key, value any) bool {
+			stream, ok := value.(*ArchiveStream)
+			if ok && stream.corrupt.Load() {
+				corruptStreams[stream.streamId] = stream
+			} else if !ok {
+				dlog.FromCtx(ctx).
+					Error("Unexpected value stored in stream cache (not an ArchiveStream)", "value", value)
+			}
+
+			return true
+		},
+	)
+
+	return corruptStreams
 }
 
 func (a *Archiver) addNewStream(
@@ -236,21 +241,6 @@ func (a *Archiver) addNewStream(
 	a.tasks <- streamId
 
 	a.streamsExamined.Add(1)
-}
-
-func (a *Archiver) onNodeBehind(
-	stream *ArchiveStream,
-	nodeAddr common.Address,
-) {
-	// Mark the stream as stale and advance the node pointer.
-	stream.stale.Store(true)
-	// We now consider this node behind for this stream. Let's advance it.
-	if a.nodeAdvances != nil {
-		nodeAddress := prometheus.Labels{"node_address": nodeAddr.String()}
-		a.nodeAdvances.With(nodeAddress).Inc()
-		a.nodeBehindEvents.With(nodeAddress).Inc()
-	}
-	stream.nodes.AdvanceStickyPeer(nodeAddr)
 }
 
 // ArchiveStream attempts to add all new miniblocks seen, according to the registry contract,
@@ -291,9 +281,10 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) err
 		}
 	}
 
-	mbsInContract, contractMbsUpdated := stream.registryState.NumBlocksInContract()
+	mbsInContract := stream.numBlocksInContract.Load()
 	if mbsInDb >= mbsInContract {
 		a.streamsUpToDate.Add(1)
+		stream.ResetConsecutiveFailures()
 		return nil
 	}
 
@@ -333,37 +324,53 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) err
 				err,
 				"streamId",
 				stream.streamId,
+				"node",
+				nodeAddr.Hex(),
 			)
+
+			// Advance node
 			if a.nodeAdvances != nil {
 				a.nodeAdvances.With(prometheus.Labels{"node_address": nodeAddr.String()}).Inc()
 			}
 			stream.nodes.AdvanceStickyPeer(nodeAddr)
+
+			// reschedule
+			if !stream.corrupt.Load() {
+				time.AfterFunc(5*time.Second, func() {
+					a.tasks <- stream.streamId
+				})
+			}
 			return err
 		}
 
 		if (err != nil && AsRiverError(err).Code == Err_NOT_FOUND) || resp.Msg == nil || len(resp.Msg.Miniblocks) == 0 {
-			if time.Since(contractMbsUpdated) > nodeUpdateGracePeriod {
-				a.onNodeBehind(
-					stream,
-					nodeAddr,
-				)
-			} else {
-				log.Debug(
-					"ArchiveStream: GetMiniblocks did not return data, remote storage is not up-to-date with contract yet",
-					"streamId",
-					stream.streamId,
-					"fromInclusive",
-					mbsInDb,
-					"toExclusive",
-					toBlock,
-				)
+			// If the stream is unable to fully update, consider this attempt to archive the stream as
+			// a failure, but not an error.
+			stream.IncrementConsecutiveFailures()
+
+			log.Debug(
+				"ArchiveStream: GetMiniblocks did not return data, remote storage is not up-to-date with contract yet",
+				"streamId",
+				stream.streamId,
+				"fromInclusive",
+				mbsInDb,
+				"toExclusive",
+				toBlock,
+			)
+
+			// Advance node
+			if a.nodeAdvances != nil {
+				a.nodeAdvances.With(prometheus.Labels{"node_address": nodeAddr.String()}).Inc()
 			}
+			stream.nodes.AdvanceStickyPeer(nodeAddr)
 
 			// Reschedule with delay.
-			streamId := stream.streamId
-			time.AfterFunc(time.Second, func() {
-				a.tasks <- streamId
-			})
+			if !stream.corrupt.Load() {
+				streamId := stream.streamId
+				time.AfterFunc(time.Second, func() {
+					a.tasks <- streamId
+				})
+			}
 			return nil
 		}
 
@@ -403,14 +410,37 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) err
 		a.miniblocksProcessed.Add(uint64(len(serialized)))
 	}
 
-	// All blocks processed, mark stream as current
-	stream.stale.Store(false)
-
+	// Update the consecutive updates counter to reflect that the miniblocks were available
+	// on the network.
+	stream.ResetConsecutiveFailures()
 	return nil
+}
+
+func (a *Archiver) emitPeriodicCorruptStreamReport(ctx context.Context) {
+	ticker := time.NewTicker(15 * time.Minute)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			corruptStreams := a.getCorruptStreams(ctx)
+
+			var builder strings.Builder
+			for _, as := range corruptStreams {
+				builder.WriteString(as.streamId.String())
+				builder.WriteString("\n")
+			}
+			dlog.FromCtx(ctx).
+				Info("Corrupt streams report", "total", len(corruptStreams), "streams", builder.String())
+		}
+	}
 }
 
 func (a *Archiver) Start(ctx context.Context, once bool, metrics infra.MetricsFactory, exitSignal chan<- error) {
 	defer a.startedWG.Done()
+	go a.emitPeriodicCorruptStreamReport(ctx)
 	err := a.startImpl(ctx, once, metrics)
 	if err != nil {
 		exitSignal <- err
@@ -520,7 +550,7 @@ func (a *Archiver) onStreamLastMiniblockUpdated(
 		return
 	}
 	stream := record.(*ArchiveStream)
-	stream.registryState.UpdateNumBlocksInContract(int64(event.LastMiniblockNum + 1))
+	stream.numBlocksInContract.Store(int64(event.LastMiniblockNum + 1))
 	a.tasks <- id
 }
 
@@ -570,6 +600,7 @@ func (a *Archiver) worker(ctx context.Context) {
 			if err != nil {
 				log.Error("archiver.worker: Failed to archive stream", "error", err, "streamId", streamId)
 				a.failedOpsCount.Add(1)
+				record.(*ArchiveStream).IncrementConsecutiveFailures()
 			} else {
 				a.successOpsCount.Add(1)
 			}

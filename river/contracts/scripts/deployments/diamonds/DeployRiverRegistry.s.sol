@@ -4,6 +4,9 @@ pragma solidity ^0.8.23;
 // interfaces
 import {IDiamond} from "@river-build/diamond/src/IDiamond.sol";
 
+// libraries
+import "forge-std/console.sol";
+
 // helpers
 import {DiamondHelper} from "contracts/test/diamond/Diamond.t.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
@@ -59,10 +62,10 @@ contract DeployRiverRegistry is DiamondHelper, Deployer {
   mapping(string => address) private facetDeployments;
 
   constructor() {
-    facetDeployments["riverConfig"] = address(riverConfigHelper);
-    facetDeployments["nodeRegistry"] = address(nodeRegistryHelper);
-    facetDeployments["streamRegistry"] = address(streamRegistryHelper);
-    facetDeployments["operatorRegistry"] = address(operatorRegistryHelper);
+    facetDeployments["RiverConfig"] = address(riverConfigHelper);
+    facetDeployments["NodeRegistry"] = address(nodeRegistryHelper);
+    facetDeployments["StreamRegistry"] = address(streamRegistryHelper);
+    facetDeployments["OperatorRegistry"] = address(operatorRegistryHelper);
   }
 
   function versionName() public pure override returns (string memory) {
@@ -148,6 +151,8 @@ contract DeployRiverRegistry is DiamondHelper, Deployer {
     for (uint256 i = 0; i < facets.length; i++) {
       string memory facetName = facets[i];
       address facetHelperAddress = facetDeployments[facetName];
+      console.log("facetName", facetName);
+      console.log("facetHelperAddress", facetHelperAddress);
       if (facetHelperAddress != address(0)) {
         // deploy facet
         address facetAddress = Deployer(facetHelperAddress).deploy(deployer);

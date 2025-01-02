@@ -40,7 +40,7 @@ export interface TimelineEvent {
     localEventId?: string // if this event was created locally and appended before addEvent, this will be set
     eventNum: bigint
     latestEventId: string // if a message was edited or deleted, this will be set to the latest event id
-    latestEventNum: bigint | undefined // if a message was edited or deleted, this will be set to the latest event id
+    latestEventNum: bigint // if a message was edited or deleted, this will be set to the latest event id
     status: EventStatus
     createdAtEpochMs: number // created at times are generated client side, do not trust them
     updatedAtEpochMs?: number // updated at times are generated client side, do not trust them

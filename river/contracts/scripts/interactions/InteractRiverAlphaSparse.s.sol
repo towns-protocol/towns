@@ -123,6 +123,9 @@ contract InteractRiverAlphaSparse is AlphaHelper {
           diamondDeployedAddress,
           facetAddresses
         );
+        console.log("interact::diamondHelper", diamondHelper);
+        console.log("interact::facetNames", facetNames[0]);
+        console.log("diamondDeployedAddress", diamondDeployedAddress);
         newCuts = IDiamondInitHelper(diamondHelper).diamondInitHelper(
           deployer,
           facetNames

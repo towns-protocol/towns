@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"testing"
 	"time"
@@ -210,6 +211,68 @@ func compareStreamsMiniblocks(
 		return <-errs
 	}
 	return nil
+}
+
+func TestArchive100StreamsWithReplication(t *testing.T) {
+	tester := newServiceTester(t, serviceTesterOpts{numNodes: 5, replicationFactor: 3, start: true})
+	ctx := tester.ctx
+	require := tester.require
+
+	// Create stream
+	// Create 100 streams
+	streamIds := testCreate100Streams(
+		ctx,
+		require,
+		tester.testClient(0),
+		&StreamSettings{DisableMiniblockCreation: true},
+	)
+
+	// Kill 2/5 nodes. With a replication factor of 3, all streams are available on at least 1 node.
+	tester.nodes[1].Close(ctx, tester.dbUrl)
+	tester.nodes[3].Close(ctx, tester.dbUrl)
+
+	archiveCfg := tester.getConfig()
+	archiveCfg.Archive.ArchiveId = "arch" + GenShortNanoid()
+
+	serverCtx, serverCancel := context.WithCancel(ctx)
+	defer serverCancel()
+
+	arch, err := StartServerInArchiveMode(
+		serverCtx,
+		archiveCfg,
+		makeTestServerOpts(tester),
+		false,
+	)
+	require.NoError(err)
+	tester.cleanup(arch.Close)
+
+	arch.Archiver.WaitForStart()
+	require.Len(arch.ExitSignal(), 0)
+
+	require.EventuallyWithT(
+		func(c *assert.CollectT) {
+			for _, streamId := range streamIds {
+				num, err := arch.Storage().GetMaxArchivedMiniblockNumber(ctx, streamId)
+				assert.NoError(c, err)
+				expectedMaxBlockNum := int64(0)
+				// The first stream id is a user stream with 2 miniblocks. The rest are
+				// space streams with a single block.
+				if streamId == streamIds[0] {
+					expectedMaxBlockNum = int64(1)
+				}
+				assert.Equal(
+					c,
+					expectedMaxBlockNum,
+					num,
+					fmt.Sprintf("Expected %d but saw %d miniblocks for stream %s", 0, num, streamId),
+				)
+			}
+		},
+		30*time.Second,
+		100*time.Millisecond,
+	)
+
+	require.NoError(compareStreamsMiniblocks(t, ctx, streamIds, arch.Storage(), tester.testClient(0)))
 }
 
 func TestArchiveOneStream(t *testing.T) {
