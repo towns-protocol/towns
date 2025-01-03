@@ -89,6 +89,7 @@ vi.mock('hooks/useSpaceInfoFromPathname', () => {
     }
 })
 
+const mockSpaceRevenueData = vi.fn()
 vi.mock('use-towns-client', async () => {
     const actual = (await vi.importActual('use-towns-client')) as typeof Lib
     return {
@@ -111,6 +112,12 @@ vi.mock('use-towns-client', async () => {
             return {
                 ..._actual,
                 data: [linkedWallet],
+                isLoading: false,
+            }
+        },
+        useSpaceRevenue: () => {
+            return {
+                data: mockSpaceRevenueData(),
                 isLoading: false,
             }
         },
@@ -153,6 +160,8 @@ const useMockedTransferAssetTransaction = (
 
 beforeEach(() => {
     transferAssetSpy.mockClear()
+    mockUseBalance.mockClear()
+    mockSpaceRevenueData.mockClear()
 })
 
 describe('TransferAssetsPanel', () => {
@@ -256,7 +265,7 @@ describe('TransferAssetsPanel', () => {
 
     test('should render text field with max amount when treasury transfer', async () => {
         mockUseSearchParams.mockReturnValue([sourceSpaceAddressParam, vi.fn()])
-        mockUseBalance.mockReturnValue(mockBalances[spaceAddress])
+        mockSpaceRevenueData.mockReturnValue(mockBalances[spaceAddress].value)
         render(<Wrapper />)
         const linkedWalletSearch = await waitForLinkedWalletSearch()
         within(linkedWalletSearch).getByPlaceholderText(/linked wallet or enter/gi)
@@ -266,7 +275,7 @@ describe('TransferAssetsPanel', () => {
 
     test('should not render field if no balance when treasury transfer', async () => {
         mockUseSearchParams.mockReturnValue([sourceSpaceAddressParam, vi.fn()])
-        mockUseBalance.mockReturnValue(mockBalances['zero'])
+        mockSpaceRevenueData.mockReturnValue(0n)
         render(<Wrapper />)
         expect(screen.queryByTestId('eth-amount')).not.toBeInTheDocument()
         expect(screen.getByTestId('treasury-empty')).toBeInTheDocument()
@@ -355,7 +364,7 @@ describe('TransferAssetsPanel', () => {
 
     test('should submit correct args for treasury transfer', async () => {
         mockUseSearchParams.mockReturnValue([sourceSpaceAddressParam, vi.fn()])
-        mockUseBalance.mockReturnValue(mockBalances[spaceAddress])
+        mockSpaceRevenueData.mockReturnValue(mockBalances[spaceAddress].value)
 
         vi.spyOn(Lib, 'useTransferAssetTransaction').mockImplementation(
             useMockedTransferAssetTransaction,

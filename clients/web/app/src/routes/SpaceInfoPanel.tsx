@@ -1,4 +1,4 @@
-import { Address, Permission } from '@river-build/web3'
+import { Permission, SpaceIdFromSpaceAddress } from '@river-build/web3'
 import React, { useCallback, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useSearchParams } from 'react-router-dom'
@@ -14,6 +14,7 @@ import {
     useSpaceData,
     useSpaceId,
     useSpaceMembers,
+    useSpaceRevenue,
     useTownsClient,
     useTownsContext,
     useUser,
@@ -48,7 +49,7 @@ import { ContractInfoButtons } from '@components/Panel/ContractInfoButtons'
 import { Analytics } from 'hooks/useAnalytics'
 import { popupToast } from '@components/Notifications/popupToast'
 
-import { useBalance } from 'hooks/useBalance'
+import { formatUnitsToFixedLength } from 'hooks/useBalance'
 import { useWaitForInvalidation } from 'hooks/useWaitForInvalidation'
 import { useRefreshSpaceMember } from 'hooks/useRefreshSpaceMember'
 import { useEntitlements } from 'hooks/useEntitlements'
@@ -470,7 +471,9 @@ const ContractWrap = (props: {
 
 const TownTreasury = (props: ContractProps) => {
     const { owner, address, tokenId } = props
-    const { data: balance } = useBalance({ address: address as Address, refetchInterval: 30_000 })
+    const spaceId = address ? SpaceIdFromSpaceAddress(address) : undefined
+    const { data: revenue } = useSpaceRevenue({ spaceId, refetchInterval: 8_000 })
+    const revenueFormatted = formatUnitsToFixedLength(revenue ?? 0n)
 
     const { openPanel } = usePanelActions()
     const openTransferTreasury = useCallback(() => {
@@ -479,7 +482,7 @@ const TownTreasury = (props: ContractProps) => {
         })
     }, [address, openPanel])
 
-    if (!balance) {
+    if (revenue === undefined) {
         return null
     }
 
@@ -496,7 +499,7 @@ const TownTreasury = (props: ContractProps) => {
             {() => (
                 <Stack horizontal gap="sm" alignItems="center">
                     <Text as="span">
-                        {balance.formatted}{' '}
+                        {revenueFormatted}{' '}
                         <Text strong display="inline" as="span">
                             ETH
                         </Text>

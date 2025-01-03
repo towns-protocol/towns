@@ -9,6 +9,9 @@ import { useCallback, useMemo, useRef, useState } from 'react'
 import { TSigner } from '../types/web3-types'
 import { useTownsClient } from './use-towns-client'
 import { getTransactionHashOrUserOpHash } from '@towns/userops'
+import { blockchainKeys } from '../query/query-keys'
+import { useQueryClient } from '../query/queryClient'
+import { SpaceIdFromSpaceAddress } from '@river-build/web3'
 
 /**
  * Hook to create a role with a transaction.
@@ -19,6 +22,7 @@ export function useTransferAssetTransaction() {
     >(undefined)
     const isTransacting = useRef<boolean>(false)
     const { transferAsset, waitForTransferAssetTransaction } = useTownsClient()
+    const queryClient = useQueryClient()
 
     const { data, isLoading, transactionHash, transactionStatus, error } = useMemo(() => {
         return {
@@ -74,10 +78,16 @@ export function useTransferAssetTransaction() {
                 setTransactionContext(transactionResult)
             } finally {
                 isTransacting.current = false
+                if (data.spaceAddress) {
+                    const spaceId = SpaceIdFromSpaceAddress(data.spaceAddress)
+                    await queryClient.invalidateQueries({
+                        queryKey: blockchainKeys.spaceRevenue(spaceId),
+                    })
+                }
             }
             return transactionResult
         },
-        [transferAsset, waitForTransferAssetTransaction],
+        [queryClient, transferAsset, waitForTransferAssetTransaction],
     )
 
     return {

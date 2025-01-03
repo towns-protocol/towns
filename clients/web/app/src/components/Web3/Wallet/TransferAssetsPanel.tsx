@@ -7,11 +7,12 @@ import {
     useConnectivity,
     useIsTransactionPending,
     useLinkedWallets,
+    useSpaceRevenue,
     useTransferAssetTransaction,
 } from 'use-towns-client'
 import { ErrorMessage, FancyButton, FormRender, Stack, Text, TextField } from '@ui'
 import { Panel } from '@components/Panel/Panel'
-import { formatUnits, parseUnits, useBalance } from 'hooks/useBalance'
+import { formatUnits, formatUnitsToFixedLength, parseUnits, useBalance } from 'hooks/useBalance'
 
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { invalidateCollectionsForAddressQueryData } from 'api/lib/tokenContracts'
@@ -66,11 +67,28 @@ function TransferAssets() {
         enabled: !isTreasuryTransfer,
     })
     const { data: linkedWallets, isLoading: isLinkedWalletsLoading } = useLinkedWallets()
-    const { data: fromBalance } = useBalance({
+    const { data: aaBalance } = useBalance({
         address: source,
-        enabled: !!source,
+        enabled: !!source && !isTreasuryTransfer,
         watch: true,
     })
+    const { data: revenue } = useSpaceRevenue({
+        spaceId,
+        enabled: !!source && isTreasuryTransfer,
+    })
+
+    const fromBalance: ReturnType<typeof useBalance>['data'] = useMemo(() => {
+        if (isTreasuryTransfer) {
+            return {
+                decimals: 18,
+                symbol: 'ETH',
+                formatted: formatUnitsToFixedLength(revenue ?? 0n),
+                value: revenue ?? 0n,
+            }
+        }
+        return aaBalance
+    }, [isTreasuryTransfer, revenue, aaBalance])
+
     const treasuryEmpty = isTreasuryTransfer && fromBalance?.value === 0n
 
     if (!source) {
