@@ -1,15 +1,16 @@
 [package]
 name = "mls-lib"
+version.workspace = true
 edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
 
 [dependencies]
 river-mls = {workspace = true}
 river-mls-protocol = {workspace = true}
-libc = "0.2"
 prost = {workspace = true}
 
 [lib]
 crate-type = ["staticlib"]
-
-[build-dependencies]
-cbindgen = "0.27.0"
