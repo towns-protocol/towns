@@ -12,29 +12,59 @@ type LinkedAccount = NonNullable<ReturnType<typeof usePrivy>['user']>['linkedAcc
 
 export function PrivyIdentityPanel() {
     const { user, ready: privyReady, authenticated } = usePrivy()
-    const { linkEmail, linkPhone, linkGoogle, linkApple } = useLinkAccount({
-        onSuccess: () => {
-            popupToast(({ toast }) => (
-                <StandardToast.Success toast={toast} message="Account linked successfully" />
-            ))
-        },
-        onError: (error) => {
-            popupToast(({ toast }) => (
-                <StandardToast.Error
-                    toast={toast}
-                    message="Failed to link account"
-                    subMessage={error.toString()}
-                />
-            ))
-        },
-    })
+    const { linkEmail, linkPhone, linkGoogle, linkApple, linkTwitter, linkFarcaster } =
+        useLinkAccount({
+            onSuccess: () => {
+                popupToast(({ toast }) => (
+                    <StandardToast.Success toast={toast} message="Account linked successfully" />
+                ))
+            },
+            onError: (error) => {
+                popupToast(({ toast }) => {
+                    if (error === 'exited_link_flow') {
+                        return
+                    }
+                    return (
+                        <StandardToast.Error
+                            toast={toast}
+                            message="Failed to link account"
+                            subMessage={error.toString()}
+                        />
+                    )
+                })
+            },
+        })
     const linkedAccounts = user?.linkedAccounts
     const linkTypes: {
-        type: 'email' | 'phone' | 'google' | 'apple'
+        type: 'email' | 'phone' | 'google' | 'apple' | 'twitter' | 'farcaster'
         icon: IconProps['type']
         label: string
         action: () => void
     }[] = [
+        {
+            type: 'google',
+            icon: 'google',
+            label: 'Google',
+            action: linkGoogle,
+        },
+        {
+            type: 'twitter',
+            icon: 'twitter',
+            label: 'Twitter',
+            action: linkTwitter,
+        },
+        {
+            type: 'farcaster',
+            icon: 'farcaster',
+            label: 'Farcaster',
+            action: linkFarcaster,
+        },
+        {
+            type: 'apple',
+            icon: 'apple',
+            label: 'Apple',
+            action: linkApple,
+        },
         {
             type: 'email',
             icon: 'mail',
@@ -46,18 +76,6 @@ export function PrivyIdentityPanel() {
             icon: 'phone',
             label: 'Phone',
             action: linkPhone,
-        },
-        {
-            type: 'google',
-            icon: 'google',
-            label: 'Google',
-            action: linkGoogle,
-        },
-        {
-            type: 'apple',
-            icon: 'apple',
-            label: 'Apple',
-            action: linkApple,
         },
     ]
 
