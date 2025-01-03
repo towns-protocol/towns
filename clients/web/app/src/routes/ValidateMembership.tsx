@@ -1,13 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { Outlet } from 'react-router'
-import {
-    Membership,
-    useMyUserId,
-    useSpaceData,
-    useSpaceDataStore,
-    useTownsContext,
-} from 'use-towns-client'
+import { useMyUserId, useSpaceData, useSpaceDataStore, useTownsContext } from 'use-towns-client'
 import isEqual from 'lodash/isEqual'
+import { Membership } from '@river-build/sdk'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { SetUsernameFormWithClose } from '@components/SetUsernameForm/SetUsernameForm'
 import { useUsernameConfirmed } from 'hooks/useUsernameConfirmed'
@@ -19,7 +14,6 @@ import { SECOND_MS } from 'data/constants'
 import { usePublicTownsPageAnalyticsEvent } from '@components/Analytics/usePublicTownPageAnalyticsEvent'
 import { PublicTownPageForAuthenticatedUser } from './PublicTownPage/PublicTownPage'
 import { usePublicPageLoginFlow } from './PublicTownPage/usePublicPageLoginFlow'
-
 //  Aims to give the best experience to the most common user flow: a user who is a member of a space and loading the app.
 //
 //  Has ?join params

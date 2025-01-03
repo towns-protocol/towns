@@ -1,15 +1,9 @@
 import React, { startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import {
-    Channel,
-    EmbeddedMessageAttachment,
-    LookupUserFn,
-    MessageType,
-    SendTextMessageOptions,
-    UnfurledLinkAttachment,
-} from 'use-towns-client'
+import { Channel, LookupUserFn, SendTextMessageOptions } from 'use-towns-client'
 import { Plate, TPlateEditor } from '@udecode/plate-common/react'
 import { TElement, getPointAfter, getPointBeforeLocation, resetEditor } from '@udecode/plate-common'
 import noop from 'lodash/noop'
+import { EmbeddedMessageAttachment, MessageType, UnfurledLinkAttachment } from '@river-build/sdk'
 import { UnfurledLinkAttachmentPreview } from '@components/EmbeddedMessageAttachement/EditorAttachmentPreview'
 import { Box, BoxProps, Stack } from '@ui'
 import { useDevice } from 'hooks/useDevice'

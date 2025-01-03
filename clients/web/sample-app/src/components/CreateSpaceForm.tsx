@@ -4,7 +4,6 @@ import { foundry, hardhat, localhost } from 'viem/chains'
 import { Address } from 'viem'
 import {
     CreateSpaceInfo,
-    Membership,
     TransactionStatus,
     getDynamicPricingModule,
     useCasablancaStore,
@@ -23,6 +22,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ethers } from 'ethers'
 import { useQueryClient } from '@tanstack/react-query'
+import { Membership } from '@river-build/sdk'
 import { MembershipRequirement, SpaceRoleSettings } from 'routes/SpaceRoleSettings'
 import { ChainSwitchingButton } from './Buttons/ChainSwitchingButton'
 import { GetSigner, WalletReady } from './WalletReady'

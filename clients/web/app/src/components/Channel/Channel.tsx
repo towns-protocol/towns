@@ -1,9 +1,8 @@
-import { isDMChannelStreamId, isGDMChannelStreamId } from '@river-build/sdk'
+import { Membership, isDMChannelStreamId, isGDMChannelStreamId } from '@river-build/sdk'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useParams } from 'react-router'
 import { useSearchParams } from 'react-router-dom'
 import {
-    Membership,
     SendMessageOptions,
     useChannelData,
     useChannelTimeline,

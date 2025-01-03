@@ -1,5 +1,5 @@
 import React from 'react'
-import { TimelineEvent } from 'use-towns-client'
+import { TimelineEvent } from '@river-build/sdk'
 import { RichTextPreview } from '@components/RichTextPlate/RichTextPreview'
 import { Box } from '@ui'
 

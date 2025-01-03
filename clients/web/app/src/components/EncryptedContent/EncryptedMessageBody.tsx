@@ -1,9 +1,8 @@
 import React from 'react'
-import { ChannelMessageEncryptedEvent } from 'use-towns-client'
+import { ChannelMessageEncryptedEvent } from '@river-build/sdk'
 import { Paragraph, Stack } from '@ui'
 import { MESSAGING_IN_TOWNS_LINK } from 'data/links'
 import { atoms } from 'ui/styles/atoms.css'
-
 export const TimelineEncryptedContent = React.memo(
     (props: { event: { createdAtEpochMs: number }; content: ChannelMessageEncryptedEvent }) => {
         const { content } = props

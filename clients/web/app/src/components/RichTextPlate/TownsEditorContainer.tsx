@@ -1,10 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import {
-    Attachment,
     Channel,
-    EmbeddedMessageAttachment,
     SendTextMessageOptions,
-    UnfurledLinkAttachment,
     useChannelId,
     useTownsContext,
     useUserLookupContext,
@@ -12,6 +9,7 @@ import {
 import { datadogRum } from '@datadog/browser-rum'
 import every from 'lodash/every'
 import isEqual from 'lodash/isEqual'
+import { Attachment, EmbeddedMessageAttachment, UnfurledLinkAttachment } from '@river-build/sdk'
 import { useMediaDropContext } from '@components/MediaDropContext/MediaDropContext'
 import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
 import { Box, BoxProps, Stack } from '@ui'

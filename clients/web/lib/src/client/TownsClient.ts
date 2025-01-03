@@ -2,7 +2,6 @@ import { Empty, PlainMessage } from '@bufbuild/protobuf'
 import { BigNumber, ethers } from 'ethers'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
-import { ChannelMessageEvent, transformAttachments } from '../types/timeline-types'
 import {
     Client as CasablancaClient,
     RiverDbManager,
@@ -12,6 +11,8 @@ import {
     makeStreamRpcClient,
     userIdFromAddress,
     makeRiverRpcClient,
+    ChannelMessageEvent,
+    transformAttachments,
 } from '@river-build/sdk'
 import { EntitlementsDelegate } from '@river-build/encryption'
 import { IRuleEntitlementV2Base, XchainConfig, ISpaceDapp } from '@river-build/web3'
@@ -45,17 +46,14 @@ import {
     CreateChannelInfo,
     CreateSpaceInfo,
     MediaStreamBlockInfo,
-    Membership,
-    MessageType,
     TownsStreamMember,
     SendMessageOptions,
     SendTextMessageOptions,
     StreamView,
     TipParams,
     UpdateChannelInfo,
-    toMembership,
 } from '../types/towns-types'
-import { SignerContext } from '@river-build/sdk'
+import { toMembership, Membership, SignerContext, MessageType } from '@river-build/sdk'
 import { getDefaultXChainIds, marshallXChainConfig } from './XChainConfig'
 import { addCategoryToError, SignerUndefinedError } from '../types/error-types'
 import { makeSpaceStreamId, makeDefaultChannelStreamId } from '@river-build/sdk'

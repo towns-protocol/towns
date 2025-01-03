@@ -6,7 +6,6 @@ import {
     Address,
     ChannelContextProvider,
     DMChannelContextUserLookupProvider,
-    Membership,
     Permission,
     SpaceData,
     TownsStreamMember,
@@ -20,7 +19,7 @@ import {
     useSpaceUnreadThreadMentions,
     useUserLookupContext,
 } from 'use-towns-client'
-import { genId } from '@river-build/sdk'
+import { Membership, genId } from '@river-build/sdk'
 import { Avatar } from '@components/Avatar/Avatar'
 import {
     DirectMessageIcon,

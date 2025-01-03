@@ -33,7 +33,6 @@ import {
     TipParams,
     UpdateChannelInfo,
 } from '../types/towns-types'
-import { ChannelMessageEvent } from '../types/timeline-types'
 import { TownsClient } from '../client/TownsClient'
 import { useLogout } from './use-logout'
 import { useResetFullyReadMarkers } from './TownsContext/useResetFullyReadMarkers'
@@ -46,7 +45,7 @@ import {
 import { create } from 'zustand'
 import { MembershipStruct, Permission, IRuleEntitlementV2Base } from '@river-build/web3'
 import { BlockchainTransactionType, TSigner } from 'types/web3-types'
-import { SignerContext } from '@river-build/sdk'
+import { SignerContext, ChannelMessageEvent } from '@river-build/sdk'
 import { UserOps } from '@towns/userops'
 
 export type TownsErrorStoreState = {

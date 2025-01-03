@@ -1,19 +1,21 @@
 import { createWithEqualityFn } from 'zustand/traditional'
 import {
-    MessageReactions,
     MessageTipEvent,
     MessageTips,
+    ThreadStatsData,
+    isMessageTipEvent,
+} from '../types/timeline-types'
+import reverse from 'lodash/reverse'
+import {
+    RiverTimelineEvent,
+    type MessageReactions,
     RedactedEvent,
     ChannelMessageEvent,
-    ThreadStatsData,
     TimelineEvent,
     TimelineEventConfirmation,
     TimelineEvent_OneOf,
     getFallbackContent,
-    isMessageTipEvent,
-} from '../types/timeline-types'
-import reverse from 'lodash/reverse'
-import { RiverTimelineEvent } from '@river-build/sdk'
+} from '@river-build/sdk'
 
 /// TimelinesMap: { streamId: TimelineEvent[] }
 export type TimelinesMap = Record<string, TimelineEvent[]>

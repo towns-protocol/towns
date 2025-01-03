@@ -1,7 +1,7 @@
 import { firstBy } from 'thenby'
+import { ChannelData } from 'use-towns-client'
 import {
     Attachment,
-    ChannelData,
     ChannelMessageEncryptedEvent,
     ChannelMessageEvent,
     ChannelMessageMissingEvent,
@@ -9,11 +9,11 @@ import {
     InceptionEvent,
     Membership,
     RedactedEvent,
+    RiverTimelineEvent,
     StreamMembershipEvent,
     ThreadStatsData,
     TimelineEvent,
-} from 'use-towns-client'
-import { RiverTimelineEvent } from '@river-build/sdk'
+} from '@river-build/sdk'
 import { ExperimentsState } from 'store/experimentsStore'
 import { MINUTE_MS } from 'data/constants'
 

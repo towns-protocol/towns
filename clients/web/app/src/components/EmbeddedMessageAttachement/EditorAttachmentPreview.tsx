@@ -1,11 +1,11 @@
+import { useUserLookupContext } from 'use-towns-client'
+import React, { useCallback } from 'react'
 import {
     Attachment,
     EmbeddedMessageAttachment,
     OTWMention,
     UnfurledLinkAttachment,
-    useUserLookupContext,
-} from 'use-towns-client'
-import React, { useCallback } from 'react'
+} from '@river-build/sdk'
 import { Box, IconButton, Paragraph, Stack, Text } from '@ui'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { MessageAttachments } from '@components/MessageAttachments/MessageAttachments'

@@ -3,7 +3,6 @@ import React, { MouseEventHandler, useCallback, useEffect, useRef, useState } fr
 import {
     Address,
     LookupUser,
-    MessageReactions,
     MessageTips,
     Permission,
     ThreadStatsData,
@@ -14,7 +13,7 @@ import {
 } from 'use-towns-client'
 import { Link } from 'react-router-dom'
 import debug from 'debug'
-import { Pin } from '@river-build/sdk'
+import { MessageReactions, Pin } from '@river-build/sdk'
 import { ProfileHoverCard } from '@components/ProfileHoverCard/ProfileHoverCard'
 import { Reactions } from '@components/Reactions/Reactions'
 import { RepliesButton } from '@components/Replies/MessageReplies'
@@ -36,7 +35,6 @@ import { MessageModalSheet } from './MessageModalSheet'
 import { SendStatus, SendStatusIndicator } from './SendStatusIndicator'
 import { DecryptionDebugger } from './DecryptionDebugger'
 import { TipReaction } from './tips/TipReaction'
-
 type Props = {
     userId?: string | null
     senderId?: string

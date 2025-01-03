@@ -7,6 +7,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 import * as Lib from 'use-towns-client'
 import * as Router from 'react-router'
 import { BigNumber } from 'ethers'
+import { Membership } from '@river-build/sdk'
 import { TestApp, getWalletAddress } from 'test/testUtils'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { SpaceInfoPanel } from './SpaceInfoPanel'
@@ -29,7 +30,7 @@ const generateSpaceData = (networkId: string) => {
         name: 'tacos are cool',
         avatarSrc: '',
         channelGroups: [],
-        membership: Lib.Membership.Join,
+        membership: Membership.Join,
         isLoadingChannels: false,
         hasLoadedMemberships: false,
         shortDescription: 'my short description',

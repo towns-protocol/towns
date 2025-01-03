@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useFullyReadMarkerStore } from '../store/use-fully-read-marker-store'
 import { TimelineStore, useTimelineStore } from '../store/use-timeline-store'
-import { MentionResult } from '../types/timeline-types'
 import isEqual from 'lodash/isEqual'
 import debounce from 'lodash/debounce'
-import { isChannelStreamId } from '@river-build/sdk'
+import { isChannelStreamId, MentionResult } from '@river-build/sdk'
 
 export function useSpaceMentions(): MentionResult[] {
     const [mentions, setMentions] = useState<MentionResult[]>([])
@@ -15,7 +14,7 @@ export function useSpaceMentions(): MentionResult[] {
             const threadsStats = useTimelineStore.getState().threadsStats
             const timelines = useTimelineStore.getState().timelines
 
-            const mentions = [] as MentionResult[]
+            const mentions: MentionResult[] = []
 
             for (const [streamId, timeline] of Object.entries(timelines)) {
                 if (!isChannelStreamId(streamId)) {

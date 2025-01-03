@@ -3,12 +3,8 @@
  */
 
 import { useTimelineStore } from '../../src/store/use-timeline-store'
-import {
-    ChannelMessageEvent,
-    ThreadStatsData,
-    TimelineEvent,
-    MessageTips,
-} from '../../src/types/timeline-types'
+import { ThreadStatsData, MessageTips } from '../../src/types/timeline-types'
+import { ChannelMessageEvent, TimelineEvent } from '@river-build/sdk'
 import { ConversationBuilder } from './helpers/ConversationBuilder'
 
 export {}

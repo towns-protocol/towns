@@ -1,12 +1,14 @@
 import {
     Client as CasablancaClient,
+    Membership,
     isSpaceStreamId,
     isChannelStreamId,
     isDMChannelStreamId,
     isGDMChannelStreamId,
+    toMembership,
 } from '@river-build/sdk'
 import { useEffect, useState } from 'react'
-import { Membership, Room, toMembership } from '../../types/towns-types'
+import { Room } from '../../types/towns-types'
 import isEqual from 'lodash/isEqual'
 import { TownsOpts } from '../../client/TownsClientTypes'
 import {

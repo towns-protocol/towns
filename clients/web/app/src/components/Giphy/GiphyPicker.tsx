@@ -2,13 +2,13 @@ import { IGif } from '@giphy/js-types'
 import { Grid } from '@giphy/react-components'
 import React, { useContext } from 'react'
 import {
-    MessageType,
     SendImageMessageOptions,
     SendMessageOptions,
     useChannelId,
     useTimelineThread,
     useTownsClient,
 } from 'use-towns-client'
+import { MessageType } from '@river-build/sdk'
 import { Spinner } from '@components/Spinner'
 import { ReplyToMessageContext } from '@components/ReplyToMessageContext/ReplyToMessageContext'
 import { Box } from '@ui'

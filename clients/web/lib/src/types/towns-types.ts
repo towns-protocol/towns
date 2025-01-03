@@ -1,17 +1,8 @@
 import { PlainMessage } from '@bufbuild/protobuf'
-import { MembershipOp, SpacePayload_ChannelSettings, StreamSettings } from '@river-build/proto'
-import { Attachment } from './timeline-types'
-import { staticAssertNever } from '../utils/towns-utils'
+import { SpacePayload_ChannelSettings, StreamSettings } from '@river-build/proto'
 import { Permission } from '@river-build/web3'
 import { TSigner } from './web3-types'
-
-export enum Membership {
-    Join = 'join',
-    Invite = 'invite',
-    Leave = 'leave',
-    Ban = 'ban',
-    None = '',
-}
+import { MessageType, Attachment, Membership } from '@river-build/sdk'
 
 export interface InviteData {
     id: string
@@ -172,12 +163,6 @@ export function isUpdateChannelAccessInfo(
     return 'disabled' in info && !('updatedChannelName' in info || 'updatedRoleIds' in info)
 }
 
-export enum MessageType {
-    Text = 'm.text',
-    GM = 'm.gm',
-    Image = 'm.Image',
-}
-
 export interface ThreadIdOptions {
     threadId?: string
     threadPreview?: string
@@ -267,22 +252,4 @@ export function isMentionedTextMessageOptions(
 
 export function isThreadIdOptions(options: SendMessageOptions): options is ThreadIdOptions {
     return 'threadId' in options && typeof options.threadId === 'string'
-}
-
-export function toMembership(membershipOp?: MembershipOp): Membership {
-    switch (membershipOp) {
-        case MembershipOp.SO_JOIN:
-            return Membership.Join
-        case MembershipOp.SO_INVITE:
-            return Membership.Invite
-        case MembershipOp.SO_LEAVE:
-            return Membership.Leave
-        case MembershipOp.SO_UNSPECIFIED:
-            return Membership.None
-        case undefined:
-            return Membership.None
-        default:
-            staticAssertNever(membershipOp)
-            return Membership.None
-    }
 }

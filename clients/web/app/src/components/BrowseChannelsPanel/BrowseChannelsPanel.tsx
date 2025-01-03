@@ -1,13 +1,8 @@
 import React, { useCallback, useEffect, useMemo } from 'react'
 import { useEvent } from 'react-use-event-hook'
-import {
-    Channel,
-    ChannelContextProvider,
-    Membership,
-    useMyMemberships,
-    useSpaceData,
-} from 'use-towns-client'
+import { Channel, ChannelContextProvider, useMyMemberships, useSpaceData } from 'use-towns-client'
 import fuzzysort from 'fuzzysort'
+import { Membership } from '@river-build/sdk'
 import { Box, Stack, Text, TextField } from '@ui'
 import { Panel } from '@components/Panel/Panel'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'

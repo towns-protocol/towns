@@ -1,10 +1,8 @@
 import React, { useMemo } from 'react'
 import {
     Channel,
-    ChannelMessageMissingEvent,
     LookupUser,
     SendMessageOptions,
-    TimelineEvent,
     useConnectivity,
     useMyProfile,
     useSpaceMembers,
@@ -14,8 +12,10 @@ import {
 import { firstBy } from 'thenby'
 import { Link, useSearchParams } from 'react-router-dom'
 import {
+    ChannelMessageMissingEvent,
     EventStatus,
     RiverTimelineEvent,
+    TimelineEvent,
     isDMChannelStreamId,
     isDefined,
     isGDMChannelStreamId,

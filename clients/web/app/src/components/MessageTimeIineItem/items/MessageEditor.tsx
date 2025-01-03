@@ -1,12 +1,7 @@
 import React, { useCallback, useContext } from 'react'
-import {
-    Attachment,
-    ChannelMessageEvent,
-    SendTextMessageOptions,
-    useMyProfile,
-    useSpaceMembers,
-} from 'use-towns-client'
+import { SendTextMessageOptions, useMyProfile, useSpaceMembers } from 'use-towns-client'
 import { createPortal } from 'react-dom'
+import { Attachment, ChannelMessageEvent } from '@river-build/sdk'
 import { Box, Stack, useZLayerContext } from '@ui'
 import { TownsEditorContainer } from '@components/RichTextPlate/TownsEditorContainer'
 import { useEditMessage } from 'hooks/useEditMessage'
@@ -14,7 +9,6 @@ import { MessageTimelineContext } from '@components/MessageTimeline/MessageTimel
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { useDevice } from 'hooks/useDevice'
 import { MediaDropContextProvider } from '@components/MediaDropContext/MediaDropContext'
-
 type Props = {
     eventId: string
     latestEventId: string

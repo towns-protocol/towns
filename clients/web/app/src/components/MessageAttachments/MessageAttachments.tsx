@@ -1,10 +1,5 @@
 import React, { MouseEventHandler, useCallback, useContext } from 'react'
 import {
-    Attachment,
-    ChunkedMediaAttachment,
-    EmbeddedMessageAttachment,
-    MessageType,
-    UnfurledLinkAttachment,
     useChannelSettings,
     useContractSpaceInfo,
     useGetRootKeyFromLinkedWallet,
@@ -13,6 +8,13 @@ import {
 } from 'use-towns-client'
 import { useNavigate } from 'react-router-dom'
 import { Image } from '@unfurl-worker/types'
+import {
+    Attachment,
+    ChunkedMediaAttachment,
+    EmbeddedMessageAttachment,
+    MessageType,
+    UnfurledLinkAttachment,
+} from '@river-build/sdk'
 import { isUrl } from 'utils/isUrl'
 import { ChunkedFile } from '@components/ChunkedFile/ChunkedFile'
 import { EmbeddedMessage } from '@components/EmbeddedMessageAttachement/EmbeddedMessage'

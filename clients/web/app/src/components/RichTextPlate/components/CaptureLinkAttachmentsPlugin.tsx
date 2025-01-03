@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import { EmbeddedMessageAttachment, UnfurledLinkAttachment } from 'use-towns-client'
+import { EmbeddedMessageAttachment, UnfurledLinkAttachment } from '@river-build/sdk'
 import { useEditorSelector } from '@udecode/plate-core/react'
 import { useExtractMessageAttachments } from 'hooks/useExtractMessageAttachments'
 import { useThrottledValue } from 'hooks/useThrottledValue'

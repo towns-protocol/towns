@@ -1,6 +1,6 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Membership } from 'use-towns-client'
+import { Membership } from '@river-build/sdk'
 import { CreateSpaceForm } from '../components/CreateSpaceForm'
 
 export const SpacesNew = () => {

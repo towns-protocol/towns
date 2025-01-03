@@ -5,7 +5,6 @@
 
 import { Box, Divider, Theme, Typography } from '@mui/material'
 import {
-    TimelineEvent,
     toRoomIdentifier,
     useTimeline,
     useTimelineFilter,
@@ -14,7 +13,7 @@ import {
 } from 'use-towns-client'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { cloneAndFormat } from '@river-build/dlog'
-import { RiverTimelineEvent } from '@river-build/sdk'
+import { RiverTimelineEvent, TimelineEvent } from '@river-build/sdk'
 
 interface Props {
     streamId: string

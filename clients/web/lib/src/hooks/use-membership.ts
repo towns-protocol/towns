@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { Membership } from '../types/towns-types'
+import { Membership } from '@river-build/sdk'
 import { useCasablancaStreamMembership } from './CasablancClient/useCasablancaStreamMember'
 
 export function useMembership(roomId?: string, userId?: string) {

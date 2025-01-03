@@ -10,7 +10,6 @@ import {
 } from './helpers/TestUtils'
 import { useChannelId } from '../../src/hooks/use-channel-id'
 import { useChannelTimeline } from '../../src/hooks/use-channel-timeline'
-import { TimelineEvent } from '../../src/types/timeline-types'
 import { useCallback, useMemo } from 'react'
 import { LoginWithWallet } from './helpers/TestComponents'
 import { TownsTestApp } from './helpers/TownsTestApp'
@@ -19,10 +18,9 @@ import { ChannelContextProvider } from '../../src/components/ChannelContextProvi
 import React from 'react'
 import { render, screen, waitFor } from '@testing-library/react'
 import { TestConstants } from './helpers/TestConstants'
-import { Membership } from '../../src/types/towns-types'
 import { useMyMembership } from '../../src/hooks/use-my-membership'
 import { TSigner } from '../../src/types/web3-types'
-import { RiverTimelineEvent } from '@river-build/sdk'
+import { RiverTimelineEvent, Membership, TimelineEvent } from '@river-build/sdk'
 
 describe('sendAMessageThenRefresh.hooks', () => {
     // test that when loading a user that is participating in a channel, the existing channel messages decrypt and render properly

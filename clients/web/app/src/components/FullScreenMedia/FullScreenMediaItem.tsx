@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react'
-import { Attachment, useChunkedMedia, useUser } from 'use-towns-client'
+import { useChunkedMedia, useUser } from 'use-towns-client'
 import { formatDistance } from 'date-fns'
+import { Attachment } from '@river-build/sdk'
 import { Box, Stack, Text } from '@ui'
 import { darkTheme } from 'ui/styles/vars.css'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'

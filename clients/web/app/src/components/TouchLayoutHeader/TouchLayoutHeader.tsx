@@ -1,12 +1,12 @@
 import React, { useCallback } from 'react'
 import {
-    Membership,
     useContractSpaceInfo,
     useMuteSettings,
     useMyMembership,
     useSpaceData,
     useSpaceMembers,
 } from 'use-towns-client'
+import { Membership } from '@river-build/sdk'
 import { Box, Dot, Icon, IconButton, Paragraph, Stack, Text } from '@ui'
 import { useShowHasUnreadBadgeForOtherSpaces } from 'hooks/useSpaceUnreadsIgnoreMuted'
 import { BugReportButton } from '@components/BugReportButton/BugReportButton'

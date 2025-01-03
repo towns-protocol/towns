@@ -1,6 +1,5 @@
 import { ChannelMessage_Post_Content_Text } from '@river-build/proto'
-import { isDefined } from '@river-build/sdk'
-import { transformAttachments } from 'use-towns-client'
+import { isDefined, transformAttachments } from '@river-build/sdk'
 import { getUnfurlContent } from 'api/lib/unfurl'
 
 export const unfurlLinksToAttachments = async (

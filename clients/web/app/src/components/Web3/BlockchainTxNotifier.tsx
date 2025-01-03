@@ -2,7 +2,6 @@ import React, { useCallback, useMemo, useRef, useState } from 'react'
 import {
     BlockchainStoreTx,
     BlockchainTransactionType,
-    Membership,
     useMyMembership,
     useOnTransactionUpdated,
 } from 'use-towns-client'
@@ -15,6 +14,7 @@ import {
 } from 'use-towns-client/dist/client/TownsClientTypes'
 import { BigNumber } from 'ethers'
 import { isInsufficientTipBalanceException } from '@towns/userops'
+import { Membership } from '@river-build/sdk'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { CHANNEL_INFO_PARAMS } from 'routes'

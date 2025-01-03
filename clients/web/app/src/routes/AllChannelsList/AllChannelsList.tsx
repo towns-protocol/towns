@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo } from 'react'
 import {
     ChannelContextProvider,
-    Membership,
     Permission,
     SpaceData,
     useConnectivity,
@@ -13,7 +12,7 @@ import {
 } from 'use-towns-client'
 import { useEvent } from 'react-use-event-hook'
 import { useNavigate } from 'react-router'
-
+import { Membership } from '@river-build/sdk'
 import { Box, Button, Icon, IconButton, Pill, Stack, Text } from '@ui'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { CHANNEL_INFO_PARAMS, PATHS } from 'routes'

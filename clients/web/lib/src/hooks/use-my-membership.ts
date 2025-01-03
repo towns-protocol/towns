@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTownsContext } from '../components/TownsContextProvider'
-import { Membership, toMembership } from '../types/towns-types'
+import { toMembership, Membership } from '@river-build/sdk'
 import { useCasablancaStream } from './CasablancClient/useCasablancaStream'
 import { Stream } from '@river-build/sdk'
 

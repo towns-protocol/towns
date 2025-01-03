@@ -1,15 +1,8 @@
 import React, { useCallback, useContext, useMemo, useRef, useState } from 'react'
-import {
-    MessageType,
-    ThreadStatsData,
-    TimelineEvent,
-    staticAssertNever,
-    useTownsClient,
-    useUserLookup,
-} from 'use-towns-client'
+import { ThreadStatsData, staticAssertNever, useTownsClient, useUserLookup } from 'use-towns-client'
 import { useSearchParams } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
-import { Pin, RiverTimelineEvent } from '@river-build/sdk'
+import { MessageType, Pin, RiverTimelineEvent, TimelineEvent } from '@river-build/sdk'
 import {
     MessageLayout,
     MessageLayoutProps,

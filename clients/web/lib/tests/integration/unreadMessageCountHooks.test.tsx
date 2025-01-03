@@ -2,9 +2,7 @@
 /**
  * @group core
  */
-import { Membership } from '../../src/types/towns-types'
 import React, { useCallback } from 'react'
-import { TimelineEvent } from '../../src/types/timeline-types'
 import {
     createTestChannelWithSpaceRoles,
     createTestSpaceGatedByTownNft,
@@ -25,7 +23,7 @@ import { useTownsClient } from '../../src/hooks/use-towns-client'
 import { useTownsContext } from '../../src/components/TownsContextProvider'
 import { TSigner } from '../../src/types/web3-types'
 import { TestConstants } from './helpers/TestConstants'
-import { RiverTimelineEvent } from '@river-build/sdk'
+import { RiverTimelineEvent, Membership, TimelineEvent } from '@river-build/sdk'
 
 describe('unreadMessageCountHooks', () => {
     test('user can join a room, see messages, and send messages', async () => {

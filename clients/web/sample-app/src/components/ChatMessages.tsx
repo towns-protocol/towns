@@ -1,13 +1,7 @@
 import { Box, Button, Divider, TextField, Theme, Typography } from '@mui/material'
-import {
-    Membership,
-    TimelineEvent,
-    useFullyReadMarker,
-    useTimelineFilter,
-    useTownsClient,
-} from 'use-towns-client'
+import { useFullyReadMarker, useTimelineFilter, useTownsClient } from 'use-towns-client'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { RiverTimelineEvent } from '@river-build/sdk'
+import { Membership, RiverTimelineEvent, TimelineEvent } from '@river-build/sdk'
 import { AcceptInvitation } from './AcceptInvitation'
 
 interface Props {

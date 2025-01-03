@@ -1,14 +1,8 @@
-import {
-    Attachment,
-    ChunkedMediaAttachment,
-    EncryptionResult,
-    MediaInfo,
-    encryptAESGCM,
-    useTownsClient,
-} from 'use-towns-client'
+import { EncryptionResult, encryptAESGCM, useTownsClient } from 'use-towns-client'
 import { useCallback } from 'react'
 import imageCompression from 'browser-image-compression'
 import { ChunkedMedia } from '@river-build/proto'
+import { Attachment, ChunkedMediaAttachment, MediaInfo } from '@river-build/sdk'
 import { refreshSpaceCache, refreshUserImageCache } from 'api/lib/fetchImage'
 import { isImageMimeType } from 'utils/isMediaMimeType'
 

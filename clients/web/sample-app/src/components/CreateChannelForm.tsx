@@ -1,13 +1,13 @@
 import { Box, TextField, Theme, Typography } from '@mui/material'
 import {
     CreateChannelInfo,
-    Membership,
     TransactionStatus,
     useCreateChannelTransaction,
     useRoles,
 } from 'use-towns-client'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { BigNumber } from 'ethers'
+import { Membership } from '@river-build/sdk'
 import { ChannelRoleSettings, RolesSettings } from 'routes/ChannelRoleSettings'
 
 import { useAsyncButtonCallback } from '../hooks/use-async-button-callback'

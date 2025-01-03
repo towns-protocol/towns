@@ -4,7 +4,7 @@ import {
     ChannelMessageEvent,
     TimelineEvent,
     TimelineEvent_OneOf,
-} from '../../../src/types/timeline-types'
+} from '@river-build/sdk'
 import {
     TransactionStatus,
     TownsClientEventHandlers,

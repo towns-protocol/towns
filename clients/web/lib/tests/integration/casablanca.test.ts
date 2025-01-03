@@ -10,9 +10,9 @@ import {
     MockEntitlementsDelegate,
     makeSignerContext,
     RiverTimelineEvent,
+    ChannelMessageEvent,
 } from '@river-build/sdk'
 import { ethers } from 'ethers'
-import { ChannelMessageEvent } from '../../src/types/timeline-types'
 import {
     createTestChannelWithSpaceRoles,
     createTestSpaceGatedByTownNft,

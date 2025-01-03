@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo } from 'react'
 
 import { matchPath, useNavigate } from 'react-router'
-import { Membership, useConnectivity, useSpaceData } from 'use-towns-client'
+import { useConnectivity, useSpaceData } from 'use-towns-client'
 import { useSearchParams } from 'react-router-dom'
+import { Membership } from '@river-build/sdk'
 import { PATHS } from 'routes'
 import { useStore } from 'store/store'
 import { useDevice } from 'hooks/useDevice'

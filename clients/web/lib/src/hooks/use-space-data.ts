@@ -1,9 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Channel, InviteData, Membership, SpaceData, toMembership } from '../types/towns-types'
+import { Channel, InviteData, SpaceData } from '../types/towns-types'
 import { useTownsContext } from '../components/TownsContextProvider'
 import { useSpaceContext } from '../components/SpaceContextProvider'
 import { useCasablancaStream } from './CasablancClient/useCasablancaStream'
-import { Client as CasablancaClient, Stream, isSpaceStreamId } from '@river-build/sdk'
+import {
+    Client as CasablancaClient,
+    Stream,
+    isSpaceStreamId,
+    Membership,
+    toMembership,
+} from '@river-build/sdk'
 import isEqual from 'lodash/isEqual'
 import { useSpaceDapp } from './use-space-dapp'
 import { ChannelMetadata, ISpaceDapp, SpaceInfo } from '@river-build/web3'

@@ -2,7 +2,8 @@
 /**
  * @group core
  */
-import { MessageType, SendImageMessageOptions } from '../../src/types/towns-types'
+import { SendImageMessageOptions } from '../../src/types/towns-types'
+import { MessageType } from '@river-build/sdk'
 import {
     createTestSpaceGatedByTownsNfts,
     makeUniqueName,

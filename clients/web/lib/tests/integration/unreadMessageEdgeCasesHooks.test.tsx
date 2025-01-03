@@ -3,7 +3,7 @@
  * @group core
  */
 import React, { useCallback, useEffect } from 'react'
-import { ChannelMessageEvent, TimelineEvent } from '../../src/types/timeline-types'
+import { ChannelMessageEvent, TimelineEvent } from '@river-build/sdk'
 import {
     createTestChannelWithSpaceRoles,
     createTestSpaceGatedByTownNft,

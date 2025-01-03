@@ -7,9 +7,7 @@
  */
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 
-import { Membership } from '../../src/types/towns-types'
 import React, { useCallback } from 'react'
-import { TimelineEvent } from '../../src/types/timeline-types'
 import {
     createTestChannelWithSpaceRoles,
     createTestSpaceGatedByTownNft,
@@ -30,7 +28,7 @@ import { useChannelTimeline } from '../../src/hooks/use-channel-timeline'
 import { useTownsClient } from '../../src/hooks/use-towns-client'
 import { TestConstants } from './helpers/TestConstants'
 import { TSigner } from '../../src/types/web3-types'
-import { RiverTimelineEvent } from '@river-build/sdk'
+import { RiverTimelineEvent, Membership, TimelineEvent } from '@river-build/sdk'
 
 describe('sendReactionHooks', () => {
     test('user can join a room, see messages, and send messages', async () => {

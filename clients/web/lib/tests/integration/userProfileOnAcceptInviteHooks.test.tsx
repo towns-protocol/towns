@@ -2,7 +2,7 @@
 /**
  * @group dendrite
  */
-import { Membership } from '../../src/types/towns-types'
+import { Membership } from '@river-build/sdk'
 import { createTestSpaceGatedByTownNft, registerAndStartClients } from './helpers/TestUtils'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 

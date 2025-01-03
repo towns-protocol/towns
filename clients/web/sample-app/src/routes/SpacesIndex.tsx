@@ -1,12 +1,7 @@
 import React, { useCallback, useState } from 'react'
-import {
-    Membership,
-    useMyMembership,
-    useSpaceData,
-    useSpaceTimeline,
-    useTownsClient,
-} from 'use-towns-client'
+import { useMyMembership, useSpaceData, useSpaceTimeline, useTownsClient } from 'use-towns-client'
 import { useNavigate } from 'react-router-dom'
+import { Membership } from '@river-build/sdk'
 import { LargeToast } from '@components/LargeToast'
 import { ChatMessages } from '../components/ChatMessages'
 

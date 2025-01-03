@@ -1,7 +1,7 @@
 import { useCallback, useRef } from 'react'
-import { ThreadStatsData, TimelineEvent } from '../types/timeline-types'
+import { ThreadStatsData } from '../types/timeline-types'
 import { TimelineStoreStates, useTimelineStore } from '../store/use-timeline-store'
-import { RiverTimelineEvent } from '@river-build/sdk'
+import { RiverTimelineEvent, TimelineEvent } from '@river-build/sdk'
 
 const EMPTY_TIMELINE: TimelineEvent[] = []
 

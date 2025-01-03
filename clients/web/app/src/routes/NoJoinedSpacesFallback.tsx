@@ -1,14 +1,8 @@
 import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router'
-import {
-    AuthStatus,
-    Membership,
-    useConnectivity,
-    useTownsClient,
-    useTownsContext,
-} from 'use-towns-client'
+import { AuthStatus, useConnectivity, useTownsClient, useTownsContext } from 'use-towns-client'
+import { Membership } from '@river-build/sdk'
 import { PATHS } from 'routes'
-
 import { useDevice } from 'hooks/useDevice'
 import { useStore } from 'store/store'
 import { AppProgressState } from '@components/AppProgressOverlay/AppProgressState'

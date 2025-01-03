@@ -13,7 +13,7 @@ import {
 
 import { Permission } from '@river-build/web3'
 import { waitFor } from '@testing-library/dom'
-import { ChannelMessageEvent } from '../../src/types/timeline-types'
+import { ChannelMessageEvent } from '@river-build/sdk'
 
 describe('sendThreadedMessage', () => {
     // usefull for debugging or running against cloud servers

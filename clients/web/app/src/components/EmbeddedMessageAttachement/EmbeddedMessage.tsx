@@ -1,12 +1,12 @@
-import { isDMChannelStreamId, isGDMChannelStreamId } from '@river-build/sdk'
-import React, { useCallback } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
 import {
     EmbeddedMessageAttachment,
     MessageType,
-    useRoom,
-    useUserLookupContext,
-} from 'use-towns-client'
+    isDMChannelStreamId,
+    isGDMChannelStreamId,
+} from '@river-build/sdk'
+import React, { useCallback } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { useRoom, useUserLookupContext } from 'use-towns-client'
 import { MessageAttachmentsContext } from '@components/MessageAttachments/MessageAttachmentsContext'
 import { RichTextPreview } from '@components/RichTextPlate/RichTextPreview'
 import { Box, Paragraph, Stack, Text } from '@ui'

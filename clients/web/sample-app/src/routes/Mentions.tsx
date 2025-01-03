@@ -1,9 +1,8 @@
 import { Divider, List, ListItem } from '@mui/material'
-import { MentionResult, useSpaceId, useSpaceMentions } from 'use-towns-client'
+import { useSpaceId, useSpaceMentions } from 'use-towns-client'
 import React, { useCallback } from 'react'
-
 import { useNavigate } from 'react-router-dom'
-import { RiverTimelineEvent } from '@river-build/sdk'
+import { MentionResult, RiverTimelineEvent } from '@river-build/sdk'
 
 export function Mentions(): JSX.Element {
     const spaceId = useSpaceId()

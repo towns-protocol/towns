@@ -7,9 +7,8 @@
  */
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 
-import { Membership } from '../../src/types/towns-types'
+import { Membership, TimelineEvent } from '@river-build/sdk'
 import React, { useCallback, useMemo } from 'react'
-import { TimelineEvent } from '../../src/types/timeline-types'
 import {
     createTestChannelWithSpaceRoles,
     createTestSpaceGatedByTownNft,

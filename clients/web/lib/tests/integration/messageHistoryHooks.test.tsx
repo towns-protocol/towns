@@ -2,7 +2,6 @@
 /**
  * @group core
  */
-import { Membership } from '../../src/types/towns-types'
 import React, { useCallback } from 'react'
 import {
     createTestChannelWithSpaceRoles,
@@ -21,7 +20,7 @@ import { useTownsClient } from '../../src/hooks/use-towns-client'
 import { TestConstants } from './helpers/TestConstants'
 import { Permission } from '@river-build/web3'
 import { TSigner } from '../../src/types/web3-types'
-import { RiverTimelineEvent } from '@river-build/sdk'
+import { RiverTimelineEvent, Membership } from '@river-build/sdk'
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 

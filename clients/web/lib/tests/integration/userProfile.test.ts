@@ -95,6 +95,6 @@ describe('userProfile', () => {
             .getEvents_TypedChannelMessage(spaceId)
             .find((event) => event.content.body === 'hello')
         // sender?
-        expect(message?.sender?.displayName).toBe("Bob's your uncle")
+        expect(message?.sender?.id).toBe("Bob's your uncle")
     }) // end test
 }) // end describe

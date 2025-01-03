@@ -1,5 +1,10 @@
-import { RiverTimelineEvent } from '@river-build/sdk'
-import { ChannelMessageEvent, MessageType, ReactionEvent, TimelineEvent } from 'use-towns-client'
+import {
+    ChannelMessageEvent,
+    MessageType,
+    ReactionEvent,
+    RiverTimelineEvent,
+    TimelineEvent,
+} from '@river-build/sdk'
 
 export const getIsChannelMessageContent = (e?: TimelineEvent): ChannelMessageEvent | undefined => {
     if (e?.content?.kind === RiverTimelineEvent.ChannelMessage) {

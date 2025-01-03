@@ -9,8 +9,7 @@ import { ChannelContextProvider } from '../../src/components/ChannelContextProvi
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { useChannelTimeline } from '../../src/hooks/use-channel-timeline'
 import { useTownsClient } from '../../src/hooks/use-towns-client'
-import { Membership } from '../../src/types/towns-types'
-import { TimelineEvent } from '../../src/types/timeline-types'
+import { Membership, TimelineEvent } from '@river-build/sdk'
 import { LoginWithWallet, RegisterAndJoinSpace } from './helpers/TestComponents'
 import {
     createTestChannelWithSpaceRoles,

@@ -10,7 +10,7 @@ import {
 } from './helpers/TestUtils'
 
 import { waitFor } from '@testing-library/dom'
-import { ChannelMessageEvent } from '../../src/types/timeline-types'
+import { ChannelMessageEvent } from '@river-build/sdk'
 import { Permission } from '@river-build/web3'
 
 describe('editMessage', () => {

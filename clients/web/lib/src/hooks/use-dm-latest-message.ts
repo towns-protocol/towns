@@ -1,12 +1,17 @@
 import { useTimeline } from './use-timeline'
-import { Attachment, ChannelMessageEncryptedEvent, TimelineEvent } from '../types/timeline-types'
 
-import { Membership, MessageType } from '../types/towns-types'
 import { useFullyReadMarkerStore } from '../store/use-fully-read-marker-store'
 import { useEffect, useMemo, useState } from 'react'
 import { markdownToPlainText } from '../utils/markdownToPlainText'
 import { isMediaMimeType } from '../utils/isMediaMimeType'
-import { RiverTimelineEvent } from '@river-build/sdk'
+import {
+    Membership,
+    RiverTimelineEvent,
+    Attachment,
+    ChannelMessageEncryptedEvent,
+    MessageType,
+    TimelineEvent,
+} from '@river-build/sdk'
 
 export type MostRecentMessageInfo_OneOf =
     | MostRecentMessageInfoImage

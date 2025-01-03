@@ -1,13 +1,14 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import React from 'react'
+import { describe, expect, test, vi } from 'vitest'
 import {
     ChannelMessageEvent,
     ChannelMessageEventContentOneOf,
+    EventStatus,
     MessageType,
+    RiverTimelineEvent,
     TimelineEvent,
-} from 'use-towns-client'
-import { describe, expect, test, vi } from 'vitest'
-import { EventStatus, RiverTimelineEvent } from '@river-build/sdk'
+} from '@river-build/sdk'
 import { TestApp } from 'test/testUtils'
 import { image, normal, twitter } from '../../../mocks/unfurl/data'
 import {

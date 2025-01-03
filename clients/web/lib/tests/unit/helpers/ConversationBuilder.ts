@@ -7,8 +7,8 @@ import {
     TimelineEvent,
     TimelineEvent_OneOf,
     getFallbackContent,
-} from '../../../src/types/timeline-types'
-import { MessageType } from '../../../src/types/towns-types'
+    MessageType,
+} from '@river-build/sdk'
 import {
     getIsMentioned,
     getReactionParentId,

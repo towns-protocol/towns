@@ -17,8 +17,7 @@ import {
 } from './helpers/TestUtils'
 
 import { Permission } from '@river-build/web3'
-import { ReactionEvent, ChannelMessageEvent } from '../../src/types/timeline-types'
-import { RiverTimelineEvent } from '@river-build/sdk'
+import { RiverTimelineEvent, ReactionEvent, ChannelMessageEvent } from '@river-build/sdk'
 
 describe('sendReaction', () => {
     // test:

@@ -1,5 +1,6 @@
 import { useCallback, useContext } from 'react'
-import { ChannelMessageEvent, SendTextMessageOptions, useTownsClient } from 'use-towns-client'
+import { SendTextMessageOptions, useTownsClient } from 'use-towns-client'
+import { ChannelMessageEvent } from '@river-build/sdk'
 import { ReplyToMessageContext } from '@components/ReplyToMessageContext/ReplyToMessageContext'
 import { trackPostedMessage } from '@components/Analytics/postedMessage'
 import { useGatherSpaceDetailsAnalytics } from '@components/Analytics/useGatherSpaceDetailsAnalytics'

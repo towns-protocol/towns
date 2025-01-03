@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Membership, useSpaceId } from 'use-towns-client'
+import { useSpaceId } from 'use-towns-client'
+import { Membership } from '@river-build/sdk'
 import { CreateChannelForm } from '../components/CreateChannelForm'
 
 export const SpacesNewChannel = () => {
