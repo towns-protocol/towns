@@ -12,25 +12,23 @@ enum ValidationResult {
     INVALID_GROUP_INFO_EPOCH = 6;
     INVALID_GROUP_INFO_MISSING_PUB_KEY_EXTENSION = 7;
     INVALID_COMMIT = 8;
+    INVALID_GROUP_INFO_GROUP_ID_MISMATCH = 9;
+    INVALID_EXTERNAL_GROUP_TOO_MANY_MEMBERS = 10;
+    INVALID_PUBLIC_SIGNATURE_KEY = 11;
 }
 
 message MlsRequest {
     oneof content {
         InitialGroupInfoRequest initial_group_info = 1;
         ExternalJoinRequest external_join = 2;
-    }
-}
-
-message MlsResponse {
-    oneof content {
-        InitialGroupInfoResponse initial_group_info = 1;
-        ExternalJoinResponse external_join = 2;
+        SnapshotExternalGroupRequest snapshot_external_group = 3;
     }
 }
 
 message InitialGroupInfoRequest {
-    bytes group_info_message = 1;
-    bytes external_group_snapshot = 2;
+    bytes signature_public_key = 1;
+    bytes group_info_message = 2;
+    bytes external_group_snapshot = 3;
 }
 
 message InitialGroupInfoResponse {
@@ -42,10 +40,27 @@ message ExternalJoinRequest {
     repeated bytes commits = 2;
     bytes proposed_external_join_info_message = 3;
     bytes proposed_external_join_commit = 4;
+    bytes signature_public_key = 5;
 }
 
 message ExternalJoinResponse {
     ValidationResult result = 1;
+}
+
+message SnapshotExternalGroupRequest {
+    // commits may or may not be accompanied by a new group_info_message
+    message CommitInfo {
+        bytes commit = 1;
+        optional bytes group_info_message = 2;
+    }
+    bytes external_group_snapshot = 1;
+    bytes group_info_message = 2;
+    repeated CommitInfo commits = 3;
+}
+
+message SnapshotExternalGroupResponse {
+    bytes external_group_snapshot = 1;
+    bytes group_info_message = 2;
 }
 
 message InfoRequest {}

@@ -8,6 +8,8 @@ use mls_rs::external_client::ExternalClient;
 use mls_rs::identity::basic::BasicIdentityProvider;
 use mls_rs_crypto_rustcrypto::RustCryptoProvider;
 
+use river_mls_protocol::SnapshotExternalGroupRequest;
+use river_mls_protocol::SnapshotExternalGroupResponse;
 use river_mls_protocol::{InitialGroupInfoRequest, 
     InitialGroupInfoResponse, 
     ExternalJoinRequest, 
@@ -71,7 +73,7 @@ pub fn validate_initial_group_info_request(request: InitialGroupInfoRequest) -> 
 
     if group_info.group_context().group_id() != external_group.group_context().group_id() {
         return InitialGroupInfoResponse {
-            result: ValidationResult::InvalidGroupInfo.into(),
+            result: ValidationResult::InvalidGroupInfoGroupIdMismatch.into(),
         };
     }
 
@@ -80,7 +82,6 @@ pub fn validate_initial_group_info_request(request: InitialGroupInfoRequest) -> 
             match extensions {
                 Some(_) => {}
                 None => {
-                    println!("no external pub extension");
                     return InitialGroupInfoResponse {
                         result: ValidationResult::InvalidGroupInfoMissingPubKeyExtension.into(),
                     };
@@ -89,7 +90,7 @@ pub fn validate_initial_group_info_request(request: InitialGroupInfoRequest) -> 
         }
         Err(_) => {
             return InitialGroupInfoResponse {
-                result: ValidationResult::InvalidGroupInfo.into(),
+                result: ValidationResult::InvalidGroupInfoMissingPubKeyExtension.into(),
             };
         }
     }
@@ -101,6 +102,19 @@ pub fn validate_initial_group_info_request(request: InitialGroupInfoRequest) -> 
                 result: ValidationResult::InvalidExternalGroupMissingTree.into(),
             };
         }
+    }
+
+    let members = external_group.roster().members();
+    if members.len() != 1 {
+        return InitialGroupInfoResponse {
+            result: ValidationResult::InvalidExternalGroupTooManyMembers.into(),
+        };
+    }
+    
+    if members[0].signing_identity.signature_key.to_vec() != request.signature_public_key {
+        return InitialGroupInfoResponse {
+            result: ValidationResult::InvalidPublicSignatureKey.into(),
+        };
     }
     return InitialGroupInfoResponse {
         result: ValidationResult::Valid.into(),
@@ -125,19 +139,12 @@ pub fn validate_external_join_request(request: ExternalJoinRequest) -> ExternalJ
         }
     };
 
+    // in the off-chance that an invalid commit slips through, we don't want to stop processing, just keep going.
     for commit_bytes in request.commits {
-        let commit = match MlsMessage::from_bytes(&commit_bytes) {
-            Ok(commit) => commit,
-            Err(_) => return ExternalJoinResponse {
-                result: ValidationResult::InvalidCommit.into(),
-            }
+        let _ = match MlsMessage::from_bytes(&commit_bytes) {
+            Ok(commit) => external_group.process_incoming_message(commit),
+            Err(_) => break
         };
-
-        if external_group.process_incoming_message(commit).is_err() {
-            return ExternalJoinResponse {
-                result: ValidationResult::InvalidCommit.into(),
-            };
-        }
     }
 
     let proposed_group_info_mls_message = match MlsMessage::from_bytes(&request.proposed_external_join_info_message) {
@@ -173,13 +180,91 @@ pub fn validate_external_join_request(request: ExternalJoinRequest) -> ExternalJ
         };
     }
 
+    let member_count_before_commit = external_group.roster().members().len();
+    match external_group.process_incoming_message(proposed_external_join_commit) {
+        Ok(_) => {}
+        Err(_) => {
+            return ExternalJoinResponse {
+                result: ValidationResult::InvalidCommit.into(),
+            };
+        }
+    }
+
+    if member_count_before_commit + 1 != external_group.roster().members().len() {
+        return ExternalJoinResponse {
+            result: ValidationResult::InvalidCommit.into(),
+        };
+    }
+
+    match external_group.roster().members().iter().any(|member| 
+        member.signing_identity.signature_key.to_vec() == request.signature_public_key 
+    ) {
+        false => {
+            return ExternalJoinResponse {
+                result: ValidationResult::InvalidPublicSignatureKey.into(),
+            };
+        }
+        true => {}
+    }
+
     return ExternalJoinResponse {
         result: ValidationResult::Valid.into(),
     };
 }
 
+pub fn snapshot_external_group_request(request: SnapshotExternalGroupRequest) -> SnapshotExternalGroupResponse {
+    let external_client = create_external_client();
+    let external_group_snapshot = match ExternalSnapshot::from_bytes(&request.external_group_snapshot) {
+        Ok(external_group_snapshot) => external_group_snapshot,
+        Err(_) => { return SnapshotExternalGroupResponse::default() }
+    };
+
+    let mut external_group = match external_client.load_group(external_group_snapshot) {
+        Ok(group) => group,
+        Err(_) => { return SnapshotExternalGroupResponse::default() }
+    };
+
+    // keep track of the last valid group info message, 
+    // ie the one that was sent along with the latest valid commit
+    let mut last_valid_group_info_message = request.group_info_message;
+    for commit_info in request.commits {
+        // in the off-chance that an invalid commit has slipped through, we don't want to stop processing, just keep going.
+        let commit = match MlsMessage::from_bytes(&commit_info.commit) {
+            Ok(commit) => commit,
+            Err(_) => continue
+        };
+
+        match external_group.process_incoming_message(commit) {
+            Ok(_) => {},
+            Err(_) => continue
+        };
+
+        // if the commit was valid, update the last valid group info message
+        match commit_info.group_info_message {
+            Some(group_info_message) => {
+                last_valid_group_info_message = group_info_message;
+            }
+            None => {}
+        }
+    }
+
+    let external_group_snapshot = external_group.snapshot();
+    let external_group_snapshot_bytes = match external_group_snapshot.to_bytes() {
+        Ok(bytes) => bytes,
+        Err(_) => { return SnapshotExternalGroupResponse::default() }
+    };
+
+    let response = SnapshotExternalGroupResponse {
+        external_group_snapshot: external_group_snapshot_bytes,
+        group_info_message: last_valid_group_info_message,
+    };
+    return response;
+}
+
 #[cfg(test)]
 mod tests {
+    use std::vec;
+
     use super::*;
     use mls_rs::group::ExportedTree;
     use mls_rs::{
@@ -261,12 +346,35 @@ mod tests {
         let external_group_snapshot = external_group.snapshot();
 
         let request = InitialGroupInfoRequest {
+            signature_public_key: bob_client.signing_identity().unwrap().0.signature_key.to_vec(),
             group_info_message: bob_group_info_message.to_bytes().unwrap(),
             external_group_snapshot: external_group_snapshot.to_bytes().unwrap(),
         };
 
         let response = validate_initial_group_info_request(request);
         assert_eq!(response.result, ValidationResult::Valid.into());
+    }
+
+    #[test]
+    fn test_validate_initial_group_info_request_invalid_public_signature_key() {
+        let bob_client = create_client("bob".to_string());
+        let bob_group = bob_client.create_group(Default::default(), Default::default()).unwrap();
+        let bob_group_info_message = bob_group.group_info_message_allowing_ext_commit(false).unwrap();
+
+        let external_client = create_external_client();
+        let tree_bytes = bob_group.export_tree().to_bytes().unwrap();
+        let tree = ExportedTree::from_bytes(&tree_bytes).unwrap();
+        let external_group = external_client.observe_group(bob_group_info_message.clone(), Some(tree)).unwrap();
+        let external_group_snapshot = external_group.snapshot();
+
+        let request = InitialGroupInfoRequest {
+            signature_public_key: vec![0; 1],
+            group_info_message: bob_group_info_message.to_bytes().unwrap(),
+            external_group_snapshot: external_group_snapshot.to_bytes().unwrap(),
+        };
+
+        let response = validate_initial_group_info_request(request);
+        assert_eq!(response.result, ValidationResult::InvalidPublicSignatureKey.into());
     }
 
     #[test]
@@ -282,10 +390,11 @@ mod tests {
         let external_group_snapshot = external_group.snapshot();
 
         let request = InitialGroupInfoRequest {
+            signature_public_key: bob_client.signing_identity().unwrap().0.signature_key.to_vec(),
             group_info_message: bob_group_info_message.to_bytes().unwrap(),
             external_group_snapshot: external_group_snapshot.to_bytes().unwrap(),
         };
-
+        
         let response = validate_initial_group_info_request(request);
         assert_eq!(response.result, ValidationResult::InvalidGroupInfoMissingPubKeyExtension.into());
     }
@@ -315,8 +424,10 @@ mod tests {
         }
 
         let alice = create_client("alice".to_string());
+        let signature_public_key = alice.signing_identity().unwrap().0.signature_key.to_vec();
         let (alice_group_info_message, alice_commit) = perform_external_join(external_group_snapshot.clone(), commits.clone(), latest_group_info_message_without_tree, alice);
         let request = ExternalJoinRequest {
+            signature_public_key: signature_public_key,
             external_group_snapshot: external_group_snapshot.to_bytes().unwrap(),
             commits: commits.iter().map(|commit| commit.to_bytes().unwrap()).collect(),
             proposed_external_join_info_message: alice_group_info_message.to_bytes().unwrap(),

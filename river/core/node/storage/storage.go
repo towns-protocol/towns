@@ -118,6 +118,11 @@ type StreamStorage interface {
 		streamId StreamId,
 	) (*DebugReadStreamDataResult, error)
 
+	DebugReadStreamStatistics(
+		ctx context.Context,
+		streamId StreamId,
+	) (*DebugReadStreamStatisticsResult, error)
+
 	// GetLastMiniblockNumber returns the last miniblock number for the given stream from storage.
 	GetLastMiniblockNumber(ctx context.Context, streamID StreamId) (int64, error)
 
@@ -155,4 +160,17 @@ type DebugReadStreamDataResult struct {
 	Miniblocks                 []MiniblockDescriptor
 	Events                     []EventDescriptor
 	MbCandidates               []MiniblockDescriptor
+}
+
+type MiniblockCandidateStatisticsResult struct {
+	Hash     string
+	BlockNum int64
+}
+
+type DebugReadStreamStatisticsResult struct {
+	StreamId                   string
+	LatestMiniblockNum         int64
+	CurrentMiniblockCandidates []MiniblockCandidateStatisticsResult
+	NumMinipoolEvents          int64
+	LatestSnapshotMiniblockNum int64
 }

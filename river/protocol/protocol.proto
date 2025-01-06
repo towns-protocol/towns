@@ -156,10 +156,16 @@ message MiniblockHeader {
 */
 message MemberPayload {
     message Snapshot {
-
         // contains the current MLS group state
         message Mls {
-            
+            message Member {
+                repeated bytes signature_public_keys = 1;
+            }
+            bytes external_group_snapshot = 1;
+            bytes group_info_message = 2;
+            // user_address -> Member
+            map<string, Member> members = 3;
+            map<uint64, bytes> epoch_secrets = 4;
         }
 
         message Member {
@@ -223,13 +229,29 @@ message MemberPayload {
 
     message Mls {
         message InitializeGroup {
-            bytes device_key = 1;
-            bytes group_info_message = 2;
-            bytes external_group_snapshot = 3;
+            bytes group_info_message = 1;
+            bytes external_group_snapshot = 2;
+            bytes signature_public_key = 3;
+        }
+
+        message ExternalJoin {
+            bytes signature_public_key = 1;
+            bytes commit = 2;
+            bytes group_info_message = 3;
+        }
+
+        message EpochSecrets {
+            message EpochSecret {
+                bytes secret = 1;
+                uint64 epoch = 2;
+            }
+            repeated EpochSecret secrets = 1;
         }
 
         oneof content {
             InitializeGroup initialize_group = 1;
+            ExternalJoin external_join = 2;
+            EpochSecrets epoch_secrets = 3;
         }
     }
 

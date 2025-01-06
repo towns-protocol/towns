@@ -1,5 +1,6 @@
 import { defineConfig, mergeConfig } from 'vitest/config'
 import { rootConfig } from '../../vitest.config.mjs'
+import wasm from 'vite-plugin-wasm'
 
 export default mergeConfig(
     rootConfig,
@@ -13,6 +14,12 @@ export default mergeConfig(
             hookTimeout: 120_000,
             testTimeout: 120_000,
             setupFiles: './vitest.setup.ts',
+            server: {
+                deps: {
+                    inline: ['@river-build/mls-rs-wasm'],
+                },
+            },
         },
+        plugins: [wasm()],
     }),
 )

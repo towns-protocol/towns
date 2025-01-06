@@ -1,6 +1,6 @@
 {
     "name": "@river-build/sdk",
-    "version": "0.0.147",
+    "version": "0.0.148",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "dist/index.js",
@@ -30,7 +30,7 @@
         "@river-build/dlog": "workspace:^",
         "@river-build/encryption": "workspace:^",
         "@river-build/generated": "workspace:^",
-        "@river-build/mls-rs-wasm": "^0.0.9",
+        "@river-build/mls-rs-wasm": "^0.0.11",
         "@river-build/proto": "workspace:^",
         "@river-build/web3": "workspace:^",
         "browser-or-node": "^3.0.0",

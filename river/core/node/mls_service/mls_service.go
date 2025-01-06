@@ -36,14 +36,13 @@ func makeMlsRequest(request *mls_tools.MlsRequest) ([]byte, error) {
 		&outputLen,
 	)
 
-	defer C.free_bytes(outputPtr, outputLen)
-
 	if retCode != 0 {
 		return nil, fmt.Errorf("error calling Rust function: %d", retCode)
 	}
 
 	// Convert the result to a Go slice
 	output := C.GoBytes(unsafe.Pointer(outputPtr), C.int(outputLen))
+	C.free_bytes(outputPtr, outputLen)
 	return output, nil
 }
 
@@ -76,6 +75,24 @@ func ExternalJoinRequest(request *mls_tools.ExternalJoinRequest) (*mls_tools.Ext
 		return nil, err
 	}
 	result := mls_tools.ExternalJoinResponse{}
+	err = proto.Unmarshal(responseBytes, &result)
+	if err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
+
+func SnapshotExternalGroupRequest(request *mls_tools.SnapshotExternalGroupRequest) (*mls_tools.SnapshotExternalGroupResponse, error) {
+	r := &mls_tools.MlsRequest{
+		Content: &mls_tools.MlsRequest_SnapshotExternalGroup{
+			SnapshotExternalGroup: request,
+		},
+	}
+	responseBytes, err := makeMlsRequest(r)
+	if err != nil {
+		return nil, err
+	}
+	result := mls_tools.SnapshotExternalGroupResponse{}
 	err = proto.Unmarshal(responseBytes, &result)
 	if err != nil {
 		return nil, err

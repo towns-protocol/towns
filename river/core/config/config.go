@@ -64,6 +64,7 @@ func GetDefaultConfig() *Config {
 			PProf:                 false,
 			Stacks:                true,
 			StacksMaxSizeKb:       5 * 1024,
+			Stream:                true,
 			TxPool:                true,
 			EnableStorageEndpoint: true,
 		},
@@ -445,6 +446,7 @@ type DebugEndpointsConfig struct {
 	PProf           bool
 	Stacks          bool
 	StacksMaxSizeKb int
+	Stream          bool
 	TxPool          bool
 
 	// Make storage statistics available via debug endpoints. This may involve running queries

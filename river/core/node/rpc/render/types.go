@@ -8,8 +8,16 @@ import (
 
 // RenderableData is the interface for all data that can be rendered
 type RenderableData interface {
-	*AvailableDebugHandlersData | *CacheData | *TransactionPoolData | *OnChainConfigData |
-		*GoRoutineData | *SystemStatsData | *InfoIndexData | *DebugMultiData | *StorageData
+	*AvailableDebugHandlersData |
+		*CacheData |
+		*TransactionPoolData |
+		*OnChainConfigData |
+		*GoRoutineData |
+		*SystemStatsData |
+		*InfoIndexData |
+		*DebugMultiData |
+		*StorageData |
+		*StreamSummaryData
 
 	// TemplateName returns the name of the template to be used for rendering
 	TemplateName() string
@@ -53,6 +61,14 @@ type TransactionPoolData struct {
 		ReplacementTransactionsCount int64
 		LastReplacementTransaction   string
 	}
+}
+
+type StreamSummaryData struct {
+	Result storage.DebugReadStreamStatisticsResult
+}
+
+func (d StreamSummaryData) TemplateName() string {
+	return "templates/debug/stream.template.html"
 }
 
 func (d TransactionPoolData) TemplateName() string {

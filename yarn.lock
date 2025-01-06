@@ -10041,7 +10041,7 @@ __metadata:
   dependencies:
     "@openzeppelin/contracts": ^5.1.0
     solady: ^0.0.281
-  checksum: 2666668787f50af79a76004ccea89798fb362f07eea88557cdcf13a70d1164b2ad58c9278fd19ff5b304d9fc1439d097d57e03676b6c1dfeeb98535dd5059b50
+  checksum: 3884bdab0e68b6f64293404a8e3670280d5ad6255f905c189121e2c34d210ec7fa3d9ffda67447a08d060c02564591d0ee0923ae9f13a3d71c0ddfd46e898ff7
   languageName: node
   linkType: hard
 
@@ -10129,10 +10129,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@river-build/mls-rs-wasm@npm:^0.0.9":
-  version: 0.0.9
-  resolution: "@river-build/mls-rs-wasm@npm:0.0.9"
-  checksum: c0221954de5c0b981f656b497e9b72ac3a3c82cb7810c389f4cb25a84ffb1727718342eafc186edeb1b3d14580ff7a1dfb2fbac576cf792ac1054f04b4659cbb
+"@river-build/mls-rs-wasm@npm:^0.0.11":
+  version: 0.0.11
+  resolution: "@river-build/mls-rs-wasm@npm:0.0.11"
+  checksum: 57abfaf019575ef6e5f20bd934170c83360439c55f38f711857eabc74e0e63ba2820b6b8f020c9ff865096fc697b67434dd0349ee6895ddbe67ff32f81297296
   languageName: node
   linkType: hard
 
@@ -10273,7 +10273,7 @@ __metadata:
     "@river-build/dlog": "workspace:^"
     "@river-build/encryption": "workspace:^"
     "@river-build/generated": "workspace:^"
-    "@river-build/mls-rs-wasm": ^0.0.9
+    "@river-build/mls-rs-wasm": ^0.0.11
     "@river-build/proto": "workspace:^"
     "@river-build/web3": "workspace:^"
     "@testing-library/react": ^14.2.1
@@ -16312,7 +16312,7 @@ __metadata:
     source-map-support: ^0.5.19
     table: ^6.8.0
     typescript: ^4.3.5
-  checksum: bdca754160deb9b34a6b668bbcb80477c1c596cdaa90ed4966e0b557f32d26f1d973033a468dca016ad8e5d909c68f15859408208b70602bdee0619c6208bd02
+  checksum: 7a95ae91ba600beaa22ce7f5ab09003fb9eccf3e56e38e3b0d1a36dd8a07ae581eeedd939f90ce6e9ef3a189fcad746228ba2703331964b398acf6437dc0e54b
   languageName: node
   linkType: hard
 

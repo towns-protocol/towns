@@ -14,10 +14,14 @@ import (
 	"time"
 
 	"github.com/river-build/river/core/config"
+	"github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/dlog"
 	. "github.com/river-build/river/core/node/events"
+	"github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/rpc/render"
+	"github.com/river-build/river/core/node/shared"
+	"github.com/river-build/river/core/node/storage"
 )
 
 type debugHandler struct {
@@ -67,7 +71,7 @@ func (s *Service) registerDebugHandlers(enableDebugEndpoints bool, cfg config.De
 	handler.HandleFunc(mux, "/debug/multi/json", s.handleDebugMultiJson)
 	handler.Handle(mux, "/debug/config", &onChainConfigHandler{onChainConfig: s.chainConfig})
 
-	if enableDebugEndpoints && cfg.EnableStorageEndpoint {
+	if cfg.EnableStorageEndpoint || enableDebugEndpoints {
 		handler.HandleFunc(mux, "/debug/storage", s.handleDebugStorage)
 	}
 
@@ -94,6 +98,10 @@ func (s *Service) registerDebugHandlers(enableDebugEndpoints bool, cfg config.De
 
 	if cfg.TxPool || enableDebugEndpoints {
 		handler.Handle(mux, "/debug/txpool", &txpoolHandler{riverTxPool: s.riverChain.TxPool})
+	}
+
+	if cfg.Stream || enableDebugEndpoints {
+		handler.Handle(mux, "/debug/stream/{streamIdStr}", &streamHandler{store: s.storage})
 	}
 }
 
@@ -130,6 +138,59 @@ func (h *stacksHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	output, err := render.Execute(&reply)
 	if err != nil {
 		dlog.FromCtx(ctx).Error("unable to render stack data", "err", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/html")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(output.Bytes())
+}
+
+type streamHandler struct {
+	store storage.StreamStorage
+}
+
+func (s *streamHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	var (
+		ctx      = r.Context()
+		reply    = render.StreamSummaryData{}
+		err      error
+		streamId shared.StreamId
+		result   *storage.DebugReadStreamStatisticsResult
+		log      = dlog.FromCtx(ctx).With("func", "streamHandler.ServeHTTP")
+	)
+
+	streamIdStr := r.PathValue("streamIdStr")
+
+	if streamId, err = shared.StreamIdFromString(streamIdStr); err != nil {
+		log.Error(
+			"unable to convert url value to streamId",
+			"err",
+			err,
+			"streamIdString",
+			streamIdStr)
+		http.Error(w, fmt.Sprintf("Stream id is not parsable: `%v`", err), http.StatusInternalServerError)
+		return
+	}
+
+	if result, err = s.store.DebugReadStreamStatistics(ctx, streamId); err != nil {
+		if base.AsRiverError(err).Code == protocol.Err_NOT_FOUND {
+			w.WriteHeader(http.StatusNotFound)
+			fmt.Fprintln(w, "404 - Stream does not exist")
+			return
+
+		} else {
+			log.Error("unable to read stream statistics from db", "err", err)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		}
+		return
+
+	}
+	reply.Result = *result
+	output, err := render.Execute(&reply)
+	if err != nil {
+		dlog.FromCtx(ctx).Error("unable to render transaction pool data", "err", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}

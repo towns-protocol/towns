@@ -32,6 +32,9 @@ pub extern "C" fn process_mls_request(input_ptr: *const u8, input_len: usize, ou
         mls_request::Content::ExternalJoin(external_join) => {
             river_mls::validate_external_join_request(external_join).encode_to_vec()
         }
+        mls_request::Content::SnapshotExternalGroup(snapshot_external_group) => {
+            river_mls::snapshot_external_group_request(snapshot_external_group).encode_to_vec()
+        }
     };
     
     // Allocate memory for the output

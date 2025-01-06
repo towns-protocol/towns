@@ -125,6 +125,14 @@ func make_SnapshotMembers(iInception IsInceptionPayload, creatorAddress []byte) 
 		return nil, RiverError(Err_INVALID_ARGUMENT, "inceptionEvent is not an inception event")
 	}
 
+	// initialize the snapshot with an empty maps
+	snapshot := &MemberPayload_Snapshot{
+		Mls: &MemberPayload_Snapshot_Mls{
+			Members:      make(map[string]*MemberPayload_Snapshot_Mls_Member),
+			EpochSecrets: make(map[uint64][]byte),
+		},
+	}
+
 	switch inception := iInception.(type) {
 	case *UserPayload_Inception, *UserSettingsPayload_Inception, *UserInboxPayload_Inception, *UserMetadataPayload_Inception:
 		// for all user streams, get the address from the stream id
@@ -132,28 +140,27 @@ func make_SnapshotMembers(iInception IsInceptionPayload, creatorAddress []byte) 
 		if err != nil {
 			return nil, err
 		}
-		return &MemberPayload_Snapshot{
-			Joined: insertMember(nil, &MemberPayload_Snapshot_Member{
-				UserAddress: userAddress.Bytes(),
-			}),
-		}, nil
+		snapshot.Joined = insertMember(nil, &MemberPayload_Snapshot_Member{
+			UserAddress: userAddress.Bytes(),
+		})
+		return snapshot, nil
 	case *DmChannelPayload_Inception:
-		return &MemberPayload_Snapshot{
-			Joined: insertMember(nil, &MemberPayload_Snapshot_Member{
-				UserAddress: inception.FirstPartyAddress,
-			}, &MemberPayload_Snapshot_Member{
-				UserAddress: inception.SecondPartyAddress,
-			}),
-			Mls: &MemberPayload_Snapshot_Mls{},
-		}, nil
+		// for dm channels, add both parties are members
+		snapshot.Joined = insertMember(nil, &MemberPayload_Snapshot_Member{
+			UserAddress: inception.FirstPartyAddress,
+		}, &MemberPayload_Snapshot_Member{
+			UserAddress: inception.SecondPartyAddress,
+		})
+		return snapshot, nil
 	case *MediaPayload_Inception:
-		return &MemberPayload_Snapshot{
-			Joined: insertMember(nil, &MemberPayload_Snapshot_Member{
-				UserAddress: creatorAddress,
-			}),
-		}, nil
+		// for media payloads, add the creator as a member
+		snapshot.Joined = insertMember(nil, &MemberPayload_Snapshot_Member{
+			UserAddress: creatorAddress,
+		})
+		return snapshot, nil
 	default:
-		return &MemberPayload_Snapshot{}, nil
+		// for all other payloads, leave them memberless by default
+		return snapshot, nil
 	}
 }
 
@@ -607,8 +614,63 @@ func update_Snapshot_Member(
 		default:
 			return RiverError(Err_INVALID_ARGUMENT, fmt.Sprintf("unknown member blockchain transaction type %T", transactionContent))
 		}
+	case *MemberPayload_Mls_:
+		return update_Snapshot_Mls(iSnapshot, content.Mls, creatorAddress)
 	default:
 		return RiverError(Err_INVALID_ARGUMENT, fmt.Sprintf("unknown membership payload type %T", memberPayload.Content))
+	}
+}
+
+func update_Snapshot_Mls(
+	iSnapshot *Snapshot,
+	mlsPayload *MemberPayload_Mls,
+	creatorAddress []byte,
+) error {
+	if iSnapshot.Members.GetMls() == nil {
+		iSnapshot.Members.Mls = &MemberPayload_Snapshot_Mls{
+			Members:      make(map[string]*MemberPayload_Snapshot_Mls_Member),
+			EpochSecrets: make(map[uint64][]byte),
+		}
+	}
+	snapshot := iSnapshot.Members.Mls
+	if snapshot.Members == nil {
+		snapshot.Members = make(map[string]*MemberPayload_Snapshot_Mls_Member)
+	}
+
+	if snapshot.EpochSecrets == nil {
+		snapshot.EpochSecrets = make(map[uint64][]byte)
+	}
+
+	switch content := mlsPayload.Content.(type) {
+	case *MemberPayload_Mls_InitializeGroup_:
+		if len(snapshot.ExternalGroupSnapshot) > 0 || len(snapshot.GroupInfoMessage) > 0 {
+			return RiverError(Err_INVALID_ARGUMENT, "duplicate mls initialization")
+		}
+		memberAddress := common.BytesToAddress(creatorAddress).Hex()
+		snapshot.ExternalGroupSnapshot = content.InitializeGroup.ExternalGroupSnapshot
+		snapshot.GroupInfoMessage = content.InitializeGroup.GroupInfoMessage
+		snapshot.Members[memberAddress] = &MemberPayload_Snapshot_Mls_Member{
+			SignaturePublicKeys: [][]byte{content.InitializeGroup.SignaturePublicKey},
+		}
+		return nil
+	case *MemberPayload_Mls_ExternalJoin_:
+		memberAddress := common.BytesToAddress(creatorAddress).Hex()
+		if _, ok := snapshot.Members[memberAddress]; !ok {
+			snapshot.Members[memberAddress] = &MemberPayload_Snapshot_Mls_Member{
+				SignaturePublicKeys: make([][]byte, 0),
+			}
+		}
+		snapshot.Members[memberAddress].SignaturePublicKeys = append(snapshot.Members[memberAddress].SignaturePublicKeys, content.ExternalJoin.SignaturePublicKey)
+		return nil
+	case *MemberPayload_Mls_EpochSecrets_:
+		for _, secret := range content.EpochSecrets.Secrets {
+			if _, ok := snapshot.EpochSecrets[secret.Epoch]; !ok {
+				snapshot.EpochSecrets[secret.Epoch] = secret.Secret
+			}
+		}
+		return nil
+	default:
+		return RiverError(Err_INVALID_ARGUMENT, fmt.Sprintf("unknown MLS payload type %T", mlsPayload.Content))
 	}
 }
 

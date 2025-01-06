@@ -1603,7 +1603,7 @@ func (s *PostgresStreamStore) DebugReadStreamData(
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
 			var err error
-			ret, err = s.debugReadStreamData(ctx, tx, streamId)
+			ret, err = s.debugReadStreamDataTx(ctx, tx, streamId)
 			return err
 		},
 		nil,
@@ -1615,7 +1615,7 @@ func (s *PostgresStreamStore) DebugReadStreamData(
 	return ret, nil
 }
 
-func (s *PostgresStreamStore) debugReadStreamData(
+func (s *PostgresStreamStore) debugReadStreamDataTx(
 	ctx context.Context,
 	tx pgx.Tx,
 	streamId StreamId,
@@ -1692,8 +1692,7 @@ func (s *PostgresStreamStore) debugReadStreamData(
 		var num int64
 		var hashStr string
 		var data []byte
-		err = candRows.Scan(&num, &hashStr, &data)
-		if err != nil {
+		if err = candRows.Scan(&num, &hashStr, &data); err != nil {
 			return nil, err
 		}
 		result.MbCandidates = append(result.MbCandidates, MiniblockDescriptor{
@@ -1701,6 +1700,91 @@ func (s *PostgresStreamStore) debugReadStreamData(
 			Data:            data,
 			Hash:            common.HexToHash(hashStr),
 		})
+	}
+
+	return result, nil
+}
+
+func (s *PostgresStreamStore) DebugReadStreamStatistics(
+	ctx context.Context,
+	streamId StreamId,
+) (*DebugReadStreamStatisticsResult, error) {
+	var ret *DebugReadStreamStatisticsResult
+	err := s.txRunnerWithUUIDCheck(
+		ctx,
+		"DebugReadStreamStatistics",
+		pgx.ReadWrite,
+		func(ctx context.Context, tx pgx.Tx) error {
+			var err error
+			ret, err = s.debugReadStreamStatisticsTx(ctx, tx, streamId)
+			return err
+		},
+		nil,
+		"streamId", streamId,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return ret, nil
+}
+
+func (s *PostgresStreamStore) debugReadStreamStatisticsTx(
+	ctx context.Context,
+	tx pgx.Tx,
+	streamId StreamId,
+) (*DebugReadStreamStatisticsResult, error) {
+	lastSnapshotMiniblock, err := s.lockStream(ctx, tx, streamId, false)
+	if err != nil {
+		return nil, err
+	}
+
+	result := &DebugReadStreamStatisticsResult{
+		StreamId:                   streamId.String(),
+		LatestSnapshotMiniblockNum: lastSnapshotMiniblock,
+	}
+
+	if err = tx.QueryRow(
+		ctx,
+		s.sqlForStream(
+			"SELECT MAX(seq_num) from {{miniblocks}} WHERE stream_id = $1",
+			streamId,
+		),
+		streamId,
+	).Scan(&result.LatestMiniblockNum); err != nil {
+		return nil, AsRiverError(err, Err_DB_OPERATION_FAILURE).Tag("query", "latest_block")
+	}
+
+	if err = tx.QueryRow(
+		ctx,
+		s.sqlForStream(
+			"SELECT count(*) FROM {{minipools}} WHERE stream_id = $1 AND slot_num <> -1",
+			streamId,
+		),
+		streamId,
+	).Scan(&result.NumMinipoolEvents); err != nil {
+		return nil, AsRiverError(err, Err_DB_OPERATION_FAILURE).Tag("query", "minipool_size")
+	}
+
+	candRows, err := tx.Query(
+		ctx,
+		s.sqlForStream(
+			"SELECT seq_num, block_hash FROM {{miniblock_candidates}} WHERE stream_id = $1 ORDER BY seq_num, block_hash",
+			streamId,
+		),
+		streamId,
+	)
+	if err != nil {
+		return nil, AsRiverError(err, Err_DB_OPERATION_FAILURE).Tag("query", "candidates")
+	}
+	defer candRows.Close()
+
+	for candRows.Next() {
+		var candidate MiniblockCandidateStatisticsResult
+		if err = candRows.Scan(&candidate.BlockNum, &candidate.Hash); err != nil {
+			return nil, err
+		}
+
+		result.CurrentMiniblockCandidates = append(result.CurrentMiniblockCandidates, candidate)
 	}
 
 	return result, nil

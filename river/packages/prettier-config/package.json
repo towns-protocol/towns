@@ -1,6 +1,6 @@
 {
     "name": "@river-build/prettier-config",
-    "version": "0.0.147",
+    "version": "0.0.148",
     "license": "MIT",
     "main": "config.js",
     "peerDependencies": {

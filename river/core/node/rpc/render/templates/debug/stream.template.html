@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Stream Summary</title>
+    <style>
+      body {
+        font-family: monospace;
+      }
+
+      table,
+      th,
+      td {
+        border: none;
+        border-collapse: collapse;
+        vertical-align: text-top;
+      }
+
+      table tr td:nth-child(1) {
+        font-weight: bolder;
+        text-align: right;
+      }
+
+      table table tr td:nth-child(1) {
+        font-weight: normal;
+        text-align: center;
+      }
+
+      th,
+      td {
+        padding: 8px;
+        text-align: center;
+      }
+
+      table tr th {
+        text-align: left;
+      }
+    </style>
+  </head>
+  <!-- prettier-ignore -->
+
+  <body>
+    <table>
+      <tr><th colspan="2"><h2>Stream Summary</h2></th></tr>
+      <tr><td>Stream Id:</td><td>{{.Result.StreamId}}</td></tr>
+      <tr><td>Num Minipool Events:</td><td>{{.Result.NumMinipoolEvents}}</td></tr>
+      <tr><td>Latest Snapshot Miniblock Num:</td><td>{{.Result.LatestSnapshotMiniblockNum}}</td></tr>
+      <tr><td>Lastest Miniblock Number:</td><td>{{.Result.LatestMiniblockNum}}</td></tr>
+      <tr><td>Current Miniblock Candidates:</td>
+        <td>
+          <table>
+            <tr><th>BlockNum</th><th>Hash</th></tr>
+            {{ range $i, $mc := .Result.CurrentMiniblockCandidates }}
+            <tr><td>{{$mc.BlockNum}}</td><td>{{$mc.Hash}}</td></tr>
+            {{end}}
+          </table>
+      </td>
+      </tr>
+    </table>
+  </body>
+</html>

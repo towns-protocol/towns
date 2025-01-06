@@ -24,6 +24,7 @@ import { KeySolicitationContent } from '@river-build/encryption'
 import { makeParsedEvent } from './sign'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { utils } from 'ethers'
+import { StreamStateView_Mls } from './streamStateView_Mls'
 
 const log = dlog('csb:streamStateView_Members')
 
@@ -50,6 +51,7 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
     readonly membership: StreamStateView_Members_Membership
     readonly solicitHelper: StreamStateView_Members_Solicitations
     readonly memberMetadata: StreamStateView_MemberMetadata
+    readonly mls: StreamStateView_Mls
     readonly pins: Pin[] = []
     tips: { [key: string]: bigint } = {}
     encryptionAlgorithm?: string = undefined
@@ -60,6 +62,7 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
         this.membership = new StreamStateView_Members_Membership(streamId)
         this.solicitHelper = new StreamStateView_Members_Solicitations(streamId)
         this.memberMetadata = new StreamStateView_MemberMetadata(streamId)
+        this.mls = new StreamStateView_Mls(streamId)
     }
 
     // initialization
@@ -155,6 +158,10 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                 )
             }
         })
+
+        if (snapshot.members.mls) {
+            this.mls.applySnapshot(snapshot.members.mls)
+        }
         this.tips = { ...snapshot.members.tips }
         this.encryptionAlgorithm = snapshot.members.encryptionAlgorithm?.algorithm
     }
@@ -343,6 +350,7 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                 break
             }
             case 'mls':
+                this.mls.appendEvent(event, cleartext, encryptionEmitter, stateEmitter)
                 break
             case 'encryptionAlgorithm':
                 this.encryptionAlgorithm = payload.content.value.algorithm
