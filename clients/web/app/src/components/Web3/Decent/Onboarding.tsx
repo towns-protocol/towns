@@ -13,8 +13,14 @@ import { useSrcAndDstChains } from './useSrcAndDstChains'
 import { ConnectedWallet } from './ConnectedWallet'
 import { usePrivyConnectWallet } from '../ConnectWallet/usePrivyConnectWallet'
 
-export function Onboarding() {
+export function Onboarding(
+    props: {
+        onTxSuccess?: (r: unknown) => void
+        onTxError?: (error: unknown) => void
+    } = {},
+) {
     const { loggedInWalletAddress } = useConnectivity()
+
     const privyConnectWallet = usePrivyConnectWallet({
         onSuccess: (wallet) => {
             Analytics.getInstance().track('add funds connected wallet', {
@@ -59,6 +65,8 @@ export function Onboarding() {
                             tokenInfo: getNativeTokenInfo(dstChain) as TokenInfo,
                         }}
                         onConnectWallet={privyConnectWallet}
+                        onTxReceipt={props.onTxSuccess}
+                        onTxError={props.onTxError}
                     />
                 </ClientRendered>
             </BoxThemeProvider>
