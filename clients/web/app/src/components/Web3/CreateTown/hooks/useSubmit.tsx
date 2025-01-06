@@ -1,4 +1,4 @@
-import { BigNumber, ethers } from 'ethers'
+import { ethers } from 'ethers'
 import React, { useCallback, useRef } from 'react'
 import { UseFormReturn } from 'react-hook-form'
 import { useNavigate } from 'react-router'
@@ -26,6 +26,7 @@ import { Analytics } from 'hooks/useAnalytics'
 import { GetSigner } from 'privy/WalletReady'
 import { PATHS } from 'routes'
 import { addressFromSpaceId } from 'ui/utils/utils'
+import { parseUnits } from 'hooks/useBalance'
 import { CreateTownFormSchema } from '../types'
 
 type Props = {
@@ -78,12 +79,10 @@ export const useSubmit = (props: Props) => {
                     // check pricing
                     //////////////////////////////////////////
 
-                    let priceInWei: ethers.BigNumberish
+                    let priceInWei: bigint
 
                     try {
-                        priceInWei = ethers.utils.parseEther(
-                            data.slideMembership.membershipCost ?? '',
-                        )
+                        priceInWei = parseUnits(data.slideMembership.membershipCost ?? '')
                     } catch (error) {
                         form.setError('slideMembership.membershipCost', {
                             type: 'manual',
@@ -303,7 +302,7 @@ export const useSubmit = (props: Props) => {
 type PriceConfiguration = {
     freeAllocation: number
     pricingModule: string
-    price: ethers.BigNumberish
+    price: bigint
 }
 
 function getPriceConfiguration(args: {
@@ -311,7 +310,7 @@ function getPriceConfiguration(args: {
     fixedPricingModuleAddress: string | undefined
     dynamicPricingModuleAddress: string | undefined
     platformMintLimit: number | undefined
-    price: BigNumber
+    price: bigint
 }): PriceConfiguration {
     const {
         isFixedPricing,
@@ -324,7 +323,7 @@ function getPriceConfiguration(args: {
         if (!fixedPricingModuleAddress) {
             throw new Error('Fixed pricing module address is undefined')
         }
-        if (price.toBigInt() === 0n) {
+        if (price === 0n) {
             if (platformMintLimit === undefined) {
                 throw new Error('Platform mint limit is undefined')
             }
@@ -332,7 +331,7 @@ function getPriceConfiguration(args: {
             return {
                 freeAllocation: platformMintLimit,
                 pricingModule: fixedPricingModuleAddress,
-                price: 0,
+                price: 0n,
             }
         }
         return {
@@ -347,6 +346,6 @@ function getPriceConfiguration(args: {
     return {
         freeAllocation: 0,
         pricingModule: dynamicPricingModuleAddress,
-        price,
+        price: 0n,
     }
 }

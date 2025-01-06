@@ -9,6 +9,7 @@ import { ethers } from 'ethers'
 import { TestApp } from 'test/testUtils'
 import { UseMockCreateSpaceReturn, mockCreateTransactionWithSpy } from 'test/transactionHookMock'
 import { YEAR_MS } from 'data/constants'
+import { parseUnits } from 'hooks/useBalance'
 import { CreateTownForm, CreateTownFormRender } from './CreateTown'
 import { GATING_ENABLED } from './createTown.schema'
 
@@ -162,7 +163,7 @@ describe('CreateTown', () => {
                         ...expected.settings,
                         pricingModule: `0x${Lib.FIXED_PRICING}`,
                         freeAllocation: 0,
-                        price: ethers.utils.parseEther('1.1'),
+                        price: parseUnits('1.1', 18),
                     },
                 },
                 {},
@@ -200,7 +201,51 @@ describe('CreateTown', () => {
                         ...expected.settings,
                         pricingModule: `0x${Lib.TIERED_PRICING_ORACLE_V2}`,
                         freeAllocation: 0,
-                        price: ethers.utils.parseEther('0'),
+                        price: 0n,
+                    },
+                },
+                {},
+                expect.anything(),
+            )
+        })
+    })
+
+    it('should should create a dynamic fee town even after user entered a fixed price', async () => {
+        vi.spyOn(Lib, 'useCreateSpaceTransaction').mockImplementation(
+            useMockedCreateSpaceTransaction,
+        )
+
+        await actions.setupPaidWithFixedFee(1.1)
+
+        if (GATING_ENABLED) {
+            const anyone = await screen.findByTestId('option-canjoin-anyone')
+            await userEvent.click(anyone)
+        }
+
+        expect(screen.getByPlaceholderText('Enter amount')).toBeInTheDocument()
+        await userEvent.type(screen.getByPlaceholderText('Enter amount'), '1.1')
+
+        await userEvent.click(await screen.findByTestId('option-fee-dynamic'))
+
+        const createButton = await screen.findByTestId('create-town-button')
+        expect(createButton).toBeEnabled()
+
+        await userEvent.click(createButton)
+
+        await waitFor(async () => {
+            const expected = getCreateSpaceTransactionDefaultResult()
+            return expect(createSpaceTransactionSpy).toHaveBeenCalledWith(
+                { name: 'testtown' },
+                {
+                    ...expected,
+                    requirements: {
+                        ...expected.requirements,
+                    },
+                    settings: {
+                        ...expected.settings,
+                        pricingModule: `0x${Lib.TIERED_PRICING_ORACLE_V2}`,
+                        freeAllocation: 0,
+                        price: 0n,
                     },
                 },
                 {},
@@ -270,7 +315,7 @@ const getCreateSpaceTransactionDefaultResult = () =>
             freeAllocation: 1000,
             maxSupply: 1000,
             name: 'testtown - Member',
-            price: 0,
+            price: 0n,
             pricingModule: `0x${Lib.FIXED_PRICING}`,
             symbol: 'MEMBER',
         },
