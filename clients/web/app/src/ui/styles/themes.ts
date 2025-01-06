@@ -49,6 +49,14 @@ const Rainbow = {
 }
 
 const light = (() => {
+    // special green for light mode
+    const _tone = {
+        ...tone,
+        [ToneName.CTA1]: Figma.LightMode.Green,
+        [ToneName.Positive]: Figma.LightMode.Green,
+        [ToneName.Presence]: Figma.LightMode.Green,
+    } as const
+
     const layer = {
         none: 'none',
         inherit: 'inherit',
@@ -80,18 +88,18 @@ const light = (() => {
     }
 
     return {
-        tone,
+        tone: _tone,
         layer,
         text,
         overlay,
         foreground: {
             ...text,
-            ...tone,
+            ..._tone,
             ...html,
         } as const,
         background: {
             ...layer,
-            ...tone,
+            ..._tone,
         } as const,
     } as const
 })()

@@ -22,6 +22,7 @@ export const Figma = {
         Primary: 'hsl(260, 5%, 8%)',
         Secondary: 'hsl(264, 5%, 18%)',
         Tertiary: 'hsl(265, 8%, 45%)',
+        Green: '#0BBD5C',
     },
     DarkMode: {
         Level1: 'hsla(255, 9%, 9%, 1)',
@@ -46,6 +47,7 @@ export const Figma = {
         Primary: 'hsla(0, 0%, 92%, 1)',
         Secondary: 'hsla(254, 14%, 82%, 1)',
         Tertiary: 'hsla(258, 4%, 55%, 1)',
+        Green: '#21E078',
     },
     Colors: {
         Blue: '#16C5DA',
