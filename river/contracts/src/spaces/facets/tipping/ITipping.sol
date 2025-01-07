@@ -13,6 +13,7 @@ interface ITippingBase {
   // =============================================================
 
   struct TipRequest {
+    address receiver;
     uint256 tokenId;
     address currency;
     uint256 amount;
@@ -39,7 +40,6 @@ interface ITippingBase {
   // =============================================================
 
   error TokenDoesNotExist();
-  error SenderIsNotMember();
   error ReceiverIsNotMember();
   error CannotTipSelf();
   error AmountIsZero();

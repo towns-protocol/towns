@@ -53,6 +53,21 @@ export type StreamEncryptionEvents = {
         }[],
     ) => void
     userDeviceKeyMessage: (streamId: string, userId: string, userDevice: UserDevice) => void
+    // MLS-specific encryption events
+    mlsNewEncryptedContent: (streamId: string, eventId: string, content: EncryptedContent) => void
+    mlsInitializeGroup: (
+        streamId: string,
+        groupInfoMessage: Uint8Array,
+        externalGroupSnapshot: Uint8Array,
+        signaturePublicKey: Uint8Array,
+    ) => void
+    mlsExternalJoin: (
+        streamId: string,
+        signaturePublicKey: Uint8Array,
+        commit: Uint8Array,
+        groupInfoMessage: Uint8Array,
+    ) => void
+    mlsEpochSecrets: (streamId: string, secrets: { epoch: bigint; secret: Uint8Array }[]) => void
 }
 
 export type SyncedStreamEvents = {

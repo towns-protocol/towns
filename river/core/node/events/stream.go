@@ -736,6 +736,8 @@ func (s *streamImpl) addEventLocked(ctx context.Context, event *ParsedEvent) err
 	// TODO: for some classes of errors, it's not clear if event was added or not
 	// for those, perhaps entire Stream structure should be scrapped and reloaded
 	if err != nil {
+		// Populate error message with as many details as possible since a possible race
+		// condition that appears here has been notoriously difficult to debug.
 		eventsStr := fmt.Sprintf("[...%d events]", len(s.view().minipool.events.Map))
 		if len(s.view().minipool.events.Map) <= 16 {
 			var sb strings.Builder

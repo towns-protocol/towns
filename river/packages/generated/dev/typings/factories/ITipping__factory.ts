@@ -17,6 +17,11 @@ const _abi = [
         internalType: "struct ITippingBase.TipRequest",
         components: [
           {
+            name: "receiver",
+            type: "address",
+            internalType: "address",
+          },
+          {
             name: "tokenId",
             type: "uint256",
             internalType: "uint256",
@@ -189,11 +194,6 @@ const _abi = [
   {
     type: "error",
     name: "ReceiverIsNotMember",
-    inputs: [],
-  },
-  {
-    type: "error",
-    name: "SenderIsNotMember",
     inputs: [],
   },
   {

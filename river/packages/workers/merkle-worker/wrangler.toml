@@ -35,6 +35,13 @@ enabled = true
 # [[r2_buckets]]
 # binding = "MY_BUCKET"
 # bucket_name = "my-bucket"
+[env.alpha]
+r2_buckets = [
+    { binding = "MERKLE_OBJECTS_R2", bucket_name = "merkle-objects-alpha" },
+]
+
+routes = [{ pattern = "merkle-worker-alpha.river.build", custom_domain = true }]
+vars = { ENVIRONMENT = "alpha" }
 
 [env.gamma]
 r2_buckets = [

@@ -7,6 +7,14 @@ import { Claim, MerkleData, MerkleTreeDump, MerkleProofResponse, VerifyProofRequ
 
 const router = Router()
 
+/**
+ * Creates a new merkle tree and stores it in R2 storage
+ * @route POST /admin/api/merkle-root
+ * @param {Object} request.body
+ * @param {Claim[]} request.body.claims - Array of address and amount pairs
+ * @param {string} request.body.conditionId - Unique identifier for the merkle tree
+ * @returns {Promise<Response>} Success response with merkle root or error response
+ */
 router.post('/admin/api/merkle-root', async (request: WorkerRequest, env: Env) => {
     try {
         const { claims, conditionId }: { claims: Claim[]; conditionId: string } =
@@ -53,6 +61,15 @@ router.post('/admin/api/merkle-root', async (request: WorkerRequest, env: Env) =
     }
 })
 
+/**
+ * Generates a merkle proof for a given claim
+ * @route POST /api/merkle-proof
+ * @param {Object} request.body
+ * @param {string} request.body.conditionId - Unique identifier for the merkle tree
+ * @param {string} request.body.merkleRoot - Root hash of the merkle tree
+ * @param {Claim} request.body.claim - Address and amount pair to generate proof for
+ * @returns {Promise<Response>} Success response with proof and leaf or error response
+ */
 router.post('/api/merkle-proof', async (request: WorkerRequest, env: Env) => {
     try {
         const {
@@ -117,6 +134,16 @@ router.post('/api/merkle-proof', async (request: WorkerRequest, env: Env) => {
     }
 })
 
+/**
+ * Verifies a merkle proof
+ * @route POST /api/verify-proof
+ * @param {Object} request.body
+ * @param {string} request.body.conditionId - Unique identifier for the merkle tree
+ * @param {string} request.body.merkleRoot - Root hash of the merkle tree
+ * @param {string[]} request.body.proof - Array of proof hashes
+ * @param {[string, string]} request.body.leaf - Address and amount pair to verify
+ * @returns {Promise<Response>} Success response with verification result or error response
+ */
 router.post('/api/verify-proof', async (request: WorkerRequest, env: Env) => {
     try {
         const { conditionId, merkleRoot, proof, leaf }: VerifyProofRequest = await request.json()
@@ -151,6 +178,11 @@ router.post('/api/verify-proof', async (request: WorkerRequest, env: Env) => {
     }
 })
 
+/**
+ * Catch-all route for undefined endpoints
+ * @route GET *
+ * @returns {Response} 404 Not Found error response
+ */
 router.get('*', () => createErrorResponse(404, 'Not Found', ErrorCode.NOT_FOUND))
 
 export const handleRequest = (request: WorkerRequest, env: Env) => router.handle(request, env)

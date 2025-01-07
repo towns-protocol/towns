@@ -2,7 +2,8 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IMainnetDelegationBase} from "contracts/src/tokens/river/base/delegation/IMainnetDelegation.sol";
+import {IMainnetDelegationBase, IMainnetDelegation} from "contracts/src/tokens/river/base/delegation/IMainnetDelegation.sol";
+import {IAuthorizedClaimers} from "contracts/src/tokens/river/mainnet/claimer/IAuthorizedClaimers.sol";
 
 // libraries
 import {NodeOperatorStatus} from "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
@@ -10,20 +11,14 @@ import {NodeOperatorStatus} from "contracts/src/base/registry/facets/operator/No
 // contracts
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
 import {NodeOperatorFacet} from "contracts/src/base/registry/facets/operator/NodeOperatorFacet.sol";
-
-// deps
 import {River} from "contracts/src/tokens/river/mainnet/River.sol";
-import {MainnetDelegation} from "contracts/src/tokens/river/base/delegation/MainnetDelegation.sol";
 import {ProxyBatchDelegation} from "contracts/src/tokens/river/mainnet/delegation/ProxyBatchDelegation.sol";
-import {ICrossDomainMessenger} from "contracts/src/tokens/river/mainnet/delegation/ICrossDomainMessenger.sol";
-import {AuthorizedClaimers} from "contracts/src/tokens/river/mainnet/claimer/AuthorizedClaimers.sol";
 
 contract ProxyBatchDelegationTest is BaseSetup, IMainnetDelegationBase {
-  MainnetDelegation internal delegation;
+  IMainnetDelegation internal mainnetDelegation;
   ProxyBatchDelegation internal proxyDelegation;
-  AuthorizedClaimers internal authorizedClaimers;
+  IAuthorizedClaimers internal authorizedClaimers;
   River internal rvr;
-  ICrossDomainMessenger internal crossDomainMessenger;
   NodeOperatorFacet internal operatorFacet;
 
   address[] internal _users;
@@ -36,20 +31,52 @@ contract ProxyBatchDelegationTest is BaseSetup, IMainnetDelegationBase {
     operatorFacet = NodeOperatorFacet(baseRegistry);
 
     _users = _createAccounts(10);
+    _claimers = _createAccounts(5);
     _operators = _createAccounts(5);
     for (uint256 i; i < _operators.length; ++i) {
       setOperator(_operators[i]);
     }
 
-    _claimers = _createAccounts(5);
     tokens = 10 ether;
 
     rvr = River(mainnetRiverToken);
     proxyDelegation = ProxyBatchDelegation(mainnetProxyDelegation);
-    crossDomainMessenger = ICrossDomainMessenger(address(messenger));
+    mainnetDelegation = IMainnetDelegation(baseRegistry);
+    authorizedClaimers = IAuthorizedClaimers(claimers);
+  }
 
-    delegation = MainnetDelegation(baseRegistry);
-    authorizedClaimers = AuthorizedClaimers(claimers);
+  function test_relayDelegationDigest()
+    external
+    givenUsersHaveTokens
+    givenUsersHaveAuthorizedClaimers
+    givenUsersHaveDelegatedTokens
+  {
+    vm.prank(_randomAddress());
+    proxyDelegation.relayDelegationDigest(50_000);
+
+    bytes memory encodedMsgs = proxyDelegation.getEncodedMsgs();
+
+    vm.prank(deployer);
+    mainnetDelegation.relayDelegations(encodedMsgs);
+
+    for (uint256 i; i < _users.length; ++i) {
+      address user = _users[i];
+      Delegation memory delegation = mainnetDelegation.getDelegationByDelegator(
+        user
+      );
+      assertEq(rvr.delegates(user), delegation.operator);
+      assertEq(
+        authorizedClaimers.getAuthorizedClaimer(user),
+        mainnetDelegation.getAuthorizedClaimer(user)
+      );
+    }
+  }
+
+  function _getRandomElement(
+    address[] memory addresses
+  ) internal pure returns (address) {
+    require(addresses.length > 0, "No addresses available");
+    return addresses[_randomUint256() % addresses.length];
   }
 
   function setOperator(address operator) internal {
@@ -65,96 +92,27 @@ contract ProxyBatchDelegationTest is BaseSetup, IMainnetDelegationBase {
   }
 
   modifier givenUsersHaveTokens() {
-    for (uint256 i = 0; i < _users.length; i++) {
-      vm.prank(vault);
+    vm.startPrank(vault);
+    for (uint256 i; i < _users.length; ++i) {
       rvr.transfer(_users[i], tokens);
     }
+    vm.stopPrank();
     _;
   }
 
   modifier givenUsersHaveAuthorizedClaimers() {
-    for (uint256 i = 0; i < _users.length; i++) {
+    for (uint256 i; i < _users.length; ++i) {
       vm.prank(_users[i]);
-      authorizedClaimers.authorizeClaimer(_getRandomValue(_claimers));
+      authorizedClaimers.authorizeClaimer(_getRandomElement(_claimers));
     }
     _;
   }
 
   modifier givenUsersHaveDelegatedTokens() {
-    for (uint256 i = 0; i < _users.length; i++) {
+    for (uint256 i; i < _users.length; ++i) {
       vm.prank(_users[i]);
-      rvr.delegate(_getRandomValue(_operators));
+      rvr.delegate(_getRandomElement(_operators));
     }
     _;
-  }
-
-  function test_sendAuthorizedClaimers()
-    external
-    givenUsersHaveTokens
-    givenUsersHaveDelegatedTokens
-  {
-    address randomUser = _getRandomValue(_users);
-    address randomClaimer = _getRandomValue(_claimers);
-
-    // Have random user authorize a claimer on mainnet
-    vm.prank(randomUser);
-    authorizedClaimers.authorizeClaimer(randomClaimer);
-
-    // Send values across the bridge to base
-    vm.prank(_randomAddress());
-    proxyDelegation.sendAuthorizedClaimers(200_000);
-
-    // Check if the claimer is the same on both sides
-    assertEq(
-      authorizedClaimers.getAuthorizedClaimer(randomUser),
-      delegation.getAuthorizedClaimer(randomUser)
-    );
-  }
-
-  function test_sendDelegations(
-    bool firstHalf,
-    uint256 seed
-  )
-    external
-    givenUsersHaveTokens
-    givenUsersHaveAuthorizedClaimers
-    givenUsersHaveDelegatedTokens
-  {
-    vm.prank(_randomAddress());
-    proxyDelegation.sendDelegators(5_000_000, firstHalf);
-
-    uint256 length = _users.length;
-    (uint256 start, uint256 end) = firstHalf
-      ? (0, length / 2)
-      : (length / 2, length);
-    uint256 halfSize = end - start;
-
-    // Pick a random index within the chosen half
-    uint256 randomIndex = start + (seed % halfSize);
-
-    address randomUser = _users[randomIndex];
-
-    Delegation memory delegator = delegation.getDelegationByDelegator(
-      randomUser
-    );
-
-    assertEq(rvr.delegates(randomUser), delegator.operator);
-    assertEq(
-      authorizedClaimers.getAuthorizedClaimer(randomUser),
-      delegation.getAuthorizedClaimer(randomUser)
-    );
-  }
-
-  function _getRandomValue(
-    address[] memory addresses
-  ) internal view returns (address) {
-    require(addresses.length > 0, "No addresses available");
-
-    // Generate a pseudo-random index based on block properties
-    uint256 randomIndex = uint256(
-      keccak256(abi.encodePacked(block.timestamp, block.prevrandao, msg.sender))
-    ) % addresses.length;
-
-    return addresses[randomIndex];
   }
 }

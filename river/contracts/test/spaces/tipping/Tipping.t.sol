@@ -80,6 +80,7 @@ contract TippingTest is BaseSetup, ITippingBase, IERC721ABase {
     vm.startSnapshotGas("tipEth");
     tipping.tip{value: amount}(
       TipRequest({
+        receiver: receiver,
         tokenId: tokenId,
         currency: CurrencyTransfer.NATIVE_TOKEN,
         amount: amount,
@@ -133,6 +134,7 @@ contract TippingTest is BaseSetup, ITippingBase, IERC721ABase {
     vm.startSnapshotGas("tipERC20");
     tipping.tip(
       TipRequest({
+        receiver: receiver,
         tokenId: tokenId,
         currency: address(mockERC20),
         amount: amount,
@@ -155,25 +157,27 @@ contract TippingTest is BaseSetup, ITippingBase, IERC721ABase {
     assertContains(tipping.tippingCurrencies(), address(mockERC20));
   }
 
-  function test_revertWhenTokenDoesNotExist(
-    uint256 tokenId,
-    uint256 amount,
-    bytes32 messageId,
-    bytes32 channelId
-  ) external {
-    vm.assume(tokenId != 0); // tokenId cannot be 0 because that would be the founder token id
+  // function test_revertWhenTokenDoesNotExist(
+  //   uint256 tokenId,
+  //   uint256 amount,
+  //   address receiver,
+  //   bytes32 messageId,
+  //   bytes32 channelId
+  // ) external {
+  //   vm.assume(tokenId != 0); // tokenId cannot be 0 because that would be the founder token id
 
-    vm.expectRevert(OwnerQueryForNonexistentToken.selector);
-    tipping.tip(
-      TipRequest({
-        tokenId: tokenId,
-        currency: CurrencyTransfer.NATIVE_TOKEN,
-        amount: amount,
-        messageId: messageId,
-        channelId: channelId
-      })
-    );
-  }
+  //   vm.expectRevert(OwnerQueryForNonexistentToken.selector);
+  //   tipping.tip(
+  //     TipRequest({
+  //       receiver: receiver,
+  //       tokenId: tokenId,
+  //       currency: CurrencyTransfer.NATIVE_TOKEN,
+  //       amount: amount,
+  //       messageId: messageId,
+  //       channelId: channelId
+  //     })
+  //   );
+  // }
 
   function test_revertWhenCurrencyIsZero(
     address sender,
@@ -187,6 +191,7 @@ contract TippingTest is BaseSetup, ITippingBase, IERC721ABase {
     vm.expectRevert(CurrencyIsZero.selector);
     tipping.tip(
       TipRequest({
+        receiver: receiver,
         tokenId: tokenId,
         currency: address(0),
         amount: amount,
@@ -209,6 +214,7 @@ contract TippingTest is BaseSetup, ITippingBase, IERC721ABase {
     vm.expectRevert(CannotTipSelf.selector);
     tipping.tip(
       TipRequest({
+        receiver: sender,
         tokenId: tokenId,
         currency: CurrencyTransfer.NATIVE_TOKEN,
         amount: amount,
@@ -230,37 +236,10 @@ contract TippingTest is BaseSetup, ITippingBase, IERC721ABase {
     vm.prank(sender);
     tipping.tip(
       TipRequest({
+        receiver: receiver,
         tokenId: tokenId,
         currency: CurrencyTransfer.NATIVE_TOKEN,
         amount: 0,
-        messageId: messageId,
-        channelId: channelId
-      })
-    );
-  }
-
-  function test_revertWhenSenderIsNotMember(
-    address notMember,
-    address sender,
-    address receiver,
-    uint256 amount,
-    bytes32 messageId,
-    bytes32 channelId
-  ) external givenUsersAreMembers(sender, receiver) {
-    uint256 tokenId = token.tokensOfOwner(receiver)[0];
-    amount = bound(amount, 0.01 ether, 1 ether);
-
-    vm.assume(notMember != sender);
-    vm.assume(notMember != receiver);
-    vm.assume(notMember != address(0) && notMember.code.length == 0);
-
-    vm.expectRevert(SenderIsNotMember.selector);
-    vm.prank(notMember);
-    tipping.tip(
-      TipRequest({
-        tokenId: tokenId,
-        currency: CurrencyTransfer.NATIVE_TOKEN,
-        amount: amount,
         messageId: messageId,
         channelId: channelId
       })

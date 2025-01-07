@@ -230,6 +230,7 @@ export type TipParams = {
     receiverUserId: string
     receiverTokenId: string
     receiverUsername: string
+    receiverAddress: string
     currency: string
     amount: bigint
     messageId: string

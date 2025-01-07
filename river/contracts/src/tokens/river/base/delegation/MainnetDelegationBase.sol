@@ -16,6 +16,70 @@ import {IRewardsDistribution} from "contracts/src/base/registry/facets/distribut
 abstract contract MainnetDelegationBase is IMainnetDelegationBase {
   using EnumerableSet for EnumerableSet.AddressSet;
 
+  function _setDelegationDigest(bytes32 digest) internal {
+    MainnetDelegationStorage.layout().delegationDigest = digest;
+
+    emit DelegationDigestSet(digest);
+  }
+
+  function _verifyDelegations(bytes calldata encodedMsgs) internal view {
+    MainnetDelegationStorage.Layout storage ds = MainnetDelegationStorage
+      .layout();
+
+    bytes32 digest = keccak256(abi.encode(keccak256(encodedMsgs)));
+    require(digest == ds.delegationDigest);
+  }
+
+  /// @dev equivalent: abi.decode(encodedMsgs, (DelegationMsg[]));
+  function _decodeDelegations(
+    bytes calldata encodedMsgs
+  ) internal pure returns (DelegationMsg[] calldata msgs) {
+    assembly {
+      // this is a dynamic array, so calldataload(encodedMsgs.offset) is the
+      // offset from encodedMsgs.offset at which the array begins
+      let lengthPtr := add(encodedMsgs.offset, calldataload(encodedMsgs.offset))
+      msgs.length := calldataload(lengthPtr)
+      msgs.offset := add(lengthPtr, 0x20)
+    }
+  }
+
+  function _relayDelegations(bytes calldata encodedMsgs) internal {
+    _verifyDelegations(encodedMsgs);
+
+    DelegationMsg[] calldata msgs = _decodeDelegations(encodedMsgs);
+
+    // process the delegation messages
+    for (uint256 i; i < msgs.length; ++i) {
+      DelegationMsg calldata delegation = msgs[i];
+      _setDelegation(
+        delegation.delegator,
+        delegation.delegatee,
+        delegation.quantity
+      );
+      _setAuthorizedClaimer(delegation.delegator, delegation.claimer);
+    }
+
+    MainnetDelegationStorage.Layout storage ds = MainnetDelegationStorage
+      .layout();
+
+    address[] memory delegators = ds.delegators.values();
+
+    // remove stale delegation if a delegator isn't in the encodedMsgs
+    for (uint256 i; i < delegators.length; ++i) {
+      address delegator = delegators[i];
+      bool found;
+      for (uint256 j; j < msgs.length; ++j) {
+        if (msgs[j].delegator == delegator) {
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        _removeDelegation(delegator);
+      }
+    }
+  }
+
   function _removeDelegation(address delegator) internal {
     MainnetDelegationStorage.Layout storage ds = MainnetDelegationStorage
       .layout();
@@ -160,40 +224,44 @@ abstract contract MainnetDelegationBase is IMainnetDelegationBase {
 
   function _getDelegationByDelegator(
     address delegator
-  ) internal view returns (Delegation memory) {
-    return MainnetDelegationStorage.layout().delegationByDelegator[delegator];
+  ) internal view returns (Delegation memory delegation) {
+    assembly ("memory-safe") {
+      // By default, memory has been implicitly allocated for `delegation`.
+      // But we don't need this implicitly allocated memory.
+      // So we just set the free memory pointer to what it was before `delegation` has been allocated.
+      mstore(0x40, delegation)
+    }
+    delegation = MainnetDelegationStorage.layout().delegationByDelegator[
+      delegator
+    ];
   }
 
   function _getMainnetDelegationsByOperator(
     address operator
-  ) internal view returns (Delegation[] memory) {
+  ) internal view returns (Delegation[] memory delegations) {
     MainnetDelegationStorage.Layout storage ds = MainnetDelegationStorage
       .layout();
     EnumerableSet.AddressSet storage delegators = ds.delegatorsByOperator[
       operator
     ];
     uint256 length = delegators.length();
-    Delegation[] memory delegations = new Delegation[](length);
+    delegations = new Delegation[](length);
 
     for (uint256 i; i < length; ++i) {
       address delegator = delegators.at(i);
       delegations[i] = ds.delegationByDelegator[delegator];
     }
-
-    return delegations;
   }
 
   function _getDelegatedStakeByOperator(
     address operator
-  ) internal view returns (uint256) {
-    uint256 stake = 0;
+  ) internal view returns (uint256 stake) {
     Delegation[] memory delegations = _getMainnetDelegationsByOperator(
       operator
     );
     for (uint256 i; i < delegations.length; ++i) {
       stake += delegations[i].quantity;
     }
-    return stake;
   }
 
   function _setAuthorizedClaimer(address delegator, address claimer) internal {

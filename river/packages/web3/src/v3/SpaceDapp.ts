@@ -1699,10 +1699,11 @@ export class SpaceDapp implements ISpaceDapp {
             amount: bigint
             messageId: string
             channelId: string
+            receiver: string
         },
         signer: ethers.Signer,
     ): Promise<ContractTransaction> {
-        const { spaceId, tokenId, currency, amount, messageId, channelId } = args
+        const { spaceId, tokenId, currency, amount, messageId, channelId, receiver } = args
         const space = this.getSpace(spaceId)
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
@@ -1710,6 +1711,7 @@ export class SpaceDapp implements ISpaceDapp {
 
         return space.Tipping.write(signer).tip(
             {
+                receiver,
                 tokenId,
                 currency,
                 amount,

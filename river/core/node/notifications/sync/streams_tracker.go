@@ -9,8 +9,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/prometheus/client_golang/prometheus"
-	"golang.org/x/sync/semaphore"
-
 	"github.com/river-build/river/core/contracts/river"
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/dlog"
@@ -19,6 +17,7 @@ import (
 	"github.com/river-build/river/core/node/nodes"
 	"github.com/river-build/river/core/node/registries"
 	"github.com/river-build/river/core/node/shared"
+	"golang.org/x/sync/semaphore"
 )
 
 // maxConcurrentNodeRequests is the maximum number of concurrent
@@ -26,7 +25,6 @@ import (
 const maxConcurrentNodeRequests = 50
 
 type StreamsTracker struct {
-	tasks          sync.WaitGroup
 	nodeRegistries []nodes.NodeRegistry
 	riverRegistry  *registries.RiverRegistryContract
 	// prevent making too many requests at the same time to a remote.
@@ -167,14 +165,12 @@ func (tracker *StreamsTracker) Run(ctx context.Context) error {
 				}
 
 				// start tracking the stream until ctx expires
-				tracker.tasks.Add(1)
 				go func() {
 					st := StreamTrackerConnectGo{}
 					idx := rand.Int63n(int64(len(tracker.nodeRegistries)))
 					st.Run(ctx, stream, tracker.nodeRegistries[idx], workerPool, tracker.onChainConfig,
 						tracker.listener, tracker.storage, tracker.metrics,
 					)
-					tracker.tasks.Done()
 				}()
 			}
 
@@ -188,9 +184,6 @@ func (tracker *StreamsTracker) Run(ctx context.Context) error {
 		"count", streamsLoaded,
 		"total", totalStreams,
 		"took", time.Since(start).String())
-
-	// wait for all tracked streams to finish
-	tracker.tasks.Wait()
 
 	log.Info("stream tracker stopped")
 
@@ -228,7 +221,6 @@ func (tracker *StreamsTracker) OnStreamAllocated(
 			tracker.workerPool[sticky] = workerPool
 		}
 
-		tracker.tasks.Add(1)
 		go func() {
 			st := StreamTrackerConnectGo{}
 			stream := &registries.GetStreamResult{
@@ -239,8 +231,6 @@ func (tracker *StreamsTracker) OnStreamAllocated(
 			idx := rand.Int63n(int64(len(tracker.nodeRegistries)))
 			st.Run(ctx, stream, tracker.nodeRegistries[idx], workerPool,
 				tracker.onChainConfig, tracker.listener, tracker.storage, tracker.metrics)
-
-			tracker.tasks.Done()
 		}()
 	}
 }

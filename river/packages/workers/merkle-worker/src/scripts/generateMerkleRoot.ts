@@ -1,6 +1,6 @@
 import fs from 'fs'
 import path from 'path'
-import { createMerkleRoot } from '../merkleLib' // Assuming this exists
+import { createMerkleRoot, createMerkleRootSimple } from '../merkleLib' // Assuming this exists
 
 interface Claim {
     address: string
@@ -14,8 +14,9 @@ interface MerkleOutput {
 }
 
 function processFile() {
-    // Get command line argument
+    // Get command line arguments
     const inputFile = process.argv[2]
+    const simpleFlag = process.argv[3] === '--simple'
 
     if (!inputFile) {
         console.error('Please provide an input JSON file path')
@@ -28,8 +29,8 @@ function processFile() {
         const { claims }: { claims: Claim[] } = JSON.parse(jsonData)
         console.log(claims)
 
-        // Generate merkle root
-        const merkleRoot = createMerkleRoot(claims)
+        // Generate merkle root based on flag
+        const merkleRoot = simpleFlag ? createMerkleRootSimple(claims) : createMerkleRoot(claims)
 
         // Create output object
         const output: MerkleOutput = {

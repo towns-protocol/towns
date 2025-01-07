@@ -370,6 +370,7 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
     onConfirmedEvent(
         event: ConfirmedTimelineEvent,
         stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
+        encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ): void {
         check(event.remoteEvent.event.payload.case === 'memberPayload')
         const payload: MemberPayload = event.remoteEvent.event.payload.value
@@ -412,6 +413,7 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
             case 'memberBlockchainTransaction':
                 break
             case 'mls':
+                this.mls.onConfirmedEvent(event, stateEmitter, encryptionEmitter)
                 break
             case 'encryptionAlgorithm':
                 break

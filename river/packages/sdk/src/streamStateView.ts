@@ -422,12 +422,12 @@ export class StreamStateView implements IStreamStateView {
             check(isConfirmedEvent(event), `Event is not confirmed ${eventId}`)
             switch (event.remoteEvent.event.payload.case) {
                 case 'memberPayload':
-                    this.membershipContent.onConfirmedEvent(event, stateEmitter)
+                    this.membershipContent.onConfirmedEvent(event, stateEmitter, encryptionEmitter)
                     break
                 case undefined:
                     break
                 default:
-                    this.getContent().onConfirmedEvent(event, stateEmitter)
+                    this.getContent().onConfirmedEvent(event, stateEmitter, encryptionEmitter)
             }
             confirmed.push(event)
         }

@@ -123,6 +123,7 @@ export function TipConfirm(props: {
                 receiverTokenId: tokenId,
                 receiverUserId: messageOwner.userId,
                 receiverUsername: messageOwner.username,
+                receiverAddress: messageOwnerAbstractAccount,
                 senderAddress: myAbstractAccount,
                 messageId: eventId,
                 channelId,

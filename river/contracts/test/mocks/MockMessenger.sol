@@ -21,11 +21,11 @@ contract MockMessenger {
   function sendMessage(
     address target,
     bytes calldata message,
-    uint32
+    uint32 minGasLimit
   ) external {
     sender = msg.sender;
 
-    (bool success, ) = target.call(message);
+    (bool success, ) = target.call{gas: minGasLimit}(message);
     if (!success) {
       revert("MockMessenger: failed to send message");
     }

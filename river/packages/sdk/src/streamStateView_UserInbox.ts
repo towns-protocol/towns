@@ -39,8 +39,9 @@ export class StreamStateView_UserInbox extends StreamStateView_AbstractContent {
     onConfirmedEvent(
         event: ConfirmedTimelineEvent,
         emitter: TypedEmitter<StreamStateEvents> | undefined,
+        encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ): void {
-        super.onConfirmedEvent(event, emitter)
+        super.onConfirmedEvent(event, emitter, encryptionEmitter)
         const eventId = event.hashStr
         const payload = this.pendingGroupSessions[eventId]
         if (payload) {

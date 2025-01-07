@@ -41,6 +41,7 @@ export abstract class StreamStateView_AbstractContent {
     onConfirmedEvent(
         _event: ConfirmedTimelineEvent,
         _stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
+        _encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ): void {
         //
     }

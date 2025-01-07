@@ -30,6 +30,18 @@ contract MainnetDelegationTest is BaseRegistryTest, IMainnetDelegationBase {
   /*                       SET DELEGATION                       */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+  function test_setDelegationDigest_revertIf_notMessenger() public {
+    vm.expectRevert(
+      "MainnetDelegation: sender is not the cross-domain messenger"
+    );
+    mainnetDelegationFacet.setDelegationDigest(_randomBytes32());
+  }
+
+  function test_fuzz_setDelegationDigest(bytes32 digest) public {
+    vm.prank(address(messenger));
+    mainnetDelegationFacet.setDelegationDigest(digest);
+  }
+
   function test_initiateWithdraw_revertIf_mainnetDelegator() public {
     uint256 depositId = test_setDelegation();
 
@@ -270,6 +282,69 @@ contract MainnetDelegationTest is BaseRegistryTest, IMainnetDelegationBase {
       _claimers,
       _quantities
     );
+
+    verifyBatch(
+      _delegators,
+      _claimers,
+      _quantities,
+      _operators,
+      toDyn(commissionRates)
+    );
+  }
+
+  /// forge-config: default.fuzz.runs = 64
+  function test_fuzz_relayDelegations(
+    address[32] memory delegators,
+    address[32] memory claimers,
+    uint256[32] memory quantities,
+    address[32] memory operators,
+    uint256[32] memory commissionRates
+  ) public {
+    sanitizeAmounts(quantities);
+
+    for (uint256 i; i < 32; ++i) {
+      // ensure delegators and operators are unique
+      if (delegators[i] == address(0) || delegatorSet.contains(delegators[i])) {
+        delegators[i] = _randomAddress();
+      }
+      delegatorSet.add(delegators[i]);
+    }
+    for (uint256 i; i < 32; ++i) {
+      if (
+        operators[i] == address(0) ||
+        operators[i] == OPERATOR ||
+        operatorSet.contains(operators[i]) ||
+        delegatorSet.contains(operators[i])
+      ) {
+        operators[i] = _randomAddress();
+      }
+      operatorSet.add(operators[i]);
+      commissionRates[i] = bound(commissionRates[i], 0, 10000);
+      setOperator(operators[i], commissionRates[i]);
+    }
+
+    address[] memory _delegators = toDyn(delegators);
+    address[] memory _operators = toDyn(operators);
+    address[] memory _claimers = toDyn(claimers);
+    uint256[] memory _quantities = toDyn(quantities);
+
+    DelegationMsg[] memory msgs = new DelegationMsg[](32);
+    for (uint256 i; i < 32; ++i) {
+      msgs[i] = DelegationMsg({
+        delegator: _delegators[i],
+        delegatee: _operators[i],
+        claimer: _claimers[i],
+        quantity: _quantities[i]
+      });
+    }
+    bytes memory encodedMsgs = abi.encode(msgs);
+    bytes32 digest = keccak256(abi.encode(keccak256(encodedMsgs)));
+
+    vm.prank(address(messenger));
+    mainnetDelegationFacet.setDelegationDigest(digest);
+
+    vm.prank(deployer);
+    mainnetDelegationFacet.relayDelegations(encodedMsgs);
 
     verifyBatch(
       _delegators,

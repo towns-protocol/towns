@@ -31,6 +31,7 @@ var (
 
 // ITippingBaseTipRequest is an auto generated low-level Go binding around an user-defined struct.
 type ITippingBaseTipRequest struct {
+	Receiver  common.Address
 	TokenId   *big.Int
 	Currency  common.Address
 	Amount    *big.Int
@@ -40,7 +41,7 @@ type ITippingBaseTipRequest struct {
 
 // TippingMetaData contains all meta data concerning the Tipping contract.
 var TippingMetaData = &bind.MetaData{
-	ABI: "[{\"type\":\"function\",\"name\":\"tip\",\"inputs\":[{\"name\":\"tipRequest\",\"type\":\"tuple\",\"internalType\":\"structITippingBase.TipRequest\",\"components\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"currency\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"messageId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"channelId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]}],\"outputs\":[],\"stateMutability\":\"payable\"},{\"type\":\"function\",\"name\":\"tipAmountByCurrency\",\"inputs\":[{\"name\":\"currency\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"tippingCurrencies\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"tipsByCurrencyAndTokenId\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"currency\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"totalTipsByCurrency\",\"inputs\":[{\"name\":\"currency\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"event\",\"name\":\"Tip\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"currency\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"sender\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"receiver\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"messageId\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"},{\"name\":\"channelId\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"}],\"anonymous\":false},{\"type\":\"error\",\"name\":\"AmountIsZero\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"CannotTipSelf\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"CurrencyIsZero\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"ReceiverIsNotMember\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"SenderIsNotMember\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"TokenDoesNotExist\",\"inputs\":[]}]",
+	ABI: "[{\"type\":\"function\",\"name\":\"tip\",\"inputs\":[{\"name\":\"tipRequest\",\"type\":\"tuple\",\"internalType\":\"structITippingBase.TipRequest\",\"components\":[{\"name\":\"receiver\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"currency\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"messageId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"channelId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]}],\"outputs\":[],\"stateMutability\":\"payable\"},{\"type\":\"function\",\"name\":\"tipAmountByCurrency\",\"inputs\":[{\"name\":\"currency\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"tippingCurrencies\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"tipsByCurrencyAndTokenId\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"currency\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"totalTipsByCurrency\",\"inputs\":[{\"name\":\"currency\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"event\",\"name\":\"Tip\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"currency\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"sender\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"receiver\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"messageId\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"},{\"name\":\"channelId\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"}],\"anonymous\":false},{\"type\":\"error\",\"name\":\"AmountIsZero\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"CannotTipSelf\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"CurrencyIsZero\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"ReceiverIsNotMember\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"TokenDoesNotExist\",\"inputs\":[]}]",
 }
 
 // TippingABI is the input ABI used to generate the binding from.
@@ -313,23 +314,23 @@ func (_Tipping *TippingCallerSession) TotalTipsByCurrency(currency common.Addres
 	return _Tipping.Contract.TotalTipsByCurrency(&_Tipping.CallOpts, currency)
 }
 
-// Tip is a paid mutator transaction binding the contract method 0x89b10db8.
+// Tip is a paid mutator transaction binding the contract method 0xc46be00e.
 //
-// Solidity: function tip((uint256,address,uint256,bytes32,bytes32) tipRequest) payable returns()
+// Solidity: function tip((address,uint256,address,uint256,bytes32,bytes32) tipRequest) payable returns()
 func (_Tipping *TippingTransactor) Tip(opts *bind.TransactOpts, tipRequest ITippingBaseTipRequest) (*types.Transaction, error) {
 	return _Tipping.contract.Transact(opts, "tip", tipRequest)
 }
 
-// Tip is a paid mutator transaction binding the contract method 0x89b10db8.
+// Tip is a paid mutator transaction binding the contract method 0xc46be00e.
 //
-// Solidity: function tip((uint256,address,uint256,bytes32,bytes32) tipRequest) payable returns()
+// Solidity: function tip((address,uint256,address,uint256,bytes32,bytes32) tipRequest) payable returns()
 func (_Tipping *TippingSession) Tip(tipRequest ITippingBaseTipRequest) (*types.Transaction, error) {
 	return _Tipping.Contract.Tip(&_Tipping.TransactOpts, tipRequest)
 }
 
-// Tip is a paid mutator transaction binding the contract method 0x89b10db8.
+// Tip is a paid mutator transaction binding the contract method 0xc46be00e.
 //
-// Solidity: function tip((uint256,address,uint256,bytes32,bytes32) tipRequest) payable returns()
+// Solidity: function tip((address,uint256,address,uint256,bytes32,bytes32) tipRequest) payable returns()
 func (_Tipping *TippingTransactorSession) Tip(tipRequest ITippingBaseTipRequest) (*types.Transaction, error) {
 	return _Tipping.Contract.Tip(&_Tipping.TransactOpts, tipRequest)
 }

@@ -1663,6 +1663,7 @@ export class BaseTransactor {
             ...tipArgs,
             messageId: `0x${args.messageId}`,
             channelId: `0x${args.channelId}`,
+            receiver: args.receiverAddress,
             tokenId: receiverTokenId,
         }
         try {

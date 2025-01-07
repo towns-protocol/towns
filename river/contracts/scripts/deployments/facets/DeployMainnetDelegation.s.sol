@@ -13,6 +13,8 @@ import {MainnetDelegation} from "contracts/src/tokens/river/base/delegation/Main
 contract DeployMainnetDelegation is FacetHelper, Deployer {
   constructor() {
     addSelector(MainnetDelegation.setProxyDelegation.selector);
+    addSelector(MainnetDelegation.setDelegationDigest.selector);
+    addSelector(MainnetDelegation.relayDelegations.selector);
     addSelector(MainnetDelegation.setDelegation.selector);
     addSelector(MainnetDelegation.getDelegationByDelegator.selector);
     addSelector(MainnetDelegation.getMainnetDelegationsByOperator.selector);

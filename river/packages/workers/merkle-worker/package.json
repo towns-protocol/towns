@@ -9,6 +9,8 @@
         "dev:local": "wrangler dev --port ${PORT:-8686}",
         "dev:remote": "wrangler dev --remote",
         "generate-merkle": "tsx src/scripts/generateMerkleRoot.ts",
+        "generate-merkle-proof": "tsx src/scripts/generateMerkleProof.ts",
+        "verify-merkle-proof": "tsx src/scripts/verifyMerkleProof.ts",
         "lint": "yarn eslint --format unix ./src",
         "prettier:check": "prettier --check .",
         "prettier:fix": "prettier --write .",
@@ -19,6 +21,7 @@
         "test:unit": "yarn node --experimental-vm-modules $(yarn bin jest)"
     },
     "dependencies": {
+        "@ethersproject/keccak256": "^5.7.0",
         "@openzeppelin/merkle-tree": "^1.0.7",
         "itty-router": "^2.6.6",
         "worker-common": "workspace:^"

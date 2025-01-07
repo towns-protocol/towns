@@ -18,9 +18,9 @@ contract MainnetDelegation is
   OwnableBase,
   Facet
 {
-  // =============================================================
-  //                           Initializers
-  // =============================================================
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                        INITIALIZERS                        */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
   function __MainnetDelegation_init(
     address messenger
@@ -33,9 +33,9 @@ contract MainnetDelegation is
     _setMessenger(ICrossDomainMessenger(messenger));
   }
 
-  // =============================================================
-  //                           Modifiers
-  // =============================================================
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                          MODIFIER                          */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
   modifier onlyCrossDomainMessenger() {
     ICrossDomainMessenger messenger = _getMessenger();
@@ -48,27 +48,29 @@ contract MainnetDelegation is
     _;
   }
 
-  // =============================================================
-  //                           Getters
-  // =============================================================
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                       ADMIN FUNCTIONS                      */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-  function getMessenger() external view returns (address) {
-    return address(_getMessenger());
+  function setProxyDelegation(address proxyDelegation) external onlyOwner {
+    _setProxyDelegation(proxyDelegation);
   }
 
-  function getProxyDelegation() external view returns (address) {
-    return address(_getProxyDelegation());
+  /// @inheritdoc IMainnetDelegation
+  function relayDelegations(bytes calldata encodedMsgs) external onlyOwner {
+    _relayDelegations(encodedMsgs);
   }
 
-  function getDepositIdByDelegator(
-    address delegator
-  ) external view returns (uint256) {
-    return _getDepositIdByDelegator(delegator);
-  }
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                         DELEGATION                         */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-  // =============================================================
-  //                       Remove Delegators
-  // =============================================================
+  /// @inheritdoc IMainnetDelegation
+  function setDelegationDigest(
+    bytes32 digest
+  ) external onlyCrossDomainMessenger {
+    _setDelegationDigest(digest);
+  }
 
   function removeDelegations(
     address[] calldata delegators
@@ -77,10 +79,6 @@ contract MainnetDelegation is
       _removeDelegation(delegators[i]);
     }
   }
-
-  // =============================================================
-  //                  Batch Authorized Claimers
-  // =============================================================
 
   function setBatchAuthorizedClaimers(
     address[] calldata delegators,
@@ -92,10 +90,6 @@ contract MainnetDelegation is
       _setAuthorizedClaimer(delegators[i], claimers[i]);
     }
   }
-
-  // =============================================================
-  //                           Batch Delegation
-  // =============================================================
 
   function setBatchDelegation(
     address[] calldata delegators,
@@ -117,14 +111,6 @@ contract MainnetDelegation is
     }
   }
 
-  // =============================================================
-  //                           Delegation
-  // =============================================================
-
-  function setProxyDelegation(address proxyDelegation) external onlyOwner {
-    _setProxyDelegation(proxyDelegation);
-  }
-
   /// @inheritdoc IMainnetDelegation
   /// @notice deprecated
   function setDelegation(
@@ -133,6 +119,34 @@ contract MainnetDelegation is
     uint256 quantity
   ) external onlyCrossDomainMessenger {
     _setDelegation(delegator, operator, quantity);
+  }
+
+  function setAuthorizedClaimer(
+    address owner,
+    address claimer
+  ) external onlyCrossDomainMessenger {
+    _setAuthorizedClaimer(owner, claimer);
+  }
+
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                          GETTERS                           */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+  /// @inheritdoc IMainnetDelegation
+  function getMessenger() external view returns (address) {
+    return address(_getMessenger());
+  }
+
+  /// @inheritdoc IMainnetDelegation
+  function getProxyDelegation() external view returns (address) {
+    return address(_getProxyDelegation());
+  }
+
+  /// @inheritdoc IMainnetDelegation
+  function getDepositIdByDelegator(
+    address delegator
+  ) external view returns (uint256) {
+    return _getDepositIdByDelegator(delegator);
   }
 
   /// @inheritdoc IMainnetDelegation
@@ -154,17 +168,6 @@ contract MainnetDelegation is
     address operator
   ) external view returns (uint256) {
     return _getDelegatedStakeByOperator(operator);
-  }
-
-  // =============================================================
-  //                           Claimer
-  // =============================================================
-
-  function setAuthorizedClaimer(
-    address owner,
-    address claimer
-  ) external onlyCrossDomainMessenger {
-    _setAuthorizedClaimer(owner, claimer);
   }
 
   function getAuthorizedClaimer(address owner) external view returns (address) {

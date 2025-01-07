@@ -358,6 +358,7 @@ export interface ISpaceDapp {
             amount: bigint
             messageId: string
             channelId: string
+            receiver: string
         },
         signer: SignerType,
     ) => Promise<TransactionType>

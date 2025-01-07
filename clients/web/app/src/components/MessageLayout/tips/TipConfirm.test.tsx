@@ -193,6 +193,7 @@ describe('TipConfirm', () => {
                     receiverUserId: mockMessageOwner.userId,
                     receiverTokenId: '1',
                     receiverUsername: mockMessageOwner.username,
+                    receiverAddress: Lib.MOCK_ADDRESS,
                     senderAddress: Lib.MOCK_ADDRESS,
                     signer: {},
                 },

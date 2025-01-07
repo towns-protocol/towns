@@ -76,6 +76,7 @@ test('can send tip to space member', async () => {
     const tipOp = await userOpsAlice.sendTipOp([
         {
             spaceId,
+            receiver: bobAAAddress!,
             tokenId: tokenId!,
             currency: ETH_ADDRESS,
             amount: tipAmount,
@@ -122,13 +123,15 @@ test('can send tip to space member', async () => {
     const metamaskMembership = await spaceDapp.hasSpaceMembership(spaceId, metamaskAddress)
     expect(metamaskMembership).toBe(true)
 
-    // now tip bob again
+    // now tip bob again - to his metamask
     await fundWallet(aliceAAAddress!, alice)
     const tokenId2 = await spaceDapp.getTokenIdOfOwner(spaceId, bobAAAddress!)
 
+    // specify metamask as receiver
     const tipOp2 = await userOpsAlice.sendTipOp([
         {
             spaceId,
+            receiver: metamaskAddress,
             tokenId: tokenId2!,
             currency: ETH_ADDRESS,
             amount: tipAmount,
@@ -145,5 +148,28 @@ test('can send tip to space member', async () => {
     expect((await bob.getBalance(bobAAAddress!)).toBigInt()).toBe(tipAmount)
 
     // bob should have the tip amount in his metamask address
+    expect((await bob.getBalance(metamaskAddress!)).toBigInt()).toBe(tipAmount)
+
+    // tip bob again. The membership NFT is in his metamask, but we want to tip his AA address
+    await fundWallet(aliceAAAddress!, alice)
+    const tokenId3 = await spaceDapp.getTokenIdOfOwner(spaceId, bobAAAddress!)
+
+    const tipOp3 = await userOpsAlice.sendTipOp([
+        {
+            spaceId,
+            receiver: bobAAAddress!,
+            tokenId: tokenId3!,
+            currency: ETH_ADDRESS,
+            amount: tipAmount,
+            messageId,
+            channelId,
+        },
+        alice.wallet,
+    ])
+
+    await waitForOpAndTx(tipOp3, alice)
+    await sleepBetweenTxs()
+
+    expect((await bob.getBalance(bobAAAddress!)).toBigInt()).toBe(tipAmount * 2n)
     expect((await bob.getBalance(metamaskAddress!)).toBigInt()).toBe(tipAmount)
 })

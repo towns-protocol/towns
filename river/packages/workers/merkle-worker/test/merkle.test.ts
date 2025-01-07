@@ -21,7 +21,7 @@ describe('Merkle Tree Functions', () => {
     it('should generate a valid Merkle proof', async () => {
         const address = randomClaims[2].address
         const amount = randomClaims[2].amount
-        const proof = await generateMerkleProof(address, amount, randomClaims)
+        const { proof } = await generateMerkleProof(address, amount, randomClaims)
 
         expect(Array.isArray(proof)).toBe(true)
         expect(proof.length).toBeGreaterThan(0)
@@ -34,7 +34,7 @@ describe('Merkle Tree Functions', () => {
     it('should verify the generated Merkle proof', async () => {
         const address = randomClaims[2].address
         const amount = randomClaims[2].amount
-        const proof = generateMerkleProof(address, amount, randomClaims)
+        const { proof } = await generateMerkleProof(address, amount, randomClaims)
 
         const tree = StandardMerkleTree.of(
             randomClaims.map((claim) => [claim.address, claim.amount]),
@@ -49,7 +49,11 @@ describe('Merkle Tree Functions', () => {
         const nonExistentAddress = '0x9999999999999999999999999999999999999999'
         const nonExistentAmount = '1000'
 
-        const proof = await generateMerkleProof(nonExistentAddress, nonExistentAmount, randomClaims)
+        const { proof } = await generateMerkleProof(
+            nonExistentAddress,
+            nonExistentAmount,
+            randomClaims,
+        )
 
         expect(Array.isArray(proof)).toBe(true)
         expect(proof.length).toBe(0)

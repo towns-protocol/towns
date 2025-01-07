@@ -1,6 +1,6 @@
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import TypedEmitter from 'typed-emitter'
-import { RemoteTimelineEvent } from './types'
+import { ConfirmedTimelineEvent, RemoteTimelineEvent } from './types'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 import { MemberPayload_Snapshot_Mls, MemberPayload_Snapshot_Mls_Member } from '@river-build/proto'
 import { check } from '@river-build/dlog'
@@ -73,5 +73,13 @@ export class StreamStateView_Mls extends StreamStateView_AbstractContent {
         _stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
         //
+    }
+
+    onConfirmedEvent(
+        event: ConfirmedTimelineEvent,
+        stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
+        encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
+    ): void {
+        super.onConfirmedEvent(event, stateEmitter, encryptionEmitter)
     }
 }

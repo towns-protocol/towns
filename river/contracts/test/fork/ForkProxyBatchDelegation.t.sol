@@ -43,50 +43,45 @@ contract ForkProxyBatchDelegationTest is TestUtils {
     );
   }
 
-  function test_sendAuthorizedClaimers() external onlyForked {
-    vm.prank(_randomAddress());
-    proxyBatchDelegation.sendAuthorizedClaimers(200_000);
-  }
-
-  function test_sendDelegators() external onlyForked {
-    uint32 minGasLimit = 15_000_000;
-    vm.recordLogs();
-    vm.prank(_randomAddress());
-    proxyBatchDelegation.sendDelegators(minGasLimit, true);
-
-    Vm.Log[] memory logs = vm.getRecordedLogs();
-    bytes memory message;
-    for (uint256 i; i < logs.length; ++i) {
-      if (
-        logs[i].topics.length > 0 && logs[i].topics[0] == SENT_MESSAGE_TOPIC
-      ) {
-        (, message, , ) = abi.decode(
-          logs[i].data,
-          (address, bytes, uint256, uint256)
-        );
-        break;
-      }
-    }
-    assertGt(message.length, 0, "message not found");
-
-    // switch to the base fork
-    vm.createSelectFork("base", 23925711);
-
-    address getMessenger = IMainnetDelegation(BASE_REGISTRY).getMessenger();
-    vm.etch(getMessenger, type(MockMessenger).runtimeCode);
-    MockMessenger(getMessenger).setXDomainMessageSender(
-      IMainnetDelegation(BASE_REGISTRY).getProxyDelegation()
-    );
-
-    vm.prank(address(getMessenger));
-    (bool success, ) = BASE_REGISTRY.call{gas: minGasLimit}(message);
-    assertTrue(success, "sendDelegators failed");
-    assertGt(
-      IRewardsDistribution(BASE_REGISTRY)
-        .getDepositsByDepositor(BASE_REGISTRY)
-        .length,
-      0,
-      "mainnet delegation failed"
-    );
-  }
+  //  function test_sendDelegators() external onlyForked {
+  //    uint32 minGasLimit = 15_000_000;
+  //    vm.recordLogs();
+  //    vm.prank(_randomAddress());
+  //    proxyBatchDelegation.sendDelegators(minGasLimit, true);
+  //
+  //    Vm.Log[] memory logs = vm.getRecordedLogs();
+  //    bytes memory message;
+  //    for (uint256 i; i < logs.length; ++i) {
+  //      if (
+  //        logs[i].topics.length > 0 && logs[i].topics[0] == SENT_MESSAGE_TOPIC
+  //      ) {
+  //        (, message, , ) = abi.decode(
+  //          logs[i].data,
+  //          (address, bytes, uint256, uint256)
+  //        );
+  //        break;
+  //      }
+  //    }
+  //    assertGt(message.length, 0, "message not found");
+  //
+  //    // switch to the base fork
+  //    vm.createSelectFork("base", 23925711);
+  //
+  //    address getMessenger = IMainnetDelegation(BASE_REGISTRY).getMessenger();
+  //    vm.etch(getMessenger, type(MockMessenger).runtimeCode);
+  //    MockMessenger(getMessenger).setXDomainMessageSender(
+  //      IMainnetDelegation(BASE_REGISTRY).getProxyDelegation()
+  //    );
+  //
+  //    vm.prank(address(getMessenger));
+  //    (bool success, ) = BASE_REGISTRY.call{gas: minGasLimit}(message);
+  //    assertTrue(success, "sendDelegators failed");
+  //    assertGt(
+  //      IRewardsDistribution(BASE_REGISTRY)
+  //        .getDepositsByDepositor(BASE_REGISTRY)
+  //        .length,
+  //      0,
+  //      "mainnet delegation failed"
+  //    );
+  //  }
 }

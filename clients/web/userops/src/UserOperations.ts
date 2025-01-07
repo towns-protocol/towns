@@ -1747,7 +1747,8 @@ export class UserOps {
     }
 
     public async sendTipOp(args: Parameters<SpaceDapp['tip']>) {
-        const [{ spaceId, tokenId, currency, amount, messageId, channelId }, signer] = args
+        const [{ spaceId, tokenId, currency, amount, messageId, channelId, receiver }, signer] =
+            args
         const space = this.spaceDapp?.getSpace(spaceId)
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
@@ -1755,6 +1756,7 @@ export class UserOps {
 
         const callData = space.Tipping.encodeFunctionData('tip', [
             {
+                receiver,
                 tokenId,
                 currency,
                 amount,

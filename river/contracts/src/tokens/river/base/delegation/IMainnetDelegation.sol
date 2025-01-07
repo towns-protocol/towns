@@ -13,12 +13,26 @@ interface IMainnetDelegationBase {
 
   /// @notice Delegation struct
   /// @param operator The operator address
-  /// @param quantity The quantity delegated
+  /// @param quantity The quantity to delegate
+  /// @param delegator The delegator address
+  /// @param delegationTime The delegation time
   struct Delegation {
     address operator;
     uint256 quantity;
     address delegator;
     uint256 delegationTime;
+  }
+
+  /// @notice Delegation message from L1
+  /// @param delegator The delegator address
+  /// @param delegatee The delegatee address
+  /// @param quantity The quantity to delegate
+  /// @param claimer The claimer address
+  struct DelegationMsg {
+    address delegator;
+    address delegatee;
+    uint256 quantity;
+    address claimer;
   }
 
   // =============================================================
@@ -35,6 +49,8 @@ interface IMainnetDelegationBase {
 
   event ClaimerSet(address indexed delegator, address indexed claimer);
 
+  event DelegationDigestSet(bytes32 digest);
+
   // =============================================================
   //                           Errors
   // =============================================================
@@ -49,6 +65,16 @@ interface IMainnetDelegationBase {
 }
 
 interface IMainnetDelegation is IMainnetDelegationBase {
+  /// @notice Set delegation digest from L1
+  /// @dev Only the L2 messenger can call this function
+  /// @param digest The delegation digest
+  function setDelegationDigest(bytes32 digest) external;
+
+  /// @notice Relay cross-chain delegations
+  /// @dev Only the owner can call this function
+  /// @param encodedMsgs The encoded delegation messages
+  function relayDelegations(bytes calldata encodedMsgs) external;
+
   /// @notice Set batch cross-chain delegation
   /// @param delegators The delegator address
   /// @param delegates The address the delegator is delegating to

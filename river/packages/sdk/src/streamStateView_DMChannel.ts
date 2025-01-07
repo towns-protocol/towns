@@ -107,8 +107,9 @@ export class StreamStateView_DMChannel extends StreamStateView_AbstractContent {
     onConfirmedEvent(
         event: ConfirmedTimelineEvent,
         stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
+        encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ): void {
-        super.onConfirmedEvent(event, stateEmitter)
+        super.onConfirmedEvent(event, stateEmitter, encryptionEmitter)
     }
     onAppendLocalEvent(
         event: StreamTimelineEvent,

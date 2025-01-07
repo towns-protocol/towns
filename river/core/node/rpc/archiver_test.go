@@ -10,6 +10,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/gammazero/workerpool"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/river-build/river/core/contracts/river"
@@ -45,7 +46,11 @@ func fillUserSettingsStreamWithData(
 					err,
 					Err_INTERNAL,
 				).Message("Failed to add event to stream").
-					Func("fillUserSettingsStreamWithData")
+					Func("fillUserSettingsStreamWithData").
+					Tag("streamId", streamId).
+					Tag("miniblockNum", i).
+					Tag("mbEventNum", j).
+					Tag("numMbs", numMBs)
 			}
 		}
 		prevMB, err = makeMiniblock(ctx, client, streamId, false, prevMB.Num)
@@ -54,7 +59,10 @@ func fillUserSettingsStreamWithData(
 				err,
 				Err_INTERNAL,
 			).Message("Failed to create miniblock").
-				Func("fillUserSettingsStreamWithData")
+				Func("fillUserSettingsStreamWithData").
+				Tag("streamId", streamId).
+				Tag("miniblockNum", i).
+				Tag("numMbs", numMBs)
 		}
 	}
 	return prevMB, nil
@@ -71,12 +79,10 @@ func createUserSettingsStreamsWithData(
 	streamIds := make([]StreamId, numStreams)
 	errChan := make(chan error, numStreams)
 
-	var wg sync.WaitGroup
-	wg.Add(numStreams)
+	wp := workerpool.New(10)
 
 	for i := 0; i < numStreams; i++ {
-		go func(i int) {
-			defer wg.Done()
+		wp.Submit(func() {
 			wallet, err := crypto.NewWallet(ctx)
 			if err != nil {
 				errChan <- err
@@ -91,20 +97,29 @@ func createUserSettingsStreamsWithData(
 				&StreamSettings{DisableMiniblockCreation: true},
 			)
 			if err != nil {
-				errChan <- AsRiverError(err, Err_INTERNAL).Message("Failed to create stream").Func("createUserSettingsStreamsWithData")
+				errChan <- AsRiverError(err, Err_INTERNAL).
+					Message("Failed to create stream").
+					Func("createUserSettingsStreamsWithData").
+					Tag("streamNum", i).
+					Tag("streamId", streamId)
 				return
 			}
 			streamIds[i] = streamId
 
 			_, err = fillUserSettingsStreamWithData(ctx, streamId, wallet, client, numMBs, numEventsPerMB, mbRef)
 			if err != nil {
-				errChan <- AsRiverError(err, Err_INTERNAL).Message("Failed to fill stream with data").Func("createUserSettingsStreamsWithData")
+				errChan <- AsRiverError(err, Err_INTERNAL).
+					Message("Failed to fill stream with data").
+					Func("createUserSettingsStreamsWithData").
+					Tag("streamNum", i).
+					Tag("streamId", streamId)
 				return
 			}
-		}(i)
+		})
 	}
 
-	wg.Wait()
+	wp.StopWait()
+
 	if len(errChan) > 0 {
 		return nil, nil, <-errChan
 	}

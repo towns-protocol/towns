@@ -117,8 +117,9 @@ export class StreamStateView_GDMChannel extends StreamStateView_AbstractContent 
     onConfirmedEvent(
         event: ConfirmedTimelineEvent,
         emitter: TypedEmitter<StreamEvents> | undefined,
+        encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ): void {
-        super.onConfirmedEvent(event, emitter)
+        super.onConfirmedEvent(event, emitter, encryptionEmitter)
     }
 
     onAppendLocalEvent(

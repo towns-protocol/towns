@@ -70,11 +70,6 @@ export default [
   },
   {
     "type": "error",
-    "name": "SenderIsNotMember",
-    "inputs": []
-  },
-  {
-    "type": "error",
     "name": "TokenDoesNotExist",
     "inputs": []
   }

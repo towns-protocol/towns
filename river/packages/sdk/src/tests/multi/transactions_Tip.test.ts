@@ -100,6 +100,7 @@ describe('transactions_Tip', () => {
                 amount: 1000n,
                 messageId: messageId,
                 channelId: defaultChannelId,
+                receiver: aliceIdentity.rootWallet.address,
             },
             bobIdentity.signer,
         )
@@ -129,6 +130,7 @@ describe('transactions_Tip', () => {
                 amount: 1000n,
                 messageId: messageId,
                 channelId: defaultChannelId,
+                receiver: aliceIdentity.rootWallet.address,
             },
             bobIdentity.signer,
         )

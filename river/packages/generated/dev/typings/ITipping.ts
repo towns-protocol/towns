@@ -29,6 +29,7 @@ import type {
 
 export declare namespace ITippingBase {
   export type TipRequestStruct = {
+    receiver: PromiseOrValue<string>;
     tokenId: PromiseOrValue<BigNumberish>;
     currency: PromiseOrValue<string>;
     amount: PromiseOrValue<BigNumberish>;
@@ -37,12 +38,14 @@ export declare namespace ITippingBase {
   };
 
   export type TipRequestStructOutput = [
+    string,
     BigNumber,
     string,
     BigNumber,
     string,
     string
   ] & {
+    receiver: string;
     tokenId: BigNumber;
     currency: string;
     amount: BigNumber;
@@ -53,7 +56,7 @@ export declare namespace ITippingBase {
 
 export interface ITippingInterface extends utils.Interface {
   functions: {
-    "tip((uint256,address,uint256,bytes32,bytes32))": FunctionFragment;
+    "tip((address,uint256,address,uint256,bytes32,bytes32))": FunctionFragment;
     "tipAmountByCurrency(address)": FunctionFragment;
     "tippingCurrencies()": FunctionFragment;
     "tipsByCurrencyAndTokenId(uint256,address)": FunctionFragment;

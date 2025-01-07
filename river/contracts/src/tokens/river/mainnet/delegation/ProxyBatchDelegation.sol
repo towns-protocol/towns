@@ -4,21 +4,22 @@ pragma solidity ^0.8.23;
 // interfaces
 import {IVotesEnumerable} from "contracts/src/diamond/facets/governance/votes/enumerable/IVotesEnumerable.sol";
 import {IAuthorizedClaimers} from "contracts/src/tokens/river/mainnet/claimer/IAuthorizedClaimers.sol";
-import {IMainnetDelegation} from "contracts/src/tokens/river/base/delegation/IMainnetDelegation.sol";
+import {IMainnetDelegationBase, IMainnetDelegation} from "contracts/src/tokens/river/base/delegation/IMainnetDelegation.sol";
 import {ICrossDomainMessenger} from "./ICrossDomainMessenger.sol";
-import {IProxyBatchDelegation} from "./IProxyBatchDelegation.sol";
 
 // libraries
 import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
 
 // contracts
 
-contract ProxyBatchDelegation is IProxyBatchDelegation {
+contract ProxyBatchDelegation is IMainnetDelegationBase {
+  using SafeTransferLib for address;
+
   address public immutable MESSENGER;
-  address public immutable TARGET;
+  address public immutable BASE_REGISTRY;
 
   address public immutable RIVER;
-  IAuthorizedClaimers public immutable CLAIMERS;
+  address public immutable CLAIMER_MANAGER;
 
   constructor(
     address _rvr,
@@ -27,65 +28,52 @@ contract ProxyBatchDelegation is IProxyBatchDelegation {
     address _target
   ) {
     RIVER = _rvr;
-    CLAIMERS = IAuthorizedClaimers(_claimers);
+    CLAIMER_MANAGER = _claimers;
     MESSENGER = _messenger;
-    TARGET = _target;
+    BASE_REGISTRY = _target;
   }
 
-  function sendAuthorizedClaimers(uint32 minGasLimit) external {
-    address[] memory delegators = IVotesEnumerable(RIVER).getDelegators();
-    uint256 length = delegators.length;
-    address[] memory authorizedClaimers = new address[](length);
+  function relayDelegationDigest(uint32 minGasLimit) external {
+    DelegationMsg[] memory msgs = _getDelegationMsgs();
+    bytes32 digest = _digest(msgs);
+
+    ICrossDomainMessenger(MESSENGER).sendMessage(
+      BASE_REGISTRY,
+      abi.encodeCall(IMainnetDelegation.setDelegationDigest, digest),
+      minGasLimit
+    );
+  }
+
+  function getEncodedMsgs() external view returns (bytes memory encodedMsgs) {
+    DelegationMsg[] memory msgs = _getDelegationMsgs();
+    encodedMsgs = abi.encode(msgs);
+  }
+
+  /// @dev Generates the digest of the delegation messages
+  function _digest(
+    DelegationMsg[] memory msgs
+  ) internal pure returns (bytes32 digest) {
+    digest = keccak256(abi.encode(keccak256(abi.encode(msgs))));
+  }
+
+  /// @dev Gathers the delegation messages
+  function _getDelegationMsgs()
+    internal
+    view
+    returns (DelegationMsg[] memory msgs)
+  {
+    address[] memory allDelegators = IVotesEnumerable(RIVER).getDelegators();
+    uint256 length = allDelegators.length;
+    msgs = new DelegationMsg[](length);
 
     for (uint256 i; i < length; ++i) {
-      authorizedClaimers[i] = CLAIMERS.getAuthorizedClaimer(delegators[i]);
-    }
-
-    ICrossDomainMessenger(MESSENGER).sendMessage(
-      TARGET,
-      abi.encodeCall(
-        IMainnetDelegation.setBatchAuthorizedClaimers,
-        (delegators, authorizedClaimers)
-      ),
-      minGasLimit
-    );
-  }
-
-  function sendDelegators(uint32 minGasLimit, bool firstHalf) external {
-    address[] memory allDelegators = IVotesEnumerable(RIVER).getDelegators();
-    uint256 start;
-    uint256 end;
-    {
-      uint256 length = allDelegators.length;
-      uint256 halfLength = length >> 1;
-      (start, end) = firstHalf ? (0, halfLength) : (halfLength, length);
-    }
-    uint256 sliceLength = end - start;
-
-    address[] memory delegators = new address[](sliceLength);
-    address[] memory delegates = new address[](sliceLength);
-    address[] memory authorizedClaimers = new address[](sliceLength);
-    uint256[] memory quantities = new uint256[](sliceLength);
-
-    // Use a separate array index to avoid out-of-range issues
-    uint256 arrayIndex = 0;
-    for (uint256 i = start; i < end; ++i) {
       address delegator = allDelegators[i];
-      delegators[arrayIndex] = delegator;
-      authorizedClaimers[arrayIndex] = CLAIMERS.getAuthorizedClaimer(delegator);
-      delegates[arrayIndex] = _delegates(RIVER, delegator);
-      quantities[arrayIndex] = SafeTransferLib.balanceOf(RIVER, delegator);
-      ++arrayIndex;
+      msgs[i].delegator = delegator;
+      msgs[i].delegatee = _delegates(RIVER, delegator);
+      msgs[i].quantity = RIVER.balanceOf(delegator);
+      msgs[i].claimer = IAuthorizedClaimers(CLAIMER_MANAGER)
+        .getAuthorizedClaimer(delegator);
     }
-
-    ICrossDomainMessenger(MESSENGER).sendMessage(
-      TARGET,
-      abi.encodeCall(
-        IMainnetDelegation.setBatchDelegation,
-        (delegators, delegates, authorizedClaimers, quantities)
-      ),
-      minGasLimit
-    );
   }
 
   /// @dev Returns the delegate that `account` has chosen.

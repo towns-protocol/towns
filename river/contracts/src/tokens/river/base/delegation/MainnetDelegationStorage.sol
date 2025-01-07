@@ -3,7 +3,6 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IMainnetDelegationBase} from "./IMainnetDelegation.sol";
-import {IProxyDelegation} from "contracts/src/tokens/river/mainnet/delegation/IProxyDelegation.sol";
 import {ICrossDomainMessenger} from "contracts/src/tokens/river/mainnet/delegation/ICrossDomainMessenger.sol";
 
 // libraries
@@ -20,12 +19,13 @@ library MainnetDelegationStorage {
     mapping(address operator => EnumerableSet.AddressSet) delegatorsByOperator;
     mapping(address delegator => IMainnetDelegationBase.Delegation delegation) delegationByDelegator;
     mapping(address delegator => address claimer) claimerByDelegator;
-    IProxyDelegation deprecatedproxyDelegation; // Do not use this, use proxyDelegation
+    address deprecatedProxyDelegation; // Do not use this, use proxyDelegation
     ICrossDomainMessenger messenger;
     mapping(address claimer => EnumerableSet.AddressSet delegators) delegatorsByAuthorizedClaimer;
     address proxyDelegation;
     EnumerableSet.AddressSet delegators;
     mapping(address delegator => uint256 depositId) depositIdByDelegator;
+    bytes32 delegationDigest;
   }
 
   function layout() internal pure returns (Layout storage s) {
