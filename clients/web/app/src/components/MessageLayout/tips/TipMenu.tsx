@@ -6,16 +6,16 @@ import { trackTipAmount } from './tipAnalytics'
 
 const tipOptions: TipOption[] = [
     {
-        amountInCents: 25,
-        label: '$0.25',
-    },
-    {
         amountInCents: 100,
         label: '$1',
     },
     {
         amountInCents: 500,
         label: '$5',
+    },
+    {
+        amountInCents: 1_000,
+        label: '$10',
     },
 ]
 

@@ -28,7 +28,8 @@ describe('TipMenu', () => {
         })
         expect(screen.getByText('Tip Amount')).toBeInTheDocument()
         expect(screen.getByText('$1')).toBeInTheDocument()
-        expect(screen.getByText('$0.25')).toBeInTheDocument()
+        expect(screen.getByText('$5')).toBeInTheDocument()
+        expect(screen.getByText('$10')).toBeInTheDocument()
     })
 
     it('should show confirm screen when tip option is selected', async () => {
