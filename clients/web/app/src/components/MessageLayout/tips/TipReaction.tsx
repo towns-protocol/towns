@@ -19,17 +19,28 @@ import { trackTipOnMessage } from './tipAnalytics'
 
 const emptyTips: MessageTips = []
 
-export function TipReaction({
-    tips,
-    eventId,
-    messageOwner,
-    isTippable,
-}: {
+type Props = {
     tips?: MessageTips
     eventId: string | undefined
     messageOwner: LookupUser
     isTippable?: boolean
-}) {
+}
+
+export function TipReaction({ tips, eventId, messageOwner, isTippable }: Props) {
+    if (!tips || !Object.keys(tips).length) {
+        return null
+    }
+    return (
+        <TipReactionInner
+            tips={tips}
+            eventId={eventId}
+            messageOwner={messageOwner}
+            isTippable={isTippable}
+        />
+    )
+}
+
+function TipReactionInner({ tips, eventId, messageOwner, isTippable }: Props) {
     const tippers = useTippers(tips ?? emptyTips)
     const theme = useStore((state) => state.getTheme())
     const amount = useTipAmount(tips ?? emptyTips)
@@ -43,11 +54,7 @@ export function TipReaction({
     const isDmOrGDM =
         !!channelId && (isDMChannelStreamId(channelId) || isGDMChannelStreamId(channelId))
 
-    if (!isTippable && !tippers.length) {
-        return null
-    }
-
-    if (!channelId || isDmOrGDM) {
+    if (!channelId || isDmOrGDM || !tippers.length) {
         return null
     }
 
@@ -104,7 +111,7 @@ export function TipReaction({
                                 >
                                     <Icon color={iconColor} type="dollar" size="square_xs" />
                                     <Text fontWeight="medium" size="sm">
-                                        {tippers.length === 0 ? 'Tip' : `${tippers.length}`}
+                                        {`${tippers.length}`}
                                     </Text>
                                 </Pill>
                             )
