@@ -185,6 +185,9 @@ func (tracker *StreamsTracker) Run(ctx context.Context) error {
 		"total", totalStreams,
 		"took", time.Since(start).String())
 
+	// wait till service stopped
+	<-ctx.Done()
+
 	log.Info("stream tracker stopped")
 
 	return nil
