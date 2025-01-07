@@ -199,3 +199,22 @@ export function isInsufficientTipBalanceException(
         error.code === 'tip_insufficient_balance'
     )
 }
+
+export class NegativeValueException extends CodeException {
+    constructor() {
+        super({
+            message: 'Negative value',
+            code: 'negative_value',
+            category: 'userop',
+        })
+    }
+}
+
+export function isNegativeValueException(error: unknown): error is NegativeValueException {
+    return (
+        typeof error === 'object' &&
+        error !== null &&
+        'code' in error &&
+        error.code === 'negative_value'
+    )
+}

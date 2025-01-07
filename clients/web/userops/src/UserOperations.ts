@@ -28,7 +28,7 @@ import {
     signUserOpHash,
     estimateGasLimit,
     estimateAlchemyGasFees,
-    subtractGasFromMaxValue,
+    subtractGasFromBalance,
     promptUser,
     isSponsoredOp,
     paymasterProxyMiddleware,
@@ -1939,15 +1939,13 @@ export class UserOps {
             })
             .useMiddleware(async (ctx) => {
                 const { txValue, functionHashForPaymasterProxy } = this.middlewareVars
-                if (!txValue || !functionHashForPaymasterProxy) {
-                    return
+                if (txValue && functionHashForPaymasterProxy === 'transferEth') {
+                    return subtractGasFromBalance(ctx, {
+                        functionHash: functionHashForPaymasterProxy,
+                        builder,
+                        value: txValue,
+                    })
                 }
-
-                return subtractGasFromMaxValue(ctx, signer, {
-                    functionHash: functionHashForPaymasterProxy,
-                    builder,
-                    value: txValue,
-                })
             })
             .useMiddleware(async (ctx) => signUserOpHash(ctx, signer))
     }

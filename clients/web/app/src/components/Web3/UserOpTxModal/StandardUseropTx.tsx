@@ -8,7 +8,7 @@ import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { formatUnits, formatUnitsToFixedLength, useBalance } from 'hooks/useBalance'
 import { isTouch } from 'hooks/useDevice'
-import { Box, IconButton } from '@ui'
+import { Box, IconButton, Text } from '@ui'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { CrossmintPayment } from '@components/CrossmintPayment'
 import { useIsSmartAccountDeployed } from 'hooks/useIsSmartAccountDeployed'
@@ -49,11 +49,6 @@ export function StandardUseropTx({
 
     const { data: spaceInfo } = useContractSpaceInfoWithoutClient(spaceId)
 
-    // transferEth op, user can set the max amount of eth to transfer from their towns wallet
-    // in this case the gas will be substracted from their tx
-    // otherwise they'd get a warning that they don't have enough eth b/c max wallet eth would be lower than eth + gas fees
-    const _requiresBalanceGreaterThanCost = currOpDecodedCallData?.type !== 'transferEth'
-
     const toAddress = useToAddress()
 
     const { loggedInWalletAddress } = useConnectivity()
@@ -74,16 +69,15 @@ export function StandardUseropTx({
     const verificationGasLimit = currOp?.verificationGasLimit ?? 0.0
     const preVerificationGas = currOp?.preVerificationGas ?? 0.0
 
-    const insufficientBalance = useInsufficientBalance({
+    const balanceIsLessThanCost = useInsufficientBalance({
         balance: balanceData?.value,
         gasLimit,
         preVerificationGas,
         verificationGasLimit,
         gasPrice,
         value: currOpValue,
+        currOpDecodedCallData,
     })
-
-    const balanceIsLessThanCost = _requiresBalanceGreaterThanCost && insufficientBalance
 
     const { gasInEth, currOpValueInEth, totalInEth } = usePriceBreakdown({
         gasLimit,
@@ -131,6 +125,8 @@ export function StandardUseropTx({
         }
     }
 
+    const isTransferEth = currOpDecodedCallData?.type === 'transferEth'
+
     return (
         <>
             <HeaderButtons
@@ -174,6 +170,8 @@ export function StandardUseropTx({
                         <Box centerContent height="x4" width="100%" />
                     ) : isSmartAccountDeployedLoading ? (
                         <ButtonSpinner />
+                    ) : isTransferEth && balanceIsLessThanCost ? (
+                        <BalanceTooLowForTransferEth />
                     ) : showWalletBalance && balanceIsLessThanCost ? (
                         <InsufficientBalanceForPayWithEth
                             smartAccountAddress={smartAccountAddress}
@@ -191,6 +189,16 @@ export function StandardUseropTx({
                 </>
             )}
         </>
+    )
+}
+
+function BalanceTooLowForTransferEth() {
+    return (
+        <Box paddingY="md" maxWidth="400">
+            <Box background="negativeSubtle" padding="md">
+                <Text>Your wallet balance will not cover the gas fees for this transaction.</Text>
+            </Box>
+        </Box>
     )
 }
 

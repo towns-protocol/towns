@@ -1,6 +1,13 @@
 import { Address, LocalhostWeb3Provider } from '@river-build/web3'
 import { createSpaceDappAndUserops, generatePrivyWalletIfKey, waitForOpAndTx } from './utils'
 import { Wallet, utils } from 'ethers'
+import * as balance from '../src/middlewares/balance'
+import { vi } from 'vitest'
+import { NegativeValueException } from '../src/errors'
+
+beforeEach(() => {
+    vi.clearAllMocks()
+})
 
 test('can transfer eth to given address', async () => {
     const alice = new LocalhostWeb3Provider(
@@ -76,4 +83,42 @@ test('can transfer max eth to given address', async () => {
 
     expect(randomWalletBalance.gte(lowerBound)).toBe(true)
     expect(randomWalletBalance.lte(upperBound)).toBe(true)
+})
+
+test('cannot transfer eth if value is less than gas cost', async () => {
+    const amountToTransfer = utils.parseEther('1')
+    const gasCost = utils.parseEther('2')
+    vi.spyOn(balance, 'costOfGas').mockReturnValue(gasCost)
+
+    const alice = new LocalhostWeb3Provider(
+        process.env.AA_RPC_URL as string,
+        generatePrivyWalletIfKey(process.env.PRIVY_WALLET_PRIVATE_KEY_1),
+    )
+
+    // this is the same as the anvil acct 0 private key and is used as the signing key for the bundler - its funded
+    const bundlerKey = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
+    await alice.ready
+
+    const { spaceDapp, userOps: userOpsAlice } = createSpaceDappAndUserops(alice)
+    const bundlerWallet = new Wallet(bundlerKey).connect(alice)
+
+    let aaAddress = await userOpsAlice.getAbstractAccountAddress({
+        rootKeyAddress: alice.wallet.address as Address,
+    })
+    expect(aaAddress).toBeDefined()
+    aaAddress = aaAddress!
+
+    const tx = await bundlerWallet.sendTransaction({ to: aaAddress, value: amountToTransfer })
+    await tx.wait()
+
+    expect(utils.formatEther(await alice.getBalance(aaAddress))).toBe('1.0')
+
+    const randomWallet = Wallet.createRandom().connect(spaceDapp.provider)
+
+    expect(
+        userOpsAlice.sendTransferEthOp(
+            { recipient: randomWallet.address, value: amountToTransfer },
+            alice.wallet,
+        ),
+    ).rejects.toThrow(new NegativeValueException())
 })
