@@ -1,10 +1,35 @@
 import { Address, LocalhostWeb3Provider } from '@river-build/web3'
 import { createSpaceDappAndUserops, generatePrivyWalletIfKey, waitForOpAndTx } from './utils'
-import { Wallet, ContractFactory, Contract, ContractInterface } from 'ethers'
+import {
+    Wallet,
+    ContractFactory,
+    Contract,
+    ContractInterface,
+    ContractReceipt,
+    BigNumberish,
+} from 'ethers'
 import MockERC721A from '@river-build/web3/src/MockERC721A'
 import { MockERC1155 } from '@river-build/web3/src/MockERC1155'
 import { vi } from 'vitest'
 import * as tokenTypes from '../src/tokenTypes'
+
+type NFTContract = Contract & {
+    mint: (
+        to: string,
+        tokenId: number,
+    ) => Promise<{
+        wait: () => Promise<ContractReceipt>
+    }>
+    mintBronze: (to: string) => Promise<{
+        wait: () => Promise<ContractReceipt>
+    }>
+    balanceOf: (
+        to: string,
+        tokenId?: number,
+    ) => Promise<{
+        toNumber: () => BigNumberish
+    }>
+}
 
 test('can transfer ERC-721 to given address', async () => {
     const alice = new LocalhostWeb3Provider(
@@ -21,7 +46,11 @@ test('can transfer ERC-721 to given address', async () => {
     const nftFactory = await factory.deploy()
     await nftFactory.deployed()
 
-    const nftContract = new Contract(nftFactory.address, MockERC721A.abi, bundlerWallet)
+    const nftContract = new Contract(
+        nftFactory.address,
+        MockERC721A.abi,
+        bundlerWallet,
+    ) as NFTContract
 
     let aaAddress = await userOpsAlice.getAbstractAccountAddress({
         rootKeyAddress: alice.wallet.address as Address,
@@ -37,7 +66,7 @@ test('can transfer ERC-721 to given address', async () => {
     const randomWallet = Wallet.createRandom().connect(spaceDapp.provider)
 
     // MockERC721A supportsInterface() calls revert, so we can't check if it's an ERC721, so mocking that check
-    vi.spyOn(tokenTypes, 'isERC721').mockImplementationOnce(() => Promise.resolve(true))
+    vi.spyOn(tokenTypes, 'isERC721').mockImplementationOnce(async () => Promise.resolve(true))
 
     const transferOp = await userOpsAlice.sendTransferAssetsOp(
         { contractAddress: nftContract.address, recipient: randomWallet.address, tokenId: '0' },
@@ -72,7 +101,7 @@ test('can transfer ERC-1155 to given address', async () => {
         nftFactory.address,
         MockERC1155.abi as unknown as ContractInterface,
         bundlerWallet,
-    )
+    ) as NFTContract
 
     let aaAddress = await userOpsAlice.getAbstractAccountAddress({
         rootKeyAddress: alice.wallet.address as Address,
@@ -88,7 +117,7 @@ test('can transfer ERC-1155 to given address', async () => {
 
     const randomWallet = Wallet.createRandom().connect(spaceDapp.provider)
 
-    vi.spyOn(tokenTypes, 'isERC1155').mockImplementationOnce(() => Promise.resolve(true))
+    vi.spyOn(tokenTypes, 'isERC1155').mockImplementationOnce(async () => Promise.resolve(true))
 
     const transferOp = await userOpsAlice.sendTransferAssetsOp(
         {

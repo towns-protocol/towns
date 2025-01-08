@@ -41,7 +41,7 @@ test('can send prepay membership op, and user can join for free', async () => {
 
     const spaceId = await getSpaceId(spaceDapp, txReceipt, bob.wallet.address, userOpsBob)
 
-    await expect(() =>
+    await expect(async () =>
         userOpsAlice.sendJoinSpaceOp([spaceId, alice.wallet.address, alice.wallet]),
     ).rejects.toThrow()
 

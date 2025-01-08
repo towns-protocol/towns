@@ -53,7 +53,7 @@ test('will reject each userop if beyond the limit', async () => {
     expect(createSpaceReceipt1.status).toBe(1)
     await sleepBetweenTxs()
 
-    await expect(() =>
+    await expect(async () =>
         createUngatedSpace({
             userOps: userOpsAlice,
             spaceDapp,
@@ -87,7 +87,7 @@ test('will reject each userop if beyond the limit', async () => {
     expect(createRoleRecipt.status).toBe(1)
     await sleepBetweenTxs()
 
-    await expect(() =>
+    await expect(async () =>
         sendCreateRoleOp(userOpsAlice, spaceId, 'dummy role', [], [], NoopRuleData, alice.wallet),
     ).rejects.toThrow()
 
@@ -109,7 +109,7 @@ test('will reject each userop if beyond the limit', async () => {
     const updateReceipt = await waitForOpAndTx(updateRoleOp, alice, 'update role')
     expect(updateReceipt.status).toBe(1)
 
-    await expect(() =>
+    await expect(async () =>
         sendUpdateRoleOp(
             userOpsAlice,
             {
@@ -132,7 +132,9 @@ test('will reject each userop if beyond the limit', async () => {
     await sleepBetweenTxs()
     expect(deleteReceipt.status).toBe(1)
 
-    await expect(() => userOpsAlice.sendDeleteRoleOp([spaceId, 2, alice.wallet])).rejects.toThrow()
+    await expect(async () =>
+        userOpsAlice.sendDeleteRoleOp([spaceId, 2, alice.wallet]),
+    ).rejects.toThrow()
 
     ////////////////////////////////////////
     // create channel
@@ -150,7 +152,7 @@ test('will reject each userop if beyond the limit', async () => {
     await sleepBetweenTxs()
     expect(createChannelReceipt.status).toBe(1)
 
-    await expect(() =>
+    await expect(async () =>
         userOpsAlice.sendCreateChannelOp([
             spaceId,
             'test',
@@ -172,7 +174,7 @@ test('will reject each userop if beyond the limit', async () => {
     const updateChannelOp = await userOpsAlice.sendUpdateChannelOp([
         {
             spaceId,
-            channelId: createdChannel!.channelNetworkId!,
+            channelId: createdChannel!.channelNetworkId,
             channelName: 'new channel name',
             channelDescription: '',
             roleIds: [],
@@ -183,11 +185,11 @@ test('will reject each userop if beyond the limit', async () => {
     await sleepBetweenTxs()
     expect(updateChannelReceipt.status).toBe(1)
 
-    await expect(() =>
+    await expect(async () =>
         userOpsAlice.sendUpdateChannelOp([
             {
                 spaceId,
-                channelId: createdChannel!.channelNetworkId!,
+                channelId: createdChannel!.channelNetworkId,
                 channelName: 'new channel name 2',
                 channelDescription: '',
                 roleIds: [],
@@ -211,7 +213,7 @@ test('will reject each userop if beyond the limit', async () => {
     await sleepBetweenTxs()
     expect(updateSpaceReceipt.status).toBe(1)
 
-    await expect(() =>
+    await expect(async () =>
         userOpsAlice.sendUpdateSpaceInfoOp([
             spaceId,
             'new space name 2',
@@ -252,7 +254,7 @@ test('will reject each userop if beyond the limit', async () => {
     expect(joinReceiptSteve.status).toBe(1)
 
     const banOp = await userOpsAlice.sendBanWalletAddressOp([
-        spaceId!,
+        spaceId,
         bob.wallet.address,
         alice.wallet,
     ])
@@ -260,12 +262,12 @@ test('will reject each userop if beyond the limit', async () => {
     await sleepBetweenTxs()
     expect(banReceipt.status).toBe(1)
 
-    await expect(() =>
-        userOpsAlice.sendBanWalletAddressOp([spaceId!, steve.wallet.address, alice.wallet]),
+    await expect(async () =>
+        userOpsAlice.sendBanWalletAddressOp([spaceId, steve.wallet.address, alice.wallet]),
     ).rejects.toThrow()
 
     const unbanOp = await userOpsAlice.sendUnbanWalletAddressOp([
-        spaceId!,
+        spaceId,
         bob.wallet.address,
         alice.wallet,
     ])
@@ -273,8 +275,8 @@ test('will reject each userop if beyond the limit', async () => {
     await sleepBetweenTxs()
     expect(unbanReceipt.status).toBe(1)
 
-    await expect(() =>
-        userOpsAlice.sendUnbanWalletAddressOp([spaceId!, steve.wallet.address, alice.wallet]),
+    await expect(async () =>
+        userOpsAlice.sendUnbanWalletAddressOp([spaceId, steve.wallet.address, alice.wallet]),
     ).rejects.toThrow()
 }, 200_000)
 
@@ -300,7 +302,7 @@ test('will reject wallet link operations if beyond the limit', async () => {
     await sleepBetweenTxs()
     expect(linkReceipt.status).toBe(1)
 
-    await expect(() =>
+    await expect(async () =>
         userOps.sendLinkEOAToRootKeyOp([alice.wallet, metamaskWallet2]),
     ).rejects.toThrow()
 })

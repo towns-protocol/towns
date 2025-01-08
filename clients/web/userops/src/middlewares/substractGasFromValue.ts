@@ -1,5 +1,5 @@
 import { IUserOperationMiddlewareCtx } from 'userop'
-import { BigNumberish, BigNumber } from 'ethers'
+import { BigNumberish, BigNumber, utils } from 'ethers'
 import { FunctionHash } from '../types'
 import { TownsSimpleAccount } from '../TownsSimpleAccount'
 import { costOfGas } from '../..'
@@ -93,10 +93,12 @@ export async function subtractGasFromBalance(
 
     const decodedData = builder.decodeExecute(ctx.op.callData)
     const [to, , data] = decodedData
-    const newCallData = builder.proxy.interface.encodeFunctionData('execute', [
-        to,
-        adjustedValue,
-        data,
-    ])
-    ctx.op.callData = newCallData
+    if (typeof to === 'string' && utils.isBytesLike(data)) {
+        const newCallData = builder.proxy.interface.encodeFunctionData('execute', [
+            to,
+            adjustedValue,
+            data,
+        ])
+        ctx.op.callData = newCallData
+    }
 }

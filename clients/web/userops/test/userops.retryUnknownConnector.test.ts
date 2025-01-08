@@ -39,7 +39,7 @@ test('a sponsored userop that fails because of unknown connector runs again', as
     )
 
     // retry defaults to 3 times
-    await expect(() =>
+    await expect(async () =>
         createUngatedSpace({
             userOps: userOpsAlice,
             spaceDapp,
@@ -65,7 +65,7 @@ test('a non-sponsored userop that fails because of gas too low runs again', asyn
     const sendSpy = vi.spyOn(useropClient, 'sendUserOperation')
     let count = 0
     const isUnknownConnectorSpy = vi.spyOn(errors, 'matchPrivyUnknownConnectorError')
-    vi.spyOn(paymasterProxyMiddleware, 'paymasterProxyMiddleware').mockImplementation(() => {
+    vi.spyOn(paymasterProxyMiddleware, 'paymasterProxyMiddleware').mockImplementation(async () => {
         return Promise.resolve()
     })
     isUnknownConnectorSpy.mockImplementation(() => ({
@@ -82,14 +82,14 @@ test('a non-sponsored userop that fails because of gas too low runs again', asyn
             if (count > 2) {
                 return {
                     userOpHash: '0x123',
-                    wait: () => Promise.resolve(null),
-                    getUserOperationReceipt: () => Promise.resolve(null),
+                    wait: async () => Promise.resolve(null),
+                    getUserOperationReceipt: async () => Promise.resolve(null),
                 }
             }
             throw new Error()
         },
     )
-    const promptUserSpy = vi.spyOn(promptUser, 'promptUser').mockImplementation(() => {
+    const promptUserSpy = vi.spyOn(promptUser, 'promptUser').mockImplementation(async () => {
         count++
         return Promise.resolve()
     })

@@ -5,7 +5,7 @@ export async function createWorkerPromise<TArgs, TReturn>(
     try {
         const result = await new Promise<TReturn>((resolve, reject) => {
             worker.postMessage(message)
-            worker.onmessage = (e) => resolve(e.data)
+            worker.onmessage = (e: MessageEvent<TReturn>) => resolve(e.data)
             worker.onmessageerror = (e) => reject(e)
             worker.onerror = (e) => reject(e)
         })

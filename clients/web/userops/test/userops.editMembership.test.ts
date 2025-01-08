@@ -1,5 +1,5 @@
+/* eslint-disable @typescript-eslint/no-base-to-string */
 import {
-    IRuleEntitlementBase,
     ISpaceDapp,
     LocalhostWeb3Provider,
     NoopRuleData,
@@ -214,9 +214,7 @@ test('should update "free" paid space to paid space', async () => {
             ruleData:
                 ogRoleData.ruleData.kind === 'v2'
                     ? ogRoleData.ruleData.rules
-                    : convertRuleDataV1ToV2(
-                          ogRoleData.ruleData.rules as IRuleEntitlementBase.RuleDataStruct,
-                      ),
+                    : convertRuleDataV1ToV2(ogRoleData.ruleData.rules),
         },
         {
             ...ogMembershipData,
@@ -300,9 +298,7 @@ test('should update membership price on a paid space', async () => {
             ruleData:
                 ogRoleData.ruleData.kind === 'v2'
                     ? ogRoleData.ruleData.rules
-                    : convertRuleDataV1ToV2(
-                          ogRoleData.ruleData.rules as IRuleEntitlementBase.RuleDataStruct,
-                      ),
+                    : convertRuleDataV1ToV2(ogRoleData.ruleData.rules),
         },
         {
             ...ogMembershipData,
@@ -315,7 +311,7 @@ test('should update membership price on a paid space', async () => {
     const lastSendOpCall = sendSpy.mock.lastCall
     expect(lastSendOpCall?.[0].toAddress).toStrictEqual([space!.Membership.address])
     expect(lastSendOpCall?.[0].callData).toStrictEqual([
-        await space!.Membership.encodeFunctionData('setMembershipPrice', [
+        space!.Membership.encodeFunctionData('setMembershipPrice', [
             ethers.utils.parseEther('0.1').toString(),
         ]),
     ])
@@ -374,9 +370,7 @@ test('should update limit on the membership', async () => {
             ruleData:
                 ogRoleData.ruleData.kind === 'v2'
                     ? ogRoleData.ruleData.rules
-                    : convertRuleDataV1ToV2(
-                          ogRoleData.ruleData.rules as IRuleEntitlementBase.RuleDataStruct,
-                      ),
+                    : convertRuleDataV1ToV2(ogRoleData.ruleData.rules),
         },
         {
             ...ogMembershipData,
@@ -389,7 +383,7 @@ test('should update limit on the membership', async () => {
     const lastSendOpCall = sendSpy.mock.lastCall
     expect(lastSendOpCall?.[0].toAddress).toStrictEqual([space!.Membership.address])
     expect(lastSendOpCall?.[0].callData).toStrictEqual([
-        await space!.Membership.encodeFunctionData('setMembershipLimit', [1_000_000]),
+        space!.Membership.encodeFunctionData('setMembershipLimit', [1_000_000]),
     ])
 
     await waitForOpAndTx(sendEditOp, alice)

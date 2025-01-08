@@ -5,7 +5,7 @@ import { CodeException } from '../errors'
  * Set the confirm and deny functions in the userOpsStore
  * Subscribe to the userOpsStore to update the UI
  */
-export function promptUser() {
+export async function promptUser() {
     return new Promise((resolve, reject) => {
         userOpsStore.getState().setConfirmAndDeny(
             () => {

@@ -110,7 +110,7 @@ export class UserOps {
         })
 
         abstractAddressMap.set(rootKeyAddress, result.addr)
-        return result.addr as Address
+        return result.addr
     }
 
     public async getUserOpClient() {
@@ -669,7 +669,7 @@ export class UserOps {
         }
         const [signer, externalWalletSigner] = args
 
-        const walletLink = await this.spaceDapp.walletLink
+        const walletLink = this.spaceDapp.walletLink
         const functionName = 'linkWalletToRootKey'
 
         const functionHashForPaymasterProxy = getFunctionSigHash(
@@ -730,7 +730,7 @@ export class UserOps {
             throw new Error('spaceDapp is required')
         }
         const [spaceId, spaceName, uri, shortDescription, longDescription, signer] = args
-        const space = await this.spaceDapp.getSpace(spaceId)
+        const space = this.spaceDapp.getSpace(spaceId)
 
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
@@ -746,7 +746,7 @@ export class UserOps {
         )
 
         const spaceInfo = await space.getSpaceInfo()
-        const callData = await space.SpaceOwner.encodeFunctionData(functionName, [
+        const callData = space.SpaceOwner.encodeFunctionData(functionName, [
             space.Address,
             spaceName,
             uri ?? spaceInfo.uri ?? '',
@@ -832,17 +832,17 @@ export class UserOps {
     }
 
     // no delete channel in spaceDapp
-    public async sendDeleteChannelOp(): Promise<TownsUserOpClientSendUserOperationResponse> {
+    public sendDeleteChannelOp(): TownsUserOpClientSendUserOperationResponse {
         throw new Error('Not implemented')
     }
 
     // add role to channel is not currently directly used in app
-    public async sendAddRoleToChannelOp(): Promise<TownsUserOpClientSendUserOperationResponse> {
+    public sendAddRoleToChannelOp(): TownsUserOpClientSendUserOperationResponse {
         throw new Error('Not implemented')
     }
 
     // remove role from channel is not currently directly used in app
-    public async sendRemoveRoleFromChannelOp(): Promise<TownsUserOpClientSendUserOperationResponse> {
+    public sendRemoveRoleFromChannelOp(): TownsUserOpClientSendUserOperationResponse {
         throw new Error('Not implemented')
     }
 
@@ -854,7 +854,7 @@ export class UserOps {
         if (!this.spaceDapp) {
             throw new Error('spaceDapp is required')
         }
-        const space = await this.spaceDapp.getSpace(spaceId)
+        const space = this.spaceDapp.getSpace(spaceId)
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
@@ -868,7 +868,7 @@ export class UserOps {
 
         const entitlements = await createLegacyEntitlementStruct(space, users, ruleData)
 
-        const callData = await space.Roles.encodeFunctionData(functionName, [
+        const callData = space.Roles.encodeFunctionData(functionName, [
             roleName,
             permissions,
             entitlements,
@@ -891,7 +891,7 @@ export class UserOps {
         if (!this.spaceDapp) {
             throw new Error('spaceDapp is required')
         }
-        const space = await this.spaceDapp.getSpace(spaceId)
+        const space = this.spaceDapp.getSpace(spaceId)
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
@@ -905,7 +905,7 @@ export class UserOps {
 
         const entitlements = await createEntitlementStruct(space, users, ruleData)
 
-        const callData = await space.Roles.encodeFunctionData(functionName, [
+        const callData = space.Roles.encodeFunctionData(functionName, [
             roleName,
             permissions,
             entitlements,
@@ -928,7 +928,7 @@ export class UserOps {
         if (!this.spaceDapp) {
             throw new Error('spaceDapp is required')
         }
-        const space = await this.spaceDapp.getSpace(spaceId)
+        const space = this.spaceDapp.getSpace(spaceId)
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
@@ -939,7 +939,7 @@ export class UserOps {
             functionName,
         )
 
-        const callData = await space.Roles.encodeFunctionData(functionName, [roleId])
+        const callData = space.Roles.encodeFunctionData(functionName, [roleId])
 
         return this.sendUserOp({
             toAddress: [space.Roles.address],
@@ -990,11 +990,10 @@ export class UserOps {
             throw new Error(`Space with spaceId "${params.spaceNetworkId}" is not found.`)
         }
 
-        const { functionHashForPaymasterProxy, callData } =
-            await this.encodeSetChannelRoleOverridesData({
-                space,
-                params,
-            })
+        const { functionHashForPaymasterProxy, callData } = this.encodeSetChannelRoleOverridesData({
+            space,
+            params,
+        })
 
         return this.sendUserOp({
             toAddress: [space.Roles.address],
@@ -1021,7 +1020,7 @@ export class UserOps {
         }
 
         const { functionHashForPaymasterProxy, callData } =
-            await this.encodeClearChannelRoleOverridesData({
+            this.encodeClearChannelRoleOverridesData({
                 space,
                 params,
             })
@@ -1059,7 +1058,7 @@ export class UserOps {
             legacyUpdateRoleParams.ruleData,
         )
 
-        const callData = await space.Roles.encodeFunctionData(functionName, [
+        const callData = space.Roles.encodeFunctionData(functionName, [
             legacyUpdateRoleParams.roleId,
             legacyUpdateRoleParams.roleName,
             legacyUpdateRoleParams.permissions,
@@ -1119,7 +1118,7 @@ export class UserOps {
             updateRoleParams,
         )
 
-        const callData = await space.Roles.encodeFunctionData(functionName, [
+        const callData = space.Roles.encodeFunctionData(functionName, [
             updateRoleParams.roleId,
             updateRoleParams.roleName,
             updateRoleParams.permissions,
@@ -1129,7 +1128,7 @@ export class UserOps {
         return { functionHashForPaymasterProxy, callData }
     }
 
-    public async encodeSetChannelRoleOverridesData({
+    public encodeSetChannelRoleOverridesData({
         space,
         params,
     }: {
@@ -1147,7 +1146,7 @@ export class UserOps {
             throw new Error('spaceDapp is required')
         }
 
-        const callData = await space.Roles.encodeFunctionData(functionName, [
+        const callData = space.Roles.encodeFunctionData(functionName, [
             params.roleId,
             params.channelId.startsWith('0x') ? params.channelId : `0x${params.channelId}`,
             params.permissions,
@@ -1156,7 +1155,7 @@ export class UserOps {
         return { functionHashForPaymasterProxy, callData }
     }
 
-    public async encodeClearChannelRoleOverridesData({
+    public encodeClearChannelRoleOverridesData({
         space,
         params,
     }: {
@@ -1173,7 +1172,7 @@ export class UserOps {
         if (!this.spaceDapp) {
             throw new Error('spaceDapp is required')
         }
-        const callData = await space.Roles.encodeFunctionData(functionName, [
+        const callData = space.Roles.encodeFunctionData(functionName, [
             params.roleId,
             params.channelId.startsWith('0x') ? params.channelId : `0x${params.channelId}`,
         ])
@@ -1186,7 +1185,7 @@ export class UserOps {
         if (!this.spaceDapp) {
             throw new Error('spaceDapp is required')
         }
-        const space = await this.spaceDapp.getSpace(spaceId)
+        const space = this.spaceDapp.getSpace(spaceId)
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
@@ -1200,7 +1199,7 @@ export class UserOps {
         const tokenId = await space.ERC721AQueryable.read
             .tokensOfOwner(walletAddress)
             .then((tokens) => tokens[0])
-        const callData = await space.Banning.encodeFunctionData(functionName, [tokenId])
+        const callData = space.Banning.encodeFunctionData(functionName, [tokenId])
 
         return this.sendUserOp({
             toAddress: [space.Banning.address],
@@ -1216,7 +1215,7 @@ export class UserOps {
         if (!this.spaceDapp) {
             throw new Error('spaceDapp is required')
         }
-        const space = await this.spaceDapp.getSpace(spaceId)
+        const space = this.spaceDapp.getSpace(spaceId)
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
@@ -1230,7 +1229,7 @@ export class UserOps {
         const tokenId = await space.ERC721AQueryable.read
             .tokensOfOwner(walletAddress)
             .then((tokens) => tokens[0])
-        const callData = await space.Banning.encodeFunctionData(functionName, [tokenId])
+        const callData = space.Banning.encodeFunctionData(functionName, [tokenId])
         return this.sendUserOp({
             toAddress: [space.Banning.address],
             callData: [callData],
@@ -1344,9 +1343,10 @@ export class UserOps {
         const currentPricingModule = await space.Membership.read.getMembershipPricingModule()
         const currentIsFixedPricing =
             currentPricingModule.toLowerCase() ===
-            fixedPricingModule.module.toString().toLowerCase()
+            (await fixedPricingModule.module).toString().toLowerCase()
         const newIsFixedPricing =
-            newPricingModule.toLowerCase() === fixedPricingModule.module.toString().toLowerCase()
+            newPricingModule.toLowerCase() ===
+            (await fixedPricingModule.module).toString().toLowerCase()
         const newMembershipPriceBigNumber = ethers.BigNumber.from(newMembershipPrice)
 
         // fixed price of 0 ("free") to fixed price of non-zero
@@ -1406,7 +1406,7 @@ export class UserOps {
                 ethers.BigNumber.from(newMembershipSupply),
             )
         ) {
-            const callData = await space.Membership.encodeFunctionData('setMembershipLimit', [
+            const callData = space.Membership.encodeFunctionData('setMembershipLimit', [
                 newMembershipSupply,
             ])
             txs.push({
@@ -1533,9 +1533,10 @@ export class UserOps {
         const currentPricingModule = await space.Membership.read.getMembershipPricingModule()
         const currentIsFixedPricing =
             currentPricingModule.toLowerCase() ===
-            fixedPricingModule.module.toString().toLowerCase()
+            (await fixedPricingModule.module).toString().toLowerCase()
         const newIsFixedPricing =
-            newPricingModule.toLowerCase() === fixedPricingModule.module.toString().toLowerCase()
+            newPricingModule.toLowerCase() ===
+            (await fixedPricingModule.module).toString().toLowerCase()
         const newMembershipPriceBigNumber = ethers.BigNumber.from(newMembershipPrice)
 
         // fixed price of 0 ("free") to fixed price of non-zero
@@ -1595,7 +1596,7 @@ export class UserOps {
                 ethers.BigNumber.from(newMembershipSupply),
             )
         ) {
-            const callData = await space.Membership.encodeFunctionData('setMembershipLimit', [
+            const callData = space.Membership.encodeFunctionData('setMembershipLimit', [
                 newMembershipSupply,
             ])
             txs.push({
@@ -1809,7 +1810,7 @@ export class UserOps {
         return this.builder
     }
 
-    private async addMiddleware({
+    private addMiddleware({
         builder,
         signer,
     }: {
@@ -1900,13 +1901,8 @@ export class UserOps {
             .useMiddleware(async (ctx) => {
                 const { functionHashForPaymasterProxy, txValue, spaceId } = this.middlewareVars
                 const space = spaceId ? this.spaceDapp?.getSpace(spaceId) : undefined
-                return saveOpToUserOpsStore(
-                    ctx,
-                    functionHashForPaymasterProxy,
-                    txValue,
-                    builder,
-                    space,
-                )
+                saveOpToUserOpsStore(ctx, functionHashForPaymasterProxy, txValue, builder, space)
+                return Promise.resolve()
             })
             // prompt user if the paymaster rejected
             .useMiddleware(async (ctx) => {
@@ -1954,7 +1950,7 @@ export class UserOps {
      * Collectively these calls can take > 1s
      * So optionally you can call this method to prep the builder and userOpClient prior to sending the first user operation
      */
-    public setup(signer: ethers.Signer) {
+    public async setup(signer: ethers.Signer) {
         return Promise.all([this.getBuilder({ signer }), this.getUserOpClient()])
     }
 

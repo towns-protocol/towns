@@ -32,7 +32,7 @@ test('can update a space (name) via userop', async () => {
     const spaceId = await getSpaceId(spaceDapp, receipt, bob.wallet.address, userOps)
     expect(spaceId).toBeDefined()
 
-    const town = spaceDapp.getSpace(spaceId!)
+    const town = spaceDapp.getSpace(spaceId)
 
     expect((await town?.getSpaceInfo())?.name).toBe(ogName)
 

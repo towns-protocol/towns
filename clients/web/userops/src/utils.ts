@@ -1,9 +1,8 @@
-import { ContractTransaction, ethers } from 'ethers'
+import { ContractTransaction, ethers, BigNumberish, BigNumber, BytesLike } from 'ethers'
 import { ISendUserOperationResponse, IUserOperation } from 'userop'
 import { Address, Space } from '@river-build/web3'
 import { FunctionHash } from './types'
 import { decodeTransferCallData } from './generateTransferCallData'
-import { BigNumber, BytesLike } from 'ethers'
 import { TownsSimpleAccount } from './TownsSimpleAccount'
 
 export function isUserOpResponse(
@@ -90,9 +89,12 @@ export function decodeCallData<F extends FunctionHash>(args: {
                     break
                 }
                 const [, , dataBytes] = builder.decodeExecute(callData)
-                const decoded = space.Prepay.decodeFunctionData('prepayMembership', dataBytes)
+                const decoded = space.Prepay.decodeFunctionData(
+                    'prepayMembership',
+                    dataBytes as BytesLike,
+                )
 
-                const supply = decoded[0]
+                const supply = decoded[0] as BigNumberish
                 if (supply === undefined) {
                     break
                 }
@@ -104,7 +106,9 @@ export function decodeCallData<F extends FunctionHash>(args: {
             }
             case 'transferTokens': {
                 const [, , dataBytes] = builder.decodeExecute(callData)
-                const [fromAddress, recipient, tokenId] = decodeTransferCallData(dataBytes)
+                const [fromAddress, recipient, tokenId] = decodeTransferCallData(
+                    dataBytes as string,
+                )
 
                 if (!fromAddress || !recipient || !tokenId) {
                     break
@@ -112,7 +116,7 @@ export function decodeCallData<F extends FunctionHash>(args: {
                 data = {
                     fromAddress: fromAddress as Address,
                     recipient: recipient as Address,
-                    tokenId: tokenId.toString(),
+                    tokenId: BigNumber.from(tokenId).toString(),
                 }
                 break
             }
@@ -132,7 +136,7 @@ export function decodeCallData<F extends FunctionHash>(args: {
                     break
                 }
                 const [, , dataBytes] = builder.decodeExecute(callData)
-                const [to] = space.Membership.decodeFunctionData('withdraw', dataBytes)
+                const [to] = space.Membership.decodeFunctionData('withdraw', dataBytes as BytesLike)
                 if (!to) {
                     break
                 }

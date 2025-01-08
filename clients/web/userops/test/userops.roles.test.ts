@@ -75,7 +75,7 @@ test('can create, update, and delete a role with user ops', async () => {
     role = roles.find((r) => r.name === NEW_ROLE_NAME)
     expect(role).toBeDefined()
 
-    const updatedRole = await spaceDapp.getRole(spaceId!, role!.roleId)
+    const updatedRole = await spaceDapp.getRole(spaceId, role!.roleId)
     expect(updatedRole?.name).toBe(NEW_ROLE_NAME)
     expect(updatedRole?.permissions).toHaveLength(2)
 
@@ -84,6 +84,6 @@ test('can create, update, and delete a role with user ops', async () => {
     await waitForOpAndTx(deleteRoleOp, alice)
     await sleepBetweenTxs()
 
-    const deletedRole = await spaceDapp.getRole(spaceId!, role!.roleId)
+    const deletedRole = await spaceDapp.getRole(spaceId, role!.roleId)
     expect(deletedRole).toBeNull()
 })

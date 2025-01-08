@@ -72,8 +72,8 @@ test('can create and update channel', async () => {
     expect(newRole).toBeDefined()
 
     const channelDetailsFirstCheck = await spaceDapp.getChannelDetails(
-        spaceId!,
-        createdChannel!.channelNetworkId!,
+        spaceId,
+        createdChannel!.channelNetworkId,
     )
     expect(channelDetailsFirstCheck?.name).toBe(TEST_CHANNEL_NAME)
     expect(channelDetailsFirstCheck?.roles).toHaveLength(0)
@@ -81,7 +81,7 @@ test('can create and update channel', async () => {
     const updateChannelOp = await userOps.sendUpdateChannelOp([
         {
             spaceId,
-            channelId: createdChannel!.channelNetworkId!,
+            channelId: createdChannel!.channelNetworkId,
             channelName: NEW_CHANNEL_NAME,
             channelDescription: '',
             roleIds: [newRole!.roleId],
@@ -92,8 +92,8 @@ test('can create and update channel', async () => {
     await sleepBetweenTxs()
 
     const channelDetailsSecondCheck = await spaceDapp.getChannelDetails(
-        spaceId!,
-        createdChannel!.channelNetworkId!,
+        spaceId,
+        createdChannel!.channelNetworkId,
     )
     expect(channelDetailsSecondCheck?.name).toBe(NEW_CHANNEL_NAME)
     expect(channelDetailsSecondCheck?.roles).toHaveLength(1)
@@ -178,8 +178,8 @@ test('can create a channel with permission overrides', async () => {
     expect(channelPermissionOverridesAfterCreate).not.toHaveLength(0)
 
     const channelDetailsFirstCheck = await spaceDapp.getChannelDetails(
-        spaceId!,
-        createdChannel!.channelNetworkId!,
+        spaceId,
+        createdChannel.channelNetworkId,
     )
 
     let hasPermission: boolean
@@ -191,6 +191,10 @@ test('can create a channel with permission overrides', async () => {
         createdChannel.channelNetworkId,
         bob.wallet.address,
         Permission.PinMessage,
+        {
+            supportedRpcUrls: [],
+            etherBasedChains: [],
+        },
     )
     expect(hasPermission).toBe(true)
 
@@ -199,6 +203,10 @@ test('can create a channel with permission overrides', async () => {
         createdChannel.channelNetworkId,
         bob.wallet.address,
         Permission.Write,
+        {
+            supportedRpcUrls: [],
+            etherBasedChains: [],
+        },
     )
     expect(hasPermission).toBe(false)
 
@@ -263,6 +271,10 @@ test('can create a channel with permission overrides', async () => {
         createdChannel.channelNetworkId,
         bob.wallet.address,
         Permission.Write,
+        {
+            supportedRpcUrls: [],
+            etherBasedChains: [],
+        },
     )
     expect(hasPermission).toBe(false)
 })

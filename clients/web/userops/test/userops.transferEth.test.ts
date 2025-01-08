@@ -115,7 +115,7 @@ test('cannot transfer eth if value is less than gas cost', async () => {
 
     const randomWallet = Wallet.createRandom().connect(spaceDapp.provider)
 
-    expect(
+    await expect(
         userOpsAlice.sendTransferEthOp(
             { recipient: randomWallet.address, value: amountToTransfer },
             alice.wallet,

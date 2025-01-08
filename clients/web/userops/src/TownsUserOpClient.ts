@@ -113,10 +113,10 @@ export class TownsUserOpClient {
                     const polledAction = await this.poll<EthGetUserOperationReceiptResponse>({
                         action: async () => {
                             try {
-                                const receipt = await this.provider.send(
+                                const receipt = (await this.provider.send(
                                     'eth_getUserOperationReceipt',
                                     [userOpHash],
-                                )
+                                )) as EthGetUserOperationReceiptResponse
 
                                 if (isEthGetUserOperationReceiptResponse(receipt)) {
                                     return receipt

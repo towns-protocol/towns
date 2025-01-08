@@ -152,7 +152,7 @@ export const paymasterProxyMiddleware = async (
                 'X-PM-Token': accessToken ?? '',
             },
         })
-        const json = await response.json()
+        const json: unknown = await response.json()
 
         if (!response.ok) {
             const errorParseResult = zErrorSchema.safeParse(json)

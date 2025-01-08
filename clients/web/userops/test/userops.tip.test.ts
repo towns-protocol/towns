@@ -148,7 +148,7 @@ test('can send tip to space member', async () => {
     expect((await bob.getBalance(bobAAAddress!)).toBigInt()).toBe(tipAmount)
 
     // bob should have the tip amount in his metamask address
-    expect((await bob.getBalance(metamaskAddress!)).toBigInt()).toBe(tipAmount)
+    expect((await bob.getBalance(metamaskAddress)).toBigInt()).toBe(tipAmount)
 
     // tip bob again. The membership NFT is in his metamask, but we want to tip his AA address
     await fundWallet(aliceAAAddress!, alice)
@@ -171,5 +171,5 @@ test('can send tip to space member', async () => {
     await sleepBetweenTxs()
 
     expect((await bob.getBalance(bobAAAddress!)).toBigInt()).toBe(tipAmount * 2n)
-    expect((await bob.getBalance(metamaskAddress!)).toBigInt()).toBe(tipAmount)
+    expect((await bob.getBalance(metamaskAddress)).toBigInt()).toBe(tipAmount)
 })

@@ -10,7 +10,7 @@ export type ErrorCategory = keyof typeof errorCategories
 
 export class CodeException extends Error {
     code: number | string
-    data: unknown | undefined
+    data: unknown
     category: ErrorCategory
     constructor(args: {
         message: string
@@ -123,12 +123,16 @@ export function errorToCodeException(error: unknown, category: ErrorCategory) {
             }
 
             try {
-                const parsedData = JSON.parse(`{${errorMatch?.replace(/\\/g, '')}}`)
+                const parsedData = JSON.parse(
+                    `{${errorMatch?.replace(/\\/g, '')}}`,
+                ) as ParsedErrorData
                 return makeCodeException(parsedData)
             } catch (error) {
                 try {
                     // if nested in revertData, needs an extra curly brace to be valid JSON
-                    const parsedData = JSON.parse(`{${errorMatch?.replace(/\\/g, '')}}}`)
+                    const parsedData = JSON.parse(
+                        `{${errorMatch?.replace(/\\/g, '')}}}`,
+                    ) as ParsedErrorData
                     return makeCodeException(parsedData)
                 } catch (error) {
                     console.error('[errorToCodeException] failed to parse error', error)
@@ -149,11 +153,9 @@ export function errorToCodeException(error: unknown, category: ErrorCategory) {
 type ParsedErrorData = {
     message: string | undefined
     code: number | string | undefined
-    data?:
-        | {
-              revertData?: unknown
-          }
-        | unknown
+    data?: {
+        revertData?: unknown
+    }
 }
 
 function isParsedErrorData(parsedData: unknown): parsedData is ParsedErrorData {

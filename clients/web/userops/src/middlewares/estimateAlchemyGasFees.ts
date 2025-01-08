@@ -9,6 +9,7 @@ export async function estimateAlchemyGasFees(
 ) {
     try {
         // https://docs.alchemy.com/reference/bundler-api-fee-logic
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         const [fee, block] = await Promise.all([
             provider.send('rundler_maxPriorityFeePerGas', []),
             provider.getBlock('latest'),

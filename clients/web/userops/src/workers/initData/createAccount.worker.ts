@@ -1,3 +1,4 @@
+import { Address } from '@river-build/web3'
 import { utils, providers, BigNumber, BigNumberish } from 'ethers'
 import { EntryPoint__factory, SimpleAccountFactory__factory } from 'userop/dist/typechain'
 import { ERC4337 } from '../../constants'
@@ -11,14 +12,14 @@ export type CreateAccountWorkerMessage = {
 
 export type CreateAccountWorkerReturn = {
     initCode: string
-    addr: string
+    addr: Address
 }
 
 self.onmessage = async (e: MessageEvent<CreateAccountWorkerMessage>) => {
     const { factoryAddress, signerAddress, rpcUrl, salt } = e.data
 
     let initCode: string
-    let addr: string
+    let addr: Address
 
     try {
         initCode = utils.hexConcat([
@@ -40,7 +41,9 @@ self.onmessage = async (e: MessageEvent<CreateAccountWorkerMessage>) => {
             throw new Error('getSenderAddress: unexpected result')
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
             if (typeof error?.errorArgs?.sender === 'string') {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
                 addr = error.errorArgs.sender
             } else {
                 throw error
@@ -48,6 +51,7 @@ self.onmessage = async (e: MessageEvent<CreateAccountWorkerMessage>) => {
         }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         throw new Error(`Worker failed: ${error.message} - Stack: ${error.stack}`)
     }
 

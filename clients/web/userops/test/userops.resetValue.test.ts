@@ -72,10 +72,14 @@ test('userops with different values are sent correctly', async () => {
     await waitForOpAndTx(joinOp1, bob)
     await sleepBetweenTxs()
     const format = (val: string) => ethers.utils.formatEther(val)
+    // eslint-disable-next-line @typescript-eslint/no-base-to-string
     expect(format(executeSpy.mock.lastCall![1].toString())).toBe('0.1')
+    // eslint-disable-next-line @typescript-eslint/no-base-to-string
     expect(format(userOpsBob.middlewareVars.txValue!.toString())).toBe('0.1')
 
     await userOpsBob.sendJoinSpaceOp([spaceId2, bob.wallet.address, bob.wallet])
+    // eslint-disable-next-line @typescript-eslint/no-base-to-string
     expect(format(executeSpy.mock.lastCall![1].toString())).toBe('0.2')
+    // eslint-disable-next-line @typescript-eslint/no-base-to-string
     expect(format(userOpsBob.middlewareVars.txValue!.toString())).toBe('0.2')
 })
