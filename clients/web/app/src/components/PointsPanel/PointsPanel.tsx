@@ -157,7 +157,7 @@ const useHandleCheckin = (abstractAccountAddress: `0x${string}` | undefined) => 
         ) {
             return
         }
-        const incrementPoints = Math.min(3, data.riverPoints - currentPointsRef.current)
+        const incrementPoints = data.riverPoints - currentPointsRef.current
         console.log('[river-points] incrementPoints', incrementPoints)
         if (incrementPoints) {
             isAwaitingPointsRef.current = false
