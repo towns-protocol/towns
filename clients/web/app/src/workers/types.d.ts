@@ -7,6 +7,7 @@ export enum NotificationKind {
     NewMessage = 'new_message',
     ReplyTo = 'reply_to',
     Reaction = 'reaction',
+    Tip = 'tip',
 }
 
 export type AppNotification = {

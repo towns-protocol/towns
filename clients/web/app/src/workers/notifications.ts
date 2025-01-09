@@ -24,7 +24,11 @@ import { checkClientIsVisible, getShortenedName, stringHasValue } from './utils'
 import { CurrentUser, NotificationCurrentUser } from '../store/notificationCurrentUser'
 import { NotificationStore } from '../store/notificationStore'
 import { env } from '../utils/environment'
-import { getEncryptedData, htmlToText } from './data_transforms'
+import {
+    getEncryptedData,
+    getPlaintextDetailsForNonEncryptedEvents,
+    htmlToText,
+} from './data_transforms'
 import { NotificationRelEntry, getPathnameWithParams, getUrlWithParams } from '../data/rel'
 
 const MIDDLE_DOT = '\u00B7'
@@ -517,6 +521,29 @@ function generateReplyToTitle(
     }
 }
 
+function generateTipTitle(
+    sender: string | undefined,
+    townName: string | undefined,
+    channelName: string | undefined,
+): string {
+    log('generateTipTitle', 'sender', sender, 'townName', townName, 'channelName', channelName)
+    if (sender && townName && channelName) {
+        return `${sender} tipped ${MIDDLE_DOT} #${channelName} ${MIDDLE_DOT} ${townName}`
+    } else if (sender && townName && !channelName) {
+        return `${sender} tipped ${MIDDLE_DOT} ${townName}`
+    } else if (sender && !townName && channelName) {
+        return `${sender} tipped ${MIDDLE_DOT} #${channelName}`
+    } else if (!sender && townName && channelName) {
+        return `#${channelName} ${MIDDLE_DOT} ${townName}`
+    } else if (!sender && townName && !channelName) {
+        return `Received tip in ${townName}`
+    } else if (!sender && !townName && channelName) {
+        return `Received tip in #${channelName}`
+    } else {
+        return 'Received tip'
+    }
+}
+
 interface ReplyToMessageInput {
     kind: NotificationKind
     spaceId: string
@@ -582,6 +609,34 @@ function generateReplyToMessage({
         title,
         body,
         refEventId,
+    }
+}
+
+function generateTipMessage(args: {
+    kind: NotificationKind.Tip
+    spaceId: string
+    townName: string | undefined
+    channelId: string
+    channelName: string | undefined
+    senderId: string
+    senderName: string | undefined
+    threadId: string | undefined
+    refEventId: string | undefined
+}): NotificationContent {
+    const title = generateTipTitle(args.senderName, args.townName, args.channelName)
+    const senderText = stringHasValue(args.senderName) ? `@${args.senderName}` : 'Someone'
+    const formattedChannelName = stringHasValue(args.channelName)
+        ? `#${args.channelName}`
+        : `a channel you're in`
+    const body = `${senderText} tipped your post in ${formattedChannelName}`
+    return {
+        kind: args.kind,
+        spaceId: args.spaceId,
+        channelId: args.channelId,
+        threadId: args.threadId,
+        title,
+        body,
+        refEventId: args.refEventId,
     }
 }
 
@@ -690,6 +745,18 @@ async function getNotificationContent(
             senderName,
             plaintext,
         })
+    } else if (kind === NotificationKind.Tip) {
+        return generateTipMessage({
+            kind,
+            spaceId,
+            townName,
+            channelId: notification.content.channelId,
+            channelName,
+            senderId: notification.content.senderId,
+            senderName,
+            threadId: notification.content.threadId,
+            refEventId: plaintext?.refEventId,
+        })
     } else if (notification.content.threadId) {
         return generateReplyToMessage({
             kind,
@@ -763,7 +830,7 @@ async function tryDecryptEvent(
     try {
         const encryptedData = getEncryptedData(event)
         if (!encryptedData) {
-            return undefined
+            return getPlaintextDetailsForNonEncryptedEvents(event)
         }
         await Promise.race([decryptPromise(encryptedData), timeoutPromise])
         if (plaintext) {
