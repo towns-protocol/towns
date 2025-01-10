@@ -234,7 +234,7 @@ module "river_notification_service" {
   system_parameters              = module.system_parameters
 
   cpu    = 8192
-  memory = 49152
+  memory = 53248
 }
 
 module "network_health_monitor" {
