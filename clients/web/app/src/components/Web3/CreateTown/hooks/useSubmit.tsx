@@ -135,12 +135,17 @@ export const useSubmit = (props: Props) => {
                         return
                     }
 
-                    const isFixedPricing = data.slideMembership.clientMembershipFee !== 'dynamic'
+                    const isFixedPricing =
+                        data.clientTownType === 'free' ||
+                        data.slideMembership.clientMembershipFee !== 'dynamic'
 
                     const fixedPricingModuleAddress = await fixedPricingModule?.module
                     const dynamicPricingModuleAddress = await dynamicPricingModule?.module
 
+                    const townType = data.clientTownType
+
                     const { price, pricingModule, freeAllocation } = getPriceConfiguration({
+                        townType,
                         isFixedPricing,
                         fixedPricingModuleAddress,
                         dynamicPricingModuleAddress,
@@ -306,6 +311,7 @@ type PriceConfiguration = {
 }
 
 function getPriceConfiguration(args: {
+    townType: CreateTownFormSchema['clientTownType']
     isFixedPricing: boolean
     fixedPricingModuleAddress: string | undefined
     dynamicPricingModuleAddress: string | undefined
@@ -313,6 +319,7 @@ function getPriceConfiguration(args: {
     price: bigint
 }): PriceConfiguration {
     const {
+        townType,
         isFixedPricing,
         fixedPricingModuleAddress,
         dynamicPricingModuleAddress,
@@ -323,7 +330,7 @@ function getPriceConfiguration(args: {
         if (!fixedPricingModuleAddress) {
             throw new Error('Fixed pricing module address is undefined')
         }
-        if (price === 0n) {
+        if (townType === 'free') {
             if (platformMintLimit === undefined) {
                 throw new Error('Platform mint limit is undefined')
             }

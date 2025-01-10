@@ -253,6 +253,109 @@ describe('CreateTown', () => {
             )
         })
     })
+
+    it('should should create a free town even after user entered a fixed price', async () => {
+        vi.spyOn(Lib, 'useCreateSpaceTransaction').mockImplementation(
+            useMockedCreateSpaceTransaction,
+        )
+
+        await actions.setup()
+
+        await userEvent.type(screen.getByPlaceholderText('Town Name'), 'testtown')
+        await actions.uploadImage()
+
+        const freeOption = await screen.findByTestId('option-towntype-free')
+        const paidOption = await screen.findByTestId('option-towntype-paid')
+        await userEvent.click(paidOption)
+        await userEvent.click(await screen.findByTestId('option-fee-fixed'))
+        await userEvent.type(screen.getByPlaceholderText('Enter amount'), '1.1')
+
+        if (GATING_ENABLED) {
+            const anyone = await screen.findByTestId('option-canjoin-anyone')
+            await userEvent.click(anyone)
+        }
+
+        await userEvent.click(freeOption)
+
+        expect(screen.queryByPlaceholderText('Enter amount')).not.toBeInTheDocument()
+
+        const createButton = await screen.findByTestId('create-town-button')
+        expect(createButton).toBeEnabled()
+
+        await userEvent.click(createButton)
+
+        await waitFor(async () => {
+            const expected = getCreateSpaceTransactionDefaultResult()
+            return expect(createSpaceTransactionSpy).toHaveBeenCalledWith(
+                { name: 'testtown' },
+                {
+                    ...expected,
+                    requirements: {
+                        ...expected.requirements,
+                    },
+                    settings: {
+                        ...expected.settings,
+                        pricingModule: `0x${Lib.FIXED_PRICING}`,
+                        freeAllocation: 1000,
+                        price: 0n,
+                    },
+                },
+                {},
+                expect.anything(),
+            )
+        })
+    })
+
+    it('should should create a free town after selecting free after selecting dynamic', async () => {
+        vi.spyOn(Lib, 'useCreateSpaceTransaction').mockImplementation(
+            useMockedCreateSpaceTransaction,
+        )
+
+        await actions.setup()
+
+        await userEvent.type(screen.getByPlaceholderText('Town Name'), 'testtown')
+        await actions.uploadImage()
+
+        const freeOption = await screen.findByTestId('option-towntype-free')
+        const paidOption = await screen.findByTestId('option-towntype-paid')
+        await userEvent.click(paidOption)
+        await userEvent.click(await screen.findByTestId('option-fee-dynamic'))
+
+        if (GATING_ENABLED) {
+            const anyone = await screen.findByTestId('option-canjoin-anyone')
+            await userEvent.click(anyone)
+        }
+
+        await userEvent.click(freeOption)
+
+        expect(screen.queryByPlaceholderText('Enter amount')).not.toBeInTheDocument()
+
+        const createButton = await screen.findByTestId('create-town-button')
+        expect(createButton).toBeEnabled()
+
+        await userEvent.click(createButton)
+
+        await waitFor(async () => {
+            const expected = getCreateSpaceTransactionDefaultResult()
+            return expect(createSpaceTransactionSpy).toHaveBeenCalledWith(
+                { name: 'testtown' },
+                {
+                    ...expected,
+                    requirements: {
+                        ...expected.requirements,
+                    },
+                    settings: {
+                        ...expected.settings,
+                        pricingModule: `0x${Lib.FIXED_PRICING}`,
+                        freeAllocation: 1000,
+                        price: 0n,
+                    },
+                },
+                {},
+                expect.anything(),
+            )
+        })
+    })
 })
 
 // helpers
