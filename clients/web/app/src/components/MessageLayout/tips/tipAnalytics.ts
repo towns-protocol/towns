@@ -16,6 +16,7 @@ export const trackTipAmount = async (cents: number) => {
         })
         Analytics.getInstance().track('clicked tip amount', {
             tipAmount: ethAmount.formatted, // in ETH- eg 0.005
+            tipAmountUsd: formatUsd(cents),
         })
     } catch (error) {
         console.error('Error tracking tip amount', error)
@@ -23,6 +24,7 @@ export const trackTipAmount = async (cents: number) => {
 }
 
 export const trackPostedTip = (args: {
+    cents: number
     tipAmount: string
     receipient: string
     spaceName: string
@@ -30,8 +32,9 @@ export const trackPostedTip = (args: {
     isGated: boolean
     pricingModule: 'fixed' | 'dynamic' | 'free'
 }) => {
-    const { tipAmount, receipient, spaceName, spaceId, isGated, pricingModule } = args
+    const { tipAmount, receipient, spaceName, spaceId, isGated, pricingModule, cents } = args
     Analytics.getInstance().track('posted tip', {
+        tipAmountUsd: formatUsd(cents),
         tipAmount, // in ETH- eg 0.005
         receipient, // address
         spaceName,
@@ -39,4 +42,13 @@ export const trackPostedTip = (args: {
         isGated, // boolean
         pricingModule, // pricing model of space 'fixed' | 'dynamic' | 'free'
     })
+}
+
+function formatUsd(cents: number) {
+    return (cents / 100)
+        .toLocaleString('en-US', {
+            style: 'currency',
+            currency: 'USD',
+        })
+        .replace('$', '')
 }

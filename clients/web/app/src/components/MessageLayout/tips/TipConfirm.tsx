@@ -134,6 +134,7 @@ export function TipConfirm(props: {
             {
                 onSuccess: (tipEvent) => {
                     trackPostedTip({
+                        cents: tipValue.amountInCents,
                         tipAmount: ethAmount.formatted,
                         receipient: tipEvent.receiver,
                         spaceName: spaceInfo?.name ?? '',
