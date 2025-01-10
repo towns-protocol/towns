@@ -5,6 +5,7 @@ import (
 
 	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/river-build/river/core/node/crypto"
 	. "github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/shared"
@@ -90,7 +91,7 @@ func (ts *TrackedNotificationStreamView) ApplyBlock(
 	miniblock *Miniblock,
 	cfg *crypto.OnChainSettings,
 ) error {
-	mb, err := NewMiniblockInfoFromProto(miniblock, NewMiniblockInfoFromProtoOpts{ExpectedBlockNumber: -1})
+	mb, err := NewMiniblockInfoFromProto(miniblock, NewParsedMiniblockInfoOpts())
 	if err != nil {
 		return err
 	}

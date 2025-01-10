@@ -34,7 +34,7 @@ func MakeGenesisMiniblockForSpaceStream(
 
 	mbInfo, err := NewMiniblockInfoFromProto(
 		mb,
-		NewMiniblockInfoFromProtoOpts{ExpectedBlockNumber: 0, DontParseEvents: true},
+		NewParsedMiniblockInfoOpts().WithExpectedBlockNumber(0).WithDoNotParseEvents(true),
 	)
 	require.NoError(t, err)
 	return mbInfo
@@ -58,7 +58,7 @@ func MakeGenesisMiniblockForUserSettingsStream(
 
 	mbInfo, err := NewMiniblockInfoFromProto(
 		mb,
-		NewMiniblockInfoFromProtoOpts{ExpectedBlockNumber: 0, DontParseEvents: true},
+		NewParsedMiniblockInfoOpts().WithExpectedBlockNumber(0).WithDoNotParseEvents(true),
 	)
 	require.NoError(t, err)
 
@@ -249,7 +249,7 @@ func TestCandidatePromotionCandidateInPlace(t *testing.T) {
 	addEventToStream(t, ctx, tt.instances[0].params, stream, "2", view.LastBlock().Ref)
 
 	remotes, _ := stream.GetRemotesAndIsLocal()
-	proposal, err := mbProduceCandiate_Make(
+	proposal, err := mbProduceCandidate_Make(
 		ctx,
 		tt.instances[0].params,
 		getView(t, ctx, stream),
@@ -302,7 +302,7 @@ func TestCandidatePromotionCandidateIsDelayed(t *testing.T) {
 
 	view = getView(t, ctx, stream)
 	require.Equal(2, view.minipool.size())
-	proposal1, err := mbProduceCandiate_Make(ctx, params, view, false, remotes)
+	proposal1, err := mbProduceCandidate_Make(ctx, params, view, false, remotes)
 	require.NoError(err)
 	require.NotNil(proposal1)
 	require.Len(proposal1.Events(), 2)
@@ -330,7 +330,7 @@ func TestCandidatePromotionCandidateIsDelayed(t *testing.T) {
 		view1 := getView(t, ctx, stream)
 		view1 = addEventToView(t, params, view1, fmt.Sprintf("%d", i+3), view1.LastBlock().Ref)
 
-		proposal2, err := mbProduceCandiate_Make(ctx, params, view1, false, remotes)
+		proposal2, err := mbProduceCandidate_Make(ctx, params, view1, false, remotes)
 		require.NoError(err)
 		require.NotNil(proposal2)
 		require.Equal(int64(i*3+2), proposal2.headerEvent.Event.GetMiniblockHeader().MiniblockNum)
@@ -342,7 +342,7 @@ func TestCandidatePromotionCandidateIsDelayed(t *testing.T) {
 		view2 = addEventToView(t, params, view2, "4", view2.LastBlock().Ref)
 		view2 = addEventToView(t, params, view2, "5", view2.LastBlock().Ref)
 
-		proposal3, err := mbProduceCandiate_Make(ctx, params, view2, false, remotes)
+		proposal3, err := mbProduceCandidate_Make(ctx, params, view2, false, remotes)
 		require.NoError(err)
 		require.NotNil(proposal3)
 		require.Equal(int64(i*3+3), proposal3.headerEvent.Event.GetMiniblockHeader().MiniblockNum)
@@ -354,7 +354,7 @@ func TestCandidatePromotionCandidateIsDelayed(t *testing.T) {
 		view3 = addEventToView(t, params, view3, "6", view3.LastBlock().Ref)
 		view3 = addEventToView(t, params, view3, "7", view3.LastBlock().Ref)
 
-		proposal4, err := mbProduceCandiate_Make(ctx, params, view3, false, remotes)
+		proposal4, err := mbProduceCandidate_Make(ctx, params, view3, false, remotes)
 		require.NoError(err)
 		require.NotNil(proposal4)
 		require.Equal(int64(i*3+4), proposal4.headerEvent.Event.GetMiniblockHeader().MiniblockNum)

@@ -247,10 +247,12 @@ func (up *UserPreferences) WantsNotificationForGDMMessage(
 			msgInteractionType == MessageInteractionType_MESSAGE_INTERACTION_TYPE_UNSPECIFIED ||
 			msgInteractionType == MessageInteractionType_MESSAGE_INTERACTION_TYPE_REPLY ||
 			msgInteractionType == MessageInteractionType_MESSAGE_INTERACTION_TYPE_POST ||
-			(isParticipating && msgInteractionType == MessageInteractionType_MESSAGE_INTERACTION_TYPE_REACTION)
+			(isParticipating && msgInteractionType == MessageInteractionType_MESSAGE_INTERACTION_TYPE_REACTION) ||
+			(isParticipating && msgInteractionType == MessageInteractionType_MESSAGE_INTERACTION_TYPE_TIP)
 	case GdmChannelSettingValue_GDM_ONLY_MENTIONS_REPLIES_REACTIONS:
 		return mentioned ||
 			(isParticipating && msgInteractionType == MessageInteractionType_MESSAGE_INTERACTION_TYPE_REACTION) ||
+			(isParticipating && msgInteractionType == MessageInteractionType_MESSAGE_INTERACTION_TYPE_TIP) ||
 			(isParticipating && msgInteractionType == MessageInteractionType_MESSAGE_INTERACTION_TYPE_REPLY)
 	case GdmChannelSettingValue_GDM_MESSAGES_NO: // disabled notifications for all GDM channels
 		return false
@@ -293,6 +295,8 @@ func (up *UserPreferences) WantNotificationForSpaceChannelMessage(
 	switch setting {
 	case SpaceChannelSettingValue_SPACE_CHANNEL_SETTING_MESSAGES_ALL:
 		switch msgInteractionType {
+		case MessageInteractionType_MESSAGE_INTERACTION_TYPE_TIP:
+			return participating
 		case MessageInteractionType_MESSAGE_INTERACTION_TYPE_REPLY:
 			return participating || mentioned
 		case MessageInteractionType_MESSAGE_INTERACTION_TYPE_REACTION:
@@ -308,7 +312,8 @@ func (up *UserPreferences) WantNotificationForSpaceChannelMessage(
 	case SpaceChannelSettingValue_SPACE_CHANNEL_SETTING_ONLY_MENTIONS_REPLIES_REACTIONS:
 		return mentioned ||
 			(participating && msgInteractionType == MessageInteractionType_MESSAGE_INTERACTION_TYPE_REACTION) ||
-			(participating && msgInteractionType == MessageInteractionType_MESSAGE_INTERACTION_TYPE_REPLY)
+			(participating && msgInteractionType == MessageInteractionType_MESSAGE_INTERACTION_TYPE_REPLY) ||
+			(participating && msgInteractionType == MessageInteractionType_MESSAGE_INTERACTION_TYPE_TIP)
 	case SpaceChannelSettingValue_SPACE_CHANNEL_SETTING_NO_MESSAGES:
 		return false
 	case SpaceChannelSettingValue_SPACE_CHANNEL_SETTING_NO_MESSAGES_AND_MUTE:

@@ -15,6 +15,8 @@ enum ValidationResult {
     INVALID_GROUP_INFO_GROUP_ID_MISMATCH = 9;
     INVALID_EXTERNAL_GROUP_TOO_MANY_MEMBERS = 10;
     INVALID_PUBLIC_SIGNATURE_KEY = 11;
+    INVALID_KEY_PACKAGE = 12;
+    INVALID_PROPOSAL = 13;
 }
 
 message MlsRequest {
@@ -22,7 +24,19 @@ message MlsRequest {
         InitialGroupInfoRequest initial_group_info = 1;
         ExternalJoinRequest external_join = 2;
         SnapshotExternalGroupRequest snapshot_external_group = 3;
+        KeyPackageRequest key_package = 4;
+        WelcomeMessageRequest welcome_message = 5;
     }
+}
+
+message KeyPackage {
+    bytes key_package = 1;
+    bytes signature_public_key = 2;
+}
+
+message MlsGroupState {
+    bytes external_group_snapshot = 1;
+    repeated bytes commits = 2;
 }
 
 message InitialGroupInfoRequest {
@@ -36,14 +50,34 @@ message InitialGroupInfoResponse {
 }
 
 message ExternalJoinRequest {
-    bytes external_group_snapshot = 1;
-    repeated bytes commits = 2;
-    bytes proposed_external_join_info_message = 3;
-    bytes proposed_external_join_commit = 4;
-    bytes signature_public_key = 5;
+    MlsGroupState group_state = 1;
+    bytes proposed_external_join_info_message = 2;
+    bytes proposed_external_join_commit = 3;
+    bytes signature_public_key = 4;
 }
 
 message ExternalJoinResponse {
+    ValidationResult result = 1;
+}
+
+message KeyPackageRequest {
+    MlsGroupState group_state = 1;
+    KeyPackage key_package = 2;
+}
+
+message KeyPackageResponse {
+    ValidationResult result = 1;
+}
+
+message WelcomeMessageRequest {
+    MlsGroupState group_state = 1;
+    bytes welcome_message_commit = 2;
+    repeated bytes welcome_messages = 3; // for now lives inside the stream
+    repeated bytes signature_public_keys = 4;
+    bytes group_info_message = 5;
+}
+
+message WelcomeMessageResponse {
     ValidationResult result = 1;
 }
 

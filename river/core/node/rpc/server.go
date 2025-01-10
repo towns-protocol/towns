@@ -666,7 +666,7 @@ func (s *Service) initCacheAndSync(opts *ServerStartOpts) error {
 	if opts != nil && opts.ScrubberMaker != nil {
 		cacheParams.Scrubber = opts.ScrubberMaker(s.serverCtx, s)
 	} else {
-		cacheParams.Scrubber = scrub.NewStreamScrubTasksProcessor(
+		cacheParams.Scrubber = scrub.NewStreamMembershipScrubTasksProcessor(
 			s.serverCtx,
 			s.cache,
 			s,

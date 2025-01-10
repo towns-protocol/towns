@@ -239,6 +239,7 @@ describe('transactions_Tip', () => {
                 dummyReceipt,
                 event,
                 aliceIdentity.rootWallet.address,
+                { disableTags: true },
             ),
         ).rejects.toThrow('matching tip event not found in receipt logs')
     })

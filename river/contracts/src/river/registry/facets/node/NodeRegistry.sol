@@ -15,6 +15,10 @@ import {RegistryModifiers} from "contracts/src/river/registry/libraries/Registry
 contract NodeRegistry is INodeRegistry, RegistryModifiers {
   using EnumerableSet for EnumerableSet.AddressSet;
 
+  function isNode(address nodeAddress) public view returns (bool) {
+    return ds.nodeByAddress[nodeAddress].nodeAddress != address(0);
+  }
+
   function registerNode(
     address nodeAddress,
     string memory url,

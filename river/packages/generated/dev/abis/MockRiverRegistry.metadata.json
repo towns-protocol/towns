@@ -922,6 +922,25 @@
         "inputs": [
           {
             "internalType": "address",
+            "name": "nodeAddress",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function",
+        "name": "isNode",
+        "outputs": [
+          {
+            "internalType": "bool",
+            "name": "",
+            "type": "bool"
+          }
+        ]
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
             "name": "operator",
             "type": "address"
           }
@@ -1073,6 +1092,38 @@
       {
         "inputs": [
           {
+            "internalType": "bytes32",
+            "name": "streamId",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "lastMiniblockHash",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "uint64",
+            "name": "lastMiniblockNum",
+            "type": "uint64"
+          },
+          {
+            "internalType": "bool",
+            "name": "isSealed",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function",
+        "name": "setStreamLastMiniblock"
+      },
+      {
+        "inputs": [
+          {
             "internalType": "struct SetMiniblock[]",
             "name": "miniblocks",
             "type": "tuple[]",
@@ -1147,6 +1198,15 @@
     "devdoc": {
       "kind": "dev",
       "methods": {
+        "allocateStream(bytes32,address[],bytes32,bytes)": {
+          "details": "Only callable by registered nodes",
+          "params": {
+            "genesisMiniblock": "The genesis miniblock data",
+            "genesisMiniblockHash": "The hash of the genesis miniblock",
+            "nodes": "The list of nodes to place the stream on",
+            "streamId": "The ID of the stream to allocate"
+          }
+        },
         "approveConfigurationManager(address)": {
           "params": {
             "manager": "The address to add"
@@ -1195,11 +1255,45 @@
           }
         },
         "getPaginatedStreams(uint256,uint256)": {
-          "details": "Recommended range is 5000 streams, returns true if on the last page."
+          "details": "Recommended range is 5000 streams to avoid gas limits",
+          "params": {
+            "start": "The starting index for pagination",
+            "stop": "The ending index for pagination"
+          },
+          "returns": {
+            "_0": "StreamWithId[] Array of streams with their IDs in the requested range",
+            "_1": "bool True if this is the last page of results"
+          }
+        },
+        "getStream(bytes32)": {
+          "params": {
+            "streamId": "The ID of the stream to get"
+          },
+          "returns": {
+            "_0": "Stream The stream data"
+          }
+        },
+        "getStreamCount()": {
+          "returns": {
+            "_0": "uint256 The total number of streams"
+          }
+        },
+        "getStreamCountOnNode(address)": {
+          "params": {
+            "nodeAddress": "The address of the node to check"
+          },
+          "returns": {
+            "_0": "uint256 The number of streams on the node"
+          }
         },
         "getStreamWithGenesis(bytes32)": {
+          "params": {
+            "streamId": "The ID of the stream to get"
+          },
           "returns": {
-            "_0": "stream, genesisMiniblockHash, genesisMiniblock"
+            "_0": "Stream The stream data",
+            "_1": "bytes32 The genesis miniblock hash",
+            "_2": "bytes The genesis miniblock data"
           }
         },
         "isConfigurationManager(address)": {
@@ -1210,9 +1304,29 @@
             "_0": "True if the address is a configuration manager"
           }
         },
+        "isStream(bytes32)": {
+          "params": {
+            "streamId": "The ID of the stream to check"
+          },
+          "returns": {
+            "_0": "bool True if the stream exists, false otherwise"
+          }
+        },
+        "placeStreamOnNode(bytes32,address)": {
+          "params": {
+            "nodeAddress": "The address of the node to place the stream on",
+            "streamId": "The ID of the stream to place"
+          }
+        },
         "removeConfigurationManager(address)": {
           "params": {
             "manager": "The address to remove"
+          }
+        },
+        "removeStreamFromNode(bytes32,address)": {
+          "params": {
+            "nodeAddress": "The address of the node to remove the stream from",
+            "streamId": "The ID of the stream to remove"
           }
         },
         "setConfiguration(bytes32,uint64,bytes)": {
@@ -1222,6 +1336,22 @@
             "key": "The keccak256 hash of the setting name",
             "value": "The setting value (value must be its ABI representation), can't be empty"
           }
+        },
+        "setStreamLastMiniblock(bytes32,bytes32,bytes32,uint64,bool)": {
+          "details": "Only callable by registered nodes",
+          "params": {
+            "isSealed": "Whether to mark the stream as sealed",
+            "lastMiniblockHash": "The hash of the new last miniblock",
+            "lastMiniblockNum": "The number of the new last miniblock",
+            "prevMiniblockHash": "The hash of the previous miniblock (currently unused)",
+            "streamId": "The ID of the stream to update"
+          }
+        },
+        "setStreamLastMiniblockBatch((bytes32,bytes32,bytes32,uint64,bool)[])": {
+          "details": "Only callable by registered nodesThis function allows updating multiple streams' last miniblock data in a single transaction",
+          "params": {
+            "miniblocks": "Array of SetMiniblock structs containing stream IDs and their last miniblock information"
+          }
         }
       },
       "version": 1
@@ -1229,6 +1359,9 @@
     "userdoc": {
       "kind": "user",
       "methods": {
+        "allocateStream(bytes32,address[],bytes32,bytes)": {
+          "notice": "Allocate a new stream in the registry"
+        },
         "approveConfigurationManager(address)": {
           "notice": "Add a configuration manager"
         },
@@ -1253,14 +1386,44 @@
         "getConfiguration(bytes32)": {
           "notice": "Get settings for the given key"
         },
+        "getPaginatedStreams(uint256,uint256)": {
+          "notice": "Get a paginated list of streams from the registry"
+        },
+        "getStream(bytes32)": {
+          "notice": "Get a stream from the registry"
+        },
+        "getStreamCount()": {
+          "notice": "Get the total number of streams in the registry"
+        },
+        "getStreamCountOnNode(address)": {
+          "notice": "Get the number of streams placed on a specific node"
+        },
+        "getStreamWithGenesis(bytes32)": {
+          "notice": "Get a stream and its genesis information from the registry"
+        },
         "isConfigurationManager(address)": {
           "notice": "Check if the given address is a configuration manager"
+        },
+        "isStream(bytes32)": {
+          "notice": "Check if a stream exists in the registry"
+        },
+        "placeStreamOnNode(bytes32,address)": {
+          "notice": "Place a stream on a specific node"
         },
         "removeConfigurationManager(address)": {
           "notice": "Remove a configuration manager"
         },
+        "removeStreamFromNode(bytes32,address)": {
+          "notice": "Remove a stream from a specific node"
+        },
         "setConfiguration(bytes32,uint64,bytes)": {
           "notice": "Set a bytes setting for the given key"
+        },
+        "setStreamLastMiniblock(bytes32,bytes32,bytes32,uint64,bool)": {
+          "notice": "Update the last miniblock information for a stream"
+        },
+        "setStreamLastMiniblockBatch((bytes32,bytes32,bytes32,uint64,bool)[])": {
+          "notice": "Set the last miniblock for multiple streams in a batch operation"
         }
       },
       "version": 1
@@ -1310,18 +1473,18 @@
       "license": "MIT"
     },
     "contracts/src/river/registry/facets/node/INodeRegistry.sol": {
-      "keccak256": "0x91ae5e33d5bc5eaf966789d8e1b03c6bb682ae363bdad4b94742bad0431990a6",
+      "keccak256": "0xf521b9a741e45f40098574a6e4f4e62a8e0b457fb053b57624463167691a8cdd",
       "urls": [
-        "bzz-raw://5e51a3f583b56c81aa6ce15c2521c7f6682d0292f77dfed420172d7104e1f482",
-        "dweb:/ipfs/QmSBmDqF8nR1wvFiqXgk6Z9GknAmZtrL2LStoRWFijEntv"
+        "bzz-raw://97eb4ed98fa25f98f4d2150d6e0b4dc5ade7c88d8b934b786891fb37bf380ce3",
+        "dweb:/ipfs/QmU9L2iJAKY6UnckhFAiq5Qw482DZzW4fiGVAJ6qkgPsrs"
       ],
       "license": "MIT"
     },
     "contracts/src/river/registry/facets/node/NodeRegistry.sol": {
-      "keccak256": "0x0134a09c9910214b08b16d3fe7788dd87f0b2084f342e3ec1e191dc455c44c2b",
+      "keccak256": "0x938e660fa4b107060b4b954fb4251b87de6f0724c948f73138cf2f8392615821",
       "urls": [
-        "bzz-raw://174e8f3c8ec467a9ca0e65e47d3c9415463cd5d4cb7a79d726231f9253674eae",
-        "dweb:/ipfs/QmVCnvLS9HbugbcgvzVy4WjdQYbU1YMLonNQZo4szSADZP"
+        "bzz-raw://7023efa8ae7526aa4650512b05c6cda9c575cea23393c0d25e63ec1c358e2261",
+        "dweb:/ipfs/QmXH9Lvc4MBNwXnC6yUmmPxXNxoiDJzdZ2iCreDxSjZPch"
       ],
       "license": "MIT"
     },
@@ -1342,18 +1505,18 @@
       "license": "MIT"
     },
     "contracts/src/river/registry/facets/stream/IStreamRegistry.sol": {
-      "keccak256": "0x7f6ffecdb47e776a49fd5eb344aad912ddcf838502e58a0b7f1d7628ba484f5c",
+      "keccak256": "0x5e8bd4aa3130035d463d4fbc0214aaeb7c23a7042d29a10c593b422d6d2a47b4",
       "urls": [
-        "bzz-raw://4501a262214df3d792aba76b6e707e2901a7e0f15f05c4d2d903549e32afa839",
-        "dweb:/ipfs/QmUzHM6rvqBrtB3CrNZe4kWDwhfTDY933HoLfwMfeLddHq"
+        "bzz-raw://928c460af3995f8df31e48557a6d9eb16a6d89307f268709570bdfc932dc3a58",
+        "dweb:/ipfs/QmTpiActnDg7Kvzezvvj9JCQWM2EsRmrZbXhXnzjhpCzCT"
       ],
       "license": "MIT"
     },
     "contracts/src/river/registry/facets/stream/StreamRegistry.sol": {
-      "keccak256": "0x50c476331f6dc1d7f63c7ebe81f046b1bd6e8bfb51752c1a636c0e4924ceb614",
+      "keccak256": "0x31d16e776e27f5643ad19a2dc2c12524dedd50d674b96e142e381287a0c3e235",
       "urls": [
-        "bzz-raw://c8c9c118175100073386f6bdb82501cef8a0b246a99a62ad143d2ed6c594e9ea",
-        "dweb:/ipfs/QmQL5Rc4iVvXciv8dd2R8UYnHMLDoB4QSbfqgfgCn1JdXe"
+        "bzz-raw://11baf58c6569cdd9444367586114223dfc9b7f07d7e56bba8a62e00daf9842bf",
+        "dweb:/ipfs/QmRp1sHsnu75ar6X8U6qVUCnCaQQTYEJWhv5pFAvFuriYP"
       ],
       "license": "MIT"
     },

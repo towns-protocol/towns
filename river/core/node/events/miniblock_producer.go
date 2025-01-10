@@ -456,7 +456,7 @@ func mbProduceCandidate(
 		return nil, replicated, RiverError(Err_INTERNAL, "mbProduceCandidate: stream is not local")
 	}
 
-	mbInfo, err := mbProduceCandiate_Make(ctx, params, view, forceSnapshot, remoteNodes)
+	mbInfo, err := mbProduceCandidate_Make(ctx, params, view, forceSnapshot, remoteNodes)
 	if err != nil {
 		return nil, replicated, err
 	}
@@ -464,7 +464,7 @@ func mbProduceCandidate(
 		return nil, replicated, nil
 	}
 
-	err = mbProduceCandiate_Save(ctx, params, stream.streamId, mbInfo, remoteNodes)
+	err = mbProduceCandidate_Save(ctx, params, stream.streamId, mbInfo, remoteNodes)
 	if err != nil {
 		return nil, replicated, err
 	}
@@ -472,7 +472,7 @@ func mbProduceCandidate(
 	return mbInfo, replicated, nil
 }
 
-func mbProduceCandiate_Make(
+func mbProduceCandidate_Make(
 	ctx context.Context,
 	params *StreamCacheParams,
 	view *streamViewImpl,
@@ -543,14 +543,14 @@ func mbProduceCandiate_Make(
 	return mbInfo, nil
 }
 
-func mbProduceCandiate_Save(
+func mbProduceCandidate_Save(
 	ctx context.Context,
 	params *StreamCacheParams,
 	streamId StreamId,
 	mbInfo *MiniblockInfo,
 	remoteNodes []common.Address,
 ) error {
-	qp := NewQuorumPool("method", "mbProduceCandiate_Save", "streamId", streamId, "miniblock", mbInfo.Ref)
+	qp := NewQuorumPool("method", "mbProduceCandidate_Save", "streamId", streamId, "miniblock", mbInfo.Ref)
 
 	qp.GoLocal(ctx, func(ctx context.Context) error {
 		miniblockBytes, err := mbInfo.ToBytes()

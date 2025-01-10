@@ -24,7 +24,7 @@ type EventAdder interface {
 	AddEventPayload(ctx context.Context, streamId StreamId, payload IsStreamEvent_Payload) error
 }
 
-type streamScrubTaskProcessorImpl struct {
+type streamMembershipScrubTaskProcessorImpl struct {
 	ctx          context.Context
 	pendingTasks *xsync.MapOf[StreamId, bool]
 	workerPool   *workerpool.WorkerPool
@@ -41,9 +41,9 @@ type streamScrubTaskProcessorImpl struct {
 	scrubQueueLength  prometheus.GaugeFunc
 }
 
-var _ events.Scrubber = (*streamScrubTaskProcessorImpl)(nil)
+var _ events.Scrubber = (*streamMembershipScrubTaskProcessorImpl)(nil)
 
-func NewStreamScrubTasksProcessor(
+func NewStreamMembershipScrubTasksProcessor(
 	ctx context.Context,
 	cache events.StreamCache,
 	eventAdder EventAdder,
@@ -51,8 +51,8 @@ func NewStreamScrubTasksProcessor(
 	cfg *config.Config,
 	metrics infra.MetricsFactory,
 	tracer trace.Tracer,
-) *streamScrubTaskProcessorImpl {
-	proc := &streamScrubTaskProcessorImpl{
+) *streamMembershipScrubTaskProcessorImpl {
+	proc := &streamMembershipScrubTaskProcessorImpl{
 		ctx:          ctx,
 		cache:        cache,
 		pendingTasks: xsync.NewMapOf[StreamId, bool](),
@@ -97,10 +97,10 @@ func NewStreamScrubTasksProcessor(
 	return proc
 }
 
-// processMember checks the individual member for entitlement and attempts to boot them if
+// processMemberImpl checks the individual member for entitlement and attempts to boot them if
 // they no longer meet entitlement requirements. This method returns an error for the sake
 // of annotating the telemetry span, but in practice it is not used by the caller.
-func (tp *streamScrubTaskProcessorImpl) processMemberImpl(
+func (tp *streamMembershipScrubTaskProcessorImpl) processMemberImpl(
 	ctx context.Context,
 	channelId StreamId,
 	member string,
@@ -154,7 +154,7 @@ func (tp *streamScrubTaskProcessorImpl) processMemberImpl(
 			spaceId,
 		)
 
-		err = tp.eventAdder.AddEventPayload(
+		if err = tp.eventAdder.AddEventPayload(
 			ctx,
 			userStreamId,
 			events.Make_UserPayload_Membership(
@@ -163,18 +163,19 @@ func (tp *streamScrubTaskProcessorImpl) processMemberImpl(
 				&member,
 				spaceId[:],
 			),
-		)
-		if err != nil {
+		); err != nil {
 			return err
 		}
 
+		// If userBoots diverges from entitlementLosses, we know that some users did lose their
+		// entitlements but the server was unable to boot them.
 		tp.userBoots.Inc()
 	}
 
 	return nil
 }
 
-func (tp *streamScrubTaskProcessorImpl) processMember(
+func (tp *streamMembershipScrubTaskProcessorImpl) processMembership(
 	ctx context.Context,
 	channelId StreamId,
 	member string,
@@ -207,7 +208,7 @@ func (tp *streamScrubTaskProcessorImpl) processMember(
 	}
 }
 
-func (tp *streamScrubTaskProcessorImpl) processTask(streamID StreamId) {
+func (tp *streamMembershipScrubTaskProcessorImpl) processStream(streamID StreamId) {
 	ctx := tp.ctx
 
 	var span trace.Span
@@ -219,7 +220,7 @@ func (tp *streamScrubTaskProcessorImpl) processTask(streamID StreamId) {
 		defer span.End()
 	}
 
-	err := tp.processTaskImpl(ctx, streamID)
+	err := tp.processStreamImpl(ctx, streamID)
 	if err != nil {
 		dlog.FromCtx(ctx).Warn("Failed to scrub stream", "streamId", streamID, "error", err)
 	}
@@ -236,7 +237,7 @@ func (tp *streamScrubTaskProcessorImpl) processTask(streamID StreamId) {
 	tp.streamsScrubbed.Inc()
 }
 
-func (tp *streamScrubTaskProcessorImpl) processTaskImpl(
+func (tp *streamMembershipScrubTaskProcessorImpl) processStreamImpl(
 	ctx context.Context,
 	streamId StreamId,
 ) error {
@@ -268,16 +269,16 @@ func (tp *streamScrubTaskProcessorImpl) processTaskImpl(
 	}
 
 	for member := range members.Iter() {
-		tp.processMember(ctx, streamId, member)
+		tp.processMembership(ctx, streamId, member)
 	}
 
 	return nil
 }
 
-func (tp *streamScrubTaskProcessorImpl) Scrub(channelId StreamId) bool {
+func (tp *streamMembershipScrubTaskProcessorImpl) Scrub(channelId StreamId) bool {
 	_, wasScheduled := tp.pendingTasks.LoadOrCompute(channelId, func() bool {
 		tp.workerPool.Submit(func() {
-			tp.processTask(channelId)
+			tp.processStream(channelId)
 			tp.pendingTasks.Delete(channelId)
 		})
 		return true

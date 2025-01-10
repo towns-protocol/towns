@@ -13,9 +13,13 @@ import {
     ExternalSnapshot,
     MlsMessage,
     ExportedTree,
+    ClientOptions as MlsClientOptions,
 } from '@river-build/mls-rs-wasm'
 import { randomBytes } from 'crypto'
-import { bin_equal } from '@river-build/dlog'
+import { bin_equal, check } from '@river-build/dlog'
+import { addressFromUserId } from '../../id'
+import { bytesToHex } from 'ethereum-cryptography/utils'
+import { isDefined } from '../../check'
 
 describe('mlsTests', () => {
     let clients: Client[] = []
@@ -28,19 +32,30 @@ describe('mlsTests', () => {
     }
 
     let bobClient: Client
+    let bobMlsGroup: MlsGroup
     let aliceClient: Client
     let bobMlsClient: MlsClient
     let aliceMlsClient: MlsClient
+    let aliceMlsClient2: MlsClient
+
+    // state data to retain between tests
     let streamId: string
     let latestGroupInfoMessage: Uint8Array
     let latestExternalGroupSnapshot: Uint8Array
+    let latestAliceMlsKeyPackage: Uint8Array
+    const commits: Uint8Array[] = []
 
     beforeAll(async () => {
         bobClient = await makeInitAndStartClient()
         aliceClient = await makeInitAndStartClient()
-        bobMlsClient = await MlsClient.create(new Uint8Array(randomBytes(32)))
-        aliceMlsClient = await MlsClient.create(new Uint8Array(randomBytes(32)))
-
+        const clientOptions: MlsClientOptions = {
+            withAllowExternalCommit: true,
+            withRatchetTreeExtension: false,
+        }
+        bobMlsClient = await MlsClient.create(new Uint8Array(randomBytes(32)), clientOptions)
+        aliceMlsClient = await MlsClient.create(new Uint8Array(randomBytes(32)), clientOptions)
+        aliceMlsClient2 = await MlsClient.create(new Uint8Array(randomBytes(32)), clientOptions)
+        bobMlsGroup = await bobMlsClient.createGroup()
         const { streamId: dmStreamId } = await bobClient.createDMChannel(aliceClient.userId)
         await bobClient.waitForStream(dmStreamId)
         await aliceClient.waitForStream(dmStreamId)
@@ -52,6 +67,17 @@ describe('mlsTests', () => {
             await client.stop()
         }
         clients = []
+    })
+
+    afterEach(async () => {
+        for (const commit of commits) {
+            try {
+                const mlsMessage = MlsMessage.fromBytes(commit)
+                await bobMlsGroup.processIncomingMessage(mlsMessage)
+            } catch {
+                // noop
+            }
+        }
     })
 
     function makeMlsPayloadInitializeGroup(
@@ -96,6 +122,42 @@ describe('mlsTests', () => {
                 case: 'epochSecrets',
                 value: {
                     secrets: secrets,
+                },
+            },
+        }
+    }
+
+    function makeMlsPayloadKeyPackage(
+        userAddress: Uint8Array,
+        signaturePublicKey: Uint8Array,
+        keyPackage: Uint8Array,
+    ): PlainMessage<MemberPayload_Mls> {
+        return {
+            content: {
+                case: 'keyPackage',
+                value: {
+                    userAddress,
+                    signaturePublicKey,
+                    keyPackage,
+                },
+            },
+        }
+    }
+
+    function makeMlsPayloadWelcomeMessage(
+        commit: Uint8Array,
+        signaturePublicKeys: Uint8Array[],
+        groupInfoMessage: Uint8Array,
+        welcomeMessages: Uint8Array[],
+    ): PlainMessage<MemberPayload_Mls> {
+        return {
+            content: {
+                case: 'welcomeMessage',
+                value: {
+                    commit,
+                    signaturePublicKeys,
+                    groupInfoMessage,
+                    welcomeMessages,
                 },
             },
         }
@@ -148,7 +210,7 @@ describe('mlsTests', () => {
             await createGroupInfoAndExternalSnapshot(group)
 
         const mlsPayload = makeMlsPayloadInitializeGroup(
-            (await bobMlsClient.signaturePublicKey()).slice(1), // slice 1 byte to make it invalid
+            bobMlsClient.signaturePublicKey().slice(1), // slice 1 byte to make it invalid
             externalGroupSnapshot,
             groupInfoMessage,
         )
@@ -157,14 +219,14 @@ describe('mlsTests', () => {
         )
     })
 
-    test('invalid MLS group is not accepted', async () => {
+    test('invalid external MLS group is not accepted', async () => {
         const mlsPayload = makeMlsPayloadInitializeGroup(
-            await bobMlsClient.signaturePublicKey(),
+            bobMlsClient.signaturePublicKey(),
             new Uint8Array([]),
             new Uint8Array([]),
         )
         await expect(bobClient._debugSendMls(streamId, mlsPayload)).rejects.to.toThrow(
-            'INVALID_GROUP_INFO',
+            'INVALID_EXTERNAL_GROUP',
         )
     })
 
@@ -178,7 +240,7 @@ describe('mlsTests', () => {
         )
 
         const mlsPayload = makeMlsPayloadInitializeGroup(
-            await bobMlsClient.signaturePublicKey(),
+            bobMlsClient.signaturePublicKey(),
             externalGroupSnapshot1,
             groupInfoMessage2,
         )
@@ -196,7 +258,7 @@ describe('mlsTests', () => {
             await createGroupInfoAndExternalSnapshot(groupAtEpoch1)
 
         const mlsPayload = makeMlsPayloadInitializeGroup(
-            await aliceMlsClient.signaturePublicKey(),
+            aliceMlsClient.signaturePublicKey(),
             externalGroupSnapshot,
             groupInfoMessage,
         )
@@ -206,11 +268,10 @@ describe('mlsTests', () => {
     })
 
     test('clients can create MLS Groups in channels', async () => {
-        const bobGroup = await bobMlsClient.createGroup()
         const { groupInfoMessage, externalGroupSnapshot } =
-            await createGroupInfoAndExternalSnapshot(bobGroup)
+            await createGroupInfoAndExternalSnapshot(bobMlsGroup)
         const mlsPayload = makeMlsPayloadInitializeGroup(
-            await bobMlsClient.signaturePublicKey(),
+            bobMlsClient.signaturePublicKey(),
             externalGroupSnapshot,
             groupInfoMessage,
         )
@@ -226,7 +287,7 @@ describe('mlsTests', () => {
         const { groupInfoMessage, externalGroupSnapshot } =
             await createGroupInfoAndExternalSnapshot(group)
         const mlsPayload = makeMlsPayloadInitializeGroup(
-            await bobMlsClient.signaturePublicKey(),
+            bobMlsClient.signaturePublicKey(),
             externalGroupSnapshot,
             groupInfoMessage,
         )
@@ -274,12 +335,13 @@ describe('mlsTests', () => {
             )
 
         const aliceMlsPayload = makeMlsPayloadExternalJoin(
-            await aliceMlsClient.signaturePublicKey(),
+            aliceMlsClient.signaturePublicKey(),
             aliceCommit,
             aliceGroupInfoMessage,
         )
         await expect(aliceClient._debugSendMls(streamId, aliceMlsPayload)).resolves.not.toThrow()
         latestGroupInfoMessage = aliceGroupInfoMessage
+        commits.push(aliceCommit)
     })
 
     test('MLS group is snapshotted after external commit', async () => {
@@ -304,8 +366,8 @@ describe('mlsTests', () => {
             bobClient.debugForceMakeMiniblock(streamId, { forceSnapshot: true }),
         ).resolves.not.toThrow()
 
-        const bobSignaturePublicKey = await bobMlsClient.signaturePublicKey()
-        const aliceSignaturePublicKey = await aliceMlsClient.signaturePublicKey()
+        const bobSignaturePublicKey = bobMlsClient.signaturePublicKey()
+        const aliceSignaturePublicKey = aliceMlsClient.signaturePublicKey()
         // verify that the signature public keys are mapped per user
         // and that the signature public keys are correct
         const streamAfterSnapshot = await bobClient.getStream(streamId)
@@ -364,5 +426,172 @@ describe('mlsTests', () => {
         const mls = streamAfterSnapshot.membershipContent.mls
         expect(bin_equal(mls.epochSecrets[1n.toString()], new Uint8Array([1, 2, 3, 4]))).toBe(true)
         expect(bin_equal(mls.epochSecrets[2n.toString()], new Uint8Array([3, 4, 5, 6]))).toBe(true)
+    })
+
+    test('clients can publish key packages', async () => {
+        const keyPackage = await aliceMlsClient2.generateKeyPackageMessage()
+        const alicePayload = makeMlsPayloadKeyPackage(
+            addressFromUserId(aliceClient.userId),
+            aliceMlsClient2.signaturePublicKey(),
+            keyPackage.toBytes(),
+        )
+
+        await expect(aliceClient._debugSendMls(streamId, alicePayload)).resolves.not.toThrow()
+        latestAliceMlsKeyPackage = keyPackage.toBytes()
+    })
+
+    test('key packages are broadcasted to all members', async () => {
+        const aliceMlsClient2SignaturePublicKey = aliceMlsClient2.signaturePublicKey()
+        await waitFor(() => {
+            const stream = bobClient.streams.get(streamId)
+            check(Object.values(stream!.view.membershipContent.mls.pendingKeyPackages).length > 0)
+            const kp =
+                stream!.view.membershipContent.mls.pendingKeyPackages[
+                    bytesToHex(aliceMlsClient2SignaturePublicKey)
+                ].keyPackage
+            check(bin_equal(kp, latestAliceMlsKeyPackage))
+        })
+    })
+
+    test("clients can publish key packages twice (but it isn't encouraged)", async () => {
+        const alicePayload = makeMlsPayloadKeyPackage(
+            addressFromUserId(aliceClient.userId),
+            aliceMlsClient2.signaturePublicKey(),
+            latestAliceMlsKeyPackage,
+        )
+        await expect(aliceClient._debugSendMls(streamId, alicePayload)).resolves.not.toThrow()
+    })
+
+    test('key packages are snapshotted', async () => {
+        // force snapshot
+        await expect(
+            bobClient.debugForceMakeMiniblock(streamId, { forceSnapshot: true }),
+        ).resolves.not.toThrow()
+
+        // verify that the key package is picked up in the snapshot
+        const streamAfterSnapshot = await bobClient.getStream(streamId)
+        const mls = streamAfterSnapshot.membershipContent.mls
+        expect(Object.values(mls.pendingKeyPackages).length).toBe(1)
+        const key = bytesToHex(aliceMlsClient2.signaturePublicKey())
+        expect(bin_equal(mls.pendingKeyPackages[key].keyPackage, latestAliceMlsKeyPackage)).toBe(
+            true,
+        )
+    })
+
+    // TODO: Add more tests once we have support for clearing commits in mls-rs-wasm
+    test('invalid group infos are not accepted', async () => {
+        const payload = makeMlsPayloadWelcomeMessage(
+            new Uint8Array(),
+            [new Uint8Array([1, 2, 3])],
+            latestGroupInfoMessage, // bogus, no longer valid
+            [new Uint8Array([4, 5, 6])],
+        )
+        await expect(bobClient._debugSendMls(streamId, payload)).rejects.to.toThrow(
+            'INVALID_GROUP_INFO_EPOCH',
+        )
+    })
+
+    test('signature key count need to match the number of added proposals', async () => {
+        const mls = bobClient.streams.get(streamId)!.view.membershipContent.mls
+        const keyPackage = Object.values(mls.pendingKeyPackages)[0]
+        const kp = MlsMessage.fromBytes(keyPackage.keyPackage)
+        const commitOutput = await bobMlsGroup.addMember(kp)
+
+        // at this point, the commit is still pending
+        await bobMlsGroup.clearPendingCommit()
+
+        const groupInfoMessage = commitOutput.externalCommitGroupInfo
+        const commit = commitOutput.commitMessage.toBytes()
+        const welcomeMessages = commitOutput.welcomeMessages.map((wm) => wm.toBytes())
+
+        const payload = makeMlsPayloadWelcomeMessage(
+            commit,
+            [keyPackage.signaturePublicKey, new Uint8Array([1, 2, 3])], // add additional bogus signature key
+            groupInfoMessage!.toBytes(),
+            welcomeMessages,
+        )
+        await expect(aliceClient._debugSendMls(streamId, payload)).rejects.to.toThrow(
+            'INVALID_PUBLIC_SIGNATURE_KEY',
+        )
+    })
+
+    test('signature keys need to match the keys inside the added proposals', async () => {
+        const mls = bobClient.streams.get(streamId)!.view.membershipContent.mls
+        const keyPackage = Object.values(mls.pendingKeyPackages)[0]
+        const kp = MlsMessage.fromBytes(keyPackage.keyPackage)
+        const commitOutput = await bobMlsGroup.addMember(kp)
+
+        // at this point, the commit is still pending
+        await bobMlsGroup.clearPendingCommit()
+
+        const groupInfoMessage = commitOutput.externalCommitGroupInfo
+        const commit = commitOutput.commitMessage.toBytes()
+        const welcomeMessages = commitOutput.welcomeMessages.map((wm) => wm.toBytes())
+
+        const payload = makeMlsPayloadWelcomeMessage(
+            commit,
+            [new Uint8Array([1, 2, 3])], // add bogus signature key
+            groupInfoMessage!.toBytes(),
+            welcomeMessages,
+        )
+        await expect(aliceClient._debugSendMls(streamId, payload)).rejects.to.toThrow(
+            'INVALID_PUBLIC_SIGNATURE_KEY',
+        )
+    })
+
+    test('clients can add other members from key packages', async () => {
+        const mls = bobClient.streams.get(streamId)!.view.membershipContent.mls
+        const keyPackage = Object.values(mls.pendingKeyPackages)[0]
+        const kp = MlsMessage.fromBytes(keyPackage.keyPackage)
+        const commitOutput = await bobMlsGroup.addMember(kp)
+
+        // at this point, the commit is still pending
+        await bobMlsGroup.clearPendingCommit()
+
+        const groupInfoMessage = commitOutput.externalCommitGroupInfo
+        const commit = commitOutput.commitMessage.toBytes()
+        const welcomeMessages = commitOutput.welcomeMessages.map((wm) => wm.toBytes())
+
+        const payload = makeMlsPayloadWelcomeMessage(
+            commit,
+            [keyPackage.signaturePublicKey],
+            groupInfoMessage!.toBytes(),
+            welcomeMessages,
+        )
+        await expect(aliceClient._debugSendMls(streamId, payload)).resolves.not.toThrow()
+        await expect(
+            bobMlsGroup.processIncomingMessage(commitOutput.commitMessage),
+        ).resolves.not.toThrow()
+        commits.push(commit)
+    })
+
+    test('key packages are cleared after being applied', async () => {
+        const aliceMlsClient2SignaturePublicKey = aliceMlsClient2.signaturePublicKey()
+        await waitFor(() => {
+            const stream = bobClient.streams.get(streamId)
+            check(Object.values(stream!.view.membershipContent.mls.pendingKeyPackages).length === 0)
+            const key = bytesToHex(aliceMlsClient2SignaturePublicKey)
+            const kp = stream!.view.membershipContent.mls.pendingKeyPackages[key]
+            check(!isDefined(kp))
+        })
+    })
+
+    test('devices added from key packages are added to the members', async () => {
+        await waitFor(() => {
+            const mls = bobClient.streams.get(streamId)!.view.membershipContent.mls
+            expect(mls.members[aliceClient.userId].signaturePublicKeys.length).toBe(2)
+        })
+    })
+
+    test('devices added from key packages are snapshotted', async () => {
+        // force snapshot
+        await expect(
+            bobClient.debugForceMakeMiniblock(streamId, { forceSnapshot: true }),
+        ).resolves.not.toThrow()
+
+        // verify that the key package is picked up in the snapshot
+        const streamAfterSnapshot = await bobClient.getStream(streamId)
+        const mls = streamAfterSnapshot.membershipContent.mls
+        expect(mls.members[aliceClient.userId].signaturePublicKeys.length).toBe(2)
     })
 })

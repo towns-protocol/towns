@@ -28,6 +28,17 @@ contract RiverRegistryBaseSetup is TestUtils {
   IOperatorRegistry internal operatorRegistry;
   IRiverConfig internal riverConfig;
 
+  struct TestNode {
+    address node;
+    string url;
+  }
+
+  struct TestStream {
+    bytes32 streamId;
+    bytes32 genesisMiniblockHash;
+    bytes genesisMiniblock;
+  }
+
   function setUp() public virtual {
     deployer = getDeployer();
     diamond = deployRiverRegistry.deploy(deployer);
@@ -43,7 +54,7 @@ contract RiverRegistryBaseSetup is TestUtils {
     vm.assume(operatorRegistry.isOperator(nodeOperator) == false);
 
     vm.prank(deployer);
-    vm.expectEmit();
+    vm.expectEmit(address(operatorRegistry));
     emit IOperatorRegistry.OperatorAdded(nodeOperator);
     operatorRegistry.approveOperator(nodeOperator);
     _;
@@ -67,5 +78,39 @@ contract RiverRegistryBaseSetup is TestUtils {
     );
     nodeRegistry.registerNode(node, url, NodeStatus.NotInitialized);
     _;
+  }
+
+  modifier givenNodesAreRegistered(
+    address nodeOperator,
+    TestNode[] memory nodes
+  ) {
+    vm.assume(nodes.length > 0 && nodes.length <= 100);
+
+    uint256 nodesLength = nodes.length;
+    for (uint256 i; i < nodesLength; ++i) {
+      vm.assume(nodeRegistry.isNode(nodes[i].node) == false);
+      _registerNode(nodeOperator, nodes[i].node, nodes[i].url);
+    }
+
+    _;
+  }
+
+  function _registerNode(
+    address nodeOperator,
+    address node,
+    string memory url
+  ) internal {
+    vm.assume(node != address(0));
+    vm.assume(nodeOperator != address(0));
+
+    vm.prank(nodeOperator);
+    vm.expectEmit(address(nodeRegistry));
+    emit INodeRegistryBase.NodeAdded(
+      node,
+      nodeOperator,
+      url,
+      NodeStatus.NotInitialized
+    );
+    nodeRegistry.registerNode(node, url, NodeStatus.NotInitialized);
   }
 }

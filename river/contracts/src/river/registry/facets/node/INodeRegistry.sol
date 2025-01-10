@@ -25,6 +25,8 @@ interface INodeRegistry is INodeRegistryBase {
   // =============================================================
   //                           Nodes
   // =============================================================
+
+  function isNode(address nodeAddress) external view returns (bool);
   function registerNode(
     address nodeAddress,
     string memory url,

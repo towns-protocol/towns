@@ -111,6 +111,25 @@ const _abi = [
   },
   {
     type: "function",
+    name: "isNode",
+    inputs: [
+      {
+        name: "nodeAddress",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+    outputs: [
+      {
+        name: "",
+        type: "bool",
+        internalType: "bool",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
     name: "registerNode",
     inputs: [
       {

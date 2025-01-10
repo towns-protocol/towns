@@ -195,6 +195,25 @@
             "internalType": "address",
             "name": "nodeAddress",
             "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function",
+        "name": "isNode",
+        "outputs": [
+          {
+            "internalType": "bool",
+            "name": "",
+            "type": "bool"
+          }
+        ]
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "nodeAddress",
+            "type": "address"
           },
           {
             "internalType": "string",
@@ -311,18 +330,18 @@
   },
   "sources": {
     "contracts/src/river/registry/facets/node/INodeRegistry.sol": {
-      "keccak256": "0x91ae5e33d5bc5eaf966789d8e1b03c6bb682ae363bdad4b94742bad0431990a6",
+      "keccak256": "0xf521b9a741e45f40098574a6e4f4e62a8e0b457fb053b57624463167691a8cdd",
       "urls": [
-        "bzz-raw://5e51a3f583b56c81aa6ce15c2521c7f6682d0292f77dfed420172d7104e1f482",
-        "dweb:/ipfs/QmSBmDqF8nR1wvFiqXgk6Z9GknAmZtrL2LStoRWFijEntv"
+        "bzz-raw://97eb4ed98fa25f98f4d2150d6e0b4dc5ade7c88d8b934b786891fb37bf380ce3",
+        "dweb:/ipfs/QmU9L2iJAKY6UnckhFAiq5Qw482DZzW4fiGVAJ6qkgPsrs"
       ],
       "license": "MIT"
     },
     "contracts/src/river/registry/facets/node/NodeRegistry.sol": {
-      "keccak256": "0x0134a09c9910214b08b16d3fe7788dd87f0b2084f342e3ec1e191dc455c44c2b",
+      "keccak256": "0x938e660fa4b107060b4b954fb4251b87de6f0724c948f73138cf2f8392615821",
       "urls": [
-        "bzz-raw://174e8f3c8ec467a9ca0e65e47d3c9415463cd5d4cb7a79d726231f9253674eae",
-        "dweb:/ipfs/QmVCnvLS9HbugbcgvzVy4WjdQYbU1YMLonNQZo4szSADZP"
+        "bzz-raw://7023efa8ae7526aa4650512b05c6cda9c575cea23393c0d25e63ec1c358e2261",
+        "dweb:/ipfs/QmXH9Lvc4MBNwXnC6yUmmPxXNxoiDJzdZ2iCreDxSjZPch"
       ],
       "license": "MIT"
     },

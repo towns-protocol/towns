@@ -2,10 +2,16 @@ import { StreamStateView_AbstractContent } from './streamStateView_AbstractConte
 import TypedEmitter from 'typed-emitter'
 import { ConfirmedTimelineEvent, RemoteTimelineEvent } from './types'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
-import { MemberPayload_Snapshot_Mls, MemberPayload_Snapshot_Mls_Member } from '@river-build/proto'
+import {
+    MemberPayload_KeyPackage,
+    MemberPayload_Snapshot_Mls,
+    MemberPayload_Snapshot_Mls_Member,
+} from '@river-build/proto'
 import { check } from '@river-build/dlog'
 import { PlainMessage } from '@bufbuild/protobuf'
 import { logNever } from './check'
+import { bytesToHex } from 'ethereum-cryptography/utils'
+import { userIdFromAddress } from './id'
 
 export class StreamStateView_Mls extends StreamStateView_AbstractContent {
     readonly streamId: string
@@ -13,7 +19,7 @@ export class StreamStateView_Mls extends StreamStateView_AbstractContent {
     groupInfoMessage?: Uint8Array
     members: { [key: string]: PlainMessage<MemberPayload_Snapshot_Mls_Member> } = {}
     epochSecrets: { [key: string]: Uint8Array } = {}
-
+    pendingKeyPackages: { [key: string]: MemberPayload_KeyPackage } = {}
     constructor(streamId: string) {
         super()
         this.streamId = streamId
@@ -24,6 +30,7 @@ export class StreamStateView_Mls extends StreamStateView_AbstractContent {
         this.groupInfoMessage = content.groupInfoMessage
         this.members = content.members
         this.epochSecrets = content.epochSecrets
+        this.pendingKeyPackages = content.pendingKeyPackages
     }
 
     appendEvent(
@@ -43,12 +50,8 @@ export class StreamStateView_Mls extends StreamStateView_AbstractContent {
                 }
                 break
             case 'externalJoin':
-                if (!this.members[event.creatorUserId]) {
-                    this.members[event.creatorUserId] = {
-                        signaturePublicKeys: [],
-                    }
-                }
-                this.members[event.creatorUserId].signaturePublicKeys.push(
+                this.addSignaturePublicKey(
+                    event.creatorUserId,
                     mlsEvent.content.value.signaturePublicKey,
                 )
                 break
@@ -57,6 +60,23 @@ export class StreamStateView_Mls extends StreamStateView_AbstractContent {
                     if (!this.epochSecrets[secret.epoch.toString()]) {
                         this.epochSecrets[secret.epoch.toString()] = secret.secret
                     }
+                }
+                break
+            case 'keyPackage':
+                this.pendingKeyPackages[bytesToHex(mlsEvent.content.value.signaturePublicKey)] =
+                    mlsEvent.content.value
+
+                break
+            case 'welcomeMessage':
+                for (const signatureKey of mlsEvent.content.value.signaturePublicKeys) {
+                    const keyPackage = this.pendingKeyPackages[bytesToHex(signatureKey)]
+                    if (keyPackage) {
+                        this.addSignaturePublicKey(
+                            userIdFromAddress(keyPackage.userAddress),
+                            keyPackage.signaturePublicKey,
+                        )
+                    }
+                    delete this.pendingKeyPackages[bytesToHex(signatureKey)]
                 }
                 break
             case undefined:
@@ -81,5 +101,14 @@ export class StreamStateView_Mls extends StreamStateView_AbstractContent {
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ): void {
         super.onConfirmedEvent(event, stateEmitter, encryptionEmitter)
+    }
+
+    addSignaturePublicKey(userId: string, signaturePublicKey: Uint8Array): void {
+        if (!this.members[userId]) {
+            this.members[userId] = {
+                signaturePublicKeys: [],
+            }
+        }
+        this.members[userId].signaturePublicKeys.push(signaturePublicKey)
     }
 }

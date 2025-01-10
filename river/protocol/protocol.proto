@@ -166,6 +166,7 @@ message MemberPayload {
             // user_address -> Member
             map<string, Member> members = 3;
             map<uint64, bytes> epoch_secrets = 4;
+            map<string, KeyPackage> pending_key_packages = 5;
         }
 
         message Member {
@@ -185,6 +186,12 @@ message MemberPayload {
         EncryptionAlgorithm encryption_algorithm = 4;
         // tips sent in this stream: map<currency, amount>
         map<string, uint64> tips = 5;
+    }
+
+    message KeyPackage {
+        bytes user_address = 1;
+        bytes signature_public_key = 2;
+        bytes key_package = 3;
     }
 
     message Membership {
@@ -248,10 +255,19 @@ message MemberPayload {
             repeated EpochSecret secrets = 1;
         }
 
+        message WelcomeMessage {
+            repeated bytes signature_public_keys = 1;
+            repeated bytes welcome_messages = 2;
+            bytes commit = 3;
+            bytes group_info_message = 4;
+        }
+
         oneof content {
             InitializeGroup initialize_group = 1;
             ExternalJoin external_join = 2;
             EpochSecrets epoch_secrets = 3;
+            KeyPackage key_package = 4;
+            WelcomeMessage welcome_message = 5;
         }
     }
 
@@ -1006,6 +1022,7 @@ enum MessageInteractionType {
     MESSAGE_INTERACTION_TYPE_POST = 3;
     MESSAGE_INTERACTION_TYPE_EDIT = 4;
     MESSAGE_INTERACTION_TYPE_REDACTION = 5;
+    MESSAGE_INTERACTION_TYPE_TIP = 6;
 }
 
 enum GroupMentionType {

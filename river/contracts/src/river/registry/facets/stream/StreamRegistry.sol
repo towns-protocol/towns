@@ -20,6 +20,7 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
   using EnumerableSet for EnumerableSet.Bytes32Set;
   using EnumerableSet for EnumerableSet.AddressSet;
 
+  /// @inheritdoc IStreamRegistry
   function allocateStream(
     bytes32 streamId,
     address[] memory nodes,
@@ -59,26 +60,15 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     );
   }
 
+  /// @inheritdoc IStreamRegistry
   function getStream(bytes32 streamId) external view returns (Stream memory) {
     if (!ds.streams.contains(streamId)) revert(RiverRegistryErrors.NOT_FOUND);
     return ds.streamById[streamId];
   }
 
+  /// @inheritdoc IStreamRegistry
   function isStream(bytes32 streamId) external view returns (bool) {
     return ds.streams.contains(streamId);
-  }
-
-  /// @return stream, genesisMiniblockHash, genesisMiniblock
-  function getStreamWithGenesis(
-    bytes32 streamId
-  ) external view returns (Stream memory, bytes32, bytes memory) {
-    if (!ds.streams.contains(streamId)) revert(RiverRegistryErrors.NOT_FOUND);
-
-    return (
-      ds.streamById[streamId],
-      ds.genesisMiniblockHashByStreamId[streamId],
-      ds.genesisMiniblockByStreamId[streamId]
-    );
   }
 
   function setStreamLastMiniblockBatch(
@@ -155,51 +145,70 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     }
   }
 
-  function placeStreamOnNode(
+  /// @inheritdoc IStreamRegistry
+  function setStreamLastMiniblock(
     bytes32 streamId,
-    address nodeAddress
-  ) external onlyStream(streamId) onlyNode(msg.sender) {
-    Stream storage stream = ds.streamById[streamId];
-
-    // validate that the node is not already on the stream
-    uint256 nodeCount = stream.nodes.length;
-
-    for (uint256 i = 0; i < nodeCount; ++i) {
-      if (stream.nodes[i] == nodeAddress)
-        revert(RiverRegistryErrors.ALREADY_EXISTS);
+    bytes32, // prevMiniblockHash
+    bytes32 lastMiniblockHash,
+    uint64 lastMiniblockNum,
+    bool isSealed
+  ) external onlyNode(msg.sender) {
+    // Validate that the streamId is in the registry
+    if (!ds.streams.contains(streamId)) {
+      revert(RiverRegistryErrors.NOT_FOUND);
     }
 
-    stream.nodes.push(nodeAddress);
-
-    emit StreamPlacementUpdated(streamId, nodeAddress, true);
-  }
-
-  function removeStreamFromNode(
-    bytes32 streamId,
-    address nodeAddress
-  ) external onlyStream(streamId) onlyNode(msg.sender) {
     Stream storage stream = ds.streamById[streamId];
 
-    bool found = false;
-    uint256 nodeCount = stream.nodes.length;
-
-    for (uint256 i = 0; i < nodeCount; ++i) {
-      if (stream.nodes[i] == nodeAddress) {
-        stream.nodes[i] = stream.nodes[nodeCount - 1];
-        stream.nodes.pop();
-        found = true;
-        break;
-      }
+    // Check if the stream is already sealed using bitwise AND
+    if ((stream.flags & StreamFlags.SEALED) != 0) {
+      revert(RiverRegistryErrors.STREAM_SEALED);
     }
-    if (!found) revert(RiverRegistryErrors.NODE_NOT_FOUND);
 
-    emit StreamPlacementUpdated(streamId, nodeAddress, false);
+    // Ensure that the lastMiniblockNum is newer than the current head.
+    if (stream.lastMiniblockNum >= lastMiniblockNum) {
+      revert(RiverRegistryErrors.BAD_ARG);
+    }
+
+    // Delete genesis miniblock
+    delete ds.genesisMiniblockByStreamId[streamId];
+
+    // Update the stream information
+    stream.lastMiniblockHash = lastMiniblockHash;
+    stream.lastMiniblockNum = lastMiniblockNum;
+
+    // Set the sealed flag if requested
+    if (isSealed) {
+      stream.flags |= StreamFlags.SEALED;
+    }
+
+    emit StreamLastMiniblockUpdated(
+      streamId,
+      lastMiniblockHash,
+      lastMiniblockNum,
+      isSealed
+    );
   }
 
+  /// @inheritdoc IStreamRegistry
+  function getStreamWithGenesis(
+    bytes32 streamId
+  ) external view returns (Stream memory, bytes32, bytes memory) {
+    if (!ds.streams.contains(streamId)) revert(RiverRegistryErrors.NOT_FOUND);
+
+    return (
+      ds.streamById[streamId],
+      ds.genesisMiniblockHashByStreamId[streamId],
+      ds.genesisMiniblockByStreamId[streamId]
+    );
+  }
+
+  /// @inheritdoc IStreamRegistry
   function getStreamCount() external view returns (uint256) {
     return ds.streams.length();
   }
 
+  /// @inheritdoc IStreamRegistry
   function getStreamCountOnNode(
     address nodeAddress
   ) external view returns (uint256) {
@@ -219,6 +228,7 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     return count;
   }
 
+  /// @inheritdoc IStreamRegistry
   function getPaginatedStreams(
     uint256 start,
     uint256 stop
@@ -237,5 +247,49 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     }
 
     return (streams, stop >= streamCount);
+  }
+
+  /// @inheritdoc IStreamRegistry
+  function placeStreamOnNode(
+    bytes32 streamId,
+    address nodeAddress
+  ) external onlyStream(streamId) onlyNode(msg.sender) {
+    Stream storage stream = ds.streamById[streamId];
+
+    // validate that the node is not already on the stream
+    uint256 nodeCount = stream.nodes.length;
+
+    for (uint256 i = 0; i < nodeCount; ++i) {
+      if (stream.nodes[i] == nodeAddress)
+        revert(RiverRegistryErrors.ALREADY_EXISTS);
+    }
+
+    stream.nodes.push(nodeAddress);
+
+    emit StreamPlacementUpdated(streamId, nodeAddress, true);
+  }
+
+  /// @inheritdoc IStreamRegistry
+  function removeStreamFromNode(
+    bytes32 streamId,
+    address nodeAddress
+  ) external onlyStream(streamId) onlyNode(msg.sender) {
+    Stream storage stream = ds.streamById[streamId];
+
+    bool found = false;
+    uint256 nodeCount = stream.nodes.length;
+
+    for (uint256 i = 0; i < nodeCount; ++i) {
+      if (stream.nodes[i] == nodeAddress) {
+        stream.nodes[i] = stream.nodes[nodeCount - 1];
+        stream.nodes.pop();
+        found = true;
+        break;
+      }
+    }
+
+    if (!found) revert(RiverRegistryErrors.NODE_NOT_FOUND);
+
+    emit StreamPlacementUpdated(streamId, nodeAddress, false);
   }
 }

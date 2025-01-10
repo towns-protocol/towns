@@ -139,13 +139,18 @@ func MakeRemoteStreamView(ctx context.Context, stream *StreamAndCookie) (*stream
 	}
 
 	miniblocks := make([]*MiniblockInfo, len(stream.Miniblocks))
-	// +1 below will make it -1 for the first iteration so block number is not enforced.
-	lastMiniblockNumber := int64(-2)
+	lastMiniblockNumber := int64(-1)
 	snapshotIndex := 0
 	for i, binMiniblock := range stream.Miniblocks {
+		opts := NewParsedMiniblockInfoOpts()
+		// Ignore block number of first block, but enforce afterwards
+		if i > 0 {
+			opts = opts.WithExpectedBlockNumber(lastMiniblockNumber + 1)
+		}
+
 		miniblock, err := NewMiniblockInfoFromProto(
 			binMiniblock,
-			NewMiniblockInfoFromProtoOpts{ExpectedBlockNumber: lastMiniblockNumber + 1},
+			opts,
 		)
 		if err != nil {
 			return nil, err
@@ -331,7 +336,10 @@ func (r *streamViewImpl) makeMiniblockHeader(
 					"event", e.ShortDebugStr(),
 				)
 			}
-			updateMlsSnapshotRequest(mlsSnapshotRequest, e) // is it wrong that we're calling this for events in the minipool?
+			updateMlsSnapshotRequest(
+				mlsSnapshotRequest,
+				e,
+			) // is it wrong that we're calling this for events in the minipool?
 		}
 
 		// only attempt to snapshot the MLS state if MLS has been initialized for this stream.

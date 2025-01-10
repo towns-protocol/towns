@@ -383,10 +383,9 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) err
 			// Parse header
 			info, err := events.NewMiniblockInfoFromProto(
 				mb,
-				events.NewMiniblockInfoFromProtoOpts{
-					ExpectedBlockNumber: int64(i) + mbsInDb,
-					DontParseEvents:     true,
-				},
+				events.NewParsedMiniblockInfoOpts().
+					WithExpectedBlockNumber(int64(i)+mbsInDb).
+					WithDoNotParseEvents(true),
 			)
 			if err != nil {
 				return err

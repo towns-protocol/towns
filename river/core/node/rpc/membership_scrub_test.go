@@ -239,7 +239,7 @@ func TestScrubStreamTaskProcessor(t *testing.T) {
 				},
 				scrubberMaker: func(ctx context.Context, s *Service) events.Scrubber {
 					eventAdder = NewObservingEventAdder(s)
-					return scrub.NewStreamScrubTasksProcessor(
+					return scrub.NewStreamMembershipScrubTasksProcessor(
 						s.serverCtx,
 						s.cache,
 						eventAdder,

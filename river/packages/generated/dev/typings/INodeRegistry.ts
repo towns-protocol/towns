@@ -47,6 +47,7 @@ export interface INodeRegistryInterface extends utils.Interface {
     "getAllNodes()": FunctionFragment;
     "getNode(address)": FunctionFragment;
     "getNodeCount()": FunctionFragment;
+    "isNode(address)": FunctionFragment;
     "registerNode(address,string,uint8)": FunctionFragment;
     "removeNode(address)": FunctionFragment;
     "updateNodeStatus(address,uint8)": FunctionFragment;
@@ -59,6 +60,7 @@ export interface INodeRegistryInterface extends utils.Interface {
       | "getAllNodes"
       | "getNode"
       | "getNodeCount"
+      | "isNode"
       | "registerNode"
       | "removeNode"
       | "updateNodeStatus"
@@ -80,6 +82,10 @@ export interface INodeRegistryInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "getNodeCount",
     values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "isNode",
+    values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
     functionFragment: "registerNode",
@@ -115,6 +121,7 @@ export interface INodeRegistryInterface extends utils.Interface {
     functionFragment: "getNodeCount",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "isNode", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "registerNode",
     data: BytesLike
@@ -223,6 +230,11 @@ export interface INodeRegistry extends BaseContract {
 
     getNodeCount(overrides?: CallOverrides): Promise<[BigNumber]>;
 
+    isNode(
+      nodeAddress: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<[boolean]>;
+
     registerNode(
       nodeAddress: PromiseOrValue<string>,
       url: PromiseOrValue<string>,
@@ -259,6 +271,11 @@ export interface INodeRegistry extends BaseContract {
 
   getNodeCount(overrides?: CallOverrides): Promise<BigNumber>;
 
+  isNode(
+    nodeAddress: PromiseOrValue<string>,
+    overrides?: CallOverrides
+  ): Promise<boolean>;
+
   registerNode(
     nodeAddress: PromiseOrValue<string>,
     url: PromiseOrValue<string>,
@@ -294,6 +311,11 @@ export interface INodeRegistry extends BaseContract {
     ): Promise<NodeStructOutput>;
 
     getNodeCount(overrides?: CallOverrides): Promise<BigNumber>;
+
+    isNode(
+      nodeAddress: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<boolean>;
 
     registerNode(
       nodeAddress: PromiseOrValue<string>,
@@ -372,6 +394,11 @@ export interface INodeRegistry extends BaseContract {
 
     getNodeCount(overrides?: CallOverrides): Promise<BigNumber>;
 
+    isNode(
+      nodeAddress: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     registerNode(
       nodeAddress: PromiseOrValue<string>,
       url: PromiseOrValue<string>,
@@ -410,6 +437,11 @@ export interface INodeRegistry extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     getNodeCount(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    isNode(
+      nodeAddress: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
 
     registerNode(
       nodeAddress: PromiseOrValue<string>,

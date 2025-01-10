@@ -132,7 +132,9 @@ func ParseEvents(events []*Envelope) ([]*ParsedEvent, error) {
 	for i, event := range events {
 		parsedEvent, err := ParseEvent(event)
 		if err != nil {
-			return nil, err
+			return nil, AsRiverError(err, Err_BAD_EVENT).
+				Tag("CorruptEventIndex", i).
+				Func("ParseEvents")
 		}
 		parsedEvents[i] = parsedEvent
 	}

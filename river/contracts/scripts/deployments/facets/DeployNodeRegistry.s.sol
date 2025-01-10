@@ -15,6 +15,7 @@ import {NodeRegistry} from "contracts/src/river/registry/facets/node/NodeRegistr
 
 contract DeployNodeRegistry is FacetHelper, Deployer {
   constructor() {
+    addSelector(NodeRegistry.isNode.selector);
     addSelector(NodeRegistry.registerNode.selector);
     addSelector(NodeRegistry.removeNode.selector);
     addSelector(NodeRegistry.updateNodeStatus.selector);

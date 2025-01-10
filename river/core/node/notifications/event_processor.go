@@ -98,6 +98,8 @@ func (p *MessageToNotificationsProcessor) OnMessageEvent(
 	tags := event.Event.GetTags()
 
 	switch tags.GetMessageInteractionType() {
+	case MessageInteractionType_MESSAGE_INTERACTION_TYPE_TIP:
+		kind = "tip"
 	case MessageInteractionType_MESSAGE_INTERACTION_TYPE_REPLY:
 		kind = "reply_to"
 	case MessageInteractionType_MESSAGE_INTERACTION_TYPE_REACTION:
