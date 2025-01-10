@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useMemo } from 'react'
 import { Address, useTownsContext } from 'use-towns-client'
+import { BigNumber } from 'ethers'
 
 const queryKey = (address: Address | undefined) => ['useBalance', address ?? 'waitingForAddress']
 
@@ -57,7 +58,7 @@ export function useBalance({
             }
             return baseProvider.getBalance(address)
         },
-        select: (data) => {
+        select: (data: BigNumber | undefined) => {
             if (!data) {
                 return
             }
@@ -124,9 +125,9 @@ export function formatUnitsToFixedLength(
 
     const smallestDisplayableValue = `0.${'0'.repeat(displayDecimals - 1)}1`
     if (roundedValue === 0n) {
-        return `< ${smallestDisplayableValue}`
-    } else if (roundedValue === 1n) {
-        return `> ${smallestDisplayableValue}`
+        return `<${smallestDisplayableValue}`
+    } else if (roundedValue === 1n && value < scaleFactor) {
+        return `~${smallestDisplayableValue}`
     }
 
     return formatUnits(roundedValue, displayDecimals)
