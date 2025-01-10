@@ -3,6 +3,7 @@ import { SpaceInfo, useTownsClient } from 'use-towns-client'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { usePublicPageLoginFlow } from 'routes/PublicTownPage/usePublicPageLoginFlow'
 import { useStore } from 'store/store'
+import { useMyAbstractAccountAddress } from './useMyAbstractAccountAddress'
 
 export function useCrossmintHandlers(args: {
     setDisableUiWhileCrossmintPaymentPhase: (value: boolean) => void
@@ -14,6 +15,7 @@ export function useCrossmintHandlers(args: {
     const spaceId = useSpaceIdFromPathname()
     const { joinAfterSuccessfulCrossmint, end: endPublicPageLoginFlow } = usePublicPageLoginFlow()
     const { setRecentlyMintedSpaceToken } = useStore()
+    const myAbstractAccountAddress = useMyAbstractAccountAddress().data
 
     const handleCrossmintPaymentStart = () => {
         setDisableUiWhileCrossmintPaymentPhase(true)
@@ -44,7 +46,7 @@ export function useCrossmintHandlers(args: {
                 spaceInfo?.name ? null : 'spaceInfo.name is undefined',
             )
         }
-        userOpsStore.getState().clear()
+        userOpsStore.getState().reset(myAbstractAccountAddress)
         endPublicPageLoginFlow()
         setShowCrossmintPayment(false)
     }

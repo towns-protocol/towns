@@ -90,6 +90,10 @@ export class TownsSimpleAccount extends UserOperationBuilder {
         return base
     }
 
+    public getSenderAddress() {
+        return this.proxy.address
+    }
+
     execute(to: string, value: BigNumberish, data: BytesLike) {
         return this.setCallData(
             this.proxy.interface.encodeFunctionData('execute', [to, value, data]),

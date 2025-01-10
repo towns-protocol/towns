@@ -1,19 +1,28 @@
-import { userOpsStore } from '@towns/userops'
+import { selectUserOpsByAddress, userOpsStore } from '@towns/userops'
 import React, { useState } from 'react'
+import { useShallow } from 'zustand/react/shallow'
 import { AboveAppProgressModalContainer } from '@components/AppProgressOverlay/AboveAppProgress/AboveAppProgress'
 
 import { usePublicPageLoginFlow } from 'routes/PublicTownPage/usePublicPageLoginFlow'
 import { useDevice } from 'hooks/useDevice'
 import { StandardUseropTx } from './StandardUseropTx'
+import { useMyAbstractAccountAddress } from './hooks/useMyAbstractAccountAddress'
 
 export function UserOpTxModal() {
-    const { currOp, confirm, deny } = userOpsStore()
+    const myAbstractAccountAddress = useMyAbstractAccountAddress().data
+    const { promptUser, setPromptResponse } = userOpsStore(
+        useShallow((s) => ({
+            promptUser: selectUserOpsByAddress(myAbstractAccountAddress, s)?.promptUser,
+            setPromptResponse: s.setPromptResponse,
+        })),
+    )
+    const deny = () => setPromptResponse(myAbstractAccountAddress, 'deny')
+
     const { end: endPublicPageLoginFlow } = usePublicPageLoginFlow()
     const { isTouch } = useDevice()
     const [disableUiWhileCrossmintPaymentPhase, setDisableUiWhileCrossmintPaymentPhase] =
         useState(false)
-
-    if (typeof confirm !== 'function' || !currOp) {
+    if (!promptUser) {
         return null
     }
     return (

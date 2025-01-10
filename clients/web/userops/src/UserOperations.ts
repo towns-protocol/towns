@@ -36,7 +36,6 @@ import {
     totalCostOfUserOp,
     balanceOf,
 } from './middlewares'
-import { MiddlewareVars } from './MiddlewareVars'
 import { abstractAddressMap } from './abstractAddressMap'
 import { TownsSimpleAccount } from './TownsSimpleAccount'
 import { getGasPrice as getEthMaxPriorityFeePerGas } from 'userop/dist/preset/middleware'
@@ -61,7 +60,7 @@ export class UserOps {
     private timeTracker: TimeTracker | undefined
     private fetchAccessTokenFn: (() => Promise<string | null>) | undefined
     private middlewareInitialized = false
-    public middlewareVars: MiddlewareVars
+    private sender: string | undefined
 
     constructor(
         config: UserOpsConfig & {
@@ -79,9 +78,6 @@ export class UserOps {
         this.skipPromptUserOnPMRejectedOp = config.skipPromptUserOnPMRejectedOp
         this.timeTracker = config.timeTracker
         this.fetchAccessTokenFn = config.fetchAccessTokenFn
-        this.middlewareVars = new MiddlewareVars({
-            operationAttempt: 1,
-        })
     }
 
     // TODO: extract this to a separate function b/c client uses this to get AA address for all users
@@ -133,14 +129,24 @@ export class UserOps {
         sequenceName?: TimeTrackerEvents,
     ): Promise<TownsUserOpClientSendUserOperationResponse> {
         const { toAddress, callData, value } = args
+        const builder = await this.getBuilder({ signer: args.signer })
+        const sender = builder.getSenderAddress()
 
-        // new op, reset the middleware props
-        this.middlewareVars.reset({
-            sequenceName,
-            functionHashForPaymasterProxy: args.functionHashForPaymasterProxy,
-            spaceId: args.spaceId,
-            txValue: args.value,
-        })
+        const {
+            setSequenceName,
+            setFunctionHashForPaymasterProxy,
+            setSpaceId,
+            setCurrOpValue,
+            reset,
+        } = userOpsStore.getState()
+
+        // TODO: with replacement underpriced, gonna need to not reset the store w/ each op
+        // but instead use the gas values from the previous op to estimate the next op
+        reset(sender)
+        setSequenceName(sender, sequenceName)
+        setFunctionHashForPaymasterProxy(sender, args.functionHashForPaymasterProxy)
+        setSpaceId(sender, args.spaceId)
+        setCurrOpValue(sender, args.value)
 
         const timeTracker = this.timeTracker
 
@@ -149,7 +155,6 @@ export class UserOps {
             endInitBuilder = timeTracker?.startMeasurement(sequenceName, 'userops_init_builder')
         }
 
-        const builder = await this.getBuilder({ signer: args.signer })
         this.addMiddleware({ builder, signer: args.signer })
 
         endInitBuilder?.()
@@ -201,7 +206,6 @@ export class UserOps {
             simpleAccount,
             retryCount: args.retryCount,
             skipPromptUserOnPMRejectedOp: this.skipPromptUserOnPMRejectedOp,
-            middlewareVars: this.middlewareVars,
         })
     }
 
@@ -514,8 +518,10 @@ export class UserOps {
         )
     }
 
-    public clearStore() {
-        userOpsStore.getState().clear()
+    private clearStore(sender: string | undefined) {
+        if (sender) {
+            userOpsStore.getState().reset(sender)
+        }
     }
 
     /**
@@ -1840,16 +1846,16 @@ export class UserOps {
             // If rejected, gas must be estimated in later middleware
             .useMiddleware(async (ctx) => {
                 if (this.paymasterProxyUrl && this.paymasterProxyAuthSecret) {
-                    const { sequenceName, functionHashForPaymasterProxy, spaceId, txValue } =
-                        this.middlewareVars
+                    const { sequenceName, functionHashForPaymasterProxy, spaceId, currOpValue } =
+                        userOpsStore.getState().userOps[ctx.op.sender]
 
-                    if (txValue) {
-                        const bigNumber = ethers.BigNumber.from(txValue)
+                    if (currOpValue) {
+                        const bigNumber = ethers.BigNumber.from(currOpValue)
                         if (bigNumber.gt(0) || bigNumber.isNegative()) {
                             return
                         }
                     }
-                    if (this.middlewareVars.functionHashForPaymasterProxy === 'checkIn') {
+                    if (functionHashForPaymasterProxy === 'checkIn') {
                         return
                     }
 
@@ -1884,7 +1890,8 @@ export class UserOps {
                 }
             })
             .useMiddleware(async (ctx) => {
-                const { spaceId } = this.middlewareVars
+                const { spaceId, functionHashForPaymasterProxy } =
+                    userOpsStore.getState().userOps[ctx.op.sender]
                 if (isSponsoredOp(ctx)) {
                     return
                 }
@@ -1894,14 +1901,14 @@ export class UserOps {
                     bundlerUrl: this.bundlerUrl,
                     spaceId,
                     spaceDapp: this.spaceDapp,
-                    functionHashForPaymasterProxy:
-                        this.middlewareVars.functionHashForPaymasterProxy,
+                    functionHashForPaymasterProxy: functionHashForPaymasterProxy,
                 })
             })
             .useMiddleware(async (ctx) => {
-                const { functionHashForPaymasterProxy, txValue, spaceId } = this.middlewareVars
+                const { functionHashForPaymasterProxy, spaceId } =
+                    userOpsStore.getState().userOps[ctx.op.sender]
                 const space = spaceId ? this.spaceDapp?.getSpace(spaceId) : undefined
-                saveOpToUserOpsStore(ctx, functionHashForPaymasterProxy, txValue, builder, space)
+                saveOpToUserOpsStore(ctx, functionHashForPaymasterProxy, builder, space)
                 return Promise.resolve()
             })
             // prompt user if the paymaster rejected
@@ -1909,7 +1916,8 @@ export class UserOps {
                 if (this.skipPromptUserOnPMRejectedOp || isSponsoredOp(ctx)) {
                     return
                 }
-                const { functionHashForPaymasterProxy, txValue } = this.middlewareVars
+                const { functionHashForPaymasterProxy, currOpValue } =
+                    userOpsStore.getState().userOps[ctx.op.sender]
 
                 // tip is a special case
                 // - it is not sponsored
@@ -1922,7 +1930,7 @@ export class UserOps {
                         preVerificationGas: op.preVerificationGas,
                         verificationGasLimit: op.verificationGasLimit,
                         gasPrice: op.maxFeePerGas,
-                        value: txValue,
+                        value: currOpValue,
                     })
                     const balance = await balanceOf(op.sender, builder.provider)
 
@@ -1930,16 +1938,17 @@ export class UserOps {
                         throw new InsufficientTipBalanceException()
                     }
                 } else {
-                    await promptUser()
+                    await promptUser(ctx.op.sender)
                 }
             })
             .useMiddleware(async (ctx) => {
-                const { txValue, functionHashForPaymasterProxy } = this.middlewareVars
-                if (txValue && functionHashForPaymasterProxy === 'transferEth') {
+                const { currOpValue, functionHashForPaymasterProxy } =
+                    userOpsStore.getState().userOps[ctx.op.sender]
+                if (currOpValue && functionHashForPaymasterProxy === 'transferEth') {
                     return subtractGasFromBalance(ctx, {
                         functionHash: functionHashForPaymasterProxy,
                         builder,
-                        value: txValue,
+                        value: currOpValue,
                     })
                 }
             })
@@ -1954,14 +1963,12 @@ export class UserOps {
         return Promise.all([this.getBuilder({ signer }), this.getUserOpClient()])
     }
 
-    public reset() {
+    public async reset() {
+        const sender = (await this.builder)?.getSenderAddress()
         this.builder = undefined
         this.userOpClient = undefined
         this.middlewareInitialized = false
-        this.middlewareVars = new MiddlewareVars({
-            operationAttempt: 1,
-        })
-        this.clearStore()
+        this.clearStore(sender)
     }
 }
 

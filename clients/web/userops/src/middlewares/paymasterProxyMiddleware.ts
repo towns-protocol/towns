@@ -160,7 +160,10 @@ export const paymasterProxyMiddleware = async (
             if (errorParseResult.success) {
                 userOpsStore
                     .getState()
-                    .setRejectedSponsorshipReason(errorParseResult.data.errorDetail.code)
+                    .setRejectedSponsorshipReason(
+                        ctx.op.sender,
+                        errorParseResult.data.errorDetail.code,
+                    )
             } else {
                 console.log(
                     '[paymasterProxyMiddleware] errorParseResult.error, error may be missing in PaymasterErrorCode',

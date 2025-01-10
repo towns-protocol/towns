@@ -130,7 +130,8 @@
                     "vite-tsconfig-paths",
                     "vitest",
                     "wagmi",
-                    "viem"
+                    "viem",
+                    "superjson"
                 ],
                 "packages": [
                     "@river-build/dlog",

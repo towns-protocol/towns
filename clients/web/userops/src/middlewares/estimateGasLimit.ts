@@ -1,12 +1,11 @@
 import { BundlerJsonRpcProvider, IUserOperationMiddlewareCtx } from 'userop'
 import { utils } from 'ethers'
 import { estimateUserOperationGas } from './estimateUserOperationGas'
-import { TimeTracker, TimeTrackerEvents } from '../types'
+import { FunctionHash, TimeTracker, TimeTrackerEvents } from '../types'
 import { BigNumber, BigNumberish } from 'ethers'
 import { errorCategories, errorToCodeException } from '../errors'
 import { ISpaceDapp } from '@river-build/web3'
 import { OpToJSON } from '../utils'
-import { MiddlewareVars } from '../MiddlewareVars'
 
 export async function estimateGasLimit(args: {
     ctx: IUserOperationMiddlewareCtx
@@ -19,7 +18,7 @@ export async function estimateGasLimit(args: {
         timeTracker?: TimeTracker | undefined
         stepPrefix?: string | undefined
     }
-    functionHashForPaymasterProxy?: MiddlewareVars['functionHashForPaymasterProxy']
+    functionHashForPaymasterProxy?: FunctionHash
 }) {
     const { ctx, provider, bundlerUrl, spaceDapp, spaceId } = args
     const { sequenceName, timeTracker, stepPrefix } = args.timeTrackArgs ?? {}

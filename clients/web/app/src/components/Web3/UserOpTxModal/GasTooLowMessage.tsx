@@ -1,8 +1,13 @@
 import React from 'react'
-import { userOpsStore } from '@towns/userops'
+import { selectUserOpsByAddress, userOpsStore } from '@towns/userops'
 import { Box, Icon, Text } from '@ui'
+import { useMyAbstractAccountAddress } from './hooks/useMyAbstractAccountAddress'
+
 export function GasTooLowMessage() {
-    const retryDetails = userOpsStore((s) => s.retryDetails)
+    const myAbstractAccountAddress = useMyAbstractAccountAddress().data
+    const retryDetails = userOpsStore(
+        (s) => selectUserOpsByAddress(myAbstractAccountAddress, s)?.retryDetails,
+    )
     if (retryDetails?.type !== 'gasTooLow') {
         return null
     }

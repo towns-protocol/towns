@@ -11,6 +11,7 @@ import {
 } from './utils'
 import { expect, vi } from 'vitest'
 import { ethers } from 'ethers'
+import { userOpsStore } from '../src/userOpsStore'
 
 test('userops with different values are sent correctly', async () => {
     const alice = new LocalhostWeb3Provider(
@@ -64,9 +65,13 @@ test('userops with different values are sent correctly', async () => {
     const spaceId1 = await getSpaceId(spaceDapp, spReceipt1, alice.wallet.address, userOpsAlice)
     const spaceId2 = await getSpaceId(spaceDapp, spReceipt2, alice.wallet.address, userOpsAlice)
 
-    expect(userOpsBob.middlewareVars.txValue).toBe(undefined)
     const bobBuilder = await userOpsBob.getBuilder({ signer: bob.wallet })
     const executeSpy = vi.spyOn(bobBuilder, 'execute')
+
+    const bobSenderAddress = bobBuilder.getSenderAddress()
+
+    expect(userOpsStore.getState().userOps[bobSenderAddress]?.currOpValue).toBe(undefined)
+
     // join space
     const joinOp1 = await userOpsBob.sendJoinSpaceOp([spaceId1, bob.wallet.address, bob.wallet])
     await waitForOpAndTx(joinOp1, bob)
@@ -74,12 +79,21 @@ test('userops with different values are sent correctly', async () => {
     const format = (val: string) => ethers.utils.formatEther(val)
     // eslint-disable-next-line @typescript-eslint/no-base-to-string
     expect(format(executeSpy.mock.lastCall![1].toString())).toBe('0.1')
-    // eslint-disable-next-line @typescript-eslint/no-base-to-string
-    expect(format(userOpsBob.middlewareVars.txValue!.toString())).toBe('0.1')
+
+    expect(
+        format(
+            // eslint-disable-next-line @typescript-eslint/no-base-to-string
+            userOpsStore.getState().userOps[bobSenderAddress].currOpValue!.toString(),
+        ),
+    ).toBe('0.1')
 
     await userOpsBob.sendJoinSpaceOp([spaceId2, bob.wallet.address, bob.wallet])
     // eslint-disable-next-line @typescript-eslint/no-base-to-string
     expect(format(executeSpy.mock.lastCall![1].toString())).toBe('0.2')
-    // eslint-disable-next-line @typescript-eslint/no-base-to-string
-    expect(format(userOpsBob.middlewareVars.txValue!.toString())).toBe('0.2')
+    expect(
+        format(
+            // eslint-disable-next-line @typescript-eslint/no-base-to-string
+            userOpsStore.getState().userOps[bobSenderAddress].currOpValue!.toString(),
+        ),
+    ).toBe('0.2')
 })

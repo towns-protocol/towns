@@ -7,23 +7,16 @@ import {
 import { datadogLogs } from '@datadog/browser-logs'
 import { TownsUserOpClient } from './TownsUserOpClient'
 import { TownsSimpleAccount } from './TownsSimpleAccount'
-import { MiddlewareVars } from './MiddlewareVars'
 import { userOpsStore } from './userOpsStore'
 
 export const sendUserOperationWithRetry = async (args: {
     userOpClient: TownsUserOpClient
     simpleAccount: TownsSimpleAccount
     retryCount?: number
-    middlewareVars: MiddlewareVars
     skipPromptUserOnPMRejectedOp?: boolean
 }) => {
-    const {
-        userOpClient,
-        simpleAccount,
-        retryCount,
-        middlewareVars,
-        skipPromptUserOnPMRejectedOp,
-    } = args
+    const { userOpClient, simpleAccount, retryCount, skipPromptUserOnPMRejectedOp } = args
+    const { setOperationAttempt, setRetryDetails } = userOpsStore.getState()
 
     let attempt = 0
     let shouldTry = true
@@ -55,7 +48,7 @@ export const sendUserOperationWithRetry = async (args: {
             if (matchPrivyError) {
                 const { error: privyError } = matchPrivyError
                 _error = privyError
-                middlewareVars.operationAttempt = attempt++
+                setOperationAttempt(simpleAccount.getSenderAddress(), attempt++)
 
                 datadogLogs.logger.error('[UserOperations] privy unknown connector error', {
                     error,
@@ -74,7 +67,7 @@ export const sendUserOperationWithRetry = async (args: {
             else if (matchGasError) {
                 const { error: gasTooLowError, type } = matchGasError
                 _error = gasTooLowError
-                middlewareVars.operationAttempt = attempt++
+                setOperationAttempt(simpleAccount.getSenderAddress(), attempt++)
 
                 datadogLogs.logger.error('[UserOperations] gas too low error', {
                     error,
@@ -84,11 +77,9 @@ export const sendUserOperationWithRetry = async (args: {
                     operationAttempt: attempt,
                 })
 
-                userOpsStore.setState({
-                    retryDetails: {
-                        type: 'gasTooLow',
-                        data: type,
-                    },
+                setRetryDetails(simpleAccount.getSenderAddress(), {
+                    type: 'gasTooLow',
+                    data: type,
                 })
                 await new Promise((resolve) => setTimeout(resolve, 500))
                 // this is a paid op. just retry until the user dismisses

@@ -12957,6 +12957,7 @@ __metadata:
     eslint: ^8.53.0
     eslint-plugin-import: ^2.27.5
     eslint-plugin-vitest: ^0.5.4
+    superjson: ^2.2.2
     typescript: ^5.1.6
     userop: ^0.3.7
     vitest: ^1.6.0
@@ -34918,6 +34919,15 @@ __metadata:
   dependencies:
     copy-anything: ^3.0.2
   checksum: 42f327474a9de80165a70641d66c2afd9ce7f0eb241c32af7e2d5777f893aac6defa6c1584bd35f022658dbdfd2b7bcf0d170acfe62a07e7d1d01238cf5b4a57
+  languageName: node
+  linkType: hard
+
+"superjson@npm:^2.2.2":
+  version: 2.2.2
+  resolution: "superjson@npm:2.2.2"
+  dependencies:
+    copy-anything: ^3.0.2
+  checksum: 5120086d24dedc180284524e5bb247a146f3ecf17d2b5e0eafecc1fe7dc7eb74a5dcfd3c250684edccb9c15db0d5ce24ac968c68cd908285c0160a3138435707
   languageName: node
   linkType: hard
 

@@ -324,7 +324,7 @@ export class TownsTestClient extends TownsClient {
      * stopClients
      *************************************************/
     public async stopClients() {
-        this.baseTransactor.userOps?.reset()
+        await this.baseTransactor.userOps?.reset()
         await this.baseTransactor.blockchainTransactionStore.stop()
         await this.stopCasablancaClient()
     }

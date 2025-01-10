@@ -1,10 +1,14 @@
 import React from 'react'
-import { userOpsStore } from '@towns/userops'
+import { selectUserOpsByAddress, userOpsStore } from '@towns/userops'
 import { Box, Icon, Text } from '@ui'
 import { useRejectionMessage } from './hooks/useRejectionMessage'
+import { useMyAbstractAccountAddress } from './hooks/useMyAbstractAccountAddress'
 
 export function RejectedSponsorshipMessage() {
-    const rejectedSponsorshipReason = userOpsStore((s) => s.rejectedSponsorshipReason)
+    const myAbstractAccountAddress = useMyAbstractAccountAddress().data
+    const rejectedSponsorshipReason = userOpsStore(
+        (s) => selectUserOpsByAddress(myAbstractAccountAddress, s)?.rejectedSponsorshipReason,
+    )
     const rejectionMessage = useRejectionMessage()
 
     if (!rejectedSponsorshipReason) {

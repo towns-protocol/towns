@@ -9,7 +9,9 @@ export function useInsufficientBalance(args: {
     preVerificationGas: BigNumberish
     verificationGasLimit: BigNumberish
     gasPrice: BigNumberish
-    currOpDecodedCallData: ReturnType<typeof userOpsStore.getState>['currOpDecodedCallData']
+    currOpDecodedCallData: ReturnType<
+        typeof userOpsStore.getState
+    >['userOps']['xxx']['currOpDecodedCallData']
     value?: BigNumberish
 }): boolean {
     const {

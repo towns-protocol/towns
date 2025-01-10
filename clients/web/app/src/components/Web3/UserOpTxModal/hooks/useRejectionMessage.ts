@@ -1,8 +1,12 @@
-import { PaymasterErrorCode, userOpsStore } from '@towns/userops'
+import { PaymasterErrorCode, selectUserOpsByAddress, userOpsStore } from '@towns/userops'
 import { useMemo } from 'react'
+import { useMyAbstractAccountAddress } from './useMyAbstractAccountAddress'
 
 export function useRejectionMessage() {
-    const rejectedSponsorshipReason = userOpsStore((s) => s.rejectedSponsorshipReason)
+    const myAbstractAccountAddress = useMyAbstractAccountAddress().data
+    const rejectedSponsorshipReason = userOpsStore(
+        (s) => selectUserOpsByAddress(myAbstractAccountAddress, s)?.rejectedSponsorshipReason,
+    )
 
     const rejectionMessage = useMemo(() => {
         if (rejectedSponsorshipReason === PaymasterErrorCode.PAYMASTER_LIMIT_REACHED) {

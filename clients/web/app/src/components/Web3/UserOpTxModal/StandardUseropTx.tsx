@@ -1,4 +1,4 @@
-import { userOpsStore } from '@towns/userops'
+import { selectUserOpsByAddress, userOpsStore } from '@towns/userops'
 import React, { useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { useConnectivity, useContractSpaceInfoWithoutClient } from 'use-towns-client'
@@ -24,6 +24,7 @@ import { RejectedSponsorshipMessage } from './RejectSponsorshipMessage'
 import { InsufficientBalanceForPayWithEth } from './InsufficientBalanceForPayWithEth'
 import { ChargesSummary } from './ChargesSummary'
 import { WalletBalance } from './WalletBalance'
+import { useMyAbstractAccountAddress } from './hooks/useMyAbstractAccountAddress'
 
 export function StandardUseropTx({
     disableUiWhileCrossmintPaymentPhase,
@@ -35,12 +36,13 @@ export function StandardUseropTx({
     const [showCrossmintPayment, setShowCrossmintPayment] = useState(false)
     const [showWalletBalance, setShowWalletBalance] = useState(false)
     const [showWalletWarning, setShowWalletWarning] = useState(false)
-
+    const myAbstractAccountAddress = useMyAbstractAccountAddress().data
     const { currOp, currOpDecodedCallData, currOpValue } = userOpsStore(
         useShallow((s) => ({
-            currOp: s.currOp,
-            currOpValue: s.currOpValue,
-            currOpDecodedCallData: s.currOpDecodedCallData,
+            currOp: selectUserOpsByAddress(myAbstractAccountAddress, s)?.currOp,
+            currOpValue: selectUserOpsByAddress(myAbstractAccountAddress, s)?.currOpValue,
+            currOpDecodedCallData: selectUserOpsByAddress(myAbstractAccountAddress, s)
+                ?.currOpDecodedCallData,
         })),
     )
 
@@ -223,7 +225,8 @@ function HeaderButtons(props: {
 }) {
     const { disableUiWhileCrossmintPaymentPhase, showCrossmintPayment, showWalletBalance, onBack } =
         props
-    const denyTx = userOpsStore((s) => s.deny)
+    const myAbstractAccountAddress = useMyAbstractAccountAddress().data
+    const setPromptResponse = userOpsStore((s) => s.setPromptResponse)
     const { end: endPublicPageLoginFlow } = usePublicPageLoginFlow()
 
     return (
@@ -246,7 +249,9 @@ function HeaderButtons(props: {
                     icon="close"
                     onClick={() => {
                         endPublicPageLoginFlow()
-                        denyTx?.()
+                        if (myAbstractAccountAddress) {
+                            setPromptResponse?.(myAbstractAccountAddress, 'deny')
+                        }
                     }}
                 />
             </PlaceholderOrIcon>

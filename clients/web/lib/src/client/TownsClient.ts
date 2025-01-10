@@ -158,7 +158,7 @@ export class TownsClient
         this.log('logout')
         await this.logoutFromCasablanca()
         await this.baseTransactor.blockchainTransactionStore.stop()
-        this.baseTransactor.userOps?.reset()
+        await this.baseTransactor.userOps?.reset()
     }
 
     /************************************************

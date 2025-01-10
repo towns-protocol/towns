@@ -1,5 +1,5 @@
 import React from 'react'
-import { userOpsStore } from '@towns/userops'
+import { selectUserOpsByAddress, userOpsStore } from '@towns/userops'
 import {
     BlockchainTransactionType,
     useConnectivity,
@@ -9,6 +9,7 @@ import { AppProgressState } from '@components/AppProgressOverlay/AppProgressStat
 import { AppProgressOverlayTrigger } from '@components/AppProgressOverlay/AppProgressOverlayTrigger'
 import { useAppProgressStore } from '@components/AppProgressOverlay/store/appProgressStore'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
+import { useMyAbstractAccountAddress } from '@components/Web3/UserOpTxModal/hooks/useMyAbstractAccountAddress'
 
 // 1. logging in
 // 2. joining - animation
@@ -19,7 +20,8 @@ import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 
 export function JoiningOverlay() {
     const { isAuthenticated } = useConnectivity()
-    const { currOp } = userOpsStore()
+    const myAbstractAccountAddress = useMyAbstractAccountAddress().data
+    const currOp = userOpsStore((s) => selectUserOpsByAddress(myAbstractAccountAddress, s)?.currOp)
 
     const spaceId = useSpaceIdFromPathname()
     const { isOptimisticInitialized } = useAppProgressStore(({ optimisticInitializedSpaces }) => ({
