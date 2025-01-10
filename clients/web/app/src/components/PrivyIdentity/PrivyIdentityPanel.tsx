@@ -158,7 +158,44 @@ const LinkedAccount = ({ account }: { account: LinkedAccount }) => {
         )
     }
 
-    return null
+    if (account.type === 'twitter_oauth') {
+        return (
+            <LinkedAccountDisplay>
+                <Icon type="twitter" size="square_sm" />
+                <Text>Twitter {account.username}</Text>
+            </LinkedAccountDisplay>
+        )
+    }
+
+    if (account.type === 'farcaster') {
+        return (
+            <LinkedAccountDisplay>
+                <Icon type="farcaster" size="square_sm" />
+                <Text>Farcaster {account.username}</Text>
+            </LinkedAccountDisplay>
+        )
+    }
+
+    if (account.type === 'wallet') {
+        // 'privy' walletClientType == embeddedWallet
+        if (account.walletClientType !== 'privy') {
+            return (
+                <LinkedAccountDisplay>
+                    <Icon type="wallet" size="square_sm" />
+                    <Text>Wallet {account.address}</Text>
+                </LinkedAccountDisplay>
+            )
+        }
+        return null
+    }
+
+    // fallback
+    return (
+        <LinkedAccountDisplay>
+            <Icon type="profile" size="square_sm" />
+            <Text>{account.type}</Text>
+        </LinkedAccountDisplay>
+    )
 }
 
 const LinkedAccountDisplay = ({ children }: { children: React.ReactNode }) => {
