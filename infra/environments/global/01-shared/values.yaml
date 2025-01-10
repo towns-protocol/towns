@@ -15,11 +15,11 @@ template:
         command: ["/home/runner/run.sh"]
         resources:
           requests:
-            memory: "15.5Gi"
-            cpu: "7900m"
+            memory: "30Gi"
+            cpu: "10000m"
           limits:
-            memory: "15.5Gi"
-            cpu: "7900m"
+            memory: "30Gi"
+            cpu: "15000m"
 ## template.spec will be modified if you change the container mode
 ## with containerMode.type=dind, we will populate the template.spec with following pod spec
 ## template:

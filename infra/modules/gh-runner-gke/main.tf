@@ -74,7 +74,7 @@ module "runner-cluster" {
       min_count    = var.min_node_count
       max_count    = var.max_node_count
       auto_upgrade = true
-      machine_type = "n2-standard-48"
+      machine_type = "n2-standard-32"
       disk_type    = "pd-ssd"
     }
   ]
