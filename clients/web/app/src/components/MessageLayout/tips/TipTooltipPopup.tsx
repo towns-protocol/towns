@@ -9,6 +9,7 @@ import { isDMChannelStreamId, isGDMChannelStreamId } from '@river-build/sdk'
 import { Box, BoxProps, CardOpener, CardOpenerTriggerProps, IconButton } from '@ui'
 import { useShortcut } from 'hooks/useShortcut'
 import { useCardOpenerContext } from 'ui/components/Overlay/CardOpenerContext'
+import { isInputFocused } from '@components/RichTextPlate/utils/helpers'
 import { TipMenu } from './TipMenu'
 import { TipOption } from './types'
 import { TipConfirm } from './TipConfirm'
@@ -119,6 +120,7 @@ export function TipIcoButton(props: { tipPending: boolean; triggerProps: CardOpe
             )
             trackTipOnMessage('messageActions')
         }, [onTriggerClick]),
+        { enableOnContentEditable: false, enabled: () => !isInputFocused() },
     )
 
     return (
