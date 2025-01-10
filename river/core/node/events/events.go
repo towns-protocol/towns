@@ -541,6 +541,29 @@ func Make_UserSettingsPayload_FullyReadMarkers(
 	}
 }
 
+func Make_MediaPayload_Inception(inception *MediaPayload_Inception) *StreamEvent_MediaPayload {
+	return &StreamEvent_MediaPayload{
+		MediaPayload: &MediaPayload{
+			Content: &MediaPayload_Inception_{
+				Inception: inception,
+			},
+		},
+	}
+}
+
+func Make_MediaPayload_Chunk(data []byte, chunkIndex int32) *StreamEvent_MediaPayload {
+	return &StreamEvent_MediaPayload{
+		MediaPayload: &MediaPayload{
+			Content: &MediaPayload_Chunk_{
+				Chunk: &MediaPayload_Chunk{
+					Data:       data,
+					ChunkIndex: chunkIndex,
+				},
+			},
+		},
+	}
+}
+
 func Make_MiniblockHeader(miniblockHeader *MiniblockHeader) *StreamEvent_MiniblockHeader {
 	return &StreamEvent_MiniblockHeader{
 		MiniblockHeader: miniblockHeader,

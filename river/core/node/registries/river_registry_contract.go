@@ -714,61 +714,6 @@ func (c *RiverRegistryContract) SetStreamLastMiniblockBatch(
 	return nil, nil, RiverError(Err_ERR_UNSPECIFIED, "SetStreamLastMiniblockBatch transaction result unknown")
 }
 
-func (c *RiverRegistryContract) SetStreamLastMiniblock(
-	ctx context.Context,
-	streamId StreamId,
-	prevMiniblockHash common.Hash,
-	lastMiniblockHash common.Hash,
-	lastMiniblockNum uint64,
-	isSealed bool,
-) error {
-	log := dlog.FromCtx(ctx)
-
-	pendingTx, err := c.Blockchain.TxPool.Submit(
-		ctx,
-		"SetStreamLastMiniblock",
-		func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			tx, err := c.StreamRegistry.SetStreamLastMiniblock(
-				opts, streamId, prevMiniblockHash, lastMiniblockHash, lastMiniblockNum, isSealed)
-			if err == nil {
-				log.Debug(
-					"RiverRegistryContract: prepared transaction",
-					"name", "SetStreamLastMiniblock",
-					"streamId", streamId,
-					"prevMiniblockHash", prevMiniblockHash,
-					"lastMiniblockHash", lastMiniblockHash,
-					"lastMiniblockNum", lastMiniblockNum,
-					"isSealed", isSealed,
-					"txHash", tx.Hash(),
-				)
-			}
-			return tx, err
-		},
-	)
-	if err != nil {
-		return AsRiverError(err, Err_CANNOT_CALL_CONTRACT).
-			Func("SetStreamLastMiniblock").
-			Tags("streamId", streamId, "prevMiniblockHash", prevMiniblockHash, "lastMiniblockHash",
-				lastMiniblockHash, "lastMiniblockNum", lastMiniblockNum, "isSealed", isSealed)
-	}
-
-	receipt, err := pendingTx.Wait(ctx)
-	if err != nil {
-		return err
-	}
-
-	if receipt != nil && receipt.Status == crypto.TransactionResultSuccess {
-		return nil
-	}
-	if receipt != nil && receipt.Status != crypto.TransactionResultSuccess {
-		return RiverError(Err_ERR_UNSPECIFIED, "Set stream last mini block transaction failed").
-			Tag("tx", receipt.TxHash.Hex()).
-			Func("SetStreamLastMiniblock")
-	}
-
-	return RiverError(Err_ERR_UNSPECIFIED, "SetStreamLastMiniblock transaction result unknown")
-}
-
 type NodeRecord = river.Node
 
 func (c *RiverRegistryContract) GetAllNodes(ctx context.Context, blockNum crypto.BlockNumber) ([]NodeRecord, error) {

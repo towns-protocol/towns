@@ -43,6 +43,8 @@ contract ForkRewardsDistributionTest is
   address internal baseRegistry;
   address internal spaceFactory;
   DeployRewardsDistributionV2 internal distributionV2Helper;
+  MockMainnetDelegation internal mockMainnetDelegation =
+    new MockMainnetDelegation();
   address internal owner;
   address[] internal activeOperators;
 
@@ -96,12 +98,7 @@ contract ForkRewardsDistributionTest is
     vm.assume(delegator != address(rewardsDistributionFacet));
     vm.assume(delegator != address(0) && delegator != operator);
 
-    address messenger = IMainnetDelegation(baseRegistry).getMessenger();
-    address proxyDelegation = IMainnetDelegation(baseRegistry)
-      .getProxyDelegation();
-
-    mockMessenger(messenger, proxyDelegation);
-    IMainnetDelegation(baseRegistry).setDelegation(delegator, operator, amount);
+    setDelegation(delegator, operator, amount);
     assertEq(
       IMainnetDelegation(baseRegistry).getDepositIdByDelegator(delegator),
       0
@@ -113,8 +110,7 @@ contract ForkRewardsDistributionTest is
       amount
     );
 
-    mockMessenger(messenger, proxyDelegation);
-    IMainnetDelegation(baseRegistry).setDelegation(delegator, operator, amount);
+    setDelegation(delegator, operator, amount);
     assertEq(
       IMainnetDelegation(baseRegistry).getDepositIdByDelegator(delegator),
       1
@@ -360,19 +356,22 @@ contract ForkRewardsDistributionTest is
     test_fuzz_notifyRewardAmount(rewardAmount);
     stake(address(this), 1 ether, address(this), operator0);
 
+    setDelegation(delegator, operator1, amount);
+
     address messenger = IMainnetDelegation(baseRegistry).getMessenger();
     address proxyDelegation = IMainnetDelegation(baseRegistry)
       .getProxyDelegation();
 
     mockMessenger(messenger, proxyDelegation);
-    IMainnetDelegation(baseRegistry).setDelegation(
-      delegator,
-      operator1,
-      amount
+    vm.mockFunction(
+      baseRegistry,
+      address(mockMainnetDelegation),
+      abi.encodePacked(MockMainnetDelegation.setAuthorizedClaimer.selector)
     );
-
-    mockMessenger(messenger, proxyDelegation);
-    IMainnetDelegation(baseRegistry).setAuthorizedClaimer(delegator, claimer);
+    MockMainnetDelegation(baseRegistry).setAuthorizedClaimer(
+      delegator,
+      claimer
+    );
 
     skip(timeLapse);
 
@@ -422,7 +421,7 @@ contract ForkRewardsDistributionTest is
     distributionV2Helper = new DeployRewardsDistributionV2();
     address distributionV2Impl = address(new RewardsDistribution());
     address mainnetDelegationImpl = IDiamondLoupe(baseRegistry).facetAddress(
-      MainnetDelegation.setBatchDelegation.selector
+      MainnetDelegation.setProxyDelegation.selector
     );
     address spaceDelegationImpl = IDiamondLoupe(baseRegistry).facetAddress(
       SpaceDelegationFacet.addSpaceDelegation.selector
@@ -507,7 +506,7 @@ contract ForkRewardsDistributionTest is
   }
 
   function mockMessenger(address messenger, address proxyDelegation) internal {
-    vm.prank(address(messenger));
+    vm.prank(messenger);
     vm.mockCall(
       messenger,
       abi.encodeWithSelector(
@@ -515,5 +514,45 @@ contract ForkRewardsDistributionTest is
       ),
       abi.encode(proxyDelegation)
     );
+  }
+
+  function setDelegation(
+    address delegator,
+    address operator,
+    uint96 amount
+  ) internal {
+    address messenger = IMainnetDelegation(baseRegistry).getMessenger();
+    address proxyDelegation = IMainnetDelegation(baseRegistry)
+      .getProxyDelegation();
+
+    mockMessenger(messenger, proxyDelegation);
+    vm.mockFunction(
+      baseRegistry,
+      address(mockMainnetDelegation),
+      abi.encodePacked(MockMainnetDelegation.setDelegation.selector)
+    );
+    MockMainnetDelegation(baseRegistry).setDelegation(
+      delegator,
+      operator,
+      amount
+    );
+  }
+}
+
+/// @dev Mock contract to include deprecated functions
+contract MockMainnetDelegation is MainnetDelegation {
+  function setDelegation(
+    address delegator,
+    address operator,
+    uint256 quantity
+  ) external onlyCrossDomainMessenger {
+    _setDelegation(delegator, operator, quantity);
+  }
+
+  function setAuthorizedClaimer(
+    address owner,
+    address claimer
+  ) external onlyCrossDomainMessenger {
+    _setAuthorizedClaimer(owner, claimer);
   }
 }

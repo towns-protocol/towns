@@ -38,6 +38,8 @@ contract RewardsDistributionTest is
   MainnetDelegation internal mainnetDelegationFacet;
   RewardsDistribution internal rewardsDistributionFacet;
   SpaceDelegationFacet internal spaceDelegationFacet;
+  MockMainnetDelegation internal mockMainnetDelegation =
+    new MockMainnetDelegation();
 
   //example test values with expected results
   uint256 exDistributionAmount;
@@ -1666,7 +1668,16 @@ contract RewardsDistributionTest is
     );
 
     vm.prank(address(messenger));
-    mainnetDelegationFacet.setDelegation(user.addr, operatorAddr, user.amount);
+    vm.mockFunction(
+      address(mainnetDelegationFacet),
+      address(mockMainnetDelegation),
+      abi.encodePacked(MockMainnetDelegation.setDelegation.selector)
+    );
+    MockMainnetDelegation(address(mainnetDelegationFacet)).setDelegation(
+      user.addr,
+      operatorAddr,
+      user.amount
+    );
   }
 
   // =============================================================
@@ -1766,10 +1777,16 @@ contract RewardsDistributionTest is
   }
 
   modifier givenMainnetUserHasSetAuthorizedClaimerToSelf(Entity memory user) {
-    // vm.expectEmit();
-    // emit IMainnetDelegationBase.AuthorizedClaimerSet(user.addr, claimer);
     vm.prank(address(messenger));
-    mainnetDelegationFacet.setAuthorizedClaimer(user.addr, user.addr);
+    vm.mockFunction(
+      address(mainnetDelegationFacet),
+      address(mockMainnetDelegation),
+      abi.encodePacked(MockMainnetDelegation.setAuthorizedClaimer.selector)
+    );
+    MockMainnetDelegation(address(mainnetDelegationFacet)).setAuthorizedClaimer(
+      user.addr,
+      user.addr
+    );
     _;
   }
 
@@ -1778,7 +1795,13 @@ contract RewardsDistributionTest is
   ) {
     for (uint256 i = 0; i < users.length; i++) {
       vm.prank(address(messenger));
-      mainnetDelegationFacet.setAuthorizedClaimer(users[i].addr, users[i].addr);
+      vm.mockFunction(
+        address(mainnetDelegationFacet),
+        address(mockMainnetDelegation),
+        abi.encodePacked(MockMainnetDelegation.setAuthorizedClaimer.selector)
+      );
+      MockMainnetDelegation(address(mainnetDelegationFacet))
+        .setAuthorizedClaimer(users[i].addr, users[i].addr);
     }
     _;
   }
@@ -1853,5 +1876,23 @@ contract RewardsDistributionTest is
   modifier givenTokensHaveBeenSentToDistributionContract(uint256 amount) {
     sendTokensToContract(address(rewardsDistributionFacet), amount);
     _;
+  }
+}
+
+/// @dev Mock contract to include deprecated functions
+contract MockMainnetDelegation is MainnetDelegation {
+  function setDelegation(
+    address delegator,
+    address operator,
+    uint256 quantity
+  ) external onlyCrossDomainMessenger {
+    _setDelegation(delegator, operator, quantity);
+  }
+
+  function setAuthorizedClaimer(
+    address owner,
+    address claimer
+  ) external onlyCrossDomainMessenger {
+    _setAuthorizedClaimer(owner, claimer);
   }
 }

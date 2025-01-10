@@ -40,8 +40,6 @@ export class MetricsDiscovery {
         const host = url.hostname
         return {
             labels: {
-                node_address: node.nodeAddress,
-                operator: node.operator,
                 node_url: node.url,
                 env: this.env,
             },

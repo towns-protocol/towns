@@ -72,62 +72,6 @@ contract MainnetDelegation is
     _setDelegationDigest(digest);
   }
 
-  function removeDelegations(
-    address[] calldata delegators
-  ) external onlyCrossDomainMessenger {
-    for (uint256 i; i < delegators.length; ++i) {
-      _removeDelegation(delegators[i]);
-    }
-  }
-
-  function setBatchAuthorizedClaimers(
-    address[] calldata delegators,
-    address[] calldata claimers
-  ) external onlyCrossDomainMessenger {
-    uint256 delegatorsLen = delegators.length;
-    require(delegatorsLen == claimers.length);
-    for (uint256 i; i < delegatorsLen; ++i) {
-      _setAuthorizedClaimer(delegators[i], claimers[i]);
-    }
-  }
-
-  function setBatchDelegation(
-    address[] calldata delegators,
-    address[] calldata delegates,
-    address[] calldata claimers,
-    uint256[] calldata quantities
-  ) external onlyCrossDomainMessenger {
-    uint256 delegatorsLen = delegators.length;
-    require(
-      delegatorsLen == delegates.length &&
-        delegatorsLen == claimers.length &&
-        delegatorsLen == quantities.length
-    );
-
-    for (uint256 i; i < delegatorsLen; ++i) {
-      address delegator = delegators[i];
-      _setDelegation(delegator, delegates[i], quantities[i]);
-      _setAuthorizedClaimer(delegator, claimers[i]);
-    }
-  }
-
-  /// @inheritdoc IMainnetDelegation
-  /// @notice deprecated
-  function setDelegation(
-    address delegator,
-    address operator,
-    uint256 quantity
-  ) external onlyCrossDomainMessenger {
-    _setDelegation(delegator, operator, quantity);
-  }
-
-  function setAuthorizedClaimer(
-    address owner,
-    address claimer
-  ) external onlyCrossDomainMessenger {
-    _setAuthorizedClaimer(owner, claimer);
-  }
-
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                          GETTERS                           */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/

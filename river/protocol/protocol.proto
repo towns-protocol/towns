@@ -735,6 +735,15 @@ message EncryptedData {
     */
     optional string ref_event_id = 6;
 
+    /**
+     * Encrypted payload when algorithm is set to mls_0.0.1
+     */
+    message Mls {
+      uint64 epoch = 1;
+      bytes ciphertext = 2;
+    }
+
+    optional Mls mls = 7;
 }
 
 message WrappedEncryptedData {

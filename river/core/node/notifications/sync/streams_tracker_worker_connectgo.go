@@ -270,10 +270,15 @@ func (s *StreamTrackerConnectGo) Run(
 					continue
 				}
 
-				// apply update
+				for _, block := range update.GetStream().GetMiniblocks() {
+					if err := trackedStream.ApplyBlock(block, onChainConfig.Get()); err != nil {
+						log.Error("Unable to apply block", "stream", streamID, "err", err)
+					}
+				}
+
 				for _, event := range update.GetStream().GetEvents() {
-					if err := trackedStream.HandleEvent(syncCtx, event); err != nil {
-						log.Error("Unable to handle event", "stream", streamID, "err", err)
+					if err := trackedStream.ApplyEvent(syncCtx, event); err != nil {
+						log.Error("Unable to apply event", "stream", streamID, "err", err)
 					}
 				}
 

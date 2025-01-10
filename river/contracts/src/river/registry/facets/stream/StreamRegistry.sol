@@ -81,50 +81,6 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     );
   }
 
-  function setStreamLastMiniblock(
-    bytes32 streamId,
-    bytes32, // prevMiniblockHash
-    bytes32 lastMiniblockHash,
-    uint64 lastMiniblockNum,
-    bool isSealed
-  ) external onlyNode(msg.sender) {
-    // Validate that the streamId is in the registry
-    if (!ds.streams.contains(streamId)) {
-      revert(RiverRegistryErrors.NOT_FOUND);
-    }
-
-    Stream storage stream = ds.streamById[streamId];
-
-    // Check if the stream is already sealed using bitwise AND
-    if ((stream.flags & StreamFlags.SEALED) != 0) {
-      revert(RiverRegistryErrors.STREAM_SEALED);
-    }
-
-    // Ensure that the lastMiniblockNum is newer than the current head.
-    if (stream.lastMiniblockNum >= lastMiniblockNum) {
-      revert(RiverRegistryErrors.BAD_ARG);
-    }
-
-    // Delete genesis miniblock
-    delete ds.genesisMiniblockByStreamId[streamId];
-
-    // Update the stream information
-    stream.lastMiniblockHash = lastMiniblockHash;
-    stream.lastMiniblockNum = lastMiniblockNum;
-
-    // Set the sealed flag if requested
-    if (isSealed) {
-      stream.flags |= StreamFlags.SEALED;
-    }
-
-    emit StreamLastMiniblockUpdated(
-      streamId,
-      lastMiniblockHash,
-      lastMiniblockNum,
-      isSealed
-    );
-  }
-
   function setStreamLastMiniblockBatch(
     SetMiniblock[] calldata miniblocks
   ) external onlyNode(msg.sender) {

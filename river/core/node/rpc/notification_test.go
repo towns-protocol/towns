@@ -514,6 +514,12 @@ func testSpaceChannelNotifications(
 		test := setupSpaceChannelNotificationTest(ctx, tester, notificationClient, authClient)
 		spaceChannelSettings(ctx, test)
 	})
+
+	tester.sequentialSubtest("JoinExistingTown", func(tester *serviceTester) {
+		ctx := tester.ctx
+		test := setupSpaceChannelNotificationTest(ctx, tester, notificationClient, authClient)
+		testJoinExistingTown(ctx, test, notifications)
+	})
 }
 
 // testSpaceChannelPlainMessage tests space channel message that isn't a reply, reaction nor includes a mention
@@ -816,7 +822,7 @@ func setupSpaceChannelNotificationTest(
 		testCtx.members = append(testCtx.members, wallet)
 	}
 
-	newMiniblockRef, err := makeMiniblock(ctx, client, testCtx.channelID, true, 0)
+	newMiniblockRef, err := makeMiniblock(ctx, client, testCtx.channelID, false, 0)
 	require.NoError(err)
 	require.Greater(newMiniblockRef.Num, int64(0))
 
@@ -1595,4 +1601,51 @@ func spaceChannelSettings(
 	// channel1 is the one that was set to messages all, make sure it's still there
 	test.req.Equal(space.Channels[0].ChannelId, channel1.ChannelId)
 	test.req.Equal(space.Channels[0].Value, SpaceChannelSettingValue_SPACE_CHANNEL_SETTING_MESSAGES_ALL)
+}
+
+// testJoinExistingTown tests that notifications are received when a user joins a town.
+func testJoinExistingTown(
+	ctx context.Context,
+	test *spaceChannelNotificationsTestContext,
+	nc *notificationCapture,
+) {
+	// create new users that joins the channel and subscribe for APN and WEB notifications
+	userNewlyJoined, err := crypto.NewWallet(ctx)
+	test.req.NoError(err)
+
+	test.subscribeApnPush(ctx, userNewlyJoined)
+	test.subscribeWebPush(ctx, userNewlyJoined)
+	test.setSpaceChannelSetting(ctx, userNewlyJoined, SpaceChannelSettingValue_SPACE_CHANNEL_SETTING_MESSAGES_ALL)
+
+	syncCookie, _, err := createUser(ctx, userNewlyJoined, test.streamClient, nil)
+	test.req.NoError(err, "error creating user")
+	test.req.NotNil(syncCookie)
+
+	_, _, err = createUserMetadataStream(ctx, userNewlyJoined, test.streamClient, nil)
+	test.req.NoError(err)
+
+	addUserToChannel(test.req, ctx, test.streamClient, syncCookie, userNewlyJoined, test.spaceID, test.channelID)
+
+	newMiniblockRef, err := makeMiniblock(ctx, test.streamClient, test.channelID, false, 0)
+	test.req.NoError(err)
+	test.req.Greater(newMiniblockRef.Num, int64(0))
+
+	sender := test.members[0]
+	event := test.sendMessageWithTags(ctx, sender, "hi!", &Tags{})
+	eventHash := common.BytesToHash(event.Hash)
+	expectedUsersToReceiveNotification := map[common.Address]int{userNewlyJoined.Address: 1}
+
+	test.req.Eventuallyf(func() bool {
+		nc.WebPushNotificationsMu.Lock()
+		defer nc.WebPushNotificationsMu.Unlock()
+
+		nc.ApnPushNotificationsMu.Lock()
+		defer nc.ApnPushNotificationsMu.Unlock()
+
+		webNotifications := nc.WebPushNotifications[eventHash]
+		apnNotifications := nc.ApnPushNotifications[eventHash]
+
+		return cmp.Equal(webNotifications, expectedUsersToReceiveNotification) &&
+			cmp.Equal(apnNotifications, expectedUsersToReceiveNotification)
+	}, notificationDeliveryDelay, 100*time.Millisecond, "Didn't receive expected notifications for stream %s", test.channelID)
 }

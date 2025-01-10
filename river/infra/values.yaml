@@ -1,0 +1,109 @@
+## maxRunners is the max number of runners the autoscaling runner set will scale up to.
+# maxRunners: 5
+
+## minRunners is the min number of idle runners. The target number of runners created will be
+## calculated as a sum of minRunners and the number of jobs assigned to the scale set.
+# minRunners: 3
+
+## template is the PodSpec for each runner Pod
+## For reference: https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#PodSpec
+template:
+  spec:
+    containers:
+      - name: runner
+        image: ghcr.io/actions/actions-runner:latest
+        command: ["/home/runner/run.sh"]
+        resources:
+          requests:
+            memory: "15.5Gi"
+            cpu: "7900m"
+          limits:
+            memory: "15.5Gi"
+            cpu: "7900m"
+## template.spec will be modified if you change the container mode
+## with containerMode.type=dind, we will populate the template.spec with following pod spec
+## template:
+##   spec:
+##     initContainers:
+##     - name: init-dind-externals
+##       image: ghcr.io/actions/actions-runner:latest
+##       command: ["cp", "-r", "-v", "/home/runner/externals/.", "/home/runner/tmpDir/"]
+##       volumeMounts:
+##         - name: dind-externals
+##           mountPath: /home/runner/tmpDir
+##     containers:
+##     - name: runner
+##       image: ghcr.io/actions/actions-runner:latest
+##       command: ["/home/runner/run.sh"]
+##       env:
+##         - name: DOCKER_HOST
+##           value: unix:///var/run/docker.sock
+##       volumeMounts:
+##         - name: work
+##           mountPath: /home/runner/_work
+##         - name: dind-sock
+##           mountPath: /var/run
+##     - name: dind
+##       image: docker:dind
+##       args:
+##         - dockerd
+##         - --host=unix:///var/run/docker.sock
+##         - --group=$(DOCKER_GROUP_GID)
+##       env:
+##         - name: DOCKER_GROUP_GID
+##           value: "123"
+##       securityContext:
+##         privileged: true
+##       volumeMounts:
+##         - name: work
+##           mountPath: /home/runner/_work
+##         - name: dind-sock
+##           mountPath: /var/run
+##         - name: dind-externals
+##           mountPath: /home/runner/externals
+##     volumes:
+##     - name: work
+##       emptyDir: {}
+##     - name: dind-sock
+##       emptyDir: {}
+##     - name: dind-externals
+##       emptyDir: {}
+######################################################################################################
+## with containerMode.type=kubernetes, we will populate the template.spec with following pod spec
+## template:
+##   spec:
+##     containers:
+##     - name: runner
+##       image: ghcr.io/actions/actions-runner:latest
+##       command: ["/home/runner/run.sh"]
+##       env:
+##         - name: ACTIONS_RUNNER_CONTAINER_HOOKS
+##           value: /home/runner/k8s/index.js
+##         - name: ACTIONS_RUNNER_POD_NAME
+##           valueFrom:
+##             fieldRef:
+##               fieldPath: metadata.name
+##         - name: ACTIONS_RUNNER_REQUIRE_JOB_CONTAINER
+##           value: "true"
+##       volumeMounts:
+##         - name: work
+##           mountPath: /home/runner/_work
+##     volumes:
+##       - name: work
+##         ephemeral:
+##           volumeClaimTemplate:
+##             spec:
+##               accessModes: [ "ReadWriteOnce" ]
+##               storageClassName: "local-path"
+##               resources:
+##                 requests:
+##                   storage: 1Gi
+## Optional controller service account that needs to have required Role and RoleBinding
+## to operate this gha-runner-scale-set installation.
+## The helm chart will try to find the controller deployment and its service account at installation time.
+## In case the helm chart can't find the right service account, you can explicitly pass in the following value
+## to help it finish RoleBinding with the right service account.
+## Note: if your controller is installed to only watch a single namespace, you have to pass these values explicitly.
+# controllerServiceAccount:
+#   namespace: arc-system
+#   name: test-arc-gha-runner-scale-set-controller

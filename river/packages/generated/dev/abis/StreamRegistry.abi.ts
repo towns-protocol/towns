@@ -286,39 +286,6 @@ export default [
   },
   {
     "type": "function",
-    "name": "setStreamLastMiniblock",
-    "inputs": [
-      {
-        "name": "streamId",
-        "type": "bytes32",
-        "internalType": "bytes32"
-      },
-      {
-        "name": "",
-        "type": "bytes32",
-        "internalType": "bytes32"
-      },
-      {
-        "name": "lastMiniblockHash",
-        "type": "bytes32",
-        "internalType": "bytes32"
-      },
-      {
-        "name": "lastMiniblockNum",
-        "type": "uint64",
-        "internalType": "uint64"
-      },
-      {
-        "name": "isSealed",
-        "type": "bool",
-        "internalType": "bool"
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
     "name": "setStreamLastMiniblockBatch",
     "inputs": [
       {

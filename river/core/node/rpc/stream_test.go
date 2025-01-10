@@ -62,12 +62,23 @@ func TestGetStreamEx(t *testing.T) {
 	}, time.Second*5, time.Millisecond*200)
 }
 
-func logsAreSequential(logs []*river.StreamRegistryV1StreamLastMiniblockUpdated, step uint64) bool {
+// expected miniblock nums seq: [1, step, 2*step, 3*step, ...]
+func logsAreSequentialAndStartFrom1(logs []*river.StreamRegistryV1StreamLastMiniblockUpdated, step uint64) bool {
+	if len(logs) < 3 {
+		return false
+	}
+
+	if logs[0].LastMiniblockNum != 1 {
+		return false
+	}
+
 	for i := 1; i < len(logs); i++ {
-		if logs[i].LastMiniblockNum != logs[i-1].LastMiniblockNum+step {
+		exp := uint64(i) * step
+		if logs[i].LastMiniblockNum != exp {
 			return false
 		}
 	}
+
 	return true
 }
 
@@ -119,8 +130,9 @@ func TestMiniBlockProductionFrequency(t *testing.T) {
 
 		var logsFound []*river.StreamRegistryV1StreamLastMiniblockUpdated
 		for logs.Next() {
-			log := logs.Event
-			logsFound = append(logsFound, log)
+			if log := logs.Event; log.StreamId == channelId {
+				logsFound = append(logsFound, log)
+			}
 		}
 
 		if testfmt.Enabled() {
@@ -135,12 +147,7 @@ func TestMiniBlockProductionFrequency(t *testing.T) {
 			return false
 		}
 
-		// make sure that the first 3 logs have last miniblock num frequency apart
-		if !logsAreSequential(logsFound, miniblockRegistrationFrequency) {
-			panic("not sequential")
-		}
-
-		return true
+		return logsAreSequentialAndStartFrom1(logsFound, miniblockRegistrationFrequency)
 	}, 20*time.Second, 25*time.Millisecond)
 
 	alice.listen(channelId, []common.Address{alice.userId}, conversation)
@@ -201,8 +208,9 @@ func TestMiniBlockProductionFrequency(t *testing.T) {
 		tt.require.NoError(err)
 
 		for logs.Next() {
-			log := logs.Event
-			logsFound = append(logsFound, log)
+			if log := logs.Event; log.StreamId == channelId {
+				logsFound = append(logsFound, log)
+			}
 		}
 
 		if testfmt.Enabled() {
@@ -210,16 +218,12 @@ func TestMiniBlockProductionFrequency(t *testing.T) {
 			testfmt.Print(t, "iter", i, "logsFound", len(logsFound), "mbs", len(mbs))
 		}
 
-		if len(logsFound) < 6 {
+		if len(logsFound) < 10 {
 			return false
 		}
 
-		// make sure that the first 3 logs have last miniblock num frequency apart
-		if !logsAreSequential(logsFound, miniblockRegistrationFrequency) {
-			panic("not sequential")
-		}
-
-		return true
+		// make sure that the logs have last miniblock num frequency apart
+		return logsAreSequentialAndStartFrom1(logsFound, miniblockRegistrationFrequency)
 	}, 20*time.Second, 25*time.Millisecond)
 
 	alice.listen(channelId, []common.Address{alice.userId}, conversation)
