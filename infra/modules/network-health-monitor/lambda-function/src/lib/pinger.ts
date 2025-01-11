@@ -5,7 +5,6 @@ import { CombinedNode } from './metrics-integrator'
 const chainHealthSchema = z.object({
     result: z.string(),
     chain_id: z.number(),
-    block: z.number(),
     latency: z.string(),
 })
 
@@ -41,7 +40,10 @@ export class Ping {
         try {
             response = await fetch(url.toString())
         } catch (e: unknown) {
-            console.warn(`Failed to ping node ${node.url}: ${e}`)
+            console.warn('Failed to ping node', {
+                url: node.url,
+                error: e,
+            })
             return {
                 result: 'error' as const,
                 message: `Failed to ping node ${node.url}: ${e}`,
@@ -49,7 +51,10 @@ export class Ping {
         }
 
         if (response.status !== 200) {
-            console.warn(`Node ${node.url} returned status ${response.status}`)
+            console.warn('Node returned non-200 status', {
+                url: node.url,
+                status: response.status,
+            })
             return {
                 result: 'error' as const,
                 message: `Node ${node.url} returned status ${response.status}`,
@@ -61,7 +66,10 @@ export class Ping {
         try {
             jsonResponse = await response.json()
         } catch (e: unknown) {
-            console.warn(`Failed to parse JSON response from node ${node.url}: ${e}`)
+            console.warn('Failed to parse JSON response', {
+                url: node.url,
+                error: e,
+            })
             return {
                 result: 'error' as const,
                 message: `Failed to parse JSON response from node ${node.url}: ${e}`,
@@ -71,13 +79,15 @@ export class Ping {
         const parsedResponse = NodeStatusSchema.safeParse(jsonResponse)
 
         if (!parsedResponse.success) {
-            console.warn(
-                `Failed to validate JSON response from node ${node.url}: ${parsedResponse.error}`,
-            )
+            console.warn('Failed to validate JSON response from node:', {
+                url: node.url,
+                error: parsedResponse.error,
+                rawResponse: jsonResponse,
+            })
             return {
                 result: 'error' as const,
                 message: `Failed to validate JSON response from node ${node.url}: ${parsedResponse.error}`,
-                rawResponse: jsonResponse,
+                rawResponse: JSON.stringify(jsonResponse, null, 2),
             }
         }
 

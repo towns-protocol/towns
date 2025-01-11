@@ -53,11 +53,8 @@ export class MetricsExtractor {
         private readonly riverChainProvider: ethers.providers.JsonRpcProvider,
         private readonly riverRegistry: RiverRegistry,
         private readonly baseRegistry: BaseRegistry,
-        private readonly spaceOwner: SpaceOwner,
-        private readonly spaceDapp: SpaceDapp,
         private readonly pinger: Pinger,
         private readonly integrator: MetricsIntegrator,
-        private readonly scrapeConfig: MetricsExtractorScrapeConfig,
     ) {}
 
     public static init(config: MetricsExtractorConfig) {
@@ -66,25 +63,16 @@ export class MetricsExtractor {
         const deployment = getWeb3Deployment(config.environment)
         const riverRegistry = new RiverRegistry(deployment.river, riverChainProvider)
         const baseRegistry = new BaseRegistry(deployment.base, baseChainProvider)
-        const spaceOwner = new SpaceOwner(deployment.base, baseChainProvider)
-        const spaceDapp = new SpaceDapp(deployment.base, baseChainProvider)
         const pinger = new Pinger()
         const metricsIntegrator = new MetricsIntegrator()
-        const scrapeConfig = {
-            getSpaceMemberships: config.environment === 'omega', // this is an incredibly expensive query, so we only do it for omega
-            getSpaceInfo: config.getSpaceInfo,
-        }
 
         return new MetricsExtractor(
             baseChainProvider,
             riverChainProvider,
             riverRegistry,
             baseRegistry,
-            spaceOwner,
-            spaceDapp,
             pinger,
             metricsIntegrator,
-            scrapeConfig,
         )
     }
 
