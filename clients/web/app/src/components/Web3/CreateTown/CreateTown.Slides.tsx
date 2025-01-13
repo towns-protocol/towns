@@ -16,6 +16,8 @@ import { TokenSelector } from '@components/Tokens/TokenSelector/TokenSelector'
 import { Token } from '@components/Tokens/TokenSelector/tokenSchemas'
 import { WalletMemberSelector } from '@components/SpaceSettingsPanel/WalletMemberSelector'
 import { useDevice } from 'hooks/useDevice'
+import { TOWNS_PRICING_TERMS_LINK } from 'data/links'
+import { atoms } from 'ui/styles/atoms.css'
 import { CreateTownFormReturn } from './types'
 import {
     GATING_ENABLED,
@@ -115,7 +117,25 @@ export const TownName = (props: SlideProps) => {
 export const TownType = (props: SlideProps) => {
     const { form, onNextSlide, ...slideProps } = props
     const optionMap = {
-        free: { name: 'Free', description: 'Town is free to join for first 100 people' },
+        free: {
+            name: 'Free',
+            description: (
+                <>
+                    Town is free to join.{' '}
+                    <a
+                        href={TOWNS_PRICING_TERMS_LINK}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={atoms({
+                            textDecoration: 'underline',
+                        })}
+                    >
+                        Terms
+                    </a>{' '}
+                    apply.
+                </>
+            ),
+        },
         paid: { name: 'Paid', description: 'Members must pay to join' },
     }
     return (

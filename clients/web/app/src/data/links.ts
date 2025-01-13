@@ -10,3 +10,6 @@ export const MESSAGING_IN_TOWNS_LINK =
     'https://townhall.towns.com/Messaging-in-Towns-4eb893c9e34444b49ad49e368b9ab123?pvs=4'
 
 export const TOWNS_IOS_APP = 'https://apps.apple.com/app/apple-store/id6504000393?pt=120981930&mt=8'
+
+export const TOWNS_PRICING_TERMS_LINK =
+    'https://townhall.towns.com/All-About-Pricing-2edea6a280cb46279762d9dca2b7be41'
