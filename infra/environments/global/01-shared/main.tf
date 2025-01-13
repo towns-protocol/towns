@@ -19,42 +19,16 @@ terraform {
   required_version = ">= 1.0.3"
 }
 
-locals {
-  project_id         = "hnt-arc-runners-444719"
-  k8s_config_context = "gke_hnt-arc-runners-444719_us-east4-a_gh-runner-k8s"
-}
-
 provider "aws" {
   region  = "us-east-1"
   profile = "harmony-github-actions"
 }
 
-provider "google-beta" {
-  project = local.project_id
-  region  = "us-central1"
-}
-
-provider "google" {
-  project = local.project_id
-  region  = "us-central1"
-}
-
-provider "kubernetes" {
-  config_path    = "~/.kube/config"
-  config_context = local.k8s_config_context
-}
-
-provider "helm" {
-  kubernetes {
-    config_path    = "~/.kube/config"
-    config_context = local.k8s_config_context
-  }
-}
-
 module "runner-gke" {
   source = "../../../modules/gh-runner-gke"
 
-  project_id             = local.project_id
+  project_id             = "hnt-arc-runners-444719"
+  k8s_config_context     = "gke_hnt-arc-runners-444719_us-east4-a_gh-runner-k8s"
   create_network         = true
   cluster_suffix         = "k8s"
   gh_app_id              = "1084993"
@@ -66,7 +40,6 @@ module "runner-gke" {
   min_node_count = 1
   max_node_count = 100
 
-  # TODO: uncomment
   arc_runners_values = [
     file("${path.module}/values.yaml")
   ]

@@ -1,3 +1,25 @@
+provider "google-beta" {
+  project = var.project_id
+  region  = "us-central1"
+}
+
+provider "google" {
+  project = var.project_id
+  region  = "us-central1"
+}
+
+provider "kubernetes" {
+  config_path    = "~/.kube/config"
+  config_context = var.k8s_config_context
+}
+
+provider "helm" {
+  kubernetes {
+    config_path    = "~/.kube/config"
+    config_context = var.k8s_config_context
+  }
+}
+
 /**
  * Copyright 2020 Google LLC
  *

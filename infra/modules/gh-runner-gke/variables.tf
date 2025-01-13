@@ -177,3 +177,8 @@ variable "arc_runners_values" {
   description = "List of values in raw yaml format to pass to helm for ARC runners scale set chart"
   default     = []
 }
+
+variable "k8s_config_context" {
+  type        = string
+  description = "The k8s context to use for the runner cluster"
+}
