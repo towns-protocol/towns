@@ -43,10 +43,10 @@ export const AppStoreBanner = (props: BoxProps) => {
                 gap="sm"
                 width="100%"
                 height="x8"
-                background="level2"
+                background="cta2"
                 alignItems="center"
             >
-                <Box width="x2" cursor="pointer" onClick={onDismiss}>
+                <Box width="x2" cursor="pointer" color="inverted" onClick={onDismiss}>
                     <Icon type="close" size="square_xs" />
                 </Box>
                 <Box
@@ -66,23 +66,25 @@ export const AppStoreBanner = (props: BoxProps) => {
                         }}
                     />
                 </Box>
-                <Box grow gap="sm" cursor="pointer" onClick={onOpen}>
-                    <Paragraph fontWeight="medium" color="default">
-                        Towns
-                    </Paragraph>
+                <Box grow gap="sm" cursor="pointer" color="inverted" onClick={onOpen}>
+                    <Paragraph fontWeight="medium">Towns</Paragraph>
                     <Paragraph size="sm">Permissionless Group Chat</Paragraph>
                 </Box>
-                <Box onClick={onOpen}>
+                <Box padding={{ default: 'md', mobile: 'none' }} onClick={onOpen}>
                     <Box
-                        background="cta2"
+                        background="level1"
                         color="default"
-                        padding="sm"
+                        padding={{ default: 'md', mobile: 'md' }}
                         borderRadius="lg"
                         fontWeight="medium"
                         cursor="pointer"
+                        gap="none"
                     >
-                        <Paragraph size="xs" textTransform="uppercase">
-                            Use app
+                        <Paragraph size="md" display={{ default: 'flex', mobile: 'none' }}>
+                            Get the App
+                        </Paragraph>
+                        <Paragraph size="md" display={{ default: 'none', mobile: 'flex' }}>
+                            Use App
                         </Paragraph>
                     </Box>
                 </Box>
