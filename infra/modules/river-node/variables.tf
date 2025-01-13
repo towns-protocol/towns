@@ -143,3 +143,8 @@ variable "memory" {
 variable "cpu" {
   type = number
 }
+
+variable "enable_mls" {
+  type    = bool
+  default = false
+}

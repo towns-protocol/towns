@@ -189,6 +189,7 @@ module "river_node" {
   river_chain_id = local.river_chain_id
 
   scrub_duration = local.scrub_duration
+  enable_mls     = true
 
   ecs_cluster = {
     id   = aws_ecs_cluster.river_ecs_cluster.id

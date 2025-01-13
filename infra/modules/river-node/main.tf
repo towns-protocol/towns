@@ -501,6 +501,10 @@ resource "aws_ecs_task_definition" "river-fargate" {
         value = "true"
       },
       {
+        name  = "ENABLEMLS"
+        value = var.enable_mls ? "true" : "false"
+      },
+      {
         name  = "DATABASE__HOST",
         value = local.db_config.host
       },
@@ -658,9 +662,9 @@ locals {
   datadog_monitor_alert_min_duration_minutes = local.run_mode == "archive" ? 8 : 2
 
   archive_node_docker_labels = {
-      "com.datadoghq.ad.check_names"  = "[\"openmetrics\"]",
-      "com.datadoghq.ad.init_configs" = "[{}]",
-      "com.datadoghq.ad.instances"    = "[{\"prometheus_url\": \"${local.node_url}/metrics\", \"namespace\": \"archive_node\", \"metrics\": [\"*\"]}]"
+    "com.datadoghq.ad.check_names"  = "[\"openmetrics\"]",
+    "com.datadoghq.ad.init_configs" = "[{}]",
+    "com.datadoghq.ad.instances"    = "[{\"prometheus_url\": \"${local.node_url}/metrics\", \"namespace\": \"archive_node\", \"metrics\": [\"*\"]}]"
   }
 }
 
