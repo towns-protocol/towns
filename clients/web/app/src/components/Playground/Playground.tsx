@@ -28,7 +28,6 @@ import {
 import { Accordion, AccordionGroup } from 'ui/components/Accordion/Accordion'
 import { FormRender } from 'ui/components/Form/Form'
 import { vars } from 'ui/styles/vars.css'
-import { BottomBar } from '@components/Web3/MembershipNFT/BottomBar'
 import { Avatar } from '@components/Avatar/Avatar'
 import { TipBurst } from '@components/MessageLayout/tips/TipBurst'
 import { VListExample } from './pages/example/VListExample'
@@ -369,12 +368,6 @@ export const Playground = () => {
             <Container darkOnly label="VList" padding="none">
                 <Stack position="relative" height="800">
                     <VListExample />
-                </Stack>
-            </Container>
-
-            <Container darkOnly label="Bottom Bar">
-                <Stack paddingY="lg">
-                    <BottomBar text="Join" onClick={() => void 0} />
                 </Stack>
             </Container>
         </Stack>

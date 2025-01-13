@@ -1,4 +1,4 @@
-import { useImageStore } from 'use-towns-client'
+import { Address, useImageStore } from 'use-towns-client'
 import { useFormContext } from 'react-hook-form'
 import React, { useCallback, useMemo } from 'react'
 import { AnimatePresence } from 'framer-motion'
@@ -9,9 +9,14 @@ import { UploadImageRequestConfig } from '@components/UploadImage/useOnImageChan
 import { UploadImageRenderer } from '@components/UploadImage/UploadImageRenderer'
 import { isTouch } from 'hooks/useDevice'
 import { Box, Icon, Paragraph } from '@ui'
-import { TransactionDetails } from '@components/Web3/MembershipNFT/CreateSpaceFormV2/types'
 import { FadeInBox } from '@components/Transitions'
 import { CreateTownFormSchema } from '../types'
+
+type TransactionDetails = {
+    isTransacting: boolean
+    townAddress: Address | undefined
+}
+
 const DEFAULT_TRANSACTION_DETAILS: TransactionDetails = {
     isTransacting: false,
     townAddress: undefined,

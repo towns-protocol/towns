@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { membershipSettingsSchema } from '@components/Web3/MembershipNFT/CreateSpaceFormV2/CreateSpaceFormV2.schema'
+import { membershipSettingsSchema } from '@components/SpaceSettingsPanel/membershipSettingsSchema'
 
 // TODO: separate prepay into its own form
 export const editMembershipSchema = z

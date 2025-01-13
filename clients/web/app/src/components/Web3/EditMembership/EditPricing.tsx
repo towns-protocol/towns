@@ -6,10 +6,10 @@ import {
     findFixedPricingModule,
 } from 'use-towns-client'
 import { FadeInBox } from '@components/Transitions'
+import { MembershipSettingsSchemaType } from '@components/SpaceSettingsPanel/membershipSettingsSchema'
 import { ErrorMessage, Paragraph, RadioCard, Stack, TextField } from '@ui'
 import { usePlatformMinMembershipPriceInEth } from 'hooks/usePlatformMinMembershipPriceInEth'
 import { shimmerClass } from 'ui/styles/globals/shimmer.css'
-import { MembershipSettingsSchemaType } from '../MembershipNFT/CreateSpaceFormV2/CreateSpaceFormV2.schema'
 import { useEthInputChange } from './useEthInputChange'
 
 enum PricingPreset {

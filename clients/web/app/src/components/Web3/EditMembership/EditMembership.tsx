@@ -2,7 +2,7 @@ import { useFormContext } from 'react-hook-form'
 import React, { ChangeEvent, useCallback } from 'react'
 import { ErrorMessage, Stack, Text, TextField } from '@ui'
 import { FadeInBox } from '@components/Transitions'
-import { MembershipSettingsSchemaType } from '../MembershipNFT/CreateSpaceFormV2/CreateSpaceFormV2.schema'
+import { MembershipSettingsSchemaType } from '@components/SpaceSettingsPanel/membershipSettingsSchema'
 
 export function EditMembership() {
     const { formState, register, setValue, setError, trigger } =

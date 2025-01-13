@@ -5,7 +5,7 @@ import { Token } from '@components/Tokens/TokenSelector/tokenSchemas'
 import { ErrorMessage, Paragraph, RadioCard, Stack, Toggle } from '@ui'
 import { TokenSelector } from '@components/Tokens/TokenSelector/TokenSelector'
 import { WalletMemberSelector } from '@components/SpaceSettingsPanel/WalletMemberSelector'
-import { MembershipSettingsSchemaType } from '../MembershipNFT/CreateSpaceFormV2/CreateSpaceFormV2.schema'
+import { MembershipSettingsSchemaType } from '@components/SpaceSettingsPanel/membershipSettingsSchema'
 
 interface EditGatingProps {
     isRole?: boolean

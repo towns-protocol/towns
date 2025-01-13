@@ -117,36 +117,4 @@ export const membershipSettingsSchema = z
         }
     })
 
-export const schema = z
-    .object({
-        spaceIconUrl: z.coerce.string().optional().nullable(),
-        spaceIconFile: z.custom<File>((val) => val instanceof File, 'Please upload an image'),
-        spaceName: z
-            .string({
-                errorMap: (err, ctx) => {
-                    if (ctx.data === null) {
-                        return { message: 'Town name is required.' }
-                    }
-
-                    if (ctx.data?.length === 0 || err.code === 'too_small') {
-                        return { message: 'Town name must be at least 2 characters.' }
-                    }
-                    if (err.code === 'too_big') {
-                        return { message: 'Town name must be less than 32 characters.' }
-                    }
-
-                    return {
-                        message: 'Town name must be between 2 and 32 characters.',
-                    }
-                },
-            })
-            .min(2)
-            .max(MAX_LENGTH_SPACE_NAME),
-        // spaceOwner: z.string(), TODO contract updates
-        shortDescription: z.string().optional().nullable(),
-        longDescription: z.string().optional().nullable(),
-    })
-    .and(membershipSettingsSchema)
-
-export type CreateSpaceFormV2SchemaType = z.infer<typeof schema>
 export type MembershipSettingsSchemaType = z.infer<typeof membershipSettingsSchema>

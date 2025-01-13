@@ -1,8 +1,7 @@
 import React, { useEffect, useMemo, useRef } from 'react'
 import { useConnectivity } from 'use-towns-client'
 import { useReadableMembershipInfo } from '@components/TownPageLayout/useReadableMembershipInfo'
-import { BottomBarWithColWidths } from '@components/Web3/MembershipNFT/BottomBar'
-import { Box, Stack, Text } from '@ui'
+import { Box, BoxProps, Stack, Text } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { JoinLoginButton } from './JoinLoginButton'
@@ -126,5 +125,56 @@ export function BottomBarContent({
             </Stack>
             {!preventJoiningOverlay && <JoiningOverlay />}
         </>
+    )
+}
+
+const BottomBarWithColWidths = ({
+    leftColWidth,
+    rightColWidth,
+    rightColContent,
+    leftColContent,
+    ...boxProps
+}: {
+    leftColWidth: number
+    rightColWidth: number
+    rightColContent: React.ReactNode
+    leftColContent: React.ReactNode
+} & BoxProps) => {
+    const isTouch = useDevice().isTouch
+    return (
+        <Stack
+            horizontal
+            centerContent
+            position="relative"
+            width="100%"
+            alignItems="center"
+            paddingBottom="safeAreaInsetBottom"
+            height={{
+                desktop: 'x12',
+                mobile: undefined,
+            }}
+            paddingY="md"
+            {...boxProps}
+        >
+            <Stack absoluteFill />
+            <Box
+                grow={isTouch}
+                position="relative"
+                style={{
+                    width: isTouch ? undefined : 600,
+                }}
+            >
+                {leftColContent}
+            </Box>
+
+            <Box
+                position="relative"
+                style={{
+                    width: isTouch ? undefined : 300,
+                }}
+            >
+                {rightColContent}
+            </Box>
+        </Stack>
     )
 }
