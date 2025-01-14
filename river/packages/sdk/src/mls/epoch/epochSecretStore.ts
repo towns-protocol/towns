@@ -1,5 +1,4 @@
 import { EpochSecret, epochSecretId, EpochSecretId } from './epochSecret'
-import { DLogger } from '@river-build/dlog'
 
 export interface IEpochSecretStore {
     getEpochSecret(streamId: string, epoch: bigint): Promise<EpochSecret | undefined>
@@ -9,11 +8,6 @@ export interface IEpochSecretStore {
 
 export class InMemoryEpochSecretStore implements IEpochSecretStore {
     private epochKeySates: Map<EpochSecretId, EpochSecret> = new Map()
-    log: DLogger
-
-    constructor(log: DLogger) {
-        this.log = log
-    }
 
     public async getEpochSecret(streamId: string, epoch: bigint): Promise<EpochSecret | undefined> {
         const epochId: EpochSecretId = epochSecretId(streamId, epoch)

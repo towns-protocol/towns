@@ -1,11 +1,20 @@
 import { check } from '@river-build/dlog'
 import { IStreamStateView } from '../../streamStateView'
 
-export function extractMlsExternalGroup(streamView: IStreamStateView): {
+export type ExtractMlsExternalGroupResult = {
     externalGroupSnapshot: Uint8Array
     groupInfoMessage: Uint8Array
     commits: { commit: Uint8Array; groupInfoMessage: Uint8Array }[]
-} {
+}
+
+export function extractMlsExternalGroup(
+    streamView: IStreamStateView,
+): ExtractMlsExternalGroupResult | undefined {
+    // check if there is group info at all
+    if (streamView.snapshot?.members?.mls?.groupInfoMessage === undefined) {
+        return undefined
+    }
+
     const indexOfLastSnapshot = streamView.timeline.findLastIndex((event) => {
         const payload = event.remoteEvent?.event.payload
         if (payload?.case !== 'miniblockHeader') {

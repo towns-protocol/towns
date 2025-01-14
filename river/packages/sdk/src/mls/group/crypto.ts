@@ -2,6 +2,7 @@ import {
     Client as MlsClient,
     ExportedTree as MlsExportedTree,
     Group as MlsGroup,
+    CipherSuite as MlsCipherSuite,
     MlsMessage,
 } from '@river-build/mls-rs-wasm'
 import { dlog, DLogger } from '@river-build/dlog'
@@ -100,11 +101,24 @@ export class Crypto {
         return group.group.currentEpoch
     }
 
+    public exportTree(group: Group): Uint8Array {
+        return group.group.exportTree().toBytes()
+    }
+
     public signaturePublicKey(): Uint8Array {
         if (!this.client) {
             this.log.error('signaturePublicKey: Client not initialized')
             throw new Error('Client not initialized')
         }
         return this.client.signaturePublicKey()
+    }
+
+    public async exportEpochSecret(group: Group): Promise<Uint8Array> {
+        const secret = await group.group.currentEpochSecret()
+        return secret.toBytes()
+    }
+
+    public ciphersuite(): MlsCipherSuite {
+        return new MlsCipherSuite()
     }
 }

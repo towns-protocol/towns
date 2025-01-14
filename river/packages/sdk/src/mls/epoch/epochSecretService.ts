@@ -5,27 +5,47 @@ import {
     HpkeSecretKey,
     Secret as MlsSecret,
 } from '@river-build/mls-rs-wasm'
-import { bin_toHexString, DLogger, shortenHexString } from '@river-build/dlog'
+import { bin_toHexString, dlog, DLogger, shortenHexString } from '@river-build/dlog'
 import { DerivedKeys, EpochSecret, EpochSecretId, epochSecretId } from './epochSecret'
-import { EncryptedData } from '@river-build/proto'
+import { EncryptedData, MemberPayload_Mls_EpochSecrets } from '@river-build/proto'
 import { IEpochSecretStore } from './epochSecretStore'
+import { PlainMessage } from '@bufbuild/protobuf'
 
 const MLS_ALGORITHM = 'mls_0.0.1'
+
+type EpochSecretsMessage = PlainMessage<MemberPayload_Mls_EpochSecrets>
+
+export interface IEpochSecretServiceCoordinator {
+    newOpenEpochSecret(streamId: string, epoch: bigint): void
+    newSealedEpochSecret(streamId: string, epoch: bigint): void
+}
+
+const defaultLogger = dlog('csb:mls:epochSecretService')
 
 export class EpochSecretService {
     private epochSecretStore: IEpochSecretStore
     private cipherSuite: MlsCipherSuite
     private cache: Map<EpochSecretId, EpochSecret> = new Map()
-    log: DLogger
+    private coordinator?: IEpochSecretServiceCoordinator
+    private log: {
+        error: DLogger
+        debug: DLogger
+    }
 
     public constructor(
         cipherSuite: MlsCipherSuite,
         epochSecretStore: IEpochSecretStore,
-        log: DLogger,
+        coordinator?: IEpochSecretServiceCoordinator,
+        opts?: { log: DLogger },
     ) {
-        this.log = log
         this.cipherSuite = cipherSuite
         this.epochSecretStore = epochSecretStore
+        this.coordinator = coordinator
+        const logger = opts?.log ?? defaultLogger
+        this.log = {
+            debug: logger.extend('debug'),
+            error: logger.extend('error'),
+        }
     }
 
     /// Gets epochKey from the cache
@@ -50,7 +70,7 @@ export class EpochSecretService {
     }
 
     private async saveEpochSecret(epochSecret: EpochSecret): Promise<void> {
-        this.log('saveEpochSecret', {
+        this.log.debug('saveEpochSecret', {
             streamId: epochSecret.streamId,
             epoch: epochSecret.epoch,
         })
@@ -63,7 +83,7 @@ export class EpochSecretService {
         epochKey: EpochSecret,
         { publicKey }: { publicKey: Uint8Array },
     ): Promise<void> {
-        this.log('sealEpochSecret', {
+        this.log.debug('sealEpochSecret', {
             streamId: epochKey.streamId,
             epoch: epochKey.epoch,
             publicKey: shortenHexString(bin_toHexString(publicKey)),
@@ -91,7 +111,7 @@ export class EpochSecretService {
         epoch: bigint,
         sealedEpochSecret: Uint8Array,
     ): Promise<void> {
-        this.log('addSealedEpochSecret', {
+        this.log.debug('addSealedEpochSecret', {
             streamId,
             epoch,
             sealedEpochSecretBytes: shortenHexString(bin_toHexString(sealedEpochSecret)),
@@ -104,6 +124,7 @@ export class EpochSecretService {
         }
         // TODO: Should this method store epochKey?
         await this.saveEpochSecret(epochSecret)
+        this.coordinator?.newSealedEpochSecret(streamId, epoch)
     }
 
     // TODO: Should this method persist the epoch secret?
@@ -112,7 +133,7 @@ export class EpochSecretService {
         epoch: bigint,
         openEpochSecret: Uint8Array,
     ): Promise<void> {
-        this.log('addOpenEpochSecret', {
+        this.log.debug('addOpenEpochSecret', {
             streamId,
             epoch,
             openEpochSecret: shortenHexString(bin_toHexString(openEpochSecret)),
@@ -137,13 +158,14 @@ export class EpochSecretService {
         }
         // TODO: Should this method store epochKey
         await this.saveEpochSecret(epochSecret)
+        this.coordinator?.newOpenEpochSecret(streamId, epoch)
     }
 
     public async openSealedEpochSecret(
         epochSecret: EpochSecret,
         nextEpochKeys: DerivedKeys,
     ): Promise<void> {
-        this.log('openSealedEpochSecret', {
+        this.log.debug('openSealedEpochSecret', {
             streamId: epochSecret.streamId,
             epoch: epochSecret.epoch,
         })
@@ -173,7 +195,7 @@ export class EpochSecretService {
         epochSecret: EpochSecret,
         message: Uint8Array,
     ): Promise<EncryptedData> {
-        this.log('encryptMessage', {
+        this.log.debug('encryptMessage', {
             streamId: epochSecret.streamId,
             epoch: epochSecret.epoch,
         })
@@ -199,7 +221,7 @@ export class EpochSecretService {
         epochSecret: EpochSecret,
         message: EncryptedData,
     ): Promise<Uint8Array> {
-        this.log('decryptMessage', {
+        this.log.debug('decryptMessage', {
             streamId: epochSecret.streamId,
             epoch: epochSecret.epoch,
         })
@@ -225,5 +247,41 @@ export class EpochSecretService {
         const secretKey_ = HpkeSecretKey.fromBytes(epochSecret.derivedKeys.secretKey)
         const ciphertext_ = HpkeCiphertext.fromBytes(ciphertext)
         return await this.cipherSuite.open(ciphertext_, secretKey_, publicKey_)
+    }
+
+    public async handleEpochSecrets(_streamId: string, _message: EpochSecretsMessage) {
+        for (const epochSecret of _message.secrets) {
+            await this.addAnnouncedSealedEpochSecret(
+                _streamId,
+                epochSecret.epoch,
+                epochSecret.secret,
+            )
+            this.coordinator?.newSealedEpochSecret(_streamId, epochSecret.epoch)
+        }
+    }
+
+    public epochSecretMessage(_epochSecret: EpochSecret): EpochSecretsMessage {
+        if (_epochSecret.sealedEpochSecret === undefined) {
+            throw new Error('Fatal: epoch secret not sealed')
+        }
+
+        return {
+            secrets: [
+                {
+                    epoch: _epochSecret.epoch,
+                    secret: _epochSecret.sealedEpochSecret,
+                },
+            ],
+        }
+    }
+
+    public isOpen(epochSecret: EpochSecret): boolean {
+        return epochSecret.openEpochSecret !== undefined
+    }
+
+    public canBeOpened(epochSecret: EpochSecret): boolean {
+        return (
+            epochSecret.openEpochSecret === undefined && epochSecret.sealedEpochSecret !== undefined
+        )
     }
 }

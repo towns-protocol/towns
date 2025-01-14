@@ -10122,17 +10122,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@river-build/mls-rs-wasm-node@npm:^0.0.15":
-  version: 0.0.15
-  resolution: "@river-build/mls-rs-wasm-node@npm:0.0.15"
-  checksum: c12f4de13976004136009e62846f9d56b129084e1c5e13faa3d2d0068d332d5a5c9a7ec70c16c2721b5c7b0f841daae182f4be4061ea7ddb3f5c812da6182fc4
+"@river-build/mls-rs-wasm-node@npm:^0.0.16":
+  version: 0.0.16
+  resolution: "@river-build/mls-rs-wasm-node@npm:0.0.16"
+  checksum: 4f83d5bcbb1a088be13254122bab03de53962223ba7ec78bd6f52e460b8e93353d72ad5a4b9a87f590c04143920669fcc80b6ddad9db9d6b7ddb67e15d33fe22
   languageName: node
   linkType: hard
 
-"@river-build/mls-rs-wasm@npm:^0.0.15":
-  version: 0.0.15
-  resolution: "@river-build/mls-rs-wasm@npm:0.0.15"
-  checksum: 89ecc4e1b75f46ce6bef73dafeb0a692c78b9b243e1902d6875e01e208f3bb1ccd083f7c0e91f4f1cc68fe9cfa04f254af341ff0819c3dad5e86e93b25e0ac56
+"@river-build/mls-rs-wasm@npm:^0.0.16":
+  version: 0.0.16
+  resolution: "@river-build/mls-rs-wasm@npm:0.0.16"
+  checksum: b5aab7c72f4b97172d722ae08f65ffcf1b18796bd9a31271fac8f7fd5bbe284194f4f65fde0f42925c6b61ea25c33221a1cffa45609b3546eb7650b8cd119799
   languageName: node
   linkType: hard
 
@@ -10273,7 +10273,7 @@ __metadata:
     "@river-build/dlog": "workspace:^"
     "@river-build/encryption": "workspace:^"
     "@river-build/generated": "workspace:^"
-    "@river-build/mls-rs-wasm": ^0.0.15
+    "@river-build/mls-rs-wasm": ^0.0.16
     "@river-build/proto": "workspace:^"
     "@river-build/web3": "workspace:^"
     "@testing-library/react": ^14.2.1
@@ -10358,7 +10358,7 @@ __metadata:
     "@bufbuild/protobuf": ^1.9.0
     "@river-build/dlog": "workspace:^"
     "@river-build/encryption": "workspace:^"
-    "@river-build/mls-rs-wasm-node": ^0.0.15
+    "@river-build/mls-rs-wasm-node": ^0.0.16
     "@river-build/proto": "workspace:^"
     "@river-build/sdk": "workspace:^"
     "@river-build/web3": "workspace:^"

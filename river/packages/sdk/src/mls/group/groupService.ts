@@ -6,19 +6,16 @@ import {
 } from '@river-build/proto'
 import { PlainMessage } from '@bufbuild/protobuf'
 import { Crypto } from './crypto'
-import { DLogger, dlog } from '@river-build/dlog'
+import { DLogger, dlog, bin_equal } from '@river-build/dlog'
 
-type InitializeGroupMessage = Omit<
-    PlainMessage<MemberPayload_Mls_InitializeGroup>,
-    'externalGroupSnapshot'
->
+type InitializeGroupMessage = PlainMessage<MemberPayload_Mls_InitializeGroup>
 type ExternalJoinMessage = PlainMessage<MemberPayload_Mls_ExternalJoin>
 
 // Placeholder for a coordinator
 export interface IGroupServiceCoordinator {
     joinOrCreateGroup(streamId: string): void
     groupActive(streamId: string): void
-    newEpochSecret(streamId: string, epoch: bigint): void
+    newEpoch(streamId: string, epoch: bigint): void
 }
 
 const defaultLogger = dlog('csb:mls:groupService')
@@ -118,8 +115,8 @@ export class GroupService {
         const wasInitializeGroupOurOwn =
             group.status === 'GROUP_PENDING_CREATE' &&
             group.groupInfoWithExternalKey !== undefined &&
-            uint8ArrayEqual(_message.groupInfoMessage, group.groupInfoWithExternalKey) &&
-            uint8ArrayEqual(_message.signaturePublicKey, this.getSignaturePublicKey())
+            bin_equal(_message.groupInfoMessage, group.groupInfoWithExternalKey) &&
+            bin_equal(_message.signaturePublicKey, this.getSignaturePublicKey())
 
         if (!wasInitializeGroupOurOwn) {
             await this.clearGroup(group.streamId)
@@ -132,7 +129,7 @@ export class GroupService {
 
         this.coordinator?.groupActive(group.streamId)
         const epoch = this.crypto.currentEpoch(group)
-        this.coordinator?.newEpochSecret(group.streamId, epoch)
+        this.coordinator?.newEpoch(group.streamId, epoch)
     }
 
     public async handleExternalJoin(group: Group, message: ExternalJoinMessage) {
@@ -143,17 +140,17 @@ export class GroupService {
             await this.crypto.processCommit(group, message.commit)
             await this.saveGroup(group)
             const epoch = this.crypto.currentEpoch(group)
-            this.coordinator?.newEpochSecret(group.streamId, epoch)
+            this.coordinator?.newEpoch(group.streamId, epoch)
             return
         }
 
         const wasExternalJoinOurOwn =
             group.status === 'GROUP_PENDING_JOIN' &&
             group.groupInfoWithExternalKey !== undefined &&
-            uint8ArrayEqual(message.groupInfoMessage, group.groupInfoWithExternalKey) &&
+            bin_equal(message.groupInfoMessage, group.groupInfoWithExternalKey) &&
             group.commit !== undefined &&
-            uint8ArrayEqual(message.commit, group.commit) &&
-            uint8ArrayEqual(message.signaturePublicKey, this.getSignaturePublicKey())
+            bin_equal(message.commit, group.commit) &&
+            bin_equal(message.signaturePublicKey, this.getSignaturePublicKey())
 
         if (!wasExternalJoinOurOwn) {
             await this.clearGroup(group.streamId)
@@ -166,7 +163,7 @@ export class GroupService {
 
         this.coordinator?.groupActive(group.streamId)
         const epoch = this.crypto.currentEpoch(group)
-        this.coordinator?.newEpochSecret(group.streamId, epoch)
+        this.coordinator?.newEpoch(group.streamId, epoch)
     }
 
     public async initializeGroupMessage(streamId: string): Promise<InitializeGroupMessage> {
@@ -180,11 +177,14 @@ export class GroupService {
         const group = await this.crypto.createGroup(streamId)
         await this.saveGroup(group)
 
+        const externalGroupSnapshot = this.exportGroupSnapshot(group)
+
         const signaturePublicKey = this.getSignaturePublicKey()
 
         return {
             groupInfoMessage: group.groupInfoWithExternalKey!,
             signaturePublicKey,
+            externalGroupSnapshot,
         }
     }
 
@@ -212,22 +212,19 @@ export class GroupService {
         }
     }
 
+    public exportGroupSnapshot(_group: Group): Uint8Array {
+        throw new Error('Not implemented')
+    }
+
+    public currentEpoch(group: Group): bigint {
+        return this.crypto.currentEpoch(group)
+    }
+
     private getSignaturePublicKey(): Uint8Array {
         return this.crypto.signaturePublicKey()
     }
-}
 
-function uint8ArrayEqual(a: Uint8Array, b: Uint8Array): boolean {
-    if (a === b) {
-        return true
+    public async exportEpochSecret(group: Group): Promise<Uint8Array> {
+        return this.crypto.exportEpochSecret(group)
     }
-    if (a.length !== b.length) {
-        return false
-    }
-    for (const [i, byte] of a.entries()) {
-        if (byte !== b[i]) {
-            return false
-        }
-    }
-    return true
 }

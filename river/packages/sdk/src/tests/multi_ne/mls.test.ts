@@ -518,7 +518,7 @@ describe('mlsTests', () => {
         const commitOutput = await bobMlsGroup.addMember(kp)
 
         // at this point, the commit is still pending
-        await bobMlsGroup.clearPendingCommit()
+        bobMlsGroup.clearPendingCommit()
 
         const groupInfoMessage = commitOutput.externalCommitGroupInfo
         const commit = commitOutput.commitMessage.toBytes()
@@ -542,7 +542,7 @@ describe('mlsTests', () => {
         const commitOutput = await bobMlsGroup.addMember(kp)
 
         // at this point, the commit is still pending
-        await bobMlsGroup.clearPendingCommit()
+        bobMlsGroup.clearPendingCommit()
 
         const groupInfoMessage = commitOutput.externalCommitGroupInfo
         const commit = commitOutput.commitMessage.toBytes()
@@ -589,7 +589,7 @@ describe('mlsTests', () => {
         const commitOutput = await bobMlsGroup.addMember(kp)
 
         // at this point, the commit is still pending
-        await bobMlsGroup.clearPendingCommit()
+        bobMlsGroup.clearPendingCommit()
 
         const groupInfoMessage = commitOutput.externalCommitGroupInfo
         const commit = commitOutput.commitMessage.toBytes()
@@ -629,7 +629,7 @@ describe('mlsTests', () => {
     })
 
     test('correct external group info is returned', async () => {
-        const externalGroupInfo = await bobClient.getMlsExternalGroupInfo(streamId)
+        const externalGroupInfo = (await bobClient.getMlsExternalGroupInfo(streamId))!
         const externalClient = new ExternalClient()
         const externalGroupSnapshot = ExternalSnapshot.fromBytes(
             externalGroupInfo.externalGroupSnapshot,

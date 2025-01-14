@@ -23,4 +23,13 @@ export class ExternalCrypto {
     public exportTree(group: ExternalGroup): Uint8Array {
         return group.externalGroup.exportTree()
     }
+
+    public async externalGroupSnapshot(
+        groupInfoMessage: Uint8Array,
+        exportedTree: Uint8Array,
+    ): Promise<Uint8Array> {
+        const externalClient = new MlsExternalClient()
+        const externalGroup = await externalClient.observeGroup(groupInfoMessage, exportedTree)
+        return externalGroup.snapshot().toBytes()
+    }
 }
