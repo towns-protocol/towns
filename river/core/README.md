@@ -5,7 +5,7 @@ Local [CA](#setting-up-local-ca-for-tls) needs to be provisioned.
 
 To list all available commands:
 
-    just RUN_ENV=multi
+    just
 
 There are two local environments available:
 
@@ -34,12 +34,18 @@ Just start with existing config and binary:
 
     just RUN_ENV=multi start
 
-There are `run` version of commands that wait for Ctrl-C and stop nodes on exit:
+Restart after rebuilding with current changes:
 
-    just RUN_ENV=multi config-and-run
-    just RUN_ENV=multi config-run-tail
-    just RUN_ENV=multi run
-    just RUN_ENV=multi run-and-tail
+    just RUN_ENV=multi restart
+
+# Building and running go tests
+
+MLS lib needs to be built for some tests to run, there are just commands that build and configure lib and then run go tests:
+
+    just test ./...  # Run go test
+    just test-all # Run all go tests from module root
+    just t # Run all tests from current dir
+    just build-mls # Rebuild mls without running tests
 
 # Installing just
 

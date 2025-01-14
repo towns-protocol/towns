@@ -21,10 +21,7 @@ contract AuthorizedClaimersTest is TestUtils, IAuthorizedClaimersBase {
     authorizedClaimers = AuthorizedClaimers(deployAuthorizedClaimers.deploy());
   }
 
-  function test_authorizeClaimer() public {
-    address signer = _randomAddress();
-    address claimer = _randomAddress();
-
+  function test_fuzz_authorizeClaimer(address signer, address claimer) public {
     vm.prank(signer);
     authorizedClaimers.authorizeClaimer(claimer);
     assertEq(
@@ -35,22 +32,34 @@ contract AuthorizedClaimersTest is TestUtils, IAuthorizedClaimersBase {
   }
 
   function test_authorizeClaimerChanged() public {
-    authorizedClaimers.authorizeClaimer(address(1));
+    test_fuzz_authorizeClaimerChanged(address(1), address(3));
+  }
+
+  function test_fuzz_authorizeClaimerChanged(
+    address claimer,
+    address newClaimer
+  ) public {
+    vm.assume(claimer != newClaimer);
+    authorizedClaimers.authorizeClaimer(claimer);
     assertEq(
       authorizedClaimers.getAuthorizedClaimer(address(this)),
-      address(1),
+      claimer,
       "authorized claimer not set"
     );
-    authorizedClaimers.authorizeClaimer(address(3));
+    authorizedClaimers.authorizeClaimer(newClaimer);
     assertEq(
       authorizedClaimers.getAuthorizedClaimer(address(this)),
-      address(3),
+      newClaimer,
       "authorized claimer not set"
     );
   }
 
   function test_removeAuthorizedClaimer() public {
-    authorizedClaimers.authorizeClaimer(address(1));
+    test_fuzz_removeAuthorizedClaimer(address(1));
+  }
+
+  function test_fuzz_removeAuthorizedClaimer(address claimer) public {
+    authorizedClaimers.authorizeClaimer(claimer);
     authorizedClaimers.removeAuthorizedClaimer();
     assertEq(
       authorizedClaimers.getAuthorizedClaimer(address(this)),
@@ -68,33 +77,44 @@ contract AuthorizedClaimersTest is TestUtils, IAuthorizedClaimersBase {
     );
   }
 
-  function test_getAuthorizedClaimer_notAuthorized() public view {
+  function test_fuzz_getAuthorizedClaimer_notAuthorized(
+    address signer
+  ) public view {
     assertEq(
-      authorizedClaimers.getAuthorizedClaimer(_randomAddress()),
+      authorizedClaimers.getAuthorizedClaimer(signer),
       address(0),
       "authorized claimer not set"
     );
   }
 
-  function test_authorizeClaimer_alreadyAuthorized() public {
-    authorizedClaimers.authorizeClaimer(address(1));
+  function test_fuzz_authorizeClaimer_alreadyAuthorized(
+    address claimer
+  ) public {
+    vm.assume(claimer != address(0));
+    authorizedClaimers.authorizeClaimer(claimer);
 
     vm.expectRevert(AuthorizedClaimers_ClaimerAlreadyAuthorized.selector);
 
-    authorizedClaimers.authorizeClaimer(address(1));
+    authorizedClaimers.authorizeClaimer(claimer);
 
     assertEq(
       authorizedClaimers.getAuthorizedClaimer(address(this)),
-      address(1),
+      claimer,
       "authorized claimer not set"
     );
   }
 
-  function test_authorizeClaimerBySig() public {
-    uint256 privateKey = _randomUint256();
+  function test_fuzz_authorizeClaimerBySig(
+    uint256 privateKey,
+    address claimer
+  ) public {
+    privateKey = bound(
+      privateKey,
+      1,
+      0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364140
+    );
     address owner = vm.addr(privateKey);
 
-    address claimer = _randomAddress();
     uint256 deadline = 0;
     uint256 nonce = authorizedClaimers.nonces(owner);
 

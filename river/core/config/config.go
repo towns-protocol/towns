@@ -79,6 +79,7 @@ func GetDefaultConfig() *Config {
 			SingleCallTimeout:      30 * time.Second, // geth internal timeout is 30 seconds
 			ProgressReportInterval: 10 * time.Second,
 		},
+		EnableMls: false,
 	}
 }
 
@@ -149,6 +150,9 @@ type Config struct {
 
 	// Disable base chain contract usage.
 	DisableBaseChain bool
+	
+	// Enable MemberPayload_Mls.
+	EnableMls bool
 
 	// Chains provides a map of chain IDs to their provider URLs as
 	// a comma-serparated list of chainID:URL pairs.

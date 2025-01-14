@@ -669,6 +669,7 @@ func update_Snapshot_Mls(
 		return nil
 	case *MemberPayload_Mls_ExternalJoin_:
 		addSignaturePublicKey(creatorAddress, content.ExternalJoin.SignaturePublicKey)
+		snapshot.CommitsSinceLastSnapshot = append(snapshot.CommitsSinceLastSnapshot, content.ExternalJoin.Commit)
 		return nil
 	case *MemberPayload_Mls_EpochSecrets_:
 		for _, secret := range content.EpochSecrets.Secrets {
@@ -689,6 +690,7 @@ func update_Snapshot_Mls(
 			}
 			delete(snapshot.PendingKeyPackages, signatureKey)
 		}
+		snapshot.CommitsSinceLastSnapshot = append(snapshot.CommitsSinceLastSnapshot, content.WelcomeMessage.Commit)
 		return nil
 	default:
 		return RiverError(Err_INVALID_ARGUMENT, fmt.Sprintf("unknown MLS payload type %T", mlsPayload.Content))

@@ -22,7 +22,7 @@ RUN cp -f ../../target/release/libmls* /build
 
 # Build river_node
 WORKDIR /build
-RUN CGO_LDFLAGS="./libmls_lib.a -ldl" \
+RUN CGO_LDFLAGS="-L/build" \
     go build \
     -trimpath \
     -o /bin/river_node \

@@ -10,11 +10,11 @@ import (
 )
 
 func runArchive(cfg *config.Config, once bool) error {
-	ctx := context.Background() // lint:ignore context.Background() is fine here
-	err := setupProfiler(ctx, "archive-node", cfg)
+	err := setupProfiler("archive-node", cfg)
 	if err != nil {
 		return err
 	}
+	ctx := context.Background() // lint:ignore context.Background() is fine here
 	return rpc.RunArchive(ctx, cfg, once)
 }
 

@@ -9,13 +9,12 @@ import (
 )
 
 func runNotificationService(cmd *cobra.Command, args []string) error {
-	ctx := context.Background() // lint:ignore context.Background() is fine here
-
-	err := setupProfiler(ctx, "notification-node", cmdConfig)
+	err := setupProfiler("notification-node", cmdConfig)
 	if err != nil {
 		return err
 	}
 
+	ctx := context.Background() // lint:ignore context.Background() is fine here
 	return rpc.RunNotificationService(ctx, cmdConfig)
 }
 

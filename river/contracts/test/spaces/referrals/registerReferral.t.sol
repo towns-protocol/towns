@@ -53,8 +53,8 @@ contract ReferralsFacet_registerReferral is ReferralsFacetTest {
   function test_revertWhen_registerReferral_invalidRecipient(
     Referral memory referral
   ) external {
-    vm.assume(referral.basisPoints > 0 && referral.basisPoints <= REFERRAL_BPS);
     vm.assume(bytes(referral.referralCode).length > 0);
+    referral.basisPoints = bound(referral.basisPoints, 1, REFERRAL_BPS);
     referral.recipient = address(0);
 
     vm.prank(founder);
@@ -90,7 +90,7 @@ contract ReferralsFacet_registerReferral is ReferralsFacetTest {
     Referral memory referral
   ) external {
     vm.assume(referral.recipient != address(0));
-    vm.assume(referral.basisPoints > 0 && referral.basisPoints <= REFERRAL_BPS);
+    referral.basisPoints = bound(referral.basisPoints, 1, REFERRAL_BPS);
     referral.referralCode = "";
 
     vm.prank(founder);

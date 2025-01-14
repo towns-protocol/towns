@@ -66,6 +66,7 @@ func (s *Service) addParsedEvent(
 
 	canAddEvent, verifications, sideEffects, err := rules.CanAddEvent(
 		ctx,
+		*s.config,
 		s.chainConfig,
 		s.nodeRegistry.GetValidNodeAddresses(),
 		time.Now(),

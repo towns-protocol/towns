@@ -29,6 +29,7 @@ import {
     Tags,
     BlockchainTransaction,
     MemberPayload_Mls,
+    MiniblockHeader,
 } from '@river-build/proto'
 import {
     bin_fromHexString,
@@ -84,6 +85,7 @@ import {
 import {
     checkEventSignature,
     makeEvent,
+    unpackEnvelope,
     UnpackEnvelopeOpts,
     unpackStream,
     unpackStreamEx,
@@ -152,6 +154,7 @@ import { SignerContext } from './signerContext'
 import { decryptAESGCM, deriveKeyAndIV, encryptAESGCM, uint8ArrayToBase64 } from './crypto_utils'
 import { makeTags, makeTipTags } from './tags'
 import { TipEventObject } from '@river-build/generated/dev/typings/ITipping'
+import { extractMlsExternalGroup } from './mls/utils/mlsutils'
 
 export type ClientEvents = StreamEvents & DecryptionEvents
 
@@ -2023,6 +2026,24 @@ export class Client
         }
     }
 
+    async getMiniblockHeader(
+        streamId: string,
+        miniblockNum: bigint,
+        unpackOpts: UnpackEnvelopeOpts | undefined = undefined,
+    ): Promise<MiniblockHeader> {
+        const response = await this.rpcClient.getMiniblockHeader({
+            streamId: streamIdAsBytes(streamId),
+            miniblockNum: miniblockNum,
+        })
+        check(isDefined(response.header), `header not found: ${streamId}`)
+        const header = await unpackEnvelope(response.header, unpackOpts)
+        check(
+            header.event.payload.case === 'miniblockHeader',
+            `bad miniblock header: wrong case received: ${header.event.payload.case}`,
+        )
+        return header.event.payload.value
+    }
+
     async scrollback(
         streamId: string,
     ): Promise<{ terminus: boolean; firstEvent?: StreamTimelineEvent }> {
@@ -2524,6 +2545,19 @@ export class Client
         return this.makeEventAndAddToStream(streamId, make_MemberPayload_Mls(payload), {
             method: 'mls',
         })
+    }
+
+    public async getMlsExternalGroupInfo(streamId: string): Promise<{
+        externalGroupSnapshot: Uint8Array
+        groupInfoMessage: Uint8Array
+        commits: { commit: Uint8Array; groupInfoMessage: Uint8Array }[]
+    }> {
+        let streamView = this.stream(streamId)?.view
+        if (!streamView || !streamView.isInitialized) {
+            streamView = await this.getStream(streamId)
+        }
+        check(isDefined(streamView), `stream not found: ${streamId}`)
+        return extractMlsExternalGroup(streamView)
     }
 }
 

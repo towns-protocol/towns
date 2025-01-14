@@ -167,6 +167,7 @@ message MemberPayload {
             map<string, Member> members = 3;
             map<uint64, bytes> epoch_secrets = 4;
             map<string, KeyPackage> pending_key_packages = 5;
+            repeated bytes commits_since_last_snapshot = 6;
         }
 
         message Member {
@@ -971,12 +972,22 @@ message InfoResponse {
     string version = 3;
 }
 
+message GetMiniblockHeaderRequest {
+    bytes stream_id = 1;
+    int64 miniblock_num = 2;
+}
+
+message GetMiniblockHeaderResponse {
+    Envelope header = 1;
+}
+
 service StreamService {
     rpc CreateStream(CreateStreamRequest) returns (CreateStreamResponse);
     rpc GetStream(GetStreamRequest) returns (GetStreamResponse);
     rpc GetStreamEx(GetStreamExRequest) returns (stream GetStreamExResponse);
     rpc GetMiniblocks(GetMiniblocksRequest) returns (GetMiniblocksResponse);
     rpc GetLastMiniblockHash(GetLastMiniblockHashRequest) returns (GetLastMiniblockHashResponse);
+    rpc GetMiniblockHeader(GetMiniblockHeaderRequest) returns (GetMiniblockHeaderResponse);
     rpc AddEvent(AddEventRequest) returns (AddEventResponse);
     rpc SyncStreams(SyncStreamsRequest) returns (stream SyncStreamsResponse);
     rpc AddStreamToSync(AddStreamToSyncRequest) returns (AddStreamToSyncResponse);

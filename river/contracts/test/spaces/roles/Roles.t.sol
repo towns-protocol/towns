@@ -535,6 +535,12 @@ contract RolesTest is RolesBaseSetup {
   ) external {
     vm.assume(bytes(roleName).length > 2);
 
+    // assume the channel does not exist
+    (bool success, ) = everyoneSpace.staticcall(
+      abi.encodeCall(IChannel.getChannel, channelId)
+    );
+    vm.assume(!success);
+
     // create a roles
     vm.prank(founder);
     uint256 roleId = roles.createRole(

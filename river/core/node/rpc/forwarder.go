@@ -266,7 +266,7 @@ func (s *Service) getStreamImpl(
 	}
 
 	if view != nil {
-		return s.localGetStream(ctx, stream, view)
+		return s.localGetStream(view)
 	} else {
 		return peerNodeRequestWithRetries(
 			ctx,
@@ -417,7 +417,7 @@ func (s *Service) getLastMiniblockHashImpl(
 	}
 
 	if view != nil {
-		return s.localGetLastMiniblockHash(ctx, view)
+		return s.localGetLastMiniblockHash(view)
 	}
 
 	return peerNodeRequestWithRetries(

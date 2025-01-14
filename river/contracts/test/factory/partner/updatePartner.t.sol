@@ -14,7 +14,11 @@ contract PartnerRegistry_updatePartner is PartnerRegistrySetup {
     Partner memory updatedPartner
   ) external givenPartnerIsRegistered(partner) {
     vm.assume(updatedPartner.recipient != address(0));
-    vm.assume(updatedPartner.fee <= partnerRegistry.maxPartnerFee());
+    updatedPartner.fee = bound(
+      updatedPartner.fee,
+      0,
+      partnerRegistry.maxPartnerFee()
+    );
 
     updatedPartner.account = partner.account;
 
@@ -62,7 +66,11 @@ contract PartnerRegistry_updatePartner is PartnerRegistrySetup {
     Partner memory unregisteredPartner
   ) external {
     vm.assume(unregisteredPartner.recipient != address(0));
-    vm.assume(unregisteredPartner.fee <= partnerRegistry.maxPartnerFee());
+    unregisteredPartner.fee = bound(
+      unregisteredPartner.fee,
+      0,
+      partnerRegistry.maxPartnerFee()
+    );
 
     vm.prank(unregisteredPartner.account);
     vm.expectRevert(

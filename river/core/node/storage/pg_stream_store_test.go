@@ -37,12 +37,11 @@ type testStreamStoreParams struct {
 }
 
 func setupStreamStorageTest(t *testing.T) *testStreamStoreParams {
+	require := require.New(t)
 	ctx, ctxCloser := test.NewTestContext()
 
 	dbCfg, dbSchemaName, dbCloser, err := dbtestutils.ConfigureDB(ctx)
-	if err != nil {
-		panic(err)
-	}
+	require.NoError(err, "Error configuring db for test")
 
 	dbCfg.StartupDelay = 2 * time.Millisecond
 	dbCfg.Extra = strings.Replace(dbCfg.Extra, "pool_max_conns=1000", "pool_max_conns=10", 1)
@@ -53,9 +52,7 @@ func setupStreamStorageTest(t *testing.T) *testStreamStoreParams {
 		dbSchemaName,
 		nil,
 	)
-	if err != nil {
-		panic(err)
-	}
+	require.NoError(err, "Error creating pgx pool for test")
 
 	instanceId := GenShortNanoid()
 	exitSignal := make(chan error, 1)
@@ -66,9 +63,7 @@ func setupStreamStorageTest(t *testing.T) *testStreamStoreParams {
 		exitSignal,
 		infra.NewMetricsFactory(nil, "", ""),
 	)
-	if err != nil {
-		panic(err)
-	}
+	require.NoError(err, "Error creating new postgres stream store")
 
 	params := &testStreamStoreParams{
 		ctx:           ctx,

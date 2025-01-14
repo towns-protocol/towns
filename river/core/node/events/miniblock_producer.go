@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
-
 	"github.com/river-build/river/core/contracts/river"
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/crypto"
@@ -25,6 +24,8 @@ const (
 
 // RemoteMiniblockProvider abstracts communications required for coordinated miniblock production.
 type RemoteMiniblockProvider interface {
+	// GetMbProposal requests miniblock proposal from the given node for the given stream.
+	// The node must participate in the stream.
 	GetMbProposal(
 		ctx context.Context,
 		node common.Address,
@@ -32,6 +33,7 @@ type RemoteMiniblockProvider interface {
 		forceSnapshot bool,
 	) (*MiniblockProposal, error)
 
+	// SaveMbCandidate sends the given mb to the given node and node must save it.
 	SaveMbCandidate(
 		ctx context.Context,
 		node common.Address,
@@ -39,6 +41,10 @@ type RemoteMiniblockProvider interface {
 		mb *Miniblock,
 	) error
 
+	// GetMbs returns a range of miniblocks from the given stream from the given node.
+	//
+	// Note: it is possible that the returned miniblocks range is limited when the requested miniblock
+	// range is too large. Range it limited to chain config setting `stream.getMiniblocksMaxPageSize`.
 	GetMbs(
 		ctx context.Context,
 		node common.Address,
@@ -48,10 +54,7 @@ type RemoteMiniblockProvider interface {
 	) ([]*Miniblock, error)
 }
 
-type MiniblockProducer interface {
-	scheduleCandidates(ctx context.Context, blockNum crypto.BlockNumber) []*mbJob
-	testCheckAllDone(jobs []*mbJob) bool
-
+type TestMiniblockProducer interface {
 	// TestMakeMiniblock is a debug function that creates a miniblock proposal, stores it in the registry, and applies it to the stream.
 	// It is intended to be called manually from the test code.
 	// TestMakeMiniblock always creates a miniblock if there are events in the minipool.
@@ -67,10 +70,18 @@ type MiniblockProducer interface {
 	) (*MiniblockRef, error)
 }
 
+type MiniblockProducer interface {
+	scheduleCandidates(ctx context.Context, blockNum crypto.BlockNumber) []*mbJob
+	testCheckAllDone(jobs []*mbJob) bool
+}
+
 type MiniblockProducerOpts struct {
 	TestDisableMbProdcutionOnBlock bool
 }
 
+// NewMiniblockProducer instantiates a new miniblockProducer instance that implements the MiniblockProducer interface.
+// It registers a callback on new RiverChain blocks and everytime this callback is called it creates new miniblock
+// candidates and schedules these candidates for registration.
 func NewMiniblockProducer(
 	ctx context.Context,
 	streamCache StreamCache,
@@ -109,6 +120,7 @@ type miniblockProducer struct {
 }
 
 var _ MiniblockProducer = (*miniblockProducer)(nil)
+var _ TestMiniblockProducer = (*miniblockProducer)(nil)
 
 // mbJos tracks single miniblock production attempt for a single stream.
 type mbJob struct {

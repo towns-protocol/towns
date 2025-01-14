@@ -467,9 +467,9 @@ contract RewardsDistributionTest is
     uint16 totalUsers,
     uint8 totalOperators
   ) public {
-    vm.assume(totalUsers < 100);
-    vm.assume(totalOperators > 0 && totalOperators < 10);
-    vm.assume(distributionAmount < 1000000000 * 1e18);
+    totalUsers = uint16(bound(totalUsers, 1, 99));
+    totalOperators = uint8(bound(totalOperators, 1, 9));
+    distributionAmount = bound(distributionAmount, 1, 999999999 * 1e18);
 
     uint256[] memory amountsPerUser = _createAmountsPerUser(totalUsers);
     uint256[] memory commissionsPerOperator = _createCommissionsPerOperator(
@@ -498,9 +498,9 @@ contract RewardsDistributionTest is
     uint16 totalUsers,
     uint8 totalOperators
   ) public {
-    vm.assume(totalUsers < 100);
-    vm.assume(totalOperators > 0 && totalOperators < 10);
-    vm.assume(distributionAmount < 1000000000 * 1e18);
+    totalUsers = uint16(bound(totalUsers, 1, 99));
+    totalOperators = uint8(bound(totalOperators, 1, 9));
+    distributionAmount = bound(distributionAmount, 1, 999999999 * 1e18);
 
     uint256[] memory amountsPerUser = _createAmountsPerUser(totalUsers);
     uint256[] memory commissionsPerOperator = _createCommissionsPerOperator(
@@ -550,10 +550,10 @@ contract RewardsDistributionTest is
     uint8 totalOperators,
     uint8 totalSpaces
   ) public {
-    vm.assume(totalUsers < 50);
-    vm.assume(totalOperators > 0 && totalOperators < 10);
-    vm.assume(distributionAmount < 1000000000 * 1e18);
-    vm.assume(totalSpaces > 0 && totalSpaces < 10);
+    totalUsers = uint16(bound(totalUsers, 1, 49));
+    totalOperators = uint8(bound(totalOperators, 1, 9));
+    totalSpaces = uint8(bound(totalSpaces, 1, 9));
+    distributionAmount = bound(distributionAmount, 1, 999999999 * 1e18);
 
     uint256[] memory amountsPerUser = _createAmountsPerUser(totalUsers);
     uint256[] memory commissionsPerOperator = _createCommissionsPerOperator(
@@ -619,9 +619,9 @@ contract RewardsDistributionTest is
   ) public {
     cleanupData();
 
-    vm.assume(totalUsers < 100);
-    vm.assume(totalOperators > 0 && totalOperators < 10);
-    vm.assume(distributionAmount < 1000000000 * 1e18);
+    totalUsers = uint16(bound(totalUsers, 1, 99));
+    totalOperators = uint8(bound(totalOperators, 1, 9));
+    distributionAmount = bound(distributionAmount, 1, 999999999 * 1e18);
 
     uint256[] memory amountsPerUser = _createAmountsPerUser(totalUsers);
     uint256[] memory commissionsPerOperator = _createCommissionsPerOperator(

@@ -127,12 +127,12 @@ func TestLoad(t *testing.T) {
 	assert.EqualValues(t, num, 100) // hard coded default
 
 	// check snapshot generation
-	assert.Equal(t, false, view.shouldSnapshot(ctx, cfg))
+	assert.Equal(t, false, view.shouldSnapshot(cfg))
 
 	// check per stream snapshot generation
 	cfg.MinSnapshotEvents.User = 2
 	assert.EqualValues(t, 2, cfg.MinSnapshotEvents.ForType(STREAM_USER_BIN))
-	assert.Equal(t, false, view.shouldSnapshot(ctx, cfg))
+	assert.Equal(t, false, view.shouldSnapshot(cfg))
 
 	// add one more event (just join again)
 	join2, err := MakeEnvelopeWithPayload(
@@ -148,7 +148,7 @@ func TestLoad(t *testing.T) {
 	assert.NoError(t, err)
 
 	// with one new event, we shouldn't snapshot yet
-	assert.Equal(t, false, view.shouldSnapshot(ctx, cfg))
+	assert.Equal(t, false, view.shouldSnapshot(cfg))
 
 	// and miniblocks should have nil snapshots
 	proposal, _ := view.ProposeNextMiniblock(ctx, cfg, false)
@@ -169,7 +169,7 @@ func TestLoad(t *testing.T) {
 	view, err = view.copyAndAddEvent(nextEvent)
 	assert.NoError(t, err)
 	// with two new events, we should snapshot
-	assert.Equal(t, true, view.shouldSnapshot(ctx, cfg))
+	assert.Equal(t, true, view.shouldSnapshot(cfg))
 	assert.Equal(t, 1, len(view.blocks))
 	assert.Equal(t, 2, len(view.blocks[0].Events()))
 	// and miniblocks should have non - nil snapshots

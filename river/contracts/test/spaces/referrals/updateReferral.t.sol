@@ -7,10 +7,13 @@ import {ReferralsFacetTest} from "contracts/test/spaces/referrals/Referrals.t.so
 //interfaces
 
 //libraries
+import {LibString} from "solady/utils/LibString.sol";
 
 //contracts
 
 contract ReferralsFacet_updateReferral is ReferralsFacetTest {
+  using LibString for string;
+
   function test_updateReferral(
     Referral memory referral
   ) external givenReferralCodeIsRegistered(referral) {
@@ -89,6 +92,7 @@ contract ReferralsFacet_updateReferral is ReferralsFacetTest {
     Referral memory referral,
     string memory invalidCode
   ) external givenReferralCodeIsRegistered(referral) {
+    vm.assume(!invalidCode.eq(referral.referralCode));
     referral.referralCode = invalidCode;
 
     vm.prank(founder);

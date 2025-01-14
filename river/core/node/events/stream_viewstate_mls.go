@@ -77,6 +77,8 @@ func (r *streamViewImpl) GetMlsGroupState() (*mls_tools.MlsGroupState, error) {
 					mlsGroupState.ExternalGroupSnapshot = content.Mls.GetInitializeGroup().ExternalGroupSnapshot
 				case *protocol.MemberPayload_Mls_ExternalJoin_:
 					mlsGroupState.Commits = append(mlsGroupState.Commits, content.Mls.GetExternalJoin().Commit)
+				case *protocol.MemberPayload_Mls_WelcomeMessage_:
+					mlsGroupState.Commits = append(mlsGroupState.Commits, content.Mls.GetWelcomeMessage().Commit)
 				default:
 					break
 				}

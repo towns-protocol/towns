@@ -24,7 +24,7 @@ contract PartnerRegistry_registerPartner is PartnerRegistrySetup {
   function test_revertWhen_registerPartner_registryFeeNotPaid(
     Partner memory partner
   ) external {
-    vm.assume(partner.fee <= MAX_PARTNER_FEE);
+    partner.fee = bound(partner.fee, 0, MAX_PARTNER_FEE);
     vm.deal(partner.account, REGISTRY_FEE);
 
     vm.prank(partner.account);
@@ -40,7 +40,7 @@ contract PartnerRegistry_registerPartner is PartnerRegistrySetup {
   function test_revertWhen_registerPartner_invalidPartnerFee(
     Partner memory partner
   ) external {
-    vm.assume(partner.fee > MAX_PARTNER_FEE);
+    partner.fee = bound(partner.fee, MAX_PARTNER_FEE + 1, type(uint256).max);
 
     vm.deal(partner.account, REGISTRY_FEE);
     vm.prank(partner.account);

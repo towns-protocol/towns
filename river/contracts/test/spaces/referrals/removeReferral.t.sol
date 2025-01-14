@@ -20,10 +20,11 @@ contract ReferralsFacet_removeReferral is ReferralsFacetTest {
     referralsFacet.removeReferral(referral.referralCode);
   }
 
-  function test_revertWhen_removeReferralWithInvalidPermissions(
+  function test_revertWhen_removeReferral_withInvalidPermissions(
     Referral memory referral,
     address user
   ) external givenReferralCodeIsRegistered(referral) {
+    vm.assume(user != founder);
     vm.prank(user);
     vm.expectRevert(Entitlement__NotAllowed.selector);
     referralsFacet.removeReferral(referral.referralCode);

@@ -1,8 +1,6 @@
 package rpc
 
 import (
-	"context"
-
 	"connectrpc.com/connect"
 
 	. "github.com/river-build/river/core/node/events"
@@ -10,7 +8,6 @@ import (
 )
 
 func (s *Service) localGetLastMiniblockHash(
-	ctx context.Context,
 	streamView StreamView,
 ) (*connect.Response[GetLastMiniblockHashResponse], error) {
 	lastBlock := streamView.LastBlock()

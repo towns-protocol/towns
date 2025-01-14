@@ -1,7 +1,7 @@
 set shell := ["bash", "-eu", "-o", "pipefail", "-c"]
 set export
 
-RUN_ENV := env_var("RUN_ENV")
+RUN_ENV := env_var_or_default("RUN_ENV", "none")
 ENV_PATH_BASE := './env/local'
 ENV_PATH := ENV_PATH_BASE / RUN_ENV
 ENV_FILE := ENV_PATH / "env.env"
@@ -20,11 +20,17 @@ LOCAL_PRIVATE_KEY := `source ../contracts/.env.localhost && echo "${LOCAL_PRIVAT
 JUST_BASH_OPTS := env_var_or_default("JUST_BASH_OPTS", "")
 BASH_OPTS := '-euo pipefail ' + JUST_BASH_OPTS
 
-default:
-    @just --list
+# NOTE: first command also runs when just is called without arguments
 
 help:
     @just --list
+
+_require_run_env:
+    #!/usr/bin/env -S bash {{BASH_OPTS}}
+    if [ "${RUN_ENV}" == "none" ]; then
+        echo "RUN_ENV is not set, must be one of: multi, multi_ne"
+        exit 1
+    fi
 
 print-env:
     @echo "RUN_ENV=${RUN_ENV}"
@@ -41,7 +47,7 @@ print-env:
     @echo "LOCAL_PRIVATE_KEY=${LOCAL_PRIVATE_KEY}"
     @echo "BASE_EXECUTION_CLIENT=${BASE_EXECUTION_CLIENT}"
 
-clean:
+clean: _require_run_env
     @rm -rf ${RUN_BASE}
 
 _anvil-start $NAME $PORT $CHAIN_ID:
@@ -110,7 +116,7 @@ storage-clean:
     cd ./scripts
     docker compose --project-name river down --volumes --rmi all
 
-deploy-contracts: anvils
+deploy-contracts: _require_run_env anvils
     #!/usr/bin/env -S bash {{BASH_OPTS}}
     source ${ENV_FILE}
     echo "Deploying contracts"
@@ -122,7 +128,7 @@ deploy-contracts: anvils
     echo "RIVER_REGISTRYCONTRACT_ADDRESS=$(jq -r '.address' ${CONTRACTS_DIR}/river/addresses/riverRegistry.json)" >> ${RUN_BASE}/contracts.env
     echo "RIVER_TEST_CONTRACT_ADDRESS=$(jq -r '.address' ${CONTRACTS_DIR}/base/addresses/entitlementGatedExample.json)" >> ${RUN_BASE}/contracts.env
 
-_config-instance $INSTANCE_NUM $INSTANCE_DIR:
+_config-instance $INSTANCE_NUM $INSTANCE_DIR: _require_run_env
     #!/usr/bin/env -S bash {{BASH_OPTS}}
     source ${ENV_FILE}
     mkdir -p ${INSTANCE_DIR}/{config,logs,wallet,certs}
@@ -140,14 +146,14 @@ _config-instance $INSTANCE_NUM $INSTANCE_DIR:
     cast rpc -r ${RPC_RIVER} anvil_setBalance $(cat "${INSTANCE_DIR}/wallet/node_address") 0xfffffffffffffffffffffffffffffffffffffffffffffffffff
 
 
-config-instances: (_loop-instances "_config-instance")
+config-instances: _require_run_env (_loop-instances "_config-instance")
 
-_remove-instance $INSTANCE_NUM $INSTANCE_DIR:
+_remove-instance $INSTANCE_NUM $INSTANCE_DIR: _require_run_env
     @rm -rf ${INSTANCE_DIR}
 
-remove-instances: (_loop-instances "_remove-instance")
+remove-instances: _require_run_env (_loop-instances "_remove-instance")
 
-just-config-base-chain:
+just-config-base-chain: _require_run_env
     #!/usr/bin/env -S bash {{BASH_OPTS}}
     source ${ENV_FILE}
     if [ "${DISABLE_BASE_CHAIN}" != "true" ]; then
@@ -167,11 +173,11 @@ just-config-base-chain:
             2 > /dev/null
     fi
 
-config-base-chain: deploy-contracts just-config-base-chain
+config-base-chain: _require_run_env deploy-contracts just-config-base-chain
 
 # Run build node binary for environment
 [positional-arguments]
-run-bin *args:
+run-bin *args: _require_run_env
     #!/usr/bin/env -S bash {{BASH_OPTS}}
     source ${ENV_FILE}
     cd ${RUN_BASE}
@@ -184,7 +190,7 @@ run-bin *args:
 
 # Run node from source with go run (for debugging)
 [positional-arguments]
-run-go *args:
+run-go *args: _require_run_env
     #!/usr/bin/env -S bash {{BASH_OPTS}}
     source ${ENV_FILE}
     cd ${RUN_BASE}
@@ -197,7 +203,7 @@ run-go *args:
 
 # Run node from source with go run with config for instance N
 [positional-arguments]
-_run-go-inst $INSTANCE_NUM $INSTANCE_DIR *args:
+_run-go-inst $INSTANCE_NUM $INSTANCE_DIR *args: _require_run_env
     #!/usr/bin/env -S bash {{BASH_OPTS}}
     source ${ENV_FILE}
     cd ${INSTANCE_DIR}
@@ -212,7 +218,7 @@ _run-go-inst $INSTANCE_NUM $INSTANCE_DIR *args:
 
 # Run node from source with go run with config for instance N
 [positional-arguments]
-run-go-inst $INSTANCE_NUM *args:
+run-go-inst $INSTANCE_NUM *args: _require_run_env
     #!/usr/bin/env -S bash {{BASH_OPTS}}
     INSTANCE_NAME=$(printf "%02d" ${INSTANCE_NUM})
     INSTANCE_DIR="${INSTANCE_BASE}/${INSTANCE_NAME}"
@@ -221,20 +227,20 @@ run-go-inst $INSTANCE_NUM *args:
 
 # Run node from source with go run with for each instance
 [positional-arguments]
-run-go-all *args: 
+run-go-all *args: _require_run_env 
     #!/usr/bin/env -S bash {{BASH_OPTS}}
     just _loop-instances-seq-args _run-go-inst "$@"
 
-just-config-river-chain:
+just-config-river-chain: _require_run_env
     #!/usr/bin/env -S bash {{BASH_OPTS}}
     source ${ENV_FILE}
     PRIVATE_KEY=${LOCAL_PRIVATE_KEY} \
         just run-bin \
         on-chain-config set-csv ../../${ENV_PATH}/on_chain.csv
 
-config-river-chain: deploy-contracts config-root build just-config-river-chain
+config-river-chain:  _require_run_env deploy-contracts config-root build just-config-river-chain
 
-config-root:
+config-root: _require_run_env
     #!/usr/bin/env -S bash {{BASH_OPTS}}
     source ${ENV_FILE}
     mkdir -p ${RUN_BASE}
@@ -242,7 +248,7 @@ config-root:
     cp ${ENV_PATH_BASE}/common/run.sh ${RUN_BASE}/run.sh
     cp ${ENV_PATH}/config.yaml ${RUN_BASE}/config.yaml
 
-_register-node-base $INSTANCE_NUM $INSTANCE_DIR:
+_register-node-base $INSTANCE_NUM $INSTANCE_DIR: _require_run_env
     #!/usr/bin/env -S bash {{BASH_OPTS}}
     source ${ENV_FILE}
     if [ "${DISABLE_BASE_CHAIN}" != "true" ]; then
@@ -256,11 +262,11 @@ _register-node-base $INSTANCE_NUM $INSTANCE_DIR:
             $NODE_ADDRESS > /dev/null
     fi
 
-just-register-nodes-base: (_loop-instances-seq "_register-node-base")
+just-register-nodes-base: _require_run_env (_loop-instances-seq "_register-node-base")
 
-register-nodes-base: config-base-chain config-instances just-register-nodes-base
+register-nodes-base: _require_run_env config-base-chain config-instances just-register-nodes-base
 
-_register-node-river $INSTANCE_NUM $INSTANCE_DIR:
+_register-node-river $INSTANCE_NUM $INSTANCE_DIR: _require_run_env
     #!/usr/bin/env -S bash {{BASH_OPTS}}
     source ${ENV_FILE}
     source ${RUN_BASE}/contracts.env
@@ -275,37 +281,39 @@ _register-node-river $INSTANCE_NUM $INSTANCE_DIR:
         https://localhost:${RIVER_PORT} \
         2 > /dev/null
 
-just-register-nodes-river: (_loop-instances-seq "_register-node-river")
+just-register-nodes-river: _require_run_env (_loop-instances-seq "_register-node-river")
 
-register-nodes-river: config-river-chain config-instances just-register-nodes-river
+register-nodes-river: _require_run_env config-river-chain config-instances just-register-nodes-river
 
-config: config-root register-nodes-base register-nodes-river storage-start
+config: _require_run_env config-root register-nodes-base register-nodes-river storage-start
 
-_build-mls:
+_build-mls $OUTPUT_DIR:
     #!/usr/bin/env -S bash {{BASH_OPTS}}
-    OUTPUT=${RUN_BASE}/bin
-    echo "Building MLS ${OUTPUT}"
-    mkdir -p ${RUN_BASE}/bin
+    echo "Building MLS ${OUTPUT_DIR}"
+    mkdir -p ${OUTPUT_DIR}
     cargo build --release --manifest-path ./mls/mls-tools/crates/mlslib/Cargo.toml
-    cp ./mls/mls-tools/target/release/libmls* ${OUTPUT}
+    cp ./mls/mls-tools/target/release/libmls* ${OUTPUT_DIR}
 
-_build-node:
+# Build MLS library for running go tests
+build-mls: (_build-mls "./run_files/mls")
+
+_build-node: _require_run_env
     #!/usr/bin/env -S bash {{BASH_OPTS}}
     source ${ENV_FILE}
     OUTPUT=${RUN_BASE}/bin/river_node
     echo "Building node binary ${OUTPUT}"
     mkdir -p ${RUN_BASE}/bin
 
-    export CGO_LDFLAGS="${RUN_BASE}/bin/libmls_lib.a -ldl"
+    CGO_LDFLAGS="-L${RUN_BASE}/bin" \
     go build \
         -o ${OUTPUT} \
         -race \
         -ldflags="-X github.com/river-build/river/core/river_node/version.branch=$(git rev-parse --abbrev-ref HEAD) -X github.com/river-build/river/core/river_node/version.commit=$(git describe --tags --always --dirty)" \
         ./river_node/main.go
 
-build: _build-mls _build-node
+build: _require_run_env (_build-mls RUN_BASE / "bin") _build-node
 
-_run-node $INSTANCE_NUM $INSTANCE_DIR:
+_run-node $INSTANCE_NUM $INSTANCE_DIR: _require_run_env
     #!/usr/bin/env -S bash {{BASH_OPTS}}
     source ${ENV_FILE}
     RUN_ARGS=${RUN_ARGS:-}
@@ -322,7 +330,7 @@ _run-node $INSTANCE_NUM $INSTANCE_DIR:
         ${RUN_ARGS} \
         > ./logs/tty.stdout.log 2> ./logs/tty.stderr.log &
 
-_stop-node $INSTANCE_NUM $INSTANCE_DIR:
+_stop-node $INSTANCE_NUM $INSTANCE_DIR: _require_run_env
     #!/usr/bin/env -S bash {{BASH_OPTS}}
     source ${ENV_FILE}
     if [ ! -f "${INSTANCE_DIR}/config/config.env" ]; then
@@ -332,9 +340,9 @@ _stop-node $INSTANCE_NUM $INSTANCE_DIR:
     ../scripts/kill-on-port.sh ${RIVER_PORT} instance_${INSTANCE_NUM}
 
 # Stop all nodes
-stop: (_loop-instances "_stop-node")
+stop: _require_run_env (_loop-instances "_stop-node")
 
-_wait-node $INSTANCE_NUM $INSTANCE_DIR:
+_wait-node $INSTANCE_NUM $INSTANCE_DIR: _require_run_env
     #!/usr/bin/env -S bash {{BASH_OPTS}}
     source ${ENV_FILE}
     source ${INSTANCE_DIR}/config/config.env
@@ -347,7 +355,7 @@ _wait-ctrl-c:
     bash -c 'trap "exit 0" INT TERM; while true; do sleep 1; done'
 
 # Tail logs from all instances starting with 500 last lines
-tail-logs:
+tail-logs: _require_run_env
     #!/usr/bin/env -S bash {{BASH_OPTS}}
     source ${ENV_FILE}
     shopt -s nullglob
@@ -363,7 +371,7 @@ tail-logs-short:
     tail -n 10 -F ${LOGS[@]}
 
 # Tail new logs from all instances
-tail-logs-new:
+tail-logs-new: _require_run_env
     #!/usr/bin/env -S bash {{BASH_OPTS}}
     source ${ENV_FILE}
     shopt -s nullglob
@@ -371,7 +379,7 @@ tail-logs-new:
     tail -n 0 -F ${LOGS[@]}
 
 # Print last 10 lines from each instance log
-print-logs:
+print-logs: _require_run_env
     #!/usr/bin/env -S bash {{BASH_OPTS}}
     source ${ENV_FILE}
     shopt -s nullglob
@@ -379,7 +387,7 @@ print-logs:
     tail -n 10 ${LOGS[@]}
 
 # Tail stderr from all instances
-tail-stderr:
+tail-stderr: _require_run_env
     #!/usr/bin/env -S bash {{BASH_OPTS}}
     source ${ENV_FILE}
     shopt -s nullglob
@@ -387,7 +395,7 @@ tail-stderr:
     tail -n 500 -F ${LOGS[@]}
 
 # Print stderr from all instances
-print-stderr:
+print-stderr: _require_run_env
     #!/usr/bin/env -S bash {{BASH_OPTS}}
     source ${ENV_FILE}
     shopt -s nullglob
@@ -395,7 +403,7 @@ print-stderr:
     tail -n 10000 ${LOGS[@]}
 
 # Exits with error if any instance has non-empty stderr
-check-stderr:
+check-stderr: _require_run_env
     #!/usr/bin/env -S bash {{BASH_OPTS}}
     source ${ENV_FILE}
     shopt -s nullglob
@@ -407,34 +415,34 @@ check-stderr:
         exit 1
     fi
 
-_start-all: (_loop-instances "_run-node")
+_start-all: _require_run_env (_loop-instances "_run-node")
 
-_wait-all: (_loop-instances "_wait-node")
+_wait-all: _require_run_env (_loop-instances "_wait-node")
 
 # Config, build, and start nodes in background. Alias: cbs
-config-and-start: stop config build start
+config-and-start: _require_run_env stop config build start
 
 alias cbs := config-and-start
 
 # Start nodes in background, config and build should be run before
-start: _start-all _wait-all
+start: _require_run_env _start-all _wait-all
 
 # Config, build, and run nodes in foreground, CTRL-C to exit
-config-and-run: stop config build run
+config-and-run: _require_run_env stop config build run
 
 # Config, build, and run nodes in foreground tailing logs
-config-run-tail: stop config build run-and-tail
+config-run-tail: _require_run_env stop config build run-and-tail
 
 # Run nodes in foreground, config and build should be run before, CTRL-C to exit
-run: _start-all _wait-all _wait-ctrl-c stop
+run: _require_run_env _start-all _wait-all _wait-ctrl-c stop
 
 # Start nodes in foreground tailing logs, config and build should be run before
-run-and-tail: _start-all _wait-all tail-logs stop
+run-and-tail: _require_run_env _start-all _wait-all tail-logs stop
 
 # Stop, build, and start nodes in background
-restart: stop build start
+restart: _require_run_env stop build start
 
-_loop-instances-seq $CMD:
+_loop-instances-seq $CMD: _require_run_env
     #!/usr/bin/env -S bash {{BASH_OPTS}}
     source ${ENV_FILE}
     for ((i=0; i<${NUM_INSTANCES}; i++)); do
@@ -445,7 +453,7 @@ _loop-instances-seq $CMD:
     done
 
 [positional-arguments]
-_loop-instances-seq-args $CMD *args:
+_loop-instances-seq-args $CMD *args: _require_run_env
     #!/usr/bin/env -S bash {{BASH_OPTS}}
     shift
     source ${ENV_FILE}
@@ -457,7 +465,7 @@ _loop-instances-seq-args $CMD *args:
     done
 
 # Loop instances without stopping on error, return 0 if all succeeded, 1 if any failed
-_loop-instances-seq-nostop $CMD:
+_loop-instances-seq-nostop $CMD: _require_run_env
     #!/usr/bin/env -S bash {{BASH_OPTS}}
     source ${ENV_FILE}
     EXIT_CODE=0
@@ -469,7 +477,7 @@ _loop-instances-seq-nostop $CMD:
     done
     exit ${EXIT_CODE}
 
-_loop-instances-parallel $CMD:
+_loop-instances-parallel $CMD: _require_run_env
     #!/usr/bin/env -S bash {{BASH_OPTS}}
     source ${ENV_FILE}
     seq 0 $((${NUM_INSTANCES}-1)) | parallel -j0 --line-buffer \
@@ -485,7 +493,7 @@ _loop-instances-parallel $CMD:
 #         just _loop-instances-seq "${CMD}"
 #     fi
 
-_loop-instances CMD: (_loop-instances-seq CMD)
+_loop-instances CMD: _require_run_env (_loop-instances-seq CMD)
 
 _ping-anvil $URL $NAME:
     #!/usr/bin/env -S bash {{BASH_OPTS}}
@@ -498,7 +506,7 @@ ping-anvil-river: (_ping-anvil RPC_RIVER "river")
 
 ping-anvils: ping-anvil-base ping-anvil-river
 
-_ping-instance-tcp $INSTANCE_NUM $INSTANCE_DIR:
+_ping-instance-tcp $INSTANCE_NUM $INSTANCE_DIR: _require_run_env
     #!/usr/bin/env -S bash {{BASH_OPTS}}
     source ${ENV_FILE}
     source ${INSTANCE_DIR}/config/config.env
@@ -507,7 +515,7 @@ _ping-instance-tcp $INSTANCE_NUM $INSTANCE_DIR:
         exit 1
     fi
 
-ping-instances-tcp: (_loop-instances-seq-nostop "_ping-instance-tcp")
+ping-instances-tcp: _require_run_env (_loop-instances-seq-nostop "_ping-instance-tcp")
 
 # Invoke cast with -r for river chain.
 [positional-arguments]
@@ -524,3 +532,18 @@ cast-base *args:
     METHOD=$1
     shift
     cast ${METHOD} -r ${RPC_BASE} "$@"
+
+_test-from-dir $DIR *args: build-mls
+    #!/usr/bin/env -S bash {{BASH_OPTS}}
+    cd $DIR
+    echo "Running go test from $(git rev-parse --show-prefix)"
+    CGO_LDFLAGS="-L{{justfile_directory()}}/run_files/mls" go test {{args}}
+
+# Run go tests from current directory
+test *args: (_test-from-dir invocation_directory() args)
+
+# Run all go tests from module root
+test-all *args: (_test-from-dir justfile_directory() "-v" args "./...")
+
+# Run all go tests from current directory
+t *args: (_test-from-dir invocation_directory() "-v" args "./...")

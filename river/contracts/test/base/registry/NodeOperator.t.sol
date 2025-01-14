@@ -199,7 +199,8 @@ contract NodeOperatorFacetTest is
 
   modifier givenCallerHasBridgedTokens(address caller, uint256 amount) {
     vm.assume(caller != address(0));
-    vm.assume(amount >= stakeRequirement && amount <= stakeRequirement * 10);
+    amount = bound(amount, stakeRequirement, stakeRequirement * 10);
+
     vm.prank(bridge);
     riverFacet.mint(caller, amount);
     _;
@@ -433,7 +434,7 @@ contract NodeOperatorFacetTest is
     address randomOperator,
     uint256 rate
   ) external givenOperatorIsRegistered(randomOperator) {
-    vm.assume(rate > 0 && rate < 100);
+    rate = bound(rate, 0, 10000);
 
     vm.prank(randomOperator);
     vm.expectEmit(address(nodeOperator));
@@ -448,8 +449,8 @@ contract NodeOperatorFacetTest is
     uint256 rate
   ) external {
     vm.assume(randomOperator != address(0));
-    vm.assume(rate > 0 && rate < 100);
     vm.assume(!nodeOperator.isOperator(randomOperator));
+    rate = bound(rate, 0, 10000);
 
     vm.expectRevert(NodeOperator__NotRegistered.selector);
     vm.prank(randomOperator);

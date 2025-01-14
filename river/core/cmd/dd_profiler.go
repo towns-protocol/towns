@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"runtime/pprof"
@@ -14,7 +13,7 @@ import (
 	"github.com/river-build/river/core/river_node/version"
 )
 
-func setupProfiler(ctx context.Context, serviceName string, cfg *config.Config) error {
+func setupProfiler(serviceName string, cfg *config.Config) error {
 	// we overwrite the DD_TAGS environment variable, because this is the best way to pass them down to the tracer
 	setDDTagsEnv()
 

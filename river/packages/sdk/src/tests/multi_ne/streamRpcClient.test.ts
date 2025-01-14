@@ -395,7 +395,9 @@ describe('streamRpcClient', () => {
         })
         const userStream = await bob.getStream({ streamId: bobsUserStreamId })
         expect(userStream).toBeDefined()
-        expect(userStream.stream?.nextSyncCookie?.streamId).toEqual(bobsUserStreamId)
+        expect(
+            bin_equal(userStream.stream?.nextSyncCookie?.streamId, bobsUserStreamId),
+        ).toBeTruthy()
 
         // try to send a channel message
         const event = await makeEvent(

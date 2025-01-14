@@ -1,5 +1,11 @@
 import { PlainMessage } from '@bufbuild/protobuf'
-import { bin_equal, bin_fromHexString, bin_toHexString, check } from '@river-build/dlog'
+import {
+    bigIntToBytes,
+    bin_equal,
+    bin_fromHexString,
+    bin_toHexString,
+    check,
+} from '@river-build/dlog'
 import { isDefined, assert, hasElements } from './check'
 import {
     Envelope,
@@ -303,24 +309,6 @@ function bigintToUint8Array64(num: bigint, endianMode: 'bigEndian' | 'littleEndi
     const view = new DataView(buffer)
     view.setBigInt64(0, num, endianMode === 'littleEndian') // true for little endian
     return new Uint8Array(buffer)
-}
-
-// Returns the absolute value of this BigInt as a big-endian byte array
-function bigIntToBytes(value: bigint): Uint8Array {
-    const abs = value < 0n ? -value : value
-    // Calculate the byte length needed to represent the BigInt
-    const byteLength = Math.ceil(abs.toString(16).length / 2)
-
-    // Create a buffer of the required length
-    const buffer = new Uint8Array(byteLength)
-
-    // Fill the buffer with the big-endian representation of the BigInt
-    let temp = abs
-    for (let i = byteLength - 1; i >= 0; i--) {
-        buffer[i] = Number(temp & 0xffn) // Extract last 8 bits
-        temp >>= 8n // Shift right by 8 bits
-    }
-    return buffer
 }
 
 function pushByteToUint8Array(arr: Uint8Array, byte: number): Uint8Array {

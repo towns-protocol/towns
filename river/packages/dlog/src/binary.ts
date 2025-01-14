@@ -60,3 +60,21 @@ export function bin_equal(
     }
     return equalsBytes(a, b)
 }
+
+// Returns the absolute value of this BigInt as a big-endian byte array
+export function bigIntToBytes(value: bigint): Uint8Array {
+    const abs = value < 0n ? -value : value
+    // Calculate the byte length needed to represent the BigInt
+    const byteLength = Math.ceil(abs.toString(16).length / 2)
+
+    // Create a buffer of the required length
+    const buffer = new Uint8Array(byteLength)
+
+    // Fill the buffer with the big-endian representation of the BigInt
+    let temp = abs
+    for (let i = byteLength - 1; i >= 0; i--) {
+        buffer[i] = Number(temp & 0xffn) // Extract last 8 bits
+        temp >>= 8n // Shift right by 8 bits
+    }
+    return buffer
+}

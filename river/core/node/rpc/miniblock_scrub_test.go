@@ -235,7 +235,6 @@ func createMultiblockChannelStream(
 func writeStreamBackToStore(
 	ctx context.Context,
 	require *require.Assertions,
-	client protocolconnect.StreamServiceClient,
 	store storage.StreamStorage,
 	streamId StreamId,
 	mb1 *events.MiniblockInfo,
@@ -566,7 +565,7 @@ func TestMiniblockScrubber_CorruptBlocks(t *testing.T) {
 			// Corrupt block 1
 			blocks[1] = tc.corruptBlock(require, tester.nodes[0].service.wallet, blocks[1])
 
-			writeStreamBackToStore(ctx, require, client, store, channelId, mb1, blocks)
+			writeStreamBackToStore(ctx, require, store, channelId, mb1, blocks)
 
 			// Start at block 0. We will evaluate block 1 as corrupt and report it as so.
 			require.NoError(scrubber.ScheduleStreamMiniblocksScrub(ctx, channelId, 0))

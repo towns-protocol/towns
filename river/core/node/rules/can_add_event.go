@@ -10,6 +10,7 @@ import (
 
 	"google.golang.org/protobuf/proto"
 
+	"github.com/river-build/river/core/config"
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/mls_service"
 	"github.com/river-build/river/core/node/mls_service/mls_tools"
@@ -30,7 +31,8 @@ import (
 
 type aeParams struct {
 	ctx                   context.Context
-	cfg                   crypto.OnChainConfiguration
+	config                config.Config
+	chainConfig           crypto.OnChainConfiguration
 	mediaMaxChunkSize     int
 	streamMembershipLimit int
 	validNodeAddresses    []common.Address
@@ -168,6 +170,7 @@ type aeHideUserJoinLeaveEventsWrapperRules struct {
 */
 func CanAddEvent(
 	ctx context.Context,
+	config config.Config,
 	chainConfig crypto.OnChainConfiguration,
 	validNodeAddresses []common.Address,
 	currentTime time.Time,
@@ -205,7 +208,8 @@ func CanAddEvent(
 
 	ru := &aeParams{
 		ctx:                   ctx,
-		cfg:                   chainConfig,
+		config:                config,
+		chainConfig:           chainConfig,
 		mediaMaxChunkSize:     int(settings.MediaMaxChunkSize),
 		streamMembershipLimit: int(settings.MembershipLimits.ForType(streamView.StreamId().Type())),
 		validNodeAddresses:    validNodeAddresses,
@@ -594,6 +598,10 @@ func (params *aeParams) canAddMemberPayload(payload *StreamEvent_MemberPayload) 
 			check(ru.validMemberBlockchainTransaction_IsUnique).
 			check(ru.validMemberBlockchainTransaction_ReceiptMetadata)
 	case *MemberPayload_Mls_:
+		if !params.config.EnableMls {
+			return aeBuilder().
+				fail(RiverError(Err_INVALID_ARGUMENT, "mls disabled globally"))
+		}
 		return params.canAddMlsPayload(content.Mls)
 
 	case *MemberPayload_EncryptionAlgorithm_:

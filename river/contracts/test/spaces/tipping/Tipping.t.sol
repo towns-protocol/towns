@@ -40,12 +40,11 @@ contract TippingTest is BaseSetup, ITippingBase, IERC721ABase {
   modifier givenUsersAreMembers(address sender, address receiver) {
     assumeNotPrecompile(sender);
     assumeNotPrecompile(receiver);
+    assumeNotForgeAddress(receiver);
 
     vm.assume(sender != receiver);
     vm.assume(sender != address(0) && sender.code.length == 0);
-    // exclude precompiles
-    vm.assume(uint256(uint160(receiver)) > 10);
-    vm.assume(receiver.code.length == 0);
+    vm.assume(receiver != address(0) && receiver.code.length == 0);
 
     vm.prank(sender);
     membership.joinSpace(sender);
@@ -64,6 +63,7 @@ contract TippingTest is BaseSetup, ITippingBase, IERC721ABase {
   ) external givenUsersAreMembers(sender, receiver) {
     amount = bound(amount, 0.01 ether, 1 ether);
 
+    uint256 initialBalance = receiver.balance;
     uint256[] memory tokens = token.tokensOfOwner(receiver);
     uint256 tokenId = tokens[0];
     hoax(sender, amount);
@@ -91,7 +91,7 @@ contract TippingTest is BaseSetup, ITippingBase, IERC721ABase {
     uint256 gasUsed = vm.stopSnapshotGas();
 
     assertLt(gasUsed, 200_000);
-    assertEq(receiver.balance, amount);
+    assertEq(receiver.balance - initialBalance, amount);
     assertEq(sender.balance, 0);
     assertEq(
       tipping.tipsByCurrencyAndTokenId(tokenId, CurrencyTransfer.NATIVE_TOKEN),

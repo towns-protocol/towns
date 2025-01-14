@@ -259,7 +259,7 @@ func (r *streamViewImpl) ProposeNextMiniblock(
 		Hashes:            hashes,
 		NewMiniblockNum:   r.minipool.generation,
 		PrevMiniblockHash: r.LastBlock().headerEvent.Hash[:],
-		ShouldSnapshot:    forceSnapshot || r.shouldSnapshot(ctx, cfg),
+		ShouldSnapshot:    forceSnapshot || r.shouldSnapshot(cfg),
 	}, nil
 }
 
@@ -308,6 +308,12 @@ func (r *streamViewImpl) makeMiniblockHeader(
 	if proposal.ShouldSnapshot {
 		snapshot = proto.Clone(r.snapshot).(*Snapshot)
 		mlsSnapshotRequest := r.makeMlsSnapshotRequest()
+
+		if snapshot.Members.GetMls() == nil {
+			snapshot.Members.Mls = &MemberPayload_Snapshot_Mls{}
+		}
+		// reset the MLS commits
+		snapshot.Members.Mls.CommitsSinceLastSnapshot = make([][]byte, 0)
 
 		// update all blocks since last snapshot
 		for i := r.snapshotIndex + 1; i < len(r.blocks); i++ {
@@ -592,7 +598,7 @@ func (r *streamViewImpl) SyncCookie(localNodeAddress common.Address) *SyncCookie
 	}
 }
 
-func (r *streamViewImpl) shouldSnapshot(ctx context.Context, cfg *crypto.OnChainSettings) bool {
+func (r *streamViewImpl) shouldSnapshot(cfg *crypto.OnChainSettings) bool {
 	minEventsPerSnapshot := int(cfg.MinSnapshotEvents.ForType(r.streamId.Type()))
 
 	count := 0
@@ -680,7 +686,7 @@ func (r *streamViewImpl) ValidateNextEvent(
 
 	// make sure we're recent
 	// if the user isn't adding the latest block, allow it if the block after was recently created
-	if foundBlockAt < len(r.blocks)-1 && !r.isRecentBlock(ctx, cfg, r.blocks[foundBlockAt+1], currentTime) {
+	if foundBlockAt < len(r.blocks)-1 && !r.isRecentBlock(cfg, r.blocks[foundBlockAt+1], currentTime) {
 		return RiverError(
 			Err_BAD_PREV_MINIBLOCK_HASH,
 			"prevMiniblockHash did not reference a recent block",
@@ -722,7 +728,6 @@ func (r *streamViewImpl) ValidateNextEvent(
 }
 
 func (r *streamViewImpl) isRecentBlock(
-	ctx context.Context,
 	cfg *crypto.OnChainSettings,
 	block *MiniblockInfo,
 	currentTime time.Time,

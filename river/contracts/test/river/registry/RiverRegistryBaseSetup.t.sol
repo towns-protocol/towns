@@ -82,16 +82,13 @@ contract RiverRegistryBaseSetup is TestUtils {
 
   modifier givenNodesAreRegistered(
     address nodeOperator,
-    TestNode[] memory nodes
+    TestNode[100] memory nodes
   ) {
-    vm.assume(nodes.length > 0 && nodes.length <= 100);
-
     uint256 nodesLength = nodes.length;
     for (uint256 i; i < nodesLength; ++i) {
       vm.assume(nodeRegistry.isNode(nodes[i].node) == false);
       _registerNode(nodeOperator, nodes[i].node, nodes[i].url);
     }
-
     _;
   }
 

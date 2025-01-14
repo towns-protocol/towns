@@ -147,9 +147,8 @@ contract EntitlementGatedTest is
     uint256[] memory roleIds = new uint256[](1);
     roleIds[0] = 0;
 
-    address[] memory nodes = entitlementChecker.getRandomNodes(5);
-
-    for (uint256 i; i < nodes.length; ++i) {
+    uint256 nodeCount = nodes.length;
+    for (uint256 i; i < nodeCount; ++i) {
       vm.assume(node != nodes[i]);
     }
 

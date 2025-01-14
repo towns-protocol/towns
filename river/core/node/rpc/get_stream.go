@@ -1,8 +1,6 @@
 package rpc
 
 import (
-	"context"
-
 	"connectrpc.com/connect"
 
 	. "github.com/river-build/river/core/node/events"
@@ -10,8 +8,6 @@ import (
 )
 
 func (s *Service) localGetStream(
-	ctx context.Context,
-	stream SyncStream,
 	streamView StreamView,
 ) (*connect.Response[GetStreamResponse], error) {
 	return connect.NewResponse(&GetStreamResponse{

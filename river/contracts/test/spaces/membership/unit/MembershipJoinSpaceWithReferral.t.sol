@@ -29,8 +29,8 @@ contract MembershipJoinSpaceWithReferralTest is
   modifier givenPartnerIsRegistered(Partner memory partner) {
     vm.assume(partner.account != address(0));
     vm.assume(partner.recipient != address(0));
-    vm.assume(partner.fee <= partnerRegistry.maxPartnerFee());
-    vm.assume(partner.active);
+    partner.active = true;
+    partner.fee = bound(partner.fee, 0, partnerRegistry.maxPartnerFee());
     partnerRegistry.registerPartner(partner);
     _;
   }
@@ -80,7 +80,15 @@ contract MembershipJoinSpaceWithReferralTest is
 
   function test_revertWhen_joinSpaceWithReferral_partnerReferral(
     Partner memory partner
-  ) external givenMembershipHasPrice givenPartnerIsRegistered(partner) {
+  )
+    external
+    givenMembershipHasPrice
+    givenPartnerIsRegistered(partner)
+    assumeEOA(partner.account)
+  {
+    vm.assume(partner.account != platformReqs.getFeeRecipient());
+    vm.assume(partner.account.balance == 0);
+
     ReferralTypes memory referral = ReferralTypes({
       partner: partner.account,
       userReferral: address(0),
@@ -96,16 +104,13 @@ contract MembershipJoinSpaceWithReferralTest is
       platformReqs.getMembershipBps()
     );
 
-    uint256 partnerFeeBps = BasisPoints.calculate(
-      MEMBERSHIP_PRICE,
-      partner.fee
-    );
+    uint256 partnerFee = BasisPoints.calculate(MEMBERSHIP_PRICE, partner.fee);
 
-    assertEq(partner.account.balance, partnerFeeBps);
+    assertEq(partner.account.balance, partnerFee, "partner fee");
     assertEq(platformReqs.getFeeRecipient().balance, protocolFee);
     assertEq(
       address(membership).balance,
-      MEMBERSHIP_PRICE - protocolFee - partnerFeeBps
+      MEMBERSHIP_PRICE - protocolFee - partnerFee
     );
   }
 

@@ -158,7 +158,7 @@ pub fn validate_external_join_request(request: ExternalJoinRequest) -> ExternalJ
     for commit_bytes in group_state.commits {
         let _ = match MlsMessage::from_bytes(&commit_bytes) {
             Ok(commit) => external_group.process_incoming_message(commit),
-            Err(_) => break
+            Err(_) => continue
         };
     }
 
@@ -244,7 +244,7 @@ pub fn validate_key_package_request(request: KeyPackageRequest) -> KeyPackageRes
     for commit_bytes in group_state.commits {
         let _ = match MlsMessage::from_bytes(&commit_bytes) {
             Ok(commit) => external_group.process_incoming_message(commit),
-            Err(_) => break
+            Err(_) => continue
         };
     }
 
@@ -308,7 +308,7 @@ pub fn validate_welcome_message_request(request: WelcomeMessageRequest) -> Welco
     for commit_bytes in group_state.commits {
         let _ = match MlsMessage::from_bytes(&commit_bytes) {
             Ok(commit) => external_group.process_incoming_message(commit),
-            Err(_) => break
+            Err(_) => continue
         };
     }
 

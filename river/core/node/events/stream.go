@@ -385,13 +385,13 @@ func (s *streamImpl) promoteCandidateLocked(ctx context.Context, mb *MiniblockRe
 	}
 
 	if mb.Num > lastMbNum+1 {
-		return s.schedulePromotionLocked(ctx, mb)
+		return s.schedulePromotionLocked(mb)
 	}
 
 	miniblockBytes, err := s.params.Storage.ReadMiniblockCandidate(ctx, s.streamId, mb.Hash, mb.Num)
 	if err != nil {
 		if IsRiverErrorCode(err, Err_NOT_FOUND) {
-			return s.schedulePromotionLocked(ctx, mb)
+			return s.schedulePromotionLocked(mb)
 		}
 		return err
 	}
@@ -405,7 +405,7 @@ func (s *streamImpl) promoteCandidateLocked(ctx context.Context, mb *MiniblockRe
 }
 
 // schedulePromotionLocked should be called with a lock held.
-func (s *streamImpl) schedulePromotionLocked(ctx context.Context, mb *MiniblockRef) error {
+func (s *streamImpl) schedulePromotionLocked(mb *MiniblockRef) error {
 	if len(s.local.pendingCandidates) == 0 {
 		if mb.Num != s.view().LastBlock().Ref.Num+1 {
 			return RiverError(Err_INTERNAL, "schedulePromotionNoLock: next promotion is not for the next block")

@@ -29,7 +29,7 @@ contract PartnerRegistrySetup is IPartnerRegistryBase, BaseSetup {
   }
 
   modifier givenPartnerIsRegistered(Partner memory partner) {
-    vm.assume(partner.fee <= MAX_PARTNER_FEE);
+    partner.fee = bound(partner.fee, 0, MAX_PARTNER_FEE);
     vm.assume(partner.recipient != address(0));
     vm.deal(partner.account, REGISTRY_FEE);
 
