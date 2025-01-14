@@ -137,7 +137,6 @@ export { useTipTransaction } from './hooks/use-tip-transaction'
 export { useCheckInTransaction } from './hooks/use-checkin-transaction'
 export { useSpaceTips } from './hooks/use-space-tips'
 export { useTokenIdOfOwner } from './hooks/use-token-id-of-owner'
-export { useSpaceRevenue } from './hooks/use-space-revenue'
 
 export { useCasablancaStore } from './store/use-casablanca-store'
 export { useFullyReadMarkerStore } from './store/use-fully-read-marker-store'
