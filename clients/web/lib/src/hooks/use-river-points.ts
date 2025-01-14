@@ -1,4 +1,4 @@
-import { staleTime24Hours, useQuery, useQueryClient } from '../query/queryClient'
+import { queryClient, staleTime24Hours, useQuery, useQueryClient } from '../query/queryClient'
 import { blockchainKeys } from '../query/query-keys'
 import { useTownsContext } from '../components/TownsContextProvider'
 import { ethers } from 'ethers'
@@ -7,6 +7,7 @@ import { useCheckInTransaction } from './use-checkin-transaction'
 import { useTownsClient } from './use-towns-client'
 import { useOnTransactionUpdated } from '../store/use-transactions-store'
 import { BlockchainTransactionType } from '../types/web3-types'
+import { useSpaceIdStore } from './TownsContext/useSpaceIds'
 
 const SECONDS_MS = 1000
 const DAY_MS = 24 * 60 * 60 * SECONDS_MS
@@ -14,6 +15,20 @@ const DAY_MS = 24 * 60 * 60 * SECONDS_MS
 export function useRiverPoints(loggedInWalletAddress: `0x${string}`) {
     const { baseChain: chain } = useTownsContext()
     const { spaceDapp } = useTownsClient()
+
+    const { spaceIds } = useSpaceIdStore()
+
+    useEffect(() => {
+        // invalidate river points aggresively since unsynced points
+        // are causing confusion and frustration
+        // - invalidate when the panel is opened
+        // - invalidate when a space potentially has been joined (when the
+        //   spaceIds updates)
+        console.log('[river-points] invalidate points', spaceIds)
+        void queryClient.invalidateQueries({
+            queryKey: blockchainKeys.riverPoints(chain.id, loggedInWalletAddress ?? ''),
+        })
+    }, [chain.id, loggedInWalletAddress, spaceIds])
 
     const dapp = spaceDapp?.airdrop
 
