@@ -23,6 +23,8 @@ type Props = {
     StyleProps &
     Pick<
         BoxProps,
+        | 'flexGrow'
+        | 'flexBasis'
         | 'grow'
         | 'aspectRatio'
         | 'color'

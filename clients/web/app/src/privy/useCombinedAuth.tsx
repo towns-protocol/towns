@@ -6,13 +6,17 @@ import {
     getPrivyLoginMethodFromLocalStorage,
     setPrivyLoginMethodToLocalStorage,
 } from '@towns/userops/src/middlewares'
+import { LinkedAccountType } from '@gateway-worker/types'
+import { Toast } from 'react-hot-toast/headless'
 import { usePublicPageLoginFlow } from 'routes/PublicTownPage/usePublicPageLoginFlow'
 import { useUnsubscribeNotification } from 'hooks/usePushSubscription'
 import { Analytics } from 'hooks/useAnalytics'
 import { popupToast } from '@components/Notifications/popupToast'
-import { StandardToast } from '@components/Notifications/StandardToast'
+import { StandardToast, dismissToast } from '@components/Notifications/StandardToast'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { usePrepareRedirect } from 'hooks/usePrepareRedirect'
+import { getLinkedAccounts } from 'api/lib/linkedAccounts'
+import { Box, Button } from '@ui'
 import { useAutoLoginToRiverIfEmbeddedWallet } from './useAutoLoginToRiverIfEmbeddedWallet'
 
 type CombinedAuthContext = {
@@ -154,6 +158,20 @@ function usePrivyLoginWithErrorHandler({
                     !privyWallet ||
                     privyWallet.address.toLowerCase() !== loggedInWalletAddress.toLowerCase()
                 ) {
+                    popupToast(
+                        ({ toast }) => (
+                            <StandardToast.Pending
+                                toast={toast}
+                                message="Checking your previous login method..."
+                            />
+                        ),
+                        { dismissAll: true },
+                    )
+                    const acccessToken = await retryGetAccessToken(1)
+                    const linkedPrivyAccounts = await getLinkedAccounts(
+                        loggedInWalletAddress,
+                        acccessToken,
+                    )
                     try {
                         await privyLogout()
                         // extra safe
@@ -163,12 +181,12 @@ function usePrivyLoginWithErrorHandler({
                     }
                     popupToast(
                         ({ toast }) => (
-                            <StandardToast.Error
+                            <LoginMismatchToast
+                                linkedPrivyAccounts={linkedPrivyAccounts}
                                 toast={toast}
-                                message="You're logged in to Towns with a different account. Please try again with the correct account."
                             />
                         ),
-                        { dismissAll: true },
+                        { dismissAll: true, duration: Infinity },
                     )
                 } else if (
                     privyWallet &&
@@ -219,4 +237,72 @@ function savePrivyLoginMethodToLocalStorage(loginMethod: string | null) {
     if (pLoginMethod) {
         setPrivyLoginMethodToLocalStorage(pLoginMethod)
     }
+}
+
+function LoginMismatchToast({
+    linkedPrivyAccounts,
+    toast,
+}: {
+    linkedPrivyAccounts: LinkedAccountType[]
+    toast: Toast
+}) {
+    const { privyLogin } = useCombinedAuth()
+    const { logout: riverLogout } = useConnectivity()
+
+    return (
+        <StandardToast.Error
+            toast={toast}
+            message={
+                <Box gap>
+                    {linkedPrivyAccounts.length ? (
+                        <>
+                            Previously, you signed in to Towns with one of these accounts:
+                            <Box background="level3" padding="sm" rounded="sm" gap="sm">
+                                {linkedPrivyAccounts.map((account) => (
+                                    <Box key={account.identifier}>
+                                        {account.type.replace('_oauth', '')}: {account.identifier}
+                                    </Box>
+                                ))}
+                            </Box>
+                            Please try again with one of these accounts. Alternatively, you can
+                            logout and sign in with a different account.
+                        </>
+                    ) : (
+                        <>
+                            You signed in to Towns with a different account. Please try again with
+                            that account, or logout and sign in with a different account.
+                        </>
+                    )}
+
+                    <Box gap horizontal>
+                        <Button
+                            grow
+                            flexBasis="none"
+                            size="button_sm"
+                            onClick={() => {
+                                dismissToast(toast.id)
+                                setTimeout(() => {
+                                    riverLogout()
+                                }, 100)
+                            }}
+                        >
+                            Logout
+                        </Button>
+                        <Button
+                            grow
+                            tone="positive"
+                            flexBasis="none"
+                            size="button_sm"
+                            onClick={() => {
+                                dismissToast(toast.id)
+                                privyLogin()
+                            }}
+                        >
+                            Try again
+                        </Button>
+                    </Box>
+                </Box>
+            }
+        />
+    )
 }

@@ -2,7 +2,8 @@ import { Request as IttyRequest, Router } from 'itty-router'
 import { type Env } from './index'
 import { createLinearIssue } from './linearClient'
 import { getLinearPayloadFromFormData } from './getLinearPayloadFromFormData'
-import { PrivyClient } from '@privy-io/server-auth'
+import { LinkedAccountWithMetadata, PrivyClient } from '@privy-io/server-auth'
+import { LinkedAccountType } from './types'
 
 const router = Router()
 
@@ -146,6 +147,84 @@ router.post('/user/delete', async (request: WorkerRequest, env: Env, ctx) => {
         return new Response('Error', { status: 400 })
     }
 })
+
+/**
+ * returns the list of accounts linked to the privy user, excluding the privy embedded wallet
+ * @param address - the privy embedded wallet address (root key)
+ * @param privyToken - the privy token to use for the request
+ * @returns the list of linked accounts
+ */
+router.get(
+    '/user/linked-accounts/:address',
+    async (request: WorkerRequest, env: Env, ctx: ExecutionContext) => {
+        const address = request.params?.address
+        const privyToken = request.headers.get('X-User-Token')
+
+        if (!address) {
+            return new Response('Missing address', { status: 400 })
+        }
+        if (!privyToken) {
+            return new Response('Missing Privy Token', { status: 400 })
+        }
+        const privyClient = new PrivyClient(env.PRIVY_APP_ID, env.PRIVY_APP_KEY)
+
+        const verification = await privyClient.verifyAuthToken(privyToken)
+        if (!verification.userId) {
+            return new Response('Invalid User Token', { status: 400 })
+        }
+
+        try {
+            const user = await privyClient.getUserByWalletAddress(address)
+            if (!user) {
+                return new Response('User not found', { status: 404 })
+            }
+
+            // filter out privy embedded wallet
+            const linkedAccounts: LinkedAccountType[] = user.linkedAccounts
+                .filter((account) => {
+                    if (account.type === 'wallet' && account.walletClientType === 'privy') {
+                        return false
+                    }
+                    return true
+                })
+                .map((account) => {
+                    let identifier: string | undefined
+                    switch (account.type) {
+                        case 'google_oauth':
+                            identifier = account.email
+                            break
+                        case 'apple_oauth':
+                            identifier = account.email
+                            break
+                        case 'twitter_oauth':
+                            identifier = account.username ?? undefined
+                            break
+                        case 'farcaster':
+                            identifier = account.username
+                            break
+                        case 'email':
+                            identifier = account.address
+                            break
+                        case 'phone':
+                            identifier = account.number
+                            break
+                        default:
+                            identifier = undefined
+                            break
+                    }
+                    return {
+                        type: account.type,
+                        identifier,
+                    }
+                })
+
+            return new Response(JSON.stringify(linkedAccounts), { status: 200 })
+        } catch (error) {
+            console.error('error fetching user by wallet address', error)
+            return new Response('Error', { status: 400 })
+        }
+    },
+)
 
 router.post('/user-feedback', async (request: WorkerRequest, env: Env, ctx: ExecutionContext) => {
     const formData = await request.formData()

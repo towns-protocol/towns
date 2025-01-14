@@ -11,7 +11,7 @@ export type Props<T extends IconProps['type'] | undefined = IconProps['type']> =
     imgSrc?: T extends IconProps['type'] ? never : string
     pending?: T extends IconProps['type'] ? never : boolean
     success?: boolean
-    message: string
+    message: string | React.ReactNode
     subMessage?: string
     cta?: string
     ctaColor?: TextProps['color']
