@@ -9,6 +9,8 @@ type Props = {
     color?: TextProps['color']
     fontSize?: TextProps['fontSize']
     children?: React.ReactNode
+    vertical?: boolean
+    noTooltip?: boolean
 }
 
 export function useCopied() {
@@ -39,7 +41,7 @@ export function CopyIcon({ copied, color }: { copied: boolean; color: TextProps[
 }
 
 export const ClipboardCopy = forwardRef<HTMLDivElement, Props>((props, ref) => {
-    const { fontSize = 'md' } = props
+    const { fontSize = 'md', vertical = false, noTooltip = false } = props
     const [, copy] = useCopyToClipboard()
     const color = props.color ?? 'gray2'
 
@@ -62,7 +64,7 @@ export const ClipboardCopy = forwardRef<HTMLDivElement, Props>((props, ref) => {
 
     return (
         <Box
-            tooltip={<Tooltip>{!copied ? 'Copy' : 'Copied!'}</Tooltip>}
+            tooltip={!noTooltip && <Tooltip>{!copied ? 'Copy' : 'Copied!'}</Tooltip>}
             tooltipOptions={{
                 closeHandleRef,
                 alignRef: iconRef,
@@ -70,9 +72,9 @@ export const ClipboardCopy = forwardRef<HTMLDivElement, Props>((props, ref) => {
             }}
         >
             <Stack
-                horizontal
+                direction={vertical ? 'columnReverse' : 'row'}
                 gap="sm"
-                alignItems="end"
+                alignItems={vertical ? 'center' : 'end'}
                 cursor={!copied ? 'pointer' : 'default'}
                 ref={ref}
                 onClick={onCopy}

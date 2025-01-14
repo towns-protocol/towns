@@ -2,12 +2,12 @@ import React from 'react'
 import { useConnectivity } from 'use-towns-client'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
-import { Box, Button, Icon, IconButton, Text } from '@ui'
+import { Box, Icon, Text, TextButton } from '@ui'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
-import { shortAddress } from 'ui/utils/utils'
 import { useBalance } from 'hooks/useBalance'
 import { Analytics } from 'hooks/useAnalytics'
 import { useStore } from 'store/store'
+import { PanelButton } from '@components/Panel/PanelButton'
 
 export function TownsWallet() {
     const { loggedInWalletAddress } = useConnectivity()
@@ -21,60 +21,100 @@ export function TownsWallet() {
     })
     const { openPanel } = usePanelActions()
 
+    const handleDeposit = () => {
+        Analytics.getInstance().track('clicked add funds')
+        setFundWalletModalOpen(true)
+    }
+
+    const handleSend = () => {
+        openPanel('transfer-assets', {
+            assetSource: aaAddress,
+            data: JSON.stringify({
+                assetToTransfer: 'BASE_ETH',
+            }),
+        })
+    }
+
+    const handleViewAssets = () => {
+        openPanel('wallet', { assetSource: aaAddress })
+    }
+
     return (
-        <>
-            <Box
-                horizontal
-                padding
-                rounded="sm"
-                background="level2"
-                justifyContent="spaceBetween"
-                gap="md"
-            >
-                <Box gap="md">
-                    <Box gap="sm">
+        <Box padding rounded="sm" background="level2" gap="md">
+            <Box gap="md">
+                <Box horizontal justifyContent="spaceBetween" alignItems="center">
+                    <Box horizontal alignItems="center" gap="sm">
                         <Text strong color="default">
                             Towns Wallet
                         </Text>
-                        {aaAddress && (
-                            <ClipboardCopy clipboardContent={aaAddress} fontSize="sm">
-                                {shortAddress(aaAddress)}
-                            </ClipboardCopy>
-                        )}
+                        <Icon type="base" size="square_sm" color="gray2" />
                     </Box>
-                    <Box gap="sm">
-                        <Box horizontal alignItems="center" gap="xs" insetX="xxs">
-                            <Icon type="eth" size="square_sm" />
-                            <Text color="default">
-                                {balance.data?.formatted ?? 0}{' '}
-                                <Text strong as="span" display="inline">
-                                    {balance.data?.symbol ?? ''}
-                                </Text>
-                            </Text>
-                            <Icon type="base" size="square_sm" />
-                        </Box>
-                        <Box display="block" width="auto">
-                            <Button
-                                size="button_sm"
-                                rounded="md"
-                                color="cta1"
-                                onClick={() => {
-                                    Analytics.getInstance().track('clicked add funds')
-                                    setFundWalletModalOpen(true)
-                                }}
-                            >
-                                Add funds
-                            </Button>
-                        </Box>
+                    <TextButton onClick={handleViewAssets}>View Assets</TextButton>
+                </Box>
+                <Box centerContent gap="xs" paddingY="sm">
+                    <Box horizontal alignItems="center" gap="xs">
+                        <Icon type="eth" size="square_md" color="cta1" />
+                        <Text strong size="h3">
+                            {balance.data?.formatted ?? 0} ETH
+                        </Text>
                     </Box>
                 </Box>
-                <IconButton
-                    inset="xs"
-                    icon="linkOut"
-                    tooltip="Details"
-                    onClick={() => openPanel('wallet', { assetSource: aaAddress })}
-                />
+                <Box horizontal justifyContent="spaceBetween" display="flex" gap="sm">
+                    <PanelButton
+                        grow
+                        centerContent
+                        background="level3"
+                        padding="md"
+                        height="x8"
+                        width="x12"
+                        onClick={handleDeposit}
+                    >
+                        <Box direction="column" alignItems="center" gap="xs">
+                            <Icon type="plus" size="square_xs" color="cta1" />
+                            <Text size="sm" color="cta1">
+                                Deposit
+                            </Text>
+                        </Box>
+                    </PanelButton>
+                    <PanelButton
+                        grow
+                        centerContent
+                        background="level3"
+                        padding="md"
+                        height="x8"
+                        width="x12"
+                        onClick={handleSend}
+                    >
+                        <Box direction="column" alignItems="center" gap="xs">
+                            <Icon type="arrowRight" size="square_xs" color="cta1" />
+                            <Text size="sm" color="cta1">
+                                Send
+                            </Text>
+                        </Box>
+                    </PanelButton>
+                    <PanelButton
+                        grow
+                        centerContent
+                        background="level3"
+                        padding="md"
+                        height="x8"
+                        width="x12"
+                    >
+                        <Box direction="column" alignItems="center">
+                            <ClipboardCopy
+                                vertical
+                                noTooltip
+                                clipboardContent={aaAddress ?? ''}
+                                color="cta1"
+                            >
+                                <Text size="sm" color="cta1">
+                                    Copy
+                                </Text>
+                            </ClipboardCopy>
+                        </Box>
+                    </PanelButton>
+                </Box>
             </Box>
-        </>
+        </Box>
     )
 }

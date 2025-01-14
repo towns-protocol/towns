@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { FormProvider, UseFormReturn, UseFormSetError, useFormContext } from 'react-hook-form'
 import {
     Address,
@@ -12,7 +13,6 @@ import {
 import { ErrorMessage, FancyButton, FormRender, Stack, Text, TextField } from '@ui'
 import { Panel } from '@components/Panel/Panel'
 import { formatUnits, parseUnits, useBalance } from 'hooks/useBalance'
-
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { invalidateCollectionsForAddressQueryData } from 'api/lib/tokenContracts'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
@@ -46,6 +46,11 @@ function TransferAssets() {
     const isAAWallet = useIsAAWallet()
     const isTreasuryTransfer = spaceAddress?.toLowerCase() === assetSourceParam?.toLowerCase()
     const source = isTreasuryTransfer ? spaceAddress : isAAWallet ? assetSourceParam : undefined
+    const [searchParams] = useSearchParams()
+    const defaultData = searchParams.get('data')
+    const defaultAssetToTransfer = defaultData ? JSON.parse(defaultData).assetToTransfer : undefined
+    const isEthTransfer = defaultAssetToTransfer === 'BASE_ETH'
+
     const isPendingTransferBaseEth = useIsTransactionPending(
         BlockchainTransactionType.TransferBaseEth,
     )
@@ -63,7 +68,7 @@ function TransferAssets() {
 
     const { nfts, isFetching } = useBaseNftsForTransfer({
         walletAddress: source,
-        enabled: !isTreasuryTransfer,
+        enabled: !isTreasuryTransfer && !isEthTransfer,
     })
     const { data: linkedWallets, isLoading: isLinkedWalletsLoading } = useLinkedWallets()
     const { data: fromBalance } = useBalance({
@@ -77,12 +82,18 @@ function TransferAssets() {
         return <></>
     }
 
+    const getPanelTitle = () => {
+        if (isTreasuryTransfer) {
+            return 'Transfer Treasury'
+        }
+        if (isEthTransfer) {
+            return 'Transfer ETH'
+        }
+        return 'Transfer Asset'
+    }
+
     return (
-        <Panel
-            label={isTreasuryTransfer ? 'Transfer Treasury' : 'Transfer Asset'}
-            padding="none"
-            data-testid="transfer-assets-panel"
-        >
+        <Panel label={getPanelTitle()} padding="none" data-testid="transfer-assets-panel">
             {isFetching || isLinkedWalletsLoading ? (
                 <Stack padding="md">
                     <ButtonSpinner />
@@ -91,11 +102,10 @@ function TransferAssets() {
                 <Stack height="100%">
                     <FormRender
                         schema={transferSchema}
-                        defaultValues={
-                            {
-                                assetToTransfer: isTreasuryTransfer ? 'BASE_ETH' : undefined,
-                            } satisfies TransferSchema
-                        }
+                        defaultValues={{
+                            assetToTransfer:
+                                isTreasuryTransfer || isEthTransfer ? 'BASE_ETH' : undefined,
+                        }}
                         id="TransferAssets"
                         mode="onChange"
                         height="100%"
@@ -111,7 +121,7 @@ function TransferAssets() {
                                                 <Stack padding rounded="sm" background="level2">
                                                     <EthDetail fromBalance={fromBalance} />
                                                 </Stack>
-                                            ) : (
+                                            ) : !isEthTransfer ? (
                                                 <>
                                                     <Text strong>Asset</Text>
                                                     <AssetSelector
@@ -120,7 +130,7 @@ function TransferAssets() {
                                                         fromBalance={fromBalance}
                                                     />
                                                 </>
-                                            )}
+                                            ) : null}
 
                                             {treasuryEmpty ? (
                                                 <Stack
