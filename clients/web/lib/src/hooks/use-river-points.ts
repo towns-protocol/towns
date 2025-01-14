@@ -45,10 +45,7 @@ export function useRiverPoints(loggedInWalletAddress: `0x${string}`) {
 
             const [riverPoints, currentStreak, lastCheckIn] = await Promise.all([
                 dapp.balanceOf(loggedInWalletAddress).then((value) => {
-                    const valueInWei = (+value).toLocaleString('fullwide', {
-                        useGrouping: false,
-                    })
-                    return Math.round(Number(ethers.utils.formatEther(valueInWei)))
+                    return Math.round(Number(ethers.utils.formatEther(value)))
                 }),
                 dapp.getCurrentStreak(loggedInWalletAddress).then((value) => Number(value)),
                 dapp.getLastCheckIn(loggedInWalletAddress).then((value) => {
