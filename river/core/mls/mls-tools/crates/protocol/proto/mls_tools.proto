@@ -17,6 +17,7 @@ enum ValidationResult {
     INVALID_PUBLIC_SIGNATURE_KEY = 11;
     INVALID_KEY_PACKAGE = 12;
     INVALID_PROPOSAL = 13;
+    INVALID_WELCOME_MESSAGE = 14;
 }
 
 message MlsRequest {

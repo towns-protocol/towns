@@ -369,6 +369,7 @@ func (up *UserPreferencesCache) AddAPNSubscription(
 	userID common.Address,
 	deviceToken []byte,
 	environment APNEnvironment,
+	pushVersion NotificationPushVersion,
 ) error {
 	pref, err := up.GetUserPreferences(ctx, userID)
 	if err != nil {
@@ -383,7 +384,7 @@ func (up *UserPreferencesCache) AddAPNSubscription(
 		}
 	}
 
-	err = up.persistent.AddAPNSubscription(ctx, userID, deviceToken, environment)
+	err = up.persistent.AddAPNSubscription(ctx, userID, deviceToken, environment, pushVersion)
 	if err != nil {
 		return err
 	}

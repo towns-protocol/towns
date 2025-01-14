@@ -123,6 +123,7 @@ type (
 			userID common.Address,
 			deviceToken []byte,
 			environment APNEnvironment,
+			pushVersion NotificationPushVersion,
 		) error
 
 		RemoveAPNSubscription(ctx context.Context,
@@ -766,7 +767,7 @@ func (s *PostgresNotificationStore) getAPNSubscriptions(
 	var subs []*types.APNPushSubscription
 	rows, err := tx.Query(
 		ctx,
-		"select device_token, environment, last_seen, user_id from apnpushsubscriptions where user_id=$1",
+		"select device_token, environment, last_seen, user_id, push_version from apnpushsubscriptions where user_id=$1",
 		hex.EncodeToString(userID[:]),
 	)
 	if err != nil {
@@ -783,8 +784,9 @@ func (s *PostgresNotificationStore) getAPNSubscriptions(
 			environment APNEnvironment
 			lastSeen    time.Time
 			fUserID     []byte
+			pushVersion int32
 		)
-		err = rows.Scan(&deviceToken, &environment, &lastSeen, &fUserID)
+		err = rows.Scan(&deviceToken, &environment, &lastSeen, &fUserID, &pushVersion)
 		if err != nil {
 			return nil, err
 		}
@@ -793,6 +795,7 @@ func (s *PostgresNotificationStore) getAPNSubscriptions(
 			DeviceToken: deviceToken,
 			LastSeen:    lastSeen,
 			Environment: environment,
+			PushVersion: NotificationPushVersion(pushVersion),
 		})
 	}
 
@@ -804,13 +807,14 @@ func (s *PostgresNotificationStore) AddAPNSubscription(
 	userID common.Address,
 	deviceToken []byte,
 	environment APNEnvironment,
+	pushVersion NotificationPushVersion,
 ) error {
 	return s.txRunner(
 		ctx,
 		"AddAPNSubscription",
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
-			return s.addAPNSubscription(ctx, tx, deviceToken, environment, userID)
+			return s.addAPNSubscription(ctx, tx, deviceToken, environment, userID, pushVersion)
 		},
 		nil,
 		"userID", userID,
@@ -823,13 +827,15 @@ func (s *PostgresNotificationStore) addAPNSubscription(
 	deviceToken []byte,
 	environment APNEnvironment,
 	userID common.Address,
+	pushVersion NotificationPushVersion,
 ) error {
 	_, err := tx.Exec(
 		ctx,
-		`INSERT INTO apnpushsubscriptions (device_token, environment, user_id, last_seen) VALUES ($1, $2, $3, NOW()) ON CONFLICT (device_token) DO UPDATE SET environment = $2, user_id = $3, last_seen = NOW()`,
+		`INSERT INTO apnpushsubscriptions (device_token, environment, user_id, last_seen, push_version) VALUES ($1, $2, $3, NOW(), $4) ON CONFLICT (device_token) DO UPDATE SET environment = $2, user_id = $3, last_seen = NOW(), push_version = $4`,
 		deviceToken,
 		int16(environment),
 		hex.EncodeToString(userID[:]),
+		int32(pushVersion),
 	)
 
 	return err

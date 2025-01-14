@@ -48,6 +48,7 @@ type (
 		DeviceToken []byte
 		LastSeen    time.Time
 		Environment APNEnvironment
+		PushVersion NotificationPushVersion
 	}
 
 	Subscriptions struct {

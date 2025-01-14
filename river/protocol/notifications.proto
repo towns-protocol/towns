@@ -314,11 +314,20 @@ message UnsubscribeWebPushRequest {
 
 message UnsubscribeWebPushResponse {}
 
+// NotificationPushVersion specifies the notification format version.
+enum NotificationPushVersion {
+  NOTIFICATION_PUSH_VERSION_UNSPECIFIED = 0;
+  NOTIFICATION_PUSH_VERSION_1 = 1;
+  NOTIFICATION_PUSH_VERSION_2 = 2;
+}
+
 message SubscribeAPNRequest {
   // APN device token
   bytes device_token = 1;
   // environment indicates what type of environment the subscription is target.
   APNEnvironment environment = 2;
+  // Requested push notification version (default=NOTIFICATION_PUSH_VERSION_1)
+  NotificationPushVersion push_version = 3;
 }
 
 message APNSubscription {

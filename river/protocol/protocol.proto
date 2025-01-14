@@ -168,6 +168,7 @@ message MemberPayload {
             map<uint64, bytes> epoch_secrets = 4;
             map<string, KeyPackage> pending_key_packages = 5;
             repeated bytes commits_since_last_snapshot = 6;
+            map<string, int64> welcome_messages_miniblock_num = 7;
         }
 
         message Member {

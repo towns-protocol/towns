@@ -20,6 +20,8 @@ export class StreamStateView_Mls extends StreamStateView_AbstractContent {
     members: { [key: string]: PlainMessage<MemberPayload_Snapshot_Mls_Member> } = {}
     epochSecrets: { [key: string]: Uint8Array } = {}
     pendingKeyPackages: { [key: string]: MemberPayload_KeyPackage } = {}
+    welcomeMessagesMiniblockNum: { [key: string]: bigint } = {}
+
     constructor(streamId: string) {
         super()
         this.streamId = streamId
@@ -31,6 +33,7 @@ export class StreamStateView_Mls extends StreamStateView_AbstractContent {
         this.members = content.members
         this.epochSecrets = content.epochSecrets
         this.pendingKeyPackages = content.pendingKeyPackages
+        this.welcomeMessagesMiniblockNum = content.welcomeMessagesMiniblockNum
     }
 
     appendEvent(
@@ -101,6 +104,23 @@ export class StreamStateView_Mls extends StreamStateView_AbstractContent {
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ): void {
         super.onConfirmedEvent(event, stateEmitter, encryptionEmitter)
+        if (event.remoteEvent.event.payload.value?.content.case !== 'mls') {
+            return
+        }
+
+        const payload = event.remoteEvent.event.payload.value.content.value
+        switch (payload.content.case) {
+            case 'welcomeMessage':
+                for (const key of payload.content.value.signaturePublicKeys) {
+                    const signatureKey = bytesToHex(key)
+                    this.welcomeMessagesMiniblockNum[signatureKey] = event.miniblockNum
+                }
+                break
+            case undefined:
+                break
+            default:
+                break
+        }
     }
 
     addSignaturePublicKey(userId: string, signaturePublicKey: Uint8Array): void {

@@ -402,6 +402,7 @@ func (s *Service) SubscribeAPN(
 		userID      = ctx.Value(UserIDCtxKey{}).(common.Address)
 		deviceToken = msg.GetDeviceToken()
 		environment = msg.GetEnvironment()
+		pushVersion = msg.GetPushVersion()
 	)
 
 	if len(deviceToken) == 0 {
@@ -411,7 +412,11 @@ func (s *Service) SubscribeAPN(
 		return nil, RiverError(Err_INVALID_ARGUMENT, "Invalid user id")
 	}
 
-	if err := s.userPreferences.AddAPNSubscription(ctx, userID, deviceToken, environment); err != nil {
+	if pushVersion == NotificationPushVersion_NOTIFICATION_PUSH_VERSION_UNSPECIFIED {
+		pushVersion = NotificationPushVersion_NOTIFICATION_PUSH_VERSION_1
+	}
+
+	if err := s.userPreferences.AddAPNSubscription(ctx, userID, deviceToken, environment, pushVersion); err != nil {
 		return nil, err
 	}
 

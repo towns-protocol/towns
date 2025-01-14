@@ -7,6 +7,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"math/big"
+	"net/http"
 	"sync"
 	"testing"
 	"time"
@@ -1458,7 +1459,7 @@ func (nc *notificationCapture) SendApplePushNotification(
 	sub *types.APNPushSubscription,
 	eventHash common.Hash,
 	_ *payload2.Payload,
-) (bool, error) {
+) (bool, int, error) {
 	nc.ApnPushNotificationsMu.Lock()
 	defer nc.ApnPushNotificationsMu.Unlock()
 
@@ -1471,7 +1472,7 @@ func (nc *notificationCapture) SendApplePushNotification(
 	events[common.BytesToAddress(sub.DeviceToken)]++
 	nc.ApnPushNotifications[eventHash] = events
 
-	return false, nil
+	return false, http.StatusOK, nil
 }
 
 func spaceChannelSettings(

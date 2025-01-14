@@ -9,8 +9,6 @@ import (
 	"time"
 
 	"github.com/SherClockHolmes/webpush-go"
-	"github.com/stretchr/testify/require"
-
 	"github.com/river-build/river/core/node/base/test"
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/infra"
@@ -19,6 +17,7 @@ import (
 	"github.com/river-build/river/core/node/shared"
 	"github.com/river-build/river/core/node/storage"
 	"github.com/river-build/river/core/node/testutils/dbtestutils"
+	"github.com/stretchr/testify/require"
 )
 
 func prepareNotificationsDB(ctx context.Context) (*storage.PostgresNotificationStore, func()) {
@@ -132,6 +131,7 @@ func setAndRetrieveUserPreferences(
 					DeviceToken: []byte{0, 1, 2, 3, 4},
 					LastSeen:    time.Now(),
 					Environment: APNEnvironment_APN_ENVIRONMENT_SANDBOX,
+					PushVersion: NotificationPushVersion_NOTIFICATION_PUSH_VERSION_2,
 				},
 			},
 		},
@@ -180,7 +180,8 @@ func setAndRetrieveUserPreferences(
 	}
 	for _, apnSub := range expected.Subscriptions.APNPush {
 		req.NoError(
-			store.AddAPNSubscription(ctx, expected.UserID, apnSub.DeviceToken, APNEnvironment_APN_ENVIRONMENT_SANDBOX),
+			store.AddAPNSubscription(ctx, expected.UserID, apnSub.DeviceToken,
+				APNEnvironment_APN_ENVIRONMENT_SANDBOX, NotificationPushVersion_NOTIFICATION_PUSH_VERSION_2),
 		)
 	}
 
@@ -252,8 +253,8 @@ func subscribeAPN(req *require.Assertions, ctx context.Context, store *storage.P
 	_, err = rand.Read(deviceToken2[:])
 	req.NoError(err)
 
-	req.NoError(store.AddAPNSubscription(ctx, wallet.Address, deviceToken1[:], env1))
-	req.NoError(store.AddAPNSubscription(ctx, wallet.Address, deviceToken2[:], env2))
+	req.NoError(store.AddAPNSubscription(ctx, wallet.Address, deviceToken1[:], env1, NotificationPushVersion_NOTIFICATION_PUSH_VERSION_2))
+	req.NoError(store.AddAPNSubscription(ctx, wallet.Address, deviceToken2[:], env2, NotificationPushVersion_NOTIFICATION_PUSH_VERSION_2))
 
 	subs, err := store.GetAPNSubscriptions(ctx, wallet.Address)
 	req.NoError(err)
