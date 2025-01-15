@@ -4,7 +4,9 @@ import { useSearchParams } from 'react-router-dom'
 import { useEvent } from 'react-use-event-hook'
 import {
     Address,
+    BASE_SEPOLIA,
     BlockchainTransactionType,
+    LOCALHOST_CHAIN_ID,
     Permission,
     SpaceData,
     useConnectivity,
@@ -20,6 +22,7 @@ import {
 } from 'use-towns-client'
 import { useBanTransaction, useUnbanTransaction } from 'use-towns-client/dist/hooks/use-banning'
 
+import { usePrivy } from '@privy-io/react-auth'
 import { useGetUserBio } from 'hooks/useUserBio'
 import { Box, Button, Icon, Paragraph, Stack, Text } from '@ui'
 import { UserProfile } from '@components/UserProfile/UserProfile'
@@ -48,6 +51,8 @@ import { GetSigner } from 'privy/WalletReady'
 import { TownNotificationsButton } from '@components/NotificationSettings/NotificationsSettingsButton'
 import { useMatchingMessages } from '@components/DirectMessages/CreateDirectMessage/hooks/useMatchingMessages'
 import { TownsWallet } from '@components/Web3/Wallet/TownsWallet'
+import { useEnvironment } from 'hooks/useEnvironmnet'
+import { env } from 'utils'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
 
 export const SpaceProfilePanel = () => {
@@ -70,7 +75,7 @@ const SpaceProfileWithoutAuth = () => {
     const isAccountAbstractionEnabled = client?.isAccountAbstractionEnabled()
     const [search] = useSearchParams()
     const space = useSpaceData()
-
+    const { baseChain } = useEnvironment()
     const cameFromSpaceInfoPanel = search.get('spaceInfo') !== null
     const [searchParams] = useSearchParams()
     const profileIdFromPath = searchParams.get('profileId') || 'me'
@@ -99,6 +104,7 @@ const SpaceProfileWithoutAuth = () => {
     })
 
     const { logout } = useCombinedAuth()
+    const { logout: privyLogout, authenticated: privyAuthenticated } = usePrivy()
     const { loggedInWalletAddress } = useConnectivity()
 
     const onLogoutClick = useEvent(() => {
@@ -367,6 +373,25 @@ const SpaceProfileWithoutAuth = () => {
                         </Box>
                         <Paragraph>Logout</Paragraph>
                     </PanelButton>
+
+                    {(env.DEV ||
+                        baseChain.id === BASE_SEPOLIA ||
+                        baseChain.id === LOCALHOST_CHAIN_ID) &&
+                        (privyAuthenticated ? (
+                            <PanelButton tone="negative" onClick={privyLogout}>
+                                <Box width="height_md" alignItems="center">
+                                    <Icon type="logout" size="square_sm" />
+                                </Box>
+                                <Paragraph>Logout from Privy (TESTNET)</Paragraph>
+                            </PanelButton>
+                        ) : (
+                            <Box horizontal disabled alignItems="center" gap="sm" cursor="default">
+                                <Box width="height_md" alignItems="center">
+                                    <Icon type="alert" size="square_sm" />
+                                </Box>
+                                <Paragraph>Privy not authenticated!</Paragraph>
+                            </Box>
+                        ))}
                 </Stack>
             )}
 
