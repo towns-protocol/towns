@@ -17,7 +17,7 @@ const config: JestConfigWithTsJest = {
         ],
     },
     moduleNameMapper: {
-        '\\.(wasm)$': require.resolve('./tests/mocks/file-mock.js'),
+        'olm\\.(wasm)$': require.resolve('./tests/mocks/file-mock.js'),
         //line below is required to address issues with bullmq
         msgpackr: '<rootDir>/../../../node_modules/msgpackr/dist/node.cjs',
     },
