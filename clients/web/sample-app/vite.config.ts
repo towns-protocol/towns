@@ -4,6 +4,7 @@ import checker from 'vite-plugin-checker'
 import tsconfigPaths from 'vite-tsconfig-paths'
 import { nodePolyfills } from 'vite-plugin-node-polyfills'
 import { visualizer } from 'rollup-plugin-visualizer'
+import wasm from 'vite-plugin-wasm'
 
 const devPlugins: PluginOption[] = [
     checker({
@@ -39,7 +40,7 @@ export default ({ mode }: { mode: string }) =>
             APP_VERSION: JSON.stringify(process.env.npm_package_version),
         },
         assetsInclude: ['**/*.png', '**/*.svg'],
-        plugins: [nodePolyfills(), react(), tsconfigPaths()].concat(
+        plugins: [nodePolyfills(), react(), tsconfigPaths(), wasm()].concat(
             mode === 'development' ? devPlugins : prodPlugins,
         ) as PluginOption[],
         server: {

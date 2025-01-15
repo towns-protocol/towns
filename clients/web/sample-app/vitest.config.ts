@@ -1,6 +1,7 @@
 /// <reference types="vitest" />
 import { defineConfig } from 'vite'
 import tsconfigPaths from 'vite-tsconfig-paths'
+import wasm from 'vite-plugin-wasm'
 
 export default defineConfig({
     test: {
@@ -22,6 +23,11 @@ export default defineConfig({
                 '@privy-io/js-sdk-core',
             ],
         },
+        server: {
+            deps: {
+                inline: ['@river-build/mls-rs-wasm'],
+            },
+        },
     },
-    plugins: [tsconfigPaths()],
+    plugins: [tsconfigPaths(), wasm()],
 })
