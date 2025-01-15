@@ -30,6 +30,7 @@ This is a module implementing a backend server for crypto chat application.
     |-contracts  # abigen generated contract bindings
     | |-base  # bindings for base chain contracts
     | |-river  # bindings for river chain contracts
+    | |-src  # Solidity contract source code
     | |-types  # extra helpers for working with contract generatedtypes
     |-docker  # files for docker container
     |-env  # shared configuration fils for supproted environments
@@ -56,6 +57,7 @@ This is a module implementing a backend server for crypto chat application.
     | | |-types
     | |-protocol  # generated protobuf bindings
     | | |-protocolconnect  # generated gRPC bindings
+    | | |-src  # Protocol Buffers definitions
     | |-protocol_extensions  # extra protobuf helpers
     | |-registries  # helper classes for working with node and stream on-chain registries
     | |-rpc  # rpc server implementation

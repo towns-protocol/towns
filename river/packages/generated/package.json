@@ -1,6 +1,6 @@
 {
     "name": "@river-build/generated",
-    "version": "0.0.153",
+    "version": "0.0.154",
     "packageManager": "yarn@3.8.0",
     "scripts": {
         "build": "yarn make-config",

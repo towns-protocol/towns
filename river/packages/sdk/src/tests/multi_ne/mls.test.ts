@@ -271,6 +271,22 @@ describe('mlsTests', () => {
         )
     })
 
+    test('invalid group info for initialize group is rejected', async () => {
+        const { groupInfoMessage, externalGroupSnapshot } =
+            await createGroupInfoAndExternalSnapshot(bobMlsGroup)
+        // tamper with the message a little bit
+        const invalidGroupInfoMessage = groupInfoMessage
+        invalidGroupInfoMessage[invalidGroupInfoMessage.length - 2] += 1 // make it invalid
+        const payload = makeMlsPayloadInitializeGroup(
+            bobMlsClient.signaturePublicKey(),
+            externalGroupSnapshot,
+            groupInfoMessage,
+        )
+        await expect(bobClient._debugSendMls(streamId, payload)).rejects.toThrow(
+            'INVALID_GROUP_INFO',
+        )
+    })
+
     test('clients can create MLS Groups in channels', async () => {
         const { groupInfoMessage, externalGroupSnapshot } =
             await createGroupInfoAndExternalSnapshot(bobMlsGroup)
@@ -329,6 +345,26 @@ describe('mlsTests', () => {
         )
         await expect(aliceClient._debugSendMls(streamId, aliceMlsPayload)).rejects.toThrow(
             'INVALID_PUBLIC_SIGNATURE_KEY',
+        )
+    })
+
+    test('Invalid group info for external commits is rejected', async () => {
+        const { commit, groupInfoMessage } = await commitExternal(
+            aliceMlsClient,
+            latestGroupInfoMessage,
+            latestExternalGroupSnapshot,
+        )
+        // tamper with the message a little bit
+        const invalidGroupInfoMessage = groupInfoMessage
+        invalidGroupInfoMessage[invalidGroupInfoMessage.length - 2] += 1 // make it invalid
+
+        const aliceMlsPayload = makeMlsPayloadExternalJoin(
+            aliceMlsClient.signaturePublicKey(),
+            commit,
+            invalidGroupInfoMessage,
+        )
+        await expect(aliceClient._debugSendMls(streamId, aliceMlsPayload)).rejects.toThrow(
+            'INVALID_GROUP_INFO',
         )
     })
 
@@ -565,7 +601,7 @@ describe('mlsTests', () => {
         const kp = MlsMessage.fromBytes(keyPackage.keyPackage)
         const commitOutput = await bobMlsGroup.addMember(kp)
         // at this point, the commit is still pending
-        await bobMlsGroup.clearPendingCommit()
+        bobMlsGroup.clearPendingCommit()
 
         const groupInfoMessage = commitOutput.externalCommitGroupInfo
         const commit = commitOutput.commitMessage.toBytes()
@@ -579,6 +615,32 @@ describe('mlsTests', () => {
         )
         await expect(aliceClient._debugSendMls(streamId, payload)).rejects.toThrow(
             'INVALID_WELCOME_MESSAGE',
+        )
+    })
+
+    test('invalid group info for welcome messages is rejected', async () => {
+        const mls = bobClient.streams.get(streamId)!.view.membershipContent.mls
+        const keyPackage = Object.values(mls.pendingKeyPackages)[0]
+        const kp = MlsMessage.fromBytes(keyPackage.keyPackage)
+        const commitOutput = await bobMlsGroup.addMember(kp)
+        bobMlsGroup.clearPendingCommit()
+        const groupInfoMessage = commitOutput.externalCommitGroupInfo!.toBytes()
+
+        // tamper with the message a little bit
+        const invalidGroupInfoMessage = groupInfoMessage
+        invalidGroupInfoMessage[invalidGroupInfoMessage.length - 2] += 1 // make it invalid
+
+        const commit = commitOutput.commitMessage.toBytes()
+        const welcomeMessages = commitOutput.welcomeMessages.map((wm) => wm.toBytes())
+
+        const payload = makeMlsPayloadWelcomeMessage(
+            commit,
+            [keyPackage.signaturePublicKey],
+            invalidGroupInfoMessage,
+            welcomeMessages,
+        )
+        await expect(aliceClient._debugSendMls(streamId, payload)).rejects.toThrow(
+            'INVALID_GROUP_INFO',
         )
     })
 

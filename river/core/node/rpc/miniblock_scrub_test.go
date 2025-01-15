@@ -13,6 +13,7 @@ import (
 
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/events"
+	"github.com/river-build/river/core/node/infra"
 	"github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/protocol/protocolconnect"
 	"github.com/river-build/river/core/node/scrub"
@@ -61,6 +62,7 @@ func TestMiniblockScrubber(t *testing.T) {
 		tester.nodes[0].service.Storage(),
 		1,
 		reports,
+		infra.NewMetricsFactory(nil, "", ""),
 	)
 	defer close(reports)
 	defer scrubber.Close()
@@ -556,6 +558,7 @@ func TestMiniblockScrubber_CorruptBlocks(t *testing.T) {
 				tester.nodes[0].service.Storage(),
 				1,
 				reports,
+				infra.NewMetricsFactory(nil, "", ""),
 			)
 			defer close(reports)
 			defer scrubber.Close()
