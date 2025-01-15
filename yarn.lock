@@ -12960,6 +12960,7 @@ __metadata:
     superjson: ^2.2.2
     typescript: ^5.1.6
     userop: ^0.3.7
+    vite-plugin-wasm: ^3.4.1
     vitest: ^1.6.0
     zod: ^3.21.4
     zustand: ^4.5.4
