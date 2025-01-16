@@ -1,4 +1,5 @@
 import React, { useRef } from 'react'
+import { useLocation } from 'react-router'
 import { BugReportButton } from '@components/BugReportButton/BugReportButton'
 import { ProfileCardButton } from '@components/ProfileCardButton/ProfileCardButton'
 import { SearchBar } from '@components/SearchBar/SearchBar'
@@ -12,6 +13,8 @@ import { PointsButton } from './PointsButton'
 export const TopBar = () => {
     const recentlyMintedSpaceToken = useStore((s) => s.recentlyMintedSpaceToken)
     const profileButtonRef = useRef<HTMLElement>(null)
+    const location = useLocation()
+    const isExplorePage = location.pathname === '/explore'
 
     return (
         <>
@@ -37,7 +40,7 @@ export const TopBar = () => {
                 </Box>
                 <Box centerContent width="x8" />
                 <Box grow centerContent>
-                    <SearchBar />
+                    {!isExplorePage && <SearchBar />}
                 </Box>
 
                 <Stack horizontal gap="md" paddingRight="lg" alignItems="center">
