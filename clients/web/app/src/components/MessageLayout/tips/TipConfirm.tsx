@@ -1,11 +1,13 @@
-import React from 'react'
+import React, { useState } from 'react'
 import {
     Address,
+    BlockchainTransactionType,
     ETH_ADDRESS,
     LookupUser,
     useChannelData,
     useConnectivity,
     useContractSpaceInfoWithoutClient,
+    useIsTransactionPending,
     useTipTransaction,
     useTokenIdOfOwner,
 } from 'use-towns-client'
@@ -21,8 +23,11 @@ import { StandardToast } from '@components/Notifications/StandardToast'
 import { useBalance } from 'hooks/useBalance'
 import { useStore } from 'store/store'
 import { useGatherSpaceDetailsAnalytics } from '@components/Analytics/useGatherSpaceDetailsAnalytics'
+import { env } from 'utils'
 import { TipOption } from './types'
 import { trackPostedTip } from './tipAnalytics'
+
+const IS_ETH_MODE = env.VITE_TIPS_IN_ETH
 
 export function TipConfirm(props: {
     tipValue: TipOption | undefined
@@ -31,8 +36,12 @@ export function TipConfirm(props: {
     eventId: string
     onTip?: () => void
     onInsufficientBalance?: () => void
+    onCancel?: () => void
 }) {
-    const { tipValue, setTipValue, messageOwner, eventId, onTip, onInsufficientBalance } = props
+    const { tipValue, setTipValue, messageOwner, eventId, onTip, onInsufficientBalance, onCancel } =
+        props
+
+    const tipPending = useIsTransactionPending(BlockchainTransactionType.Tip)
 
     const {
         data: price,
@@ -66,13 +75,19 @@ export function TipConfirm(props: {
         enabled: !!myAbstractAccount,
     })
 
-    const ethAmount =
-        tipValue && price
-            ? calculateEthAmountFromUsd({
-                  cents: tipValue.amountInCents,
-                  ethPriceInUsd: price,
-              })
+    const ethAmount = IS_ETH_MODE
+        ? tipValue?.ethAmount
+            ? {
+                  value: BigInt(Math.round(tipValue.ethAmount * 1e18)),
+                  formatted: tipValue.ethAmount.toString(),
+              }
             : undefined
+        : tipValue && price
+        ? calculateEthAmountFromUsd({
+              cents: tipValue.amountInCents,
+              ethPriceInUsd: price,
+          })
+        : undefined
 
     const { tip } = useTipTransaction()
 
@@ -83,7 +98,6 @@ export function TipConfirm(props: {
     const { data: spaceInfo } = useContractSpaceInfoWithoutClient(spaceId)
 
     const _onTip = async (getSigner: GetSigner) => {
-        onTip?.()
         const signer = await getSigner()
         if (!signer) {
             createPrivyNotAuthenticatedNotification()
@@ -142,6 +156,7 @@ export function TipConfirm(props: {
                         isGated: spaceDetailsAnalytics.gatedSpace,
                         pricingModule: spaceDetailsAnalytics.pricingModule,
                     })
+                    onTip?.()
                 },
             },
         )
@@ -168,8 +183,10 @@ export function TipConfirm(props: {
                     isErrorTokenId={isErrorTokenId}
                     loading={loading}
                     messageOwner={messageOwner}
+                    tipPending={tipPending}
                     setTipValue={setTipValue}
                     onTip={_onTip}
+                    onCancel={onCancel}
                 />
             )}
         </Stack>
@@ -220,6 +237,8 @@ function Summary(props: {
     messageOwner: LookupUser
     onTip: (getSigner: GetSigner) => void
     setTipValue: (tipValue: TipOption | undefined) => void
+    onCancel?: () => void
+    tipPending: boolean
 }) {
     const {
         tipValue,
@@ -230,7 +249,17 @@ function Summary(props: {
         messageOwner,
         onTip,
         setTipValue,
+        onCancel,
+        tipPending,
     } = props
+
+    const [isSending, setIsSending] = useState(false)
+
+    const handleTip = (getSigner: GetSigner) => {
+        setIsSending(true)
+        onTip(getSigner)
+    }
+
     return (
         <>
             <Box gap="md">
@@ -250,8 +279,17 @@ function Summary(props: {
                 ) : (
                     <Box paddingBottom="sm">
                         <Text textAlign="center" color="gray2" size="sm">
-                            {tipValue.label} ({ethAmount?.formatted} ETH) will be sent to @
-                            {messageOwner.username}?
+                            {IS_ETH_MODE ? (
+                                <>
+                                    {tipValue.label} (${(tipValue.amountInCents / 100).toFixed(2)}{' '}
+                                    USD) will be sent to @{messageOwner.username}?
+                                </>
+                            ) : (
+                                <>
+                                    {tipValue.label} ({ethAmount?.formatted} ETH) will be sent to @
+                                    {messageOwner.username}?
+                                </>
+                            )}
                         </Text>
                     </Box>
                 )}
@@ -263,10 +301,10 @@ function Summary(props: {
                         tone="cta1"
                         rounded="md"
                         size="button_sm"
-                        disabled={loading}
-                        onClick={() => onTip(getSigner)}
+                        disabled={loading || tipPending || isSending}
+                        onClick={() => handleTip(getSigner)}
                     >
-                        Send
+                        {isSending ? 'Sending...' : 'Send'}
                     </Button>
                 )}
             </WalletReady>
@@ -274,8 +312,10 @@ function Summary(props: {
                 color="cta1"
                 rounded="md"
                 size="button_sm"
+                disabled={tipPending || isSending}
                 onClick={() => {
                     setTipValue(undefined)
+                    onCancel?.()
                 }}
             >
                 Cancel

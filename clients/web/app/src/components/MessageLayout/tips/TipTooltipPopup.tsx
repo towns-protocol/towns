@@ -15,6 +15,8 @@ import { TipOption } from './types'
 import { TipConfirm } from './TipConfirm'
 import { trackTipOnMessage } from './tipAnalytics'
 
+const MODAL_WIDTH = '200px'
+
 export function TipTooltipPopup(props: {
     wrapperRef: React.RefObject<HTMLDivElement>
     messageOwner: LookupUser
@@ -31,14 +33,39 @@ export function TipTooltipPopup(props: {
     const { wrapperRef, messageOwner, tooltip, eventId, wrapperStyles, children } = props
     const [isAbove, setIsAbove] = useState(false)
     const [tipValue, setTipValue] = useState<TipOption | undefined>()
+    const [isOpen, setIsOpen] = useState(false)
     const tipPending = useIsTransactionPending(BlockchainTransactionType.Tip)
     const channelData = useChannelData()
     const channelId = channelData?.channelId
     const isDmOrGDM =
         !!channelId && (isDMChannelStreamId(channelId) || isGDMChannelStreamId(channelId))
 
+    console.log('TipTooltipPopup render:', { tipValue, channelId, tipPending, isOpen })
+
     if (!channelId || isDmOrGDM) {
         return null
+    }
+
+    const handleSetTipValue = (value: TipOption | undefined) => {
+        console.log('TipTooltipPopup setTipValue called with:', value)
+        setTipValue(value)
+        if (value) {
+            setIsOpen(true)
+        }
+    }
+
+    const handleClose = () => {
+        console.log('CardOpener handleClose called')
+        setIsOpen(false)
+        setTipValue(undefined)
+    }
+
+    const handleSend = () => {
+        handleClose()
+    }
+
+    const handleCancel = () => {
+        handleClose()
     }
 
     return (
@@ -47,36 +74,49 @@ export function TipTooltipPopup(props: {
                 placement="dropdown"
                 overrideTriggerRef={wrapperRef}
                 render={
-                    <Box
-                        pointerEvents="none"
-                        // set a min height because of the shifting content/height of the tip menu, to ensure the menu doesn't flip flop between above and below button
-                        style={{ minHeight: '210px' }}
-                        justifyContent={isAbove ? 'end' : 'start'}
-                        paddingBottom={isAbove ? 'sm' : undefined}
-                        paddingTop={isAbove ? undefined : 'sm'}
-                        {...wrapperStyles?.(isAbove)}
-                    >
-                        <TipMenu
-                            tipValue={tipValue}
-                            setTipValue={setTipValue}
-                            confirmRenderer={
-                                <TipConfirmWithCardContext
-                                    tipValue={tipValue}
-                                    setTipValue={setTipValue}
-                                    messageOwner={messageOwner}
-                                    eventId={eventId}
-                                />
-                            }
-                        />
-                    </Box>
+                    isOpen ? (
+                        <Box
+                            pointerEvents="auto"
+                            style={{
+                                width: MODAL_WIDTH,
+                            }}
+                            justifyContent={isAbove ? 'end' : 'start'}
+                            paddingBottom={isAbove ? 'sm' : undefined}
+                            paddingTop={isAbove ? undefined : 'sm'}
+                            {...wrapperStyles?.(isAbove)}
+                        >
+                            <TipMenu
+                                tipValue={tipValue}
+                                setTipValue={handleSetTipValue}
+                                confirmRenderer={
+                                    tipValue !== undefined ? (
+                                        <TipConfirmWithCardContext
+                                            tipValue={tipValue}
+                                            setTipValue={handleSetTipValue}
+                                            messageOwner={messageOwner}
+                                            eventId={eventId}
+                                            onSend={handleSend}
+                                            onCancel={handleCancel}
+                                        />
+                                    ) : null
+                                }
+                            />
+                        </Box>
+                    ) : undefined
                 }
                 onIsAbove={setIsAbove}
-                onClose={() => {
-                    setTipValue(undefined)
-                }}
+                onClose={handleClose}
             >
                 {({ triggerProps }) => {
-                    return children({ triggerProps, tipPending })
+                    const enhancedTriggerProps = {
+                        ...triggerProps,
+                        onClick: (e: React.MouseEvent) => {
+                            console.log('CardOpener trigger clicked')
+                            triggerProps.onClick?.(e)
+                            setIsOpen(true)
+                        },
+                    }
+                    return children({ triggerProps: enhancedTriggerProps, tipPending })
                 }}
             </CardOpener>
         </Box>
@@ -88,9 +128,13 @@ export function TipConfirmWithCardContext(props: {
     setTipValue: (tipValue: TipOption | undefined) => void
     messageOwner: LookupUser
     eventId: string
+    onSend?: () => void
+    onCancel?: () => void
 }) {
-    const { tipValue, setTipValue, messageOwner, eventId } = props
+    const { tipValue, setTipValue, messageOwner, eventId, onSend, onCancel } = props
     const { closeCard } = useCardOpenerContext()
+
+    console.log('TipConfirmWithCardContext render:', { tipValue })
 
     return (
         <TipConfirm
@@ -98,7 +142,11 @@ export function TipConfirmWithCardContext(props: {
             setTipValue={setTipValue}
             messageOwner={messageOwner}
             eventId={eventId}
-            onTip={closeCard}
+            onTip={() => {
+                closeCard()
+                onSend?.()
+            }}
+            onCancel={onCancel}
         />
     )
 }

@@ -31,16 +31,6 @@ vi.mock('privy/useCombinedAuth', async () => {
     }
 })
 
-vi.mock('../Web3/fetchEthPrice', async () => {
-    const actual = await vi.importActual<typeof import('../../Web3/fetchEthPrice')>(
-        '../../Web3/fetchEthPrice',
-    )
-    return {
-        ...actual,
-        fetchEthPrice: vi.fn().mockResolvedValue('3288.825276856'),
-    }
-})
-
 vi.mock('hooks/useSpaceInfoFromPathname', () => {
     return {
         useSpaceIdFromPathname: () => spaceRoomIdentifier,
@@ -180,8 +170,6 @@ describe('TipConfirm', () => {
         const sendButton = screen.getByText('Send')
         await userEvent.click(sendButton)
 
-        expect(onTip).toHaveBeenCalled()
-
         await waitFor(() => {
             expect(tipTransactionSpy).toHaveBeenCalledWith(
                 {
@@ -201,6 +189,19 @@ describe('TipConfirm', () => {
                     onSuccess: expect.any(Function),
                 },
             )
+        })
+
+        const lastCall = tipTransactionSpy.mock.lastCall
+        if (lastCall) {
+            const [, options] = lastCall
+            const onSuccess = options.onSuccess
+            if (onSuccess) {
+                onSuccess({ receiver: mockMessageOwner.userId })
+            }
+        }
+
+        await waitFor(() => {
+            expect(onTip).toHaveBeenCalled()
         })
     })
 })

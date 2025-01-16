@@ -97,6 +97,7 @@ const envSchema = z.object({
     VITE_CROSSMINT_CLIENT_API_KEY: z.string().optional(),
 
     VITE_TIPS_ENABLED: boolish.default(false),
+    VITE_TIPS_IN_ETH: boolish.default(false),
     VITE_TOKEN_PRICES_API_URL: z.string().url().optional(),
 })
 
