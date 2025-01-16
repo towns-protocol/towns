@@ -498,9 +498,11 @@ func invalidatePrevSnapshotBlockNum(require *require.Assertions, wallet *crypto.
 	return block
 }
 
+type corruptMiniblockBytesFunc func(require *require.Assertions, wallet *crypto.Wallet, block []byte) []byte
+
 func TestMiniblockScrubber_CorruptBlocks(t *testing.T) {
 	tests := map[string]struct {
-		corruptBlock func(require *require.Assertions, wallet *crypto.Wallet, block []byte) []byte
+		corruptBlock corruptMiniblockBytesFunc
 		expectedErr  string
 	}{
 		"Bad header event length": {

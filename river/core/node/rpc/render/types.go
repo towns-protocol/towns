@@ -17,10 +17,31 @@ type RenderableData interface {
 		*InfoIndexData |
 		*DebugMultiData |
 		*StorageData |
-		*StreamSummaryData
+		*StreamSummaryData |
+		*CorruptStreamData
 
 	// TemplateName returns the name of the template to be used for rendering
 	TemplateName() string
+}
+
+// DebugCorruptStreamRecord represents all the same information as scrub.CorruptStreamRecord,
+// but here all non-trivial types have been converted to strings for ease of html template
+// rendering.
+type DebugCorruptStreamRecord struct {
+	StreamId             string
+	Nodes                string
+	MostRecentBlock      int64
+	MostRecentLocalBlock int64
+	FirstCorruptBlock    int64
+	CorruptionReason     string
+}
+
+type CorruptStreamData struct {
+	Streams []DebugCorruptStreamRecord
+}
+
+func (d CorruptStreamData) TemplateName() string {
+	return "templates/debug/corruptStreams.template.html"
 }
 
 type CacheData struct {

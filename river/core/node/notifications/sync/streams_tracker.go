@@ -168,7 +168,7 @@ func (tracker *StreamsTracker) Run(ctx context.Context) error {
 				go func() {
 					st := StreamTrackerConnectGo{}
 					idx := rand.Int63n(int64(len(tracker.nodeRegistries)))
-					st.Run(ctx, stream, tracker.nodeRegistries[idx], workerPool, tracker.onChainConfig,
+					st.Run(ctx, stream, false, tracker.nodeRegistries[idx], workerPool, tracker.onChainConfig,
 						tracker.listener, tracker.storage, tracker.metrics,
 					)
 				}()
@@ -232,7 +232,7 @@ func (tracker *StreamsTracker) OnStreamAllocated(
 			}
 
 			idx := rand.Int63n(int64(len(tracker.nodeRegistries)))
-			st.Run(ctx, stream, tracker.nodeRegistries[idx], workerPool,
+			st.Run(ctx, stream, true, tracker.nodeRegistries[idx], workerPool,
 				tracker.onChainConfig, tracker.listener, tracker.storage, tracker.metrics)
 		}()
 	}

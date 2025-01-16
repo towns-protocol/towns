@@ -14,7 +14,7 @@ module.exports = {
 
     overrides: [
         {
-            files: ['*.js', '*.json', '*.ts', '*.tsx', '*.yml', '*.yaml'],
+            files: ['*.js', '*.mjs', '*.json', '*.ts', '*.tsx', '*.mts', '*.yml', '*.yaml'],
             options: {
                 arrowParens: 'always',
                 endOfLine: 'lf',

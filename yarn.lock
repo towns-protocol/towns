@@ -10319,6 +10319,7 @@ __metadata:
     "@river-build/encryption": "workspace:^"
     "@river-build/eslint-config": "workspace:^"
     "@river-build/generated": "workspace:^"
+    "@river-build/mls-rs-wasm-node": ^0.0.16
     "@river-build/prettier-config": "workspace:^"
     "@river-build/proto": "workspace:^"
     "@river-build/sdk": "workspace:^"

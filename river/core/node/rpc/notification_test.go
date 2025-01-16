@@ -429,7 +429,7 @@ func testDMMessageWithDefaultUserNotificationsPreferences(
 
 		return cmp.Equal(webNotifications, expectedUsersToReceiveNotification) &&
 			cmp.Equal(apnNotifications, expectedUsersToReceiveNotification)
-	}, notificationDeliveryDelay, 100*time.Millisecond, "Didn't receive expected notifications for stream %s", test.dmStreamID[:])
+	}, notificationDeliveryDelay, 100*time.Millisecond, "Didn't receive expected notifications for stream %s", test.dmStreamID)
 
 	// Wait a bit to ensure that no more notifications come in
 	test.req.Never(func() bool {
@@ -443,7 +443,7 @@ func testDMMessageWithDefaultUserNotificationsPreferences(
 
 		return webCount != len(expectedUsersToReceiveNotification) ||
 			apnCount != len(expectedUsersToReceiveNotification)
-	}, time.Second, 100*time.Millisecond, "Received unexpected notifications")
+	}, 3*time.Second, 100*time.Millisecond, "Received unexpected notifications")
 }
 
 func testDMMessageWithBlockedUser(
@@ -1295,6 +1295,7 @@ func (tc *dmChannelNotificationsTestContext) subscribeApnPush(
 	request := connect.NewRequest(&SubscribeAPNRequest{
 		DeviceToken: user.Address[:], // (ab)used to determine who received a notification
 		Environment: APNEnvironment_APN_ENVIRONMENT_SANDBOX,
+		PushVersion: NotificationPushVersion_NOTIFICATION_PUSH_VERSION_2,
 	})
 	authorize(ctx, tc.req, tc.authClient, user, request)
 

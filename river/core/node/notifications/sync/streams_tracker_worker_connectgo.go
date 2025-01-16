@@ -46,6 +46,7 @@ func channelLabelType(streamID shared.StreamId) string {
 func (s *StreamTrackerConnectGo) Run(
 	rootCtx context.Context,
 	stream *registries.GetStreamResult,
+	justAllocated bool,
 	nodeRegistry nodes.NodeRegistry,
 	workerPool *semaphore.Weighted,
 	onChainConfig crypto.OnChainConfiguration,
@@ -260,7 +261,12 @@ func (s *StreamTrackerConnectGo) Run(
 
 					metrics.TrackedStreams.With(promLabels).Inc()
 
-					continue
+					// if the stream was just allocated process the miniblocks and events for notifications.
+					// If not ignore them because there were already notifications send for the stream and possible
+					// for these miniblocks and events.
+					if !justAllocated {
+						continue
+					}
 				}
 
 				// first received update must be a sync reset that instantiates the trackedStream
@@ -269,6 +275,8 @@ func (s *StreamTrackerConnectGo) Run(
 					log.Error("Received unexpected non sync-reset update")
 					continue
 				}
+
+				justAllocated = false
 
 				for _, block := range update.GetStream().GetMiniblocks() {
 					if err := trackedStream.ApplyBlock(block, onChainConfig.Get()); err != nil {

@@ -140,7 +140,7 @@ func (s *PostgresEventStore) txRunner(
 			if pgErr, ok := err.(*pgconn.PgError); ok {
 				if pgErr.Code == pgerrcode.SerializationFailure || pgErr.Code == pgerrcode.DeadlockDetected {
 					s.txTracker.track("RETRY", name, tags...)
-					log.Warn(
+					log.Debug(
 						"pg.txRunner: retrying transaction due to serialization failure",
 						"pgErr", pgErr,
 						"txTracker", s.txTracker.dump(),

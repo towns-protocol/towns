@@ -97,6 +97,10 @@ func (s *Service) Close() {
 		f()
 	}
 
+	if s.Archiver != nil {
+		s.Archiver.Close()
+	}
+
 	if !s.config.Log.Simplify {
 		s.defaultLogger.Info("Server closed")
 	}

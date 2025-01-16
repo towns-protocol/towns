@@ -47,6 +47,33 @@ MLS lib needs to be built for some tests to run, there are just commands that bu
     just t # Run all tests from current dir
     just build-mls # Rebuild mls without running tests
 
+# Running the archiver service locally against different environments
+
+To run a local archiver service that downloads from various public networks, use the `run.sh` command
+for that environment and pass in specific configuration to store the data in the local database, which
+is written in `core/env/local/archiver/config.yaml`.
+
+## Example: Running against omega nodes
+
+```
+# Make sure postgres container is running
+./scripts/launch_storage.sh
+
+# Make sure to use an absolute path to refer to the archiver-local.yaml file
+# populate RIVER_REPO_PATH with the absolute path to the root of your river repository
+./env/omega/run.sh archive -c $RIVER_REPO_PATH/core/env/local/archiver/config.yaml
+```
+
+## Example: Running against gamma nodes
+
+```
+./scripts/launch_storage.sh
+
+./env/gamma/run.sh archive -c $RIVER_REPO_PATH/core/env/archiver/config.yaml
+```
+
+**Note:** some networks, such as omega, may have hundreds of gigabytes of stream data available. Be sure to increase the maximum storage, CPU and/or memory of your docker service / postgres container appropriately so it can handle the load.
+
 # Installing just
 
     brew install just

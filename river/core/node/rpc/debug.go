@@ -10,6 +10,7 @@ import (
 	"runtime"
 	runtimePProf "runtime/pprof"
 	"slices"
+	"sort"
 	"strings"
 	"time"
 
@@ -20,6 +21,7 @@ import (
 	. "github.com/river-build/river/core/node/events"
 	"github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/rpc/render"
+	"github.com/river-build/river/core/node/scrub"
 	"github.com/river-build/river/core/node/shared"
 	"github.com/river-build/river/core/node/storage"
 )
@@ -103,6 +105,68 @@ func (s *Service) registerDebugHandlers(enableDebugEndpoints bool, cfg config.De
 	if cfg.Stream || enableDebugEndpoints {
 		handler.Handle(mux, "/debug/stream/{streamIdStr}", &streamHandler{store: s.storage})
 	}
+	if s.mode == ServerModeArchive && (cfg.CorruptStreams || enableDebugEndpoints) {
+		handler.Handle(mux, "/debug/corrupt_streams", &corruptStreamsHandler{service: s.Archiver})
+	}
+}
+
+type corruptStreamsHandler struct {
+	service scrub.CorruptStreamTrackingService
+}
+
+func (h *corruptStreamsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	var (
+		ctx   = r.Context()
+		reply render.CorruptStreamData
+	)
+
+	corruptStreams := h.service.GetCorruptStreams(ctx)
+	reply.Streams = make([]render.DebugCorruptStreamRecord, len(corruptStreams))
+	for i, stream := range corruptStreams {
+		addressStrings := make([]string, len(stream.Nodes))
+		for i, node := range stream.Nodes {
+			addressStrings[i] = node.String()
+		}
+		sort.Strings(addressStrings)
+		reply.Streams[i] = render.DebugCorruptStreamRecord{
+			StreamId:             stream.StreamId.String(),
+			Nodes:                strings.Join(addressStrings, ","),
+			MostRecentBlock:      stream.MostRecentBlock,
+			MostRecentLocalBlock: stream.MostRecentLocalBlock,
+			FirstCorruptBlock:    stream.FirstCorruptBlock,
+			CorruptionReason:     stream.CorruptionReason,
+		}
+	}
+	slices.SortFunc(
+		reply.Streams,
+		func(a, b render.DebugCorruptStreamRecord) int {
+			// Sort first by nodes, then by stream id, lexicographically
+			if a.Nodes == b.Nodes {
+				if a.StreamId == b.StreamId {
+					return 0
+				}
+				if a.StreamId < b.StreamId {
+					return -1
+				}
+				return 1
+			}
+			if a.Nodes < b.Nodes {
+				return -1
+			}
+			return 1
+		},
+	)
+
+	output, err := render.Execute(&reply)
+	if err != nil {
+		dlog.FromCtx(ctx).Error("unable to render stack data", "err", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/html")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(output.Bytes())
 }
 
 type stacksHandler struct {

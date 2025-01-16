@@ -9,7 +9,7 @@ import {
     EpochSecretService,
     IEpochSecretStore,
     InMemoryEpochSecretStore,
-} from '../../mls/epoch'
+} from '../../../mls/epoch'
 import { EncryptedData } from '@river-build/proto'
 
 const encoder = new TextEncoder()

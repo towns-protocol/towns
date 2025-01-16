@@ -467,7 +467,12 @@ func (s *PostgresStreamStore) lockStream(
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return 0, RiverError(Err_NOT_FOUND, "Stream not found", "streamId", streamId)
+			return 0, RiverError(
+				Err_NOT_FOUND,
+				"Stream not found",
+				"streamId",
+				streamId,
+			).Func("PostgresStreamStore.lockStream")
 		}
 		return 0, err
 	}

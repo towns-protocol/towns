@@ -3,7 +3,7 @@
  */
 
 import { beforeEach, describe, it } from 'vitest'
-import { DexieGroupStateStorage, InMemoryGroupStateStorage } from '../../mls/groupStateStorage'
+import { DexieGroupStateStorage, InMemoryGroupStateStorage } from '../../../mls/groupStateStorage'
 import { IGroupStateStorage } from '@river-build/mls-rs-wasm'
 import { randomBytes } from 'crypto'
 

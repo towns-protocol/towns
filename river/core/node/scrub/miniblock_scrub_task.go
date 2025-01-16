@@ -16,6 +16,19 @@ import (
 	"github.com/river-build/river/core/node/storage"
 )
 
+type CorruptStreamRecord struct {
+	StreamId             shared.StreamId
+	Nodes                []common.Address
+	MostRecentBlock      int64
+	MostRecentLocalBlock int64
+	FirstCorruptBlock    int64
+	CorruptionReason     string
+}
+
+type CorruptStreamTrackingService interface {
+	GetCorruptStreams(ctx context.Context) []CorruptStreamRecord
+}
+
 type MiniblockScrubber interface {
 	ScheduleStreamMiniblocksScrub(
 		ctx context.Context,
@@ -155,7 +168,7 @@ func (m *miniblockScrubTaskProcessorImpl) scrubMiniblocks(
 	fromBlockNumInclusive int64,
 ) *MiniblockScrubReport {
 	blockNum := fromBlockNumInclusive
-	latest, err := m.store.GetLastMiniblockNumber(ctx, streamId)
+	latest, err := m.store.GetMaxArchivedMiniblockNumber(ctx, streamId)
 	if err != nil {
 		return newErrorReport(
 			streamId,
@@ -272,7 +285,7 @@ func (m *miniblockScrubTaskProcessorImpl) ScheduleStreamMiniblocksScrub(
 		}()
 	}
 
-	latest, err := m.store.GetLastMiniblockNumber(ctx, streamId)
+	latest, err := m.store.GetMaxArchivedMiniblockNumber(ctx, streamId)
 	if err != nil {
 		return base.AsRiverError(err, protocol.Err_DB_OPERATION_FAILURE).
 			Func("ScheduleStreamMiniblockScrub").

@@ -2,8 +2,8 @@
  * @group main
  */
 
-import { makeTestClient, waitFor } from '../testUtils'
-import { Client } from '../../client'
+import { makeTestClient, waitFor } from '../../testUtils'
+import { Client } from '../../../client'
 import { PlainMessage } from '@bufbuild/protobuf'
 import { MemberPayload_Mls, MemberPayload_Mls_WelcomeMessage } from '@river-build/proto'
 import {
@@ -17,10 +17,10 @@ import {
 } from '@river-build/mls-rs-wasm'
 import { randomBytes } from 'crypto'
 import { bin_equal, check } from '@river-build/dlog'
-import { addressFromUserId } from '../../id'
+import { addressFromUserId } from '../../../id'
 import { bytesToHex } from 'ethereum-cryptography/utils'
-import { isDefined } from '../../check'
-import { ParsedMiniblock } from '../../types'
+import { isDefined } from '../../../check'
+import { ParsedMiniblock } from '../../../types'
 import { fail } from 'assert'
 
 describe('mlsTests', () => {

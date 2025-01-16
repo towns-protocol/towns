@@ -93,8 +93,13 @@ type QueueEvent =
     | EncryptedContentEvent
 
 export interface IQueueService {
+    // These are only needed by the Coordinator
     enqueueCommand(command: QueueCommand): void
     enqueueEvent(event: QueueEvent): void
+    // These are only needed by the adapter
+    start(): void
+    stop(): Promise<void>
+    onMobileSafariPageVisibilityChanged(this: void): void
 }
 
 // This feels more like a coordinator
@@ -121,9 +126,12 @@ export class QueueService implements IQueueService {
     private stopping: boolean = false
     private timeoutId?: NodeJS.Timeout
     private inProgressTick?: Promise<void>
+    private isMobileSafariBackgrounded = false
 
     public enqueueCommand(command: QueueCommand) {
         this.commandQueue.push(command)
+        // TODO: Is this needed when we tick after start
+        this.checkStartTicking()
     }
 
     private dequeueCommand(): QueueCommand | undefined {
@@ -132,6 +140,8 @@ export class QueueService implements IQueueService {
 
     public enqueueEvent(event: QueueEvent) {
         this.eventQueue.push(event)
+        // TODO: Is this needed when we tick after start
+        this.checkStartTicking()
     }
 
     private dequeueEvent(): QueueEvent | undefined {
@@ -154,16 +164,22 @@ export class QueueService implements IQueueService {
         // nop
     }
 
-    private checkStartTicking() {
-        // TODO: pause if take mobile safari is backgrounded (idb issue)
+    private shouldPauseTicking(): boolean {
+        return this.isMobileSafariBackgrounded
+    }
 
+    private checkStartTicking() {
         if (this.stopping) {
-            this.log.debug('ticking is being stopped')
+            // this.log.debug('ticking is being stopped')
             return
         }
 
         if (!this.started || this.timeoutId) {
-            this.log.debug('previous tick is still running')
+            // this.log.debug('previous tick is still running')
+            return
+        }
+
+        if (this.shouldPauseTicking()) {
             return
         }
 
@@ -248,6 +264,14 @@ export class QueueService implements IQueueService {
                 )
             default:
                 logNever(event)
+        }
+    }
+
+    public readonly onMobileSafariPageVisibilityChanged = () => {
+        this.log.debug('onMobileSafariBackgrounded', this.isMobileSafariBackgrounded)
+        this.isMobileSafariBackgrounded = document.visibilityState === 'hidden'
+        if (!this.isMobileSafariBackgrounded) {
+            this.checkStartTicking()
         }
     }
 }

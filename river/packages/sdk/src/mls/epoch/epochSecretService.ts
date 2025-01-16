@@ -10,8 +10,7 @@ import { DerivedKeys, EpochSecret, EpochSecretId, epochSecretId } from './epochS
 import { EncryptedData, MemberPayload_Mls_EpochSecrets } from '@river-build/proto'
 import { IEpochSecretStore } from './epochSecretStore'
 import { PlainMessage } from '@bufbuild/protobuf'
-
-const MLS_ALGORITHM = 'mls_0.0.1'
+import { MLS_ALGORITHM } from '../constants'
 
 type EpochSecretsMessage = PlainMessage<MemberPayload_Mls_EpochSecrets>
 
