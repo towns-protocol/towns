@@ -10,6 +10,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 import { vitePWAOptions } from './vite-pwa-options.config'
 import { execSync } from 'child_process'
 import path from 'path'
+import wasm from 'vite-plugin-wasm'
 
 const commitHash = process.env.RENDER_GIT_COMMIT
     ? String(process.env.RENDER_GIT_COMMIT).substring(0, 7)
@@ -81,6 +82,7 @@ export default ({ mode }: { mode: string }) => {
         },
         assetsInclude: ['**/*.png', '**/*.svg', '**/*.wasm'],
         plugins: [
+            wasm(),
             VitePWA(vitePWAOptions(mode, env)),
             nodePolyfills(),
             react(),

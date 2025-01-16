@@ -4,6 +4,7 @@ import { defineConfig } from 'vitest/config'
 import { VitePWA } from 'vite-plugin-pwa'
 import tsconfigPaths from 'vite-tsconfig-paths'
 import { plateImports } from './vite.config'
+import wasm from 'vite-plugin-wasm'
 
 export default defineConfig({
     test: {
@@ -26,13 +27,18 @@ export default defineConfig({
                 '@privy-io/js-sdk-core',
             ],
         },
+        server: {
+            deps: {
+                inline: ['@river-build/mls-rs-wasm'],
+            },
+        },
     },
     resolve: {
         alias: {
             ...plateImports,
         },
     },
-    plugins: [tsconfigPaths(), vanillaExtractPlugin(), VitePWA()] as any,
+    plugins: [tsconfigPaths(), vanillaExtractPlugin(), VitePWA(), wasm()] as any,
     define: {
         VITE_APP_VERSION: JSON.stringify('1.2.3'),
         VITE_APP_COMMIT_HASH: JSON.stringify('aabbccdd'),

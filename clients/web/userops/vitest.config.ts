@@ -1,5 +1,6 @@
 // vitest.config.ts
 import { defineConfig } from 'vitest/config'
+import wasm from 'vite-plugin-wasm'
 
 export default defineConfig({
     test: {
@@ -14,5 +15,11 @@ export default defineConfig({
                 singleThread: true,
             },
         },
+        server: {
+            deps: {
+                inline: ['@river-build/mls-rs-wasm'],
+            },
+        },
     },
+    plugins: [wasm()],
 })
