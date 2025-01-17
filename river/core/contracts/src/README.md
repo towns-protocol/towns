@@ -1,4 +1,4 @@
-`registry` directory is softlinked from `contracts/src/river/registry`.
+Directories are softlinked from `contracts/src/river/registry`.
 
 This provides better context if ./core is open in Cursor or VSCode.
 It's advantageous to provide only needed context to the AI tools,

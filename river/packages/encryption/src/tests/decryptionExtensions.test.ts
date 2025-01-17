@@ -16,7 +16,12 @@ import {
     EncryptedData,
     UserInboxPayload_GroupEncryptionSessions,
 } from '@river-build/proto'
-import { GroupEncryptionSession, UserDevice, UserDeviceCollection } from '../olmLib'
+import {
+    GroupEncryptionAlgorithmId,
+    GroupEncryptionSession,
+    UserDevice,
+    UserDeviceCollection,
+} from '../olmLib'
 import { bin_fromHexString, bin_toHexString, dlog } from '@river-build/dlog'
 
 import { CryptoStore } from '../cryptoStore'
@@ -30,103 +35,120 @@ import { customAlphabet } from 'nanoid'
 const log = dlog('test:decryptionExtensions:')
 
 describe.concurrent('TestDecryptionExtensions', () => {
-    it('should be able to make key solicitation request', async () => {
-        // arrange
-        const clientDiscoveryService: ClientDiscoveryService = {}
-        const streamId = genStreamId()
-        const alice = genUserId('Alice')
-        const aliceUserAddress = stringToArray(alice)
-        const bob = genUserId('Bob')
-        const bobsPlaintext = "bob's plaintext"
-        const { client: aliceClient, decryptionExtension: aliceDex } = await createCryptoMocks(
-            alice,
-            clientDiscoveryService,
-        )
-        const { crypto: bobCrypto, decryptionExtension: bobDex } = await createCryptoMocks(
-            bob,
-            clientDiscoveryService,
-        )
+    // test should iterate over all the algorithms
+    it.each(Object.values(GroupEncryptionAlgorithmId))(
+        'should be able to make key solicitation request',
+        async (algorithm) => {
+            // arrange
+            const clientDiscoveryService: ClientDiscoveryService = {}
+            const streamId = genStreamId()
+            const alice = genUserId('Alice')
+            const aliceUserAddress = stringToArray(alice)
+            const bob = genUserId('Bob')
+            const bobsPlaintext = "bob's plaintext"
+            const { client: aliceClient, decryptionExtension: aliceDex } = await createCryptoMocks(
+                alice,
+                clientDiscoveryService,
+            )
+            const { crypto: bobCrypto, decryptionExtension: bobDex } = await createCryptoMocks(
+                bob,
+                clientDiscoveryService,
+            )
 
-        // act
-        aliceDex.start()
-        // bob starts the decryption extension
-        bobDex.start()
-        // bob encrypts a message
-        const encryptedData = await bobCrypto.encryptGroupEvent(streamId, bobsPlaintext)
-        const sessionId = encryptedData.sessionId
-        // alice doesn't have the session key
-        // alice sends a key solicitation request
-        const keySolicitationData: KeySolicitationContent = {
-            deviceKey: aliceDex.userDevice.deviceKey,
-            fallbackKey: aliceDex.userDevice.fallbackKey,
-            isNewDevice: true,
-            sessionIds: [sessionId],
-            srcEventId: '',
-        }
-        const keySolicitation = aliceClient.sendKeySolicitation(keySolicitationData)
-        // pretend bob receives a key solicitation request from alice, and starts processing it.
-        await bobDex.handleKeySolicitationRequest(
-            streamId,
-            alice,
-            aliceUserAddress,
-            keySolicitationData,
-        )
-        // alice waits for the response
-        await keySolicitation
-        // after alice gets the session key,
-        // try to decrypt the message
-        const decrypted = await aliceDex.crypto.decryptGroupEvent(streamId, encryptedData)
+            // act
+            aliceDex.start()
+            // bob starts the decryption extension
+            bobDex.start()
+            // bob encrypts a message
+            const encryptedData = await bobCrypto.encryptGroupEvent(
+                streamId,
+                bobsPlaintext,
+                algorithm,
+            )
+            const sessionId = encryptedData.sessionId
+            // alice doesn't have the session key
+            // alice sends a key solicitation request
+            const keySolicitationData: KeySolicitationContent = {
+                deviceKey: aliceDex.userDevice.deviceKey,
+                fallbackKey: aliceDex.userDevice.fallbackKey,
+                isNewDevice: true,
+                sessionIds: [sessionId],
+                srcEventId: '',
+            }
+            const keySolicitation = aliceClient.sendKeySolicitation(keySolicitationData)
+            // pretend bob receives a key solicitation request from alice, and starts processing it.
+            await bobDex.handleKeySolicitationRequest(
+                streamId,
+                alice,
+                aliceUserAddress,
+                keySolicitationData,
+            )
+            // alice waits for the response
+            await keySolicitation
+            // after alice gets the session key,
 
-        // stop the decryption extensions
-        await bobDex.stop()
-        await aliceDex.stop()
+            // try to decrypt the message
+            const decrypted = await aliceDex.crypto.decryptGroupEvent(streamId, encryptedData)
 
-        // assert
-        expect(decrypted).toBe(bobsPlaintext)
-        expect(bobDex.seenStates).toContain(DecryptionStatus.respondingToKeyRequests)
-        expect(aliceDex.seenStates).toContain(DecryptionStatus.processingNewGroupSessions)
-    })
+            // stop the decryption extensions
+            await bobDex.stop()
+            await aliceDex.stop()
 
-    it.concurrent('should be able to export/import stream room key', async () => {
-        // arrange
-        const clientDiscoveryService: ClientDiscoveryService = {}
-        const streamId = genStreamId()
-        const alice = genUserId('Alice')
-        const bob = genUserId('Bob')
-        const bobsPlaintext = "bob's plaintext"
-        const { decryptionExtension: aliceDex } = await createCryptoMocks(
-            alice,
-            clientDiscoveryService,
-        )
-        const { crypto: bobCrypto, decryptionExtension: bobDex } = await createCryptoMocks(
-            bob,
-            clientDiscoveryService,
-        )
+            // assert
+            expect(decrypted).toBe(bobsPlaintext)
+            expect(bobDex.seenStates).toContain(DecryptionStatus.respondingToKeyRequests)
+            expect(aliceDex.seenStates).toContain(DecryptionStatus.processingNewGroupSessions)
+        },
+    )
 
-        // act
-        aliceDex.start()
-        // bob starts the decryption extension
-        bobDex.start()
-        // bob encrypts a message
-        const encryptedData = await bobCrypto.encryptGroupEvent(streamId, bobsPlaintext)
-        // alice doesn't have the session key
-        // alice imports the keys exported by bob
-        const roomKeys = await bobDex.crypto.encryptionDevice.exportRoomKeys()
-        if (roomKeys) {
-            await aliceDex.crypto.importRoomKeys(roomKeys)
-        }
+    // test should iterate over all the algorithms
+    it.each(Object.values(GroupEncryptionAlgorithmId))(
+        'should be able to export/import stream room key',
+        async (algorithm) => {
+            // arrange
+            const clientDiscoveryService: ClientDiscoveryService = {}
+            const streamId = genStreamId()
+            const alice = genUserId('Alice')
+            const bob = genUserId('Bob')
+            const bobsPlaintext = "bob's plaintext"
+            const { decryptionExtension: aliceDex } = await createCryptoMocks(
+                alice,
+                clientDiscoveryService,
+            )
+            const { crypto: bobCrypto, decryptionExtension: bobDex } = await createCryptoMocks(
+                bob,
+                clientDiscoveryService,
+            )
 
-        // after alice gets the session key,
-        // try to decrypt the message
-        const decrypted = await aliceDex.crypto.decryptGroupEvent(streamId, encryptedData)
+            // act
+            aliceDex.start()
+            // bob starts the decryption extension
+            bobDex.start()
+            // bob encrypts a message
+            const encryptedData = await bobCrypto.encryptGroupEvent(
+                streamId,
+                bobsPlaintext,
+                algorithm,
+            )
+            // alice doesn't have the session key
+            // alice imports the keys exported by bob
+            const roomKeys = await bobDex.crypto.exportRoomKeys()
+            if (roomKeys) {
+                await aliceDex.crypto.importRoomKeys(roomKeys)
+            }
 
-        // stop the decryption extensions
-        await bobDex.stop()
-        await aliceDex.stop()
+            // after alice gets the session key,
+            // try to decrypt the message
+            const decrypted = await aliceDex.crypto.decryptGroupEvent(streamId, encryptedData)
 
-        // assert
-        expect(decrypted).toBe(bobsPlaintext)
-    })
+            // stop the decryption extensions
+            await bobDex.stop()
+            await aliceDex.stop()
+
+            // assert
+            expect(decrypted).toBe(bobsPlaintext)
+        },
+    )
 })
 
 type ReleaseFunction = (value: void | PromiseLike<void>) => void
@@ -160,10 +182,7 @@ async function createCryptoMocks(
     const client = new MockGroupEncryptionClient(clientDiscoveryService)
     const crypto = new GroupEncryptionCrypto(client, cryptoStore)
     await crypto.init()
-    const userDevice: UserDevice = {
-        deviceKey: crypto.encryptionDevice.deviceCurve25519Key!,
-        fallbackKey: crypto.encryptionDevice.fallbackKey.key,
-    }
+    const userDevice: UserDevice = crypto.getUserDevice()
     const decryptionExtension = new MockDecryptionExtensions(
         userId,
         crypto,
@@ -379,12 +398,7 @@ class MockGroupEncryptionClient
     public decryptionExtensions: MockDecryptionExtensions | undefined
 
     public get userDevice(): UserDevice | undefined {
-        return this.crypto
-            ? {
-                  deviceKey: this.crypto.encryptionDevice.deviceCurve25519Key!,
-                  fallbackKey: this.crypto.encryptionDevice.fallbackKey.key,
-              }
-            : undefined
+        return this.crypto ? this.crypto.getUserDevice() : undefined
     }
 
     public downloadUserDeviceInfo(
@@ -404,6 +418,12 @@ class MockGroupEncryptionClient
 
     public getDevicesInStream(_streamId: string): Promise<UserDeviceCollection> {
         return Promise.resolve({})
+    }
+
+    public getMiniblockInfo(
+        _streamId: string,
+    ): Promise<{ miniblockNum: bigint; miniblockHash: Uint8Array }> {
+        return Promise.resolve({ miniblockNum: 0n, miniblockHash: new Uint8Array() })
     }
 
     public sendKeySolicitation(args: KeySolicitationContent): Promise<GroupSessionsData> {
@@ -437,6 +457,7 @@ class MockGroupEncryptionClient
                     senderKey: this.userDevice?.deviceKey,
                     sessionIds: sessionIds,
                     ciphertexts: cipertext,
+                    algorithm: args.algorithm,
                 })
             // pretend sending the payload to the client
             // ....

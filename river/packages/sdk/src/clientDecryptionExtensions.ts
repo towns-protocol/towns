@@ -213,17 +213,23 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         streamId,
         item,
         sessions,
+        algorithm,
     }: GroupSessionsData): Promise<void> {
         const chunked = chunk(sessions, 100)
         for (const chunk of chunked) {
-            await this.client.encryptAndShareGroupSessions(streamId, chunk, {
-                [item.fromUserId]: [
-                    {
-                        deviceKey: item.solicitation.deviceKey,
-                        fallbackKey: item.solicitation.fallbackKey,
-                    },
-                ],
-            })
+            await this.client.encryptAndShareGroupSessions(
+                streamId,
+                chunk,
+                {
+                    [item.fromUserId]: [
+                        {
+                            deviceKey: item.solicitation.deviceKey,
+                            fallbackKey: item.solicitation.fallbackKey,
+                        },
+                    ],
+                },
+                algorithm,
+            )
         }
     }
 

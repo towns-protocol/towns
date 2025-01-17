@@ -2,6 +2,7 @@ import {
     AccountRecord,
     ExtendedInboundGroupSessionData,
     GroupSessionRecord,
+    HybridGroupSessionRecord,
     UserDeviceRecord,
 } from './storeTypes'
 import Dexie, { Table } from 'dexie'
@@ -17,6 +18,7 @@ export class CryptoStore extends Dexie {
     account!: Table<AccountRecord>
     outboundGroupSessions!: Table<GroupSessionRecord>
     inboundGroupSessions!: Table<ExtendedInboundGroupSessionData>
+    hybridGroupSessions!: Table<HybridGroupSessionRecord>
     devices!: Table<UserDeviceRecord>
     userId: string
 
@@ -27,6 +29,7 @@ export class CryptoStore extends Dexie {
             account: 'id',
             inboundGroupSessions: '[streamId+sessionId]',
             outboundGroupSessions: 'streamId',
+            hybridGroupSessions: '[streamId+sessionId],streamId',
             devices: '[userId+deviceKey],expirationTimestamp',
         })
     }
@@ -86,8 +89,24 @@ export class CryptoStore extends Dexie {
         return await this.inboundGroupSessions.get({ sessionId, streamId })
     }
 
+    async getHybridGroupSession(
+        streamId: string,
+        sessionId: string,
+    ): Promise<HybridGroupSessionRecord | undefined> {
+        return await this.hybridGroupSessions.get({ streamId, sessionId })
+    }
+
+    async getHybridGroupSessionsForStream(streamId: string): Promise<HybridGroupSessionRecord[]> {
+        const sessions = await this.hybridGroupSessions.where({ streamId }).toArray()
+        return sessions
+    }
+
     async getAllEndToEndInboundGroupSessions(): Promise<ExtendedInboundGroupSessionData[]> {
         return await this.inboundGroupSessions.toArray()
+    }
+
+    async getAllHybridGroupSessions(): Promise<HybridGroupSessionRecord[]> {
+        return await this.hybridGroupSessions.toArray()
     }
 
     async storeEndToEndInboundGroupSession(
@@ -98,8 +117,17 @@ export class CryptoStore extends Dexie {
         await this.inboundGroupSessions.put({ streamId, sessionId, ...sessionData })
     }
 
+    async storeHybridGroupSession(sessionData: HybridGroupSessionRecord): Promise<void> {
+        await this.hybridGroupSessions.put({ ...sessionData })
+    }
+
     async getInboundGroupSessionIds(streamId: string): Promise<string[]> {
         const sessions = await this.inboundGroupSessions.where({ streamId }).toArray()
+        return sessions.map((s) => s.sessionId)
+    }
+
+    async getHybridGroupSessionIds(streamId: string): Promise<string[]> {
+        const sessions = await this.hybridGroupSessions.where({ streamId }).toArray()
         return sessions.map((s) => s.sessionId)
     }
 
@@ -112,6 +140,7 @@ export class CryptoStore extends Dexie {
             'rw',
             this.outboundGroupSessions,
             this.inboundGroupSessions,
+            this.hybridGroupSessions, // aellis this should be in its own transaction but tests were failing otherwise
             fn,
         )
     }

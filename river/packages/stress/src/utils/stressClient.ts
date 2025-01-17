@@ -171,8 +171,7 @@ export class StressClient {
     }
 
     async exportDevice(): Promise<ExportedDevice | undefined> {
-        const device =
-            await this.agent.riverConnection.client?.cryptoBackend?.encryptionDevice.exportDevice()
+        const device = await this.agent.riverConnection.client?.cryptoBackend?.exportDevice()
         if (device) {
             try {
                 await this.globalPersistedStore?.set(

@@ -1,4 +1,5 @@
 export * from './base'
+export * from './cryptoAesGcm'
 export * from './cryptoStore'
 export * from './derivedEncryption'
 export * from './decryptionExtensions'

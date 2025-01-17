@@ -53,6 +53,7 @@ export interface MembershipFacetInterface extends utils.Interface {
     "getMembershipPrice()": FunctionFragment;
     "getMembershipPricingModule()": FunctionFragment;
     "getMembershipRenewalPrice(uint256)": FunctionFragment;
+    "getProtocolFee()": FunctionFragment;
     "getSpaceFactory()": FunctionFragment;
     "joinSpace(address)": FunctionFragment;
     "joinSpaceWithReferral(address,(address,address,string))": FunctionFragment;
@@ -77,6 +78,7 @@ export interface MembershipFacetInterface extends utils.Interface {
       | "getMembershipPrice"
       | "getMembershipPricingModule"
       | "getMembershipRenewalPrice"
+      | "getProtocolFee"
       | "getSpaceFactory"
       | "joinSpace"
       | "joinSpaceWithReferral"
@@ -125,6 +127,10 @@ export interface MembershipFacetInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "getMembershipRenewalPrice",
     values: [PromiseOrValue<BigNumberish>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getProtocolFee",
+    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "getSpaceFactory",
@@ -199,6 +205,10 @@ export interface MembershipFacetInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "getMembershipRenewalPrice",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getProtocolFee",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -813,6 +823,8 @@ export interface MembershipFacet extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
 
+    getProtocolFee(overrides?: CallOverrides): Promise<[BigNumber]>;
+
     getSpaceFactory(overrides?: CallOverrides): Promise<[string]>;
 
     joinSpace(
@@ -888,6 +900,8 @@ export interface MembershipFacet extends BaseContract {
     overrides?: CallOverrides
   ): Promise<BigNumber>;
 
+  getProtocolFee(overrides?: CallOverrides): Promise<BigNumber>;
+
   getSpaceFactory(overrides?: CallOverrides): Promise<string>;
 
   joinSpace(
@@ -962,6 +976,8 @@ export interface MembershipFacet extends BaseContract {
       tokenId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
+
+    getProtocolFee(overrides?: CallOverrides): Promise<BigNumber>;
 
     getSpaceFactory(overrides?: CallOverrides): Promise<string>;
 
@@ -1338,6 +1354,8 @@ export interface MembershipFacet extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    getProtocolFee(overrides?: CallOverrides): Promise<BigNumber>;
+
     getSpaceFactory(overrides?: CallOverrides): Promise<BigNumber>;
 
     joinSpace(
@@ -1427,6 +1445,8 @@ export interface MembershipFacet extends BaseContract {
       tokenId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
+
+    getProtocolFee(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     getSpaceFactory(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 

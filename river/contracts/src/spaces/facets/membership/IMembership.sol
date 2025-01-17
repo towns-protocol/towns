@@ -140,6 +140,12 @@ interface IMembership is IMembershipBase {
    */
   function getMembershipPricingModule() external view returns (address);
 
+  /**
+   * @notice Get the protocol fee
+   * @return The protocol fee
+   */
+  function getProtocolFee() external view returns (uint256);
+
   // =============================================================
   //                           Pricing
   // =============================================================

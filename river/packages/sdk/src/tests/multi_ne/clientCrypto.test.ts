@@ -29,8 +29,7 @@ describe('clientCrypto', () => {
         bobsClient.startSync()
         await expect(alicesClient.initializeUser()).resolves.not.toThrow()
         expect(
-            alicesClient.encryptionDevice.deviceCurve25519Key !==
-                bobsClient.encryptionDevice.deviceCurve25519Key,
+            alicesClient.userDeviceKey().deviceKey !== bobsClient.userDeviceKey().deviceKey,
         ).toBe(true)
         alicesClient.startSync()
         const keys = new SessionKeys({ keys: ['hi!'] })
@@ -55,8 +54,7 @@ describe('clientCrypto', () => {
         bobsClient.startSync()
         await expect(alicesClient.initializeUser()).resolves.not.toThrow()
         expect(
-            alicesClient.encryptionDevice.deviceCurve25519Key !==
-                bobsClient.encryptionDevice.deviceCurve25519Key,
+            alicesClient.userDeviceKey().deviceKey !== bobsClient.userDeviceKey().deviceKey,
         ).toBe(true)
         alicesClient.startSync()
 

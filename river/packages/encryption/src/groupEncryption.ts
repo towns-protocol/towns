@@ -1,7 +1,6 @@
 import { EncryptedData } from '@river-build/proto'
-import { PlainMessage } from '@bufbuild/protobuf'
 import { EncryptionAlgorithm, IEncryptionParams } from './base'
-import { GROUP_ENCRYPTION_ALGORITHM } from './olmLib'
+import { GroupEncryptionAlgorithmId } from './olmLib'
 import { dlog } from '@river-build/dlog'
 
 const log = dlog('csb:encryption:groupEncryption')
@@ -22,6 +21,7 @@ const log = dlog('csb:encryption:groupEncryption')
  * @param params - parameters, as per {@link EncryptionAlgorithm}
  */
 export class GroupEncryption extends EncryptionAlgorithm {
+    public readonly algorithm = GroupEncryptionAlgorithmId.GroupEncryption
     public constructor(params: IEncryptionParams) {
         super(params)
     }
@@ -63,7 +63,12 @@ export class GroupEncryption extends EncryptionAlgorithm {
             throw new Error('Session key not found for session ' + sessionId)
         }
 
-        await this.client.encryptAndShareGroupSessions(streamId, [session], devicesInRoom)
+        await this.client.encryptAndShareGroupSessions(
+            streamId,
+            [session],
+            devicesInRoom,
+            this.algorithm,
+        )
     }
 
     /**
@@ -79,10 +84,10 @@ export class GroupEncryption extends EncryptionAlgorithm {
         const result = await this.device.encryptGroupMessage(payload, streamId)
 
         return new EncryptedData({
-            algorithm: GROUP_ENCRYPTION_ALGORITHM,
+            algorithm: this.algorithm,
             senderKey: this.device.deviceCurve25519Key!,
             ciphertext: result.ciphertext,
             sessionId: result.sessionId,
-        } satisfies PlainMessage<EncryptedData>)
+        })
     }
 }

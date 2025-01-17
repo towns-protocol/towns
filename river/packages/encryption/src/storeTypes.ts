@@ -11,6 +11,13 @@ export interface GroupSessionRecord {
     streamId: string
 }
 
+export interface HybridGroupSessionRecord {
+    sessionId: string
+    streamId: string
+    sessionKey: Uint8Array
+    miniblockNum: bigint
+}
+
 export interface UserDeviceRecord {
     userId: string
     deviceKey: string

@@ -10029,7 +10029,7 @@ __metadata:
     forge-std: "github:foundry-rs/forge-std#v1.9.4"
     prettier: ^2.8.8
     prettier-plugin-solidity: ^1.4.1
-    solady: ^0.0.267
+    solady: ^0.0.289
     solhint: ^5.0.3
     turbo: ^2.0.12
   languageName: unknown
@@ -34060,17 +34060,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"solady@npm:^0.0.267":
-  version: 0.0.267
-  resolution: "solady@npm:0.0.267"
-  checksum: 67726bf72e4e86d9dfad3998da0b3e5ef2ef5e72d496e374c18806b098d3d0383f0ded5bd358161e6fe5f518dc6b4b6dab28586c4c1074b51c8f2ec257a409a4
-  languageName: node
-  linkType: hard
-
 "solady@npm:^0.0.281":
   version: 0.0.281
   resolution: "solady@npm:0.0.281"
   checksum: c36dafdde5d732d13d2f28a1437350ecd2ba71000ab765bc74028d41fbe098bc934714bf28af7323feb5c227d9ab110a015fca8ae077b3ebca6f6dfa01b44224
+  languageName: node
+  linkType: hard
+
+"solady@npm:^0.0.289":
+  version: 0.0.289
+  resolution: "solady@npm:0.0.289"
+  checksum: 65643a91f441ec7ccf7ff2b073e4efa0e649d67581dae9572fa461131c715e7cac6b82752e3f105b94cb15e8c4d7bcf686dcd1d474e925a7f6fe9d2c260a3626
   languageName: node
   linkType: hard
 

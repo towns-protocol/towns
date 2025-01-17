@@ -149,6 +149,11 @@ contract MembershipFacet is
     return _getMembershipRenewalPrice(tokenId, _totalSupply());
   }
 
+  /// @inheritdoc IMembership
+  function getProtocolFee() external view returns (uint256) {
+    return _getProtocolFee(_getMembershipPrice(_totalSupply()));
+  }
+
   // =============================================================
   //                           Allocation
   // =============================================================

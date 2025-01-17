@@ -144,9 +144,9 @@ describe('deviceKeyMessageTest', () => {
         for (let i = 0; i < 20; i++) {
             await alicesClient.resetCrypto()
             if (i === 9) {
-                tenthDeviceKey = alicesClient.encryptionDevice.deviceCurve25519Key!
+                tenthDeviceKey = alicesClient.userDeviceKey().deviceKey
             } else if (i === 10) {
-                eleventhDeviceKey = alicesClient.encryptionDevice.deviceCurve25519Key!
+                eleventhDeviceKey = alicesClient.userDeviceKey().deviceKey
             }
         }
         // bobs client should sync userDeviceKeyMessages
@@ -173,7 +173,7 @@ describe('deviceKeyMessageTest', () => {
         // eleventhDeviceKey out of 20 should be downloaded as part of downloadKeysForUsers
         expect(aliceDeviceKeys).toContain(eleventhDeviceKey)
         // latest key should be downloaded
-        expect(aliceDeviceKeys).toContain(alicesClient.encryptionDevice.deviceCurve25519Key!)
+        expect(aliceDeviceKeys).toContain(alicesClient.userDeviceKey().deviceKey)
         // any key uploaded earlier than the lookback window (i.e. 10) should not be downloaded
         expect(aliceDeviceKeys).not.toContain(tenthDeviceKey)
         expect(deviceKeys[bobsUserId]).toBeDefined()

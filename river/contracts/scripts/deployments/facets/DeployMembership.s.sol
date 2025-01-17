@@ -35,6 +35,7 @@ contract DeployMembership is Deployer, FacetHelper {
     addSelector(IMembership.setMembershipPrice.selector);
     addSelector(IMembership.getMembershipPrice.selector);
     addSelector(IMembership.getMembershipRenewalPrice.selector);
+    addSelector(IMembership.getProtocolFee.selector);
 
     // Allocation
     addSelector(IMembership.setMembershipFreeAllocation.selector);

@@ -48,6 +48,7 @@ contract RiverMainnetTest is TestUtils, EIP712Utils, IRiverBase, ILockBase {
 
   modifier givenCallerHasTokens(address caller) {
     vm.assume(caller != address(0));
+    vm.assume(caller != ZERO_SENTINEL);
     vm.prank(deployRiverMainnet.vault());
     river.transfer(caller, 100);
     _;
@@ -102,6 +103,8 @@ contract RiverMainnetTest is TestUtils, EIP712Utils, IRiverBase, ILockBase {
   // =============================================================
 
   modifier givenCallerHasDelegated(address caller, address delegatee) {
+    vm.assume(caller != ZERO_SENTINEL);
+    vm.assume(delegatee != ZERO_SENTINEL);
     vm.assume(river.delegates(caller) != delegatee);
 
     vm.prank(caller);

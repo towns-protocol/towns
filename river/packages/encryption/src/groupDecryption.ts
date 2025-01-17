@@ -1,7 +1,7 @@
 import type { GroupSessionExtraData } from './encryptionDevice'
 
 import { DecryptionAlgorithm, DecryptionError, IDecryptionParams } from './base'
-import { GroupEncryptionSession } from './olmLib'
+import { GroupEncryptionAlgorithmId, GroupEncryptionSession } from './olmLib'
 import { EncryptedData } from '@river-build/proto'
 import { dlog } from '@river-build/dlog'
 
@@ -13,6 +13,7 @@ const log = dlog('csb:encryption:groupDecryption')
  * @param params - parameters, as per {@link DecryptionAlgorithm}
  */
 export class GroupDecryption extends DecryptionAlgorithm {
+    public readonly algorithm = GroupEncryptionAlgorithmId.GroupEncryption
     public constructor(params: IDecryptionParams) {
         super(params)
     }
@@ -57,5 +58,28 @@ export class GroupDecryption extends DecryptionAlgorithm {
         } catch (e) {
             log(`Error handling room key import: ${(<Error>e).message}`)
         }
+    }
+
+    /** */
+    public async exportGroupSession(
+        streamId: string,
+        sessionId: string,
+    ): Promise<GroupEncryptionSession | undefined> {
+        return this.device.exportInboundGroupSession(streamId, sessionId)
+    }
+
+    /** */
+    public exportGroupSessions(): Promise<GroupEncryptionSession[]> {
+        return this.device.exportInboundGroupSessions()
+    }
+
+    /** */
+    public exportGroupSessionIds(streamId: string): Promise<string[]> {
+        return this.device.getInboundGroupSessionIds(streamId)
+    }
+
+    /** */
+    public async hasSessionKey(streamId: string, sessionId: string): Promise<boolean> {
+        return this.device.hasInboundSessionKeys(streamId, sessionId)
     }
 }

@@ -516,6 +516,7 @@ message UserInboxPayload {
         repeated string session_ids = 3;
         // deviceKey: per device ciphertext of encrypted session keys that match session_ids 
         map<string, string> ciphertexts = 4;
+        string algorithm = 5;
     }
 
     message Ack {
@@ -739,7 +740,8 @@ message EncryptedData {
     */
     string sender_key = 3;
     /**
-    * The ID of the session used to encrypt the message.
+    * The ID of the session used to encrypt the message in some protocols, 
+    * deprecated in favor of session_id_bytes.
     */
     string session_id = 4;
 
@@ -762,6 +764,15 @@ message EncryptedData {
     }
 
     optional Mls mls = 7;
+
+    // Used if algorithm is set to 'grpaes'
+    bytes ciphertext_bytes = 8;
+
+    // Used if algorithm is set to 'grpaes'
+    bytes iv_bytes = 9;
+
+    // Used if algorithm is set to 'grpaes'
+    bytes session_id_bytes = 10;
 }
 
 message WrappedEncryptedData {

@@ -46,6 +46,7 @@ contract RiverBaseTest is BaseSetup, EIP712Utils, ILockBase, IOwnableBase {
   modifier givenCallerHasBridgedTokens(address caller, uint256 amount) {
     vm.assume(caller != address(0));
     amount = bound(amount, 0, type(uint208).max);
+    vm.assume(caller != ZERO_SENTINEL);
 
     vm.prank(bridge);
     riverFacet.mint(caller, amount);
@@ -151,6 +152,7 @@ contract RiverBaseTest is BaseSetup, EIP712Utils, ILockBase, IOwnableBase {
   // =============================================================
 
   modifier whenCallerDelegatesToASpace(address caller) {
+    vm.assume(caller != ZERO_SENTINEL);
     vm.prank(caller);
     riverFacet.delegate(space);
     _;
@@ -158,6 +160,10 @@ contract RiverBaseTest is BaseSetup, EIP712Utils, ILockBase, IOwnableBase {
 
   modifier whenCallerDelegatesToAnOperator(address caller, address operator) {
     vm.assume(operator != address(0));
+    vm.assume(operator != ZERO_SENTINEL);
+    vm.assume(caller != operator);
+    vm.assume(caller != space);
+
     vm.prank(caller);
     riverFacet.delegate(operator);
     _;
@@ -210,6 +216,8 @@ contract RiverBaseTest is BaseSetup, EIP712Utils, ILockBase, IOwnableBase {
     whenCallerDelegatesToASpace(alice)
   {
     vm.assume(bob != address(0) && bob != space);
+    vm.assume(bob != alice);
+
     vm.startPrank(alice);
     riverFacet.delegate(bob);
     riverFacet.delegate(address(0));
@@ -270,6 +278,8 @@ contract RiverBaseTest is BaseSetup, EIP712Utils, ILockBase, IOwnableBase {
     vm.assume(alice != bob);
     vm.assume(alice != address(0));
     vm.assume(bob != address(0));
+    vm.assume(alice != ZERO_SENTINEL);
+    vm.assume(bob != ZERO_SENTINEL);
 
     amountA = bound(amountA, 1, type(uint208).max - 1);
     amountB = bound(amountB, 1, type(uint208).max - amountA);

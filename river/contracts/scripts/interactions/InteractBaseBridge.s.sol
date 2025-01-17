@@ -15,19 +15,17 @@ contract InteractBaseBridge is Interaction {
   address l1StandardBridge = 0xfd0Bf71F60660E2f608ed56e1659C450eB113120;
   address l2StandardBridge = 0x4200000000000000000000000000000000000010;
 
-  address riverOnSepolia = 0x40eF1bb984503bb5Adef041A88a4F9180e8586f9;
-  address riverOnBaseSepolia = 0x24e3123E1b30E041E2df26Da9d6140c5B07Fe4F0;
-  uint256 tokensToDeposit = 1_000_000 ether;
-
-  address oldRiverOnBaseSepolia = 0x49442708a16Bf7917764F14A2D103f40Eb27BdD8;
+  address townsOnSepolia = 0xfc85ff424F1b55fB3f9e920A47EC7255488C3bA3;
+  address townsOnBaseSepolia = 0xd47972d8A64Fc4ea4435E31D5c8C3E65BD51e293;
+  uint256 tokensToDeposit = 10 ether;
 
   function __interact(address deployer) internal override {
     // Bridge from Base Sepolia to Sepolia
     // vm.startBroadcast(deployer);
-    // IERC20(oldRiverOnBaseSepolia).approve(l2StandardBridge, tokensToDeposit);
+    // IERC20(townsOnBaseSepolia).approve(l2StandardBridge, tokensToDeposit);
     // IL2StandardBridge(l2StandardBridge).bridgeERC20({
-    //   _localToken: oldRiverOnBaseSepolia,
-    //   _remoteToken: riverOnSepolia,
+    //   _localToken: townsOnBaseSepolia,
+    //   _remoteToken: townsOnSepolia,
     //   _amount: tokensToDeposit,
     //   _minGasLimit: 100000,
     //   _extraData: ""
@@ -36,10 +34,10 @@ contract InteractBaseBridge is Interaction {
 
     // Bridge from Sepolia to Base Sepolia
     vm.startBroadcast(deployer);
-    IERC20(riverOnSepolia).approve(l1StandardBridge, tokensToDeposit);
+    IERC20(townsOnSepolia).approve(l1StandardBridge, tokensToDeposit);
     IL1StandardBridge(l1StandardBridge).depositERC20({
-      _l1Token: riverOnSepolia,
-      _l2Token: riverOnBaseSepolia,
+      _l1Token: townsOnSepolia,
+      _l2Token: townsOnBaseSepolia,
       _amount: tokensToDeposit,
       _minGasLimit: 100000,
       _extraData: ""

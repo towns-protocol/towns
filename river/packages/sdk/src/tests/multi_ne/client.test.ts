@@ -4,7 +4,7 @@
 
 import { dlog, check } from '@river-build/dlog'
 import { isDefined } from '../../check'
-import { DecryptionStatus, UserDevice } from '@river-build/encryption'
+import { DecryptionStatus, GroupEncryptionAlgorithmId, UserDevice } from '@river-build/encryption'
 import { Client } from '../../client'
 import {
     makeUserStreamId,
@@ -173,6 +173,7 @@ describe('clientTest', () => {
         await bobsClient.waitForStream(channelId)
 
         // hand construct a message, (don't do this normally! just use sendMessage(..))
+        const algorithm = GroupEncryptionAlgorithmId.GroupEncryption // algorithm doesn't matter here, don't copy paste
         const encrypted = await bobsClient.encryptGroupEvent(
             new ChannelMessage({
                 payload: {
@@ -186,6 +187,7 @@ describe('clientTest', () => {
                 },
             }),
             channelId,
+            algorithm,
         )
         check(isDefined(encrypted), 'encrypted should be defined')
         const message = make_ChannelPayload_Message(encrypted)
@@ -921,7 +923,7 @@ describe('clientTest', () => {
         expect(Object.keys(fallbackKeys)).toContain(alicesUserId)
         expect(Object.keys(fallbackKeys).length).toEqual(1)
         expect(fallbackKeys[alicesUserId].map((k) => k.fallbackKey)).toContain(
-            Object.values(alicesClient.encryptionDevice.fallbackKey)[0],
+            alicesClient.userDeviceKey().fallbackKey,
         )
     })
 
@@ -986,9 +988,7 @@ describe('clientTest', () => {
         const knownDevices = await bobsClient.knownDevicesForUserId(alicesClient.userId)
 
         expect(knownDevices.length).toBe(1)
-        expect(knownDevices[0].fallbackKey).toBe(
-            Object.values(alicesClient.encryptionDevice.fallbackKey)[0],
-        )
+        expect(knownDevices[0].fallbackKey).toBe(alicesClient.userDeviceKey().fallbackKey)
     })
 
     // Make sure that the client only uploads device keys

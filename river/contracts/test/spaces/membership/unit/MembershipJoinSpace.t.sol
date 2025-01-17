@@ -13,6 +13,7 @@ import {ICreateSpace} from "contracts/src/factory/facets/create/ICreateSpace.sol
 
 //libraries
 import {Vm} from "forge-std/Test.sol";
+import {BasisPoints} from "contracts/src/utils/libraries/BasisPoints.sol";
 
 //contracts
 import {MembershipFacet} from "contracts/src/spaces/facets/membership/MembershipFacet.sol";
@@ -576,5 +577,24 @@ contract MembershipJoinSpaceTest is
     membership.joinSpace{value: fee}(alice);
 
     assertEq(membershipToken.balanceOf(alice), 1);
+  }
+
+  function test_getProtocolFee() external view {
+    uint256 protocolFee = membership.getProtocolFee();
+    uint256 fee = platformReqs.getMembershipFee();
+    assertEq(protocolFee, fee);
+  }
+
+  function test_getProtocolFee_withPriceAboveMinPrice() external {
+    vm.prank(founder);
+    membership.setMembershipPrice(1 ether);
+
+    uint256 price = membership.getMembershipPrice();
+    uint256 protocolFee = membership.getProtocolFee();
+
+    assertEq(
+      protocolFee,
+      BasisPoints.calculate(price, platformReqs.getMembershipBps())
+    );
   }
 }

@@ -152,9 +152,12 @@ export const makeEvent_test = async (
 
 export const TEST_ENCRYPTED_MESSAGE_PROPS: PlainMessage<EncryptedData> = {
     sessionId: '',
+    sessionIdBytes: new Uint8Array(0),
     ciphertext: '',
     algorithm: '',
     senderKey: '',
+    ciphertextBytes: new Uint8Array(0),
+    ivBytes: new Uint8Array(0),
 }
 
 export const getXchainConfigForTesting = (): XchainConfig => {

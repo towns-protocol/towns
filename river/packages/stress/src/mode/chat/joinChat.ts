@@ -55,7 +55,7 @@ export async function joinChat(client: StressClient, cfg: ChatConfig) {
 
     if (client.clientIndex === cfg.localClients.startIndex) {
         logger.info('sharing keys')
-        await client.streamsClient.cryptoBackend?.ensureOutboundSession(announceChannelId, {
+        await client.streamsClient.ensureOutboundSession(announceChannelId, {
             awaitInitialShareSession: true,
         })
         logger.info('check in with root client')
@@ -84,7 +84,7 @@ export async function joinChat(client: StressClient, cfg: ChatConfig) {
             await client.streamsClient.joinStream(channelId)
             await client.streamsClient.waitForStream(channelId)
         }
-        await client.streamsClient.cryptoBackend?.ensureOutboundSession(channelId, {
+        await client.streamsClient.ensureOutboundSession(channelId, {
             awaitInitialShareSession: true,
         })
         await client.sendMessage(
