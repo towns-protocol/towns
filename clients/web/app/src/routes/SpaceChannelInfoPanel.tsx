@@ -83,7 +83,8 @@ export const ChannelInfo = () => {
         channel?.id,
     )
     const { name: environmentName } = useEnvironment()
-    const showMlsSettings = environmentName === 'alpha' || environmentName === 'gamma'
+    const showEncryptionAlgorithmSettings =
+        environmentName === 'alpha' || environmentName === 'gamma'
     const { hasSomeEntitlement } = useChannelEntitlements({
         spaceId: spaceData?.id,
         channelId: channel?.id,
@@ -281,7 +282,7 @@ export const ChannelInfo = () => {
                     </PanelButton>
                 )}
 
-                {channelExists && showMlsSettings && (
+                {channelExists && showEncryptionAlgorithmSettings && (
                     <Stack gap padding background="level2" rounded="sm">
                         <Paragraph fontWeight="medium" color="default">
                             Encryption Algorithm
@@ -296,6 +297,19 @@ export const ChannelInfo = () => {
                                 toggled={streamEncryptionAlgorithm == 'mls_0.0.1'}
                                 onToggle={(toggled) =>
                                     setEncryptionAlgorithm(toggled ? 'mls_0.0.1' : undefined)
+                                }
+                            />
+                        </Stack>
+
+                        <Stack horizontal alignItems="center">
+                            <Paragraph color="gray2" fontWeight="medium">
+                                Enable Hybrid Group Encryption
+                            </Paragraph>
+                            <Box grow />
+                            <Toggle
+                                toggled={streamEncryptionAlgorithm == 'grpaes'}
+                                onToggle={(toggled) =>
+                                    setEncryptionAlgorithm(toggled ? 'grpaes' : undefined)
                                 }
                             />
                         </Stack>
