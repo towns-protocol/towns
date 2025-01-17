@@ -25,7 +25,9 @@ import { formatUnits } from 'hooks/useBalance'
 import { shortAddress } from 'ui/utils/utils'
 import { TipBurst } from '@components/MessageLayout/tips/TipBurst'
 import { useStore } from 'store/store'
+import { Box } from '@ui'
 import { ACTION_REJECTED, baseScanUrl, mapToErrorMessage } from './utils'
+import { ERROR_MEMBERSHIP_INSUFFICIENT_PAYMENT } from './constants'
 
 type ToastProps = {
     tx: BlockchainStoreTx
@@ -268,7 +270,7 @@ function MonitoringNotification(props: ToastProps & { toast: Toast }) {
     const [updatedTx, setUpdatedTx] = useState(tx)
     const [searchParams] = useSearchParams()
     const rolesParam = searchParams.get('roles')
-    const subErrorMessage = mapToErrorMessage({ error: updatedTx.error, source: updatedTx.type })
+    const subErrorMessage = getSubErrorMessage({ error: updatedTx.error, source: updatedTx.type })
     const setFundWalletModalOpen = useStore((state) => state.setFundWalletModalOpen)
 
     const { message } = useMemo(() => {
@@ -400,4 +402,27 @@ function MonitoringNotification(props: ToastProps & { toast: Toast }) {
     }
 
     return <StandardToast.Pending toast={toast} message={message ?? ''} />
+}
+
+function getSubErrorMessage(...params: Parameters<typeof mapToErrorMessage>) {
+    const [{ error, source }] = params
+    const mappedError = mapToErrorMessage({ error, source })
+    switch (source) {
+        case BlockchainTransactionType.WithdrawTreasury:
+            // special case for membership withdrawals when the space contract has an untracked balance
+            // someone pays to join, space contract tracks payment, balance goes up
+            // but you can also fund the space contract directly, which will also increase the balance, but those funds are not tracked
+            // so we might display a balance, but you can't withdraw it
+            // this is going to be solved later in contracts but for now we just show a special message
+            if (mappedError?.includes(ERROR_MEMBERSHIP_INSUFFICIENT_PAYMENT)) {
+                return (
+                    <Box>
+                        The town contains funds that cannot be withdrawn. This can occur if funds
+                        were sent directly to the town. We are woking on this!
+                    </Box>
+                )
+            }
+            break
+    }
+    return mappedError
 }

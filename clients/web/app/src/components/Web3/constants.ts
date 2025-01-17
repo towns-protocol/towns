@@ -17,3 +17,4 @@ export const ERROR_SPACE_ALREADY_REGISTERED = 'SpaceAlreadyRegistered'
 
 export const ENTITLEMENT_NOT_ALLOWED = 'Entitlement__NotAllowed'
 export const ERROR_GATE_FACET_SERVICE_NOT_ALLOWED = 'GateFacetService__NotAllowed'
+export const ERROR_MEMBERSHIP_INSUFFICIENT_PAYMENT = 'Membership__InsufficientPayment'

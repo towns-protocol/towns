@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { ReactNode, useState } from 'react'
 import headlessToast, { Toast } from 'react-hot-toast/headless'
 import { Box, Icon, IconButton, IconProps, Text } from '@ui'
 import { TextProps } from 'ui/components/Text/Text'
@@ -11,8 +11,12 @@ export type Props<T extends IconProps['type'] | undefined = IconProps['type']> =
     imgSrc?: T extends IconProps['type'] ? never : string
     pending?: T extends IconProps['type'] ? never : boolean
     success?: boolean
-    message: string | React.ReactNode
-    subMessage?: string
+    message: string | ReactNode
+    /**
+     * pass a string to display a message that will be truncated to 2 lines - the default, useful for long, raw error messages
+     * pass a react node to display a custom message
+     */
+    subMessage?: string | ReactNode
     cta?: string
     ctaColor?: TextProps['color']
     onCtaClick?: ({ dismissToast }: { dismissToast: () => void }) => void | Promise<void>
@@ -48,7 +52,8 @@ export function StandardToast<T extends IconProps['type'] | undefined>(props: Pr
         setCtaActionLoading(false)
     }
 
-    const isUnknownConnectorError = subMessage?.toLowerCase().includes('unknown connector')
+    const isUnknownConnectorError =
+        typeof subMessage === 'string' && subMessage?.toLowerCase().includes('unknown connector')
 
     return (
         <Box
