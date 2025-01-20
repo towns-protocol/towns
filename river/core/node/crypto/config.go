@@ -21,7 +21,7 @@ import (
 
 	"github.com/river-build/river/core/contracts/river"
 	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/dlog"
+	"github.com/river-build/river/core/node/logging"
 	. "github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/shared"
 )
@@ -216,14 +216,14 @@ func (r rawSettingsMap) init(
 ) {
 	for _, setting := range retrievedSettings {
 		if setting.BlockNumber == math.MaxUint64 {
-			dlog.FromCtx(ctx).
-				Warn("Invalid block number, ignoring", "key", setting.Key, "value", setting.Value)
+			logging.FromCtx(ctx).
+				Warnw("Invalid block number, ignoring", "key", setting.Key, "value", setting.Value)
 			continue
 		}
 		name, ok := keyHashToName[setting.Key]
 		if !ok {
-			dlog.FromCtx(ctx).
-				Info("Skipping unknown setting key", "key", setting.Key, "value", setting.Value, "block", setting.BlockNumber)
+			logging.FromCtx(ctx).
+				Infow("Skipping unknown setting key", "key", setting.Key, "value", setting.Value, "block", setting.BlockNumber)
 			continue
 		}
 		blockMap, ok := r[name]
@@ -234,8 +234,8 @@ func (r rawSettingsMap) init(
 		blockNum := BlockNumber(setting.BlockNumber)
 		oldVal, ok := blockMap[blockNum]
 		if ok {
-			dlog.FromCtx(ctx).
-				Warn("Duplicate setting", "key", setting.Key, "block", blockNum, "oldValue",
+			logging.FromCtx(ctx).
+				Warnw("Duplicate setting", "key", setting.Key, "block", blockNum, "oldValue",
 					oldVal, "newValue", setting.Value)
 		}
 		blockMap[blockNum] = setting.Value
@@ -249,8 +249,8 @@ func (r rawSettingsMap) apply(
 ) {
 	name, ok := keyHashToName[event.Key]
 	if !ok {
-		dlog.FromCtx(ctx).
-			Info("Skipping unknown setting key", "key", event.Key, "value", event.Value, "block", event.Block, "deleted", event.Deleted)
+		logging.FromCtx(ctx).
+			Infow("Skipping unknown setting key", "key", event.Key, "value", event.Value, "block", event.Block, "deleted", event.Deleted)
 		return
 	}
 	if event.Deleted {
@@ -266,13 +266,13 @@ func (r rawSettingsMap) apply(
 						delete(r, name)
 					}
 				} else {
-					dlog.FromCtx(ctx).
-						Warn("Got delete event for non-existing block", "key", event.Key, "block", event.Block)
+					logging.FromCtx(ctx).
+						Warnw("Got delete event for non-existing block", "key", event.Key, "block", event.Block)
 				}
 			}
 		} else {
-			dlog.FromCtx(ctx).
-				Warn("Got delete event for non-existing setting", "key", event.Key, "block", event.Block)
+			logging.FromCtx(ctx).
+				Warnw("Got delete event for non-existing setting", "key", event.Key, "block", event.Block)
 		}
 	} else {
 		if _, ok := r[name]; !ok {
@@ -355,7 +355,7 @@ func (occ *onChainConfiguration) processRawSettings(
 	ctx context.Context,
 	blockNum BlockNumber,
 ) {
-	log := dlog.FromCtx(ctx)
+	log := logging.FromCtx(ctx)
 
 	byBlockNum, blockNums := occ.loadedSettingMap.transform()
 
@@ -379,12 +379,12 @@ func (occ *onChainConfiguration) processRawSettings(
 			DecodeHook: decodeHook,
 		})
 		if err != nil {
-			log.Error("SHOULD NOT HAPPEN: failed to create decoder", "err", err)
+			log.Errorw("SHOULD NOT HAPPEN: failed to create decoder", "err", err)
 			continue
 		}
 		err = decoder.Decode(input)
 		if err != nil {
-			log.Error("SHOULD NOT HAPPEN: failed to decode settings", "err", err)
+			log.Errorw("SHOULD NOT HAPPEN: failed to decode settings", "err", err)
 			continue
 		}
 
@@ -393,7 +393,7 @@ func (occ *onChainConfiguration) processRawSettings(
 
 	occ.cfg.Store(&settings)
 
-	log.Info("OnChainConfig: applied", "settings", settings[len(settings)-1], "currentBlock", blockNum)
+	log.Infow("OnChainConfig: applied", "settings", settings[len(settings)-1], "currentBlock", blockNum)
 }
 
 func NewOnChainConfig(
@@ -449,7 +449,7 @@ func makeOnChainConfig(
 	contract *river.RiverConfigV1Caller,
 	appliedBlockNum BlockNumber,
 ) (*onChainConfiguration, error) {
-	log := dlog.FromCtx(ctx)
+	log := logging.FromCtx(ctx)
 
 	// Get defaults to use if the setting is deleted
 	defaultsMap := make(map[string]interface{})
@@ -461,7 +461,7 @@ func makeOnChainConfig(
 	keyHashToName := make(map[common.Hash]string)
 	for key, value := range defaultsMap {
 		hash := HashSettingName(key)
-		log.Debug("OnChainConfig monitoring key", "key", key, "hash", hash, "default", value)
+		log.Debugw("OnChainConfig monitoring key", "key", key, "hash", hash, "default", value)
 		keyHashToName[hash] = key
 	}
 
@@ -490,7 +490,7 @@ func (occ *onChainConfiguration) onBlock(_ context.Context, blockNumber BlockNum
 func (occ *onChainConfiguration) onConfigChanged(ctx context.Context, event types.Log) {
 	var e river.RiverConfigV1ConfigurationChanged
 	if err := occ.contract.BoundContract().UnpackLog(&e, "ConfigurationChanged", event); err != nil {
-		dlog.FromCtx(ctx).Error("OnChainConfiguration: unable to decode ConfigurationChanged event")
+		logging.FromCtx(ctx).Errorw("OnChainConfiguration: unable to decode ConfigurationChanged event")
 		return
 	}
 	occ.applyEvent(ctx, &e)
@@ -596,7 +596,7 @@ func ABIDecodeString(data []byte) (string, error) {
 }
 
 func abiBytesToTypeDecoder(ctx context.Context) mapstructure.DecodeHookFuncValue {
-	log := dlog.FromCtx(ctx)
+	log := logging.FromCtx(ctx)
 	return func(from reflect.Value, to reflect.Value) (interface{}, error) {
 		// This function ignores decoding errors.
 		// If there is bad setting value on chain, it will be ignored.
@@ -612,7 +612,7 @@ func abiBytesToTypeDecoder(ctx context.Context) mapstructure.DecodeHookFuncValue
 					if (ms || sec) && ok {
 						vv, err := ABIDecodeInt64(bb)
 						if err != nil {
-							log.Error("failed to decode int64", "key", key, "err", err, "bytes", bb)
+							log.Errorw("failed to decode int64", "key", key, "err", err, "bytes", bb)
 							badKeys = append(badKeys, key)
 							continue
 						}
@@ -635,27 +635,27 @@ func abiBytesToTypeDecoder(ctx context.Context) mapstructure.DecodeHookFuncValue
 				if err == nil {
 					return v, nil
 				}
-				log.Error("failed to decode int64", "err", err, "bytes", from.Bytes())
+				log.Errorw("failed to decode int64", "err", err, "bytes", from.Bytes())
 			} else if to.Kind() == reflect.Uint64 || to.Kind() == reflect.Uint {
 				v, err := ABIDecodeUint64(from.Bytes())
 				if err == nil {
 					return v, nil
 				}
-				log.Error("failed to decode uint64", "err", err, "bytes", from.Bytes())
+				log.Errorw("failed to decode uint64", "err", err, "bytes", from.Bytes())
 			} else if to.Kind() == reflect.String {
 				v, err := ABIDecodeString(from.Bytes())
 				if err == nil {
 					return v, nil
 				}
-				log.Error("failed to decode string", "err", err, "bytes", from.Bytes())
+				log.Errorw("failed to decode string", "err", err, "bytes", from.Bytes())
 			} else if to.Kind() == reflect.Slice && to.Type().Elem().Kind() == reflect.Uint64 {
 				v, err := ABIDecodeUint64Array(from.Bytes())
 				if err == nil {
 					return v, nil
 				}
-				log.Error("failed to decode []uint64", "err", err, "bytes", from.Bytes())
+				log.Errorw("failed to decode []uint64", "err", err, "bytes", from.Bytes())
 			} else {
-				log.Error("unsupported type for setting decoding", "type", to.Kind(), "bytes", from.Bytes())
+				log.Errorw("unsupported type for setting decoding", "type", to.Kind(), "bytes", from.Bytes())
 			}
 			// Failed to decode, return unchanged value.
 			return to.Interface(), nil

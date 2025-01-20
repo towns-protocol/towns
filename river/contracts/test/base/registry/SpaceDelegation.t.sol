@@ -85,7 +85,7 @@ contract SpaceDelegationTest is
     uint96 amount = 1 ether;
     bridgeTokensForUser(address(this), amount);
 
-    river.approve(address(rewardsDistributionFacet), amount);
+    towns.approve(address(rewardsDistributionFacet), amount);
     rewardsDistributionFacet.stake(amount, space, address(this));
 
     timeLapse = bound(timeLapse, 1, rewardDuration);
@@ -119,7 +119,7 @@ contract SpaceDelegationTest is
     uint96 amount = 1 ether;
     bridgeTokensForUser(address(this), amount);
 
-    river.approve(address(rewardsDistributionFacet), amount);
+    towns.approve(address(rewardsDistributionFacet), amount);
     rewardsDistributionFacet.stake(amount, space, address(this));
 
     // remove delegation and forfeit rewards
@@ -187,7 +187,7 @@ contract SpaceDelegationTest is
     uint96 amount = 1 ether;
     bridgeTokensForUser(address(this), amount);
 
-    river.approve(address(rewardsDistributionFacet), amount);
+    towns.approve(address(rewardsDistributionFacet), amount);
     rewardsDistributionFacet.stake(amount, space, address(this));
 
     timeLapse = bound(timeLapse, 1, rewardDuration);

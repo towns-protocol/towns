@@ -10342,7 +10342,7 @@ __metadata:
     lru-cache: ^11.0.1
     magic-bytes.js: ^1.10.0
     pino: ^8.17.1
-    pino-pretty: ^10.2.3
+    pino-pretty: ^13.0.0
     prettier: ^2.8.8
     typescript: ^5.1.6
     uuid: ^8.3.2
@@ -10379,7 +10379,7 @@ __metadata:
     ioredis: ^5.3.2
     msgpackr: ^1.10.1
     pino: ^8.17.1
-    pino-pretty: ^10.2.3
+    pino-pretty: ^13.0.0
     typed-emitter: ^2.1.0
     typescript: ^5.1.6
     vitest: ^2.1.5
@@ -22548,6 +22548,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"fast-copy@npm:^3.0.2":
+  version: 3.0.2
+  resolution: "fast-copy@npm:3.0.2"
+  checksum: 47f584bcede08ab3198559d3e0e093a547d567715b86be2198da6e3366c3c73eed550d97b86f9fb90dae179982b89c15d68187def960f522cdce14bacdfc6184
+  languageName: node
+  linkType: hard
+
 "fast-decode-uri-component@npm:^1.0.1":
   version: 1.0.1
   resolution: "fast-decode-uri-component@npm:1.0.1"
@@ -30844,6 +30851,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"pino-abstract-transport@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "pino-abstract-transport@npm:2.0.0"
+  dependencies:
+    split2: ^4.0.0
+  checksum: 4db0cd8a1a7b6d13e76dbb58e6adc057c39e4591c70f601f4a427c030d57dff748ab53954e1ecd3aa6e21c1a22dd38de96432606c6d906a7b9f610543bf1d6e2
+  languageName: node
+  linkType: hard
+
 "pino-abstract-transport@npm:v0.5.0":
   version: 0.5.0
   resolution: "pino-abstract-transport@npm:0.5.0"
@@ -30888,27 +30904,26 @@ __metadata:
   languageName: node
   linkType: hard
 
-"pino-pretty@npm:^10.2.3":
-  version: 10.3.1
-  resolution: "pino-pretty@npm:10.3.1"
+"pino-pretty@npm:^13.0.0":
+  version: 13.0.0
+  resolution: "pino-pretty@npm:13.0.0"
   dependencies:
     colorette: ^2.0.7
     dateformat: ^4.6.3
-    fast-copy: ^3.0.0
+    fast-copy: ^3.0.2
     fast-safe-stringify: ^2.1.1
     help-me: ^5.0.0
     joycon: ^3.1.1
     minimist: ^1.2.6
     on-exit-leak-free: ^2.1.0
-    pino-abstract-transport: ^1.0.0
+    pino-abstract-transport: ^2.0.0
     pump: ^3.0.0
-    readable-stream: ^4.0.0
     secure-json-parse: ^2.4.0
-    sonic-boom: ^3.0.0
+    sonic-boom: ^4.0.1
     strip-json-comments: ^3.1.1
   bin:
     pino-pretty: bin.js
-  checksum: 51e2d670745a396ddfd12da9f7ea5c2e4dc93a84589ffb29f64f4118d4b83ab636ee21f4aee7a47adb04664d5d921fb33e039e0ea961bb1c1cffefa28444563c
+  checksum: a529219b3ccc99ed6a3e2de00ae6a8d4003344614bce39f836352317c962db8c3f4e9ee45843edc218cb9be618a7318b06fa6fab366d4314b9297d0130bc06f5
   languageName: node
   linkType: hard
 

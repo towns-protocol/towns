@@ -10,7 +10,6 @@ import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {Diamond} from "@river-build/diamond/src/Diamond.sol";
 
 // facets
-import {MainnetDelegation} from "contracts/src/tokens/river/base/delegation/MainnetDelegation.sol";
 import {MultiInit} from "@river-build/diamond/src/initializers/MultiInit.sol";
 
 // deployers
@@ -24,7 +23,6 @@ import {DeployEntitlementChecker} from "contracts/scripts/deployments/facets/Dep
 import {DeployNodeOperator} from "contracts/scripts/deployments/facets/DeployNodeOperator.s.sol";
 import {DeployMetadata} from "contracts/scripts/deployments/facets/DeployMetadata.s.sol";
 import {DeploySpaceDelegation} from "contracts/scripts/deployments/facets/DeploySpaceDelegation.s.sol";
-import {DeployRewardsDistribution} from "contracts/scripts/deployments/facets/DeployRewardsDistribution.s.sol";
 import {DeployRewardsDistributionV2} from "contracts/scripts/deployments/facets/DeployRewardsDistributionV2.s.sol";
 import {DeployERC721ANonTransferable} from "contracts/scripts/deployments/facets/DeployERC721ANonTransferable.s.sol";
 import {DeployMockMessenger} from "contracts/scripts/deployments/facets/DeployMockMessenger.s.sol";
@@ -45,8 +43,6 @@ contract DeployBaseRegistry is DiamondHelper, Deployer {
   DeployMetadata metadataHelper = new DeployMetadata();
   DeployNodeOperator operatorHelper = new DeployNodeOperator();
   DeploySpaceDelegation spaceDelegationHelper = new DeploySpaceDelegation();
-  DeployRewardsDistribution distributionHelper =
-    new DeployRewardsDistribution();
   DeployRewardsDistributionV2 distributionV2Helper =
     new DeployRewardsDistributionV2();
   DeployMockMessenger messengerHelper = new DeployMockMessenger();
@@ -115,7 +111,6 @@ contract DeployBaseRegistry is DiamondHelper, Deployer {
     metadata = metadataHelper.deploy(deployer);
     entitlementChecker = checkerHelper.deploy(deployer);
     operator = operatorHelper.deploy(deployer);
-    distribution = distributionHelper.deploy(deployer);
     distributionV2 = distributionV2Helper.deploy(deployer);
     mainnetDelegation = mainnetDelegationHelper.deploy(deployer);
     spaceDelegation = spaceDelegationHelper.deploy(deployer);
@@ -144,12 +139,7 @@ contract DeployBaseRegistry is DiamondHelper, Deployer {
       entitlementChecker,
       checkerHelper.makeInitData("")
     );
-    // New facets
-    addFacet(
-      distributionHelper.makeCut(distribution, IDiamond.FacetCutAction.Add),
-      distribution,
-      distributionHelper.makeInitData("")
-    );
+
     addFacet(
       distributionV2Helper.makeCut(distributionV2, IDiamond.FacetCutAction.Add),
       distributionV2,
@@ -224,15 +214,6 @@ contract DeployBaseRegistry is DiamondHelper, Deployer {
           operatorHelper.makeCut(operator, IDiamond.FacetCutAction.Add),
           operator,
           operatorHelper.makeInitData("")
-        );
-      } else if (
-        facetNameHash == keccak256(abi.encodePacked("RewardsDistribution"))
-      ) {
-        distribution = distributionHelper.deploy(deployer);
-        addFacet(
-          distributionHelper.makeCut(distribution, IDiamond.FacetCutAction.Add),
-          distribution,
-          distributionHelper.makeInitData("")
         );
       } else if (
         facetNameHash == keccak256(abi.encodePacked("RewardsDistributionV2"))

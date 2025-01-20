@@ -9,7 +9,7 @@ import (
 
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/dlog"
+	"github.com/river-build/river/core/node/logging"
 	. "github.com/river-build/river/core/node/protocol"
 )
 
@@ -34,7 +34,7 @@ func NewBlockchainClientPool(
 	cfg *config.Config,
 	onChainCfg crypto.OnChainConfiguration,
 ) (BlockchainClientPool, error) {
-	log := dlog.FromCtx(ctx)
+	log := logging.FromCtx(ctx)
 	clients := make(map[uint64]crypto.BlockchainClient)
 	// TODO: This is not creating errors if a client cannot be created for the sake of maintaining
 	// data availability on the network. As soon as replicated streams reaches maturity on external
@@ -43,13 +43,13 @@ func NewBlockchainClientPool(
 	for _, chainID := range onChainCfg.Get().XChain.Blockchains {
 		chainCfg, ok := cfg.ChainConfigs[chainID]
 		if !ok {
-			log.Warn("Chain config not found", "chainId", chainID)
+			log.Warnw("Chain config not found", "chainId", chainID)
 			continue
 		}
 
 		client, err := ethclient.DialContext(ctx, chainCfg.NetworkUrl)
 		if err != nil {
-			log.Warn("Unable to dial endpoint", "chainId", chainID, "err", err)
+			log.Warnw("Unable to dial endpoint", "chainId", chainID, "err", err)
 			continue
 		}
 
@@ -57,11 +57,11 @@ func NewBlockchainClientPool(
 		fetchedChainID, err := client.ChainID(ctx)
 		if err != nil {
 			client.Close()
-			log.Warn("Unable to connect to endpoint", "chainId", chainID, "err", err)
+			log.Warnw("Unable to connect to endpoint", "chainId", chainID, "err", err)
 			continue
 		}
 		if fetchedChainID.Uint64() != chainID {
-			log.Warn("Chain points to different endpoint", "chainId", chainID, "gotChainId", fetchedChainID)
+			log.Warnw("Chain points to different endpoint", "chainId", chainID, "gotChainId", fetchedChainID)
 			client.Close()
 			continue
 		}

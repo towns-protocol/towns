@@ -1,3 +1,0 @@
-INFO 14:18:26.336 test message
-    tlsConfig = 
-        {Cert:"certvalue"}

@@ -3,11 +3,11 @@ package rpc
 import (
 	"context"
 	"errors"
-	"log/slog"
 	"runtime/pprof"
 	"time"
 
 	"connectrpc.com/connect"
+	"go.uber.org/zap"
 
 	. "github.com/river-build/river/core/node/base"
 	. "github.com/river-build/river/core/node/protocol"
@@ -34,16 +34,16 @@ func (s *Service) SyncStreams(
 	ctx, log := utils.CtxAndLogForRequest(ctx, req)
 	startTime := time.Now()
 	syncId := GenNanoid()
-	log.Debug("SyncStreams START", "syncId", syncId)
+	log.Debugw("SyncStreams START", "syncId", syncId)
 
 	var err error
 	runWithLabels(ctx, syncId, func(ctx context.Context) {
 		err = s.syncHandler.SyncStreams(ctx, syncId, req, res)
 	})
 	if err != nil {
-		level := slog.LevelWarn
+		level := zap.WarnLevel
 		if errors.Is(err, context.Canceled) {
-			level = slog.LevelDebug
+			level = zap.DebugLevel
 		}
 		err = AsRiverError(
 			err,
@@ -52,7 +52,7 @@ func (s *Service) SyncStreams(
 			LogLevel(log, level).
 			AsConnectError()
 	} else {
-		log.Debug("SyncStreams DONE", "syncId", syncId, "duration", time.Since(startTime))
+		log.Debugw("SyncStreams DONE", "syncId", syncId, "duration", time.Since(startTime))
 	}
 	return err
 }

@@ -12,7 +12,7 @@ import (
 
 	"github.com/river-build/river/core/config"
 	"github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/dlog"
+	"github.com/river-build/river/core/node/logging"
 	"github.com/river-build/river/core/node/rpc"
 	"github.com/river-build/river/core/xchain/server"
 )
@@ -24,7 +24,7 @@ func runServices(ctx context.Context, cfg *config.Config, stream bool, xchain bo
 		return err
 	}
 
-	log := dlog.FromCtx(ctx)
+	log := logging.FromCtx(ctx)
 
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -36,7 +36,7 @@ func runServices(ctx context.Context, cfg *config.Config, stream bool, xchain bo
 	if stream {
 		streamService, err = rpc.StartServer(ctx, cancel, cfg, nil)
 		if err != nil {
-			log.Error("Failed to start server", "error", err)
+			log.Errorw("Failed to start server", "error", err)
 			return err
 		}
 		defer streamService.Close()
@@ -73,9 +73,9 @@ func runServices(ctx context.Context, cfg *config.Config, stream bool, xchain bo
 	}
 
 	if err == nil {
-		log.Info("Got OS signal", "signal", signal.String())
+		log.Infow("Got OS signal", "signal", signal.String())
 	} else {
-		log.Error("Exiting with error", "error", err)
+		log.Errorw("Exiting with error", "error", err)
 	}
 
 	if xchainService != nil {

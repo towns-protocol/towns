@@ -8,7 +8,7 @@ import (
 	psutilCpu "github.com/shirou/gopsutil/cpu"
 	psutilMem "github.com/shirou/gopsutil/mem"
 
-	"github.com/river-build/river/core/node/dlog"
+	"github.com/river-build/river/core/node/logging"
 	"github.com/river-build/river/core/node/rpc/render"
 )
 
@@ -45,7 +45,7 @@ func StatsHandler(w http.ResponseWriter, r *http.Request) {
 
 	output, err := render.Execute(&reply)
 	if err != nil {
-		dlog.FromCtx(ctx).Error("unable to read memory stats", "err", err)
+		logging.FromCtx(ctx).Errorw("unable to read memory stats", "err", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}

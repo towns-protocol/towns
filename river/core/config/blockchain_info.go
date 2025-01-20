@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/river-build/river/core/node/dlog"
+	"github.com/river-build/river/core/node/logging"
 )
 
 type BlockchainInfo struct {
@@ -20,13 +20,13 @@ func GetEtherBasedBlockchains(
 	chains []uint64,
 	defaultBlockchainInfo map[uint64]BlockchainInfo,
 ) []uint64 {
-	log := dlog.FromCtx(ctx)
+	log := logging.FromCtx(ctx)
 	etherBasedChains := make([]uint64, 0, len(chains))
 	for _, chainId := range chains {
 		if info, ok := defaultBlockchainInfo[chainId]; ok && info.IsEtherBased {
 			etherBasedChains = append(etherBasedChains, chainId)
 		} else if !ok {
-			log.Error("Missing BlockchainInfo for chain", "chainId", chainId)
+			log.Errorw("Missing BlockchainInfo for chain", "chainId", chainId)
 		}
 	}
 	return etherBasedChains

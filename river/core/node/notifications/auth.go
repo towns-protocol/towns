@@ -18,7 +18,7 @@ import (
 
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/dlog"
+	"github.com/river-build/river/core/node/logging"
 	. "github.com/river-build/river/core/node/protocol"
 )
 
@@ -163,7 +163,7 @@ func (s *Service) FinishAuthentication(
 
 	sessionToken, err := token.SignedString(s.sessionTokenSigningKey)
 	if err != nil {
-		dlog.FromCtx(ctx).Error("Unable to sign session token", "err", err)
+		logging.FromCtx(ctx).Errorw("Unable to sign session token", "err", err)
 		return nil, AsRiverError(err, Err_INTERNAL).Tag("user", userID)
 	}
 

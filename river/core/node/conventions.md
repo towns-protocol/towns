@@ -2,29 +2,26 @@
 
 ## Logs
 
-Logging is done using Go's [slog](https://pkg.go.dev/log/slog) package for structured logging.
+Logging is done using Go's [zap](https://pkg.go.dev/go.uber.org/zap) package for structured logging.
 
-Current logger is saved into variable `log` and logging statement takes a message and optional key-value pairs like this:
+The current logger is saved into variable `log`, and the logging statement takes a message and optional key-value pairs like this:
 
 ```go
-log.Debug("Starting new snapshot", "streamId", streamId, "blockNumber", curBlockNum)
+log.Debugw("Starting new snapshot", "streamId", streamId, "blockNumber", curBlockNum)
 ```
 
-There is wrapper called [dlog](./dlog) which
-provides coloring and better formatting for types we user frequently (protos, binary arrays).
-
-Normally logger is passed in [context](https://pkg.go.dev/context) and retrieved using `dlog.FromCtx`:
+Normally the logger is passed in via the [context](https://pkg.go.dev/context) and retrieved using `logging.FromCtx`:
 
 ```go
 func loadNodeRegistry(ctx context.Context, nodeRegistryPath string, localNode *nodes.LocalNode) (nodes.NodeRegistry, error) {
-	log := dlog.FromCtx(ctx)
+	log := logging.FromCtx(ctx)
 
 	if nodeRegistryPath == "" {
-		log.Warn("No node registry path specified, running in single node configuration")
+		log.Warnw("No node registry path specified, running in single node configuration")
 		return nodes.MakeSingleNodeRegistry(ctx, localNode), nil
 	}
 
-	log.Info("Loading node registry", "path", nodeRegistryPath)
+	log.Infow("Loading node registry", "path", nodeRegistryPath)
 	return nodes.LoadNodeRegistry(ctx, nodeRegistryPath, localNode)
 }
 ```
@@ -87,7 +84,7 @@ return WrapRiverError(Err_BAD_LINK_WALLET_BAD_SIGNATURE, err).
     Tags("anotherTag", 123, "yetAnotherTag", 456)
 ```
 
-River error can be logged:
+A RiverError can be easily logged:
 
 ```go
 return AsRiverError(err).
@@ -110,7 +107,7 @@ the default should be to augument passing error and let RPC layer do the logging
 
 ## . imports
 
-While it's not idiomatic go, it's ok to use dot imports for base, protocol, events (use judgement for other cases).
+While it's not idiomatic go, it's ok to use dot imports for base, protocol, events (use your best judgement for other cases).
 Since request processing code works with classes
 from these packages very tightly not doing this leads to endless unreadable prefixes. It's a bit impractical to merge these into
 one packages, so dot imports it is:

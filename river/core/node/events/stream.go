@@ -15,7 +15,7 @@ import (
 	"github.com/river-build/river/core/contracts/river"
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/dlog"
+	"github.com/river-build/river/core/node/logging"
 	"github.com/river-build/river/core/node/nodes"
 	. "github.com/river-build/river/core/node/protocol"
 	. "github.com/river-build/river/core/node/shared"
@@ -172,8 +172,8 @@ func (s *streamImpl) loadInternal(ctx context.Context) error {
 
 	view, err := MakeStreamView(ctx, streamData)
 	if err != nil {
-		dlog.FromCtx(ctx).
-			Error("Stream.loadInternal: Failed to parse stream data loaded from storage", "error", err, "streamId", s.streamId)
+		logging.FromCtx(ctx).
+			Errorw("Stream.loadInternal: Failed to parse stream data loaded from storage", "error", err, "streamId", s.streamId)
 		return err
 	}
 
@@ -373,7 +373,7 @@ func (s *streamImpl) promoteCandidateLocked(ctx context.Context, mb *MiniblockRe
 		// Log error if hash doesn't match.
 		appliedMb, _ := s.view().blockWithNum(mb.Num)
 		if appliedMb != nil && appliedMb.Ref.Hash != mb.Hash {
-			dlog.FromCtx(ctx).Error("PromoteCandidate: Miniblock is already applied",
+			logging.FromCtx(ctx).Errorw("PromoteCandidate: Miniblock is already applied",
 				"streamId", s.streamId,
 				"blockNum", mb.Num,
 				"blockHash", mb.Hash,
@@ -765,7 +765,7 @@ func (s *streamImpl) addEventLocked(ctx context.Context, event *ParsedEvent) err
 // Sub subscribes the reciever to the stream, sending all content between the cookie and the
 // current stream state. This method is thread-safe.
 func (s *streamImpl) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncResultReceiver) error {
-	log := dlog.FromCtx(ctx)
+	log := logging.FromCtx(ctx)
 	if !bytes.Equal(cookie.NodeAddress, s.params.Wallet.Address.Bytes()) {
 		return RiverError(
 			Err_BAD_SYNC_COOKIE,
@@ -832,7 +832,7 @@ func (s *streamImpl) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncR
 		miniblockIndex, err := s.view().indexOfMiniblockWithNum(cookie.MinipoolGen)
 		if err != nil {
 			// The user's sync cookie is out of date. Send a sync reset and return an up-to-date StreamAndCookie.
-			log.Warn("Stream.Sub: out of date cookie.MiniblockNum. Sending sync reset.",
+			log.Warnw("Stream.Sub: out of date cookie.MiniblockNum. Sending sync reset.",
 				"stream", s.streamId, "error", err.Error())
 
 			receiver.OnUpdate(
@@ -1045,8 +1045,8 @@ func (s *streamImpl) tryReadAndApplyCandidateLocked(ctx context.Context, mbRef *
 	}
 
 	if !IsRiverErrorCode(err, Err_NOT_FOUND) {
-		dlog.FromCtx(ctx).
-			Error("Stream.tryReadAndApplyCandidateNoLock: failed to read miniblock candidate", "error", err)
+		logging.FromCtx(ctx).
+			Errorw("Stream.tryReadAndApplyCandidateNoLock: failed to read miniblock candidate", "error", err)
 	}
 	return false
 }
@@ -1082,8 +1082,8 @@ func (s *streamImpl) applyStreamEvents(
 
 	// Sanity check
 	if s.lastAppliedBlockNum >= blockNum {
-		dlog.FromCtx(ctx).
-			Error("applyStreamEvents: already applied events for block", "blockNum", blockNum, "streamId", s.streamId,
+		logging.FromCtx(ctx).
+			Errorw("applyStreamEvents: already applied events for block", "blockNum", blockNum, "streamId", s.streamId,
 				"lastAppliedBlockNum", s.lastAppliedBlockNum,
 			)
 		return
@@ -1097,15 +1097,15 @@ func (s *streamImpl) applyStreamEvents(
 				Num:  int64(event.LastMiniblockNum),
 			})
 			if err != nil {
-				dlog.FromCtx(ctx).Error("onStreamLastMiniblockUpdated: failed to promote candidate", "err", err)
+				logging.FromCtx(ctx).Errorw("onStreamLastMiniblockUpdated: failed to promote candidate", "err", err)
 			}
 		case *river.StreamPlacementUpdated:
 			err := s.nodesLocked.Update(event, s.params.Wallet.Address)
 			if err != nil {
-				dlog.FromCtx(ctx).Error("applyStreamEvents: failed to update nodes", "err", err, "streamId", s.streamId)
+				logging.FromCtx(ctx).Errorw("applyStreamEvents: failed to update nodes", "err", err, "streamId", s.streamId)
 			}
 		default:
-			dlog.FromCtx(ctx).Error("applyStreamEvents: unknown event", "event", event, "streamId", s.streamId)
+			logging.FromCtx(ctx).Errorw("applyStreamEvents: unknown event", "event", event, "streamId", s.streamId)
 		}
 	}
 

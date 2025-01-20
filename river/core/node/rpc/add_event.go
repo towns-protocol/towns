@@ -9,8 +9,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/dlog"
 	. "github.com/river-build/river/core/node/events"
+	"github.com/river-build/river/core/node/logging"
 	. "github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/rules"
 	. "github.com/river-build/river/core/node/shared"
@@ -22,7 +22,7 @@ func (s *Service) localAddEvent(
 	localStream SyncStream,
 	streamView StreamView,
 ) (*connect.Response[AddEventResponse], error) {
-	log := dlog.FromCtx(ctx)
+	log := logging.FromCtx(ctx)
 
 	streamId, err := StreamIdFromBytes(req.Msg.StreamId)
 	if err != nil {
@@ -34,7 +34,7 @@ func (s *Service) localAddEvent(
 		return nil, AsRiverError(err).Func("localAddEvent")
 	}
 
-	log.Debug("localAddEvent", "parsedEvent", parsedEvent)
+	log.Debugw("localAddEvent", "parsedEvent", parsedEvent)
 
 	err = s.addParsedEvent(ctx, streamId, parsedEvent, localStream, streamView)
 	if err != nil && req.Msg.Optional {

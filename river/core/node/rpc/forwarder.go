@@ -9,7 +9,7 @@ import (
 	"connectrpc.com/connect"
 
 	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/dlog"
+	"github.com/river-build/river/core/node/logging"
 	. "github.com/river-build/river/core/node/nodes"
 	. "github.com/river-build/river/core/node/protocol"
 	. "github.com/river-build/river/core/node/protocol/protocolconnect"
@@ -182,7 +182,7 @@ func executeConnectHandler[Req, Res any](
 	methodName string,
 ) (*connect.Response[Res], error) {
 	ctx, log := utils.CtxAndLogForRequest(ctx, req)
-	log.Debug("Handler ENTER", "method", methodName)
+	log.Debugw("Handler ENTER", "method", methodName)
 
 	startTime := time.Now()
 	resp, e := handler(ctx, req)
@@ -202,7 +202,7 @@ func executeConnectHandler[Req, Res any](
 		_ = err.LogWarn(log)
 		return nil, err.AsConnectError()
 	}
-	log.Debug("Handler LEAVE", "method", methodName, "response", resp.Msg, "elapsed", elapsed)
+	log.Debugw("Handler LEAVE", "method", methodName, "response", resp.Msg, "elapsed", elapsed)
 	return resp, nil
 }
 
@@ -228,7 +228,7 @@ func (s *Service) GetStreamEx(
 	resp *connect.ServerStream[GetStreamExResponse],
 ) error {
 	ctx, log := utils.CtxAndLogForRequest(ctx, req)
-	log.Debug("GetStreamEx ENTER")
+	log.Debugw("GetStreamEx ENTER")
 	e := s.getStreamExImpl(ctx, req, resp)
 	if e != nil {
 		return s.asAnnotatedRiverError(e).
@@ -237,7 +237,7 @@ func (s *Service) GetStreamEx(
 			LogWarn(log).
 			AsConnectError()
 	}
-	log.Debug("GetStreamEx LEAVE")
+	log.Debugw("GetStreamEx LEAVE")
 	return nil
 }
 
@@ -479,7 +479,7 @@ func (s *Service) addEventImpl(
 	// TODO: smarter remote select? random?
 	// TODO: retry?
 	firstRemote := stream.GetStickyPeer()
-	dlog.FromCtx(ctx).Debug("Forwarding request", "nodeAddress", firstRemote)
+	logging.FromCtx(ctx).Debugw("Forwarding request", "nodeAddress", firstRemote)
 	stub, err := s.nodeRegistry.GetStreamServiceClientForAddress(firstRemote)
 	if err != nil {
 		return nil, err

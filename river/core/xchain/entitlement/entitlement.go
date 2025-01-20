@@ -10,7 +10,7 @@ import (
 
 	"github.com/river-build/river/core/contracts/base"
 	"github.com/river-build/river/core/contracts/types"
-	"github.com/river-build/river/core/node/dlog"
+	"github.com/river-build/river/core/node/logging"
 )
 
 func (e *Evaluator) EvaluateRuleData(
@@ -18,8 +18,8 @@ func (e *Evaluator) EvaluateRuleData(
 	linkedWallets []common.Address,
 	ruleData *base.IRuleEntitlementBaseRuleDataV2,
 ) (bool, error) {
-	log := dlog.FromCtx(ctx)
-	log.Info("Evaluating rule data", "ruleData", ruleData)
+	log := logging.FromCtx(ctx)
+	log.Infow("Evaluating rule data", "ruleData", ruleData)
 	opTree, err := types.GetOperationTree(ctx, ruleData)
 	if err != nil {
 		return false, err
@@ -37,7 +37,7 @@ func isEntitlementEvaluationError(err error) bool {
 // logIfEntitlementError conditionally logs an error if it was not a context cancellation.
 func logIfEntitlementError(ctx context.Context, err error) {
 	if isEntitlementEvaluationError(err) {
-		dlog.FromCtx(ctx).Warn("Entitlement evaluation succeeded, but encountered error", "error", err)
+		logging.FromCtx(ctx).Warnw("Entitlement evaluation succeeded, but encountered error", "error", err)
 	}
 }
 

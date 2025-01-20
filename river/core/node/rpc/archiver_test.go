@@ -389,7 +389,12 @@ func TestArchiveOneStream(t *testing.T) {
 
 	err = arch.ArchiveStream(
 		ctx,
-		NewArchiveStream(streamId, &streamRecord.Nodes, streamRecord.LastMiniblockNum),
+		NewArchiveStream(
+			streamId,
+			&streamRecord.Nodes,
+			streamRecord.LastMiniblockNum,
+			arch.config.GetMaxConsecutiveFailedUpdates(),
+		),
 	)
 	require.NoError(err)
 
@@ -410,7 +415,12 @@ func TestArchiveOneStream(t *testing.T) {
 
 	err = arch.ArchiveStream(
 		ctx,
-		NewArchiveStream(streamId, &streamRecord.Nodes, streamRecord.LastMiniblockNum),
+		NewArchiveStream(
+			streamId,
+			&streamRecord.Nodes,
+			streamRecord.LastMiniblockNum,
+			arch.config.GetMaxConsecutiveFailedUpdates(),
+		),
 	)
 	require.NoError(err)
 
@@ -428,7 +438,12 @@ func TestArchiveOneStream(t *testing.T) {
 
 	err = arch.ArchiveStream(
 		ctx,
-		NewArchiveStream(streamId, &streamRecord.Nodes, streamRecord.LastMiniblockNum),
+		NewArchiveStream(
+			streamId,
+			&streamRecord.Nodes,
+			streamRecord.LastMiniblockNum,
+			arch.config.GetMaxConsecutiveFailedUpdates(),
+		),
 	)
 	require.NoError(err)
 
@@ -537,6 +552,12 @@ func createCorruptStreams(
 		invalidateEventNumOffset,
 		invalidateBlockTimestamp,
 		invalidatePrevSnapshotBlockNum,
+		invalidateBlockHeaderEventLength,
+		invalidateEventHash,
+		invalidateBlockHeaderType,
+		invalidateMiniblockUnparsable,
+		invalidateBlockNumber,
+		mismatchEventHash,
 	}
 
 	streamIds := make([]StreamId, len(corruptionFuncs))
@@ -555,7 +576,7 @@ func TestArchive20StreamsWithCorruption(t *testing.T) {
 	ctx := tester.ctx
 	require := tester.require
 
-	_, userStreamIds, err := createUserSettingsStreamsWithData(ctx, tester.testClient(0), 16, 10, 5)
+	_, userStreamIds, err := createUserSettingsStreamsWithData(ctx, tester.testClient(0), 10, 10, 5)
 	require.NoError(err)
 
 	corruptStreamIds := createCorruptStreams(
@@ -569,6 +590,7 @@ func TestArchive20StreamsWithCorruption(t *testing.T) {
 	archiveCfg := tester.getConfig()
 	archiveCfg.Archive.ArchiveId = "arch" + GenShortNanoid()
 	archiveCfg.Archive.ReadMiniblocksSize = 10
+	archiveCfg.Archive.MaxFailedConsecutiveUpdates = 1
 
 	serverCtx, serverCancel := context.WithCancel(ctx)
 	defer serverCancel()
@@ -597,7 +619,7 @@ func TestArchive20StreamsWithCorruption(t *testing.T) {
 	require.EventuallyWithT(
 		func(c *assert.CollectT) {
 			corruptStreams := arch.Archiver.GetCorruptStreams(ctx)
-			assert.Len(c, corruptStreams, 4)
+			assert.Len(c, corruptStreams, 10)
 			corruptStreamsSet := map[StreamId]struct{}{}
 			for _, record := range corruptStreams {
 				corruptStreamsSet[record.StreamId] = struct{}{}
@@ -728,9 +750,15 @@ func requireStreamScrubCorruption(
 }
 
 func TestCorruptionTracker(t *testing.T) {
+	maxFailedConsecutiveUpdates := uint32(50)
 	ctx := context.Background()
-	stream := NewArchiveStream(testutils.FakeStreamId(STREAM_SPACE_BIN), &[]common.Address{}, 0)
-	ct := NewStreamCorruptionTracker()
+	stream := NewArchiveStream(
+		testutils.FakeStreamId(STREAM_SPACE_BIN),
+		&[]common.Address{},
+		0,
+		maxFailedConsecutiveUpdates,
+	)
+	ct := NewStreamCorruptionTracker(maxFailedConsecutiveUpdates)
 	ct.SetParent(stream)
 
 	require := require.New(t)
@@ -828,9 +856,14 @@ func TestCorruptionTracker(t *testing.T) {
 
 	// If a stream mark corrupt due to persistent unavailability, and then is marked corrupt due
 	// to a scrub failure, it cannot be reset.
-	stream = NewArchiveStream(testutils.FakeStreamId(STREAM_SPACE_BIN), &[]common.Address{}, 0)
+	stream = NewArchiveStream(
+		testutils.FakeStreamId(STREAM_SPACE_BIN),
+		&[]common.Address{},
+		0,
+		maxFailedConsecutiveUpdates,
+	)
 	stream.numBlocksInDb.Store(50)
-	ct = NewStreamCorruptionTracker()
+	ct = NewStreamCorruptionTracker(maxFailedConsecutiveUpdates)
 	ct.SetParent(stream)
 
 	for range maxFailedConsecutiveUpdates {

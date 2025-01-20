@@ -7,8 +7,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/events"
+	"github.com/river-build/river/core/node/logging"
 	. "github.com/river-build/river/core/node/protocol"
 	. "github.com/river-build/river/core/node/shared"
 )
@@ -50,11 +50,11 @@ func newLocalSyncer(
 }
 
 func (s *localSyncer) Run() {
-	log := dlog.FromCtx(s.syncStreamCtx)
+	log := logging.FromCtx(s.syncStreamCtx)
 	for _, cookie := range s.cookies {
 		streamID, _ := StreamIdFromBytes(cookie.GetStreamId())
 		if err := s.addStream(s.syncStreamCtx, streamID, cookie); err != nil {
-			log.Error("Unable to add local sync stream", "stream", streamID, "err", err)
+			log.Errorw("Unable to add local sync stream", "stream", streamID, "err", err)
 		}
 	}
 
@@ -106,7 +106,7 @@ func (s *localSyncer) OnUpdate(r *StreamAndCookie) {
 			Tag("syncId", s.globalSyncOpID).
 			Func("OnUpdate")
 
-		_ = err.LogError(dlog.FromCtx(s.syncStreamCtx))
+		_ = err.LogError(logging.FromCtx(s.syncStreamCtx))
 
 		s.cancelGlobalSyncOp(err)
 	}
@@ -136,7 +136,7 @@ func (s *localSyncer) OnStreamSyncDown(streamID StreamId) {
 			Tag("syncId", s.globalSyncOpID).
 			Func("sendSyncStreamResponseToClient")
 
-		_ = err.LogError(dlog.FromCtx(s.syncStreamCtx))
+		_ = err.LogError(logging.FromCtx(s.syncStreamCtx))
 
 		s.cancelGlobalSyncOp(err)
 	}

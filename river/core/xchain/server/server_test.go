@@ -7,10 +7,11 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"log/slog"
 	"math/big"
 	"testing"
 	"time"
+
+	"go.uber.org/zap"
 
 	"github.com/river-build/river/core/config"
 	"github.com/river-build/river/core/contracts/base"
@@ -24,13 +25,14 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/stretchr/testify/require"
+
 	node_config "github.com/river-build/river/core/config"
 	"github.com/river-build/river/core/node/base/test"
 	"github.com/river-build/river/core/node/crypto"
 	node_crypto "github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/dlog"
+	"github.com/river-build/river/core/node/logging"
 	"github.com/river-build/river/core/node/testutils/testfmt"
-	"github.com/stretchr/testify/require"
 
 	contract_types "github.com/river-build/river/core/contracts/types"
 
@@ -70,25 +72,22 @@ type serviceTester struct {
 }
 
 // Disable color output for console testing.
-func noColorLogger() *slog.Logger {
-	return slog.New(
-		dlog.NewPrettyTextHandler(dlog.DefaultLogOut, &dlog.PrettyHandlerOptions{
-			Colors: dlog.ColorMap_Disabled,
-		}),
-	)
+func noColorLogger() *zap.SugaredLogger {
+	logger, _ := zap.NewDevelopment()
+	return logger.Sugar()
 }
 
-func silentLogger() *slog.Logger {
-	return slog.New(&dlog.NullHandler{})
+func silentLogger() *zap.SugaredLogger {
+	return zap.NewNop().Sugar()
 }
 
 func newServiceTester(numNodes int, require *require.Assertions) *serviceTester {
 	ctx, cancel := test.NewTestContext()
 	// Comment out to silence xchain and client simulator logs. Chain monitoring logs are still visible.
-	ctx = dlog.CtxWithLog(ctx, noColorLogger())
+	ctx = logging.CtxWithLog(ctx, noColorLogger())
 
-	log := dlog.FromCtx(ctx)
-	log.Info("Creating service tester")
+	log := logging.FromCtx(ctx)
+	log.Infow("Creating service tester")
 
 	st := &serviceTester{
 		ctx:     ctx,
@@ -112,14 +111,14 @@ func newServiceTester(numNodes int, require *require.Assertions) *serviceTester 
 
 func (st *serviceTester) deployXchainTestContracts() {
 	var (
-		log                   = dlog.FromCtx(st.ctx)
+		log                   = logging.FromCtx(st.ctx)
 		approvedNodeOperators []common.Address
 	)
 	for _, w := range st.btc.Wallets {
 		approvedNodeOperators = append(approvedNodeOperators, w.Address)
 	}
 
-	log.Info("Deploying contracts")
+	log.Infow("Deploying contracts")
 	client := st.btc.DeployerBlockchain.Client
 
 	chainId, err := client.ChainID(st.ctx)
@@ -166,8 +165,8 @@ func (st *serviceTester) deployXchainTestContracts() {
 	// Commit all deploys
 	st.btc.Commit(st.ctx)
 
-	log = dlog.FromCtx(st.ctx)
-	log.Info(
+	log = logging.FromCtx(st.ctx)
+	log.Infow(
 		"Contracts deployed",
 		"entitlementChecker",
 		st.entitlementCheckerAddress.Hex(),
@@ -199,8 +198,8 @@ func (st *serviceTester) Close() {
 		if node.svr != nil {
 			node.svr.Stop()
 		} else {
-			log := dlog.FromCtx(st.ctx)
-			log.Warn("Skipping srv Stop, node wasn't started")
+			log := logging.FromCtx(st.ctx)
+			log.Warnw("Skipping srv Stop, node wasn't started")
 		}
 	}
 	if st.stopBlockAutoMining != nil {
@@ -311,9 +310,6 @@ func (st *serviceTester) Config() *config.Config {
 		},
 		RegistryContract: config.ContractConfig{
 			Address: st.btc.RiverRegistryAddress,
-		},
-		Log: config.LogConfig{
-			NoColor: true,
 		},
 	}
 	cfg.Init()
@@ -528,7 +524,7 @@ func TestErc721Entitlements(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			ctx, cancel := test.NewTestContext()
-			ctx = dlog.CtxWithLog(ctx, noColorLogger())
+			ctx = logging.CtxWithLog(ctx, noColorLogger())
 			defer cancel()
 
 			require := require.New(t)
@@ -1008,7 +1004,7 @@ func TestEthBalance(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			ctx, cancel := test.NewTestContext()
-			ctx = dlog.CtxWithLog(ctx, noColorLogger())
+			ctx = logging.CtxWithLog(ctx, noColorLogger())
 			defer cancel()
 
 			require := require.New(t)

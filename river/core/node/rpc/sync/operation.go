@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/river-build/river/core/node/dlog"
+	"github.com/river-build/river/core/node/logging"
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
@@ -89,7 +89,7 @@ func (syncOp *StreamSyncOperation) Run(
 	req *connect.Request[SyncStreamsRequest],
 	res StreamsResponseSubscriber,
 ) error {
-	log := dlog.FromCtx(syncOp.ctx).With("syncId", syncOp.SyncID)
+	log := logging.FromCtx(syncOp.ctx).With("syncId", syncOp.SyncID)
 
 	cookies, err := client.ValidateAndGroupSyncCookies(req.Msg.GetSyncPos())
 	if err != nil {
@@ -120,7 +120,7 @@ func (syncOp *StreamSyncOperation) Run(
 
 			msg.SyncId = syncOp.SyncID
 			if err = res.Send(msg); err != nil {
-				log.Error("Unable to send sync stream update to client", "err", err)
+				log.Errorw("Unable to send sync stream update to client", "err", err)
 				return err
 			}
 
@@ -287,7 +287,7 @@ func (syncOp *StreamSyncOperation) process(cmd *subCommand) error {
 		}
 	case <-time.After(10 * time.Second):
 		err := RiverError(Err_DEADLINE_EXCEEDED, "sync operation command queue full").Tags("syncId", syncOp.SyncID)
-		dlog.FromCtx(syncOp.ctx).Error("Sync operation command queue full", "err", err)
+		logging.FromCtx(syncOp.ctx).Errorw("Sync operation command queue full", "err", err)
 		return err
 	case <-syncOp.ctx.Done():
 		return RiverError(Err_CANCELED, "sync operation cancelled").Tags("syncId", syncOp.SyncID)

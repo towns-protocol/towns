@@ -219,6 +219,7 @@ export class Client
         highPriorityStreamIds?: string[],
         unpackEnvelopeOpts?: UnpackEnvelopeOpts,
         defaultGroupEncryptionAlgorithm?: GroupEncryptionAlgorithmId,
+        userNickname?: string,
     ) {
         super()
         if (logNamespaceFilter) {
@@ -241,9 +242,9 @@ export class Client
         this.defaultGroupEncryptionAlgorithm =
             defaultGroupEncryptionAlgorithm ?? GroupEncryptionAlgorithmId.GroupEncryption
 
-        const shortId = shortenHexString(
-            this.userId.startsWith('0x') ? this.userId.slice(2) : this.userId,
-        )
+        const shortId =
+            userNickname ??
+            shortenHexString(this.userId.startsWith('0x') ? this.userId.slice(2) : this.userId)
 
         this.logCall = dlog('csb:cl:call').extend(shortId)
         this.logSync = dlog('csb:cl:sync').extend(shortId)
@@ -2180,7 +2181,7 @@ export class Client
         check(isDefined(streamView.miniblockInfo), `stream not initialized: ${streamId}`)
         check(isDefined(streamView.prevMiniblockHash), `prevMiniblockHash not found: ${streamId}`)
         return {
-            miniblockNum: streamView.miniblockInfo.min,
+            miniblockNum: streamView.miniblockInfo.max,
             miniblockHash: streamView.prevMiniblockHash,
         }
     }

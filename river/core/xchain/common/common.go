@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/river-build/river/core/node/dlog"
+	"github.com/river-build/river/core/node/logging"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -47,12 +47,12 @@ func ConvertHTTPToWebSocket(httpURL string) (string, error) {
 const requiredBalance = 10000000000000000 // 0.01 ETH in Wei
 
 func WaitUntilWalletFunded(ctx context.Context, wsEndpoint string, walletAddress common.Address) error {
-	log := dlog.FromCtx(ctx)
+	log := logging.FromCtx(ctx)
 
 	// Connect to the client using WebSocket for live subscription
 	rpcClient, err := rpc.DialContext(ctx, wsEndpoint)
 	if err != nil {
-		log.Error("Failed to connect to the Ethereum WebSocket client", "err", err)
+		log.Errorw("Failed to connect to the Ethereum WebSocket client", "err", err)
 		return err
 	}
 	defer rpcClient.Close()
@@ -63,44 +63,44 @@ func WaitUntilWalletFunded(ctx context.Context, wsEndpoint string, walletAddress
 	headers := make(chan *types.Header)
 	subscription, err := ethClient.SubscribeNewHead(ctx, headers)
 	if err != nil {
-		log.Error("Failed to subscribe to new block headers", "err", err)
+		log.Errorw("Failed to subscribe to new block headers", "err", err)
 		return err
 	}
 	defer subscription.Unsubscribe()
 
-	log.Info("Subscription created. Waiting for the wallet to be funded...")
+	log.Infow("Subscription created. Waiting for the wallet to be funded...")
 
 	for {
 		select {
 		case err := <-subscription.Err():
-			log.Error("Subscription error", "err", err)
+			log.Errorw("Subscription error", "err", err)
 			return err
 
 		case <-headers:
 			// Check the balance on each new block
 			balance, err := ethClient.BalanceAt(ctx, walletAddress, nil)
 			if err != nil || balance == nil {
-				log.Warn("Failed to retrieve wallet balance", "err", err)
+				log.Warnw("Failed to retrieve wallet balance", "err", err)
 				continue // Try again in the next block
 			}
 
 			if balance.Cmp(big.NewInt(requiredBalance)) >= 0 {
-				log.Info("Wallet is funded. Current balance", "balance", balance)
+				log.Infow("Wallet is funded. Current balance", "balance", balance)
 				return nil
 			} else {
-				log.Warn("Wallet is not funded yet. Current balance", "balance", balance, "requiredBalance", requiredBalance, "walletAddress", walletAddress.Hex())
+				log.Warnw("Wallet is not funded yet. Current balance", "balance", balance, "requiredBalance", requiredBalance, "walletAddress", walletAddress.Hex())
 			}
 
 		case <-ctx.Done():
 			// Handle context cancellation
-			log.Info("Context cancelled, stopping WaitUntilWalletFunded subscription")
+			log.Infow("Context cancelled, stopping WaitUntilWalletFunded subscription")
 			return ctx.Err()
 		}
 	}
 }
 
 func WaitForTransaction(client *ethclient.Client, tx *types.Transaction) *big.Int {
-	log := dlog.FromCtx(context.Background())
+	log := logging.FromCtx(context.Background())
 	for {
 		receipt, err := client.TransactionReceipt(context.Background(), tx.Hash())
 		if err != nil {
@@ -109,7 +109,7 @@ func WaitForTransaction(client *ethclient.Client, tx *types.Transaction) *big.In
 				time.Sleep(500 * time.Millisecond)
 				continue
 			} else {
-				log.Error("Failed to get transaction receipt", "err", err)
+				log.Errorw("Failed to get transaction receipt", "err", err)
 				return nil
 			}
 		}
@@ -123,14 +123,14 @@ func WaitForTransaction(client *ethclient.Client, tx *types.Transaction) *big.In
 				),
 			)
 			if err != nil {
-				log.Error("Failed to parse ABI", "err", err)
+				log.Errorw("Failed to parse ABI", "err", err)
 				return nil
 			}
 
 			if len(receipt.Logs) == 0 {
 				rcp, err := json.MarshalIndent(receipt, "", "    ")
 				if err != nil {
-					log.Error("Failed to marshal receipt", "err", err)
+					log.Errorw("Failed to marshal receipt", "err", err)
 					return nil
 				}
 				rpcClient := client.Client() // Access the underlying rpc.Client
@@ -139,9 +139,9 @@ func WaitForTransaction(client *ethclient.Client, tx *types.Transaction) *big.In
 
 				err = rpcClient.Call(&result, "debug_traceTransaction", tx.Hash(), map[string]interface{}{})
 				if err != nil {
-					log.Error("Failed to execute debug_traceTransaction", "error=", err)
+					log.Errorw("Failed to execute debug_traceTransaction", "error=", err)
 				}
-				log.Error(
+				log.Errorw(
 					"Transaction failed with status but no logs were emitted.",
 					"status",
 					tx.Hash().Hex(),
@@ -158,22 +158,22 @@ func WaitForTransaction(client *ethclient.Client, tx *types.Transaction) *big.In
 			var errorMsg string
 			err = parsed.UnpackIntoInterface(&errorMsg, "errorMessage", receipt.Logs[0].Data)
 			if err != nil {
-				log.Error("Failed to unpack error message", "err", err)
+				log.Errorw("Failed to unpack error message", "err", err)
 				return nil
 			}
 
-			log.Error("Revert Reason:", "errorMsg", errorMsg)
+			log.Errorw("Revert Reason:", "errorMsg", errorMsg)
 			/*
 				var receiptResp interface{}
 				err = client.Client().CallContext(context.Background(), &receiptResp, "eth_getTransactionReceipt", tx.Hash().Hex())
 				if err != nil {
-					log.Fatalf("Fetching transaction receipt failed %v %v!\n", receiptResp, err)
+					log.Fatalw("Fetching transaction receipt failed %v %v!\n", receiptResp, err)
 				}
 				jsonResp, err := json.Marshal(receiptResp)
 				if err != nil {
-					log.Fatalf("Failed to marshal json %v!\n", err)
+					log.Fatalw("Failed to marshal json %v!\n", err)
 				}
-				log.Fatalf("Transaction != types.ReceiptStatusSuccessful jsonResp: %v", string(jsonResp))
+				log.Fatalw("Transaction != types.ReceiptStatusSuccessful jsonResp: %v", string(jsonResp))
 				return nil
 			*/
 		}

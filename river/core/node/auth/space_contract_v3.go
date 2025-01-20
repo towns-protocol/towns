@@ -13,7 +13,7 @@ import (
 	"github.com/river-build/river/core/contracts/base"
 	"github.com/river-build/river/core/contracts/types"
 	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/dlog"
+	"github.com/river-build/river/core/node/logging"
 	"github.com/river-build/river/core/node/shared"
 	"github.com/river-build/river/core/xchain/bindings/erc721"
 	"github.com/river-build/river/core/xchain/bindings/ierc5313"
@@ -177,13 +177,13 @@ func (sc *SpaceContractV3) marshalEntitlements(
 	ctx context.Context,
 	entitlementData []base.IEntitlementDataQueryableBaseEntitlementData,
 ) ([]types.Entitlement, error) {
-	log := dlog.FromCtx(ctx)
+	log := logging.FromCtx(ctx)
 	entitlements := make([]types.Entitlement, len(entitlementData))
 
 	for i, rawEntitlement := range entitlementData {
 		entitlement, err := types.MarshalEntitlement(ctx, rawEntitlement)
 		if err != nil {
-			log.Warn("Failed to marshal entitlement", "index", i, "error", err)
+			log.Warnw("Failed to marshal entitlement", "index", i, "error", err)
 			return nil, AsRiverError(err)
 		}
 		entitlements[i] = entitlement
@@ -196,10 +196,10 @@ func (sc *SpaceContractV3) IsBanned(
 	spaceId shared.StreamId,
 	linkedWallets []common.Address,
 ) (bool, error) {
-	log := dlog.FromCtx(ctx).With("function", "SpaceContractV3.IsBanned")
+	log := logging.FromCtx(ctx).With("function", "SpaceContractV3.IsBanned")
 	space, err := sc.getSpace(ctx, spaceId)
 	if err != nil {
-		log.Warn("Failed to get space", "space_id", spaceId, "error", err)
+		log.Warnw("Failed to get space", "space_id", spaceId, "error", err)
 		return false, err
 	}
 	return space.banning.IsBanned(ctx, linkedWallets)
@@ -219,24 +219,24 @@ func (sc *SpaceContractV3) GetChannelEntitlementsForPermission(
 	channelId shared.StreamId,
 	permission Permission,
 ) ([]types.Entitlement, common.Address, error) {
-	log := dlog.FromCtx(ctx)
+	log := logging.FromCtx(ctx)
 	// get the channel entitlements and check if user is entitled.
 	space, err := sc.getSpace(ctx, spaceId)
 	if err != nil {
-		log.Warn("Failed to get space", "space_id", spaceId, "error", err)
+		log.Warnw("Failed to get space", "space_id", spaceId, "error", err)
 		return nil, EMPTY_ADDRESS, err
 	}
 
 	// get owner address - owner has all permissions
 	spaceAsIerc5313, err := ierc5313.NewIerc5313(space.address, sc.backend)
 	if err != nil {
-		log.Warn("Failed to get spaceAsIerc5313", "space_id", spaceId, "error", err)
+		log.Warnw("Failed to get spaceAsIerc5313", "space_id", spaceId, "error", err)
 		return nil, EMPTY_ADDRESS, err
 	}
 
 	owner, err := spaceAsIerc5313.Owner(nil)
 	if err != nil {
-		log.Warn("Failed to get owner", "space_id", spaceId, "error", err)
+		log.Warnw("Failed to get owner", "space_id", spaceId, "error", err)
 		return nil, EMPTY_ADDRESS, err
 	}
 
@@ -249,7 +249,7 @@ func (sc *SpaceContractV3) GetChannelEntitlementsForPermission(
 		return nil, EMPTY_ADDRESS, err
 	}
 
-	log.Debug(
+	log.Debugw(
 		"Got channel entitlement data",
 		"entitlement_data",
 		entitlementData,
@@ -283,23 +283,23 @@ func (sc *SpaceContractV3) GetSpaceEntitlementsForPermission(
 	spaceId shared.StreamId,
 	permission Permission,
 ) ([]types.Entitlement, common.Address, error) {
-	log := dlog.FromCtx(ctx)
+	log := logging.FromCtx(ctx)
 	// get the space entitlements and check if user is entitled.
 	space, err := sc.getSpace(ctx, spaceId)
 	if err != nil {
-		log.Warn("Failed to get space", "space_id", spaceId, "error", err)
+		log.Warnw("Failed to get space", "space_id", spaceId, "error", err)
 		return nil, EMPTY_ADDRESS, err
 	}
 
 	spaceAsIerc5313, err := ierc5313.NewIerc5313(space.address, sc.backend)
 	if err != nil {
-		log.Warn("Failed to get spaceAsIerc5313", "space_id", spaceId, "error", err)
+		log.Warnw("Failed to get spaceAsIerc5313", "space_id", spaceId, "error", err)
 		return nil, EMPTY_ADDRESS, err
 	}
 
 	owner, err := spaceAsIerc5313.Owner(nil)
 	if err != nil {
-		log.Warn("Failed to get owner", "space_id", spaceId, "error", err)
+		log.Warnw("Failed to get owner", "space_id", spaceId, "error", err)
 		return nil, EMPTY_ADDRESS, err
 	}
 
@@ -307,7 +307,7 @@ func (sc *SpaceContractV3) GetSpaceEntitlementsForPermission(
 		&bind.CallOpts{Context: ctx},
 		permission.String(),
 	)
-	log.Debug(
+	log.Debugw(
 		"Got entitlement data",
 		"err",
 		err,
@@ -327,7 +327,7 @@ func (sc *SpaceContractV3) GetSpaceEntitlementsForPermission(
 		return nil, EMPTY_ADDRESS, err
 	}
 
-	log.Debug(
+	log.Debugw(
 		"Returning entitlements",
 		"entitlements",
 		entitlements,

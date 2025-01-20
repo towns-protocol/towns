@@ -22,7 +22,7 @@ import {NodeOperatorStatus} from "contracts/src/base/registry/facets/operator/No
 
 // contracts
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
-import {River} from "contracts/src/tokens/river/base/River.sol";
+import {Towns} from "contracts/src/tokens/towns/base/Towns.sol";
 import {NodeOperatorFacet} from "contracts/src/base/registry/facets/operator/NodeOperatorFacet.sol";
 import {EIP712Facet} from "@river-build/diamond/src/utils/cryptography/signature/EIP712Facet.sol";
 import {StakingRewards} from "contracts/src/base/registry/facets/distribution/v2/StakingRewards.sol";
@@ -50,7 +50,7 @@ contract DropFacetTest is
 
   MerkleTree internal merkleTree = new MerkleTree();
 
-  River internal river;
+  Towns internal towns;
   DropFacet internal dropFacet;
   RewardsDistribution internal rewardsDistribution;
   NodeOperatorFacet internal operatorFacet;
@@ -83,8 +83,8 @@ contract DropFacetTest is
     // Initialize the Drop facet
     dropFacet = DropFacet(riverAirdrop);
 
-    // Initialize the River river
-    river = River(riverToken);
+    // Initialize the Towns towns
+    towns = Towns(townsToken);
 
     // Operator
     operatorFacet = NodeOperatorFacet(baseRegistry);
@@ -99,7 +99,7 @@ contract DropFacetTest is
     rewardsDistribution.setRewardNotifier(NOTIFIER, true);
 
     vm.prank(bridge);
-    river.mint(address(rewardsDistribution), 1 ether);
+    towns.mint(address(rewardsDistribution), 1 ether);
 
     vm.prank(NOTIFIER);
     rewardsDistribution.notifyRewardAmount(1 ether);
@@ -114,7 +114,7 @@ contract DropFacetTest is
 
   modifier givenTokensMinted(uint256 amount) {
     vm.prank(bridge);
-    river.mint(address(dropFacet), amount);
+    towns.mint(address(dropFacet), amount);
     _;
   }
 
@@ -275,7 +275,7 @@ contract DropFacetTest is
     assertEq(condition.maxClaimableSupply, TOTAL_TOKEN_AMOUNT);
     assertEq(condition.supplyClaimed, 0);
     assertEq(condition.merkleRoot, root);
-    assertEq(condition.currency, address(river));
+    assertEq(condition.currency, address(towns));
     assertEq(condition.penaltyBps, penaltyBps);
   }
 
@@ -298,7 +298,7 @@ contract DropFacetTest is
     }
 
     vm.prank(bridge);
-    river.mint(address(dropFacet), totalAmount);
+    towns.mint(address(dropFacet), totalAmount);
 
     (root, tree) = merkleTree.constructTree(claimers, claimAmounts);
 
@@ -309,7 +309,7 @@ contract DropFacetTest is
       maxClaimableSupply: totalAmount,
       supplyClaimed: 0,
       merkleRoot: root,
-      currency: address(river),
+      currency: address(towns),
       penaltyBps: PENALTY_BPS
     });
 
@@ -367,7 +367,7 @@ contract DropFacetTest is
     givenWalletHasClaimedWithPenalty(bob, bob)
   {
     uint256 expectedAmount = _calculateExpectedAmount(bob);
-    assertEq(river.balanceOf(bob), expectedAmount);
+    assertEq(towns.balanceOf(bob), expectedAmount);
   }
 
   function test_revertWhen_merkleRootNotSet()
@@ -614,7 +614,7 @@ contract DropFacetTest is
 
     vm.prank(bob);
     rewardsDistribution.initiateWithdraw(depositId);
-    uint256 lockCooldown = river.lockCooldown(
+    uint256 lockCooldown = towns.lockCooldown(
       rewardsDistribution.delegationProxyById(depositId)
     );
     vm.warp(lockCooldown);
@@ -622,7 +622,7 @@ contract DropFacetTest is
     vm.prank(bob);
     rewardsDistribution.withdraw(depositId);
 
-    assertEq(river.balanceOf(bob), depositAmount + claimReward);
+    assertEq(towns.balanceOf(bob), depositAmount + claimReward);
   }
 
   // setClaimConditions
@@ -1044,7 +1044,7 @@ contract DropFacetTest is
         maxClaimableSupply: _maxClaimableSupply,
         supplyClaimed: 0,
         merkleRoot: _merkleRoot,
-        currency: address(river),
+        currency: address(towns),
         penaltyBps: 0
       });
   }
@@ -1105,7 +1105,7 @@ contract DropFacetTest is
     uint256 currentReward
   ) internal view {
     assertEq(reward, currentReward, "reward");
-    assertEq(river.balanceOf(claimer), reward, "reward balance");
+    assertEq(towns.balanceOf(claimer), reward, "reward balance");
 
     StakingState memory state = rewardsDistribution.stakingState();
     uint256 earningPower = rewardsDistribution

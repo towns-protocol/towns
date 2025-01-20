@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IMainnetDelegationBase} from "contracts/src/tokens/river/base/delegation/IMainnetDelegation.sol";
+import {IMainnetDelegationBase} from "contracts/src/base/registry/facets/mainnet/IMainnetDelegation.sol";
 
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
@@ -21,7 +21,7 @@ contract MainnetDelegationTest is BaseRegistryTest, IMainnetDelegationBase {
 
     // the first staking cannot be from mainnet
     bridgeTokensForUser(address(this), 1 ether);
-    river.approve(address(rewardsDistributionFacet), 1 ether);
+    towns.approve(address(rewardsDistributionFacet), 1 ether);
     rewardsDistributionFacet.stake(1 ether, OPERATOR, _randomAddress());
     totalStaked = 1 ether;
   }
@@ -56,13 +56,13 @@ contract MainnetDelegationTest is BaseRegistryTest, IMainnetDelegationBase {
         claimer != delegator &&
         claimer != address(rewardsDistributionFacet)
     );
-    vm.assume(river.balanceOf(claimer) == 0);
+    vm.assume(towns.balanceOf(claimer) == 0);
     rewardAmount = bound(rewardAmount, rewardDuration, 1e27);
     timeLapse = bound(timeLapse, 0, rewardDuration);
 
     setDelegation(delegator, claimer, amount, operator, commissionRate);
 
-    deal(address(river), address(rewardsDistributionFacet), rewardAmount, true);
+    deal(address(towns), address(rewardsDistributionFacet), rewardAmount, true);
 
     vm.prank(NOTIFIER);
     rewardsDistributionFacet.notifyRewardAmount(rewardAmount);

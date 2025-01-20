@@ -17,8 +17,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/river-build/river/core/config"
 	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/infra"
+	"github.com/river-build/river/core/node/logging"
 	"github.com/river-build/river/core/node/notifications/types"
 	"github.com/river-build/river/core/node/protocol"
 	"github.com/sideshow/apns2"
@@ -210,7 +210,7 @@ func (n *MessageNotifications) SendWebPushNotification(
 	n.webPushSent.With(prometheus.Labels{"status": fmt.Sprintf("%d", res.StatusCode)}).Inc()
 
 	if res.StatusCode == http.StatusCreated {
-		dlog.FromCtx(ctx).Info("Web push notification sent", "event", eventHash)
+		logging.FromCtx(ctx).Infow("Web push notification sent", "event", eventHash)
 		return false, nil
 	}
 
@@ -266,13 +266,13 @@ func (n *MessageNotifications) SendApplePushNotification(
 	n.apnSent.With(prometheus.Labels{"status": fmt.Sprintf("%d", res.StatusCode)}).Inc()
 
 	if res.Sent() {
-		log := dlog.FromCtx(ctx).With("event", eventHash, "apnsID", res.ApnsID)
+		log := logging.FromCtx(ctx).With("event", eventHash, "apnsID", res.ApnsID)
 		// ApnsUniqueID only available on development/sandbox,
 		// use it to check in Apple's Delivery Logs to see the status.
 		if sub.Environment == protocol.APNEnvironment_APN_ENVIRONMENT_SANDBOX {
 			log = log.With("uniqueApnsID", res.ApnsUniqueID)
 		}
-		log.Info("APN notification sent")
+		log.Infow("APN notification sent")
 
 		return false, res.StatusCode, nil
 	}
@@ -297,8 +297,8 @@ func (n *MessageNotificationsSimulator) SendWebPushNotification(
 	eventHash common.Hash,
 	payload []byte,
 ) (bool, error) {
-	log := dlog.FromCtx(ctx)
-	log.Info("SendWebPushNotification",
+	log := logging.FromCtx(ctx)
+	log.Infow("SendWebPushNotification",
 		"keys.p256dh", subscription.Keys.P256dh,
 		"keys.auth", subscription.Keys.Auth,
 		"payload", payload)
@@ -317,8 +317,8 @@ func (n *MessageNotificationsSimulator) SendApplePushNotification(
 	eventHash common.Hash,
 	payload *payload2.Payload,
 ) (bool, int, error) {
-	log := dlog.FromCtx(ctx)
-	log.Debug("SendApplePushNotification",
+	log := logging.FromCtx(ctx)
+	log.Debugw("SendApplePushNotification",
 		"deviceToken", sub.DeviceToken,
 		"env", fmt.Sprintf("%d", sub.Environment),
 		"payload", payload,

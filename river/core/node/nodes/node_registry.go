@@ -14,7 +14,7 @@ import (
 	"github.com/river-build/river/core/contracts/river"
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/dlog"
+	"github.com/river-build/river/core/node/logging"
 	. "github.com/river-build/river/core/node/protocol"
 	. "github.com/river-build/river/core/node/protocol/protocolconnect"
 	"github.com/river-build/river/core/node/registries"
@@ -54,7 +54,7 @@ func LoadNodeRegistry(
 	httpClient *http.Client,
 	connectOtelIterceptor *otelconnect.Interceptor,
 ) (*nodeRegistryImpl, error) {
-	log := dlog.FromCtx(ctx)
+	log := logging.FromCtx(ctx)
 
 	nodes, err := contract.GetAllNodes(ctx, appliedBlockNum)
 	if err != nil {
@@ -118,7 +118,7 @@ func LoadNodeRegistry(
 	}
 
 	if config.UseDetailedLog(ctx) {
-		log.Info(
+		log.Infow(
 			"Node Registry Loaded from contract",
 			"blockNum",
 			appliedBlockNum,
@@ -152,11 +152,11 @@ func (n *nodeRegistryImpl) addNode(addr common.Address, url string, status uint8
 
 // OnNodeAdded can apply INodeRegistry::NodeAdded event against the in-memory node registry.
 func (n *nodeRegistryImpl) OnNodeAdded(ctx context.Context, event types.Log) {
-	log := dlog.FromCtx(ctx)
+	log := logging.FromCtx(ctx)
 
 	var e river.NodeRegistryV1NodeAdded
 	if err := n.contract.NodeRegistry.BoundContract().UnpackLog(&e, "NodeAdded", event); err != nil {
-		log.Error("OnNodeAdded: unable to decode NodeAdded event")
+		log.Errorw("OnNodeAdded: unable to decode NodeAdded event")
 		return
 	}
 
@@ -166,7 +166,7 @@ func (n *nodeRegistryImpl) OnNodeAdded(ctx context.Context, event types.Log) {
 	if _, exists := n.nodes[e.NodeAddress]; !exists {
 		// TODO: add operator to NodeAdded event
 		nodeRecord := n.addNode(e.NodeAddress, e.Url, e.Status, e.Operator)
-		log.Info(
+		log.Infow(
 			"NodeRegistry: NodeAdded",
 			"node",
 			nodeRecord.address,
@@ -176,17 +176,17 @@ func (n *nodeRegistryImpl) OnNodeAdded(ctx context.Context, event types.Log) {
 			e.Operator,
 		)
 	} else {
-		log.Error("NodeRegistry: Got NodeAdded for node that already exists in NodeRegistry", "blockNum", event.BlockNumber, "node", e.NodeAddress, "operator", e.Operator, "nodes", n.nodes)
+		log.Errorw("NodeRegistry: Got NodeAdded for node that already exists in NodeRegistry", "blockNum", event.BlockNumber, "node", e.NodeAddress, "operator", e.Operator, "nodes", n.nodes)
 	}
 }
 
 // OnNodeRemoved can apply INodeRegistry::NodeRemoved event against the in-memory node registry.
 func (n *nodeRegistryImpl) OnNodeRemoved(ctx context.Context, event types.Log) {
-	log := dlog.FromCtx(ctx)
+	log := logging.FromCtx(ctx)
 
 	var e river.NodeRegistryV1NodeRemoved
 	if err := n.contract.NodeRegistry.BoundContract().UnpackLog(&e, "NodeRemoved", event); err != nil {
-		log.Error("OnNodeRemoved: unable to decode NodeRemoved event")
+		log.Errorw("OnNodeRemoved: unable to decode NodeRemoved event")
 		return
 	}
 
@@ -195,20 +195,20 @@ func (n *nodeRegistryImpl) OnNodeRemoved(ctx context.Context, event types.Log) {
 
 	if _, exists := n.nodes[e.NodeAddress]; exists {
 		delete(n.nodes, e.NodeAddress)
-		log.Info("NodeRegistry: NodeRemoved", "blockNum", event.BlockNumber, "node", e.NodeAddress)
+		log.Infow("NodeRegistry: NodeRemoved", "blockNum", event.BlockNumber, "node", e.NodeAddress)
 	} else {
-		log.Error("NodeRegistry: Got NodeRemoved for node that does not exist in NodeRegistry",
+		log.Errorw("NodeRegistry: Got NodeRemoved for node that does not exist in NodeRegistry",
 			"blockNum", event.BlockNumber, "node", e.NodeAddress, "nodes", n.nodes)
 	}
 }
 
 // OnNodeStatusUpdated can apply INodeRegistry::NodeStatusUpdated event against the in-memory node registry.
 func (n *nodeRegistryImpl) OnNodeStatusUpdated(ctx context.Context, event types.Log) {
-	log := dlog.FromCtx(ctx)
+	log := logging.FromCtx(ctx)
 
 	var e river.NodeRegistryV1NodeStatusUpdated
 	if err := n.contract.NodeRegistry.BoundContract().UnpackLog(&e, "NodeStatusUpdated", event); err != nil {
-		log.Error("OnNodeStatusUpdated: unable to decode NodeStatusUpdated event")
+		log.Errorw("OnNodeStatusUpdated: unable to decode NodeStatusUpdated event")
 		return
 	}
 
@@ -220,19 +220,19 @@ func (n *nodeRegistryImpl) OnNodeStatusUpdated(ctx context.Context, event types.
 		newNode := *nn
 		newNode.status = e.Status
 		n.nodes[e.NodeAddress] = &newNode
-		log.Info("NodeRegistry: NodeStatusUpdated", "blockNum", event.BlockNumber, "node", nn)
+		log.Infow("NodeRegistry: NodeStatusUpdated", "blockNum", event.BlockNumber, "node", nn)
 	} else {
-		log.Error("NodeRegistry: Got NodeStatusUpdated for node that does not exist in NodeRegistry", "blockNum", event.BlockNumber, "node", e.NodeAddress, "nodes", n.nodes)
+		log.Errorw("NodeRegistry: Got NodeStatusUpdated for node that does not exist in NodeRegistry", "blockNum", event.BlockNumber, "node", e.NodeAddress, "nodes", n.nodes)
 	}
 }
 
 // OnNodeUrlUpdated can apply INodeRegistry::NodeUrlUpdated events against the in-memory node registry.
 func (n *nodeRegistryImpl) OnNodeUrlUpdated(ctx context.Context, event types.Log) {
-	log := dlog.FromCtx(ctx)
+	log := logging.FromCtx(ctx)
 
 	var e river.NodeRegistryV1NodeUrlUpdated
 	if err := n.contract.NodeRegistry.BoundContract().UnpackLog(&e, "NodeUrlUpdated", event); err != nil {
-		log.Error("OnNodeUrlUpdated: unable to decode NodeUrlUpdated event")
+		log.Errorw("OnNodeUrlUpdated: unable to decode NodeUrlUpdated event")
 		return
 	}
 
@@ -248,9 +248,9 @@ func (n *nodeRegistryImpl) OnNodeUrlUpdated(ctx context.Context, event types.Log
 			newNode.nodeToNodeClient = NewNodeToNodeClient(n.httpClient, e.Url, n.connectOpts...)
 		}
 		n.nodes[e.NodeAddress] = &newNode
-		log.Info("NodeRegistry: NodeUrlUpdated", "blockNum", event.BlockNumber, "node", nn)
+		log.Infow("NodeRegistry: NodeUrlUpdated", "blockNum", event.BlockNumber, "node", nn)
 	} else {
-		log.Error("NodeRegistry: Got NodeUrlUpdated for node that does not exist in NodeRegistry",
+		log.Errorw("NodeRegistry: Got NodeUrlUpdated for node that does not exist in NodeRegistry",
 			"blockNum", event.BlockNumber, "node", e.NodeAddress, "nodes", n.nodes)
 	}
 }

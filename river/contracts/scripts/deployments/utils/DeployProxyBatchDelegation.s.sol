@@ -7,21 +7,21 @@ pragma solidity ^0.8.23;
 
 //contracts
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-import {ProxyBatchDelegation} from "contracts/src/tokens/river/mainnet/delegation/ProxyBatchDelegation.sol";
+import {ProxyBatchDelegation} from "contracts/src/tokens/mainnet/delegation/ProxyBatchDelegation.sol";
 
 // deployments
-import {DeployRiverMainnet} from "./DeployRiverMainnet.s.sol";
+import {DeployTownsMainnet} from "./DeployTownsMainnet.s.sol";
 import {DeployAuthorizedClaimers} from "./DeployAuthorizedClaimers.s.sol";
 
 import {MockMessenger} from "contracts/test/mocks/MockMessenger.sol";
 
 contract DeployProxyBatchDelegation is Deployer {
   // Mainnet
-  DeployRiverMainnet internal riverHelper = new DeployRiverMainnet();
+  DeployTownsMainnet internal townsHelper = new DeployTownsMainnet();
   DeployAuthorizedClaimers internal claimersHelper =
     new DeployAuthorizedClaimers();
 
-  address public riverToken;
+  address public townsToken;
   address public claimers;
   address public mainnetDelegation;
   address public messenger;
@@ -40,8 +40,8 @@ contract DeployProxyBatchDelegation is Deployer {
   }
 
   function __deploy(address deployer) public override returns (address) {
-    riverToken = riverHelper.deploy(deployer);
-    vault = riverHelper.vault();
+    townsToken = townsHelper.deploy(deployer);
+    vault = townsHelper.vault();
     claimers = claimersHelper.deploy(deployer);
 
     if (messenger == address(0)) {
@@ -57,8 +57,8 @@ contract DeployProxyBatchDelegation is Deployer {
       mainnetDelegation = _getMainnetDelegation();
     }
 
-    if (riverToken == address(0)) {
-      revert("DeployProxyBatchDelegation: River token not deployed");
+    if (townsToken == address(0)) {
+      revert("DeployProxyBatchDelegation: Towns token not deployed");
     }
 
     if (claimers == address(0)) {
@@ -69,7 +69,7 @@ contract DeployProxyBatchDelegation is Deployer {
     return
       address(
         new ProxyBatchDelegation(
-          riverToken,
+          townsToken,
           claimers,
           messenger,
           mainnetDelegation

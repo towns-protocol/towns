@@ -12,19 +12,19 @@ import {IDiamondCut} from "@river-build/diamond/src/facets/cut/IDiamondCut.sol";
 import {IDiamondLoupe} from "@river-build/diamond/src/facets/loupe/IDiamondLoupe.sol";
 import {IDiamond} from "@river-build/diamond/src/Diamond.sol";
 import {INodeOperator} from "contracts/src/base/registry/facets/operator/INodeOperator.sol";
-import {IMainnetDelegationBase, IMainnetDelegation} from "contracts/src/tokens/river/base/delegation/IMainnetDelegation.sol";
-import {ICrossDomainMessenger} from "contracts/src/tokens/river/mainnet/delegation/ICrossDomainMessenger.sol";
+import {IMainnetDelegationBase, IMainnetDelegation} from "contracts/src/base/registry/facets/mainnet/IMainnetDelegation.sol";
+import {ICrossDomainMessenger} from "contracts/src/base/registry/facets/mainnet/ICrossDomainMessenger.sol";
 
 //libraries
 import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 import {StakingRewards} from "contracts/src/base/registry/facets/distribution/v2/StakingRewards.sol";
 
 //contracts
-import {MainnetDelegation} from "contracts/src/tokens/river/base/delegation/MainnetDelegation.sol";
+import {MainnetDelegation} from "contracts/src/base/registry/facets/mainnet/MainnetDelegation.sol";
 import {MockMessenger} from "contracts/test/mocks/MockMessenger.sol";
 import {NodeOperatorStatus} from "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
 import {RewardsDistribution} from "contracts/src/base/registry/facets/distribution/v2/RewardsDistribution.sol";
-import {River} from "contracts/src/tokens/river/base/River.sol";
+import {Towns} from "contracts/src/tokens/towns/base/Towns.sol";
 import {OwnableFacet} from "@river-build/diamond/src/facets/ownable/OwnableFacet.sol";
 
 // deployers
@@ -55,7 +55,7 @@ contract ForkRewardsDistributionTest is
 
     baseRegistry = getDeployment("baseRegistry");
     spaceFactory = getDeployment("spaceFactory");
-    river = River(getDeployment("river"));
+    towns = Towns(getDeployment("towns"));
     rewardsDistributionFacet = RewardsDistribution(baseRegistry);
     owner = OwnableFacet(baseRegistry).owner();
 
@@ -130,9 +130,9 @@ contract ForkRewardsDistributionTest is
     amount1 = uint96(bound(amount1, 0, type(uint96).max - amount0));
 
     uint96 totalAmount = amount0 + amount1;
-    deal(address(river), address(this), totalAmount, true);
+    deal(address(towns), address(this), totalAmount, true);
 
-    river.approve(address(rewardsDistributionFacet), totalAmount);
+    towns.approve(address(rewardsDistributionFacet), totalAmount);
     uint256 depositId = rewardsDistributionFacet.stake(
       amount0,
       operator,
@@ -241,7 +241,7 @@ contract ForkRewardsDistributionTest is
     depositId = test_fuzz_initiateWithdraw(amount, beneficiary, seed);
 
     address proxy = rewardsDistributionFacet.delegationProxyById(depositId);
-    uint256 cd = river.lockCooldown(proxy);
+    uint256 cd = towns.lockCooldown(proxy);
 
     vm.warp(cd);
 
@@ -256,7 +256,7 @@ contract ForkRewardsDistributionTest is
   /// forge-config: default.fuzz.runs = 64
   function test_fuzz_notifyRewardAmount(uint256 reward) public {
     reward = bound(reward, rewardDuration, 1e27);
-    deal(address(river), address(rewardsDistributionFacet), reward, true);
+    deal(address(towns), address(rewardsDistributionFacet), reward, true);
 
     vm.expectEmit(address(rewardsDistributionFacet));
     emit NotifyRewardAmount(owner, reward);
@@ -448,8 +448,8 @@ contract ForkRewardsDistributionTest is
       selectors
     );
     bytes memory initPayload = distributionV2Helper.makeInitData(
-      address(river),
-      address(river),
+      address(towns),
+      address(towns),
       rewardDuration
     );
 
@@ -493,10 +493,10 @@ contract ForkRewardsDistributionTest is
     vm.assume(depositor != address(0));
     vm.assume(beneficiary != address(0));
     vm.assume(amount > 0);
-    deal(address(river), depositor, amount, true);
+    deal(address(towns), depositor, amount, true);
 
     vm.startPrank(depositor);
-    river.approve(address(rewardsDistributionFacet), amount);
+    towns.approve(address(rewardsDistributionFacet), amount);
 
     vm.expectEmit(true, true, true, false, address(rewardsDistributionFacet));
     emit Stake(depositor, operator, beneficiary, depositId, amount);

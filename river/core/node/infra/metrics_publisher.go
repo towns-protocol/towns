@@ -10,7 +10,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/river-build/river/core/config"
-	"github.com/river-build/river/core/node/dlog"
+	"github.com/river-build/river/core/node/logging"
 )
 
 // In practice, most rpc calls seem to land between 10 and 50ms, sometimes up to 100ms.
@@ -80,27 +80,27 @@ func (m *MetricsPublisher) StartMetricsServer(ctx context.Context, config config
 }
 
 func (m *MetricsPublisher) serveHttp(ctx context.Context) {
-	log := dlog.FromCtx(ctx)
+	log := logging.FromCtx(ctx)
 
-	log.Info("Starting metrics HTTP server", "url", fmt.Sprintf("http://%s/metrics", m.httpServer.Addr))
+	log.Infow("Starting metrics HTTP server", "url", fmt.Sprintf("http://%s/metrics", m.httpServer.Addr))
 	err := m.httpServer.ListenAndServe()
 	if err != nil {
 		if err == http.ErrServerClosed {
-			log.Info("Metrics HTTP server closed")
+			log.Infow("Metrics HTTP server closed")
 		} else {
-			log.Error("Metrics HTTP server error", "err", err)
+			log.Errorw("Metrics HTTP server error", "err", err)
 		}
 	}
 }
 
 func (m *MetricsPublisher) waitForClose(ctx context.Context) {
 	<-ctx.Done()
-	log := dlog.FromCtx(ctx)
+	log := logging.FromCtx(ctx)
 
 	err := m.httpServer.Close()
 	if err != nil {
-		log.Error("Error closing metrics HTTP server", "err", err)
+		log.Errorw("Error closing metrics HTTP server", "err", err)
 	} else {
-		log.Info("Closing metrics HTTP server")
+		log.Infow("Closing metrics HTTP server")
 	}
 }

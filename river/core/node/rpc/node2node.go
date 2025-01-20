@@ -21,7 +21,7 @@ func (s *Service) AllocateStream(
 	ctx, log := utils.CtxAndLogForRequest(ctx, req)
 	ctx, cancel := utils.UncancelContext(ctx, 10*time.Second, 20*time.Second)
 	defer cancel()
-	log.Debug("AllocateStream ENTER")
+	log.Debugw("AllocateStream ENTER")
 	r, e := s.allocateStream(ctx, req.Msg)
 	if e != nil {
 		return nil, AsRiverError(
@@ -31,7 +31,7 @@ func (s *Service) AllocateStream(
 			LogWarn(log).
 			AsConnectError()
 	}
-	log.Debug("AllocateStream LEAVE", "response", r)
+	log.Debugw("AllocateStream LEAVE", "response", r)
 	return connect.NewResponse(r), nil
 }
 
@@ -65,7 +65,7 @@ func (s *Service) NewEventReceived(
 	ctx, log := utils.CtxAndLogForRequest(ctx, req)
 	ctx, cancel := utils.UncancelContext(ctx, 5*time.Second, 10*time.Second)
 	defer cancel()
-	log.Debug("NewEventReceived ENTER")
+	log.Debugw("NewEventReceived ENTER")
 	r, e := s.newEventReceived(ctx, req.Msg)
 	if e != nil {
 		return nil, AsRiverError(
@@ -75,7 +75,7 @@ func (s *Service) NewEventReceived(
 			LogWarn(log).
 			AsConnectError()
 	}
-	log.Debug("NewEventReceived LEAVE", "response", r)
+	log.Debugw("NewEventReceived LEAVE", "response", r)
 	return connect.NewResponse(r), nil
 }
 
@@ -119,7 +119,7 @@ func (s *Service) ProposeMiniblock(
 	req *connect.Request[ProposeMiniblockRequest],
 ) (*connect.Response[ProposeMiniblockResponse], error) {
 	ctx, log := utils.CtxAndLogForRequest(ctx, req)
-	log.Debug("ProposeMiniblock ENTER")
+	log.Debugw("ProposeMiniblock ENTER")
 	r, e := s.proposeMiniblock(ctx, req.Msg)
 	if e != nil {
 		return nil, AsRiverError(
@@ -129,7 +129,7 @@ func (s *Service) ProposeMiniblock(
 			LogWarn(log).
 			AsConnectError()
 	}
-	log.Debug("ProposeMiniblock LEAVE", "response", r)
+	log.Debugw("ProposeMiniblock LEAVE", "response", r)
 	return connect.NewResponse(r), nil
 }
 
@@ -173,7 +173,7 @@ func (s *Service) SaveMiniblockCandidate(
 	ctx, log := utils.CtxAndLogForRequest(ctx, req)
 	ctx, cancel := utils.UncancelContext(ctx, 5*time.Second, 10*time.Second)
 	defer cancel()
-	log.Debug("SaveMiniblockCandidate ENTER")
+	log.Debugw("SaveMiniblockCandidate ENTER")
 	r, e := s.saveMiniblockCandidate(ctx, req.Msg)
 	if e != nil {
 		return nil, AsRiverError(
@@ -183,7 +183,7 @@ func (s *Service) SaveMiniblockCandidate(
 			LogWarn(log).
 			AsConnectError()
 	}
-	log.Debug("SaveMiniblockCandidate LEAVE", "response", r)
+	log.Debugw("SaveMiniblockCandidate LEAVE", "response", r)
 	return connect.NewResponse(r), nil
 }
 

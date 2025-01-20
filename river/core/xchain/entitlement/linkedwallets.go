@@ -8,8 +8,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/river-build/river/core/contracts/base"
-	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/infra"
+	"github.com/river-build/river/core/node/logging"
 )
 
 func GetLinkedWallets(
@@ -20,7 +20,7 @@ func GetLinkedWallets(
 	getRootKeyForWalletCalls *infra.StatusCounterVec,
 	getWalletsByRootKeyCalls *infra.StatusCounterVec,
 ) ([]common.Address, error) {
-	log := dlog.FromCtx(ctx)
+	log := logging.FromCtx(ctx)
 	var timer *prometheus.Timer
 
 	if callDurations != nil {
@@ -32,7 +32,7 @@ func GetLinkedWallets(
 	}
 
 	if err != nil {
-		log.Error("Failed to GetRootKeyForWallet", "err", err, "wallet", wallet.Hex())
+		log.Errorw("Failed to GetRootKeyForWallet", "err", err, "wallet", wallet.Hex())
 		if getRootKeyForWalletCalls != nil {
 			getRootKeyForWalletCalls.IncFail()
 		}
@@ -44,7 +44,7 @@ func GetLinkedWallets(
 
 	var zero common.Address
 	if rootKey == zero {
-		log.Debug("Wallet not linked to any root key, trying as root key", "wallet", wallet.Hex())
+		log.Debugw("Wallet not linked to any root key, trying as root key", "wallet", wallet.Hex())
 		rootKey = wallet
 	}
 
@@ -66,7 +66,7 @@ func GetLinkedWallets(
 	}
 
 	if len(wallets) == 0 {
-		log.Debug("No linked wallets found", "rootKey", rootKey.Hex())
+		log.Debugw("No linked wallets found", "rootKey", rootKey.Hex())
 		return []common.Address{wallet}, nil
 	}
 
@@ -83,7 +83,7 @@ func GetLinkedWallets(
 		wallets = append(wallets, rootKey)
 	}
 
-	log.Debug("Linked wallets", "rootKey", rootKey.Hex(), "wallets", wallets)
+	log.Debugw("Linked wallets", "rootKey", rootKey.Hex(), "wallets", wallets)
 
 	return wallets, nil
 }

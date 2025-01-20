@@ -2,11 +2,12 @@ package rpc
 
 import (
 	"context"
-	"log/slog"
 	"net"
 	"net/http"
 	"sync/atomic"
 	"time"
+
+	"go.uber.org/zap"
 
 	"github.com/river-build/river/core/node/notifications"
 
@@ -35,7 +36,7 @@ type Service struct {
 	serverCtxCancel context.CancelFunc
 	config          *config.Config
 	instanceId      string
-	defaultLogger   *slog.Logger
+	defaultLogger   *zap.SugaredLogger
 	wallet          *crypto.Wallet
 	startTime       time.Time
 	mode            string

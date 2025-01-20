@@ -11,7 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/river-build/river/core/contracts/base"
-	"github.com/river-build/river/core/node/dlog"
+	"github.com/river-build/river/core/node/logging"
 )
 
 type Entitlement struct {
@@ -31,8 +31,8 @@ func MarshalEntitlement(
 	ctx context.Context,
 	rawEntitlement base.IEntitlementDataQueryableBaseEntitlementData,
 ) (Entitlement, error) {
-	log := dlog.FromCtx(ctx)
-	log.Debug(
+	log := logging.FromCtx(ctx)
+	log.Debugw(
 		"Marshalling entitlement data",
 		"entitlement_data", rawEntitlement.EntitlementData,
 		"entitlement_type", rawEntitlement.EntitlementType,
@@ -41,7 +41,7 @@ func MarshalEntitlement(
 		// Parse the ABI definition
 		parsedABI, err := base.RuleEntitlementMetaData.GetAbi()
 		if err != nil {
-			log.Error("Failed to parse ABI", "error", err)
+			log.Errorw("Failed to parse ABI", "error", err)
 			return Entitlement{}, err
 		}
 
@@ -49,7 +49,7 @@ func MarshalEntitlement(
 
 		unpackedData, err := parsedABI.Unpack("getRuleData", rawEntitlement.EntitlementData)
 		if err != nil {
-			log.Warn(
+			log.Warnw(
 				"Failed to unpack rule data",
 				"error",
 				err,
@@ -66,12 +66,12 @@ func MarshalEntitlement(
 			// Marshal into JSON, because for some UnpackIntoInterface doesn't work when unpacking directly into a struct
 			jsonData, err := json.Marshal(unpackedData[0])
 			if err != nil {
-				log.Warn("Failed to marshal data to JSON", "error", err, "unpackedData", unpackedData)
+				log.Warnw("Failed to marshal data to JSON", "error", err, "unpackedData", unpackedData)
 			}
 
 			err = json.Unmarshal(jsonData, &ruleData)
 			if err != nil {
-				log.Warn(
+				log.Warnw(
 					"Failed to unmarshal JSON to struct",
 					"error",
 					err,
@@ -82,7 +82,7 @@ func MarshalEntitlement(
 				)
 			}
 		} else {
-			log.Warn("No data unpacked", "unpackedData", unpackedData)
+			log.Warnw("No data unpacked", "unpackedData", unpackedData)
 		}
 
 		return Entitlement{
@@ -93,7 +93,7 @@ func MarshalEntitlement(
 		// Parse the ABI definition
 		parsedABI, err := base.RuleEntitlementV2MetaData.GetAbi()
 		if err != nil {
-			log.Error("Failed to parse ABI", "error", err)
+			log.Errorw("Failed to parse ABI", "error", err)
 			return Entitlement{}, err
 		}
 
@@ -101,7 +101,7 @@ func MarshalEntitlement(
 
 		unpackedData, err := parsedABI.Unpack("getRuleDataV2", rawEntitlement.EntitlementData)
 		if err != nil {
-			log.Warn(
+			log.Warnw(
 				"Failed to unpack rule data",
 				"error",
 				err,
@@ -118,12 +118,12 @@ func MarshalEntitlement(
 			// Marshal into JSON, because for some UnpackIntoInterface doesn't work when unpacking directly into a struct
 			jsonData, err := json.Marshal(unpackedData[0])
 			if err != nil {
-				log.Warn("Failed to marshal data to JSON", "error", err, "unpackedData", unpackedData)
+				log.Warnw("Failed to marshal data to JSON", "error", err, "unpackedData", unpackedData)
 			}
 
 			err = json.Unmarshal(jsonData, &ruleData)
 			if err != nil {
-				log.Warn(
+				log.Warnw(
 					"Failed to unmarshal JSON to struct",
 					"error",
 					err,
@@ -134,7 +134,7 @@ func MarshalEntitlement(
 				)
 			}
 		} else {
-			log.Warn("No data unpacked", "unpackedData", unpackedData)
+			log.Warnw("No data unpacked", "unpackedData", unpackedData)
 		}
 
 		return Entitlement{

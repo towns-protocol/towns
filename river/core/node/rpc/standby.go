@@ -19,7 +19,7 @@ func (s *Service) standby() error {
 		pollPeriod = 500 * time.Millisecond
 	}
 
-	log.Info("Standby: entering standby mode", "poll_period", pollPeriod)
+	log.Infow("Standby: entering standby mode", "poll_period", pollPeriod)
 
 	// In a loop, query JSON from /status and exit when returned instanceId is matching local instanceId.
 	// This means that routing has been switched to this instance.
@@ -46,7 +46,7 @@ func (s *Service) standby() error {
 			return err
 		}
 
-		log.Info("Standby: fetching status", "url", url)
+		log.Infow("Standby: fetching status", "url", url)
 
 		if s.standbyFetchStatus(req, client) {
 			return nil
@@ -61,25 +61,25 @@ func (s *Service) standbyFetchStatus(req *http.Request, client *http.Client) boo
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := client.Do(req.WithContext(ctx))
 	if err != nil {
-		log.Warn("Standby: failed to fetch status, retrying...", "error", err)
+		log.Warnw("Standby: failed to fetch status, retrying...", "error", err)
 		return false
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		log.Warn("Standby: status code is not 200, retrying...", "status_code", resp.StatusCode)
+		log.Warnw("Standby: status code is not 200, retrying...", "status_code", resp.StatusCode)
 		return false
 	}
 
 	var status statusinfo.StatusResponse
 	err = json.NewDecoder(resp.Body).Decode(&status)
 	if err != nil {
-		log.Warn("Standby: failed to decode JSON, retrying...", "error", err)
+		log.Warnw("Standby: failed to decode JSON, retrying...", "error", err)
 		return false
 	}
 
 	if status.InstanceId != s.instanceId {
-		log.Info(
+		log.Infow(
 			"Standby: instanceId is not matching, retrying...",
 			"remoted_id",
 			status.InstanceId,
@@ -91,6 +91,6 @@ func (s *Service) standbyFetchStatus(req *http.Request, client *http.Client) boo
 		return false
 	}
 
-	log.Info("Standby: instanceId is matching, exiting standby mode", "status", status)
+	log.Infow("Standby: instanceId is matching, exiting standby mode", "status", status)
 	return true
 }

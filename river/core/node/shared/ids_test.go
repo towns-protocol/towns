@@ -1,9 +1,7 @@
-package shared
+package shared_test
 
 import (
-	"bytes"
 	"fmt"
-	"log/slog"
 	"reflect"
 	"strings"
 	"testing"
@@ -13,8 +11,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/dlog"
 	. "github.com/river-build/river/core/node/protocol"
+	. "github.com/river-build/river/core/node/shared"
+	"github.com/river-build/river/core/node/testutils"
 )
 
 func TestValidDMStreamId(t *testing.T) {
@@ -81,29 +80,24 @@ func TestReflectStreamId(t *testing.T) {
 func TestLoggingText(t *testing.T) {
 	require := require.New(t)
 
-	buffer := &bytes.Buffer{}
-	log := slog.New(dlog.NewPrettyTextHandler(buffer, &dlog.PrettyHandlerOptions{
-		Colors: dlog.ColorMap_Disabled,
-	}))
-
+	log, buf := testutils.ZapJsonLogger()
 	streamId, err := StreamIdFromBytes(padBytesId([]byte{STREAM_SPACE_BIN, 0x22, 0x33}))
 	require.NoError(err)
 
-	log.Info("test", "streamId", streamId)
-	require.Contains(buffer.String(), "1022330000000000000000000000000000000000000000000000000000000000")
+	log.Infow("test", "streamId", streamId)
+	require.Contains(buf.String(), "1022330000000000000000000000000000000000000000000000000000000000")
 }
 
 func TestLoggingJson(t *testing.T) {
 	require := require.New(t)
 
-	buffer := &bytes.Buffer{}
-	log := slog.New(dlog.NewPrettyJSONHandler(buffer, &dlog.PrettyHandlerOptions{}))
+	log, buf := testutils.ZapJsonLogger()
 
 	streamId, err := StreamIdFromBytes(padBytesId([]byte{STREAM_SPACE_BIN, 0x22, 0x33}))
 	require.NoError(err)
 
-	log.Info("test", "streamId", streamId)
-	require.Contains(buffer.String(), "1022330000000000000000000000000000000000000000000000000000000000")
+	log.Infow("test", "streamId", streamId)
+	require.Contains(buf.String(), "1022330000000000000000000000000000000000000000000000000000000000")
 }
 
 func TestErrorFormat(t *testing.T) {

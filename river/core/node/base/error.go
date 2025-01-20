@@ -1,5 +1,4 @@
 // See [conventions.md](../conventions.md) for usage examples.
-// TODO: use formatter for dlog for value formatting instead of fmt.
 
 package base
 
@@ -8,13 +7,14 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"log/slog"
 	"os"
 	"runtime"
 	"strconv"
 	"strings"
 
 	"connectrpc.com/connect"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 
 	"github.com/river-build/river/core/node/protocol"
 
@@ -362,34 +362,33 @@ func (e *RiverErrorImpl) GetTag(name string) any {
 	return nil
 }
 
-func (e *RiverErrorImpl) LogWithLevel(l *slog.Logger, level slog.Level) *RiverErrorImpl {
-	// Context for slog is optional, generally in this codebase context is not passed to slog.
-	var nilContext context.Context
-	l.Log(nilContext, level, e.GetMessage(), e.FlattenTags()...)
+func (e *RiverErrorImpl) LogWithLevel(l *zap.SugaredLogger, level zapcore.Level) *RiverErrorImpl {
+	// Context for zap is optional, generally in this codebase context is not passed to zap.
+	l.Logw(level, e.GetMessage(), e.FlattenTags()...)
 	return e
 }
 
-func (e *RiverErrorImpl) Log(l *slog.Logger) *RiverErrorImpl {
-	return e.LogWithLevel(l, slog.LevelError)
+func (e *RiverErrorImpl) Log(l *zap.SugaredLogger) *RiverErrorImpl {
+	return e.LogWithLevel(l, zapcore.ErrorLevel)
 }
 
-func (e *RiverErrorImpl) LogError(l *slog.Logger) *RiverErrorImpl {
-	return e.LogWithLevel(l, slog.LevelError)
+func (e *RiverErrorImpl) LogError(l *zap.SugaredLogger) *RiverErrorImpl {
+	return e.LogWithLevel(l, zapcore.ErrorLevel)
 }
 
-func (e *RiverErrorImpl) LogWarn(l *slog.Logger) *RiverErrorImpl {
-	return e.LogWithLevel(l, slog.LevelWarn)
+func (e *RiverErrorImpl) LogWarn(l *zap.SugaredLogger) *RiverErrorImpl {
+	return e.LogWithLevel(l, zapcore.WarnLevel)
 }
 
-func (e *RiverErrorImpl) LogInfo(l *slog.Logger) *RiverErrorImpl {
-	return e.LogWithLevel(l, slog.LevelInfo)
+func (e *RiverErrorImpl) LogInfo(l *zap.SugaredLogger) *RiverErrorImpl {
+	return e.LogWithLevel(l, zapcore.InfoLevel)
 }
 
-func (e *RiverErrorImpl) LogDebug(l *slog.Logger) *RiverErrorImpl {
-	return e.LogWithLevel(l, slog.LevelDebug)
+func (e *RiverErrorImpl) LogDebug(l *zap.SugaredLogger) *RiverErrorImpl {
+	return e.LogWithLevel(l, zapcore.DebugLevel)
 }
 
-func (e *RiverErrorImpl) LogLevel(l *slog.Logger, level slog.Level) *RiverErrorImpl {
+func (e *RiverErrorImpl) LogLevel(l *zap.SugaredLogger, level zapcore.Level) *RiverErrorImpl {
 	return e.LogWithLevel(l, level)
 }
 

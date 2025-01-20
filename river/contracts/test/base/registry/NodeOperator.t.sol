@@ -17,7 +17,7 @@ import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
 import {OwnableFacet} from "@river-build/diamond/src/facets/ownable/OwnableFacet.sol";
 import {IntrospectionFacet} from "@river-build/diamond/src/facets/introspection/IntrospectionFacet.sol";
 import {ERC721A} from "contracts/src/diamond/facets/token/ERC721A/ERC721A.sol";
-import {River} from "contracts/src/tokens/river/base/River.sol";
+import {Towns} from "contracts/src/tokens/towns/base/Towns.sol";
 
 contract NodeOperatorFacetTest is
   BaseSetup,
@@ -28,7 +28,7 @@ contract NodeOperatorFacetTest is
 {
   OwnableFacet internal ownable;
   IntrospectionFacet internal introspection;
-  River internal riverFacet;
+  Towns internal towns;
   ERC721A internal erc721;
   INodeOperator internal operator;
 
@@ -43,7 +43,7 @@ contract NodeOperatorFacetTest is
     ownable = OwnableFacet(address(baseRegistry));
     introspection = IntrospectionFacet(address(baseRegistry));
     erc721 = ERC721A(address(baseRegistry));
-    riverFacet = River(riverToken);
+    towns = Towns(townsToken);
   }
 
   function test_initialization() public view {
@@ -207,7 +207,7 @@ contract NodeOperatorFacetTest is
     amount = bound(amount, stakeRequirement, stakeRequirement * 10);
 
     vm.prank(bridge);
-    riverFacet.mint(caller, amount);
+    towns.mint(caller, amount);
     _;
   }
 
@@ -219,7 +219,7 @@ contract NodeOperatorFacetTest is
     vm.assume(_operator != delegator);
 
     vm.prank(delegator);
-    riverFacet.delegate(_operator);
+    towns.delegate(_operator);
     _;
   }
 

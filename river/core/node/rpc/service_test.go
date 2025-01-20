@@ -24,8 +24,8 @@ import (
 
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/events"
+	"github.com/river-build/river/core/node/logging"
 	"github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/protocol/protocolconnect"
 	river_sync "github.com/river-build/river/core/node/rpc/sync"
@@ -763,7 +763,7 @@ func testRemoveStreamsFromSync(tester *serviceTester) {
 	ctx := tester.ctx
 	require := tester.require
 	aliceClient := tester.testClient(0)
-	log := dlog.FromCtx(ctx)
+	log := logging.FromCtx(ctx)
 
 	// create alice's wallet and streams
 	aliceWallet, _ := crypto.NewWallet(ctx)
@@ -835,7 +835,7 @@ func testRemoveStreamsFromSync(tester *serviceTester) {
 		),
 	)
 	require.NoError(err, "AddStreamsToSync")
-	log.Info("AddStreamToSync", "resp", resp)
+	log.Infow("AddStreamToSync", "resp", resp)
 	// When AddEvent is called, node calls streamImpl.notifyToSubscribers() twice
 	// for different events. 	See hnt-3683 for explanation. First event is for
 	// the externally added event (by AddEvent). Second event is the miniblock
@@ -845,13 +845,13 @@ func testRemoveStreamsFromSync(tester *serviceTester) {
 OuterLoop:
 	for syncRes.Receive() {
 		update := syncRes.Msg()
-		log.Info("received update", "update", update)
+		log.Infow("received update", "update", update)
 		if update.Stream != nil {
 			sEvents := update.Stream.Events
 			for _, envelope := range sEvents {
 				receivedCount++
 				parsedEvent, _ := events.ParseEvent(envelope)
-				log.Info("received update inner loop", "envelope", parsedEvent)
+				log.Infow("received update inner loop", "envelope", parsedEvent)
 				if parsedEvent != nil && parsedEvent.Event.GetMiniblockHeader() != nil {
 					break OuterLoop
 				}

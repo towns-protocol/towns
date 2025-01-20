@@ -10,13 +10,13 @@ import {StakingRewards} from "contracts/src/base/registry/facets/distribution/v2
 
 // contracts
 import {StdAssertions} from "forge-std/StdAssertions.sol";
-import {River} from "contracts/src/tokens/river/base/River.sol";
+import {Towns} from "contracts/src/tokens/towns/base/Towns.sol";
 import {RewardsDistribution} from "contracts/src/base/registry/facets/distribution/v2/RewardsDistribution.sol";
 
 abstract contract RewardsVerifier is StdAssertions, IRewardsDistributionBase {
   using FixedPointMathLib for uint256;
 
-  River internal river;
+  Towns internal towns;
   RewardsDistribution internal rewardsDistributionFacet;
 
   function verifyStake(
@@ -66,8 +66,8 @@ abstract contract RewardsVerifier is StdAssertions, IRewardsDistributionBase {
 
     address proxy = rewardsDistributionFacet.delegationProxyById(depositId);
     if (proxy != address(0)) {
-      assertEq(river.delegates(proxy), delegatee, "proxy delegatee");
-      assertEq(river.getVotes(delegatee), amount, "votes");
+      assertEq(towns.delegates(proxy), delegatee, "proxy delegatee");
+      assertEq(towns.getVotes(delegatee), amount, "votes");
     }
   }
 
@@ -84,7 +84,7 @@ abstract contract RewardsVerifier is StdAssertions, IRewardsDistributionBase {
       0,
       "stakedByDepositor"
     );
-    assertEq(river.balanceOf(depositor), withdrawAmount, "withdrawAmount");
+    assertEq(towns.balanceOf(depositor), withdrawAmount, "withdrawAmount");
 
     StakingRewards.Deposit memory deposit = rewardsDistributionFacet
       .depositById(depositId);
@@ -108,11 +108,11 @@ abstract contract RewardsVerifier is StdAssertions, IRewardsDistributionBase {
     );
 
     assertEq(
-      river.delegates(rewardsDistributionFacet.delegationProxyById(depositId)),
+      towns.delegates(rewardsDistributionFacet.delegationProxyById(depositId)),
       address(0),
       "proxy delegatee"
     );
-    assertEq(river.getVotes(operator), 0, "votes");
+    assertEq(towns.getVotes(operator), 0, "votes");
   }
 
   function verifyClaim(
@@ -123,7 +123,7 @@ abstract contract RewardsVerifier is StdAssertions, IRewardsDistributionBase {
     uint256 timeLapse
   ) internal view {
     assertEq(reward, currentReward, "reward");
-    assertEq(river.balanceOf(claimer), reward, "reward balance");
+    assertEq(towns.balanceOf(claimer), reward, "reward balance");
 
     StakingState memory state = rewardsDistributionFacet.stakingState();
     uint256 earningPower = rewardsDistributionFacet

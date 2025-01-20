@@ -1,7 +1,6 @@
 package rpc
 
 import (
-	"log/slog"
 	"os"
 
 	"connectrpc.com/otelconnect"
@@ -13,7 +12,9 @@ import (
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
+	"go.uber.org/zap"
 
+	"github.com/river-build/river/core/node/utils"
 	"github.com/river-build/river/core/river_node/version"
 )
 
@@ -27,7 +28,7 @@ func (s *Service) initTracing() {
 	if s.config.PerformanceTracking.OtlpFile != "" {
 		f, err := os.OpenFile(s.config.PerformanceTracking.OtlpFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		if err != nil {
-			s.defaultLogger.Error("initTracing: failed to create trace file", "error", err)
+			s.defaultLogger.Errorw("initTracing: failed to create trace file", "error", err)
 		} else {
 			s.onClose(f.Close)
 
@@ -35,7 +36,7 @@ func (s *Service) initTracing() {
 				stdouttrace.WithWriter(f),
 			)
 			if err != nil {
-				s.defaultLogger.Error("initTracing: failed to create stdout exporter", "error", err)
+				s.defaultLogger.Errorw("initTracing: failed to create stdout exporter", "error", err)
 			} else {
 				s.onClose(exporter.Shutdown)
 
@@ -56,7 +57,7 @@ func (s *Service) initTracing() {
 			s.onClose(exp.Shutdown)
 			exporters = append(exporters, trace.WithBatcher(exp))
 		} else {
-			s.defaultLogger.Error("Failed to create http OTLP exporter", "error", err)
+			s.defaultLogger.Errorw("Failed to create http OTLP exporter", "error", err)
 		}
 	}
 
@@ -72,25 +73,25 @@ func (s *Service) initTracing() {
 			s.onClose(exp.Shutdown)
 			exporters = append(exporters, trace.WithBatcher(exp))
 		} else {
-			s.defaultLogger.Error("Failed to create grpc OTLP exporter", "error", err)
+			s.defaultLogger.Errorw("Failed to create grpc OTLP exporter", "error", err)
 		}
 	}
 
 	if s.config.PerformanceTracking.ZipkinUrl != "" {
 		exp, err := zipkin.New(
 			s.config.PerformanceTracking.ZipkinUrl+"/api/v2/spans",
-			zipkin.WithLogger(slog.NewLogLogger(s.defaultLogger.Handler(), slog.LevelWarn)),
+			zipkin.WithLogger(utils.NewLevelLogger(s.defaultLogger, zap.WarnLevel)),
 		)
 		if err == nil {
 			s.onClose(exp.Shutdown)
 			exporters = append(exporters, trace.WithBatcher(exp))
 		} else {
-			s.defaultLogger.Error("Failed to create zipkin exporter", "error", err)
+			s.defaultLogger.Errorw("Failed to create zipkin exporter", "error", err)
 		}
 	}
 
 	if len(exporters) == 0 {
-		s.defaultLogger.Warn("Tracing is enabled, but no exporters are configured, skipping tracing setup")
+		s.defaultLogger.Warnw("Tracing is enabled, but no exporters are configured, skipping tracing setup")
 		return
 	}
 
@@ -103,7 +104,7 @@ func (s *Service) initTracing() {
 		),
 	)
 	if err != nil {
-		s.defaultLogger.Error("Failed to create resource", "error", err)
+		s.defaultLogger.Errorw("Failed to create resource", "error", err)
 		return
 	}
 
@@ -124,6 +125,6 @@ func (s *Service) initTracing() {
 		otelconnect.WithPropagator(propagation.TraceContext{}),
 	)
 	if err != nil {
-		s.defaultLogger.Error("Failed to create otel interceptor", "error", err)
+		s.defaultLogger.Errorw("Failed to create otel interceptor", "error", err)
 	}
 }

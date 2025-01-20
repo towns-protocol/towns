@@ -12,7 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/dlog"
+	"github.com/river-build/river/core/node/logging"
 	. "github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/protocol/protocolconnect"
 	. "github.com/river-build/river/core/node/shared"
@@ -61,10 +61,10 @@ func newRemoteSyncer(
 		return nil, responseStream.Err()
 	}
 
-	log := dlog.FromCtx(ctx)
+	log := logging.FromCtx(ctx)
 
 	if responseStream.Msg().GetSyncOp() != SyncOp_SYNC_NEW || responseStream.Msg().GetSyncId() == "" {
-		log.Error("Received unexpected sync stream message",
+		log.Errorw("Received unexpected sync stream message",
 			"syncOp", responseStream.Msg().SyncOp,
 			"syncId", responseStream.Msg().SyncId)
 		syncStreamCancel()
@@ -95,7 +95,7 @@ func newRemoteSyncer(
 }
 
 func (s *remoteSyncer) Run() {
-	log := dlog.FromCtx(s.syncStreamCtx)
+	log := logging.FromCtx(s.syncStreamCtx)
 
 	defer s.responseStream.Close()
 
@@ -117,7 +117,7 @@ func (s *remoteSyncer) Run() {
 		if res.GetSyncOp() == SyncOp_SYNC_UPDATE {
 			if err := s.sendSyncStreamResponseToClient(res); err != nil {
 				if !errors.Is(err, context.Canceled) {
-					log.Error("Cancel remote sync with client", "remote", s.remoteAddr, "err", err)
+					log.Errorw("Cancel remote sync with client", "remote", s.remoteAddr, "err", err)
 					s.cancelGlobalSyncOp(err)
 				}
 				return
@@ -127,7 +127,7 @@ func (s *remoteSyncer) Run() {
 				s.unsubStream(streamID)
 				if err := s.sendSyncStreamResponseToClient(res); err != nil {
 					if !errors.Is(err, context.Canceled) {
-						log.Error("Cancel remote sync with client", "remote", s.remoteAddr, "err", err)
+						log.Errorw("Cancel remote sync with client", "remote", s.remoteAddr, "err", err)
 						s.cancelGlobalSyncOp(err)
 					}
 					return
@@ -140,17 +140,17 @@ func (s *remoteSyncer) Run() {
 
 	// stream interrupted while client didn't cancel sync -> remote is unavailable
 	if s.syncStreamCtx.Err() == nil {
-		log.Info("remote node disconnected", "remote", s.remoteAddr)
+		log.Infow("remote node disconnected", "remote", s.remoteAddr)
 
 		s.streams.Range(func(key, value any) bool {
 			streamID := key.(StreamId)
-			log.Debug("stream down", "syncId", s.forwarderSyncID, "remote", s.remoteAddr, "stream", streamID)
+			log.Debugw("stream down", "syncId", s.forwarderSyncID, "remote", s.remoteAddr, "stream", streamID)
 
 			msg := &SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]}
 
 			// TODO: slow down a bit to give client time to read stream down updates
 			if err := s.sendSyncStreamResponseToClient(msg); err != nil {
-				log.Error("Cancel remote sync with client", "remote", s.remoteAddr, "err", err)
+				log.Errorw("Cancel remote sync with client", "remote", s.remoteAddr, "err", err)
 				s.cancelGlobalSyncOp(err)
 				return false
 			}
@@ -179,7 +179,7 @@ func (s *remoteSyncer) sendSyncStreamResponseToClient(msg *SyncStreamsResponse) 
 // if the remote can't be reach the sync stream is canceled.
 func (s *remoteSyncer) connectionAlive(latestMsgReceived *atomic.Value) {
 	var (
-		log = dlog.FromCtx(s.syncStreamCtx)
+		log = logging.FromCtx(s.syncStreamCtx)
 		// check every pingTicker if it's time to send a ping req to remote
 		pingTicker = time.NewTicker(3 * time.Second)
 		// don't send a ping req if there was activity within recentActivityInterval
@@ -195,7 +195,7 @@ func (s *remoteSyncer) connectionAlive(latestMsgReceived *atomic.Value) {
 			now := time.Now()
 			lastMsgRecv := latestMsgReceived.Load().(time.Time)
 			if lastMsgRecv.Add(recentActivityDeadline).Before(now) { // no recent activity -> conn dead
-				log.Warn("remote sync node time out", "remote", s.remoteAddr)
+				log.Warnw("remote sync node time out", "remote", s.remoteAddr)
 				s.syncStreamCancel()
 				return
 			}
@@ -210,7 +210,7 @@ func (s *remoteSyncer) connectionAlive(latestMsgReceived *atomic.Value) {
 				Nonce:  fmt.Sprintf("%d", now.Unix()),
 			})); err != nil {
 				if !errors.Is(err, context.Canceled) {
-					log.Error("ping sync failed", "remote", s.remoteAddr, "err", err)
+					log.Errorw("ping sync failed", "remote", s.remoteAddr, "err", err)
 				}
 				s.syncStreamCancel()
 				return

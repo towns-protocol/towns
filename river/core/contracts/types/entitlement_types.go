@@ -8,7 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/river-build/river/core/contracts/base"
-	"github.com/river-build/river/core/node/dlog"
+	"github.com/river-build/river/core/node/logging"
 )
 
 // OperationType Enum
@@ -158,9 +158,9 @@ func GetOperationTree(
 	ctx context.Context,
 	ruleData *base.IRuleEntitlementBaseRuleDataV2,
 ) (Operation, error) {
-	log := dlog.FromCtx(ctx)
+	log := logging.FromCtx(ctx)
 	decodedOperations := []Operation{}
-	log.Debug("Decoding operations", "ruleData", ruleData)
+	log.Debugw("Decoding operations", "ruleData", ruleData)
 	for _, operation := range ruleData.Operations {
 		if OperationType(operation.OpType) == CHECK {
 			checkOperation := ruleData.CheckOperations[operation.Index]
@@ -193,7 +193,7 @@ func GetOperationTree(
 		} else {
 			return nil, errors.New("unknown logical operation type")
 		}
-		log.Debug("Decoded operation", "operation", operation, "decodedOperations", decodedOperations)
+		log.Debugw("Decoded operation", "operation", operation, "decodedOperations", decodedOperations)
 	}
 
 	var stack []Operation
@@ -219,7 +219,7 @@ func GetOperationTree(
 		} else {
 			return nil, errors.New("unknown operation type")
 		}
-		log.Debug("decodedOperation", "op", op, "stack", stack)
+		log.Debugw("decodedOperation", "op", op, "stack", stack)
 	}
 
 	if len(stack) != 1 {

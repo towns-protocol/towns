@@ -11,7 +11,7 @@ import (
 
 	"github.com/river-build/river/core/config"
 	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/dlog"
+	"github.com/river-build/river/core/node/logging"
 )
 
 func (s *Service) startInfoMode(opts *ServerStartOpts) error {
@@ -47,7 +47,7 @@ func (s *Service) startInfoMode(opts *ServerStartOpts) error {
 	port := tcpAddr.Port
 	// build the url by converting the integer to a string
 	url := s.config.UrlSchema() + "://localhost:" + strconv.Itoa(port) + "/debug/multi"
-	s.defaultLogger.Info("Server started", "port", port, "https", !s.config.DisableHttps, "url", url)
+	s.defaultLogger.Infow("Server started", "port", port, "https", !s.config.DisableHttps, "url", url)
 	return nil
 }
 
@@ -76,14 +76,14 @@ func StartServerInInfoMode(
 }
 
 func RunInfoMode(ctx context.Context, cfg *config.Config) error {
-	log := dlog.FromCtx(ctx)
+	log := logging.FromCtx(ctx)
 
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
 	service, error := StartServerInInfoMode(ctx, cfg, nil)
 	if error != nil {
-		log.Error("Failed to start server", "error", error)
+		log.Errorw("Failed to start server", "error", error)
 		return error
 	}
 	defer service.Close()
@@ -92,7 +92,7 @@ func RunInfoMode(ctx context.Context, cfg *config.Config) error {
 	signal.Notify(osSignal, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		sig := <-osSignal
-		log.Info("Got OS signal", "signal", sig.String())
+		log.Infow("Got OS signal", "signal", sig.String())
 		service.exitSignal <- nil
 	}()
 

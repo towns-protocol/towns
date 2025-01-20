@@ -17,7 +17,7 @@ func (s *Service) initEthBalanceMetrics() {
 
 	nodeRecord, err := s.nodeRegistry.GetNode(s.wallet.Address)
 	if err != nil {
-		s.defaultLogger.Error("Failed to find own node record", "err", err)
+		s.defaultLogger.Errorw("Failed to find own node record", "err", err)
 		return
 	}
 
@@ -31,7 +31,7 @@ func (s *Service) reportBaseEthMetric(name string, address common.Address) {
 	// Report once on start
 	balance, err := s.baseChain.Client.BalanceAt(s.serverCtx, address, nil)
 	if err != nil {
-		s.defaultLogger.Error("Unable to retrieve wallet balance from base", "err", err)
+		s.defaultLogger.Errorw("Unable to retrieve wallet balance from base", "err", err)
 	} else {
 		metric.Set(crypto.WeiToEth(balance))
 	}
@@ -46,7 +46,7 @@ func (s *Service) reportBaseEthMetric(name string, address common.Address) {
 		case <-ticker.C:
 			balance, err = s.baseChain.Client.BalanceAt(s.serverCtx, address, nil)
 			if err != nil {
-				s.defaultLogger.Error("Unable to retrieve wallet balance from base", "err", err)
+				s.defaultLogger.Errorw("Unable to retrieve wallet balance from base", "err", err)
 				continue
 			}
 

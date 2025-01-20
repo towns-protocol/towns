@@ -13,7 +13,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/river-build/river/core/node/dlog"
+	"github.com/river-build/river/core/node/logging"
 )
 
 func keyboardInput(input chan rune) {
@@ -41,8 +41,8 @@ func runClientSimulator() error {
 	bc := context.Background()
 	pid := os.Getpid()
 
-	log := dlog.FromCtx(bc).With("pid", pid)
-	log.Info("Main started")
+	log := logging.FromCtx(bc).With("pid", pid)
+	log.Infow("Main started")
 	input := make(chan rune)
 
 	go func() {
@@ -51,7 +51,7 @@ func runClientSimulator() error {
 
 	wallet, err := util.LoadWallet(bc)
 	if err != nil {
-		log.Error("error finding wallet")
+		log.Errorw("error finding wallet")
 		return err
 	}
 
@@ -61,27 +61,27 @@ func runClientSimulator() error {
 out:
 
 	for {
-		log.Info("Main Loop")
+		log.Infow("Main Loop")
 		select {
 		case char := <-input:
-			log.Info("Input", "char", char)
+			log.Infow("Input", "char", char)
 			switch char {
 			case 'a':
 				go xc.RunClientSimulator(bc, cmdConfig, wallet, xc.ERC20)
 			case 'b':
 				go xc.RunClientSimulator(bc, cmdConfig, wallet, xc.ERC721)
 			case 'q':
-				log.Info("Quit Exit")
+				log.Infow("Quit Exit")
 				break out
 			}
 
 		case <-interrupt:
-			log.Info("Main Interrupted")
+			log.Infow("Main Interrupted")
 			break out
 		}
 	}
 
-	log.Info("Shutdown")
+	log.Infow("Shutdown")
 	return nil
 }
 

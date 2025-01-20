@@ -12,14 +12,14 @@ import {Interaction} from "contracts/scripts/common/Interaction.s.sol";
 
 // deployments
 import {DeployRiverAirdrop} from "contracts/scripts/deployments/diamonds/DeployRiverAirdrop.s.sol";
-import {DeployRiverBase} from "contracts/scripts/deployments/utils/DeployRiverBase.s.sol";
+import {DeployTownsBase} from "contracts/scripts/deployments/utils/DeployTownsBase.s.sol";
 
 uint256 constant MAX_CLAIMABLE_SUPPLY = 5 ether;
 
 contract InteractClaimCondition is IDropFacetBase, Interaction {
   // deployments
   DeployRiverAirdrop deployRiverAirdrop = new DeployRiverAirdrop();
-  DeployRiverBase deployRiverBase = new DeployRiverBase();
+  DeployTownsBase deployTownsBase = new DeployTownsBase();
   MerkleTree merkleTree = new MerkleTree();
 
   address[] public wallets;
@@ -32,7 +32,7 @@ contract InteractClaimCondition is IDropFacetBase, Interaction {
 
   function __interact(address deployer) internal override {
     address riverAirdrop = deployRiverAirdrop.deploy(deployer);
-    address riverBase = deployRiverBase.deploy(deployer);
+    address townsBase = deployTownsBase.deploy(deployer);
     (bytes32 root, ) = merkleTree.constructTree(wallets, amounts);
 
     ClaimCondition[] memory conditions = new ClaimCondition[](1);
@@ -42,7 +42,7 @@ contract InteractClaimCondition is IDropFacetBase, Interaction {
       maxClaimableSupply: MAX_CLAIMABLE_SUPPLY,
       supplyClaimed: 0,
       merkleRoot: root,
-      currency: address(riverBase),
+      currency: address(townsBase),
       penaltyBps: 1000 // 10%
     });
 

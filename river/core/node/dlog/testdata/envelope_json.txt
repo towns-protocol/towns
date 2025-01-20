@@ -1,1 +1,0 @@
-{"time":"[TIMESTAMP]","level":"INFO","msg":"Logging envelope","envelope":{"hash":"MjM0NmFkMjdkNzU2OGJhOTg5NmYxYjdkYTZiNTk5MTI1MWRlYmRmMg=="}}

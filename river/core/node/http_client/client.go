@@ -12,24 +12,24 @@ import (
 	"golang.org/x/net/http2"
 
 	"github.com/river-build/river/core/config"
-	"github.com/river-build/river/core/node/dlog"
+	"github.com/river-build/river/core/node/logging"
 )
 
 // getTLSConfig returns a tls.Config with the system cert pool
 // and any additional CA certs specified in the config file.
 func getTLSConfig(ctx context.Context) *tls.Config {
-	log := dlog.FromCtx(ctx)
+	log := logging.FromCtx(ctx)
 	// Load the system cert pool
 	sysCerts, err := x509.SystemCertPool()
 	if err != nil {
-		log.Warn("getTLSConfig Error loading system certs", "err", err)
+		log.Warnw("getTLSConfig Error loading system certs", "err", err)
 		return nil
 	}
 
 	// Attempt to load ~/river-ca-cert.pem
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		log.Warn("getTLSConfig Failed to get user home directory:", "err", err)
+		log.Warnw("getTLSConfig Failed to get user home directory:", "err", err)
 		return nil
 	}
 	// TODO - hook this up to the config file
@@ -39,11 +39,11 @@ func getTLSConfig(ctx context.Context) *tls.Config {
 		return nil
 	}
 
-	log.Warn("getTLSConfig using river CA cert file for development only")
+	log.Warnw("getTLSConfig using river CA cert file for development only")
 
 	// Append river CA cert to the system cert pool
 	if ok := sysCerts.AppendCertsFromPEM(riverCaCertPEM); !ok {
-		log.Error("Failed to append river CA cert to system cert pool")
+		log.Errorw("Failed to append river CA cert to system cert pool")
 		return nil
 	}
 

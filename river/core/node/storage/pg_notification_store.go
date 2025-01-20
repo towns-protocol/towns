@@ -13,8 +13,8 @@ import (
 	"github.com/jackc/pgx/v5"
 
 	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/infra"
+	"github.com/river-build/river/core/node/logging"
 	"github.com/river-build/river/core/node/notifications/types"
 	. "github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/shared"
@@ -869,7 +869,7 @@ func (s *PostgresNotificationStore) removeAPNSubscription(
 		deviceToken,
 	)
 
-	dlog.FromCtx(ctx).Info("remove APN subscription",
+	logging.FromCtx(ctx).Infow("remove APN subscription",
 		"userID", userID, "records", result.RowsAffected(), "err", err)
 
 	return err

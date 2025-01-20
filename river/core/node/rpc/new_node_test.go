@@ -12,7 +12,7 @@ import (
 	"github.com/river-build/river/core/contracts/river"
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/dlog"
+	"github.com/river-build/river/core/node/logging"
 	. "github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/protocol/protocolconnect"
 	. "github.com/river-build/river/core/node/shared"
@@ -49,7 +49,7 @@ func TestAddingNewNodes(t *testing.T) {
 	tester := newServiceTester(t, serviceTesterOpts{numNodes: 20})
 	ctx := tester.ctx
 	require := tester.require
-	log := dlog.FromCtx(ctx)
+	log := logging.FromCtx(ctx)
 
 	tester.initNodeRecords(0, 10, river.NodeStatus_Operational)
 	tester.startNodes(0, 10)
@@ -91,7 +91,7 @@ func TestAddingNewNodes(t *testing.T) {
 			oldNodeCount++
 		}
 	}
-	log.Info("Node count new streams through old client", "oldNodeCount", oldNodeCount, "newNodeCount", newNodeCount)
+	log.Infow("Node count new streams through old client", "oldNodeCount", oldNodeCount, "newNodeCount", newNodeCount)
 	require.NotZero(newNodeCount)
 	require.NotZero(oldNodeCount)
 
@@ -111,7 +111,7 @@ func TestAddingNewNodes(t *testing.T) {
 			oldNodeCount++
 		}
 	}
-	log.Info("Node count old streams through new client", "oldNodeCount", oldNodeCount, "newNodeCount", newNodeCount)
+	log.Infow("Node count old streams through new client", "oldNodeCount", oldNodeCount, "newNodeCount", newNodeCount)
 	require.NotZero(oldNodeCount)
 	require.Zero(newNodeCount)
 }

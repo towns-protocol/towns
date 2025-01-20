@@ -7,7 +7,7 @@ import (
 	"github.com/gammazero/workerpool"
 
 	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/dlog"
+	"github.com/river-build/river/core/node/logging"
 	. "github.com/river-build/river/core/node/protocol"
 	. "github.com/river-build/river/core/node/shared"
 )
@@ -21,7 +21,7 @@ func (s *streamCacheImpl) submitSyncStreamTask(
 	pool.Submit(func() {
 		err := s.syncStreamFromPeers(ctx, streamId, lastMbInContract)
 		if err != nil {
-			dlog.FromCtx(ctx).
+			logging.FromCtx(ctx).
 				Error("Unable to sync stream from peers", "stream", streamId, "error", err, "targetMiniblockNum", lastMbInContract.Num)
 		}
 	})

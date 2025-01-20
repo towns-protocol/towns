@@ -51,7 +51,7 @@ cast rpc evm_setAutomine true --rpc-url $RIVER_ANVIL_RPC_URL
 make clear-anvil-deployments context=$RIVER_ENV
 make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=diamonds contract=DeployBaseRegistry
 make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=utils contract=DeployProxyBatchDelegation
-make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=utils contract=DeployRiverBase
+make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=utils contract=DeployTownsBase
 make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=diamonds contract=DeploySpace
 make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=diamonds contract=DeploySpaceOwner
 make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=utils contract=DeployUserEntitlement

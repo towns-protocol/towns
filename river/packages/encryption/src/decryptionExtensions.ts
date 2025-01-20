@@ -753,7 +753,26 @@ export abstract class BaseDecryptionExtensions {
         if (allSessions.length === 0) {
             return
         }
+        // send a single key fulfillment for all algorithms
+        const { error } = await this.sendKeyFulfillment({
+            streamId,
+            userAddress: item.fromUserAddress,
+            deviceKey: item.solicitation.deviceKey,
+            sessionIds: item.solicitation.isNewDevice
+                ? []
+                : allSessions.map((x) => x.sessionId).sort(),
+        })
 
+        // if the key fulfillment failed, someone else already sent a key fulfillment
+        if (error) {
+            if (!error.msg.includes('DUPLICATE_EVENT')) {
+                // duplicate events are expected, we can ignore them, others are not
+                this.log.error('failed to send key fulfillment', error)
+            }
+            return
+        }
+
+        // if the key fulfillment succeeded, send one group session payload for each algorithm
         const sessions = allSessions.reduce((acc, session) => {
             if (!acc[session.algorithm]) {
                 acc[session.algorithm] = []
@@ -766,26 +785,13 @@ export abstract class BaseDecryptionExtensions {
         for (const kv of Object.entries(sessions)) {
             const algorithm = kv[0] as GroupEncryptionAlgorithmId
             const sessions = kv[1]
-            const { error } = await this.sendKeyFulfillment({
-                streamId,
-                userAddress: item.fromUserAddress,
-                deviceKey: item.solicitation.deviceKey,
-                sessionIds: item.solicitation.isNewDevice
-                    ? []
-                    : sessions.map((x) => x.sessionId).sort(),
-            })
 
-            if (!error) {
-                await this.encryptAndShareGroupSessions({
-                    streamId,
-                    item,
-                    sessions,
-                    algorithm,
-                })
-            } else if (!error.msg.includes('DUPLICATE_EVENT')) {
-                // duplicate events are expected, we can ignore them, others are not
-                this.log.error('failed to send key fulfillment', error)
-            }
+            await this.encryptAndShareGroupSessions({
+                streamId,
+                item,
+                sessions,
+                algorithm,
+            })
         }
     }
 

@@ -2,20 +2,22 @@ package cmd
 
 import (
 	"fmt"
-	"log/slog"
 	"os"
 
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+
 	"github.com/river-build/river/core/config"
-	"github.com/river-build/river/core/node/dlog"
+	"github.com/river-build/river/core/node/logging"
 )
 
 var (
-	fileLogLevel    slog.LevelVar
-	consoleLogLevel slog.LevelVar
+	fileLogLevel    zapcore.Level
+	consoleLogLevel zapcore.Level
 )
 
 func InitLogFromConfig(c *config.LogConfig) {
-	commonLevel := slog.LevelInfo
+	commonLevel := zap.InfoLevel
 	if c.Level != "" {
 		err := commonLevel.UnmarshalText([]byte(c.Level))
 		if err != nil {
@@ -27,81 +29,47 @@ func InitLogFromConfig(c *config.LogConfig) {
 		err := consoleLogLevel.UnmarshalText([]byte(c.ConsoleLevel))
 		if err != nil {
 			fmt.Printf("Failed to parse console log level, level=%s, error=%v\n", c.ConsoleLevel, err)
-			consoleLogLevel.Set(commonLevel)
+			consoleLogLevel = commonLevel
 		}
 	} else {
-		consoleLogLevel.Set(commonLevel)
+		consoleLogLevel = commonLevel
 	}
 
 	if c.FileLevel != "" {
 		err := fileLogLevel.UnmarshalText([]byte(c.FileLevel))
 		if err != nil {
 			fmt.Printf("Failed to parse file log level, level=%s, error=%v\n", c.FileLevel, err)
-			fileLogLevel.Set(commonLevel)
+			fileLogLevel = commonLevel
 		}
 	} else {
-		fileLogLevel.Set(commonLevel)
+		fileLogLevel = commonLevel
 	}
 
-	var consoleColors dlog.ColorMap
-	if c.NoColor {
-		consoleColors = dlog.ColorMap_Disabled
-	} else {
-		consoleColors = dlog.ColorMap_Enabled
-	}
-
-	var slogHandlers []slog.Handler
+	encoder := zapcore.NewJSONEncoder(logging.DefaultZapEncoderConfig())
+	var zapCores []zapcore.Core
 	if c.Console {
-		var handler slog.Handler
-		prettyHandlerOptions := &dlog.PrettyHandlerOptions{
-			Level:  &consoleLogLevel,
-			Colors: consoleColors,
-		}
-
-		if c.Format == "json" {
-			handler = dlog.NewPrettyJSONHandler(dlog.DefaultLogOut, prettyHandlerOptions)
-		} else {
-			// c.Format == "text"
-			handler = dlog.NewPrettyTextHandler(dlog.DefaultLogOut, prettyHandlerOptions)
-		}
-		slogHandlers = append(
-			slogHandlers,
-			handler,
-		)
+		zapCores = append(zapCores, zapcore.NewCore(encoder, zapcore.AddSync(logging.DefaultLogOut), consoleLogLevel))
 	}
 
 	if c.File != "" {
 		file, err := os.OpenFile(c.File, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 		if err == nil {
-			var handler slog.Handler
-			prettyHandlerOptions := &dlog.PrettyHandlerOptions{
-				Level:  &fileLogLevel,
-				Colors: dlog.ColorMap_Disabled,
-			}
-			if c.Format == "json" {
-				handler = dlog.NewPrettyJSONHandler(file, prettyHandlerOptions)
-			} else {
-				// c.Format == "text"
-				handler = dlog.NewPrettyTextHandler(file, prettyHandlerOptions)
-			}
-			slogHandlers = append(
-				slogHandlers,
-				handler,
-			)
-			// TODO: close file when program exits
+			zapCores = append(zapCores, zapcore.NewCore(encoder, zapcore.AddSync(file), fileLogLevel))
 		} else {
 			fmt.Printf("Failed to open log file, file=%s, error=%v\n", c.FileLevel, err)
 		}
 	}
 
-	var slogHandler slog.Handler
-	if len(slogHandlers) > 1 {
-		slogHandler = dlog.NewMultiHandler(slogHandlers...)
-	} else if len(slogHandlers) == 1 {
-		slogHandler = slogHandlers[0]
+	var core zapcore.Core
+	if len(zapCores) > 1 {
+		core = zapcore.NewTee(zapCores...)
+	} else if len(zapCores) == 1 {
+		core = zapCores[0]
 	} else {
-		slogHandler = &dlog.NullHandler{}
+		zap.ReplaceGlobals(zap.NewNop())
+		return
 	}
 
-	slog.SetDefault(slog.New(slogHandler))
+	logger := zap.New(core)
+	zap.ReplaceGlobals(logger)
 }

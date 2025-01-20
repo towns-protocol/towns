@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
-import {AuthorizedClaimers} from "contracts/src/tokens/river/mainnet/claimer/AuthorizedClaimers.sol";
+import {AuthorizedClaimers} from "contracts/src/tokens/mainnet/claimer/AuthorizedClaimers.sol";
 
 contract DeployAuthorizedClaimers is Deployer, FacetHelper {
   constructor() {

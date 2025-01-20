@@ -10,8 +10,8 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/infra"
+	"github.com/river-build/river/core/node/logging"
 )
 
 type (
@@ -225,7 +225,7 @@ func (cm *chainMonitor) Start(
 	cm.mu.Lock()
 	defer cm.mu.Unlock()
 	if cm.started {
-		dlog.FromCtx(ctx).Error("chain monitor already started")
+		logging.FromCtx(ctx).Errorw("chain monitor already started")
 		return
 	}
 	cm.started = true
@@ -273,7 +273,7 @@ func (cm *chainMonitor) runWithBlockPeriod(
 	)
 
 	var (
-		log                   = dlog.FromCtx(ctx)
+		log                   = logging.FromCtx(ctx)
 		one                   = big.NewInt(1)
 		pollInterval          = time.Duration(0)
 		poll                  = NewChainMonitorPollIntervalCalculator(blockPeriod, 30*time.Second)
@@ -299,18 +299,18 @@ func (cm *chainMonitor) runWithBlockPeriod(
 	cm.setFromBlock(initialBlock.AsBigInt(), true)
 	cm.mu.Unlock()
 
-	log.Debug("chain monitor started", "blockPeriod", blockPeriod, "fromBlock", initialBlock)
+	log.Debugw("chain monitor started", "blockPeriod", blockPeriod, "fromBlock", initialBlock)
 
 	for {
 		pollIntervalCounter.Inc()
 
 		select {
 		case <-ctx.Done():
-			log.Debug("initiate chain monitor shutdown")
+			log.Debugw("initiate chain monitor shutdown")
 			ctx2, cancel := context.WithTimeout(context.WithoutCancel(ctx), time.Minute)
 			cm.builder.stoppedCallbacks.onChainMonitorStopped(ctx2)
 			cancel()
-			log.Debug("chain monitor stopped")
+			log.Debugw("chain monitor stopped")
 			return
 
 		case <-time.After(pollInterval):
@@ -322,7 +322,7 @@ func (cm *chainMonitor) runWithBlockPeriod(
 
 			head, err := client.HeaderByNumber(ctx, nil)
 			if err != nil {
-				log.Warn("chain monitor is unable to retrieve chain head", "error", err)
+				log.Warnw("chain monitor is unable to retrieve chain head", "error", err)
 				pollInterval = poll.Interval(time.Since(start), gotNewBlock, false, true)
 				continue
 			}
@@ -364,7 +364,7 @@ func (cm *chainMonitor) runWithBlockPeriod(
 			// chain monitor isn't able to keep up or the rpc node is having issues and importing chain segments
 			// instead of single blocks.
 			if fromBlock < toBlock.Uint64() && blockPeriod >= time.Second {
-				log.Info("process chain segment", "from", fromBlock, "to", toBlock.Uint64())
+				log.Infow("process chain segment", "from", fromBlock, "to", toBlock.Uint64())
 			}
 
 			cm.mu.Lock()
@@ -381,7 +381,7 @@ func (cm *chainMonitor) runWithBlockPeriod(
 				len(cm.builder.blockWithLogsCallbacks) > 0 { // collect events in new blocks
 				collectedLogs, err = client.FilterLogs(ctx, query)
 				if err != nil {
-					log.Warn("unable to retrieve logs", "error", err, "from", query.FromBlock, "to", query.ToBlock)
+					log.Warnw("unable to retrieve logs", "error", err, "from", query.FromBlock, "to", query.ToBlock)
 					pollInterval = poll.Interval(time.Since(start), gotNewBlock, false, true)
 					cm.mu.Unlock()
 					continue

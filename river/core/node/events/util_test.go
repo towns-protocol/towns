@@ -14,8 +14,8 @@ import (
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/base/test"
 	"github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/infra"
+	"github.com/river-build/river/core/node/logging"
 	. "github.com/river-build/river/core/node/nodes"
 	. "github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/registries"
@@ -99,9 +99,9 @@ func makeCacheTestContext(t *testing.T, p testParams) (context.Context, *cacheTe
 
 	baseCtx := ctx
 	for i := range p.numInstances {
-		log := dlog.FromCtx(baseCtx)
+		log := logging.FromCtx(baseCtx)
 		log = log.With("instance", i)
-		ctx = dlog.CtxWithLog(baseCtx, log)
+		ctx = logging.CtxWithLog(baseCtx, log)
 
 		ctc.require.NoError(btc.InitNodeRecord(ctx, i, "fakeurl"))
 

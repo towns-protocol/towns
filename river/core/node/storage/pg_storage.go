@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
-	"log/slog"
 	"strings"
 	"time"
 
@@ -19,11 +18,12 @@ import (
 	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
+	"go.uber.org/zap/zapcore"
 
 	"github.com/river-build/river/core/config"
 	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/infra"
+	"github.com/river-build/river/core/node/logging"
 	. "github.com/river-build/river/core/node/protocol"
 )
 
@@ -120,7 +120,7 @@ func (s *PostgresEventStore) txRunner(
 	opts *txRunnerOpts,
 	tags ...any,
 ) error {
-	log := dlog.FromCtx(ctx).With(append(tags, "name", name, "dbSchema", s.schemaName)...)
+	log := logging.FromCtx(ctx).With(append(tags, "name", name, "dbSchema", s.schemaName)...)
 
 	if accessMode == pgx.ReadWrite {
 		// For write transactions context should not be cancelled if a client connection drops. Cancellations due to lost client connections can cause
@@ -140,7 +140,7 @@ func (s *PostgresEventStore) txRunner(
 			if pgErr, ok := err.(*pgconn.PgError); ok {
 				if pgErr.Code == pgerrcode.SerializationFailure || pgErr.Code == pgerrcode.DeadlockDetected {
 					s.txTracker.track("RETRY", name, tags...)
-					log.Debug(
+					log.Debugw(
 						"pg.txRunner: retrying transaction due to serialization failure",
 						"pgErr", pgErr,
 						"txTracker", s.txTracker.dump(),
@@ -154,15 +154,15 @@ func (s *PostgresEventStore) txRunner(
 					s.txCounter.WithLabelValues(name, "retry").Inc()
 					continue
 				}
-				log.Warn("pg.txRunner: transaction failed", "pgErr", pgErr)
+				log.Warnw("pg.txRunner: transaction failed", "pgErr", pgErr)
 			} else {
-				level := slog.LevelWarn
+				level := zapcore.WarnLevel
 				if opts != nil && opts.skipLoggingNotFound && AsRiverError(err).Code == Err_NOT_FOUND {
 					// Count "not found" as succeess if error is potentially expected
 					pass = true
-					level = slog.LevelDebug
+					level = zapcore.DebugLevel
 				}
-				log.Log(ctx, level, "pg.txRunner: transaction failed", "err", err)
+				log.Logw(level, "pg.txRunner: transaction failed", "err", err)
 			}
 
 			if pass {
@@ -181,7 +181,7 @@ func (s *PostgresEventStore) txRunner(
 				Tags(tags...)
 		}
 
-		log.Debug("pg.txRunner: transaction succeeded")
+		log.Debugw("pg.txRunner: transaction succeeded")
 		s.txCounter.IncPass(name)
 		s.txTracker.track("DONE", name, tags...)
 		return nil
@@ -295,7 +295,7 @@ func (s *PostgresEventStore) init(
 	migrations fs.FS,
 	migrationsPath string,
 ) error {
-	log := dlog.FromCtx(ctx)
+	log := logging.FromCtx(ctx)
 
 	setupPostgresMetrics(ctx, *poolInfo, metrics)
 
@@ -331,7 +331,7 @@ func (s *PostgresEventStore) init(
 	}
 
 	if s.isolationLevel != pgx.Serializable {
-		log.Info("PostgresEventStore: using isolation level", "level", s.isolationLevel)
+		log.Infow("PostgresEventStore: using isolation level", "level", s.isolationLevel)
 	}
 
 	if s.config.DebugTransactions {
@@ -362,7 +362,7 @@ func (s *PostgresEventStore) InitStorage(ctx context.Context) error {
 }
 
 func (s *PostgresEventStore) createSchemaTx(ctx context.Context, tx pgx.Tx) error {
-	log := dlog.FromCtx(ctx)
+	log := logging.FromCtx(ctx)
 
 	// Create schema iff not exists
 	var schemaExists bool
@@ -380,10 +380,10 @@ func (s *PostgresEventStore) createSchemaTx(ctx context.Context, tx pgx.Tx) erro
 		if err != nil {
 			return err
 		}
-		log.Info("DB Schema created", "schema", s.schemaName)
+		log.Infow("DB Schema created", "schema", s.schemaName)
 	} else {
 		if config.UseDetailedLog(ctx) {
-			log.Info("DB Schema already exists", "schema", s.schemaName)
+			log.Infow("DB Schema already exists", "schema", s.schemaName)
 		}
 	}
 	return nil
@@ -443,8 +443,8 @@ func (s *PostgresEventStore) initStorage(ctx context.Context) error {
 
 	// Optionally run a transaction before the migrations are applied
 	if s.preMigrationTx != nil {
-		log := dlog.FromCtx(ctx)
-		log.Info("Running pre-migration transaction")
+		log := logging.FromCtx(ctx)
+		log.Infow("Running pre-migration transaction")
 		if err := s.txRunner(
 			ctx,
 			"preMigrationTx",

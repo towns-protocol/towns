@@ -72,12 +72,6 @@ func (i *metricsInterceptor) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc
 			m    = i.unaryInflight.With(prometheus.Labels{"method": proc})
 			s, _ = i.unaryStatusCode.CurryWith(prometheus.Labels{"method": proc})
 		)
-		m.Inc()
-
-		defer func() {
-			m.Dec()
-			prometheus.NewTimer(i.rpcDuration.WithLabelValues(proc)).ObserveDuration()
-		}()
 
 		// add streamId to tracing span
 		r, ok := req.Any().(streamIdProvider)
@@ -89,7 +83,11 @@ func (i *metricsInterceptor) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc
 			}
 		}
 
+		m.Inc()
+		timer := prometheus.NewTimer(i.rpcDuration.WithLabelValues(proc))
 		resp, err := next(ctx, req)
+		timer.ObserveDuration()
+		m.Dec()
 
 		s.With(prometheus.Labels{"status": errorToStatus(err)}).Inc()
 

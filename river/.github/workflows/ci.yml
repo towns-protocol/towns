@@ -44,7 +44,7 @@ jobs:
     Common_CI:
         permissions: write-all
         if: github.event_name != 'workflow_dispatch' || !inputs.skip_common_ci
-        runs-on: ubuntu-latest-8-cores
+        runs-on: ['arc-runners']
         timeout-minutes: 30
 
         steps:
@@ -71,10 +71,16 @@ jobs:
               with:
                   version: ${{ env.FOUNDRY_VERSION }}
 
+            - name: Install Binaries
+              run: sudo apt-get update && sudo apt-get -y install make zstd libsecp256k1-dev gcc
+
             - uses: actions/setup-node@v4
               with:
                   node-version: '20'
-                  cache: 'yarn'
+
+            - name: Setup yarn
+              run: npm install -g yarn
+
             - name: Install node dependencies
               run: yarn install --immutable
 
@@ -159,10 +165,6 @@ jobs:
                   working-directory: core
                   install-go: false
 
-            # - name: Terraform Lint
-            #   run: make lint
-            #   working-directory: ./infra
-
             - name: Build town types
               if: ${{ !cancelled() && steps.setup_success.outcome == 'success' }}
               run: ./scripts/build-contract-types.sh localhost --frozen
@@ -173,7 +175,7 @@ jobs:
     Multinode:
         permissions: write-all
         if: github.event_name != 'workflow_dispatch' || !inputs.skip_multinode
-        runs-on: ubuntu-latest-8-cores
+        runs-on: ['arc-runners']
         timeout-minutes: 30
         services:
             postgres-core:
@@ -199,6 +201,12 @@ jobs:
               uses: styfle/cancel-workflow-action@0.12.1
               with:
                   access_token: ${{ github.token }}
+
+            - name: Install Binaries
+              run: sudo apt update && sudo apt-get install -y postgresql-client zstd make gcc netcat
+
+            - name: Install Rust Toolchain
+              uses: actions-rust-lang/setup-rust-toolchain@v1
 
             - name: Show PostgreSQL max_connections
               run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
@@ -241,7 +249,9 @@ jobs:
             - uses: actions/setup-node@v4
               with:
                   node-version: '20'
-                  cache: 'yarn'
+
+            - name: Setup yarn
+              run: npm install -g yarn
 
             - name: Install node dependencies
               run: yarn install --immutable
@@ -315,7 +325,7 @@ jobs:
     Multinode_Ent:
         permissions: write-all
         if: github.event_name != 'workflow_dispatch' || !inputs.skip_multinode_ent
-        runs-on: ubuntu-latest-8-cores
+        runs-on: ['arc-runners']
         timeout-minutes: 40
         services:
             postgres-core:
@@ -341,6 +351,12 @@ jobs:
               uses: styfle/cancel-workflow-action@0.12.1
               with:
                   access_token: ${{ github.token }}
+
+            - name: Install Binaries
+              run: sudo apt update && sudo apt-get install -y postgresql-client zstd make gcc netcat
+
+            - name: Install Rust Toolchain
+              uses: actions-rust-lang/setup-rust-toolchain@v1
 
             - name: Show PostgreSQL max_connections
               run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
@@ -383,7 +399,9 @@ jobs:
             - uses: actions/setup-node@v4
               with:
                   node-version: '20'
-                  cache: 'yarn'
+
+            - name: Setup yarn
+              run: npm install -g yarn
 
             - name: Install node dependencies
               run: yarn install --immutable
@@ -455,7 +473,7 @@ jobs:
     Multinode_Ent_Legacy:
         permissions: write-all
         if: github.event_name != 'workflow_dispatch' || !inputs.skip_multinode_ent_legacy
-        runs-on: ubuntu-latest-8-cores
+        runs-on: ['arc-runners']
         timeout-minutes: 40
         services:
             postgres-core:
@@ -481,6 +499,12 @@ jobs:
               uses: styfle/cancel-workflow-action@0.12.1
               with:
                   access_token: ${{ github.token }}
+
+            - name: Install Binaries
+              run: sudo apt update && sudo apt-get install -y postgresql-client zstd make gcc netcat
+
+            - name: Install Rust Toolchain
+              uses: actions-rust-lang/setup-rust-toolchain@v1
 
             - name: Show PostgreSQL max_connections
               run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
@@ -523,7 +547,9 @@ jobs:
             - uses: actions/setup-node@v4
               with:
                   node-version: '20'
-                  cache: 'yarn'
+
+            - name: Setup yarn
+              run: npm install -g yarn
 
             - name: Install node dependencies
               run: yarn install --immutable
@@ -589,7 +615,7 @@ jobs:
     Go_Tests:
         permissions: write-all
         if: github.event_name != 'workflow_dispatch' || !inputs.skip_go
-        runs-on: ubuntu-latest-8-cores
+        runs-on: ['arc-runners']
         timeout-minutes: 30
         services:
             postgres-core:
@@ -615,6 +641,12 @@ jobs:
               uses: styfle/cancel-workflow-action@0.12.1
               with:
                   access_token: ${{ github.token }}
+
+            - name: Install Binaries
+              run: sudo apt update && sudo apt-get install -y postgresql-client zstd make gcc netcat libsecp256k1-dev
+
+            - name: Install Rust Toolchain
+              uses: actions-rust-lang/setup-rust-toolchain@v1
 
             - name: Show PostgreSQL max_connections
               run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
@@ -654,14 +686,6 @@ jobs:
               with:
                   version: ${{ env.FOUNDRY_VERSION }}
 
-            - uses: actions/setup-node@v4
-              with:
-                  node-version: '20'
-                  cache: 'yarn'
-
-            - name: Install node dependencies
-              run: yarn install --immutable
-
             - name: Print versions
               run: ./scripts/print-versions.sh
 
@@ -684,14 +708,14 @@ jobs:
               run: ./scripts/register-ca.sh
               working-directory: core
 
-            - name: Run node tests
+            - name: Run go tests
               run: just test-all -race -timeout 24m -parallel 1 -count 1 -p 8
               working-directory: core
 
     XChain_Integration:
         permissions: write-all
         if: github.event_name != 'workflow_dispatch' || !inputs.skip_xchain_integration
-        runs-on: ubuntu-latest-8-cores
+        runs-on: ['arc-runners']
         timeout-minutes: 30
 
         steps:
@@ -704,6 +728,12 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@v4
 
+            - name: Install Binaries
+              run: sudo apt update && sudo apt-get install -y zstd make netcat libsecp256k1-dev gcc
+
+            - name: Install Rust Toolchain
+              uses: actions-rust-lang/setup-rust-toolchain@v1
+
             - name: Setup Go
               uses: actions/setup-go@v5
               with:
@@ -715,22 +745,11 @@ jobs:
               with:
                   version: ${{ env.FOUNDRY_VERSION }}
 
-            - uses: actions/setup-node@v4
-              with:
-                  node-version: '20'
-                  cache: 'yarn'
-
-            - name: Install node dependencies
-              run: yarn install --immutable
-
             - name: Print versions
               run: ./scripts/print-versions.sh
 
             - name: Start Local Basechain
               run: ./scripts/start-local-basechain.sh &
-
-            - name: Print Yarn package versions
-              run: yarn info --name-only --all
 
             - name: Run Integration Tests
               run: make integration_tests

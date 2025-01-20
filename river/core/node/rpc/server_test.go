@@ -8,8 +8,8 @@ import (
 	"connectrpc.com/connect"
 
 	"github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/events"
+	"github.com/river-build/river/core/node/logging"
 	"github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/protocol/protocolconnect"
 	. "github.com/river-build/river/core/node/shared"
@@ -19,7 +19,7 @@ func TestServerShutdown(t *testing.T) {
 	tester := newServiceTester(t, serviceTesterOpts{numNodes: 1, start: true})
 	ctx := tester.ctx
 	require := tester.require
-	log := dlog.FromCtx(ctx)
+	log := logging.FromCtx(ctx)
 
 	stub := tester.testClient(0)
 	url := tester.nodes[0].url
@@ -29,9 +29,9 @@ func TestServerShutdown(t *testing.T) {
 	require.NotNil(resp)
 	require.Equal("HTTP/2.0", resp.Header().Get("X-Http-Version"), "expected HTTP/2.0")
 
-	log.Info("Shutting down server")
+	log.Infow("Shutting down server")
 	tester.nodes[0].Close(ctx, tester.dbUrl)
-	log.Info("Server shut down")
+	log.Infow("Server shut down")
 
 	stub2 := tester.testClientForUrl(url)
 	_, err = stub2.Info(ctx, connect.NewRequest(&protocol.InfoRequest{}))

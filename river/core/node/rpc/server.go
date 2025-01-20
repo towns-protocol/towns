@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"encoding/base64"
 	"fmt"
-	"log/slog"
 	"net"
 	"net/http"
 	"slices"
@@ -16,6 +15,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rs/cors"
+	"go.uber.org/zap"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 
@@ -23,10 +23,10 @@ import (
 	"github.com/river-build/river/core/node/auth"
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/events"
 	"github.com/river-build/river/core/node/http_client"
 	"github.com/river-build/river/core/node/infra"
+	"github.com/river-build/river/core/node/logging"
 	"github.com/river-build/river/core/node/nodes"
 	"github.com/river-build/river/core/node/notifications"
 	. "github.com/river-build/river/core/node/protocol"
@@ -35,6 +35,7 @@ import (
 	"github.com/river-build/river/core/node/rpc/sync"
 	"github.com/river-build/river/core/node/scrub"
 	"github.com/river-build/river/core/node/storage"
+	"github.com/river-build/river/core/node/utils"
 	"github.com/river-build/river/core/river_node/version"
 	"github.com/river-build/river/core/xchain/entitlement"
 	"github.com/river-build/river/core/xchain/util"
@@ -57,33 +58,33 @@ func (s *Service) httpServerClose() {
 		ctx, cancel := context.WithTimeout(s.serverCtx, timeout)
 		defer cancel()
 		if !s.config.Log.Simplify {
-			s.defaultLogger.Info("Shutting down http server", "timeout", timeout)
+			s.defaultLogger.Infow("Shutting down http server", "timeout", timeout)
 		}
 		err := s.httpServer.Shutdown(ctx)
 		if err != nil {
 			if err != context.DeadlineExceeded {
-				s.defaultLogger.Error("failed to shutdown http server", "error", err)
+				s.defaultLogger.Errorw("failed to shutdown http server", "error", err)
 			}
-			s.defaultLogger.Warn("forcing http server close")
+			s.defaultLogger.Warnw("forcing http server close")
 			err = s.httpServer.Close()
 			if err != nil {
-				s.defaultLogger.Error("failed to close http server", "error", err)
+				s.defaultLogger.Errorw("failed to close http server", "error", err)
 			}
 		} else {
 			if !s.config.Log.Simplify {
-				s.defaultLogger.Info("http server shutdown")
+				s.defaultLogger.Infow("http server shutdown")
 			}
 		}
 	} else {
 		if !s.config.Log.Simplify {
-			s.defaultLogger.Info("shutting down http server immediately")
+			s.defaultLogger.Infow("shutting down http server immediately")
 		}
 		err := s.httpServer.Close()
 		if err != nil {
-			s.defaultLogger.Error("failed to close http server", "error", err)
+			s.defaultLogger.Errorw("failed to close http server", "error", err)
 		}
 		if !s.config.Log.Simplify {
-			s.defaultLogger.Info("http server closed")
+			s.defaultLogger.Infow("http server closed")
 		}
 	}
 }
@@ -102,7 +103,7 @@ func (s *Service) Close() {
 	}
 
 	if !s.config.Log.Simplify {
-		s.defaultLogger.Info("Server closed")
+		s.defaultLogger.Infow("Server closed")
 	}
 }
 
@@ -197,7 +198,7 @@ func (s *Service) start(opts *ServerStartOpts) error {
 		addr = "localhost" + addr[4:]
 	}
 	addr = s.config.UrlSchema() + "://" + addr
-	s.defaultLogger.Info("Server started", "addr", addr+"/debug/multi")
+	s.defaultLogger.Infow("Server started", "addr", addr+"/debug/multi")
 	return nil
 }
 
@@ -216,19 +217,19 @@ func (s *Service) initInstance(mode string, opts *ServerStartOpts) {
 	}
 
 	if !s.config.Log.Simplify {
-		s.defaultLogger = dlog.FromCtx(s.serverCtx).With(
+		s.defaultLogger = logging.FromCtx(s.serverCtx).With(
 			"instanceId", s.instanceId,
 			"mode", mode,
 			"nodeType", "stream",
 		)
 	} else {
 		if s.config.Port != 0 {
-			s.defaultLogger = dlog.FromCtx(s.serverCtx).With(
+			s.defaultLogger = logging.FromCtx(s.serverCtx).With(
 				"port", s.config.Port,
 			)
 		}
 	}
-	s.serverCtx = dlog.CtxWithLog(s.serverCtx, s.defaultLogger)
+	s.serverCtx = logging.CtxWithLog(s.serverCtx, s.defaultLogger)
 
 	var (
 		vapidPrivateKey        = s.config.Notifications.Web.Vapid.PrivateKey
@@ -241,7 +242,7 @@ func (s *Service) initInstance(mode string, opts *ServerStartOpts) {
 	s.config.Notifications.Authentication.SessionToken.Key.Key = "<hidden>"
 
 	// TODO: refactor to load wallet before so node address is logged here as well
-	s.defaultLogger.Info(
+	s.defaultLogger.Infow(
 		"Server config",
 		"config", s.config,
 		"version", version.GetFullVersion(),
@@ -281,8 +282,8 @@ func (s *Service) initWallet() error {
 	// Add node address info to the logger
 	if !s.config.Log.Simplify {
 		s.defaultLogger = s.defaultLogger.With("nodeAddress", wallet.Address.Hex())
-		s.serverCtx = dlog.CtxWithLog(ctx, s.defaultLogger)
-		slog.SetDefault(s.defaultLogger)
+		s.serverCtx = logging.CtxWithLog(ctx, s.defaultLogger)
+		zap.ReplaceGlobals(s.defaultLogger.Desugar())
 	}
 
 	return nil
@@ -317,7 +318,7 @@ func (s *Service) initBaseChain() error {
 		s.chainAuth = chainAuth
 		return nil
 	} else {
-		s.defaultLogger.Warn("Using fake auth for testing")
+		s.defaultLogger.Warnw("Using fake auth for testing")
 		s.chainAuth = auth.NewFakeChainAuth()
 		return nil
 	}
@@ -454,7 +455,7 @@ func (s *Service) loadTLSConfig() (*tls.Config, error) {
 
 func (s *Service) runHttpServer() error {
 	ctx := s.serverCtx
-	log := dlog.FromCtx(ctx)
+	log := logging.FromCtx(ctx)
 	cfg := s.config
 
 	var address string
@@ -479,11 +480,11 @@ func (s *Service) runHttpServer() error {
 		}
 
 		if !cfg.Log.Simplify {
-			log.Info("Listening", "addr", address)
+			log.Infow("Listening", "addr", address)
 		}
 	} else {
 		if cfg.Port != 0 {
-			log.Warn("Port is ignored when listener is provided")
+			log.Warnw("Port is ignored when listener is provided")
 		}
 	}
 	s.onClose(s.listener.Close)
@@ -526,7 +527,7 @@ func (s *Service) runHttpServer() error {
 
 	if cfg.DisableHttps {
 		handler = h2c.NewHandler(handler, http2Server)
-		log.Warn("Starting H2C server without TLS")
+		log.Warnw("Starting H2C server without TLS")
 	}
 
 	s.httpServer = &http.Server{
@@ -535,7 +536,7 @@ func (s *Service) runHttpServer() error {
 		BaseContext: func(listener net.Listener) context.Context {
 			return ctx
 		},
-		ErrorLog: newHttpLogger(ctx),
+		ErrorLog: utils.NewHttpLogger(ctx),
 	}
 	// ensure that x/http2 is used
 	// https://github.com/golang/go/issues/42534
@@ -553,9 +554,9 @@ func (s *Service) runHttpServer() error {
 func (s *Service) serve() {
 	err := s.httpServer.Serve(s.listener)
 	if err != nil && err != http.ErrServerClosed {
-		s.defaultLogger.Error("Serve failed", "err", err)
+		s.defaultLogger.Errorw("Serve failed", "err", err)
 	} else {
-		s.defaultLogger.Info("Serve stopped")
+		s.defaultLogger.Infow("Serve stopped")
 	}
 }
 
@@ -593,7 +594,7 @@ func (s *Service) initStore() error {
 		}
 
 		if !s.config.Log.Simplify {
-			log.Info(
+			log.Infow(
 				"Created postgres event store",
 				"schema",
 				s.storagePoolInfo.Schema,
@@ -632,7 +633,7 @@ func (s *Service) initNotificationsStore() error {
 		s.onClose(pgstore.Close)
 
 		if !s.config.Log.Simplify {
-			log.Info(
+			log.Infow(
 				"Created postgres notifications store",
 				"schema",
 				s.storagePoolInfo.Schema,

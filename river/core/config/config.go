@@ -47,8 +47,6 @@ func GetDefaultConfig() *Config {
 			Level:   "info", // NOTE: this default is replaced by flag value
 			Console: true,   // NOTE: this default is replaced by flag value
 			File:    "",     // NOTE: this default is replaced by flag value
-			NoColor: false,  // NOTE: this default is replaced by flag value
-			Format:  "json",
 		},
 		Metrics: MetricsConfig{
 			Enabled: true,
@@ -151,17 +149,17 @@ type Config struct {
 
 	// Disable base chain contract usage.
 	DisableBaseChain bool
-	
+
 	// Enable MemberPayload_Mls.
 	EnableMls bool
 
 	// Chains provides a map of chain IDs to their provider URLs as
 	// a comma-serparated list of chainID:URL pairs.
 	// It is parsed into ChainsString variable.
-	Chains string `dlog:"omit" json:"-" yaml:"-"`
+	Chains string `json:"-" yaml:"-"`
 
 	// ChainsString is an another alias for Chains kept for backward compatibility.
-	ChainsString string `dlog:"omit" json:"-" yaml:"-"`
+	ChainsString string `json:"-" yaml:"-"`
 
 	// This is comma-separated list chaidID:blockTimeDuration pairs.
 	// GetDefaultBlockchainInfo() provides default values for known chains so there is no
@@ -193,7 +191,7 @@ type Config struct {
 
 type TLSConfig struct {
 	Cert   string // Path to certificate file or BASE64 encoded certificate
-	Key    string `dlog:"omit" json:"-" yaml:"-"` // Path to key file or BASE64 encoded key. Sensitive data, omitted from logging.
+	Key    string `json:"-" yaml:"-"` // Path to key file or BASE64 encoded key. Sensitive data, omit when possible.
 	TestCA string // Path to CA certificate file or BASE64 encoded CA certificate
 }
 
@@ -214,11 +212,11 @@ func (nc *NetworkConfig) GetHttpRequestTimeout() time.Duration {
 }
 
 type DatabaseConfig struct {
-	Url      string `dlog:"omit" json:"-" yaml:"-"` // Sensitive data, omitted from logging.
+	Url      string `json:"-" yaml:"-"` // Sensitive data, omit when possible
 	Host     string
 	Port     int
 	User     string
-	Password string `dlog:"omit" json:"-" yaml:"-"` // Sensitive data, omitted from logging.
+	Password string `json:"-" yaml:"-"` // Sensitive data, omit when possible
 	Database string
 	Extra    string
 
@@ -264,47 +262,47 @@ type TransactionPoolConfig struct {
 	// TransactionTimeout is the duration in which a transaction must be included in the chain before it is marked
 	// eligible for replacement. It is advisable to set the timeout as a multiple of the block period. If not set it
 	// estimates the chains block period and sets Timeout to 3x block period.
-	TransactionTimeout time.Duration
+	TransactionTimeout time.Duration `json:",omitempty"`
 
 	// GasFeeCap determines for EIP-1559 transaction the maximum amount fee per gas the node operator is willing to
 	// pay. If set to 0 the node will use 2 * chain.BaseFee by default. The base fee + miner tip must be below this
 	// cap, if not the transaction could not be made.
-	GasFeeCap int
+	GasFeeCap int `json:",omitempty"`
 
 	// MinerTipFeeReplacementPercentage is the percentage the miner tip for EIP-1559 transactions is incremented when
 	// replaced. Nodes accept replacements only when the miner tip is at least 10% higher than the original transaction.
 	// The node will add 1 Wei to the miner tip and therefore 10% is the least recommended value. Default is 10.
-	MinerTipFeeReplacementPercentage int
+	MinerTipFeeReplacementPercentage int `json:",omitempty"`
 
 	// GasFeeIncreasePercentage is the percentage by which the gas fee for legacy transaction is incremented when it is
 	// replaced. Recommended is >= 10% since nodes typically only accept replacements transactions with at least 10%
 	// higher gas price. The node will add 1 Wei, therefore 10% will also work. Default is 10.
-	GasFeeIncreasePercentage int
+	GasFeeIncreasePercentage int `json:",omitempty"`
 }
 
 type ChainConfig struct {
-	NetworkUrl  string `dlog:"omit" json:"-" yaml:"-"` // Sensitive data, omitted from logging.
+	NetworkUrl  string `json:"-" yaml:"-"` // Sensitive data, omitted from logging.
 	ChainId     uint64
 	BlockTimeMs uint64
 
-	TransactionPool TransactionPoolConfig
+	TransactionPool TransactionPoolConfig `json:",omitempty"`
 
 	// DisableReplacePendingTransactionOnBoot will not try to replace transaction that are pending after start.
-	DisableReplacePendingTransactionOnBoot bool
+	DisableReplacePendingTransactionOnBoot bool `json:",omitempty"`
 
 	// TODO: these need to be removed from here
-	LinkedWalletsLimit                        int
-	ContractCallsTimeoutMs                    int
-	PositiveEntitlementCacheSize              int
-	PositiveEntitlementCacheTTLSeconds        int
-	NegativeEntitlementCacheSize              int
-	NegativeEntitlementCacheTTLSeconds        int
-	PositiveEntitlementManagerCacheSize       int
-	PositiveEntitlementManagerCacheTTLSeconds int
-	NegativeEntitlementManagerCacheSize       int
-	NegativeEntitlementManagerCacheTTLSeconds int
-	LinkedWalletCacheSize                     int
-	LinkedWalletCacheTTLSeconds               int
+	LinkedWalletsLimit                        int `json:",omitempty"`
+	ContractCallsTimeoutMs                    int `json:",omitempty"`
+	PositiveEntitlementCacheSize              int `json:",omitempty"`
+	PositiveEntitlementCacheTTLSeconds        int `json:",omitempty"`
+	NegativeEntitlementCacheSize              int `json:",omitempty"`
+	NegativeEntitlementCacheTTLSeconds        int `json:",omitempty"`
+	PositiveEntitlementManagerCacheSize       int `json:",omitempty"`
+	PositiveEntitlementManagerCacheTTLSeconds int `json:",omitempty"`
+	NegativeEntitlementManagerCacheSize       int `json:",omitempty"`
+	NegativeEntitlementManagerCacheTTLSeconds int `json:",omitempty"`
+	LinkedWalletCacheSize                     int `json:",omitempty"`
+	LinkedWalletCacheTTLSeconds               int `json:",omitempty"`
 }
 
 func (c ChainConfig) BlockTime() time.Duration {
@@ -317,21 +315,21 @@ type PerformanceTrackingConfig struct {
 	// If true, write trace data to one of the exporters configured below
 	TracingEnabled bool
 	// If set, write trace data to this jsonl file
-	OtlpFile string
+	OtlpFile string `json:",omitempty"`
 	// If set, send trace data to using OTLP HTTP
 	// Exporter is configured with OTLP env variables as described here:
 	// go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp
-	OtlpEnableHttp bool
+	OtlpEnableHttp bool `json:",omitempty"`
 	// If set, send trace data to using OTLP gRRC
 	// Exporter is configured with OTLP env variables as described here:
 	// go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc
-	OtlpEnableGrpc bool
+	OtlpEnableGrpc bool `json:",omitempty"`
 	// If set, connet to OTLP endpoint using http instead of https
 	// Also can be configured by env var from the links above
-	OtlpInsecure bool
+	OtlpInsecure bool `json:",omitempty"`
 
 	// If set, send trace spans to this Zipkin endpoint
-	ZipkinUrl string
+	ZipkinUrl string `json:",omitempty"`
 }
 
 type ContractConfig struct {
@@ -343,20 +341,26 @@ type ArchiveConfig struct {
 	// ArchiveId is the unique identifier of the archive node. Must be set for nodes in archive mode.
 	ArchiveId string
 
-	Filter FilterConfig
+	Filter FilterConfig `json:",omitempty"`
 
 	// Number of miniblocks to read at once from the remote node.
-	ReadMiniblocksSize uint64
+	ReadMiniblocksSize uint64 `json:",omitempty"`
 
-	TaskQueueSize int // If 0, default to 100000.
+	TaskQueueSize int `json:",omitempty"` // If 0, default to 100000.
 
-	WorkerPoolSize int // If 0, default to 20.
+	WorkerPoolSize int `json:",omitempty"` // If 0, default to 20.
 
-	MiniblockScrubQueueSize int // If 0, default to 10.
+	MiniblockScrubQueueSize int `json:",omitempty"` // If 0, default to 10.
 
-	MiniblockScrubWorkerPoolSize int // If 0, default to 20
+	MiniblockScrubWorkerPoolSize int `json:",omitempty"` // If 0, default to 20
 
-	StreamsContractCallPageSize int64 // If 0, default to 5000.
+	StreamsContractCallPageSize int64 `json:",omitempty"` // If 0, default to 5000.
+
+	// MaxFailedConsecutiveUpdates is the number of failures to advance the block count
+	// of a stream with available blocks (according to the contract) that the archiver will
+	// allow before considering a stream corrupt.
+	// Please access with GetMaxFailedConsecutiveUpdates
+	MaxFailedConsecutiveUpdates uint32  `json:",omitempty"` // If 0, default to 50.
 }
 
 type APNPushNotificationsConfig struct {
@@ -370,14 +374,14 @@ type APNPushNotificationsConfig struct {
 	// TeamID from developer account (View Account -> Membership)
 	TeamID string
 	// AuthKey contains the private key to authenticate the notification service with the APN service
-	AuthKey string
+	AuthKey string `json:"-" yaml:"-"` // Omit sensitive field from logging
 }
 
 type WebPushVapidNotificationConfig struct {
 	// PrivateKey is the private key of the public key that is shared with the client
 	// and used to sign push notifications that allows the client to verify the incoming
 	// notification for origin and validity.
-	PrivateKey string
+	PrivateKey string `json:"-" yaml:"-"` // Omit sensitive field from logging
 	// PublicKey as shared with the client that is used for subscribing and verifying
 	// the incoming push notification.
 	PublicKey string
@@ -387,6 +391,27 @@ type WebPushVapidNotificationConfig struct {
 
 type WebPushNotificationConfig struct {
 	Vapid WebPushVapidNotificationConfig
+}
+
+type SessionKeyConfig struct {
+	// Algorithm indicates how the session token is signed (only HS256 is supported)
+	Algorithm string
+	// Key holds the hex encoded key
+	Key string
+}
+
+type SessionTokenConfig struct {
+	// Lifetime indicates how long a session token is valid (default=30m).
+	Lifetime time.Duration
+	// Key holds the secret key that is used to sign the session token.
+	Key SessionKeyConfig `json:"-" yaml:"-"` // Omit sensitive field from logging
+}
+
+type AuthenticationConfig struct {
+	// ChallengeTimeout is the lifetime an authentication challenge is valid (default=30s).
+	ChallengeTimeout time.Duration
+	// SessionTokenKey contains the configuration for the JWT session token.
+	SessionToken SessionTokenConfig
 }
 
 type NotificationsConfig struct {
@@ -403,22 +428,7 @@ type NotificationsConfig struct {
 	Web WebPushNotificationConfig `mapstructure:"webpush"`
 
 	// Authentication holds configuration for the Client API authentication service.
-	Authentication struct {
-		// ChallengeTimeout is the lifetime an authentication challenge is valid (default=30s).
-		ChallengeTimeout time.Duration
-		// SessionTokenKey contains the configuration for the JWT session token.
-		SessionToken struct {
-			// Lifetime indicates how long a session token is valid (default=30m).
-			Lifetime time.Duration
-			// Key holds the secret key that is used to sign the session token.
-			Key struct {
-				// Algorithm indicates how the session token is signed (only HS256 is supported)
-				Algorithm string
-				// Key holds the hex encoded key
-				Key string
-			}
-		}
-	}
+	Authentication AuthenticationConfig
 }
 
 type LogConfig struct {
@@ -427,8 +437,6 @@ type LogConfig struct {
 	FileLevel    string // If not set, use Level
 	Console      bool   // Log to console if true
 	ConsoleLevel string // If not set, use Level
-	NoColor      bool   // If true, disable color text output to console
-	Format       string // "json" or "text"
 
 	// Intended for dev use with text logs, do not output instance attributes with each log entry,
 	// drop some large messages.
@@ -524,6 +532,13 @@ func (ac *ArchiveConfig) GetMiniblockScrubWorkerPoolSize() int {
 		return 20
 	}
 	return ac.MiniblockScrubWorkerPoolSize
+}
+
+func (ac *ArchiveConfig) GetMaxConsecutiveFailedUpdates() uint32 {
+	if ac.MaxFailedConsecutiveUpdates == 0 {
+		return 50
+	}
+	return ac.MaxFailedConsecutiveUpdates
 }
 
 type ScrubbingConfig struct {

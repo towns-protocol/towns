@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/river-build/river/core/node/base/test"
-	"github.com/river-build/river/core/node/dlog"
+	"github.com/river-build/river/core/node/logging"
 	"github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/testutils/testfmt"
 )
@@ -18,7 +18,7 @@ import (
 func TestRiverError(t *testing.T) {
 	ctx, cancel := test.NewTestContext()
 	defer cancel()
-	log := dlog.FromCtx(ctx)
+	log := logging.FromCtx(ctx)
 
 	e := RiverError(
 		protocol.Err_INVALID_ARGUMENT,
@@ -35,16 +35,16 @@ func TestRiverError(t *testing.T) {
 		"error", errors.New("test error"),
 	).Func("TestRiverError").Tag("int", 3)
 	testfmt.Println(t, e.Error())
-	log.Error("test error", "error", e)
+	log.Errorw("test error", "error", e)
 	_ = e.Log(log)
 
 	e = AsRiverError(errors.New("base error"))
 	testfmt.Println(t, e.Error())
-	log.Error("test error", "error", e)
+	log.Errorw("test error", "error", e)
 	_ = e.LogInfo(log)
 
 	e = AsRiverError(e).Func("TestRiverError").Func("TopLevelFunc").Tag("int", 1).LogWarn(log)
-	log.Warn("test error", "error", e)
+	log.Warnw("test error", "error", e)
 
 	_ = WrapRiverError(protocol.Err_OUT_OF_RANGE, errors.New("test error")).
 		Func("InnerFunc").Message("inner message").

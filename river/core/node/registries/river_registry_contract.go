@@ -18,7 +18,7 @@ import (
 	"github.com/river-build/river/core/contracts/river"
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/dlog"
+	"github.com/river-build/river/core/node/logging"
 	. "github.com/river-build/river/core/node/protocol"
 	. "github.com/river-build/river/core/node/shared"
 )
@@ -68,7 +68,7 @@ func initContract[T any](
 	map[common.Hash]*EventInfo,
 	error,
 ) {
-	log := dlog.FromCtx(ctx)
+	log := logging.FromCtx(ctx)
 
 	contract, err := maker(address, backend)
 	if err != nil {
@@ -196,7 +196,7 @@ func (c *RiverRegistryContract) AllocateStream(
 	genesisMiniblockHash common.Hash,
 	genesisMiniblock []byte,
 ) error {
-	log := dlog.FromCtx(ctx)
+	log := logging.FromCtx(ctx)
 
 	pendingTx, err := c.Blockchain.TxPool.Submit(
 		ctx,
@@ -205,7 +205,7 @@ func (c *RiverRegistryContract) AllocateStream(
 			tx, err := c.StreamRegistry.AllocateStream(
 				opts, streamId, addresses, genesisMiniblockHash, genesisMiniblock)
 			if err == nil {
-				log.Debug(
+				log.Debugw(
 					"RiverRegistryContract: prepared transaction",
 					"name", "AllocateStream",
 					"streamId", streamId,
@@ -392,7 +392,7 @@ func (c *RiverRegistryContract) forAllStreamsSingle(
 	blockNum crypto.BlockNumber,
 	cb func(*GetStreamResult) bool,
 ) error {
-	log := dlog.FromCtx(ctx)
+	log := logging.FromCtx(ctx)
 	pageSize := int64(c.Settings.PageSize)
 	if pageSize <= 0 {
 		pageSize = 5000
@@ -417,7 +417,7 @@ func (c *RiverRegistryContract) forAllStreamsSingle(
 			now := time.Now()
 			if now.Sub(lastReport) > progressReportInterval {
 				elapsed := time.Since(startTime)
-				log.Info(
+				log.Infow(
 					"RiverRegistryContract: GetPaginatedStreams in progress",
 					"pagesCompleted",
 					i,
@@ -455,7 +455,7 @@ func (c *RiverRegistryContract) forAllStreamsSingle(
 	}
 
 	elapsed := time.Since(startTime)
-	log.Info(
+	log.Infow(
 		"RiverRegistryContract: GetPaginatedStreams completed",
 		"elapsed",
 		elapsed,
@@ -471,7 +471,7 @@ func (c *RiverRegistryContract) forAllStreamsParallel(
 	blockNum crypto.BlockNumber,
 	cb func(*GetStreamResult) bool,
 ) error {
-	log := dlog.FromCtx(ctx)
+	log := logging.FromCtx(ctx)
 	ctx, cancelCtx := context.WithCancel(ctx)
 	defer cancelCtx()
 
@@ -497,11 +497,11 @@ func (c *RiverRegistryContract) forAllStreamsParallel(
 	numStreams := numStreamsBigInt.Int64()
 
 	if numStreams <= 0 {
-		log.Info("RiverRegistryContract: GetPaginatedStreams no streams found", "blockNum", blockNum)
+		log.Infow("RiverRegistryContract: GetPaginatedStreams no streams found", "blockNum", blockNum)
 		return nil
 	}
 
-	log.Info(
+	log.Infow(
 		"RiverRegistryContract: GetPaginatedStreams starting parallel read",
 		"numStreams",
 		numStreams,
@@ -545,7 +545,7 @@ OuterLoop:
 		now := time.Now()
 		if now.Sub(lastReport) > progressReportInterval {
 			elapsed := time.Since(startTime)
-			log.Info(
+			log.Infow(
 				"RiverRegistryContract: GetPaginatedStreams in progress",
 				"streamsRead",
 				totalStreams,
@@ -590,7 +590,7 @@ OuterLoop:
 	}
 
 	elapsed := time.Since(startTime)
-	log.Info(
+	log.Infow(
 		"RiverRegistryContract: GetPaginatedStreams completed",
 		"elapsed",
 		elapsed,
@@ -608,7 +608,7 @@ func (c *RiverRegistryContract) SetStreamLastMiniblockBatch(
 	ctx context.Context, mbs []river.SetMiniblock,
 ) ([]StreamId, []StreamId, error) {
 	var (
-		log     = dlog.FromCtx(ctx)
+		log     = logging.FromCtx(ctx)
 		success []StreamId
 		failed  []StreamId
 	)
@@ -649,7 +649,7 @@ func (c *RiverRegistryContract) SetStreamLastMiniblockBatch(
 			case "StreamLastMiniblockUpdated":
 				args, err := event.Inputs.Unpack(l.Data)
 				if err != nil || len(args) != 4 {
-					log.Error("Unable to unpack StreamLastMiniblockUpdated event", "err", err)
+					log.Errorw("Unable to unpack StreamLastMiniblockUpdated event", "err", err)
 					continue
 				}
 
@@ -660,7 +660,7 @@ func (c *RiverRegistryContract) SetStreamLastMiniblockBatch(
 					isSealed          = args[3].(bool)
 				)
 
-				log.Debug(
+				log.Debugw(
 					"RiverRegistryContract: set stream last miniblock",
 					"name", "SetStreamLastMiniblockBatch",
 					"streamId", streamID,
@@ -675,7 +675,7 @@ func (c *RiverRegistryContract) SetStreamLastMiniblockBatch(
 			case "StreamLastMiniblockUpdateFailed":
 				args, err := event.Inputs.Unpack(l.Data)
 				if err != nil || len(args) != 4 {
-					log.Error("Unable to unpack StreamLastMiniblockUpdateFailed event", "err", err)
+					log.Errorw("Unable to unpack StreamLastMiniblockUpdateFailed event", "err", err)
 					continue
 				}
 
@@ -686,7 +686,7 @@ func (c *RiverRegistryContract) SetStreamLastMiniblockBatch(
 					reason            = args[3].(string)
 				)
 
-				log.Error(
+				log.Errorw(
 					"RiverRegistryContract: set stream last miniblock failed",
 					"name", "SetStreamLastMiniblockBatch",
 					"streamId", streamID,
@@ -699,7 +699,7 @@ func (c *RiverRegistryContract) SetStreamLastMiniblockBatch(
 				failed = append(failed, streamID)
 
 			default:
-				log.Error("Unexpected event on RiverRegistry::SetStreamLastMiniblockBatch", "event", event.Name)
+				log.Errorw("Unexpected event on RiverRegistry::SetStreamLastMiniblockBatch", "event", event.Name)
 			}
 		}
 
@@ -813,7 +813,7 @@ func (c *RiverRegistryContract) OnStreamEvent(
 		func(ctx context.Context, log types.Log) {
 			parsed, err := c.ParseEvent(ctx, c.StreamRegistry.BoundContract(), c.StreamEventInfo, &log)
 			if err != nil {
-				dlog.FromCtx(ctx).Error("Failed to parse event", "err", err, "log", log)
+				logging.FromCtx(ctx).Errorw("Failed to parse event", "err", err, "log", log)
 				return
 			}
 			switch e := parsed.(type) {
@@ -824,7 +824,7 @@ func (c *RiverRegistryContract) OnStreamEvent(
 			case *river.StreamRegistryV1StreamPlacementUpdated:
 				placementUpdated(ctx, e)
 			default:
-				dlog.FromCtx(ctx).Error("Unknown event type", "event", e)
+				logging.FromCtx(ctx).Errorw("Unknown event type", "event", e)
 			}
 		})
 	return nil

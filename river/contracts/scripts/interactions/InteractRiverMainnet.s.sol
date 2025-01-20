@@ -7,21 +7,21 @@ pragma solidity ^0.8.23;
 
 // contracts
 import {Interaction} from "contracts/scripts/common/Interaction.s.sol";
-import {River} from "contracts/src/tokens/river/mainnet/River.sol";
+import {Towns} from "contracts/src/tokens/towns/mainnet/Towns.sol";
 
 // debugging
 import {console} from "forge-std/console.sol";
 
 contract InteractRiverMainnet is Interaction {
   function __interact(address) internal view override {
-    address river = 0x53319181e003E7f86fB79f794649a2aB680Db244;
+    address towns = address(0);
 
-    address[] memory delegators = River(river).getDelegators();
+    address[] memory delegators = Towns(towns).getDelegators();
 
     for (uint256 i = 0; i < delegators.length; i++) {
       address delegator = delegators[i];
       console.log("Delegator:", delegator);
-      console.log("Delegates:", River(river).delegates(delegator));
+      console.log("Delegates:", Towns(towns).delegates(delegator));
     }
   }
 }

@@ -1,11 +1,12 @@
 package rpc
 
 import (
-	"log/slog"
 	"net/http"
 
+	"go.uber.org/zap"
+
 	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/dlog"
+	"github.com/river-build/river/core/node/logging"
 )
 
 const (
@@ -14,12 +15,12 @@ const (
 
 type httpHandler struct {
 	base http.Handler
-	log  *slog.Logger
+	log  *zap.SugaredLogger
 }
 
 var _ http.Handler = (*httpHandler)(nil)
 
-func newHttpHandler(b http.Handler, l *slog.Logger) *httpHandler {
+func newHttpHandler(b http.Handler, l *zap.SugaredLogger) *httpHandler {
 	return &httpHandler{
 		base: b,
 		log:  l,
@@ -41,10 +42,10 @@ func (h *httpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log := h.log.With("requestId", id)
-	r = r.WithContext(dlog.CtxWithLog(r.Context(), log))
+	r = r.WithContext(logging.CtxWithLog(r.Context(), log))
 
 	if r.Proto != "HTTP/2.0" {
-		log.Debug("Non HTTP/2.0 request received", "method", r.Method, "path", r.URL.Path, "protocol", r.Proto)
+		log.Debugw("Non HTTP/2.0 request received", "method", r.Method, "path", r.URL.Path, "protocol", r.Proto)
 	}
 
 	w.Header().Add("X-Http-Version", r.Proto)

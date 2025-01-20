@@ -19,7 +19,7 @@ import (
 	"golang.org/x/crypto/sha3"
 
 	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/dlog"
+	"github.com/river-build/river/core/node/logging"
 	. "github.com/river-build/river/core/node/protocol"
 )
 
@@ -93,7 +93,7 @@ type Wallet struct {
 }
 
 func NewWallet(ctx context.Context) (*Wallet, error) {
-	log := dlog.FromCtx(ctx)
+	log := logging.FromCtx(ctx)
 
 	key, err := crypto.GenerateKey()
 	if err != nil {
@@ -103,7 +103,7 @@ func NewWallet(ctx context.Context) (*Wallet, error) {
 	}
 	address := crypto.PubkeyToAddress(key.PublicKey)
 
-	log.Info(
+	log.Infow(
 		"New wallet generated.",
 		"address",
 		address.Hex(),
@@ -119,7 +119,7 @@ func NewWallet(ctx context.Context) (*Wallet, error) {
 }
 
 func NewWalletFromPrivKey(ctx context.Context, privKey string) (*Wallet, error) {
-	log := dlog.FromCtx(ctx)
+	log := logging.FromCtx(ctx)
 
 	privKey = strings.TrimPrefix(privKey, "0x")
 
@@ -132,7 +132,7 @@ func NewWalletFromPrivKey(ctx context.Context, privKey string) (*Wallet, error) 
 	}
 	address := crypto.PubkeyToAddress(k.PublicKey)
 
-	log.Info(
+	log.Infow(
 		"Wallet loaded from configured private key.",
 		"address",
 		address.Hex(),
@@ -159,11 +159,11 @@ func NewWalletFromEnv(ctx context.Context, envVar string) (*Wallet, error) {
 }
 
 func LoadWallet(ctx context.Context, filename string) (*Wallet, error) {
-	log := dlog.FromCtx(ctx)
+	log := logging.FromCtx(ctx)
 
 	key, err := crypto.LoadECDSA(filename)
 	if err != nil {
-		log.Error("Failed to load wallet.", "error", err)
+		log.Errorw("Failed to load wallet.", "error", err)
 		return nil, AsRiverError(err, Err_BAD_CONFIG).
 			Message("Failed to load wallet from file").
 			Tag("filename", filename).
@@ -171,7 +171,7 @@ func LoadWallet(ctx context.Context, filename string) (*Wallet, error) {
 	}
 	address := crypto.PubkeyToAddress(key.PublicKey)
 
-	log.Info("Wallet loaded.", "address", address.Hex(), "publicKey", crypto.FromECDSAPub(&key.PublicKey))
+	log.Infow("Wallet loaded.", "address", address.Hex(), "publicKey", crypto.FromECDSAPub(&key.PublicKey))
 	return &Wallet{
 			PrivateKeyStruct: key,
 			PrivateKey:       crypto.FromECDSA(key),
@@ -187,7 +187,7 @@ func (w *Wallet) SaveWallet(
 	addressFilename string,
 	overwrite bool,
 ) error {
-	log := dlog.FromCtx(ctx)
+	log := logging.FromCtx(ctx)
 
 	openFlags := os.O_WRONLY | os.O_CREATE | os.O_EXCL
 	if overwrite {
@@ -271,7 +271,7 @@ func (w *Wallet) SaveWallet(
 			Func("SaveWallet")
 	}
 
-	log.Info(
+	log.Infow(
 		"Wallet saved.",
 		"address",
 		w.Address.Hex(),

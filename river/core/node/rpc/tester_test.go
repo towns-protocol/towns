@@ -29,9 +29,9 @@ import (
 	"github.com/river-build/river/core/contracts/river"
 	"github.com/river-build/river/core/node/base/test"
 	"github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/dlog"
 	. "github.com/river-build/river/core/node/events"
 	"github.com/river-build/river/core/node/events/dumpevents"
+	"github.com/river-build/river/core/node/logging"
 	. "github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/protocol/protocolconnect"
 	. "github.com/river-build/river/core/node/shared"
@@ -345,8 +345,8 @@ func (st *serviceTester) startSingle(i int, opts ...startOpts) error {
 		listener = options.listeners[i]
 	}
 
-	logger := dlog.FromCtx(st.ctx).With("nodeNum", i, "test", st.t.Name())
-	ctx := dlog.CtxWithLog(st.ctx, logger)
+	logger := logging.FromCtx(st.ctx).With("nodeNum", i, "test", st.t.Name())
+	ctx := logging.CtxWithLog(st.ctx, logger)
 	ctx, ctxCancel := context.WithCancel(ctx)
 
 	bc := st.btc.GetBlockchain(ctx, i)

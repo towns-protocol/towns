@@ -20,8 +20,8 @@ import (
 	"github.com/river-build/river/core/config"
 	"github.com/river-build/river/core/contracts/river"
 	"github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/http_client"
+	"github.com/river-build/river/core/node/logging"
 	"github.com/river-build/river/core/node/nodes"
 	. "github.com/river-build/river/core/node/protocol"
 	. "github.com/river-build/river/core/node/protocol/protocolconnect"
@@ -101,7 +101,7 @@ func getHttpStatus(
 	client *http.Client,
 	wg *sync.WaitGroup,
 ) {
-	log := dlog.FromCtx(ctx)
+	log := logging.FromCtx(ctx)
 	defer wg.Done()
 
 	start := time.Now()
@@ -115,7 +115,7 @@ func getHttpStatus(
 		"GET", url, nil)
 	req.Header.Set("Accept", "application/json")
 	if err != nil {
-		log.Error("Error creating request", "err", err, "url", url)
+		log.Errorw("Error creating request", "err", err, "url", url)
 		result.StatusText = err.Error()
 		return
 	}
@@ -143,7 +143,7 @@ func getHttpStatus(
 			result.StatusText = "No response"
 		}
 	} else {
-		log.Error("Error fetching URL", "err", err, "url", url)
+		log.Errorw("Error fetching URL", "err", err, "url", url)
 		result.StatusText = err.Error()
 	}
 
@@ -162,7 +162,7 @@ func getGrpcStatus(
 	client StreamServiceClient,
 	wg *sync.WaitGroup,
 ) {
-	log := dlog.FromCtx(ctx)
+	log := logging.FromCtx(ctx)
 	defer wg.Done()
 
 	start := time.Now()
@@ -184,7 +184,7 @@ func getGrpcStatus(
 	record.Grpc.Timeline = timeline
 
 	if err != nil {
-		log.Error("Error fetching Info", "err", err, "url", record.Record.Url)
+		log.Errorw("Error fetching Info", "err", err, "url", record.Record.Url)
 		record.Grpc.StatusText = err.Error()
 		return
 	}
@@ -296,7 +296,7 @@ func GetRiverNetworkStatus(
 		if connectOtelIterceptor != nil {
 			connectOpts = append(connectOpts, connect.WithInterceptors(connectOtelIterceptor))
 		} else {
-			dlog.FromCtx(ctx).Error("No OpenTelemetry interceptor for gRPC client")
+			logging.FromCtx(ctx).Errorw("No OpenTelemetry interceptor for gRPC client")
 		}
 
 		wg.Add(4)
@@ -341,10 +341,10 @@ func (s *Service) handleDebugStorage(w http.ResponseWriter, r *http.Request) {
 
 	err := render.ExecuteAndWrite(&render.StorageData{Status: status}, w)
 	if !s.config.Log.Simplify {
-		log.Info("Node storage status", "data", status)
+		log.Infow("Node storage status", "data", status)
 	}
 	if err != nil {
-		log.Error("Error getting data or rendering template for debug/storage", "err", err)
+		log.Errorw("Error getting data or rendering template for debug/storage", "err", err)
 		http.Error(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
 	}
 }
@@ -371,11 +371,11 @@ func (s *Service) handleDebugMulti(w http.ResponseWriter, r *http.Request) {
 	if err == nil {
 		err = render.ExecuteAndWrite(&render.DebugMultiData{Status: status}, w)
 		if !s.config.Log.Simplify {
-			log.Info("River Network Status", "data", status)
+			log.Infow("River Network Status", "data", status)
 		}
 	}
 	if err != nil {
-		log.Error("Error getting data or rendering template for debug/multi", "err", err)
+		log.Errorw("Error getting data or rendering template for debug/multi", "err", err)
 		http.Error(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
 	}
 }
@@ -404,11 +404,11 @@ func (s *Service) handleDebugMultiJson(w http.ResponseWriter, r *http.Request) {
 		// Write status as json
 		err = json.NewEncoder(w).Encode(status)
 		if !s.config.Log.Simplify {
-			log.Info("River Network Status", "data", status)
+			log.Infow("River Network Status", "data", status)
 		}
 	}
 	if err != nil {
-		log.Error("Error getting data or writing json for debug/multi/json", "err", err)
+		log.Errorw("Error getting data or writing json for debug/multi/json", "err", err)
 		http.Error(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
 	}
 }

@@ -11,9 +11,9 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/river-build/river/core/contracts/river"
 	"github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/events"
 	"github.com/river-build/river/core/node/infra"
+	"github.com/river-build/river/core/node/logging"
 	"github.com/river-build/river/core/node/nodes"
 	"github.com/river-build/river/core/node/registries"
 	"github.com/river-build/river/core/node/shared"
@@ -113,7 +113,7 @@ func (tracker *StreamsTracker) Run(ctx context.Context) error {
 	// load streams and distribute streams by hashing the stream id over buckets and assign each bucket
 	// to a worker to process stream updates.
 	var (
-		log                   = dlog.FromCtx(ctx)
+		log                   = logging.FromCtx(ctx)
 		validNodes            = tracker.nodeRegistries[0].GetValidNodeAddresses()
 		streamsLoaded         = 0
 		totalStreams          = 0
@@ -127,7 +127,7 @@ func (tracker *StreamsTracker) Run(ctx context.Context) error {
 		func(stream *registries.GetStreamResult) bool {
 			// print progress report every 50k streams that are added to track
 			if streamsLoaded > 0 && streamsLoaded%50_000 == 0 && streamsLoadedProgress != streamsLoaded {
-				log.Info("Progress stream loading", "tracked", streamsLoaded, "total", totalStreams)
+				log.Infow("Progress stream loading", "tracked", streamsLoaded, "total", totalStreams)
 				streamsLoadedProgress = streamsLoaded
 			}
 
@@ -144,7 +144,7 @@ func (tracker *StreamsTracker) Run(ctx context.Context) error {
 			})
 
 			if len(stream.Nodes) == 0 {
-				log.Warn("Ignore stream, no valid node found", "stream", stream.StreamId)
+				log.Warnw("Ignore stream, no valid node found", "stream", stream.StreamId)
 				return true
 			}
 
@@ -180,7 +180,7 @@ func (tracker *StreamsTracker) Run(ctx context.Context) error {
 		return err
 	}
 
-	log.Info("Loaded streams from streams registry",
+	log.Infow("Loaded streams from streams registry",
 		"count", streamsLoaded,
 		"total", totalStreams,
 		"took", time.Since(start).String())
@@ -188,7 +188,7 @@ func (tracker *StreamsTracker) Run(ctx context.Context) error {
 	// wait till service stopped
 	<-ctx.Done()
 
-	log.Info("stream tracker stopped")
+	log.Infow("stream tracker stopped")
 
 	return nil
 }

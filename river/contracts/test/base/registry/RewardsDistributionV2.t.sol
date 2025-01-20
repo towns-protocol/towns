@@ -13,7 +13,7 @@ import {RewardsDistributionStorage} from "contracts/src/base/registry/facets/dis
 
 // contracts
 import {EIP712Utils} from "contracts/test/utils/EIP712Utils.sol";
-import {River} from "contracts/src/tokens/river/base/River.sol";
+import {Towns} from "contracts/src/tokens/towns/base/Towns.sol";
 
 import {DelegationProxy} from "contracts/src/base/registry/facets/distribution/v2/DelegationProxy.sol";
 import {UpgradeableBeaconBase} from "contracts/src/diamond/facets/beacon/UpgradeableBeacon.sol";
@@ -126,7 +126,7 @@ contract RewardsDistributionV2Test is
   function test_stake_revertIf_overflow() public givenOperator(OPERATOR, 0) {
     bridgeTokensForUser(address(this), 1 << 97);
 
-    river.approve(address(rewardsDistributionFacet), type(uint256).max);
+    towns.approve(address(rewardsDistributionFacet), type(uint256).max);
 
     rewardsDistributionFacet.stake(type(uint96).max, OPERATOR, address(this));
 
@@ -159,7 +159,7 @@ contract RewardsDistributionV2Test is
     bridgeTokensForUser(depositor, amount);
 
     vm.startPrank(depositor);
-    river.approve(address(rewardsDistributionFacet), amount);
+    towns.approve(address(rewardsDistributionFacet), amount);
 
     vm.expectEmit(true, true, true, false, address(rewardsDistributionFacet));
     emit Stake(depositor, operator, beneficiary, depositId, amount);
@@ -201,7 +201,7 @@ contract RewardsDistributionV2Test is
     bridgeTokensForUser(depositor, amount);
 
     vm.startPrank(depositor);
-    river.approve(address(rewardsDistributionFacet), amount);
+    towns.approve(address(rewardsDistributionFacet), amount);
 
     vm.expectEmit(true, true, true, false, address(rewardsDistributionFacet));
     emit Stake(depositor, space, beneficiary, depositId, amount);
@@ -238,7 +238,7 @@ contract RewardsDistributionV2Test is
 
     (uint8 v, bytes32 r, bytes32 s) = signPermit(
       privateKey,
-      riverToken,
+      townsToken,
       user,
       address(rewardsDistributionFacet),
       amount,
@@ -328,7 +328,7 @@ contract RewardsDistributionV2Test is
       signature = abi.encodePacked(r, s, v);
     }
 
-    river.approve(address(rewardsDistributionFacet), amount);
+    towns.approve(address(rewardsDistributionFacet), amount);
 
     vm.expectEmit(true, true, true, false, address(rewardsDistributionFacet));
     emit Stake(owner, operator, beneficiary, 0, amount);
@@ -378,7 +378,7 @@ contract RewardsDistributionV2Test is
 
     uint96 totalAmount = amount0 + amount1;
     bridgeTokensForUser(address(this), totalAmount);
-    river.approve(address(rewardsDistributionFacet), totalAmount);
+    towns.approve(address(rewardsDistributionFacet), totalAmount);
     uint256 depositId = rewardsDistributionFacet.stake(
       amount0,
       operator,
@@ -435,7 +435,7 @@ contract RewardsDistributionV2Test is
       address(this)
     );
 
-    vm.expectRevert(River.River__DelegateeSameAsCurrent.selector);
+    vm.expectRevert(Towns.Towns__DelegateeSameAsCurrent.selector);
     rewardsDistributionFacet.redelegate(depositId, operator);
   }
 
@@ -673,7 +673,7 @@ contract RewardsDistributionV2Test is
   function test_initiateWithdraw_revertIf_initiateWithdrawAgain() public {
     uint256 depositId = test_initiateWithdraw();
 
-    vm.expectRevert(River.River__DelegateeSameAsCurrent.selector);
+    vm.expectRevert(Towns.Towns__DelegateeSameAsCurrent.selector);
     rewardsDistributionFacet.initiateWithdraw(depositId);
   }
 
@@ -809,7 +809,7 @@ contract RewardsDistributionV2Test is
     uint256 depositId = test_initiateWithdraw();
 
     address proxy = rewardsDistributionFacet.delegationProxyById(depositId);
-    uint256 cd = river.lockCooldown(proxy);
+    uint256 cd = towns.lockCooldown(proxy);
 
     vm.warp(cd - 1);
 
@@ -835,7 +835,7 @@ contract RewardsDistributionV2Test is
     );
 
     address proxy = rewardsDistributionFacet.delegationProxyById(depositId);
-    uint256 cd = river.lockCooldown(proxy);
+    uint256 cd = towns.lockCooldown(proxy);
 
     vm.warp(cd);
 
@@ -1023,7 +1023,7 @@ contract RewardsDistributionV2Test is
       bridgeTokensForUser(depositors[i], amounts[i]);
 
       vm.startPrank(depositors[i]);
-      river.approve(address(rewardsDistributionFacet), amounts[i]);
+      towns.approve(address(rewardsDistributionFacet), amounts[i]);
       rewardsDistributionFacet.stake(
         uint96(amounts[i]),
         OPERATOR,
@@ -1126,7 +1126,7 @@ contract RewardsDistributionV2Test is
   function test_fuzz_getDepositsByDepositor(uint8 count) public {
     vm.assume(count != 0);
     bridgeTokensForUser(address(this), 1 ether * uint256(count));
-    river.approve(address(rewardsDistributionFacet), type(uint256).max);
+    towns.approve(address(rewardsDistributionFacet), type(uint256).max);
     for (uint256 i; i < count; ++i) {
       rewardsDistributionFacet.stake(1 ether, OPERATOR, address(this));
     }
@@ -1150,7 +1150,7 @@ contract RewardsDistributionV2Test is
     resetOperatorCommissionRate(OPERATOR, commissionRate);
 
     bridgeTokensForUser(address(this), 1 ether * uint256(count));
-    river.approve(address(rewardsDistributionFacet), type(uint256).max);
+    towns.approve(address(rewardsDistributionFacet), type(uint256).max);
     for (uint256 i; i < count; ++i) {
       address _space = deploySpace(deployer);
       pointSpaceToOperator(_space, OPERATOR);

@@ -10,8 +10,8 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/infra"
+	"github.com/river-build/river/core/node/logging"
 )
 
 // PostgresStats contains postgres pool stats
@@ -64,14 +64,14 @@ type PostgresStatusResult struct {
 
 // PreparePostgresStatus prepares PostgresStatusResult by the given pool
 func PreparePostgresStatus(ctx context.Context, pool PgxPoolInfo) PostgresStatusResult {
-	log := dlog.FromCtx(ctx)
+	log := logging.FromCtx(ctx)
 
 	// Query to get PostgreSQL version
 	var version string
 	err := pool.Pool.QueryRow(ctx, "SELECT version()").Scan(&version)
 	if err != nil {
 		version = fmt.Sprintf("Error: %v", err)
-		log.Error("failed to get PostgreSQL version", "err", err)
+		log.Errorw("failed to get PostgreSQL version", "err", err)
 	}
 
 	var systemId string
@@ -88,7 +88,7 @@ func PreparePostgresStatus(ctx context.Context, pool PgxPoolInfo) PostgresStatus
 		// Ignore nonexistent table or missing column, which occurs when stats are collected before migration completes
 		if pgerr, ok := err.(*pgconn.PgError); ok && pgerr.Code != pgerrcode.UndefinedTable &&
 			pgerr.Code != pgerrcode.UndefinedColumn {
-			log.Error("Error calculating unmigrated stream count", "error", err)
+			log.Errorw("Error calculating unmigrated stream count", "error", err)
 		}
 	}
 
@@ -97,7 +97,7 @@ func PreparePostgresStatus(ctx context.Context, pool PgxPoolInfo) PostgresStatus
 		// Ignore nonexistent table or missing column, which occurs when stats are collected before migration completes
 		if pgerr, ok := err.(*pgconn.PgError); ok && pgerr.Code != pgerrcode.UndefinedTable &&
 			pgerr.Code != pgerrcode.UndefinedColumn {
-			log.Error("Error calculating migrated stream count", "error", err)
+			log.Errorw("Error calculating migrated stream count", "error", err)
 		}
 	}
 
@@ -105,7 +105,7 @@ func PreparePostgresStatus(ctx context.Context, pool PgxPoolInfo) PostgresStatus
 	if err != nil {
 		// Ignore nonexistent table, which occurs when stats are collected before migration
 		if pgerr, ok := err.(*pgconn.PgError); ok && pgerr.Code != pgerrcode.UndefinedTable {
-			log.Error("Error calculating partition count", "error", err)
+			log.Errorw("Error calculating partition count", "error", err)
 		}
 	}
 
