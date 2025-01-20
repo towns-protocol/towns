@@ -1,13 +1,13 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useConnectivity } from 'use-towns-client'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { Box, Icon, Text, TextButton } from '@ui'
-import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { useBalance } from 'hooks/useBalance'
 import { Analytics } from 'hooks/useAnalytics'
 import { useStore } from 'store/store'
 import { PanelButton } from '@components/Panel/PanelButton'
+import useCopyToClipboard from 'hooks/useCopyToClipboard'
 
 export function TownsWallet() {
     const { loggedInWalletAddress } = useConnectivity()
@@ -20,6 +20,8 @@ export function TownsWallet() {
         watch: true,
     })
     const { openPanel } = usePanelActions()
+    const [copied, setCopied] = useState(false)
+    const [, copy] = useCopyToClipboard()
 
     const handleDeposit = () => {
         Analytics.getInstance().track('clicked add funds')
@@ -37,6 +39,17 @@ export function TownsWallet() {
 
     const handleViewAssets = () => {
         openPanel('wallet', { assetSource: aaAddress })
+    }
+
+    const handleCopy = async (e: React.MouseEvent) => {
+        e.preventDefault()
+        if (aaAddress) {
+            const success = await copy(aaAddress)
+            setCopied(success)
+            if (success) {
+                setTimeout(() => setCopied(false), 1000)
+            }
+        }
     }
 
     return (
@@ -99,18 +112,17 @@ export function TownsWallet() {
                         padding="md"
                         height="x8"
                         width="x12"
+                        onClick={handleCopy}
                     >
-                        <Box direction="column" alignItems="center">
-                            <ClipboardCopy
-                                vertical
-                                noTooltip
-                                clipboardContent={aaAddress ?? ''}
-                                color="cta1"
-                            >
-                                <Text size="sm" color="cta1">
-                                    Copy
-                                </Text>
-                            </ClipboardCopy>
+                        <Box direction="column" alignItems="center" gap="xs">
+                            {!copied ? (
+                                <Icon type="copy" size="square_xs" color="cta1" />
+                            ) : (
+                                <Icon type="check" size="square_xs" color="positive" />
+                            )}
+                            <Text size="sm" color={copied ? 'positive' : 'cta1'}>
+                                {copied ? 'Copied!' : 'Copy'}
+                            </Text>
                         </Box>
                     </PanelButton>
                 </Box>
