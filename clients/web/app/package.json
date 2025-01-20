@@ -1,6 +1,6 @@
 {
     "name": "harmonyweb",
-    "version": "0.3.0",
+    "version": "0.3.1",
     "private": true,
     "type": "module",
     "scripts": {
@@ -189,6 +189,7 @@
         "vite-plugin-mkcert": "^1.17.5",
         "vite-plugin-node-polyfills": "^0.22.0",
         "vite-plugin-pwa": "^0.20.0",
+        "vite-plugin-top-level-await": "^1.4.4",
         "vite-plugin-wasm": "^3.4.1",
         "vite-tsconfig-paths": "^4.3.2",
         "vitest": "^1.6.0",
