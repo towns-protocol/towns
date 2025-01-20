@@ -7,25 +7,17 @@ export const MAX_LENGTH_SPACE_BIO = 240
 const membershipPricingErrorMessage =
     'Please choose how you want to set the price of your membership.'
 
+export const membershipLimitSchema = z.coerce
+    .number({ message: 'Please enter a number' })
+    .min(1, { message: 'Please enter a number greater than 0' })
+    .max(2000, { message: 'Please enter a number less than or equal to 2000' })
+
 export const membershipSettingsSchema = z
     .object({
         // membershipDuration: z.number(), TODO contract updates
         // membershipGasFeePayer: z.nativeEnum(MembershipGasFeePayer), TODO contract updates
         membershipCurrency: z.string(),
-        membershipLimit: z.coerce
-            .number({
-                errorMap: (err, ctx) => {
-                    return {
-                        message: 'Please enter a number',
-                    }
-                },
-            })
-            .min(1, {
-                message: 'Please enter a number greater than 0',
-            })
-            .max(1000, {
-                message: 'Please enter a number less than or equal to 1000',
-            }),
+        membershipLimit: membershipLimitSchema,
         membershipPricingType: z.union([
             z.literal('dynamic', {
                 errorMap: (_err, _ctx) => {

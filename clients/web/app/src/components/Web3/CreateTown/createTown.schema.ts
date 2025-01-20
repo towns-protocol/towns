@@ -1,6 +1,7 @@
 import { ethers } from 'ethers'
 import { z } from 'zod'
 import { zodUnionFromArray } from 'utils/zodUnionFromArray'
+import { membershipLimitSchema } from '@components/SpaceSettingsPanel/membershipSettingsSchema'
 import { gatingSchema } from '../Gating/Gating.schema'
 
 export const GATING_ENABLED = false
@@ -13,11 +14,6 @@ export const clientTownTypeOptions = ['free', 'paid'] as const
 export const clientMembershipFeeOptions = ['fixed', 'dynamic'] as const
 export const clientCanJoinOptions = ['anyone', 'gated'] as const
 export const clientGateByOptions = ['digitalAssets', 'walletAddress'] as const
-
-const membershipLimit = z.coerce
-    .number({ message: 'Please enter a number' })
-    .min(1, { message: 'Please enter a number greater than 0' })
-    .max(1000, { message: 'Please enter a number less than or equal to 1000' })
 
 const spaceName = z
     .string()
@@ -42,7 +38,7 @@ export const createTownFormSchema = z
         }),
         slideMembership: z.object({
             clientMembershipFee: zodUnionFromArray(clientMembershipFeeOptions).nullable(),
-            membershipLimit,
+            membershipLimit: membershipLimitSchema,
             membershipCost: z.string().optional(),
         }),
     })
