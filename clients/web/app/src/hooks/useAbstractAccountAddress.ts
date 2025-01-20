@@ -5,6 +5,7 @@ import {
     LookupUser,
     queryClient,
     staleTime24Hours,
+    useConnectivity,
     useOfflineStore,
     useSpaceMembers,
     useTownsContext,
@@ -61,7 +62,6 @@ function querySetup({
         refetchOnWindowFocus: false,
         refetchOnMount: false,
         refetchOnReconnect: false,
-        gcTime: staleTime24Hours,
         staleTime: staleTime24Hours,
     }
 }
@@ -73,12 +73,9 @@ export function useAbstractAccountAddress({
 }) {
     const { accountAbstractionConfig } = useEnvironment()
     const userOpsInstance = useUserOps()
-    const { offlineWalletAddressMap, setOfflineWalletAddress } = useOfflineStore()
+    const setOfflineWalletAddress = useOfflineStore((s) => s.setOfflineWalletAddress)
 
-    let cachedAddress: Address | undefined
-    if (rootKeyAddress) {
-        cachedAddress = offlineWalletAddressMap[rootKeyAddress] as Address | undefined
-    }
+    const cachedAddress = useCachedAddress(rootKeyAddress)
     return useQuery({
         ...querySetup({
             rootKeyAddress,
@@ -93,14 +90,15 @@ export function useAbstractAccountAddress({
 export function useGetAbstractAccountAddressAsync() {
     const { accountAbstractionConfig } = useEnvironment()
     const userOpsInstance = useUserOps()
-    const { offlineWalletAddressMap, setOfflineWalletAddress } = useOfflineStore()
+    const setOfflineWalletAddress = useOfflineStore((s) => s.setOfflineWalletAddress)
+    const { loggedInWalletAddress } = useConnectivity()
 
     return useCallback(
         ({ rootKeyAddress }: { rootKeyAddress: Address | undefined }) => {
-            let cachedAddress: Address | undefined
-            if (rootKeyAddress) {
-                cachedAddress = offlineWalletAddressMap[rootKeyAddress] as Address | undefined
-            }
+            const cachedAddress = getCachedAddress({
+                rootKeyAddress,
+                loggedInWalletAddress,
+            })
             const qs = querySetup({
                 rootKeyAddress,
                 userOpsInstance,
@@ -113,12 +111,7 @@ export function useGetAbstractAccountAddressAsync() {
                 queryFn: qs.queryFn,
             })
         },
-        [
-            userOpsInstance,
-            accountAbstractionConfig,
-            setOfflineWalletAddress,
-            offlineWalletAddressMap,
-        ],
+        [loggedInWalletAddress, userOpsInstance, accountAbstractionConfig, setOfflineWalletAddress],
     )
 }
 
@@ -132,13 +125,17 @@ export function useLookupUsersWithAbstractAccountAddress() {
 
     const userOpsInstance = useUserOps()
     const { memberIds } = useSpaceMembers()
-    const { offlineWalletAddressMap, setOfflineWalletAddress } = useOfflineStore()
+    const setOfflineWalletAddress = useOfflineStore((s) => s.setOfflineWalletAddress)
+    const { loggedInWalletAddress } = useConnectivity()
 
     const { lookupUser } = useUserLookupContext()
 
     return useQueries({
         queries: memberIds.map((userId) => {
-            const cachedAddress = offlineWalletAddressMap[userId] as Address | undefined
+            const cachedAddress = getCachedAddress({
+                rootKeyAddress: userId,
+                loggedInWalletAddress,
+            })
             return {
                 ...querySetup({
                     accountAbstractionConfig,
@@ -183,4 +180,34 @@ export function isAbstractAccountAddress({
 function useUserOps() {
     const { clientSingleton } = useTownsContext()
     return clientSingleton?.baseTransactor.userOps
+}
+
+function useCachedAddress(rootKeyAddress: string | undefined) {
+    const { loggedInWalletAddress } = useConnectivity()
+    return getCachedAddress({ rootKeyAddress, loggedInWalletAddress })
+}
+
+// prevent infinite subscription updates to the offline wallet address map
+let busted = false
+
+function getCachedAddress(args: {
+    rootKeyAddress: string | undefined
+    loggedInWalletAddress: string | undefined
+}) {
+    const { rootKeyAddress, loggedInWalletAddress } = args
+    /**
+     * TODO: Remove mid feb 2025
+     * This will bust the cache entry for the logged in wallet address.
+     * Because we had a bug that set the root key address to a linked EOA address, when it should only point to the smart account address.
+     *
+     */
+    if (loggedInWalletAddress === rootKeyAddress || !rootKeyAddress) {
+        if (rootKeyAddress && !busted) {
+            busted = true
+            useOfflineStore.getState().removeOfflineWalletAddress(rootKeyAddress)
+        }
+        return
+    }
+    const offlineWalletAddressMap = useOfflineStore.getState().offlineWalletAddressMap
+    return offlineWalletAddressMap[rootKeyAddress] as Address
 }

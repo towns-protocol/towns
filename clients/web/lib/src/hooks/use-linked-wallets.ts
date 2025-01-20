@@ -244,7 +244,6 @@ export function useGetRootKeyFromLinkedWallet({
         config,
         provider,
     })
-    const { offlineWalletAddressMap, setOfflineWalletAddress } = useOfflineStore()
 
     return useQuery(
         blockchainKeys.rootKeyFromLinkedWallet(walletAddress ?? 'waitingForWalletAddress'),
@@ -252,6 +251,7 @@ export function useGetRootKeyFromLinkedWallet({
             if (!walletAddress || !spaceDapp) {
                 return
             }
+            const offlineWalletAddressMap = useOfflineStore.getState().offlineWalletAddressMap
 
             // if we have the root key cached, return it
             const cachedRootKey = Object.keys(offlineWalletAddressMap).find(
@@ -263,11 +263,6 @@ export function useGetRootKeyFromLinkedWallet({
 
             const walletLink = spaceDapp.getWalletLink()
             const returnVal = await walletLink.getRootKeyForWallet(walletAddress)
-            console.log('useGetRootKeyFromLinkedWallet - setting offline wallet address', {
-                rootKey: returnVal,
-                walletAddress: walletAddress,
-            })
-            setOfflineWalletAddress(returnVal, walletAddress)
             return returnVal
         },
         {

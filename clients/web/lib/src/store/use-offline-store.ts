@@ -1,7 +1,7 @@
 import { ChannelMetadata, SpaceInfo } from '@river-build/web3'
 import isEqual from 'lodash/isEqual'
-import { create, StateCreator } from 'zustand'
-import { createJSONStorage, persist, PersistOptions } from 'zustand/middleware'
+import { create } from 'zustand'
+import { createJSONStorage, persist } from 'zustand/middleware'
 
 export type OfflineUser = {
     userId: string
@@ -34,14 +34,10 @@ export type OfflineStates = {
     setOfflineChannelInfo: (channel: OfflineChannelMetadata) => void
     offlineWalletAddressMap: OfflineWalletAddressMap
     setOfflineWalletAddress: (userId: string, abstractAccountAddress: string) => void
+    removeOfflineWalletAddress: (userId: string) => void
     offlineUserBioMap: OfflineUserBioMap
     setOfflineUserBio: (userId: string, bio: string) => void
 }
-
-type MyPersist = (
-    config: StateCreator<OfflineStates>,
-    options: PersistOptions<OfflineStates>,
-) => StateCreator<OfflineStates>
 
 export const OFFLINE_STORE_NAME = 'towns/offlineStore'
 
@@ -49,8 +45,8 @@ export const generateOfflineUserKey = (spaceId: string, walletAddress: string): 
     return `${spaceId}-${walletAddress}`
 }
 
-export const useOfflineStore = create<OfflineStates>(
-    (persist as unknown as MyPersist)(
+export const useOfflineStore = create<OfflineStates>()(
+    persist(
         (set) => ({
             skipIsRegisteredCheck: {},
             setSkipIsRegisteredCheck(userAddress: string) {
@@ -114,6 +110,14 @@ export const useOfflineStore = create<OfflineStates>(
                             ...state.offlineWalletAddressMap,
                             [userId]: abstractAccountAddress,
                         },
+                    }
+                }),
+            removeOfflineWalletAddress: (userId: string) =>
+                set((state) => {
+                    const { [userId]: _, ...rest } = state.offlineWalletAddressMap
+                    return {
+                        ...state,
+                        offlineWalletAddressMap: rest,
                     }
                 }),
             offlineUserBioMap: {},
