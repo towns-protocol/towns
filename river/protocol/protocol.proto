@@ -833,6 +833,8 @@ message CreateStreamRequest {
 message CreateStreamResponse {
     // all events in current minipool and cookie allowing to sync from the end of the stream
     StreamAndCookie stream = 1;
+    // derived events created in other streams when this stream was created
+    repeated EventRef derived_events = 2;
 }
 
 message GetStreamRequest {
@@ -881,7 +883,10 @@ message AddEventResponse {
         string msg = 2;
         repeated string funcs = 3;
     }
-    Error error = 1; // only set if AddEventRequest.optional is true
+    // error thrown during this request, only set if AddEventRequest.optional is true, otherwise the request will fail with this error
+    Error error = 1; 
+    // all events created during this request including parent events
+    repeated EventRef new_events = 2;
 }
 
 // SyncStreamsRequest is a request to start a streams sync session.

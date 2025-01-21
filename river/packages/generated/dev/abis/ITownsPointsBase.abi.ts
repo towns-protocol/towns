@@ -42,6 +42,11 @@ export default [
   },
   {
     "type": "error",
+    "name": "TownsPoints__InvalidCallData",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "TownsPoints__InvalidSpace",
     "inputs": []
   }

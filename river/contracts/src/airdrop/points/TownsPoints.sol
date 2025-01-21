@@ -37,10 +37,32 @@ contract TownsPoints is IERC20Metadata, ITownsPoints, OwnableBase, Facet {
   }
 
   /// @inheritdoc ITownsPoints
-  function batchMintPoints(
-    address[] calldata accounts,
-    uint256[] calldata values
-  ) external onlyOwner {
+  function batchMintPoints(bytes calldata data) external onlyOwner {
+    address[] calldata accounts;
+    uint256[] calldata values;
+    uint256 relativeOffset;
+    assembly {
+      // call data layout:
+      // address                  | value
+      // data.offset              | 0x40 (accounts relative offset)
+      // + 0x20                   | values relative offset
+      // + 0x40                   | accounts.length
+      // + 0x60 (accounts.offset) | accounts[0]
+      let accountsLengthPtr := add(data.offset, calldataload(data.offset))
+      accounts.length := calldataload(accountsLengthPtr)
+      accounts.offset := add(accountsLengthPtr, 0x20)
+      let valuesLengthPtr := add(
+        data.offset,
+        calldataload(add(data.offset, 0x20))
+      )
+      values.length := calldataload(valuesLengthPtr)
+      values.offset := add(valuesLengthPtr, 0x20)
+      relativeOffset := sub(values.offset, data.offset)
+    }
+    if (data.length < relativeOffset + (values.length << 5)) {
+      CustomRevert.revertWith(TownsPoints__InvalidCallData.selector);
+    }
+
     if (accounts.length != values.length) {
       CustomRevert.revertWith(TownsPoints__InvalidArrayLength.selector);
     }

@@ -179,7 +179,7 @@ func (p *MessageToNotificationsProcessor) OnMessageEvent(
 			return false
 		}
 
-		switch event.Event.Payload.(type) {
+		switch payload := event.Event.Payload.(type) {
 		case *StreamEvent_DmChannelPayload:
 			if p.onDMChannelPayload(channelID, participant, pref, event) {
 				usersToNotify[participant] = pref
@@ -199,6 +199,29 @@ func (p *MessageToNotificationsProcessor) OnMessageEvent(
 				recipients.Add(participant)
 			} else {
 				p.log.Errorw("Space channel misses spaceID", "channel", channelID)
+			}
+		case *StreamEvent_MemberPayload:
+			switch payload.MemberPayload.Content.(type) {
+			// for member payloads we need to figure out what kind of stream we're in before we can check prefs
+			case *MemberPayload_MemberBlockchainTransaction_:
+				if spaceID != nil && shared.ValidChannelStreamId(&channelID) {
+					if p.onSpaceChannelPayload(*spaceID, channelID, participant, pref, event) {
+						usersToNotify[participant] = pref
+					}
+					recipients.Add(participant)
+				} else if shared.ValidDMChannelStreamId(&channelID) {
+					if p.onDMChannelPayload(channelID, participant, pref, event) {
+						usersToNotify[participant] = pref
+					}
+					recipients.Add(participant)
+				} else if shared.ValidGDMChannelStreamId(&channelID) {
+					if p.onGDMChannelPayload(channelID, participant, pref, event) {
+						usersToNotify[participant] = pref
+					}
+					recipients.Add(participant)
+				} else {
+					p.log.Error("Unexpected stream ID", "channel", channelID)
+				}
 			}
 		}
 

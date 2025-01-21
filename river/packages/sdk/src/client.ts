@@ -30,6 +30,8 @@ import {
     BlockchainTransaction,
     MemberPayload_Mls,
     MiniblockHeader,
+    GetStreamResponse,
+    CreateStreamResponse,
 } from '@river-build/proto'
 import {
     bin_fromHexString,
@@ -569,7 +571,8 @@ export class Client
         const streamId = streamIdAsString(request.streamId)
         try {
             this.creatingStreamIds.add(streamId)
-            let response = await this.rpcClient.createStream(request)
+            let response: CreateStreamResponse | GetStreamResponse =
+                await this.rpcClient.createStream(request)
             const stream = this.createSyncedStream(streamId)
             if (!response.stream) {
                 // if a stream alread exists it will return a nil stream in the response, but no error

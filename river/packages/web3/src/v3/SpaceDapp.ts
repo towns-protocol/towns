@@ -1780,7 +1780,7 @@ async function wrapTransaction(
                     (error as { code: unknown }).code === 'CALL_EXCEPTION'
                 ) {
                     logger.error('Transaction failed', { tx, errorCount, error })
-                    throw new Error('Transaction confirmed but failed')
+                    throw error
                 }
 
                 // If the transaction receipt is not available yet, the error may be thrown

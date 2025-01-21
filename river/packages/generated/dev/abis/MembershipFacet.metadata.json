@@ -1695,18 +1695,18 @@
       "license": "MIT"
     },
     "contracts/src/airdrop/points/ITownsPoints.sol": {
-      "keccak256": "0xf507ad2a91ab58166c2e850b93085320bc483e12a3fe2aef808c0b254a0b656e",
+      "keccak256": "0xb15ce8486f1b99d5035a7d52fecdee87ee0ac737e16e01eb8a570697b6b3a320",
       "urls": [
-        "bzz-raw://5dc159159e4cbe755e18661831ce80a4ca183a43edc21a01504585e73e595ebc",
-        "dweb:/ipfs/QmUELy6xZ8fpcpYfV1VV7oGbF5UAButoYteUNMX1ZAUsj7"
+        "bzz-raw://d74a62b45e362bbf7b2da8408eb487d2a6437b1f94338371da0ae286e5a3ac31",
+        "dweb:/ipfs/QmcQHcDeeYmmLbFq4CzZX9FoSRUcEG1ZcfBgsUnnc5Y79T"
       ],
       "license": "MIT"
     },
     "contracts/src/airdrop/points/TownsPoints.sol": {
-      "keccak256": "0x946df87486a5c9dc357d1ed6dd66a5910b058e3f39ee1406772788751cfc5adf",
+      "keccak256": "0xbdccdbcdc42d51ff23e6167366f5c6e1b77619d9ce1fd50dc51856a05d326c0b",
       "urls": [
-        "bzz-raw://418a07b0b0cddc9780b72a4efdf8af04210770ab0ecc504e8ec97beff58fe6f3",
-        "dweb:/ipfs/QmPKzX3Ep18KZ7LqXKummvb2Jkvc1Weperpp8e6wBKckNU"
+        "bzz-raw://fddb6f34ef89afb65a1af261ac6f8d0ea607c44b95e05220688e14f202aab452",
+        "dweb:/ipfs/QmP7GhYcafeXC8zntLbSn2rtL83iEdepQd8eRunisbvzjC"
       ],
       "license": "MIT"
     },

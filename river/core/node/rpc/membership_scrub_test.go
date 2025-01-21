@@ -155,10 +155,11 @@ func (o *ObservingEventAdder) AddEventPayload(
 	ctx context.Context,
 	streamId StreamId,
 	payload IsStreamEvent_Payload,
-) error {
-	err := o.adder.AddEventPayload(ctx, streamId, payload)
+	tags *Tags,
+) ([]*EventRef, error) {
+	newEvents, err := o.adder.AddEventPayload(ctx, streamId, payload, tags)
 	if err != nil {
-		return err
+		return newEvents, err
 	}
 	o.mu.Lock()
 	defer o.mu.Unlock()
@@ -172,7 +173,7 @@ func (o *ObservingEventAdder) AddEventPayload(
 			payload:  payload,
 		},
 	)
-	return nil
+	return newEvents, nil
 }
 
 func (o *ObservingEventAdder) ObservedEvents() []struct {

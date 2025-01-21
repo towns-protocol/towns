@@ -153,7 +153,7 @@ type aeHideUserJoinLeaveEventsWrapperRules struct {
 
   - @return canAddEvent bool // true if the event can be added to the stream, will be false in case of duplictate state
 
-  - @return chainAuthArgsList *auth.ChainAuthArgs[] // a list of on chain requirements, such that, if defined, at least one must be satisfied in order to add the event to the stream
+  - @return verifications *AddEventVerifications // a list of on chain requirements, such that, if defined, at least one must be satisfied in order to add the event to the stream
 
   - @return sideEffects *AddEventSideEffects // side effects that need to be executed before adding the event to the stream or on failures
 
@@ -164,9 +164,9 @@ type aeHideUserJoinLeaveEventsWrapperRules struct {
 * (false, nil, nil, nil) // event cannot be added to the stream, but there is no error, state would remain the same
 * (false, nil, nil, error) // event cannot be added to the stream, but there is no error, state would remain the same
 * (true, nil, nil, nil) // event can be added to the stream
-* (true, nil, &IsStreamEvent_Payload, nil) // event can be added after parent event is added or verified
-* (true, chainAuthArgs, nil, nil) // event can be added if chainAuthArgs are satisfied
-* (true, chainAuthArgs, &IsStreamEvent_Payload, nil) // event can be added if chainAuthArgs are satisfied and parent event is added or verified
+* (true, nil, &AddEventSideEffects, nil) // event can be added after parent event is added or verified
+* (true, &AddEventVerifications, nil, nil) // event can be added if chainAuthArgs are satisfied
+* (true, &AddEventVerifications, &AddEventSideEffects, nil) // event can be added if chainAuthArgs are satisfied and parent event is added or verified
 */
 func CanAddEvent(
 	ctx context.Context,
@@ -914,6 +914,7 @@ func (ru *aeReceivedBlockchainTransactionRules) parentEventForReceivedBlockchain
 				transaction,
 			),
 			StreamId: streamId,
+			Tags:     ru.params.parsedEvent.Event.Tags, // forward tags
 		}, nil
 	default:
 		return nil, RiverError(Err_INVALID_ARGUMENT, "unknown transaction content", "content", content)
@@ -944,6 +945,7 @@ func (ru *aeBlockchainTransactionRules) parentEventForBlockchainTransaction() (*
 					ru.transaction,
 				),
 				StreamId: userStreamId,
+				Tags:     ru.params.parsedEvent.Event.Tags, // forward tags
 			}, nil
 		}
 

@@ -85,6 +85,12 @@ func testGDMNotifications(
 		testGDMReactionMessage(ctx, test, notifications)
 	})
 
+	tester.parallelSubtest("TipMessage", func(tester *serviceTester) {
+		ctx := tester.ctx
+		test := setupGDMNotificationTest(ctx, tester, notificationClient, authClient)
+		testGDMTipMessage(ctx, test, notifications)
+	})
+
 	tester.parallelSubtest("APNUnsubscribe", func(tester *serviceTester) {
 		ctx := tester.ctx
 		test := setupGDMNotificationTest(ctx, tester, notificationClient, authClient)
@@ -282,6 +288,42 @@ func testGDMReactionMessage(
 
 		return cmp.Equal(nc.WebPushNotifications[eventHash], expectedUsersToReceiveNotification)
 	}, notificationDeliveryDelay, 100*time.Millisecond, "user A Didn't receive expected notification for stream %s", test.gdmStreamID)
+}
+
+// User A, B and C in GDM
+// User A in GDM posts a message
+// User B tips user A
+// User A should get a reaction notification, but user C should not
+func testGDMTipMessage(
+	ctx context.Context,
+	test *gdmChannelNotificationsTestContext,
+	nc *notificationCapture,
+) {
+	userA := test.members[0]
+	userB := test.members[1]
+	userC := test.members[2]
+
+	test.subscribeWebPush(ctx, userA)
+	test.subscribeWebPush(ctx, userB)
+	test.subscribeWebPush(ctx, userC)
+
+	messageEvent := test.sendMessageWithTags(ctx, userA, "hi!", nil)
+
+	// tip on a GDM message
+	event := test.sendTip(ctx, userB, userA, messageEvent.Hash)
+
+	test.req.NotNil(event, "tip event is nil")
+
+	eventHash := common.BytesToHash(event.Hash)
+	expectedUsersToReceiveNotification := map[common.Address]int{userA.Address: 1}
+
+	// ensure that user A received notificaton
+	test.req.Eventuallyf(func() bool {
+		nc.WebPushNotificationsMu.Lock()
+		defer nc.WebPushNotificationsMu.Unlock()
+
+		return cmp.Equal(nc.WebPushNotifications[eventHash], expectedUsersToReceiveNotification)
+	}, notificationDeliveryDelay, 100*time.Millisecond, "user A Didn't receive expected tip notification for stream %s", test.gdmStreamID)
 
 	// ensure that user B and C never get a notification
 	test.req.Never(func() bool {
@@ -912,6 +954,7 @@ type gdmChannelNotificationsTestContext struct {
 	streamClient       protocolconnect.StreamServiceClient
 	notificationClient protocolconnect.NotificationServiceClient
 	authClient         protocolconnect.AuthenticationServiceClient
+	tester             *serviceTester
 }
 
 func setupGDMNotificationTest(
@@ -925,6 +968,7 @@ func setupGDMNotificationTest(
 		streamClient:       tester.testClient(0),
 		notificationClient: notificationClient,
 		authClient:         authClient,
+		tester:             tester,
 	}
 
 	require := tester.require
@@ -999,6 +1043,134 @@ func (tc *gdmChannelNotificationsTestContext) sendMessageWithTags(
 	tc.req.NoError(err)
 
 	return event
+}
+
+func (tc *gdmChannelNotificationsTestContext) sendTip(
+	ctx context.Context,
+	from *crypto.Wallet,
+	to *crypto.Wallet,
+	messageId []byte,
+) *EventRef {
+	userStreamId, err := UserStreamIdFromBytes(from.Address[:])
+	tc.req.NoError(err)
+
+	resp, err := tc.streamClient.GetLastMiniblockHash(ctx, connect.NewRequest(
+		&GetLastMiniblockHashRequest{
+			StreamId: userStreamId[:],
+		}))
+	tc.req.NoError(err)
+	amount := big.NewInt(100)
+	tokenId := big.NewInt(12345)
+	currency := common.HexToAddress("0x2222222222222222222222222222222222222222")
+	event, err := events.MakeEnvelopeWithPayloadAndTags(
+		from,
+		events.Make_UserPayload_BlockchainTransaction(from.Address[:], &BlockchainTransaction{
+			// a very incomplete receipt
+			Receipt: makeTipReceipt(ctx, from, to, messageId, tc.gdmStreamID[:], amount, tokenId, currency),
+			Content: &BlockchainTransaction_Tip_{
+				Tip: &BlockchainTransaction_Tip{
+					Event: &BlockchainTransaction_Tip_Event{
+						MessageId: messageId,
+						Amount:    amount.Uint64(),
+						TokenId:   tokenId.Uint64(),
+						Currency:  currency.Bytes(),
+						Sender:    from.Address[:],
+						Receiver:  to.Address[:],
+						ChannelId: tc.gdmStreamID[:],
+					},
+					ToUserAddress: to.Address[:],
+				},
+			},
+		}),
+		&MiniblockRef{
+			Num:  resp.Msg.GetMiniblockNum(),
+			Hash: common.BytesToHash(resp.Msg.GetHash()),
+		},
+		&Tags{
+			MessageInteractionType:     MessageInteractionType_MESSAGE_INTERACTION_TYPE_TIP,
+			ParticipatingUserAddresses: [][]byte{to.Address[:]},
+			ThreadId:                   messageId,
+		},
+	)
+	tc.req.NoError(err)
+
+	aresp, err := tc.streamClient.AddEvent(ctx, connect.NewRequest(&AddEventRequest{
+		StreamId: userStreamId[:],
+		Event:    event,
+		Optional: false,
+	}))
+
+	tc.req.NoError(err)
+
+	for _, eventRef := range aresp.Msg.NewEvents {
+		if bytes.Equal(eventRef.StreamId, tc.gdmStreamID[:]) {
+			return eventRef
+		}
+	}
+
+	return nil
+}
+
+func makeTipReceipt(
+	ctx context.Context,
+	from *crypto.Wallet,
+	to *crypto.Wallet,
+	messageId []byte,
+	channelId []byte,
+	amount *big.Int,
+	tokenId *big.Int,
+	currency common.Address,
+) *BlockchainTransactionReceipt {
+	eventSig := []byte("Tip(uint256,address,address,address,uint256,bytes32,bytes32)")
+	eventSigHash := eth_crypto.Keccak256Hash(eventSig)
+
+	// 2. Suppose we want to simulate the following sample values:
+	sender := from.Address
+	receiver := to.Address
+
+	// 3. Construct the topics:
+	//    topics[0] = event signature hash
+	//    topics[1] = indexed tokenId (as a 256-bit value)
+	//    topics[2] = indexed currency (as a 256-bit value, left-padded)
+	topics := [][]byte{
+		eventSigHash[:],                   // the event signature
+		common.BigToHash(tokenId).Bytes(), // tokenId
+		common.BytesToHash(common.LeftPadBytes(currency.Bytes(), 32)).Bytes(), // currency
+	}
+
+	// 4. Construct the data portion (non-indexed params in order).
+	//
+	//    The Solidity layout is:
+	//    1) address sender   (32 bytes)
+	//    2) address receiver (32 bytes)
+	//    3) uint256 amount   (32 bytes)
+	//    4) bytes32 messageId
+	//    5) bytes32 channelId
+	//
+	//    Each is left-padded to 32 bytes (except bytes32 which is already 32).
+	data := []byte{}
+	data = append(data, common.LeftPadBytes(sender.Bytes(), 32)...)   // sender
+	data = append(data, common.LeftPadBytes(receiver.Bytes(), 32)...) // receiver
+	data = append(data, common.LeftPadBytes(amount.Bytes(), 32)...)   // amount
+	data = append(data, messageId[:]...)                              // messageId
+	data = append(data, channelId[:]...)                              // channelId
+
+	// 5. Construct the Log
+	//    (Address is the contract address that emitted the event; choose an example)
+	log := BlockchainTransactionReceipt_Log{
+		Address: common.HexToAddress("0x1234567890abcdef1234567890abcdef12345678").Bytes(),
+		Topics:  topics,
+		Data:    data,
+	}
+
+	return &BlockchainTransactionReceipt{
+		ChainId:         1,
+		TransactionHash: eventSigHash[:],
+		BlockNumber:     100,
+		To:              from.Address[:],
+		From:            to.Address[:],
+		Logs:            []*BlockchainTransactionReceipt_Log{&log},
+	}
 }
 
 func authorize[T any](

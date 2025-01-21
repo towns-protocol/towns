@@ -22,31 +22,32 @@ func (s *Service) createStreamImpl(
 	ctx context.Context,
 	req *connect.Request[CreateStreamRequest],
 ) (*connect.Response[CreateStreamResponse], error) {
-	stream, err := s.createStream(ctx, req.Msg)
+	stream, derivedEvents, err := s.createStream(ctx, req.Msg)
 	if err != nil {
 		return nil, AsRiverError(err).Func("createStreamImpl")
 	}
 	resMsg := &CreateStreamResponse{
-		Stream: stream,
+		Stream:        stream,
+		DerivedEvents: derivedEvents,
 	}
 	return connect.NewResponse(resMsg), nil
 }
 
-func (s *Service) createStream(ctx context.Context, req *CreateStreamRequest) (*StreamAndCookie, error) {
+func (s *Service) createStream(ctx context.Context, req *CreateStreamRequest) (*StreamAndCookie, []*EventRef, error) {
 	log := logging.FromCtx(ctx)
 
 	streamId, err := StreamIdFromBytes(req.StreamId)
 	if err != nil {
-		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "invalid stream id", "err", err)
+		return nil, nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "invalid stream id", "err", err)
 	}
 
 	if len(req.Events) == 0 {
-		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "no events")
+		return nil, nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "no events")
 	}
 
 	parsedEvents, err := ParseEvents(req.Events)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	log.Debugw("createStream", "parsedEvents", parsedEvents)
@@ -61,7 +62,7 @@ func (s *Service) createStream(ctx context.Context, req *CreateStreamRequest) (*
 		req.Metadata,
 	)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	// check that streams exist for derived events that will be added later
@@ -70,7 +71,7 @@ func (s *Service) createStream(ctx context.Context, req *CreateStreamRequest) (*
 			streamIdBytes := event.StreamId
 			stream, err := s.cache.GetStreamNoWait(ctx, streamIdBytes)
 			if err != nil || stream == nil {
-				return nil, RiverError(Err_PERMISSION_DENIED, "stream does not exist", "streamId", streamIdBytes)
+				return nil, nil, RiverError(Err_PERMISSION_DENIED, "stream does not exist", "streamId", streamIdBytes)
 			}
 		}
 	}
@@ -84,15 +85,15 @@ func (s *Service) createStream(ctx context.Context, req *CreateStreamRequest) (*
 			creatorStreamView, err = stream.GetView(ctx)
 		}
 		if err != nil {
-			return nil, RiverError(Err_PERMISSION_DENIED, "failed to load creator stream", "err", err)
+			return nil, nil, RiverError(Err_PERMISSION_DENIED, "failed to load creator stream", "err", err)
 		}
 		for _, streamIdBytes := range csRules.RequiredMemberships {
 			streamId, err := StreamIdFromBytes(streamIdBytes)
 			if err != nil {
-				return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "invalid stream id", "err", err)
+				return nil, nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "invalid stream id", "err", err)
 			}
 			if !creatorStreamView.(UserStreamView).IsMemberOf(streamId) {
-				return nil, RiverError(Err_PERMISSION_DENIED, "not a member of", "requiredStreamId", streamId)
+				return nil, nil, RiverError(Err_PERMISSION_DENIED, "not a member of", "requiredStreamId", streamId)
 			}
 		}
 	}
@@ -101,12 +102,12 @@ func (s *Service) createStream(ctx context.Context, req *CreateStreamRequest) (*
 	for _, userAddress := range csRules.RequiredUserAddrs {
 		addr, err := BytesToAddress(userAddress)
 		if err != nil {
-			return nil, RiverError(Err_PERMISSION_DENIED, "invalid user id", "requiredUser", userAddress)
+			return nil, nil, RiverError(Err_PERMISSION_DENIED, "invalid user id", "requiredUser", userAddress)
 		}
 		userStreamId := UserStreamIdFromAddr(addr)
 		_, err = s.cache.GetStreamNoWait(ctx, userStreamId)
 		if err != nil {
-			return nil, RiverError(Err_PERMISSION_DENIED, "user does not exist", "requiredUser", userAddress)
+			return nil, nil, RiverError(Err_PERMISSION_DENIED, "user does not exist", "requiredUser", userAddress)
 		}
 	}
 
@@ -114,10 +115,10 @@ func (s *Service) createStream(ctx context.Context, req *CreateStreamRequest) (*
 	if csRules.ChainAuth != nil {
 		isEntitled, err := s.chainAuth.IsEntitled(ctx, s.config, csRules.ChainAuth)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		if !isEntitled {
-			return nil, RiverError(
+			return nil, nil, RiverError(
 				Err_PERMISSION_DENIED,
 				"IsEntitled failed",
 				"chainAuthArgs",
@@ -130,20 +131,24 @@ func (s *Service) createStream(ctx context.Context, req *CreateStreamRequest) (*
 	// create the stream
 	resp, err := s.createReplicatedStream(ctx, streamId, parsedEvents)
 	if err != nil && AsRiverError(err).Code != Err_ALREADY_EXISTS {
-		return nil, err
+		return nil, nil, err
 	}
+
+	var derivedEvents []*EventRef = nil
 
 	// add derived events
 	if csRules.DerivedEvents != nil {
+		derivedEvents = make([]*EventRef, 0, len(csRules.DerivedEvents))
 		for _, de := range csRules.DerivedEvents {
-			err := s.AddEventPayload(ctx, de.StreamId, de.Payload)
+			newEvents, err := s.AddEventPayload(ctx, de.StreamId, de.Payload, de.Tags)
+			derivedEvents = append(derivedEvents, newEvents...)
 			if err != nil {
-				return nil, RiverError(Err_INTERNAL, "failed to add derived event", "err", err)
+				return resp, derivedEvents, RiverError(Err_INTERNAL, "failed to add derived event", "err", err)
 			}
 		}
 	}
 
-	return resp, nil
+	return resp, derivedEvents, nil
 }
 
 func (s *Service) createReplicatedStream(

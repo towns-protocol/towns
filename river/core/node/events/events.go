@@ -490,6 +490,19 @@ func Make_UserPayload_Membership(
 	}
 }
 
+func Make_UserPayload_BlockchainTransaction(
+	fromUserAddress []byte,
+	transaction *BlockchainTransaction,
+) *StreamEvent_UserPayload {
+	return &StreamEvent_UserPayload{
+		UserPayload: &UserPayload{
+			Content: &UserPayload_BlockchainTransaction{
+				BlockchainTransaction: transaction,
+			},
+		},
+	}
+}
+
 func Make_UserPayload_ReceivedBlockchainTransaction(
 	fromUserAddress []byte,
 	transaction *BlockchainTransaction,

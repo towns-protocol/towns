@@ -201,6 +201,19 @@ func createSpace(
 		return nil, nil, err
 	}
 
+	// if resspace.Msg.DerivedEvents doesn't contain an event in the user stream, return an error
+	userStreamId := UserStreamIdFromAddr(wallet.Address)
+	foundUserStreamEvent := false
+	for _, event := range resspace.Msg.DerivedEvents {
+		if bytes.Equal(event.StreamId, userStreamId[:]) {
+			foundUserStreamEvent = true
+			break
+		}
+	}
+	if !foundUserStreamEvent {
+		return nil, nil, fmt.Errorf("expected user stream to contain an event")
+	}
+
 	return resspace.Msg.Stream.NextSyncCookie, joinSpace.Hash, nil
 }
 
@@ -252,6 +265,32 @@ func createChannel(
 	if len(reschannel.Msg.Stream.Miniblocks) == 0 {
 		return nil, nil, fmt.Errorf("expected at least one miniblock")
 	}
+
+	// if reschannel.Msg.DerivedEvents doesn't contain an event in the user stream, return an error
+	userStreamId := UserStreamIdFromAddr(wallet.Address)
+	foundUserStreamEvent := false
+	for _, event := range reschannel.Msg.DerivedEvents {
+		if bytes.Equal(event.StreamId, userStreamId[:]) {
+			foundUserStreamEvent = true
+			break
+		}
+	}
+	if !foundUserStreamEvent {
+		return nil, nil, fmt.Errorf("expected user stream to contain an event")
+	}
+
+	// if reschannel.Msg.DerivedEvents doesn't contain an event in the space stream, return an error
+	foundSpaceStreamEvent := false
+	for _, event := range reschannel.Msg.DerivedEvents {
+		if bytes.Equal(event.StreamId, spaceId[:]) {
+			foundSpaceStreamEvent = true
+			break
+		}
+	}
+	if !foundSpaceStreamEvent {
+		return nil, nil, fmt.Errorf("expected space stream to contain an event")
+	}
+
 	lastMb := reschannel.Msg.Stream.Miniblocks[len(reschannel.Msg.Stream.Miniblocks)-1]
 	return reschannel.Msg.Stream.NextSyncCookie, &MiniblockRef{
 		Hash: common.BytesToHash(lastMb.Header.Hash),

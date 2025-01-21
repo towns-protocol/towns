@@ -14,6 +14,7 @@ import (
 type DerivedEvent struct {
 	Payload  IsStreamEvent_Payload
 	StreamId shared.StreamId
+	Tags     *Tags
 }
 
 func unknownPayloadType(payload any) error {
