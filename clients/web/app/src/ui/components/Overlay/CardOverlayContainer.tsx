@@ -24,6 +24,7 @@ const margin = 4
 export const OverlayContainer = (props: OffsetContainerProps) => {
     const { triggerRect, hitPosition, render, placement, setIsAbove } = props
     const ref = useRef<HTMLDivElement>(null)
+    const isAboveCheckCount = useRef(0)
     props.containerRef.current = ref.current
 
     const contentSizeRef = useRef<{ width: number; height: number }>({ width: 0, height: 0 })
@@ -102,7 +103,12 @@ export const OverlayContainer = (props: OffsetContainerProps) => {
             const anchorLeft = triggerRect.left
             const fitsLeft = anchorLeft + size.width < safeArea.right
 
-            setIsAbove(anchorStyle.top < triggerRect.top)
+            // this is a hack so this doesn't re-render a ton of times on edge cases and cause crazy flip flops
+            // need more time to investigate and i don't have time right now
+            if (isAboveCheckCount.current < 3) {
+                isAboveCheckCount.current += 1
+                setIsAbove(anchorStyle.top < triggerRect.top)
+            }
 
             // ideally align horizontally on the right
             if (fitsRight || !fitsLeft) {
