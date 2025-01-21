@@ -18,9 +18,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	eth_crypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/google/go-cmp/cmp"
-	payload2 "github.com/sideshow/apns2/payload"
-	"github.com/stretchr/testify/require"
-
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/events"
 	"github.com/river-build/river/core/node/notifications/push"
@@ -30,6 +27,8 @@ import (
 	. "github.com/river-build/river/core/node/shared"
 	"github.com/river-build/river/core/node/testutils"
 	"github.com/river-build/river/core/node/testutils/testcert"
+	payload2 "github.com/sideshow/apns2/payload"
+	"github.com/stretchr/testify/require"
 )
 
 var notificationDeliveryDelay = 30 * time.Second
@@ -1632,6 +1631,7 @@ func (nc *notificationCapture) SendApplePushNotification(
 	sub *types.APNPushSubscription,
 	eventHash common.Hash,
 	_ *payload2.Payload,
+	_ bool,
 ) (bool, int, error) {
 	nc.ApnPushNotificationsMu.Lock()
 	defer nc.ApnPushNotificationsMu.Unlock()

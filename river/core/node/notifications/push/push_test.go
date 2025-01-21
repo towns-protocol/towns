@@ -64,7 +64,7 @@ func TestAPNSPushNotification(t *testing.T) {
 	}
 
 	expired, _, err := notifier.SendApplePushNotification(
-		ctx, &sub, common.Hash{1}, payload)
+		ctx, &sub, common.Hash{1}, payload, true)
 	req.False(expired, "subscription should not be expired")
 	req.NoError(err, "send APN notification")
 }
