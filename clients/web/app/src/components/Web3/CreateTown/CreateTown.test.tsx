@@ -11,7 +11,7 @@ import { UseMockCreateSpaceReturn, mockCreateTransactionWithSpy } from 'test/tra
 import { YEAR_MS } from 'data/constants'
 import { parseUnits } from 'hooks/useBalance'
 import { CreateTownForm, CreateTownFormRender } from './CreateTown'
-import { GATING_ENABLED } from './createTown.schema'
+import { DEFAULT_MEMBERSHIP_LIMIT, GATING_ENABLED } from './createTown.schema'
 
 const Wrapper = (props: PropsWithChildren) => {
     return (
@@ -416,7 +416,7 @@ const getCreateSpaceTransactionDefaultResult = () =>
             currency: ethers.constants.AddressZero,
             feeRecipient: ethers.constants.AddressZero,
             freeAllocation: 1000,
-            maxSupply: 1000,
+            maxSupply: DEFAULT_MEMBERSHIP_LIMIT,
             name: 'testtown - Member',
             price: 0n,
             pricingModule: `0x${Lib.FIXED_PRICING}`,
