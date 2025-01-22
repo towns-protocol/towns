@@ -286,7 +286,24 @@ export class TownsClient
             )
         }
 
-        await this.casablancaClient.initializeUser(metadata)
+        const initTimes = await this.casablancaClient.initializeUser(metadata)
+
+        if (sequenceName) {
+            Object.entries(initTimes).forEach(([key, ms]) => {
+                // init_crypto_time,
+                // init_mls_time,
+                // init_user_stream_time,
+                // init_user_inbox_stream_time,
+                // init_user_metadata_stream_time,
+                // init_user_metadata_stream_init_from_persistence_time,
+                // init_user_metadata_stream_get_user_stream_time,
+                // init_user_metadata_stream_create_user_metadata_stream_time,
+                // init_user_metadata_stream_init_from_response_time,
+                // init_user_settings_stream_time,
+                const snakeCaseKey = key.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`)
+                getTimeTracker().addMeasurement(sequenceName, `river_${snakeCaseKey}`, ms)
+            })
+        }
 
         if (endIntializeUser) {
             endIntializeUser()

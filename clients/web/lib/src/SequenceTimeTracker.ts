@@ -85,6 +85,69 @@ class TimeTracker {
         }
     }
 
+    public addMeasurement(
+        sequence: TimeTrackerEvents,
+        step: string,
+        durationMs: number,
+        data?: Record<string, unknown>,
+    ): void {
+        try {
+            if (!sequence) {
+                console.error('Measurement name is required.')
+                return
+            }
+            const now = performance.now()
+
+            if (!this.metrics[sequence]) {
+                this.metrics[sequence] = {
+                    count: 1,
+                    totalDurationMs: 0,
+                    totalDurationSec: 0,
+                    startTime: now,
+                    sequenceId: nanoid(),
+                    steps: {
+                        [step]: {
+                            count: 1,
+                            totalDurationMs: durationMs,
+                            totalDurationSec: durationMs / 1000,
+                            startTime: undefined,
+                        },
+                    },
+                }
+            } else {
+                if (!this.metrics[sequence].steps[step]) {
+                    this.metrics[sequence].steps[step] = {
+                        count: 1,
+                        totalDurationMs: durationMs,
+                        totalDurationSec: durationMs / 1000,
+                        startTime: undefined,
+                    }
+                } else {
+                    this.metrics[sequence].steps[step].count++
+                    this.metrics[sequence].steps[step].totalDurationMs += durationMs
+                    this.metrics[sequence].steps[step].totalDurationSec += durationMs / 1000
+                }
+
+                this.metrics[sequence].totalDurationMs += durationMs
+                this.metrics[sequence].totalDurationSec += durationMs / 1000
+            }
+
+            try {
+                datadogLogs.logger.info(`sequence_time: ${sequence} ${step} ${durationMs}ms`, {
+                    sequence,
+                    step,
+                    sequenceId: this.metrics[sequence].sequenceId,
+                    durationMs,
+                    ...data,
+                })
+            } catch (error) {
+                console.log('[SequenceTimeTracker] Error logging sequence time:', error)
+            }
+        } catch (error) {
+            console.error('Error adding measurement:', error)
+        }
+    }
+
     public endMeasurement(sequence: string, step: string, data?: Record<string, unknown>): void {
         try {
             if (!sequence || !this.metrics[sequence]) {
