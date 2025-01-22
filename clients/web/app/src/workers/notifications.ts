@@ -315,7 +315,6 @@ function generateNewNotificationMessage({
 }): NotificationContent {
     const title = generateMentionTitle(senderName, townName, channelName)
     let body = plaintext?.body
-    threadId = plaintext?.threadId ? plaintext.threadId : threadId ?? ''
     if (!body) {
         switch (true) {
             case stringHasValue(channelName) && stringHasValue(senderName):
@@ -471,7 +470,6 @@ function generateMentionedMessage({
 }): NotificationContent {
     const title = generateMentionTitle(senderName, townName, channelName)
     let body = plaintext?.body
-    threadId = plaintext?.threadId ? plaintext.threadId : threadId ?? ''
     if (!body) {
         switch (true) {
             case stringHasValue(channelName) && stringHasValue(senderName):
@@ -570,7 +568,6 @@ function generateReplyToMessage({
     const title = generateReplyToTitle(senderName, townName, channelName)
     let body = plaintext?.body
     const refEventId = plaintext?.refEventId
-    threadId = plaintext?.threadId ? plaintext.threadId : threadId ?? ''
     if (reaction) {
         const senderText = stringHasValue(senderName) ? `@${senderName}` : 'Someone'
 

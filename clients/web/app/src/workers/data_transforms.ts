@@ -48,7 +48,6 @@ export function getPlaintextDetailsForNonEncryptedEvents(
                                     ?.messageId
                             return {
                                 body: undefined,
-                                threadId: undefined,
                                 reaction: undefined,
                                 refEventId: messageId ? bin_toHexString(messageId) : undefined,
                             }

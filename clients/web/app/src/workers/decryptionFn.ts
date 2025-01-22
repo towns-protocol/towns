@@ -16,7 +16,6 @@ const log = console.debug.bind(console, 'sw:push:')
 
 export interface PlaintextDetails {
     body: string | undefined
-    threadId: string | undefined
     reaction: string | undefined
     refEventId?: string
 }
@@ -77,12 +76,10 @@ async function newGroupDecryption(
 }
 
 const bodyRegex = /"body":"(.*?)"(?=,|})/
-const threadIdRegex = /"threadId":"(.*?)"(?=,|})/
 const reactionRegex = /"reaction":"(.*?)"(?=,|})/
 
 function extractDetails(jsonString: string, refEventId?: string): PlaintextDetails {
     const bodyMatch = jsonString.match(bodyRegex)
-    const threadIdMatch = jsonString.match(threadIdRegex)
     const reactionMatch = jsonString.match(reactionRegex)
     /**
      * - replace all \n because notification body cannot
@@ -100,7 +97,6 @@ function extractDetails(jsonString: string, refEventId?: string): PlaintextDetai
     }
     return {
         body: cleanBody,
-        threadId: threadIdMatch ? threadIdMatch[1] : undefined,
         reaction: reactionMatch ? reactionMatch[1] : undefined,
         refEventId,
     }
