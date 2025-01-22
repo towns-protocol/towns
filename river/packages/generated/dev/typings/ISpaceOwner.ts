@@ -58,6 +58,7 @@ export interface ISpaceOwnerInterface extends utils.Interface {
   functions: {
     "getDefaultUri()": FunctionFragment;
     "getFactory()": FunctionFragment;
+    "getSpaceByTokenId(uint256)": FunctionFragment;
     "getSpaceInfo(address)": FunctionFragment;
     "mintSpace(string,string,address,string,string)": FunctionFragment;
     "nextTokenId()": FunctionFragment;
@@ -70,6 +71,7 @@ export interface ISpaceOwnerInterface extends utils.Interface {
     nameOrSignatureOrTopic:
       | "getDefaultUri"
       | "getFactory"
+      | "getSpaceByTokenId"
       | "getSpaceInfo"
       | "mintSpace"
       | "nextTokenId"
@@ -85,6 +87,10 @@ export interface ISpaceOwnerInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "getFactory",
     values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getSpaceByTokenId",
+    values: [PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
     functionFragment: "getSpaceInfo",
@@ -128,6 +134,10 @@ export interface ISpaceOwnerInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "getFactory", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "getSpaceByTokenId",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "getSpaceInfo",
     data: BytesLike
@@ -222,6 +232,11 @@ export interface ISpaceOwner extends BaseContract {
 
     getFactory(overrides?: CallOverrides): Promise<[string]>;
 
+    getSpaceByTokenId(
+      tokenId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<[string]>;
+
     getSpaceInfo(
       space: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -262,6 +277,11 @@ export interface ISpaceOwner extends BaseContract {
 
   getFactory(overrides?: CallOverrides): Promise<string>;
 
+  getSpaceByTokenId(
+    tokenId: PromiseOrValue<BigNumberish>,
+    overrides?: CallOverrides
+  ): Promise<string>;
+
   getSpaceInfo(
     space: PromiseOrValue<string>,
     overrides?: CallOverrides
@@ -301,6 +321,11 @@ export interface ISpaceOwner extends BaseContract {
     getDefaultUri(overrides?: CallOverrides): Promise<string>;
 
     getFactory(overrides?: CallOverrides): Promise<string>;
+
+    getSpaceByTokenId(
+      tokenId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<string>;
 
     getSpaceInfo(
       space: PromiseOrValue<string>,
@@ -362,6 +387,11 @@ export interface ISpaceOwner extends BaseContract {
 
     getFactory(overrides?: CallOverrides): Promise<BigNumber>;
 
+    getSpaceByTokenId(
+      tokenId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     getSpaceInfo(
       space: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -402,6 +432,11 @@ export interface ISpaceOwner extends BaseContract {
     getDefaultUri(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     getFactory(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    getSpaceByTokenId(
+      tokenId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
 
     getSpaceInfo(
       space: PromiseOrValue<string>,

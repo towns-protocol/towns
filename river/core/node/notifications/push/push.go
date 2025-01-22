@@ -283,8 +283,11 @@ func (n *MessageNotifications) SendApplePushNotification(
 		if sub.Environment == protocol.APNEnvironment_APN_ENVIRONMENT_SANDBOX {
 			log = log.With("uniqueApnsID", res.ApnsUniqueID)
 		}
+
 		log.Infow("APN notification sent",
-			"payloadVersion", sub.PushVersion, "payloadStripped", !payloadIncludesStreamEvent)
+			"payloadVersion", sub.PushVersion,
+			"payloadStripped", !payloadIncludesStreamEvent,
+			"payload", payload)
 
 		return false, res.StatusCode, nil
 	}
@@ -333,6 +336,7 @@ func (n *MessageNotificationsSimulator) SendApplePushNotification(
 	payloadIncludesStreamEvent bool,
 ) (bool, int, error) {
 	log := logging.FromCtx(ctx)
+
 	log.Debugw("SendApplePushNotification",
 		"deviceToken", sub.DeviceToken,
 		"env", fmt.Sprintf("%d", sub.Environment),

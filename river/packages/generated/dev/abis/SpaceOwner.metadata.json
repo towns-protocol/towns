@@ -864,6 +864,25 @@
       {
         "inputs": [
           {
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function",
+        "name": "getSpaceByTokenId",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ]
+      },
+      {
+        "inputs": [
+          {
             "internalType": "address",
             "name": "space",
             "type": "address"
@@ -1284,6 +1303,14 @@
         "getPastVotes(address,uint256)": {
           "details": "Returns the amount of votes that `account` had at a specific moment in the past. If the `clock()` is configured to use block numbers, this will return the value at the end of the corresponding block."
         },
+        "getSpaceByTokenId(uint256)": {
+          "params": {
+            "tokenId": "The token id of the space"
+          },
+          "returns": {
+            "_0": "space The address of the space"
+          }
+        },
         "getSpaceInfo(address)": {
           "params": {
             "space": "The address of the space"
@@ -1359,6 +1386,9 @@
         },
         "getFactory()": {
           "notice": "Get the factory address"
+        },
+        "getSpaceByTokenId(uint256)": {
+          "notice": "Get the space address by token id"
         },
         "getSpaceInfo(address)": {
           "notice": "Get the space info"
@@ -1514,26 +1544,26 @@
       "license": "MIT"
     },
     "contracts/src/spaces/facets/owner/ISpaceOwner.sol": {
-      "keccak256": "0x7baa36238144aae1068d9df8b28c6741cbcf1f26e53c0e429fc62c351623c1f4",
+      "keccak256": "0xb911df0bd675db51765e301c652efde6863e7f9b56734c26229fc97d578ac5ef",
       "urls": [
-        "bzz-raw://4d702b63539e714f343482f80de3f342d7870647cbeb01b42abab7dc9805683a",
-        "dweb:/ipfs/QmcTDjumaJfXvAoyT6G38meixc7omy6MUuX33FrRuc8hNw"
+        "bzz-raw://5fcbd59464b2aca01f810e14ec533101d8ea33825fbe9e242771c894883304ff",
+        "dweb:/ipfs/QmfARNFQtn3upbwj5GMGBZGkktLRYQmbg2DrVHUM4hqwtn"
       ],
       "license": "MIT"
     },
     "contracts/src/spaces/facets/owner/SpaceOwner.sol": {
-      "keccak256": "0x7a9f9be94b604d4c22310e0a707876b28fafc29972739bbb041a8fa76288f830",
+      "keccak256": "0x5c12a90a8968ead0ec8ef171dbe9c0c428cf55015030c2138e8ae9a3c5f1d8c5",
       "urls": [
-        "bzz-raw://10c5d7d95f4cf04bed36afbef4de58efc62ddde1c23f120490755322c6e1b2d6",
-        "dweb:/ipfs/QmSz4mwGkKTt9ZDPegmbKPiEtb2HHYgL93BrT8KtJkMsFd"
+        "bzz-raw://5d7d492d5ea7b72a492f3e28c6e2f47f82697fd663e05b0f4797a56eed8b253a",
+        "dweb:/ipfs/QmRx1GAEZui8LPPSpn5rNg3SZ3Qh1v5D3P6n2DZQTiNP9v"
       ],
       "license": "MIT"
     },
     "contracts/src/spaces/facets/owner/SpaceOwnerBase.sol": {
-      "keccak256": "0x5f13f9246fbf565ebef09d61477e24a5d6c1a9e0cc3b285521ef356c022d1d0e",
+      "keccak256": "0xda2b6fd176951edf729020cdb7c77131422b879262608c56ad0449b6e42747bc",
       "urls": [
-        "bzz-raw://15fdda81ae99a64bce64200403443cf42bd968c21806146741252489ba537cca",
-        "dweb:/ipfs/QmQ7EigQNBttBS2SY3YBmeNqDB7wzaEWSz3GVMYkaKRZpm"
+        "bzz-raw://a6fec6a0163a23b97e5e11692545d1532d76b5c5c6869a38773441a8207b5a8a",
+        "dweb:/ipfs/QmaSPaCfivchWPawU1FP92KojXFZQBmiDMmUNiD3yu1Dac"
       ],
       "license": "MIT"
     },

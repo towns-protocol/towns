@@ -594,7 +594,10 @@ func update_Snapshot_Member(
 		snapshot.Pins = snapPins
 		return nil
 	case *MemberPayload_EncryptionAlgorithm_:
-		snapshot.EncryptionAlgorithm.Algorithm = content.EncryptionAlgorithm.Algorithm
+		if content.EncryptionAlgorithm == nil {
+			return RiverError(Err_INVALID_ARGUMENT, "member payload encryption algorithm not set")
+		}
+		snapshot.EncryptionAlgorithm = content.EncryptionAlgorithm
 		return nil
 	case *MemberPayload_MemberBlockchainTransaction_:
 		switch transactionContent := content.MemberBlockchainTransaction.Transaction.Content.(type) {

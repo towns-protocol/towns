@@ -22,7 +22,7 @@ func (s *streamCacheImpl) submitSyncStreamTask(
 		err := s.syncStreamFromPeers(ctx, streamId, lastMbInContract)
 		if err != nil {
 			logging.FromCtx(ctx).
-				Error("Unable to sync stream from peers", "stream", streamId, "error", err, "targetMiniblockNum", lastMbInContract.Num)
+				Errorw("Unable to sync stream from peers", "stream", streamId, "error", err, "targetMiniblockNum", lastMbInContract.Num)
 		}
 	})
 }

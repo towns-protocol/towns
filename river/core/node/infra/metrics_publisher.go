@@ -8,20 +8,24 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-
 	"github.com/river-build/river/core/config"
 	"github.com/river-build/river/core/node/logging"
 )
 
+// DefaultRpcDurationBucketsSeconds are the default buckets for rpc duration metrics.
 // In practice, most rpc calls seem to land between 10 and 50ms, sometimes up to 100ms.
-// Entitlement calls can sometimes take up to 2s.
+// Entitlement calls can sometimes take up to 2s and calls that send and wait for chain
+// transaction confirmation (CreateStream for instance) can sometimes take up to 15s.
 var DefaultRpcDurationBucketsSeconds = []float64{
-	0.01,
-	0.05,
-	0.1,
-	0.5,
+	.05,
+	.1,
+	.5,
 	1.0,
+	2.5,
 	5.0,
+	7.5,
+	10.0,
+	15.0,
 }
 
 // Most db operations appear to complete in <= 60ms in practice.

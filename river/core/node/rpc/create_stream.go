@@ -138,7 +138,7 @@ func (s *Service) createStream(ctx context.Context, req *CreateStreamRequest) (*
 
 	// add derived events
 	if csRules.DerivedEvents != nil {
-		derivedEvents = make([]*EventRef, 0, len(csRules.DerivedEvents))
+		derivedEvents = make([]*EventRef, 0)
 		for _, de := range csRules.DerivedEvents {
 			newEvents, err := s.AddEventPayload(ctx, de.StreamId, de.Payload, de.Tags)
 			derivedEvents = append(derivedEvents, newEvents...)

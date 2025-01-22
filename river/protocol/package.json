@@ -1,6 +1,6 @@
 {
     "name": "@river-build/proto-source",
-    "version": "0.0.157",
+    "version": "0.0.158",
     "packageManager": "yarn@3.8.0",
     "files": [
         "*.proto"

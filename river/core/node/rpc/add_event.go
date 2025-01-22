@@ -95,7 +95,7 @@ func (s *Service) addParsedEvent(
 		}
 		// If no chainAuthArgs grant entitlement, execute the OnChainAuthFailure side effect.
 		if !isEntitled {
-			var newEvents []*EventRef
+			var newEvents []*EventRef = nil
 			if sideEffects.OnChainAuthFailure != nil {
 				newEvents, err = s.AddEventPayload(
 					ctx,
@@ -203,5 +203,9 @@ func (s *Service) AddEventPayload(
 		return nil, err
 	}
 
-	return resp.Msg.NewEvents, nil
+	if resp.Msg != nil {
+		return resp.Msg.NewEvents, nil
+	}
+
+	return nil, nil
 }

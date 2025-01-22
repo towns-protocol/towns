@@ -35,6 +35,25 @@ const _abi = [
   },
   {
     type: "function",
+    name: "getSpaceByTokenId",
+    inputs: [
+      {
+        name: "tokenId",
+        type: "uint256",
+        internalType: "uint256",
+      },
+    ],
+    outputs: [
+      {
+        name: "",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
     name: "getSpaceInfo",
     inputs: [
       {

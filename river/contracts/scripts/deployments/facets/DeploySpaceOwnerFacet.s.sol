@@ -26,6 +26,7 @@ contract DeploySpaceOwnerFacet is FacetHelper, Deployer {
     addSelector(SpaceOwner.nextTokenId.selector);
     addSelector(SpaceOwner.mintSpace.selector);
     addSelector(SpaceOwner.getSpaceInfo.selector);
+    addSelector(SpaceOwner.getSpaceByTokenId.selector);
     addSelector(SpaceOwner.updateSpaceInfo.selector);
     addSelectors(erc721aHelper.selectors());
     addSelectors(votesHelper.selectors());
