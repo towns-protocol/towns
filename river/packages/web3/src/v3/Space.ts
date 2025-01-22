@@ -495,6 +495,10 @@ export class Space {
         return allTokenArrays.flat().map((token) => token.toString())
     }
 
+    public async getProtocolFee(): Promise<bigint> {
+        return (await this.membership.read.getProtocolFee()).toBigInt()
+    }
+
     /**
      * This function is potentially expensive and should be used with caution.
      * For example, a space with 1000 members will make 1000 + 1 calls to the blockchain.

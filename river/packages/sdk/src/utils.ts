@@ -122,3 +122,10 @@ export const randomUrlSelector = (urls: string) => {
         return u[Math.floor(Math.random() * u.length)]
     }
 }
+
+export async function getTime<T>(fn: () => Promise<T>) {
+    const start = performance.now()
+    const result = await fn()
+    const end = performance.now()
+    return { result, time: end - start }
+}

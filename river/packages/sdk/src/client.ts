@@ -144,7 +144,7 @@ import {
 
 import debug from 'debug'
 import { Stream } from './stream'
-import { usernameChecksum } from './utils'
+import { getTime, usernameChecksum } from './utils'
 import { isEncryptedContentKind, toDecryptedContent } from './encryptedContentTypes'
 import { ClientDecryptionExtensions } from './clientDecryptionExtensions'
 import { PersistenceStore, IPersistenceStore, StubPersistenceStore } from './persistenceStore'
@@ -389,7 +389,14 @@ export class Client
     async initializeUser(opts?: {
         spaceId?: Uint8Array | string
         encryptionDeviceInit?: EncryptionDeviceInitOpts
-    }): Promise<void> {
+    }): Promise<{
+        initCryptoTime: number
+        initMlsTime: number
+        initUserStreamTime: number
+        initUserInboxStreamTime: number
+        initUserMetadataStreamTime: number
+        initUserSettingsStreamTime: number
+    }> {
         const initUserMetadata = opts?.spaceId
             ? {
                   spaceId: streamIdAsBytes(opts?.spaceId),
@@ -399,18 +406,23 @@ export class Client
         const initializeUserStartTime = performance.now()
         this.logCall('initializeUser', this.userId)
         assert(this.userStreamId === undefined, 'already initialized')
-        await this.initCrypto(opts?.encryptionDeviceInit)
-        await this.initMls()
+        const initCrypto = await getTime(() => this.initCrypto(opts?.encryptionDeviceInit))
+        const initMls = await getTime(() => this.initMls())
 
         check(isDefined(this.decryptionExtensions), 'decryptionExtensions must be defined')
         check(isDefined(this.syncedStreamsExtensions), 'syncedStreamsExtensions must be defined')
         check(isDefined(this.mlsAdapter), 'mlsAdapter must be defined')
 
-        await Promise.all([
-            this.initUserStream(initUserMetadata),
-            this.initUserInboxStream(initUserMetadata),
-            this.initUserMetadataStream(initUserMetadata),
-            this.initUserSettingsStream(initUserMetadata),
+        const [
+            initUserStream,
+            initUserInboxStream,
+            initUserMetadataStream,
+            initUserSettingsStream,
+        ] = await Promise.all([
+            getTime(() => this.initUserStream(initUserMetadata)),
+            getTime(() => this.initUserInboxStream(initUserMetadata)),
+            getTime(() => this.initUserMetadataStream(initUserMetadata)),
+            getTime(() => this.initUserSettingsStream(initUserMetadata)),
         ])
         this.initUserJoinedStreams()
 
@@ -418,6 +430,20 @@ export class Client
         const initializeUserEndTime = performance.now()
         const executionTime = initializeUserEndTime - initializeUserStartTime
         this.logCall('initializeUser::executionTime', executionTime)
+
+        // all of these init calls follow a similar pattern and call highly similar functions
+        // so just tracking more granular times for a single one of these as a start, so there's not too much data to digest
+        const initUserMetadataTimes = initUserMetadataStream.result
+
+        return {
+            initCryptoTime: initCrypto.time,
+            initMlsTime: initMls.time,
+            initUserStreamTime: initUserStream.time,
+            initUserInboxStreamTime: initUserInboxStream.time,
+            initUserMetadataStreamTime: initUserMetadataStream.time,
+            initUserSettingsStreamTime: initUserSettingsStream.time,
+            ...initUserMetadataTimes,
+        }
     }
 
     private async initUserStream(metadata: { spaceId: Uint8Array } | undefined) {
@@ -445,12 +471,58 @@ export class Client
     private async initUserMetadataStream(metadata?: { spaceId: Uint8Array }) {
         this.userMetadataStreamId = makeUserMetadataStreamId(this.userId)
         const userMetadataStream = this.createSyncedStream(this.userMetadataStreamId)
-        if (!(await userMetadataStream.initializeFromPersistence())) {
-            const response =
-                (await this.getUserStream(this.userMetadataStreamId)) ??
-                (await this.createUserMetadataStream(this.userMetadataStreamId, metadata))
-            await userMetadataStream.initializeFromResponse(response)
+
+        let initUserMetadataStreamInitFromPersistenceTime = 0
+        let initUserMetadataStreamGetUserStreamTime = 0
+        let initUserMetadataStreamCreateUserMetadataStreamTime = 0
+        let initUserMetadataStreamInitFromResponseTime = 0
+
+        const initFromPersistence = await getTime(() =>
+            userMetadataStream.initializeFromPersistence(),
+        )
+        initUserMetadataStreamInitFromPersistenceTime = initFromPersistence.time
+        if (!initFromPersistence.result) {
+            const getUserStreamResponse = await getTime(() => {
+                check(!!this.userMetadataStreamId, 'userMetadataStreamId must be set')
+                return this.getUserStream(this.userMetadataStreamId)
+            })
+            initUserMetadataStreamGetUserStreamTime = getUserStreamResponse.time
+            let response: ParsedStreamResponse
+            if (getUserStreamResponse.result) {
+                response = getUserStreamResponse.result
+            } else {
+                const createUserMetadataStreamResponse = await getTime(() => {
+                    check(!!this.userMetadataStreamId, 'userMetadataStreamId must be set')
+                    return this.createUserMetadataStream(this.userMetadataStreamId, metadata)
+                })
+                initUserMetadataStreamCreateUserMetadataStreamTime =
+                    createUserMetadataStreamResponse.time
+                response = createUserMetadataStreamResponse.result
+            }
+            const initializeFromResponse = await getTime(() =>
+                userMetadataStream.initializeFromResponse(response),
+            )
+            initUserMetadataStreamInitFromResponseTime = initializeFromResponse.time
         }
+
+        const times = {
+            ...(initUserMetadataStreamInitFromPersistenceTime
+                ? { initUserMetadataStreamInitFromPersistenceTime }
+                : {}),
+            ...(initUserMetadataStreamGetUserStreamTime
+                ? { initUserMetadataStreamGetUserStreamTime }
+                : {}),
+            ...(initUserMetadataStreamCreateUserMetadataStreamTime
+                ? {
+                      initUserMetadataStreamCreateUserMetadataStreamTime,
+                  }
+                : {}),
+            ...(initUserMetadataStreamInitFromResponseTime
+                ? { initUserMetadataStreamInitFromResponseTime }
+                : {}),
+        }
+
+        return times
     }
 
     private async initUserSettingsStream(metadata?: { spaceId: Uint8Array }) {
