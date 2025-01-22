@@ -8,12 +8,15 @@ import { Analytics } from 'hooks/useAnalytics'
 import { useStore } from 'store/store'
 import { PanelButton } from '@components/Panel/PanelButton'
 import useCopyToClipboard from 'hooks/useCopyToClipboard'
+import { baseScanUrl } from '@components/Web3/utils'
+import { useEnvironment } from 'hooks/useEnvironmnet'
 
 export function TownsWallet() {
     const { loggedInWalletAddress } = useConnectivity()
     const { data: aaAddress } = useAbstractAccountAddress({
         rootKeyAddress: loggedInWalletAddress,
     })
+    const { baseChain } = useEnvironment()
     const setFundWalletModalOpen = useStore((state) => state.setFundWalletModalOpen)
     const balance = useBalance({
         address: aaAddress,
@@ -60,13 +63,22 @@ export function TownsWallet() {
                         <Text strong color="default">
                             Towns Wallet
                         </Text>
-                        <Icon type="base" size="square_sm" color="gray2" />
+                        <Box
+                            as="a"
+                            href={`${baseScanUrl(baseChain.id)}/address/${aaAddress}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ display: 'flex', cursor: 'pointer' }}
+                            opacity={{ hover: '0.8' }}
+                        >
+                            <Icon type="etherscan" size="square_sm" color="gray2" />
+                        </Box>
                     </Box>
                     <TextButton onClick={handleViewAssets}>View Assets</TextButton>
                 </Box>
                 <Box centerContent gap="xs" paddingY="sm">
-                    <Box horizontal alignItems="center" gap="xs">
-                        <Icon type="eth" size="square_md" color="cta1" />
+                    <Box horizontal alignItems="center" gap="sm">
+                        <Icon type="baseEth" size="square_lg" />
                         <Text strong size="h3">
                             {balance.data?.formatted ?? 0} ETH
                         </Text>
@@ -78,13 +90,13 @@ export function TownsWallet() {
                         centerContent
                         background="level3"
                         padding="md"
-                        height="x8"
+                        height="x10"
                         width="x12"
                         onClick={handleDeposit}
                     >
-                        <Box direction="column" alignItems="center" gap="xs">
-                            <Icon type="plus" size="square_xs" color="cta1" />
-                            <Text size="sm" color="cta1">
+                        <Box direction="column" alignItems="center" gap="sm">
+                            <Icon type="plus" size="square_sm" color="cta1" />
+                            <Text size="md" color="greenBlue" paddingBottom="xs">
                                 Deposit
                             </Text>
                         </Box>
@@ -94,13 +106,13 @@ export function TownsWallet() {
                         centerContent
                         background="level3"
                         padding="md"
-                        height="x8"
+                        height="x10"
                         width="x12"
                         onClick={handleSend}
                     >
                         <Box direction="column" alignItems="center" gap="xs">
-                            <Icon type="arrowRight" size="square_xs" color="cta1" />
-                            <Text size="sm" color="cta1">
+                            <Icon type="arrowRightUp" size="square_md" color="cta1" />
+                            <Text size="md" color="greenBlue" paddingBottom="xs">
                                 Send
                             </Text>
                         </Box>
@@ -110,17 +122,17 @@ export function TownsWallet() {
                         centerContent
                         background="level3"
                         padding="md"
-                        height="x8"
+                        height="x10"
                         width="x12"
                         onClick={handleCopy}
                     >
-                        <Box direction="column" alignItems="center" gap="xs">
+                        <Box direction="column" alignItems="center" gap="sm">
                             {!copied ? (
-                                <Icon type="copy" size="square_xs" color="cta1" />
+                                <Icon type="copy" size="square_sm" color="cta1" />
                             ) : (
-                                <Icon type="check" size="square_xs" color="positive" />
+                                <Icon type="check" size="square_sm" color="positive" />
                             )}
-                            <Text size="sm" color={copied ? 'positive' : 'cta1'}>
+                            <Text size="md" color="greenBlue" paddingBottom="xs">
                                 {copied ? 'Copied!' : 'Copy'}
                             </Text>
                         </Box>

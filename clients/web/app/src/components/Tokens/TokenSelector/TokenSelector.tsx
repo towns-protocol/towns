@@ -136,7 +136,7 @@ export function TokenSelector(props: Props) {
 
                 <IconButton
                     centerContent
-                    icon="eth"
+                    icon="baseEth"
                     tooltip="ETH Balance Gate"
                     background="level3"
                     rounded="sm"

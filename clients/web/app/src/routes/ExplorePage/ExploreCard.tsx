@@ -3,7 +3,7 @@ import { SpaceIdFromSpaceAddress, useContractSpaceInfoWithoutClient } from 'use-
 import { useNavigate } from 'react-router-dom'
 import { useReadableMembershipInfo } from '@components/TownPageLayout/useReadableMembershipInfo'
 import { InteractiveSpaceIcon } from '@components/SpaceIcon/SpaceIcon'
-import { Box, Heading, Icon, MotionBox, Paragraph, Pill, Stack } from '@ui'
+import { Box, Heading, Icon, MotionBox, Paragraph, Pill, Stack, Text } from '@ui'
 import { BlurredBackground } from '@components/TouchLayoutHeader/BlurredBackground'
 import { ImageVariants, useImageSource } from '@components/UploadImage/useImageSource'
 import { Analytics } from 'hooks/useAnalytics'
@@ -60,15 +60,7 @@ export const ExploreCard = ({ address, variant }: ExploreCardProps) => {
                 paddingY="md"
                 minWidth="100"
             >
-                <span
-                    style={{
-                        background: 'linear-gradient(90deg, #21E078 0%, #1FDBF1 100%)',
-                        textOverflow: 'clip',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                        backgroundClip: 'text',
-                    }}
-                >
+                <Text color="greenBlue">
                     {entitlements.hasEntitlements
                         ? 'Gated'
                         : memberInfo?.price !== 'Free'
@@ -76,7 +68,7 @@ export const ExploreCard = ({ address, variant }: ExploreCardProps) => {
                               memberInfo?.currency
                           }`
                         : 'Free'}
-                </span>
+                </Text>
             </Pill>
         ) : null
 

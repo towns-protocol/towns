@@ -38,6 +38,7 @@ import { VerifiedOnChainAssetTooltip } from '@components/VerifiedOnChainAssetToo
 import { useUploadAttachment } from '@components/MediaDropContext/useUploadAttachment'
 import { UploadImageRequestConfig } from '@components/UploadImage/useOnImageChangeEvent'
 import { UserRoles } from '@components/UserRoles/UserRoles'
+import { TownsWallet } from '@components/Web3/Wallet/TownsWallet'
 import { UserWalletContent } from './UserWalletContent'
 
 type Props = {
@@ -176,7 +177,6 @@ export const UserProfile = (props: Props) => {
                         </LargeUploadImageTemplate>
                     )}
                 </FormRender>
-
                 {(resolvedNft || canEdit) && (
                     <Stack
                         horizontal
@@ -231,8 +231,12 @@ export const UserProfile = (props: Props) => {
                     </Stack>
                 )}
             </Stack>
+
             {canEdit ? (
-                <>{streamId && <SetUsernameDisplayName streamId={streamId} />}</>
+                <>
+                    <TownsWallet />
+                    {streamId && <SetUsernameDisplayName streamId={streamId} />}
+                </>
             ) : (
                 <Stack padding gap="sm" rounded="sm" background="level2">
                     {user && (

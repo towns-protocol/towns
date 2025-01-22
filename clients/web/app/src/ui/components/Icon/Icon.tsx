@@ -119,6 +119,23 @@ export const ArrowRight = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) =
     </svg>
 ))
 
+export const ArrowRightUp = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
+    <svg
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        {...props}
+        ref={ref}
+    >
+        <path
+            d="M9 7C8.44772 7 8 7.44772 8 8C8 8.55228 8.44772 9 9 9H13.5858L7.29289 15.2929C6.90237 15.6834 6.90237 16.3166 7.29289 16.7071C7.68342 17.0976 8.31658 17.0976 8.70711 16.7071L15 10.4142V15C15 15.5523 15.4477 16 16 16C16.5523 16 17 15.5523 17 15V8C17 7.44772 16.5523 7 16 7H9Z"
+            fill="currentColor"
+        />
+    </svg>
+))
+
 export const ArrowCircle = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" {...props} ref={ref}>
         <path
@@ -1676,6 +1693,46 @@ export const EthIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
     </svg>
 ))
 
+export const BaseEthIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
+    <svg
+        width="24"
+        height="24"
+        viewBox="0 0 32 32"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        {...props}
+        ref={ref}
+    >
+        <path
+            d="M15 0C6.71573 0 0 6.71573 0 15C0 23.2843 6.71573 30 15 30C16.4579 30 17.8672 29.792 19.1998 29.4041C19.0698 28.9587 19 28.4875 19 28V24C19 21.2386 21.2386 19 24 19H28C28.4875 19 28.9587 19.0698 29.4041 19.1998C29.792 17.8672 30 16.4579 30 15C30 6.71573 23.2843 0 15 0Z"
+            fill="#3C3942"
+        />
+        <path
+            d="M15 4.92188L21.1406 15.1406L15 18.7969L8.8125 15.1406L15 4.92188Z"
+            fill="#EAEAEA"
+        />
+        <path
+            d="M8.8125 16.3125L15 19.9688L21.1406 16.3125L15 24.9844L8.8125 16.3125Z"
+            fill="#EAEAEA"
+        />
+        <path
+            d="M20 24C20 21.7909 21.7909 20 24 20H28C30.2091 20 32 21.7909 32 24V28C32 30.2091 30.2091 32 28 32H24C21.7909 32 20 30.2091 20 28V24Z"
+            fill="#3C3942"
+        />
+        <g clipPath="url(#clip0_29903_97499)">
+            <path
+                d="M25.9929 30.1668C28.2981 30.1668 30.1668 28.3014 30.1668 26.0002C30.1668 23.699 28.2981 21.8335 25.9929 21.8335C23.8059 21.8335 22.0117 23.5126 21.8335 25.6499H27.3505V26.3504H21.8335C22.0117 28.4877 23.8059 30.1668 25.9929 30.1668Z"
+                fill="#0D5BFF"
+            />
+        </g>
+        <defs>
+            <clipPath id="clip0_29903_97499">
+                <rect width="10" height="10" fill="white" transform="translate(21 21)" />
+            </clipPath>
+        </defs>
+    </svg>
+))
+
 const WalletConnectIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
     <svg
         width="16"
@@ -2165,6 +2222,7 @@ const iconMap = {
     arrowDownActive: ArrowDownActive,
     arrowLeft: ArrowLeft,
     arrowRight: ArrowRight,
+    arrowRightUp: ArrowRightUp,
     arrowCircle: ArrowCircle,
     at: AtIcon,
     attachment: AttachmentIcon,
@@ -2199,6 +2257,7 @@ const iconMap = {
     emoji: EmojiIcon,
     emojiAdd: EmojiAddIcon,
     eth: EthIcon,
+    baseEth: BaseEthIcon,
     etherscan: EtherscanIcon,
     failed: FailedIcon,
     file: FileIcon,

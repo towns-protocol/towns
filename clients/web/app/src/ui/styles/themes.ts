@@ -42,11 +42,22 @@ const html = {
     none: 'none',
 }
 
-const Rainbow = {
-    backgroundImage: `linear-gradient(90deg, ${Figma.Colors.Blue}, ${Figma.Colors.Yellow}, ${Figma.Colors.Pink})`,
-    color: 'transparent',
-    backgroundClip: 'text',
-}
+const Gradients = {
+    Rainbow: {
+        backgroundImage: `linear-gradient(90deg, ${Figma.Colors.Blue}, ${Figma.Colors.Yellow}, ${Figma.Colors.Pink})`,
+        color: 'transparent',
+        backgroundClip: 'text',
+        WebkitBackgroundClip: 'text',
+        WebkitTextFillColor: 'transparent',
+    },
+    GreenBlue: {
+        backgroundImage: 'linear-gradient(90deg, #21E078 0%, #1FDBF1 100%)',
+        color: 'transparent',
+        backgroundClip: 'text',
+        WebkitBackgroundClip: 'text',
+        WebkitTextFillColor: 'transparent',
+    },
+} as const
 
 const light = (() => {
     // special green for light mode
@@ -84,7 +95,8 @@ const light = (() => {
         secondary: Figma.Colors.Pink,
         inverted: Figma.DarkMode.Primary,
         onTone: Figma.Colors.Black,
-        rainbow: Rainbow,
+        rainbow: Gradients.Rainbow,
+        greenBlue: Gradients.GreenBlue,
     }
 
     return {
@@ -132,7 +144,8 @@ const dark = (() => {
         secondary: Figma.Colors.Pink,
         inverted: Figma.DarkMode.Level1,
         onTone: Figma.Colors.Black,
-        rainbow: Rainbow,
+        rainbow: Gradients.Rainbow,
+        greenBlue: Gradients.GreenBlue,
     } as const
 
     return {
