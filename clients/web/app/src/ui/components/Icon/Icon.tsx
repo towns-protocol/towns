@@ -203,7 +203,7 @@ export const BaseIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => 
     >
         <path
             d="M11.9808 23C18.0666 23 23 18.0752 23 12C23 5.92486 18.0666 1 11.9808 1C6.20703 1 1.47042 5.43292 1 11.0754H15.5648V12.9246H1C1.47042 18.5671 6.20703 23 11.9808 23Z"
-            fill="currentColor"
+            fill="#0D5BFF"
         />
     </svg>
 ))

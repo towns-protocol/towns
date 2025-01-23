@@ -12,9 +12,9 @@ import { useEnvironment } from 'hooks/useEnvironmnet'
 import { Spinner } from 'ui/components/Spinner'
 import { env } from 'utils/environment'
 import { Analytics } from 'hooks/useAnalytics'
+import { isTouch } from 'hooks/useDevice'
 import { useStore } from 'store/store'
 import { Figma } from 'ui/styles/palette'
-import { isTouch } from 'hooks/useDevice'
 import { useGatherSpaceDetailsAnalytics } from './Analytics/useGatherSpaceDetailsAnalytics'
 import { getSpaceNameFromCache } from './Analytics/getSpaceNameFromCache'
 
@@ -43,6 +43,7 @@ const CrossmintPaymentContent = ({
     const analytics = useGatherSpaceDetailsAnalytics({
         spaceId,
     })
+    const _isTouch = isTouch()
     const hasTriggeredPayment = useRef(false)
     const hasTriggeredComplete = useRef(false)
     const theme = useStore((s) => s.getTheme())
@@ -116,10 +117,15 @@ const CrossmintPaymentContent = ({
     }
 
     const isDark = theme === 'dark'
-    const _isTouch = isTouch()
 
     return (
-        <Box paddingTop="sm" position="relative" minHeight="400">
+        <Box
+            background="level1"
+            paddingTop="sm"
+            position="relative"
+            minHeight="400"
+            width={!_isTouch ? '400' : undefined}
+        >
             {isLoading ? (
                 <Stack centerContent height="250">
                     <Spinner />
@@ -131,9 +137,7 @@ const CrossmintPaymentContent = ({
                             fontFamily: 'Inter, system-ui, sans-serif',
                             colors: {
                                 backgroundPrimary: isDark
-                                    ? _isTouch
-                                        ? Figma.DarkMode.Level1
-                                        : Figma.DarkMode.Level3
+                                    ? Figma.DarkMode.Level2
                                     : Figma.LightMode.Level2,
                                 textPrimary: isDark ? Figma.Colors.White : Figma.Colors.Black,
                                 textSecondary: isDark
@@ -152,11 +156,7 @@ const CrossmintPaymentContent = ({
                                         ? Figma.DarkMode.Level2
                                         : Figma.LightMode.Level2,
                                     text: isDark ? Figma.Colors.White : Figma.Colors.Black,
-                                    border: isDark
-                                        ? _isTouch
-                                            ? Figma.DarkMode.Level3
-                                            : Figma.DarkMode.Level4
-                                        : Figma.LightMode.Level3,
+                                    border: isDark ? Figma.DarkMode.Level3 : Figma.LightMode.Level3,
                                     placeholder: isDark
                                         ? Figma.DarkMode.Secondary
                                         : Figma.LightMode.Secondary,

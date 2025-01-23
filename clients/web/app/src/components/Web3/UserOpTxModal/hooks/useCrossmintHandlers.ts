@@ -4,14 +4,13 @@ import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { usePublicPageLoginFlow } from 'routes/PublicTownPage/usePublicPageLoginFlow'
 import { useStore } from 'store/store'
 import { useMyAbstractAccountAddress } from './useMyAbstractAccountAddress'
-import { useUserOpTxModalContext } from '../UserOpTxModalContext'
 
 export function useCrossmintHandlers(args: {
-    setDisableModalActions: (value: boolean) => void
+    setDisableUiWhileCrossmintPaymentPhase: (value: boolean) => void
+    setShowCrossmintPayment: (value: boolean) => void
     spaceInfo: SpaceInfo | undefined
 }) {
-    const { setDisableModalActions, spaceInfo } = args
-    const { setView } = useUserOpTxModalContext()
+    const { setDisableUiWhileCrossmintPaymentPhase, setShowCrossmintPayment, spaceInfo } = args
     const { clientSingleton, signerContext } = useTownsClient()
     const spaceId = useSpaceIdFromPathname()
     const { joinAfterSuccessfulCrossmint, end: endPublicPageLoginFlow } = usePublicPageLoginFlow()
@@ -19,11 +18,11 @@ export function useCrossmintHandlers(args: {
     const myAbstractAccountAddress = useMyAbstractAccountAddress().data
 
     const handleCrossmintPaymentStart = () => {
-        setDisableModalActions(true)
+        setDisableUiWhileCrossmintPaymentPhase(true)
     }
 
     const handleCrossmintFailure = () => {
-        setDisableModalActions(false)
+        setDisableUiWhileCrossmintPaymentPhase(false)
     }
 
     const handleCrossmintComplete = async () => {
@@ -49,7 +48,7 @@ export function useCrossmintHandlers(args: {
         }
         userOpsStore.getState().reset(myAbstractAccountAddress)
         endPublicPageLoginFlow()
-        setView(undefined)
+        setShowCrossmintPayment(false)
     }
 
     return {

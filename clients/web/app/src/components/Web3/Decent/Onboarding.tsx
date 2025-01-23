@@ -67,46 +67,9 @@ export function Onboarding(
                         onConnectWallet={privyConnectWallet}
                         onTxReceipt={props.onTxSuccess}
                         onTxError={props.onTxError}
-                        onTxPending={() => {
-                            // this does not actually fire
-                            // but if it did then we would want to disable modals from closing during this time
-                        }}
                     />
                 </ClientRendered>
             </BoxThemeProvider>
         </Stack>
     )
-}
-
-// decent receipt is type of `unknown`, this is what is logged:
-export type DecentTransactionReceipt = {
-    blockHash: string
-    blockNumber: bigint
-    chainId: number
-    contractAddress: string | null
-    cumulativeGasUsed: bigint
-    effectiveGasPrice: bigint
-    from: string
-    gasUsed: bigint
-    logs: Array<Log>
-    logsBloom: string
-    status: 'success' | 'failure'
-    to: string
-    transactionHash: string
-    transactionIndex: number
-    type: 'eip1559'
-}
-
-type Log = {
-    address: string
-    topics: string[]
-    data: string
-    blockNumber: bigint
-    transactionHash: string
-    transactionIndex: number
-    blockHash: string
-}
-
-export function getDecentScanLink(receipt: DecentTransactionReceipt) {
-    return `https://www.decentscan.xyz/?chainId=${receipt.chainId}&txHash=${receipt.transactionHash}`
 }

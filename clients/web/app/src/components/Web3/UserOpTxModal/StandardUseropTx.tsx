@@ -3,18 +3,16 @@ import React, { useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { useConnectivity, useContractSpaceInfoWithoutClient } from 'use-towns-client'
 import { Address } from 'viem'
-import { AnimatePresence } from 'framer-motion'
 import { usePublicPageLoginFlow } from 'routes/PublicTownPage/usePublicPageLoginFlow'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
-import { formatUnits, useBalance } from 'hooks/useBalance'
+import { formatUnits, formatUnitsToFixedLength, useBalance } from 'hooks/useBalance'
+import { isTouch } from 'hooks/useDevice'
 import { Box, IconButton, Text } from '@ui'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { CrossmintPayment } from '@components/CrossmintPayment'
 import { useIsSmartAccountDeployed } from 'hooks/useIsSmartAccountDeployed'
 import { useJoinFunnelAnalytics } from '@components/Analytics/useJoinFunnelAnalytics'
-import { FadeInBox } from '@components/Transitions'
-import { isTouch } from 'hooks/useDevice'
 import { useInsufficientBalance } from './hooks/useInsufficientBalance'
 import { usePriceBreakdown } from './hooks/usePriceBreakdown'
 import { useToAddress } from './hooks/useToAddress'
@@ -25,23 +23,18 @@ import { GasTooLowMessage } from './GasTooLowMessage'
 import { RejectedSponsorshipMessage } from './RejectSponsorshipMessage'
 import { InsufficientBalanceForPayWithEth } from './InsufficientBalanceForPayWithEth'
 import { ChargesSummary } from './ChargesSummary'
+import { WalletBalance } from './WalletBalance'
 import { useMyAbstractAccountAddress } from './hooks/useMyAbstractAccountAddress'
-import { FundWallet } from './FundWallet'
-import {
-    isDepositEth,
-    isPayWithCard,
-    isPayWithEth,
-    useUserOpTxModalContext,
-} from './UserOpTxModalContext'
-import { RecipientText } from './RecipientText'
 
 export function StandardUseropTx({
-    disableModalActions,
-    setDisableModalActions,
+    disableUiWhileCrossmintPaymentPhase,
+    setDisableUiWhileCrossmintPaymentPhase,
 }: {
-    disableModalActions: boolean
-    setDisableModalActions: (value: boolean) => void
+    disableUiWhileCrossmintPaymentPhase: boolean
+    setDisableUiWhileCrossmintPaymentPhase: (value: boolean) => void
 }): JSX.Element {
+    const [showCrossmintPayment, setShowCrossmintPayment] = useState(false)
+    const [showWalletBalance, setShowWalletBalance] = useState(false)
     const [showWalletWarning, setShowWalletWarning] = useState(false)
     const myAbstractAccountAddress = useMyAbstractAccountAddress().data
     const { currOp, currOpDecodedCallData, currOpValue } = userOpsStore(
@@ -52,8 +45,6 @@ export function StandardUseropTx({
                 ?.currOpDecodedCallData,
         })),
     )
-
-    const { view, setView } = useUserOpTxModalContext()
 
     const isJoiningSpace = !!usePublicPageLoginFlow().spaceBeingJoined
     const spaceId = useSpaceIdFromPathname()
@@ -68,7 +59,7 @@ export function StandardUseropTx({
         rootKeyAddress: loggedInWalletAddress as Address,
     })
 
-    const { data: balanceData } = useBalance({
+    const { data: balanceData, isLoading: isLoadingBalance } = useBalance({
         address: smartAccountAddress,
         enabled: !!smartAccountAddress,
         watch: true,
@@ -96,6 +87,7 @@ export function StandardUseropTx({
         verificationGasLimit,
         gasPrice,
         value: currOpValue,
+        balanceIsLessThanCost,
     })
 
     useJoinTransactionModalShownAnalyticsEvent({
@@ -105,14 +97,23 @@ export function StandardUseropTx({
         balanceIsLessThanCost: !!balanceIsLessThanCost,
     })
 
+    const formattedBalance = `${
+        (balanceIsLessThanCost
+            ? balanceData?.formatted ?? 0
+            : formatUnitsToFixedLength(balanceData?.value ?? 0n, 18, 5)) ?? 0
+    } ${balanceData?.symbol ?? ''}`
+
+    const _isTouch = isTouch()
+
     const handleBack = () => {
-        setView(undefined)
-        setShowWalletWarning(false)
+        setShowCrossmintPayment(false)
+        setShowWalletBalance(false)
     }
 
     const { handleCrossmintPaymentStart, handleCrossmintFailure, handleCrossmintComplete } =
         useCrossmintHandlers({
-            setDisableModalActions,
+            setDisableUiWhileCrossmintPaymentPhase,
+            setShowCrossmintPayment,
             spaceInfo,
         })
 
@@ -127,79 +128,75 @@ export function StandardUseropTx({
     }
 
     const isTransferEth = currOpDecodedCallData?.type === 'transferEth'
-    const _isTouch = isTouch()
 
     return (
-        <Box
-            gap
-            position="relative"
-            background={_isTouch ? undefined : 'level2'}
-            padding="md"
-            width={!_isTouch ? '420' : 'auto'}
-            maxWidth="420"
-        >
-            <Header disableModalActions={disableModalActions} onBack={handleBack} />
-            <AnimatePresence mode="wait">
-                {isPayWithCard(view) && spaceInfo?.address ? (
-                    <FadeInBox key="crossmint">
-                        <CrossmintPayment
-                            contractAddress={spaceInfo.address}
-                            townWalletAddress={smartAccountAddress || ''}
-                            price={formatUnits(BigInt(currOpValue?.toString() ?? 0), 18)}
-                            onComplete={handleCrossmintComplete}
-                            onPaymentStart={handleCrossmintPaymentStart}
-                            onPaymentFailure={handleCrossmintFailure}
-                        />
-                    </FadeInBox>
-                ) : isPayWithEth(view) ? (
-                    <FadeInBox key="insufficient-balance">
-                        <InsufficientBalanceForPayWithEth
-                            smartAccountAddress={smartAccountAddress}
-                            showWalletWarning={showWalletWarning}
+        <>
+            <HeaderButtons
+                showCrossmintPayment={showCrossmintPayment}
+                showWalletBalance={showWalletBalance}
+                disableUiWhileCrossmintPaymentPhase={disableUiWhileCrossmintPaymentPhase}
+                onBack={handleBack}
+            />
+            {showCrossmintPayment && spaceInfo?.address ? (
+                <CrossmintPayment
+                    contractAddress={spaceInfo.address}
+                    townWalletAddress={smartAccountAddress || ''}
+                    price={formatUnits(BigInt(currOpValue?.toString() ?? 0), 18)}
+                    onComplete={handleCrossmintComplete}
+                    onPaymentStart={handleCrossmintPaymentStart}
+                    onPaymentFailure={handleCrossmintFailure}
+                />
+            ) : (
+                <>
+                    <Box gap centerContent width={!_isTouch ? '400' : undefined}>
+                        <ChargesSummary
+                            gasInEth={gasInEth}
                             totalInEth={totalInEth}
-                            onCopyClick={onCopyWalletAddressClick}
+                            balanceIsLessThanCost={balanceIsLessThanCost}
+                            currOpValueInEth={currOpValueInEth}
                         />
-                    </FadeInBox>
-                ) : isDepositEth(view) ? (
-                    <FadeInBox key="fund-wallet">
-                        <FundWallet />
-                    </FadeInBox>
-                ) : (
-                    <FadeInBox gap key="charges-summary">
-                        <Box centerContent gap>
-                            <ChargesSummary
-                                spaceId={spaceId}
-                                gasInEth={gasInEth}
-                                totalInEth={totalInEth.truncated}
-                                currOpValueInEth={currOpValueInEth}
-                            />
 
-                            <RejectedSponsorshipMessage />
-                            <GasTooLowMessage />
-                            {toAddress && <RecipientText sendingTo={toAddress} />}
-                        </Box>
-                        {!balanceData ? (
-                            <Box centerContent height="x4" width="100%" />
-                        ) : isSmartAccountDeployedLoading ? (
-                            <ButtonSpinner />
-                        ) : isTransferEth && balanceIsLessThanCost ? (
-                            <BalanceTooLowForTransferEth />
-                        ) : (
-                            <PaymentChoices
-                                spaceInfo={spaceInfo}
+                        {(showWalletBalance || !balanceIsLessThanCost) && (
+                            <WalletBalance
+                                toAddress={toAddress}
+                                isLoadingBalance={isLoadingBalance}
+                                smartAccountAddress={smartAccountAddress}
+                                formattedBalance={formattedBalance}
                                 balanceIsLessThanCost={balanceIsLessThanCost}
                             />
                         )}
-                    </FadeInBox>
-                )}
-            </AnimatePresence>
-        </Box>
+                        <RejectedSponsorshipMessage />
+                        <GasTooLowMessage />
+                    </Box>
+                    {!balanceData ? (
+                        <Box centerContent height="x4" width="100%" />
+                    ) : isSmartAccountDeployedLoading ? (
+                        <ButtonSpinner />
+                    ) : isTransferEth && balanceIsLessThanCost ? (
+                        <BalanceTooLowForTransferEth />
+                    ) : showWalletBalance && balanceIsLessThanCost ? (
+                        <InsufficientBalanceForPayWithEth
+                            smartAccountAddress={smartAccountAddress}
+                            showWalletWarning={showWalletWarning}
+                            onCopyClick={onCopyWalletAddressClick}
+                        />
+                    ) : (
+                        <PaymentChoices
+                            spaceInfo={spaceInfo}
+                            balanceIsLessThanCost={balanceIsLessThanCost}
+                            setShowCrossmintPayment={setShowCrossmintPayment}
+                            setShowWalletBalance={setShowWalletBalance}
+                        />
+                    )}
+                </>
+            )}
+        </>
     )
 }
 
 function BalanceTooLowForTransferEth() {
     return (
-        <Box paddingY="md">
+        <Box paddingY="md" maxWidth="400">
             <Box background="negativeSubtle" padding="md">
                 <Text>Your wallet balance will not cover the gas fees for this transaction.</Text>
             </Box>
@@ -208,46 +205,44 @@ function BalanceTooLowForTransferEth() {
 }
 
 function PlaceholderOrIcon({
-    disableModalActions,
+    disableUiWhileCrossmintPaymentPhase,
     children,
 }: {
-    disableModalActions: boolean
+    disableUiWhileCrossmintPaymentPhase: boolean
     children: React.ReactNode
 }) {
-    if (disableModalActions) {
+    if (disableUiWhileCrossmintPaymentPhase) {
         return <Box style={{ width: '28px', height: '28px' }} />
     }
     return children
 }
 
-function Header(props: { disableModalActions: boolean; onBack: () => void }) {
-    const { disableModalActions, onBack } = props
-    const { view } = useUserOpTxModalContext()
-    const _isPayWithCard = isPayWithCard(view)
-    const _isPayWithEth = isPayWithEth(view)
-    const _isDepositEth = isDepositEth(view)
+function HeaderButtons(props: {
+    showCrossmintPayment: boolean
+    showWalletBalance: boolean
+    onBack: () => void
+    disableUiWhileCrossmintPaymentPhase: boolean
+}) {
+    const { disableUiWhileCrossmintPaymentPhase, showCrossmintPayment, showWalletBalance, onBack } =
+        props
     const myAbstractAccountAddress = useMyAbstractAccountAddress().data
     const setPromptResponse = userOpsStore((s) => s.setPromptResponse)
     const { end: endPublicPageLoginFlow } = usePublicPageLoginFlow()
-    const title = _isPayWithCard
-        ? 'Pay with Card'
-        : _isPayWithEth || _isDepositEth
-        ? 'Deposit ETH'
-        : 'Confirm Payment'
 
     return (
-        <Box horizontal alignItems="center" justifyContent="spaceBetween">
-            {_isPayWithCard || _isPayWithEth || _isDepositEth ? (
-                <PlaceholderOrIcon disableModalActions={disableModalActions}>
+        <Box horizontal justifyContent="spaceBetween">
+            {showCrossmintPayment || showWalletBalance ? (
+                <PlaceholderOrIcon
+                    disableUiWhileCrossmintPaymentPhase={disableUiWhileCrossmintPaymentPhase}
+                >
                     <IconButton icon="arrowLeft" onClick={onBack} />
                 </PlaceholderOrIcon>
             ) : (
                 <Box width="x3" />
             )}
-            <Text strong size="lg">
-                {title}
-            </Text>
-            <PlaceholderOrIcon disableModalActions={disableModalActions}>
+            <PlaceholderOrIcon
+                disableUiWhileCrossmintPaymentPhase={disableUiWhileCrossmintPaymentPhase}
+            >
                 <IconButton
                     padding="xs"
                     alignSelf="end"

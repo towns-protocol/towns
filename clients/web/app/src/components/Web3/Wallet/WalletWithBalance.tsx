@@ -10,12 +10,10 @@ export function WalletWithBalance({
     isAbstractAccount,
     UnlinkButton,
     onRemoveClick,
-    onCopyClick,
 }: {
     address: Address
     isAbstractAccount: boolean
     UnlinkButton?: React.ReactNode
-    onCopyClick?: () => void
     onRemoveClick?: (address: Address) => void
 }) {
     const balance = useBalance({
@@ -32,7 +30,6 @@ export function WalletWithBalance({
                         color={isAbstractAccount ? 'gray2' : 'gray1'}
                         label={shortAddress(address)}
                         clipboardContent={address}
-                        onClick={onCopyClick}
                     />
                 </Stack>
             )}
@@ -42,14 +39,13 @@ export function WalletWithBalance({
                         color={isAbstractAccount ? 'gray2' : 'gray1'}
                         label={shortAddress(address)}
                         clipboardContent={address}
-                        onClick={onCopyClick}
                     />
                     {UnlinkButton}
                 </Stack>
             )}
             <Stack horizontal centerContent gap="sm">
                 {balance.data?.formatted ?? 0} {balance.data?.symbol ?? ''}
-                <Icon type="base" color="coinbaseBlue" size="square_sm" />
+                <Icon type="base" size="square_sm" />
                 {onRemoveClick && (
                     <IconButton
                         data-testid="wallet-with-balance-remove-wallet"

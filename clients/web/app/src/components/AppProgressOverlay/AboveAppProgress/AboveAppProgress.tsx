@@ -14,7 +14,7 @@ export const AboveAppProgressModalContainer = (props: ModalContainerProps) => {
     }
 
     return (
-        <ModalContainer rootLayer={container} sheetZIndex={0} {...props}>
+        <ModalContainer rootLayer={container} {...props}>
             {props.children}
         </ModalContainer>
     )

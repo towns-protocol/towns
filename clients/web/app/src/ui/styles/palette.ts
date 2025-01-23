@@ -51,7 +51,6 @@ export const Figma = {
     },
     Colors: {
         Blue: '#16C5DA',
-        CoinbaseBlue: '#0D5BFF',
         BlueTransparent: '#16C5DA90',
         Green: '#21E078',
         GreenBackground: '#21E0780A',

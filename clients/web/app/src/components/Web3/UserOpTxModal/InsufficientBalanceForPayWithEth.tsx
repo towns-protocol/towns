@@ -1,49 +1,43 @@
 import React from 'react'
 import { Address } from 'use-towns-client'
-import { Box, Button, Icon, Paragraph, Text } from '@ui'
+import { Box, Icon, Paragraph, Text } from '@ui'
 import { useEnvironment } from 'hooks/useEnvironmnet'
-import { WalletWithBalance } from '../Wallet/WalletWithBalance'
-import { useUserOpTxModalContext } from './UserOpTxModalContext'
+import { BRIDGE_LEARN_MORE_LINK } from 'data/links'
+import { atoms } from 'ui/styles/atoms.css'
+import { isTouch } from 'hooks/useDevice'
+import { CopyWalletAddressButton } from '@components/Web3/GatedTownModal/Buttons'
 
 export function InsufficientBalanceForPayWithEth(props: {
     smartAccountAddress: Address | undefined
     onCopyClick: () => void
     showWalletWarning: boolean
-    totalInEth: {
-        full: string
-        truncated: string
-    }
 }) {
-    const { smartAccountAddress, onCopyClick, showWalletWarning, totalInEth } = props
-    const { setView } = useUserOpTxModalContext()
+    const _isTouch = isTouch()
+    const { smartAccountAddress, onCopyClick, showWalletWarning } = props
     const chainName = useEnvironment().baseChain.name
 
-    if (!smartAccountAddress) {
-        return null
-    }
-
     return (
-        <Box gap="md">
-            <Text strong textAlign="center">
-                You need at least <Text display="inline-block">{totalInEth.full} ETH</Text>{' '}
-                <Text display="inline-block">
-                    on{' '}
-                    <Text as="span" display="inline" color="coinbaseBlue">
-                        Base
-                    </Text>
-                </Text>
+        <Box paddingTop="md" gap="md" width={!_isTouch ? '400' : undefined}>
+            <Text size="sm" color="error">
+                You need to bridge ETH on Base and then transfer to your towns wallet to pay with
+                ETH.{' '}
+                <Box
+                    as="a"
+                    gap="xs"
+                    href={BRIDGE_LEARN_MORE_LINK}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={atoms({ color: 'default', display: 'inline' })}
+                >
+                    Learn how
+                </Box>
             </Text>
-            <Box background="level3" padding="md" rounded="sm">
-                <WalletWithBalance
-                    isAbstractAccount
-                    address={smartAccountAddress}
-                    onCopyClick={onCopyClick}
-                />
-            </Box>
-            <Button rounded="lg" tone="cta1" onClick={() => setView('depositEth')}>
-                <Icon type="plus" />
-                Deposit ETH
-            </Button>
+
+            <CopyWalletAddressButton
+                text="Copy Wallet Address"
+                address={smartAccountAddress}
+                onClick={onCopyClick}
+            />
 
             {showWalletWarning && (
                 <Box centerContent padding horizontal gap rounded="sm" background="level3">

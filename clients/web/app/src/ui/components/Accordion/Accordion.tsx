@@ -5,7 +5,7 @@ import { Box, BoxProps } from '../Box/Box'
 import { MotionBox, MotionIcon } from '../Motion/MotionComponents'
 import { Text } from '../Text/Text'
 
-export type HeaderProps = {
+type HeaderProps = {
     title?: string
     subTitle?: string
     canOpen?: boolean
@@ -34,16 +34,16 @@ const Header = ({
     isExpanded: boolean
 }) => {
     return (
-        <Box horizontal justifyContent="spaceBetween" alignItems="center">
+        <Box horizontal justifyContent="spaceBetween">
             <Box gap="sm">
                 {title && <Text color="default">{title}</Text>}
                 {subTitle && <Text color="gray2">{subTitle}</Text>}
             </Box>
             <MotionIcon
                 animate={{
-                    rotate: isExpanded ? '-180deg' : '0deg',
+                    rotate: isExpanded ? '0deg' : '-180deg',
                 }}
-                initial={{ rotate: '0deg' }}
+                initial={{ rotate: '-180deg' }}
                 transition={{ duration: 0.2 }}
                 type="arrowDown"
             />
@@ -74,7 +74,11 @@ function _Accordion<X extends number | boolean>(props: Props<X>) {
 
     return (
         <Box background="level2" rounded="sm" {...boxProps}>
-            <Box cursor={canOpen ? 'pointer' : undefined} onClick={canOpen ? onClick : undefined}>
+            <Box
+                padding="md"
+                cursor={canOpen ? 'pointer' : undefined}
+                onClick={canOpen ? onClick : undefined}
+            >
                 {header ? (
                     header({
                         isExpanded,
@@ -82,9 +86,7 @@ function _Accordion<X extends number | boolean>(props: Props<X>) {
                         subTitle: subTitle,
                     })
                 ) : (
-                    <Box padding="md">
-                        <Header isExpanded={isExpanded} title={title} subTitle={subTitle} />
-                    </Box>
+                    <Header isExpanded={isExpanded} title={title} subTitle={subTitle} />
                 )}
             </Box>
             <AnimatePresence initial={false}>
@@ -100,7 +102,9 @@ function _Accordion<X extends number | boolean>(props: Props<X>) {
                         }}
                         transition={{ duration: 0.2 }}
                     >
-                        {children}
+                        <Box paddingX="md" paddingBottom="md">
+                            {children}
+                        </Box>
                     </MotionBox>
                 )}
             </AnimatePresence>
