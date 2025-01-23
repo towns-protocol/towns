@@ -3,7 +3,12 @@ import * as emoji from 'node-emoji'
 import { dlog, dlogError } from '@river-build/dlog'
 import { EncryptedData } from '@river-build/proto'
 
-import { isDMChannelStreamId, isGDMChannelStreamId, spaceIdFromChannelId } from '@river-build/sdk'
+import {
+    EncryptedContent,
+    isDMChannelStreamId,
+    isGDMChannelStreamId,
+    spaceIdFromChannelId,
+} from '@river-build/sdk'
 import { UserRecord } from 'store/notificationSchema'
 import { getDDLogApiURL } from '../datadog'
 import {
@@ -810,10 +815,13 @@ async function tryDecryptEvent(
     })
 
     // attempt to decrypt the data
-    const decryptPromise = async function (encryptedData: EncryptedData) {
+    const decryptPromise = async function (
+        kind: EncryptedContent['kind'],
+        encryptedData: EncryptedData,
+    ) {
         try {
             log('tryDecryptEvent', event)
-            plaintext = await decrypt(userId, databaseName, channelId, encryptedData)
+            plaintext = await decrypt(userId, databaseName, channelId, kind, encryptedData)
             log('decrypted plaintext', plaintext)
             return plaintext
         } catch (error) {
@@ -829,9 +837,9 @@ async function tryDecryptEvent(
         if (!encryptedData) {
             return getPlaintextDetailsForNonEncryptedEvents(event)
         }
-        await Promise.race([decryptPromise(encryptedData), timeoutPromise])
+        await Promise.race([decryptPromise(encryptedData.kind, encryptedData.data), timeoutPromise])
         if (plaintext) {
-            plaintext.refEventId = encryptedData.refEventId
+            plaintext.refEventId = encryptedData.data.refEventId
             plaintext.body = htmlToText(plaintext.body)
             log('plaintext', { plaintext: plaintext.body, refEventId: plaintext.refEventId })
         }

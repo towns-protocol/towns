@@ -6,6 +6,7 @@ import {
 } from '@river-build/encryption'
 
 import { EncryptedData } from '@river-build/proto'
+import { EncryptedContent, logNever, toDecryptedContent } from '@river-build/sdk'
 
 // OlmLib fails initialization if this is not initialized
 globalThis.OLM_OPTIONS = {}
@@ -24,6 +25,7 @@ export async function decrypt(
     userId: string,
     databaseName: string,
     channelId: string,
+    kind: EncryptedContent['kind'],
     encryptedData: EncryptedData,
 ): Promise<PlaintextDetails | undefined> {
     const decryptor = await getDecryptor(userId, databaseName)
@@ -31,7 +33,7 @@ export async function decrypt(
     log('decrypted plaintext', plaintext)
     // if the decryption is successful, plaintext has the string, else it's null
     const plaintextBody = plaintext
-        ? extractDetails(plaintext, encryptedData.refEventId)
+        ? extractDetails(kind, plaintext, encryptedData.refEventId)
         : undefined
 
     log('regex plaintext body', plaintextBody ?? 'null')
@@ -75,29 +77,88 @@ async function newGroupDecryption(
     return new GroupDecryption({ device: encyptionDevice })
 }
 
-const bodyRegex = /"body":"(.*?)"(?=,|})/
-const reactionRegex = /"reaction":"(.*?)"(?=,|})/
-
-function extractDetails(jsonString: string, refEventId?: string): PlaintextDetails {
-    const bodyMatch = jsonString.match(bodyRegex)
-    const reactionMatch = jsonString.match(reactionRegex)
-    /**
-     * - replace all \n because notification body cannot
-     * have newlines.
-     * - replace all \" with "
-     * */
-    let cleanBody: string | undefined
-    if (bodyMatch && bodyMatch.length > 0 && bodyMatch[1]) {
-        const text = bodyMatch[1]
-        const count = (text.match(/\\n/g) || []).length
-        // if there are multiple newlines, replace with '...'
-        // else replace with ''
-        const crReplacement = count > 1 ? ' - ' : ''
-        cleanBody = text.replace(/\\n/g, crReplacement).replace(/\\"/g, '"')
-    }
-    return {
-        body: cleanBody,
-        reaction: reactionMatch ? reactionMatch[1] : undefined,
-        refEventId,
+function extractDetails(
+    kind: EncryptedContent['kind'],
+    jsonString: string,
+    refEventId?: string,
+): PlaintextDetails {
+    const content = toDecryptedContent(kind, jsonString)
+    switch (content.kind) {
+        case 'channelMessage':
+            switch (content.content.payload.case) {
+                case 'post':
+                    switch (content.content.payload.value.content.case) {
+                        case 'text': {
+                            const text = content.content.payload.value.content.value.body
+                            const count = (text.match(/\\n/g) || []).length
+                            // if there are multiple newlines, replace with '...'
+                            // else replace with ''
+                            const crReplacement = count > 1 ? ' - ' : ''
+                            const cleanBody = text
+                                .replace(/\\n/g, crReplacement)
+                                .replace(/\\"/g, '"')
+                            return {
+                                body: cleanBody,
+                                reaction: undefined,
+                                refEventId,
+                            }
+                        }
+                        case 'gm':
+                        case 'image':
+                        case undefined:
+                            return {
+                                body: undefined,
+                                reaction: undefined,
+                                refEventId,
+                            }
+                        default:
+                            logNever(content.content.payload.value.content)
+                            return {
+                                body: undefined,
+                                reaction: undefined,
+                                refEventId,
+                            }
+                    }
+                case 'reaction':
+                    return {
+                        body: undefined,
+                        reaction: content.content.payload.value.reaction,
+                        refEventId: refEventId ?? content.content.payload.value.refEventId,
+                    }
+                case 'edit':
+                case 'redaction':
+                case undefined:
+                    return {
+                        body: undefined,
+                        reaction: undefined,
+                        refEventId,
+                    }
+                default:
+                    logNever(content.content.payload)
+                    return {
+                        body: undefined,
+                        reaction: undefined,
+                        refEventId,
+                    }
+            }
+        case 'text':
+            return {
+                body: content.content,
+                reaction: undefined,
+                refEventId,
+            }
+        case 'channelProperties':
+            return {
+                body: undefined,
+                reaction: undefined,
+                refEventId,
+            }
+        default:
+            logNever(content)
+            return {
+                body: undefined,
+                reaction: undefined,
+                refEventId,
+            }
     }
 }

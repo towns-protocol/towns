@@ -1,14 +1,17 @@
 import { EncryptedData, StreamEvent } from '@river-build/proto'
 import { convert } from 'html-to-text'
+import { EncryptedContent } from '@river-build/sdk'
 import { bin_toHexString } from '@river-build/dlog'
 import { PlaintextDetails } from './decryptionFn'
 
-export function getEncryptedData(data: StreamEvent): EncryptedData | undefined {
+export function getEncryptedData(
+    data: StreamEvent,
+): { kind: EncryptedContent['kind']; data: EncryptedData } | undefined {
     switch (data.payload.case) {
         case 'channelPayload': {
             switch (data.payload.value.content.case) {
                 case 'message':
-                    return data.payload.value.content.value
+                    return { kind: 'channelMessage', data: data.payload.value.content.value }
                 default:
                     return undefined
             }
@@ -16,14 +19,14 @@ export function getEncryptedData(data: StreamEvent): EncryptedData | undefined {
         case 'dmChannelPayload':
             switch (data.payload.value.content.case) {
                 case 'message':
-                    return data.payload.value.content.value
+                    return { kind: 'channelMessage', data: data.payload.value.content.value }
                 default:
                     return undefined
             }
         case 'gdmChannelPayload':
             switch (data.payload.value.content.case) {
                 case 'message':
-                    return data.payload.value.content.value
+                    return { kind: 'channelMessage', data: data.payload.value.content.value }
                 default:
                     return undefined
             }
