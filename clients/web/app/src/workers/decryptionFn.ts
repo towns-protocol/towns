@@ -5,7 +5,7 @@ import {
     GroupDecryption,
 } from '@river-build/encryption'
 
-import { EncryptedData } from '@river-build/proto'
+import { EncryptedData, EncryptedDataVersion } from '@river-build/proto'
 import { EncryptedContent, logNever, toDecryptedContent } from '@river-build/sdk'
 
 // OlmLib fails initialization if this is not initialized
@@ -33,7 +33,7 @@ export async function decrypt(
     log('decrypted plaintext', plaintext)
     // if the decryption is successful, plaintext has the string, else it's null
     const plaintextBody = plaintext
-        ? extractDetails(kind, plaintext, encryptedData.refEventId)
+        ? extractDetails(kind, encryptedData.version, plaintext, encryptedData.refEventId)
         : undefined
 
     log('regex plaintext body', plaintextBody ?? 'null')
@@ -79,10 +79,11 @@ async function newGroupDecryption(
 
 function extractDetails(
     kind: EncryptedContent['kind'],
-    jsonString: string,
+    version: EncryptedDataVersion,
+    clearText: string | Uint8Array,
     refEventId?: string,
 ): PlaintextDetails {
-    const content = toDecryptedContent(kind, jsonString)
+    const content = toDecryptedContent(kind, version, clearText)
     switch (content.kind) {
         case 'channelMessage':
             switch (content.content.payload.case) {
@@ -148,6 +149,12 @@ function extractDetails(
                 refEventId,
             }
         case 'channelProperties':
+            return {
+                body: undefined,
+                reaction: undefined,
+                refEventId,
+            }
+        case 'unsupported':
             return {
                 body: undefined,
                 reaction: undefined,

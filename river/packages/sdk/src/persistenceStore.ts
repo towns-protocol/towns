@@ -64,9 +64,9 @@ async function fnReadRetryer<T>(
 }
 
 export interface IPersistenceStore {
-    saveCleartext(eventId: string, cleartext: string): Promise<void>
-    getCleartext(eventId: string): Promise<string | undefined>
-    getCleartexts(eventIds: string[]): Promise<Record<string, string> | undefined>
+    saveCleartext(eventId: string, cleartext: Uint8Array | string): Promise<void>
+    getCleartext(eventId: string): Promise<Uint8Array | string | undefined>
+    getCleartexts(eventIds: string[]): Promise<Record<string, Uint8Array | string> | undefined>
     getSyncedStream(streamId: string): Promise<
         | {
               syncCookie: SyncCookie
@@ -92,7 +92,7 @@ export interface IPersistenceStore {
 }
 
 export class PersistenceStore extends Dexie implements IPersistenceStore {
-    cleartexts!: Table<{ cleartext: string; eventId: string }>
+    cleartexts!: Table<{ cleartext: Uint8Array | string; eventId: string }>
     syncedStreams!: Table<{ streamId: string; data: Uint8Array }>
     miniblocks!: Table<{ streamId: string; miniblockNum: string; data: Uint8Array }>
 
@@ -115,11 +115,16 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
             return tx.table('syncedStreams').toCollection().delete()
         })
 
+        // Version 4: added a option to have a data_type field to the encrypted data, drop all saved cleartexts
+        this.version(4).upgrade((tx) => {
+            return tx.table('cleartexts').toCollection().delete()
+        })
+
         this.requestPersistentStorage()
         this.logPersistenceStats()
     }
 
-    async saveCleartext(eventId: string, cleartext: string) {
+    async saveCleartext(eventId: string, cleartext: Uint8Array | string) {
         await this.cleartexts.put({ eventId, cleartext })
     }
 
@@ -138,7 +143,7 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
                           acc[record.eventId] = record.cleartext
                       }
                       return acc
-                  }, {} as Record<string, string>)
+                  }, {} as Record<string, Uint8Array | string>)
         }, DEFAULT_RETRY_COUNT)
     }
 
@@ -256,7 +261,7 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
 //Linting below is disable as this is a stub class which is used for testing and just follows the interface
 /* eslint-disable @typescript-eslint/no-unused-vars */
 export class StubPersistenceStore implements IPersistenceStore {
-    async saveCleartext(eventId: string, cleartext: string) {
+    async saveCleartext(eventId: string, cleartext: Uint8Array) {
         return Promise.resolve()
     }
 

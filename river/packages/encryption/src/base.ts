@@ -59,7 +59,7 @@ export abstract class DecryptionAlgorithm implements IDecryptionParams {
         this.device = params.device
     }
 
-    abstract decrypt(streamId: string, content: EncryptedData): Promise<string>
+    abstract decrypt(streamId: string, content: EncryptedData): Promise<Uint8Array | string>
 
     abstract importStreamKey(streamId: string, session: GroupEncryptionSession): Promise<void>
 

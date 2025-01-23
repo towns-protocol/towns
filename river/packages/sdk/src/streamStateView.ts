@@ -225,7 +225,7 @@ export class StreamStateView implements IStreamStateView {
     private applySnapshot(
         eventHash: string,
         inSnapshot: Snapshot,
-        cleartexts: Record<string, string> | undefined,
+        cleartexts: Record<string, Uint8Array | string> | undefined,
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ) {
         const snapshot = migrateSnapshot(inSnapshot)
@@ -299,7 +299,7 @@ export class StreamStateView implements IStreamStateView {
     private appendStreamAndCookie(
         nextSyncCookie: SyncCookie,
         minipoolEvents: ParsedEvent[],
-        cleartexts: Record<string, string> | undefined,
+        cleartexts: Record<string, Uint8Array | string> | undefined,
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
         stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): {
@@ -341,7 +341,7 @@ export class StreamStateView implements IStreamStateView {
 
     private processAppendedEvent(
         timelineEvent: RemoteTimelineEvent,
-        cleartext: string | undefined,
+        cleartext: Uint8Array | string | undefined,
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
         stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): ConfirmedTimelineEvent[] | undefined {
@@ -436,7 +436,7 @@ export class StreamStateView implements IStreamStateView {
 
     private processPrependedEvent(
         timelineEvent: RemoteTimelineEvent,
-        cleartext: string | undefined,
+        cleartext: Uint8Array | string | undefined,
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
         stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
@@ -552,7 +552,7 @@ export class StreamStateView implements IStreamStateView {
         miniblocks: ParsedMiniblock[],
         prependedMiniblocks: ParsedMiniblock[],
         prevSnapshotMiniblockNum: bigint,
-        cleartexts: Record<string, string> | undefined,
+        cleartexts: Record<string, Uint8Array | string> | undefined,
         localEvents: LocalTimelineEvent[],
         emitter: TypedEmitter<StreamEvents> | undefined,
     ): void {
@@ -629,7 +629,7 @@ export class StreamStateView implements IStreamStateView {
     appendEvents(
         events: ParsedEvent[],
         nextSyncCookie: SyncCookie,
-        cleartexts: Record<string, string> | undefined,
+        cleartexts: Record<string, Uint8Array | string> | undefined,
         emitter: TypedEmitter<StreamEvents>,
     ) {
         const { appended, updated, confirmed } = this.appendStreamAndCookie(
@@ -648,7 +648,7 @@ export class StreamStateView implements IStreamStateView {
 
     prependEvents(
         miniblocks: ParsedMiniblock[],
-        cleartexts: Record<string, string> | undefined,
+        cleartexts: Record<string, Uint8Array | string> | undefined,
         terminus: boolean,
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
         stateEmitter: TypedEmitter<StreamStateEvents> | undefined,

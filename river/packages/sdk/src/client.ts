@@ -2572,7 +2572,7 @@ export class Client
         check(isDefined(stream), 'stream not found')
         check(isEncryptedContentKind(kind), `invalid kind ${kind}`)
         const cleartext = await this.cleartextForGroupEvent(streamId, eventId, encryptedData)
-        const decryptedContent = toDecryptedContent(kind, cleartext)
+        const decryptedContent = toDecryptedContent(kind, encryptedData.version, cleartext)
         stream.updateDecryptedContent(eventId, decryptedContent)
     }
 
@@ -2580,7 +2580,7 @@ export class Client
         streamId: string,
         eventId: string,
         encryptedData: EncryptedData,
-    ): Promise<string> {
+    ): Promise<Uint8Array | string> {
         const cached = await this.persistenceStore.getCleartext(eventId)
         if (cached) {
             this.logDebug('Cache hit for cleartext', eventId)

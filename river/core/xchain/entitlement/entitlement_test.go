@@ -28,7 +28,7 @@ const (
 )
 
 var (
-	timingThreshold = 50 * time.Millisecond
+	timingThreshold = 100 * time.Millisecond
 
 	fastThresholdParams = ThresholdParams{
 		Threshold: big.NewInt(fast),

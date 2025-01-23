@@ -26,9 +26,15 @@ interface ITownsBase {
   error InvalidAddress();
   error InvalidInflationRate();
   error MintingTooSoon();
+  error InitialSupplyAlreadyMinted();
 }
 
 interface ITowns is ITownsBase {
+  /// @notice Mints the initial supply to the given address
+  /// @dev Can only be called by the owner
+  /// @dev Can only be called once
+  function mintInitialSupply(address to) external;
+
   /// @notice Creates new tokens according to the current inflation rate
   /// @dev Can only be called by accounts with ROLE_INFLATION_MANAGER
   /// @dev Mints tokens to the inflation receiver based on current total supply and inflation rate

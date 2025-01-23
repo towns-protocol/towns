@@ -55,7 +55,7 @@ export interface ISyncedStream {
     appendEvents(
         events: ParsedEvent[],
         nextSyncCookie: SyncCookie,
-        cleartexts: Record<string, string> | undefined,
+        cleartexts: Record<string, Uint8Array | string> | undefined,
     ): Promise<void>
 }
 

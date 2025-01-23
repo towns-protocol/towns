@@ -57,7 +57,7 @@ export class StreamStateView_UserMetadata extends StreamStateView_AbstractConten
 
     prependEvent(
         _event: RemoteTimelineEvent,
-        _cleartext: string | undefined,
+        _cleartext: Uint8Array | string | undefined,
         _encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
         _stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
@@ -66,7 +66,7 @@ export class StreamStateView_UserMetadata extends StreamStateView_AbstractConten
 
     appendEvent(
         event: RemoteTimelineEvent,
-        _cleartext: string | undefined,
+        _cleartext: Uint8Array | string | undefined,
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
         stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {

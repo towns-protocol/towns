@@ -6,9 +6,10 @@ cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
 
 # Array of directories to process
 declare -a dirs=(
-  "../packages/sdk/src"
-  "../packages/react-sdk/src"
+  "../packages/encryption/src"
   "../packages/proto/src"
+  "../packages/react-sdk/src"
+  "../packages/sdk/src"
   )
 
 # Loop through each directory

@@ -8,6 +8,8 @@ import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 // temporary until we move encrypted user and display names to the user metadata stream
 const MAX_DECRYPTED_NAMES_PER_STREAM = 50
 
+const textDecoder = new TextDecoder()
+
 export class MemberMetadata_Usernames {
     log = dlog('csb:streams:usernames')
     private decryptionDispatchCount = 0
@@ -40,7 +42,7 @@ export class MemberMetadata_Usernames {
         encryptedData: EncryptedData,
         userId: string,
         pending: boolean = true,
-        cleartext: string | undefined,
+        cleartext: Uint8Array | string | undefined,
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
         stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ) {
@@ -57,7 +59,10 @@ export class MemberMetadata_Usernames {
         this.addUsernameEventForUserId(userId, eventId, encryptedData, pending)
 
         if (cleartext) {
-            this.plaintextUsernames.set(userId, cleartext)
+            this.plaintextUsernames.set(
+                userId,
+                typeof cleartext === 'string' ? cleartext : textDecoder.decode(cleartext),
+            )
         } else if (this.decryptionDispatchCount < MAX_DECRYPTED_NAMES_PER_STREAM) {
             this.decryptionDispatchCount++
             // Clear the plaintext username for this user on name change

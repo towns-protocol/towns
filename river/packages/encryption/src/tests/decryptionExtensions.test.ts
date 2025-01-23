@@ -90,6 +90,10 @@ describe.concurrent('TestDecryptionExtensions', () => {
             // try to decrypt the message
             const decrypted = await aliceDex.crypto.decryptGroupEvent(streamId, encryptedData)
 
+            if (typeof decrypted !== 'string') {
+                throw new Error('decrypted is a string') // v1 should be bytes
+            }
+
             // stop the decryption extensions
             await bobDex.stop()
             await aliceDex.stop()

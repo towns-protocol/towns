@@ -96,7 +96,7 @@ export class SyncedStream extends Stream implements ISyncedStream {
         miniblocks: ParsedMiniblock[],
         prependedMiniblocks: ParsedMiniblock[],
         prevSnapshotMiniblockNum: bigint,
-        cleartexts: Record<string, string> | undefined,
+        cleartexts: Record<string, Uint8Array | string> | undefined,
     ): Promise<void> {
         super.initialize(
             nextSyncCookie,
@@ -137,7 +137,7 @@ export class SyncedStream extends Stream implements ISyncedStream {
     async appendEvents(
         events: ParsedEvent[],
         nextSyncCookie: SyncCookie,
-        cleartexts: Record<string, string> | undefined,
+        cleartexts: Record<string, Uint8Array | string> | undefined,
     ): Promise<void> {
         await super.appendEvents(events, nextSyncCookie, cleartexts)
         for (const event of events) {

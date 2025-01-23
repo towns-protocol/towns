@@ -17,6 +17,7 @@ import {IMainnetDelegation} from "contracts/src/base/registry/facets/mainnet/IMa
 import {INodeOperator} from "contracts/src/base/registry/facets/operator/INodeOperator.sol";
 import {IEntryPoint} from "account-abstraction/interfaces/IEntryPoint.sol";
 import {ICreateSpace} from "contracts/src/factory/facets/create/ICreateSpace.sol";
+import {ITowns} from "contracts/src/tokens/towns/mainnet/ITowns.sol";
 
 // libraries
 import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
@@ -134,6 +135,10 @@ contract BaseSetup is TestUtils, SpaceHelper {
     mainnetRiverToken = deployProxyBatchDelegation.townsToken();
     vault = deployProxyBatchDelegation.vault();
     claimers = deployProxyBatchDelegation.claimers();
+
+    // Mint initial supply
+    vm.prank(vault);
+    ITowns(mainnetRiverToken).mintInitialSupply(vault);
 
     // Space Factory Diamond
     spaceFactory = deploySpaceFactory.deploy(deployer);

@@ -1,5 +1,5 @@
 import TypedEmitter from 'typed-emitter'
-import { checkNever, Permission } from '@river-build/web3'
+import { Permission } from '@river-build/web3'
 import {
     AddEventResponse_Error,
     EncryptedData,
@@ -528,23 +528,18 @@ export abstract class BaseDecryptionExtensions {
             return
         }
         this.log.debug('processNewGroupSession', session)
-        // check if it contains any keys we need
-        const parsed = parseGroupEncryptionAlgorithmId(session.algorithm)
-        let algorithm: GroupEncryptionAlgorithmId
-        switch (parsed.kind) {
-            case 'matched':
-                algorithm = parsed.value
-                break
-            case 'unrecognized':
-                // todo dispatch event to update the error message
-                this.log.error('skipping, invalid algorithm', session.algorithm)
-                return
-            case 'unset':
-                algorithm = GroupEncryptionAlgorithmId.GroupEncryption // historical default
-                break
-            default:
-                checkNever(parsed)
+        // check if it contains any keys we need, default to GroupEncryption if the algorithm is not set
+        const parsed = parseGroupEncryptionAlgorithmId(
+            session.algorithm,
+            GroupEncryptionAlgorithmId.GroupEncryption,
+        )
+        if (parsed.kind === 'unrecognized') {
+            // todo dispatch event to update the error message
+            this.log.error('skipping, invalid algorithm', session.algorithm)
+            return
         }
+        const algorithm: GroupEncryptionAlgorithmId = parsed.value
+
         const neededKeyIndexs = []
         for (let i = 0; i < session.sessionIds.length; i++) {
             const sessionId = session.sessionIds[i]

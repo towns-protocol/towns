@@ -1,4 +1,7 @@
 // OLM_OPTIONS is undefined https://gitlab.matrix.org/matrix-org/olm/-/issues/10
+
+import { DecryptionError } from './base'
+
 // but this comment suggests we define it ourselves? https://gitlab.matrix.org/matrix-org/olm/-/blob/master/javascript/olm_pre.js#L22-24
 globalThis.OLM_OPTIONS = {}
 
@@ -22,14 +25,19 @@ export function isGroupEncryptionAlgorithmId(value: string): value is GroupEncry
     return Object.values(GroupEncryptionAlgorithmId).includes(value as GroupEncryptionAlgorithmId)
 }
 
-type Unset = { kind: 'unset' }
 type Matched = { kind: 'matched'; value: GroupEncryptionAlgorithmId }
 type Unrecognized = { kind: 'unrecognized'; value: string }
 
-export function parseGroupEncryptionAlgorithmId(value: string): Matched | Unset | Unrecognized {
-    if (value === '') {
-        // for backwards compatibility, historically there were places where this was not defined
-        return { kind: 'unset' }
+export function parseGroupEncryptionAlgorithmId(
+    value: string,
+    defaultValue?: GroupEncryptionAlgorithmId,
+): Matched | Unrecognized {
+    if (!value || value === '') {
+        if (defaultValue) {
+            return { kind: 'matched', value: defaultValue }
+        } else {
+            throw new DecryptionError('GROUP_DECRYPTION_UNSET_ALGORITHM', 'algorithm is unset')
+        }
     }
     if (isGroupEncryptionAlgorithmId(value)) {
         return { kind: 'matched', value: value as GroupEncryptionAlgorithmId }

@@ -10,7 +10,7 @@ export class StreamStateView_UnknownContent extends StreamStateView_AbstractCont
 
     prependEvent(
         _event: RemoteTimelineEvent,
-        _cleartext: string | undefined,
+        _cleartext: Uint8Array | string | undefined,
         _encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
         _stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
@@ -19,7 +19,7 @@ export class StreamStateView_UnknownContent extends StreamStateView_AbstractCont
 
     appendEvent(
         _event: RemoteTimelineEvent,
-        _cleartext: string | undefined,
+        _cleartext: Uint8Array | string | undefined,
         _emitter: TypedEmitter<StreamEvents> | undefined,
     ): void {
         throw new Error(`Unknown content type`)

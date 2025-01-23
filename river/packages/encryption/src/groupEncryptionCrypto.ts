@@ -1,5 +1,10 @@
 import { EncryptedData } from '@river-build/proto'
-import { GroupEncryptionAlgorithmId, GroupEncryptionSession, UserDevice } from './olmLib'
+import {
+    GroupEncryptionAlgorithmId,
+    GroupEncryptionSession,
+    parseGroupEncryptionAlgorithmId,
+    UserDevice,
+} from './olmLib'
 
 import { CryptoStore } from './cryptoStore'
 import {
@@ -168,11 +173,12 @@ export class GroupEncryptionCrypto {
      * Rejects with an error if there is a problem decrypting the event.
      */
     public async decryptGroupEvent(streamId: string, content: EncryptedData) {
-        if (!(content.algorithm && content.algorithm in this.groupDecryption)) {
+        // parse the algorithm, if value is not set, parsing function will throw
+        const algorithm = parseGroupEncryptionAlgorithmId(content.algorithm)
+        if (algorithm.kind === 'unrecognized') {
             throw new DecryptionError('GROUP_DECRYPTION_UNKNOWN_ALGORITHM', content.algorithm)
         }
-        const algorithm = content.algorithm as GroupEncryptionAlgorithmId
-        return this.groupDecryption[algorithm].decrypt(streamId, content)
+        return this.groupDecryption[algorithm.value].decrypt(streamId, content)
     }
 
     public async exportGroupSession(

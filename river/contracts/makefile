@@ -314,3 +314,6 @@ fork-alpha-base-sepolia :;
 deploy-omega-base :;
 	@$(MAKE) deploy-any-ledger context=omega rpc=base hd_path=${HD_PATH} sender=${SENDER_ADDRESS}
 	@$(MAKE) resume-any-ledger context=omega rpc=base hd_path=${HD_PATH} sender=${SENDER_ADDRESS} verifier=${BASESCAN_URL} etherscan=${BASESCAN_API_KEY}
+
+deploy-omega-mainnet :;
+	@$(MAKE) deploy-any-ledger context=omega rpc=mainnet hd_path=${HD_PATH} sender=${SENDER_ADDRESS} verifier=${ETHERSCAN_URL} etherscan=${ETHERSCAN_API_KEY}

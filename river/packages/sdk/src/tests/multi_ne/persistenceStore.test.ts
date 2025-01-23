@@ -12,9 +12,14 @@ describe('persistenceStoreTests', () => {
     })
     test('cleartextIsStored', async () => {
         const cleartext = 'decrypted event cleartext goes here'
+        const cleartextBytes = new TextEncoder().encode(cleartext)
         const eventId = genId()
-        await expect(store.saveCleartext(eventId, cleartext)).resolves.not.toThrow()
-        const cacheHit = await store.getCleartext(eventId)
+        await expect(store.saveCleartext(eventId, cleartextBytes)).resolves.not.toThrow()
+        const cacheHitBytes = await store.getCleartext(eventId)
+        const cacheHit =
+            typeof cacheHitBytes === 'string'
+                ? cacheHitBytes
+                : new TextDecoder().decode(cacheHitBytes)
         expect(cacheHit).toBe(cleartext)
     })
 

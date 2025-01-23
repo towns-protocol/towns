@@ -17,7 +17,7 @@ export class StreamStateView_ChannelMetadata {
 
     applySnapshot(
         encryptedChannelProperties: WrappedEncryptedData,
-        cleartexts: Record<string, string> | undefined,
+        cleartexts: Record<string, Uint8Array | string> | undefined,
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ): void {
         if (!encryptedChannelProperties.data) {
@@ -37,11 +37,15 @@ export class StreamStateView_ChannelMetadata {
     private decryptPayload(
         payload: EncryptedData,
         eventId: string,
-        cleartext: string | undefined,
+        cleartext: Uint8Array | string | undefined,
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ) {
         if (cleartext) {
-            const decryptedContent = toDecryptedContent('channelProperties', cleartext)
+            const decryptedContent = toDecryptedContent(
+                'channelProperties',
+                payload.version,
+                cleartext,
+            )
             this.handleDecryptedContent(decryptedContent, encryptionEmitter)
         } else {
             encryptionEmitter?.emit('newEncryptedContent', this.streamId, eventId, {
@@ -65,7 +69,7 @@ export class StreamStateView_ChannelMetadata {
 
     appendEvent(
         event: RemoteTimelineEvent,
-        cleartext: string | undefined,
+        cleartext: Uint8Array | string | undefined,
         emitter: TypedEmitter<StreamEvents> | undefined,
     ): void {
         check(event.remoteEvent.event.payload.case === 'gdmChannelPayload')
@@ -76,7 +80,7 @@ export class StreamStateView_ChannelMetadata {
 
     prependEvent(
         _event: RemoteTimelineEvent,
-        _cleartext: string | undefined,
+        _cleartext: Uint8Array | string | undefined,
         _emitter: TypedEmitter<StreamEvents> | undefined,
     ): void {
         // conveyed in snapshot

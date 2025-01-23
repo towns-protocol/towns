@@ -46,7 +46,7 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
         eventHash: string,
         _snapshot: Snapshot,
         content: SpacePayload_Snapshot,
-        _cleartexts: Record<string, string> | undefined,
+        _cleartexts: Record<string, Uint8Array | string> | undefined,
         _encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ): void {
         // loop over content.channels, update space channels metadata
@@ -68,7 +68,7 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
 
     prependEvent(
         event: RemoteTimelineEvent,
-        _cleartext: string | undefined,
+        _cleartext: Uint8Array | string | undefined,
         _encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
         _stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
@@ -98,7 +98,7 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
 
     appendEvent(
         event: RemoteTimelineEvent,
-        _cleartext: string | undefined,
+        _cleartext: Uint8Array | string | undefined,
         _encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
         stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {

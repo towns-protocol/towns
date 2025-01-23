@@ -69,7 +69,7 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
     applySnapshot(
         eventId: string,
         snapshot: Snapshot,
-        cleartexts: Record<string, string> | undefined,
+        cleartexts: Record<string, Uint8Array | string> | undefined,
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ): void {
         if (!snapshot.members) {
@@ -168,7 +168,7 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
 
     prependEvent(
         _event: RemoteTimelineEvent,
-        _cleartext: string | undefined,
+        _cleartext: Uint8Array | string | undefined,
         _encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
         _stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
@@ -180,7 +180,7 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
      */
     appendEvent(
         event: RemoteTimelineEvent,
-        cleartext: string | undefined,
+        cleartext: Uint8Array | string | undefined,
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
         stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
@@ -462,7 +462,7 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
     private addPin(
         creatorUserId: string,
         event: RemoteTimelineEvent,
-        cleartext: string | undefined,
+        cleartext: Uint8Array | string | undefined,
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
         stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ) {

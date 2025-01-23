@@ -193,7 +193,7 @@ export class Coordinator implements ICoordinator {
             )
             cleartext = decode(cleartext_)
         }
-        const decryptedContent = toDecryptedContent(kind, cleartext)
+        const decryptedContent = toDecryptedContent(kind, encryptedData.version, cleartext)
 
         stream.updateDecryptedContent(eventId, decryptedContent)
     }

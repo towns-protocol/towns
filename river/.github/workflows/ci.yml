@@ -175,7 +175,7 @@ jobs:
     Multinode:
         permissions: write-all
         if: github.event_name != 'workflow_dispatch' || !inputs.skip_multinode
-        runs-on: ['arc-runners']
+        runs-on: ubuntu-latest-8-cores
         timeout-minutes: 30
         services:
             postgres-core:
@@ -203,7 +203,7 @@ jobs:
                   access_token: ${{ github.token }}
 
             - name: Install Binaries
-              run: sudo apt update && sudo apt-get install -y postgresql-client zstd make gcc netcat
+              run: sudo apt update && sudo apt-get install -y postgresql-client zstd make gcc
 
             - name: Install Rust Toolchain
               uses: actions-rust-lang/setup-rust-toolchain@v1
