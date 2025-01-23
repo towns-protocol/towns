@@ -11,6 +11,7 @@ type Props = {
     children?: React.ReactNode
     vertical?: boolean
     noTooltip?: boolean
+    onClick?: () => void
 }
 
 export function useCopied() {
@@ -54,10 +55,11 @@ export const ClipboardCopy = forwardRef<HTMLDivElement, Props>((props, ref) => {
             const asyncCopy = async () => {
                 const _copied = await copy(props.clipboardContent ?? props.label ?? '')
                 setCopied(_copied)
+                props.onClick?.()
             }
             asyncCopy()
         },
-        [copy, props.clipboardContent, props.label, setCopied],
+        [copy, props, setCopied],
     )
 
     const iconRef = useRef<HTMLDivElement>(null)

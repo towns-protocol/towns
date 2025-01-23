@@ -50,7 +50,7 @@ export function PayWithCardButton({
     }
 
     return (
-        <Button tone="cta1" rounded="lg" onClick={handleClick}>
+        <Button tone="none" color="cta1" rounded="lg" onClick={handleClick}>
             <Icon type="creditCard" /> Pay with Card
         </Button>
     )

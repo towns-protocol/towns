@@ -285,6 +285,7 @@ export const colorProperties = defineProperties({
         },
         color: {
             ...vars.color.foreground,
+            coinbaseBlue: Figma.Colors.CoinbaseBlue,
             default: {
                 color: vars.color.foreground.default,
                 selectors: {

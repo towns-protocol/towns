@@ -97,6 +97,7 @@ const light = (() => {
         onTone: Figma.Colors.Black,
         rainbow: Gradients.Rainbow,
         greenBlue: Gradients.GreenBlue,
+        coinbaseBlue: Figma.Colors.CoinbaseBlue,
     }
 
     return {
@@ -146,6 +147,7 @@ const dark = (() => {
         onTone: Figma.Colors.Black,
         rainbow: Gradients.Rainbow,
         greenBlue: Gradients.GreenBlue,
+        coinbaseBlue: Figma.Colors.CoinbaseBlue,
     } as const
 
     return {

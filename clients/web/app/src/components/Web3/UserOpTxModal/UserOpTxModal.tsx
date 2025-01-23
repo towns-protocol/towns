@@ -7,6 +7,7 @@ import { usePublicPageLoginFlow } from 'routes/PublicTownPage/usePublicPageLogin
 import { useDevice } from 'hooks/useDevice'
 import { StandardUseropTx } from './StandardUseropTx'
 import { useMyAbstractAccountAddress } from './hooks/useMyAbstractAccountAddress'
+import { UserOpTxModalProvider } from './UserOpTxModalContext'
 
 export function UserOpTxModal() {
     const myAbstractAccountAddress = useMyAbstractAccountAddress().data
@@ -20,8 +21,7 @@ export function UserOpTxModal() {
 
     const { end: endPublicPageLoginFlow } = usePublicPageLoginFlow()
     const { isTouch } = useDevice()
-    const [disableUiWhileCrossmintPaymentPhase, setDisableUiWhileCrossmintPaymentPhase] =
-        useState(false)
+    const [disableModalActions, setDisableModalActions] = useState(false)
     if (!promptUser) {
         return null
     }
@@ -29,20 +29,22 @@ export function UserOpTxModal() {
         <AboveAppProgressModalContainer
             asSheet={isTouch}
             minWidth="auto"
-            background={isTouch ? undefined : 'none'}
+            padding="none"
             onHide={() => {
                 // prevent close while crossmint payment is in progress
-                if (disableUiWhileCrossmintPaymentPhase) {
+                if (disableModalActions) {
                     return
                 }
                 endPublicPageLoginFlow()
                 deny?.()
             }}
         >
-            <StandardUseropTx
-                disableUiWhileCrossmintPaymentPhase={disableUiWhileCrossmintPaymentPhase}
-                setDisableUiWhileCrossmintPaymentPhase={setDisableUiWhileCrossmintPaymentPhase}
-            />
+            <UserOpTxModalProvider>
+                <StandardUseropTx
+                    disableModalActions={disableModalActions}
+                    setDisableModalActions={setDisableModalActions}
+                />
+            </UserOpTxModalProvider>
         </AboveAppProgressModalContainer>
     )
 }
