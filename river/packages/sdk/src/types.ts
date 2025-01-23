@@ -6,7 +6,6 @@ import {
     UserMetadataPayload_Inception,
     UserPayload_Inception,
     SpacePayload_Inception,
-    ChannelProperties,
     ChannelPayload_Inception,
     UserSettingsPayload_Inception,
     SpacePayload_ChannelUpdate,
@@ -456,13 +455,6 @@ export const make_ChannelMessage_Redaction = (
             },
         },
     })
-}
-
-export const make_ChannelProperties = (
-    channelName: string,
-    channelTopic: string,
-): ChannelProperties => {
-    return new ChannelProperties({ name: channelName, topic: channelTopic })
 }
 
 export const make_ChannelPayload_Inception = (

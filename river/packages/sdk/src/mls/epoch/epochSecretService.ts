@@ -7,7 +7,11 @@ import {
 } from '@river-build/mls-rs-wasm'
 import { bin_toHexString, dlog, DLogger, shortenHexString } from '@river-build/dlog'
 import { DerivedKeys, EpochSecret, EpochSecretId, epochSecretId } from './epochSecret'
-import { EncryptedData, MemberPayload_Mls_EpochSecrets } from '@river-build/proto'
+import {
+    EncryptedData,
+    EncryptedDataVersion,
+    MemberPayload_Mls_EpochSecrets,
+} from '@river-build/proto'
 import { IEpochSecretStore } from './epochSecretStore'
 import { PlainMessage } from '@bufbuild/protobuf'
 import { MLS_ALGORITHM } from '../constants'
@@ -213,6 +217,7 @@ export class EpochSecretService {
                 epoch: epochSecret.epoch,
                 ciphertext,
             },
+            version: EncryptedDataVersion.ENCRYPTED_DATA_VERSION_1,
         })
     }
 

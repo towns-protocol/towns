@@ -46,7 +46,8 @@ export abstract class EncryptionAlgorithm implements IEncryptionParams {
         opts?: { awaitInitialShareSession: boolean },
     ): Promise<void>
 
-    abstract encrypt(streamId: string, payload: string): Promise<EncryptedData>
+    abstract encrypt_deprecated_v0(streamId: string, payload: string): Promise<EncryptedData>
+    abstract encrypt(streamId: string, payload: Uint8Array): Promise<EncryptedData>
 }
 
 /**

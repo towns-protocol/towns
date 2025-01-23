@@ -713,6 +713,7 @@ export abstract class BaseDecryptionExtensions {
             return
         }
 
+        // todo split this up by algorithm so that we can send all the new hybrid keys
         knownSessionIds.sort()
         const requestedSessionIds = new Set(item.solicitation.sessionIds.sort())
         const replySessionIds = item.solicitation.isNewDevice

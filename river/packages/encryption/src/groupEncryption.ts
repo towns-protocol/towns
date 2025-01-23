@@ -1,7 +1,7 @@
-import { EncryptedData } from '@river-build/proto'
+import { EncryptedData, EncryptedDataVersion } from '@river-build/proto'
 import { EncryptionAlgorithm, IEncryptionParams } from './base'
 import { GroupEncryptionAlgorithmId } from './olmLib'
-import { dlog } from '@river-build/dlog'
+import { bin_toBase64, dlog } from '@river-build/dlog'
 
 const log = dlog('csb:encryption:groupEncryption')
 
@@ -72,22 +72,35 @@ export class GroupEncryption extends EncryptionAlgorithm {
     }
 
     /**
-     * @param content - plaintext event content
-     *
-     * @returns Promise which resolves to the new event body
+     * @deprecated
      */
-    public async encrypt(streamId: string, payload: string): Promise<EncryptedData> {
-        log('Starting to encrypt event')
-
+    public async encrypt_deprecated_v0(streamId: string, payload: string): Promise<EncryptedData> {
         await this.ensureOutboundSession(streamId)
-
         const result = await this.device.encryptGroupMessage(payload, streamId)
-
         return new EncryptedData({
             algorithm: this.algorithm,
             senderKey: this.device.deviceCurve25519Key!,
             ciphertext: result.ciphertext,
             sessionId: result.sessionId,
+            version: EncryptedDataVersion.ENCRYPTED_DATA_VERSION_0,
+        })
+    }
+
+    /**
+     * @param content - plaintext event content
+     *
+     * @returns Promise which resolves to the new event body
+     */
+    public async encrypt(streamId: string, payload: Uint8Array): Promise<EncryptedData> {
+        log('Starting to encrypt event')
+        await this.ensureOutboundSession(streamId)
+        const result = await this.device.encryptGroupMessage(bin_toBase64(payload), streamId)
+        return new EncryptedData({
+            algorithm: this.algorithm,
+            senderKey: this.device.deviceCurve25519Key!,
+            ciphertext: result.ciphertext,
+            sessionId: result.sessionId,
+            version: EncryptedDataVersion.ENCRYPTED_DATA_VERSION_1,
         })
     }
 }

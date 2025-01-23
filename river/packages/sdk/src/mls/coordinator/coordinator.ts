@@ -40,17 +40,6 @@ type MlsEncryptedContentItem = {
     encryptedData: EncryptedData
 }
 
-const encoder = new TextEncoder()
-const decoder = new TextDecoder()
-
-function encode(text: string): Uint8Array {
-    return encoder.encode(text)
-}
-
-function decode(bytes: Uint8Array): string {
-    return decoder.decode(bytes)
-}
-
 export interface ICoordinator {
     // Commands
     joinOrCreateGroup(streamId: string): Promise<void>
@@ -164,10 +153,9 @@ export class Coordinator implements ICoordinator {
             }
         }
 
-        const plaintext_ = event.toJsonString()
-        const plaintext = encode(plaintext_)
+        const plainbytes = event.toBinary()
 
-        return this.epochSecretService.encryptMessage(epochSecret, plaintext)
+        return this.epochSecretService.encryptMessage(epochSecret, plainbytes)
     }
 
     // TODO: Maybe this could be refactored into a separate class
@@ -187,11 +175,7 @@ export class Coordinator implements ICoordinator {
         // check cache
         let cleartext = await this.persistenceStore.getCleartext(eventId)
         if (cleartext === undefined) {
-            const cleartext_ = await this.epochSecretService.decryptMessage(
-                epochSecret,
-                encryptedData,
-            )
-            cleartext = decode(cleartext_)
+            cleartext = await this.epochSecretService.decryptMessage(epochSecret, encryptedData)
         }
         const decryptedContent = toDecryptedContent(kind, encryptedData.version, cleartext)
 

@@ -1,4 +1,4 @@
-import { EncryptedData, HybridGroupSessionKey } from '@river-build/proto'
+import { EncryptedData, EncryptedDataVersion, HybridGroupSessionKey } from '@river-build/proto'
 import { EncryptionAlgorithm, IEncryptionParams } from './base'
 import { GroupEncryptionAlgorithmId } from './olmLib'
 import { dlog } from '@river-build/dlog'
@@ -90,28 +90,40 @@ export class HybridGroupEncryption extends EncryptionAlgorithm {
     }
 
     /**
-     * @param content - plaintext event content
-     *
-     * @returns Promise which resolves to the new event body
+     * @deprecated
      */
-    public async encrypt(streamId: string, payload: string | Uint8Array): Promise<EncryptedData> {
-        log('Starting to encrypt event')
-
-        const payloadBytes =
-            typeof payload === 'string' ? new TextEncoder().encode(payload) : payload
-
+    public async encrypt_deprecated_v0(streamId: string, payload: string): Promise<EncryptedData> {
         const sessionKey: HybridGroupSessionKey = await this._ensureOutboundSession(streamId)
-
         const key = await importAesGsmKeyBytes(sessionKey.key)
-
+        const payloadBytes = new TextEncoder().encode(payload)
         const { ciphertext, iv } = await encryptAesGcm(key, payloadBytes)
-
         return new EncryptedData({
             algorithm: this.algorithm,
             senderKey: this.device.deviceCurve25519Key!,
             sessionIdBytes: sessionKey.sessionId,
             ciphertextBytes: ciphertext,
             ivBytes: iv,
+            version: EncryptedDataVersion.ENCRYPTED_DATA_VERSION_0,
+        })
+    }
+
+    /**
+     * @param content - plaintext event content
+     *
+     * @returns Promise which resolves to the new event body
+     */
+    public async encrypt(streamId: string, payload: Uint8Array): Promise<EncryptedData> {
+        log('Starting to encrypt event')
+        const sessionKey: HybridGroupSessionKey = await this._ensureOutboundSession(streamId)
+        const key = await importAesGsmKeyBytes(sessionKey.key)
+        const { ciphertext, iv } = await encryptAesGcm(key, payload)
+        return new EncryptedData({
+            algorithm: this.algorithm,
+            senderKey: this.device.deviceCurve25519Key!,
+            sessionIdBytes: sessionKey.sessionId,
+            ciphertextBytes: ciphertext,
+            ivBytes: iv,
+            version: EncryptedDataVersion.ENCRYPTED_DATA_VERSION_1,
         })
     }
 }

@@ -9,6 +9,8 @@ export default class JSDOMEnvironmentWithBuffer extends JSDOMEnvironment {
         // patch global.Uint8Array, leading to incostency and
         // test failures since Buffer should be an instance of Uint8Array.
         this.global.Uint8Array = Uint8Array
+        this.global.ArrayBuffer = ArrayBuffer
+        this.global.DataView = DataView
         this.global.TextEncoder = TextEncoder
         this.global.TextDecoder = TextDecoder
         this.global.fetch = fetch

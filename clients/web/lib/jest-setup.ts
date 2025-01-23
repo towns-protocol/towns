@@ -29,6 +29,9 @@ process.env.RIVER_ENV = process.env.RIVER_ENV || 'local_multi'
 // fetch-polyfill.js
 import fetch, { Headers, Request, Response } from 'node-fetch'
 
+// crypto polyfill
+import webcrypto from 'node:crypto'
+
 beforeAll(async () => {
     await globalThis.Olm.init()
     // dom testing library config for `waitFor(...)`
@@ -42,6 +45,14 @@ beforeAll(async () => {
         globalThis.Request = Request as unknown as typeof globalThis.Request
         globalThis.Response = Response as unknown as typeof globalThis.Response
     }
+
+    Object.defineProperty(global.self, 'crypto', {
+        value: {
+            subtle: webcrypto.subtle,
+            getRandomValues: webcrypto.getRandomValues,
+        },
+    })
+    console.log('globalThis.crypto', globalThis.crypto.subtle)
 })
 
 afterEach(() => {

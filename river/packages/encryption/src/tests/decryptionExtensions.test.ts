@@ -62,6 +62,11 @@ describe.concurrent('TestDecryptionExtensions', () => {
             // bob encrypts a message
             const encryptedData = await bobCrypto.encryptGroupEvent(
                 streamId,
+                new TextEncoder().encode(bobsPlaintext),
+                algorithm,
+            )
+            const encryptedData_V0 = await bobCrypto.encryptGroupEvent_deprecated_v0(
+                streamId,
                 bobsPlaintext,
                 algorithm,
             )
@@ -89,9 +94,13 @@ describe.concurrent('TestDecryptionExtensions', () => {
 
             // try to decrypt the message
             const decrypted = await aliceDex.crypto.decryptGroupEvent(streamId, encryptedData)
+            const decrypted_V0 = await aliceDex.crypto.decryptGroupEvent(streamId, encryptedData_V0)
 
-            if (typeof decrypted !== 'string') {
+            if (typeof decrypted === 'string') {
                 throw new Error('decrypted is a string') // v1 should be bytes
+            }
+            if (typeof decrypted_V0 !== 'string') {
+                throw new Error('decrypted_V0 is a string') // v0 should be bytes
             }
 
             // stop the decryption extensions
@@ -99,7 +108,8 @@ describe.concurrent('TestDecryptionExtensions', () => {
             await aliceDex.stop()
 
             // assert
-            expect(decrypted).toBe(bobsPlaintext)
+            expect(new TextDecoder().decode(decrypted)).toBe(bobsPlaintext)
+            expect(decrypted_V0).toBe(bobsPlaintext)
             expect(bobDex.seenStates).toContain(DecryptionStatus.respondingToKeyRequests)
             expect(aliceDex.seenStates).toContain(DecryptionStatus.processingNewGroupSessions)
         },
@@ -131,6 +141,11 @@ describe.concurrent('TestDecryptionExtensions', () => {
             // bob encrypts a message
             const encryptedData = await bobCrypto.encryptGroupEvent(
                 streamId,
+                new TextEncoder().encode(bobsPlaintext),
+                algorithm,
+            )
+            const encryptedData_V0 = await bobCrypto.encryptGroupEvent_deprecated_v0(
+                streamId,
                 bobsPlaintext,
                 algorithm,
             )
@@ -145,12 +160,23 @@ describe.concurrent('TestDecryptionExtensions', () => {
             // try to decrypt the message
             const decrypted = await aliceDex.crypto.decryptGroupEvent(streamId, encryptedData)
 
+            if (typeof decrypted === 'string') {
+                throw new Error('decrypted is a string') // v1 should be bytes
+            }
+
+            const decrypted_V0 = await aliceDex.crypto.decryptGroupEvent(streamId, encryptedData_V0)
+
+            if (typeof decrypted_V0 !== 'string') {
+                throw new Error('decrypted_V0 is a string') // v0 should be bytes
+            }
+
             // stop the decryption extensions
             await bobDex.stop()
             await aliceDex.stop()
 
             // assert
-            expect(decrypted).toBe(bobsPlaintext)
+            expect(new TextDecoder().decode(decrypted)).toBe(bobsPlaintext)
+            expect(decrypted_V0).toBe(bobsPlaintext)
         },
     )
 })

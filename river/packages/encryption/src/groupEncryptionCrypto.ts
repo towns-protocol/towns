@@ -161,10 +161,23 @@ export class GroupEncryptionCrypto {
      */
     public async encryptGroupEvent(
         streamId: string,
-        payload: string,
+        payload: Uint8Array,
         algorithm: GroupEncryptionAlgorithmId,
     ): Promise<EncryptedData> {
         return this.groupEncryption[algorithm].encrypt(streamId, payload)
+    }
+    /**
+     * Deprecated uses v0 encryption version
+     *
+     * @returns Promise which resolves when the event has been
+     *     encrypted, or null if nothing was needed
+     */
+    public async encryptGroupEvent_deprecated_v0(
+        streamId: string,
+        payload: string,
+        algorithm: GroupEncryptionAlgorithmId,
+    ): Promise<EncryptedData> {
+        return this.groupEncryption[algorithm].encrypt_deprecated_v0(streamId, payload)
     }
     /**
      * Decrypt a received event using group encryption algorithm

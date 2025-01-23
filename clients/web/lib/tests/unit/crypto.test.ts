@@ -2,19 +2,9 @@
  * @group core
  */
 
-import crypto from 'crypto'
 import { encryptAESGCM, decryptAESGCM } from '../../src/utils/crypto-utils'
 
 describe('Crypto', () => {
-    beforeAll(() => {
-        Object.defineProperty(global.self, 'crypto', {
-            value: {
-                subtle: crypto.webcrypto.subtle,
-                getRandomValues: crypto.getRandomValues,
-            },
-        })
-    })
-
     test('should encrypt and decrypt', async () => {
         const data = window.crypto.getRandomValues(new Uint8Array(50000))
         const info = await encryptAESGCM(data)
