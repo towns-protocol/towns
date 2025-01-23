@@ -15,8 +15,6 @@ import { TipOption } from './types'
 import { TipConfirm } from './TipConfirm'
 import { trackTipOnMessage } from './tipAnalytics'
 
-const MODAL_WIDTH = '200px'
-
 export function TipTooltipPopup(props: {
     wrapperRef: React.RefObject<HTMLDivElement>
     messageOwner: LookupUser
@@ -73,13 +71,11 @@ export function TipTooltipPopup(props: {
             <CardOpener
                 placement="dropdown"
                 overrideTriggerRef={wrapperRef}
+                horizontalAlignment="center"
                 render={
                     isOpen ? (
                         <Box
                             pointerEvents="auto"
-                            style={{
-                                width: MODAL_WIDTH,
-                            }}
                             justifyContent={isAbove ? 'end' : 'start'}
                             paddingBottom={isAbove ? 'sm' : undefined}
                             paddingTop={isAbove ? undefined : 'sm'}
@@ -104,7 +100,7 @@ export function TipTooltipPopup(props: {
                         </Box>
                     ) : undefined
                 }
-                onIsAbove={setIsAbove}
+                setIsAbove={setIsAbove}
                 onClose={handleClose}
             >
                 {({ triggerProps }) => {

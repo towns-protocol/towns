@@ -2,7 +2,7 @@ import React, { useMemo, useRef, useState } from 'react'
 import useResizeObserver from '@react-hook/resize-observer'
 
 import { Box } from '../Box/Box'
-import { Placement } from './types'
+import { HorizontalAlignment, Placement } from './types'
 
 type OffsetContainerProps = {
     placement: Placement
@@ -11,7 +11,8 @@ type OffsetContainerProps = {
     hitPosition: [number, number] | undefined
     animatePresence?: boolean
     containerRef: React.MutableRefObject<HTMLDivElement | null>
-    setIsAbove: (isAbove: boolean) => void
+    setIsAbove?: (isAbove: boolean) => void
+    horizontalAlignment?: HorizontalAlignment
 }
 
 type Position = 'top' | 'bottom' | 'left' | 'right'
@@ -22,9 +23,9 @@ const DEBUG = false
 const margin = 4
 
 export const OverlayContainer = (props: OffsetContainerProps) => {
-    const { triggerRect, hitPosition, render, placement, setIsAbove } = props
+    const { triggerRect, hitPosition, render, placement, setIsAbove, horizontalAlignment } = props
     const ref = useRef<HTMLDivElement>(null)
-    const isAboveCheckCount = useRef(0)
+    const wouldOverflowBottom = useRef<boolean | undefined>(undefined)
     props.containerRef.current = ref.current
 
     const contentSizeRef = useRef<{ width: number; height: number }>({ width: 0, height: 0 })
@@ -92,10 +93,15 @@ export const OverlayContainer = (props: OffsetContainerProps) => {
         if (placement === 'dropdown') {
             const top = triggerRect.bottom
             // Check if dropdown would overflow bottom of screen
-            const wouldOverflowBottom = top + size.height > safeArea.bottom
+            wouldOverflowBottom.current = top + size.height > safeArea.bottom
             // If it would overflow bottom, position above the trigger instead
-            anchorStyle.top = wouldOverflowBottom ? triggerRect.top - size.height : top
+            anchorStyle.top = wouldOverflowBottom.current ? triggerRect.top - size.height : top
             anchorStyle.left = triggerRect.left
+
+            // setIsAbove a single time to prevent re-renders resulting in postion flip flops, or if the height of the card changes based on user actions
+            if (wouldOverflowBottom.current === undefined) {
+                setIsAbove?.(anchorStyle.top < triggerRect.top)
+            }
 
             const anchorRight = triggerRect.right
             const fitsRight = anchorRight - size.width > safeArea.left
@@ -103,15 +109,11 @@ export const OverlayContainer = (props: OffsetContainerProps) => {
             const anchorLeft = triggerRect.left
             const fitsLeft = anchorLeft + size.width < safeArea.right
 
-            // this is a hack so this doesn't re-render a ton of times on edge cases and cause crazy flip flops
-            // need more time to investigate and i don't have time right now
-            if (isAboveCheckCount.current < 3) {
-                isAboveCheckCount.current += 1
-                setIsAbove(anchorStyle.top < triggerRect.top)
+            if (horizontalAlignment === 'center') {
+                anchorStyle.left = triggerRect.left + triggerRect.width / 2 - size.width / 2
             }
-
             // ideally align horizontally on the right
-            if (fitsRight || !fitsLeft) {
+            else if (fitsRight || !fitsLeft) {
                 anchorStyle.left = anchorRight
                 containerStyle.right = 0
             } else {

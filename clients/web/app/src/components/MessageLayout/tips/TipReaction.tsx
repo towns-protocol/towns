@@ -60,27 +60,13 @@ function TipReactionInner({ tips, eventId, messageOwner, isTippable }: Props) {
 
     return (
         <>
-            <Box horizontal position="relative">
-                <Box
-                    position="absolute"
-                    style={{
-                        left: '50%',
-                        transform: 'translateX(-50%) ',
-                    }}
-                    width="150"
-                    ref={ref}
-                />
+            <Box horizontal position="relative" ref={ref}>
                 {eventId && (
                     <TipTooltipPopup
                         wrapperRef={ref}
                         messageOwner={messageOwner}
                         eventId={eventId}
                         tooltip={<TippingTooltip users={tippers} amount={amount} />}
-                        wrapperStyles={(isAbove) => ({
-                            justifyContent: isAbove ? 'end' : 'start',
-                            paddingBottom: isAbove ? 'sm' : undefined,
-                            paddingTop: isAbove ? undefined : 'x4',
-                        })}
                     >
                         {({ triggerProps, tipPending }) => {
                             const { onClick: onTriggerClick, ...rest } = triggerProps

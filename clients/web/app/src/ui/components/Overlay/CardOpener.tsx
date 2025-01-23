@@ -3,7 +3,8 @@ import { createPortal } from 'react-dom'
 import { useEvent } from 'react-use-event-hook'
 import { useZLayerContext } from '../ZLayer/ZLayer'
 import { CardOpenerContext } from './CardOpenerContext'
-import { Placement } from './types'
+import { HorizontalAlignment, Placement } from './types'
+
 import { OverlayContainer } from './CardOverlayContainer'
 
 const Trigger = {
@@ -14,6 +15,7 @@ const Trigger = {
 type Props = {
     layoutId?: string
     placement?: Placement
+    horizontalAlignment?: HorizontalAlignment
     children?: (renderProps: { triggerProps: TriggerProps }) => React.ReactNode
     render: JSX.Element | undefined
     trigger?: (typeof Trigger)[keyof typeof Trigger]
@@ -24,7 +26,7 @@ type Props = {
      * If provided, the positioning of the overlay will be relative to this ref, instead of the children()'s ref
      */
     overrideTriggerRef?: React.RefObject<HTMLDivElement>
-    onIsAbove?: (isAbove: boolean) => void
+    setIsAbove?: (isAbove: boolean) => void
 }
 
 export type TriggerProps = {
@@ -56,6 +58,8 @@ export const CardOpener = (props: Props) => {
         tabIndex,
         toggleRef,
         overrideTriggerRef,
+        horizontalAlignment,
+        setIsAbove,
     } = props
 
     const { rootLayerRef } = useZLayerContext()
@@ -197,15 +201,6 @@ export const CardOpener = (props: Props) => {
         setActive(false)
     }, [])
 
-    const [isAbove, setIsAbove] = useState(false)
-    const { onIsAbove } = props
-
-    useEffect(() => {
-        if (onIsAbove) {
-            onIsAbove(isAbove)
-        }
-    }, [isAbove, onIsAbove])
-
     return !children ? null : (
         <CardOpenerContext.Provider value={{ placement, closeCard }}>
             {children({
@@ -229,6 +224,7 @@ export const CardOpener = (props: Props) => {
                         hitPosition={hitPosition}
                         placement={placement}
                         setIsAbove={setIsAbove}
+                        horizontalAlignment={horizontalAlignment}
                     />,
                     root,
                 )}
