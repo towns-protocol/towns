@@ -4,7 +4,6 @@ import {
     EventStatus,
     ParsedEvent,
     StreamTimelineEvent,
-    isCiphertext,
     isDefined,
     isRemoteEvent,
     isLocalEvent,
@@ -762,27 +761,23 @@ function toTownsContent_FromChannelMessage(
 function toTownsContent_ChannelPayload_Message(
     timelineEvent: StreamTimelineEvent,
     payload: EncryptedData,
-    description: string,
+    _description: string,
 ): TownsContentResult {
-    if (isCiphertext(payload.ciphertext)) {
-        if (payload.refEventId) {
-            return {
-                content: {
-                    kind: RiverTimelineEvent.ChannelMessageEncryptedWithRef,
-                    refEventId: payload.refEventId,
-                },
-            }
-        }
+    if (payload.refEventId) {
         return {
-            // if payload is an EncryptedData message, than it is encrypted content kind
             content: {
-                kind: RiverTimelineEvent.ChannelMessageEncrypted,
-                error: timelineEvent.decryptedContentError,
-            } satisfies ChannelMessageEncryptedEvent,
+                kind: RiverTimelineEvent.ChannelMessageEncryptedWithRef,
+                refEventId: payload.refEventId,
+            },
         }
     }
-    // do not handle non-encrypted messages that should be encrypted
-    return { error: `${description} message text invalid channel message` }
+    return {
+        // if payload is an EncryptedData message, than it is encrypted content kind
+        content: {
+            kind: RiverTimelineEvent.ChannelMessageEncrypted,
+            error: timelineEvent.decryptedContentError,
+        } satisfies ChannelMessageEncryptedEvent,
+    }
 }
 
 function toTownsContent_ChannelPayload_ChannelProperties(
