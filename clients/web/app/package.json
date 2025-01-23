@@ -47,7 +47,6 @@
         "@towns/userops": "workspace:^",
         "@types/emoji-mart": "^3.0.14",
         "@types/json-stringify-safe": "^5.0.3",
-        "@types/prismjs": "^1.26.5",
         "@types/three": "^0.165.0",
         "@types/throttle-debounce": "^5.0.0",
         "@types/ua-parser-js": "^0.7.36",

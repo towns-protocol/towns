@@ -44,7 +44,7 @@ export default ({ mode }: { mode: string }) => {
 
     let config: UserConfig = {
         optimizeDeps: {
-            include: ['prismjs'],
+            include: [],
             esbuildOptions: {
                 define: {
                     global: 'globalThis',

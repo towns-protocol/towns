@@ -13921,13 +13921,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/prismjs@npm:^1.26.5":
-  version: 1.26.5
-  resolution: "@types/prismjs@npm:1.26.5"
-  checksum: d208b04ee9b6de6b2dc916439a81baa47e64ab3659a66d3d34bc3e42faccba9d4b26f590d76f97f7978d1dfaafa0861f81172b1e3c68696dd7a42d73aaaf5b7b
-  languageName: node
-  linkType: hard
-
 "@types/prompts@npm:^2.4.9":
   version: 2.4.9
   resolution: "@types/prompts@npm:2.4.9"
@@ -24130,7 +24123,6 @@ __metadata:
     "@types/json-stringify-safe": ^5.0.3
     "@types/linkify-it": ^3.0.5
     "@types/papaparse": ^5.3.14
-    "@types/prismjs": ^1.26.5
     "@types/react": ^18.2.11
     "@types/react-dom": ^18.2.4
     "@types/react-helmet": ^6.1.6
