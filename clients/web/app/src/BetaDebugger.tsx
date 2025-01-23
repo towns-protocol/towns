@@ -74,11 +74,18 @@ const ClientStatus = () => {
 
 const UserStatus = () => {
     const userId = useMyUserId()
+    const deviceKey = useTownsContext().casablancaClient?.userDeviceKey().deviceKey
     return (
-        <Stack horizontal gap="xs" color="gray1" fontSize="sm" alignItems="center">
-            <Paragraph size="sm">User ID:</Paragraph>
-            <ClipboardCopy clipboardContent={userId} label={shortAddress(userId ?? '')} />
-        </Stack>
+        <>
+            <Stack horizontal gap="xs" color="gray1" fontSize="sm" alignItems="center">
+                <Paragraph size="sm">User ID:</Paragraph>
+                <ClipboardCopy clipboardContent={userId} label={shortAddress(userId ?? '')} />
+            </Stack>
+            <Stack horizontal gap="xs" color="gray1" fontSize="sm" alignItems="center">
+                <Paragraph size="sm">Device ID:</Paragraph>
+                <ClipboardCopy clipboardContent={userId} label={shortAddress(deviceKey ?? '')} />
+            </Stack>
+        </>
     )
 }
 
