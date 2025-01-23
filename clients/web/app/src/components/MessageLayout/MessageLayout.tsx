@@ -54,6 +54,7 @@ type Props = {
     threadParentId?: string
     highlight?: boolean
     selectable?: boolean
+    isEncryptedMessage?: boolean
     listView?: boolean
     channelId?: string
     spaceId?: string
@@ -95,6 +96,7 @@ export const MessageLayout = (props: Props) => {
         isChannelReactable,
 
         selectable: isSelectable,
+        isEncryptedMessage,
         listView: isListView,
         displayContext = 'single',
         onReaction,
@@ -332,23 +334,29 @@ export const MessageLayout = (props: Props) => {
                     {sendStatus && <SendStatusIndicator status={sendStatus} />}
                 </Stack>
 
-                {!isTouch && channelId && eventId && isActive && !isEditing && isSelectable && (
-                    <MessageContextMenu
-                        canEdit={isEditable}
-                        canReact={isChannelReactable}
-                        canPin={canPin}
-                        canReply={canReply && isChannelWritable}
-                        canRedact={canRedact}
-                        channelId={channelId}
-                        eventId={eventId}
-                        latestEventId={latestEventId}
-                        isFocused={isFocused}
-                        isPinned={!!pin}
-                        spaceId={spaceId}
-                        threadParentId={threadParentId}
-                        messageOwner={messageOwner}
-                    />
-                )}
+                {!isTouch &&
+                    channelId &&
+                    eventId &&
+                    isActive &&
+                    !isEditing &&
+                    (isSelectable || isEncryptedMessage) && (
+                        <MessageContextMenu
+                            canEdit={isEditable}
+                            canReact={isChannelReactable}
+                            canPin={canPin}
+                            canReply={canReply && isChannelWritable}
+                            canRedact={canRedact}
+                            channelId={channelId}
+                            eventId={eventId}
+                            latestEventId={latestEventId}
+                            isFocused={isFocused}
+                            isPinned={!!pin}
+                            isEncryptedMessage={isEncryptedMessage}
+                            spaceId={spaceId}
+                            threadParentId={threadParentId}
+                            messageOwner={messageOwner}
+                        />
+                    )}
             </Stack>
             {isModalSheetVisible && isTouch && channelId && eventId && isSelectable && (
                 <MessageModalSheet

@@ -30,6 +30,7 @@ const VerifyEventSignatureContent = () => {
     const [isLoading, setIsLoading] = useState(true)
     const [event, setEvent] = useState<StreamTimelineEvent>()
     const [error, setError] = useState<string>()
+    const [encryptionSessionId, setEncryptionSessionId] = useState<string>()
     const [recoveredPublicKey, setRecoveredPublicKey] = useState<Uint8Array>()
     const [recoveredPublicKeyFromDelegateSig, setRecoveredPublicKeyFromDelegateSig] =
         useState<Uint8Array>()
@@ -65,6 +66,26 @@ const VerifyEventSignatureContent = () => {
                         'Signature not set. Try deleting your persistence store in indexdb and try again.',
                     )
                     return
+                }
+
+                if (
+                    (event.remoteEvent?.event.payload.case === 'channelPayload' ||
+                        event.remoteEvent?.event.payload.case === 'dmChannelPayload' ||
+                        event.remoteEvent?.event.payload.case === 'gdmChannelPayload') &&
+                    event.remoteEvent?.event.payload.value.content.case === 'message'
+                ) {
+                    const encryptedData = event.remoteEvent.event.payload.value.content.value
+                    if (encryptedData.sessionId && encryptedData.sessionId.length > 0) {
+                        setEncryptionSessionId(
+                            `EncryptedData.sessionId: ${encryptedData.sessionId}`,
+                        )
+                    } else if (encryptedData.sessionIdBytes) {
+                        setEncryptionSessionId(
+                            `EncryptedData.sessionIdBytes: ${bin_toHexString(
+                                encryptedData.sessionIdBytes,
+                            )}`,
+                        )
+                    }
                 }
 
                 const recoveredPubKeyRaw = riverRecoverPubKey(
@@ -122,6 +143,11 @@ const VerifyEventSignatureContent = () => {
                     <Paragraph color="gray2" size="sm" fontWeight="medium">
                         eventId: {eventId}
                     </Paragraph>
+                    {encryptionSessionId && (
+                        <Paragraph color="gray2" size="sm" fontWeight="medium">
+                            {encryptionSessionId}
+                        </Paragraph>
+                    )}
                     {error && (
                         <Paragraph color="gray2" size="sm" fontWeight="medium">
                             error: {error}

@@ -39,6 +39,7 @@ type Props = {
     canRedact?: boolean
     isFocused?: boolean
     isPinned?: boolean
+    isEncryptedMessage?: boolean
     messageOwner: LookupUser
 }
 
@@ -57,6 +58,7 @@ export const MessageContextMenu = (props: Props) => {
         threadParentId,
         isFocused,
         isPinned,
+        isEncryptedMessage,
         canRedact,
         messageOwner,
     } = props
@@ -221,7 +223,7 @@ export const MessageContextMenu = (props: Props) => {
     const submenuItems = useMemo(() => {
         const submenuItems = []
 
-        if (props.canEdit) {
+        if (!isEncryptedMessage && props.canEdit) {
             submenuItems.push({
                 key: 'edit',
                 disabled: !props.canEdit,
@@ -232,15 +234,16 @@ export const MessageContextMenu = (props: Props) => {
             } as const)
         }
 
-        submenuItems.push({
-            key: 'markAsUnread',
-            icon: 'messageUnread',
-            text: 'Mark unread',
-            shortcutAction: 'MarkAsUnread' as const,
-            onClick: onMarkAsUnreadClick,
-        } as const)
-
-        if (props.canPin) {
+        if (!isEncryptedMessage) {
+            submenuItems.push({
+                key: 'markAsUnread',
+                icon: 'messageUnread',
+                text: 'Mark unread',
+                shortcutAction: 'MarkAsUnread' as const,
+                onClick: onMarkAsUnreadClick,
+            } as const)
+        }
+        if (!isEncryptedMessage && props.canPin) {
             submenuItems.push(
                 isPinned
                     ? ({
@@ -258,7 +261,7 @@ export const MessageContextMenu = (props: Props) => {
             )
         }
 
-        if (props.canEdit || (canRedact && spaceId)) {
+        if (!isEncryptedMessage && (props.canEdit || (canRedact && spaceId))) {
             submenuItems.push({
                 key: 'delete',
                 icon: 'delete',
@@ -279,6 +282,7 @@ export const MessageContextMenu = (props: Props) => {
         return submenuItems
     }, [
         canRedact,
+        isEncryptedMessage,
         isPinned,
         onEditClick,
         onMarkAsUnreadClick,
@@ -311,7 +315,7 @@ export const MessageContextMenu = (props: Props) => {
                     alignItems="center"
                     ref={menuRef}
                 >
-                    {props.canReact && (
+                    {!isEncryptedMessage && props.canReact && (
                         <EmojiPickerButton
                             parentFocused={isFocused}
                             tooltip={<ShortcutTooltip action="ReactToMessage" />}
@@ -320,7 +324,7 @@ export const MessageContextMenu = (props: Props) => {
                         />
                     )}
 
-                    {props.canReply && (
+                    {!isEncryptedMessage && props.canReply && (
                         <IconButton
                             icon="reply"
                             size="square_sm"
@@ -336,7 +340,7 @@ export const MessageContextMenu = (props: Props) => {
                         />
                     )}
 
-                    {env.VITE_TIPS_ENABLED && !props.canEdit && (
+                    {env.VITE_TIPS_ENABLED && !isEncryptedMessage && !props.canEdit && (
                         <TipTooltipPopup
                             wrapperRef={menuRef}
                             messageOwner={messageOwner}

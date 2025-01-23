@@ -112,7 +112,6 @@ export const MessageItem = (props: Props) => {
 
     const displayContext = isMessage || isEncryptedMessage ? itemData.displayContext : 'single'
     const isEditing = event.eventId === timelineActions.editingMessageId
-    const isSelectable = !isEncryptedMessage
 
     const pin = timelineContext.pins?.find((p) => p.event.hashStr === event.eventId)
 
@@ -140,7 +139,8 @@ export const MessageItem = (props: Props) => {
             pin={pin}
             highlight={isHighlight}
             event={event}
-            selectable={!isEditing && isSelectable}
+            selectable={!isEditing && !isEncryptedMessage}
+            isEncryptedMessage={isEncryptedMessage}
             displayContext={displayContext}
             replies={replies}
             key={`${event.eventId}${event.updatedAtEpochMs ?? event.createdAtEpochMs}${msgTypeKey}`}
@@ -242,6 +242,7 @@ type MessageWrapperProps = {
     event: TimelineEvent
     highlight?: boolean
     selectable?: boolean
+    isEncryptedMessage?: boolean
     children: React.ReactNode
     replies?: ThreadStatsData
     onMediaClick: (e: React.MouseEvent) => void
@@ -249,7 +250,7 @@ type MessageWrapperProps = {
 }
 
 const MessageWrapper = React.memo((props: MessageWrapperProps) => {
-    const { event, displayContext, selectable, replies, onMediaClick } = props
+    const { event, displayContext, selectable, replies, onMediaClick, isEncryptedMessage } = props
     const { sender } = event
     const timelineContext = useTimelineContext()
     const { isTouch } = useDevice()
@@ -321,6 +322,7 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
             id={`event-${event.localEventId ?? event.eventId}`}
             highlight={props.highlight}
             selectable={selectable}
+            isEncryptedMessage={isEncryptedMessage}
             userId={userId}
             senderId={sender.id}
             canPin={!event.isLocalPending && isChannelPinnable}
