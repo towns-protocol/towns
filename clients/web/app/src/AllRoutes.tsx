@@ -14,9 +14,11 @@ import { WelcomeRoute } from 'routes/Welcome'
 import { mobileAppClass } from 'ui/styles/globals/utils.css'
 import { env } from 'utils'
 import { AppStoreBanner } from '@components/AppStoreBanner/AppStoreBanner'
+import { ExploreMobile, ExplorePage } from 'routes/ExplorePage/ExplorePage'
 
 export const AllRoutes = React.memo(() => {
     const { isAuthenticated } = useConnectivity()
+    const { isTouch } = useDevice()
 
     return (
         <>
@@ -35,6 +37,10 @@ export const AllRoutes = React.memo(() => {
                                     <Route
                                         path={`${PATHS.SPACES}/:spaceSlug/*`}
                                         element={<PublicTownPageForUnauthenticatedRoute />}
+                                    />
+                                    <Route
+                                        path={PATHS.EXPLORE}
+                                        element={isTouch ? <ExploreMobile /> : <ExplorePage />}
                                     />
                                     <Route path="*" element={<WelcomeRoute />} />
                                 </>
@@ -56,14 +62,20 @@ export const AllRoutes = React.memo(() => {
 const ResponsiveOutlet = () => {
     const { isTouch } = useDevice()
 
-    return isTouch ? (
-        <Box className={mobileAppClass}>
-            <AppStoreBanner />
-            <Outlet />
+    return (
+        <Box
+            className={isTouch ? mobileAppClass : undefined}
+            height="100vh"
+            width="100vw"
+            position="fixed"
+            overflow="hidden"
+        >
+            <Stack height="100%">
+                <Box grow>
+                    <Outlet />
+                </Box>
+                {isTouch && <AppStoreBanner />}
+            </Stack>
         </Box>
-    ) : (
-        <Stack grow color="default" minHeight="100vh">
-            <Outlet />
-        </Stack>
     )
 }

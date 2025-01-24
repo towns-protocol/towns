@@ -6,11 +6,12 @@ import { env } from 'utils/environment'
 import { Analytics } from 'hooks/useAnalytics'
 import { Panel } from '@components/Panel/Panel'
 import { ExploreCard } from './ExploreCard'
+import { PublicExploreLayout } from './PublicExploreLayout'
 
 const exploreTowns =
     env.VITE_EXPLORE_TOWNS?.split(',').map((townAddress) => townAddress.trim()) ?? []
 
-export const ExplorePage = () => {
+const ExplorePageContent = () => {
     const isMobile = useMobile()
     const { isAuthenticated } = useConnectivity()
 
@@ -54,10 +55,40 @@ export const ExplorePage = () => {
     )
 }
 
+export const ExplorePage = () => {
+    const { isAuthenticated } = useConnectivity()
+
+    useEffect(() => {
+        Analytics.getInstance().page('home-page', 'explore page', {
+            isLoggedIn: isAuthenticated,
+        })
+    }, [isAuthenticated])
+
+    if (!isAuthenticated) {
+        return (
+            <PublicExploreLayout>
+                <ExplorePageContent />
+            </PublicExploreLayout>
+        )
+    }
+
+    return <ExplorePageContent />
+}
+
 export const ExploreMobile = () => {
+    const { isAuthenticated } = useConnectivity()
+
+    if (!isAuthenticated) {
+        return (
+            <PublicExploreLayout>
+                <ExplorePageContent />
+            </PublicExploreLayout>
+        )
+    }
+
     return (
         <Panel isRootPanel label="Explore Towns">
-            <ExplorePage />
+            <ExplorePageContent />
         </Panel>
     )
 }

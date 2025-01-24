@@ -14,7 +14,7 @@ export const TopBar = () => {
     const recentlyMintedSpaceToken = useStore((s) => s.recentlyMintedSpaceToken)
     const profileButtonRef = useRef<HTMLElement>(null)
     const location = useLocation()
-    const isExplorePage = location.pathname === '/explore'
+    const noSearchBar = location.pathname === '/explore' || location.pathname === '/'
 
     return (
         <>
@@ -40,7 +40,7 @@ export const TopBar = () => {
                 </Box>
                 <Box centerContent width="x8" />
                 <Box grow centerContent>
-                    {!isExplorePage && <SearchBar />}
+                    {!noSearchBar && <SearchBar />}
                 </Box>
 
                 <Stack horizontal gap="md" paddingRight="lg" alignItems="center">
