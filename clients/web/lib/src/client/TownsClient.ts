@@ -703,16 +703,16 @@ export class TownsClient
             // https://linear.app/hnt-labs/issue/HNT-3112/implement-entitlement-checks
             isEntitled = true
         }
-        this.debug(
-            `[isEntitled] is user entitled for channel and space for permission`,
-            isEntitled,
-            {
-                user,
-                spaceId: spaceId,
-                channelId: channelId,
-                permission: permission,
-            },
-        )
+        // this.debug(
+        //     `[isEntitled] is user entitled for channel and space for permission`,
+        //     isEntitled,
+        //     {
+        //         user,
+        //         spaceId: spaceId,
+        //         channelId: channelId,
+        //         permission: permission,
+        //     },
+        // )
         return isEntitled
     }
 

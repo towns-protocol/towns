@@ -28,18 +28,18 @@ function querySetup(
                     walletAddress,
                     permission,
                 )
-                console.debug(
-                    '[useHasPermission]',
-                    'getHasPermission() from network',
-                    new Date().toString(),
-                    {
-                        spaceId,
-                        channelId,
-                        walletAddress,
-                        permission,
-                    },
-                    isEntitled,
-                )
+                // console.debug(
+                //     '[useHasPermission]',
+                //     'getHasPermission() from network',
+                //     new Date().toString(),
+                //     {
+                //         spaceId,
+                //         channelId,
+                //         walletAddress,
+                //         permission,
+                //     },
+                //     isEntitled,
+                // )
                 return isEntitled
             }
             return false
