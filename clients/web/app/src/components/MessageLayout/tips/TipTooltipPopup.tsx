@@ -38,14 +38,14 @@ export function TipTooltipPopup(props: {
     const isDmOrGDM =
         !!channelId && (isDMChannelStreamId(channelId) || isGDMChannelStreamId(channelId))
 
-    console.log('TipTooltipPopup render:', { tipValue, channelId, tipPending, isOpen })
+    //console.log('TipTooltipPopup render:', { tipValue, channelId, tipPending, isOpen })
 
     if (!channelId || isDmOrGDM) {
         return null
     }
 
     const handleSetTipValue = (value: TipOption | undefined) => {
-        console.log('TipTooltipPopup setTipValue called with:', value)
+        //console.log('TipTooltipPopup setTipValue called with:', value)
         setTipValue(value)
         if (value) {
             setIsOpen(true)
