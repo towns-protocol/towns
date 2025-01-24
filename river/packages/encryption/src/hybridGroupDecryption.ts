@@ -1,10 +1,10 @@
 import { DecryptionAlgorithm, DecryptionError, IDecryptionParams } from './base'
 import { GroupEncryptionAlgorithmId, GroupEncryptionSession } from './olmLib'
 import { EncryptedData, EncryptedDataVersion, HybridGroupSessionKey } from '@river-build/proto'
-import { bin_toHexString, dlog } from '@river-build/dlog'
+import { bin_toHexString, dlogError } from '@river-build/dlog'
 import { decryptAesGcm, importAesGsmKeyBytes } from './cryptoAesGcm'
 
-const log = dlog('csb:encryption:groupDecryption')
+const logError = dlogError('csb:encryption:groupDecryption')
 
 /**
  * Group decryption implementation
@@ -64,7 +64,8 @@ export class HybridGroupDecryption extends DecryptionAlgorithm {
         try {
             await this.device.addHybridGroupSession(streamId, session.sessionId, session.sessionKey)
         } catch (e) {
-            log(`Error handling room key import: ${(<Error>e).message}`)
+            logError(`Error handling room key import: ${(<Error>e).message}`)
+            throw e
         }
     }
 
@@ -73,12 +74,12 @@ export class HybridGroupDecryption extends DecryptionAlgorithm {
         streamId: string,
         sessionId: string,
     ): Promise<GroupEncryptionSession | undefined> {
-        return this.device.exportHybridGroupSession(streamId, sessionId, this.algorithm)
+        return this.device.exportHybridGroupSession(streamId, sessionId)
     }
 
     /** */
     public exportGroupSessions(): Promise<GroupEncryptionSession[]> {
-        return this.device.exportHybridGroupSessions(this.algorithm)
+        return this.device.exportHybridGroupSessions()
     }
 
     /** */

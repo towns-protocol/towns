@@ -17,8 +17,7 @@ jobs:
     build:
         name: Build docker image
 
-        # TODO: these don't need to be 8-cores. update to regular ubuntu-latest.
-        runs-on: ubuntu-latest-8-cores
+        runs-on: ubuntu-latest
 
         permissions:
             contents: write

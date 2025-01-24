@@ -180,9 +180,9 @@ func mbTest(
 	addEventToStream(t, ctx, tt.instances[0].params, stream, "1", view.LastBlock().Ref)
 	addEventToStream(t, ctx, tt.instances[0].params, stream, "2", view.LastBlock().Ref)
 
-	proposal, _, err := mbProduceCandidate(ctx, tt.instances[0].params, stream.(*streamImpl), false)
-	mb := proposal.headerEvent.Event.GetMiniblockHeader()
-	events := proposal.Events()
+	candidate, err := tt.instances[0].makeAndSaveMbCandidate(ctx, stream)
+	mb := candidate.headerEvent.Event.GetMiniblockHeader()
+	events := candidate.Events()
 	require.NoError(err)
 	require.Equal(2, len(events))
 	require.Equal(2, len(mb.EventHashes))
@@ -197,7 +197,7 @@ func mbTest(
 	require.Equal(2, len(events))
 	require.Equal(int64(1), mb.MiniblockNum)
 
-	err = stream.ApplyMiniblock(ctx, proposal)
+	err = stream.ApplyMiniblock(ctx, candidate)
 	require.NoError(err)
 
 	view2, err := stream.GetView(ctx)
@@ -248,32 +248,28 @@ func TestCandidatePromotionCandidateInPlace(t *testing.T) {
 	addEventToStream(t, ctx, tt.instances[0].params, stream, "1", view.LastBlock().Ref)
 	addEventToStream(t, ctx, tt.instances[0].params, stream, "2", view.LastBlock().Ref)
 
-	remotes, _ := stream.GetRemotesAndIsLocal()
-	proposal, err := mbProduceCandidate_Make(
+	candidate, err := tt.instances[0].makeMbCandidate(
 		ctx,
-		tt.instances[0].params,
-		getView(t, ctx, stream),
-		false,
-		remotes,
+		stream,
 	)
 	require.NoError(err)
-	mb := proposal.headerEvent.Event.GetMiniblockHeader()
-	events := proposal.Events()
+	mb := candidate.headerEvent.Event.GetMiniblockHeader()
+	events := candidate.Events()
 	require.Equal(2, len(events))
 	require.Equal(2, len(mb.EventHashes))
 	require.EqualValues(view.LastBlock().Ref.Hash[:], mb.PrevMiniblockHash)
 	require.Equal(int64(1), mb.MiniblockNum)
 
-	require.NoError(stream.SaveMiniblockCandidate(ctx, proposal.Proto))
+	require.NoError(stream.SaveMiniblockCandidate(ctx, candidate.Proto))
 
-	err = stream.SaveMiniblockCandidate(ctx, proposal.Proto)
+	err = stream.SaveMiniblockCandidate(ctx, candidate.Proto)
 	require.ErrorIs(err, RiverError(Err_ALREADY_EXISTS, ""))
 
-	require.NoError(stream.promoteCandidate(ctx, proposal.Ref))
+	require.NoError(stream.promoteCandidate(ctx, candidate.Ref))
 
 	view, err = stream.getViewIfLocal(ctx)
 	require.NoError(err)
-	require.EqualValues(proposal.Ref, view.LastBlock().Ref)
+	require.EqualValues(candidate.Ref, view.LastBlock().Ref)
 	require.Equal(0, view.minipool.events.Len())
 }
 
@@ -295,83 +291,82 @@ func TestCandidatePromotionCandidateIsDelayed(t *testing.T) {
 	syncStream, viewInt := tt.createStream(spaceStreamId, genesisMb.Proto)
 	stream := syncStream.(*streamImpl)
 	view := viewInt.(*streamViewImpl)
-	remotes, _ := stream.GetRemotesAndIsLocal()
 
 	addEventToStream(t, ctx, params, stream, "1", view.LastBlock().Ref)
 	addEventToStream(t, ctx, params, stream, "2", view.LastBlock().Ref)
 
 	view = getView(t, ctx, stream)
 	require.Equal(2, view.minipool.size())
-	proposal1, err := mbProduceCandidate_Make(ctx, params, view, false, remotes)
+	candidate1, err := tt.instances[0].makeMbCandidateForView(ctx, view)
 	require.NoError(err)
-	require.NotNil(proposal1)
-	require.Len(proposal1.Events(), 2)
-	require.Len(proposal1.Proto.Events, 2)
-	mbHeader := proposal1.headerEvent.Event.GetMiniblockHeader()
+	require.NotNil(candidate1)
+	require.Len(candidate1.Events(), 2)
+	require.Len(candidate1.Proto.Events, 2)
+	mbHeader := candidate1.headerEvent.Event.GetMiniblockHeader()
 	require.Equal(2, len(mbHeader.EventHashes))
 	require.EqualValues(view.LastBlock().Ref.Hash[:], mbHeader.PrevMiniblockHash)
 	require.Equal(int64(1), mbHeader.MiniblockNum)
 
-	require.NoError(stream.promoteCandidate(ctx, proposal1.Ref))
+	require.NoError(stream.promoteCandidate(ctx, candidate1.Ref))
 	view = getView(t, ctx, stream)
 	require.Equal(int64(0), view.LastBlock().Ref.Num)
 	require.Equal(2, view.minipool.size())
 	require.Len(stream.local.pendingCandidates, 1)
-	require.EqualValues(proposal1.Ref, stream.local.pendingCandidates[0])
+	require.EqualValues(candidate1.Ref, stream.local.pendingCandidates[0])
 
-	require.NoError(stream.SaveMiniblockCandidate(ctx, proposal1.Proto))
+	require.NoError(stream.SaveMiniblockCandidate(ctx, candidate1.Proto))
 
 	view = getView(t, ctx, stream)
 	require.Equal(int64(1), view.LastBlock().Ref.Num)
-	require.EqualValues(proposal1.Ref, view.LastBlock().Ref)
+	require.EqualValues(candidate1.Ref, view.LastBlock().Ref)
 	require.Equal(0, view.minipool.events.Len())
 
 	for i := 0; i < 2; i++ {
 		view1 := getView(t, ctx, stream)
 		view1 = addEventToView(t, params, view1, fmt.Sprintf("%d", i+3), view1.LastBlock().Ref)
 
-		proposal2, err := mbProduceCandidate_Make(ctx, params, view1, false, remotes)
+		candidate2, err := tt.instances[0].makeMbCandidateForView(ctx, view1)
 		require.NoError(err)
-		require.NotNil(proposal2)
-		require.Equal(int64(i*3+2), proposal2.headerEvent.Event.GetMiniblockHeader().MiniblockNum)
+		require.NotNil(candidate2)
+		require.Equal(int64(i*3+2), candidate2.headerEvent.Event.GetMiniblockHeader().MiniblockNum)
 
-		view2, _, err := view1.copyAndApplyBlock(proposal2, chainConfig)
+		view2, _, err := view1.copyAndApplyBlock(candidate2, chainConfig)
 		require.NoError(err)
-		require.EqualValues(proposal2.Ref, view2.LastBlock().Ref)
+		require.EqualValues(candidate2.Ref, view2.LastBlock().Ref)
 
 		view2 = addEventToView(t, params, view2, "4", view2.LastBlock().Ref)
 		view2 = addEventToView(t, params, view2, "5", view2.LastBlock().Ref)
 
-		proposal3, err := mbProduceCandidate_Make(ctx, params, view2, false, remotes)
+		candidate3, err := tt.instances[0].makeMbCandidateForView(ctx, view2)
 		require.NoError(err)
-		require.NotNil(proposal3)
-		require.Equal(int64(i*3+3), proposal3.headerEvent.Event.GetMiniblockHeader().MiniblockNum)
+		require.NotNil(candidate3)
+		require.Equal(int64(i*3+3), candidate3.headerEvent.Event.GetMiniblockHeader().MiniblockNum)
 
-		view3, _, err := view2.copyAndApplyBlock(proposal3, chainConfig)
+		view3, _, err := view2.copyAndApplyBlock(candidate3, chainConfig)
 		require.NoError(err)
-		require.EqualValues(proposal3.Ref, view3.LastBlock().Ref)
+		require.EqualValues(candidate3.Ref, view3.LastBlock().Ref)
 
 		view3 = addEventToView(t, params, view3, "6", view3.LastBlock().Ref)
 		view3 = addEventToView(t, params, view3, "7", view3.LastBlock().Ref)
 
-		proposal4, err := mbProduceCandidate_Make(ctx, params, view3, false, remotes)
+		candidate4, err := tt.instances[0].makeMbCandidateForView(ctx, view3)
 		require.NoError(err)
-		require.NotNil(proposal4)
-		require.Equal(int64(i*3+4), proposal4.headerEvent.Event.GetMiniblockHeader().MiniblockNum)
+		require.NotNil(candidate4)
+		require.Equal(int64(i*3+4), candidate4.headerEvent.Event.GetMiniblockHeader().MiniblockNum)
 
-		require.NoError(stream.promoteCandidate(ctx, proposal2.Ref))
-		require.NoError(stream.promoteCandidate(ctx, proposal3.Ref))
-		require.NoError(stream.promoteCandidate(ctx, proposal4.Ref))
+		require.NoError(stream.promoteCandidate(ctx, candidate2.Ref))
+		require.NoError(stream.promoteCandidate(ctx, candidate3.Ref))
+		require.NoError(stream.promoteCandidate(ctx, candidate4.Ref))
 		require.Len(stream.local.pendingCandidates, 3)
 
 		if i == 0 {
-			require.NoError(stream.SaveMiniblockCandidate(ctx, proposal2.Proto))
-			require.NoError(stream.SaveMiniblockCandidate(ctx, proposal3.Proto))
-			require.NoError(stream.SaveMiniblockCandidate(ctx, proposal4.Proto))
+			require.NoError(stream.SaveMiniblockCandidate(ctx, candidate2.Proto))
+			require.NoError(stream.SaveMiniblockCandidate(ctx, candidate3.Proto))
+			require.NoError(stream.SaveMiniblockCandidate(ctx, candidate4.Proto))
 		} else {
-			require.NoError(stream.SaveMiniblockCandidate(ctx, proposal4.Proto))
-			require.NoError(stream.SaveMiniblockCandidate(ctx, proposal2.Proto))
-			require.NoError(stream.SaveMiniblockCandidate(ctx, proposal3.Proto))
+			require.NoError(stream.SaveMiniblockCandidate(ctx, candidate4.Proto))
+			require.NoError(stream.SaveMiniblockCandidate(ctx, candidate2.Proto))
+			require.NoError(stream.SaveMiniblockCandidate(ctx, candidate3.Proto))
 		}
 
 		view = getView(t, ctx, stream)

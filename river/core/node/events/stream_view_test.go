@@ -28,6 +28,9 @@ func TestLoad(t *testing.T) {
 	defer cancel()
 	userWallet, _ := crypto.NewWallet(ctx)
 	nodeWallet, _ := crypto.NewWallet(ctx)
+	params := &StreamCacheParams{
+		Wallet: nodeWallet,
+	}
 	streamId := UserStreamIdFromAddr(userWallet.Address)
 
 	userAddress := userWallet.Address[:]
@@ -151,9 +154,16 @@ func TestLoad(t *testing.T) {
 	assert.Equal(t, false, view.shouldSnapshot(cfg))
 
 	// and miniblocks should have nil snapshots
-	proposal, _ := view.ProposeNextMiniblock(ctx, cfg, false)
-	miniblockHeader, _, _ = view.makeMiniblockHeader(ctx, proposal)
-	assert.Nil(t, miniblockHeader.Snapshot)
+	resp, err := view.ProposeNextMiniblock(ctx, cfg, &ProposeMiniblockRequest{
+		StreamId:          streamId[:],
+		NewMiniblockNum:   view.minipool.generation,
+		PrevMiniblockHash: view.LastBlock().Ref.Hash[:],
+	})
+	require.NoError(t, err)
+	require.Len(t, resp.MissingEvents, view.minipool.events.Len())
+	mbCandidate, err := view.makeMiniblockCandidate(ctx, params, mbProposalFromProto(resp.Proposal))
+	require.NoError(t, err)
+	assert.Nil(t, mbCandidate.headerEvent.Event.GetMiniblockHeader().Snapshot)
 
 	// add another join event
 	join3, err := MakeEnvelopeWithPayload(
@@ -172,10 +182,19 @@ func TestLoad(t *testing.T) {
 	assert.Equal(t, true, view.shouldSnapshot(cfg))
 	assert.Equal(t, 1, len(view.blocks))
 	assert.Equal(t, 2, len(view.blocks[0].Events()))
-	// and miniblocks should have non - nil snapshots
 
-	proposal, _ = view.ProposeNextMiniblock(ctx, cfg, false)
-	miniblockHeader, envelopes, _ := view.makeMiniblockHeader(ctx, proposal)
+	// and miniblocks should have non - nil snapshots
+	resp, err = view.ProposeNextMiniblock(ctx, cfg, &ProposeMiniblockRequest{
+		StreamId:          streamId[:],
+		NewMiniblockNum:   view.minipool.generation,
+		PrevMiniblockHash: view.LastBlock().Ref.Hash[:],
+		LocalEventHashes:  view.minipool.eventHashesAsBytes(),
+	})
+	require.NoError(t, err)
+	require.Len(t, resp.MissingEvents, 0)
+	mbCandidate, err = view.makeMiniblockCandidate(ctx, params, mbProposalFromProto(resp.Proposal))
+	require.NoError(t, err)
+	miniblockHeader = mbCandidate.headerEvent.Event.GetMiniblockHeader()
 	assert.NotNil(t, miniblockHeader.Snapshot)
 
 	// check count2
@@ -205,7 +224,7 @@ func TestLoad(t *testing.T) {
 		view.LastBlock().Ref,
 	)
 	assert.NoError(t, err)
-	miniblock, err := NewMiniblockInfoFromParsed(miniblockHeaderEvent, envelopes)
+	miniblock, err := NewMiniblockInfoFromParsed(miniblockHeaderEvent, mbCandidate.Events())
 	assert.NoError(t, err)
 	// with 5 generations (5 blocks kept in memory)
 	newSV1, newEvents, err := view.copyAndApplyBlock(miniblock, cfg)

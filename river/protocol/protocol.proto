@@ -1188,4 +1188,8 @@ enum Err {
     // This is a temporary state and the node will have the miniblock at a later point in time.
     // The client should retry with an increasing delay, starting at 100ms.
     MINIBLOCK_TOO_NEW = 63;
+
+    // Stream replica on the local node already has a miniblock with the requested
+    // proposal number.
+    MINIBLOCK_TOO_OLD = 64;
 }

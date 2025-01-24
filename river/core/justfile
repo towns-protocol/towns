@@ -548,3 +548,13 @@ test-all *args: (_test-from-dir justfile_directory() "-v" args "./...")
 
 # Run all go tests from current directory
 t *args: (_test-from-dir invocation_directory() "-v" args "./...")
+
+# Run go tests with info logging and test printing from current directory
+[positional-arguments]
+t-debug *args: 
+    RIVER_TEST_LOG=info RIVER_TEST_PRINT=1 just _test-from-dir {{invocation_directory()}} -v -count 1 "$@" ./... | yarn exec pino-pretty
+
+# Run go tests with debug logging and test printing from current directory
+[positional-arguments]
+t-debug-debug *args: 
+    RIVER_TEST_LOG=debug RIVER_TEST_PRINT=1 just _test-from-dir {{invocation_directory()}} -v -count 1 "$@" ./...

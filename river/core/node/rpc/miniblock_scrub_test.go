@@ -50,7 +50,7 @@ func addMessageToChannel(
 	require.NoError(err)
 }
 
-func TestMiniblockScrubber(t *testing.T) {
+func TestMiniblockScrubberBasic(t *testing.T) {
 	tester := newServiceTester(t, serviceTesterOpts{numNodes: 1, start: true})
 	reports := make(chan *scrub.MiniblockScrubReport)
 	client := tester.testClient(0)

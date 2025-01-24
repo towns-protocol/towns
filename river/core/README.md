@@ -47,6 +47,9 @@ MLS lib needs to be built for some tests to run, there are just commands that bu
     just t # Run all tests from current dir
     just build-mls # Rebuild mls without running tests
 
+    just t-debug -run TestMyName  # Run TestMyName with info logging and test printing
+    just t-debug-debug -run TestMyName  # Run TestMyName with debug logging and test printing
+
 # Running the archiver service locally against different environments
 
 To run a local archiver service that downloads from various public networks, use the `run.sh` command

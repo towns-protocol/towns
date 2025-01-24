@@ -75,3 +75,19 @@ func (m *minipoolInstance) getEnvelopeBytes() ([][]byte, error) {
 	}
 	return bytes, nil
 }
+
+func (m *minipoolInstance) eventHashes() []common.Hash {
+	hashes := make([]common.Hash, m.events.Len())
+	for i, e := range m.events.Values {
+		hashes[i] = e.Hash
+	}
+	return hashes
+}
+
+func (m *minipoolInstance) eventHashesAsBytes() [][]byte {
+	hashes := make([][]byte, m.events.Len())
+	for i, e := range m.events.Values {
+		hashes[i] = e.Hash[:]
+	}
+	return hashes
+}

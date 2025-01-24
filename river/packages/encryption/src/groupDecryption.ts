@@ -3,9 +3,9 @@ import type { GroupSessionExtraData } from './encryptionDevice'
 import { DecryptionAlgorithm, DecryptionError, IDecryptionParams } from './base'
 import { GroupEncryptionAlgorithmId, GroupEncryptionSession } from './olmLib'
 import { EncryptedData, EncryptedDataVersion } from '@river-build/proto'
-import { bin_fromBase64, dlog } from '@river-build/dlog'
+import { bin_fromBase64, dlogError } from '@river-build/dlog'
 
-const log = dlog('csb:encryption:groupDecryption')
+const logError = dlogError('csb:encryption:groupDecryption')
 
 /**
  * Group decryption implementation
@@ -66,7 +66,8 @@ export class GroupDecryption extends DecryptionAlgorithm {
                 extraSessionData,
             )
         } catch (e) {
-            log(`Error handling room key import: ${(<Error>e).message}`)
+            logError(`Error handling room key import: ${(<Error>e).message}`)
+            throw e
         }
     }
 

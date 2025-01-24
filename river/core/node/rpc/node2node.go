@@ -152,18 +152,12 @@ func (s *Service) proposeMiniblock(
 		return nil, err
 	}
 
-	proposal, err := view.ProposeNextMiniblock(ctx, s.chainConfig.Get(), req.DebugForceSnapshot)
+	resp, err := view.ProposeNextMiniblock(ctx, s.chainConfig.Get(), req)
 	if err != nil {
 		return nil, err
 	}
 
-	if proposal == nil {
-		return nil, RiverError(Err_MINIPOOL_MISSING_EVENTS, "Empty stream minipool")
-	}
-
-	return &ProposeMiniblockResponse{
-		Proposal: proposal,
-	}, nil
+	return resp, nil
 }
 
 func (s *Service) SaveMiniblockCandidate(

@@ -293,7 +293,7 @@ export abstract class BaseDecryptionExtensions {
             this.queues.keySolicitations.splice(index, 1)
         }
         if (keySolicitation.sessionIds.length > 0 || keySolicitation.isNewDevice) {
-            this.log.debug('new key solicitation', keySolicitation)
+            this.log.debug('new key solicitation', { fromUserId, streamId, keySolicitation })
             this.keySolicitationsNeedsSort = true
             this.queues.keySolicitations.push({
                 streamId,
@@ -569,19 +569,26 @@ export abstract class BaseDecryptionExtensions {
         // import the sessions
         this.log.info(
             'importing group sessions streamId:',
-            session.streamId,
+            streamId,
             'count: ',
             sessions.length,
+            session.sessionIds,
         )
-        await this.crypto.importSessionKeys(streamId, sessions)
-        // re-enqueue any decryption failures with these ids
-        for (const session of sessions) {
-            if (this.decryptionFailures[streamId]?.[session.sessionId]) {
-                this.queues.encryptedContent.push(
-                    ...this.decryptionFailures[streamId][session.sessionId],
-                )
-                delete this.decryptionFailures[streamId][session.sessionId]
+        try {
+            await this.crypto.importSessionKeys(streamId, sessions)
+            // re-enqueue any decryption failures with these ids
+            for (const session of sessions) {
+                if (this.decryptionFailures[streamId]?.[session.sessionId]) {
+                    this.queues.encryptedContent.push(
+                        ...this.decryptionFailures[streamId][session.sessionId],
+                    )
+                    delete this.decryptionFailures[streamId][session.sessionId]
+                }
             }
+        } catch (e) {
+            // don't re-enqueue to prevent infinite loops if this session is truely corrupted
+            // we will keep requesting it on each boot until it goes out of the scroll window
+            this.log.error('failed to import sessions', { sessionItem, error: e })
         }
         // if we processed them all, ack the stream
         if (this.queues.newGroupSession.length === 0) {

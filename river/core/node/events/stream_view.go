@@ -52,8 +52,8 @@ type StreamView interface {
 	ProposeNextMiniblock(
 		ctx context.Context,
 		cfg *crypto.OnChainSettings,
-		forceSnapshot bool,
-	) (*MiniblockProposal, error)
+		req *ProposeMiniblockRequest,
+	) (*ProposeMiniblockResponse, error)
 	IsMember(userAddress []byte) (bool, error)
 	CopyAndPrependMiniblocks(mbs []*MiniblockInfo) (StreamView, error)
 	AllEvents() iter.Seq[*ParsedEvent]
@@ -246,36 +246,123 @@ func (r *streamViewImpl) Blocks() []*MiniblockInfo {
 func (r *streamViewImpl) ProposeNextMiniblock(
 	ctx context.Context,
 	cfg *crypto.OnChainSettings,
-	forceSnapshot bool,
-) (*MiniblockProposal, error) {
-	var hashes [][]byte
-	if r.minipool.events.Len() != 0 {
-		hashes = make([][]byte, 0, r.minipool.events.Len())
-		for _, e := range r.minipool.events.Values {
-			hashes = append(hashes, e.Hash[:])
+	req *ProposeMiniblockRequest,
+) (*ProposeMiniblockResponse, error) {
+	if !bytes.Equal(req.StreamId, r.streamId[:]) {
+		return nil, RiverError(
+			Err_BAD_STREAM_ID,
+			"can't create proposal: stream id mismatch",
+			"requestedStreamId",
+			req.StreamId,
+			"actualStreamId",
+			r.streamId[:],
+		)
+	}
+
+	if req.NewMiniblockNum > r.minipool.generation {
+		return nil, RiverError(
+			Err_MINIBLOCK_TOO_NEW,
+			"can't create proposal: local replica is behind stream head",
+			"localMbNum",
+			r.minipool.generation,
+			"requestedMbNum",
+			req.NewMiniblockNum,
+		)
+	}
+
+	if req.NewMiniblockNum < r.minipool.generation {
+		return nil, RiverError(
+			Err_MINIBLOCK_TOO_OLD,
+			"can't create proposal: stream advanced past requested miniblock",
+			"localMbNum",
+			r.minipool.generation,
+			"requestedMbNum",
+			req.NewMiniblockNum,
+		)
+	}
+
+	if !bytes.Equal(req.PrevMiniblockHash, r.LastBlock().Ref.Hash[:]) {
+		return nil, RiverError(
+			Err_BAD_PREV_MINIBLOCK_HASH,
+			"can't create proposal: prev miniblock hash mismatch",
+			"requestedMbNum",
+			req.NewMiniblockNum,
+			"requestedPrevMbHash",
+			req.PrevMiniblockHash,
+			"actualPrevMbHash",
+			r.LastBlock().Ref.Hash,
+		)
+	}
+
+	remoteHashes := make(map[common.Hash]bool)
+	for _, h := range req.LocalEventHashes {
+		remoteHashes[common.BytesToHash(h)] = true
+	}
+	var missingEvents []*Envelope
+	for _, e := range r.minipool.events.Values {
+		if !remoteHashes[e.Hash] {
+			missingEvents = append(missingEvents, e.Envelope)
 		}
 	}
-	return &MiniblockProposal{
-		Hashes:            hashes,
-		NewMiniblockNum:   r.minipool.generation,
-		PrevMiniblockHash: r.LastBlock().headerEvent.Hash[:],
-		ShouldSnapshot:    forceSnapshot || r.shouldSnapshot(cfg),
+
+	return &ProposeMiniblockResponse{
+		Proposal: &MiniblockProposal{
+			Hashes:            r.minipool.eventHashesAsBytes(),
+			NewMiniblockNum:   r.minipool.generation,
+			PrevMiniblockHash: r.LastBlock().Ref.Hash[:],
+			ShouldSnapshot:    req.DebugForceSnapshot || r.shouldSnapshot(cfg),
+		},
+		MissingEvents: missingEvents,
 	}, nil
 }
 
-func (r *streamViewImpl) makeMiniblockHeader(
+func (r *streamViewImpl) proposeNextMiniblock(
 	ctx context.Context,
-	proposal *MiniblockProposal,
-) (*MiniblockHeader, []*ParsedEvent, error) {
-	if r.minipool.generation != proposal.NewMiniblockNum ||
-		!bytes.Equal(proposal.PrevMiniblockHash, r.LastBlock().headerEvent.Hash[:]) {
-		return nil, nil, RiverError(
+	cfg *crypto.OnChainSettings,
+	forceSnapshot bool,
+) *mbProposal {
+	return &mbProposal{
+		newMiniblockNum:   r.minipool.generation,
+		prevMiniblockHash: r.LastBlock().headerEvent.Hash,
+		shouldSnapshot:    forceSnapshot || r.shouldSnapshot(cfg),
+		eventHashes:       r.minipool.eventHashes(),
+	}
+}
+
+type mbProposal struct {
+	newMiniblockNum   int64
+	prevMiniblockHash common.Hash
+	shouldSnapshot    bool
+	eventHashes       []common.Hash
+}
+
+func mbProposalFromProto(p *MiniblockProposal) *mbProposal {
+	hashes := make([]common.Hash, len(p.Hashes))
+	for i, h := range p.Hashes {
+		hashes[i].SetBytes(h)
+	}
+	return &mbProposal{
+		newMiniblockNum:   p.NewMiniblockNum,
+		prevMiniblockHash: common.Hash(p.PrevMiniblockHash),
+		shouldSnapshot:    p.ShouldSnapshot,
+		eventHashes:       hashes,
+	}
+}
+
+func (r *streamViewImpl) makeMiniblockCandidate(
+	ctx context.Context,
+	params *StreamCacheParams,
+	proposal *mbProposal,
+) (*MiniblockInfo, error) {
+	if r.minipool.generation != proposal.newMiniblockNum ||
+		proposal.prevMiniblockHash != r.LastBlock().headerEvent.Hash {
+		return nil, RiverError(
 			Err_STREAM_LAST_BLOCK_MISMATCH,
 			"proposal generation or hash mismatch",
 			"expected",
 			r.minipool.generation,
 			"actual",
-			proposal.NewMiniblockNum,
+			proposal.newMiniblockNum,
 		)
 	}
 
@@ -283,14 +370,14 @@ func (r *streamViewImpl) makeMiniblockHeader(
 	hashes := make([][]byte, 0, r.minipool.events.Len())
 	events := make([]*ParsedEvent, 0, r.minipool.events.Len())
 
-	for _, h := range proposal.Hashes {
-		e, ok := r.minipool.events.Get(common.BytesToHash(h))
+	for _, h := range proposal.eventHashes {
+		e, ok := r.minipool.events.Get(h)
 		if !ok {
-			return nil, nil, RiverError(
+			return nil, RiverError(
 				Err_MINIPOOL_MISSING_EVENTS,
 				"proposal event not found in minipool",
 				"hash",
-				FormatHashFromBytes(h),
+				h,
 			)
 		}
 		hashes = append(hashes, e.Hash[:])
@@ -305,7 +392,7 @@ func (r *streamViewImpl) makeMiniblockHeader(
 	if last.Header().Snapshot != nil {
 		miniblockNumOfPrevSnapshot = last.Header().MiniblockNum
 	}
-	if proposal.ShouldSnapshot {
+	if proposal.shouldSnapshot {
 		snapshot = proto.Clone(r.snapshot).(*Snapshot)
 		mlsSnapshotRequest := r.makeMlsSnapshotRequest()
 
@@ -363,7 +450,7 @@ func (r *streamViewImpl) makeMiniblockHeader(
 		}
 	}
 
-	return &MiniblockHeader{
+	header := &MiniblockHeader{
 		MiniblockNum:             nextMiniblockNum,
 		Timestamp:                NextMiniblockTimestamp(last.Header().Timestamp),
 		EventHashes:              hashes,
@@ -374,7 +461,9 @@ func (r *streamViewImpl) makeMiniblockHeader(
 		Content: &MiniblockHeader_None{
 			None: &emptypb.Empty{},
 		},
-	}, events, nil
+	}
+
+	return NewMiniblockInfoFromHeaderAndParsed(params.Wallet, header, events)
 }
 
 // copyAndApplyBlock copies the current view and applies the given miniblock to it.

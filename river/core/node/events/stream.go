@@ -520,6 +520,8 @@ func (s *streamImpl) initFromBlockchain(ctx context.Context) error {
 	return nil
 }
 
+// getViewIfLocal return stream view if stream is local, nil if stream is not local,
+// and error if stream is local and failed to load.
 // getViewIfLocal is thread-safe.
 func (s *streamImpl) getViewIfLocal(ctx context.Context) (*streamViewImpl, error) {
 	s.mu.RLock()
@@ -549,19 +551,6 @@ func (s *streamImpl) getViewIfLocal(ctx context.Context) (*streamViewImpl, error
 	return s.view(), nil
 }
 
-// GetView is thread-safe.
-func (s *streamImpl) GetView(ctx context.Context) (StreamView, error) {
-	view, err := s.getViewIfLocal(ctx)
-	// Return nil interface, if implementation is nil.
-	if err != nil {
-		return nil, err
-	}
-	if view == nil {
-		return nil, RiverError(Err_INTERNAL, "GetView: stream is not local")
-	}
-	return view, nil
-}
-
 // GetViewIfLocal is thread-safe.
 func (s *streamImpl) GetViewIfLocal(ctx context.Context) (StreamView, error) {
 	view, err := s.getViewIfLocal(ctx)
@@ -571,6 +560,29 @@ func (s *streamImpl) GetViewIfLocal(ctx context.Context) (StreamView, error) {
 	}
 	if view == nil {
 		return nil, nil
+	}
+	return view, nil
+}
+
+// getView returns stream view if stream is local, and error if stream is not local or failed to load.
+// getView is thread-safe.
+func (s *streamImpl) getView(ctx context.Context) (*streamViewImpl, error) {
+	view, err := s.getViewIfLocal(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if view == nil {
+		return nil, RiverError(Err_INTERNAL, "getView: stream is not local")
+	}
+	return view, nil
+}
+
+// GetView is thread-safe.
+func (s *streamImpl) GetView(ctx context.Context) (StreamView, error) {
+	view, err := s.getView(ctx)
+	// Return nil interface, if implementation is nil.
+	if err != nil {
+		return nil, err
 	}
 	return view, nil
 }
