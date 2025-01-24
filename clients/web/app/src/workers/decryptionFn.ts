@@ -1,8 +1,12 @@
 import {
     CryptoStore,
+    DecryptionAlgorithm,
     EncryptionDelegate,
     EncryptionDevice,
     GroupDecryption,
+    GroupEncryptionAlgorithmId,
+    HybridGroupDecryption,
+    parseGroupEncryptionAlgorithmId,
 } from '@river-build/encryption'
 
 import { EncryptedData, EncryptedDataVersion } from '@river-build/proto'
@@ -12,7 +16,7 @@ import { EncryptedContent, logNever, toDecryptedContent } from '@river-build/sdk
 globalThis.OLM_OPTIONS = {}
 // cache the crypto store and decryptor for each user
 const cryptoStoreCache = new Map<string, CryptoStore>()
-const decryptorCache = new Map<string, GroupDecryption>()
+const decryptorCache = new Map<string, Record<GroupEncryptionAlgorithmId, DecryptionAlgorithm>>()
 const log = console.debug.bind(console, 'sw:push:')
 
 export interface PlaintextDetails {
@@ -29,7 +33,11 @@ export async function decrypt(
     encryptedData: EncryptedData,
 ): Promise<PlaintextDetails | undefined> {
     const decryptor = await getDecryptor(userId, databaseName)
-    const plaintext = await decryptor.decrypt(channelId, encryptedData)
+    const algorithm = parseGroupEncryptionAlgorithmId(encryptedData.algorithm)
+    if (algorithm.kind === 'unrecognized') {
+        return undefined
+    }
+    const plaintext = await decryptor[algorithm.value].decrypt(channelId, encryptedData)
     log('decrypted plaintext', plaintext)
     // if the decryption is successful, plaintext has the string, else it's null
     const plaintextBody = plaintext
@@ -49,7 +57,7 @@ async function getDecryptor(userId: string, databaseName: string) {
         if (!cryptoStore) {
             throw new Error('Could not get crypto store')
         }
-        const decryptor = await newGroupDecryption(userId, cryptoStore)
+        const decryptor = await newGroupDecryption(cryptoStore)
         decryptorCache.set(userId, decryptor)
     }
     const decryptor = decryptorCache.get(userId)
@@ -68,13 +76,19 @@ function getCryptoStore(userId: string, databaseName: string) {
 }
 
 async function newGroupDecryption(
-    userId: string,
     cryptoStore: CryptoStore,
-): Promise<GroupDecryption> {
+): Promise<Record<GroupEncryptionAlgorithmId, DecryptionAlgorithm>> {
     const delegate = new EncryptionDelegate()
     await delegate.init()
     const encyptionDevice = new EncryptionDevice(delegate, cryptoStore)
-    return new GroupDecryption({ device: encyptionDevice })
+    return {
+        [GroupEncryptionAlgorithmId.GroupEncryption]: new GroupDecryption({
+            device: encyptionDevice,
+        }),
+        [GroupEncryptionAlgorithmId.HybridGroupEncryption]: new HybridGroupDecryption({
+            device: encyptionDevice,
+        }),
+    }
 }
 
 function extractDetails(
