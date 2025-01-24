@@ -23,6 +23,7 @@ export type ModalContainerProps = {
     rootLayer?: HTMLElement
     background?: BoxProps['background']
     asSheet?: boolean
+    sheetZIndex?: number
 }
 
 export const ModalContainer = (props: ModalContainerProps) => {
@@ -30,6 +31,15 @@ export const ModalContainer = (props: ModalContainerProps) => {
     const root = props.rootLayer ?? zLayerRoot
     const { isTouch } = useDevice()
     const { onHide, touchTitle, rightBarButton, asSheet, background, children } = props
+
+    const sheetStyles = useMemo(
+        () =>
+            Object.assign(
+                {},
+                ...(props.sheetZIndex !== undefined ? [{ zIndex: props.sheetZIndex }] : []),
+            ),
+        [props.sheetZIndex],
+    )
 
     const content = useMemo(() => {
         if (isTouch) {
@@ -53,6 +63,7 @@ export const ModalContainer = (props: ModalContainerProps) => {
                         disableScrollLocking
                         detent="content-height"
                         className={modalSheetClass}
+                        style={sheetStyles}
                         onClose={onHide}
                     >
                         <Sheet.Container>
@@ -76,7 +87,17 @@ export const ModalContainer = (props: ModalContainerProps) => {
             }
         }
         return <CenteredModalContainer {...props} />
-    }, [asSheet, background, children, isTouch, onHide, props, rightBarButton, touchTitle])
+    }, [
+        asSheet,
+        background,
+        children,
+        isTouch,
+        onHide,
+        props,
+        rightBarButton,
+        sheetStyles,
+        touchTitle,
+    ])
 
     if (!root) {
         console.error(`no root context declared for use of modal`)

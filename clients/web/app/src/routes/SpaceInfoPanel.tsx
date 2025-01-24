@@ -501,7 +501,7 @@ const TownTreasury = (props: ContractProps) => {
                             ETH
                         </Text>
                     </Text>
-                    <Icon type="base" />
+                    <Icon type="base" color="coinbaseBlue" />
                 </Stack>
             )}
         </ContractWrap>

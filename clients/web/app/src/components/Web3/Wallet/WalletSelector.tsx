@@ -164,7 +164,7 @@ function WalletsOption(props: {
             {address !== LINK_WALLET && (
                 <Stack horizontal gap="sm">
                     {balance.data?.formatted ?? 0} {balance.data?.symbol ?? ''}
-                    <Icon type="base" size="square_sm" />
+                    <Icon type="base" size="square_sm" color="coinbaseBlue" />
                 </Stack>
             )}
         </Stack>

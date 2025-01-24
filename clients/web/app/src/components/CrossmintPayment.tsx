@@ -112,19 +112,43 @@ const CrossmintPaymentContent = ({
         return () => clearTimeout(timer)
     }, [])
 
+    const isDark = theme === 'dark'
+
+    const isConfirmV2 = env.VITE_ENABLE_CONFIRM_V2
+
+    const backgroundPrimary = useMemo(() => {
+        if (isConfirmV2) {
+            return isDark
+                ? _isTouch
+                    ? Figma.DarkMode.Level1
+                    : Figma.DarkMode.Level3
+                : Figma.LightMode.Level2
+        }
+        return isDark ? Figma.DarkMode.Level2 : Figma.LightMode.Level2
+    }, [isDark, _isTouch, isConfirmV2])
+
+    const border = useMemo(() => {
+        if (isConfirmV2) {
+            return isDark
+                ? _isTouch
+                    ? Figma.DarkMode.Level3
+                    : Figma.DarkMode.Level4
+                : Figma.LightMode.Level3
+        }
+        return isDark ? Figma.DarkMode.Level3 : Figma.LightMode.Level3
+    }, [isConfirmV2, isDark, _isTouch])
+
     if (!contractAddress || !townWalletAddress) {
         return null
     }
 
-    const isDark = theme === 'dark'
-
     return (
         <Box
-            background="level1"
+            background={isConfirmV2 ? undefined : 'level1'}
             paddingTop="sm"
             position="relative"
             minHeight="400"
-            width={!_isTouch ? '400' : undefined}
+            width={isConfirmV2 ? undefined : !_isTouch ? '400' : undefined}
         >
             {isLoading ? (
                 <Stack centerContent height="250">
@@ -136,9 +160,7 @@ const CrossmintPaymentContent = ({
                         variables: {
                             fontFamily: 'Inter, system-ui, sans-serif',
                             colors: {
-                                backgroundPrimary: isDark
-                                    ? Figma.DarkMode.Level2
-                                    : Figma.LightMode.Level2,
+                                backgroundPrimary,
                                 textPrimary: isDark ? Figma.Colors.White : Figma.Colors.Black,
                                 textSecondary: isDark
                                     ? Figma.DarkMode.Secondary
@@ -156,7 +178,7 @@ const CrossmintPaymentContent = ({
                                         ? Figma.DarkMode.Level2
                                         : Figma.LightMode.Level2,
                                     text: isDark ? Figma.Colors.White : Figma.Colors.Black,
-                                    border: isDark ? Figma.DarkMode.Level3 : Figma.LightMode.Level3,
+                                    border,
                                     placeholder: isDark
                                         ? Figma.DarkMode.Secondary
                                         : Figma.LightMode.Secondary,

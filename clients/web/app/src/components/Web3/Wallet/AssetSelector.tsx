@@ -154,7 +154,7 @@ export function EthDetail(props: { fromBalance?: ReturnType<typeof useBalance>['
     const { fromBalance } = props
     return (
         <Stack horizontal alignItems="center" gap="sm">
-            <Icon type="base" size="square_x5" />
+            <Icon type="base" size="square_x5" color="coinbaseBlue" />
             <Stack gap="sm">
                 <Text>{fromBalance ? fromBalance.formatted : ''} ETH</Text>
                 <Text size="sm" color="gray2">

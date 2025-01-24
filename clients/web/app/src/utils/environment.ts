@@ -99,6 +99,7 @@ const envSchema = z.object({
     VITE_TIPS_ENABLED: boolish.default(false),
     VITE_TIPS_IN_ETH: boolish.default(false),
     VITE_TOKEN_PRICES_API_URL: z.string().url().optional(),
+    VITE_ENABLE_CONFIRM_V2: boolish.default(false),
 })
 
 const parsed = envSchema.safeParse(import.meta.env)
