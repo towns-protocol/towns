@@ -51,11 +51,20 @@ const Gradients = {
         WebkitTextFillColor: 'transparent',
     },
     GreenBlue: {
-        backgroundImage: 'linear-gradient(90deg, #21E078 0%, #1FDBF1 100%)',
-        color: 'transparent',
-        backgroundClip: 'text',
-        WebkitBackgroundClip: 'text',
-        WebkitTextFillColor: 'transparent',
+        darkMode: {
+            backgroundImage: 'linear-gradient(90deg, #21E078 0%, #1FDBF1 100%)',
+            color: 'transparent',
+            backgroundClip: 'text',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+        },
+        lightMode: {
+            backgroundImage: 'linear-gradient(90deg, #0DB3C6 0%, #0BBD5C 100%)',
+            color: 'transparent',
+            backgroundClip: 'text',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+        },
     },
 } as const
 
@@ -96,7 +105,7 @@ const light = (() => {
         inverted: Figma.DarkMode.Primary,
         onTone: Figma.Colors.Black,
         rainbow: Gradients.Rainbow,
-        greenBlue: Gradients.GreenBlue,
+        greenBlue: Gradients.GreenBlue.lightMode,
         coinbaseBlue: Figma.Colors.CoinbaseBlue,
     }
 
@@ -146,7 +155,7 @@ const dark = (() => {
         inverted: Figma.DarkMode.Level1,
         onTone: Figma.Colors.Black,
         rainbow: Gradients.Rainbow,
-        greenBlue: Gradients.GreenBlue,
+        greenBlue: Gradients.GreenBlue.darkMode,
         coinbaseBlue: Figma.Colors.CoinbaseBlue,
     } as const
 

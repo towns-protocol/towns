@@ -96,7 +96,7 @@ export function TownsWallet() {
                     >
                         <Box direction="column" alignItems="center" gap="sm">
                             <Icon type="plus" size="square_sm" color="cta1" />
-                            <Text size="md" color="greenBlue" paddingBottom="xs">
+                            <Text size="md" color="greenBlue" paddingBottom="xs" paddingTop="xxs">
                                 Deposit
                             </Text>
                         </Box>
@@ -112,7 +112,7 @@ export function TownsWallet() {
                     >
                         <Box direction="column" alignItems="center" gap="xs">
                             <Icon type="arrowRightUp" size="square_md" color="cta1" />
-                            <Text size="md" color="greenBlue" paddingBottom="xs">
+                            <Text size="md" color="greenBlue" paddingBottom="xs" paddingTop="xxs">
                                 Send
                             </Text>
                         </Box>
@@ -130,9 +130,9 @@ export function TownsWallet() {
                             {!copied ? (
                                 <Icon type="copy" size="square_sm" color="cta1" />
                             ) : (
-                                <Icon type="check" size="square_sm" color="positive" />
+                                <Icon type="check" size="square_sm" color="cta1" />
                             )}
-                            <Text size="md" color="greenBlue" paddingBottom="xs">
+                            <Text size="md" color="greenBlue" paddingBottom="xs" paddingTop="xxs">
                                 {copied ? 'Copied!' : 'Copy'}
                             </Text>
                         </Box>
