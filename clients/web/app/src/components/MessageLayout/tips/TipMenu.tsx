@@ -43,7 +43,7 @@ const tipOptions: TipOption[] = IS_ETH_MODE
           },
       ]
 
-const BUTTON_HEIGHT = '40px'
+const BUTTON_HEIGHT = '32px'
 const MODAL_WIDTH = '200px'
 
 const customTipSchema = z.object({
@@ -171,7 +171,7 @@ export function TipMenu(props: {
                         {tipOptions.map((tip) => (
                             <Button
                                 key={tip.ethAmount || tip.amountInCents}
-                                rounded="md"
+                                rounded="full"
                                 size="button_sm"
                                 style={{ height: BUTTON_HEIGHT }}
                                 type="button"
@@ -186,7 +186,7 @@ export function TipMenu(props: {
                         <Box position="relative">
                             <Box
                                 background="level3"
-                                rounded="md"
+                                rounded="full"
                                 padding="sm"
                                 style={{ cursor: 'text', height: BUTTON_HEIGHT }}
                                 onClick={(e) => {
@@ -209,9 +209,9 @@ export function TipMenu(props: {
                                         background="none"
                                         style={{
                                             padding: 0,
-                                            height: '25px',
+                                            height: '20px',
                                             flex: 1,
-                                            fontSize: '16px',
+                                            fontSize: '14px',
                                             width: '75%',
                                         }}
                                         type="number"
@@ -232,7 +232,10 @@ export function TipMenu(props: {
                                             }
                                         }}
                                     />
-                                    <Text style={{ minWidth: '35px', textAlign: 'left' }}>
+                                    <Text
+                                        fontSize="sm"
+                                        style={{ minWidth: '35px', textAlign: 'left' }}
+                                    >
                                         {IS_ETH_MODE ? 'ETH' : 'USD'}
                                     </Text>
                                 </Stack>
@@ -240,7 +243,7 @@ export function TipMenu(props: {
                         </Box>
                         <Button
                             tone="cta1"
-                            rounded="md"
+                            rounded="full"
                             size="button_sm"
                             type="submit"
                             style={{ height: BUTTON_HEIGHT }}

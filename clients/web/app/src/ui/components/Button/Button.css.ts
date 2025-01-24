@@ -106,6 +106,9 @@ export const buttonStyle = recipe({
             lg: {
                 borderRadius: vars.borderRadius.lg,
             },
+            full: {
+                borderRadius: vars.borderRadius.full,
+            },
         },
     },
 })
