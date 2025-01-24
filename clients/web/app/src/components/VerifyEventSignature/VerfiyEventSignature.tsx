@@ -30,7 +30,7 @@ const VerifyEventSignatureContent = () => {
     const [isLoading, setIsLoading] = useState(true)
     const [event, setEvent] = useState<StreamTimelineEvent>()
     const [error, setError] = useState<string>()
-    const [encryptionSessionId, setEncryptionSessionId] = useState<string>()
+    const [encryptionSessionInfo, setEncryptionSessionInfo] = useState<string[]>()
     const [recoveredPublicKey, setRecoveredPublicKey] = useState<Uint8Array>()
     const [recoveredPublicKeyFromDelegateSig, setRecoveredPublicKeyFromDelegateSig] =
         useState<Uint8Array>()
@@ -75,17 +75,17 @@ const VerifyEventSignatureContent = () => {
                     event.remoteEvent?.event.payload.value.content.case === 'message'
                 ) {
                     const encryptedData = event.remoteEvent.event.payload.value.content.value
-                    if (encryptedData.sessionId && encryptedData.sessionId.length > 0) {
-                        setEncryptionSessionId(
-                            `EncryptedData.sessionId: ${encryptedData.sessionId}`,
-                        )
-                    } else if (encryptedData.sessionIdBytes) {
-                        setEncryptionSessionId(
-                            `EncryptedData.sessionIdBytes: ${bin_toHexString(
-                                encryptedData.sessionIdBytes,
-                            )}`,
-                        )
-                    }
+                    const sessionId =
+                        encryptedData.sessionId && encryptedData.sessionId.length > 0
+                            ? `EncryptedData.sessionId: ${encryptedData.sessionId}`
+                            : `EncryptedData.sessionIdBytes: ${bin_toHexString(
+                                  encryptedData.sessionIdBytes,
+                              )}`
+                    setEncryptionSessionInfo([
+                        sessionId,
+                        `EncryptedData.algorithm ${encryptedData.algorithm}`,
+                        `EncryptedData.version ${encryptedData.version}`,
+                    ])
                 }
 
                 const recoveredPubKeyRaw = riverRecoverPubKey(
@@ -143,11 +143,18 @@ const VerifyEventSignatureContent = () => {
                     <Paragraph color="gray2" size="sm" fontWeight="medium">
                         eventId: {eventId}
                     </Paragraph>
-                    {encryptionSessionId && (
-                        <Paragraph color="gray2" size="sm" fontWeight="medium">
-                            {encryptionSessionId}
-                        </Paragraph>
-                    )}
+                    {encryptionSessionInfo &&
+                        encryptionSessionInfo.map((info, index) => (
+                            <Paragraph
+                                color="gray2"
+                                size="sm"
+                                fontWeight="medium"
+                                // eslint-disable-next-line react/no-array-index-key
+                                key={`esi_${index}`}
+                            >
+                                {info}
+                            </Paragraph>
+                        ))}
                     {error && (
                         <Paragraph color="gray2" size="sm" fontWeight="medium">
                             error: {error}
