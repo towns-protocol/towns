@@ -39,7 +39,7 @@ export const NodeStatusPanel = () => {
         ref.current?.style.setProperty('--scroll-top', `${Math.max(0, scrollTop - 50) / 250}`)
     }, [])
     return (
-        <Panel label="River Network" style={{ userSelect: 'none' }} onScroll={onScroll}>
+        <Panel label="Towns Network" style={{ userSelect: 'none' }} onScroll={onScroll}>
             <Box centerContent ref={ref}>
                 <Box width="300" height="300" />
                 <Box

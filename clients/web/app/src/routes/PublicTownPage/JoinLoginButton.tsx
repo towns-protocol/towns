@@ -129,7 +129,7 @@ export function JoinLoginButton({
     const content = () => {
         if (isEvaluating) {
             return (
-                <LoadingStatusMessage spinner background="level2" message="Connecting to River" />
+                <LoadingStatusMessage spinner background="level2" message="Connecting to Towns" />
             )
         }
         if (!isAuthenticated) {
@@ -208,7 +208,7 @@ function useWatchEvaluatingCredentialsAuthStatus() {
                     return
                 }
                 const message =
-                    '[useWatchEvaluatingCredentialsAuthStatus] timeout connecting to River'
+                    '[useWatchEvaluatingCredentialsAuthStatus] timeout connecting to Towns'
                 trackError({
                     error: new Error(message),
                     category: 'river',

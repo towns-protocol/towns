@@ -63,7 +63,7 @@ export const SetupAnimation = (props: Props) => {
         () =>
             mode === AppProgressState.InitializingWorkspace
                 ? [
-                      'Connecting to River Network',
+                      'Connecting to Towns Network',
                       'Downloading message streams',
                       'Setting up your towns',
                   ]
@@ -72,7 +72,7 @@ export const SetupAnimation = (props: Props) => {
                       mode === AppProgressState.CreatingDM
                           ? 'Creating encrypted direct message'
                           : 'Creating encrypted group',
-                      'Connecting to River Network',
+                      'Connecting to Towns Network',
                       'Sharing encryption keys',
                   ]
                 : [],
@@ -103,7 +103,7 @@ const JoiningChecklist = () => {
     const steps = useMemo(
         () => [
             'Minting town membership',
-            'Connecting to River Network',
+            'Connecting to Towns Network',
             'Downloading message streams',
         ],
         [],

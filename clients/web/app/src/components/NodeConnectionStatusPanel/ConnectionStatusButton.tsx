@@ -45,7 +45,7 @@ export const NodeStatusButton = () => {
                 hoverable
                 centerContent
                 cursor="pointer"
-                tooltip={isActive ? undefined : 'River Network'}
+                tooltip={isActive ? undefined : 'Towns Network'}
                 tooltipOptions={{ placement: 'horizontal' }}
                 padding="line"
                 background="level2"

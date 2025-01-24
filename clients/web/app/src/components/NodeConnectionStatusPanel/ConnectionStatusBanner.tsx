@@ -18,7 +18,7 @@ export const ConnectionStatusBanner = ({ status }: Props) => {
         <Banner>
             <Icon type="check" color="positive" size="square_xs" insetLeft="xxs" />
             <Text truncate color={color}>
-                Connected to River Network Node.
+                Connected to Towns Network Node.
             </Text>
         </Banner>
     ) : status === 'syncing' ? (
