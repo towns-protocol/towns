@@ -62,20 +62,14 @@ export const AllRoutes = React.memo(() => {
 const ResponsiveOutlet = () => {
     const { isTouch } = useDevice()
 
-    return (
-        <Box
-            className={isTouch ? mobileAppClass : undefined}
-            height="100vh"
-            width="100vw"
-            position="fixed"
-            overflow="hidden"
-        >
-            <Stack height="100%">
-                <Box grow>
-                    <Outlet />
-                </Box>
-                {isTouch && <AppStoreBanner />}
-            </Stack>
+    return isTouch ? (
+        <Box className={mobileAppClass}>
+            <AppStoreBanner />
+            <Outlet />
         </Box>
+    ) : (
+        <Stack grow color="default" minHeight="100vh">
+            <Outlet />
+        </Stack>
     )
 }
