@@ -798,6 +798,11 @@ async function tryDecryptEvent(
     }
 
     const { event, channelId } = notification.content
+    const encryptedData = getEncryptedData(event)
+    if (!encryptedData) {
+        return getPlaintextDetailsForNonEncryptedEvents(event)
+    }
+
     let plaintext: PlaintextDetails | undefined
     let cancelTimeout: () => void
 
@@ -820,7 +825,7 @@ async function tryDecryptEvent(
         encryptedData: EncryptedData,
     ) {
         try {
-            log('tryDecryptEvent', event)
+            log('tryDecryptEventPromise', event)
             plaintext = await decrypt(userId, databaseName, channelId, kind, encryptedData)
             log('decrypted plaintext', plaintext)
             return plaintext
@@ -833,10 +838,6 @@ async function tryDecryptEvent(
     }
 
     try {
-        const encryptedData = getEncryptedData(event)
-        if (!encryptedData) {
-            return getPlaintextDetailsForNonEncryptedEvents(event)
-        }
         await Promise.race([decryptPromise(encryptedData.kind, encryptedData.data), timeoutPromise])
         if (plaintext) {
             plaintext.refEventId = encryptedData.data.refEventId
