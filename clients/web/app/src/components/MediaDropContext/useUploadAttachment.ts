@@ -7,8 +7,8 @@ import { refreshSpaceCache, refreshUserImageCache } from 'api/lib/fetchImage'
 import { isImageMimeType } from 'utils/isMediaMimeType'
 
 const CHUNK_SIZE = 500_000
-const MAX_THUMBNAIL_WIDTH = 30 // pixels
-const MAX_THUMBNAIL_SIZE = 0.003 // mb
+const MAX_THUMBNAIL_WIDTH = 20 // pixels
+const MAX_THUMBNAIL_SIZE = 0.0003 // 300 bytes
 
 export type EncryptionMetadataForUpload = {
     encryptionResult: EncryptionResult
