@@ -1,6 +1,6 @@
 import { EncryptedData, StreamEvent } from '@river-build/proto'
 import { convert } from 'html-to-text'
-import { EncryptedContent } from '@river-build/sdk'
+import { EncryptedContent, userIdFromAddress } from '@river-build/sdk'
 import { bin_toHexString } from '@river-build/dlog'
 import { PlaintextDetails } from './decryptionFn'
 
@@ -54,6 +54,34 @@ export function getPlaintextDetailsForNonEncryptedEvents(
                                 reaction: undefined,
                                 refEventId: messageId ? bin_toHexString(messageId) : undefined,
                             }
+                        }
+                        default:
+                            // ignoring other transaction content types
+                            return undefined
+                    }
+                default:
+                    // ignoring other member content types
+                    return undefined
+            }
+        default:
+            // ignoring other event types
+            return undefined
+    }
+}
+
+export function getSenderIdOverride(data?: StreamEvent): string | undefined {
+    if (!data) {
+        return undefined
+    }
+    switch (data.payload.case) {
+        case 'memberPayload':
+            switch (data.payload.value.content.case) {
+                case 'memberBlockchainTransaction':
+                    switch (data.payload.value.content.value.transaction?.content.case) {
+                        case 'tip': {
+                            return userIdFromAddress(
+                                data.payload.value.content.value.fromUserAddress,
+                            )
                         }
                         default:
                             // ignoring other transaction content types

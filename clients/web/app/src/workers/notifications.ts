@@ -32,6 +32,7 @@ import { env } from '../utils/environment'
 import {
     getEncryptedData,
     getPlaintextDetailsForNonEncryptedEvents,
+    getSenderIdOverride,
     htmlToText,
 } from './data_transforms'
 import { NotificationRelEntry, getPathnameWithParams, getUrlWithParams } from '../data/rel'
@@ -668,7 +669,9 @@ async function getNotificationContent(
             ? notificationStore?.getDmChannel(notification.content.channelId)
             : undefined,
         notificationStore?.getChannel(notification.content.channelId),
-        notificationStore?.getUser(notification.content.senderId),
+        notificationStore?.getUser(
+            getSenderIdOverride(notification.content.event) ?? notification.content.senderId,
+        ),
     ])
     try {
         townName = space?.name
