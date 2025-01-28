@@ -3,6 +3,7 @@ import { Address } from 'use-towns-client'
 import { Box, Button, Icon, Paragraph, Text } from '@ui'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { useBalance } from 'hooks/useBalance'
+import { env } from 'utils'
 import { WalletWithBalance } from '../../Wallet/WalletWithBalance'
 import { useUserOpTxModalContext } from './UserOpTxModalContext'
 import { CopyWalletAddressButton } from '../../GatedTownModal/Buttons'
@@ -56,10 +57,12 @@ export function InsufficientBalanceForPayWithEth(props: {
                     onCopyClick={onCopyClick}
                 />
             </Box>
-            <Button rounded="lg" tone="cta1" onClick={() => setView('depositEth')}>
-                <Icon type="plus" />
-                Deposit ETH
-            </Button>
+            {env.VITE_ENABLE_CONFIRM_FUND_WALLET && (
+                <Button rounded="lg" tone="cta1" onClick={() => setView('depositEth')}>
+                    <Icon type="plus" />
+                    Deposit ETH
+                </Button>
+            )}
 
             <CopyWalletAddressButton
                 address={smartAccountAddress}

@@ -90,7 +90,7 @@ export function StandardUseropTx({
         currOpDecodedCallData,
     })
 
-    const { gasInEth, currOpValueInEth, totalInEth } = usePriceBreakdown({
+    const { gasInEth, currOpValueInEth, totalInEth, gasCost } = usePriceBreakdown({
         gasLimit,
         preVerificationGas,
         verificationGasLimit,
@@ -174,9 +174,11 @@ export function StandardUseropTx({
                         <Box centerContent gap>
                             <ChargesSummary
                                 spaceId={spaceId}
+                                gasCost={gasCost}
                                 gasInEth={gasInEth}
                                 totalInEth={totalInEth.truncated}
                                 currOpValueInEth={currOpValueInEth}
+                                value={currOpValue}
                             />
 
                             <RejectedSponsorshipMessage />

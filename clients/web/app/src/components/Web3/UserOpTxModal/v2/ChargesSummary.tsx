@@ -1,19 +1,22 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { useProtocolFee } from 'use-towns-client'
 import { selectUserOpsByAddress, userOpsStore } from '@towns/userops'
+import { BigNumber, BigNumberish } from 'ethers'
 import { Box, Heading, MotionIcon, Text } from '@ui'
 import { Accordion, HeaderProps as AccordionHeaderProps } from 'ui/components/Accordion/Accordion'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
-import { formatUnits } from 'hooks/useBalance'
+import { formatUnits, formatUnitsToFixedLength } from 'hooks/useBalance'
 import { useMyAbstractAccountAddress } from './hooks/useMyAbstractAccountAddress'
 
 export function ChargesSummary(props: {
     gasInEth: string
+    gasCost: BigNumber
     currOpValueInEth: string | undefined
     totalInEth: string
     spaceId: string | undefined
+    value: BigNumberish | undefined
 }) {
-    const { gasInEth, totalInEth, spaceId } = props
+    const { gasInEth, totalInEth, spaceId, value, gasCost } = props
     const { data: protocolFee, isLoading: isLoadingProtocolFee } = useProtocolFee({ spaceId })
     const myAbstractAccountAddress = useMyAbstractAccountAddress().data
     const currOpDecodedCallData = userOpsStore(
@@ -24,6 +27,15 @@ export function ChargesSummary(props: {
         currOpDecodedCallData?.type === 'joinSpace' ||
         currOpDecodedCallData?.type === 'joinSpace_linkWallet'
 
+    const isPaidTown = !!value && isJoinSpace && BigNumber.from(value).toBigInt() > 0n
+
+    const gasWithProtocolFee: string = useMemo(() => {
+        if (isPaidTown && protocolFee) {
+            return formatUnitsToFixedLength(gasCost.toBigInt() + protocolFee)
+        }
+        return gasInEth
+    }, [isPaidTown, gasInEth, gasCost, protocolFee])
+
     return (
         <Box centerContent gap="md" width="100%">
             <Heading level={2}>{totalInEth + ' ETH'}</Heading>
@@ -31,7 +43,7 @@ export function ChargesSummary(props: {
                 <Accordion
                     title="Includes fees"
                     background="none"
-                    header={(props) => <FeesAccordionHeader {...props} fees={gasInEth} />}
+                    header={(props) => <FeesAccordionHeader {...props} fees={gasWithProtocolFee} />}
                 >
                     <Box color="gray2" gap="lg" paddingBottom="md">
                         <Box horizontal width="100%" justifyContent="spaceBetween">
@@ -43,7 +55,7 @@ export function ChargesSummary(props: {
                             </Text>
                             <Text> {gasInEth + ' ETH'}</Text>
                         </Box>
-                        {isJoinSpace && (
+                        {isPaidTown && (
                             <Box horizontal width="100%" justifyContent="spaceBetween">
                                 <Text>Protocol</Text>
                                 {isLoadingProtocolFee ? (
