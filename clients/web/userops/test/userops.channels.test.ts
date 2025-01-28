@@ -22,7 +22,7 @@ test('can create and update channel', async () => {
     )
     await alice.ready
 
-    const { spaceDapp, userOps } = createSpaceDappAndUserops(alice)
+    const { spaceDapp, userOps } = await createSpaceDappAndUserops(alice)
 
     const createSpaceOp = await createUngatedSpace({
         userOps,
@@ -113,7 +113,7 @@ test('can create a channel with permission overrides', async () => {
     )
     await bob.ready
 
-    const { spaceDapp, userOps } = createSpaceDappAndUserops(alice)
+    const { spaceDapp, userOps } = await createSpaceDappAndUserops(alice)
 
     const createSpaceOp = await createUngatedSpace({
         userOps,
@@ -292,8 +292,8 @@ test("can create a channel when roles is gated by user's smart account", async (
     )
     await bob.ready
 
-    const { spaceDapp, userOps: userOpsAlice } = createSpaceDappAndUserops(alice)
-    const { userOps: userOpsBob } = createSpaceDappAndUserops(bob)
+    const { spaceDapp, userOps: userOpsAlice } = await createSpaceDappAndUserops(alice)
+    const { userOps: userOpsBob } = await createSpaceDappAndUserops(bob)
 
     const createSpaceOp = await createUngatedSpace({
         userOps: userOpsAlice,

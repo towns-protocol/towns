@@ -26,8 +26,8 @@ services:
       - "--mine"
       - "--networkid=31337"
       - "--dev"
-      # interval mining 1 second
-      - "--dev.period=1"
+      # interval mining 2 seconds
+      - "--dev.period=${BASE_BLOCK_TIME:-2}"
       - "--allow-insecure-unlock"
       - "--rpc.allow-unprotected-txs"
       - "--miner.gaslimit=50000000"

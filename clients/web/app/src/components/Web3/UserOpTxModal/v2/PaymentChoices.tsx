@@ -22,11 +22,11 @@ export function PaymentChoices(props: {
     })
     const myAbstractAccountAddress = useMyAbstractAccountAddress().data
     const currOpDecodedCallData = userOpsStore(
-        (s) => selectUserOpsByAddress(myAbstractAccountAddress, s)?.currOpDecodedCallData,
+        (s) => selectUserOpsByAddress(myAbstractAccountAddress, s)?.current?.decodedCallData,
     )
     const isJoinSpace =
-        currOpDecodedCallData?.type === 'joinSpace' ||
-        currOpDecodedCallData?.type === 'joinSpace_linkWallet'
+        currOpDecodedCallData?.functionHash === 'joinSpace' ||
+        currOpDecodedCallData?.functionHash === 'joinSpace_linkWallet'
     const setPromptResponse = userOpsStore((s) => s.setPromptResponse)
     const confirmUserOp = () => setPromptResponse(myAbstractAccountAddress, 'confirm')
     const { clickedPayWithEth } = useJoinFunnelAnalytics()

@@ -3,6 +3,7 @@ env:
     FOUNDRY_VERSION: nightly
     RIVER_BLOCK_TIME: 1
     BASE_EXECUTION_CLIENT: geth_dev
+    BASE_BLOCK_TIME: 2
 
 on:
     pull_request:

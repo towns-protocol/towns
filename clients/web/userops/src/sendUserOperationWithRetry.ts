@@ -3,24 +3,27 @@ import {
     errorToCodeException,
     matchGasTooLowError,
     matchPrivyUnknownConnectorError,
+    matchReplacementUnderpriced,
 } from './errors'
 import { datadogLogs } from '@datadog/browser-logs'
 import { TownsUserOpClient } from './TownsUserOpClient'
 import { TownsSimpleAccount } from './TownsSimpleAccount'
 import { userOpsStore } from './userOpsStore'
+import { IUserOperation } from 'userop'
 
 export const sendUserOperationWithRetry = async (args: {
     userOpClient: TownsUserOpClient
     simpleAccount: TownsSimpleAccount
+    onBuild?: (op: IUserOperation) => void
     retryCount?: number
-    skipPromptUserOnPMRejectedOp?: boolean
 }) => {
-    const { userOpClient, simpleAccount, retryCount, skipPromptUserOnPMRejectedOp } = args
+    const { userOpClient, simpleAccount, retryCount } = args
     const { setOperationAttempt, setRetryDetails } = userOpsStore.getState()
 
     let attempt = 0
     let shouldTry = true
     let _error: CodeException | undefined = undefined
+    const waitTime = userOpClient.waitIntervalMs
 
     while (shouldTry && attempt < (retryCount ?? 3)) {
         try {
@@ -37,6 +40,7 @@ export const sendUserOperationWithRetry = async (args: {
             const res = await userOpClient.sendUserOperation(simpleAccount, {
                 onBuild: (op) => {
                     console.log('[UserOperations] Signed UserOperation:', op)
+                    args.onBuild?.(op)
                 },
             })
             console.log('[UserOperations] userOpHash:', res.userOpHash)
@@ -44,6 +48,7 @@ export const sendUserOperationWithRetry = async (args: {
         } catch (error) {
             const matchPrivyError = matchPrivyUnknownConnectorError(error)
             const matchGasError = matchGasTooLowError(error)
+            const replacementUnderpriced = matchReplacementUnderpriced(error)
 
             if (matchPrivyError) {
                 const { error: privyError } = matchPrivyError
@@ -60,6 +65,17 @@ export const sendUserOperationWithRetry = async (args: {
                 const delay = 2_000 * attempt
                 console.warn(`Unknown connector error. Retry attempt ${attempt} after ${delay}ms`)
                 await new Promise((resolve) => setTimeout(resolve, delay))
+                continue
+            } else if (replacementUnderpriced) {
+                const { error: replacementUnderpricedError, type } = replacementUnderpriced
+                _error = replacementUnderpricedError
+                setOperationAttempt(simpleAccount.getSenderAddress(), attempt++)
+                setRetryDetails(simpleAccount.getSenderAddress(), {
+                    type: 'replacementUnderpriced',
+                    data: type,
+                })
+
+                await new Promise((resolve) => setTimeout(resolve, waitTime))
                 continue
             }
             // if any gas too low errors, retry
@@ -83,7 +99,7 @@ export const sendUserOperationWithRetry = async (args: {
                 })
                 await new Promise((resolve) => setTimeout(resolve, 500))
                 // this is a paid op. just retry until the user dismisses
-                if (simpleAccount.getPaymasterAndData() === '0x' && !skipPromptUserOnPMRejectedOp) {
+                if (simpleAccount.getPaymasterAndData() === '0x') {
                     continue
                 }
 

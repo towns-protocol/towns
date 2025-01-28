@@ -18,7 +18,7 @@ test('can transfer eth to given address', async () => {
     const bundlerKey = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
     await alice.ready
 
-    const { spaceDapp, userOps: userOpsAlice } = createSpaceDappAndUserops(alice)
+    const { spaceDapp, userOps: userOpsAlice } = await createSpaceDappAndUserops(alice)
     const bundlerWallet = new Wallet(bundlerKey).connect(alice)
 
     let aaAddress = await userOpsAlice.getAbstractAccountAddress({
@@ -53,7 +53,7 @@ test('can transfer max eth to given address', async () => {
     const bundlerKey = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
     await alice.ready
 
-    const { spaceDapp, userOps: userOpsAlice } = createSpaceDappAndUserops(alice)
+    const { spaceDapp, userOps: userOpsAlice } = await createSpaceDappAndUserops(alice)
     const bundlerWallet = new Wallet(bundlerKey).connect(alice)
 
     let aaAddress = await userOpsAlice.getAbstractAccountAddress({
@@ -99,7 +99,7 @@ test('cannot transfer eth if value is less than gas cost', async () => {
     const bundlerKey = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
     await alice.ready
 
-    const { spaceDapp, userOps: userOpsAlice } = createSpaceDappAndUserops(alice)
+    const { spaceDapp, userOps: userOpsAlice } = await createSpaceDappAndUserops(alice)
     const bundlerWallet = new Wallet(bundlerKey).connect(alice)
 
     let aaAddress = await userOpsAlice.getAbstractAccountAddress({

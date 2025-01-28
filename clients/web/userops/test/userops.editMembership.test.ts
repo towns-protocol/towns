@@ -33,7 +33,7 @@ test('should update ungated minter role to gated', async () => {
     )
     await alice.ready
 
-    const { spaceDapp, userOps } = createSpaceDappAndUserops(alice)
+    const { spaceDapp, userOps } = await createSpaceDappAndUserops(alice)
 
     const createSpaceOp = await createUngatedSpace({
         userOps,
@@ -107,7 +107,7 @@ test('should update gated minter role to everyone', async () => {
     )
     await alice.ready
 
-    const { spaceDapp, userOps } = createSpaceDappAndUserops(alice)
+    const { spaceDapp, userOps } = await createSpaceDappAndUserops(alice)
 
     const createSpaceOp = await createGatedSpace({
         userOps,
@@ -176,7 +176,7 @@ test('should update "free" paid space to paid space', async () => {
     )
     await alice.ready
 
-    const { spaceDapp, userOps } = createSpaceDappAndUserops(alice)
+    const { spaceDapp, userOps } = await createSpaceDappAndUserops(alice)
 
     const sendSpy = vi.spyOn(userOps, 'sendUserOp')
 
@@ -260,7 +260,7 @@ test('should update membership price on a paid space', async () => {
     )
     await alice.ready
 
-    const { spaceDapp, userOps } = createSpaceDappAndUserops(alice)
+    const { spaceDapp, userOps } = await createSpaceDappAndUserops(alice)
 
     const sendSpy = vi.spyOn(userOps, 'sendUserOp')
 
@@ -336,7 +336,7 @@ test('should update limit on the membership', async () => {
     )
     await alice.ready
 
-    const { spaceDapp, userOps } = createSpaceDappAndUserops(alice)
+    const { spaceDapp, userOps } = await createSpaceDappAndUserops(alice)
 
     const sendSpy = vi.spyOn(userOps, 'sendUserOp')
 

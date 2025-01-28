@@ -40,7 +40,7 @@ test('can transfer ERC-721 to given address', async () => {
     const bundlerKey = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
     await alice.ready
 
-    const { spaceDapp, userOps: userOpsAlice } = createSpaceDappAndUserops(alice)
+    const { spaceDapp, userOps: userOpsAlice } = await createSpaceDappAndUserops(alice)
     const bundlerWallet = new Wallet(bundlerKey).connect(alice)
     const factory = new ContractFactory(MockERC721A.abi, MockERC721A.bytecode.object, bundlerWallet)
     const nftFactory = await factory.deploy()
@@ -87,7 +87,7 @@ test('can transfer ERC-1155 to given address', async () => {
     const bundlerKey = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
     await alice.ready
 
-    const { spaceDapp, userOps: userOpsAlice } = createSpaceDappAndUserops(alice)
+    const { spaceDapp, userOps: userOpsAlice } = await createSpaceDappAndUserops(alice)
     const bundlerWallet = new Wallet(bundlerKey).connect(alice)
     const factory = new ContractFactory(
         MockERC1155.abi as unknown as ContractInterface,

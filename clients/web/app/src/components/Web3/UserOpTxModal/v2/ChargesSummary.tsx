@@ -20,12 +20,12 @@ export function ChargesSummary(props: {
     const { data: protocolFee, isLoading: isLoadingProtocolFee } = useProtocolFee({ spaceId })
     const myAbstractAccountAddress = useMyAbstractAccountAddress().data
     const currOpDecodedCallData = userOpsStore(
-        (s) => selectUserOpsByAddress(myAbstractAccountAddress, s)?.currOpDecodedCallData,
+        (s) => selectUserOpsByAddress(myAbstractAccountAddress, s)?.current?.decodedCallData,
     )
 
     const isJoinSpace =
-        currOpDecodedCallData?.type === 'joinSpace' ||
-        currOpDecodedCallData?.type === 'joinSpace_linkWallet'
+        currOpDecodedCallData?.functionHash === 'joinSpace' ||
+        currOpDecodedCallData?.functionHash === 'joinSpace_linkWallet'
 
     const isPaidTown = !!value && isJoinSpace && BigNumber.from(value).toBigInt() > 0n
 

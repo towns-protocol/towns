@@ -23,8 +23,8 @@ test('space ownercan ban and unban', async () => {
     )
     await bob.ready
 
-    const { spaceDapp, userOps: userOpsAlice } = createSpaceDappAndUserops(alice)
-    const { userOps: userOpsBob } = createSpaceDappAndUserops(bob)
+    const { spaceDapp, userOps: userOpsAlice } = await createSpaceDappAndUserops(alice)
+    const { userOps: userOpsBob } = await createSpaceDappAndUserops(bob)
 
     const createSpaceOp = await createUngatedSpace({
         userOps: userOpsAlice,
@@ -90,9 +90,9 @@ test('user with ban permission can ban and unban', async () => {
     )
     await carol.ready
 
-    const { spaceDapp, userOps: userOpsAlice } = createSpaceDappAndUserops(alice)
-    const { userOps: userOpsBob } = createSpaceDappAndUserops(adminUser)
-    const { userOps: userOpsCarol } = createSpaceDappAndUserops(carol)
+    const { spaceDapp, userOps: userOpsAlice } = await createSpaceDappAndUserops(alice)
+    const { userOps: userOpsBob } = await createSpaceDappAndUserops(adminUser)
+    const { userOps: userOpsCarol } = await createSpaceDappAndUserops(carol)
 
     const createSpaceOp = await createUngatedSpace({
         userOps: userOpsAlice,

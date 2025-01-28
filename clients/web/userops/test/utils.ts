@@ -23,7 +23,8 @@ import {
     LegacyUpdateRoleParams,
     Space,
 } from '@river-build/web3'
-import { ISendUserOperationResponse } from 'userop'
+import { userOpsStore } from '../src/userOpsStore'
+import { TownsUserOpClientSendUserOperationResponse } from '../src/TownsUserOpClient'
 
 export const fundWallet = async (address: string, provider: LocalhostWeb3Provider) => {
     const wallet = new ethers.Wallet(
@@ -52,13 +53,7 @@ export const boredApeRuleData = createOperationsTree([
     },
 ])
 
-export const UserOps = ({
-    spaceDapp,
-    skipPromptUserOnPMRejectedOp,
-}: {
-    spaceDapp: ISpaceDapp
-    skipPromptUserOnPMRejectedOp?: boolean
-}) => {
+export const UserOps = ({ spaceDapp }: { spaceDapp: ISpaceDapp }) => {
     return new TestUserOps({
         provider: spaceDapp.provider,
         config: spaceDapp.config,
@@ -69,7 +64,6 @@ export const UserOps = ({
         entryPointAddress: process.env.AA_ENTRY_POINT_ADDRESS,
         factoryAddress: process.env.AA_FACTORY_ADDRESS,
         paymasterProxyAuthSecret: process.env.AA_PAYMASTER_PROXY_AUTH_SECRET!,
-        skipPromptUserOnPMRejectedOp: skipPromptUserOnPMRejectedOp ?? true,
         fetchAccessTokenFn: undefined,
     })
 }
@@ -93,7 +87,7 @@ export async function createUngatedSpace({
     signer: ethers.Signer
     rolePermissions: Permission[]
     spaceName?: string
-}): Promise<ISendUserOperationResponse> {
+}): Promise<TownsUserOpClientSendUserOperationResponse> {
     const signerAddress = await signer.getAddress()
     const { spaceName: generatedSpaceName, channelName: channelName } =
         getSpaceAndChannelName(signerAddress)
@@ -175,7 +169,7 @@ export async function createGatedSpace({
     signer: ethers.Signer
     rolePermissions: Permission[]
     spaceName?: string
-}): Promise<ISendUserOperationResponse> {
+}): Promise<TownsUserOpClientSendUserOperationResponse> {
     const signerAddress = await signer.getAddress()
     const { spaceName: generatedSpaceName, channelName: channelName } =
         getSpaceAndChannelName(signerAddress)
@@ -261,7 +255,7 @@ export async function createFixedPriceSpace({
     rolePermissions: Permission[]
     spaceName?: string
     price?: string
-}): Promise<ISendUserOperationResponse> {
+}): Promise<TownsUserOpClientSendUserOperationResponse> {
     const signerAddress = await signer.getAddress()
     const { spaceName: generatedSpaceName, channelName: channelName } =
         getSpaceAndChannelName(signerAddress)
@@ -338,23 +332,37 @@ export function generatePrivyWalletIfKey(privateKey?: string) {
     }
 }
 
-export const createSpaceDappAndUserops = (
-    provider: ethers.providers.StaticJsonRpcProvider,
-    useropsOpts: { skipPromptUserOnPMRejectedOp?: boolean } = {},
-) => {
+export const createSpaceDappAndUserops = async (provider: LocalhostWeb3Provider) => {
     const baseConfig = getWeb3Deployment(process.env.RIVER_ENV as string).base // see util.test.ts for loading from env
     const spaceDapp = new SpaceDapp(baseConfig, provider)
+
+    const userOpsInstance = UserOps({
+        spaceDapp,
+    })
+
+    const aaAddress = await userOpsInstance.getAbstractAccountAddress({
+        rootKeyAddress: (await provider.wallet.getAddress()) as Address,
+    })
+
+    if (!aaAddress) {
+        throw new Error('Failed to get abstract account address')
+    }
+
+    // test users always confirm
+    userOpsStore.subscribe((state) => {
+        if (state.userOps[aaAddress]?.promptUser) {
+            userOpsStore.getState().setPromptResponse(aaAddress, 'confirm')
+        }
+    })
+
     return {
         spaceDapp,
-        userOps: UserOps({
-            spaceDapp,
-            skipPromptUserOnPMRejectedOp: useropsOpts.skipPromptUserOnPMRejectedOp,
-        }),
+        userOps: userOpsInstance,
     }
 }
 
 export const waitForOpAndTx = async (
-    op: ISendUserOperationResponse,
+    op: TownsUserOpClientSendUserOperationResponse,
     provider: ethers.providers.StaticJsonRpcProvider,
     action?: string,
 ) => {

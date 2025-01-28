@@ -1,4 +1,4 @@
-import { userOpsStore } from '../userOpsStore'
+import { selectUserOpsByAddress, userOpsStore } from '../userOpsStore'
 import { CodeException } from '../errors'
 
 /**
@@ -26,11 +26,16 @@ export async function promptUser(sender: string) {
 
 async function waitForUserResponse(sender: string): Promise<'confirm' | 'deny' | undefined> {
     return new Promise((resolve) => {
-        const unsubscribe = userOpsStore.subscribe((state) => {
-            if (state.userOps[sender].promptResponse) {
-                unsubscribe()
-                resolve(state.userOps[sender].promptResponse)
-            }
-        })
+        const promptResponse = selectUserOpsByAddress(sender).promptResponse
+        if (promptResponse) {
+            resolve(promptResponse)
+        } else {
+            const unsubscribe = userOpsStore.subscribe((state) => {
+                if (state.userOps[sender].promptResponse) {
+                    unsubscribe()
+                    resolve(state.userOps[sender].promptResponse)
+                }
+            })
+        }
     })
 }

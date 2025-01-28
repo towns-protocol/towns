@@ -107,4 +107,8 @@ export class TownsSimpleAccount extends UserOperationBuilder {
     decodeExecute(data: BytesLike) {
         return this.proxy.interface.decodeFunctionData('execute', data)
     }
+
+    decodeExecuteBatch(data: BytesLike) {
+        return this.proxy.interface.decodeFunctionData('executeBatch', data)
+    }
 }

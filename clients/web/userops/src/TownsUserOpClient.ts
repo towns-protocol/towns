@@ -12,21 +12,26 @@ import { EntryPoint, EntryPoint__factory } from 'userop/dist/typechain'
 import { ERC4337 } from './constants'
 import { OpToJSON } from './utils'
 import { datadogLogs } from '@datadog/browser-logs'
+import {
+    getUserOperationReceipt,
+    isEthGetUserOperationReceiptResponse,
+} from './getUserOperationReceipt'
+import { EthGetUserOperationReceiptResponse } from './getUserOperationReceipt'
 
 export type TownsUserOpClientSendUserOperationResponse = ISendUserOperationResponse & {
     getUserOperationReceipt: () => Promise<EthGetUserOperationReceiptResponse | null>
 }
 
 export class TownsUserOpClient {
-    private provider: ethers.providers.JsonRpcProvider
+    private provider: BundlerJsonRpcProvider
 
     public entryPoint: EntryPoint
     public chainId: BigNumberish
     public waitTimeoutMs: number
     public waitIntervalMs: number
 
-    private constructor(rpcUrl: string, opts?: IClientOpts) {
-        this.provider = new BundlerJsonRpcProvider(rpcUrl).setBundlerRpc(opts?.overrideBundlerRpc)
+    private constructor(provider: BundlerJsonRpcProvider, opts?: IClientOpts) {
+        this.provider = provider
         this.entryPoint = EntryPoint__factory.connect(
             opts?.entryPoint || ERC4337.EntryPoint,
             this.provider,
@@ -36,8 +41,20 @@ export class TownsUserOpClient {
         this.waitIntervalMs = 500
     }
 
+    public setWaitTimeoutMs(ms: number) {
+        this.waitTimeoutMs = ms
+    }
+
+    public setWaitIntervalMs(ms: number) {
+        this.waitIntervalMs = ms
+    }
+
+    public static createProvider(rpcUrl: string, opts?: IClientOpts) {
+        return new BundlerJsonRpcProvider(rpcUrl).setBundlerRpc(opts?.overrideBundlerRpc)
+    }
+
     public static async init(rpcUrl: string, opts?: IClientOpts) {
-        const instance = new TownsUserOpClient(rpcUrl, opts)
+        const instance = new TownsUserOpClient(this.createProvider(rpcUrl, opts), opts)
         instance.chainId = await instance.provider
             .getNetwork()
             .then((network) => ethers.BigNumber.from(network.chainId))
@@ -113,10 +130,10 @@ export class TownsUserOpClient {
                     const polledAction = await this.poll<EthGetUserOperationReceiptResponse>({
                         action: async () => {
                             try {
-                                const receipt = (await this.provider.send(
-                                    'eth_getUserOperationReceipt',
-                                    [userOpHash],
-                                )) as EthGetUserOperationReceiptResponse
+                                const receipt = await getUserOperationReceipt({
+                                    provider: this.provider,
+                                    userOpHash,
+                                })
 
                                 if (isEthGetUserOperationReceiptResponse(receipt)) {
                                     return receipt
@@ -153,49 +170,6 @@ export class TownsUserOpClient {
                 },
         }
 
-        // track all user ops to DD so we can get better insight on bundler times
-        response.getUserOperationReceipt().catch((err) => {
-            console.error('[TownsUserOpClient] waitForUserOperationReceipt error', err)
-        })
-
         return response
-    }
-}
-
-function isEthGetUserOperationReceiptResponse(
-    receipt: unknown,
-): receipt is EthGetUserOperationReceiptResponse {
-    const receiptObj = receipt as EthGetUserOperationReceiptResponse
-    return (
-        receiptObj?.userOpHash !== undefined &&
-        receiptObj?.receipt !== undefined &&
-        receiptObj?.receipt?.transactionHash !== undefined
-    )
-}
-
-type EthGetUserOperationReceiptResponse = {
-    userOpHash: string
-    sender: string
-    success: boolean
-    paymasterAndData: string
-    actualGasCost: string
-    actualGasUsed: string
-    reason?: string
-    logs?: object[]
-    nonce: string
-    receipt: {
-        blockHash: string
-        blockNumber: string
-        contractAddress: string | null
-        cumulativeGasUsed: string
-        effectiveGasPrice: string
-        from: string
-        gasUsed: string
-        logs: object[]
-        logsBloom: string
-        to: string
-        transactionIndex: string
-        transactionHash: string
-        type: string
     }
 }

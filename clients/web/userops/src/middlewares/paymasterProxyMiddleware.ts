@@ -1,11 +1,12 @@
 import { FunctionHash, UserOpsConfig } from '../types'
-import { BigNumber } from 'ethers'
-import { IUserOperation, IUserOperationMiddlewareCtx } from 'userop'
+import { BigNumber, BigNumberish, utils } from 'ethers'
+import { BundlerJsonRpcProvider, IUserOperation, IUserOperationMiddlewareCtx } from 'userop'
 import { z } from 'zod'
 import { CodeException } from '../errors'
 import { isUsingAlchemyBundler } from '../utils'
-import { PaymasterErrorCode, userOpsStore } from '../userOpsStore'
+import { PaymasterErrorCode, selectUserOpsByAddress, userOpsStore } from '../userOpsStore'
 import { getPrivyLoginMethodFromLocalStorage } from './privyLoginMethod'
+import { estimateGasFeesWithReplacement } from './estimateGasFees'
 
 type PaymasterProxyResponse = {
     data: {
@@ -35,40 +36,80 @@ const zErrorSchema: z.ZodType<{ errorDetail: { code: PaymasterErrorCode } }> = z
     }),
 })
 
-type PaymasterProxyPostData = IUserOperation & {
+export type PaymasterProxyPostData = IUserOperation & {
     rootKeyAddress: string
     functionHash: string
     townId: string | undefined
+    gasOverrides: GasOverrides
+}
+
+type Multiplier = number
+
+export type GasOverrides = {
+    callGasLimit?: BigNumberish | Multiplier
+    maxFeePerGas?: BigNumberish | Multiplier
+    maxPriorityFeePerGas?: BigNumberish | Multiplier
+    preVerificationGas?: BigNumberish | Multiplier
+    verificationGasLimit?: BigNumberish | Multiplier
 }
 
 const NON_SPONSORED_LOGIN_METHODS = ['email']
+const NON_SPONSORED_FUNCTION_HASHES: FunctionHash[] = ['checkIn']
 
 export const paymasterProxyMiddleware = async (
     args: {
         userOpContext: IUserOperationMiddlewareCtx
         rootKeyAddress: string
-        functionHashForPaymasterProxy: FunctionHash | undefined
-        spaceId: string | undefined
         bundlerUrl: string
+        provider: BundlerJsonRpcProvider
         fetchAccessTokenFn: (() => Promise<string | null>) | undefined
     } & Pick<UserOpsConfig, 'paymasterProxyUrl' | 'paymasterProxyAuthSecret'>,
 ) => {
+    const {
+        userOpContext: ctx,
+        rootKeyAddress,
+        paymasterProxyAuthSecret,
+        paymasterProxyUrl,
+        fetchAccessTokenFn,
+        bundlerUrl,
+    } = args
+    const { current, pending } = selectUserOpsByAddress(args.userOpContext.op.sender)
+
+    const value = current.value
+    const pendingHash = pending.hash
+    const { functionHashForPaymasterProxy, spaceId } = current
+
+    if (
+        functionHashForPaymasterProxy &&
+        NON_SPONSORED_FUNCTION_HASHES.includes(functionHashForPaymasterProxy)
+    ) {
+        return
+    }
+
+    if (value) {
+        const bigNumber = BigNumber.from(value)
+        if (bigNumber.gt(0) || bigNumber.isNegative()) {
+            return
+        }
+    }
+
     const loginMethod = getPrivyLoginMethodFromLocalStorage()
 
     if (loginMethod && NON_SPONSORED_LOGIN_METHODS.includes(loginMethod)) {
         return
     }
 
-    const {
-        userOpContext: ctx,
-        rootKeyAddress,
-        functionHashForPaymasterProxy,
-        spaceId,
-        paymasterProxyAuthSecret,
-        paymasterProxyUrl,
-        fetchAccessTokenFn,
-        bundlerUrl,
-    } = args
+    let maxFeePerGas: BigNumberish | undefined
+    let maxPriorityFeePerGas: BigNumberish | undefined
+    if (pendingHash) {
+        // get the gas values
+        const result = await estimateGasFeesWithReplacement({
+            sender: args.userOpContext.op.sender,
+            provider: args.provider,
+        })
+        maxFeePerGas = result.maxFeePerGas
+        maxPriorityFeePerGas = result.maxPriorityFeePerGas
+    }
 
     try {
         // TODO: ///////////////////////////
@@ -116,6 +157,12 @@ export const paymasterProxyMiddleware = async (
             functionHash: functionHashForPaymasterProxy,
             rootKeyAddress: rootKeyAddress,
             townId: spaceId,
+            gasOverrides: {
+                maxFeePerGas: maxFeePerGas ? utils.hexValue(maxFeePerGas) : undefined,
+                maxPriorityFeePerGas: maxPriorityFeePerGas
+                    ? utils.hexValue(maxPriorityFeePerGas)
+                    : undefined,
+            },
         }
         // convert all bigNumberish types to hex strings for paymaster proxy payload
         bigNumberishTypes.forEach((type) => {

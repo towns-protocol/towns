@@ -1,5 +1,5 @@
 import { BaseChainConfig, SpaceDapp } from '@river-build/web3'
-import { ethers } from 'ethers'
+import { BigNumberish, Signer, BytesLike } from 'ethers'
 
 export type AccountAbstractionConfig = Omit<UserOpsConfig, 'chainId' | 'provider' | 'config'>
 
@@ -22,23 +22,22 @@ export type UserOpsConfig = {
     entryPointAddress?: string
     factoryAddress?: string
     paymasterProxyAuthSecret?: string
-    skipPromptUserOnPMRejectedOp: boolean
     fetchAccessTokenFn: (() => Promise<string | null>) | undefined
 }
 
 export type UserOpParams = {
-    value?: ethers.BigNumberish
-    signer: ethers.Signer
+    value?: BigNumberish
+    signer: Signer
 } & (ExecuteSingleData | ExecuteBatchData)
 
 type ExecuteSingleData = {
     toAddress?: string
-    callData?: string
+    callData?: BytesLike
 }
 
 type ExecuteBatchData = {
     toAddress?: string[]
-    callData?: string[]
+    callData?: BytesLike[]
 }
 
 export const FunctionHash = {
@@ -104,10 +103,10 @@ export type TimeTracker = {
 }
 
 export type GasEstimate = {
-    preVerificationGas: ethers.BigNumberish
-    verificationGasLimit: ethers.BigNumberish
-    callGasLimit: ethers.BigNumberish
+    preVerificationGas: BigNumberish
+    verificationGasLimit: BigNumberish
+    callGasLimit: BigNumberish
 
     // TODO: remove this with EntryPoint v0.7
-    verificationGas: ethers.BigNumberish
+    verificationGas: BigNumberish
 }

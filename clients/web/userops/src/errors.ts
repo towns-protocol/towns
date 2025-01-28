@@ -2,8 +2,11 @@ export const errorCategories = {
     userop_sponsored: 'userop_sponsored',
     userop_non_sponsored: 'userop_non_sponsored',
     userop: 'userop',
+    nonce_mismatch: 'nonce_mismatch',
     misc: 'misc',
     privy: 'privy',
+    replacement_underpriced: 'replacement_underpriced',
+    gas_too_low: 'gas_too_low',
 } as const
 
 export type ErrorCategory = keyof typeof errorCategories
@@ -23,61 +26,6 @@ export class CodeException extends Error {
         this.code = code
         this.data = data
         this.category = category
-    }
-}
-
-// Privy seems to misbehave and throw "Unknown connector error" when requesting another signature too quickly!!
-// This can happen on initial login from a public town page, when a user logs in with embedded wallet, other signature requests might come in (i.e. sign for river delegate key, sign for setting up userops, etc.)
-// It will also happen when https://auth.privy.io/api/v1/embedded_wallets/<address>/* fails
-// https://hntlabs.slack.com/archives/C05SSQJMK0V/p1723649868311309
-export function matchPrivyUnknownConnectorError(error: unknown):
-    | {
-          error: CodeException
-      }
-    | undefined {
-    const err = errorToCodeException(error, 'privy')
-    if (err.message.includes('Unknown connector error')) {
-        return { error: err }
-    }
-}
-
-// https://docs.stackup.sh/docs/bundler-errors
-// docs.alchemy.com/reference/bundler-api-errors
-export function matchGasTooLowError(error: unknown):
-    | {
-          error: CodeException
-          type: string
-      }
-    | undefined {
-    const err = errorToCodeException(error, 'misc')
-    // alchemy
-    if (err.code.toString().startsWith('-32')) {
-        const possibleGasErrors = [
-            'maxFeePerGas',
-            'callGasLimit',
-            // maxFeePerGas or preVerificationGas too low
-            'preVerificationGas',
-            'maxPriorityFeePerGas',
-            // verificationGasLimit too low
-            'AA23 reverted',
-            // verificationGasLimit too low
-            'OOG',
-            // replacement underpriced
-            'currentMaxPriorityFee',
-            'currentMaxFee',
-        ]
-        const match = possibleGasErrors.find((error) => err.message.includes(error))
-        if (match) {
-            return { error: err, type: match }
-        }
-    }
-    // stackup
-    const isPreVerificationGasBelowExpected =
-        err.code === -32602 &&
-        typeof err.data === 'string' &&
-        err.data.includes('preVerificationGas: below expected gas')
-    if (isPreVerificationGasBelowExpected) {
-        return { error: err, type: 'preverificationGas' }
     }
 }
 
@@ -219,4 +167,115 @@ export function isNegativeValueException(error: unknown): error is NegativeValue
         'code' in error &&
         error.code === 'negative_value'
     )
+}
+
+// Privy seems to misbehave and throw "Unknown connector error" when requesting another signature too quickly!!
+// This can happen on initial login from a public town page, when a user logs in with embedded wallet, other signature requests might come in (i.e. sign for river delegate key, sign for setting up userops, etc.)
+// It will also happen when https://auth.privy.io/api/v1/embedded_wallets/<address>/* fails
+// https://hntlabs.slack.com/archives/C05SSQJMK0V/p1723649868311309
+export function matchPrivyUnknownConnectorError(error: unknown):
+    | {
+          error: CodeException
+      }
+    | undefined {
+    const err = errorToCodeException(error, 'privy')
+    if (err.message.includes('Unknown connector error')) {
+        return { error: err }
+    }
+}
+
+// https://docs.stackup.sh/docs/bundler-errors
+// docs.alchemy.com/reference/bundler-api-errors
+export function matchGasTooLowError(error: unknown):
+    | {
+          error: CodeException
+          type: string
+      }
+    | undefined {
+    const err = errorToCodeException(error, 'gas_too_low')
+    // alchemy
+    if (err.code.toString().startsWith('-32')) {
+        const possibleGasErrors = [
+            'maxFeePerGas',
+            'callGasLimit',
+            // maxFeePerGas or preVerificationGas too low
+            'preVerificationGas',
+            'maxPriorityFeePerGas',
+            // verificationGasLimit too low
+            'AA23 reverted',
+            // verificationGasLimit too low
+            'OOG',
+        ]
+        const match = possibleGasErrors.find((error) => err.message.includes(error))
+        if (match) {
+            return { error: err, type: match }
+        }
+    }
+    // stackup
+    const isPreVerificationGasBelowExpected =
+        err.code === -32602 &&
+        typeof err.data === 'string' &&
+        err.data.includes('preVerificationGas: below expected gas')
+    if (isPreVerificationGasBelowExpected) {
+        return { error: err, type: 'preverificationGas' }
+    }
+}
+
+export function matchReplacementUnderpriced(error: unknown) {
+    const err = errorToCodeException(error, 'replacement_underpriced')
+    // alchemy
+    if (err.code.toString().startsWith('-32')) {
+        const possibleGasErrors = [
+            // alchemy
+            'replacement underpriced',
+            // stackup
+            'replacement op',
+        ]
+        const match = possibleGasErrors.find((error) => err.message.includes(error))
+        if (match) {
+            return {
+                error: err,
+                type: match,
+            }
+        }
+    }
+}
+
+export function isReplacementUnderpricedError(
+    data: unknown,
+): data is { currentMaxPriorityFee: string; currentMaxFee: string } {
+    return (
+        typeof data === 'object' &&
+        data !== null &&
+        'currentMaxPriorityFee' in data &&
+        'currentMaxFee' in data
+    )
+}
+
+// This is what alchemy returns, NOT stackup
+export class MockReplacementUnderpricedError extends Error {
+    code: number
+    data?: {
+        currentMaxPriorityFee: string
+        currentMaxFee: string
+    }
+
+    constructor(maxPriorityFee = '1000000000', maxFee = '2000000000') {
+        super('replacement underpriced')
+        this.code = -32602
+        this.data = {
+            currentMaxPriorityFee: maxPriorityFee,
+            currentMaxFee: maxFee,
+        }
+    }
+}
+
+export class NonceMismatchError extends CodeException {
+    constructor() {
+        super({
+            message: 'nonce mismatch between current and pending userops',
+            code: 'nonce_mismatch',
+            category: 'nonce_mismatch',
+        })
+    }
 }

@@ -22,8 +22,8 @@ test('can send prepay membership op, and user can join for free', async () => {
     )
     await alice.ready
 
-    const { spaceDapp, userOps: userOpsBob } = createSpaceDappAndUserops(bob)
-    const { userOps: userOpsAlice } = createSpaceDappAndUserops(alice)
+    const { spaceDapp, userOps: userOpsBob } = await createSpaceDappAndUserops(bob)
+    const { userOps: userOpsAlice } = await createSpaceDappAndUserops(alice)
 
     // create a space that costs
     const op = await createFixedPriceSpace({

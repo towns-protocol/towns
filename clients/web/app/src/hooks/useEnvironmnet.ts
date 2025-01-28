@@ -60,7 +60,6 @@ function makeEnvironments(): TownsEnvironmentInfo[] {
                 entryPointAddress: env.VITE_AA_ENTRY_POINT_ADDRESS,
                 factoryAddress: env.VITE_AA_FACTORY_ADDRESS,
                 paymasterProxyAuthSecret: env.VITE_AUTH_WORKER_HEADER_SECRET,
-                skipPromptUserOnPMRejectedOp: false,
                 fetchAccessTokenFn,
             }
         }
@@ -73,7 +72,6 @@ function makeEnvironments(): TownsEnvironmentInfo[] {
                 entryPointAddress: undefined, // uses default userop.js address
                 factoryAddress: undefined, // uses default userop.js address
                 paymasterProxyAuthSecret: env.VITE_AUTH_WORKER_HEADER_SECRET,
-                skipPromptUserOnPMRejectedOp: false,
                 fetchAccessTokenFn,
             }
         }

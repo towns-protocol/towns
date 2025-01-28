@@ -19,30 +19,30 @@ import {
 import { ethers } from 'ethers'
 import isEqual from 'lodash/isEqual'
 import { UserOpsConfig, UserOpParams, FunctionHash, TimeTracker, TimeTrackerEvents } from './types'
-import { userOpsStore } from './userOpsStore'
+import { selectUserOpsByAddress, userOpsStore } from './userOpsStore'
 import { ERC4337 } from 'userop/dist/constants'
-import { CodeException, InsufficientTipBalanceException } from './errors'
+import { CodeException, InsufficientTipBalanceException, NonceMismatchError } from './errors'
 import { UserOperationEventEvent } from 'userop/dist/typechain/EntryPoint'
 import { EVERYONE_ADDRESS, getFunctionSigHash, isUsingAlchemyBundler } from './utils'
 import {
     signUserOpHash,
     estimateGasLimit,
-    estimateAlchemyGasFees,
     subtractGasFromBalance,
     promptUser,
     isSponsoredOp,
     paymasterProxyMiddleware,
-    saveOpToUserOpsStore,
     totalCostOfUserOp,
     balanceOf,
+    estimateGasFeesMiddleware,
 } from './middlewares'
 import { abstractAddressMap } from './abstractAddressMap'
 import { TownsSimpleAccount } from './TownsSimpleAccount'
-import { getGasPrice as getEthMaxPriorityFeePerGas } from 'userop/dist/preset/middleware'
 import { TownsUserOpClient, TownsUserOpClientSendUserOperationResponse } from './TownsUserOpClient'
 import { getTransferCallData } from './generateTransferCallData'
 import { sendUserOperationWithRetry } from './sendUserOperationWithRetry'
 import { getInitData } from './workers'
+import { decodeCallData, isBatchData, isSingleData } from './decodeCallData'
+import { getUserOperationReceipt } from './getUserOperationReceipt'
 
 export class UserOps {
     private bundlerUrl: string
@@ -53,14 +53,12 @@ export class UserOps {
     // defaults to Stackup's deployed factory
     private factoryAddress: string | undefined
     private paymasterProxyAuthSecret: string | undefined
-    private skipPromptUserOnPMRejectedOp = false
     private userOpClient: Promise<TownsUserOpClient> | undefined
     private builder: Promise<TownsSimpleAccount> | undefined
     protected spaceDapp: ISpaceDapp | undefined
     private timeTracker: TimeTracker | undefined
     private fetchAccessTokenFn: (() => Promise<string | null>) | undefined
     private middlewareInitialized = false
-    private sender: string | undefined
 
     constructor(
         config: UserOpsConfig & {
@@ -75,7 +73,6 @@ export class UserOps {
         this.factoryAddress = config.factoryAddress ?? ERC4337.SimpleAccount.Factory
         this.paymasterProxyAuthSecret = config.paymasterProxyAuthSecret
         this.spaceDapp = config.spaceDapp
-        this.skipPromptUserOnPMRejectedOp = config.skipPromptUserOnPMRejectedOp
         this.timeTracker = config.timeTracker
         this.fetchAccessTokenFn = config.fetchAccessTokenFn
     }
@@ -132,22 +129,6 @@ export class UserOps {
         const builder = await this.getBuilder({ signer: args.signer })
         const sender = builder.getSenderAddress()
 
-        const {
-            setSequenceName,
-            setFunctionHashForPaymasterProxy,
-            setSpaceId,
-            setCurrOpValue,
-            reset,
-        } = userOpsStore.getState()
-
-        // TODO: with replacement underpriced, gonna need to not reset the store w/ each op
-        // but instead use the gas values from the previous op to estimate the next op
-        reset(sender)
-        setSequenceName(sender, sequenceName)
-        setFunctionHashForPaymasterProxy(sender, args.functionHashForPaymasterProxy)
-        setSpaceId(sender, args.spaceId)
-        setCurrOpValue(sender, args.value)
-
         const timeTracker = this.timeTracker
 
         let endInitBuilder: (() => void) | undefined
@@ -196,17 +177,122 @@ export class UserOps {
         if (sequenceName) {
             endInitClient = timeTracker?.startMeasurement(sequenceName, 'userops_init_client')
         }
-
         const userOpClient = await this.getUserOpClient()
-
         endInitClient?.()
 
-        return sendUserOperationWithRetry({
+        const op = simpleAccount.getOp()
+
+        const resetUseropStore = () => {
+            const { setCurrent, reset, setSequenceName } = userOpsStore.getState()
+            reset(sender)
+            const space = args.spaceId ? this.spaceDapp?.getSpace(args.spaceId) : undefined
+            const decodedCallData = decodeCallData({
+                callData: op.callData,
+                functionHash: args.functionHashForPaymasterProxy,
+                builder,
+                space,
+            })
+            setSequenceName(sender, sequenceName)
+            setCurrent({
+                sender,
+                op,
+                value: args.value,
+                decodedCallData,
+                functionHashForPaymasterProxy: args.functionHashForPaymasterProxy,
+                spaceId: args.spaceId,
+            })
+        }
+
+        const pendingUserOp = selectUserOpsByAddress(sender).pending
+
+        if (pendingUserOp.hash) {
+            try {
+                // check if the pending op has landed
+                const result = await getUserOperationReceipt({
+                    provider: builder.provider,
+                    userOpHash: pendingUserOp.hash,
+                })
+                if (result) {
+                    resetUseropStore()
+                }
+            } catch (error) {
+                // TODO: retry getUserOperationReceipt
+                console.log('[UserOperations] error getting user operation receipt', error)
+                resetUseropStore()
+            }
+        } else {
+            resetUseropStore()
+        }
+
+        const opResponse = await sendUserOperationWithRetry({
             userOpClient,
             simpleAccount,
             retryCount: args.retryCount,
-            skipPromptUserOnPMRejectedOp: this.skipPromptUserOnPMRejectedOp,
+            onBuild: (op) => {
+                // when op is built and ready to be sent, set it in the store
+                userOpsStore.getState().setCurrent({
+                    sender,
+                    op,
+                })
+            },
         })
+
+        // if op made it to the bundler, copy to pending
+        userOpsStore.getState().setPending({
+            sender,
+            hash: opResponse.userOpHash,
+        })
+        return opResponse
+    }
+
+    public async dropAndReplace(hash: string, signer: ethers.Signer) {
+        const builder = await this.getBuilder({ signer })
+        const sender = builder.getSenderAddress()
+        const userOpState = selectUserOpsByAddress(sender, userOpsStore.getState())
+        if (!userOpState) {
+            throw new Error('current user op not found')
+        }
+        const pending = userOpState.pending
+
+        if (!pending.op?.callData) {
+            throw new Error('user op call data not found')
+        }
+        if (pending.hash !== hash) {
+            throw new Error('user op hash does not match')
+        }
+        if (!pending.functionHashForPaymasterProxy) {
+            throw new Error('user op function hash for paymaster proxy not found')
+        }
+        if (!pending.decodedCallData) {
+            throw new Error('user op decoded call data not found')
+        }
+
+        const spaceId = pending.spaceId
+        const functionHashForPaymasterProxy = pending.functionHashForPaymasterProxy
+
+        if (isBatchData(pending.decodedCallData)) {
+            const { toAddress, value, executeData } = pending.decodedCallData
+            return this.sendUserOp({
+                toAddress,
+                callData: executeData,
+                signer,
+                spaceId,
+                functionHashForPaymasterProxy,
+                value,
+            })
+        } else if (isSingleData(pending.decodedCallData)) {
+            const { toAddress, value, executeData } = pending.decodedCallData
+            return this.sendUserOp({
+                toAddress,
+                callData: executeData,
+                signer,
+                spaceId,
+                functionHashForPaymasterProxy,
+                value,
+            })
+        } else {
+            throw new Error('mismatch in format of toAddress and callData')
+        }
     }
 
     public async sendCreateLegacySpaceOp(
@@ -1836,7 +1922,7 @@ export class UserOps {
         builder
             .useMiddleware(async (ctx) => {
                 if (!isUsingAlchemyBundler(this.bundlerUrl)) {
-                    return getEthMaxPriorityFeePerGas(builder.provider)(ctx)
+                    return estimateGasFeesMiddleware(ctx, builder.provider)
                 }
             })
             // pass user op with new gas data to paymaster.
@@ -1846,25 +1932,14 @@ export class UserOps {
             // If rejected, gas must be estimated in later middleware
             .useMiddleware(async (ctx) => {
                 if (this.paymasterProxyUrl && this.paymasterProxyAuthSecret) {
-                    const { sequenceName, functionHashForPaymasterProxy, spaceId, currOpValue } =
-                        userOpsStore.getState().userOps[ctx.op.sender]
-
-                    if (currOpValue) {
-                        const bigNumber = ethers.BigNumber.from(currOpValue)
-                        if (bigNumber.gt(0) || bigNumber.isNegative()) {
-                            return
-                        }
-                    }
-                    if (functionHashForPaymasterProxy === 'checkIn') {
-                        return
-                    }
+                    const { sequenceName, current } = selectUserOpsByAddress(ctx.op.sender)
 
                     let endPaymasterMiddleware: (() => void) | undefined
 
                     if (sequenceName) {
                         endPaymasterMiddleware = timeTracker?.startMeasurement(
                             sequenceName,
-                            `userops_${functionHashForPaymasterProxy}_paymasterProxyMiddleware`,
+                            `userops_${current.functionHashForPaymasterProxy}_paymasterProxyMiddleware`,
                         )
                     }
                     await paymasterProxyMiddleware({
@@ -1872,9 +1947,8 @@ export class UserOps {
                         userOpContext: ctx,
                         paymasterProxyAuthSecret: this.paymasterProxyAuthSecret,
                         paymasterProxyUrl: this.paymasterProxyUrl,
-                        functionHashForPaymasterProxy: functionHashForPaymasterProxy,
-                        spaceId,
                         bundlerUrl: this.bundlerUrl,
+                        provider: builder.provider,
                         fetchAccessTokenFn: this.fetchAccessTokenFn,
                     })
 
@@ -1886,12 +1960,12 @@ export class UserOps {
                     if (isSponsoredOp(ctx)) {
                         return
                     }
-                    return estimateAlchemyGasFees(ctx, builder.provider)
+                    return estimateGasFeesMiddleware(ctx, builder.provider)
                 }
             })
             .useMiddleware(async (ctx) => {
-                const { spaceId, functionHashForPaymasterProxy } =
-                    userOpsStore.getState().userOps[ctx.op.sender]
+                const { current } = selectUserOpsByAddress(ctx.op.sender)
+                const { spaceId, functionHashForPaymasterProxy } = current
                 if (isSponsoredOp(ctx)) {
                     return
                 }
@@ -1904,33 +1978,25 @@ export class UserOps {
                     functionHashForPaymasterProxy: functionHashForPaymasterProxy,
                 })
             })
-            .useMiddleware(async (ctx) => {
-                const { functionHashForPaymasterProxy, spaceId } =
-                    userOpsStore.getState().userOps[ctx.op.sender]
-                const space = spaceId ? this.spaceDapp?.getSpace(spaceId) : undefined
-                saveOpToUserOpsStore(ctx, functionHashForPaymasterProxy, builder, space)
-                return Promise.resolve()
-            })
             // prompt user if the paymaster rejected
             .useMiddleware(async (ctx) => {
-                if (this.skipPromptUserOnPMRejectedOp || isSponsoredOp(ctx)) {
+                if (isSponsoredOp(ctx)) {
                     return
                 }
-                const { functionHashForPaymasterProxy, currOpValue } =
-                    userOpsStore.getState().userOps[ctx.op.sender]
+                const { current } = selectUserOpsByAddress(ctx.op.sender)
 
                 // tip is a special case
                 // - it is not sponsored
                 // - it will make tx without prompting user
                 // - we only want to prompt user if not enough balance in sender wallet
-                if (functionHashForPaymasterProxy === 'tip') {
+                if (current.functionHashForPaymasterProxy === 'tip') {
                     const op = ctx.op
                     const totalCost = totalCostOfUserOp({
                         gasLimit: op.callGasLimit,
                         preVerificationGas: op.preVerificationGas,
                         verificationGasLimit: op.verificationGasLimit,
                         gasPrice: op.maxFeePerGas,
-                        value: currOpValue,
+                        value: current.value,
                     })
                     const balance = await balanceOf(op.sender, builder.provider)
 
@@ -1942,15 +2008,30 @@ export class UserOps {
                 }
             })
             .useMiddleware(async (ctx) => {
-                const { currOpValue, functionHashForPaymasterProxy } =
-                    userOpsStore.getState().userOps[ctx.op.sender]
-                if (currOpValue && functionHashForPaymasterProxy === 'transferEth') {
+                const { current } = selectUserOpsByAddress(ctx.op.sender)
+                const { functionHashForPaymasterProxy, value } = current
+
+                if (value && functionHashForPaymasterProxy === 'transferEth') {
                     return subtractGasFromBalance(ctx, {
                         functionHash: functionHashForPaymasterProxy,
                         builder,
-                        value: currOpValue,
+                        value,
                     })
                 }
+            })
+            .useMiddleware(async (ctx) => {
+                const { current, pending } = selectUserOpsByAddress(ctx.op.sender)
+                // in the case that the pending userop lands during the replacement flow, and the current nonce increments
+                // it would indicate that the current op is not replacing the pending op, but is a new op.
+                // i've not run into this but i imagine it's possible
+                //
+                // i.e. you tipped someone, it's stuck, we start retyring, the stuck tx lands, you're deducted, and the new tx is sent, so you double tip
+                //
+                // let's be extra careful here and prevent the userop from being sent
+                if (pending.op && current.op && pending.op.nonce !== current.op.nonce) {
+                    throw new NonceMismatchError()
+                }
+                return Promise.resolve()
             })
             .useMiddleware(async (ctx) => signUserOpHash(ctx, signer))
     }

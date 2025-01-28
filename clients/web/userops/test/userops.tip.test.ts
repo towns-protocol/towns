@@ -24,8 +24,8 @@ test('can send tip to space member', async () => {
     )
     await bob.ready
 
-    const { spaceDapp, userOps: userOpsAlice } = createSpaceDappAndUserops(alice)
-    const { userOps: userOpsBob } = createSpaceDappAndUserops(bob)
+    const { spaceDapp, userOps: userOpsAlice } = await createSpaceDappAndUserops(alice)
+    const { userOps: userOpsBob } = await createSpaceDappAndUserops(bob)
 
     // Create space
     const createSpaceOp = await createUngatedSpace({

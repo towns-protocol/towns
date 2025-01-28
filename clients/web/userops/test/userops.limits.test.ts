@@ -41,7 +41,7 @@ test('will reject each userop if beyond the limit', async () => {
     )
     await alice.ready
 
-    const { spaceDapp, userOps: userOpsAlice } = createSpaceDappAndUserops(alice)
+    const { spaceDapp, userOps: userOpsAlice } = await createSpaceDappAndUserops(alice)
 
     const createSpaceOp = await createUngatedSpace({
         userOps: userOpsAlice,
@@ -232,7 +232,7 @@ test('will reject each userop if beyond the limit', async () => {
         generatePrivyWalletIfKey(process.env.PRIVY_WALLET_PRIVATE_KEY_1),
     )
     await bob.ready
-    const { userOps: userOpsBob } = createSpaceDappAndUserops(bob)
+    const { userOps: userOpsBob } = await createSpaceDappAndUserops(bob)
     const joinOp = await userOpsBob.sendJoinSpaceOp([spaceId, bob.wallet.address, bob.wallet])
     const joinReceipt = await waitForOpAndTx(joinOp, bob, 'join space bob')
     await sleepBetweenTxs()
@@ -243,7 +243,7 @@ test('will reject each userop if beyond the limit', async () => {
         generatePrivyWalletIfKey(process.env.PRIVY_WALLET_PRIVATE_KEY_1),
     )
     await steve.ready
-    const { userOps: userOpsSteve } = createSpaceDappAndUserops(steve)
+    const { userOps: userOpsSteve } = await createSpaceDappAndUserops(steve)
     const joinOpSteve = await userOpsSteve.sendJoinSpaceOp([
         spaceId,
         steve.wallet.address,
@@ -288,7 +288,7 @@ test('will reject wallet link operations if beyond the limit', async () => {
     )
     await alice.ready
 
-    const { userOps } = createSpaceDappAndUserops(alice)
+    const { userOps } = await createSpaceDappAndUserops(alice)
 
     ////////////////////////////////////////
     // link wallet

@@ -19,7 +19,7 @@ test('can update a space (name) via userop', async () => {
     )
     await bob.ready
 
-    const { spaceDapp, userOps } = createSpaceDappAndUserops(bob)
+    const { spaceDapp, userOps } = await createSpaceDappAndUserops(bob)
 
     const op = await createUngatedSpace({
         userOps,

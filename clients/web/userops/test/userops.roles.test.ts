@@ -21,7 +21,7 @@ test('can create, update, and delete a role with user ops', async () => {
     )
     await alice.ready
 
-    const { spaceDapp, userOps } = createSpaceDappAndUserops(alice)
+    const { spaceDapp, userOps } = await createSpaceDappAndUserops(alice)
 
     const createSpaceOp = await createUngatedSpace({
         userOps,

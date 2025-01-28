@@ -14,7 +14,7 @@ test('can send createSpace user op', async () => {
     )
     await bob.ready
 
-    const { spaceDapp, userOps } = createSpaceDappAndUserops(bob)
+    const { spaceDapp, userOps } = await createSpaceDappAndUserops(bob)
 
     const op = await createUngatedSpace({
         userOps,

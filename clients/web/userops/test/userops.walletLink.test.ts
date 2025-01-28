@@ -14,7 +14,7 @@ test('can link a wallet with unfunded EOA', async () => {
     )
     await alice.ready
 
-    const { spaceDapp, userOps } = createSpaceDappAndUserops(alice)
+    const { spaceDapp, userOps } = await createSpaceDappAndUserops(alice)
     const metamaskWallet = ethers.Wallet.createRandom().connect(spaceDapp.provider)
     const metamaskAddress = await metamaskWallet.getAddress()
 
@@ -39,7 +39,7 @@ test('can link a smart account', async () => {
     )
     await alice.ready
 
-    const { spaceDapp, userOps } = createSpaceDappAndUserops(alice)
+    const { spaceDapp, userOps } = await createSpaceDappAndUserops(alice)
 
     const aliceAbstractAccountAddress = await userOps.getAbstractAccountAddress({
         rootKeyAddress: alice.wallet.address as Address,

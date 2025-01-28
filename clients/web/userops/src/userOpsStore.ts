@@ -2,30 +2,36 @@ import { BigNumberish } from 'ethers'
 import { IUserOperation } from 'userop'
 import { create } from 'zustand'
 import { FunctionHash, TimeTrackerEvents } from './types'
-import { decodeCallData } from './utils'
-import { TownsSimpleAccount } from './TownsSimpleAccount'
-import { Space } from '@river-build/web3'
 import { devtools, persist, PersistStorage } from 'zustand/middleware'
 import { immer } from 'zustand/middleware/immer'
 import superjson from 'superjson'
-
+import { decodeCallData } from './decodeCallData'
 export enum PaymasterErrorCode {
     PAYMASTER_LIMIT_REACHED = 'PAYMASTER_LIMIT_REACHED',
     DAILY_LIMIT_REACHED = 'DAILY_LIMIT_REACHED',
 }
+type RetryType = 'gasTooLow' | 'replacementUnderpriced'
 
-type UserOpsState = {
-    currOp: IUserOperation | undefined
-    currOpValue: BigNumberish | undefined
-    promptUser: boolean
-    currOpDecodedCallData: ReturnType<typeof decodeCallData<FunctionHash>> | undefined
-    rejectedSponsorshipReason: PaymasterErrorCode | undefined
-    operationAttempt: number
-    sequenceName?: TimeTrackerEvents | undefined
+type OpDetails = {
+    op: IUserOperation | undefined
+    value: BigNumberish | undefined
+    decodedCallData: ReturnType<typeof decodeCallData<FunctionHash>> | undefined
     functionHashForPaymasterProxy?: FunctionHash | undefined
     spaceId?: string | undefined
+}
+
+type UserOpsState = {
+    current: OpDetails
+    pending: OpDetails & {
+        hash: string | undefined
+    }
+    promptUser: boolean
+    rejectedSponsorshipReason: PaymasterErrorCode | undefined
+    operationAttempt: number
+    // TODO: remove this
+    sequenceName?: TimeTrackerEvents | undefined
     retryDetails?: {
-        type: 'gasTooLow'
+        type: RetryType
         data: unknown
     }
     promptResponse: 'confirm' | 'deny' | undefined
@@ -40,26 +46,19 @@ type PersistentState = {
 }
 
 type Actions = {
-    saveOp: (args: {
-        sender: string
-        op: IUserOperation
-        type: FunctionHash | undefined
-        builder: TownsSimpleAccount
-        space: Space | undefined
-    }) => void
+    setCurrent: (
+        args: {
+            sender: string
+        } & Partial<OpDetails>,
+    ) => void
+    setPending: (args: { sender: string; hash: string }) => void
     setRejectedSponsorshipReason: (sender: string, reason: PaymasterErrorCode | undefined) => void
     reset: (sender: string | undefined) => void
     setOperationAttempt: (sender: string, attempt: number) => void
     setSequenceName: (sender: string, sequenceName: TimeTrackerEvents | undefined) => void
-    setFunctionHashForPaymasterProxy: (
-        sender: string,
-        functionHashForPaymasterProxy: FunctionHash | undefined,
-    ) => void
-    setSpaceId: (sender: string, spaceId: string | undefined) => void
-    setCurrOpValue: (sender: string, value: BigNumberish | undefined) => void
     setRetryDetails: (
         sender: string,
-        retryDetails: { type: 'gasTooLow'; data: unknown } | undefined,
+        retryDetails: { type: RetryType; data: unknown } | undefined,
     ) => void
     setPromptUser: (sender: string, promptUser: boolean) => void
     setPromptResponse: (
@@ -68,19 +67,29 @@ type Actions = {
     ) => void
 }
 
-const initialState: UserOpsState = Object.freeze({
-    currOpValue: undefined,
-    retryDetails: undefined,
-    currOp: undefined,
-    currOpDecodedCallData: undefined,
-    rejectedSponsorshipReason: undefined,
-    promptResponse: undefined,
+const initialState = Object.freeze({
     operationAttempt: 1,
-    sequenceName: undefined,
-    functionHashForPaymasterProxy: undefined,
-    spaceId: undefined,
+    promptResponse: undefined,
     promptUser: false,
-})
+    rejectedSponsorshipReason: undefined,
+    retryDetails: undefined,
+    sequenceName: undefined,
+    current: {
+        op: undefined,
+        value: undefined,
+        decodedCallData: undefined,
+        functionHashForPaymasterProxy: undefined,
+        spaceId: undefined,
+    },
+    pending: {
+        op: undefined,
+        value: undefined,
+        decodedCallData: undefined,
+        hash: undefined,
+        functionHashForPaymasterProxy: undefined,
+        spaceId: undefined,
+    },
+} satisfies UserOpsState)
 
 const customStorage: PersistStorage<PersistentState> = {
     getItem: async (name) => {
@@ -117,41 +126,59 @@ export const userOpsStore = create<State & Actions>()(
                 setRejectedSponsorshipReason: (sender, reason) => {
                     set(
                         (state) => {
-                            prepInitialState(state, sender)
+                            state.userOps[sender] ??= { ...initialState }
                             state.userOps[sender].rejectedSponsorshipReason = reason
                         },
                         undefined,
                         'userOps/setRejectedSponsorshipReason',
                     )
                 },
-                saveOp: ({
-                    sender,
-                    op,
-                    type,
-                    // value,
-                    builder,
-                    space,
-                }) => {
+                setCurrent: (args: { sender: string } & Partial<OpDetails>) => {
                     set(
                         (state) => {
-                            prepInitialState(state, sender)
-                            state.userOps[sender].currOp = structuredClone(op)
-                            state.userOps[sender].currOpDecodedCallData = decodeCallData({
-                                callData: op.callData,
-                                functionHash: type,
-                                builder,
-                                space,
-                            })
+                            const {
+                                sender,
+                                op,
+                                value,
+                                decodedCallData,
+                                functionHashForPaymasterProxy,
+                                spaceId,
+                            } = args
+                            state.userOps[sender] ??= { ...initialState }
+                            state.userOps[sender].current = {
+                                ...state.userOps[sender].current,
+                                ...(op && { op: structuredClone(op) }),
+                                ...(value !== undefined && { value }),
+                                ...(decodedCallData !== undefined && { decodedCallData }),
+                                ...(functionHashForPaymasterProxy !== undefined && {
+                                    functionHashForPaymasterProxy,
+                                }),
+                                ...(spaceId !== undefined && { spaceId }),
+                            }
                         },
                         undefined,
-                        'userOps/saveOp',
+                        'userOps/setCurrent',
+                    )
+                },
+                setPending: ({ sender, hash }) => {
+                    set(
+                        (state) => {
+                            state.userOps[sender] ??= { ...initialState }
+                            const current = state.userOps[sender].current
+                            state.userOps[sender].pending = {
+                                ...current,
+                                hash,
+                            }
+                        },
+                        undefined,
+                        'userOps/setPending',
                     )
                 },
                 setPromptResponse: (sender, promptResponse) => {
                     set(
                         (state) => {
                             if (!sender) return
-                            prepInitialState(state, sender)
+                            state.userOps[sender] ??= { ...initialState }
                             state.userOps[sender].promptResponse = promptResponse
                         },
                         undefined,
@@ -161,7 +188,7 @@ export const userOpsStore = create<State & Actions>()(
                 setOperationAttempt: (sender, attempt) => {
                     set(
                         (state) => {
-                            prepInitialState(state, sender)
+                            state.userOps[sender] ??= { ...initialState }
                             state.userOps[sender].operationAttempt = attempt
                         },
                         undefined,
@@ -171,48 +198,17 @@ export const userOpsStore = create<State & Actions>()(
                 setSequenceName: (sender, sequenceName) => {
                     set(
                         (state) => {
-                            prepInitialState(state, sender)
+                            state.userOps[sender] ??= { ...initialState }
                             state.userOps[sender].sequenceName = sequenceName
                         },
                         undefined,
                         'userOps/setSequenceName',
                     )
                 },
-                setFunctionHashForPaymasterProxy: (sender, functionHashForPaymasterProxy) => {
-                    set(
-                        (state) => {
-                            prepInitialState(state, sender)
-                            state.userOps[sender].functionHashForPaymasterProxy =
-                                functionHashForPaymasterProxy
-                        },
-                        undefined,
-                        'userOps/setFunctionHashForPaymasterProxy',
-                    )
-                },
-                setSpaceId: (sender, spaceId) => {
-                    set(
-                        (state) => {
-                            prepInitialState(state, sender)
-                            state.userOps[sender].spaceId = spaceId
-                        },
-                        undefined,
-                        'userOps/setSpaceId',
-                    )
-                },
-                setCurrOpValue: (sender, value) => {
-                    set(
-                        (state) => {
-                            prepInitialState(state, sender)
-                            state.userOps[sender].currOpValue = value
-                        },
-                        undefined,
-                        'userOps/setCurrOpValue',
-                    )
-                },
                 setRetryDetails: (sender, retryDetails) => {
                     set(
                         (state) => {
-                            prepInitialState(state, sender)
+                            state.userOps[sender] ??= { ...initialState }
                             state.userOps[sender].retryDetails = retryDetails
                         },
                         undefined,
@@ -222,7 +218,7 @@ export const userOpsStore = create<State & Actions>()(
                 setPromptUser: (sender, promptUser) => {
                     set(
                         (state) => {
-                            prepInitialState(state, sender)
+                            state.userOps[sender] ??= { ...initialState }
                             state.userOps[sender].promptUser = promptUser
                         },
                         undefined,
@@ -237,7 +233,7 @@ export const userOpsStore = create<State & Actions>()(
                             }
                         },
                         undefined,
-                        'userOps/clear',
+                        'userOps/reset',
                     )
                 },
             })),
@@ -274,11 +270,7 @@ export const userOpsStore = create<State & Actions>()(
     ),
 )
 
-export const selectUserOpsByAddress = (address: string | undefined, state: State) =>
-    address ? state.userOps[address] : undefined
-
-const prepInitialState = (state: State, sender: string) => {
-    if (!state.userOps[sender]) {
-        state.userOps[sender] = { ...initialState }
-    }
+export const selectUserOpsByAddress = (address: string | undefined, state?: State) => {
+    if (!address) return { ...initialState }
+    return (state ?? userOpsStore.getState()).userOps[address] ?? { ...initialState }
 }

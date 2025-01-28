@@ -14,7 +14,7 @@ test('UserOperations initializes with the correct sender', async () => {
     await bob.ready
     expect(bob.wallet.address).toBe(PUBLIC_KEY)
 
-    const { userOps } = createSpaceDappAndUserops(bob)
+    const { userOps } = await createSpaceDappAndUserops(bob)
     const [builder] = await userOps.setup(bob.wallet)
     const sender = builder.getSender()
 
@@ -25,7 +25,7 @@ test('Useroperations.getAbstractAccountAddress returns the correct address', asy
     const wallet = new Wallet(PRIVATE_KEY)
     const bob = new LocalhostWeb3Provider(process.env.AA_RPC_URL as string)
     await bob.ready
-    const { userOps } = createSpaceDappAndUserops(bob)
+    const { userOps } = await createSpaceDappAndUserops(bob)
     const address = await userOps.getAbstractAccountAddress({
         rootKeyAddress: (await wallet.getAddress()) as Address,
     })

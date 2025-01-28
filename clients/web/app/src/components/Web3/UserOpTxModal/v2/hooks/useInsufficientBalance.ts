@@ -11,7 +11,7 @@ export function useInsufficientBalance(args: {
     gasPrice: BigNumberish
     currOpDecodedCallData: ReturnType<
         typeof userOpsStore.getState
-    >['userOps']['xxx']['currOpDecodedCallData']
+    >['userOps']['xxx']['current']['decodedCallData']
     value?: BigNumberish
 }): boolean {
     const {
@@ -24,7 +24,7 @@ export function useInsufficientBalance(args: {
         currOpDecodedCallData,
     } = args
 
-    const isTransferEth = currOpDecodedCallData?.type === 'transferEth'
+    const isTransferEth = currOpDecodedCallData?.functionHash === 'transferEth'
 
     return useMemo(() => {
         if (isTransferEth && value && balance !== undefined) {

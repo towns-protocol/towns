@@ -25,8 +25,8 @@ test('userops with different values are sent correctly', async () => {
         generatePrivyWalletIfKey(process.env.PRIVY_WALLET_PRIVATE_KEY_2),
     )
     await bob.ready
-    const { spaceDapp, userOps: userOpsAlice } = createSpaceDappAndUserops(alice)
-    const { userOps: userOpsBob } = createSpaceDappAndUserops(bob)
+    const { spaceDapp, userOps: userOpsAlice } = await createSpaceDappAndUserops(alice)
+    const { userOps: userOpsBob } = await createSpaceDappAndUserops(bob)
 
     const aaAddress = await userOpsBob.getAbstractAccountAddress({
         rootKeyAddress: bob.wallet.address as Address,
@@ -70,7 +70,7 @@ test('userops with different values are sent correctly', async () => {
 
     const bobSenderAddress = bobBuilder.getSenderAddress()
 
-    expect(userOpsStore.getState().userOps[bobSenderAddress]?.currOpValue).toBe(undefined)
+    expect(userOpsStore.getState().userOps[bobSenderAddress]?.current?.value).toBe(undefined)
 
     // join space
     const joinOp1 = await userOpsBob.sendJoinSpaceOp([spaceId1, bob.wallet.address, bob.wallet])
@@ -83,7 +83,7 @@ test('userops with different values are sent correctly', async () => {
     expect(
         format(
             // eslint-disable-next-line @typescript-eslint/no-base-to-string
-            userOpsStore.getState().userOps[bobSenderAddress].currOpValue!.toString(),
+            userOpsStore.getState().userOps[bobSenderAddress].current?.value!.toString(),
         ),
     ).toBe('0.1')
 
@@ -93,7 +93,7 @@ test('userops with different values are sent correctly', async () => {
     expect(
         format(
             // eslint-disable-next-line @typescript-eslint/no-base-to-string
-            userOpsStore.getState().userOps[bobSenderAddress].currOpValue!.toString(),
+            userOpsStore.getState().userOps[bobSenderAddress].current?.value!.toString(),
         ),
     ).toBe('0.2')
 })

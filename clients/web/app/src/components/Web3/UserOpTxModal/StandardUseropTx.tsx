@@ -37,14 +37,14 @@ export function StandardUseropTx({
     const [showWalletBalance, setShowWalletBalance] = useState(false)
     const [showWalletWarning, setShowWalletWarning] = useState(false)
     const myAbstractAccountAddress = useMyAbstractAccountAddress().data
-    const { currOp, currOpDecodedCallData, currOpValue } = userOpsStore(
+    const { current } = userOpsStore(
         useShallow((s) => ({
-            currOp: selectUserOpsByAddress(myAbstractAccountAddress, s)?.currOp,
-            currOpValue: selectUserOpsByAddress(myAbstractAccountAddress, s)?.currOpValue,
-            currOpDecodedCallData: selectUserOpsByAddress(myAbstractAccountAddress, s)
-                ?.currOpDecodedCallData,
+            current: selectUserOpsByAddress(myAbstractAccountAddress, s)?.current,
         })),
     )
+    const currOp = current?.op
+    const currOpDecodedCallData = current?.decodedCallData
+    const currOpValue = current?.value
 
     const isJoiningSpace = !!usePublicPageLoginFlow().spaceBeingJoined
     const spaceId = useSpaceIdFromPathname()
@@ -127,7 +127,7 @@ export function StandardUseropTx({
         }
     }
 
-    const isTransferEth = currOpDecodedCallData?.type === 'transferEth'
+    const isTransferEth = currOpDecodedCallData?.functionHash === 'transferEth'
 
     return (
         <>

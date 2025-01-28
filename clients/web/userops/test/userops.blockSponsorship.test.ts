@@ -11,7 +11,7 @@ test('with non-sponsored login method, sponsorship is blocked', async () => {
     )
 
     vi.spyOn(privyLoginMethod, 'getPrivyLoginMethodFromLocalStorage').mockReturnValueOnce('email')
-    const { spaceDapp, userOps: userOpsAlice } = createSpaceDappAndUserops(alice)
+    const { spaceDapp, userOps: userOpsAlice } = await createSpaceDappAndUserops(alice)
 
     await expect(async () =>
         createUngatedSpace({

@@ -21,7 +21,7 @@ import { useMyAbstractAccountAddress } from '@components/Web3/UserOpTxModal/hook
 export function JoiningOverlay() {
     const { isAuthenticated } = useConnectivity()
     const myAbstractAccountAddress = useMyAbstractAccountAddress().data
-    const currOp = userOpsStore((s) => selectUserOpsByAddress(myAbstractAccountAddress, s)?.currOp)
+    const currOp = userOpsStore((s) => selectUserOpsByAddress(myAbstractAccountAddress, s)?.current)
 
     const spaceId = useSpaceIdFromPathname()
     const { isOptimisticInitialized } = useAppProgressStore(({ optimisticInitializedSpaces }) => ({
@@ -34,8 +34,7 @@ export function JoiningOverlay() {
         if (!isAuthenticated) {
             return AppProgressState.LoggingIn
         }
-        if (currOp) {
-            // currOpGas means the confirmation tx modal is up
+        if (currOp.op) {
             return AppProgressState.Joining
         }
 

@@ -22,8 +22,8 @@ test('can join an ungated space', async () => {
     )
     await bob.ready
 
-    const { spaceDapp, userOps: userOpsAlice } = createSpaceDappAndUserops(alice)
-    const { userOps: userOpsBob } = createSpaceDappAndUserops(bob)
+    const { spaceDapp, userOps: userOpsAlice } = await createSpaceDappAndUserops(alice)
+    const { userOps: userOpsBob } = await createSpaceDappAndUserops(bob)
 
     const createSpaceOp = await createUngatedSpace({
         userOps: userOpsAlice,

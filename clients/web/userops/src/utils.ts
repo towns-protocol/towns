@@ -1,9 +1,7 @@
-import { ContractTransaction, ethers, BigNumberish, BigNumber, BytesLike } from 'ethers'
+import { ContractTransaction, ethers } from 'ethers'
 import { ISendUserOperationResponse, IUserOperation } from 'userop'
-import { Address, Space } from '@river-build/web3'
+import { Address } from '@river-build/web3'
 import { FunctionHash } from './types'
-import { decodeTransferCallData } from './generateTransferCallData'
-import { TownsSimpleAccount } from './TownsSimpleAccount'
 
 export function isUserOpResponse(
     tx: undefined | ContractTransaction | ISendUserOperationResponse,
@@ -72,89 +70,4 @@ export const OpToJSON = (op: IUserOperation): IUserOperation => {
             }),
             {},
         ) as IUserOperation
-}
-
-export function decodeCallData<F extends FunctionHash>(args: {
-    callData: BytesLike
-    space?: Space | undefined
-    functionHash: F | undefined
-    builder: TownsSimpleAccount
-}) {
-    const { callData, space, functionHash, builder } = args
-    let data
-    try {
-        switch (functionHash) {
-            case 'prepayMembership': {
-                if (!space) {
-                    break
-                }
-                const [, , dataBytes] = builder.decodeExecute(callData)
-                const decoded = space.Prepay.decodeFunctionData(
-                    'prepayMembership',
-                    dataBytes as BytesLike,
-                )
-
-                const supply = decoded[0] as BigNumberish
-                if (supply === undefined) {
-                    break
-                }
-
-                data = {
-                    supply: BigNumber.from(supply).toBigInt(),
-                }
-                break
-            }
-            case 'transferTokens': {
-                const [, , dataBytes] = builder.decodeExecute(callData)
-                const [fromAddress, recipient, tokenId] = decodeTransferCallData(
-                    dataBytes as string,
-                )
-
-                if (!fromAddress || !recipient || !tokenId) {
-                    break
-                }
-                data = {
-                    fromAddress: fromAddress as Address,
-                    recipient: recipient as Address,
-                    tokenId: BigNumber.from(tokenId).toString(),
-                }
-                break
-            }
-            case 'transferEth': {
-                const [to] = builder.decodeExecute(callData)
-
-                if (!to) {
-                    break
-                }
-                data = {
-                    recipient: to as Address,
-                }
-                break
-            }
-            case 'withdraw': {
-                if (!space) {
-                    break
-                }
-                const [, , dataBytes] = builder.decodeExecute(callData)
-                const [to] = space.Membership.decodeFunctionData('withdraw', dataBytes as BytesLike)
-                if (!to) {
-                    break
-                }
-                data = {
-                    recipient: to as Address,
-                }
-                break
-            }
-            default: {
-                break
-            }
-        }
-    } catch (error) {
-        console.error('decodeCallData::error', error)
-    }
-
-    return {
-        type: functionHash,
-        data,
-    }
 }

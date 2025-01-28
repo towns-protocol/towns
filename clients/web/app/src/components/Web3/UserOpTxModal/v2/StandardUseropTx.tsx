@@ -44,14 +44,14 @@ export function StandardUseropTx({
 }): JSX.Element {
     const [showWalletWarning, setShowWalletWarning] = useState(false)
     const myAbstractAccountAddress = useMyAbstractAccountAddress().data
-    const { currOp, currOpDecodedCallData, currOpValue } = userOpsStore(
+    const { current } = userOpsStore(
         useShallow((s) => ({
-            currOp: selectUserOpsByAddress(myAbstractAccountAddress, s)?.currOp,
-            currOpValue: selectUserOpsByAddress(myAbstractAccountAddress, s)?.currOpValue,
-            currOpDecodedCallData: selectUserOpsByAddress(myAbstractAccountAddress, s)
-                ?.currOpDecodedCallData,
+            current: selectUserOpsByAddress(myAbstractAccountAddress, s)?.current,
         })),
     )
+    const currOp = current?.op
+    const currOpDecodedCallData = current?.decodedCallData
+    const currOpValue = current?.value
 
     const { view, setView } = useUserOpTxModalContext()
 
@@ -130,7 +130,7 @@ export function StandardUseropTx({
         }
     }
 
-    const isTransferEth = currOpDecodedCallData?.type === 'transferEth'
+    const isTransferEth = currOpDecodedCallData?.functionHash === 'transferEth'
     const _isTouch = isTouch()
 
     return (

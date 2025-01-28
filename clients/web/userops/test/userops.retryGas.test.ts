@@ -14,7 +14,7 @@ test('a sponsored userop that fails because of gas too low runs again', async ()
     )
     await alice.ready
 
-    const { spaceDapp, userOps: userOpsAlice } = createSpaceDappAndUserops(alice)
+    const { spaceDapp, userOps: userOpsAlice } = await createSpaceDappAndUserops(alice)
     const useropClient = await userOpsAlice.getUserOpClient()
 
     const sendSpy = vi.spyOn(useropClient, 'sendUserOperation')
@@ -57,9 +57,7 @@ test('a non-sponsored userop that fails because of gas too low runs again', asyn
     )
     await alice.ready
 
-    const { spaceDapp, userOps: userOpsAlice } = createSpaceDappAndUserops(alice, {
-        skipPromptUserOnPMRejectedOp: false,
-    })
+    const { spaceDapp, userOps: userOpsAlice } = await createSpaceDappAndUserops(alice)
     const useropClient = await userOpsAlice.getUserOpClient()
 
     const sendSpy = vi.spyOn(useropClient, 'sendUserOperation')
