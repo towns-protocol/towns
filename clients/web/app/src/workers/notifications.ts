@@ -759,7 +759,7 @@ async function getNotificationContent(
             threadId: notification.content.threadId,
             refEventId: plaintext?.refEventId,
         })
-    } else if (notification.content.threadId) {
+    } else if (notification.content.threadId || kind === NotificationKind.Reaction) {
         return generateReplyToMessage({
             kind,
             spaceId,
