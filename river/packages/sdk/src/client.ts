@@ -221,7 +221,7 @@ export class Client
         highPriorityStreamIds?: string[],
         unpackEnvelopeOpts?: UnpackEnvelopeOpts,
         defaultGroupEncryptionAlgorithm?: GroupEncryptionAlgorithmId,
-        userNickname?: string,
+        logId?: string,
     ) {
         super()
         if (logNamespaceFilter) {
@@ -245,7 +245,7 @@ export class Client
             defaultGroupEncryptionAlgorithm ?? GroupEncryptionAlgorithmId.HybridGroupEncryption
 
         const shortId =
-            userNickname ??
+            logId ??
             shortenHexString(this.userId.startsWith('0x') ? this.userId.slice(2) : this.userId)
 
         this.logCall = dlog('csb:cl:call').extend(shortId)

@@ -1,3 +1,3 @@
 # Group Encryption protocol
 
-Documentation here: <https://docs.river.build/build/encryption>
+Documentation here: <https://docs.towns.com/build/towns-encryption>

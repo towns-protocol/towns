@@ -31,7 +31,7 @@ func DefaultZapEncoderConfig() zapcore.EncoderConfig {
 }
 
 func DefaultZapLogger() *zap.SugaredLogger {
-	encoder := zapcore.NewJSONEncoder(DefaultZapEncoderConfig())
+	encoder := NewJSONEncoder(DefaultZapEncoderConfig())
 	writer := zapcore.AddSync(DefaultLogOut)
 
 	logLevel := zapcore.InfoLevel

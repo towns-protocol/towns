@@ -13,7 +13,7 @@ CONTRACT_INTERFACES="(IDiamond|IDiamondCut|IArchitect|ILegacyArchitect|IProxyMan
 
 yarn typechain --target=ethers-v5 "contracts/out/**/?${CONTRACT_INTERFACES}.json" --out-dir "packages/generated/dev/typings"
 
-mkdir -p $ABI_DIR && cp -a contracts/out/{Diamond,DiamondCutFacet,Architect,MockLegacyArchitect,ProxyManager,IPausable,EntitlementsManager,Channels,Roles,IMulticall,OwnableFacet,WalletLink,MockWalletLink,NodeRegistry,OperatorRegistry,StreamRegistry,TokenPausableFacet,IRuleEntitlement,UserEntitlement,SpaceOwner,MockERC721A,MembershipFacet,IMembershipMetadata,Member,MockRiverRegistry,IBanning,IPricingModules,ICrossChainEntitlement,MockCrossChainEntitlement,MockEntitlementGated,PrepayFacet,IERC721AQueryable,IEntitlementDataQueryable,PlatformRequirementsFacet,IERC721A,INodeOperator,ISpaceDelegation,IEntitlementChecker,IERC5267,ICreateSpace,DropFacet,ITownsPoints,ITipping}.sol/* "$ABI_DIR"
+mkdir -p $ABI_DIR && cp -a contracts/out/{Diamond,DiamondCutFacet,Architect,MockLegacyArchitect,ProxyManager,IPausable,EntitlementsManager,Channels,Roles,IMulticall,OwnableFacet,WalletLink,MockWalletLink,NodeRegistry,OperatorRegistry,StreamRegistry,TokenPausableFacet,IRuleEntitlement,UserEntitlement,SpaceOwner,MockERC721A,MembershipFacet,IMembershipMetadata,Member,MockRiverRegistry,IBanning,IPricingModules,ICrossChainEntitlement,MockCrossChainEntitlement,MockEntitlementGated,PrepayFacet,IERC721AQueryable,IEntitlementDataQueryable,PlatformRequirementsFacet,IERC721A,INodeOperator,ISpaceDelegation,IEntitlementChecker,IEntitlementGated,IERC5267,ICreateSpace,DropFacet,ITownsPoints,ITipping}.sol/* "$ABI_DIR"
 
 # Copy the json abis to TS files for type inference
 for file in $ABI_DIR/*.abi.json; do

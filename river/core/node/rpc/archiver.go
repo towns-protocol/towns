@@ -1044,7 +1044,11 @@ func (a *Archiver) worker(ctx context.Context) {
 			}
 			err := a.ArchiveStream(ctx, record.(*ArchiveStream))
 			if err != nil {
-				log.Errorw("archiver.worker: Failed to archive stream", "error", err, "streamId", streamId)
+				// Do not log for the known set of streams that were registered under an operator address.
+				// These errors are not worth tracking.
+				if !IsRiverErrorCode(err, Err_UNKNOWN_NODE) {
+					log.Errorw("archiver.worker: Failed to archive stream", "error", err, "streamId", streamId)
+				}
 				a.failedOpsCount.Add(1)
 			} else {
 				a.successOpsCount.Add(1)

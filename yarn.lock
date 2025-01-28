@@ -39406,6 +39406,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"xchain-monitor@workspace:river/packages/xchain-monitor":
+  version: 0.0.0-use.local
+  resolution: "xchain-monitor@workspace:river/packages/xchain-monitor"
+  dependencies:
+    "@river-build/generated": "workspace:^"
+    "@river-build/web3": "workspace:^"
+    tsx: ^4.7.1
+    typescript: ^5.1.6
+    viem: ^2.21.51
+  languageName: unknown
+  linkType: soft
+
 "xml-name-validator@npm:^4.0.0":
   version: 4.0.0
   resolution: "xml-name-validator@npm:4.0.0"

@@ -350,7 +350,7 @@ func (p *MessageToNotificationsProcessor) apnPayloadV1(
 	apnPayload := map[string]interface{}{
 		"channelId":      hex.EncodeToString(channelID[:]),
 		"kind":           kind,
-		"senderId":       hex.EncodeToString(event.Event.CreatorAddress),
+		"senderId":       common.BytesToAddress(event.Event.CreatorAddress),
 		"payloadVersion": int(NotificationPushVersion_NOTIFICATION_PUSH_VERSION_1),
 	}
 
@@ -395,7 +395,7 @@ func (p *MessageToNotificationsProcessor) apnPayloadV2(
 	apnPayload := map[string]interface{}{
 		"channelId":        hex.EncodeToString(channelID[:]),
 		"kind":             kind,
-		"senderId":         hex.EncodeToString(event.Event.GetCreatorAddress()),
+		"senderId":         common.BytesToAddress(event.Event.GetCreatorAddress()),
 		"createdAtEpochMs": event.Event.GetCreatedAtEpochMs(),
 		"eventId":          eventHash,
 		"payloadVersion":   int(NotificationPushVersion_NOTIFICATION_PUSH_VERSION_2),
@@ -448,7 +448,7 @@ func (p *MessageToNotificationsProcessor) sendNotification(
 		webPayload := map[string]interface{}{
 			"channelId": hex.EncodeToString(channelID[:]),
 			"kind":      kind,
-			"senderId":  hex.EncodeToString(event.Event.CreatorAddress),
+			"senderId":  common.BytesToAddress(event.Event.CreatorAddress),
 		}
 
 		if len(eventBytesHex) <= MaxWebPushAllowedNotificationStreamEventPayloadSize {

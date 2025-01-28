@@ -22,7 +22,7 @@ func ZapJsonLogger() (*zap.SugaredLogger, *bytes.Buffer) {
 
 	return zap.New(
 		zapcore.NewCore(
-			zapcore.NewJSONEncoder(logging.DefaultZapEncoderConfig()),
+			logging.NewJSONEncoder(logging.DefaultZapEncoderConfig()),
 			zapcore.AddSync(buffer),
 			zapcore.DebugLevel,
 		),

@@ -45,7 +45,7 @@ func InitLogFromConfig(c *config.LogConfig) {
 		fileLogLevel = commonLevel
 	}
 
-	encoder := zapcore.NewJSONEncoder(logging.DefaultZapEncoderConfig())
+	encoder := logging.NewJSONEncoder(logging.DefaultZapEncoderConfig())
 	var zapCores []zapcore.Core
 	if c.Console {
 		zapCores = append(zapCores, zapcore.NewCore(encoder, zapcore.AddSync(logging.DefaultLogOut), consoleLogLevel))

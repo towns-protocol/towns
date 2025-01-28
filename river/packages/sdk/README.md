@@ -2,9 +2,9 @@
 
 For more details, visit the following resources:
 
-River documentation: https://docs.river.build/introduction
-River Messaging with encryption: https://docs.river.build/concepts/encryption
-River Encryption protocol: https://docs.river.build/build/river-encryption
+River documentation: https://docs.towns.com/introduction
+River Messaging with encryption: https://docs.towns.com/concepts/encryption
+River Encryption protocol: https://docs.towns.com/build/towns-encryption
 GitHub repository: git+https://github.com/river-build/river.git
 bugs: https://github.com/river-build/river/issues
 
