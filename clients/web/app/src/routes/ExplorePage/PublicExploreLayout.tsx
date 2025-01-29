@@ -1,5 +1,4 @@
 import React, { useCallback } from 'react'
-import { Link } from 'react-router-dom'
 import { useCombinedAuth } from 'privy/useCombinedAuth'
 import { Box, Button, Card, Stack } from '@ui'
 import { LogoSingleLetter } from '@components/Logo/Logo'
@@ -26,10 +25,19 @@ export const PublicExploreLayout: React.FC<{ children: React.ReactNode }> = ({ c
                 <AppStoreBanner insetX="xxs" insetTop="xxs" />
                 <Box>
                     <Card horizontal paddingX minHeight="x6" grow={false}>
-                        <Box centerContent padding="xs">
-                            <Link to="/">
+                        <Box
+                            centerContent
+                            padding="xs"
+                            tooltip="Go to towns.com"
+                            tooltipOptions={{
+                                placement: 'horizontal',
+                                immediate: true,
+                            }}
+                            data-testid="towns-logo"
+                        >
+                            <a href="https://towns.com" rel="noopener noreferrer" target="_blank">
                                 <LogoSingleLetter />
-                            </Link>
+                            </a>
                         </Box>
                         <Box grow />
                         <Box centerContent>
