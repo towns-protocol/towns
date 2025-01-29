@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react'
 import { Box, BoxProps, Icon, Paragraph } from '@ui'
 import { TOWNS_IOS_APP } from 'data/links'
-import { isIOS, isMacOS, isSafari } from 'hooks/useDevice'
+import { isIOS, isSafari } from 'hooks/useDevice'
 import { useStore } from 'store/store'
 import { Analytics } from 'hooks/useAnalytics'
 
@@ -27,7 +27,7 @@ export const AppStoreBanner = (props: BoxProps) => {
         if (didDismiss) {
             return false
         }
-        return isMacOS() || (isIOS() && !isSafari())
+        return isIOS() && !isSafari()
     }, [appStoreBannerPresentedCount, didDismiss])
 
     if (!display) {
