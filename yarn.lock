@@ -24261,7 +24261,7 @@ __metadata:
     workbox-routing: ^7.1.0
     workbox-strategies: ^7.1.0
     workbox-window: ^7.1.0
-    yet-another-react-lightbox: ^3.12.2
+    yet-another-react-lightbox: ^3.21.7
     zod: ^3.21.4
     zustand: ^4.5.4
   languageName: unknown
@@ -39620,13 +39620,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"yet-another-react-lightbox@npm:^3.12.2":
-  version: 3.12.2
-  resolution: "yet-another-react-lightbox@npm:3.12.2"
+"yet-another-react-lightbox@npm:^3.21.7":
+  version: 3.21.7
+  resolution: "yet-another-react-lightbox@npm:3.21.7"
   peerDependencies:
     react: ">=16.8.0"
     react-dom: ">=16.8.0"
-  checksum: 3584595af4eaff6e7bcc7324540d10c1f1a238bbc4fea81cbf87fdb6d439c97d513f46d4f2b009074bd55b69f1339c46fd7ded4a39286d01c73dc8390d2e50d8
+  checksum: 708ddf49dd68ede9bd2e49bec76be8a55ce5002e52d4d5dcd9b766493bb130d0e1c36dce9ec470af1016d11988d3267177f85df6d8a683004af9e5893b6e02bb
   languageName: node
   linkType: hard
 

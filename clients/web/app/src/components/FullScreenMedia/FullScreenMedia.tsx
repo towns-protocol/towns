@@ -6,8 +6,9 @@ import { QUERY_PARAMS } from 'routes'
 import { atoms } from 'ui/styles/atoms.css'
 import { Icon } from '@ui'
 import 'yet-another-react-lightbox/styles.css'
-import { fullScreenMediaStyle } from './FullScreeenMedia.css'
+import { useDevice } from 'hooks/useDevice'
 import { FullScreenMediaItem } from './FullScreenMediaItem'
+import { fullScreenMediaStyle } from './FullScreeenMedia.css'
 
 type Props = {
     events: TimelineEvent[]
@@ -15,6 +16,7 @@ type Props = {
 }
 
 export const FullScreenMedia = (props: Props) => {
+    const { isTouch } = useDevice()
     const [searchParams, setSearchParams] = useSearchParams()
     const galleryId = searchParams.get(QUERY_PARAMS.GALLERY_ID)
     const { events, threadId } = props
@@ -113,6 +115,10 @@ export const FullScreenMedia = (props: Props) => {
             }}
             animation={{
                 navigation: 350,
+            }}
+            controller={{
+                closeOnBackdropClick: true,
+                closeOnPullDown: isTouch,
             }}
             className={`${atoms({ zIndex: 'tooltips' })} ${fullScreenMediaStyle}`}
             styles={{ toolbar: { paddingTop: 'calc(env(safe-area-inset-top) + 10px)' } }}
