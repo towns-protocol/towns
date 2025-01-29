@@ -4,12 +4,11 @@ import (
 	"context"
 	"sync"
 
-	"github.com/river-build/river/core/node/logging"
-
 	"github.com/ethereum/go-ethereum/common"
 
 	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/events"
+	. "github.com/river-build/river/core/node/events"
+	"github.com/river-build/river/core/node/logging"
 	"github.com/river-build/river/core/node/nodes"
 	. "github.com/river-build/river/core/node/protocol"
 	. "github.com/river-build/river/core/node/shared"
@@ -40,7 +39,7 @@ type (
 		// messages is the channel to which StreamsSyncers write updates that must be sent to the client
 		messages chan *SyncStreamsResponse
 		// streamCache is used to subscribe to streams managed by this node instance
-		streamCache events.StreamCache
+		streamCache *StreamCache
 		// nodeRegistry keeps a mapping from node address to node meta-data
 		nodeRegistry nodes.NodeRegistry
 		// syncerTasks is a wait group for running background StreamsSyncers that is used to ensure all syncers stopped
@@ -84,7 +83,7 @@ func NewSyncers(
 	ctx context.Context,
 	globalSyncOpCtxCancel context.CancelCauseFunc,
 	syncID string,
-	streamCache events.StreamCache,
+	streamCache *StreamCache,
 	nodeRegistry nodes.NodeRegistry,
 	localNodeAddress common.Address,
 	cookies StreamCookieSetGroupedByNodeAddress,
@@ -308,7 +307,7 @@ func (ss *SyncerSet) DebugDropStream(ctx context.Context, streamID StreamId) err
 func ValidateAndGroupSyncCookies(syncCookies []*SyncCookie) (StreamCookieSetGroupedByNodeAddress, error) {
 	cookies := make(StreamCookieSetGroupedByNodeAddress)
 	for _, cookie := range syncCookies {
-		if err := events.SyncCookieValidate(cookie); err != nil {
+		if err := SyncCookieValidate(cookie); err != nil {
 			return nil, err
 		}
 

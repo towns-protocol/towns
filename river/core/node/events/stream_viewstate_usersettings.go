@@ -14,11 +14,11 @@ type UserSettingsStreamView interface {
 	BlockedUsers() (mapset.Set[common.Address], error)
 }
 
-var _ UserSettingsStreamView = (*streamViewImpl)(nil)
+var _ UserSettingsStreamView = (*StreamView)(nil)
 
 // BlockedUsers returns a set of addresses that are blocked.
 // r must be a view over a user settings stream (shared.STREAM_USER_SETTINGS_BIN 0xa5)
-func (r *streamViewImpl) BlockedUsers() (mapset.Set[common.Address], error) {
+func (r *StreamView) BlockedUsers() (mapset.Set[common.Address], error) {
 	blocked := mapset.NewSet[common.Address]()
 
 	if r.streamId.Type() != shared.STREAM_USER_SETTINGS_BIN {

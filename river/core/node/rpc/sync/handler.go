@@ -11,7 +11,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/events"
+	. "github.com/river-build/river/core/node/events"
 	"github.com/river-build/river/core/node/nodes"
 	. "github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/shared"
@@ -64,7 +64,7 @@ type (
 		// nodeAddr is used to determine if a stream is local or remote
 		nodeAddr common.Address
 		// streamCache is used to subscribe on local streams
-		streamCache events.StreamCache
+		streamCache *StreamCache
 		// nodeRegistry is used to find a node endpoint to subscribe on remote streams
 		nodeRegistry nodes.NodeRegistry
 		// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
@@ -84,7 +84,7 @@ var (
 // requests to the associated stream sync operation.
 func NewHandler(
 	nodeAddr common.Address,
-	cache events.StreamCache,
+	cache *StreamCache,
 	nodeRegistry nodes.NodeRegistry,
 	otelTracer trace.Tracer,
 ) *handlerImpl {

@@ -13,7 +13,7 @@ import (
 	"github.com/river-build/river/core/config"
 	"github.com/river-build/river/core/node/auth"
 	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/events"
+	. "github.com/river-build/river/core/node/events"
 	"github.com/river-build/river/core/node/infra"
 	"github.com/river-build/river/core/node/logging"
 	. "github.com/river-build/river/core/node/protocol"
@@ -33,7 +33,7 @@ type streamMembershipScrubTaskProcessorImpl struct {
 	ctx          context.Context
 	pendingTasks *xsync.MapOf[StreamId, bool]
 	workerPool   *workerpool.WorkerPool
-	cache        events.StreamCache
+	cache        *StreamCache
 	eventAdder   EventAdder
 	chainAuth    auth.ChainAuth
 	config       *config.Config
@@ -46,11 +46,11 @@ type streamMembershipScrubTaskProcessorImpl struct {
 	scrubQueueLength  prometheus.GaugeFunc
 }
 
-var _ events.Scrubber = (*streamMembershipScrubTaskProcessorImpl)(nil)
+var _ Scrubber = (*streamMembershipScrubTaskProcessorImpl)(nil)
 
 func NewStreamMembershipScrubTasksProcessor(
 	ctx context.Context,
-	cache events.StreamCache,
+	cache *StreamCache,
 	eventAdder EventAdder,
 	chainAuth auth.ChainAuth,
 	cfg *config.Config,
@@ -162,7 +162,7 @@ func (tp *streamMembershipScrubTaskProcessorImpl) processMemberImpl(
 		if _, err = tp.eventAdder.AddEventPayload(
 			ctx,
 			userStreamId,
-			events.Make_UserPayload_Membership(
+			Make_UserPayload_Membership(
 				MembershipOp_SO_LEAVE,
 				channelId,
 				&member,
@@ -264,12 +264,7 @@ func (tp *streamMembershipScrubTaskProcessorImpl) processStreamImpl(
 		return RiverError(Err_INTERNAL, "Scrub scheduled for non-local stream", "streamId", streamId)
 	}
 
-	joinableView, ok := view.(events.JoinableStreamView)
-	if !ok {
-		return RiverError(Err_INTERNAL, "Unable to scrub stream; could not cast view to JoinableStreamView")
-	}
-
-	members, err := joinableView.GetChannelMembers()
+	members, err := view.GetChannelMembers()
 	if err != nil {
 		return err
 	}

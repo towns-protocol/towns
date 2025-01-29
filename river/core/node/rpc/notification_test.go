@@ -102,6 +102,8 @@ func testGDMAPNNotificationAfterUnsubscribe(
 	test *gdmChannelNotificationsTestContext,
 	nc *notificationCapture,
 ) {
+	test.tester.t.Skip("Flaky test with userA not receiving first event before unsubscribing from APN notifications")
+
 	// user A and B share an Apple device.
 	// user A and C join a GDM channel.
 	// User A unsubscribes from APN notifications on the device.

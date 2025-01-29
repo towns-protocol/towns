@@ -18,7 +18,7 @@ import (
 	"github.com/river-build/river/core/config"
 	"github.com/river-build/river/core/node/auth"
 	"github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/events"
+	. "github.com/river-build/river/core/node/events"
 	"github.com/river-build/river/core/node/infra"
 	"github.com/river-build/river/core/node/nodes"
 	. "github.com/river-build/river/core/node/protocol/protocolconnect"
@@ -51,8 +51,8 @@ type Service struct {
 	storage         storage.StreamStorage
 
 	// Streams
-	cache       events.StreamCache
-	mbProducer  events.TestMiniblockProducer
+	cache       *StreamCache
+	mbProducer  TestMiniblockProducer
 	syncHandler river_sync.Handler
 
 	// Notifications

@@ -104,10 +104,10 @@ func joinSpace_T(
 	t *testing.T,
 	wallet *crypto.Wallet,
 	ctx context.Context,
-	syncStream SyncStream,
+	syncStream *Stream,
 	users []string,
 ) {
-	stream := syncStream.(*streamImpl)
+	stream := syncStream
 	for _, user := range users {
 		err := stream.AddEvent(
 			ctx,
@@ -133,10 +133,10 @@ func joinChannel_T(
 	t *testing.T,
 	wallet *crypto.Wallet,
 	ctx context.Context,
-	syncStream SyncStream,
+	syncStream *Stream,
 	users []string,
 ) {
-	stream := syncStream.(*streamImpl)
+	stream := syncStream
 	for _, user := range users {
 		err := stream.AddEvent(
 			ctx,
@@ -163,10 +163,10 @@ func leaveChannel_T(
 	t *testing.T,
 	wallet *crypto.Wallet,
 	ctx context.Context,
-	syncStream SyncStream,
+	syncStream *Stream,
 	users []string,
 ) {
-	stream := syncStream.(*streamImpl)
+	stream := syncStream
 	for _, user := range users {
 		err := stream.AddEvent(
 			ctx,
@@ -208,15 +208,15 @@ func TestSpaceViewState(t *testing.T) {
 
 	_, mb := makeTestSpaceStream(t, user1Wallet, spaceStreamId, nil)
 	s, _ := tt.createStream(spaceStreamId, mb)
-	stream := s.(*streamImpl)
+	stream := s
 	require.NotNil(t, stream)
 	// refresh view
 	view0, err := stream.GetView(ctx)
 	require.NoError(t, err)
 	// check that users 2 and 3 are not joined yet,
-	spaceViewStateTest_CheckUserJoined(t, view0.(JoinableStreamView), user1Wallet, true)
-	spaceViewStateTest_CheckUserJoined(t, view0.(JoinableStreamView), user2Wallet, false)
-	spaceViewStateTest_CheckUserJoined(t, view0.(JoinableStreamView), user3Wallet, false)
+	spaceViewStateTest_CheckUserJoined(t, view0, user1Wallet, true)
+	spaceViewStateTest_CheckUserJoined(t, view0, user2Wallet, false)
+	spaceViewStateTest_CheckUserJoined(t, view0, user3Wallet, false)
 	// add two more membership events
 	// user_2
 	joinSpace_T(t, user2Wallet, ctx, stream, []string{user2Id})
@@ -226,9 +226,9 @@ func TestSpaceViewState(t *testing.T) {
 	view1, err := stream.GetView(ctx)
 	require.NoError(t, err)
 	// users show up as joined immediately, because we need that information to continue to add events
-	spaceViewStateTest_CheckUserJoined(t, view1.(JoinableStreamView), user1Wallet, true)
-	spaceViewStateTest_CheckUserJoined(t, view1.(JoinableStreamView), user2Wallet, true)
-	spaceViewStateTest_CheckUserJoined(t, view1.(JoinableStreamView), user3Wallet, true)
+	spaceViewStateTest_CheckUserJoined(t, view1, user1Wallet, true)
+	spaceViewStateTest_CheckUserJoined(t, view1, user2Wallet, true)
+	spaceViewStateTest_CheckUserJoined(t, view1, user3Wallet, true)
 	require.Equal(t, 1, len(stream.view().blocks))
 
 	// make a miniblock
@@ -239,9 +239,9 @@ func TestSpaceViewState(t *testing.T) {
 	view2, err := stream.GetView(ctx)
 	require.NoError(t, err)
 	// check that users are joined
-	spaceViewStateTest_CheckUserJoined(t, view2.(JoinableStreamView), user1Wallet, true)
-	spaceViewStateTest_CheckUserJoined(t, view2.(JoinableStreamView), user2Wallet, true)
-	spaceViewStateTest_CheckUserJoined(t, view2.(JoinableStreamView), user3Wallet, true)
+	spaceViewStateTest_CheckUserJoined(t, view2, user1Wallet, true)
+	spaceViewStateTest_CheckUserJoined(t, view2, user2Wallet, true)
+	spaceViewStateTest_CheckUserJoined(t, view2, user3Wallet, true)
 	// now, turn that block into bytes, then load it back into a view
 	miniblocks := stream.view().MiniblocksFromLastSnapshot()
 	require.Equal(t, 1, len(miniblocks))
@@ -250,7 +250,7 @@ func TestSpaceViewState(t *testing.T) {
 	require.NoError(t, err)
 
 	// load up a brand new view from the latest snapshot result
-	var view3 StreamView
+	var view3 *StreamView
 	view3, err = MakeStreamView(
 		ctx,
 		&storage.ReadStreamFromLastSnapshotResult{
@@ -262,14 +262,14 @@ func TestSpaceViewState(t *testing.T) {
 	require.NotNil(t, view3)
 
 	// check that users are joined when loading from the snapshot
-	spaceViewStateTest_CheckUserJoined(t, view3.(JoinableStreamView), user1Wallet, true)
-	spaceViewStateTest_CheckUserJoined(t, view3.(JoinableStreamView), user2Wallet, true)
-	spaceViewStateTest_CheckUserJoined(t, view3.(JoinableStreamView), user3Wallet, true)
+	spaceViewStateTest_CheckUserJoined(t, view3, user1Wallet, true)
+	spaceViewStateTest_CheckUserJoined(t, view3, user2Wallet, true)
+	spaceViewStateTest_CheckUserJoined(t, view3, user3Wallet, true)
 }
 
 func spaceViewStateTest_CheckUserJoined(
 	t *testing.T,
-	view JoinableStreamView,
+	view *StreamView,
 	userWallet *crypto.Wallet,
 	expected bool,
 ) {
@@ -301,12 +301,12 @@ func TestChannelViewState_JoinedMembers(t *testing.T) {
 	// create a space stream and add the members
 	_, mb := makeTestSpaceStream(t, userWallet, spaceStreamId, nil)
 	sStream, _ := tt.createStream(spaceStreamId, mb)
-	spaceStream := sStream.(*streamImpl)
+	spaceStream := sStream
 	joinSpace_T(t, userWallet, ctx, spaceStream, []string{bob, carol})
 	// create a channel stream and add the members
 	_, mb = makeTestChannelStream(t, userWallet, alice, channelStreamId, spaceStreamId, nil)
 	cStream, _ := tt.createStream(channelStreamId, mb)
-	channelStream := cStream.(*streamImpl)
+	channelStream := cStream
 	joinChannel_T(t, userWallet, ctx, channelStream, []string{alice, bob, carol})
 	// make a miniblock
 	_ = tt.makeMiniblock(0, channelStreamId, false)
@@ -315,7 +315,7 @@ func TestChannelViewState_JoinedMembers(t *testing.T) {
 	miniblock := miniblocks[0]
 	miniblockProtoBytes, _ := proto.Marshal(miniblock)
 	// create a stream view from the miniblock bytes
-	var streamView StreamView
+	var streamView *StreamView
 	streamView, err = MakeStreamView(
 		ctx,
 		&storage.ReadStreamFromLastSnapshotResult{
@@ -327,8 +327,7 @@ func TestChannelViewState_JoinedMembers(t *testing.T) {
 
 	/* Act */
 	// create a channel view from the stream view
-	channelView := streamView.(JoinableStreamView)
-	allJoinedMembers, err := channelView.GetChannelMembers()
+	allJoinedMembers, err := streamView.GetChannelMembers()
 
 	/* Assert */
 	require.NoError(t, err)
@@ -361,12 +360,12 @@ func TestChannelViewState_RemainingMembers(t *testing.T) {
 	// create a space stream and add the members
 	_, mb := makeTestSpaceStream(t, userWallet, spaceStreamId, nil)
 	sStream, _ := tt.createStream(spaceStreamId, mb)
-	spaceStream := sStream.(*streamImpl)
+	spaceStream := sStream
 	joinSpace_T(t, userWallet, ctx, spaceStream, []string{bob, carol})
 	// create a channel stream and add the members
 	_, mb = makeTestChannelStream(t, userWallet, alice, channelStreamId, spaceStreamId, nil)
 	cStream, _ := tt.createStream(channelStreamId, mb)
-	channelStream := cStream.(*streamImpl)
+	channelStream := cStream
 	joinChannel_T(t, userWallet, ctx, channelStream, []string{alice, bob, carol})
 	// bob leaves the channel
 	leaveChannel_T(t, userWallet, ctx, channelStream, []string{bob})
@@ -377,7 +376,7 @@ func TestChannelViewState_RemainingMembers(t *testing.T) {
 	miniblock := miniblocks[0]
 	miniblockProtoBytes, _ := proto.Marshal(miniblock)
 	// create a stream view from the miniblock bytes
-	var streamView StreamView
+	var streamView *StreamView
 	streamView, err = MakeStreamView(
 		ctx,
 		&storage.ReadStreamFromLastSnapshotResult{
@@ -389,8 +388,7 @@ func TestChannelViewState_RemainingMembers(t *testing.T) {
 
 	/* Act */
 	// create a channel view from the stream view
-	channelView := streamView.(JoinableStreamView)
-	allJoinedMembers, err := channelView.GetChannelMembers()
+	allJoinedMembers, err := streamView.GetChannelMembers()
 
 	/* Assert */
 	require.NoError(t, err)

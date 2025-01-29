@@ -14,7 +14,7 @@ import (
 
 // mbJos tracks single miniblock production attempt for a single stream.
 type mbJob struct {
-	stream        *streamImpl
+	stream        *Stream
 	params        *StreamCacheParams
 	forceSnapshot bool
 
@@ -53,7 +53,7 @@ func (j *mbJob) produceCandidate(ctx context.Context) error {
 
 func (j *mbJob) makeCandidate(ctx context.Context) error {
 	var prop *mbProposal
-	var view *streamViewImpl
+	var view *StreamView
 	var err error
 	if j.replicated {
 		prop, view, err = j.makeReplicatedProposal(ctx)
@@ -75,7 +75,7 @@ func (j *mbJob) makeCandidate(ctx context.Context) error {
 	return nil
 }
 
-func (j *mbJob) makeReplicatedProposal(ctx context.Context) (*mbProposal, *streamViewImpl, error) {
+func (j *mbJob) makeReplicatedProposal(ctx context.Context) (*mbProposal, *StreamView, error) {
 	proposals, view, err := j.processRemoteProposals(ctx)
 	if err != nil {
 		return nil, nil, err
@@ -93,8 +93,8 @@ func (j *mbJob) makeReplicatedProposal(ctx context.Context) (*mbProposal, *strea
 	return combined, view, nil
 }
 
-func (j *mbJob) makeLocalProposal(ctx context.Context) (*mbProposal, *streamViewImpl, error) {
-	view, err := j.stream.getView(ctx)
+func (j *mbJob) makeLocalProposal(ctx context.Context) (*mbProposal, *StreamView, error) {
+	view, err := j.stream.GetView(ctx)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -109,8 +109,8 @@ func (j *mbJob) makeLocalProposal(ctx context.Context) (*mbProposal, *streamView
 	return prop, view, nil
 }
 
-func (j *mbJob) processRemoteProposals(ctx context.Context) ([]*mbProposal, *streamViewImpl, error) {
-	view, err := j.stream.getView(ctx)
+func (j *mbJob) processRemoteProposals(ctx context.Context) ([]*mbProposal, *StreamView, error) {
+	view, err := j.stream.GetView(ctx)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -126,7 +126,7 @@ func (j *mbJob) processRemoteProposals(ctx context.Context) ([]*mbProposal, *str
 	proposals, errs := j.gatherRemoteProposals(ctx, request)
 
 	// Get view again and bug out if stream advanced in the meantime.
-	view, err = j.stream.getView(ctx)
+	view, err = j.stream.GetView(ctx)
 	if err != nil {
 		return nil, nil, err
 	}

@@ -80,7 +80,7 @@ func (s *Service) createStream(ctx context.Context, req *CreateStreamRequest) (*
 	if csRules.RequiredMemberships != nil {
 		// load the creator's user stream
 		stream, err := s.loadStream(ctx, csRules.CreatorStreamId)
-		var creatorStreamView StreamView
+		var creatorStreamView *StreamView
 		if err == nil {
 			creatorStreamView, err = stream.GetView(ctx)
 		}
@@ -92,7 +92,7 @@ func (s *Service) createStream(ctx context.Context, req *CreateStreamRequest) (*
 			if err != nil {
 				return nil, nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "invalid stream id", "err", err)
 			}
-			if !creatorStreamView.(UserStreamView).IsMemberOf(streamId) {
+			if !creatorStreamView.IsMemberOf(streamId) {
 				return nil, nil, RiverError(Err_PERMISSION_DENIED, "not a member of", "requiredStreamId", streamId)
 			}
 		}

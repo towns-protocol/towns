@@ -636,7 +636,8 @@ func (r *transactionPool) sendReplacementTransactions(ctx context.Context) {
 func (tx *txPoolPendingTransaction) Wait(ctx context.Context) (*types.Receipt, error) {
 	var span trace.Span
 	if tx.tracer != nil {
-		ctx, span = tx.tracer.Start(ctx, "pending_tx_wait")
+		ctx, span = tx.tracer.Start(ctx, "pending_tx_wait",
+			trace.WithAttributes(attribute.String("function", tx.name)))
 		defer span.End()
 	}
 

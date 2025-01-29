@@ -136,7 +136,7 @@ func DumpMiniblockW(w io.Writer, mb *MiniblockInfo, opts DumpOpts) {
 	}
 }
 
-func DumpStreamViewW(w io.Writer, view StreamView, opts DumpOpts) {
+func DumpStreamViewW(w io.Writer, view *StreamView, opts DumpOpts) {
 	fmt.Fprintf(w, "%sSTREAM %v miniblocks: %d\n", opts.Prefix, view.StreamId(), len(view.Miniblocks()))
 
 	o := opts
@@ -152,7 +152,7 @@ func DumpStreamViewW(w io.Writer, view StreamView, opts DumpOpts) {
 	}
 }
 
-func DumpStreamView(view StreamView, opts DumpOpts) string {
+func DumpStreamView(view *StreamView, opts DumpOpts) string {
 	var buf bytes.Buffer
 	DumpStreamViewW(&buf, view, opts)
 	return buf.String()

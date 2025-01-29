@@ -290,10 +290,9 @@ func TestScrubStreamTaskProcessor(t *testing.T) {
 
 					// Grab the updated view, this triggers a scrub since scrub time was set to 300ms.
 					view, err := stream.GetViewIfLocal(ctx)
-					joinableView, ok := view.(events.JoinableStreamView)
-					if assert.NoError(err) && assert.NotNil(view) && assert.True(ok) {
+					if assert.NoError(err) && assert.NotNil(view) {
 						for _, wallet := range allWallets {
-							isMember, err := joinableView.IsMember(wallet.Address[:])
+							isMember, err := view.IsMember(wallet.Address[:])
 							if assert.NoError(err) {
 								assert.Equal(
 									!slices.Contains(tc.expectedBootedUsers, wallet),

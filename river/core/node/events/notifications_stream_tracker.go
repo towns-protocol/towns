@@ -31,7 +31,7 @@ type (
 	// In addition, it keeps track of which notifications are processed to prevent double event processing.
 	TrackedNotificationStreamView struct {
 		streamID        shared.StreamId
-		view            *streamViewImpl
+		view            *StreamView
 		cfg             crypto.OnChainConfiguration
 		listener        StreamEventListener
 		userPreferences UserPreferencesStore
@@ -120,6 +120,12 @@ func (ts *TrackedNotificationStreamView) applyBlock(
 	miniblock *MiniblockInfo,
 	cfg *crypto.OnChainSettings,
 ) error {
+	if lastBlock := ts.view.LastBlock(); lastBlock != nil {
+		if miniblock.Ref.Num <= lastBlock.Ref.Num {
+			return nil
+		}
+	}
+
 	view, _, err := ts.view.copyAndApplyBlock(miniblock, cfg)
 	if err != nil {
 		return err

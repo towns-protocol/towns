@@ -82,7 +82,7 @@ type MiniblockProducerOpts struct {
 // candidates and schedules these candidates for registration.
 func NewMiniblockProducer(
 	ctx context.Context,
-	streamCache StreamCache,
+	streamCache *StreamCache,
 	cfg crypto.OnChainConfiguration,
 	opts *MiniblockProducerOpts,
 ) *miniblockProducer {
@@ -104,7 +104,7 @@ func NewMiniblockProducer(
 }
 
 type miniblockProducer struct {
-	streamCache      StreamCache
+	streamCache      *StreamCache
 	cfg              crypto.OnChainConfiguration
 	opts             MiniblockProducerOpts
 	localNodeAddress common.Address
@@ -219,7 +219,7 @@ func (p *miniblockProducer) scheduleCandidates(ctx context.Context, blockNum cry
 }
 
 func (p *miniblockProducer) isLocalLeaderOnCurrentBlock(
-	stream *streamImpl,
+	stream *Stream,
 	blockNum crypto.BlockNumber,
 ) bool {
 	streamNodes := stream.GetNodes()
@@ -230,7 +230,7 @@ func (p *miniblockProducer) isLocalLeaderOnCurrentBlock(
 	return streamNodes[index] == p.localNodeAddress
 }
 
-func (p *miniblockProducer) trySchedule(ctx context.Context, stream *streamImpl) *mbJob {
+func (p *miniblockProducer) trySchedule(ctx context.Context, stream *Stream) *mbJob {
 	j := &mbJob{
 		stream: stream,
 		params: p.streamCache.Params(),
@@ -271,7 +271,7 @@ func (p *miniblockProducer) TestMakeMiniblock(
 	}
 
 	job := &mbJob{
-		stream:        stream.(*streamImpl),
+		stream:        stream,
 		params:        p.streamCache.Params(),
 		forceSnapshot: forceSnapshot,
 	}

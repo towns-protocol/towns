@@ -79,8 +79,18 @@ func RiverError(code protocol.Err, msg string, tags ...any) *RiverErrorImpl {
 		_ = e.Tags(tags...)
 	}
 	if isDebugCallStack {
-		_ = e.Tag("callstack", FormatCallstack(3))
+		_ = e.tag("callstack", FormatCallstack(3), 0)
 	}
+	return e
+}
+
+func RiverErrorWithBase(code protocol.Err, msg string, base error, tags ...any) *RiverErrorImpl {
+	return RiverErrorWithBases(code, msg, []error{base}, tags...)
+}
+
+func RiverErrorWithBases(code protocol.Err, msg string, bases []error, tags ...any) *RiverErrorImpl {
+	e := RiverError(code, msg, tags...)
+	e.Bases = bases
 	return e
 }
 
@@ -88,7 +98,7 @@ type RiverErrorImpl struct {
 	Code      protocol.Err
 	Msg       string
 	NamedTags []RiverErrorTag
-	Base      error
+	Bases     []error
 	Funcs     []string
 }
 
@@ -106,15 +116,15 @@ func (e *RiverErrorImpl) Error() string {
 	return sb.String()
 }
 
-func (e *RiverErrorImpl) Unwrap() error {
-	return e.Base
+func (e *RiverErrorImpl) Unwrap() []error {
+	return e.Bases
 }
 
 func (e *RiverErrorImpl) Is(target error) bool {
 	if riverErr, ok := target.(*RiverErrorImpl); ok && riverErr.Code == e.Code {
 		return true
 	}
-	return errors.Is(e.Base, target)
+	return false
 }
 
 func (e *RiverErrorImpl) WriteMessage(sb *strings.Builder) {
@@ -134,11 +144,15 @@ func (e *RiverErrorImpl) WriteMessage(sb *strings.Builder) {
 		sb.WriteString(e.Msg)
 	}
 
-	if e.Base != nil {
-		if e.Msg != "" {
-			sb.WriteString(" base_error: ")
-		}
-		sb.WriteString(e.Base.Error())
+	for i, base := range e.Bases {
+		sb.WriteString("\n<<base ")
+		num := strconv.Itoa(i)
+		sb.WriteString(num)
+		sb.WriteString(": ")
+		sb.WriteString(base.Error())
+		sb.WriteString("\n>>base ")
+		sb.WriteString(num)
+		sb.WriteString(" end")
 	}
 }
 
@@ -163,7 +177,13 @@ func WriteTag(sb *strings.Builder, tag RiverErrorTag) {
 	}
 }
 
-func (e *RiverErrorImpl) Tag(name string, value any) *RiverErrorImpl {
+func (e *RiverErrorImpl) tag(name string, value any, duplicateCheck int) *RiverErrorImpl {
+	for i := 0; i < duplicateCheck; i++ {
+		if e.NamedTags[i].Name == name {
+			e.NamedTags[i].Value = value
+			return e
+		}
+	}
 	e.NamedTags = append(e.NamedTags, RiverErrorTag{
 		Name:  name,
 		Value: value,
@@ -171,19 +191,24 @@ func (e *RiverErrorImpl) Tag(name string, value any) *RiverErrorImpl {
 	return e
 }
 
+func (e *RiverErrorImpl) Tag(name string, value any) *RiverErrorImpl {
+	return e.tag(name, value, len(e.NamedTags))
+}
+
 func (e *RiverErrorImpl) Tags(v ...any) *RiverErrorImpl {
+	duplicateCheck := len(e.NamedTags)
 	i := 0
 	for i+1 < len(v) {
 		if str, ok := v[i].(string); ok {
-			_ = e.Tag(str, v[i+1])
+			_ = e.tag(str, v[i+1], duplicateCheck)
 			i += 2
 		} else {
-			_ = e.Tag("!BAD_TAG_NAME", v[i])
+			_ = e.tag("!BAD_TAG_NAME", v[i], 0)
 			i++
 		}
 	}
 	if i < len(v) {
-		_ = e.Tag("!LAST_TAG_NO_NAME", v[i])
+		_ = e.tag("!LAST_TAG_NO_NAME", v[i], 0)
 	}
 	return e
 }
@@ -258,8 +283,8 @@ func AsRiverError(err error, defaultCode ...protocol.Err) *RiverErrorImpl {
 			code = protocol.Err_DOWNSTREAM_NETWORK_ERROR
 		}
 		return &RiverErrorImpl{
-			Code: code,
-			Base: err,
+			Code:  code,
+			Bases: []error{err},
 		}
 	}
 
@@ -290,7 +315,7 @@ func AsRiverError(err error, defaultCode ...protocol.Err) *RiverErrorImpl {
 		}
 		return &RiverErrorImpl{
 			Code:      code,
-			Base:      err,
+			Bases:     []error{err},
 			Msg:       "Contract Returned Error",
 			NamedTags: tags,
 		}
@@ -303,8 +328,8 @@ func AsRiverError(err error, defaultCode ...protocol.Err) *RiverErrorImpl {
 			code = protocol.Err_DEADLINE_EXCEEDED
 		}
 		return &RiverErrorImpl{
-			Code: code,
-			Base: err,
+			Code:  code,
+			Bases: []error{err},
 		}
 	} else {
 		return &RiverErrorImpl{

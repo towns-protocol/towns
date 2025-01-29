@@ -15,9 +15,9 @@ type UserStreamView interface {
 	HasTransaction(receipt *BlockchainTransactionReceipt) (bool, error)
 }
 
-var _ UserStreamView = (*streamViewImpl)(nil)
+var _ UserStreamView = (*StreamView)(nil)
 
-func (r *streamViewImpl) GetUserInception() (*UserPayload_Inception, error) {
+func (r *StreamView) GetUserInception() (*UserPayload_Inception, error) {
 	i := r.InceptionPayload()
 	c, ok := i.(*UserPayload_Inception)
 	if ok {
@@ -27,7 +27,7 @@ func (r *streamViewImpl) GetUserInception() (*UserPayload_Inception, error) {
 	}
 }
 
-func (r *streamViewImpl) GetUserSnapshotContent() (*UserPayload_Snapshot, error) {
+func (r *StreamView) GetUserSnapshotContent() (*UserPayload_Snapshot, error) {
 	s := r.snapshot.Content
 	c, ok := s.(*Snapshot_UserContent)
 	if ok {
@@ -37,7 +37,7 @@ func (r *streamViewImpl) GetUserSnapshotContent() (*UserPayload_Snapshot, error)
 	}
 }
 
-func (r *streamViewImpl) IsMemberOf(streamId shared.StreamId) bool {
+func (r *StreamView) IsMemberOf(streamId shared.StreamId) bool {
 	if streamId == r.streamId {
 		return true
 	}
@@ -49,7 +49,7 @@ func (r *streamViewImpl) IsMemberOf(streamId shared.StreamId) bool {
 	return userMembershipOp == MembershipOp_SO_JOIN
 }
 
-func (r *streamViewImpl) GetUserMembership(streamId shared.StreamId) (MembershipOp, error) {
+func (r *StreamView) GetUserMembership(streamId shared.StreamId) (MembershipOp, error) {
 	retValue := MembershipOp_SO_UNSPECIFIED
 
 	snap, err := r.GetUserSnapshotContent()
@@ -87,7 +87,7 @@ func (r *streamViewImpl) GetUserMembership(streamId shared.StreamId) (Membership
 }
 
 // handles transactions for user streams and member payload of any stream
-func (r *streamViewImpl) HasTransaction(receipt *BlockchainTransactionReceipt) (bool, error) {
+func (r *StreamView) HasTransaction(receipt *BlockchainTransactionReceipt) (bool, error) {
 	retValue := false
 	updateFn := func(e *ParsedEvent, minibockNum int64, eventNum int64) (bool, error) {
 		switch payload := e.Event.Payload.(type) {

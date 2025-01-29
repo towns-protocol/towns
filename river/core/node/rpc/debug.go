@@ -340,7 +340,7 @@ func (h *txpoolHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 type cacheHandler struct {
-	cache StreamCache
+	cache *StreamCache
 }
 
 func (h *cacheHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -361,7 +361,7 @@ func (h *cacheHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		reply.Streams = make([]*render.CacheDataStream, streamCount)
 	}
 
-	slices.SortFunc(streams, func(a, b StreamView) int {
+	slices.SortFunc(streams, func(a, b *StreamView) int {
 		return a.StreamId().Compare(*b.StreamId())
 	})
 

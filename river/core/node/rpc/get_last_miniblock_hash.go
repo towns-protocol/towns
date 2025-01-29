@@ -8,7 +8,7 @@ import (
 )
 
 func (s *Service) localGetLastMiniblockHash(
-	streamView StreamView,
+	streamView *StreamView,
 ) (*connect.Response[GetLastMiniblockHashResponse], error) {
 	lastBlock := streamView.LastBlock()
 	resp := &GetLastMiniblockHashResponse{

@@ -41,7 +41,7 @@ func TestStreamCacheViewEviction(t *testing.T) {
 	// stream just loaded and should be with view in cache
 	streamWithoutLoadedView := 0
 	streamWithLoadedViewCount := 0
-	streamCache.cache.Range(func(key StreamId, value *streamImpl) bool {
+	streamCache.cache.Range(func(key StreamId, value *Stream) bool {
 		if value.view() == nil {
 			streamWithoutLoadedView++
 		} else {
@@ -67,7 +67,7 @@ func TestStreamCacheViewEviction(t *testing.T) {
 	// cache must have view dropped even there is a subscriber
 	streamWithoutLoadedView = 0
 	streamWithLoadedViewCount = 0
-	streamCache.cache.Range(func(key StreamId, value *streamImpl) bool {
+	streamCache.cache.Range(func(key StreamId, value *Stream) bool {
 		if value.view() == nil {
 			streamWithoutLoadedView++
 		} else {
@@ -89,7 +89,7 @@ func TestStreamCacheViewEviction(t *testing.T) {
 
 	streamWithoutLoadedView = 0
 	streamWithLoadedViewCount = 0
-	streamCache.cache.Range(func(key StreamId, value *streamImpl) bool {
+	streamCache.cache.Range(func(key StreamId, value *Stream) bool {
 		if value.view() == nil {
 			streamWithoutLoadedView++
 		} else {
@@ -107,7 +107,7 @@ func TestStreamCacheViewEviction(t *testing.T) {
 	require.NoError(err, "get view")
 	streamWithoutLoadedView = 0
 	streamWithLoadedViewCount = 0
-	streamCache.cache.Range(func(key StreamId, value *streamImpl) bool {
+	streamCache.cache.Range(func(key StreamId, value *Stream) bool {
 		if value.view() == nil {
 			streamWithoutLoadedView++
 		} else {
@@ -144,7 +144,7 @@ func TestCacheEvictionWithFilledMiniBlockPool(t *testing.T) {
 	// stream just loaded and should have view loaded
 	streamWithoutLoadedView := 0
 	streamWithLoadedViewCount := 0
-	streamCache.cache.Range(func(key StreamId, value *streamImpl) bool {
+	streamCache.cache.Range(func(key StreamId, value *Stream) bool {
 		if value.view() == nil {
 			streamWithoutLoadedView++
 		} else {
@@ -235,7 +235,7 @@ func TestStreamMiniblockBatchProduction(t *testing.T) {
 
 	streamCache := tc.initCache(0, nil)
 
-	streamCache.cache.Range(func(key StreamId, value *streamImpl) bool {
+	streamCache.cache.Range(func(key StreamId, value *Stream) bool {
 		require.Fail("stream cache must be empty")
 		return true
 	})
@@ -327,22 +327,22 @@ func TestStreamMiniblockBatchProduction(t *testing.T) {
 	)
 }
 
-func isCacheEmpty(streamCache *streamCacheImpl) bool {
+func isCacheEmpty(streamCache *StreamCache) bool {
 	return streamCache.cache.Size() == 0
 }
 
-func cleanUpCache(streamCache *streamCacheImpl) bool {
+func cleanUpCache(streamCache *StreamCache) bool {
 	cleanedUp := true
-	streamCache.cache.Range(func(key StreamId, streamVal *streamImpl) bool {
+	streamCache.cache.Range(func(key StreamId, streamVal *Stream) bool {
 		cleanedUp = cleanedUp && streamVal.tryCleanup(0)
 		return true
 	})
 	return cleanedUp
 }
 
-func areAllViewsDropped(streamCache *streamCacheImpl) bool {
+func areAllViewsDropped(streamCache *StreamCache) bool {
 	allDropped := true
-	streamCache.cache.Range(func(key StreamId, streamVal *streamImpl) bool {
+	streamCache.cache.Range(func(key StreamId, streamVal *Stream) bool {
 		st := streamVal.getStatus()
 		allDropped = allDropped && !st.loaded
 		return true

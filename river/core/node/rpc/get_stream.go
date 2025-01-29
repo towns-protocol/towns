@@ -8,7 +8,7 @@ import (
 )
 
 func (s *Service) localGetStream(
-	streamView StreamView,
+	streamView *StreamView,
 ) (*connect.Response[GetStreamResponse], error) {
 	return connect.NewResponse(&GetStreamResponse{
 		Stream: &StreamAndCookie{

@@ -7,11 +7,12 @@ import {IMembershipPricing} from "./pricing/IMembershipPricing.sol";
 
 // libraries
 import {CurrencyTransfer} from "contracts/src/utils/libraries/CurrencyTransfer.sol";
+import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 
 // contracts
+import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
 import {ReentrancyGuard} from "solady/utils/ReentrancyGuard.sol";
 import {MembershipJoin} from "./join/MembershipJoin.sol";
-import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
 
 contract MembershipFacet is
   IMembership,
@@ -19,19 +20,21 @@ contract MembershipFacet is
   ReentrancyGuard,
   Facet
 {
-  // =============================================================
-  //                           Funds
-  // =============================================================
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                            FUNDS                           */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
   /// @inheritdoc IMembership
   function withdraw(address account) external onlyOwner nonReentrant {
-    if (account == address(0)) revert Membership__InvalidAddress();
+    if (account == address(0))
+      CustomRevert.revertWith(Membership__InvalidAddress.selector);
 
     // get the balance
     uint256 balance = _getCreatorBalance();
 
     // verify the balance is not 0
-    if (balance == 0) revert Membership__InsufficientPayment();
+    if (balance == 0)
+      CustomRevert.revertWith(Membership__InsufficientPayment.selector);
 
     // reset the balance
     _setCreatorBalance(0);
@@ -49,9 +52,9 @@ contract MembershipFacet is
     return _getCreatorBalance();
   }
 
-  // =============================================================
-  //                           Join
-  // =============================================================
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                            JOIN                            */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
   /// @inheritdoc IMembership
   function joinSpace(address receiver) external payable nonReentrant {
@@ -67,20 +70,21 @@ contract MembershipFacet is
     _joinSpaceWithReferral(receiver, referral);
   }
 
-  // =============================================================
-  //                           Renewal
-  // =============================================================
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                           RENEWAL                          */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
   /// @inheritdoc IMembership
   function renewMembership(uint256 tokenId) external payable nonReentrant {
     address receiver = _ownerOf(tokenId);
 
-    if (receiver == address(0)) revert Membership__InvalidAddress();
+    if (receiver == address(0))
+      CustomRevert.revertWith(Membership__InvalidAddress.selector);
 
     // validate if the current expiration is 365 or more
     uint256 expiration = _expiresAt(tokenId);
     if (expiration - block.timestamp >= _getMembershipDuration())
-      revert Membership__NotExpired();
+      CustomRevert.revertWith(Membership__NotExpired.selector);
 
     // allocate protocol and membership fees
     uint256 membershipPrice = _getMembershipRenewalPrice(
@@ -90,8 +94,8 @@ contract MembershipFacet is
 
     if (membershipPrice > 0) {
       uint256 protocolFee = _collectProtocolFee(receiver, membershipPrice);
-      uint256 surplus = membershipPrice - protocolFee;
-      if (surplus > 0) _transferIn(receiver, surplus);
+      uint256 remainingDue = membershipPrice - protocolFee;
+      if (remainingDue > 0) _transferIn(receiver, remainingDue);
     }
 
     _renewSubscription(tokenId, _getMembershipDuration());
@@ -102,18 +106,19 @@ contract MembershipFacet is
     return _expiresAt(tokenId);
   }
 
-  // =============================================================
-  //                           Duration
-  // =============================================================
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                          DURATION                          */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
   /// @inheritdoc IMembership
   function getMembershipDuration() external view returns (uint64) {
     return _getMembershipDuration();
   }
 
-  // =============================================================
-  //                        Pricing Module
-  // =============================================================
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                       PRICING MODULE                       */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
   /// @inheritdoc IMembership
   function setMembershipPricingModule(
     address pricingModule
@@ -127,9 +132,9 @@ contract MembershipFacet is
     return _getPricingModule();
   }
 
-  // =============================================================
-  //                           Pricing
-  // =============================================================
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                           PRICING                          */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
   /// @inheritdoc IMembership
   function setMembershipPrice(uint256 newPrice) external onlyOwner {
@@ -154,9 +159,10 @@ contract MembershipFacet is
     return _getProtocolFee(_getMembershipPrice(_totalSupply()));
   }
 
-  // =============================================================
-  //                           Allocation
-  // =============================================================
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                         ALLOCATION                         */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
   /// @inheritdoc IMembership
   function setMembershipFreeAllocation(
     uint256 newAllocation
@@ -166,7 +172,7 @@ contract MembershipFacet is
 
     // verify newLimit is not more than the max supply limit
     if (currentSupplyLimit != 0 && newAllocation > currentSupplyLimit)
-      revert Membership__InvalidFreeAllocation();
+      CustomRevert.revertWith(Membership__InvalidFreeAllocation.selector);
 
     // verify newLimit is not more than the allowed platform limit
     _verifyFreeAllocation(newAllocation);
@@ -178,9 +184,9 @@ contract MembershipFacet is
     return _getMembershipFreeAllocation();
   }
 
-  // =============================================================
-  //                    Token Max Supply Limit
-  // =============================================================
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                        SUPPLY LIMIT                        */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
   /// @inheritdoc IMembership
   function setMembershipLimit(uint256 newLimit) external onlyOwner {
@@ -193,18 +199,19 @@ contract MembershipFacet is
     return _getMembershipSupplyLimit();
   }
 
-  // =============================================================
-  //                           Currency
-  // =============================================================
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                          CURRENCY                          */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
   /// @inheritdoc IMembership
   function getMembershipCurrency() external view returns (address) {
     return _getMembershipCurrency();
   }
 
-  // =============================================================
-  //                           Image
-  // =============================================================
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                            IMAGE                           */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
   function setMembershipImage(string calldata newImage) external onlyOwner {
     _setMembershipImage(newImage);
   }
@@ -213,9 +220,9 @@ contract MembershipFacet is
     return _getMembershipImage();
   }
 
-  // =============================================================
-  //                           Factory
-  // =============================================================
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                           FACTORY                          */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
   /// @inheritdoc IMembership
   function getSpaceFactory() external view returns (address) {

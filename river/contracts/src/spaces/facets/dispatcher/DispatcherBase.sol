@@ -5,6 +5,7 @@ pragma solidity ^0.8.23;
 import {IDispatcherBase} from "./IDispatcher.sol";
 
 // libraries
+import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 
 // contracts
 import {DispatcherStorage} from "./DispatcherStorage.sol";
@@ -23,8 +24,9 @@ abstract contract DispatcherBase is IDispatcherBase {
   }
 
   function _captureValue(bytes32 transactionId, uint256 value) internal {
-    if (value == 0) revert Dispatcher__InvalidValue();
-    if (msg.value != value) revert Dispatcher__InvalidValue();
+    if (value == 0) CustomRevert.revertWith(Dispatcher__InvalidValue.selector);
+    if (msg.value != value)
+      CustomRevert.revertWith(Dispatcher__InvalidValue.selector);
 
     DispatcherStorage.Layout storage ds = DispatcherStorage.layout();
     ds.transactionBalance[transactionId] += value;
@@ -72,8 +74,7 @@ abstract contract DispatcherBase is IDispatcherBase {
 
   function _registerTransaction(
     address sender,
-    bytes memory data,
-    uint256 value
+    bytes memory data
   ) internal returns (bytes32) {
     bytes32 keyHash = keccak256(abi.encodePacked(sender, block.number));
 
@@ -84,12 +85,12 @@ abstract contract DispatcherBase is IDispatcherBase {
 
     // revert if the transaction already exists
     if (_getCapturedData(transactionId).length > 0) {
-      revert Dispatcher__TransactionAlreadyExists();
+      CustomRevert.revertWith(Dispatcher__TransactionAlreadyExists.selector);
     }
 
     _captureData(transactionId, data);
-    if (value != 0) {
-      _captureValue(transactionId, value);
+    if (msg.value != 0) {
+      _captureValue(transactionId, msg.value);
     }
 
     return transactionId;

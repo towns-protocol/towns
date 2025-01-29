@@ -7,26 +7,21 @@ import (
 	"slices"
 	"time"
 
-	"go.uber.org/zap"
-	"google.golang.org/protobuf/proto"
-
-	"github.com/river-build/river/core/config"
-	"github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/mls_service"
-	"github.com/river-build/river/core/node/mls_service/mls_tools"
-
 	"github.com/ethereum/go-ethereum/common"
-
 	ethTypes "github.com/ethereum/go-ethereum/core/types"
-
+	"github.com/river-build/river/core/config"
 	baseContracts "github.com/river-build/river/core/contracts/base"
-
 	"github.com/river-build/river/core/node/auth"
 	. "github.com/river-build/river/core/node/base"
+	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/events"
 	"github.com/river-build/river/core/node/logging"
+	"github.com/river-build/river/core/node/mls_service"
+	"github.com/river-build/river/core/node/mls_service/mls_tools"
 	. "github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/shared"
+	"go.uber.org/zap"
+	"google.golang.org/protobuf/proto"
 )
 
 type aeParams struct {
@@ -37,7 +32,7 @@ type aeParams struct {
 	streamMembershipLimit int
 	validNodeAddresses    []common.Address
 	currentTime           time.Time
-	streamView            events.StreamView
+	streamView            *events.StreamView
 	parsedEvent           *events.ParsedEvent
 }
 
@@ -175,7 +170,7 @@ func CanAddEvent(
 	validNodeAddresses []common.Address,
 	currentTime time.Time,
 	parsedEvent *events.ParsedEvent,
-	streamView events.StreamView,
+	streamView *events.StreamView,
 ) (bool, *AddEventVerifications, *AddEventSideEffects, error) {
 	if parsedEvent.Event.DelegateExpiryEpochMs > 0 &&
 		isPastExpiry(currentTime, parsedEvent.Event.DelegateExpiryEpochMs) {
@@ -700,7 +695,7 @@ func (params *aeParams) creatorIsMember() (bool, error) {
 }
 
 func (params *aeParams) mlsInitialized() (bool, error) {
-	mlsInitialized, err := params.streamView.(events.MlsStreamView).IsMlsInitialized()
+	mlsInitialized, err := params.streamView.IsMlsInitialized()
 	if err != nil {
 		return false, err
 	}
@@ -740,7 +735,7 @@ func (ru *aeMemberBlockchainTransactionRules) validMemberBlockchainTransaction_R
 
 func (ru *aeMemberBlockchainTransactionRules) validMemberBlockchainTransaction_IsUnique() (bool, error) {
 	// loop over all events in the view, check if the transaction is already in the view
-	streamView := ru.params.streamView.(events.JoinableStreamView)
+	streamView := ru.params.streamView
 
 	hasTransaction, err := streamView.HasTransaction(ru.memberTransaction.Transaction.GetReceipt())
 	if err != nil {
@@ -756,7 +751,7 @@ func (ru *aeMemberBlockchainTransactionRules) validMemberBlockchainTransaction_I
 
 func (ru *aeReceivedBlockchainTransactionRules) validReceivedBlockchainTransaction_IsUnique() (bool, error) {
 	// loop over all events in the view, check if the transaction is already in the view
-	userStreamView := ru.params.streamView.(events.UserStreamView)
+	userStreamView := ru.params.streamView
 
 	hasTransaction, err := userStreamView.HasTransaction(ru.receivedTransaction.Transaction.GetReceipt())
 	if err != nil {
@@ -772,7 +767,7 @@ func (ru *aeReceivedBlockchainTransactionRules) validReceivedBlockchainTransacti
 
 func (ru *aeBlockchainTransactionRules) validBlockchainTransaction_IsUnique() (bool, error) {
 	// loop over all events in the view, check if the transaction is already in the view
-	userStreamView := ru.params.streamView.(events.UserStreamView)
+	userStreamView := ru.params.streamView
 
 	hasTransaction, err := userStreamView.HasTransaction(ru.transaction.GetReceipt())
 	if err != nil {
@@ -1032,7 +1027,7 @@ func (ru *aeMembershipRules) validMembershipPayload() (bool, error) {
 
 func (ru *aeMembershipRules) validMembershipLimit() (bool, error) {
 	if ru.membership.Op == MembershipOp_SO_JOIN || ru.membership.Op == MembershipOp_SO_INVITE {
-		members, err := ru.params.streamView.(events.JoinableStreamView).GetChannelMembers()
+		members, err := ru.params.streamView.GetChannelMembers()
 		if err != nil {
 			return false, err
 		}
@@ -1057,7 +1052,7 @@ func (ru *aeMembershipRules) validMembershipTransition() (bool, error) {
 
 	userAddress := ru.membership.UserAddress
 
-	currentMembership, err := ru.params.streamView.(events.JoinableStreamView).GetMembership(userAddress)
+	currentMembership, err := ru.params.streamView.GetMembership(userAddress)
 	if err != nil {
 		return false, err
 	}
@@ -1134,7 +1129,7 @@ func (ru *aeMembershipRules) validMembershipTransitionForDM() (bool, error) {
 		return false, RiverError(Err_INVALID_ARGUMENT, "membership is nil")
 	}
 
-	inception, err := ru.params.streamView.(events.DMChannelStreamView).GetDMChannelInception()
+	inception, err := ru.params.streamView.GetDMChannelInception()
 	if err != nil {
 		return false, err
 	}
@@ -1185,11 +1180,11 @@ func (ru *aeMembershipRules) validMembershipTransitionForGDM() (bool, error) {
 	initiatorAddress := ru.membership.InitiatorAddress
 	userAddress := ru.membership.UserAddress
 
-	initiatorMembership, err := ru.params.streamView.(events.JoinableStreamView).GetMembership(initiatorAddress)
+	initiatorMembership, err := ru.params.streamView.GetMembership(initiatorAddress)
 	if err != nil {
 		return false, err
 	}
-	userMembership, err := ru.params.streamView.(events.JoinableStreamView).GetMembership(userAddress)
+	userMembership, err := ru.params.streamView.GetMembership(userAddress)
 	if err != nil {
 		return false, err
 	}
@@ -1287,7 +1282,7 @@ func (ru *aeUserMembershipRules) validUserMembershipTransition() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	currentMembershipOp, err := ru.params.streamView.(events.UserStreamView).GetUserMembership(streamId)
+	currentMembershipOp, err := ru.params.streamView.GetUserMembership(streamId)
 	if err != nil {
 		return false, err
 	}
@@ -1413,7 +1408,7 @@ func (ru *aeMembershipRules) spaceMembershipEntitlements() (*auth.ChainAuthArgs,
 }
 
 func (ru *aeMembershipRules) channelMembershipEntitlements() (*auth.ChainAuthArgs, error) {
-	inception, err := ru.params.streamView.(events.ChannelStreamView).GetChannelInception()
+	inception, err := ru.params.streamView.GetChannelInception()
 	if err != nil {
 		return nil, err
 	}
@@ -1453,7 +1448,7 @@ func (ru *aeMembershipRules) channelMembershipEntitlements() (*auth.ChainAuthArg
 }
 
 func (ru *aeMlsInitializeGroupRules) validMlsInitializeGroup() (bool, error) {
-	mlsInitialized, err := ru.params.streamView.(events.MlsStreamView).IsMlsInitialized()
+	mlsInitialized, err := ru.params.streamView.IsMlsInitialized()
 	if err != nil {
 		return false, err
 	}
@@ -1476,7 +1471,7 @@ func (ru *aeMlsInitializeGroupRules) validMlsInitializeGroup() (bool, error) {
 }
 
 func (ru *aeMlsExternalJoinRules) validMlsExternalJoin() (bool, error) {
-	view := ru.params.streamView.(events.MlsStreamView)
+	view := ru.params.streamView
 	mlsGroupState, err := view.GetMlsGroupState()
 	if err != nil {
 		return false, err
@@ -1503,7 +1498,7 @@ func (ru *aeMlsEpochSecrets) validMlsEpochSecrets() (bool, error) {
 	if len(ru.secrets.Secrets) == 0 {
 		return false, RiverError(Err_INVALID_ARGUMENT, "no secrets provided")
 	}
-	view := ru.params.streamView.(events.MlsStreamView)
+	view := ru.params.streamView
 	epochSecrets, err := view.GetMlsEpochSecrets()
 	if err != nil {
 		return false, err
@@ -1517,7 +1512,7 @@ func (ru *aeMlsEpochSecrets) validMlsEpochSecrets() (bool, error) {
 }
 
 func (ru *aeMlsKeyPackageRules) validMlsKeyPackage() (bool, error) {
-	view := ru.params.streamView.(events.MlsStreamView)
+	view := ru.params.streamView
 	mlsGroupState, err := view.GetMlsGroupState()
 	if err != nil {
 		return false, err
@@ -1544,7 +1539,7 @@ func (ru *aeMlsKeyPackageRules) validMlsKeyPackage() (bool, error) {
 }
 
 func (ru *aeMlsWelcomeMessageRules) validMlsWelcomeMessage() (bool, error) {
-	view := ru.params.streamView.(events.MlsStreamView)
+	view := ru.params.streamView
 	mlsGroupState, err := view.GetMlsGroupState()
 	if err != nil {
 		return false, err
@@ -1601,7 +1596,7 @@ func (params *aeParams) channelEntitlements(permission auth.Permission) func() (
 		}
 		channelId := *params.streamView.StreamId()
 
-		inception, err := params.streamView.(events.ChannelStreamView).GetChannelInception()
+		inception, err := params.streamView.GetChannelInception()
 		if err != nil {
 			return nil, err
 		}
@@ -1685,7 +1680,7 @@ func (ru *aeMembershipRules) getPermissionForMembershipOp() (auth.Permission, st
 		return auth.PermissionUndefined, "", err
 	}
 
-	currentMembership, err := ru.params.streamView.(events.JoinableStreamView).GetMembership(userAddress)
+	currentMembership, err := ru.params.streamView.GetMembership(userAddress)
 	if err != nil {
 		return auth.PermissionUndefined, "", err
 	}
@@ -1760,7 +1755,7 @@ func (ru *aePinRules) validPin() (bool, error) {
 	}
 
 	// cast as joinable view state
-	view := ru.params.streamView.(events.JoinableStreamView)
+	view := ru.params.streamView
 	// get existing pins
 	existingPins, err := view.GetPinnedMessages()
 	if err != nil {
@@ -1789,7 +1784,7 @@ func (ru *aeUnpinRules) validUnpin() (bool, error) {
 		return false, RiverError(Err_INVALID_ARGUMENT, "invalid message hash")
 	}
 	// cast as joinable view state
-	view := ru.params.streamView.(events.JoinableStreamView)
+	view := ru.params.streamView
 	// get existing pins
 	existingPins, err := view.GetPinnedMessages()
 	if err != nil {
@@ -1833,7 +1828,7 @@ func (params *aeParams) channelExistsInSpace(spaceChannelPayloadRules HasChannel
 			return false, err
 		}
 
-		view := params.streamView.(events.SpaceStreamView)
+		view := params.streamView
 		// check if the channel exists
 		_, err = view.GetChannelInfo(channelId)
 		if err != nil {
@@ -1850,7 +1845,7 @@ func (ru *aeSpaceChannelRules) validSpaceChannelOp() (bool, error) {
 	}
 
 	next := ru.channelUpdate
-	view := ru.params.streamView.(events.SpaceStreamView)
+	view := ru.params.streamView
 	channelId, err := shared.StreamIdFromBytes(next.ChannelId)
 	if err != nil {
 		return false, err
@@ -1887,7 +1882,7 @@ func (ru *aeMediaPayloadChunkRules) canAddMediaChunk() (bool, error) {
 	}
 	chunk := ru.chunk
 
-	inception, err := ru.params.streamView.(events.MediaStreamView).GetMediaInception()
+	inception, err := ru.params.streamView.GetMediaInception()
 	if err != nil {
 		return false, err
 	}
@@ -1929,7 +1924,7 @@ func (ru *aeKeyFulfillmentRules) validKeyFulfillment() (bool, error) {
 		return false, RiverError(Err_INVALID_ARGUMENT, "event is not a key fulfillment event")
 	}
 	userAddress := ru.fulfillment.UserAddress
-	solicitations, err := ru.params.streamView.(events.JoinableStreamView).GetKeySolicitations(userAddress)
+	solicitations, err := ru.params.streamView.GetKeySolicitations(userAddress)
 	if err != nil {
 		return false, err
 	}

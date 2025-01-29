@@ -7,7 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/events"
+	. "github.com/river-build/river/core/node/events"
 	"github.com/river-build/river/core/node/logging"
 	. "github.com/river-build/river/core/node/protocol"
 	. "github.com/river-build/river/core/node/shared"
@@ -19,13 +19,13 @@ type localSyncer struct {
 	syncStreamCtx      context.Context
 	cancelGlobalSyncOp context.CancelCauseFunc
 
-	streamCache events.StreamCache
+	streamCache *StreamCache
 	cookies     []*SyncCookie
 	messages    chan<- *SyncStreamsResponse
 	localAddr   common.Address
 
 	activeStreamsMu sync.Mutex
-	activeStreams   map[StreamId]events.SyncStream
+	activeStreams   map[StreamId]*Stream
 }
 
 func newLocalSyncer(
@@ -33,7 +33,7 @@ func newLocalSyncer(
 	globalSyncOpID string,
 	cancelGlobalSyncOp context.CancelCauseFunc,
 	localAddr common.Address,
-	streamCache events.StreamCache,
+	streamCache *StreamCache,
 	cookies []*SyncCookie,
 	messages chan<- *SyncStreamsResponse,
 ) (*localSyncer, error) {
@@ -45,7 +45,7 @@ func newLocalSyncer(
 		localAddr:          localAddr,
 		cookies:            cookies,
 		messages:           messages,
-		activeStreams:      make(map[StreamId]events.SyncStream),
+		activeStreams:      make(map[StreamId]*Stream),
 	}, nil
 }
 

@@ -10,7 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/events"
+	. "github.com/river-build/river/core/node/events"
 	"github.com/river-build/river/core/node/nodes"
 	. "github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/rpc/sync/client"
@@ -34,7 +34,7 @@ type (
 		// thisNodeAddress keeps the address of this stream  thisNodeAddress instance
 		thisNodeAddress common.Address
 		// streamCache gives access to streams managed by this thisNodeAddress
-		streamCache events.StreamCache
+		streamCache *StreamCache
 		// nodeRegistry is used to get the remote remoteNode endpoint from a thisNodeAddress address
 		nodeRegistry nodes.NodeRegistry
 	}
@@ -66,7 +66,7 @@ func NewStreamsSyncOperation(
 	ctx context.Context,
 	syncId string,
 	node common.Address,
-	streamCache events.StreamCache,
+	streamCache *StreamCache,
 	nodeRegistry nodes.NodeRegistry,
 ) (*StreamSyncOperation, error) {
 	// make the sync operation cancellable for CancelSync
@@ -174,7 +174,7 @@ func (syncOp *StreamSyncOperation) AddStreamToSync(
 	ctx context.Context,
 	req *connect.Request[AddStreamToSyncRequest],
 ) (*connect.Response[AddStreamToSyncResponse], error) {
-	if err := events.SyncCookieValidate(req.Msg.GetSyncPos()); err != nil {
+	if err := SyncCookieValidate(req.Msg.GetSyncPos()); err != nil {
 		return nil, err
 	}
 

@@ -2,20 +2,23 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IMembershipBase} from "./IMembership.sol";
 import {IPlatformRequirements} from "contracts/src/factory/facets/platform/requirements/IPlatformRequirements.sol";
 import {IMembershipPricing} from "./pricing/IMembershipPricing.sol";
 import {IPricingModules} from "contracts/src/factory/facets/architect/pricing/IPricingModules.sol";
 
 // libraries
+import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
 import {CurrencyTransfer} from "contracts/src/utils/libraries/CurrencyTransfer.sol";
+import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
+import {BasisPoints} from "contracts/src/utils/libraries/BasisPoints.sol";
 import {MembershipStorage} from "./MembershipStorage.sol";
 
 // contracts
-import {BasisPoints} from "contracts/src/utils/libraries/BasisPoints.sol";
 
 abstract contract MembershipBase is IMembershipBase {
+  using SafeTransferLib for address;
+
   function __MembershipBase_init(
     Membership memory info,
     address spaceFactory
@@ -36,29 +39,27 @@ abstract contract MembershipBase is IMembershipBase {
 
     if (info.price > 0) {
       _verifyPrice(info.price);
-      IMembershipPricing(ds.pricingModule).setPrice(info.price);
+      IMembershipPricing(info.pricingModule).setPrice(info.price);
     }
   }
 
-  // =============================================================
-  //                           Membership
-  // =============================================================
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                         MEMBERSHIP                         */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
   function _collectProtocolFee(
-    address buyer,
+    address payer,
     uint256 membershipPrice
   ) internal returns (uint256 protocolFee) {
-    MembershipStorage.Layout storage ds = MembershipStorage.layout();
-    IPlatformRequirements platform = IPlatformRequirements(ds.spaceFactory);
+    IPlatformRequirements platform = _getPlatformRequirements();
 
-    address currency = ds.membershipCurrency;
     address platformRecipient = platform.getFeeRecipient();
     protocolFee = _getProtocolFee(membershipPrice);
 
-    //transfer the platform fee to the platform fee recipient
+    // transfer the platform fee to the platform fee recipient
     CurrencyTransfer.transferCurrency(
-      currency,
-      buyer, // from
+      _getMembershipCurrency(),
+      payer, // from
       platformRecipient, // to
       protocolFee
     );
@@ -67,7 +68,7 @@ abstract contract MembershipBase is IMembershipBase {
   function _getProtocolFee(
     uint256 membershipPrice
   ) internal view returns (uint256) {
-    IPlatformRequirements platform = IPlatformRequirements(_getSpaceFactory());
+    IPlatformRequirements platform = _getPlatformRequirements();
 
     uint256 minPrice = platform.getMembershipMinPrice();
     uint256 fixedFee = platform.getMembershipFee();
@@ -92,14 +93,14 @@ abstract contract MembershipBase is IMembershipBase {
     }
 
     // handle erc20 tokens
-    IERC20 token = IERC20(currency);
-    uint256 balanceBefore = token.balanceOf(address(this));
+    uint256 balanceBefore = currency.balanceOf(address(this));
     CurrencyTransfer.transferCurrency(currency, from, address(this), amount);
-    uint256 balanceAfter = token.balanceOf(address(this));
+    uint256 balanceAfter = currency.balanceOf(address(this));
 
     // Calculate the amount of tokens transferred
     uint256 finalAmount = balanceAfter - balanceBefore;
-    if (finalAmount != amount) revert Membership__InsufficientPayment();
+    if (finalAmount != amount)
+      CustomRevert.revertWith(Membership__InsufficientPayment.selector);
 
     ds.tokenBalance += finalAmount;
     return finalAmount;
@@ -113,22 +114,24 @@ abstract contract MembershipBase is IMembershipBase {
     MembershipStorage.layout().tokenBalance = newBalance;
   }
 
-  // =============================================================
-  //                           Duration
-  // =============================================================
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                          DURATION                          */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
   function _getMembershipDuration() internal view returns (uint64) {
-    MembershipStorage.Layout storage ds = MembershipStorage.layout();
-    return IPlatformRequirements(ds.spaceFactory).getMembershipDuration();
+    return _getPlatformRequirements().getMembershipDuration();
   }
 
-  // =============================================================
-  //                        Pricing Module
-  // =============================================================
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                       PRICING MODULE                       */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
   function _verifyPricingModule(address pricingModule) internal view {
-    if (pricingModule == address(0)) revert Membership__InvalidPricingModule();
+    if (pricingModule == address(0))
+      CustomRevert.revertWith(Membership__InvalidPricingModule.selector);
 
     if (!IPricingModules(_getSpaceFactory()).isPricingModule(pricingModule))
-      revert Membership__InvalidPricingModule();
+      CustomRevert.revertWith(Membership__InvalidPricingModule.selector);
   }
 
   function _setPricingModule(address newPricingModule) internal {
@@ -139,30 +142,29 @@ abstract contract MembershipBase is IMembershipBase {
     return MembershipStorage.layout().pricingModule;
   }
 
-  // =============================================================
-  //                           Pricing
-  // =============================================================
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                           PRICING                          */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
   function _verifyPrice(uint256 newPrice) internal view {
-    uint256 minFee = IPlatformRequirements(_getSpaceFactory())
-      .getMembershipFee();
-    if (newPrice < minFee) revert Membership__PriceTooLow();
+    uint256 minFee = _getPlatformRequirements().getMembershipFee();
+    if (newPrice < minFee)
+      CustomRevert.revertWith(Membership__PriceTooLow.selector);
   }
 
   /// @dev Makes it virtual to allow other pricing strategies
   function _getMembershipPrice(
     uint256 totalSupply
   ) internal view virtual returns (uint256) {
-    MembershipStorage.Layout storage ds = MembershipStorage.layout();
-
     // get free allocation
     uint256 freeAllocation = _getMembershipFreeAllocation();
 
-    uint256 membershipPrice = IMembershipPricing(ds.pricingModule).getPrice(
+    uint256 membershipPrice = IMembershipPricing(_getPricingModule()).getPrice(
       freeAllocation,
       totalSupply
     );
 
-    IPlatformRequirements platform = IPlatformRequirements(_getSpaceFactory());
+    IPlatformRequirements platform = _getPlatformRequirements();
 
     uint256 minPrice = platform.getMembershipMinPrice();
     uint256 fixedFee = platform.getMembershipFee();
@@ -185,23 +187,20 @@ abstract contract MembershipBase is IMembershipBase {
   ) internal view returns (uint256) {
     MembershipStorage.Layout storage ds = MembershipStorage.layout();
 
-    if (ds.renewalPriceByTokenId[tokenId] > 0)
-      return ds.renewalPriceByTokenId[tokenId];
+    uint256 renewalPrice = ds.renewalPriceByTokenId[tokenId];
+    if (renewalPrice != 0) return renewalPrice;
 
     return _getMembershipPrice(totalSupply);
   }
 
-  // =============================================================
-  //                           Allocation
-  // =============================================================
-  function _verifyFreeAllocation(uint256 newAllocation) internal view {
-    MembershipStorage.Layout storage ds = MembershipStorage.layout();
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                         ALLOCATION                         */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+  function _verifyFreeAllocation(uint256 newAllocation) internal view {
     // verify newLimit is not more than the allowed platform limit
-    if (
-      newAllocation >
-      IPlatformRequirements(ds.spaceFactory).getMembershipMintLimit()
-    ) revert Membership__InvalidFreeAllocation();
+    if (newAllocation > _getPlatformRequirements().getMembershipMintLimit())
+      CustomRevert.revertWith(Membership__InvalidFreeAllocation.selector);
   }
 
   function _setMembershipFreeAllocation(uint256 newAllocation) internal {
@@ -216,18 +215,20 @@ abstract contract MembershipBase is IMembershipBase {
 
     if (ds.freeAllocationEnabled) return ds.freeAllocation;
 
-    return IPlatformRequirements(ds.spaceFactory).getMembershipMintLimit();
+    return _getPlatformRequirements().getMembershipMintLimit();
   }
 
-  // =============================================================
-  //                   Token Max Supply Limits
-  // =============================================================
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                        SUPPLY LIMIT                        */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
   function _verifyMaxSupply(
     uint256 newLimit,
     uint256 totalSupply
   ) internal pure {
     // if the new limit is less than the current total supply, revert
-    if (newLimit < totalSupply) revert Membership__InvalidMaxSupply();
+    if (newLimit < totalSupply)
+      CustomRevert.revertWith(Membership__InvalidMaxSupply.selector);
   }
 
   function _setMembershipSupplyLimit(uint256 newLimit) internal {
@@ -238,23 +239,34 @@ abstract contract MembershipBase is IMembershipBase {
     return MembershipStorage.layout().membershipMaxSupply;
   }
 
-  // =============================================================
-  //                           Currency
-  // =============================================================
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                          CURRENCY                          */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
   function _getMembershipCurrency() internal view returns (address) {
     return MembershipStorage.layout().membershipCurrency;
   }
 
-  // =============================================================
-  //                           Factory
-  // =============================================================
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                           FACTORY                          */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
   function _getSpaceFactory() internal view returns (address) {
     return MembershipStorage.layout().spaceFactory;
   }
 
-  // =============================================================
-  //                           Image
-  // =============================================================
+  function _getPlatformRequirements()
+    internal
+    view
+    returns (IPlatformRequirements)
+  {
+    return IPlatformRequirements(_getSpaceFactory());
+  }
+
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                            IMAGE                           */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
   function _getMembershipImage() internal view returns (string memory) {
     return MembershipStorage.layout().membershipImage;
   }
