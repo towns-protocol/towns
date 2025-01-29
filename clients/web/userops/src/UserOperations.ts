@@ -23,7 +23,7 @@ import { selectUserOpsByAddress, userOpsStore } from './userOpsStore'
 import { ERC4337 } from 'userop/dist/constants'
 import { CodeException, InsufficientTipBalanceException, NonceMismatchError } from './errors'
 import { UserOperationEventEvent } from 'userop/dist/typechain/EntryPoint'
-import { EVERYONE_ADDRESS, getFunctionSigHash, isUsingAlchemyBundler } from './utils'
+import { EVERYONE_ADDRESS, getFunctionSigHash, isUsingAlchemyBundler, OpToJSON } from './utils'
 import {
     signUserOpHash,
     estimateGasLimit,
@@ -195,7 +195,7 @@ export class UserOps {
             setSequenceName(sender, sequenceName)
             setCurrent({
                 sender,
-                op,
+                op: OpToJSON(op),
                 value: args.value,
                 decodedCallData,
                 functionHashForPaymasterProxy: args.functionHashForPaymasterProxy,
@@ -229,10 +229,10 @@ export class UserOps {
             simpleAccount,
             retryCount: args.retryCount,
             onBuild: (op) => {
-                // when op is built and ready to be sent, set it in the store
+                // update finalized op
                 userOpsStore.getState().setCurrent({
                     sender,
-                    op,
+                    op: OpToJSON(op),
                 })
             },
         })
@@ -1983,6 +1983,10 @@ export class UserOps {
                 if (isSponsoredOp(ctx)) {
                     return
                 }
+                userOpsStore.getState().setCurrent({
+                    sender: ctx.op.sender,
+                    op: OpToJSON(ctx.op),
+                })
                 const { current } = selectUserOpsByAddress(ctx.op.sender)
 
                 // tip is a special case
@@ -2028,8 +2032,12 @@ export class UserOps {
                 // i.e. you tipped someone, it's stuck, we start retyring, the stuck tx lands, you're deducted, and the new tx is sent, so you double tip
                 //
                 // let's be extra careful here and prevent the userop from being sent
-                if (pending.op && current.op && pending.op.nonce !== current.op.nonce) {
-                    throw new NonceMismatchError()
+                if (pending.op && current.op) {
+                    const pendingNonce = ethers.BigNumber.from(pending.op.nonce)
+                    const currentNonce = ethers.BigNumber.from(current.op.nonce)
+                    if (!pendingNonce.eq(currentNonce)) {
+                        throw new NonceMismatchError()
+                    }
                 }
                 return Promise.resolve()
             })

@@ -189,6 +189,7 @@ test(
             )
         } catch (error) {
             // noop
+            console.error(error)
         }
         expect(replacementOpTx).toBeDefined()
         expect(await ogOpTx.getUserOperationReceipt()).toBeNull()
@@ -291,6 +292,7 @@ test(
             )
         } catch (error) {
             // noop
+            console.error(error)
         }
         expect(replacementOpTx).toBeDefined()
         expect(await replacementOpTx!.getUserOperationReceipt()).toBeNull()
