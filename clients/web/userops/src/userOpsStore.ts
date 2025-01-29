@@ -1,49 +1,25 @@
-import { BigNumberish } from 'ethers'
-import { IUserOperation } from 'userop'
 import { create } from 'zustand'
-import { FunctionHash, TimeTrackerEvents } from './types'
+import { PaymasterErrorCode, RetryType, TimeTrackerEvents } from './types'
 import { devtools, persist, PersistStorage } from 'zustand/middleware'
 import { immer } from 'zustand/middleware/immer'
 import superjson from 'superjson'
-import { decodeCallData } from './decodeCallData'
-export enum PaymasterErrorCode {
-    PAYMASTER_LIMIT_REACHED = 'PAYMASTER_LIMIT_REACHED',
-    DAILY_LIMIT_REACHED = 'DAILY_LIMIT_REACHED',
-}
-type RetryType = 'gasTooLow' | 'replacementUnderpriced'
+import {
+    migrations,
+    V1PersistentState,
+    V2OpDetails,
+    V2PersistentState,
+    V2State,
+} from './userOpsStoreMigrations'
 
-type OpDetails = {
-    op: IUserOperation | undefined
-    value: BigNumberish | undefined
-    decodedCallData: ReturnType<typeof decodeCallData<FunctionHash>> | undefined
-    functionHashForPaymasterProxy?: FunctionHash | undefined
-    spaceId?: string | undefined
-}
+type OpDetails = V2OpDetails
 
-type UserOpsState = {
-    current: OpDetails
-    pending: OpDetails & {
-        hash: string | undefined
-    }
-    promptUser: boolean
-    rejectedSponsorshipReason: PaymasterErrorCode | undefined
-    operationAttempt: number
-    // TODO: remove this
-    sequenceName?: TimeTrackerEvents | undefined
-    retryDetails?: {
-        type: RetryType
-        data: unknown
-    }
-    promptResponse: 'confirm' | 'deny' | undefined
-}
+type UserOpsState = V2State
 
 type State = {
     userOps: { [sender: string]: UserOpsState }
 }
 
-type PersistentState = {
-    userOps: { [sender: string]: Omit<UserOpsState, 'promptUser' | 'promptResponse'> }
-}
+type PersistentState = V2PersistentState
 
 type Actions = {
     setCurrent: (
@@ -239,8 +215,14 @@ export const userOpsStore = create<State & Actions>()(
             })),
             {
                 name: 'towns/user-ops',
-                version: 1,
+                version: 2,
                 storage: customStorage,
+                migrate: (persistedState, version) => {
+                    if (version === 1) {
+                        return migrations[1](persistedState as V1PersistentState)
+                    }
+                    return persistedState as PersistentState
+                },
                 partialize: (state) => {
                     const { userOps } = state
                     // Create new userOps object with promptUser filtered out from each entry

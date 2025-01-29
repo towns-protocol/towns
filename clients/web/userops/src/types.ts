@@ -110,3 +110,10 @@ export type GasEstimate = {
     // TODO: remove this with EntryPoint v0.7
     verificationGas: BigNumberish
 }
+
+export enum PaymasterErrorCode {
+    PAYMASTER_LIMIT_REACHED = 'PAYMASTER_LIMIT_REACHED',
+    DAILY_LIMIT_REACHED = 'DAILY_LIMIT_REACHED',
+}
+
+export type RetryType = 'gasTooLow' | 'replacementUnderpriced'

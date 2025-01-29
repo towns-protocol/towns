@@ -1,10 +1,10 @@
-import { FunctionHash, UserOpsConfig } from '../types'
+import { FunctionHash, PaymasterErrorCode, UserOpsConfig } from '../types'
 import { BigNumber, BigNumberish, utils } from 'ethers'
 import { BundlerJsonRpcProvider, IUserOperation, IUserOperationMiddlewareCtx } from 'userop'
 import { z } from 'zod'
 import { CodeException } from '../errors'
 import { isUsingAlchemyBundler } from '../utils'
-import { PaymasterErrorCode, selectUserOpsByAddress, userOpsStore } from '../userOpsStore'
+import { selectUserOpsByAddress, userOpsStore } from '../userOpsStore'
 import { getPrivyLoginMethodFromLocalStorage } from './privyLoginMethod'
 import { estimateGasFeesWithReplacement } from './estimateGasFees'
 
