@@ -16,6 +16,7 @@ import {
     UseMutationOptions,
     UseMutationResult,
 } from '@tanstack/react-query'
+import { useMemo } from 'react'
 
 const defaultStaleTime = 1_000 * 15
 const staleTime24Hours = 1000 * 60 * 60 * 24
@@ -52,7 +53,17 @@ function useQuery<
     queryFn: QueryFunction<TQueryFnData, TQueryKey>,
     options?: Omit<UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>, 'queryKey' | 'queryFn'>,
 ) {
-    return useBaseQuery({
+    const {
+        data,
+        error,
+        isError,
+        isPending,
+        isLoading,
+        isLoadingError,
+        isRefetchError,
+        isSuccess,
+        status,
+    } = useBaseQuery({
         queryKey: key,
         queryFn,
         staleTime: defaultStaleTime,
@@ -61,6 +72,31 @@ function useQuery<
         refetchOnMount: false,
         ...(options ?? {}),
     })
+    // fucking base query returns a new object every fucking time what fucking amatures
+    return useMemo(
+        () => ({
+            data,
+            error,
+            isError,
+            isPending,
+            isLoading,
+            isLoadingError,
+            isRefetchError,
+            isSuccess,
+            status,
+        }),
+        [
+            data,
+            error,
+            isError,
+            isPending,
+            isLoading,
+            isLoadingError,
+            isRefetchError,
+            isSuccess,
+            status,
+        ],
+    )
 }
 
 function useMutation<TData = unknown, TError = DefaultError, TVariables = void, TContext = unknown>(
