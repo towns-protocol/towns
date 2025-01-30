@@ -33,6 +33,7 @@ import { useUserLookupUpdater } from '../hooks/use-user-lookup-updater'
 import { TownsAnalytics } from '../types/TownsAnalytics'
 import { useStreamMetadataUpdater } from '../hooks/use-stream-metadata-updater'
 import { NotificationSettingsClient } from '../client/TownsNotifciationSettings'
+import { useSpaceRollups } from '../hooks/use-space-data'
 
 export type InitialSyncSortPredicate = (a: string, b: string) => number
 
@@ -212,6 +213,7 @@ const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
             : timelineFilter,
         props.streamFilter,
     )
+    useSpaceRollups(townsOpts, casablancaClient, baseProvider)
     useHookLogger()
 
     return (

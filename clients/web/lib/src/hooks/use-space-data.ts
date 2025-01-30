@@ -1,8 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Channel, InviteData, SpaceData } from '../types/towns-types'
 import { useTownsContext } from '../components/TownsContextProvider'
 import { useSpaceContext } from '../components/SpaceContextProvider'
-import { useCasablancaStream } from './CasablancClient/useCasablancaStream'
 import {
     Client as CasablancaClient,
     Stream,
@@ -12,16 +11,75 @@ import {
 } from '@river-build/sdk'
 import isEqual from 'lodash/isEqual'
 import { useSpaceDapp } from './use-space-dapp'
-import { ChannelMetadata, ISpaceDapp, SpaceInfo } from '@river-build/web3'
+import { ISpaceDapp, SpaceInfo } from '@river-build/web3'
 import { useQuery, useQueries, defaultStaleTime } from '../query/queryClient'
 import { blockchainKeys } from '../query/query-keys'
 import { isDefined } from '../utils/isDefined'
 import { OfflineChannelMetadata, useOfflineStore } from '../store/use-offline-store'
 import { TownsOpts } from 'client/TownsClientTypes'
 import { create } from 'zustand'
+import debounce from 'lodash/debounce'
+// eslint-disable-next-line lodash/import-scope
+import { DebouncedFunc } from 'lodash'
+import { TProvider } from 'types/web3-types'
 
 const EMPTY_SPACE_INFOS: SpaceInfo[] = []
-const EMPTY_CHANNEL_METADATA: OfflineChannelMetadata[] = []
+
+async function getChannelsMetadata(
+    spaceDapp: ISpaceDapp,
+    spaceId: string,
+    channels: { channelId: string; updatedAtKey?: string }[],
+): Promise<OfflineChannelMetadata[]> {
+    // we can fetch all metatdata in one go, but first see if we have cached data at this version
+    let metadata: OfflineChannelMetadata[] = []
+    for (const { channelId, updatedAtKey } of channels) {
+        const cached = useOfflineStore.getState().offlineChannelMetadataMap[channelId]
+        if (cached && (!updatedAtKey || cached.updatedAtKey === updatedAtKey)) {
+            metadata.push(cached)
+        } else {
+            break
+        }
+    }
+    if (metadata.length === channels.length) {
+        return metadata
+    }
+    metadata = []
+
+    // fetch everything, push it to the cache
+    const channelMetadata = await spaceDapp.getChannels(spaceId)
+    // reduce the channels to a map of channelId to updatedAtKey
+    const updatedAtKeys = channels.reduce((acc, c) => {
+        acc[c.channelId] = c.updatedAtKey ?? '0'
+        return acc
+    }, {} as Record<string, string>)
+    // save offline
+    for (const channel of channelMetadata) {
+        const offlineChannelMetadata = {
+            channel,
+            updatedAtKey: updatedAtKeys[channel.channelNetworkId] ?? '0',
+        }
+        useOfflineStore.getState().setOfflineChannelInfo(offlineChannelMetadata)
+        metadata.push(offlineChannelMetadata)
+    }
+    // return the metadata
+    return metadata
+}
+
+async function getSpaceInfo(
+    spaceDapp: ISpaceDapp,
+    spaceId: string,
+): Promise<SpaceInfo | undefined> {
+    // the offline store will get updated in useContractSpaceInfo
+    const cachedSpaceInfo = useOfflineStore.getState().offlineSpaceInfoMap[spaceId]
+    if (cachedSpaceInfo) {
+        return cachedSpaceInfo
+    }
+    const spaceInfo = await spaceDapp.getSpaceInfo(spaceId)
+    if (spaceInfo) {
+        useOfflineStore.getState().setOfflineSpaceInfo(spaceInfo)
+    }
+    return spaceInfo
+}
 
 export type SpaceDataMap = Record<string, SpaceData | undefined>
 
@@ -67,9 +125,8 @@ export function useSpaceData(): SpaceData | undefined {
 
 export function useSpaceDataWithId(
     inSpaceId: string | undefined,
-    fromTag: string | undefined = undefined,
+    _fromTag: string | undefined = undefined,
 ): SpaceData | undefined {
-    useSpaceRollup(inSpaceId, `useSpaceDataWithId<${fromTag}>`)
     const spaceData = useSpaceDataStore((state) => state.spaceDataMap)?.[inSpaceId ?? '']
     return spaceData
 }
@@ -87,72 +144,6 @@ export const useInviteData = (slug: string | undefined) => {
             }),
         [invites, slug],
     )
-}
-
-function channelInfoQueryConfig({
-    spaceId,
-    channelId,
-    updatedAtKey,
-    spaceDapp,
-    initialData,
-    enabled = true,
-}: {
-    spaceId: string
-    channelId: string
-    updatedAtKey: string
-    spaceDapp: ISpaceDapp | undefined
-    initialData: OfflineChannelMetadata | undefined
-    enabled?: boolean | undefined
-}) {
-    const needsUpdate =
-        enabled && !!spaceId && !!spaceDapp && initialData?.updatedAtKey !== updatedAtKey // we fetch these in the space query, only fetch if not defined
-    return {
-        queryKey: blockchainKeys.channelInfo(channelId ?? '', updatedAtKey ?? ''),
-        queryFn: async (
-            spaceDapp: ISpaceDapp | undefined,
-            spaceId: string | undefined,
-            channelId: string | undefined,
-            updatedAtKey: string | undefined,
-        ) => {
-            if (
-                !spaceDapp ||
-                !spaceId ||
-                spaceId.length === 0 ||
-                !channelId ||
-                channelId.length === 0 ||
-                !updatedAtKey ||
-                updatedAtKey.length === 0
-            ) {
-                return undefined
-            }
-            const space = spaceDapp.getSpace(spaceId)
-            // if we don't have a spaceInfo from network for some reasons, return the cached one
-            if (!space) {
-                return useOfflineStore.getState().offlineChannelMetadataMap[channelId]
-            }
-            const channel = await space.getChannelMetadata(channelId)
-
-            // console.log(
-            //     `channelInfoQueryConfig spaceDapp.getChannelMetadata: ${spaceId}/${channelId} at: ${updatedAtKey}`,
-            //     { channel },
-            // )
-            if (channel) {
-                useOfflineStore
-                    .getState()
-                    .setOfflineChannelInfo({ channel, updatedAtKey: updatedAtKey })
-            }
-            return { channel, updatedAtKey }
-        },
-        options: {
-            enabled: needsUpdate,
-            initialData: needsUpdate ? undefined : initialData, // if our initial data is out of date we want to fetch imediately
-            refetchOnMount: false,
-            refetchOnWindowFocus: false,
-            refetchOnReconnect: false,
-            staleTime: Infinity, // once fetched this data is good for ever
-            gcTime: Infinity, // once fetched this data is good for ever
-        },
-    }
 }
 
 function spaceInfoWithChannelsQueryConfig({
@@ -182,16 +173,6 @@ function spaceInfoWithChannelsQueryConfig({
             if (!spaceInfo) {
                 return useOfflineStore.getState().offlineSpaceInfoMap[spaceId]
             }
-            const channelData = client.streams.get(spaceId)?.view.spaceContent.spaceChannelsMetadata
-            const channels = await spaceDapp.getChannels(spaceId)
-            channels.forEach((channel: ChannelMetadata) => {
-                const key =
-                    channelData?.get(channel.channelNetworkId)?.updatedAtEventNum.toString() ?? '0'
-                useOfflineStore.getState().setOfflineChannelInfo({
-                    channel,
-                    updatedAtKey: key,
-                })
-            })
             useOfflineStore.getState().setOfflineSpaceInfo(spaceInfo)
             return spaceInfo
         },
@@ -204,84 +185,6 @@ function spaceInfoWithChannelsQueryConfig({
             staleTime: defaultStaleTime,
         },
     }
-}
-
-export function useChannelMetadata(spaceChannels: {
-    spaceId: string | undefined
-    channels: { id: string; updatedAtKey: string }[]
-}) {
-    const { spaceId, channels } = spaceChannels
-    const { baseProvider: provider, baseConfig: config, client } = useTownsContext()
-    const spaceDapp = useSpaceDapp({ config, provider })
-
-    //console.log('offline channels', offlineChannelInfoMap)
-    const isEnabled = spaceDapp && channels.length > 0 && !!client
-
-    const queryData = useQueries({
-        queries: spaceId
-            ? channels.map((channel) => {
-                  const queryConfig = channelInfoQueryConfig({
-                      spaceId: spaceId,
-                      channelId: channel.id,
-                      updatedAtKey: channel.updatedAtKey,
-                      spaceDapp,
-                      initialData: useOfflineStore.getState().offlineChannelMetadataMap[channel.id],
-                      enabled: isEnabled,
-                  })
-                  return {
-                      queryKey: queryConfig.queryKey,
-                      queryFn: () => {
-                          const res = queryConfig.queryFn(
-                              spaceDapp,
-                              spaceId,
-                              channel.id,
-                              channel.updatedAtKey,
-                          )
-                          //   console.log(
-                          //       `useChannelMetadata query: ${spaceId}/${channel.id} at: ${channel.updatedAtKey}`,
-                          //   )
-                          return res
-                      },
-                      ...queryConfig.options,
-                      refetchOnMount: false,
-                  }
-              })
-            : [],
-        combine: (results) => {
-            return {
-                data: results.map((r) => r.data).filter(isDefined),
-                isLoading: results.some((r) => r.isLoading),
-            }
-        },
-    })
-
-    const channelMetaData = queryData.data.length > 0 ? queryData.data : EMPTY_CHANNEL_METADATA
-    const channelMetadataMap = useMemo(() => {
-        return channelMetaData.reduce((acc, cur) => {
-            if (!!cur && !!cur.channel && !!cur.channel.channelNetworkId) {
-                acc[cur.channel.channelNetworkId] = {
-                    channel: cur.channel,
-                    updatedAtKey: cur.updatedAtKey,
-                }
-            }
-            return acc
-        }, {} as Record<string, OfflineChannelMetadata>)
-    }, [channelMetaData])
-    const retVal = useMemo(() => {
-        return channels.reduce((acc, cur) => {
-            const channel = channelMetadataMap[cur.id]
-            if (channel) {
-                acc[cur.id] = channel
-            } else {
-                const offChannel = useOfflineStore.getState().offlineChannelMetadataMap[cur.id]
-                if (offChannel) {
-                    acc[cur.id] = offChannel
-                }
-            }
-            return acc
-        }, {} as Record<string, OfflineChannelMetadata>)
-    }, [channels, channelMetadataMap])
-    return retVal
 }
 
 export function useContractSpaceInfos(opts: TownsOpts, client?: CasablancaClient) {
@@ -450,130 +353,141 @@ export function useContractSpaceInfoWithoutClient(spaceId: string | undefined) {
     )
 }
 
-export function useSpaceRollup(streamId: string | undefined, fromTag: string | undefined) {
-    const { casablancaClient } = useTownsContext()
-    const stream = useCasablancaStream(streamId)
-    const { data: spaceInfo } = useContractSpaceInfo(streamId ?? '')
-    const userStream = useCasablancaStream(casablancaClient?.userStreamId)
+export function useSpaceRollups(
+    townsOpts: TownsOpts,
+    casablancaClient: CasablancaClient | undefined,
+    spaceDappProvider: TProvider,
+) {
+    const spaceDapp = useSpaceDapp({
+        config: townsOpts.baseConfig,
+        provider: spaceDappProvider,
+    })
     const { setSpaceData } = useSpaceDataStore()
-
-    const [spaceChannels, setSpaceChannels] = useState<{
-        spaceId: string | undefined
-        channels: { id: string; updatedAtKey: string }[]
-    }>(() => ({
-        spaceId: stream?.streamId,
-        channels: mapSpaceChannels(stream),
-    }))
-
-    const channelMetadata = useChannelMetadata(spaceChannels)
-
+    const debounceRef = useRef<Record<string, DebouncedFunc<() => void>>>({})
     useEffect(() => {
-        if (!stream || !casablancaClient || stream.view.contentKind !== 'spaceContent') {
+        if (!casablancaClient || !spaceDapp) {
             return
         }
-        const update = () => {
-            const spaceChannels = mapSpaceChannels(stream)
-            setSpaceChannels((prev) => {
-                if (isEqual(prev.channels, spaceChannels)) {
-                    return prev
-                }
-                return {
-                    spaceId: stream.streamId,
-                    channels: spaceChannels,
-                }
-            })
-        }
-
-        const onStreamUpdated = (streamId: string) => {
-            if (streamId === stream.streamId) {
-                update()
-            }
-        }
-
-        // run the first update
-        update()
-
-        // listen to space events and user membership events to update the spaceData
-        casablancaClient.on('streamInitialized', onStreamUpdated)
-        casablancaClient.on('spaceChannelCreated', onStreamUpdated)
-        casablancaClient.on('spaceChannelUpdated', onStreamUpdated)
-
-        return () => {
-            // remove lsiteners and clear state when the effect stops
-            casablancaClient.off('streamInitialized', onStreamUpdated)
-            casablancaClient.off('spaceChannelCreated', onStreamUpdated)
-            casablancaClient.off('spaceChannelUpdated', onStreamUpdated)
-        }
-    }, [casablancaClient, stream])
-
-    useEffect(() => {
-        if (!stream || !casablancaClient || !userStream) {
-            return
-        }
-        if (stream.view.contentKind !== 'spaceContent') {
-            console.error('useSpaceRollup called with non-space stream')
-            return
-        }
-
-        // wrap the update op, we get the channel ids and
-        // rollup the space channels into a space
-        const update = () => {
-            if ((streamId !== stream.streamId || spaceChannels.spaceId) !== stream.streamId) {
-                // FIXME: This conditions shouldn't exist, but happens when switching spaces.
+        const initialUpdate = (spaceId: string) => {
+            const userStreamId = casablancaClient.userStreamId
+            if (!userStreamId) {
+                //console.log('!!no user stream id')
                 return
             }
-            const spaceName: string = spaceInfo?.name ?? ''
+            const userStream = casablancaClient.streams.get(userStreamId)
+            if (!userStream || !userStream.view.isInitialized) {
+                //console.log('!!no user stream')
+                return
+            }
+            const stream = casablancaClient.streams.get(spaceId)
+            if (!stream || !stream.view.isInitialized) {
+                //console.log('!!no stream')
+                return
+            }
+            const spaceName = useOfflineStore.getState().offlineSpaceInfoMap[spaceId]?.name
+            const spaceChannels = mapSpaceChannels(stream)
+            const channelsMetadata = spaceChannels.reduce((acc, c) => {
+                acc[c.channelId] = useOfflineStore.getState().offlineChannelMetadataMap[c.channelId]
+                return acc
+            }, {} as Record<string, OfflineChannelMetadata>)
             const membership = toMembership(
                 userStream.view.userContent.getMembership(stream.streamId)?.op,
             )
             const newSpace = rollupSpace(
                 stream,
                 membership,
-                spaceChannels.channels,
-                channelMetadata,
+                spaceChannels,
+                channelsMetadata,
                 spaceName,
             )
             if (newSpace) {
+                //console.log('!!setSpaceData', newSpace)
                 setSpaceData(newSpace)
             }
         }
+        const update = (spaceId: string) => {
+            //console.log('!!UPDATE', spaceId)
+            const userStreamId = casablancaClient.userStreamId
+            if (!userStreamId) {
+                // console.log('!!no user stream id')
+                return
+            }
+            const userStream = casablancaClient.streams.get(userStreamId)
+            if (!userStream || !userStream.view.isInitialized) {
+                //console.log('!!no user stream')
+                return
+            }
+            const stream = casablancaClient.streams.get(spaceId)
+            if (!stream || !stream.view.isInitialized) {
+                //console.log('!!no stream')
+                return
+            }
+            void (async () => {
+                const spaceChannels = mapSpaceChannels(stream)
+                const channelMetadata = await getChannelsMetadata(spaceDapp, spaceId, spaceChannels)
+                const spaceInfo = await getSpaceInfo(spaceDapp, spaceId)
+                const spaceName: string = spaceInfo?.name ?? ''
+                const membership = toMembership(
+                    userStream.view.userContent.getMembership(stream.streamId)?.op,
+                )
+                const newSpace = rollupSpace(
+                    stream,
+                    membership,
+                    spaceChannels,
+                    channelMetadata.reduce((acc, c) => {
+                        acc[c.channel.channelNetworkId] = c
+                        return acc
+                    }, {} as Record<string, OfflineChannelMetadata>),
+                    spaceName,
+                )
+                if (newSpace) {
+                    //console.log('!!setSpaceData', newSpace)
+                    setSpaceData(newSpace)
+                } else {
+                    //console.log('!!no new space')
+                }
+            })()
+        }
 
         const onStreamUpdated = (streamId: string) => {
-            if (streamId === stream.streamId || streamId === userStream.streamId) {
-                update()
+            if (isSpaceStreamId(streamId)) {
+                if (!debounceRef.current[streamId]) {
+                    debounceRef.current[streamId] = debounce(() => update(streamId), 3000, {
+                        leading: true,
+                    }) // only do each space once every 3 seconds
+                }
+                debounceRef.current[streamId]!()
             }
         }
 
         // run the first update
-        update()
+        casablancaClient.streams.getStreamIds().forEach((streamId) => {
+            if (isSpaceStreamId(streamId)) {
+                initialUpdate(streamId)
+                onStreamUpdated(streamId)
+            }
+        })
 
-        // this hook produces a list of channel metadata and the current user's membership
         // listen to space events and user membership events to update the spaceData
         casablancaClient.on('streamInitialized', onStreamUpdated)
+        casablancaClient.on('spaceChannelCreated', onStreamUpdated)
+        casablancaClient.on('spaceChannelUpdated', onStreamUpdated)
         casablancaClient.on('userStreamMembershipChanged', onStreamUpdated)
 
         return () => {
             // remove lsiteners and clear state when the effect stops
             casablancaClient.off('streamInitialized', onStreamUpdated)
+            casablancaClient.off('spaceChannelCreated', onStreamUpdated)
+            casablancaClient.off('spaceChannelUpdated', onStreamUpdated)
             casablancaClient.off('userStreamMembershipChanged', onStreamUpdated)
         }
-    }, [
-        casablancaClient,
-        spaceChannels,
-        channelMetadata,
-        fromTag,
-        setSpaceData,
-        spaceInfo?.name,
-        stream,
-        userStream,
-        streamId,
-    ])
+    }, [casablancaClient, setSpaceData, spaceDapp])
 }
 
 function rollupSpace(
     stream: Stream,
     membership: Membership,
-    spaceChannels: { id: string; updatedAtKey: string }[],
+    spaceChannels: { channelId: string; updatedAtKey: string }[],
     channelMetadata: Record<string, OfflineChannelMetadata>,
     spaceName?: string,
 ): SpaceData | undefined {
@@ -589,16 +503,16 @@ function rollupSpace(
             {
                 label: 'Channels',
                 channels: spaceChannels
-                    .sort((a, b) => a.id.localeCompare(b.id))
+                    .sort((a, b) => a.channelId.localeCompare(b.channelId))
                     .map(
                         (c) =>
                             ({
-                                id: c.id,
-                                label: channelMetadata[c.id]?.channel.name ?? c.id,
+                                id: c.channelId,
+                                label: channelMetadata[c.channelId]?.channel.name ?? c.channelId,
                                 private: false,
                                 highlight: false,
-                                topic: channelMetadata[c.id]?.channel.description ?? '',
-                                disabled: channelMetadata[c.id]?.channel.disabled ?? false,
+                                topic: channelMetadata[c.channelId]?.channel.description ?? '',
+                                disabled: channelMetadata[c.channelId]?.channel.disabled ?? false,
                             } satisfies Channel),
                     ),
             },
@@ -615,11 +529,11 @@ const mapSpaceChannels = (stream?: Stream) => {
         : []
     return channelIds.map((id) => {
         return {
-            id,
+            channelId: id,
             updatedAtKey:
                 stream?.view.spaceContent.spaceChannelsMetadata
                     .get(id)
-                    ?.updatedAtEventNum.toString() ?? '',
+                    ?.updatedAtEventNum.toString() ?? '0',
         }
     })
 }
