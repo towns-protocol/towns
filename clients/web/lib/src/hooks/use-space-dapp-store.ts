@@ -1,13 +1,13 @@
 import { createStore, StoreApi } from 'zustand'
-import { BaseChainConfig, ISpaceDapp, createSpaceDapp } from '@river-build/web3'
+import { BaseChainConfig, SpaceDapp } from '@river-build/web3'
 import { TProvider } from '../types/web3-types'
 
 // Define the store
 interface SpaceDappStore {
-    spaceDapp: ISpaceDapp | undefined
+    spaceDapp: SpaceDapp | undefined
     provider: TProvider | undefined
     config: BaseChainConfig | undefined
-    setSpaceDapp: (spaceDapp: ISpaceDapp, provider: TProvider, config: BaseChainConfig) => void
+    setSpaceDapp: (spaceDapp: SpaceDapp, provider: TProvider, config: BaseChainConfig) => void
 }
 
 // This function will create the store and initialize the spaceDapp if it doesn't already exist
@@ -23,10 +23,10 @@ const createSpaceDappStore = (): StoreApi<SpaceDappStore> => {
 const store = createSpaceDappStore()
 
 export const useSpaceDappStore = (
-    selector: (state: SpaceDappStore) => ISpaceDapp | undefined,
+    selector: (state: SpaceDappStore) => SpaceDapp | undefined,
     provider: TProvider,
     config: BaseChainConfig,
-): ISpaceDapp => {
+): SpaceDapp => {
     const {
         spaceDapp,
         setSpaceDapp,
@@ -35,7 +35,7 @@ export const useSpaceDappStore = (
     } = store.getState()
 
     if (!spaceDapp || currentProvider !== provider || currentConfig !== config) {
-        const newSpaceDapp = createSpaceDapp(provider, config)
+        const newSpaceDapp = new SpaceDapp(config, provider)
         setSpaceDapp(newSpaceDapp, provider, config)
     }
 

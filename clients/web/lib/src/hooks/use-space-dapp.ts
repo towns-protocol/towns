@@ -1,4 +1,4 @@
-import { BaseChainConfig, ISpaceDapp } from '@river-build/web3'
+import { BaseChainConfig, SpaceDapp } from '@river-build/web3'
 import { TProvider } from '../types/web3-types'
 import { useSpaceDappStore } from './use-space-dapp-store'
 
@@ -9,7 +9,7 @@ export const useSpaceDapp = ({
 }: {
     provider: TProvider
     config: BaseChainConfig
-}): ISpaceDapp => {
+}): SpaceDapp => {
     // pass the props to the store to initialize it
     // the store will create a new SpaceDapp instance if it doesn't already exist
     // or return the existing instance if it does

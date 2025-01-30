@@ -54,7 +54,7 @@ export function usePricingModuleForMembership(spaceId: string | undefined):
         if (!membershipInfo || !pricingModules) {
             return { isLoading: false, data: undefined }
         }
-        const membershipPricingModuleAddress = membershipInfo.pricingModule as string
+        const membershipPricingModuleAddress = membershipInfo.pricingModule
         const membershipPricingModule = pricingModules.find(
             (m) => m.module === membershipPricingModuleAddress,
         )

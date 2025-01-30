@@ -82,7 +82,7 @@ function EditMembershipForm({
             ethBalanceGatedBy: entitlements.ethBalance,
             usersGatedBy: entitlements.users,
             membershipLimit: Number(membershipInfo?.maxSupply) ?? 0,
-            membershipCost: formatUnits((membershipInfo?.price as bigint) ?? 0n),
+            membershipCost: formatUnits(membershipInfo?.price.toBigInt() ?? 0n),
             membershipPricingType: pricingModule?.isFixed ? 'fixed' : 'dynamic',
             clientPricingOption: pricingModule?.isFixed ? 'fixed' : 'dynamic',
             membershipCurrency: (membershipInfo?.currency as string) ?? constants.AddressZero,
