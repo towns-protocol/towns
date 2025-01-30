@@ -22,7 +22,9 @@ import debounce from 'lodash/debounce'
 // eslint-disable-next-line lodash/import-scope
 import { DebouncedFunc } from 'lodash'
 import { TProvider } from 'types/web3-types'
+import { persist, createJSONStorage } from 'zustand/middleware'
 
+const SPACE_DATA_STORE_NAME = 'towns/spaceDataStore'
 const EMPTY_SPACE_INFOS: SpaceInfo[] = []
 
 async function getChannelsMetadata(
@@ -88,34 +90,43 @@ export type SpaceDataStore = {
     setSpaceData: (spaceData: SpaceData) => void
 }
 
-export const useSpaceDataStore = create<SpaceDataStore>((set) => ({
-    spaceDataMap: undefined,
-    setSpaceData: (spaceData) =>
-        set((state) => {
-            if (!state.spaceDataMap) {
-                return {
-                    spaceDataMap: {
-                        [spaceData.id]: spaceData,
-                    },
-                }
-            }
-            if (isEqual(state.spaceDataMap[spaceData.id], spaceData)) {
-                return state
-            }
+export const useSpaceDataStore = create<SpaceDataStore>()(
+    persist(
+        (set) => ({
+            spaceDataMap: undefined,
+            setSpaceData: (spaceData) =>
+                set((state) => {
+                    if (!state.spaceDataMap) {
+                        return {
+                            spaceDataMap: {
+                                [spaceData.id]: spaceData,
+                            },
+                        }
+                    }
+                    if (isEqual(state.spaceDataMap[spaceData.id], spaceData)) {
+                        return state
+                    }
 
-            // console.log(`setSpaceData<${spaceData.id}> data changed`, {
-            //     prevSpaceId: state.spaceDataMap[spaceData.id]?.id,
-            //     spaceData,
-            // })
+                    // console.log(`setSpaceData<${spaceData.id}> data changed`, {
+                    //     prevSpaceId: state.spaceDataMap[spaceData.id]?.id,
+                    //     spaceData,
+                    // })
 
-            return {
-                spaceDataMap: {
-                    ...state.spaceDataMap,
-                    [spaceData.id]: spaceData,
-                },
-            }
+                    return {
+                        spaceDataMap: {
+                            ...state.spaceDataMap,
+                            [spaceData.id]: spaceData,
+                        },
+                    }
+                }),
         }),
-}))
+        {
+            name: SPACE_DATA_STORE_NAME,
+            storage: createJSONStorage(() => localStorage),
+            version: 2,
+        },
+    ),
+)
 
 /// returns default space if no space slug is provided
 export function useSpaceData(): SpaceData | undefined {
@@ -368,43 +379,6 @@ export function useSpaceRollups(
         if (!casablancaClient || !spaceDapp) {
             return
         }
-        const initialUpdate = (spaceId: string) => {
-            const userStreamId = casablancaClient.userStreamId
-            if (!userStreamId) {
-                //console.log('!!no user stream id')
-                return
-            }
-            const userStream = casablancaClient.streams.get(userStreamId)
-            if (!userStream || !userStream.view.isInitialized) {
-                //console.log('!!no user stream')
-                return
-            }
-            const stream = casablancaClient.streams.get(spaceId)
-            if (!stream || !stream.view.isInitialized) {
-                //console.log('!!no stream')
-                return
-            }
-            const spaceName = useOfflineStore.getState().offlineSpaceInfoMap[spaceId]?.name
-            const spaceChannels = mapSpaceChannels(stream)
-            const channelsMetadata = spaceChannels.reduce((acc, c) => {
-                acc[c.channelId] = useOfflineStore.getState().offlineChannelMetadataMap[c.channelId]
-                return acc
-            }, {} as Record<string, OfflineChannelMetadata>)
-            const membership = toMembership(
-                userStream.view.userContent.getMembership(stream.streamId)?.op,
-            )
-            const newSpace = rollupSpace(
-                stream,
-                membership,
-                spaceChannels,
-                channelsMetadata,
-                spaceName,
-            )
-            if (newSpace) {
-                //console.log('!!setSpaceData', newSpace)
-                setSpaceData(newSpace)
-            }
-        }
         const update = (spaceId: string) => {
             //console.log('!!UPDATE', spaceId)
             const userStreamId = casablancaClient.userStreamId
@@ -461,12 +435,7 @@ export function useSpaceRollups(
         }
 
         // run the first update
-        casablancaClient.streams.getStreamIds().forEach((streamId) => {
-            if (isSpaceStreamId(streamId)) {
-                initialUpdate(streamId)
-                onStreamUpdated(streamId)
-            }
-        })
+        casablancaClient.streams.getStreamIds().forEach(onStreamUpdated)
 
         // listen to space events and user membership events to update the spaceData
         casablancaClient.on('streamInitialized', onStreamUpdated)
