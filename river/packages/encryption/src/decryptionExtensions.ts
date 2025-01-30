@@ -133,6 +133,7 @@ export abstract class BaseDecryptionExtensions {
         encryptedContent: new Array<EncryptedContentItem>(),
         missingKeys: new Array<MissingKeysItem>(),
         keySolicitations: new Array<KeySolicitationItem>(),
+        ownKeySolicitations: new Array<KeySolicitationItem>(),
     }
     private upToDateStreams = new Set<string>()
     private highPriorityStreams: string[] = []
@@ -254,13 +255,23 @@ export abstract class BaseDecryptionExtensions {
         this.queues.keySolicitations = this.queues.keySolicitations.filter(
             (x) => x.streamId !== streamId,
         )
+        this.queues.ownKeySolicitations = this.queues.ownKeySolicitations.filter(
+            (x) => x.streamId !== streamId,
+        )
         for (const member of members) {
             const { userId: fromUserId, userAddress: fromUserAddress } = member
             for (const keySolicitation of member.solicitations) {
                 if (keySolicitation.deviceKey === this.userDevice.deviceKey) {
                     continue
                 }
-                this.queues.keySolicitations.push({
+                if (!keySolicitation.isNewDevice || keySolicitation.sessionIds.length === 0) {
+                    continue
+                }
+                const selectedQueue =
+                    fromUserId === this.userId
+                        ? this.queues.ownKeySolicitations
+                        : this.queues.keySolicitations
+                selectedQueue.push({
                     streamId,
                     fromUserId,
                     fromUserAddress,
@@ -285,17 +296,22 @@ export abstract class BaseDecryptionExtensions {
             this.log.debug('ignoring key solicitation for our own device')
             return
         }
-        const index = this.queues.keySolicitations.findIndex(
+        const selectedQueue =
+            fromUserId === this.userId
+                ? this.queues.ownKeySolicitations
+                : this.queues.keySolicitations
+
+        const index = selectedQueue.findIndex(
             (x) =>
                 x.streamId === streamId && x.solicitation.deviceKey === keySolicitation.deviceKey,
         )
         if (index > -1) {
-            this.queues.keySolicitations.splice(index, 1)
+            selectedQueue.splice(index, 1)
         }
         if (keySolicitation.sessionIds.length > 0 || keySolicitation.isNewDevice) {
             this.log.debug('new key solicitation', { fromUserId, streamId, keySolicitation })
             this.keySolicitationsNeedsSort = true
-            this.queues.keySolicitations.push({
+            selectedQueue.push({
                 streamId,
                 fromUserId,
                 fromUserAddress,
@@ -404,7 +420,7 @@ export abstract class BaseDecryptionExtensions {
                 .catch((e) => this.log.error('ProcessTick Error', e))
                 .finally(() => {
                     this.timeoutId = undefined
-                    this.checkStartTicking()
+                    setTimeout(() => this.checkStartTicking())
                 })
         }, this.getDelayMs())
     }
@@ -449,31 +465,19 @@ export abstract class BaseDecryptionExtensions {
             this.setStatus(DecryptionStatus.processingNewGroupSessions)
             return this.processNewGroupSession(session)
         }
+        const ownSolicitation = this.queues.ownKeySolicitations.shift()
+        if (ownSolicitation) {
+            this.log.debug(' processing own key solicitation')
+            this.setStatus(DecryptionStatus.respondingToKeyRequests)
+            return this.processKeySolicitation(ownSolicitation)
+        }
+        // decrypt any new encrypted content, prioritize high priority streams
         for (const streamId of [...this.highPriorityStreams, undefined]) {
             //
             if (streamId && !this.upToDateStreams.has(streamId)) {
                 continue
             }
             //console.log('csb:dec streamId', streamId)
-
-            if (!streamId) {
-                // respond to key solicitations from yourself
-                const ownKeySolicitationIndex = this.queues.keySolicitations.findIndex(
-                    (x) => x.fromUserId === this.userId,
-                )
-                if (ownKeySolicitationIndex > -1) {
-                    const solicitation = this.queues.keySolicitations.splice(
-                        ownKeySolicitationIndex,
-                        1,
-                    )[0]
-                    if (solicitation) {
-                        this.log.debug(' processing own key solicitation')
-                        this.setStatus(DecryptionStatus.respondingToKeyRequests)
-                        return this.processKeySolicitation(solicitation)
-                    }
-                }
-            }
-
             const encryptedContent = streamId
                 ? dequeueItemWithStreamId(this.queues.encryptedContent, streamId)
                 : this.queues.encryptedContent.shift()

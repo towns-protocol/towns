@@ -27,7 +27,7 @@ type (
 	}
 
 	// TrackedNotificationStreamView is part the notification service and put in the events package to provide access to
-	// some of the private types/methods of this package. It is a wrapper around streamViewImpl to apply events.
+	// some of the private types/methods of this package. It is a wrapper around StreamView to apply events.
 	// In addition, it keeps track of which notifications are processed to prevent double event processing.
 	TrackedNotificationStreamView struct {
 		streamID        shared.StreamId
@@ -64,8 +64,8 @@ func NewNotificationsStreamTrackerFromStreamAndCookie(
 		return nil, err
 	}
 
-	// load the list of users that someone has blocked from their personal user settings stream into the user
-	// preference cache which is queried when determining if a notification must be send.
+	// Load the list of users that someone has blocked from their personal user settings stream into the user
+	// preference cache which is queried when determining if a notification must be sent.
 	if view.streamId.Type() == shared.STREAM_USER_SETTINGS_BIN {
 		user := common.BytesToAddress(view.streamId[1:21])
 		if blockedUsers, err := view.BlockedUsers(); err == nil {

@@ -126,7 +126,7 @@ export class SyncedStreamsExtension {
                 .catch((e) => this.logError('ProcessTick Error', e))
                 .finally(() => {
                     this.timeoutId = undefined
-                    this.checkStartTicking()
+                    setTimeout(() => this.checkStartTicking(), 0)
                 })
         }, 0)
     }

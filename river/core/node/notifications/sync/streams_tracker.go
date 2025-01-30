@@ -37,7 +37,7 @@ type StreamsTracker struct {
 	tracked       sync.Map // map[shared.StreamId] = struct{}
 }
 
-// NewStreamsTracker create stream tracker instance.
+// NewStreamsTracker creates a stream tracker instance.
 func NewStreamsTracker(
 	ctx context.Context,
 	onChainConfig crypto.OnChainConfiguration,

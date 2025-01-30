@@ -476,7 +476,10 @@ export class StreamStateView implements IStreamStateView {
                     )
             }
         } catch (e) {
-            logError(`StreamStateView::Error prepending event ${event.hashStr}`, e)
+            logError(
+                `StreamStateView::Error prepending stream ${this.streamId} event ${event.hashStr}`,
+                e,
+            )
         }
     }
 

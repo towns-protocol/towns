@@ -19,9 +19,9 @@ const envMainSchema = z.object({
     TRANSACTION_VALID_BLOCKS: NumberFromIntStringSchema.optional().default('20'),
     BASE_PROVIDER_URL: z.string(),
     LOG_LEVEL: z.string().optional().default('info'),
-    LOG_PRETTY: BoolFromStringSchema.optional().default('true'),
+    LOG_PRETTY: BoolFromStringSchema.optional().default('false'),
     DD_GIT_COMMIT_SHA: z.string().optional(),
-    BLOCK_SCAN_CHUNK_SIZE: NumberFromIntStringSchema.optional().default('10000'),
+    BLOCK_SCAN_CHUNK_SIZE: NumberFromIntStringSchema.optional().default('100'),
 })
 
 function makeConfig() {

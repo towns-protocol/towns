@@ -301,7 +301,7 @@ func (p *ParsedMiniblockInfoOpts) DoNotParseEvents() bool {
 
 // NewMiniblockInfoFromProto initializes a MiniblockInfo from a proto, applying validation based
 // on whatever is set in the opts. If an empty opts is passed in, the method will still perform
-// some minimal validation if the requested miniblock is block 0.
+// some minimal validation to confirm that event counts between the header and body match.
 func NewMiniblockInfoFromProto(pb *Miniblock, opts *ParsedMiniblockInfoOpts) (*MiniblockInfo, error) {
 	headerEvent, err := ParseEvent(pb.Header)
 	if err != nil {

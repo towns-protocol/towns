@@ -189,7 +189,7 @@ export class QueueService implements IQueueService {
                 .catch((e) => this.log.error('MLS ProcessTick Error', e))
                 .finally(() => {
                     this.timeoutId = undefined
-                    this.checkStartTicking()
+                    setTimeout(() => this.checkStartTicking())
                 })
         }, this.getDelayMs())
     }

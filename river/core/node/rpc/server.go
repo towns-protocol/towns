@@ -231,26 +231,12 @@ func (s *Service) initInstance(mode string, opts *ServerStartOpts) {
 	}
 	s.serverCtx = logging.CtxWithLog(s.serverCtx, s.defaultLogger)
 
-	var (
-		vapidPrivateKey        = s.config.Notifications.Web.Vapid.PrivateKey
-		apnPrivateAuthKey      = s.config.Notifications.APN.AuthKey
-		sessionTokenPrivateKey = s.config.Notifications.Authentication.SessionToken.Key.Key
-	)
-	// TODO: set omit tag on sensitive fields instead of manually hiding them
-	s.config.Notifications.Web.Vapid.PrivateKey = "<hidden>"
-	s.config.Notifications.APN.AuthKey = "<hidden>"
-	s.config.Notifications.Authentication.SessionToken.Key.Key = "<hidden>"
-
 	// TODO: refactor to load wallet before so node address is logged here as well
 	s.defaultLogger.Infow(
 		"Server config",
 		"config", s.config,
 		"version", version.GetFullVersion(),
 	)
-
-	s.config.Notifications.Web.Vapid.PrivateKey = vapidPrivateKey
-	s.config.Notifications.APN.AuthKey = apnPrivateAuthKey
-	s.config.Notifications.Authentication.SessionToken.Key.Key = sessionTokenPrivateKey
 
 	subsystem := mode
 	if mode == ServerModeFull {

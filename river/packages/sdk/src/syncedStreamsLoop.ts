@@ -467,7 +467,7 @@ export class SyncedStreamsLoop {
         queueMicrotask(() => {
             tick.catch((e) => this.logError('ProcessTick Error', e)).finally(() => {
                 this.inProgressTick = undefined
-                this.checkStartTicking()
+                setTimeout(() => this.checkStartTicking())
             })
         })
     }

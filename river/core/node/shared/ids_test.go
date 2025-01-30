@@ -77,18 +77,7 @@ func TestReflectStreamId(t *testing.T) {
 	assert.True(t, ok)
 }
 
-func TestLoggingText(t *testing.T) {
-	require := require.New(t)
-
-	log, buf := testutils.ZapJsonLogger()
-	streamId, err := StreamIdFromBytes(padBytesId([]byte{STREAM_SPACE_BIN, 0x22, 0x33}))
-	require.NoError(err)
-
-	log.Infow("test", "streamId", streamId)
-	require.Contains(buf.String(), "1022330000000000000000000000000000000000000000000000000000000000")
-}
-
-func TestLoggingJson(t *testing.T) {
+func TestLogging(t *testing.T) {
 	require := require.New(t)
 
 	log, buf := testutils.ZapJsonLogger()

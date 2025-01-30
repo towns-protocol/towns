@@ -1,19 +1,27 @@
 {
-    "name": "xchain-monitor",
+    "name": "@river-build/xchain-monitor",
     "type": "module",
     "packageManager": "yarn@3.8.0",
+    "main": "dist/index.js",
     "dependencies": {
         "@river-build/generated": "workspace:^",
         "@river-build/web3": "workspace:^",
+        "dotenv": "^16.4.5",
+        "esbuild-plugin-pino": "^2.2.0",
+        "pino": "^8.17.1",
+        "pino-pretty": "^13.0.0",
         "typescript": "^5.1.6",
-        "viem": "^2.21.51"
+        "uuid": "^8.3.2",
+        "viem": "^2.21.51",
+        "zod": "^3.21.4"
     },
     "scripts": {
-        "build": "tsc",
+        "build": "node ./esbuild.config.mjs",
         "clean": "rm -rf dist",
         "dev": "yarn tsx src/index.ts"
     },
     "devDependencies": {
+        "@types/uuid": "^10.0.0",
         "tsx": "^4.7.1"
     }
 }

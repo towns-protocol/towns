@@ -502,20 +502,18 @@ func (s *PostgresNotificationStore) getUserPreferencesTx(
 	if err != nil {
 		return nil, err
 	}
-	defer spaceRows.Close()
 
-	for spaceRows.Next() {
-		var spaceID shared.StreamId
+	var spaceId shared.StreamId
+	var setting SpaceChannelSettingValue
+	if _, err := pgx.ForEachRow(spaceRows, []any{&spaceId, &setting}, func() error {
 		space := &types.SpacePreferences{
-			Setting:  SpaceChannelSettingValue_SPACE_CHANNEL_SETTING_ONLY_MENTIONS_REPLIES_REACTIONS,
+			Setting:  setting,
 			Channels: make(types.SpaceChannelsMap),
 		}
-
-		if err := spaceRows.Scan(&spaceID, &space.Setting); err != nil {
-			return nil, err
-		}
-
-		userPref.Spaces[spaceID] = space
+		userPref.Spaces[spaceId] = space
+		return nil
+	}); err != nil {
+		return nil, err
 	}
 
 	channelRows, err := tx.Query(
@@ -526,18 +524,9 @@ func (s *PostgresNotificationStore) getUserPreferencesTx(
 	if err != nil {
 		return nil, err
 	}
-	defer channelRows.Close()
 
-	for channelRows.Next() {
-		var (
-			channelIDRaw []byte
-			setting      SpaceChannelSettingValue
-		)
-
-		if err := channelRows.Scan(&channelIDRaw, &setting); err != nil {
-			return nil, err
-		}
-
+	var channelIDRaw []byte
+	if _, err := pgx.ForEachRow(channelRows, []any{&channelIDRaw, &setting}, func() error {
 		channelID, _ := shared.StreamIdFromString(string(channelIDRaw))
 
 		if channelID.Type() == shared.STREAM_CHANNEL_BIN {
@@ -556,6 +545,9 @@ func (s *PostgresNotificationStore) getUserPreferencesTx(
 		} else if channelID.Type() == shared.STREAM_GDM_CHANNEL_BIN {
 			userPref.GDMChannels[channelID] = GdmChannelSettingValue(setting)
 		}
+		return nil
+	}); err != nil {
+		return nil, err
 	}
 
 	userPref.Subscriptions.APNPush, err = s.getAPNSubscriptions(ctx, tx, userID)
@@ -610,20 +602,25 @@ func (s *PostgresNotificationStore) getWebPushSubscriptions(
 		}
 		return nil, err
 	}
-	defer rows.Close()
 
-	for rows.Next() {
-		var sub webpush.Subscription
-		var lastSeen time.Time
-		err = rows.Scan(&sub.Keys.Auth, &sub.Keys.P256dh, &sub.Endpoint, &lastSeen)
-		if err != nil {
-			return nil, err
-		}
-
+	var (
+		auth, p256dh, endpoint string
+		lastSeen               time.Time
+	)
+	if _, err := pgx.ForEachRow(rows, []any{&auth, &p256dh, &endpoint, &lastSeen}, func() error {
 		subs = append(subs, &types.WebPushSubscription{
-			Sub:      &sub,
+			Sub: &webpush.Subscription{
+				Endpoint: endpoint,
+				Keys: webpush.Keys{
+					Auth:   auth,
+					P256dh: p256dh,
+				},
+			},
 			LastSeen: lastSeen,
 		})
+		return nil
+	}); err != nil {
+		return nil, err
 	}
 
 	return subs, nil
@@ -767,7 +764,7 @@ func (s *PostgresNotificationStore) getAPNSubscriptions(
 	var subs []*types.APNPushSubscription
 	rows, err := tx.Query(
 		ctx,
-		"select device_token, environment, last_seen, user_id, push_version from apnpushsubscriptions where user_id=$1",
+		"select device_token, environment, last_seen, push_version from apnpushsubscriptions where user_id=$1",
 		hex.EncodeToString(userID[:]),
 	)
 	if err != nil {
@@ -776,27 +773,23 @@ func (s *PostgresNotificationStore) getAPNSubscriptions(
 		}
 		return nil, err
 	}
-	defer rows.Close()
 
-	for rows.Next() {
-		var (
-			deviceToken []byte
-			environment APNEnvironment
-			lastSeen    time.Time
-			fUserID     []byte
-			pushVersion int32
-		)
-		err = rows.Scan(&deviceToken, &environment, &lastSeen, &fUserID, &pushVersion)
-		if err != nil {
-			return nil, err
-		}
-
+	var (
+		deviceToken []byte
+		environment APNEnvironment
+		lastSeen    time.Time
+		pushVersion int32
+	)
+	if _, err := pgx.ForEachRow(rows, []any{&deviceToken, &environment, &lastSeen, &pushVersion}, func() error {
 		subs = append(subs, &types.APNPushSubscription{
 			DeviceToken: deviceToken,
 			LastSeen:    lastSeen,
 			Environment: environment,
 			PushVersion: NotificationPushVersion(pushVersion),
 		})
+		return nil
+	}); err != nil {
+		return nil, err
 	}
 
 	return subs, nil

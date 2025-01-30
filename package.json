@@ -144,7 +144,7 @@
                     "@river-build/stream-metadata",
                     "@river-build/stress",
                     "@river-build/web3",
-                    "xchain-monitor"
+                    "@river-build/xchain-monitor"
                 ],
                 "dependencyTypes": [
                     "prod",

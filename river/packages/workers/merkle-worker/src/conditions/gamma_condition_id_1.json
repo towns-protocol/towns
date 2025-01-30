@@ -1,0 +1,50 @@
+{
+    "txHash": "0x3047190602405b0acf5c46df9555a434ced023d7d903ee68fc60ca9631960613",
+    "conditionId": "1",
+    "claims": [
+        {
+            "address": "0x5E38d087315217D5E1791553D8C3101A820C7E40",
+            "amount": "1000000000000000000"
+        },
+        {
+            "address": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+            "amount": "1000000000000000000"
+        },
+        {
+            "address": "0x2FaC60B7bCcEc9b234A2f07448D3B2a045d621B9",
+            "amount": "1000000000000000000"
+        },
+        {
+            "address": "0xd2ABa91375eC2C3f021525FeD8FAFdcd2bC08460",
+            "amount": "1000000000000000000"
+        },
+        {
+            "address": "0xCe3827fFDC199d8EDce73de2517cdE8fbE79837E",
+            "amount": "1000000000000000000"
+        },
+        {
+            "address": "0x669a0Ce817227375368F054109BF9bf5D6174eD3",
+            "amount": "1000000000000000000"
+        },
+        {
+            "address": "0x421C3d000098b46Ae9a303D95DF6a04FeF38aA8A",
+            "amount": "1000000000000000000"
+        },
+        {
+            "address": "0xeb59fF9fF1384eC05f3dFBee403d6640635d19bb",
+            "amount": "1000000000000000000"
+        },
+        {
+            "address": "0xa28C8D49957f757Dc9EB3df461F0c416F97a2b00",
+            "amount": "1000000000000000000"
+        },
+        {
+            "address": "0x2198DB4FCAB6bED053c36403032febA40B950047",
+            "amount": "1000000000000000000"
+        },
+        {
+            "address": "0xC6CB690bE10c3df004883565498075E67c344E01",
+            "amount": "1000000000000000000"
+        }
+    ]
+}

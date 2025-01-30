@@ -1,0 +1,10 @@
+services:
+    xchain-monitor:
+        build:
+            context: ../../
+            dockerfile: ./packages/xchain-monitor/Dockerfile
+        environment:
+            RIVER_ENV: omega
+            INITIAL_BLOCK_NUM: 25287260
+            TRANSACTION_VALID_BLOCKS: 20
+            BASE_PROVIDER_URL: https://base-mainnet.g.alchemy.com/v2/ghkfp_vHzHlXdPaQpQuehc7K_RN9zb76

@@ -32,7 +32,7 @@ func (s *Service) startNotificationMode(notifier push.MessageNotifier, opts *Ser
 
 	err = s.prepareStore()
 	if err != nil {
-		return err
+		return AsRiverError(err).Message("Failed to prepare store").LogError(s.defaultLogger)
 	}
 
 	err = s.initNotificationsStore()

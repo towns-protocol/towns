@@ -11,11 +11,26 @@ async function main() {
     const publicClient = await createCustomPublicClient()
     var currentBlock = await publicClient.getBlockNumber()
     while (true) {
-        if (
+        while (
             currentBlock <
             blockOffset + BigInt(config.blockScanChunkSize + config.transactionValidBlocks)
         ) {
-            break
+            logger.info(
+                {
+                    currentBlock,
+                    blockOffset,
+                    blockScanChunkSize: config.blockScanChunkSize,
+                    transactionValidBlocks: config.transactionValidBlocks,
+                    waitingForBlocks:
+                        blockOffset +
+                        BigInt(config.blockScanChunkSize + config.transactionValidBlocks) -
+                        currentBlock,
+                },
+                'Unable to proceed - waiting for chain to progress',
+            )
+            const waitMs = Math.min(config.blockScanChunkSize, 60) * 1000
+            await new Promise((resolve) => setTimeout(resolve, waitMs))
+            currentBlock = await publicClient.getBlockNumber()
         }
         const results = await scanBlockchainForXchainEvents(blockOffset, config.blockScanChunkSize)
         currentBlock = await publicClient.getBlockNumber()
@@ -45,4 +60,4 @@ async function main() {
     }
 }
 
-await main()
+void main()
