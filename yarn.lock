@@ -10304,6 +10304,7 @@ __metadata:
     typescript: ^5.1.6
     vite-plugin-wasm: ^3.4.1
     vitest: ^2.1.5
+    vitest-fetch-mock: ^0.4.3
   languageName: unknown
   linkType: soft
 
@@ -38286,6 +38287,15 @@ __metadata:
   peerDependencies:
     vitest: ">=0.23.0"
   checksum: 1cbc5c9e73feed9cbcabbc390e538bc7ca333eb29090a59788665123d5f6360d5a5ad7a767e6f400d4329bfb4decae08749ba7cabf53290d8723c967d8d17645
+  languageName: node
+  linkType: hard
+
+"vitest-fetch-mock@npm:^0.4.3":
+  version: 0.4.3
+  resolution: "vitest-fetch-mock@npm:0.4.3"
+  peerDependencies:
+    vitest: ">=2.0.0"
+  checksum: e0a4d46b38ec5d50c7cc8756f8818325496f19299c5a0b4dff664085e92a9a7e2797b388627ccd607e979404fb53d4633ca2d54857f009b7938b39c2ea8a6149
   languageName: node
   linkType: hard
 

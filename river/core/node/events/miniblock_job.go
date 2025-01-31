@@ -3,19 +3,20 @@ package events
 import (
 	"bytes"
 	"context"
+	"slices"
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
-
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/logging"
 	. "github.com/river-build/river/core/node/protocol"
+	"github.com/river-build/river/core/node/shared"
 )
 
 // mbJos tracks single miniblock production attempt for a single stream.
 type mbJob struct {
 	stream        *Stream
-	params        *StreamCacheParams
+	cache         *StreamCache
 	forceSnapshot bool
 
 	remoteNodes []common.Address
@@ -67,7 +68,7 @@ func (j *mbJob) makeCandidate(ctx context.Context) error {
 		return nil
 	}
 
-	j.candidate, err = view.makeMiniblockCandidate(ctx, j.params, prop)
+	j.candidate, err = view.makeMiniblockCandidate(ctx, j.cache.Params(), prop)
 	if err != nil {
 		return err
 	}
@@ -81,7 +82,7 @@ func (j *mbJob) makeReplicatedProposal(ctx context.Context) (*mbProposal, *Strea
 		return nil, nil, err
 	}
 
-	localProposal := view.proposeNextMiniblock(ctx, j.params.ChainConfig.Get(), j.forceSnapshot)
+	localProposal := view.proposeNextMiniblock(ctx, j.cache.Params().ChainConfig.Get(), j.forceSnapshot)
 
 	proposals = append(proposals, localProposal)
 
@@ -99,7 +100,7 @@ func (j *mbJob) makeLocalProposal(ctx context.Context) (*mbProposal, *StreamView
 		return nil, nil, err
 	}
 
-	prop := view.proposeNextMiniblock(ctx, j.params.ChainConfig.Get(), j.forceSnapshot)
+	prop := view.proposeNextMiniblock(ctx, j.cache.Params().ChainConfig.Get(), j.forceSnapshot)
 
 	// Is there anything to do?
 	if len(prop.eventHashes) == 0 && !prop.shouldSnapshot {
@@ -163,7 +164,26 @@ func (j *mbJob) processRemoteProposals(ctx context.Context) ([]*mbProposal, *Str
 		return converted, view, nil
 	}
 
-	// TODO: schedule MB reconciliation if any of the errors is MINIBLOCK_TOO_OLD.
+	// if one of the nodes returned MINIBLOCK_TOO_OLD it indicates that this node has fallen behind, sync to catch up.
+	if slices.ContainsFunc(errs, func(err error) bool {
+		return IsRiverErrorCode(err, Err_MINIBLOCK_TOO_OLD)
+	}) {
+		contractStream, err := j.cache.params.Registry.StreamRegistry.GetStream(nil, j.stream.streamId)
+		if err != nil {
+			return nil, nil, RiverError(
+				Err_CANNOT_CALL_CONTRACT, "mbJob.processRemoteProposals: cannot get contract stream")
+		}
+
+		if err := j.cache.syncStreamFromPeers(ctx, j.stream.streamId, &shared.MiniblockRef{
+			Hash: contractStream.LastMiniblockHash,
+			Num:  int64(contractStream.LastMiniblockNum),
+		}); err != nil {
+			return nil, nil, err
+		}
+
+		return nil, nil, RiverError(Err_MINIBLOCK_TOO_OLD, "mbJob.processRemoteProposals: node out of sync")
+	}
+
 	if len(errs) > 0 {
 		return nil, nil, errs[0]
 	}
@@ -228,7 +248,7 @@ func (j *mbJob) gatherRemoteProposals(
 ) ([]*ProposeMiniblockResponse, []error) {
 	// TODO: better timeout?
 	// TODO: once quorum is achieved, it could be beneficial to return reasonably early.
-	ctx, cancel := context.WithTimeout(ctx, j.params.RiverChain.Config.BlockTime())
+	ctx, cancel := context.WithTimeout(ctx, j.cache.Params().RiverChain.Config.BlockTime())
 	defer cancel()
 
 	proposals := make([]*ProposeMiniblockResponse, 0, len(j.remoteNodes))
@@ -241,7 +261,7 @@ func (j *mbJob) gatherRemoteProposals(
 	for i, node := range j.remoteNodes {
 		go func(i int, node common.Address) {
 			defer wg.Done()
-			proposal, err := j.params.RemoteMiniblockProvider.GetMbProposal(ctx, node, request)
+			proposal, err := j.cache.Params().RemoteMiniblockProvider.GetMbProposal(ctx, node, request)
 
 			// Sanity check: discard proposals for wrong miniblock number and wrong prev hash.
 			if err == nil {
@@ -274,7 +294,7 @@ func (j *mbJob) saveCandidate(ctx context.Context) error {
 			return err
 		}
 
-		return j.params.Storage.WriteMiniblockCandidate(
+		return j.cache.Params().Storage.WriteMiniblockCandidate(
 			ctx,
 			j.stream.streamId,
 			j.candidate.Ref.Hash,
@@ -284,7 +304,7 @@ func (j *mbJob) saveCandidate(ctx context.Context) error {
 	})
 
 	qp.GoRemotes(ctx, j.remoteNodes, func(ctx context.Context, node common.Address) error {
-		return j.params.RemoteMiniblockProvider.SaveMbCandidate(ctx, node, j.stream.streamId, j.candidate.Proto)
+		return j.cache.Params().RemoteMiniblockProvider.SaveMbCandidate(ctx, node, j.stream.streamId, j.candidate.Proto)
 	})
 
 	return qp.Wait()

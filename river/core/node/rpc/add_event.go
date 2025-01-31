@@ -145,14 +145,7 @@ func (s *Service) addParsedEvent(
 		}
 	}
 
-	stream := &replicatedStream{
-		streamId:    streamId.String(),
-		localStream: localStream,
-		nodes:       localStream,
-		service:     s,
-	}
-
-	err = stream.AddEvent(ctx, parsedEvent)
+	err = s.replicatedAddEvent(ctx, localStream, parsedEvent)
 	if err != nil {
 		return newParentEvents, err
 	}

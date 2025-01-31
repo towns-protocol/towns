@@ -407,7 +407,7 @@ func (i *cacheTestInstance) makeAndSaveMbCandidate(
 ) (*MiniblockInfo, error) {
 	j := &mbJob{
 		stream: stream,
-		params: i.params,
+		cache:  i.cache,
 	}
 	err := j.produceCandidate(ctx)
 	if err != nil {
@@ -422,7 +422,7 @@ func (i *cacheTestInstance) makeMbCandidate(
 ) (*MiniblockInfo, error) {
 	j := &mbJob{
 		stream: stream,
-		params: i.params,
+		cache:  i.cache,
 	}
 	j.remoteNodes, _ = j.stream.GetRemotesAndIsLocal()
 	j.replicated = len(j.remoteNodes) > 0

@@ -233,7 +233,7 @@ func (p *miniblockProducer) isLocalLeaderOnCurrentBlock(
 func (p *miniblockProducer) trySchedule(ctx context.Context, stream *Stream) *mbJob {
 	j := &mbJob{
 		stream: stream,
-		params: p.streamCache.Params(),
+		cache:  p.streamCache,
 	}
 	_, prevLoaded := p.jobs.LoadOrStore(stream.streamId, j)
 	if !prevLoaded {
@@ -272,7 +272,7 @@ func (p *miniblockProducer) TestMakeMiniblock(
 
 	job := &mbJob{
 		stream:        stream,
-		params:        p.streamCache.Params(),
+		cache:         p.streamCache,
 		forceSnapshot: forceSnapshot,
 	}
 

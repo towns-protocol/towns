@@ -5,42 +5,33 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
+	. "github.com/river-build/river/core/node/base"
 	. "github.com/river-build/river/core/node/events"
-	. "github.com/river-build/river/core/node/nodes"
 	. "github.com/river-build/river/core/node/protocol"
-	"github.com/river-build/river/core/node/shared"
 
 	"connectrpc.com/connect"
 )
 
-type replicatedStream struct {
-	streamId    string
-	localStream AddableStream
-	nodes       StreamNodes
-	service     *Service
-}
-
-var _ AddableStream = (*replicatedStream)(nil)
-
-func (r *replicatedStream) AddEvent(ctx context.Context, event *ParsedEvent) error {
-	remotes, _ := r.nodes.GetRemotesAndIsLocal()
-	if len(remotes) == 0 {
-		return r.localStream.AddEvent(ctx, event)
+func (s *Service) replicatedAddEvent(ctx context.Context, stream *Stream, event *ParsedEvent) error {
+	remotes, isLocal := stream.GetRemotesAndIsLocal()
+	if !isLocal {
+		return RiverError(Err_INTERNAL, "replicatedAddEvent: stream must be local")
 	}
 
-	sender := NewQuorumPool("method", "replicatedStream.AddEvent", "streamId", r.streamId)
+	if len(remotes) == 0 {
+		return stream.AddEvent(ctx, event)
+	}
+
+	streamId := stream.StreamId()
+	sender := NewQuorumPool("method", "replicatedStream.AddEvent", "streamId", streamId)
 
 	sender.GoLocal(ctx, func(ctx context.Context) error {
-		return r.localStream.AddEvent(ctx, event)
+		return stream.AddEvent(ctx, event)
 	})
 
 	if len(remotes) > 0 {
-		streamId, err := shared.StreamIdFromString(r.streamId)
-		if err != nil {
-			return err
-		}
 		sender.GoRemotes(ctx, remotes, func(ctx context.Context, node common.Address) error {
-			stub, err := r.service.nodeRegistry.GetNodeToNodeClientForAddress(node)
+			stub, err := s.nodeRegistry.GetNodeToNodeClientForAddress(node)
 			if err != nil {
 				return err
 			}

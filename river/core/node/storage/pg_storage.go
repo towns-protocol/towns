@@ -93,25 +93,6 @@ func (s *PostgresEventStore) txRunnerInner(
 	return nil
 }
 
-type backoffTracker struct {
-	last time.Duration
-}
-
-// Retries first attempt immediately, next waits for 50ms, then multipled by 1.5 each time.
-func (b *backoffTracker) wait(ctx context.Context) error {
-	if b.last == 0 {
-		b.last = 50 * time.Millisecond
-		return nil
-	}
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	case <-time.After(b.last):
-		b.last = b.last * 3 / 2
-		return nil
-	}
-}
-
 func (s *PostgresEventStore) txRunner(
 	ctx context.Context,
 	name string,
@@ -130,7 +111,7 @@ func (s *PostgresEventStore) txRunner(
 
 	defer prometheus.NewTimer(s.txDuration.WithLabelValues(name)).ObserveDuration()
 
-	var backoff backoffTracker
+	var backoff BackoffTracker
 	s.txTracker.track("START", name, tags...)
 	for {
 		err := s.txRunnerInner(ctx, accessMode, txFn, opts)
@@ -146,7 +127,7 @@ func (s *PostgresEventStore) txRunner(
 						"txTracker", s.txTracker.dump(),
 					)
 
-					backoffErr := backoff.wait(ctx)
+					backoffErr := backoff.Wait(ctx, err)
 					if backoffErr != nil {
 						s.txTracker.track("RETRY_TIMEOUT", name, tags...)
 						return AsRiverError(backoffErr).Func(name).Message("Timed out waiting for backoff")

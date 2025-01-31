@@ -106,6 +106,11 @@ func (s *Stream) IsLocal() bool {
 	return s.local != nil
 }
 
+// StreamId is thread-safe: streamId is immutable.
+func (s *Stream) StreamId() StreamId {
+	return s.streamId
+}
+
 // view should be called with at least a read lock.
 func (s *Stream) view() *StreamView {
 	return s.local.useGetterAndSetterToGetView
