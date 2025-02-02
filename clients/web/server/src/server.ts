@@ -81,8 +81,11 @@ server.setNotFoundHandler(async (request, reply) => {
     // strip query params and hash
     const baseUrl = `https://${request.headers.host}`
     let urlPath: string
+    let host: string = ''
     try {
-        urlPath = new URL(request.raw.url ?? '', baseUrl).pathname
+        const url = new URL(request.raw.url ?? '', baseUrl)
+        urlPath = url.pathname
+        host = `${url.protocol}//${url.host}`
     } catch (error) {
         urlPath = '/'
     }
@@ -95,7 +98,11 @@ server.setNotFoundHandler(async (request, reply) => {
     } else if (urlPath.startsWith('/t/') || urlPath === '/') {
         const townId = getTownIdFromPath(urlPath)
         const exactMatch = townId && isTownPageExactMatch(urlPath)
-        const html = await updateTemplate({ townId, route: exactMatch ? 'town-page' : 'page' })
+        const html = await updateTemplate({
+            host,
+            townId,
+            route: exactMatch ? 'town-page' : 'page',
+        })
         return reply.header('Content-Type', 'text/html').send(html)
     } else if (urlPath === '/version' || urlPath === '/data/version') {
         return reply.header('Content-Type', 'text/json').send({ version: appPackageVersion })
@@ -105,7 +112,7 @@ server.setNotFoundHandler(async (request, reply) => {
         })
     }
 
-    const html = await updateTemplate()
+    const html = await updateTemplate({ host })
     return reply.code(404).header('Content-Type', 'text/html').send(html)
 })
 
@@ -146,9 +153,10 @@ function validateTownId(townId: string) {
 type TownData = Partial<SpaceInfo>
 
 async function updateTemplate({
+    host = '',
     townId,
     route,
-}: { townId?: string; route?: 'town-page' | 'page' } = {}) {
+}: { host?: string; townId?: string; route?: 'town-page' | 'page' } = {}) {
     const cacheKey = `template-${townId}`
     const cachedTemplate = cache.get<string>(cacheKey)
 
@@ -160,7 +168,7 @@ async function updateTemplate({
     const info: Record<string, string> = {
         title: 'Towns',
         description: 'A new way to connect with your community',
-        image: '/og-image.jpg',
+        image: host + '/og-image.jpg',
     }
 
     let townData: TownData | undefined
