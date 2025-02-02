@@ -167,7 +167,7 @@ async function updateTemplate({
     // default info
     const info: Record<string, string> = {
         title: 'Towns',
-        description: 'A new way to connect with your community',
+        description: 'The Blockchain Messenger',
         image: host + '/og-image.jpg',
     }
 
