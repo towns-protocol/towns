@@ -652,6 +652,7 @@ func (s *Service) initCacheAndSync(opts *ServerStartOpts) error {
 		ChainMonitor:            s.riverChain.ChainMonitor,
 		Metrics:                 s.metrics,
 		RemoteMiniblockProvider: s,
+		Tracer:                  s.otelTracer,
 	}
 
 	s.cache = events.NewStreamCache(s.serverCtx, cacheParams)
