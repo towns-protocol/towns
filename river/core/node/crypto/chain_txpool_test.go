@@ -105,7 +105,7 @@ func TestReplacementTxOnBoot(t *testing.T) {
 
 	// this test can only run with full control over block production
 	if !tc.IsSimulated() || (tc.IsAnvil() && tc.AnvilAutoMineEnabled()) {
-		t.Skip()
+		t.Skip("skipping test on non-simulated blockchain")
 	}
 
 	// submit some transactions and don't mint any new blocks -> "pending stuck"

@@ -689,8 +689,17 @@ func (s *Stream) addEventLocked(ctx context.Context, event *ParsedEvent) error {
 		return err
 	}
 
+	oldSV := s.view()
+	err = oldSV.ValidateNextEvent(ctx, s.params.ChainConfig.Get(), event, time.Time{})
+	if err != nil {
+		if IsRiverErrorCode(err, Err_DUPLICATE_EVENT) {
+			return nil
+		}
+		return AsRiverError(err).Func("copyAndAddEvent")
+	}
+
 	// Check if event can be added before writing to storage.
-	newSV, err := s.view().copyAndAddEvent(event)
+	newSV, err := oldSV.copyAndAddEvent(event)
 	if err != nil {
 		return err
 	}
@@ -698,8 +707,8 @@ func (s *Stream) addEventLocked(ctx context.Context, event *ParsedEvent) error {
 	err = s.params.Storage.WriteEvent(
 		ctx,
 		s.streamId,
-		s.view().minipool.generation,
-		s.view().minipool.nextSlotNumber(),
+		oldSV.minipool.generation,
+		oldSV.minipool.nextSlotNumber(),
 		envelopeBytes,
 	)
 	// TODO: for some classes of errors, it's not clear if event was added or not

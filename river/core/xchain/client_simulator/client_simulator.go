@@ -81,11 +81,17 @@ type postResult struct {
 type ClientSimulator interface {
 	Start(ctx context.Context)
 	Stop()
-	EvaluateRuleData(ctx context.Context, cfg *config.Config, ruleData base.IRuleEntitlementBaseRuleData) (bool, error)
+	EvaluateRuleData(
+		ctx context.Context,
+		cfg *config.Config,
+		ruleData base.IRuleEntitlementBaseRuleData,
+		emitV2Event bool,
+	) (bool, error)
 	EvaluateRuleDataV2(
 		ctx context.Context,
 		cfg *config.Config,
 		ruleData base.IRuleEntitlementBaseRuleDataV2,
+		emitV2Event bool,
 	) (bool, error)
 	Wallet() *node_crypto.Wallet
 }
@@ -98,10 +104,10 @@ type clientSimulator struct {
 	decoder *node_crypto.EvmErrorDecoder
 
 	entitlementGated         *deploy.MockEntitlementGated
+	entitlementGatedAddress  common.Address
 	entitlementGatedABI      *abi.ABI
 	entitlementGatedContract *bind.BoundContract
 
-	checker         *base.IEntitlementChecker
 	checkerABI      *abi.ABI
 	checkerContract *bind.BoundContract
 
@@ -118,17 +124,14 @@ var _ ClientSimulator = &clientSimulator{}
 func New(
 	ctx context.Context,
 	cfg *config.Config,
+	mockEntitlementGatedAddress common.Address,
 	baseChain *node_crypto.Blockchain,
 	wallet *node_crypto.Wallet,
 ) (ClientSimulator, error) {
 	entitlementGated, err := deploy.NewMockEntitlementGated(
-		cfg.GetTestEntitlementContractAddress(),
-		nil,
+		mockEntitlementGatedAddress,
+		baseChain.Client,
 	)
-	if err != nil {
-		return nil, err
-	}
-	checker, err := base.NewIEntitlementChecker(cfg.GetEntitlementContractAddress(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -145,7 +148,7 @@ func New(
 
 	var (
 		entitlementGatedContract = bind.NewBoundContract(
-			cfg.GetTestEntitlementContractAddress(),
+			mockEntitlementGatedAddress,
 			*entitlementGatedABI,
 			nil,
 			nil,
@@ -178,9 +181,9 @@ func New(
 		wallet,
 		decoder,
 		entitlementGated,
+		mockEntitlementGatedAddress,
 		entitlementGatedABI,
 		entitlementGatedContract,
-		checker,
 		checkerABI,
 		checkerContract,
 		baseChain,
@@ -197,7 +200,7 @@ func (cs *clientSimulator) Stop() {
 func (cs *clientSimulator) Start(ctx context.Context) {
 	cs.baseChain.ChainMonitor.OnContractWithTopicsEvent(
 		0,
-		cs.cfg.GetTestEntitlementContractAddress(),
+		cs.entitlementGatedAddress,
 		[][]common.Hash{{cs.entitlementGatedABI.Events["EntitlementCheckResultPosted"].ID}},
 		func(ctx context.Context, event types.Log) {
 			cs.onEntitlementCheckResultPosted(ctx, event, cs.resultPosted)
@@ -216,29 +219,45 @@ func (cs *clientSimulator) Start(ctx context.Context) {
 			cs.onEntitlementCheckRequested(ctx, event, cs.checkRequests)
 		},
 	)
+
+	cs.baseChain.ChainMonitor.OnContractWithTopicsEvent(
+		0,
+		cs.cfg.GetEntitlementContractAddress(),
+		[][]common.Hash{{cs.checkerABI.Events["EntitlementCheckRequestedV2"].ID}},
+		func(ctx context.Context, event types.Log) {
+			cs.onEntitlementCheckRequestedV2(ctx, event, cs.checkRequests)
+		},
+	)
 }
 
-func (cs *clientSimulator) executeCheck(ctx context.Context, ruleData *deploy.IRuleEntitlementBaseRuleData) error {
+func (cs *clientSimulator) executeCheck(
+	ctx context.Context,
+	ruleData *deploy.IRuleEntitlementBaseRuleData,
+	emitV2Event bool,
+) error {
 	log := logging.FromCtx(ctx).With("application", "clientSimulator")
 	log.Infow("ClientSimulator executing check", "ruleData", ruleData, "cfg", cs.cfg)
 
 	pendingTx, err := cs.baseChain.TxPool.Submit(
 		ctx,
-		"RequestEntitlementCheck",
+		"RequestEntitlementCheckV1RuleDataV1",
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			log.Infow("Calling RequestEntitlementCheck", "opts", opts, "ruleData", ruleData)
-			gated, err := deploy.NewMockEntitlementGated(
-				cs.cfg.GetTestEntitlementContractAddress(),
-				cs.baseChain.Client,
+			log.Infow(
+				"Requesting entitlement check for legacy space",
+				"opts",
+				opts,
+				"ruleData",
+				ruleData,
+				"v2Event",
+				emitV2Event,
 			)
-			if err != nil {
-				log.Errorw("Failed to get NewMockEntitlementGated", "err", err)
-				return nil, err
+			if emitV2Event {
+				log.Infow("Calling RequestEntitlementCheckV2RuleDataV1", "opts", opts, "ruleData", ruleData)
+				return cs.entitlementGated.RequestEntitlementCheckV2RuleDataV1(opts, [](*big.Int){big.NewInt(0)}, *ruleData)
+			} else {
+				log.Infow("Calling RequestEntitlementCheckV1RuleDataV1", "opts", opts, "ruleData", ruleData)
+				return cs.entitlementGated.RequestEntitlementCheckV1RuleDataV1(opts, big.NewInt(0), *ruleData)
 			}
-			log.Infow("NewMockEntitlementGated", "gated", gated.RequestEntitlementCheck, "err", err)
-			tx, err := gated.RequestEntitlementCheck(opts, big.NewInt(0), *ruleData)
-			log.Infow("RequestEntitlementCheck called", "tx", tx, "err", err)
-			return tx, err
 		})
 
 	log.Infow("Submitted entitlement check...")
@@ -269,7 +288,11 @@ func (cs *clientSimulator) executeCheck(ctx context.Context, ruleData *deploy.IR
 	return nil
 }
 
-func (cs *clientSimulator) executeV2Check(ctx context.Context, ruleData *deploy.IRuleEntitlementBaseRuleDataV2) error {
+func (cs *clientSimulator) executeV2Check(
+	ctx context.Context,
+	ruleData *deploy.IRuleEntitlementBaseRuleDataV2,
+	emitV2Event bool,
+) error {
 	log := logging.FromCtx(ctx).With("application", "clientSimulator")
 	log.Infow("ClientSimulator executing v2 check", "ruleData", ruleData, "cfg", cs.cfg)
 
@@ -277,19 +300,26 @@ func (cs *clientSimulator) executeV2Check(ctx context.Context, ruleData *deploy.
 		ctx,
 		"RequestEntitlementCheckV2",
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			log.Infow("Calling RequestEntitlementCheck", "opts", opts, "ruleData", ruleData)
-			gated, err := deploy.NewMockEntitlementGated(
-				cs.cfg.GetTestEntitlementContractAddress(),
-				cs.baseChain.Client,
+			log.Infow(
+				"Requesting entitlement check for V2 space",
+				"opts",
+				opts,
+				"ruleDataV2",
+				ruleData,
+				"v2Event",
+				emitV2Event,
 			)
-			if err != nil {
-				log.Errorw("Failed to get NewMockEntitlementGated", "err", err)
-				return nil, err
+
+			if emitV2Event {
+				tx, err := cs.entitlementGated.RequestEntitlementCheckV2RuleDataV2(opts, []*big.Int{big.NewInt(0)}, *ruleData)
+				log.Infow("RequestEntitlementCheckV2RuleDataV2 called", "tx", tx, "err", err)
+				return tx, err
+
+			} else {
+				tx, err := cs.entitlementGated.RequestEntitlementCheckV1RuleDataV2(opts, []*big.Int{big.NewInt(0)}, *ruleData)
+				log.Infow("RequestEntitlementCheckV1RuleDataV2 called", "tx", tx, "err", err)
+				return tx, err
 			}
-			log.Infow("NewMockEntitlementGated", "gated", gated.RequestEntitlementCheck, "err", err)
-			tx, err := gated.RequestEntitlementCheckV2(opts, []*big.Int{big.NewInt(0)}, *ruleData)
-			log.Infow("RequestEntitlementCheckV2 called", "tx", tx, "err", err)
-			return tx, err
 		})
 
 	log.Infow("Submitted entitlement check...")
@@ -380,14 +410,14 @@ func (cs *clientSimulator) onEntitlementCheckResultPosted(
 	postedResults chan postResult,
 ) {
 	entitlementCheckResultPosted := base.IEntitlementGatedEntitlementCheckResultPosted{}
-	log := logging.FromCtx(ctx).With("application", "clientSimulator").With("function", "onEntitlementCheckResultPosted")
+	log := logging.FromCtx(ctx).
+		With("application", "clientSimulator").
+		With("function", "onEntitlementCheckResultPosted")
 
 	log.Infow(
 		"Unpacking EntitlementCheckResultPosted event",
 		"event",
 		event,
-		"entitlementCheckResultPosted",
-		entitlementCheckResultPosted,
 	)
 
 	if err := cs.entitlementGatedContract.UnpackLog(&entitlementCheckResultPosted, "EntitlementCheckResultPosted", event); err != nil {
@@ -396,8 +426,7 @@ func (cs *clientSimulator) onEntitlementCheckResultPosted(
 	}
 
 	log.Infow("Received EntitlementCheckResultPosted event",
-		"TransactionId", entitlementCheckResultPosted.TransactionId,
-		"Result", entitlementCheckResultPosted.Result,
+		"event", entitlementCheckResultPosted,
 	)
 
 	postedResults <- postResult{
@@ -427,7 +456,36 @@ func (cs *clientSimulator) onEntitlementCheckRequested(
 		return
 	}
 
-	log.Infow("Received EntitlementCheckRequested event",
+	log.Infow("Observed EntitlementCheckRequested event",
+		"TransactionId", entitlementCheckRequest.TransactionId,
+		"selectedNodes", entitlementCheckRequest.SelectedNodes,
+	)
+
+	checkRequests <- entitlementCheckRequest.TransactionId
+}
+
+func (cs *clientSimulator) onEntitlementCheckRequestedV2(
+	ctx context.Context,
+	event types.Log,
+	checkRequests chan [32]byte,
+) {
+	entitlementCheckRequest := base.IEntitlementCheckerEntitlementCheckRequestedV2{}
+	log := logging.FromCtx(ctx).With("application", "clientSimulator").With("function", "onEntitlementCheckRequestedV2")
+
+	log.Infow(
+		"Unpacking EntitlementCheckRequestedV2 event",
+		"event",
+		event,
+		"entitlementCheckRequestV2",
+		entitlementCheckRequest,
+	)
+
+	if err := cs.checkerContract.UnpackLog(&entitlementCheckRequest, "EntitlementCheckRequestedV2", event); err != nil {
+		log.Errorw("Failed to unpack EntitlementCheckRequestedV2 event", "err", err)
+		return
+	}
+
+	log.Infow("Observed EntitlementCheckRequestedV2 event",
 		"TransactionId", entitlementCheckRequest.TransactionId,
 		"selectedNodes", entitlementCheckRequest.SelectedNodes,
 	)
@@ -533,13 +591,14 @@ func (cs *clientSimulator) EvaluateRuleDataV2(
 	ctx context.Context,
 	cfg *config.Config,
 	baseRuleData base.IRuleEntitlementBaseRuleDataV2,
+	emitV2Event bool,
 ) (bool, error) {
 	ruleData := convertRuleDataV2FromBaseToDeploy(baseRuleData)
 
 	log := logging.FromCtx(ctx).With("application", "clientSimulator")
 	log.Infow("ClientSimulator evaluating rule data v2", "ruleData", ruleData)
 
-	err := cs.executeV2Check(ctx, &ruleData)
+	err := cs.executeV2Check(ctx, &ruleData, emitV2Event)
 	if err != nil {
 		log.Errorw("Failed to execute entitlement check", "err", err)
 		return false, err
@@ -551,13 +610,14 @@ func (cs *clientSimulator) EvaluateRuleData(
 	ctx context.Context,
 	cfg *config.Config,
 	baseRuleData base.IRuleEntitlementBaseRuleData,
+	emitV2Event bool,
 ) (bool, error) {
 	ruleData := convertRuleDataFromBaseToDeploy(baseRuleData)
 
 	log := logging.FromCtx(ctx).With("application", "clientSimulator")
 	log.Infow("ClientSimulator evaluating rule data", "ruleData", ruleData)
 
-	err := cs.executeCheck(ctx, &ruleData)
+	err := cs.executeCheck(ctx, &ruleData, emitV2Event)
 	if err != nil {
 		log.Errorw("Failed to execute entitlement check", "err", err)
 		return false, err
@@ -565,14 +625,26 @@ func (cs *clientSimulator) EvaluateRuleData(
 	return cs.awaitNextResult(ctx)
 }
 
-func RunClientSimulator(ctx context.Context, cfg *config.Config, wallet *node_crypto.Wallet, simType SimulationType) {
+func RunClientSimulator(
+	ctx context.Context,
+	cfg *config.Config,
+	mockEntitlementGated common.Address,
+	wallet *node_crypto.Wallet,
+	simType SimulationType,
+) {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
 	log := logging.FromCtx(ctx).With("application", "clientSimulator")
 	log.Infow("--- ClientSimulator starting", "simType", simType)
 
-	cs, err := New(ctx, cfg, nil, wallet)
+	cs, err := New(
+		ctx,
+		cfg,
+		mockEntitlementGated,
+		nil,
+		wallet,
+	)
 	if err != nil {
 		log.Errorw("--- Failed to create clientSimulator", "err", err)
 		return
@@ -591,5 +663,5 @@ func RunClientSimulator(ctx context.Context, cfg *config.Config, wallet *node_cr
 		return
 	}
 
-	_, _ = cs.EvaluateRuleData(ctx, cfg, ruleData)
+	_, _ = cs.EvaluateRuleData(ctx, cfg, ruleData, false)
 }

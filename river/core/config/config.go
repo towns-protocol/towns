@@ -169,13 +169,6 @@ type Config struct {
 
 	ChainConfigs map[uint64]*ChainConfig `mapstructure:"-"` // This is a derived field from Chains.
 
-	// extra xChain configuration
-	EntitlementContract     ContractConfig `mapstructure:"entitlement_contract"`
-	TestEntitlementContract ContractConfig `mapstructure:"test_contract"`
-
-	// History indicates how far back xchain must look for entitlement check requests after start
-	History time.Duration
-
 	// EnableTestAPIs enables additional APIs used for testing.
 	EnableTestAPIs bool
 
@@ -187,6 +180,14 @@ type Config struct {
 
 	// RiverRegistry contains settings for calling registry contract on River chain.
 	RiverRegistry RiverRegistryConfig
+
+	// xChain configuration
+	// ====================
+	// EntitlementContract denotes the address of the contract that receives entitlement check
+	// requests.
+	EntitlementContract     ContractConfig `mapstructure:"entitlement_contract"`
+	// History indicates how far back xchain must look for entitlement check requests after start
+	History time.Duration
 }
 
 type TLSConfig struct {
@@ -581,16 +582,13 @@ func (c *Config) GetGraffiti() string {
 	return c.Graffiti
 }
 
+// Get the address of the contract that receives entitlement check requests.
 func (c *Config) GetEntitlementContractAddress() common.Address {
 	return c.EntitlementContract.Address
 }
 
 func (c *Config) GetWalletLinkContractAddress() common.Address {
 	return c.ArchitectContract.Address
-}
-
-func (c *Config) GetTestEntitlementContractAddress() common.Address {
-	return c.TestEntitlementContract.Address
 }
 
 func (c *Config) Init() error {

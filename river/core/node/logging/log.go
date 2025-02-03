@@ -9,12 +9,12 @@ import (
 )
 
 var (
-	DefaultLogOut = os.Stdout
+	DefaultLogOut zapcore.WriteSyncer = os.Stdout
 	defaultLogger *zap.SugaredLogger
 )
 
 func init() {
-	defaultLogger = DefaultZapLogger()
+	defaultLogger = DefaultZapLogger(zapcore.InfoLevel)
 }
 
 func DefaultZapEncoderConfig() zapcore.EncoderConfig {
@@ -30,12 +30,10 @@ func DefaultZapEncoderConfig() zapcore.EncoderConfig {
 	}
 }
 
-func DefaultZapLogger() *zap.SugaredLogger {
+func DefaultZapLogger(level zapcore.Level) *zap.SugaredLogger {
 	encoder := NewJSONEncoder(DefaultZapEncoderConfig())
-	writer := zapcore.AddSync(DefaultLogOut)
 
-	logLevel := zapcore.InfoLevel
-	core := zapcore.NewCore(encoder, writer, logLevel)
+	core := zapcore.NewCore(encoder, DefaultLogOut, level)
 
 	logger := zap.New(
 		core,

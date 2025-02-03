@@ -227,6 +227,8 @@ func (s *Service) initInstance(mode string, opts *ServerStartOpts) {
 			s.defaultLogger = logging.FromCtx(s.serverCtx).With(
 				"port", s.config.Port,
 			)
+		} else {
+			s.defaultLogger = logging.FromCtx(s.serverCtx)
 		}
 	}
 	s.serverCtx = logging.CtxWithLog(s.serverCtx, s.defaultLogger)
@@ -304,7 +306,9 @@ func (s *Service) initBaseChain() error {
 		s.chainAuth = chainAuth
 		return nil
 	} else {
-		s.defaultLogger.Warnw("Using fake auth for testing")
+		if !s.config.Log.Simplify {
+			s.defaultLogger.Warnw("Using fake auth for testing")
+		}
 		s.chainAuth = auth.NewFakeChainAuth()
 		return nil
 	}

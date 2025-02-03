@@ -7,7 +7,9 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
+	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/logging"
+	. "github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/utils"
 )
 
@@ -16,6 +18,7 @@ type QuorumPool struct {
 	remotes          int
 	remoteErrChannel chan error
 	tags             []any
+	Timeout          time.Duration
 }
 
 func NewQuorumPool(tags ...any) *QuorumPool {
@@ -48,10 +51,16 @@ func (q *QuorumPool) GoRemotes(
 	q.remoteErrChannel = make(chan error, len(nodes))
 	q.remotes += len(nodes)
 	for _, node := range nodes {
-		ctx, cancel := utils.UncancelContext(ctx, 5*time.Second, 10*time.Second)
+		var ctx2 context.Context
+		var cancel context.CancelFunc
+		if q.Timeout > 0 {
+			ctx2, cancel = utils.UncancelContextWithTimeout(ctx, q.Timeout)
+		} else {
+			ctx2, cancel = utils.UncancelContext(ctx, 5*time.Second, 10*time.Second)
+		}
 		go func() {
 			defer cancel()
-			q.executeRemote(ctx, node, f)
+			q.executeRemote(ctx2, node, f)
 		}()
 	}
 }
@@ -82,7 +91,7 @@ func (q *QuorumPool) Wait() error {
 	// First wait for local if any.
 	if q.localErrChannel != nil {
 		if err := <-q.localErrChannel; err != nil {
-			return err
+			return RiverErrorWithBase(Err_QUORUM_FAILED, "local failed", err)
 		}
 	}
 
@@ -90,9 +99,8 @@ func (q *QuorumPool) Wait() error {
 	if q.remotes > 0 {
 		remoteQuorum := RemoteQuorumNum(q.remotes, q.localErrChannel != nil)
 
-		var firstErr error
+		var errs []error
 		success := 0
-		failure := 0
 		for i := 0; i < q.remotes; i++ {
 			err := <-q.remoteErrChannel
 			if err == nil {
@@ -101,17 +109,13 @@ func (q *QuorumPool) Wait() error {
 					return nil
 				}
 			} else {
-				if firstErr == nil {
-					firstErr = err
-				}
-				failure++
-				if failure > q.remotes-remoteQuorum {
-					return firstErr
+				errs = append(errs, err)
+				if len(errs) > q.remotes-remoteQuorum {
+					return RiverErrorWithBases(Err_QUORUM_FAILED, "quorum failed", errs, "remotes", q.remotes, "remoteQuorum", remoteQuorum, "failed", len(errs), "succeeded", success)
 				}
 			}
 		}
-		// TODO: agument error with more info.
-		return firstErr
+		return RiverErrorWithBases(Err_INTERNAL, "QuorumPool.Wait: should succeed or fail by this point", errs)
 	}
 
 	return nil

@@ -21,6 +21,7 @@ import {ITowns} from "contracts/src/tokens/towns/mainnet/ITowns.sol";
 
 // libraries
 import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+import {TownsLib} from "contracts/src/tokens/towns/base/TownsLib.sol";
 
 // contracts
 import {EIP712Facet} from "@river-build/diamond/src/utils/cryptography/signature/EIP712Facet.sol";
@@ -158,7 +159,7 @@ contract BaseSetup is TestUtils, SpaceHelper {
     riverAirdrop = deployRiverAirdrop.deploy(deployer);
 
     // Base Registry Diamond
-    bridge = deployTokenBase.bridgeBase();
+    bridge = TownsLib.L2_STANDARD_BRIDGE;
 
     // POST DEPLOY
     vm.startPrank(deployer);

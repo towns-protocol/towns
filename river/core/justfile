@@ -538,7 +538,11 @@ _test-from-dir $DIR *args: build-mls
     #!/usr/bin/env -S bash {{BASH_OPTS}}
     cd $DIR
     echo "Running go test from $(git rev-parse --show-prefix)"
-    CGO_LDFLAGS="-L{{justfile_directory()}}/run_files/mls" go test {{args}}
+    if [[ "${GITHUB_ACTIONS:-false}" == "true" ]]; then
+        CGO_LDFLAGS="-L{{justfile_directory()}}/run_files/mls" go test {{args}}
+    else
+        CGO_LDFLAGS="-L{{justfile_directory()}}/run_files/mls" go test {{args}} | yarn exec pino-pretty
+    fi
 
 # Run go tests from current directory
 test *args: (_test-from-dir invocation_directory() args)
@@ -552,7 +556,7 @@ t *args: (_test-from-dir invocation_directory() "-v" args "./...")
 # Run go tests with info logging and test printing from current directory
 [positional-arguments]
 t-debug *args: 
-    RIVER_TEST_LOG=info RIVER_TEST_PRINT=1 just _test-from-dir {{invocation_directory()}} -v -count 1 "$@" ./... | yarn exec pino-pretty
+    RIVER_TEST_LOG=info RIVER_TEST_PRINT=1 just _test-from-dir {{invocation_directory()}} -v -count 1 "$@" ./...
 
 # Run go tests with debug logging and test printing from current directory
 [positional-arguments]

@@ -240,6 +240,19 @@ func IsRiverErrorCode(err error, code protocol.Err) bool {
 	return false
 }
 
+// IsCodeWithBases checks if the error or any of base errors match the given code.
+func (e *RiverErrorImpl) IsCodeWithBases(code protocol.Err) bool {
+	if e.Code == code {
+		return true
+	}
+	for _, base := range e.Bases {
+		if AsRiverError(base).Code == code {
+			return true
+		}
+	}
+	return false
+}
+
 func IsConnectNetworkError(err error) bool {
 	if ce, ok := err.(*connect.Error); ok {
 		return IsConnectNetworkErrorCode(ce.Code())

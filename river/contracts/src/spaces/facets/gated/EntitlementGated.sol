@@ -42,6 +42,19 @@ contract EntitlementGated is
     _postEntitlementCheckResult(transactionId, roleId, result);
   }
 
+  /// @notice Post the result of the entitlement check for a specific role
+  /// @dev Only the entitlement checker can call this function
+  /// @param transactionId The unique identifier for the transaction
+  /// @param roleId The role ID for the entitlement check
+  /// @param result The result of the entitlement check (PASSED or FAILED)
+  function postEntitlementCheckResultV2(
+    bytes32 transactionId,
+    uint256 roleId,
+    NodeVoteStatus result
+  ) external payable onlyEntitlementChecker nonReentrant {
+    _postEntitlementCheckResultV2(transactionId, roleId, result);
+  }
+
   /// deprecated Use EntitlementDataQueryable.getCrossChainEntitlementData instead
   function getRuleData(
     bytes32 transactionId,

@@ -27,7 +27,7 @@ import {DeployRewardsDistributionV2} from "contracts/scripts/deployments/facets/
 import {DeployERC721ANonTransferable} from "contracts/scripts/deployments/facets/DeployERC721ANonTransferable.s.sol";
 import {DeployMockMessenger} from "contracts/scripts/deployments/facets/DeployMockMessenger.s.sol";
 import {DeployEIP712Facet} from "contracts/scripts/deployments/facets/DeployEIP712Facet.s.sol";
-
+import {DeployXChain} from "contracts/scripts/deployments/facets/DeployXChain.s.sol";
 contract DeployBaseRegistry is DiamondHelper, Deployer {
   DeployERC721ANonTransferable deployNFT = new DeployERC721ANonTransferable();
 
@@ -47,7 +47,7 @@ contract DeployBaseRegistry is DiamondHelper, Deployer {
     new DeployRewardsDistributionV2();
   DeployMockMessenger messengerHelper = new DeployMockMessenger();
   DeployEIP712Facet eip712Helper = new DeployEIP712Facet();
-
+  DeployXChain xchainHelper = new DeployXChain();
   address multiInit;
   address diamondCut;
   address diamondLoupe;
@@ -63,6 +63,7 @@ contract DeployBaseRegistry is DiamondHelper, Deployer {
   address distributionV2;
   address spaceDelegation;
   address mainnetDelegation;
+  address xchain;
   address public messenger;
 
   address riverToken = 0x9172852305F32819469bf38A3772f29361d7b768;
@@ -117,7 +118,7 @@ contract DeployBaseRegistry is DiamondHelper, Deployer {
     nft = deployNFT.deploy(deployer);
     messenger = messengerHelper.deploy(deployer);
     eip712 = eip712Helper.deploy(deployer);
-
+    xchain = xchainHelper.deploy(deployer);
     addFacet(
       deployNFT.makeCut(nft, IDiamond.FacetCutAction.Add),
       nft,
@@ -165,6 +166,11 @@ contract DeployBaseRegistry is DiamondHelper, Deployer {
       eip712Helper.makeCut(eip712, IDiamond.FacetCutAction.Add),
       eip712,
       eip712Helper.makeInitData("BaseRegistry", "1")
+    );
+    addFacet(
+      xchainHelper.makeCut(xchain, IDiamond.FacetCutAction.Add),
+      xchain,
+      xchainHelper.makeInitData("")
     );
 
     return

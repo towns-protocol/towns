@@ -6,14 +6,17 @@ import {TestUtils} from "contracts/test/utils/TestUtils.sol";
 
 //interfaces
 import {ILockBase} from "contracts/src/tokens/lock/ILock.sol";
+
 //libraries
 import {EIP712Utils} from "contracts/test/utils/EIP712Utils.sol";
+import {TownsLib} from "contracts/src/tokens/towns/base/TownsLib.sol";
 
 //contracts
 import {DeployTownsBase} from "contracts/scripts/deployments/utils/DeployTownsBase.s.sol";
 import {Towns} from "contracts/src/tokens/towns/base/Towns.sol";
 import {ERC20} from "solady/tokens/ERC20.sol";
 import {ERC20Votes} from "solady/tokens/ERC20Votes.sol";
+
 contract TownsBaseTest is TestUtils, EIP712Utils, ILockBase {
   DeployTownsBase internal deployTownsBase = new DeployTownsBase();
 
@@ -25,7 +28,7 @@ contract TownsBaseTest is TestUtils, EIP712Utils, ILockBase {
   function setUp() external {
     deployer = getDeployer();
     towns = Towns(deployTownsBase.deploy(deployer));
-    bridge = deployTownsBase.bridgeBase();
+    bridge = TownsLib.L2_STANDARD_BRIDGE;
   }
 
   modifier givenCallerHasBridgedTokens(address caller, uint256 amount) {
@@ -174,7 +177,7 @@ contract TownsBaseTest is TestUtils, EIP712Utils, ILockBase {
 
   function test_revertWhen_delegateToZeroAddress(address alice) external {
     vm.prank(alice);
-    vm.expectRevert(Towns.Towns__DelegateeSameAsCurrent.selector);
+    vm.expectRevert(Towns.DelegateeSameAsCurrent.selector);
     towns.delegate(address(0));
     assertEq(towns.delegates(alice), address(0));
   }
@@ -210,7 +213,7 @@ contract TownsBaseTest is TestUtils, EIP712Utils, ILockBase {
   {
     vm.assume(bob != address(0));
     vm.prank(alice);
-    vm.expectRevert(Towns.Towns__TransferLockEnabled.selector);
+    vm.expectRevert(Towns.TransferLockEnabled.selector);
     towns.transfer(bob, amount);
   }
 
@@ -237,7 +240,7 @@ contract TownsBaseTest is TestUtils, EIP712Utils, ILockBase {
     uint256 cd = towns.lockCooldown(alice);
     vm.warp(cd);
 
-    vm.expectRevert(Towns.Towns__TransferLockEnabled.selector);
+    vm.expectRevert(Towns.TransferLockEnabled.selector);
     towns.transfer(bob, amount);
   }
 

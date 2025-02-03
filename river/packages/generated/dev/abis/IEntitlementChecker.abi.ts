@@ -131,6 +131,34 @@ export default [
   },
   {
     "type": "function",
+    "name": "requestEntitlementCheckV2",
+    "inputs": [
+      {
+        "name": "walletAddress",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "transactionId",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      },
+      {
+        "name": "requestId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "extraData",
+        "type": "bytes",
+        "internalType": "bytes"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "payable"
+  },
+  {
+    "type": "function",
     "name": "unregisterNode",
     "inputs": [
       {
@@ -154,6 +182,49 @@ export default [
       },
       {
         "name": "contractAddress",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "transactionId",
+        "type": "bytes32",
+        "indexed": false,
+        "internalType": "bytes32"
+      },
+      {
+        "name": "roleId",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "selectedNodes",
+        "type": "address[]",
+        "indexed": false,
+        "internalType": "address[]"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "EntitlementCheckRequestedV2",
+    "inputs": [
+      {
+        "name": "walletAddress",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "spaceAddress",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "resolverAddress",
         "type": "address",
         "indexed": false,
         "internalType": "address"
@@ -207,6 +278,11 @@ export default [
   },
   {
     "type": "error",
+    "name": "EntitlementChecker_InsufficientFunds",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "EntitlementChecker_InsufficientNumberOfNodes",
     "inputs": []
   },
@@ -218,6 +294,16 @@ export default [
   {
     "type": "error",
     "name": "EntitlementChecker_InvalidOperator",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "EntitlementChecker_NoPendingRequests",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "EntitlementChecker_NoRefundsAvailable",
     "inputs": []
   },
   {

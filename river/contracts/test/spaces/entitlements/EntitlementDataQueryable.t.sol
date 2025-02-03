@@ -98,7 +98,7 @@ contract EntitlementDataQueryableTest is
     vm.prank(user);
     membership.joinSpace(user);
 
-    (, bytes32 transactionId, uint256 roleId, ) = _getRequestedEntitlementData(
+    (, , , bytes32 transactionId, uint256 roleId, ) = _getRequestV2EventData(
       vm.getRecordedLogs()
     );
 

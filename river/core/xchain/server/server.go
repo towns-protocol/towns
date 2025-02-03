@@ -67,6 +67,7 @@ type (
 		RoleId        *big.Int
 		Outcome       bool
 		Event         base.IEntitlementCheckerEntitlementCheckRequested
+		EventV2       base.IEntitlementCheckerEntitlementCheckRequestedV2
 	}
 
 	// pending task to write the entitlement check outcome to base
@@ -305,6 +306,9 @@ func (x *xchain) Run(ctx context.Context) {
 		onEntitlementCheckRequestedCallback = func(ctx context.Context, event types.Log) {
 			x.onEntitlementCheckRequested(ctx, event, entitlementCheckReceipts)
 		}
+		onEntitlementCheckRequestedV2Callback = func(ctx context.Context, event types.Log) {
+			x.onEntitlementCheckRequestedV2(ctx, event, entitlementCheckReceipts)
+		}
 	)
 	x.cancel = cancel
 
@@ -323,19 +327,26 @@ func (x *xchain) Run(ctx context.Context) {
 		x.metricsPublisher.StartMetricsServer(runCtx, cfg)
 	}
 
-	// register callback for Base EntitlementCheckRequested events
+	// Register callback for Base EntitlementCheckRequested V1 events
 	x.baseChain.ChainMonitor.OnContractWithTopicsEvent(
 		x.baseChainStartBlock,
 		entitlementAddress,
 		[][]common.Hash{{x.checkerABI.Events["EntitlementCheckRequested"].ID}},
 		onEntitlementCheckRequestedCallback)
 
-	// read entitlement check results from entitlementCheckReceipts and write the result to Base
+	// Register callback for Base EntitlementCheckRequested V2 events
+	x.baseChain.ChainMonitor.OnContractWithTopicsEvent(
+		x.baseChainStartBlock,
+		entitlementAddress,
+		[][]common.Hash{{x.checkerABI.Events["EntitlementCheckRequestedV2"].ID}},
+		onEntitlementCheckRequestedV2Callback)
+
+	// Read entitlement check results from entitlementCheckReceipts and write the result to Base
 	x.writeEntitlementCheckResults(runCtx, entitlementCheckReceipts)
 }
 
 // onEntitlementCheckRequested is the callback that the chain monitor calls for each EntitlementCheckRequested
-// event raised on Base in the entitlement contract.
+// event emitted on Base from the entitlement contract.
 func (x *xchain) onEntitlementCheckRequested(
 	ctx context.Context,
 	event types.Log,
@@ -354,14 +365,82 @@ func (x *xchain) onEntitlementCheckRequested(
 	}
 
 	log.Infow("Received EntitlementCheckRequested",
-		"xchain.req.txid", hex.EncodeToString(entitlementCheckRequest.TransactionId[:]))
+		"xchain.req.txid", hex.EncodeToString(entitlementCheckRequest.TransactionId[:]),
+		"request", entitlementCheckRequest,
+	)
 
 	// process the entitlement request and post the result to entitlementCheckResults
-	outcome, err := x.handleEntitlementCheckRequest(ctx, entitlementCheckRequest)
+	// First, convert the check to a V2 request for unified processing.
+	v2Request := base.IEntitlementCheckerEntitlementCheckRequestedV2{
+		WalletAddress:   entitlementCheckRequest.CallerAddress,
+		SpaceAddress:    entitlementCheckRequest.ContractAddress,
+		ResolverAddress: entitlementCheckRequest.ContractAddress,
+		TransactionId:   entitlementCheckRequest.TransactionId,
+		RoleId:          entitlementCheckRequest.RoleId,
+		SelectedNodes:   entitlementCheckRequest.SelectedNodes,
+		Raw:             entitlementCheckRequest.Raw,
+	}
+	outcome, err := x.handleEntitlementCheckRequest(ctx, v2Request)
 	if err != nil {
 		x.entitlementCheckRequested.IncFail()
 		log.Errorw("Entitlement check failed to process",
 			"err", err, "xchain.req.txid", hex.EncodeToString(entitlementCheckRequest.TransactionId[:]))
+		return
+	}
+
+	// outcome is nil if request was not intended for this xchain instance.
+	if outcome != nil {
+		x.entitlementCheckRequested.IncPass()
+
+		// Convert outcome back to a V1 outcome so that the post method knows
+		// how to branch
+		outcome.Event = entitlementCheckRequest
+		outcome.EventV2 = base.IEntitlementCheckerEntitlementCheckRequestedV2{}
+
+		log.Infow(
+			"Queueing check result for post",
+			"transactionId",
+			outcome.TransactionID.Hex(),
+			"outcome",
+			outcome.Outcome,
+			"v1Event",
+			outcome.Event,
+			"v2Event",
+			outcome.EventV2,
+		)
+
+		entitlementCheckResults <- outcome
+	}
+}
+
+// onEntitlementCheckRequestedV2 is the callback that the chain monitor calls for each
+// EntitlementCheckRequestedV2 event emitted on Base from the entitlement contract.
+func (x *xchain) onEntitlementCheckRequestedV2(
+	ctx context.Context,
+	event types.Log,
+	entitlementCheckResults chan<- *entitlementCheckReceipt,
+) {
+	var (
+		log                       = x.Log(ctx)
+		entitlementCheckRequestV2 = base.IEntitlementCheckerEntitlementCheckRequestedV2{}
+	)
+
+	// try to decode the EntitlementCheckRequested event
+	if err := x.checkerContract.UnpackLog(&entitlementCheckRequestV2, "EntitlementCheckRequestedV2", event); err != nil {
+		x.entitlementCheckRequested.IncFail()
+		log.Errorw("Unable to decode EntitlementCheckRequestedV2 event", "err", err)
+		return
+	}
+
+	log.Infow("Received EntitlementCheckRequestedV2",
+		"xchain.req.txid", hex.EncodeToString(entitlementCheckRequestV2.TransactionId[:]))
+
+	// process the entitlement request and post the result to entitlementCheckResults
+	outcome, err := x.handleEntitlementCheckRequest(ctx, entitlementCheckRequestV2)
+	if err != nil {
+		x.entitlementCheckRequested.IncFail()
+		log.Errorw("Entitlement check failed to process",
+			"err", err, "xchain.req.txid", hex.EncodeToString(entitlementCheckRequestV2.TransactionId[:]))
 		return
 	}
 	if outcome != nil { // request was not intended for this xchain instance.
@@ -381,7 +460,7 @@ func (x *xchain) onEntitlementCheckRequested(
 // It can return nil, nil in case the request wasn't targeted for the current xchain instance.
 func (x *xchain) handleEntitlementCheckRequest(
 	ctx context.Context,
-	request base.IEntitlementCheckerEntitlementCheckRequested,
+	request base.IEntitlementCheckerEntitlementCheckRequestedV2,
 ) (*entitlementCheckReceipt, error) {
 	log := x.Log(ctx).
 		With("function", "handleEntitlementCheckRequest").
@@ -390,8 +469,8 @@ func (x *xchain) handleEntitlementCheckRequest(
 
 	for _, selectedNodeAddress := range request.SelectedNodes {
 		if selectedNodeAddress == x.baseChain.Wallet.Address {
-			log.Infow("Processing EntitlementCheckRequested")
-			outcome, err := x.process(ctx, request, x.baseChain.Client, request.CallerAddress)
+			log.Infow("Processing EntitlementCheckRequested", "request", request)
+			outcome, err := x.process(ctx, request, x.baseChain.Client, request.WalletAddress)
 			if err != nil {
 				return nil, err
 			}
@@ -399,7 +478,7 @@ func (x *xchain) handleEntitlementCheckRequest(
 				TransactionID: request.TransactionId,
 				RoleId:        request.RoleId,
 				Outcome:       outcome,
-				Event:         request,
+				EventV2:       request,
 			}, nil
 		}
 	}
@@ -433,15 +512,51 @@ func (x *xchain) writeEntitlementCheckResults(ctx context.Context, checkResults 
 					outcome = contracts.NodeVoteStatus__PASSED
 				}
 
-				createPostResultTx := func(opts *bind.TransactOpts) (*types.Transaction, error) {
-					gated, err := base.NewIEntitlementGated(
-						receipt.Event.ContractAddress,
-						x.baseChain.Client,
+				var createPostResultTx func(opts *bind.TransactOpts) (*types.Transaction, error)
+
+				var resolverAddress common.Address
+				// Use EventV2.RoleId as a proxy for, is this event unset? If it is unset, the check
+				// was initiated by a V1 event, so post the result back to an EntitlementGated contract.
+				if receipt.EventV2.RoleId == nil {
+					resolverAddress = receipt.Event.ContractAddress
+					log.Infow(
+						"Posting V1 result",
+						"transactionId",
+						receipt.TransactionID,
+						"resolverAddress",
+						resolverAddress,
 					)
-					if err != nil {
-						return nil, err
+					createPostResultTx = func(opts *bind.TransactOpts) (*types.Transaction, error) {
+						gated, err := base.NewIEntitlementGated(
+							resolverAddress,
+							x.baseChain.Client,
+						)
+						if err != nil {
+							return nil, err
+						}
+						return gated.PostEntitlementCheckResult(
+							opts,
+							receipt.TransactionID,
+							receipt.RoleId,
+							uint8(outcome),
+						)
 					}
-					return gated.PostEntitlementCheckResult(opts, receipt.TransactionID, receipt.RoleId, uint8(outcome))
+				} else {
+					// If the check was a V2 check, we want to post it using the resolver address on the V2 event.
+					// (We use the  Xchain interface below, but it's the same selector and would work either way,
+					// this is just good hygiene.)
+					log.Infow("Posting V2 result", "transactionId", receipt.TransactionID, "resolverAddress", receipt.EventV2.ResolverAddress)
+					createPostResultTx = func(opts *bind.TransactOpts) (*types.Transaction, error) {
+						xchain, err := base.NewXchain(
+							receipt.EventV2.ResolverAddress,
+							x.baseChain.Client,
+						)
+						if err != nil {
+							return nil, err
+						}
+						return xchain.PostEntitlementCheckResult(opts, receipt.TransactionID, receipt.RoleId, uint8(outcome))
+					}
+
 				}
 				gasEstimate, err := x.baseChain.TxPool.EstimateGas(ctx, createPostResultTx)
 				if err != nil {
@@ -505,7 +620,8 @@ func (x *xchain) writeEntitlementCheckResults(ctx context.Context, checkResults 
 				"tx.success", receipt.Status == crypto.TransactionResultSuccess,
 				"xchain.req.txid", task.outcome.TransactionID,
 				"xchain.req.outcome", task.outcome.Outcome,
-				"gatedContract", task.outcome.Event.ContractAddress)
+				"gatedContract", task.outcome.Event.ContractAddress,
+				"xchainContract", task.outcome.EventV2.ResolverAddress)
 			x.entitlementCheckProcessed.IncFail()
 		} else {
 			log.Infow("entitlement check response posted",
@@ -539,7 +655,13 @@ func (x *xchain) handleContractError(log *zap.SugaredLogger, err error, msg stri
 
 func (x *xchain) getLinkedWallets(ctx context.Context, wallet common.Address) ([]common.Address, error) {
 	log := x.Log(ctx)
-	log.Debugw("GetLinkedWallets", "wallet", wallet.Hex(), "walletLinkContract", x.config.GetWalletLinkContractAddress())
+	log.Debugw(
+		"GetLinkedWallets",
+		"wallet",
+		wallet.Hex(),
+		"walletLinkContract",
+		x.config.GetWalletLinkContractAddress(),
+	)
 	iWalletLink, err := base.NewWalletLink(
 		x.config.GetWalletLinkContractAddress(),
 		x.baseChain.Client,
@@ -575,11 +697,11 @@ func (x *xchain) getRuleData(
 	ctx context.Context,
 	transactionId [32]byte,
 	roleId *big.Int,
-	contractAddress common.Address,
+	spaceAddress common.Address,
 	client crypto.BlockchainClient,
 ) (*base.IRuleEntitlementBaseRuleDataV2, error) {
 	log := x.Log(ctx).With("function", "getRuleData", "req.txid", hex.EncodeToString(transactionId[:]))
-	queryable, err := base.NewEntitlementDataQueryable(contractAddress, client)
+	queryable, err := base.NewEntitlementDataQueryable(spaceAddress, client)
 	if err != nil {
 		return nil, x.handleContractError(log, err, "Failed to create EntitlementDataQueryable")
 	}
@@ -609,7 +731,7 @@ func (x *xchain) getRuleData(
 		log.Errorw("No decoded rule entitlements for role",
 			"roleId", roleId,
 			"transactionId", hex.EncodeToString(transactionId[:]),
-			"contractAddress", contractAddress.Hex(),
+			"spaceAddress", spaceAddress.Hex(),
 		)
 		return nil, fmt.Errorf("no decoded rule entitlements for role")
 	}
@@ -625,7 +747,7 @@ func (x *xchain) getRuleData(
 // It returns an indication of the request passes checks.
 func (x *xchain) process(
 	ctx context.Context,
-	request base.IEntitlementCheckerEntitlementCheckRequested,
+	request base.IEntitlementCheckerEntitlementCheckRequestedV2,
 	client crypto.BlockchainClient,
 	callerAddress common.Address,
 ) (result bool, err error) {
@@ -639,14 +761,16 @@ func (x *xchain) process(
 	if err != nil {
 		return false, err
 	}
+	log.Infow("Fetched linked wallets", "wallets", wallets)
 
-	ruleData, err := x.getRuleData(ctx, request.TransactionId, request.RoleId, request.ContractAddress, client)
+	ruleData, err := x.getRuleData(ctx, request.TransactionId, request.RoleId, request.SpaceAddress, client)
 	if err != nil {
 		return false, err
 	}
 
 	// Embed log metadata for rule evaluation logs
 	ctx = logging.CtxWithLog(ctx, log)
+	log.Info("Evaluating rule data", "wallets", wallets, "ruleData", ruleData)
 	result, err = x.evaluator.EvaluateRuleData(ctx, wallets, ruleData)
 	if err != nil {
 		log.Errorw("Failed to EvaluateRuleData", "err", err)

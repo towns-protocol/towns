@@ -200,13 +200,15 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
     pricingModulesFacet = pricingModulesHelper.deploy(deployer);
     partnerRegistry = partnerRegistryHelper.deploy(deployer);
 
-    // legacy
-    legacyArchitect = deployMockLegacyArchitect.deploy(deployer);
     spaceProxyInitializer = deploySpaceProxyInitializer.deploy(deployer);
     spaceFactoryInit = deploySpaceFactoryInit.deploy(deployer);
     spaceFactoryInitData = deploySpaceFactoryInit.makeInitData(
       spaceProxyInitializer
     );
+
+    if (isAnvil()) {
+      legacyArchitect = deployMockLegacyArchitect.deploy(deployer);
+    }
 
     addFacet(
       metadataHelper.makeCut(metadata, IDiamond.FacetCutAction.Add),
@@ -229,14 +231,16 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
       create,
       createSpaceHelper.makeInitData("")
     );
-    addFacet(
-      deployMockLegacyArchitect.makeCut(
+    if (isAnvil()) {
+      addFacet(
+        deployMockLegacyArchitect.makeCut(
+          legacyArchitect,
+          IDiamond.FacetCutAction.Add
+        ),
         legacyArchitect,
-        IDiamond.FacetCutAction.Add
-      ),
-      legacyArchitect,
-      deployMockLegacyArchitect.makeInitData("")
-    );
+        deployMockLegacyArchitect.makeInitData("")
+      );
+    }
     addFacet(
       proxyManagerHelper.makeCut(proxyManager, IDiamond.FacetCutAction.Add),
       proxyManager,

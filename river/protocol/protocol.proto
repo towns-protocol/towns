@@ -1192,4 +1192,7 @@ enum Err {
     // Stream replica on the local node already has a miniblock with the requested
     // proposal number.
     MINIBLOCK_TOO_OLD = 64;
+
+    // Quorum failed to be reached for write operation.
+    QUORUM_FAILED = 65;
 }

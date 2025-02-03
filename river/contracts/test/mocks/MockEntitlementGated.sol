@@ -25,13 +25,15 @@ contract MockEntitlementGated is EntitlementGated {
     return ruleDatasByRoleId[roleId];
   }
 
+  /// @dev This function is used to get the RuleDataV2 for the requestEntitlementCheck function
   function getRuleDataV2(
     uint256 roleId
   ) external view returns (IRuleEntitlement.RuleDataV2 memory) {
     return ruleDatasV2ByRoleId[roleId];
   }
 
-  function requestEntitlementCheck(
+  /// @dev This function is used to request a v1 entitlement check for a roleId and RuleData v1
+  function requestEntitlementCheckV1RuleDataV1(
     uint256 roleId,
     IRuleEntitlement.RuleData calldata ruleData
   ) external returns (bytes32) {
@@ -48,7 +50,8 @@ contract MockEntitlementGated is EntitlementGated {
     return transactionId;
   }
 
-  function requestEntitlementCheckV2(
+  /// @dev This function is used to request a v1 entitlement check for a roleId and RuleData v2
+  function requestEntitlementCheckV1RuleDataV2(
     uint256[] calldata roleIds,
     IRuleEntitlement.RuleDataV2 calldata ruleData
   ) external returns (bytes32) {
@@ -62,6 +65,54 @@ contract MockEntitlementGated is EntitlementGated {
     for (uint256 i = 0; i < roleIds.length; i++) {
       _requestEntitlementCheck(
         msg.sender,
+        transactionId,
+        IRuleEntitlement(address(this)),
+        roleIds[i]
+      );
+    }
+    return transactionId;
+  }
+
+  /// @dev This function is used to request an entitlement check v2 for a roleId and RuleData v1
+  function requestEntitlementCheckV2RuleDataV1(
+    uint256[] calldata roleIds,
+    IRuleEntitlement.RuleData calldata ruleData
+  ) external payable returns (bytes32) {
+    for (uint256 i = 0; i < roleIds.length; i++) {
+      ruleDatasByRoleId[roleIds[i]] = ruleData;
+    }
+    bytes32 transactionId = keccak256(
+      abi.encodePacked(tx.origin, block.number)
+    );
+
+    for (uint256 i = 0; i < roleIds.length; i++) {
+      _requestEntitlementCheckV2(
+        msg.sender,
+        address(this),
+        transactionId,
+        IRuleEntitlement(address(this)),
+        roleIds[i]
+      );
+    }
+    return transactionId;
+  }
+
+  /// @dev This function is used to request a v2 entitlement check for a roleId and RuleData v2
+  function requestEntitlementCheckV2RuleDataV2(
+    uint256[] calldata roleIds,
+    IRuleEntitlement.RuleDataV2 calldata ruleData
+  ) external payable returns (bytes32) {
+    for (uint256 i = 0; i < roleIds.length; i++) {
+      ruleDatasV2ByRoleId[roleIds[i]] = ruleData;
+    }
+    bytes32 transactionId = keccak256(
+      abi.encodePacked(tx.origin, block.number)
+    );
+
+    for (uint256 i = 0; i < roleIds.length; i++) {
+      _requestEntitlementCheckV2(
+        msg.sender,
+        address(this),
         transactionId,
         IRuleEntitlement(address(this)),
         roleIds[i]

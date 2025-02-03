@@ -11,7 +11,6 @@ import (
 	. "github.com/river-build/river/core/node/events"
 	"github.com/river-build/river/core/node/protocol"
 	. "github.com/river-build/river/core/node/shared"
-	"github.com/river-build/river/core/node/testutils"
 )
 
 func TestReplCreate(t *testing.T) {
@@ -59,8 +58,6 @@ func TestReplAdd(t *testing.T) {
 }
 
 func TestReplMiniblock(t *testing.T) {
-	testutils.SkipFlackyTest(t)
-
 	tt := newServiceTester(t, serviceTesterOpts{numNodes: 5, replicationFactor: 5, start: true})
 	ctx := tt.ctx
 	require := tt.require
@@ -181,8 +178,6 @@ func TestStreamReconciliationFromGenesis(t *testing.T) {
 // TestStreamReconciliationForKnownStreams ensures that a node reconciles local streams that it already knows
 // but advanced when the node was down.
 func TestStreamReconciliationForKnownStreams(t *testing.T) {
-	//	t.Skip("SKIPPED: TODO: REPLICATION: fix")
-
 	var (
 		opts    = serviceTesterOpts{numNodes: 5, replicationFactor: 5, start: true}
 		tt      = newServiceTester(t, opts)

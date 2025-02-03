@@ -9,6 +9,7 @@ import type {
   CallOverrides,
   ContractTransaction,
   Overrides,
+  PayableOverrides,
   PopulatedTransaction,
   Signer,
   utils,
@@ -36,6 +37,7 @@ export interface IEntitlementCheckerInterface extends utils.Interface {
     "isValidNode(address)": FunctionFragment;
     "registerNode(address)": FunctionFragment;
     "requestEntitlementCheck(address,bytes32,uint256,address[])": FunctionFragment;
+    "requestEntitlementCheckV2(address,bytes32,uint256,bytes)": FunctionFragment;
     "unregisterNode(address)": FunctionFragment;
   };
 
@@ -48,6 +50,7 @@ export interface IEntitlementCheckerInterface extends utils.Interface {
       | "isValidNode"
       | "registerNode"
       | "requestEntitlementCheck"
+      | "requestEntitlementCheckV2"
       | "unregisterNode"
   ): FunctionFragment;
 
@@ -85,6 +88,15 @@ export interface IEntitlementCheckerInterface extends utils.Interface {
     ]
   ): string;
   encodeFunctionData(
+    functionFragment: "requestEntitlementCheckV2",
+    values: [
+      PromiseOrValue<string>,
+      PromiseOrValue<BytesLike>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BytesLike>
+    ]
+  ): string;
+  encodeFunctionData(
     functionFragment: "unregisterNode",
     values: [PromiseOrValue<string>]
   ): string;
@@ -118,17 +130,25 @@ export interface IEntitlementCheckerInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "requestEntitlementCheckV2",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "unregisterNode",
     data: BytesLike
   ): Result;
 
   events: {
     "EntitlementCheckRequested(address,address,bytes32,uint256,address[])": EventFragment;
+    "EntitlementCheckRequestedV2(address,address,address,bytes32,uint256,address[])": EventFragment;
     "NodeRegistered(address)": EventFragment;
     "NodeUnregistered(address)": EventFragment;
   };
 
   getEvent(nameOrSignatureOrTopic: "EntitlementCheckRequested"): EventFragment;
+  getEvent(
+    nameOrSignatureOrTopic: "EntitlementCheckRequestedV2"
+  ): EventFragment;
   getEvent(nameOrSignatureOrTopic: "NodeRegistered"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "NodeUnregistered"): EventFragment;
 }
@@ -147,6 +167,22 @@ export type EntitlementCheckRequestedEvent = TypedEvent<
 
 export type EntitlementCheckRequestedEventFilter =
   TypedEventFilter<EntitlementCheckRequestedEvent>;
+
+export interface EntitlementCheckRequestedV2EventObject {
+  walletAddress: string;
+  spaceAddress: string;
+  resolverAddress: string;
+  transactionId: string;
+  roleId: BigNumber;
+  selectedNodes: string[];
+}
+export type EntitlementCheckRequestedV2Event = TypedEvent<
+  [string, string, string, string, BigNumber, string[]],
+  EntitlementCheckRequestedV2EventObject
+>;
+
+export type EntitlementCheckRequestedV2EventFilter =
+  TypedEventFilter<EntitlementCheckRequestedV2Event>;
 
 export interface NodeRegisteredEventObject {
   nodeAddress: string;
@@ -231,6 +267,14 @@ export interface IEntitlementChecker extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    requestEntitlementCheckV2(
+      walletAddress: PromiseOrValue<string>,
+      transactionId: PromiseOrValue<BytesLike>,
+      requestId: PromiseOrValue<BigNumberish>,
+      extraData: PromiseOrValue<BytesLike>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     unregisterNode(
       node: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -270,6 +314,14 @@ export interface IEntitlementChecker extends BaseContract {
     roleId: PromiseOrValue<BigNumberish>,
     nodes: PromiseOrValue<string>[],
     overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  requestEntitlementCheckV2(
+    walletAddress: PromiseOrValue<string>,
+    transactionId: PromiseOrValue<BytesLike>,
+    requestId: PromiseOrValue<BigNumberish>,
+    extraData: PromiseOrValue<BytesLike>,
+    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
   unregisterNode(
@@ -313,6 +365,14 @@ export interface IEntitlementChecker extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
+    requestEntitlementCheckV2(
+      walletAddress: PromiseOrValue<string>,
+      transactionId: PromiseOrValue<BytesLike>,
+      requestId: PromiseOrValue<BigNumberish>,
+      extraData: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
     unregisterNode(
       node: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -334,6 +394,23 @@ export interface IEntitlementChecker extends BaseContract {
       roleId?: null,
       selectedNodes?: null
     ): EntitlementCheckRequestedEventFilter;
+
+    "EntitlementCheckRequestedV2(address,address,address,bytes32,uint256,address[])"(
+      walletAddress?: null,
+      spaceAddress?: null,
+      resolverAddress?: null,
+      transactionId?: null,
+      roleId?: null,
+      selectedNodes?: null
+    ): EntitlementCheckRequestedV2EventFilter;
+    EntitlementCheckRequestedV2(
+      walletAddress?: null,
+      spaceAddress?: null,
+      resolverAddress?: null,
+      transactionId?: null,
+      roleId?: null,
+      selectedNodes?: null
+    ): EntitlementCheckRequestedV2EventFilter;
 
     "NodeRegistered(address)"(
       nodeAddress?: PromiseOrValue<string> | null
@@ -386,6 +463,14 @@ export interface IEntitlementChecker extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    requestEntitlementCheckV2(
+      walletAddress: PromiseOrValue<string>,
+      transactionId: PromiseOrValue<BytesLike>,
+      requestId: PromiseOrValue<BigNumberish>,
+      extraData: PromiseOrValue<BytesLike>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     unregisterNode(
       node: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -426,6 +511,14 @@ export interface IEntitlementChecker extends BaseContract {
       roleId: PromiseOrValue<BigNumberish>,
       nodes: PromiseOrValue<string>[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    requestEntitlementCheckV2(
+      walletAddress: PromiseOrValue<string>,
+      transactionId: PromiseOrValue<BytesLike>,
+      requestId: PromiseOrValue<BigNumberish>,
+      extraData: PromiseOrValue<BytesLike>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
     unregisterNode(

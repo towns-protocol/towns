@@ -15,7 +15,7 @@ This is a module implementing a backend server for crypto chat application.
 - HTTP/2 provided by x/net/http2 and net/http
 - Ethereum client provided by go-ethereum library
 - Postgres database provided by pgx/v5 library
-- Logging provided by go's slog library
+- Logging provided by zap library
 - require and assert test helpers provided by github.com/stretchr/testify
 - OpenMetrics provided by prometheus
 - Tracing provided by opentelemetry
@@ -42,11 +42,11 @@ This is a module implementing a backend server for crypto chat application.
     | |-auth  # on-chain auth implementation for river entitlements
     | |-base  # RiverError type and other shared helpers
     | |-crypto  # Classes to interact with blockchain
-    | |-dlog  # slog extension to provide human-readable formatting
     | |-events  # in-memory cache for streams loaded from db, stream event parsing, miniblock generation
     | |-http_client  # http client for making requests to other nodes
     | |-infra  # shared infra code for node
     | |-lint_extensions  # shared lint extensions
+    | |-logging  # zap extentions for log handling
     | |-logs  # ignore
     | |-mls_service  # mls service implementation
     | | |-mls_tools  # mls tools implementation

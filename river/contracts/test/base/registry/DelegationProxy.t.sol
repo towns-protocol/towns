@@ -66,6 +66,7 @@ contract DelegationProxyTest is TestUtils {
   function test_fuzz_reinitialize(address delegatee) public {
     test_fuzz_initialize(delegatee);
 
+    deployTownsTokenBase.setSalts(_randomBytes32(), _randomBytes32());
     address token = deployTownsTokenBase.deploy(deployer);
 
     vm.prank(deployer);

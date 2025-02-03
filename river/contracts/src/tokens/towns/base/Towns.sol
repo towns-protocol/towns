@@ -10,9 +10,11 @@ import {IERC6372} from "@openzeppelin/contracts/interfaces/IERC6372.sol";
 import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 import {IOptimismMintableERC20, ILegacyMintableERC20} from "contracts/src/tokens/towns/base/IOptimismMintableERC20.sol";
 import {ISemver} from "contracts/src/tokens/towns/base/ISemver.sol";
+import {IERC7802} from "contracts/src/tokens/towns/base/IERC7802.sol";
 import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 
 // libraries
+import {TownsLib} from "./TownsLib.sol";
 
 // contracts
 import {Initializable} from "solady/utils/Initializable.sol";
@@ -24,7 +26,7 @@ import {LockBase} from "contracts/src/tokens/lock/LockBase.sol";
 
 contract Towns is
   IOptimismMintableERC20,
-  ILegacyMintableERC20,
+  IERC7802,
   ISemver,
   IntrospectionBase,
   LockBase,
@@ -36,14 +38,12 @@ contract Towns is
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                          Errors                            */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-  error Towns__DelegateeSameAsCurrent();
-  error Towns__TransferLockEnabled();
+  error DelegateeSameAsCurrent();
+  error TransferLockEnabled();
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                  Constants & Immutables                    */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-  /// @notice Semantic version.
-  string public constant version = "1.3.0";
 
   /// @notice The name of the token
   string internal constant NAME = "Towns";
@@ -54,35 +54,39 @@ contract Towns is
   /// @notice The name hash of the token
   bytes32 internal constant NAME_HASH = keccak256(bytes(NAME));
 
-  ///@notice Address of the corresponding version of this token on the remote chain
-  address public immutable REMOTE_TOKEN;
-
-  /// @notice Address of the StandardBridge on this network.
-  address public immutable BRIDGE;
-
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                        Modifiers                           */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
   /// @notice A modifier that only allows the bridge to call
-  modifier onlyBridge() {
-    require(msg.sender == BRIDGE, "Towns: only bridge can mint and burn");
+  modifier onlyL2StandardBridge() {
+    if (msg.sender != TownsLib.L2_STANDARD_BRIDGE) revert Unauthorized();
     _;
   }
 
-  constructor(address _bridge, address _remoteToken) {
-    // set the bridge
-    BRIDGE = _bridge;
+  /// @notice A modifier that only allows the super chain to call
+  modifier onlyL2SuperChainBridge() {
+    if (msg.sender != TownsLib.SUPERCHAIN_TOKEN_BRIDGE) revert Unauthorized();
+    _;
+  }
 
-    // set the remote token
-    REMOTE_TOKEN = _remoteToken;
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                      Initialization                        */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+  constructor() {
     _disableInitializers();
   }
 
-  function initialize(address _owner) external initializer {
+  function initialize(
+    address _remoteToken,
+    address _owner
+  ) external initializer {
     // set the owner
     _initializeOwner(_owner);
+
+    // set the remote token
+    TownsLib.initializeRemoteToken(_remoteToken);
 
     // initialize the lock
     __LockBase_init(30 days);
@@ -97,6 +101,13 @@ contract Towns is
     _addInterface(type(IOptimismMintableERC20).interfaceId);
     _addInterface(type(ILegacyMintableERC20).interfaceId);
     _addInterface(type(ISemver).interfaceId);
+    _addInterface(type(IERC7802).interfaceId);
+  }
+
+  /// @notice Semantic version
+  /// @custom:semver 1.0.0-beta.12
+  function version() external view virtual returns (string memory) {
+    return "1.0.0-beta.12";
   }
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -104,27 +115,41 @@ contract Towns is
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
   /// @custom:legacy
-  /// @notice Legacy getter for the remote token. Use REMOTE_TOKEN going forward.
-  function l1Token() external view returns (address) {
-    return REMOTE_TOKEN;
-  }
-
-  /// @custom:legacy
-  /// @notice Legacy getter for the bridge. Use BRIDGE going forward.
-  function l2Bridge() external view returns (address) {
-    return BRIDGE;
-  }
-
-  /// @custom:legacy
   /// @notice Legacy getter for REMOTE_TOKEN
   function remoteToken() external view returns (address) {
-    return REMOTE_TOKEN;
+    return TownsLib.layout().remoteToken;
   }
 
   /// @custom:legacy
-  /// @notice Legacy getter for BRIDGE.
-  function bridge() external view returns (address) {
-    return BRIDGE;
+  /// @notice Legacy getter for L2_STANDARD_BRIDGE.
+  function bridge() external pure returns (address) {
+    return TownsLib.L2_STANDARD_BRIDGE;
+  }
+
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                      Super Chain                           */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+  /// @notice Allows the SuperchainTokenBridge to mint tokens.
+  /// @param _to     Address to mint tokens to.
+  /// @param _amount Amount of tokens to mint.
+  function crosschainMint(
+    address _to,
+    uint256 _amount
+  ) external onlyL2SuperChainBridge {
+    _mint(_to, _amount);
+    emit CrosschainMint(_to, _amount, msg.sender);
+  }
+
+  /// @notice Allows the SuperchainTokenBridge to burn tokens.
+  /// @param _from   Address to burn tokens from.
+  /// @param _amount Amount of tokens to burn.
+  function crosschainBurn(
+    address _from,
+    uint256 _amount
+  ) external onlyL2SuperChainBridge {
+    _burn(_from, _amount);
+    emit CrosschainBurn(_from, _amount, msg.sender);
   }
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -169,7 +194,7 @@ contract Towns is
   function mint(
     address to,
     uint256 amount
-  ) external override(IOptimismMintableERC20, ILegacyMintableERC20) onlyBridge {
+  ) external override(IOptimismMintableERC20) onlyL2StandardBridge {
     _mint(to, amount);
   }
 
@@ -179,7 +204,7 @@ contract Towns is
   function burn(
     address from,
     uint256 amount
-  ) external override(IOptimismMintableERC20, ILegacyMintableERC20) onlyBridge {
+  ) external override(IOptimismMintableERC20) onlyL2StandardBridge {
     _burn(from, amount);
   }
 
@@ -204,7 +229,7 @@ contract Towns is
   ) internal override {
     if (from != address(0) && _lockEnabled(from)) {
       // allow transferring at minting time
-      CustomRevert.revertWith(Towns__TransferLockEnabled.selector);
+      CustomRevert.revertWith(TransferLockEnabled.selector);
     }
 
     super._beforeTokenTransfer(from, to, amount);
@@ -215,7 +240,7 @@ contract Towns is
 
     // revert if the delegatee is the same as the current delegatee
     if (currentDelegatee == delegatee)
-      CustomRevert.revertWith(Towns__DelegateeSameAsCurrent.selector);
+      CustomRevert.revertWith(DelegateeSameAsCurrent.selector);
 
     // if the delegatee is the zero address, initialize disable lock
     if (delegatee == address(0)) {
@@ -226,10 +251,6 @@ contract Towns is
 
     super._delegate(account, delegatee);
   }
-
-  function _authorizeUpgrade(
-    address newImplementation
-  ) internal override onlyOwner {}
 
   /// @dev Override the name hash to be a constant value for performance in EIP-712
   function _constantNameHash() internal pure override returns (bytes32) {
@@ -246,7 +267,13 @@ contract Towns is
     return true;
   }
 
+  /// @notice Override the default lock check to disable it.
   function _canLock() internal pure override returns (bool) {
     return false;
   }
+
+  /// @notice Override the default upgrade check to only allow the owner.
+  function _authorizeUpgrade(
+    address newImplementation
+  ) internal override onlyOwner {}
 }

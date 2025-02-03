@@ -70,6 +70,7 @@ abstract contract MembershipJoin is
     _validatePayment();
     _validateUserReferral(receiver, referral);
     bool isNotReferral = _isNotReferral(referral);
+    address sender = msg.sender;
 
     bytes memory referralData = isNotReferral
       ? bytes("")
@@ -81,11 +82,12 @@ abstract contract MembershipJoin is
 
     bytes32 transactionId = _registerTransaction(
       receiver,
-      _encodeJoinSpaceData(selector, msg.sender, receiver, referralData)
+      _encodeJoinSpaceData(selector, sender, receiver, referralData)
     );
 
     (bool isEntitled, bool isCrosschainPending) = _checkEntitlement(
       receiver,
+      sender,
       transactionId
     );
 
@@ -99,13 +101,13 @@ abstract contract MembershipJoin is
             _chargeForJoinSpaceWithReferral(transactionId);
           }
         } else {
-          _refundBalance(transactionId, msg.sender);
+          _refundBalance(transactionId, sender);
         }
 
         _issueToken(receiver);
       } else {
         _captureData(transactionId, "");
-        _refundBalance(transactionId, msg.sender);
+        _refundBalance(transactionId, sender);
         emit MembershipTokenRejected(receiver);
       }
     }
@@ -163,8 +165,9 @@ abstract contract MembershipJoin is
   /// @return isCrosschainPending A boolean indicating if a crosschain entitlement check is pending
   function _checkEntitlement(
     address receiver,
+    address sender,
     bytes32 transactionId
-  ) internal returns (bool isEntitled, bool isCrosschainPending) {
+  ) internal virtual returns (bool isEntitled, bool isCrosschainPending) {
     IRolesBase.Role[] memory roles = _getRolesWithPermission(
       Permissions.JoinSpace
     );
@@ -185,8 +188,9 @@ abstract contract MembershipJoin is
         }
 
         if (entitlement.isCrosschain()) {
-          _requestEntitlementCheck(
+          _requestEntitlementCheckV2(
             receiver,
+            sender,
             transactionId,
             IRuleEntitlement(address(entitlement)),
             role.id

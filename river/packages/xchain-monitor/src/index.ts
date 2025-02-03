@@ -7,9 +7,17 @@ const logger = getLogger('main')
 
 async function main() {
     var blockOffset = config.initialBlockNum
-
     const publicClient = await createCustomPublicClient()
     var currentBlock = await publicClient.getBlockNumber()
+
+    logger.info(
+        {
+            config,
+            currentBlock,
+        },
+        'Starting xchain-monitor service',
+    )
+
     while (true) {
         while (
             currentBlock <

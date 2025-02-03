@@ -35,6 +35,9 @@ import {DeploySpaceEntitlementGated} from "contracts/scripts/deployments/facets/
 import {DeployTipping} from "contracts/scripts/deployments/facets/DeployTipping.s.sol";
 import {DeployMultiInit} from "contracts/scripts/deployments/utils/DeployMultiInit.s.sol";
 
+// Test Facets
+import {DeployMockLegacyMembership} from "contracts/scripts/deployments/utils/DeployMockLegacyMembership.s.sol";
+
 contract DeploySpace is DiamondHelper, Deployer {
   DeployDiamondCut diamondCutHelper = new DeployDiamondCut();
   DeployDiamondLoupe diamondLoupeHelper = new DeployDiamondLoupe();
@@ -63,6 +66,11 @@ contract DeploySpace is DiamondHelper, Deployer {
     new DeploySpaceEntitlementGated();
   DeployMultiInit deployMultiInit = new DeployMultiInit();
   DeployTipping tippingHelper = new DeployTipping();
+
+  // Test Facets
+  DeployMockLegacyMembership mockLegacyMembershipHelper =
+    new DeployMockLegacyMembership();
+
   address tokenOwnable;
   address diamondCut;
   address diamondLoupe;
@@ -84,6 +92,9 @@ contract DeploySpace is DiamondHelper, Deployer {
   address referrals;
   address tipping;
   address multiInit;
+
+  // Test Facets
+  address mockLegacyMembership;
 
   function versionName() public pure override returns (string memory) {
     return "space";
@@ -137,6 +148,10 @@ contract DeploySpace is DiamondHelper, Deployer {
     tipping = tippingHelper.deploy(deployer);
     membershipTokenHelper.removeSelector(IERC721A.tokenURI.selector);
 
+    if (isAnvil()) {
+      mockLegacyMembership = mockLegacyMembershipHelper.deploy(deployer);
+    }
+
     addCut(
       entitlementsHelper.makeCut(entitlements, IDiamond.FacetCutAction.Add)
     );
@@ -181,6 +196,15 @@ contract DeploySpace is DiamondHelper, Deployer {
     addCut(prepayHelper.makeCut(prepay, IDiamond.FacetCutAction.Add));
     addCut(referralsHelper.makeCut(referrals, IDiamond.FacetCutAction.Add));
     addCut(tippingHelper.makeCut(tipping, IDiamond.FacetCutAction.Add));
+
+    if (isAnvil()) {
+      addCut(
+        mockLegacyMembershipHelper.makeCut(
+          mockLegacyMembership,
+          IDiamond.FacetCutAction.Add
+        )
+      );
+    }
 
     return
       Diamond.InitParams({

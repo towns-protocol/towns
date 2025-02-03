@@ -8,6 +8,11 @@
       {
         "inputs": [],
         "type": "error",
+        "name": "EntitlementChecker_InsufficientFunds"
+      },
+      {
+        "inputs": [],
+        "type": "error",
         "name": "EntitlementChecker_InsufficientNumberOfNodes"
       },
       {
@@ -19,6 +24,16 @@
         "inputs": [],
         "type": "error",
         "name": "EntitlementChecker_InvalidOperator"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "EntitlementChecker_NoPendingRequests"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "EntitlementChecker_NoRefundsAvailable"
       },
       {
         "inputs": [],
@@ -70,6 +85,49 @@
         ],
         "type": "event",
         "name": "EntitlementCheckRequested",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "walletAddress",
+            "type": "address",
+            "indexed": false
+          },
+          {
+            "internalType": "address",
+            "name": "spaceAddress",
+            "type": "address",
+            "indexed": false
+          },
+          {
+            "internalType": "address",
+            "name": "resolverAddress",
+            "type": "address",
+            "indexed": false
+          },
+          {
+            "internalType": "bytes32",
+            "name": "transactionId",
+            "type": "bytes32",
+            "indexed": false
+          },
+          {
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256",
+            "indexed": false
+          },
+          {
+            "internalType": "address[]",
+            "name": "selectedNodes",
+            "type": "address[]",
+            "indexed": false
+          }
+        ],
+        "type": "event",
+        "name": "EntitlementCheckRequestedV2",
         "anonymous": false
       },
       {
@@ -230,6 +288,33 @@
         "inputs": [
           {
             "internalType": "address",
+            "name": "walletAddress",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "transactionId",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "uint256",
+            "name": "requestId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bytes",
+            "name": "extraData",
+            "type": "bytes"
+          }
+        ],
+        "stateMutability": "payable",
+        "type": "function",
+        "name": "requestEntitlementCheckV2"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
             "name": "node",
             "type": "address"
           }
@@ -241,12 +326,104 @@
     ],
     "devdoc": {
       "kind": "dev",
-      "methods": {},
+      "methods": {
+        "getNodeAtIndex(uint256)": {
+          "params": {
+            "index": "The index of the node to retrieve"
+          },
+          "returns": {
+            "_0": "address The address of the node at the given index"
+          }
+        },
+        "getNodeCount()": {
+          "returns": {
+            "_0": "uint256 The count of registered nodes"
+          }
+        },
+        "getNodesByOperator(address)": {
+          "params": {
+            "operator": "The address of the operator"
+          },
+          "returns": {
+            "_0": "address[] Array of node addresses registered to the operator"
+          }
+        },
+        "getRandomNodes(uint256)": {
+          "params": {
+            "count": "The number of random nodes to return"
+          },
+          "returns": {
+            "_0": "address[] Array of randomly selected node addresses"
+          }
+        },
+        "isValidNode(address)": {
+          "params": {
+            "node": "The address of the node to check"
+          },
+          "returns": {
+            "_0": "bool True if the node is valid, false otherwise"
+          }
+        },
+        "registerNode(address)": {
+          "params": {
+            "node": "The address of the node to register"
+          }
+        },
+        "requestEntitlementCheck(address,bytes32,uint256,address[])": {
+          "params": {
+            "callerAddress": "The address initiating the check",
+            "nodes": "Array of node addresses that will perform the check",
+            "roleId": "The role ID to check entitlements against",
+            "transactionId": "The unique identifier of the transaction"
+          }
+        },
+        "requestEntitlementCheckV2(address,bytes32,uint256,bytes)": {
+          "params": {
+            "extraData": "Additional data required for the check",
+            "requestId": "The unique identifier for this specific request",
+            "transactionId": "The unique identifier of the transaction",
+            "walletAddress": "The wallet address to check entitlements for"
+          }
+        },
+        "unregisterNode(address)": {
+          "params": {
+            "node": "The address of the node to unregister"
+          }
+        }
+      },
       "version": 1
     },
     "userdoc": {
       "kind": "user",
-      "methods": {},
+      "methods": {
+        "getNodeAtIndex(uint256)": {
+          "notice": "Get the node address at a specific index"
+        },
+        "getNodeCount()": {
+          "notice": "Get the total number of registered nodes"
+        },
+        "getNodesByOperator(address)": {
+          "notice": "Get all nodes registered to a specific operator"
+        },
+        "getRandomNodes(uint256)": {
+          "notice": "Get a random selection of registered nodes"
+        },
+        "isValidNode(address)": {
+          "notice": "Check if a node address is registered and valid"
+        },
+        "registerNode(address)": {
+          "notice": "Register a new node in the system"
+        },
+        "requestEntitlementCheck(address,bytes32,uint256,address[])": {
+          "notice": "Request an entitlement check for a transaction"
+        },
+        "requestEntitlementCheckV2(address,bytes32,uint256,bytes)": {
+          "notice": "Request an entitlement check with additional data (V2)"
+        },
+        "unregisterNode(address)": {
+          "notice": "Unregister an existing node from the system"
+        }
+      },
       "version": 1
     }
   },
@@ -278,10 +455,10 @@
   },
   "sources": {
     "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol": {
-      "keccak256": "0xbeb7bfa236f19172b29eac53be03a3b377de3524b2d836192b0c64ebe708c204",
+      "keccak256": "0x09bb1a23de39267836f97b670edcde8efd72255afd54529f5e6b3b9aa6603e4b",
       "urls": [
-        "bzz-raw://3d5a103a2b7b6be1ffa6662db6081763bcd210216fefc25307b835c555e0cf4d",
-        "dweb:/ipfs/QmUCvhZdZpVnyJuZVgd2qGduTf11384TmmBJb2RaEBHxhh"
+        "bzz-raw://5ef2fb19a74acd625fa47e518cd9a09d182d381e0822a206545febede0bd4a44",
+        "dweb:/ipfs/Qmb9BSPvBkb2MihJAcPu96R6HeCYGx9QJJZpSy3pfi82GB"
       ],
       "license": "MIT"
     }

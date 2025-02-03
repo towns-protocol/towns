@@ -104,23 +104,21 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
         continue;
       }
 
-      // TODO: Check is disabled to allow over-writing miniblocks
-      // It should be re-enabled when go code is fixed to handle this correctly.
       // Check if the lastMiniblockNum is the next expected miniblock and
       // the prevMiniblockHash is correct
-      // if (
-      //   // stream.lastMiniblockNum + 1 != miniblock.lastMiniblockNum ||
-      //   // stream.lastMiniblockHash != miniblock.prevMiniBlockHash
-      //   stream.lastMiniblockNum >= miniblock.lastMiniblockNum
-      // ) {
-      //   emit StreamLastMiniblockUpdateFailed(
-      //     miniblock.streamId,
-      //     miniblock.lastMiniblockHash,
-      //     miniblock.lastMiniblockNum,
-      //     RiverRegistryErrors.BAD_ARG
-      //   );
-      //   continue;
-      // }
+      if (
+        // stream.lastMiniblockNum + 1 != miniblock.lastMiniblockNum ||
+        // stream.lastMiniblockHash != miniblock.prevMiniBlockHash
+        stream.lastMiniblockNum >= miniblock.lastMiniblockNum
+      ) {
+        emit StreamLastMiniblockUpdateFailed(
+          miniblock.streamId,
+          miniblock.lastMiniblockHash,
+          miniblock.lastMiniblockNum,
+          RiverRegistryErrors.BAD_ARG
+        );
+        continue;
+      }
 
       // Delete genesis miniblock bytes if the stream is moving beyond genesis
       if (stream.lastMiniblockNum == 0) {

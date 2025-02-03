@@ -304,6 +304,7 @@ func (st *serviceTester) getConfig(opts ...startOpts) *config.Config {
 	}
 
 	cfg := config.GetDefaultConfig()
+	cfg.Port = 0
 	cfg.DisableBaseChain = true
 	cfg.DisableHttps = false
 	cfg.RegistryContract = st.btc.RegistryConfig()
@@ -805,7 +806,7 @@ func (tc *testClient) listenImpl(channelId StreamId, expected userMessages) {
 		if len(actualExtra) > 0 {
 			tc.require.FailNow("Received unexpected messages", "actualExtra:%v", actualExtra)
 		}
-	})
+	}, 15*time.Second)
 }
 
 func (tc *testClient) getStream(streamId StreamId) *StreamAndCookie {

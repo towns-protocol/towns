@@ -17,29 +17,15 @@ import {BasisPoints} from "contracts/src/utils/libraries/BasisPoints.sol";
 
 //contracts
 import {MembershipFacet} from "contracts/src/spaces/facets/membership/MembershipFacet.sol";
+import {MockLegacyMembership} from "contracts/test/mocks/legacy/membership/MockLegacyMembership.sol";
+import {EntitlementTestUtils} from "contracts/test/utils/EntitlementTestUtils.sol";
 
 contract MembershipJoinSpaceTest is
   MembershipBaseSetup,
+  EntitlementTestUtils,
   IEntitlementCheckerBase,
   IEntitlementGatedBase
 {
-  bytes32 internal constant CHECK_REQUESTED =
-    keccak256(
-      "EntitlementCheckRequested(address,address,bytes32,uint256,address[])"
-    );
-  bytes32 internal constant RESULT_POSTED =
-    keccak256("EntitlementCheckResultPosted(bytes32,uint8)");
-  bytes32 internal constant TOKEN_EMITTED =
-    keccak256("MembershipTokenIssued(address,uint256)");
-
-  struct EntitlementCheckRequestEvent {
-    address callerAddress;
-    address contractAddress;
-    bytes32 transactionId;
-    uint256 roleId;
-    address[] selectedNodes;
-  }
-
   function test_joinSpaceOnly() external givenAliceHasMintedMembership {
     assertEq(membershipToken.balanceOf(alice), 1);
   }
@@ -101,21 +87,22 @@ contract MembershipJoinSpaceTest is
     membership.joinSpace(bob);
 
     Vm.Log[] memory requestLogs = vm.getRecordedLogs(); // Retrieve the recorded logs
-
     (
-      address contractAddress,
+      ,
+      ,
+      address resolverAddress,
       bytes32 transactionId,
       uint256 roleId,
       address[] memory selectedNodes
-    ) = _getRequestedEntitlementData(requestLogs);
-    uint256 numCheckRequests = _getEntitlementCheckRequestCount(requestLogs);
+    ) = _getRequestV2EventData(requestLogs);
+    uint256 numCheckRequests = _getRequestV2EventCount(requestLogs);
 
     assertEq(numCheckRequests, 3);
     assertEq(membershipToken.balanceOf(bob), 0);
 
     uint256 quorum = selectedNodes.length / 2;
     uint256 nextTokenId = membershipToken.totalSupply();
-    IEntitlementGated _entitlementGated = IEntitlementGated(contractAddress);
+    IEntitlementGated _entitlementGated = IEntitlementGated(resolverAddress);
 
     for (uint256 i = 0; i < selectedNodes.length; i++) {
       // First quorum nodes should pass, the rest should fail.
@@ -159,49 +146,21 @@ contract MembershipJoinSpaceTest is
 
     Vm.Log[] memory requestLogs = vm.getRecordedLogs(); // Retrieve the recorded logs
 
-    bool tokenEmittedMatched = false;
-
-    EntitlementCheckRequestEvent[]
-      memory entitlementCheckRequests = new EntitlementCheckRequestEvent[](3);
-    uint256 numCheckRequests = 0;
-
-    // Capture relevant event logs
-    for (uint256 i = 0; i < requestLogs.length; i++) {
-      address callerAddress;
-      address contractAddress;
-      uint256 roleId;
-      bytes32 transactionId;
-      address[] memory selectedNodes;
-
-      if (requestLogs[i].topics[0] == CHECK_REQUESTED) {
-        (, contractAddress, transactionId, roleId, selectedNodes) = abi.decode(
-          requestLogs[i].data,
-          (address, address, bytes32, uint256, address[])
-        );
-        entitlementCheckRequests[
-          numCheckRequests
-        ] = EntitlementCheckRequestEvent({
-          callerAddress: callerAddress,
-          contractAddress: contractAddress,
-          transactionId: transactionId,
-          roleId: roleId,
-          selectedNodes: selectedNodes
-        });
-        numCheckRequests++;
-      } else if (requestLogs[i].topics[0] == TOKEN_EMITTED) {
-        tokenEmittedMatched = true;
-      }
-    }
+    uint256 numCheckRequests = _getRequestV2EventCount(requestLogs);
 
     // Validate that a check requested event was emitted and no tokens were minted.
     assertEq(numCheckRequests, 3);
-    assertFalse(tokenEmittedMatched);
+    assertEq(membershipToken.balanceOf(bob), 0);
 
-    vm.recordLogs();
+    EntitlementCheckRequestEvent[]
+      memory entitlementCheckRequests = _getRequestV2Events(requestLogs);
+
     EntitlementCheckRequestEvent memory firstRequest = entitlementCheckRequests[
       0
     ];
-    for (uint256 j = 0; j < firstRequest.selectedNodes.length; j++) {
+
+    vm.recordLogs();
+    for (uint256 j = 0; j < firstRequest.randomNodes.length; j++) {
       IEntitlementGatedBase.NodeVoteStatus status = IEntitlementGatedBase
         .NodeVoteStatus
         .PASSED;
@@ -209,19 +168,19 @@ contract MembershipJoinSpaceTest is
       if (j % 2 == 1) {
         status = IEntitlementGatedBase.NodeVoteStatus.FAILED;
       }
-      vm.prank(firstRequest.selectedNodes[j]);
-      IEntitlementGated(firstRequest.contractAddress)
+      vm.prank(firstRequest.randomNodes[j]);
+      IEntitlementGated(firstRequest.resolverAddress)
         .postEntitlementCheckResult(
           firstRequest.transactionId,
-          firstRequest.roleId,
+          firstRequest.requestId,
           status
         );
     }
 
+    Vm.Log[] memory resultLogs = vm.getRecordedLogs(); // Retrieve the recorded logs
     // Check for posted result, and the emitted token mint event.
     bool resultPosted = false;
     bool tokenEmitted = false;
-    Vm.Log[] memory resultLogs = vm.getRecordedLogs(); // Retrieve the recorded logs
     for (uint256 l; l < resultLogs.length; l++) {
       if (resultLogs[l].topics[0] == RESULT_POSTED) {
         resultPosted = true;
@@ -235,19 +194,21 @@ contract MembershipJoinSpaceTest is
     // Further node votes to the terminated transaction should cause reversion due to cleaned up txn.
     vm.expectRevert(
       abi.encodeWithSelector(
-        IEntitlementGatedBase.EntitlementGated_NodeNotFound.selector
+        IEntitlementGatedBase
+          .EntitlementGated_TransactionCheckAlreadyCompleted
+          .selector
       )
     );
     EntitlementCheckRequestEvent memory finalRequest = entitlementCheckRequests[
       2
     ];
-    (bool success, ) = address(finalRequest.contractAddress).call(
+    (bool success, ) = address(finalRequest.resolverAddress).call(
       abi.encodeWithSelector(
-        IEntitlementGated(finalRequest.contractAddress)
+        IEntitlementGated(finalRequest.resolverAddress)
           .postEntitlementCheckResult
           .selector,
         finalRequest.transactionId,
-        finalRequest.roleId,
+        finalRequest.requestId,
         IEntitlementGatedBase.NodeVoteStatus.PASSED
       )
     );
@@ -264,11 +225,13 @@ contract MembershipJoinSpaceTest is
     Vm.Log[] memory requestLogs = vm.getRecordedLogs(); // Retrieve the recorded logs
 
     (
-      address contractAddress,
+      ,
+      ,
+      address resolverAddress,
       bytes32 transactionId,
       uint256 roleId,
       address[] memory selectedNodes
-    ) = _getRequestedEntitlementData(requestLogs);
+    ) = _getRequestV2EventData(requestLogs);
 
     // Validate that a check requested event was emitted and no tokens were minted.
     assertEq(membershipToken.balanceOf(bob), 0);
@@ -279,7 +242,7 @@ contract MembershipJoinSpaceTest is
     for (uint256 i = 0; i < selectedNodes.length; i++) {
       if (i <= quorum) {
         vm.prank(selectedNodes[i]);
-        IEntitlementGated(contractAddress).postEntitlementCheckResult(
+        IEntitlementGated(resolverAddress).postEntitlementCheckResult(
           transactionId,
           roleId,
           IEntitlementGatedBase.NodeVoteStatus.FAILED
@@ -291,7 +254,7 @@ contract MembershipJoinSpaceTest is
       vm.expectRevert(
         EntitlementGated_TransactionCheckAlreadyCompleted.selector
       );
-      IEntitlementGated(contractAddress).postEntitlementCheckResult(
+      IEntitlementGated(resolverAddress).postEntitlementCheckResult(
         transactionId,
         roleId,
         IEntitlementGatedBase.NodeVoteStatus.PASSED
@@ -311,15 +274,17 @@ contract MembershipJoinSpaceTest is
     Vm.Log[] memory logs = vm.getRecordedLogs();
 
     (
-      address contractAddress,
+      ,
+      ,
+      address resolverAddress,
       bytes32 transactionId,
       uint256 roleId,
       address[] memory selectedNodes
-    ) = _getRequestedEntitlementData(logs);
+    ) = _getRequestV2EventData(logs);
 
     for (uint256 i = 0; i < 3; i++) {
       vm.prank(selectedNodes[i]);
-      IEntitlementGated(contractAddress).postEntitlementCheckResult(
+      IEntitlementGated(resolverAddress).postEntitlementCheckResult(
         transactionId,
         roleId,
         IEntitlementGatedBase.NodeVoteStatus.FAILED
@@ -350,11 +315,13 @@ contract MembershipJoinSpaceTest is
     bool checkRequestedMatched = false;
 
     (
-      address contractAddress,
+      ,
+      ,
+      address resolverAddress,
       bytes32 transactionId,
       uint256 roleId,
       address[] memory selectedNodes
-    ) = _getRequestedEntitlementData(requestLogs);
+    ) = _getRequestV2EventData(requestLogs);
 
     for (uint256 k = 0; k < 3; k++) {
       if (k == 2) {
@@ -364,7 +331,7 @@ contract MembershipJoinSpaceTest is
       address currentNode = selectedNodes[k];
 
       vm.prank(currentNode);
-      IEntitlementGated(contractAddress).postEntitlementCheckResult(
+      IEntitlementGated(resolverAddress).postEntitlementCheckResult(
         transactionId,
         roleId,
         IEntitlementGatedBase.NodeVoteStatus.PASSED
@@ -448,15 +415,17 @@ contract MembershipJoinSpaceTest is
     Vm.Log[] memory logs = vm.getRecordedLogs();
 
     (
-      address contractAddress,
+      ,
+      ,
+      address resolverAddress,
       bytes32 transactionId,
       uint256 roleId,
       address[] memory selectedNodes
-    ) = _getRequestedEntitlementData(logs);
+    ) = _getRequestV2EventData(logs);
 
     for (uint256 i = 0; i < 3; i++) {
       vm.prank(selectedNodes[i]);
-      IEntitlementGated(contractAddress).postEntitlementCheckResult(
+      IEntitlementGated(resolverAddress).postEntitlementCheckResult(
         transactionId,
         roleId,
         IEntitlementGatedBase.NodeVoteStatus.FAILED
@@ -468,41 +437,6 @@ contract MembershipJoinSpaceTest is
   }
 
   // utils
-
-  function _getEntitlementCheckRequestCount(
-    Vm.Log[] memory logs
-  ) internal pure returns (uint256 count) {
-    for (uint256 i = 0; i < logs.length; i++) {
-      if (logs[i].topics[0] == CHECK_REQUESTED) {
-        count++;
-      }
-    }
-  }
-
-  function _getRequestedEntitlementData(
-    Vm.Log[] memory requestLogs
-  )
-    internal
-    pure
-    returns (
-      address contractAddress,
-      bytes32 transactionId,
-      uint256 roleId,
-      address[] memory selectedNodes
-    )
-  {
-    for (uint256 i = 0; i < requestLogs.length; i++) {
-      if (
-        requestLogs[i].topics.length > 0 &&
-        requestLogs[i].topics[0] == CHECK_REQUESTED
-      ) {
-        (, contractAddress, transactionId, roleId, selectedNodes) = abi.decode(
-          requestLogs[i].data,
-          (address, address, bytes32, uint256, address[])
-        );
-      }
-    }
-  }
 
   function test_joinSpacePriceChangesMidTransaction()
     external
@@ -521,15 +455,17 @@ contract MembershipJoinSpaceTest is
     membership.setMembershipPrice(MEMBERSHIP_PRICE * 2);
 
     (
-      address contractAddress,
+      ,
+      ,
+      address resolverAddress,
       bytes32 transactionId,
       uint256 roleId,
       address[] memory selectedNodes
-    ) = _getRequestedEntitlementData(logs);
+    ) = _getRequestV2EventData(logs);
 
     for (uint256 i = 0; i < 3; i++) {
       vm.prank(selectedNodes[i]);
-      IEntitlementGated(contractAddress).postEntitlementCheckResult(
+      IEntitlementGated(resolverAddress).postEntitlementCheckResult(
         transactionId,
         roleId,
         IEntitlementGatedBase.NodeVoteStatus.PASSED
@@ -596,5 +532,51 @@ contract MembershipJoinSpaceTest is
       protocolFee,
       BasisPoints.calculate(price, platformReqs.getMembershipBps())
     );
+  }
+
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                           LEGACY                           */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+  function test_joinSpaceWithLegacyMembership() external {
+    MockLegacyMembership(address(membership)).joinSpaceLegacy(alice);
+
+    assertEq(membershipToken.balanceOf(alice), 1);
+    assertEq(alice.balance, 0);
+  }
+
+  function test_joinSpaceWithLegacyMembership_withEntitlementCheck()
+    external
+    givenJoinspaceHasAdditionalCrosschainEntitlements
+  {
+    MockLegacyMembership legacyMembership = MockLegacyMembership(
+      address(membership)
+    );
+
+    vm.recordLogs();
+    vm.prank(bob);
+    legacyMembership.joinSpaceLegacy(bob);
+    Vm.Log[] memory logs = vm.getRecordedLogs();
+
+    (
+      address resolverAddress,
+      bytes32 transactionId,
+      uint256 roleId,
+      address[] memory selectedNodes
+    ) = _getRequestV1EventData(logs);
+
+    // posting to space
+    IEntitlementGated entitlementGated = IEntitlementGated(resolverAddress);
+
+    for (uint256 i = 0; i < 3; i++) {
+      vm.prank(selectedNodes[i]);
+      entitlementGated.postEntitlementCheckResult(
+        transactionId,
+        roleId,
+        IEntitlementGatedBase.NodeVoteStatus.PASSED
+      );
+    }
+
+    assertEq(membershipToken.balanceOf(bob), 1);
   }
 }
