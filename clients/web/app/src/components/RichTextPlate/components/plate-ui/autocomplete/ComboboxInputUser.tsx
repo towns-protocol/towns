@@ -98,7 +98,7 @@ export const ComboboxItemGeneric = ({
 const EMPTY_ARRAY: TComboboxItemWithData<TUserWithChannel | Channel>[] = []
 
 export const ComboboxInput = withRef<typeof PlateElement, ComboboxInputUserProps>(
-    ({ className, userMentions, channelMentions, ...props }, ref) => {
+    ({ className, getUserMentions, getChannelMentions, ...props }, ref) => {
         const {
             query: searchQueryStore,
             editor,
@@ -115,8 +115,8 @@ export const ComboboxInput = withRef<typeof PlateElement, ComboboxInputUserProps
             if (isEmojiCombobox(trigger.current)) {
                 return EMPTY_ARRAY
             }
-            return isUserCombobox(trigger.current) ? userMentions : channelMentions
-        }, [userMentions, channelMentions])
+            return isUserCombobox(trigger.current) ? getUserMentions() : getChannelMentions()
+        }, [getUserMentions, getChannelMentions])
 
         useEffect(() => {
             startTransition(() => {
@@ -145,14 +145,16 @@ export const ComboboxInput = withRef<typeof PlateElement, ComboboxInputUserProps
                 })
                 return
             } else if (isUserCombobox(trigger.current)) {
-                _filteredItemList = userMentions.filter(userMentionFilter(searchQueryStore))
+                _filteredItemList = getUserMentions().filter(userMentionFilter(searchQueryStore))
             } else {
-                _filteredItemList = channelMentions.filter(channelMentionFilter(searchQueryStore))
+                _filteredItemList = getChannelMentions().filter(
+                    channelMentionFilter(searchQueryStore),
+                )
             }
             startTransition(() => {
                 setFilteredItems(_filteredItemList)
             })
-        }, [getAllItems, searchQueryStore, store, userMentions, channelMentions])
+        }, [getAllItems, searchQueryStore, store, getUserMentions, getChannelMentions])
 
         const searchResults = useMemo(() => {
             return filteredItems.map((item) => {

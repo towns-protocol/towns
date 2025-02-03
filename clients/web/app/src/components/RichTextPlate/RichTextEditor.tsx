@@ -132,13 +132,19 @@ export const RichTextEditor = ({
         return [{ ...EMPTY_NODE }]
     }, [_initialValue, channels, userHashMap, lookupUser, editable, valueFromStore])
 
+    const userMentionsRef = useRef(userMentions)
+    userMentionsRef.current = userMentions
+
+    const channelMentionsRef = useRef(channelMentions)
+    channelMentionsRef.current = channelMentions
+
     const [editor] = useState<TPlateEditor>(() =>
         createTownsEditor(
             storageId.current,
             channels,
             userHashMap,
-            userMentions,
-            channelMentions,
+            () => userMentionsRef.current,
+            () => channelMentionsRef.current,
             initialValue,
             lookupUser,
         ),

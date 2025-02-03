@@ -62,8 +62,8 @@ const createTownsEditor = (
     uniqueId: string,
     channelList: Channel[],
     userHashMap: TUserIDNameMap,
-    userMentions: TComboboxItemWithData<TUserWithChannel>[],
-    channelMentions: TComboboxItemWithData<Channel>[],
+    getUserMentions: () => TComboboxItemWithData<TUserWithChannel>[],
+    getChannelMentions: () => TComboboxItemWithData<Channel>[],
     initialValue: Value,
     lookupUser?: ReturnType<typeof useUserLookupContext>['lookupUser'],
 ) =>
@@ -162,8 +162,8 @@ const createTownsEditor = (
                 [ELEMENT_MENTION_EMOJI]: EmojiMentionElement,
                 [MentionInputPlugin.key]: withProps(ComboboxContextWrapper, {
                     Component: ComboboxInput,
-                    userMentions,
-                    channelMentions,
+                    getUserMentions,
+                    getChannelMentions,
                 }),
                 [ParagraphPlugin.key]: ParagraphElement,
                 [BoldPlugin.key]: withProps(PlateLeaf, { as: 'strong' }),

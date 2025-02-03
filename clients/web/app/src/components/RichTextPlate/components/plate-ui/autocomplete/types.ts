@@ -11,8 +11,8 @@ import { TMentionElement } from '@udecode/plate-mention'
 import { type TriggerComboboxPluginOptions } from '@udecode/plate-combobox'
 
 export type ComboboxInputUserProps = Omit<ComboboxContainerProps, 'searchResults' | 'filter'> & {
-    userMentions: TComboboxItemWithData<TUserWithChannel>[]
-    channelMentions: TComboboxItemWithData<Channel>[]
+    getUserMentions: () => TComboboxItemWithData<TUserWithChannel>[]
+    getChannelMentions: () => TComboboxItemWithData<Channel>[]
 }
 
 export type ComboboxContainerProps = PlateElementProps<TElement> & {
