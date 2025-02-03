@@ -13,12 +13,16 @@ const SECONDS_MS = 1000
 const DAY_MS = 24 * 60 * 60 * SECONDS_MS
 
 export function useRiverPoints(loggedInWalletAddress: `0x${string}`) {
-    const { baseChain: chain } = useTownsContext()
+    const { baseChain: chain, clientStatus } = useTownsContext()
     const { spaceDapp } = useTownsClient()
 
     const { spaceIds } = useSpaceIdStore()
+    const isLocalDataLoaded = clientStatus.isLocalDataLoaded
 
     useEffect(() => {
+        if (!isLocalDataLoaded) {
+            return
+        }
         // invalidate river points aggresively since unsynced points
         // are causing confusion and frustration
         // - invalidate when the panel is opened
@@ -28,7 +32,7 @@ export function useRiverPoints(loggedInWalletAddress: `0x${string}`) {
         void queryClient.invalidateQueries({
             queryKey: blockchainKeys.riverPoints(chain.id, loggedInWalletAddress ?? ''),
         })
-    }, [chain.id, loggedInWalletAddress, spaceIds])
+    }, [chain.id, loggedInWalletAddress, spaceIds, isLocalDataLoaded])
 
     const dapp = spaceDapp?.airdrop
 
