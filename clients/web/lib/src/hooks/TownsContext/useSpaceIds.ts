@@ -38,4 +38,5 @@ export function useSpacesIds(casablancaClient: CasablancaClient | undefined) {
             return { spaceIds: newSpaceIds }
         })
     }, [spaceIds, setSpaceIds])
+    return { spaceIds }
 }

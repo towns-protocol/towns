@@ -185,11 +185,11 @@ const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
         environmentId,
         props.riverNotificationServiceUrl,
     )
-    useSpacesIds(casablancaClient)
+    const { spaceIds } = useSpacesIds(casablancaClient)
     useContentAwareTimelineDiffCasablanca(casablancaClient)
     const clientStatus = useClientInitStatus(casablancaClient)
 
-    const { spaces } = useSpaces(townsOpts, casablancaClient)
+    const { spaces } = useSpaces(townsOpts, spaceIds, casablancaClient)
     const { channels: dmChannels } = useCasablancaDMs(casablancaClient)
     const spaceHierarchies = useCasablancaSpaceHierarchies(casablancaClient)
     const blockedUserIds = useBlockedUsers(casablancaClient)

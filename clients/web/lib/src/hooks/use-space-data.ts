@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { Channel, InviteData, SpaceData } from '../types/towns-types'
 import { useTownsContext } from '../components/TownsContextProvider'
 import { useSpaceContext } from '../components/SpaceContextProvider'
@@ -198,7 +198,11 @@ function spaceInfoWithChannelsQueryConfig({
     }
 }
 
-export function useContractSpaceInfos(opts: TownsOpts, client?: CasablancaClient) {
+export function useContractSpaceInfos(
+    opts: TownsOpts,
+    spaceIds: string[],
+    client?: CasablancaClient,
+) {
     const provider = opts.baseProvider
     const config = opts.baseConfig
 
@@ -209,37 +213,6 @@ export function useContractSpaceInfos(opts: TownsOpts, client?: CasablancaClient
     const offlineSpaceInfoMap = useOfflineStore((s) => s.offlineSpaceInfoMap)
 
     const isEnabled = spaceDapp && client && client.streams.size() > 0
-
-    const [spaceIds, setSpaceIds] = useState<string[]>([])
-    useEffect(() => {
-        if (!isEnabled || !client) {
-            return
-        }
-
-        const updateSpaceIds = () => {
-            const newSpaceIds = client.streams.getStreamIds().filter((id) => isSpaceStreamId(id))
-            setSpaceIds((prev) => {
-                if (isEqual(prev, newSpaceIds)) {
-                    return prev
-                }
-                return newSpaceIds
-            })
-        }
-
-        const streamUpdated = (streamId: string) => {
-            if (isSpaceStreamId(streamId)) {
-                updateSpaceIds()
-            }
-        }
-        updateSpaceIds()
-
-        client.on('streamInitialized', streamUpdated)
-        client.on('userLeftStream', streamUpdated)
-        return () => {
-            client.off('streamInitialized', streamUpdated)
-            client.off('userLeftStream', streamUpdated)
-        }
-    }, [isEnabled, client, setSpaceIds])
 
     const queryData = useQueries({
         queries: spaceIds.map((id) => {

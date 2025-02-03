@@ -5,10 +5,11 @@ import { Client as CasablancaClient } from '@river-build/sdk'
 
 export function useSpaces(
     opts: TownsOpts,
+    spaceIds: string[],
     casablancaClient: CasablancaClient | undefined,
 ): {
     spaces: SpaceItem[]
 } {
-    const casablancaSpaces = useCasablancaSpaces(opts, casablancaClient)
+    const casablancaSpaces = useCasablancaSpaces(opts, spaceIds, casablancaClient)
     return { spaces: casablancaSpaces }
 }

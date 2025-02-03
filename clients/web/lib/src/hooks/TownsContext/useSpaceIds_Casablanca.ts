@@ -1,33 +1,20 @@
-import { Client as CasablancaClient, Stream, isSpaceStreamId } from '@river-build/sdk'
+import { Client as CasablancaClient, isSpaceStreamId } from '@river-build/sdk'
 import { useEffect, useState } from 'react'
 import isEqual from 'lodash/isEqual'
-import { SnapshotCaseType } from '@river-build/proto'
+import { MembershipOp, SnapshotCaseType } from '@river-build/proto'
 
 export function useSpacesIds_Casablanca(casablancaClient: CasablancaClient | undefined): {
     spaceIds: string[]
 } {
-    const [spaceIds, setSpaceIds] = useState<string[]>([])
+    const [spaceIds, setSpaceIds] = useState<string[]>(() => getSpaceIds(casablancaClient))
 
     useEffect(() => {
-        if (!casablancaClient || !casablancaClient.userStreamId) {
-            return
-        }
-
-        const userStream = casablancaClient.streams.get(casablancaClient.userStreamId)
-        if (!userStream) {
+        if (!casablancaClient) {
             return
         }
 
         const updateSpaces = () => {
-            const spaceIds = casablancaClient.streams
-                .getStreams()
-                .filter((stream) => stream.view.contentKind === 'spaceContent')
-                .filter((stream: Stream) => {
-                    return userStream.view.userContent.isJoined(stream.view.streamId)
-                })
-                .sort((a, b) => a.view.streamId.localeCompare(b.view.streamId))
-                .map((stream) => stream.view.streamId)
-
+            const spaceIds = getSpaceIds(casablancaClient)
             setSpaceIds((prev) => {
                 if (isEqual(prev, spaceIds)) {
                     return prev
@@ -36,8 +23,8 @@ export function useSpacesIds_Casablanca(casablancaClient: CasablancaClient | und
             })
         }
 
-        const onStreamChange = (_streamId: string, kind: SnapshotCaseType) => {
-            if (kind === 'spaceContent') {
+        const onStreamInitialized = (streamId: string, _kind: SnapshotCaseType) => {
+            if (streamId === casablancaClient.userStreamId) {
                 updateSpaces()
             }
         }
@@ -50,10 +37,10 @@ export function useSpacesIds_Casablanca(casablancaClient: CasablancaClient | und
 
         updateSpaces()
 
-        casablancaClient.on('streamInitialized', onStreamChange)
+        casablancaClient.on('streamInitialized', onStreamInitialized)
         casablancaClient.on('userStreamMembershipChanged', onUserMembershipsChanged)
         return () => {
-            casablancaClient.off('streamInitialized', onStreamChange)
+            casablancaClient.off('streamInitialized', onStreamInitialized)
             casablancaClient.off('userStreamMembershipChanged', onUserMembershipsChanged)
         }
     }, [casablancaClient])
@@ -61,4 +48,21 @@ export function useSpacesIds_Casablanca(casablancaClient: CasablancaClient | und
     return {
         spaceIds,
     }
+}
+
+function getSpaceIds(casablancaClient: CasablancaClient | undefined): string[] {
+    if (!casablancaClient || !casablancaClient.userStreamId) {
+        return []
+    }
+    const userStream = casablancaClient.streams.get(casablancaClient.userStreamId)
+    if (!userStream) {
+        return []
+    }
+    return Object.entries(userStream.view.userContent.streamMemberships)
+        .filter(
+            ([streamId, membership]) =>
+                membership.op === MembershipOp.SO_JOIN && isSpaceStreamId(streamId),
+        )
+        .map(([streamId]) => streamId)
+        .sort((a, b) => a.localeCompare(b))
 }
