@@ -9,6 +9,7 @@ import {
     useTownsClient,
     useUserLookupContext,
 } from 'use-towns-client'
+import { useInView } from 'react-intersection-observer'
 import { Avatar } from '@components/Avatar/Avatar'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { ModalContainer } from '@components/Modals/ModalContainer'
@@ -158,7 +159,7 @@ const ChannelMembers = (props: {
 
             {(filteredMembers?.length > 0 ? filteredMembers : membersWithNames).map(
                 ({ userId }) => (
-                    <ChannelMemberRow
+                    <LazyChannelMemberRow
                         key={userId}
                         userId={userId}
                         onRemoveMember={userId === myUserId ? undefined : onRemoveMember}
@@ -282,6 +283,23 @@ const AddMemberRow = (props: { onClick: () => void }) => {
 type ChannelMemberRowProps = {
     userId: string
     onRemoveMember?: (userId: string) => void
+}
+
+const LazyChannelMemberRow = (props: ChannelMemberRowProps) => {
+    const { ref, inView } = useInView({
+        rootMargin: '200px 0px',
+    })
+    return (
+        <Box ref={ref}>
+            {inView ? (
+                <ChannelMemberRow {...props} />
+            ) : (
+                <Box horizontal gap height="x7" padding="sm">
+                    <Box horizontal grow rounded="sm" background="level2" />
+                </Box>
+            )}
+        </Box>
+    )
 }
 
 const ChannelMemberRow = (props: ChannelMemberRowProps) => {
