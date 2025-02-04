@@ -306,6 +306,7 @@ export const boxProperties = defineProperties({
         justifyContent: flexJustifyAlignment,
         justifySelf: flexAlignment,
         zIndex: vars.zIndex,
+        userSelect: ['none', 'text', 'auto', 'all'],
     },
 
     shorthands: {

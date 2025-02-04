@@ -172,6 +172,8 @@ export const MessageLayout = (props: Props) => {
     const debugHash = debug.enabled('app:vlist') ? ` [${eventId?.substring(0, 4)}]` : ''
     const showDecryptionDebugger = debug.enabled('app:decryption')
 
+    const onMobileTap = isTouch && isSelectable ? onClick : undefined
+
     return (
         <Stack
             horizontal
@@ -187,7 +189,7 @@ export const MessageLayout = (props: Props) => {
         >
             {/* left / avatar gutter */}
             {/* snippet: center avatar with name row by keeping the size of the containers equal  */}
-            <Box minWidth={isTouch ? 'x5' : 'x6'}>
+            <Box minWidth={isTouch ? 'x5' : 'x6'} onClick={onMobileTap}>
                 {displayContext === 'single' || displayContext === 'head' ? (
                     senderId ? (
                         <AvatarComponent
@@ -224,7 +226,15 @@ export const MessageLayout = (props: Props) => {
                 {pin ? <PinnedContent pin={pin} /> : <></>}
                 {/* name & date top row */}
                 {(displayContext === 'head' || displayContext === 'single') && (
-                    <Stack horizontal grow gap="xs" height="height_sm" alignItems="center">
+                    <Stack
+                        horizontal
+                        grow
+                        gap="xs"
+                        height="height_sm"
+                        alignItems="center"
+                        userSelect="none"
+                        onClick={onMobileTap}
+                    >
                         {/* display name with tooltip */}
                         {senderId && (
                             <Box
