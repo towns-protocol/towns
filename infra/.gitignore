@@ -35,5 +35,7 @@ keys.*
 # Zip artifacts
 *.zip
 
-#Testing Environment only
-mahattam-test
+# For local test files
+.ignore
+
+gcloud-credentials.json

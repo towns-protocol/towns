@@ -25,6 +25,14 @@ terraform {
       source  = "cloudflare/cloudflare"
       version = "~> 4.0"
     }
+    google-beta = {
+      source  = "hashicorp/google-beta"
+      version = ">= 5.45.0"
+    }
+    google = {
+      source  = "hashicorp/google"
+      version = ">= 5.45.0"
+    }
   }
 
   backend "s3" {}
@@ -281,4 +289,20 @@ resource "cloudflare_record" "sample_app_dns" {
   value   = "sample-gamma.onrender.com"
   type    = "CNAME"
   ttl     = 60
+}
+
+locals {
+  gcp_project_id = "hnt-live-${terraform.workspace}"
+  gcp_region     = "us-east4"
+  gcp_zones      = ["us-east4-a", "us-east4-b", "us-east4-c"]
+}
+
+module "gcp_env" {
+  source = "../../modules/gcp-env"
+
+  project_id                     = local.gcp_project_id
+  region                         = local.gcp_region
+  zones                          = local.gcp_zones
+  cloudflare_terraform_api_token = var.cloudflare_terraform_api_token
+  gcloud_credentials             = file("./gcloud-credentials.json")
 }

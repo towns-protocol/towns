@@ -1,11 +1,9 @@
 provider "google-beta" {
   project = var.project_id
-  region  = "us-central1"
 }
 
 provider "google" {
   project = var.project_id
-  region  = "us-central1"
 }
 
 provider "kubernetes" {
@@ -57,22 +55,24 @@ resource "google_compute_subnetwork" "gh-subnetwork" {
   ip_cidr_range = var.subnet_ip
   region        = var.region
   network       = google_compute_network.gh-network[0].name
-  secondary_ip_range = [
-    {
-      range_name    = var.ip_range_pods_name
-      ip_cidr_range = var.ip_range_pods_cidr
-    },
-    { range_name    = var.ip_range_services_name
-      ip_cidr_range = var.ip_range_services_cider
-    }
-  ]
+
+
+  secondary_ip_range {
+    range_name    = var.ip_range_pods_name
+    ip_cidr_range = var.ip_range_pods_cidr
+  }
+
+  secondary_ip_range {
+    range_name    = var.ip_range_services_name
+    ip_cidr_range = var.ip_range_services_cider
+  }
 }
 /*****************************************
   Runner GKE
  *****************************************/
 module "runner-cluster" {
   source                   = "terraform-google-modules/kubernetes-engine/google//modules/beta-public-cluster/"
-  version                  = "~> 32.0"
+  version                  = "35.0.1"
   project_id               = var.project_id
   name                     = "gh-runner-${var.cluster_suffix}"
   regional                 = false

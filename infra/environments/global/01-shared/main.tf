@@ -12,6 +12,10 @@ terraform {
       source  = "hashicorp/google"
       version = ">= 5.45.0"
     }
+    cloudflare = {
+      source  = "cloudflare/cloudflare"
+      version = "~> 4.0"
+    }
   }
 
   backend "s3" {}
@@ -22,6 +26,11 @@ terraform {
 provider "aws" {
   region  = "us-east-1"
   profile = "harmony-github-actions"
+}
+
+
+provider "cloudflare" {
+  api_token = var.cloudflare_terraform_api_token
 }
 
 module "runner-gke" {
