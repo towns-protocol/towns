@@ -72,14 +72,15 @@ export function calculateEthAmountFromUsd(args: { cents: number; ethPriceInUsd: 
 export function calculateUsdAmountFromEth(args: {
     ethAmount: bigint | undefined
     ethPriceInUsd: string | undefined
+    decimals?: number
 }) {
-    const { ethAmount, ethPriceInUsd } = args
+    const { ethAmount, ethPriceInUsd, decimals = 18 } = args
     if (!ethAmount || !ethPriceInUsd) {
         return undefined
     }
-    const ethPriceInUsdBigInt = parseUnits(ethPriceInUsd, 18)
-    const usdValueBigInt = (ethAmount * ethPriceInUsdBigInt) / BigInt(1e18)
-    return formatUnitsToFixedLength(usdValueBigInt)
+    const ethPriceInUsdBigInt = parseUnits(ethPriceInUsd, decimals)
+    const usdValueBigInt = (ethAmount * ethPriceInUsdBigInt) / BigInt(10 ** decimals)
+    return usdValueBigInt
 }
 
 export function useEthToUsdFormatted(args: {
@@ -94,12 +95,13 @@ export function useEthToUsdFormatted(args: {
         ethAmount: ethAmount,
         ethPriceInUsd: ethPrice?.toString(),
     })
-    return (
-        `$` +
-        new Intl.NumberFormat('en-US', {
-            style: 'decimal',
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-        }).format(parseFloat(amount || '0'))
-    )
+    return formatUsd(formatUnitsToFixedLength(amount || 0n))
+}
+
+export const formatUsd = (totalPrice: string) => {
+    return `$${Intl.NumberFormat('en-US', {
+        style: 'decimal',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    }).format(parseFloat(totalPrice))}`
 }

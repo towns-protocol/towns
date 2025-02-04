@@ -1,0 +1,93 @@
+import {
+    ActionType,
+    BoxActionResponse,
+    ChainId,
+    EvmTransaction,
+    SwapActionConfig,
+    SwapDirection,
+    TokenInfo,
+} from '@decent.xyz/box-common'
+import { UseBoxActionArgs, useBoxAction } from '@decent.xyz/box-hooks'
+import { getAccount, getPublicClient, sendTransaction, switchChain } from '@wagmi/core'
+import { useMemo } from 'react'
+import { useMyAbstractAccountAddress } from '@components/Web3/UserOpTxModal/hooks/useMyAbstractAccountAddress'
+import { wagmiConfig } from 'wagmiConfig'
+import { estimateGasArgs, isActionConfig } from './utils'
+
+type UseSwapActionArgs = {
+    sender: UseBoxActionArgs['sender'] | undefined
+    srcToken: TokenInfo | undefined
+    dstToken: TokenInfo | undefined
+    amount: SwapActionConfig['amount'] | undefined
+}
+
+const nonConfigurableConfig = {
+    slippage: 1, // defaults to 1
+    actionType: ActionType.SwapAction,
+    swapDirection: SwapDirection.EXACT_AMOUNT_IN,
+}
+
+export function useSwapAction(args: UseSwapActionArgs) {
+    const { sender, srcToken, dstToken, amount } = args
+    const myAbstractAccountAddress = useMyAbstractAccountAddress().data
+
+    // there is a weird bug w/ this hook where even though the arguments can be either undefined or UseBoxActionArgs according to typescript,
+    // it throws an error internally if you switch from undefined to UseBoxActionArgs
+    // so whereas i'd like to pass either undefined or { ...config }
+    // i'm passing the config with fallback values AND making sure enable is only true if all args are defined
+    const config: UseBoxActionArgs = {
+        sender: sender ?? '',
+        srcToken: srcToken?.address ?? '',
+        dstToken: dstToken?.address ?? '',
+        srcChainId: srcToken?.chainId ?? ChainId.ETHEREUM,
+        dstChainId: dstToken?.chainId ?? ChainId.BASE,
+        slippage: nonConfigurableConfig.slippage,
+        actionType: nonConfigurableConfig.actionType,
+        actionConfig: {
+            amount: amount ?? 0n,
+            swapDirection: nonConfigurableConfig.swapDirection,
+            receiverAddress: myAbstractAccountAddress,
+            chainId: dstToken?.chainId ?? ChainId.BASE,
+        },
+    }
+
+    const { actionResponse, isLoading, error } = useBoxAction({
+        ...config,
+        enable: isActionConfig(config),
+    })
+
+    return useMemo(() => {
+        return {
+            actionResponse,
+            isLoading,
+            error,
+        }
+    }, [actionResponse, isLoading, error])
+}
+
+export async function sendSwapTransaction(args: {
+    srcChainId: number | undefined
+    actionResponse: BoxActionResponse
+}) {
+    const { srcChainId, actionResponse } = args
+    try {
+        const account = getAccount(wagmiConfig)
+        const publicClient = getPublicClient(wagmiConfig)
+        if (!account || !srcChainId) {
+            return
+        }
+        if (account.chainId !== srcChainId) {
+            await switchChain(wagmiConfig, { chainId: srcChainId })
+        }
+        const tx = actionResponse.tx as EvmTransaction
+        const gas = await publicClient?.estimateGas(
+            estimateGasArgs({ sender: account.address, boxActionResponse: actionResponse }),
+        )
+        return sendTransaction(wagmiConfig, {
+            ...tx,
+            gas,
+        })
+    } catch (e) {
+        console.error('[sendSwapTransaction] error', e)
+    }
+}

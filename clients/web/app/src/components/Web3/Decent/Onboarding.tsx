@@ -6,35 +6,24 @@ import { Address, useConnectivity } from 'use-towns-client'
 import { env } from 'utils'
 import { chainIds, wagmiConfig } from 'wagmiConfig'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
-import { Stack } from '@ui'
+import { Icon, Stack, Text } from '@ui'
 import { Analytics } from 'hooks/useAnalytics'
 import { decentTheme } from './decentTheme'
 import { useSrcAndDstChains } from './useSrcAndDstChains'
 import { ConnectedWallet } from './ConnectedWallet'
 import { usePrivyConnectWallet } from '../ConnectWallet/usePrivyConnectWallet'
+import { DecentFund } from './fund/DecentFund'
+import { useActiveWalletIsPrivy, useIsWagmiConnected } from './useActiveWalletIsPrivy'
+import { SelectDifferentWallet, useNonPrivyWallets } from './SelectDifferentWallet'
+import { ConnectAndSetActive } from './ConnectAndSetActive'
+import { FundWalletCallbacks } from './fund/types'
 
-export function Onboarding(
-    props: {
-        onTxSuccess?: (r: unknown) => void
-        onTxError?: (error: unknown) => void
-    } = {},
-) {
+export function Onboarding(props: FundWalletCallbacks = {}) {
     const { loggedInWalletAddress } = useConnectivity()
 
-    const privyConnectWallet = usePrivyConnectWallet({
-        onSuccess: (wallet) => {
-            Analytics.getInstance().track('add funds connected wallet', {
-                walletName: wallet.meta.name,
-            })
-        },
-        onError: (error) => {
-            console.error('[Swap] error connecting wallet', error)
-        },
-    })
     const { data: address, isLoading } = useAbstractAccountAddress({
         rootKeyAddress: loggedInWalletAddress as Address,
     })
-    const { srcChain, dstChain } = useSrcAndDstChains()
 
     if (isLoading) {
         return <></>
@@ -47,6 +36,62 @@ export function Onboarding(
     return (
         <Stack gap="sm">
             <ConnectedWallet />
+            <BoxThemeProvider theme={decentTheme}>
+                {env.VITE_ENABLE_DECENT_ONBOARDING_V2 ? (
+                    <DecentFund
+                        onTxStart={props.onTxStart}
+                        onConnectWallet={props.onConnectWallet}
+                        onTxSuccess={props.onTxSuccess}
+                        onTxError={props.onTxError}
+                    />
+                ) : (
+                    <OnboardingV1 {...props} address={address} />
+                )}
+            </BoxThemeProvider>
+        </Stack>
+    )
+}
+
+function OnboardingV1(props: {
+    onTxSuccess?: (r: unknown) => void
+    onTxError?: (error: unknown) => void
+    address: Address
+}) {
+    const { address } = props
+
+    const privyConnectWallet = usePrivyConnectWallet({
+        onSuccess: (wallet) => {
+            Analytics.getInstance().track('add funds connected wallet', {
+                walletName: wallet.meta.name,
+            })
+        },
+        onError: (error) => {
+            console.error('[Swap] error connecting wallet', error)
+        },
+    })
+    const isPrivyWalletActive = useActiveWalletIsPrivy()
+    const isWagmiConnected = useIsWagmiConnected()
+    const nonPrivyWallets = useNonPrivyWallets()
+
+    const { srcChain, dstChain } = useSrcAndDstChains()
+
+    // need to connect a wallet
+    if (nonPrivyWallets.length === 0 || !isWagmiConnected) {
+        return (
+            <Stack gap="lg" alignItems="center">
+                <Icon size="square_xl" type="baseEth" />
+                <Text textAlign="center">{`To add ETH to your Towns account, connect a wallet with funds.`}</Text>
+                <ConnectAndSetActive />
+            </Stack>
+        )
+    }
+
+    if (isPrivyWalletActive) {
+        return <SelectDifferentWallet />
+    }
+
+    return (
+        <Stack gap="sm">
             <BoxThemeProvider theme={decentTheme}>
                 <ClientRendered>
                     <OnboardingModal

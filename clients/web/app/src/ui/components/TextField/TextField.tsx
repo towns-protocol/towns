@@ -1,6 +1,6 @@
 import { clsx } from 'clsx'
 import React, { InputHTMLAttributes, forwardRef } from 'react'
-import { Box } from '../Box/Box'
+import { Box, BoxProps } from '../Box/Box'
 import { Field, FieldBaseProps } from '../_internal/Field/Field'
 import * as styles from './TextField.css'
 import { TextProps } from '../Text/Text'
@@ -20,12 +20,24 @@ type Props = {
     fontSize?: TextProps['fontSize']
     fontWeight?: TextProps['fontWeight']
     textAlign?: TextProps['textAlign']
+    paddingX?: BoxProps['paddingX']
+    inputWidth?: BoxProps['width']
+    inputLimit?: number
 } & FieldBaseProps &
     InputCallbackProps &
     InputHTMLAttributes<HTMLInputElement>
 
 export const TextField = forwardRef<HTMLInputElement, Props>((props, ref) => {
-    const { type, placeholder, fontSize, fontWeight, autoComplete, ...fieldProps } = props
+    const {
+        type,
+        placeholder,
+        fontSize,
+        fontWeight,
+        autoComplete,
+        inputWidth,
+        inputLimit,
+        ...fieldProps
+    } = props
     return (
         <Field {...fieldProps}>
             {(overlays, { className, ...inputProps }) => (
@@ -40,6 +52,8 @@ export const TextField = forwardRef<HTMLInputElement, Props>((props, ref) => {
                         fontSize={fontSize}
                         fontWeight={fontWeight}
                         autoComplete={autoComplete || 'off'}
+                        width={inputWidth}
+                        maxLength={inputLimit}
                     />
                     {overlays}
                 </>

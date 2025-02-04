@@ -5,7 +5,7 @@ import { Helmet } from 'react-helmet'
 import { RiverTimelineEvent, isDefined } from '@river-build/sdk'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useEvent } from 'react-use-event-hook'
-import { WagmiProvider } from 'wagmi'
+import { WagmiProvider } from '@privy-io/wagmi'
 import { Notifications } from '@components/Notifications/Notifications'
 import { useDevice } from 'hooks/useDevice'
 import { ENVIRONMENTS, useEnvironment } from 'hooks/useEnvironmnet'
@@ -148,23 +148,23 @@ export const App = () => {
     })
 
     return (
-        <WagmiProvider config={wagmiConfig}>
-            <TownsContextProvider
-                environmentId={environment.id}
-                baseChain={environment.baseChain}
-                baseConfig={environment.baseChainConfig}
-                riverChain={environment.riverChain}
-                riverConfig={environment.riverChainConfig}
-                timelineFilter={DEFAULT_TIMELINE_FILTER}
-                riverNotificationServiceUrl={env.VITE_RIVER_NOTIFICATION_SERVICE_URL}
-                accountAbstractionConfig={environment.accountAbstractionConfig}
-                highPriorityStreamIds={highPriorityStreamIds.current}
-                unpackEnvelopeOpts={unpackEnvelopeOpts}
-                supportedXChainRpcMapping={supportedXChainRpcMapping}
-                ethMainnetRpcUrl={env.VITE_ETHEREUM_RPC_URL}
-                analytics={analyticsInstance}
-                streamMetadataUrl={env.VITE_RIVER_STREAM_METADATA_URL}
-            >
+        <TownsContextProvider
+            environmentId={environment.id}
+            baseChain={environment.baseChain}
+            baseConfig={environment.baseChainConfig}
+            riverChain={environment.riverChain}
+            riverConfig={environment.riverChainConfig}
+            timelineFilter={DEFAULT_TIMELINE_FILTER}
+            riverNotificationServiceUrl={env.VITE_RIVER_NOTIFICATION_SERVICE_URL}
+            accountAbstractionConfig={environment.accountAbstractionConfig}
+            highPriorityStreamIds={highPriorityStreamIds.current}
+            unpackEnvelopeOpts={unpackEnvelopeOpts}
+            supportedXChainRpcMapping={supportedXChainRpcMapping}
+            ethMainnetRpcUrl={env.VITE_ETHEREUM_RPC_URL}
+            analytics={analyticsInstance}
+            streamMetadataUrl={env.VITE_RIVER_STREAM_METADATA_URL}
+        >
+            <WagmiProvider config={wagmiConfig}>
                 <CombinedAuthContextProvider>
                     <>
                         <FaviconBadge />
@@ -203,8 +203,8 @@ export const App = () => {
                         <TrackRiverConnectedSuccessfully />
                     </>
                 </CombinedAuthContextProvider>
-            </TownsContextProvider>
-        </WagmiProvider>
+            </WagmiProvider>
+        </TownsContextProvider>
     )
 }
 

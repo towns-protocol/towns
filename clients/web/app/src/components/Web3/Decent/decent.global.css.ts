@@ -110,6 +110,11 @@ globalStyle('.box-token-group-option button:hover', {
     backgroundColor: `${vars.color.layer.level4} !important`,
 })
 
+globalStyle('.box-balance-selector', {
+    width: '100% !important',
+    padding: '0 !important',
+})
+
 globalStyle('.box-balance-selector-amt', {
     background: 'transparent !important',
     color: `${vars.color.text.default} !important`,

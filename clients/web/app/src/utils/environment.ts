@@ -103,6 +103,8 @@ const envSchema = z.object({
     VITE_ENABLE_CONFIRM_V2: boolish.default(false),
     // show the deposit button within the fund wallet modal
     VITE_ENABLE_CONFIRM_FUND_WALLET: boolish.default(false),
+    // show custom decent components for funding wallet
+    VITE_ENABLE_DECENT_ONBOARDING_V2: boolish.default(false),
 })
 
 const parsed = envSchema.safeParse(import.meta.env)

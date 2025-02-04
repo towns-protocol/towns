@@ -1,18 +1,18 @@
 import React from 'react'
 import { useAccount } from 'wagmi'
-import { Box, Button, Icon, IconName, Stack } from '@ui'
+import { Box, Button, Stack } from '@ui'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { shortAddress } from 'ui/utils/utils'
+import { ConnectedWalletIcon } from './ConnectedWalletIcon'
+import { useActiveWalletIsPrivy } from './useActiveWalletIsPrivy'
 
-const iconMap: Record<string, IconName> = {
-    metamask: 'metamask',
-}
-
+// wagmi's useAccount will return the "active" privy wallet, which can be set with useSetActiveWallet from @privy-io/wagmi
 export function ConnectedWallet() {
     const { address, connector } = useAccount()
     const walletName = connector?.name?.toLowerCase()
+    const activeWalletIsPrivy = useActiveWalletIsPrivy()
 
-    if (!address) {
+    if (!address || activeWalletIsPrivy) {
         return null
     }
 
@@ -27,7 +27,7 @@ export function ConnectedWallet() {
             padding="sm"
         >
             <Stack horizontal gap="sm" alignItems="center">
-                <Icon type={walletName ? iconMap[walletName] : 'wallet'} />
+                <ConnectedWalletIcon walletName={walletName} />
                 {address && (
                     <ClipboardCopy color="default" clipboardContent={address}>
                         {shortAddress(address)}

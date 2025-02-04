@@ -186,7 +186,8 @@
             {
                 "label": "Different versions in sample-app",
                 "dependencies": [
-                    "wagmi"
+                    "wagmi",
+                    "@privy-io/wagmi"
                 ],
                 "packages": [
                     "sample-app"

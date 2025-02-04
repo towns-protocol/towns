@@ -33,6 +33,12 @@ export const blockProperties = defineProperties({
                 left: '50%',
                 transform: 'translate(-50%, -50%)',
             },
+            fixedCenter: {
+                position: 'fixed',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+            },
             topLeft: {
                 position: 'absolute',
                 top: 0,

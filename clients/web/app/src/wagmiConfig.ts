@@ -1,4 +1,5 @@
-import { createConfig, http } from 'wagmi'
+import { http } from 'wagmi'
+import { createConfig } from '@privy-io/wagmi'
 import { Chain, zora } from 'wagmi/chains'
 import { getViemChain } from '@decent.xyz/box-common'
 
@@ -28,7 +29,7 @@ const additionalChains: [Chain, string][] = [
     [zora, `https://zora-mainnet.g.alchemy.com/v2/${alchemyKey}`],
 ]
 
-const chains = initialChains.concat(additionalChains.map(([c]) => c)) as [Chain, ...Chain[]]
+export const chains = initialChains.concat(additionalChains.map(([c]) => c)) as [Chain, ...Chain[]]
 
 const transports = {
     ...initialTransports,

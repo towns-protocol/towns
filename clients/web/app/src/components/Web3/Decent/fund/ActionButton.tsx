@@ -1,0 +1,303 @@
+import { useAccount, useSwitchChain } from 'wagmi'
+import { useSetActiveWallet } from '@privy-io/wagmi'
+import { ConnectedWallet } from '@privy-io/react-auth'
+import React, { useEffect, useMemo } from 'react'
+import { Toast } from 'react-hot-toast'
+import { ConnectAndSetActive } from '@components/Web3/Decent/ConnectAndSetActive'
+import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
+import { Button, ButtonProps, Icon, Stack, Text } from '@ui'
+import { usePrivyConnectWallet } from '@components/Web3/ConnectWallet/usePrivyConnectWallet'
+import { shortAddress } from 'ui/utils/utils'
+import {
+    useActiveWalletIsPrivy,
+    useIsWagmiConnected,
+} from '@components/Web3/Decent/useActiveWalletIsPrivy'
+import { useNonPrivyWallets } from '@components/Web3/Decent/SelectDifferentWallet'
+import { isBoxActionResponseError } from '@components/Web3/Decent/utils'
+import { ConnectedWalletIcon } from '@components/Web3/Decent/ConnectedWalletIcon'
+import { StandardToast, dismissToast } from '@components/Notifications/StandardToast'
+import { useFundContext, useFundTxStore } from './FundContext'
+import { sendSwapTransaction } from '../useSwapAction'
+import { waitForReceipt } from '../waitForReceipt'
+import { FundWalletCallbacks } from './types'
+
+const INSUFFICIENT_FUNDS = 'INSUFFICIENT_FUNDS'
+const INVALID_SWAP = 'INVALID_SWAP'
+
+export function ActionButton(props: FundWalletCallbacks) {
+    const isWagmiConnected = useIsWagmiConnected()
+    const nonPrivyWallets = useNonPrivyWallets()
+    const { setActiveWallet } = useSetActiveWallet()
+    const activeWalletIsPrivy = useActiveWalletIsPrivy()
+
+    const buttonStates = useButtonStates(props)
+
+    if (nonPrivyWallets.length === 0 || !isWagmiConnected) {
+        return <ConnectAndSetActive />
+    }
+
+    if (activeWalletIsPrivy) {
+        return (
+            <Stack gap paddingTop="md" alignItems="center">
+                <Text>Select the wallet you want to fund your account</Text>
+                {nonPrivyWallets.map((w) => (
+                    <Button
+                        width="100%"
+                        rounded="full"
+                        key={w.address}
+                        onClick={() => setActiveWallet(w)}
+                    >
+                        <ConnectedWalletIcon walletName={w.walletClientType} />
+                        {shortAddress(w.address)}
+                    </Button>
+                ))}
+            </Stack>
+        )
+    }
+
+    if (buttonStates.status === INSUFFICIENT_FUNDS || buttonStates.status === INVALID_SWAP) {
+        return (
+            <Stack
+                horizontal
+                centerContent
+                height="x6"
+                gap="sm"
+                rounded="full"
+                background="negativeSubtle"
+            >
+                <Icon type="alert" size="square_sm" />
+                <Text>
+                    {buttonStates.status === INSUFFICIENT_FUNDS
+                        ? 'Insufficient funds'
+                        : buttonStates.status === INVALID_SWAP
+                        ? 'Invalid Swap'
+                        : 'There was an error'}
+                </Text>
+            </Stack>
+        )
+    }
+
+    return (
+        <Button
+            rounded="full"
+            disabled={buttonStates.disabled}
+            tone={buttonStates.tone ?? 'cta1'}
+            onClick={buttonStates.onClick}
+        >
+            {buttonStates.loading && <ButtonSpinner />}
+            {buttonStates.text}
+        </Button>
+    )
+}
+
+function useButtonStates(props: FundWalletCallbacks) {
+    const { onTxStart, onTxSuccess, onTxError } = props
+    const isWagmiConnected = useIsWagmiConnected()
+    const nonPrivyWallets = useNonPrivyWallets()
+    const { setActiveWallet } = useSetActiveWallet()
+    const { chainId: walletChainId } = useAccount()
+    const { switchChain } = useSwitchChain()
+    const {
+        estimatedGasFailureReason,
+        amount,
+        srcToken,
+        estimatedGas,
+        isEstimatedGasLoading,
+        boxActionResponse,
+        isBoxActionLoading,
+        disabled,
+        setTx,
+    } = useFundContext()
+    const srcChainId = srcToken?.chainId
+    const chainMismatch = srcChainId !== walletChainId
+    const noWalletConnected = nonPrivyWallets.length === 0 || !isWagmiConnected
+
+    const privyConnectWallet = usePrivyConnectWallet({
+        onSuccess: async (wallet) => {
+            await setActiveWallet(wallet as ConnectedWallet)
+            props.onConnectWallet?.(wallet as ConnectedWallet)
+        },
+    })
+
+    const buttonStates: {
+        text?: string
+        onClick?: () => void
+        tone?: ButtonProps['tone']
+        loading?: boolean
+        disabled?: boolean
+        status?: typeof INSUFFICIENT_FUNDS | typeof INVALID_SWAP
+    } = useMemo(() => {
+        if (chainMismatch && srcChainId) {
+            return {
+                text: 'Switch Network',
+                onClick: () => switchChain({ chainId: srcChainId }),
+            }
+        }
+        if (noWalletConnected) {
+            return {
+                text: 'Connect Wallet',
+                onClick: privyConnectWallet,
+            }
+        }
+
+        // disable button if gas estimate fails - the tx would fail
+        if (estimatedGasFailureReason) {
+            if (
+                (estimatedGasFailureReason.cause as { name: string }).name ===
+                'InsufficientFundsError'
+            ) {
+                return {
+                    status: INSUFFICIENT_FUNDS,
+                }
+            } else {
+                return {
+                    text: 'Fund',
+                    disabled: true,
+                }
+            }
+        }
+
+        // the box response returned but decent can't find a way to make the swap
+        // the error messages are things like "no available routes with liquidity"
+        // for now just catch all and show the same error message
+        if (isBoxActionResponseError(boxActionResponse)) {
+            return {
+                status: INVALID_SWAP,
+            }
+        }
+
+        if (!amount) {
+            return {
+                text: 'Fund',
+                disabled: true,
+            }
+        }
+
+        if (!estimatedGas || !boxActionResponse || isEstimatedGasLoading || isBoxActionLoading) {
+            return {
+                text: '',
+                loading: true,
+                disabled: true,
+            }
+        }
+
+        return {
+            text: 'Fund',
+            disabled,
+            onClick: async () => {
+                if (disabled) {
+                    return
+                }
+                setTx({
+                    status: 'pending',
+                })
+                // popupToast(FundToast, {
+                //     duration: Infinity,
+                // })
+                onTxStart?.({
+                    sourceChain: srcToken?.chainId,
+                    sourceAsset: srcToken?.address,
+                    sourceAmount: amount.toString(),
+                })
+
+                try {
+                    const hash = await sendSwapTransaction({
+                        srcChainId: srcToken?.chainId,
+                        actionResponse: boxActionResponse,
+                    })
+
+                    if (hash) {
+                        try {
+                            const receipt = await waitForReceipt({ hash })
+                            if (receipt?.status === 'success') {
+                                setTx({
+                                    status: 'success',
+                                    receipt: receipt,
+                                })
+                                await onTxSuccess?.(receipt)
+                            } else {
+                                setTx({
+                                    status: 'error',
+                                    error: new Error('Failed to get receipt'),
+                                })
+                                onTxError?.('Failed to get receipt')
+                            }
+                        } catch (error) {
+                            console.error('[useButtonStates waitForReceipt] error', error)
+                            onTxError?.(error)
+                            setTx({
+                                status: 'error',
+                                error: error as Error,
+                            })
+                        }
+                    }
+                } catch (error) {
+                    onTxError?.(error)
+                    setTx({
+                        status: 'error',
+                        error: error as Error,
+                    })
+                }
+            },
+        }
+    }, [
+        chainMismatch,
+        srcChainId,
+        noWalletConnected,
+        estimatedGasFailureReason,
+        boxActionResponse,
+        amount,
+        estimatedGas,
+        isEstimatedGasLoading,
+        isBoxActionLoading,
+        disabled,
+        switchChain,
+        privyConnectWallet,
+        setTx,
+        onTxStart,
+        srcToken?.chainId,
+        srcToken?.address,
+        onTxSuccess,
+        onTxError,
+    ])
+
+    return buttonStates
+}
+
+// In case we need to change pending state from overlay spinner to toast
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function FundToast(props: { toast: Toast }) {
+    const { toast } = props
+    const tx = useFundTxStore((s) => s)
+
+    useEffect(() => {
+        let timeout: NodeJS.Timeout | null = null
+        if (tx?.status === 'success' || tx?.status === 'error') {
+            timeout = setTimeout(() => {
+                dismissToast(toast.id)
+            }, 8_000)
+        }
+        return () => {
+            timeout && clearTimeout(timeout)
+        }
+    }, [toast.id, tx?.status])
+
+    if (!tx?.status) {
+        return null
+    }
+
+    if (tx.status === 'pending') {
+        return <StandardToast.Pending toast={toast} message="Swapping funds" />
+    }
+
+    if (tx.status === 'success') {
+        return <StandardToast.Success toast={toast} message="Funding successful" />
+    }
+
+    if (tx.status === 'error') {
+        if (tx.error?.message.includes('rejected')) {
+            return null
+        }
+        return <StandardToast.Error toast={toast} message="Funding failed" />
+    }
+}

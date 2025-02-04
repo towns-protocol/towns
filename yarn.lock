@@ -3836,66 +3836,66 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@decent.xyz/box-common@npm:4.0.25":
-  version: 4.0.25
-  resolution: "@decent.xyz/box-common@npm:4.0.25"
+"@decent.xyz/box-common@npm:4.0.53":
+  version: 4.0.53
+  resolution: "@decent.xyz/box-common@npm:4.0.53"
   peerDependencies:
     "@wagmi/core": 2.x
     react: ^18.0.0
     viem: 2.x
     wagmi: 2.x
-  checksum: b1762eef2f7d9abfd881117cd71bb9202b904ee46c5728a60cbdc7c65b97893eb0960a250f032fb5e26c3e01ad280993720cd24c506486044b70a885b83c4317
+  checksum: 595a32dd3454dc190e6bc93a49d5c17ab4fadde377b98b4b0ae13c17cdf8ff2734558fdbed22c1354eee8eabc32fd6a18c926b334ad9f487acc04306a918a28c
   languageName: node
   linkType: hard
 
-"@decent.xyz/box-evm@npm:4.0.25":
-  version: 4.0.25
-  resolution: "@decent.xyz/box-evm@npm:4.0.25"
+"@decent.xyz/box-evm@npm:4.0.53":
+  version: 4.0.53
+  resolution: "@decent.xyz/box-evm@npm:4.0.53"
   dependencies:
-    "@decent.xyz/box-common": 4.0.25
-    "@decent.xyz/box-hooks": 4.0.25
+    "@decent.xyz/box-common": 4.0.53
+    "@decent.xyz/box-hooks": 4.0.53
   peerDependencies:
     "@wagmi/core": 2.x
     react: ^18.0.0
     viem: 2.x
     wagmi: 2.x
-  checksum: f19b4d16871f3b881100f27e7a3d104c9fcb287ab4eb36e5f0427a71982ac227c5566efcf126366c34cab65ac1112c676b7148c140488c793e78b4cb2cb975bf
+  checksum: de3616c1cf6cf4efe7d60d46c222c59d038a880b2ae54a19c45d3c7fb8fcfd907b27c461230873b509e92f1c382acc19cd271be49d1d7dda2e6229cc78019df1
   languageName: node
   linkType: hard
 
-"@decent.xyz/box-hooks@npm:4.0.25":
-  version: 4.0.25
-  resolution: "@decent.xyz/box-hooks@npm:4.0.25"
+"@decent.xyz/box-hooks@npm:4.0.53":
+  version: 4.0.53
+  resolution: "@decent.xyz/box-hooks@npm:4.0.53"
   dependencies:
-    "@decent.xyz/box-common": 4.0.25
+    "@decent.xyz/box-common": 4.0.53
     swr: ^2.2.0
   peerDependencies:
     "@wagmi/core": 2.x
     react: ^18.0.0
-  checksum: 01cdd5729221e0af611dd44a35072525fdaf3adb831933ab65dec5dc555b19cce128ec64ab763554a4e61fa7ef360896a4106c605f69c45079d7d11937151b8b
+  checksum: 5f836ccdfd86d62f37849191c073c62d63a77199a3ee9eaf8ff4ef251a72596503e6155786d40fb9c5bbfc5dedaf298e335a5123d18e93d2f0d713be9fcedbbf
   languageName: node
   linkType: hard
 
-"@decent.xyz/box-ui@npm:4.0.25":
-  version: 4.0.25
-  resolution: "@decent.xyz/box-ui@npm:4.0.25"
+"@decent.xyz/box-ui@npm:4.0.53":
+  version: 4.0.53
+  resolution: "@decent.xyz/box-ui@npm:4.0.53"
   dependencies:
-    "@decent.xyz/box-common": 4.0.25
-    "@decent.xyz/box-hooks": 4.0.25
+    "@decent.xyz/box-common": 4.0.53
+    "@decent.xyz/box-hooks": 4.0.53
   peerDependencies:
     react: ^18.0.0
-  checksum: 2cc1b85c8266043ff2ecd1a7951c9f9db6815ab3a53725481bb47ee8c9fa6745803b2277c0586913ba2424a9cdbc9656f2c22d5d4eaefbe36bdba88b77f447cd
+  checksum: 6cae4d5285045145e306fc218f24effa1b893ecb4caf18a38b324473b02ec5cedcbe5b03473a14df91e1a2fe87cbef3081071accfff7e6a777c5552c3fe795a3
   languageName: node
   linkType: hard
 
-"@decent.xyz/the-box@npm:^4.0.25":
-  version: 4.0.25
-  resolution: "@decent.xyz/the-box@npm:4.0.25"
+"@decent.xyz/the-box@npm:^4.0.53":
+  version: 4.0.53
+  resolution: "@decent.xyz/the-box@npm:4.0.53"
   dependencies:
-    "@decent.xyz/box-common": 4.0.25
-    "@decent.xyz/box-evm": 4.0.25
-    "@decent.xyz/box-hooks": 4.0.25
-    "@decent.xyz/box-ui": 4.0.25
+    "@decent.xyz/box-common": 4.0.53
+    "@decent.xyz/box-evm": 4.0.53
+    "@decent.xyz/box-hooks": 4.0.53
+    "@decent.xyz/box-ui": 4.0.53
     swr: ^2.2.0
   peerDependencies:
     "@wagmi/core": 2.x
@@ -3903,7 +3903,7 @@ __metadata:
     react-dom: ">=18"
     viem: 2.x
     wagmi: 2.x
-  checksum: 7fc00cdb0cbfa955878969ec12efb5ce73f65baf66a05c4257a5c12d0613f77c5dee27c2faac790b81585e2b6bed818175c17c52a28eb033e729365d43d7f419
+  checksum: f5c41dbd6191aa6913f2ed0071e9c68a2c3ce4ba22a23947519a730a2e6c004e266926db460e4c3a0712dbc2c2c46a5c6a8e2903b425a42dfdc0b5ac6fd7346a
   languageName: node
   linkType: hard
 
@@ -8641,6 +8641,18 @@ __metadata:
     viem: ^2
     wagmi: ^2
   checksum: 69410c298729e69fad11bdb3d40bdfb82cf3eb039b6f1bc33bc6f23c8b7caa2d232a55f81146336f2786e9f0ad3bbfd9bbee613934d06e37c1baf4a52030804d
+  languageName: node
+  linkType: hard
+
+"@privy-io/wagmi@npm:^1.0.2":
+  version: 1.0.2
+  resolution: "@privy-io/wagmi@npm:1.0.2"
+  peerDependencies:
+    "@privy-io/react-auth": ^2.0.0
+    react: ">=18"
+    viem: ^2
+    wagmi: ^2
+  checksum: 3ad0e01ef60ae7db8499068cd3a489c188607c1a52d7f7eb9ccf359a7b206c646a39d92c80a74bbe6016ac058b64843c40bb4915355e92d9f93476f88632ada5
   languageName: node
   linkType: hard
 
@@ -24113,7 +24125,7 @@ __metadata:
     "@crossmint/client-sdk-react-ui": ^1.11.3
     "@datadog/browser-logs": ^4.48.1
     "@datadog/browser-rum": ^5.8.0
-    "@decent.xyz/the-box": ^4.0.25
+    "@decent.xyz/the-box": ^4.0.53
     "@emoji-mart/data": ^1.1.2
     "@emoji-mart/react": ^1.1.1
     "@giphy/js-fetch-api": ^4.4.0
@@ -24121,6 +24133,7 @@ __metadata:
     "@hookform/resolvers": ^3.6.0
     "@ngneat/falso": ^6.1.0
     "@privy-io/react-auth": 1.92.2
+    "@privy-io/wagmi": ^1.0.2
     "@react-hook/resize-observer": ^1.2.6
     "@react-spring/three": ^9.7.3
     "@react-three/drei": ^9.105.4

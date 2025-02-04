@@ -9,7 +9,7 @@ export function useSrcAndDstChains() {
         if (isBaseMainnet) {
             return [ChainId.ETHEREUM, ChainId.BASE]
         }
-        return [ChainId.SEPOLIA, ChainId.BASE_SEPOLIA]
+        return [ChainId.BASE_SEPOLIA, ChainId.BASE_SEPOLIA]
     }, [isBaseMainnet])
 
     return { srcChain, dstChain }

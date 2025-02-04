@@ -162,7 +162,9 @@ const root = createGlobalTheme(':root', {
              * hard to to make one-version-fits-all-needs
              **/
             x1: `${baseline * 1}px`,
+            'x1.5': `${baseline * 1.5}px`,
             x2: `${baseline * 2}px`,
+            'x2.5': `${baseline * 2.5}px`,
             x3: `${baseline * 3}px`,
             x4: `${baseline * 4}px`,
             x5: `${baseline * 5}px`,

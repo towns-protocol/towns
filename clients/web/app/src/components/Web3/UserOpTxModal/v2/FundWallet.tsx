@@ -1,110 +1,100 @@
-import React, { useCallback, useState } from 'react'
-import { Box, Button, Icon, MotionBox, Text } from '@ui'
-import { useBalance } from 'hooks/useBalance'
+import React, { useState } from 'react'
+import { Address, useTownsContext } from 'use-towns-client'
+import { popupToast } from '@components/Notifications/popupToast'
+import { StandardToast } from '@components/Notifications/StandardToast'
+import { FullPanelOverlay } from '@components/Web3/WalletLinkingPanel'
 import { DecentTransactionReceipt, Onboarding, getDecentScanLink } from '../../Decent/Onboarding'
-import { trackFundWalletTx } from '../../Wallet/fundWalletAnalytics'
+import {
+    trackConnectWallet,
+    trackFundWalletTx,
+    trackFundWalletTxStart,
+} from '../../Wallet/fundWalletAnalytics'
 import { useUserOpTxModalContext } from './UserOpTxModalContext'
 import { useMyAbstractAccountAddress } from './hooks/useMyAbstractAccountAddress'
 
 export const FundWallet = (props: { cost: bigint }) => {
-    const [result, setResult] = useState<{
-        status: 'success' | 'error' | undefined
-        link?: string
-    }>({
-        status: undefined,
-        link: undefined,
-    })
-
-    if (result.status) {
-        return <ResultBox status={result.status} link={result.link} cost={props.cost} />
-    }
+    const { baseProvider } = useTownsContext()
+    const myAbstractAccountAddress = useMyAbstractAccountAddress().data
+    const { setView } = useUserOpTxModalContext()
+    const [isCheckingBalance, setIsCheckingBalance] = useState(false)
 
     return (
-        <Onboarding
-            onTxSuccess={(r) => {
-                if (r) {
-                    trackFundWalletTx({ success: true })
-                    const receipt = r as DecentTransactionReceipt
-                    const link = getDecentScanLink(receipt)
-                    setResult({ status: 'success', link })
+        <>
+            <Onboarding
+                onConnectWallet={(wallet) =>
+                    trackConnectWallet({
+                        walletName: wallet.meta.name ?? 'unknown',
+                        entrypoint: 'joinspace',
+                    })
                 }
-            }}
-            onTxError={(e) => {
-                console.error('[Fund Wallet Tx from UserOpTxModal] error', e)
-                // for now we don't need to set the result here
-                // since decent has their own error modal that pops up
-                trackFundWalletTx({ success: false })
-            }}
-        />
+                onTxStart={(args) => trackFundWalletTxStart(args)}
+                onTxSuccess={async (r) => {
+                    if (r) {
+                        trackFundWalletTx({ success: true, entrypoint: 'joinspace' })
+                        const receipt = r as DecentTransactionReceipt
+                        const link = getDecentScanLink(receipt)
+                        popupToast(({ toast }) => (
+                            <StandardToast.Success
+                                toast={toast}
+                                message="You've added funds to your Towns Wallet!"
+                                cta="View on DecentScan"
+                                onCtaClick={() => {
+                                    window.open(link, '_blank')
+                                }}
+                            />
+                        ))
+                        setIsCheckingBalance(true)
+                        const isBalanceEnough = await checkBalance({
+                            cost: props.cost,
+                            provider: baseProvider,
+                            myAbstractAccountAddress,
+                        })
+                        if (isBalanceEnough) {
+                            setView(undefined)
+                        } else {
+                            setView('payEth')
+                        }
+                        setIsCheckingBalance(false)
+                    }
+                }}
+                onTxError={(e) => {
+                    console.error('[Fund Wallet Tx from UserOpTxModal] error', e)
+                    trackFundWalletTx({ success: false, entrypoint: 'joinspace' })
+                    popupToast(({ toast }) => (
+                        <StandardToast.Error
+                            toast={toast}
+                            message="There was an error adding funds to your Towns Wallet"
+                        />
+                    ))
+                }}
+            />
+            {isCheckingBalance && <FullPanelOverlay text="Checking balance..." />}
+        </>
     )
 }
 
-const ResultBox = (props: {
-    status: 'success' | 'error'
-    link: string | undefined
+async function checkBalance(props: {
     cost: bigint
-}) => {
-    const { setView } = useUserOpTxModalContext()
-    const myAbstractAccountAddress = useMyAbstractAccountAddress().data
-
-    const { data: balanceData } = useBalance({
-        address: myAbstractAccountAddress,
-        enabled: !!myAbstractAccountAddress,
-        watch: true,
-    })
-
-    const setDestinationView = useCallback(() => {
-        if (balanceData?.value && balanceData.value >= props.cost) {
-            // go back to beginning
-            // user can proceed with the transaction
-            setView(undefined)
-        } else {
-            setView('payEth')
+    provider: ReturnType<typeof useTownsContext>['baseProvider']
+    myAbstractAccountAddress: Address | undefined
+}) {
+    const now = Date.now()
+    const endTime = now + 8_000
+    if (!props.myAbstractAccountAddress) {
+        return false
+    }
+    while (Date.now() < endTime) {
+        try {
+            const currentBalance = (
+                await props.provider.getBalance(props.myAbstractAccountAddress)
+            ).toBigInt()
+            if (currentBalance >= props.cost) {
+                return true
+            }
+            await new Promise((resolve) => setTimeout(resolve, 1_000))
+        } catch (e) {
+            console.error('[checkBalance] error', e)
         }
-    }, [setView, balanceData?.value, props.cost])
-
-    const isSuccess = props.status === 'success'
-    const message = isSuccess
-        ? "You've added funds to your Towns Wallet!"
-        : 'Something went wrong. Could not add funds to your Towns Wallet.'
-
-    return (
-        <Box centerContent gap="md" paddingBottom="md">
-            <Box horizontal centerContent gap="sm">
-                <Box background="level3" rounded="sm" padding="sm">
-                    <Icon
-                        type={isSuccess ? 'check' : 'alert'}
-                        color={isSuccess ? 'positive' : 'negative'}
-                        size="square_sm"
-                        shrink={false}
-                    />
-                </Box>
-                <Text>{message}</Text>
-            </Box>
-
-            {isSuccess && (
-                <Button
-                    tone="none"
-                    color="cta1"
-                    size="inline"
-                    onClick={() => window.open(props.link, '_blank')}
-                >
-                    <Text size="sm">View on DecentScan</Text>
-                </Button>
-            )}
-
-            <MotionBox
-                initial={{ width: 0 }}
-                animate={{ width: '100%' }}
-                transition={{ duration: 4, ease: 'linear' }}
-                position="absolute"
-                bottom="none"
-                background="level4"
-                left="none"
-                height="x1"
-                width="100%"
-                onAnimationComplete={setDestinationView}
-            />
-        </Box>
-    )
+    }
+    return false
 }
