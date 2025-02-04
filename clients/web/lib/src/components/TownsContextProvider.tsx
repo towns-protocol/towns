@@ -34,8 +34,11 @@ import { TownsAnalytics } from '../types/TownsAnalytics'
 import { useStreamMetadataUpdater } from '../hooks/use-stream-metadata-updater'
 import { NotificationSettingsClient } from '../client/TownsNotifciationSettings'
 import { useSpaceRollups } from '../hooks/use-space-data'
+import { dlogger } from '@river-build/dlog'
 
 export type InitialSyncSortPredicate = (a: string, b: string) => number
+
+const log = dlogger('towns:context')
 
 export interface ITownsContext {
     environmentId: string /// the environment id, used to manage local storage keys
@@ -110,16 +113,6 @@ export function TownsContextProvider({
 }
 
 const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
-    let hookCounter = 0
-    function useHookLogger() {
-        useEffect(() => {
-            console.log(`Hook number ${++hookCounter}`)
-            return () => {
-                hookCounter--
-            }
-        }, [])
-    }
-
     const { environmentId, baseConfig, baseChain, riverConfig, riverChain, timelineFilter } = props
 
     const previousProps = useRef<TownsContextProviderProps>()
@@ -129,7 +122,7 @@ const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
             Object.keys(previousProps.current).forEach((key, i) => {
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
                 if ((previousProps.current as any)[key] !== (props as any)[key]) {
-                    console.log('TownsContextImpl: props changed', i, key)
+                    log.info('prop changed', i, key)
                 }
             })
         }
@@ -202,10 +195,10 @@ const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
     })
 
     const { dmUnreadChannelIds } = useDMUnreads(casablancaClient, dmChannels)
-    useHookLogger()
 
     const rooms = useCasablancaRooms(townsOpts, casablancaClient)
     const dynamicTimelineFilter = useTimelineFilter((state) => state.eventFilter)
+
     useCasablancaTimelines(
         casablancaClient,
         dynamicTimelineFilter && dynamicTimelineFilter.size > 0
@@ -214,38 +207,79 @@ const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
         props.streamFilter,
     )
     useSpaceRollups(townsOpts, casablancaClient, baseProvider)
-    useHookLogger()
 
-    return (
-        <TownsContext.Provider
-            value={{
-                environmentId,
-                client,
-                clientSingleton,
-                casablancaClient,
-                notificationSettingsClient,
-                baseConfig,
-                baseChain,
-                baseProvider,
-                riverConfig,
-                riverChain,
-                riverProvider,
-                rooms,
-                spaceUnreads,
-                spaceMentions,
-                spaceUnreadChannelIds,
-                spaces,
-                spaceHierarchies,
-                dmChannels,
-                dmUnreadChannelIds,
-                clientStatus,
-                blockedUserIds,
-                signerContext,
-            }}
-        >
-            {props.children}
-        </TownsContext.Provider>
-    )
+    const value = useMemo(() => {
+        const newValue = {
+            environmentId,
+            client,
+            clientSingleton,
+            casablancaClient,
+            notificationSettingsClient,
+            baseConfig,
+            baseChain,
+            baseProvider,
+            riverConfig,
+            riverChain,
+            riverProvider,
+            rooms,
+            spaceUnreads,
+            spaceMentions,
+            spaceUnreadChannelIds,
+            spaces,
+            spaceHierarchies,
+            dmChannels,
+            dmUnreadChannelIds,
+            clientStatus,
+            blockedUserIds,
+            signerContext,
+        }
+
+        return newValue
+    }, [
+        environmentId,
+        client,
+        clientSingleton,
+        casablancaClient,
+        notificationSettingsClient,
+        baseConfig,
+        baseChain,
+        baseProvider,
+        riverConfig,
+        riverChain,
+        riverProvider,
+        rooms,
+        spaceUnreads,
+        spaceMentions,
+        spaceUnreadChannelIds,
+        spaces,
+        spaceHierarchies,
+        dmChannels,
+        dmUnreadChannelIds,
+        clientStatus,
+        blockedUserIds,
+        signerContext,
+    ])
+
+    log.info('context impl render')
+
+    const valueRef = useRef<ITownsContext>()
+
+    useEffect(() => {
+        log.info('context impl changed', !!value)
+        if (valueRef.current) {
+            const diffKeys = Object.keys(valueRef.current).reduce((acc, key) => {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+                if ((valueRef.current as any)[key] !== (value as any)[key]) {
+                    acc.push(key)
+                }
+                return acc
+            }, [] as string[])
+            log.info('new values', diffKeys)
+        }
+        valueRef.current = value
+    }, [value])
+
+    return <TownsContext.Provider value={value}>{props.children}</TownsContext.Provider>
 }
 
 /// the towns client needs to be nested inside a Web3 provider, hence the need for this component
@@ -260,7 +294,7 @@ const TownsContextImplMemo = React.memo(
         Object.keys(prevProps).forEach((key, i) => {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
             if ((prevProps as any)[key] !== (nextProps as any)[key]) {
-                console.log('TownsContextProvider: props changed', i, key)
+                log.info('context impl props changed', i, key)
                 result = false
             }
         })
