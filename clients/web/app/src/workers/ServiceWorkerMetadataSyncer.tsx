@@ -93,7 +93,7 @@ export function ServiceWorkerMetadataSyncer() {
 // TODO: mimic the previous version, needs refactoring in a separate PR (SW to
 // fetch from same store)
 function UsersMetadata({ store }: { store: NotificationStore }) {
-    const { allUsers } = useUserLookupStore()
+    const allUsers = useUserLookupStore((s) => s.allUsers)
 
     const setUsers = useCallback(
         async (users: LookupUser[]) => {

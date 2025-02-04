@@ -13,8 +13,8 @@ import { SnapshotCaseType } from '@river-build/proto'
 import { TownsOpts } from '../client/TownsClientTypes'
 import { useSpaceEnsLookup } from './use-ens-lookup'
 import { TownsClient } from 'client/TownsClient'
-
-type EnsInfo = { ensAddress: string; ensName: string }
+import { EnsInfo } from './use-ens-lookup'
+import { useShallow } from 'zustand/react/shallow'
 
 const dlog = dlogger('csb:hooks:user-lookup-updater')
 
@@ -62,7 +62,15 @@ export const useUserLookupUpdater = (
 ) => {
     const { ethMainnetRpcUrl } = townsOpts
     const { setSpaceUsers, setSpaceUser, setChannelUser, setChannelUsers, updateUserEverywhere } =
-        useUserLookupStore()
+        useUserLookupStore(
+            useShallow((s) => ({
+                setSpaceUsers: s.setSpaceUsers,
+                setSpaceUser: s.setSpaceUser,
+                setChannelUser: s.setChannelUser,
+                setChannelUsers: s.setChannelUsers,
+                updateUserEverywhere: s.updateUserEverywhere,
+            })),
+        )
     const { getEnsData } = useSpaceEnsLookup({ ethMainnetRpcUrl, townsClient })
 
     const onStreamMetadataUpdated = useCallback(
@@ -115,6 +123,8 @@ export const useUserLookupUpdater = (
 
             const spaceRecords: { userId: string; user: LookupUser; spaceId?: string }[] = []
             const channelRecords: { userId: string; user: LookupUser; channelId?: string }[] = []
+            const updatePromises: Promise<void>[] = []
+
             for (const userId of stream.view.getMembers().participants() ?? []) {
                 const info = metadata.userInfo(userId)
                 if (isUserInfo(info)) {
@@ -141,15 +151,18 @@ export const useUserLookupUpdater = (
                                 break
                         }
                     }
-                    void update()
+                    updatePromises.push(update())
                 }
             }
-            if (spaceRecords.length > 0) {
-                setSpaceUsers(spaceRecords)
-            }
-            if (channelRecords.length > 0) {
-                setChannelUsers(channelRecords)
-            }
+
+            void Promise.all(updatePromises).then(() => {
+                if (spaceRecords.length > 0) {
+                    setSpaceUsers(spaceRecords)
+                }
+                if (channelRecords.length > 0) {
+                    setChannelUsers(channelRecords)
+                }
+            })
         },
         [client?.streams, getEnsData, setChannelUsers, setSpaceUsers],
     )

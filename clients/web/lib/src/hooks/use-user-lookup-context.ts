@@ -15,7 +15,7 @@ export const useUserLookupContext = () => {
     const spaceId = context?.spaceId
     const channelId = context?.channelId
 
-    const { lookupUser: genericLookupUser } = useUserLookupStore()
+    const genericLookupUser = useUserLookupStore((s) => s.lookupUser)
 
     const lookupUser: LookupUserFn = useCallback(
         (userId: string) =>

@@ -15,8 +15,12 @@ vi.mock('zustand', async (importOriginal) => {
     }
 })
 
-const Wrapper = (props: { children: JSX.Element }) => {
-    return <TestApp>{props.children}</TestApp>
+const Wrapper = (props: { children: React.ReactNode }) => {
+    return (
+        <TestApp>
+            <>{props.children}</>
+        </TestApp>
+    )
 }
 
 const UserComponent = (props: { userId: string }) => {
@@ -71,7 +75,7 @@ describe('setting and updating a username', () => {
         })
 
         setupDefaultUserNames()
-        render(
+        const { rerender } = render(
             <Wrapper>
                 <Lib.SpaceContextProvider spaceId="spaceId">
                     <UserComponent userId="0x1234" />
@@ -83,7 +87,9 @@ describe('setting and updating a username', () => {
             expect(screen.getByText('hello')).toBeInTheDocument()
         })
 
-        const { result } = renderHook(() => Lib.useUserLookupStore())
+        const { result } = renderHook(() => Lib.useUserLookupStore(), {
+            wrapper: Wrapper,
+        })
         act(() => {
             result.current.setSpaceUser(
                 '0x1234',
@@ -101,6 +107,14 @@ describe('setting and updating a username', () => {
                 'spaceId',
             )
         })
+
+        rerender(
+            <Wrapper>
+                <Lib.SpaceContextProvider spaceId="spaceId">
+                    <UserComponent userId="0x1234" />
+                </Lib.SpaceContextProvider>
+            </Wrapper>,
+        )
 
         await waitFor(() => {
             expect(screen.getByText('joseph')).toBeInTheDocument()
@@ -123,6 +137,14 @@ describe('setting and updating a username', () => {
                 'spaceId',
             )
         })
+
+        rerender(
+            <Wrapper>
+                <Lib.SpaceContextProvider spaceId="spaceId">
+                    <UserComponent userId="0x1234" />
+                </Lib.SpaceContextProvider>
+            </Wrapper>,
+        )
 
         await waitFor(() => {
             expect(screen.getByText('joseph2')).toBeInTheDocument()

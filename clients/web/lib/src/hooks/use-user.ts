@@ -3,7 +3,7 @@ import { useUserLookupStore } from '../store/use-user-lookup-store'
 import { LookupUser } from '../types/user-lookup'
 
 export function useUser(userId?: string): LookupUser | undefined {
-    const { lookupUser } = useUserLookupStore()
+    const lookupUser = useUserLookupStore((s) => s.lookupUser)
 
     return userId ? lookupUser(userId) ?? getStableDefault(userId) : undefined
 }
