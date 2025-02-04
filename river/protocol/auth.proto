@@ -1,0 +1,67 @@
+syntax = "proto3";
+package river;
+option go_package = "github.com/river-build/river/core/node/protocol";
+
+import "google/protobuf/timestamp.proto";
+
+// AuthenticationService provides client functionality to obtain a session token that can be used
+// in the NotificationService.
+service AuthenticationService {
+  // StartAuthentication returns a challenge that the client must sign to prove its identity.
+  rpc StartAuthentication(StartAuthenticationRequest) returns (StartAuthenticationResponse);
+  // FinishAuthentication expects the signed challenge and if valid returns a session token
+  // that can be used in the NotificationService.
+  rpc FinishAuthentication(FinishAuthenticationRequest) returns (FinishAuthenticationResponse);
+}
+
+message StartAuthenticationRequest {
+    // user id of the user that wants to authenticate
+    bytes user_id = 1;
+  }
+  
+  message StartAuthenticationResponse {
+    // user id of the user that wants to authenticate
+    bytes user_id = 1;
+    // challenge that must be signed.
+    // clients must verify before signing that the challenge is >= 128 bits
+    bytes challenge = 2;
+    // timestamp until the challenge is valid
+    google.protobuf.Timestamp expiration = 3;
+  }
+  
+  // note, challenge expiration is stored in the notification service and therefore doesn't have to be provided
+  // in the request. Expiration is looked up through the challenge.
+  message FinishAuthenticationRequest {
+    // user id of the user that wants to authenticate.
+    //
+    // For the response to be valid:
+    // If delegate_sig is present, user_id must match delegate_sig signer address.
+    // If delegate_sig is not present, user_id must match signature signer address.
+    bytes user_id = 1;
+  
+    // signature is calculated with the delegate keypair with:
+    // ecdsa_sign(delegate_key, sha256(PREFIX || user_id || expiration || challenge)
+    // with
+    // PREFIX=NS_AUTH: (string with length 8)
+    // user_id raw user id bytes (160 bits)
+    // expiration is a 64 bits unix timestamp encoded in big endian
+    // || means concatenation
+    bytes signature = 2;
+  
+    // delegate_sig contains signature of the
+    // public key of the delegate keypair + the delegate_expiry_epoch_ms.
+    // User's primary wallet is used to produce this signature.
+    bytes delegate_sig = 3;
+  
+    // DelegateExpiry is the time when the delegate signature expires.
+    int64 delegate_expiry_epoch_ms = 4;
+  
+    // challenge that must be signed to prove identity.
+    bytes challenge = 5;
+  }
+  
+  message FinishAuthenticationResponse {
+    // session_token holds the token that must be provided in the AUTHORIZATION header when making
+    // rpc calls to the NotificationService.
+    string session_token = 1;
+  }

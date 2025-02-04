@@ -57,23 +57,28 @@ func DeleteTestSchema(ctx context.Context, dbUrl string, schemaName string) erro
 	return err
 }
 
-func ConfigureDB(ctx context.Context) (*config.DatabaseConfig, string, func(), error) {
-	dbSchemaName := os.Getenv("TEST_DATABASE_SCHEMA_NAME")
-	if dbSchemaName == "" {
-		b := make([]byte, 16)
-		_, err := rand.Read(b)
-		if err != nil {
-			return &config.DatabaseConfig{}, "", func() {}, err
-		}
-		// convert to hex string
-		dbSchemaName = "tst" + hex.EncodeToString(b)
+func ConfigureDbWithPrefix(
+	ctx context.Context,
+	prefix string,
+) (*config.DatabaseConfig, string, func(), error) {
+	b := make([]byte, 16)
+	_, err := rand.Read(b)
+	if err != nil {
+		return &config.DatabaseConfig{}, "", func() {}, err
 	}
+	return ConfigureDbWithSchemaName(ctx, prefix+hex.EncodeToString(b))
+}
+
+func ConfigureDbWithSchemaName(
+	ctx context.Context,
+	dbSchemaName string,
+) (*config.DatabaseConfig, string, func(), error) {
 	dbUrl := os.Getenv("TEST_DATABASE_URL")
 	if dbUrl != "" {
 		return &config.DatabaseConfig{
 			Url:          dbUrl,
 			StartupDelay: 2 * time.Millisecond,
-		}, dbSchemaName, func() {}, nil
+		}, "", func() {}, nil
 	} else {
 		cfg := &config.DatabaseConfig{
 			Host:          "localhost",
@@ -92,4 +97,18 @@ func ConfigureDB(ctx context.Context) (*config.DatabaseConfig, string, func(), e
 			},
 			nil
 	}
+}
+
+func ConfigureDB(ctx context.Context) (*config.DatabaseConfig, string, func(), error) {
+	dbSchemaName := os.Getenv("TEST_DATABASE_SCHEMA_NAME")
+	if dbSchemaName == "" {
+		b := make([]byte, 16)
+		_, err := rand.Read(b)
+		if err != nil {
+			return &config.DatabaseConfig{}, "", func() {}, err
+		}
+		// convert to hex string
+		dbSchemaName = "tst" + hex.EncodeToString(b)
+	}
+	return ConfigureDbWithSchemaName(ctx, dbSchemaName)
 }

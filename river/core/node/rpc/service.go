@@ -9,6 +9,7 @@ import (
 
 	"go.uber.org/zap"
 
+	"github.com/river-build/river/core/node/bot_registry"
 	"github.com/river-build/river/core/node/notifications"
 
 	"connectrpc.com/otelconnect"
@@ -58,6 +59,9 @@ type Service struct {
 	// Notifications
 	notifications notifications.UserPreferencesStore
 
+	// Bot Registry
+	botStore storage.BotRegistryStore
+
 	// River chain
 	riverChain       *crypto.Blockchain
 	registryContract *registries.RiverRegistryContract
@@ -86,6 +90,9 @@ type Service struct {
 
 	// NotificationService is not nil if running in notification mode
 	NotificationService *notifications.Service
+
+	// BotRegistryService is not nil if running in bot registry mode
+	BotRegistryService *bot_registry.Service
 
 	// Metrics
 	metrics               infra.MetricsFactory

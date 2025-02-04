@@ -73,7 +73,6 @@ type (
 		client                 BlockchainClient
 		wallet                 *Wallet
 		chainID                uint64
-		chainIDStr             string
 		signerFn               bind.SignerFn
 		tracer                 trace.Tracer
 		pricePolicy            TransactionPricePolicy
@@ -82,6 +81,7 @@ type (
 		transactionSubmitted         *prometheus.CounterVec
 		walletBalanceLastTimeChecked time.Time
 		walletBalance                prometheus.Gauge
+		baseFee                      atomic.Pointer[big.Int]
 
 		// mu guards lastNonce that is used to determine the tx nonce
 		mu        sync.Mutex
@@ -140,6 +140,8 @@ type (
 var (
 	_ TransactionPool                   = (*transactionPool)(nil)
 	_ TransactionPoolPendingTransaction = (*txPoolPendingTransaction)(nil)
+
+	riverChainFixedTipCap = big.NewInt(10_000) // 0.00001 gWei
 )
 
 func newPendingTransactionPool(
@@ -501,7 +503,6 @@ func NewTransactionPoolWithPolicies(
 		client:               client,
 		wallet:               wallet,
 		chainID:              chainID.Uint64(),
-		chainIDStr:           chainID.String(),
 		pricePolicy:          pricePolicy,
 		signerFn:             signerFn,
 		tracer:               tracer,
@@ -511,13 +512,17 @@ func NewTransactionPoolWithPolicies(
 			ctx, chainMonitor, client, chainID, wallet, replacePolicy, pricePolicy, metrics),
 	}
 
-	chainMonitor.OnHeader(txPool.Balance)
+	chainMonitor.OnHeader(txPool.onHead)
 
 	if !disableReplacePendingTransactionOnBoot {
 		go txPool.sendReplacementTransactions(ctx)
 	}
 
 	return txPool, nil
+}
+
+func (r *transactionPool) isRiverChain() bool {
+	return r.chainID == 550 /*mainnet*/ || r.chainID == 6524490 /*devnet*/
 }
 
 // sendReplacementTransactions tries to send replacement transactions for pending/stuck transactions.
@@ -729,6 +734,17 @@ func (r *transactionPool) submitLocked(
 		GasFeeCap: r.pricePolicy.GasFeeCap(),
 	}
 
+	// on river chain there is no gas market and miners are expected to include transactions with a
+	// fixed tip of riverChainFixedTipCap. This saves several rpc calls when assembling the transaction.
+	if r.isRiverChain() {
+		if baseFee := r.baseFee.Load(); baseFee != nil {
+			opts.GasFeeCap = new(big.Int).Add(
+				new(big.Int).Mul(baseFee, big.NewInt(2)),
+				riverChainFixedTipCap)
+		}
+		opts.GasTipCap = riverChainFixedTipCap
+	}
+
 	tx, err := createTx(opts)
 	if err != nil {
 		return nil, err
@@ -799,7 +815,9 @@ func (r *transactionPool) submitLocked(
 	return pendingTx, nil
 }
 
-func (r *transactionPool) Balance(ctx context.Context, _ *types.Header) {
+func (r *transactionPool) onHead(ctx context.Context, head *types.Header) {
+	r.baseFee.Store(new(big.Int).Set(head.BaseFee))
+	
 	if time.Since(r.walletBalanceLastTimeChecked) < time.Minute {
 		return
 	}
