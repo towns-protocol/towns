@@ -61,7 +61,7 @@ module "rds_aurora_postgresql" {
     one = {}
   }
 
-  publicly_accessible = false
+  publicly_accessible = var.allow_db_public_access
 
   iam_database_authentication_enabled = false
 }
@@ -77,4 +77,18 @@ resource "aws_vpc_security_group_ingress_rule" "allow_pgadmin_inbound_to_db" {
   referenced_security_group_id = var.pgadmin_security_group_id
 
   tags = local.tags
+}
+
+resource "aws_vpc_security_group_ingress_rule" "allow_public_inbound_to_db" {
+  description = "Allow public inbound to notification service db cluster"
+
+  count = var.allow_db_public_access ? 1 : 0
+
+  from_port   = 5432
+  to_port     = 5432
+  ip_protocol = "tcp"
+
+  security_group_id = module.rds_aurora_postgresql.security_group_id
+
+  cidr_ipv4 = "0.0.0.0/0"
 }

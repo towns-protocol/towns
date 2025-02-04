@@ -208,6 +208,13 @@ module "archive_node" {
   memory = 8192
 }
 
+locals {
+  notification_service_migration_config = {
+    container_provider : "aws"
+    rds_public_access : false
+  }
+}
+
 module "river_notification_service" {
   source           = "../../modules/river-notification-service"
   docker_image_tag = "mainnet"
@@ -234,7 +241,9 @@ module "river_notification_service" {
   system_parameters              = module.system_parameters
 
   cpu    = 8192
-  memory = 53248
+  memory = 61440
+
+  migration_config = local.notification_service_migration_config
 }
 
 module "network_health_monitor" {
@@ -265,4 +274,21 @@ module "metrics_aggregator" {
     id   = aws_ecs_cluster.river_ecs_cluster.id
     name = aws_ecs_cluster.river_ecs_cluster.name
   }
+}
+
+locals {
+  gcp_project_id = "hnt-live-${terraform.workspace}"
+  gcp_region     = "us-east4"
+  gcp_zones      = ["us-east4-a", "us-east4-b", "us-east4-c"]
+}
+
+module "gcp_env" {
+  source = "../../modules/gcp-env"
+
+  project_id                             = local.gcp_project_id
+  region                                 = local.gcp_region
+  zones                                  = local.gcp_zones
+  cloudflare_terraform_api_token         = var.cloudflare_terraform_api_token
+  gcloud_credentials                     = file("./gcloud-credentials.json")
+  notifications_service_migration_config = local.notification_service_migration_config
 }

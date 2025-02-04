@@ -205,6 +205,10 @@ module "river_node" {
 locals {
   river_database_isolation_level = "READ COMMITTED"
   river_max_db_connections       = 50
+  notification_service_migration_config = {
+    container_provider : "gcp"
+    rds_public_access : true
+  }
 }
 
 module "river_notification_service" {
@@ -230,6 +234,8 @@ module "river_notification_service" {
   river_chain_id                 = local.river_chain_id
   river_chain_rpc_url_secret_arn = local.global_remote_state.river_sepolia_rpc_url_secret.arn
   system_parameters              = module.system_parameters
+
+  migration_config = local.notification_service_migration_config
 }
 
 module "network_health_monitor" {
@@ -300,9 +306,10 @@ locals {
 module "gcp_env" {
   source = "../../modules/gcp-env"
 
-  project_id                     = local.gcp_project_id
-  region                         = local.gcp_region
-  zones                          = local.gcp_zones
-  cloudflare_terraform_api_token = var.cloudflare_terraform_api_token
-  gcloud_credentials             = file("./gcloud-credentials.json")
+  project_id                             = local.gcp_project_id
+  region                                 = local.gcp_region
+  zones                                  = local.gcp_zones
+  cloudflare_terraform_api_token         = var.cloudflare_terraform_api_token
+  gcloud_credentials                     = file("./gcloud-credentials.json")
+  notifications_service_migration_config = local.notification_service_migration_config
 }

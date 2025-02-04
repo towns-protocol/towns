@@ -33,6 +33,15 @@ module "gcp_network" {
   region     = var.region
 }
 
+module "main_alb" {
+  source = "./main-alb"
+
+  depends_on = [module.gcp_apis]
+
+  project_id = var.project_id
+  region     = var.region
+}
+
 # TODO: find a way to reduce the min node per zone to 0
 module "gke_main" {
   source = "./gke-main"
@@ -56,38 +65,14 @@ module "gcp_secrets" {
   google_service_account = module.gke_main.service_account
 }
 
-# # resource "google_compute_global_address" "default" {
-# #   provider = google-beta
-# #   name     = "kerem-test-ip-global"
+module "notification_service" {
+  source = "./notification-service"
 
-# #   address_type = "EXTERNAL"
-# #   ip_version   = "IPV4"
-# # }
+  depends_on = [module.gcp_apis]
 
-# # resource "google_compute_address" "service-load-balancer-ip" {
-# #   project = var.project_id
-# #   region  = var.region
+  project_id = var.project_id
 
-# #   name = "service-load-balancer-ip"
-
-# #   network_tier = "PREMIUM"
-# #   address_type = "EXTERNAL"
-# #   ip_version   = "IPV4"
-# # }
-
-# module "global_constants" {
-#   source = "../../modules/global-constants"
-# }
-
-# data "cloudflare_zone" "zone" {
-#   name = module.global_constants.primary_hosted_zone_name
-# }
-
-# # resource "cloudflare_record" "service-load-balancer-dns" {
-# #   zone_id = data.cloudflare_zone.zone.id
-# #   name    = "kerem-lb-dns-test"
-# #   value   = google_compute_address.service-load-balancer-ip.address
-# #   type    = "A"
-# #   ttl     = 1
-# # }
-
+  google_service_account = module.gke_main.service_account
+  alb_ip                 = module.main_alb.ip
+  migration_config       = var.notifications_service_migration_config
+}

@@ -30,8 +30,6 @@ locals {
   dns_name            = local.local_name
   dns_host            = "${local.dns_name}.${module.global_constants.primary_hosted_zone_name}"
 
-  public_url = "http://${local.dns_host}"
-
   service_tags = merge(
     module.global_constants.tags,
     {
@@ -66,7 +64,8 @@ module "service_db" {
   pgadmin_security_group_id = var.pgadmin_security_group_id
 
   # TODO: remove the prefix workaround post-migration
-  name_prefix = "river"
+  name_prefix            = "river"
+  allow_db_public_access = var.migration_config.rds_public_access
 }
 
 data "terraform_remote_state" "global_remote_state" {
@@ -472,7 +471,7 @@ resource "aws_ecs_service" "ecs-service" {
   name                               = "${local.local_name}-fargate-service"
   cluster                            = var.ecs_cluster.id
   task_definition                    = aws_ecs_task_definition.task_definition.arn
-  desired_count                      = 1
+  desired_count                      = var.migration_config.container_provider == "aws" ? 1 : 0
   deployment_minimum_healthy_percent = 0
   deployment_maximum_percent         = 100
 
@@ -525,7 +524,7 @@ data "cloudflare_zone" "zone" {
 }
 
 resource "cloudflare_record" "dns_record" {
-  count   = 1
+  count   = var.migration_config.container_provider == "aws" ? 1 : 0
   zone_id = data.cloudflare_zone.zone.id
   name    = local.dns_name
   value   = var.alb_dns_name

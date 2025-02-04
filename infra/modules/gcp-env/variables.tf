@@ -21,3 +21,16 @@ variable "gcloud_credentials" {
   sensitive   = true
   type        = string
 }
+
+variable "notifications_service_migration_config" {
+  description = "Migration configuration for the notification service"
+  type = object({
+    container_provider : string
+    rds_public_access : bool
+  })
+
+  default = {
+    container_provider = "aws"
+    rds_public_access  = false
+  }
+}

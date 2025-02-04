@@ -22,3 +22,9 @@ variable "name_prefix" {
   type        = string
   default     = ""
 }
+
+variable "allow_db_public_access" {
+  description = "Whether to allow public access to the database"
+  type        = bool
+  default     = false
+}

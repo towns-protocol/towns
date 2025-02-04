@@ -90,3 +90,22 @@ variable "cpu" {
   type    = number
   default = 1024
 }
+
+variable "allow_db_public_access" {
+  description = "Allow public access to the database"
+  type        = bool
+  default     = false
+}
+
+variable "migration_config" {
+  description = "Migration configuration for the notification service"
+  type = object({
+    container_provider : string
+    rds_public_access : bool
+  })
+
+  default = {
+    container_provider = "aws"
+    rds_public_access  = false
+  }
+}

@@ -51,3 +51,31 @@ resource "google_secret_manager_secret_iam_member" "datadog" {
   role      = "roles/secretmanager.secretAccessor"
   member    = var.google_service_account.member
 }
+
+
+########### Cloudflare Secret ###########
+
+resource "google_secret_manager_secret" "cloudflare" {
+  secret_id = "cloudflare"
+  replication {
+    auto {}
+  }
+}
+
+resource "google_secret_manager_secret_version" "cloudflare" {
+  secret = google_secret_manager_secret.cloudflare.id
+  secret_data = jsonencode({
+    "api_token" = null
+    "api_key"   = null
+  })
+
+  lifecycle {
+    ignore_changes = [secret_data]
+  }
+}
+
+resource "google_secret_manager_secret_iam_member" "cloudflare" {
+  secret_id = google_secret_manager_secret.cloudflare.id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = var.google_service_account.member
+}

@@ -11,7 +11,7 @@ module "gke" {
   version = "35.0.1"
 
   project_id                  = var.project_id
-  name                        = "main-cluster"
+  name                        = "main-cluster-${terraform.workspace}"
   regional                    = true
   region                      = var.region
   network                     = var.network_name
@@ -87,11 +87,17 @@ resource "google_project_iam_member" "gsa_secret_accessor" {
   member  = "serviceAccount:${google_service_account.main.email}"
 }
 
+resource "google_project_iam_member" "gsa_kcc_editor" {
+  project = var.project_id
+  role    = "roles/editor"
+  member  = "serviceAccount:${google_service_account.main.email}"
+}
+
 resource "google_service_account_iam_binding" "gsa_k8s_binding" {
   service_account_id = google_service_account.main.name
   role               = "roles/iam.workloadIdentityUser"
   members = [
-    "serviceAccount:${module.gke.identity_namespace}[external-secrets/main-service-account]",
+    "serviceAccount:${module.gke.identity_namespace}[external-secrets/main-service-account]"
   ]
 }
 
