@@ -51,16 +51,13 @@ abstract contract MembershipBase is IMembershipBase {
     address payer,
     uint256 membershipPrice
   ) internal returns (uint256 protocolFee) {
-    IPlatformRequirements platform = _getPlatformRequirements();
-
-    address platformRecipient = platform.getFeeRecipient();
     protocolFee = _getProtocolFee(membershipPrice);
 
     // transfer the platform fee to the platform fee recipient
     CurrencyTransfer.transferCurrency(
       _getMembershipCurrency(),
       payer, // from
-      platformRecipient, // to
+      _getPlatformRequirements().getFeeRecipient(), // to
       protocolFee
     );
   }
@@ -155,11 +152,11 @@ abstract contract MembershipBase is IMembershipBase {
   /// @dev Makes it virtual to allow other pricing strategies
   function _getMembershipPrice(
     uint256 totalSupply
-  ) internal view virtual returns (uint256) {
+  ) internal view virtual returns (uint256 membershipPrice) {
     // get free allocation
     uint256 freeAllocation = _getMembershipFreeAllocation();
 
-    uint256 membershipPrice = IMembershipPricing(_getPricingModule()).getPrice(
+    membershipPrice = IMembershipPricing(_getPricingModule()).getPrice(
       freeAllocation,
       totalSupply
     );
@@ -169,9 +166,7 @@ abstract contract MembershipBase is IMembershipBase {
     uint256 minPrice = platform.getMembershipMinPrice();
     uint256 fixedFee = platform.getMembershipFee();
 
-    if (membershipPrice < minPrice) return fixedFee;
-
-    return membershipPrice;
+    if (membershipPrice < minPrice) membershipPrice = fixedFee;
   }
 
   function _setMembershipRenewalPrice(

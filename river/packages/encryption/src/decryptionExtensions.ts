@@ -293,7 +293,7 @@ export abstract class BaseDecryptionExtensions {
         keySolicitation: KeySolicitationContent,
     ): void {
         if (keySolicitation.deviceKey === this.userDevice.deviceKey) {
-            this.log.debug('ignoring key solicitation for our own device')
+            //this.log.debug('ignoring key solicitation for our own device')
             return
         }
         const selectedQueue =
@@ -309,7 +309,7 @@ export abstract class BaseDecryptionExtensions {
             selectedQueue.splice(index, 1)
         }
         if (keySolicitation.sessionIds.length > 0 || keySolicitation.isNewDevice) {
-            this.log.debug('new key solicitation', { fromUserId, streamId, keySolicitation })
+            //this.log.debug('new key solicitation', { fromUserId, streamId, keySolicitation })
             this.keySolicitationsNeedsSort = true
             selectedQueue.push({
                 streamId,
@@ -322,12 +322,12 @@ export abstract class BaseDecryptionExtensions {
             } satisfies KeySolicitationItem)
             this.checkStartTicking()
         } else if (index > -1) {
-            this.log.debug('cleared key solicitation', keySolicitation)
+            //this.log.debug('cleared key solicitation', keySolicitation)
         }
     }
 
     public setStreamUpToDate(streamId: string): void {
-        this.log.debug('streamUpToDate', streamId)
+        //this.log.debug('streamUpToDate', streamId)
         this.upToDateStreams.add(streamId)
         this.checkStartTicking()
     }

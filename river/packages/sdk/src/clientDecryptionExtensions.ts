@@ -144,7 +144,7 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         const numMembers = stream.view.getMembers().joinedParticipants().size
         const maxWaitTimeSeconds = Math.max(5, Math.min(30, numMembers))
         const waitTime = maxWaitTimeSeconds * 1000 * Math.random() // this could be much better
-        this.log.debug('getRespondDelayMSForKeySolicitation', { streamId, userId, waitTime })
+        //this.log.debug('getRespondDelayMSForKeySolicitation', { streamId, userId, waitTime })
         return waitTime * multiplier
     }
 

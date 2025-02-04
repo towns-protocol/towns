@@ -94,7 +94,7 @@ describe('syncStreams', () => {
         )
         await userInboxStream.initializeFromResponse(userInboxStreamResponse)
 
-        await alicesSyncedStreams.startSyncStreams()
+        alicesSyncedStreams.startSyncStreams()
         await done1.promise
 
         alicesSyncedStreams.set(alicesUserInboxStreamIdStr, userInboxStream)

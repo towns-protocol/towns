@@ -5,11 +5,15 @@ import {
     isUserSettingsStreamId,
     isUserStreamId,
     isUserInboxStreamId,
+    spaceIdFromChannelId,
+    isDMChannelStreamId,
+    isGDMChannelStreamId,
 } from './id'
 import { check, dlog, dlogError } from '@river-build/dlog'
 import { Stream } from './stream'
 import { ClientInitStatus } from './types'
 import pLimit from 'p-limit'
+import { IPersistenceStore, LoadedStream } from './persistenceStore'
 
 interface StreamSyncItem {
     streamId: string
@@ -18,20 +22,25 @@ interface StreamSyncItem {
 
 interface SyncedStreamsExtensionDelegate {
     startSyncStreams: () => Promise<void>
-    initStream(streamId: string, allowGetStream: boolean): Promise<Stream>
+    initStream(
+        streamId: string,
+        allowGetStream: boolean,
+        persistedData?: LoadedStream,
+    ): Promise<Stream>
     emitClientInitStatus: (status: ClientInitStatus) => void
 }
 
-const concurrencyLimit = pLimit(50)
+const concurrencyLimit = pLimit(20)
 
 export class SyncedStreamsExtension {
-    private log = dlog('csb:syncedStreamsExtension')
+    private log = dlog('csb:syncedStreamsExtension', { defaultEnabled: true })
+    private logDebug = dlog('csb:syncedStreamsExtension:debug', { defaultEnabled: false })
     private logError = dlogError('csb:syncedStreamsExtension:error')
     private readonly delegate: SyncedStreamsExtensionDelegate
 
     private readonly tasks = new Array<() => Promise<void>>()
     private streamIds = new Set<string>()
-    private highPriorityIds = new Set<string>()
+    private highPriorityIds: Set<string>
     private started: boolean = false
     private inProgressTick?: Promise<void>
     private timeoutId?: NodeJS.Timeout
@@ -54,7 +63,12 @@ export class SyncedStreamsExtension {
         progress: 0,
     }
 
-    constructor(delegate: SyncedStreamsExtensionDelegate) {
+    constructor(
+        highPriorityStreamIds: string[] | undefined,
+        delegate: SyncedStreamsExtensionDelegate,
+        private persistenceStore: IPersistenceStore,
+    ) {
+        this.highPriorityIds = new Set(highPriorityStreamIds ?? [])
         this.delegate = delegate
     }
 
@@ -64,8 +78,7 @@ export class SyncedStreamsExtension {
         this.totalStreamCount = streamIds.length
     }
 
-    public setHighPriority(streamIds: string[]) {
-        check(this.highPriorityIds.size === 0, 'setHighPriority called twice')
+    public setHighPriorityStreams(streamIds: string[]) {
         this.highPriorityIds = new Set(streamIds)
     }
 
@@ -83,7 +96,6 @@ export class SyncedStreamsExtension {
         this.numStreamsLoadedFromNetwork = 0
         this.numStreamsFailedToLoad = 0
 
-        this.tasks.push(() => this.loadHighPriorityStreams())
         this.tasks.push(() => this.loadStreamsFromPersistence())
         this.tasks.push(() => this.loadStreamsFromNetwork())
 
@@ -131,37 +143,64 @@ export class SyncedStreamsExtension {
         }, 0)
     }
 
-    private async loadHighPriorityStreams() {
-        const streamIds = Array.from(this.highPriorityIds)
-        await Promise.all(streamIds.map((streamId) => this.loadStreamFromPersistence(streamId)))
+    private async loadStreamsFromPersistence() {
+        this.log('####loadingStreamsFromPersistence')
+        const now = performance.now()
+        // aellis it seems like it would be faster to pull the high priority streams first
+        // then load the rest of the streams after, but it's not!
+        // for 300ish streams,loading the rest of the streams after the application has started
+        // going takes 30-50 seconds,doing it this way takes 4 seconds
+        const loadedStreams = await this.persistenceStore.loadStreams([
+            ...Array.from(this.highPriorityIds),
+            ...Array.from(this.streamIds),
+        ])
+        const t1 = performance.now()
+        this.log('####Performance: loaded streams from persistence!!', t1 - now)
+
+        let streamIds = Array.from(this.highPriorityIds)
+        await Promise.all(
+            streamIds.map((streamId) =>
+                this.loadStreamFromPersistence(streamId, loadedStreams[streamId]),
+            ),
+        )
         this.didLoadHighPriorityStreams = true
         this.emitClientStatus()
-    }
-
-    private async loadStreamsFromPersistence() {
-        const syncItems = Array.from(this.streamIds).map((streamId) => {
-            return {
-                streamId,
-                priority: this.priorityFromStreamId(streamId),
-            } satisfies StreamSyncItem
-        })
-        syncItems.sort((a, b) => a.priority - b.priority)
-        await Promise.all(syncItems.map((item) => this.loadStreamFromPersistence(item.streamId)))
+        // wait for 10ms to allow the client to update the status
+        await new Promise((resolve) => setTimeout(resolve, 10))
+        const t2 = performance.now()
+        this.log('####Performance: loadedHighPriorityStreams!!', t2 - t1)
+        streamIds = Array.from(this.streamIds).toSorted(
+            (a, b) =>
+                priorityFromStreamId(a, this.highPriorityIds) -
+                priorityFromStreamId(b, this.highPriorityIds),
+        )
+        // because of how concurrency limit works, resort the streams on every iteration of the loop
+        // to allow for updates to the priority of the streams
+        while (streamIds.length > 0) {
+            const item = streamIds.shift()!
+            //this.log('Performance: loading stream from persistence', item)
+            await this.loadStreamFromPersistence(item, loadedStreams[item])
+        }
+        const t3 = performance.now()
+        this.log('####Performance: loadedLowPriorityStreams!!', t3 - t2, 'total:', t3 - now)
         this.didLoadStreamsFromPersistence = true
         this.emitClientStatus()
     }
 
-    private async loadStreamFromPersistence(streamId: string) {
+    private async loadStreamFromPersistence(
+        streamId: string,
+        persistedData: LoadedStream | undefined,
+    ) {
         const allowGetStream = this.highPriorityIds.has(streamId)
-        return concurrencyLimit(async () => {
+        await concurrencyLimit(async () => {
             try {
-                await this.delegate.initStream(streamId, allowGetStream)
+                await this.delegate.initStream(streamId, allowGetStream, persistedData)
                 this.loadedStreamCount++
                 this.numStreamsLoadedFromCache++
                 this.streamIds.delete(streamId)
             } catch (err) {
                 this.streamCountRequiringNetworkAccess++
-                this.log('Error initializing stream from persistence', streamId, err)
+                this.logError('Error initializing stream from persistence', streamId, err)
             }
             this.emitClientStatus()
         })
@@ -171,7 +210,7 @@ export class SyncedStreamsExtension {
         const syncItems = Array.from(this.streamIds).map((streamId) => {
             return {
                 streamId,
-                priority: this.priorityFromStreamId(streamId),
+                priority: priorityFromStreamId(streamId, this.highPriorityIds),
             } satisfies StreamSyncItem
         })
         syncItems.sort((a, b) => a.priority - b.priority)
@@ -180,7 +219,7 @@ export class SyncedStreamsExtension {
     }
 
     private async loadStreamFromNetwork(streamId: string) {
-        this.log('Performance: adding stream from network', streamId)
+        this.logDebug('Performance: adding stream from network', streamId)
         return concurrencyLimit(async () => {
             try {
                 await this.delegate.initStream(streamId, true)
@@ -188,7 +227,6 @@ export class SyncedStreamsExtension {
                 this.streamIds.delete(streamId)
             } catch (err) {
                 this.logError('Error initializing stream', streamId, err)
-                this.log('Error initializing stream', streamId)
                 this.numStreamsFailedToLoad++
             }
             this.loadedStreamCount++
@@ -245,26 +283,44 @@ export class SyncedStreamsExtension {
             }
         }
     }
+}
 
-    private priorityFromStreamId(streamId: string) {
-        if (
-            isUserDeviceStreamId(streamId) ||
-            isUserInboxStreamId(streamId) ||
-            isUserStreamId(streamId) ||
-            isUserSettingsStreamId(streamId)
-        ) {
-            return 0
-        }
-        if (this.highPriorityIds.has(streamId)) {
-            return 1
-        }
-
-        if (isSpaceStreamId(streamId)) {
-            return 2
-        }
-        if (isChannelStreamId(streamId)) {
-            return 3
-        }
-        return 4
+// priority from stream id for loading, we need spaces to structure the app, dms if that's what we're looking at
+// and channels for any high priority spaces
+function priorityFromStreamId(streamId: string, highPriorityIds: Set<string>) {
+    if (
+        isUserDeviceStreamId(streamId) ||
+        isUserInboxStreamId(streamId) ||
+        isUserStreamId(streamId) ||
+        isUserSettingsStreamId(streamId)
+    ) {
+        return 0
     }
+    if (highPriorityIds.has(streamId)) {
+        return 1
+    }
+    // if we're prioritizing dms, load other dms and gdm channels
+    if (highPriorityIds.size > 0) {
+        const firstHPI = Array.from(highPriorityIds.values())[0]
+        if (isDMChannelStreamId(firstHPI) || isGDMChannelStreamId(firstHPI)) {
+            if (isDMChannelStreamId(streamId) || isGDMChannelStreamId(streamId)) {
+                return 2
+            }
+        }
+    }
+
+    // we need spaces to structure the app
+    if (isSpaceStreamId(streamId)) {
+        return 3
+    }
+
+    if (isChannelStreamId(streamId)) {
+        const spaceId = spaceIdFromChannelId(streamId)
+        if (highPriorityIds.has(spaceId)) {
+            return 4
+        } else {
+            return 5
+        }
+    }
+    return 6
 }

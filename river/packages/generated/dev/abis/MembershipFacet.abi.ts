@@ -1047,16 +1047,6 @@ export default [
   },
   {
     "type": "error",
-    "name": "Dispatcher__InvalidCaller",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "Dispatcher__InvalidValue",
-    "inputs": []
-  },
-  {
-    "type": "error",
     "name": "Dispatcher__TransactionAlreadyExists",
     "inputs": []
   },

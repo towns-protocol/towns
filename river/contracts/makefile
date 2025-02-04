@@ -207,7 +207,7 @@ deploy-ledger-base-sepolia :;
 	@$(MAKE) resume-any-ledger rpc=base_sepolia hd_path=${HD_PATH} sender=${SENDER_ADDRESS} verifier=${BASESCAN_SEPOLIA_URL} etherscan=${BASESCAN_API_KEY}
 
 deploy-base-sepolia :;
-	@$(MAKE) deploy-any-blockscout rpc=base_sepolia private_key=${TESTNET_PRIVATE_KEY} verifier=${BLOCKSCOUT_SEPOLIA_URL} etherscan=${BLOCKSCOUT_SEPOLIA_API_KEY}
+	@$(MAKE) deploy-any-blockscout rpc=base_sepolia private_key=${TESTNET_PRIVATE_KEY} verifier=${BLOCKSCOUT_SEPOLIA_URL}
 	@$(MAKE) resume-any rpc=base_sepolia private_key=${TESTNET_PRIVATE_KEY} verifier=${BASESCAN_SEPOLIA_URL} etherscan=${BASESCAN_API_KEY}
 
 interact-base-sepolia :;
@@ -252,7 +252,7 @@ interact-river :;
 # 				 		Base
 # ===========================
 deploy-base :;
-	@$(MAKE) deploy-any-ledger rpc=base hd_path=${HD_PATH} sender=${SENDER_ADDRESS} verifier=${BLOCKSCOUT_BASE_URL} etherscan=${BLOCKSCOUT_BASE_API_KEY}
+	@$(MAKE) deploy-any-ledger rpc=base hd_path=${HD_PATH} sender=${SENDER_ADDRESS} verifier=${BLOCKSCOUT_BASE_URL}
 	@$(MAKE) resume-any-ledger rpc=base hd_path=${HD_PATH} sender=${SENDER_ADDRESS} verifier=${BASESCAN_URL} etherscan=${BASESCAN_API_KEY}
 
 interact-base :;

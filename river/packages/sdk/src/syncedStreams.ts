@@ -11,6 +11,7 @@ import { UnpackEnvelopeOpts } from './sign'
 
 export class SyncedStreams {
     private syncedStreamsLoop: SyncedStreamsLoop | undefined
+    private highPriorityIds: Set<string> = new Set()
     // userId is the current user id
     private readonly userId: string
     private readonly logNamespace: string
@@ -67,6 +68,11 @@ export class SyncedStreams {
         this.streams.set(id, stream)
     }
 
+    public setHighPriorityStreams(streamIds: string[]) {
+        this.highPriorityIds = new Set(streamIds)
+        this.syncedStreamsLoop?.setHighPriorityStreams(streamIds)
+    }
+
     public delete(inStreamId: string | Uint8Array): void {
         const streamId = streamIdAsString(inStreamId)
         this.streams.get(streamId)?.stop()
@@ -98,7 +104,7 @@ export class SyncedStreams {
         }
     }
 
-    public async startSyncStreams() {
+    public startSyncStreams() {
         const streamRecords = Array.from(this.streams.values())
             .filter((x) => isDefined(x.syncCookie))
             .map((stream) => ({ syncCookie: stream.syncCookie!, stream }))
@@ -109,8 +115,9 @@ export class SyncedStreams {
             streamRecords,
             this.logNamespace,
             this.unpackEnvelopeOpts,
+            this.highPriorityIds,
         )
-        await this.syncedStreamsLoop.start()
+        this.syncedStreamsLoop.start()
     }
 
     public async stopSync() {

@@ -217,12 +217,12 @@ contract MembershipJoinSpaceWithReferralTest is
     membership.joinSpaceWithReferral(alice, referral);
   }
 
-  function test_revertWhen_joinSpaceWithReferral_invalidPayment(
+  function test_revertWhen_joinSpaceWithReferral_insufficientPayment(
     ReferralTypes memory referral
   ) external givenValidReferral(referral) givenMembershipHasPrice {
     vm.deal(alice, MEMBERSHIP_PRICE - 1);
     vm.prank(alice);
-    vm.expectRevert(Membership__InvalidPayment.selector);
+    vm.expectRevert(Membership__InsufficientPayment.selector);
     membership.joinSpaceWithReferral{value: MEMBERSHIP_PRICE - 1}(
       alice,
       referral

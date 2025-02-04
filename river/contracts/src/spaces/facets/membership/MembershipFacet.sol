@@ -58,8 +58,7 @@ contract MembershipFacet is
 
   /// @inheritdoc IMembership
   function joinSpace(address receiver) external payable nonReentrant {
-    ReferralTypes memory emptyReferral;
-    _joinSpaceWithReferral(receiver, emptyReferral);
+    _joinSpace(receiver);
   }
 
   /// @inheritdoc IMembership

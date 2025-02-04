@@ -1,4 +1,4 @@
-import { Err, SyncCookie, SyncOp, SyncStreamsResponse } from '@river-build/proto'
+import { SyncCookie, SyncOp, SyncStreamsResponse } from '@river-build/proto'
 import { DLogger, dlog, dlogError } from '@river-build/dlog'
 import { StreamRpcClient } from './makeStreamRpcClient'
 import { UnpackEnvelopeOpts, unpackStream, unpackStreamAndCookie } from './sign'
@@ -6,10 +6,21 @@ import { SyncedStreamEvents } from './streamEvents'
 import TypedEmitter from 'typed-emitter'
 import { nanoid } from 'nanoid'
 import { isMobileSafari } from './utils'
-import { streamIdAsBytes, streamIdAsString } from './id'
+import {
+    spaceIdFromChannelId,
+    isDMChannelStreamId,
+    isGDMChannelStreamId,
+    isSpaceStreamId,
+    isUserDeviceStreamId,
+    isUserInboxStreamId,
+    isUserSettingsStreamId,
+    isUserStreamId,
+    streamIdAsBytes,
+    streamIdAsString,
+    isChannelStreamId,
+} from './id'
 import { ParsedEvent, ParsedStreamResponse } from './types'
-import { logNever } from './check'
-import { errorContains } from './rpcInterceptors'
+import { isDefined, logNever } from './check'
 
 export enum SyncState {
     Canceling = 'Canceling', // syncLoop, maybe syncId if was syncing, not is was starting or retrying
@@ -81,6 +92,7 @@ export class SyncedStreamsLoop {
     private readonly streams: Map<string, { syncCookie: SyncCookie; stream: ISyncedStream }>
     // loggers
     private readonly logSync: DLogger
+    private readonly logDebug: DLogger
     private readonly logError: DLogger
     // clientEmitter is used to proxy the events from the streams to the client
     private readonly clientEmitter: TypedEmitter<SyncedStreamEvents>
@@ -113,6 +125,11 @@ export class SyncedStreamsLoop {
     // and are cleared when sync stops
     private responsesQueue: SyncStreamsResponse[] = []
     private inProgressTick?: Promise<void>
+    private pendingSyncCookies: string[] = []
+    private inFlightSyncCookies = new Set<string>()
+    private readonly MAX_IN_FLIGHT_COOKIES = 40
+    private readonly MIN_IN_FLIGHT_COOKIES = 10
+
     public pingInfo: PingInfo = {
         currentSequence: 0,
         nonces: {},
@@ -124,6 +141,7 @@ export class SyncedStreamsLoop {
         streams: { syncCookie: SyncCookie; stream: ISyncedStream }[],
         logNamespace: string,
         readonly unpackEnvelopeOpts: UnpackEnvelopeOpts | undefined,
+        private highPriorityIds: Set<string>,
     ) {
         this.rpcClient = rpcClient
         this.clientEmitter = clientEmitter
@@ -133,7 +151,8 @@ export class SyncedStreamsLoop {
                 { syncCookie, stream },
             ]),
         )
-        this.logSync = dlog('csb:cl:sync').extend(logNamespace)
+        this.logDebug = dlog('csb:cl:sync:debug').extend(logNamespace)
+        this.logSync = dlog('csb:cl:sync', { defaultEnabled: true }).extend(logNamespace)
         this.logError = dlogError('csb:cl:sync:stream').extend(logNamespace)
     }
 
@@ -154,12 +173,12 @@ export class SyncedStreamsLoop {
         return this.syncId
     }
 
-    public async start(): Promise<void> {
+    public start() {
         if (isMobileSafari()) {
             document.addEventListener('visibilitychange', this.onMobileSafariBackgrounded)
         }
 
-        await this.createSyncLoop()
+        this.createSyncLoop()
     }
 
     public async stop() {
@@ -205,37 +224,14 @@ export class SyncedStreamsLoop {
     // adds stream to the sync subscription
     public async addStreamToSync(syncCookie: SyncCookie, stream: ISyncedStream): Promise<void> {
         const streamId = streamIdAsString(syncCookie.streamId)
-        this.log('addStreamToSync', streamId)
+        this.logDebug('addStreamToSync', streamId)
         if (this.streams.has(streamId)) {
             this.log('stream already in sync', streamId)
             return
         }
         this.streams.set(streamId, { syncCookie, stream })
-
-        if (this.syncState === SyncState.Starting || this.syncState === SyncState.Retrying) {
-            await this.waitForSyncingState()
-        }
-        if (this.syncState === SyncState.Syncing) {
-            try {
-                await this.rpcClient.addStreamToSync({
-                    syncId: this.syncId,
-                    syncPos: syncCookie,
-                })
-                this.log('addStreamToSync complete', syncCookie)
-            } catch (err) {
-                // Trigger restart of sync loop
-                this.log(`addStreamToSync error`, err)
-                if (errorContains(err, Err.BAD_SYNC_COOKIE)) {
-                    this.log('addStreamToSync BAD_SYNC_COOKIE', syncCookie)
-                    throw err
-                }
-            }
-        } else {
-            this.log(
-                'addStreamToSync: not in "syncing" state; let main sync loop handle this with its streams map',
-                { streamId: syncCookie.streamId, syncState: this.syncState },
-            )
-        }
+        this.pendingSyncCookies.push(streamId)
+        this.checkStartTicking()
     }
 
     // remove stream from the sync subsbscription
@@ -245,6 +241,14 @@ export class SyncedStreamsLoop {
         if (!streamRecord) {
             this.log('removeStreamFromSync streamId not found', streamId)
             // no such stream
+            return
+        }
+        const pendingIndex = this.pendingSyncCookies.indexOf(streamId)
+        if (pendingIndex !== -1) {
+            this.pendingSyncCookies.splice(pendingIndex, 1)
+            streamRecord.stream.stop()
+            this.streams.delete(streamId)
+            this.log('removed stream from pending sync', streamId)
             return
         }
         if (this.syncState === SyncState.Starting || this.syncState === SyncState.Retrying) {
@@ -272,170 +276,165 @@ export class SyncedStreamsLoop {
         }
     }
 
-    private async createSyncLoop() {
-        return new Promise<void>((resolve, reject) => {
-            if (stateConstraints[this.syncState].has(SyncState.Starting)) {
-                this.setSyncState(SyncState.Starting)
-                this.log('starting sync loop')
-            } else {
-                this.log(
-                    'runSyncLoop: invalid state transition',
-                    this.syncState,
-                    '->',
-                    SyncState.Starting,
-                )
-                reject(new Error('invalid state transition'))
-            }
+    public setHighPriorityStreams(streamIds: string[]) {
+        this.highPriorityIds = new Set(streamIds)
+    }
 
-            if (this.syncLoop) {
-                reject(new Error('createSyncLoop called while a loop exists'))
-            }
+    private createSyncLoop() {
+        if (stateConstraints[this.syncState].has(SyncState.Starting)) {
+            this.setSyncState(SyncState.Starting)
+            this.log('starting sync loop')
+        } else {
+            this.log(
+                'runSyncLoop: invalid state transition',
+                this.syncState,
+                '->',
+                SyncState.Starting,
+            )
+            throw new Error('invalid state transition')
+        }
 
-            this.syncLoop = (async (): Promise<number> => {
-                let iteration = 0
+        if (this.syncLoop) {
+            throw new Error('createSyncLoop called while a loop exists')
+        }
 
-                this.log('sync loop created')
-                resolve()
+        this.syncLoop = (async (): Promise<number> => {
+            let iteration = 0
 
-                try {
-                    while (
-                        this.syncState === SyncState.Starting ||
-                        this.syncState === SyncState.Syncing ||
-                        this.syncState === SyncState.Retrying
-                    ) {
-                        this.log('sync ITERATION start', ++iteration, this.syncState)
-                        if (this.syncState === SyncState.Retrying) {
-                            this.setSyncState(SyncState.Starting)
-                        }
+            this.log('sync loop created')
 
-                        // get cookies from all the known streams to sync
-                        const syncCookies = Array.from(this.streams.values()).map(
-                            (streamRecord) => streamRecord.syncCookie,
+            try {
+                while (
+                    this.syncState === SyncState.Starting ||
+                    this.syncState === SyncState.Syncing ||
+                    this.syncState === SyncState.Retrying
+                ) {
+                    this.log('sync ITERATION start', ++iteration, this.syncState)
+                    if (this.syncState === SyncState.Retrying) {
+                        this.setSyncState(SyncState.Starting)
+                    }
+
+                    // get cookies from all the known streams to sync
+                    this.pendingSyncCookies = Array.from(this.streams.keys())
+                    try {
+                        // syncId needs to be reset before starting a new syncStreams
+                        // syncStreams() should return a new syncId
+                        this.syncId = undefined
+                        const streams = this.rpcClient.syncStreams(
+                            {
+                                syncPos: [],
+                            },
+                            { timeoutMs: -1 },
                         )
 
-                        try {
-                            // syncId needs to be reset before starting a new syncStreams
-                            // syncStreams() should return a new syncId
-                            this.syncId = undefined
-                            const streams = this.rpcClient.syncStreams(
-                                {
-                                    syncPos: syncCookies,
-                                },
-                                { timeoutMs: -1 },
+                        const iterator = streams[Symbol.asyncIterator]()
+
+                        while (
+                            this.syncState === SyncState.Syncing ||
+                            this.syncState === SyncState.Starting
+                        ) {
+                            const interruptSyncPromise = new Promise<void>((resolve, reject) => {
+                                this.forceStopSyncStreams = () => {
+                                    this.log('forceStopSyncStreams called')
+                                    resolve()
+                                }
+                                this.interruptSync = (e: unknown) => {
+                                    this.logError('sync interrupted', e)
+                                    reject(e)
+                                }
+                            })
+                            const { value, done } = await Promise.race([
+                                iterator.next(),
+                                interruptSyncPromise.then(() => ({
+                                    value: undefined,
+                                    done: true,
+                                })),
+                            ])
+                            if (done || value === undefined) {
+                                this.log('exiting syncStreams', done, value)
+                                // exit the syncLoop, it's done
+                                this.forceStopSyncStreams = undefined
+                                this.interruptSync = undefined
+                                return iteration
+                            }
+
+                            this.logDebug(
+                                'got syncStreams response',
+                                'syncOp',
+                                value.syncOp,
+                                'syncId',
+                                value.syncId,
                             )
 
-                            const iterator = streams[Symbol.asyncIterator]()
-
-                            while (
-                                this.syncState === SyncState.Syncing ||
-                                this.syncState === SyncState.Starting
-                            ) {
-                                const interruptSyncPromise = new Promise<void>(
-                                    (resolve, reject) => {
-                                        this.forceStopSyncStreams = () => {
-                                            this.log('forceStopSyncStreams called')
-                                            resolve()
-                                        }
-                                        this.interruptSync = (e: unknown) => {
-                                            this.logError('sync interrupted', e)
-                                            reject(e)
-                                        }
-                                    },
-                                )
-                                const { value, done } = await Promise.race([
-                                    iterator.next(),
-                                    interruptSyncPromise.then(() => ({
-                                        value: undefined,
-                                        done: true,
-                                    })),
-                                ])
-                                if (done || value === undefined) {
-                                    this.log('exiting syncStreams', done, value)
-                                    // exit the syncLoop, it's done
-                                    this.forceStopSyncStreams = undefined
-                                    this.interruptSync = undefined
-                                    return iteration
-                                }
-
-                                this.log(
-                                    'got syncStreams response',
-                                    'syncOp',
-                                    value.syncOp,
-                                    'syncId',
-                                    value.syncId,
-                                )
-
-                                if (!value.syncId || !value.syncOp) {
-                                    this.log('missing syncId or syncOp', value)
-                                    continue
-                                }
-                                let pingStats: NonceStats | undefined
-                                switch (value.syncOp) {
-                                    case SyncOp.SYNC_NEW:
-                                        this.syncStarted(value.syncId)
-                                        break
-                                    case SyncOp.SYNC_CLOSE:
-                                        this.syncClosed()
-                                        break
-                                    case SyncOp.SYNC_UPDATE:
-                                        this.responsesQueue.push(value)
-                                        this.checkStartTicking()
-                                        break
-                                    case SyncOp.SYNC_PONG:
-                                        pingStats = this.pingInfo.nonces[value.pongNonce]
-                                        if (pingStats) {
-                                            pingStats.receivedAt = performance.now()
-                                            pingStats.duration =
-                                                pingStats.receivedAt - pingStats.pingAt
-                                        } else {
-                                            this.logError('pong nonce not found', value.pongNonce)
-                                            this.printNonces()
-                                        }
-                                        break
-                                    case SyncOp.SYNC_DOWN:
-                                        this.syncDown(value.streamId)
-                                        break
-                                    default:
-                                        logNever(
-                                            value.syncOp,
-                                            `unknown syncOp { syncId: ${this.syncId}, syncOp: ${value.syncOp} }`,
-                                        )
-                                        break
-                                }
+                            if (!value.syncId || !value.syncOp) {
+                                this.log('missing syncId or syncOp', value)
+                                continue
                             }
-                        } catch (err) {
-                            this.logError('syncLoop error', err)
-                            await this.attemptRetry()
+                            let pingStats: NonceStats | undefined
+                            switch (value.syncOp) {
+                                case SyncOp.SYNC_NEW:
+                                    this.syncStarted(value.syncId)
+                                    break
+                                case SyncOp.SYNC_CLOSE:
+                                    this.syncClosed()
+                                    break
+                                case SyncOp.SYNC_UPDATE:
+                                    this.responsesQueue.push(value)
+                                    this.checkStartTicking()
+                                    break
+                                case SyncOp.SYNC_PONG:
+                                    pingStats = this.pingInfo.nonces[value.pongNonce]
+                                    if (pingStats) {
+                                        pingStats.receivedAt = performance.now()
+                                        pingStats.duration = pingStats.receivedAt - pingStats.pingAt
+                                    } else {
+                                        this.logError('pong nonce not found', value.pongNonce)
+                                        this.printNonces()
+                                    }
+                                    break
+                                case SyncOp.SYNC_DOWN:
+                                    this.syncDown(value.streamId)
+                                    break
+                                default:
+                                    logNever(
+                                        value.syncOp,
+                                        `unknown syncOp { syncId: ${this.syncId}, syncOp: ${value.syncOp} }`,
+                                    )
+                                    break
+                            }
                         }
+                    } catch (err) {
+                        this.logError('syncLoop error', err)
+                        await this.attemptRetry()
                     }
-                } finally {
-                    this.log('sync loop stopping ITERATION', {
-                        iteration,
-                        syncState: this.syncState,
-                    })
-                    this.stopPing()
-                    if (stateConstraints[this.syncState].has(SyncState.NotSyncing)) {
-                        this.setSyncState(SyncState.NotSyncing)
-                        this.streams.forEach((streamRecord) => {
-                            streamRecord.stream.stop()
-                        })
-                        this.streams.clear()
-                        this.releaseRetryWait = undefined
-                        this.syncId = undefined
-                        this.clientEmitter.emit('streamSyncActive', false)
-                    } else {
-                        this.log(
-                            'onStopped: invalid state transition',
-                            this.syncState,
-                            '->',
-                            SyncState.NotSyncing,
-                        )
-                    }
-                    this.log('sync loop stopped ITERATION', iteration)
                 }
-                return iteration
-            })()
-        })
+            } finally {
+                this.log('sync loop stopping ITERATION', {
+                    iteration,
+                    syncState: this.syncState,
+                })
+                this.stopPing()
+                if (stateConstraints[this.syncState].has(SyncState.NotSyncing)) {
+                    this.setSyncState(SyncState.NotSyncing)
+                    this.streams.forEach((streamRecord) => {
+                        streamRecord.stream.stop()
+                    })
+                    this.streams.clear()
+                    this.releaseRetryWait = undefined
+                    this.syncId = undefined
+                    this.clientEmitter.emit('streamSyncActive', false)
+                } else {
+                    this.log(
+                        'onStopped: invalid state transition',
+                        this.syncState,
+                        '->',
+                        SyncState.NotSyncing,
+                    )
+                }
+                this.log('sync loop stopped ITERATION', iteration)
+            }
+            return iteration
+        })()
     }
 
     private onMobileSafariBackgrounded = () => {
@@ -454,7 +453,7 @@ export class SyncedStreamsLoop {
             return
         }
 
-        if (this.responsesQueue.length === 0) {
+        if (this.responsesQueue.length === 0 && this.pendingSyncCookies.length === 0) {
             return
         }
 
@@ -473,6 +472,33 @@ export class SyncedStreamsLoop {
     }
 
     private async tick() {
+        if (this.syncState === SyncState.Syncing) {
+            if (
+                this.inFlightSyncCookies.size <= this.MIN_IN_FLIGHT_COOKIES &&
+                this.pendingSyncCookies.length > 0
+            ) {
+                this.pendingSyncCookies.sort((a, b) => {
+                    const aPriority = priorityFromStreamId(a, this.highPriorityIds)
+                    const bPriority = priorityFromStreamId(b, this.highPriorityIds)
+                    return aPriority - bPriority
+                })
+                const streamsToAdd = this.pendingSyncCookies.splice(0, this.MAX_IN_FLIGHT_COOKIES)
+                streamsToAdd.forEach((x) => this.inFlightSyncCookies.add(x))
+                const syncPos = streamsToAdd.map((x) => this.streams.get(x)?.syncCookie)
+                this.logSync('tick: modifySync', {
+                    syncId: this.syncId,
+                    addStreams: streamsToAdd,
+                })
+                try {
+                    await this.rpcClient.modifySync({
+                        syncId: this.syncId,
+                        addStreams: syncPos.filter(isDefined),
+                    })
+                } catch (err) {
+                    this.logError('modifySync error', err)
+                }
+            }
+        }
         const item = this.responsesQueue.shift()
         if (!item || item.syncId !== this.syncId) {
             return
@@ -574,6 +600,7 @@ export class SyncedStreamsLoop {
             this.log('syncStarted', 'syncId', this.syncId)
             this.clientEmitter.emit('streamSyncActive', true)
             this.log('emitted streamSyncActive', true)
+            this.checkStartTicking()
         } else {
             this.log(
                 'syncStarted: invalid state transition',
@@ -674,6 +701,7 @@ export class SyncedStreamsLoop {
                     */
                     const streamIdBytes = syncStream.nextSyncCookie?.streamId ?? Uint8Array.from([])
                     const streamId = streamIdAsString(streamIdBytes)
+                    this.inFlightSyncCookies.delete(streamId)
                     const streamRecord = this.streams.get(streamId)
                     if (streamRecord === undefined) {
                         this.log('sync got stream', streamId, 'NOT FOUND')
@@ -788,4 +816,46 @@ export class SyncedStreamsLoop {
     private log(...args: unknown[]): void {
         this.logSync(...args)
     }
+}
+
+// priority from stream id for syncing, dms if that's what we're looking at
+// channels for any high priority spaces are more important than spaces we're not looking at
+// then spaces, then other channels
+function priorityFromStreamId(streamId: string, highPriorityIds: Set<string>) {
+    if (
+        isUserDeviceStreamId(streamId) ||
+        isUserInboxStreamId(streamId) ||
+        isUserStreamId(streamId) ||
+        isUserSettingsStreamId(streamId)
+    ) {
+        return 0
+    }
+    if (highPriorityIds.has(streamId)) {
+        return 1
+    }
+
+    if (isChannelStreamId(streamId)) {
+        const spaceId = spaceIdFromChannelId(streamId)
+        if (highPriorityIds.has(spaceId)) {
+            return 2
+        } else {
+            return 3
+        }
+    }
+    // if we're prioritizing dms, load other dms and gdm channels
+    if (highPriorityIds.size > 0) {
+        const firstHPI = Array.from(highPriorityIds.values())[0]
+        if (isDMChannelStreamId(firstHPI) || isGDMChannelStreamId(firstHPI)) {
+            if (isDMChannelStreamId(streamId) || isGDMChannelStreamId(streamId)) {
+                return 4
+            }
+        }
+    }
+
+    // we need spaces to structure the app
+    if (isSpaceStreamId(streamId)) {
+        return 5
+    }
+
+    return 6
 }

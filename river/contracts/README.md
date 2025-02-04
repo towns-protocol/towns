@@ -50,7 +50,7 @@ forge test
 
 You can add verbosity to the tests by adding `-vvvv` (1-4 levels) to the command
 
-<b>To start a local ethereum blockchain:</b>
+<b>To start a local Ethereum blockchain:</b>
 
 ```shell
 anvil

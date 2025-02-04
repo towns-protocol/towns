@@ -23,13 +23,9 @@ abstract contract DispatcherBase is IDispatcherBase {
     return ds.transactionData[transactionId];
   }
 
-  function _captureValue(bytes32 transactionId, uint256 value) internal {
-    if (value == 0) CustomRevert.revertWith(Dispatcher__InvalidValue.selector);
-    if (msg.value != value)
-      CustomRevert.revertWith(Dispatcher__InvalidValue.selector);
-
+  function _captureValue(bytes32 transactionId) internal {
     DispatcherStorage.Layout storage ds = DispatcherStorage.layout();
-    ds.transactionBalance[transactionId] += value;
+    ds.transactionBalance[transactionId] += msg.value;
   }
 
   function _releaseCapturedValue(
@@ -75,10 +71,10 @@ abstract contract DispatcherBase is IDispatcherBase {
   function _registerTransaction(
     address sender,
     bytes memory data
-  ) internal returns (bytes32) {
+  ) internal returns (bytes32 transactionId) {
     bytes32 keyHash = keccak256(abi.encodePacked(sender, block.number));
 
-    bytes32 transactionId = _makeDispatchId(
+    transactionId = _makeDispatchId(
       keyHash,
       _makeDispatchInputSeed(keyHash, sender, _useDispatchNonce(keyHash))
     );
@@ -90,9 +86,7 @@ abstract contract DispatcherBase is IDispatcherBase {
 
     _captureData(transactionId, data);
     if (msg.value != 0) {
-      _captureValue(transactionId, msg.value);
+      _captureValue(transactionId);
     }
-
-    return transactionId;
   }
 }

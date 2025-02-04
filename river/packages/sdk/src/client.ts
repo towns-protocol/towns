@@ -147,7 +147,12 @@ import { Stream } from './stream'
 import { getTime, usernameChecksum } from './utils'
 import { isEncryptedContentKind, toDecryptedContent } from './encryptedContentTypes'
 import { ClientDecryptionExtensions } from './clientDecryptionExtensions'
-import { PersistenceStore, IPersistenceStore, StubPersistenceStore } from './persistenceStore'
+import {
+    PersistenceStore,
+    IPersistenceStore,
+    StubPersistenceStore,
+    LoadedStream,
+} from './persistenceStore'
 import { SyncedStreams } from './syncedStreams'
 import { SyncState } from './syncedStreamsLoop'
 import { SyncedStream } from './syncedStream'
@@ -265,17 +270,21 @@ export class Client
         }
 
         this.streams = new SyncedStreams(this.userId, this.rpcClient, this, this.unpackEnvelopeOpts)
-        this.syncedStreamsExtensions = new SyncedStreamsExtension({
-            startSyncStreams: async () => {
-                await this.streams.startSyncStreams()
-                this.decryptionExtensions?.start()
-                this.mlsAdapter?.start()
+        this.syncedStreamsExtensions = new SyncedStreamsExtension(
+            highPriorityStreamIds,
+            {
+                startSyncStreams: async () => {
+                    this.mlsAdapter?.start()
+                    this.streams.startSyncStreams()
+                    this.decryptionExtensions?.start()
+                },
+                initStream: (streamId, allowGetStream, persistedData) =>
+                    this.initStream(streamId, allowGetStream, persistedData),
+                emitClientInitStatus: (status) => this.emit('clientInitStatusUpdated', status),
             },
-            initStream: (streamId, allowGetStream) => this.initStream(streamId, allowGetStream),
-            emitClientInitStatus: (status) => this.emit('clientInitStatusUpdated', status),
-        })
+            this.persistenceStore,
+        )
 
-        this.syncedStreamsExtensions.setHighPriority(highPriorityStreamIds ?? [])
         this.logCall('new Client')
     }
 
@@ -391,7 +400,7 @@ export class Client
         encryptionDeviceInit?: EncryptionDeviceInitOpts
     }): Promise<{
         initCryptoTime: number
-        initMlsTime: number
+        //initMlsTime: number
         initUserStreamTime: number
         initUserInboxStreamTime: number
         initUserMetadataStreamTime: number
@@ -407,11 +416,11 @@ export class Client
         this.logCall('initializeUser', this.userId)
         assert(this.userStreamId === undefined, 'already initialized')
         const initCrypto = await getTime(() => this.initCrypto(opts?.encryptionDeviceInit))
-        const initMls = await getTime(() => this.initMls())
+        //const initMls = await getTime(() => this.initMls())
 
         check(isDefined(this.decryptionExtensions), 'decryptionExtensions must be defined')
         check(isDefined(this.syncedStreamsExtensions), 'syncedStreamsExtensions must be defined')
-        check(isDefined(this.mlsAdapter), 'mlsAdapter must be defined')
+        //check(isDefined(this.mlsAdapter), 'mlsAdapter must be defined')
 
         const [
             initUserStream,
@@ -437,7 +446,7 @@ export class Client
 
         return {
             initCryptoTime: initCrypto.time,
-            initMlsTime: initMls.time,
+            //initMlsTime: initMls.time,
             initUserStreamTime: initUserStream.time,
             initUserInboxStreamTime: initUserInboxStream.time,
             initUserMetadataStreamTime: initUserMetadataStream.time,
@@ -1402,6 +1411,7 @@ export class Client
     async initStream(
         streamId: string | Uint8Array,
         allowGetStream: boolean = true,
+        persistedData?: LoadedStream,
     ): Promise<Stream> {
         const streamIdStr = streamIdAsString(streamId)
         const existingRequest = this.initStreamRequests.get(streamIdStr)
@@ -1409,7 +1419,7 @@ export class Client
             this.logCall('initStream: had existing request for', streamIdStr, 'returning promise')
             return existingRequest
         }
-        const request = this._initStream(streamId, allowGetStream)
+        const request = this._initStream(streamId, allowGetStream, persistedData)
         this.initStreamRequests.set(streamIdStr, request)
         let stream: Stream
         try {
@@ -1423,6 +1433,7 @@ export class Client
     private async _initStream(
         streamId: string | Uint8Array,
         allowGetStream: boolean = true,
+        persistedData?: LoadedStream,
     ): Promise<Stream> {
         try {
             this.logCall('initStream', streamId)
@@ -1439,7 +1450,7 @@ export class Client
                 const stream = this.createSyncedStream(streamId)
 
                 // Try initializing from persistence
-                if (await stream.initializeFromPersistence()) {
+                if (await stream.initializeFromPersistence(persistedData)) {
                     if (stream.view.syncCookie) {
                         await this.streams.addStreamToSync(stream.view.syncCookie)
                     }
@@ -2543,7 +2554,10 @@ export class Client
     }
 
     public setHighPriorityStreams(streamIds: string[]) {
+        this.logCall('setHighPriorityStreams', streamIds)
         this.decryptionExtensions?.setHighPriorityStreams(streamIds)
+        this.syncedStreamsExtensions?.setHighPriorityStreams(streamIds)
+        this.streams.setHighPriorityStreams(streamIds)
     }
 
     public async ensureOutboundSession(

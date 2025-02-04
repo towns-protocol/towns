@@ -104,7 +104,7 @@ contract MembershipJoinSpaceTest is
     uint256 nextTokenId = membershipToken.totalSupply();
     IEntitlementGated _entitlementGated = IEntitlementGated(resolverAddress);
 
-    for (uint256 i = 0; i < selectedNodes.length; i++) {
+    for (uint256 i; i < selectedNodes.length; ++i) {
       // First quorum nodes should pass, the rest should fail.
       if (i <= quorum) {
         vm.prank(selectedNodes[i]);
@@ -239,7 +239,7 @@ contract MembershipJoinSpaceTest is
     uint256 quorum = selectedNodes.length / 2;
 
     // All checks fail, should result in no token mint.
-    for (uint256 i = 0; i < selectedNodes.length; i++) {
+    for (uint256 i; i < selectedNodes.length; ++i) {
       if (i <= quorum) {
         vm.prank(selectedNodes[i]);
         IEntitlementGated(resolverAddress).postEntitlementCheckResult(
@@ -265,7 +265,40 @@ contract MembershipJoinSpaceTest is
     assertEq(membershipToken.balanceOf(bob), 0);
   }
 
-  function test_joinPaidSpaceRefund() external givenMembershipHasPrice {
+  function test_fuzz_joinSpace_refundOnSuccess(
+    uint256 overPayment
+  ) external givenMembershipHasPrice {
+    overPayment = bound(overPayment, MEMBERSHIP_PRICE, 100 * MEMBERSHIP_PRICE);
+    vm.deal(bob, overPayment);
+
+    vm.recordLogs();
+    vm.prank(bob);
+    membership.joinSpace{value: overPayment}(bob);
+    Vm.Log[] memory logs = vm.getRecordedLogs();
+
+    (
+      ,
+      ,
+      address resolverAddress,
+      bytes32 transactionId,
+      uint256 roleId,
+      address[] memory selectedNodes
+    ) = _getRequestV2EventData(logs);
+
+    for (uint256 i; i < 3; ++i) {
+      vm.prank(selectedNodes[i]);
+      IEntitlementGated(resolverAddress).postEntitlementCheckResult(
+        transactionId,
+        roleId,
+        IEntitlementGatedBase.NodeVoteStatus.PASSED
+      );
+    }
+
+    assertEq(membershipToken.balanceOf(bob), 1);
+    assertEq(bob.balance, overPayment - MEMBERSHIP_PRICE);
+  }
+
+  function test_joinSpace_refundOnFail() external givenMembershipHasPrice {
     vm.deal(bob, MEMBERSHIP_PRICE);
 
     vm.recordLogs();
@@ -282,7 +315,7 @@ contract MembershipJoinSpaceTest is
       address[] memory selectedNodes
     ) = _getRequestV2EventData(logs);
 
-    for (uint256 i = 0; i < 3; i++) {
+    for (uint256 i; i < 3; ++i) {
       vm.prank(selectedNodes[i]);
       IEntitlementGated(resolverAddress).postEntitlementCheckResult(
         transactionId,
@@ -409,41 +442,6 @@ contract MembershipJoinSpaceTest is
   {
     vm.deal(bob, MEMBERSHIP_PRICE);
 
-    vm.recordLogs();
-    vm.prank(bob);
-    membership.joinSpace{value: MEMBERSHIP_PRICE}(bob);
-    Vm.Log[] memory logs = vm.getRecordedLogs();
-
-    (
-      ,
-      ,
-      address resolverAddress,
-      bytes32 transactionId,
-      uint256 roleId,
-      address[] memory selectedNodes
-    ) = _getRequestV2EventData(logs);
-
-    for (uint256 i = 0; i < 3; i++) {
-      vm.prank(selectedNodes[i]);
-      IEntitlementGated(resolverAddress).postEntitlementCheckResult(
-        transactionId,
-        roleId,
-        IEntitlementGatedBase.NodeVoteStatus.FAILED
-      );
-    }
-
-    assertEq(membershipToken.balanceOf(bob), 0);
-    assertEq(bob.balance, MEMBERSHIP_PRICE);
-  }
-
-  // utils
-
-  function test_joinSpacePriceChangesMidTransaction()
-    external
-    givenMembershipHasPrice
-  {
-    vm.deal(bob, MEMBERSHIP_PRICE);
-
     assertEq(membershipToken.balanceOf(bob), 0);
 
     vm.recordLogs();
@@ -463,7 +461,7 @@ contract MembershipJoinSpaceTest is
       address[] memory selectedNodes
     ) = _getRequestV2EventData(logs);
 
-    for (uint256 i = 0; i < 3; i++) {
+    for (uint256 i; i < 3; ++i) {
       vm.prank(selectedNodes[i]);
       IEntitlementGated(resolverAddress).postEntitlementCheckResult(
         transactionId,
@@ -472,8 +470,9 @@ contract MembershipJoinSpaceTest is
       );
     }
 
-    assertEq(membershipToken.balanceOf(bob), 1);
-    assertTrue(address(membership).balance > 0);
+    // bob gets no membership token and a refund
+    assertEq(membershipToken.balanceOf(bob), 0);
+    assertEq(bob.balance, MEMBERSHIP_PRICE);
   }
 
   function test_joinSpaceWithInitialFreeAllocation() external {
@@ -505,14 +504,18 @@ contract MembershipJoinSpaceTest is
   function test_joinSpace_withFeeOnlyPrice() external {
     uint256 fee = platformReqs.getMembershipFee();
 
-    vm.prank(founder);
+    vm.startPrank(founder);
+    membership.setMembershipFreeAllocation(0);
     membership.setMembershipPrice(fee);
+    vm.stopPrank();
 
     vm.deal(alice, fee);
     vm.prank(alice);
     membership.joinSpace{value: fee}(alice);
 
     assertEq(membershipToken.balanceOf(alice), 1);
+    assertEq(alice.balance, 0);
+    assertEq(membership.revenue(), 0);
   }
 
   function test_getProtocolFee() external view {
