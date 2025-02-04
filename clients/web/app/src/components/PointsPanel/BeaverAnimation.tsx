@@ -2,7 +2,7 @@ import React, { CSSProperties, useCallback, useEffect, useMemo, useRef, useState
 import { useRiverPointsCheckIn } from 'use-towns-client/dist/hooks/use-river-points'
 import { AnimatePresence } from 'framer-motion'
 import { Box } from '@ui'
-import { SECOND_MS } from 'data/constants'
+import { DAY_MS, SECOND_MS } from 'data/constants'
 import { useSizeContext } from 'ui/hooks/useSizeContext'
 import { Figma } from 'ui/styles/palette'
 import { useStore } from 'store/store'
@@ -25,6 +25,7 @@ type Props = {
     onBellyRub: () => Promise<boolean | undefined>
     points: number | undefined
     abstractAccountAddress: `0x${string}` | undefined
+    lastCheckIn: number | undefined
 }
 
 export const BeaverAnimation = (props: Props) => {
@@ -84,7 +85,11 @@ export const BeaverAnimation = (props: Props) => {
                             <PixelProgress />
                         </FadeInBox>
                     )}
-                    <HoverBox isActive={isActive} onClick={onClick} />
+                    <HoverBox
+                        isActive={isActive}
+                        lastCheckIn={props.lastCheckIn}
+                        onClick={onClick}
+                    />
                 </Box>
             </AnimatePresence>
 
@@ -97,7 +102,11 @@ export const BeaverAnimation = (props: Props) => {
     )
 }
 
-const HoverBox = (props: { isActive: boolean; onClick: () => void }) => {
+const HoverBox = (props: {
+    isActive: boolean
+    lastCheckIn: number | undefined
+    onClick: () => void
+}) => {
     const { isActive } = props
     const ref = useRef<HTMLDivElement>(null)
     const labelRef = useRef<HTMLCanvasElement>(null)
@@ -168,11 +177,23 @@ const HoverBox = (props: { isActive: boolean; onClick: () => void }) => {
 
     const onClick = useCallback(() => {
         if (!isActive) {
+            const remaining = props.lastCheckIn
+                ? new Date(DAY_MS + props.lastCheckIn - Date.now())
+                : 0
+            const remainingHours = remaining ? remaining.getUTCHours() : 0
+            const remainingMinutes = remaining ? remaining.getUTCMinutes() : 0
+
             popupToast(({ toast }) => (
                 <StandardToast.Success
                     icon="beaver"
-                    message="The beaver only wants one belly rub a day."
-                    subMessage="Come back tomorrow."
+                    message="The beaver is not ready for his belly rub."
+                    subMessage={`Come back in ${
+                        !remaining
+                            ? 'a bit'
+                            : remainingHours > 0
+                            ? `${remainingHours} ${remainingHours === 1 ? 'hour' : 'hours'}`
+                            : `${remainingMinutes} ${remainingMinutes === 1 ? 'minute' : 'minutes'}`
+                    }.`}
                     toast={toast}
                 />
             ))

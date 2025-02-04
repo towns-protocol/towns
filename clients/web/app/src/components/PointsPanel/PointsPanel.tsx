@@ -77,6 +77,7 @@ export const RiverPointsPanel = () => {
                                         abstractAccountAddress={abstractAccountAddress}
                                         isActive={!!data?.isActive}
                                         points={data?.riverPoints}
+                                        lastCheckIn={data?.lastCheckIn}
                                         onBellyRub={async () => {
                                             return onSubmit(getSigner)
                                         }}
@@ -168,7 +169,7 @@ const useHandleCheckin = (abstractAccountAddress: `0x${string}` | undefined) => 
                     message={`You've earned +${incrementPoints} point${
                         incrementPoints > 1 ? 's' : ''
                     }!`}
-                    subMessage="Come back tomorrow for more points!"
+                    subMessage="Come back in 24 hours to continue your streak."
                     toast={toast}
                 />
             ))
