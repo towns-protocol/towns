@@ -40,7 +40,7 @@ export const TownCreationProgressSlide = (props: {
     }, [isTransacting, status])
 
     const steps = useMemo(
-        () => ['Creating town onchain', 'Initializing River streams', 'Setting up your town'],
+        () => ['Creating town onchain', 'Connecting to Towns Network', 'Setting up your town'],
         [],
     )
     const step = useMemo(() => {
