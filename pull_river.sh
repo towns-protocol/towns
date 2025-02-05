@@ -198,7 +198,7 @@ function list_inprogress_branches() {
 MAINTREE_REPO="herenotthere/harmony"
 # Subtree details
 SUBTREE_PREFIX="river"
-SUBTREE_REPO="https://github.com/river-build/river"
+SUBTREE_REPO="https://github.com/towns-protocol/towns"
 SUBTREE_BRANCH="main"
 
 
