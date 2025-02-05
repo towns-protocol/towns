@@ -557,7 +557,7 @@ func (s *Service) serve() {
 
 func (s *Service) initEntitlements() error {
 	var err error
-	s.entitlementEvaluator, err = entitlement.NewEvaluatorFromConfig(s.serverCtx, s.config, s.chainConfig, s.metrics)
+	s.entitlementEvaluator, err = entitlement.NewEvaluatorFromConfig(s.serverCtx, s.config, s.chainConfig, s.metrics, s.otelTracer)
 	if err != nil {
 		return err
 	}

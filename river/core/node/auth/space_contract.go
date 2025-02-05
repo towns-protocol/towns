@@ -55,4 +55,8 @@ type SpaceContract interface {
 		ctx context.Context,
 		spaceId shared.StreamId,
 	) ([]types.BaseRole, error)
+	GetChannels(
+		ctx context.Context,
+		spaceId shared.StreamId,
+	) ([]types.BaseChannel, error)
 }

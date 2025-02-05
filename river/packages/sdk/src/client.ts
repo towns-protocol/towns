@@ -308,10 +308,6 @@ export class Client
         await this.stopSync()
     }
 
-    getSizeOfEncryptedСontentQueue(): number {
-        return this.decryptionExtensions?.getSizeOfEncryptedСontentQueue() ?? 0
-    }
-
     stream(streamId: string | Uint8Array): SyncedStream | undefined {
         return this.streams.get(streamId)
     }

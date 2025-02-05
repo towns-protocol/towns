@@ -61,6 +61,34 @@ func NewSpaceContractV3(
 	return spaceContract, nil
 }
 
+func (sc *SpaceContractV3) GetChannels(
+	ctx context.Context,
+	spaceId shared.StreamId,
+) ([]types.BaseChannel, error) {
+	space, err := sc.getSpace(ctx, spaceId)
+	if err != nil {
+		return nil, err
+	}
+	contractChannels, err := space.channels.GetChannels(nil)
+	if err != nil {
+		return nil, err
+	}
+	baseChannels := make([]types.BaseChannel, len(contractChannels))
+	for i, channel := range contractChannels {
+		streamId, err := shared.StreamIdFromBytes(channel.Id[:])
+		if err != nil {
+			return nil, err
+		}
+		baseChannels[i] = types.BaseChannel{
+			Id:       streamId,
+			Disabled: channel.Disabled,
+			Metadata: channel.Metadata,
+			RoleIds:  channel.RoleIds,
+		}
+	}
+	return baseChannels, nil
+}
+
 func (sc *SpaceContractV3) GetRoles(
 	ctx context.Context,
 	spaceId shared.StreamId,

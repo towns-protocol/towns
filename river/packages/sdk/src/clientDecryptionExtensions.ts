@@ -24,6 +24,16 @@ import { check } from '@river-build/dlog'
 import chunk from 'lodash/chunk'
 import { isDefined } from './check'
 import { isMobileSafari } from './utils'
+import {
+    spaceIdFromChannelId,
+    isDMChannelStreamId,
+    isGDMChannelStreamId,
+    isUserDeviceStreamId,
+    isUserInboxStreamId,
+    isUserSettingsStreamId,
+    isUserStreamId,
+    isChannelStreamId,
+} from './id'
 
 export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
     private isMobileSafariBackgrounded = false
@@ -288,5 +298,43 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         if (!this.isMobileSafariBackgrounded) {
             this.checkStartTicking()
         }
+    }
+
+    public getPriorityForStream(streamId: string, highPriorityIds: Set<string>): number {
+        if (
+            isUserDeviceStreamId(streamId) ||
+            isUserInboxStreamId(streamId) ||
+            isUserStreamId(streamId) ||
+            isUserSettingsStreamId(streamId)
+        ) {
+            return 0
+        }
+        // channel or dm we're currently viewing
+        const isChannel = isChannelStreamId(streamId)
+        const isDmOrGdm = isDMChannelStreamId(streamId) || isGDMChannelStreamId(streamId)
+        if ((isDmOrGdm || isChannel) && highPriorityIds.has(streamId)) {
+            return 1
+        }
+        // channels in the space we're currently viewing
+        if (isChannel) {
+            const spaceId = spaceIdFromChannelId(streamId)
+            if (highPriorityIds.has(spaceId)) {
+                return 2
+            }
+        }
+        // dms
+        if (isDmOrGdm) {
+            return 3
+        }
+        // space that we're currently viewing
+        if (highPriorityIds.has(streamId)) {
+            return 4
+        }
+        // then other channels,
+        if (isChannel) {
+            return 5
+        }
+        // then other spaces
+        return 6
     }
 }

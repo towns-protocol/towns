@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/river-build/river/core/config"
 	"github.com/river-build/river/core/node/crypto"
@@ -21,6 +22,7 @@ func NewEvaluatorFromConfig(
 	cfg *config.Config,
 	onChainCfg crypto.OnChainConfiguration,
 	metrics infra.MetricsFactory,
+	tracer trace.Tracer,
 ) (*Evaluator, error) {
 	return NewEvaluatorFromConfigWithBlockchainInfo(
 		ctx,
@@ -28,6 +30,7 @@ func NewEvaluatorFromConfig(
 		onChainCfg,
 		config.GetDefaultBlockchainInfo(),
 		metrics,
+		tracer,
 	)
 }
 
@@ -37,8 +40,9 @@ func NewEvaluatorFromConfigWithBlockchainInfo(
 	onChainCfg crypto.OnChainConfiguration,
 	blockChainInfo map[uint64]config.BlockchainInfo,
 	metrics infra.MetricsFactory,
+	tracer trace.Tracer,
 ) (*Evaluator, error) {
-	clients, err := NewBlockchainClientPool(ctx, cfg, onChainCfg)
+	clients, err := NewBlockchainClientPool(ctx, cfg, onChainCfg, metrics, tracer)
 	if err != nil {
 		return nil, err
 	}

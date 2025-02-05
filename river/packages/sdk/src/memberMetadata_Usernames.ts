@@ -58,13 +58,14 @@ export class MemberMetadata_Usernames {
                 userId,
                 typeof cleartext === 'string' ? cleartext : textDecoder.decode(cleartext),
             )
+        } else {
+            // Clear the plaintext username for this user on name change
+            this.plaintextUsernames.delete(userId)
+            encryptionEmitter?.emit('newEncryptedContent', this.streamId, eventId, {
+                kind: 'text',
+                content: encryptedData,
+            })
         }
-        // Clear the plaintext username for this user on name change
-        this.plaintextUsernames.delete(userId)
-        encryptionEmitter?.emit('newEncryptedContent', this.streamId, eventId, {
-            kind: 'text',
-            content: encryptedData,
-        })
 
         if (!pending) {
             this.confirmedUserIds.add(userId)

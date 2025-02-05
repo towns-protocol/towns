@@ -10099,6 +10099,7 @@ __metadata:
     eslint-plugin-import: ^2.27.5
     ethers: ^5.7.2
     fake-indexeddb: ^4.0.1
+    lru-cache: ^11.0.1
     nanoid: ^4.0.0
     ts-node: ^10.9.1
     typed-emitter: ^2.1.0

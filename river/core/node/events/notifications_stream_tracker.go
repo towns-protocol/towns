@@ -58,7 +58,6 @@ func NewNotificationsStreamTrackerFromStreamAndCookie(
 	listener StreamEventListener,
 	userPreferences UserPreferencesStore,
 ) (*TrackedNotificationStreamView, error) {
-	// lint:ignore context.Background() is fine here
 	view, err := MakeRemoteStreamView(ctx, stream)
 	if err != nil {
 		return nil, err

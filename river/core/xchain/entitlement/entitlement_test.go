@@ -341,6 +341,7 @@ func TestMain(m *testing.M) {
 		cfg,
 		allSepoliaChains_onChainConfig,
 		infra.NewMetricsFactory(nil, "", ""),
+		nil,
 	)
 	if err != nil {
 		panic(err)
@@ -980,6 +981,7 @@ func Test_evaluateEthBalance_withConfig(t *testing.T) {
 				allSepoliaChains_onChainConfig,
 				singleEtherChainBlockChainInfo,
 				infra.NewMetricsFactory(nil, "", ""),
+				nil,
 			)
 			require.NoError(err)
 

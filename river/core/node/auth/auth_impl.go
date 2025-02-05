@@ -169,7 +169,7 @@ func newArgsForLinkedWallets(principal common.Address) *ChainAuthArgs {
 }
 
 const (
-	DEFAULT_REQUEST_TIMEOUT_MS = 5000
+	DEFAULT_REQUEST_TIMEOUT_MS = 10000
 	DEFAULT_MAX_WALLETS        = 10
 )
 

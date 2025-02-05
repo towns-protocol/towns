@@ -27,6 +27,7 @@
         "debug": "^4.3.4",
         "dexie": "^4.0.7",
         "ethers": "^5.7.2",
+        "lru-cache": "^11.0.1",
         "nanoid": "^4.0.0",
         "typed-emitter": "^2.1.0"
     },

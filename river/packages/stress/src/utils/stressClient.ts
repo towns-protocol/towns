@@ -5,7 +5,12 @@ import {
     SyncAgent,
     spaceIdFromChannelId,
 } from '@river-build/sdk'
-import { type ExportedDevice } from '@river-build/encryption'
+import {
+    ExtendedInboundGroupSessionData,
+    GroupSessionRecord,
+    HybridGroupSessionRecord,
+    type ExportedDevice,
+} from '@river-build/encryption'
 import { LocalhostWeb3Provider, SpaceDapp } from '@river-build/web3'
 import { shortenHexString } from '@river-build/dlog'
 import { Wallet } from 'ethers'
@@ -31,11 +36,21 @@ export async function makeStressClient(
     })
     let device: ExportedDevice | undefined
     const rawDevice = await globalPersistedStore?.get(storageKey).catch(() => undefined)
+
     if (rawDevice) {
-        device = JSON.parse(rawDevice) as ExportedDevice
-        logger.info(
-            `Device imported from ${storageKey}, outboundSessions: ${device.outboundSessions.length} inboundSessions: ${device.inboundSessions.length}`,
-        )
+        const jsonDevice = JSON.parse(rawDevice) as ExportedDevice
+        if (jsonDevice.pickleKey && jsonDevice.pickledAccount) {
+            device = {
+                outboundSessions: jsonDevice.outboundSessions ?? [],
+                inboundSessions: jsonDevice.inboundSessions ?? [],
+                hybridGroupSessions: jsonDevice.hybridGroupSessions ?? [],
+                pickleKey: jsonDevice.pickleKey,
+                pickledAccount: jsonDevice.pickledAccount,
+            } satisfies ExportedDevice
+            logger.info(
+                `Device imported from ${storageKey}, outboundSessions: ${device.outboundSessions.length} inboundSessions: ${device.inboundSessions.length}`,
+            )
+        }
     }
     const botPrivateKey = bot.rootWallet.privateKey
     const agent = await bot.makeSyncAgent({

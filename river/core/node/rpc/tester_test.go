@@ -55,11 +55,16 @@ func (n *testNodeRecord) Close(ctx context.Context, dbUrl string) {
 		n.service = nil
 	}
 	if n.address != (common.Address{}) {
-		_ = dbtestutils.DeleteTestSchema(
-			ctx,
+		// lint:ignore context.Background() is fine here
+		err := dbtestutils.DeleteTestSchema(
+			context.Background(),
 			dbUrl,
 			storage.DbSchemaNameFromAddress(n.address.String()),
 		)
+		// Force test writers to properly clean up schemas if this fails for some reason.
+		if err != nil {
+			panic(err)
+		}
 	}
 }
 

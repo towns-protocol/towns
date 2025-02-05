@@ -145,7 +145,7 @@ func New(
 		return nil, err
 	}
 
-	evaluator, err := entitlement.NewEvaluatorFromConfig(ctx, cfg, chainConfig, metrics)
+	evaluator, err := entitlement.NewEvaluatorFromConfig(ctx, cfg, chainConfig, metrics, nil)
 	if err != nil {
 		return nil, err
 	}
