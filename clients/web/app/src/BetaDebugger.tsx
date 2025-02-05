@@ -83,7 +83,7 @@ const UserStatus = () => {
             </Stack>
             <Stack horizontal gap="xs" color="gray1" fontSize="sm" alignItems="center">
                 <Paragraph size="sm">Device ID:</Paragraph>
-                <ClipboardCopy clipboardContent={userId} label={shortAddress(deviceKey ?? '')} />
+                <ClipboardCopy clipboardContent={deviceKey} label={shortAddress(deviceKey ?? '')} />
             </Stack>
         </>
     )
