@@ -177,6 +177,20 @@
       "dependsOrder": "sequence"
     },
     {
+      "label": "Start Local App",
+      "dependsOn": [
+        "CheckVersions",
+        "YarnInstall",
+        "App and Watches",
+      ],
+      // Mark as the default build task so cmd/ctrl+shift+b will create them
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "dependsOrder": "sequence"
+    },
+    {
       "label": "Apps and Workers",
       "dependsOn": [
         "Start Watches",
@@ -195,7 +209,18 @@
       },
       "problemMatcher": []
     },
-    
+    {
+      "label": "App and Watches",
+      "dependsOn": [
+        "Start Watches",
+        "App",
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      },
+      "problemMatcher": []
+    },
     {
       "label": "Start Watches",
       "dependsOn": [
