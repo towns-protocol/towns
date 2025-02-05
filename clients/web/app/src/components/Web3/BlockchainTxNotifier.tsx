@@ -380,10 +380,7 @@ function MonitoringNotification(props: ToastProps & { toast: Toast }) {
             return (
                 <StandardToast.Error
                     toast={toast}
-                    message={
-                        `Including gas, you don't have enough ETH to tip @${updatedTx.data?.receiverUsername}` ??
-                        ''
-                    }
+                    message={`Including gas, you don't have enough ETH to tip @${updatedTx.data?.receiverUsername}`}
                     cta="Add Funds"
                     onCtaClick={() => {
                         headlessToast.dismiss(toast.id)
@@ -405,24 +402,30 @@ function MonitoringNotification(props: ToastProps & { toast: Toast }) {
 }
 
 function getSubErrorMessage(...params: Parameters<typeof mapToErrorMessage>) {
-    const [{ error, source }] = params
-    const mappedError = mapToErrorMessage({ error, source })
-    switch (source) {
-        case BlockchainTransactionType.WithdrawTreasury:
-            // special case for membership withdrawals when the space contract has an untracked balance
-            // someone pays to join, space contract tracks payment, balance goes up
-            // but you can also fund the space contract directly, which will also increase the balance, but those funds are not tracked
-            // so we might display a balance, but you can't withdraw it
-            // this is going to be solved later in contracts but for now we just show a special message
-            if (mappedError?.includes(ERROR_MEMBERSHIP_INSUFFICIENT_PAYMENT)) {
-                return (
-                    <Box>
-                        The town contains funds that cannot be withdrawn. This can occur if funds
-                        were sent directly to the town. We are woking on this!
-                    </Box>
-                )
-            }
-            break
+    try {
+        const [{ error, source }] = params
+        const mappedError = mapToErrorMessage({ error, source })
+
+        switch (source) {
+            case BlockchainTransactionType.WithdrawTreasury:
+                // special case for membership withdrawals when the space contract has an untracked balance
+                // someone pays to join, space contract tracks payment, balance goes up
+                // but you can also fund the space contract directly, which will also increase the balance, but those funds are not tracked
+                // so we might display a balance, but you can't withdraw it
+                // this is going to be solved later in contracts but for now we just show a special message
+                if (mappedError?.includes(ERROR_MEMBERSHIP_INSUFFICIENT_PAYMENT)) {
+                    return (
+                        <Box>
+                            The town contains funds that cannot be withdrawn. This can occur if
+                            funds were sent directly to the town. We are woking on this!
+                        </Box>
+                    )
+                }
+                break
+        }
+        return mappedError
+    } catch (error) {
+        console.error(`[getSubErrorMessage] `, error)
+        return typeof error === 'string' ? error : error instanceof Error ? error.message : ''
     }
-    return mappedError
 }

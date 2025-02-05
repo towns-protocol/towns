@@ -2,6 +2,8 @@ import React from 'react'
 import { Toast, useToaster } from 'react-hot-toast/headless'
 import { AnimatePresence } from 'framer-motion'
 import { Box, MotionBox } from '@ui'
+import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
+import { StandardToast } from './StandardToast'
 
 export const Notifications = () => {
     const { toasts, handlers } = useToaster()
@@ -56,7 +58,16 @@ export const Notifications = () => {
                                 rounded="sm"
                                 border="default"
                             >
-                                {(toast.message as (toast: Toast) => JSX.Element)(toast)}
+                                <ErrorBoundary
+                                    fallback={
+                                        <StandardToast.Error
+                                            toast={toast}
+                                            message="There was an error"
+                                        />
+                                    }
+                                >
+                                    {(toast.message as (toast: Toast) => JSX.Element)(toast)}
+                                </ErrorBoundary>
                             </Box>
                         </MotionBox>
                     )
