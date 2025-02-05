@@ -23,7 +23,6 @@ export const sendUserOperationWithRetry = async (args: {
     let attempt = 0
     let shouldTry = true
     let _error: CodeException | undefined = undefined
-    const waitTime = userOpClient.waitIntervalMs
 
     while (shouldTry && attempt < (retryCount ?? 3)) {
         try {
@@ -67,16 +66,21 @@ export const sendUserOperationWithRetry = async (args: {
                 await new Promise((resolve) => setTimeout(resolve, delay))
                 continue
             } else if (replacementUnderpriced) {
-                const { error: replacementUnderpricedError, type } = replacementUnderpriced
+                // TODO:
+                // gas estimation for replacement underpriced is baked into the middleware - any time a userop is prepared,
+                // any pending op is checked and replacement gas is estimated if applicable
+                //
+                // we don't need to auto retry here, as it adds complication in the case that a pending op lands in between retries and the retried op has the wrong nonce
+                // which opens the door for a number of possible edge cases
+                //
+                // if the replacement gas wasn't enough and we get this error, subsequent manual retries should succeed
+                // this is still an improvement over the previous behavior where we didn't estimate replacement gas, so any retry had a high chance of failure
+                //
+                // it's a tradeoff between UX and complexity that we can revisit in the future
+                // error tracking should help inform of how severe this issue is now that we're estimating replacement gas,
+                const { error: replacementUnderpricedError } = replacementUnderpriced
                 _error = replacementUnderpricedError
-                setOperationAttempt(simpleAccount.getSenderAddress(), attempt++)
-                setRetryDetails(simpleAccount.getSenderAddress(), {
-                    type: 'replacementUnderpriced',
-                    data: type,
-                })
-
-                await new Promise((resolve) => setTimeout(resolve, waitTime))
-                continue
+                shouldTry = false
             }
             // if any gas too low errors, retry
             // https://docs.stackup.sh/docs/bundler-errors

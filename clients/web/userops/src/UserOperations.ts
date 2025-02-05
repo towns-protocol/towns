@@ -21,7 +21,7 @@ import isEqual from 'lodash/isEqual'
 import { UserOpsConfig, UserOpParams, FunctionHash, TimeTracker, TimeTrackerEvents } from './types'
 import { selectUserOpsByAddress, userOpsStore } from './userOpsStore'
 import { ERC4337 } from 'userop/dist/constants'
-import { CodeException, InsufficientTipBalanceException, NonceMismatchError } from './errors'
+import { CodeException, InsufficientTipBalanceException } from './errors'
 import { UserOperationEventEvent } from 'userop/dist/typechain/EntryPoint'
 import { EVERYONE_ADDRESS, getFunctionSigHash, isUsingAlchemyBundler, OpToJSON } from './utils'
 import {
@@ -1978,15 +1978,19 @@ export class UserOps {
                     functionHashForPaymasterProxy: functionHashForPaymasterProxy,
                 })
             })
+            // we have gas limits, estimates paymaster, nonce, etc now, so update the current op
+            .useMiddleware(async (ctx) => {
+                userOpsStore.getState().setCurrent({
+                    sender: ctx.op.sender,
+                    op: OpToJSON(ctx.op),
+                })
+                await Promise.resolve()
+            })
             // prompt user if the paymaster rejected
             .useMiddleware(async (ctx) => {
                 if (isSponsoredOp(ctx)) {
                     return
                 }
-                userOpsStore.getState().setCurrent({
-                    sender: ctx.op.sender,
-                    op: OpToJSON(ctx.op),
-                })
                 const { current } = selectUserOpsByAddress(ctx.op.sender)
 
                 // tip is a special case
@@ -2022,24 +2026,6 @@ export class UserOps {
                         value,
                     })
                 }
-            })
-            .useMiddleware(async (ctx) => {
-                const { current, pending } = selectUserOpsByAddress(ctx.op.sender)
-                // in the case that the pending userop lands during the replacement flow, and the current nonce increments
-                // it would indicate that the current op is not replacing the pending op, but is a new op.
-                // i've not run into this but i imagine it's possible
-                //
-                // i.e. you tipped someone, it's stuck, we start retyring, the stuck tx lands, you're deducted, and the new tx is sent, so you double tip
-                //
-                // let's be extra careful here and prevent the userop from being sent
-                if (pending.op && current.op) {
-                    const pendingNonce = ethers.BigNumber.from(pending.op.nonce)
-                    const currentNonce = ethers.BigNumber.from(current.op.nonce)
-                    if (!pendingNonce.eq(currentNonce)) {
-                        throw new NonceMismatchError()
-                    }
-                }
-                return Promise.resolve()
             })
             .useMiddleware(async (ctx) => signUserOpHash(ctx, signer))
     }

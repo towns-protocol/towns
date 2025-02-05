@@ -271,9 +271,9 @@ export class MockReplacementUnderpricedError extends Error {
 }
 
 export class NonceMismatchError extends CodeException {
-    constructor() {
+    constructor({ currentNonce, pendingNonce }: { currentNonce: string; pendingNonce: string }) {
         super({
-            message: 'nonce mismatch between current and pending userops',
+            message: `nonce mismatch between current and pending userops: ${currentNonce} !== ${pendingNonce}`,
             code: 'nonce_mismatch',
             category: 'nonce_mismatch',
         })
