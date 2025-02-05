@@ -93,7 +93,7 @@ jobs:
                           "actor": "${{ github.actor }}"
                       }
     deploy:
-        name: Deploy to AWS ECS
+        name: Deploy
         runs-on: ubuntu-latest
 
         needs: pre_deploy
@@ -109,11 +109,31 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
                   aws-region: us-east-1
 
-            - name: Deploy notification service
+            - name: Deploy via ECS
+              if: inputs.environment_name != 'gamma'
               env:
                   ENVIRONMENT_NAME: ${{ inputs.environment_name }}
                   DOCKER_IMAGE_TAG: ${{ inputs.docker_image_tag }}
               run: ./scripts/create-and-deploy-river-notification-service-task-definition.sh
+
+            - name: Deploy via Repository Dispatch (Gamma Only)
+              if: inputs.environment_name == 'gamma'
+              env:
+                  ENVIRONMENT_NAME: ${{ inputs.environment_name }}
+                  DOCKER_IMAGE_TAG: ${{ inputs.docker_image_tag }}
+              uses: actions/github-script@v7
+              with:
+                  github-token: ${{ secrets.HARMONY_GITHUB_PAT }}
+                  script: |
+                      await github.rest.repos.createDispatchEvent({
+                        owner: "HereNotThere",
+                        repo: "argocd",
+                        event_type: "update-infra",
+                        client_payload: {
+                          environment: process.env.ENVIRONMENT_NAME,
+                          notificationServiceImageTag: process.env.DOCKER_IMAGE_TAG
+                        }
+                      });
 
             - name: Data dog logging
               if: failure()
