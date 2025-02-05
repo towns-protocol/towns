@@ -5,12 +5,7 @@ import {
     SyncAgent,
     spaceIdFromChannelId,
 } from '@river-build/sdk'
-import {
-    ExtendedInboundGroupSessionData,
-    GroupSessionRecord,
-    HybridGroupSessionRecord,
-    type ExportedDevice,
-} from '@river-build/encryption'
+import { type ExportedDevice } from '@river-build/encryption'
 import { LocalhostWeb3Provider, SpaceDapp } from '@river-build/web3'
 import { shortenHexString } from '@river-build/dlog'
 import { Wallet } from 'ethers'

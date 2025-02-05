@@ -46,6 +46,6 @@ abstract contract ERC20PermitBase is IERC20PermitBase, EIP712, Nonces {
 
     address signer = ECDSA.recover(hash, v, r, s);
     require(signer == owner, "ERC20Permit: invalid signature");
-    ERC20Storage.layout().inner.approve(owner, spender, value);
+    ERC20Storage.layout().inner._approve(owner, spender, value);
   }
 }

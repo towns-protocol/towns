@@ -16,20 +16,20 @@
         "test:unit": "make test"
     },
     "dependencies": {
-        "@openzeppelin/contracts": "^5.1.0",
-        "@openzeppelin/contracts-upgradeable": "^5.1.0",
+        "@openzeppelin/contracts": "^5.2.0",
+        "@openzeppelin/contracts-upgradeable": "^5.2.0",
         "@prb/math": "^4.1.0",
-        "@river-build/diamond": "github:river-build/diamond#5b9f60d7ff0d4ff99c560d95c15a5e7e8caf922a",
+        "@river-build/diamond": "github:river-build/diamond#552c970ed60cf452d28e7713b00a95c7bd10a5d9",
         "account-abstraction": "github:eth-infinitism/account-abstraction",
-        "solady": "^0.0.289"
+        "solady": "^0.1.2"
     },
     "devDependencies": {
         "@prb/test": "^0.6.4",
         "ds-test": "github:dapphub/ds-test",
-        "forge-std": "github:foundry-rs/forge-std#v1.9.4",
+        "forge-std": "github:foundry-rs/forge-std#v1.9.5",
         "prettier": "^2.8.8",
-        "prettier-plugin-solidity": "^1.4.1",
-        "solhint": "^5.0.3",
+        "prettier-plugin-solidity": "^1.4.2",
+        "solhint": "^5.0.5",
         "turbo": "^2.0.12"
     }
 }

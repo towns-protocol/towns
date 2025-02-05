@@ -246,6 +246,7 @@ export class SyncedStreamsLoop {
         const pendingIndex = this.pendingSyncCookies.indexOf(streamId)
         if (pendingIndex !== -1) {
             this.pendingSyncCookies.splice(pendingIndex, 1)
+            this.inFlightSyncCookies.delete(streamId)
             streamRecord.stream.stop()
             this.streams.delete(streamId)
             this.log('removed stream from pending sync', streamId)
@@ -309,13 +310,20 @@ export class SyncedStreamsLoop {
                     this.syncState === SyncState.Syncing ||
                     this.syncState === SyncState.Retrying
                 ) {
-                    this.log('sync ITERATION start', ++iteration, this.syncState)
+                    // get cookies from all the known streams to sync
+                    this.inFlightSyncCookies.clear()
+                    this.pendingSyncCookies = Array.from(this.streams.keys())
+
+                    this.log(
+                        'sync ITERATION start',
+                        ++iteration,
+                        this.syncState,
+                        `pending: ${this.pendingSyncCookies.length}`,
+                    )
                     if (this.syncState === SyncState.Retrying) {
                         this.setSyncState(SyncState.Starting)
                     }
 
-                    // get cookies from all the known streams to sync
-                    this.pendingSyncCookies = Array.from(this.streams.keys())
                     try {
                         // syncId needs to be reset before starting a new syncStreams
                         // syncStreams() should return a new syncId
@@ -706,7 +714,7 @@ export class SyncedStreamsLoop {
                     if (streamRecord === undefined) {
                         this.log('sync got stream', streamId, 'NOT FOUND')
                     } else if (syncStream.syncReset) {
-                        this.log('initStream from sync reset', streamId, 'RESET')
+                        this.logDebug('initStream from sync reset', streamId, 'RESET')
                         const response = await unpackStream(syncStream, this.unpackEnvelopeOpts)
                         streamRecord.syncCookie = response.streamAndCookie.nextSyncCookie
                         await streamRecord.stream.initializeFromResponse(response)
