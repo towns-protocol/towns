@@ -430,7 +430,7 @@ export abstract class BaseDecryptionExtensions {
 
     private setStatus(status: DecryptionStatus) {
         if (this._status !== status) {
-            this.log.info(`status changed ${status}`)
+            this.log.debug(`status changed ${status}`)
             this._status = status
             this.emitter.emit('decryptionExtStatusChanged', status)
         }
