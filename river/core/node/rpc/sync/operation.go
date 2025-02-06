@@ -2,6 +2,8 @@ package sync
 
 import (
 	"context"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"time"
 
 	"github.com/river-build/river/core/node/logging"
@@ -37,6 +39,8 @@ type (
 		streamCache *StreamCache
 		// nodeRegistry is used to get the remote remoteNode endpoint from a thisNodeAddress address
 		nodeRegistry nodes.NodeRegistry
+		// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
+		otelTracer trace.Tracer
 	}
 
 	// subCommand represents a request to add or remove a stream and ping sync operation
@@ -68,6 +72,7 @@ func NewStreamsSyncOperation(
 	node common.Address,
 	streamCache *StreamCache,
 	nodeRegistry nodes.NodeRegistry,
+	otelTracer trace.Tracer,
 ) (*StreamSyncOperation, error) {
 	// make the sync operation cancellable for CancelSync
 	syncOpCtx, cancel := context.WithCancelCause(ctx)
@@ -81,6 +86,7 @@ func NewStreamsSyncOperation(
 		commands:        make(chan *subCommand, 64),
 		streamCache:     streamCache,
 		nodeRegistry:    nodeRegistry,
+		otelTracer:      otelTracer,
 	}, nil
 }
 
@@ -98,7 +104,7 @@ func (syncOp *StreamSyncOperation) Run(
 
 	syncers, messages, err := client.NewSyncers(
 		syncOp.ctx, syncOp.cancel, syncOp.SyncID, syncOp.streamCache,
-		syncOp.nodeRegistry, syncOp.thisNodeAddress, cookies)
+		syncOp.nodeRegistry, syncOp.thisNodeAddress, cookies, syncOp.otelTracer)
 	if err != nil {
 		return err
 	}
@@ -178,6 +184,14 @@ func (syncOp *StreamSyncOperation) AddStreamToSync(
 		return nil, err
 	}
 
+	if syncOp.otelTracer != nil {
+		var span trace.Span
+		streamID, _ := shared.StreamIdFromBytes(req.Msg.GetSyncPos().GetStreamId())
+		ctx, span = syncOp.otelTracer.Start(ctx, "addStreamToSync",
+			trace.WithAttributes(attribute.String("stream", streamID.String())))
+		defer span.End()
+	}
+
 	cmd := &subCommand{
 		Ctx:          ctx,
 		AddStreamReq: req,
@@ -197,6 +211,14 @@ func (syncOp *StreamSyncOperation) RemoveStreamFromSync(
 ) (*connect.Response[RemoveStreamFromSyncResponse], error) {
 	if req.Msg.GetSyncId() != syncOp.SyncID {
 		return nil, RiverError(Err_INVALID_ARGUMENT, "invalid syncId").Tag("syncId", req.Msg.GetSyncId())
+	}
+
+	if syncOp.otelTracer != nil {
+		var span trace.Span
+		streamID, _ := shared.StreamIdFromBytes(req.Msg.GetStreamId())
+		ctx, span = syncOp.otelTracer.Start(ctx, "removeStreamFromSync",
+			trace.WithAttributes(attribute.String("stream", streamID.String())))
+		defer span.End()
 	}
 
 	cmd := &subCommand{

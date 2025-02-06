@@ -5,12 +5,13 @@ import (
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
-
 	. "github.com/river-build/river/core/node/base"
 	. "github.com/river-build/river/core/node/events"
 	"github.com/river-build/river/core/node/logging"
 	. "github.com/river-build/river/core/node/protocol"
 	. "github.com/river-build/river/core/node/shared"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type localSyncer struct {
@@ -26,6 +27,9 @@ type localSyncer struct {
 
 	activeStreamsMu sync.Mutex
 	activeStreams   map[StreamId]*Stream
+
+	// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
+	otelTracer trace.Tracer
 }
 
 func newLocalSyncer(
@@ -36,6 +40,7 @@ func newLocalSyncer(
 	streamCache *StreamCache,
 	cookies []*SyncCookie,
 	messages chan<- *SyncStreamsResponse,
+	otelTracer trace.Tracer,
 ) (*localSyncer, error) {
 	return &localSyncer{
 		globalSyncOpID:     globalSyncOpID,
@@ -46,6 +51,7 @@ func newLocalSyncer(
 		cookies:            cookies,
 		messages:           messages,
 		activeStreams:      make(map[StreamId]*Stream),
+		otelTracer:         otelTracer,
 	}, nil
 }
 
@@ -74,6 +80,14 @@ func (s *localSyncer) Address() common.Address {
 }
 
 func (s *localSyncer) AddStream(ctx context.Context, cookie *SyncCookie) error {
+	if s.otelTracer != nil {
+		var span trace.Span
+		streamID, _ := StreamIdFromBytes(cookie.GetStreamId())
+		ctx, span = s.otelTracer.Start(ctx, "localSyncer::AddStream",
+			trace.WithAttributes(attribute.String("stream", streamID.String())))
+		defer span.End()
+	}
+
 	streamID, err := StreamIdFromBytes(cookie.GetStreamId())
 	if err != nil {
 		return err
@@ -81,7 +95,13 @@ func (s *localSyncer) AddStream(ctx context.Context, cookie *SyncCookie) error {
 	return s.addStream(ctx, streamID, cookie)
 }
 
-func (s *localSyncer) RemoveStream(_ context.Context, streamID StreamId) (bool, error) {
+func (s *localSyncer) RemoveStream(ctx context.Context, streamID StreamId) (bool, error) {
+	if s.otelTracer != nil {
+		_, span := s.otelTracer.Start(ctx, "localSyncer::removeStream",
+			trace.WithAttributes(attribute.String("stream", streamID.String())))
+		defer span.End()
+	}
+
 	s.activeStreamsMu.Lock()
 	defer s.activeStreamsMu.Unlock()
 
