@@ -9,6 +9,10 @@ export const useDmChannels = (): Channel[] => {
                 return {
                     id: c.id,
                     label: '',
+                    isAutojoin: false,
+                    isDefault: false,
+                    hideUserJoinLeaveEvents: false,
+                    disabled: false,
                 } satisfies Channel
             }),
         [dmChannels],

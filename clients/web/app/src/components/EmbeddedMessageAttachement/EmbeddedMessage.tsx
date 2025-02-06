@@ -6,7 +6,7 @@ import {
 } from '@river-build/sdk'
 import React, { useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useRoom, useUserLookupContext } from 'use-towns-client'
+import { useChannelWithId, useUserLookupContext } from 'use-towns-client'
 import { MessageAttachmentsContext } from '@components/MessageAttachments/MessageAttachmentsContext'
 import { RichTextPreview } from '@components/RichTextPlate/RichTextPreview'
 import { Box, Paragraph, Stack, Text } from '@ui'
@@ -28,7 +28,7 @@ export const EmbeddedMessage = (props: {
             ? attachment.channelMessageEvent
             : undefined
 
-    const channel = useRoom(attachment.info.channelId)
+    const channel = useChannelWithId(attachment.info.channelId)
     const { lookupUser } = useUserLookupContext()
     const user = lookupUser(attachment.info.userId)
 
@@ -66,7 +66,7 @@ export const EmbeddedMessage = (props: {
     )
 
     const channelName =
-        isDM || !isKnownChannel || !channel?.name ? `${channelType}` : `#${channel?.name}`
+        isDM || !isKnownChannel || !channel?.label ? `${channelType}` : `#${channel?.label}`
 
     if (!attachedMessage) {
         return null

@@ -148,7 +148,17 @@ describe('CreateChannelForm', () => {
         )
 
         vi.spyOn(useSpaceChannels, 'useSpaceChannels').mockImplementation(() => {
-            return [{ id: '1', name: 'test-channel', label: 'test-channel' }]
+            return [
+                {
+                    id: '1',
+                    name: 'test-channel',
+                    label: 'test-channel',
+                    isAutojoin: false,
+                    isDefault: false,
+                    hideUserJoinLeaveEvents: false,
+                    disabled: false,
+                },
+            ]
         })
 
         render(<Wrapper />)

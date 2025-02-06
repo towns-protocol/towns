@@ -65,6 +65,8 @@ describe('<ChannelRiverMetadataSettingsForm />', () => {
                     label: 'some channel',
                     isAutojoin: true,
                     hideUserJoinLeaveEvents: true,
+                    isDefault: false,
+                    disabled: false,
                 },
             } satisfies ReturnType<typeof townsClient.useChannelData>
         })
@@ -89,6 +91,8 @@ describe('<ChannelRiverMetadataSettingsForm />', () => {
                     label: 'some channel',
                     isAutojoin: false,
                     hideUserJoinLeaveEvents: false,
+                    isDefault: false,
+                    disabled: false,
                 },
             } satisfies ReturnType<typeof townsClient.useChannelData>
         })
@@ -113,6 +117,8 @@ describe('<ChannelRiverMetadataSettingsForm />', () => {
                     label: 'some channel',
                     isAutojoin: false,
                     hideUserJoinLeaveEvents: false,
+                    isDefault: false,
+                    disabled: false,
                 },
             } satisfies ReturnType<typeof townsClient.useChannelData>
         })

@@ -21,6 +21,11 @@ vi.mock('use-towns-client', async () => {
             channel: {
                 id: channelId,
                 label: 'my-channel',
+                isAutojoin: false,
+                isDefault: false,
+                hideUserJoinLeaveEvents: false,
+                disabled: false,
+                topic: 'Room Topic',
             },
             channelId: channelId,
             spaceId: spaceId,
@@ -30,14 +35,17 @@ vi.mock('use-towns-client', async () => {
         }),
         useRoom: (channelId: string): ReturnType<typeof Lib.useRoom> => ({
             id: channelId,
-            name: 'my-channel',
-            topic: 'Room Topic',
             members: ['0x123'],
             membership: 'join',
-            isSpaceRoom: false,
-            isDefault: false,
+        }),
+        useChannelWithId: (channelId: string): ReturnType<typeof Lib.useChannelWithId> => ({
+            id: channelId,
+            label: 'my-channel',
             isAutojoin: false,
+            isDefault: false,
             hideUserJoinLeaveEvents: false,
+            disabled: false,
+            topic: 'Room Topic',
         }),
         useConnectivity: (): ReturnType<typeof Lib.useConnectivity> => ({
             ...actual.useConnectivity(),

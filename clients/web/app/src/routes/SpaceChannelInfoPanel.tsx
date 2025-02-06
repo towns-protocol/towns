@@ -6,11 +6,11 @@ import {
     useChannelData,
     useChannelMembers,
     useChannelSettings,
+    useChannelWithId,
     useConnectivity,
     useHasPermission,
     usePermissionOverrides,
     usePrefetchMultipleRoleDetails,
-    useRoom,
     useSpaceData,
     useStreamEncryptionAlgorithm,
 } from 'use-towns-client'
@@ -94,7 +94,7 @@ export const ChannelInfo = () => {
     usePrefetchMultipleRoleDetails(spaceData?.id, roledIds)
 
     const channelExists = channel !== undefined
-    const room = useRoom(channel?.id)
+    const room = useChannelWithId(channel?.id)
     const [activeModal, setActiveModal] = useState<'members' | 'settings' | undefined>(undefined)
 
     const onLeaveClick = useEvent(async () => {

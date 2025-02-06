@@ -6,8 +6,8 @@ import {
     UpdateChannelInfo,
     WalletDoesNotMatchSignedInAccountError,
     useChannelId,
+    useChannelWithId,
     useIsTransactionPending,
-    useRoom,
     useSpaceId,
     useUpdateChannelTransaction,
 } from 'use-towns-client'
@@ -58,7 +58,7 @@ export function ChannelPermissionsNameDescriptionForm({
 }: ChannelPermissionsNameDescriptionFormProps & {
     preventCloseMessage?: string
 }): JSX.Element {
-    const channel = useRoom(channelId)
+    const channel = useChannelWithId(channelId)
     console.log('[ChannelPermissionsNameDescriptionModal] channel', channel)
     const { data, isLoading, invalidateQuery } = useAllRoleDetails(spaceId)
 
@@ -216,7 +216,7 @@ export function ChannelPermissionsNameDescriptionForm({
                 grow
                 schema={schema}
                 defaultValues={{
-                    name: channel.name,
+                    name: channel.label,
                     description: channel.topic,
                     roleIds: getCheckedValuesForRoleIdsField(rolesWithDetails),
                 }}

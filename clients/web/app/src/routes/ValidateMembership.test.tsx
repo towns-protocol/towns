@@ -48,6 +48,10 @@ const mockSpaceData: Lib.SpaceData = {
                 {
                     id: 'some-channel-stream-id',
                     label: 'general',
+                    isAutojoin: false,
+                    isDefault: false,
+                    hideUserJoinLeaveEvents: false,
+                    disabled: false,
                 },
             ],
         },

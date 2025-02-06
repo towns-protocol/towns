@@ -1,21 +1,43 @@
 import { Channel, ChannelData } from '../types/towns-types'
 import { useChannelContext } from '../components/ChannelContextProvider'
 import { useMemo } from 'react'
-import { useSpaceData } from './use-space-data'
-import { useRoom } from './use-room'
-import { isDMChannelStreamId, isGDMChannelStreamId } from '@river-build/sdk'
+import { useSpaceDataWithId } from './use-space-data'
+import {
+    isChannelStreamId,
+    isDMChannelStreamId,
+    isGDMChannelStreamId,
+    spaceIdFromChannelId,
+} from '@river-build/sdk'
 
 export function useChannelData(): ChannelData {
     const { channelId, spaceId } = useChannelContext()
-    const space = useSpaceData()
+    const channel = useChannelWithSpaceId(channelId, spaceId)
+    return useMemo(() => {
+        return {
+            spaceId,
+            channelId,
+            channel,
+        }
+    }, [channel, channelId, spaceId])
+}
 
-    const room = useRoom(channelId)
+export function useChannelWithId(inChannelId?: string) {
+    const channelId = inChannelId && isChannelStreamId(inChannelId) ? inChannelId : undefined
+    const spaceId = channelId ? spaceIdFromChannelId(channelId) : undefined
+    return useChannelWithSpaceId(channelId, spaceId)
+}
+
+function useChannelWithSpaceId(channelId?: string, spaceId?: string): Channel | undefined {
+    const space = useSpaceDataWithId(spaceId)
     const channelGroup = useMemo(
         () => space?.channelGroups.find((g) => g.channels.find((c) => c.id === channelId)),
         [space?.channelGroups, channelId],
     )
 
-    const channel = useMemo(() => {
+    return useMemo(() => {
+        if (!channelId) {
+            return undefined
+        }
         const channelChild = channelGroup?.channels.find((c) => c.id === channelId)
         if (!channelChild) {
             // The channel wasn't found in a space, return a DM channel if the prefix matches
@@ -26,6 +48,10 @@ export function useChannelData(): ChannelData {
                     private: true,
                     highlight: false,
                     topic: '',
+                    isAutojoin: false,
+                    isDefault: false,
+                    hideUserJoinLeaveEvents: false,
+                    disabled: false,
                 } satisfies Channel
             }
             return undefined
@@ -33,30 +59,15 @@ export function useChannelData(): ChannelData {
 
         const channel: Channel = {
             id: channelChild.id,
-            label: room?.name ?? channelChild.label,
+            label: channelChild.label,
             private: channelChild.private,
             highlight: channelChild.highlight,
-            topic: room?.topic ?? channelChild.topic,
-            isAutojoin: room?.isAutojoin,
-            isDefault: room?.isDefault,
-            hideUserJoinLeaveEvents: room?.hideUserJoinLeaveEvents,
+            topic: channelChild.topic,
+            isAutojoin: channelChild.isAutojoin,
+            isDefault: channelChild.isDefault,
+            hideUserJoinLeaveEvents: channelChild.hideUserJoinLeaveEvents,
             disabled: channelChild.disabled,
         }
         return channel
-    }, [
-        channelGroup?.channels,
-        channelId,
-        room?.hideUserJoinLeaveEvents,
-        room?.isAutojoin,
-        room?.isDefault,
-        room?.name,
-        room?.topic,
-    ])
-    return useMemo(() => {
-        return {
-            spaceId,
-            channelId,
-            channel,
-        }
-    }, [channel, channelId, spaceId])
+    }, [channelGroup?.channels, channelId])
 }

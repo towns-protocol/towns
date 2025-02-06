@@ -43,6 +43,10 @@ const mockSpaceData: Lib.SpaceData = {
                 {
                     id: 'some-stream-id',
                     label: 'general',
+                    isAutojoin: false,
+                    isDefault: false,
+                    hideUserJoinLeaveEvents: false,
+                    disabled: false,
                 },
             ],
         },
@@ -70,6 +74,10 @@ describe('<TouchHome />', () => {
                         channel: {
                             id: 'some-stream-id',
                             label: 'general',
+                            isAutojoin: false,
+                            isDefault: false,
+                            hideUserJoinLeaveEvents: false,
+                            disabled: false,
                         },
                         mentionCount: 0,
                         unread: false,

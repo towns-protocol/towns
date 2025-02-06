@@ -16,10 +16,10 @@ export interface Channel {
     private?: boolean
     highlight?: boolean
     topic?: string
-    isAutojoin?: boolean
-    isDefault?: boolean
-    hideUserJoinLeaveEvents?: boolean
-    disabled?: boolean
+    isAutojoin: boolean
+    isDefault: boolean
+    hideUserJoinLeaveEvents: boolean
+    disabled: boolean
 }
 
 export interface ChannelGroup {
@@ -72,15 +72,8 @@ export interface StreamView {
 
 export interface Room {
     id: string
-    name: string
     membership: string
     members: string[]
-    inviter?: string
-    isSpaceRoom: boolean
-    topic?: string
-    isDefault: boolean
-    isAutojoin: boolean
-    hideUserJoinLeaveEvents: boolean
 }
 
 export interface Rooms {

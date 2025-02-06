@@ -138,7 +138,9 @@ export function useSpaceDataWithId(
     inSpaceId: string | undefined,
     _fromTag: string | undefined = undefined,
 ): SpaceData | undefined {
-    const spaceData = useSpaceDataStore((state) => state.spaceDataMap)?.[inSpaceId ?? '']
+    const spaceData = useSpaceDataStore((state) =>
+        inSpaceId ? state.spaceDataMap?.[inSpaceId] : undefined,
+    )
     return spaceData
 }
 
@@ -399,6 +401,8 @@ export function useSpaceRollups(
         casablancaClient.on('streamInitialized', onStreamUpdated)
         casablancaClient.on('spaceChannelCreated', onStreamUpdated)
         casablancaClient.on('spaceChannelUpdated', onStreamUpdated)
+        casablancaClient.on('spaceChannelAutojoinUpdated', onStreamUpdated)
+        casablancaClient.on('spaceChannelHideUserJoinLeaveEventsUpdated', onStreamUpdated)
         casablancaClient.on('userStreamMembershipChanged', onStreamUpdated)
 
         return () => {
@@ -406,6 +410,8 @@ export function useSpaceRollups(
             casablancaClient.off('streamInitialized', onStreamUpdated)
             casablancaClient.off('spaceChannelCreated', onStreamUpdated)
             casablancaClient.off('spaceChannelUpdated', onStreamUpdated)
+            casablancaClient.off('spaceChannelAutojoinUpdated', onStreamUpdated)
+            casablancaClient.off('spaceChannelHideUserJoinLeaveEventsUpdated', onStreamUpdated)
             casablancaClient.off('userStreamMembershipChanged', onStreamUpdated)
         }
     }, [casablancaClient, setSpaceData, spaceDapp])
@@ -421,6 +427,8 @@ function rollupSpace(
     if (stream.view.contentKind !== 'spaceContent') {
         throw new Error('stream is not a space')
     }
+
+    const streamChannelMetadata = stream.view.spaceContent.spaceChannelsMetadata
 
     return {
         id: stream.view.streamId,
@@ -440,6 +448,13 @@ function rollupSpace(
                                 highlight: false,
                                 topic: channelMetadata[c.channelId]?.channel.description ?? '',
                                 disabled: channelMetadata[c.channelId]?.channel.disabled ?? false,
+                                isAutojoin:
+                                    streamChannelMetadata.get(c.channelId)?.isAutojoin ?? false,
+                                hideUserJoinLeaveEvents:
+                                    streamChannelMetadata.get(c.channelId)
+                                        ?.hideUserJoinLeaveEvents ?? false,
+                                isDefault:
+                                    streamChannelMetadata.get(c.channelId)?.isDefault ?? false,
                             } satisfies Channel),
                     ),
             },

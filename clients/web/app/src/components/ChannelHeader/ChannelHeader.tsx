@@ -2,11 +2,11 @@ import React, { useCallback, useContext, useMemo } from 'react'
 import {
     Address,
     useChannelMembers,
+    useChannelWithId,
     useDMData,
     useMembers,
     useMuteSettings,
     useMyUserId,
-    useRoom,
     useStreamUpToDate,
     useTownsContext,
 } from 'use-towns-client'
@@ -94,7 +94,7 @@ const DesktopChannelHeader = (props: Props & HeaderProps) => {
     const { channel, spaceId, showLoadingIndicator } = props
     const { displayNotificationBanner, requestPushPermission, denyPushPermission } =
         usePushNotifications()
-    const topic = useRoom(channel.id)?.topic
+    const topic = useChannelWithId(channel.id)?.topic
 
     const { channelIsMuted } = useMuteSettings({
         spaceId: spaceId,

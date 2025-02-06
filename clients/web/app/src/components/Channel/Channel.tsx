@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useParams } from 'react-router'
 import { useSearchParams } from 'react-router-dom'
 import {
+    Channel as ChannelModel,
     SendMessageOptions,
     useChannelData,
     useChannelTimeline,
@@ -179,6 +180,10 @@ export const DraftChannel = (props: { userIds: string[] } & Props) => {
                         id: '',
                         label: 'placeholder',
                         topic: 'placeholder',
+                        isAutojoin: false,
+                        isDefault: false,
+                        hideUserJoinLeaveEvents: false,
+                        disabled: false,
                     }
                 }
                 placeholders={placeholders}
@@ -204,7 +209,7 @@ export const DraftChannel = (props: { userIds: string[] } & Props) => {
 }
 
 type ExtendedProps = Omit<Props, 'channelId'> & {
-    channel: { id: string; label: string; topic?: string }
+    channel: ChannelModel
     counterParty?: string
     isBlocked?: boolean
     isChannelWritable?: boolean

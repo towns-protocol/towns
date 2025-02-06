@@ -34,5 +34,18 @@ export const ChannelLinkForDisplay = ({
         [channels, channelLabel],
     )
 
-    return <ChannelLink channel={channel || { id: channelLabel, label: channelLabel }} />
+    return (
+        <ChannelLink
+            channel={
+                channel || {
+                    id: channelLabel,
+                    label: channelLabel,
+                    isAutojoin: false,
+                    isDefault: false,
+                    hideUserJoinLeaveEvents: false,
+                    disabled: false,
+                }
+            }
+        />
+    )
 }
