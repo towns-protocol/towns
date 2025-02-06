@@ -40,6 +40,9 @@ on:
             TF_VAR_datadog_api_key:
                 description: 'Data dog api key to log the failure in datadog'
                 required: true
+            HARMONY_GITHUB_PAT:
+                description: 'Github personal access token to trigger repository dispatch'
+                required: true
 
 concurrency:
     group: river-notification-service-deploy-${{ inputs.environment_name }}
