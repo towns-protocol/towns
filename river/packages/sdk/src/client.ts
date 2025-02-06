@@ -659,7 +659,7 @@ export class Client
             const unpacked = await unpackStream(response.stream, this.unpackEnvelopeOpts)
             await stream.initializeFromResponse(unpacked)
             if (stream.view.syncCookie) {
-                await this.streams.addStreamToSync(stream.view.syncCookie)
+                this.streams.addStreamToSync(streamId, stream.view.syncCookie)
             }
         } catch (err) {
             this.logError('Failed to create stream', streamId)
@@ -1415,7 +1415,7 @@ export class Client
             this.logCall('initStream: had existing request for', streamIdStr, 'returning promise')
             return existingRequest
         }
-        const request = this._initStream(streamId, allowGetStream, persistedData)
+        const request = this._initStream(streamIdStr, allowGetStream, persistedData)
         this.initStreamRequests.set(streamIdStr, request)
         let stream: Stream
         try {
@@ -1427,7 +1427,7 @@ export class Client
     }
 
     private async _initStream(
-        streamId: string | Uint8Array,
+        streamId: string,
         allowGetStream: boolean = true,
         persistedData?: LoadedStream,
     ): Promise<Stream> {
@@ -1446,9 +1446,10 @@ export class Client
                 const stream = this.createSyncedStream(streamId)
 
                 // Try initializing from persistence
-                if (await stream.initializeFromPersistence(persistedData)) {
+                const success = await stream.initializeFromPersistence(persistedData)
+                if (success) {
                     if (stream.view.syncCookie) {
-                        await this.streams.addStreamToSync(stream.view.syncCookie)
+                        this.streams.addStreamToSync(streamId, stream.view.syncCookie)
                     }
                     return stream
                 }
@@ -1473,7 +1474,7 @@ export class Client
                     this.logCall('initStream calling initializingFromResponse', streamId)
                     await stream.initializeFromResponse(unpacked)
                     if (stream.view.syncCookie) {
-                        await this.streams.addStreamToSync(stream.view.syncCookie)
+                        this.streams.addStreamToSync(streamId, stream.view.syncCookie)
                     }
                 } catch (err) {
                     this.logError('Failed to initialize stream', streamId, err)

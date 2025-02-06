@@ -261,7 +261,11 @@ export abstract class BaseDecryptionExtensions {
      * upload device keys to the server
      */
     public abstract uploadDeviceKeys(): Promise<void>
-    public abstract getPriorityForStream(streamId: string, highPriorityIds: Set<string>): number
+    public abstract getPriorityForStream(
+        streamId: string,
+        highPriorityIds: Set<string>,
+        recentStreamIds: Set<string>,
+    ): number
 
     public enqueueNewGroupSessions(
         sessions: UserInboxPayload_GroupEncryptionSessions,
@@ -446,8 +450,11 @@ export abstract class BaseDecryptionExtensions {
     }
 
     private compareStreamIds(a: string, b: string): number {
-        const priorityIds = new Set([...this.highPriorityIds, ...this.recentStreamIds])
-        return this.getPriorityForStream(a, priorityIds) - this.getPriorityForStream(b, priorityIds)
+        const recentStreamIds = new Set(this.recentStreamIds)
+        return (
+            this.getPriorityForStream(a, this.highPriorityIds, recentStreamIds) -
+            this.getPriorityForStream(b, this.highPriorityIds, recentStreamIds)
+        )
     }
 
     private lastPrintedAt = 0

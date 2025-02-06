@@ -120,7 +120,7 @@ message GetSettingsResponse {
 }
 
 message SetSettingsRequest {
-  // dm_global holds the default config setting that is applied to all DM channels unless overwritten by a DM specif
+  // dm_global holds the default config setting that is applied to all DM channels unless overwritten by a DM specific
   // preference.
   DmChannelSettingValue dm_global = 1;
   // dm_channels holds DM channel specific preferences that overwrite dm_global.

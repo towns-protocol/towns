@@ -222,8 +222,7 @@ export class SyncedStreamsLoop {
     }
 
     // adds stream to the sync subscription
-    public async addStreamToSync(syncCookie: SyncCookie, stream: ISyncedStream): Promise<void> {
-        const streamId = streamIdAsString(syncCookie.streamId)
+    public addStreamToSync(streamId: string, syncCookie: SyncCookie, stream: ISyncedStream) {
         this.logDebug('addStreamToSync', streamId)
         if (this.streams.has(streamId)) {
             this.log('stream already in sync', streamId)

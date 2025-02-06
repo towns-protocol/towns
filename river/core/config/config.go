@@ -188,7 +188,7 @@ type Config struct {
 	// ====================
 	// EntitlementContract denotes the address of the contract that receives entitlement check
 	// requests.
-	EntitlementContract     ContractConfig `mapstructure:"entitlement_contract"`
+	EntitlementContract ContractConfig `mapstructure:"entitlement_contract"`
 	// History indicates how far back xchain must look for entitlement check requests after start
 	History time.Duration
 }
@@ -439,6 +439,9 @@ type BotRegistryConfig struct {
 	// BotRegistryId is the unique identifier of the bot registry service node. It must be set for
 	// nodes running in bot registry mode.
 	BotRegistryId string
+
+	// Authentication holds configuration for the Client API authentication service.
+	Authentication AuthenticationConfig
 }
 
 type LogConfig struct {

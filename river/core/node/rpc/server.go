@@ -21,6 +21,7 @@ import (
 
 	"github.com/river-build/river/core/config"
 	"github.com/river-build/river/core/node/auth"
+	"github.com/river-build/river/core/node/authentication"
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/events"
@@ -757,7 +758,8 @@ func (s *Service) initNotificationHandlers() error {
 	ii = append(ii, s.NewMetricsInterceptor())
 	ii = append(ii, NewTimeoutInterceptor(s.config.Network.RequestTimeout))
 
-	authInceptor, err := notifications.NewAuthenticationInterceptor(
+	authInceptor, err := authentication.NewAuthenticationInterceptor(
+		s.NotificationService.ShortServiceName(),
 		s.config.Notifications.Authentication.SessionToken.Key.Algorithm,
 		s.config.Notifications.Authentication.SessionToken.Key.Key,
 	)
@@ -793,15 +795,16 @@ func (s *Service) initBotRegistryHandlers() error {
 	ii = append(ii, s.NewMetricsInterceptor())
 	ii = append(ii, NewTimeoutInterceptor(s.config.Network.RequestTimeout))
 
-	// TODO: add authentication to bot registry service
-	// authInceptor, err := notifications.NewAuthenticationInterceptor(
-	// 	s.config.Notifications.Authentication.SessionToken.Key.Algorithm,
-	// 	s.config.Notifications.Authentication.SessionToken.Key.Key,
-	// )
-	// if err != nil {
-	// 	return err
-	// }
-	// ii = append(ii, authInceptor)
+	authInceptor, err := authentication.NewAuthenticationInterceptor(
+		s.BotRegistryService.ShortServiceName(),
+		s.config.BotRegistry.Authentication.SessionToken.Key.Algorithm,
+		s.config.BotRegistry.Authentication.SessionToken.Key.Key,
+		"/river.BotRegistryService/GetStatus",
+	)
+	if err != nil {
+		return err
+	}
+	ii = append(ii, authInceptor)
 
 	interceptors := connect.WithInterceptors(ii...)
 
@@ -809,8 +812,15 @@ func (s *Service) initBotRegistryHandlers() error {
 		s.BotRegistryService,
 		interceptors,
 	)
+	botRegistryAuthServicePattern, botRegistryAuthServiceHandler := protocolconnect.NewAuthenticationServiceHandler(
+		s.BotRegistryService,
+		interceptors,
+	)
 
 	s.mux.Handle(botRegistryServicePattern, newHttpHandler(botRegistryServiceHandler, s.defaultLogger))
+	s.mux.Handle(botRegistryAuthServicePattern, newHttpHandler(botRegistryAuthServiceHandler, s.defaultLogger))
+
+	// s.registerDebugHandlers(s.config.EnableDebugEndpoints, s.config.DebugEndpoints)
 
 	return nil
 }

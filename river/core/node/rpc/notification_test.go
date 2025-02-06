@@ -14,10 +14,13 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/SherClockHolmes/webpush-go"
-	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/common"
 	eth_crypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/google/go-cmp/cmp"
+	payload2 "github.com/sideshow/apns2/payload"
+	"github.com/stretchr/testify/require"
+
+	"github.com/river-build/river/core/node/authentication"
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/events"
 	"github.com/river-build/river/core/node/notifications/push"
@@ -27,9 +30,24 @@ import (
 	. "github.com/river-build/river/core/node/shared"
 	"github.com/river-build/river/core/node/testutils"
 	"github.com/river-build/river/core/node/testutils/testcert"
-	payload2 "github.com/sideshow/apns2/payload"
-	"github.com/stretchr/testify/require"
 )
+
+func authenticateNS[T any](
+	ctx context.Context,
+	req *require.Assertions,
+	authClient protocolconnect.AuthenticationServiceClient,
+	primaryWallet *crypto.Wallet,
+	request *connect.Request[T],
+) {
+	authentication.Authenticate(
+		ctx,
+		"NS_AUTH:",
+		req,
+		authClient,
+		primaryWallet,
+		request,
+	)
+}
 
 var notificationDeliveryDelay = 30 * time.Second
 
@@ -142,18 +160,18 @@ func testGDMAPNNotificationAfterUnsubscribe(
 		Environment: APNEnvironment_APN_ENVIRONMENT_SANDBOX,
 	})
 
-	authorize(ctx, test.req, test.authClient, userB, request)
+	authenticateNS(ctx, test.req, test.authClient, userB, request)
 	_, err = test.notificationClient.SubscribeAPN(ctx, request)
 	test.req.NoError(err, "SubscribeAPN failed")
 
 	// make sure userA has no APN subscriptions and userB has the just created sub
 	getSettingsRequest := connect.NewRequest(&GetSettingsRequest{})
-	authorize(ctx, test.req, test.authClient, userA, getSettingsRequest)
+	authenticateNS(ctx, test.req, test.authClient, userA, getSettingsRequest)
 	resp, err := test.notificationClient.GetSettings(ctx, getSettingsRequest)
 	test.req.NoError(err, "GetSettings failed")
 	test.req.Empty(resp.Msg.GetApnSubscriptions(), "got APN subs")
 
-	authorize(ctx, test.req, test.authClient, userB, getSettingsRequest)
+	authenticateNS(ctx, test.req, test.authClient, userB, getSettingsRequest)
 	resp, err = test.notificationClient.GetSettings(ctx, getSettingsRequest)
 	test.req.NoError(err, "GetSettings failed")
 	test.req.Equal(1, len(resp.Msg.GetApnSubscriptions()), "got no APN subs")
@@ -1174,65 +1192,6 @@ func makeTipReceipt(
 	}
 }
 
-func authorize[T any](
-	ctx context.Context,
-	req *require.Assertions,
-	authClient protocolconnect.AuthenticationServiceClient,
-	primaryWallet *crypto.Wallet,
-	request *connect.Request[T],
-) {
-	resp, err := authClient.StartAuthentication(ctx, connect.NewRequest(&StartAuthenticationRequest{
-		UserId: primaryWallet.Address[:],
-	}))
-	req.NoError(err)
-
-	// create a delegate signature that grants a device to make the request on behalf
-	// of the users primary wallet. This device key is generated on the fly.
-	deviceWallet, err := crypto.NewWallet(ctx)
-	req.NoError(err)
-
-	devicePubKey := eth_crypto.FromECDSAPub(&deviceWallet.PrivateKeyStruct.PublicKey)
-
-	delegateExpiryEpochMs := 1000 * (time.Now().Add(time.Hour).Unix())
-	// create the delegate signature by signing it with the primary wallet
-	hashSrc, err := crypto.RiverDelegateHashSrc(devicePubKey, delegateExpiryEpochMs)
-	req.NoError(err)
-	hash := accounts.TextHash(hashSrc)
-	delegateSig, err := eth_crypto.Sign(hash, primaryWallet.PrivateKeyStruct)
-	req.NoError(err)
-
-	var (
-		prefix     = "NS_AUTH:"
-		nonce      = resp.Msg.GetChallenge()
-		expiration = big.NewInt(resp.Msg.GetExpiration().GetSeconds())
-		buf        bytes.Buffer
-	)
-
-	// sign the authentication request with the device key
-	buf.WriteString(prefix)
-	buf.Write(primaryWallet.Address.Bytes())
-	buf.Write(expiration.Bytes())
-	buf.Write(nonce)
-
-	digest := sha256.Sum256(buf.Bytes())
-	bufHash := accounts.TextHash(digest[:])
-
-	signature, err := deviceWallet.SignHash(bufHash[:])
-	req.NoError(err)
-
-	resp2, err := authClient.FinishAuthentication(ctx, connect.NewRequest(&FinishAuthenticationRequest{
-		UserId:                primaryWallet.Address[:],
-		Challenge:             nonce,
-		Signature:             signature,
-		DelegateSig:           delegateSig,
-		DelegateExpiryEpochMs: delegateExpiryEpochMs,
-	}))
-
-	req.NoError(err)
-
-	request.Header().Set("authorization", resp2.Msg.GetSessionToken())
-}
-
 func (tc *gdmChannelNotificationsTestContext) setGlobalGDMSetting(
 	ctx context.Context,
 	user *crypto.Wallet,
@@ -1243,7 +1202,7 @@ func (tc *gdmChannelNotificationsTestContext) setGlobalGDMSetting(
 		GdmGlobal: setting,
 	})
 
-	authorize(ctx, tc.req, tc.authClient, user, req)
+	authenticateNS(ctx, tc.req, tc.authClient, user, req)
 
 	_, err := tc.notificationClient.SetDmGdmSettings(ctx, req)
 
@@ -1260,7 +1219,7 @@ func (tc *gdmChannelNotificationsTestContext) setGDMChannelSetting(
 		Value:        setting,
 	})
 
-	authorize(ctx, tc.req, tc.authClient, user, request)
+	authenticateNS(ctx, tc.req, tc.authClient, user, request)
 
 	_, err := tc.notificationClient.SetGdmChannelSetting(ctx, request)
 
@@ -1289,7 +1248,7 @@ func (tc *gdmChannelNotificationsTestContext) subscribeWebPush(
 		},
 	})
 
-	authorize(ctx, tc.req, tc.authClient, user, request)
+	authenticateNS(ctx, tc.req, tc.authClient, user, request)
 
 	_, err := tc.notificationClient.SubscribeWebPush(ctx, request)
 
@@ -1305,7 +1264,7 @@ func (tc *gdmChannelNotificationsTestContext) subscribeApnPush(
 		Environment: APNEnvironment_APN_ENVIRONMENT_SANDBOX,
 	})
 
-	authorize(ctx, tc.req, tc.authClient, user, request)
+	authenticateNS(ctx, tc.req, tc.authClient, user, request)
 	_, err := tc.notificationClient.SubscribeAPN(ctx, request)
 
 	tc.req.NoError(err, "SubscribeAPN failed")
@@ -1319,7 +1278,7 @@ func (tc *gdmChannelNotificationsTestContext) unsubscribeApnPush(
 		DeviceToken: user.Address[:], // (ab)used to determine who received a notification
 	})
 
-	authorize(ctx, tc.req, tc.authClient, user, request)
+	authenticateNS(ctx, tc.req, tc.authClient, user, request)
 	_, err := tc.notificationClient.UnsubscribeAPN(ctx, request)
 
 	tc.req.NoError(err, "UnsubscribeAPN failed")
@@ -1407,7 +1366,7 @@ func (tc *dmChannelNotificationsTestContext) setChannel(
 		Value:       setting,
 	})
 
-	authorize(ctx, tc.req, tc.authClient, user, request)
+	authenticateNS(ctx, tc.req, tc.authClient, user, request)
 
 	_, err := tc.notificationClient.SetDmChannelSetting(ctx, request)
 
@@ -1424,7 +1383,7 @@ func (tc *dmChannelNotificationsTestContext) muteGlobal(
 		GdmGlobal: GdmChannelSettingValue_GDM_UNSPECIFIED,
 	})
 
-	authorize(ctx, tc.req, tc.authClient, user, request)
+	authenticateNS(ctx, tc.req, tc.authClient, user, request)
 
 	_, err := tc.notificationClient.SetDmGdmSettings(ctx, request)
 
@@ -1454,7 +1413,7 @@ func (tc *dmChannelNotificationsTestContext) subscribeWebPush(
 		},
 	})
 
-	authorize(ctx, tc.req, tc.authClient, user, request)
+	authenticateNS(ctx, tc.req, tc.authClient, user, request)
 
 	_, err := tc.notificationClient.SubscribeWebPush(ctx, request)
 
@@ -1470,7 +1429,7 @@ func (tc *dmChannelNotificationsTestContext) subscribeApnPush(
 		Environment: APNEnvironment_APN_ENVIRONMENT_SANDBOX,
 		PushVersion: NotificationPushVersion_NOTIFICATION_PUSH_VERSION_2,
 	})
-	authorize(ctx, tc.req, tc.authClient, user, request)
+	authenticateNS(ctx, tc.req, tc.authClient, user, request)
 
 	_, err := tc.notificationClient.SubscribeAPN(ctx, request)
 
@@ -1543,7 +1502,7 @@ func (tc *spaceChannelNotificationsTestContext) subscribeWebPush(
 		},
 	})
 
-	authorize(ctx, tc.req, tc.authClient, user, request)
+	authenticateNS(ctx, tc.req, tc.authClient, user, request)
 	_, err := tc.notificationClient.SubscribeWebPush(ctx, request)
 
 	tc.req.NoError(err, "SubscribeWebPush failed")
@@ -1558,7 +1517,7 @@ func (tc *spaceChannelNotificationsTestContext) subscribeApnPush(
 		Environment: APNEnvironment_APN_ENVIRONMENT_SANDBOX,
 	})
 
-	authorize(ctx, tc.req, tc.authClient, user, request)
+	authenticateNS(ctx, tc.req, tc.authClient, user, request)
 
 	_, err := tc.notificationClient.SubscribeAPN(ctx, request)
 
@@ -1576,7 +1535,7 @@ func (tc *spaceChannelNotificationsTestContext) setSpaceChannelSetting(
 		Value:     setting,
 	})
 
-	authorize(ctx, tc.req, tc.authClient, user, request)
+	authenticateNS(ctx, tc.req, tc.authClient, user, request)
 
 	_, err := tc.notificationClient.SetSpaceChannelSettings(ctx, request)
 
@@ -1593,7 +1552,7 @@ func (tc *spaceChannelNotificationsTestContext) setSpaceSetting(
 		Value:   setting,
 	})
 
-	authorize(ctx, tc.req, tc.authClient, user, request)
+	authenticateNS(ctx, tc.req, tc.authClient, user, request)
 
 	_, err := tc.notificationClient.SetSpaceSettings(ctx, request)
 
@@ -1666,7 +1625,7 @@ func spaceChannelSettings(
 	test.req.NotNil(channel)
 
 	request1 := connect.NewRequest(&GetSettingsRequest{})
-	authorize(ctx, test.req, test.authClient, user, request1)
+	authenticateNS(ctx, test.req, test.authClient, user, request1)
 
 	// ensure that the initial settings are correct
 	initialSettingsResp, err := test.notificationClient.GetSettings(ctx, request1)
@@ -1692,7 +1651,7 @@ func spaceChannelSettings(
 		SpaceId:   test.spaceID[:],
 		Value:     SpaceChannelSettingValue_SPACE_CHANNEL_SETTING_MESSAGES_ALL,
 	})
-	authorize(ctx, test.req, test.authClient, user, request2)
+	authenticateNS(ctx, test.req, test.authClient, user, request2)
 
 	_, err = test.notificationClient.SetSpaceChannelSettings(ctx, request2)
 	test.req.NoError(err, "SetSpaceChannelSettings failed")
@@ -1702,7 +1661,7 @@ func spaceChannelSettings(
 		SpaceId:   test.spaceID[:],
 		Value:     SpaceChannelSettingValue_SPACE_CHANNEL_SETTING_NO_MESSAGES,
 	})
-	authorize(ctx, test.req, test.authClient, user, request3)
+	authenticateNS(ctx, test.req, test.authClient, user, request3)
 
 	_, err = test.notificationClient.SetSpaceChannelSettings(ctx, request3)
 	test.req.NoError(err, "SetSpaceChannelSettings failed")
@@ -1712,7 +1671,7 @@ func spaceChannelSettings(
 		Value:   SpaceChannelSettingValue_SPACE_CHANNEL_SETTING_NO_MESSAGES,
 	})
 
-	authorize(ctx, test.req, test.authClient, user, request4)
+	authenticateNS(ctx, test.req, test.authClient, user, request4)
 
 	_, err = test.notificationClient.SetSpaceSettings(ctx, request4)
 	test.req.NoError(err, "SetSpaceSettings failed")
@@ -1755,12 +1714,12 @@ func spaceChannelSettings(
 		SpaceId:   test.spaceID[:],
 		Value:     SpaceChannelSettingValue_SPACE_CHANNEL_SETTING_UNSPECIFIED,
 	})
-	authorize(ctx, test.req, test.authClient, user, request5)
+	authenticateNS(ctx, test.req, test.authClient, user, request5)
 
 	_, err = test.notificationClient.SetSpaceChannelSettings(ctx, request5)
 	test.req.NoError(err, "SetSpaceChannelSettings failed")
 
-	authorize(ctx, test.req, test.authClient, user, request4)
+	authenticateNS(ctx, test.req, test.authClient, user, request4)
 
 	_, err = test.notificationClient.SetSpaceSettings(ctx, request4)
 	test.req.NoError(err, "SetSpaceSettings failed")

@@ -126,8 +126,10 @@ export class SyncedStreams {
     }
 
     // adds stream to the sync subscription
-    public async addStreamToSync(syncCookie: SyncCookie): Promise<void> {
-        const streamId = streamIdAsString(syncCookie.streamId)
+    public addStreamToSync(streamId: string, syncCookie: SyncCookie): void {
+        if (!this.syncedStreamsLoop) {
+            return
+        }
         this.log('addStreamToSync', streamId)
         const stream = this.streams.get(streamId)
         if (!stream) {
@@ -135,7 +137,7 @@ export class SyncedStreams {
             this.logError('streamId not in this.streams, not adding to sync', streamId)
             return
         }
-        await this.syncedStreamsLoop?.addStreamToSync(syncCookie, stream)
+        this.syncedStreamsLoop.addStreamToSync(streamId, syncCookie, stream)
     }
 
     // remove stream from the sync subsbscription

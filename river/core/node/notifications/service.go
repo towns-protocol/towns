@@ -2,8 +2,6 @@ package notifications
 
 import (
 	"context"
-	"encoding/hex"
-	"sync"
 	"time"
 
 	"connectrpc.com/connect"
@@ -11,11 +9,13 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/river-build/river/core/config"
+	"github.com/river-build/river/core/node/authentication"
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/events"
 	"github.com/river-build/river/core/node/infra"
 	"github.com/river-build/river/core/node/logging"
+
 	"github.com/river-build/river/core/node/nodes"
 	notificationssync "github.com/river-build/river/core/node/notifications/sync"
 	"github.com/river-build/river/core/node/notifications/types"
@@ -24,19 +24,21 @@ import (
 	"github.com/river-build/river/core/node/shared"
 )
 
+const (
+	notificationServiceChallengePrefix = "NS_AUTH:"
+)
+
 type (
 	Service struct {
-		notificationsConfig           config.NotificationsConfig
-		onChainConfig                 crypto.OnChainConfiguration
-		userPreferences               UserPreferencesStore
-		riverRegistry                 *registries.RiverRegistryContract
-		nodes                         []nodes.NodeRegistry
-		listener                      events.StreamEventListener
-		streamsTracker                *notificationssync.StreamsTracker
-		metrics                       infra.MetricsFactory
-		pendingAuthenticationRequests sync.Map
-		sessionTokenSigningKey        any
-		sessionTokenSigningAlgo       string
+		authentication.AuthServiceMixin
+		notificationsConfig config.NotificationsConfig
+		onChainConfig       crypto.OnChainConfiguration
+		userPreferences     UserPreferencesStore
+		riverRegistry       *registries.RiverRegistryContract
+		nodes               []nodes.NodeRegistry
+		listener            events.StreamEventListener
+		streamsTracker      *notificationssync.StreamsTracker
+		metrics             infra.MetricsFactory
 	}
 )
 
@@ -63,41 +65,24 @@ func NewService(
 		return nil, err
 	}
 
-	// set defaults
-	if notificationsConfig.Authentication.ChallengeTimeout <= 0 {
-		notificationsConfig.Authentication.ChallengeTimeout = 30 * time.Second
+	service := &Service{
+		notificationsConfig: notificationsConfig,
+		onChainConfig:       onChainConfig,
+		userPreferences:     userPreferences,
+		riverRegistry:       riverRegistry,
+		nodes:               nodes,
+		listener:            listener,
+		streamsTracker:      tracker,
+		metrics:             metrics,
 	}
-	if notificationsConfig.Authentication.SessionToken.Lifetime <= 0 {
-		notificationsConfig.Authentication.SessionToken.Lifetime = 30 * time.Minute
-	}
-
-	if len(notificationsConfig.Authentication.SessionToken.Key.Key) != 64 {
-		return nil, RiverError(Err_BAD_CONFIG, "Invalid session token key length",
-			"len", len(notificationsConfig.Authentication.SessionToken.Key.Key)).
-			Func("NewService")
-	}
-
-	key, err := hex.DecodeString(notificationsConfig.Authentication.SessionToken.Key.Key)
-	if err != nil {
-		return nil, RiverError(Err_BAD_CONFIG, "Invalid session token key (not hex)").Func("NewService")
+	if err := service.AuthServiceMixin.InitAuthentication(
+		notificationServiceChallengePrefix,
+		&notificationsConfig.Authentication,
+	); err != nil {
+		return nil, err
 	}
 
-	if len(key) != 32 {
-		return nil, RiverError(Err_BAD_CONFIG, "Invalid session token key decoded length").Func("NewService")
-	}
-
-	return &Service{
-		notificationsConfig:     notificationsConfig,
-		onChainConfig:           onChainConfig,
-		userPreferences:         userPreferences,
-		riverRegistry:           riverRegistry,
-		nodes:                   nodes,
-		listener:                listener,
-		streamsTracker:          tracker,
-		metrics:                 metrics,
-		sessionTokenSigningKey:  key,
-		sessionTokenSigningAlgo: notificationsConfig.Authentication.SessionToken.Key.Algorithm,
-	}, nil
+	return service, nil
 }
 
 func (s *Service) Start(ctx context.Context) {
@@ -126,7 +111,7 @@ func (s *Service) GetSettings(
 	ctx context.Context,
 	req *connect.Request[GetSettingsRequest],
 ) (*connect.Response[GetSettingsResponse], error) {
-	userID := ctx.Value(UserIDCtxKey{}).(common.Address)
+	userID := authentication.UserFromAuthenticatedContext(ctx)
 	if userID == (common.Address{}) {
 		return nil, RiverError(Err_INVALID_ARGUMENT, "Invalid user id")
 	}
@@ -170,7 +155,7 @@ func (s *Service) SetSettings(
 	ctx context.Context,
 	req *connect.Request[SetSettingsRequest],
 ) (*connect.Response[SetSettingsResponse], error) {
-	userID := ctx.Value(UserIDCtxKey{}).(common.Address)
+	userID := authentication.UserFromAuthenticatedContext(ctx)
 	if userID == (common.Address{}) {
 		return nil, RiverError(Err_INVALID_ARGUMENT, "Invalid user id")
 	}
@@ -198,7 +183,7 @@ func (s *Service) SetDmGdmSettings(
 		gdm = msg.GetGdmGlobal()
 	)
 
-	userID := ctx.Value(UserIDCtxKey{}).(common.Address)
+	userID := authentication.UserFromAuthenticatedContext(ctx)
 	if userID == (common.Address{}) {
 		return nil, RiverError(Err_INVALID_ARGUMENT, "Invalid user id")
 	}
@@ -221,7 +206,7 @@ func (s *Service) SetSpaceSettings(
 		value        = msg.GetValue()
 	)
 
-	userID := ctx.Value(UserIDCtxKey{}).(common.Address)
+	userID := authentication.UserFromAuthenticatedContext(ctx)
 	if userID == (common.Address{}) {
 		return nil, RiverError(Err_INVALID_ARGUMENT, "Invalid user id")
 	}
@@ -248,7 +233,7 @@ func (s *Service) SetDmChannelSetting(
 		value = msg.GetValue()
 	)
 
-	userID := ctx.Value(UserIDCtxKey{}).(common.Address)
+	userID := authentication.UserFromAuthenticatedContext(ctx)
 	if userID == (common.Address{}) {
 		return nil, RiverError(Err_INVALID_ARGUMENT, "Invalid user id")
 	}
@@ -279,7 +264,7 @@ func (s *Service) SetGdmChannelSetting(
 		value = msg.GetValue()
 	)
 
-	userID := ctx.Value(UserIDCtxKey{}).(common.Address)
+	userID := authentication.UserFromAuthenticatedContext(ctx)
 	if userID == (common.Address{}) {
 		return nil, RiverError(Err_INVALID_ARGUMENT, "Invalid user id")
 	}
@@ -310,7 +295,7 @@ func (s *Service) SetSpaceChannelSettings(
 		value = msg.GetValue()
 	)
 
-	userID := ctx.Value(UserIDCtxKey{}).(common.Address)
+	userID := authentication.UserFromAuthenticatedContext(ctx)
 	if userID == (common.Address{}) {
 		return nil, RiverError(Err_INVALID_ARGUMENT, "Invalid user id")
 	}
@@ -344,7 +329,7 @@ func (s *Service) SubscribeWebPush(
 		}
 	)
 
-	userID := ctx.Value(UserIDCtxKey{}).(common.Address)
+	userID := authentication.UserFromAuthenticatedContext(ctx)
 	if userID == (common.Address{}) {
 		return nil, RiverError(Err_INVALID_ARGUMENT, "Invalid user id")
 	}
@@ -377,7 +362,7 @@ func (s *Service) UnsubscribeWebPush(
 		}
 	)
 
-	userID := ctx.Value(UserIDCtxKey{}).(common.Address)
+	userID := authentication.UserFromAuthenticatedContext(ctx)
 	if userID == (common.Address{}) {
 		return nil, RiverError(Err_INVALID_ARGUMENT, "Invalid user id")
 	}
@@ -399,7 +384,7 @@ func (s *Service) SubscribeAPN(
 ) (*connect.Response[SubscribeAPNResponse], error) {
 	var (
 		msg         = req.Msg
-		userID      = ctx.Value(UserIDCtxKey{}).(common.Address)
+		userID      = authentication.UserFromAuthenticatedContext(ctx)
 		deviceToken = msg.GetDeviceToken()
 		environment = msg.GetEnvironment()
 		pushVersion = msg.GetPushVersion()
@@ -430,7 +415,7 @@ func (s *Service) UnsubscribeAPN(
 	var (
 		msg         = req.Msg
 		deviceToken = msg.GetDeviceToken()
-		userID      = ctx.Value(UserIDCtxKey{}).(common.Address)
+		userID      = authentication.UserFromAuthenticatedContext(ctx)
 	)
 	if len(deviceToken) == 0 {
 		return nil, RiverError(Err_INVALID_ARGUMENT, "Invalid APN device token")

@@ -1,4 +1,4 @@
-package notifications
+package authentication
 
 import (
 	"bytes"
@@ -6,9 +6,9 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
-	"encoding/json"
 	"math/big"
 	"strings"
+	"sync"
 	"time"
 
 	"connectrpc.com/connect"
@@ -16,6 +16,7 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/river-build/river/core/config"
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/logging"
@@ -23,15 +24,14 @@ import (
 )
 
 const (
-	challengePrefix = "NS_AUTH:"
 	challengeLength = 16
 )
 
 type (
-	UserIDCtxKey            struct{}
 	authenticationChallenge struct {
-		userID  common.Address
-		expires time.Time
+		challengePrefix string
+		userID          common.Address
+		expires         time.Time
 	}
 )
 
@@ -65,7 +65,7 @@ func (c authenticationChallenge) Verify(
 		expires = big.NewInt(c.expires.Unix())
 	)
 
-	buf.WriteString(challengePrefix)
+	buf.WriteString(c.challengePrefix)
 	buf.Write(c.userID.Bytes())
 	buf.Write(expires.Bytes())
 	buf.Write(challenge[:])
@@ -89,15 +89,78 @@ func (c authenticationChallenge) Verify(
 	return crypto.CheckDelegateSig(c.userID[:], signerPubKey, delegateSig, delegateExpiryEpochMs)
 }
 
-func (s *Service) StartAuthentication(
+// AuthServiceMixin can be used by any service requiring authentication to implement authentication
+// for the endpoints of the authentication service, which allows users to attest to their ownership
+// of wallets. In order to implement authentication, a service must add this mixin to it's definition,
+// call InitAuthentication with appropriate config, and configure the connect service to use the
+// authentication interceptor with service metadata derived from the mixin. See notification and bot
+// registry services for examples.
+type AuthServiceMixin struct {
+	authConfig                    *config.AuthenticationConfig
+	sessionTokenSigningKey        any
+	sessionTokenSigningAlgo       string
+	pendingAuthenticationRequests sync.Map
+	challengePrefix               string
+}
+
+func (s *AuthServiceMixin) ShortServiceName() string {
+	return strings.ToLower(s.challengePrefix[:2])
+}
+
+// Since AuthServiceMixin is intended to be used as an embedded struct in other service definitions,
+// InitAuthentication is the method that initializes the mixin's internal state.
+// challengePrefix will be used as a service-specific prefix for the challenge message the user is expected
+// sign in order to verify their ownership of a wallet's private key. The first two characters of the prefix
+// are also used to populate service-specific values in the issued jwt token's claim map, so it's best to
+// make sure they are unique compared to other services that implement authentication for the sake
+// of sane debugging.
+func (s *AuthServiceMixin) InitAuthentication(challengePrefix string, config *config.AuthenticationConfig) error {
+	if len(challengePrefix) < 2 || len(challengePrefix) > 32 {
+		return RiverError(Err_INVALID_ARGUMENT, "Challenge prefix length is out of range", "prefix", challengePrefix)
+	}
+
+	s.authConfig = config
+
+	// set defaults
+	if s.authConfig.ChallengeTimeout <= 0 {
+		s.authConfig.ChallengeTimeout = 30 * time.Second
+	}
+	if s.authConfig.SessionToken.Lifetime <= 0 {
+		s.authConfig.SessionToken.Lifetime = 30 * time.Minute
+	}
+
+	if len(s.authConfig.SessionToken.Key.Key) != 64 {
+		return RiverError(Err_BAD_CONFIG, "Invalid session token key length",
+			"len", len(s.authConfig.SessionToken.Key.Key)).
+			Func("NewService")
+	}
+
+	key, err := hex.DecodeString(s.authConfig.SessionToken.Key.Key)
+	if err != nil {
+		return RiverError(Err_BAD_CONFIG, "Invalid session token key (not hex)").Func("NewService")
+	}
+
+	if len(key) != 32 {
+		return RiverError(Err_BAD_CONFIG, "Invalid session token key decoded length").Func("NewService")
+	}
+
+	s.sessionTokenSigningAlgo = s.authConfig.SessionToken.Key.Algorithm
+	s.sessionTokenSigningKey = key
+	s.challengePrefix = challengePrefix
+
+	return nil
+}
+
+func (s *AuthServiceMixin) StartAuthentication(
 	_ context.Context,
 	req *connect.Request[StartAuthenticationRequest],
 ) (*connect.Response[StartAuthenticationResponse], error) {
 	var (
 		msg           = req.Msg
 		authChallenge = &authenticationChallenge{
-			userID:  common.BytesToAddress(msg.GetUserId()),
-			expires: time.Now().Add(s.notificationsConfig.Authentication.ChallengeTimeout),
+			challengePrefix: s.challengePrefix,
+			userID:          common.BytesToAddress(msg.GetUserId()),
+			expires:         time.Now().Add(s.authConfig.ChallengeTimeout),
 		}
 		challenge [challengeLength]byte
 	)
@@ -121,7 +184,7 @@ func (s *Service) StartAuthentication(
 	}), nil
 }
 
-func (s *Service) FinishAuthentication(
+func (s *AuthServiceMixin) FinishAuthentication(
 	ctx context.Context,
 	req *connect.Request[FinishAuthenticationRequest],
 ) (*connect.Response[FinishAuthenticationResponse], error) {
@@ -154,11 +217,12 @@ func (s *Service) FinishAuthentication(
 
 	// create a JWT session token that the client can use to make notification service rpc and send it to the client
 	now := time.Now()
+	shortServiceName := s.ShortServiceName()
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"aud": "ns",
-		"iss": "ns",
+		"aud": shortServiceName,
+		"iss": shortServiceName,
 		"sub": userID.String(),
-		"exp": now.Add(s.notificationsConfig.Authentication.SessionToken.Lifetime).Unix(),
+		"exp": now.Add(s.authConfig.SessionToken.Lifetime).Unix(),
 	})
 
 	sessionToken, err := token.SignedString(s.sessionTokenSigningKey)
@@ -168,123 +232,4 @@ func (s *Service) FinishAuthentication(
 	}
 
 	return connect.NewResponse(&FinishAuthenticationResponse{SessionToken: sessionToken}), nil
-}
-
-type jwtAuthenticationInterceptor struct {
-	sessionTokenSigningKeyAlgo string
-	sessionTokenSigningKey     interface{}
-}
-
-func NewAuthenticationInterceptor(
-	sessionTokenSigningKeyAlgo string,
-	sessionTokenSigningKey string,
-) (connect.Interceptor, error) {
-	key, err := hex.DecodeString(sessionTokenSigningKey)
-	if err != nil {
-		return nil, RiverError(Err_BAD_CONFIG, "Invalid session token key").Func("NewService")
-	}
-
-	if len(key) != 32 {
-		return nil, RiverError(Err_BAD_CONFIG, "Invalid session token key length").Func("NewService")
-	}
-
-	return &jwtAuthenticationInterceptor{
-		sessionTokenSigningKeyAlgo: sessionTokenSigningKeyAlgo,
-		sessionTokenSigningKey:     key,
-	}, nil
-}
-
-func (i *jwtAuthenticationInterceptor) authorize(sessionTokenString string) (common.Address, error) {
-	token, err := jwt.Parse(sessionTokenString, func(token *jwt.Token) (interface{}, error) {
-		return i.sessionTokenSigningKey, nil
-	}, jwt.WithJSONNumber(), jwt.WithValidMethods([]string{"HS256"}))
-	if err != nil {
-		return common.Address{}, RiverError(Err_UNAUTHENTICATED, "Invalid session token")
-	}
-
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if !ok {
-		return common.Address{}, RiverError(Err_UNAUTHENTICATED, "Invalid session token")
-	}
-
-	if claims["aud"] != "ns" {
-		return common.Address{}, RiverError(Err_UNAUTHENTICATED, "Invalid session token audience")
-	}
-
-	if claims["iss"] != "ns" {
-		return common.Address{}, RiverError(Err_UNAUTHENTICATED, "Invalid session token issuer")
-	}
-
-	expiredNumber, ok := claims["exp"].(json.Number)
-	if !ok {
-		return common.Address{}, RiverError(Err_UNAUTHENTICATED, "Invalid session token exp")
-	}
-
-	expired, err := expiredNumber.Int64()
-	if err != nil {
-		return common.Address{}, RiverError(Err_UNAUTHENTICATED, "Invalid session token exp")
-	}
-
-	if time.Now().After(time.Unix(expired, 0)) {
-		return common.Address{}, RiverError(Err_UNAUTHENTICATED, "Session token expired")
-	}
-
-	subStr, ok := claims["sub"].(string)
-	if !ok {
-		return common.Address{}, RiverError(Err_UNAUTHENTICATED, "Invalid session token subject")
-	}
-
-	return common.HexToAddress(subStr), nil
-}
-
-func (i *jwtAuthenticationInterceptor) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
-	return func(
-		ctx context.Context,
-		req connect.AnyRequest,
-	) (connect.AnyResponse, error) {
-		// calls to the authentication service are unauthenticated
-		if strings.HasPrefix(req.Spec().Procedure, "/river.AuthenticationService/") {
-			return next(ctx, req)
-		}
-
-		authHeader := req.Header().Get("Authorization")
-		if authHeader == "" {
-			return nil, RiverError(Err_UNAUTHENTICATED, "missing session token")
-		}
-
-		userID, err := i.authorize(authHeader)
-		if err != nil {
-			return nil, err
-		}
-
-		return next(context.WithValue(ctx, UserIDCtxKey{}, userID), req)
-	}
-}
-
-func (i *jwtAuthenticationInterceptor) WrapStreamingClient(
-	next connect.StreamingClientFunc,
-) connect.StreamingClientFunc {
-	return func(
-		ctx context.Context,
-		spec connect.Spec,
-	) connect.StreamingClientConn {
-		return next(ctx, spec)
-	}
-}
-
-func (i *jwtAuthenticationInterceptor) WrapStreamingHandler(
-	next connect.StreamingHandlerFunc,
-) connect.StreamingHandlerFunc {
-	return func(
-		ctx context.Context,
-		conn connect.StreamingHandlerConn,
-	) error {
-		sessionToken := conn.RequestHeader().Get("Authorization")
-		userID, err := i.authorize(sessionToken)
-		if err != nil {
-			return err
-		}
-
-		return next(context.WithValue(ctx, UserIDCtxKey{}, userID), conn)
-	}
 }

@@ -309,7 +309,11 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         }
     }
 
-    public getPriorityForStream(streamId: string, highPriorityIds: Set<string>): number {
+    public getPriorityForStream(
+        streamId: string,
+        highPriorityIds: Set<string>,
+        recentStreamIds: Set<string>,
+    ): number {
         if (
             isUserDeviceStreamId(streamId) ||
             isUserInboxStreamId(streamId) ||
@@ -324,26 +328,30 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         if ((isDmOrGdm || isChannel) && highPriorityIds.has(streamId)) {
             return 1
         }
+        // if you're getting updates for this stream, decrypt them so that you see unread messages
+        if (recentStreamIds.has(streamId)) {
+            return 2
+        }
         // channels in the space we're currently viewing
         if (isChannel) {
             const spaceId = spaceIdFromChannelId(streamId)
             if (highPriorityIds.has(spaceId)) {
-                return 2
+                return 3
             }
         }
         // dms
         if (isDmOrGdm) {
-            return 3
+            return 4
         }
         // space that we're currently viewing
         if (highPriorityIds.has(streamId)) {
-            return 4
+            return 5
         }
         // then other channels,
         if (isChannel) {
-            return 5
+            return 6
         }
         // then other spaces
-        return 6
+        return 7
     }
 }

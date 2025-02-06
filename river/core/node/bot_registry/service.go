@@ -7,26 +7,38 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
+	"github.com/river-build/river/core/config"
+	"github.com/river-build/river/core/node/authentication"
 	"github.com/river-build/river/core/node/base"
 	. "github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/storage"
 )
 
+const (
+	botServiceChallengePrefix = "BS_AUTH:"
+)
+
 type (
 	Service struct {
-		ctx   context.Context
+		authentication.AuthServiceMixin
+		cfg   config.BotRegistryConfig
 		store storage.BotRegistryStore
 	}
 )
 
 func NewService(
-	ctx context.Context,
+	cfg config.BotRegistryConfig,
 	store storage.BotRegistryStore,
 ) (*Service, error) {
-	return &Service{
-		ctx,
-		store,
-	}, nil
+	s := &Service{
+		cfg:   cfg,
+		store: store,
+	}
+
+	if err := s.InitAuthentication(botServiceChallengePrefix, &cfg.Authentication); err != nil {
+		return nil, err
+	}
+	return s, nil
 }
 
 func (s *Service) Start(ctx context.Context) {
@@ -54,8 +66,19 @@ func (s *Service) RegisterWebhook(
 			Tag("bot_owner_id", req.Msg.BotOwnerId)
 	}
 
-	// TODO: authorization
-	// auth signer should match owner or bot address
+	userId := authentication.UserFromAuthenticatedContext(ctx)
+	if bot != userId && owner != userId {
+		return nil, base.RiverError(
+			Err_PERMISSION_DENIED,
+			"Registering user is neither bot nor owner",
+			"owner",
+			owner,
+			"bot",
+			bot,
+			"userId",
+			userId,
+		)
+	}
 
 	// TODO: Validate URL by sending a request to the webhook
 	webhook := req.Msg.WebhookUrl

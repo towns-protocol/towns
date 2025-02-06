@@ -401,7 +401,11 @@ class MockDecryptionExtensions extends BaseDecryptionExtensions {
         return true
     }
 
-    public getPriorityForStream(_streamId: string, _highPriorityIds: Set<string>): number {
+    public getPriorityForStream(
+        _streamId: string,
+        _highPriorityIds: Set<string>,
+        _recentStreamIds: Set<string>,
+    ): number {
         return 0
     }
 
