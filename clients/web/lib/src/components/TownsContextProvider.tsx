@@ -34,6 +34,7 @@ import { TownsAnalytics } from '../types/TownsAnalytics'
 import { useStreamMetadataUpdater } from '../hooks/use-stream-metadata-updater'
 import { NotificationSettingsClient } from '../client/TownsNotifciationSettings'
 import { useSpaceRollups } from '../hooks/use-space-data'
+import { useCalculateSpaceThreadRoots } from '../hooks/use-space-thread-roots'
 import { dlogger } from '@river-build/dlog'
 
 export type InitialSyncSortPredicate = (a: string, b: string) => number
@@ -196,6 +197,7 @@ const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
     const blockedUserIds = useBlockedUsers(casablancaClient)
     useUserLookupUpdater(townsOpts, casablancaClient, client)
     useStreamMetadataUpdater(casablancaClient, client, streamMetadataUrl)
+    useCalculateSpaceThreadRoots(townsOpts)
 
     const { spaceUnreads, spaceMentions, spaceUnreadChannelIds } = useSpaceUnreads({
         client,
