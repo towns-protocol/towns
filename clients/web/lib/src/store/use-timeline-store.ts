@@ -42,7 +42,12 @@ export type TimelineStoreStates = {
 export interface TimelineStoreInterface {
     initializeStream: (userId: string, streamId: string) => void
     reset: (streamIds: string[]) => void
-    appendEvents: (events: TimelineEvent[], userId: string, streamId: string) => void
+    appendEvents: (
+        events: TimelineEvent[],
+        userId: string,
+        streamId: string,
+        specialFunction?: 'initializeStream',
+    ) => void
     prependEvents: (events: TimelineEvent[], userId: string, streamId: string) => void
     updateEvents: (events: TimelineEvent[], userId: string, streamId: string) => void
     updateEvent: (
@@ -78,13 +83,17 @@ function makeTimelineStoreInterface(
     setState: (fn: (prevState: TimelineStoreStates) => TimelineStoreStates) => void,
 ): TimelineStoreInterface {
     const initializeStream = (userId: string, streamId: string) => {
+        setState((state) => _initializeStream(state, streamId))
+    }
+
+    const _initializeStream = (state: TimelineStoreStates, streamId: string) => {
         const aggregated = {
             threadStats: {} as Record<string, ThreadStatsData>,
             threads: {} as Record<string, TimelineEvent[]>,
             reactions: {} as Record<string, MessageReactions>,
             tips: {} as Record<string, MessageTips>,
         }
-        setState((state) => ({
+        return {
             timelines: { ...state.timelines, [streamId]: [] },
             replacedEvents: state.replacedEvents,
             pendingReplacedEvents: state.pendingReplacedEvents,
@@ -105,7 +114,7 @@ function makeTimelineStoreInterface(
                 [streamId]: aggregated.tips,
             },
             lastestEventByUser: state.lastestEventByUser,
-        }))
+        }
     }
 
     const reset = (streamIds: string[]) => {
@@ -399,8 +408,16 @@ function makeTimelineStoreInterface(
         return state
     }
 
-    function appendEvents(events: TimelineEvent[], userId: string, streamId: string) {
+    function appendEvents(
+        events: TimelineEvent[],
+        userId: string,
+        streamId: string,
+        specialFunction?: 'initializeStream',
+    ) {
         setState((state) => {
+            if (specialFunction === 'initializeStream') {
+                state = _initializeStream(state, streamId)
+            }
             for (const event of events) {
                 state = processEvent(state, event, userId, streamId, undefined)
             }

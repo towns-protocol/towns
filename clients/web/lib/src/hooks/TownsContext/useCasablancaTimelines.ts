@@ -132,8 +132,7 @@ export function useCasablancaTimelines(
                 const timelineEvents = messages
                     .map((event) => toEvent(event, userId))
                     .filter((event) => filterFn(event, kind))
-                setState.initializeStream(userId, streamId)
-                setState.appendEvents(timelineEvents, userId, streamId)
+                setState.appendEvents(timelineEvents, userId, streamId, 'initializeStream')
             }
         }
 
