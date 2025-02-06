@@ -1,4 +1,4 @@
-import { useTimelineStore, useTownsContext } from 'use-towns-client'
+import { useRawTimelineStore, useTownsContext } from 'use-towns-client'
 import { useEffect, useMemo, useState } from 'react'
 import debounce from 'lodash/debounce'
 import { isDMChannelStreamId, isGDMChannelStreamId } from '@river-build/sdk'
@@ -17,7 +17,7 @@ type MemberNotInDMsChannelMenuItem = {
 function calculateMembersNotInDMs(
     dmItems: DMChannelMenuItem[],
     memberIds: string[],
-    latestEvents: ReturnType<typeof useTimelineStore.getState>['lastestEventByUser'],
+    latestEvents: ReturnType<typeof useRawTimelineStore.getState>['lastestEventByUser'],
 ) {
     const DM_THRESHOLD = 50
 
@@ -68,7 +68,7 @@ export function useMembersNotInDMs(args: { dmItems: DMChannelMenuItem[]; memberI
 
         const debouncedCalculation = debounce(
             (dmItems: DMChannelMenuItem[], memberIds: string[]) => {
-                workerFn(dmItems, memberIds, useTimelineStore.getState().lastestEventByUser)
+                workerFn(dmItems, memberIds, useRawTimelineStore.getState().lastestEventByUser)
                     .then((result) => {
                         if (mounted) {
                             setResult(result)

@@ -16,6 +16,9 @@ import {
     TimelineEvent_OneOf,
     getFallbackContent,
 } from '@river-build/sdk'
+import { useEffect } from 'react'
+import { useState } from 'react'
+import { useRef } from 'react'
 
 /// TimelinesMap: { streamId: TimelineEvent[] }
 export type TimelinesMap = Record<string, TimelineEvent[]>
@@ -63,7 +66,18 @@ export type TimelineStore = TimelineStoreStates & {
     setState: TimelineStoreInterface
 }
 
-export const useTimelineStore = createWithEqualityFn<TimelineStore>((set) => ({
+// wrap use timeline store return the same type
+export function useTimelineStore<T>(
+    selector: (state: TimelineStore) => T,
+    throttleMs: number = 1000,
+    equalityFn?: (a: T, b: T) => boolean,
+): T {
+    const store = useRawTimelineStore(selector, equalityFn)
+    const throttled = useThrottledValue(store, throttleMs ?? 1000)
+    return throttled
+}
+
+export const useRawTimelineStore = createWithEqualityFn<TimelineStore>((set) => ({
     timelines: {},
     replacedEvents: {},
     pendingReplacedEvents: {},
@@ -971,4 +985,29 @@ export function getIsMentioned(content: TimelineEvent_OneOf | undefined, userId:
                       .localeCompare(userId.toLowerCase(), undefined, { sensitivity: 'base' }) == 0,
           ) >= 0
         : false
+}
+
+export const useThrottledValue = <T>(value: T, throttle: number) => {
+    const tsRef = useRef<number>(Date.now())
+    const [throttledValue, setThrottledValue] = useState<T>(value)
+
+    useEffect(() => {
+        const ts = Date.now()
+        const diff = ts - tsRef.current
+        if (diff >= throttle) {
+            tsRef.current = ts
+            setThrottledValue(value)
+        } else {
+            // trailing edge
+            const timeout = setTimeout(() => {
+                tsRef.current = Date.now()
+                setThrottledValue(value)
+            }, throttle - diff)
+            return () => {
+                clearTimeout(timeout)
+            }
+        }
+    }, [throttle, value])
+
+    return throttledValue
 }

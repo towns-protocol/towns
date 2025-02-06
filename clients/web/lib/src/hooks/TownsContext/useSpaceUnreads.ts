@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import { FullyReadMarker } from '@river-build/proto'
 import { TownsClient } from '../../client/TownsClient'
 import { useFullyReadMarkerStore } from '../../store/use-fully-read-marker-store'
-import { ThreadStatsMap, useTimelineStore } from '../../store/use-timeline-store'
+import { ThreadStatsMap, useRawTimelineStore } from '../../store/use-timeline-store'
 import isEqual from 'lodash/isEqual'
 import debounce from 'lodash/debounce'
 import { isChannelStreamId, spaceIdFromChannelId } from '@river-build/sdk'
@@ -80,7 +80,7 @@ export function useSpaceUnreads(
 
         const runUpdate = () => {
             const markers = useFullyReadMarkerStore.getState().markers
-            const threadsStats = useTimelineStore.getState().threadsStats
+            const threadsStats = useRawTimelineStore.getState().threadsStats
 
             const results: Record<
                 string,
@@ -138,7 +138,7 @@ export function useSpaceUnreads(
         debouncedRunUpdate1()
 
         const fullyReadUnsub = useFullyReadMarkerStore.subscribe(debouncedRunUpdate1)
-        const threadStatsUnsub = useTimelineStore.subscribe(debouncedRunUpdate2)
+        const threadStatsUnsub = useRawTimelineStore.subscribe(debouncedRunUpdate2)
         return () => {
             debouncedRunUpdate1.cancel()
             debouncedRunUpdate2.cancel()

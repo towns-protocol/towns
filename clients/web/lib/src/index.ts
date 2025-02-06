@@ -130,7 +130,7 @@ export { useProtocolFee } from './hooks/use-protocol-fee'
 
 export { useCasablancaStore } from './store/use-casablanca-store'
 export { useFullyReadMarkerStore } from './store/use-fully-read-marker-store'
-export { useTimelineStore } from './store/use-timeline-store'
+export * from './store/use-timeline-store'
 export { useOfflineStore, generateOfflineUserKey } from './store/use-offline-store'
 export * from './store/use-timeline-filter'
 export * from './store/use-transactions-store'

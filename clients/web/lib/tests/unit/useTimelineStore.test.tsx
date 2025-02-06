@@ -2,7 +2,7 @@
  * @group core
  */
 
-import { useTimelineStore } from '../../src/store/use-timeline-store'
+import { useRawTimelineStore } from '../../src/store/use-timeline-store'
 import { ThreadStatsData, MessageTips } from '../../src/types/timeline-types'
 import { ChannelMessageEvent, TimelineEvent } from '@river-build/sdk'
 import { ConversationBuilder } from './helpers/ConversationBuilder'
@@ -54,7 +54,7 @@ function execute(
         tips?: Record<string, string[]>
     },
 ) {
-    const { setState } = useTimelineStore.getState()
+    const { setState } = useRawTimelineStore.getState()
     const channelId = 'channel1'
     //
     {
@@ -66,7 +66,7 @@ function execute(
             threads: threadsAppended,
             threadsStats: threadStatsAppended,
             tips: tipsAppended,
-        } = useTimelineStore.getState()
+        } = useRawTimelineStore.getState()
         // assert the timeline events are in the correct order
         expect(describeEvents(timelinesAppended[channelId])).toEqual(expected.timeline)
         // check threads
@@ -94,7 +94,7 @@ function execute(
             threads: threadsPrepended,
             threadsStats: threadStatsPrepended,
             tips: tipsPrepended,
-        } = useTimelineStore.getState()
+        } = useRawTimelineStore.getState()
         // assert the timeline events are in the correct order
         expect(describeEvents(timelinesPrepended[channelId])).toEqual(expected.timeline)
         // check threads
@@ -114,12 +114,12 @@ function execute(
 
 describe('UseTimelineStore', () => {
     beforeAll(() => {
-        const { timelines, setState } = useTimelineStore.getState()
+        const { timelines, setState } = useRawTimelineStore.getState()
         const roomIds = Object.keys(timelines)
         setState.reset(roomIds)
     }),
         afterEach(() => {
-            const { timelines, setState } = useTimelineStore.getState()
+            const { timelines, setState } = useRawTimelineStore.getState()
             const roomIds = Object.keys(timelines)
             setState.reset(roomIds)
         }),

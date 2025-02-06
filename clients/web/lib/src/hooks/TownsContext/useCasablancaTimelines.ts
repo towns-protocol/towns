@@ -70,7 +70,7 @@ import {
     getReactionParentId,
     getThreadParentId,
     getReplyParentId,
-    useTimelineStore,
+    useRawTimelineStore,
 } from '../../store/use-timeline-store'
 import { useCallback } from 'react'
 import { bin_toHexString, check } from '@river-build/dlog'
@@ -109,7 +109,7 @@ export function useCasablancaTimelines(
         },
         [streamFilter],
     )
-    const setState = useTimelineStore((s) => s.setState)
+    const setState = useRawTimelineStore((s) => s.setState)
     useEffect(() => {
         if (!casablancaClient) {
             return

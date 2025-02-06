@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { FullyReadMarker } from '@river-build/proto'
-import { useTimelineStore } from '../store/use-timeline-store'
+import { useRawTimelineStore } from '../store/use-timeline-store'
 import { ThreadResult, ThreadStatsData } from '../types/timeline-types'
 import { useFullyReadMarkerStore } from '../store/use-fully-read-marker-store'
 import { getChannelsFromSpaceData } from './use-channels'
@@ -35,7 +35,7 @@ export function useCalculateSpaceThreadRoots(_opts: TownsOpts) {
     useEffect(() => {
         const runUpdate = () => {
             const unreadMarkers = useFullyReadMarkerStore.getState().markers
-            const threadsStats = useTimelineStore.getState().threadsStats
+            const threadsStats = useRawTimelineStore.getState().threadsStats
             const spaceData = useSpaceDataStore.getState().spaceDataMap
 
             for (const spaceId in spaceData) {
@@ -92,7 +92,7 @@ export function useCalculateSpaceThreadRoots(_opts: TownsOpts) {
         const debouncedRunUpdate = debounce(runUpdate, 1000)
 
         const unsub1 = useSpaceDataStore.subscribe(debouncedRunUpdate)
-        const unsub2 = useTimelineStore.subscribe(debouncedRunUpdate)
+        const unsub2 = useRawTimelineStore.subscribe(debouncedRunUpdate)
         const unsub3 = useFullyReadMarkerStore.subscribe(debouncedRunUpdate)
 
         return () => {

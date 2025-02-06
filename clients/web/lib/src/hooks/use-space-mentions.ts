@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useFullyReadMarkerStore } from '../store/use-fully-read-marker-store'
-import { TimelineStore, useTimelineStore } from '../store/use-timeline-store'
+import { TimelineStore, useRawTimelineStore } from '../store/use-timeline-store'
 import isEqual from 'lodash/isEqual'
 import debounce from 'lodash/debounce'
 import { isChannelStreamId, MentionResult } from '@river-build/sdk'
@@ -10,9 +10,10 @@ export function useSpaceMentions(): MentionResult[] {
 
     useEffect(() => {
         const runUpdate = () => {
+            console.log('!!space mentions runUpdate')
             const unreadMarkers = useFullyReadMarkerStore.getState().markers
-            const threadsStats = useTimelineStore.getState().threadsStats
-            const timelines = useTimelineStore.getState().timelines
+            const threadsStats = useRawTimelineStore.getState().threadsStats
+            const timelines = useRawTimelineStore.getState().timelines
 
             const mentions: MentionResult[] = []
 
@@ -80,7 +81,7 @@ export function useSpaceMentions(): MentionResult[] {
         runUpdate()
 
         const unsub1 = useFullyReadMarkerStore.subscribe(debouncedRunUpdate)
-        const unsub2 = useTimelineStore.subscribe(onTimelineStoreChange)
+        const unsub2 = useRawTimelineStore.subscribe(onTimelineStoreChange)
         return () => {
             unsub1()
             unsub2()

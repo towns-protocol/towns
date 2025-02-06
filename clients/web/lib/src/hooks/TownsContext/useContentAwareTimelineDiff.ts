@@ -11,7 +11,7 @@ import {
     isGDMChannelStreamId,
 } from '@river-build/sdk'
 import { useFullyReadMarkerStore } from '../../store/use-fully-read-marker-store'
-import { TimelineStore, useTimelineStore } from '../../store/use-timeline-store'
+import { TimelineStore, useRawTimelineStore } from '../../store/use-timeline-store'
 import { check } from '@river-build/dlog'
 
 export function useContentAwareTimelineDiffCasablanca(casablancaClient?: CasablancaClient) {
@@ -51,7 +51,7 @@ export function useContentAwareTimelineDiffCasablanca(casablancaClient?: Casabla
             }
         }
         // subscribe
-        const unsubTimeline = useTimelineStore.subscribe(onTimelineChange)
+        const unsubTimeline = useRawTimelineStore.subscribe(onTimelineChange)
         casablancaClient.on('fullyReadMarkersUpdated', fullyReadMarkersUpdated)
         casablancaClient.on('streamInitialized', onInitFulyReadMarkers)
         // return ability to unsubscribe

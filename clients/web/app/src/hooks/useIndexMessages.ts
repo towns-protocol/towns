@@ -1,9 +1,8 @@
 import debug from 'debug'
-import { useDeferredValue, useMemo } from 'react'
 import { useTimelineStore } from 'use-towns-client'
+import { useDeferredValue, useMemo } from 'react'
 import { isChannelMessage } from '@components/MessageTimeline/util/getEventsByDate'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
-import { useThrottledValue } from 'hooks/useThrottledValue'
 import { notUndefined } from 'ui/utils/utils'
 import { DMMessageEventDocument, MessageEventDocument } from '@components/SearchBar/types'
 import { useDmChannels } from './useDMChannels'
@@ -15,10 +14,7 @@ export const useIndexMessages = () => {
     const channels = useSpaceChannels()
     const dmChannels = useDmChannels()
 
-    const timelines = useThrottledValue(
-        useDeferredValue(useTimelineStore((s) => s.timelines)),
-        1000,
-    )
+    const timelines = useDeferredValue(useTimelineStore((s) => s.timelines))
 
     const messages = useMemo<MessageEventDocument[]>(() => {
         return (channels ?? [])

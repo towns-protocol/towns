@@ -28,7 +28,6 @@ import { useIsChannelWritable } from 'hooks/useIsChannelWritable'
 import { useSendReply } from 'hooks/useSendReply'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { useDevice } from 'hooks/useDevice'
-import { useThrottledValue } from 'hooks/useThrottledValue'
 import { FullScreenMedia } from '@components/FullScreenMedia/FullScreenMedia'
 import { QUERY_PARAMS } from 'routes'
 import { useCreateLink } from 'hooks/useCreateLink'
@@ -44,7 +43,7 @@ export const MessageThread = (props: {
     spaceChannels: Channel[]
 }) => {
     const { parentId, spaceId, channelId, channelLabel, spaceChannels: channels } = props
-    const { parent, messages: unthrottledMessages } = useTimelineThread(channelId, parentId)
+    const { parent, messages } = useTimelineThread(channelId, parentId)
     let parentMessage = parent?.parentEvent
     const isDmOrGDM = isDMChannelStreamId(channelId) || isGDMChannelStreamId(channelId)
 
@@ -76,7 +75,6 @@ export const MessageThread = (props: {
     const galleryThreadId = searchParams.get(QUERY_PARAMS.GALLERY_THREAD_ID)
     const showGallery = galleryThreadId === parentId || galleryId === parentId
 
-    const messages = useThrottledValue(unthrottledMessages, 1000)
     const { lookupUser } = useUserLookupContext()
 
     const { sendReply } = useSendReply(parentId, parentMessage?.fallbackContent)
