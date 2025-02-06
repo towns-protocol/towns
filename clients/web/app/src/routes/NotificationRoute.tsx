@@ -1,10 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useTimelineThread, useTownsContext } from 'use-towns-client'
+import { useTimelineThread } from 'use-towns-client'
 
 import { createSearchParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useLocation, useNavigate } from 'react-router'
 import { useEvent } from 'react-use-event-hook'
+import {
+    isChannelStreamId,
+    isDMChannelStreamId,
+    isGDMChannelStreamId,
+    isSpaceStreamId,
+} from '@river-build/sdk'
 import { NotificationCurrentUser } from 'store/notificationCurrentUser'
 import { PanelStack } from '@components/Panel/PanelContext'
 import { SECOND_MS } from 'data/constants'
@@ -29,7 +35,6 @@ export function NotificationRoute(): JSX.Element | null {
         new NotificationCurrentUser(),
     )
     const { isTouch } = useDevice()
-    const { spaces, spaceHierarchies, dmChannels } = useTownsContext()
     const { state: locationState } = useLocation()
     const { urlPathnameSafeToNavigate } = useNotificationRoute()
     const navigate = useNavigate()
@@ -78,22 +83,18 @@ export function NotificationRoute(): JSX.Element | null {
     const { parent: threadParent } = useTimelineThread(channelId, threadId)
 
     const isChannelIdPresent = useMemo((): boolean => {
-        if (!spaceId || !channelId || !spaceHierarchies) {
+        if (!spaceId || !channelId) {
             return false
         }
-        const space = spaceHierarchies[spaceId]
-        if (!space) {
-            return false
-        }
-        return space.channels.some((channel) => channel.id === channelId)
-    }, [channelId, spaceHierarchies, spaceId])
+        return isChannelStreamId(channelId)
+    }, [channelId, spaceId])
 
     const isDmChannelIdPresent = useMemo((): boolean => {
-        if (!channelId || !dmChannels) {
+        if (!channelId) {
             return false
         }
-        return dmChannels.some((channel) => channel.id === channelId)
-    }, [channelId, dmChannels])
+        return isDMChannelStreamId(channelId) || isGDMChannelStreamId(channelId)
+    }, [channelId])
 
     const isSpaceIdPresentOrUnspecified = useMemo((): boolean => {
         // either there is no spaceId requirement or the spaceId is in the list of spaces
@@ -101,8 +102,8 @@ export function NotificationRoute(): JSX.Element | null {
             // unspecified is ok for DM / GDM
             return true
         }
-        return spaces && spaces.some((space) => space.id === spaceId)
-    }, [spaceId, spaces])
+        return isSpaceStreamId(spaceId)
+    }, [spaceId])
 
     const isThreadIdPresentOrUnspecified = useMemo((): boolean => {
         if (!threadId) {
