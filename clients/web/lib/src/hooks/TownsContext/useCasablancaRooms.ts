@@ -1,38 +1,52 @@
 import {
     Client as CasablancaClient,
-    Membership,
     isSpaceStreamId,
     isChannelStreamId,
     isDMChannelStreamId,
     isGDMChannelStreamId,
     toMembership,
 } from '@river-build/sdk'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { Room } from '../../types/towns-types'
 import isEqual from 'lodash/isEqual'
 import { TownsOpts } from '../../client/TownsClientTypes'
+import { create } from 'zustand'
+import { createJSONStorage, persist } from 'zustand/middleware'
+
+const ROOM_DATA_STORE_NAME = 'towns/channelData'
+
+export type RoomDataStore = {
+    rooms: Record<string, Room>
+    setRoomData: (streamId: string, room: Room) => void
+}
+
+const useRoomDataStore = create<RoomDataStore>()(
+    persist(
+        (set) => ({
+            rooms: {},
+            setRoomData: (streamId: string, room: Room) =>
+                set((state) => {
+                    const prevRoom = state.rooms[streamId]
+                    if (isEqual(prevRoom, room)) {
+                        return state
+                    }
+                    console.log('useCasablancaRooms, setRoomData', streamId, prevRoom, room)
+                    return { rooms: { ...state.rooms, [streamId]: room } }
+                }),
+        }),
+        {
+            name: ROOM_DATA_STORE_NAME,
+            storage: createJSONStorage(() => localStorage, {}),
+            version: 1,
+        },
+    ),
+)
 
 export function useCasablancaRooms(
-    opts: TownsOpts,
+    _opts: TownsOpts,
     client?: CasablancaClient,
 ): Record<string, Room | undefined> {
-    const [rooms, setRooms] = useState<Record<string, Room | undefined>>(() => {
-        const allChannelsAndSpaces = client?.streams
-            .getStreamIds()
-            .filter((stream) => {
-                return (
-                    isSpaceStreamId(stream) ||
-                    isChannelStreamId(stream) ||
-                    isDMChannelStreamId(stream) ||
-                    isGDMChannelStreamId(stream)
-                )
-            })
-            .reduce((acc: Record<string, Room | undefined>, stream: string) => {
-                acc[stream] = toCasablancaRoom(stream, client)
-                return acc
-            }, {})
-        return allChannelsAndSpaces ?? {}
-    })
+    const { rooms } = useRoomDataStore()
 
     //TODO: placeholder for working with Rooms in Casablanca
     useEffect(() => {
@@ -43,17 +57,9 @@ export function useCasablancaRooms(
         // helpers
         const updateState = (streamId: string) => {
             const newRoom = toCasablancaRoom(streamId, client)
-            setRooms((prev) => {
-                const prevRoom = prev[streamId]
-                const prevMember = prevRoom?.membership === Membership.Join
-                const newMember = newRoom?.membership === Membership.Join
-                // in the case of a user leaving a room, they should still get the latest update
-                // if they were not a member before and still aren't, then don't update
-                if (!prevMember && !newMember) {
-                    return prev
-                }
-                return isEqual(prevRoom, newRoom) ? prev : { ...prev, [streamId]: newRoom }
-            })
+            if (newRoom) {
+                useRoomDataStore.getState().setRoomData(streamId, newRoom)
+            }
         }
 
         // subscribe to changes
@@ -97,7 +103,6 @@ export function useCasablancaRooms(
                 'spaceChannelHideUserJoinLeaveEventsUpdated',
                 onHideUserJoinLeaveEventsUpdated,
             )
-            setRooms({})
         }
     }, [client])
     return rooms
