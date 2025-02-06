@@ -75,8 +75,6 @@ export {
     useSpaceData,
     useSpaceDataStore,
     useSpaceDataWithId,
-    useInvites,
-    useInviteData,
     useContractSpaceInfo,
     useContractSpaceInfoWithoutClient,
 } from './hooks/use-space-data'

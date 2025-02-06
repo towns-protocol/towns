@@ -4,14 +4,6 @@ import { Permission } from '@river-build/web3'
 import { TSigner } from './web3-types'
 import { MessageType, Attachment, Membership } from '@river-build/sdk'
 
-export interface InviteData {
-    id: string
-    name: string
-    avatarSrc: string
-    isSpaceRoom: boolean
-    spaceParentId?: string
-}
-
 export interface ChannelData {
     spaceId: string | undefined
     channelId: string

@@ -10,7 +10,6 @@ import { LoginWithWallet } from './helpers/TestComponents'
 import { Permission } from '@river-build/web3'
 import React from 'react'
 import { TownsTestApp } from './helpers/TownsTestApp'
-import { useInvites } from '../../src/hooks/use-space-data'
 import { useMyMembership } from '../../src/hooks/use-my-membership'
 import { useMyProfile } from '../../src/hooks/use-my-profile'
 import { useTownsClient } from '../../src/hooks/use-towns-client'
@@ -39,16 +38,13 @@ describe.skip('userProfileOnAcceptInviteHooks', () => {
             const myProfile = useMyProfile()
             const { spaces } = useTownsContext()
             const { joinTown } = useTownsClient()
-            const invites = useInvites()
-            const roomId = invites[0]?.id ?? spaces[0]?.id
+            const roomId = spaces[0]?.id
             const myMembership = useMyMembership(roomId)
             return (
                 <>
                     <LoginWithWallet signer={alice.wallet} />
                     <div data-testid="myProfileName">{myProfile?.displayName ?? 'unknown'}</div>
-                    <div data-testid="invitesCount">
-                        {invites.length > 0 ? invites.length.toString() : 'none'}
-                    </div>
+                    <div data-testid="invitesCount">{'none'}</div>
                     <div data-testid="roomId">{roomId ?? 'none'}</div>
                     <div data-testid="myMembership">{myMembership}</div>
                     <button onClick={() => void joinTown(roomId, alice.wallet)}>

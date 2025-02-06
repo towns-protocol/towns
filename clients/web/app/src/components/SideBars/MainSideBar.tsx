@@ -1,12 +1,6 @@
 import { motion } from 'framer-motion'
 import React, { forwardRef, useCallback, useEffect, useMemo, useRef } from 'react'
-import {
-    SpaceItem,
-    useInvites,
-    useMyUserId,
-    useSpaceContext,
-    useTownsContext,
-} from 'use-towns-client'
+import { SpaceItem, useMyUserId, useSpaceContext, useTownsContext } from 'use-towns-client'
 import { useEvent } from 'react-use-event-hook'
 import { useNavigate } from 'react-router'
 import { firstBy } from 'thenby'
@@ -26,7 +20,6 @@ export const MainSideBar = () => {
     const { isTouch } = useDevice()
     const { spaces } = useTownsContext()
     const { spaceId } = useSpaceContext()
-    const invites = useInvites()
     const { dmUnreadChannelIds } = useTownsContext()
 
     const onShowCreateSpace = useEvent(() => {
@@ -89,16 +82,6 @@ export const MainSideBar = () => {
             </TransitionItem>
 
             <SpaceList spaces={spaces} spaceId={spaceId} />
-
-            {invites.map((m) => (
-                <TransitionItem key={m.id}>
-                    <SpaceNavItem
-                        isInvite
-                        id={m.id}
-                        spaceName={spaces.find((sp) => sp.id === spaceId)?.name || ''}
-                    />
-                </TransitionItem>
-            ))}
         </Card>
     )
 }

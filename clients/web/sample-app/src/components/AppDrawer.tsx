@@ -1,9 +1,6 @@
 import React from 'react'
 import { Box, CssBaseline, Divider, Drawer, Toolbar } from '@mui/material'
-import { InviteData } from 'use-towns-client'
 import { Outlet, useNavigate } from 'react-router-dom'
-
-import { Invites } from './Invites'
 import { SidebarNewItemButton } from './Buttons/SidebarNewItemButton'
 import { SidebarItemButton } from './Buttons/SidebarItemButton'
 import { AppDrawerSpaces } from './AppDrawerSpaces'
@@ -40,14 +37,6 @@ export function AppDrawer(props: Props): JSX.Element {
     const onClickChannel = (spaceId: string, channelId: string) => {
         console.log('onClickChannel', spaceId, channelId)
         navigate('/spaces/' + spaceId + '/channels/' + channelId + '/')
-    }
-
-    const onClickInvite = (invite: InviteData) => {
-        if (invite.spaceParentId) {
-            navigate('/spaces/' + invite.spaceParentId + '/channels/' + invite.id)
-        } else {
-            navigate('/spaces/' + invite.id)
-        }
     }
 
     const onClickCreateSpace = () => {
@@ -87,7 +76,6 @@ export function AppDrawer(props: Props): JSX.Element {
             <Divider />
             <SidebarNewItemButton label="Create A Town" onClick={onClickCreateSpace} />
             <Divider />
-            <Invites title="Invites" onClickInvite={onClickInvite} />
             <SidebarItemButton label="Web 3" onClick={onWeb3Click} />
             <SidebarItemButton label="Linked Wallets" onClick={onLinkedWalletsClick} />
             <SidebarItemButton label="Logins" onClick={onLoginsClick} />

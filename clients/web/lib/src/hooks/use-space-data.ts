@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react'
-import { Channel, InviteData, SpaceData } from '../types/towns-types'
+import { Channel, SpaceData } from '../types/towns-types'
 import { useTownsContext } from '../components/TownsContextProvider'
 import { useSpaceContext } from '../components/SpaceContextProvider'
 import {
@@ -140,21 +140,6 @@ export function useSpaceDataWithId(
 ): SpaceData | undefined {
     const spaceData = useSpaceDataStore((state) => state.spaceDataMap)?.[inSpaceId ?? '']
     return spaceData
-}
-
-export function useInvites(): InviteData[] {
-    return []
-}
-
-export const useInviteData = (slug: string | undefined) => {
-    const invites = useInvites()
-    return useMemo(
-        () =>
-            invites.find((invite) => {
-                return invite.id === slug || invite.id === encodeURIComponent(slug || '')
-            }),
-        [invites, slug],
-    )
 }
 
 function spaceInfoWithChannelsQueryConfig({
