@@ -89,6 +89,12 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
             }[],
         ) => this.enqueueInitKeySolicitations(streamId, members)
 
+        const onStreamInitialized = (streamId: string) => {
+            if (isUserInboxStreamId(streamId)) {
+                this.enqueueNewMessageDownload()
+            }
+        }
+
         client.on('streamUpToDate', onStreamUpToDate)
         client.on('newGroupSessions', onNewGroupSessions)
         client.on('newEncryptedContent', onNewEncryptedContent)
@@ -96,6 +102,7 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         client.on('updatedKeySolicitation', onKeySolicitation)
         client.on('initKeySolicitations', onInitKeySolicitations)
         client.on('streamNewUserJoined', onMembershipChange)
+        client.on('streamInitialized', onStreamInitialized)
 
         this._onStopFn = () => {
             client.off('streamUpToDate', onStreamUpToDate)
@@ -105,6 +112,7 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
             client.off('updatedKeySolicitation', onKeySolicitation)
             client.off('initKeySolicitations', onInitKeySolicitations)
             client.off('streamNewUserJoined', onMembershipChange)
+            client.off('streamInitialized', onStreamInitialized)
         }
         this.log.debug('new ClientDecryptionExtensions', { userDevice })
     }
@@ -135,6 +143,7 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
     }
 
     public downloadNewMessages(): Promise<void> {
+        this.log.info('downloadNewInboxMessages')
         return this.client.downloadNewInboxMessages()
     }
 

@@ -107,6 +107,13 @@ class StreamTasks {
         this.keySolicitations.sort((a, b) => a.respondAfter - b.respondAfter)
         this.keySolicitationsNeedsSort = false
     }
+    isEmpty() {
+        return (
+            this.encryptedContent.length === 0 &&
+            this.keySolicitations.length === 0 &&
+            !this.isMissingKeys
+        )
+    }
 }
 
 class StreamQueues {
@@ -124,11 +131,7 @@ class StreamQueues {
     }
     isEmpty() {
         for (const tasks of this.streams.values()) {
-            if (
-                tasks.encryptedContent.length > 0 ||
-                tasks.keySolicitations.length > 0 ||
-                tasks.isMissingKeys
-            ) {
+            if (!tasks.isEmpty()) {
                 return false
             }
         }
@@ -394,9 +397,14 @@ export abstract class BaseDecryptionExtensions {
         // enqueue a task to upload device keys
         this.mainQueues.priorityTasks.push(() => this.uploadDeviceKeys())
         // enqueue a task to download new to-device messages
-        this.mainQueues.priorityTasks.push(() => this.downloadNewMessages())
+        this.enqueueNewMessageDownload()
         // start the tick loop
         this.checkStartTicking()
+    }
+
+    // enqueue a task to download new to-device messages, should be safe to call multiple times
+    public enqueueNewMessageDownload() {
+        this.mainQueues.priorityTasks.push(() => this.downloadNewMessages())
     }
 
     public onStart(): void {
@@ -453,6 +461,18 @@ export abstract class BaseDecryptionExtensions {
                 `queues: ${Object.entries(this.mainQueues)
                     .map(([key, q]) => `${key}: ${q.length}`)
                     .join(', ')} ${this.streamQueues.toString()}`,
+            )
+            this.log.info(
+                `priorityTasks: ${Array.from(this.streamQueues.streams.entries())
+                    .filter(([_, value]) => !value.isEmpty())
+                    .map(([key, _]) => key)
+                    .sort(
+                        (a, b) =>
+                            this.getPriorityForStream(a, this.highPriorityIds) -
+                            this.getPriorityForStream(b, this.highPriorityIds),
+                    )
+                    .slice(0, 4)
+                    .join(', ')}`,
             )
             this.lastPrintedAt = Date.now()
         }
