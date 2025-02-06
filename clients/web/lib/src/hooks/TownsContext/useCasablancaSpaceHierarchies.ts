@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { Client as CasablancaClient } from '@river-build/sdk'
 import { SpaceHierarchies, SpaceHierarchy } from 'types/towns-types'
 import { isSpaceStreamId } from '@river-build/sdk'
+import isEqual from 'lodash/isEqual'
+import debounce from 'lodash/debounce'
 
 export function useCasablancaSpaceHierarchies(
     casablancaClient?: CasablancaClient,
@@ -21,12 +23,19 @@ export function useCasablancaSpaceHierarchies(
                 }
                 return acc
             }, {} as SpaceHierarchies)
-            setSpaceHierarchies(spaceHierarchies)
+            setSpaceHierarchies((prev) => {
+                if (isEqual(prev, spaceHierarchies)) {
+                    return prev
+                }
+                return spaceHierarchies
+            })
         }
+
+        const debouncedUpdateSpaceHierarchies = debounce(updateSpaceHierarchies, 1000)
 
         const onUpdate = (streamId: string) => {
             if (isSpaceStreamId(streamId)) {
-                updateSpaceHierarchies()
+                debouncedUpdateSpaceHierarchies()
             }
         }
 
@@ -39,6 +48,7 @@ export function useCasablancaSpaceHierarchies(
             casablancaClient.off('streamInitialized', onUpdate)
             casablancaClient.off('spaceChannelCreated', onUpdate)
             casablancaClient.off('spaceChannelDeleted', onUpdate)
+            setSpaceHierarchies({})
         }
     }, [casablancaClient])
 

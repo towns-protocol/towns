@@ -8,6 +8,7 @@ import { Stream } from '@river-build/sdk'
 import { MembershipOp } from '@river-build/proto'
 import isEqual from 'lodash/isEqual'
 import { DMChannelIdentifier } from '../../types/dm-channel-identifier'
+import debounce from 'lodash/debounce'
 
 export function useCasablancaDMs(casablancaClient?: CasablancaClient): {
     channels: DMChannelIdentifier[]
@@ -88,15 +89,16 @@ export function useCasablancaDMs(casablancaClient?: CasablancaClient): {
             setChannels((prev) => {
                 if (isEqual(prev, channels)) {
                     return prev
-                } else {
-                    return channels
                 }
+                return channels
             })
         }
 
+        const debouncedUpdateChannels = debounce(updateChannels, 1000)
+
         const onStreamChange = (streamId: string) => {
             if (isDMChannelStreamId(streamId) || isGDMChannelStreamId(streamId)) {
-                updateChannels()
+                debouncedUpdateChannels()
             }
         }
 
@@ -113,6 +115,7 @@ export function useCasablancaDMs(casablancaClient?: CasablancaClient): {
             casablancaClient.off('userStreamMembershipChanged', onStreamChange)
             casablancaClient.off('streamRemovedFromSync', onStreamChange)
             casablancaClient.off('streamChannelPropertiesUpdated', onStreamChange)
+            setChannels([])
         }
     }, [casablancaClient, userId, userStreamId])
     return { channels }
