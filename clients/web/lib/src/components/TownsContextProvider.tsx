@@ -5,9 +5,8 @@ import { useBlockedUsers } from '../hooks/use-blocked-users'
 import { useSpacesIds } from '../hooks/TownsContext/useSpaceIds'
 import { useSpaceUnreads } from '../hooks/TownsContext/useSpaceUnreads'
 import { useSpaces } from '../hooks/TownsContext/useSpaces'
-import { useCasablancaSpaceHierarchies } from '../hooks/TownsContext/useCasablancaSpaceHierarchies'
 import { useTownsClientListener } from '../hooks/use-towns-client-listener'
-import { Room, SpaceHierarchies, SpaceItem } from '../types/towns-types'
+import { Room, SpaceItem } from '../types/towns-types'
 import { QueryProvider } from './QueryProvider'
 import {
     Client as CasablancaClient,
@@ -59,7 +58,7 @@ export interface ITownsContext {
     spaceMentions: Record<string, number | undefined> // spaceId -> aggregated mentionCount
     spaceUnreadChannelIds: Record<string, Set<string> | undefined> // spaceId -> array of channelIds with unreads
     spaces: SpaceItem[]
-    spaceHierarchies: SpaceHierarchies
+    spaceIds: string[]
     dmChannels: DMChannelIdentifier[]
     dmUnreadChannelIds: Set<string> // dmChannelId -> set of channelIds with unreads
     clientStatus: ReturnType<typeof useClientInitStatus>
@@ -187,22 +186,21 @@ const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
         environmentId,
         props.riverNotificationServiceUrl,
     )
-    const { spaceIds } = useSpacesIds(casablancaClient)
+    const spaceIds = useSpacesIds(casablancaClient)
     useContentAwareTimelineDiffCasablanca(casablancaClient)
     const clientStatus = useClientInitStatus(casablancaClient)
 
     const { spaces } = useSpaces(townsOpts, spaceIds, casablancaClient)
     const { channels: dmChannels } = useCasablancaDMs(casablancaClient)
-    const spaceHierarchies = useCasablancaSpaceHierarchies(casablancaClient)
     const blockedUserIds = useBlockedUsers(casablancaClient)
     useUserLookupUpdater(townsOpts, casablancaClient, client)
     useStreamMetadataUpdater(casablancaClient, client, streamMetadataUrl)
     useCalculateSpaceThreadRoots(townsOpts)
 
-    const { spaceUnreads, spaceMentions, spaceUnreadChannelIds } = useSpaceUnreads({
+    const { spaceUnreads, spaceMentions, spaceUnreadChannelIds } = useSpaceUnreads(
         client,
         notificationSettingsClient,
-    })
+    )
 
     const { dmUnreadChannelIds } = useDMUnreads(casablancaClient, dmChannels)
 
@@ -236,7 +234,7 @@ const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
             spaceMentions,
             spaceUnreadChannelIds,
             spaces,
-            spaceHierarchies,
+            spaceIds,
             dmChannels,
             dmUnreadChannelIds,
             clientStatus,
@@ -262,7 +260,7 @@ const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
         spaceMentions,
         spaceUnreadChannelIds,
         spaces,
-        spaceHierarchies,
+        spaceIds,
         dmChannels,
         dmUnreadChannelIds,
         clientStatus,

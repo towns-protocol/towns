@@ -6,26 +6,20 @@ import { ThreadStatsMap, useTimelineStore } from '../../store/use-timeline-store
 import isEqual from 'lodash/isEqual'
 import debounce from 'lodash/debounce'
 import { isChannelStreamId, spaceIdFromChannelId } from '@river-build/sdk'
-import { useSpaceIdStore } from './useSpaceIds'
 import {
     getMutedChannelIds,
     NotificationSettingsClient,
 } from '../../client/TownsNotifciationSettings'
 
-export function useSpaceUnreads({
-    client,
-    notificationSettingsClient,
-}: {
-    client: TownsClient | undefined
-    notificationSettingsClient?: NotificationSettingsClient
-}) {
+export function useSpaceUnreads(
+    client: TownsClient | undefined,
+    notificationSettingsClient: NotificationSettingsClient | undefined,
+) {
     const [state, setState] = useState<{
         spaceUnreads: Record<string, boolean>
         spaceMentions: Record<string, number>
         spaceUnreadChannelIds: Record<string, Set<string>>
     }>({ spaceUnreads: {}, spaceMentions: {}, spaceUnreadChannelIds: {} })
-
-    const { spaceIds } = useSpaceIdStore()
 
     const settings = useSyncExternalStore(
         (subscriber) => {
@@ -107,26 +101,24 @@ export function useSpaceUnreads({
                 if (isChannelStreamId(marker.channelId)) {
                     const spaceId = spaceIdFromChannelId(marker.channelId)
                     // only return the unreads from spaceIds in the spaceId store
-                    if (spaceIds.includes(spaceId)) {
-                        if (!results[spaceId]) {
-                            results[spaceId] = {
-                                isUnread: false,
-                                mentions: 0,
-                                unreadChannelIds: new Set(),
-                            }
-                        }
-                        if (marker.isUnread && isParticipatingThread(marker, threadsStats)) {
-                            const isMuted =
-                                mutedChannelIds?.has(marker.channelId) ||
-                                mutedChannelIds?.has(spaceId)
 
-                            if (!isMuted) {
-                                results[spaceId].mentions += marker.mentions
-                                results[spaceId].isUnread = true
-                                // dismiss threads when marking channels as unread
-                                if (!marker.threadParentId) {
-                                    results[spaceId].unreadChannelIds.add(marker.channelId)
-                                }
+                    if (!results[spaceId]) {
+                        results[spaceId] = {
+                            isUnread: false,
+                            mentions: 0,
+                            unreadChannelIds: new Set(),
+                        }
+                    }
+                    if (marker.isUnread && isParticipatingThread(marker, threadsStats)) {
+                        const isMuted =
+                            mutedChannelIds?.has(marker.channelId) || mutedChannelIds?.has(spaceId)
+
+                        if (!isMuted) {
+                            results[spaceId].mentions += marker.mentions
+                            results[spaceId].isUnread = true
+                            // dismiss threads when marking channels as unread
+                            if (!marker.threadParentId) {
+                                results[spaceId].unreadChannelIds.add(marker.channelId)
                             }
                         }
                     }
@@ -153,7 +145,7 @@ export function useSpaceUnreads({
             fullyReadUnsub()
             threadStatsUnsub()
         }
-    }, [client, mutedChannelIds, spaceIds])
+    }, [client, mutedChannelIds])
 
     return state
 }

@@ -2,7 +2,6 @@ import { useMembers } from './use-members'
 import { useSpaceContext } from '../components/SpaceContextProvider'
 import { useTownsContext } from '../components/TownsContextProvider'
 import { useMemo } from 'react'
-import { useSpaceIdStore } from './TownsContext/useSpaceIds'
 import { isDefined } from '../utils/isDefined'
 
 /**
@@ -14,8 +13,7 @@ export function useSpaceMembers() {
 }
 
 export function useSpaceMembersWithFallback(spaceId?: string | undefined) {
-    const { spaceIds: allSpaceIds } = useSpaceIdStore()
-    const { rooms } = useTownsContext()
+    const { rooms, spaceIds: allSpaceIds } = useTownsContext()
     const spaceIds = useMemo(() => (spaceId ? [spaceId] : allSpaceIds), [spaceId, allSpaceIds])
     const memberIds = useMemo(
         () =>

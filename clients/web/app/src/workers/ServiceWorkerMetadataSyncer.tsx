@@ -24,7 +24,7 @@ function createInitialCurrentUser() {
 
 export function ServiceWorkerMetadataSyncer() {
     const myUserId = useMyUserId()
-    const { casablancaClient, spaceHierarchies } = useTownsContext()
+    const { casablancaClient, spaceIds } = useTownsContext()
     const [store, setStore] = useState<NotificationStore | null>(null)
     const [currentUser] = useState<NotificationCurrentUser>(createInitialCurrentUser)
 
@@ -78,7 +78,7 @@ export function ServiceWorkerMetadataSyncer() {
                 {store ? <UsersMetadata store={store} /> : null}
                 {store ? <DmMetadata store={store} /> : null}
                 {store
-                    ? Object.keys(spaceHierarchies).map((spaceId) => (
+                    ? spaceIds.map((spaceId) => (
                           <SpaceContextProvider key={spaceId} spaceId={spaceId}>
                               <SpacesAndChannelsMetadata spaceId={spaceId} store={store} />
                           </SpaceContextProvider>
@@ -86,7 +86,7 @@ export function ServiceWorkerMetadataSyncer() {
                     : null}
             </>
         ),
-        [store, spaceHierarchies],
+        [store, spaceIds],
     )
 }
 

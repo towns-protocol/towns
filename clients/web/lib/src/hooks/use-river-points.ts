@@ -7,16 +7,14 @@ import { useCheckInTransaction } from './use-checkin-transaction'
 import { useTownsClient } from './use-towns-client'
 import { useOnTransactionUpdated } from '../store/use-transactions-store'
 import { BlockchainTransactionType } from '../types/web3-types'
-import { useSpaceIdStore } from './TownsContext/useSpaceIds'
 
 const SECONDS_MS = 1000
 const DAY_MS = 24 * 60 * 60 * SECONDS_MS
 
 export function useRiverPoints(loggedInWalletAddress: `0x${string}`) {
-    const { baseChain: chain, clientStatus } = useTownsContext()
+    const { baseChain: chain, clientStatus, spaceIds } = useTownsContext()
     const { spaceDapp } = useTownsClient()
 
-    const { spaceIds } = useSpaceIdStore()
     const isLocalDataLoaded = clientStatus.isLocalDataLoaded
 
     useEffect(() => {
