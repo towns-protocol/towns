@@ -113,7 +113,15 @@ export function TownsContextProvider({
 }
 
 const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
-    const { environmentId, baseConfig, baseChain, riverConfig, riverChain, timelineFilter } = props
+    const {
+        environmentId,
+        baseConfig,
+        baseChain,
+        riverConfig,
+        riverChain,
+        timelineFilter,
+        streamMetadataUrl,
+    } = props
 
     const previousProps = useRef<TownsContextProviderProps>()
 
@@ -187,7 +195,7 @@ const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
     const spaceHierarchies = useCasablancaSpaceHierarchies(casablancaClient)
     const blockedUserIds = useBlockedUsers(casablancaClient)
     useUserLookupUpdater(townsOpts, casablancaClient, client)
-    useStreamMetadataUpdater(casablancaClient, client, props.streamMetadataUrl)
+    useStreamMetadataUpdater(casablancaClient, client, streamMetadataUrl)
 
     const { spaceUnreads, spaceMentions, spaceUnreadChannelIds } = useSpaceUnreads({
         client,
