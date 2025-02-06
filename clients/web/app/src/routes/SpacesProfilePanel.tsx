@@ -9,6 +9,7 @@ import {
     LOCALHOST_CHAIN_ID,
     Permission,
     SpaceData,
+    useBanTransaction,
     useConnectivity,
     useGetRootKeyFromLinkedWallet,
     useHasPermission,
@@ -17,11 +18,10 @@ import {
     useSpaceData,
     useTownsClient,
     useTownsContext,
+    useUnbanTransaction,
     useUserLookupContext,
     useWalletAddressIsBanned,
 } from 'use-towns-client'
-import { useBanTransaction, useUnbanTransaction } from 'use-towns-client/dist/hooks/use-banning'
-
 import { usePrivy } from '@privy-io/react-auth'
 import { useGetUserBio } from 'hooks/useUserBio'
 import { Box, Button, Icon, Paragraph, Stack, Text } from '@ui'

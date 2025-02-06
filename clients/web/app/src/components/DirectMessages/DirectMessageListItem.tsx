@@ -2,13 +2,13 @@ import React, { forwardRef, useCallback, useMemo, useRef } from 'react'
 import {
     DMChannelIdentifier,
     LookupUser,
+    MostRecentMessageInfo_OneOf,
     useDMData,
     useDMLatestMessage,
     useMyUserId,
     useUser,
     useUserLookupContext,
 } from 'use-towns-client'
-import { MostRecentMessageInfo_OneOf } from 'use-towns-client/dist/hooks/use-dm-latest-message'
 import { useInView } from 'react-intersection-observer'
 import { Avatar } from '@components/Avatar/Avatar'
 import { UserList } from '@components/UserList/UserList'

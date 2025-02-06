@@ -9,12 +9,11 @@ import {
     useConnectivity,
     useHasPermission,
     usePermissionOverrides,
+    usePrefetchMultipleRoleDetails,
     useRoom,
     useSpaceData,
     useStreamEncryptionAlgorithm,
 } from 'use-towns-client'
-
-import { usePrefetchMultipleRoleDetails } from 'use-towns-client/dist/hooks/use-role-details'
 import { EditChannelName } from '@components/Panel/EditChannelName'
 import { Box, Icon, Paragraph, Stack, Text, TextButton, Toggle } from '@ui'
 import { CHANNEL_INFO_PARAMS, PATHS } from 'routes'

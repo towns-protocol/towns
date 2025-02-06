@@ -8,13 +8,13 @@ import {
     Permission,
     RoleDetails,
     useChannelId,
+    useClearChannelPermissionOverrides,
     useIsTransactionPending,
     usePermissionOverrides,
     useRoleDetails,
     useSetChannelPermissionOverrides,
     useSpaceId,
 } from 'use-towns-client'
-import { useClearChannelPermissionOverrides } from 'use-towns-client/dist/hooks/use-set-channel-permission-overrides'
 import { z } from 'zod'
 import { AnimatePresence } from 'framer-motion'
 import { atoms } from 'ui/styles/atoms.css'

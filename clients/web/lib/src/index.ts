@@ -33,13 +33,13 @@ export { useChannelThread } from './hooks/use-channel-thread'
 export { useChannelTimeline } from './hooks/use-channel-timeline'
 export { useChannelThreadStat } from './hooks/use-channel-thread-stat'
 export { useChannelThreadStats } from './hooks/use-channel-thread-stats'
-export { useChunkedMedia } from './hooks/use-chunked-media'
+export * from './hooks/use-chunked-media'
 export { useCreateChannelTransaction } from './hooks/use-create-channel-transaction'
 export { useCreateRoleTransaction } from './hooks/use-create-role-transaction'
 export { useCreateSpaceTransaction } from './hooks/use-create-space-transaction'
 export { useConnectivity } from './hooks/use-connectivity'
 export { useDeleteRoleTransaction } from './hooks/use-delete-role-transaction'
-export { useDMLatestMessage } from './hooks/use-dm-latest-message'
+export * from './hooks/use-dm-latest-message'
 export { useDMData } from './hooks/use-dm-data'
 export { useFavIconBadge, useAppBadge } from './hooks/TownsContext/useFavIconBadge'
 export { useFullyReadMarker } from './hooks/use-fully-read-marker'
@@ -59,18 +59,14 @@ export { useMyUserId } from './hooks/use-my-user-id'
 export { useNetworkStatus } from './hooks/use-network-status'
 export * from './hooks/use-pins'
 export { usePermissionOverrides } from './hooks/use-permission-overrides'
-export {
-    useRoleDetails,
-    useMultipleRoleDetails,
-    usePrefetchMultipleRoleDetails,
-} from './hooks/use-role-details'
+export * from './hooks/use-role-details'
 export {
     usePlatformMembershipFee,
     usePlatformMembershipPriceForSupplyInEth,
 } from './hooks/use-platform-membership-fee'
 export { useRoles } from './hooks/use-roles'
 export { useRoom } from './hooks/use-room'
-export { useSetChannelPermissionOverrides } from './hooks/use-set-channel-permission-overrides'
+export * from './hooks/use-set-channel-permission-overrides'
 export {
     useSpaceData,
     useSpaceDataStore,
@@ -99,12 +95,7 @@ export { useUpdateRoleTransaction } from './hooks/use-update-role-transaction'
 export { useUpdateSpaceInfoTransaction } from './hooks/use-update-space-info-transaction'
 export { useEditSpaceMembershipTransaction } from './hooks/use-edit-space-membership-transaction'
 export { useUser } from './hooks/use-user'
-export {
-    useBannedWalletAddresses,
-    useBanTransaction,
-    useUnbanTransaction,
-    useWalletAddressIsBanned,
-} from './hooks/use-banning'
+export * from './hooks/use-banning'
 export { useBlockedUsers } from './hooks/use-blocked-users'
 export { useTownsClient } from './hooks/use-towns-client'
 export {
@@ -152,7 +143,7 @@ export { toRoomIdentifier } from './types/room-identifier'
 export { toMessageInfo } from './hooks/use-dm-latest-message'
 export { useStreamMetadataUpdater } from './hooks/use-stream-metadata-updater'
 export { useRefreshMetadataTx } from './hooks/use-refresh-metadata'
-export { useRiverPoints } from './hooks/use-river-points'
+export * from './hooks/use-river-points'
 export { useImageStore } from './store/use-image-store'
 export * from './types/timeline-types'
 export {

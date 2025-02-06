@@ -1,5 +1,5 @@
 import React, { CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useRiverPointsCheckIn } from 'use-towns-client/dist/hooks/use-river-points'
+import { useRiverPointsCheckIn } from 'use-towns-client'
 import { AnimatePresence } from 'framer-motion'
 import { Box } from '@ui'
 import { DAY_MS, SECOND_MS } from 'data/constants'

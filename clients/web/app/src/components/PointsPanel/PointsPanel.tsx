@@ -1,6 +1,10 @@
 import React, { Suspense, useCallback, useEffect, useRef, useState } from 'react'
-import { useConnectivity, useRiverPoints, useSpaceId } from 'use-towns-client'
-import { useRiverPointsCheckIn } from 'use-towns-client/dist/hooks/use-river-points'
+import {
+    useConnectivity,
+    useRiverPoints,
+    useRiverPointsCheckIn,
+    useSpaceId,
+} from 'use-towns-client'
 import { AnimatePresence } from 'framer-motion'
 import { Signer } from 'ethers'
 import { popupToast } from '@components/Notifications/popupToast'
