@@ -122,7 +122,6 @@ export const SpaceSideBar = (props: Props) => {
         actualUnreadChannels,
         readChannels,
         readDms,
-        spaceMentions,
         dmItems,
         spaceMemberIds,
     } = useSortedChannels({
@@ -132,7 +131,7 @@ export const SpaceSideBar = (props: Props) => {
 
     const membersNotInDMs = useMembersNotInDMs({ dmItems, memberIds: spaceMemberIds })
 
-    const unreadThreadMentions = useSpaceUnreadThreadMentions(spaceMentions)
+    const unreadThreadMentions = useSpaceUnreadThreadMentions()
 
     const offscreenMarkers = useOffscreenMarkers({
         unreadChannels: actualUnreadChannels,

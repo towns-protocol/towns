@@ -77,7 +77,7 @@ export {
 export { useSpaceDapp } from './hooks/use-space-dapp'
 export * from './hooks/use-space-id'
 export { useSpaceMembers, useSpaceMembersWithFallback } from './hooks/use-space-members'
-export { useSpaceMentions, useSpaceUnreadThreadMentions } from './hooks/use-space-mentions'
+export * from './hooks/use-space-mentions'
 export { useSpaceNotificationCounts } from './hooks/use-space-notification-counts'
 export { useSpaceUnread } from './hooks/use-space-unread'
 export { useSpaceTimeline } from './hooks/use-space-timeline'

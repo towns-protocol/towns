@@ -164,16 +164,10 @@ export const TouchHome = () => {
         }
     }
 
-    const {
-        unreadChannels,
-        readChannels,
-        readDms,
-        unjoinedChannels,
-        favoriteChannels,
-        spaceMentions,
-    } = useSortedChannels({
-        spaceId: space?.id ?? '',
-    })
+    const { unreadChannels, readChannels, readDms, unjoinedChannels, favoriteChannels } =
+        useSortedChannels({
+            spaceId: space?.id ?? '',
+        })
 
     const { filteredUnreadChannels, filteredReadChannels, filteredDms, filteredFavoriteChannels } =
         useMemo(() => {
@@ -249,7 +243,7 @@ export const TouchHome = () => {
     const threadsLink = createLink({ route: 'threads' })
     const mentionsLink = createLink({ route: 'mentions' })
     const unreadThreadsCount = useSpaceThreadRootsUnreadCount()
-    const unreadThreadMentions = useSpaceUnreadThreadMentions(spaceMentions)
+    const unreadThreadMentions = useSpaceUnreadThreadMentions()
 
     const filteredMenuItems = useMemo(
         () =>

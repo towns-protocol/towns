@@ -1,16 +1,39 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect } from 'react'
 import { useFullyReadMarkerStore } from '../store/use-fully-read-marker-store'
 import { TimelineStore, useRawTimelineStore } from '../store/use-timeline-store'
 import isEqual from 'lodash/isEqual'
 import debounce from 'lodash/debounce'
 import { isChannelStreamId, MentionResult } from '@river-build/sdk'
+import { create } from 'zustand'
+import { TownsOpts } from 'client/TownsClientTypes'
 
-export function useSpaceMentions(): MentionResult[] {
-    const [mentions, setMentions] = useState<MentionResult[]>([])
+const useSpaceMentionsStore = create<{
+    mentions: MentionResult[]
+    unreadThreadCount: number
+    unreadChannelCount: number
+    setMentions: (mentions: MentionResult[]) => void
+}>((set) => ({
+    mentions: [],
+    unreadThreadCount: 0,
+    unreadChannelCount: 0,
+    setMentions: (mentions) =>
+        set((prev) => {
+            if (isEqual(prev.mentions, mentions)) {
+                return prev
+            }
+            const unreadThreadCount = mentions.reduce((count, m) => {
+                return m.thread && m.unread ? count + 1 : count
+            }, 0)
+            const unreadChannelCount = mentions.reduce((count, m) => {
+                return !m.thread && m.unread ? count + 1 : count
+            }, 0)
+            return { mentions, unreadThreadCount, unreadChannelCount }
+        }),
+}))
 
+export function useCalculateSpaceMentions(_opts: TownsOpts) {
     useEffect(() => {
         const runUpdate = () => {
-            console.log('!!space mentions runUpdate')
             const unreadMarkers = useFullyReadMarkerStore.getState().markers
             const threadsStats = useRawTimelineStore.getState().threadsStats
             const timelines = useRawTimelineStore.getState().timelines
@@ -64,7 +87,7 @@ export function useSpaceMentions(): MentionResult[] {
                 },
             )
 
-            setMentions((prev) => (isEqual(prev, mentions) ? prev : mentions))
+            useSpaceMentionsStore.getState().setMentions(mentions)
         }
 
         const debouncedRunUpdate = debounce(runUpdate, 2000)
@@ -86,17 +109,17 @@ export function useSpaceMentions(): MentionResult[] {
             unsub1()
             unsub2()
         }
-    }, [mentions])
-
-    return mentions
+    }, [])
 }
 
-export function useSpaceUnreadThreadMentions(mentions: MentionResult[]): number {
-    return useMemo(
-        () =>
-            mentions.reduce((count, m) => {
-                return m.thread && m.unread ? count + 1 : count
-            }, 0),
-        [mentions],
-    )
+export function useSpaceMentions(): MentionResult[] {
+    return useSpaceMentionsStore((state) => state.mentions)
+}
+
+export function useSpaceUnreadThreadMentions(): number {
+    return useSpaceMentionsStore((state) => state.unreadThreadCount)
+}
+
+export function useSpaceUnreadChannelMentions(): number {
+    return useSpaceMentionsStore((state) => state.unreadChannelCount)
 }
