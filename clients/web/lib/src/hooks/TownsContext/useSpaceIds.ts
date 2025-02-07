@@ -23,7 +23,7 @@ export function useSpacesIds(casablancaClient: CasablancaClient | undefined): st
             })
         }
 
-        const debouncedUpdateSpaces = debounce(updateSpaces, 250)
+        const debouncedUpdateSpaces = debounce(updateSpaces, 250, { maxWait: 250 })
 
         const onStreamInitialized = (streamId: string, _kind: SnapshotCaseType) => {
             if (streamId === casablancaClient.userStreamId) {

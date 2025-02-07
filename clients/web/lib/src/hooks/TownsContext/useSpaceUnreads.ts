@@ -132,8 +132,8 @@ export function useSpaceUnreads(
             )
         }
 
-        const debouncedRunUpdate1 = debounce(runUpdate, 250)
-        const debouncedRunUpdate2 = debounce(runUpdate, 3000)
+        const debouncedRunUpdate1 = debounce(runUpdate, 250, { maxWait: 250 })
+        const debouncedRunUpdate2 = debounce(runUpdate, 3000, { maxWait: 3000 })
 
         debouncedRunUpdate1()
 

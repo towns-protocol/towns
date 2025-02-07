@@ -387,7 +387,7 @@ export function useSpaceRollups(
             if (isSpaceStreamId(streamId)) {
                 if (!debounceRef.current[streamId]) {
                     debounceRef.current[streamId] = debounce(() => update(streamId), 3000, {
-                        leading: true,
+                        maxWait: 3000,
                     }) // only do each space once every 3 seconds
                 }
                 debounceRef.current[streamId]!()

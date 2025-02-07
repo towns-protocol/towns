@@ -89,7 +89,7 @@ export function useCalculateSpaceThreadRoots(_opts: TownsOpts) {
             }
         }
 
-        const debouncedRunUpdate = debounce(runUpdate, 1000)
+        const debouncedRunUpdate = debounce(runUpdate, 1000, { maxWait: 1500 })
 
         const unsub1 = useSpaceDataStore.subscribe(debouncedRunUpdate)
         const unsub2 = useRawTimelineStore.subscribe(debouncedRunUpdate)

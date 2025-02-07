@@ -90,7 +90,7 @@ export function useCalculateSpaceMentions(_opts: TownsOpts) {
             useSpaceMentionsStore.getState().setMentions(mentions)
         }
 
-        const debouncedRunUpdate = debounce(runUpdate, 2000)
+        const debouncedRunUpdate = debounce(runUpdate, 2000, { maxWait: 2000 })
 
         const onTimelineStoreChange = (state: TimelineStore, prevState: TimelineStore) => {
             if (

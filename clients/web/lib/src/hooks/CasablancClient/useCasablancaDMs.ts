@@ -94,7 +94,7 @@ export function useCasablancaDMs(casablancaClient?: CasablancaClient): {
             })
         }
 
-        const debouncedUpdateChannels = debounce(updateChannels, 1000)
+        const debouncedUpdateChannels = debounce(updateChannels, 1000, { maxWait: 1000 })
 
         const onStreamChange = (streamId: string) => {
             if (isDMChannelStreamId(streamId) || isGDMChannelStreamId(streamId)) {
