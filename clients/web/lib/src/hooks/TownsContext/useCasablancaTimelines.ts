@@ -420,7 +420,8 @@ function toTownsContent_MiniblockHeader(
     return {
         content: {
             kind: RiverTimelineEvent.MiniblockHeader,
-            message: value,
+            miniblockNum: value.miniblockNum,
+            hasSnapshot: value.snapshot !== undefined,
         } satisfies MiniblockHeaderEvent,
     }
 }

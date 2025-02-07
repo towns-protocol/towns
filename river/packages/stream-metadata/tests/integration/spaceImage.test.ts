@@ -101,13 +101,6 @@ describe('integration/stream-metadata/space/:spaceAddress/image', () => {
 		const spaceStream = await bobsClient.waitForStream(spaceId)
 		log('spaceStreamId', spaceStream.streamId)
 
-		// assert assumptions
-		expect(spaceStream).toBeDefined()
-		expect(
-			spaceStream.view.snapshot?.content.case === 'spaceContent' &&
-				spaceStream.view.snapshot?.content.value.spaceImage === undefined,
-		).toBe(true)
-
 		/*
 		 * 2. upload a space image.
 		 */
@@ -158,13 +151,6 @@ describe('integration/stream-metadata/space/:spaceAddress/image', () => {
 		await bobsClient.createSpace(spaceId)
 		const spaceStream = await bobsClient.waitForStream(spaceId)
 		log('spaceStreamId', spaceStream.streamId)
-
-		// assert assumptions
-		expect(spaceStream).toBeDefined()
-		expect(
-			spaceStream.view.snapshot?.content.case === 'spaceContent' &&
-				spaceStream.view.snapshot?.content.value.spaceImage === undefined,
-		).toBe(true)
 
 		// make a snapshot
 		await bobsClient.debugForceMakeMiniblock(spaceId, { forceSnapshot: true })

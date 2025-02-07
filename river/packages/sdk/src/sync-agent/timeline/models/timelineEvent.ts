@@ -262,7 +262,8 @@ function toTownsContent_MiniblockHeader(
     return {
         content: {
             kind: RiverTimelineEvent.MiniblockHeader,
-            message: value,
+            miniblockNum: value.miniblockNum,
+            hasSnapshot: value.snapshot !== undefined,
         } satisfies MiniblockHeaderEvent,
     }
 }
@@ -935,11 +936,9 @@ export function getFallbackContent(
     }
     switch (content.kind) {
         case RiverTimelineEvent.MiniblockHeader:
-            return `Miniblock miniblockNum:${content.message.miniblockNum}, hasSnapshot:${(content
-                .message.snapshot
-                ? true
-                : false
-            ).toString()}`
+            return `Miniblock miniblockNum:${
+                content.miniblockNum
+            }, hasSnapshot:${content.hasSnapshot.toString()}`
         case RiverTimelineEvent.Reaction:
             return `${senderDisplayName} reacted with ${content.reaction} to ${content.targetEventId}`
         case RiverTimelineEvent.Inception:

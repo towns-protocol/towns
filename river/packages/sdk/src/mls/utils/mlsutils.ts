@@ -11,7 +11,7 @@ export function extractMlsExternalGroup(
     streamView: IStreamStateView,
 ): ExtractMlsExternalGroupResult | undefined {
     // check if there is group info at all
-    if (streamView.snapshot?.members?.mls?.groupInfoMessage === undefined) {
+    if (streamView.membershipContent.mls.groupInfoMessage === undefined) {
         return undefined
     }
 
