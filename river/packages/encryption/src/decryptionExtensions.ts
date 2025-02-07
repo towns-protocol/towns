@@ -479,18 +479,25 @@ export abstract class BaseDecryptionExtensions {
 
         if (Date.now() - this.lastPrintedAt > 30000) {
             this.log.info(
-                `queues: ${Object.entries(this.mainQueues)
+                `status: ${this.status} queues: ${Object.entries(this.mainQueues)
                     .map(([key, q]) => `${key}: ${q.length}`)
                     .join(', ')} ${this.streamQueues.toString()}`,
             )
-            this.log.info(
-                `priorityTasks: ${Array.from(this.streamQueues.streams.entries())
-                    .filter(([_, value]) => !value.isEmpty())
-                    .map(([key, _]) => key)
-                    .sort((a, b) => this.compareStreamIds(a, b))
-                    .slice(0, 4)
-                    .join(', ')}`,
-            )
+            const streamIds = Array.from(this.streamQueues.streams.entries())
+                .filter(([_, value]) => !value.isEmpty())
+                .map(([key, _]) => key)
+                .sort((a, b) => this.compareStreamIds(a, b))
+            const first4Priority = streamIds
+                .filter((x) => this.upToDateStreams.has(x))
+                .slice(0, 4)
+                .join(', ')
+            const first4Blocked = streamIds
+                .filter((x) => !this.upToDateStreams.has(x))
+                .slice(0, 4)
+                .join(', ')
+            if (first4Priority.length > 0 || first4Blocked.length > 0) {
+                this.log.info(`priorityTasks: ${first4Priority} waitingFor: ${first4Blocked}`)
+            }
             this.lastPrintedAt = Date.now()
         }
 

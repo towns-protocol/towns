@@ -334,25 +334,18 @@ export class Client
         if (!stream) {
             return { isValid: false, reason: 'stream not found' }
         }
-        const event = stream.view.events.get(eventId)
-        if (!event) {
+        const sigBundle = stream.view.getSignature(eventId)
+        if (!sigBundle) {
             return { isValid: false, reason: 'event not found' }
         }
-        if (!event.remoteEvent) {
-            return { isValid: false, reason: 'remote event not found' }
-        }
-        if (!event.remoteEvent.signature) {
+        if (!sigBundle.signature) {
             return { isValid: false, reason: 'remote event signature not found' }
         }
         if (this.validatedEvents[eventId]) {
             return this.validatedEvents[eventId]
         }
         try {
-            checkEventSignature(
-                event.remoteEvent.event,
-                event.remoteEvent.hash,
-                event.remoteEvent.signature,
-            )
+            checkEventSignature(sigBundle.event, sigBundle.hash, sigBundle.signature)
             const result = { isValid: true }
             this.validatedEvents[eventId] = result
             return result

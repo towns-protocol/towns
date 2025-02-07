@@ -490,12 +490,13 @@ export class SyncedStreamsLoop {
                     return aPriority - bPriority
                 })
                 const streamsToAdd = this.pendingSyncCookies.splice(0, this.MAX_IN_FLIGHT_COOKIES)
-                streamsToAdd.forEach((x) => this.inFlightSyncCookies.add(x))
-                const syncPos = streamsToAdd.map((x) => this.streams.get(x)?.syncCookie)
                 this.logSync('tick: modifySync', {
                     syncId: this.syncId,
                     addStreams: streamsToAdd,
+                    inFlight: this.inFlightSyncCookies.size,
                 })
+                streamsToAdd.forEach((x) => this.inFlightSyncCookies.add(x))
+                const syncPos = streamsToAdd.map((x) => this.streams.get(x)?.syncCookie)
                 try {
                     await this.rpcClient.modifySync({
                         syncId: this.syncId,
@@ -683,6 +684,7 @@ export class SyncedStreamsLoop {
         }
     }
 
+    private lastLogInflightAt = 0
     private async onUpdate(res: SyncStreamsResponse): Promise<void> {
         // Until we've completed canceling, accept responses
         if (this.syncState === SyncState.Syncing || this.syncState === SyncState.Canceling) {
@@ -708,7 +710,19 @@ export class SyncedStreamsLoop {
                     */
                     const streamIdBytes = syncStream.nextSyncCookie?.streamId ?? Uint8Array.from([])
                     const streamId = streamIdAsString(streamIdBytes)
-                    this.inFlightSyncCookies.delete(streamId)
+                    if (this.inFlightSyncCookies.has(streamId)) {
+                        this.inFlightSyncCookies.delete(streamId)
+                        if (
+                            this.inFlightSyncCookies.size === 0 ||
+                            Date.now() - this.lastLogInflightAt > 3000
+                        ) {
+                            this.log(
+                                'onUpdate: remaining streams in flight',
+                                this.inFlightSyncCookies.size,
+                            )
+                            this.lastLogInflightAt = Date.now()
+                        }
+                    }
                     const streamRecord = this.streams.get(streamId)
                     if (streamRecord === undefined) {
                         this.log('sync got stream', streamId, 'NOT FOUND')

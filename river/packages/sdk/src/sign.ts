@@ -210,7 +210,15 @@ export const unpackEnvelope = async (
     return makeParsedEvent(event, envelope.hash, envelope.signature)
 }
 
-export function checkEventSignature(event: StreamEvent, hash: Uint8Array, signature: Uint8Array) {
+export function checkEventSignature(
+    event: {
+        creatorAddress: Uint8Array
+        delegateSig: Uint8Array
+        delegateExpiryEpochMs: bigint
+    },
+    hash: Uint8Array,
+    signature: Uint8Array,
+) {
     const recoveredPubKey = riverRecoverPubKey(hash, signature)
 
     if (!hasElements(event.delegateSig)) {

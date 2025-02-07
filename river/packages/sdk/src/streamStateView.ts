@@ -11,6 +11,7 @@ import {
 import TypedEmitter from 'typed-emitter'
 import {
     ConfirmedTimelineEvent,
+    EventSignatureBundle,
     LocalEventStatus,
     LocalTimelineEvent,
     ParsedEvent,
@@ -83,6 +84,7 @@ export interface IStreamStateView {
     get userInboxContent(): StreamStateView_UserInbox
     get mediaContent(): StreamStateView_Media
     snapshot(): Snapshot | undefined
+    getSignature(eventId: string): EventSignatureBundle | undefined
     getMembers(): StreamStateView_Members
     getMemberMetadata(): StreamStateView_MemberMetadata
     getChannelMetadata(): StreamStateView_ChannelMetadata | undefined
@@ -97,6 +99,7 @@ export class StreamStateView implements IStreamStateView {
     readonly contentKind: SnapshotCaseType
     readonly timeline: StreamTimelineEvent[] = []
     readonly events = new Map<string, StreamTimelineEvent>()
+    readonly signatures = new Map<string, EventSignatureBundle>()
     isInitialized = false
     prevMiniblockHash?: Uint8Array
     lastEventNum = 0n
@@ -351,8 +354,21 @@ export class StreamStateView implements IStreamStateView {
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
         stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): ConfirmedTimelineEvent[] | undefined {
-        check(!this.events.has(timelineEvent.hashStr))
-        if (timelineEvent.remoteEvent.event.payload.case !== 'miniblockHeader') {
+        check(
+            !this.events.has(timelineEvent.hashStr) && !this.signatures.has(timelineEvent.hashStr),
+        )
+        if (timelineEvent.remoteEvent.event.payload.case === 'miniblockHeader') {
+            // just save the signature, saving the whole event is overkill
+            this.signatures.set(timelineEvent.hashStr, {
+                hash: timelineEvent.remoteEvent.hash,
+                signature: timelineEvent.remoteEvent.signature,
+                event: {
+                    creatorAddress: timelineEvent.remoteEvent.event.creatorAddress,
+                    delegateSig: timelineEvent.remoteEvent.event.delegateSig,
+                    delegateExpiryEpochMs: timelineEvent.remoteEvent.event.delegateExpiryEpochMs,
+                },
+            })
+        } else {
             this.events.set(timelineEvent.hashStr, timelineEvent)
         }
 
@@ -448,8 +464,16 @@ export class StreamStateView implements IStreamStateView {
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
         stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
-        check(!this.events.has(timelineEvent.hashStr))
-        if (timelineEvent.remoteEvent.event.payload.case !== 'miniblockHeader') {
+        check(
+            !this.events.has(timelineEvent.hashStr) && !this.signatures.has(timelineEvent.hashStr),
+        )
+        if (timelineEvent.remoteEvent.event.payload.case === 'miniblockHeader') {
+            this.signatures.set(timelineEvent.hashStr, {
+                hash: timelineEvent.remoteEvent.hash,
+                signature: timelineEvent.remoteEvent.signature,
+                event: timelineEvent.remoteEvent.event,
+            })
+        } else {
             this.events.set(timelineEvent.hashStr, timelineEvent)
         }
 
@@ -759,6 +783,18 @@ export class StreamStateView implements IStreamStateView {
             previousId,
             timelineEvent,
         )
+    }
+
+    getSignature(eventId: string): EventSignatureBundle | undefined {
+        const event = this.events.get(eventId)
+        if (event) {
+            return event.remoteEvent
+        }
+        const signature = this.signatures.get(eventId)
+        if (signature) {
+            return signature
+        }
+        return undefined
     }
 
     getMembers(): StreamStateView_Members {

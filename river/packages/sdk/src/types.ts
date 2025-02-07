@@ -52,6 +52,17 @@ export interface LocalEvent {
     status: LocalEventStatus
 }
 
+// paired down from StreamEvent, required for signature validation
+export interface EventSignatureBundle {
+    hash: Uint8Array
+    signature: Uint8Array | undefined
+    event: {
+        creatorAddress: Uint8Array
+        delegateSig: Uint8Array
+        delegateExpiryEpochMs: bigint
+    }
+}
+
 export interface ParsedEvent {
     event: StreamEvent
     hash: Uint8Array
