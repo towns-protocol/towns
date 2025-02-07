@@ -1,5 +1,6 @@
 import { NavigationRoute, registerRoute } from 'workbox-routing'
 import {
+    addPlugins,
     cleanupOutdatedCaches,
     createHandlerBoundToURL,
     precacheAndRoute,
@@ -40,6 +41,27 @@ registerRoute(({ url }) => {
     return !!url.pathname.match(new RegExp(`^/t/(0x[a-f0-9]{40}|[a-f0-9]{64})/?$`))
 }, new NetworkFirst())
 
+async function resetPrecache() {
+    console.log('main-sw: resetting precache')
+    const cacheNames = await caches.keys()
+    for (const cacheName of cacheNames) {
+        if (cacheName.startsWith('workbox-precache')) {
+            await caches.delete(cacheName)
+        }
+    }
+}
+
+addPlugins([
+    {
+        fetchDidFail: async ({ error, request }) => {
+            console.error(`main-sw: precache: fetch failed for ${request.url}:`, error)
+            if (request.url.match(/\.(js|css)/)) {
+                console.log('main-sw: trigger precache reset')
+                void resetPrecache()
+            }
+        },
+    },
+])
 // to allow work offline
 console.log('main-sw: enabling offline precaching')
 registerRoute(new NavigationRoute(createHandlerBoundToURL('index.html')))
