@@ -483,7 +483,7 @@ func (p *MessageToNotificationsProcessor) sendNotification(
 
 			subscriptionExpired, err := p.sendWebPushNotification(ctx, channelID, sub.Sub, event, webPayload)
 			if err == nil {
-				p.log.Debugw("Successfully sent web push notification",
+				p.log.Infow("Successfully sent web push notification",
 					"user", user,
 					"event", event.Hash,
 					"channelID", channelID,

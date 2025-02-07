@@ -119,12 +119,6 @@ func (ts *TrackedNotificationStreamView) applyBlock(
 	miniblock *MiniblockInfo,
 	cfg *crypto.OnChainSettings,
 ) error {
-	if lastBlock := ts.view.LastBlock(); lastBlock != nil {
-		if miniblock.Ref.Num <= lastBlock.Ref.Num {
-			return nil
-		}
-	}
-
 	view, _, err := ts.view.copyAndApplyBlock(miniblock, cfg)
 	if err != nil {
 		return err
@@ -134,7 +128,10 @@ func (ts *TrackedNotificationStreamView) applyBlock(
 	return nil
 }
 
-func (ts *TrackedNotificationStreamView) addEvent(ctx context.Context, event *ParsedEvent) error {
+func (ts *TrackedNotificationStreamView) addEvent(
+	ctx context.Context,
+	event *ParsedEvent,
+) error {
 	if ts.view.minipool.events.Has(event.Hash) || event.Event.GetMiniblockHeader() != nil {
 		return nil
 	}
@@ -160,6 +157,18 @@ func (ts *TrackedNotificationStreamView) addEvent(ctx context.Context, event *Pa
 			}
 		}
 
+		return nil
+	}
+
+	return ts.SendEventNotification(ctx, event)
+}
+
+func (ts *TrackedNotificationStreamView) SendEventNotification(
+	ctx context.Context,
+	event *ParsedEvent,
+) error {
+	view := ts.view
+	if view == nil {
 		return nil
 	}
 

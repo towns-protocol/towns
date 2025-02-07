@@ -253,6 +253,7 @@ func (s *StreamTrackerConnectGo) Run(
 				if reset {
 					trackedStream, err = events.NewNotificationsStreamTrackerFromStreamAndCookie(
 						syncCtx, streamID, onChainConfig, update.GetStream(), listener, userPreferences)
+
 					if err != nil {
 						syncCancel()
 						log.Errorw("Unable to instantiate tracked stream", "err", err)
@@ -276,11 +277,19 @@ func (s *StreamTrackerConnectGo) Run(
 					continue
 				}
 
-				justAllocated = false
-
 				for _, block := range update.GetStream().GetMiniblocks() {
-					if err := trackedStream.ApplyBlock(block, onChainConfig.Get()); err != nil {
-						log.Errorw("Unable to apply block", "stream", streamID, "err", err)
+					if !reset {
+						if err := trackedStream.ApplyBlock(block, onChainConfig.Get()); err != nil {
+							log.Debugw("Unable to apply block", "stream", streamID, "err", err)
+						}
+					}
+					if justAllocated {
+						// send notifications for all events in all blocks
+						for _, event := range block.GetEvents() {
+							if parsedEvent, err := events.ParseEvent(event); err == nil {
+								_ = trackedStream.SendEventNotification(syncCtx, parsedEvent)
+							}
+						}
 					}
 				}
 
@@ -289,6 +298,8 @@ func (s *StreamTrackerConnectGo) Run(
 						log.Errorw("Unable to apply event", "stream", streamID, "err", err)
 					}
 				}
+
+				justAllocated = false
 
 			case protocol.SyncOp_SYNC_DOWN:
 				log.Debugw("Stream reported as down")
