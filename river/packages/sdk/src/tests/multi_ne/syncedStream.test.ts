@@ -39,9 +39,12 @@ describe('syncedStream', () => {
         // the stream is now loaded from cache
         const bobStreamFresh = await bob2.waitForStream(streamId)
 
-        expect(bobStreamFresh.view.timeline.map((e) => e.remoteEvent)).toEqual(
-            bobStreamCached.view.timeline.map((e) => e.remoteEvent),
-        )
+        const fresh = bobStreamFresh.view.timeline.map((e) => e.remoteEvent?.hashStr)
+        const cached = bobStreamCached.view.timeline.map((e) => e.remoteEvent?.hashStr)
+        expect(fresh.length).toBeGreaterThan(0)
+        expect(cached.length).toBeGreaterThan(0)
+        expect(fresh).toEqual(cached)
+
         expect(aliceStream.view.timeline.length).toBeGreaterThan(
             bobStreamFresh.view.timeline.length,
         )

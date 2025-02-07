@@ -30,7 +30,9 @@ interface SyncedStreamsExtensionDelegate {
     emitClientInitStatus: (status: ClientInitStatus) => void
 }
 
-const concurrencyLimit = pLimit(20)
+const MAX_CONCURRENT_FROM_PERSISTENCE = 5
+const MAX_CONCURRENT_FROM_NETWORK = 20
+const concurrencyLimit = pLimit(MAX_CONCURRENT_FROM_NETWORK)
 
 export class SyncedStreamsExtension {
     private log = dlog('csb:syncedStreamsExtension', { defaultEnabled: true })
@@ -157,34 +159,63 @@ export class SyncedStreamsExtension {
         const t1 = performance.now()
         this.log('####Performance: loaded streams from persistence!!', t1 - now)
 
-        let streamIds = Array.from(this.highPriorityIds)
+        const hpStreamIds = Array.from(this.highPriorityIds).filter(
+            (x) => loadedStreams[x] !== undefined,
+        )
         await Promise.all(
-            streamIds.map((streamId) =>
-                this.loadStreamFromPersistence(streamId, loadedStreams[streamId]),
-            ),
+            hpStreamIds.map(async (streamId) => {
+                await this.loadStreamFromPersistence(streamId, loadedStreams[streamId])
+                delete loadedStreams[streamId]
+            }),
         )
         this.didLoadHighPriorityStreams = true
         this.emitClientStatus()
         // wait for 10ms to allow the client to update the status
-        await new Promise((resolve) => setTimeout(resolve, 10))
         const t2 = performance.now()
         this.log('####Performance: loadedHighPriorityStreams!!', t2 - t1)
-        streamIds = Array.from(this.streamIds).toSorted(
-            (a, b) =>
-                priorityFromStreamId(a, this.highPriorityIds) -
-                priorityFromStreamId(b, this.highPriorityIds),
-        )
-        // because of how concurrency limit works, resort the streams on every iteration of the loop
-        // to allow for updates to the priority of the streams
-        while (streamIds.length > 0) {
-            const item = streamIds.shift()!
-            //this.log('Performance: loading stream from persistence', item)
-            await this.loadStreamFromPersistence(item, loadedStreams[item])
+        // this is real goofy, it makes the app smooth
+        // push on a final task to update the client status and report stats
+        this.tasks.unshift(async () => {
+            const t3 = performance.now()
+            this.log('####Performance: loadedLowPriorityStreams!!', t3 - t2, 'total:', t3 - now)
+            this.didLoadStreamsFromPersistence = true
+            this.emitClientStatus()
+        })
+        // freeze the remaining stream ids
+        const streamIds = Array.from(this.streamIds).filter((x) => loadedStreams[x] !== undefined)
+        // make a step task that will load the next batch of streams
+        const stepTask = async () => {
+            const tsn = performance.now()
+            if (streamIds.length === 0) {
+                return
+            }
+            // it sorts and slices the array
+            const streamIdsForStep = streamIds
+                .sort(
+                    (a, b) =>
+                        priorityFromStreamId(a, this.highPriorityIds) -
+                        priorityFromStreamId(b, this.highPriorityIds),
+                )
+                .splice(0, MAX_CONCURRENT_FROM_PERSISTENCE)
+            // and then loads MAX_CONCURRENT_STREAMS streams
+            await Promise.all(
+                streamIdsForStep.map(async (streamId) => {
+                    await this.loadStreamFromPersistence(streamId, loadedStreams[streamId])
+                    delete loadedStreams[streamId]
+                }),
+            )
+            this.logDebug(
+                '####Performance: STEP STREAMS!! processed',
+                streamIdsForStep.length,
+                'remaining',
+                streamIds.length,
+                performance.now() - tsn,
+            )
+            // do the next few
+            this.tasks.unshift(stepTask)
         }
-        const t3 = performance.now()
-        this.log('####Performance: loadedLowPriorityStreams!!', t3 - t2, 'total:', t3 - now)
-        this.didLoadStreamsFromPersistence = true
-        this.emitClientStatus()
+        // push on the step task as the next task to run
+        this.tasks.unshift(stepTask)
     }
 
     private async loadStreamFromPersistence(
@@ -192,18 +223,16 @@ export class SyncedStreamsExtension {
         persistedData: LoadedStream | undefined,
     ) {
         const allowGetStream = this.highPriorityIds.has(streamId)
-        await concurrencyLimit(async () => {
-            try {
-                await this.delegate.initStream(streamId, allowGetStream, persistedData)
-                this.loadedStreamCount++
-                this.numStreamsLoadedFromCache++
-                this.streamIds.delete(streamId)
-            } catch (err) {
-                this.streamCountRequiringNetworkAccess++
-                this.logError('Error initializing stream from persistence', streamId, err)
-            }
-            this.emitClientStatus()
-        })
+        try {
+            await this.delegate.initStream(streamId, allowGetStream, persistedData)
+            this.loadedStreamCount++
+            this.numStreamsLoadedFromCache++
+            this.streamIds.delete(streamId)
+        } catch (err) {
+            this.streamCountRequiringNetworkAccess++
+            this.logError('Error initializing stream from persistence', streamId, err)
+        }
+        this.emitClientStatus()
     }
 
     private async loadStreamsFromNetwork() {
@@ -301,8 +330,10 @@ function priorityFromStreamId(streamId: string, highPriorityIds: Set<string>) {
     }
     // if we're prioritizing dms, load other dms and gdm channels
     if (highPriorityIds.size > 0) {
-        const firstHPI = Array.from(highPriorityIds.values())[0]
-        if (isDMChannelStreamId(firstHPI) || isGDMChannelStreamId(firstHPI)) {
+        const hasHighPriorityDmORGDm = Array.from(highPriorityIds).some(
+            (x) => isDMChannelStreamId(x) || isGDMChannelStreamId(x),
+        )
+        if (hasHighPriorityDmORGDm) {
             if (isDMChannelStreamId(streamId) || isGDMChannelStreamId(streamId)) {
                 return 2
             }
