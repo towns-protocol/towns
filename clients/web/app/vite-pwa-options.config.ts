@@ -1,6 +1,4 @@
 import { VitePWAOptions } from 'vite-plugin-pwa'
-import wasm from 'vite-plugin-wasm'
-import topLevelAwait from 'vite-plugin-top-level-await'
 
 export interface AppPwaDevOptions {
     enablePushNotification?: boolean
@@ -47,7 +45,7 @@ export function vitePWAOptions(
             // 64 MB PWA precache limit
             maximumFileSizeToCacheInBytes: 64 * 1024 * 1024,
             buildPlugins: {
-                vite: [wasm(), topLevelAwait()],
+                vite: [],
             },
         },
         workbox: {
