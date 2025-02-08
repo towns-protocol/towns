@@ -3,13 +3,13 @@ import {
     CheckOperationType,
     DecodedCheckOperation,
     IRuleEntitlementV2Base,
+    NULL_ADDRESS,
     NoopRuleData,
     createDecodedCheckOperationFromTree,
     createOperationsTree,
 } from 'use-towns-client'
 import { constants } from 'ethers'
 import { useMemo } from 'react'
-import { NULL_ADDRESS } from 'use-towns-client/dist/types/web3-types'
 import { formatUnits, parseUnits } from 'hooks/useBalance'
 import { EVERYONE_ADDRESS } from 'utils'
 import { TokenType } from './types'

@@ -15,7 +15,7 @@ import {
     usePlatformMintLimit,
     useTownsClient,
 } from 'use-towns-client'
-import { CreateSpaceFlowStatus } from 'use-towns-client/dist/client/TownsClientTypes'
+import type { CreateSpaceFlowStatus } from 'use-towns-client'
 import { useUploadAttachment } from '@components/MediaDropContext/useUploadAttachment'
 import { popupToast } from '@components/Notifications/popupToast'
 import { StandardToast, dismissToast } from '@components/Notifications/StandardToast'

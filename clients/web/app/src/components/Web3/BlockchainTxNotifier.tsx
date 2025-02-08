@@ -2,16 +2,14 @@ import React, { useCallback, useMemo, useRef, useState } from 'react'
 import {
     BlockchainStoreTx,
     BlockchainTransactionType,
+    TipTransactionContext,
+    TransferAssetTransactionContext,
     useMyMembership,
     useOnTransactionUpdated,
 } from 'use-towns-client'
 
 import headlessToast, { Toast } from 'react-hot-toast/headless'
 import { useSearchParams } from 'react-router-dom'
-import {
-    TipTransactionContext,
-    TransferAssetTransactionContext,
-} from 'use-towns-client/dist/client/TownsClientTypes'
 import { BigNumber } from 'ethers'
 import { isInsufficientTipBalanceException } from '@towns/userops'
 import { Membership } from '@river-build/sdk'

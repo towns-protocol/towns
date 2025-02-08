@@ -5,7 +5,7 @@ import { describe, expect, test, vi } from 'vitest'
 import * as Lib from 'use-towns-client'
 import * as RouterDom from 'react-router-dom'
 import userEvent from '@testing-library/user-event'
-import { RoleDetails } from 'use-towns-client/dist/types/web3-types'
+import { RoleDetails } from 'use-towns-client'
 import {
     everyoneRole,
     memberRole,

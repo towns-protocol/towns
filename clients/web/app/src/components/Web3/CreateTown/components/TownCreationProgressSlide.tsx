@@ -1,6 +1,6 @@
 import { AnimatePresence } from 'framer-motion'
 import React, { useEffect, useMemo, useState } from 'react'
-import { CreateSpaceFlowStatus } from 'use-towns-client/dist/client/TownsClientTypes'
+import { CreateSpaceFlowStatus } from 'use-towns-client'
 import { SECOND_MS } from 'data/constants'
 import { SetupChecklist } from '@components/SetupAnimation/SetupChecklist'
 import {

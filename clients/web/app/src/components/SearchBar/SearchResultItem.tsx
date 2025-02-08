@@ -1,7 +1,6 @@
 import React, { useCallback, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Channel, DMChannelIdentifier, useMyProfile } from 'use-towns-client'
-import { ThreadStatsMap } from 'use-towns-client/dist/store/use-timeline-store'
+import { Channel, DMChannelIdentifier, ThreadStatsMap, useMyProfile } from 'use-towns-client'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { Box, BoxProps, Icon, Paragraph } from '@ui'
 import { ZChannelMessageEvent } from '@components/MessageTimeline/util/getEventsByDate'

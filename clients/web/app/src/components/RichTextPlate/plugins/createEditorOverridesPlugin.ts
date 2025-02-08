@@ -1,5 +1,5 @@
 import { TPlateEditor, createPlatePlugin } from '@udecode/plate-common/react'
-import { TextDeleteOptions } from 'slate/dist/interfaces/transforms/text'
+import { type TextDeleteOptions } from 'slate/dist/interfaces/transforms/text'
 import { debouncedUnwrapLinkAtSelection } from '../utils/helpers'
 
 const withCustomEditorOverrides = ({ editor }: { editor: TPlateEditor }) => {

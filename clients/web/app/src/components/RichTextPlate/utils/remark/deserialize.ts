@@ -1,5 +1,5 @@
 import { MentionPlugin } from '@udecode/plate-mention/react'
-import { LinkPlugin } from '@udecode/plate-link/dist/react'
+import { LinkPlugin } from '@udecode/plate-link/react'
 import {
     BlockQuoteNode,
     CodeBlockNode,

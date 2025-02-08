@@ -1,9 +1,13 @@
 import React, { useMemo } from 'react'
 import { SubmitErrorHandler, useFormContext } from 'react-hook-form'
-import { queryClient, useCreateRoleTransaction, useUpdateRoleTransaction } from 'use-towns-client'
+import {
+    blockchainQueryKeys as blockchainKeys,
+    queryClient,
+    useCreateRoleTransaction,
+    useUpdateRoleTransaction,
+} from 'use-towns-client'
 import { isEqual } from 'lodash'
 import { useEvent } from 'react-use-event-hook'
-import { blockchainKeys } from 'use-towns-client/dist/query/query-keys'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { FancyButton } from '@ui'
 import { prepareGatedDataForSubmit } from '@components/Tokens/utils'

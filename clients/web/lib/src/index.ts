@@ -1,10 +1,11 @@
 export type {
     Space,
     SpaceIdentifier,
+    TipTransactionContext,
     TransactionContext,
     TransferAssetTransactionContext,
 } from './client/TownsClientTypes'
-export { TransactionStatus } from './client/TownsClientTypes'
+export { TransactionStatus, CreateSpaceFlowStatus } from './client/TownsClientTypes'
 export * from './client/TownsNotifciationSettings'
 export { ChannelContextProvider, useChannelContext } from './components/ChannelContextProvider'
 export { QueryProvider } from './components/QueryProvider'
@@ -34,12 +35,19 @@ export { useChannelTimeline } from './hooks/use-channel-timeline'
 export { useChannelThreadStat } from './hooks/use-channel-thread-stat'
 export { useChannelThreadStats } from './hooks/use-channel-thread-stats'
 export * from './hooks/use-chunked-media'
+export { useChunkedMedia, useDownloadFile } from './hooks/use-chunked-media'
+export {
+    useClearChannelPermissionOverrides,
+    useSetChannelPermissionOverrides,
+} from './hooks/use-set-channel-permission-overrides'
 export { useCreateChannelTransaction } from './hooks/use-create-channel-transaction'
 export { useCreateRoleTransaction } from './hooks/use-create-role-transaction'
 export { useCreateSpaceTransaction } from './hooks/use-create-space-transaction'
 export { useConnectivity } from './hooks/use-connectivity'
 export { useDeleteRoleTransaction } from './hooks/use-delete-role-transaction'
 export * from './hooks/use-dm-latest-message'
+export { useDMLatestMessage } from './hooks/use-dm-latest-message'
+export type { MostRecentMessageInfo_OneOf } from './hooks/use-dm-latest-message'
 export { useDMData } from './hooks/use-dm-data'
 export { useFavIconBadge, useAppBadge } from './hooks/TownsContext/useFavIconBadge'
 export { useFullyReadMarker } from './hooks/use-fully-read-marker'
@@ -152,6 +160,7 @@ export {
     isNullAddress,
     type TSigner,
     type IChainConfig,
+    NULL_ADDRESS,
 } from './types/web3-types'
 export { getAccountAddress } from './types/user-identifier'
 export {
