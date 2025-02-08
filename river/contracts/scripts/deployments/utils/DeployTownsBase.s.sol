@@ -98,8 +98,8 @@ contract DeployTownsBase is Deployer {
   }
 
   function _getToken() internal view returns (address) {
-    if (block.chainid == 8453) {
-      // if deploying to base use mainnet token
+    if (block.chainid == 8453 || block.chainid == 10) {
+      // if deploying to base or optimism use mainnet token
       return 0x000000Fa00b200406de700041CFc6b19BbFB4d13;
     } else if (block.chainid == 84532) {
       // if deploying to base-sepolia use sepolia token

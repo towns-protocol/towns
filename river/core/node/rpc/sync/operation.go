@@ -6,17 +6,17 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"time"
 
-	"github.com/river-build/river/core/node/logging"
+	"github.com/towns-protocol/towns/core/node/logging"
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
 
-	. "github.com/river-build/river/core/node/base"
-	. "github.com/river-build/river/core/node/events"
-	"github.com/river-build/river/core/node/nodes"
-	. "github.com/river-build/river/core/node/protocol"
-	"github.com/river-build/river/core/node/rpc/sync/client"
-	"github.com/river-build/river/core/node/shared"
+	. "github.com/towns-protocol/towns/core/node/base"
+	. "github.com/towns-protocol/towns/core/node/events"
+	"github.com/towns-protocol/towns/core/node/nodes"
+	. "github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/rpc/sync/client"
+	"github.com/towns-protocol/towns/core/node/shared"
 )
 
 type (

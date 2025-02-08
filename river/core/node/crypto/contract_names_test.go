@@ -7,8 +7,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/xchain/bindings/erc721"
+	"github.com/towns-protocol/towns/core/node/crypto"
+	"github.com/towns-protocol/towns/core/xchain/bindings/erc721"
 )
 
 func TestContractNameMap(t *testing.T) {

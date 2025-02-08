@@ -4,10 +4,10 @@ import (
 	"context"
 	"time"
 
-	. "github.com/river-build/river/core/node/events"
-	. "github.com/river-build/river/core/node/protocol"
-	. "github.com/river-build/river/core/node/protocol/protocolconnect"
-	. "github.com/river-build/river/core/node/shared"
+	. "github.com/towns-protocol/towns/core/node/events"
+	. "github.com/towns-protocol/towns/core/node/protocol"
+	. "github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
+	. "github.com/towns-protocol/towns/core/node/shared"
 
 	"connectrpc.com/connect"
 )

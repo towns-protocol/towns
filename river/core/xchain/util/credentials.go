@@ -4,7 +4,7 @@ import (
 	"context"
 	"os"
 
-	"github.com/river-build/river/core/node/crypto"
+	"github.com/towns-protocol/towns/core/node/crypto"
 )
 
 func LoadWallet(ctx context.Context) (*crypto.Wallet, error) {

@@ -5,8 +5,6 @@ build({
     bundle: true,
     entryPoints: {
         node_esbuild: './src/index.ts',
-        // NOTE: For some reason esbuild is not picking it up
-        mls_rs_wasm_bg: '@river-build/mls-rs-wasm-node/mls_rs_wasm_bg.wasm',
     }, // Rename the entry point to control the output file name
     format: 'cjs',
     logLevel: 'info',
@@ -26,9 +24,6 @@ build({
     outExtension: { '.js': '.cjs' }, // Ensure the output file has .cjs extension
     platform: 'node',
     plugins: [esbuildPluginPino({ transports: ['pino-pretty'] })],
-    alias: {
-        '@river-build/mls-rs-wasm': '@river-build/mls-rs-wasm-node',
-    },
     assetNames: '[name]',
     loader: {
         '.ts': 'ts',

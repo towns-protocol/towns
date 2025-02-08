@@ -10,11 +10,11 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/spf13/cobra"
 
-	"github.com/river-build/river/core/config"
-	"github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/logging"
-	"github.com/river-build/river/core/node/rpc"
-	"github.com/river-build/river/core/xchain/server"
+	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/node/crypto"
+	"github.com/towns-protocol/towns/core/node/logging"
+	"github.com/towns-protocol/towns/core/node/rpc"
+	"github.com/towns-protocol/towns/core/xchain/server"
 )
 
 func runServices(ctx context.Context, cfg *config.Config, stream bool, xchain bool) error {

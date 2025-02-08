@@ -5,7 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/river-build/river/core/node/rpc"
+	"github.com/towns-protocol/towns/core/node/rpc"
 )
 
 func runBotRegistryService(cmd *cobra.Command, args []string) error {

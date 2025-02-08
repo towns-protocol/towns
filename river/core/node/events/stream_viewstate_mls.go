@@ -3,8 +3,8 @@ package events
 import (
 	"fmt"
 
-	"github.com/river-build/river/core/node/mls_service/mls_tools"
-	"github.com/river-build/river/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/mls_service/mls_tools"
+	"github.com/towns-protocol/towns/core/node/protocol"
 )
 
 type MlsStreamView interface {

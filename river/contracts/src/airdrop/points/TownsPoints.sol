@@ -96,6 +96,12 @@ contract TownsPoints is IERC20Metadata, ITownsPoints, OwnableBase, Facet {
       );
       (points, ) = CheckIn.getPointsAndStreak(lastCheckIn, streak, currentTime);
     }
+
+    if (action == Action.Tip) {
+      uint256 protocolFee = abi.decode(data, (uint256));
+      // 1 pt per 0.0003 ETH
+      points = (protocolFee * 10_000) / 3;
+    }
   }
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

@@ -9,8 +9,8 @@ import (
 	"io/fs"
 	"strings"
 
-	. "github.com/river-build/river/core/node/base"
-	. "github.com/river-build/river/core/node/protocol"
+	. "github.com/towns-protocol/towns/core/node/base"
+	. "github.com/towns-protocol/towns/core/node/protocol"
 )
 
 // Execute renders the given data using its associated template

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/river-build/river/core/config"
-	"github.com/river-build/river/core/config/builder"
+	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/config/builder"
 
 	"github.com/spf13/cobra"
 )

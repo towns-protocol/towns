@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/testutils/testfmt"
-	//. "github.com/river-build/river/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/crypto"
+	"github.com/towns-protocol/towns/core/node/testutils/testfmt"
+	//. "github.com/towns-protocol/towns/core/node/shared"
 )
 
 func newServiceTesterForReplication(t *testing.T) *serviceTester {

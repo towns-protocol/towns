@@ -7,13 +7,13 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/cobra"
 
-	"github.com/river-build/river/core/config"
-	"github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/http_client"
-	"github.com/river-build/river/core/node/infra"
-	"github.com/river-build/river/core/node/nodes"
-	"github.com/river-build/river/core/node/registries"
-	"github.com/river-build/river/core/node/rpc"
+	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/node/crypto"
+	"github.com/towns-protocol/towns/core/node/http_client"
+	"github.com/towns-protocol/towns/core/node/infra"
+	"github.com/towns-protocol/towns/core/node/nodes"
+	"github.com/towns-protocol/towns/core/node/registries"
+	"github.com/towns-protocol/towns/core/node/rpc"
 )
 
 func runPing(cfg *config.Config) error {

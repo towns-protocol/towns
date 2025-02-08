@@ -40,6 +40,7 @@ message ChannelMessage {
                 ChunkedMedia chunkedMedia = 103;
                 Content.EmbeddedMessage embeddedMessage = 104;
                 Content.UnfurledURL unfurledUrl = 105;
+                Content.Ticker ticker = 106;
             }
         }
         
@@ -102,6 +103,11 @@ message ChannelMessage {
                 string description = 2;
                 string title = 3;
                 optional UnfurledURL.Image image = 4;
+            }
+
+            message Ticker {
+                string address = 1;
+                string chain_id = 2;
             }
         }
         

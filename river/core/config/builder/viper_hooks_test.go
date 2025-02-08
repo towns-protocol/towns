@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/river-build/river/core/config/builder"
+	"github.com/towns-protocol/towns/core/config/builder"
 )
 
 func TestDecodeHooks(t *testing.T) {

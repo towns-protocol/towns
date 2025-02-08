@@ -5,15 +5,15 @@ import (
 
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/river-build/river/core/config"
+	"github.com/towns-protocol/towns/core/config"
 
 	"github.com/ethereum/go-ethereum/ethclient"
 
-	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/infra"
-	"github.com/river-build/river/core/node/logging"
-	. "github.com/river-build/river/core/node/protocol"
+	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/crypto"
+	"github.com/towns-protocol/towns/core/node/infra"
+	"github.com/towns-protocol/towns/core/node/logging"
+	. "github.com/towns-protocol/towns/core/node/protocol"
 )
 
 type (

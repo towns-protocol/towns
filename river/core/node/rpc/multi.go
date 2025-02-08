@@ -17,17 +17,17 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/river-build/river/core/config"
-	"github.com/river-build/river/core/contracts/river"
-	"github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/http_client"
-	"github.com/river-build/river/core/node/logging"
-	"github.com/river-build/river/core/node/nodes"
-	. "github.com/river-build/river/core/node/protocol"
-	. "github.com/river-build/river/core/node/protocol/protocolconnect"
-	"github.com/river-build/river/core/node/rpc/render"
-	"github.com/river-build/river/core/node/rpc/statusinfo"
-	"github.com/river-build/river/core/node/storage"
+	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/contracts/river"
+	"github.com/towns-protocol/towns/core/node/crypto"
+	"github.com/towns-protocol/towns/core/node/http_client"
+	"github.com/towns-protocol/towns/core/node/logging"
+	"github.com/towns-protocol/towns/core/node/nodes"
+	. "github.com/towns-protocol/towns/core/node/protocol"
+	. "github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
+	"github.com/towns-protocol/towns/core/node/rpc/render"
+	"github.com/towns-protocol/towns/core/node/rpc/statusinfo"
+	"github.com/towns-protocol/towns/core/node/storage"
 )
 
 func formatDurationToMs(d time.Duration) string {

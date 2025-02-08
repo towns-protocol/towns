@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/river-build/river/core/node/logging"
+	"github.com/towns-protocol/towns/core/node/logging"
 )
 
 type BlockchainInfo struct {

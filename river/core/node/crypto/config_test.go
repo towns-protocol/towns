@@ -12,9 +12,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 
-	"github.com/river-build/river/core/contracts/river"
-	"github.com/river-build/river/core/node/base/test"
-	"github.com/river-build/river/core/node/logging"
+	"github.com/towns-protocol/towns/core/contracts/river"
+	"github.com/towns-protocol/towns/core/node/base/test"
+	"github.com/towns-protocol/towns/core/node/logging"
 )
 
 func TestOnChainConfigSettingMultipleActiveBlockValues(t *testing.T) {

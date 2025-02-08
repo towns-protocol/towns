@@ -20,7 +20,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/river-build/river/core/node/infra"
+	"github.com/towns-protocol/towns/core/node/infra"
 )
 
 type simulatedClientWrapper struct {

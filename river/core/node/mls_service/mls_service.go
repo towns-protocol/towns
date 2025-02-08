@@ -18,7 +18,7 @@ import (
 
 	"google.golang.org/protobuf/proto"
 
-	"github.com/river-build/river/core/node/mls_service/mls_tools"
+	"github.com/towns-protocol/towns/core/node/mls_service/mls_tools"
 )
 
 func makeMlsRequest(request *mls_tools.MlsRequest) ([]byte, error) {

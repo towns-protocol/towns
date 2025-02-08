@@ -5,7 +5,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/river-build/river/core/node/crypto"
+	"github.com/towns-protocol/towns/core/node/crypto"
 )
 
 func (s *Service) initEthBalanceMetrics() {

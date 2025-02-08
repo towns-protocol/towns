@@ -3,7 +3,7 @@ package statusinfo
 import (
 	"encoding/json"
 
-	"github.com/river-build/river/core/node/storage"
+	"github.com/towns-protocol/towns/core/node/storage"
 )
 
 type BlockchainPing struct {

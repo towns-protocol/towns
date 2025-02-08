@@ -6,18 +6,18 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/river-build/river/core/config"
-	"github.com/river-build/river/core/node/infra"
-	"github.com/river-build/river/core/xchain/contracts"
-	"github.com/river-build/river/core/xchain/examples"
+	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/node/infra"
+	"github.com/towns-protocol/towns/core/xchain/contracts"
+	"github.com/towns-protocol/towns/core/xchain/examples"
 
-	contract_types "github.com/river-build/river/core/contracts/types"
+	contract_types "github.com/towns-protocol/towns/core/contracts/types"
 
-	node_crypto "github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/logging"
+	node_crypto "github.com/towns-protocol/towns/core/node/crypto"
+	"github.com/towns-protocol/towns/core/node/logging"
 
-	"github.com/river-build/river/core/contracts/base"
-	"github.com/river-build/river/core/contracts/base/deploy"
+	"github.com/towns-protocol/towns/core/contracts/base"
+	"github.com/towns-protocol/towns/core/contracts/base/deploy"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"

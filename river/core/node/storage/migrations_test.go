@@ -3,8 +3,8 @@ package storage
 import (
 	"testing"
 
-	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/infra"
+	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/infra"
 
 	"github.com/stretchr/testify/require"
 )

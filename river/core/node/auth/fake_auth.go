@@ -3,8 +3,8 @@ package auth
 import (
 	"context"
 
-	"github.com/river-build/river/core/config"
-	"github.com/river-build/river/core/node/protocol"
+	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/node/protocol"
 )
 
 // This checkers always returns true, used for some testing scenarios.

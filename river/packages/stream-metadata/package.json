@@ -49,7 +49,6 @@
 		"@river-build/dlog": "workspace:^",
 		"@river-build/encryption": "workspace:^",
 		"@river-build/eslint-config": "workspace:^",
-		"@river-build/mls-rs-wasm-node": "^0.0.16",
 		"@river-build/prettier-config": "workspace:^",
 		"@types/node": "^20.5.0",
 		"@types/uuid": "^10.0.0",

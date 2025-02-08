@@ -5,9 +5,9 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/river-build/river/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/shared"
 
-	"github.com/river-build/river/core/contracts/types"
+	"github.com/towns-protocol/towns/core/contracts/types"
 )
 
 type SpaceContract interface {

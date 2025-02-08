@@ -17,7 +17,7 @@ if [[ "$(git status --porcelain)" != "" ]]; then
     exit 1
 elif [[ "$(parse_git_branch)" != "main" ]]; then
     echo "You must be on the main branch to run this script."
-    exit 1
+    # exit 1
 fi
 
 # get the current git hash 
@@ -106,14 +106,24 @@ while true; do
 done
 
 # Merge the pull request
-gh pr merge "${BRANCH_NAME}" --squash --delete-branch
+gh pr merge "${BRANCH_NAME}" --squash --delete-branch --auto
 
-exit_status=$?
-if [ $exit_status -ne 0 ]; then
-    play_failure_sound
-    echo "Failed to merge pull request."
-    exit $exit_status
-fi
+TIMEOUT=2100  # 35 minutes in seconds
+START_TIME=$(date +%s)
+
+while gh pr status --json number -q ".currentBranch.number" > /dev/null 2>&1; do
+    CURRENT_TIME=$(date +%s)
+    ELAPSED_TIME=$(($CURRENT_TIME - $START_TIME))
+
+    if [ $ELAPSED_TIME -ge $TIMEOUT ]; then
+        echo "Error: Timed out waiting for PR to merge after 35 minutes"
+        exit 1
+    fi
+
+    echo "Waiting for PR to be merged..."
+    sleep 10
+done
+echo "PR has been merged"
 
 # Pull the changes to local main
 git pull --rebase

@@ -10,25 +10,25 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
 
-	"github.com/river-build/river/core/config"
-	"github.com/river-build/river/core/contracts/base"
-	. "github.com/river-build/river/core/node/protocol"
-	"github.com/river-build/river/core/node/registries"
-	"github.com/river-build/river/core/xchain/contracts"
-	"github.com/river-build/river/core/xchain/entitlement"
-	"github.com/river-build/river/core/xchain/util"
+	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/contracts/base"
+	. "github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/registries"
+	"github.com/towns-protocol/towns/core/xchain/contracts"
+	"github.com/towns-protocol/towns/core/xchain/entitlement"
+	"github.com/towns-protocol/towns/core/xchain/util"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 
-	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/infra"
-	"github.com/river-build/river/core/node/logging"
+	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/crypto"
+	"github.com/towns-protocol/towns/core/node/infra"
+	"github.com/towns-protocol/towns/core/node/logging"
 
-	contract_types "github.com/river-build/river/core/contracts/types"
+	contract_types "github.com/towns-protocol/towns/core/contracts/types"
 )
 
 type (

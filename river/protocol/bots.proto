@@ -1,6 +1,6 @@
 syntax = "proto3";
 package river;
-option go_package = "github.com/river-build/river/core/node/protocol";
+option go_package = "github.com/towns-protocol/towns/core/node/protocol";
 
 // BotRegistryService allows bots and bot owners to register bots, and set bot-related preferences for messages added
 // to channels the bot has membership in.

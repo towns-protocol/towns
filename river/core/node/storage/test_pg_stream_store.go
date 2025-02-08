@@ -3,9 +3,9 @@ package storage
 import (
 	"context"
 
-	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/infra"
-	"github.com/river-build/river/core/node/testutils/dbtestutils"
+	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/infra"
+	"github.com/towns-protocol/towns/core/node/testutils/dbtestutils"
 )
 
 type TestStreamStore struct {

@@ -5,7 +5,6 @@ import { DecryptedContent, EncryptedContent, toDecryptedContent } from './encryp
 import { StreamStateView_ChannelMetadata } from './streamStateView_ChannelMetadata'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 import { streamIdToBytes } from './id'
-import { MLS_ALGORITHM } from './mls'
 
 export abstract class StreamStateView_AbstractContent {
     abstract readonly streamId: string
@@ -32,24 +31,10 @@ export abstract class StreamStateView_AbstractContent {
         if (cleartext) {
             event.decryptedContent = toDecryptedContent(kind, content.version, cleartext)
         } else {
-            switch (content.algorithm) {
-                case MLS_ALGORITHM:
-                    encryptionEmitter?.emit(
-                        'mlsNewEncryptedContent',
-                        this.streamId,
-                        event.hashStr,
-                        {
-                            kind,
-                            content,
-                        },
-                    )
-                    break
-                default:
-                    encryptionEmitter?.emit('newEncryptedContent', this.streamId, event.hashStr, {
-                        kind,
-                        content,
-                    })
-            }
+            encryptionEmitter?.emit('newEncryptedContent', this.streamId, event.hashStr, {
+                kind,
+                content,
+            })
         }
     }
 

@@ -7,11 +7,11 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/river-build/river/core/config"
-	"github.com/river-build/river/core/node/authentication"
-	"github.com/river-build/river/core/node/base"
-	. "github.com/river-build/river/core/node/protocol"
-	"github.com/river-build/river/core/node/storage"
+	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/node/authentication"
+	"github.com/towns-protocol/towns/core/node/base"
+	. "github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/storage"
 )
 
 const (

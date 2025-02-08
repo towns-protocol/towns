@@ -1,9 +1,9 @@
 package render
 
 import (
-	"github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/rpc/statusinfo"
-	"github.com/river-build/river/core/node/storage"
+	"github.com/towns-protocol/towns/core/node/crypto"
+	"github.com/towns-protocol/towns/core/node/rpc/statusinfo"
+	"github.com/towns-protocol/towns/core/node/storage"
 )
 
 // RenderableData is the interface for all data that can be rendered

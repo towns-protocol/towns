@@ -309,7 +309,7 @@ _build-node: _require_run_env
     go build \
         -o ${OUTPUT} \
         -race \
-        -ldflags="-X github.com/river-build/river/core/river_node/version.branch=$(git rev-parse --abbrev-ref HEAD) -X github.com/river-build/river/core/river_node/version.commit=$(git describe --tags --always --dirty)" \
+        -ldflags="-X github.com/towns-protocol/towns/core/river_node/version.branch=$(git rev-parse --abbrev-ref HEAD) -X github.com/towns-protocol/towns/core/river_node/version.commit=$(git describe --tags --always --dirty)" \
         ./river_node/main.go
 
 build: _require_run_env (_build-mls RUN_BASE / "bin") _build-node

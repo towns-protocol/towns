@@ -11,12 +11,12 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 
-	"github.com/river-build/river/core/config"
-	"github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/base/test"
-	"github.com/river-build/river/core/node/infra"
-	"github.com/river-build/river/core/node/protocol"
-	"github.com/river-build/river/core/node/testutils/dbtestutils"
+	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/base/test"
+	"github.com/towns-protocol/towns/core/node/infra"
+	"github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/testutils/dbtestutils"
 )
 
 type testBotRegistryStoreParams struct {

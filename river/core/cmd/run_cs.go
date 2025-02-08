@@ -10,12 +10,12 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	xc "github.com/river-build/river/core/xchain/client_simulator"
-	"github.com/river-build/river/core/xchain/util"
+	xc "github.com/towns-protocol/towns/core/xchain/client_simulator"
+	"github.com/towns-protocol/towns/core/xchain/util"
 
 	"github.com/spf13/cobra"
 
-	"github.com/river-build/river/core/node/logging"
+	"github.com/towns-protocol/towns/core/node/logging"
 )
 
 func keyboardInput(input chan rune) {

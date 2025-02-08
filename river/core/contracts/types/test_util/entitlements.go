@@ -5,10 +5,10 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/river-build/river/core/contracts/base"
-	"github.com/river-build/river/core/node/crypto"
+	"github.com/towns-protocol/towns/core/contracts/base"
+	"github.com/towns-protocol/towns/core/node/crypto"
 
-	contract_types "github.com/river-build/river/core/contracts/types"
+	contract_types "github.com/towns-protocol/towns/core/contracts/types"
 )
 
 func Erc721Check(chainId uint64, contractAddress common.Address, threshold uint64) base.IRuleEntitlementBaseRuleData {

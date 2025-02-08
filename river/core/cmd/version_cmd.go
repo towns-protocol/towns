@@ -5,7 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/river-build/river/core/river_node/version"
+	"github.com/towns-protocol/towns/core/river_node/version"
 )
 
 func init() {

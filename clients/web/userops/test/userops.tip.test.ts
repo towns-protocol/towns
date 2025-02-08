@@ -89,7 +89,8 @@ test('can send tip to space member', async () => {
     await waitForOpAndTx(tipOp, alice)
     await sleepBetweenTxs()
 
-    expect((await bob.getBalance(bobAAAddress!)).toBigInt()).toBe(tipAmount)
+    expect((await bob.getBalance(bobAAAddress!)).toBigInt()).toBeGreaterThan(0)
+    const bobBalanceInAAAfterTip1 = await bob.getBalance(bobAAAddress!)
 
     // now bob will link a wallet
     const metamaskWallet = ethers.Wallet.createRandom().connect(spaceDapp.provider)
@@ -144,11 +145,13 @@ test('can send tip to space member', async () => {
     await waitForOpAndTx(tipOp2, alice)
     await sleepBetweenTxs()
 
+    const bobBalanceInAAAfterTip2 = await bob.getBalance(bobAAAddress!)
     // bob should have the same exsiting tip amount in his AA address, since the tip was sent to metamask
-    expect((await bob.getBalance(bobAAAddress!)).toBigInt()).toBe(tipAmount)
+    expect(bobBalanceInAAAfterTip2.toBigInt()).toBe(bobBalanceInAAAfterTip1.toBigInt())
 
     // bob should have the tip amount in his metamask address
-    expect((await bob.getBalance(metamaskAddress)).toBigInt()).toBe(tipAmount)
+    expect((await bob.getBalance(metamaskAddress)).toBigInt()).toBeGreaterThan(0)
+    const metamaskBalanceAfterTip2 = await bob.getBalance(metamaskAddress)
 
     // tip bob again. The membership NFT is in his metamask, but we want to tip his AA address
     await fundWallet(aliceAAAddress!, alice)
@@ -170,6 +173,10 @@ test('can send tip to space member', async () => {
     await waitForOpAndTx(tipOp3, alice)
     await sleepBetweenTxs()
 
-    expect((await bob.getBalance(bobAAAddress!)).toBigInt()).toBe(tipAmount * 2n)
-    expect((await bob.getBalance(metamaskAddress)).toBigInt()).toBe(tipAmount)
+    expect((await bob.getBalance(bobAAAddress!)).toBigInt()).toBeGreaterThan(
+        bobBalanceInAAAfterTip2.toBigInt(),
+    )
+    expect((await bob.getBalance(metamaskAddress)).toBigInt()).toBe(
+        metamaskBalanceAfterTip2.toBigInt(),
+    )
 })

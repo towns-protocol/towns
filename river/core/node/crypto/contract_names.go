@@ -6,12 +6,12 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 
-	"github.com/river-build/river/core/contracts/base"
-	"github.com/river-build/river/core/contracts/river"
-	"github.com/river-build/river/core/xchain/bindings/erc1155"
-	"github.com/river-build/river/core/xchain/bindings/erc20"
-	"github.com/river-build/river/core/xchain/bindings/erc721"
-	"github.com/river-build/river/core/xchain/bindings/ierc5313"
+	"github.com/towns-protocol/towns/core/contracts/base"
+	"github.com/towns-protocol/towns/core/contracts/river"
+	"github.com/towns-protocol/towns/core/xchain/bindings/erc1155"
+	"github.com/towns-protocol/towns/core/xchain/bindings/erc20"
+	"github.com/towns-protocol/towns/core/xchain/bindings/erc721"
+	"github.com/towns-protocol/towns/core/xchain/bindings/ierc5313"
 )
 
 // ContractNameMap maps selectors found in contract ABI code to the contract's method name.

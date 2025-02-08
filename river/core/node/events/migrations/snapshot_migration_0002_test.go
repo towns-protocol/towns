@@ -6,9 +6,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	. "github.com/river-build/river/core/node/protocol"
+	. "github.com/towns-protocol/towns/core/node/protocol"
 
-	"github.com/river-build/river/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/shared"
 )
 
 func TestSnapshotMigration0002(t *testing.T) {

@@ -3,8 +3,8 @@ package cmd
 import (
 	"context"
 
-	"github.com/river-build/river/core/config"
-	"github.com/river-build/river/core/node/rpc"
+	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/node/rpc"
 
 	"github.com/spf13/cobra"
 )

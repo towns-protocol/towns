@@ -1,4 +1,4 @@
-module github.com/river-build/river/core
+module github.com/towns-protocol/towns/core
 
 go 1.23.3
 

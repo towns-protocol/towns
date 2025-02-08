@@ -9,9 +9,9 @@ import (
 	"connectrpc.com/connect"
 	"go.uber.org/zap"
 
-	. "github.com/river-build/river/core/node/base"
-	. "github.com/river-build/river/core/node/protocol"
-	"github.com/river-build/river/core/node/utils"
+	. "github.com/towns-protocol/towns/core/node/base"
+	. "github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/utils"
 )
 
 func runWithLabels(

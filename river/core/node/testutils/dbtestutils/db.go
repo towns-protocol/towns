@@ -12,7 +12,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/river-build/river/core/config"
+	"github.com/towns-protocol/towns/core/config"
 )
 
 func GetTestDbUrl() string {

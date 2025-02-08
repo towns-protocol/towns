@@ -28,7 +28,6 @@ import {
     UserBio,
     Tags,
     BlockchainTransaction,
-    MemberPayload_Mls,
     MiniblockHeader,
     GetStreamResponse,
     CreateStreamResponse,
@@ -139,7 +138,6 @@ import {
     make_UserPayload_BlockchainTransaction,
     ContractReceipt,
     make_MemberPayload_EncryptionAlgorithm,
-    make_MemberPayload_Mls,
 } from './types'
 
 import debug from 'debug'
@@ -161,8 +159,6 @@ import { SignerContext } from './signerContext'
 import { decryptAESGCM, deriveKeyAndIV, encryptAESGCM, uint8ArrayToBase64 } from './crypto_utils'
 import { makeTags, makeTipTags } from './tags'
 import { TipEventObject } from '@river-build/generated/dev/typings/ITipping'
-import { extractMlsExternalGroup, ExtractMlsExternalGroupResult } from './mls/utils/mlsutils'
-import { MlsAdapter, MLS_ALGORITHM } from './mls'
 
 export type ClientEvents = StreamEvents & DecryptionEvents
 
@@ -211,7 +207,6 @@ export class Client
     private entitlementsDelegate: EntitlementsDelegate
     private decryptionExtensions?: BaseDecryptionExtensions
     private syncedStreamsExtensions?: SyncedStreamsExtension
-    private mlsAdapter?: MlsAdapter
     private persistenceStore: IPersistenceStore
     private validatedEvents: Record<string, { isValid: boolean; reason?: string }> = {}
     private defaultGroupEncryptionAlgorithm: GroupEncryptionAlgorithmId
@@ -274,7 +269,6 @@ export class Client
             highPriorityStreamIds,
             {
                 startSyncStreams: async () => {
-                    this.mlsAdapter?.start()
                     this.streams.startSyncStreams()
                     this.decryptionExtensions?.start()
                 },
@@ -389,7 +383,6 @@ export class Client
         encryptionDeviceInit?: EncryptionDeviceInitOpts
     }): Promise<{
         initCryptoTime: number
-        //initMlsTime: number
         initUserStreamTime: number
         initUserInboxStreamTime: number
         initUserMetadataStreamTime: number
@@ -405,11 +398,9 @@ export class Client
         this.logCall('initializeUser', this.userId)
         assert(this.userStreamId === undefined, 'already initialized')
         const initCrypto = await getTime(() => this.initCrypto(opts?.encryptionDeviceInit))
-        //const initMls = await getTime(() => this.initMls())
 
         check(isDefined(this.decryptionExtensions), 'decryptionExtensions must be defined')
         check(isDefined(this.syncedStreamsExtensions), 'syncedStreamsExtensions must be defined')
-        //check(isDefined(this.mlsAdapter), 'mlsAdapter must be defined')
 
         const [
             initUserStream,
@@ -435,7 +426,6 @@ export class Client
 
         return {
             initCryptoTime: initCrypto.time,
-            //initMlsTime: initMls.time,
             initUserStreamTime: initUserStream.time,
             initUserInboxStreamTime: initUserInboxStream.time,
             initUserMetadataStreamTime: initUserMetadataStream.time,
@@ -978,13 +968,13 @@ export class Client
         check(isDefined(stream), 'stream not found')
         check(
             stream.view.membershipContent.encryptionAlgorithm != encryptionAlgorithm,
-            `mlsEnabled is already set to ${encryptionAlgorithm}`,
+            `encryptionAlgorithm is already set to ${encryptionAlgorithm}`,
         )
         return this.makeEventAndAddToStream(
             streamId,
             make_MemberPayload_EncryptionAlgorithm(encryptionAlgorithm),
             {
-                method: 'setMlsEnabled',
+                method: 'setStreamEncryptionAlgorithm',
             },
         )
     }
@@ -1620,9 +1610,6 @@ export class Client
         let message: EncryptedData
         const encryptionAlgorithm = stream.view.membershipContent.encryptionAlgorithm
         switch (encryptionAlgorithm) {
-            case MLS_ALGORITHM:
-                message = await this.encryptGroupEventEpochSecret(payload, streamId)
-                break
             case GroupEncryptionAlgorithmId.HybridGroupEncryption:
                 message = await this.encryptGroupEvent(
                     payload,
@@ -2470,18 +2457,6 @@ export class Client
         )
     }
 
-    /// Initialise MLS but do not start it
-    private async initMls(): Promise<void> {
-        this.logCall('initMls')
-        if (this.mlsAdapter) {
-            this.logCall('Attempt to re-init mls adapter, ignoring')
-            return
-        }
-
-        this.mlsAdapter = new MlsAdapter(this)
-        await this.mlsAdapter.initialize()
-    }
-
     /**
      * Resets crypto backend and creates a new encryption account, uploading device keys to UserDeviceKey stream.
      */
@@ -2710,36 +2685,6 @@ export class Client
 
     public async debugDropStream(syncId: string, streamId: string): Promise<void> {
         await this.rpcClient.info({ debug: ['drop_stream', syncId, streamId] })
-    }
-
-    public async _debugSendMls(
-        streamId: string | Uint8Array,
-        payload: PlainMessage<MemberPayload_Mls>,
-    ) {
-        return this.makeEventAndAddToStream(streamId, make_MemberPayload_Mls(payload), {
-            method: 'mls',
-        })
-    }
-
-    public async getMlsExternalGroupInfo(
-        streamId: string,
-    ): Promise<ExtractMlsExternalGroupResult | undefined> {
-        let streamView = this.stream(streamId)?.view
-        if (!streamView || !streamView.isInitialized) {
-            streamView = await this.getStream(streamId)
-        }
-        check(isDefined(streamView), `stream not found: ${streamId}`)
-        return extractMlsExternalGroup(streamView)
-    }
-
-    private async encryptGroupEventEpochSecret(
-        payload: Message,
-        streamId: string,
-    ): Promise<EncryptedData> {
-        if (this.mlsAdapter === undefined) {
-            throw new Error('mls adapter not initialized')
-        }
-        return this.mlsAdapter.encryptGroupEventEpochSecret(streamId, payload)
     }
 }
 

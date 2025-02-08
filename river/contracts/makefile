@@ -139,7 +139,7 @@ deploy-any-ledger :;
 	@SAVE_DEPLOYMENTS=1 $(if $(context),DEPLOYMENT_CONTEXT=$(context)) \
 	forge script scripts/deployments/${type}/${contract}.s.sol:${contract} \
 	--ledger --hd-paths ${hd_path} --sender ${sender} \
-	--ffi --rpc-url ${rpc} --broadcast --verify --verifier=blockscout --verifier-url=${verifier} --etherscan-api-key ${etherscan}
+	--ffi --rpc-url ${rpc} --broadcast --verify
 
 resume-any-ledger :;
 	@forge script scripts/deployments/${type}/${contract}.s.sol:${contract} \
@@ -264,6 +264,8 @@ fork-base :;
 verify-base :;
 	@$(MAKE) verify-any rpc=base
 	@$(MAKE) explicit-verify-any rpc=base verifier=${BLOCKSCOUT_BASE_URL} etherscan=${BLOCKSCOUT_BASE_API_KEY}
+
+
 
 # ===========================
 # 				Mainnet

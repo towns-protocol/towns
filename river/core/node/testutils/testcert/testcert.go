@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/river-build/river/core/config"
+	"github.com/towns-protocol/towns/core/config"
 )
 
 // LocalhostCertBytes is a PEM-encoded TLS cert with SAN IPs

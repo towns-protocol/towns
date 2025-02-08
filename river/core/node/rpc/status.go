@@ -14,11 +14,11 @@ import (
 
 	"github.com/ethereum/go-ethereum/ethclient"
 
-	"github.com/river-build/river/core/config"
-	"github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/rpc/render"
-	"github.com/river-build/river/core/node/rpc/statusinfo"
-	"github.com/river-build/river/core/river_node/version"
+	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/node/crypto"
+	"github.com/towns-protocol/towns/core/node/rpc/render"
+	"github.com/towns-protocol/towns/core/node/rpc/statusinfo"
+	"github.com/towns-protocol/towns/core/river_node/version"
 )
 
 func (s *Service) blockchainPingWithClient(

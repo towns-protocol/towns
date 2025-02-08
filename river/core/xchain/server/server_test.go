@@ -11,13 +11,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/river-build/river/core/config"
-	"github.com/river-build/river/core/contracts/base"
-	"github.com/river-build/river/core/contracts/base/deploy"
-	test_contracts "github.com/river-build/river/core/contracts/base/deploy"
-	"github.com/river-build/river/core/xchain/client_simulator"
-	xc_common "github.com/river-build/river/core/xchain/common"
-	"github.com/river-build/river/core/xchain/server"
+	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/contracts/base"
+	"github.com/towns-protocol/towns/core/contracts/base/deploy"
+	test_contracts "github.com/towns-protocol/towns/core/contracts/base/deploy"
+	"github.com/towns-protocol/towns/core/xchain/client_simulator"
+	xc_common "github.com/towns-protocol/towns/core/xchain/common"
+	"github.com/towns-protocol/towns/core/xchain/server"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -25,16 +25,16 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/stretchr/testify/require"
 
-	node_config "github.com/river-build/river/core/config"
-	"github.com/river-build/river/core/node/base/test"
-	"github.com/river-build/river/core/node/crypto"
-	node_crypto "github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/logging"
-	"github.com/river-build/river/core/node/testutils/testfmt"
+	node_config "github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/node/base/test"
+	"github.com/towns-protocol/towns/core/node/crypto"
+	node_crypto "github.com/towns-protocol/towns/core/node/crypto"
+	"github.com/towns-protocol/towns/core/node/logging"
+	"github.com/towns-protocol/towns/core/node/testutils/testfmt"
 
-	contract_types "github.com/river-build/river/core/contracts/types"
+	contract_types "github.com/towns-protocol/towns/core/contracts/types"
 
-	"github.com/river-build/river/core/contracts/types/test_util"
+	"github.com/towns-protocol/towns/core/contracts/types/test_util"
 )
 
 const (

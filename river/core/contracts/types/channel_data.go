@@ -3,7 +3,7 @@ package types
 import (
 	"math/big"
 
-	"github.com/river-build/river/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/shared"
 )
 
 type BaseChannel struct {

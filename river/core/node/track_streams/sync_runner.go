@@ -1,4 +1,4 @@
-package sync
+package track_streams
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"math"
 	"math/rand"
 	"strconv"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -16,17 +17,43 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/sync/semaphore"
 
-	"github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/events"
-	"github.com/river-build/river/core/node/logging"
-	"github.com/river-build/river/core/node/nodes"
-	"github.com/river-build/river/core/node/protocol"
-	"github.com/river-build/river/core/node/protocol/protocolconnect"
-	"github.com/river-build/river/core/node/registries"
-	"github.com/river-build/river/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/crypto"
+	"github.com/towns-protocol/towns/core/node/events"
+	"github.com/towns-protocol/towns/core/node/logging"
+	"github.com/towns-protocol/towns/core/node/nodes"
+	"github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
+	"github.com/towns-protocol/towns/core/node/registries"
+	"github.com/towns-protocol/towns/core/node/shared"
 )
 
-type StreamTrackerConnectGo struct{}
+// maxConcurrentNodeRequests is the maximum number of concurrent
+// requests made to a remote node
+const maxConcurrentNodeRequests = 50
+
+// The SyncRunner implements the logic for setting up a stream sync with a remote node, and creating and
+// continuously updating a TrackedStreamView from the streaming responses from that node. The TrackedStreamView
+// is responsible for firing any callbacks needed by a service that is tracking the contents of remotely
+// hosted streams.
+type SyncRunner struct {
+	// workerPools keeps track of a set of weighted semaphors, one per node address. These are used
+	// to rate limit the number of syncs started on the same remote node at the same time.
+	workerPools sync.Map
+}
+
+// NewSyncRunner creates a SyncRunner instance.
+func NewSyncRunner() *SyncRunner {
+	return &SyncRunner{}
+}
+
+func (sr *SyncRunner) getWorkerPool(addr common.Address) *semaphore.Weighted {
+	if workerPool, ok := sr.workerPools.Load(addr); ok {
+		return workerPool.(*semaphore.Weighted)
+	}
+
+	workerPool, _ := sr.workerPools.LoadOrStore(addr, semaphore.NewWeighted(maxConcurrentNodeRequests))
+	return workerPool.(*semaphore.Weighted)
+}
 
 func channelLabelType(streamID shared.StreamId) string {
 	switch streamID.Type() {
@@ -38,21 +65,29 @@ func channelLabelType(streamID shared.StreamId) string {
 		return "space_channel"
 	case shared.STREAM_USER_SETTINGS_BIN:
 		return "user_settings"
+	case shared.STREAM_USER_INBOX_BIN:
+		return "user_inbox"
+	case shared.STREAM_USER_BIN:
+		return "user"
+	case shared.STREAM_USER_METADATA_KEY_BIN:
+		return "user_metadata"
+	case shared.STREAM_SPACE_BIN:
+		return "space"
+	case shared.STREAM_MEDIA_BIN:
+		return "media"
 	default:
 		return "unknown"
 	}
 }
 
-func (s *StreamTrackerConnectGo) Run(
+func (sr *SyncRunner) Run(
 	rootCtx context.Context,
 	stream *registries.GetStreamResult,
-	justAllocated bool,
+	applyHistoricalStreamContents bool,
 	nodeRegistry nodes.NodeRegistry,
-	workerPool *semaphore.Weighted,
 	onChainConfig crypto.OnChainConfiguration,
-	listener events.StreamEventListener,
-	userPreferences events.UserPreferencesStore,
-	metrics *streamsTrackerWorkerMetrics,
+	newTrackedStreamView TrackedViewConstructorFn,
+	metrics *TrackStreamsSyncMetrics,
 ) {
 	var (
 		promLabels                = prometheus.Labels{"type": channelLabelType(stream.StreamId)}
@@ -69,7 +104,7 @@ func (s *StreamTrackerConnectGo) Run(
 			syncCtx, syncCancel = context.WithCancel(rootCtx)
 			lastReceivedPong    atomic.Int64
 			syncID              string
-			trackedStream       *events.TrackedNotificationStreamView
+			trackedStream       events.TrackedStreamView
 		)
 
 		var (
@@ -93,7 +128,7 @@ func (s *StreamTrackerConnectGo) Run(
 		if client == nil {
 			syncCancel()
 			log.Errorw("unable to obtain stream service client", "err", err)
-			if s.waitMaxOrUntilCancel(rootCtx, time.Minute, 2*time.Minute) {
+			if sr.waitMaxOrUntilCancel(rootCtx, time.Minute, 2*time.Minute) {
 				return
 			}
 			continue
@@ -102,13 +137,13 @@ func (s *StreamTrackerConnectGo) Run(
 		// workers are started in parallel, prevent starting too many at the same time
 		// to ensure that remotes are not overflown with SyncStream requests.
 		metrics.SyncSessionInFlight.Inc()
-		if err := workerPool.Acquire(syncCtx, 1); err != nil {
+		if err := sr.getWorkerPool(remoteAddr).Acquire(syncCtx, 1); err != nil {
 			metrics.SyncSessionInFlight.Dec()
 			syncCancel()
 			if !errors.Is(err, context.Canceled) {
 				log.Errorw("unable to acquire worker pool task", "err", err)
 			}
-			if s.waitMaxOrUntilCancel(rootCtx, 10*time.Second, 30*time.Second) {
+			if sr.waitMaxOrUntilCancel(rootCtx, 10*time.Second, 30*time.Second) {
 				return
 			}
 			continue
@@ -133,7 +168,7 @@ func (s *StreamTrackerConnectGo) Run(
 		streamUpdates, err := client.SyncStreams(syncCtx, connect.NewRequest(&protocol.SyncStreamsRequest{
 			SyncPos: syncPos,
 		}))
-		workerPool.Release(1)
+		sr.getWorkerPool(remoteAddr).Release(1)
 		metrics.SyncSessionInFlight.Dec()
 
 		if err != nil {
@@ -142,7 +177,7 @@ func (s *StreamTrackerConnectGo) Run(
 			if !errors.Is(err, context.Canceled) {
 				log.Debugw("unable to start stream sync session", "err", err)
 			}
-			if s.waitMaxOrUntilCancel(rootCtx, time.Minute, 2*time.Minute) {
+			if sr.waitMaxOrUntilCancel(rootCtx, time.Minute, 2*time.Minute) {
 				return
 			}
 			continue
@@ -172,7 +207,7 @@ func (s *StreamTrackerConnectGo) Run(
 				if !errors.Is(err, context.Canceled) {
 					log.Errorw("Stream sync session didn't start with SyncOp_SYNC_NEW")
 				}
-				if s.waitMaxOrUntilCancel(rootCtx, 10*time.Second, 30*time.Second) {
+				if sr.waitMaxOrUntilCancel(rootCtx, 10*time.Second, 30*time.Second) {
 					return
 				}
 				continue
@@ -187,7 +222,7 @@ func (s *StreamTrackerConnectGo) Run(
 			}
 			syncCancel()
 			remotes.AdvanceStickyPeer(remoteAddr)
-			if s.waitMaxOrUntilCancel(rootCtx, time.Minute, 2*time.Minute) {
+			if sr.waitMaxOrUntilCancel(rootCtx, time.Minute, 2*time.Minute) {
 				return
 			}
 			continue
@@ -197,7 +232,7 @@ func (s *StreamTrackerConnectGo) Run(
 			syncCancel()
 			remotes.AdvanceStickyPeer(remoteAddr)
 			log.Errorw("Received empty syncID")
-			if s.waitMaxOrUntilCancel(rootCtx, time.Minute, 2*time.Minute) {
+			if sr.waitMaxOrUntilCancel(rootCtx, time.Minute, 2*time.Minute) {
 				return
 			}
 			continue
@@ -251,9 +286,7 @@ func (s *StreamTrackerConnectGo) Run(
 				}
 
 				if reset {
-					trackedStream, err = events.NewNotificationsStreamTrackerFromStreamAndCookie(
-						syncCtx, streamID, onChainConfig, update.GetStream(), listener, userPreferences)
-
+					trackedStream, err = newTrackedStreamView(syncCtx, streamID, onChainConfig, update.GetStream())
 					if err != nil {
 						syncCancel()
 						log.Errorw("Unable to instantiate tracked stream", "err", err)
@@ -265,7 +298,7 @@ func (s *StreamTrackerConnectGo) Run(
 					// if the stream was just allocated process the miniblocks and events for notifications.
 					// If not ignore them because there were already notifications send for the stream and possible
 					// for these miniblocks and events.
-					if !justAllocated {
+					if !applyHistoricalStreamContents {
 						continue
 					}
 				}
@@ -279,11 +312,11 @@ func (s *StreamTrackerConnectGo) Run(
 
 				for _, block := range update.GetStream().GetMiniblocks() {
 					if !reset {
-						if err := trackedStream.ApplyBlock(block, onChainConfig.Get()); err != nil {
+						if err := trackedStream.ApplyBlock(block); err != nil {
 							log.Debugw("Unable to apply block", "stream", streamID, "err", err)
 						}
 					}
-					if justAllocated {
+					if applyHistoricalStreamContents {
 						// send notifications for all events in all blocks
 						for _, event := range block.GetEvents() {
 							if parsedEvent, err := events.ParseEvent(event); err == nil {
@@ -299,7 +332,7 @@ func (s *StreamTrackerConnectGo) Run(
 					}
 				}
 
-				justAllocated = false
+				applyHistoricalStreamContents = false
 
 			case protocol.SyncOp_SYNC_DOWN:
 				log.Debugw("Stream reported as down")
@@ -349,7 +382,7 @@ func (s *StreamTrackerConnectGo) Run(
 		syncCancel()
 		remotes.AdvanceStickyPeer(remoteAddr)
 
-		if s.waitMaxOrUntilCancel(rootCtx, 10*time.Second, 30*time.Second) {
+		if sr.waitMaxOrUntilCancel(rootCtx, 10*time.Second, 30*time.Second) {
 			return
 		}
 	}
@@ -360,7 +393,7 @@ func (s *StreamTrackerConnectGo) Run(
 //
 //nolint:unused
 //lint:ignore U1000 temporary disabled - pings are commented out
-func (s *StreamTrackerConnectGo) liveness(
+func (sr *SyncRunner) liveness(
 	log *zap.SugaredLogger,
 	syncCtx context.Context,
 	cancelSyncSession context.CancelFunc,
@@ -370,7 +403,7 @@ func (s *StreamTrackerConnectGo) liveness(
 	syncID string,
 	client protocolconnect.StreamServiceClient,
 	lastReceivedPong *atomic.Int64,
-	metrics *streamsTrackerWorkerMetrics,
+	metrics *TrackStreamsSyncMetrics,
 ) {
 	const pongTimeout = 30 * time.Second
 
@@ -470,7 +503,7 @@ func (s *StreamTrackerConnectGo) liveness(
 
 // waitMaxOrUntilCancel waits a random duration between minWait and maxWait
 // or returns true when ctx expires before.
-func (s *StreamTrackerConnectGo) waitMaxOrUntilCancel(
+func (sr *SyncRunner) waitMaxOrUntilCancel(
 	ctx context.Context,
 	minWait time.Duration,
 	maxWait time.Duration,

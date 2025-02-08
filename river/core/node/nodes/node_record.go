@@ -5,8 +5,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/river-build/river/core/contracts/river"
-	. "github.com/river-build/river/core/node/protocol/protocolconnect"
+	"github.com/towns-protocol/towns/core/contracts/river"
+	. "github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
 )
 
 // NodeRecord is immutable and so can be passed by pointer.

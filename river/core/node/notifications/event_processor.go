@@ -12,8 +12,8 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/crypto"
+	"github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/crypto"
 
 	"github.com/SherClockHolmes/webpush-go"
 	mapset "github.com/deckarep/golang-set/v2"
@@ -21,13 +21,13 @@ import (
 	"github.com/sideshow/apns2/payload"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/river-build/river/core/config"
-	"github.com/river-build/river/core/node/events"
-	"github.com/river-build/river/core/node/logging"
-	"github.com/river-build/river/core/node/notifications/push"
-	"github.com/river-build/river/core/node/notifications/types"
-	. "github.com/river-build/river/core/node/protocol"
-	"github.com/river-build/river/core/node/shared"
+	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/node/events"
+	"github.com/towns-protocol/towns/core/node/logging"
+	"github.com/towns-protocol/towns/core/node/notifications/push"
+	"github.com/towns-protocol/towns/core/node/notifications/types"
+	. "github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/shared"
 )
 
 // MaxWebPushAllowedNotificationStreamEventPayloadSize is the max length of a serialized stream
@@ -487,11 +487,12 @@ func (p *MessageToNotificationsProcessor) sendNotification(
 					"user", user,
 					"event", event.Hash,
 					"channelID", channelID,
+					"user", user,
 				)
 			} else if !subscriptionExpired {
 				p.log.Errorw("Unable to send web push notification",
-					"user",
-					user, "err", err,
+					"user", user,
+					"err", err,
 					"event", event.Hash,
 					"channelID", channelID,
 				)
