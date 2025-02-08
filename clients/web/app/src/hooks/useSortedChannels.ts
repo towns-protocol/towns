@@ -52,7 +52,7 @@ const STICKY_UNREADS = false
  */
 export const useSortedChannels = ({ spaceId, currentRouteId }: Params) => {
     const { spaceUnreadChannelIds, dmUnreadChannelIds, dmChannels } = useTownsContext()
-    const spaceMentions = useSpaceMentions()
+    const spaceMentions = useSpaceMentions(spaceId)
     const channels = useSpaceChannels()
     const { memberIds } = useSpaceMembers()
     const { joinedChannels } = useJoinedChannels(spaceId)

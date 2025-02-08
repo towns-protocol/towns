@@ -243,7 +243,7 @@ export const TouchHome = () => {
     const threadsLink = createLink({ route: 'threads' })
     const mentionsLink = createLink({ route: 'mentions' })
     const unreadThreadsCount = useSpaceThreadRootsUnreadCount()
-    const unreadThreadMentions = useSpaceUnreadThreadMentions()
+    const unreadThreadMentions = useSpaceUnreadThreadMentions(space?.id)
 
     const filteredMenuItems = useMemo(
         () =>

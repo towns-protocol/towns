@@ -1,5 +1,5 @@
 import React from 'react'
-import { useMyProfile, useSpaceMentions } from 'use-towns-client'
+import { useMyProfile, useSpaceId, useSpaceMentions } from 'use-towns-client'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { NoJoinedChannelsFallback } from '@components/NoJoinedChannelsFallback'
 import { IsolatedMessageItem } from '@components/ResultItem/IsolatedMessageItem'
@@ -8,8 +8,9 @@ import { Box, Heading, Icon, Paragraph, Stack } from '@ui'
 import { useHasJoinedChannels } from 'hooks/useHasJoinedChannels'
 
 export const SpaceMentions = () => {
+    const spaceId = useSpaceId()
     const userId = useMyProfile()?.userId
-    const mentions = useSpaceMentions()
+    const mentions = useSpaceMentions(spaceId)
     const { loadingChannels, hasJoinedChannels } = useHasJoinedChannels()
 
     const renderContent = () => {

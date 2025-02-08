@@ -131,7 +131,7 @@ export const SpaceSideBar = (props: Props) => {
 
     const membersNotInDMs = useMembersNotInDMs({ dmItems, memberIds: spaceMemberIds })
 
-    const unreadThreadMentions = useSpaceUnreadThreadMentions()
+    const unreadThreadMentions = useSpaceUnreadThreadMentions(space.id)
 
     const offscreenMarkers = useOffscreenMarkers({
         unreadChannels: actualUnreadChannels,

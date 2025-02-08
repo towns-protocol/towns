@@ -6,7 +6,7 @@ import { MentionResult, RiverTimelineEvent } from '@river-build/sdk'
 
 export function Mentions(): JSX.Element {
     const spaceId = useSpaceId()
-    const mentions = useSpaceMentions()
+    const mentions = useSpaceMentions(spaceId)
     const navigate = useNavigate()
 
     const onClickMentions = useCallback(
