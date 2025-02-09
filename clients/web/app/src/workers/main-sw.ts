@@ -31,7 +31,13 @@ cleanupOutdatedCaches()
 const manifest = self.__WB_MANIFEST
 
 console.log('main-sw: precaching', manifest)
-precacheAndRoute(manifest)
+
+function getUrlFromPrecacheItem(item: string | { url: string }) {
+    return typeof item === 'string' ? item : item.url
+}
+
+const precacheItems = manifest.filter((item) => !getUrlFromPrecacheItem(item).endsWith('map'))
+precacheAndRoute(precacheItems)
 
 registerRoute(({ url }) => {
     return url.pathname === '/version' || url.pathname.startsWith('/data/')
