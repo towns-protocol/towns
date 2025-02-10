@@ -10,8 +10,9 @@ import { TestApp } from 'test/testUtils'
 import { UseMockCreateSpaceReturn, mockCreateTransactionWithSpy } from 'test/transactionHookMock'
 import { YEAR_MS } from 'data/constants'
 import { parseUnits } from 'hooks/useBalance'
+import { DEFAULT_MEMBERSHIP_LIMIT } from '@components/SpaceSettingsPanel/defaultMembershipLimit'
 import { CreateTownForm, CreateTownFormRender } from './CreateTown'
-import { DEFAULT_MEMBERSHIP_LIMIT, GATING_ENABLED } from './createTown.schema'
+import { GATING_ENABLED } from './createTown.schema'
 
 const Wrapper = (props: PropsWithChildren) => {
     return (

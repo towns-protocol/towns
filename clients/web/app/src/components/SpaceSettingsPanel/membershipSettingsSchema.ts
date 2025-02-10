@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { gatingSchema } from '@components/Web3/Gating/Gating.schema'
-
+import { DEFAULT_MEMBERSHIP_LIMIT } from './defaultMembershipLimit'
 export const MAX_LENGTH_SPACE_NAME = 32
 export const MAX_LENGTH_SPACE_BIO = 240
 
@@ -10,7 +10,9 @@ const membershipPricingErrorMessage =
 export const membershipLimitSchema = z.coerce
     .number({ message: 'Please enter a number' })
     .min(1, { message: 'Please enter a number greater than 0' })
-    .max(2000, { message: 'Please enter a number less than or equal to 2000' })
+    .max(DEFAULT_MEMBERSHIP_LIMIT, {
+        message: `Please enter a number less than or equal to ${DEFAULT_MEMBERSHIP_LIMIT.toLocaleString()}`,
+    })
 
 export const membershipSettingsSchema = z
     .object({

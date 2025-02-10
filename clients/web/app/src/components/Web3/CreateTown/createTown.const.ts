@@ -1,4 +1,4 @@
-import { DEFAULT_MEMBERSHIP_LIMIT } from './createTown.schema'
+import { DEFAULT_MEMBERSHIP_LIMIT } from '@components/SpaceSettingsPanel/defaultMembershipLimit'
 import { CreateTownFormSchema } from './types'
 
 const clientDefaultValues = {

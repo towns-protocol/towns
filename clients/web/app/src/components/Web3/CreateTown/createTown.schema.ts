@@ -6,7 +6,6 @@ import { gatingSchema } from '../Gating/Gating.schema'
 
 export const GATING_ENABLED = false
 
-export const DEFAULT_MEMBERSHIP_LIMIT = 2000
 export const MAX_LENGTH_SPACE_NAME = 32
 export const MAX_LENGTH_SPACE_BIO = 240
 
