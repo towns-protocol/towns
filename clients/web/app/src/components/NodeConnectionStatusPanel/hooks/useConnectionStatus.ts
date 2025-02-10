@@ -22,22 +22,38 @@ export const useConnectionStatus = () => {
             const stream = casablancaClient.streams.get(streamId)
             if (stream) {
                 setUnsyncedStreams((s) => {
-                    if (stream.isUpToDate) {
+                    if (stream.isUpToDate && s.has(stream.streamId)) {
                         s.delete(stream.streamId)
-                    } else {
-                        s.add(stream.streamId)
+                        return new Set(s)
                     }
-                    return new Set(s)
+                    if (!stream.isUpToDate && !s.has(stream.streamId)) {
+                        s.add(stream.streamId)
+                        return new Set(s)
+                    }
+                    return s
                 })
             }
         }
 
+        const onStreamSyncActive = (_active: boolean) => {
+            setUnsyncedStreams((s) => {
+                return new Set(
+                    casablancaClient.streams
+                        .getStreams()
+                        .filter((x) => !x.isUpToDate)
+                        .map((x) => x.streamId),
+                )
+            })
+        }
+
         casablancaClient.on('streamInitialized', updateStreamStatus)
         casablancaClient.on('streamUpToDate', updateStreamStatus)
+        casablancaClient.on('streamSyncActive', onStreamSyncActive)
 
         return () => {
             casablancaClient.off('streamInitialized', updateStreamStatus)
             casablancaClient.off('streamUpToDate', updateStreamStatus)
+            casablancaClient.off('streamSyncActive', onStreamSyncActive)
         }
     }, [casablancaClient])
 
