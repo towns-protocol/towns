@@ -83,6 +83,7 @@ export type SetMiniblockStructOutput = [
 
 export interface IStreamRegistryInterface extends utils.Interface {
   functions: {
+    "addStream(bytes32,bytes32,(bytes32,uint64,uint64,uint64,address[]))": FunctionFragment;
     "allocateStream(bytes32,address[],bytes32,bytes)": FunctionFragment;
     "getPaginatedStreams(uint256,uint256)": FunctionFragment;
     "getStream(bytes32)": FunctionFragment;
@@ -98,6 +99,7 @@ export interface IStreamRegistryInterface extends utils.Interface {
 
   getFunction(
     nameOrSignatureOrTopic:
+      | "addStream"
       | "allocateStream"
       | "getPaginatedStreams"
       | "getStream"
@@ -111,6 +113,10 @@ export interface IStreamRegistryInterface extends utils.Interface {
       | "setStreamLastMiniblockBatch"
   ): FunctionFragment;
 
+  encodeFunctionData(
+    functionFragment: "addStream",
+    values: [PromiseOrValue<BytesLike>, PromiseOrValue<BytesLike>, StreamStruct]
+  ): string;
   encodeFunctionData(
     functionFragment: "allocateStream",
     values: [
@@ -167,6 +173,7 @@ export interface IStreamRegistryInterface extends utils.Interface {
     values: [SetMiniblockStruct[]]
   ): string;
 
+  decodeFunctionResult(functionFragment: "addStream", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "allocateStream",
     data: BytesLike
@@ -208,12 +215,14 @@ export interface IStreamRegistryInterface extends utils.Interface {
 
   events: {
     "StreamAllocated(bytes32,address[],bytes32,bytes)": EventFragment;
+    "StreamCreated(bytes32,bytes32,tuple)": EventFragment;
     "StreamLastMiniblockUpdateFailed(bytes32,bytes32,uint64,string)": EventFragment;
     "StreamLastMiniblockUpdated(bytes32,bytes32,uint64,bool)": EventFragment;
     "StreamPlacementUpdated(bytes32,address,bool)": EventFragment;
   };
 
   getEvent(nameOrSignatureOrTopic: "StreamAllocated"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "StreamCreated"): EventFragment;
   getEvent(
     nameOrSignatureOrTopic: "StreamLastMiniblockUpdateFailed"
   ): EventFragment;
@@ -233,6 +242,18 @@ export type StreamAllocatedEvent = TypedEvent<
 >;
 
 export type StreamAllocatedEventFilter = TypedEventFilter<StreamAllocatedEvent>;
+
+export interface StreamCreatedEventObject {
+  streamId: string;
+  genesisMiniblockHash: string;
+  stream: StreamStructOutput;
+}
+export type StreamCreatedEvent = TypedEvent<
+  [string, string, StreamStructOutput],
+  StreamCreatedEventObject
+>;
+
+export type StreamCreatedEventFilter = TypedEventFilter<StreamCreatedEvent>;
 
 export interface StreamLastMiniblockUpdateFailedEventObject {
   streamId: string;
@@ -302,6 +323,13 @@ export interface IStreamRegistry extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
+    addStream(
+      streamId: PromiseOrValue<BytesLike>,
+      genesisMiniblockHash: PromiseOrValue<BytesLike>,
+      stream: StreamStruct,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     allocateStream(
       streamId: PromiseOrValue<BytesLike>,
       nodes: PromiseOrValue<string>[],
@@ -364,6 +392,13 @@ export interface IStreamRegistry extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
   };
+
+  addStream(
+    streamId: PromiseOrValue<BytesLike>,
+    genesisMiniblockHash: PromiseOrValue<BytesLike>,
+    stream: StreamStruct,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
 
   allocateStream(
     streamId: PromiseOrValue<BytesLike>,
@@ -428,6 +463,13 @@ export interface IStreamRegistry extends BaseContract {
   ): Promise<ContractTransaction>;
 
   callStatic: {
+    addStream(
+      streamId: PromiseOrValue<BytesLike>,
+      genesisMiniblockHash: PromiseOrValue<BytesLike>,
+      stream: StreamStruct,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
     allocateStream(
       streamId: PromiseOrValue<BytesLike>,
       nodes: PromiseOrValue<string>[],
@@ -505,6 +547,17 @@ export interface IStreamRegistry extends BaseContract {
       genesisMiniblock?: null
     ): StreamAllocatedEventFilter;
 
+    "StreamCreated(bytes32,bytes32,tuple)"(
+      streamId?: null,
+      genesisMiniblockHash?: null,
+      stream?: null
+    ): StreamCreatedEventFilter;
+    StreamCreated(
+      streamId?: null,
+      genesisMiniblockHash?: null,
+      stream?: null
+    ): StreamCreatedEventFilter;
+
     "StreamLastMiniblockUpdateFailed(bytes32,bytes32,uint64,string)"(
       streamId?: null,
       lastMiniblockHash?: null,
@@ -544,6 +597,13 @@ export interface IStreamRegistry extends BaseContract {
   };
 
   estimateGas: {
+    addStream(
+      streamId: PromiseOrValue<BytesLike>,
+      genesisMiniblockHash: PromiseOrValue<BytesLike>,
+      stream: StreamStruct,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     allocateStream(
       streamId: PromiseOrValue<BytesLike>,
       nodes: PromiseOrValue<string>[],
@@ -608,6 +668,13 @@ export interface IStreamRegistry extends BaseContract {
   };
 
   populateTransaction: {
+    addStream(
+      streamId: PromiseOrValue<BytesLike>,
+      genesisMiniblockHash: PromiseOrValue<BytesLike>,
+      stream: StreamStruct,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
     allocateStream(
       streamId: PromiseOrValue<BytesLike>,
       nodes: PromiseOrValue<string>[],

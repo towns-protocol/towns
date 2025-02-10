@@ -38,7 +38,12 @@ contract DeployTownsMainnet is Deployer, ITownsBase {
     InflationConfig memory config = inflationConfig(manager);
 
     vm.broadcast(deployer);
-    return address(new Towns({vault: vault, manager: manager, config: config}));
+    return
+      address(
+        new Towns{
+          salt: 0x9f2667b9ec9a7d09a47d87156f032c6735a077adfe74d91cc4d708e8da080040
+        }({vault: vault, manager: manager, config: config})
+      );
   }
 
   function _getVault() internal view returns (address) {
@@ -46,7 +51,7 @@ contract DeployTownsMainnet is Deployer, ITownsBase {
     if (block.chainid == 1) {
       return address(0x23b168657744124360d3553F3bc257f3E28cBaf9);
     } else if (block.chainid == 11155111) {
-      return address(0x86312a65B491CF25D9D265f6218AB013DaCa5e19);
+      return address(0x23b168657744124360d3553F3bc257f3E28cBaf9);
     } else if (block.chainid == 31337 || block.chainid == 31338) {
       return address(0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266); // anvil deployer
     } else {
@@ -58,7 +63,7 @@ contract DeployTownsMainnet is Deployer, ITownsBase {
     if (block.chainid == 1) {
       return address(0x18038ee5692FCE1cc0B0b3F2D63e09639A597F94);
     } else if (block.chainid == 11155111) {
-      return address(0x86312a65B491CF25D9D265f6218AB013DaCa5e19);
+      return address(0x18038ee5692FCE1cc0B0b3F2D63e09639A597F94);
     } else if (block.chainid == 31337 || block.chainid == 31338) {
       return address(0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266); // anvil deployer
     } else {

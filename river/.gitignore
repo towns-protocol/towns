@@ -82,6 +82,3 @@ go.work.sum
 /packages/stress/*/.env*
 
 .idea
-
-/core/node/mls_service/libmls*
-libmls_lib.*

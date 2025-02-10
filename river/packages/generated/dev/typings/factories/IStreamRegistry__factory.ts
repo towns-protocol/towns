@@ -12,6 +12,56 @@ import type {
 const _abi = [
   {
     type: "function",
+    name: "addStream",
+    inputs: [
+      {
+        name: "streamId",
+        type: "bytes32",
+        internalType: "bytes32",
+      },
+      {
+        name: "genesisMiniblockHash",
+        type: "bytes32",
+        internalType: "bytes32",
+      },
+      {
+        name: "stream",
+        type: "tuple",
+        internalType: "struct Stream",
+        components: [
+          {
+            name: "lastMiniblockHash",
+            type: "bytes32",
+            internalType: "bytes32",
+          },
+          {
+            name: "lastMiniblockNum",
+            type: "uint64",
+            internalType: "uint64",
+          },
+          {
+            name: "reserved0",
+            type: "uint64",
+            internalType: "uint64",
+          },
+          {
+            name: "flags",
+            type: "uint64",
+            internalType: "uint64",
+          },
+          {
+            name: "nodes",
+            type: "address[]",
+            internalType: "address[]",
+          },
+        ],
+      },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
     name: "allocateStream",
     inputs: [
       {
@@ -395,6 +445,58 @@ const _abi = [
         type: "bytes",
         indexed: false,
         internalType: "bytes",
+      },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
+    name: "StreamCreated",
+    inputs: [
+      {
+        name: "streamId",
+        type: "bytes32",
+        indexed: false,
+        internalType: "bytes32",
+      },
+      {
+        name: "genesisMiniblockHash",
+        type: "bytes32",
+        indexed: false,
+        internalType: "bytes32",
+      },
+      {
+        name: "stream",
+        type: "tuple",
+        indexed: false,
+        internalType: "struct Stream",
+        components: [
+          {
+            name: "lastMiniblockHash",
+            type: "bytes32",
+            internalType: "bytes32",
+          },
+          {
+            name: "lastMiniblockNum",
+            type: "uint64",
+            internalType: "uint64",
+          },
+          {
+            name: "reserved0",
+            type: "uint64",
+            internalType: "uint64",
+          },
+          {
+            name: "flags",
+            type: "uint64",
+            internalType: "uint64",
+          },
+          {
+            name: "nodes",
+            type: "address[]",
+            internalType: "address[]",
+          },
+        ],
       },
     ],
     anonymous: false,

@@ -1,6 +1,7 @@
 {
     "name": "@river-build/xchain-monitor",
     "type": "module",
+    "version": "0.0.160",
     "packageManager": "yarn@3.8.0",
     "main": "dist/index.js",
     "dependencies": {

@@ -121,10 +121,15 @@ func makeCacheTestContext(t *testing.T, p testParams) (context.Context, *cacheTe
 
 		blockNumber := btc.BlockNum(ctx)
 
-		nr, err := LoadNodeRegistry(ctx, registry, bc.Wallet.Address, blockNumber, bc.ChainMonitor, nil, nil)
-		ctc.require.NoError(err)
-
-		sr, err := NewStreamRegistry(ctx, bc, nr, registry, btc.OnChainConfig)
+		nr, err := LoadNodeRegistry(
+			ctx,
+			registry,
+			bc.Wallet.Address,
+			blockNumber,
+			bc.ChainMonitor,
+			nil,
+			nil,
+		)
 		ctc.require.NoError(err)
 
 		params := &StreamCacheParams{
@@ -139,11 +144,12 @@ func makeCacheTestContext(t *testing.T, p testParams) (context.Context, *cacheTe
 			Metrics:                 infra.NewMetricsFactory(nil, "", ""),
 			RemoteMiniblockProvider: ctc,
 			Scrubber:                &noopScrubber{},
+			NodeRegistry:            nr,
 		}
 
 		inst := &cacheTestInstance{
 			params:         params,
-			streamRegistry: sr,
+			streamRegistry: NewStreamRegistry(bc, nr, registry, btc.OnChainConfig),
 		}
 		ctc.instances = append(ctc.instances, inst)
 		ctc.instancesByAddr[bc.Wallet.Address] = inst
@@ -153,7 +159,7 @@ func makeCacheTestContext(t *testing.T, p testParams) (context.Context, *cacheTe
 }
 
 func (ctc *cacheTestContext) initCache(n int, opts *MiniblockProducerOpts) *StreamCache {
-	streamCache := NewStreamCache(ctc.ctx, ctc.instances[n].params)
+	streamCache := NewStreamCache(ctc.instances[n].params)
 	err := streamCache.Start(ctc.ctx)
 	ctc.require.NoError(err)
 	ctc.instances[n].cache = streamCache

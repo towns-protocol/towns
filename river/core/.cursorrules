@@ -21,7 +21,6 @@ This is a module implementing a backend server for crypto chat application.
 - Tracing provided by opentelemetry
 - Command line parsing provided by cobra
 - Flags parsing provided by viper
-- Rust is used for the mls implementation
 
 # Directory structure
 
@@ -34,10 +33,6 @@ This is a module implementing a backend server for crypto chat application.
     | |-types  # extra helpers for working with contract generatedtypes
     |-docker  # files for docker container
     |-env  # shared configuration fils for supproted environments
-    |-mls  # server-side mls implementation in Rust
-    | |-mls-tools
-    | | |-crates  # ignore
-    | | |-target  # build artifacts: ignore
     |-node  # stream node implementation
     | |-auth  # on-chain auth implementation for river entitlements
     | |-base  # RiverError type and other shared helpers
@@ -48,8 +43,6 @@ This is a module implementing a backend server for crypto chat application.
     | |-lint_extensions  # shared lint extensions
     | |-logging  # zap extentions for log handling
     | |-logs  # ignore
-    | |-mls_service  # mls service implementation
-    | | |-mls_tools  # mls tools implementation
     | |-nodes  # code for tracking other nodes
     | |-notifications  # notification service implementation
     | | |-push

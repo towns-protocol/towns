@@ -1,4 +1,4 @@
-import { EncryptedData } from '@river-build/proto'
+import { EncryptedData, ExportedDevice } from '@river-build/proto'
 import {
     GroupEncryptionAlgorithmId,
     GroupEncryptionSession,
@@ -15,7 +15,7 @@ import {
 } from './base'
 import { GroupDecryption } from './groupDecryption'
 import { GroupEncryption } from './groupEncryption'
-import { EncryptionDevice, ExportedDevice, type EncryptionDeviceInitOpts } from './encryptionDevice'
+import { EncryptionDevice, type EncryptionDeviceInitOpts } from './encryptionDevice'
 import { EncryptionDelegate } from './encryptionDelegate'
 import { check, dlog } from '@river-build/dlog'
 import { HybridGroupEncryption } from './hybridGroupEncryption'

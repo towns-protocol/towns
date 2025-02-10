@@ -25,7 +25,7 @@ import (
 
 var streamRegistryABI, _ = river.StreamRegistryV1MetaData.GetAbi()
 
-// Convinience wrapper for the IRiverRegistryV1 interface (abigen exports it as RiverRegistryV1)
+// RiverRegistryContract is the convinience wrapper for the IRiverRegistryV1 interface (abigen exports it as RiverRegistryV1)
 type RiverRegistryContract struct {
 	OperatorRegistry *river.OperatorRegistryV1
 
@@ -168,6 +168,10 @@ func NewRiverRegistryContract(
 				func(log *types.Log) any { return &river.StreamRegistryV1StreamAllocated{Raw: *log} },
 			},
 			{
+				river.Event_StreamCreated,
+				func(log *types.Log) any { return &river.StreamRegistryV1StreamCreated{Raw: *log} },
+			},
+			{
 				river.Event_StreamLastMiniblockUpdated,
 				func(log *types.Log) any { return &river.StreamRegistryV1StreamLastMiniblockUpdated{Raw: *log} },
 			},
@@ -238,6 +242,73 @@ func (c *RiverRegistryContract) AllocateStream(
 	}
 
 	return RiverError(Err_ERR_UNSPECIFIED, "AllocateStream transaction result unknown")
+}
+
+func (c *RiverRegistryContract) AddStream(
+	ctx context.Context,
+	streamId StreamId,
+	addresses []common.Address,
+	genesisMiniblockHash common.Hash,
+	lastMiniblockHash common.Hash,
+	lastMiniblockNum int64,
+	isSealed bool,
+) error {
+	log := logging.FromCtx(ctx)
+
+	var flags StreamFlag
+	if isSealed {
+		flags |= StreamFlagSealed
+	}
+
+	pendingTx, err := c.Blockchain.TxPool.Submit(
+		ctx,
+		"AddStream",
+		func(opts *bind.TransactOpts) (*types.Transaction, error) {
+			tx, err := c.StreamRegistry.AddStream(
+				opts, streamId, genesisMiniblockHash, river.Stream{
+					LastMiniblockHash: lastMiniblockHash,
+					LastMiniblockNum:  uint64(lastMiniblockNum),
+					Reserved0:         0,
+					Flags:             uint64(flags),
+					Nodes:             addresses,
+				})
+			if err == nil {
+				log.Debugw(
+					"RiverRegistryContract: prepared transaction",
+					"name", "AddStream",
+					"streamId", streamId,
+					"addresses", addresses,
+					"genesisMiniblockHash", genesisMiniblockHash,
+					"lastMiniblockHash", lastMiniblockHash,
+					"lastMiniblockNum", lastMiniblockNum,
+					"isSealed", isSealed,
+					"txHash", tx.Hash(),
+				)
+			}
+			return tx, err
+		},
+	)
+	if err != nil {
+		return AsRiverError(err, Err_CANNOT_CALL_CONTRACT).
+			Func("AddStream").
+			Message("Smart contract call failed")
+	}
+
+	receipt, err := pendingTx.Wait(ctx)
+	if err != nil {
+		return err
+	}
+
+	if receipt != nil && receipt.Status == crypto.TransactionResultSuccess {
+		return nil
+	}
+	if receipt != nil && receipt.Status != crypto.TransactionResultSuccess {
+		return RiverError(Err_ERR_UNSPECIFIED, "Add stream transaction failed").
+			Tag("tx", receipt.TxHash.Hex()).
+			Func("AddStream")
+	}
+
+	return RiverError(Err_ERR_UNSPECIFIED, "AddStream transaction result unknown")
 }
 
 type GetStreamResult struct {

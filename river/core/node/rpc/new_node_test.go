@@ -6,7 +6,6 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
-
 	"github.com/stretchr/testify/require"
 
 	"github.com/towns-protocol/towns/core/contracts/river"

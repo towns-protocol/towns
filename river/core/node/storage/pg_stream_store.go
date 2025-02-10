@@ -34,6 +34,9 @@ type PostgresStreamStore struct {
 	cleanupLockFunc   func()
 
 	numPartitions int
+
+	//
+	esm *ephemeralStreamMonitor
 }
 
 var _ StreamStorage = (*PostgresStreamStore)(nil)
@@ -112,13 +115,14 @@ func NewPostgresStreamStore(
 	instanceId string,
 	exitSignal chan error,
 	metrics infra.MetricsFactory,
-) (*PostgresStreamStore, error) {
-	store := &PostgresStreamStore{
+	ephemeralStreamTtl time.Duration,
+) (store *PostgresStreamStore, err error) {
+	store = &PostgresStreamStore{
 		nodeUUID:   instanceId,
 		exitSignal: exitSignal,
 	}
 
-	if err := store.PostgresEventStore.init(
+	if err = store.PostgresEventStore.init(
 		ctx,
 		poolInfo,
 		metrics,
@@ -129,13 +133,19 @@ func NewPostgresStreamStore(
 		return nil, AsRiverError(err).Func("NewPostgresStreamStore")
 	}
 
-	if err := store.initStreamStorage(ctx); err != nil {
+	if err = store.initStreamStorage(ctx); err != nil {
 		return nil, AsRiverError(err).Func("NewPostgresStreamStore")
 	}
 
 	cancelCtx, cancel := context.WithCancel(ctx)
 	store.cleanupListenFunc = cancel
 	go store.listenForNewNodes(cancelCtx)
+
+	// Start the ephemeral stream monitor.
+	store.esm, err = newEphemeralStreamMonitor(ctx, ephemeralStreamTtl, store)
+	if err != nil {
+		return nil, AsRiverError(err).Func("NewPostgresStreamStore")
+	}
 
 	return store, nil
 }
@@ -482,7 +492,7 @@ func (s *PostgresStreamStore) createStreamStorageTx(
 ) error {
 	sql := s.sqlForStream(
 		`
-			INSERT INTO es (stream_id, latest_snapshot_miniblock, migrated) VALUES ($1, 0, true);
+			INSERT INTO es (stream_id, latest_snapshot_miniblock, migrated, ephemeral) VALUES ($1, 0, true, false);
 			INSERT INTO {{miniblocks}} (stream_id, seq_num, blockdata) VALUES ($1, 0, $2);
 			INSERT INTO {{minipools}} (stream_id, generation, slot_num) VALUES ($1, 1, -1);`,
 		streamId,
@@ -801,7 +811,7 @@ func (s *PostgresStreamStore) readStreamFromLastSnapshotTx(
 	}, nil
 }
 
-// Adds event to the given minipool.
+// WriteEvent adds event to the given minipool.
 // Current generation of minipool should match minipoolGeneration,
 // and there should be exactly minipoolSlot events in the minipool.
 func (s *PostgresStreamStore) WriteEvent(
@@ -996,7 +1006,7 @@ func (s *PostgresStreamStore) readMiniblocksTx(
 func (s *PostgresStreamStore) ReadMiniblocksByStream(
 	ctx context.Context,
 	streamId StreamId,
-	onEachMb func(blockdata []byte, seqNum int) error,
+	onEachMb func(blockdata []byte, seqNum int64) error,
 ) error {
 	return s.txRunner(
 		ctx,
@@ -1014,7 +1024,7 @@ func (s *PostgresStreamStore) readMiniblocksByStreamTx(
 	ctx context.Context,
 	tx pgx.Tx,
 	streamId StreamId,
-	onEachMb func(blockdata []byte, seqNum int) error,
+	onEachMb func(blockdata []byte, seqNum int64) error,
 ) error {
 	if _, err := s.lockStream(ctx, tx, streamId, false); err != nil {
 		return err
@@ -1032,9 +1042,9 @@ func (s *PostgresStreamStore) readMiniblocksByStreamTx(
 		return err
 	}
 
-	prevSeqNum := -1
+	prevSeqNum := int64(-1)
 	var blockdata []byte
-	var seqNum int
+	var seqNum int64
 	_, err = pgx.ForEachRow(rows, []any{&blockdata, &seqNum}, func() error {
 		if (prevSeqNum != -1) && (seqNum != prevSeqNum+1) {
 			// There is a gap in sequence numbers
@@ -1044,6 +1054,60 @@ func (s *PostgresStreamStore) readMiniblocksByStreamTx(
 
 		prevSeqNum = seqNum
 
+		return onEachMb(blockdata, seqNum)
+	})
+
+	return err
+}
+
+// ReadMiniblocksByIds returns miniblocks data of the given miniblocks by the given stream ID.
+func (s *PostgresStreamStore) ReadMiniblocksByIds(
+	ctx context.Context,
+	streamId StreamId,
+	mbs []int64,
+	onEachMb func(blockdata []byte, seqNum int64) error,
+) error {
+	return s.txRunner(
+		ctx,
+		"ReadMiniblocksByIds",
+		pgx.ReadWrite,
+		func(ctx context.Context, tx pgx.Tx) error {
+			return s.readMiniblocksByIdsTx(ctx, tx, streamId, mbs, onEachMb)
+		},
+		&txRunnerOpts{useStreamingPool: true},
+		"streamId", streamId,
+		"mbs", mbs,
+	)
+}
+
+func (s *PostgresStreamStore) readMiniblocksByIdsTx(
+	ctx context.Context,
+	tx pgx.Tx,
+	streamId StreamId,
+	mbs []int64,
+	onEachMb func(blockdata []byte, seqNum int64) error,
+) error {
+	_, err := s.lockStream(ctx, tx, streamId, false)
+	if err != nil {
+		return err
+	}
+
+	rows, err := tx.Query(
+		ctx,
+		s.sqlForStream(
+			"SELECT blockdata, seq_num FROM {{miniblocks}} WHERE stream_id = $1 AND seq_num IN (SELECT unnest($2::int[])) ORDER BY seq_num",
+			streamId,
+		),
+		streamId,
+		mbs,
+	)
+	if err != nil {
+		return err
+	}
+
+	var blockdata []byte
+	var seqNum int64
+	_, err = pgx.ForEachRow(rows, []any{&blockdata, &seqNum}, func() error {
 		return onEachMb(blockdata, seqNum)
 	})
 
@@ -1389,6 +1453,7 @@ func (s *PostgresStreamStore) writeMiniblocksTx(
 				if miniblocks[i].Snapshot {
 					newLastSnapshotMiniblock = miniblocks[i].Number
 				}
+
 				return []any{streamId, miniblocks[i].Number, miniblocks[i].Data}, nil
 			},
 		),
@@ -1464,7 +1529,7 @@ func (s *PostgresStreamStore) Close(ctx context.Context) {
 	s.cleanupLockFunc()
 	// Cancel the notify listening func to release the listener connection before closing the pool.
 	s.cleanupListenFunc()
-
+	s.esm.close()
 	s.PostgresEventStore.Close(ctx)
 }
 

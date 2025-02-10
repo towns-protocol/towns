@@ -560,10 +560,6 @@ function toTownsContent_MemberPayload(
                     return { error: `${description} unknown transaction content` }
             }
         }
-        case 'mls':
-            return {
-                error: `MLS not supported: ${description}`,
-            }
         case 'encryptionAlgorithm':
             return {
                 error: `Encryption Algorithm not supported: ${description}`,

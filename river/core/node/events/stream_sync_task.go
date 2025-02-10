@@ -9,20 +9,27 @@ import (
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
-	. "github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/registries"
 )
 
 func (s *StreamCache) submitSyncStreamTask(
 	ctx context.Context,
 	pool *workerpool.WorkerPool,
-	streamId StreamId,
-	lastMbInContract *MiniblockRef,
+	stream *Stream,
+	streamRecord *registries.GetStreamResult,
 ) {
 	pool.Submit(func() {
-		err := s.syncStreamFromPeers(ctx, streamId, lastMbInContract)
-		if err != nil {
+		if err := s.syncStreamFromPeers(
+			ctx,
+			stream,
+			int64(streamRecord.LastMiniblockNum),
+			streamRecord.IsSealed,
+		); err != nil {
 			logging.FromCtx(ctx).
-				Errorw("Unable to sync stream from peers", "stream", streamId, "error", err, "targetMiniblockNum", lastMbInContract.Num)
+				Errorw("Unable to sync stream from peers",
+					"stream", stream.streamId,
+					"error", err,
+					"targetMiniblockNum", streamRecord.LastMiniblockNum)
 		}
 	})
 }
@@ -32,10 +39,17 @@ func (s *StreamCache) submitSyncStreamTask(
 // TODO: change. It is assumed that stream is already in the local DB and only miniblocks maybe in the need of syncing.
 func (s *StreamCache) syncStreamFromPeers(
 	ctx context.Context,
-	streamId StreamId,
-	lastMbInContract *MiniblockRef,
+	stream *Stream,
+	lastContractMbNum int64,
+	isSealed bool,
 ) error {
-	stream, err := s.getStreamImpl(ctx, streamId, false)
+	// Try to normalize the given stream if needed.
+	err := s.normalizeEphemeralStream(ctx, stream, lastContractMbNum, isSealed)
+	if err != nil {
+		return err
+	}
+
+	stream, err = s.getStreamImpl(ctx, stream.streamId, false)
 	if err != nil {
 		return err
 	}
@@ -49,16 +63,16 @@ func (s *StreamCache) syncStreamFromPeers(
 		}
 	}
 
-	if lastMbInContract.Num <= lastMiniblockNum {
+	if lastContractMbNum <= lastMiniblockNum {
 		return nil
 	}
 
 	fromInclusive := lastMiniblockNum + 1
-	toExclusive := lastMbInContract.Num + 1
+	toExclusive := lastContractMbNum + 1
 
 	remotes, _ := stream.GetRemotesAndIsLocal()
 	if len(remotes) == 0 {
-		return RiverError(Err_UNAVAILABLE, "Stream has no remotes", "stream", streamId)
+		return RiverError(Err_UNAVAILABLE, "Stream has no remotes", "stream", stream.streamId)
 	}
 
 	remote := stream.GetStickyPeer()
@@ -72,7 +86,7 @@ func (s *StreamCache) syncStreamFromPeers(
 	}
 
 	return AsRiverError(err, Err_UNAVAILABLE).
-		Tags("stream", streamId, "missingFromInclusive", nextFromInclusive, "missingToExlusive", toExclusive).
+		Tags("stream", stream.streamId, "missingFromInclusive", nextFromInclusive, "missingToExlusive", toExclusive).
 		Message("No peer could provide miniblocks for stream reconciliation")
 }
 

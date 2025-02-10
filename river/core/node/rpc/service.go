@@ -7,21 +7,19 @@ import (
 	"sync/atomic"
 	"time"
 
-	"go.uber.org/zap"
-
-	"github.com/towns-protocol/towns/core/node/bot_registry"
-	"github.com/towns-protocol/towns/core/node/notifications"
-
 	"connectrpc.com/otelconnect"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
+	"go.uber.org/zap"
 
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/node/auth"
+	"github.com/towns-protocol/towns/core/node/bot_registry"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	. "github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/nodes"
+	"github.com/towns-protocol/towns/core/node/notifications"
 	. "github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
 	"github.com/towns-protocol/towns/core/node/registries"
 	river_sync "github.com/towns-protocol/towns/core/node/rpc/sync"

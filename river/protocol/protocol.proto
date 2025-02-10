@@ -89,7 +89,7 @@ message StreamEvent {
     Tags tags = 7;
 
     /** prev_miniblock_num contains miniblock number for prev_miniblock_hash. */
-    int64 prev_miniblock_num = 8;
+    optional int64 prev_miniblock_num = 8;
 
     /** Variable-type payload. 
       * Payloads should obey the following rules:
@@ -156,21 +156,6 @@ message MiniblockHeader {
 */
 message MemberPayload {
     message Snapshot {
-        // contains the current MLS group state
-        message Mls {
-            message Member {
-                repeated bytes signature_public_keys = 1;
-            }
-            bytes external_group_snapshot = 1;
-            bytes group_info_message = 2;
-            // user_address -> Member
-            map<string, Member> members = 3;
-            map<uint64, bytes> epoch_secrets = 4;
-            map<string, KeyPackage> pending_key_packages = 5;
-            repeated bytes commits_since_last_snapshot = 6;
-            map<string, int64> welcome_messages_miniblock_num = 7;
-        }
-
         message Member {
             bytes user_address = 1;
             int64 miniblock_num = 2;
@@ -184,7 +169,7 @@ message MemberPayload {
         
         repeated Member joined = 1;
         repeated SnappedPin pins = 2;
-        Mls mls = 3;
+        reserved 3;
         EncryptionAlgorithm encryption_algorithm = 4;
         // tips sent in this stream: map<currency, amount>
         map<string, uint64> tips = 5;
@@ -236,43 +221,6 @@ message MemberPayload {
         bytes event_id = 1;
     }
 
-    message Mls {
-        message InitializeGroup {
-            bytes group_info_message = 1;
-            bytes external_group_snapshot = 2;
-            bytes signature_public_key = 3;
-        }
-
-        message ExternalJoin {
-            bytes signature_public_key = 1;
-            bytes commit = 2;
-            bytes group_info_message = 3;
-        }
-
-        message EpochSecrets {
-            message EpochSecret {
-                bytes secret = 1;
-                uint64 epoch = 2;
-            }
-            repeated EpochSecret secrets = 1;
-        }
-
-        message WelcomeMessage {
-            repeated bytes signature_public_keys = 1;
-            repeated bytes welcome_messages = 2;
-            bytes commit = 3;
-            bytes group_info_message = 4;
-        }
-
-        oneof content {
-            InitializeGroup initialize_group = 1;
-            ExternalJoin external_join = 2;
-            EpochSecrets epoch_secrets = 3;
-            KeyPackage key_package = 4;
-            WelcomeMessage welcome_message = 5;
-        }
-    }
-
     message EncryptionAlgorithm {
         optional string algorithm = 1;
     }
@@ -292,10 +240,10 @@ message MemberPayload {
         Nft nft = 7;
         Pin pin = 8;
         Unpin unpin = 9;
-        Mls mls = 10;
         MemberBlockchainTransaction member_blockchain_transaction = 11;
         EncryptionAlgorithm encryption_algorithm = 12;
     }
+    reserved 10;
 }
 
 /**
@@ -728,13 +676,6 @@ message StreamSettings {
  */
 message EncryptedData {
     /**
-     * Encrypted payload when algorithm is set to mls_0.0.1
-     */
-     message Mls {
-        uint64 epoch = 1;
-        bytes ciphertext = 2;
-      }
-    /**
     * Ciphertext of the encryption envelope.
     */
     string ciphertext = 1;
@@ -762,10 +703,7 @@ message EncryptedData {
     */
     optional string ref_event_id = 6;
 
-    /**
-     * Encrypted payload when algorithm is set to mls_0.0.1
-     */
-    optional Mls mls = 7;
+    reserved 7;
 
     // Used if algorithm is set to 'grpaes'
     bytes ciphertext_bytes = 8;
@@ -792,6 +730,13 @@ message SyncCookie  {
     int64 minipool_gen = 3;
     int64 minipool_slot = 4;
     bytes prev_miniblock_hash = 5;
+}
+
+message CreationCookie {
+  bytes stream_id = 1;
+  repeated bytes nodes = 2;
+  int64 miniblock_num = 3;
+  bytes prev_miniblock_hash = 4;
 }
 
 message StreamAndCookie {
@@ -833,13 +778,23 @@ message CreateStreamRequest {
     repeated Envelope events = 1;
     bytes stream_id = 2; // stream_id should match the stream_id in the inception payload of the first event
     map<string, bytes> metadata = 3;
- }
+}
 
 message CreateStreamResponse {
     // all events in current minipool and cookie allowing to sync from the end of the stream
     StreamAndCookie stream = 1;
     // derived events created in other streams when this stream was created
     repeated EventRef derived_events = 2;
+}
+
+message CreateMediaStreamRequest {
+    repeated Envelope events = 1;
+    bytes stream_id = 2; // stream_id should match the stream_id in the inception payload of the first event
+    map<string, bytes> metadata = 3;
+}
+
+message CreateMediaStreamResponse {
+    CreationCookie next_creation_cookie = 1;
 }
 
 message GetStreamRequest {
@@ -892,6 +847,16 @@ message AddEventResponse {
     Error error = 1; 
     // all events created during this request including parent events
     repeated EventRef new_events = 2;
+}
+
+message AddMediaEventRequest {
+    Envelope event = 1;
+    CreationCookie creation_cookie = 2;
+    bool last = 3;
+}
+
+message AddMediaEventResponse {
+    CreationCookie creation_cookie = 1;
 }
 
 // SyncStreamsRequest is a request to start a streams sync session.
@@ -1005,12 +970,14 @@ message GetMiniblockHeaderResponse {
 
 service StreamService {
     rpc CreateStream(CreateStreamRequest) returns (CreateStreamResponse);
+    rpc CreateMediaStream(CreateMediaStreamRequest) returns (CreateMediaStreamResponse);
     rpc GetStream(GetStreamRequest) returns (GetStreamResponse);
     rpc GetStreamEx(GetStreamExRequest) returns (stream GetStreamExResponse);
     rpc GetMiniblocks(GetMiniblocksRequest) returns (GetMiniblocksResponse);
     rpc GetLastMiniblockHash(GetLastMiniblockHashRequest) returns (GetLastMiniblockHashResponse);
     rpc GetMiniblockHeader(GetMiniblockHeaderRequest) returns (GetMiniblockHeaderResponse);
     rpc AddEvent(AddEventRequest) returns (AddEventResponse);
+    rpc AddMediaEvent(AddMediaEventRequest) returns (AddMediaEventResponse);
     rpc SyncStreams(SyncStreamsRequest) returns (stream SyncStreamsResponse);
     rpc AddStreamToSync(AddStreamToSyncRequest) returns (AddStreamToSyncResponse);
     // ModifySync adds/removes streams to/from an in progress sync session.

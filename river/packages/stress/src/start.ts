@@ -68,6 +68,6 @@ const run = async () => {
     exit(0)
 }
 run().catch((e) => {
-    logger.error('unhandled error:', e)
+    logger.error(e, 'unhandled error:')
     exit(1)
 })

@@ -361,10 +361,6 @@ function toTownsContent_MemberPayload(
                     unpinnedEventId: bin_toHexString(value.content.value.eventId),
                 } satisfies UnpinEvent,
             }
-        case 'mls': // TODO: remove after proto update
-            return {
-                error: 'not supported',
-            }
         case 'encryptionAlgorithm':
             return {
                 content: {

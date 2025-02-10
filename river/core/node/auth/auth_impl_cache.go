@@ -5,13 +5,12 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	lru "github.com/hashicorp/golang-lru/arc/v2"
 
 	"github.com/towns-protocol/towns/core/config"
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/protocol"
-
-	lru "github.com/hashicorp/golang-lru/arc/v2"
 )
 
 type entitlementCache struct {

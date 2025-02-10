@@ -7,10 +7,11 @@ import (
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
+
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
-	"github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/registries"
 )
 
 // mbJos tracks single miniblock production attempt for a single stream.
@@ -132,7 +133,7 @@ func (j *mbJob) processRemoteProposals(ctx context.Context) ([]*mbProposal, *Str
 		return nil, nil, err
 	}
 	if view.minipool.generation != request.NewMiniblockNum {
-		return nil, nil, RiverError(Err_MINIBLOCK_TOO_OLD, "mbJob.processRemoteProposals: stream advanced in the meantime")
+		return nil, nil, RiverError(Err_MINIBLOCK_TOO_OLD, "mbJob.processRemoteProposals: stream advanced in the meantime (1)")
 	}
 
 	added := make(map[common.Hash]bool)
@@ -150,13 +151,20 @@ func (j *mbJob) processRemoteProposals(ctx context.Context) ([]*mbProposal, *Str
 				added[parsed.Hash] = true
 
 				if !view.minipool.events.Has(parsed.Hash) {
-					err = j.stream.AddEvent(ctx, parsed)
-					if err != nil {
+					newView, err := j.stream.AddEvent2(ctx, parsed)
+					if err == nil {
+						view = newView
+					} else {
 						logging.FromCtx(ctx).Errorw("mbJob.processRemoteProposals: error adding event", "err", err)
 					}
 				}
 			}
 		}
+	}
+
+	// View might have been updated by adding events, check if stream advanced in the meantime.
+	if view.minipool.generation != request.NewMiniblockNum {
+		return nil, nil, RiverError(Err_MINIBLOCK_TOO_OLD, "mbJob.processRemoteProposals: stream advanced in the meantime (2)")
 	}
 
 	// Check if we have enough remote proposals and return them.
@@ -174,10 +182,12 @@ func (j *mbJob) processRemoteProposals(ctx context.Context) ([]*mbProposal, *Str
 				Err_CANNOT_CALL_CONTRACT, "mbJob.processRemoteProposals: cannot get contract stream")
 		}
 
-		if err := j.cache.syncStreamFromPeers(ctx, j.stream.streamId, &shared.MiniblockRef{
-			Hash: contractStream.LastMiniblockHash,
-			Num:  int64(contractStream.LastMiniblockNum),
-		}); err != nil {
+		if err := j.cache.syncStreamFromPeers(
+			ctx,
+			j.stream,
+			int64(contractStream.LastMiniblockNum),
+			contractStream.Flags&uint64(registries.StreamFlagSealed) != 0,
+		); err != nil {
 			return nil, nil, err
 		}
 

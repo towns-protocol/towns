@@ -16,7 +16,7 @@ type MockNodeRegistry struct {
 	mock.Mock
 }
 
-// GetAllNodes provides a mock function with given fields:
+// GetAllNodes provides a mock function with no fields
 func (_m *MockNodeRegistry) GetAllNodes() []*nodes.NodeRecord {
 	ret := _m.Called()
 
@@ -126,7 +126,7 @@ func (_m *MockNodeRegistry) GetStreamServiceClientForAddress(address common.Addr
 	return r0, r1
 }
 
-// GetValidNodeAddresses provides a mock function with given fields:
+// GetValidNodeAddresses provides a mock function with no fields
 func (_m *MockNodeRegistry) GetValidNodeAddresses() []common.Address {
 	ret := _m.Called()
 

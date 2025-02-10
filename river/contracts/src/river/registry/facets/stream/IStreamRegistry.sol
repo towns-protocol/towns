@@ -18,6 +18,12 @@ interface IStreamRegistryBase {
     bytes genesisMiniblock
   );
 
+  event StreamCreated(
+    bytes32 streamId,
+    bytes32 genesisMiniblockHash,
+    Stream stream
+  );
+
   event StreamLastMiniblockUpdated(
     bytes32 streamId,
     bytes32 lastMiniblockHash,
@@ -64,6 +70,17 @@ interface IStreamRegistry is IStreamRegistryBase {
     address[] memory nodes,
     bytes32 genesisMiniblockHash,
     bytes memory genesisMiniblock
+  ) external;
+
+  /**
+   * @notice Create a new stream in the registry
+   * @param stream is the Stream object to be created
+   * @dev Only callable by registered nodes
+   */
+  function addStream(
+    bytes32 streamId,
+    bytes32 genesisMiniblockHash,
+    Stream memory stream
   ) external;
 
   /**

@@ -365,16 +365,12 @@ func (s *Service) initRiverChain() error {
 		return err
 	}
 
-	s.streamRegistry, err = nodes.NewStreamRegistry(
-		ctx,
+	s.streamRegistry = nodes.NewStreamRegistry(
 		s.riverChain,
 		s.nodeRegistry,
 		s.registryContract,
 		s.chainConfig,
 	)
-	if err != nil {
-		return err
-	}
 
 	return nil
 }
@@ -577,6 +573,7 @@ func (s *Service) initStore() error {
 			s.instanceId,
 			s.exitSignal,
 			s.metrics,
+			s.chainConfig.Get().StreamEphemeralStreamTTL,
 		)
 		if err != nil {
 			return err
@@ -694,10 +691,11 @@ func (s *Service) initCacheAndSync(opts *ServerStartOpts) error {
 		ChainMonitor:            s.riverChain.ChainMonitor,
 		Metrics:                 s.metrics,
 		RemoteMiniblockProvider: s,
+		NodeRegistry:            s.nodeRegistry,
 		Tracer:                  s.otelTracer,
 	}
 
-	s.cache = events.NewStreamCache(s.serverCtx, cacheParams)
+	s.cache = events.NewStreamCache(cacheParams)
 
 	// There is circular dependency between cache and scrubber, so scurbber
 	// needs to be patched into cache params after cache is created.

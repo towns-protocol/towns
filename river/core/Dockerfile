@@ -16,14 +16,9 @@ WORKDIR /build
 COPY . .
 RUN go mod download
 
-WORKDIR /build/mls/mls-tools/crates/mlslib
-RUN cargo build --release
-RUN cp -f ../../target/release/libmls* /build
-
 # Build river_node
 WORKDIR /build
-RUN CGO_LDFLAGS="-L/build" \
-    go build \
+RUN go build \
     -trimpath \
     -o /bin/river_node \
     -ldflags="-X github.com/towns-protocol/towns/core/river_node/version.version=$VER_VERSION -X github.com/towns-protocol/towns/core/river_node/version.branch=$VER_BRANCH -X github.com/towns-protocol/towns/core/river_node/version.commit=$VER_COMMIT" \

@@ -211,3 +211,24 @@ message BearerToken {
     bytes delegate_sig = 2;
     int64 expiry_epoch_ms = 3;
 }
+
+message ExportedDevice {
+    message GroupSession {
+        string session_id = 1;
+        string stream_id = 2;
+        string session = 3;
+    }
+
+    message HybridGroupSession {
+        string session_id = 1;
+        string stream_id = 2;
+        bytes session_key = 3;
+        int64 miniblock_num = 4;
+    }
+
+    string pickleKey = 1;
+    string pickledAccount = 2;
+    repeated GroupSession outboundSessions = 3;
+    repeated GroupSession inboundSessions = 4;
+    repeated HybridGroupSession hybridGroupSessions = 5;
+}

@@ -353,8 +353,6 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                 break
             case undefined:
                 break
-            case 'mls': // TODO: remove after proto update
-                break
             default:
                 logNever(payload.content)
         }
@@ -404,8 +402,6 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
             case 'unpin':
                 break
             case 'memberBlockchainTransaction':
-                break
-            case 'mls': // TODO: remove after proto update
                 break
             case 'encryptionAlgorithm':
                 break

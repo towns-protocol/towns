@@ -126,12 +126,7 @@ func make_SnapshotMembers(iInception IsInceptionPayload, creatorAddress []byte) 
 	}
 
 	// initialize the snapshot with an empty maps
-	snapshot := &MemberPayload_Snapshot{
-		Mls: &MemberPayload_Snapshot_Mls{
-			Members:      make(map[string]*MemberPayload_Snapshot_Mls_Member),
-			EpochSecrets: make(map[uint64][]byte),
-		},
-	}
+	snapshot := &MemberPayload_Snapshot{}
 
 	switch inception := iInception.(type) {
 	case *UserPayload_Inception, *UserSettingsPayload_Inception, *UserInboxPayload_Inception, *UserMetadataPayload_Inception:
@@ -617,92 +612,8 @@ func update_Snapshot_Member(
 		default:
 			return RiverError(Err_INVALID_ARGUMENT, fmt.Sprintf("unknown member blockchain transaction type %T", transactionContent))
 		}
-	case *MemberPayload_Mls_:
-		return update_Snapshot_Mls(iSnapshot, content.Mls, miniblockNum, creatorAddress)
 	default:
 		return RiverError(Err_INVALID_ARGUMENT, fmt.Sprintf("unknown membership payload type %T", memberPayload.Content))
-	}
-}
-
-func update_Snapshot_Mls(
-	iSnapshot *Snapshot,
-	mlsPayload *MemberPayload_Mls,
-	miniblockNum int64,
-	creatorAddress []byte,
-) error {
-	if iSnapshot.Members.GetMls() == nil {
-		iSnapshot.Members.Mls = &MemberPayload_Snapshot_Mls{
-			Members:      make(map[string]*MemberPayload_Snapshot_Mls_Member),
-			EpochSecrets: make(map[uint64][]byte),
-		}
-	}
-	snapshot := iSnapshot.Members.Mls
-	if snapshot.Members == nil {
-		snapshot.Members = make(map[string]*MemberPayload_Snapshot_Mls_Member)
-	}
-
-	if snapshot.EpochSecrets == nil {
-		snapshot.EpochSecrets = make(map[uint64][]byte)
-	}
-
-	if snapshot.PendingKeyPackages == nil {
-		snapshot.PendingKeyPackages = make(map[string]*MemberPayload_KeyPackage)
-	}
-
-	if snapshot.WelcomeMessagesMiniblockNum == nil {
-		snapshot.WelcomeMessagesMiniblockNum = make(map[string]int64)
-	}
-
-	addSignaturePublicKey := func(userAddress []byte, signaturePublicKey []byte) {
-		memberAddress := common.BytesToAddress(userAddress).Hex()
-		if _, ok := snapshot.Members[memberAddress]; !ok {
-			snapshot.Members[memberAddress] = &MemberPayload_Snapshot_Mls_Member{
-				SignaturePublicKeys: make([][]byte, 0),
-			}
-		}
-		snapshot.Members[memberAddress].SignaturePublicKeys = append(snapshot.Members[memberAddress].SignaturePublicKeys, signaturePublicKey)
-	}
-
-	switch content := mlsPayload.Content.(type) {
-	case *MemberPayload_Mls_InitializeGroup_:
-		if len(snapshot.ExternalGroupSnapshot) > 0 || len(snapshot.GroupInfoMessage) > 0 {
-			return RiverError(Err_INVALID_ARGUMENT, "duplicate mls initialization")
-		}
-		memberAddress := common.BytesToAddress(creatorAddress).Hex()
-		snapshot.ExternalGroupSnapshot = content.InitializeGroup.ExternalGroupSnapshot
-		snapshot.GroupInfoMessage = content.InitializeGroup.GroupInfoMessage
-		snapshot.Members[memberAddress] = &MemberPayload_Snapshot_Mls_Member{
-			SignaturePublicKeys: [][]byte{content.InitializeGroup.SignaturePublicKey},
-		}
-		return nil
-	case *MemberPayload_Mls_ExternalJoin_:
-		addSignaturePublicKey(creatorAddress, content.ExternalJoin.SignaturePublicKey)
-		snapshot.CommitsSinceLastSnapshot = append(snapshot.CommitsSinceLastSnapshot, content.ExternalJoin.Commit)
-		return nil
-	case *MemberPayload_Mls_EpochSecrets_:
-		for _, secret := range content.EpochSecrets.Secrets {
-			if _, ok := snapshot.EpochSecrets[secret.Epoch]; !ok {
-				snapshot.EpochSecrets[secret.Epoch] = secret.Secret
-			}
-		}
-		return nil
-	case *MemberPayload_Mls_KeyPackage:
-		signatureKey := common.Bytes2Hex(content.KeyPackage.SignaturePublicKey)
-		snapshot.PendingKeyPackages[signatureKey] = content.KeyPackage
-		return nil
-	case *MemberPayload_Mls_WelcomeMessage_:
-		for _, key := range content.WelcomeMessage.SignaturePublicKeys {
-			signatureKey := common.Bytes2Hex(key)
-			if keyPackage, ok := snapshot.PendingKeyPackages[signatureKey]; ok {
-				addSignaturePublicKey(keyPackage.UserAddress, keyPackage.SignaturePublicKey)
-			}
-			delete(snapshot.PendingKeyPackages, signatureKey)
-			snapshot.WelcomeMessagesMiniblockNum[signatureKey] = miniblockNum
-		}
-		snapshot.CommitsSinceLastSnapshot = append(snapshot.CommitsSinceLastSnapshot, content.WelcomeMessage.Commit)
-		return nil
-	default:
-		return RiverError(Err_INVALID_ARGUMENT, fmt.Sprintf("unknown MLS payload type %T", mlsPayload.Content))
 	}
 }
 

@@ -125,7 +125,7 @@ func TotalQuorumNum(totalNumNodes int) int {
 	return (totalNumNodes + 1) / 2
 }
 
-// Returns number of remotes that need to succeed for quorum based on where the local is present.
+// RemoteQuorumNum returns number of remotes that need to succeed for quorum based on where the local is present.
 func RemoteQuorumNum(remotes int, local bool) int {
 	if local {
 		return TotalQuorumNum(remotes+1) - 1

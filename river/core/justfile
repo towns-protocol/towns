@@ -195,7 +195,6 @@ run-go *args: _require_run_env
     source ${ENV_FILE}
     cd ${RUN_BASE}
     mkdir -p logs
-    CGO_LDFLAGS="-L./bin" \
     go run ../../river_node/main.go \
         --config common.yaml \
         --config config.yaml \
@@ -288,31 +287,18 @@ register-nodes-river: _require_run_env config-river-chain config-instances just-
 
 config: _require_run_env config-root register-nodes-base register-nodes-river storage-start
 
-_build-mls $OUTPUT_DIR:
-    #!/usr/bin/env -S bash {{BASH_OPTS}}
-    echo "Building MLS ${OUTPUT_DIR}"
-    mkdir -p ${OUTPUT_DIR}
-    cargo build --release --manifest-path ./mls/mls-tools/crates/mlslib/Cargo.toml
-    cp ./mls/mls-tools/target/release/libmls* ${OUTPUT_DIR}
-
-# Build MLS library for running go tests
-build-mls: (_build-mls "./run_files/mls")
-
-_build-node: _require_run_env
+build: _require_run_env
     #!/usr/bin/env -S bash {{BASH_OPTS}}
     source ${ENV_FILE}
     OUTPUT=${RUN_BASE}/bin/river_node
     echo "Building node binary ${OUTPUT}"
     mkdir -p ${RUN_BASE}/bin
 
-    CGO_LDFLAGS="-L${RUN_BASE}/bin" \
     go build \
         -o ${OUTPUT} \
         -race \
         -ldflags="-X github.com/towns-protocol/towns/core/river_node/version.branch=$(git rev-parse --abbrev-ref HEAD) -X github.com/towns-protocol/towns/core/river_node/version.commit=$(git describe --tags --always --dirty)" \
         ./river_node/main.go
-
-build: _require_run_env (_build-mls RUN_BASE / "bin") _build-node
 
 _run-node $INSTANCE_NUM $INSTANCE_DIR: _require_run_env
     #!/usr/bin/env -S bash {{BASH_OPTS}}
@@ -534,14 +520,14 @@ cast-base *args:
     shift
     cast ${METHOD} -r ${RPC_BASE} "$@"
 
-_test-from-dir $DIR *args: build-mls
+_test-from-dir $DIR *args:
     #!/usr/bin/env -S bash {{BASH_OPTS}}
     cd $DIR
     echo "Running go test from $(git rev-parse --show-prefix)"
     if [[ "${GITHUB_ACTIONS:-false}" == "true" ]]; then
-        CGO_LDFLAGS="-L{{justfile_directory()}}/run_files/mls" go test {{args}}
+        go test {{args}}
     else
-        CGO_LDFLAGS="-L{{justfile_directory()}}/run_files/mls" go test {{args}} | yarn exec pino-pretty
+        go test {{args}} | yarn exec pino-pretty
     fi
 
 # Run go tests from current directory

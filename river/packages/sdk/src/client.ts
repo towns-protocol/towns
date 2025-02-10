@@ -32,6 +32,7 @@ import {
     GetStreamResponse,
     CreateStreamResponse,
     ChannelProperties,
+    CreationCookie,
 } from '@river-build/proto'
 import {
     bin_fromHexString,
@@ -873,6 +874,60 @@ export class Client
         check(isDefined(streamView.prevMiniblockHash), 'prevMiniblockHash must be defined')
 
         return { streamId: streamId, prevMiniblockHash: streamView.prevMiniblockHash }
+    }
+
+    async createMediaStreamNew(
+        channelId: string | Uint8Array | undefined,
+        spaceId: string | Uint8Array | undefined,
+        userId: string | undefined,
+        chunkCount: number,
+        streamSettings?: PlainMessage<StreamSettings>,
+    ): Promise<{ creationCookie: CreationCookie }> {
+        assert(this.userStreamId !== undefined, 'userStreamId must be set')
+        if (!channelId && !spaceId && !userId) {
+            throw Error('channelId, spaceId or userId must be set')
+        }
+        if (spaceId) {
+            assert(isSpaceStreamId(spaceId), 'spaceId must be a valid streamId')
+        }
+        if (channelId) {
+            assert(
+                isChannelStreamId(channelId) ||
+                    isDMChannelStreamId(channelId) ||
+                    isGDMChannelStreamId(channelId),
+                'channelId must be a valid streamId',
+            )
+        }
+        if (userId) {
+            assert(isUserId(userId), 'userId must be a valid userId')
+        }
+
+        const streamId = makeUniqueMediaStreamId()
+
+        this.logCall('createMedia', channelId ?? spaceId, userId, streamId)
+        const inceptionEvent = await makeEvent(
+            this.signerContext,
+            make_MediaPayload_Inception({
+                streamId: streamIdAsBytes(streamId),
+                channelId: channelId ? streamIdAsBytes(channelId) : undefined,
+                spaceId: spaceId ? streamIdAsBytes(spaceId) : undefined,
+                userId: userId ? addressFromUserId(userId) : undefined,
+                chunkCount,
+                settings: streamSettings,
+            }),
+        )
+
+        const response = await this.rpcClient.createMediaStream({
+            events: [inceptionEvent],
+            streamId: streamIdAsBytes(streamId),
+        })
+
+        check(
+            response?.nextCreationCookie !== undefined,
+            'nextCreationCookie was expected but was not returned in response',
+        )
+
+        return { creationCookie: response.nextCreationCookie }
     }
 
     async updateChannel(
@@ -1754,6 +1809,19 @@ export class Client
         return this.makeEventWithHashAndAddToStream(streamId, payload, prevMiniblockHash)
     }
 
+    async sendMediaPayloadNew(
+        creationCookie: CreationCookie,
+        last: boolean,
+        data: Uint8Array,
+        chunkIndex: number,
+    ): Promise<{ creationCookie: CreationCookie }> {
+        const payload = make_MediaPayload_Chunk({
+            data: data,
+            chunkIndex: chunkIndex,
+        })
+        return this.makeMediaEventWithHashAndAddToMediaStream(creationCookie, last, payload)
+    }
+
     async getMediaPayload(
         streamId: string,
         secretKey: Uint8Array,
@@ -2427,6 +2495,29 @@ export class Client
                 throw err
             }
         }
+    }
+
+    // makeMediaEventWithHashAndAddToMediaStream is used for uploading media chunks to the media stream.
+    // This function uses media stream specific RPC endpoints to upload media chunks.
+    // These endpoints are optimized for media uploads and are not used for general stream events.
+    async makeMediaEventWithHashAndAddToMediaStream(
+        creationCookie: CreationCookie,
+        last: boolean,
+        payload: PlainMessage<StreamEvent>['payload'],
+    ): Promise<{ creationCookie: CreationCookie }> {
+        const streamIdStr = streamIdAsString(creationCookie.streamId)
+        check(isDefined(streamIdStr) && streamIdStr !== '', 'streamId must be defined')
+        const event = await makeEvent(this.signerContext, payload, creationCookie.prevMiniblockHash)
+
+        const resp = await this.rpcClient.addMediaEvent({
+            event,
+            creationCookie,
+            last,
+        })
+
+        check(isDefined(resp.creationCookie), 'creationCookie not found in response')
+
+        return { creationCookie: resp.creationCookie }
     }
 
     async getStreamLastMiniblockHash(streamId: string | Uint8Array): Promise<Uint8Array> {

@@ -44,18 +44,18 @@
   },
   "sources": {
     "contracts/src/river/registry/facets/stream/IStreamRegistry.sol": {
-      "keccak256": "0x5e8bd4aa3130035d463d4fbc0214aaeb7c23a7042d29a10c593b422d6d2a47b4",
+      "keccak256": "0xa72836372c31f4dbb87ef2ef4eada35173d8d18b0a3d56a1d7c8c1984d0e4795",
       "urls": [
-        "bzz-raw://928c460af3995f8df31e48557a6d9eb16a6d89307f268709570bdfc932dc3a58",
-        "dweb:/ipfs/QmTpiActnDg7Kvzezvvj9JCQWM2EsRmrZbXhXnzjhpCzCT"
+        "bzz-raw://aaf8c0d16891fb009b8c3d2fd23d2a82752a5841a77709ba8334070ff877aed6",
+        "dweb:/ipfs/QmWEmMtnvVLUis4kcDthoQ7PkkVsZtCBNLhKKrtcKJhyUT"
       ],
       "license": "MIT"
     },
     "contracts/src/river/registry/facets/stream/StreamRegistry.sol": {
-      "keccak256": "0xe61f190231d18c91cc44d556ae19b9d344ce877fc85568a79e3d4c0ab5f864ac",
+      "keccak256": "0xc03eab6e7207c9f1a5e727e18046b26a6d39356d02c13a5e9c76800a6d8a4cff",
       "urls": [
-        "bzz-raw://b0919767472bfe186b5e0f8c6e7b00d2f2a99b8cd0ab15f77406de4c699a2104",
-        "dweb:/ipfs/QmXfQPVM59CFXgk58kaD26rWVGKq8HxQQFCMNXySSJbXRK"
+        "bzz-raw://38f368a9c988cdadc3835281875c6f4bbafec2c9b8327d26b180c80dcc829351",
+        "dweb:/ipfs/QmSoLZdCKbCSsoN7RZb9DwbTAswy5cWzUiCkK6KSSz6c8B"
       ],
       "license": "MIT"
     },

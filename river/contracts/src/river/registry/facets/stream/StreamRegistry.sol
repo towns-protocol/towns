@@ -61,6 +61,30 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
   }
 
   /// @inheritdoc IStreamRegistry
+  function addStream(
+    bytes32 streamId,
+    bytes32 genesisMiniblockHash,
+    Stream memory stream
+  ) external onlyNode(msg.sender) {
+    // verify that the streamId is not already in the registry
+    if (ds.streams.contains(streamId))
+      revert(RiverRegistryErrors.ALREADY_EXISTS);
+
+    // verify that the nodes stream is placed on are in the registry
+    uint256 nodeCount = stream.nodes.length;
+    for (uint256 i = 0; i < nodeCount; ++i) {
+      if (!ds.nodes.contains(stream.nodes[i]))
+        revert(RiverRegistryErrors.NODE_NOT_FOUND);
+    }
+
+    ds.streams.add(streamId);
+    ds.streamById[streamId] = stream;
+    ds.genesisMiniblockHashByStreamId[streamId] = genesisMiniblockHash;
+
+    emit StreamCreated(streamId, genesisMiniblockHash, stream);
+  }
+
+  /// @inheritdoc IStreamRegistry
   function getStream(bytes32 streamId) external view returns (Stream memory) {
     if (!ds.streams.contains(streamId)) revert(RiverRegistryErrors.NOT_FOUND);
     return ds.streamById[streamId];

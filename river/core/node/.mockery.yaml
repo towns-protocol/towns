@@ -12,3 +12,4 @@ packages:
     github.com/towns-protocol/towns/core/node/protocol/protocolconnect:
         interfaces:
             StreamServiceClient:
+            NodeToNodeHandler:

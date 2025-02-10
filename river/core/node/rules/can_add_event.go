@@ -16,8 +16,6 @@ import (
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/logging"
-	"github.com/towns-protocol/towns/core/node/mls_service"
-	"github.com/towns-protocol/towns/core/node/mls_service/mls_tools"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/shared"
 	"go.uber.org/zap"
@@ -79,31 +77,6 @@ type aePinRules struct {
 type aeUnpinRules struct {
 	params *aeParams
 	unpin  *MemberPayload_Unpin
-}
-
-type aeMlsInitializeGroupRules struct {
-	params          *aeParams
-	initializeGroup *MemberPayload_Mls_InitializeGroup
-}
-
-type aeMlsExternalJoinRules struct {
-	params       *aeParams
-	externalJoin *MemberPayload_Mls_ExternalJoin
-}
-
-type aeMlsEpochSecrets struct {
-	params  *aeParams
-	secrets *MemberPayload_Mls_EpochSecrets
-}
-
-type aeMlsKeyPackageRules struct {
-	params     *aeParams
-	keyPackage *MemberPayload_KeyPackage
-}
-
-type aeMlsWelcomeMessageRules struct {
-	params         *aeParams
-	welcomeMessage *MemberPayload_Mls_WelcomeMessage
 }
 
 type aeMediaPayloadChunkRules struct {
@@ -592,70 +565,9 @@ func (params *aeParams) canAddMemberPayload(payload *StreamEvent_MemberPayload) 
 			check(params.creatorIsValidNode).
 			check(ru.validMemberBlockchainTransaction_IsUnique).
 			check(ru.validMemberBlockchainTransaction_ReceiptMetadata)
-	case *MemberPayload_Mls_:
-		if !params.config.EnableMls {
-			return aeBuilder().
-				fail(RiverError(Err_INVALID_ARGUMENT, "mls disabled globally"))
-		}
-		return params.canAddMlsPayload(content.Mls)
-
 	case *MemberPayload_EncryptionAlgorithm_:
 		return aeBuilder().
 			check(params.creatorIsMember)
-	default:
-		return aeBuilder().
-			fail(unknownContentType(content))
-	}
-}
-
-func (params *aeParams) canAddMlsPayload(payload *MemberPayload_Mls) ruleBuilderAE {
-	switch content := payload.Content.(type) {
-	case *MemberPayload_Mls_InitializeGroup_:
-		ru := &aeMlsInitializeGroupRules{
-			params:          params,
-			initializeGroup: content.InitializeGroup,
-		}
-		return aeBuilder().
-			check(params.creatorIsMember).
-			check(ru.validMlsInitializeGroup)
-	case *MemberPayload_Mls_ExternalJoin_:
-		ru := &aeMlsExternalJoinRules{
-			params:       params,
-			externalJoin: content.ExternalJoin,
-		}
-		return aeBuilder().
-			check(params.creatorIsMember).
-			check(params.mlsInitialized).
-			check(ru.validMlsExternalJoin)
-	case *MemberPayload_Mls_EpochSecrets_:
-		ru := &aeMlsEpochSecrets{
-			params:  params,
-			secrets: content.EpochSecrets,
-		}
-		return aeBuilder().
-			check(params.creatorIsMember).
-			check(params.mlsInitialized).
-			check(ru.validMlsEpochSecrets)
-
-	case *MemberPayload_Mls_KeyPackage:
-		ru := &aeMlsKeyPackageRules{
-			params:     params,
-			keyPackage: content.KeyPackage,
-		}
-		return aeBuilder().
-			check(params.creatorIsMember).
-			check(params.mlsInitialized).
-			check(ru.validMlsKeyPackage)
-
-	case *MemberPayload_Mls_WelcomeMessage_:
-		ru := &aeMlsWelcomeMessageRules{
-			params:         params,
-			welcomeMessage: content.WelcomeMessage,
-		}
-		return aeBuilder().
-			check(params.creatorIsMember).
-			check(params.mlsInitialized).
-			check(ru.validMlsWelcomeMessage)
 	default:
 		return aeBuilder().
 			fail(unknownContentType(content))
@@ -692,14 +604,6 @@ func (params *aeParams) creatorIsMember() (bool, error) {
 		return false, err
 	}
 	return true, nil
-}
-
-func (params *aeParams) mlsInitialized() (bool, error) {
-	mlsInitialized, err := params.streamView.IsMlsInitialized()
-	if err != nil {
-		return false, err
-	}
-	return mlsInitialized, nil
 }
 
 func (ru *aeMemberBlockchainTransactionRules) validMemberBlockchainTransaction_ReceiptMetadata() (bool, error) {
@@ -1445,124 +1349,6 @@ func (ru *aeMembershipRules) channelMembershipEntitlements() (*auth.ChainAuthArg
 	)
 
 	return chainAuthArgs, nil
-}
-
-func (ru *aeMlsInitializeGroupRules) validMlsInitializeGroup() (bool, error) {
-	mlsInitialized, err := ru.params.streamView.IsMlsInitialized()
-	if err != nil {
-		return false, err
-	}
-	if mlsInitialized {
-		return false, RiverError(Err_INVALID_ARGUMENT, "group already initialized")
-	}
-	request := mls_tools.InitialGroupInfoRequest{
-		SignaturePublicKey:    ru.initializeGroup.SignaturePublicKey,
-		GroupInfoMessage:      ru.initializeGroup.GroupInfoMessage,
-		ExternalGroupSnapshot: ru.initializeGroup.ExternalGroupSnapshot,
-	}
-	resp, err := mls_service.InitialGroupInfoRequest(&request)
-	if err != nil {
-		return false, err
-	}
-	if resp.GetResult() != mls_tools.ValidationResult_VALID {
-		return false, RiverError(Err_INVALID_ARGUMENT, "invalid group init", "result", resp.GetResult())
-	}
-	return true, nil
-}
-
-func (ru *aeMlsExternalJoinRules) validMlsExternalJoin() (bool, error) {
-	view := ru.params.streamView
-	mlsGroupState, err := view.GetMlsGroupState()
-	if err != nil {
-		return false, err
-	}
-
-	externalJoinRequest := &mls_tools.ExternalJoinRequest{
-		GroupState:                      mlsGroupState,
-		ProposedExternalJoinCommit:      ru.externalJoin.Commit,
-		ProposedExternalJoinInfoMessage: ru.externalJoin.GroupInfoMessage,
-		SignaturePublicKey:              ru.externalJoin.SignaturePublicKey,
-	}
-
-	resp, err := mls_service.ExternalJoinRequest(externalJoinRequest)
-	if err != nil {
-		return false, err
-	}
-	if resp.GetResult() != mls_tools.ValidationResult_VALID {
-		return false, RiverError(Err_INVALID_ARGUMENT, "invalid external join", "result", resp.GetResult())
-	}
-	return true, nil
-}
-
-func (ru *aeMlsEpochSecrets) validMlsEpochSecrets() (bool, error) {
-	if len(ru.secrets.Secrets) == 0 {
-		return false, RiverError(Err_INVALID_ARGUMENT, "no secrets provided")
-	}
-	view := ru.params.streamView
-	epochSecrets, err := view.GetMlsEpochSecrets()
-	if err != nil {
-		return false, err
-	}
-	for _, secret := range ru.secrets.Secrets {
-		if _, ok := epochSecrets[secret.Epoch]; ok {
-			return false, RiverError(Err_INVALID_ARGUMENT, "epoch already exists", "epoch", secret.Epoch)
-		}
-	}
-	return true, nil
-}
-
-func (ru *aeMlsKeyPackageRules) validMlsKeyPackage() (bool, error) {
-	view := ru.params.streamView
-	mlsGroupState, err := view.GetMlsGroupState()
-	if err != nil {
-		return false, err
-	}
-
-	keyPackageRequest := &mls_tools.KeyPackageRequest{
-		GroupState: mlsGroupState,
-		KeyPackage: &mls_tools.KeyPackage{
-			KeyPackage:         ru.keyPackage.KeyPackage,
-			SignaturePublicKey: ru.keyPackage.SignaturePublicKey,
-		},
-	}
-
-	resp, err := mls_service.KeyPackageRequest(keyPackageRequest)
-	if err != nil {
-		return false, err
-	}
-
-	if resp.GetResult() != mls_tools.ValidationResult_VALID {
-		return false, RiverError(Err_INVALID_ARGUMENT, "invalid key package", "result", resp.GetResult())
-	}
-
-	return true, nil
-}
-
-func (ru *aeMlsWelcomeMessageRules) validMlsWelcomeMessage() (bool, error) {
-	view := ru.params.streamView
-	mlsGroupState, err := view.GetMlsGroupState()
-	if err != nil {
-		return false, err
-	}
-
-	welcomeMessageRequest := &mls_tools.WelcomeMessageRequest{
-		GroupState:           mlsGroupState,
-		SignaturePublicKeys:  ru.welcomeMessage.SignaturePublicKeys,
-		GroupInfoMessage:     ru.welcomeMessage.GroupInfoMessage,
-		WelcomeMessages:      ru.welcomeMessage.WelcomeMessages,
-		WelcomeMessageCommit: ru.welcomeMessage.Commit,
-	}
-
-	resp, err := mls_service.WelcomeMessageRequest(welcomeMessageRequest)
-	if err != nil {
-		return false, err
-	}
-
-	if resp.GetResult() != mls_tools.ValidationResult_VALID {
-		return false, RiverError(Err_INVALID_ARGUMENT, "invalid welcome message", "result", resp.GetResult())
-	}
-
-	return true, nil
 }
 
 // return function that can be used to check if a user has a permission for a space

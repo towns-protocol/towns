@@ -215,6 +215,15 @@ func (s *Service) CreateStream(
 	return executeConnectHandler(ctx, req, s, s.createStreamImpl, "CreateStream")
 }
 
+func (s *Service) CreateMediaStream(
+	ctx context.Context,
+	req *connect.Request[CreateMediaStreamRequest],
+) (*connect.Response[CreateMediaStreamResponse], error) {
+	ctx, cancel := utils.UncancelContext(ctx, 20*time.Second, 40*time.Second)
+	defer cancel()
+	return executeConnectHandler(ctx, req, s, s.createMediaStreamImpl, "CreateMediaStream")
+}
+
 func (s *Service) GetStream(
 	ctx context.Context,
 	req *connect.Request[GetStreamRequest],
@@ -464,7 +473,7 @@ func (s *Service) addEventImpl(
 	}
 
 	if view != nil {
-		return s.localAddEvent(ctx, req, stream, view)
+		return s.localAddEvent(ctx, req, streamId, stream, view)
 	}
 
 	if req.Header().Get(RiverNoForwardHeader) == RiverNoForwardValue {
@@ -490,6 +499,66 @@ func (s *Service) addEventImpl(
 	newReq.Header().Set(RiverFromNodeHeader, s.wallet.Address.Hex())
 	newReq.Header().Set(RiverToNodeHeader, firstRemote.Hex())
 	ret, err := stub.AddEvent(ctx, newReq)
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(ret.Msg), nil
+}
+
+func (s *Service) AddMediaEvent(
+	ctx context.Context,
+	req *connect.Request[AddMediaEventRequest],
+) (*connect.Response[AddMediaEventResponse], error) {
+	ctx, cancel := utils.UncancelContext(ctx, 10*time.Second, 20*time.Second)
+	defer cancel()
+	return executeConnectHandler(ctx, req, s, s.addMediaEventImpl, "AddMediaEvent")
+}
+
+func (s *Service) addMediaEventImpl(
+	ctx context.Context,
+	req *connect.Request[AddMediaEventRequest],
+) (*connect.Response[AddMediaEventResponse], error) {
+	cc := req.Msg.GetCreationCookie()
+
+	// Check if the current node is in the replica nodes list for the given stream.
+	if cc.IsLocal(s.wallet.Address) {
+		streamId, err := shared.StreamIdFromBytes(cc.GetStreamId())
+		if err != nil {
+			return nil, err
+		}
+
+		// Check if the given stream exists in the correct node.
+		if _, err = s.storage.GetLastMiniblockNumber(ctx, streamId); err != nil {
+			return nil, err
+		}
+
+		return s.localAddMediaEvent(ctx, req)
+	}
+
+	// Forward the request to the first sticky node otherwise
+	if req.Header().Get(RiverNoForwardHeader) == RiverNoForwardValue {
+		return nil, RiverError(Err_UNAVAILABLE, "Forwarding disabled by request header").
+			Func("service.addEventImpl").
+			Tags("streamId", cc.GetStreamId(),
+				RiverFromNodeHeader, req.Header().Get(RiverFromNodeHeader),
+				RiverToNodeHeader, req.Header().Get(RiverToNodeHeader),
+			)
+	}
+
+	// TODO: smarter remote select? random?
+	// TODO: retry?
+	firstRemote := NewStreamNodesWithLock(cc.NodeAddresses(), s.wallet.Address).GetStickyPeer()
+	logging.FromCtx(ctx).Debug("Forwarding request", "nodeAddress", firstRemote)
+	stub, err := s.nodeRegistry.GetStreamServiceClientForAddress(firstRemote)
+	if err != nil {
+		return nil, err
+	}
+
+	newReq := connect.NewRequest(req.Msg)
+	newReq.Header().Set(RiverNoForwardHeader, RiverNoForwardValue)
+	newReq.Header().Set(RiverFromNodeHeader, s.wallet.Address.Hex())
+	newReq.Header().Set(RiverToNodeHeader, firstRemote.Hex())
+	ret, err := stub.AddMediaEvent(ctx, newReq)
 	if err != nil {
 		return nil, err
 	}

@@ -37,7 +37,9 @@ func MakeStreamEvent(
 
 	if prevMiniblock != nil && prevMiniblock.Hash != (common.Hash{}) {
 		event.PrevMiniblockHash = prevMiniblock.Hash[:]
-		event.PrevMiniblockNum = prevMiniblock.Num
+		if prevMiniblock.Num >= 0 {
+			event.PrevMiniblockNum = &prevMiniblock.Num
+		}
 	}
 
 	return event, nil
@@ -58,7 +60,9 @@ func MakeStreamEventWithTags(
 
 	if prevMiniblock != nil && prevMiniblock.Hash != (common.Hash{}) {
 		event.PrevMiniblockHash = prevMiniblock.Hash[:]
-		event.PrevMiniblockNum = prevMiniblock.Num
+		if prevMiniblock.Num >= 0 {
+			event.PrevMiniblockNum = &prevMiniblock.Num
+		}
 	}
 
 	return event, nil
@@ -80,13 +84,18 @@ func MakeDelegatedStreamEvent(
 	epochMillis := time.Now().UnixNano() / int64(time.Millisecond)
 
 	event := &StreamEvent{
-		CreatorAddress:    wallet.Address.Bytes(),
-		Salt:              salt,
-		PrevMiniblockHash: prevMiniblock.Hash[:],
-		PrevMiniblockNum:  prevMiniblock.Num,
-		Payload:           payload,
-		DelegateSig:       delegateSig,
-		CreatedAtEpochMs:  epochMillis,
+		CreatorAddress:   wallet.Address.Bytes(),
+		Salt:             salt,
+		Payload:          payload,
+		DelegateSig:      delegateSig,
+		CreatedAtEpochMs: epochMillis,
+	}
+
+	if prevMiniblock != nil && prevMiniblock.Hash != (common.Hash{}) {
+		event.PrevMiniblockHash = prevMiniblock.Hash[:]
+		if prevMiniblock.Num >= 0 {
+			event.PrevMiniblockNum = &prevMiniblock.Num
+		}
 	}
 
 	return event, nil

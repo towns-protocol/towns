@@ -291,7 +291,7 @@ func (n *nodeRegistryImpl) GetStreamServiceClientForAddress(address common.Addre
 	return node.streamServiceClient, nil
 }
 
-// Returns error for local node.
+// GetNodeToNodeClientForAddress returns error for local node.
 func (n *nodeRegistryImpl) GetNodeToNodeClientForAddress(address common.Address) (NodeToNodeClient, error) {
 	node, err := n.GetNode(address)
 	if err != nil {

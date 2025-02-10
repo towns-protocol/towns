@@ -75,13 +75,18 @@ func ParseEvent(envelope *Envelope) (*ParsedEvent, error) {
 		}
 	}
 
+	prevMiniblockNum := int64(-1)
+	if streamEvent.PrevMiniblockNum != nil {
+		prevMiniblockNum = *streamEvent.PrevMiniblockNum
+	}
+
 	return &ParsedEvent{
 		Event:    &streamEvent,
 		Envelope: envelope,
 		Hash:     common.BytesToHash(envelope.Hash),
 		MiniblockRef: &MiniblockRef{
 			Hash: common.BytesToHash(streamEvent.PrevMiniblockHash),
-			Num:  streamEvent.PrevMiniblockNum,
+			Num:  prevMiniblockNum,
 		},
 		SignerPubKey: signerPubKey,
 	}, nil
