@@ -1,5 +1,5 @@
 import { useCallback, useContext, useEffect, useMemo, useRef } from 'react'
-import { useChannelId, useTimelineStore, useUserLookupContext } from 'use-towns-client'
+import { useChannelId, useRawTimelineStore, useUserLookupContext } from 'use-towns-client'
 import { RiverTimelineEvent } from '@river-build/sdk'
 import { ReplyToMessageContext } from '@components/ReplyToMessageContext/ReplyToMessageContext'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
@@ -15,7 +15,7 @@ export const useInlineReplyAttchmentPreview = (params?: { onNewInlineReply?: () 
     const channelId = useChannelId()
 
     // lookup message content to create preview
-    const parentEvent = useTimelineStore((state) => {
+    const parentEvent = useRawTimelineStore((state) => {
         if (replyToEventId) {
             const event = state.timelines[channelId]?.find((e) => e.eventId === replyToEventId)
             if (event?.content?.kind === RiverTimelineEvent.ChannelMessage) {

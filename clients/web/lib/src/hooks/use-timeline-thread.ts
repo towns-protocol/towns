@@ -1,6 +1,6 @@
 import { useCallback, useRef } from 'react'
 import { ThreadStatsData } from '../types/timeline-types'
-import { TimelineStoreStates, useTimelineStore } from '../store/use-timeline-store'
+import { TimelineStoreStates, useRawTimelineStore } from '../store/use-timeline-store'
 import { RiverTimelineEvent, TimelineEvent } from '@river-build/sdk'
 
 const EMPTY_TIMELINE: TimelineEvent[] = []
@@ -28,7 +28,7 @@ export function useTimelineThread(
                 : { parent: undefined, messages: EMPTY_TIMELINE },
         [eventId, roomId],
     )
-    return useTimelineStore(callback)
+    return useRawTimelineStore(callback)
 }
 
 function toDummyThreadStats(

@@ -4,7 +4,7 @@ import {
     useSpaceData,
     useSpaceId,
     useSpaceMembers,
-    useTimelineStore,
+    useThrottledTimelineStore,
     useTownsContext,
 } from 'use-towns-client'
 import { AnimatePresence } from 'framer-motion'
@@ -153,7 +153,7 @@ const SearchResults = (props: { onHide: () => void; searchResults: CombinedResul
     const { dmChannels: dmChannelIds } = useTownsContext()
 
     const members = useSpaceMembers()
-    const { threadsStats } = useTimelineStore(({ threadsStats }) => ({
+    const { threadsStats } = useThrottledTimelineStore(({ threadsStats }) => ({
         threadsStats,
     }))
 

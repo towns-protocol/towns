@@ -1,9 +1,9 @@
-import { TimelineStoreStates, useTimelineStore } from '../store/use-timeline-store'
+import { TimelineStoreStates, useRawTimelineStore } from '../store/use-timeline-store'
 import { TimelineEvent } from '@river-build/sdk'
 const EMPTY_TIMELINE: TimelineEvent[] = []
 
 export function useTimeline(roomId?: string) {
-    const timeline = useTimelineStore((state: TimelineStoreStates) =>
+    const timeline = useRawTimelineStore((state: TimelineStoreStates) =>
         roomId ? state.timelines[roomId] : undefined,
     )
     return {

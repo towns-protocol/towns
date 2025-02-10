@@ -66,8 +66,11 @@ export type TimelineStore = TimelineStoreStates & {
     setState: TimelineStoreInterface
 }
 
-// wrap use timeline store return the same type
-export function useTimelineStore<T>(
+/**
+ * use debounced timeline store for anything that doesn't refresh after user input
+ * and can be deferred to the next tick
+ */
+export function useThrottledTimelineStore<T>(
     selector: (state: TimelineStore) => T,
     throttleMs: number = 1000,
     equalityFn?: (a: T, b: T) => boolean,
@@ -77,6 +80,10 @@ export function useTimelineStore<T>(
     return throttled
 }
 
+/**
+ * use useRawTimelineStore if you are dealing with user input and need to refresh
+ * the dom immediately after user clicks or enters info (for example: emoji reactions)
+ */
 export const useRawTimelineStore = createWithEqualityFn<TimelineStore>((set) => ({
     timelines: {},
     replacedEvents: {},

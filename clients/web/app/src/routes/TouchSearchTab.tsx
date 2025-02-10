@@ -1,5 +1,10 @@
 import React, { useCallback, useMemo } from 'react'
-import { useSpaceData, useSpaceId, useTimelineStore, useTownsContext } from 'use-towns-client'
+import {
+    useSpaceData,
+    useSpaceId,
+    useThrottledTimelineStore,
+    useTownsContext,
+} from 'use-towns-client'
 import { ResultItem } from '@components/SearchBar/SearchResultItem'
 import { TouchScrollToTopScrollId } from '@components/TouchTabBar/TouchScrollToTopScrollId'
 import { Box, Icon, IconButton, Paragraph, Stack, TextField } from '@ui'
@@ -56,7 +61,7 @@ export const TouchSearchTab = () => {
     const dmChannels = useDmChannels()
     const { dmChannels: dmChannelIds } = useTownsContext()
 
-    const { threadsStats } = useTimelineStore(({ threadsStats }) => ({
+    const { threadsStats } = useThrottledTimelineStore(({ threadsStats }) => ({
         threadsStats,
     }))
 

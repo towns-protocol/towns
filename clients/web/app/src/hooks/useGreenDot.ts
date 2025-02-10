@@ -1,4 +1,4 @@
-import { useTimelineStore } from 'use-towns-client'
+import { useThrottledTimelineStore } from 'use-towns-client'
 import { useEffect, useState } from 'react'
 import { MINUTE_MS } from 'data/constants'
 
@@ -7,7 +7,7 @@ const GREEN_TIME = MINUTE_MS * 15
 const getGreen = (ms: number) => Date.now() - ms < GREEN_TIME
 
 export const useGreenDot = (userId: string | undefined) => {
-    const lastEventMs = useTimelineStore((state) => {
+    const lastEventMs = useThrottledTimelineStore((state) => {
         return userId ? state.lastestEventByUser[userId]?.createdAtEpochMs ?? 0 : 0
     })
 

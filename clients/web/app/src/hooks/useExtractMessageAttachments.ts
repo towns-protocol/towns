@@ -1,4 +1,4 @@
-import { useTimelineStore, useTownsContext, useUserLookupStore } from 'use-towns-client'
+import { useThrottledTimelineStore, useTownsContext, useUserLookupStore } from 'use-towns-client'
 import { isEqual } from 'lodash'
 import { useCallback, useRef } from 'react'
 import { EmbeddedMessageAttachment, RiverTimelineEvent } from '@river-build/sdk'
@@ -12,7 +12,7 @@ export const useExtractMessageAttachments = (
     const { createStaticInfo } = useCreateStaticInfo()
     const ref = useRef<EmbeddedMessageAttachment[]>([])
 
-    const attachments = useTimelineStore(
+    const attachments = useThrottledTimelineStore(
         (state) => {
             const newValue: EmbeddedMessageAttachment[] = links
                 .map((link) => {
