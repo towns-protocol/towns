@@ -36,12 +36,12 @@ export function isActionConfig(config: unknown): config is UseBoxActionArgs {
 
 export function estimateGasArgs(args: {
     sender: Address | undefined
-    boxActionResponse: BoxActionResponse | undefined
+    tx: BoxActionResponse['tx'] | undefined
 }) {
-    const { sender, boxActionResponse } = args
+    const { sender, tx } = args
     return {
         account: sender,
-        ...(boxActionResponse?.tx as EvmTransaction),
+        ...(tx as EvmTransaction),
     } as unknown as EstimateGasParameters
 }
 

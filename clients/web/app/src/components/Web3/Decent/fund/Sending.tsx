@@ -5,15 +5,18 @@ import debounce from 'lodash/debounce'
 import { useUsersBalances } from '@decent.xyz/box-hooks'
 import { ErrorMessage, Icon, Stack, Text, TextField } from '@ui'
 import { useEthInputChange } from '@components/Web3/EditMembership/useEthInputChange'
-import { formatUnitsToFixedLength, parseUnits } from 'hooks/useBalance'
+import { formatUnits, formatUnitsToFixedLength, parseUnits } from 'hooks/useBalance'
 import { Section } from '@components/Web3/Decent/fund/Section'
 import { NetworkLogo } from '@components/Web3/Decent/NetworkLogo'
 import { TokenAmountSchema } from '@components/Web3/Decent/fund/formSchema'
+import { calculateUsdAmountFromToken, formatUsd } from '@components/Web3/useEthPrice'
 import { useFundContext } from './FundContext'
+import { useDecentUsdConversion } from '../useDecentUsdConversion'
 
 export function Sending(props: { setShowChainSelector: (show: boolean) => void }) {
     const { setShowChainSelector } = props
-    const { srcToken, sender, usdAmount } = useFundContext()
+    const { srcToken, sender, amount } = useFundContext()
+    const { data: tokenPriceInUsd } = useDecentUsdConversion(srcToken)
 
     const { tokens } = useUsersBalances({
         address: sender,
@@ -23,6 +26,18 @@ export function Sending(props: { setShowChainSelector: (show: boolean) => void }
     const srcTokenBalance = tokens?.find(
         (t) => t.chainId === srcToken?.chainId && t.address === srcToken?.address,
     )
+
+    const usdAmount = !tokenPriceInUsd
+        ? '-'
+        : formatUsd(
+              formatUnits(
+                  calculateUsdAmountFromToken({
+                      tokenAmount: amount,
+                      tokenPriceInUsd: tokenPriceInUsd?.quote?.formatted,
+                  }) || 0n,
+                  srcToken?.decimals,
+              ),
+          )
 
     return (
         <Section>
@@ -47,7 +62,7 @@ export function Sending(props: { setShowChainSelector: (show: boolean) => void }
                         onClick={() => setShowChainSelector(true)}
                     >
                         {srcToken && <NetworkLogo token={srcToken} />}
-                        <Text strong size="lg">
+                        <Text strong size="lg" whiteSpace="nowrap">
                             {srcToken?.name}
                         </Text>
                         <Icon type="arrowDown" size="square_sm" />
@@ -69,20 +84,33 @@ export function Sending(props: { setShowChainSelector: (show: boolean) => void }
 
 const numberRegex = /^-?\d+(\.\d+)?$/
 
+function handleAmount(amount: string) {
+    const [integer, decimal] = amount.split('.')
+    if (!decimal) {
+        return integer
+    }
+    if (integer === '') {
+        return '0.' + decimal
+    }
+    return amount
+}
+
 function TokenAmountField() {
-    const { setAmount, disabled } = useFundContext()
+    const { setAmount, disabled, srcToken } = useFundContext()
     const { register, watch, setValue, trigger, formState } = useFormContext<TokenAmountSchema>()
     const tokenAmount = watch('tokenAmount')
     const onCostChange = useEthInputChange(tokenAmount ?? '', 'tokenAmount', setValue, trigger)
 
     const debouncedDispatch = useMemo(() => {
         return debounce((amount: string) => {
-            const isNumber = numberRegex.test(amount)
+            const _amount = handleAmount(amount)
+            const isNumber = numberRegex.test(_amount)
+
             if (isNumber) {
-                setAmount(parseUnits(amount))
+                setAmount(parseUnits(_amount, srcToken?.decimals))
             }
         }, 500)
-    }, [setAmount])
+    }, [setAmount, srcToken])
 
     useEffect(() => {
         debouncedDispatch(tokenAmount ?? '0')

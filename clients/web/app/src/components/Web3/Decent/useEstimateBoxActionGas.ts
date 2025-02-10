@@ -9,10 +9,11 @@ export function useEstimateBoxActionGas(args: {
     sender: Address | undefined
     boxActionResponse: BoxActionResponse | undefined
     amount: bigint | undefined
+    enabled?: boolean
 }) {
-    const { sender, boxActionResponse, amount } = args
+    const { sender, boxActionResponse, amount, enabled = true } = args
 
-    const _estimateGasArgs = estimateGasArgs({ sender, boxActionResponse })
+    const _estimateGasArgs = estimateGasArgs({ sender, tx: boxActionResponse?.tx })
 
     const enableQuery = useMemo(() => {
         if (
@@ -30,8 +31,8 @@ export function useEstimateBoxActionGas(args: {
         ..._estimateGasArgs,
         query: {
             // this still runs even if i set to false??
-            enabled: enableQuery,
-            refetchInterval: 6_000, // lets try every 3ish blocks
+            enabled: enableQuery && enabled,
+            retryDelay: 1_000,
         },
     })
 }

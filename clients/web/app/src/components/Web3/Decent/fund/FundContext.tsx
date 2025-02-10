@@ -3,12 +3,9 @@ import { BoxActionResponse, ChainId, TokenInfo, getNativeTokenInfo } from '@dece
 import { Address } from 'viem'
 import { useAccount, useEstimateGas } from 'wagmi'
 import { create } from 'zustand'
-import { calculateUsdAmountFromEth, formatUsd } from '@components/Web3/useEthPrice'
 import { useEnvironment } from 'hooks/useEnvironmnet'
-import { useDecentUsdConversion } from '@components/Web3/Decent/useDecentUsdConversion'
-import { useSwapAction } from '@components/Web3/Decent/useSwapAction'
+import { useSwapWithApproval } from '@components/Web3/Decent/useSwapAction'
 import { useEstimateBoxActionGas } from '@components/Web3/Decent/useEstimateBoxActionGas'
-import { formatUnits } from 'hooks/useBalance'
 import { useActiveWalletIsPrivy, useIsWagmiConnected } from '../useActiveWalletIsPrivy'
 import { useNonPrivyWallets } from '../SelectDifferentWallet'
 import { waitForReceipt } from '../waitForReceipt'
@@ -23,21 +20,22 @@ type FundState = {
     sender: Address | undefined
     srcToken: TokenInfo | undefined
     dstToken: TokenInfo | undefined
+    approvedAt: Date | undefined
+    isApprovalRequired: boolean
     amount: bigint | undefined
     estimatedGas: bigint | undefined
-    tokenPriceInUsd: ReturnType<typeof useDecentUsdConversion>['data']
     estimatedGasFailureReason: ReturnType<typeof useEstimateGas>['failureReason']
     isEstimatedGasLoading: boolean
     boxActionError: unknown
     isBoxActionLoading: boolean
     boxActionResponse: BoxActionResponse | undefined
-    usdAmount: string
     disabled: boolean
     tx: Transaction
 }
 
 type FundActions = {
     setSrcToken: (token: TokenInfo) => void
+    setApprovedAt: (approved: Date) => void
     setAmount: (amount: bigint) => void
     setTx: (tx: Transaction) => void
 }
@@ -55,10 +53,13 @@ export const FundProvider = ({ children }: { children: React.ReactNode }) => {
     )
     const dstToken = useMemo(() => getNativeTokenInfo(dstChain) ?? undefined, [dstChain])
     const [amount, setAmount] = useState<bigint | undefined>(undefined)
+    const [approvedAt, setApprovedAt] = useState<Date | undefined>(undefined)
     const [tx, setTx] = useState<Transaction>({
         status: undefined,
     })
-    const { data: tokenPriceInUsd } = useDecentUsdConversion(srcToken)
+
+    // const { data: tokenPriceInUsd } = useDecentUsdConversion(srcToken)
+
     const isWagmiConnected = useIsWagmiConnected()
     const nonPrivyWallets = useNonPrivyWallets()
     const activeWalletIsPrivy = useActiveWalletIsPrivy()
@@ -72,11 +73,13 @@ export const FundProvider = ({ children }: { children: React.ReactNode }) => {
         actionResponse: boxActionResponse,
         isLoading: isBoxActionLoading,
         error: boxActionError,
-    } = useSwapAction({
+        isApprovalRequired,
+    } = useSwapWithApproval({
         sender,
         srcToken,
         dstToken,
         amount,
+        approvedAt,
     })
 
     const {
@@ -87,17 +90,8 @@ export const FundProvider = ({ children }: { children: React.ReactNode }) => {
         sender,
         boxActionResponse,
         amount,
+        enabled: !isApprovalRequired,
     })
-
-    const usdAmount = formatUsd(
-        formatUnits(
-            calculateUsdAmountFromEth({
-                ethAmount: amount,
-                ethPriceInUsd: tokenPriceInUsd?.decimalFormat,
-            }) || 0n,
-            srcToken?.decimals,
-        ),
-    )
 
     // see ActionButton.tsx for why we don't need this
     // useEffect(() => {
@@ -112,18 +106,19 @@ export const FundProvider = ({ children }: { children: React.ReactNode }) => {
                 dstToken,
                 amount,
                 estimatedGas,
-                tokenPriceInUsd,
                 isEstimatedGasLoading,
                 isBoxActionLoading,
                 boxActionError,
                 boxActionResponse,
                 estimatedGasFailureReason,
-                usdAmount,
                 tx,
                 disabled,
+                isApprovalRequired,
+                approvedAt,
                 setTx,
                 setSrcToken,
                 setAmount,
+                setApprovedAt,
             }}
         >
             {children}

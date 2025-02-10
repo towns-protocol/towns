@@ -1,7 +1,7 @@
 import { useAccount, useSwitchChain } from 'wagmi'
 import { useSetActiveWallet } from '@privy-io/wagmi'
 import { ConnectedWallet } from '@privy-io/react-auth'
-import React, { useEffect, useMemo } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { Toast } from 'react-hot-toast'
 import { ConnectAndSetActive } from '@components/Web3/Decent/ConnectAndSetActive'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
@@ -16,10 +16,12 @@ import { useNonPrivyWallets } from '@components/Web3/Decent/SelectDifferentWalle
 import { isBoxActionResponseError } from '@components/Web3/Decent/utils'
 import { ConnectedWalletIcon } from '@components/Web3/Decent/ConnectedWalletIcon'
 import { StandardToast, dismissToast } from '@components/Notifications/StandardToast'
+import { popupToast } from '@components/Notifications/popupToast'
 import { useFundContext, useFundTxStore } from './FundContext'
 import { sendSwapTransaction } from '../useSwapAction'
 import { waitForReceipt } from '../waitForReceipt'
 import { FundWalletCallbacks } from './types'
+import { approveToken } from '../checkForApproval'
 
 const INSUFFICIENT_FUNDS = 'INSUFFICIENT_FUNDS'
 const INVALID_SWAP = 'INVALID_SWAP'
@@ -84,7 +86,7 @@ export function ActionButton(props: FundWalletCallbacks) {
             tone={buttonStates.tone ?? 'cta1'}
             onClick={buttonStates.onClick}
         >
-            {buttonStates.loading && <ButtonSpinner />}
+            {(buttonStates.loading || buttonStates.isApproving) && <ButtonSpinner />}
             {buttonStates.text}
         </Button>
     )
@@ -97,6 +99,7 @@ function useButtonStates(props: FundWalletCallbacks) {
     const { setActiveWallet } = useSetActiveWallet()
     const { chainId: walletChainId } = useAccount()
     const { switchChain } = useSwitchChain()
+    const [isApproving, setIsApproving] = useState(false)
     const {
         estimatedGasFailureReason,
         amount,
@@ -106,7 +109,9 @@ function useButtonStates(props: FundWalletCallbacks) {
         boxActionResponse,
         isBoxActionLoading,
         disabled,
+        isApprovalRequired,
         setTx,
+        setApprovedAt,
     } = useFundContext()
     const srcChainId = srcToken?.chainId
     const chainMismatch = srcChainId !== walletChainId
@@ -126,6 +131,7 @@ function useButtonStates(props: FundWalletCallbacks) {
         loading?: boolean
         disabled?: boolean
         status?: typeof INSUFFICIENT_FUNDS | typeof INVALID_SWAP
+        isApproving?: boolean
     } = useMemo(() => {
         if (chainMismatch && srcChainId) {
             return {
@@ -137,6 +143,58 @@ function useButtonStates(props: FundWalletCallbacks) {
             return {
                 text: 'Connect Wallet',
                 onClick: privyConnectWallet,
+            }
+        }
+
+        if (isApprovalRequired) {
+            return {
+                text: isApproving ? 'Approving...' : 'Approve Transaction',
+                disabled: disabled || isApproving,
+                isApproving,
+                onClick: async () => {
+                    if (disabled || isApproving) {
+                        return
+                    }
+                    setIsApproving(true)
+                    if (
+                        !boxActionResponse ||
+                        !boxActionResponse.tokenPayment ||
+                        !srcToken?.address
+                    ) {
+                        return
+                    }
+                    const receipt = await approveToken(
+                        {
+                            token: srcToken?.address,
+                            spender: boxActionResponse.tx.to,
+                            amount: boxActionResponse.tokenPayment.amount,
+                        },
+                        srcToken?.chainId,
+                    )
+
+                    const failureToast = () =>
+                        popupToast(({ toast }) => (
+                            <StandardToast.Error message="Token approval failed" toast={toast} />
+                        ))
+
+                    if (receipt) {
+                        if (receipt?.status === 'success') {
+                            popupToast(({ toast }) => (
+                                <StandardToast.Success
+                                    message="Token approved for funding"
+                                    toast={toast}
+                                />
+                            ))
+                        } else {
+                            failureToast()
+                        }
+                    } else {
+                        failureToast()
+                    }
+                    setIsApproving(false)
+                    // tick the time so useSwapWithApproval can re-check
+                    setApprovedAt(new Date())
+                },
             }
         }
 
@@ -203,7 +261,7 @@ function useButtonStates(props: FundWalletCallbacks) {
                 try {
                     const hash = await sendSwapTransaction({
                         srcChainId: srcToken?.chainId,
-                        actionResponse: boxActionResponse,
+                        tx: boxActionResponse?.tx,
                     })
 
                     if (hash) {
@@ -244,6 +302,7 @@ function useButtonStates(props: FundWalletCallbacks) {
         chainMismatch,
         srcChainId,
         noWalletConnected,
+        isApprovalRequired,
         estimatedGasFailureReason,
         boxActionResponse,
         amount,
@@ -253,10 +312,12 @@ function useButtonStates(props: FundWalletCallbacks) {
         disabled,
         switchChain,
         privyConnectWallet,
+        isApproving,
+        srcToken?.address,
+        srcToken?.chainId,
+        setApprovedAt,
         setTx,
         onTxStart,
-        srcToken?.chainId,
-        srcToken?.address,
         onTxSuccess,
         onTxError,
     ])

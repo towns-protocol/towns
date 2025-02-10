@@ -9,10 +9,12 @@ import {
 } from '@decent.xyz/box-common'
 import { UseBoxActionArgs, useBoxAction } from '@decent.xyz/box-hooks'
 import { getAccount, getPublicClient, sendTransaction, switchChain } from '@wagmi/core'
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { Address } from 'viem'
 import { useMyAbstractAccountAddress } from '@components/Web3/UserOpTxModal/hooks/useMyAbstractAccountAddress'
 import { wagmiConfig } from 'wagmiConfig'
 import { estimateGasArgs, isActionConfig } from './utils'
+import { checkForApproval } from './checkForApproval'
 
 type UseSwapActionArgs = {
     sender: UseBoxActionArgs['sender'] | undefined
@@ -67,9 +69,9 @@ export function useSwapAction(args: UseSwapActionArgs) {
 
 export async function sendSwapTransaction(args: {
     srcChainId: number | undefined
-    actionResponse: BoxActionResponse
+    tx: BoxActionResponse['tx']
 }) {
-    const { srcChainId, actionResponse } = args
+    const { srcChainId, tx } = args
     try {
         const account = getAccount(wagmiConfig)
         const publicClient = getPublicClient(wagmiConfig)
@@ -79,15 +81,49 @@ export async function sendSwapTransaction(args: {
         if (account.chainId !== srcChainId) {
             await switchChain(wagmiConfig, { chainId: srcChainId })
         }
-        const tx = actionResponse.tx as EvmTransaction
         const gas = await publicClient?.estimateGas(
-            estimateGasArgs({ sender: account.address, boxActionResponse: actionResponse }),
+            estimateGasArgs({ sender: account.address, tx }),
         )
         return sendTransaction(wagmiConfig, {
-            ...tx,
+            ...(tx as EvmTransaction),
             gas,
         })
     } catch (e) {
         console.error('[sendSwapTransaction] error', e)
+    }
+}
+
+export function useSwapWithApproval(args: UseSwapActionArgs & { approvedAt: Date | undefined }) {
+    const { sender, srcToken, dstToken, amount, approvedAt } = args
+    const [isApprovalRequired, setIsApprovalRequired] = useState(false)
+    const { actionResponse, isLoading, error } = useSwapAction({
+        sender,
+        srcToken,
+        dstToken,
+        amount,
+    })
+
+    useEffect(() => {
+        async function init() {
+            if (!actionResponse || !sender || !srcToken?.chainId) {
+                setIsApprovalRequired(false)
+                return
+            }
+            const isApprovalRequired = await checkForApproval({
+                userAddress: sender as Address,
+                actionResponse,
+                srcChainId: srcToken?.chainId,
+            })
+            setIsApprovalRequired(!!isApprovalRequired)
+        }
+
+        init()
+    }, [actionResponse, srcToken?.chainId, sender, approvedAt])
+
+    return {
+        actionResponse,
+        isApprovalRequired,
+        isLoading,
+        error,
     }
 }

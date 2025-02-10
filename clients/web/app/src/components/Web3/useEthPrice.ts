@@ -69,17 +69,17 @@ export function calculateEthAmountFromUsd(args: { cents: number; ethPriceInUsd: 
     }
 }
 
-export function calculateUsdAmountFromEth(args: {
-    ethAmount: bigint | undefined
-    ethPriceInUsd: string | undefined
+export function calculateUsdAmountFromToken(args: {
+    tokenAmount: bigint | undefined
+    tokenPriceInUsd: string | undefined
     decimals?: number
 }) {
-    const { ethAmount, ethPriceInUsd, decimals = 18 } = args
-    if (!ethAmount || !ethPriceInUsd) {
+    const { tokenAmount, tokenPriceInUsd, decimals = 18 } = args
+    if (!tokenAmount || !tokenPriceInUsd) {
         return undefined
     }
-    const ethPriceInUsdBigInt = parseUnits(ethPriceInUsd, decimals)
-    const usdValueBigInt = (ethAmount * ethPriceInUsdBigInt) / BigInt(10 ** decimals)
+    const tokenPriceInUsdBigInt = parseUnits(tokenPriceInUsd, decimals)
+    const usdValueBigInt = (tokenAmount * tokenPriceInUsdBigInt) / BigInt(10 ** decimals)
     return usdValueBigInt
 }
 
@@ -91,9 +91,9 @@ export function useEthToUsdFormatted(args: {
     const { data: ethPrice } = useEthPrice({
         refetchInterval: refetchInterval,
     })
-    const amount = calculateUsdAmountFromEth({
-        ethAmount: ethAmount,
-        ethPriceInUsd: ethPrice?.toString(),
+    const amount = calculateUsdAmountFromToken({
+        tokenAmount: ethAmount,
+        tokenPriceInUsd: ethPrice?.toString(),
     })
     return formatUsd(formatUnitsToFixedLength(amount || 0n))
 }

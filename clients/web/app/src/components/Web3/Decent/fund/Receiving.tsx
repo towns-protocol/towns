@@ -2,13 +2,30 @@ import React from 'react'
 import { Stack, Text } from '@ui'
 import { shortAddress } from 'ui/utils/utils'
 import { useMyAbstractAccountAddress } from '@components/Web3/UserOpTxModal/hooks/useMyAbstractAccountAddress'
+import { calculateUsdAmountFromToken, formatUsd } from '@components/Web3/useEthPrice'
+import { formatUnits } from 'hooks/useBalance'
 import { Section } from './Section'
 import { useFundContext } from './FundContext'
 import { NetworkLogo } from '../NetworkLogo'
+import { useDecentUsdConversion } from '../useDecentUsdConversion'
 
 export function Receiving() {
-    const { dstToken, usdAmount } = useFundContext()
+    const { dstToken, boxActionResponse } = useFundContext()
     const myAbstractAccountAddress = useMyAbstractAccountAddress().data
+    const { data: dstTokenPriceInUsd } = useDecentUsdConversion(dstToken)
+
+    const usdAmount = !dstTokenPriceInUsd
+        ? '-'
+        : formatUsd(
+              formatUnits(
+                  calculateUsdAmountFromToken({
+                      tokenAmount: boxActionResponse?.amountOut?.amount,
+                      tokenPriceInUsd: dstTokenPriceInUsd?.quote?.formatted,
+                      decimals: boxActionResponse?.amountOut?.decimals,
+                  }) || 0n,
+                  dstToken?.decimals,
+              ),
+          )
 
     return (
         <Section>
