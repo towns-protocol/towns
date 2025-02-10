@@ -105,6 +105,9 @@ const envSchema = z.object({
     VITE_ENABLE_CONFIRM_FUND_WALLET: boolish.default(false),
     // show custom decent components for funding wallet
     VITE_ENABLE_DECENT_ONBOARDING_V2: boolish.default(false),
+
+    // Lifi API Key
+    VITE_LIFI_API_KEY: z.string().optional(),
 })
 
 const parsed = envSchema.safeParse(import.meta.env)
