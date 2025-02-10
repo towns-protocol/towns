@@ -33,7 +33,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@adraffy/ens-normalize@npm:1.11.0, @adraffy/ens-normalize@npm:^1.10.1":
+"@adraffy/ens-normalize@npm:^1.10.1":
   version: 1.11.0
   resolution: "@adraffy/ens-normalize@npm:1.11.0"
   checksum: b2911269e3e0ec6396a2e5433a99e0e1f9726befc6c167994448cd0e53dbdd0be22b4835b4f619558b568ed9aa7312426b8fa6557a13999463489daa88169ee5
@@ -3471,20 +3471,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@coinbase/wallet-sdk@npm:4.0.3":
-  version: 4.0.3
-  resolution: "@coinbase/wallet-sdk@npm:4.0.3"
-  dependencies:
-    buffer: ^6.0.3
-    clsx: ^1.2.1
-    eventemitter3: ^5.0.1
-    keccak: ^3.0.3
-    preact: ^10.16.0
-    sha.js: ^2.4.11
-  checksum: 47c2818b57f13b1fa403a5e79fc3e039a8cfc4daf9e92910aec4fe32caa4f2326d13c7ff26bbe1921cdcae29acfe41fbf5f0d3c9d58ab39035f05b1737bc06ab
-  languageName: node
-  linkType: hard
-
 "@coinbase/wallet-sdk@npm:4.0.4":
   version: 4.0.4
   resolution: "@coinbase/wallet-sdk@npm:4.0.4"
@@ -3508,6 +3494,18 @@ __metadata:
     eventemitter3: ^5.0.1
     preact: ^10.24.2
   checksum: f1cb3c5975bf7eed46aa56077943becea16e92ac7dda46e78fb2939b3f3864815a7f218842410abb40b2b3182d09c9636ea699714c3d564009438c3611f45abc
+  languageName: node
+  linkType: hard
+
+"@coinbase/wallet-sdk@npm:4.3.0":
+  version: 4.3.0
+  resolution: "@coinbase/wallet-sdk@npm:4.3.0"
+  dependencies:
+    "@noble/hashes": ^1.4.0
+    clsx: ^1.2.1
+    eventemitter3: ^5.0.1
+    preact: ^10.24.2
+  checksum: 1895558c5297b93ea2be3438af8f2f3f0872389c3651def046c699fa8443bcf4b6785017332a11ee22e95b13c0bfe688badfa7ab02f9704a40d42704567abaf0
   languageName: node
   linkType: hard
 
@@ -5742,7 +5740,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ethersproject/providers@npm:5.7.2, @ethersproject/providers@npm:^5.7.0, @ethersproject/providers@npm:^5.7.1, @ethersproject/providers@npm:^5.7.2":
+"@ethersproject/providers@npm:5.7.2, @ethersproject/providers@npm:^5.7.0, @ethersproject/providers@npm:^5.7.2":
   version: 5.7.2
   resolution: "@ethersproject/providers@npm:5.7.2"
   dependencies:
@@ -5840,7 +5838,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ethersproject/transactions@npm:5.7.0, @ethersproject/transactions@npm:^5.6.2, @ethersproject/transactions@npm:^5.7.0":
+"@ethersproject/transactions@npm:5.7.0, @ethersproject/transactions@npm:^5.7.0":
   version: 5.7.0
   resolution: "@ethersproject/transactions@npm:5.7.0"
   dependencies:
@@ -6439,16 +6437,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@headlessui/react@npm:^1.7.18":
-  version: 1.7.18
-  resolution: "@headlessui/react@npm:1.7.18"
+"@headlessui/react@npm:^2.2.0":
+  version: 2.2.0
+  resolution: "@headlessui/react@npm:2.2.0"
   dependencies:
-    "@tanstack/react-virtual": ^3.0.0-beta.60
-    client-only: ^0.0.1
+    "@floating-ui/react": ^0.26.16
+    "@react-aria/focus": ^3.17.1
+    "@react-aria/interactions": ^3.21.3
+    "@tanstack/react-virtual": ^3.8.1
   peerDependencies:
-    react: ^16 || ^17 || ^18
-    react-dom: ^16 || ^17 || ^18
-  checksum: 7463167b4cf2ad57f92c2deedd6429a245dfc4d979ead5533d2e83429e3e4dd39c346e5a8fd958e6bd9e2fba42486af97577b7dd3137f5a797dacc93632578ba
+    react: ^18 || ^19 || ^19.0.0-rc
+    react-dom: ^18 || ^19 || ^19.0.0-rc
+  checksum: d64b23108e3f0ad4a28753aba5bc3c08ad771d2b9f5a2f3a7a8b4dec5b96fbbcce39fe9404a050af2c1ceafdc29837f5c3dc51ca03ea58c7ee2e30cf8b9b8d16
   languageName: node
   linkType: hard
 
@@ -7895,6 +7895,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@noble/curves@npm:1.8.1, @noble/curves@npm:~1.8.1":
+  version: 1.8.1
+  resolution: "@noble/curves@npm:1.8.1"
+  dependencies:
+    "@noble/hashes": 1.7.1
+  checksum: 4143f1248ed57c1ae46dfef5c692a91383e5830420b9c72d3ff1061aa9ebbf8999297da6d2aed8a9716fef8e6b1f5a45737feeab02abf55ca2a4f514bf9339ec
+  languageName: node
+  linkType: hard
+
 "@noble/curves@npm:^1.3.0, @noble/curves@npm:^1.4.2, @noble/curves@npm:^1.6.0, @noble/curves@npm:~1.7.0":
   version: 1.7.0
   resolution: "@noble/curves@npm:1.7.0"
@@ -7952,6 +7961,13 @@ __metadata:
   version: 1.6.0
   resolution: "@noble/hashes@npm:1.6.0"
   checksum: 07729b80108d2a9b862eb4e070d4f78ca7ee86b9a9c13a4f7c338ba47a15d4386dd283235da71f21ad515fa9f0b9429fc3da39d2f2b4a50e2442212d14cfd4a9
+  languageName: node
+  linkType: hard
+
+"@noble/hashes@npm:1.7.1, @noble/hashes@npm:~1.7.1":
+  version: 1.7.1
+  resolution: "@noble/hashes@npm:1.7.1"
+  checksum: 4f1b56428a10323feef17e4f437c9093556cb18db06f94d254043fadb69c3da8475f96eb3f8322d41e8670117d7486475a8875e68265c2839f60fd03edd6a616
   languageName: node
   linkType: hard
 
@@ -8497,18 +8513,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@privy-io/api-base@npm:1.3.2, @privy-io/api-base@npm:^1.3.2":
-  version: 1.3.2
-  resolution: "@privy-io/api-base@npm:1.3.2"
+"@privy-io/api-base@npm:1.4.3, @privy-io/api-base@npm:^1.4.3":
+  version: 1.4.3
+  resolution: "@privy-io/api-base@npm:1.4.3"
   dependencies:
     zod: ^3.21.4
-  checksum: c282ce6405e62cb0400f191b0d595e1fa3df415bd9a92b0d2413c04fe332282f7bbc21c7a40753ff899733a2cbe5ac4e2b21741670b72e9a0301ce3a5431e0ea
+  checksum: fa18129404af6d8208c9f9cd54489cdea47e3908f032c97f0fe983bef8caa05cfff3f5cb5defcc1128cb73a377aa087d0f9b4cc5f8cc2fc244b57e8300c7b15e
   languageName: node
   linkType: hard
 
-"@privy-io/js-sdk-core@npm:0.29.3":
-  version: 0.29.3
-  resolution: "@privy-io/js-sdk-core@npm:0.29.3"
+"@privy-io/js-sdk-core@npm:0.43.0":
+  version: 0.43.0
+  resolution: "@privy-io/js-sdk-core@npm:0.43.0"
   dependencies:
     "@ethersproject/abstract-signer": ^5.7.0
     "@ethersproject/bignumber": ^5.7.0
@@ -8516,8 +8532,8 @@ __metadata:
     "@ethersproject/providers": ^5.7.2
     "@ethersproject/transactions": ^5.7.0
     "@ethersproject/units": ^5.7.0
-    "@privy-io/api-base": ^1.3.2
-    "@privy-io/public-api": 2.11.2
+    "@privy-io/api-base": ^1.4.3
+    "@privy-io/public-api": 2.18.6
     eventemitter3: ^5.0.1
     fetch-retry: ^5.0.6
     jose: ^4.15.5
@@ -8525,44 +8541,42 @@ __metadata:
     libphonenumber-js: ^1.10.44
     set-cookie-parser: ^2.6.0
     uuid: ">=8 <10"
-  checksum: cdbc5793f9cb9c35f6edb933bfa2064d31e7453bca447f57a6cce6030b52996d57be34ff8e21d20f7849737bbe49b45b5149ebaf7c555f8d4b58ae28f9fce415
+  peerDependencies:
+    permissionless: ^0.2.10
+    viem: ^2.21.36
+  peerDependenciesMeta:
+    permissionless:
+      optional: true
+    viem:
+      optional: true
+  checksum: 70b9cd961a387c40b691b36ddc826504987629474784d2103c8aac1c0a99a39ceb870edb6a1054163037a04d6bf422c75da7fb5696d5ceab98a871c468d2a9b7
   languageName: node
   linkType: hard
 
-"@privy-io/public-api@npm:2.11.2":
-  version: 2.11.2
-  resolution: "@privy-io/public-api@npm:2.11.2"
+"@privy-io/public-api@npm:2.18.6":
+  version: 2.18.6
+  resolution: "@privy-io/public-api@npm:2.18.6"
   dependencies:
-    "@privy-io/api-base": 1.3.2
+    "@privy-io/api-base": 1.4.3
     bs58: ^5.0.0
     ethers: ^5.7.2
     libphonenumber-js: ^1.10.31
     zod: ^3.22.4
-  checksum: 6a89f5155bd28bc897555e790572fbcf091525c943b5e3511049ed7cc9c262f3b2394341f882b6a6ce8154e72f2ffbfe80993c12bc50bc4f290bd998ccbf9e0d
+  checksum: 28ec4b55756063aff676875d40ce0cad7740e1bf5afb2eb233927a1af036557b27ff694c62c7c50f0b545236ba6cf52be139aa66cf8c6c9eb293e84ae44edb70
   languageName: node
   linkType: hard
 
-"@privy-io/react-auth@npm:1.92.2":
-  version: 1.92.2
-  resolution: "@privy-io/react-auth@npm:1.92.2"
+"@privy-io/react-auth@npm:2.4.2":
+  version: 2.4.2
+  resolution: "@privy-io/react-auth@npm:2.4.2"
   dependencies:
-    "@coinbase/wallet-sdk": 4.0.3
-    "@ethersproject/abstract-signer": ^5.7.0
-    "@ethersproject/address": ^5.7.0
-    "@ethersproject/bignumber": ^5.7.0
-    "@ethersproject/bytes": ^5.7.0
-    "@ethersproject/contracts": ^5.7.0
-    "@ethersproject/logger": ^5.7.0
-    "@ethersproject/providers": ^5.7.1
-    "@ethersproject/strings": ^5.7.0
-    "@ethersproject/transactions": ^5.7.0
-    "@ethersproject/units": ^5.7.0
+    "@coinbase/wallet-sdk": 4.3.0
     "@floating-ui/react": ^0.26.22
-    "@headlessui/react": ^1.7.18
+    "@headlessui/react": ^2.2.0
     "@heroicons/react": ^2.1.1
     "@marsidev/react-turnstile": ^0.4.1
     "@metamask/eth-sig-util": ^6.0.0
-    "@privy-io/js-sdk-core": 0.29.3
+    "@privy-io/js-sdk-core": 0.43.0
     "@simplewebauthn/browser": ^9.0.1
     "@solana/wallet-adapter-base": ^0.9.23
     "@solana/wallet-standard-wallet-adapter-base": ^1.1.2
@@ -8581,7 +8595,6 @@ __metadata:
     md5: ^2.3.0
     mipd: ^0.0.7
     ofetch: ^1.3.4
-    permissionless: ^0.2.10
     pino-pretty: ^10.0.0
     qrcode: ^1.5.1
     react-device-detect: ^2.2.2
@@ -8590,17 +8603,22 @@ __metadata:
     stylis: ^4.3.4
     tinycolor2: ^1.6.0
     uuid: ">=8 <10"
-    viem: ^2.21.3
-    web3-core: ^1.8.0
-    web3-core-helpers: ^1.8.0
+    viem: ^2.21.9
+    zustand: ^5.0.0
   peerDependencies:
-    "@solana/web3.js": ^1.95.3
-    react: ^18
-    react-dom: ^18
+    "@abstract-foundation/agw-client": ^1.0.0
+    "@solana/web3.js": ^1.95.8
+    permissionless: ^0.2.10
+    react: ^18 || ^19
+    react-dom: ^18 || ^19
   peerDependenciesMeta:
+    "@abstract-foundation/agw-client":
+      optional: true
     "@solana/web3.js":
       optional: true
-  checksum: 7ac16725e79928e7cbac4d91eefd627f7243574edade0cacff8353b59ed794c1cf909f6cf47be812c1414d159f365e99f35f6f33d0edf530422397d9af7a83ed
+    permissionless:
+      optional: true
+  checksum: 4e85424e1b1613259db0ce672f1c14718b9cdbd87be504add4576c49ab2e6f2ea896cd4c48c354dd808b0861e37210afd01495589f63741cb2f9b58e384cbc1d
   languageName: node
   linkType: hard
 
@@ -10909,6 +10927,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@scure/base@npm:~1.2.2, @scure/base@npm:~1.2.4":
+  version: 1.2.4
+  resolution: "@scure/base@npm:1.2.4"
+  checksum: db554eb550a1bd17684af9282e1ad751050a13d4add0e83ad61cc496680d7d1c1c1120ca780e72935a293bb59721c20a006a53a5eec6f6b5bdcd702cf27c8cae
+  languageName: node
+  linkType: hard
+
 "@scure/bip32@npm:1.1.5":
   version: 1.1.5
   resolution: "@scure/bip32@npm:1.1.5"
@@ -10964,6 +10989,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@scure/bip32@npm:1.6.2":
+  version: 1.6.2
+  resolution: "@scure/bip32@npm:1.6.2"
+  dependencies:
+    "@noble/curves": ~1.8.1
+    "@noble/hashes": ~1.7.1
+    "@scure/base": ~1.2.2
+  checksum: e7586619f8a669e522267ce71a90b2d00c3a91da658f1f50e54072cf9f432ba26d2bb4d3d91a5d06932ab96612b8bd038bc31d885bbc048cebfb6509c4a790fc
+  languageName: node
+  linkType: hard
+
 "@scure/bip32@npm:^1.5.0":
   version: 1.6.0
   resolution: "@scure/bip32@npm:1.6.0"
@@ -11012,6 +11048,16 @@ __metadata:
     "@noble/hashes": ~1.5.0
     "@scure/base": ~1.1.8
   checksum: 211f2c01361993bfe54c0e4949f290224381457c7f76d7cd51d6a983f3f4b6b9f85adfd0e623977d777ed80417a5fe729eb19dd34e657147810a0e58a8e7b9e0
+  languageName: node
+  linkType: hard
+
+"@scure/bip39@npm:1.5.4":
+  version: 1.5.4
+  resolution: "@scure/bip39@npm:1.5.4"
+  dependencies:
+    "@noble/hashes": ~1.7.1
+    "@scure/base": ~1.2.4
+  checksum: 744f302559ad05ee6ea4928572ac8f0b5443e8068fd53234c9c2e158814e910a043c54f0688d05546decadd2ff66e0d0c76355d10e103a28cb8f44efe140857a
   languageName: node
   linkType: hard
 
@@ -12834,18 +12880,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tanstack/react-virtual@npm:^3.0.0-beta.60":
-  version: 3.0.4
-  resolution: "@tanstack/react-virtual@npm:3.0.4"
-  dependencies:
-    "@tanstack/virtual-core": 3.0.0
-  peerDependencies:
-    react: ^16.8.0 || ^17.0.0 || ^18.0.0
-    react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
-  checksum: d01ea51d8a130c8f2cf87941d312a8d7929e19334bbe85a3ab125b935742cf58ee76d71f590cbd5c50b4fbdbbd6a7b8e58f7c0538c43aa4d5ccab20914246b28
-  languageName: node
-  linkType: hard
-
 "@tanstack/react-virtual@npm:^3.8.1":
   version: 3.10.9
   resolution: "@tanstack/react-virtual@npm:3.10.9"
@@ -12855,13 +12889,6 @@ __metadata:
     react: ^16.8.0 || ^17.0.0 || ^18.0.0
     react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
   checksum: a6c90118d0b084aedf0a2b02bc718df5cc1e594fb60d1dededf8a393d3e519e574e2ba67bb7adcaf8b4d6b206f6a10b37166f006bc7e50ad566475323d545b8c
-  languageName: node
-  linkType: hard
-
-"@tanstack/virtual-core@npm:3.0.0":
-  version: 3.0.0
-  resolution: "@tanstack/virtual-core@npm:3.0.0"
-  checksum: 7283d50fc7b7a56608c37a8e94a93b85890ff7e39c6281633a19c4d6f6f4fbf25f8418f1eec302a008a8746a0d1d0cd00630137b55e6cf019818d68af8ed16b6
   languageName: node
   linkType: hard
 
@@ -12957,7 +12984,7 @@ __metadata:
     eslint-plugin-react: ^7.32.2
     typescript: ^5.1.6
   peerDependencies:
-    "@privy-io/react-auth": 1.92.2
+    "@privy-io/react-auth": 2.4.2
     "@privy-io/wagmi-connector": ^0.1.13
     "@types/react": ^18.2.11
     "@types/react-dom": ^18.2.4
@@ -13274,7 +13301,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/bn.js@npm:^5.1.0, @types/bn.js@npm:^5.1.1":
+"@types/bn.js@npm:^5.1.0":
   version: 5.1.5
   resolution: "@types/bn.js@npm:5.1.5"
   dependencies:
@@ -13740,7 +13767,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:^12.12.54, @types/node@npm:^12.12.6":
+"@types/node@npm:^12.12.54":
   version: 12.20.55
   resolution: "@types/node@npm:12.20.55"
   checksum: e4f86785f4092706e0d3b0edff8dca5a13b45627e4b36700acd8dfe6ad53db71928c8dee914d4276c7fd3b6ccd829aa919811c9eb708a2c8e4c6eb3701178c37
@@ -16325,6 +16352,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"abitype@npm:1.0.8":
+  version: 1.0.8
+  resolution: "abitype@npm:1.0.8"
+  peerDependencies:
+    typescript: ">=5.0.4"
+    zod: ^3 >=3.22.0
+  peerDependenciesMeta:
+    typescript:
+      optional: true
+    zod:
+      optional: true
+  checksum: 104bc2f6820ced8d2cb61521916f7f22c0981a846216f5b6144f69461265f7da137a4ae108bf4b84cd8743f2dd1e9fdadffc0f95371528e15a59e0a369e08438
+  languageName: node
+  linkType: hard
+
 "abitype@npm:^0.9.10":
   version: 0.9.10
   resolution: "abitype@npm:0.9.10"
@@ -16346,13 +16388,6 @@ __metadata:
   dependencies:
     event-target-shim: ^5.0.0
   checksum: 170bdba9b47b7e65906a28c8ce4f38a7a369d78e2271706f020849c1bfe0ee2067d4261df8bbb66eb84f79208fd5b710df759d64191db58cfba7ce8ef9c54b75
-  languageName: node
-  linkType: hard
-
-"abortcontroller-polyfill@npm:^1.7.5":
-  version: 1.7.5
-  resolution: "abortcontroller-polyfill@npm:1.7.5"
-  checksum: daf4169f4228ae0e4f4dbcfa782e501b923667f2666b7c55bd3b7664e5d6b100e333a93371173985fdf21f65d7dfba15bdb2e6031bdc9e57e4ce0297147da3aa
   languageName: node
   linkType: hard
 
@@ -22286,13 +22321,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eventemitter3@npm:4.0.4":
-  version: 4.0.4
-  resolution: "eventemitter3@npm:4.0.4"
-  checksum: 7afb1cd851d19898bc99cc55ca894fe18cb1f8a07b0758652830a09bd6f36082879a25345be6219b81d74764140688b1a8fa75bcd1073d96b9a6661e444bc2ea
-  languageName: node
-  linkType: hard
-
 "eventemitter3@npm:5.0.1, eventemitter3@npm:^5.0.0, eventemitter3@npm:^5.0.1":
   version: 5.0.1
   resolution: "eventemitter3@npm:5.0.1"
@@ -23996,7 +24024,7 @@ __metadata:
     "@giphy/react-components": ^6.2.0
     "@hookform/resolvers": ^3.6.0
     "@ngneat/falso": ^6.1.0
-    "@privy-io/react-auth": 1.92.2
+    "@privy-io/react-auth": 2.4.2
     "@privy-io/wagmi": ^1.0.2
     "@react-hook/resize-observer": ^1.2.6
     "@react-spring/three": ^9.7.3
@@ -24462,13 +24490,6 @@ __metadata:
     statuses: 2.0.1
     toidentifier: 1.0.1
   checksum: 9b0a3782665c52ce9dc658a0d1560bcb0214ba5699e4ea15aefb2a496e2ca83db03ebc42e1cce4ac1f413e4e0d2d736a3fd755772c556a9a06853ba2a0b7d920
-  languageName: node
-  linkType: hard
-
-"http-https@npm:^1.0.0":
-  version: 1.0.0
-  resolution: "http-https@npm:1.0.0"
-  checksum: 82fc4d2e512c64b35680944d1ae13e68220acfa05b06329832e271fd199c5c7fcff1f53fc1f91a1cd65a737ee4de14004dd3ba9a73cce33da970940c6e6ca774
   languageName: node
   linkType: hard
 
@@ -30154,15 +30175,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"oboe@npm:2.1.5":
-  version: 2.1.5
-  resolution: "oboe@npm:2.1.5"
-  dependencies:
-    http-https: ^1.0.0
-  checksum: e6171b33645ffc3559688a824a461952380d0b8f6a203b2daf6767647f277554a73fd7ad795629d88cd8eab68c0460aabb1e1b8b52ef80e3ff7621ac39f832ed
-  languageName: node
-  linkType: hard
-
 "ofetch@npm:^1.3.3, ofetch@npm:^1.3.4":
   version: 1.3.4
   resolution: "ofetch@npm:1.3.4"
@@ -30377,6 +30389,26 @@ __metadata:
     typescript:
       optional: true
   checksum: 3f01119adbec8258b064298c66cb9830fc32c023e7fdc6e0634610505e74e8aab051c7fa49dad0fdd751a1c4af66c8eb2a825d993c6e79611e761a537276afd6
+  languageName: node
+  linkType: hard
+
+"ox@npm:0.6.7":
+  version: 0.6.7
+  resolution: "ox@npm:0.6.7"
+  dependencies:
+    "@adraffy/ens-normalize": ^1.10.1
+    "@noble/curves": ^1.6.0
+    "@noble/hashes": ^1.5.0
+    "@scure/bip32": ^1.5.0
+    "@scure/bip39": ^1.4.0
+    abitype: ^1.0.6
+    eventemitter3: 5.0.1
+  peerDependencies:
+    typescript: ">=5.4.0"
+  peerDependenciesMeta:
+    typescript:
+      optional: true
+  checksum: 99acb683ff1cf78749f2b4230d3c208b8cdea0b3bf2bff0db564207917ae6833093b203cb7b9853fc8ec642ca0c8c87cd70a50eab9ff9944c55bf990436112b5
   languageName: node
   linkType: hard
 
@@ -30833,15 +30865,6 @@ __metadata:
   peerDependencies:
     viem: ^2.14.1
   checksum: 5f46c09bad98e05a17c7c052d3680d07e6bb7b117f9e9167d9d76aa1efa90014d098120603ee8700d1d43e1fa446512bcfbed1993cb1c16fb8967130183e422a
-  languageName: node
-  linkType: hard
-
-"permissionless@npm:^0.2.10":
-  version: 0.2.11
-  resolution: "permissionless@npm:0.2.11"
-  peerDependencies:
-    viem: ^2.21.22
-  checksum: 9ca604387f6285684a83bdfdd22b75d8d04778485ab1fc2beba13fc6c702eaa45598e132bbc210a9464390880322e18946a1ddaf2517303a60ea66032ecc1019
   languageName: node
   linkType: hard
 
@@ -33443,7 +33466,7 @@ __metadata:
     "@mui/icons-material": ^5.10.9
     "@mui/material": ^5.10.10
     "@mui/styles": ^5.10.10
-    "@privy-io/react-auth": 1.92.2
+    "@privy-io/react-auth": 2.4.2
     "@privy-io/wagmi": ^0.2.12
     "@privy-io/wagmi-connector": ^0.1.13
     "@river-build/generated": "workspace:^"
@@ -37481,7 +37504,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"util@npm:0.12.5, util@npm:^0.12.0, util@npm:^0.12.3, util@npm:^0.12.4, util@npm:^0.12.5":
+"util@npm:0.12.5, util@npm:^0.12.0, util@npm:^0.12.3, util@npm:^0.12.4":
   version: 0.12.5
   resolution: "util@npm:0.12.5"
   dependencies:
@@ -37800,25 +37823,24 @@ __metadata:
   languageName: node
   linkType: hard
 
-"viem@npm:^2.21.3":
-  version: 2.21.34
-  resolution: "viem@npm:2.21.34"
+"viem@npm:^2.21.9":
+  version: 2.23.0
+  resolution: "viem@npm:2.23.0"
   dependencies:
-    "@adraffy/ens-normalize": 1.11.0
-    "@noble/curves": 1.6.0
-    "@noble/hashes": 1.5.0
-    "@scure/bip32": 1.5.0
-    "@scure/bip39": 1.4.0
-    abitype: 1.0.6
+    "@noble/curves": 1.8.1
+    "@noble/hashes": 1.7.1
+    "@scure/bip32": 1.6.2
+    "@scure/bip39": 1.5.4
+    abitype: 1.0.8
     isows: 1.0.6
-    webauthn-p256: 0.0.10
+    ox: 0.6.7
     ws: 8.18.0
   peerDependencies:
     typescript: ">=5.0.4"
   peerDependenciesMeta:
     typescript:
       optional: true
-  checksum: d67c251f1c857cb283bfe6b6710d6af50496ce46fe8b9249e2ca530482982d68cf158ace607b9ce3138609619304e58c90231e0064fc943b6c6baef80ced4df8
+  checksum: 5c7c9654f579aac9896a2464f9f3d38a30e614ef03457f50b795da318e6503ab0ad14141288524955746ad721ca777a08a4f9bfb16cc22c0a709fdff6b9bb3bf
   languageName: node
   linkType: hard
 
@@ -38460,135 +38482,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"web3-core-helpers@npm:1.10.3, web3-core-helpers@npm:^1.8.0":
-  version: 1.10.3
-  resolution: "web3-core-helpers@npm:1.10.3"
-  dependencies:
-    web3-eth-iban: 1.10.3
-    web3-utils: 1.10.3
-  checksum: cd5a9f54620fa9c67d08bf7955d43f09260c23a9107201cdfc9455ec2cb04ce36d84f8c65529b86dbfcac2449b8a91c33383cb9cc6e70f1e554fd923e551cf16
-  languageName: node
-  linkType: hard
-
-"web3-core-method@npm:1.10.3":
-  version: 1.10.3
-  resolution: "web3-core-method@npm:1.10.3"
-  dependencies:
-    "@ethersproject/transactions": ^5.6.2
-    web3-core-helpers: 1.10.3
-    web3-core-promievent: 1.10.3
-    web3-core-subscriptions: 1.10.3
-    web3-utils: 1.10.3
-  checksum: a1f707b4085605cc50fd8c17f2217f5f0508e4e2cee8112a3cded1b65b82c5027501c418651c80152ac940884209d3609068568bb8d2007ea07ba700f3e60d63
-  languageName: node
-  linkType: hard
-
-"web3-core-promievent@npm:1.10.3":
-  version: 1.10.3
-  resolution: "web3-core-promievent@npm:1.10.3"
-  dependencies:
-    eventemitter3: 4.0.4
-  checksum: 5406e3d84a4f02e301ddae7e560be7e83c0f5f87988e1b1efb141697d816bbba8e4ddd0d0160123745a43fa152a5b986135b16901639172490abee4f9e16d106
-  languageName: node
-  linkType: hard
-
-"web3-core-requestmanager@npm:1.10.3":
-  version: 1.10.3
-  resolution: "web3-core-requestmanager@npm:1.10.3"
-  dependencies:
-    util: ^0.12.5
-    web3-core-helpers: 1.10.3
-    web3-providers-http: 1.10.3
-    web3-providers-ipc: 1.10.3
-    web3-providers-ws: 1.10.3
-  checksum: dfa64971fcdfaea6c0c041e4117f67bdd7af89b33b8f8bf41b51605a2803188705b39847d98a63d8c2899e7d81ec20236c33354b036e1843969fee1984c3aceb
-  languageName: node
-  linkType: hard
-
-"web3-core-subscriptions@npm:1.10.3":
-  version: 1.10.3
-  resolution: "web3-core-subscriptions@npm:1.10.3"
-  dependencies:
-    eventemitter3: 4.0.4
-    web3-core-helpers: 1.10.3
-  checksum: c996f9aa1c2bfad4e0fa91b79393909fcf9550e43e7d2a8e3ff822ca750a528839f52792e6e354d5617c94a5782868e57c5a928ae354a4e52748752bea381958
-  languageName: node
-  linkType: hard
-
-"web3-core@npm:^1.8.0":
-  version: 1.10.3
-  resolution: "web3-core@npm:1.10.3"
-  dependencies:
-    "@types/bn.js": ^5.1.1
-    "@types/node": ^12.12.6
-    bignumber.js: ^9.0.0
-    web3-core-helpers: 1.10.3
-    web3-core-method: 1.10.3
-    web3-core-requestmanager: 1.10.3
-    web3-utils: 1.10.3
-  checksum: aab0ed09ccb38d842d205fda1c5505686e1f91f0ba408d96b49c962c91af2386552329124391a17f43918a18df383c63f521c64a56eff8513071ed48910afb5b
-  languageName: node
-  linkType: hard
-
-"web3-eth-iban@npm:1.10.3":
-  version: 1.10.3
-  resolution: "web3-eth-iban@npm:1.10.3"
-  dependencies:
-    bn.js: ^5.2.1
-    web3-utils: 1.10.3
-  checksum: 0603b45164e55a303215a6aa120eba68a63f7e9e9deffce67fd1d38623ba75696e4b4e0922b733c64a9a72c04f6ad7c90ca287d1d4c32868754fea0cac731917
-  languageName: node
-  linkType: hard
-
-"web3-providers-http@npm:1.10.3":
-  version: 1.10.3
-  resolution: "web3-providers-http@npm:1.10.3"
-  dependencies:
-    abortcontroller-polyfill: ^1.7.5
-    cross-fetch: ^4.0.0
-    es6-promise: ^4.2.8
-    web3-core-helpers: 1.10.3
-  checksum: 4b60778d1e7c0ca13aa7b348b9b9140c68851cf346989fc89c53cad5f2ae3c99a54eac78211d47feb513cf108db35df136a85e6a376fefd035a3fe93fbd0035d
-  languageName: node
-  linkType: hard
-
-"web3-providers-ipc@npm:1.10.3":
-  version: 1.10.3
-  resolution: "web3-providers-ipc@npm:1.10.3"
-  dependencies:
-    oboe: 2.1.5
-    web3-core-helpers: 1.10.3
-  checksum: 54c2c13ab58b6712c54adfa1040bc9f3328843a5d0b649b1a30994dadae219427e72d3ba41e352f254c35858de42e988a3d36ef5e6a1f8e0b1a608e07e8c2591
-  languageName: node
-  linkType: hard
-
-"web3-providers-ws@npm:1.10.3":
-  version: 1.10.3
-  resolution: "web3-providers-ws@npm:1.10.3"
-  dependencies:
-    eventemitter3: 4.0.4
-    web3-core-helpers: 1.10.3
-    websocket: ^1.0.32
-  checksum: 2f54abe361c38e6f35968aa6df984f787882f4f7208b1c00136763366f4060dea52c3157edc7cc3e7910626dc98ef453553f60a65f6a2b79ef76c09fc96fa173
-  languageName: node
-  linkType: hard
-
-"web3-utils@npm:1.10.3":
-  version: 1.10.3
-  resolution: "web3-utils@npm:1.10.3"
-  dependencies:
-    "@ethereumjs/util": ^8.1.0
-    bn.js: ^5.2.1
-    ethereum-bloom-filters: ^1.0.6
-    ethereum-cryptography: ^2.1.2
-    ethjs-unit: 0.1.6
-    number-to-bn: 1.7.0
-    randombytes: ^2.1.0
-    utf8: 3.0.0
-  checksum: 353226710b2089a8e84f2b97cc765093e3018b850d3a6d60c92fe012829fa15a54ad15d432f1927bc185c6ef5100397a32fd4a896da5f514817c3f53583df134
-  languageName: node
-  linkType: hard
-
 "web3-utils@npm:^1.3.6":
   version: 1.10.4
   resolution: "web3-utils@npm:1.10.4"
@@ -38671,7 +38564,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"websocket@npm:^1.0.32, websocket@npm:^1.0.34":
+"websocket@npm:^1.0.34":
   version: 1.0.34
   resolution: "websocket@npm:1.0.34"
   dependencies:
@@ -39698,6 +39591,27 @@ __metadata:
     react:
       optional: true
   checksum: 654e47959970bc66bbf2ae80fced7e556dd488e9ee54eb678330cb036ecc7184f4b8c2cae273be28022533622c54ab6339bf3fe30d19236367c5c251b6c6679a
+  languageName: node
+  linkType: hard
+
+"zustand@npm:^5.0.0":
+  version: 5.0.3
+  resolution: "zustand@npm:5.0.3"
+  peerDependencies:
+    "@types/react": ">=18.0.0"
+    immer: ">=9.0.6"
+    react: ">=18.0.0"
+    use-sync-external-store: ">=1.2.0"
+  peerDependenciesMeta:
+    "@types/react":
+      optional: true
+    immer:
+      optional: true
+    react:
+      optional: true
+    use-sync-external-store:
+      optional: true
+  checksum: 72da39ac3017726c3562c615a0f76cee0c9ea678d664f82ee7669f8cb5e153ee81059363473094e4154d73a2935ee3459f6792d1ec9d08d2e72ebe641a16a6ba
   languageName: node
   linkType: hard
 
