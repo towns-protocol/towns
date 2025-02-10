@@ -2,6 +2,7 @@ import { Handler } from 'mdast-util-to-hast'
 import { ListItemContentPlugin } from '@udecode/plate-list/react'
 import { MentionPlugin } from '@udecode/plate-mention/react'
 import { ELEMENT_MENTION_CHANNEL } from '../plugins/createChannelPlugin'
+import { ELEMENT_MENTION_TICKER } from '../plugins/createTickerMentionPlugin'
 import { ELEMENT_EDITED } from './remark/remarkEditedAnnotation'
 
 export const userMentionHandler: Handler = (state, node) => ({
@@ -19,6 +20,15 @@ export const channelMentionHandler: Handler = (state, node) => ({
     value: String(node.value).trim(),
     children: state.all(node),
     channel: node.channel,
+    properties: {},
+})
+
+export const tickerMentionHandler: Handler = (state, node) => ({
+    type: 'element',
+    tagName: ELEMENT_MENTION_TICKER,
+    value: String(node.value).trim(),
+    children: state.all(node),
+    ticker: node.ticker,
     properties: {},
 })
 

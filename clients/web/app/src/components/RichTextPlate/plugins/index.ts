@@ -53,10 +53,13 @@ import { ELEMENT_MENTION_EMOJI, EmojiMentionPlugin } from './createEmojiPlugin'
 import { ErrorHandlingPlugin } from './createErrorHandlingPlugin'
 import {
     TComboboxItemWithData,
+    TMentionTicker,
     TUserIDNameMap,
     TUserWithChannel,
 } from '../components/plate-ui/autocomplete/types'
 import { getUrlHref, isBlockquoteWithEmptyLines, isExactlyUrl } from '../utils/helpers'
+import { ELEMENT_MENTION_TICKER, TickerMentionPlugin } from './createTickerMentionPlugin'
+import { TickerMentionElement } from '../components/plate-ui/TickerMentionElement'
 
 const createTownsEditor = (
     uniqueId: string,
@@ -64,8 +67,10 @@ const createTownsEditor = (
     userHashMap: TUserIDNameMap,
     getUserMentions: () => TComboboxItemWithData<TUserWithChannel>[],
     getChannelMentions: () => TComboboxItemWithData<Channel>[],
+    getTickerMentions: () => TComboboxItemWithData<TMentionTicker>[],
     initialValue: Value,
     lookupUser?: ReturnType<typeof useUserLookupContext>['lookupUser'],
+    onSelectTicker?: (ticker: TMentionTicker) => void,
 ) =>
     createPlateEditor({
         plugins: [
@@ -128,6 +133,7 @@ const createTownsEditor = (
             ChannelMentionPlugin,
             UserMentionPlugin,
             EmojiMentionPlugin,
+            TickerMentionPlugin,
             ResetNodePlugin.configure({
                 options: {
                     rules: nodeResetRules,
@@ -160,10 +166,13 @@ const createTownsEditor = (
                 [MentionPlugin.key]: MentionElement,
                 [ELEMENT_MENTION_CHANNEL]: ChannelMentionElement,
                 [ELEMENT_MENTION_EMOJI]: EmojiMentionElement,
+                [ELEMENT_MENTION_TICKER]: TickerMentionElement,
                 [MentionInputPlugin.key]: withProps(ComboboxContextWrapper, {
                     Component: ComboboxInput,
                     getUserMentions,
                     getChannelMentions,
+                    getTickerMentions,
+                    onSelectTicker: onSelectTicker,
                 }),
                 [ParagraphPlugin.key]: ParagraphElement,
                 [BoldPlugin.key]: withProps(PlateLeaf, { as: 'strong' }),

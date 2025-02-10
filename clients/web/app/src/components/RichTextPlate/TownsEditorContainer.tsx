@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import {
     Channel,
     SendTextMessageOptions,
@@ -9,7 +9,12 @@ import {
 import { datadogRum } from '@datadog/browser-rum'
 import every from 'lodash/every'
 import isEqual from 'lodash/isEqual'
-import { Attachment, EmbeddedMessageAttachment, UnfurledLinkAttachment } from '@river-build/sdk'
+import {
+    Attachment,
+    EmbeddedMessageAttachment,
+    TickerAttachment,
+    UnfurledLinkAttachment,
+} from '@river-build/sdk'
 import { useMediaDropContext } from '@components/MediaDropContext/MediaDropContext'
 import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
 import { Box, BoxProps, Stack } from '@ui'
@@ -20,11 +25,14 @@ import {
 import { useInlineReplyAttchmentPreview } from '@components/EmbeddedMessageAttachement/hooks/useInlineReplyAttchmentPreview'
 import { LoadingUnfurledLinkAttachment } from 'hooks/useExtractInternalLinks'
 import { SECOND_MS } from 'data/constants'
+import { useTradingTokens } from '@components/Trading/hooks/useTradingTokens'
+import { useIsHNTMember } from 'hooks/useIsHNTMember'
 import { RichTextEditor } from './RichTextEditor'
 import { useEditorChannelData, useEditorMemberData } from './hooks/editorHooks'
 import { getChannelNames } from './utils/helpers'
 import { EditorFallback } from './components/EditorFallback'
 import { unfurlLinksToAttachments } from './utils/unfurlLinks'
+import { TComboboxItemWithData, TMentionTicker } from './components/plate-ui/autocomplete/types'
 
 type Props = {
     onSend?: (
@@ -79,6 +87,8 @@ const TownsTextEditorWithoutBoundary = ({
         (UnfurledLinkAttachment | LoadingUnfurledLinkAttachment)[]
     >([])
 
+    const [tickerAttachments, setTickerAttachments] = useState<TickerAttachment[]>([])
+
     const channelId = useChannelId()
     const { lookupUser } = useUserLookupContext()
     const { userMentions, userHashMap } = useEditorMemberData(
@@ -87,6 +97,55 @@ const TownsTextEditorWithoutBoundary = ({
         draftUserIds,
     )
     const { channelMentions } = useEditorChannelData(channels)
+    const { data: tradingTokens } = useTradingTokens()
+    const { isHNTMember } = useIsHNTMember()
+    const tickerMentions = useMemo(() => {
+        if (!tradingTokens || !isHNTMember) {
+            return []
+        }
+        const chains = Object.keys(tradingTokens.tokens)
+        return chains
+            .map((chain) => {
+                const tokens = tradingTokens.tokens[Number(chain)]
+                return tokens.map(
+                    (token) =>
+                        ({
+                            key: chain + token.address,
+                            text: token.symbol,
+                            data: {
+                                symbol: token.symbol,
+                                address: token.address,
+                                name: token.name,
+                                chain: chain,
+                            },
+                        } satisfies TComboboxItemWithData<TMentionTicker>),
+                )
+            })
+            .flat()
+    }, [tradingTokens, isHNTMember])
+
+    const onAddTickerAttachment = useCallback(
+        (ticker: TMentionTicker) => {
+            setTickerAttachments([
+                ...tickerAttachments,
+                {
+                    type: 'ticker',
+                    id: ticker.address,
+                    address: ticker.address,
+                    chainId: ticker.chain,
+                } satisfies TickerAttachment,
+            ])
+        },
+        [tickerAttachments],
+    )
+    const onRemoveTickerAttachment = useCallback(
+        (address: string, chainId: string) => {
+            setTickerAttachments(
+                tickerAttachments.filter((t) => t.address !== address && t.chainId !== chainId),
+            )
+        },
+        [tickerAttachments],
+    )
 
     const onRemoveMessageAttachment = useCallback(
         (attachmentId: string) => {
@@ -125,6 +184,7 @@ const TownsTextEditorWithoutBoundary = ({
             const attachments: Attachment[] = []
             attachments.push(...embeddedMessageAttachments)
             attachments.push(...unfurledLinkAttachments)
+            attachments.push(...tickerAttachments)
 
             if (attachments.length > 0) {
                 options.attachments = attachments
@@ -177,6 +237,7 @@ const TownsTextEditorWithoutBoundary = ({
             }
 
             onSend(message, options, files?.length)
+            setTickerAttachments([])
         },
         [
             onSend,
@@ -186,6 +247,7 @@ const TownsTextEditorWithoutBoundary = ({
             files?.length,
             casablancaClient?.streams,
             channelId,
+            tickerAttachments,
         ],
     )
 
@@ -234,9 +296,13 @@ const TownsTextEditorWithoutBoundary = ({
                     storageId={inlineReplyPreview?.event?.eventId ?? storageId}
                     userMentions={userMentions}
                     channelMentions={channelMentions}
+                    tickerMentions={tickerMentions}
                     userHashMap={userHashMap}
                     lookupUser={lookupUser}
                     unfurledLinkAttachments={unfurledLinkAttachments}
+                    tickerAttachments={tickerAttachments}
+                    onSelectTicker={onAddTickerAttachment}
+                    onRemoveTicker={onRemoveTickerAttachment}
                     onMessageLinksUpdated={onMessageLinksUpdated}
                     onRemoveUnfurledLinkAttachment={onRemoveUnfurledLinkAttachment}
                     onSend={sendMessage}

@@ -13,6 +13,7 @@ import {
     ChunkedMediaAttachment,
     EmbeddedMessageAttachment,
     MessageType,
+    TickerAttachment,
     UnfurledLinkAttachment,
 } from '@river-build/sdk'
 import { isUrl } from 'utils/isUrl'
@@ -35,6 +36,7 @@ import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
 import { addressFromSpaceId } from 'ui/utils/utils'
 import { minterRoleId } from '@components/SpaceSettingsPanel/rolePermissions.const'
 import { MessageAttachmentsContext } from './MessageAttachmentsContext'
+import { TickerAttachmentContainer } from './TickerAttachmentContainer/TickerAttachmentContainer'
 
 const emptyArray: never[] = []
 
@@ -56,6 +58,7 @@ export const MessageAttachments = (props: {
     const mediaAttachments = attachments.filter(isMediaAttachment)
     const fileAttachments = attachments.filter(isRegularFileAttachment)
     const unfurledLinkAttachments = attachments.filter(isUnfurledLinkAttachment)
+    const tickerAttachments = attachments.filter(isTickerAttachment)
     const messageAttachments = isMessageAttachementContext
         ? emptyArray
         : attachments?.filter(isEmbeddedMessageAttachment)
@@ -133,6 +136,14 @@ export const MessageAttachments = (props: {
                     ))}
                 </Box>
             )}
+            {/* show ticker attachments in vertical stack */}
+            {tickerAttachments.length > 0 && (
+                <Stack>
+                    {tickerAttachments.map((ticker) => {
+                        return <TickerAttachmentContainer key={ticker.id} attachment={ticker} />
+                    })}
+                </Stack>
+            )}
         </>
     )
 }
@@ -159,6 +170,10 @@ function isRegularFileAttachment(attachment: Attachment): attachment is ChunkedM
 
 function isUnfurledLinkAttachment(attachment: Attachment): attachment is UnfurledLinkAttachment {
     return attachment.type === 'unfurled_link'
+}
+
+function isTickerAttachment(attachment: Attachment): attachment is TickerAttachment {
+    return attachment.type === 'ticker'
 }
 
 export function isEmbeddedMessageAttachment(

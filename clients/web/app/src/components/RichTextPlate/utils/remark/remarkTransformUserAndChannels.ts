@@ -7,10 +7,12 @@ import { findAndReplace } from 'mdast-util-find-and-replace'
 import { Channel, useUserLookupContext } from 'use-towns-client'
 import { MentionPlugin } from '@udecode/plate-mention/react'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
+import { ELEMENT_MENTION_TICKER } from '@components/RichTextPlate/plugins/createTickerMentionPlugin'
 import { ELEMENT_MENTION_CHANNEL } from '../../plugins/createChannelPlugin'
 import {
     AtChannelUser,
     TChannelMentionElement,
+    TTickerMentionElement,
     TUserIDNameMap,
     TUserMentionElement,
 } from '../../components/plate-ui/autocomplete/types'
@@ -66,6 +68,13 @@ function remarkTransformUserAndChannels(
         const CHANNEL_NAME_REGEX = '[-\\da-z_<a?:.+?:\\d{18}>|\\p{Extended_Pictographic}]{0,50}'
         const CHANNEL_ELEMENT_REGEX = new RegExp(
             `(?:^|\\s)${CHANNEL_TRIGGER}(${CHANNEL_NAME_REGEX})`,
+            'gui',
+        )
+
+        const TICKER_TRIGGER = '$'
+        const TICKER_NAME_REGEX = '[-a-z0-9]{0,6}'
+        const TICKER_ELEMENT_REGEX = new RegExp(
+            `(?:^|\\s)\\${TICKER_TRIGGER}(${TICKER_NAME_REGEX})`,
             'gui',
         )
 
@@ -159,9 +168,33 @@ function remarkTransformUserAndChannels(
             ]
         }
 
+        const transformTicker = (value: string, selection: string) => {
+            const whitespace = []
+            if (value.indexOf(TICKER_TRIGGER) > 0) {
+                whitespace.push({
+                    type: 'text',
+                    value: value.substring(0, value.indexOf(TICKER_TRIGGER)),
+                })
+            }
+            const tickerName = value.split(TICKER_TRIGGER)[1]
+            const ticker = { name: tickerName, symbol: tickerName }
+
+            return [
+                ...whitespace,
+                {
+                    type: ELEMENT_MENTION_TICKER,
+                    ticker,
+                    value,
+                    children: [{ text: value }],
+                } as TTickerMentionElement,
+                { ...SPACE_NODE },
+            ]
+        }
+
         type SanitizeFragmentType = {
             (mentionFragment: ReturnType<typeof transformChannel>): ElementOrTextOf<TEditor>
             (mentionFragment: ReturnType<typeof transformUser>): ElementOrTextOf<TEditor>
+            (mentionFragment: ReturnType<typeof transformTicker>): ElementOrTextOf<TEditor>
         }
         const sanitizeFragment: SanitizeFragmentType = (mentionFragment) => {
             if (mentionFragment.length === 1) {
@@ -198,6 +231,7 @@ function remarkTransformUserAndChannels(
             findAndReplace(tree, [
                 [CHANNEL_ELEMENT_REGEX, transformChannel],
                 [USER_ELEMENT_REGEX, transformUser],
+                [TICKER_ELEMENT_REGEX, transformTicker],
             ])
         }
 

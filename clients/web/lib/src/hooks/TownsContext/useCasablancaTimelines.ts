@@ -49,6 +49,7 @@ import {
     TipEvent,
     MessageType,
     toMembership,
+    TickerAttachment,
 } from '@river-build/sdk'
 import {
     ChannelMessage_Post,
@@ -1057,6 +1058,15 @@ function toAttachment(
                 image: content.image,
                 id,
             }
+        }
+        case 'ticker': {
+            const content = attachment.content.value
+            return {
+                id,
+                type: 'ticker',
+                address: content.address,
+                chainId: content.chainId,
+            } satisfies TickerAttachment
         }
         default:
             return undefined

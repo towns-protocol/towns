@@ -14,6 +14,7 @@ const MENTION_TYPES = [
     defaultNodeTypes.mention,
     defaultNodeTypes.mention_channel,
     defaultNodeTypes.mention_emoji,
+    defaultNodeTypes.mention_ticker,
 ]
 
 const isLeafNode = (node: BlockType | LeafType): node is LeafType => {

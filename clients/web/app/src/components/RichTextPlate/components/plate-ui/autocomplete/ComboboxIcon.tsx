@@ -18,10 +18,15 @@ const ComboboxChannelIcon = (_: TComboboxAllData) => (
     <Avatar icon="tag" size="avatar_sm" iconSize="square_xs" />
 )
 
+const ComboboxTickerIcon = (_: TComboboxAllData) => (
+    <Avatar icon="dollar" size="avatar_sm" iconSize="square_xs" />
+)
+
 const ComboboxIconRenderer = {
     [ComboboxTypes.userMention]: ComboboxUserIcon,
     [ComboboxTypes.emojiMention]: ComboboxEmojiIcon,
     [ComboboxTypes.channelMention]: ComboboxChannelIcon,
+    [ComboboxTypes.tickerMention]: ComboboxTickerIcon,
 }
 
 export const ComboboxIcon = <T extends TMentionComboboxTypes>({

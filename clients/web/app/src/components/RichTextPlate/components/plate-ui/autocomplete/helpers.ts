@@ -2,6 +2,7 @@ import { Channel, Mention } from 'use-towns-client'
 import { SlateEditor } from '@udecode/plate-common'
 import { BaseMentionPlugin, MentionOnSelectItem } from '@udecode/plate-mention'
 import { UserWithDisplayName, getPrettyDisplayName } from 'utils/getPrettyDisplayName'
+import { ELEMENT_MENTION_TICKER } from '@components/RichTextPlate/plugins/createTickerMentionPlugin'
 import {
     AtChannelUser,
     ComboboxTypes,
@@ -94,6 +95,11 @@ const onSelectItemUser: MentionOnSelectItem<TComboboxItemWithData> = getMentionO
 const onSelectItemChannel: MentionOnSelectItem<TComboboxItemWithData> = getMentionOnSelectItem({
     key: ELEMENT_MENTION_CHANNEL,
 })
+
+const onSelectItemTicker: MentionOnSelectItem<TComboboxItemWithData> = getMentionOnSelectItem({
+    key: ELEMENT_MENTION_TICKER,
+})
+
 /**
  * On select emoji, insert the emoji as text into the editor, instead of creating a complex element as required for @user #channel mention.
  */
@@ -110,5 +116,6 @@ export const onMentionSelectTriggerMap = (trigger: string) => {
         '@': onSelectItemUser,
         '#': onSelectItemChannel,
         ':': onSelectItemEmoji,
+        $: onSelectItemTicker,
     }[trigger]
 }

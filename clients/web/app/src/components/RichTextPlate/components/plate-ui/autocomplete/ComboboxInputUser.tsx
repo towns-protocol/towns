@@ -10,6 +10,7 @@ import {
     ComboboxInputUserProps,
     ComboboxTypes,
     TComboboxItemWithData,
+    TMentionTicker,
     TUserWithChannel,
 } from './types'
 import { ComboboxIcon } from './ComboboxIcon'
@@ -22,12 +23,15 @@ import {
     userMentionFilter,
 } from './helpers'
 import { ComboboxContainer } from './ComboboxContainer'
+import { tickerSearch } from './ticker-search'
+import { ComboboxTrailingTickerContent } from './ComboboxTrailingTickerContent'
 
 type CollectionStoreItem = ReturnType<CollectionStore['item']>
 
 const isUserCombobox = (trigger: string) => trigger === '@'
 const isChannelCombobox = (trigger: string) => trigger === '#'
 const isEmojiCombobox = (trigger: string) => trigger === ':'
+const isTickerCombobox = (trigger: string) => trigger === '$'
 
 /** Combobox item UI for channels and @user mentions */
 export const ComboboxItemUser = ({
@@ -57,6 +61,41 @@ export const ComboboxItemUser = ({
                 />
             }
             onClick={() => onMentionSelectTriggerMap(trigger)?.(editor, item, item.text)}
+        />
+    )
+}
+
+export const ComboboxItemTicker = ({
+    item,
+    editor,
+    trigger,
+    onSelectTicker,
+}: {
+    trigger: string
+    editor: TPlateEditor<Value>
+    item: TComboboxItemWithData<TMentionTicker>
+    onSelectTicker?: (ticker: TMentionTicker) => void
+}) => {
+    const getItem = useCallback(
+        (_storeProps: CollectionStoreItem) => Object.assign({}, _storeProps, item),
+        [item],
+    )
+    return (
+        <InlineComboboxItem
+            key={item.key}
+            value={item.text}
+            getItem={getItem}
+            Icon={<ComboboxIcon item={item.data} comboboxType={ComboboxTypes.tickerMention} />}
+            trailingContent={
+                <ComboboxTrailingTickerContent
+                    address={item.data.address}
+                    chain={item.data.chain}
+                />
+            }
+            onClick={() => {
+                onSelectTicker?.(item.data)
+                onMentionSelectTriggerMap(trigger)?.(editor, item, item.text)
+            }}
         />
     )
 }
@@ -98,7 +137,17 @@ export const ComboboxItemGeneric = ({
 const EMPTY_ARRAY: TComboboxItemWithData<TUserWithChannel | Channel>[] = []
 
 export const ComboboxInput = withRef<typeof PlateElement, ComboboxInputUserProps>(
-    ({ className, getUserMentions, getChannelMentions, ...props }, ref) => {
+    (
+        {
+            className,
+            getUserMentions,
+            getChannelMentions,
+            getTickerMentions,
+            onSelectTicker,
+            ...props
+        },
+        ref,
+    ) => {
         const {
             query: searchQueryStore,
             editor,
@@ -112,7 +161,7 @@ export const ComboboxInput = withRef<typeof PlateElement, ComboboxInputUserProps
         const store = useComboboxContext()!
 
         const getAllItems = useCallback(() => {
-            if (isEmojiCombobox(trigger.current)) {
+            if (isEmojiCombobox(trigger.current) || isTickerCombobox(trigger.current)) {
                 return EMPTY_ARRAY
             }
             return isUserCombobox(trigger.current) ? getUserMentions() : getChannelMentions()
@@ -144,6 +193,13 @@ export const ComboboxInput = withRef<typeof PlateElement, ComboboxInputUserProps
                     })
                 })
                 return
+            } else if (isTickerCombobox(trigger.current)) {
+                tickerSearch(searchQueryStore, getTickerMentions()).then((tickerSearchResult) => {
+                    startTransition(() => {
+                        setFilteredItems(tickerSearchResult)
+                    })
+                })
+                return
             } else if (isUserCombobox(trigger.current)) {
                 _filteredItemList = getUserMentions().filter(userMentionFilter(searchQueryStore))
             } else {
@@ -154,7 +210,14 @@ export const ComboboxInput = withRef<typeof PlateElement, ComboboxInputUserProps
             startTransition(() => {
                 setFilteredItems(_filteredItemList)
             })
-        }, [getAllItems, searchQueryStore, store, getUserMentions, getChannelMentions])
+        }, [
+            getAllItems,
+            searchQueryStore,
+            store,
+            getUserMentions,
+            getChannelMentions,
+            getTickerMentions,
+        ])
 
         const searchResults = useMemo(() => {
             return filteredItems.map((item) => {
@@ -165,6 +228,16 @@ export const ComboboxInput = withRef<typeof PlateElement, ComboboxInputUserProps
                             editor={editor}
                             trigger={trigger.current}
                             item={item as TComboboxItemWithData<TUserWithChannel>}
+                        />
+                    )
+                } else if (isTickerCombobox(trigger.current)) {
+                    return (
+                        <ComboboxItemTicker
+                            key={`cbox_item_${item.key}`}
+                            editor={editor}
+                            trigger={trigger.current}
+                            item={item as TComboboxItemWithData<TMentionTicker>}
+                            onSelectTicker={onSelectTicker}
                         />
                     )
                 } else {
@@ -178,7 +251,7 @@ export const ComboboxInput = withRef<typeof PlateElement, ComboboxInputUserProps
                     )
                 }
             })
-        }, [filteredItems, editor])
+        }, [filteredItems, editor, onSelectTicker])
 
         return (
             <ComboboxContainer

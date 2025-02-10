@@ -3,14 +3,23 @@ import { Channel, LookupUserFn, SendTextMessageOptions } from 'use-towns-client'
 import { Plate, TPlateEditor } from '@udecode/plate-common/react'
 import { TElement, getPointAfter, getPointBeforeLocation, resetEditor } from '@udecode/plate-common'
 import noop from 'lodash/noop'
-import { EmbeddedMessageAttachment, MessageType, UnfurledLinkAttachment } from '@river-build/sdk'
-import { UnfurledLinkAttachmentPreview } from '@components/EmbeddedMessageAttachement/EditorAttachmentPreview'
+import {
+    EmbeddedMessageAttachment,
+    MessageType,
+    TickerAttachment,
+    UnfurledLinkAttachment,
+} from '@river-build/sdk'
+import {
+    TickerAttachmentPreview,
+    UnfurledLinkAttachmentPreview,
+} from '@components/EmbeddedMessageAttachement/EditorAttachmentPreview'
 import { Box, BoxProps, Stack } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { useInputStore } from 'store/store'
 import { LoadingUnfurledLinkAttachment } from 'hooks/useExtractInternalLinks'
 import {
     TComboboxItemWithData,
+    TMentionTicker,
     TUserIDNameMap,
     TUserWithChannel,
 } from './components/plate-ui/autocomplete/types'
@@ -55,6 +64,8 @@ type RichTextEditorProps = {
     userMentions: TComboboxItemWithData<TUserWithChannel>[]
     /* channels shown in #channel popup while typing */
     channelMentions: TComboboxItemWithData<Channel>[]
+    /* tickers shown in $ticker popup while typing */
+    tickerMentions: TComboboxItemWithData<TMentionTicker>[]
     /* list of all channels in space */
     channels: Channel[]
     /* func to get user details by `userId`. Generally provided by `useUserLookupContext()` */
@@ -66,6 +77,9 @@ type RichTextEditorProps = {
         messages: EmbeddedMessageAttachment[],
         links: UnfurledLinkAttachment[],
     ) => void
+    tickerAttachments?: TickerAttachment[]
+    onSelectTicker?: (ticker: TMentionTicker) => void
+    onRemoveTicker?: (address: string, chain: string) => void
     /* callback invoked when user presses enter key or click send button  */
     onSend?: (
         message: string,
@@ -93,12 +107,16 @@ export const RichTextEditor = ({
     userHashMap,
     userMentions,
     channelMentions,
+    tickerMentions,
+    tickerAttachments = [],
     channels,
     lookupUser,
     unfurledLinkAttachments = [],
     onArrowEscape,
     onRemoveUnfurledLinkAttachment = noop,
     onMessageLinksUpdated = noop,
+    onSelectTicker = noop,
+    onRemoveTicker = noop,
     onCancel = noop,
     onSend = noop,
     onChange = noop,
@@ -138,6 +156,9 @@ export const RichTextEditor = ({
     const channelMentionsRef = useRef(channelMentions)
     channelMentionsRef.current = channelMentions
 
+    const tickerMentionsRef = useRef(tickerMentions)
+    tickerMentionsRef.current = tickerMentions
+
     const [editor] = useState<TPlateEditor>(() =>
         createTownsEditor(
             storageId.current,
@@ -145,8 +166,10 @@ export const RichTextEditor = ({
             userHashMap,
             () => userMentionsRef.current,
             () => channelMentionsRef.current,
+            () => tickerMentionsRef.current,
             initialValue,
             lookupUser,
+            onSelectTicker,
         ),
     )
     const disabled = useMemo(() => !editable || isSendingMessage, [editable, isSendingMessage])
@@ -397,6 +420,17 @@ export const RichTextEditor = ({
                                 key={attachment.id}
                                 attachment={attachment}
                                 onRemove={onRemoveUnfurledLinkAttachment}
+                            />
+                        ))}
+                    </Box>
+                )}
+                {tickerAttachments.length > 0 && (
+                    <Box horizontal gap padding flexWrap="wrap" width="100%">
+                        {tickerAttachments.map((attachment) => (
+                            <TickerAttachmentPreview
+                                key={attachment.id}
+                                attachment={attachment}
+                                onRemove={onRemoveTicker}
                             />
                         ))}
                     </Box>

@@ -17,6 +17,7 @@ import {
     TownsMentionConfig,
 } from '../components/plate-ui/autocomplete/types'
 import { ELEMENT_MENTION_CHANNEL } from './createChannelPlugin'
+import { ELEMENT_MENTION_TICKER } from './createTickerMentionPlugin'
 
 /**
  * Originally defined in the official PlateJS plugin, `getMentionOnSelectItem` is a function that handles
@@ -51,6 +52,14 @@ export const getMentionOnSelectItem =
                     value: '#' + item.text,
                     channel: item.data,
                     children: [{ text: '#' + item.text }],
+                })
+                break
+            case ELEMENT_MENTION_TICKER:
+                insertNodes<TMentionElement>(editor, {
+                    type: key,
+                    value: '$' + item.text,
+                    ticker: item.data,
+                    children: [{ text: '$' + item.text }],
                 })
                 break
             default:

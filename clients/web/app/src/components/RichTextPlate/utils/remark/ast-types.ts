@@ -2,7 +2,12 @@ import { TMentionElement } from '@udecode/plate-mention'
 import { MentionPlugin } from '@udecode/plate-mention/react'
 import { TCodeBlockElement } from '@udecode/plate-code-block'
 import { CodeBlockPlugin, CodeLinePlugin } from '@udecode/plate-code-block/react'
-import { TChannelMentionElement, TMentionEmoji } from '../../components/plate-ui/autocomplete/types'
+import { ELEMENT_MENTION_TICKER } from '@components/RichTextPlate/plugins/createTickerMentionPlugin'
+import {
+    TChannelMentionElement,
+    TMentionEmoji,
+    TMentionTicker,
+} from '../../components/plate-ui/autocomplete/types'
 import { ELEMENT_MENTION_EMOJI } from '../../plugins/createEmojiPlugin'
 import { ELEMENT_MENTION_CHANNEL } from '../../plugins/createChannelPlugin'
 
@@ -35,6 +40,7 @@ export interface NodeTypes {
     mention: string
     mention_channel: string
     mention_emoji: string
+    mention_ticker: string
 }
 
 export type MdastNodeType =
@@ -60,6 +66,7 @@ export type MdastNodeType =
     | typeof MentionPlugin.key
     | typeof ELEMENT_MENTION_CHANNEL
     | typeof ELEMENT_MENTION_EMOJI
+    | typeof ELEMENT_MENTION_TICKER
 
 export const defaultNodeTypes: NodeTypes = {
     paragraph: 'p',
@@ -90,6 +97,7 @@ export const defaultNodeTypes: NodeTypes = {
     mention: MentionPlugin.key,
     mention_channel: ELEMENT_MENTION_CHANNEL,
     mention_emoji: ELEMENT_MENTION_EMOJI,
+    mention_ticker: ELEMENT_MENTION_TICKER,
 }
 
 export interface LeafType {
@@ -274,3 +282,4 @@ export type DeserializedNode<T extends InputNodeTypes> =
     | TChannelMentionElement
     | TMentionElement
     | TMentionEmoji
+    | TMentionTicker

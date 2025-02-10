@@ -15,6 +15,7 @@ import {
     channelMentionHandler,
     editedHandler,
     listContentHandler,
+    tickerMentionHandler,
     userMentionHandler,
 } from './rehypeHandlers'
 import remarkTransformUserAndChannels from './remark/remarkTransformUserAndChannels'
@@ -25,6 +26,7 @@ import remarkDecodeHTMLCodeBlocks from './remark/remarkDecodeHTMLCodeBlocks'
 import remarkEditedAnnotation, { ELEMENT_EDITED } from './remark/remarkEditedAnnotation'
 import { getChannelNames } from './helpers'
 import { TUserIDNameMap } from '../components/plate-ui/autocomplete/types'
+import { ELEMENT_MENTION_TICKER } from '../plugins/createTickerMentionPlugin'
 
 type MarkdownRendererProps = React.PropsWithChildren<{
     isEdited?: boolean
@@ -68,11 +70,13 @@ const MarkdownRenderer = ({
                 ListItemContentPlugin.key,
                 MentionPlugin.key,
                 ELEMENT_MENTION_CHANNEL,
+                ELEMENT_MENTION_TICKER,
                 'abbr',
             ],
             handlers: {
                 [MentionPlugin.key]: userMentionHandler,
                 [ELEMENT_MENTION_CHANNEL]: channelMentionHandler,
+                [ELEMENT_MENTION_TICKER]: tickerMentionHandler,
                 [ListItemContentPlugin.key]: listContentHandler,
                 [ELEMENT_EDITED]: editedHandler,
             },

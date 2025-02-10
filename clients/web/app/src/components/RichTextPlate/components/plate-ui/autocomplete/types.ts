@@ -13,6 +13,8 @@ import { type TriggerComboboxPluginOptions } from '@udecode/plate-combobox'
 export type ComboboxInputUserProps = Omit<ComboboxContainerProps, 'searchResults' | 'filter'> & {
     getUserMentions: () => TComboboxItemWithData<TUserWithChannel>[]
     getChannelMentions: () => TComboboxItemWithData<Channel>[]
+    getTickerMentions: () => TComboboxItemWithData<TMentionTicker>[]
+    onSelectTicker?: (ticker: TMentionTicker) => void
 }
 
 export type ComboboxContainerProps = PlateElementProps<TElement> & {
@@ -37,10 +39,12 @@ export type TMentionEmoji = { name: string; emoji: string }
 export type TUserWithChannel = TownsStreamMember & { isChannelMember: boolean } & {
     atChannel?: boolean
 }
-export type TMentionComboboxTypes = Channel | TUserWithChannel | TMentionEmoji
-export type TComboboxAllData = Channel & TUserWithChannel & TMentionEmoji
+export type TMentionTicker = { name: string; symbol: string; address: string; chain: string }
+export type TMentionComboboxTypes = Channel | TUserWithChannel | TMentionEmoji | TMentionTicker
+export type TComboboxAllData = Channel & TUserWithChannel & TMentionEmoji & TMentionTicker
 export type TEmojiMentionElement = TMentionElement & { emoji: TMentionEmoji }
 export type TChannelMentionElement = TMentionElement & { channel: Channel }
+export type TTickerMentionElement = TMentionElement & { ticker: TMentionTicker }
 export type TComboboxItemWithData<T = TMentionComboboxTypes> = {
     key: string
     text: string
@@ -60,6 +64,7 @@ export enum ComboboxTypes {
     userMention = 'userMention',
     channelMention = 'channelMention',
     emojiMention = 'emojiMention',
+    tickerMention = 'tickerMention',
 }
 
 export function isComboboxType(value: string): value is ComboboxTypes {

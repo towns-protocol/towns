@@ -4,6 +4,7 @@ import {
     Attachment,
     EmbeddedMessageAttachment,
     OTWMention,
+    TickerAttachment,
     UnfurledLinkAttachment,
 } from '@river-build/sdk'
 import { Box, IconButton, Paragraph, Stack, Text } from '@ui'
@@ -14,6 +15,7 @@ import { FadeInBox } from '@components/Transitions'
 import { RichTextPreview } from '@components/RichTextPlate/RichTextPreview'
 import { LoadingUnfurledLinkAttachment } from 'hooks/useExtractInternalLinks'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
+import { shortAddress } from 'ui/utils/utils'
 
 type MessageAttachmentPreviewProps = {
     attachment: EmbeddedMessageAttachment
@@ -59,6 +61,19 @@ export const UnfurledLinkAttachmentPreview = (props: UnfurledLinkAttachmentPrevi
     return (
         <MessageAttachmentsContext.Provider value={{ isMessageAttachementContext: true }}>
             <UnfurledLinkPreview attachment={props.attachment} onRemove={props.onRemove} />
+        </MessageAttachmentsContext.Provider>
+    )
+}
+
+type TickerAttachmentPreviewProps = {
+    attachment: TickerAttachment
+    onRemove: (address: string, chainId: string) => void
+}
+
+export const TickerAttachmentPreview = (props: TickerAttachmentPreviewProps) => {
+    return (
+        <MessageAttachmentsContext.Provider value={{ isMessageAttachementContext: true }}>
+            <TickerPreview attachment={props.attachment} onRemove={props.onRemove} />
         </MessageAttachmentsContext.Provider>
     )
 }
@@ -186,6 +201,52 @@ const UnfurledLinkPreview = (props: {
                 )}
             </Stack>
         </FadeInBox>
+    )
+}
+
+const TickerPreview = (props: {
+    attachment: TickerAttachment
+    onRemove?: (address: string, chainId: string) => void
+}) => {
+    const { onRemove, attachment } = props
+
+    const onRemoveClicked = useCallback(
+        (event: React.MouseEvent) => {
+            event.stopPropagation()
+            event.preventDefault()
+            onRemove?.(attachment.address, attachment.chainId)
+        },
+        [onRemove, attachment],
+    )
+
+    return (
+        <Box
+            hoverable
+            paddingY="sm"
+            paddingX="paragraph"
+            background="level3"
+            rounded="sm"
+            position="relative"
+            cursor="pointer"
+        >
+            <Stack horizontal gap alignItems="center">
+                <Text>
+                    {shortAddress(attachment.address)}({attachment.chainId})
+                </Text>
+
+                <IconButton
+                    background="lightHover"
+                    rounded="full"
+                    insetX="xs"
+                    size="square_xs"
+                    icon="close"
+                    color="default"
+                    tooltip="Remove"
+                    tooltipOptions={{ immediate: true }}
+                    onClick={onRemoveClicked}
+                />
+            </Stack>
+        </Box>
     )
 }
 
