@@ -1,8 +1,8 @@
 import { EncryptionResult, encryptAESGCM, useTownsClient } from 'use-towns-client'
 import { useCallback } from 'react'
 import imageCompression from 'browser-image-compression'
-import { ChunkedMedia } from '@river-build/proto'
-import { Attachment, ChunkedMediaAttachment, MediaInfo } from '@river-build/sdk'
+import { ChunkedMedia, CreationCookie } from '@river-build/proto'
+import { Attachment, ChunkedMediaAttachment, MediaInfo, streamIdAsString } from '@river-build/sdk'
 import { refreshSpaceCache, refreshUserImageCache } from 'api/lib/fetchImage'
 import { isImageMimeType } from 'utils/isMediaMimeType'
 
@@ -17,12 +17,102 @@ export type EncryptionMetadataForUpload = {
 }
 
 export const useUploadAttachment = () => {
-    const { createMediaStream, setUserProfileImage, sendMediaPayload, setSpaceImage } =
-        useTownsClient()
+    const {
+        createMediaStream,
+        createMediaStreamNew,
+        setUserProfileImage,
+        sendMediaPayload,
+        sendMediaPayloadNew,
+        setSpaceImage,
+    } = useTownsClient()
 
     function shouldCompressFile(file: File): boolean {
         return file.type !== 'image/gif' && isImageMimeType(file.type)
     }
+
+    const createChunkedAttachmentNew = useCallback(
+        async (
+            data: Uint8Array,
+            width: number,
+            height: number,
+            file: File,
+            channelId: string | undefined,
+            spaceId: string | undefined,
+            userId: string | undefined,
+            thumbnail: File | undefined,
+            setProgress: (progress: number) => void,
+        ): Promise<Attachment> => {
+            const encryptionResult = await encryptAESGCM(data)
+            const chunkCount = Math.ceil(encryptionResult.ciphertext.length / CHUNK_SIZE)
+            const mediaStreamInfo = await createMediaStreamNew(
+                channelId,
+                spaceId,
+                userId,
+                chunkCount,
+            )
+            if (!mediaStreamInfo) {
+                throw new Error('Failed to create media stream')
+            }
+
+            console.log('createChunkedAttachmentNew', {
+                spaceId: spaceId ?? 'undefined',
+                channelId: channelId ?? 'undefined',
+                userId: userId ?? 'undefined',
+                creationCookie: mediaStreamInfo.creationCookie ?? 'undefined',
+            })
+
+            let chunkIndex = 0
+            let cc: CreationCookie = new CreationCookie(mediaStreamInfo.creationCookie)
+            for (let i = 0; i < encryptionResult.ciphertext.length; i += CHUNK_SIZE) {
+                const chunk = encryptionResult.ciphertext.slice(i, i + CHUNK_SIZE)
+                setProgress(i / encryptionResult.ciphertext.length)
+                const result = await sendMediaPayloadNew(
+                    cc,
+                    chunkIndex == chunkCount - 1,
+                    chunk,
+                    chunkIndex++,
+                )
+                if (!result) {
+                    throw new Error('Failed to send media payload')
+                }
+                cc = new CreationCookie(result.creationCookie)
+            }
+            setProgress(1)
+
+            let thumbnailInfo: { content: Uint8Array; info: MediaInfo } | undefined
+            if (thumbnail) {
+                thumbnailInfo = {
+                    info: {
+                        filename: thumbnail.name,
+                        mimetype: thumbnail.type,
+                        widthPixels: width,
+                        heightPixels: height,
+                        sizeBytes: BigInt(thumbnail.size),
+                    },
+                    content: new Uint8Array(await thumbnail.arrayBuffer()),
+                }
+            }
+
+            return {
+                id: streamIdAsString(mediaStreamInfo.creationCookie.streamId),
+                type: 'chunked_media',
+                streamId: streamIdAsString(mediaStreamInfo.creationCookie.streamId),
+                encryption: {
+                    iv: encryptionResult.iv,
+                    secretKey: encryptionResult.secretKey,
+                },
+                info: {
+                    filename: file.name,
+                    mimetype: file.type,
+                    widthPixels: width,
+                    heightPixels: height,
+                    sizeBytes: BigInt(data.length),
+                },
+                thumbnail: thumbnailInfo,
+            } satisfies ChunkedMediaAttachment
+        },
+        [createMediaStreamNew, sendMediaPayloadNew],
+    )
 
     const createChunkedAttachment = useCallback(
         async (
@@ -178,6 +268,7 @@ export const useUploadAttachment = () => {
             setProgress: (progress: number) => void,
             setError: () => void,
         ) => {
+            console.log('window.townsMeasureFlag', window.townsMeasureFlag)
             try {
                 if (isImageMimeType(file.type)) {
                     return await uploadImageFile(channelId, spaceId, undefined, file, setProgress)
