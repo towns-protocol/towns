@@ -275,7 +275,6 @@ export const useUploadAttachment = () => {
             setProgress: (progress: number) => void,
             setError: () => void,
         ) => {
-            console.log('window.townsNewMediaFlag', window.townsNewMediaFlag)
             try {
                 if (isImageMimeType(file.type)) {
                     return await uploadImageFile(channelId, spaceId, undefined, file, setProgress)
