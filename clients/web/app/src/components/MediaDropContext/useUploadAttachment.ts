@@ -216,7 +216,7 @@ export const useUploadAttachment = () => {
                 setProgress,
             )
         },
-        [createChunkedAttachment],
+        [createChunkedAttachment, createChunkedAttachmentNew],
     )
 
     const uploadImageFile = useCallback(
@@ -264,7 +264,7 @@ export const useUploadAttachment = () => {
                 setProgress,
             )
         },
-        [createChunkedAttachment],
+        [createChunkedAttachment, createChunkedAttachmentNew],
     )
 
     const uploadAttachment = useCallback(
