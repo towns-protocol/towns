@@ -26,6 +26,7 @@ describe('getCollectionMetadataAcrossNetworks()', () => {
             AUTH_SECRET: 'fake_secret',
             SIMPLEHASH_API_KEY: 'fake_key',
             ENVIRONMENT: 'test' as const,
+            COINGECKO_API_KEY: 'fake_key',
         }
     })
 
