@@ -471,7 +471,11 @@ export class StreamStateView implements IStreamStateView {
             this.signatures.set(timelineEvent.hashStr, {
                 hash: timelineEvent.remoteEvent.hash,
                 signature: timelineEvent.remoteEvent.signature,
-                event: timelineEvent.remoteEvent.event,
+                event: {
+                    creatorAddress: timelineEvent.remoteEvent.event.creatorAddress,
+                    delegateSig: timelineEvent.remoteEvent.event.delegateSig,
+                    delegateExpiryEpochMs: timelineEvent.remoteEvent.event.delegateExpiryEpochMs,
+                },
             })
         } else {
             this.events.set(timelineEvent.hashStr, timelineEvent)

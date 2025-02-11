@@ -385,6 +385,11 @@ export abstract class BaseDecryptionExtensions {
         this.checkStartTicking()
     }
 
+    public resetUpToDateStreams(): void {
+        this.upToDateStreams.clear()
+        this.checkStartTicking()
+    }
+
     public retryDecryptionFailures(streamId: string): void {
         const streamQueue = this.streamQueues.getQueue(streamId)
         if (

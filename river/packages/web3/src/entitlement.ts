@@ -373,10 +373,20 @@ type DeepWriteable<T> = { -readonly [P in keyof T]: DeepWriteable<T[P]> }
 export function postOrderTraversal(operation: Operation, data: DeepWriteable<RuleDataV2>) {
     if (isLogicalOperation(operation)) {
         postOrderTraversal(operation.leftOperation, data)
+        // Capture index of the most recently added operation, which is the
+        // top of the left child's postorder tree
+        const leftChildIndex = data.operations.length - 1
         postOrderTraversal(operation.rightOperation, data)
-    }
-
-    if (isCheckOperationV2(operation)) {
+        data.logicalOperations.push({
+            logOpType: operation.logicalType,
+            leftOperationIndex: leftChildIndex,
+            rightOperationIndex: data.operations.length - 1, // Index of right child root
+        })
+        data.operations.push({
+            opType: OperationType.LOGICAL,
+            index: data.logicalOperations.length - 1,
+        })
+    } else if (isCheckOperationV2(operation)) {
         data.checkOperations.push({
             opType: operation.checkType,
             chainId: operation.chainId,
@@ -387,16 +397,8 @@ export function postOrderTraversal(operation: Operation, data: DeepWriteable<Rul
             opType: OperationType.CHECK,
             index: data.checkOperations.length - 1,
         })
-    } else if (isLogicalOperation(operation)) {
-        data.logicalOperations.push({
-            logOpType: operation.logicalType,
-            leftOperationIndex: data.operations.length - 2, // Index of left child
-            rightOperationIndex: data.operations.length - 1, // Index of right child
-        })
-        data.operations.push({
-            opType: OperationType.LOGICAL,
-            index: data.logicalOperations.length - 1,
-        })
+    } else {
+        throw new Error('Unrecognized operation type')
     }
 }
 

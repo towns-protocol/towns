@@ -68,6 +68,7 @@ export interface ISyncedStream {
         nextSyncCookie: SyncCookie,
         cleartexts: Record<string, Uint8Array | string> | undefined,
     ): Promise<void>
+    resetUpToDate(): void
 }
 
 interface NonceStats {
@@ -245,7 +246,6 @@ export class SyncedStreamsLoop {
         const pendingIndex = this.pendingSyncCookies.indexOf(streamId)
         if (pendingIndex !== -1) {
             this.pendingSyncCookies.splice(pendingIndex, 1)
-            this.inFlightSyncCookies.delete(streamId)
             streamRecord.stream.stop()
             this.streams.delete(streamId)
             this.log('removed stream from pending sync', streamId)
@@ -274,6 +274,7 @@ export class SyncedStreamsLoop {
                 { streamId, syncState: this.syncState },
             )
         }
+        this.inFlightSyncCookies.delete(streamId)
     }
 
     public setHighPriorityStreams(streamIds: string[]) {
@@ -484,6 +485,7 @@ export class SyncedStreamsLoop {
                 this.inFlightSyncCookies.size <= this.MIN_IN_FLIGHT_COOKIES &&
                 this.pendingSyncCookies.length > 0
             ) {
+                const syncId = this.syncId
                 this.pendingSyncCookies.sort((a, b) => {
                     const aPriority = priorityFromStreamId(a, this.highPriorityIds)
                     const bPriority = priorityFromStreamId(b, this.highPriorityIds)
@@ -491,7 +493,7 @@ export class SyncedStreamsLoop {
                 })
                 const streamsToAdd = this.pendingSyncCookies.splice(0, this.MAX_IN_FLIGHT_COOKIES)
                 this.logSync('tick: modifySync', {
-                    syncId: this.syncId,
+                    syncId,
                     addStreams: streamsToAdd,
                     inFlight: this.inFlightSyncCookies.size,
                 })
@@ -499,11 +501,19 @@ export class SyncedStreamsLoop {
                 const syncPos = streamsToAdd.map((x) => this.streams.get(x)?.syncCookie)
                 try {
                     await this.rpcClient.modifySync({
-                        syncId: this.syncId,
+                        syncId,
                         addStreams: syncPos.filter(isDefined),
                     })
                 } catch (err) {
                     this.logError('modifySync error', err)
+                    if (this.syncId === syncId && this.syncState === SyncState.Syncing) {
+                        streamsToAdd.forEach((x) => {
+                            if (this.inFlightSyncCookies.delete(x)) {
+                                this.pendingSyncCookies.push(x)
+                            }
+                        })
+                        this.checkStartTicking()
+                    }
                 }
             }
         }
@@ -554,6 +564,11 @@ export class SyncedStreamsLoop {
             if (this.syncState !== SyncState.Retrying) {
                 this.setSyncState(SyncState.Retrying)
                 this.syncId = undefined
+                this.streams.forEach((streamRecord) => {
+                    streamRecord.stream.resetUpToDate()
+                })
+                this.inFlightSyncCookies.clear()
+                this.pendingSyncCookies = []
                 this.clientEmitter.emit('streamSyncActive', false)
             }
 

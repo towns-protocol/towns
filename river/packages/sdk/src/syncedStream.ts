@@ -171,4 +171,8 @@ export class SyncedStream extends Stream implements ISyncedStream {
         this.isUpToDate = true
         this.emit('streamUpToDate', this.streamId)
     }
+
+    resetUpToDate(): void {
+        this.isUpToDate = false
+    }
 }
