@@ -1,9 +1,12 @@
 {
     "name": "@river-build/xchain-monitor",
     "type": "module",
-    "version": "0.0.161",
+    "version": "0.0.162",
     "packageManager": "yarn@3.8.0",
     "main": "dist/index.js",
+    "publishConfig": {
+        "access": "public"
+    },
     "dependencies": {
         "@river-build/generated": "workspace:^",
         "@river-build/web3": "workspace:^",

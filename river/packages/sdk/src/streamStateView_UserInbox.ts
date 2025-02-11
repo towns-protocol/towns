@@ -16,10 +16,6 @@ import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 export class StreamStateView_UserInbox extends StreamStateView_AbstractContent {
     readonly streamId: string
     deviceSummary: Record<string, UserInboxPayload_Snapshot_DeviceSummary> = {}
-    pendingGroupSessions: Record<
-        string,
-        { creatorUserId: string; value: UserInboxPayload_GroupEncryptionSessions }
-    > = {}
 
     constructor(streamId: string) {
         super()
@@ -42,12 +38,6 @@ export class StreamStateView_UserInbox extends StreamStateView_AbstractContent {
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ): void {
         super.onConfirmedEvent(event, emitter, encryptionEmitter)
-        const eventId = event.hashStr
-        const payload = this.pendingGroupSessions[eventId]
-        if (payload) {
-            delete this.pendingGroupSessions[eventId]
-            this.addGroupSessions(payload.creatorUserId, payload.value, emitter)
-        }
     }
 
     prependEvent(
@@ -76,7 +66,7 @@ export class StreamStateView_UserInbox extends StreamStateView_AbstractContent {
     appendEvent(
         event: RemoteTimelineEvent,
         _cleartext: Uint8Array | string | undefined,
-        _encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
+        encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
         stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
         check(event.remoteEvent.event.payload.case === 'userInboxPayload')
@@ -85,10 +75,7 @@ export class StreamStateView_UserInbox extends StreamStateView_AbstractContent {
             case 'inception':
                 break
             case 'groupEncryptionSessions':
-                this.pendingGroupSessions[event.hashStr] = {
-                    creatorUserId: event.creatorUserId,
-                    value: payload.content.value,
-                }
+                this.addGroupSessions(event.creatorUserId, payload.content.value, encryptionEmitter)
                 break
             case 'ack':
                 this.updateDeviceSummary(event.remoteEvent, payload.content.value, stateEmitter)
@@ -98,18 +85,6 @@ export class StreamStateView_UserInbox extends StreamStateView_AbstractContent {
             default:
                 logNever(payload.content)
         }
-    }
-
-    hasPendingSessionId(deviceKey: string, sessionId: string): boolean {
-        for (const [_, payload] of Object.entries(this.pendingGroupSessions)) {
-            if (
-                payload.value.sessionIds.includes(sessionId) &&
-                payload.value.ciphertexts[deviceKey]
-            ) {
-                return true
-            }
-        }
-        return false
     }
 
     private addGroupSessions(

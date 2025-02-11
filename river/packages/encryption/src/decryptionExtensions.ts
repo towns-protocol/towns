@@ -238,7 +238,6 @@ export abstract class BaseDecryptionExtensions {
     public abstract downloadNewMessages(): Promise<void>
     public abstract getKeySolicitations(streamId: string): KeySolicitationContent[]
     public abstract hasStream(streamId: string): boolean
-    public abstract hasUnprocessedSession(item: EncryptedContentItem): boolean
     public abstract isUserEntitledToKeyExchange(
         streamId: string,
         userId: string,

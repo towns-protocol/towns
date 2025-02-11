@@ -15,7 +15,7 @@ if [[ "$(git status --porcelain)" != "" ]]; then
     exit 1
 elif [[ "$(parse_git_branch)" != "main" ]]; then
     echo "You must be on the main branch to run this script."
-    # exit 1
+    exit 1
 fi
 
 # get the current git hash 

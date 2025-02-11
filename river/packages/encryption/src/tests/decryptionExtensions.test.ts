@@ -361,11 +361,6 @@ class MockDecryptionExtensions extends BaseDecryptionExtensions {
         return []
     }
 
-    public hasUnprocessedSession(_item: EncryptedContentItem): boolean {
-        log('hasUnprocessedSession')
-        return true
-    }
-
     public isUserEntitledToKeyExchange(_streamId: string, _userId: string): Promise<boolean> {
         log('isUserEntitledToKeyExchange')
         return Promise.resolve(true)

@@ -5,6 +5,7 @@
 import { makeTestClient, waitFor } from '../testUtils'
 import { Client } from '../../client'
 import { check } from '@river-build/dlog'
+import { StreamTimelineEvent } from '../../types'
 
 describe('userSettingsTests', () => {
     let clients: Client[] = []
@@ -116,6 +117,7 @@ describe('userSettingsTests', () => {
                 bobsClient.stream(streamId)?.view?.timeline?.filter((m) => {
                     return (
                         m.creatorUserId === alicesClient.userId &&
+                        isDmChannelPayload(m) &&
                         bobsClient
                             .stream(bobsClient.userSettingsStreamId!)
                             ?.view?.userSettingsContent?.isUserBlockedAt(
@@ -151,6 +153,7 @@ describe('userSettingsTests', () => {
                 bobsClient.stream(streamId)?.view?.timeline?.filter((m) => {
                     return (
                         m.creatorUserId === alicesClient.userId &&
+                        isDmChannelPayload(m) &&
                         bobsClient
                             .stream(bobsClient.userSettingsStreamId!)
                             ?.view?.userSettingsContent?.isUserBlockedAt(
@@ -163,3 +166,7 @@ describe('userSettingsTests', () => {
         })
     })
 })
+
+function isDmChannelPayload(m: StreamTimelineEvent): boolean {
+    return m.remoteEvent?.event.payload.case === 'dmChannelPayload'
+}

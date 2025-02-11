@@ -20,7 +20,7 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@v4
               with:
-                  ref: ${{ github.event_name == 'schedule' && 'main' || github.ref }}
+                  ref: main
 
             - name: Install GPG
               run: |
