@@ -68,6 +68,7 @@ export const CHANNEL_INFO_PARAMS = {
     IDENTITY: 'identity',
     FUND_WALLET: 'fund-wallet',
     RIVER_POINTS: 'river-points',
+    TRADING_WALLET: 'trading-wallet',
 } as const
 
 export type CHANNEL_INFO_PARAMS_VALUES =

@@ -339,6 +339,12 @@ interface TownsClientImpl {
     waitForCheckInTransaction: (
         transactionContext: TransactionContext<void>,
     ) => Promise<TransactionContext<void> | undefined>
+    sendUserOperationWithCallData: (args: {
+        callData: string
+        toAddress: string
+        value: bigint
+        signer: TSigner
+    }) => Promise<TransactionContext<void> | undefined>
 }
 
 export function useTownsClient(): TownsClientImpl {
@@ -514,6 +520,7 @@ export function useTownsClient(): TownsClientImpl {
         waitForTipTransaction: useWithCatch(clientSingleton?.waitForTipTransaction),
         checkInTransaction: useWithCatch(clientSingleton?.checkInTransaction),
         waitForCheckInTransaction: useWithCatch(clientSingleton?.waitForCheckInTransaction),
+        sendUserOperationWithCallData: useWithCatch(clientSingleton?.sendUserOperationWithCallData),
     }
 }
 

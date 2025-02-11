@@ -1897,6 +1897,15 @@ export class TownsClient
         return this.baseTransactor.getRootKeyFromLinkedWallet(walletAddress)
     }
 
+    public async sendUserOperationWithCallData(args: {
+        callData: string
+        toAddress: string
+        value: bigint
+        signer: TSigner
+    }): Promise<TransactionContext<void> | undefined> {
+        return this.baseTransactor.sendUserOperationWithCallData(args)
+    }
+
     protected log(message: string, ...optionalParams: unknown[]) {
         console.log(message, ...optionalParams)
     }

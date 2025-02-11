@@ -1727,6 +1727,43 @@ export class BaseTransactor {
         }
     }
 
+    public async sendUserOperationWithCallData(args: {
+        callData: string
+        toAddress: string
+        value: bigint
+        signer: TSigner
+    }): Promise<TransactionContext<void>> {
+        let transaction: TransactionOrUserOperation | undefined = undefined
+        let error: Error | undefined = undefined
+        if (!this.isAccountAbstractionEnabled()) {
+            throw new Error('sendUserOperationWithCallData requires account abstraction')
+        }
+
+        const continueStoreTx = this.blockchainTransactionStore.begin({
+            type: BlockchainTransactionType.Trade,
+        })
+
+        try {
+            transaction = await this.userOps?.sendUserOperationWithCallData(args)
+            this.log(`[userOperation with calldata] transaction created`)
+        } catch (err) {
+            error = this.tryDecodeError(err, `[sendUserOperationWithCallData] cannot decode error`)
+        }
+
+        continueStoreTx({
+            hashOrUserOpHash: getTransactionHashOrUserOpHash(transaction),
+            transaction,
+            error: error,
+        })
+
+        return {
+            transaction,
+            receipt: undefined,
+            data: undefined,
+            status: transaction ? TransactionStatus.Pending : TransactionStatus.Failed,
+        }
+    }
+
     /*
      * Error when baseProvider.waitForTransaction receipt has a status of 0
      */
@@ -1767,29 +1804,7 @@ export class BaseTransactor {
             }
             return realError
         } catch (e: unknown) {
-            if (e instanceof Error) {
-                return e
-            }
-            if (
-                typeof e === 'object' &&
-                e !== null &&
-                'name' in e &&
-                typeof e.name === 'string' &&
-                'message' in e &&
-                typeof e.message === 'string' &&
-                e.message !== undefined
-            ) {
-                const newErr = new Error(e.message)
-                newErr.name = e.name
-                if ('code' in e) {
-                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                    // @ts-ignore
-                    newErr.code = e.code
-                }
-                return newErr
-            } else {
-                return new Error(`[getDecodedErrorForSpace] cannot decode error`)
-            }
+            return this.tryDecodeError(e, `[getDecodedErrorForSpace] cannot decode error`)
         }
     }
 
@@ -1801,29 +1816,7 @@ export class BaseTransactor {
         try {
             return this.spaceDapp.parseSpaceFactoryError(error)
         } catch (e: unknown) {
-            if (e instanceof Error) {
-                return e
-            }
-            if (
-                typeof e === 'object' &&
-                e !== null &&
-                'name' in e &&
-                typeof e.name === 'string' &&
-                'message' in e &&
-                typeof e.message === 'string' &&
-                e.message !== undefined
-            ) {
-                const newErr = new Error(e.message)
-                newErr.name = e.name
-                if ('code' in e) {
-                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                    // @ts-ignore
-                    newErr.code = e.code
-                }
-                return newErr
-            } else {
-                return new Error(`[getDecodedErrorForSpaceFactory] cannot decode error`)
-            }
+            return this.tryDecodeError(e, `[getDecodedErrorForSpaceFactory] cannot decode error`)
         }
     }
 
@@ -1835,29 +1828,34 @@ export class BaseTransactor {
         try {
             return this.spaceDapp.airdrop?.riverPoints?.parseError(error)
         } catch (e: unknown) {
-            if (e instanceof Error) {
-                return e
+            return this.tryDecodeError(e, `[getDecodedErrorForRiverPoints] cannot decode error`)
+        }
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    private tryDecodeError(e: unknown, defaultText: string): Error {
+        if (e instanceof Error) {
+            return e
+        }
+        if (
+            typeof e === 'object' &&
+            e !== null &&
+            'name' in e &&
+            typeof e.name === 'string' &&
+            'message' in e &&
+            typeof e.message === 'string' &&
+            e.message !== undefined
+        ) {
+            const newErr = new Error(e.message)
+            newErr.name = e.name
+            if ('code' in e) {
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-ignore
+                newErr.code = e.code
             }
-            if (
-                typeof e === 'object' &&
-                e !== null &&
-                'name' in e &&
-                typeof e.name === 'string' &&
-                'message' in e &&
-                typeof e.message === 'string' &&
-                e.message !== undefined
-            ) {
-                const newErr = new Error(e.message)
-                newErr.name = e.name
-                if ('code' in e) {
-                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                    // @ts-ignore
-                    newErr.code = e.code
-                }
-                return newErr
-            } else {
-                return new Error(`[getDecodedErrorForRiverPoints] cannot decode error`)
-            }
+            return newErr
+        } else {
+            return new Error(defaultText)
         }
     }
 }

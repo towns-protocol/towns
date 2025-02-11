@@ -62,6 +62,7 @@ export enum BlockchainTransactionType {
     RefreshMetadata = 'refreshMetadata',
     Tip = 'tip',
     CheckIn = 'checkIn',
+    Trade = 'trade',
 }
 
 export type BlockchainTransaction = {
