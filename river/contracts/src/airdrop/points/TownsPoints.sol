@@ -99,8 +99,7 @@ contract TownsPoints is IERC20Metadata, ITownsPoints, OwnableBase, Facet {
 
     if (action == Action.Tip) {
       uint256 protocolFee = abi.decode(data, (uint256));
-      // 1 pt per 0.0003 ETH
-      points = (protocolFee * 10_000) / 3;
+      points = (protocolFee * 2_000_000) / 3;
     }
   }
 

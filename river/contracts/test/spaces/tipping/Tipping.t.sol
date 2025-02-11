@@ -111,7 +111,7 @@ contract TippingTest is BaseSetup, ITippingBase, IERC721ABase {
     assertEq(sender.balance, 0, "sender balance");
     assertEq(
       IERC20(address(points)).balanceOf(sender) - initialPointBalance,
-      (protocolFee * 10_000) / 3,
+      (protocolFee * 2_000_000) / 3,
       "points minted"
     );
     assertEq(
