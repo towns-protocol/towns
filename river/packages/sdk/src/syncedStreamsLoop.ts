@@ -129,7 +129,7 @@ export class SyncedStreamsLoop {
     private pendingSyncCookies: string[] = []
     private inFlightSyncCookies = new Set<string>()
     private readonly MAX_IN_FLIGHT_COOKIES = 40
-    private readonly MIN_IN_FLIGHT_COOKIES = 10
+    private readonly MIN_IN_FLIGHT_COOKIES = 0
 
     public pingInfo: PingInfo = {
         currentSequence: 0,
@@ -312,14 +312,25 @@ export class SyncedStreamsLoop {
                 ) {
                     // get cookies from all the known streams to sync
                     this.inFlightSyncCookies.clear()
-                    this.pendingSyncCookies = Array.from(this.streams.keys())
+                    this.pendingSyncCookies = []
+
+                    // get cookies from all the known streams to sync
+                    const syncCookies = Array.from(this.streams.entries())
+                        .sort((a, b) => {
+                            const aPriority = priorityFromStreamId(a[0], this.highPriorityIds)
+                            const bPriority = priorityFromStreamId(b[0], this.highPriorityIds)
+                            return aPriority - bPriority
+                        })
+                        .map((streamRecord) => streamRecord[1].syncCookie)
 
                     this.log(
                         'sync ITERATION start',
                         ++iteration,
                         this.syncState,
                         `pending: ${this.pendingSyncCookies.length}`,
+                        `syncCookies: ${syncCookies.map((x) => x.streamId).length}`,
                     )
+
                     if (this.syncState === SyncState.Retrying) {
                         this.setSyncState(SyncState.Starting)
                     }
@@ -330,7 +341,7 @@ export class SyncedStreamsLoop {
                         this.syncId = undefined
                         const streams = this.rpcClient.syncStreams(
                             {
-                                syncPos: [],
+                                syncPos: syncCookies,
                             },
                             { timeoutMs: -1 },
                         )
