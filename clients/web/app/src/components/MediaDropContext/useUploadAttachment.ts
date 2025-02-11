@@ -201,7 +201,10 @@ export const useUploadAttachment = () => {
         ) => {
             const buffer = await file.arrayBuffer()
             const bytes = new Uint8Array(buffer)
-            return await createChunkedAttachment(
+            const createAttachment = window.townsNewMediaFlag
+                ? createChunkedAttachmentNew
+                : createChunkedAttachment
+            return await createAttachment(
                 bytes,
                 0,
                 0,
@@ -245,7 +248,11 @@ export const useUploadAttachment = () => {
             const buffer = await compressed.arrayBuffer()
             const bytes = new Uint8Array(buffer)
 
-            return await createChunkedAttachment(
+            const createAttachment = window.townsNewMediaFlag
+                ? createChunkedAttachmentNew
+                : createChunkedAttachment
+
+            return await createAttachment(
                 bytes,
                 width,
                 height,
@@ -268,7 +275,7 @@ export const useUploadAttachment = () => {
             setProgress: (progress: number) => void,
             setError: () => void,
         ) => {
-            console.log('window.townsMeasureFlag', window.townsMeasureFlag)
+            console.log('window.townsNewMediaFlag', window.townsNewMediaFlag)
             try {
                 if (isImageMimeType(file.type)) {
                     return await uploadImageFile(channelId, spaceId, undefined, file, setProgress)
