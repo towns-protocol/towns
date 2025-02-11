@@ -56,6 +56,7 @@ describe('getCollectionsForOwnerAcrossNetworks()', () => {
                 AUTH_SECRET: 'fake_secret',
                 SIMPLEHASH_API_KEY: 'fake_key',
                 ENVIRONMENT: 'test',
+                COINGECKO_API_KEY: 'fake_key',
             },
         )
 

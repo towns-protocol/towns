@@ -22,4 +22,5 @@ export default {
         modules: true,
     },
     extensionsToTreatAsEsm: ['.ts'],
+    transformIgnorePatterns: ['/node_modules/(?!(uuid|@solana/web3.js|jayson)/)'],
 }

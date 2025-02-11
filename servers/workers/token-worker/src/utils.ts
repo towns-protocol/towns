@@ -12,15 +12,41 @@ import { throwCustomError } from './router'
 import { createPublicClient, http } from 'viem'
 import { GetOwnersForNftResponse } from 'alchemy-sdk'
 
-const tokenNetworkMap = [
-    { vChain: mainnet, alchemyIdentifier: 'eth-mainnet', simpleHashIdentifier: 'ethereum' },
-    { vChain: arbitrum, alchemyIdentifier: 'arb-mainnet', simpleHashIdentifier: 'arbitrum' },
-    { vChain: optimism, alchemyIdentifier: 'opt-mainnet', simpleHashIdentifier: 'optimism' },
-    { vChain: polygon, alchemyIdentifier: 'polygon-mainnet', simpleHashIdentifier: 'polygon' },
-    { vChain: base, alchemyIdentifier: 'base-mainnet', simpleHashIdentifier: 'base' },
+export const tokenNetworkMap = [
+    {
+        vChain: mainnet,
+        alchemyIdentifier: 'eth-mainnet',
+        coinGeckoIdentifier: 'eth',
+        simpleHashIdentifier: 'ethereum',
+    },
+    {
+        vChain: arbitrum,
+        alchemyIdentifier: 'arb-mainnet',
+        coinGeckoIdentifier: 'arbitrum',
+        simpleHashIdentifier: 'arbitrum',
+    },
+    {
+        vChain: optimism,
+        alchemyIdentifier: 'opt-mainnet',
+        coinGeckoIdentifier: 'optimism',
+        simpleHashIdentifier: 'optimism',
+    },
+    {
+        vChain: polygon,
+        alchemyIdentifier: 'polygon-mainnet',
+        coinGeckoIdentifier: 'matic-network',
+        simpleHashIdentifier: 'polygon',
+    },
+    {
+        vChain: base,
+        alchemyIdentifier: 'base-mainnet',
+        coinGeckoIdentifier: 'base',
+        simpleHashIdentifier: 'base',
+    },
     {
         vChain: baseSepolia,
         alchemyIdentifier: 'base-sepolia',
+        coinGeckoIdentifier: '',
         simpleHashIdentifier: 'base-sepolia',
     },
 ] as const

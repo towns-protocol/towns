@@ -15,6 +15,7 @@ import { getTokenType } from './handlers/getTokenType'
 import { getTokenBalance } from './handlers/getTokenBalance'
 import { TokenSchema, WalletList, tokenSchema, walletListSchema } from './requestSchemas'
 import { getNftMetadata } from './handlers/alchemy/getNftMetadata'
+import { getWalletAssets } from './handlers/getWalletAssets'
 
 // enum for supported providers
 // currently only alchemy is supported
@@ -248,6 +249,10 @@ router
         } catch (error) {
             return new Response(JSON.stringify({ error }), { status: 500, headers })
         }
+    })
+
+    .get('/api/towns-wallet', (request: TokenProviderRequest, env: Env) => {
+        return getWalletAssets(request, env)
     })
 
     .get('*', () => new Response('Not found', { status: 404 }))

@@ -15,6 +15,7 @@
     },
     "dependencies": {
         "@river-build/generated": "workspace:^",
+        "@solana/web3.js": "^1.98.0",
         "alchemy-sdk": "^2.2.4",
         "itty-router": "^2.6.6",
         "viem": "^1.18.2",
