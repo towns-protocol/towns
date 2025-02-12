@@ -2,21 +2,19 @@ package sync
 
 import (
 	"context"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
 	"time"
-
-	"github.com/towns-protocol/towns/core/node/logging"
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
-
 	. "github.com/towns-protocol/towns/core/node/base"
 	. "github.com/towns-protocol/towns/core/node/events"
+	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/client"
 	"github.com/towns-protocol/towns/core/node/shared"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type (
@@ -97,6 +95,9 @@ func (syncOp *StreamSyncOperation) Run(
 ) error {
 	log := logging.FromCtx(syncOp.ctx).With("syncId", syncOp.SyncID)
 
+	log.Info("Stream sync operation start")
+	defer log.Info("Stream sync operation stopped")
+
 	cookies, err := client.ValidateAndGroupSyncCookies(req.Msg.GetSyncPos())
 	if err != nil {
 		return err
@@ -130,6 +131,8 @@ func (syncOp *StreamSyncOperation) Run(
 				return err
 			}
 
+			log.Debug("Pending messages in sync operation", "count", len(messages))
+
 		case <-syncOp.ctx.Done():
 			// clientErr non-nil indicates client hung up, get the error from the root ctx.
 			if clientErr := syncOp.rootCtx.Err(); clientErr != nil {
@@ -146,6 +149,7 @@ func (syncOp *StreamSyncOperation) Run(
 					cmd.Reply(err)
 					continue
 				}
+
 				cmd.Reply(syncers.AddStream(cmd.Ctx, nodeAddress, streamID, cmd.AddStreamReq.Msg.GetSyncPos()))
 			} else if cmd.RmStreamReq != nil {
 				streamID, err := shared.StreamIdFromBytes(cmd.RmStreamReq.Msg.GetStreamId())
@@ -188,7 +192,9 @@ func (syncOp *StreamSyncOperation) AddStreamToSync(
 		var span trace.Span
 		streamID, _ := shared.StreamIdFromBytes(req.Msg.GetSyncPos().GetStreamId())
 		ctx, span = syncOp.otelTracer.Start(ctx, "addStreamToSync",
-			trace.WithAttributes(attribute.String("stream", streamID.String())))
+			trace.WithAttributes(
+				attribute.String("stream", streamID.String()),
+				attribute.String("syncId", req.Msg.GetSyncId())))
 		defer span.End()
 	}
 
@@ -217,7 +223,8 @@ func (syncOp *StreamSyncOperation) RemoveStreamFromSync(
 		var span trace.Span
 		streamID, _ := shared.StreamIdFromBytes(req.Msg.GetStreamId())
 		ctx, span = syncOp.otelTracer.Start(ctx, "removeStreamFromSync",
-			trace.WithAttributes(attribute.String("stream", streamID.String())))
+			trace.WithAttributes(attribute.String("stream", streamID.String()),
+				attribute.String("syncId", req.Msg.GetSyncId())))
 		defer span.End()
 	}
 

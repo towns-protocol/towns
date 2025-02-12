@@ -196,7 +196,8 @@ func (ss *SyncerSet) AddStream(
 ) error {
 	if ss.otelTracer != nil {
 		_, span := ss.otelTracer.Start(ctx, "AddStream",
-			trace.WithAttributes(attribute.String("stream", streamID.String())))
+			trace.WithAttributes(attribute.String("stream", streamID.String())),
+			trace.WithAttributes(attribute.String("remoteSyncID", ss.syncID)))
 		defer span.End()
 	}
 
