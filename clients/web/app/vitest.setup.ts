@@ -42,6 +42,14 @@ vi.mock('@privy-io/react-auth', async () => {
         useLogin: () => ({
             login: () => {},
         }),
+        useSolanaWallets: () => ({
+            wallets: [
+                {
+                    address: '0x0000000000000000000000000000000000000000',
+                    walletClientType: 'privy',
+                },
+            ],
+        }),
         useWallets: (): { wallets: ConnectedWallet[] } => ({
             ready: true,
             wallets: [

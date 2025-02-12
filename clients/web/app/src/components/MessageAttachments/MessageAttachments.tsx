@@ -35,8 +35,8 @@ import { PATHS } from 'routes'
 import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
 import { addressFromSpaceId } from 'ui/utils/utils'
 import { minterRoleId } from '@components/SpaceSettingsPanel/rolePermissions.const'
+import { TradingChart } from '@components/TradingChart/TradingChart'
 import { MessageAttachmentsContext } from './MessageAttachmentsContext'
-import { TickerAttachmentContainer } from './TickerAttachmentContainer/TickerAttachmentContainer'
 
 const emptyArray: never[] = []
 
@@ -140,7 +140,11 @@ export const MessageAttachments = (props: {
             {tickerAttachments.length > 0 && (
                 <Stack>
                     {tickerAttachments.map((ticker) => {
-                        return <TickerAttachmentContainer key={ticker.id} attachment={ticker} />
+                        return (
+                            <Box key={ticker.id} gap="lg">
+                                <TradingChart attachment={ticker} />
+                            </Box>
+                        )
                     })}
                 </Stack>
             )}

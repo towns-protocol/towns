@@ -52,6 +52,8 @@ export type FieldBaseProps = {
     paddingX?: BoxProps['paddingX']
     /** vertical padding of the input */
     paddingY?: BoxProps['paddingY']
+    /** padding of the input */
+    padding?: BoxProps['padding']
     /** max length of the input */
     maxLength?: FormElementProps['maxLength']
     border?: BoxProps['border']
@@ -59,6 +61,7 @@ export type FieldBaseProps = {
     rounded?: BoxProps['rounded']
     minHeight?: BoxProps['minHeight']
     gap?: BoxProps['gap']
+    zIndex?: BoxProps['zIndex']
 }
 
 type PassthroughProps = 'id' | 'name' | 'disabled' | 'autoComplete' | 'autoFocus' | 'maxLength'
@@ -101,6 +104,7 @@ export const Field = (props: Props) => {
         paddingY,
         paddingX = 'md',
         border,
+        rounded,
         ...inputProps
     } = props
 
@@ -132,6 +136,7 @@ export const Field = (props: Props) => {
                 borderRadius="sm"
                 color={inputColor}
                 id="container"
+                rounded={rounded}
             >
                 {props.icon && <Icon type={props.icon} size="square_xs" color="gray2" />}
                 {before}

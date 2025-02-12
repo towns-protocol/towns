@@ -29,6 +29,8 @@ export const getNetworkName = (chainId: number) => {
             return 'Base Sepolia'
         case 11155111:
             return 'Sepolia'
+        case 1151111081099710:
+            return 'Solana'
         default:
             return 'Unknown'
     }

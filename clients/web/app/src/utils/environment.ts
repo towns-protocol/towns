@@ -105,13 +105,12 @@ const envSchema = z.object({
     VITE_ENABLE_CONFIRM_FUND_WALLET: boolish.default(false),
     // show custom decent components for funding wallet
     VITE_ENABLE_DECENT_ONBOARDING_V2: boolish.default(false),
-
     // Lifi API Key
     VITE_LIFI_API_KEY: z.string().optional(),
-
+    // Coingecko API Key
+    VITE_COINGECKO_API_KEY: z.string().optional(),
     // Codex API Key
     VITE_CODEX_API_KEY: z.string().optional(),
-
     // Solana mainnet rpc url
     VITE_SOLANA_MAINNET_RPC_URL: z.string().url().optional(),
 })
