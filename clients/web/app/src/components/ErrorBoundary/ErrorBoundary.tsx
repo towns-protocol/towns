@@ -1,11 +1,10 @@
 import React from 'react'
-import { datadogRum } from '@datadog/browser-rum'
 import { ErrorBoundaryProps, ErrorBoundary as ReactErrorBoundary } from 'react-error-boundary'
 
 export type { FallbackProps } from 'react-error-boundary'
 
 const handleError = (error: Error) => {
-    datadogRum.addError(error)
+    console.error('[ErrorBoundary] Error:', error)
 }
 
 type Props = ErrorBoundaryProps

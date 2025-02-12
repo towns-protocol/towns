@@ -23,10 +23,9 @@ import { formatUnits } from 'hooks/useBalance'
 import { shortAddress } from 'ui/utils/utils'
 import { TipBurst } from '@components/MessageLayout/tips/TipBurst'
 import { useStore } from 'store/store'
-import { Box } from '@ui'
+import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
 import { ACTION_REJECTED, baseScanUrl, mapToErrorMessage } from './utils'
 import { ERROR_MEMBERSHIP_INSUFFICIENT_PAYMENT } from './constants'
-
 type ToastProps = {
     tx: BlockchainStoreTx
     /**
@@ -41,6 +40,211 @@ type ToastProps = {
 } & Omit<StandardToastProps, 'toast' | 'message' | 'onCtaClick'>
 
 export function BlockchainTxNotifier() {
+    const spaceId = useSpaceIdFromPathname()
+    const myMembership = useMyMembership(spaceId ?? '')
+    const isMember = myMembership === Membership.Join
+    const { currentlyOpenPanel } = usePanelActions()
+    const { baseChain } = useEnvironment()
+
+    useOnTransactionUpdated((tx) => {
+        // these potential txs will show a toast that transitions from a pending to a success or failure state
+        if (tx.status === 'potential') {
+            switch (tx.type) {
+                case BlockchainTransactionType.LinkWallet:
+                    if (spaceId && !isMember) {
+                        // skip b/c we can wallet link when on a public town page, and we handle there
+                        return
+                    }
+                    generateToast({
+                        tx,
+                        pendingMessage: 'Linking wallet...',
+                        successMessage: 'Wallet linked!',
+                        errorMessage: `Couldn't link wallet.`,
+                        onlyShowPending:
+                            currentlyOpenPanel === CHANNEL_INFO_PARAMS.ROLE_RESTRICTED_CHANNEL_JOIN,
+                    })
+                    break
+                case BlockchainTransactionType.UnlinkWallet:
+                    if (spaceId && !isMember) {
+                        // skip b/c we can wallet link when on a public town page, and we handle there
+                        return
+                    }
+                    generateToast({
+                        tx,
+                        pendingMessage: 'Unlinking wallet...',
+                        successMessage: 'Unlinked your wallet!',
+                        errorMessage: `Couldn't unlink wallet.`,
+                        onlyShowPending:
+                            currentlyOpenPanel === CHANNEL_INFO_PARAMS.ROLE_RESTRICTED_CHANNEL_JOIN,
+                    })
+                    break
+                case BlockchainTransactionType.CreateRole: {
+                    const roleName = tx.data?.roleName
+                    generateToast({
+                        tx,
+                        pendingMessage: `Creating ${roleName} role...`,
+                        successMessage: `${roleName} role created!`,
+                        errorMessage: `Couldn't create ${roleName} role.`,
+                    })
+                    break
+                }
+                case BlockchainTransactionType.UpdateRole: {
+                    const roleName = tx.data?.roleName
+
+                    generateToast({
+                        tx,
+                        pendingMessage: `Updating ${roleName} role...`,
+                        successMessage: `${roleName} role updated! Any permission changes may take up to 15 minutes to reflect.`,
+                        errorMessage: `Couldn't update ${roleName} role.`,
+                    })
+                    break
+                }
+                case BlockchainTransactionType.DeleteRole: {
+                    generateToast({
+                        tx,
+                        pendingMessage: `Deleting role...`,
+                        successMessage: `Role deleted!`,
+                        errorMessage: `Couldn't delete role.`,
+                    })
+                    break
+                }
+                case BlockchainTransactionType.EditSpaceMembership: {
+                    generateToast({
+                        tx,
+                        pendingMessage: 'Updating membership...',
+                        successMessage: 'Membership updated!',
+                        errorMessage: `Couldn't update membership.`,
+                    })
+                    break
+                }
+                case BlockchainTransactionType.PrepayMembership: {
+                    generateToast({
+                        tx,
+                        pendingMessage: 'Adding prepaid seats...',
+                        successMessage: `${tx.data?.supply} Prepaid seats added!`,
+                        errorMessage: `Couldn't add prepaid seats.`,
+                    })
+                    break
+                }
+                case BlockchainTransactionType.EditChannel:
+                    generateToast({
+                        tx,
+                        pendingMessage: 'Updating channel...',
+                        successMessage: 'Channel updated!',
+                        errorMessage: `Couldn't update channel.`,
+                    })
+                    break
+                case BlockchainTransactionType.BanUser:
+                    generateToast({
+                        tx,
+                        pendingMessage: 'Banning user...',
+                        successMessage: 'User banned!',
+                        errorMessage: `Couldn't ban user.`,
+                    })
+                    break
+                case BlockchainTransactionType.UnbanUser:
+                    generateToast({
+                        tx,
+                        pendingMessage: 'Unbanning user...',
+                        successMessage: 'User unbanned!',
+                        errorMessage: `Couldn't unban user.`,
+                    })
+                    break
+
+                case BlockchainTransactionType.DeleteChannel:
+                    generateToast({
+                        tx,
+                        pendingMessage: 'Disabling channel...',
+                        successMessage: 'Channel disabled!',
+                    })
+                    break
+
+                case BlockchainTransactionType.Tip: {
+                    const data = tx.data as TipTransactionContext['data']
+
+                    generateToast({
+                        tx,
+                        pendingMessage: `Sending tip to @${data?.receiverUsername}...`,
+                        successMessage: `You tipped @${data?.receiverUsername}.`,
+                        errorMessage: `Couldn't send tip.`,
+                    })
+                    break
+                }
+
+                case BlockchainTransactionType.TransferNft:
+                case BlockchainTransactionType.WithdrawTreasury:
+                case BlockchainTransactionType.TransferBaseEth: {
+                    const data = tx.data as TransferAssetTransactionContext['data']
+
+                    let successMessage: string = 'Transfer complete!'
+                    if (data?.value) {
+                        try {
+                            successMessage = `${formatUnits(
+                                BigNumber.from(data.value).toBigInt(),
+                            )} ETH was sent to ${shortAddress(data.recipient)}`
+                        } catch (error) {
+                            console.error(error)
+                        }
+                    } else if (data?.contractAddress) {
+                        const label = data?.assetLabel ?? data?.contractAddress
+                        const recipient = data?.recipient
+                            ? `to ${shortAddress(data.recipient)}`
+                            : ''
+                        successMessage = `${label} was sent ${recipient}`
+                    } else if (data?.spaceAddress) {
+                        successMessage = `Town funds were sent to ${shortAddress(data.recipient)}`
+                    }
+
+                    generateToast({
+                        tx,
+                        pendingMessage: 'Transfer in progress...',
+                        successMessage: successMessage,
+                        errorMessage: `Couldn't complete transfer.`,
+                        cta: 'View Transaction',
+                        onCtaClick: (updatedTx: BlockchainStoreTx) => {
+                            window.open(
+                                `${baseScanUrl(baseChain.id)}/tx/${
+                                    updatedTx.receipt?.transactionHash
+                                }`,
+                                '_blank',
+                                'noopener,noreferrer',
+                            )
+                        },
+                    })
+                    break
+                }
+                default:
+                    break
+            }
+        }
+
+        // these 'failure' only show a toast when tx fails
+        // this is mostly for transactions that are use older UX patterns, where a toast is not shown when pending or for success
+        // these can be converted over to the nex UX pattern and put in the potential switch above
+        if (tx.status === 'failure') {
+            switch (tx.type) {
+                case BlockchainTransactionType.CreateChannel: {
+                    generateToast({
+                        tx,
+                        successMessage: '',
+                        errorMessage: `Couldn't create channel.`,
+                    })
+                    break
+                }
+                default:
+                    break
+            }
+        }
+    })
+
+    return (
+        <ErrorBoundary fallbackRender={() => null}>
+            <InnerBlockchainTxNotifier />
+        </ErrorBoundary>
+    )
+}
+
+function InnerBlockchainTxNotifier() {
     const spaceId = useSpaceIdFromPathname()
     const myMembership = useMyMembership(spaceId ?? '')
     const isMember = myMembership === Membership.Join
@@ -411,13 +615,9 @@ function getSubErrorMessage(...params: Parameters<typeof mapToErrorMessage>) {
                 // but you can also fund the space contract directly, which will also increase the balance, but those funds are not tracked
                 // so we might display a balance, but you can't withdraw it
                 // this is going to be solved later in contracts but for now we just show a special message
-                if (mappedError?.includes(ERROR_MEMBERSHIP_INSUFFICIENT_PAYMENT)) {
-                    return (
-                        <Box>
-                            The town contains funds that cannot be withdrawn. This can occur if
-                            funds were sent directly to the town. We are woking on this!
-                        </Box>
-                    )
+                if (mappedError?.includes?.(ERROR_MEMBERSHIP_INSUFFICIENT_PAYMENT)) {
+                    return `The town contains funds that cannot be withdrawn. This can occur if
+                            funds were sent directly to the town. We are woking on this!`
                 }
                 break
         }

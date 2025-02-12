@@ -12,11 +12,7 @@ export type Props<T extends IconProps['type'] | undefined = IconProps['type']> =
     pending?: T extends IconProps['type'] ? never : boolean
     success?: boolean
     message: string | ReactNode
-    /**
-     * pass a string to display a message that will be truncated to 2 lines - the default, useful for long, raw error messages
-     * pass a react node to display a custom message
-     */
-    subMessage?: string | ReactNode
+    subMessage?: string
     cta?: string
     ctaColor?: TextProps['color']
     onCtaClick?: ({ dismissToast }: { dismissToast: () => void }) => void | Promise<void>
@@ -51,9 +47,9 @@ export function StandardToast<T extends IconProps['type'] | undefined>(props: Pr
         })
         setCtaActionLoading(false)
     }
+    const [seeMore, setSeeMore] = useState(false)
 
-    const isUnknownConnectorError =
-        typeof subMessage === 'string' && subMessage?.toLowerCase().includes('unknown connector')
+    const isUnknownConnectorError = subMessage?.toLowerCase().includes('unknown connector')
 
     return (
         <Box
@@ -90,7 +86,7 @@ export function StandardToast<T extends IconProps['type'] | undefined>(props: Pr
                         <Box>(UC) Please try logging out and in again.</Box>
                     )}
 
-                    {subMessage && !isUnknownConnectorError && (
+                    {subMessage && !isUnknownConnectorError && !seeMore && (
                         <Box
                             style={{
                                 display: '-webkit-box',
@@ -102,6 +98,23 @@ export function StandardToast<T extends IconProps['type'] | undefined>(props: Pr
                             fontSize="sm"
                         >
                             {subMessage}
+                        </Box>
+                    )}
+
+                    {subMessage && !isUnknownConnectorError && seeMore && (
+                        <Box color="gray2" fontSize="sm">
+                            {subMessage}
+                        </Box>
+                    )}
+
+                    {subMessage && subMessage.length > 100 && !seeMore && (
+                        <Box
+                            paddingBottom="sm"
+                            cursor="pointer"
+                            alignSelf="end"
+                            onClick={() => setSeeMore(!seeMore)}
+                        >
+                            <Text size="sm">See more</Text>
                         </Box>
                     )}
                 </Box>

@@ -48,7 +48,13 @@ function TransferAssets() {
     const source = isTreasuryTransfer ? spaceAddress : isAAWallet ? assetSourceParam : undefined
     const [searchParams] = useSearchParams()
     const defaultData = searchParams.get('data')
-    const defaultAssetToTransfer = defaultData ? JSON.parse(defaultData).assetToTransfer : undefined
+    let defaultAssetToTransfer
+    try {
+        defaultAssetToTransfer = defaultData ? JSON.parse(defaultData).assetToTransfer : undefined
+    } catch (error) {
+        console.error('[TransferAssetsPanel] Failed to parse default data:', error)
+        defaultAssetToTransfer = undefined
+    }
     const isEthTransfer = defaultAssetToTransfer === 'BASE_ETH'
 
     const isPendingTransferBaseEth = useIsTransactionPending(
