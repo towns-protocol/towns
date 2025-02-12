@@ -1,15 +1,12 @@
 import React, { useMemo } from 'react'
 import { Stack, Text } from '@ui'
+import { formatCompactUSD } from '@components/Web3/Trading/tradingUtils'
 import { TMentionTicker } from './types'
 
 export const ComboboxTrailingTickerContent = ({ item }: { item: TMentionTicker }) => {
     const { marketCap, priceUSD } = item
     const formattedMarketCap = useMemo(() => {
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD',
-            notation: 'compact',
-        }).format(Number(marketCap))
+        return formatCompactUSD(Number(marketCap))
     }, [marketCap])
 
     return (

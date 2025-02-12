@@ -8,30 +8,20 @@ import {
     UTCTimestamp,
     createChart,
 } from 'lightweight-charts'
-import { useQuery } from '@tanstack/react-query'
-import { z } from 'zod'
+import { zip } from 'lodash'
 import { themes } from 'ui/styles/themes'
 import { Box, Button, Dropdown, IconButton, Pill, Stack, Text } from '@ui'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { NetworkName } from '@components/Tokens/TokenSelector/NetworkName'
 import { useStore } from 'store/store'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
-import { env } from 'utils'
-
-function formatUSD(value: number): string {
-    return (
-        '$' +
-        new Intl.NumberFormat('en-US', {
-            style: 'decimal',
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0,
-        }).format(value)
-    )
-}
+import { formatCompactUSD, formatUSD } from '@components/Web3/Trading/tradingUtils'
+import { useCoinData } from './useCoinData'
+import { GetBars, TimeFrame, useCoinBars } from './useCoinBars'
 
 export const TradingChart = (props: { attachment: TickerAttachment }) => {
     const { attachment } = props
-    const [days, setDays] = useState<string>('1')
+    const [timeframe, setTimeframe] = useState<TimeFrame>('1d')
     const [chartType, setChartType] = useState<'area' | 'candlestick'>('area')
 
     const onToggleChartType = useCallback(() => {
@@ -42,14 +32,11 @@ export const TradingChart = (props: { attachment: TickerAttachment }) => {
         address: attachment.address,
         chain: attachment.chainId,
     })
-    const { data: ohlcData, isLoading: isLoadingOHLCData } = useCoinOHLCHistoricalData({
-        coinId: coinData?.id,
-        days: days,
-    })
-    const { data: historicalData, isLoading: isLoadingHistoricalData } = useCoinHistoricalData({
+
+    const { data: barData, isLoading: isLoadingData } = useCoinBars({
         address: attachment.address,
         chain: attachment.chainId,
-        days: days,
+        timeframe: timeframe,
     })
 
     const [isFocused, setIsFocused] = useState(false)
@@ -63,12 +50,9 @@ export const TradingChart = (props: { attachment: TickerAttachment }) => {
                     cursor={!isFocused ? 'pointer' : 'default'}
                     onClick={() => setIsFocused(true)}
                 >
-                    <ChartComponent
-                        isFocused={isFocused}
-                        data={(chartType === 'area' ? historicalData?.prices : ohlcData) ?? []}
-                    />
+                    <ChartComponent isFocused={isFocused} data={barData} chartType={chartType} />
                 </Box>
-                {(isLoadingHistoricalData || isLoadingOHLCData) && (
+                {isLoadingData && (
                     <Box position="absoluteCenter" zIndex="above">
                         <ButtonSpinner />
                     </Box>
@@ -85,19 +69,20 @@ export const TradingChart = (props: { attachment: TickerAttachment }) => {
                         />
                         <Dropdown
                             padding="none"
-                            defaultValue={days}
+                            defaultValue={timeframe}
                             height="height_md"
                             width="x9"
                             background="level4"
                             rounded="full"
                             options={[
-                                { label: '24h', value: '1' },
-                                { label: '7d', value: '7' },
-                                { label: '1m', value: '30' },
-                                { label: '3m', value: '90' },
-                                { label: '1y', value: '365' },
+                                { label: '1h', value: '1h' },
+                                { label: '24h', value: '1d' },
+                                { label: '7d', value: '7d' },
+                                { label: '1m', value: '30d' },
+                                { label: '3m', value: '90d' },
+                                { label: '1y', value: '365d' },
                             ]}
-                            onChange={(value) => setDays(value)}
+                            onChange={(value) => setTimeframe(value as TimeFrame)}
                         />
                     </Stack>
                 </Box>
@@ -114,13 +99,13 @@ export const TradingChart = (props: { attachment: TickerAttachment }) => {
                                     background="accent"
                                     rounded="full"
                                     as="img"
-                                    src={coinData.image.small}
+                                    src={coinData.token.info.imageThumbUrl ?? ''}
                                 />
                                 <ClipboardCopy
                                     color="default"
                                     fontSize="sm"
                                     clipboardContent={attachment.address}
-                                    label={coinData.name}
+                                    label={coinData.token.name}
                                 />
                             </Stack>
                             <Box grow />
@@ -134,20 +119,16 @@ export const TradingChart = (props: { attachment: TickerAttachment }) => {
                         </Stack>
 
                         <Text fontWeight="strong" fontSize="lg">
-                            ${coinData.market_data.current_price.usd}
+                            {formatUSD(Number(coinData.priceUSD))}
                         </Text>
 
                         <Stack horizontal grow gap="sm">
                             <Text
                                 truncate
                                 size="sm"
-                                color={
-                                    coinData.market_data.price_change_percentage_24h > 0
-                                        ? 'greenBlue'
-                                        : 'error'
-                                }
+                                color={Number(coinData.change24) > 0 ? 'greenBlue' : 'error'}
                             >
-                                {coinData.market_data.price_change_percentage_24h}%
+                                {Number(coinData.change24).toFixed(2)}%
                             </Text>
                             <Text color="gray2" size="sm">
                                 Past day
@@ -155,13 +136,16 @@ export const TradingChart = (props: { attachment: TickerAttachment }) => {
                         </Stack>
                         <Stack horizontal grow gap="sm" color="gray1">
                             <Pill background="level3" color="inherit">
-                                VOL {formatUSD(coinData.market_data.total_volume.usd)}
+                                LIQ {formatCompactUSD(Number(coinData.liquidity))}
                             </Pill>
                             <Pill background="level3" color="inherit">
-                                MCAP {formatUSD(coinData.market_data.market_cap.usd)}
+                                VOL {formatCompactUSD(Number(coinData.volume24))}
                             </Pill>
                             <Pill background="level3" color="inherit">
-                                FDV {formatUSD(coinData.market_data.fully_diluted_valuation.usd)}
+                                MCAP {formatCompactUSD(Number(coinData.marketCap))}
+                            </Pill>
+                            <Pill background="level3" color="inherit">
+                                HDLRS {coinData.holders}
                             </Pill>
                         </Stack>
                         <Stack horizontal gap="sm">
@@ -181,9 +165,10 @@ export const TradingChart = (props: { attachment: TickerAttachment }) => {
 
 const ChartComponent = (props: {
     isFocused: boolean
-    data: [number, number][] | [number, number, number, number, number][]
+    data: GetBars
+    chartType: 'area' | 'candlestick'
 }) => {
-    const { isFocused, data } = props
+    const { isFocused, data, chartType } = props
 
     const { getTheme } = useStore()
     const theme = getTheme()
@@ -203,7 +188,7 @@ const ChartComponent = (props: {
         if (!current) {
             return
         }
-        if (data.length === 0) {
+        if (data.o.length === 0) {
             return
         }
 
@@ -242,24 +227,27 @@ const ChartComponent = (props: {
         })
         c.timeScale().fitContent()
 
-        if (data[0].length === 2) {
+        if (chartType === 'area') {
             const areaSeries = c.addSeries(AreaSeries, {
                 lineColor,
                 topColor: areaTopColor,
                 bottomColor: areaBottomColor,
                 lineWidth: 4,
             })
-            const formattedData = data.map(([time, value]) => {
-                return { time: (time / 1000) as UTCTimestamp, value }
+            const formattedData = zip(data.t, data.c).map(([time, close]) => {
+                return { time: time as UTCTimestamp, value: close }
             })
             areaSeries.setData(formattedData)
         } else {
             const candleStickSeries = c.addSeries(CandlestickSeries, {})
-            const formattedData = data.map(([time, open, high, low, close]) => {
-                return { time: (time / 1000) as UTCTimestamp, open, high, low, close }
-            })
+            const formattedData = zip(data.t, data.o, data.h, data.l, data.c).map(
+                ([time, open, high, low, close]) => {
+                    return { time: time as UTCTimestamp, open, high, low, close }
+                },
+            )
             candleStickSeries.setData(formattedData)
         }
+
         setChart(c)
 
         const handleResize = () => {
@@ -275,7 +263,7 @@ const ChartComponent = (props: {
             window.removeEventListener('resize', handleResize)
             c.remove()
         }
-    }, [data, lineColor, textColor, areaTopColor, areaBottomColor, backgroundColor])
+    }, [data, lineColor, textColor, areaTopColor, areaBottomColor, backgroundColor, chartType])
 
     useEffect(() => {
         if (!chart) {
@@ -299,133 +287,4 @@ const ChartComponent = (props: {
     }, [isFocused, chart])
 
     return <Box ref={chartContainerRef} pointerEvents={isFocused ? 'auto' : 'none'} />
-}
-
-type MarketDataEntry = {
-    eth: number
-    btc: number
-    usd: number
-}
-
-const zMarketDataEntry: z.ZodType<MarketDataEntry> = z.object({
-    eth: z.number(),
-    btc: z.number(),
-    usd: z.number(),
-})
-
-type GetCoinDataResponse = {
-    id: string
-    name: string
-    market_data: {
-        ath: MarketDataEntry
-        current_price: MarketDataEntry
-        market_cap: MarketDataEntry
-        fully_diluted_valuation: MarketDataEntry
-        total_volume: MarketDataEntry
-        price_change_percentage_24h: number
-    }
-    image: {
-        small: string
-    }
-}
-
-const zCoinData: z.ZodType<GetCoinDataResponse> = z.object({
-    id: z.string(),
-    name: z.string(),
-    market_data: z.object({
-        ath: zMarketDataEntry,
-        current_price: zMarketDataEntry,
-        market_cap: zMarketDataEntry,
-        fully_diluted_valuation: zMarketDataEntry,
-        total_volume: zMarketDataEntry,
-        price_change_percentage_24h: z.number(),
-    }),
-    image: z.object({
-        small: z.string(),
-    }),
-})
-
-const useCoinData = (props: { address: string; chain: string }) => {
-    const { data, error } = useQuery({
-        queryKey: ['get-coin-data', `${props.address}`],
-        queryFn: async () => {
-            const url = `https://pro-api.coingecko.com/api/v3/coins/${props.chain}/contract/${props.address}`
-            const result = await fetch(url, {
-                headers: {
-                    accept: 'application/json',
-                    'x-cg-pro-api-key': env.VITE_COINGECKO_API_KEY ?? '',
-                },
-            })
-            return result.json()
-        },
-        select: (response) => {
-            console.log('coin data', response)
-            return zCoinData.safeParse(response).data
-        },
-        enabled: !!env.VITE_COINGECKO_API_KEY,
-        refetchOnWindowFocus: false,
-        refetchOnReconnect: false,
-        staleTime: 1000 * 15,
-    })
-
-    console.log('Coin Data', data, error)
-    return { data }
-}
-
-const zPricesData: z.ZodType<{ prices: [number, number][] }> = z.object({
-    prices: z.array(z.tuple([z.number(), z.number()])),
-})
-
-const zOHLCData: z.ZodType<[number, number, number, number, number][]> = z.array(
-    z.tuple([z.number(), z.number(), z.number(), z.number(), z.number()]),
-)
-
-const useCoinHistoricalData = (props: { address: string; chain: string; days: string }) => {
-    const { data, isLoading } = useQuery({
-        queryKey: ['get-pools', `${props.address}`, props.days],
-        queryFn: async () => {
-            const url = `https://pro-api.coingecko.com/api/v3/coins/${props.chain}/contract/${props.address}/market_chart?vs_currency=usd&days=${props.days}`
-            const result = await fetch(url, {
-                headers: {
-                    accept: 'application/json',
-                    'x-cg-pro-api-key': env.VITE_COINGECKO_API_KEY ?? '',
-                },
-            })
-            return result.json()
-        },
-        select: (response) => {
-            return zPricesData.safeParse(response).data
-        },
-        enabled: !!env.VITE_COINGECKO_API_KEY,
-        refetchOnWindowFocus: false,
-        refetchOnReconnect: false,
-        staleTime: 1000 * 15,
-    })
-
-    return { data, isLoading }
-}
-
-const useCoinOHLCHistoricalData = (props: { coinId?: string; days: string }) => {
-    const { data, isLoading } = useQuery({
-        queryKey: ['get-ohlc', `${props.coinId}`, props.days],
-        queryFn: async () => {
-            const url = `https://pro-api.coingecko.com/api/v3/coins/${props.coinId}/ohlc?vs_currency=usd&days=${props.days}`
-            const result = await fetch(url, {
-                headers: {
-                    accept: 'application/json',
-                    'x-cg-pro-api-key': env.VITE_COINGECKO_API_KEY ?? '',
-                },
-            })
-            return result.json()
-        },
-        select: (response) => {
-            return zOHLCData.safeParse(response).data
-        },
-        enabled: props.coinId !== undefined && !!env.VITE_COINGECKO_API_KEY,
-        refetchOnWindowFocus: false,
-        refetchOnReconnect: false,
-        staleTime: 1000 * 15,
-    })
-
-    return { data, isLoading }
 }
