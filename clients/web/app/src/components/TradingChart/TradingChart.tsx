@@ -19,6 +19,17 @@ import { formatCompactUSD, formatUSD } from '@components/Web3/Trading/tradingUti
 import { useCoinData } from './useCoinData'
 import { GetBars, TimeFrame, useCoinBars } from './useCoinBars'
 
+const CHART_TIME_FORMAT_OPTIONS: {
+    [key: string]: object
+} = {
+    '1h': { hour: '2-digit', minute: '2-digit' },
+    '1d': { hour: '2-digit' },
+    '7d': { month: 'short', day: 'numeric' },
+    '30d': { month: 'short', day: 'numeric' },
+    '90d': { month: 'short', day: 'numeric' },
+    '365d': { month: 'short', year: 'numeric' },
+}
+
 export const TradingChart = (props: { attachment: TickerAttachment }) => {
     const { attachment } = props
     const [timeframe, setTimeframe] = useState<TimeFrame>('1d')
@@ -50,7 +61,12 @@ export const TradingChart = (props: { attachment: TickerAttachment }) => {
                     cursor={!isFocused ? 'pointer' : 'default'}
                     onClick={() => setIsFocused(true)}
                 >
-                    <ChartComponent isFocused={isFocused} data={barData} chartType={chartType} />
+                    <ChartComponent
+                        isFocused={isFocused}
+                        data={barData}
+                        chartType={chartType}
+                        timeframe={timeframe}
+                    />
                 </Box>
                 {isLoadingData && (
                     <Box position="absoluteCenter" zIndex="above">
@@ -166,9 +182,10 @@ export const TradingChart = (props: { attachment: TickerAttachment }) => {
 const ChartComponent = (props: {
     isFocused: boolean
     data: GetBars
+    timeframe: TimeFrame
     chartType: 'area' | 'candlestick'
 }) => {
-    const { isFocused, data, chartType } = props
+    const { isFocused, data, chartType, timeframe } = props
 
     const { getTheme } = useStore()
     const theme = getTheme()
@@ -178,9 +195,8 @@ const ChartComponent = (props: {
     const textColor = themes[theme].foreground.gray2
     const areaTopColor = themes[theme].background.cta2
     const areaBottomColor = themes[theme].background.level3
-
     const chartContainerRef = useRef<HTMLElement>(null)
-
+    const timeFrameOptions = CHART_TIME_FORMAT_OPTIONS[timeframe]
     const [chart, setChart] = useState<IChartApi | null>(null)
 
     useEffect(() => {
@@ -221,6 +237,9 @@ const ChartComponent = (props: {
                 },
             },
             timeScale: {
+                tickMarkFormatter: (timestamp: UTCTimestamp) => {
+                    return new Date(timestamp * 1000).toLocaleString('en-US', timeFrameOptions)
+                },
                 ticksVisible: false,
                 borderVisible: false,
             },
@@ -263,7 +282,16 @@ const ChartComponent = (props: {
             window.removeEventListener('resize', handleResize)
             c.remove()
         }
-    }, [data, lineColor, textColor, areaTopColor, areaBottomColor, backgroundColor, chartType])
+    }, [
+        data,
+        lineColor,
+        textColor,
+        areaTopColor,
+        areaBottomColor,
+        backgroundColor,
+        chartType,
+        timeFrameOptions,
+    ])
 
     useEffect(() => {
         if (!chart) {

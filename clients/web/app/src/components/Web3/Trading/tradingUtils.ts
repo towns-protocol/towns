@@ -3,7 +3,7 @@ export function formatCents(cents: number): string {
 }
 
 export function formatCompactUSD(number: number): string {
-    return Intl.NumberFormat('en-US', { notation: 'compact' }).format(number)
+    return '$' + Intl.NumberFormat('en-US', { notation: 'compact' }).format(number)
 }
 
 export function formatUSD(value: number): string {
