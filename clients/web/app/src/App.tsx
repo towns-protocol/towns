@@ -38,6 +38,7 @@ import { CombinedAuthContextProvider } from 'privy/useCombinedAuth'
 import { useRiverConnectedSuccessfullyAnalyticsEvent } from '@components/Analytics/useRiverConnectedSuccessfullyAnalyticsEvent'
 import { validateAndParseXChainConfig } from 'utils/validateAndParseXChainConfig'
 import { FundWalletModal } from '@components/Web3/Wallet/FundWalletModal'
+import { TradingContextProvider } from '@components/Web3/Trading/TradingContextProvider'
 import { wagmiConfig } from './wagmiConfig'
 
 FontLoader.init()
@@ -166,7 +167,7 @@ export const App = () => {
         >
             <WagmiProvider config={wagmiConfig}>
                 <CombinedAuthContextProvider>
-                    <>
+                    <TradingContextProvider>
                         <FaviconBadge />
                         <AppBadge />
                         <AppNotifications />
@@ -201,7 +202,7 @@ export const App = () => {
                         <UserOpTxModal />
                         <FundWalletModal />
                         <TrackRiverConnectedSuccessfully />
-                    </>
+                    </TradingContextProvider>
                 </CombinedAuthContextProvider>
             </WagmiProvider>
         </TownsContextProvider>

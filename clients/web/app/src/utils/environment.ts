@@ -108,6 +108,9 @@ const envSchema = z.object({
 
     // Lifi API Key
     VITE_LIFI_API_KEY: z.string().optional(),
+
+    // Solana mainnet rpc url
+    VITE_SOLANA_MAINNET_RPC_URL: z.string().url().optional(),
 })
 
 const parsed = envSchema.safeParse(import.meta.env)
