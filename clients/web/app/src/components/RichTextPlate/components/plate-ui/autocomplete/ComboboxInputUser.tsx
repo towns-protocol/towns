@@ -4,7 +4,8 @@ import { withRef } from '@udecode/cn'
 import { CollectionStore, useComboboxContext } from '@ariakit/react'
 import { PlateElement, TPlateEditor } from '@udecode/plate-common/react'
 import { Value } from '@udecode/plate-common'
-import { Box, Icon } from '@ui'
+import { Box, Icon, Stack, Text } from '@ui'
+import { shortAddress } from 'ui/utils/utils'
 import { emojiSearch } from './emoji-search'
 import {
     ComboboxContainerProps,
@@ -92,7 +93,16 @@ export const ComboboxItemTicker = ({
                 onSelectTicker?.(item.data)
                 onMentionSelectTriggerMap(trigger)?.(editor, item, item.text)
             }}
-        />
+        >
+            <Stack>
+                <Text color="default" fontWeight="strong" fontSize="sm">
+                    {item.data.name}
+                </Text>
+                <Text color="gray2" fontSize="sm">
+                    {item.data.symbol} {shortAddress(item.data.address)}
+                </Text>
+            </Stack>
+        </InlineComboboxItem>
     )
 }
 

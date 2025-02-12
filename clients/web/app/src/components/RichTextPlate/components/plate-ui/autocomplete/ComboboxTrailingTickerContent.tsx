@@ -15,7 +15,7 @@ export const ComboboxTrailingTickerContent = ({ item }: { item: TMentionTicker }
     return (
         <Stack horizontal gap="sm" fontSize="sm">
             <Text color="gray2">MCAP {formattedMarketCap}</Text>
-            <Text color="default">${Number(priceUSD).toPrecision(2)}</Text>
+            <Text color="default">${Number(priceUSD).toPrecision(5)}</Text>
         </Stack>
     )
 }
