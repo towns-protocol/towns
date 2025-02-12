@@ -72,7 +72,7 @@ function remarkTransformUserAndChannels(
         )
 
         const TICKER_TRIGGER = '$'
-        const TICKER_NAME_REGEX = '[-a-z0-9]{0,6}'
+        const TICKER_NAME_REGEX = '[-a-z0-9]{0,20}'
         const TICKER_ELEMENT_REGEX = new RegExp(
             `(?:^|\\s)\\${TICKER_TRIGGER}(${TICKER_NAME_REGEX})`,
             'gui',
