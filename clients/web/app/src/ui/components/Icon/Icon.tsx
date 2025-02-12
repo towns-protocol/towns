@@ -1354,6 +1354,24 @@ export const SunIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
     </svg>
 ))
 
+export const SwapIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
+    <svg
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        {...props}
+        ref={ref}
+    >
+        <path
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="M11.2071 5.70711C11.5976 5.31658 11.5976 4.68342 11.2071 4.29289C10.8166 3.90237 10.1834 3.90237 9.7929 4.29289L6.14645 7.93934C5.2015 8.88429 5.87076 10.5 7.20711 10.5H19C19.5523 10.5 20 10.0523 20 9.5C20 8.94772 19.5523 8.5 19 8.5H8.41422L11.2071 5.70711ZM12.7929 17.7929C12.4024 18.1834 12.4024 18.8166 12.7929 19.2071C13.1834 19.5976 13.8166 19.5976 14.2071 19.2071L17.8536 15.5607C18.7985 14.6157 18.1292 13 16.7929 13H5C4.44771 13 4 13.4477 4 14C4 14.5523 4.44771 15 5 15H15.5858L12.7929 17.7929Z"
+            fill="currentColor"
+        />
+    </svg>
+))
 export const TagIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" {...props} ref={ref}>
         <g fill="currentColor">
@@ -2319,6 +2337,7 @@ const iconMap = {
     starFilledOutline: StarFilledOutlineIcon,
     strikethrough: StrikethroughIcon,
     sun: SunIcon,
+    swap: SwapIcon,
     tag: TagIcon,
     text: TextIcon,
     threads: MessageIcon,
