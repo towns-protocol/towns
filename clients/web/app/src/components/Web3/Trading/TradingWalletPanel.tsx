@@ -11,14 +11,32 @@ import { AutoCreateSolanaWallet } from './AutoCreateSolanaWallet'
 
 export function TradingWalletPanel() {
     const { openPanel } = usePanelActions()
+    const onClickDeposit = useCallback(() => {
+        openPanel(CHANNEL_INFO_PARAMS.TRADING_DEPOSIT)
+    }, [openPanel])
+
     const { data: chainWalletAssets } = useTradingWallet()
     const totalHoldingValueCents = useMemo(() => {
         return calculateTotalHoldingValueCents(chainWalletAssets)
     }, [chainWalletAssets])
 
-    const onClickDeposit = useCallback(() => {
-        openPanel(CHANNEL_INFO_PARAMS.TRADING_DEPOSIT)
-    }, [openPanel])
+    const holdingValue24hAgo = useMemo(() => {
+        if (!chainWalletAssets) {
+            return 0
+        }
+        return chainWalletAssets.reduce((acc, asset) => {
+            const pct = 1 + asset.nativeAsset.priceChange24h / 100
+            const value24hAgo = asset.nativeAsset.holdingValueCents / pct
+            const tokensValue24hAgo = asset.tokens.reduce((acc, token) => {
+                const pct = 1 + token.priceChange24h / 100
+                return acc + token.holdingValueCents / pct
+            }, 0)
+            return acc + value24hAgo + tokensValue24hAgo
+        }, 0)
+    }, [chainWalletAssets])
+
+    const gain24h = totalHoldingValueCents - holdingValue24hAgo
+    const gain24hPct = holdingValue24hAgo === 0 ? 0 : (gain24h / holdingValue24hAgo) * 100
 
     return (
         <Panel padding label="Towns Wallet">
@@ -28,6 +46,18 @@ export function TradingWalletPanel() {
                 <Text fontSize="h2" fontWeight="strong" textAlign="center">
                     {formatCents(totalHoldingValueCents)}
                 </Text>
+                <Stack
+                    horizontal
+                    gap
+                    alignItems="center"
+                    alignSelf="center"
+                    color={gain24hPct > 0 ? 'greenBlue' : 'error'}
+                >
+                    <Text>{formatCents(gain24h)}</Text>
+                    <Box padding="xs" rounded="xs" color="inherit">
+                        <Text>{gain24hPct.toFixed(2)}%</Text>
+                    </Box>
+                </Stack>
 
                 <Stack horizontal gap padding>
                     <WalletActionButton iconName="plus" label="Deposit" onClick={onClickDeposit} />

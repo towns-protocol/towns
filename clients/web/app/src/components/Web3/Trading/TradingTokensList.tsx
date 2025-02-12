@@ -81,6 +81,10 @@ const AssetEntry = ({
         walletAddress?: string
     }
 }) => {
+    const pct = 1 + asset.priceChange24h / 100
+    const value24hAgo = asset.holdingValueCents / pct
+    const diff24h = asset.holdingValueCents - value24hAgo
+
     return (
         <Stack horizontal gap="md">
             {asset.imageUrl && asset.imageUrl !== 'missing.png' ? (
@@ -110,7 +114,7 @@ const AssetEntry = ({
             <Stack gap="sm" alignItems="end">
                 <Text fontWeight="strong">{formatCents(asset.holdingValueCents)}</Text>
                 <Text color={asset.priceChange24h > 0 ? 'greenBlue' : 'error'}>
-                    {asset.priceChange24h.toFixed(2)}%
+                    {formatCents(diff24h)}
                 </Text>
             </Stack>
         </Stack>
