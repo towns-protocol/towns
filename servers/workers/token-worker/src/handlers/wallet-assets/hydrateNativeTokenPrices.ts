@@ -8,11 +8,17 @@ type CoinGeckoSimplePriceResponse = {
     }
 }
 
-function coinGeckoIdentifierToCoinId(identifier: string) {
-    return identifier === 'eth' ? 'ethereum' : identifier
-}
-
 export async function hydrateNativeTokenPrices(assets: ChainWalletAssets[], env: Env) {
+    // the value of 1 eth on base == 1 eth, so let's just remap them here
+    // since coingecko returns another price for base.
+    // this will be 1:1 with the value displayed on Basescan
+    function coinGeckoIdentifierToCoinId(identifier: string) {
+        if (identifier === 'eth' || identifier === 'base') {
+            return 'ethereum'
+        }
+        return identifier
+    }
+
     const coinIds = assets.map((asset) => coinGeckoIdentifierToCoinId(asset.coinGeckoIdentifier))
     const API_KEY = env.COINGECKO_API_KEY
     if (!API_KEY) {
