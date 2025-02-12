@@ -6,6 +6,7 @@ import {
     type ChunkedMedia,
     UserBio,
     AddEventResponse_Error,
+    CreationCookie,
 } from '@river-build/proto'
 import { PlainMessage } from '@bufbuild/protobuf'
 import {
@@ -147,6 +148,12 @@ interface TownsClientImpl {
         userId: string | undefined,
         chunkCount: number,
     ) => Promise<MediaStreamBlockInfo | undefined>
+    createMediaStreamNew: (
+        channelId: string | undefined,
+        spaceId: string | undefined,
+        userId: string | undefined,
+        chunkCount: number,
+    ) => Promise<{ creationCookie: CreationCookie } | undefined>
     createRoleTransaction: (
         spaceNetworkId: string,
         roleName: string,
@@ -253,6 +260,12 @@ interface TownsClientImpl {
         chunkIndex: number,
         prevMiniblockHash: Uint8Array,
     ) => Promise<{ prevMiniblockHash: Uint8Array; eventId: string } | undefined>
+    sendMediaPayloadNew: (
+        creationCookie: CreationCookie,
+        last: boolean,
+        data: Uint8Array,
+        chunkIndex: number,
+    ) => Promise<{ creationCookie: CreationCookie } | undefined>
     sendReadReceipt: (marker: FullyReadMarker, isUnread?: boolean) => Promise<void>
     setAvatarUrl: (ravatarUrl: string) => Promise<void>
     setRoomProperties: (roomId: string, title: string, topic: string) => Promise<void>
@@ -402,6 +415,7 @@ export function useTownsClient(): TownsClientImpl {
         createSpaceTransaction: useWithCatch(clientSingleton?.createSpaceTransaction),
         waitForCreateSpaceTransaction,
         createMediaStream: useWithCatch(clientSingleton?.createMediaStream),
+        createMediaStreamNew: useWithCatch(clientSingleton?.createMediaStreamNew),
 
         createChannelTransaction: useWithCatch(clientSingleton?.createChannelTransaction),
         waitForCreateChannelTransaction: useWithCatch(
@@ -473,6 +487,7 @@ export function useTownsClient(): TownsClientImpl {
         retrySendMessage: useWithCatch(clientSingleton?.retrySendMessage),
         sendReaction: useWithCatch(clientSingleton?.sendReaction),
         sendMediaPayload: useWithCatch(clientSingleton?.sendMediaPayload),
+        sendMediaPayloadNew: useWithCatch(clientSingleton?.sendMediaPayloadNew),
         sendReadReceipt: useWithCatch(sendReadReceipt),
         adminRedactMessage: useWithCatch(clientSingleton?.adminRedactMessage),
         setDisplayName: useWithCatch(clientSingleton?.setDisplayName),

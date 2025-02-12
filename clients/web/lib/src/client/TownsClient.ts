@@ -22,6 +22,7 @@ import {
     ChunkedMedia,
     FullyReadMarker,
     UserBio,
+    CreationCookie,
 } from '@river-build/proto'
 import {
     ChannelTransactionContext,
@@ -655,6 +656,23 @@ export class TownsClient
             throw new Error("Casablanca client doesn't exist")
         }
         return await this.casablancaClient.createMediaStream(channelId, spaceId, userId, chunkCount)
+    }
+
+    public async createMediaStreamNew(
+        channelId: string | Uint8Array | undefined,
+        spaceId: string | Uint8Array | undefined,
+        userId: string | undefined,
+        chunkCount: number,
+    ): Promise<{ creationCookie: CreationCookie }> {
+        if (!this.casablancaClient) {
+            throw new Error("Casablanca client doesn't exist")
+        }
+        return await this.casablancaClient.createMediaStreamNew(
+            channelId,
+            spaceId,
+            userId,
+            chunkCount,
+        )
     }
 
     /************************************************
@@ -1398,6 +1416,23 @@ export class TownsClient
             data,
             chunkIndex,
             prevMiniblockHash,
+        )
+    }
+
+    public async sendMediaPayloadNew(
+        creationCookie: CreationCookie,
+        last: boolean,
+        data: Uint8Array,
+        chunkIndex: number,
+    ): Promise<{ creationCookie: CreationCookie }> {
+        if (!this.casablancaClient) {
+            throw new Error('Casablanca client not initialized')
+        }
+        return await this.casablancaClient.sendMediaPayloadNew(
+            creationCookie,
+            last,
+            data,
+            chunkIndex,
         )
     }
 
