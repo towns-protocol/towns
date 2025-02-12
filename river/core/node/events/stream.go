@@ -505,16 +505,7 @@ func (s *Stream) initFromBlockchain(ctx context.Context) error {
 // and error if stream is local and failed to load.
 // GetViewIfLocal is thread-safe.
 func (s *Stream) GetViewIfLocal(ctx context.Context) (*StreamView, error) {
-	s.mu.RLock()
-	isLocal := s.local != nil
-	var view *StreamView
-	if isLocal {
-		view = s.view()
-		if view != nil {
-			s.maybeScrubLocked()
-		}
-	}
-	s.mu.RUnlock()
+	view, isLocal := s.tryGetView()
 	if !isLocal {
 		return nil, nil
 	}
@@ -546,15 +537,17 @@ func (s *Stream) GetView(ctx context.Context) (*StreamView, error) {
 }
 
 // tryGetView returns StreamView if it's already loaded, or nil if it's not.
+// The second return value is true if the view is local.
 // tryGetView is thread-safe.
-func (s *Stream) tryGetView() *StreamView {
+func (s *Stream) tryGetView() (*StreamView, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	if s.local != nil && s.view() != nil {
+	isLocal := s.local != nil
+	if isLocal && s.view() != nil {
 		s.maybeScrubLocked()
-		return s.view()
+		return s.view(), true
 	} else {
-		return nil
+		return nil, isLocal
 	}
 }
 
@@ -568,20 +561,24 @@ func (s *Stream) maybeScrubLocked() {
 
 	if s.params.Config.Scrubbing.ScrubEligibleDuration > 0 &&
 		time.Since(s.local.lastScrubbedTime) > s.params.Config.Scrubbing.ScrubEligibleDuration {
-		s.params.Scrubber.Scrub(s.streamId)
-		// Needs write lock to reset last scrubbed time.
-		go s.resetLastScrubbed()
+		go s.maybeScheduleScrub()
 	}
 }
 
-// resetLastScrubbed reset the last scrubbed time on the stream, which is used for
-// determining when the stream is eligible for another scrub.
-// resetLastScrubbed is thread-safe.
-func (s *Stream) resetLastScrubbed() {
+func (s *Stream) shouldScrub() bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if s.local != nil {
+	if s.params.Config.Scrubbing.ScrubEligibleDuration > 0 &&
+		time.Since(s.local.lastScrubbedTime) > s.params.Config.Scrubbing.ScrubEligibleDuration {
 		s.local.lastScrubbedTime = time.Now()
+		return true
+	}
+	return false
+}
+
+func (s *Stream) maybeScheduleScrub() {
+	if s.shouldScrub() {
+		s.params.Scrubber.Scrub(s.streamId)
 	}
 }
 

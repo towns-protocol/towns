@@ -45,9 +45,7 @@ func (s *StreamCache) onStreamCreated(
 		}
 
 		// Cache the stream
-		stream.mu.Lock()
 		s.cache.Store(stream.streamId, stream)
-		stream.mu.Unlock()
 	}()
 }
 

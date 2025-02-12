@@ -61,7 +61,7 @@ func GetDefaultConfig() *Config {
 			Memory:                true,
 			PProf:                 false,
 			Stacks:                true,
-			StacksMaxSizeKb:       5 * 1024,
+			StacksMaxSizeKb:       64 * 1024,
 			Stream:                true,
 			TxPool:                true,
 			CorruptStreams:        true,

@@ -1,8 +1,6 @@
 package rpc
 
 import (
-	"bufio"
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -174,41 +172,34 @@ type stacksHandler struct {
 }
 
 func (h *stacksHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	stacksSize := h.maxSizeKb * 1024
-	if stacksSize == 0 {
-		stacksSize = 1024 * 1024
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+
+	var stacksSize int
+	if h.maxSizeKb > 0 {
+		stacksSize = h.maxSizeKb * 1024
+	} else {
+		stacksSize = 64 * 1024 * 1024
 	}
 
-	var (
-		ctx          = r.Context()
-		buf          = make([]byte, stacksSize)
-		stackSize    = runtime.Stack(buf, true)
-		traceScanner = bufio.NewScanner(bytes.NewReader((buf[:stackSize])))
-		reply        render.GoRoutineData
-	)
+	buf := make([]byte, stacksSize)
+	n := runtime.Stack(buf, true)
+	buf = buf[:n]
 
-	traceScanner.Split(bufio.ScanLines)
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(buf)
+}
 
-	for traceScanner.Scan() {
-		stack, err := readGoRoutineStackFrame(traceScanner)
-		if err != nil {
-			logging.FromCtx(ctx).Errorw("unable to read stack frame", "err", err)
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-			return
-		}
-		reply.Stacks = append(reply.Stacks, stack)
-	}
-
-	output, err := render.Execute(&reply)
-	if err != nil {
-		logging.FromCtx(ctx).Errorw("unable to render stack data", "err", err)
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+func stacks2Handler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	p := runtimePProf.Lookup("goroutine")
+	if p == nil {
+		w.WriteHeader(http.StatusNotFound)
+		fmt.Fprintln(w, "Unknown profile")
 		return
 	}
-
-	w.Header().Set("Content-Type", "text/html")
-	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write(output.Bytes())
+	_ = p.WriteTo(w, 1)
 }
 
 type streamHandler struct {
@@ -262,18 +253,6 @@ func (s *streamHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(output.Bytes())
-}
-
-func stacks2Handler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("X-Content-Type-Options", "nosniff")
-	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	p := runtimePProf.Lookup("goroutine")
-	if p == nil {
-		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprintln(w, "Unknown profile")
-		return
-	}
-	_ = p.WriteTo(w, 1)
 }
 
 type onChainConfigHandler struct {
@@ -402,26 +381,4 @@ func (h *cacheHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(output.Bytes())
-}
-
-func readGoRoutineStackFrame(trace *bufio.Scanner) (*render.GoRoutineStack, error) {
-	var (
-		head = trace.Text()
-		data render.GoRoutineStack
-	)
-
-	if !strings.HasPrefix(head, "goroutine ") {
-		return nil, fmt.Errorf("expected goroutine header, got %q", head)
-	}
-
-	data.Description = head
-
-	for trace.Scan() {
-		line := trace.Text()
-		if line == "" { // marks end of the frame
-			return &data, nil
-		}
-		data.Lines = append(data.Lines, line)
-	}
-	return &data, nil
 }
