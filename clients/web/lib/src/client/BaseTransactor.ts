@@ -850,15 +850,15 @@ export class BaseTransactor {
 
     public async banTransaction(
         spaceId: string,
-        walletAddress: string,
+        userId: string,
         signer: TSigner,
     ): Promise<BanUnbanWalletTransactionContext> {
         let transaction: TransactionOrUserOperation | undefined = undefined
         let error: Error | undefined = undefined
 
-        this.log('[banUserTransaction] space', { spaceId, walletAddress })
+        this.log('[banUserTransaction] space', { spaceId, userId })
 
-        const walletAddressWithToken = await this.walletAddressForMembership(spaceId, walletAddress)
+        const walletAddressWithToken = await this.walletAddressForMembership(spaceId, userId)
         if (!walletAddressWithToken) {
             throw new Error('Membership token not found')
         }
@@ -896,20 +896,20 @@ export class BaseTransactor {
             transaction,
             receipt: undefined,
             status: transaction ? TransactionStatus.Pending : TransactionStatus.Failed,
-            data: { spaceId: spaceId, walletAddress: walletAddressWithToken, isBan: true },
+            data: { spaceId, userId, isBan: true },
             error,
         }
     }
 
     public async unbanTransaction(
         spaceId: string,
-        walletAddress: string,
+        userId: string,
         signer: TSigner,
     ): Promise<BanUnbanWalletTransactionContext> {
         let transaction: TransactionOrUserOperation | undefined = undefined
         let error: Error | undefined = undefined
-        this.log('[unbanUserTransaction] space', { spaceId, walletAddress })
-        const walletAddressWithToken = await this.walletAddressForMembership(spaceId, walletAddress)
+        this.log('[unbanUserTransaction] space', { spaceId, userId })
+        const walletAddressWithToken = await this.walletAddressForMembership(spaceId, userId)
         if (!walletAddressWithToken) {
             throw new Error('Membership token not found')
         }
@@ -947,7 +947,7 @@ export class BaseTransactor {
             transaction,
             receipt: undefined,
             status: transaction ? TransactionStatus.Pending : TransactionStatus.Failed,
-            data: { spaceId: spaceId, walletAddress: walletAddressWithToken, isBan: false },
+            data: { spaceId, userId, isBan: false },
             error,
         }
     }

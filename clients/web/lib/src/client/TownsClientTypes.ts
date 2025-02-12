@@ -128,7 +128,7 @@ export type WalletLinkTransactionContext = TransactionContext<{
 
 export type BanUnbanWalletTransactionContext = TransactionContext<{
     spaceId: string
-    walletAddress: string
+    userId: string
     isBan: boolean
 }>
 

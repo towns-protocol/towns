@@ -65,9 +65,9 @@ export const blockchainKeys = {
     linkedWallets: (walletAddress: string) => ['linkedWallets', walletAddress],
     rootKeyFromLinkedWallet: (walletAddress: string) => ['rootKeyFromLinkedWallet', walletAddress],
     hasMemberNft: (spaceId: string | undefined) => ['hasMemberNft', spaceId ?? 'waitingForSpaceId'],
-    walletAddressIsBanned: (walletAddress: string, spaceId: string) => [
+    walletAddressIsBanned: (userId: string, spaceId: string) => [
         'walletAddressIsBanned',
-        walletAddress,
+        userId,
         spaceId,
     ],
     bannedWalletAddresses: (spaceId: string) => ['bannedWalletAddresses', spaceId],

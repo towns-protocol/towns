@@ -62,10 +62,10 @@ function useBanUnbanTransactionBuilder() {
                     transactionContext?.data
                 ) {
                     const spaceId = transactionContext.data.spaceId
-                    const walletAddress = transactionContext.data.walletAddress
+                    const userId = transactionContext.data.userId
 
                     await queryClient.invalidateQueries({
-                        queryKey: blockchainKeys.walletAddressIsBanned(spaceId, walletAddress),
+                        queryKey: blockchainKeys.walletAddressIsBanned(spaceId, userId),
                     })
                     await queryClient.invalidateQueries({
                         queryKey: blockchainKeys.bannedWalletAddresses(spaceId),
@@ -160,20 +160,19 @@ export const useBannedWalletAddresses = (spaceId?: string) => {
     return { userIds: data.data, isLoading: data.isLoading }
 }
 
-export function useWalletAddressIsBanned(spaceId?: string, walletAddress?: string) {
+export function useWalletAddressIsBanned(spaceId?: string, userId?: string) {
     const { client } = useTownsClient()
 
     const userIsBanned = useCallback(async () => {
-        if (!client || !spaceId || !walletAddress) {
+        if (!client || !spaceId || !userId) {
             return
         }
-        return await client?.walletAddressIsBanned(spaceId, walletAddress)
-    }, [spaceId, walletAddress, client])
+        return await client?.walletAddressIsBanned(spaceId, userId)
+    }, [spaceId, userId, client])
 
-    const isEnabled =
-        spaceId && walletAddress ? spaceId.length > 0 && walletAddress.length > 0 : false
+    const isEnabled = spaceId && userId ? spaceId.length > 0 && userId.length > 0 : false
     const data = useQuery(
-        blockchainKeys.walletAddressIsBanned(spaceId ?? '', walletAddress ?? ''),
+        blockchainKeys.walletAddressIsBanned(spaceId ?? '', userId ?? ''),
         userIsBanned,
         {
             enabled: isEnabled,
