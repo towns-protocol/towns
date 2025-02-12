@@ -2,22 +2,17 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-
-// libraries
-
 import {IRuleEntitlement} from "src/spaces/entitlements/rule/IRuleEntitlement.sol";
 import {IRuleEntitlementV2} from "src/spaces/entitlements/rule/IRuleEntitlement.sol";
 import {IUserEntitlement} from "src/spaces/entitlements/user/IUserEntitlement.sol";
 import {IMembershipBase} from "src/spaces/facets/membership/IMembership.sol";
-
 import {ISpaceOwner} from "src/spaces/facets/owner/ISpaceOwner.sol";
 import {ISpaceProxyInitializer} from "src/spaces/facets/proxy/ISpaceProxyInitializer.sol";
 
-// contracts
 interface IArchitectBase {
-    // =============================================================
-    //                           STRUCTS
-    // =============================================================
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           Structs                          */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     struct MembershipRequirementsOld {
         bool everyone;
@@ -85,11 +80,9 @@ interface IArchitectBase {
         ChannelInfo channel;
         Prepay prepay;
     }
-    /**
-     * @notice Options for creating a space
-     * @param to Address that will receive the space NFT (defaults to msg.sender if not specified)
-     */
 
+    /// @notice Options for creating a space
+    /// @param to Address that will receive the space NFT (defaults to msg.sender if not specified)
     struct SpaceOptions {
         address to;
     }
@@ -97,6 +90,8 @@ interface IArchitectBase {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           Events                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    event Architect__ProxyInitializerSet(address indexed proxyInitializer);
     event SpaceCreated(address indexed owner, uint256 indexed tokenId, address indexed space);
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -108,20 +103,19 @@ interface IArchitectBase {
     error Architect__InvalidAddress();
     error Architect__NotContract();
     error Architect__InvalidPricingModule();
-
-    event Architect__ProxyInitializerSet(address indexed proxyInitializer);
 }
 
 interface IArchitect is IArchitectBase {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           Registry                         */
+    /*                          Registry                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
     function getSpaceByTokenId(uint256 tokenId) external view returns (address space);
 
     function getTokenIdBySpace(address space) external view returns (uint256);
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           Implementations                  */
+    /*                       Implementations                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     function setSpaceArchitectImplementations(
@@ -142,8 +136,9 @@ interface IArchitect is IArchitectBase {
         );
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           Proxy Initializer                */
+    /*                      Proxy Initializer                     */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
     /// @notice Retrieves the current proxy initializer
     /// @return The address of the current ISpaceProxyInitializer contract
     function getProxyInitializer() external view returns (ISpaceProxyInitializer);
