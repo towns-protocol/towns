@@ -2,8 +2,6 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-
-// libraries
 import {IMembershipBase} from "contracts/src/spaces/facets/membership/IMembership.sol";
 import {IUserEntitlement} from "contracts/src/spaces/entitlements/user/IUserEntitlement.sol";
 import {IRuleEntitlement} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
@@ -11,11 +9,10 @@ import {IRuleEntitlementV2} from "contracts/src/spaces/entitlements/rule/IRuleEn
 import {ISpaceOwner} from "contracts/src/spaces/facets/owner/ISpaceOwner.sol";
 import {ISpaceProxyInitializer} from "contracts/src/spaces/facets/proxy/ISpaceProxyInitializer.sol";
 
-// contracts
 interface IArchitectBase {
-  // =============================================================
-  //                           STRUCTS
-  // =============================================================
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                           Structs                          */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
   struct MembershipRequirementsOld {
     bool everyone;
@@ -92,8 +89,9 @@ interface IArchitectBase {
   }
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-  /*                           Events                               */
+  /*                           Events                           */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
   event SpaceCreated(
     address indexed owner,
     uint256 indexed tokenId,
@@ -101,7 +99,7 @@ interface IArchitectBase {
   );
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-  /*                           Errors                               */
+  /*                           Errors                           */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
   error Architect__InvalidStringLength();
@@ -109,13 +107,15 @@ interface IArchitectBase {
   error Architect__InvalidAddress();
   error Architect__NotContract();
   error Architect__InvalidPricingModule();
+
   event Architect__ProxyInitializerSet(address indexed proxyInitializer);
 }
 
 interface IArchitect is IArchitectBase {
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-  /*                           Registry                               */
+  /*                          Registry                          */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
   function getSpaceByTokenId(
     uint256 tokenId
   ) external view returns (address space);
@@ -123,7 +123,7 @@ interface IArchitect is IArchitectBase {
   function getTokenIdBySpace(address space) external view returns (uint256);
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-  /*                           Implementations                               */
+  /*                       Implementations                      */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
   function setSpaceArchitectImplementations(
@@ -144,8 +144,9 @@ interface IArchitect is IArchitectBase {
     );
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-  /*                           Proxy Initializer                               */
+  /*                      Proxy Initializer                     */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
   /// @notice Retrieves the current proxy initializer
   /// @return The address of the current ISpaceProxyInitializer contract
   function getProxyInitializer() external view returns (ISpaceProxyInitializer);
