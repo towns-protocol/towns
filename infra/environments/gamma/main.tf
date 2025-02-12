@@ -90,6 +90,7 @@ module "river_db" {
   vpc_id                    = module.vpc.vpc_id
   pgadmin_security_group_id = module.pgadmin.security_group_id
   cluster_name_suffix       = "" // TODO: remove this
+  publicly_accessible       = local.river_node_migration_config.rds_public_access
 }
 
 module "river_node_ssl_cert" {
@@ -190,6 +191,8 @@ module "river_node" {
 
   migrate_stream_creation = true
 
+  migration_config = local.river_node_migration_config
+
   ecs_cluster = {
     id   = aws_ecs_cluster.river_ecs_cluster.id
     name = aws_ecs_cluster.river_ecs_cluster.name
@@ -206,6 +209,10 @@ locals {
   river_database_isolation_level = "READ COMMITTED"
   river_max_db_connections       = 50
   notification_service_migration_config = {
+    container_provider : "gcp"
+    rds_public_access : true
+  }
+  river_node_migration_config = {
     container_provider : "gcp"
     rds_public_access : true
   }
@@ -265,18 +272,6 @@ module "stress_tests" {
   channel_ids         = "20a38bcf15ab6b94d404c201dee9f67c6428c0ecb14c8601d7f529814cebe12c,20a38bcf15ab6b94d404c201dee9f67c6428c0ecb1826ef52f48e2e904844cff"
 }
 
-module "metrics_aggregator" {
-  source = "../../modules/metrics-aggregator"
-
-  vpc_id                         = module.vpc.vpc_id
-  river_chain_rpc_url_secret_arn = local.global_remote_state.river_sepolia_rpc_url_secret.arn
-  subnets                        = module.vpc.private_subnets
-  ecs_cluster = {
-    id   = aws_ecs_cluster.river_ecs_cluster.id
-    name = aws_ecs_cluster.river_ecs_cluster.name
-  }
-}
-
 data "cloudflare_zone" "zone" {
   name = module.global_constants.primary_hosted_zone_name
 }
@@ -306,10 +301,13 @@ locals {
 module "gcp_env" {
   source = "../../modules/gcp-env"
 
-  project_id                             = local.gcp_project_id
-  region                                 = local.gcp_region
-  zones                                  = local.gcp_zones
-  cloudflare_terraform_api_token         = var.cloudflare_terraform_api_token
-  gcloud_credentials                     = file("./gcloud-credentials.json")
-  notifications_service_migration_config = local.notification_service_migration_config
+  project_id                     = local.gcp_project_id
+  region                         = local.gcp_region
+  zones                          = local.gcp_zones
+  cloudflare_terraform_api_token = var.cloudflare_terraform_api_token
+  gcloud_credentials             = file("./gcloud-credentials.json")
+  river_node_config = {
+    num_stream_nodes  = local.num_full_nodes
+    num_archive_nodes = local.num_archive_nodes
+  }
 }

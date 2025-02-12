@@ -65,14 +65,23 @@ module "gcp_secrets" {
   google_service_account = module.gke_main.service_account
 }
 
-module "notification_service" {
-  source = "./notification-service"
+module "river_node" {
+  source = "./river-node"
 
+  depends_on = [module.gcp_apis]
+
+  project_id             = var.project_id
+  google_service_account = module.gke_main.service_account
+  node_config            = var.river_node_config
+
+  region = var.region
+}
+
+module "notification_service" {
+  source     = "./notification-service"
   depends_on = [module.gcp_apis]
 
   project_id = var.project_id
 
   google_service_account = module.gke_main.service_account
-  alb_ip                 = module.main_alb.ip
-  migration_config       = var.notifications_service_migration_config
 }

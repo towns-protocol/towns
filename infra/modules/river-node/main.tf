@@ -595,7 +595,7 @@ resource "aws_ecs_service" "river-ecs-service" {
   name                               = "${local.node_name}-fargate-service"
   cluster                            = var.ecs_cluster.id
   task_definition                    = aws_ecs_task_definition.river-fargate.arn
-  desired_count                      = var.on ? 1 : 0
+  desired_count                      = var.migration_config.container_provider == "aws" ? 1 : 0
   deployment_minimum_healthy_percent = local.run_mode == "archive" ? 0 : 100
   deployment_maximum_percent         = local.run_mode == "archive" ? 100 : 200
 
@@ -643,7 +643,7 @@ resource "aws_ecs_service" "river-ecs-service" {
 }
 
 resource "cloudflare_record" "nlb_cname_dns_record" {
-  count   = 1
+  count   = var.migration_config.container_provider == "aws" ? 1 : 0
   zone_id = data.cloudflare_zone.zone.id
   name    = local.node_dns_name
   value   = var.lb.lb_dns_name

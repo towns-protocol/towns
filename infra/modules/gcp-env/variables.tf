@@ -22,15 +22,9 @@ variable "gcloud_credentials" {
   type        = string
 }
 
-variable "notifications_service_migration_config" {
-  description = "Migration configuration for the notification service"
+variable "river_node_config" {
   type = object({
-    container_provider : string
-    rds_public_access : bool
+    num_stream_nodes  = number
+    num_archive_nodes = number
   })
-
-  default = {
-    container_provider = "aws"
-    rds_public_access  = false
-  }
 }

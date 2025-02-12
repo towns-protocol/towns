@@ -33,36 +33,18 @@ module "gke" {
   cluster_autoscaling = {
     enabled             = true
     autoscaling_profile = "BALANCED"
-    min_cpu_cores       = 0
-    max_cpu_cores       = 1000
-    min_memory_gb       = 0
-    max_memory_gb       = 2000
+    min_cpu_cores       = 8
+    max_cpu_cores       = 64
+    min_memory_gb       = 8
+    max_memory_gb       = 256
+    disk_size           = 10
+    disk_type           = "pd-standard"
     gpu_resources       = []
     auto_repair         = true
     auto_upgrade        = true
   }
 
   node_pools = [
-    {
-      name               = "n1-standard-4-pool"
-      machine_type       = "n1-standard-4"
-      disk_size_gb       = 10 # TODO: does this need to be this big?
-      disk_type          = "pd-standard"
-      min_count          = 0
-      max_count          = 100
-      autoscaling        = true
-      initial_node_count = 0
-    },
-    {
-      name               = "n1-standard-8-pool"
-      machine_type       = "n1-standard-8"
-      disk_size_gb       = 10
-      disk_type          = "pd-standard"
-      min_count          = 0
-      max_count          = 100
-      autoscaling        = true
-      initial_node_count = 0
-    },
     {
       name               = "n2-standard-16-pool"
       machine_type       = "n2-standard-16"

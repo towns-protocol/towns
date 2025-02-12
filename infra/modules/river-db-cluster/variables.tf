@@ -30,3 +30,8 @@ variable "max_capacity" {
   type    = number
   default = 20
 }
+
+variable "publicly_accessible" {
+  type    = bool
+  default = false
+}

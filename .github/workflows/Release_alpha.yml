@@ -43,6 +43,7 @@ jobs:
             SLACK_CD_ALERT_WORKFLOW_WEBHOOK_URL: ${{ secrets.SLACK_CD_ALERT_WORKFLOW_WEBHOOK_URL }}
             SLACK_CD_INFO_WORKFLOW_WEBHOOK_URL: ${{ secrets.SLACK_CD_INFO_WORKFLOW_WEBHOOK_URL }}
             TF_VAR_datadog_api_key: ${{ secrets.TF_VAR_datadog_api_key }}
+            HARMONY_GITHUB_PAT: ${{ secrets.HARMONY_GITHUB_PAT }}
         with:
             environment_name: alpha
 

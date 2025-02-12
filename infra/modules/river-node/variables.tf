@@ -127,11 +127,6 @@ variable "scrub_duration" {
   default     = 3600000000000
 }
 
-variable "on" {
-  type    = bool
-  default = true
-}
-
 variable "migrate_stream_creation" {
   type = bool
 }
@@ -147,4 +142,17 @@ variable "cpu" {
 variable "enable_mls" {
   type    = bool
   default = false
+}
+
+variable "migration_config" {
+  description = "Migration configuration for the notification service"
+  type = object({
+    container_provider : string
+    rds_public_access : bool
+  })
+
+  default = {
+    container_provider = "aws"
+    rds_public_access  = false
+  }
 }
