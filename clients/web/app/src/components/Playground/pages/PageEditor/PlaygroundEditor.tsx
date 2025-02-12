@@ -59,7 +59,6 @@ export const PlaygroundEditor = ({
                 userHashMap={userHashMap.current}
                 userMentions={userMentions.current}
                 channelMentions={channelMentions}
-                tickerMentions={[]}
                 fileCount={files.length}
                 channels={channels}
                 lookupUser={lookupUser}

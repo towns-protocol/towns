@@ -39,7 +39,15 @@ export type TMentionEmoji = { name: string; emoji: string }
 export type TUserWithChannel = TownsStreamMember & { isChannelMember: boolean } & {
     atChannel?: boolean
 }
-export type TMentionTicker = { name: string; symbol: string; address: string; chain: string }
+export type TMentionTicker = {
+    name: string
+    symbol: string
+    address: string
+    chain: string
+    marketCap: string
+    priceUSD: string
+    imageUrl: string
+}
 export type TMentionComboboxTypes = Channel | TUserWithChannel | TMentionEmoji | TMentionTicker
 export type TComboboxAllData = Channel & TUserWithChannel & TMentionEmoji & TMentionTicker
 export type TEmojiMentionElement = TMentionElement & { emoji: TMentionEmoji }

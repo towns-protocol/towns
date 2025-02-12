@@ -1,14 +1,21 @@
-import React, { PropsWithChildren } from 'react'
-import { Text } from '@ui'
-import { shortAddress } from 'ui/utils/utils'
+import React, { useMemo } from 'react'
+import { Stack, Text } from '@ui'
+import { TMentionTicker } from './types'
 
-export const ComboboxTrailingTickerContent = ({
-    address,
-    chain,
-}: PropsWithChildren<{ address: string; chain: string }>) => {
+export const ComboboxTrailingTickerContent = ({ item }: { item: TMentionTicker }) => {
+    const { marketCap, priceUSD } = item
+    const formattedMarketCap = useMemo(() => {
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+            notation: 'compact',
+        }).format(Number(marketCap))
+    }, [marketCap])
+
     return (
-        <Text truncate color="gray2">
-            {shortAddress(address)}@{chain}
-        </Text>
+        <Stack horizontal gap="sm" fontSize="sm">
+            <Text color="gray2">MCAP {formattedMarketCap}</Text>
+            <Text color="default">${Number(priceUSD).toPrecision(2)}</Text>
+        </Stack>
     )
 }

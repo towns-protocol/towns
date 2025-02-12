@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import {
     Channel,
     SendTextMessageOptions,
@@ -25,14 +25,12 @@ import {
 import { useInlineReplyAttchmentPreview } from '@components/EmbeddedMessageAttachement/hooks/useInlineReplyAttchmentPreview'
 import { LoadingUnfurledLinkAttachment } from 'hooks/useExtractInternalLinks'
 import { SECOND_MS } from 'data/constants'
-import { useTradingTokens } from '@components/Trading/hooks/useTradingTokens'
-import { useIsHNTMember } from 'hooks/useIsHNTMember'
 import { RichTextEditor } from './RichTextEditor'
 import { useEditorChannelData, useEditorMemberData } from './hooks/editorHooks'
 import { getChannelNames } from './utils/helpers'
 import { EditorFallback } from './components/EditorFallback'
 import { unfurlLinksToAttachments } from './utils/unfurlLinks'
-import { TComboboxItemWithData, TMentionTicker } from './components/plate-ui/autocomplete/types'
+import { TMentionTicker } from './components/plate-ui/autocomplete/types'
 
 type Props = {
     onSend?: (
@@ -97,32 +95,6 @@ const TownsTextEditorWithoutBoundary = ({
         draftUserIds,
     )
     const { channelMentions } = useEditorChannelData(channels)
-    const { data: tradingTokens } = useTradingTokens()
-    const { isHNTMember } = useIsHNTMember()
-    const tickerMentions = useMemo(() => {
-        if (!tradingTokens || !isHNTMember) {
-            return []
-        }
-        const chains = Object.keys(tradingTokens.tokens)
-        return chains
-            .map((chain) => {
-                const tokens = tradingTokens.tokens[Number(chain)]
-                return tokens.map(
-                    (token) =>
-                        ({
-                            key: chain + token.address,
-                            text: token.symbol,
-                            data: {
-                                symbol: token.symbol,
-                                address: token.address,
-                                name: token.name,
-                                chain: chain,
-                            },
-                        } satisfies TComboboxItemWithData<TMentionTicker>),
-                )
-            })
-            .flat()
-    }, [tradingTokens, isHNTMember])
 
     const onAddTickerAttachment = useCallback(
         (ticker: TMentionTicker) => {
@@ -296,7 +268,6 @@ const TownsTextEditorWithoutBoundary = ({
                     storageId={inlineReplyPreview?.event?.eventId ?? storageId}
                     userMentions={userMentions}
                     channelMentions={channelMentions}
-                    tickerMentions={tickerMentions}
                     userHashMap={userHashMap}
                     lookupUser={lookupUser}
                     unfurledLinkAttachments={unfurledLinkAttachments}

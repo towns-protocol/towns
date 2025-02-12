@@ -64,8 +64,6 @@ type RichTextEditorProps = {
     userMentions: TComboboxItemWithData<TUserWithChannel>[]
     /* channels shown in #channel popup while typing */
     channelMentions: TComboboxItemWithData<Channel>[]
-    /* tickers shown in $ticker popup while typing */
-    tickerMentions: TComboboxItemWithData<TMentionTicker>[]
     /* list of all channels in space */
     channels: Channel[]
     /* func to get user details by `userId`. Generally provided by `useUserLookupContext()` */
@@ -107,7 +105,6 @@ export const RichTextEditor = ({
     userHashMap,
     userMentions,
     channelMentions,
-    tickerMentions,
     tickerAttachments = [],
     channels,
     lookupUser,
@@ -156,9 +153,6 @@ export const RichTextEditor = ({
     const channelMentionsRef = useRef(channelMentions)
     channelMentionsRef.current = channelMentions
 
-    const tickerMentionsRef = useRef(tickerMentions)
-    tickerMentionsRef.current = tickerMentions
-
     const [editor] = useState<TPlateEditor>(() =>
         createTownsEditor(
             storageId.current,
@@ -166,7 +160,6 @@ export const RichTextEditor = ({
             userHashMap,
             () => userMentionsRef.current,
             () => channelMentionsRef.current,
-            () => tickerMentionsRef.current,
             initialValue,
             lookupUser,
             onSelectTicker,

@@ -4,6 +4,7 @@ import { withRef } from '@udecode/cn'
 import { CollectionStore, useComboboxContext } from '@ariakit/react'
 import { PlateElement, TPlateEditor } from '@udecode/plate-common/react'
 import { Value } from '@udecode/plate-common'
+import { Box, Icon } from '@ui'
 import { emojiSearch } from './emoji-search'
 import {
     ComboboxContainerProps,
@@ -23,8 +24,8 @@ import {
     userMentionFilter,
 } from './helpers'
 import { ComboboxContainer } from './ComboboxContainer'
-import { tickerSearch } from './ticker-search'
 import { ComboboxTrailingTickerContent } from './ComboboxTrailingTickerContent'
+import { useSearchTokens } from './useSearchTokens'
 
 type CollectionStoreItem = ReturnType<CollectionStore['item']>
 
@@ -83,20 +84,25 @@ export const ComboboxItemTicker = ({
     return (
         <InlineComboboxItem
             key={item.key}
-            value={item.text}
+            value={item.data.name}
             getItem={getItem}
-            Icon={<ComboboxIcon item={item.data} comboboxType={ComboboxTypes.tickerMention} />}
-            trailingContent={
-                <ComboboxTrailingTickerContent
-                    address={item.data.address}
-                    chain={item.data.chain}
-                />
-            }
+            Icon={<TickerIcon item={item.data} />}
+            trailingContent={<ComboboxTrailingTickerContent item={item.data} />}
             onClick={() => {
                 onSelectTicker?.(item.data)
                 onMentionSelectTriggerMap(trigger)?.(editor, item, item.text)
             }}
         />
+    )
+}
+
+const TickerIcon = ({ item }: { item: TMentionTicker }) => {
+    return item.imageUrl.length > 0 ? (
+        <Box as="img" src={item.imageUrl} square="square_md" rounded="full" />
+    ) : item.chain === '8453' ? (
+        <Icon size="square_md" type="baseEth" />
+    ) : (
+        <Icon size="square_md" type="solana" />
     )
 }
 
@@ -159,6 +165,10 @@ export const ComboboxInput = withRef<typeof PlateElement, ComboboxInputUserProps
         const [filteredItems, setFilteredItems] = useState<TComboboxItemWithData[]>(EMPTY_ARRAY)
 
         const store = useComboboxContext()!
+        const { data: tokenList } = useSearchTokens({
+            searchString: searchQueryStore,
+            enabled: isTickerCombobox(trigger.current) && searchQueryStore.length > 0,
+        })
 
         const getAllItems = useCallback(() => {
             if (isEmojiCombobox(trigger.current) || isTickerCombobox(trigger.current)) {
@@ -185,7 +195,9 @@ export const ComboboxInput = withRef<typeof PlateElement, ComboboxInputUserProps
                 return
             }
 
-            let _filteredItemList: TComboboxItemWithData<TUserWithChannel | Channel>[] = EMPTY_ARRAY
+            let _filteredItemList: TComboboxItemWithData<
+                TUserWithChannel | Channel | TMentionTicker
+            >[] = EMPTY_ARRAY
             if (isEmojiCombobox(trigger.current)) {
                 emojiSearch(searchQueryStore).then((emojiSearchResult) => {
                     startTransition(() => {
@@ -194,12 +206,7 @@ export const ComboboxInput = withRef<typeof PlateElement, ComboboxInputUserProps
                 })
                 return
             } else if (isTickerCombobox(trigger.current)) {
-                tickerSearch(searchQueryStore, getTickerMentions()).then((tickerSearchResult) => {
-                    startTransition(() => {
-                        setFilteredItems(tickerSearchResult)
-                    })
-                })
-                return
+                _filteredItemList = tokenList ?? []
             } else if (isUserCombobox(trigger.current)) {
                 _filteredItemList = getUserMentions().filter(userMentionFilter(searchQueryStore))
             } else {
@@ -217,6 +224,7 @@ export const ComboboxInput = withRef<typeof PlateElement, ComboboxInputUserProps
             getUserMentions,
             getChannelMentions,
             getTickerMentions,
+            tokenList,
         ])
 
         const searchResults = useMemo(() => {
