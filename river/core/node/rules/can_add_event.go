@@ -1702,6 +1702,14 @@ func (ru *aeKeySolicitationRules) validKeySolicitation() (bool, error) {
 		return false, RiverError(Err_INVALID_ARGUMENT, "session ids must be sorted")
 	}
 
+	if len(ru.solicitation.SessionIds) > 0 {
+		for _, sessionId := range ru.solicitation.SessionIds {
+			if sessionId == "" {
+				return false, RiverError(Err_INVALID_ARGUMENT, "session ids must not be empty")
+			}
+		}
+	}
+
 	return true, nil
 }
 

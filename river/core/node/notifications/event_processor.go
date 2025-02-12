@@ -135,10 +135,7 @@ func (p *MessageToNotificationsProcessor) OnMessageEvent(
 	members.Each(func(member string) bool {
 		var (
 			participant = common.HexToAddress(member)
-			pref, err   = p.cache.GetUserPreferences(
-				context.Background(),
-				participant,
-			) // lint:ignore context.Background() is fine here
+			pref, err   = p.cache.GetUserPreferences(ctx, participant)
 		)
 
 		if slices.ContainsFunc(tags.GetMentionedUserAddresses(), func(member []byte) bool {
@@ -241,6 +238,12 @@ func (p *MessageToNotificationsProcessor) onDMChannelPayload(
 	userPref *types.UserPreferences,
 	event *events.ParsedEvent,
 ) bool {
+	if dmChannelPayload, ok := event.Event.Payload.(*StreamEvent_DmChannelPayload); ok {
+		if dmChannelPayload.DmChannelPayload.GetMessage() == nil {
+			return false // inception
+		}
+	}
+
 	if userPref.WantsNotificationForDMMessage(streamID) {
 		return true
 	}
@@ -282,6 +285,12 @@ func (p *MessageToNotificationsProcessor) onGDMChannelPayload(
 	userPref *types.UserPreferences,
 	event *events.ParsedEvent,
 ) bool {
+	if gdmChannelPayload, ok := event.Event.Payload.(*StreamEvent_GdmChannelPayload); ok {
+		if gdmChannelPayload.GdmChannelPayload.GetMessage() == nil {
+			return false // inception or channel properties
+		}
+	}
+
 	tags := event.Event.GetTags()
 	messageInteractionType := tags.GetMessageInteractionType()
 	mentioned := isMentioned(participant, tags.GetGroupMentionTypes(), tags.GetMentionedUserAddresses())
@@ -308,6 +317,12 @@ func (p *MessageToNotificationsProcessor) onSpaceChannelPayload(
 	userPref *types.UserPreferences,
 	event *events.ParsedEvent,
 ) bool {
+	if streamChannelPayload, ok := event.Event.Payload.(*StreamEvent_ChannelPayload); ok {
+		if streamChannelPayload.ChannelPayload.GetMessage() == nil {
+			return false // inception or channel properties
+		}
+	}
+
 	tags := event.Event.GetTags()
 	messageInteractionType := event.Event.GetTags().GetMessageInteractionType()
 	mentioned := isMentioned(participant, tags.GetGroupMentionTypes(), tags.GetMentionedUserAddresses())

@@ -4,6 +4,7 @@ import { Stack, Text } from '@ui'
 import { calculateTotalHoldingValueCents, formatCents } from './tradingUtils'
 import { useTradingWallet } from './useTradingWallet'
 import { TradingTokensList } from './TradingTokensList'
+import { AutoCreateSolanaWallet } from './AutoCreateSolanaWallet'
 
 export function TradingWalletPanel() {
     const { data: chainWalletAssets } = useTradingWallet()
@@ -13,6 +14,7 @@ export function TradingWalletPanel() {
 
     return (
         <Panel padding label="Towns Wallet">
+            <AutoCreateSolanaWallet />
             <Stack gap>
                 <Text fontSize="h2" fontWeight="strong" textAlign="center">
                     {formatCents(totalHoldingValueCents)}

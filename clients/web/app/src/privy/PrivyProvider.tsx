@@ -34,7 +34,12 @@ export function TownsPrivyProvider({ children }: { children: JSX.Element }) {
                     logo,
                 },
                 embeddedWallets: {
-                    createOnLogin: 'all-users',
+                    ethereum: {
+                        createOnLogin: 'all-users',
+                    },
+                    solana: {
+                        createOnLogin: 'all-users',
+                    },
                 },
                 // Order of login methods:
                 // Google

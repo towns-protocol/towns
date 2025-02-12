@@ -176,16 +176,6 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         return waitTime * multiplier
     }
 
-    public hasUnprocessedSession(item: EncryptedContentItem): boolean {
-        check(isDefined(this.client.userInboxStreamId), 'userInboxStreamId not found')
-        const inboxStream = this.client.stream(this.client.userInboxStreamId)
-        check(isDefined(inboxStream), 'inboxStream not found')
-        return inboxStream.view.userInboxContent.hasPendingSessionId(
-            this.userDevice.deviceKey,
-            item.encryptedData.sessionId,
-        )
-    }
-
     public async isUserEntitledToKeyExchange(
         streamId: string,
         userId: string,
