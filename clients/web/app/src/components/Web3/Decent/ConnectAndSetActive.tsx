@@ -9,7 +9,7 @@ export function ConnectAndSetActive(props: {
 }) {
     const { setActiveWallet } = useSetActiveWallet()
     const privyConnectWallet = usePrivyConnectWallet({
-        onSuccess: async ({ wallet }) => {
+        onSuccess: async (wallet) => {
             await setActiveWallet(wallet as ConnectedWallet)
             props.onConnectWallet?.(wallet as ConnectedWallet)
         },

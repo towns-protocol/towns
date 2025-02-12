@@ -32,7 +32,7 @@ export function PrivyProvider({ children }: { children: JSX.Element }) {
                 supportedChains: SUPPORTED_CHAINS,
                 embeddedWallets: {
                     createOnLogin: 'all-users',
-                    showWalletUIs: false,
+                    noPromptOnSignature: true,
                 },
                 loginMethods: ['sms', 'google', 'twitter', 'apple'],
             }}

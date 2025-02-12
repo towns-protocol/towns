@@ -118,7 +118,7 @@ function useButtonStates(props: FundWalletCallbacks) {
     const noWalletConnected = nonPrivyWallets.length === 0 || !isWagmiConnected
 
     const privyConnectWallet = usePrivyConnectWallet({
-        onSuccess: async ({ wallet }) => {
+        onSuccess: async (wallet) => {
             await setActiveWallet(wallet as ConnectedWallet)
             props.onConnectWallet?.(wallet as ConnectedWallet)
         },

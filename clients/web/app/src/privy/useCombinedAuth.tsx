@@ -131,7 +131,7 @@ function usePrivyLoginWithErrorHandler({
     const { prepareRedirect } = usePrepareRedirect()
 
     const { login: privyLogin } = useLogin({
-        async onComplete({ user, isNewUser, wasAlreadyAuthenticated, loginMethod, loginAccount }) {
+        async onComplete(user, isNewUser, wasAlreadyAuthenticated, loginMethod, loginAccount) {
             // onComplete always fires - if already logged in and loading page, or if logging in
             // loginMethod will only be present if actually logging in
             savePrivyLoginMethodToLocalStorage(loginMethod)

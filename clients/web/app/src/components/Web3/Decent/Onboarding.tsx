@@ -60,7 +60,7 @@ function OnboardingV1(props: {
     const { address } = props
 
     const privyConnectWallet = usePrivyConnectWallet({
-        onSuccess: ({ wallet }) => {
+        onSuccess: (wallet) => {
             Analytics.getInstance().track('add funds connected wallet', {
                 walletName: wallet.meta.name,
             })

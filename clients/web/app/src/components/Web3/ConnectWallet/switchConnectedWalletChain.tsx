@@ -8,7 +8,7 @@ import { mapToErrorMessage } from '../utils'
 
 type Wallet = Parameters<
     NonNullable<NonNullable<Parameters<typeof useConnectWallet>[0]>['onSuccess']>
->[0]['wallet']
+>[0]
 
 export async function switchConnectedWalletChain(args: {
     wallet: Wallet
@@ -17,7 +17,7 @@ export async function switchConnectedWalletChain(args: {
 }) {
     const { wallet, baseChain, onSuccess } = args
     const chainString = baseChain.id.toString()
-    if ('type' in wallet && wallet.type === 'ethereum') {
+    if ('chainId' in wallet && 'getEthersProvider' in wallet) {
         let errorSubMessage: string | undefined = undefined
         if (!wallet.chainId.includes(chainString)) {
             try {
@@ -31,8 +31,7 @@ export async function switchConnectedWalletChain(args: {
             }
         }
 
-        const privyProvider = await wallet.getEthereumProvider()
-        const provider = new providers.Web3Provider(privyProvider)
+        const provider = await wallet.getEthersProvider()
         // switching the chain doesn't immediately update in `wallet` (ms later it does)
         // so we need to check the network
         const networkChainId = (await provider.getNetwork()).chainId

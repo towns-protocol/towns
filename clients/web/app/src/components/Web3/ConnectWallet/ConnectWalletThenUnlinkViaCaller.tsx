@@ -89,7 +89,7 @@ export function useConnectThenUnlinkViaCaller() {
     const { unlinkViaCallerTransaction } = useUnlinkViaCallerTransaction()
 
     return usePrivyConnectWallet({
-        onSuccess: async ({ wallet }) => {
+        onSuccess: async (wallet) => {
             Analytics.getInstance().track('connected wallet', {
                 walletName: wallet.meta.name,
             })

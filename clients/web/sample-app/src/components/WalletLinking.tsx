@@ -8,7 +8,7 @@ import {
     useUnlinkWalletTransaction,
 } from 'use-towns-client'
 import { useAccount } from 'wagmi'
-import { providers } from 'ethers'
+
 export const WalletLinking = () => {
     const { authenticated: privyAuthenticated, connectWallet } = usePrivy()
     const { wallets } = useWallets()
@@ -109,11 +109,9 @@ const WalletLinkButton = (props: { wallet: ConnectedWallet }) => {
         if (!privy) {
             return
         }
-        const privyProvider = new providers.Web3Provider(await privy.getEthereumProvider())
-        const otherWallet = new providers.Web3Provider(await wallet.getEthereumProvider())
         const res = await linkEOAToRootKeyTransaction(
-            privyProvider.getSigner(),
-            otherWallet.getSigner(),
+            (await privy.getEthersProvider()).getSigner(),
+            (await wallet.getEthersProvider()).getSigner(),
         )
         console.log('linkWallet', res)
     }, [wallets, wallet, linkEOAToRootKeyTransaction])
@@ -124,8 +122,10 @@ const WalletLinkButton = (props: { wallet: ConnectedWallet }) => {
             return
         }
         // call unlinkWallet
-        const privyProvider = new providers.Web3Provider(await privy.getEthereumProvider())
-        const res = await unlinkWalletTransaction(privyProvider.getSigner(), wallet.address)
+        const res = await unlinkWalletTransaction(
+            (await privy.getEthersProvider()).getSigner(),
+            wallet.address,
+        )
         console.log('removeLink', res)
     }, [wallets, wallet, unlinkWalletTransaction])
 
