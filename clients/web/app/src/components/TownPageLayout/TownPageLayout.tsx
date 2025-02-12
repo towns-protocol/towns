@@ -1,5 +1,11 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { Address, useContractSpaceInfo, useGetRootKeyFromLinkedWallet } from 'use-towns-client'
+import {
+    Address,
+    useContractSpaceInfo,
+    useGetRootKeyFromLinkedWallet,
+    useSpaceTips,
+    useUserLookupStore,
+} from 'use-towns-client'
 import { useEvent } from 'react-use-event-hook'
 import { isAddress } from 'viem'
 import { InteractiveTownsToken } from '@components/TownsToken/InteractiveTownsToken'
@@ -17,6 +23,7 @@ import { Entitlements, useEntitlements } from 'hooks/useEntitlements'
 import { MotionBoxProps } from 'ui/components/Motion/MotionComponents'
 import { shimmerClass } from 'ui/styles/globals/shimmer.css'
 import { minterRoleId } from '@components/SpaceSettingsPanel/rolePermissions.const'
+import { useEthToUsdFormatted } from '@components/Web3/useEthPrice'
 import { useReadableMembershipInfo } from './useReadableMembershipInfo'
 import { TokenInfoBox } from './TokenInfoBox'
 import { InformationBox } from './InformationBox'
@@ -148,6 +155,8 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
                                 spaceId={spaceId}
                                 isPreview={isPreview}
                                 motto={motto}
+                                address={address}
+                                chainId={chainId}
                             />
                         </Stack>
                         <InformationBoxes
@@ -246,6 +255,10 @@ function useColumnWidths({
     return widths
 }
 
+type User = {
+    ensName?: string
+}
+
 const Header = (props: {
     spaceId?: string
     name?: string
@@ -253,9 +266,23 @@ const Header = (props: {
     userId?: string
     motto?: string
     isPreview: boolean
+    address?: `0x${string}`
+    chainId?: number
 }) => {
-    const { name, owner, userId, motto, spaceId, isPreview } = props
+    const { name, owner, userId, motto, spaceId, isPreview, address, chainId } = props
     const { isTouch } = useDevice()
+    const { lookupUser } = useUserLookupStore(
+        (state: { lookupUser: (userId: Address) => User | undefined }) => ({
+            lookupUser: state.lookupUser,
+        }),
+    )
+
+    const ownerUser = useMemo(() => {
+        if (!owner) {
+            return undefined
+        }
+        return lookupUser(owner as Address)
+    }, [owner, lookupUser])
 
     const onTouchSharePressed = useEvent(async () => {
         if (!spaceId) {
@@ -265,6 +292,20 @@ const Header = (props: {
         try {
             await navigator.share({ title: name, url: url })
         } catch (_) {} // eslint-disable-line no-empty
+    })
+
+    const onAddressClick = useEvent(() => {
+        if (!address || !chainId) {
+            return
+        }
+        window.open(`${baseScanUrl(chainId)}/address/${address}`, '_blank', 'noopener,noreferrer')
+    })
+
+    const onOpenSeaClick = useEvent(() => {
+        if (!address || !chainId) {
+            return
+        }
+        window.open(`${openSeaAssetUrl(chainId, address)}`, '_blank', 'noopener,noreferrer')
     })
 
     return (
@@ -280,13 +321,40 @@ const Header = (props: {
                 paddingTop={isTouch ? 'sm' : 'none'}
             >
                 <Stack gap>
-                    <Heading
-                        level={2}
-                        style={{ textTransform: 'none' }}
-                        data-testid="town-preview-header"
-                    >
-                        {name}
-                    </Heading>
+                    <Box display="flex" flexDirection="row" alignItems="center">
+                        <Heading
+                            data-testid="town-preview-header"
+                            level={2}
+                            style={{ textTransform: 'none' }}
+                        >
+                            {name}
+                        </Heading>
+                        {address && chainId && (
+                            <Box
+                                display="flex"
+                                flexDirection="row"
+                                gap="sm"
+                                alignItems="center"
+                                paddingLeft="sm"
+                                marginTop="xs"
+                            >
+                                <IconButton
+                                    color="gray2"
+                                    hoverColor="default"
+                                    icon="etherscan"
+                                    size="square_md"
+                                    onClick={onAddressClick}
+                                />
+                                <IconButton
+                                    color="gray2"
+                                    hoverColor="default"
+                                    icon="openSeaPlain"
+                                    size="square_md"
+                                    onClick={onOpenSeaClick}
+                                />
+                            </Box>
+                        )}
+                    </Box>
                     {motto && <Text color="gray2">{motto}</Text>}
                 </Stack>
                 <Stack horizontal justifySelf="end" height="x4">
@@ -295,6 +363,7 @@ const Header = (props: {
                             userId={userId}
                             abstractAccountaddress={owner as Address}
                             prepend={<Text color="gray2">By </Text>}
+                            customDisplayName={ownerUser?.ensName}
                         />
                     )}
                 </Stack>
@@ -352,18 +421,12 @@ const InformationBoxes = (props: {
     isEntitlementsLoading: boolean
     entitlements?: Entitlements
 }) => {
-    const { spaceId, address, chainId, duration, isEntitlementsLoading, price, entitlements } =
-        props
+    const { spaceId, duration, isEntitlementsLoading, price, entitlements } = props
 
-    const onAddressClick = useEvent(() => {
-        window.open(`${baseScanUrl(chainId)}/address/${address}`, '_blank', 'noopener,noreferrer')
-    })
-
-    const onOpenSeaClick = useEvent(() => {
-        if (!address) {
-            return
-        }
-        window.open(`${openSeaAssetUrl(chainId, address)}`, '_blank', 'noopener,noreferrer')
+    const { data: tips } = useSpaceTips({ spaceId })
+    const totalTipsInUsd = useEthToUsdFormatted({
+        ethAmount: tips?.amount,
+        refetchInterval: 8_000,
     })
 
     if (isEntitlementsLoading || !entitlements) {
@@ -394,6 +457,17 @@ const InformationBoxes = (props: {
                 entitlements={entitlements}
                 dataTestId="town-preview-membership-info-bubble"
             />
+            {totalTipsInUsd && (
+                <InformationBox
+                    key="tips"
+                    title="Tips Sent"
+                    centerContent={
+                        <Icon type="dollarFilled" color="cta1" size="square_md" padding="xxs" />
+                    }
+                    subtitle={`${totalTipsInUsd || '0'}`}
+                    dataTestId="town-preview-tips-info-bubble"
+                />
+            )}
             <InformationBox
                 key="cost"
                 title="Entry"
@@ -417,28 +491,7 @@ const InformationBoxes = (props: {
                 }
                 subtitle={duration?.suffix}
                 dataTestId="town-preview-valid-for-info-bubble"
-                onClick={onAddressClick}
             />
-            {address && (
-                <InformationBox
-                    key="explore"
-                    title="Explore"
-                    centerContent={<Icon type="etherscan" />}
-                    subtitle="Etherscan"
-                    dataTestId="town-preview-etherscan-info-bubble"
-                    onClick={onAddressClick}
-                />
-            )}
-            {address && (
-                <InformationBox
-                    key="opensea"
-                    title="View"
-                    centerContent={<Icon type="openSeaPlain" />}
-                    subtitle="OpenSea"
-                    dataTestId="town-preview-opeansea-info-bubble"
-                    onClick={onOpenSeaClick}
-                />
-            )}
             <Box width="x2" shrink={false} />
         </Placeholder>
     )
@@ -460,20 +513,25 @@ const Bio = (props: { bio?: string }) => {
     const canExpand = bio && bio.length > MAX_LENGTH && !isExpanded
 
     return bio ? (
-        <Box display="inline-block" style={{ maxWidth: isTouch ? '100%' : '55ch' }}>
-            <Paragraph size="lg">
-                {shortenedBio}
-                {canExpand && (
-                    <span
-                        style={{ color: vars.color.tone[ToneName.Accent], cursor: 'pointer' }}
-                        onClick={() => setIsExpanded(true)}
-                    >
-                        {' '}
-                        more
-                    </span>
-                )}
-            </Paragraph>
-        </Box>
+        <Stack gap="md">
+            <Text strong size="md">
+                About
+            </Text>
+            <Box display="inline-block" style={{ maxWidth: isTouch ? '100%' : '55ch' }}>
+                <Paragraph size="lg">
+                    {shortenedBio}
+                    {canExpand && (
+                        <span
+                            style={{ color: vars.color.tone[ToneName.Accent], cursor: 'pointer' }}
+                            onClick={() => setIsExpanded(true)}
+                        >
+                            {' '}
+                            more
+                        </span>
+                    )}
+                </Paragraph>
+            </Box>
+        </Stack>
     ) : (
         <></>
     )

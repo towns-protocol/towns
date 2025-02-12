@@ -10,8 +10,16 @@ type Props = {
     userId: string
     abstractAccountaddress: Address | undefined
     name?: string
+    customDisplayName?: string
 }
-export function AvatarTextHorizontal({ abstractAccountaddress, name, prepend, userId }: Props) {
+
+export function AvatarTextHorizontal({
+    abstractAccountaddress,
+    name,
+    prepend,
+    userId,
+    customDisplayName,
+}: Props) {
     return (
         <Stack horizontal gap="sm" alignItems="center">
             {prepend}
@@ -26,12 +34,12 @@ export function AvatarTextHorizontal({ abstractAccountaddress, name, prepend, us
                 data-testid="town-preview-author-container"
             >
                 <Avatar userId={userId} size="avatar_sm" />
-                {name && (
+                {(customDisplayName || name) && (
                     <Text strong size="md">
-                        {name}
+                        {customDisplayName || name}
                     </Text>
                 )}
-                {abstractAccountaddress && (
+                {abstractAccountaddress && !customDisplayName && (
                     <Text size="md" color="default" fontWeight="medium">
                         {shortAddress(abstractAccountaddress)}
                     </Text>
