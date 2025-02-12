@@ -10,7 +10,7 @@ export const TradingDepositPanel = () => {
     return (
         <Panel padding label="Deposit">
             {solanaWalletAddress && (
-                <WalletRow walletAddress={solanaWalletAddress} name="Solana" iconName="baseEth" />
+                <WalletRow walletAddress={solanaWalletAddress} name="Solana" iconName="solana" />
             )}
             {evmWalletAddress && (
                 <WalletRow walletAddress={evmWalletAddress} name="Base ETH" iconName="baseEth" />
