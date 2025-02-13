@@ -3,7 +3,7 @@ import { PATHS, PATHS_REGEX } from 'routes'
 import { isTownsAppUrl } from './isTownsAppUrl'
 
 const townsIdRegex = new RegExp(
-    `${PATHS.SPACES}/${PATHS_REGEX.SPACE_ID}(?:/|/${PATHS.CHANNELS}/${PATHS_REGEX.CHANNEL_ID})(?:/|$)`,
+    `${PATHS.SPACES}/${PATHS_REGEX.SPACE_ID}(?:|/|/${PATHS.CHANNELS}/${PATHS_REGEX.CHANNEL_ID})(?:/|$)`,
 )
 
 export const getTownParamsFromUrl = (url: string | undefined) => {
