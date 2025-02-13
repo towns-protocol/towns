@@ -6,12 +6,11 @@ import (
 	"fmt"
 	"slices"
 	"strings"
-	"sync"
 	"time"
 
 	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/ethereum/go-ethereum/common"
-
+	"github.com/linkdata/deadlock"
 	"github.com/towns-protocol/towns/core/contracts/river"
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/crypto"
@@ -65,7 +64,7 @@ type Stream struct {
 	// I.e. if there no calls to AddEvent, readers share the same view object
 	// out of lock, which is immutable, so if there is a need to modify, lock is taken, copy
 	// of view is created, and copy is modified and stored.
-	mu sync.RWMutex
+	mu deadlock.RWMutex
 
 	lastAppliedBlockNum crypto.BlockNumber
 

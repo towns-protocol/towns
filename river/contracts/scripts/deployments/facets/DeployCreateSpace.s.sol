@@ -28,6 +28,7 @@ contract DeployCreateSpace is FacetHelper, Deployer {
         )
       )
     );
+    addSelector(CreateSpaceFacet.createSpaceV2.selector);
   }
 
   function initializer() public pure override returns (bytes4) {

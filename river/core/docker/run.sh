@@ -1,23 +1,25 @@
 #!/bin/bash
 set -euo pipefail
 
-if [ -z "$RUN_MODE" ]; then
-    echo "RUN_MODE is not set. Defaulting to full node"
-    RUN_MODE="full"
+RUN_MODE="${RUN_MODE:-full}"
+RACE="${RACE:-false}"
+
+RIVER_NODE_BINARY="/usr/bin/river_node"
+cd /riveruser/river_node
+
+if [ "$RACE" == "true" ]; then
+    RIVER_NODE_BINARY="/usr/bin/river_node_race"
 fi
 
 if [ "$RUN_MODE" == "full" ]; then
     echo "Running full node"
-    cd /riveruser/river_node
-    exec /usr/bin/river_node run
+    exec $RIVER_NODE_BINARY run
 elif [ "$RUN_MODE" == "archive" ]; then
     echo "Running archive node"
-    cd /riveruser/river_node
-    exec /usr/bin/river_node archive
+    exec $RIVER_NODE_BINARY archive
 elif [ "$RUN_MODE" == "notifications" ]; then
     echo "Running notification service"
-    cd /riveruser/river_node
-    exec /usr/bin/river_node notifications
+    exec $RIVER_NODE_BINARY notifications
 else
     echo "Unknown RUN_MODE: $RUN_MODE"
     exit 1

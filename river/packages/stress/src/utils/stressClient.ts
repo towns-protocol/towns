@@ -32,6 +32,7 @@ export async function makeStressClient(
         userId: bot.userId,
         storageKey,
     })
+    logger.info('makeStressClient')
     let device: ExportedDevice | undefined
     const rawDevice = await globalPersistedStore?.get(storageKey).catch(() => undefined)
 
@@ -86,7 +87,7 @@ export async function makeStressClient(
         throw new Error('streamsClient not initialized')
     }
 
-    return new StressClient(
+    const client = new StressClient(
         config,
         clientIndex,
         bot.userId,
@@ -98,6 +99,8 @@ export async function makeStressClient(
         globalPersistedStore,
         storageKey,
     )
+    logger.info('makeStressClient: client created')
+    return client
 }
 
 export class StressClient {

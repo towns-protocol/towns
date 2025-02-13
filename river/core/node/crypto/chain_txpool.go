@@ -6,7 +6,6 @@ import (
 	"errors"
 	"math/big"
 	"strings"
-	"sync"
 	"sync/atomic"
 	"time"
 
@@ -15,17 +14,17 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/linkdata/deadlock"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/puzpuzpuz/xsync/v3"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
-	"go.uber.org/zap"
-
 	"github.com/towns-protocol/towns/core/config"
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+	"go.uber.org/zap"
 )
 
 type (
@@ -84,7 +83,7 @@ type (
 		baseFee                      atomic.Pointer[big.Int]
 
 		// mu guards lastNonce that is used to determine the tx nonce
-		mu        sync.Mutex
+		mu        deadlock.Mutex
 		lastNonce *uint64
 	}
 
@@ -133,7 +132,7 @@ type (
 		transactionGasCap                 *prometheus.GaugeVec
 		transactionGasTip                 *prometheus.GaugeVec
 
-		onCheckPendingTransactionsMutex sync.Mutex
+		onCheckPendingTransactionsMutex deadlock.Mutex
 	}
 )
 
@@ -817,7 +816,7 @@ func (r *transactionPool) submitLocked(
 
 func (r *transactionPool) onHead(ctx context.Context, head *types.Header) {
 	r.baseFee.Store(new(big.Int).Set(head.BaseFee))
-	
+
 	if time.Since(r.walletBalanceLastTimeChecked) < time.Minute {
 		return
 	}

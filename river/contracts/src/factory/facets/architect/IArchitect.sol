@@ -36,12 +36,31 @@ interface IArchitectBase {
     Prepay prepay;
   }
 
-  // Latest
+  struct SpaceInfo {
+    string name;
+    string uri;
+    string shortDescription;
+    string longDescription;
+    Membership membership;
+    ChannelInfo channel;
+  }
+
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                           CreateSpace                      */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
   struct MembershipRequirements {
     bool everyone;
     address[] users;
     bytes ruleData;
     bool syncEntitlements;
+  }
+
+  struct Metadata {
+    string name;
+    string uri;
+    string shortDescription;
+    string longDescription;
   }
 
   struct Membership {
@@ -54,22 +73,6 @@ interface IArchitectBase {
     string metadata;
   }
 
-  struct SpaceInfo {
-    string name;
-    string uri;
-    string shortDescription;
-    string longDescription;
-    Membership membership;
-    ChannelInfo channel;
-  }
-
-  struct Metadata {
-    string name;
-    string uri;
-    string shortDescription;
-    string longDescription;
-  }
-
   struct Prepay {
     uint256 supply;
   }
@@ -80,19 +83,26 @@ interface IArchitectBase {
     ChannelInfo channel;
     Prepay prepay;
   }
+  /**
+   * @notice Options for creating a space
+   * @param to Address that will receive the space NFT (defaults to msg.sender if not specified)
+   */
+  struct SpaceOptions {
+    address to;
+  }
 
-  // =============================================================
-  //                           EVENTS
-  // =============================================================
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                           Events                               */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
   event SpaceCreated(
     address indexed owner,
     uint256 indexed tokenId,
     address indexed space
   );
 
-  // =============================================================
-  //                           ERRORS
-  // =============================================================
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                           Errors                               */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
   error Architect__InvalidStringLength();
   error Architect__InvalidNetworkId();
@@ -103,18 +113,18 @@ interface IArchitectBase {
 }
 
 interface IArchitect is IArchitectBase {
-  // =============================================================
-  //                            Registry
-  // =============================================================
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                           Registry                               */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
   function getSpaceByTokenId(
     uint256 tokenId
   ) external view returns (address space);
 
   function getTokenIdBySpace(address space) external view returns (uint256);
 
-  // =============================================================
-  //                         Implementations
-  // =============================================================
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                           Implementations                               */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
   function setSpaceArchitectImplementations(
     ISpaceOwner ownerTokenImplementation,
@@ -133,9 +143,9 @@ interface IArchitect is IArchitectBase {
       IRuleEntitlement legacyRuleEntitlement
     );
 
-  // =============================================================
-  //                    Proxy Initializer
-  // =============================================================
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                           Proxy Initializer                               */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
   /// @notice Retrieves the current proxy initializer
   /// @return The address of the current ISpaceProxyInitializer contract
   function getProxyInitializer() external view returns (ISpaceProxyInitializer);

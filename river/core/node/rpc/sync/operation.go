@@ -95,8 +95,10 @@ func (syncOp *StreamSyncOperation) Run(
 ) error {
 	log := logging.FromCtx(syncOp.ctx).With("syncId", syncOp.SyncID)
 
+	messagesSendToClient := 0
+
 	log.Info("Stream sync operation start")
-	defer log.Info("Stream sync operation stopped")
+	defer log.Infow("Stream sync operation stopped", "send", messagesSendToClient)
 
 	cookies, err := client.ValidateAndGroupSyncCookies(req.Msg.GetSyncPos())
 	if err != nil {
@@ -130,6 +132,8 @@ func (syncOp *StreamSyncOperation) Run(
 				log.Errorw("Unable to send sync stream update to client", "err", err)
 				return err
 			}
+
+			messagesSendToClient++
 
 			log.Debug("Pending messages in sync operation", "count", len(messages))
 

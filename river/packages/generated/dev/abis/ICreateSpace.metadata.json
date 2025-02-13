@@ -215,6 +215,181 @@
       {
         "inputs": [
           {
+            "internalType": "struct IArchitectBase.CreateSpace",
+            "name": "createSpace",
+            "type": "tuple",
+            "components": [
+              {
+                "internalType": "struct IArchitectBase.Metadata",
+                "name": "metadata",
+                "type": "tuple",
+                "components": [
+                  {
+                    "internalType": "string",
+                    "name": "name",
+                    "type": "string"
+                  },
+                  {
+                    "internalType": "string",
+                    "name": "uri",
+                    "type": "string"
+                  },
+                  {
+                    "internalType": "string",
+                    "name": "shortDescription",
+                    "type": "string"
+                  },
+                  {
+                    "internalType": "string",
+                    "name": "longDescription",
+                    "type": "string"
+                  }
+                ]
+              },
+              {
+                "internalType": "struct IArchitectBase.Membership",
+                "name": "membership",
+                "type": "tuple",
+                "components": [
+                  {
+                    "internalType": "struct IMembershipBase.Membership",
+                    "name": "settings",
+                    "type": "tuple",
+                    "components": [
+                      {
+                        "internalType": "string",
+                        "name": "name",
+                        "type": "string"
+                      },
+                      {
+                        "internalType": "string",
+                        "name": "symbol",
+                        "type": "string"
+                      },
+                      {
+                        "internalType": "uint256",
+                        "name": "price",
+                        "type": "uint256"
+                      },
+                      {
+                        "internalType": "uint256",
+                        "name": "maxSupply",
+                        "type": "uint256"
+                      },
+                      {
+                        "internalType": "uint64",
+                        "name": "duration",
+                        "type": "uint64"
+                      },
+                      {
+                        "internalType": "address",
+                        "name": "currency",
+                        "type": "address"
+                      },
+                      {
+                        "internalType": "address",
+                        "name": "feeRecipient",
+                        "type": "address"
+                      },
+                      {
+                        "internalType": "uint256",
+                        "name": "freeAllocation",
+                        "type": "uint256"
+                      },
+                      {
+                        "internalType": "address",
+                        "name": "pricingModule",
+                        "type": "address"
+                      }
+                    ]
+                  },
+                  {
+                    "internalType": "struct IArchitectBase.MembershipRequirements",
+                    "name": "requirements",
+                    "type": "tuple",
+                    "components": [
+                      {
+                        "internalType": "bool",
+                        "name": "everyone",
+                        "type": "bool"
+                      },
+                      {
+                        "internalType": "address[]",
+                        "name": "users",
+                        "type": "address[]"
+                      },
+                      {
+                        "internalType": "bytes",
+                        "name": "ruleData",
+                        "type": "bytes"
+                      },
+                      {
+                        "internalType": "bool",
+                        "name": "syncEntitlements",
+                        "type": "bool"
+                      }
+                    ]
+                  },
+                  {
+                    "internalType": "string[]",
+                    "name": "permissions",
+                    "type": "string[]"
+                  }
+                ]
+              },
+              {
+                "internalType": "struct IArchitectBase.ChannelInfo",
+                "name": "channel",
+                "type": "tuple",
+                "components": [
+                  {
+                    "internalType": "string",
+                    "name": "metadata",
+                    "type": "string"
+                  }
+                ]
+              },
+              {
+                "internalType": "struct IArchitectBase.Prepay",
+                "name": "prepay",
+                "type": "tuple",
+                "components": [
+                  {
+                    "internalType": "uint256",
+                    "name": "supply",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "internalType": "struct IArchitectBase.SpaceOptions",
+            "name": "options",
+            "type": "tuple",
+            "components": [
+              {
+                "internalType": "address",
+                "name": "to",
+                "type": "address"
+              }
+            ]
+          }
+        ],
+        "stateMutability": "payable",
+        "type": "function",
+        "name": "createSpaceV2",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ]
+      },
+      {
+        "inputs": [
+          {
             "internalType": "struct IArchitectBase.CreateSpaceOld",
             "name": "spaceInfo",
             "type": "tuple",
@@ -539,12 +714,38 @@
       "methods": {
         "createSpace((string,string,string,string,((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes,bool),string[]),(string)))": {
           "params": {
-            "SpaceInfo": "Space information"
+            "SpaceInfo": "Struct containing space metadata, membership settings, and channel configuration"
+          },
+          "returns": {
+            "_0": "address The address of the newly created space contract"
+          }
+        },
+        "createSpaceV2(((string,string,string,string),((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes,bool),string[]),(string),(uint256)),(address))": {
+          "details": "The msg.value must cover the cost of prepaid memberships",
+          "params": {
+            "createSpace": "Struct containing space metadata, membership settings, channel config and prepay info",
+            "options": "Struct containing deployment options like the recipient address"
+          },
+          "returns": {
+            "_0": "address The address of the newly created space contract"
+          }
+        },
+        "createSpaceWithPrepay(((string,string,string,string),((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes),string[]),(string),(uint256)))": {
+          "details": "This function converts the old format to the new format internallyThe msg.value must cover the cost of prepaid memberships",
+          "params": {
+            "spaceInfo": "Struct containing old format space configuration"
+          },
+          "returns": {
+            "_0": "address The address of the newly created space contract"
           }
         },
         "createSpaceWithPrepay(((string,string,string,string),((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes,bool),string[]),(string),(uint256)))": {
+          "details": "The msg.value must cover the cost of prepaid memberships",
           "params": {
-            "createSpace": "Space information"
+            "createSpace": "Struct containing space metadata, membership settings, channel config and prepay info"
+          },
+          "returns": {
+            "_0": "address The address of the newly created space contract"
           }
         }
       },
@@ -554,10 +755,16 @@
       "kind": "user",
       "methods": {
         "createSpace((string,string,string,string,((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes,bool),string[]),(string)))": {
-          "notice": "Creates a new space"
+          "notice": "Creates a new space with basic configuration"
+        },
+        "createSpaceV2(((string,string,string,string),((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes,bool),string[]),(string),(uint256)),(address))": {
+          "notice": "Creates a new space with prepaid memberships and custom deployment options"
+        },
+        "createSpaceWithPrepay(((string,string,string,string),((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes),string[]),(string),(uint256)))": {
+          "notice": "Legacy function for backwards compatibility with older space creation format"
         },
         "createSpaceWithPrepay(((string,string,string,string),((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes,bool),string[]),(string),(uint256)))": {
-          "notice": "Creates a new space with a prepayment"
+          "notice": "Creates a new space with prepaid memberships"
         }
       },
       "version": 1
@@ -591,18 +798,18 @@
   },
   "sources": {
     "contracts/src/factory/facets/architect/IArchitect.sol": {
-      "keccak256": "0x5d790cabaad08df5dda57b8055dbf21ed103bd10ad0e4d684a0e690f9c240a24",
+      "keccak256": "0x2bf49e13516faf10c9d284c68562259a3bf6a1fe34f53669194b7968ff0234d3",
       "urls": [
-        "bzz-raw://8ff954eb61db93e8b7b58d542f73d75b2e9ee856896a07d436bbc8101b4e9aea",
-        "dweb:/ipfs/QmdgzSC3JooGsWA6BTgyXQU7YA6byFFLuVkyZqs7mEgRCm"
+        "bzz-raw://57d74147ba45d4094bf7e47662dc68c6ffc9c1ee4287014fe52c2f17222afffd",
+        "dweb:/ipfs/Qmdnzmz59QLB1x7btPyywt3o37Mbaie4wQt8UEpyAyH7rn"
       ],
       "license": "MIT"
     },
     "contracts/src/factory/facets/create/ICreateSpace.sol": {
-      "keccak256": "0x617bc117035dc3dfea6d486bc48b650bb7b55bd35060f9e3418e5d03bcde5a2a",
+      "keccak256": "0x9f3e608a3248aaedc4741a01fec9be6df91a456ef1f8eb025f3173dad779fd47",
       "urls": [
-        "bzz-raw://9d91412c79ca6a14222a84480bd108f44373dfe41442de0e7e8087d9eca318ac",
-        "dweb:/ipfs/QmeFKAWu3mWnsPuFrSZ3RM5V4riJ9fnq6Ehx9C1cYpkF2Z"
+        "bzz-raw://0bf050c778daf71a09faa64114c8e64497172a5ef26d38c50903e6d2c73c2383",
+        "dweb:/ipfs/QmTEWTNaax1xizBv1Druejo8vJCpqHFr4mjEnGcCJQXWEP"
       ],
       "license": "MIT"
     },

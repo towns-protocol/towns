@@ -236,7 +236,7 @@ export class RiverConnection extends PersistedObservable<RiverConnectionModel> {
                 } catch (err) {
                     retryCount++
                     this.loginError = err as Error
-                    logger.log('encountered exception while initializing', err)
+                    logger.error('encountered exception while initializing', err)
 
                     for (const fn of this.onStoppedFns) {
                         fn()
@@ -254,7 +254,7 @@ export class RiverConnection extends PersistedObservable<RiverConnectionModel> {
                         throw err
                     } else {
                         const retryDelay = getRetryDelay(retryCount)
-                        logger.log('retrying', { retryDelay, retryCount })
+                        logger.info('retrying', { retryDelay, retryCount })
                         // sleep
                         await new Promise((resolve) => setTimeout(resolve, retryDelay))
                     }

@@ -143,6 +143,33 @@ export declare namespace IArchitectBase {
     longDescription: string;
   };
 
+  export type PrepayStruct = { supply: PromiseOrValue<BigNumberish> };
+
+  export type PrepayStructOutput = [BigNumber] & { supply: BigNumber };
+
+  export type CreateSpaceStruct = {
+    metadata: IArchitectBase.MetadataStruct;
+    membership: IArchitectBase.MembershipStruct;
+    channel: IArchitectBase.ChannelInfoStruct;
+    prepay: IArchitectBase.PrepayStruct;
+  };
+
+  export type CreateSpaceStructOutput = [
+    IArchitectBase.MetadataStructOutput,
+    IArchitectBase.MembershipStructOutput,
+    IArchitectBase.ChannelInfoStructOutput,
+    IArchitectBase.PrepayStructOutput
+  ] & {
+    metadata: IArchitectBase.MetadataStructOutput;
+    membership: IArchitectBase.MembershipStructOutput;
+    channel: IArchitectBase.ChannelInfoStructOutput;
+    prepay: IArchitectBase.PrepayStructOutput;
+  };
+
+  export type SpaceOptionsStruct = { to: PromiseOrValue<string> };
+
+  export type SpaceOptionsStructOutput = [string] & { to: string };
+
   export type MembershipRequirementsOldStruct = {
     everyone: PromiseOrValue<boolean>;
     users: PromiseOrValue<string>[];
@@ -171,10 +198,6 @@ export declare namespace IArchitectBase {
     permissions: string[];
   };
 
-  export type PrepayStruct = { supply: PromiseOrValue<BigNumberish> };
-
-  export type PrepayStructOutput = [BigNumber] & { supply: BigNumber };
-
   export type CreateSpaceOldStruct = {
     metadata: IArchitectBase.MetadataStruct;
     membership: IArchitectBase.MembershipOldStruct;
@@ -193,30 +216,12 @@ export declare namespace IArchitectBase {
     channel: IArchitectBase.ChannelInfoStructOutput;
     prepay: IArchitectBase.PrepayStructOutput;
   };
-
-  export type CreateSpaceStruct = {
-    metadata: IArchitectBase.MetadataStruct;
-    membership: IArchitectBase.MembershipStruct;
-    channel: IArchitectBase.ChannelInfoStruct;
-    prepay: IArchitectBase.PrepayStruct;
-  };
-
-  export type CreateSpaceStructOutput = [
-    IArchitectBase.MetadataStructOutput,
-    IArchitectBase.MembershipStructOutput,
-    IArchitectBase.ChannelInfoStructOutput,
-    IArchitectBase.PrepayStructOutput
-  ] & {
-    metadata: IArchitectBase.MetadataStructOutput;
-    membership: IArchitectBase.MembershipStructOutput;
-    channel: IArchitectBase.ChannelInfoStructOutput;
-    prepay: IArchitectBase.PrepayStructOutput;
-  };
 }
 
 export interface ICreateSpaceInterface extends utils.Interface {
   functions: {
     "createSpace((string,string,string,string,((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes,bool),string[]),(string)))": FunctionFragment;
+    "createSpaceV2(((string,string,string,string),((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes,bool),string[]),(string),(uint256)),(address))": FunctionFragment;
     "createSpaceWithPrepay(((string,string,string,string),((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes),string[]),(string),(uint256)))": FunctionFragment;
     "createSpaceWithPrepay(((string,string,string,string),((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes,bool),string[]),(string),(uint256)))": FunctionFragment;
   };
@@ -224,6 +229,7 @@ export interface ICreateSpaceInterface extends utils.Interface {
   getFunction(
     nameOrSignatureOrTopic:
       | "createSpace"
+      | "createSpaceV2"
       | "createSpaceWithPrepay(((string,string,string,string),((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes),string[]),(string),(uint256)))"
       | "createSpaceWithPrepay(((string,string,string,string),((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes,bool),string[]),(string),(uint256)))"
   ): FunctionFragment;
@@ -231,6 +237,13 @@ export interface ICreateSpaceInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "createSpace",
     values: [IArchitectBase.SpaceInfoStruct]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "createSpaceV2",
+    values: [
+      IArchitectBase.CreateSpaceStruct,
+      IArchitectBase.SpaceOptionsStruct
+    ]
   ): string;
   encodeFunctionData(
     functionFragment: "createSpaceWithPrepay(((string,string,string,string),((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes),string[]),(string),(uint256)))",
@@ -243,6 +256,10 @@ export interface ICreateSpaceInterface extends utils.Interface {
 
   decodeFunctionResult(
     functionFragment: "createSpace",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "createSpaceV2",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -320,6 +337,12 @@ export interface ICreateSpace extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    createSpaceV2(
+      createSpace: IArchitectBase.CreateSpaceStruct,
+      options: IArchitectBase.SpaceOptionsStruct,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     "createSpaceWithPrepay(((string,string,string,string),((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes),string[]),(string),(uint256)))"(
       spaceInfo: IArchitectBase.CreateSpaceOldStruct,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
@@ -336,6 +359,12 @@ export interface ICreateSpace extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  createSpaceV2(
+    createSpace: IArchitectBase.CreateSpaceStruct,
+    options: IArchitectBase.SpaceOptionsStruct,
+    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
   "createSpaceWithPrepay(((string,string,string,string),((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes),string[]),(string),(uint256)))"(
     spaceInfo: IArchitectBase.CreateSpaceOldStruct,
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
@@ -349,6 +378,12 @@ export interface ICreateSpace extends BaseContract {
   callStatic: {
     createSpace(
       SpaceInfo: IArchitectBase.SpaceInfoStruct,
+      overrides?: CallOverrides
+    ): Promise<string>;
+
+    createSpaceV2(
+      createSpace: IArchitectBase.CreateSpaceStruct,
+      options: IArchitectBase.SpaceOptionsStruct,
       overrides?: CallOverrides
     ): Promise<string>;
 
@@ -389,6 +424,12 @@ export interface ICreateSpace extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    createSpaceV2(
+      createSpace: IArchitectBase.CreateSpaceStruct,
+      options: IArchitectBase.SpaceOptionsStruct,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     "createSpaceWithPrepay(((string,string,string,string),((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes),string[]),(string),(uint256)))"(
       spaceInfo: IArchitectBase.CreateSpaceOldStruct,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
@@ -404,6 +445,12 @@ export interface ICreateSpace extends BaseContract {
     createSpace(
       SpaceInfo: IArchitectBase.SpaceInfoStruct,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    createSpaceV2(
+      createSpace: IArchitectBase.CreateSpaceStruct,
+      options: IArchitectBase.SpaceOptionsStruct,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
     "createSpaceWithPrepay(((string,string,string,string),((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes),string[]),(string),(uint256)))"(

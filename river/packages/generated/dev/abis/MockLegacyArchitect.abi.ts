@@ -330,11 +330,6 @@ export default [
   },
   {
     "type": "error",
-    "name": "Factory__FailedDeployment",
-    "inputs": []
-  },
-  {
-    "type": "error",
     "name": "Initializable_InInitializingState",
     "inputs": []
   },

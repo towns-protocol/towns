@@ -18,7 +18,7 @@ import {DeployBaseRegistry} from "contracts/scripts/deployments/diamonds/DeployB
 import {DeploySpaceOwner} from "contracts/scripts/deployments/diamonds/DeploySpaceOwner.s.sol";
 import {DeployRiverAirdrop} from "contracts/scripts/deployments/diamonds/DeployRiverAirdrop.s.sol";
 
-contract InteractAlpha is AlphaHelper {
+contract InteractBaseAlpha is AlphaHelper {
   DeploySpace deploySpace = new DeploySpace();
   DeploySpaceFactory deploySpaceFactory = new DeploySpaceFactory();
   DeployBaseRegistry deployBaseRegistry = new DeployBaseRegistry();
@@ -39,6 +39,7 @@ contract InteractAlpha is AlphaHelper {
     removeRemoteFacets(deployer, spaceFactory);
     removeRemoteFacets(deployer, baseRegistry);
     removeRemoteFacets(deployer, riverAirdrop);
+
     // Deploy Space
     deploySpace.diamondInitParams(deployer);
     newCuts = deploySpace.getCuts();

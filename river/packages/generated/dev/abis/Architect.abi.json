@@ -233,177 +233,6 @@
   },
   {
     "type": "event",
-    "name": "PermissionsAddedToChannelRole",
-    "inputs": [
-      {
-        "name": "updater",
-        "type": "address",
-        "indexed": true,
-        "internalType": "address"
-      },
-      {
-        "name": "roleId",
-        "type": "uint256",
-        "indexed": true,
-        "internalType": "uint256"
-      },
-      {
-        "name": "channelId",
-        "type": "bytes32",
-        "indexed": true,
-        "internalType": "bytes32"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
-    "name": "PermissionsRemovedFromChannelRole",
-    "inputs": [
-      {
-        "name": "updater",
-        "type": "address",
-        "indexed": true,
-        "internalType": "address"
-      },
-      {
-        "name": "roleId",
-        "type": "uint256",
-        "indexed": true,
-        "internalType": "uint256"
-      },
-      {
-        "name": "channelId",
-        "type": "bytes32",
-        "indexed": true,
-        "internalType": "bytes32"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
-    "name": "PermissionsUpdatedForChannelRole",
-    "inputs": [
-      {
-        "name": "updater",
-        "type": "address",
-        "indexed": true,
-        "internalType": "address"
-      },
-      {
-        "name": "roleId",
-        "type": "uint256",
-        "indexed": true,
-        "internalType": "uint256"
-      },
-      {
-        "name": "channelId",
-        "type": "bytes32",
-        "indexed": true,
-        "internalType": "bytes32"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
-    "name": "PricingModuleAdded",
-    "inputs": [
-      {
-        "name": "module",
-        "type": "address",
-        "indexed": true,
-        "internalType": "address"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
-    "name": "PricingModuleRemoved",
-    "inputs": [
-      {
-        "name": "module",
-        "type": "address",
-        "indexed": true,
-        "internalType": "address"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
-    "name": "PricingModuleUpdated",
-    "inputs": [
-      {
-        "name": "module",
-        "type": "address",
-        "indexed": true,
-        "internalType": "address"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
-    "name": "RoleCreated",
-    "inputs": [
-      {
-        "name": "creator",
-        "type": "address",
-        "indexed": true,
-        "internalType": "address"
-      },
-      {
-        "name": "roleId",
-        "type": "uint256",
-        "indexed": true,
-        "internalType": "uint256"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
-    "name": "RoleRemoved",
-    "inputs": [
-      {
-        "name": "remover",
-        "type": "address",
-        "indexed": true,
-        "internalType": "address"
-      },
-      {
-        "name": "roleId",
-        "type": "uint256",
-        "indexed": true,
-        "internalType": "uint256"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
-    "name": "RoleUpdated",
-    "inputs": [
-      {
-        "name": "updater",
-        "type": "address",
-        "indexed": true,
-        "internalType": "address"
-      },
-      {
-        "name": "roleId",
-        "type": "uint256",
-        "indexed": true,
-        "internalType": "uint256"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
     "name": "SpaceCreated",
     "inputs": [
       {
@@ -467,11 +296,6 @@
   },
   {
     "type": "error",
-    "name": "Factory__FailedDeployment",
-    "inputs": []
-  },
-  {
-    "type": "error",
     "name": "Initializable_InInitializingState",
     "inputs": []
   },
@@ -489,17 +313,6 @@
     "type": "error",
     "name": "Introspection_NotSupported",
     "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "InvalidPricingModule",
-    "inputs": [
-      {
-        "name": "module",
-        "type": "address",
-        "internalType": "address"
-      }
-    ]
   },
   {
     "type": "error",
@@ -530,41 +343,6 @@
   {
     "type": "error",
     "name": "Reentrancy",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "Roles__EntitlementAlreadyExists",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "Roles__EntitlementDoesNotExist",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "Roles__InvalidEntitlementAddress",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "Roles__InvalidPermission",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "Roles__PermissionAlreadyExists",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "Roles__PermissionDoesNotExist",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "Roles__RoleDoesNotExist",
     "inputs": []
   }
 ]

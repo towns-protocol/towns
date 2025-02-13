@@ -28,12 +28,46 @@ contract InteractAlphaSparse is AlphaHelper {
   mapping(string => address) private diamondDeployments;
 
   constructor() {
-    diamondDeployments["space"] = address(new DeploySpace());
-    diamondDeployments["spaceFactory"] = address(new DeploySpaceFactory());
-    diamondDeployments["baseRegistry"] = address(new DeployBaseRegistry());
-    diamondDeployments["spaceOwner"] = address(new DeploySpaceOwner());
-    // todo: implement river airdrop here
-    //diamondDeployments["riverAirdrop"] = address(new DeployRiverAirdrop());
+    // pause to avoid out of gas errors when deploying diamond helpers
+    vm.pauseGasMetering();
+
+    try new DeploySpaceOwner() returns (DeploySpaceOwner spaceOwner) {
+      diamondDeployments["spaceOwner"] = address(spaceOwner);
+      console.log("spaceOwner deployed to:", address(spaceOwner));
+    } catch Error(string memory reason) {
+      console.log("Failed to deploy SpaceOwner:", reason);
+    } catch (bytes memory) {
+      console.log("Failed to deploy SpaceOwner (low level error)");
+    }
+
+    try new DeploySpace() returns (DeploySpace space) {
+      diamondDeployments["space"] = address(space);
+      console.log("space deployed to:", address(space));
+    } catch Error(string memory reason) {
+      console.log("Failed to deploy Space:", reason);
+    } catch (bytes memory) {
+      console.log("Failed to deploy Space (low level error)");
+    }
+
+    try new DeploySpaceFactory() returns (DeploySpaceFactory spaceFactory) {
+      diamondDeployments["spaceFactory"] = address(spaceFactory);
+      console.log("spaceFactory deployed to:", address(spaceFactory));
+    } catch Error(string memory reason) {
+      console.log("Failed to deploy SpaceFactory:", reason);
+    } catch (bytes memory) {
+      console.log("Failed to deploy SpaceFactory (low level error)");
+    }
+
+    try new DeployBaseRegistry() returns (DeployBaseRegistry baseRegistry) {
+      diamondDeployments["baseRegistry"] = address(baseRegistry);
+      console.log("baseRegistry deployed to:", address(baseRegistry));
+    } catch Error(string memory reason) {
+      console.log("Failed to deploy BaseRegistry:", reason);
+    } catch (bytes memory) {
+      console.log("Failed to deploy BaseRegistry (low level error)");
+    }
+
+    vm.resumeGasMetering();
   }
 
   string constant DEFAULT_JSON_FILE = "compiled_source_diff.json";
@@ -110,7 +144,6 @@ contract InteractAlphaSparse is AlphaHelper {
     }
 
     readJSON(jsonPath);
-
     DiamondFacetData[] memory diamonds = decodeDiamondsFromJSON();
     console.log("interact::diamonds decoded", diamonds.length);
 

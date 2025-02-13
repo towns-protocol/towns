@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/linkdata/deadlock"
 	"github.com/towns-protocol/towns/core/contracts/river"
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/crypto"
@@ -114,7 +115,7 @@ type miniblockProducer struct {
 
 	candidates candidateTracker
 
-	onNewBlockMutex sync.Mutex
+	onNewBlockMutex deadlock.Mutex
 }
 
 var _ MiniblockProducer = (*miniblockProducer)(nil)
@@ -124,7 +125,7 @@ var _ TestMiniblockProducer = (*miniblockProducer)(nil)
 // Logically this is just a part of the miniblockProducer, but encapsulating logic here makes
 // the code more readable.
 type candidateTracker struct {
-	mu         sync.Mutex
+	mu         deadlock.Mutex
 	candidates []*mbJob
 	timer      *time.Timer
 }
