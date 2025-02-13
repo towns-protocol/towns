@@ -1,8 +1,10 @@
-import React, { createContext, useCallback, useContext, useMemo } from 'react'
+import React, { createContext, useCallback, useContext, useEffect, useMemo } from 'react'
 import { Connection as SolanaConnection, VersionedTransaction } from '@solana/web3.js'
 import { base64ToUint8Array } from '@river-build/sdk'
-import { TransactionStatus } from 'use-towns-client'
+import { TransactionStatus, queryClient } from 'use-towns-client'
 import { env } from 'utils'
+import { StandardToast, dismissToast } from '@components/Notifications/StandardToast'
+import { popupToast } from '@components/Notifications/popupToast'
 import { useSolanaWallet } from './useSolanaWallet'
 
 export type SolanaTransactionRequest = {
@@ -95,9 +97,28 @@ export const TradingContextProvider = ({ children }: { children: React.ReactNode
                         if (txResult.meta?.err) {
                             console.error('Solana Transaction failed:', txResult.meta?.err)
                             transaction.status = TransactionStatus.Failed
+                            popupToast(({ toast }) => (
+                                <StandardToast.Error
+                                    message="Transaction failed"
+                                    subMessage={txResult.meta?.err?.toString()}
+                                    toast={toast}
+                                />
+                            ))
                         } else if (txResult.blockTime) {
                             console.log('Solana Transaction confirmed:', txResult)
                             transaction.status = TransactionStatus.Success
+                            popupToast(
+                                ({ toast }) => (
+                                    <StandardToast.Success
+                                        message="Transaction confirmed"
+                                        toast={toast}
+                                    />
+                                ),
+                                { duration: Infinity },
+                            )
+                            queryClient.invalidateQueries({
+                                predicate: (query) => query.queryKey[0] === 'walletContents',
+                            })
                         }
                     }
 
@@ -121,7 +142,32 @@ export const TradingContextProvider = ({ children }: { children: React.ReactNode
         [solanaWallet, connection, setPendingSolanaTransaction, pendingSolanaTransaction],
     )
 
-    console.log('Pending Solana Transaction: ', pendingSolanaTransaction)
+    const pendingTransactionData = pendingSolanaTransaction?.transactionData
+
+    useEffect(() => {
+        if (
+            !pendingTransactionData ||
+            pendingSolanaTransaction?.status === TransactionStatus.Success
+        ) {
+            return
+        }
+        const toastId = popupToast(
+            ({ toast }) => (
+                <StandardToast.Pending
+                    message="Pending transaction"
+                    subMessage="Please wait for the transaction to complete"
+                    toast={toast}
+                />
+            ),
+            { duration: Infinity },
+        )
+        return () => {
+            if (toastId) {
+                dismissToast(toastId)
+            }
+        }
+    }, [pendingTransactionData, pendingSolanaTransaction])
+
     return (
         <TradingContext.Provider
             value={{ pendingSolanaTransaction, failedSolanaTransactions, sendSolanaTransaction }}

@@ -294,27 +294,32 @@ export const TradingPanel = () => {
                     ) : (
                         <></>
                     )}
-                    <WalletReady>
-                        {({ getSigner }) => (
-                            <FancyButton
-                                borderRadius="full"
-                                disabled={!quote.data}
-                                background={quote.data ? 'cta1' : 'level2'}
-                                onClick={() => buyButtonPressed(getSigner)}
-                            >
-                                {mode === 'buy' ? 'Buy' : 'Sell'}
-                            </FancyButton>
-                        )}
-                    </WalletReady>
 
-                    <FancyButton
-                        borderRadius="full"
-                        disabled={!quote.data}
-                        background={quote.data ? 'cta1' : 'level2'}
-                        onClick={solanaBuyButtonPressed}
-                    >
-                        {mode === 'buy' ? 'Buy (SOL)' : 'Sell (SOL)'}
-                    </FancyButton>
+                    {isSolana ? (
+                        <FancyButton
+                            borderRadius="full"
+                            disabled={!quote.data}
+                            background={quote.data ? 'cta1' : 'level2'}
+                            onClick={solanaBuyButtonPressed}
+                        >
+                            {mode === 'buy'
+                                ? `Buy ${coinData?.token.symbol}`
+                                : `Sell ${coinData?.token.symbol}`}
+                        </FancyButton>
+                    ) : (
+                        <WalletReady>
+                            {({ getSigner }) => (
+                                <FancyButton
+                                    borderRadius="full"
+                                    disabled={!quote.data}
+                                    background={quote.data ? 'cta1' : 'level2'}
+                                    onClick={() => buyButtonPressed(getSigner)}
+                                >
+                                    {mode === 'buy' ? 'Buy' : 'Sell'}
+                                </FancyButton>
+                            )}
+                        </WalletReady>
+                    )}
                 </Stack>
             </TabPanel>
         </Panel>
