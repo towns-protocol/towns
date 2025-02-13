@@ -89,8 +89,8 @@ export const TradingPanel = () => {
             return [
                 { label: '25%', value: 25n },
                 { label: '50%', value: 50n },
+                { label: '75%', value: 75n },
                 { label: '100%', value: 100n },
-                { label: '200%', value: 200n },
             ].map((v) => ({
                 ...v,
                 icon: undefined,
@@ -203,7 +203,7 @@ export const TradingPanel = () => {
         return null
     }
 
-    if (!mode || !tokenAddress) {
+    if ((mode !== 'buy' && mode !== 'sell') || !tokenAddress) {
         return null
     }
 
@@ -296,32 +296,74 @@ export const TradingPanel = () => {
                     )}
 
                     {isSolana ? (
-                        <FancyButton
-                            borderRadius="full"
-                            disabled={!quote.data}
-                            background={quote.data ? 'cta1' : 'level2'}
-                            onClick={solanaBuyButtonPressed}
-                        >
-                            {mode === 'buy'
-                                ? `Buy ${coinData?.token.symbol}`
-                                : `Sell ${coinData?.token.symbol}`}
-                        </FancyButton>
+                        <SolanaBuyButton
+                            mode={mode}
+                            hasQuote={!!quote.data}
+                            symbol={coinData?.token.symbol ?? ''}
+                            onSendTransaction={solanaBuyButtonPressed}
+                        />
                     ) : (
-                        <WalletReady>
-                            {({ getSigner }) => (
-                                <FancyButton
-                                    borderRadius="full"
-                                    disabled={!quote.data}
-                                    background={quote.data ? 'cta1' : 'level2'}
-                                    onClick={() => buyButtonPressed(getSigner)}
-                                >
-                                    {mode === 'buy' ? 'Buy' : 'Sell'}
-                                </FancyButton>
-                            )}
-                        </WalletReady>
+                        <EvmBuyButton
+                            mode={mode}
+                            hasQuote={!!quote.data}
+                            onSendTransaction={buyButtonPressed}
+                        />
                     )}
                 </Stack>
             </TabPanel>
         </Panel>
+    )
+}
+
+const SolanaBuyButton = (props: {
+    mode: 'buy' | 'sell'
+    hasQuote: boolean
+    symbol: string
+    onSendTransaction: () => void
+}) => {
+    const { mode, hasQuote, symbol, onSendTransaction } = props
+    const context = useTradingContext()
+    const { pendingSolanaTransaction } = context
+    const isPending = !!pendingSolanaTransaction?.transactionData
+
+    return (
+        <FancyButton
+            borderRadius="full"
+            spinner={!!isPending}
+            disabled={!hasQuote || isPending}
+            background={hasQuote ? 'cta1' : 'level2'}
+            onClick={onSendTransaction}
+        >
+            {mode === 'buy' ? `Buy ${symbol}` : `Sell ${symbol}`}
+        </FancyButton>
+    )
+}
+
+const EvmBuyButton = (props: {
+    mode: 'buy' | 'sell'
+    hasQuote: boolean
+    onSendTransaction: (signer: () => Promise<TSigner | undefined>) => void
+}) => {
+    const { mode, hasQuote, onSendTransaction } = props
+    const context = useTradingContext()
+    const { pendingSolanaTransaction } = context
+    const isPending = !!pendingSolanaTransaction?.transactionData
+
+    return (
+        <WalletReady>
+            {({ getSigner }) => (
+                <FancyButton
+                    borderRadius="full"
+                    spinner={!!isPending}
+                    disabled={!hasQuote || isPending}
+                    background={hasQuote ? 'cta1' : 'level2'}
+                    onClick={() => {
+                        return onSendTransaction(getSigner)
+                    }}
+                >
+                    {mode === 'buy' ? 'Buy' : 'Sell'}
+                </FancyButton>
+            )}
+        </WalletReady>
     )
 }

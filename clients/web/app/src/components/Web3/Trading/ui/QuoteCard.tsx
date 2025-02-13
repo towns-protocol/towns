@@ -67,7 +67,7 @@ const ValueRow = (props: {
     const imageUrl = tokenData?.token.info.imageThumbUrl
     const name = tokenData?.token.name
     const symbol = tokenData?.token.symbol
-    const formatedValue = formatUnitsToFixedLength(BigInt(amount), chainConfig.decimals, 5)
+    const formatedValue = formatUnitsToFixedLength(BigInt(amount), tokenData?.token.decimals, 5)
     return (
         <Row
             left={
