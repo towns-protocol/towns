@@ -30,16 +30,26 @@ const zGetBarsResponse: z.ZodType<GetBarsResponse> = z.object({
     }),
 })
 
-export const useCoinBars = (props: { address: string; chain: string; timeframe: TimeFrame }) => {
+export const useCoinBars = ({
+    address,
+    chain,
+    timeframe,
+    disabled = false,
+}: {
+    address: string
+    chain: string
+    timeframe: TimeFrame
+    disabled?: boolean
+}) => {
     const { data, isLoading } = useQuery({
-        queryKey: ['searchTokens', props.address, props.chain, props.timeframe],
+        queryKey: ['searchTokens', address, chain, timeframe],
         queryFn: async () => {
             const apiKey = env.VITE_CODEX_API_KEY
             if (!apiKey) {
                 console.error('VITE_CODEX_API_KEY missing')
                 return { o: [], h: [], l: [], c: [], t: [] }
             }
-            const query = createQuery(props.address, props.chain, props.timeframe)
+            const query = createQuery(address, chain, timeframe)
             const url = 'https://graph.defined.fi/graphql'
             const resp = await fetch(url, {
                 method: 'POST',
@@ -51,6 +61,7 @@ export const useCoinBars = (props: { address: string; chain: string; timeframe: 
             return zGetBarsResponse.safeParse(json).data?.data.getBars
         },
         gcTime: MINUTE_MS,
+        enabled: !disabled,
     })
 
     return { data: data ?? { o: [], h: [], l: [], c: [], t: [] }, isLoading }

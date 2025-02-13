@@ -49,15 +49,23 @@ const zParsedTokenResponse = z.object({
     }),
 })
 
-export const useCoinData = (props: { address: string; chain: string }) => {
-    const networkId = props.chain === '1151111081099710' ? 1399811149 : Number(props.chain)
+export const useCoinData = ({
+    address,
+    chain,
+    disabled = false,
+}: {
+    address: string
+    chain: string
+    disabled?: boolean
+}) => {
+    const networkId = chain === '1151111081099710' ? 1399811149 : Number(chain)
     const query = `
      {
         filterTokens(
             filters: {
                 network: [${networkId}]
             }
-            tokens: ["${props.address}:${networkId}"]
+            tokens: ["${address}:${networkId}"]
             limit: 1
         ) {
             results {
@@ -101,6 +109,7 @@ export const useCoinData = (props: { address: string; chain: string }) => {
             return parsed.data?.data.filterTokens.results[0]
         },
         gcTime: MINUTE_MS,
+        enabled: !disabled,
     })
 
     return { data: data as GetCoinDataResponse | undefined, isLoading }

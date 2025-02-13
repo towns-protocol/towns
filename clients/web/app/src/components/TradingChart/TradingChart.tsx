@@ -9,6 +9,7 @@ import {
     createChart,
 } from 'lightweight-charts'
 import { zip } from 'lodash'
+import { useInView } from 'react-intersection-observer'
 import { themes } from 'ui/styles/themes'
 import { Box, Button, Dropdown, IconButton, Pill, Stack, Text } from '@ui'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
@@ -33,6 +34,10 @@ const CHART_TIME_FORMAT_OPTIONS: {
 }
 
 export const TradingChart = (props: { attachment: TickerAttachment }) => {
+    const { ref, inView } = useInView({
+        rootMargin: '10px 0px',
+    })
+
     const { attachment } = props
     const [timeframe, setTimeframe] = useState<TimeFrame>('1d')
     const [chartType, setChartType] = useState<'area' | 'candlestick'>('area')
@@ -44,12 +49,14 @@ export const TradingChart = (props: { attachment: TickerAttachment }) => {
     const { data: coinData } = useCoinData({
         address: attachment.address,
         chain: attachment.chainId,
+        disabled: !inView,
     })
 
     const { data: barData, isLoading: isLoadingData } = useCoinBars({
         address: attachment.address,
         chain: attachment.chainId,
         timeframe: timeframe,
+        disabled: !inView,
     })
 
     const [isFocused, setIsFocused] = useState(false)
@@ -68,7 +75,7 @@ export const TradingChart = (props: { attachment: TickerAttachment }) => {
     )
 
     return (
-        <Stack rounded="md" width="500" maxWidth="100%" background="level2">
+        <Stack rounded="md" width="500" maxWidth="100%" background="level2" ref={ref}>
             <Box height="250" width="100%" position="relative">
                 <Box
                     roundedTop="md"
