@@ -65,7 +65,9 @@ function remarkTransformUserAndChannels(
     return function (onPaste?: boolean) {
         const CHANNEL_TRIGGER = '#'
         // We allow channel names to have emoji characters, hence we use \p{Extended_Pictographic} instead of \w
-        const CHANNEL_NAME_REGEX = '[-\\da-z_<a?:.+?:\\d{18}>|\\p{Extended_Pictographic}]{0,50}'
+        const CHANNEL_NAME_REGEX =
+            '[-\\da-z_<a?:.+?:\\d{18}>\\p{Extended_Pictographic}\\uFE0F]{0,50}'
+
         const CHANNEL_ELEMENT_REGEX = new RegExp(
             `(?:^|\\s)${CHANNEL_TRIGGER}(${CHANNEL_NAME_REGEX})`,
             'gui',
