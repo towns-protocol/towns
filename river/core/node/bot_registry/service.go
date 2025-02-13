@@ -2,6 +2,7 @@ package bot_registry
 
 import (
 	"context"
+	"time"
 
 	"connectrpc.com/connect"
 
@@ -10,8 +11,15 @@ import (
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/node/authentication"
 	"github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/bot_registry/sync"
+	"github.com/towns-protocol/towns/core/node/crypto"
+	"github.com/towns-protocol/towns/core/node/infra"
+	"github.com/towns-protocol/towns/core/node/logging"
+	"github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/registries"
 	"github.com/towns-protocol/towns/core/node/storage"
+	"github.com/towns-protocol/towns/core/node/track_streams"
 )
 
 const (
@@ -21,18 +29,39 @@ const (
 type (
 	Service struct {
 		authentication.AuthServiceMixin
-		cfg   config.BotRegistryConfig
-		store storage.BotRegistryStore
+		cfg            config.BotRegistryConfig
+		store          storage.BotRegistryStore
+		streamsTracker track_streams.StreamsTracker
 	}
 )
 
 func NewService(
+	ctx context.Context,
 	cfg config.BotRegistryConfig,
+	onChainConfig crypto.OnChainConfiguration,
 	store storage.BotRegistryStore,
+	riverRegistry *registries.RiverRegistryContract,
+	nodes []nodes.NodeRegistry,
+	metrics infra.MetricsFactory,
+	listener track_streams.StreamEventListener,
 ) (*Service, error) {
+	tracker, err := sync.NewBotRegistryStreamsTracker(
+		ctx,
+		cfg,
+		onChainConfig,
+		riverRegistry,
+		nodes,
+		metrics,
+		listener,
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	s := &Service{
-		cfg:   cfg,
-		store: store,
+		cfg:            cfg,
+		store:          store,
+		streamsTracker: tracker,
 	}
 
 	if err := s.InitAuthentication(botServiceChallengePrefix, &cfg.Authentication); err != nil {
@@ -42,7 +71,24 @@ func NewService(
 }
 
 func (s *Service) Start(ctx context.Context) {
-	// TODO
+	log := logging.FromCtx(ctx)
+
+	go func() {
+		for {
+			log.Infow("Start bot registry streams tracker")
+
+			if err := s.streamsTracker.Run(ctx); err != nil {
+				log.Errorw("tracking streams failed", "err", err)
+			}
+
+			select {
+			case <-time.After(10 * time.Second):
+				continue
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
 }
 
 func (s *Service) RegisterWebhook(

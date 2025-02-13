@@ -37,7 +37,7 @@ const maxConcurrentNodeRequests = 50
 // hosted streams.
 type SyncRunner struct {
 	// workerPools keeps track of a set of weighted semaphors, one per node address. These are used
-	// to rate limit the number of syncs started on the same remote node at the same time.
+	// to rate limit concurrent requests to the each remote node from this service.
 	workerPools sync.Map
 }
 
@@ -79,6 +79,13 @@ func channelLabelType(streamID shared.StreamId) string {
 		return "unknown"
 	}
 }
+
+type TrackedViewConstructorFn func(
+	ctx context.Context,
+	streamID shared.StreamId,
+	cfg crypto.OnChainConfiguration,
+	stream *protocol.StreamAndCookie,
+) (events.TrackedStreamView, error)
 
 func (sr *SyncRunner) Run(
 	rootCtx context.Context,
@@ -189,7 +196,7 @@ func (sr *SyncRunner) Run(
 		go func(log *zap.SugaredLogger) {
 			select {
 			case <-time.After(30 * time.Second):
-				log.Debugw("Didn't receive sync id within 30s, cancel sync session")
+				log.Debugw("Didn't receive sync id within 30s, cancel sync session", "stream", stream.StreamId)
 				syncCancel() // cancel sync session
 				syncIDGot()
 				return
@@ -205,7 +212,7 @@ func (sr *SyncRunner) Run(
 			if firstMsg.GetSyncOp() != protocol.SyncOp_SYNC_NEW {
 				syncCancel()
 				if !errors.Is(err, context.Canceled) {
-					log.Errorw("Stream sync session didn't start with SyncOp_SYNC_NEW")
+					log.Errorw("Stream sync session didn't start with SyncOp_SYNC_NEW", "stream", stream.StreamId)
 				}
 				if sr.waitMaxOrUntilCancel(rootCtx, 10*time.Second, 30*time.Second) {
 					return
@@ -218,7 +225,15 @@ func (sr *SyncRunner) Run(
 		if err := streamUpdates.Err(); err != nil {
 			if !errors.Is(err, context.Canceled) {
 				// if remote node is down this gets fired
-				log.Debugw("Unable to receive first sync message", "err", err)
+				log.Debugw(
+					"Unable to receive first sync message",
+					"err",
+					err,
+					"stream",
+					stream.StreamId,
+					"remote",
+					remoteAddr,
+				)
 			}
 			syncCancel()
 			remotes.AdvanceStickyPeer(remoteAddr)
@@ -231,7 +246,7 @@ func (sr *SyncRunner) Run(
 		if syncID == "" {
 			syncCancel()
 			remotes.AdvanceStickyPeer(remoteAddr)
-			log.Errorw("Received empty syncID")
+			log.Errorw("Received empty syncID", "stream", stream.StreamId, "remote", remoteAddr)
 			if sr.waitMaxOrUntilCancel(rootCtx, time.Minute, 2*time.Minute) {
 				return
 			}
@@ -294,13 +309,6 @@ func (sr *SyncRunner) Run(
 					}
 
 					metrics.TrackedStreams.With(promLabels).Inc()
-
-					// if the stream was just allocated process the miniblocks and events for notifications.
-					// If not ignore them because there were already notifications send for the stream and possible
-					// for these miniblocks and events.
-					if !applyHistoricalStreamContents {
-						continue
-					}
 				}
 
 				// first received update must be a sync reset that instantiates the trackedStream
@@ -316,8 +324,11 @@ func (sr *SyncRunner) Run(
 							log.Debugw("Unable to apply block", "stream", streamID, "err", err)
 						}
 					}
+					// If the stream was just allocated, process the miniblocks and events for notifications.
+					// If not, ignore them because there were already notifications sent for the stream, and possibly
+					// for these miniblocks and events.
 					if applyHistoricalStreamContents {
-						// send notifications for all events in all blocks
+						// Send notifications for all events in all blocks.
 						for _, event := range block.GetEvents() {
 							if parsedEvent, err := events.ParseEvent(event); err == nil {
 								_ = trackedStream.SendEventNotification(syncCtx, parsedEvent)
@@ -327,8 +338,25 @@ func (sr *SyncRunner) Run(
 				}
 
 				for _, event := range update.GetStream().GetEvents() {
-					if err := trackedStream.ApplyEvent(syncCtx, event); err != nil {
-						log.Errorw("Unable to apply event", "stream", streamID, "err", err)
+					// These events are already applied to the tracked stream view's internal state, so let's
+					// notify on them because they were not added via ApplyEvent. If added below, the events
+					// will be silently skipped because they are already a part of the minipool.
+					if applyHistoricalStreamContents {
+						if parsedEvent, err := events.ParseEvent(event); err == nil {
+							if err := trackedStream.SendEventNotification(syncCtx, parsedEvent); err != nil {
+								log.Debugw(
+									"Error sending notification for historical event",
+									"hash",
+									parsedEvent.Hash,
+									"err",
+									err,
+								)
+							}
+						}
+					} else {
+						if err := trackedStream.ApplyEvent(syncCtx, event); err != nil {
+							log.Errorw("Unable to apply event", "stream", streamID, "err", err)
+						}
 					}
 				}
 

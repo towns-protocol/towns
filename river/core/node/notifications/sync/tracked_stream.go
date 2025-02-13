@@ -3,13 +3,13 @@ package sync
 import (
 	"context"
 
-	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/towns-protocol/towns/core/node/crypto"
 	. "github.com/towns-protocol/towns/core/node/events"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/track_streams"
 )
 
 type (
@@ -26,21 +26,11 @@ type (
 			blockedUser common.Address,
 		)
 	}
-
-	StreamEventListener interface {
-		OnMessageEvent(
-			ctx context.Context,
-			streamID shared.StreamId,
-			parentStreamID *shared.StreamId, // only
-			members mapset.Set[string],
-			event *ParsedEvent,
-		)
-	}
 )
 
 type notificationsTrackedStreamView struct {
 	TrackedStreamViewImpl
-	listener        StreamEventListener
+	listener        track_streams.StreamEventListener
 	userPreferences UserPreferencesStore
 }
 
@@ -87,7 +77,7 @@ func NewTrackedStreamForNotifications(
 	streamID shared.StreamId,
 	cfg crypto.OnChainConfiguration,
 	stream *StreamAndCookie,
-	listener StreamEventListener,
+	listener track_streams.StreamEventListener,
 	userPreferences UserPreferencesStore,
 ) (TrackedStreamView, error) {
 	trackedView := &notificationsTrackedStreamView{

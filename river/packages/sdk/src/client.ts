@@ -278,6 +278,7 @@ export class Client
                 emitClientInitStatus: (status) => this.emit('clientInitStatusUpdated', status),
             },
             this.persistenceStore,
+            shortId,
         )
 
         this.logCall('new Client')

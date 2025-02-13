@@ -7,6 +7,7 @@ import { PromiseQueue } from '../utils/promiseQueue'
 import {
     CryptoStore,
     EntitlementsDelegate,
+    GroupEncryptionAlgorithmId,
     type EncryptionDeviceInitOpts,
 } from '@river-build/encryption'
 import { Client } from '../../client'
@@ -34,6 +35,8 @@ export interface ClientParams {
     encryptionDevice?: EncryptionDeviceInitOpts
     onTokenExpired?: () => void
     unpackEnvelopeOpts?: UnpackEnvelopeOpts
+    defaultGroupEncryptionAlgorithm?: GroupEncryptionAlgorithmId
+    logId?: string
 }
 
 export type OnStoppedFn = () => void
@@ -177,6 +180,8 @@ export class RiverConnection extends PersistedObservable<RiverConnectionModel> {
             this.clientParams.logNamespaceFilter,
             this.clientParams.highPriorityStreamIds,
             this.clientParams.unpackEnvelopeOpts,
+            this.clientParams.defaultGroupEncryptionAlgorithm,
+            this.clientParams.logId,
         )
         client.setMaxListeners(100)
         this.client = client

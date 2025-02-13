@@ -36,7 +36,7 @@ type (
 		userPreferences     UserPreferencesStore
 		riverRegistry       *registries.RiverRegistryContract
 		nodes               []nodes.NodeRegistry
-		listener            notificationssync.StreamEventListener
+		listener            track_streams.StreamEventListener
 		streamsTracker      track_streams.StreamsTracker
 		metrics             infra.MetricsFactory
 	}
@@ -50,9 +50,9 @@ func NewService(
 	riverRegistry *registries.RiverRegistryContract,
 	nodes []nodes.NodeRegistry,
 	metrics infra.MetricsFactory,
-	listener notificationssync.StreamEventListener,
+	listener track_streams.StreamEventListener,
 ) (*Service, error) {
-	tracker, err := notificationssync.NewStreamsTrackerForNotifications(
+	tracker, err := notificationssync.NewNotificationsStreamsTracker(
 		ctx,
 		onChainConfig,
 		riverRegistry,

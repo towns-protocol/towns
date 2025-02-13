@@ -37,6 +37,7 @@ export interface SyncAgentConfig {
     encryptionDevice?: EncryptionDeviceInitOpts
     onTokenExpired?: () => void
     unpackEnvelopeOpts?: UnpackEnvelopeOpts
+    logId?: string
 }
 
 export class SyncAgent {
@@ -88,6 +89,7 @@ export class SyncAgent {
             encryptionDevice: config.encryptionDevice,
             onTokenExpired: config.onTokenExpired,
             unpackEnvelopeOpts: config.unpackEnvelopeOpts,
+            logId: config.logId,
         })
 
         this.user = new User(this.userId, this.store, this.riverConnection)

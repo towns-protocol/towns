@@ -20,73 +20,74 @@ import (
 	"github.com/towns-protocol/towns/core/node/shared"
 )
 
-type TrackedViewConstructorFn func(
-	ctx context.Context,
-	streamID shared.StreamId,
-	cfg crypto.OnChainConfiguration,
-	stream *protocol.StreamAndCookie,
-) (events.TrackedStreamView, error)
+// The StreamFilter is used by the StreamTrackerImpl, which is a cross-application, shared implementation
+// of stream tracking used by both the notification service and the bot registry service. Each application
+// must provide the logic for determining which streams to track, and for constructing application-specific
+// tracked stream views.
+type StreamFilter interface {
+	TrackStream(streamID shared.StreamId) bool
 
-type TrackStreamFn func(streamId shared.StreamId) bool
+	NewTrackedStream(
+		ctx context.Context,
+		streamID shared.StreamId,
+		cfg crypto.OnChainConfiguration,
+		stream *protocol.StreamAndCookie,
+	) (events.TrackedStreamView, error)
+}
 
-// The StreamsTracker tracks all eligible streams on the network and executes callbacks
-// on streams that see new events.
 type StreamsTracker interface {
 	Run(ctx context.Context) error
 }
 
+// The StreamsTrackerImpl implements watching the river registry, detecting new streams, and syncing them.
+// It defers to the filter to determine whether a stream should be tracked and to create new tracked stream
+// views, which are application-specific. The filter implementation struct embeds this tracker implementation
+// and provides these methods for encapsulation.
 type StreamsTrackerImpl struct {
+	filter         StreamFilter
 	nodeRegistries []nodes.NodeRegistry
 	riverRegistry  *registries.RiverRegistryContract
-	// prevent making too many requests at the same time to a remote.
-	// keep per remote a worker pool that limits the number of concurrent requests.
-	onChainConfig crypto.OnChainConfiguration
-
-	// newTrackedView is the function used to create a new TrackedStreamView, which may
-	// be a closure including any additional data structures needed to initialize a
-	// specific application class of tracked views.
-	newTrackedView TrackedViewConstructorFn
-
-	// shouldTrackStream is used to determine if the stream is elegible for tracking.
-	shouldTrackStream TrackStreamFn
-
-	metrics *TrackStreamsSyncMetrics
-
-	// tracked monitors whether a stream is already being tracked
-	tracked sync.Map // map[shared.StreamId] = struct{}
-
-	// The syncRunner manages the go routines that operate syncs for each stream.
-	// It uses weighted semaphors to ensure that each node does not experience an
-	// overwhelming influx of traffic from the streams tracker.
-	syncRunner *SyncRunner
+	onChainConfig  crypto.OnChainConfiguration
+	listener       StreamEventListener
+	metrics        *TrackStreamsSyncMetrics
+	tracked        sync.Map // map[shared.StreamId] = struct{}
+	syncRunner     *SyncRunner
 }
 
-// Init can be called by embedding structs, which cannot call NewStreamsTracker directly.
+// Init can be used by a struct embedding the StreamsTrackerImpl to initialize it.
 func (tracker *StreamsTrackerImpl) Init(
 	ctx context.Context,
 	onChainConfig crypto.OnChainConfiguration,
 	riverRegistry *registries.RiverRegistryContract,
 	nodeRegistries []nodes.NodeRegistry,
-	trackedViewConstructorFn TrackedViewConstructorFn,
-	shouldTrackStream TrackStreamFn,
+	listener StreamEventListener,
+	filter StreamFilter,
 	metricsFactory infra.MetricsFactory,
 ) error {
 	tracker.metrics = NewTrackStreamsSyncMetrics(metricsFactory)
-	tracker.newTrackedView = trackedViewConstructorFn
-	tracker.shouldTrackStream = shouldTrackStream
 	tracker.riverRegistry = riverRegistry
 	tracker.onChainConfig = onChainConfig
 	tracker.nodeRegistries = nodeRegistries
+	tracker.listener = listener
+	tracker.filter = filter
 	tracker.syncRunner = NewSyncRunner()
 
-	// subscribe to stream events in river registry
-	return tracker.riverRegistry.OnStreamEvent(
+	// Subscribe to stream events in river registry
+	if err := tracker.riverRegistry.OnStreamEvent(
 		ctx,
 		tracker.riverRegistry.Blockchain.InitialBlockNum,
-		tracker.onStreamAllocated,
-		tracker.onStreamLastMiniblockUpdated,
-		tracker.onStreamPlacementUpdated,
-	)
+		tracker.OnStreamAllocated,
+		tracker.OnStreamLastMiniblockUpdated,
+		tracker.OnStreamPlacementUpdated,
+	); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (tracker *StreamsTrackerImpl) Listener() StreamEventListener {
+	return tracker.listener
 }
 
 // Run the stream tracker workers until the given ctx expires.
@@ -106,7 +107,7 @@ func (tracker *StreamsTrackerImpl) Run(ctx context.Context) error {
 		ctx,
 		tracker.riverRegistry.Blockchain.InitialBlockNum,
 		func(stream *registries.GetStreamResult) bool {
-			// Print progress report every 50k streams that are added to track.
+			// Print progress report every 50k streams that are added to track
 			if streamsLoaded > 0 && streamsLoaded%50_000 == 0 && streamsLoadedProgress != streamsLoaded {
 				log.Infow("Progress stream loading", "tracked", streamsLoaded, "total", totalStreams)
 				streamsLoadedProgress = streamsLoaded
@@ -114,7 +115,7 @@ func (tracker *StreamsTrackerImpl) Run(ctx context.Context) error {
 
 			totalStreams++
 
-			if !tracker.shouldTrackStream(stream.StreamId) {
+			if !tracker.filter.TrackStream(stream.StreamId) {
 				return true
 			}
 
@@ -146,7 +147,7 @@ func (tracker *StreamsTrackerImpl) Run(ctx context.Context) error {
 						false,
 						tracker.nodeRegistries[idx],
 						tracker.onChainConfig,
-						tracker.newTrackedView,
+						tracker.filter.NewTrackedStream,
 						tracker.metrics,
 					)
 				}()
@@ -171,14 +172,15 @@ func (tracker *StreamsTrackerImpl) Run(ctx context.Context) error {
 	return nil
 }
 
-// onStreamAllocated is called each time a stream is allocated in the river registry.
-// If the stream must be tracked, then add it to the worker that is responsible for it.
-func (tracker *StreamsTrackerImpl) onStreamAllocated(
+// OnStreamAllocated is called each time a stream is allocated in the river registry.
+// If the stream must be tracked for the service, then add it to the worker that is
+// responsible for it.
+func (tracker *StreamsTrackerImpl) OnStreamAllocated(
 	ctx context.Context,
 	event *river.StreamRegistryV1StreamAllocated,
 ) {
 	streamID := shared.StreamId(event.StreamId)
-	if !tracker.shouldTrackStream(streamID) {
+	if !tracker.filter.TrackStream(streamID) {
 		return
 	}
 
@@ -197,21 +199,21 @@ func (tracker *StreamsTrackerImpl) onStreamAllocated(
 				true,
 				tracker.nodeRegistries[idx],
 				tracker.onChainConfig,
-				tracker.newTrackedView,
+				tracker.filter.NewTrackedStream,
 				tracker.metrics,
 			)
 		}()
 	}
 }
 
-func (tracker *StreamsTrackerImpl) onStreamLastMiniblockUpdated(
+func (tracker *StreamsTrackerImpl) OnStreamLastMiniblockUpdated(
 	context.Context,
 	*river.StreamRegistryV1StreamLastMiniblockUpdated,
 ) {
 	// miniblocks are processed when a stream event with a block header is received for the stream
 }
 
-func (tracker *StreamsTrackerImpl) onStreamPlacementUpdated(
+func (tracker *StreamsTrackerImpl) OnStreamPlacementUpdated(
 	context.Context,
 	*river.StreamRegistryV1StreamPlacementUpdated,
 ) {
