@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import { Panel } from '@components/Panel/Panel'
 import { Box, Icon, IconName, Stack, Text } from '@ui'
 import { PanelButton } from '@components/Panel/PanelButton'
@@ -8,6 +8,7 @@ import { calculateTotalHoldingValueCents, formatCents } from './tradingUtils'
 import { useTradingWallet } from './useTradingWallet'
 import { TradingTokensList } from './TradingTokensList'
 import { AutoCreateSolanaWallet } from './AutoCreateSolanaWallet'
+import { TabPanel } from './ui/TabPanel'
 
 export function TradingWalletPanel() {
     const { openPanel } = usePanelActions()
@@ -38,6 +39,11 @@ export function TradingWalletPanel() {
     const gain24h = totalHoldingValueCents - holdingValue24hAgo
     const gain24hPct = holdingValue24hAgo === 0 ? 0 : (gain24h / holdingValue24hAgo) * 100
 
+    const [tab, setTab] = useState('tokens')
+    const onTabChange = useCallback((tab: string) => {
+        setTab(tab)
+    }, [])
+
     return (
         <Panel padding label="Towns Wallet">
             <AutoCreateSolanaWallet />
@@ -66,7 +72,30 @@ export function TradingWalletPanel() {
                 </Stack>
 
                 <Text fontSize="h4" textAlign="center" color="cta1" />
-                <TradingTokensList assets={chainWalletAssets ?? []} />
+                <TabPanel
+                    layoutId="tradingTokensList"
+                    value={tab}
+                    tabs={[
+                        { label: 'Tokens', value: 'tokens' },
+                        { label: 'NFTs', value: 'nfts' },
+                        { label: 'Activity', value: 'activity' },
+                    ]}
+                    onChange={onTabChange}
+                >
+                    <Stack gap paddingY>
+                        {tab === 'tokens' && <TradingTokensList assets={chainWalletAssets ?? []} />}
+                        {tab === 'nfts' && (
+                            <Box centerContent color="gray1">
+                                NFTs
+                            </Box>
+                        )}
+                        {tab === 'activity' && (
+                            <Box centerContent color="gray1">
+                                Activity
+                            </Box>
+                        )}
+                    </Stack>
+                </TabPanel>
             </Stack>
         </Panel>
     )

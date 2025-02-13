@@ -51,6 +51,12 @@ export const colorProperties = defineProperties({
             readability: {
                 background: vars.color.background.readability,
             },
+            base: {
+                background: vars.color.background.base,
+                vars: {
+                    '--background': vars.color.background.base,
+                },
+            },
             level1: {
                 background: vars.color.background.level1,
                 vars: {

@@ -194,30 +194,28 @@ export const TradingPanel = () => {
     const onTabChanged = useCallback(
         (tab: string) => {
             searchParams.set('mode', tab)
-            setSearchParams(searchParams)
+            setSearchParams(searchParams, { replace: true })
         },
         [setSearchParams, searchParams],
     )
 
+    let panelContent: React.ReactNode
+
     if (!isTradingChain(chainId)) {
-        return null
-    }
-
-    if ((mode !== 'buy' && mode !== 'sell') || !tokenAddress) {
-        return null
-    }
-
-    return (
-        <Panel
-            padding
-            label={
-                <Stack horizontal gap="sm" alignItems="center">
-                    <Text>Trade</Text>
-                    <Text color="gray2">{coinData?.token.symbol}</Text>
-                </Stack>
-            }
-        >
+        panelContent = (
+            <Box>
+                <Text color="error">
+                    Supplied chain &quot;{chainId}&quot; is not a trading chain. Please use a valid
+                    trading chain.
+                </Text>
+            </Box>
+        )
+    } else if ((mode !== 'buy' && mode !== 'sell') || !tokenAddress) {
+        panelContent = <Text color="error">Invalid mode or token address</Text>
+    } else {
+        panelContent = (
             <TabPanel
+                layoutId="tradingPanel"
                 value={mode}
                 tabs={[
                     { label: 'Buy', value: 'buy' },
@@ -311,6 +309,20 @@ export const TradingPanel = () => {
                     )}
                 </Stack>
             </TabPanel>
+        )
+    }
+
+    return (
+        <Panel
+            padding
+            label={
+                <Stack horizontal gap="sm" alignItems="center">
+                    <Text>Trade</Text>
+                    <Text color="gray2">{coinData?.token.symbol}</Text>
+                </Stack>
+            }
+        >
+            {panelContent}
         </Panel>
     )
 }

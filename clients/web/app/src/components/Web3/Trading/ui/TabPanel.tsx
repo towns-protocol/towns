@@ -5,6 +5,7 @@ import { Box, BoxProps, MotionBox, Stack } from '@ui'
 
 export const TabPanel = (
     props: {
+        layoutId: string
         value: string
         children: React.ReactNode
         tabs: { label: string; value: string }[]
@@ -35,7 +36,7 @@ export const TabPanel = (
                                     <MotionBox
                                         height="2"
                                         background="cta2"
-                                        layoutId="tab"
+                                        layoutId={props.layoutId + 'tab'}
                                         layout="position"
                                     />
                                 ) : (
