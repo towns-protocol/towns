@@ -19,6 +19,7 @@ import { useLifiQuote } from './useLifiQuote'
 import { useSolanaBalance } from './useSolanaBalance'
 import { useSolanaWallet } from './useSolanaWallet'
 import { SolanaTransactionRequest, useTradingContext } from './TradingContextProvider'
+import { useTokenBalance } from './useTokenBalance'
 
 export const TradingPanel = () => {
     const townsClient = useTownsClient()
@@ -35,16 +36,15 @@ export const TradingPanel = () => {
     })
 
     const { data: ethBalance } = useBalanceOnChain(evmWalletAddress, 8453)
-
     const { solanaWallet } = useSolanaWallet()
     const { data: solanaBalance } = useSolanaBalance(solanaWallet?.address)
-
     const { nativeTokenAddress, decimals } = chainConfig
 
     const isSolana = chainConfig.name === 'Solana'
-
     const address = isSolana ? solanaWallet?.address : evmWalletAddress
-    const currentTokenBalance = mode === 'buy' ? (isSolana ? solanaBalance : ethBalance) : 0n
+    const tokenBalance = useTokenBalance(chainId, tokenAddress ?? '')
+    const currentTokenBalance =
+        mode === 'buy' ? (isSolana ? solanaBalance : ethBalance) : tokenBalance
     const fromTokenAddress = mode === 'buy' ? nativeTokenAddress : tokenAddress
     const toTokenAddress = mode === 'buy' ? tokenAddress : nativeTokenAddress
 
