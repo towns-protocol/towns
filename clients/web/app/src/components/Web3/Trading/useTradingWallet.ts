@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { ZodType, z } from 'zod'
 import { env } from 'utils'
 import { axiosClient } from 'api/apiClient'
+import { MINUTE_MS } from 'data/constants'
 import { ChainWalletAssets, NativeAsset, TokenAsset } from './tradingUtils'
 import { useTradingWalletAddresses } from './useTradingWalletAddresses'
 
@@ -53,6 +54,7 @@ export const useTradingWallet = () => {
             const response = zTownsWalletResponse.safeParse(data)
             return response.success ? response.data : undefined
         },
+        gcTime: MINUTE_MS,
     })
 
     return { data, isLoading }
