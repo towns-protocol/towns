@@ -38,7 +38,7 @@ export const TradingPanel = () => {
     const { data: ethBalance } = useBalanceOnChain(evmWalletAddress, 8453)
     const { solanaWallet } = useSolanaWallet()
     const { data: solanaBalance } = useSolanaBalance(solanaWallet?.address)
-    const { nativeTokenAddress, decimals } = chainConfig
+    const { nativeTokenAddress } = chainConfig
 
     const isSolana = chainConfig.name === 'Solana'
     const address = isSolana ? solanaWallet?.address : evmWalletAddress
@@ -58,6 +58,8 @@ export const TradingPanel = () => {
         chain: chainId,
     })
 
+    const currentBalanceDecimals =
+        mode === 'buy' ? chainConfig.decimals : fromTokenData?.token.decimals ?? 18
     const [amount, setAmount] = useState<bigint>()
 
     const cachedAmounts = useRef<Record<string, bigint | undefined>>({})
@@ -242,7 +244,7 @@ export const TradingPanel = () => {
                         </Stack>
                         <BigIntInput
                             icon={chainConfig.icon}
-                            decimals={decimals}
+                            decimals={currentBalanceDecimals}
                             value={amount}
                             onChange={onCustomAmount}
                         />
@@ -252,8 +254,12 @@ export const TradingPanel = () => {
                         <Text color="gray2">
                             <>
                                 Balance:{' '}
-                                {formatUnitsToFixedLength(currentTokenBalance, decimals, 5)}{' '}
-                                {fromTokenData?.token.name ?? ''}
+                                {formatUnitsToFixedLength(
+                                    currentTokenBalance,
+                                    currentBalanceDecimals,
+                                    5,
+                                )}{' '}
+                                {fromTokenData?.token.symbol ?? ''}
                             </>
                         </Text>
                     </Stack>
