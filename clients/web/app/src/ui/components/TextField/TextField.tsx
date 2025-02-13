@@ -23,6 +23,7 @@ type Props = {
     paddingX?: BoxProps['paddingX']
     inputWidth?: BoxProps['width']
     inputLimit?: number
+    borderRadius?: BoxProps['borderRadius']
 } & FieldBaseProps &
     InputCallbackProps &
     InputHTMLAttributes<HTMLInputElement>
@@ -36,10 +37,11 @@ export const TextField = forwardRef<HTMLInputElement, Props>((props, ref) => {
         autoComplete,
         inputWidth,
         inputLimit,
+        rounded,
         ...fieldProps
     } = props
     return (
-        <Field {...fieldProps}>
+        <Field {...fieldProps} rounded={rounded}>
             {(overlays, { className, ...inputProps }) => (
                 <>
                     <Box
@@ -54,6 +56,7 @@ export const TextField = forwardRef<HTMLInputElement, Props>((props, ref) => {
                         autoComplete={autoComplete || 'off'}
                         width={inputWidth}
                         maxLength={inputLimit}
+                        rounded={rounded}
                     />
                     {overlays}
                 </>

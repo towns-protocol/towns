@@ -72,10 +72,10 @@ export const buttonStyle = recipe({
                 height: vars.dims.button.button_md,
                 width: vars.dims.button.button_md,
                 fontVariationSettings: vars.fontWeight.medium.fontVariationSettings,
-                paddingLeft: vars.dims.baseline.x3,
-                paddingRight: vars.dims.baseline.x3,
+                paddingLeft: vars.dims.baseline.x2,
+                paddingRight: vars.dims.baseline.x2,
                 borderRadius: vars.borderRadius.full,
-                gap: vars.space.sm,
+                gap: vars.space.xs,
             },
         },
         border: {
@@ -96,6 +96,7 @@ export const buttonStyle = recipe({
                 },
             },
         },
+
         rounded: {
             sm: {
                 borderRadius: vars.borderRadius.sm,

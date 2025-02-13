@@ -141,7 +141,7 @@ export const Field = (props: Props) => {
                 {props.icon && <Icon type={props.icon} size="square_xs" color="gray2" />}
                 {before}
                 {children(
-                    <FieldOutline tone={tone} disabled={props.disabled} />,
+                    <FieldOutline tone={tone} disabled={props.disabled} rounded={rounded} />,
                     {
                         id,
                         height,

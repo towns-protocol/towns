@@ -38,6 +38,9 @@ export const usePanelActions = () => {
                     assetSource?: Address
                     eventId?: string
                     streamId?: string
+                    mode?: 'buy' | 'sell'
+                    tokenAddress?: string
+                    chainId?: string
                 } = {},
             ) => {
                 const { stackId = contextStackId, ...restOptions } = options

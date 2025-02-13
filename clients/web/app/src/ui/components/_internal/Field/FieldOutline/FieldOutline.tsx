@@ -8,12 +8,13 @@ type Props = {
     tone: FieldTone
     withBorder?: boolean
     disabled?: boolean
+    rounded?: BoxProps['rounded']
 } & BoxProps
 
 export const FieldOutline = (props: Props) => (
     <Box
         absoluteFill
-        rounded="sm"
+        rounded={props.rounded ?? 'sm'}
         pointerEvents="none"
         {...props}
         className={clsx([styles.fieldOutline, styles.fieldTones[props.tone]])}

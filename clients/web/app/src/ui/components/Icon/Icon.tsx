@@ -1772,6 +1772,23 @@ export const EthIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
     </svg>
 ))
 
+export const EthFilledIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
+    <svg
+        xmlns="http://www.w3.org/2000/svg"
+        version="1.1"
+        viewBox="0 0 540 879.4"
+        {...props}
+        ref={ref}
+    >
+        <g fill="currentColor">
+            <path d="m0.1 447.8 269.9 159.6v-607.4z" opacity=".45" />
+            <path d="m270 0v607.4l269.9-159.6z" opacity=".8" />
+            <path d="m0 499 269.9 380.4v-220.9z" opacity=".45" />
+            <path d="m269.9 658.5v220.9l270.1-380.4z" opacity=".8" />
+        </g>
+    </svg>
+))
+
 export const BaseEthIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
     <svg
         width="24"
@@ -2337,6 +2354,7 @@ const iconMap = {
     emoji: EmojiIcon,
     emojiAdd: EmojiAddIcon,
     eth: EthIcon,
+    ethFilled: EthFilledIcon,
     baseEth: BaseEthIcon,
     etherscan: EtherscanIcon,
     failed: FailedIcon,

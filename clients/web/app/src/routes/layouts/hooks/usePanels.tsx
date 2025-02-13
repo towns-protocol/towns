@@ -39,6 +39,7 @@ import { VerifyEventSignaturePanel } from '@components/VerifyEventSignature/Verf
 import { PrivyIdentityPanel } from '@components/PrivyIdentity/PrivyIdentityPanel'
 import { TradingWalletPanel } from '@components/Web3/Trading/TradingWalletPanel'
 import { TradingDepositPanel } from '@components/Web3/Trading/TradingDepositPanel'
+import { TradingPanel } from '@components/Web3/Trading/TradingPanel'
 
 export const usePanels = () => {
     const [searchParams] = useSearchParams()
@@ -205,6 +206,9 @@ export const usePanels = () => {
         }
         case CHANNEL_INFO_PARAMS.TRADING_DEPOSIT: {
             return <TradingDepositPanel />
+        }
+        case CHANNEL_INFO_PARAMS.TRADE_PANEL: {
+            return <TradingPanel />
         }
     }
 

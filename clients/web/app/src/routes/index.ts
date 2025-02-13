@@ -63,6 +63,7 @@ export const CHANNEL_INFO_PARAMS = {
     BEARER_TOKEN: 'bearer-token',
     TOWN_MEMBERS: 'town-members',
     SINGLE_WALLET: 'wallet',
+    TRADE_PANEL: 'trade',
     TRANSFER_ASSETS: 'transfer-assets',
     VERIFY_EVENT_SIGNATURE: 'verify-event-signature',
     IDENTITY: 'identity',

@@ -5,6 +5,8 @@ import { Icon, IconName } from '../Icon'
 import { MotionBox, MotionParagraph, MotionStack } from '../Motion/MotionComponents'
 import { ButtonSpinner } from '../Spinner/ButtonSpinner'
 import * as fancyButtonStyle from './FancyButton.css'
+import { IconAtoms } from '../Icon/Icon.css'
+import { TextSprinkles } from '../Text/Text.css'
 
 type FancyButtonProps = {
     children?: string
@@ -13,10 +15,15 @@ type FancyButtonProps = {
     spinner?: boolean
     disabled?: boolean
     icon?: IconName
+    color?: TextSprinkles['color']
     onClick?: () => void
     onClickDisabled?: () => void
     borderRadius?: BoxProps['borderRadius']
     boxShadow?: BoxProps['boxShadow']
+    background?: BoxProps['background']
+    gap?: BoxProps['gap']
+    paddingX?: BoxProps['paddingX']
+    iconSize?: IconAtoms['size']
 } & Omit<
     ButtonHTMLAttributes<HTMLButtonElement>,
     'onDrag' | 'onDragEnd' | 'onDragStart' | 'onAnimationStart' | 'size' | 'color'
@@ -37,14 +44,18 @@ export const FancyButton = React.forwardRef<HTMLButtonElement, FancyButtonProps>
         boxShadow,
         borderRadius = 'sm',
         onClickDisabled,
+        gap,
+        iconSize,
+        color,
         ...buttonProps
     } = props
-    const background = cta ? 'cta1' : 'level3'
+
+    const background = cta ? 'cta1' : props.background ?? 'level3'
 
     const before = spinner ? (
         <ButtonSpinner />
     ) : icon ? (
-        <Icon type={icon} size="square_inline" />
+        <Icon type={icon} size={iconSize ?? 'square_inline'} />
     ) : null
 
     const [ripple, setRipple] = useState<{ x: number; y: number; key: number } | false>(false)
@@ -123,7 +134,7 @@ export const FancyButton = React.forwardRef<HTMLButtonElement, FancyButtonProps>
                     <Background
                         tone={background}
                         borderRadius={borderRadius}
-                        key={background}
+                        key={background as string}
                         boxShadow={boxShadow}
                     />
                 }
@@ -144,7 +155,13 @@ export const FancyButton = React.forwardRef<HTMLButtonElement, FancyButtonProps>
                 )}
             </AnimatePresence>
 
-            <MotionStack horizontal centerContent gap="sm" position="relative" color="inherit">
+            <MotionStack
+                horizontal
+                centerContent
+                gap={gap ?? 'sm'}
+                position="relative"
+                color="inherit"
+            >
                 {before ? (
                     <Box centerContent square="square_inline">
                         <MotionBox
@@ -194,7 +211,7 @@ export const FancyButton = React.forwardRef<HTMLButtonElement, FancyButtonProps>
                     key={children}
                     layout="position"
                     fontWeight="medium"
-                    color="inherit"
+                    color={color ?? 'inherit'}
                     transition={{
                         ease: 'easeIn',
                         delay: 0,

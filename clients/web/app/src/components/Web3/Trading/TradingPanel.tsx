@@ -1,0 +1,322 @@
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { TSigner, TransactionStatus, useConnectivity, useTownsClient } from 'use-towns-client'
+import { Panel } from '@components/Panel/Panel'
+import { useCoinData } from '@components/TradingChart/useCoinData'
+import { Box, FancyButton, Stack, Text } from '@ui'
+import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
+import { formatUnitsToFixedLength } from 'hooks/useBalance'
+import { WalletReady } from 'privy/WalletReady'
+import { shimmerClass } from 'ui/styles/globals/shimmer.css'
+import { isTradingChain, tradingChains } from './tradingConstants'
+import { BigIntInput } from './ui/BigIntInput'
+import { QuoteCard } from './ui/QuoteCard'
+import { RadioButton } from './ui/RadioButton'
+import { ButtonSelection } from './ui/SelectButton'
+import { TabPanel } from './ui/TabPanel'
+import { useBalanceOnChain } from './useBalanceOnChain'
+import { useLifiQuote } from './useLifiQuote'
+import { useSolanaBalance } from './useSolanaBalance'
+import { useSolanaWallet } from './useSolanaWallet'
+import { SolanaTransactionRequest, useTradingContext } from './TradingContextProvider'
+
+export const TradingPanel = () => {
+    const townsClient = useTownsClient()
+
+    const [searchParams, setSearchParams] = useSearchParams()
+    const { mode, tokenAddress, chainId } = Object.fromEntries(searchParams.entries())
+
+    const chainConfig = isTradingChain(chainId) ? tradingChains[chainId] : tradingChains[1]
+
+    const { loggedInWalletAddress } = useConnectivity()
+
+    const { data: evmWalletAddress } = useAbstractAccountAddress({
+        rootKeyAddress: loggedInWalletAddress,
+    })
+
+    const { data: ethBalance } = useBalanceOnChain(evmWalletAddress, 8453)
+
+    const { solanaWallet } = useSolanaWallet()
+    const { data: solanaBalance } = useSolanaBalance(solanaWallet?.address)
+
+    const { nativeTokenAddress, decimals } = chainConfig
+
+    const isSolana = chainConfig.name === 'Solana'
+
+    const address = isSolana ? solanaWallet?.address : evmWalletAddress
+    const currentTokenBalance = mode === 'buy' ? (isSolana ? solanaBalance : ethBalance) : 0n
+    const fromTokenAddress = mode === 'buy' ? nativeTokenAddress : tokenAddress
+    const toTokenAddress = mode === 'buy' ? tokenAddress : nativeTokenAddress
+
+    const { data: fromTokenData } = useCoinData({
+        address: fromTokenAddress,
+        chain: chainId,
+    })
+
+    const { data: toTokenData } = useCoinData({
+        address: toTokenAddress,
+        chain: chainId,
+    })
+
+    const [amount, setAmount] = useState<bigint>()
+
+    const cachedAmounts = useRef<Record<string, bigint | undefined>>({})
+
+    const key = `${mode}-${tokenAddress}-${chainId}`
+    const prevKey = useRef(key)
+
+    useEffect(() => {
+        if (prevKey.current !== key) {
+            prevKey.current = key
+            setAmount(cachedAmounts.current[key] ?? 0n)
+        }
+        cachedAmounts.current[key] = amount
+    }, [amount, key])
+
+    const quickSelectValues = useMemo(() => {
+        if (mode === 'buy') {
+            return [
+                { label: '0.25', value: 0.25 },
+                { label: '0.5', value: 0.5 },
+                { label: '1.0', value: 1 },
+                { label: '2.0', value: 2 },
+            ].map((v) => ({
+                ...v,
+                icon: chainConfig.icon,
+                value: BigInt(v.value * 10 ** chainConfig.decimals),
+            }))
+        } else {
+            return [
+                { label: '25%', value: 25n },
+                { label: '50%', value: 50n },
+                { label: '100%', value: 100n },
+                { label: '200%', value: 200n },
+            ].map((v) => ({
+                ...v,
+                icon: undefined,
+                value: (currentTokenBalance * v.value) / 100n,
+            }))
+        }
+    }, [chainConfig.decimals, chainConfig.icon, currentTokenBalance, mode])
+
+    const [preselectedOption, setPreselectedOption] = useState<{ label: string; value: bigint }>()
+
+    const onSetPreselectedAmount = useCallback((option: { label: string; value: bigint }) => {
+        setPreselectedOption(option)
+        setAmount(option.value)
+    }, [])
+
+    const onCustomAmount = useCallback(
+        (value: bigint) => {
+            setAmount(value)
+            setPreselectedOption(undefined)
+        },
+        [setAmount],
+    )
+
+    const { data: coinData } = useCoinData({
+        address: tokenAddress ?? '',
+        chain: chainId,
+    })
+
+    const quote = useLifiQuote({
+        fromToken: fromTokenAddress,
+        toToken: toTokenAddress,
+        fromAddress: address ?? '',
+        toAddress: address ?? '',
+        fromAmount: amount?.toString() ?? '0',
+        currentTokenBalance,
+        fromChain: chainId,
+        toChain: chainId,
+    })
+
+    const buyButtonPressed = useCallback(
+        async (getSigner: () => Promise<TSigner | undefined>) => {
+            if (chainId !== '8453') {
+                return
+            }
+
+            if (!quote.data) {
+                return
+            }
+            const signer = await getSigner()
+            if (!signer) {
+                return
+            }
+            const to = quote.data.transactionRequest.to
+            const value = quote.data.transactionRequest.value
+
+            if (!to || !value) {
+                return
+            }
+
+            try {
+                const res = await townsClient.sendUserOperationWithCallData({
+                    callData: quote.data.transactionRequest.data,
+                    toAddress: to,
+                    value: BigInt(value),
+                    signer,
+                })
+                console.log('RES', res)
+            } catch (error) {
+                console.error('Error sending transaction', error)
+            }
+        },
+        [quote, chainId, townsClient],
+    )
+
+    const tradingContext = useTradingContext()
+    const solanaBuyButtonPressed = useCallback(async () => {
+        if (chainId !== tradingChains[1151111081099710].chainId) {
+            console.error("chainId doesn't match")
+            return
+        }
+        if (!quote.data) {
+            console.error('no quote data')
+            return
+        }
+
+        const request: SolanaTransactionRequest = {
+            id: quote.data.id,
+            transactionData: quote.data.transactionRequest.data,
+            token: {
+                name: coinData?.token.name ?? '',
+                symbol: coinData?.token.symbol ?? '',
+                address: tokenAddress ?? '',
+                amount: amount ?? 0n,
+                decimals: coinData?.token.decimals ?? 0,
+            },
+            status: TransactionStatus.Pending,
+        }
+        tradingContext.sendSolanaTransaction(request)
+    }, [quote, chainId, tradingContext, coinData, tokenAddress, amount])
+
+    const onTabChanged = useCallback(
+        (tab: string) => {
+            searchParams.set('mode', tab)
+            setSearchParams(searchParams)
+        },
+        [setSearchParams, searchParams],
+    )
+
+    if (!isTradingChain(chainId)) {
+        return null
+    }
+
+    if (!mode || !tokenAddress) {
+        return null
+    }
+
+    return (
+        <Panel
+            padding
+            label={
+                <Stack horizontal gap="sm" alignItems="center">
+                    <Text>Trade</Text>
+                    <Text color="gray2">{coinData?.token.symbol}</Text>
+                </Stack>
+            }
+        >
+            <TabPanel
+                value={mode}
+                tabs={[
+                    { label: 'Buy', value: 'buy' },
+                    { label: 'Sell', value: 'sell' },
+                ]}
+                onChange={onTabChanged}
+            >
+                <Stack paddingY gap="md">
+                    <Stack gap="sm">
+                        <Stack horizontal justifyContent="spaceBetween" display="flex" gap="sm">
+                            <ButtonSelection
+                                value={quickSelectValues.find((v) => v === preselectedOption)}
+                                options={quickSelectValues}
+                                renderItem={({ option, onSelect, selected }) => (
+                                    <RadioButton
+                                        label={option.label}
+                                        selected={selected}
+                                        icon={option.icon}
+                                        onClick={() => onSelect(option)}
+                                    />
+                                )}
+                                onChange={onSetPreselectedAmount}
+                            />
+                        </Stack>
+                        <BigIntInput
+                            icon={chainConfig.icon}
+                            decimals={decimals}
+                            value={amount}
+                            onChange={onCustomAmount}
+                        />
+                    </Stack>
+
+                    <Stack horizontal justifyContent="spaceBetween" alignItems="center">
+                        <Text color="gray2">
+                            <>
+                                Balance:{' '}
+                                {formatUnitsToFixedLength(currentTokenBalance, decimals, 5)}{' '}
+                                {fromTokenData?.token.name ?? ''}
+                            </>
+                        </Text>
+                    </Stack>
+
+                    {quote.isLoading ? (
+                        <Stack gap padding className={shimmerClass} rounded="sm" height="100">
+                            <Stack height="x4" width="100%" />
+                            <Stack height="x4" width="100%" />
+                        </Stack>
+                    ) : quote.isError ? (
+                        <Stack
+                            gap
+                            padding
+                            rounded="sm"
+                            border="negative"
+                            overflow="hidden"
+                            background="negativeSubtle"
+                        >
+                            <Text size="sm">Error</Text>
+                            <Box as="pre" fontSize="sm" wrap="wrap">
+                                {quote.error?.message}
+                            </Box>
+                        </Stack>
+                    ) : quote.data ? (
+                        <Stack gap="sm">
+                            <QuoteCard
+                                chainConfig={chainConfig}
+                                {...quote.data}
+                                fromTokenAddress={fromTokenAddress}
+                                toTokenAddress={toTokenAddress}
+                                chainId={chainId}
+                                fromTokenData={fromTokenData}
+                                toTokenData={toTokenData}
+                            />
+                        </Stack>
+                    ) : (
+                        <></>
+                    )}
+                    <WalletReady>
+                        {({ getSigner }) => (
+                            <FancyButton
+                                borderRadius="full"
+                                disabled={!quote.data}
+                                background={quote.data ? 'cta1' : 'level2'}
+                                onClick={() => buyButtonPressed(getSigner)}
+                            >
+                                {mode === 'buy' ? 'Buy' : 'Sell'}
+                            </FancyButton>
+                        )}
+                    </WalletReady>
+
+                    <FancyButton
+                        borderRadius="full"
+                        disabled={!quote.data}
+                        background={quote.data ? 'cta1' : 'level2'}
+                        onClick={solanaBuyButtonPressed}
+                    >
+                        {mode === 'buy' ? 'Buy (SOL)' : 'Sell (SOL)'}
+                    </FancyButton>
+                </Stack>
+            </TabPanel>
+        </Panel>
+    )
+}

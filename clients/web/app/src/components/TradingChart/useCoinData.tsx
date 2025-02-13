@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { env } from 'utils'
 import { MINUTE_MS } from 'data/constants'
 
-type GetCoinDataResponse = {
+export type GetCoinDataResponse = {
     marketCap: string
     priceUSD: string
     change24: string

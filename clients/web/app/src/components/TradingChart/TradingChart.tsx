@@ -16,8 +16,10 @@ import { NetworkName } from '@components/Tokens/TokenSelector/NetworkName'
 import { useStore } from 'store/store'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { formatCompactUSD, formatUSD } from '@components/Web3/Trading/tradingUtils'
-import { useCoinData } from './useCoinData'
+import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
+import { CHANNEL_INFO_PARAMS } from 'routes'
 import { GetBars, TimeFrame, useCoinBars } from './useCoinBars'
+import { useCoinData } from './useCoinData'
 
 const CHART_TIME_FORMAT_OPTIONS: {
     [key: string]: object
@@ -51,6 +53,19 @@ export const TradingChart = (props: { attachment: TickerAttachment }) => {
     })
 
     const [isFocused, setIsFocused] = useState(false)
+
+    const { openPanel } = usePanelActions()
+
+    const onTradeClick = useCallback(
+        (mode: 'buy' | 'sell') => {
+            openPanel(CHANNEL_INFO_PARAMS.TRADE_PANEL, {
+                mode,
+                tokenAddress: props.attachment.address,
+                chainId: props.attachment.chainId.toString(),
+            })
+        },
+        [openPanel, props.attachment.address, props.attachment.chainId],
+    )
 
     return (
         <Stack rounded="md" width="500" maxWidth="100%" background="level2">
@@ -165,10 +180,22 @@ export const TradingChart = (props: { attachment: TickerAttachment }) => {
                             </Pill>
                         </Stack>
                         <Stack horizontal gap="sm">
-                            <Button grow tone="level3" rounded="full" color="cta1">
+                            <Button
+                                grow
+                                tone="level3"
+                                rounded="full"
+                                color="cta1"
+                                onClick={() => onTradeClick('buy')}
+                            >
                                 Buy
                             </Button>
-                            <Button grow tone="level3" rounded="full" color="cta1">
+                            <Button
+                                grow
+                                tone="level3"
+                                rounded="full"
+                                color="cta1"
+                                onClick={() => onTradeClick('sell')}
+                            >
                                 Sell
                             </Button>
                         </Stack>

@@ -75,7 +75,7 @@ export const CardLabel = (props: {
 }) => (
     <CardHeader gap="sm">
         {props.leftBarButton}
-        <Box grow paddingY="sm" width="none" /* truncate hack */>
+        <Box horizontal grow paddingY="sm" width="none" /* truncate hack */>
             {typeof props.label === 'string' ? (
                 <Paragraph truncate fontWeight="medium" data-testid={`${props.dataTestId}-header`}>
                     {props.label}
