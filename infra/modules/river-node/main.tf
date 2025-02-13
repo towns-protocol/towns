@@ -532,6 +532,10 @@ resource "aws_ecs_task_definition" "river-fargate" {
         name  = "WALLETLINKCONTRACT__VERSION"
         value = "v3"
       },
+      {
+        name  = "RACE"
+        value = var.race ? "true" : "false"
+      }
       ],
       local.base_chain_override_td_env_config,
       local.river_chain_override_td_env_config,

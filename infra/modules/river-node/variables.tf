@@ -156,3 +156,8 @@ variable "migration_config" {
     rds_public_access  = false
   }
 }
+
+variable "race" {
+  type    = bool
+  default = false
+}
