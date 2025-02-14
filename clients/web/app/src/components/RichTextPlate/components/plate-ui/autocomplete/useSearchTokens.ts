@@ -115,7 +115,7 @@ function createQuery(searchString: string) {
             phrase:"${searchString}"
             limit: 10
             rankings:{
-                attribute: marketCap
+                attribute: volume24
             }
         ) {
             results {
