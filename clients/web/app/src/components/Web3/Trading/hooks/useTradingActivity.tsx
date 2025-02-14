@@ -34,6 +34,7 @@ const zFilterTokensQuery = z.object({
 })
 
 export type TradingActivityItem = {
+    id: string
     token0Address: string
     token1Address: string
     token1ValueBase: string
@@ -59,6 +60,7 @@ const zTokenEventsForMaker = z.object({
         getTokenEventsForMaker: z.object({
             items: z.array(
                 z.object({
+                    id: z.string(),
                     token0Address: z.string(),
                     token1Address: z.string(),
                     token1ValueBase: z.string(),
@@ -164,16 +166,17 @@ function buildGetTokenEventsForMakerQuery(walletAddress: string | undefined, net
     {
         getTokenEventsForMaker(
             limit:100, 
-            query:{
+            query: {
                 maker:"${walletAddress}"
                 timestamp: {
-                from: 0
-                to: 1999999999
+                    from: 0
+                    to: 1999999999
                 },
                 eventType:Swap
                 networkId:${networkId}
-                }) {
-                    items {
+            }) {
+                items {
+                    id
                     token0ValueBase
                     token1ValueBase,
                     timestamp
