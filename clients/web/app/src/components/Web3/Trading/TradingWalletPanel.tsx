@@ -9,6 +9,7 @@ import { useTradingWallet } from './useTradingWallet'
 import { TradingTokensList } from './TradingTokensList'
 import { AutoCreateSolanaWallet } from './AutoCreateSolanaWallet'
 import { TabPanel } from './ui/TabPanel'
+import { TradingActivity } from './TradingActivity'
 
 export function TradingWalletPanel() {
     const { openPanel } = usePanelActions()
@@ -88,11 +89,7 @@ export function TradingWalletPanel() {
                                 NFTs
                             </Box>
                         )}
-                        {tab === 'activity' && (
-                            <Box centerContent color="gray1">
-                                Activity
-                            </Box>
-                        )}
+                        {tab === 'activity' && <TradingActivity />}
                     </Stack>
                 </TabPanel>
             </Stack>

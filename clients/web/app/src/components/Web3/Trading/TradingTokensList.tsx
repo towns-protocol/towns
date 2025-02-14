@@ -29,7 +29,7 @@ export const TradingTokensList = ({ assets }: { assets: ChainWalletAssets[] }) =
             ...asset.nativeAsset,
             imageUrl: baseImageURL,
             decimals: 18,
-            tokenAddress: '',
+            tokenAddress: 'BASE',
             symbol: 'BASE',
             name: 'Base',
             walletAddress: asset.walletAddress,
