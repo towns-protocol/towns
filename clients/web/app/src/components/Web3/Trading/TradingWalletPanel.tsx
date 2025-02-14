@@ -67,7 +67,6 @@ export function TradingWalletPanel() {
 
                 <Stack horizontal gap padding>
                     <WalletActionButton iconName="plus" label="Deposit" onClick={onClickDeposit} />
-                    <WalletActionButton iconName="swap" label="Swap" onClick={() => {}} />
                     <WalletActionButton iconName="linkOut" label="Send" onClick={() => {}} />
                 </Stack>
 
