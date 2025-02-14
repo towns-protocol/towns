@@ -207,35 +207,67 @@ export function decodeCallData<F extends FunctionHash>(args: {
 export function isPrepayMembershipData(
     decodedCallData: DecodedCallData<FunctionHash> | undefined,
 ): decodedCallData is PrepayMembershipData {
-    return decodedCallData?.functionHash === 'prepayMembership'
+    return (
+        decodedCallData?.functionHash === 'prepayMembership' &&
+        !!decodedCallData?.functionData &&
+        typeof decodedCallData.functionData === 'object' &&
+        'supply' in decodedCallData.functionData
+    )
 }
 
 export function isTransferEthData(
     decodedCallData: DecodedCallData<FunctionHash> | undefined,
 ): decodedCallData is TransferEthData {
-    return decodedCallData?.functionHash === 'transferEth'
+    return (
+        decodedCallData?.functionHash === 'transferEth' &&
+        !!decodedCallData?.functionData &&
+        typeof decodedCallData.functionData === 'object' &&
+        'toAddress' in decodedCallData.functionData &&
+        'executeData' in decodedCallData &&
+        'executeType' in decodedCallData
+    )
 }
 
 export function isTransferTokensData(
     decodedCallData: DecodedCallData<FunctionHash> | undefined,
 ): decodedCallData is TransferTokensData {
-    return decodedCallData?.functionHash === 'transferTokens'
+    return (
+        decodedCallData?.functionHash === 'transferTokens' &&
+        !!decodedCallData?.functionData &&
+        typeof decodedCallData.functionData === 'object' &&
+        'fromAddress' in decodedCallData.functionData &&
+        'recipient' in decodedCallData.functionData &&
+        'tokenId' in decodedCallData.functionData
+    )
 }
 
 export function isWithdrawData(
     decodedCallData: DecodedCallData<FunctionHash> | undefined,
 ): decodedCallData is WithdrawData {
-    return decodedCallData?.functionHash === 'withdraw'
+    return (
+        decodedCallData?.functionHash === 'withdraw' &&
+        !!decodedCallData?.functionData &&
+        typeof decodedCallData.functionData === 'object' &&
+        'recipient' in decodedCallData.functionData
+    )
 }
 
 export function isBatchData(
     decodedCallData: DecodedCallData<FunctionHash> | undefined,
 ): decodedCallData is DecodedBatchCallData<FunctionHash> {
-    return decodedCallData?.executeType === 'batch'
+    return (
+        decodedCallData?.executeType === 'batch' &&
+        decodedCallData?.toAddress !== undefined &&
+        decodedCallData?.executeData !== undefined
+    )
 }
 
 export function isSingleData(
     decodedCallData: DecodedCallData<FunctionHash> | undefined,
 ): decodedCallData is DecodedSingleCallData<FunctionHash> {
-    return decodedCallData?.executeType === 'single'
+    return (
+        decodedCallData?.executeType === 'single' &&
+        decodedCallData?.toAddress !== undefined &&
+        decodedCallData?.executeData !== undefined
+    )
 }

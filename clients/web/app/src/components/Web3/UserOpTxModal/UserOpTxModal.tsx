@@ -6,9 +6,10 @@ import { AboveAppProgressModalContainer } from '@components/AppProgressOverlay/A
 import { usePublicPageLoginFlow } from 'routes/PublicTownPage/usePublicPageLoginFlow'
 import { useDevice } from 'hooks/useDevice'
 import { env } from 'utils'
+import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
 import { StandardUseropTx } from './StandardUseropTx'
 import { useMyAbstractAccountAddress } from './hooks/useMyAbstractAccountAddress'
-import { UserOpTxModal as UserOpTxModalV2 } from './v2/UserOpTxModal'
+import { ErrorContent, UserOpTxModal as UserOpTxModalV2 } from './v2/UserOpTxModal'
 
 export function UserOpTxModal() {
     return env.VITE_ENABLE_CONFIRM_V2 ? <UserOpTxModalV2 /> : <UserOpTxModalV1 />
@@ -28,6 +29,14 @@ export function UserOpTxModalV1() {
     const { isTouch } = useDevice()
     const [disableUiWhileCrossmintPaymentPhase, setDisableUiWhileCrossmintPaymentPhase] =
         useState(false)
+    const onHide = () => {
+        // prevent close while crossmint payment is in progress
+        if (disableUiWhileCrossmintPaymentPhase) {
+            return
+        }
+        endPublicPageLoginFlow()
+        deny?.()
+    }
     if (!promptUser) {
         return null
     }
@@ -36,19 +45,16 @@ export function UserOpTxModalV1() {
             asSheet={isTouch}
             minWidth="auto"
             background={isTouch ? undefined : 'none'}
-            onHide={() => {
-                // prevent close while crossmint payment is in progress
-                if (disableUiWhileCrossmintPaymentPhase) {
-                    return
-                }
-                endPublicPageLoginFlow()
-                deny?.()
-            }}
+            onHide={onHide}
         >
-            <StandardUseropTx
-                disableUiWhileCrossmintPaymentPhase={disableUiWhileCrossmintPaymentPhase}
-                setDisableUiWhileCrossmintPaymentPhase={setDisableUiWhileCrossmintPaymentPhase}
-            />
+            <ErrorBoundary
+                FallbackComponent={({ error }) => <ErrorContent error={error} onHide={onHide} />}
+            >
+                <StandardUseropTx
+                    disableUiWhileCrossmintPaymentPhase={disableUiWhileCrossmintPaymentPhase}
+                    setDisableUiWhileCrossmintPaymentPhase={setDisableUiWhileCrossmintPaymentPhase}
+                />
+            </ErrorBoundary>
         </AboveAppProgressModalContainer>
     )
 }

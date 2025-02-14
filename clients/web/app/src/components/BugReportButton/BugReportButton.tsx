@@ -3,7 +3,8 @@ import { Box, Icon } from '@ui'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { Analytics } from 'hooks/useAnalytics'
 
-export const BugReportButton = () => {
+export const BugReportButton = (props: { onClick?: () => void }) => {
+    const { onClick } = props
     const { closePanel, openPanel, isPanelOpen } = usePanelActions()
     const isActive = isPanelOpen('bug-report')
 
@@ -14,7 +15,8 @@ export const BugReportButton = () => {
             Analytics.getInstance().track('clicked bug report')
             openPanel('bug-report')
         }
-    }, [closePanel, isPanelOpen, openPanel])
+        onClick?.()
+    }, [closePanel, isPanelOpen, openPanel, onClick])
 
     return (
         <>
