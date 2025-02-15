@@ -1,4 +1,12 @@
-import React, { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, {
+    ChangeEvent,
+    startTransition,
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+} from 'react'
 import { matchPath, useLocation } from 'react-router'
 import {
     useSpaceData,
@@ -29,7 +37,9 @@ export const SearchBar = () => {
 
     const onChange = (e: ChangeEvent<HTMLInputElement>) => {
         if (e.target) {
-            setValue(e.target.value)
+            startTransition(() => {
+                setValue(e.target.value)
+            })
         }
     }
     const onHide = useCallback(() => {
@@ -114,7 +124,7 @@ export const SearchBar = () => {
                                         height="100%"
                                         width="700"
                                         placeholder={searchLabel}
-                                        value={value ?? undefined}
+                                        defaultValue={value}
                                         data-testid="top-search-bar-input"
                                         onChange={onChange}
                                     />
