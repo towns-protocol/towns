@@ -259,6 +259,8 @@ contract StreamRegistryTest is
     givenNodeOperatorIsApproved(nodeOperator)
     givenNodeIsRegistered(nodeOperator, node.node, node.url)
   {
+    vm.assume(randomNode != node.node);
+
     address[] memory nodes = new address[](2);
     nodes[0] = node.node;
     nodes[1] = randomNode;

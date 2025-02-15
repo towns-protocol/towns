@@ -94,27 +94,46 @@ func (syncOp *StreamSyncOperation) Run(
 	res StreamsResponseSubscriber,
 ) error {
 	log := logging.FromCtx(syncOp.ctx).With("syncId", syncOp.SyncID)
-
+	
 	messagesSendToClient := 0
 
 	log.Info("Stream sync operation start")
 	defer log.Infow("Stream sync operation stopped", "send", messagesSendToClient)
 
-	cookies, err := client.ValidateAndGroupSyncCookies(req.Msg.GetSyncPos())
-	if err != nil {
-		return err
-	}
-
 	syncers, messages, err := client.NewSyncers(
 		syncOp.ctx, syncOp.cancel, syncOp.SyncID, syncOp.streamCache,
-		syncOp.nodeRegistry, syncOp.thisNodeAddress, cookies, syncOp.otelTracer)
+		syncOp.nodeRegistry, syncOp.thisNodeAddress, nil, syncOp.otelTracer)
 	if err != nil {
 		return err
 	}
 
-	syncers.AddInitialStreams()
-
 	go syncers.Run()
+
+	go func() {
+		for _, cookie := range req.Msg.GetSyncPos() {
+			cmd := &subCommand{
+				Ctx: syncOp.ctx,
+				AddStreamReq: &connect.Request[AddStreamToSyncRequest]{
+					Msg: &AddStreamToSyncRequest{
+						SyncId:  syncOp.SyncID,
+						SyncPos: cookie,
+					},
+				},
+				reply: make(chan error, 1),
+			}
+			if err := syncOp.process(cmd); err != nil {
+				select {
+				case messages <- &SyncStreamsResponse{
+					SyncOp:   SyncOp_SYNC_DOWN,
+					StreamId: cookie.GetStreamId(),
+				}:
+					continue
+				case <-syncOp.ctx.Done():
+					return
+				}
+			}
+		}
+	}()
 
 	for {
 		select {
@@ -128,7 +147,7 @@ func (syncOp *StreamSyncOperation) Run(
 			}
 
 			msg.SyncId = syncOp.SyncID
-			if err = res.Send(msg); err != nil {
+			if err := res.Send(msg); err != nil {
 				log.Errorw("Unable to send sync stream update to client", "err", err)
 				return err
 			}
@@ -163,7 +182,7 @@ func (syncOp *StreamSyncOperation) Run(
 				}
 				cmd.Reply(syncers.RemoveStream(cmd.Ctx, streamID))
 			} else if cmd.PingReq != nil {
-				err = res.Send(&SyncStreamsResponse{
+				err := res.Send(&SyncStreamsResponse{
 					SyncId:    syncOp.SyncID,
 					SyncOp:    SyncOp_SYNC_PONG,
 					PongNonce: cmd.PingReq.Msg.GetNonce(),

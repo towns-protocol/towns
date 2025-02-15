@@ -92,7 +92,7 @@ func NewSyncers(
 	localNodeAddress common.Address,
 	cookies StreamCookieSetGroupedByNodeAddress,
 	otelTracer trace.Tracer,
-) (*SyncerSet, <-chan *SyncStreamsResponse, error) {
+) (*SyncerSet, chan *SyncStreamsResponse, error) {
 	var (
 		log             = logging.FromCtx(ctx)
 		syncers         = make(map[common.Address]StreamsSyncer)
@@ -177,14 +177,6 @@ func (ss *SyncerSet) Run() {
 	ss.muSyncers.Unlock()
 
 	ss.syncerTasks.Wait() // background syncers finished -> safe to close messages channel
-}
-
-func (ss *SyncerSet) AddInitialStreams() {
-	ss.muSyncers.Lock()
-	for _, syncer := range ss.syncers {
-		ss.startSyncer(syncer)
-	}
-	ss.muSyncers.Unlock()
 }
 
 func (ss *SyncerSet) AddStream(

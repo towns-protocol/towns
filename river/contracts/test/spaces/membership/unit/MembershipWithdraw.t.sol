@@ -10,8 +10,6 @@ import {IPlatformRequirements} from "contracts/src/factory/facets/platform/requi
 //libraries
 import {BasisPoints} from "contracts/src/utils/libraries/BasisPoints.sol";
 
-//contracts
-import {console} from "forge-std/console.sol";
 contract MembershipWithdraw is MembershipBaseSetup {
   function test_withdraw()
     external
