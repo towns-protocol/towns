@@ -94,11 +94,11 @@ func (syncOp *StreamSyncOperation) Run(
 	res StreamsResponseSubscriber,
 ) error {
 	log := logging.FromCtx(syncOp.ctx).With("syncId", syncOp.SyncID)
-	
+
 	messagesSendToClient := 0
 
-	log.Info("Stream sync operation start")
-	defer log.Infow("Stream sync operation stopped", "send", messagesSendToClient)
+	log.Debug("Stream sync operation start")
+	defer log.Debugw("Stream sync operation stopped", "send", messagesSendToClient)
 
 	syncers, messages, err := client.NewSyncers(
 		syncOp.ctx, syncOp.cancel, syncOp.SyncID, syncOp.streamCache,
