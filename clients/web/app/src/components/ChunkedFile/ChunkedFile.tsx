@@ -1,7 +1,5 @@
-import useResizeObserver from '@react-hook/resize-observer'
 import { useMutation } from '@tanstack/react-query'
-import debounce from 'lodash/debounce'
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useChunkedMedia, useDownloadFile } from 'use-towns-client'
 import { Box, Button, Icon, IconButton, Stack, Text } from '@ui'
 import { useDevice } from 'hooks/useDevice'
@@ -136,73 +134,15 @@ const ChunkedFileDownload = (
     )
 }
 
-const getClosestEventDiv = (element: React.RefObject<HTMLDivElement>) =>
-    element.current?.closest('[id^="event-"]') as HTMLDivElement
-
 const ChunkedImageMedia = (
     props: Props & {
         onDownloadClicked: (event: React.MouseEvent<Element, MouseEvent>) => Promise<void>
     },
 ) => {
-    const { width, height, filename, thumbnail, onClick, onDownloadClicked } = props
-    const [thumbnailURL, setThumbnailURL] = useState<string | undefined>(undefined)
-    const { objectURL } = useChunkedMedia(props)
+    const { width, height, thumbnail, onClick, onDownloadClicked } = props
+
+    const { isMessageAttachementContext } = useIsMessageAttachementContext()
     const { isTouch } = useDevice()
-    const containerRef = useRef<HTMLDivElement>(null)
-    const [displayHeight, setDisplayHeight] = useState(0)
-
-    const calculateDimensions = useCallback(() => {
-        if (!containerRef.current) {
-            return
-        }
-
-        const multiplier = isTouch ? 0.7 : 1
-        // By default, the image thumbnail will have a maximum height of 280px * MULTIPLIER
-        const MAX_HEIGHT = 280 * multiplier
-
-        // Get the element that is the closest ancestor of the current element that has an ID that starts with 'event-'
-        // We do not use containerRef.current here because the containerRef is the parent of the image thumbnail and it
-        // does not resize along with window because it has a fixed height set
-        const containerWidth =
-            (getClosestEventDiv(containerRef).getBoundingClientRect().width ?? 350) - 100
-        // Calculate the height of the image thumbnail based on the available container width
-        const heightBasedOnContainerWidth = (height / width) * containerWidth
-        // Calculate the width of the image thumbnail based on the defined MAX_HEIGHT above
-        const widthBasedOnMaxHeight = (width / height) * MAX_HEIGHT
-
-        // First preference is to use the MAX_HEIGHT, but if the width of the image thumbnail is going to be larger
-        // than the container width, then use the height based on the container width
-        if (widthBasedOnMaxHeight > containerWidth) {
-            setDisplayHeight(heightBasedOnContainerWidth)
-        } else {
-            setDisplayHeight(MAX_HEIGHT)
-        }
-    }, [width, height, isTouch, setDisplayHeight])
-
-    const debouncedCalc = useMemo(() => debounce(calculateDimensions, 300), [calculateDimensions])
-
-    // Recalculate the dimensions when the container is resized
-    useResizeObserver(getClosestEventDiv(containerRef), debouncedCalc)
-
-    useLayoutEffect(() => {
-        calculateDimensions()
-    }, [calculateDimensions])
-
-    useEffect(() => {
-        if (!containerRef.current) {
-            return
-        }
-
-        debouncedCalc()
-    }, [debouncedCalc])
-
-    useEffect(() => {
-        if (thumbnail) {
-            const blob = new Blob([thumbnail])
-            const url = URL.createObjectURL(blob)
-            setThumbnailURL(url)
-        }
-    }, [thumbnail])
 
     const [isHovering, setIsHovering] = useState(false)
     const onPointerEnter = useCallback(() => {
@@ -212,21 +152,71 @@ const ChunkedImageMedia = (
         setIsHovering(false)
     }, [])
 
-    const { isMessageAttachementContext } = useIsMessageAttachementContext()
-
+    const { objectURL } = useChunkedMedia(props)
+    const [thumbnailURL] = useState<string | undefined>(() => {
+        if (thumbnail) {
+            const blob = new Blob([thumbnail])
+            return URL.createObjectURL(blob)
+        }
+        return undefined
+    })
     const src = objectURL ?? thumbnailURL ?? ''
     const applyBlur = !objectURL
 
-    const touchButton = isTouch && (
-        <IconButton
-            opaque
-            icon="maximize"
-            position="absolute"
-            bottom="sm"
-            right="sm"
-            onClick={onClick}
-        />
-    )
+    const touchButton = useMemo(() => {
+        return (
+            isTouch && (
+                <IconButton
+                    opaque
+                    icon="maximize"
+                    position="absolute"
+                    bottom="sm"
+                    right="sm"
+                    onClick={onClick}
+                />
+            )
+        )
+    }, [isTouch, onClick])
+
+    const { containerWidth, containerHeight } = useSizeContext()
+
+    const safeArea = useMemo(() => {
+        // slightly arbitrary, the margin around the container (avatars, textbox, etc)
+        const marginX = 85
+        const marginY = 150
+
+        // max size of the image
+        const imageMaxWidth = 600
+        const imageMaxHeight = 600
+
+        // viewport size
+        const vpw = containerWidth - marginX
+        const vph = containerHeight - marginY
+        const ca = vpw / vph
+
+        return {
+            // - never larger than the viewport
+            // - never larger than the image itself
+            // - for stretched landscape (text) downscale 66% otherwise 50%
+            width: Math.min(vpw, imageMaxWidth, width / height > 3 ? width * 0.66 : width * 0.5),
+
+            // - never larger than the imageMaxHeight
+            // - if the image is landscape, never larger than 75% of the viewport height
+            // - if the image is portrait, never larger than 50% of the viewport height
+            // - for stretched landscape (text) downscale 66% otherwise 50%
+            // - but never smaller than 300px height
+            height: Math.max(
+                300,
+                Math.min(
+                    imageMaxHeight,
+                    ca > 1 ? vph * 0.75 : vph * 0.66,
+                    height / width > 3 ? height * 0.66 : height * 0.5,
+                ),
+            ),
+        }
+    }, [containerHeight, containerWidth, height, width])
+
+    const direction = width / height > safeArea.width / safeArea.height ? 'h' : 'v'
 
     return isMessageAttachementContext ? (
         <Box
@@ -243,22 +233,30 @@ const ChunkedImageMedia = (
     ) : (
         <Box
             position="relative"
-            ref={containerRef}
             cursor={onClick ? 'zoom-in' : undefined}
             style={{
-                height: displayHeight,
-                filter: applyBlur ? 'blur(10px) brightness(80%)' : undefined,
+                width: direction === 'h' ? safeArea.width : undefined,
+                height: direction === 'v' ? safeArea.height : undefined,
             }}
-            rounded="sm"
+            rounded="xs"
             overflow="hidden"
             onPointerEnter={isTouch ? undefined : onPointerEnter}
             onPointerLeave={isTouch ? undefined : onPointerLeave}
             onClick={isTouch ? undefined : onClick}
         >
             <img
+                role="image"
                 src={src}
-                alt={filename}
-                style={{ minWidth: '100%', height: '100%', objectFit: 'cover' }}
+                width={width}
+                height={height}
+                style={{
+                    height: '100%',
+                    width: '100%',
+                    objectFit: 'contain',
+                    objectPosition: 'top left',
+                    filter: applyBlur ? 'blur(10px) brightness(80%)' : undefined,
+                }}
+                onClick={isTouch ? undefined : onClick}
             />
             {isHovering && (
                 <Box position="bottomRight" padding="sm">
