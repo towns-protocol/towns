@@ -10,6 +10,8 @@ import { MembershipSettingsSchemaType } from '@components/SpaceSettingsPanel/mem
 import { ErrorMessage, Paragraph, RadioCard, Stack, TextField } from '@ui'
 import { usePlatformMinMembershipPriceInEth } from 'hooks/usePlatformMinMembershipPriceInEth'
 import { shimmerClass } from 'ui/styles/globals/shimmer.css'
+import { TOWNS_PRICING_TERMS_LINK } from 'data/links'
+import { atoms } from 'ui/styles/atoms.css'
 import { useEthInputChange } from './useEthInputChange'
 
 enum PricingPreset {
@@ -29,12 +31,14 @@ export function EditPricing({
     disablePricingModules,
     freeAllocation,
     isEditMode,
+    isFree,
 }: {
     freeAllocation: number | undefined
     pricingModules?: PricingModuleStruct[]
     isLoadingPricingModules?: boolean
     disablePricingModules?: boolean
     isEditMode?: boolean
+    isFree?: boolean
 }) {
     const { formState, setValue, watch, trigger } = useFormContext<MembershipSettingsSchemaType>()
     const { data: minimumMemebershipPrice, isLoading: isLoadingMinMembershipPrice } =
@@ -167,7 +171,33 @@ export function EditPricing({
                     {...formProps}
                 />
             )}
-            {showFixedPricing && (
+            {showFixedPricing && isFree && (
+                <RadioCard
+                    selected={pricingPreset === PricingPreset.Fixed}
+                    name="clientPricingOption"
+                    value="fixed"
+                    title="Free"
+                    description={
+                        <>
+                            Town is free to join.{' '}
+                            <a
+                                href={TOWNS_PRICING_TERMS_LINK}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={atoms({
+                                    textDecoration: 'underline',
+                                })}
+                            >
+                                Terms
+                            </a>{' '}
+                            apply.
+                        </>
+                    }
+                    dataTestId="membership-pricing-type-fixed-free"
+                    {...formProps}
+                />
+            )}
+            {showFixedPricing && !isFree && (
                 <RadioCard
                     selected={pricingPreset === PricingPreset.Fixed}
                     name="clientPricingOption"

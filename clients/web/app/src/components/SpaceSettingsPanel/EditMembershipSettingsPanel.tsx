@@ -3,9 +3,10 @@ import {
     BlockchainTransactionType,
     useIsTransactionPending,
     useMembershipFreeAllocation,
+    usePlatformMinMembershipPrice,
     usePricingModules,
 } from 'use-towns-client'
-import { constants } from 'ethers'
+import { BigNumber, constants } from 'ethers'
 import { FormProvider, UseFormReturn } from 'react-hook-form'
 import { FormRender, Icon, Paragraph, Stack, Text } from '@ui'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
@@ -75,6 +76,8 @@ function EditMembershipForm({
 
     const { data: pricingModules, isLoading: isLoadingPricingModules } = usePricingModules()
 
+    const { data: minMembershipPrice } = usePlatformMinMembershipPrice()
+
     const defaultValues: EditMembershipSchemaType = useMemo(
         () => ({
             gatingType: entitlements.hasEntitlements ? 'gated' : 'everyone',
@@ -90,6 +93,11 @@ function EditMembershipForm({
         }),
         [entitlements, membershipInfo, pricingModule],
     )
+
+    const isFree =
+        pricingModule?.isFixed &&
+        minMembershipPrice instanceof BigNumber &&
+        membershipInfo?.price.lt(minMembershipPrice)
 
     if (isEntitlementsLoading) {
         return <ButtonSpinner />
@@ -136,6 +144,7 @@ function EditMembershipForm({
                                             )}
                                             <EditPricing
                                                 isEditMode
+                                                isFree={isFree}
                                                 freeAllocation={freeAllocation}
                                                 pricingModules={pricingModules}
                                                 isLoadingPricingModules={isLoadingPricingModules}

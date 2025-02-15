@@ -9,8 +9,8 @@ import * as style from './RadioSelect/RadioSelect.css'
 
 type Props<T extends FieldValues> = {
     value: string
-    title: string
-    description: string
+    title: string | React.ReactNode
+    description: string | React.ReactNode
     selected?: boolean
     children?: React.ReactNode
     name: string
