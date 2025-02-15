@@ -7,6 +7,7 @@ import { env } from 'utils'
 export type LifiQuote = {
     id: string
     estimate: {
+        approvalAddress: string
         fromAmount: string
         fromAmountUSD: string
         toAmount: string
@@ -28,6 +29,7 @@ export type LifiQuote = {
 const zLifiQuote: z.ZodType<LifiQuote> = z.object({
     id: z.string(),
     estimate: z.object({
+        approvalAddress: z.string(),
         fromAmount: z.string(),
         fromAmountUSD: z.string(),
         toAmount: z.string(),

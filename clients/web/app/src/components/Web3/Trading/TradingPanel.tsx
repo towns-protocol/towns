@@ -20,6 +20,7 @@ import { useSolanaBalance } from './useSolanaBalance'
 import { useSolanaWallet } from './useSolanaWallet'
 import { SolanaTransactionRequest, useTradingContext } from './TradingContextProvider'
 import { useTokenBalance } from './useTokenBalance'
+import { generateApproveAmountCallData } from './hooks/erc20-utils'
 
 export const TradingPanel = () => {
     const townsClient = useTownsClient()
@@ -152,10 +153,27 @@ export const TradingPanel = () => {
                 return
             }
 
+            // IF this is a token transfer, we need to approve the token first
+            // by bundling an approve call with the actual transaction call.
+            // call approve(spender, amount) with quote.estimate.approvalAddress, amount
+            // then add the actual swap tx
+            const data =
+                fromTokenAddress !== nativeTokenAddress
+                    ? {
+                          callData: [
+                              generateApproveAmountCallData(
+                                  quote.data.estimate.approvalAddress,
+                                  quote.data.estimate.fromAmount,
+                              ),
+                              quote.data.transactionRequest.data,
+                          ],
+                          toAddress: [fromTokenAddress, to],
+                      }
+                    : { toAddress: to, callData: quote.data.transactionRequest.data }
+
             try {
                 const res = await townsClient.sendUserOperationWithCallData({
-                    callData: quote.data.transactionRequest.data,
-                    toAddress: to,
+                    ...data,
                     value: BigInt(value),
                     signer,
                 })
@@ -164,7 +182,7 @@ export const TradingPanel = () => {
                 console.error('Error sending transaction', error)
             }
         },
-        [quote, chainId, townsClient],
+        [quote, chainId, townsClient, fromTokenAddress, nativeTokenAddress],
     )
 
     const tradingContext = useTradingContext()
