@@ -1888,18 +1888,14 @@ export class UserOps {
         })
     }
 
-    public async sendUserOperationWithCallData(args: {
-        callData: string
-        toAddress: string
-        value: bigint
-        signer: ethers.Signer
-    }) {
-        const { callData, toAddress, value, signer } = args
+    public async sendUserOperationWithCallData(
+        args: {
+            value: bigint
+            signer: ethers.Signer
+        } & ({ callData: string; toAddress: string } | { callData: string[]; toAddress: string[] }),
+    ) {
         return this.sendUserOp({
-            toAddress,
-            callData,
-            value,
-            signer,
+            ...args,
             spaceId: undefined,
             functionHashForPaymasterProxy: 'unsponsored',
         })

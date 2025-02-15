@@ -339,12 +339,12 @@ interface TownsClientImpl {
     waitForCheckInTransaction: (
         transactionContext: TransactionContext<void>,
     ) => Promise<TransactionContext<void> | undefined>
-    sendUserOperationWithCallData: (args: {
-        callData: string
-        toAddress: string
-        value: bigint
-        signer: TSigner
-    }) => Promise<TransactionContext<void> | undefined>
+    sendUserOperationWithCallData: (
+        args: {
+            value: bigint
+            signer: TSigner
+        } & ({ callData: string; toAddress: string } | { callData: string[]; toAddress: string[] }),
+    ) => Promise<TransactionContext<void> | undefined>
 }
 
 export function useTownsClient(): TownsClientImpl {

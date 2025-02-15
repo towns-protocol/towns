@@ -1727,12 +1727,12 @@ export class BaseTransactor {
         }
     }
 
-    public async sendUserOperationWithCallData(args: {
-        callData: string
-        toAddress: string
-        value: bigint
-        signer: TSigner
-    }): Promise<TransactionContext<void>> {
+    public async sendUserOperationWithCallData(
+        args: {
+            value: bigint
+            signer: TSigner
+        } & ({ callData: string; toAddress: string } | { callData: string[]; toAddress: string[] }),
+    ): Promise<TransactionContext<void>> {
         let transaction: TransactionOrUserOperation | undefined = undefined
         let error: Error | undefined = undefined
         if (!this.isAccountAbstractionEnabled()) {
