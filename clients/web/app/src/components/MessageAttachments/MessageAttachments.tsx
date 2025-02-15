@@ -1,4 +1,4 @@
-import React, { MouseEventHandler, useCallback, useContext } from 'react'
+import React, { MouseEventHandler, useCallback, useContext, useState } from 'react'
 import {
     useChannelSettings,
     useContractSpaceInfo,
@@ -21,7 +21,6 @@ import { ChunkedFile } from '@components/ChunkedFile/ChunkedFile'
 import { EmbeddedMessage } from '@components/EmbeddedMessageAttachement/EmbeddedMessage'
 import { Box, BoxProps, Heading, Icon, Paragraph, Stack, Text } from '@ui'
 import { isImageMimeType, isMediaMimeType, isVideoMimeType } from 'utils/isMediaMimeType'
-import { RatioedBackgroundImage } from '@components/RatioedBackgroundImage'
 import { getTownParamsFromUrl } from 'utils/getTownParamsFromUrl'
 import { LoadingUnfurledLinkAttachment } from 'hooks/useExtractInternalLinks'
 import { InteractiveSpaceIcon } from '@components/SpaceIcon'
@@ -36,6 +35,7 @@ import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
 import { addressFromSpaceId } from 'ui/utils/utils'
 import { minterRoleId } from '@components/SpaceSettingsPanel/rolePermissions.const'
 import { TradingChart } from '@components/TradingChart/TradingChart'
+import { useSizeContext } from 'ui/hooks/useSizeContext'
 import { MessageAttachmentsContext } from './MessageAttachmentsContext'
 
 const emptyArray: never[] = []
@@ -395,58 +395,91 @@ const Pill = ({ children, ...props }: BoxProps) => (
     </Box>
 )
 
+const SKIP_PROFILE_IMAGES = false
+
+function isProfileImage(url?: string) {
+    return !!(url?.match('profile_image') || url?.match('avatars.githubusercontent.com'))
+}
+
+function validateImage(image?: Image): image is Image {
+    if (!image?.url || !image?.height) {
+        return false
+    }
+    if (SKIP_PROFILE_IMAGES && isProfileImage(image.url)) {
+        return false
+    }
+    return true
+}
+
 const GenericContent = (props: {
     image?: Image
     title?: string
     description?: string
     url?: string
-}) => (
-    <LinkContainer>
-        {props.image?.url && !!props.image?.height && (
-            <RatioedBackgroundImage
-                alt={props.title}
-                url={props.image.url}
-                width={props.image.width}
-                height={props.image.height}
-            />
-        )}
-        <Stack gap="paragraph" padding="md">
-            {props.title && !isUrl(props.title) && (
-                <Box>
-                    <Text
-                        size="md"
+}) => {
+    const [isImageLoaded, setIsImageLoaded] = useState(false)
+    const { containerHeight, aspectRatio: containerAspectRatio } = useSizeContext()
+    return (
+        <LinkContainer>
+            {!isImageLoaded && validateImage(props.image) && (
+                <Box
+                    roundedTop="md"
+                    as="img"
+                    src={props.image.url}
+                    alt={props.title}
+                    objectFit="cover"
+                    objectPosition="center"
+                    style={{
+                        width: '100%',
+                        maxHeight: `min(${!isProfileImage(props.image?.url) ? '290px' : '150px'}, ${
+                            containerAspectRatio > 1 ? containerHeight * 0.5 : containerHeight * 0.5
+                        }px)`,
+                    }}
+                    onError={() => setIsImageLoaded(true)}
+                />
+            )}
+            <Stack padding gap="paragraph">
+                {props.title && !isUrl(props.title) && (
+                    <Paragraph
                         style={{
                             overflowWrap: 'break-word',
                         }}
                     >
                         {props.title}
+                    </Paragraph>
+                )}
+                {props.description && (
+                    <Text>
+                        <Text
+                            size="sm"
+                            color="gray2"
+                            style={{
+                                display: '-webkit-box',
+                                WebkitLineClamp: 5,
+                                WebkitBoxOrient: 'vertical',
+                                overflow: 'hidden',
+                            }}
+                        >
+                            {props.description}
+                        </Text>
+                    </Text>
+                )}
+                <Box
+                    hoverable
+                    color={{ hover: 'cta2', default: 'gray1' }}
+                    maxWidth="100%"
+                    paddingBottom="xs"
+                >
+                    <Text truncate fontWeight="medium" size="sm">
+                        {props.url?.match(/^https?:\/\//)
+                            ? new URL(props.url).hostname
+                            : 'invalid host'}
                     </Text>
                 </Box>
-            )}
-            {props.description && (
-                <Text>
-                    <Text
-                        size="sm"
-                        color="gray2"
-                        style={{
-                            display: '-webkit-box',
-                            WebkitLineClamp: 5,
-                            WebkitBoxOrient: 'vertical',
-                            overflow: 'hidden',
-                        }}
-                    >
-                        {props.description}
-                    </Text>
-                </Text>
-            )}
-            <Box hoverable color={{ hover: 'cta2', default: 'gray2' }} maxWidth="100%">
-                <Text truncate fontWeight="medium" size="sm">
-                    {props.url}
-                </Text>
-            </Box>
-        </Stack>
-    </LinkContainer>
-)
+            </Stack>
+        </LinkContainer>
+    )
+}
 
 const LinkContainer = (props: BoxProps) => (
     <Box background="level2" borderRadius="md" maxWidth="300" {...props} />
