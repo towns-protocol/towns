@@ -1,12 +1,11 @@
 import React, { useMemo } from 'react'
 import { useProtocolFee } from 'use-towns-client'
-import { selectUserOpsByAddress, userOpsStore } from '@towns/userops'
 import { BigNumber, BigNumberish } from 'ethers'
 import { Box, Heading, MotionIcon, Text } from '@ui'
 import { Accordion, HeaderProps as AccordionHeaderProps } from 'ui/components/Accordion/Accordion'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { formatUnits, formatUnitsToFixedLength } from 'hooks/useBalance'
-import { useMyAbstractAccountAddress } from './hooks/useMyAbstractAccountAddress'
+import { useIsJoinSpace } from '../hooks/useIsJoinSpace'
 
 export function ChargesSummary(props: {
     gasInEth: string
@@ -18,15 +17,7 @@ export function ChargesSummary(props: {
 }) {
     const { gasInEth, totalInEth, spaceId, value, gasCost } = props
     const { data: protocolFee, isLoading: isLoadingProtocolFee } = useProtocolFee({ spaceId })
-    const myAbstractAccountAddress = useMyAbstractAccountAddress().data
-    const currOpDecodedCallData = userOpsStore(
-        (s) => selectUserOpsByAddress(myAbstractAccountAddress, s)?.current?.decodedCallData,
-    )
-
-    const isJoinSpace =
-        currOpDecodedCallData?.functionHash === 'joinSpace' ||
-        currOpDecodedCallData?.functionHash === 'joinSpace_linkWallet'
-
+    const isJoinSpace = useIsJoinSpace()
     const isPaidTown = !!value && isJoinSpace && BigNumber.from(value).toBigInt() > 0n
 
     const gasWithProtocolFee: string = useMemo(() => {

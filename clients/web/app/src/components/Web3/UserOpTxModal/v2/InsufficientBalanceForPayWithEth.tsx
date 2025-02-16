@@ -4,10 +4,11 @@ import { Box, Button, Icon, Paragraph, Text } from '@ui'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { useBalance } from 'hooks/useBalance'
 import { env } from 'utils'
+import { trackClickedAddFunds } from '@components/Web3/Wallet/fundWalletAnalytics'
 import { WalletWithBalance } from '../../Wallet/WalletWithBalance'
 import { useUserOpTxModalContext } from './UserOpTxModalContext'
 import { CopyWalletAddressButton } from '../../GatedTownModal/Buttons'
-
+import { useIsJoinSpace } from '../hooks/useIsJoinSpace'
 export function InsufficientBalanceForPayWithEth(props: {
     smartAccountAddress: Address | undefined
     onCopyClick: () => void
@@ -27,6 +28,7 @@ export function InsufficientBalanceForPayWithEth(props: {
         enabled: !!smartAccountAddress,
         watch: true,
     })
+    const isJoinSpace = useIsJoinSpace()
 
     useEffect(() => {
         if (balanceData?.value && balanceData.value >= props.cost) {
@@ -58,7 +60,16 @@ export function InsufficientBalanceForPayWithEth(props: {
                 />
             </Box>
             {env.VITE_ENABLE_CONFIRM_FUND_WALLET && (
-                <Button rounded="lg" tone="cta1" onClick={() => setView('depositEth')}>
+                <Button
+                    rounded="lg"
+                    tone="cta1"
+                    onClick={() => {
+                        if (isJoinSpace) {
+                            trackClickedAddFunds({ entrypoint: 'joinspace' })
+                        }
+                        setView('depositEth')
+                    }}
+                >
                     <Icon type="plus" />
                     Deposit ETH
                 </Button>

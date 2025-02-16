@@ -4,12 +4,12 @@ import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { Box, Icon, Text, TextButton } from '@ui'
 import { useBalance } from 'hooks/useBalance'
-import { Analytics } from 'hooks/useAnalytics'
 import { useStore } from 'store/store'
 import { PanelButton } from '@components/Panel/PanelButton'
 import useCopyToClipboard from 'hooks/useCopyToClipboard'
 import { baseScanUrl } from '@components/Web3/utils'
 import { useEnvironment } from 'hooks/useEnvironmnet'
+import { trackClickedAddFunds } from './fundWalletAnalytics'
 
 export function TownsWallet() {
     const { loggedInWalletAddress } = useConnectivity()
@@ -27,7 +27,7 @@ export function TownsWallet() {
     const [, copy] = useCopyToClipboard()
 
     const handleDeposit = () => {
-        Analytics.getInstance().track('clicked add funds')
+        trackClickedAddFunds({ entrypoint: 'profile' })
         setFundWalletModalOpen(true)
     }
 

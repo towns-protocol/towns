@@ -1,7 +1,9 @@
 import { Analytics } from 'hooks/useAnalytics'
 import { FundWalletCallbacks } from '../Decent/fund/types'
 
-export function trackFundWalletTx(args: { success: boolean; entrypoint: 'joinspace' | 'profile' }) {
+type Entrypoint = 'joinspace' | 'profile'
+
+export function trackFundWalletTx(args: { success: boolean; entrypoint: Entrypoint }) {
     const { success, entrypoint } = args
     Analytics.getInstance().track('added funds', {
         success,
@@ -9,10 +11,7 @@ export function trackFundWalletTx(args: { success: boolean; entrypoint: 'joinspa
     })
 }
 
-export function trackConnectWallet(args: {
-    walletName: string
-    entrypoint: 'joinspace' | 'profile'
-}) {
+export function trackConnectWallet(args: { walletName: string; entrypoint: Entrypoint }) {
     const { walletName, entrypoint } = args
     Analytics.getInstance().track('add funds connected wallet', {
         entrypoint,
@@ -20,13 +19,22 @@ export function trackConnectWallet(args: {
     })
 }
 
+export function trackClickedAddFunds(args: { entrypoint: Entrypoint }) {
+    const { entrypoint } = args
+    Analytics.getInstance().track('clicked add funds', {
+        entrypoint,
+    })
+}
+
 export function trackFundWalletTxStart(
     args: Parameters<NonNullable<FundWalletCallbacks['onTxStart']>>[0],
+    entrypoint: Entrypoint,
 ) {
     const { sourceChain, sourceAsset, sourceAmount } = args
-    Analytics.getInstance().track('add funds tx start', {
+    Analytics.getInstance().track('add funds initiate', {
         sourceChain,
         sourceAsset,
         sourceAmount,
+        entrypoint,
     })
 }

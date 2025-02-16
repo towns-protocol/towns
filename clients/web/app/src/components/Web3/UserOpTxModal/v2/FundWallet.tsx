@@ -11,26 +11,39 @@ import {
 } from '../../Wallet/fundWalletAnalytics'
 import { useUserOpTxModalContext } from './UserOpTxModalContext'
 import { useMyAbstractAccountAddress } from './hooks/useMyAbstractAccountAddress'
+import { useIsJoinSpace } from '../hooks/useIsJoinSpace'
 
 export const FundWallet = (props: { cost: bigint }) => {
     const { baseProvider } = useTownsContext()
     const myAbstractAccountAddress = useMyAbstractAccountAddress().data
     const { setView } = useUserOpTxModalContext()
     const [isCheckingBalance, setIsCheckingBalance] = useState(false)
+    const isJoinSpace = useIsJoinSpace()
 
     return (
         <>
             <Onboarding
-                onConnectWallet={(wallet) =>
-                    trackConnectWallet({
-                        walletName: wallet.meta.name ?? 'unknown',
-                        entrypoint: 'joinspace',
-                    })
-                }
-                onTxStart={(args) => trackFundWalletTxStart(args)}
+                onConnectWallet={(wallet) => {
+                    if (isJoinSpace) {
+                        trackConnectWallet({
+                            walletName: wallet.meta.name ?? 'unknown',
+                            entrypoint: 'joinspace',
+                        })
+                    }
+                }}
+                onTxStart={(args) => {
+                    if (isJoinSpace) {
+                        trackFundWalletTxStart(args, 'joinspace')
+                    }
+                }}
                 onTxSuccess={async (r) => {
                     if (r) {
-                        trackFundWalletTx({ success: true, entrypoint: 'joinspace' })
+                        if (isJoinSpace) {
+                            trackFundWalletTx({
+                                success: true,
+                                entrypoint: 'joinspace',
+                            })
+                        }
                         const receipt = r as DecentTransactionReceipt
                         const link = getDecentScanLink(receipt)
                         popupToast(({ toast }) => (
@@ -59,7 +72,12 @@ export const FundWallet = (props: { cost: bigint }) => {
                 }}
                 onTxError={(e) => {
                     console.error('[Fund Wallet Tx from UserOpTxModal] error', e)
-                    trackFundWalletTx({ success: false, entrypoint: 'joinspace' })
+                    if (isJoinSpace) {
+                        trackFundWalletTx({
+                            success: false,
+                            entrypoint: 'joinspace',
+                        })
+                    }
                     popupToast(({ toast }) => (
                         <StandardToast.Error
                             toast={toast}

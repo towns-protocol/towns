@@ -1,6 +1,6 @@
 import React from 'react'
 import { SpaceInfo } from 'use-towns-client'
-import { selectUserOpsByAddress, userOpsStore } from '@towns/userops'
+import { userOpsStore } from '@towns/userops'
 import { useJoinFunnelAnalytics } from '@components/Analytics/useJoinFunnelAnalytics'
 import { useGatherSpaceDetailsAnalytics } from '@components/Analytics/useGatherSpaceDetailsAnalytics'
 import { getSpaceNameFromCache } from '@components/Analytics/getSpaceNameFromCache'
@@ -9,6 +9,7 @@ import { useStore } from 'store/store'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { PayWithCardButton } from './PayWithCardButton'
 import { useMyAbstractAccountAddress } from './hooks/useMyAbstractAccountAddress'
+import { useIsJoinSpace } from './hooks/useIsJoinSpace'
 
 export function PaymentChoices(props: {
     spaceInfo: SpaceInfo | undefined
@@ -23,12 +24,7 @@ export function PaymentChoices(props: {
         spaceId,
     })
     const myAbstractAccountAddress = useMyAbstractAccountAddress().data
-    const currOpDecodedCallData = userOpsStore(
-        (s) => selectUserOpsByAddress(myAbstractAccountAddress, s)?.current?.decodedCallData,
-    )
-    const isJoinSpace =
-        currOpDecodedCallData?.functionHash === 'joinSpace' ||
-        currOpDecodedCallData?.functionHash === 'joinSpace_linkWallet'
+    const isJoinSpace = useIsJoinSpace()
     const theme = useStore((s) => s.getTheme())
     const setPromptResponse = userOpsStore((s) => s.setPromptResponse)
     const confirmUserOp = () => setPromptResponse(myAbstractAccountAddress, 'confirm')

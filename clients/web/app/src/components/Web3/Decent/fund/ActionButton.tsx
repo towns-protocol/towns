@@ -1,12 +1,10 @@
 import { useAccount, useSwitchChain } from 'wagmi'
 import { useSetActiveWallet } from '@privy-io/wagmi'
-import { ConnectedWallet } from '@privy-io/react-auth'
 import React, { useEffect, useMemo, useState } from 'react'
 import { Toast } from 'react-hot-toast'
 import { ConnectAndSetActive } from '@components/Web3/Decent/ConnectAndSetActive'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { Button, ButtonProps, Icon, Stack, Text } from '@ui'
-import { usePrivyConnectWallet } from '@components/Web3/ConnectWallet/usePrivyConnectWallet'
 import { shortAddress } from 'ui/utils/utils'
 import {
     useActiveWalletIsPrivy,
@@ -33,29 +31,8 @@ export function ActionButton(props: FundWalletCallbacks) {
     const activeWalletIsPrivy = useActiveWalletIsPrivy()
 
     const buttonStates = useButtonStates(props)
-
-    if (nonPrivyWallets.length === 0 || !isWagmiConnected) {
-        return <ConnectAndSetActive />
-    }
-
-    if (activeWalletIsPrivy) {
-        return (
-            <Stack gap paddingTop="md" alignItems="center">
-                <Text>Select the wallet you want to fund your account</Text>
-                {nonPrivyWallets.map((w) => (
-                    <Button
-                        width="100%"
-                        rounded="full"
-                        key={w.address}
-                        onClick={() => setActiveWallet(w)}
-                    >
-                        <ConnectedWalletIcon walletName={w.walletClientType} />
-                        {shortAddress(w.address)}
-                    </Button>
-                ))}
-            </Stack>
-        )
-    }
+    const showConnectWallet = nonPrivyWallets.length === 0 || !isWagmiConnected
+    const showSetActiveWallet = nonPrivyWallets.length && activeWalletIsPrivy
 
     if (buttonStates.status === INSUFFICIENT_FUNDS || buttonStates.status === INVALID_SWAP) {
         return (
@@ -79,24 +56,51 @@ export function ActionButton(props: FundWalletCallbacks) {
         )
     }
 
+    // we're hiding/showing here instead of removing from DOM b/c of usePrivyConnectWallet, the onSuccess callback doesn't fire if the ConnectAndSetActive component is unmounted
     return (
-        <Button
-            rounded="full"
-            disabled={buttonStates.disabled}
-            tone={buttonStates.tone ?? 'cta1'}
-            onClick={buttonStates.onClick}
-        >
-            {(buttonStates.loading || buttonStates.isApproving) && <ButtonSpinner />}
-            {buttonStates.text}
-        </Button>
+        <>
+            {/* select a different wallet */}
+            <Stack
+                gap
+                display={showSetActiveWallet && !showConnectWallet ? 'flex' : 'none'}
+                paddingTop="md"
+                alignItems="center"
+            >
+                <Text>Select the wallet you want to fund your account</Text>
+                {nonPrivyWallets.map((w) => (
+                    <Button
+                        width="100%"
+                        rounded="full"
+                        key={w.address}
+                        onClick={() => setActiveWallet(w)}
+                    >
+                        <ConnectedWalletIcon walletName={w.walletClientType} />
+                        {shortAddress(w.address)}
+                    </Button>
+                ))}
+            </Stack>
+            {/* connect a new wallet */}
+            <Stack display={showConnectWallet && !showSetActiveWallet ? 'flex' : 'none'}>
+                <ConnectAndSetActive onConnectWallet={props.onConnectWallet} />
+            </Stack>
+            {/* fund the account */}
+            <Stack display={!showConnectWallet && !showSetActiveWallet ? 'flex' : 'none'}>
+                <Button
+                    rounded="full"
+                    disabled={buttonStates.disabled}
+                    tone={buttonStates.tone ?? 'cta1'}
+                    onClick={buttonStates.onClick}
+                >
+                    {(buttonStates.loading || buttonStates.isApproving) && <ButtonSpinner />}
+                    {buttonStates.text}
+                </Button>
+            </Stack>
+        </>
     )
 }
 
 function useButtonStates(props: FundWalletCallbacks) {
     const { onTxStart, onTxSuccess, onTxError } = props
-    const isWagmiConnected = useIsWagmiConnected()
-    const nonPrivyWallets = useNonPrivyWallets()
-    const { setActiveWallet } = useSetActiveWallet()
     const { chainId: walletChainId } = useAccount()
     const { switchChain } = useSwitchChain()
     const [isApproving, setIsApproving] = useState(false)
@@ -115,14 +119,6 @@ function useButtonStates(props: FundWalletCallbacks) {
     } = useFundContext()
     const srcChainId = srcToken?.chainId
     const chainMismatch = srcChainId !== walletChainId
-    const noWalletConnected = nonPrivyWallets.length === 0 || !isWagmiConnected
-
-    const privyConnectWallet = usePrivyConnectWallet({
-        onSuccess: async (wallet) => {
-            await setActiveWallet(wallet as ConnectedWallet)
-            props.onConnectWallet?.(wallet as ConnectedWallet)
-        },
-    })
 
     const buttonStates: {
         text?: string
@@ -137,12 +133,6 @@ function useButtonStates(props: FundWalletCallbacks) {
             return {
                 text: 'Switch Network',
                 onClick: () => switchChain({ chainId: srcChainId }),
-            }
-        }
-        if (noWalletConnected) {
-            return {
-                text: 'Connect Wallet',
-                onClick: privyConnectWallet,
             }
         }
 
@@ -301,7 +291,6 @@ function useButtonStates(props: FundWalletCallbacks) {
     }, [
         chainMismatch,
         srcChainId,
-        noWalletConnected,
         isApprovalRequired,
         estimatedGasFailureReason,
         boxActionResponse,
@@ -311,7 +300,6 @@ function useButtonStates(props: FundWalletCallbacks) {
         isBoxActionLoading,
         disabled,
         switchChain,
-        privyConnectWallet,
         isApproving,
         srcToken?.address,
         srcToken?.chainId,

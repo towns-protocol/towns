@@ -37,7 +37,7 @@ export const FundWalletModal = () => {
                             entrypoint: 'profile',
                         })
                     }
-                    onTxStart={(args) => trackFundWalletTxStart(args)}
+                    onTxStart={(args) => trackFundWalletTxStart(args, 'profile')}
                     onTxSuccess={async (r) => {
                         if (r) {
                             setFundWalletModalOpen(false)
