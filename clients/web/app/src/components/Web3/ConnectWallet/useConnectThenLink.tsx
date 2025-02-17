@@ -24,7 +24,7 @@ export function useConnectThenLink({
     const { baseChain } = useEnvironment()
 
     const connectWallet = usePrivyConnectWallet({
-        onSuccess: async (wallet) => {
+        onSuccess: async ({ wallet }) => {
             const rootSigner = await getSigner()
             if (!rootSigner) {
                 createPrivyNotAuthenticatedNotification()
