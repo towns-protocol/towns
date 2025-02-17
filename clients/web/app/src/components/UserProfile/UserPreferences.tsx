@@ -23,6 +23,14 @@ export function UserPreferences() {
                 <TownNotificationsButton type="gdmGlobal" />
             </Stack>
             <EventSignatureValidationCheckbox />
+            <Stack padding elevate gap background="level2" rounded="sm">
+                <Box display="flex">
+                    <Text fontWeight="strong" color="default">
+                        Editor Preference
+                    </Text>
+                </Box>
+                <SendWithShiftEnterCheckbox />
+            </Stack>
         </>
     )
 }
@@ -72,5 +80,33 @@ const EventSignatureValidationCheckbox = () => {
                 re-validated via the message modal.
             </Paragraph>
         </Stack>
+    )
+}
+
+const SendWithShiftEnterCheckbox = () => {
+    const { sendWithShiftEnter, setSendWithShiftEnter } = useStore()
+
+    const onChange = useCallback(
+        (e: React.ChangeEvent<HTMLInputElement>) => {
+            setSendWithShiftEnter(e.target.checked)
+        },
+        [setSendWithShiftEnter],
+    )
+
+    return (
+        <>
+            <Checkbox
+                labelLast
+                defaultChecked
+                justifyContent="start"
+                checked={sendWithShiftEnter}
+                name="sendWithShiftEnter"
+                label="Send with Shift+Enter"
+                onChange={onChange}
+            />
+            <Paragraph size="sm" color="gray2">
+                When enabled, messages will only be sent when you press Shift+Enter
+            </Paragraph>
+        </>
     )
 }

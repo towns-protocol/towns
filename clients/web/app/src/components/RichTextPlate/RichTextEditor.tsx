@@ -15,7 +15,7 @@ import {
 } from '@components/EmbeddedMessageAttachement/EditorAttachmentPreview'
 import { Box, BoxProps, Stack } from '@ui'
 import { useDevice } from 'hooks/useDevice'
-import { useInputStore } from 'store/store'
+import { useInputStore, useStore } from 'store/store'
 import { LoadingUnfurledLinkAttachment } from 'hooks/useExtractInternalLinks'
 import {
     TComboboxItemWithData,
@@ -301,6 +301,8 @@ export const RichTextEditor = ({
         }
     }, [editorText, isAndroid])
 
+    const sendWithShiftEnter = useStore((state) => state.sendWithShiftEnter)
+
     const customKeydownHandler: React.KeyboardEventHandler = useCallback(
         async (event) => {
             /** On desktop, we want to exit the editor if the user presses up/down  */
@@ -318,7 +320,11 @@ export const RichTextEditor = ({
             }
 
             const { key, shiftKey } = event
-            if (key === 'Enter' && !shiftKey) {
+            if (key === 'Enter' && shiftKey && sendWithShiftEnter) {
+                event.preventDefault()
+                await sendMessage()
+            }
+            if (key === 'Enter' && !shiftKey && !sendWithShiftEnter) {
                 event.preventDefault()
                 await sendMessage()
             }
@@ -332,6 +338,7 @@ export const RichTextEditor = ({
             fileCount,
             exitEditorOnArrow,
             sendMessage,
+            sendWithShiftEnter,
         ],
     )
 
