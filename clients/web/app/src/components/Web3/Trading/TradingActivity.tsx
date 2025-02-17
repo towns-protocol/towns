@@ -45,7 +45,10 @@ const TradingActivityEntry = (props: { item: TradingActivityItem }) => {
         // SOLANA vs EVM token amounts are treated differently
         // i've tried to keep it as readable as possible, and avoided ternaries
         // as much as possible
-        if (item.networkId === SOLANA_CODEX_NETWORK_ID) {
+        if (
+            item.networkId === SOLANA_CODEX_NETWORK_ID ||
+            (item.data.amount0 && item.data.amount1)
+        ) {
             const amount0 = BigInt(item.data.amount0 ?? '0')
             fromTokenIsToken0 = amount0 > 0n
             if (fromTokenIsToken0) {
@@ -56,16 +59,15 @@ const TradingActivityEntry = (props: { item: TradingActivityItem }) => {
                 toAmount = absBigInt(BigInt(item.data.amount0 ?? '0'))
             }
         } else {
-            // For EVM it's just a complete pain to parse out vs in etc
-            // let's try it
             fromTokenIsToken0 = BigInt(item.data.amount0In ?? '0') > 0n
-            if (fromTokenIsToken0) {
-                fromAmount = absBigInt(BigInt(item.data.amount0In ?? '0'))
-                toAmount = absBigInt(BigInt(item.data.amount1Out ?? '0'))
-            } else {
-                fromAmount = absBigInt(BigInt(item.data.amount0Out ?? '0'))
-                toAmount = absBigInt(BigInt(item.data.amount1In ?? '0'))
-            }
+            const amount0 = BigInt(
+                (item.data.amount0In !== '0' ? item.data.amount0In : item.data.amount0Out) ?? '0',
+            )
+            const amount1 = BigInt(
+                (item.data.amount1In !== '0' ? item.data.amount1In : item.data.amount1Out) ?? '0',
+            )
+            fromAmount = absBigInt(amount0)
+            toAmount = absBigInt(amount1)
         }
         // this is a little tricky but it's the only way i've found
         // to reliably keep track of what token is being sold and what token is being bought
