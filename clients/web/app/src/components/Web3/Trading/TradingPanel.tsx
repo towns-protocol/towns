@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { TSigner, TransactionStatus, useConnectivity, useTownsClient } from 'use-towns-client'
+import { TSigner, TransactionStatus, useConnectivity } from 'use-towns-client'
 import { Panel } from '@components/Panel/Panel'
 import { useCoinData } from '@components/TradingChart/useCoinData'
 import { Box, FancyButton, Stack, Text } from '@ui'
@@ -20,11 +20,9 @@ import { useSolanaBalance } from './useSolanaBalance'
 import { useSolanaWallet } from './useSolanaWallet'
 import { SolanaTransactionRequest, useTradingContext } from './TradingContextProvider'
 import { useTokenBalance } from './useTokenBalance'
-import { generateApproveAmountCallData } from './hooks/erc20-utils'
 
 export const TradingPanel = () => {
-    const townsClient = useTownsClient()
-
+    const tradingContext = useTradingContext()
     const [searchParams, setSearchParams] = useSearchParams()
     const { mode, tokenAddress, chainId } = Object.fromEntries(searchParams.entries())
 
@@ -135,57 +133,42 @@ export const TradingPanel = () => {
 
     const buyButtonPressed = useCallback(
         async (getSigner: () => Promise<TSigner | undefined>) => {
-            if (chainId !== '8453') {
-                return
-            }
-
-            if (!quote.data) {
-                return
-            }
             const signer = await getSigner()
-            if (!signer) {
+            if (
+                chainId !== '8453' ||
+                !signer ||
+                !quote.data ||
+                !quote.data.transactionRequest.to ||
+                !quote.data.transactionRequest.value
+            ) {
                 return
             }
-            const to = quote.data.transactionRequest.to
-            const value = quote.data.transactionRequest.value
-
-            if (!to || !value) {
-                return
-            }
-
-            // IF this is a token transfer, we need to approve the token first
-            // by bundling an approve call with the actual transaction call.
-            // call approve(spender, amount) with quote.estimate.approvalAddress, amount
-            // then add the actual swap tx
-            const data =
-                fromTokenAddress !== nativeTokenAddress
-                    ? {
-                          callData: [
-                              generateApproveAmountCallData(
-                                  quote.data.estimate.approvalAddress,
-                                  quote.data.estimate.fromAmount,
-                              ),
-                              quote.data.transactionRequest.data,
-                          ],
-                          toAddress: [fromTokenAddress, to],
-                      }
-                    : { toAddress: to, callData: quote.data.transactionRequest.data }
-
-            try {
-                const res = await townsClient.sendUserOperationWithCallData({
-                    ...data,
-                    value: BigInt(value),
-                    signer,
-                })
-                console.log('RES', res)
-            } catch (error) {
-                console.error('Error sending transaction', error)
-            }
+            tradingContext.sendEvmTransaction(
+                {
+                    id: quote.data.id,
+                    token: {
+                        name: coinData?.token.name ?? '',
+                        symbol: coinData?.token.symbol ?? '',
+                        address: tokenAddress ?? '',
+                        amount: BigInt(quote.data.estimate.fromAmount),
+                        decimals: coinData?.token.decimals ?? 0,
+                    },
+                    approvalAddress: quote.data.estimate.approvalAddress,
+                    transaction: {
+                        toAddress: quote.data.transactionRequest.to,
+                        callData: quote.data.transactionRequest.data,
+                        fromAmount: quote.data.estimate.fromAmount,
+                        fromTokenAddress: fromTokenAddress,
+                        value: quote.data.transactionRequest.value,
+                    },
+                    status: TransactionStatus.Pending,
+                },
+                signer,
+            )
         },
-        [quote, chainId, townsClient, fromTokenAddress, nativeTokenAddress],
+        [quote, chainId, tokenAddress, tradingContext, fromTokenAddress, coinData],
     )
 
-    const tradingContext = useTradingContext()
     const solanaBuyButtonPressed = useCallback(async () => {
         if (chainId !== tradingChains[1151111081099710].chainId) {
             console.error("chainId doesn't match")
@@ -382,8 +365,8 @@ const EvmBuyButton = (props: {
 }) => {
     const { mode, hasQuote, onSendTransaction } = props
     const context = useTradingContext()
-    const { pendingSolanaTransaction } = context
-    const isPending = !!pendingSolanaTransaction?.transactionData
+    const { pendingEvmTransaction } = context
+    const isPending = !!pendingEvmTransaction
 
     return (
         <WalletReady>

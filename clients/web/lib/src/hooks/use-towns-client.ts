@@ -345,6 +345,9 @@ interface TownsClientImpl {
             signer: TSigner
         } & ({ callData: string; toAddress: string } | { callData: string[]; toAddress: string[] }),
     ) => Promise<TransactionContext<void> | undefined>
+    waitForUserOperationWithCallDataTransaction: (
+        transactionContext: TransactionContext<void>,
+    ) => Promise<TransactionContext<void> | undefined>
 }
 
 export function useTownsClient(): TownsClientImpl {
@@ -521,6 +524,9 @@ export function useTownsClient(): TownsClientImpl {
         checkInTransaction: useWithCatch(clientSingleton?.checkInTransaction),
         waitForCheckInTransaction: useWithCatch(clientSingleton?.waitForCheckInTransaction),
         sendUserOperationWithCallData: useWithCatch(clientSingleton?.sendUserOperationWithCallData),
+        waitForUserOperationWithCallDataTransaction: useWithCatch(
+            clientSingleton?.waitForUserOperationWithCallDataTransaction,
+        ),
     }
 }
 

@@ -1903,6 +1903,12 @@ export class TownsClient
         return this.baseTransactor.sendUserOperationWithCallData(args)
     }
 
+    public async waitForUserOperationWithCallDataTransaction(
+        transactionContext: TransactionContext<void>,
+    ): Promise<TransactionContext<void> | undefined> {
+        return this.baseTransactor.waitForBlockchainTransaction(transactionContext)
+    }
+
     protected log(message: string, ...optionalParams: unknown[]) {
         console.log(message, ...optionalParams)
     }

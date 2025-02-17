@@ -1,33 +1,53 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo } from 'react'
 import { Connection as SolanaConnection, VersionedTransaction } from '@solana/web3.js'
 import { base64ToUint8Array } from '@river-build/sdk'
-import { TransactionStatus, queryClient } from 'use-towns-client'
+import { TransactionStatus, queryClient, useTownsClient } from 'use-towns-client'
+import { Signer } from 'ethers'
 import { env } from 'utils'
 import { StandardToast, dismissToast } from '@components/Notifications/StandardToast'
 import { popupToast } from '@components/Notifications/popupToast'
 import { useSolanaWallet } from './useSolanaWallet'
+import { tradingChains } from './tradingConstants'
+import { generateApproveAmountCallData } from './hooks/erc20-utils'
 
+type TokenInfo = {
+    name: string
+    symbol: string
+    address: string
+    amount: bigint
+    decimals: number
+}
 export type SolanaTransactionRequest = {
     id: string
     transactionData: string
-    token: {
-        name: string
-        symbol: string
-        address: string
-        amount: bigint
-        decimals: number
-    }
+    token: TokenInfo
     signature?: string
     status: TransactionStatus
 }
 
+export type EvmTransactionRequest = {
+    id: string
+    transaction: {
+        toAddress: string
+        callData: string
+        fromAmount: string
+        fromTokenAddress: string
+        value: string
+    }
+    token: TokenInfo
+    approvalAddress: string
+    status: TransactionStatus
+}
+
 const TradingContext = createContext<{
-    pendingSolanaTransaction: SolanaTransactionRequest | undefined
-    failedSolanaTransactions: SolanaTransactionRequest[]
     sendSolanaTransaction: (transaction: SolanaTransactionRequest) => void
+    sendEvmTransaction: (transaction: EvmTransactionRequest, signer: Signer) => void
+    pendingEvmTransaction: EvmTransactionRequest | undefined
+    pendingSolanaTransaction: SolanaTransactionRequest | undefined
 }>({
     sendSolanaTransaction: () => {},
-    failedSolanaTransactions: [],
+    sendEvmTransaction: () => {},
+    pendingEvmTransaction: undefined,
     pendingSolanaTransaction: undefined,
 })
 
@@ -37,13 +57,13 @@ export const useTradingContext = () => {
 
 export const TradingContextProvider = ({ children }: { children: React.ReactNode }) => {
     const { solanaWallet } = useSolanaWallet()
+    const townsClient = useTownsClient()
     const [pendingSolanaTransaction, setPendingSolanaTransaction] = React.useState<
         SolanaTransactionRequest | undefined
     >(undefined)
 
-    const [failedSolanaTransactions, setFailedSolanaTransactions] = React.useState<
-        SolanaTransactionRequest[]
-    >([])
+    const [pendingEvmTransaction, setPendingEvmTransaction] =
+        React.useState<EvmTransactionRequest>()
 
     const connection = useMemo(() => {
         if (!env.VITE_SOLANA_MAINNET_RPC_URL) {
@@ -130,9 +150,6 @@ export const TradingContextProvider = ({ children }: { children: React.ReactNode
                     await new Promise((resolve) => setTimeout(resolve, 1000))
                 }
 
-                if (transaction.status !== TransactionStatus.Success) {
-                    setFailedSolanaTransactions((prev) => [...prev, transaction])
-                }
                 setPendingSolanaTransaction(undefined)
             } catch (error) {
                 console.error('Error sending Solana transaction:', error)
@@ -140,6 +157,86 @@ export const TradingContextProvider = ({ children }: { children: React.ReactNode
             setPendingSolanaTransaction(undefined)
         },
         [solanaWallet, connection, setPendingSolanaTransaction, pendingSolanaTransaction],
+    )
+
+    const sendEvmTransaction = useCallback(
+        async (request: EvmTransactionRequest, signer: Signer) => {
+            // IF this is a token transfer, we need to approve the token first
+            // by bundling an approve call with the actual transaction call.
+            // call approve(spender, amount) with quote.estimate.approvalAddress, amount
+            // then add the actual swap tx
+            const data =
+                request.transaction.fromTokenAddress !== tradingChains[8453].nativeTokenAddress
+                    ? {
+                          callData: [
+                              generateApproveAmountCallData(
+                                  request.approvalAddress,
+                                  request.transaction.fromAmount,
+                              ),
+                              request.transaction.callData,
+                          ],
+                          toAddress: [
+                              request.transaction.fromTokenAddress,
+                              request.transaction.toAddress,
+                          ],
+                      }
+                    : {
+                          toAddress: request.transaction.toAddress,
+                          callData: request.transaction.callData,
+                      }
+
+            function showErrorToast(subMessage: string) {
+                popupToast(({ toast }) => (
+                    <StandardToast.Error
+                        message="Transaction failed"
+                        subMessage={subMessage}
+                        toast={toast}
+                    />
+                ))
+            }
+            try {
+                let transactionContext = await townsClient.sendUserOperationWithCallData({
+                    ...data,
+                    value: BigInt(request.transaction.value),
+                    signer,
+                })
+
+                if (!transactionContext) {
+                    showErrorToast('Failed to send transaction')
+                    return
+                }
+                request.status = transactionContext.status
+                setPendingEvmTransaction(request)
+                transactionContext = await townsClient.waitForUserOperationWithCallDataTransaction(
+                    transactionContext,
+                )
+
+                request.status = transactionContext?.status ?? TransactionStatus.Failed
+                setPendingEvmTransaction(undefined)
+
+                if (transactionContext?.status === TransactionStatus.Success) {
+                    popupToast(
+                        ({ toast }) => (
+                            <StandardToast.Success message="Transaction confirmed" toast={toast} />
+                        ),
+                        { duration: Infinity },
+                    )
+
+                    queryClient.invalidateQueries({
+                        predicate: (query) => query.queryKey[0] === 'walletContents',
+                    })
+                } else {
+                    showErrorToast('Transaction failed')
+                    return
+                }
+            } catch (error) {
+                showErrorToast('Failed to send transaction')
+                request.status = TransactionStatus.Failed
+                setPendingEvmTransaction(undefined)
+                console.error('Error sending EVM transaction:', error)
+            }
+        },
+        [townsClient],
     )
 
     const pendingTransactionData = pendingSolanaTransaction?.transactionData
@@ -168,9 +265,36 @@ export const TradingContextProvider = ({ children }: { children: React.ReactNode
         }
     }, [pendingTransactionData, pendingSolanaTransaction])
 
+    const pendingEvmTransactionData = pendingEvmTransaction?.transaction
+    useEffect(() => {
+        if (!pendingEvmTransaction || pendingEvmTransaction?.status === TransactionStatus.Success) {
+            return
+        }
+        const toastId = popupToast(
+            ({ toast }) => (
+                <StandardToast.Pending
+                    message="Pending transaction"
+                    subMessage="Please wait for the transaction to complete"
+                    toast={toast}
+                />
+            ),
+            { duration: Infinity },
+        )
+        return () => {
+            if (toastId) {
+                dismissToast(toastId)
+            }
+        }
+    }, [pendingEvmTransactionData, pendingEvmTransaction])
+
     return (
         <TradingContext.Provider
-            value={{ pendingSolanaTransaction, failedSolanaTransactions, sendSolanaTransaction }}
+            value={{
+                pendingSolanaTransaction,
+                pendingEvmTransaction,
+                sendSolanaTransaction,
+                sendEvmTransaction,
+            }}
         >
             {children}
         </TradingContext.Provider>
