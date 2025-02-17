@@ -11,7 +11,7 @@ import {
 import { zip } from 'lodash'
 import { useInView } from 'react-intersection-observer'
 import { themes } from 'ui/styles/themes'
-import { Box, Button, Dropdown, IconButton, Pill, Stack, Text } from '@ui'
+import { Box, Button, Dropdown, IconButton, Pill, SizeBox, Stack, Text } from '@ui'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { NetworkName } from '@components/Tokens/TokenSelector/NetworkName'
 import { useStore } from 'store/store'
@@ -19,6 +19,7 @@ import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { formatCompactUSD, formatUSD } from '@components/Web3/Trading/tradingUtils'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { CHANNEL_INFO_PARAMS } from 'routes'
+import { useSizeContext } from 'ui/hooks/useSizeContext'
 import { GetBars, TimeFrame, useCoinBars } from './useCoinBars'
 import { useCoinData } from './useCoinData'
 
@@ -33,34 +34,10 @@ const CHART_TIME_FORMAT_OPTIONS: {
     '365d': { month: 'short', year: 'numeric' },
 }
 
-export const TradingChart = (props: { attachment: TickerAttachment }) => {
+export const TradingChartAttachment = (props: { attachment: TickerAttachment }) => {
     const { ref, inView } = useInView({
         rootMargin: '10px 0px',
     })
-
-    const { attachment } = props
-    const [timeframe, setTimeframe] = useState<TimeFrame>('1d')
-    const [chartType, setChartType] = useState<'area' | 'candlestick'>('area')
-
-    const onToggleChartType = useCallback(() => {
-        setChartType((t) => (t === 'area' ? 'candlestick' : 'area'))
-    }, [])
-
-    const { data: coinData } = useCoinData({
-        address: attachment.address,
-        chain: attachment.chainId,
-        disabled: !inView,
-    })
-
-    const { data: barData, isLoading: isLoadingData } = useCoinBars({
-        address: attachment.address,
-        chain: attachment.chainId,
-        timeframe: timeframe,
-        disabled: !inView,
-    })
-
-    const [isFocused, setIsFocused] = useState(false)
-
     const { openPanel } = usePanelActions()
 
     const onTradeClick = useCallback(
@@ -74,12 +51,76 @@ export const TradingChart = (props: { attachment: TickerAttachment }) => {
         [openPanel, props.attachment.address, props.attachment.chainId],
     )
 
+    const { containerWidth } = useSizeContext()
+
     return (
-        <Stack rounded="md" width="500" maxWidth="100%" background="level2" ref={ref}>
+        <Stack
+            rounded="md"
+            width="500"
+            style={{
+                maxWidth: containerWidth - 80,
+            }}
+            background="level2"
+            ref={ref}
+            overflow="hidden"
+        >
+            <TradingChart
+                address={props.attachment.address}
+                chainId={props.attachment.chainId}
+                disabled={!inView}
+            />
+            <Stack horizontal padding gap="sm">
+                <Button
+                    grow
+                    tone="level3"
+                    rounded="full"
+                    color="cta1"
+                    onClick={() => onTradeClick('buy')}
+                >
+                    Buy
+                </Button>
+                <Button
+                    grow
+                    tone="level3"
+                    rounded="full"
+                    color="cta1"
+                    onClick={() => onTradeClick('sell')}
+                >
+                    Sell
+                </Button>
+            </Stack>
+        </Stack>
+    )
+}
+export const TradingChart = (props: { address: string; chainId: string; disabled?: boolean }) => {
+    const { address, chainId, disabled } = props
+
+    const [timeframe, setTimeframe] = useState<TimeFrame>('1d')
+    const [chartType, setChartType] = useState<'area' | 'candlestick'>('area')
+
+    const onToggleChartType = useCallback(() => {
+        setChartType((t) => (t === 'area' ? 'candlestick' : 'area'))
+    }, [])
+
+    const { data: coinData } = useCoinData({
+        address,
+        chain: chainId,
+        disabled,
+    })
+
+    const { data: barData, isLoading: isLoadingData } = useCoinBars({
+        address,
+        chain: chainId,
+        timeframe,
+        disabled,
+    })
+
+    const [isFocused, setIsFocused] = useState(false)
+
+    return (
+        <>
             <Box height="250" width="100%" position="relative">
-                <Box
-                    roundedTop="md"
-                    overflow="hidden"
+                <SizeBox
                     cursor={!isFocused ? 'pointer' : 'default'}
                     onClick={() => setIsFocused(true)}
                 >
@@ -89,7 +130,7 @@ export const TradingChart = (props: { attachment: TickerAttachment }) => {
                         chartType={chartType}
                         timeframe={timeframe}
                     />
-                </Box>
+                </SizeBox>
                 {isLoadingData && (
                     <Box position="absoluteCenter" zIndex="above">
                         <ButtonSpinner />
@@ -142,17 +183,13 @@ export const TradingChart = (props: { attachment: TickerAttachment }) => {
                                 <ClipboardCopy
                                     color="default"
                                     fontSize="sm"
-                                    clipboardContent={attachment.address}
+                                    clipboardContent={address}
                                     label={coinData.token.name}
                                 />
                             </Stack>
                             <Box grow />
                             <Box>
-                                <NetworkName
-                                    chainId={Number(attachment.chainId)}
-                                    size="sm"
-                                    color="initial"
-                                />
+                                <NetworkName chainId={Number(chainId)} size="sm" color="initial" />
                             </Box>
                         </Stack>
 
@@ -186,30 +223,10 @@ export const TradingChart = (props: { attachment: TickerAttachment }) => {
                                 HDLRS {coinData.holders}
                             </Pill>
                         </Stack>
-                        <Stack horizontal gap="sm">
-                            <Button
-                                grow
-                                tone="level3"
-                                rounded="full"
-                                color="cta1"
-                                onClick={() => onTradeClick('buy')}
-                            >
-                                Buy
-                            </Button>
-                            <Button
-                                grow
-                                tone="level3"
-                                rounded="full"
-                                color="cta1"
-                                onClick={() => onTradeClick('sell')}
-                            >
-                                Sell
-                            </Button>
-                        </Stack>
                     </Stack>
                 </>
             )}
-        </Stack>
+        </>
     )
 }
 
@@ -233,16 +250,28 @@ const ChartComponent = (props: {
     const timeFrameOptions = CHART_TIME_FORMAT_OPTIONS[timeframe]
     const [chart, setChart] = useState<IChartApi | null>(null)
 
+    const chartRef = useRef<IChartApi | null>(null)
+
+    const { containerWidth } = useSizeContext()
+
     useEffect(() => {
-        const current = chartContainerRef.current
-        if (!current) {
+        if (!chartRef.current) {
+            return
+        }
+        chartRef.current.applyOptions({ width: containerWidth })
+        chartRef.current.timeScale().fitContent()
+    }, [containerWidth])
+
+    useEffect(() => {
+        const container = chartContainerRef.current
+        if (!container) {
             return
         }
         if (data.o.length === 0) {
             return
         }
 
-        const c = createChart(current, {
+        const c = createChart(container, {
             layout: {
                 background: {
                     color: backgroundColor,
@@ -250,7 +279,7 @@ const ChartComponent = (props: {
                 },
                 textColor,
             },
-            width: current.clientWidth,
+            width: container.clientWidth,
             height: 250,
             leftPriceScale: {
                 visible: false,
@@ -278,6 +307,9 @@ const ChartComponent = (props: {
                 borderVisible: false,
             },
         })
+
+        chartRef.current = c
+
         c.timeScale().fitContent()
 
         if (chartType === 'area') {
@@ -303,17 +335,7 @@ const ChartComponent = (props: {
 
         setChart(c)
 
-        const handleResize = () => {
-            try {
-                c.applyOptions({ width: current.clientWidth })
-            } catch (e) {
-                console.log(e)
-            }
-        }
-
-        window.addEventListener('resize', handleResize)
         return () => {
-            window.removeEventListener('resize', handleResize)
             c.remove()
         }
     }, [
@@ -348,5 +370,5 @@ const ChartComponent = (props: {
         }
     }, [isFocused, chart])
 
-    return <Box ref={chartContainerRef} pointerEvents={isFocused ? 'auto' : 'none'} />
+    return <Box height="250" ref={chartContainerRef} pointerEvents={isFocused ? 'auto' : 'none'} />
 }

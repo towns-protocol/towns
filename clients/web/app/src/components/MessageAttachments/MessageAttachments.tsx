@@ -34,7 +34,7 @@ import { PATHS } from 'routes'
 import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
 import { addressFromSpaceId } from 'ui/utils/utils'
 import { minterRoleId } from '@components/SpaceSettingsPanel/rolePermissions.const'
-import { TradingChart } from '@components/TradingChart/TradingChart'
+import { TradingChartAttachment } from '@components/TradingChart/TradingChart'
 import { useSizeContext } from 'ui/hooks/useSizeContext'
 import { MessageAttachmentsContext } from './MessageAttachmentsContext'
 
@@ -142,7 +142,7 @@ export const MessageAttachments = (props: {
                     {tickerAttachments.map((ticker) => {
                         return (
                             <Box key={ticker.id} gap="lg">
-                                <TradingChart attachment={ticker} />
+                                <TradingChartAttachment attachment={ticker} />
                             </Box>
                         )
                     })}

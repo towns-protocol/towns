@@ -8,6 +8,7 @@ import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { formatUnitsToFixedLength } from 'hooks/useBalance'
 import { WalletReady } from 'privy/WalletReady'
 import { shimmerClass } from 'ui/styles/globals/shimmer.css'
+import { TradingChart } from '@components/TradingChart/TradingChart'
 import { isTradingChain, tradingChains } from './tradingConstants'
 import { BigIntInput } from './ui/BigIntInput'
 import { QuoteCard } from './ui/QuoteCard'
@@ -329,6 +330,13 @@ export const TradingPanel = () => {
                 </Stack>
             }
         >
+            <Box insetX="sm" insetTop="sm">
+                <TradingChart
+                    address={tokenAddress ?? ''}
+                    chainId={chainId}
+                    disabled={!tokenAddress}
+                />
+            </Box>
             {panelContent}
         </Panel>
     )
