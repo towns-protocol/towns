@@ -40,7 +40,7 @@
         "lodash": "^4.17.21",
         "nanoid": "^4.0.0",
         "p-limit": "^6.1.0",
-        "vitest": "^2.1.5"
+        "vitest": "3.0.5"
     },
     "devDependencies": {
         "@testing-library/react": "^14.2.1",
