@@ -219,7 +219,7 @@ export const TradingPanel = () => {
     } else {
         panelContent = (
             <TabPanel
-                layoutId="tradingPanel"
+                layoutId={`tradingPanel-${tokenAddress}-${chainId}`}
                 value={mode}
                 tabs={[
                     { label: 'Buy', value: 'buy' },
@@ -330,7 +330,7 @@ export const TradingPanel = () => {
                 </Stack>
             }
         >
-            <Box insetX="sm" insetTop="sm">
+            <Box gap insetX="sm" insetTop="sm">
                 <TradingChart
                     address={tokenAddress ?? ''}
                     chainId={chainId}

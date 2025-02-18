@@ -96,6 +96,7 @@ const root = createGlobalTheme(':root', {
 
     space: {
         none: '0',
+        '2': `2px`,
         xxs: `${baseline * 0.25}px`,
         // 11 occurrences
         xs: `${baseline * 0.5}px`,
@@ -264,6 +265,9 @@ const root = createGlobalTheme(':root', {
 
     insetLeft: {
         none: { marginLeft: '0' },
+        '2': {
+            marginLeft: `${2}px`,
+        },
         xxs: {
             marginLeft: `${baseline * -0.5}px`,
         },
@@ -278,6 +282,9 @@ const root = createGlobalTheme(':root', {
 
     insetRight: {
         none: { marginRight: '0' },
+        '2': {
+            marginRight: `${2}px`,
+        },
         xxs: {
             marginRight: `${baseline * -0.5}px`,
         },
@@ -310,6 +317,9 @@ const root = createGlobalTheme(':root', {
 
     insetBottom: {
         none: { marginBottom: '0' },
+        '2': {
+            marginBottom: `${2}px`,
+        },
         xxs: {
             marginBottom: `${baseline * -0.5}px`,
         },

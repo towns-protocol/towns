@@ -140,6 +140,14 @@ export const boxProperties = defineProperties({
                     },
                 },
             },
+            edge: {
+                boxShadow: `0 2px 2px rgba(0, 0, 0, 0.5)`,
+                selectors: {
+                    [`${lightTheme} &`]: {
+                        boxShadow: `0 2px 2px rgba(0, 0, 0, 0.5)`,
+                    },
+                },
+            },
 
             card: {
                 boxShadow: `0 0 16px rgba(0, 0, 0, 0.25)`,

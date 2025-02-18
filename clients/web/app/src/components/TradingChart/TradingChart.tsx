@@ -11,9 +11,8 @@ import {
 import { zip } from 'lodash'
 import { useInView } from 'react-intersection-observer'
 import { themes } from 'ui/styles/themes'
-import { Box, Button, Dropdown, IconButton, Pill, SizeBox, Stack, Text } from '@ui'
+import { Box, Button, Dropdown, Icon, IconButton, Pill, SizeBox, Stack, Text } from '@ui'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
-import { NetworkName } from '@components/Tokens/TokenSelector/NetworkName'
 import { useStore } from 'store/store'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { formatCompactUSD, formatUSD } from '@components/Web3/Trading/tradingUtils'
@@ -21,6 +20,8 @@ import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { CHANNEL_INFO_PARAMS } from 'routes'
 import { useSizeContext } from 'ui/hooks/useSizeContext'
 import { shimmerClass } from 'ui/styles/globals/shimmer.css'
+import { TokenIcon } from '@components/Web3/Trading/ui/TokenIcon'
+import { chainIdToLitteral } from '@components/Web3/Trading/useTokenBalance'
 import { GetBars, TimeFrame, useCoinBars } from './useCoinBars'
 import { useCoinData } from './useCoinData'
 
@@ -121,7 +122,7 @@ export const TradingChart = (props: { address: string; chainId: string; disabled
 
     return (
         <>
-            <Box height="200" width="100%" position="relative">
+            <Box width="100%" position="relative">
                 <SizeBox
                     cursor={!isFocused ? 'pointer' : 'default'}
                     onClick={() => setIsFocused(true)}
@@ -171,55 +172,75 @@ export const TradingChart = (props: { address: string; chainId: string; disabled
             <Stack paddingX paddingY="none" gap="paragraph">
                 {coinData ? (
                     <>
-                        <Stack horizontal alignItems="center">
-                            <Stack horizontal gap="sm" alignItems="center">
-                                <Box
-                                    width="x3"
-                                    height="x3"
-                                    rounded="full"
-                                    as="img"
-                                    src={coinData.token.info.imageThumbUrl ?? ''}
-                                />
+                        <Stack horizontal gap="xs" alignItems="center" insetY="xxs">
+                            <TokenIcon
+                                asset={{
+                                    imageUrl: coinData.token.info.imageThumbUrl ?? '',
+                                    chain: chainIdToLitteral(chainId),
+                                }}
+                            />
+                            <Box maxWidth="250" overflow="hidden" paddingY="xs">
                                 <ClipboardCopy
                                     color="default"
-                                    fontSize="sm"
+                                    fontSize="lg"
+                                    fontWeight="strong"
                                     clipboardContent={address}
                                     label={coinData.token.name}
                                 />
-                            </Stack>
-                            <Box grow />
-                            <Box>
-                                <NetworkName chainId={Number(chainId)} size="sm" color="initial" />
                             </Box>
                         </Stack>
 
-                        <Text fontWeight="strong" fontSize="lg">
-                            {formatUSD(Number(coinData.priceUSD))}
-                        </Text>
-
-                        <Stack horizontal grow gap="sm">
-                            <Text
-                                truncate
-                                size="sm"
-                                color={Number(coinData.change24) > 0 ? 'greenBlue' : 'error'}
-                            >
-                                {Number(coinData.change24).toFixed(2)}%
+                        <Stack horizontal grow gap="xs" alignItems="end">
+                            <Text fontWeight="strong" fontSize="lg">
+                                {formatUSD(Number(coinData.priceUSD))}
                             </Text>
-                            <Text color="gray2" size="sm">
-                                Past day
+                            <Box
+                                horizontal
+                                alignItems="center"
+                                gap="xs"
+                                paddingX="sm"
+                                paddingY="xs"
+                                rounded="md"
+                                insetBottom="xxs"
+                                background={
+                                    Number(coinData.change24) > 0
+                                        ? 'positiveSubtle'
+                                        : 'negativeSubtle'
+                                }
+                            >
+                                <Icon
+                                    insetY="xxs"
+                                    size="square_xxs"
+                                    type={
+                                        Number(coinData.change24) > 0
+                                            ? 'arrowSmallUp'
+                                            : 'arrowSmallDown'
+                                    }
+                                />
+                                <Text
+                                    fontWeight="strong"
+                                    size="sm"
+                                    color={Number(coinData.change24) > 0 ? 'greenBlue' : 'error'}
+                                >
+                                    {Math.abs(Number(coinData.change24)).toFixed(2)}%
+                                </Text>
+                            </Box>
+
+                            <Text color="gray2" size="sm" fontWeight="medium">
+                                24H
                             </Text>
                         </Stack>
-                        <Stack horizontal grow gap="sm" color="gray1">
-                            <Pill background="level3" color="inherit">
+                        <Stack grow horizontal gap="sm" color="gray2" flexWrap="wrap">
+                            <Pill background="level3" color="inherit" whiteSpace="nowrap">
                                 LIQ {formatCompactUSD(Number(coinData.liquidity))}
                             </Pill>
-                            <Pill background="level3" color="inherit">
+                            <Pill background="level3" color="inherit" whiteSpace="nowrap">
                                 VOL {formatCompactUSD(Number(coinData.volume24))}
                             </Pill>
-                            <Pill background="level3" color="inherit">
+                            <Pill background="level3" color="inherit" whiteSpace="nowrap">
                                 MCAP {formatCompactUSD(Number(coinData.marketCap))}
                             </Pill>
-                            <Pill background="level3" color="inherit">
+                            <Pill background="level3" color="inherit" whiteSpace="nowrap">
                                 HDLRS {coinData.holders}
                             </Pill>
                         </Stack>
@@ -414,5 +435,5 @@ const ChartComponent = (props: {
         }
     }, [isFocused, focusChart])
 
-    return <Box height="250" ref={chartContainerRef} pointerEvents={isFocused ? 'auto' : 'none'} />
+    return <Box height="200" ref={chartContainerRef} pointerEvents={isFocused ? 'auto' : 'none'} />
 }

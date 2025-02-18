@@ -8,6 +8,7 @@ type Props = {
     clipboardContent?: string
     color?: TextProps['color']
     fontSize?: TextProps['fontSize']
+    fontWeight?: TextProps['fontWeight']
     children?: React.ReactNode
     vertical?: boolean
     noTooltip?: boolean
@@ -42,7 +43,7 @@ export function CopyIcon({ copied, color }: { copied: boolean; color: TextProps[
 }
 
 export const ClipboardCopy = forwardRef<HTMLDivElement, Props>((props, ref) => {
-    const { fontSize = 'md', vertical = false, noTooltip = false } = props
+    const { fontSize = 'md', fontWeight = undefined, vertical = false, noTooltip = false } = props
     const [, copy] = useCopyToClipboard()
     const color = props.color ?? 'gray2'
 
@@ -81,7 +82,7 @@ export const ClipboardCopy = forwardRef<HTMLDivElement, Props>((props, ref) => {
                 ref={ref}
                 onClick={onCopy}
             >
-                <Text truncate size={fontSize} color={color}>
+                <Text truncate size={fontSize} color={color} fontWeight={fontWeight}>
                     {props.children || props.label}
                 </Text>
                 <Box centerContent ref={iconRef} pointerEvents="none" height="paragraph">

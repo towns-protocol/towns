@@ -5,6 +5,7 @@ import { formatUnitsToFixedLength } from 'hooks/useBalance'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { notUndefined } from 'ui/utils/utils'
 import { ChainWalletAssets, formatCents } from './tradingUtils'
+import { TokenIcon } from './ui/TokenIcon'
 
 const baseImageURL =
     'https://coin-images.coingecko.com/coins/images/31199/thumb/59302ba8-022e-45a4-8d00-e29fe2ee768c-removebg-preview.png?1696530026'
@@ -170,38 +171,5 @@ export function WalletLinkOutButton({
         >
             <Icon type="linkOut" />
         </Link>
-    )
-}
-
-function TokenIcon(props: { asset: AssetData }) {
-    const { asset } = props
-    return asset.imageUrl && asset.imageUrl !== 'missing.png' ? (
-        <Box position="relative">
-            <Box square="square_lg" as="img" src={asset.imageUrl} rounded="full" />
-            {['solana-mainnet', 'base'].includes(asset.chain) && (
-                <Box
-                    centerContent
-                    position="bottomRight"
-                    square="square_xs"
-                    background={asset.chain === 'base' ? 'base' : 'level2'}
-                    rounded="xs"
-                    insetY="xxs"
-                    insetX="xxs"
-                >
-                    <Icon
-                        type={
-                            asset.chain === 'solana-mainnet'
-                                ? 'solana'
-                                : asset.chain === 'base'
-                                ? 'base'
-                                : 'ethFilled'
-                        }
-                        size="square_xxs"
-                    />
-                </Box>
-            )}
-        </Box>
-    ) : (
-        <Icon size="square_lg" type="token" color="gray1" />
     )
 }

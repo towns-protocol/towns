@@ -97,6 +97,24 @@ const ArrowDownActive = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => 
     </svg>
 ))
 
+export const ArrowSmallDown = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
+    <svg width="10" height="7" viewBox="0 0 10 7" fill="none" {...props} ref={ref}>
+        <path
+            d="M4.08076 6.47308L0.451192 2.32501C-0.114569 1.67843 0.344612 0.666504 1.20377 0.666504H8.4629C9.32206 0.666504 9.78124 1.67842 9.21548 2.32501L5.58591 6.47308C5.1875 6.92841 4.47917 6.92841 4.08076 6.47308Z"
+            fill="currentColor"
+        />
+    </svg>
+))
+
+export const ArrowSmallUp = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
+    <svg width="10" height="7" viewBox="0 0 10 7" fill="none" {...props} ref={ref}>
+        <path
+            d="M4.08076 0.526917L0.451192 4.67499C-0.114569 5.32157 0.344612 6.3335 1.20377 6.3335H8.4629C9.32206 6.3335 9.78124 5.32158 9.21548 4.67499L5.58591 0.526917C5.1875 0.0715899 4.47917 0.0715895 4.08076 0.526917Z"
+            fill="currentColor"
+        />
+    </svg>
+))
+
 export const ArrowLeft = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" {...props} ref={ref}>
         <path
@@ -2316,6 +2334,8 @@ const iconMap = {
     all: AllIcon,
     arrowDown: ArrowDown,
     arrowDownActive: ArrowDownActive,
+    arrowSmallDown: ArrowSmallDown,
+    arrowSmallUp: ArrowSmallUp,
     arrowLeft: ArrowLeft,
     arrowRight: ArrowRight,
     arrowRightUp: ArrowRightUp,
