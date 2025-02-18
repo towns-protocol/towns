@@ -3401,13 +3401,13 @@ __metadata:
   linkType: hard
 
 "@capsizecss/vanilla-extract@npm:^1.0.0":
-  version: 1.0.0
-  resolution: "@capsizecss/vanilla-extract@npm:1.0.0"
+  version: 1.0.1
+  resolution: "@capsizecss/vanilla-extract@npm:1.0.1"
   dependencies:
     "@capsizecss/core": ^3.0.0
   peerDependencies:
     "@vanilla-extract/css": ^1.2.1
-  checksum: 895c342dba9cf2882fc98ee6bd53b5175258a085255597964413fb0c7abab77489620cbd8ca2037c524a6be77d18526602194fe73517dad796136e05a91b211f
+  checksum: 20257007c63c9d64d817caaab2f45b04197e86fc32216ecab880f49ecadb1ed66577b783453dec7e707e79ca9aa68aa7e8a443a4a59184213ad7748f7c4b5c1a
   languageName: node
   linkType: hard
 
@@ -16450,7 +16450,7 @@ __metadata:
     source-map-support: ^0.5.19
     table: ^6.8.0
     typescript: ^4.3.5
-  checksum: bdca754160deb9b34a6b668bbcb80477c1c596cdaa90ed4966e0b557f32d26f1d973033a468dca016ad8e5d909c68f15859408208b70602bdee0619c6208bd02
+  checksum: 26c2069a95628f053dcc8c930893ae043176494917f30f2c0e6a2f78bfd93ef161c3bceeea35ed98605fa21970587c3d13af673edc76b56e65384387c0b01800
   languageName: node
   linkType: hard
 

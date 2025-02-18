@@ -24,6 +24,7 @@ import { MotionBoxProps } from 'ui/components/Motion/MotionComponents'
 import { shimmerClass } from 'ui/styles/globals/shimmer.css'
 import { minterRoleId } from '@components/SpaceSettingsPanel/rolePermissions.const'
 import { useEthToUsdFormatted } from '@components/Web3/useEthPrice'
+import { useSpacePageChannels } from './hooks/useSpacePageChannels'
 import { useReadableMembershipInfo } from './useReadableMembershipInfo'
 import { TokenInfoBox } from './TokenInfoBox'
 import { InformationBox } from './InformationBox'
@@ -170,7 +171,7 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
                             entitlements={entitlements}
                         />
                         <Bio bio={bio} />
-
+                        <ChannelList spaceId={spaceId} />
                         <Box>{props.activityContent}</Box>
                         <Box height="x12" shrink={false} />
                     </Stack>
@@ -497,7 +498,51 @@ const InformationBoxes = (props: {
     )
 }
 
-const MAX_LENGTH = 100
+const ChannelList = ({ spaceId }: { spaceId: string }) => {
+    const { channels, channelCount, isLoading: isChannelsLoading } = useSpacePageChannels(spaceId)
+    const MAX_VISIBLE_CHANNELS = 8
+
+    const visibleChannels = channels.slice(0, MAX_VISIBLE_CHANNELS)
+    const remainingCount = channels.length - MAX_VISIBLE_CHANNELS
+
+    if (channels.length === 0 || isChannelsLoading) {
+        return null
+    }
+
+    return (
+        <Stack gap="md" maxWidth="500">
+            <Text strong size="md">
+                {channelCount} Channel{channelCount === 1 ? '' : 's'}
+            </Text>
+            <Stack horizontal flexWrap="wrap" gap="sm">
+                {visibleChannels.map((channel) => (
+                    <Box
+                        key={channel.channelNetworkId}
+                        background="level3"
+                        paddingX="sm"
+                        paddingY="sm"
+                        borderRadius="sm"
+                    >
+                        <Text color="gray1">#{channel.name}</Text>
+                    </Box>
+                ))}
+                {remainingCount > 0 && (
+                    <Box
+                        key={`remaining-${remainingCount}`}
+                        background="level3"
+                        paddingX="sm"
+                        paddingY="sm"
+                        borderRadius="sm"
+                    >
+                        <Text color="gray1">+{remainingCount} more</Text>
+                    </Box>
+                )}
+            </Stack>
+        </Stack>
+    )
+}
+
+const BIO_MAX_LENGTH = 100
 const Bio = (props: { bio?: string }) => {
     const { bio = '' } = props
     const { isTouch } = useDevice()
@@ -507,10 +552,10 @@ const Bio = (props: { bio?: string }) => {
             return bio
         }
 
-        return bio.slice(0, MAX_LENGTH) + '…'
+        return bio.slice(0, BIO_MAX_LENGTH) + '…'
     }, [bio, isExpanded])
 
-    const canExpand = bio && bio.length > MAX_LENGTH && !isExpanded
+    const canExpand = bio && bio.length > BIO_MAX_LENGTH && !isExpanded
 
     return bio ? (
         <Stack gap="md">
