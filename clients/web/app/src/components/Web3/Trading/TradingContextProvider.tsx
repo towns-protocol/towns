@@ -161,6 +161,7 @@ export const TradingContextProvider = ({ children }: { children: React.ReactNode
 
     const sendEvmTransaction = useCallback(
         async (request: EvmTransactionRequest, signer: Signer) => {
+            setPendingEvmTransaction({ ...request, status: TransactionStatus.Pending })
             // IF this is a token transfer, we need to approve the token first
             // by bundling an approve call with the actual transaction call.
             // call approve(spender, amount) with quote.estimate.approvalAddress, amount
@@ -205,8 +206,7 @@ export const TradingContextProvider = ({ children }: { children: React.ReactNode
                     showErrorToast('Failed to send transaction')
                     return
                 }
-                request.status = transactionContext.status
-                setPendingEvmTransaction(request)
+
                 transactionContext = await townsClient.waitForUserOperationWithCallDataTransaction(
                     transactionContext,
                 )
