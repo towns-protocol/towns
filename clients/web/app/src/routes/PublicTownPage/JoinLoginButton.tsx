@@ -19,6 +19,7 @@ import { popupToast } from '@components/Notifications/popupToast'
 import { StandardToast, dismissToast } from '@components/Notifications/StandardToast'
 import { GetSigner, WalletReady } from 'privy/WalletReady'
 import { useJoinFunnelAnalytics } from '@components/Analytics/useJoinFunnelAnalytics'
+import { useGatherSpaceDetailsAnalytics } from '@components/Analytics/useGatherSpaceDetailsAnalytics'
 import { usePublicPageLoginFlow } from './usePublicPageLoginFlow'
 
 const LoginComponent = React.lazy(() => import('@components/Login/LoginComponent'))
@@ -34,6 +35,7 @@ export function JoinLoginButton({
     const { isAuthenticated, loggedInWalletAddress } = useConnectivity()
     const { clientSingleton, signerContext } = useTownsContext()
     const { data: spaceInfo } = useContractSpaceInfoWithoutClient(spaceId)
+    const { pricingModule } = useGatherSpaceDetailsAnalytics({ spaceId })
 
     const {
         startJoinMeetsRequirements,
@@ -76,7 +78,7 @@ export function JoinLoginButton({
                 createPrivyNotAuthenticatedNotification()
                 return
             }
-            clickedJoinTown({ meetsMembershipRequirements, spaceId })
+            clickedJoinTown({ meetsMembershipRequirements, spaceId, pricingModule })
             if (meetsMembershipRequirements) {
                 startJoinMeetsRequirements({
                     signer,
@@ -102,6 +104,7 @@ export function JoinLoginButton({
             clickedJoinTown,
             meetsMembershipRequirements,
             spaceId,
+            pricingModule,
             startJoinMeetsRequirements,
             clientSingleton,
             signerContext,
@@ -116,9 +119,9 @@ export function JoinLoginButton({
         if (maxSupplyReached) {
             return
         }
-        clickedJoinTown({ spaceId })
+        clickedJoinTown({ spaceId, pricingModule })
         startJoinPreLogin()
-    }, [startJoinPreLogin, maxSupplyReached, spaceId, clickedJoinTown])
+    }, [startJoinPreLogin, maxSupplyReached, spaceId, pricingModule, clickedJoinTown])
 
     const isEvaluating = useWatchEvaluatingCredentialsAuthStatus()
 

@@ -119,17 +119,23 @@ export const useJoinFunnelAnalytics = () => {
         // or when user is logged in and clicks "join"
         // we use other events/props to segment funnels based on auth state
         clickedJoinTownOnTownPage: useCallback(
-            (args: { meetsMembershipRequirements?: boolean; spaceId: string | undefined }) => {
-                const { meetsMembershipRequirements, spaceId } = args
+            (args: {
+                meetsMembershipRequirements?: boolean
+                spaceId: string | undefined
+                pricingModule: 'fixed' | 'dynamic' | 'free'
+            }) => {
+                const { meetsMembershipRequirements, spaceId, pricingModule } = args
                 const eventStr = 'clicked join town on town page'
                 if (meetsMembershipRequirements !== undefined) {
                     Analytics.getInstance().track(eventStr, {
                         spaceId,
                         meetsMembershipRequirements,
+                        pricingModule,
                     })
                 } else {
                     Analytics.getInstance().track(eventStr, {
                         spaceId,
+                        pricingModule,
                     })
                 }
             },
