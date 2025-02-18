@@ -1,14 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
+
 // interfaces
 import {IOwnableBase} from "@river-build/diamond/src/facets/ownable/IERC173.sol";
-// structs
+
 // libraries
 import {Stream, StreamWithId, SetMiniblock} from "contracts/src/river/registry/libraries/RegistryStorage.sol";
 import {RiverRegistryErrors} from "contracts/src/river/registry/libraries/RegistryErrors.sol";
 import {IStreamRegistryBase} from "contracts/src/river/registry/facets/stream/IStreamRegistry.sol";
 import {StreamFlags} from "contracts/src/river/registry/facets/stream/StreamRegistry.sol";
-// contracts
+
 // deployments
 import {RiverRegistryBaseSetup} from "contracts/test/river/registry/RiverRegistryBaseSetup.t.sol";
 
@@ -17,9 +18,35 @@ contract StreamRegistryTest is
   IOwnableBase,
   IStreamRegistryBase
 {
+  address internal NODE = makeAddr("node");
+  address internal OPERATOR = makeAddr("operator");
+  TestStream internal SAMPLE_STREAM =
+    TestStream(
+      bytes32(uint256(1234567890)),
+      keccak256("genesisMiniblock"),
+      "genesisMiniblock"
+    );
+
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                       allocateStream                       */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+  function test_allocateStream()
+    external
+    givenNodeOperatorIsApproved(OPERATOR)
+    givenNodeIsRegistered(OPERATOR, NODE, "url")
+  {
+    address[] memory nodeAddresses = new address[](1);
+    nodeAddresses[0] = NODE;
+
+    vm.prank(nodeAddresses[0]);
+    streamRegistry.allocateStream(
+      SAMPLE_STREAM.streamId,
+      nodeAddresses,
+      SAMPLE_STREAM.genesisMiniblockHash,
+      SAMPLE_STREAM.genesisMiniblock
+    );
+  }
 
   /// forge-config: default.fuzz.runs = 64
   function test_fuzz_allocateStream(
@@ -62,19 +89,17 @@ contract StreamRegistryTest is
     assertContains(stream.nodes, nodes[0].node);
   }
 
-  function test_revertWhen_allocateStream_streamIdAlreadyExists(
-    address nodeOperator,
-    TestNode memory node,
+  function test_fuzz_allocateStream_revertWhen_streamIdAlreadyExists(
     TestStream memory testStream
   )
     external
-    givenNodeOperatorIsApproved(nodeOperator)
-    givenNodeIsRegistered(nodeOperator, node.node, node.url)
+    givenNodeOperatorIsApproved(OPERATOR)
+    givenNodeIsRegistered(OPERATOR, NODE, "url")
   {
     address[] memory nodes = new address[](1);
-    nodes[0] = node.node;
+    nodes[0] = NODE;
 
-    vm.prank(node.node);
+    vm.prank(NODE);
     streamRegistry.allocateStream(
       testStream.streamId,
       nodes,
@@ -82,7 +107,7 @@ contract StreamRegistryTest is
       testStream.genesisMiniblock
     );
 
-    vm.prank(node.node);
+    vm.prank(NODE);
     vm.expectRevert(bytes(RiverRegistryErrors.ALREADY_EXISTS));
     streamRegistry.allocateStream(
       testStream.streamId,
@@ -93,15 +118,14 @@ contract StreamRegistryTest is
   }
 
   /// @notice This test is to ensure that the node who is calling the allocateStream function is registered.
-  function test_revertWhen_allocateStream_nodeNotRegistered(
-    address nodeOperator,
-    TestNode memory node,
+  function test_fuzz_allocateStream_revertWhen_nodeNotRegistered(
+    address node,
     TestStream memory testStream
-  ) external givenNodeOperatorIsApproved(nodeOperator) {
+  ) external givenNodeOperatorIsApproved(OPERATOR) {
     address[] memory nodes = new address[](1);
-    nodes[0] = node.node;
+    nodes[0] = node;
 
-    vm.prank(node.node);
+    vm.prank(node);
     vm.expectRevert(bytes(RiverRegistryErrors.NODE_NOT_FOUND));
     streamRegistry.allocateStream(
       testStream.streamId,
@@ -112,15 +136,14 @@ contract StreamRegistryTest is
   }
 
   /// @notice This test is to ensure that the nodes being passed in are registered before allocating a stream.
-  function test_revertWhen_allocateStream_nodesNotRegistered(
-    address nodeOperator,
+  function test_fuzz_allocateStream_revertWhen_nodesNotRegistered(
     address randomNode,
     TestNode memory node,
     TestStream memory testStream
   )
     external
-    givenNodeOperatorIsApproved(nodeOperator)
-    givenNodeIsRegistered(nodeOperator, node.node, node.url)
+    givenNodeOperatorIsApproved(OPERATOR)
+    givenNodeIsRegistered(OPERATOR, node.node, node.url)
   {
     vm.assume(randomNode != node.node);
     address[] memory nodes = new address[](2);
@@ -140,6 +163,31 @@ contract StreamRegistryTest is
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                       addStream                            */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+  function test_addStream()
+    external
+    givenNodeOperatorIsApproved(OPERATOR)
+    givenNodeIsRegistered(OPERATOR, NODE, "url")
+  {
+    address[] memory nodeAddresses = new address[](1);
+    nodeAddresses[0] = NODE;
+
+    Stream memory streamToCreate = Stream({
+      lastMiniblockHash: SAMPLE_STREAM.genesisMiniblockHash,
+      lastMiniblockNum: 1,
+      flags: StreamFlags.SEALED,
+      reserved0: 0,
+      nodes: nodeAddresses
+    });
+
+    vm.prank(nodeAddresses[0]);
+    streamRegistry.addStream(
+      SAMPLE_STREAM.streamId,
+      SAMPLE_STREAM.genesisMiniblockHash,
+      streamToCreate
+    );
+  }
+
   function test_fuzz_addStream(
     address nodeOperator,
     TestStream memory testStream,
@@ -149,8 +197,6 @@ contract StreamRegistryTest is
     givenNodeOperatorIsApproved(nodeOperator)
     givenNodesAreRegistered(nodeOperator, nodes)
   {
-    vm.assume(nodes.length > 0 && nodes.length <= 100);
-
     address[] memory nodeAddresses = new address[](nodes.length);
     uint256 nodesLength = nodes.length;
     for (uint256 i; i < nodesLength; ++i) {
@@ -188,14 +234,13 @@ contract StreamRegistryTest is
     assertContains(stream.nodes, nodes[0].node);
   }
 
-  function test_revertWhen_addStream_streamIdAlreadyExists(
-    address nodeOperator,
+  function test_fuzz_addStream_revertWhen_streamIdAlreadyExists(
     TestStream memory testStream,
     TestNode memory node
   )
     external
-    givenNodeOperatorIsApproved(nodeOperator)
-    givenNodeIsRegistered(nodeOperator, node.node, node.url)
+    givenNodeOperatorIsApproved(OPERATOR)
+    givenNodeIsRegistered(OPERATOR, node.node, node.url)
   {
     address[] memory nodes = new address[](1);
     nodes[0] = node.node;
@@ -224,11 +269,10 @@ contract StreamRegistryTest is
   }
 
   /// @notice This test is to ensure that the node who is calling the addStream function is registered.
-  function test_revertWhen_addStream_nodeNotRegistered(
-    address nodeOperator,
+  function test_fuzz_addStream_revertWhen_nodeNotRegistered(
     TestStream memory testStream,
     TestNode memory node
-  ) external givenNodeOperatorIsApproved(nodeOperator) {
+  ) external givenNodeOperatorIsApproved(OPERATOR) {
     address[] memory nodes = new address[](1);
     nodes[0] = node.node;
     Stream memory streamToCreate = Stream({
@@ -249,15 +293,14 @@ contract StreamRegistryTest is
   }
 
   /// @notice This test is to ensure that the nodes being passed in are registered before allocating a stream.
-  function test_revertWhen_addStream_nodesNotRegistered(
-    address nodeOperator,
+  function test_fuzz_addStream_revertWhen_nodesNotRegistered(
     address randomNode,
     TestStream memory testStream,
     TestNode memory node
   )
     external
-    givenNodeOperatorIsApproved(nodeOperator)
-    givenNodeIsRegistered(nodeOperator, node.node, node.url)
+    givenNodeOperatorIsApproved(OPERATOR)
+    givenNodeIsRegistered(OPERATOR, node.node, node.url)
   {
     vm.assume(randomNode != node.node);
 
@@ -285,8 +328,37 @@ contract StreamRegistryTest is
   /*                 setStreamLastMiniblockBatch                */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+  function test_setStreamLastMiniblockBatch()
+    external
+    givenNodeOperatorIsApproved(OPERATOR)
+    givenNodeIsRegistered(OPERATOR, NODE, "url")
+  {
+    address[] memory nodes = new address[](1);
+    nodes[0] = NODE;
+
+    vm.prank(NODE);
+    streamRegistry.allocateStream(
+      SAMPLE_STREAM.streamId,
+      nodes,
+      SAMPLE_STREAM.genesisMiniblockHash,
+      SAMPLE_STREAM.genesisMiniblock
+    );
+
+    SetMiniblock[] memory miniblocks = new SetMiniblock[](1);
+    miniblocks[0] = SetMiniblock({
+      streamId: SAMPLE_STREAM.streamId,
+      prevMiniBlockHash: bytes32(0),
+      lastMiniblockHash: SAMPLE_STREAM.genesisMiniblockHash,
+      lastMiniblockNum: 1,
+      isSealed: false
+    });
+
+    vm.prank(NODE);
+    streamRegistry.setStreamLastMiniblockBatch(miniblocks);
+  }
+
   /// forge-config: default.fuzz.runs = 64
-  function test_setStreamLastMiniblockBatch(
+  function test_fuzz_setStreamLastMiniblockBatch(
     address nodeOperator,
     bytes32 genesisMiniblockHash,
     bytes memory genesisMiniblock,
@@ -300,8 +372,8 @@ contract StreamRegistryTest is
     address[] memory nodes = new address[](1);
     nodes[0] = node.node;
 
-    for (uint256 i = 0; i < miniblocks.length; i++) {
-      vm.assume(streamRegistry.isStream(miniblocks[i].streamId) == false);
+    for (uint256 i; i < miniblocks.length; ++i) {
+      vm.assume(!streamRegistry.isStream(miniblocks[i].streamId));
 
       vm.prank(node.node);
       streamRegistry.allocateStream(
@@ -321,7 +393,7 @@ contract StreamRegistryTest is
     vm.prank(node.node);
     streamRegistry.setStreamLastMiniblockBatch(_miniblocks);
 
-    for (uint256 i = 0; i < miniblocks.length; i++) {
+    for (uint256 i; i < miniblocks.length; ++i) {
       assertEq(
         streamRegistry.getStream(miniblocks[i].streamId).lastMiniblockHash,
         miniblocks[i].lastMiniblockHash
@@ -334,29 +406,25 @@ contract StreamRegistryTest is
     assertTrue(isLastPage);
   }
 
-  function test_revertWhen_setStreamLastMiniblockBatch_noMiniblocks(
-    address nodeOperator,
-    TestNode memory node
-  )
+  function test_revertWhen_setStreamLastMiniblockBatch_noMiniblocks()
     external
-    givenNodeOperatorIsApproved(nodeOperator)
-    givenNodeIsRegistered(nodeOperator, node.node, node.url)
+    givenNodeOperatorIsApproved(OPERATOR)
+    givenNodeIsRegistered(OPERATOR, NODE, "url")
   {
     SetMiniblock[] memory miniblocks = new SetMiniblock[](0);
 
-    vm.prank(node.node);
+    vm.prank(NODE);
     vm.expectRevert(bytes(RiverRegistryErrors.BAD_ARG));
     streamRegistry.setStreamLastMiniblockBatch(miniblocks);
   }
 
-  function test_revertWhen_setStreamLastMiniblockBatch_streamNotFound(
-    address nodeOperator,
+  function test_fuzz_setStreamLastMiniblockBatch_revertWhen_streamNotFound(
     SetMiniblock memory miniblock,
     TestNode memory node
   )
     external
-    givenNodeOperatorIsApproved(nodeOperator)
-    givenNodeIsRegistered(nodeOperator, node.node, node.url)
+    givenNodeOperatorIsApproved(OPERATOR)
+    givenNodeIsRegistered(OPERATOR, node.node, node.url)
   {
     SetMiniblock[] memory miniblocks = new SetMiniblock[](1);
     miniblocks[0] = miniblock;
@@ -372,15 +440,14 @@ contract StreamRegistryTest is
     streamRegistry.setStreamLastMiniblockBatch(miniblocks);
   }
 
-  function test_revertWhen_setStreamLastMiniblockBatch_streamSealed(
-    address nodeOperator,
+  function test_fuzz_setStreamLastMiniblockBatch_revertWhen_streamSealed(
     TestNode memory node,
     TestStream memory testStream,
     SetMiniblock memory miniblock
   )
     external
-    givenNodeOperatorIsApproved(nodeOperator)
-    givenNodeIsRegistered(nodeOperator, node.node, node.url)
+    givenNodeOperatorIsApproved(OPERATOR)
+    givenNodeIsRegistered(OPERATOR, node.node, node.url)
   {
     address[] memory nodes = new address[](1);
     nodes[0] = node.node;

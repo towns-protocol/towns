@@ -50,6 +50,11 @@ contract RiverRegistryBaseSetup is TestUtils {
   }
 
   modifier givenNodeOperatorIsApproved(address nodeOperator) {
+    _approveNodeOperator(nodeOperator);
+    _;
+  }
+
+  function _approveNodeOperator(address nodeOperator) internal {
     vm.assume(nodeOperator != address(0));
     vm.assume(operatorRegistry.isOperator(nodeOperator) == false);
 
@@ -57,7 +62,6 @@ contract RiverRegistryBaseSetup is TestUtils {
     vm.expectEmit(address(operatorRegistry));
     emit IOperatorRegistry.OperatorAdded(nodeOperator);
     operatorRegistry.approveOperator(nodeOperator);
-    _;
   }
 
   modifier givenNodeIsRegistered(
@@ -65,18 +69,7 @@ contract RiverRegistryBaseSetup is TestUtils {
     address node,
     string memory url
   ) {
-    vm.assume(nodeOperator != address(0));
-    vm.assume(node != address(0));
-
-    vm.prank(nodeOperator);
-    vm.expectEmit();
-    emit INodeRegistryBase.NodeAdded(
-      node,
-      nodeOperator,
-      url,
-      NodeStatus.NotInitialized
-    );
-    nodeRegistry.registerNode(node, url, NodeStatus.NotInitialized);
+    _registerNode(nodeOperator, node, url);
     _;
   }
 
