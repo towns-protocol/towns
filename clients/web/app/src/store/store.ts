@@ -44,8 +44,8 @@ interface AppState {
     appStoreBannerPresentedCount: number
     fundWalletModalOpen: boolean
     setFundWalletModalOpen: (open: boolean) => void
-    sendWithShiftEnter: boolean
-    setSendWithShiftEnter: (sendWithShiftEnter: boolean) => void
+    sendWithCmdEnter: boolean
+    setSendWithCmdEnter: (sendWithCmdEnter: boolean) => void
 }
 
 export const GLOBAL_STORE_NAME = 'towns/global'
@@ -153,9 +153,9 @@ export const useStore = create(
             setFundWalletModalOpen: (fundWalletModalOpen) => {
                 set(() => ({ fundWalletModalOpen }))
             },
-            sendWithShiftEnter: false,
-            setSendWithShiftEnter: (sendWithShiftEnter) => {
-                set(() => ({ sendWithShiftEnter }))
+            sendWithCmdEnter: false,
+            setSendWithCmdEnter: (sendWithCmdEnter) => {
+                set(() => ({ sendWithCmdEnter }))
             },
         }),
         {

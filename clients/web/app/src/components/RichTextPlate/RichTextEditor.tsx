@@ -14,7 +14,7 @@ import {
     UnfurledLinkAttachmentPreview,
 } from '@components/EmbeddedMessageAttachement/EditorAttachmentPreview'
 import { Box, BoxProps, Stack } from '@ui'
-import { useDevice } from 'hooks/useDevice'
+import { isMacOS, useDevice } from 'hooks/useDevice'
 import { useInputStore, useStore } from 'store/store'
 import { LoadingUnfurledLinkAttachment } from 'hooks/useExtractInternalLinks'
 import {
@@ -301,7 +301,8 @@ export const RichTextEditor = ({
         }
     }, [editorText, isAndroid])
 
-    const sendWithShiftEnter = useStore((state) => state.sendWithShiftEnter)
+    const sendWithCmdEnter = useStore((state) => state.sendWithCmdEnter)
+    const isDarwin = isMacOS()
 
     const customKeydownHandler: React.KeyboardEventHandler = useCallback(
         async (event) => {
@@ -319,14 +320,22 @@ export const RichTextEditor = ({
                 return
             }
 
-            const { key, shiftKey } = event
-            if (key === 'Enter' && shiftKey && sendWithShiftEnter) {
-                event.preventDefault()
-                await sendMessage()
-            }
-            if (key === 'Enter' && !shiftKey && !sendWithShiftEnter) {
-                event.preventDefault()
-                await sendMessage()
+            const { key, metaKey, ctrlKey, shiftKey } = event
+            const modifierPressed = isDarwin ? metaKey : ctrlKey
+            if (key === 'Enter') {
+                if (shiftKey) {
+                    // shift+enter should create a new line
+                    return
+                }
+                if (sendWithCmdEnter) {
+                    if (modifierPressed) {
+                        event.preventDefault()
+                        await sendMessage()
+                    }
+                } else {
+                    event.preventDefault()
+                    await sendMessage()
+                }
             }
         },
         [
@@ -336,9 +345,10 @@ export const RichTextEditor = ({
             disabled,
             isEditorEmpty,
             fileCount,
+            isDarwin,
+            sendWithCmdEnter,
             exitEditorOnArrow,
             sendMessage,
-            sendWithShiftEnter,
         ],
     )
 

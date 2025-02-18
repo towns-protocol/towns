@@ -2,6 +2,7 @@ import React, { useCallback, useEffect } from 'react'
 import { Box, Checkbox, Paragraph, Stack, Text } from '@ui'
 import { DEFAULT_UNPACK_ENVELOPE_OPTS, useStore } from 'store/store'
 import { TownNotificationsButton } from '@components/NotificationSettings/NotificationsSettingsButton'
+import { isMacOS } from 'hooks/useDevice'
 
 export function UserPreferences() {
     return (
@@ -29,7 +30,7 @@ export function UserPreferences() {
                         Editor Preference
                     </Text>
                 </Box>
-                <SendWithShiftEnterCheckbox />
+                <SendWithCmdEnterCheckbox />
             </Stack>
         </>
     )
@@ -83,14 +84,15 @@ const EventSignatureValidationCheckbox = () => {
     )
 }
 
-const SendWithShiftEnterCheckbox = () => {
-    const { sendWithShiftEnter, setSendWithShiftEnter } = useStore()
+const SendWithCmdEnterCheckbox = () => {
+    const { sendWithCmdEnter, setSendWithCmdEnter } = useStore()
+    const isDarwin = isMacOS()
 
     const onChange = useCallback(
         (e: React.ChangeEvent<HTMLInputElement>) => {
-            setSendWithShiftEnter(e.target.checked)
+            setSendWithCmdEnter(e.target.checked)
         },
-        [setSendWithShiftEnter],
+        [setSendWithCmdEnter],
     )
 
     return (
@@ -99,13 +101,14 @@ const SendWithShiftEnterCheckbox = () => {
                 labelLast
                 defaultChecked
                 justifyContent="start"
-                checked={sendWithShiftEnter}
-                name="sendWithShiftEnter"
-                label="Send with Shift+Enter"
+                checked={sendWithCmdEnter}
+                name="sendWithCmdEnter"
+                label={isDarwin ? 'Send with Cmd+Enter' : 'Send with Ctrl+Enter'}
                 onChange={onChange}
             />
             <Paragraph size="sm" color="gray2">
-                When enabled, messages will only be sent when you press Shift+Enter
+                When enabled, messages will only be sent when you press{' '}
+                {isDarwin ? 'Cmd+Enter' : 'Ctrl+Enter'}
             </Paragraph>
         </>
     )
