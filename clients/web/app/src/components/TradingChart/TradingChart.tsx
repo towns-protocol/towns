@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useLayoutEffect, useRef, useState } from 'react'
 import { TickerAttachment } from '@river-build/sdk'
 import {
     AreaSeries,
@@ -20,6 +20,7 @@ import { formatCompactUSD, formatUSD } from '@components/Web3/Trading/tradingUti
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { CHANNEL_INFO_PARAMS } from 'routes'
 import { useSizeContext } from 'ui/hooks/useSizeContext'
+import { shimmerClass } from 'ui/styles/globals/shimmer.css'
 import { GetBars, TimeFrame, useCoinBars } from './useCoinBars'
 import { useCoinData } from './useCoinData'
 
@@ -55,6 +56,7 @@ export const TradingChartAttachment = (props: { attachment: TickerAttachment }) 
 
     return (
         <Stack
+            gap="paragraph"
             rounded="md"
             width="500"
             style={{
@@ -69,7 +71,7 @@ export const TradingChartAttachment = (props: { attachment: TickerAttachment }) 
                 chainId={props.attachment.chainId}
                 disabled={!inView}
             />
-            <Stack horizontal padding gap="sm">
+            <Stack horizontal padding paddingTop="none" gap="sm">
                 <Button
                     grow
                     tone="level3"
@@ -119,7 +121,7 @@ export const TradingChart = (props: { address: string; chainId: string; disabled
 
     return (
         <>
-            <Box height="250" width="100%" position="relative">
+            <Box height="200" width="100%" position="relative">
                 <SizeBox
                     cursor={!isFocused ? 'pointer' : 'default'}
                     onClick={() => setIsFocused(true)}
@@ -166,16 +168,14 @@ export const TradingChart = (props: { address: string; chainId: string; disabled
                     </Stack>
                 </Box>
             </Box>
-
-            {coinData && (
-                <>
-                    <Stack padding gap="paragraph">
+            <Stack paddingX paddingY="none" gap="paragraph">
+                {coinData ? (
+                    <>
                         <Stack horizontal alignItems="center">
                             <Stack horizontal gap="sm" alignItems="center">
                                 <Box
-                                    width="x2.5"
-                                    height="x2.5"
-                                    background="accent"
+                                    width="x3"
+                                    height="x3"
                                     rounded="full"
                                     as="img"
                                     src={coinData.token.info.imageThumbUrl ?? ''}
@@ -223,9 +223,43 @@ export const TradingChart = (props: { address: string; chainId: string; disabled
                                 HDLRS {coinData.holders}
                             </Pill>
                         </Stack>
-                    </Stack>
-                </>
-            )}
+                    </>
+                ) : (
+                    <>
+                        <Stack horizontal alignItems="center">
+                            <Stack horizontal gap="sm" alignItems="center">
+                                <Box
+                                    width="x2.5"
+                                    height="x2.5"
+                                    rounded="full"
+                                    className={shimmerClass}
+                                />
+                            </Stack>
+                            <Box grow />
+                            <Box>
+                                <Box
+                                    height="x2"
+                                    className={shimmerClass}
+                                    width="x12"
+                                    rounded="md"
+                                />
+                            </Box>
+                        </Stack>
+
+                        <Box height="x2" className={shimmerClass} width="x12" rounded="md" />
+
+                        <Stack horizontal grow gap="sm">
+                            <Box height="x2" className={shimmerClass} width="x12" rounded="md" />
+                        </Stack>
+                        <Stack horizontal grow gap="sm" color="gray1">
+                            <Box height="x2" className={shimmerClass} rounded="md" width="x6" />
+                            <Box height="x2" className={shimmerClass} rounded="md" width="x6" />
+                            <Box height="x2" className={shimmerClass} rounded="md" width="x6" />
+                            <Box height="x2" className={shimmerClass} rounded="md" width="x6" />
+                        </Stack>
+                    </>
+                )}
+            </Stack>
         </>
     )
 }
@@ -241,28 +275,41 @@ const ChartComponent = (props: {
     const { getTheme } = useStore()
     const theme = getTheme()
 
+    const chartContainerRef = useRef<HTMLElement>(null)
+
+    const backgroundGradientBottom = themes[theme].background.level2
+    const backgroundGradientTop = themes[theme].background.level3
     const backgroundColor = themes[theme].background.level2
     const lineColor = themes[theme].foreground.cta2
     const textColor = themes[theme].foreground.gray2
     const areaTopColor = themes[theme].background.cta2
     const areaBottomColor = themes[theme].background.level3
-    const chartContainerRef = useRef<HTMLElement>(null)
+
     const timeFrameOptions = CHART_TIME_FORMAT_OPTIONS[timeframe]
-    const [chart, setChart] = useState<IChartApi | null>(null)
 
     const chartRef = useRef<IChartApi | null>(null)
 
     const { containerWidth } = useSizeContext()
 
-    useEffect(() => {
-        if (!chartRef.current) {
-            return
+    const focusChart = useCallback((chart: IChartApi, isFocused: boolean) => {
+        if (isFocused) {
+            chart.timeScale().applyOptions({
+                visible: true,
+            })
+            chart.priceScale('left').applyOptions({
+                visible: true,
+            })
+        } else {
+            chart.timeScale().applyOptions({
+                visible: false,
+            })
+            chart.priceScale('right').applyOptions({
+                visible: false,
+            })
         }
-        chartRef.current.applyOptions({ width: containerWidth })
-        chartRef.current.timeScale().fitContent()
-    }, [containerWidth])
+    }, [])
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         const container = chartContainerRef.current
         if (!container) {
             return
@@ -271,16 +318,17 @@ const ChartComponent = (props: {
             return
         }
 
-        const c = createChart(container, {
+        const chart = createChart(container, {
             layout: {
                 background: {
-                    color: backgroundColor,
-                    type: ColorType.Solid,
+                    bottomColor: backgroundGradientBottom,
+                    topColor: backgroundGradientTop,
+                    type: ColorType.VerticalGradient,
                 },
                 textColor,
             },
             width: container.clientWidth,
-            height: 250,
+            height: 200,
             leftPriceScale: {
                 visible: false,
             },
@@ -308,12 +356,8 @@ const ChartComponent = (props: {
             },
         })
 
-        chartRef.current = c
-
-        c.timeScale().fitContent()
-
         if (chartType === 'area') {
-            const areaSeries = c.addSeries(AreaSeries, {
+            const areaSeries = chart.addSeries(AreaSeries, {
                 lineColor,
                 topColor: areaTopColor,
                 bottomColor: areaBottomColor,
@@ -324,7 +368,7 @@ const ChartComponent = (props: {
             })
             areaSeries.setData(formattedData)
         } else {
-            const candleStickSeries = c.addSeries(CandlestickSeries, {})
+            const candleStickSeries = chart.addSeries(CandlestickSeries, {})
             const formattedData = zip(data.t, data.o, data.h, data.l, data.c).map(
                 ([time, open, high, low, close]) => {
                     return { time: time as UTCTimestamp, open, high, low, close }
@@ -333,10 +377,13 @@ const ChartComponent = (props: {
             candleStickSeries.setData(formattedData)
         }
 
-        setChart(c)
+        chartRef.current = chart
+        chartRef.current.timeScale().fitContent()
+
+        focusChart(chart, false)
 
         return () => {
-            c.remove()
+            chart.remove()
         }
     }, [
         data,
@@ -345,30 +392,27 @@ const ChartComponent = (props: {
         areaTopColor,
         areaBottomColor,
         backgroundColor,
-        chartType,
         timeFrameOptions,
+        focusChart,
+        chartType,
+        backgroundGradientBottom,
+        backgroundGradientTop,
     ])
 
-    useEffect(() => {
-        if (!chart) {
-            return
+    useLayoutEffect(() => {
+        if (chartRef.current) {
+            chartRef.current.applyOptions({
+                width: containerWidth,
+            })
+            chartRef.current.timeScale().fitContent()
         }
-        if (isFocused) {
-            chart.timeScale().applyOptions({
-                visible: true,
-            })
-            chart.priceScale('left').applyOptions({
-                visible: true,
-            })
-        } else {
-            chart.timeScale().applyOptions({
-                visible: false,
-            })
-            chart.priceScale('right').applyOptions({
-                visible: false,
-            })
+    }, [containerWidth])
+
+    useLayoutEffect(() => {
+        if (chartRef.current) {
+            focusChart(chartRef.current, isFocused)
         }
-    }, [isFocused, chart])
+    }, [isFocused, focusChart])
 
     return <Box height="250" ref={chartContainerRef} pointerEvents={isFocused ? 'auto' : 'none'} />
 }
