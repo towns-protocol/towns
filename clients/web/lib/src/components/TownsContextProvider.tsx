@@ -270,21 +270,19 @@ const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
         signerContext,
     ])
 
-    log.info('context impl render')
-
     const valueRef = useRef<ITownsContext>()
 
     useEffect(() => {
-        log.info('context impl changed', !!value)
+        //log.info('context impl changed', !!value)
         if (valueRef.current) {
-            const diffKeys = Object.keys(valueRef.current).reduce((acc, key) => {
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-                if ((valueRef.current as any)[key] !== (value as any)[key]) {
-                    acc.push(key)
-                }
-                return acc
-            }, [] as string[])
-            log.info('new values', diffKeys)
+            // const diffKeys = Object.keys(valueRef.current).reduce((acc, key) => {
+            //     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+            //     if ((valueRef.current as any)[key] !== (value as any)[key]) {
+            //         acc.push(key)
+            //     }
+            //     return acc
+            // }, [] as string[])
+            // log.info('new values', diffKeys)
         }
         valueRef.current = value
     }, [value])

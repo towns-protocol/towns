@@ -11,36 +11,23 @@ import { Room } from '../../types/towns-types'
 import isEqual from 'lodash/isEqual'
 import { TownsOpts } from '../../client/TownsClientTypes'
 import { create } from 'zustand'
-import { createJSONStorage, persist } from 'zustand/middleware'
-
-const ROOM_DATA_STORE_NAME = 'towns/channelData'
 
 export type RoomDataStore = {
     rooms: Record<string, Room>
     setRoomData: (streamId: string, room: Room) => void
 }
 
-const useRoomDataStore = create<RoomDataStore>()(
-    persist(
-        (set) => ({
-            rooms: {},
-            setRoomData: (streamId: string, room: Room) =>
-                set((state) => {
-                    const prevRoom = state.rooms[streamId]
-                    if (isEqual(prevRoom, room)) {
-                        return state
-                    }
-                    console.log('useCasablancaRooms, setRoomData', streamId, prevRoom, room)
-                    return { rooms: { ...state.rooms, [streamId]: room } }
-                }),
+const useRoomDataStore = create<RoomDataStore>((set) => ({
+    rooms: {},
+    setRoomData: (streamId: string, room: Room) =>
+        set((state) => {
+            const prevRoom = state.rooms[streamId]
+            if (isEqual(prevRoom, room)) {
+                return state
+            }
+            return { rooms: { ...state.rooms, [streamId]: room } }
         }),
-        {
-            name: ROOM_DATA_STORE_NAME,
-            storage: createJSONStorage(() => localStorage, {}),
-            version: 1,
-        },
-    ),
-)
+}))
 
 export function useCasablancaRooms(
     _opts: TownsOpts,
