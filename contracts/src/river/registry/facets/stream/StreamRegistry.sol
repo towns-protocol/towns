@@ -13,7 +13,7 @@ import {RiverRegistryErrors} from "contracts/src/river/registry/libraries/Regist
 import {RegistryModifiers} from "contracts/src/river/registry/libraries/RegistryStorage.sol";
 
 library StreamFlags {
-  uint64 constant SEALED = 1;
+  uint64 internal constant SEALED = 1;
 }
 
 contract StreamRegistry is IStreamRegistry, RegistryModifiers {
@@ -23,9 +23,9 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
   /// @inheritdoc IStreamRegistry
   function allocateStream(
     bytes32 streamId,
-    address[] memory nodes,
+    address[] calldata nodes,
     bytes32 genesisMiniblockHash,
-    bytes memory genesisMiniblock
+    bytes calldata genesisMiniblock
   ) external onlyNode(msg.sender) {
     // verify that the streamId is not already in the registry
     if (ds.streams.contains(streamId))
@@ -33,7 +33,7 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
 
     // verify that the nodes stream is placed on are in the registry
     uint256 nodeCount = nodes.length;
-    for (uint256 i = 0; i < nodeCount; ++i) {
+    for (uint256 i; i < nodeCount; ++i) {
       if (!ds.nodes.contains(nodes[i]))
         revert(RiverRegistryErrors.NODE_NOT_FOUND);
     }
@@ -64,7 +64,7 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
   function addStream(
     bytes32 streamId,
     bytes32 genesisMiniblockHash,
-    Stream memory stream
+    Stream calldata stream
   ) external onlyNode(msg.sender) {
     // verify that the streamId is not already in the registry
     if (ds.streams.contains(streamId))
@@ -72,7 +72,7 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
 
     // verify that the nodes stream is placed on are in the registry
     uint256 nodeCount = stream.nodes.length;
-    for (uint256 i = 0; i < nodeCount; ++i) {
+    for (uint256 i; i < nodeCount; ++i) {
       if (!ds.nodes.contains(stream.nodes[i]))
         revert(RiverRegistryErrors.NODE_NOT_FOUND);
     }
@@ -84,17 +84,6 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     emit StreamCreated(streamId, genesisMiniblockHash, stream);
   }
 
-  /// @inheritdoc IStreamRegistry
-  function getStream(bytes32 streamId) external view returns (Stream memory) {
-    if (!ds.streams.contains(streamId)) revert(RiverRegistryErrors.NOT_FOUND);
-    return ds.streamById[streamId];
-  }
-
-  /// @inheritdoc IStreamRegistry
-  function isStream(bytes32 streamId) external view returns (bool) {
-    return ds.streams.contains(streamId);
-  }
-
   function setStreamLastMiniblockBatch(
     SetMiniblock[] calldata miniblocks
   ) external onlyNode(msg.sender) {
@@ -102,7 +91,7 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
 
     if (miniblockCount == 0) revert(RiverRegistryErrors.BAD_ARG);
 
-    for (uint256 i = 0; i < miniblockCount; ++i) {
+    for (uint256 i; i < miniblockCount; ++i) {
       SetMiniblock calldata miniblock = miniblocks[i];
 
       if (!ds.streams.contains(miniblock.streamId)) {
@@ -213,65 +202,6 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
   }
 
   /// @inheritdoc IStreamRegistry
-  function getStreamWithGenesis(
-    bytes32 streamId
-  ) external view returns (Stream memory, bytes32, bytes memory) {
-    if (!ds.streams.contains(streamId)) revert(RiverRegistryErrors.NOT_FOUND);
-
-    return (
-      ds.streamById[streamId],
-      ds.genesisMiniblockHashByStreamId[streamId],
-      ds.genesisMiniblockByStreamId[streamId]
-    );
-  }
-
-  /// @inheritdoc IStreamRegistry
-  function getStreamCount() external view returns (uint256) {
-    return ds.streams.length();
-  }
-
-  /// @inheritdoc IStreamRegistry
-  function getStreamCountOnNode(
-    address nodeAddress
-  ) external view returns (uint256) {
-    uint256 count = 0;
-    uint256 streamLength = ds.streams.length();
-    for (uint256 i = 0; i < streamLength; ++i) {
-      bytes32 id = ds.streams.at(i);
-      Stream storage stream = ds.streamById[id];
-      for (uint256 j = 0; j < stream.nodes.length; ++j) {
-        if (stream.nodes[j] == nodeAddress) {
-          count++;
-          break;
-        }
-      }
-    }
-
-    return count;
-  }
-
-  /// @inheritdoc IStreamRegistry
-  function getPaginatedStreams(
-    uint256 start,
-    uint256 stop
-  ) external view returns (StreamWithId[] memory, bool) {
-    if (start >= stop) revert(RiverRegistryErrors.BAD_ARG);
-
-    uint256 streamCount = ds.streams.length();
-    uint256 maxStreamIndex = stop > streamCount ? streamCount : stop;
-    uint256 count = maxStreamIndex > start ? maxStreamIndex - start : 0;
-
-    StreamWithId[] memory streams = new StreamWithId[](count);
-
-    for (uint256 i = 0; i < count; ++i) {
-      bytes32 id = ds.streams.at(start + i);
-      streams[i] = StreamWithId({id: id, stream: ds.streamById[id]});
-    }
-
-    return (streams, stop >= streamCount);
-  }
-
-  /// @inheritdoc IStreamRegistry
   function placeStreamOnNode(
     bytes32 streamId,
     address nodeAddress
@@ -281,7 +211,7 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     // validate that the node is not already on the stream
     uint256 nodeCount = stream.nodes.length;
 
-    for (uint256 i = 0; i < nodeCount; ++i) {
+    for (uint256 i; i < nodeCount; ++i) {
       if (stream.nodes[i] == nodeAddress)
         revert(RiverRegistryErrors.ALREADY_EXISTS);
     }
@@ -301,7 +231,7 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     bool found = false;
     uint256 nodeCount = stream.nodes.length;
 
-    for (uint256 i = 0; i < nodeCount; ++i) {
+    for (uint256 i; i < nodeCount; ++i) {
       if (stream.nodes[i] == nodeAddress) {
         stream.nodes[i] = stream.nodes[nodeCount - 1];
         stream.nodes.pop();
@@ -313,5 +243,83 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     if (!found) revert(RiverRegistryErrors.NODE_NOT_FOUND);
 
     emit StreamPlacementUpdated(streamId, nodeAddress, false);
+  }
+
+  /// @inheritdoc IStreamRegistry
+  function getStream(
+    bytes32 streamId
+  ) external view returns (Stream memory stream) {
+    assembly ("memory-safe") {
+      // By default, memory has been implicitly allocated for `stream`.
+      // But we don't need this implicitly allocated memory.
+      // So we just set the free memory pointer to what it was before `stream` has been allocated.
+      mstore(0x40, stream)
+    }
+    if (!ds.streams.contains(streamId)) revert(RiverRegistryErrors.NOT_FOUND);
+    stream = ds.streamById[streamId];
+  }
+
+  /// @inheritdoc IStreamRegistry
+  function isStream(bytes32 streamId) external view returns (bool) {
+    return ds.streams.contains(streamId);
+  }
+
+  /// @inheritdoc IStreamRegistry
+  function getStreamWithGenesis(
+    bytes32 streamId
+  ) external view returns (Stream memory stream, bytes32, bytes memory) {
+    assembly ("memory-safe") {
+      mstore(0x40, stream)
+    }
+    if (!ds.streams.contains(streamId)) revert(RiverRegistryErrors.NOT_FOUND);
+
+    return (
+      ds.streamById[streamId],
+      ds.genesisMiniblockHashByStreamId[streamId],
+      ds.genesisMiniblockByStreamId[streamId]
+    );
+  }
+
+  /// @inheritdoc IStreamRegistry
+  function getStreamCount() external view returns (uint256) {
+    return ds.streams.length();
+  }
+
+  /// @inheritdoc IStreamRegistry
+  function getStreamCountOnNode(
+    address nodeAddress
+  ) external view returns (uint256 count) {
+    uint256 streamLength = ds.streams.length();
+    for (uint256 i; i < streamLength; ++i) {
+      bytes32 id = ds.streams.at(i);
+      Stream storage stream = ds.streamById[id];
+      for (uint256 j; j < stream.nodes.length; ++j) {
+        if (stream.nodes[j] == nodeAddress) {
+          ++count;
+          break;
+        }
+      }
+    }
+  }
+
+  /// @inheritdoc IStreamRegistry
+  function getPaginatedStreams(
+    uint256 start,
+    uint256 stop
+  ) external view returns (StreamWithId[] memory, bool) {
+    if (start >= stop) revert(RiverRegistryErrors.BAD_ARG);
+
+    uint256 streamCount = ds.streams.length();
+    uint256 maxStreamIndex = stop > streamCount ? streamCount : stop;
+    uint256 count = maxStreamIndex > start ? maxStreamIndex - start : 0;
+
+    StreamWithId[] memory streams = new StreamWithId[](count);
+
+    for (uint256 i; i < count; ++i) {
+      bytes32 id = ds.streams.at(start + i);
+      streams[i] = StreamWithId({id: id, stream: ds.streamById[id]});
+    }
+
+    return (streams, stop >= streamCount);
   }
 }

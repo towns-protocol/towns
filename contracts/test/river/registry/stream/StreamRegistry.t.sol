@@ -32,7 +32,7 @@ contract StreamRegistryTest is
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
   function test_allocateStream()
-    external
+    public
     givenNodeOperatorIsApproved(OPERATOR)
     givenNodeIsRegistered(OPERATOR, NODE, "url")
   {
@@ -406,7 +406,7 @@ contract StreamRegistryTest is
     assertTrue(isLastPage);
   }
 
-  function test_revertWhen_setStreamLastMiniblockBatch_noMiniblocks()
+  function test_setStreamLastMiniblockBatch_revertWhen_noMiniblocks()
     external
     givenNodeOperatorIsApproved(OPERATOR)
     givenNodeIsRegistered(OPERATOR, NODE, "url")
@@ -479,5 +479,21 @@ contract StreamRegistryTest is
       RiverRegistryErrors.STREAM_SEALED
     );
     streamRegistry.setStreamLastMiniblockBatch(miniblocks);
+  }
+
+  function test_getStream() public {
+    test_allocateStream();
+
+    Stream memory stream = streamRegistry.getStream(SAMPLE_STREAM.streamId);
+    assertEq(stream.lastMiniblockHash, SAMPLE_STREAM.genesisMiniblockHash);
+  }
+
+  function test_getStreamWithGenesis() public {
+    test_allocateStream();
+
+    (Stream memory stream, bytes32 genesisMiniblockHash, ) = streamRegistry
+      .getStreamWithGenesis(SAMPLE_STREAM.streamId);
+    assertEq(stream.lastMiniblockHash, SAMPLE_STREAM.genesisMiniblockHash);
+    assertEq(genesisMiniblockHash, SAMPLE_STREAM.genesisMiniblockHash);
   }
 }
