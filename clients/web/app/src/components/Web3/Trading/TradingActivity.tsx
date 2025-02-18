@@ -17,8 +17,11 @@ export const TradingActivity = () => {
     return (
         <Stack>
             {allData.map((item) => {
-                // the same event id can occur multiple times, but with different amounts
-                const key = item.id + (item.data.amount0 ?? '') + (item.data.amount1 ?? '')
+                // the same event hash can occur multiple times, but with different amounts 🤷‍♂️
+                const key = JSON.stringify({
+                    txHash: item.transactionHash,
+                    data: item.data,
+                })
                 return <TradingActivityEntry key={key} item={item} />
             })}
         </Stack>

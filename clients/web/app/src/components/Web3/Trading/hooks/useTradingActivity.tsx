@@ -207,9 +207,7 @@ function buildFilterTokensQuery(addresses: string[], networkId: number) {
     return `
     {
         filterTokens(
-            filters: {
-            network: [${networkId}]
-            }
+            limit: 200,
             tokens:[${tokens}]
         ) {
             results {
