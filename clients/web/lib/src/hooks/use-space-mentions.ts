@@ -126,9 +126,10 @@ export function useCalculateSpaceMentions(_opts: TownsOpts) {
     }, [])
 }
 
+const emptyMentionsResult: MentionResult[] = []
 export function useSpaceMentions(spaceId: string | undefined): MentionResult[] {
     return useSpaceMentionsStore((state) =>
-        spaceId ? state.mentionsMap[spaceId]?.mentions ?? [] : [],
+        spaceId ? state.mentionsMap[spaceId]?.mentions ?? emptyMentionsResult : emptyMentionsResult,
     )
 }
 
