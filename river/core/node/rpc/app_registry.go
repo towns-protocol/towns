@@ -11,17 +11,17 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/node/app_registry"
 	. "github.com/towns-protocol/towns/core/node/base"
-	"github.com/towns-protocol/towns/core/node/bot_registry"
 	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/nodes"
 )
 
-func (s *Service) startBotRegistryMode(opts *ServerStartOpts) error {
+func (s *Service) startAppRegistryMode(opts *ServerStartOpts) error {
 	var err error
 	s.startTime = time.Now()
 
-	s.initInstance(ServerModeBotRegistry, opts)
+	s.initInstance(ServerModeAppRegistry, opts)
 
 	err = s.initRiverChain()
 	if err != nil {
@@ -33,7 +33,7 @@ func (s *Service) startBotRegistryMode(opts *ServerStartOpts) error {
 		return err
 	}
 
-	err = s.initBotRegistryStore()
+	err = s.initAppRegistryStore()
 	if err != nil {
 		return AsRiverError(err).Message("Failed to init store").LogError(s.defaultLogger)
 	}
@@ -61,17 +61,18 @@ func (s *Service) startBotRegistryMode(opts *ServerStartOpts) error {
 		registries = append(registries, registry)
 	}
 
-	if s.BotRegistryService, err = bot_registry.NewService(
+	if s.AppRegistryService, err = app_registry.NewService(
 		s.serverCtx,
-		s.config.BotRegistry,
+		s.config.AppRegistry,
 		s.chainConfig,
-		s.botStore,
+		s.appStore,
 		s.registryContract,
 		registries,
 		s.metrics,
 		opts.StreamEventListener,
+		httpClient,
 	); err != nil {
-		return AsRiverError(err).Message("Failed to instantiate bot registry service").LogError(s.defaultLogger)
+		return AsRiverError(err).Message("Failed to instantiate app registry service").LogError(s.defaultLogger)
 	}
 
 	s.SetStatus("OK")
@@ -81,11 +82,11 @@ func (s *Service) startBotRegistryMode(opts *ServerStartOpts) error {
 		return AsRiverError(err).Message("Failed to run http server").LogError(s.defaultLogger)
 	}
 
-	if err := s.initBotRegistryHandlers(); err != nil {
+	if err := s.initAppRegistryHandlers(); err != nil {
 		return err
 	}
 
-	s.BotRegistryService.Start(s.serverCtx)
+	s.AppRegistryService.Start(s.serverCtx)
 
 	// Retrieve the TCP address of the listener
 	tcpAddr := s.listener.Addr().(*net.TCPAddr)
@@ -100,7 +101,7 @@ func (s *Service) startBotRegistryMode(opts *ServerStartOpts) error {
 	return nil
 }
 
-func StartServerInBotRegistryMode(
+func StartServerInAppRegistryMode(
 	ctx context.Context,
 	cfg *config.Config,
 	opts *ServerStartOpts,
@@ -115,7 +116,7 @@ func StartServerInBotRegistryMode(
 		exitSignal:      make(chan error, 1),
 	}
 
-	err := service.startBotRegistryMode(opts)
+	err := service.startAppRegistryMode(opts)
 	if err != nil {
 		service.Close()
 		return nil, err
@@ -124,13 +125,13 @@ func StartServerInBotRegistryMode(
 	return service, nil
 }
 
-func RunBotRegistryService(ctx context.Context, cfg *config.Config) error {
+func RunAppRegistryService(ctx context.Context, cfg *config.Config) error {
 	log := logging.FromCtx(ctx)
 
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	service, err := StartServerInBotRegistryMode(ctx, cfg, nil)
+	service, err := StartServerInAppRegistryMode(ctx, cfg, nil)
 	if err != nil {
 		log.Errorw("Failed to start server", "error", err)
 		return err

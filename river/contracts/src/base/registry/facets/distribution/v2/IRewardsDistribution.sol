@@ -211,16 +211,14 @@ interface IRewardsDistribution is IRewardsDistributionBase {
   /// @param delegatee The address of the delegatee
   /// @param beneficiary The address of the beneficiary
   /// @param owner The address of the deposit owner
-  /// @param deadline The deadline for the signature
-  /// @param signature The EIP-712 signature
   /// @return depositId The ID of the deposit
   function stakeOnBehalf(
     uint96 amount,
     address delegatee,
     address beneficiary,
     address owner,
-    uint256 deadline,
-    bytes calldata signature
+    uint256,
+    bytes calldata
   ) external returns (uint256 depositId);
 
   /// @notice Increases the stake of an existing deposit

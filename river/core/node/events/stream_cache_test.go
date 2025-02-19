@@ -393,7 +393,7 @@ func Disabled_TestStreamUnloadWithSubscribers(t *testing.T) {
 	streamCache = NewStreamCache(tc.instances[0].params)
 	err = streamCache.Start(ctx)
 	require.NoError(err, "instantiating stream cache")
-	mpProducer := NewMiniblockProducer(ctx, streamCache, tc.btc.OnChainConfig, &MiniblockProducerOpts{TestDisableMbProdcutionOnBlock: true})
+	mpProducer := NewMiniblockProducer(ctx, streamCache, &MiniblockProducerOpts{TestDisableMbProdcutionOnBlock: true})
 
 	for streamID, syncCookie := range syncCookies {
 		streamSync, err := streamCache.GetStreamWaitForLocal(ctx, streamID)

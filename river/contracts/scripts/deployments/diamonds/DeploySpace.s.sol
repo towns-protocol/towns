@@ -30,6 +30,7 @@ import {DeployChannels} from "contracts/scripts/deployments/facets/DeployChannel
 import {DeployTokenPausable} from "contracts/scripts/deployments/facets/DeployTokenPausable.s.sol";
 import {DeployPrepayFacet} from "contracts/scripts/deployments/facets/DeployPrepayFacet.s.sol";
 import {DeployReferrals} from "contracts/scripts/deployments/facets/DeployReferrals.s.sol";
+import {DeployReviewFacet} from "contracts/scripts/deployments/facets/DeployReviewFacet.s.sol";
 import {DeployMembershipToken} from "contracts/scripts/deployments/facets/DeployMembershipToken.s.sol";
 import {DeploySpaceEntitlementGated} from "contracts/scripts/deployments/facets/DeploySpaceEntitlementGated.s.sol";
 import {DeployTipping} from "contracts/scripts/deployments/facets/DeployTipping.s.sol";
@@ -61,6 +62,7 @@ contract DeploySpace is DiamondHelper, Deployer {
 
   DeployPrepayFacet prepayHelper = new DeployPrepayFacet();
   DeployReferrals referralsHelper = new DeployReferrals();
+  DeployReviewFacet reviewHelper = new DeployReviewFacet();
   DeployMembershipToken membershipTokenHelper = new DeployMembershipToken();
   DeploySpaceEntitlementGated entitlementGatedHelper =
     new DeploySpaceEntitlementGated();
@@ -90,6 +92,7 @@ contract DeploySpace is DiamondHelper, Deployer {
   address ownablePending;
   address prepay;
   address referrals;
+  address review;
   address tipping;
   address multiInit;
 
@@ -144,6 +147,7 @@ contract DeploySpace is DiamondHelper, Deployer {
     tokenPausable = tokenPausableHelper.deploy(deployer);
     prepay = prepayHelper.deploy(deployer);
     referrals = referralsHelper.deploy(deployer);
+    review = reviewHelper.deploy(deployer);
     entitlementGated = entitlementGatedHelper.deploy(deployer);
     tipping = tippingHelper.deploy(deployer);
     membershipTokenHelper.removeSelector(IERC721A.tokenURI.selector);
@@ -195,6 +199,7 @@ contract DeploySpace is DiamondHelper, Deployer {
     );
     addCut(prepayHelper.makeCut(prepay, IDiamond.FacetCutAction.Add));
     addCut(referralsHelper.makeCut(referrals, IDiamond.FacetCutAction.Add));
+    addCut(reviewHelper.makeCut(review, IDiamond.FacetCutAction.Add));
     addCut(tippingHelper.makeCut(tipping, IDiamond.FacetCutAction.Add));
 
     if (isAnvil()) {
@@ -307,6 +312,9 @@ contract DeploySpace is DiamondHelper, Deployer {
       ) {
         referrals = referralsHelper.deploy(deployer);
         addCut(referralsHelper.makeCut(referrals, IDiamond.FacetCutAction.Add));
+      } else if (facetNameHash == keccak256(abi.encodePacked("ReviewFacet"))) {
+        review = reviewHelper.deploy(deployer);
+        addCut(reviewHelper.makeCut(review, IDiamond.FacetCutAction.Add));
       } else if (
         facetNameHash == keccak256(abi.encodePacked("SpaceEntitlementGated"))
       ) {

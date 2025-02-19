@@ -304,32 +304,32 @@ contract RewardsDistributionV2Test is
     verifyStake(user, depositId, amount, operator, commissionRate, beneficiary);
   }
 
-  function test_fuzz_stakeOnBehalf_revertIf_pastDeadline(
-    uint256 deadline
-  ) public {
-    deadline = bound(deadline, 0, block.timestamp - 1);
-    vm.expectRevert(RewardsDistribution__ExpiredDeadline.selector);
-    rewardsDistributionFacet.stakeOnBehalf(
-      1,
-      OPERATOR,
-      address(this),
-      address(this),
-      deadline,
-      ""
-    );
-  }
-
-  function test_stakeOnBehalf_revertIf_invalidSignature() public {
-    vm.expectRevert(RewardsDistribution__InvalidSignature.selector);
-    rewardsDistributionFacet.stakeOnBehalf(
-      1,
-      OPERATOR,
-      address(this),
-      address(this),
-      block.timestamp,
-      ""
-    );
-  }
+  //  function test_fuzz_stakeOnBehalf_revertIf_pastDeadline(
+  //    uint256 deadline
+  //  ) public {
+  //    deadline = bound(deadline, 0, block.timestamp - 1);
+  //    vm.expectRevert(RewardsDistribution__ExpiredDeadline.selector);
+  //    rewardsDistributionFacet.stakeOnBehalf(
+  //      1,
+  //      OPERATOR,
+  //      address(this),
+  //      address(this),
+  //      deadline,
+  //      ""
+  //    );
+  //  }
+  //
+  //  function test_stakeOnBehalf_revertIf_invalidSignature() public {
+  //    vm.expectRevert(RewardsDistribution__InvalidSignature.selector);
+  //    rewardsDistributionFacet.stakeOnBehalf(
+  //      1,
+  //      OPERATOR,
+  //      address(this),
+  //      address(this),
+  //      block.timestamp,
+  //      ""
+  //    );
+  //  }
 
   function test_fuzz_stakeOnBehalf(
     uint256 privateKey,

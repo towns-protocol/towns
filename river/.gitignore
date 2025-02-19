@@ -25,6 +25,7 @@ contracts/.openzeppelin/unknown-*.json
 contracts/docs/coverage
 contracts/.env
 contracts/.env.tpl
+contracts/in
 
 abi/
 

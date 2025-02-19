@@ -163,7 +163,7 @@ func (ctc *cacheTestContext) initCache(n int, opts *MiniblockProducerOpts) *Stre
 	err := streamCache.Start(ctc.ctx)
 	ctc.require.NoError(err)
 	ctc.instances[n].cache = streamCache
-	ctc.instances[n].mbProducer = NewMiniblockProducer(ctc.ctx, streamCache, ctc.btc.OnChainConfig, opts)
+	ctc.instances[n].mbProducer = NewMiniblockProducer(ctc.ctx, streamCache, opts)
 	return streamCache
 }
 

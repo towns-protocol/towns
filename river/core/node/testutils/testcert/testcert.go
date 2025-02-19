@@ -7,8 +7,10 @@ import (
 	"net"
 	"net/http"
 	"strings"
+	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
 	"github.com/towns-protocol/towns/core/config"
 )
 
@@ -118,4 +120,13 @@ func GetHttp2LocalhostTLSClient(ctx context.Context, cfg *config.Config) (*http.
 			ForceAttemptHTTP2: true,
 		},
 	}, nil
+}
+
+// MakeTestListener creates a localhost listener on a random port and and validates proper
+// listener creation. It does not clean up the listener on test close.
+func MakeTestListener(t *testing.T) (net.Listener, string) {
+	listener, err := net.Listen("tcp", "localhost:0")
+	require.NoError(t, err)
+	listener = tls.NewListener(listener, GetHttp2LocalhostTLSConfig())
+	return listener, "https://" + listener.Addr().String()
 }

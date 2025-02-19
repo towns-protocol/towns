@@ -122,18 +122,15 @@ contract MembershipBaseSetup is
   }
 
   modifier givenAliceHasPaidMembership() {
-    vm.startPrank(alice);
-    vm.deal(alice, MEMBERSHIP_PRICE);
+    hoax(alice, MEMBERSHIP_PRICE);
     membership.joinSpace{value: MEMBERSHIP_PRICE}(alice);
     assertEq(membershipToken.balanceOf(alice), 1);
-    vm.stopPrank();
     _;
   }
 
   modifier givenAliceHasMintedMembership() {
-    vm.startPrank(alice);
+    vm.prank(alice);
     membership.joinSpace(alice);
-    vm.stopPrank();
     _;
   }
 

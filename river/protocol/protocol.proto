@@ -1162,4 +1162,7 @@ enum Err {
 
     // Quorum failed to be reached for write operation.
     QUORUM_FAILED = 65;
+
+    // App webhook could not successfully be called.
+    CANNOT_CALL_WEBHOOK = 66;
 }

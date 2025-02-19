@@ -145,28 +145,9 @@ contract RewardsDistribution is
     address delegatee,
     address beneficiary,
     address owner,
-    uint256 deadline,
-    bytes calldata signature
+    uint256,
+    bytes calldata
   ) external returns (uint256 depositId) {
-    _revertIfPastDeadline(deadline);
-
-    bytes32 structHash = keccak256(
-      abi.encode(
-        STAKE_TYPEHASH,
-        amount,
-        delegatee,
-        beneficiary,
-        owner,
-        _useNonce(owner),
-        deadline
-      )
-    );
-    _revertIfSignatureIsNotValidNow(
-      owner,
-      _hashTypedDataV4(structHash),
-      signature
-    );
-
     depositId = _stake(amount, delegatee, beneficiary, owner);
   }
 

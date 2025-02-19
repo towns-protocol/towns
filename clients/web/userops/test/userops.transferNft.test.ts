@@ -8,7 +8,7 @@ import {
     ContractReceipt,
     BigNumberish,
 } from 'ethers'
-import MockERC721A from '@river-build/web3/src/MockERC721A'
+import { MockERC721a } from '@river-build/web3/src/MockERC721A'
 import { MockERC1155 } from '@river-build/web3/src/MockERC1155'
 import { vi } from 'vitest'
 import * as tokenTypes from '../src/tokenTypes'
@@ -42,13 +42,13 @@ test('can transfer ERC-721 to given address', async () => {
 
     const { spaceDapp, userOps: userOpsAlice } = await createSpaceDappAndUserops(alice)
     const bundlerWallet = new Wallet(bundlerKey).connect(alice)
-    const factory = new ContractFactory(MockERC721A.abi, MockERC721A.bytecode.object, bundlerWallet)
+    const factory = new ContractFactory(MockERC721a.abi, MockERC721a.bytecode.object, bundlerWallet)
     const nftFactory = await factory.deploy()
     await nftFactory.deployed()
 
     const nftContract = new Contract(
         nftFactory.address,
-        MockERC721A.abi,
+        MockERC721a.abi,
         bundlerWallet,
     ) as NFTContract
 

@@ -18,20 +18,12 @@ cache_path = "contracts/cache" # The path to the cache, relative to the root of 
 verbosity = 3 # The verbosity level to use during tests.
 fs_permissions = [
   { access = "read-write", path = "./contracts/deployments" },
+  { access = "read-write", path = "./contracts/in" },
   { access = "read", path = "./scripts/bytecode-diff/source-diffs" },
 ] # Configures permissions for cheatcodes that touch the filesystem
 extra_output = ["metadata", "abi", "bin"]
 extra_output_files = ["metadata", "abi", "bin"]
 ffi = true
-
-
-# [etherscan]
-# sepolia = { chain = 11155111, key = "${ETHERSCAN_API_KEY}" }
-# base_sepolia = { chain = 84532, key = "${BLOCKSCOUT_SEPOLIA_API_KEY}", url = "${BLOCKSCOUT_SEPOLIA_URL}" }
-# base = { chain = 8453, key = "${BLOCKSCOUT_BASE_API_KEY}", url = "${BLOCKSCOUT_BASE_URL}" }
-# river_devnet = { chain = 6524490, key = "${RIVERSCAN_API_KEY}", url = "${RIVERSCAN_DEVNET_URL}" }
-# river = { chain = 550, key = "${RIVERSCAN_API_KEY}", url = "${RIVERSCAN_URL}" }
-
 
 [rpc_endpoints]
 base_anvil = "${BASE_ANVIL_RPC_URL}"

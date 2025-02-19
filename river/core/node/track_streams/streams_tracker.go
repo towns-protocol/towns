@@ -21,7 +21,7 @@ import (
 )
 
 // The StreamFilter is used by the StreamTrackerImpl, which is a cross-application, shared implementation
-// of stream tracking used by both the notification service and the bot registry service. Each application
+// of stream tracking used by both the notification service and the app registry service. Each application
 // must provide the logic for determining which streams to track, and for constructing application-specific
 // tracked stream views.
 type StreamFilter interface {

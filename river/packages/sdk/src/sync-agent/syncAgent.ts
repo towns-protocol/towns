@@ -24,6 +24,7 @@ import type { EncryptionDeviceInitOpts } from '@river-build/encryption'
 import { Gdms, type GdmsModel } from './gdms/gdms'
 import { Dms, DmsModel } from './dms/dms'
 import { UnpackEnvelopeOpts } from '../sign'
+import { dlog, DLogger, shortenHexString } from '@river-build/dlog'
 
 export interface SyncAgentConfig {
     context: SignerContext
@@ -41,6 +42,7 @@ export interface SyncAgentConfig {
 }
 
 export class SyncAgent {
+    log: DLogger
     userId: string
     config: SyncAgentConfig
     riverConnection: RiverConnection
@@ -68,6 +70,8 @@ export class SyncAgent {
 
     constructor(config: SyncAgentConfig) {
         this.userId = userIdFromAddress(config.context.creatorAddress)
+        const logId = config.logId ?? shortenHexString(this.userId)
+        this.log = dlog('csb:syncAgent', { defaultEnabled: true }).extend(logId)
         this.config = config
         const base = config.riverConfig.base
         const river = config.riverConfig.river
@@ -118,9 +122,11 @@ export class SyncAgent {
         }
         // commit the initialization transaction, which triggers onLoaded on the models
         await this.store.commitTransaction()
+        this.log('SyncAgent::start: starting river connection')
         // start thie river connection, this will log us in if the user is already signed up
         // it will leave us in a connected state otherwise, see riverConnection.authStatus
         await this.riverConnection.start()
+        this.log('SyncAgent::start: river connection started')
     }
 
     async stop() {

@@ -3,11 +3,11 @@ package events
 import (
 	"context"
 	"slices"
-	"sync"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/linkdata/deadlock"
+	"github.com/puzpuzpuz/xsync/v3"
 	"github.com/towns-protocol/towns/core/contracts/river"
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/crypto"
@@ -69,11 +69,6 @@ type TestMiniblockProducer interface {
 	) (*MiniblockRef, error)
 }
 
-type MiniblockProducer interface {
-	scheduleCandidates(ctx context.Context, blockNum crypto.BlockNumber) []*mbJob
-	testCheckAllDone(jobs []*mbJob) bool
-}
-
 type MiniblockProducerOpts struct {
 	TestDisableMbProdcutionOnBlock bool
 }
@@ -84,13 +79,12 @@ type MiniblockProducerOpts struct {
 func NewMiniblockProducer(
 	ctx context.Context,
 	streamCache *StreamCache,
-	cfg crypto.OnChainConfiguration,
 	opts *MiniblockProducerOpts,
 ) *miniblockProducer {
 	mb := &miniblockProducer{
 		streamCache:      streamCache,
 		localNodeAddress: streamCache.Params().Wallet.Address,
-		cfg:              cfg,
+		jobs:             xsync.NewMapOf[StreamId, *mbJob](),
 	}
 
 	if opts != nil {
@@ -98,7 +92,7 @@ func NewMiniblockProducer(
 	}
 
 	if !mb.opts.TestDisableMbProdcutionOnBlock {
-		streamCache.Params().ChainMonitor.OnBlock(mb.OnNewBlock)
+		streamCache.Params().ChainMonitor.OnBlock(mb.onNewBlock)
 	}
 
 	return mb
@@ -106,19 +100,16 @@ func NewMiniblockProducer(
 
 type miniblockProducer struct {
 	streamCache      *StreamCache
-	cfg              crypto.OnChainConfiguration
 	opts             MiniblockProducerOpts
 	localNodeAddress common.Address
 
-	// jobs is a maps of streamId to *mbJob
-	jobs sync.Map
+	jobs *xsync.MapOf[StreamId, *mbJob]
 
 	candidates candidateTracker
 
 	onNewBlockMutex deadlock.Mutex
 }
 
-var _ MiniblockProducer = (*miniblockProducer)(nil)
 var _ TestMiniblockProducer = (*miniblockProducer)(nil)
 
 // candidateTracker is a helper struct to accumulate proposals and call SetStreamLastMiniblockBatch.
@@ -159,17 +150,17 @@ func (p *candidateTracker) add(ctx context.Context, mp *miniblockProducer, j *mb
 	}
 	p.mu.Unlock()
 	if len(readyProposals) > 0 {
-		mp.submitProposalBatch(ctx, readyProposals)
+		go mp.submitProposalBatch(ctx, readyProposals)
 	}
 }
 
-// OnNewBlock loops over streams and determines if it needs to produce a new mini block.
+// onNewBlock loops over streams and determines if it needs to produce a new mini block.
 // For every stream that is eligible to produce a new mini block it creates a new mini block candidate.
 // It bundles candidates in a batch.
 // If the batch is full it submits the batch to the RiverRegistry#stream facet for registration and parses the resulting
 // logs to determine which mini block candidate was registered and which are not. For each registered mini block
 // candidate it applies the candidate to the stream.
-func (p *miniblockProducer) OnNewBlock(ctx context.Context, blockNum crypto.BlockNumber) {
+func (p *miniblockProducer) onNewBlock(ctx context.Context, blockNum crypto.BlockNumber) {
 	// Try lock to have only one invocation at a time. Previous onNewBlock may still be running.
 	if !p.onNewBlockMutex.TryLock() {
 		return
@@ -258,6 +249,14 @@ func (p *miniblockProducer) testCheckAllDone(jobs []*mbJob) bool {
 	return true
 }
 
+// TestMakeMiniblock is a debug function that creates a miniblock proposal, stores it in the registry, and applies it to the stream.
+// It is intended to be called manually from the test code.
+// TestMakeMiniblock always creates a miniblock if there are events in the minipool.
+// TestMakeMiniblock always creates a miniblock if forceSnapshot is true. This miniblock will have a snapshot.
+//
+// If there are no events in the minipool and forceSnapshot is false, TestMakeMiniblock does nothing and succeeds.
+//
+// Returns the hash and number of the last know miniblock.
 func (p *miniblockProducer) TestMakeMiniblock(
 	ctx context.Context,
 	streamId StreamId,
@@ -346,7 +345,16 @@ func (p *miniblockProducer) jobStart(ctx context.Context, j *mbJob) {
 }
 
 func (p *miniblockProducer) jobDone(ctx context.Context, j *mbJob) {
-	if !p.jobs.CompareAndDelete(j.stream.streamId, j) {
+	notFound := false
+	// Delete the job from the jobs map if value is the same as j.
+	_, _ = p.jobs.Compute(j.stream.streamId, func(oldValue *mbJob, loaded bool) (*mbJob, bool) {
+		if oldValue == j {
+			return nil, true
+		}
+		notFound = true
+		return oldValue, false
+	})
+	if notFound {
 		logging.FromCtx(ctx).Errorw("MiniblockProducer: jobDone: job not found in jobs map", "streamId", j.stream.streamId)
 	}
 }
@@ -363,7 +371,7 @@ func (p *miniblockProducer) submitProposalBatch(ctx context.Context, proposals [
 	var success []StreamId
 	var failed []StreamId
 	var filteredProposals []*mbJob
-	freq := int64(p.cfg.Get().StreamMiniblockRegistrationFrequency)
+	freq := int64(p.streamCache.Params().ChainConfig.Get().StreamMiniblockRegistrationFrequency)
 	if freq <= 0 {
 		freq = 1
 	}
@@ -416,17 +424,21 @@ func (p *miniblockProducer) submitProposalBatch(ctx context.Context, proposals [
 
 	for _, job := range proposals {
 		if slices.Contains(success, job.stream.streamId) {
-			err := job.stream.ApplyMiniblock(ctx, job.candidate)
-			if err != nil {
-				log.Errorw(
-					"processMiniblockProposalBatch: Error applying miniblock",
-					"streamId",
-					job.stream.streamId,
-					"err",
-					err,
-				)
-			}
+			go func() {
+				err := job.stream.ApplyMiniblock(ctx, job.candidate)
+				if err != nil {
+					log.Errorw(
+						"processMiniblockProposalBatch: Error applying miniblock",
+						"streamId",
+						job.stream.streamId,
+						"err",
+						err,
+					)
+				}
+				p.jobDone(ctx, job)
+			}()
+		} else {
+			p.jobDone(ctx, job)
 		}
-		p.jobDone(ctx, job)
 	}
 }

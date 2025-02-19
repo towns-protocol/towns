@@ -1964,10 +1964,10 @@
       "license": "MIT"
     },
     "contracts/src/spaces/facets/membership/MembershipFacet.sol": {
-      "keccak256": "0x2986a8828609c5b3557afba18db5eb0e9728c40360fe8e5642a5c1b294fcc952",
+      "keccak256": "0x7131a5158bcafac6342e1048c7020c7bff0f0bf81c3ccc07cf0ef7a68c8d5298",
       "urls": [
-        "bzz-raw://5cf2c3c463c2af9987aaa1cd01e4b0a05291335eac0e77e92ce993c5ab21aeb1",
-        "dweb:/ipfs/Qma2btGzing7rBkaPxsszb8v7rBADgWZkN4vTPs4ZnuSKM"
+        "bzz-raw://fbd4bec5875aca7322b20289ff6330495ebc3c8367da6633ded9bfa0917c8a7a",
+        "dweb:/ipfs/QmcHtHGre2MDhHW8CYE4H3WBy9xcLWDNowwhPS7fzbtZaW"
       ],
       "license": "MIT"
     },

@@ -143,8 +143,8 @@ type Config struct {
 	// Notifications must be set when running in notification mode.
 	Notifications NotificationsConfig
 
-	// BotRegistry must be set when running in bot registry mode.
-	BotRegistry BotRegistryConfig
+	// AppRegistry must be set when running in app registry mode.
+	AppRegistry AppRegistryConfig
 
 	// Feature flags
 	// Used to disable functionality for some testing setups.
@@ -431,13 +431,23 @@ type NotificationsConfig struct {
 	Authentication AuthenticationConfig
 }
 
-type BotRegistryConfig struct {
-	// BotRegistryId is the unique identifier of the bot registry service node. It must be set for
-	// nodes running in bot registry mode.
-	BotRegistryId string
+type AppRegistryConfig struct {
+	// AppRegistryId is the unique identifier of the app registry service node. It must be set for
+	// nodes running in app registry mode.
+	AppRegistryId string
 
 	// Authentication holds configuration for the Client API authentication service.
 	Authentication AuthenticationConfig
+
+	// SharedSecretDataEncryptionKey stores the 256-bit key used to encrypt shared secrets in database
+	// storage via AES256. This key is stored as a string in hex format, with an expected length of 64
+	// characters, plus an optional '0x' prefix.
+	SharedSecretDataEncryptionKey string `json:"-" yaml:"-"` // Omit sensitive field from logging
+
+	// AllowLoopbackWebhooks allows webhooks that resolve to a loopback address via DNS. This setting
+	// was added for local/unit testing only and ishould not be used in production environments,
+	// in order to prevent server side request forgery attacks.
+	AllowLoopbackWebhooks bool
 }
 
 type LogConfig struct {

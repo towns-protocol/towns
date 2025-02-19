@@ -12,7 +12,7 @@ const (
 	postgres                        = "postgres"
 	StreamStorageTypePostgres       = postgres
 	NotificationStorageTypePostgres = postgres
-	BotRegistryStorageTypePostgres  = postgres
+	AppRegistryStorageTypePostgres  = postgres
 )
 
 type ReadStreamFromLastSnapshotResult struct {

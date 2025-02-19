@@ -93,7 +93,7 @@ func (c authenticationChallenge) Verify(
 // for the endpoints of the authentication service, which allows users to attest to their ownership
 // of wallets. In order to implement authentication, a service must add this mixin to it's definition,
 // call InitAuthentication with appropriate config, and configure the connect service to use the
-// authentication interceptor with service metadata derived from the mixin. See notification and bot
+// authentication interceptor with service metadata derived from the mixin. See notification and app
 // registry services for examples.
 type AuthServiceMixin struct {
 	authConfig                    *config.AuthenticationConfig

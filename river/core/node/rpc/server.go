@@ -48,7 +48,7 @@ const (
 	ServerModeInfo         = "info"
 	ServerModeArchive      = "archive"
 	ServerModeNotification = "notification"
-	ServerModeBotRegistry  = "bot_registry"
+	ServerModeAppRegistry  = "app_registry"
 )
 
 func (s *Service) httpServerClose() {
@@ -248,8 +248,8 @@ func (s *Service) initInstance(mode string, opts *ServerStartOpts) {
 		subsystem = "stream"
 	} else if mode == ServerModeNotification {
 		subsystem = "notification"
-	} else if mode == ServerModeBotRegistry {
-		subsystem = "bot_registry"
+	} else if mode == ServerModeAppRegistry {
+		subsystem = "app_registry"
 	}
 
 	metricsRegistry := prometheus.NewRegistry()
@@ -387,8 +387,8 @@ func (s *Service) prepareStore() error {
 			schema = storage.DbSchemaNameForArchive(s.config.Archive.ArchiveId)
 		case ServerModeNotification:
 			schema = storage.DbSchemaNameForNotifications(s.config.RiverChain.ChainId)
-		case ServerModeBotRegistry:
-			schema = storage.DbSchemaNameForBotRegistryService(s.config.BotRegistry.BotRegistryId)
+		case ServerModeAppRegistry:
+			schema = storage.DbSchemaNameForAppRegistryService(s.config.AppRegistry.AppRegistryId)
 		default:
 			return RiverError(
 				Err_BAD_CONFIG,
@@ -650,13 +650,13 @@ func (s *Service) initNotificationsStore() error {
 	}
 }
 
-func (s *Service) initBotRegistryStore() error {
+func (s *Service) initAppRegistryStore() error {
 	ctx := s.serverCtx
 	log := s.defaultLogger
 
 	switch s.config.StorageType {
-	case storage.BotRegistryStorageTypePostgres:
-		pgstore, err := storage.NewPostgresBotRegistryStore(
+	case storage.AppRegistryStorageTypePostgres:
+		pgstore, err := storage.NewPostgresAppRegistryStore(
 			ctx,
 			s.storagePoolInfo,
 			s.exitSignal,
@@ -666,11 +666,11 @@ func (s *Service) initBotRegistryStore() error {
 			return err
 		}
 		s.onClose(pgstore.Close)
-		s.botStore = pgstore
+		s.appStore = pgstore
 
 		if !s.config.Log.Simplify {
 			log.Infow(
-				"Created postgres bot registry store",
+				"Created postgres app registry store",
 				"schema",
 				s.storagePoolInfo.Schema,
 			)
@@ -725,7 +725,7 @@ func (s *Service) initCacheAndSync(opts *ServerStartOpts) error {
 		return err
 	}
 
-	s.mbProducer = events.NewMiniblockProducer(s.serverCtx, s.cache, s.chainConfig, nil)
+	s.mbProducer = events.NewMiniblockProducer(s.serverCtx, s.cache, nil)
 
 	s.syncHandler = sync.NewHandler(
 		s.wallet.Address,
@@ -792,7 +792,7 @@ func (s *Service) initNotificationHandlers() error {
 	return nil
 }
 
-func (s *Service) initBotRegistryHandlers() error {
+func (s *Service) initAppRegistryHandlers() error {
 	var ii []connect.Interceptor
 	if s.otelConnectIterceptor != nil {
 		ii = append(ii, s.otelConnectIterceptor)
@@ -801,10 +801,10 @@ func (s *Service) initBotRegistryHandlers() error {
 	ii = append(ii, NewTimeoutInterceptor(s.config.Network.RequestTimeout))
 
 	authInceptor, err := authentication.NewAuthenticationInterceptor(
-		s.BotRegistryService.ShortServiceName(),
-		s.config.BotRegistry.Authentication.SessionToken.Key.Algorithm,
-		s.config.BotRegistry.Authentication.SessionToken.Key.Key,
-		"/river.BotRegistryService/GetStatus",
+		s.AppRegistryService.ShortServiceName(),
+		s.config.AppRegistry.Authentication.SessionToken.Key.Algorithm,
+		s.config.AppRegistry.Authentication.SessionToken.Key.Key,
+		"/river.AppRegistryService/GetStatus",
 	)
 	if err != nil {
 		return err
@@ -813,17 +813,17 @@ func (s *Service) initBotRegistryHandlers() error {
 
 	interceptors := connect.WithInterceptors(ii...)
 
-	botRegistryServicePattern, botRegistryServiceHandler := protocolconnect.NewBotRegistryServiceHandler(
-		s.BotRegistryService,
+	AppRegistryServicePattern, AppRegistryServiceHandler := protocolconnect.NewAppRegistryServiceHandler(
+		s.AppRegistryService,
 		interceptors,
 	)
-	botRegistryAuthServicePattern, botRegistryAuthServiceHandler := protocolconnect.NewAuthenticationServiceHandler(
-		s.BotRegistryService,
+	AppRegistryAuthServicePattern, AppRegistryAuthServiceHandler := protocolconnect.NewAuthenticationServiceHandler(
+		s.AppRegistryService,
 		interceptors,
 	)
 
-	s.mux.Handle(botRegistryServicePattern, newHttpHandler(botRegistryServiceHandler, s.defaultLogger))
-	s.mux.Handle(botRegistryAuthServicePattern, newHttpHandler(botRegistryAuthServiceHandler, s.defaultLogger))
+	s.mux.Handle(AppRegistryServicePattern, newHttpHandler(AppRegistryServiceHandler, s.defaultLogger))
+	s.mux.Handle(AppRegistryAuthServicePattern, newHttpHandler(AppRegistryAuthServiceHandler, s.defaultLogger))
 
 	// s.registerDebugHandlers(s.config.EnableDebugEndpoints, s.config.DebugEndpoints)
 

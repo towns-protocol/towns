@@ -1,0 +1,69 @@
+syntax = "proto3";
+package river;
+option go_package = "github.com/towns-protocol/towns/core/node/protocol";
+
+// AppRegistryService allows apps and app owners to register apps, and set app-related preferences for messages added
+// to channels the app has membership in.
+//
+// These functions are all authenticated, with the exception of GetStatus, and require a session token to be passed
+// through the authorization metadata.
+// This session token can be obtained from the AuthenticationService. If the session token is missing or invalid an
+// Err_UNAUTHENTICATED (code=16) is returned.
+service AppRegistryService {
+    rpc Register(RegisterRequest) returns (RegisterResponse);
+    rpc RegisterWebhook(RegisterWebhookRequest) returns (RegisterWebhookResponse);
+    // rpc GetInfo(GetInfoRequest) returns (GetInfoResponse);
+    // rpc RotateSecret(RotateSecretRequest) returns (RotateSecretResponse);
+    rpc GetStatus(GetStatusRequest) returns (GetStatusResponse);
+}
+
+message RegisterRequest {
+    // public key of the app
+    bytes app_id = 1;
+
+    // public key of the app owner
+    bytes app_owner_id = 2;
+}
+
+message RegisterResponse {
+    // The shared secret used to sign the jwt the app registry will use to authenticate to the
+    // app service. This secret should be exactly 32 bytes.
+    bytes hs256_shared_secret = 1;
+}
+
+message RegisterWebhookRequest {
+    // public key of the app
+    bytes app_id = 1;
+
+    // Webhook for sending requests to the app service
+    string webhook_url = 2;
+}
+
+message RegisterWebhookResponse { }
+
+message RotateSecretRequest {
+        // public key of the app
+        bytes app_id = 1;
+}
+
+message RotateSecretResponse {
+    // the updated shared secret used to generate the hmac the app registry will send to the app service
+    string hmac_shared_secret = 1;
+}
+
+message GetStatusRequest {
+    // public key of the app
+    bytes app_id = 1;
+}
+
+message GetStatusResponse {
+    // is_registered describes if the app is registered with a webhook
+    bool is_registered = 1;
+
+    // valid_response is set to true if calling the webhook results in a 200 with version
+    // info included in the response body.
+    bool valid_response = 2;
+
+    // version info returned by the webhook
+    string version_info = 3;
+}
