@@ -15,13 +15,14 @@ import { Box, Button, Dropdown, Icon, IconButton, Pill, SizeBox, Stack, Text } f
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { useStore } from 'store/store'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
-import { formatCompactUSD, formatUSD } from '@components/Web3/Trading/tradingUtils'
+import { formatCompactUSD } from '@components/Web3/Trading/tradingUtils'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { CHANNEL_INFO_PARAMS } from 'routes'
 import { useSizeContext } from 'ui/hooks/useSizeContext'
 import { shimmerClass } from 'ui/styles/globals/shimmer.css'
 import { TokenIcon } from '@components/Web3/Trading/ui/TokenIcon'
 import { chainIdToLitteral } from '@components/Web3/Trading/useTokenBalance'
+import { TokenPrice } from '@components/Web3/Trading/ui/TokenPrice'
 import { GetBars, TimeFrame, useCoinBars } from './useCoinBars'
 import { useCoinData } from './useCoinData'
 
@@ -191,9 +192,9 @@ export const TradingChart = (props: { address: string; chainId: string; disabled
                         </Stack>
 
                         <Stack horizontal grow gap="xs" alignItems="end">
-                            <Text fontWeight="strong" fontSize="lg">
-                                {formatUSD(Number(coinData.priceUSD))}
-                            </Text>
+                            <TokenPrice fontWeight="strong" fontSize="lg" before="$">
+                                {coinData.priceUSD}
+                            </TokenPrice>
                             <Box
                                 horizontal
                                 alignItems="center"

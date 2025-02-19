@@ -37,6 +37,7 @@ export type TextProps = Props &
         | 'paddingBottom'
         | 'marginBottom'
         | 'overflow'
+        | 'title'
     >
 
 export const Text = forwardRef<HTMLElement, TextProps>((props, ref) => {

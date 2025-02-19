@@ -6,18 +6,6 @@ export function formatCompactUSD(number: number): string {
     return '$' + Intl.NumberFormat('en-US', { notation: 'compact' }).format(number)
 }
 
-export function formatUSD(value: number): string {
-    return (
-        '$' +
-        new Intl.NumberFormat('en-US', {
-            style: 'decimal',
-            minimumFractionDigits: 2,
-            minimumSignificantDigits: 2,
-            maximumSignificantDigits: 3,
-        }).format(value)
-    )
-}
-
 export function calculateTotalHoldingValueCents(
     chainWalletAssets: ChainWalletAssets[] | undefined,
 ): number {
