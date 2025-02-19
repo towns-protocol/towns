@@ -131,6 +131,7 @@ yarn csb:build
 
 # Array of commands from the VS Code tasks
 commands=(
+    "watch_userops:cd clients/web/userops && yarn watch"
     "watch_lib:cd clients/web/lib && yarn watch"
     "watch_sdk:cd river/packages/sdk && yarn watch"
     "watch_encryption:cd river/packages/encryption && yarn watch"

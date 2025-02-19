@@ -9,7 +9,7 @@ import { keccak256 } from 'ethers/lib/utils'
 import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from '@river-build/sdk'
 import { TownsAnalytics } from 'use-towns-client'
 import { datadogLogs } from '@datadog/browser-logs'
-import { getPrivyLoginMethodFromLocalStorage } from '@towns/userops/src/middlewares'
+import { getPrivyLoginMethodFromLocalStorage } from '@towns/userops'
 import { env } from 'utils'
 import { UserAgentInstance, getBrowserName, isPWA } from './useDevice'
 

@@ -1,7 +1,11 @@
-import { isNegativeValueException, totalCostOfUserOp, userOpsStore } from '@towns/userops'
+import {
+    adjustValueRelativeToBalance,
+    isNegativeValueException,
+    totalCostOfUserOp,
+    userOpsStore,
+} from '@towns/userops'
 import { useMemo } from 'react'
 import { BigNumberish } from 'ethers'
-import { adjustValueRelativeToBalance } from '@towns/userops/src/middlewares'
 
 export function useInsufficientBalance(args: {
     balance: bigint | undefined

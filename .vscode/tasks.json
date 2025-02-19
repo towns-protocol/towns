@@ -224,6 +224,7 @@
     {
       "label": "Start Watches",
       "dependsOn": [
+        "WatchUserops",
         "WatchCasablancaDlog",
         "WatchCasablancaEncryption",
         "WatchCasablancaProto",
@@ -449,6 +450,16 @@
       "label": "WatchSharedLib",
       "type": "shell",
       "command": "cd clients/web/lib && yarn watch",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "local-watch"
+      }
+    },
+    {
+      "label": "WatchUserops",
+      "type": "shell",
+      "command": "cd clients/web/userops && yarn watch",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {

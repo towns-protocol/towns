@@ -1,10 +1,15 @@
 {
     "name": "@towns/userops",
     "type": "module",
-    "main": "index.ts",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
     "scripts": {
         "lint": "eslint .",
+        "build": "tsc",
+        "preinstall": "yarn run --top-level csb:build",
+        "postinstall": "yarn build",
         "lint:fix": "yarn lint --fix",
+        "watch": "tsc --watch",
         "test:exclude:limits": "vitest run --coverage --exclude **/**/userops.limits.test.ts",
         "test:userops:paymaster-limits": "DOTENV_CONFIG_PATH=.env.test-sample vitest limits run",
         "test:userops:privy-wallet": "DOTENV_CONFIG_PATH=.env.test-sample PRIVY_WALLET_PRIVATE_KEY_1=09892cb15045f5989457e72dd4c7321f29d1dcb93b9f90d78da6fc433852a367 PRIVY_WALLET_PRIVATE_KEY_2=757fb31b53bdf75d16ce0342c54047d1a848a66ba3b0d656b883208a88460ee3 yarn test:exclude:limits",
@@ -29,7 +34,6 @@
         "eslint-plugin-import": "^2.27.5",
         "eslint-plugin-vitest": "^0.5.4",
         "typescript": "^5.1.6",
-        "vite-plugin-wasm": "^3.4.1",
         "vitest": "^1.6.0"
     }
 }

@@ -1,13 +1,15 @@
 {
     "compilerOptions": {
-        "target": "es2020",
+        "target": "ESNext",
         "module": "esnext",
         "moduleResolution": "node",
         "strict": true,
         "skipLibCheck": true,
-        "noEmit": true, // Explicitly state we don't want to emit files
         "types": ["node", "vitest/globals"],
-        "allowSyntheticDefaultImports": true
+        "allowSyntheticDefaultImports": true,
+        "declaration": true,
+        "declarationMap": true,
+        "outDir": "./dist"
     },
     "include": ["src/**/*"],
     "exclude": ["node_modules"]

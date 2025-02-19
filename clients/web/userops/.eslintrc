@@ -29,7 +29,9 @@
         "checkFunctionExpressions": true,
         "checkMethodDeclarations": true
       }
-    ]
+    ],
+    "require-await": "off",
+    "@typescript-eslint/require-await": "off"
   },
   "ignorePatterns": ["vitest.config.ts", "vitest.setup.ts"]
 }

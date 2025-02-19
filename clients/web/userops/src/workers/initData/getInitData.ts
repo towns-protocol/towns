@@ -13,7 +13,7 @@ export async function getInitData(args: {
 }): Promise<CreateAccountWorkerReturn> {
     const { factoryAddress, signerAddress, rpcUrl } = args
     return createWorkerPromise<CreateAccountWorkerMessage, CreateAccountWorkerReturn>(
-        new Worker(new URL('./createAccount.worker.ts', import.meta.url), {
+        new Worker(new URL('./createAccount.worker', import.meta.url), {
             type: 'module',
         }),
         {

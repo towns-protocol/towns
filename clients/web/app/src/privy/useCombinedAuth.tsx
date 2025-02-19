@@ -5,7 +5,7 @@ import { retryGetAccessToken, useEmbeddedWallet, useGetSignerWithTimeout } from 
 import {
     getPrivyLoginMethodFromLocalStorage,
     setPrivyLoginMethodToLocalStorage,
-} from '@towns/userops/src/middlewares'
+} from '@towns/userops'
 import { LinkedAccountType } from '@gateway-worker/types'
 import { Toast } from 'react-hot-toast/headless'
 import { usePublicPageLoginFlow } from 'routes/PublicTownPage/usePublicPageLoginFlow'

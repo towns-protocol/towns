@@ -1,4 +1,4 @@
-import { createWorkerPromise } from '@towns/userops/src/workers'
+import { createWorkerPromise } from '@towns/userops'
 
 export function createInlineWorker<TArgs extends unknown[], TResult>(
     workerFunction: (...args: TArgs) => Promise<TResult> | TResult,
