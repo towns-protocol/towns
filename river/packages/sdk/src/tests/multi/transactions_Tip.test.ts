@@ -116,7 +116,7 @@ describe('transactions_Tip', () => {
     })
 
     afterEach(() => {
-        expect(dummyTipEventCopy).toEqual(dummyTipEvent) // don't modify it please
+        expect(dummyTipEventCopy).toEqual(dummyTipEvent) // don't modify it please, it's used for error cases
     })
 
     test('addTip', async () => {

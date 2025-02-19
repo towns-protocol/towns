@@ -37,6 +37,7 @@ import { BaseChainConfig } from '../IStaticContractsInfo'
 import { parseChannelMetadataJSON } from '../Utils'
 import { IPrepayShim } from './IPrepayShim'
 import { IERC721AShim } from './IERC721AShim'
+import { IReviewShim } from './IReviewShim'
 
 interface AddressToEntitlement {
     [address: string]: EntitlementShim
@@ -62,6 +63,7 @@ export class Space {
     private readonly erc721A: IERC721AShim
     private readonly spaceOwnerErc721A: IERC721AShim
     private readonly tipping: ITippingShim
+    private readonly review: IReviewShim
 
     constructor(
         address: string,
@@ -90,6 +92,7 @@ export class Space {
         this.prepay = new IPrepayShim(address, provider)
         this.erc721A = new IERC721AShim(address, provider)
         this.tipping = new ITippingShim(address, provider)
+        this.review = new IReviewShim(address, provider)
     }
 
     private getAllShims() {
@@ -178,6 +181,10 @@ export class Space {
 
     public get Tipping(): ITippingShim {
         return this.tipping
+    }
+
+    public get Review(): IReviewShim {
+        return this.review
     }
 
     public async totalTips({ currency }: { currency: string }): Promise<{
