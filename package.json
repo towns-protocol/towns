@@ -133,7 +133,8 @@
                     "wagmi",
                     "viem",
                     "superjson",
-                    "vite"
+                    "vite",
+                    "superjson"
                 ],
                 "packages": [
                     "@river-build/dlog",
