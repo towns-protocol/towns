@@ -86,10 +86,16 @@ contract DeployAppStore is DiamondHelper, Deployer {
     appInstaller = appInstallerHelper.deploy(deployer);
     appRegistry = appRegistryHelper.deploy(deployer);
 
-    addCut(
-      appInstallerHelper.makeCut(appInstaller, IDiamond.FacetCutAction.Add)
+    addFacet(
+      appInstallerHelper.makeCut(appInstaller, IDiamond.FacetCutAction.Add),
+      appInstaller,
+      appInstallerHelper.makeInitData("")
     );
-    addCut(appRegistryHelper.makeCut(appRegistry, IDiamond.FacetCutAction.Add));
+    addFacet(
+      appRegistryHelper.makeCut(appRegistry, IDiamond.FacetCutAction.Add),
+      appRegistry,
+      appRegistryHelper.makeInitData("")
+    );
 
     return
       Diamond.InitParams({

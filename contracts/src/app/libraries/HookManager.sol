@@ -11,7 +11,7 @@ import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 import {ParseBytes} from "contracts/src/utils/libraries/ParseBytes.sol";
 
 // contracts
-struct Permissions {
+struct HookPermissions {
   bool beforeInitialize;
   bool afterInitialize;
   bool beforeRegister;
@@ -41,7 +41,7 @@ library HookManager {
     // Zero address is considered valid as it represents no hooks
     if (address(self) == address(0)) return true;
 
-    try self.getHookPermissions() returns (Permissions memory permissions) {
+    try self.getHookPermissions() returns (HookPermissions memory permissions) {
       // Hook must implement at least one permission
       return (permissions.beforeInitialize ||
         permissions.afterInitialize ||
@@ -55,9 +55,9 @@ library HookManager {
 
   function validateHookPermissions(
     IAppHooks self,
-    Permissions memory requiredPermissions
+    HookPermissions memory requiredPermissions
   ) internal view {
-    Permissions memory hookPermissions = self.getHookPermissions();
+    HookPermissions memory hookPermissions = self.getHookPermissions();
 
     if (
       (requiredPermissions.beforeInitialize &&
@@ -73,7 +73,7 @@ library HookManager {
 
   function beforeInitialize(IAppHooks self) internal {
     if (address(self) == address(0)) return;
-    Permissions memory permissions = self.getHookPermissions();
+    HookPermissions memory permissions = self.getHookPermissions();
     if (permissions.beforeInitialize) {
       callHook(
         self,
@@ -84,7 +84,7 @@ library HookManager {
 
   function afterInitialize(IAppHooks self) internal {
     if (address(self) == address(0)) return;
-    Permissions memory permissions = self.getHookPermissions();
+    HookPermissions memory permissions = self.getHookPermissions();
     if (permissions.afterInitialize) {
       callHook(
         self,
@@ -94,7 +94,7 @@ library HookManager {
   }
 
   function beforeRegister(IAppHooks self) internal {
-    Permissions memory permissions = self.getHookPermissions();
+    HookPermissions memory permissions = self.getHookPermissions();
     if (permissions.beforeRegister) {
       callHook(
         self,
@@ -104,7 +104,7 @@ library HookManager {
   }
 
   function afterRegister(IAppHooks self) internal {
-    Permissions memory permissions = self.getHookPermissions();
+    HookPermissions memory permissions = self.getHookPermissions();
     if (permissions.afterRegister) {
       callHook(
         self,

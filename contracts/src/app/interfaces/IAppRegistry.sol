@@ -44,6 +44,9 @@ interface IAppRegistryBase {
     UpdateRegistration registration
   );
 
+  event PermissionDisabled(string permission);
+  event PermissionEnabled(string permission);
+
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                           Errors                           */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -57,18 +60,54 @@ interface IAppRegistryBase {
 }
 
 interface IAppRegistry is IAppRegistryBase {
+  /// @notice Register a new app with the registry
+  /// @param registration The registration details for the app
+  /// @return appId The unique identifier assigned to the registered app
   function register(
     Registration calldata registration
   ) external returns (uint256 appId);
 
+  /// @notice Check if an app address is registered
+  /// @param appAddress The address of the app to check
+  /// @return bool True if the app is registered, false otherwise
   function isRegistered(address appAddress) external view returns (bool);
 
+  /// @notice Get the registration details for a registered app
+  /// @param appAddress The address of the app to get registration details for
+  /// @return Registration The registration details of the app
+  /// @dev Reverts with AppNotRegistered if the app is not registered
   function getRegistration(
     address appAddress
   ) external view returns (Registration memory);
 
+  /// @notice Update the registration details for a registered app
+  /// @param appId The ID of the app to update
+  /// @param registration The new registration details
+  /// @dev Only the app owner can update the registration
+  /// @dev Reverts with AppNotRegistered if the app is not registered
+  /// @dev Reverts with AppNotOwnedBySender if caller is not the app owner
   function updateRegistration(
     uint256 appId,
     UpdateRegistration calldata registration
   ) external;
+
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                        Permissions                         */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+  /// @notice Check if a permission is disabled for all apps
+  /// @param permission The permission to check
+  /// @return bool True if the permission is disabled, false otherwise
+  function isPermissionDisabled(
+    string memory permission
+  ) external view returns (bool);
+
+  /// @notice Disable a permission for all apps
+  /// @param permission The permission to disable
+  function disablePermission(string memory permission) external;
+
+  /// @notice Enable a permission for all apps
+  /// @param permission The permission to enable
+  /// @dev Reverts with PermissionDisabled if the permission is already disabled
+  function enablePermission(string memory permission) external;
 }

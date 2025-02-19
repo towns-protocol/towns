@@ -35,6 +35,10 @@ contract DeployAppInstaller is FacetHelper, Deployer {
     return "appInstallerFacet";
   }
 
+  function initializer() public pure override returns (bytes4) {
+    return AppInstaller.__AppInstaller_init.selector;
+  }
+
   function __deploy(address deployer) public override returns (address) {
     vm.startBroadcast(deployer);
     AppInstaller appInstaller = new AppInstaller();

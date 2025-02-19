@@ -2,15 +2,15 @@
 pragma solidity ^0.8.23;
 
 import {IAppHooks} from "contracts/src/app/interfaces/IAppHooks.sol";
-import {Permissions} from "../libraries/HookManager.sol";
+import {HookPermissions} from "../libraries/HookManager.sol";
 
 abstract contract BaseHook is IAppHooks {
   // Hook permissions
-  Permissions internal _permissions;
+  HookPermissions internal _permissions;
 
   constructor() {
     // By default, no permissions are enabled
-    _permissions = Permissions({
+    _permissions = HookPermissions({
       beforeInitialize: false,
       afterInitialize: false,
       beforeRegister: false,
@@ -18,7 +18,7 @@ abstract contract BaseHook is IAppHooks {
     });
   }
 
-  function getHookPermissions() external view returns (Permissions memory) {
+  function getHookPermissions() external view returns (HookPermissions memory) {
     return _permissions;
   }
 

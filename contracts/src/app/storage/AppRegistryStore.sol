@@ -6,6 +6,7 @@ pragma solidity ^0.8.23;
 // libraries
 import {App} from "contracts/src/app/libraries/App.sol";
 import {Account} from "contracts/src/app/libraries/Account.sol";
+import {StringSet} from "contracts/src/utils/StringSet.sol";
 
 // contracts
 
@@ -16,6 +17,7 @@ library AppRegistryStore {
 
   struct Layout {
     uint256 nextAppId;
+    mapping(string invalidPermission => bool) invalidPermissions;
     mapping(address appAddress => uint256 appId) appIdByAddress;
     mapping(uint256 appId => App.Config registration) registrations;
     mapping(address account => Account.Installation installation) installations;

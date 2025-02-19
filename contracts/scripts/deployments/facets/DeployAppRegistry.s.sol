@@ -22,6 +22,10 @@ contract DeployAppRegistry is FacetHelper, Deployer {
     return "appRegistryFacet";
   }
 
+  function initializer() public pure override returns (bytes4) {
+    return AppRegistry.__AppRegistry_init.selector;
+  }
+
   function __deploy(address deployer) public override returns (address) {
     vm.startBroadcast(deployer);
     AppRegistry appRegistry = new AppRegistry();

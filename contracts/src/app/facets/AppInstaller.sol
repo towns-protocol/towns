@@ -14,12 +14,16 @@ import {StringSet} from "contracts/src/utils/StringSet.sol";
 import {LibString} from "solady/utils/LibString.sol";
 // contracts
 import {ERC6909} from "solady/tokens/ERC6909.sol";
+import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
 
-contract AppInstaller is ERC6909, IAppInstaller {
+contract AppInstaller is ERC6909, IAppInstaller, Facet {
   using CustomRevert for bytes4;
   using App for App.Config;
   using Account for Account.Installation;
   using StringSet for StringSet.Set;
+
+  function __AppInstaller_init() external onlyInitializing {}
+
   function name(uint256 id) public view override returns (string memory) {
     return AppRegistryStore.layout().registrations[id].name;
   }
@@ -110,14 +114,13 @@ contract AppInstaller is ERC6909, IAppInstaller {
   ) external view returns (bool) {
     AppRegistryStore.Layout storage ds = AppRegistryStore.layout();
 
-    Account.Installation storage installation = ds.installations[msg.sender];
-
     uint256 appId = ds.appIdByAddress[appAddress];
     if (appId == 0) return false;
     if (balanceOf(msg.sender, appId) == 0) return false;
 
     string memory permissionString = LibString.fromSmallString(permission);
 
+    Account.Installation storage installation = ds.installations[msg.sender];
     return installation.isEntitled(appId, channelId, permissionString);
   }
 }
