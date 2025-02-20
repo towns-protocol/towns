@@ -1,4 +1,4 @@
-const MockERC721A = {
+export const MockERC721a = {
     abi: [
         {
             inputs: [],
@@ -1927,5 +1927,3 @@ const MockERC721A = {
     },
     id: 261,
 } as const
-
-export default MockERC721A
