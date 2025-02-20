@@ -133,7 +133,21 @@ func TestAppRegistryStorage_RegisterWebhook(t *testing.T) {
 	require.Equal(deviceKey, info.EncryptionDevice.DeviceKey)
 	require.Equal(fallbackKey, info.EncryptionDevice.FallbackKey)
 
-	// Register webhook for a nonexistent app
+	webhook2 := "https://www.webhook.com/beepme"
+	deviceKey2 := safeAddress(t).String()
+	fallbackKey2 := safeAddress(t).String()
+	err = store.RegisterWebhook(params.ctx, app, webhook2, deviceKey2, fallbackKey2)
+	require.NoError(err)
+
+	info, err = store.GetAppInfo(params.ctx, app)
+	require.NoError(err)
+	require.Equal(app, info.App)
+	require.Equal(owner, info.Owner)
+	require.Equal([32]byte(secretBytes), info.EncryptedSecret)
+	require.Equal(webhook2, info.WebhookUrl)
+	require.Equal(deviceKey2, info.EncryptionDevice.DeviceKey)
+	require.Equal(fallbackKey2, info.EncryptionDevice.FallbackKey)
+
 	err = store.RegisterWebhook(params.ctx, unregisteredApp, webhook, deviceKey, fallbackKey)
 	require.ErrorContains(err, "app was not found in registry")
 }

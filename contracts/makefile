@@ -141,7 +141,7 @@ deploy-any-ledger :;
 	@SAVE_DEPLOYMENTS=1 $(if $(context),DEPLOYMENT_CONTEXT=$(context)) \
 	forge script scripts/deployments/${type}/${contract}.s.sol:${contract} \
 	--ledger --hd-paths ${hd_path} --sender ${sender} \
-	--ffi --rpc-url ${rpc} --broadcast --verify
+	--ffi --rpc-url ${rpc} --broadcast --verify --verifier-url ${verifier} --etherscan-api-key ${etherscan}
 
 resume-any-ledger :;
 	@forge script scripts/deployments/${type}/${contract}.s.sol:${contract} \
