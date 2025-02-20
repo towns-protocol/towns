@@ -844,16 +844,16 @@ func (ru *aeBlockchainTransactionRules) validBlockchainTransaction_CheckReceiptM
 		return true, nil
 	case *BlockchainTransaction_Tip_:
 		return false, RiverError(Err_INVALID_ARGUMENT, "solana tip transactions are not supported")
-	case *BlockchainTransaction_Transfer_:
+	case *BlockchainTransaction_TokenTransfer_:
 		meta := receipt.GetMeta()
 		if meta == nil {
 			return false, RiverError(Err_INVALID_ARGUMENT, "solana transfer transaction meta is nil")
 		}
 
-		sender := string(content.Transfer.Sender)
+		sender := string(content.TokenTransfer.Sender)
 		// get the amount _before_ the transfer
 		idx := sort.Search(len(meta.GetPreTokenBalances()), func(i int) bool {
-			return meta.GetPreTokenBalances()[i].Mint == string(content.Transfer.Address) && meta.GetPreTokenBalances()[i].Owner == sender
+			return meta.GetPreTokenBalances()[i].Mint == string(content.TokenTransfer.Address) && meta.GetPreTokenBalances()[i].Owner == sender
 		})
 		if idx == len(meta.GetPreTokenBalances()) {
 			return false, RiverError(Err_INVALID_ARGUMENT, "solana transfer transaction mint not found in preTokenBalances")
@@ -865,7 +865,7 @@ func (ru *aeBlockchainTransactionRules) validBlockchainTransaction_CheckReceiptM
 
 		// get the amount _after_ the transfer
 		idx = sort.Search(len(meta.GetPostTokenBalances()), func(i int) bool {
-			return meta.GetPostTokenBalances()[i].Mint == string(content.Transfer.Address) && meta.GetPreTokenBalances()[i].Owner == sender
+			return meta.GetPostTokenBalances()[i].Mint == string(content.TokenTransfer.Address) && meta.GetPreTokenBalances()[i].Owner == sender
 		})
 		if idx == len(meta.GetPreTokenBalances()) {
 			return false, RiverError(Err_INVALID_ARGUMENT, "solana transfer transaction mint not found in postTokenBalances")
@@ -876,7 +876,7 @@ func (ru *aeBlockchainTransactionRules) validBlockchainTransaction_CheckReceiptM
 		}
 
 		// check the amount
-		expectedBalanceDiff, ok := new(big.Int).SetString(content.Transfer.Amount, 0)
+		expectedBalanceDiff, ok := new(big.Int).SetString(content.TokenTransfer.Amount, 0)
 		if (!ok) {
 			return false, RiverError(Err_INVALID_ARGUMENT, "invalid balance amount")
 		}
@@ -886,9 +886,9 @@ func (ru *aeBlockchainTransactionRules) validBlockchainTransaction_CheckReceiptM
 		}
 
 		// make sure it's a valid buy or sell
-		if content.Transfer.IsBuy && amountAfter.Cmp(amountBefore) < 0 {
+		if content.TokenTransfer.IsBuy && amountAfter.Cmp(amountBefore) < 0 {
 			return false, RiverError(Err_INVALID_ARGUMENT, "solana transfer transaction is buy but balance decreased")
-		} else if !content.Transfer.IsBuy && amountAfter.Cmp(amountBefore) > 0 {
+		} else if !content.TokenTransfer.IsBuy && amountAfter.Cmp(amountBefore) > 0 {
 			return false, RiverError(Err_INVALID_ARGUMENT, "solana transfer transaction is sell but balance increased")
 		}
 		return true, nil

@@ -2,7 +2,7 @@ import { Client } from '../../client'
 import { makeTestClient, makeUniqueSpaceStreamId, waitFor } from '../testUtils'
 import { makeUniqueChannelStreamId } from '../../id'
 import { PlainMessage } from '@bufbuild/protobuf'
-import { BlockchainTransaction_Transfer } from '@river-build/proto'
+import { BlockchainTransaction_TokenTransfer } from '@river-build/proto'
 import { SolanaTransactionReceipt } from '../../types'
 import { bin_fromHexString, bin_fromString, bin_toString } from '@river-build/dlog'
 import { extractMemberBlockchainTransactions } from './trading.test'
@@ -10,7 +10,7 @@ import { extractMemberBlockchainTransactions } from './trading.test'
 describe('Trading Solana', () => {
     let bobClient: Client
     const mintAddress = '2HQXvda5sUjGLRKLG6LEqSctARYJboufSfG2Qciqmoon'
-    const bobSolanaWalletAdddress = '3cfwgyZY7uLNEv72etBQArWSoTzmXEm7aUmW3xE5xG4P'
+    const bobSolanaWalletAddress = '3cfwgyZY7uLNEv72etBQArWSoTzmXEm7aUmW3xE5xG4P'
     let spaceId!: string
     let channelId!: string
     let threadParentId!: string
@@ -26,14 +26,14 @@ describe('Trading Solana', () => {
                 {
                     amount: { amount: '4804294168682', decimals: 9 },
                     mint: mintAddress,
-                    owner: bobSolanaWalletAdddress,
+                    owner: bobSolanaWalletAddress,
                 },
             ],
             postTokenBalances: [
                 {
                     amount: { amount: '0', decimals: 9 },
                     mint: mintAddress,
-                    owner: bobSolanaWalletAdddress,
+                    owner: bobSolanaWalletAddress,
                 },
             ],
         },
@@ -51,14 +51,14 @@ describe('Trading Solana', () => {
                 {
                     amount: { amount: '0', decimals: 9 },
                     mint: mintAddress,
-                    owner: bobSolanaWalletAdddress,
+                    owner: bobSolanaWalletAddress,
                 },
             ],
             postTokenBalances: [
                 {
                     amount: { amount: '4804294168682', decimals: 9 },
                     mint: mintAddress,
-                    owner: bobSolanaWalletAdddress,
+                    owner: bobSolanaWalletAddress,
                 },
             ],
         },
@@ -80,10 +80,10 @@ describe('Trading Solana', () => {
     })
 
     test('Solana transactions are rejected if the amount is invalid', async () => {
-        const transferEvent: PlainMessage<BlockchainTransaction_Transfer> = {
+        const transferEvent: PlainMessage<BlockchainTransaction_TokenTransfer> = {
             amount: 5804294168682n.toString(), // invalid amount
             address: bin_fromString(mintAddress),
-            sender: bin_fromString(bobSolanaWalletAdddress),
+            sender: bin_fromString(bobSolanaWalletAddress),
             messageId: bin_fromHexString(threadParentId),
             channelId: bin_fromHexString(channelId),
             isBuy: false,
@@ -95,10 +95,10 @@ describe('Trading Solana', () => {
     })
 
     test('Token amounts for buy transactions need to be increasing', async () => {
-        const transferEvent: PlainMessage<BlockchainTransaction_Transfer> = {
+        const transferEvent: PlainMessage<BlockchainTransaction_TokenTransfer> = {
             amount: 4804294168682n.toString(),
             address: bin_fromString(mintAddress),
-            sender: bin_fromString(bobSolanaWalletAdddress),
+            sender: bin_fromString(bobSolanaWalletAddress),
             messageId: bin_fromHexString(threadParentId),
             channelId: bin_fromHexString(channelId),
             isBuy: true, // wrong: this is not a buy, this is a sell
@@ -110,10 +110,10 @@ describe('Trading Solana', () => {
     })
 
     test('Token amounts for sell transactions needs to be decreasing', async () => {
-        const transferEvent: PlainMessage<BlockchainTransaction_Transfer> = {
+        const transferEvent: PlainMessage<BlockchainTransaction_TokenTransfer> = {
             amount: 4804294168682n.toString(),
             address: bin_fromString(mintAddress),
-            sender: bin_fromString(bobSolanaWalletAdddress),
+            sender: bin_fromString(bobSolanaWalletAddress),
             messageId: bin_fromHexString(threadParentId),
             channelId: bin_fromHexString(channelId),
             isBuy: false, // wrong: this is not a sell, this is a buy
@@ -125,10 +125,10 @@ describe('Trading Solana', () => {
     })
 
     test('Solana transactions are rejected if the mint doesnt match the address', async () => {
-        const transferEvent: PlainMessage<BlockchainTransaction_Transfer> = {
+        const transferEvent: PlainMessage<BlockchainTransaction_TokenTransfer> = {
             amount: 4804294168682n.toString(),
             address: bin_fromString(mintAddress).toReversed(), // invalid address
-            sender: bin_fromString(bobSolanaWalletAdddress),
+            sender: bin_fromString(bobSolanaWalletAddress),
             messageId: bin_fromHexString(threadParentId),
             channelId: bin_fromHexString(channelId),
             isBuy: false,
@@ -140,10 +140,10 @@ describe('Trading Solana', () => {
     })
 
     test('Solana transactions are rejected if the sender is invalid', async () => {
-        const transferEvent: PlainMessage<BlockchainTransaction_Transfer> = {
+        const transferEvent: PlainMessage<BlockchainTransaction_TokenTransfer> = {
             amount: 4804294168682n.toString(),
             address: bin_fromString(mintAddress),
-            sender: bin_fromString(bobSolanaWalletAdddress).toReversed(), // invalid sender
+            sender: bin_fromString(bobSolanaWalletAddress).toReversed(), // invalid sender
             messageId: bin_fromHexString(threadParentId),
             channelId: bin_fromHexString(channelId),
             isBuy: false,
@@ -154,10 +154,10 @@ describe('Trading Solana', () => {
     })
 
     test('Solana transactions are accepted if the amount, mint and owner are valid', async () => {
-        const transferEvent: PlainMessage<BlockchainTransaction_Transfer> = {
+        const transferEvent: PlainMessage<BlockchainTransaction_TokenTransfer> = {
             amount: 4804294168682n.toString(),
             address: bin_fromString(mintAddress),
-            sender: bin_fromString(bobSolanaWalletAdddress),
+            sender: bin_fromString(bobSolanaWalletAddress),
             messageId: bin_fromHexString(threadParentId),
             channelId: bin_fromHexString(channelId),
             isBuy: false,
@@ -170,8 +170,8 @@ describe('Trading Solana', () => {
             const transferEvents = extractMemberBlockchainTransactions(bobClient, channelId)
             expect(transferEvents.length).toBe(1)
             const event0 = transferEvents[0]
-            expect(BigInt(event0.amount)).toBe(4804294168682n)
-            expect(bin_toString(event0.sender)).toBe('3cfwgyZY7uLNEv72etBQArWSoTzmXEm7aUmW3xE5xG4P')
+            expect(BigInt(event0!.amount)).toBe(4804294168682n)
+            expect(bin_toString(event0!.sender)).toBe(bobSolanaWalletAddress)
         })
     })
 })
