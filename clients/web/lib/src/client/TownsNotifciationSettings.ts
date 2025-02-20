@@ -28,7 +28,7 @@ import {
 import { Message, PlainMessage } from '@bufbuild/protobuf'
 import { useCallback, useEffect, useMemo, useSyncExternalStore } from 'react'
 import { useTownsContext } from '../components/TownsContextProvider'
-import { bin_fromHexString, bin_toHexString } from '@river-build/dlog'
+import { bin_fromBase64, bin_toBase64 } from '@river-build/dlog'
 
 export interface INotificationStore {
     getItem<T extends Message>(key: string, messageType: { new (): T }): T | undefined
@@ -41,12 +41,17 @@ class LocalStorageNotificationStore implements INotificationStore {
         if (!data) {
             return undefined
         }
-        return new messageType().fromBinary(bin_fromHexString(data))
+        try {
+            return new messageType().fromBinary(bin_fromBase64(data))
+        } catch (error) {
+            console.error('TNS PUSH: error parsing local storage', error)
+            return undefined
+        }
     }
 
     setItem<T extends Message>(key: string, value: T): void {
         const bytes = value.toBinary()
-        localStorage.setItem(key, bin_toHexString(bytes))
+        localStorage.setItem(key, bin_toBase64(bytes))
     }
 }
 
