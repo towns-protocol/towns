@@ -60,11 +60,11 @@ export const Channel = (props: Props) => {
 
     const { counterParty, data: dmData } = useDMData(channelId)
 
-    const isChannelWritable = !!useIsChannelWritable(
-        isDmOrGDM ? undefined : spaceId,
-        channelId,
-        loggedInWalletAddress,
-    )?.isChannelWritable
+    const isChannelWritable =
+        useIsChannelWritable(isDmOrGDM ? undefined : spaceId, channelId, loggedInWalletAddress)
+            ?.isChannelWritable ??
+        // keep it optimistic!
+        true
 
     const isChannelDisabled = channel?.disabled
     const isUserBlocked = useBlockedUsers()
