@@ -6,6 +6,7 @@ import (
 )
 
 type UserMetadataStreamView interface {
+	GetUserMetadataInception() (*UserMetadataPayload_Inception, error)
 	GetEncryptionDevices() ([]*UserMetadataPayload_EncryptionDevice, error)
 	GetUserMetadataSnapshotContent() (*UserMetadataPayload_Snapshot, error)
 }
@@ -32,7 +33,7 @@ func (r *StreamView) GetEncryptionDevices() (
 	}
 
 	devices := snapshot.GetEncryptionDevices()
-	if err = r.ForEachEvent(r.snapshotIndex, func(e *ParsedEvent, _ int64, _ int64) (bool, error) {
+	if err = r.ForEachEvent(r.snapshotIndex+1, func(e *ParsedEvent, _ int64, _ int64) (bool, error) {
 		payload := e.Event.GetUserMetadataPayload()
 		if payload != nil {
 			device := payload.GetEncryptionDevice()

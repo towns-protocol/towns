@@ -124,26 +124,6 @@ describe('clientTest', () => {
         await alicesClient.stop()
     })
 
-    test.only('bobsUserMetadataStream', async () => {
-        await expect(bobsClient.initializeUser()).resolves.not.toThrow()
-        bobsClient.startSync()
-
-        const streamId = makeUserMetadataStreamId(bobsClient.userId)
-        const stream = await bobsClient.waitForStream(streamId)
-
-        await waitFor(
-            () => {
-                const deviceKeys = stream.view.userMetadataContent.deviceKeys
-                expect(deviceKeys.length).toBeGreaterThan(0)
-            },
-            {
-                timeoutMS: 10 * 1000,
-            },
-        )
-        const deviceKeys = stream.view.userMetadataContent.deviceKeys
-        console.log('deviceKeys', deviceKeys)
-    })
-
     test('bobTalksToHimself-noflush', async () => {
         await expect(bobsClient.initializeUser()).resolves.not.toThrow()
         bobsClient.startSync()

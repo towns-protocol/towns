@@ -248,6 +248,46 @@ func register(
 	return resp.Msg.GetHs256SharedSecret()
 }
 
+func safeCreateStreamsForApp(
+	t *testing.T,
+	ctx context.Context,
+	appWallet *crypto.Wallet,
+	client protocolconnect.StreamServiceClient,
+	encryptionDevice *app_client.EncryptionDevice,
+) {
+	_, _, err := createUser(ctx, appWallet, client, nil)
+	require.NoError(t, err)
+
+	cookie, _, err := createUserMetadataStream(ctx, appWallet, client, nil)
+	require.NoError(t, err)
+
+	event, err := events.MakeEnvelopeWithPayloadAndTags(
+		appWallet,
+		events.Make_UserMetadataPayload_EncryptionDevice(
+			encryptionDevice.DeviceKey,
+			encryptionDevice.FallbackKey,
+		),
+		&MiniblockRef{
+			Num:  cookie.GetMinipoolGen() - 1,
+			Hash: common.Hash(cookie.GetPrevMiniblockHash()),
+		},
+		nil,
+	)
+	require.NoError(t, err)
+
+	addEventResp, err := client.AddEvent(
+		ctx,
+		&connect.Request[protocol.AddEventRequest]{
+			Msg: &protocol.AddEventRequest{
+				StreamId: cookie.StreamId,
+				Event:    event,
+			},
+		},
+	)
+	require.NoError(t, err)
+	require.Nil(t, addEventResp.Msg.GetError())
+}
+
 func TestAppRegistry_RegisterWebhook(t *testing.T) {
 	tester := newServiceTester(t, serviceTesterOpts{numNodes: 1, start: true})
 	service, _ := initAppRegistryService(tester.ctx, tester)
@@ -290,42 +330,11 @@ func TestAppRegistry_RegisterWebhook(t *testing.T) {
 
 	// Create needed streams and add an encryption device to the user metadata stream for the app service.
 	tc := tester.newTestClient(0)
-	_, _, err := createUser(tester.ctx, appWallet, tc.client, nil)
-	tester.require.NoError(err)
-
-	cookie, _, err := createUserMetadataStream(tester.ctx, appWallet, tc.client, nil)
-	tester.require.NoError(err)
-
 	defaultEncryptionDevice := app_client.EncryptionDevice{
 		DeviceKey:   "deviceKey",
 		FallbackKey: "fallbackKey",
 	}
-
-	event, err := events.MakeEnvelopeWithPayloadAndTags(
-		appWallet,
-		events.Make_UserMetadataPayload_EncryptionDevice(
-			defaultEncryptionDevice.DeviceKey,
-			defaultEncryptionDevice.FallbackKey,
-		),
-		&MiniblockRef{
-			Num:  cookie.GetMinipoolGen() - 1,
-			Hash: common.Hash(cookie.GetPrevMiniblockHash()),
-		},
-		nil,
-	)
-	tester.require.NoError(err)
-
-	addEventResp, err := tc.client.AddEvent(
-		tester.ctx,
-		&connect.Request[protocol.AddEventRequest]{
-			Msg: &protocol.AddEventRequest{
-				StreamId: cookie.StreamId,
-				Event:    event,
-			},
-		},
-	)
-	tester.require.NoError(err)
-	tester.require.Nil(addEventResp.Msg.GetError())
+	safeCreateStreamsForApp(t, tester.ctx, appWallet, tc.client, &defaultEncryptionDevice)
 
 	appServer := app_registry.NewTestAppServer(
 		t,

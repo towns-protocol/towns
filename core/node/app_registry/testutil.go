@@ -14,10 +14,8 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/towns-protocol/towns/core/node/app_registry/app_client"
 	"github.com/towns-protocol/towns/core/node/crypto"
-	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/testutils/testcert"
 	"github.com/towns-protocol/towns/core/node/utils"
-	"go.uber.org/zap/zapcore"
 )
 
 type TestAppServer struct {
@@ -141,8 +139,8 @@ func (b *TestAppServer) rootHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// For demonstration, print the received payload.
-	log := logging.DefaultZapLogger(zapcore.DebugLevel)
-	log.Infow("Received payload", "payload", payload)
+	// log := logging.DefaultZapLogger(zapcore.DebugLevel)
+	// log.Infow("Received payload", "payload", payload)
 
 	// Send a response back.
 	w.Header().Set("Content-Type", "application/json")
