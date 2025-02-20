@@ -587,6 +587,7 @@ message MediaPayload {
     message Chunk {
         bytes data = 1;
         int32 chunk_index = 2;
+        bytes iv = 3;
     }
 
     oneof content {

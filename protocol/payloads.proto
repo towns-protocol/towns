@@ -191,17 +191,11 @@ message ChunkedMedia {
         bytes secretKey = 2;
     }
 
-    message ChunkedAESGCM {
-        repeated bytes iv = 1;
-        bytes secretKey = 2;
-    }
-
     MediaInfo info = 1;
     string streamId = 2;
     EmbeddedMedia thumbnail = 3;
     oneof encryption {
         AESGCM aesgcm = 101;
-        ChunkedAESGCM chunkedAESGCM = 102;
     }
 }
 
