@@ -628,7 +628,7 @@ message BlockchainTransaction {
         bytes toUserAddress = 2; // user that received funds
     }
 
-    message Transfer {
+    message TokenTransfer {
         bytes address = 1;
         string amount = 2; // uint64 isn't big enough
         bytes sender = 3;
@@ -643,7 +643,7 @@ message BlockchainTransaction {
     // optional metadata to be verified by the node
     oneof content {
         Tip tip = 101;
-        Transfer transfer = 102;
+        TokenTransfer token_transfer = 102;
     }
 }
 

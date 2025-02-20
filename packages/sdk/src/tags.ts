@@ -1,6 +1,6 @@
 import { PlainMessage } from '@bufbuild/protobuf'
 import {
-    BlockchainTransaction_Transfer,
+    BlockchainTransaction_TokenTransfer,
     ChannelMessage,
     GroupMentionType,
     MessageInteractionType,
@@ -42,7 +42,7 @@ export function makeTipTags(
 }
 
 export function makeTransferTags(
-    event: PlainMessage<BlockchainTransaction_Transfer>,
+    event: PlainMessage<BlockchainTransaction_TokenTransfer>,
     streamView: IStreamStateView,
 ): PlainMessage<Tags> | undefined {
     check(isDefined(streamView), 'stream not found')

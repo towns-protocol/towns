@@ -629,13 +629,13 @@ func (ru *aeMemberBlockchainTransactionRules) validMemberBlockchainTransaction_R
 			return false, RiverError(Err_INVALID_ARGUMENT, "tip transaction message id is nil")
 		}
 		return true, nil
-	case *BlockchainTransaction_Transfer_:
+	case *BlockchainTransaction_TokenTransfer_:
 		err := checkIsMember(ru.params, ru.memberTransaction.GetFromUserAddress())
 		if err != nil {
 			return false, err
 		}
 		// we need a ref event id
-		if content.Transfer.GetMessageId() == nil {
+		if content.TokenTransfer.GetMessageId() == nil {
 			return false, RiverError(Err_INVALID_ARGUMENT, "transfer transaction message id is nil")
 		}
 		return true, nil
@@ -773,9 +773,9 @@ func (ru *aeBlockchainTransactionRules) validBlockchainTransaction_CheckReceiptM
 			Err_INVALID_ARGUMENT,
 			"matching tip event not found in receipt logs",
 		)
-	case *BlockchainTransaction_Transfer_:
+	case *BlockchainTransaction_TokenTransfer_:
 		amount := &big.Int{}
-		amount, ok := amount.SetString(content.Transfer.GetAmount(), 10)
+		amount, ok := amount.SetString(content.TokenTransfer.GetAmount(), 10)
 		if !ok {
 			return false, RiverError(Err_INVALID_ARGUMENT, "failed to parse amount")
 		}
@@ -784,10 +784,10 @@ func (ru *aeBlockchainTransactionRules) validBlockchainTransaction_CheckReceiptM
 			return false, err
 		}
 		
-		senderAddress := common.BytesToAddress(content.Transfer.GetSender())
+		senderAddress := common.BytesToAddress(content.TokenTransfer.GetSender())
 		
 		for _, receiptLog := range receipt.Logs {
-			if !bytes.Equal(receiptLog.GetAddress(), content.Transfer.GetAddress()) {
+			if !bytes.Equal(receiptLog.GetAddress(), content.TokenTransfer.GetAddress()) {
 				continue
 			}
 			topics := make([]common.Hash, len(receiptLog.Topics))
@@ -808,11 +808,11 @@ func (ru *aeBlockchainTransactionRules) validBlockchainTransaction_CheckReceiptM
 				continue
 			}
 
-			if content.Transfer.IsBuy && transfer.To.Cmp(senderAddress) != 0 {
+			if content.TokenTransfer.IsBuy && transfer.To.Cmp(senderAddress) != 0 {
 				continue
 			}
 
-			if !content.Transfer.IsBuy && transfer.From.Cmp(senderAddress) != 0 {
+			if !content.TokenTransfer.IsBuy && transfer.From.Cmp(senderAddress) != 0 {
 				continue
 			}
 
@@ -956,7 +956,7 @@ func (ru *aeReceivedBlockchainTransactionRules) parentEventForReceivedBlockchain
 			StreamId: streamId,
 			Tags:     ru.params.parsedEvent.Event.Tags, // forward tags
 		}, nil
-	case *BlockchainTransaction_Transfer_:
+	case *BlockchainTransaction_TokenTransfer_:
 		return nil, RiverError(Err_INVALID_ARGUMENT, "transfer transactions are not supported", "transaction", transaction)
 	default:
 		return nil, RiverError(Err_INVALID_ARGUMENT, "unknown transaction content", "content", content)
@@ -996,12 +996,12 @@ func (ru *aeBlockchainTransactionRules) parentEventForBlockchainTransaction() (*
 			"streamId",
 			toStreamId,
 		)
-	case *BlockchainTransaction_Transfer_:
-		if content.Transfer.GetChannelId() == nil {
+	case *BlockchainTransaction_TokenTransfer_:
+		if content.TokenTransfer.GetChannelId() == nil {
 			return nil, RiverError(Err_INVALID_ARGUMENT, "transaction channel id is nil")
 		}
 		// convert to stream id
-		toStreamId, err := shared.StreamIdFromBytes(content.Transfer.GetChannelId())
+		toStreamId, err := shared.StreamIdFromBytes(content.TokenTransfer.GetChannelId())
 		if err != nil {
 			return nil, err
 		}
@@ -1068,10 +1068,10 @@ func (ru *aeBlockchainTransactionRules) blockchainTransaction_ChainAuth() (*auth
 			ru.params.parsedEvent.Event.CreatorAddress,
 			content.Tip.GetEvent().GetSender(),
 		), nil
-	case *BlockchainTransaction_Transfer_:
+	case *BlockchainTransaction_TokenTransfer_:
 		return auth.NewChainAuthArgsForIsWalletLinked(
 			ru.params.parsedEvent.Event.CreatorAddress, 
-			content.Transfer.GetSender(),
+			content.TokenTransfer.GetSender(),
 		), nil
 	default:
 		return nil, RiverError(
