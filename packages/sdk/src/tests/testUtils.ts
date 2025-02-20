@@ -943,6 +943,8 @@ export function waitFor<T>(
             clearInterval(timeoutId)
             if (result) {
                 resolve(result)
+            } else if (result === undefined && promiseStatus === 'resolved') {
+                resolve(undefined as T)
             } else {
                 reject(lastError)
             }
