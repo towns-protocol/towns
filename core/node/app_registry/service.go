@@ -181,6 +181,10 @@ func (s *Service) Register(
 	}, nil
 }
 
+// waitForAppEncryption device waits up to 10 seconds for the app's user metadata stream to become
+// available, first in the registry, and then on one of the peer nodes that host it. Once the stream
+// is available, it looks for the first encryption device in the stream and returns it. The stream
+// is expected to have exactly 1 encryption device if it is available.
 func (s *Service) waitForAppEncryptionDevice(
 	ctx context.Context,
 	appId common.Address,
@@ -293,13 +297,6 @@ func (s *Service) RegisterWebhook(
 		return nil, err
 	}
 
-	// TODO: Validate URL
-	// - https only
-	// - no private ips or loopback directly quoted in the webhook url, as these are def.
-	// invalid
-	// - no redirect params allowed in the url either
-	webhook := req.Msg.WebhookUrl
-
 	decryptedSecret, err := decryptSharedSecret(appInfo.EncryptedSecret, s.sharedSecretDataEncryptionKey)
 	if err != nil {
 		return nil, base.WrapRiverError(Err_INTERNAL, err).
@@ -307,6 +304,7 @@ func (s *Service) RegisterWebhook(
 			Tag("appId", app)
 	}
 
+	webhook := req.Msg.WebhookUrl
 	serverEncryptionDevice, err := s.appClient.InitializeWebhook(
 		ctx,
 		webhook,
