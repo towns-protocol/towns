@@ -355,7 +355,7 @@ function generateDmTitle(
     log('generateDmTitle INPUT', 'senderName', sender, 'recipients', recipients)
     const recipientNames = recipients
         .map((recipient) => getShortenedName(recipient.name))
-        .filter((name) => name !== undefined) as string[]
+        .filter((name) => name !== undefined && name !== sender) as string[]
     switch (true) {
         case stringHasValue(sender) && stringHasValue(dmChannelName):
             return `${sender} ${MIDDLE_DOT} ${dmChannelName}`
@@ -372,12 +372,12 @@ function generateDmTitle(
         case !stringHasValue(sender) && stringHasValue(dmChannelName):
             return `${dmChannelName}`
         case !stringHasValue(sender) && recipientNames.length === 1:
-            return `${recipientNames[0]} and one other`
+            return `${recipientNames[0]}`
         case !stringHasValue(sender) && recipientNames.length === 2:
-            return `${recipientNames[0]}, ${recipientNames[1]}, and one other`
+            return `${recipientNames[0]}, ${recipientNames[1]}`
         case !stringHasValue(sender) && recipientNames.length > 2:
             return `${recipientNames[0]}, ${recipientNames[1]}, and ${
-                recipientNames.length - 1
+                recipientNames.length - 2
             } others`
         default:
             return 'Direct Message'
