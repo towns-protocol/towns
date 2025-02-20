@@ -11,7 +11,7 @@ import {
 } from './utils'
 import { expect, vi } from 'vitest'
 import { ethers } from 'ethers'
-import { userOpsStore } from '../src/userOpsStore'
+import { userOpsStore } from '../src/store/userOpsStore'
 
 test('userops with different values are sent correctly', async () => {
     const alice = new LocalhostWeb3Provider(

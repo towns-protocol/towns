@@ -11,7 +11,7 @@ import {
 import { MockERC721a } from '@river-build/web3/src/MockERC721A'
 import { MockERC1155 } from '@river-build/web3/src/MockERC1155'
 import { vi } from 'vitest'
-import * as tokenTypes from '../src/tokenTypes'
+import * as tokenTypes from '../src/utils/tokenTypes'
 
 type NFTContract = Contract & {
     mint: (

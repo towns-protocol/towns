@@ -4,11 +4,11 @@ import {
     matchGasTooLowError,
     matchPrivyUnknownConnectorError,
     matchReplacementUnderpriced,
-} from './errors'
+} from '../errors'
 import { datadogLogs } from '@datadog/browser-logs'
-import { TownsUserOpClient } from './TownsUserOpClient'
-import { TownsSimpleAccount } from './TownsSimpleAccount'
-import { userOpsStore } from './userOpsStore'
+import { TownsUserOpClient } from './useropjs/TownsUserOpClient'
+import { TownsSimpleAccount } from './useropjs/TownsSimpleAccount'
+import { userOpsStore } from '../store/userOpsStore'
 import { IUserOperation } from 'userop'
 
 export const sendUserOperationWithRetry = async (args: {

@@ -6,10 +6,10 @@ import {
     CreateSpaceParams,
     decodeRuleDataV2,
     IRuleEntitlementV2Base,
-    ISpaceDapp,
     LegacyUpdateRoleParams,
     MembershipStruct,
     Permission,
+    SpaceDapp,
     UpdateChannelParams,
     XchainConfig,
 } from '@river-build/web3'
@@ -70,7 +70,7 @@ export class BaseTransactor {
     public blockchainTransactionStore: BlockchainTransactionStore
     public accountAbstractionConfig: AccountAbstractionConfig | undefined
     public createLegacySpaces: boolean
-    public spaceDapp: ISpaceDapp
+    public spaceDapp: SpaceDapp
     public baseProvider: TProvider
     public baseConfig: BaseChainConfig
 
@@ -78,7 +78,7 @@ export class BaseTransactor {
         accountAbstractionConfig: AccountAbstractionConfig | undefined
         baseProvider: TProvider
         baseConfig: BaseChainConfig
-        spaceDapp: ISpaceDapp
+        spaceDapp: SpaceDapp
         analytics: TownsAnalytics | undefined
         createLegacySpaces: boolean
     }) {

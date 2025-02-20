@@ -1,8 +1,8 @@
 import { BigNumberish, BigNumber, BytesLike, utils } from 'ethers'
 import { Address, Space } from '@river-build/web3'
-import { FunctionHash } from './types'
+import { FunctionHash } from '../types'
 import { decodeTransferCallData } from './generateTransferCallData'
-import { TownsSimpleAccount } from './TownsSimpleAccount'
+import { TownsSimpleAccount } from '../lib/useropjs/TownsSimpleAccount'
 
 type SingleExecuteData = {
     type: 'single'

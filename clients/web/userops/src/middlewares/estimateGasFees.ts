@@ -1,7 +1,7 @@
 import { BundlerJsonRpcProvider, IUserOperationMiddlewareCtx } from 'userop'
 import { BigNumber, BigNumberish } from 'ethers'
 import { getGasPrice as getEthMaxPriorityFeePerGas } from 'userop/dist/preset/middleware'
-import { selectUserOpsByAddress } from '../userOpsStore'
+import { selectUserOpsByAddress } from '../store/userOpsStore'
 import { getGasFees } from './getGasFees'
 
 // don't go below 1.1x, userop requires an increase of at least 10% of gas fees for replacement

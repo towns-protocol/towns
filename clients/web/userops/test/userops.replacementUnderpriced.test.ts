@@ -8,8 +8,8 @@ import {
     sleepBetweenTxs,
 } from './utils'
 import { expect, vi, test } from 'vitest'
-import * as TownsUserOpClient from '../src/TownsUserOpClient'
-import { selectUserOpsByAddress, userOpsStore } from '../src/userOpsStore'
+import * as TownsUserOpClient from '../src/lib/useropjs/TownsUserOpClient'
+import { selectUserOpsByAddress, userOpsStore } from '../src/store/userOpsStore'
 import { MAX_MULTIPLIER } from '../src/middlewares/estimateGasFees'
 import { Wallet, utils } from 'ethers'
 import { bigIntMultiply, PaymasterProxyPostData } from '../src/middlewares'

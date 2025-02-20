@@ -1,5 +1,6 @@
 import { BundlerJsonRpcProvider, IUserOperation, IUserOperationMiddlewareCtx } from 'userop'
-import { isUsingAlchemyBundler, OpToJSON } from '../utils'
+import { OpToJSON } from '../utils/opToJson'
+import { isUsingAlchemyBundler } from '../utils/isUsingAlchemyBundler'
 import { GasEstimate } from '../types'
 
 export const estimateUserOperationGas = async (

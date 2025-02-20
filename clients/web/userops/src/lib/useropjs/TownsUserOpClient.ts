@@ -9,14 +9,14 @@ import {
     UserOperationMiddlewareCtx,
 } from 'userop'
 import { EntryPoint, EntryPoint__factory } from 'userop/dist/typechain'
-import { ERC4337 } from './constants'
-import { OpToJSON } from './utils'
+import { ERC4337 } from '../../constants'
+import { OpToJSON } from '../../utils/opToJson'
 import { datadogLogs } from '@datadog/browser-logs'
 import {
     getUserOperationReceipt,
     isEthGetUserOperationReceiptResponse,
-} from './getUserOperationReceipt'
-import { EthGetUserOperationReceiptResponse } from './getUserOperationReceipt'
+    EthGetUserOperationReceiptResponse,
+} from '../getUserOperationReceipt'
 
 export type TownsUserOpClientSendUserOperationResponse = ISendUserOperationResponse & {
     getUserOperationReceipt: () => Promise<EthGetUserOperationReceiptResponse | null>

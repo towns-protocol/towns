@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { PaymasterErrorCode, RetryType, TimeTrackerEvents } from './types'
+import { PaymasterErrorCode, RetryType, TimeTrackerEvents } from '../types'
 import { devtools, persist, PersistStorage } from 'zustand/middleware'
 import { immer } from 'zustand/middleware/immer'
 import superjson from 'superjson'

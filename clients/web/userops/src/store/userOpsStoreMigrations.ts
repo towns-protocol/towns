@@ -1,7 +1,7 @@
 import { IUserOperation } from 'userop'
 import { BigNumberish } from 'ethers'
-import { FunctionHash, PaymasterErrorCode, RetryType, TimeTrackerEvents } from './types'
-import { decodeCallData } from './decodeCallData'
+import { FunctionHash, PaymasterErrorCode, RetryType, TimeTrackerEvents } from '../types'
+import { decodeCallData } from '../utils/decodeCallData'
 
 type V1State = {
     currOp: IUserOperation | undefined

@@ -5,7 +5,7 @@ import { FunctionHash, TimeTracker, TimeTrackerEvents } from '../types'
 import { BigNumber, BigNumberish } from 'ethers'
 import { errorCategories, errorToCodeException } from '../errors'
 import { ISpaceDapp } from '@river-build/web3'
-import { OpToJSON } from '../utils'
+import { OpToJSON } from '../utils/opToJson'
 
 export async function estimateGasLimit(args: {
     ctx: IUserOperationMiddlewareCtx

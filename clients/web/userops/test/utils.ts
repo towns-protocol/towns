@@ -1,4 +1,3 @@
-import { ISpaceDapp } from 'use-towns-client/src/types/web3-types'
 import { TestUserOps } from './TestUserOps'
 import { ethers } from 'ethers'
 import {
@@ -23,8 +22,9 @@ import {
     LegacyUpdateRoleParams,
     Space,
 } from '@river-build/web3'
-import { userOpsStore } from '../src/userOpsStore'
-import { TownsUserOpClientSendUserOperationResponse } from '../src/TownsUserOpClient'
+import { userOpsStore } from '../src/store/userOpsStore'
+import { TownsUserOpClientSendUserOperationResponse } from '../src/lib/useropjs/TownsUserOpClient'
+import * as encodeUpdateRoleDataHelpers from '../src/utils/encodeUpdateRoleData'
 
 export const fundWallet = async (address: string, provider: LocalhostWeb3Provider) => {
     const wallet = new ethers.Wallet(
@@ -53,7 +53,7 @@ export const boredApeRuleData = createOperationsTree([
     },
 ])
 
-export const UserOps = ({ spaceDapp }: { spaceDapp: ISpaceDapp }) => {
+export const UserOps = ({ spaceDapp }: { spaceDapp: SpaceDapp }) => {
     return new TestUserOps({
         provider: spaceDapp.provider,
         config: spaceDapp.config,
@@ -83,7 +83,7 @@ export async function createUngatedSpace({
     spaceName,
 }: {
     userOps: TestUserOps
-    spaceDapp: ISpaceDapp
+    spaceDapp: SpaceDapp
     signer: ethers.Signer
     rolePermissions: Permission[]
     spaceName?: string
@@ -165,7 +165,7 @@ export async function createGatedSpace({
     spaceName,
 }: {
     userOps: TestUserOps
-    spaceDapp: ISpaceDapp
+    spaceDapp: SpaceDapp
     signer: ethers.Signer
     rolePermissions: Permission[]
     spaceName?: string
@@ -250,7 +250,7 @@ export async function createFixedPriceSpace({
     price,
 }: {
     userOps: TestUserOps
-    spaceDapp: ISpaceDapp
+    spaceDapp: SpaceDapp
     signer: ethers.Signer
     rolePermissions: Permission[]
     spaceName?: string
@@ -375,7 +375,7 @@ export const waitForOpAndTx = async (
 }
 
 export async function getSpaceId(
-    spaceDapp: ISpaceDapp,
+    spaceDapp: SpaceDapp,
     receipt: ethers.providers.TransactionReceipt,
     rootKeyAddress: string,
     userOps: TestUserOps,
@@ -499,6 +499,7 @@ export async function sendEditMembershipSettingsOp(
 export async function encodeUpdateRoleData(
     userOps: TestUserOps,
     space: Space,
+    spaceDapp: SpaceDapp,
     updateRoleParams: UpdateRoleParams,
 ) {
     if (userOps.createLegacySpaces()) {
@@ -506,14 +507,15 @@ export async function encodeUpdateRoleData(
             ...updateRoleParams,
             ruleData: convertRuleDataV2ToV1(updateRoleParams.ruleData),
         } as LegacyUpdateRoleParams
-        return userOps.encodeLegacyUpdateRoleData({
+        return encodeUpdateRoleDataHelpers.encodeLegacyUpdateRoleData({
             space,
             legacyUpdateRoleParams,
         })
     } else {
-        return userOps.encodeUpdateRoleData({
+        return encodeUpdateRoleDataHelpers.encodeUpdateRoleData({
             space,
             updateRoleParams,
+            spaceDapp,
         })
     }
 }

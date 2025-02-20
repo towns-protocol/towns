@@ -1,4 +1,4 @@
-import { selectUserOpsByAddress, userOpsStore } from '../userOpsStore'
+import { selectUserOpsByAddress, userOpsStore } from '../store/userOpsStore'
 import { CodeException } from '../errors'
 
 /**

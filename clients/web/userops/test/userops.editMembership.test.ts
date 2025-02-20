@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-base-to-string */
 import {
+    EVERYONE_ADDRESS,
     ISpaceDapp,
     LocalhostWeb3Provider,
     NoopRuleData,
@@ -24,7 +25,6 @@ import {
 import { vi } from 'vitest'
 import { ethers } from 'ethers'
 import { TestUserOps } from './TestUserOps'
-import { EVERYONE_ADDRESS } from '../src/utils'
 
 test('should update ungated minter role to gated', async () => {
     const alice = new LocalhostWeb3Provider(
@@ -75,7 +75,7 @@ test('should update ungated minter role to gated', async () => {
     expect(lastSendOpCall?.[0].toAddress).toStrictEqual([space!.Roles.address])
     expect(lastSendOpCall?.[0].callData).toStrictEqual([
         (
-            await encodeUpdateRoleData(userOps, space!, {
+            await encodeUpdateRoleData(userOps, space!, spaceDapp, {
                 ...ogRoleData,
                 users: [],
                 ruleData: boredApeRuleData,
@@ -149,7 +149,7 @@ test('should update gated minter role to everyone', async () => {
     expect(lastSendOpCall?.[0].toAddress).toStrictEqual([space!.Roles.address])
     expect(lastSendOpCall?.[0].callData).toStrictEqual([
         (
-            await encodeUpdateRoleData(userOps, space!, {
+            await encodeUpdateRoleData(userOps, space!, spaceDapp, {
                 ...ogRoleData,
                 users: [EVERYONE_ADDRESS],
                 ruleData: NoopRuleData,
@@ -427,7 +427,7 @@ async function getMembershipData({
     }
 
     const membershipData = {
-        pricingModule: membershipInfo.pricingModule as string,
+        pricingModule: membershipInfo.pricingModule,
         membershipPrice: membershipInfo.price as ethers.BigNumberish,
         membershipSupply: membershipInfo.maxSupply as ethers.BigNumberish,
         freeAllocation: freeAllocation,

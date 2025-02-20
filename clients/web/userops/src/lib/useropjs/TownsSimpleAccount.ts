@@ -13,8 +13,8 @@ import {
     SimpleAccountFactory,
     SimpleAccountFactory__factory,
 } from 'userop/dist/typechain'
-import { ERC4337 } from './constants'
-import { getInitData, getSignature } from './workers'
+import { ERC4337 } from '../../constants'
+import { getInitData, getSignature } from '../../workers'
 interface ISigner extends Pick<Signer, 'signMessage'> {}
 type EOASigner = ISigner & Pick<Signer, 'getAddress'>
 

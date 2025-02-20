@@ -1,7 +1,7 @@
 import { IUserOperationMiddlewareCtx } from 'userop'
 import { BigNumberish, BigNumber, utils } from 'ethers'
 import { FunctionHash } from '../types'
-import { TownsSimpleAccount } from '../TownsSimpleAccount'
+import { TownsSimpleAccount } from '../lib/useropjs/TownsSimpleAccount'
 import { totalCostOfUserOp, costOfGas } from './balance'
 import { NegativeValueException } from '../errors'
 

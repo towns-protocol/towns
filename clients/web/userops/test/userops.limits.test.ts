@@ -1,4 +1,9 @@
-import { LocalhostWeb3Provider, NoopRuleData, Permission } from '@river-build/web3'
+import {
+    EVERYONE_ADDRESS,
+    LocalhostWeb3Provider,
+    NoopRuleData,
+    Permission,
+} from '@river-build/web3'
 import {
     createSpaceDappAndUserops,
     createUngatedSpace,
@@ -11,7 +16,6 @@ import {
 } from './utils'
 import { makeUniqueChannelStreamId } from '@river-build/sdk'
 import { TestConstants } from 'use-towns-client/tests/integration/helpers/TestConstants'
-import { EVERYONE_ADDRESS } from '../src/utils'
 
 // run this test with script/run-stackup-worker.sh -l
 // the limit for each userop will be 1

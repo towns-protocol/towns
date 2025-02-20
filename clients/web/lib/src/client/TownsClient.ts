@@ -15,7 +15,7 @@ import {
     transformAttachments,
 } from '@river-build/sdk'
 import { EntitlementsDelegate } from '@river-build/encryption'
-import { IRuleEntitlementV2Base, XchainConfig, ISpaceDapp } from '@river-build/web3'
+import { IRuleEntitlementV2Base, XchainConfig, ISpaceDapp, SpaceDapp } from '@river-build/web3'
 import {
     AddEventResponse_Error,
     ChannelMessage_Post_Mention,
@@ -117,7 +117,7 @@ export class TownsClient
             accountAbstractionConfig: opts.accountAbstractionConfig,
             baseProvider: opts.baseProvider,
             baseConfig: opts.baseConfig,
-            spaceDapp: this.spaceDapp,
+            spaceDapp: this.spaceDapp as SpaceDapp,
             analytics: this.analytics,
             createLegacySpaces: this.createLegacySpaces,
         })
