@@ -110,7 +110,7 @@ func initAppRegistryService(
 	config.AppRegistry.Authentication.SessionToken.Key.Key = hex.EncodeToString(key[:])
 
 	// Allow loopback webhooks for local testing
-	config.AppRegistry.AllowLoopbackWebhooks = true
+	config.AppRegistry.AllowInsecureWebhooks = true
 
 	ctx = logging.CtxWithLog(ctx, logging.FromCtx(ctx).With("service", "app-registry"))
 	streamEventListener = &MockStreamEventListener{}

@@ -34,7 +34,7 @@ type AppClient struct {
 
 func NewAppClient(httpClient *http.Client, allowLoopback bool) *AppClient {
 	if !allowLoopback {
-		httpClient = NewExternalHttpClient(httpClient)
+		httpClient = NewExternalHttpsClient(httpClient)
 	}
 	return &AppClient{
 		httpClient: httpClient,

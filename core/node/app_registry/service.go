@@ -94,7 +94,7 @@ func NewService(
 		store:                         store,
 		streamsTracker:                tracker,
 		sharedSecretDataEncryptionKey: [32]byte(sharedSecretDataEncryptionKey),
-		appClient:                     app_client.NewAppClient(httpClient, cfg.AllowLoopbackWebhooks),
+		appClient:                     app_client.NewAppClient(httpClient, cfg.AllowInsecureWebhooks),
 		riverRegistry:                 riverRegistry,
 		nodeRegistry:                  nodes[0],
 	}
