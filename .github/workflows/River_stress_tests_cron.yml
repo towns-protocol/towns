@@ -15,7 +15,7 @@ jobs:
         uses: './.github/workflows/Run_river_stress_tests.yml'
         strategy:
             matrix:
-                environment_name: [alpha, gamma]
+                environment_name: [alpha]
             fail-fast: false
         secrets:
             AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
