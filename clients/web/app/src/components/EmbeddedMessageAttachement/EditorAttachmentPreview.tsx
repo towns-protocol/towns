@@ -16,6 +16,9 @@ import { RichTextPreview } from '@components/RichTextPlate/RichTextPreview'
 import { LoadingUnfurledLinkAttachment } from 'hooks/useExtractInternalLinks'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { shortAddress } from 'ui/utils/utils'
+import { useCoinData } from '@components/TradingChart/useCoinData'
+import { chainIdToLitteral } from '@components/Web3/Trading/useTokenBalance'
+import { TokenIcon } from '@components/Web3/Trading/ui/TokenIcon'
 
 type MessageAttachmentPreviewProps = {
     attachment: EmbeddedMessageAttachment
@@ -219,6 +222,13 @@ const TickerPreview = (props: {
         [onRemove, attachment],
     )
 
+    const { data: coinData } = useCoinData({
+        address: attachment.address,
+        chain: attachment.chainId,
+    })
+
+    const token = coinData?.token
+
     return (
         <Box
             hoverable
@@ -229,10 +239,24 @@ const TickerPreview = (props: {
             position="relative"
             cursor="pointer"
         >
-            <Stack horizontal gap alignItems="center">
-                <Text>
-                    {shortAddress(attachment.address)}({attachment.chainId})
-                </Text>
+            <Stack horizontal gap alignItems="center" minWidth="150" justifyContent="spaceBetween">
+                {token ? (
+                    <Box horizontal gap alignItems="center" position="relative">
+                        <TokenIcon
+                            asset={{
+                                imageUrl: token.info.imageThumbUrl ?? '',
+                                chain: chainIdToLitteral(attachment.chainId),
+                            }}
+                        />
+                        <Paragraph truncate strong size="sm">
+                            {token.symbol}
+                        </Paragraph>
+                    </Box>
+                ) : (
+                    <Box centerContent width="100" height="x4">
+                        <Text truncate>{shortAddress(attachment.address)}</Text>
+                    </Box>
+                )}
 
                 <IconButton
                     background="lightHover"
