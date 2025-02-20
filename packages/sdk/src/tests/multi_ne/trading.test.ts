@@ -11,8 +11,9 @@ import { ContractReceipt, StreamTimelineEvent } from '../../types'
 import { PlainMessage } from '@bufbuild/protobuf'
 import { bin_fromHexString } from '@river-build/dlog'
 import { ethers } from 'ethers'
-import { BlockchainTransaction_Transfer } from '@river-build/proto'
+
 import { TestERC20 } from '@river-build/web3'
+import { BlockchainTransaction_TokenTransfer } from '@river-build/proto'
 
 describe('Trading', () => {
     const tokenName = 'Erc20 token test'
@@ -110,7 +111,7 @@ describe('Trading', () => {
 
     test('should reject token transfers where the amount doesnt match the transferred amount', async () => {
         // this is a transfer event with an amount that doesn't match the amount transferred
-        const transferEvent: PlainMessage<BlockchainTransaction_Transfer> = {
+        const transferEvent: PlainMessage<BlockchainTransaction_TokenTransfer> = {
             amount: 9n.toString(),
             address: bin_fromHexString(tokenAddress),
             sender: bin_fromHexString(bobClient.userId),
@@ -127,7 +128,7 @@ describe('Trading', () => {
     test('should reject token transfers where the user is neither the sender nor the recipient', async () => {
         // this is a transfer event from charlie, he's barely a member of the channel
         // and he's not the sender nor the recipient
-        const transferEvent: PlainMessage<BlockchainTransaction_Transfer> = {
+        const transferEvent: PlainMessage<BlockchainTransaction_TokenTransfer> = {
             amount: amountToTransfer.toString(),
             address: bin_fromHexString(tokenAddress),
             sender: bin_fromHexString(charlieClient.userId),
@@ -144,7 +145,7 @@ describe('Trading', () => {
     test('should reject token transfers where the user claims to be the buyer but is the seller', async () => {
         // this is a transfer event from charlie, he's barely a member of the channel
         // and he's not the sender nor the recipient
-        const transferEvent: PlainMessage<BlockchainTransaction_Transfer> = {
+        const transferEvent: PlainMessage<BlockchainTransaction_TokenTransfer> = {
             amount: amountToTransfer.toString(),
             address: bin_fromHexString(tokenAddress),
             sender: bin_fromHexString(bobClient.userId),
@@ -161,7 +162,7 @@ describe('Trading', () => {
     test('should reject token transfers where the user claims to be the seller but is the seller', async () => {
         // this is a transfer event from charlie, he's barely a member of the channel
         // and he's not the sender nor the recipient
-        const transferEvent: PlainMessage<BlockchainTransaction_Transfer> = {
+        const transferEvent: PlainMessage<BlockchainTransaction_TokenTransfer> = {
             amount: amountToTransfer.toString(),
             address: bin_fromHexString(tokenAddress),
             sender: bin_fromHexString(aliceClient.userId),
@@ -176,7 +177,7 @@ describe('Trading', () => {
     })
 
     test('should reject token transfers where the token address doesnt match', async () => {
-        const transferEvent: PlainMessage<BlockchainTransaction_Transfer> = {
+        const transferEvent: PlainMessage<BlockchainTransaction_TokenTransfer> = {
             amount: amountToTransfer.toString(),
             address: bin_fromHexString(tokenAddress).toReversed(), // mess up the token address
             sender: bin_fromHexString(bobClient.userId),
@@ -191,7 +192,7 @@ describe('Trading', () => {
 
     test('should accept token transfers where the user == from and isBuy == false', async () => {
         // this is a transfer event from bob, he's the sender (from)
-        const transferEvent: PlainMessage<BlockchainTransaction_Transfer> = {
+        const transferEvent: PlainMessage<BlockchainTransaction_TokenTransfer> = {
             amount: amountToTransfer.toString(),
             address: bin_fromHexString(tokenAddress),
             sender: bin_fromHexString(bobClient.userId),
@@ -214,7 +215,7 @@ describe('Trading', () => {
 
     test('should accept token transfers where the user == to and isBuy == true', async () => {
         // this is a transfer event to alice, she's the recipient (to)
-        const transferEvent: PlainMessage<BlockchainTransaction_Transfer> = {
+        const transferEvent: PlainMessage<BlockchainTransaction_TokenTransfer> = {
             amount: amountToTransfer.toString(),
             address: bin_fromHexString(tokenAddress),
             sender: bin_fromHexString(aliceClient.userId),
@@ -237,7 +238,7 @@ describe('Trading', () => {
 
     test('should reject duplicate transfers', async () => {
         // alice can't add the same transfer event twice
-        const transferEvent: PlainMessage<BlockchainTransaction_Transfer> = {
+        const transferEvent: PlainMessage<BlockchainTransaction_TokenTransfer> = {
             amount: amountToTransfer.toString(),
             address: bin_fromHexString(tokenAddress),
             sender: bin_fromHexString(aliceClient.userId),
@@ -299,7 +300,7 @@ function extractBlockchainTransactionTransferEvents(timeline: StreamTimelineEven
             if (
                 e.remoteEvent?.event.payload.case === 'userPayload' &&
                 e.remoteEvent?.event.payload.value.content.case === 'blockchainTransaction' &&
-                e.remoteEvent?.event.payload.value.content.value.content.case === 'transfer'
+                e.remoteEvent?.event.payload.value.content.value.content.case === 'tokenTransfer'
             ) {
                 return e.remoteEvent?.event.payload.value.content.value.content.value
             }
@@ -318,7 +319,7 @@ function extractMemberBlockchainTransactions(client: Client, channelId: string) 
                 e.remoteEvent?.event.payload.case === 'memberPayload' &&
                 e.remoteEvent?.event.payload.value.content.case === 'memberBlockchainTransaction' &&
                 e.remoteEvent.event.payload.value.content.value.transaction?.content.case ===
-                    'transfer'
+                    'tokenTransfer'
             ) {
                 return e.remoteEvent.event.payload.value.content.value.transaction.content.value
             }

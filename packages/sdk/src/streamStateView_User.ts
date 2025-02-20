@@ -96,7 +96,7 @@ export class StreamStateView_User extends StreamStateView_AbstractContent {
                         stateEmitter?.emit('userTipSent', this.streamId, currency, event.amount)
                         break
                     }
-                    case 'transfer':
+                    case 'tokenTransfer':
                         break
                     default:
                         logNever(transactionContent)
@@ -120,7 +120,7 @@ export class StreamStateView_User extends StreamStateView_AbstractContent {
                         stateEmitter?.emit('userTipReceived', this.streamId, currency, event.amount)
                         break
                     }
-                    case 'transfer':
+                    case 'tokenTransfer':
                         break
                     default:
                         logNever(transactionContent)

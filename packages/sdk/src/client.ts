@@ -33,7 +33,7 @@ import {
     CreateStreamResponse,
     ChannelProperties,
     CreationCookie,
-    BlockchainTransaction_Transfer,
+    BlockchainTransaction_TokenTransfer,
 } from '@river-build/proto'
 import {
     bin_fromHexString,
@@ -2154,7 +2154,7 @@ export class Client
     async addTransaction_Transfer(
         chainId: number,
         receipt: ContractReceipt,
-        event: PlainMessage<BlockchainTransaction_Transfer>,
+        event: PlainMessage<BlockchainTransaction_TokenTransfer>,
         opts?: SendBlockchainTransactionOptions,
     ): Promise<{ eventId: string }> {
         const stream = this.stream(streamIdAsString(event.channelId))
@@ -2164,7 +2164,7 @@ export class Client
             chainId,
             receipt,
             {
-                case: 'transfer',
+                case: 'tokenTransfer',
                 value: event,
             },
             tags,

@@ -395,7 +395,7 @@ function toTownsContent_MemberPayload(
                         } satisfies TipEvent,
                     }
                 }
-                case 'transfer':
+                case 'tokenTransfer':
                     return { error: `${description} unsupported content` }
                 case undefined:
                     return {
