@@ -74,7 +74,7 @@ func UncancelContextWithTimeout(
 
 // PeerNodeRequestWithRetries makes a request to as many as each of the remote nodes for a stream,
 // returning the first response that is not a network unavailability error. This utility function
-// will advance the node's
+// will advance the sticky peer of the nodes object if any request fails, even if there are no retries.
 func PeerNodeRequestWithRetries[T any](
 	ctx context.Context,
 	nodes StreamNodes,
