@@ -703,11 +703,12 @@ func (ru *aeBlockchainTransactionRules) validBlockchainTransaction_IsUnique() (b
 }
 
 func (ru *aeBlockchainTransactionRules) validBlockchainTransaction_CheckReceiptMetadata() (bool, error) {
-	receipt := ru.transaction.Receipt
-	if receipt != nil {
+	if ru.transaction.Receipt != nil {
 		return ru.validBlockchainTransaction_CheckReceiptMetadataEVM()
-	} else {
+	} else if ru.transaction.SolanaReceipt != nil {
 		return ru.validBlockchainTransaction_CheckReceiptMetadataSolana()
+	} else {
+		return false, RiverError(Err_INVALID_ARGUMENT, "receipt is nil")
 	}
 }
 
