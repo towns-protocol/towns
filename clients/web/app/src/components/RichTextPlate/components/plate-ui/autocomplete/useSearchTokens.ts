@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { z } from 'zod'
-import { useDebounce } from 'hooks/useDebounce'
+import { useThrottledValue } from 'use-towns-client'
+import { useEffect, useState } from 'react'
 import { env } from 'utils'
 import { useIsHNTMember } from 'hooks/useIsHNTMember'
 import { TComboboxItemWithData, TMentionTicker } from './types'
@@ -69,6 +70,8 @@ function remapResponse(
         .filter((item) => item.data.chain !== '')
 }
 
+const EMPTY_ARRAY: TComboboxItemWithData<TMentionTicker>[] = []
+
 export const useSearchTokens = ({
     searchString,
     enabled,
@@ -78,9 +81,12 @@ export const useSearchTokens = ({
 }) => {
     const { isHNTMember } = useIsHNTMember()
     const query = createQuery(searchString)
-    const debouncedQuery = useDebounce(query, 500)
+    const throttledQuery = useThrottledValue(query, 500)
+
+    const [savedData, setSavedData] = useState<TComboboxItemWithData<TMentionTicker>[]>([])
+
     const { data, isLoading } = useQuery({
-        queryKey: ['searchTokens', debouncedQuery],
+        queryKey: ['searchTokens', throttledQuery],
         queryFn: async () => {
             const apiKey = env.VITE_CODEX_API_KEY
             if (!apiKey) {
@@ -91,7 +97,7 @@ export const useSearchTokens = ({
             const resp = await fetch(url, {
                 method: 'POST',
                 headers: { Authorization: `${apiKey}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ query: debouncedQuery }),
+                body: JSON.stringify({ query: throttledQuery }),
             })
             const json = await resp.json()
             const parsed = zParsedTokenResponse.safeParse(json)
@@ -101,7 +107,13 @@ export const useSearchTokens = ({
         enabled: enabled && isHNTMember,
     })
 
-    return { data: data ?? [], isLoading }
+    useEffect(() => {
+        if (!isLoading) {
+            setSavedData(data ?? EMPTY_ARRAY)
+        }
+    }, [data, isLoading])
+
+    return { data: savedData, isLoading }
 }
 
 function createQuery(searchString: string) {

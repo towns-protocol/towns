@@ -6,6 +6,7 @@ import { PlateElement, TPlateEditor } from '@udecode/plate-common/react'
 import { Value } from '@udecode/plate-common'
 import { Box, Icon, Stack, Text } from '@ui'
 import { shortAddress } from 'ui/utils/utils'
+import { atoms } from 'ui/styles/atoms.css'
 import { emojiSearch } from './emoji-search'
 import {
     ComboboxContainerProps,
@@ -94,12 +95,15 @@ export const ComboboxItemTicker = ({
                 onMentionSelectTriggerMap(trigger)?.(editor, item, item.text)
             }}
         >
-            <Stack>
-                <Text color="default" fontWeight="strong" fontSize="sm">
+            <Stack width="150">
+                <Text truncate color="default" fontSize="sm">
                     {item.data.name}
                 </Text>
-                <Text color="gray2" fontSize="sm">
-                    {item.data.symbol} {shortAddress(item.data.address)}
+                <Text truncate grow color="gray2" fontSize="xs">
+                    <span className={atoms({ color: 'default', fontWeight: 'strong' })}>
+                        {item.data.symbol}
+                    </span>{' '}
+                    {shortAddress(item.data.address)}
                 </Text>
             </Stack>
         </InlineComboboxItem>
@@ -177,15 +181,18 @@ export const ComboboxInput = withRef<typeof PlateElement, ComboboxInputUserProps
         const store = useComboboxContext()!
         const { data: tokenList } = useSearchTokens({
             searchString: searchQueryStore,
-            enabled: isTickerCombobox(trigger.current) && searchQueryStore.length > 0,
+            enabled: isTickerCombobox(trigger.current),
         })
 
         const getAllItems = useCallback(() => {
-            if (isEmojiCombobox(trigger.current) || isTickerCombobox(trigger.current)) {
+            if (isEmojiCombobox(trigger.current)) {
                 return EMPTY_ARRAY
             }
+            if (isTickerCombobox(trigger.current)) {
+                return tokenList
+            }
             return isUserCombobox(trigger.current) ? getUserMentions() : getChannelMentions()
-        }, [getUserMentions, getChannelMentions])
+        }, [getUserMentions, getChannelMentions, tokenList])
 
         useEffect(() => {
             startTransition(() => {

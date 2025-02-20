@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react'
 import { Stack, Text } from '@ui'
 import { formatCompactUSD } from '@components/Web3/Trading/tradingUtils'
+import { TokenPrice } from '@components/Web3/Trading/ui/TokenPrice'
 import { TMentionTicker } from './types'
 
 export const ComboboxTrailingTickerContent = ({ item }: { item: TMentionTicker }) => {
@@ -10,9 +11,13 @@ export const ComboboxTrailingTickerContent = ({ item }: { item: TMentionTicker }
     }, [marketCap])
 
     return (
-        <Stack horizontal gap="sm" fontSize="sm">
-            <Text color="gray2">MCAP {formattedMarketCap}</Text>
-            <Text color="default">${Number(priceUSD).toPrecision(5)}</Text>
+        <Stack fontSize="sm" gap="sm" justifyContent="spaceBetween" alignItems="end">
+            <TokenPrice size="sm" before="$">
+                {priceUSD}
+            </TokenPrice>
+            <Text color="gray2" fontSize="xs">
+                MCAP {formattedMarketCap}
+            </Text>
         </Stack>
     )
 }
