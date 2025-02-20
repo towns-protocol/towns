@@ -26,39 +26,48 @@ func (s *StreamCache) submitSyncStreamTaskToPool(
 	streamRecord *registries.GetStreamResult,
 ) {
 	pool.Submit(func() {
-		if err := s.syncStreamFromPeers(
-			ctx,
-			stream,
-			streamRecord,
-		); err != nil {
-			logging.FromCtx(ctx).
-				Errorw("Unable to sync stream from peers",
-					"stream", stream.streamId,
-					"error", err,
-					"targetMiniblockNum", streamRecord.LastMiniblockNum)
-		}
+		s.syncStreamFromPeers(ctx, stream, streamRecord)
 	})
 }
 
-// syncStreamFromPeers syncs the database for the given streamResult by fetching missing blocks from peers
-// participating in the stream.
-// TODO: change. It is assumed that stream is already in the local DB and only miniblocks maybe in the need of syncing.
 func (s *StreamCache) syncStreamFromPeers(
 	ctx context.Context,
 	stream *Stream,
 	streamRecord *registries.GetStreamResult,
-) error {
+) {
 	var err error
 	if streamRecord == nil {
 		streamRecord, err = s.params.Registry.GetStreamOnLatestBlock(ctx, stream.streamId)
 		if err != nil {
-			return err
+			logging.FromCtx(ctx).
+				Errorw("syncStreamFromPeers:Unable to get stream record",
+					"stream", stream.streamId,
+					"error", err)
+			return
 		}
 	}
 
+	err = s.syncStreamFromPeersImpl(ctx, stream, streamRecord)
+	if err != nil {
+		logging.FromCtx(ctx).
+			Errorw("syncStreamFromPeers: Unable to sync stream from peers",
+				"stream", stream.streamId,
+				"error", err,
+				"streamRecord", streamRecord)
+	}
+}
+
+// syncStreamFromPeersImpl syncs the database for the given streamResult by fetching missing blocks from peers
+// participating in the stream.
+// TODO: change. It is assumed that stream is already in the local DB and only miniblocks maybe in the need of syncing.
+func (s *StreamCache) syncStreamFromPeersImpl(
+	ctx context.Context,
+	stream *Stream,
+	streamRecord *registries.GetStreamResult,
+) error {
 	// TODO: double check if this is correct to normalize here
 	// Try to normalize the given stream if needed.
-	err = s.normalizeEphemeralStream(ctx, stream, int64(streamRecord.LastMiniblockNum), streamRecord.IsSealed)
+	err := s.normalizeEphemeralStream(ctx, stream, int64(streamRecord.LastMiniblockNum), streamRecord.IsSealed)
 	if err != nil {
 		return err
 	}
