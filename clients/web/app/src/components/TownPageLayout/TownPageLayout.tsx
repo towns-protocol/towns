@@ -279,11 +279,11 @@ const Header = (props: {
     )
 
     const ownerUser = useMemo(() => {
-        if (!owner) {
+        if (!userId) {
             return undefined
         }
-        return lookupUser(owner as Address)
-    }, [owner, lookupUser])
+        return lookupUser(userId as Address)
+    }, [userId, lookupUser])
 
     const onTouchSharePressed = useEvent(async () => {
         if (!spaceId) {
