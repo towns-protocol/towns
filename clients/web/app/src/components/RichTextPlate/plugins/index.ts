@@ -60,6 +60,7 @@ import {
 import { getUrlHref, isBlockquoteWithEmptyLines, isExactlyUrl } from '../utils/helpers'
 import { ELEMENT_MENTION_TICKER, TickerMentionPlugin } from './createTickerMentionPlugin'
 import { TickerMentionElement } from '../components/plate-ui/TickerMentionElement'
+import { InsertTickerMentionPlugin } from './createInsertTickerMentionPlugin'
 
 const createTownsEditor = (
     uniqueId: string,
@@ -146,6 +147,9 @@ const createTownsEditor = (
             CsvPlugin,
             MarkdownPlugin,
             EditorOverridesPlugin,
+            InsertTickerMentionPlugin({
+                onInsertTickerMention: onSelectTicker,
+            }),
             ErrorHandlingPlugin,
             FormatTextLinkPlugin,
             IOSPasteLinkPlugin,
