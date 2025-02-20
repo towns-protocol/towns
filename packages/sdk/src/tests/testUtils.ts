@@ -974,7 +974,11 @@ export function waitFor<T>(
                     )
                 } else {
                     promiseStatus = 'resolved'
-                    resolve(result)
+                    if (result) {
+                        // if result is not truthy, resolve
+                        resolve(result)
+                    }
+                    // otherwise let the polling continue
                 }
             } catch (err: any) {
                 lastError = err
