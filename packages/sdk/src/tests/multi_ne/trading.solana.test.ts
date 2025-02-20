@@ -14,7 +14,7 @@ describe('Trading Solana', () => {
     let channelId!: string
     let threadParentId!: string
 
-    const validReceipt: SolanaTransactionReceipt = {
+    const validSellReceipt: SolanaTransactionReceipt = {
         transaction: {
             signatures: [
                 '4uPV4YciNkRoRqaN5bsDw4HzPTCuavM94sbdaZPkaVVEXkyaNNT4KLpuvwBsyJUkzzzjLXpVx88dRswJ6tRp41VG',
@@ -31,6 +31,31 @@ describe('Trading Solana', () => {
             postTokenBalances: [
                 {
                     amount: { amount: '0', decimals: 9 },
+                    mint: '2HQXvda5sUjGLRKLG6LEqSctARYJboufSfG2Qciqmoon',
+                    owner: '3cfwgyZY7uLNEv72etBQArWSoTzmXEm7aUmW3xE5xG4P',
+                },
+            ],
+        },
+        slot: 320403856n,
+    }
+
+    const validBuyReceipt: SolanaTransactionReceipt = {
+        transaction: {
+            signatures: [
+                '4uPV4YciNkRoRqaN5bsDw4HzPTCuavM94sbdaZPkaVVEXkyaNNT4KLpuvwBsyJUkzzzjLXpVx88dRswJ6tRp41VG',
+            ],
+        },
+        meta: {
+            preTokenBalances: [
+                {
+                    amount: { amount: '0', decimals: 9 },
+                    mint: '2HQXvda5sUjGLRKLG6LEqSctARYJboufSfG2Qciqmoon',
+                    owner: '3cfwgyZY7uLNEv72etBQArWSoTzmXEm7aUmW3xE5xG4P',
+                },
+            ],
+            postTokenBalances: [
+                {
+                    amount: { amount: '4804294168682', decimals: 9 },
                     mint: '2HQXvda5sUjGLRKLG6LEqSctARYJboufSfG2Qciqmoon',
                     owner: '3cfwgyZY7uLNEv72etBQArWSoTzmXEm7aUmW3xE5xG4P',
                 },
@@ -68,7 +93,7 @@ describe('Trading Solana', () => {
         }
 
         await expect(
-            bobClient.addTransaction_Transfer(1151111081099710, validReceipt, transferEvent),
+            bobClient.addTransaction_Transfer(1151111081099710, validSellReceipt, transferEvent),
         ).rejects.toThrow('transaction amount not equal to balance diff')
     })
 
@@ -83,8 +108,23 @@ describe('Trading Solana', () => {
         }
 
         await expect(
-            bobClient.addTransaction_Transfer(1151111081099710, validReceipt, transferEvent),
+            bobClient.addTransaction_Transfer(1151111081099710, validSellReceipt, transferEvent),
         ).rejects.toThrow('transfer transaction is buy but balance decreased')
+    })
+
+    test('Token amounts for sell transactions needs to be decreasing', async () => {
+        const transferEvent: PlainMessage<BlockchainTransaction_Transfer> = {
+            amount: 4804294168682n.toString(),
+            address: bin_fromString('2HQXvda5sUjGLRKLG6LEqSctARYJboufSfG2Qciqmoon'),
+            sender: bin_fromHexString(bobClient.userId),
+            messageId: bin_fromHexString(threadParentId),
+            channelId: bin_fromHexString(channelId),
+            isBuy: false, // wrong: this is not a sell, this is a buy
+        }
+
+        await expect(
+            bobClient.addTransaction_Transfer(1151111081099710, validBuyReceipt, transferEvent),
+        ).rejects.toThrow('transfer transaction is sell but balance increased')
     })
 
     test('Solana transactions are rejected if the mint doesnt match the address', async () => {
@@ -98,7 +138,7 @@ describe('Trading Solana', () => {
         }
 
         await expect(
-            bobClient.addTransaction_Transfer(1151111081099710, validReceipt, transferEvent),
+            bobClient.addTransaction_Transfer(1151111081099710, validSellReceipt, transferEvent),
         ).rejects.toThrow('transaction mint not found')
     })
 
@@ -111,6 +151,6 @@ describe('Trading Solana', () => {
             channelId: bin_fromHexString(channelId),
             isBuy: false,
         }
-        await bobClient.addTransaction_Transfer(1151111081099710, validReceipt, transferEvent)
+        await bobClient.addTransaction_Transfer(1151111081099710, validSellReceipt, transferEvent)
     })
 })

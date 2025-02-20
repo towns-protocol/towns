@@ -886,7 +886,7 @@ func (ru *aeBlockchainTransactionRules) validBlockchainTransaction_CheckReceiptM
 		// make sure it's a valid buy or sell
 		if content.Transfer.IsBuy && amountAfter.Cmp(amountBefore) < 0 {
 			return false, RiverError(Err_INVALID_ARGUMENT, "solana transfer transaction is buy but balance decreased")
-		} else if content.Transfer.IsBuy && amountAfter.Cmp(amountBefore) > 0 {
+		} else if !content.Transfer.IsBuy && amountAfter.Cmp(amountBefore) > 0 {
 			return false, RiverError(Err_INVALID_ARGUMENT, "solana transfer transaction is sell but balance increased")
 		}
 		return true, nil
