@@ -2,23 +2,30 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IAppHooks} from "contracts/src/app/interfaces/IAppHooks.sol";
+import {IAppHooks, IAppHooksBase} from "contracts/src/app/interfaces/IAppHooks.sol";
 
 // structs
 
 // libraries
 import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 import {ParseBytes} from "contracts/src/utils/libraries/ParseBytes.sol";
+import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
+import {LibCall} from "solady/utils/LibCall.sol";
 
 // contracts
 struct HookPermissions {
-  bool beforeInitialize;
-  bool afterInitialize;
   bool beforeRegister;
   bool afterRegister;
+  bool beforeInstall;
+  bool afterInstall;
+  bool beforeUninstall;
+  bool afterUninstall;
 }
 
-library HookManager {
+library HooksManager {
+  // Add gas limit for hook calls
+  uint256 private constant HOOK_GAS_LIMIT = 100000;
+
   /// @notice Thrown if the address will not lead to the specified hook calls being called
   /// @param hooks The address of the hooks contract
   error HookAddressNotValid(address hooks);
@@ -38,19 +45,24 @@ library HookManager {
   /// @dev This function attempts to call getHookPermissions() and verifies the hook has at least one permission flag set to true.
   /// If the call fails (e.g. contract doesn't exist or doesn't implement interface), returns false.
   function isValidHookAddress(IAppHooks self) internal view returns (bool) {
-    // Zero address is considered valid as it represents no hooks
-    if (address(self) == address(0)) return true;
-
     try self.getHookPermissions() returns (HookPermissions memory permissions) {
       // Hook must implement at least one permission
-      return (permissions.beforeInitialize ||
-        permissions.afterInitialize ||
-        permissions.beforeRegister ||
-        permissions.afterRegister);
+      return (permissions.beforeRegister ||
+        permissions.afterRegister ||
+        permissions.beforeInstall ||
+        permissions.afterInstall ||
+        permissions.beforeUninstall ||
+        permissions.afterUninstall);
     } catch {
       // If the call fails (e.g., contract doesn't exist or doesn't implement interface)
       return false;
     }
+  }
+
+  function validateHookAddress(IAppHooks self) internal view {
+    if (address(self) == address(0)) return;
+    if (!isValidHookAddress(self))
+      CustomRevert.revertWith(HookAddressNotValid.selector, address(self));
   }
 
   function validateHookPermissions(
@@ -60,40 +72,21 @@ library HookManager {
     HookPermissions memory hookPermissions = self.getHookPermissions();
 
     if (
-      (requiredPermissions.beforeInitialize &&
-        !hookPermissions.beforeInitialize) ||
-      (requiredPermissions.afterInitialize &&
-        !hookPermissions.afterInitialize) ||
       (requiredPermissions.beforeRegister && !hookPermissions.beforeRegister) ||
-      (requiredPermissions.afterRegister && !hookPermissions.afterRegister)
+      (requiredPermissions.afterRegister && !hookPermissions.afterRegister) ||
+      (requiredPermissions.beforeInstall && !hookPermissions.beforeInstall) ||
+      (requiredPermissions.afterInstall && !hookPermissions.afterInstall) ||
+      (requiredPermissions.beforeUninstall &&
+        !hookPermissions.beforeUninstall) ||
+      (requiredPermissions.afterUninstall && !hookPermissions.afterUninstall)
     ) {
       CustomRevert.revertWith(HookAddressNotValid.selector, address(self));
     }
   }
 
-  function beforeInitialize(IAppHooks self) internal {
-    if (address(self) == address(0)) return;
-    HookPermissions memory permissions = self.getHookPermissions();
-    if (permissions.beforeInitialize) {
-      callHook(
-        self,
-        abi.encodeWithSelector(IAppHooks.beforeInitialize.selector, msg.sender)
-      );
-    }
-  }
-
-  function afterInitialize(IAppHooks self) internal {
-    if (address(self) == address(0)) return;
-    HookPermissions memory permissions = self.getHookPermissions();
-    if (permissions.afterInitialize) {
-      callHook(
-        self,
-        abi.encodeWithSelector(IAppHooks.afterInitialize.selector, msg.sender)
-      );
-    }
-  }
-
   function beforeRegister(IAppHooks self) internal {
+    if (address(self) == address(0)) return;
+
     HookPermissions memory permissions = self.getHookPermissions();
     if (permissions.beforeRegister) {
       callHook(
@@ -104,6 +97,8 @@ library HookManager {
   }
 
   function afterRegister(IAppHooks self) internal {
+    if (address(self) == address(0)) return;
+
     HookPermissions memory permissions = self.getHookPermissions();
     if (permissions.afterRegister) {
       callHook(
@@ -113,14 +108,68 @@ library HookManager {
     }
   }
 
+  function beforeInstall(IAppHooks self) internal {
+    if (address(self) == address(0)) return;
+
+    HookPermissions memory permissions = self.getHookPermissions();
+    if (permissions.beforeInstall) {
+      callHook(
+        self,
+        abi.encodeWithSelector(IAppHooks.beforeInstall.selector, msg.sender)
+      );
+    }
+  }
+
+  function afterInstall(IAppHooks self) internal {
+    if (address(self) == address(0)) return;
+
+    HookPermissions memory permissions = self.getHookPermissions();
+    if (permissions.afterInstall) {
+      callHook(
+        self,
+        abi.encodeWithSelector(IAppHooks.afterInstall.selector, msg.sender)
+      );
+    }
+  }
+
+  function beforeUninstall(IAppHooks self) internal {
+    if (address(self) == address(0)) return;
+
+    HookPermissions memory permissions = self.getHookPermissions();
+    if (permissions.beforeUninstall) {
+      callHook(
+        self,
+        abi.encodeWithSelector(IAppHooks.beforeUninstall.selector, msg.sender)
+      );
+    }
+  }
+
+  function afterUninstall(IAppHooks self) internal {
+    if (address(self) == address(0)) return;
+
+    HookPermissions memory permissions = self.getHookPermissions();
+    if (permissions.afterUninstall) {
+      callHook(
+        self,
+        abi.encodeWithSelector(IAppHooks.afterUninstall.selector, msg.sender)
+      );
+    }
+  }
+
   function callHook(
     IAppHooks self,
     bytes memory data
   ) internal returns (bytes memory result) {
     bool success;
-    assembly ("memory-safe") {
-      success := call(gas(), self, 0, add(data, 0x20), mload(data), 0, 0)
-    }
+    uint256 gasLimit = FixedPointMathLib.min(gasleft() - 2000, HOOK_GAS_LIMIT);
+
+    (success, , result) = LibCall.tryCall(
+      address(self),
+      0,
+      gasLimit,
+      type(uint16).max,
+      data
+    );
 
     // Revert with FailedHookCall, containing any error message to bubble up
     if (!success)
@@ -142,13 +191,14 @@ library HookManager {
       returndatacopy(add(result, 0x20), 0, returndatasize())
     }
 
+    bytes4 selector = ParseBytes.parseSelector(data);
+
     // Length must be at least 32 to contain the selector. Check expected selector and returned selector match.
-    if (
-      result.length < 32 ||
-      ParseBytes.parseSelector(result) != ParseBytes.parseSelector(data)
-    ) {
+    if (result.length < 32 || selector != ParseBytes.parseSelector(result)) {
       CustomRevert.revertWith(InvalidHookResponse.selector);
     }
+
+    emit IAppHooksBase.HookExecuted(address(self), selector, success);
   }
 
   function hasPermission(

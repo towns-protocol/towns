@@ -19,10 +19,10 @@ library App {
     uint256 tokenId;
     address appAddress;
     address owner;
+    bool disabled;
     string uri;
     string name;
     string symbol;
-    bool disabled;
     StringSet.Set permissions;
     IAppHooks hooks;
   }

@@ -44,8 +44,11 @@ interface IAppRegistryBase {
     UpdateRegistration registration
   );
 
-  event PermissionDisabled(string permission);
-  event PermissionEnabled(string permission);
+  event PermissionStateChanged(
+    address indexed changedBy,
+    string indexed permission,
+    bool enabled
+  );
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                           Errors                           */
@@ -56,7 +59,8 @@ interface IAppRegistryBase {
   error AppNotOwnedBySender();
   error AppDisabled();
   error AppPermissionsMissing();
-  error AppPermissionNotAllowed();
+  error AppInvalidPermission();
+  error AppTooManyPermissions();
 }
 
 interface IAppRegistry is IAppRegistryBase {

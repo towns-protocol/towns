@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 import {IAppHooks} from "contracts/src/app/interfaces/IAppHooks.sol";
-import {HookPermissions} from "../libraries/HookManager.sol";
+import {HookPermissions} from "../libraries/HooksManager.sol";
 
 abstract contract BaseHook is IAppHooks {
   // Hook permissions
@@ -11,10 +11,12 @@ abstract contract BaseHook is IAppHooks {
   constructor() {
     // By default, no permissions are enabled
     _permissions = HookPermissions({
-      beforeInitialize: false,
-      afterInitialize: false,
       beforeRegister: false,
-      afterRegister: false
+      afterRegister: false,
+      beforeInstall: false,
+      afterInstall: false,
+      beforeUninstall: false,
+      afterUninstall: false
     });
   }
 
@@ -28,16 +30,6 @@ abstract contract BaseHook is IAppHooks {
   }
 
   // Default implementations that return their selectors
-  function beforeInitialize(address sender) external virtual returns (bytes4) {
-    _beforeInitialize(sender);
-    return _returnSelector();
-  }
-
-  function afterInitialize(address sender) external virtual returns (bytes4) {
-    _afterInitialize(sender);
-    return _returnSelector();
-  }
-
   function beforeRegister(address sender) external virtual returns (bytes4) {
     _beforeRegister(sender);
     return _returnSelector();
@@ -48,9 +40,31 @@ abstract contract BaseHook is IAppHooks {
     return _returnSelector();
   }
 
+  function beforeInstall(address sender) external virtual returns (bytes4) {
+    _beforeInstall(sender);
+    return _returnSelector();
+  }
+
+  function afterInstall(address sender) external virtual returns (bytes4) {
+    _afterInstall(sender);
+    return _returnSelector();
+  }
+
+  function beforeUninstall(address sender) external virtual returns (bytes4) {
+    _beforeUninstall(sender);
+    return _returnSelector();
+  }
+
+  function afterUninstall(address sender) external virtual returns (bytes4) {
+    _afterUninstall(sender);
+    return _returnSelector();
+  }
+
   // Internal functions to be overridden by implementing contracts
-  function _beforeInitialize(address sender) internal virtual {}
-  function _afterInitialize(address sender) internal virtual {}
   function _beforeRegister(address sender) internal virtual {}
   function _afterRegister(address sender) internal virtual {}
+  function _beforeInstall(address sender) internal virtual {}
+  function _afterInstall(address sender) internal virtual {}
+  function _beforeUninstall(address sender) internal virtual {}
+  function _afterUninstall(address sender) internal virtual {}
 }

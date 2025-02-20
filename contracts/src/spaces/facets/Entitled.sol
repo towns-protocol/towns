@@ -42,7 +42,7 @@ abstract contract Entitled is
     address user,
     bytes32 permission
   ) internal view returns (bool) {
-    if (InstallLib.isEntitled(channelId, user, permission)) return true;
+    if (InstallLib.isAppEntitled(channelId, user, permission)) return true;
 
     address owner = _owner();
 

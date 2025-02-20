@@ -51,11 +51,16 @@ library Account {
     string[] memory permissions
   ) internal {
     self.installation[appId].updatedAt = block.timestamp;
-    for (uint256 i; i < channelIds.length; ++i) {
+
+    uint256 channelLength = channelIds.length;
+    for (uint256 i; i < channelLength; ++i) {
       self.installation[appId].channels.add(channelIds[i]);
     }
+
     self.installedApps.add(appId);
-    for (uint256 i; i < permissions.length; ++i) {
+
+    uint256 permLength = permissions.length;
+    for (uint256 i; i < permLength; ++i) {
       self.installation[appId].permissions.add(permissions[i]);
     }
   }
@@ -67,8 +72,10 @@ library Account {
   ) internal returns (bool) {
     uint256 channelsLength = channelIds.length;
 
-    for (uint256 i; i < channelsLength; ++i) {
-      self.installation[appId].channels.remove(channelIds[i]);
+    unchecked {
+      for (uint256 i; i < channelsLength; ++i) {
+        self.installation[appId].channels.remove(channelIds[i]);
+      }
     }
 
     bool isFullyUninstalled = false;

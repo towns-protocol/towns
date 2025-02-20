@@ -5,7 +5,7 @@ pragma solidity ^0.8.23;
 import {IAppRegistry} from "contracts/src/app/interfaces/IAppRegistry.sol";
 
 // libraries
-import {HookManager} from "contracts/src/app/libraries/HookManager.sol";
+import {HooksManager} from "contracts/src/app/libraries/HooksManager.sol";
 import {AppRegistryStore} from "contracts/src/app/storage/AppRegistryStore.sol";
 import {App} from "contracts/src/app/libraries/App.sol";
 import {EnumerableSetLib} from "solady/utils/EnumerableSetLib.sol";
@@ -18,11 +18,17 @@ import {StringSet} from "contracts/src/utils/StringSet.sol";
 import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
 import {OwnableBase} from "@river-build/diamond/src/facets/ownable/OwnableBase.sol";
 
+/// @title AppRegistry
+/// @notice Registry for apps
+/// @dev Inherits from OwnableBase to handle ownership
 contract AppRegistry is IAppRegistry, OwnableBase, Facet {
   using EnumerableSetLib for EnumerableSetLib.Uint256Set;
   using EnumerableSetLib for EnumerableSetLib.Bytes32Set;
   using App for App.Config;
   using StringSet for StringSet.Set;
+
+  // Add validation for maximum permissions
+  uint256 private constant MAX_PERMISSIONS = 50;
 
   function __AppRegistry_init() external onlyInitializing {
     AppRegistryStore.Layout storage ds = AppRegistryStore.layout();
@@ -49,9 +55,9 @@ contract AppRegistry is IAppRegistry, OwnableBase, Facet {
     ds.appIdByAddress[registration.appAddress] = tokenId;
     App.Config storage config = ds.registrations[tokenId];
 
-    HookManager.beforeInitialize(registration.hooks);
+    HooksManager.beforeRegister(registration.hooks);
     config.initialize(tokenId, registration);
-    HookManager.afterInitialize(registration.hooks);
+    HooksManager.afterRegister(registration.hooks);
 
     emit AppRegistered(
       registration.owner,
@@ -125,13 +131,13 @@ contract AppRegistry is IAppRegistry, OwnableBase, Facet {
   /// @inheritdoc IAppRegistry
   function disablePermission(string memory permission) external onlyOwner {
     AppRegistryStore.layout().invalidPermissions[permission] = true;
-    emit PermissionDisabled(permission);
+    emit PermissionStateChanged(msg.sender, permission, false);
   }
 
   /// @inheritdoc IAppRegistry
   function enablePermission(string memory permission) external onlyOwner {
     delete AppRegistryStore.layout().invalidPermissions[permission];
-    emit PermissionEnabled(permission);
+    emit PermissionStateChanged(msg.sender, permission, true);
   }
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -156,20 +162,18 @@ contract AppRegistry is IAppRegistry, OwnableBase, Facet {
 
     _validatePermissions(registration.permissions);
 
-    if (!HookManager.isValidHookAddress(registration.hooks))
-      CustomRevert.revertWith(
-        HookManager.HookAddressNotValid.selector,
-        address(registration.hooks)
-      );
+    HooksManager.validateHookAddress(registration.hooks);
   }
 
   function _validatePermissions(string[] memory permissions) internal view {
     if (permissions.length == 0) return;
+    if (permissions.length > MAX_PERMISSIONS)
+      CustomRevert.revertWith(AppTooManyPermissions.selector);
 
     AppRegistryStore.Layout storage ds = AppRegistryStore.layout();
     for (uint256 i; i < permissions.length; ++i) {
       if (ds.invalidPermissions[permissions[i]])
-        CustomRevert.revertWith(AppPermissionNotAllowed.selector);
+        CustomRevert.revertWith(AppInvalidPermission.selector);
     }
   }
 }
