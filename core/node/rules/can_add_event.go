@@ -850,9 +850,10 @@ func (ru *aeBlockchainTransactionRules) validBlockchainTransaction_CheckReceiptM
 			return false, RiverError(Err_INVALID_ARGUMENT, "solana transfer transaction meta is nil")
 		}
 
+		sender := string(content.Transfer.Sender)
 		// get the amount _before_ the transfer
 		idx := sort.Search(len(meta.GetPreTokenBalances()), func(i int) bool {
-			return meta.GetPreTokenBalances()[i].Mint == string(content.Transfer.Address)
+			return meta.GetPreTokenBalances()[i].Mint == string(content.Transfer.Address) && meta.GetPreTokenBalances()[i].Owner == sender
 		})
 		if idx == len(meta.GetPreTokenBalances()) {
 			return false, RiverError(Err_INVALID_ARGUMENT, "solana transfer transaction mint not found in preTokenBalances")
@@ -864,7 +865,7 @@ func (ru *aeBlockchainTransactionRules) validBlockchainTransaction_CheckReceiptM
 
 		// get the amount _after_ the transfer
 		idx = sort.Search(len(meta.GetPostTokenBalances()), func(i int) bool {
-			return meta.GetPostTokenBalances()[i].Mint == string(content.Transfer.Address)
+			return meta.GetPostTokenBalances()[i].Mint == string(content.Transfer.Address) && meta.GetPreTokenBalances()[i].Owner == sender
 		})
 		if idx == len(meta.GetPreTokenBalances()) {
 			return false, RiverError(Err_INVALID_ARGUMENT, "solana transfer transaction mint not found in postTokenBalances")

@@ -139,6 +139,20 @@ describe('Trading Solana', () => {
         ).rejects.toThrow('transaction mint not found')
     })
 
+    test('Solana transactions are rejected if the sender is invalid', async () => {
+        const transferEvent: PlainMessage<BlockchainTransaction_Transfer> = {
+            amount: 4804294168682n.toString(),
+            address: bin_fromString(mintAddress),
+            sender: bin_fromString(bobSolanaWalletAdddress).toReversed(), // invalid sender
+            messageId: bin_fromHexString(threadParentId),
+            channelId: bin_fromHexString(channelId),
+            isBuy: false,
+        }
+        await expect(
+            bobClient.addTransaction_Transfer(1151111081099710, validSellReceipt, transferEvent),
+        ).rejects.toThrow('solana transfer transaction mint not found')
+    })
+
     test('Solana transactions are accepted if the amount, mint and owner are valid', async () => {
         const transferEvent: PlainMessage<BlockchainTransaction_Transfer> = {
             amount: 4804294168682n.toString(),
