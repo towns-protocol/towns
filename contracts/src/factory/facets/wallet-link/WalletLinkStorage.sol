@@ -7,6 +7,7 @@ pragma solidity ^0.8.23;
 
 // contracts
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {Uint256ToAddressMap, AddressToUint256Map} from "@river-build/diamond/src/primitive/HashMap.sol";
 
 library WalletLinkStorage {
   // keccak256(abi.encode(uint256(keccak256("river.wallet.link.storage")) - 1)) & ~bytes32(uint256(0xff))
@@ -19,9 +20,9 @@ library WalletLinkStorage {
     // mapping Ethereum Wallets to RootKey is a 1 to 1 relationship, a wallet can only be linked to 1 root key
     mapping(address => address) rootKeyByWallet;
     // Default wallet by chain id
-    mapping(address => mapping(uint256 => address)) defaultWalletsByRootKey;
+    mapping(address => Uint256ToAddressMap) defaultWalletsByRootKey;
     // Chain id by wallet
-    mapping(address => uint256) chainIdByDefaultWallet;
+    AddressToUint256Map chainIdByDefaultWallet;
   }
 
   function layout() internal pure returns (Layout storage s) {

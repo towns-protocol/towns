@@ -127,4 +127,26 @@ interface IWalletLink is IWalletLinkBase {
   function getLatestNonceForRootKey(
     address rootKey
   ) external view returns (uint256);
+
+  /**
+   * @notice sets the default wallet for a rootkey and chainId
+   * @param rootWallet the root wallet to set the default wallet for
+   * @param wallet the wallet to set as the default wallet for
+   * @param chainId the chainId to set the default wallet for
+   */
+  function setDefaultWallet(
+    address rootWallet,
+    address wallet,
+    uint256 chainId
+  ) external;
+
+  /**
+   * @notice gets the default wallet for a rootkey and chainId
+   * @param rootWallet the root wallet to get the default wallet for
+   * @param chainId the chainId to get the default wallet for
+   */
+  function getDefaultWallet(
+    address rootWallet,
+    uint256 chainId
+  ) external view returns (address);
 }
