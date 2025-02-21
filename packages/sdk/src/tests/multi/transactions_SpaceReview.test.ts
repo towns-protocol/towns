@@ -131,30 +131,14 @@ describe('transaction_SpaceReview', () => {
     test('alice sees review in space stream', async () => {
         const stream = alice.riverConnection.client!.stream(spaceIdWithAlice)
         if (!stream) throw new Error('no stream found')
-        const { reviewEvent, eventId } = await waitFor(() => {
-            const reviewEvents = stream.view.timeline.filter(isMemberBlockchainTransaction)
-            expect(reviewEvents.length).toBeGreaterThan(0)
+        const reviewEvent = await waitFor(() => {
+            const reviewEvents = stream.view.membershipContent.spaceReviews
+            expect(reviewEvents.length).toBe(1)
             const reviewEvent = reviewEvents[0]
-            expect(reviewEvent).toBeDefined()
-            if (
-                reviewEvent.remoteEvent?.event.payload.value?.content.case !==
-                'memberBlockchainTransaction'
-            ) {
-                throw new Error('no review event whaaa?')
-            }
-            return {
-                reviewEvent: reviewEvent.remoteEvent.event.payload.value.content.value,
-                eventId: reviewEvent.hashStr,
-            }
+            return reviewEvent
         })
-        expect(stream.view.membershipContent.spaceReviews.length).toBe(1)
-        expect(eventId).toBeDefined()
-        spaceReviewEventId = eventId
-        expect(reviewEvent.transaction?.receipt).toBeDefined()
-        const { comment, rating } = getSpaceReviewEventDataBin(
-            reviewEvent.transaction!.receipt!.logs,
-            reviewEvent.transaction!.receipt!.from,
-        )
+        spaceReviewEventId = reviewEvent.eventHashStr
+        const { comment, rating } = reviewEvent.review
         expect(comment).toBe('This is a test review')
         expect(rating).toBe(5)
     })
@@ -162,8 +146,8 @@ describe('transaction_SpaceReview', () => {
         const stream = bob.riverConnection.client!.stream(spaceIdWithAlice)
         if (!stream) throw new Error('no stream found')
         const reviewEvent = await waitFor(() => {
-            const reviewEvents = stream.view.timeline.filter(isMemberBlockchainTransaction)
-            expect(reviewEvents.length).toBeGreaterThan(0)
+            const reviewEvents = stream.view.membershipContent.spaceReviews
+            expect(reviewEvents.length).toBe(1)
             return reviewEvents[0]
         })
         expect(reviewEvent).toBeDefined()

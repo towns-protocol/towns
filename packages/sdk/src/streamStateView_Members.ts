@@ -54,7 +54,11 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
     readonly pins: Pin[] = []
     tips: { [key: string]: bigint } = {}
     encryptionAlgorithm?: string = undefined
-    spaceReviews: { review: SpaceReviewEventObject; createdAtEpochMs: bigint }[] = []
+    spaceReviews: {
+        review: SpaceReviewEventObject
+        createdAtEpochMs: bigint
+        eventHashStr: string
+    }[] = []
 
     constructor(streamId: string) {
         super()
@@ -189,6 +193,7 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                             this.spaceReviews.unshift({
                                 review: review,
                                 createdAtEpochMs: event.createdAtEpochMs,
+                                eventHashStr: event.hashStr,
                             })
                             stateEmitter?.emit('spaceReviewsUpdated', this.streamId, review)
                         }
@@ -387,12 +392,14 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                             this.spaceReviews.push({
                                 review: review,
                                 createdAtEpochMs: event.createdAtEpochMs,
+                                eventHashStr: event.hashStr,
                             })
                         } else {
                             // since we're prepending, existing reviews are newer and should be kept
                             this.spaceReviews[existingReviewIndex] = {
                                 review: review,
                                 createdAtEpochMs: event.createdAtEpochMs,
+                                eventHashStr: event.hashStr,
                             }
                         }
                         stateEmitter?.emit('spaceReviewsUpdated', this.streamId, review)
