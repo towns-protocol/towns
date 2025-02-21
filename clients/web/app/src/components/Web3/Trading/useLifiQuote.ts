@@ -69,6 +69,10 @@ export const useLifiQuote = (props: {
         currentTokenBalance,
     } = props
 
+    const remappedFromChain =
+        props.fromChain === 'solana-mainnet' ? '1151111081099710' : props.fromChain
+    const remappedToChain = props.toChain === 'solana-mainnet' ? '1151111081099710' : props.toChain
+
     const enabled =
         fromChain.length > 0 &&
         toChain.length > 0 &&
@@ -96,20 +100,11 @@ export const useLifiQuote = (props: {
         queryKey,
         enabled: enabled,
         queryFn: async () => {
-            console.log('GETTING QUOTE', {
-                fromChain,
-                toChain,
-                fromToken,
-                toToken,
-                fromAmount,
-                fromAddress,
-                // toAddress,
-            })
             try {
                 const result = await axios.get('https://li.quest/v1/quote', {
                     params: {
-                        fromChain,
-                        toChain,
+                        fromChain: remappedFromChain,
+                        toChain: remappedToChain,
                         fromToken,
                         toToken,
                         fromAmount,

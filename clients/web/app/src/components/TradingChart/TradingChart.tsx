@@ -21,7 +21,6 @@ import { CHANNEL_INFO_PARAMS } from 'routes'
 import { useSizeContext } from 'ui/hooks/useSizeContext'
 import { shimmerClass } from 'ui/styles/globals/shimmer.css'
 import { TokenIcon } from '@components/Web3/Trading/ui/TokenIcon'
-import { chainIdToLitteral } from '@components/Web3/Trading/useTokenBalance'
 import { TokenPrice } from '@components/Web3/Trading/ui/TokenPrice'
 import { GetBars, TimeFrame, useCoinBars } from './useCoinBars'
 import { useCoinData } from './useCoinData'
@@ -42,16 +41,22 @@ export const TradingChartAttachment = (props: { attachment: TickerAttachment }) 
         rootMargin: '10px 0px',
     })
     const { openPanel } = usePanelActions()
+    const remappedChain =
+        props.attachment.chainId === '1151111081099710'
+            ? 'solana-mainnet'
+            : props.attachment.chainId
 
     const onTradeClick = useCallback(
         (mode: 'buy' | 'sell') => {
+            // a little workaround to cover the case where old tickers were posted
+            // a temp chainId for solana
             openPanel(CHANNEL_INFO_PARAMS.TRADE_PANEL, {
                 mode,
                 tokenAddress: props.attachment.address,
-                chainId: props.attachment.chainId.toString(),
+                chainId: remappedChain,
             })
         },
-        [openPanel, props.attachment.address, props.attachment.chainId],
+        [openPanel, props.attachment.address, remappedChain],
     )
 
     const { containerWidth } = useSizeContext()
@@ -70,7 +75,7 @@ export const TradingChartAttachment = (props: { attachment: TickerAttachment }) 
         >
             <TradingChart
                 address={props.attachment.address}
-                chainId={props.attachment.chainId}
+                chainId={remappedChain}
                 disabled={!inView}
             />
             <Stack horizontal padding paddingTop="none" gap="sm">
@@ -177,7 +182,7 @@ export const TradingChart = (props: { address: string; chainId: string; disabled
                             <TokenIcon
                                 asset={{
                                     imageUrl: coinData.token.info.imageThumbUrl ?? '',
-                                    chain: chainIdToLitteral(chainId),
+                                    chain: chainId,
                                 }}
                             />
                             <Box maxWidth="250" overflow="hidden" paddingY="xs">

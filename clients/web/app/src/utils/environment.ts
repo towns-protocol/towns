@@ -107,8 +107,6 @@ const envSchema = z.object({
     VITE_ENABLE_DECENT_ONBOARDING_V2: boolish.default(false),
     // Lifi API Key
     VITE_LIFI_API_KEY: z.string().optional(),
-    // Coingecko API Key
-    VITE_COINGECKO_API_KEY: z.string().optional(),
     // Codex API Key
     VITE_CODEX_API_KEY: z.string().optional(),
     // Solana mainnet rpc url

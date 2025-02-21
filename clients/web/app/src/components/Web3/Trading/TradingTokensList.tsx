@@ -22,7 +22,7 @@ export const TradingTokensList = ({ assets }: { assets: ChainWalletAssets[] }) =
     }, [assets])
 
     const baseNativeAsset = useMemo(() => {
-        const asset = assets.find((asset) => asset.chain === 'base')
+        const asset = assets.find((asset) => asset.chain === '8453')
         if (!asset) {
             return
         }
@@ -30,7 +30,7 @@ export const TradingTokensList = ({ assets }: { assets: ChainWalletAssets[] }) =
             ...asset.nativeAsset,
             imageUrl: baseImageURL,
             decimals: 18,
-            tokenAddress: 'BASE',
+            tokenAddress: '',
             symbol: 'BASE',
             name: 'Base',
             walletAddress: asset.walletAddress,
@@ -62,7 +62,7 @@ export const TradingTokensList = ({ assets }: { assets: ChainWalletAssets[] }) =
     return (
         <>
             {allAssets.map((token) => (
-                <AssetEntry asset={token} key={token.tokenAddress} />
+                <AssetEntry asset={token} key={token.tokenAddress + token.chain} />
             ))}
         </>
     )
@@ -82,7 +82,7 @@ type AssetData = {
 }
 
 const AssetEntry = ({ asset }: { asset: AssetData }) => {
-    const pct = 1 + asset.priceChange24h / 100
+    const pct = 1 + asset.priceChange24h
     const value24hAgo = asset.holdingValueCents / pct
     const diff24h = asset.holdingValueCents - value24hAgo
 
@@ -92,12 +92,7 @@ const AssetEntry = ({ asset }: { asset: AssetData }) => {
             openPanel('trade', {
                 mode: 'sell',
                 tokenAddress: asset.tokenAddress,
-                chainId:
-                    asset.chain === 'solana-mainnet'
-                        ? '1151111081099710'
-                        : asset.chain === 'base'
-                        ? '8453'
-                        : '1',
+                chainId: asset.chain,
             })
         }
     }, [asset, openPanel])

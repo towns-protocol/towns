@@ -85,7 +85,7 @@ const zTokenEventsForMaker = z.object({
 })
 
 export const useTradingActivity = (walletAddress: string | undefined, chainId: string) => {
-    const networkId = chainId === '1151111081099710' ? 1399811149 : Number(chainId)
+    const networkId = chainId === 'solana-mainnet' ? 1399811149 : Number(chainId)
     const apiKey = env.VITE_CODEX_API_KEY
     if (!apiKey) {
         console.error('VITE_CODEX_API_KEY missing')

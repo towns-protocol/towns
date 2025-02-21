@@ -9,12 +9,12 @@ export type ChainConfig = {
 }
 
 export const tradingChains = {
-    '1151111081099710': {
+    'solana-mainnet': {
         name: 'Solana',
         nativeTokenAddress: '11111111111111111111111111111111',
         icon: 'solana',
         decimals: 9,
-        chainId: '1151111081099710',
+        chainId: 'solana-mainnet',
     },
     '8453': {
         name: 'Base',

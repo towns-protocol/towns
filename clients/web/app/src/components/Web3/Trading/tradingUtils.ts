@@ -44,7 +44,6 @@ export type NativeAsset = {
 
 export type ChainWalletAssets = {
     chain: string // e.g., 'ethereum', 'polygon'
-    coinGeckoIdentifier: string
     walletAddress: string
     nativeAsset: NativeAsset
     tokens: TokenAsset[]

@@ -1,51 +1,46 @@
 import { withCorsHeaders } from 'worker-common'
 import { Env, TokenProviderRequest } from '../types'
-import { getEvmWalletAssets } from './wallet-assets/getEvmWalletAssets'
-import { tokenNetworkMap } from '../utils'
-import { hydrateNativeTokenPrices } from './wallet-assets/hydrateNativeTokenPrices'
-import { getSolanaWalletAssets } from './wallet-assets/getSolanaWalletAssets'
 import { ChainWalletAssets } from './wallet-assets/walletAssetsModels'
 import { hydrateHoldingValues } from './wallet-assets/hydrateHoldingValues'
+import { hydrateTokens } from './wallet-assets/hydrateTokens'
+import { getBalances } from './wallet-assets/getBalances'
 
-// filter out chains that are available on coingecko
-// currently this only filters out base sepolia (not supported by coingecko)
-const evmChains = tokenNetworkMap.filter((x) => x.alchemyIdentifier === 'base-mainnet')
 const solanaChains = ['solana-mainnet']
+const evmChains = ['8453']
 
 export const getWalletAssets = async (request: TokenProviderRequest, env: Env) => {
     const { query } = request
     const { evmWalletAddress, solanaWalletAddress } = query || {}
 
+    if (!evmWalletAddress && !solanaWalletAddress) {
+        return new Response('No wallet address provided', { status: 400 })
+    }
+
     const promises: Promise<ChainWalletAssets>[] = []
     if (evmWalletAddress) {
-        promises.push(
-            ...evmChains.map((chain) =>
-                getEvmWalletAssets(
-                    evmWalletAddress,
-                    chain.vChain.rpcUrls.alchemy.http[0],
-                    chain.simpleHashIdentifier,
-                    chain.coinGeckoIdentifier,
-                    env,
-                ),
-            ),
-        )
+        promises.push(...evmChains.map((chain) => getBalances(env, evmWalletAddress, chain)))
     }
     if (solanaWalletAddress) {
         promises.push(
             ...solanaChains.map((solanaChain) =>
-                getSolanaWalletAssets(solanaChain, solanaWalletAddress, env),
+                getBalances(env, solanaWalletAddress, solanaChain),
             ),
         )
     }
     try {
         const responses = await Promise.all(promises)
-        await hydrateNativeTokenPrices(responses, env)
-        await hydrateHoldingValues(responses)
+        await hydrateTokens(responses, env)
+        hydrateHoldingValues(responses)
         const body = JSON.stringify(responses)
         const headers = {
             'Content-type': 'application/json',
             ...withCorsHeaders(request, env.ENVIRONMENT),
         }
+        console.log('ASSETS', responses)
+        console.log(
+            'TOKENS',
+            responses.map((r) => r.tokens),
+        )
         return new Response(body, { headers })
     } catch (error) {
         console.error('Error getting wallet assets', error)

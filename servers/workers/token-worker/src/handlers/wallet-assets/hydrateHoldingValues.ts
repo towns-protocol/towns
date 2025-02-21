@@ -27,7 +27,7 @@ function holdingValueCents(balance: bigint, decimals: number, priceCents: number
     return Number(totalCents)
 }
 
-export async function hydrateHoldingValues(assets: ChainWalletAssets[]) {
+export function hydrateHoldingValues(assets: ChainWalletAssets[]) {
     for (const asset of assets) {
         asset.nativeAsset.holdingValueCents = holdingValueCents(
             BigInt(asset.nativeAsset.balance),

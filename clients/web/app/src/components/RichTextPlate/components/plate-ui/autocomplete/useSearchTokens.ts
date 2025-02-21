@@ -43,11 +43,10 @@ function remapResponse(
     return item.data.data.filterTokens.results
         .map((result) => {
             // different APIs use different neworkIds for Solana.
-            // 1151111081099710 seems to be the most common one
             const chain = () => {
                 switch (result.token.networkId) {
                     case 1399811149:
-                        return '1151111081099710'
+                        return 'solana-mainnet'
                     default:
                         return result.token.networkId.toString()
                 }

@@ -13,7 +13,7 @@ export interface Env extends AuthEnv {
     ENVIRONMENT: Environment
     ALCHEMY_API_KEY: string
     SIMPLEHASH_API_KEY: string
-    COINGECKO_API_KEY: string
+    CODEX_API_KEY: string
 }
 
 export interface TokenProviderRequest extends Request {

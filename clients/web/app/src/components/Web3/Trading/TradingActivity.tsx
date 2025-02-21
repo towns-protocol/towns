@@ -9,7 +9,7 @@ import { TradingActivityItem, useTradingActivity } from './hooks/useTradingActiv
 export const TradingActivity = () => {
     const { solanaWalletAddress, evmWalletAddress } = useTradingWalletAddresses()
     const { data: baseData } = useTradingActivity(evmWalletAddress, '8453')
-    const { data: solanaData } = useTradingActivity(solanaWalletAddress, '1151111081099710')
+    const { data: solanaData } = useTradingActivity(solanaWalletAddress, 'solana-mainnet')
     const allData = useMemo(() => {
         return [...baseData, ...solanaData].sort((a, b) => b.timestamp - a.timestamp)
     }, [baseData, solanaData])

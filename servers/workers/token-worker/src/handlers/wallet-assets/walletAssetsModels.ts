@@ -9,6 +9,7 @@ export type TokenAsset = {
     imageUrl: string
     priceCents: number // USD price from CoinGecko
     priceChange24h: number // 24h price change percentage from CoinGecko
+    identifier: string
 }
 
 export interface NativeAsset {
@@ -22,8 +23,8 @@ export interface NativeAsset {
 
 export interface ChainWalletAssets {
     chain: string // e.g., 'ethereum', 'polygon'
-    coinGeckoIdentifier: string
     walletAddress: string
     nativeAsset: NativeAsset
     tokens: TokenAsset[]
+    identifier: string
 }

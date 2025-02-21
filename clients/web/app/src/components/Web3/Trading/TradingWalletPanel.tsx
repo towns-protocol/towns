@@ -27,10 +27,10 @@ export function TradingWalletPanel() {
             return 0
         }
         return chainWalletAssets.reduce((acc, asset) => {
-            const pct = 1 + asset.nativeAsset.priceChange24h / 100
+            const pct = 1 + asset.nativeAsset.priceChange24h
             const value24hAgo = asset.nativeAsset.holdingValueCents / pct
             const tokensValue24hAgo = asset.tokens.reduce((acc, token) => {
-                const pct = 1 + token.priceChange24h / 100
+                const pct = 1 + token.priceChange24h
                 return acc + token.holdingValueCents / pct
             }, 0)
             return acc + value24hAgo + tokensValue24hAgo

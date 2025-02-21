@@ -58,7 +58,7 @@ export const useCoinData = ({
     chain: string
     disabled?: boolean
 }) => {
-    const networkId = chain === '1151111081099710' ? 1399811149 : Number(chain)
+    const networkId = chain === 'solana-mainnet' ? 1399811149 : Number(chain)
     const query = `
      {
         filterTokens(

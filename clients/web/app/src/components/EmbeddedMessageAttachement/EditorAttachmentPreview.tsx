@@ -17,8 +17,8 @@ import { LoadingUnfurledLinkAttachment } from 'hooks/useExtractInternalLinks'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { shortAddress } from 'ui/utils/utils'
 import { useCoinData } from '@components/TradingChart/useCoinData'
-import { chainIdToLitteral } from '@components/Web3/Trading/useTokenBalance'
 import { TokenIcon } from '@components/Web3/Trading/ui/TokenIcon'
+import { chainIdToLitteral } from '@components/Web3/Trading/useTokenBalance'
 
 type MessageAttachmentPreviewProps = {
     attachment: EmbeddedMessageAttachment

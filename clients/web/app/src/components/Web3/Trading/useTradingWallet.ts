@@ -29,7 +29,6 @@ const zNativeAsset: ZodType<NativeAsset> = z.object({
 
 const zChainWalletAssets: ZodType<ChainWalletAssets> = z.object({
     chain: z.string(),
-    coinGeckoIdentifier: z.string(),
     walletAddress: z.string(),
     nativeAsset: zNativeAsset,
     tokens: z.array(zTokenAsset),

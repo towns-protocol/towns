@@ -171,7 +171,7 @@ export const TradingPanel = () => {
     )
 
     const solanaBuyButtonPressed = useCallback(async () => {
-        if (chainId !== tradingChains[1151111081099710].chainId) {
+        if (chainId !== tradingChains['solana-mainnet'].chainId) {
             console.error("chainId doesn't match")
             return
         }

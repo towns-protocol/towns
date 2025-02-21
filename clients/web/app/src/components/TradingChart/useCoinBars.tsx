@@ -68,7 +68,7 @@ export const useCoinBars = ({
 }
 
 function createQuery(address: string, chain: string, timeframe: TimeFrame): string {
-    const networkId = chain === '1151111081099710' ? 1399811149 : Number(chain)
+    const networkId = chain === 'solana-mainnet' ? 1399811149 : Number(chain)
     const resolution = () => {
         switch (timeframe) {
             case '1h':
