@@ -50,6 +50,7 @@ import {
     MessageType,
     toMembership,
     TickerAttachment,
+    SpaceReviewEvent,
 } from '@river-build/sdk'
 import {
     ChannelMessage_Post,
@@ -75,6 +76,7 @@ import {
 } from '../../store/use-timeline-store'
 import { useCallback } from 'react'
 import { bin_toHexString, check } from '@river-build/dlog'
+import { getSpaceReviewEventDataBin } from '@river-build/web3'
 
 type SuccessResult = {
     content: TimelineEvent_OneOf
@@ -545,6 +547,25 @@ function toTownsContent_MemberPayload(
                             refEventId: bin_toHexString(tipContent.event.messageId),
                             toUserId: userIdFromAddress(tipContent.toUserAddress),
                         } satisfies TipEvent,
+                    }
+                }
+                case 'spaceReview': {
+                    if (!transaction.receipt) {
+                        return { error: `${description} no receipt` }
+                    }
+                    const reviewContent = transaction.content.value
+                    const { comment, rating } = getSpaceReviewEventDataBin(
+                        transaction.receipt.logs,
+                        transaction.receipt.from,
+                    )
+                    return {
+                        content: {
+                            kind: RiverTimelineEvent.SpaceReview,
+                            action: reviewContent.action,
+                            rating: rating,
+                            comment: comment,
+                            fromUserId: userIdFromAddress(fromUserAddress),
+                        } satisfies SpaceReviewEvent,
                     }
                 }
                 case undefined:

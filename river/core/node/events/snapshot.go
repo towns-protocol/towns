@@ -343,6 +343,8 @@ func update_Snapshot_User(iSnapshot *Snapshot, userPayload *UserPayload) error {
 			}
 			snapshot.UserContent.TipsSent[currency] += transactionContent.Tip.GetEvent().GetAmount()
 			return nil
+		case *BlockchainTransaction_SpaceReview_:
+			return nil
 		default:
 			return RiverError(Err_INVALID_ARGUMENT, fmt.Sprintf("unknown blockchain transaction type %T", transactionContent))
 		}
@@ -362,6 +364,8 @@ func update_Snapshot_User(iSnapshot *Snapshot, userPayload *UserPayload) error {
 			}
 			snapshot.UserContent.TipsReceived[currency] += transactionContent.Tip.GetEvent().GetAmount()
 			return nil
+		case *BlockchainTransaction_SpaceReview_:
+			return nil // doesn't ever happen
 		default:
 			return RiverError(Err_INVALID_ARGUMENT, fmt.Sprintf("unknown received blockchain transaction type %T", transactionContent))
 		}
@@ -608,6 +612,8 @@ func update_Snapshot_Member(
 				snapshot.Tips[currency] = 0
 			}
 			snapshot.Tips[currency] += transactionContent.Tip.GetEvent().GetAmount()
+			return nil
+		case *BlockchainTransaction_SpaceReview_:
 			return nil
 		default:
 			return RiverError(Err_INVALID_ARGUMENT, fmt.Sprintf("unknown member blockchain transaction type %T", transactionContent))
