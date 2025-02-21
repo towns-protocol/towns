@@ -50,13 +50,25 @@ func newRemoteSyncer(
 	syncStreamCtx, syncStreamCancel := context.WithCancel(ctx)
 	responseStream, err := client.SyncStreams(syncStreamCtx, connect.NewRequest(&SyncStreamsRequest{SyncPos: cookies}))
 	if err != nil {
-		for _, cookie := range cookies {
-			messages <- &SyncStreamsResponse{
-				SyncOp:   SyncOp_SYNC_DOWN,
-				StreamId: cookie.GetStreamId(),
+		go func() {
+			defer syncStreamCancel()
+			timeout := time.After(15 * time.Second)
+
+			for _, cookie := range cookies {
+				select {
+				case messages <- &SyncStreamsResponse{
+					SyncOp:   SyncOp_SYNC_DOWN,
+					StreamId: cookie.GetStreamId(),
+				}:
+					continue
+				case <-timeout:
+					return
+				case <-ctx.Done():
+					return
+				}
 			}
-		}
-		syncStreamCancel()
+		}()
+
 		return nil, err
 	}
 
