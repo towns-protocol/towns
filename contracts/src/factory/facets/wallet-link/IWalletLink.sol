@@ -36,9 +36,6 @@ interface IWalletLinkBase {
     uint256 chainId
   );
 
-  /// @notice Emitted when the linked wallets for a root key are migrated
-  event WalletsLinkMigrated(address indexed rootKey, address[] wallets);
-
   // =============================================================
   //                      Errors
   // =============================================================
