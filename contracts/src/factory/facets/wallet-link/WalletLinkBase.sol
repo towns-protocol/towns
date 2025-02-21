@@ -217,9 +217,11 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
     uint256 chainId
   ) internal view returns (address) {
     return
-      WalletLinkStorage.layout().defaultWalletsByRootKey[rootWallet].get(
-        chainId
-      );
+      WalletLinkStorage
+        .layout()
+        .defaultWalletsByRootKey[rootWallet]
+        .walletByChainId
+        .get(chainId);
   }
 
   function _setDefaultWallet(
@@ -232,17 +234,24 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
     }
 
     WalletLinkStorage.Layout storage ds = WalletLinkStorage.layout();
+    WalletLinkStorage.DefaultWallet storage metadata = ds
+      .defaultWalletsByRootKey[rootWallet];
 
-    // Check if the wallet is already the default wallet for the root wallet
-    uint256 slot = ds.defaultWalletsByRootKey[rootWallet].slot(chainId);
+    uint256 slot = metadata.walletByChainId.slot(chainId);
     address prevDefaultWallet;
     assembly {
       prevDefaultWallet := sload(slot)
+    }
+
+    if (prevDefaultWallet == wallet) {
+      revert WalletLink__DefaultWalletAlreadySet(wallet, rootWallet, chainId);
+    }
+
+    assembly {
       sstore(slot, wallet)
     }
 
-    ds.chainIdByDefaultWallet.set(wallet, chainId);
-
+    metadata.chainIdByWallet.set(wallet, chainId);
     emit DefaultWalletUpdated(rootWallet, prevDefaultWallet, wallet, chainId);
   }
 

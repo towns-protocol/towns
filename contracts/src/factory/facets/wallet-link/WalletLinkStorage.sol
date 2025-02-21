@@ -14,15 +14,18 @@ library WalletLinkStorage {
   bytes32 constant STORAGE_SLOT =
     0x19511ce7944c192b1007be99b82019218d1decfc513f05239612743360a0dc00;
 
+  struct DefaultWallet {
+    AddressToUint256Map chainIdByWallet;
+    Uint256ToAddressMap walletByChainId;
+  }
+
   struct Layout {
     // mapping RootKeys to Ethereum Wallets is a 1 to many relationship, a root key can have many wallets
     mapping(address => EnumerableSet.AddressSet) walletsByRootKey;
     // mapping Ethereum Wallets to RootKey is a 1 to 1 relationship, a wallet can only be linked to 1 root key
     mapping(address => address) rootKeyByWallet;
     // Default wallet by chain id
-    mapping(address => Uint256ToAddressMap) defaultWalletsByRootKey;
-    // Chain id by wallet
-    AddressToUint256Map chainIdByDefaultWallet;
+    mapping(address => DefaultWallet) defaultWalletsByRootKey;
   }
 
   function layout() internal pure returns (Layout storage s) {
