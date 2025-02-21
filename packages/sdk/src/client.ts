@@ -319,10 +319,6 @@ export class Client
         return stream
     }
 
-    isValidEvent(streamId: string, eventId: string): { isValid: boolean; reason?: string } {
-        // if we didn't disable signature validation, we can assume the event is valid
-    }
-
     private initUserJoinedStreams() {
         assert(isDefined(this.userStreamId), 'userStreamId must be set')
         assert(isDefined(this.syncedStreamsExtensions), 'syncedStreamsExtensions must be set')
