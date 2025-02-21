@@ -638,10 +638,16 @@ func (ru *aeMemberBlockchainTransactionRules) validMemberBlockchainTransaction_R
 			return false, RiverError(Err_INVALID_ARGUMENT, "transfer transaction message id is nil")
 		}
 		return true, nil
+	case *BlockchainTransaction_SpaceReview_:
+		err := checkIsMember(ru.params, ru.memberTransaction.GetFromUserAddress())
+		if err != nil {
+			return false, err
+		}
+		return true, nil
 	default:
 		return false, RiverError(
 			Err_INVALID_ARGUMENT,
-			"unknown transaction content",
+			"unknown transaction content - member blockchain transaction",
 			"content",
 			content,
 		)
@@ -772,9 +778,9 @@ func (ru *aeBlockchainTransactionRules) validBlockchainTransaction_CheckReceiptM
 		if (err != nil) {
 			return false, err
 		}
-		
+
 		senderAddress := common.BytesToAddress(content.TokenTransfer.GetSender())
-		
+
 		for _, receiptLog := range receipt.Logs {
 			if !bytes.Equal(receiptLog.GetAddress(), content.TokenTransfer.GetAddress()) {
 				continue
@@ -792,7 +798,7 @@ func (ru *aeBlockchainTransactionRules) validBlockchainTransaction_CheckReceiptM
 			if err != nil {
 				continue
 			}
-			
+
 			if transfer.Value.Cmp(amount) != 0 {
 				continue
 			}
@@ -807,13 +813,73 @@ func (ru *aeBlockchainTransactionRules) validBlockchainTransaction_CheckReceiptM
 
 			return true, nil
 		}
-		
 		return false, RiverError(Err_INVALID_ARGUMENT, "matching transfer event not found in receipt logs")
+	case *BlockchainTransaction_SpaceReview_:
+		// parse the logs for the review event, make sure it matches the review metadata
+		filterer, err := baseContracts.NewSpaceReviewFilterer(common.Address{}, nil)
+		if err != nil {
+			return false, err
+		}
+		for _, receiptLog := range receipt.Logs {
+			if !bytes.Equal(receiptLog.Address, content.SpaceReview.GetSpaceAddress()) {
+				continue
+			}
 
+			topics := make([]common.Hash, len(receiptLog.Topics))
+			for i, topic := range receiptLog.Topics {
+				topics[i] = common.BytesToHash(topic)
+			}
+			log := ethTypes.Log{
+				Address: common.BytesToAddress(receiptLog.Address),
+				Topics:  topics,
+				Data:    receiptLog.Data,
+			}
+			switch content.SpaceReview.GetAction() {
+			case BlockchainTransaction_SpaceReview_Add:
+				reviewEvent, err := filterer.ParseReviewAdded(log)
+				if err != nil {
+					continue
+				}
+				if reviewEvent.Review.Rating != uint8(content.SpaceReview.GetEvent().Rating) {
+					continue
+				}
+				if !bytes.Equal(reviewEvent.User[:], content.SpaceReview.GetEvent().User) {
+					continue
+				}
+				return true, nil
+			case BlockchainTransaction_SpaceReview_Update:
+				reviewEvent, err := filterer.ParseReviewUpdated(log)
+				if err != nil {
+					continue
+				}
+				if reviewEvent.Review.Rating != uint8(content.SpaceReview.GetEvent().Rating) {
+					continue
+				}
+				if !bytes.Equal(reviewEvent.User[:], content.SpaceReview.GetEvent().User) {
+					continue
+				}
+				return true, nil
+			case BlockchainTransaction_SpaceReview_Delete:
+				reviewEvent, err := filterer.ParseReviewDeleted(log)
+				if err != nil {
+					continue
+				}
+				if !bytes.Equal(reviewEvent.User[:], content.SpaceReview.GetEvent().User) {
+					continue
+				}
+				return true, nil
+			default:
+				continue
+			}
+		}
+		return false, RiverError(
+			Err_INVALID_ARGUMENT,
+			"matching review event not found in receipt logs",
+		)
 	default:
 		return false, RiverError(
 			Err_INVALID_ARGUMENT,
-			"unknown transaction type",
+			"unknown transaction type - check receipt metadata",
 			"transactionType",
 			content,
 		)
@@ -876,6 +942,8 @@ func (ru *aeReceivedBlockchainTransactionRules) parentEventForReceivedBlockchain
 		}, nil
 	case *BlockchainTransaction_TokenTransfer_:
 		return nil, RiverError(Err_INVALID_ARGUMENT, "transfer transactions are not supported", "transaction", transaction)
+	case *BlockchainTransaction_SpaceReview_:
+		return nil, RiverError(Err_INVALID_ARGUMENT, "space review is not a valid received blockchain transaction")
 	default:
 		return nil, RiverError(Err_INVALID_ARGUMENT, "unknown transaction content", "content", content)
 	}
@@ -898,7 +966,8 @@ func (ru *aeBlockchainTransactionRules) parentEventForBlockchainTransaction() (*
 		}
 		if shared.ValidChannelStreamId(&toStreamId) ||
 			shared.ValidDMChannelStreamId(&toStreamId) ||
-			shared.ValidGDMChannelStreamId(&toStreamId) {
+			shared.ValidGDMChannelStreamId(&toStreamId) ||
+			shared.ValidSpaceStreamId(&toStreamId) {
 			return &DerivedEvent{
 				Payload: events.Make_UserPayload_ReceivedBlockchainTransaction(
 					ru.params.parsedEvent.Event.CreatorAddress,
@@ -908,6 +977,7 @@ func (ru *aeBlockchainTransactionRules) parentEventForBlockchainTransaction() (*
 				Tags:     ru.params.parsedEvent.Event.Tags, // forward tags
 			}, nil
 		}
+
 		return nil, RiverError(
 			Err_INVALID_ARGUMENT,
 			"tip transaction streamId is not a valid channel/dm/gdm stream id",
@@ -944,10 +1014,26 @@ func (ru *aeBlockchainTransactionRules) parentEventForBlockchainTransaction() (*
 			StreamId: toStreamId,
 			Tags:     ru.params.parsedEvent.Event.Tags, // forward tags
 		}, nil
+	case *BlockchainTransaction_SpaceReview_:
+		// forward the space review to the space stream
+		spaceStreamId, err := shared.SpaceIdFromBytes(content.SpaceReview.GetSpaceAddress())
+		if err != nil {
+			return nil, err
+		}
+
+		// forward the tip to the space stream as a member event, preserving the original sender as the from address
+		return &DerivedEvent{
+			Payload: events.Make_MemberPayload_BlockchainTransaction(
+				ru.params.parsedEvent.Event.CreatorAddress,
+				ru.transaction,
+			),
+			StreamId: spaceStreamId,
+			Tags:     ru.params.parsedEvent.Event.Tags, // forward tags if any
+		}, nil
 	default:
 		return nil, RiverError(
 			Err_INVALID_ARGUMENT,
-			"unknown transaction type",
+			"unknown transaction type - parent event for blockchain transaction",
 			"transactionType",
 			content,
 		)
@@ -982,10 +1068,17 @@ func (ru *aeBlockchainTransactionRules) blockchainTransaction_ChainAuth() (*auth
 			ru.params.parsedEvent.Event.CreatorAddress, 
 			content.TokenTransfer.GetSender(),
 		), nil
+	case *BlockchainTransaction_SpaceReview_:
+		// space reviews can be sent through a bundler, verify the space review sender
+		// as specified in the space review content and verified against the logs in blockchainTransaction_CheckReceiptMetadata
+		return auth.NewChainAuthArgsForIsWalletLinked(
+			ru.params.parsedEvent.Event.CreatorAddress,
+			content.SpaceReview.GetEvent().GetUser(),
+		), nil
 	default:
 		return nil, RiverError(
 			Err_INVALID_ARGUMENT,
-			"unknown transaction type",
+			"unknown transaction type - chain auth",
 			"transactionType",
 			content,
 		)

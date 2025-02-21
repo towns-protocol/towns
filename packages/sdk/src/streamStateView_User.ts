@@ -98,6 +98,10 @@ export class StreamStateView_User extends StreamStateView_AbstractContent {
                     }
                     case 'tokenTransfer':
                         break
+                    case 'spaceReview': {
+                        // user left a review on a space
+                        break
+                    }
                     default:
                         logNever(transactionContent)
                         break
@@ -122,6 +126,10 @@ export class StreamStateView_User extends StreamStateView_AbstractContent {
                     }
                     case 'tokenTransfer':
                         break
+                    case 'spaceReview': {
+                        // user left a review on a space
+                        break
+                    }
                     default:
                         logNever(transactionContent)
                         break

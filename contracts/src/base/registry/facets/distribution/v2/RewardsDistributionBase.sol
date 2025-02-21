@@ -2,6 +2,7 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import {IRewardsDistributionBase} from "./IRewardsDistribution.sol";
 
 // libraries
@@ -56,6 +57,63 @@ abstract contract RewardsDistributionBase is IRewardsDistributionBase {
     ds.depositsByDepositor[owner].add(depositId);
 
     emit Stake(owner, delegatee, beneficiary, depositId, amount);
+  }
+
+  function _increaseStake(uint256 depositId, uint96 amount) internal {
+    RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage
+      .layout();
+    StakingRewards.Deposit storage deposit = ds.staking.depositById[depositId];
+    address owner = deposit.owner;
+    _revertIfNotDepositOwner(owner);
+
+    address delegatee = deposit.delegatee;
+    _revertIfNotOperatorOrSpace(delegatee);
+
+    ds.staking.increaseStake(
+      deposit,
+      owner,
+      amount,
+      delegatee,
+      deposit.beneficiary,
+      _getCommissionRate(delegatee)
+    );
+
+    _sweepSpaceRewardsIfNecessary(delegatee);
+
+    if (owner != address(this)) {
+      address proxy = ds.proxyById[depositId];
+      ds.staking.stakeToken.safeTransferFrom(msg.sender, proxy, amount);
+    }
+
+    emit IncreaseStake(depositId, amount);
+  }
+
+  /// @dev Calls the `permit` function of the stake token
+  function _permitStakeToken(
+    uint96 amount,
+    uint256 deadline,
+    uint8 v,
+    bytes32 r,
+    bytes32 s
+  ) internal {
+    address stakeToken = RewardsDistributionStorage.layout().staking.stakeToken;
+
+    bytes4 selector = IERC20Permit.permit.selector;
+    assembly ("memory-safe") {
+      let fmp := mload(0x40)
+      mstore(fmp, selector)
+      mstore(add(fmp, 0x04), caller())
+      mstore(add(fmp, 0x24), address())
+      mstore(add(fmp, 0x44), amount)
+      mstore(add(fmp, 0x64), deadline)
+      mstore(add(fmp, 0x84), v)
+      mstore(add(fmp, 0xa4), r)
+      mstore(add(fmp, 0xc4), s)
+      if iszero(call(gas(), stakeToken, 0, fmp, 0xe4, 0, 0)) {
+        returndatacopy(0, 0, returndatasize())
+        revert(0, returndatasize())
+      }
+    }
   }
 
   /// @dev Deploys a beacon proxy for the delegation

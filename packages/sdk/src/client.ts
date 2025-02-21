@@ -1,5 +1,10 @@
 import { Message, PlainMessage } from '@bufbuild/protobuf'
-import { Permission } from '@river-build/web3'
+import {
+    Permission,
+    SpaceAddressFromSpaceId,
+    SpaceReviewAction,
+    SpaceReviewEventObject,
+} from '@river-build/web3'
 import {
     MembershipOp,
     ChannelOp,
@@ -2169,6 +2174,26 @@ export class Client
             },
             tags,
         )
+    }
+
+    async addTransaction_SpaceReview(
+        chainId: number,
+        receipt: ContractReceipt,
+        event: SpaceReviewEventObject,
+        spaceId: string,
+    ): Promise<{ eventId: string }> {
+        check(event.action !== SpaceReviewAction.None, 'invalid space review event')
+        return this.addTransaction(chainId, receipt, {
+            case: 'spaceReview',
+            value: {
+                action: event.action.valueOf(),
+                spaceAddress: bin_fromHexString(SpaceAddressFromSpaceId(spaceId)),
+                event: {
+                    rating: event.rating,
+                    user: addressFromUserId(event.user),
+                },
+            },
+        })
     }
 
     async getMiniblocks(

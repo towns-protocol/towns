@@ -442,6 +442,78 @@ contract RewardsDistributionV2Test is
     );
   }
 
+  function test_fuzz_permitAndIncreaseStake(
+    uint96 amount0,
+    uint96 amount1,
+    uint256 privateKey,
+    address operator,
+    uint256 commissionRate,
+    address beneficiary,
+    uint256 deadline
+  ) public givenOperator(operator, commissionRate) {
+    vm.assume(beneficiary != address(0) && beneficiary != operator);
+    amount0 = uint96(bound(amount0, 1, type(uint96).max));
+    amount1 = uint96(bound(amount1, 0, type(uint96).max - amount0));
+    commissionRate = bound(commissionRate, 0, 10000);
+    deadline = bound(deadline, block.timestamp, type(uint256).max);
+
+    privateKey = boundPrivateKey(privateKey);
+    address user = vm.addr(privateKey);
+
+    uint96 totalAmount = amount0 + amount1;
+    bridgeTokensForUser(user, totalAmount);
+    vm.prank(user);
+    towns.approve(address(rewardsDistributionFacet), amount0);
+
+    vm.prank(user);
+    uint256 depositId = rewardsDistributionFacet.stake(
+      amount0,
+      operator,
+      beneficiary
+    );
+
+    _permitAndIncreaseStake(depositId, amount1, privateKey, user, deadline);
+
+    verifyStake(
+      user,
+      depositId,
+      totalAmount,
+      operator,
+      commissionRate,
+      beneficiary
+    );
+  }
+
+  function _permitAndIncreaseStake(
+    uint256 depositId,
+    uint96 amount,
+    uint256 privateKey,
+    address user,
+    uint256 deadline
+  ) internal {
+    (uint8 v, bytes32 r, bytes32 s) = signPermit(
+      privateKey,
+      townsToken,
+      user,
+      address(rewardsDistributionFacet),
+      amount,
+      deadline
+    );
+
+    vm.expectEmit(true, true, true, false, address(rewardsDistributionFacet));
+    emit IncreaseStake(depositId, amount);
+
+    vm.prank(user);
+    rewardsDistributionFacet.permitAndIncreaseStake(
+      depositId,
+      amount,
+      deadline,
+      v,
+      r,
+      s
+    );
+  }
+
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                         REDELEGATE                         */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
