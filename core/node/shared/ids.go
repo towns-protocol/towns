@@ -44,6 +44,21 @@ func AddressFromSpaceId(spaceId StreamId) (common.Address, error) {
 	return common.BytesToAddress(spaceId[1:21]), nil
 }
 
+func SpaceIdFromBytes(bytes []byte) (StreamId, error) {
+	if len(bytes) != 20 {
+		return StreamId{}, RiverError(Err_BAD_ADDRESS, "wrong length", "bytes", len(bytes))
+	}
+	address := common.BytesToAddress(bytes)
+	return SpaceIdFromAddress(address), nil
+}
+
+func SpaceIdFromAddress(address common.Address) StreamId {
+	var b StreamId
+	b[0] = STREAM_SPACE_BIN
+	copy(b[1:], address.Bytes())
+	return b
+}
+
 func MakeSpaceId() (StreamId, error) {
 	var b [32]byte
 	b[0] = STREAM_SPACE_BIN
