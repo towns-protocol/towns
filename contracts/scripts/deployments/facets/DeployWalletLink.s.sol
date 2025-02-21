@@ -16,6 +16,7 @@ contract DeployWalletLink is FacetHelper, Deployer {
     addSelector(WalletLink.checkIfLinked.selector);
     addSelector(WalletLink.getLatestNonceForRootKey.selector);
     addSelector(WalletLink.removeCallerLink.selector);
+    addSelector(WalletLink.setCallerAsDefaultWallet.selector);
     addSelector(WalletLink.setDefaultWallet.selector);
     addSelector(WalletLink.getDefaultWallet.selector);
   }

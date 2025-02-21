@@ -90,6 +90,11 @@ contract WalletLink is IWalletLink, WalletLinkBase, Facet {
   }
 
   /// @inheritdoc IWalletLink
+  function setCallerAsDefaultWallet(address rootWallet) external {
+    _setDefaultWallet(rootWallet, msg.sender, block.chainid);
+  }
+
+  /// @inheritdoc IWalletLink
   function getDefaultWallet(
     address rootWallet,
     uint256 chainId

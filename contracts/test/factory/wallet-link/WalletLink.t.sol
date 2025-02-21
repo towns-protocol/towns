@@ -628,6 +628,51 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup {
     );
   }
 
+  function test_revertWhen_setDefaultWalletRootWalletNotLinked() external {
+    vm.prank(rootWallet.addr);
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        WalletLink__NotLinked.selector,
+        wallet.addr,
+        rootWallet.addr
+      )
+    );
+    walletLink.setDefaultWallet(rootWallet.addr, wallet.addr, block.chainid);
+  }
+
+  function test_revertWhen_setDefaultWalletDefaultWalletAlreadySet() external {
+    _linkWallet(wallet.addr);
+
+    vm.prank(wallet.addr);
+    walletLink.setCallerAsDefaultWallet(rootWallet.addr);
+
+    vm.prank(rootWallet.addr);
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        WalletLink__DefaultWalletAlreadySet.selector,
+        wallet.addr,
+        rootWallet.addr,
+        block.chainid
+      )
+    );
+    walletLink.setDefaultWallet(rootWallet.addr, wallet.addr, block.chainid);
+  }
+
+  function test_setCallerAsDefaultWallet()
+    external
+    givenWalletIsLinkedViaCaller
+  {
+    vm.prank(wallet.addr);
+    vm.expectEmit(address(walletLink));
+    emit DefaultWalletUpdated(
+      rootWallet.addr,
+      address(0),
+      wallet.addr,
+      block.chainid
+    );
+    walletLink.setCallerAsDefaultWallet(rootWallet.addr);
+  }
+
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                           helpers                          */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/

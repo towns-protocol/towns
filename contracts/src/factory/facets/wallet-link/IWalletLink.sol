@@ -134,6 +134,13 @@ interface IWalletLink is IWalletLinkBase {
   ) external view returns (uint256);
 
   /**
+   * @notice sets the caller as the default wallet for a rootkey and chainId
+   * @param rootWallet the root wallet to set the default wallet for
+   * @dev the caller must be linked to the rootwallet
+   */
+  function setCallerAsDefaultWallet(address rootWallet) external;
+
+  /**
    * @notice sets the default wallet for a rootkey and chainId
    * @param rootWallet the root wallet to set the default wallet for
    * @param wallet the wallet to set as the default wallet for
