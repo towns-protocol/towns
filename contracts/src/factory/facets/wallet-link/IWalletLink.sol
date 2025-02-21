@@ -28,6 +28,17 @@ interface IWalletLinkBase {
   /// @notice Emitted when two wallets are unlinked
   event RemoveLink(address indexed wallet, address indexed secondWallet);
 
+  /// @notice Emitted when the default wallet for a chain is updated
+  event DefaultWalletUpdated(
+    address indexed rootKey,
+    address indexed prevDefault,
+    address indexed newDefault,
+    uint256 chainId
+  );
+
+  /// @notice Emitted when the linked wallets for a root key are migrated
+  event WalletsLinkMigrated(address indexed rootKey, address[] wallets);
+
   // =============================================================
   //                      Errors
   // =============================================================

@@ -8,7 +8,6 @@ import {IWalletLinkBase} from "./IWalletLink.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {WalletLinkStorage} from "./WalletLinkStorage.sol";
-
 // contracts
 import {Nonces} from "@river-build/diamond/src/utils/Nonces.sol";
 import {EIP712Base} from "@river-build/diamond/src/utils/cryptography/signature/EIP712Base.sol";
@@ -16,17 +15,18 @@ import {EIP712Base} from "@river-build/diamond/src/utils/cryptography/signature/
 abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
   using EnumerableSet for EnumerableSet.AddressSet;
 
-  // =============================================================
-  //                           Constants
-  // =============================================================
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                           Constants                        */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
   /// @dev `keccak256("LinkedWallet(string message,address userID,uint256 nonce)")`.
   // https://eips.ethereum.org/EIPS/eip-712
   bytes32 private constant _LINKED_WALLET_TYPEHASH =
     0x6bb89d031fcd292ecd4c0e6855878b7165cebc3a2f35bc6bbac48c088dd8325c;
 
-  // =============================================================
-  //                      External - Write
-  // =============================================================
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                      External - Write                      */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
   /// @dev Links a caller address to a root wallet
   /// @param rootWallet the root wallet that the caller is linking to
@@ -119,9 +119,9 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
     emit LinkWalletToRootKey(wallet.addr, rootWallet.addr);
   }
 
-  // =============================================================
-  //                           Remove
-  // =============================================================
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                         Remove                             */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
   function _removeLink(
     address walletToRemove,
@@ -186,9 +186,9 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
     emit RemoveLink(walletToRemove, rootWallet);
   }
 
-  // =============================================================
-  //                        Read
-  // =============================================================
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                           Read                             */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
   function _getWalletsByRootKey(
     address rootKey
   ) internal view returns (address[] memory wallets) {
@@ -207,6 +207,33 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
   ) internal view returns (bool) {
     WalletLinkStorage.Layout storage ds = WalletLinkStorage.layout();
     return ds.rootKeyByWallet[wallet] == rootKey;
+  }
+
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                      Default Wallet                        */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+  function _getDefaultWallet(
+    address rootWallet,
+    uint256 chainId
+  ) internal view returns (address) {
+    return
+      WalletLinkStorage.layout().defaultWalletsByRootKey[rootWallet][chainId];
+  }
+
+  function _setDefaultWallet(
+    address rootWallet,
+    address wallet,
+    uint256 chainId
+  ) internal {
+    if (!_checkIfLinked(rootWallet, wallet)) {
+      revert WalletLink__NotLinked(wallet, rootWallet);
+    }
+
+    WalletLinkStorage.Layout storage ds = WalletLinkStorage.layout();
+    address prevDefaultWallet = ds.defaultWalletsByRootKey[rootWallet][chainId];
+    ds.defaultWalletsByRootKey[rootWallet][chainId] = wallet;
+    ds.chainIdByDefaultWallet[wallet] = chainId;
+    emit DefaultWalletUpdated(rootWallet, prevDefaultWallet, wallet, chainId);
   }
 
   // =============================================================
