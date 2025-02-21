@@ -145,6 +145,8 @@ import {
     make_UserPayload_BlockchainTransaction,
     ContractReceipt,
     make_MemberPayload_EncryptionAlgorithm,
+    SolanaTransactionReceipt,
+    isSolanaTransactionReceipt,
 } from './types'
 
 import debug from 'debug'
@@ -2095,24 +2097,27 @@ export class Client
     // upload transactions made on the base chain
     async addTransaction(
         chainId: number,
-        receipt: ContractReceipt,
+        receipt: ContractReceipt | SolanaTransactionReceipt,
         content?: PlainMessage<BlockchainTransaction>['content'],
         tags?: PlainMessage<Tags>,
     ): Promise<{ eventId: string }> {
         check(isDefined(this.userStreamId))
         const transaction = {
-            receipt: {
-                chainId: BigInt(chainId),
-                transactionHash: bin_fromHexString(receipt.transactionHash),
-                blockNumber: BigInt(receipt.blockNumber),
-                to: bin_fromHexString(receipt.to),
-                from: bin_fromHexString(receipt.from),
-                logs: receipt.logs.map((log) => ({
-                    address: bin_fromHexString(log.address),
-                    topics: log.topics.map(bin_fromHexString),
-                    data: bin_fromHexString(log.data),
-                })),
-            },
+            receipt: !isSolanaTransactionReceipt(receipt)
+                ? {
+                      chainId: BigInt(chainId),
+                      transactionHash: bin_fromHexString(receipt.transactionHash),
+                      blockNumber: BigInt(receipt.blockNumber),
+                      to: bin_fromHexString(receipt.to),
+                      from: bin_fromHexString(receipt.from),
+                      logs: receipt.logs.map((log) => ({
+                          address: bin_fromHexString(log.address),
+                          topics: log.topics.map(bin_fromHexString),
+                          data: bin_fromHexString(log.data),
+                      })),
+                  }
+                : undefined,
+            solanaReceipt: isSolanaTransactionReceipt(receipt) ? receipt : undefined,
             content: content ?? { case: undefined },
         } satisfies PlainMessage<BlockchainTransaction>
         const event = make_UserPayload_BlockchainTransaction(transaction)
@@ -2158,7 +2163,7 @@ export class Client
 
     async addTransaction_Transfer(
         chainId: number,
-        receipt: ContractReceipt,
+        receipt: ContractReceipt | SolanaTransactionReceipt,
         event: PlainMessage<BlockchainTransaction_TokenTransfer>,
         opts?: SendBlockchainTransactionOptions,
     ): Promise<{ eventId: string }> {

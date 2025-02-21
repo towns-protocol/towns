@@ -122,6 +122,39 @@ export type ContractReceipt = {
     }[]
 }
 
+type SolanaTokenBalance = {
+    mint: string
+    owner: string
+    amount: {
+        amount: string
+        decimals: number
+    }
+}
+
+export type SolanaTransactionReceipt = {
+    transaction: {
+        signatures: string[]
+    }
+    meta: {
+        preTokenBalances: SolanaTokenBalance[]
+        postTokenBalances: SolanaTokenBalance[]
+    }
+    slot: bigint
+}
+
+export function isSolanaTransactionReceipt(obj: unknown): obj is SolanaTransactionReceipt {
+    return (
+        typeof obj === 'object' &&
+        obj !== null &&
+        'transaction' in obj &&
+        'meta' in obj &&
+        typeof obj['meta'] === 'object' &&
+        obj.meta !== null &&
+        'preTokenBalances' in obj.meta &&
+        'postTokenBalances' in obj.meta
+    )
+}
+
 export function isLocalEvent(event: StreamTimelineEvent): event is LocalTimelineEvent {
     return event.localEvent !== undefined
 }

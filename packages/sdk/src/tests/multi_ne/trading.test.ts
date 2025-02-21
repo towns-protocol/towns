@@ -309,7 +309,7 @@ function extractBlockchainTransactionTransferEvents(timeline: StreamTimelineEven
         .filter((e) => e !== undefined)
 }
 
-function extractMemberBlockchainTransactions(client: Client, channelId: string) {
+export function extractMemberBlockchainTransactions(client: Client, channelId: string) {
     const stream = client.streams.get(channelId)
     if (!stream) throw new Error('no stream found')
 
