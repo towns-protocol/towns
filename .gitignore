@@ -19,6 +19,7 @@ lcov.info
 .DS_Store
 coverage.json
 .npmrc
+.cursor/
 
 # Contracts
 contracts/.openzeppelin/unknown-*.json
