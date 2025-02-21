@@ -31,7 +31,14 @@ export function isPersistedEvent(event: ParsedEvent, direction: 'forward' | 'bac
         case 'mediaPayload':
             return true
         case 'userPayload':
-            return direction === 'forward' ? true : false
+            switch (event.event.payload.value.content.case) {
+                case 'blockchainTransaction':
+                    return true
+                case 'receivedBlockchainTransaction':
+                    return true
+                default:
+                    return direction === 'forward' ? true : false
+            }
         case 'userSettingsPayload':
             return direction === 'forward' ? true : false
         case 'miniblockHeader':
@@ -44,6 +51,8 @@ export function isPersistedEvent(event: ParsedEvent, direction: 'forward' | 'bac
                     return direction === 'forward' ? true : false
                 case 'keyFulfillment':
                     return direction === 'forward' ? true : false
+                case 'memberBlockchainTransaction':
+                    return true
                 case undefined:
                     return false
                 default:
