@@ -41,6 +41,36 @@ describe('util.test', () => {
         expect(r).toBeUndefined()
     })
 
+    test('waifForSucceedsAfterDuration', async () => {
+        let myDelayedValue: string | undefined = undefined
+        setTimeout(() => {
+            myDelayedValue = 'hello'
+        }, 500)
+
+        const result = await waitFor(
+            () => {
+                return myDelayedValue
+            },
+            { timeoutMS: 2000 },
+        )
+        expect(result).toBe('hello')
+    })
+
+    test('waifForSucceedsAfterDurationWithBool', async () => {
+        let myDelayedValue: boolean = false
+        setTimeout(() => {
+            myDelayedValue = true
+        }, 500)
+
+        const result = await waitFor(
+            () => {
+                return myDelayedValue
+            },
+            { timeoutMS: 2000 },
+        )
+        expect(result).toBe(true)
+    })
+
     test('hashString', () => {
         expect(hashString('hello')).toEqual(
             '1c8aff950685c2ed4bc3174f3472287b56d9517b9c948127319a09a7a36deac8',
