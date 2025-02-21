@@ -36,11 +36,6 @@ export const getWalletAssets = async (request: TokenProviderRequest, env: Env) =
             'Content-type': 'application/json',
             ...withCorsHeaders(request, env.ENVIRONMENT),
         }
-        console.log('ASSETS', responses)
-        console.log(
-            'TOKENS',
-            responses.map((r) => r.tokens),
-        )
         return new Response(body, { headers })
     } catch (error) {
         console.error('Error getting wallet assets', error)
