@@ -390,6 +390,14 @@ contract StreamRegistryTest is
       _miniblocks[i].lastMiniblockNum = 1;
     }
 
+    vm.expectEmit(address(streamRegistry));
+    emit StreamLastMiniblockUpdated(
+      miniblocks[0].streamId,
+      miniblocks[0].lastMiniblockHash,
+      miniblocks[0].lastMiniblockNum,
+      miniblocks[0].isSealed
+    );
+
     vm.prank(node.node);
     streamRegistry.setStreamLastMiniblockBatch(_miniblocks);
 

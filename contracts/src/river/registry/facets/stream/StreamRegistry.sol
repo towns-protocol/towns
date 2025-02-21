@@ -147,7 +147,7 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
         stream.flags |= StreamFlags.SEALED;
       }
 
-      emit StreamLastMiniblockUpdated(
+      _emitStreamLastMiniblockUpdated(
         miniblock.streamId,
         miniblock.lastMiniblockHash,
         miniblock.lastMiniblockNum,
@@ -193,7 +193,7 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
       stream.flags |= StreamFlags.SEALED;
     }
 
-    emit StreamLastMiniblockUpdated(
+    _emitStreamLastMiniblockUpdated(
       streamId,
       lastMiniblockHash,
       lastMiniblockNum,
@@ -321,5 +321,27 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     }
 
     return (streams, stop >= streamCount);
+  }
+
+  /// @dev Emits the StreamLastMiniblockUpdated event without memory expansion
+  function _emitStreamLastMiniblockUpdated(
+    bytes32 streamId,
+    bytes32 lastMiniblockHash,
+    uint64 lastMiniblockNum,
+    bool isSealed
+  ) internal {
+    bytes32 topic0 = StreamLastMiniblockUpdated.selector;
+    assembly ("memory-safe") {
+      // cache the free memory pointer
+      let fmp := mload(0x40)
+      mstore(0, streamId)
+      mstore(0x20, lastMiniblockHash)
+      mstore(0x40, lastMiniblockNum)
+      mstore(0x60, isSealed)
+      log1(0, 0x80, topic0)
+      // restore the free memory pointer and zero slot
+      mstore(0x40, fmp)
+      mstore(0x60, 0)
+    }
   }
 }
