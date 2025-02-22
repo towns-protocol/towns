@@ -398,6 +398,8 @@ function toTownsContent_MemberPayload(
                         } satisfies TipEvent,
                     }
                 }
+                case 'tokenTransfer':
+                    return { error: `${description} unsupported content` }
                 case 'spaceReview': {
                     if (!transaction.receipt) {
                         return { error: `${description} no receipt` }

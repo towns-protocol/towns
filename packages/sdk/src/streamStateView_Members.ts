@@ -390,6 +390,8 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                         )
                         break
                     }
+                    case 'tokenTransfer':
+                        break
                     case 'spaceReview': {
                         if (!receipt) {
                             return
