@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 // utils
 import {TestUtils} from "contracts/test/utils/TestUtils.sol";
-
+import {EIP712Utils} from "contracts/test/utils/EIP712Utils.sol";
 import {SimpleAccountFactory} from "account-abstraction/samples/SimpleAccountFactory.sol";
 import {SimpleAccount} from "account-abstraction/samples/SimpleAccount.sol";
 
@@ -50,15 +50,11 @@ import {DeployAppStore} from "contracts/scripts/deployments/diamonds/DeployAppSt
  * @notice - This is the base setup to start testing the entire suite of contracts
  * @dev - This contract is inherited by all other test contracts, it will create one diamond contract which represent the factory contract that creates all spaces
  */
-contract BaseSetup is TestUtils, SpaceHelper {
+contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
   uint256 internal constant FREE_ALLOCATION = 1_000;
   string public constant LINKED_WALLET_MESSAGE = "Link your external wallet";
   bytes32 private constant _LINKED_WALLET_TYPEHASH =
     0x6bb89d031fcd292ecd4c0e6855878b7165cebc3a2f35bc6bbac48c088dd8325c;
-  bytes32 private constant _TYPE_HASH =
-    keccak256(
-      "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
-    );
 
   DeployBaseRegistry internal deployBaseRegistry = new DeployBaseRegistry();
   DeploySpaceFactory internal deploySpaceFactory = new DeploySpaceFactory();
@@ -236,51 +232,18 @@ contract BaseSetup is TestUtils, SpaceHelper {
     address newWallet,
     uint256 nonce
   ) internal view returns (bytes memory) {
-    (
-      ,
-      string memory name,
-      string memory version,
-      uint256 chainId,
-      address verifyingContract,
-      ,
-
-    ) = eip712Facet.eip712Domain();
-
     bytes32 linkedWalletHash = _getLinkedWalletTypedDataHash(
       LINKED_WALLET_MESSAGE,
       newWallet,
       nonce
     );
-    bytes32 typeDataHash = MessageHashUtils.toTypedDataHash(
-      _getDomainSeparator(name, version, chainId, verifyingContract),
+    (uint8 v, bytes32 r, bytes32 s) = signIntent(
+      privateKey,
+      address(eip712Facet),
       linkedWalletHash
     );
 
-    (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, typeDataHash);
-
     return abi.encodePacked(r, s, v);
-  }
-
-  // https://eips.ethereum.org/EIPS/eip-5267
-  function _getDomainSeparator(
-    string memory name,
-    string memory version,
-    uint256 chainId,
-    address verifyingContract
-  ) public pure returns (bytes32) {
-    bytes32 nameHash = keccak256(abi.encodePacked(name));
-    bytes32 versionHash = keccak256(abi.encodePacked(version));
-
-    return
-      keccak256(
-        abi.encode(
-          _TYPE_HASH,
-          nameHash,
-          versionHash,
-          chainId,
-          verifyingContract
-        )
-      );
   }
 
   function _getLinkedWalletTypedDataHash(

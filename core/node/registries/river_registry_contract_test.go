@@ -294,7 +294,7 @@ func TestStreamEvents(t *testing.T) {
 
 	// Update last miniblock
 	newMBHash := common.HexToHash("0x456")
-	succeeded, failed, err := rr1.SetStreamLastMiniblockBatch(
+	succeeded, invalidMiniblocks, failed, err := rr1.SetStreamLastMiniblockBatch(
 		ctx,
 		[]river.SetMiniblock{{
 			StreamId:          streamId,
@@ -306,6 +306,7 @@ func TestStreamEvents(t *testing.T) {
 	)
 	require.NoError(err)
 	require.Len(succeeded, 1)
+	require.Empty(invalidMiniblocks)
 	require.Empty(failed)
 
 	lastMB := <-lastMBC
@@ -318,7 +319,7 @@ func TestStreamEvents(t *testing.T) {
 	require.Len(placementC, 0)
 
 	newMBHash2 := common.HexToHash("0x789")
-	succeeded, failed, err = rr1.SetStreamLastMiniblockBatch(
+	succeeded, invalidMiniblocks, failed, err = rr1.SetStreamLastMiniblockBatch(
 		ctx,
 		[]river.SetMiniblock{{
 			StreamId:          streamId,
@@ -330,6 +331,7 @@ func TestStreamEvents(t *testing.T) {
 	)
 	require.NoError(err)
 	require.Len(succeeded, 1)
+	require.Empty(invalidMiniblocks)
 	require.Empty(failed)
 
 	lastMB = <-lastMBC

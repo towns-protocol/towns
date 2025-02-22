@@ -9,8 +9,10 @@ import TypedEmitter from 'typed-emitter'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 import {
     ConfirmedTimelineEvent,
+    ParsedEvent,
     RemoteTimelineEvent,
     StreamTimelineEvent,
+    getEventSignature,
     makeRemoteTimelineEvent,
 } from './types'
 import { isDefined, logNever } from './check'
@@ -24,6 +26,7 @@ import { KeySolicitationContent } from '@river-build/encryption'
 import { makeParsedEvent } from './sign'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { utils } from 'ethers'
+import { getSpaceReviewEventDataBin, SpaceReviewEventObject } from '@river-build/web3'
 
 const log = dlog('csb:streamStateView_Members')
 
@@ -53,6 +56,11 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
     readonly pins: Pin[] = []
     tips: { [key: string]: bigint } = {}
     encryptionAlgorithm?: string = undefined
+    spaceReviews: {
+        review: SpaceReviewEventObject
+        createdAtEpochMs: bigint
+        eventHashStr: string
+    }[] = []
 
     constructor(streamId: string) {
         super()
@@ -65,6 +73,7 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
     // initialization
     applySnapshot(
         eventId: string,
+        event: ParsedEvent,
         snapshot: Snapshot,
         cleartexts: Record<string, Uint8Array | string> | undefined,
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
@@ -135,7 +144,12 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
             cleartexts,
             encryptionEmitter,
         )
-        this.solicitHelper.initSolicitations(Array.from(this.joined.values()), encryptionEmitter)
+        const sigBundle = getEventSignature(event)
+        this.solicitHelper.initSolicitations(
+            Array.from(this.joined.values()),
+            sigBundle,
+            encryptionEmitter,
+        )
 
         snapshot.members?.pins.forEach((snappedPin) => {
             if (snappedPin.pin?.event) {
@@ -161,12 +175,47 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
     }
 
     prependEvent(
-        _event: RemoteTimelineEvent,
+        event: RemoteTimelineEvent,
         _cleartext: Uint8Array | string | undefined,
         _encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
-        _stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
+        stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
-        //
+        check(event.remoteEvent.event.payload.case === 'memberPayload')
+        const payload: MemberPayload = event.remoteEvent.event.payload.value
+        switch (payload.content.case) {
+            case 'memberBlockchainTransaction': {
+                const receipt = payload.content.value.transaction?.receipt
+                const transactionContent = payload.content.value.transaction?.content
+                switch (transactionContent?.case) {
+                    case 'spaceReview': {
+                        // space reviews need to be prepended
+                        if (!receipt) {
+                            return
+                        }
+                        const review = getSpaceReviewEventDataBin(receipt.logs, receipt.from)
+                        const existingReview = this.spaceReviews.find(
+                            (r) => r.review.user === review.user,
+                        )
+                        // since we're prepending, existing reviews are newer and should be kept
+                        if (!existingReview) {
+                            this.spaceReviews.unshift({
+                                review: review,
+                                createdAtEpochMs: event.createdAtEpochMs,
+                                eventHashStr: event.hashStr,
+                            })
+                            stateEmitter?.emit('spaceReviewsUpdated', this.streamId, review)
+                        }
+                        break
+                    }
+                    default:
+                        break
+                }
+
+                break
+            }
+            default:
+                break
+        }
     }
 
     /**
@@ -225,6 +274,7 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                         stateMember,
                         event.hashStr,
                         payload.content.value,
+                        getEventSignature(event.remoteEvent),
                         encryptionEmitter,
                     )
                 }
@@ -237,6 +287,7 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                     this.solicitHelper.applyFulfillment(
                         stateMember,
                         payload.content.value,
+                        getEventSignature(event.remoteEvent),
                         encryptionEmitter,
                     )
                 }
@@ -319,6 +370,7 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                 }
                 break
             case 'memberBlockchainTransaction': {
+                const receipt = payload.content.value.transaction?.receipt
                 const transactionContent = payload.content.value.transaction?.content
                 switch (transactionContent?.case) {
                     case undefined:
@@ -336,6 +388,31 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                             event.hashStr,
                             transactionContent.value,
                         )
+                        break
+                    }
+                    case 'spaceReview': {
+                        if (!receipt) {
+                            return
+                        }
+                        const review = getSpaceReviewEventDataBin(receipt.logs, receipt.from)
+                        const existingReviewIndex = this.spaceReviews.findIndex(
+                            (r) => r.review.user === review.user,
+                        )
+                        if (existingReviewIndex === -1) {
+                            this.spaceReviews.push({
+                                review: review,
+                                createdAtEpochMs: event.createdAtEpochMs,
+                                eventHashStr: event.hashStr,
+                            })
+                        } else {
+                            // since we're prepending, existing reviews are newer and should be kept
+                            this.spaceReviews[existingReviewIndex] = {
+                                review: review,
+                                createdAtEpochMs: event.createdAtEpochMs,
+                                eventHashStr: event.hashStr,
+                            }
+                        }
+                        stateEmitter?.emit('spaceReviewsUpdated', this.streamId, review)
                         break
                     }
                     default:
