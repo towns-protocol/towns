@@ -578,7 +578,12 @@ export class StreamStateView implements IStreamStateView {
     ): void {
         check(miniblocks.length > 0, `Stream has no miniblocks ${this.streamId}`, Err.STREAM_EMPTY)
         // parse the blocks
-        const miniblockHeaderEvent = miniblocks[0].events[-1]
+        const miniblockHeaderEvent = miniblocks[0].events.at(-1)
+        check(
+            isDefined(miniblockHeaderEvent),
+            `Miniblock header event not found ${this.streamId}`,
+            Err.STREAM_EMPTY,
+        )
 
         // initialize from snapshot data, this gets all memberships and channel data, etc
         this.applySnapshot(
