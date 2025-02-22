@@ -140,9 +140,43 @@ async function balanceOf(contractName: string, address: Address): Promise<number
     return Number(balance)
 }
 
+async function transfer(
+    contractName: string,
+    to: Address,
+    privateKey: `0x${string}`,
+    amount: bigint,
+): Promise<{ transactionHash: string }> {
+    const account = privateKeyToAccount(privateKey)
+    const client = createTestClient({
+        chain: foundry,
+        mode: 'anvil',
+        transport: http(),
+        account: account,
+    })
+        .extend(publicActions)
+        .extend(walletActions)
+
+    await client.setBalance({
+        address: account.address,
+        value: parseEther('1'),
+    })
+
+    const contractAddress = await getContractAddress(contractName)
+    const tx = await client.writeContract({
+        address: contractAddress,
+        abi: MockERC20.abi,
+        functionName: 'transfer',
+        args: [to, amount],
+    })
+
+    const { transactionHash } = await client.waitForTransactionReceipt({ hash: tx })
+    return { transactionHash }
+}
+
 export const TestERC20 = {
     getContractAddress,
     balanceOf,
     totalSupply,
     publicMint,
+    transfer,
 }

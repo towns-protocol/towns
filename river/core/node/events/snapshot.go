@@ -343,6 +343,8 @@ func update_Snapshot_User(iSnapshot *Snapshot, userPayload *UserPayload) error {
 			}
 			snapshot.UserContent.TipsSent[currency] += transactionContent.Tip.GetEvent().GetAmount()
 			return nil
+		case *BlockchainTransaction_TokenTransfer_:
+			return nil
 		case *BlockchainTransaction_SpaceReview_:
 			return nil
 		default:
@@ -363,6 +365,8 @@ func update_Snapshot_User(iSnapshot *Snapshot, userPayload *UserPayload) error {
 				snapshot.UserContent.TipsReceived[currency] = 0
 			}
 			snapshot.UserContent.TipsReceived[currency] += transactionContent.Tip.GetEvent().GetAmount()
+			return nil
+		case *BlockchainTransaction_TokenTransfer_:
 			return nil
 		case *BlockchainTransaction_SpaceReview_:
 			return nil // doesn't ever happen
@@ -612,6 +616,8 @@ func update_Snapshot_Member(
 				snapshot.Tips[currency] = 0
 			}
 			snapshot.Tips[currency] += transactionContent.Tip.GetEvent().GetAmount()
+			return nil
+		case *BlockchainTransaction_TokenTransfer_:
 			return nil
 		case *BlockchainTransaction_SpaceReview_:
 			return nil

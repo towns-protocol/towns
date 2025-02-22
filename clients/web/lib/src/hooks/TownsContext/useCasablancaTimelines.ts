@@ -568,6 +568,8 @@ function toTownsContent_MemberPayload(
                         } satisfies SpaceReviewEvent,
                     }
                 }
+                case 'tokenTransfer':
+                    return { error: `${description} token transfer events not yet supported` }
                 case undefined:
                     return {
                         content: {
