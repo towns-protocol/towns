@@ -647,14 +647,7 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup {
     walletLink.setCallerAsDefaultWallet(rootWallet.addr);
 
     vm.prank(rootWallet.addr);
-    vm.expectRevert(
-      abi.encodeWithSelector(
-        WalletLink__DefaultWalletAlreadySet.selector,
-        wallet.addr,
-        rootWallet.addr,
-        block.chainid
-      )
-    );
+    vm.expectRevert(WalletLink__DefaultWalletAlreadySet.selector);
     walletLink.setDefaultWallet(rootWallet.addr, wallet.addr, block.chainid);
   }
 

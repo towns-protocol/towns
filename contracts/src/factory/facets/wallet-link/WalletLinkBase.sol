@@ -244,7 +244,7 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
     }
 
     if (prevDefaultWallet == wallet) {
-      revert WalletLink__DefaultWalletAlreadySet(wallet, rootWallet, chainId);
+      revert WalletLink__DefaultWalletAlreadySet();
     }
 
     assembly {

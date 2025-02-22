@@ -47,11 +47,7 @@ interface IWalletLinkBase {
   error WalletLink__CannotRemoveRootWallet();
   error WalletLink__CannotLinkToSelf();
   error WalletLink__CannotLinkToRootWallet(address wallet, address rootKey);
-  error WalletLink__DefaultWalletAlreadySet(
-    address wallet,
-    address rootKey,
-    uint256 chainId
-  );
+  error WalletLink__DefaultWalletAlreadySet();
 }
 
 interface IWalletLink is IWalletLinkBase {
