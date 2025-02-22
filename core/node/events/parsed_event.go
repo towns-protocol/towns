@@ -5,12 +5,13 @@ import (
 	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
-	. "github.com/river-build/river/core/node/base"
-	. "github.com/river-build/river/core/node/crypto"
-	. "github.com/river-build/river/core/node/protocol"
-	. "github.com/river-build/river/core/node/shared"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
+
+	. "github.com/towns-protocol/towns/core/node/base"
+	. "github.com/towns-protocol/towns/core/node/crypto"
+	. "github.com/towns-protocol/towns/core/node/protocol"
+	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
 type ParsedEvent struct {
@@ -32,7 +33,7 @@ func (e *ParsedEvent) GetEnvelopeBytes() ([]byte, error) {
 		Func("GetEnvelopeBytes")
 }
 
-func ParseEventWithCachedStreamEvent(envelope *Envelope, streamEvent *StreamEvent) (*ParsedEvent, error) {
+func ParseEvent(envelope *Envelope) (*ParsedEvent, error) {
 	hash := RiverHash(envelope.Event)
 	if !bytes.Equal(hash[:], envelope.Hash) {
 		return nil, RiverError(Err_BAD_EVENT_HASH, "Bad hash provided", "computed", hash, "got", envelope.Hash)
@@ -43,7 +44,8 @@ func ParseEventWithCachedStreamEvent(envelope *Envelope, streamEvent *StreamEven
 		return nil, err
 	}
 
-	err = proto.Unmarshal(envelope.Event, streamEvent)
+	var streamEvent StreamEvent
+	err = proto.Unmarshal(envelope.Event, &streamEvent)
 	if err != nil {
 		return nil, AsRiverError(err, Err_INVALID_ARGUMENT).
 			Message("Failed to decode stream event from bytes").
@@ -73,21 +75,21 @@ func ParseEventWithCachedStreamEvent(envelope *Envelope, streamEvent *StreamEven
 		}
 	}
 
+	prevMiniblockNum := int64(-1)
+	if streamEvent.PrevMiniblockNum != nil {
+		prevMiniblockNum = *streamEvent.PrevMiniblockNum
+	}
+
 	return &ParsedEvent{
-		Event:    streamEvent,
+		Event:    &streamEvent,
 		Envelope: envelope,
 		Hash:     common.BytesToHash(envelope.Hash),
 		MiniblockRef: &MiniblockRef{
 			Hash: common.BytesToHash(streamEvent.PrevMiniblockHash),
-			Num:  streamEvent.PrevMiniblockNum,
+			Num:  prevMiniblockNum,
 		},
 		SignerPubKey: signerPubKey,
 	}, nil
-}
-
-func ParseEvent(envelope *Envelope) (*ParsedEvent, error) {
-	streamEvent := new(StreamEvent)
-	return ParseEventWithCachedStreamEvent(envelope, streamEvent)
 }
 
 func (e *ParsedEvent) ShortDebugStr() string {
