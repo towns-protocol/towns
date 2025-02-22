@@ -471,7 +471,7 @@ func TestMiniblockRegistrationWithPendingLocalCandidate(t *testing.T) {
 	instance.params.ChainMonitor.OnBlockWithLogs(instance.params.AppliedBlockNum+1,
 		func(ctx context.Context, blockNumber crypto.BlockNumber, logs []*types.Log) {
 			if !disableCallbacks.Load() {
-				mbProducer.OnNewBlock(ctx, blockNumber)
+				mbProducer.onNewBlock(ctx, blockNumber)
 				instance.cache.onBlockWithLogs(ctx, blockNumber, logs)
 			}
 		})
@@ -536,7 +536,16 @@ func TestMiniblockRegistrationWithPendingLocalCandidate(t *testing.T) {
 		instance.params.Wallet, candidateHeader, []*ParsedEvent{event1, event2})
 	require.NoError(err)
 
-	err = mbProduceCandidate_Save(ctx, instance.params, spaceStreamId, candidate, []common.Address{})
+	miniblockBytes, err := candidate.ToBytes()
+	require.NoError(err)
+
+	err = instance.params.Storage.WriteMiniblockCandidate(
+		ctx,
+		spaceStreamId,
+		candidate.Ref.Hash,
+		candidate.Ref.Num,
+		miniblockBytes,
+	)
 	require.NoError(err)
 
 	// bypass the mini-block producer and register candidate in the stream facet
