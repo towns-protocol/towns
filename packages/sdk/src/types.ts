@@ -42,24 +42,13 @@ import { bin_toHexString } from '@river-build/dlog'
 import { isDefined } from './check'
 import { DecryptedContent } from './encryptedContentTypes'
 import { addressFromUserId, streamIdAsBytes } from './id'
-import { DecryptionSessionError } from '@river-build/encryption'
+import { DecryptionSessionError, EventSignatureBundle } from '@river-build/encryption'
 
 export type LocalEventStatus = 'sending' | 'sent' | 'failed'
 export interface LocalEvent {
     localId: string
     channelMessage: ChannelMessage
     status: LocalEventStatus
-}
-
-// paired down from StreamEvent, required for signature validation
-export interface EventSignatureBundle {
-    hash: Uint8Array
-    signature: Uint8Array | undefined
-    event: {
-        creatorAddress: Uint8Array
-        delegateSig: Uint8Array
-        delegateExpiryEpochMs: bigint
-    }
 }
 
 export interface ParsedEvent {
@@ -140,6 +129,18 @@ export function isConfirmedEvent(event: StreamTimelineEvent): event is Confirmed
         event.confirmedEventNum !== undefined &&
         event.miniblockNum !== undefined
     )
+}
+
+export function getEventSignature(remoteEvent: ParsedEvent): EventSignatureBundle {
+    return {
+        hash: remoteEvent.hash,
+        signature: remoteEvent.signature,
+        event: {
+            creatorAddress: remoteEvent.event.creatorAddress,
+            delegateSig: remoteEvent.event.delegateSig,
+            delegateExpiryEpochMs: remoteEvent.event.delegateExpiryEpochMs,
+        },
+    }
 }
 
 export function makeRemoteTimelineEvent(params: {
