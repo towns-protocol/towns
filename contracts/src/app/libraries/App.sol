@@ -6,15 +6,14 @@ import {IAppRegistryBase} from "contracts/src/app/interfaces/IAppRegistry.sol";
 import {IAppHooks} from "contracts/src/app/interfaces/IAppHooks.sol";
 
 // libraries
-import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 import {Validator} from "contracts/src/utils/Validator.sol";
 import {StringSet} from "contracts/src/utils/StringSet.sol";
 
 // contracts
 
 library App {
-  using CustomRevert for bytes4;
   using StringSet for StringSet.Set;
+
   struct Config {
     uint256 tokenId;
     address appAddress;
@@ -37,9 +36,6 @@ library App {
     Validator.checkLength(registration.uri, 1);
     Validator.checkLength(registration.name, 1);
     Validator.checkLength(registration.symbol, 1);
-
-    if (exists(self))
-      IAppRegistryBase.AppAlreadyRegistered.selector.revertWith();
 
     self.tokenId = tokenId;
     self.appAddress = registration.appAddress;

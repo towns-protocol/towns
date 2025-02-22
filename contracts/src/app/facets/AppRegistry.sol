@@ -55,6 +55,8 @@ contract AppRegistry is IAppRegistry, OwnableBase, Facet {
     ds.appIdByAddress[registration.appAddress] = tokenId;
     App.Config storage config = ds.registrations[tokenId];
 
+    if (config.exists()) CustomRevert.revertWith(AppAlreadyRegistered.selector);
+
     HooksManager.beforeRegister(registration.hooks);
     config.initialize(tokenId, registration);
     HooksManager.afterRegister(registration.hooks);
