@@ -3,13 +3,12 @@ package nodes
 import (
 	"math/rand"
 	"slices"
-	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
-
-	"github.com/river-build/river/core/contracts/river"
-	. "github.com/river-build/river/core/node/base"
-	. "github.com/river-build/river/core/node/protocol"
+	"github.com/linkdata/deadlock"
+	"github.com/towns-protocol/towns/core/contracts/river"
+	. "github.com/towns-protocol/towns/core/node/base"
+	. "github.com/towns-protocol/towns/core/node/protocol"
 )
 
 type StreamNodes interface {
@@ -144,7 +143,7 @@ func (s *StreamNodesWithoutLock) Update(event *river.StreamPlacementUpdated, loc
 
 type StreamNodesWithLock struct {
 	n  StreamNodesWithoutLock
-	mu sync.RWMutex
+	mu deadlock.RWMutex
 }
 
 var _ StreamNodes = (*StreamNodesWithLock)(nil)

@@ -15,12 +15,12 @@ import (
 	"github.com/SherClockHolmes/webpush-go"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/river-build/river/core/config"
-	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/infra"
-	"github.com/river-build/river/core/node/logging"
-	"github.com/river-build/river/core/node/notifications/types"
-	"github.com/river-build/river/core/node/protocol"
+	"github.com/towns-protocol/towns/core/config"
+	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/infra"
+	"github.com/towns-protocol/towns/core/node/logging"
+	"github.com/towns-protocol/towns/core/node/notifications/types"
+	"github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/sideshow/apns2"
 	payload2 "github.com/sideshow/apns2/payload"
 	"github.com/sideshow/apns2/token"
@@ -32,23 +32,25 @@ type (
 		// VAPID protocol to authenticate the message.
 		SendWebPushNotification(
 			ctx context.Context,
-			// subscription object as returned by the browser on enabling subscriptions.
+		// subscription object as returned by the browser on enabling subscriptions.
 			subscription *webpush.Subscription,
-			// event hash
+		// event hash
 			eventHash common.Hash,
-			// payload of the message
+		// payload of the message
 			payload []byte,
 		) (expired bool, err error)
 
 		// SendApplePushNotification sends a push notification to the iOS app
 		SendApplePushNotification(
 			ctx context.Context,
-			// sub APN
+		// sub APN
 			sub *types.APNPushSubscription,
-			// event hash
+		// event hash
 			eventHash common.Hash,
-			// payload is sent to the APP
+		// payload is sent to the APP
 			payload *payload2.Payload,
+		// payloadIncludesStreamEvent is true if the payload includes the stream event
+			payloadIncludesStreamEvent bool,
 		) (bool, int, error)
 	}
 
@@ -164,10 +166,10 @@ func NewMessageNotifier(
 		"status",
 	)
 
-	apnSend := metricsFactory.NewCounterVecEx(
+	apnSent := metricsFactory.NewCounterVecEx(
 		"apn_sent",
 		"Number of notifications send over APN",
-		"status",
+		"status", "payload_stripped", "payload_version",
 	)
 
 	return &MessageNotifications{
@@ -180,7 +182,7 @@ func NewMessageNotifier(
 		vapidPublicKey:  cfg.Web.Vapid.PublicKey,
 		vapidSubject:    cfg.Web.Vapid.Subject,
 		webPushSent:     webPushSend,
-		apnSent:         apnSend,
+		apnSent:         apnSent,
 	}, nil
 }
 
@@ -210,7 +212,6 @@ func (n *MessageNotifications) SendWebPushNotification(
 	n.webPushSent.With(prometheus.Labels{"status": fmt.Sprintf("%d", res.StatusCode)}).Inc()
 
 	if res.StatusCode == http.StatusCreated {
-		logging.FromCtx(ctx).Infow("Web push notification sent", "event", eventHash)
 		return false, nil
 	}
 
@@ -234,6 +235,7 @@ func (n *MessageNotifications) SendApplePushNotification(
 	sub *types.APNPushSubscription,
 	eventHash common.Hash,
 	payload *payload2.Payload,
+	payloadIncludesStreamEvent bool,
 ) (bool, int, error) {
 	notification := &apns2.Notification{
 		DeviceToken: hex.EncodeToString(sub.DeviceToken),
@@ -257,13 +259,21 @@ func (n *MessageNotifications) SendApplePushNotification(
 
 	res, err := client.PushWithContext(ctx, notification)
 	if err != nil {
-		n.apnSent.With(prometheus.Labels{"status": fmt.Sprintf("%d", http.StatusServiceUnavailable)}).Inc()
+		n.apnSent.With(prometheus.Labels{
+			"status":           fmt.Sprintf("%d", http.StatusServiceUnavailable),
+			"payload_stripped": fmt.Sprintf("%v", !payloadIncludesStreamEvent),
+			"payload_version":  fmt.Sprintf("%d", sub.PushVersion),
+		}).Inc()
 		return false, http.StatusBadGateway, AsRiverError(err).
 			Message("Send notification to APNS failed").
 			Func("SendAPNNotification")
 	}
 
-	n.apnSent.With(prometheus.Labels{"status": fmt.Sprintf("%d", res.StatusCode)}).Inc()
+	n.apnSent.With(prometheus.Labels{
+		"status":           fmt.Sprintf("%d", res.StatusCode),
+		"payload_stripped": fmt.Sprintf("%v", !payloadIncludesStreamEvent),
+		"payload_version":  fmt.Sprintf("%d", sub.PushVersion),
+	}).Inc()
 
 	if res.Sent() {
 		log := logging.FromCtx(ctx).With("event", eventHash, "apnsID", res.ApnsID)
@@ -272,7 +282,11 @@ func (n *MessageNotifications) SendApplePushNotification(
 		if sub.Environment == protocol.APNEnvironment_APN_ENVIRONMENT_SANDBOX {
 			log = log.With("uniqueApnsID", res.ApnsUniqueID)
 		}
-		log.Infow("APN notification sent")
+
+		log.Infow("APN notification sent",
+			"payloadVersion", sub.PushVersion,
+			"payloadStripped", !payloadIncludesStreamEvent,
+			"payload", payload)
 
 		return false, res.StatusCode, nil
 	}
@@ -286,6 +300,8 @@ func (n *MessageNotifications) SendApplePushNotification(
 		"reason", res.Reason,
 		"deviceToken", sub.DeviceToken,
 		"event", eventHash,
+		"payloadVersion", sub.PushVersion,
+		"payloadStripped", !payloadIncludesStreamEvent,
 	).Func("SendAPNNotification")
 
 	return subExpired, res.StatusCode, riverErr
@@ -316,12 +332,16 @@ func (n *MessageNotificationsSimulator) SendApplePushNotification(
 	sub *types.APNPushSubscription,
 	eventHash common.Hash,
 	payload *payload2.Payload,
+	payloadIncludesStreamEvent bool,
 ) (bool, int, error) {
 	log := logging.FromCtx(ctx)
+
 	log.Debugw("SendApplePushNotification",
 		"deviceToken", sub.DeviceToken,
 		"env", fmt.Sprintf("%d", sub.Environment),
 		"payload", payload,
+		"payloadStripped", payloadIncludesStreamEvent,
+		"payloadVersion", fmt.Sprintf("%d", sub.PushVersion),
 	)
 
 	n.apnSent.With(prometheus.Labels{"status": "200"}).Inc()

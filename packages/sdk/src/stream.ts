@@ -50,7 +50,7 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
         miniblocks: ParsedMiniblock[],
         prependedMiniblocks: ParsedMiniblock[],
         prevSnapshotMiniblockNum: bigint,
-        cleartexts: Record<string, string> | undefined,
+        cleartexts: Record<string, Uint8Array | string> | undefined,
     ): void {
         // grab any local events from the previous view that haven't been processed
         const localEvents = this._view.timeline
@@ -78,14 +78,14 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
     async appendEvents(
         events: ParsedEvent[],
         nextSyncCookie: SyncCookie,
-        cleartexts: Record<string, string> | undefined,
+        cleartexts: Record<string, Uint8Array | string> | undefined,
     ): Promise<void> {
         this._view.appendEvents(events, nextSyncCookie, cleartexts, this)
     }
 
     prependEvents(
         miniblocks: ParsedMiniblock[],
-        cleartexts: Record<string, string> | undefined,
+        cleartexts: Record<string, Uint8Array | string> | undefined,
         terminus: boolean,
     ) {
         this._view.prependEvents(miniblocks, cleartexts, terminus, this, this)

@@ -9,14 +9,16 @@ import {
 } from './encryptionTypes'
 import { EncryptionDelegate } from './encryptionDelegate'
 import { GroupEncryptionAlgorithmId, GroupEncryptionSession } from './olmLib'
-import { bin_fromHexString, bin_toHexString, dlog } from '@river-build/dlog'
-import type {
-    ExtendedInboundGroupSessionData,
-    GroupSessionRecord,
-    HybridGroupSessionRecord,
-} from './storeTypes'
-import { HybridGroupSessionKey } from '@river-build/proto'
+import { bin_equal, bin_fromHexString, bin_toHexString, dlog } from '@river-build/dlog'
+import type { HybridGroupSessionRecord } from './storeTypes'
+import {
+    ExportedDevice,
+    ExportedDevice_GroupSession,
+    ExportedDevice_HybridGroupSession,
+    HybridGroupSessionKey,
+} from '@river-build/proto'
 import { exportAesGsmKeyBytes, generateNewAesGcmKey } from './cryptoAesGcm'
+import { Dexie } from 'dexie'
 
 const log = dlog('csb:encryption:encryptionDevice')
 
@@ -32,14 +34,6 @@ export interface InboundGroupSessionData {
     keysClaimed: Record<string, string>
     /** whether this session is untrusted. */
     untrusted?: boolean
-}
-
-export type ExportedDevice = {
-    pickleKey: string
-    pickledAccount: string
-    outboundSessions: GroupSessionRecord[]
-    inboundSessions: ExtendedInboundGroupSessionData[]
-    hybridGroupSessions: HybridGroupSessionRecord[]
 }
 
 export type EncryptionDeviceInitOpts = {
@@ -187,7 +181,11 @@ export class EncryptionDevice {
                     this.cryptoStore.storeEndToEndInboundGroupSession(
                         session.streamId,
                         session.sessionId,
-                        session,
+                        {
+                            stream_id: session.streamId,
+                            session: session.session,
+                            keysClaimed: {},
+                        } satisfies InboundGroupSessionData,
                     ),
                 ),
                 ...exportedData.hybridGroupSessions.map((session) =>
@@ -224,13 +222,35 @@ export class EncryptionDevice {
             this.cryptoStore.getAllHybridGroupSessions(),
         ])
 
-        return {
+        return new ExportedDevice({
             pickleKey: this.pickleKey,
             pickledAccount,
-            inboundSessions,
-            outboundSessions,
-            hybridGroupSessions,
-        }
+            inboundSessions: inboundSessions.map(
+                (session) =>
+                    new ExportedDevice_GroupSession({
+                        sessionId: session.sessionId,
+                        streamId: session.streamId,
+                        session: session.session,
+                    }),
+            ),
+            outboundSessions: outboundSessions.map(
+                (session) =>
+                    new ExportedDevice_GroupSession({
+                        sessionId: session.sessionId,
+                        streamId: session.streamId,
+                        session: session.session,
+                    }),
+            ),
+            hybridGroupSessions: hybridGroupSessions.map(
+                (session) =>
+                    new ExportedDevice_HybridGroupSession({
+                        sessionId: session.sessionId,
+                        streamId: session.streamId,
+                        sessionKey: session.sessionKey,
+                        miniblockNum: session.miniblockNum,
+                    }),
+            ),
+        })
     }
 
     /**
@@ -650,6 +670,20 @@ export class EncryptionDevice {
         if (bin_toHexString(session.sessionId) !== sessionId) {
             throw new Error(`Session ID mismatch for hybrid group session ${sessionId}`)
         }
+        const expectedSessionPromise = hybridSessionKeyHash(
+            session.streamId,
+            session.key,
+            session.miniblockNum,
+            session.miniblockHash,
+        )
+        const expectedSessionId = await Dexie.waitFor(expectedSessionPromise)
+        if (!bin_equal(expectedSessionId, bin_fromHexString(sessionId))) {
+            throw new Error(
+                `Session ID mismatch for hybrid group session ${sessionId} expected ${bin_toHexString(
+                    expectedSessionId,
+                )}`,
+            )
+        }
         await this.cryptoStore.withGroupSessions(async () => {
             await this.cryptoStore.storeHybridGroupSession({
                 sessionId,
@@ -852,7 +886,6 @@ export class EncryptionDevice {
     public async exportHybridGroupSession(
         streamId: string,
         sessionId: string,
-        algorithm: GroupEncryptionAlgorithmId,
     ): Promise<GroupEncryptionSession | undefined> {
         const sessionData = await this.cryptoStore.getHybridGroupSession(streamId, sessionId)
         if (!sessionData) {
@@ -862,7 +895,7 @@ export class EncryptionDevice {
             streamId: streamId,
             sessionId: sessionId,
             sessionKey: bin_toHexString(sessionData.sessionKey),
-            algorithm,
+            algorithm: GroupEncryptionAlgorithmId.HybridGroupEncryption,
         }
     }
 
@@ -898,16 +931,14 @@ export class EncryptionDevice {
         return exportedSessions
     }
 
-    public async exportHybridGroupSessions(
-        algorithm: GroupEncryptionAlgorithmId,
-    ): Promise<GroupEncryptionSession[]> {
+    public async exportHybridGroupSessions(): Promise<GroupEncryptionSession[]> {
         const sessions = await this.cryptoStore.getAllHybridGroupSessions()
         return sessions.map((session: HybridGroupSessionRecord): GroupEncryptionSession => {
             return {
                 streamId: session.streamId,
                 sessionId: session.sessionId,
                 sessionKey: bin_toHexString(session.sessionKey),
-                algorithm,
+                algorithm: GroupEncryptionAlgorithmId.HybridGroupEncryption,
             }
         })
     }

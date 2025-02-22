@@ -1,13 +1,13 @@
 ---
 title: Introduction
-description: "The River Protocol is powered by a network of Stream Nodes that are registered on chain and run by Node Operators. This guide is intended as an introduction to getting started as an operator and running a node in the River network."
+description: "The Towns Protocol is powered by a network of Stream Nodes that are registered on chain and run by Node Operators. This guide is intended as an introduction to getting started as an operator and running a node in the Towns network."
 ---
 
-### Operating River Components
+### Operating Towns Components
 
-[River Stream Nodes](https://github.com/river-build/river/tree/main/core/node) are software components that are able to be run by anyone. River Protocol's incentive structure supports River Stream Node operators as a first-class actor in the network. Operators, once registered and approved by the DAO , can run a Stream Node on River Chain and participate in block validation as well as reward distribution.
+[Towns Stream Nodes](https://github.com/river-build/river/tree/main/core/node) are software components that are able to be run by anyone. Towns Protocol's incentive structure supports Towns Stream Node operators as a first-class actor in the network. Operators, once registered and approved by the DAO , can run a Stream Node on Towns Chain and participate in block validation as well as reward distribution.
 
-Given the open-source nature of River, the Foundation also encourages developers who would like to run instances of River Chain on a network of their choice connected to self-hosted River Stream Nodes. Though these nodes would not technically be connected to the River protocol node network that is deployed on [Base Mainnet](https://basescan.org/), developers may find value in experimenting with different rollup implementation features.
+Given the open-source nature of River, the Foundation also encourages developers who would like to run instances of Towns Chain on a network of their choice connected to self-hosted Towns Stream Nodes. Though these nodes would not technically be connected to the Towns protocol node network that is deployed on [Base Mainnet](https://basescan.org/), developers may find value in experimenting with different rollup implementation features.
 
 ### Operator Onboarding Lifecycle
 
@@ -39,10 +39,10 @@ Each of the following steps are described in detail in subsequent sections.
 
 #### Stream Node Configuration Modes
 
-The below table outlines the current operator service level that is supported by the River Protocol. Supported configurations are outlined in subsequent sections.
+The below table outlines the current operator service level that is supported by the Towns Protocol. Supported configurations are outlined in subsequent sections.
 
 | Configuration   | Description                                                                                      | Node Registration     | Stream Reads         | Stream Writes        | Support             |
 | --------------- | ------------------------------------------------------------------------------------------------ | --------------------- | -------------------- | -------------------- | ------------------- |
-| Full node       | Stream node running inside River node network                                                   | required | yes                  | yes                  | supported         |
+| Full node       | Stream node running inside Towns node network                                                   | required | yes                  | yes                  | supported         |
 | Info mode       | Stream node running in info mode, unattached to the network, for debug purposes only.            | no                    | no      | no     | supported         |
-| Archival node   | Stream node running outside River node network storing all stream events from River node network | no                    | proxied | proxied | not yet supported |
+| Archival node   | Stream node running outside Towns node network storing all stream events from Towns node network | no                    | proxied | proxied | not yet supported |

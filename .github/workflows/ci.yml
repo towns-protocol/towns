@@ -1,6 +1,6 @@
 name: Continuous Integration
 env:
-    FOUNDRY_VERSION: nightly
+    FOUNDRY_VERSION: stable
     RIVER_BLOCK_TIME: 1
 on:
     schedule:
@@ -302,8 +302,10 @@ jobs:
               working-directory: core
               run: just RUN_ENV=multi_ne config-and-start
 
-            - name: Run SDK Tests (without entitlements)
-              run: yarn turbo run test:ci:multi:ne --filter=@river-build/sdk
+            - name: Run River Tests (without entitlements)
+              working-directory: packages/sdk
+              run: yarn run test:ci:multi:ne
+              timeout-minutes: 10
 
             - name: Run Stream Metadata Nodes
               run: |

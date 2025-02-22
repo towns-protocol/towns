@@ -116,7 +116,7 @@ export const AuthRoute = () => {
                                 variant: 'outline',
                                 className: 'mt-4 w-full',
                             })}
-                            href="https://docs.river.build"
+                            href="https://docs.towns.com"
                             target="_blank"
                         >
                             Read Docs <ExternalLink className="ml-2 size-4" />

@@ -25,6 +25,7 @@ export { IOperatorRegistry__factory } from "./IOperatorRegistry__factory";
 export { IPausable__factory } from "./IPausable__factory";
 export { IPricingModules__factory } from "./IPricingModules__factory";
 export { IProxyManager__factory } from "./IProxyManager__factory";
+export { IReview__factory } from "./IReview__factory";
 export { IRoles__factory } from "./IRoles__factory";
 export { ISpaceDelegation__factory } from "./ISpaceDelegation__factory";
 export { ISpaceOwner__factory } from "./ISpaceOwner__factory";

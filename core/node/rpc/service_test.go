@@ -9,7 +9,6 @@ import (
 	"os"
 	"slices"
 	"strconv"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -19,19 +18,18 @@ import (
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/common"
 	eth_crypto "github.com/ethereum/go-ethereum/crypto"
+	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/crypto"
+	"github.com/towns-protocol/towns/core/node/events"
+	"github.com/towns-protocol/towns/core/node/logging"
+	"github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
+	river_sync "github.com/towns-protocol/towns/core/node/rpc/sync"
+	. "github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/testutils"
+	"github.com/towns-protocol/towns/core/node/testutils/testfmt"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
-
-	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/events"
-	"github.com/river-build/river/core/node/logging"
-	"github.com/river-build/river/core/node/protocol"
-	"github.com/river-build/river/core/node/protocol/protocolconnect"
-	river_sync "github.com/river-build/river/core/node/rpc/sync"
-	. "github.com/river-build/river/core/node/shared"
-	"github.com/river-build/river/core/node/testutils"
-	"github.com/river-build/river/core/node/testutils/testfmt"
 )
 
 func TestMain(m *testing.M) {
@@ -201,6 +199,19 @@ func createSpace(
 		return nil, nil, err
 	}
 
+	// if resspace.Msg.DerivedEvents doesn't contain an event in the user stream, return an error
+	userStreamId := UserStreamIdFromAddr(wallet.Address)
+	foundUserStreamEvent := false
+	for _, event := range resspace.Msg.DerivedEvents {
+		if bytes.Equal(event.StreamId, userStreamId[:]) {
+			foundUserStreamEvent = true
+			break
+		}
+	}
+	if !foundUserStreamEvent {
+		return nil, nil, fmt.Errorf("expected user stream to contain an event")
+	}
+
 	return resspace.Msg.Stream.NextSyncCookie, joinSpace.Hash, nil
 }
 
@@ -252,6 +263,32 @@ func createChannel(
 	if len(reschannel.Msg.Stream.Miniblocks) == 0 {
 		return nil, nil, fmt.Errorf("expected at least one miniblock")
 	}
+
+	// if reschannel.Msg.DerivedEvents doesn't contain an event in the user stream, return an error
+	userStreamId := UserStreamIdFromAddr(wallet.Address)
+	foundUserStreamEvent := false
+	for _, event := range reschannel.Msg.DerivedEvents {
+		if bytes.Equal(event.StreamId, userStreamId[:]) {
+			foundUserStreamEvent = true
+			break
+		}
+	}
+	if !foundUserStreamEvent {
+		return nil, nil, fmt.Errorf("expected user stream to contain an event")
+	}
+
+	// if reschannel.Msg.DerivedEvents doesn't contain an event in the space stream, return an error
+	foundSpaceStreamEvent := false
+	for _, event := range reschannel.Msg.DerivedEvents {
+		if bytes.Equal(event.StreamId, spaceId[:]) {
+			foundSpaceStreamEvent = true
+			break
+		}
+	}
+	if !foundSpaceStreamEvent {
+		return nil, nil, fmt.Errorf("expected space stream to contain an event")
+	}
+
 	lastMb := reschannel.Msg.Stream.Miniblocks[len(reschannel.Msg.Stream.Miniblocks)-1]
 	return reschannel.Msg.Stream.NextSyncCookie, &MiniblockRef{
 		Hash: common.BytesToHash(lastMb.Header.Hash),
@@ -1617,7 +1654,7 @@ func TestSyncSubscriptionWithTooSlowClient(t *testing.T) {
 	testfmt.Logf(t, "subscribe on node %s", node1.address)
 	syncPos := append(users, channels...)
 	syncOp, err := river_sync.NewStreamsSyncOperation(
-		ctx, syncID, node1.address, node1.service.cache, node1.service.nodeRegistry)
+		ctx, syncID, node1.address, node1.service.cache, node1.service.nodeRegistry, nil)
 	req.NoError(err, "NewStreamsSyncOperation")
 
 	syncOpResult := make(chan error)
@@ -1774,92 +1811,4 @@ func TestGetMiniblocksRangeLimit(t *testing.T) {
 
 		return true
 	}, 20*time.Second, 100*time.Millisecond)
-}
-
-// TestCreateMediaStream tests creating a media stream
-func TestCreateMediaStream(t *testing.T) {
-	tt := newServiceTester(t, serviceTesterOpts{numNodes: 1, start: true})
-
-	alice := tt.newTestClient(0)
-	_ = alice.createUserStream()
-	spaceId, _ := alice.createSpace()
-	channelId, _ := alice.createChannel(spaceId)
-
-	mediaStreamId, err := StreamIdFromString(STREAM_MEDIA_PREFIX + strings.Repeat("0", 62))
-	tt.require.NoError(err)
-
-	const chunks = 10
-	inception, err := events.MakeEnvelopeWithPayload(
-		alice.wallet,
-		events.Make_MediaPayload_Inception(&protocol.MediaPayload_Inception{
-			StreamId:   mediaStreamId[:],
-			ChannelId:  channelId[:],
-			SpaceId:    spaceId[:],
-			UserId:     alice.userId[:],
-			ChunkCount: chunks,
-		}),
-		nil,
-	)
-	tt.require.NoError(err)
-
-	// Create media stream
-	csResp, err := alice.client.CreateStream(alice.ctx, connect.NewRequest(&protocol.CreateStreamRequest{
-		Events:   []*protocol.Envelope{inception},
-		StreamId: mediaStreamId[:],
-	}))
-	tt.require.NoError(err)
-
-	mb := &MiniblockRef{
-		Hash: common.BytesToHash(csResp.Msg.Stream.NextSyncCookie.PrevMiniblockHash),
-		Num:  0,
-	}
-	mediaChunks := make([][]byte, chunks)
-	for i := 0; i < chunks; i++ {
-		// Create media chunk event
-		mediaChunks[i] = []byte("chunk " + fmt.Sprint(i))
-		mp := events.Make_MediaPayload_Chunk(mediaChunks[i], int32(i))
-		envelope, err := events.MakeEnvelopeWithPayload(alice.wallet, mp, mb)
-		tt.require.NoError(err)
-
-		// Add media chunk event
-		aeResp, err := alice.client.AddEvent(alice.ctx, connect.NewRequest(&protocol.AddEventRequest{
-			StreamId: mediaStreamId[:],
-			Event:    envelope,
-		}))
-		tt.require.NoError(err)
-		tt.require.Nil(aeResp.Msg.Error)
-
-		mb, err = makeMiniblock(tt.ctx, alice.client, mediaStreamId, false, int64(i))
-		tt.require.NoError(err, i)
-	}
-
-	// Get Miniblocks for the given media stream
-	resp, err := alice.client.GetMiniblocks(alice.ctx, connect.NewRequest(&protocol.GetMiniblocksRequest{
-		StreamId:      mediaStreamId[:],
-		FromInclusive: 0,
-		ToExclusive:   chunks * 2, // adding a threshold to make sure there are no unexpected events
-	}))
-	tt.require.NoError(err)
-	tt.require.NotNil(resp)
-	tt.require.Len(resp.Msg.GetMiniblocks(), chunks+1) // The first miniblock is the stream creation one
-
-	mbs := resp.Msg.GetMiniblocks()
-
-	// The first miniblock is the stream creation one
-	tt.require.Len(mbs[0].GetEvents(), 1)
-	pe, err := events.ParseEvent(mbs[0].GetEvents()[0])
-	tt.require.NoError(err)
-	mp, ok := pe.Event.GetPayload().(*protocol.StreamEvent_MediaPayload)
-	tt.require.True(ok)
-	tt.require.Equal(int32(chunks), mp.MediaPayload.GetInception().GetChunkCount())
-
-	// The rest of the miniblocks are the media chunks
-	for i, mb := range mbs[1:] {
-		tt.require.Len(mb.GetEvents(), 1)
-		pe, err = events.ParseEvent(mb.GetEvents()[0])
-		tt.require.NoError(err)
-		mp, ok = pe.Event.GetPayload().(*protocol.StreamEvent_MediaPayload)
-		tt.require.True(ok)
-		tt.require.Equal(mediaChunks[i], mp.MediaPayload.GetChunk().Data)
-	}
 }

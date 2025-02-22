@@ -29,7 +29,7 @@ import type {
 
 export interface ITownsPointsInterface extends utils.Interface {
   functions: {
-    "batchMintPoints(address[],uint256[])": FunctionFragment;
+    "batchMintPoints(bytes)": FunctionFragment;
     "checkIn()": FunctionFragment;
     "getCurrentStreak(address)": FunctionFragment;
     "getLastCheckIn(address)": FunctionFragment;
@@ -49,7 +49,7 @@ export interface ITownsPointsInterface extends utils.Interface {
 
   encodeFunctionData(
     functionFragment: "batchMintPoints",
-    values: [PromiseOrValue<string>[], PromiseOrValue<BigNumberish>[]]
+    values: [PromiseOrValue<BytesLike>]
   ): string;
   encodeFunctionData(functionFragment: "checkIn", values?: undefined): string;
   encodeFunctionData(
@@ -133,8 +133,7 @@ export interface ITownsPoints extends BaseContract {
 
   functions: {
     batchMintPoints(
-      accounts: PromiseOrValue<string>[],
-      values: PromiseOrValue<BigNumberish>[],
+      data: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -166,8 +165,7 @@ export interface ITownsPoints extends BaseContract {
   };
 
   batchMintPoints(
-    accounts: PromiseOrValue<string>[],
-    values: PromiseOrValue<BigNumberish>[],
+    data: PromiseOrValue<BytesLike>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -199,8 +197,7 @@ export interface ITownsPoints extends BaseContract {
 
   callStatic: {
     batchMintPoints(
-      accounts: PromiseOrValue<string>[],
-      values: PromiseOrValue<BigNumberish>[],
+      data: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -246,8 +243,7 @@ export interface ITownsPoints extends BaseContract {
 
   estimateGas: {
     batchMintPoints(
-      accounts: PromiseOrValue<string>[],
-      values: PromiseOrValue<BigNumberish>[],
+      data: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -280,8 +276,7 @@ export interface ITownsPoints extends BaseContract {
 
   populateTransaction: {
     batchMintPoints(
-      accounts: PromiseOrValue<string>[],
-      values: PromiseOrValue<BigNumberish>[],
+      data: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 

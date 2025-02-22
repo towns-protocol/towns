@@ -15,15 +15,14 @@ contract InteractRiverAlpha is AlphaHelper {
   DeployRiverRegistry deployRiverRegistry = new DeployRiverRegistry();
 
   function __interact(address deployer) internal override {
-    vm.setEnv("OVERRIDE_DEPLOYMENTS", "1");
-    address riverRegistry = getDeployment("riverRegistry");
+    address riverRegistry = deployRiverRegistry.deploy(deployer);
 
     removeRemoteFacets(deployer, riverRegistry);
-
     FacetCut[] memory newCuts;
 
     deployRiverRegistry.diamondInitParams(deployer);
     newCuts = deployRiverRegistry.getCuts();
+
     vm.broadcast(deployer);
     IDiamondCut(riverRegistry).diamondCut(newCuts, address(0), "");
   }

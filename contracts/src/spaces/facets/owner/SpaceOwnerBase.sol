@@ -114,4 +114,8 @@ abstract contract SpaceOwnerBase is ISpaceOwnerBase {
   function _getTokenId(address space) internal view returns (uint256) {
     return SpaceOwnerStorage.layout().spaceByAddress[space].tokenId;
   }
+
+  function _getSpaceByTokenId(uint256 tokenId) internal view returns (address) {
+    return SpaceOwnerStorage.layout().spaceByTokenId[tokenId];
+  }
 }

@@ -7,26 +7,19 @@ import (
 	"slices"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
+	ethTypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/towns-protocol/towns/core/config"
+	baseContracts "github.com/towns-protocol/towns/core/contracts/base"
+	"github.com/towns-protocol/towns/core/node/auth"
+	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/crypto"
+	"github.com/towns-protocol/towns/core/node/events"
+	"github.com/towns-protocol/towns/core/node/logging"
+	. "github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/shared"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
-
-	"github.com/river-build/river/core/config"
-	"github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/mls_service"
-	"github.com/river-build/river/core/node/mls_service/mls_tools"
-
-	"github.com/ethereum/go-ethereum/common"
-
-	ethTypes "github.com/ethereum/go-ethereum/core/types"
-
-	baseContracts "github.com/river-build/river/core/contracts/base"
-
-	"github.com/river-build/river/core/node/auth"
-	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/events"
-	"github.com/river-build/river/core/node/logging"
-	. "github.com/river-build/river/core/node/protocol"
-	"github.com/river-build/river/core/node/shared"
 )
 
 type aeParams struct {
@@ -37,7 +30,7 @@ type aeParams struct {
 	streamMembershipLimit int
 	validNodeAddresses    []common.Address
 	currentTime           time.Time
-	streamView            events.StreamView
+	streamView            *events.StreamView
 	parsedEvent           *events.ParsedEvent
 }
 
@@ -86,31 +79,6 @@ type aeUnpinRules struct {
 	unpin  *MemberPayload_Unpin
 }
 
-type aeMlsInitializeGroupRules struct {
-	params          *aeParams
-	initializeGroup *MemberPayload_Mls_InitializeGroup
-}
-
-type aeMlsExternalJoinRules struct {
-	params       *aeParams
-	externalJoin *MemberPayload_Mls_ExternalJoin
-}
-
-type aeMlsEpochSecrets struct {
-	params  *aeParams
-	secrets *MemberPayload_Mls_EpochSecrets
-}
-
-type aeMlsKeyPackageRules struct {
-	params     *aeParams
-	keyPackage *MemberPayload_KeyPackage
-}
-
-type aeMlsWelcomeMessageRules struct {
-	params         *aeParams
-	welcomeMessage *MemberPayload_Mls_WelcomeMessage
-}
-
 type aeMediaPayloadChunkRules struct {
 	params *aeParams
 	chunk  *MediaPayload_Chunk
@@ -153,7 +121,7 @@ type aeHideUserJoinLeaveEventsWrapperRules struct {
 
   - @return canAddEvent bool // true if the event can be added to the stream, will be false in case of duplictate state
 
-  - @return chainAuthArgsList *auth.ChainAuthArgs[] // a list of on chain requirements, such that, if defined, at least one must be satisfied in order to add the event to the stream
+  - @return verifications *AddEventVerifications // a list of on chain requirements, such that, if defined, at least one must be satisfied in order to add the event to the stream
 
   - @return sideEffects *AddEventSideEffects // side effects that need to be executed before adding the event to the stream or on failures
 
@@ -164,9 +132,9 @@ type aeHideUserJoinLeaveEventsWrapperRules struct {
 * (false, nil, nil, nil) // event cannot be added to the stream, but there is no error, state would remain the same
 * (false, nil, nil, error) // event cannot be added to the stream, but there is no error, state would remain the same
 * (true, nil, nil, nil) // event can be added to the stream
-* (true, nil, &IsStreamEvent_Payload, nil) // event can be added after parent event is added or verified
-* (true, chainAuthArgs, nil, nil) // event can be added if chainAuthArgs are satisfied
-* (true, chainAuthArgs, &IsStreamEvent_Payload, nil) // event can be added if chainAuthArgs are satisfied and parent event is added or verified
+* (true, nil, &AddEventSideEffects, nil) // event can be added after parent event is added or verified
+* (true, &AddEventVerifications, nil, nil) // event can be added if chainAuthArgs are satisfied
+* (true, &AddEventVerifications, &AddEventSideEffects, nil) // event can be added if chainAuthArgs are satisfied and parent event is added or verified
 */
 func CanAddEvent(
 	ctx context.Context,
@@ -175,7 +143,7 @@ func CanAddEvent(
 	validNodeAddresses []common.Address,
 	currentTime time.Time,
 	parsedEvent *events.ParsedEvent,
-	streamView events.StreamView,
+	streamView *events.StreamView,
 ) (bool, *AddEventVerifications, *AddEventSideEffects, error) {
 	if parsedEvent.Event.DelegateExpiryEpochMs > 0 &&
 		isPastExpiry(currentTime, parsedEvent.Event.DelegateExpiryEpochMs) {
@@ -597,70 +565,9 @@ func (params *aeParams) canAddMemberPayload(payload *StreamEvent_MemberPayload) 
 			check(params.creatorIsValidNode).
 			check(ru.validMemberBlockchainTransaction_IsUnique).
 			check(ru.validMemberBlockchainTransaction_ReceiptMetadata)
-	case *MemberPayload_Mls_:
-		if !params.config.EnableMls {
-			return aeBuilder().
-				fail(RiverError(Err_INVALID_ARGUMENT, "mls disabled globally"))
-		}
-		return params.canAddMlsPayload(content.Mls)
-
 	case *MemberPayload_EncryptionAlgorithm_:
 		return aeBuilder().
 			check(params.creatorIsMember)
-	default:
-		return aeBuilder().
-			fail(unknownContentType(content))
-	}
-}
-
-func (params *aeParams) canAddMlsPayload(payload *MemberPayload_Mls) ruleBuilderAE {
-	switch content := payload.Content.(type) {
-	case *MemberPayload_Mls_InitializeGroup_:
-		ru := &aeMlsInitializeGroupRules{
-			params:          params,
-			initializeGroup: content.InitializeGroup,
-		}
-		return aeBuilder().
-			check(params.creatorIsMember).
-			check(ru.validMlsInitializeGroup)
-	case *MemberPayload_Mls_ExternalJoin_:
-		ru := &aeMlsExternalJoinRules{
-			params:       params,
-			externalJoin: content.ExternalJoin,
-		}
-		return aeBuilder().
-			check(params.creatorIsMember).
-			check(params.mlsInitialized).
-			check(ru.validMlsExternalJoin)
-	case *MemberPayload_Mls_EpochSecrets_:
-		ru := &aeMlsEpochSecrets{
-			params:  params,
-			secrets: content.EpochSecrets,
-		}
-		return aeBuilder().
-			check(params.creatorIsMember).
-			check(params.mlsInitialized).
-			check(ru.validMlsEpochSecrets)
-
-	case *MemberPayload_Mls_KeyPackage:
-		ru := &aeMlsKeyPackageRules{
-			params:     params,
-			keyPackage: content.KeyPackage,
-		}
-		return aeBuilder().
-			check(params.creatorIsMember).
-			check(params.mlsInitialized).
-			check(ru.validMlsKeyPackage)
-
-	case *MemberPayload_Mls_WelcomeMessage_:
-		ru := &aeMlsWelcomeMessageRules{
-			params:         params,
-			welcomeMessage: content.WelcomeMessage,
-		}
-		return aeBuilder().
-			check(params.creatorIsMember).
-			check(params.mlsInitialized).
-			check(ru.validMlsWelcomeMessage)
 	default:
 		return aeBuilder().
 			fail(unknownContentType(content))
@@ -699,14 +606,6 @@ func (params *aeParams) creatorIsMember() (bool, error) {
 	return true, nil
 }
 
-func (params *aeParams) mlsInitialized() (bool, error) {
-	mlsInitialized, err := params.streamView.(events.MlsStreamView).IsMlsInitialized()
-	if err != nil {
-		return false, err
-	}
-	return mlsInitialized, nil
-}
-
 func (ru *aeMemberBlockchainTransactionRules) validMemberBlockchainTransaction_ReceiptMetadata() (bool, error) {
 	// check creator
 	switch content := ru.memberTransaction.Transaction.Content.(type) {
@@ -728,10 +627,16 @@ func (ru *aeMemberBlockchainTransactionRules) validMemberBlockchainTransaction_R
 			return false, RiverError(Err_INVALID_ARGUMENT, "tip transaction message id is nil")
 		}
 		return true, nil
+	case *BlockchainTransaction_SpaceReview_:
+		err := checkIsMember(ru.params, ru.memberTransaction.GetFromUserAddress())
+		if err != nil {
+			return false, err
+		}
+		return true, nil
 	default:
 		return false, RiverError(
 			Err_INVALID_ARGUMENT,
-			"unknown transaction content",
+			"unknown transaction content - member blockchain transaction",
 			"content",
 			content,
 		)
@@ -740,7 +645,7 @@ func (ru *aeMemberBlockchainTransactionRules) validMemberBlockchainTransaction_R
 
 func (ru *aeMemberBlockchainTransactionRules) validMemberBlockchainTransaction_IsUnique() (bool, error) {
 	// loop over all events in the view, check if the transaction is already in the view
-	streamView := ru.params.streamView.(events.JoinableStreamView)
+	streamView := ru.params.streamView
 
 	hasTransaction, err := streamView.HasTransaction(ru.memberTransaction.Transaction.GetReceipt())
 	if err != nil {
@@ -756,7 +661,7 @@ func (ru *aeMemberBlockchainTransactionRules) validMemberBlockchainTransaction_I
 
 func (ru *aeReceivedBlockchainTransactionRules) validReceivedBlockchainTransaction_IsUnique() (bool, error) {
 	// loop over all events in the view, check if the transaction is already in the view
-	userStreamView := ru.params.streamView.(events.UserStreamView)
+	userStreamView := ru.params.streamView
 
 	hasTransaction, err := userStreamView.HasTransaction(ru.receivedTransaction.Transaction.GetReceipt())
 	if err != nil {
@@ -772,7 +677,7 @@ func (ru *aeReceivedBlockchainTransactionRules) validReceivedBlockchainTransacti
 
 func (ru *aeBlockchainTransactionRules) validBlockchainTransaction_IsUnique() (bool, error) {
 	// loop over all events in the view, check if the transaction is already in the view
-	userStreamView := ru.params.streamView.(events.UserStreamView)
+	userStreamView := ru.params.streamView
 
 	hasTransaction, err := userStreamView.HasTransaction(ru.transaction.GetReceipt())
 	if err != nil {
@@ -852,10 +757,72 @@ func (ru *aeBlockchainTransactionRules) validBlockchainTransaction_CheckReceiptM
 			Err_INVALID_ARGUMENT,
 			"matching tip event not found in receipt logs",
 		)
+	case *BlockchainTransaction_SpaceReview_:
+		// parse the logs for the review event, make sure it matches the review metadata
+		filterer, err := baseContracts.NewSpaceReviewFilterer(common.Address{}, nil)
+		if err != nil {
+			return false, err
+		}
+		for _, receiptLog := range receipt.Logs {
+			if !bytes.Equal(receiptLog.Address, content.SpaceReview.GetSpaceAddress()) {
+				continue
+			}
+
+			topics := make([]common.Hash, len(receiptLog.Topics))
+			for i, topic := range receiptLog.Topics {
+				topics[i] = common.BytesToHash(topic)
+			}
+			log := ethTypes.Log{
+				Address: common.BytesToAddress(receiptLog.Address),
+				Topics:  topics,
+				Data:    receiptLog.Data,
+			}
+			switch content.SpaceReview.GetAction() {
+			case BlockchainTransaction_SpaceReview_Add:
+				reviewEvent, err := filterer.ParseReviewAdded(log)
+				if err != nil {
+					continue
+				}
+				if reviewEvent.Review.Rating != uint8(content.SpaceReview.GetEvent().Rating) {
+					continue
+				}
+				if !bytes.Equal(reviewEvent.User[:], content.SpaceReview.GetEvent().User) {
+					continue
+				}
+				return true, nil
+			case BlockchainTransaction_SpaceReview_Update:
+				reviewEvent, err := filterer.ParseReviewUpdated(log)
+				if err != nil {
+					continue
+				}
+				if reviewEvent.Review.Rating != uint8(content.SpaceReview.GetEvent().Rating) {
+					continue
+				}
+				if !bytes.Equal(reviewEvent.User[:], content.SpaceReview.GetEvent().User) {
+					continue
+				}
+				return true, nil
+			case BlockchainTransaction_SpaceReview_Delete:
+				reviewEvent, err := filterer.ParseReviewDeleted(log)
+				if err != nil {
+					continue
+				}
+				if !bytes.Equal(reviewEvent.User[:], content.SpaceReview.GetEvent().User) {
+					continue
+				}
+				return true, nil
+			default:
+				continue
+			}
+		}
+		return false, RiverError(
+			Err_INVALID_ARGUMENT,
+			"matching review event not found in receipt logs",
+		)
 	default:
 		return false, RiverError(
 			Err_INVALID_ARGUMENT,
-			"unknown transaction type",
+			"unknown transaction type - check receipt metadata",
 			"transactionType",
 			content,
 		)
@@ -914,7 +881,10 @@ func (ru *aeReceivedBlockchainTransactionRules) parentEventForReceivedBlockchain
 				transaction,
 			),
 			StreamId: streamId,
+			Tags:     ru.params.parsedEvent.Event.Tags, // forward tags
 		}, nil
+	case *BlockchainTransaction_SpaceReview_:
+		return nil, RiverError(Err_INVALID_ARGUMENT, "space review is not a valid received blockchain transaction")
 	default:
 		return nil, RiverError(Err_INVALID_ARGUMENT, "unknown transaction content", "content", content)
 	}
@@ -937,13 +907,15 @@ func (ru *aeBlockchainTransactionRules) parentEventForBlockchainTransaction() (*
 		}
 		if shared.ValidChannelStreamId(&toStreamId) ||
 			shared.ValidDMChannelStreamId(&toStreamId) ||
-			shared.ValidGDMChannelStreamId(&toStreamId) {
+			shared.ValidGDMChannelStreamId(&toStreamId) ||
+			shared.ValidSpaceStreamId(&toStreamId) {
 			return &DerivedEvent{
 				Payload: events.Make_UserPayload_ReceivedBlockchainTransaction(
 					ru.params.parsedEvent.Event.CreatorAddress,
 					ru.transaction,
 				),
 				StreamId: userStreamId,
+				Tags:     ru.params.parsedEvent.Event.Tags, // forward tags
 			}, nil
 		}
 
@@ -953,10 +925,26 @@ func (ru *aeBlockchainTransactionRules) parentEventForBlockchainTransaction() (*
 			"streamId",
 			toStreamId,
 		)
+	case *BlockchainTransaction_SpaceReview_:
+		// forward the space review to the space stream
+		spaceStreamId, err := shared.SpaceIdFromBytes(content.SpaceReview.GetSpaceAddress())
+		if err != nil {
+			return nil, err
+		}
+
+		// forward the tip to the space stream as a member event, preserving the original sender as the from address
+		return &DerivedEvent{
+			Payload: events.Make_MemberPayload_BlockchainTransaction(
+				ru.params.parsedEvent.Event.CreatorAddress,
+				ru.transaction,
+			),
+			StreamId: spaceStreamId,
+			Tags:     ru.params.parsedEvent.Event.Tags, // forward tags if any
+		}, nil
 	default:
 		return nil, RiverError(
 			Err_INVALID_ARGUMENT,
-			"unknown transaction type",
+			"unknown transaction type - parent event for blockchain transaction",
 			"transactionType",
 			content,
 		)
@@ -986,10 +974,17 @@ func (ru *aeBlockchainTransactionRules) blockchainTransaction_ChainAuth() (*auth
 			ru.params.parsedEvent.Event.CreatorAddress,
 			content.Tip.GetEvent().GetSender(),
 		), nil
+	case *BlockchainTransaction_SpaceReview_:
+		// space reviews can be sent through a bundler, verify the space review sender
+		// as specified in the space review content and verified against the logs in blockchainTransaction_CheckReceiptMetadata
+		return auth.NewChainAuthArgsForIsWalletLinked(
+			ru.params.parsedEvent.Event.CreatorAddress,
+			content.SpaceReview.GetEvent().GetUser(),
+		), nil
 	default:
 		return nil, RiverError(
 			Err_INVALID_ARGUMENT,
-			"unknown transaction type",
+			"unknown transaction type - chain auth",
 			"transactionType",
 			content,
 		)
@@ -1030,7 +1025,7 @@ func (ru *aeMembershipRules) validMembershipPayload() (bool, error) {
 
 func (ru *aeMembershipRules) validMembershipLimit() (bool, error) {
 	if ru.membership.Op == MembershipOp_SO_JOIN || ru.membership.Op == MembershipOp_SO_INVITE {
-		members, err := ru.params.streamView.(events.JoinableStreamView).GetChannelMembers()
+		members, err := ru.params.streamView.GetChannelMembers()
 		if err != nil {
 			return false, err
 		}
@@ -1055,7 +1050,7 @@ func (ru *aeMembershipRules) validMembershipTransition() (bool, error) {
 
 	userAddress := ru.membership.UserAddress
 
-	currentMembership, err := ru.params.streamView.(events.JoinableStreamView).GetMembership(userAddress)
+	currentMembership, err := ru.params.streamView.GetMembership(userAddress)
 	if err != nil {
 		return false, err
 	}
@@ -1132,7 +1127,7 @@ func (ru *aeMembershipRules) validMembershipTransitionForDM() (bool, error) {
 		return false, RiverError(Err_INVALID_ARGUMENT, "membership is nil")
 	}
 
-	inception, err := ru.params.streamView.(events.DMChannelStreamView).GetDMChannelInception()
+	inception, err := ru.params.streamView.GetDMChannelInception()
 	if err != nil {
 		return false, err
 	}
@@ -1183,11 +1178,11 @@ func (ru *aeMembershipRules) validMembershipTransitionForGDM() (bool, error) {
 	initiatorAddress := ru.membership.InitiatorAddress
 	userAddress := ru.membership.UserAddress
 
-	initiatorMembership, err := ru.params.streamView.(events.JoinableStreamView).GetMembership(initiatorAddress)
+	initiatorMembership, err := ru.params.streamView.GetMembership(initiatorAddress)
 	if err != nil {
 		return false, err
 	}
-	userMembership, err := ru.params.streamView.(events.JoinableStreamView).GetMembership(userAddress)
+	userMembership, err := ru.params.streamView.GetMembership(userAddress)
 	if err != nil {
 		return false, err
 	}
@@ -1285,7 +1280,7 @@ func (ru *aeUserMembershipRules) validUserMembershipTransition() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	currentMembershipOp, err := ru.params.streamView.(events.UserStreamView).GetUserMembership(streamId)
+	currentMembershipOp, err := ru.params.streamView.GetUserMembership(streamId)
 	if err != nil {
 		return false, err
 	}
@@ -1411,7 +1406,7 @@ func (ru *aeMembershipRules) spaceMembershipEntitlements() (*auth.ChainAuthArgs,
 }
 
 func (ru *aeMembershipRules) channelMembershipEntitlements() (*auth.ChainAuthArgs, error) {
-	inception, err := ru.params.streamView.(events.ChannelStreamView).GetChannelInception()
+	inception, err := ru.params.streamView.GetChannelInception()
 	if err != nil {
 		return nil, err
 	}
@@ -1450,124 +1445,6 @@ func (ru *aeMembershipRules) channelMembershipEntitlements() (*auth.ChainAuthArg
 	return chainAuthArgs, nil
 }
 
-func (ru *aeMlsInitializeGroupRules) validMlsInitializeGroup() (bool, error) {
-	mlsInitialized, err := ru.params.streamView.(events.MlsStreamView).IsMlsInitialized()
-	if err != nil {
-		return false, err
-	}
-	if mlsInitialized {
-		return false, RiverError(Err_INVALID_ARGUMENT, "group already initialized")
-	}
-	request := mls_tools.InitialGroupInfoRequest{
-		SignaturePublicKey:    ru.initializeGroup.SignaturePublicKey,
-		GroupInfoMessage:      ru.initializeGroup.GroupInfoMessage,
-		ExternalGroupSnapshot: ru.initializeGroup.ExternalGroupSnapshot,
-	}
-	resp, err := mls_service.InitialGroupInfoRequest(&request)
-	if err != nil {
-		return false, err
-	}
-	if resp.GetResult() != mls_tools.ValidationResult_VALID {
-		return false, RiverError(Err_INVALID_ARGUMENT, "invalid group init", "result", resp.GetResult())
-	}
-	return true, nil
-}
-
-func (ru *aeMlsExternalJoinRules) validMlsExternalJoin() (bool, error) {
-	view := ru.params.streamView.(events.MlsStreamView)
-	mlsGroupState, err := view.GetMlsGroupState()
-	if err != nil {
-		return false, err
-	}
-
-	externalJoinRequest := &mls_tools.ExternalJoinRequest{
-		GroupState:                      mlsGroupState,
-		ProposedExternalJoinCommit:      ru.externalJoin.Commit,
-		ProposedExternalJoinInfoMessage: ru.externalJoin.GroupInfoMessage,
-		SignaturePublicKey:              ru.externalJoin.SignaturePublicKey,
-	}
-
-	resp, err := mls_service.ExternalJoinRequest(externalJoinRequest)
-	if err != nil {
-		return false, err
-	}
-	if resp.GetResult() != mls_tools.ValidationResult_VALID {
-		return false, RiverError(Err_INVALID_ARGUMENT, "invalid external join", "result", resp.GetResult())
-	}
-	return true, nil
-}
-
-func (ru *aeMlsEpochSecrets) validMlsEpochSecrets() (bool, error) {
-	if len(ru.secrets.Secrets) == 0 {
-		return false, RiverError(Err_INVALID_ARGUMENT, "no secrets provided")
-	}
-	view := ru.params.streamView.(events.MlsStreamView)
-	epochSecrets, err := view.GetMlsEpochSecrets()
-	if err != nil {
-		return false, err
-	}
-	for _, secret := range ru.secrets.Secrets {
-		if _, ok := epochSecrets[secret.Epoch]; ok {
-			return false, RiverError(Err_INVALID_ARGUMENT, "epoch already exists", "epoch", secret.Epoch)
-		}
-	}
-	return true, nil
-}
-
-func (ru *aeMlsKeyPackageRules) validMlsKeyPackage() (bool, error) {
-	view := ru.params.streamView.(events.MlsStreamView)
-	mlsGroupState, err := view.GetMlsGroupState()
-	if err != nil {
-		return false, err
-	}
-
-	keyPackageRequest := &mls_tools.KeyPackageRequest{
-		GroupState: mlsGroupState,
-		KeyPackage: &mls_tools.KeyPackage{
-			KeyPackage:         ru.keyPackage.KeyPackage,
-			SignaturePublicKey: ru.keyPackage.SignaturePublicKey,
-		},
-	}
-
-	resp, err := mls_service.KeyPackageRequest(keyPackageRequest)
-	if err != nil {
-		return false, err
-	}
-
-	if resp.GetResult() != mls_tools.ValidationResult_VALID {
-		return false, RiverError(Err_INVALID_ARGUMENT, "invalid key package", "result", resp.GetResult())
-	}
-
-	return true, nil
-}
-
-func (ru *aeMlsWelcomeMessageRules) validMlsWelcomeMessage() (bool, error) {
-	view := ru.params.streamView.(events.MlsStreamView)
-	mlsGroupState, err := view.GetMlsGroupState()
-	if err != nil {
-		return false, err
-	}
-
-	welcomeMessageRequest := &mls_tools.WelcomeMessageRequest{
-		GroupState:           mlsGroupState,
-		SignaturePublicKeys:  ru.welcomeMessage.SignaturePublicKeys,
-		GroupInfoMessage:     ru.welcomeMessage.GroupInfoMessage,
-		WelcomeMessages:      ru.welcomeMessage.WelcomeMessages,
-		WelcomeMessageCommit: ru.welcomeMessage.Commit,
-	}
-
-	resp, err := mls_service.WelcomeMessageRequest(welcomeMessageRequest)
-	if err != nil {
-		return false, err
-	}
-
-	if resp.GetResult() != mls_tools.ValidationResult_VALID {
-		return false, RiverError(Err_INVALID_ARGUMENT, "invalid welcome message", "result", resp.GetResult())
-	}
-
-	return true, nil
-}
-
 // return function that can be used to check if a user has a permission for a space
 func (params *aeParams) spaceEntitlements(permission auth.Permission) func() (*auth.ChainAuthArgs, error) {
 	return func() (*auth.ChainAuthArgs, error) {
@@ -1599,7 +1476,7 @@ func (params *aeParams) channelEntitlements(permission auth.Permission) func() (
 		}
 		channelId := *params.streamView.StreamId()
 
-		inception, err := params.streamView.(events.ChannelStreamView).GetChannelInception()
+		inception, err := params.streamView.GetChannelInception()
 		if err != nil {
 			return nil, err
 		}
@@ -1683,7 +1560,7 @@ func (ru *aeMembershipRules) getPermissionForMembershipOp() (auth.Permission, st
 		return auth.PermissionUndefined, "", err
 	}
 
-	currentMembership, err := ru.params.streamView.(events.JoinableStreamView).GetMembership(userAddress)
+	currentMembership, err := ru.params.streamView.GetMembership(userAddress)
 	if err != nil {
 		return auth.PermissionUndefined, "", err
 	}
@@ -1758,7 +1635,7 @@ func (ru *aePinRules) validPin() (bool, error) {
 	}
 
 	// cast as joinable view state
-	view := ru.params.streamView.(events.JoinableStreamView)
+	view := ru.params.streamView
 	// get existing pins
 	existingPins, err := view.GetPinnedMessages()
 	if err != nil {
@@ -1772,7 +1649,7 @@ func (ru *aePinRules) validPin() (bool, error) {
 	// check if the hash is already pinned
 	for _, snappedPin := range existingPins {
 		if bytes.Equal(snappedPin.Pin.EventId, ru.pin.EventId) {
-			return false, RiverError(Err_DUPLICATE_EVENT, "message is already pinned")
+			return false, RiverError(Err_ALREADY_EXISTS, "message is already pinned")
 		}
 	}
 	return true, nil
@@ -1787,7 +1664,7 @@ func (ru *aeUnpinRules) validUnpin() (bool, error) {
 		return false, RiverError(Err_INVALID_ARGUMENT, "invalid message hash")
 	}
 	// cast as joinable view state
-	view := ru.params.streamView.(events.JoinableStreamView)
+	view := ru.params.streamView
 	// get existing pins
 	existingPins, err := view.GetPinnedMessages()
 	if err != nil {
@@ -1831,7 +1708,7 @@ func (params *aeParams) channelExistsInSpace(spaceChannelPayloadRules HasChannel
 			return false, err
 		}
 
-		view := params.streamView.(events.SpaceStreamView)
+		view := params.streamView
 		// check if the channel exists
 		_, err = view.GetChannelInfo(channelId)
 		if err != nil {
@@ -1848,7 +1725,7 @@ func (ru *aeSpaceChannelRules) validSpaceChannelOp() (bool, error) {
 	}
 
 	next := ru.channelUpdate
-	view := ru.params.streamView.(events.SpaceStreamView)
+	view := ru.params.streamView
 	channelId, err := shared.StreamIdFromBytes(next.ChannelId)
 	if err != nil {
 		return false, err
@@ -1885,7 +1762,7 @@ func (ru *aeMediaPayloadChunkRules) canAddMediaChunk() (bool, error) {
 	}
 	chunk := ru.chunk
 
-	inception, err := ru.params.streamView.(events.MediaStreamView).GetMediaInception()
+	inception, err := ru.params.streamView.GetMediaInception()
 	if err != nil {
 		return false, err
 	}
@@ -1919,6 +1796,14 @@ func (ru *aeKeySolicitationRules) validKeySolicitation() (bool, error) {
 		return false, RiverError(Err_INVALID_ARGUMENT, "session ids must be sorted")
 	}
 
+	if len(ru.solicitation.SessionIds) > 0 {
+		for _, sessionId := range ru.solicitation.SessionIds {
+			if sessionId == "" {
+				return false, RiverError(Err_INVALID_ARGUMENT, "session ids must not be empty")
+			}
+		}
+	}
+
 	return true, nil
 }
 
@@ -1927,7 +1812,7 @@ func (ru *aeKeyFulfillmentRules) validKeyFulfillment() (bool, error) {
 		return false, RiverError(Err_INVALID_ARGUMENT, "event is not a key fulfillment event")
 	}
 	userAddress := ru.fulfillment.UserAddress
-	solicitations, err := ru.params.streamView.(events.JoinableStreamView).GetKeySolicitations(userAddress)
+	solicitations, err := ru.params.streamView.GetKeySolicitations(userAddress)
 	if err != nil {
 		return false, err
 	}
@@ -1945,7 +1830,7 @@ func (ru *aeKeyFulfillmentRules) validKeyFulfillment() (bool, error) {
 			if hasCommon(solicitation.SessionIds, ru.fulfillment.SessionIds) {
 				return true, nil
 			}
-			return false, RiverError(Err_DUPLICATE_EVENT, "solicitation with common session ids not found")
+			return false, RiverError(Err_NOT_FOUND, "solicitation with common session ids not found")
 		}
 	}
 	return false, RiverError(Err_INVALID_ARGUMENT, "solicitation with matching device key not found")

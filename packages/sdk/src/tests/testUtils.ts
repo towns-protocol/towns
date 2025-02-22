@@ -12,6 +12,7 @@ import {
     SnapshotCaseType,
     SyncStreamsResponse,
     SyncOp,
+    EncryptedDataVersion,
 } from '@river-build/proto'
 import { Entitlements } from '../sync-agent/entitlements/entitlements'
 import { PlainMessage } from '@bufbuild/protobuf'
@@ -158,6 +159,7 @@ export const TEST_ENCRYPTED_MESSAGE_PROPS: PlainMessage<EncryptedData> = {
     senderKey: '',
     ciphertextBytes: new Uint8Array(0),
     ivBytes: new Uint8Array(0),
+    version: EncryptedDataVersion.ENCRYPTED_DATA_VERSION_1,
 }
 
 export const getXchainConfigForTesting = (): XchainConfig => {
@@ -925,7 +927,7 @@ export async function linkWallets(
 export function waitFor<T>(
     callback: (() => T) | (() => Promise<T>),
     options: { timeoutMS: number } = { timeoutMS: 5000 },
-): Promise<T | undefined> {
+): Promise<T> {
     const timeoutContext: Error = new Error(
         'waitFor timed out after ' + options.timeoutMS.toString() + 'ms',
     )
@@ -939,8 +941,10 @@ export function waitFor<T>(
         function onDone(result?: T) {
             clearInterval(intervalId)
             clearInterval(timeoutId)
-            if (result || promiseStatus === 'resolved') {
+            if (result) {
                 resolve(result)
+            } else if (result === undefined && promiseStatus === 'resolved') {
+                resolve(undefined as T)
             } else {
                 reject(lastError)
             }
@@ -970,7 +974,11 @@ export function waitFor<T>(
                     )
                 } else {
                     promiseStatus = 'resolved'
-                    resolve(result)
+                    if (result) {
+                        // if result is not truthy, resolve
+                        resolve(result)
+                    }
+                    // otherwise let the polling continue
                 }
             } catch (err: any) {
                 lastError = err

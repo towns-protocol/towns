@@ -57,14 +57,14 @@ contract TownsPointsTest is
   function test_batchMintPoints_revertIf_invalidArrayLength() public {
     vm.prank(deployer);
     vm.expectRevert(TownsPoints__InvalidArrayLength.selector);
-    pointsFacet.batchMintPoints(new address[](1), new uint256[](2));
+    pointsFacet.batchMintPoints(abi.encode(new address[](1), new uint256[](2)));
   }
 
   function test_batchMintPoints_revertIf_notOwner() public {
     vm.expectRevert(
       abi.encodeWithSelector(Ownable__NotOwner.selector, address(this))
     );
-    pointsFacet.batchMintPoints(new address[](1), new uint256[](1));
+    pointsFacet.batchMintPoints(abi.encode(new address[](1), new uint256[](1)));
   }
 
   function test_fuzz_batchMintPoints(
@@ -81,7 +81,7 @@ contract TownsPointsTest is
     address[] memory _accounts = toDyn(accounts);
     uint256[] memory _values = toDyn(values);
     vm.prank(deployer);
-    pointsFacet.batchMintPoints(_accounts, _values);
+    pointsFacet.batchMintPoints(abi.encode(_accounts, _values));
   }
 
   modifier givenCheckedIn(address user) {

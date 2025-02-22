@@ -1,10 +1,11 @@
 import { DecryptionAlgorithm, DecryptionError, IDecryptionParams } from './base'
 import { GroupEncryptionAlgorithmId, GroupEncryptionSession } from './olmLib'
-import { EncryptedData, HybridGroupSessionKey } from '@river-build/proto'
-import { bin_toHexString, dlog } from '@river-build/dlog'
+import { EncryptedData, EncryptedDataVersion, HybridGroupSessionKey } from '@river-build/proto'
+import { bin_toHexString, dlogError } from '@river-build/dlog'
 import { decryptAesGcm, importAesGsmKeyBytes } from './cryptoAesGcm'
+import { LRUCache } from 'lru-cache'
 
-const log = dlog('csb:encryption:groupDecryption')
+const logError = dlogError('csb:encryption:groupDecryption')
 
 /**
  * Group decryption implementation
@@ -13,8 +14,10 @@ const log = dlog('csb:encryption:groupDecryption')
  */
 export class HybridGroupDecryption extends DecryptionAlgorithm {
     public readonly algorithm = GroupEncryptionAlgorithmId.HybridGroupEncryption
+    private lruCache: LRUCache<string, HybridGroupSessionKey>
     public constructor(params: IDecryptionParams) {
         super(params)
+        this.lruCache = new LRUCache<string, HybridGroupSessionKey>({ max: 1000 })
     }
 
     /**
@@ -23,7 +26,7 @@ export class HybridGroupDecryption extends DecryptionAlgorithm {
      * decrypting, or rejects with an `algorithms.DecryptionError` if there is a
      * problem decrypting the event.
      */
-    public async decrypt(streamId: string, content: EncryptedData): Promise<string> {
+    public async decrypt(streamId: string, content: EncryptedData): Promise<Uint8Array | string> {
         if (
             !content.senderKey ||
             !content.sessionIdBytes ||
@@ -38,14 +41,32 @@ export class HybridGroupDecryption extends DecryptionAlgorithm {
 
         const sessionId = bin_toHexString(content.sessionIdBytes)
 
-        const session: HybridGroupSessionKey = await this.device.getHybridGroupSessionKey(
-            streamId,
-            sessionId,
-        )
+        // Check cache first
+        let session = this.lruCache.get(sessionId)
+
+        // If not in cache, fetch from device
+        if (!session) {
+            session = await this.device.getHybridGroupSessionKey(streamId, sessionId)
+            if (!session) {
+                throw new DecryptionError(
+                    'HYBRID_GROUP_DECRYPTION_MISSING_SESSION',
+                    'Missing session',
+                )
+            }
+            this.lruCache.set(sessionId, session)
+        }
 
         const key = await importAesGsmKeyBytes(session.key)
         const result = await decryptAesGcm(key, content.ciphertextBytes, content.ivBytes)
-        return new TextDecoder().decode(result) // TODO: what kind of string is actually expected here? TODO: convert to Uint8Array
+
+        switch (content.version) {
+            case EncryptedDataVersion.ENCRYPTED_DATA_VERSION_0:
+                return new TextDecoder().decode(result)
+            case EncryptedDataVersion.ENCRYPTED_DATA_VERSION_1:
+                return result
+            default:
+                throw new DecryptionError('GROUP_DECRYPTION_INVALID_VERSION', 'Unsupported version')
+        }
     }
 
     /**
@@ -56,7 +77,8 @@ export class HybridGroupDecryption extends DecryptionAlgorithm {
         try {
             await this.device.addHybridGroupSession(streamId, session.sessionId, session.sessionKey)
         } catch (e) {
-            log(`Error handling room key import: ${(<Error>e).message}`)
+            logError(`Error handling room key import: ${(<Error>e).message}`)
+            throw e
         }
     }
 
@@ -65,12 +87,12 @@ export class HybridGroupDecryption extends DecryptionAlgorithm {
         streamId: string,
         sessionId: string,
     ): Promise<GroupEncryptionSession | undefined> {
-        return this.device.exportHybridGroupSession(streamId, sessionId, this.algorithm)
+        return this.device.exportHybridGroupSession(streamId, sessionId)
     }
 
     /** */
     public exportGroupSessions(): Promise<GroupEncryptionSession[]> {
-        return this.device.exportHybridGroupSessions(this.algorithm)
+        return this.device.exportHybridGroupSessions()
     }
 
     /** */

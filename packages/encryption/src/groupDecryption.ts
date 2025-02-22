@@ -2,10 +2,12 @@ import type { GroupSessionExtraData } from './encryptionDevice'
 
 import { DecryptionAlgorithm, DecryptionError, IDecryptionParams } from './base'
 import { GroupEncryptionAlgorithmId, GroupEncryptionSession } from './olmLib'
-import { EncryptedData } from '@river-build/proto'
-import { dlog } from '@river-build/dlog'
+import { EncryptedData, EncryptedDataVersion } from '@river-build/proto'
+import { bin_fromBase64, dlogError } from '@river-build/dlog'
+import { LRUCache } from 'lru-cache'
+import { InboundGroupSession } from '@matrix-org/olm'
 
-const log = dlog('csb:encryption:groupDecryption')
+const logError = dlogError('csb:encryption:groupDecryption')
 
 /**
  * Group decryption implementation
@@ -14,8 +16,10 @@ const log = dlog('csb:encryption:groupDecryption')
  */
 export class GroupDecryption extends DecryptionAlgorithm {
     public readonly algorithm = GroupEncryptionAlgorithmId.GroupEncryption
+    private lruCache: LRUCache<string, InboundGroupSession>
     public constructor(params: IDecryptionParams) {
         super(params)
+        this.lruCache = new LRUCache<string, InboundGroupSession>({ max: 1000 })
     }
 
     /**
@@ -24,19 +28,39 @@ export class GroupDecryption extends DecryptionAlgorithm {
      * decrypting, or rejects with an `algorithms.DecryptionError` if there is a
      * problem decrypting the event.
      */
-    public async decrypt(streamId: string, content: EncryptedData): Promise<string> {
+    public async decrypt(streamId: string, content: EncryptedData): Promise<Uint8Array | string> {
         if (!content.senderKey || !content.sessionId || !content.ciphertext) {
             throw new DecryptionError('GROUP_DECRYPTION_MISSING_FIELDS', 'Missing fields in input')
         }
 
-        const { session } = await this.device.getInboundGroupSession(streamId, content.sessionId)
+        let session = this.lruCache.get(content.sessionId)
+        if (!session) {
+            const { session: loadedSession } = await this.device.getInboundGroupSession(
+                streamId,
+                content.sessionId,
+            )
+            if (loadedSession) {
+                this.lruCache.set(content.sessionId, loadedSession)
+                session = loadedSession
+            }
+        }
 
         if (!session) {
             throw new Error('Session not found')
         }
 
+        // for historical reasons, we return the plaintext as a string
         const result = session.decrypt(content.ciphertext)
-        return result.plaintext
+
+        switch (content.version) {
+            case EncryptedDataVersion.ENCRYPTED_DATA_VERSION_0:
+                return result.plaintext
+            case EncryptedDataVersion.ENCRYPTED_DATA_VERSION_1:
+                return bin_fromBase64(result.plaintext)
+
+            default:
+                throw new DecryptionError('GROUP_DECRYPTION_INVALID_VERSION', 'Unsupported version')
+        }
     }
 
     /**
@@ -56,7 +80,8 @@ export class GroupDecryption extends DecryptionAlgorithm {
                 extraSessionData,
             )
         } catch (e) {
-            log(`Error handling room key import: ${(<Error>e).message}`)
+            logError(`Error handling room key import: ${(<Error>e).message}`)
+            throw e
         }
     }
 

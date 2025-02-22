@@ -5,16 +5,22 @@ pragma solidity ^0.8.23;
 import {ICreateSpace} from "contracts/src/factory/facets/create/ICreateSpace.sol";
 
 // libraries
+import {CreateSpaceLib} from "contracts/src/factory/facets/create/CreateSpaceLib.sol";
 
 // contracts
 import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
-import {ArchitectBase} from "contracts/src/factory/facets/architect/ArchitectBase.sol";
 import {PausableBase} from "@river-build/diamond/src/facets/pausable/PausableBase.sol";
 import {ReentrancyGuard} from "solady/utils/ReentrancyGuard.sol";
 
+/// @title CreateSpaceFacet
+/// @notice Facet for creating new spaces with various configurations
+/// @dev Inherits from:
+/// - ICreateSpace: Interface defining space creation methods
+/// - PausableBase: Allows pausing of space creation functionality
+/// - ReentrancyGuard: Prevents reentrancy attacks during space creation
+/// - Facet: Base contract for diamond facets
 contract CreateSpaceFacet is
   ICreateSpace,
-  ArchitectBase,
   PausableBase,
   ReentrancyGuard,
   Facet
@@ -23,18 +29,31 @@ contract CreateSpaceFacet is
     _addInterface(type(ICreateSpace).interfaceId);
   }
 
+  /// @inheritdoc ICreateSpace
+  function createSpaceV2(
+    CreateSpace memory spaceInfo,
+    SpaceOptions memory options
+  ) external payable nonReentrant whenNotPaused returns (address) {
+    return CreateSpaceLib.createSpaceWithPrepay(spaceInfo, options);
+  }
+
+  /// @inheritdoc ICreateSpace
   function createSpace(
     SpaceInfo memory spaceInfo
   ) external nonReentrant whenNotPaused returns (address) {
-    return _createSpace(spaceInfo);
+    SpaceOptions memory spaceOptions = SpaceOptions({to: msg.sender});
+    return CreateSpaceLib.createSpace(spaceInfo, spaceOptions);
   }
 
+  /// @inheritdoc ICreateSpace
   function createSpaceWithPrepay(
     CreateSpace memory spaceInfo
   ) external payable nonReentrant whenNotPaused returns (address) {
-    return _createSpaceWithPrepay(spaceInfo);
+    SpaceOptions memory spaceOptions = SpaceOptions({to: msg.sender});
+    return CreateSpaceLib.createSpaceWithPrepay(spaceInfo, spaceOptions);
   }
 
+  /// @inheritdoc ICreateSpace
   function createSpaceWithPrepay(
     CreateSpaceOld memory spaceInfo
   ) external payable nonReentrant whenNotPaused returns (address) {
@@ -55,6 +74,7 @@ contract CreateSpaceFacet is
       channel: spaceInfo.channel,
       prepay: spaceInfo.prepay
     });
-    return _createSpaceWithPrepay(newSpaceInfo);
+    SpaceOptions memory spaceOptions = SpaceOptions({to: msg.sender});
+    return CreateSpaceLib.createSpaceWithPrepay(newSpaceInfo, spaceOptions);
   }
 }

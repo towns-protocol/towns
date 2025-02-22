@@ -31,8 +31,8 @@ var (
 
 // EntitlementCheckerMetaData contains all meta data concerning the EntitlementChecker contract.
 var EntitlementCheckerMetaData = &bind.MetaData{
-	ABI: "[{\"type\":\"function\",\"name\":\"__EntitlementChecker_init\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"getNodeAtIndex\",\"inputs\":[{\"name\":\"index\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getNodeCount\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getNodesByOperator\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"nodes\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getRandomNodes\",\"inputs\":[{\"name\":\"count\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isValidNode\",\"inputs\":[{\"name\":\"node\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"registerNode\",\"inputs\":[{\"name\":\"node\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"requestEntitlementCheck\",\"inputs\":[{\"name\":\"callerAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"transactionId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"roleId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"nodes\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"unregisterNode\",\"inputs\":[{\"name\":\"node\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"EntitlementCheckRequested\",\"inputs\":[{\"name\":\"callerAddress\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"contractAddress\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"transactionId\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"},{\"name\":\"roleId\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"selectedNodes\",\"type\":\"address[]\",\"indexed\":false,\"internalType\":\"address[]\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"Initialized\",\"inputs\":[{\"name\":\"version\",\"type\":\"uint32\",\"indexed\":false,\"internalType\":\"uint32\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"InterfaceAdded\",\"inputs\":[{\"name\":\"interfaceId\",\"type\":\"bytes4\",\"indexed\":true,\"internalType\":\"bytes4\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"InterfaceRemoved\",\"inputs\":[{\"name\":\"interfaceId\",\"type\":\"bytes4\",\"indexed\":true,\"internalType\":\"bytes4\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"NodeRegistered\",\"inputs\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"NodeUnregistered\",\"inputs\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"error\",\"name\":\"EntitlementChecker_InsufficientNumberOfNodes\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"EntitlementChecker_InvalidNodeOperator\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"EntitlementChecker_InvalidOperator\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"EntitlementChecker_NodeAlreadyRegistered\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"EntitlementChecker_NodeNotRegistered\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"EntitlementChecker_OperatorNotActive\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"Initializable_InInitializingState\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"Initializable_NotInInitializingState\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"Introspection_AlreadySupported\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"Introspection_NotSupported\",\"inputs\":[]}]",
-	Bin: "0x608060405234801561001057600080fd5b5061001961001e565b6100c4565b7f59b501c3653afc186af7d48dda36cf6732bd21629a6295693664240a6ef520008054640100000000900460ff161561006a576040516366008a2d60e01b815260040160405180910390fd5b805463ffffffff90811610156100c157805463ffffffff191663ffffffff90811782556040519081527fe9c9b456cb2994b80aeef036cf59d26e9617df80f816a6ee5a5b4166e07e2f5c9060200160405180910390a15b50565b610d3f806100d36000396000f3fe608060405234801561001057600080fd5b50600436106100935760003560e01c80634f845445116100665780634f84544514610108578063541da4e51461011b578063672d7a0d1461012e5780639ebd11ef14610141578063c5e41cf61461016457600080fd5b806339bf397e1461009857806339dc5b3e146100b35780633c59f126146100bd57806343024ac9146100e8575b600080fd5b6100a0610177565b6040519081526020015b60405180910390f35b6100bb610197565b005b6100d06100cb366004610aad565b6101f3565b6040516001600160a01b0390911681526020016100aa565b6100fb6100f6366004610ae2565b610266565b6040516100aa9190610b42565b6100fb610116366004610aad565b610358565b6100bb610129366004610b6b565b610369565b6100bb61013c366004610ae2565b6103ae565b61015461014f366004610ae2565b6104d3565b60405190151581526020016100aa565b6100bb610172366004610ae2565b6104ee565b6000600080516020610d1f833981519152610191816105f1565b91505090565b7f59b501c3653afc186af7d48dda36cf6732bd21629a6295693664240a6ef5200054640100000000900460ff166101e157604051630ef4733760e31b815260040160405180910390fd5b6101f1636109052560e01b6105fb565b565b6000600080516020610d1f83398151915261020d816105f1565b83106102555760405162461bcd60e51b8152602060048201526013602482015272496e646578206f7574206f6620626f756e647360681b604482015260640160405180910390fd5b61025f81846106d4565b9392505050565b6060600080516020610d1f8339815191526000610282826105f1565b90508067ffffffffffffffff81111561029d5761029d610b55565b6040519080825280602002602001820160405280156102c6578160200160208202803683370190505b5092506000805b8281101561034d5760006102e185836106d4565b6001600160a01b038082166000908152600288016020526040902054919250808916911603610344578086848060010195508151811061032357610323610c54565b60200260200101906001600160a01b031690816001600160a01b0316815250505b506001016102cd565b508352509092915050565b6060610363826106e0565b92915050565b7f4675e3cc15801ffde520a3076d6ad75c0c6dbe8f23bdbea1dd45b676caffe4f384338585856040516103a0959493929190610c6a565b60405180910390a150505050565b7f988e8266be98e92aff755bdd688f8f4a2421e26daa6089c7e2668053a3bf55006103d981336108ab565b6103f65760405163c931a1fb60e01b815260040160405180910390fd5b600080516020610d1f83398151915261040f81846108ab565b1561042d5760405163d1922fc160e01b815260040160405180910390fd5b61043781846108cd565b506001600160a01b038316600081815260028301602052604080822080546001600160a01b03191633179055517f564728e6a7c8edd446557d94e0339d5e6ca2e05f42188914efdbdc87bcbbabf69190a250600233600090815260028301602052604090205460ff1660038111156104b1576104b1610caf565b146104cf57604051637164de9160e01b815260040160405180910390fd5b5050565b6000600080516020610d1f83398151915261025f81846108ab565b6001600160a01b0380821660009081527f180c1d0b9e5eeea9f2f078bc2712cd77acc6afea03b37705abe96dda6f602602602052604090205482913391600080516020610d1f8339815191529116821461055b5760405163fd2dc62f60e01b815260040160405180910390fd5b600080516020610d1f83398151915261057481866108ab565b610591576040516317e3e0b960e01b815260040160405180910390fd5b61059b81866108e2565b506001600160a01b038516600081815260028301602052604080822080546001600160a01b0319169055517fb1864577e4f285436a80ebc833984755393e2450d58622a65fb4fce87ea3573a9190a25050505050565b6000610363825490565b6001600160e01b0319811660009081527f81088bbc801e045ea3e7620779ab349988f58afbdfba10dff983df3f33522b00602052604090205460ff16610683576001600160e01b0319811660009081527f81088bbc801e045ea3e7620779ab349988f58afbdfba10dff983df3f33522b0060205260409020805460ff1916600117905561069c565b604051637967f77d60e11b815260040160405180910390fd5b6040516001600160e01b03198216907f78f84e5b1c5c05be2b5ad3800781dd404d6d6c6302bc755c0fe20f58a33a7f2290600090a250565b600061025f83836108f7565b6060600080516020610d1f83398151915260006106fc826105f1565b90508084111561071f57604051631762997d60e01b815260040160405180910390fd5b60008467ffffffffffffffff81111561073a5761073a610b55565b604051908082528060200260200182016040528015610763578160200160208202803683370190505b50905060008267ffffffffffffffff81111561078157610781610b55565b6040519080825280602002602001820160405280156107aa578160200160208202803683370190505b50905060005b838110156107de57808282815181106107cb576107cb610c54565b60209081029190910101526001016107b0565b5060005b868110156108a05760006107f68286610921565b905061082783828151811061080d5761080d610c54565b6020026020010151876000016106d490919063ffffffff16565b84838151811061083957610839610c54565b60200260200101906001600160a01b031690816001600160a01b0316815250508285600190039550858151811061087257610872610c54565b602002602001015183828151811061088c5761088c610c54565b6020908102919091010152506001016107e2565b509095945050505050565b6001600160a01b0381166000908152600183016020526040812054151561025f565b600061025f836001600160a01b03841661096b565b600061025f836001600160a01b0384166109ba565b600082600001828154811061090e5761090e610c54565b9060005260206000200154905092915050565b60408051446020820152429181019190915260608101839052336080820152600090829060a0016040516020818303038152906040528051906020012060001c61025f9190610cc5565b60008181526001830160205260408120546109b257508154600181810184556000848152602080822090930184905584548482528286019093526040902091909155610363565b506000610363565b60008181526001830160205260408120548015610aa35760006109de600183610ce7565b85549091506000906109f290600190610ce7565b9050808214610a57576000866000018281548110610a1257610a12610c54565b9060005260206000200154905080876000018481548110610a3557610a35610c54565b6000918252602080832090910192909255918252600188019052604090208390555b8554869080610a6857610a68610d08565b600190038181906000526020600020016000905590558560010160008681526020019081526020016000206000905560019350505050610363565b6000915050610363565b600060208284031215610abf57600080fd5b5035919050565b80356001600160a01b0381168114610add57600080fd5b919050565b600060208284031215610af457600080fd5b61025f82610ac6565b60008151808452602080850194506020840160005b83811015610b375781516001600160a01b031687529582019590820190600101610b12565b509495945050505050565b60208152600061025f6020830184610afd565b634e487b7160e01b600052604160045260246000fd5b60008060008060808587031215610b8157600080fd5b610b8a85610ac6565b9350602080860135935060408601359250606086013567ffffffffffffffff80821115610bb657600080fd5b818801915088601f830112610bca57600080fd5b813581811115610bdc57610bdc610b55565b8060051b604051601f19603f83011681018181108582111715610c0157610c01610b55565b60405291825284820192508381018501918b831115610c1f57600080fd5b938501935b82851015610c4457610c3585610ac6565b84529385019392850192610c24565b989b979a50959850505050505050565b634e487b7160e01b600052603260045260246000fd5b6001600160a01b03868116825285166020820152604081018490526060810183905260a060808201819052600090610ca490830184610afd565b979650505050505050565b634e487b7160e01b600052602160045260246000fd5b600082610ce257634e487b7160e01b600052601260045260246000fd5b500690565b8181038181111561036357634e487b7160e01b600052601160045260246000fd5b634e487b7160e01b600052603160045260246000fdfe180c1d0b9e5eeea9f2f078bc2712cd77acc6afea03b37705abe96dda6f602600",
+	ABI: "[{\"type\":\"function\",\"name\":\"__EntitlementChecker_init\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"getNodeAtIndex\",\"inputs\":[{\"name\":\"index\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getNodeCount\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getNodesByOperator\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"nodes\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getRandomNodes\",\"inputs\":[{\"name\":\"count\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isValidNode\",\"inputs\":[{\"name\":\"node\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"registerNode\",\"inputs\":[{\"name\":\"node\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"requestEntitlementCheck\",\"inputs\":[{\"name\":\"walletAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"transactionId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"roleId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"nodes\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"requestEntitlementCheckV2\",\"inputs\":[{\"name\":\"walletAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"transactionId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"requestId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"extraData\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"outputs\":[],\"stateMutability\":\"payable\"},{\"type\":\"function\",\"name\":\"unregisterNode\",\"inputs\":[{\"name\":\"node\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"EntitlementCheckRequested\",\"inputs\":[{\"name\":\"callerAddress\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"contractAddress\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"transactionId\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"},{\"name\":\"roleId\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"selectedNodes\",\"type\":\"address[]\",\"indexed\":false,\"internalType\":\"address[]\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"EntitlementCheckRequestedV2\",\"inputs\":[{\"name\":\"walletAddress\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"spaceAddress\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"resolverAddress\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"transactionId\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"},{\"name\":\"roleId\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"selectedNodes\",\"type\":\"address[]\",\"indexed\":false,\"internalType\":\"address[]\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"Initialized\",\"inputs\":[{\"name\":\"version\",\"type\":\"uint32\",\"indexed\":false,\"internalType\":\"uint32\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"InterfaceAdded\",\"inputs\":[{\"name\":\"interfaceId\",\"type\":\"bytes4\",\"indexed\":true,\"internalType\":\"bytes4\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"InterfaceRemoved\",\"inputs\":[{\"name\":\"interfaceId\",\"type\":\"bytes4\",\"indexed\":true,\"internalType\":\"bytes4\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"NodeRegistered\",\"inputs\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"NodeUnregistered\",\"inputs\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"error\",\"name\":\"EntitlementChecker_InsufficientFunds\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"EntitlementChecker_InsufficientNumberOfNodes\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"EntitlementChecker_InvalidNodeOperator\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"EntitlementChecker_InvalidOperator\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"EntitlementChecker_NoPendingRequests\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"EntitlementChecker_NoRefundsAvailable\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"EntitlementChecker_NodeAlreadyRegistered\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"EntitlementChecker_NodeNotRegistered\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"EntitlementChecker_OperatorNotActive\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"Initializable_InInitializingState\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"Initializable_NotInInitializingState\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"Introspection_AlreadySupported\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"Introspection_NotSupported\",\"inputs\":[]}]",
+	Bin: "0x608060405234801561001057600080fd5b5061001961001e565b6100c4565b7f59b501c3653afc186af7d48dda36cf6732bd21629a6295693664240a6ef520008054640100000000900460ff161561006a576040516366008a2d60e01b815260040160405180910390fd5b805463ffffffff90811610156100c157805463ffffffff191663ffffffff90811782556040519081527fe9c9b456cb2994b80aeef036cf59d26e9617df80f816a6ee5a5b4166e07e2f5c9060200160405180910390a15b50565b6111ba806100d36000396000f3fe6080604052600436106100915760003560e01c80634f845445116100595780634f8454451461014d578063541da4e51461016d578063672d7a0d1461018d5780639ebd11ef146101ad578063c5e41cf6146101dd57600080fd5b806321be050a1461009657806339bf397e146100ab57806339dc5b3e146100d35780633c59f126146100e857806343024ac914610120575b600080fd5b6100a96100a4366004610e43565b6101fd565b005b3480156100b757600080fd5b506100c06104a2565b6040519081526020015b60405180910390f35b3480156100df57600080fd5b506100a96104c2565b3480156100f457600080fd5b50610108610103366004610efe565b61051e565b6040516001600160a01b0390911681526020016100ca565b34801561012c57600080fd5b5061014061013b366004610f17565b610591565b6040516100ca9190610f79565b34801561015957600080fd5b50610140610168366004610efe565b610683565b34801561017957600080fd5b506100a9610188366004610f8c565b610694565b34801561019957600080fd5b506100a96101a8366004610f17565b6106d9565b3480156101b957600080fd5b506101cd6101c8366004610f17565b6107fe565b60405190151581526020016100ca565b3480156101e957600080fd5b506100a96101f8366004610f17565b610819565b60003390506000828060200190518101906102189190611064565b6001600160a01b03811660009081527ff501c51c066c21fd640901535874a71171bb35113f6dc2832fce1b1f9da0cc01602052604090209091507ff501c51c066c21fd640901535874a71171bb35113f6dc2832fce1b1f9da0cc009061027e908761091c565b50604080516080810182523481524360208083019182526001600160a01b038088168486019081526000606086018181528d82526002808a0190955296812095518655935160018601555193909101805494511515600160a01b026001600160a81b031990951693909116929092179290921790556102fd6005610928565b60008881527ff501c51c066c21fd640901535874a71171bb35113f6dc2832fce1b1f9da0cc0360205260409020909150610337818861091c565b5060005b82518110156104555761038483828151811061035957610359611081565b60200260200101518360020160008b8152602001908152602001600020610af390919063ffffffff16565b5081600301600089815260200190815260200160002060405180604001604052808584815181106103b7576103b7611081565b60200260200101516001600160a01b03168152602001600060028111156103e0576103e0611097565b9052815460018101835560009283526020928390208251910180546001600160a01b031981166001600160a01b03909316928317825593830151929390929183916001600160a81b03191617600160a01b83600281111561044357610443611097565b0217905550505080600101905061033b565b507ff116223a7f59f1061fd42fcd9ff757b06a05709a822d38873fbbc5b5fda148bf8986308b8b8760405161048f969594939291906110ad565b60405180910390a1505050505050505050565b600060008051602061119a8339815191526104bc81610b08565b91505090565b7f59b501c3653afc186af7d48dda36cf6732bd21629a6295693664240a6ef5200054640100000000900460ff1661050c57604051630ef4733760e31b815260040160405180910390fd5b61051c6340b7002f60e01b610b12565b565b600060008051602061119a83398151915261053881610b08565b83106105805760405162461bcd60e51b8152602060048201526013602482015272496e646578206f7574206f6620626f756e647360681b604482015260640160405180910390fd5b61058a8184610beb565b9392505050565b606060008051602061119a83398151915260006105ad82610b08565b90508067ffffffffffffffff8111156105c8576105c8610dfc565b6040519080825280602002602001820160405280156105f1578160200160208202803683370190505b5092506000805b8281101561067857600061060c8583610beb565b6001600160a01b03808216600090815260028801602052604090205491925080891691160361066f578086848060010195508151811061064e5761064e611081565b60200260200101906001600160a01b031690816001600160a01b0316815250505b506001016105f8565b508352509092915050565b606061068e82610928565b92915050565b7f4675e3cc15801ffde520a3076d6ad75c0c6dbe8f23bdbea1dd45b676caffe4f384338585856040516106cb9594939291906110fb565b60405180910390a150505050565b7f988e8266be98e92aff755bdd688f8f4a2421e26daa6089c7e2668053a3bf55006107048133610bf7565b6107215760405163c931a1fb60e01b815260040160405180910390fd5b60008051602061119a83398151915261073a8184610bf7565b156107585760405163d1922fc160e01b815260040160405180910390fd5b6107628184610af3565b506001600160a01b038316600081815260028301602052604080822080546001600160a01b03191633179055517f564728e6a7c8edd446557d94e0339d5e6ca2e05f42188914efdbdc87bcbbabf69190a250600233600090815260028301602052604090205460ff1660038111156107dc576107dc611097565b146107fa57604051637164de9160e01b815260040160405180910390fd5b5050565b600060008051602061119a83398151915261058a8184610bf7565b6001600160a01b0380821660009081527f180c1d0b9e5eeea9f2f078bc2712cd77acc6afea03b37705abe96dda6f60260260205260409020548291339160008051602061119a833981519152911682146108865760405163fd2dc62f60e01b815260040160405180910390fd5b60008051602061119a83398151915261089f8186610bf7565b6108bc576040516317e3e0b960e01b815260040160405180910390fd5b6108c68186610c19565b506001600160a01b038516600081815260028301602052604080822080546001600160a01b0319169055517fb1864577e4f285436a80ebc833984755393e2450d58622a65fb4fce87ea3573a9190a25050505050565b600061058a8383610c2e565b606060008051602061119a833981519152600061094482610b08565b90508084111561096757604051631762997d60e01b815260040160405180910390fd5b60008467ffffffffffffffff81111561098257610982610dfc565b6040519080825280602002602001820160405280156109ab578160200160208202803683370190505b50905060008267ffffffffffffffff8111156109c9576109c9610dfc565b6040519080825280602002602001820160405280156109f2578160200160208202803683370190505b50905060005b83811015610a265780828281518110610a1357610a13611081565b60209081029190910101526001016109f8565b5060005b86811015610ae8576000610a3e8286610c7d565b9050610a6f838281518110610a5557610a55611081565b602002602001015187600001610beb90919063ffffffff16565b848381518110610a8157610a81611081565b60200260200101906001600160a01b031690816001600160a01b03168152505082856001900395508581518110610aba57610aba611081565b6020026020010151838281518110610ad457610ad4611081565b602090810291909101015250600101610a2a565b509095945050505050565b600061058a836001600160a01b038416610c2e565b600061068e825490565b6001600160e01b0319811660009081527f81088bbc801e045ea3e7620779ab349988f58afbdfba10dff983df3f33522b00602052604090205460ff16610b9a576001600160e01b0319811660009081527f81088bbc801e045ea3e7620779ab349988f58afbdfba10dff983df3f33522b0060205260409020805460ff19166001179055610bb3565b604051637967f77d60e11b815260040160405180910390fd5b6040516001600160e01b03198216907f78f84e5b1c5c05be2b5ad3800781dd404d6d6c6302bc755c0fe20f58a33a7f2290600090a250565b600061058a8383610cc7565b6001600160a01b0381166000908152600183016020526040812054151561058a565b600061058a836001600160a01b038416610cf1565b6000818152600183016020526040812054610c755750815460018181018455600084815260208082209093018490558454848252828601909352604090209190915561068e565b50600061068e565b60408051446020820152429181019190915260608101839052336080820152600090829060a0016040516020818303038152906040528051906020012060001c61058a9190611140565b6000826000018281548110610cde57610cde611081565b9060005260206000200154905092915050565b60008181526001830160205260408120548015610dda576000610d15600183611162565b8554909150600090610d2990600190611162565b9050808214610d8e576000866000018281548110610d4957610d49611081565b9060005260206000200154905080876000018481548110610d6c57610d6c611081565b6000918252602080832090910192909255918252600188019052604090208390555b8554869080610d9f57610d9f611183565b60019003818190600052602060002001600090559055856001016000868152602001908152602001600020600090556001935050505061068e565b600091505061068e565b6001600160a01b0381168114610df957600080fd5b50565b634e487b7160e01b600052604160045260246000fd5b604051601f8201601f1916810167ffffffffffffffff81118282101715610e3b57610e3b610dfc565b604052919050565b60008060008060808587031215610e5957600080fd5b8435610e6481610de4565b9350602085810135935060408601359250606086013567ffffffffffffffff80821115610e9057600080fd5b818801915088601f830112610ea457600080fd5b813581811115610eb657610eb6610dfc565b610ec8601f8201601f19168501610e12565b91508082528984828501011115610ede57600080fd5b808484018584013760008482840101525080935050505092959194509250565b600060208284031215610f1057600080fd5b5035919050565b600060208284031215610f2957600080fd5b813561058a81610de4565b60008151808452602080850194506020840160005b83811015610f6e5781516001600160a01b031687529582019590820190600101610f49565b509495945050505050565b60208152600061058a6020830184610f34565b60008060008060808587031215610fa257600080fd5b8435610fad81610de4565b9350602085810135935060408601359250606086013567ffffffffffffffff80821115610fd957600080fd5b818801915088601f830112610fed57600080fd5b813581811115610fff57610fff610dfc565b8060051b9150611010848301610e12565b818152918301840191848101908b84111561102a57600080fd5b938501935b83851015611054578435925061104483610de4565b828252938501939085019061102f565b989b979a50959850505050505050565b60006020828403121561107657600080fd5b815161058a81610de4565b634e487b7160e01b600052603260045260246000fd5b634e487b7160e01b600052602160045260246000fd5b6001600160a01b038781168252868116602083015285166040820152606081018490526080810183905260c060a082018190526000906110ef90830184610f34565b98975050505050505050565b6001600160a01b03868116825285166020820152604081018490526060810183905260a06080820181905260009061113590830184610f34565b979650505050505050565b60008261115d57634e487b7160e01b600052601260045260246000fd5b500690565b8181038181111561068e57634e487b7160e01b600052601160045260246000fd5b634e487b7160e01b600052603160045260246000fdfe180c1d0b9e5eeea9f2f078bc2712cd77acc6afea03b37705abe96dda6f602600",
 }
 
 // EntitlementCheckerABI is the input ABI used to generate the binding from.
@@ -401,23 +401,44 @@ func (_EntitlementChecker *EntitlementCheckerTransactorSession) RegisterNode(nod
 
 // RequestEntitlementCheck is a paid mutator transaction binding the contract method 0x541da4e5.
 //
-// Solidity: function requestEntitlementCheck(address callerAddress, bytes32 transactionId, uint256 roleId, address[] nodes) returns()
-func (_EntitlementChecker *EntitlementCheckerTransactor) RequestEntitlementCheck(opts *bind.TransactOpts, callerAddress common.Address, transactionId [32]byte, roleId *big.Int, nodes []common.Address) (*types.Transaction, error) {
-	return _EntitlementChecker.contract.Transact(opts, "requestEntitlementCheck", callerAddress, transactionId, roleId, nodes)
+// Solidity: function requestEntitlementCheck(address walletAddress, bytes32 transactionId, uint256 roleId, address[] nodes) returns()
+func (_EntitlementChecker *EntitlementCheckerTransactor) RequestEntitlementCheck(opts *bind.TransactOpts, walletAddress common.Address, transactionId [32]byte, roleId *big.Int, nodes []common.Address) (*types.Transaction, error) {
+	return _EntitlementChecker.contract.Transact(opts, "requestEntitlementCheck", walletAddress, transactionId, roleId, nodes)
 }
 
 // RequestEntitlementCheck is a paid mutator transaction binding the contract method 0x541da4e5.
 //
-// Solidity: function requestEntitlementCheck(address callerAddress, bytes32 transactionId, uint256 roleId, address[] nodes) returns()
-func (_EntitlementChecker *EntitlementCheckerSession) RequestEntitlementCheck(callerAddress common.Address, transactionId [32]byte, roleId *big.Int, nodes []common.Address) (*types.Transaction, error) {
-	return _EntitlementChecker.Contract.RequestEntitlementCheck(&_EntitlementChecker.TransactOpts, callerAddress, transactionId, roleId, nodes)
+// Solidity: function requestEntitlementCheck(address walletAddress, bytes32 transactionId, uint256 roleId, address[] nodes) returns()
+func (_EntitlementChecker *EntitlementCheckerSession) RequestEntitlementCheck(walletAddress common.Address, transactionId [32]byte, roleId *big.Int, nodes []common.Address) (*types.Transaction, error) {
+	return _EntitlementChecker.Contract.RequestEntitlementCheck(&_EntitlementChecker.TransactOpts, walletAddress, transactionId, roleId, nodes)
 }
 
 // RequestEntitlementCheck is a paid mutator transaction binding the contract method 0x541da4e5.
 //
-// Solidity: function requestEntitlementCheck(address callerAddress, bytes32 transactionId, uint256 roleId, address[] nodes) returns()
-func (_EntitlementChecker *EntitlementCheckerTransactorSession) RequestEntitlementCheck(callerAddress common.Address, transactionId [32]byte, roleId *big.Int, nodes []common.Address) (*types.Transaction, error) {
-	return _EntitlementChecker.Contract.RequestEntitlementCheck(&_EntitlementChecker.TransactOpts, callerAddress, transactionId, roleId, nodes)
+// Solidity: function requestEntitlementCheck(address walletAddress, bytes32 transactionId, uint256 roleId, address[] nodes) returns()
+func (_EntitlementChecker *EntitlementCheckerTransactorSession) RequestEntitlementCheck(walletAddress common.Address, transactionId [32]byte, roleId *big.Int, nodes []common.Address) (*types.Transaction, error) {
+	return _EntitlementChecker.Contract.RequestEntitlementCheck(&_EntitlementChecker.TransactOpts, walletAddress, transactionId, roleId, nodes)
+}
+
+// RequestEntitlementCheckV2 is a paid mutator transaction binding the contract method 0x21be050a.
+//
+// Solidity: function requestEntitlementCheckV2(address walletAddress, bytes32 transactionId, uint256 requestId, bytes extraData) payable returns()
+func (_EntitlementChecker *EntitlementCheckerTransactor) RequestEntitlementCheckV2(opts *bind.TransactOpts, walletAddress common.Address, transactionId [32]byte, requestId *big.Int, extraData []byte) (*types.Transaction, error) {
+	return _EntitlementChecker.contract.Transact(opts, "requestEntitlementCheckV2", walletAddress, transactionId, requestId, extraData)
+}
+
+// RequestEntitlementCheckV2 is a paid mutator transaction binding the contract method 0x21be050a.
+//
+// Solidity: function requestEntitlementCheckV2(address walletAddress, bytes32 transactionId, uint256 requestId, bytes extraData) payable returns()
+func (_EntitlementChecker *EntitlementCheckerSession) RequestEntitlementCheckV2(walletAddress common.Address, transactionId [32]byte, requestId *big.Int, extraData []byte) (*types.Transaction, error) {
+	return _EntitlementChecker.Contract.RequestEntitlementCheckV2(&_EntitlementChecker.TransactOpts, walletAddress, transactionId, requestId, extraData)
+}
+
+// RequestEntitlementCheckV2 is a paid mutator transaction binding the contract method 0x21be050a.
+//
+// Solidity: function requestEntitlementCheckV2(address walletAddress, bytes32 transactionId, uint256 requestId, bytes extraData) payable returns()
+func (_EntitlementChecker *EntitlementCheckerTransactorSession) RequestEntitlementCheckV2(walletAddress common.Address, transactionId [32]byte, requestId *big.Int, extraData []byte) (*types.Transaction, error) {
+	return _EntitlementChecker.Contract.RequestEntitlementCheckV2(&_EntitlementChecker.TransactOpts, walletAddress, transactionId, requestId, extraData)
 }
 
 // UnregisterNode is a paid mutator transaction binding the contract method 0xc5e41cf6.
@@ -573,6 +594,145 @@ func (_EntitlementChecker *EntitlementCheckerFilterer) WatchEntitlementCheckRequ
 func (_EntitlementChecker *EntitlementCheckerFilterer) ParseEntitlementCheckRequested(log types.Log) (*EntitlementCheckerEntitlementCheckRequested, error) {
 	event := new(EntitlementCheckerEntitlementCheckRequested)
 	if err := _EntitlementChecker.contract.UnpackLog(event, "EntitlementCheckRequested", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// EntitlementCheckerEntitlementCheckRequestedV2Iterator is returned from FilterEntitlementCheckRequestedV2 and is used to iterate over the raw logs and unpacked data for EntitlementCheckRequestedV2 events raised by the EntitlementChecker contract.
+type EntitlementCheckerEntitlementCheckRequestedV2Iterator struct {
+	Event *EntitlementCheckerEntitlementCheckRequestedV2 // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *EntitlementCheckerEntitlementCheckRequestedV2Iterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(EntitlementCheckerEntitlementCheckRequestedV2)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(EntitlementCheckerEntitlementCheckRequestedV2)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *EntitlementCheckerEntitlementCheckRequestedV2Iterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *EntitlementCheckerEntitlementCheckRequestedV2Iterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// EntitlementCheckerEntitlementCheckRequestedV2 represents a EntitlementCheckRequestedV2 event raised by the EntitlementChecker contract.
+type EntitlementCheckerEntitlementCheckRequestedV2 struct {
+	WalletAddress   common.Address
+	SpaceAddress    common.Address
+	ResolverAddress common.Address
+	TransactionId   [32]byte
+	RoleId          *big.Int
+	SelectedNodes   []common.Address
+	Raw             types.Log // Blockchain specific contextual infos
+}
+
+// FilterEntitlementCheckRequestedV2 is a free log retrieval operation binding the contract event 0xf116223a7f59f1061fd42fcd9ff757b06a05709a822d38873fbbc5b5fda148bf.
+//
+// Solidity: event EntitlementCheckRequestedV2(address walletAddress, address spaceAddress, address resolverAddress, bytes32 transactionId, uint256 roleId, address[] selectedNodes)
+func (_EntitlementChecker *EntitlementCheckerFilterer) FilterEntitlementCheckRequestedV2(opts *bind.FilterOpts) (*EntitlementCheckerEntitlementCheckRequestedV2Iterator, error) {
+
+	logs, sub, err := _EntitlementChecker.contract.FilterLogs(opts, "EntitlementCheckRequestedV2")
+	if err != nil {
+		return nil, err
+	}
+	return &EntitlementCheckerEntitlementCheckRequestedV2Iterator{contract: _EntitlementChecker.contract, event: "EntitlementCheckRequestedV2", logs: logs, sub: sub}, nil
+}
+
+// WatchEntitlementCheckRequestedV2 is a free log subscription operation binding the contract event 0xf116223a7f59f1061fd42fcd9ff757b06a05709a822d38873fbbc5b5fda148bf.
+//
+// Solidity: event EntitlementCheckRequestedV2(address walletAddress, address spaceAddress, address resolverAddress, bytes32 transactionId, uint256 roleId, address[] selectedNodes)
+func (_EntitlementChecker *EntitlementCheckerFilterer) WatchEntitlementCheckRequestedV2(opts *bind.WatchOpts, sink chan<- *EntitlementCheckerEntitlementCheckRequestedV2) (event.Subscription, error) {
+
+	logs, sub, err := _EntitlementChecker.contract.WatchLogs(opts, "EntitlementCheckRequestedV2")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(EntitlementCheckerEntitlementCheckRequestedV2)
+				if err := _EntitlementChecker.contract.UnpackLog(event, "EntitlementCheckRequestedV2", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseEntitlementCheckRequestedV2 is a log parse operation binding the contract event 0xf116223a7f59f1061fd42fcd9ff757b06a05709a822d38873fbbc5b5fda148bf.
+//
+// Solidity: event EntitlementCheckRequestedV2(address walletAddress, address spaceAddress, address resolverAddress, bytes32 transactionId, uint256 roleId, address[] selectedNodes)
+func (_EntitlementChecker *EntitlementCheckerFilterer) ParseEntitlementCheckRequestedV2(log types.Log) (*EntitlementCheckerEntitlementCheckRequestedV2, error) {
+	event := new(EntitlementCheckerEntitlementCheckRequestedV2)
+	if err := _EntitlementChecker.contract.UnpackLog(event, "EntitlementCheckRequestedV2", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log

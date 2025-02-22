@@ -1,13 +1,13 @@
 ---
 title: System Requirements & Installation 
-description: The following guide describes system requirements, dependencies, and installation details recommended for running a River Stream Node. This guide applies to nodes running in either Testnet or Mainnet.
+description: The following guide describes system requirements, dependencies, and installation details recommended for running a Towns Stream Node. This guide applies to nodes running in either Testnet or Mainnet.
 ---
 
-<Note>By adhering to the guidelines outlined in this guide, node operators can contribute to the stability and efficiency of the River Network. Effective node operation not only benefits the individual operator by ensuring optimal node performance but also supports the health and reliability of the entire network.</Note>
+<Note>By adhering to the guidelines outlined in this guide, node operators can contribute to the stability and efficiency of the Towns Network. Effective node operation not only benefits the individual operator by ensuring optimal node performance but also supports the health and reliability of the entire network.</Note>
 
 <br />
 ### System Requirements & Dependencies
-To run a River Stream Node, an operator will need to run a Node Frontend (FE) and Node Storage layer, postgres database, with a specific network configuration.
+To run a Towns Stream Node, an operator will need to run a Node Frontend (FE) and Node Storage layer, postgres database, with a specific network configuration.
 
 Please read the below requirements carefully prior to proceeding with node setup.
 
@@ -18,7 +18,7 @@ Please read the below requirements carefully prior to proceeding with node setup
   - **Network**: Dedicated, static public IP address, capable of handling up to 1 Gbps ingress and egress for HTTP 1.1/2
   traffic.
   - **Blockchain RPC Access**: Access to blockchain RPC provider endpoints for
-  Base Chain, River Chain, and cross-chain chain ids.
+  Base Chain, Towns Chain, and cross-chain chain ids.
 </Accordion>
 <Accordion title="Node Storage Requirements">
   - **Database Compatibility**: Postgres 15.4 or newer.
@@ -31,12 +31,12 @@ Please read the below requirements carefully prior to proceeding with node setup
 <br />
 ### Installation
 
-Node FE's can be installed either from docker with the River public [ECR image registry](https://public.ecr.aws/h5v6m2x1/river) or built from [source code](https://github.com/river-build/river/tree/main/core/node).
+Node FE's can be installed either from docker with the Towns public [ECR image registry](https://public.ecr.aws/h5v6m2x1/river) or built from [source code](https://github.com/river-build/river/tree/main/core/node).
 
 #### Installation from Docker
 
-<Accordion title="Install Image from River Public Image Registry">
-The River Association maintains a public docker image registry `public.ecr.aws/h5v6m2x1/river` for images that are built officially from [source](https://github.com/river-build/river) during CI/CD.
+<Accordion title="Install Image from Towns Public Image Registry">
+The Towns Protocol maintains a public docker image registry `public.ecr.aws/h5v6m2x1/river` for images that are built officially from [source](https://github.com/river-build/river) during CI/CD.
 As such, node operators can easily install the latest Node FE software from images stored in the public ECR registry. Images are tagged during [releases](/run/release-process) with the associated commit as well as mutable tags `mainnet`, `testnet`, for each network respectively.
 
 ```bash
@@ -75,7 +75,7 @@ docker build -t river-node .
 <br />
 ### Node FE Environment Variables
 
-River Stream Nodes run expecting certain environment variables to be present in the process environment and set at runtime. Config, which is described in [config.go](https://github.com/river-build/river/blob/main/core/config/config.go), is injected into the binary at runtime using [viper](https://github.com/spf13/viper).
+Towns Stream Nodes run expecting certain environment variables to be present in the process environment and set at runtime. Config, which is described in [config.go](https://github.com/river-build/river/blob/main/core/config/config.go), is injected into the binary at runtime using [viper](https://github.com/spf13/viper).
 
 <Note>For the list of contracts required to run nodes and their addresses, see [contracts](/run/contracts). </Note>
 <br />
@@ -103,9 +103,9 @@ River Stream Nodes run expecting certain environment variables to be present in 
 |PERFORMANCETRACKING__PROFILINGENABLED|Used by Datadog for cpu profiling|no|true|No|
 |PERFORMANCETRACKING__TRACINGENABLED|Used by Datadog for tracing|no|true|No|
 |PORT|Port RPC service listens on|Yes|443|-|
-|REGISTRYCONTRACT__ADDRESS|River Registry contract address in River Chain Network|Yes|0xf18E98D36A6bd1aDb52F776aCc191E69B491c070|-|
-|RIVERCHAIN__CHAINID|River Chain chainId|Yes|6524490|-|
-|RIVERCHAIN__NETWORKURL|River Chain RPC Url|Yes|https://towns-devnet.rpc.caldera.xyz/http|Yes|
+|REGISTRYCONTRACT__ADDRESS|River Registry contract address in Towns Chain Network|Yes|0xf18E98D36A6bd1aDb52F776aCc191E69B491c070|-|
+|RIVERCHAIN__CHAINID|Towns Chain chainId|Yes|6524490|-|
+|RIVERCHAIN__NETWORKURL|Towns Chain RPC Url|Yes|https://towns-devnet.rpc.caldera.xyz/http|Yes|
 |RUN_MODE|Stream Node Run Mode (full, archive)|No|full|-|
 |SKIP_GENKEY|Skip generating node ECDSA wallet keypair|Yes|true|-|
 |STANDBYONSTART|Start node in standby mode|No|false|-|
@@ -128,7 +128,7 @@ River Stream Nodes run expecting certain environment variables to be present in 
 
 ### Cross-chain Requirements
   `CHAINSSTRING` environment variable is a comma-separated, colon delimited list of chain ID's and RPC Urls that is required for nodes to support cross-chain entitlement checks.
-  As of June 2024, the River network must support the following chainIds listed in the below table for testnet, mainnet, respectively.
+  As of June 2024, the Towns network must support the following chainIds listed in the below table for testnet, mainnet, respectively.
 
   As an example, using redacted RPC urls from Web3 providers, the `CHAINSSTRING` environment variable for Mainnet would look like:
 

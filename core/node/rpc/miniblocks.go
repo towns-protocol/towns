@@ -6,9 +6,9 @@ import (
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
 
-	. "github.com/river-build/river/core/node/events"
-	. "github.com/river-build/river/core/node/protocol"
-	. "github.com/river-build/river/core/node/shared"
+	. "github.com/towns-protocol/towns/core/node/events"
+	. "github.com/towns-protocol/towns/core/node/protocol"
+	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
 var _ RemoteMiniblockProvider = (*Service)(nil)
@@ -16,9 +16,8 @@ var _ RemoteMiniblockProvider = (*Service)(nil)
 func (s *Service) GetMbProposal(
 	ctx context.Context,
 	node common.Address,
-	streamId StreamId,
-	forceSnapshot bool,
-) (*MiniblockProposal, error) {
+	request *ProposeMiniblockRequest,
+) (*ProposeMiniblockResponse, error) {
 	stub, err := s.nodeRegistry.GetNodeToNodeClientForAddress(node)
 	if err != nil {
 		return nil, err
@@ -26,16 +25,13 @@ func (s *Service) GetMbProposal(
 
 	resp, err := stub.ProposeMiniblock(
 		ctx,
-		connect.NewRequest(&ProposeMiniblockRequest{
-			StreamId:           streamId[:],
-			DebugForceSnapshot: forceSnapshot,
-		}),
+		connect.NewRequest(request),
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	return resp.Msg.Proposal, nil
+	return resp.Msg, nil
 }
 
 func (s *Service) SaveMbCandidate(

@@ -14,14 +14,14 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/events"
-	"github.com/river-build/river/core/node/infra"
-	"github.com/river-build/river/core/node/nodes"
-	"github.com/river-build/river/core/node/protocol"
-	"github.com/river-build/river/core/node/protocol/protocolconnect"
-	"github.com/river-build/river/core/node/registries"
-	"github.com/river-build/river/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/crypto"
+	"github.com/towns-protocol/towns/core/node/events"
+	"github.com/towns-protocol/towns/core/node/infra"
+	"github.com/towns-protocol/towns/core/node/nodes"
+	"github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
+	"github.com/towns-protocol/towns/core/node/registries"
+	"github.com/towns-protocol/towns/core/node/shared"
 )
 
 func runStreamGetEventCmd(cmd *cobra.Command, args []string) error {
@@ -461,6 +461,76 @@ func runStreamNodeDumpCmd(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+func runStreamGetCmd(cmd *cobra.Command, args []string) error {
+	ctx := context.Background() // lint:ignore context.Background() is fine here
+	streamID, err := shared.StreamIdFromString(args[0])
+	if err != nil {
+		return err
+	}
+
+	blockchain, err := crypto.NewBlockchain(
+		ctx,
+		&cmdConfig.RiverChain,
+		nil,
+		infra.NewMetricsFactory(nil, "river", "cmdline"),
+		nil,
+	)
+	if err != nil {
+		return err
+	}
+
+	registryContract, err := registries.NewRiverRegistryContract(
+		ctx,
+		blockchain,
+		&cmdConfig.RegistryContract,
+		&cmdConfig.RiverRegistry,
+	)
+	if err != nil {
+		return err
+	}
+
+	streamRecord, err := registryContract.StreamRegistry.GetStream(nil, streamID)
+	if err != nil {
+		return err
+	}
+
+	nodes := nodes.NewStreamNodesWithLock(streamRecord.Nodes, common.Address{})
+	remoteNodeAddress := nodes.GetStickyPeer()
+
+	remote, err := registryContract.NodeRegistry.GetNode(nil, remoteNodeAddress)
+	if err != nil {
+		return err
+	}
+
+	remoteClient := protocolconnect.NewStreamServiceClient(http.DefaultClient, remote.Url)
+
+	response, err := remoteClient.GetStream(ctx, connect.NewRequest(&protocol.GetStreamRequest{
+		StreamId: streamID[:],
+		Optional: false,
+	}))
+	if err != nil {
+		return err
+	}
+
+	stream := response.Msg.GetStream()
+	fmt.Println("MBs: ", len(stream.GetMiniblocks()), " Events: ", len(stream.GetEvents()))
+
+	for _, mb := range stream.GetMiniblocks() {
+		i, err := events.NewMiniblockInfoFromProto(mb, events.NewParsedMiniblockInfoOpts().WithDoNotParseEvents(true))
+		if err != nil {
+			return err
+		}
+
+		fmt.Print(i.Ref, "  ", i.Header().GetTimestamp().AsTime().Local())
+		if i.Header().GetSnapshot() != nil {
+			fmt.Print(" SNAPSHOT")
+		}
+		fmt.Println()
+	}
+
+	return nil
+}
+
 func init() {
 	cmdStream := &cobra.Command{
 		Use:   "stream",
@@ -502,9 +572,18 @@ max-block-range is optional and limits the number of blocks to consider (default
 		RunE:  runStreamNodeDumpCmd,
 	}
 
+	cmdStreamGet := &cobra.Command{
+		Use:   "get <stream-id>",
+		Short: "Get stream contents",
+		Long:  `Get stream content from node using GetStream RPC.`,
+		Args:  cobra.RangeArgs(1, 1),
+		RunE:  runStreamGetCmd,
+	}
+
 	cmdStream.AddCommand(cmdStreamGetMiniblock)
 	cmdStream.AddCommand(cmdStreamGetEvent)
 	cmdStream.AddCommand(cmdStreamDump)
 	cmdStream.AddCommand(cmdStreamNodeDump)
+	cmdStream.AddCommand(cmdStreamGet)
 	rootCmd.AddCommand(cmdStream)
 }

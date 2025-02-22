@@ -6,12 +6,11 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/river-build/river/core/contracts/river"
-	"github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/events"
-	"github.com/river-build/river/core/node/protocol"
-	. "github.com/river-build/river/core/node/shared"
-	"github.com/river-build/river/core/node/testutils"
+	"github.com/towns-protocol/towns/core/contracts/river"
+	"github.com/towns-protocol/towns/core/node/crypto"
+	. "github.com/towns-protocol/towns/core/node/events"
+	"github.com/towns-protocol/towns/core/node/protocol"
+	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
 func TestReplCreate(t *testing.T) {
@@ -59,8 +58,6 @@ func TestReplAdd(t *testing.T) {
 }
 
 func TestReplMiniblock(t *testing.T) {
-	testutils.SkipFlackyTest(t)
-
 	tt := newServiceTester(t, serviceTesterOpts{numNodes: 5, replicationFactor: 5, start: true})
 	ctx := tt.ctx
 	require := tt.require
@@ -151,7 +148,7 @@ func TestStreamReconciliationFromGenesis(t *testing.T) {
 
 	// make sure that node loaded the stream and synced up its local database with the stream registry.
 	// this happens as a background task, therefore wait till all mini-blocks are imported.
-	var stream events.SyncStream
+	var stream *Stream
 	require.Eventuallyf(func() bool {
 		stream, err = lastStartedNode.service.cache.GetStreamNoWait(ctx, streamId)
 		if err == nil {
@@ -181,8 +178,6 @@ func TestStreamReconciliationFromGenesis(t *testing.T) {
 // TestStreamReconciliationForKnownStreams ensures that a node reconciles local streams that it already knows
 // but advanced when the node was down.
 func TestStreamReconciliationForKnownStreams(t *testing.T) {
-	//	t.Skip("SKIPPED: TODO: REPLICATION: fix")
-
 	var (
 		opts    = serviceTesterOpts{numNodes: 5, replicationFactor: 5, start: true}
 		tt      = newServiceTester(t, opts)
@@ -275,7 +270,7 @@ func TestStreamReconciliationForKnownStreams(t *testing.T) {
 
 	// wait till stream cache has finish reconciliation for the stream
 	var (
-		stream             events.SyncStream
+		stream             *Stream
 		receivedMiniblocks []*protocol.Miniblock
 	)
 

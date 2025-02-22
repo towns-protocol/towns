@@ -1,6 +1,6 @@
 ---
 title: System Configuration
-description: The following guide describes steps and best practices for configuring a River Stream Node after meeting the [system requirements](/run/node-operator/system-requirements-installation).
+description: The following guide describes steps and best practices for configuring a Towns Stream Node after meeting the [system requirements](/run/node-operator/system-requirements-installation).
 ---
 
 ## Node FE & Storage Configuration 
@@ -8,7 +8,7 @@ description: The following guide describes steps and best practices for configur
 <Steps>
   <Step title="Generate configuration associated with the Node Storage">
     Generate an ECDSA wallet that will serve as the Node identity to the storage layer and network. On Node FE startup, this wallet will be used to access the appropriate
-    database schema and to authenticate the Node FE to the River Chain during registration.
+    database schema and to authenticate the Node FE to the Towns Chain during registration.
 
     <Note>Only one unique Node FE (by wallet identity) can be associated with a Node Storage instance at a given time.</Note>
 

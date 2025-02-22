@@ -3,11 +3,11 @@ title: Stream Checkpointing
 description: ""
 ---
 
-Stream Checkpointing is how River Protocol ensures data integrity of a stream on a secure L2 blockchain. This guide provides an in-depth understanding of the process, focusing on the mini block headers, their structure, and their role in the River Protocol.
+Stream Checkpointing is how Towns Protocol ensures data integrity of a stream on a secure L2 blockchain. This guide provides an in-depth understanding of the process, focusing on the mini block headers, their structure, and their role in the Towns Protocol.
 
 ## Mini Block Headers
 
-Mini block headers serve as a compact summary of a mini block's contents, providing essential information needed to verify the integrity and finality of transactions within the River Protocol.
+Mini block headers serve as a compact summary of a mini block's contents, providing essential information needed to verify the integrity and finality of transactions within the Towns Protocol.
 
 ### Components of a Mini Block Header
 
@@ -21,12 +21,12 @@ A mini block header is an event that encapsulates several critical pieces of inf
 
 ### Storage and Distribution
 
-- **Local Storage by Nodes**: Each node participating in the River Protocol stores the mini block headers locally. This storage plays a critical role in maintaining the network's integrity and redundancy.
+- **Local Storage by Nodes**: Each node participating in the Towns Protocol stores the mini block headers locally. This storage plays a critical role in maintaining the network's integrity and redundancy.
 - **Sent to Clients**: Mini block headers are also transmitted to clients, providing them with the necessary information to verify transaction finality and integrity.
 
 ## Finality and Verification
 
-Understanding the finality of transactions within the River Protocol is crucial for maintaining trust in the system. The mini block header plays a central role in this process:
+Understanding the finality of transactions within the Towns Protocol is crucial for maintaining trust in the system. The mini block header plays a central role in this process:
 
-- **Transaction Finality**: If a client or node possesses a mini block header and observes a transaction on the River Chain with the same header hash, the transaction can be considered final.
-- **Verification Process**: The interconnected nature of the mini block headers, along with the consensus proof and node signatures, allows for a robust verification process, ensuring the authenticity and integrity of the data within the River Protocol.
+- **Transaction Finality**: If a client or node possesses a mini block header and observes a transaction on the Towns Chain with the same header hash, the transaction can be considered final.
+- **Verification Process**: The interconnected nature of the mini block headers, along with the consensus proof and node signatures, allows for a robust verification process, ensuring the authenticity and integrity of the data within the Towns Protocol.

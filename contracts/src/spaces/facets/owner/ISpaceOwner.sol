@@ -63,6 +63,11 @@ interface ISpaceOwner is ISpaceOwnerBase {
   /// @return space The space info
   function getSpaceInfo(address space) external view returns (Space memory);
 
+  /// @notice Get the space address by token id
+  /// @param tokenId The token id of the space
+  /// @return space The address of the space
+  function getSpaceByTokenId(uint256 tokenId) external view returns (address);
+
   /// @notice Update the space info
   /// @dev Only the space owner is allowed to update the space info
   /// @param space The address of the space

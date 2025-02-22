@@ -11,12 +11,12 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/river-build/river/core/config"
-	"github.com/river-build/river/core/contracts/river"
-	"github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/protocol"
-	"github.com/river-build/river/core/node/testutils/testcert"
-	"github.com/river-build/river/core/node/testutils/testfmt"
+	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/contracts/river"
+	"github.com/towns-protocol/towns/core/node/crypto"
+	"github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/testutils/testcert"
+	"github.com/towns-protocol/towns/core/node/testutils/testfmt"
 )
 
 func TestGetStreamEx(t *testing.T) {

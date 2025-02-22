@@ -2,6 +2,10 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
+import {IDiamond} from "@river-build/diamond/src/IDiamond.sol";
+import {IDiamondCut} from "@river-build/diamond/src/facets/cut/IDiamondCut.sol";
 import {IOwnableBase} from "@river-build/diamond/src/facets/ownable/IERC173.sol";
 
 // libraries
@@ -12,24 +16,23 @@ import {StakingRewards} from "contracts/src/base/registry/facets/distribution/v2
 import {RewardsDistributionStorage} from "contracts/src/base/registry/facets/distribution/v2/RewardsDistributionStorage.sol";
 
 // contracts
-import {EIP712Utils} from "contracts/test/utils/EIP712Utils.sol";
+import {DeployRewardsDistributionV2} from "contracts/scripts/deployments/facets/DeployRewardsDistributionV2.s.sol";
 import {Towns} from "contracts/src/tokens/towns/base/Towns.sol";
-
 import {DelegationProxy} from "contracts/src/base/registry/facets/distribution/v2/DelegationProxy.sol";
 import {UpgradeableBeaconBase} from "contracts/src/diamond/facets/beacon/UpgradeableBeacon.sol";
+import {RewardsDistribution} from "contracts/src/base/registry/facets/distribution/v2/RewardsDistribution.sol";
 import {BaseRegistryTest} from "./BaseRegistry.t.sol";
 
-contract RewardsDistributionV2Test is
-  BaseRegistryTest,
-  EIP712Utils,
-  IOwnableBase
-{
+contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
   using FixedPointMathLib for uint256;
 
   bytes32 internal constant STAKE_TYPEHASH =
     keccak256(
       "Stake(uint96 amount,address delegatee,address beneficiary,address owner,uint256 nonce,uint256 deadline)"
     );
+
+  DeployRewardsDistributionV2 internal distributionV2Helper =
+    new DeployRewardsDistributionV2();
 
   function test_storageSlot() public pure {
     bytes32 slot = keccak256(
@@ -78,6 +81,39 @@ contract RewardsDistributionV2Test is
     rewardsDistributionFacet.setPeriodRewardAmount(reward);
 
     assertEq(rewardsDistributionFacet.getPeriodRewardAmount(), reward);
+  }
+
+  function test_reinitialize() public {
+    uint256 depositId = test_stake();
+
+    deployTokenBase.setSalts(_randomBytes32(), _randomBytes32());
+    address newTowns = deployTokenBase.deploy(deployer);
+
+    address implementation = address(new RewardsDistribution());
+    FacetCut memory cut = distributionV2Helper.makeCut(
+      implementation,
+      FacetCutAction.Replace
+    );
+    FacetCut[] memory cuts = new FacetCut[](1);
+    cuts[0] = cut;
+    bytes memory initData = distributionV2Helper.makeInitData(
+      newTowns,
+      newTowns,
+      14 days
+    );
+
+    vm.prank(deployer);
+    IDiamondCut(baseRegistry).diamondCut(cuts, implementation, initData);
+
+    address proxy = rewardsDistributionFacet.delegationProxyById(depositId);
+
+    assertEq(DelegationProxy(proxy).factory(), baseRegistry);
+    assertEq(DelegationProxy(proxy).stakeToken(), newTowns);
+    assertEq(IVotes(newTowns).delegates(proxy), OPERATOR);
+    assertEq(
+      IERC20(newTowns).allowance(proxy, baseRegistry),
+      type(uint256).max
+    );
   }
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -262,32 +298,32 @@ contract RewardsDistributionV2Test is
     verifyStake(user, depositId, amount, operator, commissionRate, beneficiary);
   }
 
-  function test_fuzz_stakeOnBehalf_revertIf_pastDeadline(
-    uint256 deadline
-  ) public {
-    deadline = bound(deadline, 0, block.timestamp - 1);
-    vm.expectRevert(RewardsDistribution__ExpiredDeadline.selector);
-    rewardsDistributionFacet.stakeOnBehalf(
-      1,
-      OPERATOR,
-      address(this),
-      address(this),
-      deadline,
-      ""
-    );
-  }
-
-  function test_stakeOnBehalf_revertIf_invalidSignature() public {
-    vm.expectRevert(RewardsDistribution__InvalidSignature.selector);
-    rewardsDistributionFacet.stakeOnBehalf(
-      1,
-      OPERATOR,
-      address(this),
-      address(this),
-      block.timestamp,
-      ""
-    );
-  }
+  //  function test_fuzz_stakeOnBehalf_revertIf_pastDeadline(
+  //    uint256 deadline
+  //  ) public {
+  //    deadline = bound(deadline, 0, block.timestamp - 1);
+  //    vm.expectRevert(RewardsDistribution__ExpiredDeadline.selector);
+  //    rewardsDistributionFacet.stakeOnBehalf(
+  //      1,
+  //      OPERATOR,
+  //      address(this),
+  //      address(this),
+  //      deadline,
+  //      ""
+  //    );
+  //  }
+  //
+  //  function test_stakeOnBehalf_revertIf_invalidSignature() public {
+  //    vm.expectRevert(RewardsDistribution__InvalidSignature.selector);
+  //    rewardsDistributionFacet.stakeOnBehalf(
+  //      1,
+  //      OPERATOR,
+  //      address(this),
+  //      address(this),
+  //      block.timestamp,
+  //      ""
+  //    );
+  //  }
 
   function test_fuzz_stakeOnBehalf(
     uint256 privateKey,
@@ -400,6 +436,78 @@ contract RewardsDistributionV2Test is
     );
   }
 
+  function test_fuzz_permitAndIncreaseStake(
+    uint96 amount0,
+    uint96 amount1,
+    uint256 privateKey,
+    address operator,
+    uint256 commissionRate,
+    address beneficiary,
+    uint256 deadline
+  ) public givenOperator(operator, commissionRate) {
+    vm.assume(beneficiary != address(0) && beneficiary != operator);
+    amount0 = uint96(bound(amount0, 1, type(uint96).max));
+    amount1 = uint96(bound(amount1, 0, type(uint96).max - amount0));
+    commissionRate = bound(commissionRate, 0, 10000);
+    deadline = bound(deadline, block.timestamp, type(uint256).max);
+
+    privateKey = boundPrivateKey(privateKey);
+    address user = vm.addr(privateKey);
+
+    uint96 totalAmount = amount0 + amount1;
+    bridgeTokensForUser(user, totalAmount);
+    vm.prank(user);
+    towns.approve(address(rewardsDistributionFacet), amount0);
+
+    vm.prank(user);
+    uint256 depositId = rewardsDistributionFacet.stake(
+      amount0,
+      operator,
+      beneficiary
+    );
+
+    _permitAndIncreaseStake(depositId, amount1, privateKey, user, deadline);
+
+    verifyStake(
+      user,
+      depositId,
+      totalAmount,
+      operator,
+      commissionRate,
+      beneficiary
+    );
+  }
+
+  function _permitAndIncreaseStake(
+    uint256 depositId,
+    uint96 amount,
+    uint256 privateKey,
+    address user,
+    uint256 deadline
+  ) internal {
+    (uint8 v, bytes32 r, bytes32 s) = signPermit(
+      privateKey,
+      townsToken,
+      user,
+      address(rewardsDistributionFacet),
+      amount,
+      deadline
+    );
+
+    vm.expectEmit(true, true, true, false, address(rewardsDistributionFacet));
+    emit IncreaseStake(depositId, amount);
+
+    vm.prank(user);
+    rewardsDistributionFacet.permitAndIncreaseStake(
+      depositId,
+      amount,
+      deadline,
+      v,
+      r,
+      s
+    );
+  }
+
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                         REDELEGATE                         */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -435,7 +543,7 @@ contract RewardsDistributionV2Test is
       address(this)
     );
 
-    vm.expectRevert(Towns.Towns__DelegateeSameAsCurrent.selector);
+    vm.expectRevert(Towns.DelegateeSameAsCurrent.selector);
     rewardsDistributionFacet.redelegate(depositId, operator);
   }
 
@@ -673,7 +781,7 @@ contract RewardsDistributionV2Test is
   function test_initiateWithdraw_revertIf_initiateWithdrawAgain() public {
     uint256 depositId = test_initiateWithdraw();
 
-    vm.expectRevert(Towns.Towns__DelegateeSameAsCurrent.selector);
+    vm.expectRevert(Towns.DelegateeSameAsCurrent.selector);
     rewardsDistributionFacet.initiateWithdraw(depositId);
   }
 

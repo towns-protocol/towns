@@ -10,8 +10,8 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/river-build/river/core/node/infra"
-	"github.com/river-build/river/core/node/logging"
+	"github.com/towns-protocol/towns/core/node/infra"
+	"github.com/towns-protocol/towns/core/node/logging"
 )
 
 // PostgresStats contains postgres pool stats

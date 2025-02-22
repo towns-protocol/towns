@@ -4,7 +4,8 @@ pragma solidity ^0.8.23;
 interface ITownsPointsBase {
   enum Action {
     JoinSpace,
-    CheckIn
+    CheckIn,
+    Tip
   }
 
   /// @notice Emitted when a user successfully checks in and receives points
@@ -22,6 +23,9 @@ interface ITownsPointsBase {
   /// @notice Error thrown when the space is invalid
   error TownsPoints__InvalidSpace();
 
+  /// @notice Error thrown when the call data is invalid
+  error TownsPoints__InvalidCallData();
+
   /// @notice Error thrown when the array length is invalid
   error TownsPoints__InvalidArrayLength();
 
@@ -32,12 +36,8 @@ interface ITownsPointsBase {
 interface ITownsPoints is ITownsPointsBase {
   /// @notice Batch mint points to multiple users
   /// @dev Only callable by the owner
-  /// @param accounts The addresses to mint the points to
-  /// @param values The amounts of points to mint
-  function batchMintPoints(
-    address[] calldata accounts,
-    uint256[] calldata values
-  ) external;
+  /// @param data The abi-encoded array of addresses and values to mint
+  function batchMintPoints(bytes calldata data) external;
 
   /// @notice Mint points to a user
   /// @dev Only spaces can mint points

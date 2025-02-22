@@ -7,8 +7,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/river-build/river/core/contracts/base"
-	"github.com/river-build/river/core/node/logging"
+	"github.com/towns-protocol/towns/core/contracts/base"
+	"github.com/towns-protocol/towns/core/node/logging"
 )
 
 // OperationType Enum

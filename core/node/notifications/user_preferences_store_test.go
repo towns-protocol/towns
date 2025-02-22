@@ -9,14 +9,14 @@ import (
 	"time"
 
 	"github.com/SherClockHolmes/webpush-go"
-	"github.com/river-build/river/core/node/base/test"
-	"github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/infra"
-	"github.com/river-build/river/core/node/notifications/types"
-	. "github.com/river-build/river/core/node/protocol"
-	"github.com/river-build/river/core/node/shared"
-	"github.com/river-build/river/core/node/storage"
-	"github.com/river-build/river/core/node/testutils/dbtestutils"
+	"github.com/towns-protocol/towns/core/node/base/test"
+	"github.com/towns-protocol/towns/core/node/crypto"
+	"github.com/towns-protocol/towns/core/node/infra"
+	"github.com/towns-protocol/towns/core/node/notifications/types"
+	. "github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/storage"
+	"github.com/towns-protocol/towns/core/node/testutils/dbtestutils"
 	"github.com/stretchr/testify/require"
 )
 

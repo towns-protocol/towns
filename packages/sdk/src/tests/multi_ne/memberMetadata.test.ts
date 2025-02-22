@@ -676,20 +676,20 @@ describe('memberMetadataTests', () => {
             undefined,
         )
 
-        // set mls enabled to mls_0.0.1
+        const newAlgorithm = 'mega_v1'
         const truePromise = makeDonePromise()
         bobsClient.once('streamEncryptionAlgorithmUpdated', (updatedStreamId, value) => {
             expect(updatedStreamId).toBe(channelId)
-            expect(value).toBe('mls_0.0.1')
+            expect(value).toBe(newAlgorithm)
             truePromise.done()
         })
 
         await expect(
-            bobsClient.setStreamEncryptionAlgorithm(channelId, 'mls_0.0.1'),
+            bobsClient.setStreamEncryptionAlgorithm(channelId, newAlgorithm),
         ).resolves.not.toThrow()
         await truePromise.expectToSucceed()
         expect(bobsClient.stream(channelId)?.view.membershipContent.encryptionAlgorithm).toBe(
-            'mls_0.0.1',
+            newAlgorithm,
         )
 
         // toggle back to to undefined

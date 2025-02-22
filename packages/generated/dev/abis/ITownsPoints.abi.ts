@@ -4,14 +4,9 @@ export default [
     "name": "batchMintPoints",
     "inputs": [
       {
-        "name": "accounts",
-        "type": "address[]",
-        "internalType": "address[]"
-      },
-      {
-        "name": "values",
-        "type": "uint256[]",
-        "internalType": "uint256[]"
+        "name": "data",
+        "type": "bytes",
+        "internalType": "bytes"
       }
     ],
     "outputs": [],
@@ -143,6 +138,11 @@ export default [
   {
     "type": "error",
     "name": "TownsPoints__InvalidArrayLength",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "TownsPoints__InvalidCallData",
     "inputs": []
   },
   {

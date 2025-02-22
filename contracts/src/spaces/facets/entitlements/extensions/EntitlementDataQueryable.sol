@@ -53,7 +53,7 @@ contract EntitlementDataQueryable is
 
     Transaction storage transaction = ds.transactions[transactionId];
 
-    if (!transaction.hasBenSet) {
+    if (!transaction.finalized) {
       revert EntitlementGated_TransactionNotRegistered();
     }
 

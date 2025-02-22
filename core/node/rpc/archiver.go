@@ -12,18 +12,18 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/river-build/river/core/config"
-	"github.com/river-build/river/core/contracts/river"
-	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/events"
-	"github.com/river-build/river/core/node/infra"
-	"github.com/river-build/river/core/node/logging"
-	"github.com/river-build/river/core/node/nodes"
-	. "github.com/river-build/river/core/node/protocol"
-	"github.com/river-build/river/core/node/registries"
-	"github.com/river-build/river/core/node/scrub"
-	. "github.com/river-build/river/core/node/shared"
-	"github.com/river-build/river/core/node/storage"
+	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/contracts/river"
+	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/events"
+	"github.com/towns-protocol/towns/core/node/infra"
+	"github.com/towns-protocol/towns/core/node/logging"
+	"github.com/towns-protocol/towns/core/node/nodes"
+	. "github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/registries"
+	"github.com/towns-protocol/towns/core/node/scrub"
+	. "github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/storage"
 )
 
 type CorruptionReason int
@@ -1044,7 +1044,11 @@ func (a *Archiver) worker(ctx context.Context) {
 			}
 			err := a.ArchiveStream(ctx, record.(*ArchiveStream))
 			if err != nil {
-				log.Errorw("archiver.worker: Failed to archive stream", "error", err, "streamId", streamId)
+				// Do not log for the known set of streams that were registered under an operator address.
+				// These errors are not worth tracking.
+				if !IsRiverErrorCode(err, Err_UNKNOWN_NODE) {
+					log.Errorw("archiver.worker: Failed to archive stream", "error", err, "streamId", streamId)
+				}
 				a.failedOpsCount.Add(1)
 			} else {
 				a.successOpsCount.Add(1)

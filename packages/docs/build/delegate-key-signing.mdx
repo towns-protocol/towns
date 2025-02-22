@@ -5,34 +5,34 @@ description: ""
 
 ### Delegate Key Signing
 
-All events in the River Protocol are signed by an [ECDSA](https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm) wallet key pair. Users and nodes can both send events using a process referred to as delegate signing that allows for events to be signed by a separate device linked to the primary wallet. Delegate signing therefore opens the protocol to allow events from linked devices the user has custody of. River Stream Nodes validate the signature prior to processing an event that is for example being added to a stream using `addEvent` RPC method.
+All events in the Towns Protocol are signed by an [ECDSA](https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm) wallet key pair. Users and nodes can both send events using a process referred to as delegate signing that allows for events to be signed by a separate device linked to the primary wallet. Delegate signing therefore opens the protocol to allow events from linked devices the user has custody of. Towns Stream Nodes validate the signature prior to processing an event that is for example being added to a stream using `addEvent` RPC method.
 
-<Note>Why ECDSA ? First, [ECDSA](https://blog.cloudflare.com/ecdsa-the-digital-signature-algorithm-of-a-better-internet) elliptic curve derived keys have been proven to be less susceptible to breaking than earlier algorithms such as RSA. Secondly, ECDSA keys are smaller at 256-bytes and less cpu intensive to generate signatures than asymmetric or RSA keys. Since River Stream Nodes validate and store signatures in storage for each event, using ECDSA signatures saves on cpu and disk space. </Note>
+<Note>Why ECDSA ? First, [ECDSA](https://blog.cloudflare.com/ecdsa-the-digital-signature-algorithm-of-a-better-internet) elliptic curve derived keys have been proven to be less susceptible to breaking than earlier algorithms such as RSA. Secondly, ECDSA keys are smaller at 256-bytes and less cpu intensive to generate signatures than asymmetric or RSA keys. Since Towns Stream Nodes validate and store signatures in storage for each event, using ECDSA signatures saves on cpu and disk space. </Note>
 
 The rules and construction of the delegate key signature are the topic of this page.
 
 ### Delegate Signature Protocol Rules
 
-The logic dictating how a River Stream Node should process delegate signatures on the critical path of a request are described in `protocol.proto` and defined in `delegate.go`.
+The logic dictating how a Towns Stream Node should process delegate signatures on the critical path of a request is described in `protocol.proto` and defined in `delegate.go`.
 
-Events sent over RPC to a River Stream Node are sent with a message `Envelope` that includes several fields used to validate the sender.
+Events sent over RPC to a Towns Stream Node are sent with a message `Envelope` that includes several fields used to validate the sender.
 
 ![Wire Payload](/images/wire-payload.png)
 
 - **signature** : For the event to be valid, the signature on the `Envelope` must match the `Event` creator_address or be signed by the same address implied by `Event` delegate_sig.
-- **creator_address** : This is the wallet address of the creator of the event, which can be a user or a River Stream Node.
+- **creator_address** : This is the wallet address of the creator of the event, which can be a user or a Towns Stream Node.
 - **delegate_sig** : Optional field that allows events to be signed by a device keypair linked to the user's primary wallet.
 
 <Note>If a delegate signature is present on an event, the event is only valid if either the creator_address matches the delegate_sig's signer public key or if the delegate_sig signing public key matches the key implied by Envelope.signature.</Note>
 
 ### Delegate Signature Validation
 
-Each event on a River Stream Node is parsed and validated as follows. 
+Each event on a Towns Stream Node is parsed and validated as follows. 
 
 <Steps>
   <Step title="Unmarshal Bytes">
-    Events are stored as bytes in River Stream Node storage and transmitted as bytes over the wire.
-    All events are unmarshalled first then parsed to run a series of validity checks prior to storing those events.
+    Events are stored as bytes in Towns Stream Node storage and transmitted as bytes over the wire.
+    All events are unmarshalled first and then parsed to run a series of validity checks prior to storing those events.
     ```go
     // stream_view.go example unpacking and parsing of events
     var env Envelope
@@ -47,7 +47,7 @@ Each event on a River Stream Node is parsed and validated as follows.
     }
     ```
   </Step>
-  <Step title="River Hash">
+  <Step title="Towns Hash">
     The event hash is first validated using `RiverHash` function found in `sign.go`.
     ```go
     // sign.go
@@ -68,7 +68,7 @@ Each event on a River Stream Node is parsed and validated as follows.
     ```
   </Step>
   <Step title="Check Delegate Signature">
-    Once the hash is confirmed as valid for the event, the hash along with the envelope signature are used to recover the signer public key.
+    Once the hash is confirmed as valid for the event, the hash along with the envelope signature is used to recover the signer public key.
     ```go
     // parsed_event.go
     func ParseEvent(envelope *Envelope) (*ParsedEvent, error) {
@@ -122,11 +122,11 @@ Each event on a River Stream Node is parsed and validated as follows.
   </Step>
 </Steps>
 
-<Note>Event creator wallets used to sign events are assumed to be created as Ethereum wallets. Therefore, `secp256k1` algorithm is used to validate signature and sign. River Stream Nodes use a hardened version of this algorithm found in [go-ethereum](https://github.com/ethereum/go-ethereum/tree/master/crypto/secp256k1) package. </Note>
+<Note>Event creator wallets used to sign events are assumed to be created as Ethereum wallets. Therefore, `secp256k1` algorithm is used to validate signature and sign. Towns Stream Nodes use a hardened version of this algorithm found in [go-ethereum](https://github.com/ethereum/go-ethereum/tree/master/crypto/secp256k1) package. </Note>
 
 ### Node Delegate Events
 
-River Stream Nodes are created with an ECDSA wallet used for identity and so can create events destined for streams in the network just like users using their Ethereum wallet as a primary wallet or another linked wallet created using [ECDSA](https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm). 
+Towns Stream Nodes are created with an ECDSA wallet used for identity and so can create events destined for streams in the network just like users using their Ethereum wallet as a primary wallet or another linked wallet created using [ECDSA](https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm). 
 
 Nodes create new wallets using `go-ethereum` crypto tools in the following function.
 

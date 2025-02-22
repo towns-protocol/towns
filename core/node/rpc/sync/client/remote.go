@@ -10,12 +10,13 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
-
-	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/logging"
-	. "github.com/river-build/river/core/node/protocol"
-	"github.com/river-build/river/core/node/protocol/protocolconnect"
-	. "github.com/river-build/river/core/node/shared"
+	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/logging"
+	. "github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
+	. "github.com/towns-protocol/towns/core/node/shared"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type remoteSyncer struct {
@@ -31,6 +32,8 @@ type remoteSyncer struct {
 	streams            sync.Map
 	responseStream     *connect.ServerStreamForClient[SyncStreamsResponse]
 	unsubStream        func(streamID StreamId)
+	// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
+	otelTracer trace.Tracer
 }
 
 func newRemoteSyncer(
@@ -42,6 +45,7 @@ func newRemoteSyncer(
 	cookies []*SyncCookie,
 	unsubStream func(streamID StreamId),
 	messages chan<- *SyncStreamsResponse,
+	otelTracer trace.Tracer,
 ) (*remoteSyncer, error) {
 	syncStreamCtx, syncStreamCancel := context.WithCancel(ctx)
 	responseStream, err := client.SyncStreams(syncStreamCtx, connect.NewRequest(&SyncStreamsRequest{SyncPos: cookies}))
@@ -82,6 +86,7 @@ func newRemoteSyncer(
 		responseStream:     responseStream,
 		remoteAddr:         remoteAddr,
 		unsubStream:        unsubStream,
+		otelTracer:         otelTracer,
 	}
 
 	s.syncID = responseStream.Msg().GetSyncId()
@@ -228,6 +233,14 @@ func (s *remoteSyncer) Address() common.Address {
 }
 
 func (s *remoteSyncer) AddStream(ctx context.Context, cookie *SyncCookie) error {
+	if s.otelTracer != nil {
+		var span trace.Span
+		streamID, _ := StreamIdFromBytes(cookie.GetStreamId())
+		ctx, span = s.otelTracer.Start(ctx, "remoteSyncer::AddStream",
+			trace.WithAttributes(attribute.String("stream", streamID.String())))
+		defer span.End()
+	}
+
 	streamID, err := StreamIdFromBytes(cookie.GetStreamId())
 	if err != nil {
 		return err
@@ -246,6 +259,13 @@ func (s *remoteSyncer) AddStream(ctx context.Context, cookie *SyncCookie) error 
 }
 
 func (s *remoteSyncer) RemoveStream(ctx context.Context, streamID StreamId) (bool, error) {
+	if s.otelTracer != nil {
+		var span trace.Span
+		ctx, span = s.otelTracer.Start(ctx, "remoteSyncer::removeStream",
+			trace.WithAttributes(attribute.String("stream", streamID.String())))
+		defer span.End()
+	}
+
 	_, err := s.client.RemoveStreamFromSync(ctx, connect.NewRequest(&RemoveStreamFromSyncRequest{
 		SyncId:   s.syncID,
 		StreamId: streamID[:],

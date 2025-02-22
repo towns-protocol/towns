@@ -41,14 +41,10 @@ contract TownsMainnetTests is TestUtils, ITownsBase, EIP712Utils {
     vm.warp(INITIAL_MINT_TIME);
   }
 
-  function test_init() external view {
-    assertEq(towns.name(), "Towns");
-    assertEq(towns.symbol(), "TOWNS");
-    assertEq(towns.decimals(), 18);
-    assertEq(towns.inflationReceiver(), vault);
-    assertEq(towns.totalSupply(), INITIAL_SUPPLY);
-    assertTrue(towns.supportsInterface(type(IERC20).interfaceId));
-    assertTrue(towns.supportsInterface(type(IERC20Metadata).interfaceId));
+  modifier givenMintedInitialSupply() {
+    vm.prank(vault);
+    towns.mintInitialSupply(vault);
+    _;
   }
 
   modifier givenCallerHasTokens(address caller, uint256 amount) {
@@ -74,6 +70,29 @@ contract TownsMainnetTests is TestUtils, ITownsBase, EIP712Utils {
     assertEq(towns.delegates(caller), delegatee);
     _;
   }
+
+  function test_init() external givenMintedInitialSupply {
+    assertEq(towns.name(), "Towns");
+    assertEq(towns.symbol(), "TOWNS");
+    assertEq(towns.decimals(), 18);
+    assertEq(towns.inflationReceiver(), vault);
+    assertEq(towns.totalSupply(), INITIAL_SUPPLY);
+    assertTrue(towns.supportsInterface(type(IERC20).interfaceId));
+    assertTrue(towns.supportsInterface(type(IERC20Metadata).interfaceId));
+  }
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                       INITIAL SUPPLY                       */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+  function test_mintInitialSupply(address to) external {
+    vm.assume(to != address(0));
+    vm.assume(to != ZERO_SENTINEL);
+
+    vm.prank(vault);
+    towns.mintInitialSupply(to);
+    assertEq(towns.totalSupply(), INITIAL_SUPPLY);
+  }
+
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                           Permit                        */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -81,7 +100,7 @@ contract TownsMainnetTests is TestUtils, ITownsBase, EIP712Utils {
     address alice,
     address bob,
     uint256 amount
-  ) external givenCallerHasTokens(alice, amount) {
+  ) external givenMintedInitialSupply givenCallerHasTokens(alice, amount) {
     vm.assume(bob != address(0));
     vm.assume(bob != ZERO_SENTINEL);
     vm.assume(alice != bob);
@@ -97,7 +116,7 @@ contract TownsMainnetTests is TestUtils, ITownsBase, EIP712Utils {
     uint256 alicePrivateKey,
     address bob,
     uint256 amount
-  ) external {
+  ) external givenMintedInitialSupply {
     vm.assume(bob != address(0));
     vm.assume(bob != ZERO_SENTINEL);
     amount = bound(amount, 1, INITIAL_SUPPLY);
@@ -132,7 +151,7 @@ contract TownsMainnetTests is TestUtils, ITownsBase, EIP712Utils {
   /*                           Inflation                        */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-  function test_createInflation() external {
+  function test_createInflation() external givenMintedInitialSupply {
     // wait 1 year
     skip(365 days);
 
@@ -157,7 +176,9 @@ contract TownsMainnetTests is TestUtils, ITownsBase, EIP712Utils {
     assertEq(towns.balanceOf(vault), totalMinted);
   }
 
-  function test_createInflation_multipleTimes(uint256 times) external {
+  function test_createInflation_multipleTimes(
+    uint256 times
+  ) external givenMintedInitialSupply {
     times = bound(times, 1, 20);
 
     for (uint256 i = 0; i < times; ++i) {
@@ -183,13 +204,16 @@ contract TownsMainnetTests is TestUtils, ITownsBase, EIP712Utils {
     }
   }
 
-  function test_revertWhen_createInflation_mintingTooSoon() external {
+  function test_revertWhen_createInflation_mintingTooSoon()
+    external
+    givenMintedInitialSupply
+  {
     vm.prank(vault);
     vm.expectRevert(MintingTooSoon.selector);
     towns.createInflation();
   }
 
-  function test_currentInflationRate() external {
+  function test_currentInflationRate() external givenMintedInitialSupply {
     uint256 currentInflationRate = towns.currentInflationRate();
     assertEq(
       currentInflationRate,
@@ -221,7 +245,7 @@ contract TownsMainnetTests is TestUtils, ITownsBase, EIP712Utils {
     );
   }
 
-  function test_setOverrideInflation() external {
+  function test_setOverrideInflation() external givenMintedInitialSupply {
     vm.prank(manager);
     towns.setOverrideInflation(true, 100);
 
@@ -237,6 +261,7 @@ contract TownsMainnetTests is TestUtils, ITownsBase, EIP712Utils {
     uint256 tokens
   )
     external
+    givenMintedInitialSupply
     givenCallerHasTokens(alice, tokens)
     givenCallerHasDelegated(alice, bob)
   {
@@ -253,6 +278,7 @@ contract TownsMainnetTests is TestUtils, ITownsBase, EIP712Utils {
     uint256 tokens
   )
     external
+    givenMintedInitialSupply
     givenCallerHasTokens(alice, tokens)
     givenCallerHasDelegated(alice, bob)
   {
@@ -269,6 +295,7 @@ contract TownsMainnetTests is TestUtils, ITownsBase, EIP712Utils {
     address charlie
   )
     external
+    givenMintedInitialSupply
     givenCallerHasTokens(alice, 1000)
     givenCallerHasTokens(bob, 1000)
     givenCallerHasDelegated(alice, charlie)
@@ -288,7 +315,7 @@ contract TownsMainnetTests is TestUtils, ITownsBase, EIP712Utils {
 
   function test_getPaginatedDelegators(
     TestPaginatedDelegators[10] memory test
-  ) external {
+  ) external givenMintedInitialSupply {
     for (uint256 i = 0; i < test.length; ++i) {
       test[i].tokenAmount = bound(test[i].tokenAmount, 1, 100);
       vm.assume(test[i].holder != test[i].delegatee);
@@ -320,7 +347,10 @@ contract TownsMainnetTests is TestUtils, ITownsBase, EIP712Utils {
     assertEq(next, 0);
   }
 
-  function test_getPaginatedDelegators_whenNoMoreDelegators() external view {
+  function test_getPaginatedDelegators_whenNoMoreDelegators()
+    external
+    givenMintedInitialSupply
+  {
     (address[] memory delegators, uint256 next) = towns.getPaginatedDelegators(
       0,
       10

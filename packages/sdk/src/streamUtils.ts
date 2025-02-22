@@ -8,6 +8,14 @@ import { ParsedEvent, ParsedMiniblock } from './types'
 import { bin_toHexString } from '@river-build/dlog'
 import { isDefined, logNever } from './check'
 
+export interface ParsedPersistedSyncedStream {
+    streamId: string
+    syncCookie: SyncCookie
+    lastSnapshotMiniblockNum: bigint
+    minipoolEvents: ParsedEvent[]
+    lastMiniblockNum: bigint
+}
+
 export function isPersistedEvent(event: ParsedEvent, direction: 'forward' | 'backward'): boolean {
     if (!event.event) {
         return false
@@ -23,7 +31,14 @@ export function isPersistedEvent(event: ParsedEvent, direction: 'forward' | 'bac
         case 'mediaPayload':
             return true
         case 'userPayload':
-            return direction === 'forward' ? true : false
+            switch (event.event.payload.value.content.case) {
+                case 'blockchainTransaction':
+                    return true
+                case 'receivedBlockchainTransaction':
+                    return true
+                default:
+                    return direction === 'forward' ? true : false
+            }
         case 'userSettingsPayload':
             return direction === 'forward' ? true : false
         case 'miniblockHeader':
@@ -36,6 +51,8 @@ export function isPersistedEvent(event: ParsedEvent, direction: 'forward' | 'bac
                     return direction === 'forward' ? true : false
                 case 'keyFulfillment':
                     return direction === 'forward' ? true : false
+                case 'memberBlockchainTransaction':
+                    return true
                 case undefined:
                     return false
                 default:
@@ -105,18 +122,15 @@ function parsedEventToPersistedEvent(event: ParsedEvent) {
     })
 }
 
-export function persistedSyncedStreamToParsedSyncedStream(stream: PersistedSyncedStream):
-    | {
-          syncCookie: SyncCookie
-          lastSnapshotMiniblockNum: bigint
-          minipoolEvents: ParsedEvent[]
-          lastMiniblockNum: bigint
-      }
-    | undefined {
+export function persistedSyncedStreamToParsedSyncedStream(
+    streamId: string,
+    stream: PersistedSyncedStream,
+): ParsedPersistedSyncedStream | undefined {
     if (!stream.syncCookie) {
         return undefined
     }
     return {
+        streamId,
         syncCookie: stream.syncCookie,
         lastSnapshotMiniblockNum: stream.lastSnapshotMiniblockNum,
         minipoolEvents: stream.minipoolEvents.map(persistedEventToParsedEvent).filter(isDefined),

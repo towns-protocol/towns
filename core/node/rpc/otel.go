@@ -14,8 +14,8 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 	"go.uber.org/zap"
 
-	"github.com/river-build/river/core/node/utils"
-	"github.com/river-build/river/core/river_node/version"
+	"github.com/towns-protocol/towns/core/node/utils"
+	"github.com/towns-protocol/towns/core/river_node/version"
 )
 
 func (s *Service) initTracing() {

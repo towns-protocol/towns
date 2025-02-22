@@ -16,10 +16,10 @@ template:
         resources:
           requests:
             memory: "15.5Gi"
-            cpu: "7900m"
+            cpu: "7500m"
           limits:
             memory: "15.5Gi"
-            cpu: "7900m"
+            cpu: "7500m"
 ## template.spec will be modified if you change the container mode
 ## with containerMode.type=dind, we will populate the template.spec with following pod spec
 ## template:

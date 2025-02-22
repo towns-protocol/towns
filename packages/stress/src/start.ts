@@ -13,7 +13,7 @@ check(isSet(process.env.PROCESS_INDEX), 'process.env.PROCESS_INDEX')
 const processIndex = parseInt(process.env.PROCESS_INDEX)
 
 const config = makeRiverConfig(process.env.RIVER_ENV)
-const logger = getLogger(`stress:run`, { processIndex })
+const logger = getLogger(`stress:run`)
 logger.info('======================= run =======================')
 
 if (processIndex === 0) {
@@ -68,6 +68,6 @@ const run = async () => {
     exit(0)
 }
 run().catch((e) => {
-    logger.error('unhandled error:', e)
+    logger.error(e, 'unhandled error:')
     exit(1)
 })

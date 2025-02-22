@@ -1,19 +1,19 @@
 package events
 
 import (
-	"bytes"
 	"context"
 	"slices"
-	"sync"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/river-build/river/core/contracts/river"
-	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/logging"
-	. "github.com/river-build/river/core/node/protocol"
-	. "github.com/river-build/river/core/node/shared"
+	"github.com/linkdata/deadlock"
+	"github.com/puzpuzpuz/xsync/v3"
+	"github.com/towns-protocol/towns/core/contracts/river"
+	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/crypto"
+	"github.com/towns-protocol/towns/core/node/logging"
+	. "github.com/towns-protocol/towns/core/node/protocol"
+	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
 const (
@@ -29,9 +29,8 @@ type RemoteMiniblockProvider interface {
 	GetMbProposal(
 		ctx context.Context,
 		node common.Address,
-		streamId StreamId,
-		forceSnapshot bool,
-	) (*MiniblockProposal, error)
+		request *ProposeMiniblockRequest,
+	) (*ProposeMiniblockResponse, error)
 
 	// SaveMbCandidate sends the given mb to the given node and node must save it.
 	SaveMbCandidate(
@@ -70,11 +69,6 @@ type TestMiniblockProducer interface {
 	) (*MiniblockRef, error)
 }
 
-type MiniblockProducer interface {
-	scheduleCandidates(ctx context.Context, blockNum crypto.BlockNumber) []*mbJob
-	testCheckAllDone(jobs []*mbJob) bool
-}
-
 type MiniblockProducerOpts struct {
 	TestDisableMbProdcutionOnBlock bool
 }
@@ -84,14 +78,13 @@ type MiniblockProducerOpts struct {
 // candidates and schedules these candidates for registration.
 func NewMiniblockProducer(
 	ctx context.Context,
-	streamCache StreamCache,
-	cfg crypto.OnChainConfiguration,
+	streamCache *StreamCache,
 	opts *MiniblockProducerOpts,
 ) *miniblockProducer {
 	mb := &miniblockProducer{
 		streamCache:      streamCache,
 		localNodeAddress: streamCache.Params().Wallet.Address,
-		cfg:              cfg,
+		jobs:             xsync.NewMapOf[StreamId, *mbJob](),
 	}
 
 	if opts != nil {
@@ -99,40 +92,31 @@ func NewMiniblockProducer(
 	}
 
 	if !mb.opts.TestDisableMbProdcutionOnBlock {
-		streamCache.Params().ChainMonitor.OnBlock(mb.OnNewBlock)
+		streamCache.Params().ChainMonitor.OnBlock(mb.onNewBlock)
 	}
 
 	return mb
 }
 
 type miniblockProducer struct {
-	streamCache      StreamCache
-	cfg              crypto.OnChainConfiguration
+	streamCache      *StreamCache
 	opts             MiniblockProducerOpts
 	localNodeAddress common.Address
 
-	// jobs is a maps of streamId to *mbJob
-	jobs sync.Map
+	jobs *xsync.MapOf[StreamId, *mbJob]
 
 	candidates candidateTracker
 
-	onNewBlockMutex sync.Mutex
+	onNewBlockMutex deadlock.Mutex
 }
 
-var _ MiniblockProducer = (*miniblockProducer)(nil)
-
-// mbJos tracks single miniblock production attempt for a single stream.
-type mbJob struct {
-	stream     *streamImpl
-	candidate  *MiniblockInfo
-	replicated bool
-}
+var _ TestMiniblockProducer = (*miniblockProducer)(nil)
 
 // candidateTracker is a helper struct to accumulate proposals and call SetStreamLastMiniblockBatch.
 // Logically this is just a part of the miniblockProducer, but encapsulating logic here makes
 // the code more readable.
 type candidateTracker struct {
-	mu         sync.Mutex
+	mu         deadlock.Mutex
 	candidates []*mbJob
 	timer      *time.Timer
 }
@@ -166,17 +150,17 @@ func (p *candidateTracker) add(ctx context.Context, mp *miniblockProducer, j *mb
 	}
 	p.mu.Unlock()
 	if len(readyProposals) > 0 {
-		mp.submitProposalBatch(ctx, readyProposals)
+		go mp.submitProposalBatch(ctx, readyProposals)
 	}
 }
 
-// OnNewBlock loops over streams and determines if it needs to produce a new mini block.
+// onNewBlock loops over streams and determines if it needs to produce a new mini block.
 // For every stream that is eligible to produce a new mini block it creates a new mini block candidate.
 // It bundles candidates in a batch.
 // If the batch is full it submits the batch to the RiverRegistry#stream facet for registration and parses the resulting
 // logs to determine which mini block candidate was registered and which are not. For each registered mini block
 // candidate it applies the candidate to the stream.
-func (p *miniblockProducer) OnNewBlock(ctx context.Context, blockNum crypto.BlockNumber) {
+func (p *miniblockProducer) onNewBlock(ctx context.Context, blockNum crypto.BlockNumber) {
 	// Try lock to have only one invocation at a time. Previous onNewBlock may still be running.
 	if !p.onNewBlockMutex.TryLock() {
 		return
@@ -227,7 +211,7 @@ func (p *miniblockProducer) scheduleCandidates(ctx context.Context, blockNum cry
 }
 
 func (p *miniblockProducer) isLocalLeaderOnCurrentBlock(
-	stream *streamImpl,
+	stream *Stream,
 	blockNum crypto.BlockNumber,
 ) bool {
 	streamNodes := stream.GetNodes()
@@ -238,13 +222,14 @@ func (p *miniblockProducer) isLocalLeaderOnCurrentBlock(
 	return streamNodes[index] == p.localNodeAddress
 }
 
-func (p *miniblockProducer) trySchedule(ctx context.Context, stream *streamImpl) *mbJob {
+func (p *miniblockProducer) trySchedule(ctx context.Context, stream *Stream) *mbJob {
 	j := &mbJob{
 		stream: stream,
+		cache:  p.streamCache,
 	}
 	_, prevLoaded := p.jobs.LoadOrStore(stream.streamId, j)
 	if !prevLoaded {
-		go p.jobStart(ctx, j, false)
+		go p.jobStart(ctx, j)
 		return j
 	}
 	return nil
@@ -264,6 +249,14 @@ func (p *miniblockProducer) testCheckAllDone(jobs []*mbJob) bool {
 	return true
 }
 
+// TestMakeMiniblock is a debug function that creates a miniblock proposal, stores it in the registry, and applies it to the stream.
+// It is intended to be called manually from the test code.
+// TestMakeMiniblock always creates a miniblock if there are events in the minipool.
+// TestMakeMiniblock always creates a miniblock if forceSnapshot is true. This miniblock will have a snapshot.
+//
+// If there are no events in the minipool and forceSnapshot is false, TestMakeMiniblock does nothing and succeeds.
+//
+// Returns the hash and number of the last know miniblock.
 func (p *miniblockProducer) TestMakeMiniblock(
 	ctx context.Context,
 	streamId StreamId,
@@ -278,7 +271,9 @@ func (p *miniblockProducer) TestMakeMiniblock(
 	}
 
 	job := &mbJob{
-		stream: stream.(*streamImpl),
+		stream:        stream,
+		cache:         p.streamCache,
+		forceSnapshot: forceSnapshot,
 	}
 
 	// Spin until we manage to insert our job into the jobs map.
@@ -286,7 +281,7 @@ func (p *miniblockProducer) TestMakeMiniblock(
 	for {
 		actual, _ := p.jobs.LoadOrStore(streamId, job)
 		if actual == job {
-			go p.jobStart(ctx, job, forceSnapshot)
+			go p.jobStart(ctx, job)
 			break
 		}
 
@@ -322,276 +317,13 @@ func (p *miniblockProducer) TestMakeMiniblock(
 	return view.LastBlock().Ref, nil
 }
 
-func combineProposals(
-	ctx context.Context,
-	remoteQuorumNum int,
-	local *MiniblockProposal,
-	remote []*MiniblockProposal,
-) (*MiniblockProposal, error) {
-	log := logging.FromCtx(ctx)
-	// Filter remotes that don't match local prerequisites.
-	remote = slices.DeleteFunc(remote, func(p *MiniblockProposal) bool {
-		if p.NewMiniblockNum != local.NewMiniblockNum {
-			log.Infow(
-				"combineProposals: ignoring remote proposal: mb number mismatch",
-				"remoteNum",
-				p.NewMiniblockNum,
-				"localNum",
-				local.NewMiniblockNum,
-			)
-			return true
-		}
-		if !bytes.Equal(p.PrevMiniblockHash, local.PrevMiniblockHash) {
-			log.Infow(
-				"combineProposals: ignoring remote proposal: prev hash mismatch",
-				"remoteHash",
-				p.PrevMiniblockHash,
-				"localHash",
-				local.PrevMiniblockHash,
-			)
-			return true
-		}
-		return false
-	})
-
-	// Check if we have enough remote proposals.
-	if len(remote) < remoteQuorumNum {
-		return nil, RiverError(
-			Err_INTERNAL,
-			"combineProposals: not enough remote proposals",
-			"remoteNum",
-			len(remote),
-			"remoteQuorumNum",
-			remoteQuorumNum,
-		)
-	}
-
-	all := append(remote, local)
-
-	// Count ShouldSnapshot.
-	shouldSnapshotNum := 0
-	for _, p := range all {
-		if p.ShouldSnapshot {
-			shouldSnapshotNum++
-		}
-	}
-	quorumNum := remoteQuorumNum + 1
-	shouldSnapshot := shouldSnapshotNum >= quorumNum
-
-	// Count event hashes.
-	eventCounts := make(map[common.Hash]int)
-	for _, p := range all {
-		for _, h := range p.Hashes {
-			eventCounts[common.BytesToHash(h)]++
-		}
-	}
-
-	events := make([][]byte, 0, len(eventCounts))
-	for h, c := range eventCounts {
-		if c >= quorumNum {
-			events = append(events, h.Bytes())
-		}
-	}
-
-	return &MiniblockProposal{
-		PrevMiniblockHash: local.PrevMiniblockHash,
-		NewMiniblockNum:   local.NewMiniblockNum,
-		ShouldSnapshot:    shouldSnapshot,
-		Hashes:            events,
-	}, nil
-}
-
-func gatherRemoteProposals(
-	ctx context.Context,
-	params *StreamCacheParams,
-	nodes []common.Address,
-	streamId StreamId,
-	forceSnapshot bool,
-) ([]*MiniblockProposal, error) {
-	// TODO: better timeout?
-	// TODO: once quorum is achieved, it could be beneficial to return reasonably early.
-	ctx, cancel := context.WithTimeout(ctx, params.RiverChain.Config.BlockTime())
-	defer cancel()
-
-	proposals := make([]*MiniblockProposal, 0, len(nodes))
-	errs := make([]error, 0)
-	var mu sync.Mutex
-
-	var wg sync.WaitGroup
-	wg.Add(len(nodes))
-
-	for i, node := range nodes {
-		go func(i int, node common.Address) {
-			defer wg.Done()
-			proposal, err := params.RemoteMiniblockProvider.GetMbProposal(ctx, node, streamId, forceSnapshot)
-			mu.Lock()
-			defer mu.Unlock()
-			if err != nil {
-				errs = append(errs, err)
-			} else {
-				proposals = append(proposals, proposal)
-			}
-		}(i, node)
-	}
-	wg.Wait()
-
-	if len(proposals) > 0 {
-		return proposals, nil
-	}
-	if len(errs) > 0 {
-		return nil, errs[0]
-	}
-	return nil, RiverError(Err_INTERNAL, "gatherRemoteProposals: no proposals and no errors")
-}
-
-// mbProduceCandidate is implemented as standalone function to allow calling from tests.
-func mbProduceCandidate(
-	ctx context.Context,
-	params *StreamCacheParams,
-	stream *streamImpl,
-	forceSnapshot bool,
-) (*MiniblockInfo, bool, error) {
-	remoteNodes, isLocal := stream.GetRemotesAndIsLocal()
-	replicated := len(remoteNodes) > 0
-	// TODO: this is a sanity check, but in general mb production code needs to be hardened
-	// to handle scenario when local node is removed from the stream.
-	if !isLocal {
-		return nil, replicated, RiverError(Err_INTERNAL, "Not a local stream")
-	}
-
-	view, err := stream.getViewIfLocal(ctx)
-	if err != nil {
-		return nil, replicated, err
-	}
-	if view == nil {
-		return nil, replicated, RiverError(Err_INTERNAL, "mbProduceCandidate: stream is not local")
-	}
-
-	mbInfo, err := mbProduceCandidate_Make(ctx, params, view, forceSnapshot, remoteNodes)
-	if err != nil {
-		return nil, replicated, err
-	}
-	if mbInfo == nil {
-		return nil, replicated, nil
-	}
-
-	err = mbProduceCandidate_Save(ctx, params, stream.streamId, mbInfo, remoteNodes)
-	if err != nil {
-		return nil, replicated, err
-	}
-
-	return mbInfo, replicated, nil
-}
-
-func mbProduceCandidate_Make(
-	ctx context.Context,
-	params *StreamCacheParams,
-	view *streamViewImpl,
-	forceSnapshot bool,
-	remoteNodes []common.Address,
-) (*MiniblockInfo, error) {
-	localProposal, err := view.ProposeNextMiniblock(ctx, params.ChainConfig.Get(), forceSnapshot)
-	if err != nil {
-		return nil, err
-	}
-	// TODO: update code to handle situation when localProposal is empty and still proceed with remote proposals.
-	if localProposal == nil {
-		return nil, nil
-	}
-
-	var combinedProposal *MiniblockProposal
-	if len(remoteNodes) > 0 {
-		remoteProposals, err := gatherRemoteProposals(
-			ctx,
-			params,
-			remoteNodes,
-			view.streamId,
-			forceSnapshot,
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		remoteQuorumNum := RemoteQuorumNum(len(remoteNodes), true)
-		if len(remoteProposals) < remoteQuorumNum {
-			// TODO: actual error
-			return nil, RiverError(Err_INTERNAL, "mbProposeAndStore: not enough remote proposals")
-		}
-
-		combinedProposal, err = combineProposals(ctx, remoteQuorumNum, localProposal, remoteProposals)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		combinedProposal = localProposal
-	}
-
-	// TODO: fix this to fetch missing events
-	// Filter out events that are not present locally; otherwise we would not be able to create candidate.
-	localEvents := map[common.Hash]bool{}
-	for _, e := range localProposal.Hashes {
-		localEvents[common.BytesToHash(e)] = true
-	}
-	combinedProposal.Hashes = slices.DeleteFunc(combinedProposal.Hashes, func(h []byte) bool {
-		return !localEvents[common.BytesToHash(h)]
-	})
-
-	// Is there anything to do?
-	if !(len(combinedProposal.Hashes) > 0 || combinedProposal.ShouldSnapshot) {
-		return nil, nil
-	}
-
-	miniblockHeader, envelopes, err := view.makeMiniblockHeader(ctx, combinedProposal)
-	if err != nil {
-		return nil, err
-	}
-
-	mbInfo, err := NewMiniblockInfoFromHeaderAndParsed(params.Wallet, miniblockHeader, envelopes)
-	if err != nil {
-		return nil, err
-	}
-
-	return mbInfo, nil
-}
-
-func mbProduceCandidate_Save(
-	ctx context.Context,
-	params *StreamCacheParams,
-	streamId StreamId,
-	mbInfo *MiniblockInfo,
-	remoteNodes []common.Address,
-) error {
-	qp := NewQuorumPool("method", "mbProduceCandidate_Save", "streamId", streamId, "miniblock", mbInfo.Ref)
-
-	qp.GoLocal(ctx, func(ctx context.Context) error {
-		miniblockBytes, err := mbInfo.ToBytes()
-		if err != nil {
-			return err
-		}
-
-		return params.Storage.WriteMiniblockCandidate(
-			ctx,
-			streamId,
-			mbInfo.Ref.Hash,
-			mbInfo.Ref.Num,
-			miniblockBytes,
-		)
-	})
-
-	qp.GoRemotes(ctx, remoteNodes, func(ctx context.Context, node common.Address) error {
-		return params.RemoteMiniblockProvider.SaveMbCandidate(ctx, node, streamId, mbInfo.Proto)
-	})
-
-	return qp.Wait()
-}
-
-func (p *miniblockProducer) jobStart(ctx context.Context, j *mbJob, forceSnapshot bool) {
+func (p *miniblockProducer) jobStart(ctx context.Context, j *mbJob) {
 	if ctx.Err() != nil {
 		p.jobDone(ctx, j)
 		return
 	}
 
-	candidate, replicated, err := mbProduceCandidate(ctx, p.streamCache.Params(), j.stream, forceSnapshot)
+	err := j.produceCandidate(ctx)
 	if err != nil {
 		logging.FromCtx(ctx).
 			Errorw(
@@ -604,18 +336,25 @@ func (p *miniblockProducer) jobStart(ctx context.Context, j *mbJob, forceSnapsho
 		p.jobDone(ctx, j)
 		return
 	}
-	if candidate == nil {
+	if j.candidate == nil {
 		p.jobDone(ctx, j)
 		return
 	}
 
-	j.candidate = candidate
-	j.replicated = replicated
 	p.candidates.add(ctx, p, j)
 }
 
 func (p *miniblockProducer) jobDone(ctx context.Context, j *mbJob) {
-	if !p.jobs.CompareAndDelete(j.stream.streamId, j) {
+	notFound := false
+	// Delete the job from the jobs map if value is the same as j.
+	_, _ = p.jobs.Compute(j.stream.streamId, func(oldValue *mbJob, loaded bool) (*mbJob, bool) {
+		if oldValue == j {
+			return nil, true
+		}
+		notFound = true
+		return oldValue, false
+	})
+	if notFound {
 		logging.FromCtx(ctx).Errorw("MiniblockProducer: jobDone: job not found in jobs map", "streamId", j.stream.streamId)
 	}
 }
@@ -633,7 +372,7 @@ func (p *miniblockProducer) submitProposalBatch(ctx context.Context, proposals [
 	var invalidProposals []StreamId
 	var failed []StreamId
 	var filteredProposals []*mbJob
-	freq := int64(p.cfg.Get().StreamMiniblockRegistrationFrequency)
+	freq := int64(p.streamCache.Params().ChainConfig.Get().StreamMiniblockRegistrationFrequency)
 	if freq <= 0 {
 		freq = 1
 	}
@@ -689,20 +428,23 @@ func (p *miniblockProducer) submitProposalBatch(ctx context.Context, proposals [
 
 	for _, job := range proposals {
 		if slices.Contains(success, job.stream.streamId) {
-			err := job.stream.ApplyMiniblock(ctx, job.candidate)
-			if err != nil {
-				log.Errorw(
-					"processMiniblockProposalBatch: Error applying miniblock",
-					"streamId",
-					job.stream.streamId,
-					"err",
-					err,
-				)
-			}
-
-			p.jobDone(ctx, job)
+			go func() {
+				err := job.stream.ApplyMiniblock(ctx, job.candidate)
+				if err != nil {
+					log.Errorw(
+						"processMiniblockProposalBatch: Error applying miniblock",
+						"streamId",
+						job.stream.streamId,
+						"err",
+						err,
+					)
+				}
+				p.jobDone(ctx, job)
+			}()
 		} else if slices.Contains(invalidProposals, job.stream.streamId) {
 			streamsOutOfSync = append(streamsOutOfSync, job)
+		} else {
+			p.jobDone(ctx, job)
 		}
 	}
 

@@ -288,6 +288,30 @@ contract SpaceOwnerTest is ISpaceOwnerBase, IOwnableBase, BaseSetup {
     assertEq(LibString.toCase(tokenUri, false), expectedUri);
   }
 
+  // ------------ getSpace ------------
+
+  function test_fuzz_getSpaceInfo(address spaceAddress) external {
+    vm.assume(spaceAddress != address(0));
+    uint256 tokenId = mintSpace(uri, spaceAddress);
+
+    Space memory space = spaceOwnerToken.getSpaceInfo(spaceAddress);
+
+    assertEq(space.name, name);
+    assertEq(space.uri, uri);
+    assertEq(space.tokenId, tokenId);
+    assertEq(space.shortDescription, shortDescription);
+    assertEq(space.longDescription, longDescription);
+  }
+
+  function test_fuzz_getSpaceByTokenId(address spaceAddress) external {
+    vm.assume(spaceAddress != address(0));
+    uint256 tokenId = mintSpace(uri, spaceAddress);
+
+    address space = spaceOwnerToken.getSpaceByTokenId(tokenId);
+
+    assertEq(space, spaceAddress);
+  }
+
   function test_getVotes() external {
     assertEq(spaceOwnerToken.getVotes(deployer), 0);
 

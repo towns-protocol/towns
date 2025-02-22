@@ -84,6 +84,8 @@ deploy-any-explicit :;
 	forge script scripts/deployments/${type}/${contract}.s.sol:${contract} \
 	--ffi --rpc-url ${rpc} --private-key ${private_key} --broadcast --verify --verifier-url ${verifier} --etherscan-api-key ${api_key}
 
+
+
 resume-any :;
 	@$(if $(context),DEPLOYMENT_CONTEXT=$(context)) \
 	forge script scripts/deployments/${type}/${contract}.s.sol:${contract} \
@@ -125,7 +127,7 @@ verify-any :;
 
 explicit-verify-any :;
 	@echo "Verifying $(contract) on a remote network"
-	@forge verify-contract ${address} ${contract} --verifier-url ${verifier} --etherscan-api-key ${etherscan}
+	@forge verify-contract ${address} ${contract} --verifier ${verifier} --verifier-url ${verifier-url} ${args}
 
 deploy-any-local-ledger :;
 	@echo "Running $(contract) on local chain"
@@ -139,7 +141,7 @@ deploy-any-ledger :;
 	@SAVE_DEPLOYMENTS=1 $(if $(context),DEPLOYMENT_CONTEXT=$(context)) \
 	forge script scripts/deployments/${type}/${contract}.s.sol:${contract} \
 	--ledger --hd-paths ${hd_path} --sender ${sender} \
-	--ffi --rpc-url ${rpc} --broadcast --verify --verifier=blockscout --verifier-url=${verifier} --etherscan-api-key ${etherscan}
+	--ffi --rpc-url ${rpc} --broadcast --verify --verifier-url ${verifier} --etherscan-api-key ${etherscan}
 
 resume-any-ledger :;
 	@forge script scripts/deployments/${type}/${contract}.s.sol:${contract} \
@@ -207,7 +209,7 @@ deploy-ledger-base-sepolia :;
 	@$(MAKE) resume-any-ledger rpc=base_sepolia hd_path=${HD_PATH} sender=${SENDER_ADDRESS} verifier=${BASESCAN_SEPOLIA_URL} etherscan=${BASESCAN_API_KEY}
 
 deploy-base-sepolia :;
-	@$(MAKE) deploy-any-blockscout rpc=base_sepolia private_key=${TESTNET_PRIVATE_KEY} verifier=${BLOCKSCOUT_SEPOLIA_URL} etherscan=${BLOCKSCOUT_SEPOLIA_API_KEY}
+	@$(MAKE) deploy-any-blockscout rpc=base_sepolia private_key=${TESTNET_PRIVATE_KEY} verifier=${BLOCKSCOUT_SEPOLIA_URL}
 	@$(MAKE) resume-any rpc=base_sepolia private_key=${TESTNET_PRIVATE_KEY} verifier=${BASESCAN_SEPOLIA_URL} etherscan=${BASESCAN_API_KEY}
 
 interact-base-sepolia :;
@@ -217,8 +219,8 @@ fork-base-sepolia :;
 	@$(MAKE) fork-any rpc=base_sepolia private_key=${TESTNET_PRIVATE_KEY}
 
 verify-base-sepolia :;
-	@$(MAKE) verify-any rpc=base_sepolia
-	@$(MAKE) explicit-verify-any rpc=base_sepolia verifier=${BASESCAN_SEPOLIA_URL} etherscan=${BASESCAN_API_KEY}
+	@$(MAKE) explicit-verify-any rpc=base_sepolia verifier=blockscout verifier-url=${BLOCKSCOUT_SEPOLIA_URL}
+	@$(MAKE) explicit-verify-any rpc=base_sepolia verifier=etherscan verifier-url=${BASESCAN_SEPOLIA_URL} args="--etherscan-api-key ${BASESCAN_API_KEY}"
 
 # ===========================
 # 				Sepolia
@@ -264,6 +266,8 @@ fork-base :;
 verify-base :;
 	@$(MAKE) verify-any rpc=base
 	@$(MAKE) explicit-verify-any rpc=base verifier=${BLOCKSCOUT_BASE_URL} etherscan=${BLOCKSCOUT_BASE_API_KEY}
+
+
 
 # ===========================
 # 				Mainnet
@@ -314,3 +318,41 @@ fork-alpha-base-sepolia :;
 deploy-omega-base :;
 	@$(MAKE) deploy-any-ledger context=omega rpc=base hd_path=${HD_PATH} sender=${SENDER_ADDRESS}
 	@$(MAKE) resume-any-ledger context=omega rpc=base hd_path=${HD_PATH} sender=${SENDER_ADDRESS} verifier=${BASESCAN_URL} etherscan=${BASESCAN_API_KEY}
+
+deploy-omega-mainnet :;
+	@$(MAKE) deploy-any-ledger context=omega rpc=mainnet hd_path=${HD_PATH} sender=${SENDER_ADDRESS} verifier=${ETHERSCAN_URL} etherscan=${ETHERSCAN_API_KEY}
+
+#*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+#*                      DEPLOYMENTS V2                        */
+#*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+deploy-any-wallet :;
+	@echo "Running $(contract) on remote network"
+	@SAVE_DEPLOYMENTS=1 $(if $(context),DEPLOYMENT_CONTEXT=$(context)) \
+	forge script scripts/deployments/${type}/${contract}.s.sol:${contract} --ffi \
+	--ledger --hd-paths ${hd_path} --sender ${sender} \
+	--rpc-url ${rpc} --broadcast --verify --verifier-url ${verifier-url} --verifier ${verifier} ${args}
+
+deploy-any-account :;
+	@echo "Running $(contract) on remote network"
+	@SAVE_DEPLOYMENTS=1 $(if $(context),DEPLOYMENT_CONTEXT=$(context)) \
+	forge script scripts/deployments/${type}/${contract}.s.sol:${contract} --ffi \
+	--account ${account} --password ${password} --sender ${sender} \
+	--rpc-url ${rpc} --broadcast --verify --verifier-url ${verifier-url} --verifier ${verifier} ${args}
+
+fork-any-account :;
+	@echo "Running $(contract) on a forked remote network"
+	@$(if $(context),DEPLOYMENT_CONTEXT=$(context)) \
+	forge script scripts/interactions/${contract}.s.sol:${contract} \
+	--ffi --fork-url ${rpc} --account ${account} --password ${password} --sender ${sender} -vvvv
+
+interact-any-account :;
+	@echo "Running $(contract) on remote network"
+	@SAVE_DEPLOYMENTS=1 $(if $(context),DEPLOYMENT_CONTEXT=$(context)) \
+	forge script scripts/interactions/${contract}.s.sol:${contract} --ffi \
+	--account ${account} --password ${password} --sender ${sender} \
+	--rpc-url ${rpc} --broadcast --verify --verifier-url ${verifier-url} --verifier ${verifier} ${args}
+
+deploy-base-sepolia-with-account :;
+	@$(MAKE) deploy-any-account rpc=base_sepolia verifier=etherscan verifier-url=${BASESCAN_SEPOLIA_URL} args="--etherscan-api-key ${BASESCAN_SEPOLIA_API_KEY}"
+	@$(MAKE) deploy-any-account rpc=base_sepolia verifier=blockscout verifier-url=${BLOCKSCOUT_SEPOLIA_URL} args="--resume"

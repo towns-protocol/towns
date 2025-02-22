@@ -6,22 +6,36 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/river-build/river/core/contracts/river"
-	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/crypto"
-	. "github.com/river-build/river/core/node/protocol"
-	"github.com/river-build/river/core/node/registries"
-	. "github.com/river-build/river/core/node/shared"
+	"github.com/towns-protocol/towns/core/contracts/river"
+	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/crypto"
+	. "github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/registries"
+	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
 type StreamRegistry interface {
-	// GetStreamInfo: returns nodes, error
+	// AllocateStream allocates a stream with the given streamId and genesis miniblock.
 	AllocateStream(
 		ctx context.Context,
 		streamId StreamId,
 		genesisMiniblockHash common.Hash,
 		genesisMiniblock []byte,
 	) ([]common.Address, error)
+
+	// AddStream creates a stream with the given streamId and params.
+	AddStream(
+		ctx context.Context,
+		streamId StreamId,
+		addrs []common.Address,
+		genesisMiniblockHash common.Hash,
+		lastMiniblockHash common.Hash,
+		lastMiniblockNum int64,
+		isSealed bool,
+	) error
+
+	// ChooseStreamNodes returns a list of nodes that should store the stream.
+	ChooseStreamNodes(streamId StreamId) ([]common.Address, error)
 }
 
 type streamRegistryImpl struct {
@@ -31,23 +45,18 @@ type streamRegistryImpl struct {
 	contract      *registries.RiverRegistryContract
 }
 
-var _ StreamRegistry = (*streamRegistryImpl)(nil)
-
 func NewStreamRegistry(
-	ctx context.Context,
 	blockchain *crypto.Blockchain,
 	nodeRegistry NodeRegistry,
 	contract *registries.RiverRegistryContract,
 	onChainConfig crypto.OnChainConfiguration,
-) (*streamRegistryImpl, error) {
-	impl := &streamRegistryImpl{
+) StreamRegistry {
+	return &streamRegistryImpl{
 		blockchain:    blockchain,
 		nodeRegistry:  nodeRegistry,
 		onChainConfig: onChainConfig,
 		contract:      contract,
 	}
-
-	return impl, nil
 }
 
 func (sr *streamRegistryImpl) AllocateStream(
@@ -56,7 +65,7 @@ func (sr *streamRegistryImpl) AllocateStream(
 	genesisMiniblockHash common.Hash,
 	genesisMiniblock []byte,
 ) ([]common.Address, error) {
-	addrs, err := sr.chooseStreamNodes(ctx, streamId)
+	addrs, err := sr.ChooseStreamNodes(streamId)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +78,27 @@ func (sr *streamRegistryImpl) AllocateStream(
 	return addrs, nil
 }
 
-func (sr *streamRegistryImpl) chooseStreamNodes(ctx context.Context, streamId StreamId) ([]common.Address, error) {
+func (sr *streamRegistryImpl) AddStream(
+	ctx context.Context,
+	streamId StreamId,
+	addrs []common.Address,
+	genesisMiniblockHash common.Hash,
+	lastMiniblockHash common.Hash,
+	lastMiniblockNum int64,
+	isSealed bool,
+) error {
+	return sr.contract.AddStream(
+		ctx,
+		streamId,
+		addrs,
+		genesisMiniblockHash,
+		lastMiniblockHash,
+		lastMiniblockNum,
+		isSealed,
+	)
+}
+
+func (sr *streamRegistryImpl) ChooseStreamNodes(streamId StreamId) ([]common.Address, error) {
 	allNodes := sr.nodeRegistry.GetAllNodes()
 	nodes := make([]*NodeRecord, 0, len(allNodes))
 

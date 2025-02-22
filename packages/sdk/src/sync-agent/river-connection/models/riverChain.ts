@@ -35,6 +35,7 @@ export class RiverChain extends PersistedObservable<RiverChainModel> {
 
     // implement start function then wire it up from parent
     protected override onLoaded() {
+        log.info('riverChain onLoaded')
         this.withInfiniteRetries(() => this.fetchUrls())
         this.withInfiniteRetries(() => this.fetchStreamExists(makeUserStreamId(this.userId)))
     }
@@ -47,7 +48,7 @@ export class RiverChain extends PersistedObservable<RiverChainModel> {
         // urls is returning the cached data if it exists, otherwise waiting for the data to be fetched
         // if the cached data returns a stale node url, the startup will fail
         // nodes almost never exit the network, so this is a very rare case
-        await this.when((x) => x.data.urls.fetchedAtMs !== undefined)
+        await this.when((x) => x.data.urls.fetchedAtMs !== undefined, { timeoutMs: 15000 })
         return this.data.urls.value
     }
 

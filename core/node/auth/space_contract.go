@@ -5,9 +5,9 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/river-build/river/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/shared"
 
-	"github.com/river-build/river/core/contracts/types"
+	"github.com/towns-protocol/towns/core/contracts/types"
 )
 
 type SpaceContract interface {
@@ -55,4 +55,8 @@ type SpaceContract interface {
 		ctx context.Context,
 		spaceId shared.StreamId,
 	) ([]types.BaseRole, error)
+	GetChannels(
+		ctx context.Context,
+		spaceId shared.StreamId,
+	) ([]types.BaseChannel, error)
 }

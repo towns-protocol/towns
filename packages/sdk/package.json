@@ -1,6 +1,6 @@
 {
     "name": "@river-build/sdk",
-    "version": "0.0.156",
+    "version": "0.0.171",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "dist/index.js",
@@ -30,7 +30,6 @@
         "@river-build/dlog": "workspace:^",
         "@river-build/encryption": "workspace:^",
         "@river-build/generated": "workspace:^",
-        "@river-build/mls-rs-wasm": "^0.0.16",
         "@river-build/proto": "workspace:^",
         "@river-build/web3": "workspace:^",
         "browser-or-node": "^3.0.0",
@@ -62,7 +61,8 @@
         "seedrandom": "^3.0.5",
         "typed-emitter": "^2.1.0",
         "typescript": "^5.1.6",
-        "vite-plugin-wasm": "^3.4.1"
+        "vite-plugin-wasm": "^3.4.1",
+        "vitest-fetch-mock": "^0.4.3"
     },
     "files": [
         "/dist"

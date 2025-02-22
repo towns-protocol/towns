@@ -28,7 +28,7 @@ contract SpaceEntitlementGated is MembershipJoin, EntitlementGated {
       return;
     }
 
-    (bytes4 transactionType, address sender, address receiver, ) = abi.decode(
+    (bytes4 transactionType, , address receiver, ) = abi.decode(
       data,
       (bytes4, address, address, bytes)
     );
@@ -36,21 +36,32 @@ contract SpaceEntitlementGated is MembershipJoin, EntitlementGated {
     if (result == NodeVoteStatus.PASSED) {
       bool shouldCharge = _shouldChargeForJoinSpace();
       if (shouldCharge) {
-        if (transactionType == IMembership.joinSpaceWithReferral.selector) {
-          _chargeForJoinSpaceWithReferral(transactionId);
-        } else if (transactionType == IMembership.joinSpace.selector) {
-          _chargeForJoinSpace(transactionId);
+        uint256 payment = _getCapturedValue(transactionId);
+        uint256 membershipPrice = _getMembershipPrice(_totalSupply());
+        uint256 requiredAmount = _getRequiredAmount(membershipPrice);
+
+        if (payment < requiredAmount) {
+          _rejectMembership(transactionId, receiver);
+          return;
         }
-      } else {
-        _refundBalance(transactionId, sender);
+
+        if (transactionType == IMembership.joinSpace.selector) {
+          _chargeForJoinSpace(transactionId);
+        } else if (
+          transactionType == IMembership.joinSpaceWithReferral.selector
+        ) {
+          _chargeForJoinSpaceWithReferral(transactionId);
+        } else {
+          _rejectMembership(transactionId, receiver);
+          return;
+        }
       }
 
+      _refundBalance(transactionId, receiver);
       _issueToken(receiver);
-    } else {
-      _captureData(transactionId, "");
-      _refundBalance(transactionId, sender);
-
-      emit MembershipTokenRejected(receiver);
+      return;
     }
+
+    _rejectMembership(transactionId, receiver);
   }
 }

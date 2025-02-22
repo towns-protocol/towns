@@ -7,7 +7,7 @@ import (
 	"connectrpc.com/connect"
 	"go.uber.org/zap"
 
-	"github.com/river-build/river/core/node/logging"
+	"github.com/towns-protocol/towns/core/node/logging"
 )
 
 const (
@@ -55,4 +55,13 @@ func UncancelContext(
 	}
 	ctx = context.WithoutCancel(ctx)
 	return context.WithDeadline(ctx, deadline)
+}
+
+// UncancelContextWithTimeout returns a new context without original parent cancel.
+// New timeout is set to the given timeout.
+func UncancelContextWithTimeout(
+	ctx context.Context,
+	timeout time.Duration,
+) (context.Context, context.CancelFunc) {
+	return context.WithTimeout(context.WithoutCancel(ctx), timeout)
 }

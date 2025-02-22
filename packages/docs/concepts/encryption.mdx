@@ -3,22 +3,22 @@ title: Encryption
 description: ""
 ---
 
-### End-to-End Message Encryption in River
+### End-to-End Message Encryption in Towns Protocol
 
-All messages in the context of the communication modalities that River supports are encrypted. Nodes are only privy to ciphertext and clients manage their device encryption keys.
+All messages in the context of the communication modalities that Towns Protocol supports are encrypted. Nodes are only privy to ciphertext and clients manage their device encryption keys.
 
-Two related cryptographic ratcheting algorithms are used by River to encrypt messages. River employs an implementation of the [Double Ratchet](https://signal.org/docs/specifications/doubleratchet/) cryptographic ratchet described by Signal to encrypt peer to peer messages. River also employs an AES-based cryptographic ratched optimized for group messaging.
+Two related cryptographic ratcheting algorithms are used by Towns to encrypt messages. Towns employs an implementation of the [Double Ratchet](https://signal.org/docs/specifications/doubleratchet/) cryptographic ratchet described by Signal to encrypt peer to peer messages. Towns also employs an AES-based cryptographic ratched optimized for group messaging.
 
 ### Devices
 
-To facilitate end to end encryption in River, each `(user, client instance)` tuple is associated with a `deviceId`, which identifies that device and is used to establish peer-to-peer encrypted sessions for the purpose of sharing group message encryption keys.
+To facilitate end to end encryption in Towns, each `(user, client instance)` tuple is associated with a `deviceId`, which identifies that device and is used to establish peer-to-peer encrypted sessions for the purpose of sharing group message encryption keys.
 
-Devices are objects storing key material created on the client and stored in the River Node on the user's `UserDeviceKey` stream containing the following pair of keys:
+Devices are objects storing key material created on the client and stored in the Towns Node on the user's `UserDeviceKey` stream containing the following pair of keys:
 
 1. **Curve25519 peer-to-peer encryption key** - A long-lived Curve25519 asymmetric key pair is created with a new device of a user. The private portion of this key never leaves the device, while the public portion is stored in the user's `UserDeviceKey` stream. This key along with the following key are used by other user's to establish secure and ephemeral p2p sessions.
 2. **Curve25519 fallback key** - A second Curve25519 key pair is created using the encryption key and published to a user's UserDeviceKey stream. For Alice to establish a new secure p2p encrypted session with Bob, Alice would use her encryption key along with Bob's public key portion of his encryption key and fallback key.
 
-> Device lifecycle is outside of the purview of the River protocol and managed entirely by client implementations. However, given it is expected under the protocol that there exists a 1-1 relation between `(user, client instance)` tuples and `devices`, the River Node performs periodic compaction criteria to stem the uncontrolled growth of user's device key stream in storage.
+> Device lifecycle is outside of the purview of the Towns protocol and managed entirely by client implementations. However, given it is expected under the protocol that there exists a 1-1 relation between `(user, client instance)` tuples and `devices`, the Towns Node performs periodic compaction criteria to stem the uncontrolled growth of user's device key stream in storage.
 
 ### Encryption Data Schemas
 
@@ -79,13 +79,13 @@ Below is an example of the encryption lifecycle between Alice and Bob who are co
 6. Alice decrypts Bob's message and extracts the key material storing it in her local cache.
 7. Alice attempts re-decrypting the channel messages that share the `session_id` of the keys she now has in her possession.
 
-> Peer-to-peer encryption in River requires distinct sessions `outbound`, `inbound` for encryption and decryption, respectively. Moreover, each message can only be decrypted once per established session.
+> Peer-to-peer encryption in Towns requires distinct sessions `outbound`, `inbound` for encryption and decryption, respectively. Moreover, each message can only be decrypted once per established session.
 
 ### Key Sharing
 
 #### Active Sharing
 
-Session keys to encrypt message events and metadata in River are created on an as-needed basis by clients. If a user is joining a channel and decides to subsequently send a message for the first time, they will create a new outbound session key to encrypt the message and send it to the member roster of the channel along with the message. The same key can be used as an inbound session key by other members to decrypt the message encrypted with that session.
+Session keys to encrypt message events and metadata in Towns are created on an as-needed basis by clients. If a user is joining a channel and decides to subsequently send a message for the first time, they will create a new outbound session key to encrypt the message and send it to the member roster of the channel along with the message. The same key can be used as an inbound session key by other members to decrypt the message encrypted with that session.
 
 #### Passive Sharing
 

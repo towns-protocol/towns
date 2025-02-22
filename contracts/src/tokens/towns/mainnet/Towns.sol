@@ -56,6 +56,9 @@ contract Towns is
   /// @dev the initial mint time
   uint256 public immutable initialMintTime;
 
+  /// @dev whether the initial supply has been minted
+  bool internal initialSupplyMinted;
+
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                           Constructor                      */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -86,8 +89,18 @@ contract Towns is
     initialMintTime = config.initialMintTime;
 
     TokenInflationLib.initialize(config);
+  }
 
-    _mint(vault, INITIAL_SUPPLY);
+  /// @notice Mints the initial supply to the given address
+  /// @dev Can only be called by the owner
+  /// @dev Can only be called once
+  function mintInitialSupply(address to) external onlyOwner {
+    if (initialSupplyMinted) {
+      CustomRevert.revertWith(InitialSupplyAlreadyMinted.selector);
+    }
+
+    _mint(to, INITIAL_SUPPLY);
+    initialSupplyMinted = true;
   }
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

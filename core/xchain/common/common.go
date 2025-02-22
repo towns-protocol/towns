@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/river-build/river/core/node/logging"
+	"github.com/towns-protocol/towns/core/node/logging"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"

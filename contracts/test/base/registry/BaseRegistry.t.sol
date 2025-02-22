@@ -190,26 +190,40 @@ abstract contract BaseRegistryTest is RewardsVerifier, BaseSetup {
 
   function toDyn(
     address[32] memory arr
-  ) internal returns (address[] memory res) {
+  ) internal view returns (address[] memory res) {
     assembly ("memory-safe") {
       res := mload(0x40)
       mstore(0x40, add(res, mul(33, 0x20)))
       mstore(res, 32)
       pop(
-        call(gas(), 0x04, 0, arr, mul(32, 0x20), add(res, 0x20), mul(32, 0x20))
+        staticcall(
+          gas(),
+          0x04,
+          arr,
+          mul(32, 0x20),
+          add(res, 0x20),
+          mul(32, 0x20)
+        )
       )
     }
   }
 
   function toDyn(
     uint256[32] memory arr
-  ) internal returns (uint256[] memory res) {
+  ) internal view returns (uint256[] memory res) {
     assembly ("memory-safe") {
       res := mload(0x40)
       mstore(0x40, add(res, mul(33, 0x20)))
       mstore(res, 32)
       pop(
-        call(gas(), 0x04, 0, arr, mul(32, 0x20), add(res, 0x20), mul(32, 0x20))
+        staticcall(
+          gas(),
+          0x04,
+          arr,
+          mul(32, 0x20),
+          add(res, 0x20),
+          mul(32, 0x20)
+        )
       )
     }
   }

@@ -5,19 +5,18 @@ import { DecryptedContent, EncryptedContent, toDecryptedContent } from './encryp
 import { StreamStateView_ChannelMetadata } from './streamStateView_ChannelMetadata'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 import { streamIdToBytes } from './id'
-import { MLS_ALGORITHM } from './mls'
 
 export abstract class StreamStateView_AbstractContent {
     abstract readonly streamId: string
     abstract prependEvent(
         event: RemoteTimelineEvent,
-        cleartext: string | undefined,
+        cleartext: Uint8Array | string | undefined,
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
         stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void
     abstract appendEvent(
         event: RemoteTimelineEvent,
-        cleartext: string | undefined,
+        cleartext: Uint8Array | string | undefined,
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
         stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void
@@ -26,30 +25,16 @@ export abstract class StreamStateView_AbstractContent {
         kind: EncryptedContent['kind'],
         event: RemoteTimelineEvent,
         content: EncryptedData,
-        cleartext: string | undefined,
+        cleartext: Uint8Array | string | undefined,
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ) {
         if (cleartext) {
-            event.decryptedContent = toDecryptedContent(kind, cleartext)
+            event.decryptedContent = toDecryptedContent(kind, content.version, cleartext)
         } else {
-            switch (content.algorithm) {
-                case MLS_ALGORITHM:
-                    encryptionEmitter?.emit(
-                        'mlsNewEncryptedContent',
-                        this.streamId,
-                        event.hashStr,
-                        {
-                            kind,
-                            content,
-                        },
-                    )
-                    break
-                default:
-                    encryptionEmitter?.emit('newEncryptedContent', this.streamId, event.hashStr, {
-                        kind,
-                        content,
-                    })
-            }
+            encryptionEmitter?.emit('newEncryptedContent', this.streamId, event.hashStr, {
+                kind,
+                content,
+            })
         }
     }
 

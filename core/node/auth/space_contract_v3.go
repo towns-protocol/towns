@@ -9,14 +9,14 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/river-build/river/core/config"
-	"github.com/river-build/river/core/contracts/base"
-	"github.com/river-build/river/core/contracts/types"
-	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/logging"
-	"github.com/river-build/river/core/node/shared"
-	"github.com/river-build/river/core/xchain/bindings/erc721"
-	"github.com/river-build/river/core/xchain/bindings/ierc5313"
+	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/contracts/base"
+	"github.com/towns-protocol/towns/core/contracts/types"
+	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/logging"
+	"github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/xchain/bindings/erc721"
+	"github.com/towns-protocol/towns/core/xchain/bindings/ierc5313"
 )
 
 type Space struct {
@@ -59,6 +59,34 @@ func NewSpaceContractV3(
 	}
 
 	return spaceContract, nil
+}
+
+func (sc *SpaceContractV3) GetChannels(
+	ctx context.Context,
+	spaceId shared.StreamId,
+) ([]types.BaseChannel, error) {
+	space, err := sc.getSpace(ctx, spaceId)
+	if err != nil {
+		return nil, err
+	}
+	contractChannels, err := space.channels.GetChannels(nil)
+	if err != nil {
+		return nil, err
+	}
+	baseChannels := make([]types.BaseChannel, len(contractChannels))
+	for i, channel := range contractChannels {
+		streamId, err := shared.StreamIdFromBytes(channel.Id[:])
+		if err != nil {
+			return nil, err
+		}
+		baseChannels[i] = types.BaseChannel{
+			Id:       streamId,
+			Disabled: channel.Disabled,
+			Metadata: channel.Metadata,
+			RoleIds:  channel.RoleIds,
+		}
+	}
+	return baseChannels, nil
 }
 
 func (sc *SpaceContractV3) GetRoles(

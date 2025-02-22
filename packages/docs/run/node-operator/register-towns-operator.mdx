@@ -1,0 +1,52 @@
+---
+title: Register Operator
+description: The following guide illustrates how to register a new Node Operator to begin onboarding nodes. This guide uses Testnet as an example. The Mainnet guide follows from this guide with modifications to contract addresses and rpc url for Towns Chain.
+---
+
+### Requirements & Dependencies
+
+- Foundry Toolkit: To install follow [this](https://book.getfoundry.sh/getting-started/installation) guide.
+- Node Operator delegation: address migrated to Towns Chain by DAO (see below).
+- Warm wallet access to Node Operator wallet.
+- Sufficient gas on Node Operator wallet on both Base and Towns Chain to register
+
+<Note>
+  The node operator wallet registered on Base must
+  be bridged to Towns Chain by the DAO prior to proceeding with node registration. Furthermore, the node operator needs warm access to this
+  wallet to perform node operations to register, and update a fleet of node instances.
+</Note>
+
+
+All contract addresses for testnet and mainnet needed to register operator can be found in the [contracts](/run/contracts) section.
+
+<Note>When referencing contract methods in the below guide, keep in mind that our contracts are deployed using the [Diamond Standard](https://www.quicknode.com/guides/ethereum-development/smart-contracts/the-diamond-standard-eip-2535-explained-part-1) pattern. This means for practical purposes that when interacting with contracts on Base or Towns Chain, you will be calling each method on the associated diamond contract.</Note>
+
+
+### Registration Outline 
+
+The following outlines the logical steps to onboarding a Node Operator. Instructions are applicable to testnet and mainnet. Node Operator delegations are only needed for mainnet registration.
+
+Instructions with specific calling signatures can be found below in the [Node Operator Registration](#node-operator-registration).
+<Steps>
+<Step title="Register Node Operator in Base">Operators starts the onboarding process calling [registerOperator](https://github.com/river-build/river/blob/main/contracts/src/base/registry/facets/operator/NodeOperatorFacet.sol) on the [BaseRegistry](https://github.com/river-build/river/blob/main/contracts/deployments/gamma/base/addresses/baseRegistry.json) [diamond](https://www.quicknode.com/guides/ethereum-development/smart-contracts/the-diamond-standard-eip-2535-explained-part-1) contract deployed on Base.</Step>
+<Step title="Set Commission Rate in Base">Operator sets commission rate for rewards in Base calling [setCommissionRate](https://github.com/river-build/river/blob/main/contracts/src/base/registry/facets/operator/NodeOperatorFacet.sol) on the BaseRegistry diamond contract with the desired commission rate in basis points.</Step>
+<Step title="DAO approves operator">DAO approves operator in Base and RiverChain via governance once 100mm delegations of RVR token are received to the operator</Step>
+<Step title="DAO activates operator to start reward clock">Once a node is running and in a healthy state as observed by the network (see [check node health from debug multi dashboard](#check-node-health-from-debug-multi-dashboard)), DAO will activate operator which begins the clock for inclusion in the next reward distribution.</Step>
+</Steps>
+
+#### Node Operator Registration
+
+1. Node Operator must call `registerOperator(address)` on the BaseRegistry diamond contract deployed
+on Base with the address of the wallet that they wish to claim rewards with. Note that the claimer wallet can differ from the operator wallet.
+
+
+<Info>Node operators can update the claimer address for receiving rewards from distribution by calling `setClaimAddressForOperator(claimer address, operator address) onlyClaimer` on the BaseRegistry contract with the desired wallet from the Node Operator wallet in Base. This is useful in separating concerns between the claim wallet that accrues rewards and the operator wallet which needs to be warm to facilitate node operations.</Info>
+
+1. Node Operator can begin soliciting delegation after
+   being registered.
+
+2. Node Operator should call `setCommissionRate(uint256)` on the BaseRegistry contract to set the commission rate for the operator. Ensure the commission rate is passed in using basis point notation (e.g. 10000 for 100%). Conversely, Node Operator can call the view, `getCommissionRate(address)` passing in their operator address to check their current commission rate.
+
+3. After Node Operator receives at least `100m` RVR tokens delegated,
+   the DAO can approve it to enter into Towns Chain. The same address will be added
+   to River Registry on Towns Chain in order to begin configuring Nodes.

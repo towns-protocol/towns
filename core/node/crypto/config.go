@@ -19,11 +19,11 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/mitchellh/mapstructure"
 
-	"github.com/river-build/river/core/contracts/river"
-	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/logging"
-	. "github.com/river-build/river/core/node/protocol"
-	"github.com/river-build/river/core/node/shared"
+	"github.com/towns-protocol/towns/core/contracts/river"
+	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/logging"
+	. "github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/shared"
 )
 
 const (
@@ -48,6 +48,7 @@ const (
 	MediaStreamMembershipLimitsDMConfigKey          = "media.streamMembershipLimits.88"
 	XChainBlockchainsConfigKey                      = "xchain.blockchains"
 	StreamMiniblockRegistrationFrequencyKey         = "stream.miniblockRegistrationFrequency"
+	StreamEphemeralStreamTTLMsKey                   = "stream.ephemeralStreamTTLMs"
 )
 
 var (
@@ -100,6 +101,8 @@ type OnChainSettings struct {
 
 	StreamCacheExpiration    time.Duration `mapstructure:"stream.cacheExpirationMs"`
 	StreamCachePollIntterval time.Duration `mapstructure:"stream.cacheExpirationPollIntervalMs"`
+
+	StreamEphemeralStreamTTL time.Duration `mapstructure:"stream.ephemeralStreamTTLMs"`
 
 	GetMiniblocksMaxPageSize uint64 `mapstructure:"stream.getMiniblocksMaxPageSize"`
 
@@ -171,6 +174,8 @@ func DefaultOnChainSettings() *OnChainSettings {
 
 		StreamCacheExpiration:    5 * time.Minute,
 		StreamCachePollIntterval: 30 * time.Second,
+
+		StreamEphemeralStreamTTL: time.Minute * 10,
 
 		// TODO: Set it to the default value when the client side is updated.
 		GetMiniblocksMaxPageSize: 0,

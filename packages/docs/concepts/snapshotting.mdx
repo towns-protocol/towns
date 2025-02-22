@@ -5,19 +5,19 @@ description: ""
 
 ### Event Ordering
 
-River nodes are responsible for assembling events from the stream's `minipool` into `miniblocks` that are sealed blocks of event hashes pointing to the previous block hash.
+Towns nodes are responsible for assembling events from the stream's `minipool` into `miniblocks` that are sealed blocks of event hashes pointing to the previous block hash.
 
 Coarse ordering of events in a given stream is achieved due to the sequential nature of block production. However, for certain events, such as a stream's membership roster, strict ordering is required.
 
-As a concrete example, take the case where Alice `joins` a space at local time `t1` then `leaves` the space at time `t2`. We should expect a read of the membership roster after the `leave` event to exclude Alice. We should also expect Alice to have been a member in the coarse grained time interval `t2 - t1` between when the `join` and `leave` events were included by a node each in a mini-block. Since different River Nodes may have seen the `join` and `leave` events, there is no way to guarrantee that they would be included in mini-blocks with a temporal sequence equivalent to the sequence in which the actions were taken.
+As a concrete example, take the case where Alice `joins` a space at local time `t1` then `leaves` the space at time `t2`. We should expect a read of the membership roster after the `leave` event to exclude Alice. We should also expect Alice to have been a member in the coarse grained time interval `t2 - t1` between when the `join` and `leave` events were included by a node each in a mini-block. Since different Towns Nodes may have seen the `join` and `leave` events, there is no way to guarrantee that they would be included in mini-blocks with a temporal sequence equivalent to the sequence in which the actions were taken.
 
-Therefore, to achieve strict ordering under the River protocol a technique called **Snapshotting** is undertaken at the block boundary for each stream. A positive side effect of Snapshotting is that disk utilisation is reduced for nodes as snapshots are updated in-place.
+Therefore, to achieve strict ordering under the Towns protocol a technique called **Snapshotting** is undertaken at the block boundary for each stream. A positive side effect of Snapshotting is that disk utilisation is reduced for nodes as snapshots are updated in-place.
 
 ### Snapshot Production
 
 Snapshots are taken every N events at the block boundary, which occurs when a node that is elected by `RANDDAO` to propose the next block creates and appends a new signed `miniblock` to the stream's `minichain`.
 
-> Though miniblocks are comprised of event hashes, snapshot data is stored unhashed in miniblock to allow for fast client syncs of `state` events from miniblock which is rolled up onto River Chain.
+> Though miniblocks are comprised of event hashes, snapshot data is stored unhashed in miniblock to allow for fast client syncs of `state` events from miniblock which is rolled up onto Towns Chain.
 
 ![Snapshotting](../images/snapshotting.png)
 

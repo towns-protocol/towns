@@ -4,13 +4,10 @@ import { usernameChecksum } from './utils'
 import { dlog } from '@river-build/dlog'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 
-// this is a hack to prevent too much cpu usage from spamming the client with too many decrypted names
-// temporary until we move encrypted user and display names to the user metadata stream
-const MAX_DECRYPTED_NAMES_PER_STREAM = 50
+const textDecoder = new TextDecoder()
 
 export class MemberMetadata_Usernames {
     log = dlog('csb:streams:usernames')
-    private decryptionDispatchCount = 0
     readonly streamId: string
     readonly plaintextUsernames = new Map<string, string>()
     readonly userIdToEventId = new Map<string, string>()
@@ -40,7 +37,7 @@ export class MemberMetadata_Usernames {
         encryptedData: EncryptedData,
         userId: string,
         pending: boolean = true,
-        cleartext: string | undefined,
+        cleartext: Uint8Array | string | undefined,
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
         stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ) {
@@ -57,9 +54,11 @@ export class MemberMetadata_Usernames {
         this.addUsernameEventForUserId(userId, eventId, encryptedData, pending)
 
         if (cleartext) {
-            this.plaintextUsernames.set(userId, cleartext)
-        } else if (this.decryptionDispatchCount < MAX_DECRYPTED_NAMES_PER_STREAM) {
-            this.decryptionDispatchCount++
+            this.plaintextUsernames.set(
+                userId,
+                typeof cleartext === 'string' ? cleartext : textDecoder.decode(cleartext),
+            )
+        } else {
             // Clear the plaintext username for this user on name change
             this.plaintextUsernames.delete(userId)
             encryptionEmitter?.emit('newEncryptedContent', this.streamId, eventId, {

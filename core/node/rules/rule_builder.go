@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	. "github.com/river-build/river/core/node/base"
-	. "github.com/river-build/river/core/node/protocol"
-	"github.com/river-build/river/core/node/shared"
+	. "github.com/towns-protocol/towns/core/node/base"
+	. "github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/shared"
 )
 
 /** shared code for the rule builders */
@@ -14,6 +14,7 @@ import (
 type DerivedEvent struct {
 	Payload  IsStreamEvent_Payload
 	StreamId shared.StreamId
+	Tags     *Tags
 }
 
 func unknownPayloadType(payload any) error {

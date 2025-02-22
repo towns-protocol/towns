@@ -27,7 +27,7 @@ export class StreamStateView_DMChannel extends StreamStateView_AbstractContent {
     applySnapshot(
         snapshot: Snapshot,
         content: DmChannelPayload_Snapshot,
-        _cleartexts: Record<string, string> | undefined,
+        _cleartexts: Record<string, Uint8Array | string> | undefined,
         _encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ): void {
         if (content.inception) {
@@ -38,7 +38,7 @@ export class StreamStateView_DMChannel extends StreamStateView_AbstractContent {
 
     appendEvent(
         event: RemoteTimelineEvent,
-        cleartext: string | undefined,
+        cleartext: Uint8Array | string | undefined,
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
         stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
@@ -69,7 +69,7 @@ export class StreamStateView_DMChannel extends StreamStateView_AbstractContent {
 
     prependEvent(
         event: RemoteTimelineEvent,
-        cleartext: string | undefined,
+        cleartext: Uint8Array | string | undefined,
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
         _stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {

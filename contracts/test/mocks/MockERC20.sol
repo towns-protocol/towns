@@ -4,10 +4,10 @@ pragma solidity ^0.8.24;
 // interfaces
 
 // libraries
-import {ERC20Storage} from "contracts/src/diamond/facets/token/ERC20/ERC20Storage.sol";
+import {ERC20Storage} from "@river-build/diamond/src/facets/token/ERC20/ERC20Storage.sol";
 
 // contracts
-import {ERC20} from "contracts/src/diamond/facets/token/ERC20/ERC20.sol";
+import {ERC20} from "@river-build/diamond/src/facets/token/ERC20/ERC20.sol";
 import {IntrospectionFacet} from "@river-build/diamond/src/facets/introspection/IntrospectionFacet.sol";
 
 contract MockERC20 is ERC20, IntrospectionFacet {

@@ -6,7 +6,6 @@ import {
     UserMetadataPayload_Inception,
     UserPayload_Inception,
     SpacePayload_Inception,
-    ChannelProperties,
     ChannelPayload_Inception,
     UserSettingsPayload_Inception,
     SpacePayload_ChannelUpdate,
@@ -37,14 +36,13 @@ import {
     MemberPayload,
     MemberPayload_Nft,
     BlockchainTransaction,
-    MemberPayload_Mls,
 } from '@river-build/proto'
 import { keccak256 } from 'ethereum-cryptography/keccak'
 import { bin_toHexString } from '@river-build/dlog'
 import { isDefined } from './check'
 import { DecryptedContent } from './encryptedContentTypes'
 import { addressFromUserId, streamIdAsBytes } from './id'
-import { DecryptionSessionError } from '@river-build/encryption'
+import { DecryptionSessionError, EventSignatureBundle } from '@river-build/encryption'
 
 export type LocalEventStatus = 'sending' | 'sent' | 'failed'
 export interface LocalEvent {
@@ -131,6 +129,18 @@ export function isConfirmedEvent(event: StreamTimelineEvent): event is Confirmed
         event.confirmedEventNum !== undefined &&
         event.miniblockNum !== undefined
     )
+}
+
+export function getEventSignature(remoteEvent: ParsedEvent): EventSignatureBundle {
+    return {
+        hash: remoteEvent.hash,
+        signature: remoteEvent.signature,
+        event: {
+            creatorAddress: remoteEvent.event.creatorAddress,
+            delegateSig: remoteEvent.event.delegateSig,
+            delegateExpiryEpochMs: remoteEvent.event.delegateExpiryEpochMs,
+        },
+    }
 }
 
 export function makeRemoteTimelineEvent(params: {
@@ -358,20 +368,6 @@ export const make_MemberPayload_Unpin = (
     }
 }
 
-export const make_MemberPayload_Mls = (
-    value: PlainMessage<MemberPayload_Mls>,
-): PlainMessage<StreamEvent>['payload'] => {
-    return {
-        case: 'memberPayload',
-        value: {
-            content: {
-                case: 'mls',
-                value,
-            },
-        },
-    }
-}
-
 export const make_ChannelMessage_Post_Content_Text = (
     body: string,
     mentions?: PlainMessage<ChannelMessage_Post_Mention>[],
@@ -456,13 +452,6 @@ export const make_ChannelMessage_Redaction = (
             },
         },
     })
-}
-
-export const make_ChannelProperties = (
-    channelName: string,
-    channelTopic: string,
-): ChannelProperties => {
-    return new ChannelProperties({ name: channelName, topic: channelTopic })
 }
 
 export const make_ChannelPayload_Inception = (

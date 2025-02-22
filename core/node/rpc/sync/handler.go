@@ -3,18 +3,18 @@ package sync
 import (
 	"context"
 	"sync"
+	"time"
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
+	. "github.com/towns-protocol/towns/core/node/base"
+	. "github.com/towns-protocol/towns/core/node/events"
+	"github.com/towns-protocol/towns/core/node/nodes"
+	. "github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/shared"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
-
-	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/events"
-	"github.com/river-build/river/core/node/nodes"
-	. "github.com/river-build/river/core/node/protocol"
-	"github.com/river-build/river/core/node/shared"
 )
 
 type (
@@ -64,7 +64,7 @@ type (
 		// nodeAddr is used to determine if a stream is local or remote
 		nodeAddr common.Address
 		// streamCache is used to subscribe on local streams
-		streamCache events.StreamCache
+		streamCache *StreamCache
 		// nodeRegistry is used to find a node endpoint to subscribe on remote streams
 		nodeRegistry nodes.NodeRegistry
 		// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
@@ -84,7 +84,7 @@ var (
 // requests to the associated stream sync operation.
 func NewHandler(
 	nodeAddr common.Address,
-	cache events.StreamCache,
+	cache *StreamCache,
 	nodeRegistry nodes.NodeRegistry,
 	otelTracer trace.Tracer,
 ) *handlerImpl {
@@ -102,7 +102,7 @@ func (h *handlerImpl) SyncStreams(
 	req *connect.Request[SyncStreamsRequest],
 	res *connect.ServerStream[SyncStreamsResponse],
 ) error {
-	op, err := NewStreamsSyncOperation(ctx, syncId, h.nodeAddr, h.streamCache, h.nodeRegistry)
+	op, err := NewStreamsSyncOperation(ctx, syncId, h.nodeAddr, h.streamCache, h.nodeRegistry, h.otelTracer)
 	if err != nil {
 		return err
 	}
@@ -187,6 +187,9 @@ func (h *handlerImpl) AddStreamToSync(
 	ctx context.Context,
 	req *connect.Request[AddStreamToSyncRequest],
 ) (*connect.Response[AddStreamToSyncResponse], error) {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
 	if op, ok := h.activeSyncOperations.Load(req.Msg.GetSyncId()); ok {
 		return op.(*StreamSyncOperation).AddStreamToSync(ctx, req)
 	}
@@ -197,6 +200,9 @@ func (h *handlerImpl) RemoveStreamFromSync(
 	ctx context.Context,
 	req *connect.Request[RemoveStreamFromSyncRequest],
 ) (*connect.Response[RemoveStreamFromSyncResponse], error) {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
 	if op, ok := h.activeSyncOperations.Load(req.Msg.GetSyncId()); ok {
 		return op.(*StreamSyncOperation).RemoveStreamFromSync(ctx, req)
 	}

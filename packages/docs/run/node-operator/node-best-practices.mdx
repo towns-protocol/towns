@@ -20,7 +20,7 @@ Whether operating nodes in the public cloud or on-premise, the following best pr
     - Storage schema updates are performed via db migrations using [golang-migrate](https://github.com/golang-migrate/migrate) and are performed automatically within releases as part of Node FE upgrades.
     - You are encouraged to set `STANDBYONSTART` to true in your environment variables if you are running blue green deployments behind a proxy or network load balancer. This will allow you to bring up a new instance of the FE in standby mode, and once it is passing health checks, it will automatically switch to primary.
     <br />
-    <Note>If your node operator has not yet been fully registered or your node has not yet been registered, you can test running an unattached Node Fe to ensure health checks pass by setting `STANDBYONSTART=true`. A node started in this manner will not attach to Storage layer or shutdown if it is not registered yet on the River Chain.</Note>
+    <Note>If your node operator has not yet been fully registered or your node has not yet been registered, you can test running an unattached Node Fe to ensure health checks pass by setting `STANDBYONSTART=true`. A node started in this manner will not attach to Storage layer or shutdown if it is not registered yet on the Towns Chain.</Note>
 </Step>
 <Step title="Backups">
     - Implement routine backups of your Node Storage to prevent data loss. 
@@ -41,9 +41,9 @@ Whether operating nodes in the public cloud or on-premise, the following best pr
 
 ### Troubleshooting
 
-Using logs, metrics and profiling tools, you can identify and resolve issues with your node. Some issues may have specific resolutions on the [River Issue Tracker](https://github.com/river-build/river/issues?q=is%3Aissue+is%3Aclosed).
+Using logs, metrics and profiling tools, you can identify and resolve issues with your node. Some issues may have specific resolutions on the [Towns Issue Tracker](https://github.com/river-build/river/issues?q=is%3Aissue+is%3Aclosed).
 
-If there's a new bug or security vulnerability found, please file an issue on the [River Issue Tracker](https://github.com/river-build/river/issues/new/choose) for the core development team to address.
+If there's a new bug or security vulnerability found, please file an issue on the [Towns Issue Tracker](https://github.com/river-build/river/issues/new/choose) for the core development team to address.
 
 <Steps>
   <Step title="Common Issues">

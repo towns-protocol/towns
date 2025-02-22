@@ -9,8 +9,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	. "github.com/river-build/river/core/node/base"
-	. "github.com/river-build/river/core/node/protocol"
+	. "github.com/towns-protocol/towns/core/node/base"
+	. "github.com/towns-protocol/towns/core/node/protocol"
 )
 
 func GetDefaultConfig() *Config {
@@ -61,7 +61,7 @@ func GetDefaultConfig() *Config {
 			Memory:                true,
 			PProf:                 false,
 			Stacks:                true,
-			StacksMaxSizeKb:       5 * 1024,
+			StacksMaxSizeKb:       64 * 1024,
 			Stream:                true,
 			TxPool:                true,
 			CorruptStreams:        true,
@@ -78,7 +78,6 @@ func GetDefaultConfig() *Config {
 			SingleCallTimeout:      30 * time.Second, // geth internal timeout is 30 seconds
 			ProgressReportInterval: 10 * time.Second,
 		},
-		EnableMls: false,
 	}
 }
 
@@ -138,20 +137,20 @@ type Config struct {
 	// Graffiti is returned in status and info requests.
 	Graffiti string
 
-	// Should be set if node is run in archive mode.
+	// Should be set if the node is running in archive mode.
 	Archive ArchiveConfig
 
-	// Notifications must be set when run in notification mode.
+	// Notifications must be set when running in notification mode.
 	Notifications NotificationsConfig
+
+	// AppRegistry must be set when running in app registry mode.
+	AppRegistry AppRegistryConfig
 
 	// Feature flags
 	// Used to disable functionality for some testing setups.
 
 	// Disable base chain contract usage.
 	DisableBaseChain bool
-
-	// Enable MemberPayload_Mls.
-	EnableMls bool
 
 	// Chains provides a map of chain IDs to their provider URLs as
 	// a comma-serparated list of chainID:URL pairs.
@@ -169,13 +168,6 @@ type Config struct {
 
 	ChainConfigs map[uint64]*ChainConfig `mapstructure:"-"` // This is a derived field from Chains.
 
-	// extra xChain configuration
-	EntitlementContract     ContractConfig `mapstructure:"entitlement_contract"`
-	TestEntitlementContract ContractConfig `mapstructure:"test_contract"`
-
-	// History indicates how far back xchain must look for entitlement check requests after start
-	History time.Duration
-
 	// EnableTestAPIs enables additional APIs used for testing.
 	EnableTestAPIs bool
 
@@ -187,6 +179,14 @@ type Config struct {
 
 	// RiverRegistry contains settings for calling registry contract on River chain.
 	RiverRegistry RiverRegistryConfig
+
+	// xChain configuration
+	// ====================
+	// EntitlementContract denotes the address of the contract that receives entitlement check
+	// requests.
+	EntitlementContract ContractConfig `mapstructure:"entitlement_contract"`
+	// History indicates how far back xchain must look for entitlement check requests after start
+	History time.Duration
 }
 
 type TLSConfig struct {
@@ -360,7 +360,7 @@ type ArchiveConfig struct {
 	// of a stream with available blocks (according to the contract) that the archiver will
 	// allow before considering a stream corrupt.
 	// Please access with GetMaxFailedConsecutiveUpdates
-	MaxFailedConsecutiveUpdates uint32  `json:",omitempty"` // If 0, default to 50.
+	MaxFailedConsecutiveUpdates uint32 `json:",omitempty"` // If 0, default to 50.
 }
 
 type APNPushNotificationsConfig struct {
@@ -429,6 +429,25 @@ type NotificationsConfig struct {
 
 	// Authentication holds configuration for the Client API authentication service.
 	Authentication AuthenticationConfig
+}
+
+type AppRegistryConfig struct {
+	// AppRegistryId is the unique identifier of the app registry service node. It must be set for
+	// nodes running in app registry mode.
+	AppRegistryId string
+
+	// Authentication holds configuration for the Client API authentication service.
+	Authentication AuthenticationConfig
+
+	// SharedSecretDataEncryptionKey stores the 256-bit key used to encrypt shared secrets in database
+	// storage via AES256. This key is stored as a string in hex format, with an expected length of 64
+	// characters, plus an optional '0x' prefix.
+	SharedSecretDataEncryptionKey string `json:"-" yaml:"-"` // Omit sensitive field from logging
+
+	// AllowLoopbackWebhooks allows webhooks that resolve to a loopback address via DNS. This setting
+	// was added for local/unit testing only and ishould not be used in production environments,
+	// in order to prevent server side request forgery attacks.
+	AllowLoopbackWebhooks bool
 }
 
 type LogConfig struct {
@@ -581,16 +600,13 @@ func (c *Config) GetGraffiti() string {
 	return c.Graffiti
 }
 
+// Get the address of the contract that receives entitlement check requests.
 func (c *Config) GetEntitlementContractAddress() common.Address {
 	return c.EntitlementContract.Address
 }
 
 func (c *Config) GetWalletLinkContractAddress() common.Address {
 	return c.ArchitectContract.Address
-}
-
-func (c *Config) GetTestEntitlementContractAddress() common.Address {
-	return c.TestEntitlementContract.Address
 }
 
 func (c *Config) Init() error {

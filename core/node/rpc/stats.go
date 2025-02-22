@@ -8,8 +8,8 @@ import (
 	psutilCpu "github.com/shirou/gopsutil/cpu"
 	psutilMem "github.com/shirou/gopsutil/mem"
 
-	"github.com/river-build/river/core/node/logging"
-	"github.com/river-build/river/core/node/rpc/render"
+	"github.com/towns-protocol/towns/core/node/logging"
+	"github.com/towns-protocol/towns/core/node/rpc/render"
 )
 
 func StatsHandler(w http.ResponseWriter, r *http.Request) {

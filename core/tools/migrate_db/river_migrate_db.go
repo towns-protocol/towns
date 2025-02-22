@@ -22,8 +22,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/river-build/river/core/node/shared"
-	"github.com/river-build/river/core/node/storage"
+	"github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/storage"
 )
 
 func wrapError(message string, err error) error {

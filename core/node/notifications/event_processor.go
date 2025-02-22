@@ -12,8 +12,8 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/crypto"
+	"github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/crypto"
 
 	"github.com/SherClockHolmes/webpush-go"
 	mapset "github.com/deckarep/golang-set/v2"
@@ -21,13 +21,13 @@ import (
 	"github.com/sideshow/apns2/payload"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/river-build/river/core/config"
-	"github.com/river-build/river/core/node/events"
-	"github.com/river-build/river/core/node/logging"
-	"github.com/river-build/river/core/node/notifications/push"
-	"github.com/river-build/river/core/node/notifications/types"
-	. "github.com/river-build/river/core/node/protocol"
-	"github.com/river-build/river/core/node/shared"
+	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/node/events"
+	"github.com/towns-protocol/towns/core/node/logging"
+	"github.com/towns-protocol/towns/core/node/notifications/push"
+	"github.com/towns-protocol/towns/core/node/notifications/types"
+	. "github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/shared"
 )
 
 // MaxWebPushAllowedNotificationStreamEventPayloadSize is the max length of a serialized stream
@@ -47,7 +47,7 @@ const MaxWebPushAllowedNotificationStreamEventPayloadSize = 3 * 1024
 // Note: this value is too high. When APN returns a http 413 the notification is sent again
 // with the stream event dropped. This is a limit that we know will fail due to this error
 // and immediately strip the stream event from the notification payload before trying it.
-const MaxAPNAllowedNotificationStreamEventPayloadSize = 4000
+const MaxAPNAllowedNotificationStreamEventPayloadSize = 4096
 
 // MessageToNotificationsProcessor implements events.StreamEventListener and for each stream event determines
 // if it needs to send a notification, to who and sends it.
@@ -135,10 +135,7 @@ func (p *MessageToNotificationsProcessor) OnMessageEvent(
 	members.Each(func(member string) bool {
 		var (
 			participant = common.HexToAddress(member)
-			pref, err   = p.cache.GetUserPreferences(
-				context.Background(),
-				participant,
-			) // lint:ignore context.Background() is fine here
+			pref, err   = p.cache.GetUserPreferences(ctx, participant)
 		)
 
 		if slices.ContainsFunc(tags.GetMentionedUserAddresses(), func(member []byte) bool {
@@ -179,7 +176,7 @@ func (p *MessageToNotificationsProcessor) OnMessageEvent(
 			return false
 		}
 
-		switch event.Event.Payload.(type) {
+		switch payload := event.Event.Payload.(type) {
 		case *StreamEvent_DmChannelPayload:
 			if p.onDMChannelPayload(channelID, participant, pref, event) {
 				usersToNotify[participant] = pref
@@ -200,6 +197,29 @@ func (p *MessageToNotificationsProcessor) OnMessageEvent(
 			} else {
 				p.log.Errorw("Space channel misses spaceID", "channel", channelID)
 			}
+		case *StreamEvent_MemberPayload:
+			switch payload.MemberPayload.Content.(type) {
+			// for member payloads we need to figure out what kind of stream we're in before we can check prefs
+			case *MemberPayload_MemberBlockchainTransaction_:
+				if spaceID != nil && shared.ValidChannelStreamId(&channelID) {
+					if p.onSpaceChannelPayload(*spaceID, channelID, participant, pref, event) {
+						usersToNotify[participant] = pref
+					}
+					recipients.Add(participant)
+				} else if shared.ValidDMChannelStreamId(&channelID) {
+					if p.onDMChannelPayload(channelID, participant, pref, event) {
+						usersToNotify[participant] = pref
+					}
+					recipients.Add(participant)
+				} else if shared.ValidGDMChannelStreamId(&channelID) {
+					if p.onGDMChannelPayload(channelID, participant, pref, event) {
+						usersToNotify[participant] = pref
+					}
+					recipients.Add(participant)
+				} else {
+					p.log.Error("Unexpected stream ID", "channel", channelID)
+				}
+			}
 		}
 
 		return false
@@ -218,6 +238,12 @@ func (p *MessageToNotificationsProcessor) onDMChannelPayload(
 	userPref *types.UserPreferences,
 	event *events.ParsedEvent,
 ) bool {
+	if dmChannelPayload, ok := event.Event.Payload.(*StreamEvent_DmChannelPayload); ok {
+		if dmChannelPayload.DmChannelPayload.GetMessage() == nil {
+			return false // inception
+		}
+	}
+
 	if userPref.WantsNotificationForDMMessage(streamID) {
 		return true
 	}
@@ -259,6 +285,12 @@ func (p *MessageToNotificationsProcessor) onGDMChannelPayload(
 	userPref *types.UserPreferences,
 	event *events.ParsedEvent,
 ) bool {
+	if gdmChannelPayload, ok := event.Event.Payload.(*StreamEvent_GdmChannelPayload); ok {
+		if gdmChannelPayload.GdmChannelPayload.GetMessage() == nil {
+			return false // inception or channel properties
+		}
+	}
+
 	tags := event.Event.GetTags()
 	messageInteractionType := tags.GetMessageInteractionType()
 	mentioned := isMentioned(participant, tags.GetGroupMentionTypes(), tags.GetMentionedUserAddresses())
@@ -285,6 +317,12 @@ func (p *MessageToNotificationsProcessor) onSpaceChannelPayload(
 	userPref *types.UserPreferences,
 	event *events.ParsedEvent,
 ) bool {
+	if streamChannelPayload, ok := event.Event.Payload.(*StreamEvent_ChannelPayload); ok {
+		if streamChannelPayload.ChannelPayload.GetMessage() == nil {
+			return false // inception or channel properties
+		}
+	}
+
 	tags := event.Event.GetTags()
 	messageInteractionType := event.Event.GetTags().GetMessageInteractionType()
 	mentioned := isMentioned(participant, tags.GetGroupMentionTypes(), tags.GetMentionedUserAddresses())
@@ -327,7 +365,7 @@ func (p *MessageToNotificationsProcessor) apnPayloadV1(
 	apnPayload := map[string]interface{}{
 		"channelId":      hex.EncodeToString(channelID[:]),
 		"kind":           kind,
-		"senderId":       hex.EncodeToString(event.Event.CreatorAddress),
+		"senderId":       common.BytesToAddress(event.Event.CreatorAddress),
 		"payloadVersion": int(NotificationPushVersion_NOTIFICATION_PUSH_VERSION_1),
 	}
 
@@ -372,10 +410,11 @@ func (p *MessageToNotificationsProcessor) apnPayloadV2(
 	apnPayload := map[string]interface{}{
 		"channelId":        hex.EncodeToString(channelID[:]),
 		"kind":             kind,
-		"senderId":         hex.EncodeToString(event.Event.GetCreatorAddress()),
+		"senderId":         common.BytesToAddress(event.Event.GetCreatorAddress()),
 		"createdAtEpochMs": event.Event.GetCreatedAtEpochMs(),
 		"eventId":          eventHash,
 		"payloadVersion":   int(NotificationPushVersion_NOTIFICATION_PUSH_VERSION_2),
+		"tags":             event.Event.GetTags(),
 	}
 
 	// only add the (stream)event if there is a reasonable chance that the payload isn't too large.
@@ -425,7 +464,7 @@ func (p *MessageToNotificationsProcessor) sendNotification(
 		webPayload := map[string]interface{}{
 			"channelId": hex.EncodeToString(channelID[:]),
 			"kind":      kind,
-			"senderId":  hex.EncodeToString(event.Event.CreatorAddress),
+			"senderId":  common.BytesToAddress(event.Event.CreatorAddress),
 		}
 
 		if len(eventBytesHex) <= MaxWebPushAllowedNotificationStreamEventPayloadSize {
@@ -459,15 +498,16 @@ func (p *MessageToNotificationsProcessor) sendNotification(
 
 			subscriptionExpired, err := p.sendWebPushNotification(ctx, channelID, sub.Sub, event, webPayload)
 			if err == nil {
-				p.log.Debugw("Successfully sent web push notification",
+				p.log.Infow("Successfully sent web push notification",
 					"user", user,
 					"event", event.Hash,
 					"channelID", channelID,
+					"user", user,
 				)
 			} else if !subscriptionExpired {
 				p.log.Errorw("Unable to send web push notification",
-					"user",
-					user, "err", err,
+					"user", user,
+					"err", err,
 					"event", event.Hash,
 					"channelID", channelID,
 				)
@@ -530,7 +570,7 @@ func (p *MessageToNotificationsProcessor) sendNotification(
 				continue
 			}
 
-			subscriptionExpired, statusCode, err := p.sendAPNNotification(channelID, sub, event, apnPayload)
+			subscriptionExpired, statusCode, err := p.sendAPNNotification(channelID, sub, event, apnPayload, sub.PushVersion)
 
 			// APN can return an error that the payload is too large, drop the (stream)event from the payload and retry.
 			// The client can handle notifications with no (stream)event and doesn't show a preview to the user.
@@ -538,7 +578,15 @@ func (p *MessageToNotificationsProcessor) sendNotification(
 				if _, exists := apnPayload["event"]; exists {
 					delete(apnPayload, "event")
 					p.log.Infow("Payload too large, retry notification with event stripped", "event", event.Hash)
-					subscriptionExpired, _, err = p.sendAPNNotification(channelID, sub, event, apnPayload)
+					subscriptionExpired, statusCode, err = p.sendAPNNotification(channelID, sub, event, apnPayload, sub.PushVersion)
+
+					if err != nil && statusCode == http.StatusRequestEntityTooLarge {
+						if _, exists := apnPayload["tags"]; exists {
+							delete(apnPayload, "tags")
+							p.log.Infow("Payload too large, retry notification with tags stripped", "event", event.Hash)
+							subscriptionExpired, _, err = p.sendAPNNotification(channelID, sub, event, apnPayload, sub.PushVersion)
+						}
+					}
 				}
 			}
 
@@ -593,6 +641,7 @@ func (p *MessageToNotificationsProcessor) sendAPNNotification(
 	sub *types.APNPushSubscription,
 	event *events.ParsedEvent,
 	content map[string]interface{},
+	payloadVersion NotificationPushVersion,
 ) (bool, int, error) {
 	// lint:ignore context.Background() is fine here
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -612,5 +661,8 @@ func (p *MessageToNotificationsProcessor) sendAPNNotification(
 			"notification", notificationPayload)
 	}
 
-	return p.notifier.SendApplePushNotification(ctx, sub, event.Hash, notificationPayload)
+	_, containsStreamEvent := content["event"]
+
+	return p.notifier.SendApplePushNotification(
+		ctx, sub, event.Hash, notificationPayload, containsStreamEvent)
 }

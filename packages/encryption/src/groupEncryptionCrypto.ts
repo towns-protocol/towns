@@ -1,5 +1,10 @@
-import { EncryptedData } from '@river-build/proto'
-import { GroupEncryptionAlgorithmId, GroupEncryptionSession, UserDevice } from './olmLib'
+import { EncryptedData, ExportedDevice } from '@river-build/proto'
+import {
+    GroupEncryptionAlgorithmId,
+    GroupEncryptionSession,
+    parseGroupEncryptionAlgorithmId,
+    UserDevice,
+} from './olmLib'
 
 import { CryptoStore } from './cryptoStore'
 import {
@@ -10,7 +15,7 @@ import {
 } from './base'
 import { GroupDecryption } from './groupDecryption'
 import { GroupEncryption } from './groupEncryption'
-import { EncryptionDevice, ExportedDevice, type EncryptionDeviceInitOpts } from './encryptionDevice'
+import { EncryptionDevice, type EncryptionDeviceInitOpts } from './encryptionDevice'
 import { EncryptionDelegate } from './encryptionDelegate'
 import { check, dlog } from '@river-build/dlog'
 import { HybridGroupEncryption } from './hybridGroupEncryption'
@@ -156,10 +161,23 @@ export class GroupEncryptionCrypto {
      */
     public async encryptGroupEvent(
         streamId: string,
-        payload: string,
+        payload: Uint8Array,
         algorithm: GroupEncryptionAlgorithmId,
     ): Promise<EncryptedData> {
         return this.groupEncryption[algorithm].encrypt(streamId, payload)
+    }
+    /**
+     * Deprecated uses v0 encryption version
+     *
+     * @returns Promise which resolves when the event has been
+     *     encrypted, or null if nothing was needed
+     */
+    public async encryptGroupEvent_deprecated_v0(
+        streamId: string,
+        payload: string,
+        algorithm: GroupEncryptionAlgorithmId,
+    ): Promise<EncryptedData> {
+        return this.groupEncryption[algorithm].encrypt_deprecated_v0(streamId, payload)
     }
     /**
      * Decrypt a received event using group encryption algorithm
@@ -168,11 +186,12 @@ export class GroupEncryptionCrypto {
      * Rejects with an error if there is a problem decrypting the event.
      */
     public async decryptGroupEvent(streamId: string, content: EncryptedData) {
-        if (!(content.algorithm && content.algorithm in this.groupDecryption)) {
+        // parse the algorithm, if value is not set, parsing function will throw
+        const algorithm = parseGroupEncryptionAlgorithmId(content.algorithm)
+        if (algorithm.kind === 'unrecognized') {
             throw new DecryptionError('GROUP_DECRYPTION_UNKNOWN_ALGORITHM', content.algorithm)
         }
-        const algorithm = content.algorithm as GroupEncryptionAlgorithmId
-        return this.groupDecryption[algorithm].decrypt(streamId, content)
+        return this.groupDecryption[algorithm.value].decrypt(streamId, content)
     }
 
     public async exportGroupSession(

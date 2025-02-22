@@ -3,9 +3,9 @@ package cmd
 import (
 	"context"
 
-	"github.com/river-build/river/core/config"
-	"github.com/river-build/river/core/node/logging"
-	"github.com/river-build/river/core/node/rpc"
+	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/node/logging"
+	"github.com/towns-protocol/towns/core/node/rpc"
 	"go.uber.org/zap"
 
 	"github.com/spf13/cobra"

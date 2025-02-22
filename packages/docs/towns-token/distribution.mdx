@@ -1,0 +1,30 @@
+---
+title: Distribution 
+description: Token reward distribution is a key component of the Towns Network to align incentives between Node Operators and the goals of the network.
+---
+
+
+
+## Inflation Schedule
+
+The first year's inflation of Towns token derives from the existing supply. Subsequent inflation occurs annually, starting at 8% and tapering to 2% after 20 years, per the predefined inflation [schedule](https://github.com/river-build/river/blob/main/contracts/scripts/deployments/DeployTownsMainnet.s.sol#L27-L35).
+
+## Token Inflation
+
+Inflation is faciliated thorugh the `createInflation()` function callable by the DAO on Ethereum Mainnet up to once a year. This function mints the annual allocation of tokens and send them a designated contract on Ethereum Mainnet.
+
+## Token Bridging
+
+The aforementioned designated contract automatically bridges the tokens yielded by calling `createInflation()` to Base using `bridgeERC20To()` function, specifying the Distribution contract address on Base as the destination. 
+
+## Periodic Distribution
+
+The Distribution contract accumulates the annual rewards and distributes them every two weeks. The distribution, representing 1/26 of the annual supply, is allocated to active operators and delegators from that period via the `distribute()` function.
+
+## Allocation
+
+At launch, distributions will be allocated equally amongst all approved active Node Operators. Each operator will receive their commission they specified when registering in the Node Operator Registry contract. 
+
+The remainder net of commission will be divided pro-rata amongst all the delegators who delegating to that operator for the entire period. 
+
+<Note>Delegators entering in the middle of a period will not be eligible for rewards until the following period.</Note>

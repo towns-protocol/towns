@@ -13,17 +13,17 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/river-build/river/core/config"
-	"github.com/river-build/river/core/contracts/river"
-	"github.com/river-build/river/core/node/auth"
-	"github.com/river-build/river/core/node/base/test"
-	"github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/events"
-	. "github.com/river-build/river/core/node/protocol"
-	"github.com/river-build/river/core/node/protocol/protocolconnect"
-	"github.com/river-build/river/core/node/scrub"
-	. "github.com/river-build/river/core/node/shared"
-	"github.com/river-build/river/core/node/testutils"
+	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/contracts/river"
+	"github.com/towns-protocol/towns/core/node/auth"
+	"github.com/towns-protocol/towns/core/node/base/test"
+	"github.com/towns-protocol/towns/core/node/crypto"
+	"github.com/towns-protocol/towns/core/node/events"
+	. "github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
+	"github.com/towns-protocol/towns/core/node/scrub"
+	. "github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/testutils"
 )
 
 func addUserToChannel(
@@ -155,10 +155,11 @@ func (o *ObservingEventAdder) AddEventPayload(
 	ctx context.Context,
 	streamId StreamId,
 	payload IsStreamEvent_Payload,
-) error {
-	err := o.adder.AddEventPayload(ctx, streamId, payload)
+	tags *Tags,
+) ([]*EventRef, error) {
+	newEvents, err := o.adder.AddEventPayload(ctx, streamId, payload, tags)
 	if err != nil {
-		return err
+		return newEvents, err
 	}
 	o.mu.Lock()
 	defer o.mu.Unlock()
@@ -172,7 +173,7 @@ func (o *ObservingEventAdder) AddEventPayload(
 			payload:  payload,
 		},
 	)
-	return nil
+	return newEvents, nil
 }
 
 func (o *ObservingEventAdder) ObservedEvents() []struct {
@@ -289,10 +290,9 @@ func TestScrubStreamTaskProcessor(t *testing.T) {
 
 					// Grab the updated view, this triggers a scrub since scrub time was set to 300ms.
 					view, err := stream.GetViewIfLocal(ctx)
-					joinableView, ok := view.(events.JoinableStreamView)
-					if assert.NoError(err) && assert.NotNil(view) && assert.True(ok) {
+					if assert.NoError(err) && assert.NotNil(view) {
 						for _, wallet := range allWallets {
-							isMember, err := joinableView.IsMember(wallet.Address[:])
+							isMember, err := view.IsMember(wallet.Address[:])
 							if assert.NoError(err) {
 								assert.Equal(
 									!slices.Contains(tc.expectedBootedUsers, wallet),

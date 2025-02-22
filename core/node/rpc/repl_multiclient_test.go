@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/testutils/testfmt"
-	//. "github.com/river-build/river/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/crypto"
+	"github.com/towns-protocol/towns/core/node/testutils/testfmt"
+	//. "github.com/towns-protocol/towns/core/node/shared"
 )
 
 func newServiceTesterForReplication(t *testing.T) *serviceTester {
@@ -47,7 +47,6 @@ func TestReplMcSimple(t *testing.T) {
 }
 
 func TestReplMcSpeakUntilMbTrim(t *testing.T) {
-	t.Skip("TODO: REPLICATON: FIX: flaky on CI")
 	tt := newServiceTesterForReplication(t)
 	require := tt.require
 
@@ -92,7 +91,13 @@ func testReplMcConversation(t *testing.T, numClients int, numSteps int, listenIn
 			testfmt.Println(t, "Compared all streams")
 		}
 	}()
+
+	prev := time.Now()
 	for i, m = range messages {
+		now := time.Now()
+		testfmt.Println(t, "Step", i, "took", now.Sub(prev))
+		prev = now
+
 		clients.say(channelId, m...)
 		if listenInterval > 0 && (i+1)%listenInterval == 0 {
 			clients.listen(channelId, messages[:i+1])
@@ -112,7 +117,6 @@ func testReplMcConversation(t *testing.T, numClients int, numSteps int, listenIn
 }
 
 func TestReplMcConversation(t *testing.T) {
-	t.Skip("TODO: REPLICATON: FIX: disabled due to #11608")
 	t.Parallel()
 	t.Run("5x5", func(t *testing.T) {
 		testReplMcConversation(t, 5, 5, 1, 1)
@@ -121,10 +125,17 @@ func TestReplMcConversation(t *testing.T) {
 		testReplMcConversation(t, 5, 100, 10, 100)
 	})
 	t.Run("10x1000", func(t *testing.T) {
-		t.Skip("TODO: REPLICATON: FIX: flaky on CI")
+		t.Skip("TODO: REPLICATION: FIX: flacky")
 		if testing.Short() {
 			t.Skip("skipping 10x1000 in short mode")
 		}
 		testReplMcConversation(t, 10, 1000, 20, 1000)
+	})
+	t.Run("30x1000", func(t *testing.T) {
+		t.Skip("TODO: REPLICATION: FIX: flacky")
+		if testing.Short() {
+			t.Skip("skipping 30x1000 in short mode")
+		}
+		testReplMcConversation(t, 30, 1000, 50, 1000)
 	})
 }

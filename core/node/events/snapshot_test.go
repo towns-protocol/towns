@@ -3,10 +3,10 @@ package events
 import (
 	"testing"
 
-	"github.com/river-build/river/core/node/base/test"
-	"github.com/river-build/river/core/node/crypto"
-	. "github.com/river-build/river/core/node/protocol"
-	. "github.com/river-build/river/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/base/test"
+	"github.com/towns-protocol/towns/core/node/crypto"
+	. "github.com/towns-protocol/towns/core/node/protocol"
+	. "github.com/towns-protocol/towns/core/node/shared"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

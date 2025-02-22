@@ -4,10 +4,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/river-build/river/core/config"
-	"github.com/river-build/river/core/node/base/test"
-	"github.com/river-build/river/core/node/shared"
-	"github.com/river-build/river/core/node/testutils"
+	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/node/base/test"
+	"github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/testutils"
 
 	"github.com/stretchr/testify/assert"
 )

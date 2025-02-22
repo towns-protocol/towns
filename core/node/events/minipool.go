@@ -3,7 +3,7 @@ package events
 import (
 	"github.com/ethereum/go-ethereum/common"
 
-	. "github.com/river-build/river/core/node/utils"
+	. "github.com/towns-protocol/towns/core/node/utils"
 )
 
 type eventMap = *OrderedMap[common.Hash, *ParsedEvent]
@@ -74,4 +74,20 @@ func (m *minipoolInstance) getEnvelopeBytes() ([][]byte, error) {
 		bytes[i] = b
 	}
 	return bytes, nil
+}
+
+func (m *minipoolInstance) eventHashes() []common.Hash {
+	hashes := make([]common.Hash, m.events.Len())
+	for i, e := range m.events.Values {
+		hashes[i] = e.Hash
+	}
+	return hashes
+}
+
+func (m *minipoolInstance) eventHashesAsBytes() [][]byte {
+	hashes := make([][]byte, m.events.Len())
+	for i, e := range m.events.Values {
+		hashes[i] = e.Hash[:]
+	}
+	return hashes
 }

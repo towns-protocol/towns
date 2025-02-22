@@ -12,11 +12,11 @@ import (
 	payload2 "github.com/sideshow/apns2/payload"
 	"github.com/stretchr/testify/require"
 
-	"github.com/river-build/river/core/config"
-	"github.com/river-build/river/core/node/infra"
-	"github.com/river-build/river/core/node/notifications/push"
-	"github.com/river-build/river/core/node/notifications/types"
-	"github.com/river-build/river/core/node/protocol"
+	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/node/infra"
+	"github.com/towns-protocol/towns/core/node/notifications/push"
+	"github.com/towns-protocol/towns/core/node/notifications/types"
+	"github.com/towns-protocol/towns/core/node/protocol"
 )
 
 func TestAPNSPushNotification(t *testing.T) {
@@ -64,7 +64,7 @@ func TestAPNSPushNotification(t *testing.T) {
 	}
 
 	expired, _, err := notifier.SendApplePushNotification(
-		ctx, &sub, common.Hash{1}, payload)
+		ctx, &sub, common.Hash{1}, payload, true)
 	req.False(expired, "subscription should not be expired")
 	req.NoError(err, "send APN notification")
 }

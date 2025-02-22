@@ -7,8 +7,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/jackc/pgx/v5/pgtype"
 
-	. "github.com/river-build/river/core/node/base"
-	. "github.com/river-build/river/core/node/protocol"
+	. "github.com/towns-protocol/towns/core/node/base"
+	. "github.com/towns-protocol/towns/core/node/protocol"
 )
 
 const (

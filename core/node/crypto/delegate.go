@@ -7,9 +7,9 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 
-	. "github.com/river-build/river/core/node/base"
+	. "github.com/towns-protocol/towns/core/node/base"
 
-	. "github.com/river-build/river/core/node/protocol"
+	. "github.com/towns-protocol/towns/core/node/protocol"
 )
 
 func RecoverEthereumMessageSignerPublicKey(hashSrc []byte, inSignature []byte) ([]byte, error) {

@@ -10,11 +10,11 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/crypto"
-	. "github.com/river-build/river/core/node/protocol"
-	. "github.com/river-build/river/core/node/shared"
-	"github.com/river-build/river/core/node/storage"
+	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/crypto"
+	. "github.com/towns-protocol/towns/core/node/protocol"
+	. "github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/storage"
 )
 
 func Make_GenesisMiniblockHeader(parsedEvents []*ParsedEvent) (*MiniblockHeader, error) {
@@ -301,7 +301,7 @@ func (p *ParsedMiniblockInfoOpts) DoNotParseEvents() bool {
 
 // NewMiniblockInfoFromProto initializes a MiniblockInfo from a proto, applying validation based
 // on whatever is set in the opts. If an empty opts is passed in, the method will still perform
-// some minimal validation if the requested miniblock is block 0.
+// some minimal validation to confirm that event counts between the header and body match.
 func NewMiniblockInfoFromProto(pb *Miniblock, opts *ParsedMiniblockInfoOpts) (*MiniblockInfo, error) {
 	headerEvent, err := ParseEvent(pb.Header)
 	if err != nil {

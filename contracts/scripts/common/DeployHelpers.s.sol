@@ -111,7 +111,7 @@ abstract contract DeployHelpers is CommonBase {
   // =============================================================
   //                     FILE SYSTEM HELPERS
   // =============================================================
-  function exists(string memory path) internal returns (bool) {
+  function exists(string memory path) internal view returns (bool) {
     return vm.exists(path);
   }
 

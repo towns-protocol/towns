@@ -19,26 +19,28 @@ import (
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 
-	"github.com/river-build/river/core/config"
-	"github.com/river-build/river/core/node/auth"
-	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/events"
-	"github.com/river-build/river/core/node/http_client"
-	"github.com/river-build/river/core/node/infra"
-	"github.com/river-build/river/core/node/logging"
-	"github.com/river-build/river/core/node/nodes"
-	"github.com/river-build/river/core/node/notifications"
-	. "github.com/river-build/river/core/node/protocol"
-	"github.com/river-build/river/core/node/protocol/protocolconnect"
-	"github.com/river-build/river/core/node/registries"
-	"github.com/river-build/river/core/node/rpc/sync"
-	"github.com/river-build/river/core/node/scrub"
-	"github.com/river-build/river/core/node/storage"
-	"github.com/river-build/river/core/node/utils"
-	"github.com/river-build/river/core/river_node/version"
-	"github.com/river-build/river/core/xchain/entitlement"
-	"github.com/river-build/river/core/xchain/util"
+	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/node/auth"
+	"github.com/towns-protocol/towns/core/node/authentication"
+	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/crypto"
+	"github.com/towns-protocol/towns/core/node/events"
+	"github.com/towns-protocol/towns/core/node/http_client"
+	"github.com/towns-protocol/towns/core/node/infra"
+	"github.com/towns-protocol/towns/core/node/logging"
+	"github.com/towns-protocol/towns/core/node/nodes"
+	"github.com/towns-protocol/towns/core/node/notifications"
+	. "github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
+	"github.com/towns-protocol/towns/core/node/registries"
+	"github.com/towns-protocol/towns/core/node/rpc/sync"
+	"github.com/towns-protocol/towns/core/node/scrub"
+	"github.com/towns-protocol/towns/core/node/storage"
+	"github.com/towns-protocol/towns/core/node/track_streams"
+	"github.com/towns-protocol/towns/core/node/utils"
+	"github.com/towns-protocol/towns/core/river_node/version"
+	"github.com/towns-protocol/towns/core/xchain/entitlement"
+	"github.com/towns-protocol/towns/core/xchain/util"
 )
 
 const (
@@ -46,6 +48,7 @@ const (
 	ServerModeInfo         = "info"
 	ServerModeArchive      = "archive"
 	ServerModeNotification = "notification"
+	ServerModeAppRegistry  = "app_registry"
 )
 
 func (s *Service) httpServerClose() {
@@ -227,19 +230,11 @@ func (s *Service) initInstance(mode string, opts *ServerStartOpts) {
 			s.defaultLogger = logging.FromCtx(s.serverCtx).With(
 				"port", s.config.Port,
 			)
+		} else {
+			s.defaultLogger = logging.FromCtx(s.serverCtx)
 		}
 	}
 	s.serverCtx = logging.CtxWithLog(s.serverCtx, s.defaultLogger)
-
-	var (
-		vapidPrivateKey        = s.config.Notifications.Web.Vapid.PrivateKey
-		apnPrivateAuthKey      = s.config.Notifications.APN.AuthKey
-		sessionTokenPrivateKey = s.config.Notifications.Authentication.SessionToken.Key.Key
-	)
-	// TODO: set omit tag on sensitive fields instead of manually hiding them
-	s.config.Notifications.Web.Vapid.PrivateKey = "<hidden>"
-	s.config.Notifications.APN.AuthKey = "<hidden>"
-	s.config.Notifications.Authentication.SessionToken.Key.Key = "<hidden>"
 
 	// TODO: refactor to load wallet before so node address is logged here as well
 	s.defaultLogger.Infow(
@@ -248,15 +243,13 @@ func (s *Service) initInstance(mode string, opts *ServerStartOpts) {
 		"version", version.GetFullVersion(),
 	)
 
-	s.config.Notifications.Web.Vapid.PrivateKey = vapidPrivateKey
-	s.config.Notifications.APN.AuthKey = apnPrivateAuthKey
-	s.config.Notifications.Authentication.SessionToken.Key.Key = sessionTokenPrivateKey
-
 	subsystem := mode
 	if mode == ServerModeFull {
 		subsystem = "stream"
 	} else if mode == ServerModeNotification {
 		subsystem = "notification"
+	} else if mode == ServerModeAppRegistry {
+		subsystem = "app_registry"
 	}
 
 	metricsRegistry := prometheus.NewRegistry()
@@ -318,7 +311,9 @@ func (s *Service) initBaseChain() error {
 		s.chainAuth = chainAuth
 		return nil
 	} else {
-		s.defaultLogger.Warnw("Using fake auth for testing")
+		if !s.config.Log.Simplify {
+			s.defaultLogger.Warnw("Using fake auth for testing")
+		}
 		s.chainAuth = auth.NewFakeChainAuth()
 		return nil
 	}
@@ -371,16 +366,12 @@ func (s *Service) initRiverChain() error {
 		return err
 	}
 
-	s.streamRegistry, err = nodes.NewStreamRegistry(
-		ctx,
+	s.streamRegistry = nodes.NewStreamRegistry(
 		s.riverChain,
 		s.nodeRegistry,
 		s.registryContract,
 		s.chainConfig,
 	)
-	if err != nil {
-		return err
-	}
 
 	return nil
 }
@@ -396,6 +387,8 @@ func (s *Service) prepareStore() error {
 			schema = storage.DbSchemaNameForArchive(s.config.Archive.ArchiveId)
 		case ServerModeNotification:
 			schema = storage.DbSchemaNameForNotifications(s.config.RiverChain.ChainId)
+		case ServerModeAppRegistry:
+			schema = storage.DbSchemaNameForAppRegistryService(s.config.AppRegistry.AppRegistryId)
 		default:
 			return RiverError(
 				Err_BAD_CONFIG,
@@ -562,7 +555,13 @@ func (s *Service) serve() {
 
 func (s *Service) initEntitlements() error {
 	var err error
-	s.entitlementEvaluator, err = entitlement.NewEvaluatorFromConfig(s.serverCtx, s.config, s.chainConfig, s.metrics)
+	s.entitlementEvaluator, err = entitlement.NewEvaluatorFromConfig(
+		s.serverCtx,
+		s.config,
+		s.chainConfig,
+		s.metrics,
+		s.otelTracer,
+	)
 	if err != nil {
 		return err
 	}
@@ -581,6 +580,7 @@ func (s *Service) initStore() error {
 			s.instanceId,
 			s.exitSignal,
 			s.metrics,
+			s.chainConfig.Get().StreamEphemeralStreamTTL,
 		)
 		if err != nil {
 			return err
@@ -650,6 +650,42 @@ func (s *Service) initNotificationsStore() error {
 	}
 }
 
+func (s *Service) initAppRegistryStore() error {
+	ctx := s.serverCtx
+	log := s.defaultLogger
+
+	switch s.config.StorageType {
+	case storage.AppRegistryStorageTypePostgres:
+		pgstore, err := storage.NewPostgresAppRegistryStore(
+			ctx,
+			s.storagePoolInfo,
+			s.exitSignal,
+			s.metrics,
+		)
+		if err != nil {
+			return err
+		}
+		s.onClose(pgstore.Close)
+		s.appStore = pgstore
+
+		if !s.config.Log.Simplify {
+			log.Infow(
+				"Created postgres app registry store",
+				"schema",
+				s.storagePoolInfo.Schema,
+			)
+		}
+		return nil
+	default:
+		return RiverError(
+			Err_BAD_CONFIG,
+			"Unknown storage type",
+			"storageType",
+			s.config.StorageType,
+		).Func("createStore")
+	}
+}
+
 func (s *Service) initCacheAndSync(opts *ServerStartOpts) error {
 	cacheParams := &events.StreamCacheParams{
 		Storage:                 s.storage,
@@ -662,12 +698,14 @@ func (s *Service) initCacheAndSync(opts *ServerStartOpts) error {
 		ChainMonitor:            s.riverChain.ChainMonitor,
 		Metrics:                 s.metrics,
 		RemoteMiniblockProvider: s,
+		NodeRegistry:            s.nodeRegistry,
+		Tracer:                  s.otelTracer,
 	}
 
-	s.cache = events.NewStreamCache(s.serverCtx, cacheParams)
+	s.cache = events.NewStreamCache(cacheParams)
 
-	// There is circular dependency between cache and scrubber, so scurbber
-	// needs to be patched into cache params after cache is created.
+	// There is circular dependency between the cache and the scrubber, so the scrubber
+	// needs to be patched into cache params after the cache is created.
 	if opts != nil && opts.ScrubberMaker != nil {
 		cacheParams.Scrubber = opts.ScrubberMaker(s.serverCtx, s)
 	} else {
@@ -687,7 +725,7 @@ func (s *Service) initCacheAndSync(opts *ServerStartOpts) error {
 		return err
 	}
 
-	s.mbProducer = events.NewMiniblockProducer(s.serverCtx, s.cache, s.chainConfig, nil)
+	s.mbProducer = events.NewMiniblockProducer(s.serverCtx, s.cache, nil)
 
 	s.syncHandler = sync.NewHandler(
 		s.wallet.Address,
@@ -725,7 +763,8 @@ func (s *Service) initNotificationHandlers() error {
 	ii = append(ii, s.NewMetricsInterceptor())
 	ii = append(ii, NewTimeoutInterceptor(s.config.Network.RequestTimeout))
 
-	authInceptor, err := notifications.NewAuthenticationInterceptor(
+	authInceptor, err := authentication.NewAuthenticationInterceptor(
+		s.NotificationService.ShortServiceName(),
 		s.config.Notifications.Authentication.SessionToken.Key.Algorithm,
 		s.config.Notifications.Authentication.SessionToken.Key.Key,
 	)
@@ -753,11 +792,50 @@ func (s *Service) initNotificationHandlers() error {
 	return nil
 }
 
+func (s *Service) initAppRegistryHandlers() error {
+	var ii []connect.Interceptor
+	if s.otelConnectIterceptor != nil {
+		ii = append(ii, s.otelConnectIterceptor)
+	}
+	ii = append(ii, s.NewMetricsInterceptor())
+	ii = append(ii, NewTimeoutInterceptor(s.config.Network.RequestTimeout))
+
+	authInceptor, err := authentication.NewAuthenticationInterceptor(
+		s.AppRegistryService.ShortServiceName(),
+		s.config.AppRegistry.Authentication.SessionToken.Key.Algorithm,
+		s.config.AppRegistry.Authentication.SessionToken.Key.Key,
+		"/river.AppRegistryService/GetStatus",
+	)
+	if err != nil {
+		return err
+	}
+	ii = append(ii, authInceptor)
+
+	interceptors := connect.WithInterceptors(ii...)
+
+	AppRegistryServicePattern, AppRegistryServiceHandler := protocolconnect.NewAppRegistryServiceHandler(
+		s.AppRegistryService,
+		interceptors,
+	)
+	AppRegistryAuthServicePattern, AppRegistryAuthServiceHandler := protocolconnect.NewAuthenticationServiceHandler(
+		s.AppRegistryService,
+		interceptors,
+	)
+
+	s.mux.Handle(AppRegistryServicePattern, newHttpHandler(AppRegistryServiceHandler, s.defaultLogger))
+	s.mux.Handle(AppRegistryAuthServicePattern, newHttpHandler(AppRegistryAuthServiceHandler, s.defaultLogger))
+
+	// s.registerDebugHandlers(s.config.EnableDebugEndpoints, s.config.DebugEndpoints)
+
+	return nil
+}
+
 type ServerStartOpts struct {
-	RiverChain      *crypto.Blockchain
-	Listener        net.Listener
-	HttpClientMaker HttpClientMakerFunc
-	ScrubberMaker   func(context.Context, *Service) events.Scrubber
+	RiverChain          *crypto.Blockchain
+	Listener            net.Listener
+	HttpClientMaker     HttpClientMakerFunc
+	ScrubberMaker       func(context.Context, *Service) events.Scrubber
+	StreamEventListener track_streams.StreamEventListener
 }
 
 // StartServer starts the server with the given configuration.

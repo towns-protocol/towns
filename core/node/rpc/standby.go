@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/river-build/river/core/node/rpc/statusinfo"
+	"github.com/towns-protocol/towns/core/node/rpc/statusinfo"
 )
 
 func (s *Service) standby() error {

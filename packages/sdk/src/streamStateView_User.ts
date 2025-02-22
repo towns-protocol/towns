@@ -40,7 +40,7 @@ export class StreamStateView_User extends StreamStateView_AbstractContent {
 
     prependEvent(
         event: RemoteTimelineEvent,
-        _cleartext: string | undefined,
+        _cleartext: Uint8Array | string | undefined,
         _encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
         _stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
@@ -67,7 +67,7 @@ export class StreamStateView_User extends StreamStateView_AbstractContent {
 
     appendEvent(
         event: RemoteTimelineEvent,
-        cleartext: string | undefined,
+        cleartext: Uint8Array | string | undefined,
         _encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
         stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
@@ -96,6 +96,10 @@ export class StreamStateView_User extends StreamStateView_AbstractContent {
                         stateEmitter?.emit('userTipSent', this.streamId, currency, event.amount)
                         break
                     }
+                    case 'spaceReview': {
+                        // user left a review on a space
+                        break
+                    }
                     default:
                         logNever(transactionContent)
                         break
@@ -116,6 +120,10 @@ export class StreamStateView_User extends StreamStateView_AbstractContent {
                         this.tipsReceived[currency] =
                             this.tipsReceived[currency] ?? 0n + event.amount
                         stateEmitter?.emit('userTipReceived', this.streamId, currency, event.amount)
+                        break
+                    }
+                    case 'spaceReview': {
+                        // user left a review on a space
                         break
                     }
                     default:

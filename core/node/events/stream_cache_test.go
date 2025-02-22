@@ -3,20 +3,21 @@ package events
 import (
 	"context"
 	"fmt"
-	"github.com/ethereum/go-ethereum/core/types"
-	"go.uber.org/atomic"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/river-build/river/core/contracts/river"
-	"github.com/river-build/river/core/node/crypto"
-	. "github.com/river-build/river/core/node/protocol"
-	. "github.com/river-build/river/core/node/shared"
-	"github.com/river-build/river/core/node/testutils"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/emptypb"
+
+	"github.com/towns-protocol/towns/core/contracts/river"
+	"github.com/towns-protocol/towns/core/node/crypto"
+	. "github.com/towns-protocol/towns/core/node/protocol"
+	. "github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/testutils"
 )
 
 func TestStreamCacheViewEviction(t *testing.T) {
@@ -44,7 +45,7 @@ func TestStreamCacheViewEviction(t *testing.T) {
 	// stream just loaded and should be with view in cache
 	streamWithoutLoadedView := 0
 	streamWithLoadedViewCount := 0
-	streamCache.cache.Range(func(key StreamId, value *streamImpl) bool {
+	streamCache.cache.Range(func(key StreamId, value *Stream) bool {
 		if value.view() == nil {
 			streamWithoutLoadedView++
 		} else {
@@ -70,7 +71,7 @@ func TestStreamCacheViewEviction(t *testing.T) {
 	// cache must have view dropped even there is a subscriber
 	streamWithoutLoadedView = 0
 	streamWithLoadedViewCount = 0
-	streamCache.cache.Range(func(key StreamId, value *streamImpl) bool {
+	streamCache.cache.Range(func(key StreamId, value *Stream) bool {
 		if value.view() == nil {
 			streamWithoutLoadedView++
 		} else {
@@ -92,7 +93,7 @@ func TestStreamCacheViewEviction(t *testing.T) {
 
 	streamWithoutLoadedView = 0
 	streamWithLoadedViewCount = 0
-	streamCache.cache.Range(func(key StreamId, value *streamImpl) bool {
+	streamCache.cache.Range(func(key StreamId, value *Stream) bool {
 		if value.view() == nil {
 			streamWithoutLoadedView++
 		} else {
@@ -110,7 +111,7 @@ func TestStreamCacheViewEviction(t *testing.T) {
 	require.NoError(err, "get view")
 	streamWithoutLoadedView = 0
 	streamWithLoadedViewCount = 0
-	streamCache.cache.Range(func(key StreamId, value *streamImpl) bool {
+	streamCache.cache.Range(func(key StreamId, value *Stream) bool {
 		if value.view() == nil {
 			streamWithoutLoadedView++
 		} else {
@@ -147,7 +148,7 @@ func TestCacheEvictionWithFilledMiniBlockPool(t *testing.T) {
 	// stream just loaded and should have view loaded
 	streamWithoutLoadedView := 0
 	streamWithLoadedViewCount := 0
-	streamCache.cache.Range(func(key StreamId, value *streamImpl) bool {
+	streamCache.cache.Range(func(key StreamId, value *Stream) bool {
 		if value.view() == nil {
 			streamWithoutLoadedView++
 		} else {
@@ -238,7 +239,7 @@ func TestStreamMiniblockBatchProduction(t *testing.T) {
 
 	streamCache := tc.initCache(0, nil)
 
-	streamCache.cache.Range(func(key StreamId, value *streamImpl) bool {
+	streamCache.cache.Range(func(key StreamId, value *Stream) bool {
 		require.Fail("stream cache must be empty")
 		return true
 	})
@@ -330,22 +331,22 @@ func TestStreamMiniblockBatchProduction(t *testing.T) {
 	)
 }
 
-func isCacheEmpty(streamCache *streamCacheImpl) bool {
+func isCacheEmpty(streamCache *StreamCache) bool {
 	return streamCache.cache.Size() == 0
 }
 
-func cleanUpCache(streamCache *streamCacheImpl) bool {
+func cleanUpCache(streamCache *StreamCache) bool {
 	cleanedUp := true
-	streamCache.cache.Range(func(key StreamId, streamVal *streamImpl) bool {
+	streamCache.cache.Range(func(key StreamId, streamVal *Stream) bool {
 		cleanedUp = cleanedUp && streamVal.tryCleanup(0)
 		return true
 	})
 	return cleanedUp
 }
 
-func areAllViewsDropped(streamCache *streamCacheImpl) bool {
+func areAllViewsDropped(streamCache *StreamCache) bool {
 	allDropped := true
-	streamCache.cache.Range(func(key StreamId, streamVal *streamImpl) bool {
+	streamCache.cache.Range(func(key StreamId, streamVal *Stream) bool {
 		st := streamVal.getStatus()
 		allDropped = allDropped && !st.loaded
 		return true
@@ -393,10 +394,10 @@ func Disabled_TestStreamUnloadWithSubscribers(t *testing.T) {
 	tc.instances[0].params.AppliedBlockNum = blockNum
 
 	// create fresh stream cache and subscribe
-	streamCache = NewStreamCache(ctx, tc.instances[0].params)
+	streamCache = NewStreamCache(tc.instances[0].params)
 	err = streamCache.Start(ctx)
 	require.NoError(err, "instantiating stream cache")
-	mpProducer := NewMiniblockProducer(ctx, streamCache, tc.btc.OnChainConfig, &MiniblockProducerOpts{TestDisableMbProdcutionOnBlock: true})
+	mpProducer := NewMiniblockProducer(ctx, streamCache, &MiniblockProducerOpts{TestDisableMbProdcutionOnBlock: true})
 
 	for streamID, syncCookie := range syncCookies {
 		streamSync, err := streamCache.GetStreamWaitForLocal(ctx, streamID)
@@ -466,7 +467,7 @@ func TestMiniblockRegistrationWithPendingLocalCandidate(t *testing.T) {
 	mbProducer := instance.mbProducer
 
 	// through disableCallback the test can control if the stream cache witnesses river chain events.
-	disableCallbacks := atomic.NewBool(false)
+	var disableCallbacks atomic.Bool
 	instance.params.ChainMonitor.OnBlockWithLogs(instance.params.AppliedBlockNum+1,
 		func(ctx context.Context, blockNumber crypto.BlockNumber, logs []*types.Log) {
 			if !disableCallbacks.Load() {
