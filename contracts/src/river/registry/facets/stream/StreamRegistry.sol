@@ -207,16 +207,16 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     address nodeAddress
   ) external onlyStream(streamId) onlyNode(msg.sender) {
     Stream storage stream = ds.streamById[streamId];
+    address[] storage nodes = stream.nodes;
 
     // validate that the node is not already on the stream
-    uint256 nodeCount = stream.nodes.length;
+    uint256 nodeCount = nodes.length;
 
     for (uint256 i; i < nodeCount; ++i) {
-      if (stream.nodes[i] == nodeAddress)
-        revert(RiverRegistryErrors.ALREADY_EXISTS);
+      if (nodes[i] == nodeAddress) revert(RiverRegistryErrors.ALREADY_EXISTS);
     }
 
-    stream.nodes.push(nodeAddress);
+    nodes.push(nodeAddress);
 
     emit StreamPlacementUpdated(streamId, nodeAddress, true);
   }
@@ -227,14 +227,15 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     address nodeAddress
   ) external onlyStream(streamId) onlyNode(msg.sender) {
     Stream storage stream = ds.streamById[streamId];
+    address[] storage nodes = stream.nodes;
 
     bool found = false;
-    uint256 nodeCount = stream.nodes.length;
+    uint256 nodeCount = nodes.length;
 
     for (uint256 i; i < nodeCount; ++i) {
-      if (stream.nodes[i] == nodeAddress) {
-        stream.nodes[i] = stream.nodes[nodeCount - 1];
-        stream.nodes.pop();
+      if (nodes[i] == nodeAddress) {
+        nodes[i] = nodes[nodeCount - 1];
+        nodes.pop();
         found = true;
         break;
       }
