@@ -66,6 +66,8 @@ The system allows for:
   - Cross-chain token bridging and migration
   - Inflation and supply management
 
+- `/contracts/scripts/diamonds` - Handles deployment of all the diamonds being used in production, each file is a smart contract deployment along with the facets they contain.
+
 ### Key Contracts
 
 #### Space Management
@@ -75,7 +77,8 @@ The system allows for:
 - `Roles.sol` - Manages role-based permissions and access control hierarchies
 
 #### Token System
-- `TownsToken.sol` - Main ERC20 token implementation with inflation and governance
+- `contracts/src/tokens/towns/mainnet/Towns.sol` - Main ERC20 token implementation with inflation and governance
+- `contracts/src/tokens/towns/base/Towns.sol` - Layer 2 ERC20 token implementation with cross-chain minting, used for rewards distribution
 
 #### Rewards & Distribution
 - `DropFacet.sol` - Handles token airdrops with complex claiming conditions
@@ -85,7 +88,7 @@ The system allows for:
 #### Registry & Infrastructure
 - `EntitlementChecker.sol` - Validates cross-chain entitlements and permissions
 - `DiamondCutFacet.sol` - Handles contract upgradeability via Diamond pattern
-- `SpaceFactory.sol` - Creates and initializes new space instances
+- `CreateSpace.sol` - Creates and initializes new space instances
 
 Each contract follows the Diamond Pattern (EIP-2535) for upgradeability and implements proper access control, events, and storage patterns. They work together to create a comprehensive space management and token distribution system with cross-chain capabilities.
 
@@ -155,3 +158,32 @@ Each contract follows the Diamond Pattern (EIP-2535) for upgradeability and impl
 4. Use safe math operations
 5. Implement proper access control
 6. Follow upgrade best practices
+
+### Diamond Facet Storage
+Every new facet or feature needs to follow the following storage pattern to avoid collision:
+
+```solidity
+library FacetStorage {
+  // A hash calculate by running 
+  // keccak256(abi.encode(uint256(keccak256("folder.path.to.feature")) - 1)) & ~bytes32(uint256(0xff))
+  bytes32 internal constant STORAGE_SLOT =
+    0x672ef851d5f92307da037116e23aa9e31af7e1f7e3ca62c4e6d540631df3fd00;
+
+  struct Object {
+    string variablesBeingUsedInFeature
+  }
+
+  // Layout is a special struct that we use to define what we will be reading/writing to and from
+  struct Layout {
+    mapping(uint256 => Object) varibleToWriteTo
+  }
+
+  // function to fetch the storage slot to do reads/write in the future
+  function layout() internal pure returns (Layout storage ds) {
+    bytes32 slot = STORAGE_SLOT;
+    assembly {
+      ds.slot := slot
+    }
+  }
+}
+```
