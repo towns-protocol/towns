@@ -17,11 +17,10 @@ export const useScrollback = (channelId: string) => {
 
     const onFirstMessageReached = useCallback(
         (watermark: string) => {
-            console.log('onFirstMessageReached', watermark)
             if (watermark === watermarkRef.current) {
                 return
             }
-            console.log('onFirstMessageReached onLoadMore')
+            console.log('[useScrollback] onLoadMore')
             watermarkRef.current = watermark
             setTimeout(onLoadMore, 0)
         },

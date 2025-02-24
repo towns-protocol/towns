@@ -1,4 +1,4 @@
-import React, { MutableRefObject } from 'react'
+import React, { MutableRefObject, useEffect } from 'react'
 import { useInView } from 'react-intersection-observer'
 import { Box } from '@ui'
 
@@ -15,9 +15,10 @@ export const ScrollbackMarker = (props: {
         rootMargin: '5000px',
         root: containerRef?.current,
     })
-
-    if (inView && watermark) {
-        onMarkerReached(watermark)
-    }
+    useEffect(() => {
+        if (inView && watermark) {
+            onMarkerReached(watermark)
+        }
+    }, [inView, watermark, onMarkerReached])
     return <Box ref={ref} />
 }
