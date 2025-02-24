@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/require"
 
-	"github.com/river-build/river/core/config/builder"
+	"github.com/towns-protocol/towns/core/config/builder"
 )
 
 type Config struct {

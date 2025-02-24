@@ -1,7 +1,7 @@
 package migrations
 
 import (
-	. "github.com/river-build/river/core/node/protocol"
+	. "github.com/towns-protocol/towns/core/node/protocol"
 )
 
 // a no-op migration for the initial snapshot, use as a template for new migrations

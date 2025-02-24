@@ -5,8 +5,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/river-build/river/core/node/rpc/render"
-	"github.com/river-build/river/core/node/rpc/statusinfo"
+	"github.com/towns-protocol/towns/core/node/rpc/render"
+	"github.com/towns-protocol/towns/core/node/rpc/statusinfo"
 )
 
 // implicitly calls render.init that loads and parses all templates

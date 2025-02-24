@@ -66,12 +66,12 @@ export interface IStreamStateView {
     readonly timeline: StreamTimelineEvent[]
     readonly events: Map<string, StreamTimelineEvent>
     isInitialized: boolean
-    snapshot?: Snapshot
     prevMiniblockHash?: Uint8Array
     lastEventNum: bigint
     prevSnapshotMiniblockNum: bigint
     miniblockInfo?: { max: bigint; min: bigint; terminusReached: boolean }
     syncCookie?: SyncCookie
+    saveSnapshots?: boolean
     membershipContent: StreamStateView_Members
     get spaceContent(): StreamStateView_Space
     get channelContent(): StreamStateView_Channel
@@ -82,6 +82,7 @@ export interface IStreamStateView {
     get userMetadataContent(): StreamStateView_UserMetadata
     get userInboxContent(): StreamStateView_UserInbox
     get mediaContent(): StreamStateView_Media
+    snapshot(): Snapshot | undefined
     getMembers(): StreamStateView_Members
     getMemberMetadata(): StreamStateView_MemberMetadata
     getChannelMetadata(): StreamStateView_ChannelMetadata | undefined
@@ -97,13 +98,17 @@ export class StreamStateView implements IStreamStateView {
     readonly timeline: StreamTimelineEvent[] = []
     readonly events = new Map<string, StreamTimelineEvent>()
     isInitialized = false
-    snapshot?: Snapshot
     prevMiniblockHash?: Uint8Array
     lastEventNum = 0n
     prevSnapshotMiniblockNum: bigint
     miniblockInfo?: { max: bigint; min: bigint; terminusReached: boolean }
     syncCookie?: SyncCookie
-
+    saveSnapshots?: boolean
+    private _snapshot?: Snapshot
+    snapshot(): Snapshot | undefined {
+        check(this.saveSnapshots === true, 'snapshots are not enabled')
+        return this._snapshot
+    }
     // membership content
     membershipContent: StreamStateView_Members
 
@@ -224,12 +229,12 @@ export class StreamStateView implements IStreamStateView {
 
     private applySnapshot(
         eventHash: string,
+        event: ParsedEvent,
         inSnapshot: Snapshot,
         cleartexts: Record<string, Uint8Array | string> | undefined,
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ) {
         const snapshot = migrateSnapshot(inSnapshot)
-        this.snapshot = snapshot
         switch (snapshot.content.case) {
             case 'spaceContent':
                 this.spaceContent.applySnapshot(
@@ -293,7 +298,13 @@ export class StreamStateView implements IStreamStateView {
             default:
                 logNever(snapshot.content)
         }
-        this.membershipContent.applySnapshot(eventHash, snapshot, cleartexts, encryptionEmitter)
+        this.membershipContent.applySnapshot(
+            eventHash,
+            event,
+            snapshot,
+            cleartexts,
+            encryptionEmitter,
+        )
     }
 
     private appendStreamAndCookie(
@@ -322,7 +333,9 @@ export class StreamStateView implements IStreamStateView {
                     miniblockNum: undefined,
                     confirmedEventNum: undefined,
                 })
-                this.timeline.push(event)
+                if (event.remoteEvent.event.payload.case !== 'miniblockHeader') {
+                    this.timeline.push(event)
+                }
                 const newlyConfirmed = this.processAppendedEvent(
                     event,
                     cleartexts?.[event.hashStr],
@@ -346,7 +359,9 @@ export class StreamStateView implements IStreamStateView {
         stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): ConfirmedTimelineEvent[] | undefined {
         check(!this.events.has(timelineEvent.hashStr))
-        this.events.set(timelineEvent.hashStr, timelineEvent)
+        if (timelineEvent.remoteEvent.event.payload.case !== 'miniblockHeader') {
+            this.events.set(timelineEvent.hashStr, timelineEvent)
+        }
 
         const event = timelineEvent.remoteEvent
         const payload = event.event.payload
@@ -361,8 +376,8 @@ export class StreamStateView implements IStreamStateView {
                         `Miniblock number out of order ${payload.value.miniblockNum} > ${this.miniblockInfo?.max}`,
                         Err.STREAM_BAD_EVENT,
                     )
-                    if (payload.value.snapshot) {
-                        this.snapshot = migrateSnapshot(payload.value.snapshot)
+                    if (this.saveSnapshots && payload.value.snapshot) {
+                        this._snapshot = payload.value.snapshot
                     }
                     this.prevMiniblockHash = event.hash
                     this.updateMiniblockInfo(payload.value, { max: payload.value.miniblockNum })
@@ -441,7 +456,9 @@ export class StreamStateView implements IStreamStateView {
         stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
         check(!this.events.has(timelineEvent.hashStr))
-        this.events.set(timelineEvent.hashStr, timelineEvent)
+        if (timelineEvent.remoteEvent.event.payload.case !== 'miniblockHeader') {
+            this.events.set(timelineEvent.hashStr, timelineEvent)
+        }
 
         const event = timelineEvent.remoteEvent
         const payload = event.event.payload
@@ -476,7 +493,10 @@ export class StreamStateView implements IStreamStateView {
                     )
             }
         } catch (e) {
-            logError(`StreamStateView::Error prepending event ${event.hashStr}`, e)
+            logError(
+                `StreamStateView::Error prepending stream ${this.streamId} event ${event.hashStr}`,
+                e,
+            )
         }
     }
 
@@ -558,8 +578,21 @@ export class StreamStateView implements IStreamStateView {
     ): void {
         check(miniblocks.length > 0, `Stream has no miniblocks ${this.streamId}`, Err.STREAM_EMPTY)
         // parse the blocks
+        const miniblockHeaderEvent = miniblocks[0].events.at(-1)
+        check(
+            isDefined(miniblockHeaderEvent),
+            `Miniblock header event not found ${this.streamId}`,
+            Err.STREAM_EMPTY,
+        )
+
         // initialize from snapshot data, this gets all memberships and channel data, etc
-        this.applySnapshot(bin_toHexString(miniblocks[0].hash), snapshot, cleartexts, emitter)
+        this.applySnapshot(
+            bin_toHexString(miniblocks[0].hash),
+            miniblockHeaderEvent,
+            snapshot,
+            cleartexts,
+            emitter,
+        )
         // initialize from miniblocks, the first minblock is the snapshot block, it's events are accounted for
         const block0Events = miniblocks[0].events.map((parsedEvent, i) => {
             const eventNum = miniblocks[0].header.eventNumOffset + BigInt(i)
@@ -585,13 +618,17 @@ export class StreamStateView implements IStreamStateView {
         // initialize our event hashes
         check(block0Events.length > 0)
         // prepend the snapshotted block in reverse order
-        this.timeline.push(...block0Events)
+        this.timeline.push(
+            ...block0Events.filter((e) => e.remoteEvent.event.payload.case !== 'miniblockHeader'),
+        )
         for (let i = block0Events.length - 1; i >= 0; i--) {
             const event = block0Events[i]
             this.processPrependedEvent(event, cleartexts?.[event.hashStr], emitter, undefined)
         }
         // append the new block events
-        this.timeline.push(...rest)
+        this.timeline.push(
+            ...rest.filter((e) => e.remoteEvent.event.payload.case !== 'miniblockHeader'),
+        )
         for (const event of rest) {
             this.processAppendedEvent(event, cleartexts?.[event.hashStr], emitter, undefined)
         }
@@ -675,7 +712,9 @@ export class StreamStateView implements IStreamStateView {
             })
         }
 
-        this.timeline.unshift(...prepended)
+        this.timeline.unshift(
+            ...prepended.filter((e) => e.remoteEvent.event.payload.case !== 'miniblockHeader'),
+        )
         // prepend the new block events in reverse order
         for (let i = prepended.length - 1; i >= 0; i--) {
             const event = prepended[i]

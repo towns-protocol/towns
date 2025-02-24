@@ -13,7 +13,7 @@ The rules and construction of the delegate key signature are the topic of this p
 
 ### Delegate Signature Protocol Rules
 
-The logic dictating how a Towns Stream Node should process delegate signatures on the critical path of a request are described in `protocol.proto` and defined in `delegate.go`.
+The logic dictating how a Towns Stream Node should process delegate signatures on the critical path of a request is described in `protocol.proto` and defined in `delegate.go`.
 
 Events sent over RPC to a Towns Stream Node are sent with a message `Envelope` that includes several fields used to validate the sender.
 
@@ -32,7 +32,7 @@ Each event on a Towns Stream Node is parsed and validated as follows.
 <Steps>
   <Step title="Unmarshal Bytes">
     Events are stored as bytes in Towns Stream Node storage and transmitted as bytes over the wire.
-    All events are unmarshalled first then parsed to run a series of validity checks prior to storing those events.
+    All events are unmarshalled first and then parsed to run a series of validity checks prior to storing those events.
     ```go
     // stream_view.go example unpacking and parsing of events
     var env Envelope
@@ -68,7 +68,7 @@ Each event on a Towns Stream Node is parsed and validated as follows.
     ```
   </Step>
   <Step title="Check Delegate Signature">
-    Once the hash is confirmed as valid for the event, the hash along with the envelope signature are used to recover the signer public key.
+    Once the hash is confirmed as valid for the event, the hash along with the envelope signature is used to recover the signer public key.
     ```go
     // parsed_event.go
     func ParseEvent(envelope *Envelope) (*ParsedEvent, error) {

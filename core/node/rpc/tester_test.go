@@ -2,7 +2,6 @@ package rpc
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
 	"hash/fnv"
 	"io"
@@ -25,21 +24,21 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/river-build/river/core/config"
-	"github.com/river-build/river/core/contracts/river"
-	"github.com/river-build/river/core/node/base/test"
-	"github.com/river-build/river/core/node/crypto"
-	. "github.com/river-build/river/core/node/events"
-	"github.com/river-build/river/core/node/events/dumpevents"
-	"github.com/river-build/river/core/node/logging"
-	. "github.com/river-build/river/core/node/protocol"
-	"github.com/river-build/river/core/node/protocol/protocolconnect"
-	. "github.com/river-build/river/core/node/shared"
-	"github.com/river-build/river/core/node/storage"
-	"github.com/river-build/river/core/node/testutils"
-	"github.com/river-build/river/core/node/testutils/dbtestutils"
-	"github.com/river-build/river/core/node/testutils/testcert"
-	"github.com/river-build/river/core/node/testutils/testfmt"
+	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/contracts/river"
+	"github.com/towns-protocol/towns/core/node/base/test"
+	"github.com/towns-protocol/towns/core/node/crypto"
+	. "github.com/towns-protocol/towns/core/node/events"
+	"github.com/towns-protocol/towns/core/node/events/dumpevents"
+	"github.com/towns-protocol/towns/core/node/logging"
+	. "github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
+	. "github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/storage"
+	"github.com/towns-protocol/towns/core/node/testutils"
+	"github.com/towns-protocol/towns/core/node/testutils/dbtestutils"
+	"github.com/towns-protocol/towns/core/node/testutils/testcert"
+	"github.com/towns-protocol/towns/core/node/testutils/testfmt"
 )
 
 type testNodeRecord struct {
@@ -55,11 +54,16 @@ func (n *testNodeRecord) Close(ctx context.Context, dbUrl string) {
 		n.service = nil
 	}
 	if n.address != (common.Address{}) {
-		_ = dbtestutils.DeleteTestSchema(
-			ctx,
+		// lint:ignore context.Background() is fine here
+		err := dbtestutils.DeleteTestSchema(
+			context.Background(),
 			dbUrl,
 			storage.DbSchemaNameFromAddress(n.address.String()),
 		)
+		// Force test writers to properly clean up schemas if this fails for some reason.
+		if err != nil {
+			panic(err)
+		}
 	}
 }
 
@@ -82,15 +86,8 @@ type serviceTesterOpts struct {
 	printTestLogs     bool
 }
 
-func makeTestListenerNoCleanup(t *testing.T) (net.Listener, string) {
-	listener, err := net.Listen("tcp", "localhost:0")
-	require.NoError(t, err)
-	listener = tls.NewListener(listener, testcert.GetHttp2LocalhostTLSConfig())
-	return listener, "https://" + listener.Addr().String()
-}
-
 func makeTestListener(t *testing.T) (net.Listener, string) {
-	l, url := makeTestListenerNoCleanup(t)
+	l, url := testcert.MakeTestListener(t)
 	t.Cleanup(func() { _ = l.Close() })
 	return l, url
 }
@@ -213,7 +210,7 @@ func (st *serviceTester) cleanup(f any) {
 }
 
 func (st *serviceTester) makeTestListener() (net.Listener, string) {
-	l, url := makeTestListenerNoCleanup(st.t)
+	l, url := testcert.MakeTestListener(st.t)
 	st.cleanup(l.Close)
 	return l, url
 }
@@ -304,6 +301,7 @@ func (st *serviceTester) getConfig(opts ...startOpts) *config.Config {
 	}
 
 	cfg := config.GetDefaultConfig()
+	cfg.Port = 0
 	cfg.DisableBaseChain = true
 	cfg.DisableHttps = false
 	cfg.RegistryContract = st.btc.RegistryConfig()
@@ -805,7 +803,7 @@ func (tc *testClient) listenImpl(channelId StreamId, expected userMessages) {
 		if len(actualExtra) > 0 {
 			tc.require.FailNow("Received unexpected messages", "actualExtra:%v", actualExtra)
 		}
-	})
+	}, 15*time.Second)
 }
 
 func (tc *testClient) getStream(streamId StreamId) *StreamAndCookie {
@@ -833,9 +831,9 @@ func (tc *testClient) getStreamEx(streamId StreamId, onEachMb func(*Miniblock)) 
 func (tc *testClient) getStreamAndView(
 	streamId StreamId,
 	history ...bool,
-) (*StreamAndCookie, JoinableStreamView) {
+) (*StreamAndCookie, *StreamView) {
 	stream := tc.getStream(streamId)
-	var view JoinableStreamView
+	var view *StreamView
 	var err error
 	view, err = MakeRemoteStreamView(tc.ctx, stream)
 	tc.require.NoError(err)
@@ -852,7 +850,7 @@ func (tc *testClient) getStreamAndView(
 	return stream, view
 }
 
-func (tc *testClient) maybeDumpStreamView(view StreamView) {
+func (tc *testClient) maybeDumpStreamView(view *StreamView) {
 	if os.Getenv("RIVER_TEST_DUMP_STREAM") != "" {
 		testfmt.Print(
 			tc.t,
@@ -893,9 +891,22 @@ func (tc *testClient) getMiniblocks(streamId StreamId, fromInclusive, toExclusiv
 	return mbs
 }
 
+func (tc *testClient) getMiniblocksByIds(streamId StreamId, ids []int64, onEachMb func(*Miniblock)) {
+	resp, err := tc.node2nodeClient.GetMiniblocksByIds(tc.ctx, connect.NewRequest(&GetMiniblocksByIdsRequest{
+		StreamId:     streamId[:],
+		MiniblockIds: ids,
+	}))
+	tc.require.NoError(err)
+	for resp.Receive() {
+		onEachMb(resp.Msg().GetMiniblock())
+	}
+	tc.require.NoError(resp.Err())
+	tc.require.NoError(resp.Close())
+}
+
 func (tc *testClient) addHistoryToView(
-	view JoinableStreamView,
-) JoinableStreamView {
+	view *StreamView,
+) *StreamView {
 	firstMbNum := view.Miniblocks()[0].Ref.Num
 	if firstMbNum == 0 {
 		return view
@@ -904,7 +915,7 @@ func (tc *testClient) addHistoryToView(
 	mbs := tc.getMiniblocks(*view.StreamId(), 0, firstMbNum)
 	newView, err := view.CopyAndPrependMiniblocks(mbs)
 	tc.require.NoError(err)
-	return newView.(JoinableStreamView)
+	return newView
 }
 
 func (tc *testClient) requireMembership(streamId StreamId, expectedMemberships []common.Address) {
@@ -1025,9 +1036,9 @@ func (tcs testClients) parallelForAllT(t require.TestingT, f func(*testClient)) 
 }
 
 // setupChannelWithClients creates a channel and returns a testClients with clients connected to it.
-// First client is creator of both space and channel.
+// The first client is the creator of both the space and the channel.
 // Other clients join the channel.
-// Clients are connected to nodes in round-robin fashion.
+// Clients are connected to nodes in a round-robin fashion.
 func (tcs testClients) createChannelAndJoin(spaceId StreamId) StreamId {
 	alice := tcs[0]
 	channelId, _ := alice.createChannel(spaceId)
@@ -1052,7 +1063,22 @@ func (tcs testClients) compareNowImpl(t require.TestingT, streamId StreamId) []*
 	for range tcs {
 		streams = append(streams, <-streamC)
 	}
-	testfmt.Println(tcs[0].t, "compareNowImpl: Got all streams")
+	if testfmt.Enabled() {
+		testfmt.Println(tcs[0].t, "compareNowImpl: Got all streams")
+		for i, stream := range streams {
+			testfmt.Println(
+				tcs[0].t,
+				"    ",
+				i,
+				"MBs:",
+				len(stream.Miniblocks),
+				"Gen:",
+				stream.NextSyncCookie.MinipoolGen,
+				"Events:",
+				len(stream.Events),
+			)
+		}
+	}
 	first := streams[0]
 	var success bool
 	for i, stream := range streams[1:] {

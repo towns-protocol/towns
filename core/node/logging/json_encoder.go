@@ -5,10 +5,11 @@
 package logging
 
 import (
-	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"io"
 	"math"
+	"reflect"
 	"time"
 	"unicode/utf8"
 
@@ -24,7 +25,6 @@ var (
 	// Get retrieves a buffer from the pool, creating one if necessary.
 	getBufferPool = _pool.Get
 )
-
 
 var _jsonPool = NewPool(func() *jsonEncoder {
 	return &jsonEncoder{}
@@ -106,8 +106,9 @@ func (enc *jsonEncoder) AddObject(key string, obj zapcore.ObjectMarshaler) error
 	return enc.AppendObject(obj)
 }
 
+// Note: we have updated this method to use hex encoding. The original binary encoding was b64.
 func (enc *jsonEncoder) AddBinary(key string, val []byte) {
-	enc.AddString(key, base64.StdEncoding.EncodeToString(val))
+	enc.AddString(key, hex.EncodeToString(val))
 }
 
 func (enc *jsonEncoder) AddByteString(key string, val []byte) {
@@ -193,7 +194,18 @@ func (enc *jsonEncoder) OpenNamespace(key string) {
 
 func (enc *jsonEncoder) AddString(key, val string) {
 	enc.addKey(key)
-	enc.AppendString(val)
+
+	first, middle, last, truncated := formatHexString(val)
+	if truncated {
+		enc.addElementSeparator()
+		enc.buf.AppendByte('"')
+		enc.safeAddString(first)
+		enc.safeAddString(middle)
+		enc.safeAddString(last)
+		enc.buf.AppendByte('"')
+	} else {
+		enc.AppendString(val)
+	}
 }
 
 func (enc *jsonEncoder) AddTime(key string, val time.Time) {
@@ -577,8 +589,54 @@ func safeAppendStringLike[S []byte | string](
 	appendTo(buf, s[last:])
 }
 
+// Note: this is another place we wrote custom changes.
+var byteType = reflect.TypeOf(byte(0)) // a cached reflect.Type for 'byte'
+
+// addFields looks for protos, Addresses, and byte arrays.
+// It hex-encodes addreses and byte arrays, and marshals the proto into a json-friendly
+// type for logging.
+// All other fields are handled the regular way via field.AddTo(enc).
 func addFields(enc zapcore.ObjectEncoder, fields []zapcore.Field) {
 	for i := range fields {
-		fields[i].AddTo(enc)
+		field := fields[i]
+
+		// Use a switch statement here on the field type to avoid
+		// double computation of reflected types.
+		switch field.Type { //nolint
+
+		// byte arrays come in as ReflectType. These are already a bit slow because they
+		// require reflection.
+		case zapcore.ReflectType:
+			reflectType := reflect.TypeOf(field.Interface)
+
+			if reflectType == nil {
+				field.AddTo(enc)
+				continue
+			}
+
+			// Byte array
+			if reflectType.Kind() == reflect.Array && reflectType.Elem() == byteType {
+				value := reflect.ValueOf(field.Interface)
+				// Allocate a new []byte of the same length.
+				// (The value here is difficult to extract an unsafe pointer from to use
+				// in the construction of a new slice, because it is considered unaddressible.)
+				b := make([]byte, value.Len())
+
+				// Use reflect.Copy to copy from the reflection value into b.
+				reflect.Copy(reflect.ValueOf(b), value)
+
+				enc.AddString(
+					field.Key,
+					hex.EncodeToString(b),
+				)
+			} else {
+				// default behavior
+				field.AddTo(enc)
+			}
+
+		default:
+			field.AddTo(enc)
+		}
+
 	}
 }

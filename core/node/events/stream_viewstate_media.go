@@ -1,8 +1,8 @@
 package events
 
 import (
-	. "github.com/river-build/river/core/node/base"
-	. "github.com/river-build/river/core/node/protocol"
+	. "github.com/towns-protocol/towns/core/node/base"
+	. "github.com/towns-protocol/towns/core/node/protocol"
 )
 
 type MediaStreamView interface {
@@ -10,9 +10,9 @@ type MediaStreamView interface {
 	GetMediaInception() (*MediaPayload_Inception, error)
 }
 
-var _ MediaStreamView = (*streamViewImpl)(nil)
+var _ MediaStreamView = (*StreamView)(nil)
 
-func (r *streamViewImpl) GetMediaInception() (*MediaPayload_Inception, error) {
+func (r *StreamView) GetMediaInception() (*MediaPayload_Inception, error) {
 	i := r.InceptionPayload()
 	c, ok := i.(*MediaPayload_Inception)
 	if ok {

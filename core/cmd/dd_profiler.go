@@ -9,8 +9,8 @@ import (
 
 	"gopkg.in/DataDog/dd-trace-go.v1/profiler"
 
-	"github.com/river-build/river/core/config"
-	"github.com/river-build/river/core/river_node/version"
+	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/river_node/version"
 )
 
 func setupProfiler(serviceName string, cfg *config.Config) error {

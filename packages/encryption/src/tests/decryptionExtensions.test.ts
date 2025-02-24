@@ -5,10 +5,12 @@ import {
     DecryptionStatus,
     EncryptedContentItem,
     EntitlementsDelegate,
+    EventSignatureBundle,
     GroupSessionsData,
     KeyFulfilmentData,
     KeySolicitationContent,
     KeySolicitationData,
+    KeySolicitationItem,
     makeSessionKeys,
 } from '../decryptionExtensions'
 import {
@@ -87,6 +89,15 @@ describe.concurrent('TestDecryptionExtensions', () => {
                 alice,
                 aliceUserAddress,
                 keySolicitationData,
+                {
+                    hash: new Uint8Array(),
+                    signature: new Uint8Array(),
+                    event: {
+                        creatorAddress: new Uint8Array(),
+                        delegateSig: new Uint8Array(),
+                        delegateExpiryEpochMs: 0n,
+                    },
+                },
             )
             // alice waits for the response
             await keySolicitation
@@ -110,8 +121,8 @@ describe.concurrent('TestDecryptionExtensions', () => {
             // assert
             expect(new TextDecoder().decode(decrypted)).toBe(bobsPlaintext)
             expect(decrypted_V0).toBe(bobsPlaintext)
-            expect(bobDex.seenStates).toContain(DecryptionStatus.respondingToKeyRequests)
-            expect(aliceDex.seenStates).toContain(DecryptionStatus.processingNewGroupSessions)
+            expect(bobDex.seenStates).toContain(DecryptionStatus.working)
+            expect(aliceDex.seenStates).toContain(DecryptionStatus.working)
         },
     )
 
@@ -297,8 +308,8 @@ class MockDecryptionExtensions extends BaseDecryptionExtensions {
         const p = new Promise<void>((resolve) => {
             this.inProgress[streamId] = new MicroTask(
                 resolve,
-                DecryptionStatus.processingNewGroupSessions,
-                DecryptionStatus.idle,
+                DecryptionStatus.working,
+                DecryptionStatus.done,
             )
             // start processing the new sessions
             this.enqueueNewGroupSessions(sessions, senderId)
@@ -316,17 +327,24 @@ class MockDecryptionExtensions extends BaseDecryptionExtensions {
         fromUserId: string,
         fromUserAddress: Uint8Array,
         keySolicitation: KeySolicitationContent,
+        sigBundle: EventSignatureBundle,
     ): Promise<void> {
         log('keySolicitationRequest', streamId, keySolicitation)
         this.markStreamUpToDate(streamId)
         const p = new Promise<void>((resolve) => {
             this.inProgress[streamId] = new MicroTask(
                 resolve,
-                DecryptionStatus.respondingToKeyRequests,
-                DecryptionStatus.idle,
+                DecryptionStatus.working,
+                DecryptionStatus.done,
             )
             // start processing the request
-            this.enqueueKeySolicitation(streamId, fromUserId, fromUserAddress, keySolicitation)
+            this.enqueueKeySolicitation(
+                streamId,
+                fromUserId,
+                fromUserAddress,
+                keySolicitation,
+                sigBundle,
+            )
         })
         return p
     }
@@ -336,8 +354,8 @@ class MockDecryptionExtensions extends BaseDecryptionExtensions {
         return this._upToDateStreams.has(streamId)
     }
 
-    public isValidEvent(streamId: string, eventId: string): { isValid: boolean; reason?: string } {
-        log('isValidEvent', streamId, eventId)
+    public isValidEvent(item: KeySolicitationItem): { isValid: boolean; reason?: string } {
+        log('isValidEvent', item)
         return { isValid: true }
     }
 
@@ -359,11 +377,6 @@ class MockDecryptionExtensions extends BaseDecryptionExtensions {
     public getKeySolicitations(_streamId: string): KeySolicitationContent[] {
         log('getKeySolicitations')
         return []
-    }
-
-    public hasUnprocessedSession(_item: EncryptedContentItem): boolean {
-        log('hasUnprocessedSession')
-        return true
     }
 
     public isUserEntitledToKeyExchange(_streamId: string, _userId: string): Promise<boolean> {
@@ -399,6 +412,14 @@ class MockDecryptionExtensions extends BaseDecryptionExtensions {
 
     public isUserInboxStreamUpToDate(_upToDateStreams: Set<string>): boolean {
         return true
+    }
+
+    public getPriorityForStream(
+        _streamId: string,
+        _highPriorityIds: Set<string>,
+        _recentStreamIds: Set<string>,
+    ): number {
+        return 0
     }
 
     private markStreamUpToDate(streamId: string): void {

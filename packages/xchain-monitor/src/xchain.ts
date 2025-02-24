@@ -40,6 +40,7 @@ export interface XChainRequest {
     txHashes: { [roleId: number]: Hex }
 }
 
+const maxCacheSize = 500
 var blockCache: {
     [blockNumString: string]: BlockType
 } = {}
@@ -187,6 +188,12 @@ export async function scanBlockchainForXchainEvents(
     // role ids to check.
     const requests: { [transactionId: Hex]: XChainRequest } = {}
     for (const log of requestLogs) {
+        // Dump cache when it reaches the size limit
+        // TODO: replace this with a real, fixed-size cache
+        if (Object.keys(blockCache).length > maxCacheSize) {
+            blockCache = {}
+        }
+
         // We can cast as a number here because these start from 0 and it's unlikely that a
         // space will have very big role ids.
         const roleId = Number(log.args.roleId)

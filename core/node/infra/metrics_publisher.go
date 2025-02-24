@@ -8,8 +8,8 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/river-build/river/core/config"
-	"github.com/river-build/river/core/node/logging"
+	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/node/logging"
 )
 
 // DefaultRpcDurationBucketsSeconds are the default buckets for rpc duration metrics.

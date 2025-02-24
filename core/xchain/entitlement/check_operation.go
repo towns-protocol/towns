@@ -10,12 +10,12 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/river-build/river/core/contracts/base"
-	"github.com/river-build/river/core/contracts/types"
-	"github.com/river-build/river/core/node/logging"
-	"github.com/river-build/river/core/xchain/bindings/erc1155"
-	"github.com/river-build/river/core/xchain/bindings/erc20"
-	"github.com/river-build/river/core/xchain/bindings/erc721"
+	"github.com/towns-protocol/towns/core/contracts/base"
+	"github.com/towns-protocol/towns/core/contracts/types"
+	"github.com/towns-protocol/towns/core/node/logging"
+	"github.com/towns-protocol/towns/core/xchain/bindings/erc1155"
+	"github.com/towns-protocol/towns/core/xchain/bindings/erc20"
+	"github.com/towns-protocol/towns/core/xchain/bindings/erc721"
 )
 
 func checkThresholdParam(threshold *big.Int) error {

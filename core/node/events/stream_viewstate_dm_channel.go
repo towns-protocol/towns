@@ -1,8 +1,8 @@
 package events
 
 import (
-	. "github.com/river-build/river/core/node/base"
-	. "github.com/river-build/river/core/node/protocol"
+	. "github.com/towns-protocol/towns/core/node/base"
+	. "github.com/towns-protocol/towns/core/node/protocol"
 )
 
 type DMChannelStreamView interface {
@@ -10,9 +10,9 @@ type DMChannelStreamView interface {
 	GetDMChannelInception() (*DmChannelPayload_Inception, error)
 }
 
-var _ DMChannelStreamView = (*streamViewImpl)(nil)
+var _ DMChannelStreamView = (*StreamView)(nil)
 
-func (r *streamViewImpl) GetDMChannelInception() (*DmChannelPayload_Inception, error) {
+func (r *StreamView) GetDMChannelInception() (*DmChannelPayload_Inception, error) {
 	i := r.InceptionPayload()
 	c, ok := i.(*DmChannelPayload_Inception)
 	if ok {

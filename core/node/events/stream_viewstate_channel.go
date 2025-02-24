@@ -1,8 +1,8 @@
 package events
 
 import (
-	. "github.com/river-build/river/core/node/base"
-	. "github.com/river-build/river/core/node/protocol"
+	. "github.com/towns-protocol/towns/core/node/base"
+	. "github.com/towns-protocol/towns/core/node/protocol"
 )
 
 type ChannelStreamView interface {
@@ -10,9 +10,9 @@ type ChannelStreamView interface {
 	GetChannelInception() (*ChannelPayload_Inception, error)
 }
 
-var _ ChannelStreamView = (*streamViewImpl)(nil)
+var _ ChannelStreamView = (*StreamView)(nil)
 
-func (r *streamViewImpl) GetChannelInception() (*ChannelPayload_Inception, error) {
+func (r *StreamView) GetChannelInception() (*ChannelPayload_Inception, error) {
 	i := r.InceptionPayload()
 	c, ok := i.(*ChannelPayload_Inception)
 	if ok {

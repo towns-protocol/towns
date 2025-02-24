@@ -3,7 +3,7 @@ package events
 import (
 	"github.com/ethereum/go-ethereum/common"
 
-	. "github.com/river-build/river/core/node/utils"
+	. "github.com/towns-protocol/towns/core/node/utils"
 )
 
 type eventMap = *OrderedMap[common.Hash, *ParsedEvent]

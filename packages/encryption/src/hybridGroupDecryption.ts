@@ -3,6 +3,7 @@ import { GroupEncryptionAlgorithmId, GroupEncryptionSession } from './olmLib'
 import { EncryptedData, EncryptedDataVersion, HybridGroupSessionKey } from '@river-build/proto'
 import { bin_toHexString, dlogError } from '@river-build/dlog'
 import { decryptAesGcm, importAesGsmKeyBytes } from './cryptoAesGcm'
+import { LRUCache } from 'lru-cache'
 
 const logError = dlogError('csb:encryption:groupDecryption')
 
@@ -13,8 +14,10 @@ const logError = dlogError('csb:encryption:groupDecryption')
  */
 export class HybridGroupDecryption extends DecryptionAlgorithm {
     public readonly algorithm = GroupEncryptionAlgorithmId.HybridGroupEncryption
+    private lruCache: LRUCache<string, HybridGroupSessionKey>
     public constructor(params: IDecryptionParams) {
         super(params)
+        this.lruCache = new LRUCache<string, HybridGroupSessionKey>({ max: 1000 })
     }
 
     /**
@@ -38,10 +41,20 @@ export class HybridGroupDecryption extends DecryptionAlgorithm {
 
         const sessionId = bin_toHexString(content.sessionIdBytes)
 
-        const session: HybridGroupSessionKey = await this.device.getHybridGroupSessionKey(
-            streamId,
-            sessionId,
-        )
+        // Check cache first
+        let session = this.lruCache.get(sessionId)
+
+        // If not in cache, fetch from device
+        if (!session) {
+            session = await this.device.getHybridGroupSessionKey(streamId, sessionId)
+            if (!session) {
+                throw new DecryptionError(
+                    'HYBRID_GROUP_DECRYPTION_MISSING_SESSION',
+                    'Missing session',
+                )
+            }
+            this.lruCache.set(sessionId, session)
+        }
 
         const key = await importAesGsmKeyBytes(session.key)
         const result = await decryptAesGcm(key, content.ciphertextBytes, content.ivBytes)

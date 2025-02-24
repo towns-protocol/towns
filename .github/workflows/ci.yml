@@ -1,6 +1,6 @@
 name: Continuous Integration
 env:
-    FOUNDRY_VERSION: nightly
+    FOUNDRY_VERSION: stable
     RIVER_BLOCK_TIME: 1
 on:
     schedule:

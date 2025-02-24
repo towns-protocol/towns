@@ -341,6 +341,17 @@ describe('clientTest', () => {
             bobsClient.makeEventAndAddToStream(bobsClient.userSettingsStreamId!, payload),
         ).rejects.toThrow('INVALID_ARGUMENT')
 
+        // solicitation with empty key should fail
+        payload = make_MemberPayload_KeySolicitation({
+            deviceKey: 'foo',
+            sessionIds: [''],
+            fallbackKey: 'baz',
+            isNewDevice: false,
+        })
+        await expect(
+            bobsClient.makeEventAndAddToStream(bobsClient.userSettingsStreamId!, payload),
+        ).rejects.toThrow('INVALID_ARGUMENT')
+
         // solicitation for isNewDevice should resolve
         payload = make_MemberPayload_KeySolicitation({
             deviceKey: 'foo',
@@ -384,7 +395,7 @@ describe('clientTest', () => {
         })
         await expect(
             bobsClient.makeEventAndAddToStream(bobsClient.userSettingsStreamId!, payload),
-        ).rejects.toThrow('DUPLICATE_EVENT')
+        ).rejects.toThrow('PERMISSION_DENIED')
     })
 
     test('bobCreatesUnamedSpaceAndStream', async () => {
@@ -915,7 +926,7 @@ describe('clientTest', () => {
         alicesClient.startSync()
         await waitFor(() => {
             // @ts-ignore
-            expect(alicesClient.decryptionExtensions?.status).toEqual(DecryptionStatus.idle)
+            expect(alicesClient.decryptionExtensions?.status).toEqual(DecryptionStatus.done)
         })
         const alicesUserId = alicesClient.userId
 
@@ -979,7 +990,7 @@ describe('clientTest', () => {
         alicesClient.startSync()
         await waitFor(() => {
             // @ts-ignore
-            expect(alicesClient.decryptionExtensions?.status).toEqual(DecryptionStatus.idle)
+            expect(alicesClient.decryptionExtensions?.status).toEqual(DecryptionStatus.done)
         })
 
         await expect(
@@ -1020,10 +1031,6 @@ describe('clientTest', () => {
 
         // assert assumptionsP
         expect(userMetadataStream).toBeDefined()
-        expect(
-            userMetadataStream.view.snapshot?.content.case === 'userMetadataContent' &&
-                userMetadataStream.view.snapshot?.content.value.profileImage === undefined,
-        ).toBe(true)
 
         // make a space image event
         const mediaStreamId = makeUniqueMediaStreamId()
@@ -1043,7 +1050,7 @@ describe('clientTest', () => {
         } satisfies PlainMessage<ChunkedMedia>
 
         const { eventId } = await bobsClient.setUserProfileImage(chunkedMediaInfo)
-        expect(await waitFor(() => userMetadataStream.view.events.has(eventId))).toBe(true)
+        await waitFor(() => expect(userMetadataStream.view.events.has(eventId)).toBe(true))
 
         const decrypted = await bobsClient.getUserProfileImage(bobsClient.userId)
         expect(decrypted).toBeDefined()
@@ -1060,14 +1067,10 @@ describe('clientTest', () => {
         const userMetadataStream = await bobsClient.waitForStream(streamId)
 
         expect(userMetadataStream).toBeDefined()
-        expect(
-            userMetadataStream.view.snapshot?.content.case === 'userMetadataContent' &&
-                userMetadataStream.view.snapshot?.content.value.profileImage === undefined,
-        ).toBe(true)
 
         const bio = new UserBio({ bio: 'Hello, world!' })
         const { eventId } = await bobsClient.setUserBio(bio)
-        expect(await waitFor(() => userMetadataStream.view.events.has(eventId))).toBe(true)
+        await waitFor(() => expect(userMetadataStream.view.events.has(eventId)).toBe(true))
 
         const decrypted = await bobsClient.getUserBio(bobsClient.userId)
         expect(decrypted).toStrictEqual(bio)
@@ -1080,14 +1083,10 @@ describe('clientTest', () => {
         const userMetadataStream = await bobsClient.waitForStream(streamId)
 
         expect(userMetadataStream).toBeDefined()
-        expect(
-            userMetadataStream.view.snapshot?.content.case === 'userMetadataContent' &&
-                userMetadataStream.view.snapshot?.content.value.profileImage === undefined,
-        ).toBe(true)
 
         const bio = new UserBio({ bio: '' })
         const { eventId } = await bobsClient.setUserBio(bio)
-        expect(await waitFor(() => userMetadataStream.view.events.has(eventId))).toBe(true)
+        await waitFor(() => expect(userMetadataStream.view.events.has(eventId)).toBe(true))
 
         const decrypted = await bobsClient.getUserBio(bobsClient.userId)
         expect(decrypted).toStrictEqual(bio)

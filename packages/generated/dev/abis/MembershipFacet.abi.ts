@@ -1047,16 +1047,6 @@ export default [
   },
   {
     "type": "error",
-    "name": "Dispatcher__InvalidCaller",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "Dispatcher__InvalidValue",
-    "inputs": []
-  },
-  {
-    "type": "error",
     "name": "Dispatcher__TransactionAlreadyExists",
     "inputs": []
   },
@@ -1099,12 +1089,27 @@ export default [
   },
   {
     "type": "error",
+    "name": "EntitlementGated_InvalidEntitlement",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "EntitlementGated_NodeAlreadyVoted",
     "inputs": []
   },
   {
     "type": "error",
     "name": "EntitlementGated_NodeNotFound",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "EntitlementGated_OnlyEntitlementChecker",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "EntitlementGated_RequestIdNotFound",
     "inputs": []
   },
   {

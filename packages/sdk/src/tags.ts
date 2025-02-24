@@ -1,10 +1,17 @@
 import { PlainMessage } from '@bufbuild/protobuf'
-import { ChannelMessage, GroupMentionType, MessageInteractionType, Tags } from '@river-build/proto'
+import {
+    BlockchainTransaction_TokenTransfer,
+    ChannelMessage,
+    GroupMentionType,
+    MessageInteractionType,
+    Tags,
+} from '@river-build/proto'
 import { IStreamStateView } from './streamStateView'
 import { addressFromUserId } from './id'
 import { bin_fromHexString, check } from '@river-build/dlog'
 import { TipEventObject } from '@river-build/generated/dev/typings/ITipping'
 import { isDefined } from './check'
+import { bytesToHex } from 'ethereum-cryptography/utils'
 
 export function makeTags(
     message: PlainMessage<ChannelMessage>,
@@ -31,6 +38,20 @@ export function makeTipTags(
         mentionedUserAddresses: [],
         participatingUserAddresses: [addressFromUserId(toUserId)],
         threadId: getParentThreadId(event.messageId, streamView),
+    } satisfies PlainMessage<Tags>
+}
+
+export function makeTransferTags(
+    event: PlainMessage<BlockchainTransaction_TokenTransfer>,
+    streamView: IStreamStateView,
+): PlainMessage<Tags> | undefined {
+    check(isDefined(streamView), 'stream not found')
+    return {
+        messageInteractionType: MessageInteractionType.TRADE,
+        groupMentionTypes: [],
+        mentionedUserAddresses: [],
+        participatingUserAddresses: [],
+        threadId: getParentThreadId(bytesToHex(event.messageId), streamView),
     } satisfies PlainMessage<Tags>
 }
 

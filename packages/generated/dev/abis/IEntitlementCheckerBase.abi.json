@@ -38,6 +38,49 @@
   },
   {
     "type": "event",
+    "name": "EntitlementCheckRequestedV2",
+    "inputs": [
+      {
+        "name": "walletAddress",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "spaceAddress",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "resolverAddress",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "transactionId",
+        "type": "bytes32",
+        "indexed": false,
+        "internalType": "bytes32"
+      },
+      {
+        "name": "roleId",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "selectedNodes",
+        "type": "address[]",
+        "indexed": false,
+        "internalType": "address[]"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "NodeRegistered",
     "inputs": [
       {
@@ -64,6 +107,11 @@
   },
   {
     "type": "error",
+    "name": "EntitlementChecker_InsufficientFunds",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "EntitlementChecker_InsufficientNumberOfNodes",
     "inputs": []
   },
@@ -75,6 +123,16 @@
   {
     "type": "error",
     "name": "EntitlementChecker_InvalidOperator",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "EntitlementChecker_NoPendingRequests",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "EntitlementChecker_NoRefundsAvailable",
     "inputs": []
   },
   {

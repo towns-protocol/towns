@@ -4,18 +4,26 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/spf13/cobra"
 
-	"github.com/river-build/river/core/config"
-	"github.com/river-build/river/core/node/auth"
-	"github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/shared"
+	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/node/auth"
+	"github.com/towns-protocol/towns/core/node/crypto"
+	"github.com/towns-protocol/towns/core/node/infra"
+	"github.com/towns-protocol/towns/core/node/shared"
 
 	"gopkg.in/yaml.v3"
 )
 
 func listRolesForSpace(ctx context.Context, cfg config.Config, spaceId shared.StreamId) error {
-	baseChain, err := crypto.NewBlockchain(ctx, &cfg.BaseChain, nil, nil, nil)
+	baseChain, err := crypto.NewBlockchain(
+		ctx,
+		&cfg.BaseChain,
+		nil,
+		infra.NewMetricsFactory(prometheus.NewRegistry(), "", ""),
+		nil,
+	)
 	if err != nil {
 		return err
 	}

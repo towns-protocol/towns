@@ -4,6 +4,8 @@ import { DecryptionAlgorithm, DecryptionError, IDecryptionParams } from './base'
 import { GroupEncryptionAlgorithmId, GroupEncryptionSession } from './olmLib'
 import { EncryptedData, EncryptedDataVersion } from '@river-build/proto'
 import { bin_fromBase64, dlogError } from '@river-build/dlog'
+import { LRUCache } from 'lru-cache'
+import { InboundGroupSession } from '@matrix-org/olm'
 
 const logError = dlogError('csb:encryption:groupDecryption')
 
@@ -14,8 +16,10 @@ const logError = dlogError('csb:encryption:groupDecryption')
  */
 export class GroupDecryption extends DecryptionAlgorithm {
     public readonly algorithm = GroupEncryptionAlgorithmId.GroupEncryption
+    private lruCache: LRUCache<string, InboundGroupSession>
     public constructor(params: IDecryptionParams) {
         super(params)
+        this.lruCache = new LRUCache<string, InboundGroupSession>({ max: 1000 })
     }
 
     /**
@@ -29,7 +33,17 @@ export class GroupDecryption extends DecryptionAlgorithm {
             throw new DecryptionError('GROUP_DECRYPTION_MISSING_FIELDS', 'Missing fields in input')
         }
 
-        const { session } = await this.device.getInboundGroupSession(streamId, content.sessionId)
+        let session = this.lruCache.get(content.sessionId)
+        if (!session) {
+            const { session: loadedSession } = await this.device.getInboundGroupSession(
+                streamId,
+                content.sessionId,
+            )
+            if (loadedSession) {
+                this.lruCache.set(content.sessionId, loadedSession)
+                session = loadedSession
+            }
+        }
 
         if (!session) {
             throw new Error('Session not found')

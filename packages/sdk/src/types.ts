@@ -36,14 +36,13 @@ import {
     MemberPayload,
     MemberPayload_Nft,
     BlockchainTransaction,
-    MemberPayload_Mls,
 } from '@river-build/proto'
 import { keccak256 } from 'ethereum-cryptography/keccak'
 import { bin_toHexString } from '@river-build/dlog'
 import { isDefined } from './check'
 import { DecryptedContent } from './encryptedContentTypes'
 import { addressFromUserId, streamIdAsBytes } from './id'
-import { DecryptionSessionError } from '@river-build/encryption'
+import { DecryptionSessionError, EventSignatureBundle } from '@river-build/encryption'
 
 export type LocalEventStatus = 'sending' | 'sent' | 'failed'
 export interface LocalEvent {
@@ -112,6 +111,39 @@ export type ContractReceipt = {
     }[]
 }
 
+type SolanaTokenBalance = {
+    mint: string
+    owner: string
+    amount: {
+        amount: string
+        decimals: number
+    }
+}
+
+export type SolanaTransactionReceipt = {
+    transaction: {
+        signatures: string[]
+    }
+    meta: {
+        preTokenBalances: SolanaTokenBalance[]
+        postTokenBalances: SolanaTokenBalance[]
+    }
+    slot: bigint
+}
+
+export function isSolanaTransactionReceipt(obj: unknown): obj is SolanaTransactionReceipt {
+    return (
+        typeof obj === 'object' &&
+        obj !== null &&
+        'transaction' in obj &&
+        'meta' in obj &&
+        typeof obj['meta'] === 'object' &&
+        obj.meta !== null &&
+        'preTokenBalances' in obj.meta &&
+        'postTokenBalances' in obj.meta
+    )
+}
+
 export function isLocalEvent(event: StreamTimelineEvent): event is LocalTimelineEvent {
     return event.localEvent !== undefined
 }
@@ -130,6 +162,18 @@ export function isConfirmedEvent(event: StreamTimelineEvent): event is Confirmed
         event.confirmedEventNum !== undefined &&
         event.miniblockNum !== undefined
     )
+}
+
+export function getEventSignature(remoteEvent: ParsedEvent): EventSignatureBundle {
+    return {
+        hash: remoteEvent.hash,
+        signature: remoteEvent.signature,
+        event: {
+            creatorAddress: remoteEvent.event.creatorAddress,
+            delegateSig: remoteEvent.event.delegateSig,
+            delegateExpiryEpochMs: remoteEvent.event.delegateExpiryEpochMs,
+        },
+    }
 }
 
 export function makeRemoteTimelineEvent(params: {
@@ -352,20 +396,6 @@ export const make_MemberPayload_Unpin = (
             content: {
                 case: 'unpin',
                 value: { eventId },
-            },
-        },
-    }
-}
-
-export const make_MemberPayload_Mls = (
-    value: PlainMessage<MemberPayload_Mls>,
-): PlainMessage<StreamEvent>['payload'] => {
-    return {
-        case: 'memberPayload',
-        value: {
-            content: {
-                case: 'mls',
-                value,
             },
         },
     }

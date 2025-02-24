@@ -2,12 +2,16 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ITippingBase} from "contracts/src/spaces/facets/tipping/ITipping.sol";
 import {IERC721AQueryable} from "contracts/src/diamond/facets/token/ERC721A/extensions/IERC721AQueryable.sol";
 import {IERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
+import {ITownsPoints, ITownsPointsBase} from "contracts/src/airdrop/points/ITownsPoints.sol";
+import {IPlatformRequirements} from "contracts/src/factory/facets/platform/requirements/IPlatformRequirements.sol";
 
 // libraries
 import {CurrencyTransfer} from "contracts/src/utils/libraries/CurrencyTransfer.sol";
+import {BasisPoints} from "contracts/src/utils/libraries/BasisPoints.sol";
 
 // contracts
 import {TippingFacet} from "contracts/src/spaces/facets/tipping/TippingFacet.sol";
@@ -27,14 +31,20 @@ contract TippingTest is BaseSetup, ITippingBase, IERC721ABase {
   MembershipFacet internal membership;
   IERC721AQueryable internal token;
   MockERC20 internal mockERC20;
+  ITownsPoints internal points;
+
+  address internal platformRecipient;
 
   function setUp() public override {
     super.setUp();
+
     tipping = TippingFacet(everyoneSpace);
     introspection = IntrospectionFacet(everyoneSpace);
     membership = MembershipFacet(everyoneSpace);
     token = IERC721AQueryable(everyoneSpace);
     mockERC20 = MockERC20(deployERC20.deploy(deployer));
+    points = ITownsPoints(riverAirdrop);
+    platformRecipient = IPlatformRequirements(spaceFactory).getFeeRecipient();
   }
 
   modifier givenUsersAreMembers(address sender, address receiver) {
@@ -61,11 +71,17 @@ contract TippingTest is BaseSetup, ITippingBase, IERC721ABase {
     bytes32 messageId,
     bytes32 channelId
   ) external givenUsersAreMembers(sender, receiver) {
-    amount = bound(amount, 0.01 ether, 1 ether);
+    vm.assume(sender != platformRecipient);
+    vm.assume(receiver != platformRecipient);
+    amount = bound(amount, 0.0003 ether, 1 ether);
 
     uint256 initialBalance = receiver.balance;
-    uint256[] memory tokens = token.tokensOfOwner(receiver);
-    uint256 tokenId = tokens[0];
+    uint256 initialPointBalance = IERC20(address(points)).balanceOf(sender);
+    uint256 tokenId = token.tokensOfOwner(receiver)[0];
+
+    uint256 protocolFee = BasisPoints.calculate(amount, 50); // 0.5%
+    uint256 tipAmount = amount - protocolFee;
+
     hoax(sender, amount);
     vm.expectEmit(address(tipping));
     emit Tip(
@@ -88,19 +104,24 @@ contract TippingTest is BaseSetup, ITippingBase, IERC721ABase {
         channelId: channelId
       })
     );
-    uint256 gasUsed = vm.stopSnapshotGas();
 
-    assertLt(gasUsed, 200_000);
-    assertEq(receiver.balance - initialBalance, amount);
-    assertEq(sender.balance, 0);
+    assertLt(vm.stopSnapshotGas(), 400_000);
+    assertEq(receiver.balance - initialBalance, tipAmount, "receiver balance");
+    assertEq(platformRecipient.balance, protocolFee, "protocol fee");
+    assertEq(sender.balance, 0, "sender balance");
+    assertEq(
+      IERC20(address(points)).balanceOf(sender) - initialPointBalance,
+      (protocolFee * 2_000_000) / 3,
+      "points minted"
+    );
     assertEq(
       tipping.tipsByCurrencyAndTokenId(tokenId, CurrencyTransfer.NATIVE_TOKEN),
-      amount
+      tipAmount
     );
     assertEq(tipping.totalTipsByCurrency(CurrencyTransfer.NATIVE_TOKEN), 1);
     assertEq(
       tipping.tipAmountByCurrency(CurrencyTransfer.NATIVE_TOKEN),
-      amount
+      tipAmount
     );
     assertContains(tipping.tippingCurrencies(), CurrencyTransfer.NATIVE_TOKEN);
   }
@@ -145,7 +166,7 @@ contract TippingTest is BaseSetup, ITippingBase, IERC721ABase {
     uint256 gasUsed = vm.stopSnapshotGas();
     vm.stopPrank();
 
-    assertLt(gasUsed, 200_000);
+    assertLt(gasUsed, 300_000);
     assertEq(mockERC20.balanceOf(sender), 0);
     assertEq(mockERC20.balanceOf(receiver), amount);
     assertEq(
@@ -156,28 +177,6 @@ contract TippingTest is BaseSetup, ITippingBase, IERC721ABase {
     assertEq(tipping.tipAmountByCurrency(address(mockERC20)), amount);
     assertContains(tipping.tippingCurrencies(), address(mockERC20));
   }
-
-  // function test_revertWhenTokenDoesNotExist(
-  //   uint256 tokenId,
-  //   uint256 amount,
-  //   address receiver,
-  //   bytes32 messageId,
-  //   bytes32 channelId
-  // ) external {
-  //   vm.assume(tokenId != 0); // tokenId cannot be 0 because that would be the founder token id
-
-  //   vm.expectRevert(OwnerQueryForNonexistentToken.selector);
-  //   tipping.tip(
-  //     TipRequest({
-  //       receiver: receiver,
-  //       tokenId: tokenId,
-  //       currency: CurrencyTransfer.NATIVE_TOKEN,
-  //       amount: amount,
-  //       messageId: messageId,
-  //       channelId: channelId
-  //     })
-  //   );
-  // }
 
   function test_revertWhenCurrencyIsZero(
     address sender,

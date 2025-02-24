@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/river-build/river/core/node/crypto"
+	"github.com/towns-protocol/towns/core/node/crypto"
 )
 
 func TestMain(m *testing.M) {

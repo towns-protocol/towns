@@ -3,11 +3,13 @@ import {
     DecryptionSessionError,
     EncryptedContentItem,
     EntitlementsDelegate,
+    EventSignatureBundle,
     GroupEncryptionCrypto,
     GroupSessionsData,
     KeyFulfilmentData,
     KeySolicitationContent,
     KeySolicitationData,
+    KeySolicitationItem,
     UserDevice,
 } from '@river-build/encryption'
 import {
@@ -24,9 +26,22 @@ import { check } from '@river-build/dlog'
 import chunk from 'lodash/chunk'
 import { isDefined } from './check'
 import { isMobileSafari } from './utils'
+import {
+    spaceIdFromChannelId,
+    isDMChannelStreamId,
+    isGDMChannelStreamId,
+    isUserDeviceStreamId,
+    isUserInboxStreamId,
+    isUserSettingsStreamId,
+    isUserStreamId,
+    isChannelStreamId,
+} from './id'
+import { checkEventSignature } from './sign'
 
 export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
     private isMobileSafariBackgrounded = false
+    private validatedEvents: Record<string, { isValid: boolean; reason?: string }> = {}
+    private unpackEnvelopeOpts?: { disableSignatureValidation: boolean }
 
     constructor(
         private readonly client: Client,
@@ -34,6 +49,7 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         delegate: EntitlementsDelegate,
         userId: string,
         userDevice: UserDevice,
+        unpackEnvelopeOpts?: { disableSignatureValidation: boolean },
     ) {
         const upToDateStreams = new Set<string>()
         client.streams.getStreams().forEach((stream) => {
@@ -44,6 +60,7 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
 
         super(client, crypto, delegate, userDevice, userId, upToDateStreams)
 
+        this.unpackEnvelopeOpts = unpackEnvelopeOpts
         const onMembershipChange = (streamId: string, userId: string) => {
             if (userId === this.userId) {
                 this.retryDecryptionFailures(streamId)
@@ -68,7 +85,15 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
             fromUserId: string,
             fromUserAddress: Uint8Array,
             keySolicitation: KeySolicitationContent,
-        ) => this.enqueueKeySolicitation(streamId, fromUserId, fromUserAddress, keySolicitation)
+            sigBundle: EventSignatureBundle,
+        ) =>
+            this.enqueueKeySolicitation(
+                streamId,
+                fromUserId,
+                fromUserAddress,
+                keySolicitation,
+                sigBundle,
+            )
 
         const onInitKeySolicitations = (
             streamId: string,
@@ -77,7 +102,21 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
                 userAddress: Uint8Array
                 solicitations: KeySolicitationContent[]
             }[],
-        ) => this.enqueueInitKeySolicitations(streamId, members)
+            sigBundle: EventSignatureBundle,
+        ) => this.enqueueInitKeySolicitations(streamId, members, sigBundle)
+
+        const onStreamInitialized = (streamId: string) => {
+            if (isUserInboxStreamId(streamId)) {
+                this.enqueueNewMessageDownload()
+            }
+        }
+
+        const onStreamSyncActive = (active: boolean) => {
+            this.log.info('onStreamSyncActive', active)
+            if (!active) {
+                this.resetUpToDateStreams()
+            }
+        }
 
         client.on('streamUpToDate', onStreamUpToDate)
         client.on('newGroupSessions', onNewGroupSessions)
@@ -86,6 +125,8 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         client.on('updatedKeySolicitation', onKeySolicitation)
         client.on('initKeySolicitations', onInitKeySolicitations)
         client.on('streamNewUserJoined', onMembershipChange)
+        client.on('streamInitialized', onStreamInitialized)
+        client.on('streamSyncActive', onStreamSyncActive)
 
         this._onStopFn = () => {
             client.off('streamUpToDate', onStreamUpToDate)
@@ -95,6 +136,8 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
             client.off('updatedKeySolicitation', onKeySolicitation)
             client.off('initKeySolicitations', onInitKeySolicitations)
             client.off('streamNewUserJoined', onMembershipChange)
+            client.off('streamInitialized', onStreamInitialized)
+            client.off('streamSyncActive', onStreamSyncActive)
         }
         this.log.debug('new ClientDecryptionExtensions', { userDevice })
     }
@@ -125,6 +168,7 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
     }
 
     public downloadNewMessages(): Promise<void> {
+        this.log.info('downloadNewInboxMessages')
         return this.client.downloadNewInboxMessages()
     }
 
@@ -144,18 +188,8 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         const numMembers = stream.view.getMembers().joinedParticipants().size
         const maxWaitTimeSeconds = Math.max(5, Math.min(30, numMembers))
         const waitTime = maxWaitTimeSeconds * 1000 * Math.random() // this could be much better
-        this.log.debug('getRespondDelayMSForKeySolicitation', { streamId, userId, waitTime })
+        //this.log.debug('getRespondDelayMSForKeySolicitation', { streamId, userId, waitTime })
         return waitTime * multiplier
-    }
-
-    public hasUnprocessedSession(item: EncryptedContentItem): boolean {
-        check(isDefined(this.client.userInboxStreamId), 'userInboxStreamId not found')
-        const inboxStream = this.client.stream(this.client.userInboxStreamId)
-        check(isDefined(inboxStream), 'inboxStream not found')
-        return inboxStream.view.userInboxContent.hasPendingSessionId(
-            this.userDevice.deviceKey,
-            item.encryptedData.sessionId,
-        )
     }
 
     public async isUserEntitledToKeyExchange(
@@ -190,8 +224,32 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         return true
     }
 
-    public isValidEvent(streamId: string, eventId: string): { isValid: boolean; reason?: string } {
-        return this.client.isValidEvent(streamId, eventId)
+    public isValidEvent(item: KeySolicitationItem): { isValid: boolean; reason?: string } {
+        if (this.unpackEnvelopeOpts?.disableSignatureValidation !== true) {
+            return { isValid: true }
+        }
+        const eventId = item.solicitation.srcEventId
+        const sigBundle = item.sigBundle
+        if (!sigBundle) {
+            return { isValid: false, reason: 'event not found' }
+        }
+        if (!sigBundle.signature) {
+            return { isValid: false, reason: 'remote event signature not found' }
+        }
+        if (this.validatedEvents[eventId]) {
+            return this.validatedEvents[eventId]
+        }
+        try {
+            checkEventSignature(sigBundle.event, sigBundle.hash, sigBundle.signature)
+            const result = { isValid: true }
+            this.validatedEvents[eventId] = result
+            return result
+        } catch (err) {
+            // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+            const result = { isValid: false, reason: `error: ${err}` }
+            this.validatedEvents[eventId] = result
+            return result
+        }
     }
 
     public onDecryptionError(item: EncryptedContentItem, err: DecryptionSessionError): void {
@@ -288,5 +346,51 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         if (!this.isMobileSafariBackgrounded) {
             this.checkStartTicking()
         }
+    }
+
+    public getPriorityForStream(
+        streamId: string,
+        highPriorityIds: Set<string>,
+        recentStreamIds: Set<string>,
+    ): number {
+        if (
+            isUserDeviceStreamId(streamId) ||
+            isUserInboxStreamId(streamId) ||
+            isUserStreamId(streamId) ||
+            isUserSettingsStreamId(streamId)
+        ) {
+            return 0
+        }
+        // channel or dm we're currently viewing
+        const isChannel = isChannelStreamId(streamId)
+        const isDmOrGdm = isDMChannelStreamId(streamId) || isGDMChannelStreamId(streamId)
+        if ((isDmOrGdm || isChannel) && highPriorityIds.has(streamId)) {
+            return 1
+        }
+        // if you're getting updates for this stream, decrypt them so that you see unread messages
+        if (recentStreamIds.has(streamId)) {
+            return 2
+        }
+        // channels in the space we're currently viewing
+        if (isChannel) {
+            const spaceId = spaceIdFromChannelId(streamId)
+            if (highPriorityIds.has(spaceId)) {
+                return 3
+            }
+        }
+        // dms
+        if (isDmOrGdm) {
+            return 4
+        }
+        // space that we're currently viewing
+        if (highPriorityIds.has(streamId)) {
+            return 5
+        }
+        // then other channels,
+        if (isChannel) {
+            return 6
+        }
+        // then other spaces
+        return 7
     }
 }

@@ -478,10 +478,10 @@
       "license": "MIT"
     },
     "node_modules/@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol": {
-      "keccak256": "0xf72d3b11f41fccbbdcacd121f994daab8267ccfceb1fb4f247e4ba274c169d27",
+      "keccak256": "0xd861907d1168dcaec2a7846edbaed12feb8bad2d6781dba987be01374f90b495",
       "urls": [
-        "bzz-raw://1e46ee40ddc9e2009176ce5d76aa2c046fd68f2ed52d02d77db191365b7c5b2e",
-        "dweb:/ipfs/QmZnxgPmCCHosdvbh4J65uTaFYeGtZGzQ1sXRdeh1y68Zr"
+        "bzz-raw://12ff809243040419e2fc2aa7ef0aaa60b3e6ebc901553ba1de970ceeef208c4c",
+        "dweb:/ipfs/QmX2dwMVNrQAahqVzEx94gqcVB6Z8ovifPYdEfHZzj7aEb"
       ],
       "license": "MIT"
     },
@@ -518,10 +518,10 @@
       "license": "MIT"
     },
     "node_modules/@openzeppelin/contracts/proxy/ERC1967/ERC1967Utils.sol": {
-      "keccak256": "0x911c3346ee26afe188f3b9dc267ef62a7ccf940aba1afa963e3922f0ca3d8a06",
+      "keccak256": "0x8decfa54cec979c824b044b8128cd91d713f72c71fd7dfa54974624d8c949898",
       "urls": [
-        "bzz-raw://04539f4419e44a831807d7203375d2bc6a733da256efd02e51290f5d5015218c",
-        "dweb:/ipfs/QmPZ97gsAAgaMRPiE2WJfkzRsudQnW5tPAvMgGj1jcTJtR"
+        "bzz-raw://271f914261a19d87117a777e0924ada545c16191ef9b00cc40b0134fc14ebc70",
+        "dweb:/ipfs/QmdvVNWHGHQrGGPonZJs5NuzTevTjZRM2zayKrDJf7WBA2"
       ],
       "license": "MIT"
     },
@@ -534,10 +534,10 @@
       "license": "MIT"
     },
     "node_modules/@openzeppelin/contracts/utils/Address.sol": {
-      "keccak256": "0x9d8da059267bac779a2dbbb9a26c2acf00ca83085e105d62d5d4ef96054a47f5",
+      "keccak256": "0xaaa1d17c1129b127a4a401db2fbd72960e2671474be3d08cae71ccdc42f7624c",
       "urls": [
-        "bzz-raw://c78e2aa4313323cecd1ef12a8d6265b96beee1a199923abf55d9a2a9e291ad23",
-        "dweb:/ipfs/QmUTs2KStXucZezzFo3EYeqYu47utu56qrF7jj1Gue65vb"
+        "bzz-raw://cb2f27cd3952aa667e198fba0d9b7bcec52fbb12c16f013c25fe6fb52b29cc0e",
+        "dweb:/ipfs/QmeuohBFoeyDPZA9JNCTEDz3VBfBD4EABWuWXVhHAuEpKR"
       ],
       "license": "MIT"
     },

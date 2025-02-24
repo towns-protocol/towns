@@ -4,7 +4,8 @@ pragma solidity ^0.8.23;
 interface ITownsPointsBase {
   enum Action {
     JoinSpace,
-    CheckIn
+    CheckIn,
+    Tip
   }
 
   /// @notice Emitted when a user successfully checks in and receives points

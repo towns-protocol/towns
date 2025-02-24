@@ -1,6 +1,6 @@
 {
     "name": "@river-build/encryption",
-    "version": "0.0.159",
+    "version": "0.0.173",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "dist/index.js",
@@ -27,6 +27,7 @@
         "debug": "^4.3.4",
         "dexie": "^4.0.7",
         "ethers": "^5.7.2",
+        "lru-cache": "^11.0.1",
         "nanoid": "^4.0.0",
         "typed-emitter": "^2.1.0"
     },

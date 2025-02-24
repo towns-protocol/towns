@@ -6,7 +6,6 @@ import type {
     ChunkedMedia_AESGCM,
     ChannelMessage_Post_Content_Image_Info,
     MediaInfo as MediaInfoStruct,
-    MiniblockHeader,
     PayloadCaseType,
     ChannelOp,
     SpacePayload_ChannelSettings,
@@ -14,6 +13,7 @@ import type {
     BlockchainTransaction,
     UserPayload_ReceivedBlockchainTransaction,
     BlockchainTransaction_Tip,
+    BlockchainTransaction_SpaceReview_Action,
 } from '@river-build/proto'
 import type { PlainMessage } from '@bufbuild/protobuf'
 import type { DecryptionSessionError } from '@river-build/encryption'
@@ -75,7 +75,6 @@ export type TimelineEvent_OneOf =
     | KeySolicitationEvent
     | MiniblockHeaderEvent
     | MemberBlockchainTransactionEvent
-    | MlsEvent
     | PinEvent
     | ReactionEvent
     | RedactedEvent
@@ -90,6 +89,7 @@ export type TimelineEvent_OneOf =
     | SpaceUpdateHideUserJoinLeavesEvent
     | SpaceUsernameEvent
     | TipEvent
+    | SpaceReviewEvent
     | UserBlockchainTransactionEvent
     | UserReceivedBlockchainTransactionEvent
     | UnpinEvent
@@ -106,7 +106,6 @@ export enum RiverTimelineEvent {
     KeySolicitation = 'm.key_solicitation',
     MemberBlockchainTransaction = 'm.member_blockchain_transaction',
     MiniblockHeader = 'm.miniblockheader',
-    Mls = 'm.mls',
     Pin = 'm.pin',
     Reaction = 'm.reaction',
     RedactedEvent = 'm.redacted_event',
@@ -118,6 +117,7 @@ export enum RiverTimelineEvent {
     SpaceDisplayName = 'm.space.display_name',
     SpaceEnsAddress = 'm.space.ens_name',
     SpaceNft = 'm.space.nft',
+    SpaceReview = 'm.space.review',
     StreamEncryptionAlgorithm = 'm.stream_encryption_algorithm',
     StreamMembership = 'm.stream_membership',
     TipEvent = 'm.tip_event',
@@ -128,7 +128,8 @@ export enum RiverTimelineEvent {
 
 export interface MiniblockHeaderEvent {
     kind: RiverTimelineEvent.MiniblockHeader
-    message: MiniblockHeader
+    miniblockNum: bigint
+    hasSnapshot: boolean
 }
 
 export interface FulfillmentEvent {
@@ -221,10 +222,6 @@ export interface UnpinEvent {
     unpinnedEventId: string
 }
 
-export interface MlsEvent {
-    kind: RiverTimelineEvent.Mls
-}
-
 export interface StreamEncryptionAlgorithmEvent {
     kind: RiverTimelineEvent.StreamEncryptionAlgorithm
     algorithm?: string
@@ -291,6 +288,14 @@ export interface TipEvent {
     fromUserId: string
     refEventId: string
     toUserId: string
+}
+
+export interface SpaceReviewEvent {
+    kind: RiverTimelineEvent.SpaceReview
+    action: BlockchainTransaction_SpaceReview_Action
+    rating: number
+    comment?: string
+    fromUserId: string
 }
 
 export enum MessageType {
@@ -447,9 +452,17 @@ export type UnfurledLinkAttachment = {
     info?: string
 }
 
+export type TickerAttachment = {
+    type: 'ticker'
+    id: string
+    address: string
+    chainId: string
+}
+
 export type Attachment =
     | ImageAttachment
     | ChunkedMediaAttachment
     | EmbeddedMediaAttachment
     | EmbeddedMessageAttachment
     | UnfurledLinkAttachment
+    | TickerAttachment

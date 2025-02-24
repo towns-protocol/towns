@@ -1,5 +1,10 @@
 import { Message, PlainMessage } from '@bufbuild/protobuf'
-import { Permission } from '@river-build/web3'
+import {
+    Permission,
+    SpaceAddressFromSpaceId,
+    SpaceReviewAction,
+    SpaceReviewEventObject,
+} from '@river-build/web3'
 import {
     MembershipOp,
     ChannelOp,
@@ -28,11 +33,12 @@ import {
     UserBio,
     Tags,
     BlockchainTransaction,
-    MemberPayload_Mls,
     MiniblockHeader,
     GetStreamResponse,
     CreateStreamResponse,
     ChannelProperties,
+    CreationCookie,
+    BlockchainTransaction_TokenTransfer,
 } from '@river-build/proto'
 import {
     bin_fromHexString,
@@ -85,14 +91,7 @@ import {
     contractAddressFromSpaceId,
     isUserId,
 } from './id'
-import {
-    checkEventSignature,
-    makeEvent,
-    unpackEnvelope,
-    UnpackEnvelopeOpts,
-    unpackStream,
-    unpackStreamEx,
-} from './sign'
+import { makeEvent, unpackEnvelope, UnpackEnvelopeOpts, unpackStream, unpackStreamEx } from './sign'
 import { StreamEvents } from './streamEvents'
 import { IStreamStateView, StreamStateView } from './streamStateView'
 import {
@@ -139,7 +138,8 @@ import {
     make_UserPayload_BlockchainTransaction,
     ContractReceipt,
     make_MemberPayload_EncryptionAlgorithm,
-    make_MemberPayload_Mls,
+    SolanaTransactionReceipt,
+    isSolanaTransactionReceipt,
 } from './types'
 
 import debug from 'debug'
@@ -147,17 +147,20 @@ import { Stream } from './stream'
 import { getTime, usernameChecksum } from './utils'
 import { isEncryptedContentKind, toDecryptedContent } from './encryptedContentTypes'
 import { ClientDecryptionExtensions } from './clientDecryptionExtensions'
-import { PersistenceStore, IPersistenceStore, StubPersistenceStore } from './persistenceStore'
+import {
+    PersistenceStore,
+    IPersistenceStore,
+    StubPersistenceStore,
+    LoadedStream,
+} from './persistenceStore'
 import { SyncedStreams } from './syncedStreams'
 import { SyncState } from './syncedStreamsLoop'
 import { SyncedStream } from './syncedStream'
 import { SyncedStreamsExtension } from './syncedStreamsExtension'
 import { SignerContext } from './signerContext'
 import { decryptAESGCM, deriveKeyAndIV, encryptAESGCM, uint8ArrayToBase64 } from './crypto_utils'
-import { makeTags, makeTipTags } from './tags'
+import { makeTags, makeTipTags, makeTransferTags } from './tags'
 import { TipEventObject } from '@river-build/generated/dev/typings/ITipping'
-import { extractMlsExternalGroup, ExtractMlsExternalGroupResult } from './mls/utils/mlsutils'
-import { MlsAdapter, MLS_ALGORITHM } from './mls'
 
 export type ClientEvents = StreamEvents & DecryptionEvents
 
@@ -206,7 +209,6 @@ export class Client
     private entitlementsDelegate: EntitlementsDelegate
     private decryptionExtensions?: BaseDecryptionExtensions
     private syncedStreamsExtensions?: SyncedStreamsExtension
-    private mlsAdapter?: MlsAdapter
     private persistenceStore: IPersistenceStore
     private validatedEvents: Record<string, { isValid: boolean; reason?: string }> = {}
     private defaultGroupEncryptionAlgorithm: GroupEncryptionAlgorithmId
@@ -265,17 +267,21 @@ export class Client
         }
 
         this.streams = new SyncedStreams(this.userId, this.rpcClient, this, this.unpackEnvelopeOpts)
-        this.syncedStreamsExtensions = new SyncedStreamsExtension({
-            startSyncStreams: async () => {
-                await this.streams.startSyncStreams()
-                this.decryptionExtensions?.start()
-                this.mlsAdapter?.start()
+        this.syncedStreamsExtensions = new SyncedStreamsExtension(
+            highPriorityStreamIds,
+            {
+                startSyncStreams: async () => {
+                    this.streams.startSyncStreams()
+                    this.decryptionExtensions?.start()
+                },
+                initStream: (streamId, allowGetStream, persistedData) =>
+                    this.initStream(streamId, allowGetStream, persistedData),
+                emitClientInitStatus: (status) => this.emit('clientInitStatusUpdated', status),
             },
-            initStream: (streamId, allowGetStream) => this.initStream(streamId, allowGetStream),
-            emitClientInitStatus: (status) => this.emit('clientInitStatusUpdated', status),
-        })
+            this.persistenceStore,
+            shortId,
+        )
 
-        this.syncedStreamsExtensions.setHighPriority(highPriorityStreamIds ?? [])
         this.logCall('new Client')
     }
 
@@ -299,10 +305,6 @@ export class Client
         await this.stopSync()
     }
 
-    getSizeOfEncryptedСontentQueue(): number {
-        return this.decryptionExtensions?.getSizeOfEncryptedСontentQueue() ?? 0
-    }
-
     stream(streamId: string | Uint8Array): SyncedStream | undefined {
         return this.streams.get(streamId)
     }
@@ -318,45 +320,6 @@ export class Client
         )
         this.streams.set(streamId, stream)
         return stream
-    }
-
-    isValidEvent(streamId: string, eventId: string): { isValid: boolean; reason?: string } {
-        // if we didn't disable signature validation, we can assume the event is valid
-        if (this.unpackEnvelopeOpts?.disableSignatureValidation !== true) {
-            return { isValid: true }
-        }
-        const stream = this.stream(streamId)
-        if (!stream) {
-            return { isValid: false, reason: 'stream not found' }
-        }
-        const event = stream.view.events.get(eventId)
-        if (!event) {
-            return { isValid: false, reason: 'event not found' }
-        }
-        if (!event.remoteEvent) {
-            return { isValid: false, reason: 'remote event not found' }
-        }
-        if (!event.remoteEvent.signature) {
-            return { isValid: false, reason: 'remote event signature not found' }
-        }
-        if (this.validatedEvents[eventId]) {
-            return this.validatedEvents[eventId]
-        }
-        try {
-            checkEventSignature(
-                event.remoteEvent.event,
-                event.remoteEvent.hash,
-                event.remoteEvent.signature,
-            )
-            const result = { isValid: true }
-            this.validatedEvents[eventId] = result
-            return result
-        } catch (err) {
-            // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-            const result = { isValid: false, reason: `error: ${err}` }
-            this.validatedEvents[eventId] = result
-            return result
-        }
     }
 
     private initUserJoinedStreams() {
@@ -391,7 +354,6 @@ export class Client
         encryptionDeviceInit?: EncryptionDeviceInitOpts
     }): Promise<{
         initCryptoTime: number
-        initMlsTime: number
         initUserStreamTime: number
         initUserInboxStreamTime: number
         initUserMetadataStreamTime: number
@@ -407,11 +369,9 @@ export class Client
         this.logCall('initializeUser', this.userId)
         assert(this.userStreamId === undefined, 'already initialized')
         const initCrypto = await getTime(() => this.initCrypto(opts?.encryptionDeviceInit))
-        const initMls = await getTime(() => this.initMls())
 
         check(isDefined(this.decryptionExtensions), 'decryptionExtensions must be defined')
         check(isDefined(this.syncedStreamsExtensions), 'syncedStreamsExtensions must be defined')
-        check(isDefined(this.mlsAdapter), 'mlsAdapter must be defined')
 
         const [
             initUserStream,
@@ -437,7 +397,6 @@ export class Client
 
         return {
             initCryptoTime: initCrypto.time,
-            initMlsTime: initMls.time,
             initUserStreamTime: initUserStream.time,
             initUserInboxStreamTime: initUserInboxStream.time,
             initUserMetadataStreamTime: initUserMetadataStream.time,
@@ -654,7 +613,7 @@ export class Client
             const unpacked = await unpackStream(response.stream, this.unpackEnvelopeOpts)
             await stream.initializeFromResponse(unpacked)
             if (stream.view.syncCookie) {
-                await this.streams.addStreamToSync(stream.view.syncCookie)
+                this.streams.addStreamToSync(streamId, stream.view.syncCookie)
             }
         } catch (err) {
             this.logError('Failed to create stream', streamId)
@@ -887,6 +846,60 @@ export class Client
         return { streamId: streamId, prevMiniblockHash: streamView.prevMiniblockHash }
     }
 
+    async createMediaStreamNew(
+        channelId: string | Uint8Array | undefined,
+        spaceId: string | Uint8Array | undefined,
+        userId: string | undefined,
+        chunkCount: number,
+        streamSettings?: PlainMessage<StreamSettings>,
+    ): Promise<{ creationCookie: CreationCookie }> {
+        assert(this.userStreamId !== undefined, 'userStreamId must be set')
+        if (!channelId && !spaceId && !userId) {
+            throw Error('channelId, spaceId or userId must be set')
+        }
+        if (spaceId) {
+            assert(isSpaceStreamId(spaceId), 'spaceId must be a valid streamId')
+        }
+        if (channelId) {
+            assert(
+                isChannelStreamId(channelId) ||
+                    isDMChannelStreamId(channelId) ||
+                    isGDMChannelStreamId(channelId),
+                'channelId must be a valid streamId',
+            )
+        }
+        if (userId) {
+            assert(isUserId(userId), 'userId must be a valid userId')
+        }
+
+        const streamId = makeUniqueMediaStreamId()
+
+        this.logCall('createMedia', channelId ?? spaceId, userId, streamId)
+        const inceptionEvent = await makeEvent(
+            this.signerContext,
+            make_MediaPayload_Inception({
+                streamId: streamIdAsBytes(streamId),
+                channelId: channelId ? streamIdAsBytes(channelId) : undefined,
+                spaceId: spaceId ? streamIdAsBytes(spaceId) : undefined,
+                userId: userId ? addressFromUserId(userId) : undefined,
+                chunkCount,
+                settings: streamSettings,
+            }),
+        )
+
+        const response = await this.rpcClient.createMediaStream({
+            events: [inceptionEvent],
+            streamId: streamIdAsBytes(streamId),
+        })
+
+        check(
+            response?.nextCreationCookie !== undefined,
+            'nextCreationCookie was expected but was not returned in response',
+        )
+
+        return { creationCookie: response.nextCreationCookie }
+    }
+
     async updateChannel(
         spaceId: string | Uint8Array,
         channelId: string | Uint8Array,
@@ -980,13 +993,13 @@ export class Client
         check(isDefined(stream), 'stream not found')
         check(
             stream.view.membershipContent.encryptionAlgorithm != encryptionAlgorithm,
-            `mlsEnabled is already set to ${encryptionAlgorithm}`,
+            `encryptionAlgorithm is already set to ${encryptionAlgorithm}`,
         )
         return this.makeEventAndAddToStream(
             streamId,
             make_MemberPayload_EncryptionAlgorithm(encryptionAlgorithm),
             {
-                method: 'setMlsEnabled',
+                method: 'setStreamEncryptionAlgorithm',
             },
         )
     }
@@ -1402,6 +1415,7 @@ export class Client
     async initStream(
         streamId: string | Uint8Array,
         allowGetStream: boolean = true,
+        persistedData?: LoadedStream,
     ): Promise<Stream> {
         const streamIdStr = streamIdAsString(streamId)
         const existingRequest = this.initStreamRequests.get(streamIdStr)
@@ -1409,7 +1423,7 @@ export class Client
             this.logCall('initStream: had existing request for', streamIdStr, 'returning promise')
             return existingRequest
         }
-        const request = this._initStream(streamId, allowGetStream)
+        const request = this._initStream(streamIdStr, allowGetStream, persistedData)
         this.initStreamRequests.set(streamIdStr, request)
         let stream: Stream
         try {
@@ -1421,8 +1435,9 @@ export class Client
     }
 
     private async _initStream(
-        streamId: string | Uint8Array,
+        streamId: string,
         allowGetStream: boolean = true,
+        persistedData?: LoadedStream,
     ): Promise<Stream> {
         try {
             this.logCall('initStream', streamId)
@@ -1439,9 +1454,10 @@ export class Client
                 const stream = this.createSyncedStream(streamId)
 
                 // Try initializing from persistence
-                if (await stream.initializeFromPersistence()) {
+                const success = await stream.initializeFromPersistence(persistedData)
+                if (success) {
                     if (stream.view.syncCookie) {
-                        await this.streams.addStreamToSync(stream.view.syncCookie)
+                        this.streams.addStreamToSync(streamId, stream.view.syncCookie)
                     }
                     return stream
                 }
@@ -1466,7 +1482,7 @@ export class Client
                     this.logCall('initStream calling initializingFromResponse', streamId)
                     await stream.initializeFromResponse(unpacked)
                     if (stream.view.syncCookie) {
-                        await this.streams.addStreamToSync(stream.view.syncCookie)
+                        this.streams.addStreamToSync(streamId, stream.view.syncCookie)
                     }
                 } catch (err) {
                     this.logError('Failed to initialize stream', streamId, err)
@@ -1619,9 +1635,6 @@ export class Client
         let message: EncryptedData
         const encryptionAlgorithm = stream.view.membershipContent.encryptionAlgorithm
         switch (encryptionAlgorithm) {
-            case MLS_ALGORITHM:
-                message = await this.encryptGroupEventEpochSecret(payload, streamId)
-                break
             case GroupEncryptionAlgorithmId.HybridGroupEncryption:
                 message = await this.encryptGroupEvent(
                     payload,
@@ -1764,6 +1777,19 @@ export class Client
             chunkIndex: chunkIndex,
         })
         return this.makeEventWithHashAndAddToStream(streamId, payload, prevMiniblockHash)
+    }
+
+    async sendMediaPayloadNew(
+        creationCookie: CreationCookie,
+        last: boolean,
+        data: Uint8Array,
+        chunkIndex: number,
+    ): Promise<{ creationCookie: CreationCookie }> {
+        const payload = make_MediaPayload_Chunk({
+            data: data,
+            chunkIndex: chunkIndex,
+        })
+        return this.makeMediaEventWithHashAndAddToMediaStream(creationCookie, last, payload)
     }
 
     async getMediaPayload(
@@ -2032,24 +2058,27 @@ export class Client
     // upload transactions made on the base chain
     async addTransaction(
         chainId: number,
-        receipt: ContractReceipt,
+        receipt: ContractReceipt | SolanaTransactionReceipt,
         content?: PlainMessage<BlockchainTransaction>['content'],
         tags?: PlainMessage<Tags>,
     ): Promise<{ eventId: string }> {
         check(isDefined(this.userStreamId))
         const transaction = {
-            receipt: {
-                chainId: BigInt(chainId),
-                transactionHash: bin_fromHexString(receipt.transactionHash),
-                blockNumber: BigInt(receipt.blockNumber),
-                to: bin_fromHexString(receipt.to),
-                from: bin_fromHexString(receipt.from),
-                logs: receipt.logs.map((log) => ({
-                    address: bin_fromHexString(log.address),
-                    topics: log.topics.map(bin_fromHexString),
-                    data: bin_fromHexString(log.data),
-                })),
-            },
+            receipt: !isSolanaTransactionReceipt(receipt)
+                ? {
+                      chainId: BigInt(chainId),
+                      transactionHash: bin_fromHexString(receipt.transactionHash),
+                      blockNumber: BigInt(receipt.blockNumber),
+                      to: bin_fromHexString(receipt.to),
+                      from: bin_fromHexString(receipt.from),
+                      logs: receipt.logs.map((log) => ({
+                          address: bin_fromHexString(log.address),
+                          topics: log.topics.map(bin_fromHexString),
+                          data: bin_fromHexString(log.data),
+                      })),
+                  }
+                : undefined,
+            solanaReceipt: isSolanaTransactionReceipt(receipt) ? receipt : undefined,
             content: content ?? { case: undefined },
         } satisfies PlainMessage<BlockchainTransaction>
         const event = make_UserPayload_BlockchainTransaction(transaction)
@@ -2091,6 +2120,46 @@ export class Client
             },
             tags,
         )
+    }
+
+    async addTransaction_Transfer(
+        chainId: number,
+        receipt: ContractReceipt | SolanaTransactionReceipt,
+        event: PlainMessage<BlockchainTransaction_TokenTransfer>,
+        opts?: SendBlockchainTransactionOptions,
+    ): Promise<{ eventId: string }> {
+        const stream = this.stream(streamIdAsString(event.channelId))
+        const tags =
+            opts?.disableTags || !stream?.view ? undefined : makeTransferTags(event, stream.view)
+        return this.addTransaction(
+            chainId,
+            receipt,
+            {
+                case: 'tokenTransfer',
+                value: event,
+            },
+            tags,
+        )
+    }
+
+    async addTransaction_SpaceReview(
+        chainId: number,
+        receipt: ContractReceipt,
+        event: SpaceReviewEventObject,
+        spaceId: string,
+    ): Promise<{ eventId: string }> {
+        check(event.action !== SpaceReviewAction.None, 'invalid space review event')
+        return this.addTransaction(chainId, receipt, {
+            case: 'spaceReview',
+            value: {
+                action: event.action.valueOf(),
+                spaceAddress: bin_fromHexString(SpaceAddressFromSpaceId(spaceId)),
+                event: {
+                    rating: event.rating,
+                    user: addressFromUserId(event.user),
+                },
+            },
+        })
     }
 
     async getMiniblocks(
@@ -2441,6 +2510,29 @@ export class Client
         }
     }
 
+    // makeMediaEventWithHashAndAddToMediaStream is used for uploading media chunks to the media stream.
+    // This function uses media stream specific RPC endpoints to upload media chunks.
+    // These endpoints are optimized for media uploads and are not used for general stream events.
+    async makeMediaEventWithHashAndAddToMediaStream(
+        creationCookie: CreationCookie,
+        last: boolean,
+        payload: PlainMessage<StreamEvent>['payload'],
+    ): Promise<{ creationCookie: CreationCookie }> {
+        const streamIdStr = streamIdAsString(creationCookie.streamId)
+        check(isDefined(streamIdStr) && streamIdStr !== '', 'streamId must be defined')
+        const event = await makeEvent(this.signerContext, payload, creationCookie.prevMiniblockHash)
+
+        const resp = await this.rpcClient.addMediaEvent({
+            event,
+            creationCookie,
+            last,
+        })
+
+        check(isDefined(resp.creationCookie), 'creationCookie not found in response')
+
+        return { creationCookie: resp.creationCookie }
+    }
+
     async getStreamLastMiniblockHash(streamId: string | Uint8Array): Promise<Uint8Array> {
         const r = await this.rpcClient.getLastMiniblockHash({ streamId: streamIdAsBytes(streamId) })
         return r.hash
@@ -2467,18 +2559,6 @@ export class Client
             this.userId,
             this.userDeviceKey(),
         )
-    }
-
-    /// Initialise MLS but do not start it
-    private async initMls(): Promise<void> {
-        this.logCall('initMls')
-        if (this.mlsAdapter) {
-            this.logCall('Attempt to re-init mls adapter, ignoring')
-            return
-        }
-
-        this.mlsAdapter = new MlsAdapter(this)
-        await this.mlsAdapter.initialize()
     }
 
     /**
@@ -2543,7 +2623,10 @@ export class Client
     }
 
     public setHighPriorityStreams(streamIds: string[]) {
+        this.logCall('setHighPriorityStreams', streamIds)
         this.decryptionExtensions?.setHighPriorityStreams(streamIds)
+        this.syncedStreamsExtensions?.setHighPriorityStreams(streamIds)
+        this.streams.setHighPriorityStreams(streamIds)
     }
 
     public async ensureOutboundSession(
@@ -2706,36 +2789,6 @@ export class Client
 
     public async debugDropStream(syncId: string, streamId: string): Promise<void> {
         await this.rpcClient.info({ debug: ['drop_stream', syncId, streamId] })
-    }
-
-    public async _debugSendMls(
-        streamId: string | Uint8Array,
-        payload: PlainMessage<MemberPayload_Mls>,
-    ) {
-        return this.makeEventAndAddToStream(streamId, make_MemberPayload_Mls(payload), {
-            method: 'mls',
-        })
-    }
-
-    public async getMlsExternalGroupInfo(
-        streamId: string,
-    ): Promise<ExtractMlsExternalGroupResult | undefined> {
-        let streamView = this.stream(streamId)?.view
-        if (!streamView || !streamView.isInitialized) {
-            streamView = await this.getStream(streamId)
-        }
-        check(isDefined(streamView), `stream not found: ${streamId}`)
-        return extractMlsExternalGroup(streamView)
-    }
-
-    private async encryptGroupEventEpochSecret(
-        payload: Message,
-        streamId: string,
-    ): Promise<EncryptedData> {
-        if (this.mlsAdapter === undefined) {
-            throw new Error('mls adapter not initialized')
-        }
-        return this.mlsAdapter.encryptGroupEventEpochSecret(streamId, payload)
     }
 }
 

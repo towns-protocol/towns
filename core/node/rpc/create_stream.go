@@ -9,13 +9,13 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"google.golang.org/protobuf/proto"
 
-	. "github.com/river-build/river/core/node/base"
-	. "github.com/river-build/river/core/node/events"
-	"github.com/river-build/river/core/node/logging"
-	. "github.com/river-build/river/core/node/nodes"
-	. "github.com/river-build/river/core/node/protocol"
-	"github.com/river-build/river/core/node/rules"
-	. "github.com/river-build/river/core/node/shared"
+	. "github.com/towns-protocol/towns/core/node/base"
+	. "github.com/towns-protocol/towns/core/node/events"
+	"github.com/towns-protocol/towns/core/node/logging"
+	. "github.com/towns-protocol/towns/core/node/nodes"
+	. "github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/rules"
+	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
 func (s *Service) createStreamImpl(
@@ -80,7 +80,7 @@ func (s *Service) createStream(ctx context.Context, req *CreateStreamRequest) (*
 	if csRules.RequiredMemberships != nil {
 		// load the creator's user stream
 		stream, err := s.loadStream(ctx, csRules.CreatorStreamId)
-		var creatorStreamView StreamView
+		var creatorStreamView *StreamView
 		if err == nil {
 			creatorStreamView, err = stream.GetView(ctx)
 		}
@@ -92,7 +92,7 @@ func (s *Service) createStream(ctx context.Context, req *CreateStreamRequest) (*
 			if err != nil {
 				return nil, nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "invalid stream id", "err", err)
 			}
-			if !creatorStreamView.(UserStreamView).IsMemberOf(streamId) {
+			if !creatorStreamView.IsMemberOf(streamId) {
 				return nil, nil, RiverError(Err_PERMISSION_DENIED, "not a member of", "requiredStreamId", streamId)
 			}
 		}

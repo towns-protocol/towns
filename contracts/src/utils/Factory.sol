@@ -6,7 +6,7 @@ import {LibClone} from "solady/utils/LibClone.sol";
 /**
  * @title Factory for arbitrary code deployment using the "CREATE" and "CREATE2" opcodes
  */
-abstract contract Factory {
+library Factory {
   error Factory__FailedDeployment();
 
   /**
@@ -14,9 +14,7 @@ abstract contract Factory {
    * @param initCode contract initialization code
    * @return deployment address of deployed contract
    */
-  function _deploy(
-    bytes memory initCode
-  ) internal returns (address deployment) {
+  function deploy(bytes memory initCode) internal returns (address deployment) {
     assembly ("memory-safe") {
       let encoded_data := add(0x20, initCode)
       let encoded_size := mload(initCode)
@@ -35,7 +33,7 @@ abstract contract Factory {
    * @param salt input for deterministic address calculation
    * @return deployment address of deployed contract
    */
-  function _deploy(
+  function deploy(
     bytes memory initCode,
     bytes32 salt
   ) internal returns (address deployment) {
@@ -56,7 +54,7 @@ abstract contract Factory {
    * @param salt input for deterministic address calculation
    * @return deployment deployment address
    */
-  function _calculateDeploymentAddress(
+  function calculateDeploymentAddress(
     bytes32 initCodeHash,
     bytes32 salt
   ) internal view returns (address deployment) {

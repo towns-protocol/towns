@@ -9,14 +9,14 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/river-build/river/core/config"
-	"github.com/river-build/river/core/contracts/river"
-	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/base/test"
-	"github.com/river-build/river/core/node/crypto"
-	. "github.com/river-build/river/core/node/protocol"
-	. "github.com/river-build/river/core/node/shared"
-	"github.com/river-build/river/core/node/testutils"
+	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/contracts/river"
+	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/base/test"
+	"github.com/towns-protocol/towns/core/node/crypto"
+	. "github.com/towns-protocol/towns/core/node/protocol"
+	. "github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/testutils"
 )
 
 func TestNodeEvents(t *testing.T) {
@@ -294,7 +294,7 @@ func TestStreamEvents(t *testing.T) {
 
 	// Update last miniblock
 	newMBHash := common.HexToHash("0x456")
-	succeeded, failed, err := rr1.SetStreamLastMiniblockBatch(
+	succeeded, invalidMiniblocks, failed, err := rr1.SetStreamLastMiniblockBatch(
 		ctx,
 		[]river.SetMiniblock{{
 			StreamId:          streamId,
@@ -306,6 +306,7 @@ func TestStreamEvents(t *testing.T) {
 	)
 	require.NoError(err)
 	require.Len(succeeded, 1)
+	require.Empty(invalidMiniblocks)
 	require.Empty(failed)
 
 	lastMB := <-lastMBC
@@ -318,7 +319,7 @@ func TestStreamEvents(t *testing.T) {
 	require.Len(placementC, 0)
 
 	newMBHash2 := common.HexToHash("0x789")
-	succeeded, failed, err = rr1.SetStreamLastMiniblockBatch(
+	succeeded, invalidMiniblocks, failed, err = rr1.SetStreamLastMiniblockBatch(
 		ctx,
 		[]river.SetMiniblock{{
 			StreamId:          streamId,
@@ -330,6 +331,7 @@ func TestStreamEvents(t *testing.T) {
 	)
 	require.NoError(err)
 	require.Len(succeeded, 1)
+	require.Empty(invalidMiniblocks)
 	require.Empty(failed)
 
 	lastMB = <-lastMBC

@@ -8,12 +8,14 @@ import (
 	"os/signal"
 	"syscall"
 
-	xc "github.com/river-build/river/core/xchain/client_simulator"
-	"github.com/river-build/river/core/xchain/util"
+	"github.com/ethereum/go-ethereum/common"
+
+	xc "github.com/towns-protocol/towns/core/xchain/client_simulator"
+	"github.com/towns-protocol/towns/core/xchain/util"
 
 	"github.com/spf13/cobra"
 
-	"github.com/river-build/river/core/node/logging"
+	"github.com/towns-protocol/towns/core/node/logging"
 )
 
 func keyboardInput(input chan rune) {
@@ -37,7 +39,7 @@ func keyboardInput(input chan rune) {
 	}
 }
 
-func runClientSimulator() error {
+func runClientSimulator(entitlementGatedAddress common.Address) error {
 	bc := context.Background()
 	pid := os.Getpid()
 
@@ -67,9 +69,9 @@ out:
 			log.Infow("Input", "char", char)
 			switch char {
 			case 'a':
-				go xc.RunClientSimulator(bc, cmdConfig, wallet, xc.ERC20)
+				go xc.RunClientSimulator(bc, cmdConfig, entitlementGatedAddress, wallet, xc.ERC20)
 			case 'b':
-				go xc.RunClientSimulator(bc, cmdConfig, wallet, xc.ERC721)
+				go xc.RunClientSimulator(bc, cmdConfig, entitlementGatedAddress, wallet, xc.ERC721)
 			case 'q':
 				log.Infow("Quit Exit")
 				break out
@@ -87,10 +89,12 @@ out:
 
 func init() {
 	cmd := &cobra.Command{
-		Use:   "run-cs",
+		Use:   "run-cs <mock-gated-contract>",
 		Short: "Runs the client simulator",
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runClientSimulator()
+			entitlementGatedAddress := common.HexToAddress(args[1])
+			return runClientSimulator(entitlementGatedAddress)
 		},
 	}
 

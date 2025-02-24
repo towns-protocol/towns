@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"slices"
 
-	. "github.com/river-build/river/core/node/protocol"
+	. "github.com/towns-protocol/towns/core/node/protocol"
 )
 
 // nasty bug with the insert_sorted function, it was inserting an extra element at the end

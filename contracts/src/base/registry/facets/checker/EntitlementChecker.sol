@@ -3,18 +3,21 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IEntitlementChecker} from "./IEntitlementChecker.sol";
+import {IEntitlementGatedBase} from "contracts/src/spaces/facets/gated/IEntitlementGated.sol";
 
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {EntitlementCheckerStorage} from "./EntitlementCheckerStorage.sol";
 import {NodeOperatorStorage, NodeOperatorStatus} from "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
+import {XChainLib} from "contracts/src/base/registry/facets/xchain/XChainLib.sol";
 
 // contracts
 import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
 
 contract EntitlementChecker is IEntitlementChecker, Facet {
   using EnumerableSet for EnumerableSet.AddressSet;
-
+  using EnumerableSet for EnumerableSet.UintSet;
+  using EnumerableSet for EnumerableSet.Bytes32Set;
   // =============================================================
   //                           Initializer
   // =============================================================
@@ -55,11 +58,7 @@ contract EntitlementChecker is IEntitlementChecker, Facet {
   //                           External
   // =============================================================
 
-  /**
-   * @notice Register a node
-   * @param node The address of the node to register
-   * @dev Only valid operators can register a node
-   */
+  /// @inheritdoc IEntitlementChecker
   function registerNode(address node) external onlyRegisteredApprovedOperator {
     EntitlementCheckerStorage.Layout storage layout = EntitlementCheckerStorage
       .layout();
@@ -73,11 +72,7 @@ contract EntitlementChecker is IEntitlementChecker, Facet {
     emit NodeRegistered(node);
   }
 
-  /**
-   * @notice Unregister a node
-   * @param node The address of the node to unregister
-   * @dev Only the operator of the node can unregister it
-   */
+  /// @inheritdoc IEntitlementChecker
   function unregisterNode(
     address node
   ) external onlyNodeOperator(node, msg.sender) {
@@ -93,33 +88,21 @@ contract EntitlementChecker is IEntitlementChecker, Facet {
     emit NodeUnregistered(node);
   }
 
-  /**
-   * @notice Check if a node is registered
-   * @param node The address of the node to check
-   * @return true if the node is registered, false otherwise
-   */
+  /// @inheritdoc IEntitlementChecker
   function isValidNode(address node) external view returns (bool) {
     EntitlementCheckerStorage.Layout storage layout = EntitlementCheckerStorage
       .layout();
     return layout.nodes.contains(node);
   }
 
-  /**
-   * @notice Get the number of registered nodes
-   * @return The number of registered nodes
-   */
+  /// @inheritdoc IEntitlementChecker
   function getNodeCount() external view returns (uint256) {
     EntitlementCheckerStorage.Layout storage layout = EntitlementCheckerStorage
       .layout();
     return layout.nodes.length();
   }
 
-  /**
-   * @notice Get the node at a specific index
-   * @param index The index of the node to get
-   * @dev Reverts if the index is out of bounds
-   * @return The address of the node at the specified index
-   */
+  /// @inheritdoc IEntitlementChecker
   function getNodeAtIndex(uint256 index) external view returns (address) {
     EntitlementCheckerStorage.Layout storage layout = EntitlementCheckerStorage
       .layout();
@@ -128,31 +111,22 @@ contract EntitlementChecker is IEntitlementChecker, Facet {
     return layout.nodes.at(index);
   }
 
-  /**
-   * @notice Get a random selection of nodes
-   * @param count The number of nodes to select
-   * @dev Reverts if the requested count exceeds the number of available nodes
-   * @return An array of randomly selected node addresses
-   */
+  /// @inheritdoc IEntitlementChecker
   function getRandomNodes(
     uint256 count
   ) external view returns (address[] memory) {
     return _getRandomNodes(count);
   }
 
-  /**
-   * @notice Emit an EntitlementCheckRequested event
-   * @param transactionId The hash of the transaction
-   * @param nodes The selected nodes
-   */
+  /// @inheritdoc IEntitlementChecker
   function requestEntitlementCheck(
-    address callerAddress,
+    address walletAddress,
     bytes32 transactionId,
     uint256 roleId,
     address[] memory nodes
   ) external {
     emit EntitlementCheckRequested(
-      callerAddress,
+      walletAddress,
       msg.sender,
       transactionId,
       roleId,
@@ -160,11 +134,53 @@ contract EntitlementChecker is IEntitlementChecker, Facet {
     );
   }
 
-  /**
-   * @notice Get the nodes registered by an operator
-   * @param operator The address of the operator
-   * @return nodes An array of node addresses
-   */
+  /// @inheritdoc IEntitlementChecker
+  function requestEntitlementCheckV2(
+    address walletAddress,
+    bytes32 transactionId,
+    uint256 requestId,
+    bytes memory extraData
+  ) external payable {
+    address space = msg.sender;
+    address senderAddress = abi.decode(extraData, (address));
+
+    XChainLib.Layout storage layout = XChainLib.layout();
+
+    layout.requestsBySender[senderAddress].add(transactionId);
+    layout.requests[transactionId] = XChainLib.Request({
+      caller: space,
+      blockNumber: block.number,
+      value: msg.value,
+      completed: false
+    });
+
+    address[] memory randomNodes = _getRandomNodes(5);
+
+    XChainLib.Check storage check = XChainLib.layout().checks[transactionId];
+
+    check.requestIds.add(requestId);
+
+    for (uint256 i; i < randomNodes.length; ++i) {
+      check.nodes[requestId].add(randomNodes[i]);
+      check.votes[requestId].push(
+        IEntitlementGatedBase.NodeVote({
+          node: randomNodes[i],
+          vote: IEntitlementGatedBase.NodeVoteStatus.NOT_VOTED
+        })
+      );
+    }
+
+    emit EntitlementCheckRequestedV2(
+      walletAddress,
+      space,
+      address(this),
+      transactionId,
+      requestId,
+      randomNodes
+    );
+  }
+
+  /// @inheritdoc IEntitlementChecker
   function getNodesByOperator(
     address operator
   ) external view returns (address[] memory nodes) {

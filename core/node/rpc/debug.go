@@ -1,8 +1,6 @@
 package rpc
 
 import (
-	"bufio"
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -14,16 +12,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/river-build/river/core/config"
-	"github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/crypto"
-	. "github.com/river-build/river/core/node/events"
-	"github.com/river-build/river/core/node/logging"
-	"github.com/river-build/river/core/node/protocol"
-	"github.com/river-build/river/core/node/rpc/render"
-	"github.com/river-build/river/core/node/scrub"
-	"github.com/river-build/river/core/node/shared"
-	"github.com/river-build/river/core/node/storage"
+	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/crypto"
+	. "github.com/towns-protocol/towns/core/node/events"
+	"github.com/towns-protocol/towns/core/node/logging"
+	"github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/rpc/render"
+	"github.com/towns-protocol/towns/core/node/scrub"
+	"github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/storage"
 )
 
 type debugHandler struct {
@@ -174,41 +172,34 @@ type stacksHandler struct {
 }
 
 func (h *stacksHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	stacksSize := h.maxSizeKb * 1024
-	if stacksSize == 0 {
-		stacksSize = 1024 * 1024
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+
+	var stacksSize int
+	if h.maxSizeKb > 0 {
+		stacksSize = h.maxSizeKb * 1024
+	} else {
+		stacksSize = 64 * 1024 * 1024
 	}
 
-	var (
-		ctx          = r.Context()
-		buf          = make([]byte, stacksSize)
-		stackSize    = runtime.Stack(buf, true)
-		traceScanner = bufio.NewScanner(bytes.NewReader((buf[:stackSize])))
-		reply        render.GoRoutineData
-	)
+	buf := make([]byte, stacksSize)
+	n := runtime.Stack(buf, true)
+	buf = buf[:n]
 
-	traceScanner.Split(bufio.ScanLines)
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(buf)
+}
 
-	for traceScanner.Scan() {
-		stack, err := readGoRoutineStackFrame(traceScanner)
-		if err != nil {
-			logging.FromCtx(ctx).Errorw("unable to read stack frame", "err", err)
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-			return
-		}
-		reply.Stacks = append(reply.Stacks, stack)
-	}
-
-	output, err := render.Execute(&reply)
-	if err != nil {
-		logging.FromCtx(ctx).Errorw("unable to render stack data", "err", err)
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+func stacks2Handler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	p := runtimePProf.Lookup("goroutine")
+	if p == nil {
+		w.WriteHeader(http.StatusNotFound)
+		fmt.Fprintln(w, "Unknown profile")
 		return
 	}
-
-	w.Header().Set("Content-Type", "text/html")
-	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write(output.Bytes())
+	_ = p.WriteTo(w, 1)
 }
 
 type streamHandler struct {
@@ -262,18 +253,6 @@ func (s *streamHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(output.Bytes())
-}
-
-func stacks2Handler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("X-Content-Type-Options", "nosniff")
-	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	p := runtimePProf.Lookup("goroutine")
-	if p == nil {
-		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprintln(w, "Unknown profile")
-		return
-	}
-	_ = p.WriteTo(w, 1)
 }
 
 type onChainConfigHandler struct {
@@ -340,7 +319,7 @@ func (h *txpoolHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 type cacheHandler struct {
-	cache StreamCache
+	cache *StreamCache
 }
 
 func (h *cacheHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -361,7 +340,7 @@ func (h *cacheHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		reply.Streams = make([]*render.CacheDataStream, streamCount)
 	}
 
-	slices.SortFunc(streams, func(a, b StreamView) int {
+	slices.SortFunc(streams, func(a, b *StreamView) int {
 		return a.StreamId().Compare(*b.StreamId())
 	})
 
@@ -402,26 +381,4 @@ func (h *cacheHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(output.Bytes())
-}
-
-func readGoRoutineStackFrame(trace *bufio.Scanner) (*render.GoRoutineStack, error) {
-	var (
-		head = trace.Text()
-		data render.GoRoutineStack
-	)
-
-	if !strings.HasPrefix(head, "goroutine ") {
-		return nil, fmt.Errorf("expected goroutine header, got %q", head)
-	}
-
-	data.Description = head
-
-	for trace.Scan() {
-		line := trace.Text()
-		if line == "" { // marks end of the frame
-			return &data, nil
-		}
-		data.Lines = append(data.Lines, line)
-	}
-	return &data, nil
 }

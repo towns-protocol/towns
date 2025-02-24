@@ -2,15 +2,16 @@ package client
 
 import (
 	"context"
-	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
-
-	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/events"
-	"github.com/river-build/river/core/node/logging"
-	. "github.com/river-build/river/core/node/protocol"
-	. "github.com/river-build/river/core/node/shared"
+	"github.com/linkdata/deadlock"
+	. "github.com/towns-protocol/towns/core/node/base"
+	. "github.com/towns-protocol/towns/core/node/events"
+	"github.com/towns-protocol/towns/core/node/logging"
+	. "github.com/towns-protocol/towns/core/node/protocol"
+	. "github.com/towns-protocol/towns/core/node/shared"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type localSyncer struct {
@@ -19,13 +20,16 @@ type localSyncer struct {
 	syncStreamCtx      context.Context
 	cancelGlobalSyncOp context.CancelCauseFunc
 
-	streamCache events.StreamCache
+	streamCache *StreamCache
 	cookies     []*SyncCookie
 	messages    chan<- *SyncStreamsResponse
 	localAddr   common.Address
 
-	activeStreamsMu sync.Mutex
-	activeStreams   map[StreamId]events.SyncStream
+	activeStreamsMu deadlock.Mutex
+	activeStreams   map[StreamId]*Stream
+
+	// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
+	otelTracer trace.Tracer
 }
 
 func newLocalSyncer(
@@ -33,9 +37,10 @@ func newLocalSyncer(
 	globalSyncOpID string,
 	cancelGlobalSyncOp context.CancelCauseFunc,
 	localAddr common.Address,
-	streamCache events.StreamCache,
+	streamCache *StreamCache,
 	cookies []*SyncCookie,
 	messages chan<- *SyncStreamsResponse,
+	otelTracer trace.Tracer,
 ) (*localSyncer, error) {
 	return &localSyncer{
 		globalSyncOpID:     globalSyncOpID,
@@ -45,7 +50,8 @@ func newLocalSyncer(
 		localAddr:          localAddr,
 		cookies:            cookies,
 		messages:           messages,
-		activeStreams:      make(map[StreamId]events.SyncStream),
+		activeStreams:      make(map[StreamId]*Stream),
+		otelTracer:         otelTracer,
 	}, nil
 }
 
@@ -74,6 +80,14 @@ func (s *localSyncer) Address() common.Address {
 }
 
 func (s *localSyncer) AddStream(ctx context.Context, cookie *SyncCookie) error {
+	if s.otelTracer != nil {
+		var span trace.Span
+		streamID, _ := StreamIdFromBytes(cookie.GetStreamId())
+		ctx, span = s.otelTracer.Start(ctx, "localSyncer::AddStream",
+			trace.WithAttributes(attribute.String("stream", streamID.String())))
+		defer span.End()
+	}
+
 	streamID, err := StreamIdFromBytes(cookie.GetStreamId())
 	if err != nil {
 		return err
@@ -81,7 +95,13 @@ func (s *localSyncer) AddStream(ctx context.Context, cookie *SyncCookie) error {
 	return s.addStream(ctx, streamID, cookie)
 }
 
-func (s *localSyncer) RemoveStream(_ context.Context, streamID StreamId) (bool, error) {
+func (s *localSyncer) RemoveStream(ctx context.Context, streamID StreamId) (bool, error) {
+	if s.otelTracer != nil {
+		_, span := s.otelTracer.Start(ctx, "localSyncer::removeStream",
+			trace.WithAttributes(attribute.String("stream", streamID.String())))
+		defer span.End()
+	}
+
 	s.activeStreamsMu.Lock()
 	defer s.activeStreamsMu.Unlock()
 

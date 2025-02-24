@@ -20,11 +20,13 @@ lcov.info
 coverage.json
 .npmrc
 
+
 # Contracts
 contracts/.openzeppelin/unknown-*.json
 contracts/docs/coverage
 contracts/.env
 contracts/.env.tpl
+contracts/in
 
 abi/
 
@@ -82,6 +84,3 @@ go.work.sum
 /packages/stress/*/.env*
 
 .idea
-
-/core/node/mls_service/libmls*
-libmls_lib.*

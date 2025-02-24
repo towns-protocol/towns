@@ -16,6 +16,7 @@ import {StreamRegistry} from "contracts/src/river/registry/facets/stream/StreamR
 contract DeployStreamRegistry is FacetHelper, Deployer {
   constructor() {
     addSelector(StreamRegistry.allocateStream.selector);
+    addSelector(StreamRegistry.addStream.selector);
     addSelector(StreamRegistry.getStream.selector);
     addSelector(StreamRegistry.getStreamWithGenesis.selector);
     addSelector(StreamRegistry.setStreamLastMiniblockBatch.selector);

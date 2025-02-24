@@ -30,10 +30,14 @@ import {DeployChannels} from "contracts/scripts/deployments/facets/DeployChannel
 import {DeployTokenPausable} from "contracts/scripts/deployments/facets/DeployTokenPausable.s.sol";
 import {DeployPrepayFacet} from "contracts/scripts/deployments/facets/DeployPrepayFacet.s.sol";
 import {DeployReferrals} from "contracts/scripts/deployments/facets/DeployReferrals.s.sol";
+import {DeployReviewFacet} from "contracts/scripts/deployments/facets/DeployReviewFacet.s.sol";
 import {DeployMembershipToken} from "contracts/scripts/deployments/facets/DeployMembershipToken.s.sol";
 import {DeploySpaceEntitlementGated} from "contracts/scripts/deployments/facets/DeploySpaceEntitlementGated.s.sol";
 import {DeployTipping} from "contracts/scripts/deployments/facets/DeployTipping.s.sol";
 import {DeployMultiInit} from "contracts/scripts/deployments/utils/DeployMultiInit.s.sol";
+
+// Test Facets
+import {DeployMockLegacyMembership} from "contracts/scripts/deployments/utils/DeployMockLegacyMembership.s.sol";
 
 contract DeploySpace is DiamondHelper, Deployer {
   DeployDiamondCut diamondCutHelper = new DeployDiamondCut();
@@ -58,11 +62,17 @@ contract DeploySpace is DiamondHelper, Deployer {
 
   DeployPrepayFacet prepayHelper = new DeployPrepayFacet();
   DeployReferrals referralsHelper = new DeployReferrals();
+  DeployReviewFacet reviewHelper = new DeployReviewFacet();
   DeployMembershipToken membershipTokenHelper = new DeployMembershipToken();
   DeploySpaceEntitlementGated entitlementGatedHelper =
     new DeploySpaceEntitlementGated();
   DeployMultiInit deployMultiInit = new DeployMultiInit();
   DeployTipping tippingHelper = new DeployTipping();
+
+  // Test Facets
+  DeployMockLegacyMembership mockLegacyMembershipHelper =
+    new DeployMockLegacyMembership();
+
   address tokenOwnable;
   address diamondCut;
   address diamondLoupe;
@@ -82,8 +92,12 @@ contract DeploySpace is DiamondHelper, Deployer {
   address ownablePending;
   address prepay;
   address referrals;
+  address review;
   address tipping;
   address multiInit;
+
+  // Test Facets
+  address mockLegacyMembership;
 
   function versionName() public pure override returns (string memory) {
     return "space";
@@ -133,9 +147,14 @@ contract DeploySpace is DiamondHelper, Deployer {
     tokenPausable = tokenPausableHelper.deploy(deployer);
     prepay = prepayHelper.deploy(deployer);
     referrals = referralsHelper.deploy(deployer);
+    review = reviewHelper.deploy(deployer);
     entitlementGated = entitlementGatedHelper.deploy(deployer);
     tipping = tippingHelper.deploy(deployer);
     membershipTokenHelper.removeSelector(IERC721A.tokenURI.selector);
+
+    if (isAnvil()) {
+      mockLegacyMembership = mockLegacyMembershipHelper.deploy(deployer);
+    }
 
     addCut(
       entitlementsHelper.makeCut(entitlements, IDiamond.FacetCutAction.Add)
@@ -180,7 +199,17 @@ contract DeploySpace is DiamondHelper, Deployer {
     );
     addCut(prepayHelper.makeCut(prepay, IDiamond.FacetCutAction.Add));
     addCut(referralsHelper.makeCut(referrals, IDiamond.FacetCutAction.Add));
+    addCut(reviewHelper.makeCut(review, IDiamond.FacetCutAction.Add));
     addCut(tippingHelper.makeCut(tipping, IDiamond.FacetCutAction.Add));
+
+    if (isAnvil()) {
+      addCut(
+        mockLegacyMembershipHelper.makeCut(
+          mockLegacyMembership,
+          IDiamond.FacetCutAction.Add
+        )
+      );
+    }
 
     return
       Diamond.InitParams({
@@ -283,6 +312,9 @@ contract DeploySpace is DiamondHelper, Deployer {
       ) {
         referrals = referralsHelper.deploy(deployer);
         addCut(referralsHelper.makeCut(referrals, IDiamond.FacetCutAction.Add));
+      } else if (facetNameHash == keccak256(abi.encodePacked("ReviewFacet"))) {
+        review = reviewHelper.deploy(deployer);
+        addCut(reviewHelper.makeCut(review, IDiamond.FacetCutAction.Add));
       } else if (
         facetNameHash == keccak256(abi.encodePacked("SpaceEntitlementGated"))
       ) {

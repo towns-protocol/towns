@@ -6,9 +6,9 @@ import (
 	"github.com/SherClockHolmes/webpush-go"
 	"github.com/ethereum/go-ethereum/common"
 
-	. "github.com/river-build/river/core/node/base"
-	. "github.com/river-build/river/core/node/protocol"
-	"github.com/river-build/river/core/node/shared"
+	. "github.com/towns-protocol/towns/core/node/base"
+	. "github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/shared"
 )
 
 // UserPreferences are all user cache and web/APN subscriptions a user has configured through the API.
@@ -306,7 +306,8 @@ func (up *UserPreferences) WantNotificationForSpaceChannelMessage(
 			MessageInteractionType_MESSAGE_INTERACTION_TYPE_UNSPECIFIED:
 			return true
 		case MessageInteractionType_MESSAGE_INTERACTION_TYPE_EDIT,
-			MessageInteractionType_MESSAGE_INTERACTION_TYPE_REDACTION:
+			MessageInteractionType_MESSAGE_INTERACTION_TYPE_REDACTION,
+			MessageInteractionType_MESSAGE_INTERACTION_TYPE_TRADE:
 			return false
 		}
 

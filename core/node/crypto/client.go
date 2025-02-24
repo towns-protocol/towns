@@ -20,7 +20,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/river-build/river/core/node/infra"
+	"github.com/towns-protocol/towns/core/node/infra"
 )
 
 type simulatedClientWrapper struct {
@@ -125,6 +125,26 @@ func (ic *otelEthClient) BlockNumber(ctx context.Context) (uint64, error) {
 	}
 
 	return ic.Client.BlockNumber(ctx)
+}
+
+func (ic *otelEthClient) SuggestGasTipCap(ctx context.Context) (*big.Int, error) {
+	if ic.tracer != nil {
+		var span trace.Span
+		ctx, span = ic.tracer.Start(ctx, "eth_maxPriorityFeePerGas")
+		defer span.End()
+	}
+
+	return ic.Client.SuggestGasTipCap(ctx)
+}
+
+func (ic *otelEthClient) PendingCodeAt(ctx context.Context, account common.Address) ([]byte, error) {
+	if ic.tracer != nil {
+		var span trace.Span
+		ctx, span = ic.tracer.Start(ctx, "eth_getCode")
+		defer span.End()
+	}
+
+	return ic.Client.PendingCodeAt(ctx, account)
 }
 
 func (ic *otelEthClient) SendTransaction(ctx context.Context, tx *types.Transaction) error {

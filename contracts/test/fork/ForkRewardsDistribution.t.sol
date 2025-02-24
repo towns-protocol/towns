@@ -55,7 +55,7 @@ contract ForkRewardsDistributionTest is
 
     baseRegistry = getDeployment("baseRegistry");
     spaceFactory = getDeployment("spaceFactory");
-    towns = Towns(getDeployment("towns"));
+    towns = Towns(getDeployment("river"));
     rewardsDistributionFacet = RewardsDistribution(baseRegistry);
     owner = OwnableFacet(baseRegistry).owner();
 

@@ -1,0 +1,158 @@
+{
+  "compiler": {
+    "version": "0.8.24+commit.e11b9ed9"
+  },
+  "language": "Solidity",
+  "output": {
+    "abi": [
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "ReviewFacet__InvalidCommentLength"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "ReviewFacet__InvalidRating"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "user",
+            "type": "address",
+            "indexed": true
+          },
+          {
+            "internalType": "struct ReviewStorage.Content",
+            "name": "review",
+            "type": "tuple",
+            "components": [
+              {
+                "internalType": "string",
+                "name": "comment",
+                "type": "string"
+              },
+              {
+                "internalType": "uint8",
+                "name": "rating",
+                "type": "uint8"
+              }
+            ],
+            "indexed": false
+          }
+        ],
+        "type": "event",
+        "name": "ReviewAdded",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "user",
+            "type": "address",
+            "indexed": true
+          }
+        ],
+        "type": "event",
+        "name": "ReviewDeleted",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "user",
+            "type": "address",
+            "indexed": true
+          },
+          {
+            "internalType": "struct ReviewStorage.Content",
+            "name": "review",
+            "type": "tuple",
+            "components": [
+              {
+                "internalType": "string",
+                "name": "comment",
+                "type": "string"
+              },
+              {
+                "internalType": "uint8",
+                "name": "rating",
+                "type": "uint8"
+              }
+            ],
+            "indexed": false
+          }
+        ],
+        "type": "event",
+        "name": "ReviewUpdated",
+        "anonymous": false
+      }
+    ],
+    "devdoc": {
+      "kind": "dev",
+      "methods": {},
+      "version": 1
+    },
+    "userdoc": {
+      "kind": "user",
+      "methods": {},
+      "version": 1
+    }
+  },
+  "settings": {
+    "remappings": [
+      "@openzeppelin/=node_modules/@openzeppelin/",
+      "@prb/math/=node_modules/@prb/math/src/",
+      "@prb/test/=node_modules/@prb/test/src/",
+      "@river-build/diamond/=node_modules/@river-build/diamond/",
+      "account-abstraction/=node_modules/account-abstraction/contracts/",
+      "ds-test/=node_modules/ds-test/src/",
+      "forge-std/=node_modules/forge-std/src/",
+      "hardhat-deploy/=node_modules/hardhat-deploy/",
+      "solady/=node_modules/solady/src/"
+    ],
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "metadata": {
+      "bytecodeHash": "none",
+      "appendCBOR": false
+    },
+    "compilationTarget": {
+      "contracts/src/spaces/facets/review/IReview.sol": "IReviewBase"
+    },
+    "evmVersion": "paris",
+    "libraries": {}
+  },
+  "sources": {
+    "contracts/src/spaces/facets/review/IReview.sol": {
+      "keccak256": "0xc9c69cc58f75d6846cb06f5ebf239b6e9a41320bb8c166c6ec5e386fe7eadc9d",
+      "urls": [
+        "bzz-raw://e1a48b8949cddb3d940de1fba319821a58381b2911f2f58741fbe9bf777ebf4f",
+        "dweb:/ipfs/QmWRKnVkt74RRN125PYdv4aYtYTXChvMZwrb9MCSsGfhkr"
+      ],
+      "license": "MIT"
+    },
+    "contracts/src/spaces/facets/review/ReviewStorage.sol": {
+      "keccak256": "0x98d1fac30e8dc8ad3c791bec718b6bdee06b2f5fa7bf5b76a65300c038394fd8",
+      "urls": [
+        "bzz-raw://b87788f7e47a9bd8a4eab3a03d908cf120618996361e9bc7bc4be41f1be949ab",
+        "dweb:/ipfs/QmdQzQoJnGMMbjLy7FPmcst3ETiundvFXZ67k1QaTmY26R"
+      ],
+      "license": "MIT"
+    },
+    "node_modules/solady/src/utils/EnumerableSetLib.sol": {
+      "keccak256": "0x2c6add1cfac11c6fdce6630ca6e15b398471718b1478870e3ffc15c13bef31f0",
+      "urls": [
+        "bzz-raw://2f2d89db798be6df7a53761826396b668a85b0ef9e34b074c97ebf7c31826686",
+        "dweb:/ipfs/QmUQeF8owogBTCchomTWLTKscEUWsUtCR68KpPTSTKHDNm"
+      ],
+      "license": "MIT"
+    }
+  },
+  "version": 1
+}

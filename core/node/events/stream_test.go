@@ -5,15 +5,14 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/emptypb"
 
-	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/crypto"
-	. "github.com/river-build/river/core/node/protocol"
-	. "github.com/river-build/river/core/node/shared"
-	"github.com/river-build/river/core/node/testutils"
-
-	"github.com/stretchr/testify/require"
+	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/crypto"
+	. "github.com/towns-protocol/towns/core/node/protocol"
+	. "github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/testutils"
 )
 
 func MakeGenesisMiniblockForSpaceStream(
@@ -49,6 +48,31 @@ func MakeGenesisMiniblockForUserSettingsStream(
 	inception, err := MakeParsedEventWithPayload(
 		userWallet,
 		Make_UserSettingsPayload_Inception(streamId, nil),
+		&MiniblockRef{},
+	)
+	require.NoError(t, err)
+
+	mb, err := MakeGenesisMiniblock(nodeWallet, []*ParsedEvent{inception})
+	require.NoError(t, err)
+
+	mbInfo, err := NewMiniblockInfoFromProto(
+		mb,
+		NewParsedMiniblockInfoOpts().WithExpectedBlockNumber(0).WithDoNotParseEvents(true),
+	)
+	require.NoError(t, err)
+
+	return mbInfo
+}
+
+func MakeGenesisMiniblockForMediaStream(
+	t *testing.T,
+	userWallet *crypto.Wallet,
+	nodeWallet *crypto.Wallet,
+	media *MediaPayload_Inception,
+) *MiniblockInfo {
+	inception, err := MakeParsedEventWithPayload(
+		userWallet,
+		Make_MediaPayload_Inception(media),
 		&MiniblockRef{},
 	)
 	require.NoError(t, err)
@@ -111,7 +135,7 @@ func addEventToStream(
 	t *testing.T,
 	ctx context.Context,
 	streamCacheParams *StreamCacheParams,
-	stream SyncStream,
+	stream *Stream,
 	data string,
 	prevMiniblock *MiniblockRef,
 ) {
@@ -130,10 +154,10 @@ func addEventToStream(
 func addEventToView(
 	t *testing.T,
 	streamCacheParams *StreamCacheParams,
-	view *streamViewImpl,
+	view *StreamView,
 	data string,
 	prevMiniblock *MiniblockRef,
-) *streamViewImpl {
+) *StreamView {
 	view, err := view.copyAndAddEvent(
 		MakeEvent(
 			t,
@@ -147,8 +171,8 @@ func addEventToView(
 	return view
 }
 
-func getView(t *testing.T, ctx context.Context, stream *streamImpl) *streamViewImpl {
-	view, err := stream.getViewIfLocal(ctx)
+func getView(t *testing.T, ctx context.Context, stream *Stream) *StreamView {
+	view, err := stream.GetViewIfLocal(ctx)
 	require.NoError(t, err)
 	require.NotNil(t, view)
 	return view
@@ -241,9 +265,8 @@ func TestCandidatePromotionCandidateInPlace(t *testing.T) {
 		spaceStreamId,
 	)
 
-	syncStream, viewInt := tt.createStream(spaceStreamId, genesisMb.Proto)
-	stream := syncStream.(*streamImpl)
-	view := viewInt.(*streamViewImpl)
+	syncStream, view := tt.createStream(spaceStreamId, genesisMb.Proto)
+	stream := syncStream
 
 	addEventToStream(t, ctx, tt.instances[0].params, stream, "1", view.LastBlock().Ref)
 	addEventToStream(t, ctx, tt.instances[0].params, stream, "2", view.LastBlock().Ref)
@@ -267,7 +290,7 @@ func TestCandidatePromotionCandidateInPlace(t *testing.T) {
 
 	require.NoError(stream.promoteCandidate(ctx, candidate.Ref))
 
-	view, err = stream.getViewIfLocal(ctx)
+	view, err = stream.GetViewIfLocal(ctx)
 	require.NoError(err)
 	require.EqualValues(candidate.Ref, view.LastBlock().Ref)
 	require.Equal(0, view.minipool.events.Len())
@@ -288,9 +311,8 @@ func TestCandidatePromotionCandidateIsDelayed(t *testing.T) {
 		spaceStreamId,
 	)
 
-	syncStream, viewInt := tt.createStream(spaceStreamId, genesisMb.Proto)
-	stream := syncStream.(*streamImpl)
-	view := viewInt.(*streamViewImpl)
+	syncStream, view := tt.createStream(spaceStreamId, genesisMb.Proto)
+	stream := syncStream
 
 	addEventToStream(t, ctx, params, stream, "1", view.LastBlock().Ref)
 	addEventToStream(t, ctx, params, stream, "2", view.LastBlock().Ref)

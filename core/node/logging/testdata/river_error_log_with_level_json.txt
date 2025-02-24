@@ -1,0 +1,1 @@
+{"level":"INFO","timestamp":"[TIMESTAMP]","msg":"secondFunction: firstFunction: (47:DB_OPERATION_FAILURE) this is the error message\n<<base 0: test\n>>base 0 end","tagA":"a","tagB":"b"}

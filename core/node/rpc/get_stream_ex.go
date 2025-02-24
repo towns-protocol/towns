@@ -6,9 +6,9 @@ import (
 	"connectrpc.com/connect"
 	"google.golang.org/protobuf/proto"
 
-	. "github.com/river-build/river/core/node/base"
-	. "github.com/river-build/river/core/node/protocol"
-	"github.com/river-build/river/core/node/shared"
+	. "github.com/towns-protocol/towns/core/node/base"
+	. "github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/shared"
 )
 
 func (s *Service) localGetStreamEx(
@@ -21,7 +21,7 @@ func (s *Service) localGetStreamEx(
 		return err
 	}
 
-	if err = s.storage.ReadMiniblocksByStream(ctx, streamId, func(blockdata []byte, seqNum int) error {
+	if err = s.storage.ReadMiniblocksByStream(ctx, streamId, func(blockdata []byte, _ int64) error {
 		var mb Miniblock
 		if err = proto.Unmarshal(blockdata, &mb); err != nil {
 			return WrapRiverError(Err_BAD_BLOCK, err).Message("Unable to unmarshal miniblock")

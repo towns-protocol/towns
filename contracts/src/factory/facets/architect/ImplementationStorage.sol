@@ -19,7 +19,7 @@ library ImplementationStorage {
     0x9e34afa7b4d27d347d25d9d9dab4f1a106fa081382e6c4243e834d093e787d00;
 
   struct Layout {
-    ISpaceOwner spaceToken;
+    ISpaceOwner spaceOwnerToken;
     IUserEntitlement userEntitlement;
     IRuleEntitlementV2 ruleEntitlement;
     IWalletLink walletLink;

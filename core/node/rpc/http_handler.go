@@ -5,8 +5,8 @@ import (
 
 	"go.uber.org/zap"
 
-	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/logging"
+	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/logging"
 )
 
 const (

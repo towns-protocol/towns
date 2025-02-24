@@ -94,11 +94,14 @@ describe('syncStreams', () => {
         )
         await userInboxStream.initializeFromResponse(userInboxStreamResponse)
 
-        await alicesSyncedStreams.startSyncStreams()
+        alicesSyncedStreams.startSyncStreams()
         await done1.promise
 
         alicesSyncedStreams.set(alicesUserInboxStreamIdStr, userInboxStream)
-        await alicesSyncedStreams.addStreamToSync(userInboxStream.view.syncCookie!)
+        alicesSyncedStreams.addStreamToSync(
+            alicesUserInboxStreamIdStr,
+            userInboxStream.view.syncCookie!,
+        )
 
         // some helper functions
         const addEvent = async (payload: PlainMessage<StreamEvent>['payload']) => {

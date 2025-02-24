@@ -14,6 +14,7 @@ import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
 contract DeploySpaceEntitlementGated is FacetHelper, Deployer {
   constructor() {
     addSelector(EntitlementGated.postEntitlementCheckResult.selector);
+    addSelector(EntitlementGated.postEntitlementCheckResultV2.selector);
     addSelector(EntitlementGated.getRuleData.selector);
   }
 
