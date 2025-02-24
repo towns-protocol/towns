@@ -38,8 +38,12 @@ export const CountdownPill = (props: { lastCheckIn: number }) => {
     )
 }
 
-export const RiverPointsPill = (props: { riverPoints?: number; isActive: boolean }) => {
-    const { riverPoints, isActive } = props
+export const RiverPointsPill = (props: {
+    riverPoints?: number
+    isActive: boolean
+    isPointsSuccess: boolean
+}) => {
+    const { riverPoints, isActive, isPointsSuccess } = props
     const ref = useRef<HTMLDivElement>(null)
     const [points, setPoints] = useState(riverPoints)
     const pointsRef = useRef(points)
@@ -51,7 +55,7 @@ export const RiverPointsPill = (props: { riverPoints?: number; isActive: boolean
         const newPoints = riverPoints - pointsRef.current
         pointsRef.current = riverPoints
 
-        if (newPoints) {
+        if (isPointsSuccess && newPoints > 0 && newPoints <= 30) {
             for (let i = 0; i < newPoints; i++) {
                 setTimeout(() => {
                     const style = ref.current?.style
@@ -63,11 +67,13 @@ export const RiverPointsPill = (props: { riverPoints?: number; isActive: boolean
                             style.backgroundColor = ''
                         })
                     }
-                    setPoints((prev) => oldPoints + i + 1)
+                    setPoints(() => oldPoints + i + 1)
                 }, (2 + i * 0.5) * SECOND_MS)
             }
+        } else {
+            setPoints(riverPoints)
         }
-    }, [riverPoints])
+    }, [riverPoints, isPointsSuccess])
     return (
         <Pill ref={ref}>
             <BeaverHead isActive={isActive} />

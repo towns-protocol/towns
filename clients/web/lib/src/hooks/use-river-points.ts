@@ -1,4 +1,4 @@
-import { queryClient, staleTime24Hours, useQuery, useQueryClient } from '../query/queryClient'
+import { queryClient, useQuery, useQueryClient } from '../query/queryClient'
 import { blockchainKeys } from '../query/query-keys'
 import { useTownsContext } from '../components/TownsContextProvider'
 import { ethers } from 'ethers'
@@ -9,7 +9,8 @@ import { useOnTransactionUpdated } from '../store/use-transactions-store'
 import { BlockchainTransactionType } from '../types/web3-types'
 
 const SECONDS_MS = 1000
-const DAY_MS = 24 * 60 * 60 * SECONDS_MS
+const HOUR_MS = 60 * 60 * SECONDS_MS
+const DAY_MS = 24 * HOUR_MS
 
 export function useRiverPoints(loggedInWalletAddress: `0x${string}`) {
     const { baseChain: chain, clientStatus, spaceIds } = useTownsContext()
@@ -63,8 +64,8 @@ export function useRiverPoints(loggedInWalletAddress: `0x${string}`) {
         },
         {
             enabled: !!dapp && !!loggedInWalletAddress,
-            staleTime: staleTime24Hours,
-            gcTime: staleTime24Hours,
+            staleTime: HOUR_MS * 4,
+            refetchOnWindowFocus: 'always',
         },
     )
 

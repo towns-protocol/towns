@@ -35,7 +35,7 @@ export const RiverPointsPanel = () => {
         rootKeyAddress: wallet,
     })
 
-    const { checkIn, data, isSubmitting } = useHandleCheckin(
+    const { checkIn, data, isSubmitting, isPointsSuccess } = useHandleCheckin(
         abstractAccountAddress as `0x${string}`,
     )
 
@@ -78,6 +78,7 @@ export const RiverPointsPanel = () => {
                                 return (
                                     <BeaverAnimation
                                         isSubmitting={isSubmitting}
+                                        isPointsSuccess={isPointsSuccess}
                                         abstractAccountAddress={abstractAccountAddress}
                                         isActive={!!data?.isActive}
                                         points={data?.riverPoints}
@@ -107,6 +108,7 @@ export const RiverPointsPanel = () => {
                                 <RiverPointsPill
                                     riverPoints={data.riverPoints}
                                     isActive={data.isActive}
+                                    isPointsSuccess={isPointsSuccess}
                                 />
                             </FadeInBox>
                         )}
@@ -151,6 +153,7 @@ const useHandleCheckin = (abstractAccountAddress: `0x${string}` | undefined) => 
     const currentPointsRef = useRef<number>()
     const isAwaitingPointsRef = useRef(false)
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const [isPointsSuccess, setIsPointsSuccess] = useState(false)
 
     const spaceId = useSpaceId()
 
@@ -183,6 +186,7 @@ const useHandleCheckin = (abstractAccountAddress: `0x${string}` | undefined) => 
     const onSuccess = useCallback(() => {
         console.log('[river-points] onSuccess')
         setIsSubmitting(false)
+        setIsPointsSuccess(true)
         isAwaitingPointsRef.current = true
         currentPointsRef.current = data?.riverPoints ?? 0
         Analytics.getInstance().track('completed belly rub', {
@@ -193,6 +197,7 @@ const useHandleCheckin = (abstractAccountAddress: `0x${string}` | undefined) => 
     const onError = useCallback((error: Error | undefined) => {
         console.log('[river-points] onError', error)
         setIsSubmitting(false)
+        setIsPointsSuccess(false)
         popupToast(({ toast }) => (
             <StandardToast.Error
                 icon="beaver"
@@ -244,5 +249,6 @@ const useHandleCheckin = (abstractAccountAddress: `0x${string}` | undefined) => 
         checkIn,
         data,
         isSubmitting,
+        isPointsSuccess,
     }
 }

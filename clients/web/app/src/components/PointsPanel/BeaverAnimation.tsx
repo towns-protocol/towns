@@ -22,6 +22,7 @@ const MAX_WIDTH = 400
 type Props = {
     isActive: boolean
     isSubmitting: boolean
+    isPointsSuccess: boolean
     onBellyRub: () => Promise<boolean | undefined>
     points: number | undefined
     abstractAccountAddress: `0x${string}` | undefined
@@ -31,7 +32,7 @@ type Props = {
 export const BeaverAnimation = (props: Props) => {
     const canvasRef = useRef<HTMLCanvasElement>(null)
 
-    const { coins, removeCoin } = useCoinsAnimation(props.points)
+    const { coins, removeCoin } = useCoinsAnimation(props.points, props.isPointsSuccess)
 
     const [isActive, setActive] = useState(props.isActive)
     useBeaverAnimations(canvasRef, isActive)
@@ -286,7 +287,7 @@ const useBeaverAnimations = (canvasRef: React.RefObject<HTMLCanvasElement>, isAc
     return { setAnimationInactive, restoreAnimationActive: setAnimationActive }
 }
 
-const useCoinsAnimation = (points: number | undefined) => {
+const useCoinsAnimation = (points: number | undefined, isPointsSuccess: boolean) => {
     const { containerWidth, containerHeight } = useSizeContext()
     const [coins, setCoins] = useState<CoinData[]>(() => [])
     const pointsRef = useRef(points)
@@ -303,21 +304,22 @@ const useCoinsAnimation = (points: number | undefined) => {
 
         const newPoints = points - pointsRef.current
         pointsRef.current = points
-
-        setCoins(() => {
-            return [
-                ...Array.from({ length: newPoints }).map((_, index, arr) => ({
-                    delay: 0.5 * index * SECOND_MS,
-                    pos: {
-                        t: 0,
-                        x: containerWidth / 2 - Math.min(MAX_WIDTH, containerWidth) * -0.05,
-                        y: containerHeight / 2 - Math.min(MAX_WIDTH, containerWidth) * 0.35,
-                    },
-                    key: `coin_${Date.now() * 1000 + index}`,
-                })),
-            ]
-        })
-    }, [containerHeight, containerWidth, points])
+        if (isPointsSuccess && newPoints > 0 && newPoints <= 30) {
+            setCoins(() => {
+                return [
+                    ...Array.from({ length: newPoints }).map((_, index, arr) => ({
+                        delay: 0.5 * index * SECOND_MS,
+                        pos: {
+                            t: 0,
+                            x: containerWidth / 2 - Math.min(MAX_WIDTH, containerWidth) * -0.05,
+                            y: containerHeight / 2 - Math.min(MAX_WIDTH, containerWidth) * 0.35,
+                        },
+                        key: `coin_${Date.now() * 1000 + index}`,
+                    })),
+                ]
+            })
+        }
+    }, [containerHeight, containerWidth, points, isPointsSuccess])
 
     const removeCoin = useCallback((coin: CoinData) => {
         setCoins((prev) => prev.filter((c) => c.key !== coin.key))
