@@ -17,19 +17,13 @@ import {RewardsDistributionStorage} from "contracts/src/base/registry/facets/dis
 
 // contracts
 import {DeployRewardsDistributionV2} from "contracts/scripts/deployments/facets/DeployRewardsDistributionV2.s.sol";
-import {EIP712Utils} from "contracts/test/utils/EIP712Utils.sol";
 import {Towns} from "contracts/src/tokens/towns/base/Towns.sol";
 import {DelegationProxy} from "contracts/src/base/registry/facets/distribution/v2/DelegationProxy.sol";
 import {UpgradeableBeaconBase} from "contracts/src/diamond/facets/beacon/UpgradeableBeacon.sol";
 import {RewardsDistribution} from "contracts/src/base/registry/facets/distribution/v2/RewardsDistribution.sol";
 import {BaseRegistryTest} from "./BaseRegistry.t.sol";
 
-contract RewardsDistributionV2Test is
-  BaseRegistryTest,
-  EIP712Utils,
-  IOwnableBase,
-  IDiamond
-{
+contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
   using FixedPointMathLib for uint256;
 
   bytes32 internal constant STAKE_TYPEHASH =
@@ -439,6 +433,78 @@ contract RewardsDistributionV2Test is
       operator,
       commissionRate,
       beneficiary
+    );
+  }
+
+  function test_fuzz_permitAndIncreaseStake(
+    uint96 amount0,
+    uint96 amount1,
+    uint256 privateKey,
+    address operator,
+    uint256 commissionRate,
+    address beneficiary,
+    uint256 deadline
+  ) public givenOperator(operator, commissionRate) {
+    vm.assume(beneficiary != address(0) && beneficiary != operator);
+    amount0 = uint96(bound(amount0, 1, type(uint96).max));
+    amount1 = uint96(bound(amount1, 0, type(uint96).max - amount0));
+    commissionRate = bound(commissionRate, 0, 10000);
+    deadline = bound(deadline, block.timestamp, type(uint256).max);
+
+    privateKey = boundPrivateKey(privateKey);
+    address user = vm.addr(privateKey);
+
+    uint96 totalAmount = amount0 + amount1;
+    bridgeTokensForUser(user, totalAmount);
+    vm.prank(user);
+    towns.approve(address(rewardsDistributionFacet), amount0);
+
+    vm.prank(user);
+    uint256 depositId = rewardsDistributionFacet.stake(
+      amount0,
+      operator,
+      beneficiary
+    );
+
+    _permitAndIncreaseStake(depositId, amount1, privateKey, user, deadline);
+
+    verifyStake(
+      user,
+      depositId,
+      totalAmount,
+      operator,
+      commissionRate,
+      beneficiary
+    );
+  }
+
+  function _permitAndIncreaseStake(
+    uint256 depositId,
+    uint96 amount,
+    uint256 privateKey,
+    address user,
+    uint256 deadline
+  ) internal {
+    (uint8 v, bytes32 r, bytes32 s) = signPermit(
+      privateKey,
+      townsToken,
+      user,
+      address(rewardsDistributionFacet),
+      amount,
+      deadline
+    );
+
+    vm.expectEmit(true, true, true, false, address(rewardsDistributionFacet));
+    emit IncreaseStake(depositId, amount);
+
+    vm.prank(user);
+    rewardsDistributionFacet.permitAndIncreaseStake(
+      depositId,
+      amount,
+      deadline,
+      v,
+      r,
+      s
     );
   }
 

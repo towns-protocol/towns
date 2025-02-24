@@ -633,11 +633,39 @@ message BlockchainTransaction {
         Event event = 1; // event emitted by the tipping facet
         bytes toUserAddress = 2; // user that received funds
     }
+
+    message TokenTransfer {
+        bytes address = 1;
+        string amount = 2; // uint64 isn't big enough
+        bytes sender = 3;
+        bytes message_id = 4;
+        bytes channel_id = 5;
+        bool is_buy = 6;
+    }
+
+    message SpaceReview {
+        enum Action {
+            Add = 0;
+            Update = 1;
+            Delete = 2;
+        }
+        message Event {
+            bytes user = 1;
+            int32 rating = 2;
+            // the comment can be found in the receipt logs
+        }
+        bytes space_address = 1; // space that was reviewed
+        Action action = 2; // action that was taken (add, update, delete)
+        Event event = 3; // event emitted by the space review facet
+    }
     // required fields
     BlockchainTransactionReceipt receipt = 1;
+    SolanaBlockchainTransactionReceipt solana_receipt = 2;
     // optional metadata to be verified by the node
     oneof content {
         Tip tip = 101;
+        TokenTransfer token_transfer = 102;
+        SpaceReview space_review = 103;
     }
 }
 
@@ -654,6 +682,28 @@ message BlockchainTransactionReceipt {
     bytes to = 4;
     bytes from = 5;
     repeated Log logs = 6;
+}
+
+message SolanaBlockchainTransactionReceipt {
+    message Transaction {
+        repeated string signatures = 1;
+    }
+    message Meta {
+        message TokenBalance {
+            message UITokenAmount {
+                string amount = 1;
+                uint32 decimals = 2;
+            }
+            string mint = 1;
+            string owner = 2;
+            UITokenAmount amount = 3;
+        }
+        repeated TokenBalance pre_token_balances = 1;
+        repeated TokenBalance post_token_balances = 2;
+    }
+    uint64 slot = 1;
+    Transaction transaction = 2;
+    Meta meta = 3;
 }
 
 /**
@@ -1029,6 +1079,7 @@ enum MessageInteractionType {
     MESSAGE_INTERACTION_TYPE_EDIT = 4;
     MESSAGE_INTERACTION_TYPE_REDACTION = 5;
     MESSAGE_INTERACTION_TYPE_TIP = 6;
+    MESSAGE_INTERACTION_TYPE_TRADE = 7;
 }
 
 enum GroupMentionType {

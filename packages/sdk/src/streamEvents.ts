@@ -16,10 +16,11 @@ import {
     RemoteTimelineEvent,
     StreamTimelineEvent,
 } from './types'
-import { KeySolicitationContent, UserDevice } from '@river-build/encryption'
+import { EventSignatureBundle, KeySolicitationContent, UserDevice } from '@river-build/encryption'
 import { EncryptedContent } from './encryptedContentTypes'
 import { SyncState } from './syncedStreamsLoop'
 import { Pin } from './streamStateView_Members'
+import { SpaceReviewEventObject } from '@river-build/web3'
 
 export type StreamChange = {
     prepended?: RemoteTimelineEvent[]
@@ -37,12 +38,14 @@ export type StreamEncryptionEvents = {
         fromUserId: string,
         fromUserAddress: Uint8Array,
         event: KeySolicitationContent,
+        sigBundle: EventSignatureBundle,
     ) => void
     updatedKeySolicitation: (
         streamId: string,
         fromUserId: string,
         fromUserAddress: Uint8Array,
         event: KeySolicitationContent,
+        sigBundle: EventSignatureBundle,
     ) => void
     initKeySolicitations: (
         streamId: string,
@@ -51,6 +54,7 @@ export type StreamEncryptionEvents = {
             userAddress: Uint8Array
             solicitations: KeySolicitationContent[]
         }[],
+        sigBundle: EventSignatureBundle,
     ) => void
     userDeviceKeyMessage: (streamId: string, userId: string, userDevice: UserDevice) => void
 }
@@ -98,6 +102,7 @@ export type StreamStateEvents = {
     ) => void
     spaceChannelDeleted: (spaceId: string, channelId: string) => void
     spaceImageUpdated: (spaceId: string) => void
+    spaceReviewsUpdated: (streamId: string, review: SpaceReviewEventObject) => void
     channelPinAdded: (channelId: string, pin: Pin) => void
     channelPinRemoved: (channelId: string, pin: Pin, index: number) => void
     channelPinDecrypted: (channelId: string, pin: Pin, index: number) => void

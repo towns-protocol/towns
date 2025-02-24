@@ -927,7 +927,7 @@ export async function linkWallets(
 export function waitFor<T>(
     callback: (() => T) | (() => Promise<T>),
     options: { timeoutMS: number } = { timeoutMS: 5000 },
-): Promise<T | undefined> {
+): Promise<T> {
     const timeoutContext: Error = new Error(
         'waitFor timed out after ' + options.timeoutMS.toString() + 'ms',
     )
@@ -941,8 +941,10 @@ export function waitFor<T>(
         function onDone(result?: T) {
             clearInterval(intervalId)
             clearInterval(timeoutId)
-            if (result || promiseStatus === 'resolved') {
+            if (result) {
                 resolve(result)
+            } else if (result === undefined && promiseStatus === 'resolved') {
+                resolve(undefined as T)
             } else {
                 reject(lastError)
             }
@@ -972,7 +974,11 @@ export function waitFor<T>(
                     )
                 } else {
                     promiseStatus = 'resolved'
-                    resolve(result)
+                    if (result) {
+                        // if result is not truthy, resolve
+                        resolve(result)
+                    }
+                    // otherwise let the polling continue
                 }
             } catch (err: any) {
                 lastError = err
