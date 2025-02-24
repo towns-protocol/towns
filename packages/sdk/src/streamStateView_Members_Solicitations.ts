@@ -3,13 +3,14 @@ import { MemberPayload_KeyFulfillment, MemberPayload_KeySolicitation } from '@ri
 import { StreamEncryptionEvents } from './streamEvents'
 import { StreamMember } from './streamStateView_Members'
 import { removeCommon } from './utils'
-import { KeySolicitationContent } from '@river-build/encryption'
+import { EventSignatureBundle, KeySolicitationContent } from '@river-build/encryption'
 
 export class StreamStateView_Members_Solicitations {
     constructor(readonly streamId: string) {}
 
     initSolicitations(
         members: StreamMember[],
+        sigBundle: EventSignatureBundle,
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ): void {
         encryptionEmitter?.emit(
@@ -20,6 +21,7 @@ export class StreamStateView_Members_Solicitations {
                 userAddress: member.userAddress,
                 solicitations: member.solicitations,
             })),
+            sigBundle,
         )
     }
 
@@ -27,6 +29,7 @@ export class StreamStateView_Members_Solicitations {
         user: StreamMember,
         eventId: string,
         solicitation: MemberPayload_KeySolicitation,
+        sigBundle: EventSignatureBundle,
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ): void {
         user.solicitations = user.solicitations.filter(
@@ -46,12 +49,14 @@ export class StreamStateView_Members_Solicitations {
             user.userId,
             user.userAddress,
             newSolicitation,
+            sigBundle,
         )
     }
 
     applyFulfillment(
         user: StreamMember,
         fulfillment: MemberPayload_KeyFulfillment,
+        sigBundle: EventSignatureBundle,
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ): void {
         const index = user.solicitations.findIndex((x) => x.deviceKey === fulfillment.deviceKey)
@@ -73,6 +78,7 @@ export class StreamStateView_Members_Solicitations {
             user.userId,
             user.userAddress,
             newEvent,
+            sigBundle,
         )
     }
 }

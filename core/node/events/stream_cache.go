@@ -46,6 +46,7 @@ type StreamCacheParams struct {
 	Scrubber                Scrubber
 	NodeRegistry            NodeRegistry
 	Tracer                  trace.Tracer
+	disableCallbacks        bool // for test purposes
 }
 
 type StreamCache struct {
@@ -66,6 +67,8 @@ type StreamCache struct {
 	streamCacheRemoteGauge   prometheus.Gauge
 
 	onlineSyncWorkerPool *workerpool.WorkerPool
+
+	disableCallbacks bool
 }
 
 func NewStreamCache(params *StreamCacheParams) *StreamCache {
@@ -95,6 +98,7 @@ func NewStreamCache(params *StreamCacheParams) *StreamCache {
 		),
 		chainConfig:          params.ChainConfig,
 		onlineSyncWorkerPool: workerpool.New(params.Config.StreamReconciliation.OnlineWorkerPoolSize),
+		disableCallbacks:     params.disableCallbacks,
 	}
 }
 
@@ -140,15 +144,15 @@ func (s *StreamCache) Start(ctx context.Context) error {
 	s.appliedBlockNum.Store(uint64(s.params.AppliedBlockNum))
 
 	// Close initial worker pool after all tasks are executed.
-	go func() {
-		initialSyncWorkerPool.StopWait()
-	}()
+	go initialSyncWorkerPool.StopWait()
 
 	// TODO: add buffered channel to avoid blocking ChainMonitor
-	s.params.RiverChain.ChainMonitor.OnBlockWithLogs(
-		s.params.AppliedBlockNum+1,
-		s.onBlockWithLogs,
-	)
+	if !s.disableCallbacks {
+		s.params.RiverChain.ChainMonitor.OnBlockWithLogs(
+			s.params.AppliedBlockNum+1,
+			s.onBlockWithLogs,
+		)
+	}
 
 	go s.runCacheCleanup(ctx)
 

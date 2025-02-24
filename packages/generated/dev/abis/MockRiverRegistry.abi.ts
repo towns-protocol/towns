@@ -451,7 +451,7 @@ export default [
     ],
     "outputs": [
       {
-        "name": "",
+        "name": "stream",
         "type": "tuple",
         "internalType": "struct Stream",
         "components": [
@@ -510,7 +510,7 @@ export default [
     ],
     "outputs": [
       {
-        "name": "",
+        "name": "count",
         "type": "uint256",
         "internalType": "uint256"
       }
@@ -529,7 +529,7 @@ export default [
     ],
     "outputs": [
       {
-        "name": "",
+        "name": "stream",
         "type": "tuple",
         "internalType": "struct Stream",
         "components": [

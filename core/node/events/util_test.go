@@ -53,8 +53,9 @@ type testParams struct {
 	recencyConstraintsAgeSec      int
 	defaultMinEventsPerSnapshot   int
 
-	disableMineOnTx bool
-	numInstances    int
+	disableMineOnTx             bool
+	numInstances                int
+	disableStreamCacheCallbacks bool
 }
 
 type noopScrubber struct{}
@@ -145,6 +146,7 @@ func makeCacheTestContext(t *testing.T, p testParams) (context.Context, *cacheTe
 			RemoteMiniblockProvider: ctc,
 			Scrubber:                &noopScrubber{},
 			NodeRegistry:            nr,
+			disableCallbacks:        p.disableStreamCacheCallbacks,
 		}
 
 		inst := &cacheTestInstance{
