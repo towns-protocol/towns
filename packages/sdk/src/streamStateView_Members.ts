@@ -9,8 +9,10 @@ import TypedEmitter from 'typed-emitter'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 import {
     ConfirmedTimelineEvent,
+    ParsedEvent,
     RemoteTimelineEvent,
     StreamTimelineEvent,
+    getEventSignature,
     makeRemoteTimelineEvent,
 } from './types'
 import { isDefined, logNever } from './check'
@@ -71,6 +73,7 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
     // initialization
     applySnapshot(
         eventId: string,
+        event: ParsedEvent,
         snapshot: Snapshot,
         cleartexts: Record<string, Uint8Array | string> | undefined,
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
@@ -141,7 +144,12 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
             cleartexts,
             encryptionEmitter,
         )
-        this.solicitHelper.initSolicitations(Array.from(this.joined.values()), encryptionEmitter)
+        const sigBundle = getEventSignature(event)
+        this.solicitHelper.initSolicitations(
+            Array.from(this.joined.values()),
+            sigBundle,
+            encryptionEmitter,
+        )
 
         snapshot.members?.pins.forEach((snappedPin) => {
             if (snappedPin.pin?.event) {
@@ -266,6 +274,7 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                         stateMember,
                         event.hashStr,
                         payload.content.value,
+                        getEventSignature(event.remoteEvent),
                         encryptionEmitter,
                     )
                 }
@@ -278,6 +287,7 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                     this.solicitHelper.applyFulfillment(
                         stateMember,
                         payload.content.value,
+                        getEventSignature(event.remoteEvent),
                         encryptionEmitter,
                     )
                 }
@@ -380,6 +390,8 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                         )
                         break
                     }
+                    case 'tokenTransfer':
+                        break
                     case 'spaceReview': {
                         if (!receipt) {
                             return

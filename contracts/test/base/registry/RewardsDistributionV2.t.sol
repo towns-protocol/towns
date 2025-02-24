@@ -17,19 +17,13 @@ import {RewardsDistributionStorage} from "contracts/src/base/registry/facets/dis
 
 // contracts
 import {DeployRewardsDistributionV2} from "contracts/scripts/deployments/facets/DeployRewardsDistributionV2.s.sol";
-import {EIP712Utils} from "contracts/test/utils/EIP712Utils.sol";
 import {Towns} from "contracts/src/tokens/towns/base/Towns.sol";
 import {DelegationProxy} from "contracts/src/base/registry/facets/distribution/v2/DelegationProxy.sol";
 import {UpgradeableBeaconBase} from "contracts/src/diamond/facets/beacon/UpgradeableBeacon.sol";
 import {RewardsDistribution} from "contracts/src/base/registry/facets/distribution/v2/RewardsDistribution.sol";
 import {BaseRegistryTest} from "./BaseRegistry.t.sol";
 
-contract RewardsDistributionV2Test is
-  BaseRegistryTest,
-  EIP712Utils,
-  IOwnableBase,
-  IDiamond
-{
+contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
   using FixedPointMathLib for uint256;
 
   bytes32 internal constant STAKE_TYPEHASH =

@@ -5,10 +5,12 @@ import {
     DecryptionStatus,
     EncryptedContentItem,
     EntitlementsDelegate,
+    EventSignatureBundle,
     GroupSessionsData,
     KeyFulfilmentData,
     KeySolicitationContent,
     KeySolicitationData,
+    KeySolicitationItem,
     makeSessionKeys,
 } from '../decryptionExtensions'
 import {
@@ -87,6 +89,15 @@ describe.concurrent('TestDecryptionExtensions', () => {
                 alice,
                 aliceUserAddress,
                 keySolicitationData,
+                {
+                    hash: new Uint8Array(),
+                    signature: new Uint8Array(),
+                    event: {
+                        creatorAddress: new Uint8Array(),
+                        delegateSig: new Uint8Array(),
+                        delegateExpiryEpochMs: 0n,
+                    },
+                },
             )
             // alice waits for the response
             await keySolicitation
@@ -316,6 +327,7 @@ class MockDecryptionExtensions extends BaseDecryptionExtensions {
         fromUserId: string,
         fromUserAddress: Uint8Array,
         keySolicitation: KeySolicitationContent,
+        sigBundle: EventSignatureBundle,
     ): Promise<void> {
         log('keySolicitationRequest', streamId, keySolicitation)
         this.markStreamUpToDate(streamId)
@@ -326,7 +338,13 @@ class MockDecryptionExtensions extends BaseDecryptionExtensions {
                 DecryptionStatus.done,
             )
             // start processing the request
-            this.enqueueKeySolicitation(streamId, fromUserId, fromUserAddress, keySolicitation)
+            this.enqueueKeySolicitation(
+                streamId,
+                fromUserId,
+                fromUserAddress,
+                keySolicitation,
+                sigBundle,
+            )
         })
         return p
     }
@@ -336,8 +354,8 @@ class MockDecryptionExtensions extends BaseDecryptionExtensions {
         return this._upToDateStreams.has(streamId)
     }
 
-    public isValidEvent(streamId: string, eventId: string): { isValid: boolean; reason?: string } {
-        log('isValidEvent', streamId, eventId)
+    public isValidEvent(item: KeySolicitationItem): { isValid: boolean; reason?: string } {
+        log('isValidEvent', item)
         return { isValid: true }
     }
 

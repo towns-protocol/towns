@@ -96,6 +96,8 @@ export class StreamStateView_User extends StreamStateView_AbstractContent {
                         stateEmitter?.emit('userTipSent', this.streamId, currency, event.amount)
                         break
                     }
+                    case 'tokenTransfer':
+                        break
                     case 'spaceReview': {
                         // user left a review on a space
                         break
@@ -122,6 +124,8 @@ export class StreamStateView_User extends StreamStateView_AbstractContent {
                         stateEmitter?.emit('userTipReceived', this.streamId, currency, event.amount)
                         break
                     }
+                    case 'tokenTransfer':
+                        break
                     case 'spaceReview': {
                         // user left a review on a space
                         break
