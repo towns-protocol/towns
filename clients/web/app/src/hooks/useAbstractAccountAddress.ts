@@ -1,5 +1,5 @@
 import { useQueries, useQuery } from '@tanstack/react-query'
-import { useCallback } from 'react'
+import { useCallback, useMemo } from 'react'
 import {
     Address,
     LookupUser,
@@ -125,9 +125,8 @@ export function useLookupUsersWithAbstractAccountAddress() {
     const setOfflineWalletAddress = useOfflineStore((s) => s.setOfflineWalletAddress)
 
     const { lookupUser } = useUserLookupContext()
-
-    return useQueries({
-        queries: memberIds.map((userId) => {
+    const queries = useMemo(() => {
+        return memberIds.map((userId) => {
             const cachedAddress = getCachedAddress({
                 rootKeyAddress: userId,
             })
@@ -140,7 +139,10 @@ export function useLookupUsersWithAbstractAccountAddress() {
                     setOfflineWalletAddress,
                 }),
             }
-        }),
+        })
+    }, [accountAbstractionConfig, memberIds, setOfflineWalletAddress, userOpsInstance])
+    return useQueries({
+        queries: queries,
         combine: (results) => {
             return {
                 data: results
