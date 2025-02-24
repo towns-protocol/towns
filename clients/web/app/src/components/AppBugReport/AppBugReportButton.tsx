@@ -2,11 +2,13 @@ import React, { useCallback } from 'react'
 import { Box, IconButton } from '@ui'
 import { useAppOverlayBugReport } from './useAppOverlayBugReport'
 
-export const AppBugReportButton = (props: { topRight?: true }) => {
+export const AppBugReportButton = (props: { topRight?: true; onClick?: () => void }) => {
+    const { onClick } = props
     const showBugReport = useAppOverlayBugReport((s) => s.setVisible)
     const onShowBugReport = useCallback(() => {
         showBugReport(true)
-    }, [showBugReport])
+        onClick?.()
+    }, [showBugReport, onClick])
 
     const button = (
         <>

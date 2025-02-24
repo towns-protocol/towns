@@ -6,8 +6,8 @@ import { AboveAppProgressModalContainer } from '@components/AppProgressOverlay/A
 import { usePublicPageLoginFlow } from 'routes/PublicTownPage/usePublicPageLoginFlow'
 import { useDevice } from 'hooks/useDevice'
 import { Box, Icon, IconButton, Paragraph } from '@ui'
-import { BugReportButton } from '@components/BugReportButton/BugReportButton'
 import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
+import { AppBugReportButton } from '@components/AppBugReport/AppBugReportButton'
 import { StandardUseropTx } from './StandardUseropTx'
 import { useMyAbstractAccountAddress } from './hooks/useMyAbstractAccountAddress'
 import { UserOpTxModalProvider } from './UserOpTxModalContext'
@@ -44,7 +44,14 @@ export function UserOpTxModal() {
             onHide={onHide}
         >
             <ErrorBoundary
-                FallbackComponent={({ error }) => <ErrorContent error={error} onHide={onHide} />}
+                FallbackComponent={({ error }) => (
+                    <ErrorContent
+                        containerName="UserOpTxModal"
+                        error={error}
+                        message="There was an error with your transaction. Please log a bug report."
+                        onHide={onHide}
+                    />
+                )}
             >
                 <UserOpTxModalProvider>
                     <StandardUseropTx
@@ -57,10 +64,20 @@ export function UserOpTxModal() {
     )
 }
 
-export function ErrorContent({ error, onHide }: { error: Error; onHide: () => void }) {
+export function ErrorContent({
+    error,
+    onHide,
+    containerName,
+    message,
+}: {
+    error: Error
+    onHide: () => void
+    containerName: string
+    message: string
+}) {
     useEffect(() => {
-        console.error(`[UserOpTxModal]::error`, error)
-    }, [error])
+        console.error(`[${containerName}]::error`, error)
+    }, [containerName, error])
     return (
         <Box centerContent padding>
             <IconButton icon="close" color="default" alignSelf="end" onClick={onHide} />
@@ -68,9 +85,9 @@ export function ErrorContent({ error, onHide }: { error: Error; onHide: () => vo
                 <Icon type="alert" color="negative" size="square_lg" insetBottom="xs" />
                 <Paragraph textAlign="center">Oops! We&apos;ve hit a snag. </Paragraph>
                 <Paragraph textAlign="center" color="gray2">
-                    There was an error with your transaction. Please log a bug report.
+                    {message}
                 </Paragraph>
-                <BugReportButton onClick={onHide} />
+                <AppBugReportButton onClick={onHide} />
             </Box>
         </Box>
     )

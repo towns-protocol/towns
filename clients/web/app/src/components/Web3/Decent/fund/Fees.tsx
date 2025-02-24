@@ -2,25 +2,27 @@ import React, { useMemo } from 'react'
 import { useGasPrice } from 'wagmi'
 import { MotionIcon, Stack, Text } from '@ui'
 import { Accordion } from 'ui/components/Accordion/Accordion'
-import { formatUnits, formatUnitsToFixedLength } from 'hooks/useBalance'
+import { formatUnitsToFixedLength } from 'hooks/useBalance'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { Section } from './Section'
-import { calculateUsdAmountFromToken, formatUsd } from '../../useEthPrice'
 import { useFundContext } from './FundContext'
-import { useDecentUsdConversion } from '../useDecentUsdConversion'
+import { useDecentUsdConversion, useUsdOrTokenConversion } from '../useDecentUsdConversion'
 export function Fees() {
     const { isEstimatedGasLoading, isBoxActionLoading, dstToken } = useFundContext()
     const { fees, total, isLoadingGasPrice } = useFees()
     const isGasLoading = isEstimatedGasLoading || isLoadingGasPrice
     const isLoading = isBoxActionLoading || isGasLoading
     const { data: dstTokenPriceInUsd } = useDecentUsdConversion(dstToken)
+    const conversion = useUsdOrTokenConversion()
 
-    const totalFeesUsd = calculateUsdAmountFromToken({
+    const totalFees = conversion({
         tokenAmount: total,
+        tokenPriceInUsd: dstTokenPriceInUsd?.quote?.formatted,
         // dstToken is always Base ETH
         // Decent's own modal always shows the gas/protocol fees in ETH
         // so using ETH as the token price in USD gives the same results
-        tokenPriceInUsd: dstTokenPriceInUsd?.quote?.formatted,
+        decimals: dstToken?.decimals,
+        symbol: dstToken?.symbol,
     })
 
     // The fees display follows Decent's modal logic, which is kind of confusing for ERC20s
@@ -65,7 +67,7 @@ export function Fees() {
                     <AccordionHeader
                         isExpanded={isExpanded}
                         isLoading={isLoading}
-                        feesUsd={formatUsd(formatUnits(totalFeesUsd ?? 0n))}
+                        feesUsd={totalFees ?? ''}
                     />
                 )}
                 background="none"

@@ -2,30 +2,25 @@ import React from 'react'
 import { Stack, Text } from '@ui'
 import { shortAddress } from 'ui/utils/utils'
 import { useMyAbstractAccountAddress } from '@components/Web3/UserOpTxModal/hooks/useMyAbstractAccountAddress'
-import { calculateUsdAmountFromToken, formatUsd } from '@components/Web3/useEthPrice'
-import { formatUnits } from 'hooks/useBalance'
 import { Section } from './Section'
 import { useFundContext } from './FundContext'
 import { NetworkLogo } from '../NetworkLogo'
-import { useDecentUsdConversion } from '../useDecentUsdConversion'
+import { useDecentUsdConversion, useUsdOrTokenConversion } from '../useDecentUsdConversion'
 
 export function Receiving() {
     const { dstToken, boxActionResponse } = useFundContext()
     const myAbstractAccountAddress = useMyAbstractAccountAddress().data
     const { data: dstTokenPriceInUsd } = useDecentUsdConversion(dstToken)
+    const conversion = useUsdOrTokenConversion()
 
-    const usdAmount = !dstTokenPriceInUsd
+    const convertedAmount = !dstTokenPriceInUsd
         ? '-'
-        : formatUsd(
-              formatUnits(
-                  calculateUsdAmountFromToken({
-                      tokenAmount: boxActionResponse?.amountOut?.amount,
-                      tokenPriceInUsd: dstTokenPriceInUsd?.quote?.formatted,
-                      decimals: boxActionResponse?.amountOut?.decimals,
-                  }) || 0n,
-                  dstToken?.decimals,
-              ),
-          )
+        : conversion({
+              tokenAmount: boxActionResponse?.amountOut?.amount,
+              tokenPriceInUsd: dstTokenPriceInUsd?.quote?.formatted,
+              decimals: boxActionResponse?.amountOut?.decimals,
+              symbol: dstToken?.symbol,
+          })
 
     return (
         <Section>
@@ -34,7 +29,7 @@ export function Receiving() {
                     <Text>Receiving</Text>
                     <Stack centerContent horizontal gap="sm">
                         {dstToken && <NetworkLogo token={dstToken} />}
-                        <Text color="gray2">{usdAmount}</Text>
+                        <Text color="gray2">{convertedAmount}</Text>
                     </Stack>
                 </Stack>
 

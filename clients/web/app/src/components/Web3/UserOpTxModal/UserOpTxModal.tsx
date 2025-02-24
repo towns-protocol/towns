@@ -48,7 +48,14 @@ export function UserOpTxModalV1() {
             onHide={onHide}
         >
             <ErrorBoundary
-                FallbackComponent={({ error }) => <ErrorContent error={error} onHide={onHide} />}
+                FallbackComponent={({ error }) => (
+                    <ErrorContent
+                        containerName="UserOpTxModal"
+                        error={error}
+                        message="There was an error with your transaction. Please log a bug report."
+                        onHide={onHide}
+                    />
+                )}
             >
                 <StandardUseropTx
                     disableUiWhileCrossmintPaymentPhase={disableUiWhileCrossmintPaymentPhase}

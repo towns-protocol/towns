@@ -5,18 +5,18 @@ import debounce from 'lodash/debounce'
 import { useUsersBalances } from '@decent.xyz/box-hooks'
 import { ErrorMessage, Icon, Stack, Text, TextField } from '@ui'
 import { useEthInputChange } from '@components/Web3/EditMembership/useEthInputChange'
-import { formatUnits, formatUnitsToFixedLength, parseUnits } from 'hooks/useBalance'
+import { formatUnitsToFixedLength, parseUnits } from 'hooks/useBalance'
 import { Section } from '@components/Web3/Decent/fund/Section'
 import { NetworkLogo } from '@components/Web3/Decent/NetworkLogo'
 import { TokenAmountSchema } from '@components/Web3/Decent/fund/formSchema'
-import { calculateUsdAmountFromToken, formatUsd } from '@components/Web3/useEthPrice'
 import { useFundContext } from './FundContext'
-import { useDecentUsdConversion } from '../useDecentUsdConversion'
+import { useDecentUsdConversion, useUsdOrTokenConversion } from '../useDecentUsdConversion'
 
 export function Sending(props: { setShowChainSelector: (show: boolean) => void }) {
     const { setShowChainSelector } = props
     const { srcToken, sender, amount } = useFundContext()
     const { data: tokenPriceInUsd } = useDecentUsdConversion(srcToken)
+    const conversion = useUsdOrTokenConversion()
 
     const { tokens } = useUsersBalances({
         address: sender,
@@ -27,17 +27,14 @@ export function Sending(props: { setShowChainSelector: (show: boolean) => void }
         (t) => t.chainId === srcToken?.chainId && t.address === srcToken?.address,
     )
 
-    const usdAmount = !tokenPriceInUsd
+    const convertedAmount = !tokenPriceInUsd
         ? '-'
-        : formatUsd(
-              formatUnits(
-                  calculateUsdAmountFromToken({
-                      tokenAmount: amount,
-                      tokenPriceInUsd: tokenPriceInUsd?.quote?.formatted,
-                  }) || 0n,
-                  srcToken?.decimals,
-              ),
-          )
+        : conversion({
+              tokenAmount: amount,
+              tokenPriceInUsd: tokenPriceInUsd?.quote?.formatted,
+              decimals: srcToken?.decimals,
+              symbol: srcToken?.symbol,
+          })
 
     return (
         <Section>
@@ -45,7 +42,7 @@ export function Sending(props: { setShowChainSelector: (show: boolean) => void }
                 <Stack gap="md">
                     <Text>Sending</Text>
                     <TokenAmountField />
-                    <Text color="gray2">{usdAmount}</Text>
+                    <Text color="gray2">{convertedAmount}</Text>
                 </Stack>
                 <Stack centerContent gap="sm">
                     <Stack

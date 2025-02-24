@@ -69,15 +69,35 @@ export function calculateEthAmountFromUsd(args: { cents: number; ethPriceInUsd: 
     }
 }
 
+export const INVALID_CALCULATION = 'INVALID'
 export function calculateUsdAmountFromToken(args: {
-    tokenAmount: bigint | undefined
-    tokenPriceInUsd: string | undefined
+    tokenAmount: unknown | undefined
+    tokenPriceInUsd: unknown | undefined
     decimals?: number
-}) {
+}): bigint | typeof INVALID_CALCULATION | undefined {
     const { tokenAmount, tokenPriceInUsd, decimals = 18 } = args
     if (!tokenAmount || !tokenPriceInUsd) {
         return undefined
     }
+    if (typeof tokenAmount !== 'bigint') {
+        console.error('[calculateUsdAmountFromToken] tokenAmount is not a bigint', tokenAmount)
+        return INVALID_CALCULATION
+    }
+    if (typeof tokenPriceInUsd !== 'string') {
+        console.error(
+            '[calculateUsdAmountFromToken] tokenPriceInUsd is not a string',
+            tokenPriceInUsd,
+        )
+        return INVALID_CALCULATION
+    }
+    if (!/^\d+(\.\d+)?$/.test(tokenPriceInUsd)) {
+        console.error(
+            '[calculateUsdAmountFromToken] tokenPriceInUsd is not a valid numerical string:',
+            tokenPriceInUsd,
+        )
+        return undefined
+    }
+
     const tokenPriceInUsdBigInt = parseUnits(tokenPriceInUsd, decimals)
     const usdValueBigInt = (tokenAmount * tokenPriceInUsdBigInt) / BigInt(10 ** decimals)
     return usdValueBigInt
@@ -95,6 +115,9 @@ export function useEthToUsdFormatted(args: {
         tokenAmount: ethAmount,
         tokenPriceInUsd: ethPrice?.toString(),
     })
+    if (amount === INVALID_CALCULATION) {
+        return '--'
+    }
     return formatUsd(formatUnitsToFixedLength(amount || 0n))
 }
 

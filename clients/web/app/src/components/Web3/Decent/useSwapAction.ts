@@ -109,6 +109,10 @@ export function useSwapWithApproval(args: UseSwapActionArgs & { approvedAt: Date
                 setIsApprovalRequired(false)
                 return
             }
+            console.log('[useSwapWithApproval] checking for approval', {
+                ...srcToken,
+                amount: actionResponse?.tokenPayment?.amount,
+            })
             const isApprovalRequired = await checkForApproval({
                 userAddress: sender as Address,
                 actionResponse,
@@ -118,7 +122,7 @@ export function useSwapWithApproval(args: UseSwapActionArgs & { approvedAt: Date
         }
 
         init()
-    }, [actionResponse, srcToken?.chainId, sender, approvedAt])
+    }, [actionResponse, srcToken, sender, approvedAt])
 
     return {
         actionResponse,
