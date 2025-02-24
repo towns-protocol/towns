@@ -356,3 +356,6 @@ interact-any-account :;
 deploy-base-sepolia-with-account :;
 	@$(MAKE) deploy-any-account rpc=base_sepolia verifier=etherscan verifier-url=${BASESCAN_SEPOLIA_URL} args="--etherscan-api-key ${BASESCAN_SEPOLIA_API_KEY}"
 	@$(MAKE) deploy-any-account rpc=base_sepolia verifier=blockscout verifier-url=${BLOCKSCOUT_SEPOLIA_URL} args="--resume"
+
+deploy-river-with-ledger :;
+	@$(MAKE) deploy-any-wallet rpc=river verifier=blockscout verifier-url=${RIVERSCAN_URL}
