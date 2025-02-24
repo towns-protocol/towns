@@ -202,10 +202,6 @@ export type MediaStreamBlockInfo = {
     prevMiniblockHash: Uint8Array
 }
 
-export interface SendTownsReactionOptions {
-    targetEventId: string
-}
-
 export interface SpaceIdOptions {
     parentSpaceId?: string
 }
