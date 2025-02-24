@@ -12,7 +12,6 @@
         "dev": "my-node src/index.ts",
         "lint": "yarn eslint --format unix ./src  --max-warnings=0",
         "lint:fix": "yarn lint --fix",
-        "test:unit": "vitest run --config vitest.config.unit.ts",
         "test:ci": "yarn test:ci:multi:ne",
         "test:watch": "vitest --watch",
         "watch": "tsc --watch"
