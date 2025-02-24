@@ -78,6 +78,62 @@ const defaultValues = {
     [FormStateKeys.attachments]: [],
 }
 
+const getNavigatorStorageEstimate = async () => {
+    try {
+        const { quota, usage } = await navigator.storage.estimate()
+        const mbUsage = (usage || 0) / 1024 / 1024
+        const mbQuota = (quota || 0) / 1024 / 1024
+        const usagePercentage = (((usage || 0) / (quota || 1)) * 100).toFixed(2)
+        const formatter = new Intl.NumberFormat('en-US', {
+            maximumFractionDigits: 2,
+            style: 'unit',
+            compactDisplay: 'short',
+            unit: 'megabyte',
+        })
+        return {
+            totalUsagePercentage: usagePercentage,
+            totalUsage: formatter.format(mbUsage),
+            totalQuota: formatter.format(mbQuota),
+        }
+    } catch {
+        return {
+            totalUsagePercentage: '??%',
+            totalUsage: '??',
+            totalQuota: '?? - Failed to get navigator storage estimate',
+        }
+    }
+}
+
+const getLocalStorageUsage = () => {
+    try {
+        const utf16BytesPerCharacter = 2
+        const totalBytes = Object.keys(localStorage).reduce((total, key) => {
+            return total + (key.length + (localStorage[key]?.length || 0)) * utf16BytesPerCharacter
+        }, 0)
+        const mbUsage = totalBytes / (1024 * 1024)
+        const mbQuota = 5
+        const usagePercentage = ((mbUsage / mbQuota) * 100).toFixed(2)
+        const formatter = new Intl.NumberFormat('en-US', {
+            maximumFractionDigits: 2,
+            style: 'unit',
+            compactDisplay: 'short',
+            unit: 'megabyte',
+        })
+
+        return {
+            usagePercentage,
+            totalUsage: formatter.format(mbUsage),
+            totalQuota: formatter.format(mbQuota),
+        }
+    } catch {
+        return {
+            usagePercentage: '??%',
+            totalUsage: '??',
+            totalQuota: '5.00MB - Failed to get localStorage usage',
+        }
+    }
+}
+
 async function postCustomError(
     data: FormState,
     info: {
@@ -119,6 +175,8 @@ async function postCustomError(
         deviceType = 'Laptop/Desktop'
     }
 
+    const storageEstimate = await getNavigatorStorageEstimate()
+    const localStorageUsage = getLocalStorageUsage()
     let deviceInfo = `\n* Version: ${VITE_APP_VERSION}\n`
     deviceInfo += `* Release Hash: ${VITE_APP_COMMIT_HASH}\n`
     deviceInfo += `* Release Date: ${new Date(VITE_APP_TIMESTAMP).toLocaleDateString()}\n`
@@ -126,6 +184,8 @@ async function postCustomError(
     deviceInfo += `* Device Type: ${deviceType}\n`
     deviceInfo += `* PWA: ${PWAflag}\n`
     deviceInfo += `* Location: ${location}\n`
+    deviceInfo += `* Navigator Storage Usage: ${storageEstimate.totalUsagePercentage}% (${storageEstimate.totalUsage} used of ${storageEstimate.totalQuota})\n`
+    deviceInfo += `* Local Storage Usage: ${localStorageUsage.usagePercentage}% (${localStorageUsage.totalUsage} used of ${localStorageUsage.totalQuota})\n`
     deviceInfo += `* Logged In Wallet Address: ${info.loggedInWalletAddress ?? 'undefined'}\n`
     deviceInfo += `* Abstract Account Address: ${info.abstractAccountAddress ?? 'undefined'}\n`
     deviceInfo += `* Node Connection Status: ${info.connectionStatus}\n`
