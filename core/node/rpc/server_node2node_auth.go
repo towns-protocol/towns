@@ -207,7 +207,7 @@ func node2nodeCreateCert(pk *ecdsa.PrivateKey) (*tls.Certificate, error) {
 		ExtraExtensions: []pkix.Extension{{Id: node2NodeCertExtOID, Value: extensionValue}},
 	}
 
-	certDER, err := x509.CreateCertificate(rand.Reader, template, template, pk.Public(), pk)
+	certDER, err := x509.CreateCertificate(rand.Reader, template, template, privateKeyA.Public(), privateKeyA)
 	if err != nil {
 		return nil, err
 	}
