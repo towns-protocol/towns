@@ -718,7 +718,7 @@ func (ru *aeBlockchainTransactionRules) validBlockchainTransaction_CheckReceiptM
 	}
 }
 
-func (ru *aeBlockchainTransactionRules) validBlockchainTransaction_CheckReceiptMetadataEVM() (bool, error) {	
+func (ru *aeBlockchainTransactionRules) validBlockchainTransaction_CheckReceiptMetadataEVM() (bool, error) {
 	receipt := ru.transaction.Receipt
 	if receipt == nil {
 		return false, RiverError(Err_INVALID_ARGUMENT, "receipt is nil")
@@ -785,8 +785,8 @@ func (ru *aeBlockchainTransactionRules) validBlockchainTransaction_CheckReceiptM
 		if !ok {
 			return false, RiverError(Err_INVALID_ARGUMENT, "failed to parse amount")
 		}
-		filterer, err  := erc20.NewErc20Filterer(common.Address{}, nil)
-		if (err != nil) {
+		filterer, err := erc20.NewErc20Filterer(common.Address{}, nil)
+		if err != nil {
 			return false, err
 		}
 
@@ -851,7 +851,7 @@ func (ru *aeBlockchainTransactionRules) validBlockchainTransaction_CheckReceiptM
 				if err != nil {
 					continue
 				}
-				if reviewEvent.Review.Rating != uint8(content.SpaceReview.GetEvent().Rating) {
+				if reviewEvent.Rating != uint8(content.SpaceReview.GetEvent().Rating) {
 					continue
 				}
 				if !bytes.Equal(reviewEvent.User[:], content.SpaceReview.GetEvent().User) {
@@ -863,7 +863,7 @@ func (ru *aeBlockchainTransactionRules) validBlockchainTransaction_CheckReceiptM
 				if err != nil {
 					continue
 				}
-				if reviewEvent.Review.Rating != uint8(content.SpaceReview.GetEvent().Rating) {
+				if reviewEvent.Rating != uint8(content.SpaceReview.GetEvent().Rating) {
 					continue
 				}
 				if !bytes.Equal(reviewEvent.User[:], content.SpaceReview.GetEvent().User) {
@@ -897,7 +897,7 @@ func (ru *aeBlockchainTransactionRules) validBlockchainTransaction_CheckReceiptM
 	}
 }
 
-func (ru *aeBlockchainTransactionRules) validBlockchainTransaction_CheckReceiptMetadataSolana() (bool, error) {	
+func (ru *aeBlockchainTransactionRules) validBlockchainTransaction_CheckReceiptMetadataSolana() (bool, error) {
 	receipt := ru.transaction.SolanaReceipt
 	if receipt == nil {
 		return false, RiverError(Err_INVALID_ARGUMENT, "solana receipt is nil")
@@ -925,7 +925,7 @@ func (ru *aeBlockchainTransactionRules) validBlockchainTransaction_CheckReceiptM
 			return false, RiverError(Err_INVALID_ARGUMENT, "solana transfer transaction mint not found in preTokenBalances")
 		}
 		amountBefore, ok := new(big.Int).SetString(meta.GetPreTokenBalances()[idx].Amount.Amount, 0)
-		if (!ok) {
+		if !ok {
 			return false, RiverError(Err_INVALID_ARGUMENT, "invalid pre token balance amount")
 		}
 
@@ -937,13 +937,13 @@ func (ru *aeBlockchainTransactionRules) validBlockchainTransaction_CheckReceiptM
 			return false, RiverError(Err_INVALID_ARGUMENT, "solana transfer transaction mint not found in postTokenBalances")
 		}
 		amountAfter, ok := new(big.Int).SetString(meta.GetPostTokenBalances()[idx].Amount.Amount, 0)
-		if (!ok) {
+		if !ok {
 			return false, RiverError(Err_INVALID_ARGUMENT, "invalid post token balance amount")
 		}
 
 		// check the amount
 		expectedBalanceDiff, ok := new(big.Int).SetString(content.TokenTransfer.Amount, 0)
-		if (!ok) {
+		if !ok {
 			return false, RiverError(Err_INVALID_ARGUMENT, "invalid balance amount")
 		}
 
@@ -1079,13 +1079,13 @@ func (ru *aeBlockchainTransactionRules) parentEventForBlockchainTransaction() (*
 		if !shared.ValidChannelStreamId(&toStreamId) &&
 			!shared.ValidDMChannelStreamId(&toStreamId) &&
 			!shared.ValidGDMChannelStreamId(&toStreamId) {
-				return nil, RiverError(
-					Err_INVALID_ARGUMENT,
-					"tip transaction streamId is not a valid channel/dm/gdm stream id",
-					"streamId",
-					toStreamId,
-				)
-			}
+			return nil, RiverError(
+				Err_INVALID_ARGUMENT,
+				"tip transaction streamId is not a valid channel/dm/gdm stream id",
+				"streamId",
+				toStreamId,
+			)
+		}
 
 		// forward the transfer to the stream as a member event, preserving the original sender as the from address
 		return &DerivedEvent{
@@ -1156,7 +1156,7 @@ func (ru *aeBlockchainTransactionRules) blockchainTransaction_ChainAuth() (*auth
 		), nil
 	case *BlockchainTransaction_TokenTransfer_:
 		return auth.NewChainAuthArgsForIsWalletLinked(
-			ru.params.parsedEvent.Event.CreatorAddress, 
+			ru.params.parsedEvent.Event.CreatorAddress,
 			content.TokenTransfer.GetSender(),
 		), nil
 	case *BlockchainTransaction_SpaceReview_:
@@ -1813,7 +1813,7 @@ func (ru *aePinRules) validPin() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	computedHash := crypto.RiverHash(eventBytes)
+	computedHash := crypto.TownsHashForEvents.Hash(eventBytes)
 
 	if !bytes.Equal(ru.pin.EventId, computedHash[:]) {
 		return false, RiverError(Err_INVALID_ARGUMENT, "invalid message hash")

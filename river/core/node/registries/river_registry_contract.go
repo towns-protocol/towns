@@ -341,6 +341,17 @@ func (c *RiverRegistryContract) GetStream(
 	return makeGetStreamResult(streamId, &stream), nil
 }
 
+func (c *RiverRegistryContract) GetStreamOnLatestBlock(
+	ctx context.Context,
+	streamId StreamId,
+) (*GetStreamResult, error) {
+	stream, err := c.StreamRegistry.GetStream(c.callOpts(ctx), streamId)
+	if err != nil {
+		return nil, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).Func("GetStreamOnLatestBlock").Message("Call failed")
+	}
+	return makeGetStreamResult(streamId, &stream), nil
+}
+
 // Returns stream, genesis miniblock hash, genesis miniblock, error
 func (c *RiverRegistryContract) GetStreamWithGenesis(
 	ctx context.Context,

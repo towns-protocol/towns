@@ -138,4 +138,11 @@ func TestReplMcConversation(t *testing.T) {
 		}
 		testReplMcConversation(t, 30, 1000, 50, 1000)
 	})
+	t.Run("100x100", func(t *testing.T) {
+		t.Skip("TODO: REPLICATION: FIX: flacky")
+		if testing.Short() {
+			t.Skip("skipping 100x100 in short mode")
+		}
+		testReplMcConversation(t, 100, 100, 20, 50)
+	})
 }
