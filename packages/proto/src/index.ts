@@ -3,6 +3,7 @@
  **************************************************************************/
 export * from './gen/auth_pb'
 export * from './gen/apps_pb'
+export * from './gen/auth_pb'
 export * from './gen/internal_pb'
 export * from './gen/notifications_pb'
 export * from './gen/payloads_pb'
