@@ -349,7 +349,7 @@ func (s *Service) initRiverChain() error {
 		walletAddress = s.wallet.Address
 	}
 
-	httpClient, err := s.httpClientMakerWithCert(ctx, s.config, node2nodeCertGetter(s.wallet.PrivateKeyStruct))
+	httpClient, err := s.httpClientMakerWithCert(ctx, s.config, node2nodeCertGetter(s.defaultLogger, s.wallet))
 	if err != nil {
 		return err
 	}

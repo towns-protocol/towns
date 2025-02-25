@@ -8,18 +8,21 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/asn1"
-	"errors"
 	"math/big"
 	"net/http"
 	"sync"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
+	ethcrypto "github.com/ethereum/go-ethereum/crypto"
+	"go.uber.org/zap"
 
 	"github.com/towns-protocol/towns/core/contracts/river"
+	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/http_client"
 	"github.com/towns-protocol/towns/core/node/nodes"
+	. "github.com/towns-protocol/towns/core/node/protocol"
 )
 
 const (
@@ -50,7 +53,7 @@ func (s *Service) verifyNode2NodePeerCertificate(rawCerts [][]byte, _ [][]*x509.
 		}
 
 		if peerCert.Subject.CommonName == node2NodeCertName {
-			if err = verifyNode2NodeCert(s.nodeRegistry, peerCert); err != nil {
+			if err = verifyNode2NodeCert(s.defaultLogger, s.nodeRegistry, peerCert); err != nil {
 				return err
 			}
 		}
@@ -82,49 +85,51 @@ func requireNode2NodeCertMiddleware(next http.Handler) http.Handler {
 
 // verifyNode2NodeCert verifies the node-2-node client certificate.
 // The certificate must have a custom node2nodeCertExt extension.
-func verifyNode2NodeCert(nodeRegistry nodes.NodeRegistry, cert *x509.Certificate) error {
+func verifyNode2NodeCert(logger *zap.SugaredLogger, nodeRegistry nodes.NodeRegistry, cert *x509.Certificate) error {
 	if cert == nil {
-		return errors.New("no node-2-node client certificate provided")
+		return RiverError(Err_UNAUTHENTICATED, "No node-2-node client certificate provided").LogError(logger)
 	}
 
 	if cert.Subject.CommonName != node2NodeCertName {
-		return errors.New("unexpected node-2-node client certificate name")
+		return RiverError(Err_UNAUTHENTICATED, "Unexpected node-2-node client certificate name").LogError(logger)
 	}
 
 	now := time.Now()
 	if cert.NotBefore.After(now) || cert.NotAfter.Before(now) {
-		return errors.New("certificate expired")
+		return RiverError(Err_UNAUTHENTICATED, "Certificate expired").LogError(logger)
 	}
-
-	publicKeyDER, err := x509.MarshalPKIXPublicKey(cert.PublicKey)
-	if err != nil {
-		return err
-	}
-	hash := crypto.Keccak256(publicKeyDER)
 
 	var certExt node2NodeCertExt
 	var found bool
 	for _, ext := range cert.Extensions {
 		if ext.Id.Equal(node2NodeCertExtOID) {
 			if _, err := asn1.Unmarshal(ext.Value, &certExt); err != nil {
-				return err
+				return AsRiverError(err, Err_UNAUTHENTICATED).Message("Failed to unmarshal extra extension").LogError(logger)
 			}
 			found = true
 			break
 		}
 	}
 	if !found {
-		return errors.New("node-2-node cert extension not found")
+		return RiverError(Err_UNAUTHENTICATED, "Node-2-node cert extension not found").LogError(logger)
 	}
 
-	sigPublicKey, err := crypto.SigToPub(hash, certExt.Signature)
+	publicKeyDER, err := x509.MarshalPKIXPublicKey(cert.PublicKey)
 	if err != nil {
-		return err
+		return AsRiverError(err, Err_UNAUTHENTICATED).Message("Failed to marshal public key").LogError(logger)
 	}
-	recoveredAddr := crypto.PubkeyToAddress(*sigPublicKey)
+
+	sigPublicKey, err := ethcrypto.SigToPub(
+		crypto.TownsHashForCert.Hash(publicKeyDER).Bytes(),
+		certExt.Signature,
+	)
+	if err != nil {
+		return AsRiverError(err, Err_UNAUTHENTICATED).Message("Failed to extract public key from the cert signature").LogError(logger)
+	}
+	recoveredAddr := ethcrypto.PubkeyToAddress(*sigPublicKey)
 
 	if recoveredAddr.Cmp(common.HexToAddress(certExt.Address)) != 0 {
-		return errors.New("node-2-node cert signature does not match address")
+		return RiverError(Err_UNAUTHENTICATED, "Node-2-node cert signature does not match address").LogError(logger)
 	}
 
 	node, err := nodeRegistry.GetNode(recoveredAddr)
@@ -132,15 +137,16 @@ func verifyNode2NodeCert(nodeRegistry nodes.NodeRegistry, cert *x509.Certificate
 		return err
 	}
 
+	// Check that that sender node is operational
 	if node.Status() != river.NodeStatus_Operational {
-		return errors.New("node is not operational")
+		return RiverError(Err_UNAUTHENTICATED, "Node is not operational").LogError(logger)
 	}
 
 	return nil
 }
 
 // node2nodeCertGetter returns a GetClientCertFunc that provides a node-2-node client certificate.
-func node2nodeCertGetter(pk *ecdsa.PrivateKey) http_client.GetClientCertFunc {
+func node2nodeCertGetter(logger *zap.SugaredLogger, wallet *crypto.Wallet) http_client.GetClientCertFunc {
 	const (
 		certTTL      = time.Hour * 24
 		certRenewGap = time.Minute
@@ -157,7 +163,7 @@ func node2nodeCertGetter(pk *ecdsa.PrivateKey) http_client.GetClientCertFunc {
 		defer lock.Unlock()
 
 		if cert == nil || time.Now().Add(certRenewGap).After(exp) {
-			newCert, err := node2nodeCreateCert(pk)
+			newCert, err := node2nodeCreateCert(logger, wallet)
 			if err != nil {
 				return nil, err
 			}
@@ -172,29 +178,28 @@ func node2nodeCertGetter(pk *ecdsa.PrivateKey) http_client.GetClientCertFunc {
 
 // node2nodeCreateCert creates a node-2-node client certificate.
 // The certificate contains a custom extension with the node's address and a signature of the cert's public key.
-func node2nodeCreateCert(pk *ecdsa.PrivateKey) (*tls.Certificate, error) {
+func node2nodeCreateCert(logger *zap.SugaredLogger, wallet *crypto.Wallet) (*tls.Certificate, error) {
 	privateKeyA, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
-		return nil, err
+		return nil, AsRiverError(err, Err_INTERNAL).Message("Failed to generate private key").LogError(logger)
 	}
 
 	publicKeyDER, err := x509.MarshalPKIXPublicKey(&privateKeyA.PublicKey)
 	if err != nil {
-		return nil, err
+		return nil, AsRiverError(err, Err_INTERNAL).Message("Failed to marshal public key").LogError(logger)
 	}
-	hash := crypto.Keccak256(publicKeyDER)
 
-	signature, err := crypto.Sign(hash, pk)
+	signature, err := wallet.SignHash(crypto.TownsHashForCert.Hash(publicKeyDER))
 	if err != nil {
-		return nil, err
+		return nil, AsRiverError(err, Err_INTERNAL).Message("Failed to sign public key").LogError(logger)
 	}
 
 	extensionValue, err := asn1.Marshal(node2NodeCertExt{
-		Address:   crypto.PubkeyToAddress(pk.PublicKey).Hex(),
+		Address:   wallet.Address.Hex(),
 		Signature: signature,
 	})
 	if err != nil {
-		return nil, err
+		return nil, AsRiverError(err, Err_INTERNAL).Message("Failed to marshal extra extension").LogError(logger)
 	}
 
 	template := &x509.Certificate{
@@ -209,16 +214,11 @@ func node2nodeCreateCert(pk *ecdsa.PrivateKey) (*tls.Certificate, error) {
 
 	certDER, err := x509.CreateCertificate(rand.Reader, template, template, privateKeyA.Public(), privateKeyA)
 	if err != nil {
-		return nil, err
-	}
-
-	cert, err := x509.ParseCertificate(certDER)
-	if err != nil {
-		return nil, err
+		return nil, AsRiverError(err, Err_INTERNAL).Message("Failed to create certificate").LogError(logger)
 	}
 
 	return &tls.Certificate{
-		Certificate: [][]byte{cert.Raw},
+		Certificate: [][]byte{certDER},
 		PrivateKey:  privateKeyA,
 	}, nil
 }
