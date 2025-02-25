@@ -9,6 +9,10 @@
 #
 #    docker compose -f scripts/local-go-test-docker-compose.yml run --entrypoint sh towns-go-test
 #
+# To set the number of CPUs:
+#
+#    DOCKER_CPUS=4.0 docker compose -f scripts/local-go-test-docker-compose.yml run --entrypoint sh towns-go-test
+#
 
 services:
     towns-go-test:
@@ -24,7 +28,7 @@ services:
         deploy:
             resources:
                 limits:
-                    cpus: '4.0'
+                    cpus: '${DOCKER_CPUS:-8.0}'
                     memory: 8G
                 reservations:
                     memory: 4G
