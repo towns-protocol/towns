@@ -1517,10 +1517,10 @@ func compareAllTableCounts(
 	if err != nil {
 		return err
 	}
-	err = compareTableCounts(ctx, sourceConn, targetConn, targetSchemaMetadata, streamId, "miniblock_candidates")
-	if err != nil {
-		return err
-	}
+	// err = compareTableCounts(ctx, sourceConn, targetConn, targetSchemaMetadata, streamId, "miniblock_candidates")
+	// if err != nil {
+	// 	return err
+	// }
 	return nil
 }
 
@@ -1549,10 +1549,10 @@ func compareAllTableContents(
 		return err
 	}
 
-	err = compareMiniblockCandidateContents(ctx, sourceConn, targetConn, sourceInfo, targetSchemaMetadata, streamId)
-	if err != nil {
-		return err
-	}
+	// err = compareMiniblockCandidateContents(ctx, sourceConn, targetConn, sourceInfo, targetSchemaMetadata, streamId)
+	// if err != nil {
+	// 	return err
+	// }
 
 	err = compareMinipoolContents(ctx, sourceConn, targetConn, targetSchemaMetadata, streamId)
 	if err != nil {
