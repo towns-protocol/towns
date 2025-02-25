@@ -5,6 +5,10 @@ resource "google_secret_manager_secret" "river_node_local_credentials" {
   replication {
     auto {}
   }
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 locals {
@@ -38,60 +42,17 @@ resource "google_secret_manager_secret_iam_member" "river_node_local_credentials
   member    = var.google_service_account.member
 }
 
-########### SECRET MANAGER - RIVER NODE DB HOST ###########
+########### GCP ALLOY POSTGRES ###########
 
-resource "google_secret_manager_secret" "river_node_db_host" {
-  secret_id = "river-node-db-host"
-  replication {
-    auto {}
-  }
+module "river_node_db" {
+  source = "./river-node-db"
+
+  project_id = var.project_id
+
+  region                 = var.region
+  network                = var.network
+  google_service_account = var.google_service_account
+
+  k8s_subnet_cidr        = var.k8s_subnet_cidr
+  private_vpc_connection = var.private_vpc_connection
 }
-
-resource "google_secret_manager_secret_version" "river_node_db_host" {
-  secret = google_secret_manager_secret.river_node_db_host.id
-
-  secret_data = jsonencode({
-    "db_host" = null
-  })
-
-  lifecycle {
-    ignore_changes = [secret_data]
-  }
-}
-
-resource "google_secret_manager_secret_iam_member" "river_node_db_host" {
-  secret_id = google_secret_manager_secret.river_node_db_host.id
-  role      = "roles/secretmanager.secretAccessor"
-  member    = var.google_service_account.member
-}
-
-# ########### STATIC IP ADDRESSES ###########
-
-
-# resource "google_compute_address" "river_stream_ip_address" {
-#   provider = google-beta
-
-#   project = var.project_id
-
-#   count = var.node_config.num_stream_nodes
-
-#   name   = "river-stream-${count.index + 1}-ip-address"
-#   region = var.region
-
-#   address_type = "EXTERNAL"
-#   ip_version   = "IPV4"
-# }
-
-# resource "google_compute_address" "river_archive_ip_address" {
-#   provider = google-beta
-
-#   project = var.project_id
-
-#   count = var.node_config.num_archive_nodes
-
-#   name   = "river-archive-${count.index + 1}-ip-address"
-#   region = var.region
-
-#   address_type = "EXTERNAL"
-#   ip_version   = "IPV4"
-# }

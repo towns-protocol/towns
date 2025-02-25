@@ -77,11 +77,11 @@ resource "aws_ecs_cluster" "river_ecs_cluster" {
 }
 
 module "river_db_post_stream_migration" {
-  source                    = "../../modules/river-db-cluster"
-  database_subnets          = module.vpc.database_subnets
-  vpc_id                    = module.vpc.vpc_id
-  pgadmin_security_group_id = module.pgadmin.security_group_id
-  cluster_name_suffix       = "post-stream-migration"
+  source              = "../../modules/river-db-cluster"
+  database_subnets    = module.vpc.database_subnets
+  vpc_id              = module.vpc.vpc_id
+  cluster_name_suffix = "post-stream-migration"
+  migration_config    = local.river_node_migration_config
 }
 
 module "river_node_ssl_cert" {
@@ -115,6 +115,11 @@ locals {
   base_chain_id       = 84532
   river_chain_id      = 6524490
   scrub_duration      = 900000000000
+  river_node_migration_config = {
+    container_provider : "aws"
+    rds_public_access : true
+    delete_rds_instance : false
+  }
 }
 
 module "system_parameters" {
@@ -199,33 +204,10 @@ module "river_node" {
 
   lb = module.river_nlb[count.index]
 
-  cpu    = 512
-  memory = 1024
-}
+  migration_config = local.river_node_migration_config
 
-module "river_notification_service" {
-  source = "../../modules/river-notification-service"
-
-  alb_security_group_id  = module.river_alb.security_group_id
-  alb_dns_name           = module.river_alb.lb_dns_name
-  alb_https_listener_arn = module.river_alb.lb_https_listener_arn
-
-  vpc_id          = module.vpc.vpc_id
-  db_subnets      = module.vpc.database_subnets
-  private_subnets = module.vpc.private_subnets
-
-  ecs_cluster = {
-    id   = aws_ecs_cluster.river_ecs_cluster.id
-    name = aws_ecs_cluster.river_ecs_cluster.name
-  }
-
-  apns_auth_key_secret_arn  = local.global_remote_state.notification_apns_auth_key_secret.arn
-  apns_towns_app_identifier = "com.towns.ios.alpha"
-
-  pgadmin_security_group_id      = module.pgadmin.security_group_id
-  river_chain_id                 = local.river_chain_id
-  river_chain_rpc_url_secret_arn = local.global_remote_state.river_sepolia_rpc_url_secret.arn
-  system_parameters              = module.system_parameters
+  cpu    = 2048
+  memory = 4096
 }
 
 module "network_health_monitor" {
@@ -255,18 +237,6 @@ module "stress_tests" {
   channel_ids         = "209bd136d3155316d5d6dfcd4f87d5ee1a3ea8f22dcc16da7e96af829d8d73be,209bd136d3155316d5d6dfcd4f87d5ee1a3ea8f22d56888a483afd0412ddb85c"
 }
 
-module "metrics_aggregator" {
-  source = "../../modules/metrics-aggregator"
-
-  vpc_id                         = module.vpc.vpc_id
-  river_chain_rpc_url_secret_arn = local.global_remote_state.river_sepolia_rpc_url_secret.arn
-  subnets                        = module.vpc.private_subnets
-  ecs_cluster = {
-    id   = aws_ecs_cluster.river_ecs_cluster.id
-    name = aws_ecs_cluster.river_ecs_cluster.name
-  }
-}
-
 data "cloudflare_zone" "zone" {
   name = module.global_constants.primary_hosted_zone_name
 }
@@ -277,4 +247,25 @@ resource "cloudflare_record" "app_dns" {
   value   = "towns-server-alpha.onrender.com"
   type    = "CNAME"
   ttl     = 60
+}
+
+locals {
+  gcp_project_id = "hnt-live-${terraform.workspace}"
+  gcp_region     = "us-east4"
+  gcp_zones      = ["us-east4-a", "us-east4-b", "us-east4-c"]
+}
+
+module "gcp_env" {
+  source = "../../modules/gcp-env"
+
+  project_id                     = local.gcp_project_id
+  region                         = local.gcp_region
+  zones                          = local.gcp_zones
+  cloudflare_terraform_api_token = var.cloudflare_terraform_api_token
+  gcloud_credentials             = file("./gcloud-credentials.json")
+
+  river_node_config = {
+    num_archive_nodes = local.num_archive_nodes
+    num_stream_nodes  = local.num_full_nodes
+  }
 }

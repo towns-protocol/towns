@@ -12,11 +12,6 @@ variable "database_subnets" {
   type        = list(string)
 }
 
-variable "pgadmin_security_group_id" {
-  description = "The security group id of the pgadmin service"
-  type        = string
-}
-
 variable "cluster_name_suffix" {
   default = "-postgresql-cluster"
 }
@@ -31,7 +26,10 @@ variable "max_capacity" {
   default = 20
 }
 
-variable "publicly_accessible" {
-  type    = bool
-  default = false
+variable "migration_config" {
+  description = "The migration configuration for the river node database"
+  type = object({
+    rds_public_access : bool
+    delete_rds_instance : bool
+  })
 }

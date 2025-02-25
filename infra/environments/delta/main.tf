@@ -63,76 +63,16 @@ module "vpc" {
   enable_dns_hostnames = true
 }
 
-
-module "river_alb" {
-  source = "../../modules/river-alb"
-
-  subnets = module.vpc.public_subnets
-  vpc_id  = module.vpc.vpc_id
-}
-
-resource "aws_ecs_cluster" "river_ecs_cluster" {
-  name = "${terraform.workspace}-river-ecs-cluster"
-  tags = module.global_constants.tags
-}
-
-module "river_db_cluster" {
-  source                    = "../../modules/river-db-cluster"
-  database_subnets          = module.vpc.database_subnets
-  vpc_id                    = module.vpc.vpc_id
-  pgadmin_security_group_id = module.pgadmin.security_group_id
-}
-
-module "river_node_ssl_cert" {
-  source                       = "../../modules/river-node-ssl-cert"
-  subnet_ids                   = module.vpc.private_subnets
-  common_name                  = "*.nodes.${terraform.workspace}.towns.com"
-  challenge_dns_record_fq_name = "_acme-challenge.nodes.${terraform.workspace}.towns.com"
-}
-
-module "pgadmin" {
-  source          = "../../modules/pgadmin"
-  vpc_id          = module.vpc.vpc_id
-  public_subnets  = module.vpc.public_subnets
-  private_subnets = module.vpc.private_subnets
-
-  ecs_cluster = {
-    id   = aws_ecs_cluster.river_ecs_cluster.id
-    name = aws_ecs_cluster.river_ecs_cluster.name
-  }
-
-  alb_security_group_id  = module.river_alb.security_group_id
-  alb_dns_name           = module.river_alb.lb_dns_name
-  alb_https_listener_arn = module.river_alb.lb_https_listener_arn
-}
-
 locals {
   num_full_nodes      = 10
   num_archive_nodes   = 0
-  archive_enabled     = false
   global_remote_state = module.global_constants.global_remote_state.outputs
-  base_chain_id       = 84532
-  river_chain_id      = 6524490
 }
 
 module "system_parameters" {
   source = "../../modules/river-system-parameters"
 }
 
-module "river_nlb" {
-  source  = "../../modules/river-nlb"
-  count   = local.num_full_nodes
-  subnets = module.vpc.public_subnets
-  vpc_id  = module.vpc.vpc_id
-  nlb_id  = tostring(count.index + 1)
-}
-
-module "node_metadata" {
-  source = "../../modules/river-node-metadata"
-
-  num_full_nodes    = local.num_full_nodes
-  num_archive_nodes = local.num_archive_nodes
-}
 
 # module "stream_metadata" {
 #   source    = "../../modules/stream-metadata"
@@ -157,118 +97,6 @@ locals {
   river_max_db_connections       = 50
 }
 
-module "river_node" {
-  source = "../../modules/river-node"
-  count  = local.num_full_nodes
-
-  node_metadata = module.node_metadata.full_nodes[count.index]
-
-  enable_debug_endpoints  = true
-  migrate_stream_creation = true
-
-  river_node_ssl_cert_secret_arn = module.river_node_ssl_cert.river_node_ssl_cert_secret_arn
-
-  river_node_db = module.river_db_cluster
-
-  river_database_isolation_level = local.river_database_isolation_level
-  max_db_connections             = local.river_max_db_connections
-
-  public_subnets  = module.vpc.public_subnets
-  private_subnets = module.vpc.private_subnets
-  vpc_id          = module.vpc.vpc_id
-
-  system_parameters = module.system_parameters
-
-  base_chain_rpc_url_secret_arn  = local.global_remote_state.base_sepolia_rpc_url_secret.arn
-  river_chain_rpc_url_secret_arn = local.global_remote_state.river_sepolia_rpc_url_secret.arn
-  chainsstring_secret_arn        = local.global_remote_state.gamma_chainsstring_secret.arn
-
-  base_chain_id  = local.base_chain_id
-  river_chain_id = local.river_chain_id
-
-  # scrub_duration = local.scrub_duration
-
-  ecs_cluster = {
-    id   = aws_ecs_cluster.river_ecs_cluster.id
-    name = aws_ecs_cluster.river_ecs_cluster.name
-  }
-
-  lb = module.river_nlb[count.index]
-
-  cpu    = 512
-  memory = 1024
-}
-
-# module "archive_node_nlb" {
-#   source  = "../../modules/river-nlb"
-#   count   = local.num_archive_nodes
-#   subnets = module.vpc.public_subnets
-#   vpc_id  = module.vpc.vpc_id
-#   nlb_id  = "archive-${tostring(count.index + 1)}"
-# }
-
-# module "archive_node" {
-#   source = "../../modules/river-node"
-#   count  = local.num_archive_nodes
-#   on     = local.archive_enabled
-
-#   node_metadata = module.node_metadata.archive_nodes[count.index]
-
-#   enable_debug_endpoints  = true
-#   migrate_stream_creation = true
-
-#   river_node_ssl_cert_secret_arn = module.river_node_ssl_cert.river_node_ssl_cert_secret_arn
-
-#   river_node_db = count.index == 0 ? module.river_db : module.river_db_cluster
-
-#   river_database_isolation_level = local.river_database_isolation_level
-#   max_db_connections             = local.river_max_db_connections
-
-#   public_subnets  = module.vpc.public_subnets
-#   private_subnets = module.vpc.private_subnets
-#   vpc_id          = module.vpc.vpc_id
-
-#   system_parameters = module.system_parameters
-
-#   base_chain_rpc_url_secret_arn  = local.global_remote_state.base_sepolia_rpc_url_secret.arn
-#   river_chain_rpc_url_secret_arn = local.global_remote_state.river_sepolia_rpc_url_secret.arn
-#   chainsstring_secret_arn        = local.global_remote_state.gamma_chainsstring_secret.arn
-
-#   base_chain_id  = local.base_chain_id
-#   river_chain_id = local.river_chain_id
-
-#   ecs_cluster = {
-#     id   = aws_ecs_cluster.river_ecs_cluster.id
-#     name = aws_ecs_cluster.river_ecs_cluster.name
-#   }
-
-#   lb = module.archive_node_nlb[count.index]
-# }
-
-# module "river_notification_service" {
-#   source = "../../modules/river-notification-service"
-
-#   alb_security_group_id  = module.river_alb.security_group_id
-#   alb_dns_name           = module.river_alb.lb_dns_name
-#   alb_https_listener_arn = module.river_alb.lb_https_listener_arn
-
-#   vpc_id          = module.vpc.vpc_id
-#   db_subnets      = module.vpc.database_subnets
-#   private_subnets = module.vpc.private_subnets
-
-#   # TODO: remove after migration
-#   docker_image_tag = "notifications-wip"
-#   ecs_cluster = {
-#     id   = aws_ecs_cluster.river_ecs_cluster.id
-#     name = aws_ecs_cluster.river_ecs_cluster.name
-#   }
-
-#   pgadmin_security_group_id      = module.pgadmin.security_group_id
-#   river_chain_id                 = local.river_chain_id
-#   river_chain_rpc_url_secret_arn = local.global_remote_state.river_sepolia_rpc_url_secret.arn
-#   system_parameters              = module.system_parameters
-# }
-
 module "network_health_monitor" {
   source = "../../modules/network-health-monitor"
 
@@ -279,33 +107,6 @@ module "network_health_monitor" {
 
   base_chain_rpc_url_secret_arn  = local.global_remote_state.base_sepolia_metrics_rpc_url_secret.arn
   river_chain_rpc_url_secret_arn = local.global_remote_state.river_sepolia_rpc_url_secret.arn
-}
-
-# module "stress_tests" {
-#   source = "../../modules/stress-tests"
-
-#   vpc_id          = module.vpc.vpc_id
-#   private_subnets = module.vpc.private_subnets
-#   public_subnets  = module.vpc.public_subnets
-
-#   base_chain_rpc_url_secret_arn  = local.global_remote_state.base_sepolia_rpc_url_secret.arn
-#   river_chain_rpc_url_secret_arn = local.global_remote_state.river_sepolia_rpc_url_secret.arn
-
-#   space_id            = "109bd136d3155316d5d6dfcd4f87d5ee1a3ea8f22d0000000000000000000000"
-#   announce_channel_id = "209bd136d3155316d5d6dfcd4f87d5ee1a3ea8f22d3ea9c4273da5a77d10de58"
-#   channel_ids         = "209bd136d3155316d5d6dfcd4f87d5ee1a3ea8f22dcc16da7e96af829d8d73be,209bd136d3155316d5d6dfcd4f87d5ee1a3ea8f22d56888a483afd0412ddb85c"
-# }
-
-module "metrics_aggregator" {
-  source = "../../modules/metrics-aggregator"
-
-  vpc_id                         = module.vpc.vpc_id
-  river_chain_rpc_url_secret_arn = local.global_remote_state.river_sepolia_rpc_url_secret.arn
-  subnets                        = module.vpc.private_subnets
-  ecs_cluster = {
-    id   = aws_ecs_cluster.river_ecs_cluster.id
-    name = aws_ecs_cluster.river_ecs_cluster.name
-  }
 }
 
 # data "cloudflare_zone" "zone" {
@@ -319,3 +120,24 @@ module "metrics_aggregator" {
 #   type    = "CNAME"
 #   ttl     = 60
 # }
+
+locals {
+  gcp_project_id = "hnt-live-${terraform.workspace}"
+  gcp_region     = "us-east4"
+  gcp_zones      = ["us-east4-a", "us-east4-b", "us-east4-c"]
+}
+
+module "gcp_env" {
+  source = "../../modules/gcp-env"
+
+  project_id                     = local.gcp_project_id
+  region                         = local.gcp_region
+  zones                          = local.gcp_zones
+  cloudflare_terraform_api_token = var.cloudflare_terraform_api_token
+  gcloud_credentials             = file("./gcloud-credentials.json")
+
+  river_node_config = {
+    num_archive_nodes = local.num_archive_nodes
+    num_stream_nodes  = local.num_full_nodes
+  }
+}

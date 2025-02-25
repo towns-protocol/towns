@@ -37,3 +37,21 @@ resource "google_project_service" "cloudresourcemanager" {
   project = var.project_id
   service = "cloudresourcemanager.googleapis.com"
 }
+
+# service networking api
+resource "google_project_service" "servicenetworking" {
+  project = var.project_id
+  service = "servicenetworking.googleapis.com"
+}
+
+resource "google_project_service" "cloud_sql_admin" {
+  project = var.project_id
+  service = "sqladmin.googleapis.com"
+
+  disable_dependent_services = false
+}
+
+resource "google_project_service" "alloydb" {
+  project = var.project_id
+  service = "alloydb.googleapis.com"
+}

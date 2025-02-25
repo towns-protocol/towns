@@ -65,16 +65,34 @@ module "gcp_secrets" {
   google_service_account = module.gke_main.service_account
 }
 
-module "river_node" {
-  source = "./river-node"
+# Create a private IP address for AlloyDB
+resource "google_compute_global_address" "private_ip_alloydb" {
+  name          = "alloy-db-private-ip"
+  purpose       = "VPC_PEERING"
+  address_type  = "INTERNAL"
+  prefix_length = 16
+  network       = module.gcp_network.vpc.network_name
+}
 
+# Create a private connection for AlloyDB
+resource "google_service_networking_connection" "private_vpc_connection" {
+  network                 = module.gcp_network.vpc.network_name
+  service                 = "servicenetworking.googleapis.com"
+  reserved_peering_ranges = [google_compute_global_address.private_ip_alloydb.name]
+}
+
+module "river_node" {
+  source     = "./river-node"
   depends_on = [module.gcp_apis]
 
-  project_id             = var.project_id
+  project_id = var.project_id
+
   google_service_account = module.gke_main.service_account
   node_config            = var.river_node_config
-
-  region = var.region
+  private_vpc_connection = google_service_networking_connection.private_vpc_connection
+  region                 = var.region
+  network                = module.gcp_network.vpc.network_name
+  k8s_subnet_cidr        = module.gcp_network.k8s_subnet.ip_cidr_range
 }
 
 module "notification_service" {
@@ -83,5 +101,9 @@ module "notification_service" {
 
   project_id = var.project_id
 
+  private_vpc_connection = google_service_networking_connection.private_vpc_connection
   google_service_account = module.gke_main.service_account
+  region                 = var.region
+  network                = module.gcp_network.vpc.network_name
+  k8s_subnet_cidr        = module.gcp_network.k8s_subnet.ip_cidr_range
 }

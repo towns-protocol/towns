@@ -1,0 +1,38 @@
+variable "region" {
+  description = "The GCP region where resources will be created"
+  type        = string
+}
+
+variable "network" {
+  description = "The VPC network where the AlloyDB instance will be deployed"
+  type        = string
+}
+
+
+# TODO: figure out max_connections & auto_scaling
+variable "db_min_cpu_count" {
+  description = "Minimum number of CPUs for the database instance"
+  type        = number
+  default     = 2
+}
+
+variable "google_service_account" {
+  type = object({
+    member = string
+    email  = string
+  })
+}
+
+variable "project_id" {
+  type = string
+}
+
+variable "k8s_subnet_cidr" {
+  description = "The CIDR block of the subnet where the GKE cluster is deployed"
+  type        = string
+}
+
+variable "private_vpc_connection" {
+  description = "The private VPC connection to the GCP network"
+  type        = any
+}

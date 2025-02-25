@@ -213,36 +213,9 @@ locals {
     rds_public_access : true
   }
   river_node_migration_config = {
-    container_provider : "gcp"
+    container_provider : "aws"
     rds_public_access : true
   }
-}
-
-module "river_notification_service" {
-  source = "../../modules/river-notification-service"
-
-  alb_security_group_id  = module.river_alb.security_group_id
-  alb_dns_name           = module.river_alb.lb_dns_name
-  alb_https_listener_arn = module.river_alb.lb_https_listener_arn
-
-  vpc_id          = module.vpc.vpc_id
-  db_subnets      = module.vpc.database_subnets
-  private_subnets = module.vpc.private_subnets
-
-  ecs_cluster = {
-    id   = aws_ecs_cluster.river_ecs_cluster.id
-    name = aws_ecs_cluster.river_ecs_cluster.name
-  }
-
-  apns_auth_key_secret_arn  = local.global_remote_state.notification_apns_auth_key_secret.arn
-  apns_towns_app_identifier = "com.towns.internal"
-
-  pgadmin_security_group_id      = module.pgadmin.security_group_id
-  river_chain_id                 = local.river_chain_id
-  river_chain_rpc_url_secret_arn = local.global_remote_state.river_sepolia_rpc_url_secret.arn
-  system_parameters              = module.system_parameters
-
-  migration_config = local.notification_service_migration_config
 }
 
 module "network_health_monitor" {

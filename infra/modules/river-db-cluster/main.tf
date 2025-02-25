@@ -63,7 +63,7 @@ module "rds_aurora_postgresql" {
 
   tags = local.tags
 
-  deletion_protection = true
+  deletion_protection = false
 
   db_cluster_parameter_group_name = aws_rds_cluster_parameter_group.river_db_paramater_group.name
 
@@ -73,32 +73,19 @@ module "rds_aurora_postgresql" {
   }
 
   instance_class = "db.serverless"
-  instances = {
+  instances = var.migration_config.delete_rds_instance ? {} : {
     one = {}
   }
 
-  publicly_accessible = var.publicly_accessible
+  publicly_accessible = var.migration_config.rds_public_access
 
   iam_database_authentication_enabled = false
-}
-
-resource "aws_vpc_security_group_ingress_rule" "allow_pgadmin_inbound_to_db" {
-  description = "Allow pgadmin inbound to river node db cluster"
-
-  from_port   = 5432
-  to_port     = 5432
-  ip_protocol = "tcp"
-
-  security_group_id            = module.rds_aurora_postgresql.security_group_id
-  referenced_security_group_id = var.pgadmin_security_group_id
-
-  tags = local.tags
 }
 
 resource "aws_vpc_security_group_ingress_rule" "allow_public_inbound_to_db" {
   description = "Allow public inbound to the river node db cluster"
 
-  count = var.publicly_accessible ? 1 : 0
+  count = var.migration_config.rds_public_access ? 1 : 0
 
   from_port   = 5432
   to_port     = 5432
