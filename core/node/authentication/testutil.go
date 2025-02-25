@@ -9,6 +9,7 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/accounts"
+	"github.com/ethereum/go-ethereum/common"
 	eth_crypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
 
@@ -76,7 +77,7 @@ func GetAuthenticationToken[T any](
 	digest := sha256.Sum256(buf.Bytes())
 	bufHash := accounts.TextHash(digest[:])
 
-	signature, err := deviceWallet.SignHash(bufHash[:])
+	signature, err := deviceWallet.SignHash(common.BytesToHash(bufHash))
 	req.NoError(err)
 
 	resp2, err := authClient.FinishAuthentication(ctx, connect.NewRequest(&FinishAuthenticationRequest{

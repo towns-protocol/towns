@@ -19,7 +19,7 @@ const (
 // GetDeviceId returns the device id for a given wallet, useful for testing
 func GetDeviceId(wallet *Wallet) (string, error) {
 	publicKey := eth_crypto.FromECDSAPub(&wallet.PrivateKeyStruct.PublicKey)
-	hash := RiverHash(publicKey)
+	hash := TownsHashForEvents.Hash(publicKey)
 	return hex.EncodeToString(hash[:]), nil
 }
 

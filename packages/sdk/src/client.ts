@@ -1771,10 +1771,12 @@ export class Client
         data: Uint8Array,
         chunkIndex: number,
         prevMiniblockHash: Uint8Array,
+        iv?: Uint8Array,
     ): Promise<{ prevMiniblockHash: Uint8Array; eventId: string }> {
         const payload = make_MediaPayload_Chunk({
             data: data,
             chunkIndex: chunkIndex,
+            iv: iv,
         })
         return this.makeEventWithHashAndAddToStream(streamId, payload, prevMiniblockHash)
     }
@@ -1784,10 +1786,12 @@ export class Client
         last: boolean,
         data: Uint8Array,
         chunkIndex: number,
+        iv?: Uint8Array,
     ): Promise<{ creationCookie: CreationCookie }> {
         const payload = make_MediaPayload_Chunk({
             data: data,
             chunkIndex: chunkIndex,
+            iv: iv,
         })
         return this.makeMediaEventWithHashAndAddToMediaStream(creationCookie, last, payload)
     }
