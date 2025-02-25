@@ -302,10 +302,10 @@ func PublicKeyToAddress(publicKey []byte) common.Address {
 	return common.BytesToAddress(crypto.Keccak256(publicKey[1:])[12:])
 }
 
-func PackWithNonce(address common.Address, nonce uint64) ([]byte, error) {
+func PackWithNonce(address common.Address, nonce uint64) (common.Hash, error) {
 	addressTy, err := abi.NewType("address", "address", nil)
 	if err != nil {
-		return nil, AsRiverError(err, Err_INTERNAL).
+		return common.Hash{}, AsRiverError(err, Err_INTERNAL).
 			Message("Invalid abi type definition").
 			Tag("type", "address").
 			Func("PackWithNonce")
@@ -313,7 +313,7 @@ func PackWithNonce(address common.Address, nonce uint64) ([]byte, error) {
 
 	uint256Ty, err := abi.NewType("uint256", "uint256", nil)
 	if err != nil {
-		return nil, AsRiverError(err, Err_INTERNAL).
+		return common.Hash{}, AsRiverError(err, Err_INTERNAL).
 			Message("Invalid abi type definition").
 			Tag("type", "uint256").
 			Func("PackWithNonce")
@@ -328,7 +328,7 @@ func PackWithNonce(address common.Address, nonce uint64) ([]byte, error) {
 	}
 	bytes, err := arguments.Pack(address, new(big.Int).SetUint64(nonce))
 	if err != nil {
-		return nil, AsRiverError(err, Err_INTERNAL).
+		return common.Hash{}, AsRiverError(err, Err_INTERNAL).
 			Message("Failed to pack arguments").
 			Func("PackWithNonce")
 	}
@@ -337,16 +337,16 @@ func PackWithNonce(address common.Address, nonce uint64) ([]byte, error) {
 	hasher.Write(bytes)
 	bytes = hasher.Sum(nil)
 
-	return bytes, nil
+	return common.BytesToHash(bytes), nil
 }
 
-func ToEthMessageHash(messageHash []byte) []byte {
+func ToEthMessageHash(messageHash common.Hash) common.Hash {
 	bytes := append(
 		[]byte("\x19Ethereum Signed Message:\n"),
 		[]byte(fmt.Sprintf("%d", len(messageHash)))...,
 	)
-	bytes = append(bytes, messageHash...)
-	return crypto.Keccak256(bytes)
+	bytes = append(bytes, messageHash.Bytes()...)
+	return crypto.Keccak256Hash(bytes)
 }
 
 func (w Wallet) String() string {
