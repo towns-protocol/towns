@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"fmt"
+	"github.com/linkdata/deadlock"
 	"testing"
 	"time"
 
@@ -68,6 +69,12 @@ func TestReplMcSpeakUntilMbTrim(t *testing.T) {
 }
 
 func testReplMcConversation(t *testing.T, numClients int, numSteps int, listenInterval int, compareInterval int) {
+	deadlock.Opts.WriteLocked(func() {
+		deadlock.Opts.DeadlockTimeout = 30 * time.Second
+		deadlock.Opts.MaxMapSize = 1024 * 256
+		deadlock.Opts.PrintAllCurrentGoroutines = true
+	})
+
 	tt := newServiceTesterForReplication(t)
 	clients := tt.newTestClients(numClients)
 	spaceId, _ := clients[0].createSpace()
@@ -125,21 +132,18 @@ func TestReplMcConversation(t *testing.T) {
 		testReplMcConversation(t, 5, 100, 10, 100)
 	})
 	t.Run("10x1000", func(t *testing.T) {
-		t.Skip("TODO: REPLICATION: FIX: flacky")
 		if testing.Short() {
 			t.Skip("skipping 10x1000 in short mode")
 		}
 		testReplMcConversation(t, 10, 1000, 20, 1000)
 	})
 	t.Run("30x1000", func(t *testing.T) {
-		t.Skip("TODO: REPLICATION: FIX: flacky")
 		if testing.Short() {
 			t.Skip("skipping 30x1000 in short mode")
 		}
 		testReplMcConversation(t, 30, 1000, 50, 1000)
 	})
 	t.Run("100x100", func(t *testing.T) {
-		t.Skip("TODO: REPLICATION: FIX: flacky")
 		if testing.Short() {
 			t.Skip("skipping 100x100 in short mode")
 		}
