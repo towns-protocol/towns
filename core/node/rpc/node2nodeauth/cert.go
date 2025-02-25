@@ -159,6 +159,10 @@ func CertGetter(logger *zap.SugaredLogger, wallet *crypto.Wallet) http_client.Ge
 // createCert creates a node-2-node client certificate.
 // The certificate contains a custom extension with the node's address and a signature of the cert's public key.
 func createCert(logger *zap.SugaredLogger, wallet *crypto.Wallet) (*tls.Certificate, error) {
+	if wallet == nil {
+		return nil, RiverError(Err_INTERNAL, "No wallet provided").LogError(logger)
+	}
+
 	privateKeyA, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
 		return nil, AsRiverError(err, Err_INTERNAL).Message("Failed to generate private key").LogError(logger)

@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/towns-protocol/towns/core/node/rpc/node2nodeauth"
+
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -347,6 +349,7 @@ func TestArchiveOneStream(t *testing.T) {
 	require.NoError(err)
 
 	httpClient, _ := testcert.GetHttp2LocalhostTLSClient(ctx, nil)
+	httpClientWithCert, _ := testcert.GetHttp2LocalhostTLSClientWithCert(ctx, nil, node2nodeauth.CertGetter(nil, wallet))
 	var nodeRegistry nodes.NodeRegistry
 	nodeRegistry, err = nodes.LoadNodeRegistry(
 		ctx,
@@ -355,6 +358,7 @@ func TestArchiveOneStream(t *testing.T) {
 		bc.InitialBlockNum,
 		bc.ChainMonitor,
 		httpClient,
+		httpClientWithCert,
 		nil,
 	)
 	require.NoError(err)

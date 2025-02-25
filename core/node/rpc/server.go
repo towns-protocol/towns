@@ -351,7 +351,12 @@ func (s *Service) initRiverChain() error {
 		walletAddress = s.wallet.Address
 	}
 
-	httpClient, err := s.httpClientMakerWithCert(ctx, s.config, node2nodeauth.CertGetter(s.defaultLogger, s.wallet))
+	httpClient, err := s.httpClientMaker(ctx, s.config)
+	if err != nil {
+		return err
+	}
+
+	httpClientWithCert, err := s.httpClientMakerWithCert(ctx, s.config, node2nodeauth.CertGetter(s.defaultLogger, s.wallet))
 	if err != nil {
 		return err
 	}
@@ -363,6 +368,7 @@ func (s *Service) initRiverChain() error {
 		s.riverChain.InitialBlockNum,
 		s.riverChain.ChainMonitor,
 		httpClient,
+		httpClientWithCert,
 		s.otelConnectIterceptor,
 	)
 	if err != nil {
