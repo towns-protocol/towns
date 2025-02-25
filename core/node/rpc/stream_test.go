@@ -15,6 +15,7 @@ import (
 	"github.com/towns-protocol/towns/core/contracts/river"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/rpc/node2nodeauth"
 	"github.com/towns-protocol/towns/core/node/testutils/testcert"
 	"github.com/towns-protocol/towns/core/node/testutils/testfmt"
 )
@@ -172,7 +173,12 @@ func TestMiniBlockProductionFrequency(t *testing.T) {
 		if err != nil {
 			return false
 		}
-		listener = tls.NewListener(listener, testcert.GetHttp2LocalhostTLSConfig())
+		listener = tls.NewListener(
+			listener,
+			testcert.GetHttp2LocalhostTLSConfig(
+				node2nodeauth.VerifyPeerCertificate(firstNode.service.defaultLogger, firstNode.service.nodeRegistry),
+			),
+		)
 
 		return true
 	}, 20*time.Second, 25*time.Millisecond)

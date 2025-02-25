@@ -35,7 +35,7 @@ var (
 
 // VerifyPeerCertificate goes through the peer certificates and verifies the node-2-node client certificate.
 // Returns nil if the certificate is valid or not found.
-func VerifyPeerCertificate(logger *zap.SugaredLogger, nodeRegistry nodes.NodeRegistry) VerifyPeerCertificateFunc {
+func VerifyPeerCertificate(logger *zap.SugaredLogger, nodeRegistry nodes.NodeRegistry) func([][]byte, [][]*x509.Certificate) error {
 	return func(rawCerts [][]byte, _ [][]*x509.Certificate) error {
 		for _, rawCert := range rawCerts {
 			peerCert, err := x509.ParseCertificate(rawCert)

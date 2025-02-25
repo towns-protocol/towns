@@ -93,11 +93,12 @@ var LocalhostCertPool = func() *x509.CertPool {
 	return certpool
 }()
 
-func GetHttp2LocalhostTLSConfig() *tls.Config {
+func GetHttp2LocalhostTLSConfig(verify func([][]byte, [][]*x509.Certificate) error) *tls.Config {
 	return &tls.Config{
-		Certificates: []tls.Certificate{LocalhostCert},
-		NextProtos:   []string{"h2"},
-		ClientAuth:   tls.RequestClientCert,
+		Certificates:          []tls.Certificate{LocalhostCert},
+		NextProtos:            []string{"h2"},
+		ClientAuth:            tls.RequestClientCert,
+		VerifyPeerCertificate: verify,
 	}
 }
 
@@ -130,11 +131,11 @@ func GetHttp2LocalhostTLSClientWithCert(ctx context.Context, cfg *config.Config,
 	}, nil
 }
 
-// MakeTestListener creates a localhost listener on a random port and and validates proper
+// MakeTestListener creates a localhost listener on a random port and validates proper
 // listener creation. It does not clean up the listener on test close.
-func MakeTestListener(t *testing.T) (net.Listener, string) {
+func MakeTestListener(t *testing.T, verify func([][]byte, [][]*x509.Certificate) error) (net.Listener, string) {
 	listener, err := net.Listen("tcp", "localhost:0")
 	require.NoError(t, err)
-	listener = tls.NewListener(listener, GetHttp2LocalhostTLSConfig())
+	listener = tls.NewListener(listener, GetHttp2LocalhostTLSConfig(verify))
 	return listener, "https://" + listener.Addr().String()
 }

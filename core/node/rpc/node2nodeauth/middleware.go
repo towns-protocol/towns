@@ -1,12 +1,8 @@
 package node2nodeauth
 
 import (
-	"crypto/x509"
 	"net/http"
 )
-
-// VerifyPeerCertificateFunc is a function that verifies the peer certificates.
-type VerifyPeerCertificateFunc func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error
 
 // RequireCertMiddleware is a middleware that requires the node-2-node client certificate.
 // This works together with verifyNode2NodePeerCertificate which verifies the certificate.
