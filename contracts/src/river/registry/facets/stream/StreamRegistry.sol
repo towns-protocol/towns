@@ -40,6 +40,8 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     ds.genesisMiniblockByStreamId[streamId] = genesisMiniblock;
     ds.genesisMiniblockHashByStreamId[streamId] = genesisMiniblockHash;
 
+    _addStreamIdToNodes(streamId, nodes);
+
     emit StreamAllocated(
       streamId,
       nodes,
@@ -62,6 +64,8 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     ds.streams.add(streamId);
     ds.streamById[streamId] = stream;
     ds.genesisMiniblockHashByStreamId[streamId] = genesisMiniblockHash;
+
+    _addStreamIdToNodes(streamId, stream.nodes);
 
     emit StreamCreated(streamId, genesisMiniblockHash, stream);
   }
@@ -186,6 +190,8 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     Stream storage stream = ds.streamById[streamId];
     address[] storage nodes = stream.nodes;
 
+    ds.streamIdsByNode[nodeAddress].add(streamId);
+
     // validate that the node is not already on the stream
     uint256 nodeCount = nodes.length;
 
@@ -205,6 +211,8 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
   ) external onlyStream(streamId) onlyNode(msg.sender) {
     Stream storage stream = ds.streamById[streamId];
     address[] storage nodes = stream.nodes;
+
+    ds.streamIdsByNode[nodeAddress].remove(streamId);
 
     bool found = false;
     uint256 nodeCount = nodes.length;
@@ -267,16 +275,18 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
   function getStreamCountOnNode(
     address nodeAddress
   ) external view returns (uint256 count) {
-    uint256 streamLength = ds.streams.length();
-    for (uint256 i; i < streamLength; ++i) {
-      bytes32 id = ds.streams.at(i);
-      Stream storage stream = ds.streamById[id];
-      for (uint256 j; j < stream.nodes.length; ++j) {
-        if (stream.nodes[j] == nodeAddress) {
-          ++count;
-          break;
-        }
-      }
+    count = ds.streamIdsByNode[nodeAddress].length();
+  }
+
+  function getStreamsOnNode(
+    address nodeAddress
+  ) external view returns (StreamWithId[] memory streams) {
+    uint256 streamCount = ds.streamIdsByNode[nodeAddress].length();
+    streams = new StreamWithId[](streamCount);
+
+    for (uint256 i; i < streamCount; ++i) {
+      bytes32 id = ds.streamIdsByNode[nodeAddress].at(i);
+      streams[i] = StreamWithId({id: id, stream: ds.streamById[id]});
     }
   }
 
@@ -299,6 +309,15 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     }
 
     return (streams, stop >= streamCount);
+  }
+
+  function _addStreamIdToNodes(
+    bytes32 streamId,
+    address[] calldata nodes
+  ) internal {
+    for (uint256 i; i < nodes.length; ++i) {
+      ds.streamIdsByNode[nodes[i]].add(streamId);
+    }
   }
 
   /// @dev Emits the StreamLastMiniblockUpdated event without memory expansion
