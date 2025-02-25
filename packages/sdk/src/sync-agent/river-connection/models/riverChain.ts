@@ -1,12 +1,10 @@
 import { RiverRegistry } from '@river-build/web3'
 import { PersistedObservable, persistedObservable } from '../../../observable/persistedObservable'
 import { LoadPriority, Store } from '../../../store/store'
-import { dlogger } from '@river-build/dlog'
+import { dlogger, ExtendedLogger } from '@river-build/dlog'
 import { makeUserStreamId, streamIdAsBytes } from '../../../id'
 
 // Over commenting here as an example that we reference from the readme
-
-const log = dlogger('csb:agent:riverChain')
 
 // Define a data model, (smurf named *Model) this is what will be stored in the database
 export interface RiverChainModel {
@@ -24,18 +22,25 @@ export interface RiverChainModel {
     tableName: 'riverChain', // this is the name of the table in the database
 })
 export class RiverChain extends PersistedObservable<RiverChainModel> {
+    private log: ExtendedLogger
     private sessionStartMs = Date.now()
     private stopped = false
     // The constructor is where we set up the class, we pass in the store and any other dependencies
-    constructor(store: Store, private riverRegistryDapp: RiverRegistry, private userId: string) {
+    constructor(
+        store: Store,
+        private riverRegistryDapp: RiverRegistry,
+        private userId: string,
+        logId: string,
+    ) {
         // pass a default value to the parent class, this is what will be used if the data is not loaded
         // set the load priority to high, this will load first
         super({ id: '0', urls: { value: '' }, streamExists: {} }, store, LoadPriority.high)
+        this.log = dlogger(`csb:agent:riverChain:${logId}`)
     }
 
     // implement start function then wire it up from parent
     protected override onLoaded() {
-        log.info('riverChain onLoaded')
+        this.log.info('riverChain onLoaded')
         this.withInfiniteRetries(() => this.fetchUrls())
         this.withInfiniteRetries(() => this.fetchStreamExists(makeUserStreamId(this.userId)))
     }
@@ -91,8 +96,8 @@ export class RiverChain extends PersistedObservable<RiverChainModel> {
             return
         }
         fn().catch((e) => {
-            log.error(e)
-            log.info(`retrying in ${delayMs / 1000} seconds`)
+            this.log.error(e)
+            this.log.info(`retrying in ${delayMs / 1000} seconds`)
             setTimeout(() => {
                 this.withInfiniteRetries(fn, delayMs)
             }, delayMs)

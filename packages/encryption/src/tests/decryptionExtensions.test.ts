@@ -24,7 +24,7 @@ import {
     UserDevice,
     UserDeviceCollection,
 } from '../olmLib'
-import { bin_fromHexString, bin_toHexString, dlog } from '@river-build/dlog'
+import { bin_fromHexString, bin_toHexString, dlog, shortenHexString } from '@river-build/dlog'
 
 import { CryptoStore } from '../cryptoStore'
 import EventEmitter from 'events'
@@ -281,7 +281,8 @@ class MockDecryptionExtensions extends BaseDecryptionExtensions {
         client: MockGroupEncryptionClient,
     ) {
         const upToDateStreams = new Set<string>()
-        super(client, crypto, entitlementDelegate, userDevice, userId, upToDateStreams)
+        const logId = shortenHexString(userId)
+        super(client, crypto, entitlementDelegate, userDevice, userId, upToDateStreams, logId)
         this._upToDateStreams = upToDateStreams
         this.client = client
         this._onStopFn = () => {
