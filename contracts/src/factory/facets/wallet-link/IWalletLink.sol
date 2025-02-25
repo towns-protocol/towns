@@ -28,6 +28,18 @@ interface IWalletLinkBase {
   /// @notice Emitted when two wallets are unlinked
   event RemoveLink(address indexed wallet, address indexed secondWallet);
 
+  /// @notice Emitted when a default wallet is set for a root key
+  event SetDefaultWallet(
+    address indexed rootKey,
+    address indexed defaultWallet
+  );
+
+  /// @notice Emitted when a third party delegation is linked
+  event LinkThirdPartyDelegation(
+    address indexed delegator,
+    address indexed delegatedWallet
+  );
+
   // =============================================================
   //                      Errors
   // =============================================================
@@ -39,6 +51,8 @@ interface IWalletLinkBase {
   error WalletLink__CannotRemoveRootWallet();
   error WalletLink__CannotLinkToSelf();
   error WalletLink__CannotLinkToRootWallet(address wallet, address rootKey);
+  error WalletLink__DefaultWalletAlreadySet();
+  error WalletLink__MaxLinkedWalletsReached(address rootKey);
 }
 
 interface IWalletLink is IWalletLinkBase {

@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IWalletLinkBase} from "./IWalletLink.sol";
-
+import {IDelegateRegistry} from "./interfaces/IDelegateRegistry.sol";
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
@@ -16,17 +16,24 @@ import {EIP712Base} from "@river-build/diamond/src/utils/cryptography/signature/
 abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
   using EnumerableSet for EnumerableSet.AddressSet;
 
-  // =============================================================
-  //                           Constants
-  // =============================================================
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                           Constants
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /// @dev `keccak256("LinkedWallet(string message,address userID,uint256 nonce)")`.
   // https://eips.ethereum.org/EIPS/eip-712
   bytes32 private constant _LINKED_WALLET_TYPEHASH =
     0x6bb89d031fcd292ecd4c0e6855878b7165cebc3a2f35bc6bbac48c088dd8325c;
 
-  // =============================================================
-  //                      External - Write
-  // =============================================================
+  /// @dev Maximum number of linked wallets per root key
+  uint256 private constant MAX_LINKED_WALLETS = 10;
+
+  // Address of delegate.xyz v2 registry
+  address constant DELEGATE_REGISTRY =
+    0x00000000000000447e69651d841bD8D104Bed493;
+
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                      External - Write
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
 
   /// @dev Links a caller address to a root wallet
   /// @param rootWallet the root wallet that the caller is linking to
@@ -64,6 +71,11 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
     //set link in mapping
     ds.walletsByRootKey[rootWallet.addr].add(newWallet);
     ds.rootKeyByWallet[newWallet] = rootWallet.addr;
+
+    // if there are no default wallets, set the new wallet as the default wallet
+    if (_getDefaultWallet(rootWallet.addr) == address(0)) {
+      ds.walletExtensions[rootWallet.addr].defaultWallet = newWallet;
+    }
 
     emit LinkWalletToRootKey(newWallet, rootWallet.addr);
   }
@@ -116,12 +128,17 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
     ds.walletsByRootKey[rootWallet.addr].add(wallet.addr);
     ds.rootKeyByWallet[wallet.addr] = rootWallet.addr;
 
+    // if there are no default wallets, set the new wallet as the default wallet
+    if (_getDefaultWallet(rootWallet.addr) == address(0)) {
+      ds.walletExtensions[rootWallet.addr].defaultWallet = wallet.addr;
+    }
+
     emit LinkWalletToRootKey(wallet.addr, rootWallet.addr);
   }
 
-  // =============================================================
-  //                           Remove
-  // =============================================================
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                           Remove
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
 
   function _removeLink(
     address walletToRemove,
@@ -186,13 +203,31 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
     emit RemoveLink(walletToRemove, rootWallet);
   }
 
-  // =============================================================
-  //                        Read
-  // =============================================================
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                        Read
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   function _getWalletsByRootKey(
     address rootKey
   ) internal view returns (address[] memory wallets) {
-    return WalletLinkStorage.layout().walletsByRootKey[rootKey].values();
+    // update so it loops over all wallets and adds the delegators to the array
+    address[] memory linkedWallets = WalletLinkStorage
+      .layout()
+      .walletsByRootKey[rootKey]
+      .values();
+
+    uint256 count = 0;
+    uint256 linkedWalletsLength = linkedWallets.length;
+
+    for (uint256 i; i < linkedWalletsLength; ++i) {
+      address[] memory delegators = _getThirdPartyDelegators(linkedWallets[i]);
+      uint256 delegatorsLength = delegators.length;
+      for (uint256 j; j < delegatorsLength; ++j) {
+        wallets[count] = delegators[j];
+        count++;
+      }
+    }
+
+    return wallets;
   }
 
   function _getRootKeyByWallet(
@@ -209,9 +244,84 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
     return ds.rootKeyByWallet[wallet] == rootKey;
   }
 
-  // =============================================================
-  //                           Helpers
-  // =============================================================
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                   Default Wallet Functions                 */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+  function _setDefaultWallet(
+    address defaultWallet,
+    LinkedWallet memory rootWallet,
+    uint256 nonce
+  ) internal {
+    WalletLinkStorage.Layout storage ds = WalletLinkStorage.layout();
+
+    // Verify the default wallet is linked to the root wallet and that the default wallet is not the root wallet itself
+    if (
+      !_checkIfLinked(rootWallet.addr, defaultWallet) &&
+      defaultWallet != rootWallet.addr
+    ) {
+      revert WalletLink__NotLinked(defaultWallet, rootWallet.addr);
+    }
+
+    bytes32 structHash = _getLinkedWalletTypedDataHash(
+      rootWallet.message,
+      defaultWallet,
+      nonce
+    );
+    bytes32 rootKeyMessageHash = _hashTypedDataV4(structHash);
+
+    // Verify the signature of the root wallet is correct for the nonce and wallet address
+    if (
+      ECDSA.recover(rootKeyMessageHash, rootWallet.signature) != rootWallet.addr
+    ) {
+      revert WalletLink__InvalidSignature();
+    }
+
+    _useCheckedNonce(rootWallet.addr, nonce);
+    ds.walletExtensions[rootWallet.addr].defaultWallet = defaultWallet;
+
+    emit SetDefaultWallet(rootWallet.addr, defaultWallet);
+  }
+
+  function _getDefaultWallet(
+    address rootKey
+  ) internal view returns (address defaultWallet) {
+    return WalletLinkStorage.layout().walletExtensions[rootKey].defaultWallet;
+  }
+
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                      Delegate Functions                    */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+  function _getThirdPartyDelegators(
+    address linkedWallet
+  ) internal view returns (address[] memory delegators) {
+    IDelegateRegistry.Delegation[] memory delegations = IDelegateRegistry(
+      DELEGATE_REGISTRY
+    ).getIncomingDelegations(linkedWallet);
+
+    if (delegations.length == 0) {
+      return new address[](0);
+    }
+
+    uint256 count = 0;
+    for (uint256 i; i < delegations.length; ++i) {
+      if (delegations[i].type_ == IDelegateRegistry.DelegationType.ALL) {
+        delegators[count] = delegations[i].from;
+        count++;
+      }
+    }
+
+    assembly {
+      mstore(delegators, count)
+    }
+
+    return delegators;
+  }
+
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                           Helpers
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
 
   function _verifyWallets(
     WalletLinkStorage.Layout storage ds,
@@ -244,6 +354,11 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
     // Check that the wallet is not itself a root wallet
     if (ds.walletsByRootKey[wallet].length() > 0) {
       revert WalletLink__CannotLinkToRootWallet(wallet, rootWallet);
+    }
+
+    // Check that we haven't reached the maximum number of linked wallets
+    if (ds.walletsByRootKey[rootWallet].length() >= MAX_LINKED_WALLETS) {
+      revert WalletLink__MaxLinkedWalletsReached(rootWallet);
     }
   }
 
