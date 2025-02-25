@@ -76,7 +76,11 @@ library CreateSpaceLib {
     uint256 spaceTokenId = ims.spaceOwnerToken.nextTokenId();
 
     // deploy space
-    spaceAddress = deploySpace(spaceTokenId, spaceInfo.membership);
+    spaceAddress = deploySpace(
+      spaceTokenId,
+      spaceInfo.membership,
+      spaceOptions
+    );
 
     // save space info to storage
     unchecked {
@@ -290,12 +294,14 @@ library CreateSpaceLib {
 
   function deploySpace(
     uint256 spaceTokenId,
-    IArchitectBase.Membership memory membership
+    IArchitectBase.Membership memory membership,
+    IArchitectBase.SpaceOptions memory spaceOptions
   ) internal returns (address space) {
     // get deployment info
     (bytes memory initCode, bytes32 salt) = getSpaceDeploymentInfo(
       spaceTokenId,
-      membership
+      membership,
+      spaceOptions
     );
     return Factory.deploy(initCode, salt);
   }
@@ -327,7 +333,8 @@ library CreateSpaceLib {
 
   function getSpaceDeploymentInfo(
     uint256 spaceTokenId,
-    IArchitectBase.Membership memory membership
+    IArchitectBase.Membership memory membership,
+    IArchitectBase.SpaceOptions memory spaceOptions
   ) internal view returns (bytes memory initCode, bytes32 salt) {
     verifyPricingModule(membership.settings.pricingModule);
 
@@ -358,7 +365,7 @@ library CreateSpaceLib {
         abi.encodeCall(
           SpaceProxyInitializer.initialize,
           (
-            msg.sender,
+            spaceOptions.to,
             address(this),
             ITokenOwnableBase.TokenOwnable({
               collection: spaceOwnerNFT,
