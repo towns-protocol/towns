@@ -244,7 +244,10 @@ export class RiverConnection extends PersistedObservable<RiverConnectionModel> {
                 } catch (err) {
                     retryCount++
                     this.loginError = err as Error
-                    this.logger.error('encountered exception while initializing', err)
+                    this.logger.error(
+                        `encountered exception while initializing ${this.userId}`,
+                        err,
+                    )
 
                     for (const fn of this.onStoppedFns) {
                         fn()
