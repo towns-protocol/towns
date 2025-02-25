@@ -11,7 +11,9 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+
 	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/node/http_client"
 )
 
 // LocalhostCertBytes is a PEM-encoded TLS cert with SAN IPs
@@ -100,10 +102,15 @@ func GetHttp2LocalhostTLSConfig() *tls.Config {
 }
 
 func GetHttp2LocalhostTLSClient(ctx context.Context, cfg *config.Config) (*http.Client, error) {
+	return GetHttp2LocalhostTLSClientWithCert(ctx, cfg, nil)
+}
+
+func GetHttp2LocalhostTLSClientWithCert(ctx context.Context, cfg *config.Config, getCert http_client.GetClientCertFunc) (*http.Client, error) {
 	return &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
-				RootCAs: LocalhostCertPool,
+				RootCAs:              LocalhostCertPool,
+				GetClientCertificate: getCert,
 			},
 
 			// Node-2-node connections to local nodes in tests sometimes seem to hang if the

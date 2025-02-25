@@ -349,10 +349,11 @@ func (st *serviceTester) startSingle(i int, opts ...startOpts) error {
 
 	bc := st.btc.GetBlockchain(ctx, i)
 	service, err := StartServer(ctx, ctxCancel, cfg, &ServerStartOpts{
-		RiverChain:      bc,
-		Listener:        listener,
-		HttpClientMaker: testcert.GetHttp2LocalhostTLSClient,
-		ScrubberMaker:   options.scrubberMaker,
+		RiverChain:              bc,
+		Listener:                listener,
+		HttpClientMaker:         testcert.GetHttp2LocalhostTLSClient,
+		HttpClientMakerWithCert: testcert.GetHttp2LocalhostTLSClientWithCert,
+		ScrubberMaker:           options.scrubberMaker,
 	})
 	if err != nil {
 		st.require.Nil(service)
