@@ -47,9 +47,11 @@ func writeOrPanic(w io.Writer, buf []byte) {
 	}
 }
 
+// TownsHash is a hasher with a given header. Use different headers for different types of hashes to avoid replay attacks.
 type TownsHash [8]byte
 
-var TownsHashForEvents = TownsHash{67, 83, 66, 76, 65, 78, 67, 65} // String 'CSBLANCA' as bytes.
+// TownsHashForEvents is a TownsHash with the prefix 'CSBLANCA' as bytes for hashing Towns events.
+var TownsHashForEvents = TownsHash{67, 83, 66, 76, 65, 78, 67, 65} // Prefix 'CSBLANCA' as bytes.
 
 // Hash computes the hash of the given buffer using the Towns hashing algorithm.
 // It uses Keccak256 to ensure compatability with the EVM and uses a header, separator,
