@@ -6611,7 +6611,6 @@ __metadata:
     "@prb/test": ^0.6.4
     "@river-build/diamond": "github:river-build/diamond#552c970ed60cf452d28e7713b00a95c7bd10a5d9"
     account-abstraction: "github:eth-infinitism/account-abstraction"
-    ds-test: "github:dapphub/ds-test"
     forge-std: "github:foundry-rs/forge-std#v1.9.5"
     prettier: ^2.8.8
     prettier-plugin-solidity: ^1.4.2
@@ -13692,13 +13691,6 @@ __metadata:
   version: 16.3.2
   resolution: "dotenv@npm:16.3.2"
   checksum: 917b27eeb654b95846484009326b1c52af7a7c25f7b09e2939ed49de8f98cb9895dcc04f13a39cdb078d247985e21147311ccb5bfbf2fd151afb20fa8f96de15
-  languageName: node
-  linkType: hard
-
-"ds-test@github:dapphub/ds-test":
-  version: 1.0.0
-  resolution: "ds-test@https://github.com/dapphub/ds-test.git#commit=e282159d5170298eb2455a6c05280ab5a73a4ef0"
-  checksum: 8f36e20dde868d062841c790fc43c9dd18b93d6180995f378bedaee1f24444950838843c0f2ffa5ac3b8a21b4c29fd97a60725e29e8ff71c9cf28f837614d96f
   languageName: node
   linkType: hard
 
