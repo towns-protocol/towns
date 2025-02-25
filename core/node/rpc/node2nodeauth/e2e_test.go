@@ -44,7 +44,7 @@ func TestEndToEnd(t *testing.T) {
 	defer server.Close()
 
 	// Create client with mTLS setup
-	client, err := testcert.GetHttp2LocalhostTLSClientWithCert(nil, nil, node2nodeauth.CertGetter(logger, wallet))
+	client, err := testcert.GetHttp2LocalhostTLSClientWithCert(context.Background(), nil, node2nodeauth.CertGetter(logger, wallet))
 	assert.NoError(t, err)
 
 	// Perform a request to the server
@@ -53,7 +53,7 @@ func TestEndToEnd(t *testing.T) {
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 	// Create a client without mTLS
-	client, err = testcert.GetHttp2LocalhostTLSClient(nil, nil)
+	client, err = testcert.GetHttp2LocalhostTLSClient(context.Background(), nil)
 	assert.NoError(t, err)
 
 	// Perform a request to the server
