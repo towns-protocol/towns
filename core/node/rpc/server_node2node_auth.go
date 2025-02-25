@@ -13,6 +13,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/towns-protocol/towns/core/node/testutils/testcert"
+
 	"github.com/ethereum/go-ethereum/common"
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
 	"go.uber.org/zap"
@@ -64,7 +66,7 @@ func (s *Service) verifyNode2NodePeerCertificate(rawCerts [][]byte, _ [][]*x509.
 
 // requireNode2NodeCertMiddleware is a middleware that requires the node-2-node client certificate.
 // This works together with verifyNode2NodePeerCertificate which verifies the certificate.
-func requireNode2NodeCertMiddleware(next http.Handler) http.Handler {
+func requireNode2NodeCertMiddleware(next http.Handler) http.Handler { //nolint:unused
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var found bool
 		for _, cert := range r.TLS.PeerCertificates {
@@ -212,7 +214,7 @@ func node2nodeCreateCert(logger *zap.SugaredLogger, wallet *crypto.Wallet) (*tls
 		ExtraExtensions: []pkix.Extension{{Id: node2NodeCertExtOID, Value: extensionValue}},
 	}
 
-	certDER, err := x509.CreateCertificate(rand.Reader, template, template, privateKeyA.Public(), privateKeyA)
+	certDER, err := x509.CreateCertificate(rand.Reader, template, testcert.LocalhostCert.Leaf, privateKeyA.Public(), privateKeyA)
 	if err != nil {
 		return nil, AsRiverError(err, Err_INTERNAL).Message("Failed to create certificate").LogError(logger)
 	}
