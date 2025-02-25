@@ -13,8 +13,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/towns-protocol/towns/core/node/testutils/testcert"
-
 	"github.com/ethereum/go-ethereum/common"
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
 	"go.uber.org/zap"
@@ -214,7 +212,7 @@ func node2nodeCreateCert(logger *zap.SugaredLogger, wallet *crypto.Wallet) (*tls
 		ExtraExtensions: []pkix.Extension{{Id: node2NodeCertExtOID, Value: extensionValue}},
 	}
 
-	certDER, err := x509.CreateCertificate(rand.Reader, template, testcert.LocalhostCert.Leaf, privateKeyA.Public(), privateKeyA)
+	certDER, err := x509.CreateCertificate(rand.Reader, template, template, privateKeyA.Public(), privateKeyA)
 	if err != nil {
 		return nil, AsRiverError(err, Err_INTERNAL).Message("Failed to create certificate").LogError(logger)
 	}
