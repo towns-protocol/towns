@@ -15,6 +15,7 @@ const processIndex = parseInt(process.env.PROCESS_INDEX)
 const config = makeRiverConfig(process.env.RIVER_ENV)
 const logger = getLogger(`stress:run`)
 logger.info('======================= run =======================')
+logger.error('test error')
 
 if (processIndex === 0) {
     logger.info(process.env, 'env')
