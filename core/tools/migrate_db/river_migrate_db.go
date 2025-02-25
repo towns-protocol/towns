@@ -560,7 +560,8 @@ func inspectStream(ctx context.Context, pool *pgxpool.Pool, streamId string) err
 	)
 	if err != nil {
 		fmt.Println("Error reading stream miniblock candidates :", err)
-		fmt.Println("Some streams may have been allocated before the miniblock_candidate table was created")
+		fmt.Println("Stream: ", streamId)
+		os.Exit(1)
 	} else {
 		fmt.Println("Miniblock Candidates (stream_id, seq_num, block_hash, block_data)")
 		fmt.Println("==================================================================")
@@ -1271,10 +1272,10 @@ func copyStream(
 	if err != nil {
 		return err
 	}
-	err = copyPart(ctx, source, tx, streamId, "miniblock_candidates", force, sourceInfo, targetSchemaMetadata)
-	if err != nil {
-		return err
-	}
+	// err = copyPart(ctx, source, tx, streamId, "miniblock_candidates", force, sourceInfo, targetSchemaMetadata)
+	// if err != nil {
+	// 	return err
+	// }
 	return nil
 }
 
