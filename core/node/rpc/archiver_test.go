@@ -7,8 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/towns-protocol/towns/core/node/rpc/node2nodeauth"
-
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -25,6 +23,7 @@ import (
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
 	"github.com/towns-protocol/towns/core/node/registries"
+	"github.com/towns-protocol/towns/core/node/rpc/node2nodeauth"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/storage"
 	"github.com/towns-protocol/towns/core/node/testutils"
