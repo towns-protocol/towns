@@ -11,8 +11,11 @@ import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
 import {WalletLinkBase} from "./WalletLinkBase.sol";
 
 contract WalletLink is IWalletLink, WalletLinkBase, Facet {
-  function __WalletLink_init() external onlyInitializing {
+  function __WalletLink_init(
+    address delegateRegistry
+  ) external onlyInitializing {
     _addInterface(type(IWalletLink).interfaceId);
+    _setDelegateByVersion(DELEGATE_VERSION, delegateRegistry);
   }
 
   /// @inheritdoc IWalletLink

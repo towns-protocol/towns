@@ -22,6 +22,12 @@ contract DeployWalletLink is FacetHelper, Deployer {
     return WalletLink.__WalletLink_init.selector;
   }
 
+  function makeInitData(
+    address delegateRegistry
+  ) public pure returns (bytes memory) {
+    return abi.encode(delegateRegistry);
+  }
+
   function versionName() public pure override returns (string memory) {
     return "walletLinkFacet";
   }

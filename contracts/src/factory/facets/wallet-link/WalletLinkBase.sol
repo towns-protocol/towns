@@ -28,8 +28,7 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
   uint256 private constant MAX_LINKED_WALLETS = 10;
 
   // Address of delegate.xyz v2 registry
-  address constant DELEGATE_REGISTRY =
-    0x00000000000000447e69651d841bD8D104Bed493;
+  uint256 constant DELEGATE_VERSION = 2;
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                      External - Write
@@ -74,7 +73,7 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
 
     // if there are no default wallets, set the new wallet as the default wallet
     if (_getDefaultWallet(rootWallet.addr) == address(0)) {
-      ds.walletExtensions[rootWallet.addr].defaultWallet = newWallet;
+      ds.defaultWalletByRootKey[rootWallet.addr] = newWallet;
     }
 
     emit LinkWalletToRootKey(newWallet, rootWallet.addr);
@@ -130,7 +129,7 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
 
     // if there are no default wallets, set the new wallet as the default wallet
     if (_getDefaultWallet(rootWallet.addr) == address(0)) {
-      ds.walletExtensions[rootWallet.addr].defaultWallet = wallet.addr;
+      ds.defaultWalletByRootKey[rootWallet.addr] = wallet.addr;
     }
 
     emit LinkWalletToRootKey(wallet.addr, rootWallet.addr);
@@ -278,7 +277,7 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
     }
 
     _useCheckedNonce(rootWallet.addr, nonce);
-    ds.walletExtensions[rootWallet.addr].defaultWallet = defaultWallet;
+    ds.defaultWalletByRootKey[rootWallet.addr] = defaultWallet;
 
     emit SetDefaultWallet(rootWallet.addr, defaultWallet);
   }
@@ -286,18 +285,28 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
   function _getDefaultWallet(
     address rootKey
   ) internal view returns (address defaultWallet) {
-    return WalletLinkStorage.layout().walletExtensions[rootKey].defaultWallet;
+    return WalletLinkStorage.layout().defaultWalletByRootKey[rootKey];
   }
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                      Delegate Functions                    */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+  function _getDelegateByVersion(
+    uint256 version
+  ) internal view returns (address delegate) {
+    return WalletLinkStorage.layout().delegateByVersion[version];
+  }
+
+  function _setDelegateByVersion(uint256 version, address delegate) internal {
+    WalletLinkStorage.layout().delegateByVersion[version] = delegate;
+  }
+
   function _getThirdPartyDelegators(
     address linkedWallet
   ) internal view returns (address[] memory delegators) {
     IDelegateRegistry.Delegation[] memory delegations = IDelegateRegistry(
-      DELEGATE_REGISTRY
+      WalletLinkStorage.layout().delegateByVersion[DELEGATE_VERSION]
     ).getIncomingDelegations(linkedWallet);
 
     if (delegations.length == 0) {
