@@ -210,8 +210,8 @@ export class Client
     private decryptionExtensions?: BaseDecryptionExtensions
     private syncedStreamsExtensions?: SyncedStreamsExtension
     private persistenceStore: IPersistenceStore
-    private validatedEvents: Record<string, { isValid: boolean; reason?: string }> = {}
     private defaultGroupEncryptionAlgorithm: GroupEncryptionAlgorithmId
+    private logId: string
 
     constructor(
         signerContext: SignerContext,
@@ -223,7 +223,7 @@ export class Client
         highPriorityStreamIds?: string[],
         unpackEnvelopeOpts?: UnpackEnvelopeOpts,
         defaultGroupEncryptionAlgorithm?: GroupEncryptionAlgorithmId,
-        logId?: string,
+        inLogId?: string,
     ) {
         super()
         if (logNamespaceFilter) {
@@ -246,18 +246,18 @@ export class Client
         this.defaultGroupEncryptionAlgorithm =
             defaultGroupEncryptionAlgorithm ?? GroupEncryptionAlgorithmId.HybridGroupEncryption
 
-        const shortId =
-            logId ??
+        this.logId =
+            inLogId ??
             shortenHexString(this.userId.startsWith('0x') ? this.userId.slice(2) : this.userId)
 
-        this.logCall = dlog('csb:cl:call').extend(shortId)
-        this.logSync = dlog('csb:cl:sync').extend(shortId)
-        this.logEmitFromStream = dlog('csb:cl:stream').extend(shortId)
-        this.logEmitFromClient = dlog('csb:cl:emit').extend(shortId)
-        this.logEvent = dlog('csb:cl:event').extend(shortId)
-        this.logError = dlogError('csb:cl:error').extend(shortId)
-        this.logInfo = dlog('csb:cl:info', { defaultEnabled: true }).extend(shortId)
-        this.logDebug = dlog('csb:cl:debug').extend(shortId)
+        this.logCall = dlog('csb:cl:call').extend(this.logId)
+        this.logSync = dlog('csb:cl:sync').extend(this.logId)
+        this.logEmitFromStream = dlog('csb:cl:stream').extend(this.logId)
+        this.logEmitFromClient = dlog('csb:cl:emit').extend(this.logId)
+        this.logEvent = dlog('csb:cl:event').extend(this.logId)
+        this.logError = dlogError('csb:cl:error').extend(this.logId)
+        this.logInfo = dlog('csb:cl:info', { defaultEnabled: true }).extend(this.logId)
+        this.logDebug = dlog('csb:cl:debug').extend(this.logId)
         this.cryptoStore = cryptoStore
 
         if (persistenceStoreName) {
@@ -266,7 +266,13 @@ export class Client
             this.persistenceStore = new StubPersistenceStore()
         }
 
-        this.streams = new SyncedStreams(this.userId, this.rpcClient, this, this.unpackEnvelopeOpts)
+        this.streams = new SyncedStreams(
+            this.userId,
+            this.rpcClient,
+            this,
+            this.unpackEnvelopeOpts,
+            this.logId,
+        )
         this.syncedStreamsExtensions = new SyncedStreamsExtension(
             highPriorityStreamIds,
             {
@@ -279,7 +285,7 @@ export class Client
                 emitClientInitStatus: (status) => this.emit('clientInitStatusUpdated', status),
             },
             this.persistenceStore,
-            shortId,
+            this.logId,
         )
 
         this.logCall('new Client')
@@ -2562,6 +2568,8 @@ export class Client
             this.entitlementsDelegate,
             this.userId,
             this.userDeviceKey(),
+            this.unpackEnvelopeOpts,
+            this.logId,
         )
     }
 
