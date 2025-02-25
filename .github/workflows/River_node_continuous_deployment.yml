@@ -29,20 +29,8 @@ on:
                 type: string
 
         secrets:
-            AWS_ACCESS_KEY_ID:
-                description: 'AWS access key id'
-                required: true
-            AWS_SECRET_ACCESS_KEY:
-                description: 'AWS secret access key'
-                required: true
             SLACK_CD_ALERT_WORKFLOW_WEBHOOK_URL:
                 description: 'Slack webhook url for alerting'
-                required: true
-            SLACK_CD_INFO_WORKFLOW_WEBHOOK_URL:
-                description: 'Slack webhook url for info'
-                required: true
-            TF_VAR_datadog_api_key:
-                description: 'Data dog api key to log the failure in datadog'
                 required: true
             HARMONY_GITHUB_PAT:
                 description: 'Github personal access token to trigger repository dispatch'
@@ -53,15 +41,9 @@ concurrency:
     cancel-in-progress: true
 
 jobs:
-    setup:
-        name: Setup
+    deploy:
+        name: Deploy
         runs-on: ubuntu-latest
-        outputs:
-            ENV_NAME: ${{ steps.set_deployment_parameters.outputs.ENV_NAME }}
-            DOCKER_IMAGE_TAG: ${{ steps.set_deployment_parameters.outputs.DOCKER_IMAGE_TAG }}
-            FULL_NODE_NUMBERS: ${{ steps.set_deployment_parameters.outputs.FULL_NODE_NUMBERS }}
-            ARCHIVE_NODE_NUMBERS: ${{ steps.set_deployment_parameters.outputs.ARCHIVE_NODE_NUMBERS }}
-
         steps:
             - name: Checkout
               uses: actions/checkout@v4
@@ -84,44 +66,15 @@ jobs:
                   echo "ENV_NAME=$ENV_NAME" >> $GITHUB_ENV
 
             - name: Set Deployment Parameters
-              id: set_deployment_parameters
               env:
                   BRANCH_NAME: ${{ github.ref }}
                   ENV_NAME: ${{ env.ENV_NAME }}
               run: |
-                  if [ $ENV_NAME = "gamma" ]; then
-
-                    DOCKER_IMAGE_TAG=$(./scripts/river-node-tag/run.sh get)
-                    FULL_NODE_NUMBERS="[1,2,3,4,5,6,7,8,9,10,11]"
-                    ARCHIVE_NODE_NUMBERS="[]"
-
-                  elif [ $ENV_NAME = "delta" ]; then
-
-                    DOCKER_IMAGE_TAG=$(./scripts/river-node-tag/run.sh get)
-                    FULL_NODE_NUMBERS="[]"
-                    ARCHIVE_NODE_NUMBERS="[]"
-
-                  elif [ $ENV_NAME = "alpha" ]; then
-
-                    DOCKER_IMAGE_TAG=$(./scripts/river-node-tag/run.sh get)
-                    FULL_NODE_NUMBERS="[1,2,3,4,5,6,7,8,9,10]"
-                    ARCHIVE_NODE_NUMBERS="[]"
-
-                  elif [ $ENV_NAME = "omega" ]; then
-
+                  if [ $ENV_NAME = "omega" ]; then
                     DOCKER_IMAGE_TAG=mainnet
-                    FULL_NODE_NUMBERS="[]"
-                    ARCHIVE_NODE_NUMBERS="[]"
-
                   else
-                    echo "Error: Env name unrecognized: <$ENV_NAME>. Exiting."
-                    exit 1
+                    DOCKER_IMAGE_TAG=$(./scripts/river-node-tag/run.sh get)
                   fi
-
-                  echo "::set-output name=ENV_NAME::$ENV_NAME"
-                  echo "::set-output name=FULL_NODE_NUMBERS::$FULL_NODE_NUMBERS"
-                  echo "::set-output name=ARCHIVE_NODE_NUMBERS::$ARCHIVE_NODE_NUMBERS"
-                  echo "::set-output name=DOCKER_IMAGE_TAG::$DOCKER_IMAGE_TAG"
 
                   # Put the params into env vars:
                   echo "ENV_NAME=$ENV_NAME" >> $GITHUB_ENV
@@ -129,7 +82,6 @@ jobs:
 
             - name: Deploy via argocd repository dispatch
               uses: actions/github-script@v7
-              if: ${{ env.ENV_NAME == 'omega' || env.ENV_NAME == 'delta'  }}
               with:
                   github-token: ${{ secrets.HARMONY_GITHUB_PAT }}
                   script: |
@@ -160,37 +112,3 @@ jobs:
                           "commit": "${{ github.sha }}",
                           "actor": "${{ github.actor }}"
                       }
-
-    archive_node_continuous_deployment:
-        needs: setup
-        uses: './.github/workflows/River_deploy.yml'
-        if: ${{ needs.setup.outputs.ARCHIVE_NODE_NUMBERS != '[]' }}
-        secrets:
-            AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-            AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            SLACK_CD_ALERT_WORKFLOW_WEBHOOK_URL: ${{ secrets.SLACK_CD_ALERT_WORKFLOW_WEBHOOK_URL }}
-            SLACK_CD_INFO_WORKFLOW_WEBHOOK_URL: ${{ secrets.SLACK_CD_INFO_WORKFLOW_WEBHOOK_URL }}
-            TF_VAR_datadog_api_key: ${{ secrets.TF_VAR_datadog_api_key }}
-
-        with:
-            environment_name: ${{ needs.setup.outputs.ENV_NAME }}
-            docker_image_tag: ${{ needs.setup.outputs.DOCKER_IMAGE_TAG }}
-            node_numbers: ${{ needs.setup.outputs.ARCHIVE_NODE_NUMBERS }}
-            run_mode: 'archive'
-
-    full_node_continuous_deployment:
-        if: ${{ needs.setup.outputs.FULL_NODE_NUMBERS != '[]' }}
-        needs: setup
-        uses: './.github/workflows/River_deploy.yml'
-        secrets:
-            AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-            AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            SLACK_CD_ALERT_WORKFLOW_WEBHOOK_URL: ${{ secrets.SLACK_CD_ALERT_WORKFLOW_WEBHOOK_URL }}
-            SLACK_CD_INFO_WORKFLOW_WEBHOOK_URL: ${{ secrets.SLACK_CD_INFO_WORKFLOW_WEBHOOK_URL }}
-            TF_VAR_datadog_api_key: ${{ secrets.TF_VAR_datadog_api_key }}
-
-        with:
-            environment_name: ${{ needs.setup.outputs.ENV_NAME }}
-            docker_image_tag: ${{ needs.setup.outputs.DOCKER_IMAGE_TAG }}
-            node_numbers: ${{ needs.setup.outputs.FULL_NODE_NUMBERS }}
-            run_mode: 'full'
