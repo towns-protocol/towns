@@ -31,11 +31,15 @@ export declare namespace ReviewStorage {
   export type ContentStruct = {
     comment: PromiseOrValue<string>;
     rating: PromiseOrValue<BigNumberish>;
+    createdAt: PromiseOrValue<BigNumberish>;
+    updatedAt: PromiseOrValue<BigNumberish>;
   };
 
-  export type ContentStructOutput = [string, number] & {
+  export type ContentStructOutput = [string, number, number, number] & {
     comment: string;
     rating: number;
+    createdAt: number;
+    updatedAt: number;
   };
 }
 
@@ -71,9 +75,9 @@ export interface IReviewInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: "setReview", data: BytesLike): Result;
 
   events: {
-    "ReviewAdded(address,tuple)": EventFragment;
+    "ReviewAdded(address,string,uint8)": EventFragment;
     "ReviewDeleted(address)": EventFragment;
-    "ReviewUpdated(address,tuple)": EventFragment;
+    "ReviewUpdated(address,string,uint8)": EventFragment;
   };
 
   getEvent(nameOrSignatureOrTopic: "ReviewAdded"): EventFragment;
@@ -83,10 +87,11 @@ export interface IReviewInterface extends utils.Interface {
 
 export interface ReviewAddedEventObject {
   user: string;
-  review: ReviewStorage.ContentStructOutput;
+  comment: string;
+  rating: number;
 }
 export type ReviewAddedEvent = TypedEvent<
-  [string, ReviewStorage.ContentStructOutput],
+  [string, string, number],
   ReviewAddedEventObject
 >;
 
@@ -101,10 +106,11 @@ export type ReviewDeletedEventFilter = TypedEventFilter<ReviewDeletedEvent>;
 
 export interface ReviewUpdatedEventObject {
   user: string;
-  review: ReviewStorage.ContentStructOutput;
+  comment: string;
+  rating: number;
 }
 export type ReviewUpdatedEvent = TypedEvent<
-  [string, ReviewStorage.ContentStructOutput],
+  [string, string, number],
   ReviewUpdatedEventObject
 >;
 
@@ -201,13 +207,15 @@ export interface IReview extends BaseContract {
   };
 
   filters: {
-    "ReviewAdded(address,tuple)"(
+    "ReviewAdded(address,string,uint8)"(
       user?: PromiseOrValue<string> | null,
-      review?: null
+      comment?: null,
+      rating?: null
     ): ReviewAddedEventFilter;
     ReviewAdded(
       user?: PromiseOrValue<string> | null,
-      review?: null
+      comment?: null,
+      rating?: null
     ): ReviewAddedEventFilter;
 
     "ReviewDeleted(address)"(
@@ -217,13 +225,15 @@ export interface IReview extends BaseContract {
       user?: PromiseOrValue<string> | null
     ): ReviewDeletedEventFilter;
 
-    "ReviewUpdated(address,tuple)"(
+    "ReviewUpdated(address,string,uint8)"(
       user?: PromiseOrValue<string> | null,
-      review?: null
+      comment?: null,
+      rating?: null
     ): ReviewUpdatedEventFilter;
     ReviewUpdated(
       user?: PromiseOrValue<string> | null,
-      review?: null
+      comment?: null,
+      rating?: null
     ): ReviewUpdatedEventFilter;
   };
 
