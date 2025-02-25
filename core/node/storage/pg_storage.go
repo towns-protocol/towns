@@ -308,12 +308,10 @@ func (s *PostgresEventStore) init(
 	case "read committed", "read_committed", "readcommitted":
 		s.isolationLevel = pgx.ReadCommitted
 	default:
-		s.isolationLevel = pgx.Serializable
+		s.isolationLevel = pgx.ReadCommitted
 	}
 
-	if s.isolationLevel != pgx.Serializable {
-		log.Infow("PostgresEventStore: using isolation level", "level", s.isolationLevel)
-	}
+	log.Infow("PostgresEventStore: using isolation level", "level", s.isolationLevel)
 
 	if s.config.DebugTransactions {
 		s.txTracker.enable()
