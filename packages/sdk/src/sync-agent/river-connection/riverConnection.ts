@@ -232,11 +232,13 @@ export class RiverConnection extends PersistedObservable<RiverConnectionModel> {
                         spaceId: this.newUserMetadata?.spaceId,
                         encryptionDeviceInit: this.clientParams.encryptionDevice,
                     })
+                    this.logger.info('user initialized')
                     client.startSync()
                     this.setData({ userExists: true })
                     this.authStatus.setValue(AuthStatus.ConnectedToRiver)
                     // New rpcClient is available, resolve all queued requests
                     this.clientQueue.flush(client)
+                    this.loginPromise = undefined
 
                     break
                 } catch (err) {
@@ -254,9 +256,12 @@ export class RiverConnection extends PersistedObservable<RiverConnectionModel> {
 
                     if (loginContext.cancelled) {
                         this.logger.info('login cancelled after error')
+                        this.loginPromise = undefined
                         break
                     } else if (retryCount >= MAX_RETRY_COUNT) {
+                        this.logger.info('login MAX_RETRY_COUNT reached')
                         this.authStatus.setValue(AuthStatus.Error)
+                        this.loginPromise = undefined
                         throw err
                     } else {
                         const retryDelay = getRetryDelay(retryCount)
@@ -264,9 +269,6 @@ export class RiverConnection extends PersistedObservable<RiverConnectionModel> {
                         // sleep
                         await new Promise((resolve) => setTimeout(resolve, retryDelay))
                     }
-                } finally {
-                    this.logger.info('exiting login loop')
-                    this.loginPromise = undefined
                 }
             }
         }
