@@ -31,9 +31,6 @@ const (
 	KEY_FILE_PERMISSIONS     = 0o600
 )
 
-// String 'CSBLANCA' as bytes.
-var HASH_HEADER = []byte{67, 83, 66, 76, 65, 78, 67, 65}
-
 // String 'ABCDEFG>' as bytes.
 var HASH_SEPARATOR = []byte{65, 66, 67, 68, 69, 70, 71, 62}
 
@@ -50,20 +47,22 @@ func writeOrPanic(w io.Writer, buf []byte) {
 	}
 }
 
-// RiverHash computes the hash of the given buffer using the River hashing algorithm.
+type TownsHash [8]byte
+
+var TownsHashForEvents = TownsHash{67, 83, 66, 76, 65, 78, 67, 65} // String 'CSBLANCA' as bytes.
+
+// Hash computes the hash of the given buffer using the Towns hashing algorithm.
 // It uses Keccak256 to ensure compatability with the EVM and uses a header, separator,
-// and footer to ensure that the hash is unique to River.
-func RiverHash(buffer []byte) common.Hash {
+// and footer to ensure that the hash is unique to Towns.
+func (h TownsHash) Hash(buffer []byte) common.Hash {
 	hash := sha3.NewLegacyKeccak256()
-	writeOrPanic(hash, HASH_HEADER)
-	// Write length of buffer as 64-bit little endian uint.
-	err := binary.Write(hash, binary.LittleEndian, uint64(len(buffer)))
-	if err != nil {
-		panic(err)
-	}
-	writeOrPanic(hash, HASH_SEPARATOR)
-	writeOrPanic(hash, buffer)
-	writeOrPanic(hash, HASH_FOOTER)
+	_, _ = hash.Write(h[:])
+	// Write length of the buffer as 64-bit little endian uint.
+	l := uint64(len(buffer))
+	_, _ = hash.Write([]byte{byte(l), byte(l >> 8), byte(l >> 16), byte(l >> 24), byte(l >> 32), byte(l >> 40), byte(l >> 48), byte(l >> 56)})
+	_, _ = hash.Write(HASH_SEPARATOR)
+	_, _ = hash.Write(buffer)
+	_, _ = hash.Write(HASH_FOOTER)
 	return common.BytesToHash(hash.Sum(nil))
 }
 
@@ -283,8 +282,8 @@ func (w *Wallet) SaveWallet(
 	return nil
 }
 
-func (w *Wallet) SignHash(hash []byte) ([]byte, error) {
-	return secp256k1.Sign(hash, w.PrivateKey)
+func (w *Wallet) SignHash(hash common.Hash) ([]byte, error) {
+	return secp256k1.Sign(hash[:], w.PrivateKey)
 }
 
 func RecoverSignerPublicKey(hash []byte, signature []byte) ([]byte, error) {
