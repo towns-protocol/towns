@@ -458,9 +458,10 @@ func TestArchiveOneStream(t *testing.T) {
 func makeTestServerOpts(tester *serviceTester) *ServerStartOpts {
 	listener, _ := tester.makeTestListener()
 	return &ServerStartOpts{
-		RiverChain:      tester.btc.NewWalletAndBlockchain(tester.ctx),
-		Listener:        listener,
-		HttpClientMaker: testcert.GetHttp2LocalhostTLSClient,
+		RiverChain:              tester.btc.NewWalletAndBlockchain(tester.ctx),
+		Listener:                listener,
+		HttpClientMaker:         testcert.GetHttp2LocalhostTLSClient,
+		HttpClientMakerWithCert: testcert.GetHttp2LocalhostTLSClientWithCert,
 	}
 }
 
