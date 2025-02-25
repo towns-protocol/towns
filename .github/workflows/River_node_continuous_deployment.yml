@@ -99,7 +99,7 @@ jobs:
                   elif [ $ENV_NAME = "delta" ]; then
 
                     DOCKER_IMAGE_TAG=$(./scripts/river-node-tag/run.sh get)
-                    FULL_NODE_NUMBERS="[1,2,3,4,5,6,7,8,9,10]"
+                    FULL_NODE_NUMBERS="[]"
                     ARCHIVE_NODE_NUMBERS="[]"
 
                   elif [ $ENV_NAME = "alpha" ]; then
@@ -112,7 +112,7 @@ jobs:
 
                     DOCKER_IMAGE_TAG=mainnet
                     FULL_NODE_NUMBERS="[]"
-                    ARCHIVE_NODE_NUMBERS="[1,2]"
+                    ARCHIVE_NODE_NUMBERS="[]"
 
                   else
                     echo "Error: Env name unrecognized: <$ENV_NAME>. Exiting."
@@ -128,21 +128,21 @@ jobs:
                   echo "ENV_NAME=$ENV_NAME" >> $GITHUB_ENV
                   echo "DOCKER_IMAGE_TAG=$DOCKER_IMAGE_TAG" >> $GITHUB_ENV
 
-            # - name: Deploy via argocd repository dispatch
-            #   uses: actions/github-script@v7
-            #   if: ${{ env.ENV_NAME == 'gamma' }}
-            #   with:
-            #       github-token: ${{ secrets.HARMONY_GITHUB_PAT }}
-            #       script: |
-            #           await github.rest.repos.createDispatchEvent({
-            #             owner: "HereNotThere",
-            #             repo: "argocd",
-            #             event_type: "update-infra",
-            #             client_payload: {
-            #               environment: process.env.ENV_NAME,
-            #               riverNodeImageTag: process.env.DOCKER_IMAGE_TAG
-            #             }
-            #           });
+            - name: Deploy via argocd repository dispatch
+              uses: actions/github-script@v7
+              if: ${{ env.ENV_NAME == 'omega' || env.ENV_NAME == 'delta'  }}
+              with:
+                  github-token: ${{ secrets.HARMONY_GITHUB_PAT }}
+                  script: |
+                      await github.rest.repos.createDispatchEvent({
+                        owner: "HereNotThere",
+                        repo: "argocd",
+                        event_type: "update-infra",
+                        client_payload: {
+                          environment: process.env.ENV_NAME,
+                          riverNodeImageTag: process.env.DOCKER_IMAGE_TAG
+                        }
+                      });
 
             # If action failed, we send a slack notification
             - name: Alert notification

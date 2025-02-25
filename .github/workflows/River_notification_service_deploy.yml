@@ -112,15 +112,7 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
                   aws-region: us-east-1
 
-            - name: Deploy via ECS
-              if: inputs.environment_name != 'gamma'
-              env:
-                  ENVIRONMENT_NAME: ${{ inputs.environment_name }}
-                  DOCKER_IMAGE_TAG: ${{ inputs.docker_image_tag }}
-              run: ./scripts/create-and-deploy-river-notification-service-task-definition.sh
-
-            - name: Deploy via Repository Dispatch (Gamma Only)
-              if: inputs.environment_name == 'gamma'
+            - name: Deploy via Repository Dispatch
               env:
                   ENVIRONMENT_NAME: ${{ inputs.environment_name }}
                   DOCKER_IMAGE_TAG: ${{ inputs.docker_image_tag }}
