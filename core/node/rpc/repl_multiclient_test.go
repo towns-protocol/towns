@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"fmt"
+	"github.com/linkdata/deadlock"
 	"testing"
 	"time"
 
@@ -68,6 +69,12 @@ func TestReplMcSpeakUntilMbTrim(t *testing.T) {
 }
 
 func testReplMcConversation(t *testing.T, numClients int, numSteps int, listenInterval int, compareInterval int) {
+	deadlock.Opts.WriteLocked(func() {
+		deadlock.Opts.DeadlockTimeout = 30 * time.Second
+		deadlock.Opts.MaxMapSize = 1024 * 256
+		deadlock.Opts.PrintAllCurrentGoroutines = true
+	})
+
 	tt := newServiceTesterForReplication(t)
 	clients := tt.newTestClients(numClients)
 	spaceId, _ := clients[0].createSpace()
