@@ -109,8 +109,8 @@ func MakeEnvelopeWithEvent(wallet *crypto.Wallet, streamEvent *StreamEvent) (*En
 			Func("MakeEnvelopeWithEvent")
 	}
 
-	hash := crypto.RiverHash(eventBytes)
-	signature, err := wallet.SignHash(hash[:])
+	hash := crypto.TownsHashForEvents.Hash(eventBytes)
+	signature, err := wallet.SignHash(hash)
 	if err != nil {
 		return nil, err
 	}
