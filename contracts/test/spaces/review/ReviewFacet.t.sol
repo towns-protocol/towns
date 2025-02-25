@@ -11,11 +11,11 @@ contract ReviewFacetTest is MembershipBaseSetup, IReviewBase {
   using LibString for string;
 
   uint16 internal constant DEFAULT_MIN_COMMENT_LENGTH = 10;
-  uint16 internal constant DEFAULT_MAX_COMMENT_LENGTH = type(uint16).max;
+  uint16 internal constant DEFAULT_MAX_COMMENT_LENGTH = 4000;
 
   ReviewFacet internal reviewFacet;
 
-  ReviewStorage.Content internal sampleReview;
+  Review internal sampleReview;
 
   function setUp() public override {
     super.setUp();
@@ -23,10 +23,7 @@ contract ReviewFacetTest is MembershipBaseSetup, IReviewBase {
     reviewFacet = ReviewFacet(userSpace);
 
     // Example initialization of a sample review
-    sampleReview = ReviewStorage.Content({
-      comment: "Great experience!",
-      rating: 5
-    });
+    sampleReview = Review({comment: "Great experience!", rating: 5});
   }
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -47,10 +44,7 @@ contract ReviewFacetTest is MembershipBaseSetup, IReviewBase {
     public
     givenAliceHasMintedMembership
   {
-    ReviewStorage.Content memory invalidReview = ReviewStorage.Content({
-      comment: "Bad",
-      rating: 5
-    });
+    Review memory invalidReview = Review({comment: "Bad", rating: 5});
 
     vm.expectRevert(ReviewFacet__InvalidCommentLength.selector);
     vm.prank(alice);
@@ -61,7 +55,7 @@ contract ReviewFacetTest is MembershipBaseSetup, IReviewBase {
     public
     givenAliceHasMintedMembership
   {
-    ReviewStorage.Content memory invalidReview = ReviewStorage.Content({
+    Review memory invalidReview = Review({
       comment: "This exceeds the maximum allowed rating.",
       rating: 6 // Invalid rating
     });
@@ -74,11 +68,7 @@ contract ReviewFacetTest is MembershipBaseSetup, IReviewBase {
   function test_fuzz_addReview(
     string memory comment,
     uint8 rating
-  )
-    public
-    givenAliceHasMintedMembership
-    returns (ReviewStorage.Content memory newReview)
-  {
+  ) public givenAliceHasMintedMembership {
     rating = uint8(bound(rating, 0, 5));
     if (bytes(comment).length < DEFAULT_MIN_COMMENT_LENGTH) {
       comment = comment.concat(
@@ -89,7 +79,10 @@ contract ReviewFacetTest is MembershipBaseSetup, IReviewBase {
       comment = comment.slice(0, DEFAULT_MAX_COMMENT_LENGTH);
     }
 
-    newReview = ReviewStorage.Content({comment: comment, rating: rating});
+    Review memory newReview = Review({comment: comment, rating: rating});
+
+    vm.expectEmit(address(reviewFacet));
+    emit ReviewAdded(alice, newReview.comment, newReview.rating);
 
     vm.prank(alice);
     reviewFacet.setReview(Action.Add, abi.encode(newReview));
@@ -107,10 +100,13 @@ contract ReviewFacetTest is MembershipBaseSetup, IReviewBase {
     vm.prank(alice);
     reviewFacet.setReview(Action.Add, abi.encode(sampleReview));
 
-    ReviewStorage.Content memory updatedReview = ReviewStorage.Content({
+    Review memory updatedReview = Review({
       comment: "Updated comment",
       rating: 4
     });
+
+    vm.expectEmit(address(reviewFacet));
+    emit ReviewUpdated(alice, updatedReview.comment, updatedReview.rating);
 
     vm.prank(alice);
     reviewFacet.setReview(Action.Update, abi.encode(updatedReview));
@@ -127,6 +123,9 @@ contract ReviewFacetTest is MembershipBaseSetup, IReviewBase {
   function test_deleteReview() public givenAliceHasMintedMembership {
     vm.prank(alice);
     reviewFacet.setReview(Action.Add, abi.encode(sampleReview));
+
+    vm.expectEmit(address(reviewFacet));
+    emit ReviewDeleted(alice);
 
     vm.prank(alice);
     reviewFacet.setReview(Action.Delete, "");
@@ -156,10 +155,7 @@ contract ReviewFacetTest is MembershipBaseSetup, IReviewBase {
     vm.prank(charlie);
     membership.joinSpace(charlie);
 
-    ReviewStorage.Content memory review = ReviewStorage.Content({
-      comment: "Good Service.",
-      rating: 4
-    });
+    Review memory review = Review({comment: "Good Service.", rating: 4});
 
     vm.prank(charlie);
     reviewFacet.setReview(Action.Add, abi.encode(review));

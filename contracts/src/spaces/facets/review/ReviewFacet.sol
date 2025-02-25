@@ -17,19 +17,10 @@ import {Entitled} from "contracts/src/spaces/facets/Entitled.sol";
 contract ReviewFacet is IReview, Entitled, Facet {
   using EnumerableSetLib for EnumerableSetLib.AddressSet;
 
-  uint16 internal constant DEFAULT_MIN_COMMENT_LENGTH = 10;
-  uint16 internal constant DEFAULT_MAX_COMMENT_LENGTH = type(uint16).max;
+  uint256 internal constant DEFAULT_MIN_COMMENT_LENGTH = 10;
+  uint256 internal constant DEFAULT_MAX_COMMENT_LENGTH = 4000;
 
-  function __Review_init(
-    uint16 minCommentLength,
-    uint16 maxCommentLength
-  ) external onlyInitializing {
-    ReviewStorage.Layout storage rs = ReviewStorage.layout();
-    (rs.minCommentLength, rs.maxCommentLength) = (
-      minCommentLength,
-      maxCommentLength
-    );
-
+  function __Review_init() external onlyInitializing {
     _addInterface(type(IReview).interfaceId);
   }
 
@@ -39,24 +30,38 @@ contract ReviewFacet is IReview, Entitled, Facet {
     ReviewStorage.Layout storage rs = ReviewStorage.layout();
 
     if (action == Action.Add) {
-      ReviewStorage.Content memory newReview = abi.decode(
-        data,
-        (ReviewStorage.Content)
-      );
+      Review memory newReview = abi.decode(data, (Review));
       _validateReview(newReview);
-      rs.reviewByUser[msg.sender] = newReview;
+
+      ReviewStorage.Content storage review = rs.reviewByUser[msg.sender];
+
+      if (review.createdAt != 0)
+        CustomRevert.revertWith(ReviewFacet__ReviewAlreadyExists.selector);
+
+      (review.comment, review.rating, review.createdAt) = (
+        newReview.comment,
+        newReview.rating,
+        uint40(block.timestamp)
+      );
       rs.usersReviewed.add(msg.sender);
 
-      emit ReviewAdded(msg.sender, newReview);
+      emit ReviewAdded(msg.sender, newReview.comment, newReview.rating);
     } else if (action == Action.Update) {
-      ReviewStorage.Content memory newReview = abi.decode(
-        data,
-        (ReviewStorage.Content)
-      );
+      Review memory newReview = abi.decode(data, (Review));
       _validateReview(newReview);
-      rs.reviewByUser[msg.sender] = newReview;
 
-      emit ReviewUpdated(msg.sender, newReview);
+      ReviewStorage.Content storage review = rs.reviewByUser[msg.sender];
+
+      if (review.createdAt == 0)
+        CustomRevert.revertWith(ReviewFacet__ReviewDoesNotExist.selector);
+
+      (review.comment, review.rating, review.updatedAt) = (
+        newReview.comment,
+        newReview.rating,
+        uint40(block.timestamp)
+      );
+
+      emit ReviewUpdated(msg.sender, newReview.comment, newReview.rating);
     } else if (action == Action.Delete) {
       delete rs.reviewByUser[msg.sender];
       rs.usersReviewed.remove(msg.sender);
@@ -87,22 +92,10 @@ contract ReviewFacet is IReview, Entitled, Facet {
     }
   }
 
-  function _validateReview(ReviewStorage.Content memory review) internal view {
-    ReviewStorage.Layout storage rs = ReviewStorage.layout();
-
+  function _validateReview(Review memory review) internal pure {
     uint256 length = bytes(review.comment).length;
-    (uint16 minCommentLength, uint16 maxCommentLength) = (
-      rs.minCommentLength,
-      rs.maxCommentLength
-    );
-    unchecked {
-      // type(uint16).max if unset
-      maxCommentLength = maxCommentLength - 1;
-    }
     if (
-      length <
-      FixedPointMathLib.max(DEFAULT_MIN_COMMENT_LENGTH, minCommentLength) ||
-      length > maxCommentLength
+      length < DEFAULT_MIN_COMMENT_LENGTH || length > DEFAULT_MAX_COMMENT_LENGTH
     ) {
       CustomRevert.revertWith(ReviewFacet__InvalidCommentLength.selector);
     }
