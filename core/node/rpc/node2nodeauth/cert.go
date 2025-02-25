@@ -1,4 +1,4 @@
-package rpc
+package node2nodeauth
 
 import (
 	"crypto/ecdsa"
@@ -9,7 +9,6 @@ import (
 	"crypto/x509/pkix"
 	"encoding/asn1"
 	"math/big"
-	"net/http"
 	"sync"
 	"time"
 
@@ -34,6 +33,27 @@ var (
 	node2NodeCertExtOID = asn1.ObjectIdentifier{1, 3, 6, 1, 4, 1, 50000, 1, 1}
 )
 
+// VerifyPeerCertificate goes through the peer certificates and verifies the node-2-node client certificate.
+// Returns nil if the certificate is valid or not found.
+func VerifyPeerCertificate(logger *zap.SugaredLogger, nodeRegistry nodes.NodeRegistry) VerifyPeerCertificateFunc {
+	return func(rawCerts [][]byte, _ [][]*x509.Certificate) error {
+		for _, rawCert := range rawCerts {
+			peerCert, err := x509.ParseCertificate(rawCert)
+			if err != nil {
+				return err
+			}
+
+			if peerCert.Subject.CommonName == node2NodeCertName {
+				if err = verifyCert(logger, nodeRegistry, peerCert); err != nil {
+					return err
+				}
+			}
+		}
+
+		return nil
+	}
+}
+
 // node2NodeCertExt is a custom extension for the node-2-node client certificates.
 type node2NodeCertExt struct {
 	// Address is the Ethereum address of the node.
@@ -43,49 +63,9 @@ type node2NodeCertExt struct {
 	Signature []byte `asn1:"octet"`
 }
 
-// verifyNode2NodePeerCertificate goes through the peer certificates and verifies the node-2-node client certificate.
-// Returns nil if the certificate is valid or not found.
-func (s *Service) verifyNode2NodePeerCertificate(rawCerts [][]byte, _ [][]*x509.Certificate) error {
-	for _, rawCert := range rawCerts {
-		peerCert, err := x509.ParseCertificate(rawCert)
-		if err != nil {
-			return err
-		}
-
-		if peerCert.Subject.CommonName == node2NodeCertName {
-			if err = verifyNode2NodeCert(s.defaultLogger, s.nodeRegistry, peerCert); err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
-}
-
-// requireNode2NodeCertMiddleware is a middleware that requires the node-2-node client certificate.
-// This works together with verifyNode2NodePeerCertificate which verifies the certificate.
-func requireNode2NodeCertMiddleware(next http.Handler) http.Handler { //nolint:unused
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var found bool
-		for _, cert := range r.TLS.PeerCertificates {
-			if cert.Subject.CommonName == node2NodeCertName {
-				found = true
-				break
-			}
-		}
-
-		if !found {
-			w.WriteHeader(http.StatusUnauthorized)
-			return
-		}
-
-		next.ServeHTTP(w, r)
-	})
-}
-
-// verifyNode2NodeCert verifies the node-2-node client certificate.
+// verifyCert verifies the node-2-node client certificate.
 // The certificate must have a custom node2nodeCertExt extension.
-func verifyNode2NodeCert(logger *zap.SugaredLogger, nodeRegistry nodes.NodeRegistry, cert *x509.Certificate) error {
+func verifyCert(logger *zap.SugaredLogger, nodeRegistry nodes.NodeRegistry, cert *x509.Certificate) error {
 	if cert == nil {
 		return RiverError(Err_UNAUTHENTICATED, "No node-2-node client certificate provided").LogError(logger)
 	}
@@ -145,8 +125,8 @@ func verifyNode2NodeCert(logger *zap.SugaredLogger, nodeRegistry nodes.NodeRegis
 	return nil
 }
 
-// node2nodeCertGetter returns a GetClientCertFunc that provides a node-2-node client certificate.
-func node2nodeCertGetter(logger *zap.SugaredLogger, wallet *crypto.Wallet) http_client.GetClientCertFunc {
+// CertGetter returns a GetClientCertFunc that provides a node-2-node client certificate.
+func CertGetter(logger *zap.SugaredLogger, wallet *crypto.Wallet) http_client.GetClientCertFunc {
 	const (
 		certTTL      = time.Hour * 24
 		certRenewGap = time.Minute
@@ -163,7 +143,7 @@ func node2nodeCertGetter(logger *zap.SugaredLogger, wallet *crypto.Wallet) http_
 		defer lock.Unlock()
 
 		if cert == nil || time.Now().Add(certRenewGap).After(exp) {
-			newCert, err := node2nodeCreateCert(logger, wallet)
+			newCert, err := createCert(logger, wallet)
 			if err != nil {
 				return nil, err
 			}
@@ -176,9 +156,9 @@ func node2nodeCertGetter(logger *zap.SugaredLogger, wallet *crypto.Wallet) http_
 	}
 }
 
-// node2nodeCreateCert creates a node-2-node client certificate.
+// createCert creates a node-2-node client certificate.
 // The certificate contains a custom extension with the node's address and a signature of the cert's public key.
-func node2nodeCreateCert(logger *zap.SugaredLogger, wallet *crypto.Wallet) (*tls.Certificate, error) {
+func createCert(logger *zap.SugaredLogger, wallet *crypto.Wallet) (*tls.Certificate, error) {
 	privateKeyA, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
 		return nil, AsRiverError(err, Err_INTERNAL).Message("Failed to generate private key").LogError(logger)

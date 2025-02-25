@@ -11,6 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/towns-protocol/towns/core/node/rpc/node2nodeauth"
+
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/prometheus/client_golang/prometheus"
@@ -349,7 +351,7 @@ func (s *Service) initRiverChain() error {
 		walletAddress = s.wallet.Address
 	}
 
-	httpClient, err := s.httpClientMakerWithCert(ctx, s.config, node2nodeCertGetter(s.defaultLogger, s.wallet))
+	httpClient, err := s.httpClientMakerWithCert(ctx, s.config, node2nodeauth.CertGetter(s.defaultLogger, s.wallet))
 	if err != nil {
 		return err
 	}
@@ -451,7 +453,7 @@ func (s *Service) loadTLSConfig() (*tls.Config, error) {
 		Certificates:          []tls.Certificate{*cert},
 		NextProtos:            []string{"h2"},
 		ClientAuth:            tls.RequestClientCert, // Optional client certs, needed for node2node auth
-		VerifyPeerCertificate: s.verifyNode2NodePeerCertificate,
+		VerifyPeerCertificate: node2nodeauth.VerifyPeerCertificate(s.defaultLogger, s.nodeRegistry),
 	}, nil
 }
 

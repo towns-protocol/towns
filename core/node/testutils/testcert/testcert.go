@@ -95,6 +95,7 @@ func GetHttp2LocalhostTLSConfig() *tls.Config {
 	return &tls.Config{
 		Certificates: []tls.Certificate{LocalhostCert},
 		NextProtos:   []string{"h2"},
+		ClientAuth:   tls.RequestClientCert,
 	}
 }
 
