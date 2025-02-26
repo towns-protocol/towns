@@ -128,6 +128,8 @@ export class SyncedStreamsLoop {
     private inProgressTick?: Promise<void>
     private pendingSyncCookies: string[] = []
     private inFlightSyncCookies = new Set<string>()
+    private lastLogInflightAt = 0
+    private syncStartedAt: number | undefined = undefined
     private readonly MAX_IN_FLIGHT_COOKIES = 40
     private readonly MIN_IN_FLIGHT_COOKIES = 0
 
@@ -313,6 +315,7 @@ export class SyncedStreamsLoop {
                     // get cookies from all the known streams to sync
                     this.inFlightSyncCookies.clear()
                     this.pendingSyncCookies = []
+                    this.syncStartedAt = performance.now()
 
                     // get cookies from all the known streams to sync
                     const syncCookies = Array.from(this.streams.entries())
@@ -321,14 +324,17 @@ export class SyncedStreamsLoop {
                             const bPriority = priorityFromStreamId(b[0], this.highPriorityIds)
                             return aPriority - bPriority
                         })
-                        .map((streamRecord) => streamRecord[1].syncCookie)
+                        .map((streamRecord) => {
+                            this.inFlightSyncCookies.add(streamRecord[0])
+                            return streamRecord[1].syncCookie
+                        })
 
                     this.log(
                         'sync ITERATION start',
                         ++iteration,
                         this.syncState,
                         `pending: ${this.pendingSyncCookies.length}`,
-                        `syncCookies: ${syncCookies.map((x) => x.streamId).length}`,
+                        `syncCookies: ${syncCookies.length}`,
                     )
 
                     if (this.syncState === SyncState.Retrying) {
@@ -710,7 +716,6 @@ export class SyncedStreamsLoop {
         }
     }
 
-    private lastLogInflightAt = 0
     private async onUpdate(res: SyncStreamsResponse): Promise<void> {
         // Until we've completed canceling, accept responses
         if (this.syncState === SyncState.Syncing || this.syncState === SyncState.Canceling) {
@@ -742,10 +747,19 @@ export class SyncedStreamsLoop {
                             this.inFlightSyncCookies.size === 0 ||
                             Date.now() - this.lastLogInflightAt > 3000
                         ) {
-                            this.log(
-                                'onUpdate: remaining streams in flight',
-                                this.inFlightSyncCookies.size,
-                            )
+                            if (
+                                this.inFlightSyncCookies.size === 0 &&
+                                this.syncStartedAt !== undefined
+                            ) {
+                                const duration = performance.now() - this.syncStartedAt
+                                this.log('sync completed in', duration, 'ms')
+                                this.syncStartedAt = undefined
+                            } else {
+                                this.log(
+                                    'onUpdate: remaining streams in flight',
+                                    this.inFlightSyncCookies.size,
+                                )
+                            }
                             this.lastLogInflightAt = Date.now()
                         }
                     }

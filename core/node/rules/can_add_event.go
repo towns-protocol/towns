@@ -851,7 +851,7 @@ func (ru *aeBlockchainTransactionRules) validBlockchainTransaction_CheckReceiptM
 				if err != nil {
 					continue
 				}
-				if reviewEvent.Review.Rating != uint8(content.SpaceReview.GetEvent().Rating) {
+				if reviewEvent.Rating != uint8(content.SpaceReview.GetEvent().Rating) {
 					continue
 				}
 				if !bytes.Equal(reviewEvent.User[:], content.SpaceReview.GetEvent().User) {
@@ -863,7 +863,7 @@ func (ru *aeBlockchainTransactionRules) validBlockchainTransaction_CheckReceiptM
 				if err != nil {
 					continue
 				}
-				if reviewEvent.Review.Rating != uint8(content.SpaceReview.GetEvent().Rating) {
+				if reviewEvent.Rating != uint8(content.SpaceReview.GetEvent().Rating) {
 					continue
 				}
 				if !bytes.Equal(reviewEvent.User[:], content.SpaceReview.GetEvent().User) {

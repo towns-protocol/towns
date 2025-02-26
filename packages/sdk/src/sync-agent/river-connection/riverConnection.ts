@@ -71,7 +71,7 @@ export class RiverConnection extends PersistedObservable<RiverConnectionModel> {
         super({ id: '0', userExists: false }, store, LoadPriority.high)
         const logId = this.clientParams.logId ?? shortenHexString(this.userId)
         this.logger = dlogger(`csb:rconn:${logId}`)
-        this.riverChain = new RiverChain(store, riverRegistryDapp, this.userId)
+        this.riverChain = new RiverChain(store, riverRegistryDapp, this.userId, logId)
     }
 
     protected override onLoaded() {
@@ -244,7 +244,10 @@ export class RiverConnection extends PersistedObservable<RiverConnectionModel> {
                 } catch (err) {
                     retryCount++
                     this.loginError = err as Error
-                    this.logger.error('encountered exception while initializing', err)
+                    this.logger.error(
+                        `encountered exception while initializing ${this.userId}`,
+                        err,
+                    )
 
                     for (const fn of this.onStoppedFns) {
                         fn()
