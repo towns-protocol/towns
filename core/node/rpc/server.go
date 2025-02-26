@@ -11,6 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/towns-protocol/towns/core/node/rpc/node2nodeauth"
+
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/prometheus/client_golang/prometheus"
@@ -213,10 +215,15 @@ func (s *Service) initInstance(mode string, opts *ServerStartOpts) {
 		s.riverChain = opts.RiverChain
 		s.listener = opts.Listener
 		s.httpClientMaker = opts.HttpClientMaker
+		s.httpClientMakerWithCert = opts.HttpClientMakerWithCert
 	}
 
 	if s.httpClientMaker == nil {
 		s.httpClientMaker = http_client.GetHttpClient
+	}
+
+	if s.httpClientMakerWithCert == nil {
+		s.httpClientMakerWithCert = http_client.GetHttpClientWithCert
 	}
 
 	if !s.config.Log.Simplify {
@@ -343,10 +350,17 @@ func (s *Service) initRiverChain() error {
 	if s.wallet != nil {
 		walletAddress = s.wallet.Address
 	}
+
 	httpClient, err := s.httpClientMaker(ctx, s.config)
 	if err != nil {
 		return err
 	}
+
+	httpClientWithCert, err := s.httpClientMakerWithCert(ctx, s.config, node2nodeauth.CertGetter(s.defaultLogger, s.wallet))
+	if err != nil {
+		return err
+	}
+
 	s.nodeRegistry, err = nodes.LoadNodeRegistry(
 		ctx,
 		s.registryContract,
@@ -354,6 +368,7 @@ func (s *Service) initRiverChain() error {
 		s.riverChain.InitialBlockNum,
 		s.riverChain.ChainMonitor,
 		httpClient,
+		httpClientWithCert,
 		s.otelConnectIterceptor,
 	)
 	if err != nil {
@@ -441,8 +456,10 @@ func (s *Service) loadTLSConfig() (*tls.Config, error) {
 	}
 
 	return &tls.Config{
-		Certificates: []tls.Certificate{*cert},
-		NextProtos:   []string{"h2"},
+		Certificates:          []tls.Certificate{*cert},
+		NextProtos:            []string{"h2"},
+		ClientAuth:            tls.RequestClientCert, // Optional client certs, needed for node2node auth
+		VerifyPeerCertificate: node2nodeauth.VerifyPeerCertificate(s.defaultLogger, s.nodeRegistry),
 	}, nil
 }
 
@@ -750,6 +767,7 @@ func (s *Service) initHandlers() {
 	s.mux.Handle(streamServicePattern, newHttpHandler(streamServiceHandler, s.defaultLogger))
 
 	nodeServicePattern, nodeServiceHandler := protocolconnect.NewNodeToNodeHandler(s, interceptors)
+	// TODO: nodeServiceHandler = requireNode2NodeCertMiddleware(nodeServiceHandler)
 	s.mux.Handle(nodeServicePattern, newHttpHandler(nodeServiceHandler, s.defaultLogger))
 
 	s.registerDebugHandlers(s.config.EnableDebugEndpoints, s.config.DebugEndpoints)
@@ -831,11 +849,12 @@ func (s *Service) initAppRegistryHandlers() error {
 }
 
 type ServerStartOpts struct {
-	RiverChain          *crypto.Blockchain
-	Listener            net.Listener
-	HttpClientMaker     HttpClientMakerFunc
-	ScrubberMaker       func(context.Context, *Service) events.Scrubber
-	StreamEventListener track_streams.StreamEventListener
+	RiverChain              *crypto.Blockchain
+	Listener                net.Listener
+	HttpClientMaker         HttpClientMakerFunc
+	HttpClientMakerWithCert HttpClientMakerWithCertFunc
+	ScrubberMaker           func(context.Context, *Service) events.Scrubber
+	StreamEventListener     track_streams.StreamEventListener
 }
 
 // StartServer starts the server with the given configuration.

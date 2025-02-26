@@ -74,7 +74,7 @@ func validateSignature(req *http.Request, secretKey []byte, appId common.Address
 }
 
 func NewTestAppServer(t *testing.T, appWallet *crypto.Wallet, hs256SecretKey []byte) *TestAppServer {
-	listener, url := testcert.MakeTestListener(t)
+	listener, url := testcert.MakeTestListener(t, nil)
 
 	b := &TestAppServer{
 		t:              t,

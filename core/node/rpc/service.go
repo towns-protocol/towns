@@ -17,6 +17,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/auth"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	. "github.com/towns-protocol/towns/core/node/events"
+	"github.com/towns-protocol/towns/core/node/http_client"
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/nodes"
 	"github.com/towns-protocol/towns/core/node/notifications"
@@ -27,7 +28,10 @@ import (
 	"github.com/towns-protocol/towns/core/xchain/entitlement"
 )
 
-type HttpClientMakerFunc = func(context.Context, *config.Config) (*http.Client, error)
+type (
+	HttpClientMakerFunc         = func(context.Context, *config.Config) (*http.Client, error)
+	HttpClientMakerWithCertFunc = func(context.Context, *config.Config, http_client.GetClientCertFunc) (*http.Client, error)
+)
 
 type Service struct {
 	// Context and config
@@ -75,10 +79,11 @@ type Service struct {
 	entitlementEvaluator *entitlement.Evaluator
 
 	// Network
-	listener        net.Listener
-	httpServer      *http.Server
-	mux             httpMux
-	httpClientMaker HttpClientMakerFunc
+	listener                net.Listener
+	httpServer              *http.Server
+	mux                     httpMux
+	httpClientMaker         HttpClientMakerFunc
+	httpClientMakerWithCert HttpClientMakerWithCertFunc
 
 	// Status string
 	status atomic.Pointer[string]

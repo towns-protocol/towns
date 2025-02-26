@@ -130,6 +130,7 @@ func makeCacheTestContext(t *testing.T, p testParams) (context.Context, *cacheTe
 			bc.ChainMonitor,
 			nil,
 			nil,
+			nil,
 		)
 		ctc.require.NoError(err)
 
