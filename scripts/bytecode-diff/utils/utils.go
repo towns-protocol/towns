@@ -100,7 +100,7 @@ func GetFacetFiles(facetSourcePath string, verbose bool) ([]FacetFile, error) {
 			return err
 		}
 
-		if strings.Contains(path, "facets") {
+		if strings.Contains(path, "facets") || strings.Contains(path, "airdrop") {
 			if !info.IsDir() && strings.HasSuffix(info.Name(), ".sol") && !strings.HasPrefix(info.Name(), "I") {
 				if verbose {
 					Log.Info().Msgf("Found facet file: %s", info.Name())
@@ -198,7 +198,7 @@ func CreateFacetHashesReport(
 		Previous: previousReport.CurrentCommitHash,
 		Current:  commitHash,
 	}
-	report := generateReport(previousReport, compiledHashes, alphaFacets, environment, commitHashes)
+	report := generateReport(previousReport, compiledHashes, alphaFacets, environment, commitHashes, verbose)
 
 	if strings.HasPrefix(outputPath, "s3://") {
 		return writeYamlReportToS3(s3Client, outputPath, report, commitHash, currentDate, verbose)
@@ -212,6 +212,7 @@ func generateReport(
 	envFacets map[DiamondName][]Facet,
 	environment string,
 	commitHashes CommitHashes,
+	verbose bool,
 ) SourceDiffReport {
 	report := SourceDiffReport{
 		Environment:        environment,
@@ -227,6 +228,9 @@ func generateReport(
 		var chainName string
 		for _, facet := range facets {
 			facetName := FacetName(facet.ContractName)
+			if verbose {
+				Log.Info().Msgf("generateReport: Processing facet: %s", facetName)
+			}
 			chainName = facet.ChainName
 			currentHash, exists := currentHashes[facetName]
 			if !exists {
