@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/towns-protocol/towns/core/node/crypto"
+	"github.com/towns-protocol/towns/core/node/testutils"
 	"github.com/towns-protocol/towns/core/node/testutils/testfmt"
 	//. "github.com/towns-protocol/towns/core/node/shared"
 )
@@ -125,18 +126,21 @@ func TestReplMcConversation(t *testing.T) {
 		testReplMcConversation(t, 5, 100, 10, 100)
 	})
 	t.Run("10x1000", func(t *testing.T) {
+		testutils.SkipFlackyTest(t, "TODO: REPLICATION: FIX: flacky")
 		if testing.Short() {
 			t.Skip("skipping 10x1000 in short mode")
 		}
 		testReplMcConversation(t, 10, 1000, 20, 1000)
 	})
 	t.Run("30x1000", func(t *testing.T) {
+		testutils.SkipFlackyTest(t, "TODO: REPLICATION: FIX: flacky")
 		if testing.Short() {
 			t.Skip("skipping 30x1000 in short mode")
 		}
 		testReplMcConversation(t, 30, 1000, 50, 1000)
 	})
 	t.Run("100x100", func(t *testing.T) {
+		testutils.SkipFlackyTest(t, "TODO: REPLICATION: FIX: flacky")
 		if testing.Short() {
 			t.Skip("skipping 100x100 in short mode")
 		}

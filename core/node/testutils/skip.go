@@ -5,8 +5,8 @@ import (
 	"testing"
 )
 
-func SkipFlackyTest(t *testing.T) {
+func SkipFlackyTest(t *testing.T, msg string) {
 	if os.Getenv("RIVER_TEST_ENABLE_FLACKY") == "" {
-		t.Skip("skipping flacky test")
+		t.Skip(msg)
 	}
 }
