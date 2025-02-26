@@ -1,11 +1,16 @@
 import { Client } from '../../client'
-import { makeTestClient, makeUniqueSpaceStreamId, waitFor } from '../testUtils'
+import {
+    extractMemberBlockchainTransactions,
+    makeDonePromise,
+    makeTestClient,
+    makeUniqueSpaceStreamId,
+    waitFor,
+} from '../testUtils'
 import { makeUniqueChannelStreamId } from '../../id'
 import { PlainMessage } from '@bufbuild/protobuf'
 import { BlockchainTransaction_TokenTransfer } from '@river-build/proto'
 import { SolanaTransactionReceipt } from '../../types'
 import { bin_fromHexString, bin_fromString, bin_toString } from '@river-build/dlog'
-import { extractMemberBlockchainTransactions } from './trading.test'
 
 describe('Trading Solana', () => {
     let bobClient: Client
@@ -14,6 +19,7 @@ describe('Trading Solana', () => {
     let spaceId!: string
     let channelId!: string
     let threadParentId!: string
+    const eventEmittedPromise = makeDonePromise()
 
     const validSellReceipt: SolanaTransactionReceipt = {
         transaction: {
@@ -77,6 +83,16 @@ describe('Trading Solana', () => {
 
         const result = await bobClient.sendMessage(channelId, 'try out this token: $yo!')
         threadParentId = result.eventId
+
+        bobClient.on('streamTokenTransfer', (streamId, data) => {
+            expect(streamId).toBe(channelId)
+            expect(data.createdAtEpochMs > 0n).toBe(true)
+            expect(data.chainId).toBe('solana-mainnet')
+            expect(data.amount).toBe(4804294168682n)
+            expect(data.messageId).toBe(threadParentId)
+            expect(data.isBuy).toBe(false)
+            eventEmittedPromise.done()
+        })
     })
 
     test('Solana transactions are rejected if the amount is invalid', async () => {
@@ -162,7 +178,26 @@ describe('Trading Solana', () => {
             channelId: bin_fromHexString(channelId),
             isBuy: false,
         }
-        await bobClient.addTransaction_Transfer(1151111081099710, validSellReceipt, transferEvent)
+
+        await expect(
+            bobClient.addTransaction_Transfer(1151111081099710, validSellReceipt, transferEvent),
+        ).resolves.not.toThrow()
+    })
+
+    test('tokentransfer events are emitted', async () => {
+        await eventEmittedPromise.expectToSucceed()
+    })
+
+    test('the token transfer is represented in the membership content', async () => {
+        const stream = bobClient.streams.get(channelId)
+        expect(stream).toBeDefined()
+        const transfer = stream!.view.membershipContent.tokenTransfers[0]
+        expect(transfer.userId).toBe(bobClient.userId)
+        expect(transfer.createdAtEpochMs > 0n).toBe(true)
+        expect(transfer.chainId).toBe('solana-mainnet')
+        expect(transfer.amount).toBe(4804294168682n)
+        expect(transfer.messageId).toBe(threadParentId)
+        expect(transfer.isBuy).toBe(false)
     })
 
     test('bob sees the transfer event in the channel stream', async () => {
