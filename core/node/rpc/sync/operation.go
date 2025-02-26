@@ -2,6 +2,7 @@ package sync
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	"connectrpc.com/connect"
@@ -133,7 +134,16 @@ func (syncOp *StreamSyncOperation) Run(
 
 	// stop is used to signal the message sender to stop sending messages to the client when the sync is closed
 	stop := make(chan struct{})
-	defer close(stop)
+
+	// res.Send is not thread safe, so we need to lock it
+	resLock := sync.Mutex{}
+	resSend := func(msg *SyncStreamsResponse) error {
+		resLock.Lock()
+		defer resLock.Unlock()
+
+		msg.SyncId = syncOp.SyncID
+		return res.Send(msg)
+	}
 
 	// Start a separate goroutine to send messages to the client
 	go func() {
@@ -143,18 +153,16 @@ func (syncOp *StreamSyncOperation) Run(
 			select {
 			case <-syncOp.ctx.Done():
 				return
-
 			case <-stop:
 				return
-
 			case msg, ok := <-messages:
 				if !ok {
 					return
 				}
 
-				msg.SyncId = syncOp.SyncID
-				if err := res.Send(msg); err != nil {
+				if err := resSend(msg); err != nil {
 					log.Errorw("Unable to send sync stream update to client", "err", err)
+					close(stop)
 					return
 				}
 
@@ -174,7 +182,8 @@ func (syncOp *StreamSyncOperation) Run(
 			}
 			// otherwise syncOp is stopped internally.
 			return context.Cause(syncOp.ctx)
-
+		case <-stop:
+			return nil
 		case cmd := <-syncOp.commands:
 			if cmd.AddStreamReq != nil {
 				nodeAddress := common.BytesToAddress(cmd.AddStreamReq.Msg.GetSyncPos().GetNodeAddress())
@@ -194,19 +203,17 @@ func (syncOp *StreamSyncOperation) Run(
 
 				cmd.Reply(syncers.RemoveStream(cmd.Ctx, streamID))
 			} else if cmd.PingReq != nil {
-				cmd.Reply(res.Send(&SyncStreamsResponse{
-					SyncId:    syncOp.SyncID,
+				cmd.Reply(resSend(&SyncStreamsResponse{
 					SyncOp:    SyncOp_SYNC_PONG,
 					PongNonce: cmd.PingReq.Msg.GetNonce(),
 				}))
 			} else if cmd.DebugDropStream != (shared.StreamId{}) {
 				cmd.Reply(syncers.DebugDropStream(cmd.Ctx, cmd.DebugDropStream))
 			} else if cmd.CancelReq != nil {
-				_ = res.Send(&SyncStreamsResponse{
-					SyncId: syncOp.SyncID,
+				_ = resSend(&SyncStreamsResponse{
 					SyncOp: SyncOp_SYNC_CLOSE,
 				})
-
+				close(stop)
 				cmd.Reply(nil)
 				return nil
 			}
