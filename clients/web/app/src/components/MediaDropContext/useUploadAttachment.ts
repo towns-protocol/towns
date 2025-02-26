@@ -17,12 +17,8 @@ export type EncryptionMetadataForUpload = {
 }
 
 export const useUploadAttachment = () => {
-    const {
-        createMediaStreamNew,
-        setUserProfileImage,
-        sendMediaPayloadNew,
-        setSpaceImage,
-    } = useTownsClient()
+    const { createMediaStreamNew, setUserProfileImage, sendMediaPayloadNew, setSpaceImage } =
+        useTownsClient()
 
     function shouldCompressFile(file: File): boolean {
         return file.type !== 'image/gif' && isImageMimeType(file.type)
