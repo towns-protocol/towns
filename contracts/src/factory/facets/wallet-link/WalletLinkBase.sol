@@ -208,7 +208,12 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
   function _getWalletsByRootKey(
     address rootKey
   ) internal view returns (address[] memory wallets) {
-    // update so it loops over all wallets and adds the delegators to the array
+    return WalletLinkStorage.layout().walletsByRootKey[rootKey].values();
+  }
+
+  function _getWalletsByRootKeyWithDelegators(
+    address rootKey
+  ) internal view returns (address[] memory wallets) {
     address[] memory linkedWallets = WalletLinkStorage
       .layout()
       .walletsByRootKey[rootKey]

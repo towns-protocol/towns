@@ -20,6 +20,6 @@ contract MockDelegationRegistry is IDelegateRegistry {
   function getIncomingDelegations(
     address
   ) external pure returns (Delegation[] memory delegations) {
-    return delegations;
+    return new Delegation[](0);
   }
 }
