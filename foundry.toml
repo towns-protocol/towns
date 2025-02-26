@@ -20,6 +20,7 @@ fs_permissions = [
   { access = "read-write", path = "./contracts/deployments" },
   { access = "read-write", path = "./contracts/in" },
   { access = "read", path = "./scripts/bytecode-diff/source-diffs" },
+  { access = "read", path = "./scripts/migrations" }
 ] # Configures permissions for cheatcodes that touch the filesystem
 extra_output = ["metadata", "abi", "bin"]
 extra_output_files = ["metadata", "abi", "bin"]

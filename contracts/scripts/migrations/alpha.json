@@ -1,0 +1,13 @@
+{
+    "networks": {
+        "base_sepolia": {
+            "pendingFacets": [
+                {
+                    "action": "Replace",
+                    "diamond": "spaceFactory",
+                    "facet": "walletLink"
+                }
+            ]
+        }
+    }
+}
