@@ -156,8 +156,6 @@ func (syncOp *StreamSyncOperation) Run(
 					return
 				}
 
-				msg.SyncId = syncOp.SyncID
-
 				errChan := make(chan error, 1)
 				clientMsgs <- clientMsg{
 					msg: msg,
@@ -239,6 +237,7 @@ func (syncOp *StreamSyncOperation) Run(
 		case <-stop:
 			return nil
 		case msg := <-clientMsgs:
+			msg.msg.SyncId = syncOp.SyncID
 			msg.err <- res.Send(msg.msg)
 		}
 	}
