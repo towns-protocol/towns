@@ -27,7 +27,6 @@ contract InteractBaseAlpha is AlphaHelper {
   DeployRiverAirdrop deployRiverAirdrop = new DeployRiverAirdrop();
 
   function __interact(address deployer) internal override {
-    vm.pauseGasMetering();
     vm.setEnv("OVERRIDE_DEPLOYMENTS", "1");
     address space = getDeployment("space");
     address spaceOwner = getDeployment("spaceOwner");
@@ -35,47 +34,50 @@ contract InteractBaseAlpha is AlphaHelper {
     address baseRegistry = getDeployment("baseRegistry");
     address riverAirdrop = getDeployment("riverAirdrop");
 
+    vm.pauseGasMetering();
     removeRemoteFacets(deployer, space);
     removeRemoteFacets(deployer, spaceOwner);
     removeRemoteFacets(deployer, spaceFactory);
     removeRemoteFacets(deployer, baseRegistry);
     removeRemoteFacets(deployer, riverAirdrop);
 
-    // Deploy Space
-    try this.deploySpaceCuts(deployer, space) {
-      console.log("Space deployment successful");
-    } catch Error(string memory reason) {
-      console.log("Space deployment failed:", reason);
+    {
+      try this.deploySpaceCuts(deployer, space) {
+        console.log("Space deployment successful");
+      } catch Error(string memory reason) {
+        console.log("Space deployment failed:", reason);
+      }
+
+      try this.deploySpaceOwnerCuts(deployer, spaceOwner) {
+        console.log("Space Owner deployment successful");
+      } catch Error(string memory reason) {
+        console.log("Space Owner deployment failed:", reason);
+      }
     }
 
-    // Deploy Space Owner
-    try this.deploySpaceOwnerCuts(deployer, spaceOwner) {
-      console.log("Space Owner deployment successful");
-    } catch Error(string memory reason) {
-      console.log("Space Owner deployment failed:", reason);
+    {
+      try this.deploySpaceFactoryCuts(deployer, spaceFactory) {
+        console.log("Space Factory deployment successful");
+      } catch Error(string memory reason) {
+        console.log("Space Factory deployment failed:", reason);
+      }
     }
 
-    // Deploy Space Factory
-    try this.deploySpaceFactoryCuts(deployer, spaceFactory) {
-      console.log("Space Factory deployment successful");
-    } catch Error(string memory reason) {
-      console.log("Space Factory deployment failed:", reason);
+    {
+      try this.deployBaseRegistryCuts(deployer, baseRegistry) {
+        console.log("Base Registry deployment successful");
+      } catch Error(string memory reason) {
+        console.log("Base Registry deployment failed:", reason);
+      }
     }
 
-    // Deploy Base Registry
-    try this.deployBaseRegistryCuts(deployer, baseRegistry) {
-      console.log("Base Registry deployment successful");
-    } catch Error(string memory reason) {
-      console.log("Base Registry deployment failed:", reason);
+    {
+      try this.deployRiverAirdropCuts(deployer, riverAirdrop) {
+        console.log("River Airdrop deployment successful");
+      } catch Error(string memory reason) {
+        console.log("River Airdrop deployment failed:", reason);
+      }
     }
-
-    // Deploy River Airdrop
-    try this.deployRiverAirdropCuts(deployer, riverAirdrop) {
-      console.log("River Airdrop deployment successful");
-    } catch Error(string memory reason) {
-      console.log("River Airdrop deployment failed:", reason);
-    }
-
     vm.resumeGasMetering();
   }
 
