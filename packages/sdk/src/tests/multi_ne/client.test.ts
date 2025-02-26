@@ -5,7 +5,6 @@
 import { dlog, check } from '@river-build/dlog'
 import { isDefined } from '../../check'
 import { DecryptionStatus, GroupEncryptionAlgorithmId, UserDevice } from '@river-build/encryption'
-import { Client } from '../../client'
 import {
     makeUserStreamId,
     makeUserSettingsStreamId,
@@ -22,6 +21,9 @@ import {
     waitFor,
     getChannelMessagePayload,
     makeRandomUserAddress,
+    TestClient,
+    cloneTestClient,
+    SignerContextWithWallet,
 } from '../testUtils'
 import {
     CancelSyncResponse,
@@ -47,7 +49,6 @@ import {
     make_MemberPayload_KeyFulfillment,
     make_MemberPayload_KeySolicitation,
 } from '../../types'
-import { SignerContext } from '../../signerContext'
 import { deriveKeyAndIV } from '../../crypto_utils'
 import { nanoid } from 'nanoid'
 
@@ -114,8 +115,8 @@ function makeMockSyncGenerator(generator: () => Promise<SyncStreamsResponse>) {
 }
 
 describe('clientTest', () => {
-    let bobsClient: Client
-    let alicesClient: Client
+    let bobsClient: TestClient
+    let alicesClient: TestClient
 
     beforeEach(async () => {
         bobsClient = await makeTestClient()
@@ -307,7 +308,7 @@ describe('clientTest', () => {
 
     test('clientCreatesStreamsForExistingUser', async () => {
         await expect(bobsClient.initializeUser()).resolves.not.toThrow()
-        const bobsAnotherClient = await makeTestClient({ context: bobsClient.signerContext })
+        const bobsAnotherClient = await cloneTestClient(bobsClient)
         await expect(bobsAnotherClient.initializeUser()).resolves.not.toThrow()
         expect(bobsAnotherClient.streams.size()).toEqual(4)
         expect(
@@ -421,7 +422,7 @@ describe('clientTest', () => {
         await expect(bobsClient.stopSync()).resolves.not.toThrow()
     })
 
-    const bobCanReconnect = async (signer: SignerContext) => {
+    const bobCanReconnect = async (signer: SignerContextWithWallet) => {
         const bobsAnotherClient = await makeTestClient({ context: signer, deviceId: 'd2' })
         const bobsOneMoreAnotherClient = await makeTestClient({ context: signer, deviceId: 'd3' })
 

@@ -65,35 +65,6 @@ export function makeEthersProvider(wallet: ethers.Wallet) {
 	return new LocalhostWeb3Provider(config.baseChainRpcUrl, wallet)
 }
 
-export async function makeTestClient(wallet: ethers.Wallet): Promise<Client> {
-	// create all the constructor arguments for the SDK client
-
-	// arg: user context
-	const context = await makeUserContext(wallet)
-
-	// arg: stream rpc client
-	const nodeUrl = await getAnyNodeUrlFromRiverRegistry()
-	if (!nodeUrl) {
-		throw new Error('No nodes available')
-	}
-	const rpcClient = makeStreamRpcClient(nodeUrl)
-
-	// arg: crypto store
-	const deviceId = `${genId(5)}`
-	const userId = userIdFromAddress(context.creatorAddress)
-	const dbName = `database-${userId}-${deviceId}`
-	const cryptoStore = RiverDbManager.getCryptoDb(userId, dbName)
-
-	// arg: entitlements delegate
-	const entitlementsDelegate = new MockEntitlementsDelegate()
-
-	// arg: persistence db name
-	const persistenceDbName = `persistence-${userId}-${deviceId}`
-
-	// create the client with all the args
-	return new Client(context, rpcClient, cryptoStore, entitlementsDelegate, persistenceDbName)
-}
-
 export async function makeUserContext(wallet: ethers.Wallet): Promise<SignerContext> {
 	const userPrimaryWallet = wallet
 	const delegateWallet = ethers.Wallet.createRandom()

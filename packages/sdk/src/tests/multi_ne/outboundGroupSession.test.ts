@@ -2,8 +2,7 @@
  * @group main
  */
 
-import { makeTestClient, makeUniqueSpaceStreamId } from '../testUtils'
-import { Client } from '../../client'
+import { makeTestClient, makeUniqueSpaceStreamId, TestClient } from '../testUtils'
 
 import { genShortId, makeUniqueChannelStreamId } from '../../id'
 import { ChannelMessageSchema } from '@river-build/proto'
@@ -13,7 +12,7 @@ import { create, toBinary } from '@bufbuild/protobuf'
 
 describe('outboundSessionTests', () => {
     let bobsDeviceId: string
-    let bobsClient: Client
+    let bobsClient: TestClient
     beforeEach(async () => {
         bobsDeviceId = genShortId()
         bobsClient = await makeTestClient({ deviceId: bobsDeviceId })

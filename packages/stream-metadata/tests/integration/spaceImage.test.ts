@@ -1,13 +1,12 @@
 import axios from 'axios'
 import { ethers } from 'ethers'
 import { dlog } from '@river-build/dlog'
-import { Client, contractAddressFromSpaceId } from '@river-build/sdk'
+import { contractAddressFromSpaceId, makeTestClient, TestClient } from '@river-build/sdk'
 
 import {
 	encryptAndSendMediaPayload,
 	getTestServerUrl,
 	makeJpegBlob,
-	makeTestClient,
 	makeUniqueSpaceStreamId,
 } from '../testUtils'
 
@@ -20,12 +19,12 @@ describe('integration/stream-metadata/space/:spaceAddress/image', () => {
 	const baseURL = getTestServerUrl()
 	log('baseURL', baseURL)
 
-	let bobsClient: Client
+	let bobsClient: TestClient
 	let bobsWallet: ethers.Wallet
 
 	beforeEach(async () => {
-		bobsWallet = ethers.Wallet.createRandom()
-		bobsClient = await makeTestClient(bobsWallet)
+		bobsClient = await makeTestClient()
+		bobsWallet = bobsClient.wallet
 		await bobsClient.initializeUser()
 		bobsClient.startSync()
 	})

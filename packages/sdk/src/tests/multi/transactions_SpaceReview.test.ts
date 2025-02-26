@@ -73,6 +73,11 @@ describe('transaction_SpaceReview', () => {
         // todo, leave a review on the without alice space
     })
 
+    afterAll(async () => {
+        await bob.stop()
+        await alice.stop()
+    })
+
     test('alice adds review', async () => {
         const web3Space = alice.riverConnection.spaceDapp.getSpace(spaceIdWithAlice)
         expect(web3Space).toBeDefined()
