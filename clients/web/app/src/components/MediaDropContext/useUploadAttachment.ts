@@ -30,7 +30,7 @@ export const useUploadAttachment = () => {
         return file.type !== 'image/gif' && isImageMimeType(file.type)
     }
 
-    const createChunkedAttachmentNew = useCallback(
+    const createChunkedAttachment = useCallback(
         async (
             data: Uint8Array,
             width: number,
@@ -54,7 +54,7 @@ export const useUploadAttachment = () => {
                 throw new Error('Failed to create media stream')
             }
 
-            console.log('createChunkedAttachmentNew', {
+            console.log('createChunkedAttachment', {
                 spaceId: spaceId ?? 'undefined',
                 channelId: channelId ?? 'undefined',
                 userId: userId ?? 'undefined',
@@ -114,84 +114,6 @@ export const useUploadAttachment = () => {
         [createMediaStreamNew, sendMediaPayloadNew],
     )
 
-    const createChunkedAttachment = useCallback(
-        async (
-            data: Uint8Array,
-            width: number,
-            height: number,
-            file: File,
-            channelId: string | undefined,
-            spaceId: string | undefined,
-            userId: string | undefined,
-            thumbnail: File | undefined,
-            setProgress: (progress: number) => void,
-        ): Promise<Attachment> => {
-            const encryptionResult = await encryptAESGCM(data)
-            const chunkCount = Math.ceil(encryptionResult.ciphertext.length / CHUNK_SIZE)
-            const mediaStreamInfo = await createMediaStream(channelId, spaceId, userId, chunkCount)
-            if (!mediaStreamInfo) {
-                throw new Error('Failed to create media stream')
-            }
-
-            console.log('createChunkedAttachment', {
-                spaceId: spaceId ?? 'undefined',
-                channelId: channelId ?? 'undefined',
-                userId: userId ?? 'undefined',
-                mediaStreamInfo: mediaStreamInfo.streamId ?? 'undefined',
-            })
-
-            let chunkIndex = 0
-            for (let i = 0; i < encryptionResult.ciphertext.length; i += CHUNK_SIZE) {
-                const chunk = encryptionResult.ciphertext.slice(i, i + CHUNK_SIZE)
-                setProgress(i / encryptionResult.ciphertext.length)
-                const result = await sendMediaPayload(
-                    mediaStreamInfo.streamId,
-                    chunk,
-                    chunkIndex++,
-                    mediaStreamInfo.prevMiniblockHash,
-                )
-                if (!result) {
-                    throw new Error('Failed to send media payload')
-                }
-                mediaStreamInfo.prevMiniblockHash = result.prevMiniblockHash
-            }
-            setProgress(1)
-
-            let thumbnailInfo: { content: Uint8Array; info: MediaInfo } | undefined
-            if (thumbnail) {
-                thumbnailInfo = {
-                    info: {
-                        filename: thumbnail.name,
-                        mimetype: thumbnail.type,
-                        widthPixels: width,
-                        heightPixels: height,
-                        sizeBytes: BigInt(thumbnail.size),
-                    },
-                    content: new Uint8Array(await thumbnail.arrayBuffer()),
-                }
-            }
-
-            return {
-                id: mediaStreamInfo.streamId,
-                type: 'chunked_media',
-                streamId: mediaStreamInfo.streamId,
-                encryption: {
-                    iv: encryptionResult.iv,
-                    secretKey: encryptionResult.secretKey,
-                },
-                info: {
-                    filename: file.name,
-                    mimetype: file.type,
-                    widthPixels: width,
-                    heightPixels: height,
-                    sizeBytes: BigInt(data.length),
-                },
-                thumbnail: thumbnailInfo,
-            } satisfies ChunkedMediaAttachment
-        },
-        [createMediaStream, sendMediaPayload],
-    )
-
     const uploadFile = useCallback(
         async (
             channelId: string | undefined,
@@ -201,10 +123,7 @@ export const useUploadAttachment = () => {
         ) => {
             const buffer = await file.arrayBuffer()
             const bytes = new Uint8Array(buffer)
-            const createAttachment = window.townsNewMediaFlag
-                ? createChunkedAttachmentNew
-                : createChunkedAttachment
-            return await createAttachment(
+            return await createChunkedAttachment(
                 bytes,
                 0,
                 0,
@@ -216,7 +135,7 @@ export const useUploadAttachment = () => {
                 setProgress,
             )
         },
-        [createChunkedAttachment, createChunkedAttachmentNew],
+        [createChunkedAttachment],
     )
 
     const uploadImageFile = useCallback(
@@ -248,11 +167,7 @@ export const useUploadAttachment = () => {
             const buffer = await compressed.arrayBuffer()
             const bytes = new Uint8Array(buffer)
 
-            const createAttachment = window.townsNewMediaFlag
-                ? createChunkedAttachmentNew
-                : createChunkedAttachment
-
-            return await createAttachment(
+            return await createChunkedAttachment(
                 bytes,
                 width,
                 height,
@@ -264,7 +179,7 @@ export const useUploadAttachment = () => {
                 setProgress,
             )
         },
-        [createChunkedAttachment, createChunkedAttachmentNew],
+        [createChunkedAttachment],
     )
 
     const uploadAttachment = useCallback(
