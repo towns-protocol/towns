@@ -5,7 +5,8 @@
                 {
                     "action": "Replace",
                     "diamond": "spaceFactory",
-                    "facet": "walletLink"
+                    "facetAddress": "walletLinkFacet",
+                    "facetContract": "WalletLink"
                 }
             ]
         }
