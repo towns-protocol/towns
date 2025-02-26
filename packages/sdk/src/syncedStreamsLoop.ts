@@ -131,7 +131,7 @@ export class SyncedStreamsLoop {
     private lastLogInflightAt = 0
     private syncStartedAt: number | undefined = undefined
     private readonly MAX_IN_FLIGHT_COOKIES = 40
-    private readonly MIN_IN_FLIGHT_COOKIES = 0
+    private readonly MIN_IN_FLIGHT_COOKIES = 10
 
     public pingInfo: PingInfo = {
         currentSequence: 0,
@@ -314,27 +314,14 @@ export class SyncedStreamsLoop {
                 ) {
                     // get cookies from all the known streams to sync
                     this.inFlightSyncCookies.clear()
-                    this.pendingSyncCookies = []
+                    this.pendingSyncCookies = Array.from(this.streams.keys())
                     this.syncStartedAt = performance.now()
-
-                    // get cookies from all the known streams to sync
-                    const syncCookies = Array.from(this.streams.entries())
-                        .sort((a, b) => {
-                            const aPriority = priorityFromStreamId(a[0], this.highPriorityIds)
-                            const bPriority = priorityFromStreamId(b[0], this.highPriorityIds)
-                            return aPriority - bPriority
-                        })
-                        .map((streamRecord) => {
-                            this.inFlightSyncCookies.add(streamRecord[0])
-                            return streamRecord[1].syncCookie
-                        })
 
                     this.log(
                         'sync ITERATION start',
                         ++iteration,
                         this.syncState,
                         `pending: ${this.pendingSyncCookies.length}`,
-                        `syncCookies: ${syncCookies.length}`,
                     )
 
                     if (this.syncState === SyncState.Retrying) {
@@ -347,7 +334,7 @@ export class SyncedStreamsLoop {
                         this.syncId = undefined
                         const streams = this.rpcClient.syncStreams(
                             {
-                                syncPos: syncCookies,
+                                syncPos: [],
                             },
                             { timeoutMs: -1 },
                         )
