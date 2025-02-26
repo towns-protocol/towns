@@ -33,7 +33,7 @@ async function waitFor<T>(
 export const useGetSignerWithTimeout = (args: { chainId: number; timeout?: number }) => {
     const { chainId, timeout } = args
     const _timeout = timeout ?? 10_000
-    const embeddedWallet = useEmbeddedWallet()
+    const { embeddedWallet } = useEmbeddedWallet()
     const embeddedWalletRef = useRef(embeddedWallet)
     if (embeddedWallet) {
         embeddedWalletRef.current = embeddedWallet

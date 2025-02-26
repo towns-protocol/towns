@@ -1,6 +1,6 @@
 import { Address, useConnectivity, useMyDefaultUsernames } from 'use-towns-client'
 import React, { createContext, useCallback, useContext, useMemo } from 'react'
-import { useLogin, usePrivy } from '@privy-io/react-auth'
+import { Wallet, useCreateWallet, useLogin, usePrivy } from '@privy-io/react-auth'
 import { retryGetAccessToken, useEmbeddedWallet, useGetSignerWithTimeout } from '@towns/privy'
 import {
     getPrivyLoginMethodFromLocalStorage,
@@ -66,7 +66,9 @@ function useCombinedAuthContext(): CombinedAuthContext {
         authError,
     } = useConnectivity()
     const { logout: privyLogout } = usePrivy()
-    const embeddedWallet = useEmbeddedWallet()
+    const { embeddedWallet, privyAuthenticated, privyReady, walletsReady } = useEmbeddedWallet()
+    const { createWallet } = useCreateWallet()
+
     const defaultUsername: string | undefined = useMyDefaultUsernames()[0]
     const unsubscribeNotification = useUnsubscribeNotification()
 
@@ -91,10 +93,36 @@ function useCombinedAuthContext(): CombinedAuthContext {
             const signer = await getSigner()
             await riverLogin(signer)
         } else {
-            // login to privy, kicking off useAutoLoginToRiverIfEmbeddedWallet
-            privyLogin()
+            // suspect privy behavior where embedded wallet is not auto created for user
+            // so if they're authenticated but don't have one then try and create one
+            if (privyReady && privyAuthenticated && walletsReady) {
+                // login to privy, kicking off useAutoLoginToRiverIfEmbeddedWallet
+                let wallet: Wallet | undefined
+                try {
+                    console.log('[useCombinedAuth] creating embedded wallet...')
+                    wallet = await createWallet()
+                } catch (error) {
+                    console.error('[useCombinedAuth] error creating embedded wallet', error)
+                }
+                if (wallet) {
+                    console.log('[useCombinedAuth] embedded wallet created, logging in to river...')
+                    const signer = await getSigner()
+                    await riverLogin(signer)
+                }
+            } else {
+                privyLogin()
+            }
         }
-    }, [embeddedWallet, getSigner, riverLogin, privyLogin])
+    }, [
+        embeddedWallet,
+        getSigner,
+        riverLogin,
+        privyReady,
+        privyAuthenticated,
+        walletsReady,
+        createWallet,
+        privyLogin,
+    ])
 
     const logout = useCallback(async () => {
         try {

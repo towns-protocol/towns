@@ -315,7 +315,7 @@ const useAsyncSwitchNetwork = () => {
     const promiseRef = useRef<Promise<number>>()
     const resolveRef = useRef<(chainId: number) => void>()
     const rejectRef = useRef<(error: Error) => void>()
-    const embeddedWallet = useEmbeddedWallet()
+    const { embeddedWallet } = useEmbeddedWallet()
 
     if (!promiseRef.current) {
         log('useSwitchNetwork creating promise')

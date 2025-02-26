@@ -16,5 +16,10 @@ export function useEmbeddedWallet() {
         })
     }, [privyReady, walletsReady, authenticated, wallets, embeddedWallet])
 
-    return embeddedWallet
+    return {
+        embeddedWallet,
+        privyReady,
+        walletsReady,
+        privyAuthenticated: authenticated,
+    }
 }

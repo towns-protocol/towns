@@ -75,6 +75,9 @@ vi.mock('@privy-io/react-auth', async () => {
         }),
         addRpcUrlOverrideToChain: (c: Chain) => c,
         PrivyProvider: ({ children }: { children: JSX.Element }) => children,
+        useCreateWallet: () => ({
+            createWallet: () => Promise.resolve(),
+        }),
     }
 })
 
