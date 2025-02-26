@@ -149,13 +149,6 @@ function getParticipatingUserAddresses(
                         event.remoteEvent?.event.creatorAddress
                     ) {
                         participating.add(event.remoteEvent.event.creatorAddress)
-                    } else if (
-                        event.decryptedContent?.kind === 'channelMessage' &&
-                        event.decryptedContent.content.payload.case === 'reaction' &&
-                        event.decryptedContent.content.payload.value.refEventId === parentId &&
-                        event.remoteEvent?.event.creatorAddress
-                    ) {
-                        participating.add(event.remoteEvent.event.creatorAddress)
                     }
                 })
             }
