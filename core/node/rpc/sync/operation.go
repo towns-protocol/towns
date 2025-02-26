@@ -2,7 +2,6 @@ package sync
 
 import (
 	"context"
-	"sync"
 	"time"
 
 	"connectrpc.com/connect"
@@ -135,17 +134,14 @@ func (syncOp *StreamSyncOperation) Run(
 	// stop is used to signal the message sender to stop sending messages to the client when the sync is closed
 	stop := make(chan struct{})
 
-	// res.Send is not thread safe, so we need to lock it
-	resLock := sync.Mutex{}
-	resSend := func(msg *SyncStreamsResponse) error {
-		resLock.Lock()
-		defer resLock.Unlock()
-
-		msg.SyncId = syncOp.SyncID
-		return res.Send(msg)
+	// Create a channel to send messages to the client
+	type clientMsg struct {
+		msg *SyncStreamsResponse
+		err chan error
 	}
+	clientMsgs := make(chan clientMsg, 1)
 
-	// Start a separate goroutine to send messages to the client
+	// Start a separate goroutine to process stream update messages
 	go func() {
 		var messagesSendToClient int
 		defer log.Debugw("Stream sync operation stopped", "send", messagesSendToClient)
@@ -160,7 +156,15 @@ func (syncOp *StreamSyncOperation) Run(
 					return
 				}
 
-				if err := resSend(msg); err != nil {
+				msg.SyncId = syncOp.SyncID
+
+				errChan := make(chan error, 1)
+				clientMsgs <- clientMsg{
+					msg: msg,
+					err: errChan,
+				}
+
+				if err := <-errChan; err != nil {
 					log.Errorw("Unable to send sync stream update to client", "err", err)
 					close(stop)
 					return
@@ -169,6 +173,56 @@ func (syncOp *StreamSyncOperation) Run(
 				messagesSendToClient++
 
 				log.Debug("Pending messages in sync operation", "count", len(messages))
+			}
+		}
+	}()
+
+	// Start separate goroutine to process sync stream commands
+	go func() {
+		for {
+			select {
+			case <-syncOp.ctx.Done():
+				return
+			case <-stop:
+				return
+			case cmd := <-syncOp.commands:
+				if cmd.AddStreamReq != nil {
+					nodeAddress := common.BytesToAddress(cmd.AddStreamReq.Msg.GetSyncPos().GetNodeAddress())
+					streamID, err := shared.StreamIdFromBytes(cmd.AddStreamReq.Msg.GetSyncPos().GetStreamId())
+					if err != nil {
+						cmd.Reply(err)
+						continue
+					}
+
+					cmd.Reply(syncers.AddStream(cmd.Ctx, nodeAddress, streamID, cmd.AddStreamReq.Msg.GetSyncPos()))
+				} else if cmd.RmStreamReq != nil {
+					streamID, err := shared.StreamIdFromBytes(cmd.RmStreamReq.Msg.GetStreamId())
+					if err != nil {
+						cmd.Reply(err)
+						continue
+					}
+					cmd.Reply(syncers.RemoveStream(cmd.Ctx, streamID))
+				} else if cmd.DebugDropStream != (shared.StreamId{}) {
+					cmd.Reply(syncers.DebugDropStream(cmd.Ctx, cmd.DebugDropStream))
+				} else if cmd.CancelReq != nil {
+					clientMsgs <- clientMsg{
+						msg: &SyncStreamsResponse{SyncOp: SyncOp_SYNC_CLOSE},
+						err: make(chan error, 1),
+					}
+					close(stop)
+					cmd.Reply(nil)
+					return
+				} else if cmd.PingReq != nil {
+					errChan := make(chan error, 1)
+					clientMsgs <- clientMsg{
+						msg: &SyncStreamsResponse{
+							SyncOp:    SyncOp_SYNC_PONG,
+							PongNonce: cmd.PingReq.Msg.GetNonce(),
+						},
+						err: errChan,
+					}
+					cmd.Reply(<-errChan)
+				}
 			}
 		}
 	}()
@@ -184,39 +238,8 @@ func (syncOp *StreamSyncOperation) Run(
 			return context.Cause(syncOp.ctx)
 		case <-stop:
 			return nil
-		case cmd := <-syncOp.commands:
-			if cmd.AddStreamReq != nil {
-				nodeAddress := common.BytesToAddress(cmd.AddStreamReq.Msg.GetSyncPos().GetNodeAddress())
-				streamID, err := shared.StreamIdFromBytes(cmd.AddStreamReq.Msg.GetSyncPos().GetStreamId())
-				if err != nil {
-					cmd.Reply(err)
-					continue
-				}
-
-				cmd.Reply(syncers.AddStream(cmd.Ctx, nodeAddress, streamID, cmd.AddStreamReq.Msg.GetSyncPos()))
-			} else if cmd.RmStreamReq != nil {
-				streamID, err := shared.StreamIdFromBytes(cmd.RmStreamReq.Msg.GetStreamId())
-				if err != nil {
-					cmd.Reply(err)
-					continue
-				}
-
-				cmd.Reply(syncers.RemoveStream(cmd.Ctx, streamID))
-			} else if cmd.PingReq != nil {
-				cmd.Reply(resSend(&SyncStreamsResponse{
-					SyncOp:    SyncOp_SYNC_PONG,
-					PongNonce: cmd.PingReq.Msg.GetNonce(),
-				}))
-			} else if cmd.DebugDropStream != (shared.StreamId{}) {
-				cmd.Reply(syncers.DebugDropStream(cmd.Ctx, cmd.DebugDropStream))
-			} else if cmd.CancelReq != nil {
-				_ = resSend(&SyncStreamsResponse{
-					SyncOp: SyncOp_SYNC_CLOSE,
-				})
-				close(stop)
-				cmd.Reply(nil)
-				return nil
-			}
+		case msg := <-clientMsgs:
+			msg.err <- res.Send(msg.msg)
 		}
 	}
 }
