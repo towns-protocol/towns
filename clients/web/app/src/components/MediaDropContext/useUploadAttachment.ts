@@ -18,10 +18,8 @@ export type EncryptionMetadataForUpload = {
 
 export const useUploadAttachment = () => {
     const {
-        createMediaStream,
         createMediaStreamNew,
         setUserProfileImage,
-        sendMediaPayload,
         sendMediaPayloadNew,
         setSpaceImage,
     } = useTownsClient()
