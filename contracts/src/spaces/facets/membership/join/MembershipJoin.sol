@@ -146,11 +146,7 @@ abstract contract MembershipJoin is
 
     if (price == 0) return 0; // If the price is zero, no payment is required
 
-    // Calculate the protocol fee
-    uint256 fee = _getProtocolFee(price);
-
-    // Return the higher of the price or fee to ensure at least the protocol fee is covered
-    return FixedPointMathLib.max(price, fee);
+    return price;
   }
 
   function _validatePayment() internal view {
@@ -261,7 +257,7 @@ abstract contract MembershipJoin is
       receiver,
       paymentRequired,
       ownerProceeds,
-      protocolFee
+      membershipPrice
     );
   }
 
@@ -287,25 +283,25 @@ abstract contract MembershipJoin is
 
     ReferralTypes memory referral = abi.decode(referralData, (ReferralTypes));
 
-    uint256 protocolFee = _collectProtocolFee(sender, membershipPrice);
+    uint256 ownerProceeds;
+    {
+      uint256 protocolFee = _collectProtocolFee(sender, membershipPrice);
 
-    uint256 partnerFee = _collectPartnerFee(
-      sender,
-      referral.partner,
-      membershipPrice
-    );
+      uint256 partnerFee = _collectPartnerFee(
+        sender,
+        referral.partner,
+        membershipPrice
+      );
 
-    uint256 referralFee = _collectReferralCodeFee(
-      sender,
-      referral.userReferral,
-      referral.referralCode,
-      membershipPrice
-    );
+      uint256 referralFee = _collectReferralCodeFee(
+        sender,
+        referral.userReferral,
+        referral.referralCode,
+        membershipPrice
+      );
 
-    uint256 ownerProceeds = paymentRequired -
-      protocolFee -
-      partnerFee -
-      referralFee;
+      ownerProceeds = paymentRequired - protocolFee - partnerFee - referralFee;
+    }
 
     _afterChargeForJoinSpace(
       transactionId,
@@ -313,7 +309,7 @@ abstract contract MembershipJoin is
       receiver,
       paymentRequired,
       ownerProceeds,
-      protocolFee
+      membershipPrice
     );
   }
 
@@ -323,7 +319,7 @@ abstract contract MembershipJoin is
     address receiver,
     uint256 paymentRequired,
     uint256 ownerProceeds,
-    uint256 protocolFee
+    uint256 membershipPrice
   ) internal {
     // account for owner's proceeds
     if (ownerProceeds != 0) _transferIn(payer, ownerProceeds);
@@ -339,7 +335,7 @@ abstract contract MembershipJoin is
     );
     uint256 points = pointsToken.getPoints(
       ITownsPointsBase.Action.JoinSpace,
-      abi.encode(protocolFee)
+      abi.encode(membershipPrice)
     );
 
     pointsToken.mint(receiver, points);
