@@ -41,7 +41,7 @@ import { checkEventSignature } from './sign'
 export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
     private isMobileSafariBackgrounded = false
     private validatedEvents: Record<string, { isValid: boolean; reason?: string }> = {}
-    private unpackEnvelopeOpts?: { disableSignatureValidation: boolean }
+    private unpackEnvelopeOpts?: { disableSignatureValidation?: boolean }
 
     constructor(
         private readonly client: Client,
@@ -49,7 +49,8 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         delegate: EntitlementsDelegate,
         userId: string,
         userDevice: UserDevice,
-        unpackEnvelopeOpts?: { disableSignatureValidation: boolean },
+        unpackEnvelopeOpts: { disableSignatureValidation?: boolean } | undefined,
+        logId: string,
     ) {
         const upToDateStreams = new Set<string>()
         client.streams.getStreams().forEach((stream) => {
@@ -58,7 +59,7 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
             }
         })
 
-        super(client, crypto, delegate, userDevice, userId, upToDateStreams)
+        super(client, crypto, delegate, userDevice, userId, upToDateStreams, logId)
 
         this.unpackEnvelopeOpts = unpackEnvelopeOpts
         const onMembershipChange = (streamId: string, userId: string) => {
