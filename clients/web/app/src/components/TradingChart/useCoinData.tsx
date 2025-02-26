@@ -18,6 +18,8 @@ export type GetCoinDataResponse = {
         symbol: string
         info: {
             imageThumbUrl: string | null
+            circulatingSupply: string
+            totalSupply: string
         }
     }
 }
@@ -37,6 +39,8 @@ const zCoinData: z.ZodType<GetCoinDataResponse> = z.object({
         symbol: z.string(),
         info: z.object({
             imageThumbUrl: z.string().nullable(),
+            circulatingSupply: z.string(),
+            totalSupply: z.string(),
         }),
     }),
 })
@@ -83,6 +87,8 @@ export const useCoinData = ({
                     symbol
                     info {
                         imageThumbUrl
+                        circulatingSupply
+                        totalSupply
                     }
                 }
             }

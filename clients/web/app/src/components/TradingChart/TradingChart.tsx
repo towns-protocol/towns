@@ -237,17 +237,30 @@ export const TradingChart = (props: { address: string; chainId: string; disabled
                             </Text>
                         </Stack>
                         <Stack grow horizontal gap="sm" color="gray2" flexWrap="wrap">
+                            {/* 
+                            `codexResponse.marketCap` is actually not the market cap, but the FDV.
+                            This is a bit confusing, but it's how the API is.
+                            Market cap is `codexResponse.token.info.circulatingSupply * codexResponse.priceUSD`
+                            (&#8201; is "thin space")
+                            */}
                             <Pill background="level3" color="inherit" whiteSpace="nowrap">
-                                LIQ {formatCompactUSD(Number(coinData.liquidity))}
+                                LIQ&#8201;{formatCompactUSD(Number(coinData.liquidity))}
                             </Pill>
                             <Pill background="level3" color="inherit" whiteSpace="nowrap">
-                                VOL {formatCompactUSD(Number(coinData.volume24))}
+                                VOL&#8201;{formatCompactUSD(Number(coinData.volume24))}
                             </Pill>
                             <Pill background="level3" color="inherit" whiteSpace="nowrap">
-                                MCAP {formatCompactUSD(Number(coinData.marketCap))}
+                                MCAP&#8201;
+                                {formatCompactUSD(
+                                    Number(coinData.token.info.circulatingSupply) *
+                                        Number(coinData.priceUSD),
+                                )}
                             </Pill>
                             <Pill background="level3" color="inherit" whiteSpace="nowrap">
-                                HDLRS {coinData.holders}
+                                HDLRS&#8201;{coinData.holders}
+                            </Pill>
+                            <Pill background="level3" color="inherit" whiteSpace="nowrap">
+                                FDV&#8201;{formatCompactUSD(Number(coinData.marketCap))}
                             </Pill>
                         </Stack>
                     </>
