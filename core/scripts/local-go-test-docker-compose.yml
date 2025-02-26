@@ -1,4 +1,4 @@
-# This is a docker compose file for running the go tests locally.
+# This is a docker compose file for running go tests locally.
 # It expects postgres to run on localhost:5433.
 #
 # To run all tests:
@@ -7,11 +7,11 @@
 #
 # To connect to terminal:
 #
-#    docker compose -f scripts/local-go-test-docker-compose.yml run --entrypoint sh towns-go-test
+#    docker compose -f scripts/local-go-test-docker-compose.yml run --entrypoint bash towns-go-test
 #
 # To set the number of CPUs:
 #
-#    DOCKER_CPUS=4.0 docker compose -f scripts/local-go-test-docker-compose.yml run --entrypoint sh towns-go-test
+#    DOCKER_CPUS=4.0 docker compose -f scripts/local-go-test-docker-compose.yml run --entrypoint bash towns-go-test
 #
 
 services:
