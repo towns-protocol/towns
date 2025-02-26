@@ -13,6 +13,7 @@ import (
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
+	"gopkg.in/yaml.v3"
 
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/events"
@@ -22,6 +23,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
 	"github.com/towns-protocol/towns/core/node/registries"
 	"github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/storage"
 )
 
 func runStreamGetEventCmd(cmd *cobra.Command, args []string) error {
@@ -275,6 +277,9 @@ func runStreamDumpCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	streamData, _ := yaml.Marshal(&stream)
+	fmt.Printf("\nStream result:\n\n%s\n", streamData)
+
 	nodes := nodes.NewStreamNodesWithLock(stream.Nodes, common.Address{})
 	remoteNodeAddress := nodes.GetStickyPeer()
 
@@ -296,16 +301,15 @@ func runStreamDumpCmd(cmd *cobra.Command, args []string) error {
 	streamAndCookie := response.Msg.GetStream()
 
 	maxBlock := streamAndCookie.GetNextSyncCookie().GetMinipoolGen()
-	blockRange := int64(100)
+	blockRange := int64(10)
 	if len(args) == 2 {
 		blockRange, err = strconv.ParseInt(args[1], 10, 64)
 		if err != nil {
 			return err
 		}
 	}
-	from := int64(0)
-	to := min(int64(from)+blockRange, maxBlock)
-
+	from := max(maxBlock-blockRange, 0)
+	to := maxBlock
 	for {
 		miniblocks, err := remoteClient.GetMiniblocks(ctx, connect.NewRequest(&protocol.GetMiniblocksRequest{
 			StreamId:      streamID[:],
@@ -531,6 +535,18 @@ func runStreamGetCmd(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+func runStreamPartitionCmd(cmd *cobra.Command, args []string) error {
+	streamID, err := shared.StreamIdFromString(args[0])
+	if err != nil {
+		return err
+	}
+
+	suffix := storage.CreatePartitionSuffix(streamID, 256)
+	fmt.Printf("Partition for %v is %v\n", streamID, suffix)
+
+	return nil
+}
+
 func init() {
 	cmdStream := &cobra.Command{
 		Use:   "stream",
@@ -576,8 +592,15 @@ max-block-range is optional and limits the number of blocks to consider (default
 		Use:   "get <stream-id>",
 		Short: "Get stream contents",
 		Long:  `Get stream content from node using GetStream RPC.`,
-		Args:  cobra.RangeArgs(1, 1),
+		Args:  cobra.ExactArgs(1),
 		RunE:  runStreamGetCmd,
+	}
+	cmdStreamGetPartition := &cobra.Command{
+		Use:   "part <stream-id>",
+		Short: "Get stream stream database partition",
+		Long:  `Get partition in database where the stream is stored (assuming 256 total partitions)`,
+		Args:  cobra.RangeArgs(1, 1),
+		RunE:  runStreamPartitionCmd,
 	}
 
 	cmdStream.AddCommand(cmdStreamGetMiniblock)
@@ -585,5 +608,6 @@ max-block-range is optional and limits the number of blocks to consider (default
 	cmdStream.AddCommand(cmdStreamDump)
 	cmdStream.AddCommand(cmdStreamNodeDump)
 	cmdStream.AddCommand(cmdStreamGet)
+	cmdStream.AddCommand(cmdStreamGetPartition)
 	rootCmd.AddCommand(cmdStream)
 }
