@@ -134,6 +134,18 @@ export type StreamStateEvents = {
     streamNftUpdated: (streamId: string, userId: string) => void
     streamChannelPropertiesUpdated: (streamId: string) => void
     streamEncryptionAlgorithmUpdated: (streamId: string, encryptionAlgorithm?: string) => void
+    streamTokenTransfer: (
+        streamId: string,
+        transaction: {
+            address: Uint8Array
+            amount: bigint
+            isBuy: boolean
+            chainId: string
+            userId: string
+            createdAtEpochMs: bigint
+            messageId: string
+        },
+    ) => void
 }
 
 export type StreamEvents = StreamEncryptionEvents & StreamStateEvents & SyncedStreamEvents
