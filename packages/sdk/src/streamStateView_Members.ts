@@ -225,6 +225,7 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                             transactionContent.value,
                             event.createdAtEpochMs,
                             stateEmitter,
+                            true,
                         )
                         break
                     }
@@ -557,6 +558,7 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
         transferContent: BlockchainTransaction_TokenTransfer,
         createdAtEpochMs: bigint,
         stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
+        prepend: boolean = false,
     ) {
         const receipt = payload.transaction?.receipt
         const solanaReceipt = payload.transaction?.solanaReceipt
@@ -574,7 +576,7 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
             messageId: bin_toHexString(transferContent.messageId),
             amount: BigInt(transferContent.amount),
         }
-        this.tokenTransfers.push(transferData)
+        prepend ? this.tokenTransfers.unshift(transferData) : this.tokenTransfers.push(transferData)
         stateEmitter?.emit('streamTokenTransfer', this.streamId, transferData)
     }
 
