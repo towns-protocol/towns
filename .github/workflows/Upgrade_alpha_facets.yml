@@ -219,7 +219,7 @@ jobs:
               run: make interact-any-explicit \
                   context=alpha \
                   rpc=base_sepolia \
-                  contract=InteractAlpha \
+                  contract=InteractBaseAlpha \
                   private_key=${{ env.ALPHA_BASE_SEPOLIA_DEPLOYER_PK }} \
                   etherscan=${{ env.BLOCKSCOUT_SEPOLIA_API_KEY }} \
                   verifier=${{ env.BLOCKSCOUT_SEPOLIA_URL }}
