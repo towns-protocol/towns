@@ -37,4 +37,4 @@ To repair these streams: from the `core` directory, run
 
 `./scripts/get_gamma_streams.py tools/audit_db/streams_with_candidates.txt`
 
-in order to call the GetStream rpc on each stream with a candidate.
+in order to call the GetStream rpc on each stream with a candidate. This tool will print out which streams have successfully advanced, and which have failed to advance. Call the script at least twice in order to provoke the node to make new miniblocks for all streams with high candidate count, and then again to confirm that all streams are advancing.
