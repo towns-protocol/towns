@@ -33,6 +33,8 @@ on:
                     - 'Upgrade_Facets_Sparse'
                     - 'Upgrade_Facets'
                 default: 'Upgrade_Facets_Sparse'
+    schedule:
+        - cron: '0 20 * * 5' # Runs at 8:00 PM UTC every Friday
 
     workflow_call:
         inputs:
@@ -193,7 +195,7 @@ jobs:
                       }
 
     Upgrade_Facets:
-        if: inputs.job_to_run == 'Upgrade_Facets'
+        if: inputs.job_to_run == 'Upgrade_Facets' || github.event_name == 'schedule'
         runs-on: ubuntu-latest
         steps:
             - name: Checkout code
@@ -222,7 +224,8 @@ jobs:
                   contract=InteractBaseAlpha \
                   private_key=${{ env.ALPHA_BASE_SEPOLIA_DEPLOYER_PK }} \
                   etherscan=${{ env.BLOCKSCOUT_SEPOLIA_API_KEY }} \
-                  verifier=${{ env.BLOCKSCOUT_SEPOLIA_URL }}
+                  verifier=${{ env.BLOCKSCOUT_SEPOLIA_URL }} \
+                  gas_limit=18446744073709551615
               working-directory: river/contracts
 
             - name: Run River Devnet Interaction
