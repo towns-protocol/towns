@@ -352,15 +352,21 @@ const useTokenTransferRollups = () => {
             rollup.current[address].push({ ...transfer, channelId })
         }
 
-        for (const stream of casablancaClient.streams.getStreams()) {
-            for (const tokenTransfer of stream._view.membershipContent.tokenTransfers) {
-                onStreamTokenTransfer(stream._view.streamId, tokenTransfer)
+        const onStreamInitialized = (streamId: string) => {
+            const stream = casablancaClient.streams.get(streamId)
+            if (!stream) {
+                return
+            }
+            for (const tokenTransfer of stream.view.membershipContent.tokenTransfers) {
+                onStreamTokenTransfer(stream.view.streamId, tokenTransfer)
             }
         }
 
         casablancaClient.on('streamTokenTransfer', onStreamTokenTransfer)
+        casablancaClient.on('streamInitialized', onStreamInitialized)
         return () => {
             casablancaClient.off('streamTokenTransfer', onStreamTokenTransfer)
+            casablancaClient.off('streamInitialized', onStreamInitialized)
         }
     }, [casablancaClient])
     return { tokenTransferRollups: rollup.current }
