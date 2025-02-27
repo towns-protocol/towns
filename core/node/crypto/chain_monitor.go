@@ -8,8 +8,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/linkdata/deadlock"
 	"github.com/prometheus/client_golang/prometheus"
-
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/logging"
 )
@@ -71,7 +71,7 @@ type (
 	OnChainMonitorStoppedCallback = func(context.Context)
 
 	chainMonitor struct {
-		mu        sync.Mutex
+		mu        deadlock.Mutex
 		builder   chainMonitorBuilder
 		fromBlock *big.Int
 		started   bool

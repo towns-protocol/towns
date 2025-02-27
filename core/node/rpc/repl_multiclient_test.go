@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/towns-protocol/towns/core/node/crypto"
+	"github.com/towns-protocol/towns/core/node/testutils"
 	"github.com/towns-protocol/towns/core/node/testutils/testfmt"
 	//. "github.com/towns-protocol/towns/core/node/shared"
 )
@@ -91,7 +92,13 @@ func testReplMcConversation(t *testing.T, numClients int, numSteps int, listenIn
 			testfmt.Println(t, "Compared all streams")
 		}
 	}()
+
+	prev := time.Now()
 	for i, m = range messages {
+		now := time.Now()
+		testfmt.Println(t, "Step", i, "took", now.Sub(prev))
+		prev = now
+
 		clients.say(channelId, m...)
 		if listenInterval > 0 && (i+1)%listenInterval == 0 {
 			clients.listen(channelId, messages[:i+1])
@@ -118,11 +125,25 @@ func TestReplMcConversation(t *testing.T) {
 	t.Run("5x100", func(t *testing.T) {
 		testReplMcConversation(t, 5, 100, 10, 100)
 	})
-	t.Skip("10x100 fails on CI")
 	t.Run("10x1000", func(t *testing.T) {
+		testutils.SkipFlakyTest(t, "TODO: REPLICATION: FIX: flaky")
 		if testing.Short() {
 			t.Skip("skipping 10x1000 in short mode")
 		}
 		testReplMcConversation(t, 10, 1000, 20, 1000)
+	})
+	t.Run("30x1000", func(t *testing.T) {
+		testutils.SkipFlakyTest(t, "TODO: REPLICATION: FIX: flaky")
+		if testing.Short() {
+			t.Skip("skipping 30x1000 in short mode")
+		}
+		testReplMcConversation(t, 30, 1000, 50, 1000)
+	})
+	t.Run("100x100", func(t *testing.T) {
+		testutils.SkipFlakyTest(t, "TODO: REPLICATION: FIX: flaky")
+		if testing.Short() {
+			t.Skip("skipping 100x100 in short mode")
+		}
+		testReplMcConversation(t, 100, 100, 20, 50)
 	})
 }

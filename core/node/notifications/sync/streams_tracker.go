@@ -13,53 +13,53 @@ import (
 	"github.com/towns-protocol/towns/core/node/track_streams"
 )
 
-type notificationsStreamsTracker struct {
+// NotificationsStreamTracker implements the StreamsTracker interface for the notifications service. It encapsulates
+// StreamsTracker functionality with notifications-specific data structures.
+type NotificationsStreamsTracker struct {
 	track_streams.StreamsTrackerImpl
-	listener StreamEventListener
-	storage  UserPreferencesStore
+	storage UserPreferencesStore
 }
 
-// NewStreamsTrackerForNotifications creates a stream tracker instance for the notifications
-// service.
-func NewStreamsTrackerForNotifications(
+var _ track_streams.StreamFilter = (*NotificationsStreamsTracker)(nil)
+
+// NewStreamsTracker creates a stream tracker instance.
+func NewNotificationsStreamsTracker(
 	ctx context.Context,
 	onChainConfig crypto.OnChainConfiguration,
 	riverRegistry *registries.RiverRegistryContract,
 	nodeRegistries []nodes.NodeRegistry,
-	listener StreamEventListener,
+	listener track_streams.StreamEventListener,
 	storage UserPreferencesStore,
 	metricsFactory infra.MetricsFactory,
 ) (track_streams.StreamsTracker, error) {
-	tracker := &notificationsStreamsTracker{
-		listener: listener,
-		storage:  storage,
+	tracker := &NotificationsStreamsTracker{
+		storage: storage,
 	}
-	if err := tracker.StreamsTrackerImpl.Init(
-		ctx,
-		onChainConfig,
-		riverRegistry,
-		nodeRegistries,
-		tracker.newTrackedStreamView,
-		tracker.trackStream,
-		metricsFactory,
-	); err != nil {
+	if err := tracker.StreamsTrackerImpl.Init(ctx, onChainConfig, riverRegistry, nodeRegistries, listener, tracker, metricsFactory); err != nil {
 		return nil, err
 	}
 
 	return tracker, nil
 }
 
-func (tracker *notificationsStreamsTracker) newTrackedStreamView(
+func (tracker *NotificationsStreamsTracker) NewTrackedStream(
 	ctx context.Context,
 	streamID shared.StreamId,
 	cfg crypto.OnChainConfiguration,
 	stream *protocol.StreamAndCookie,
 ) (events.TrackedStreamView, error) {
-	return NewTrackedStreamForNotifications(ctx, streamID, cfg, stream, tracker.listener, tracker.storage)
+	return NewTrackedStreamForNotifications(
+		ctx,
+		streamID,
+		cfg,
+		stream,
+		tracker.StreamsTrackerImpl.Listener(),
+		tracker.storage,
+	)
 }
 
-// TrackStreamForNotifications returns true if the given streamID must be tracked for notifications.
-func (tracker *notificationsStreamsTracker) trackStream(streamID shared.StreamId) bool {
+// TrackStream returns true if the given streamID must be tracked for notifications.
+func (tracker *NotificationsStreamsTracker) TrackStream(streamID shared.StreamId) bool {
 	streamType := streamID.Type()
 
 	return streamType == shared.STREAM_DM_CHANNEL_BIN ||

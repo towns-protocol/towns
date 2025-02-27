@@ -8,6 +8,8 @@ export const EVERYONE_ADDRESS = '0x0000000000000000000000000000000000000001'
 export const MOCK_ADDRESS = '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef'
 export const MOCK_ADDRESS_2 = '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbee2'
 export const MOCK_ADDRESS_3 = '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbee3'
+export const MOCK_ADDRESS_4 = '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbee4'
+export const MOCK_ADDRESS_5 = '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbee5'
 
 export class NoEntitledWalletError extends Error {
     constructor() {

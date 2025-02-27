@@ -59,11 +59,55 @@ message SaveMiniblockCandidateRequest {
 message SaveMiniblockCandidateResponse {
 }
 
+message GetMiniblocksByIdsRequest {
+    bytes stream_id = 1;
+    repeated int64 miniblock_ids = 2;
+}
+
+message GetMiniblockResponse {
+    Miniblock miniblock = 1;
+    int64 num = 2;
+}
+
+/*
+  * Ephemeral stream related messages
+ */
+
+message AllocateEphemeralStreamRequest {
+    Miniblock miniblock = 1;
+    bytes stream_id = 2; // stream_id should match the stream_id in the inception payload of the first event
+}
+
+message AllocateEphemeralStreamResponse {
+}
+
+message SaveEphemeralMiniblockRequest {
+    bytes stream_id = 1;
+    Miniblock miniblock = 2;
+}
+
+message SaveEphemeralMiniblockResponse {
+}
+
+message SealEphemeralStreamRequest {
+    bytes stream_id = 1;
+}
+
+message SealEphemeralStreamResponse {
+}
+
+// NodeToNode is the service that network nodes are using to communicate with each other.
 service NodeToNode {
     rpc AllocateStream(AllocateStreamRequest) returns (AllocateStreamResponse);
     rpc NewEventReceived(NewEventReceivedRequest) returns (NewEventReceivedResponse);
     rpc NewEventInPool(NewEventInPoolRequest) returns (NewEventInPoolResponse);
     rpc ProposeMiniblock(ProposeMiniblockRequest) returns (ProposeMiniblockResponse); 
     rpc SaveMiniblockCandidate(SaveMiniblockCandidateRequest) returns (SaveMiniblockCandidateResponse);
+    rpc GetMiniblocksByIds(GetMiniblocksByIdsRequest) returns (stream GetMiniblockResponse);
+
+    // Endpoints for ephemeral streams
+    rpc AllocateEphemeralStream(AllocateEphemeralStreamRequest) returns (AllocateEphemeralStreamResponse);
+    rpc SaveEphemeralMiniblock(SaveEphemeralMiniblockRequest) returns (SaveEphemeralMiniblockResponse);
+    rpc SealEphemeralStream(SealEphemeralStreamRequest) returns (SealEphemeralStreamResponse);
 }
 

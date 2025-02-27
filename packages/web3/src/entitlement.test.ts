@@ -28,11 +28,21 @@ import {
     DecodedCheckOperationBuilder,
     evaluateOperationsForEntitledWallet,
 } from './entitlement'
-import { MOCK_ADDRESS, MOCK_ADDRESS_2, MOCK_ADDRESS_3 } from './Utils'
+import {
+    MOCK_ADDRESS,
+    MOCK_ADDRESS_2,
+    MOCK_ADDRESS_3,
+    MOCK_ADDRESS_4,
+    MOCK_ADDRESS_5,
+} from './Utils'
 import { zeroAddress } from 'viem'
 import { Address } from './ContractTypes'
 import { convertRuleDataV2ToV1 } from './ConvertersEntitlements'
 import { IRuleEntitlementV2Base } from './v3/IRuleEntitlementV2Shim'
+
+import debug from 'debug'
+
+const log = debug('test')
 
 function makeRandomOperation(depth: number): Operation {
     const rand = Math.random()
@@ -819,14 +829,6 @@ it.concurrent.each(errorTests)('error - $desc', async (props) => {
     ).rejects.toThrow(error)
 })
 
-/*
-["andOperation", trueCheck, trueCheck, true],
-["andOperation", falseCheck, falseCheck, false],
-["andOperation", falseCheck, falseCheck, false],
-["andOperation", falseCheck, falseCheck, false],
-];
-*/
-
 const orCases = [
     { leftCheck: trueCheck, rightCheck: trueCheck, expectedResult: MOCK_ADDRESS },
     { leftCheck: trueCheck, rightCheck: falseCheck, expectedResult: MOCK_ADDRESS },
@@ -1059,6 +1061,13 @@ describe.concurrent('erc1155 params', () => {
             'Invalid threshold -1: must be greater than or equal to 0',
         )
     })
+
+    it('encode invalid token id', () => {
+        expect(() => encodeERC1155Params({ threshold: BigInt(100), tokenId: BigInt(-1) })).toThrow(
+            'Invalid tokenId -1: must be greater than or equal to 0',
+        )
+    })
+
     it('encode/decode', () => {
         const encodedParams = encodeERC1155Params({ threshold: BigInt(200), tokenId: BigInt(100) })
         const decodedParams = decodeERC1155Params(encodedParams)
@@ -1288,6 +1297,20 @@ describe.concurrent('createOperationsTree', () => {
     })
 
     it('three checks', () => {
+        /*
+                       3-check tree:
+                       ============
+
+                         logical2
+                         --------
+                        /         \
+                    logical1    check3
+                    --------
+                    /       \
+                 check1   check2
+
+        Postorder: check1, check2, logical1, check3, logical2
+        */
         const checkOp: DecodedCheckOperation[] = [
             {
                 type: CheckOperationType.ISENTITLED,
@@ -1409,6 +1432,241 @@ describe.concurrent('createOperationsTree', () => {
         }
 
         assertOperationsEqual(operations, [check1, check2, logical1, check3, logical2])
+    })
+
+    it('five checks', () => {
+        /*
+                            5-check tree:
+                            =============
+
+                               logical4
+                               --------
+                             /          \
+                         logical3      check5
+                         --------
+                        /         \
+                logical1           logical2
+                --------           --------
+               /        \         /        \
+            check1    check2   check3    check4
+
+        Postorder: check1, check2, logical1, check3, check4, logical2, logical3, check5, logical4
+        */
+        const checkOp: DecodedCheckOperation[] = [
+            {
+                type: CheckOperationType.ISENTITLED,
+                chainId: 1n,
+                address: MOCK_ADDRESS,
+                byteEncodedParams: `0xabcdef`,
+            },
+            {
+                type: CheckOperationType.ERC721,
+                chainId: 2n,
+                address: MOCK_ADDRESS_2,
+                threshold: BigInt(2),
+            },
+            {
+                type: CheckOperationType.ERC20,
+                chainId: 3n,
+                address: MOCK_ADDRESS_3,
+                threshold: BigInt(3),
+            },
+            {
+                type: CheckOperationType.ERC721,
+                chainId: 4n,
+                address: MOCK_ADDRESS_4,
+                threshold: BigInt(4),
+            },
+            {
+                type: CheckOperationType.ERC20,
+                chainId: 5n,
+                address: MOCK_ADDRESS_5,
+                threshold: BigInt(5),
+            },
+        ]
+
+        const tree = createOperationsTree(checkOp)
+
+        // Validate the constructed rule data
+        log('tree', tree)
+
+        const expectedTree = {
+            operations: [
+                {
+                    opType: OperationType.CHECK,
+                    index: 0,
+                },
+                {
+                    opType: OperationType.CHECK,
+                    index: 1,
+                },
+                {
+                    opType: OperationType.LOGICAL,
+                    index: 0,
+                },
+                {
+                    opType: OperationType.CHECK,
+                    index: 2,
+                },
+                {
+                    opType: OperationType.CHECK,
+                    index: 3,
+                },
+                {
+                    opType: OperationType.LOGICAL,
+                    index: 1,
+                },
+                {
+                    opType: OperationType.LOGICAL,
+                    index: 2,
+                },
+                {
+                    opType: OperationType.CHECK,
+                    index: 4,
+                },
+                {
+                    opType: OperationType.LOGICAL,
+                    index: 3,
+                },
+            ],
+            checkOperations: [
+                {
+                    opType: CheckOperationType.ISENTITLED,
+                    chainId: 1n,
+                    contractAddress: MOCK_ADDRESS,
+                    params: '0xabcdef',
+                },
+                {
+                    opType: CheckOperationType.ERC721,
+                    chainId: 2n,
+                    contractAddress: MOCK_ADDRESS_2,
+                    params: encodeThresholdParams({ threshold: BigInt(2) }),
+                },
+                {
+                    opType: CheckOperationType.ERC20,
+                    chainId: 3n,
+                    contractAddress: MOCK_ADDRESS_3,
+                    params: encodeThresholdParams({ threshold: BigInt(3) }),
+                },
+                {
+                    opType: CheckOperationType.ERC721,
+                    chainId: 4n,
+                    contractAddress: MOCK_ADDRESS_4,
+                    params: encodeThresholdParams({ threshold: BigInt(4) }),
+                },
+                {
+                    opType: CheckOperationType.ERC20,
+                    chainId: 5n,
+                    contractAddress: MOCK_ADDRESS_5,
+                    params: encodeThresholdParams({ threshold: BigInt(5) }),
+                },
+            ],
+            logicalOperations: [
+                {
+                    logOpType: LogicalOperationType.OR,
+                    leftOperationIndex: 0,
+                    rightOperationIndex: 1,
+                },
+                {
+                    logOpType: LogicalOperationType.OR,
+                    leftOperationIndex: 3,
+                    rightOperationIndex: 4,
+                },
+                {
+                    logOpType: LogicalOperationType.OR,
+                    leftOperationIndex: 2,
+                    rightOperationIndex: 5,
+                },
+                {
+                    logOpType: LogicalOperationType.OR,
+                    leftOperationIndex: 6,
+                    rightOperationIndex: 7,
+                },
+            ],
+        }
+
+        assertRuleDatasEqual(tree, expectedTree)
+
+        // Validate conversion of rule data to operations tree (used for evaluation)
+        const operations = ruleDataToOperations(tree)
+
+        const check1: CheckOperationV2 = {
+            opType: OperationType.CHECK,
+            checkType: CheckOperationType.ISENTITLED,
+            chainId: 1n,
+            contractAddress: MOCK_ADDRESS,
+            params: '0xabcdef',
+        }
+        const check2: CheckOperationV2 = {
+            opType: OperationType.CHECK,
+            checkType: CheckOperationType.ERC721,
+            chainId: 2n,
+            contractAddress: MOCK_ADDRESS_2,
+            params: encodeThresholdParams({ threshold: BigInt(2) }),
+        }
+        const check3: CheckOperationV2 = {
+            opType: OperationType.CHECK,
+            checkType: CheckOperationType.ERC20,
+            chainId: 3n,
+            contractAddress: MOCK_ADDRESS_3,
+            params: encodeThresholdParams({ threshold: BigInt(3) }),
+        }
+        const check4: CheckOperationV2 = {
+            opType: OperationType.CHECK,
+            checkType: CheckOperationType.ERC721,
+            chainId: 4n,
+            contractAddress: MOCK_ADDRESS_4,
+            params: encodeThresholdParams({ threshold: BigInt(4) }),
+        }
+        const check5: CheckOperationV2 = {
+            opType: OperationType.CHECK,
+            checkType: CheckOperationType.ERC20,
+            chainId: 5n,
+            contractAddress: MOCK_ADDRESS_5,
+            params: encodeThresholdParams({ threshold: BigInt(5) }),
+        }
+
+        const logical1: LogicalOperation = {
+            opType: OperationType.LOGICAL,
+            logicalType: LogicalOperationType.OR,
+            leftOperation: check1,
+            rightOperation: check2,
+        }
+
+        const logical2: LogicalOperation = {
+            opType: OperationType.LOGICAL,
+            logicalType: LogicalOperationType.OR,
+            leftOperation: check3,
+            rightOperation: check4,
+        }
+
+        const logical3: LogicalOperation = {
+            opType: OperationType.LOGICAL,
+            logicalType: LogicalOperationType.OR,
+            leftOperation: logical1,
+            rightOperation: logical2,
+        }
+
+        const logical4: LogicalOperation = {
+            opType: OperationType.LOGICAL,
+            logicalType: LogicalOperationType.OR,
+            leftOperation: logical3,
+            rightOperation: check5,
+        }
+
+        const expectedOperations = [
+            check1,
+            check2,
+            logical1,
+            check3,
+            check4,
+            logical2,
+            logical3,
+            check5,
+            logical4,
+        ]
+
+        assertOperationsEqual(operations, expectedOperations)
     })
 })
 

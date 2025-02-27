@@ -42,24 +42,13 @@ import { bin_toHexString } from '@river-build/dlog'
 import { isDefined } from './check'
 import { DecryptedContent } from './encryptedContentTypes'
 import { addressFromUserId, streamIdAsBytes } from './id'
-import { DecryptionSessionError } from '@river-build/encryption'
+import { DecryptionSessionError, EventSignatureBundle } from '@river-build/encryption'
 
 export type LocalEventStatus = 'sending' | 'sent' | 'failed'
 export interface LocalEvent {
     localId: string
     channelMessage: ChannelMessage
     status: LocalEventStatus
-}
-
-// paired down from StreamEvent, required for signature validation
-export interface EventSignatureBundle {
-    hash: Uint8Array
-    signature: Uint8Array | undefined
-    event: {
-        creatorAddress: Uint8Array
-        delegateSig: Uint8Array
-        delegateExpiryEpochMs: bigint
-    }
 }
 
 export interface ParsedEvent {
@@ -122,6 +111,39 @@ export type ContractReceipt = {
     }[]
 }
 
+type SolanaTokenBalance = {
+    mint: string
+    owner: string
+    amount: {
+        amount: string
+        decimals: number
+    }
+}
+
+export type SolanaTransactionReceipt = {
+    transaction: {
+        signatures: string[]
+    }
+    meta: {
+        preTokenBalances: SolanaTokenBalance[]
+        postTokenBalances: SolanaTokenBalance[]
+    }
+    slot: bigint
+}
+
+export function isSolanaTransactionReceipt(obj: unknown): obj is SolanaTransactionReceipt {
+    return (
+        typeof obj === 'object' &&
+        obj !== null &&
+        'transaction' in obj &&
+        'meta' in obj &&
+        typeof obj['meta'] === 'object' &&
+        obj.meta !== null &&
+        'preTokenBalances' in obj.meta &&
+        'postTokenBalances' in obj.meta
+    )
+}
+
 export function isLocalEvent(event: StreamTimelineEvent): event is LocalTimelineEvent {
     return event.localEvent !== undefined
 }
@@ -140,6 +162,18 @@ export function isConfirmedEvent(event: StreamTimelineEvent): event is Confirmed
         event.confirmedEventNum !== undefined &&
         event.miniblockNum !== undefined
     )
+}
+
+export function getEventSignature(remoteEvent: ParsedEvent): EventSignatureBundle {
+    return {
+        hash: remoteEvent.hash,
+        signature: remoteEvent.signature,
+        event: {
+            creatorAddress: remoteEvent.event.creatorAddress,
+            delegateSig: remoteEvent.event.delegateSig,
+            delegateExpiryEpochMs: remoteEvent.event.delegateExpiryEpochMs,
+        },
+    }
 }
 
 export function makeRemoteTimelineEvent(params: {

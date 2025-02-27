@@ -2,7 +2,6 @@ package rpc
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
 	"hash/fnv"
 	"io"
@@ -87,15 +86,8 @@ type serviceTesterOpts struct {
 	printTestLogs     bool
 }
 
-func makeTestListenerNoCleanup(t *testing.T) (net.Listener, string) {
-	listener, err := net.Listen("tcp", "localhost:0")
-	require.NoError(t, err)
-	listener = tls.NewListener(listener, testcert.GetHttp2LocalhostTLSConfig())
-	return listener, "https://" + listener.Addr().String()
-}
-
 func makeTestListener(t *testing.T) (net.Listener, string) {
-	l, url := makeTestListenerNoCleanup(t)
+	l, url := testcert.MakeTestListener(t)
 	t.Cleanup(func() { _ = l.Close() })
 	return l, url
 }
@@ -218,7 +210,7 @@ func (st *serviceTester) cleanup(f any) {
 }
 
 func (st *serviceTester) makeTestListener() (net.Listener, string) {
-	l, url := makeTestListenerNoCleanup(st.t)
+	l, url := testcert.MakeTestListener(st.t)
 	st.cleanup(l.Close)
 	return l, url
 }
@@ -811,7 +803,7 @@ func (tc *testClient) listenImpl(channelId StreamId, expected userMessages) {
 		if len(actualExtra) > 0 {
 			tc.require.FailNow("Received unexpected messages", "actualExtra:%v", actualExtra)
 		}
-	}, 15*time.Second)
+	}, 60*time.Second)
 }
 
 func (tc *testClient) getStream(streamId StreamId) *StreamAndCookie {
@@ -897,6 +889,19 @@ func (tc *testClient) getMiniblocks(streamId StreamId, fromInclusive, toExclusiv
 	)
 	tc.require.NoError(err)
 	return mbs
+}
+
+func (tc *testClient) getMiniblocksByIds(streamId StreamId, ids []int64, onEachMb func(*Miniblock)) {
+	resp, err := tc.node2nodeClient.GetMiniblocksByIds(tc.ctx, connect.NewRequest(&GetMiniblocksByIdsRequest{
+		StreamId:     streamId[:],
+		MiniblockIds: ids,
+	}))
+	tc.require.NoError(err)
+	for resp.Receive() {
+		onEachMb(resp.Msg().GetMiniblock())
+	}
+	tc.require.NoError(resp.Err())
+	tc.require.NoError(resp.Close())
 }
 
 func (tc *testClient) addHistoryToView(
@@ -1031,9 +1036,9 @@ func (tcs testClients) parallelForAllT(t require.TestingT, f func(*testClient)) 
 }
 
 // setupChannelWithClients creates a channel and returns a testClients with clients connected to it.
-// First client is creator of both space and channel.
+// The first client is the creator of both the space and the channel.
 // Other clients join the channel.
-// Clients are connected to nodes in round-robin fashion.
+// Clients are connected to nodes in a round-robin fashion.
 func (tcs testClients) createChannelAndJoin(spaceId StreamId) StreamId {
 	alice := tcs[0]
 	channelId, _ := alice.createChannel(spaceId)
@@ -1058,7 +1063,22 @@ func (tcs testClients) compareNowImpl(t require.TestingT, streamId StreamId) []*
 	for range tcs {
 		streams = append(streams, <-streamC)
 	}
-	testfmt.Println(tcs[0].t, "compareNowImpl: Got all streams")
+	if testfmt.Enabled() {
+		testfmt.Println(tcs[0].t, "compareNowImpl: Got all streams")
+		for i, stream := range streams {
+			testfmt.Println(
+				tcs[0].t,
+				"    ",
+				i,
+				"MBs:",
+				len(stream.Miniblocks),
+				"Gen:",
+				stream.NextSyncCookie.MinipoolGen,
+				"Events:",
+				len(stream.Events),
+			)
+		}
+	}
 	first := streams[0]
 	var success bool
 	for i, stream := range streams[1:] {

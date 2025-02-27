@@ -40,12 +40,11 @@ Restart after rebuilding with current changes:
 
 # Building and running go tests
 
-MLS lib needs to be built for some tests to run, there are just commands that build and configure lib and then run go tests:
+There are just commands to run go tests, `go test` works too:
 
     just test ./...  # Run go test
     just test-all # Run all go tests from module root
     just t # Run all tests from current dir
-    just build-mls # Rebuild mls without running tests
 
     just t-debug -run TestMyName  # Run TestMyName with info logging and test printing
     just t-debug-debug -run TestMyName  # Run TestMyName with debug logging and test printing

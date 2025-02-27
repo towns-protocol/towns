@@ -53,6 +53,7 @@ import {
     UserReceivedBlockchainTransactionEvent,
     StreamEncryptionAlgorithmEvent,
     TipEvent,
+    SpaceReviewEvent,
 } from './timeline-types'
 import type { PlainMessage } from '@bufbuild/protobuf'
 import { userIdFromAddress, streamIdFromBytes, streamIdAsString } from '../../../id'
@@ -64,6 +65,8 @@ import {
     type RemoteTimelineEvent,
     isCiphertext,
 } from '../../../types'
+
+import { getSpaceReviewEventDataBin } from '@river-build/web3'
 
 type SuccessResult = {
     content: TimelineEvent_OneOf
@@ -361,10 +364,6 @@ function toTownsContent_MemberPayload(
                     unpinnedEventId: bin_toHexString(value.content.value.eventId),
                 } satisfies UnpinEvent,
             }
-        case 'mls': // TODO: remove after proto update
-            return {
-                error: 'not supported',
-            }
         case 'encryptionAlgorithm':
             return {
                 content: {
@@ -397,6 +396,27 @@ function toTownsContent_MemberPayload(
                             refEventId: bin_toHexString(tipContent.event.messageId),
                             toUserId: userIdFromAddress(tipContent.toUserAddress),
                         } satisfies TipEvent,
+                    }
+                }
+                case 'tokenTransfer':
+                    return { error: `${description} unsupported content` }
+                case 'spaceReview': {
+                    if (!transaction.receipt) {
+                        return { error: `${description} no receipt` }
+                    }
+                    const reviewContent = transaction.content.value
+                    const { comment, rating } = getSpaceReviewEventDataBin(
+                        transaction.receipt.logs,
+                        transaction.receipt.from,
+                    )
+                    return {
+                        content: {
+                            kind: RiverTimelineEvent.SpaceReview,
+                            action: reviewContent.action,
+                            rating: rating,
+                            comment: comment,
+                            fromUserId: userIdFromAddress(fromUserAddress),
+                        } satisfies SpaceReviewEvent,
                     }
                 }
                 case undefined:
@@ -1000,6 +1020,8 @@ export function getFallbackContent(
             return `tip from: ${content.fromUserId} to: ${content.toUserId} refEventId: ${
                 content.refEventId
             } amount: ${content.tip.event?.amount.toString() ?? '??'}`
+        case RiverTimelineEvent.SpaceReview:
+            return `spaceReview from: ${content.fromUserId} rating: ${content.rating} comment: ${content.comment}`
         case RiverTimelineEvent.UserReceivedBlockchainTransaction:
             return `kind: ${
                 content.receivedTransaction.transaction?.content?.case ?? '??'
@@ -1124,6 +1146,16 @@ export function transformAttachments(attachments?: Attachment[]): ChannelMessage
                                           url: attachment.image.url,
                                       }
                                     : undefined,
+                            },
+                        },
+                    })
+                case 'ticker':
+                    return new ChannelMessage_Post_Attachment({
+                        content: {
+                            case: 'ticker',
+                            value: {
+                                chainId: attachment.chainId,
+                                address: attachment.address,
                             },
                         },
                     })

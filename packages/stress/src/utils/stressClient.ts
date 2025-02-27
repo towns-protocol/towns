@@ -5,12 +5,15 @@ import {
     SyncAgent,
     spaceIdFromChannelId,
 } from '@river-build/sdk'
-import { type ExportedDevice } from '@river-build/encryption'
 import { LocalhostWeb3Provider, SpaceDapp } from '@river-build/web3'
-import { shortenHexString } from '@river-build/dlog'
+import { bin_fromBase64, bin_toBase64, shortenHexString } from '@river-build/dlog'
 import { Wallet } from 'ethers'
 import { PlainMessage } from '@bufbuild/protobuf'
-import { ChannelMessage_Post_Attachment, ChannelMessage_Post_Mention } from '@river-build/proto'
+import {
+    ChannelMessage_Post_Attachment,
+    ChannelMessage_Post_Mention,
+    ExportedDevice,
+} from '@river-build/proto'
 import { waitFor } from './waitFor'
 import { IStorage } from './storage'
 import { sha256 } from 'ethers/lib/utils'
@@ -24,30 +27,51 @@ export async function makeStressClient(
 ) {
     const bot = new Bot(inWallet, config)
     const storageKey = `stressclient_${bot.userId}_${config.environmentId}`
+    const logId = `client${clientIndex}:${shortenHexString(bot.userId)}`
     const logger = getLogger('stress:makeStressClient', {
         clientIndex,
         userId: bot.userId,
         storageKey,
+        logId,
     })
+    logger.info('makeStressClient')
     let device: ExportedDevice | undefined
     const rawDevice = await globalPersistedStore?.get(storageKey).catch(() => undefined)
 
     if (rawDevice) {
-        const jsonDevice = JSON.parse(rawDevice) as ExportedDevice
-        if (jsonDevice.pickleKey && jsonDevice.pickledAccount) {
-            device = {
-                outboundSessions: jsonDevice.outboundSessions ?? [],
-                inboundSessions: jsonDevice.inboundSessions ?? [],
-                hybridGroupSessions: jsonDevice.hybridGroupSessions ?? [],
-                pickleKey: jsonDevice.pickleKey,
-                pickledAccount: jsonDevice.pickledAccount,
-            } satisfies ExportedDevice
-            logger.info(
-                `Device imported from ${storageKey}, outboundSessions: ${device.outboundSessions.length} inboundSessions: ${device.inboundSessions.length}`,
-            )
+        try {
+            device = ExportedDevice.fromBinary(bin_fromBase64(rawDevice))
+        } catch (e) {
+            logger.error(e, 'failed to parse device')
+            // backwards compatibility
+            try {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                const jsonDevice = JSON.parse(rawDevice)
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                if (jsonDevice.pickleKey && jsonDevice.pickledAccount) {
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+                    device = new ExportedDevice({
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                        outboundSessions: jsonDevice.outboundSessions ?? [],
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                        inboundSessions: jsonDevice.inboundSessions ?? [],
+                        hybridGroupSessions: [],
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                        pickleKey: jsonDevice.pickleKey,
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                        pickledAccount: jsonDevice.pickledAccount,
+                    })
+                    logger.info(
+                        `BACKCOMPAT Device imported from ${storageKey}, outboundSessions: ${device.outboundSessions.length} inboundSessions: ${device.inboundSessions.length}`,
+                    )
+                }
+            } catch (e) {
+                logger.error(e, 'failed to parse BACKCOMPAT device')
+            }
         }
     }
     const botPrivateKey = bot.rootWallet.privateKey
+    logger.info('makeStressClient: making agent')
     const agent = await bot.makeSyncAgent({
         disablePersistenceStore: true,
         unpackEnvelopeOpts: {
@@ -58,15 +82,18 @@ export async function makeStressClient(
             fromExportedDevice: device,
             pickleKey: sha256(botPrivateKey),
         },
+        logId,
     })
+    logger.info('makeStressClient: agent created')
     await agent.start()
 
+    logger.info('makeStressClient: agent started')
     const streamsClient = agent.riverConnection.client
     if (!streamsClient) {
         throw new Error('streamsClient not initialized')
     }
 
-    return new StressClient(
+    const client = new StressClient(
         config,
         clientIndex,
         bot.userId,
@@ -77,7 +104,10 @@ export async function makeStressClient(
         streamsClient,
         globalPersistedStore,
         storageKey,
+        logId,
     )
+    logger.info('makeStressClient: client created')
+    return client
 }
 
 export class StressClient {
@@ -94,6 +124,7 @@ export class StressClient {
         public streamsClient: StreamsClient,
         public globalPersistedStore: IStorage | undefined,
         public storageKey: string,
+        public logId: string,
     ) {
         this.logger = getLogger('stress:stressClient', {
             clientIndex,
@@ -101,10 +132,6 @@ export class StressClient {
             logId: this.logId,
             rpcUrl: this.streamsClient.rpcClient.url,
         })
-    }
-
-    get logId(): string {
-        return `client${this.clientIndex}:${shortenHexString(this.userId)}`
     }
 
     async fundWallet() {
@@ -180,19 +207,18 @@ export class StressClient {
         await this.agent.stop()
     }
 
-    async exportDevice(): Promise<ExportedDevice | undefined> {
+    async exportDevice(): Promise<void> {
         const device = await this.agent.riverConnection.client?.cryptoBackend?.exportDevice()
         if (device) {
             try {
                 await this.globalPersistedStore?.set(
                     this.storageKey,
-                    JSON.stringify(device, null, 2),
+                    bin_toBase64(device.toBinary()),
                 )
                 this.logger.info({ storageKey: this.storageKey }, 'device exported')
             } catch (e) {
                 this.logger.error(e, 'failed to export device')
             }
         }
-        return device
     }
 }

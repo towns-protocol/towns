@@ -13,6 +13,7 @@ import type {
     BlockchainTransaction,
     UserPayload_ReceivedBlockchainTransaction,
     BlockchainTransaction_Tip,
+    BlockchainTransaction_SpaceReview_Action,
 } from '@river-build/proto'
 import type { PlainMessage } from '@bufbuild/protobuf'
 import type { DecryptionSessionError } from '@river-build/encryption'
@@ -88,6 +89,7 @@ export type TimelineEvent_OneOf =
     | SpaceUpdateHideUserJoinLeavesEvent
     | SpaceUsernameEvent
     | TipEvent
+    | SpaceReviewEvent
     | UserBlockchainTransactionEvent
     | UserReceivedBlockchainTransactionEvent
     | UnpinEvent
@@ -115,6 +117,7 @@ export enum RiverTimelineEvent {
     SpaceDisplayName = 'm.space.display_name',
     SpaceEnsAddress = 'm.space.ens_name',
     SpaceNft = 'm.space.nft',
+    SpaceReview = 'm.space.review',
     StreamEncryptionAlgorithm = 'm.stream_encryption_algorithm',
     StreamMembership = 'm.stream_membership',
     TipEvent = 'm.tip_event',
@@ -287,6 +290,14 @@ export interface TipEvent {
     toUserId: string
 }
 
+export interface SpaceReviewEvent {
+    kind: RiverTimelineEvent.SpaceReview
+    action: BlockchainTransaction_SpaceReview_Action
+    rating: number
+    comment?: string
+    fromUserId: string
+}
+
 export enum MessageType {
     Text = 'm.text',
     GM = 'm.gm',
@@ -441,9 +452,17 @@ export type UnfurledLinkAttachment = {
     info?: string
 }
 
+export type TickerAttachment = {
+    type: 'ticker'
+    id: string
+    address: string
+    chainId: string
+}
+
 export type Attachment =
     | ImageAttachment
     | ChunkedMediaAttachment
     | EmbeddedMediaAttachment
     | EmbeddedMessageAttachment
     | UnfurledLinkAttachment
+    | TickerAttachment

@@ -15,6 +15,7 @@ import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 
 // libraries
 import {TownsLib} from "./TownsLib.sol";
+import {Context} from "@openzeppelin/contracts/utils/Context.sol";
 
 // contracts
 import {Initializable} from "solady/utils/Initializable.sol";
@@ -33,7 +34,8 @@ contract Towns is
   Initializable,
   ERC20Votes,
   UUPSUpgradeable,
-  Ownable
+  Ownable,
+  Context
 {
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                          Errors                            */
@@ -60,13 +62,13 @@ contract Towns is
 
   /// @notice A modifier that only allows the bridge to call
   modifier onlyL2StandardBridge() {
-    if (msg.sender != TownsLib.L2_STANDARD_BRIDGE) revert Unauthorized();
+    if (_msgSender() != TownsLib.L2_STANDARD_BRIDGE) revert Unauthorized();
     _;
   }
 
   /// @notice A modifier that only allows the super chain to call
   modifier onlyL2SuperChainBridge() {
-    if (msg.sender != TownsLib.SUPERCHAIN_TOKEN_BRIDGE) revert Unauthorized();
+    if (_msgSender() != TownsLib.SUPERCHAIN_TOKEN_BRIDGE) revert Unauthorized();
     _;
   }
 
@@ -113,6 +115,18 @@ contract Towns is
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                        Bridge                              */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+  /// @custom:legacy
+  /// @notice Legacy getter for the remote token. Use REMOTE_TOKEN going forward.
+  function l1Token() external view returns (address) {
+    return TownsLib.layout().remoteToken;
+  }
+
+  /// @custom:legacy
+  /// @notice Legacy getter for the bridge. Use BRIDGE going forward.
+  function l2Bridge() external pure returns (address) {
+    return TownsLib.L2_STANDARD_BRIDGE;
+  }
 
   /// @custom:legacy
   /// @notice Legacy getter for REMOTE_TOKEN
@@ -186,6 +200,10 @@ contract Towns is
 
   function symbol() public pure override returns (string memory) {
     return SYMBOL;
+  }
+
+  function decimals() public pure override returns (uint8) {
+    return 18;
   }
 
   /// @notice Allows the StandardBridge on this network to mint tokens.

@@ -40,7 +40,7 @@ contract DelegationProxy is Initializable {
   /// @param stakeToken_ The address of the stake token
   function reinitialize(
     address stakeToken_
-  ) external payable onlyFactory reinitializer(2) {
+  ) external payable onlyFactory reinitializer(3) {
     address currentDelegatee = IVotes(stakeToken).delegates(address(this));
     stakeToken = stakeToken_;
     IERC20(stakeToken_).approve(msg.sender, type(uint256).max);

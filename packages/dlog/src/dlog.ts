@@ -224,8 +224,15 @@ export const dlog = (ns: string, opts?: DLogOpts): DLogger => {
  * @returns New logger with namespace `ns`.
  */
 export const dlogError = (ns: string): DLogger => {
-    const l = makeDlog(debug(ns), { defaultEnabled: true, printStack: true })
+    const l = makeDlog(debug(ns), { defaultEnabled: true, printStack: true, allowJest: true })
     return l
+}
+
+export interface ExtendedLogger {
+    info: DLogger
+    log: DLogger
+    error: DLogger
+    extend: (namespace: string) => ExtendedLogger
 }
 
 /**
@@ -233,10 +240,13 @@ export const dlogError = (ns: string): DLogger => {
  * @param ns Namespace for the logger.
  * @returns New logger with log/info/error namespace `ns`.
  */
-export const dlogger = (ns: string): { log: DLogger; info: DLogger; error: DLogger } => {
+export const dlogger = (ns: string): ExtendedLogger => {
     return {
         log: makeDlog(debug(ns + ':log')),
         info: makeDlog(debug(ns + ':info'), { defaultEnabled: true, allowJest: true }),
         error: dlogError(ns + ':error'),
+        extend: (sub: string) => {
+            return dlogger(ns + ':' + sub)
+        },
     }
 }

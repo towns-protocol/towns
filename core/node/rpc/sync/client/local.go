@@ -2,9 +2,9 @@ package client
 
 import (
 	"context"
-	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/linkdata/deadlock"
 	. "github.com/towns-protocol/towns/core/node/base"
 	. "github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/logging"
@@ -25,7 +25,7 @@ type localSyncer struct {
 	messages    chan<- *SyncStreamsResponse
 	localAddr   common.Address
 
-	activeStreamsMu sync.Mutex
+	activeStreamsMu deadlock.Mutex
 	activeStreams   map[StreamId]*Stream
 
 	// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil

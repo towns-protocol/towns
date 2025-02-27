@@ -36,6 +36,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/rpc/sync"
 	"github.com/towns-protocol/towns/core/node/scrub"
 	"github.com/towns-protocol/towns/core/node/storage"
+	"github.com/towns-protocol/towns/core/node/track_streams"
 	"github.com/towns-protocol/towns/core/node/utils"
 	"github.com/towns-protocol/towns/core/river_node/version"
 	"github.com/towns-protocol/towns/core/xchain/entitlement"
@@ -47,7 +48,7 @@ const (
 	ServerModeInfo         = "info"
 	ServerModeArchive      = "archive"
 	ServerModeNotification = "notification"
-	ServerModeBotRegistry  = "bot_registry"
+	ServerModeAppRegistry  = "app_registry"
 )
 
 func (s *Service) httpServerClose() {
@@ -242,13 +243,17 @@ func (s *Service) initInstance(mode string, opts *ServerStartOpts) {
 		"version", version.GetFullVersion(),
 	)
 
+	if !utils.CgoEnabled {
+		s.defaultLogger.Warnw("CGO is disabled, signature verification and hashing will be slower")
+	}
+
 	subsystem := mode
 	if mode == ServerModeFull {
 		subsystem = "stream"
 	} else if mode == ServerModeNotification {
 		subsystem = "notification"
-	} else if mode == ServerModeBotRegistry {
-		subsystem = "bot_registry"
+	} else if mode == ServerModeAppRegistry {
+		subsystem = "app_registry"
 	}
 
 	metricsRegistry := prometheus.NewRegistry()
@@ -365,16 +370,12 @@ func (s *Service) initRiverChain() error {
 		return err
 	}
 
-	s.streamRegistry, err = nodes.NewStreamRegistry(
-		ctx,
+	s.streamRegistry = nodes.NewStreamRegistry(
 		s.riverChain,
 		s.nodeRegistry,
 		s.registryContract,
 		s.chainConfig,
 	)
-	if err != nil {
-		return err
-	}
 
 	return nil
 }
@@ -390,8 +391,8 @@ func (s *Service) prepareStore() error {
 			schema = storage.DbSchemaNameForArchive(s.config.Archive.ArchiveId)
 		case ServerModeNotification:
 			schema = storage.DbSchemaNameForNotifications(s.config.RiverChain.ChainId)
-		case ServerModeBotRegistry:
-			schema = storage.DbSchemaNameForBotRegistryService(s.config.BotRegistry.BotRegistryId)
+		case ServerModeAppRegistry:
+			schema = storage.DbSchemaNameForAppRegistryService(s.config.AppRegistry.AppRegistryId)
 		default:
 			return RiverError(
 				Err_BAD_CONFIG,
@@ -558,7 +559,13 @@ func (s *Service) serve() {
 
 func (s *Service) initEntitlements() error {
 	var err error
-	s.entitlementEvaluator, err = entitlement.NewEvaluatorFromConfig(s.serverCtx, s.config, s.chainConfig, s.metrics, s.otelTracer)
+	s.entitlementEvaluator, err = entitlement.NewEvaluatorFromConfig(
+		s.serverCtx,
+		s.config,
+		s.chainConfig,
+		s.metrics,
+		s.otelTracer,
+	)
 	if err != nil {
 		return err
 	}
@@ -577,6 +584,7 @@ func (s *Service) initStore() error {
 			s.instanceId,
 			s.exitSignal,
 			s.metrics,
+			s.chainConfig.Get().StreamEphemeralStreamTTL,
 		)
 		if err != nil {
 			return err
@@ -646,13 +654,13 @@ func (s *Service) initNotificationsStore() error {
 	}
 }
 
-func (s *Service) initBotRegistryStore() error {
+func (s *Service) initAppRegistryStore() error {
 	ctx := s.serverCtx
 	log := s.defaultLogger
 
 	switch s.config.StorageType {
-	case storage.BotRegistryStorageTypePostgres:
-		pgstore, err := storage.NewPostgresBotRegistryStore(
+	case storage.AppRegistryStorageTypePostgres:
+		pgstore, err := storage.NewPostgresAppRegistryStore(
 			ctx,
 			s.storagePoolInfo,
 			s.exitSignal,
@@ -662,11 +670,11 @@ func (s *Service) initBotRegistryStore() error {
 			return err
 		}
 		s.onClose(pgstore.Close)
-		s.botStore = pgstore
+		s.appStore = pgstore
 
 		if !s.config.Log.Simplify {
 			log.Infow(
-				"Created postgres bot registry store",
+				"Created postgres app registry store",
 				"schema",
 				s.storagePoolInfo.Schema,
 			)
@@ -694,13 +702,14 @@ func (s *Service) initCacheAndSync(opts *ServerStartOpts) error {
 		ChainMonitor:            s.riverChain.ChainMonitor,
 		Metrics:                 s.metrics,
 		RemoteMiniblockProvider: s,
+		NodeRegistry:            s.nodeRegistry,
 		Tracer:                  s.otelTracer,
 	}
 
-	s.cache = events.NewStreamCache(s.serverCtx, cacheParams)
+	s.cache = events.NewStreamCache(cacheParams)
 
-	// There is circular dependency between cache and scrubber, so scurbber
-	// needs to be patched into cache params after cache is created.
+	// There is circular dependency between the cache and the scrubber, so the scrubber
+	// needs to be patched into cache params after the cache is created.
 	if opts != nil && opts.ScrubberMaker != nil {
 		cacheParams.Scrubber = opts.ScrubberMaker(s.serverCtx, s)
 	} else {
@@ -720,7 +729,7 @@ func (s *Service) initCacheAndSync(opts *ServerStartOpts) error {
 		return err
 	}
 
-	s.mbProducer = events.NewMiniblockProducer(s.serverCtx, s.cache, s.chainConfig, nil)
+	s.mbProducer = events.NewMiniblockProducer(s.serverCtx, s.cache, nil)
 
 	s.syncHandler = sync.NewHandler(
 		s.wallet.Address,
@@ -787,7 +796,7 @@ func (s *Service) initNotificationHandlers() error {
 	return nil
 }
 
-func (s *Service) initBotRegistryHandlers() error {
+func (s *Service) initAppRegistryHandlers() error {
 	var ii []connect.Interceptor
 	if s.otelConnectIterceptor != nil {
 		ii = append(ii, s.otelConnectIterceptor)
@@ -796,10 +805,10 @@ func (s *Service) initBotRegistryHandlers() error {
 	ii = append(ii, NewTimeoutInterceptor(s.config.Network.RequestTimeout))
 
 	authInceptor, err := authentication.NewAuthenticationInterceptor(
-		s.BotRegistryService.ShortServiceName(),
-		s.config.BotRegistry.Authentication.SessionToken.Key.Algorithm,
-		s.config.BotRegistry.Authentication.SessionToken.Key.Key,
-		"/river.BotRegistryService/GetStatus",
+		s.AppRegistryService.ShortServiceName(),
+		s.config.AppRegistry.Authentication.SessionToken.Key.Algorithm,
+		s.config.AppRegistry.Authentication.SessionToken.Key.Key,
+		"/river.AppRegistryService/GetStatus",
 	)
 	if err != nil {
 		return err
@@ -808,17 +817,17 @@ func (s *Service) initBotRegistryHandlers() error {
 
 	interceptors := connect.WithInterceptors(ii...)
 
-	botRegistryServicePattern, botRegistryServiceHandler := protocolconnect.NewBotRegistryServiceHandler(
-		s.BotRegistryService,
+	AppRegistryServicePattern, AppRegistryServiceHandler := protocolconnect.NewAppRegistryServiceHandler(
+		s.AppRegistryService,
 		interceptors,
 	)
-	botRegistryAuthServicePattern, botRegistryAuthServiceHandler := protocolconnect.NewAuthenticationServiceHandler(
-		s.BotRegistryService,
+	AppRegistryAuthServicePattern, AppRegistryAuthServiceHandler := protocolconnect.NewAuthenticationServiceHandler(
+		s.AppRegistryService,
 		interceptors,
 	)
 
-	s.mux.Handle(botRegistryServicePattern, newHttpHandler(botRegistryServiceHandler, s.defaultLogger))
-	s.mux.Handle(botRegistryAuthServicePattern, newHttpHandler(botRegistryAuthServiceHandler, s.defaultLogger))
+	s.mux.Handle(AppRegistryServicePattern, newHttpHandler(AppRegistryServiceHandler, s.defaultLogger))
+	s.mux.Handle(AppRegistryAuthServicePattern, newHttpHandler(AppRegistryAuthServiceHandler, s.defaultLogger))
 
 	// s.registerDebugHandlers(s.config.EnableDebugEndpoints, s.config.DebugEndpoints)
 
@@ -826,10 +835,11 @@ func (s *Service) initBotRegistryHandlers() error {
 }
 
 type ServerStartOpts struct {
-	RiverChain      *crypto.Blockchain
-	Listener        net.Listener
-	HttpClientMaker HttpClientMakerFunc
-	ScrubberMaker   func(context.Context, *Service) events.Scrubber
+	RiverChain          *crypto.Blockchain
+	Listener            net.Listener
+	HttpClientMaker     HttpClientMakerFunc
+	ScrubberMaker       func(context.Context, *Service) events.Scrubber
+	StreamEventListener track_streams.StreamEventListener
 }
 
 // StartServer starts the server with the given configuration.

@@ -34,7 +34,7 @@ func (e *ParsedEvent) GetEnvelopeBytes() ([]byte, error) {
 }
 
 func ParseEvent(envelope *Envelope) (*ParsedEvent, error) {
-	hash := RiverHash(envelope.Event)
+	hash := TownsHashForEvents.Hash(envelope.Event)
 	if !bytes.Equal(hash[:], envelope.Hash) {
 		return nil, RiverError(Err_BAD_EVENT_HASH, "Bad hash provided", "computed", hash, "got", envelope.Hash)
 	}
@@ -75,13 +75,18 @@ func ParseEvent(envelope *Envelope) (*ParsedEvent, error) {
 		}
 	}
 
+	prevMiniblockNum := int64(-1)
+	if streamEvent.PrevMiniblockNum != nil {
+		prevMiniblockNum = *streamEvent.PrevMiniblockNum
+	}
+
 	return &ParsedEvent{
 		Event:    &streamEvent,
 		Envelope: envelope,
 		Hash:     common.BytesToHash(envelope.Hash),
 		MiniblockRef: &MiniblockRef{
 			Hash: common.BytesToHash(streamEvent.PrevMiniblockHash),
-			Num:  streamEvent.PrevMiniblockNum,
+			Num:  prevMiniblockNum,
 		},
 		SignerPubKey: signerPubKey,
 	}, nil

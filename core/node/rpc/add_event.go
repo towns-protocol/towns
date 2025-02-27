@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-
 	"github.com/ethereum/go-ethereum/common"
 
 	. "github.com/towns-protocol/towns/core/node/base"
@@ -19,15 +18,11 @@ import (
 func (s *Service) localAddEvent(
 	ctx context.Context,
 	req *connect.Request[AddEventRequest],
+	streamId StreamId,
 	localStream *Stream,
 	streamView *StreamView,
 ) (*connect.Response[AddEventResponse], error) {
 	log := logging.FromCtx(ctx)
-
-	streamId, err := StreamIdFromBytes(req.Msg.StreamId)
-	if err != nil {
-		return nil, AsRiverError(err).Func("localAddEvent")
-	}
 
 	parsedEvent, err := ParseEvent(req.Msg.Event)
 	if err != nil {
@@ -37,10 +32,18 @@ func (s *Service) localAddEvent(
 	log.Debugw("localAddEvent", "parsedEvent", parsedEvent)
 
 	newEvents, err := s.addParsedEvent(ctx, streamId, parsedEvent, localStream, streamView)
+
+	if err != nil {
+		err = AsRiverError(err).Func("localAddEvent").Tags(
+			"eventMiniblock", parsedEvent.MiniblockRef,
+			"lastLocalMiniblock", streamView.LastBlock().Ref,
+		)
+	}
+
 	if err != nil && req.Msg.Optional {
 		// aellis 5/2024 - we only want to wrap errors from canAddEvent,
 		// currently this is catching all errors, which is not ideal
-		riverError := AsRiverError(err).Func("localAddEvent")
+		riverError := AsRiverError(err)
 		return connect.NewResponse(&AddEventResponse{
 			Error: &AddEventResponse_Error{
 				Code:  riverError.Code,
@@ -50,7 +53,7 @@ func (s *Service) localAddEvent(
 			NewEvents: newEvents,
 		}), nil
 	} else if err != nil {
-		return nil, AsRiverError(err).Func("localAddEvent")
+		return nil, err
 	} else {
 		return connect.NewResponse(&AddEventResponse{
 			NewEvents: newEvents,

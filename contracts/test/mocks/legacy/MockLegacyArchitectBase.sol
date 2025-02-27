@@ -32,7 +32,7 @@ import {SpaceProxyInitializer} from "contracts/src/spaces/facets/proxy/SpaceProx
 // modules
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
-abstract contract LegacyArchitectBase is Factory, ILegacyArchitectBase {
+abstract contract LegacyArchitectBase is ILegacyArchitectBase {
   using StringSet for StringSet.Set;
   using EnumerableSet for EnumerableSet.AddressSet;
 
@@ -58,7 +58,7 @@ abstract contract LegacyArchitectBase is Factory, ILegacyArchitectBase {
     ImplementationStorage.Layout storage ims = ImplementationStorage.layout();
 
     // get the token id of the next space
-    uint256 spaceTokenId = ims.spaceToken.nextTokenId();
+    uint256 spaceTokenId = ims.spaceOwnerToken.nextTokenId();
 
     // deploy space
     spaceAddress = _deploySpace(spaceTokenId, spaceInfo.membership);
@@ -71,7 +71,7 @@ abstract contract LegacyArchitectBase is Factory, ILegacyArchitectBase {
     ds.tokenIdBySpace[spaceAddress] = spaceTokenId;
 
     // mint token to and transfer to Architect
-    ims.spaceToken.mintSpace(
+    ims.spaceOwnerToken.mintSpace(
       spaceInfo.name,
       spaceInfo.uri,
       spaceAddress,
@@ -116,7 +116,7 @@ abstract contract LegacyArchitectBase is Factory, ILegacyArchitectBase {
     _createDefaultChannel(spaceAddress, memberRoleId, spaceInfo.channel);
 
     // transfer nft to sender
-    IERC721A(address(ims.spaceToken)).safeTransferFrom(
+    IERC721A(address(ims.spaceOwnerToken)).safeTransferFrom(
       address(this),
       msg.sender,
       spaceTokenId
@@ -254,7 +254,7 @@ abstract contract LegacyArchitectBase is Factory, ILegacyArchitectBase {
       spaceTokenId,
       membership
     );
-    return _deploy(initCode, salt);
+    return Factory.deploy(initCode, salt);
   }
 
   function _deployEntitlement(
@@ -270,7 +270,7 @@ abstract contract LegacyArchitectBase is Factory, ILegacyArchitectBase {
       )
     );
 
-    return _deploy(initCode);
+    return Factory.deploy(initCode);
   }
 
   function _getSpaceDeploymentInfo(
@@ -304,7 +304,7 @@ abstract contract LegacyArchitectBase is Factory, ILegacyArchitectBase {
             msg.sender,
             address(this),
             ITokenOwnableBase.TokenOwnable({
-              collection: address(ds.spaceToken),
+              collection: address(ds.spaceOwnerToken),
               tokenId: spaceTokenId
             }),
             membershipSettings

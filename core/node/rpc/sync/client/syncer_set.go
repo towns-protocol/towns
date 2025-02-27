@@ -2,18 +2,18 @@ package client
 
 import (
 	"context"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
-
+	"github.com/linkdata/deadlock"
 	. "github.com/towns-protocol/towns/core/node/base"
 	. "github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type (
@@ -47,7 +47,7 @@ type (
 		// syncerTasks is a wait group for running background StreamsSyncers that is used to ensure all syncers stopped
 		syncerTasks sync.WaitGroup
 		// muSyncers guards syncers and streamID2Syncer
-		muSyncers sync.Mutex
+		muSyncers deadlock.Mutex
 		// stopped holds an indication if the sync operation is stopped
 		stopped bool
 		// syncers is the existing set of syncers, indexed by the syncer node address
@@ -92,7 +92,7 @@ func NewSyncers(
 	localNodeAddress common.Address,
 	cookies StreamCookieSetGroupedByNodeAddress,
 	otelTracer trace.Tracer,
-) (*SyncerSet, <-chan *SyncStreamsResponse, error) {
+) (*SyncerSet, chan *SyncStreamsResponse, error) {
 	var (
 		log             = logging.FromCtx(ctx)
 		syncers         = make(map[common.Address]StreamsSyncer)
@@ -177,15 +177,6 @@ func (ss *SyncerSet) Run() {
 	ss.muSyncers.Unlock()
 
 	ss.syncerTasks.Wait() // background syncers finished -> safe to close messages channel
-	close(ss.messages)    // close will cause the sync operation to send the SYNC_CLOSE message to the client
-}
-
-func (ss *SyncerSet) AddInitialStreams() {
-	ss.muSyncers.Lock()
-	for _, syncer := range ss.syncers {
-		ss.startSyncer(syncer)
-	}
-	ss.muSyncers.Unlock()
 }
 
 func (ss *SyncerSet) AddStream(
@@ -196,7 +187,8 @@ func (ss *SyncerSet) AddStream(
 ) error {
 	if ss.otelTracer != nil {
 		_, span := ss.otelTracer.Start(ctx, "AddStream",
-			trace.WithAttributes(attribute.String("stream", streamID.String())))
+			trace.WithAttributes(attribute.String("stream", streamID.String())),
+			trace.WithAttributes(attribute.String("remoteSyncID", ss.syncID)))
 		defer span.End()
 	}
 

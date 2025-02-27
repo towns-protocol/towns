@@ -6,12 +6,11 @@ import (
 	"fmt"
 	"slices"
 	"strings"
-	"sync"
 	"time"
 
 	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/ethereum/go-ethereum/common"
-
+	"github.com/linkdata/deadlock"
 	"github.com/towns-protocol/towns/core/contracts/river"
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/crypto"
@@ -65,7 +64,7 @@ type Stream struct {
 	// I.e. if there no calls to AddEvent, readers share the same view object
 	// out of lock, which is immutable, so if there is a need to modify, lock is taken, copy
 	// of view is created, and copy is modified and stored.
-	mu sync.RWMutex
+	mu deadlock.RWMutex
 
 	lastAppliedBlockNum crypto.BlockNumber
 
@@ -386,6 +385,7 @@ func (s *Stream) promoteCandidateLocked(ctx context.Context, mb *MiniblockRef) e
 }
 
 // schedulePromotionLocked should be called with a lock held.
+// TODO: REPLICATION: FIX: there should be periodic check to trigger reconciliation if scheduled promotion is not acted upon.
 func (s *Stream) schedulePromotionLocked(mb *MiniblockRef) error {
 	if len(s.local.pendingCandidates) == 0 {
 		if mb.Num != s.view().LastBlock().Ref.Num+1 {
@@ -505,16 +505,7 @@ func (s *Stream) initFromBlockchain(ctx context.Context) error {
 // and error if stream is local and failed to load.
 // GetViewIfLocal is thread-safe.
 func (s *Stream) GetViewIfLocal(ctx context.Context) (*StreamView, error) {
-	s.mu.RLock()
-	isLocal := s.local != nil
-	var view *StreamView
-	if isLocal {
-		view = s.view()
-		if view != nil {
-			s.maybeScrubLocked()
-		}
-	}
-	s.mu.RUnlock()
+	view, isLocal := s.tryGetView()
 	if !isLocal {
 		return nil, nil
 	}
@@ -546,15 +537,17 @@ func (s *Stream) GetView(ctx context.Context) (*StreamView, error) {
 }
 
 // tryGetView returns StreamView if it's already loaded, or nil if it's not.
+// The second return value is true if the view is local.
 // tryGetView is thread-safe.
-func (s *Stream) tryGetView() *StreamView {
+func (s *Stream) tryGetView() (*StreamView, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	if s.local != nil && s.view() != nil {
+	isLocal := s.local != nil
+	if isLocal && s.view() != nil {
 		s.maybeScrubLocked()
-		return s.view()
+		return s.view(), true
 	} else {
-		return nil
+		return nil, isLocal
 	}
 }
 
@@ -568,20 +561,24 @@ func (s *Stream) maybeScrubLocked() {
 
 	if s.params.Config.Scrubbing.ScrubEligibleDuration > 0 &&
 		time.Since(s.local.lastScrubbedTime) > s.params.Config.Scrubbing.ScrubEligibleDuration {
-		s.params.Scrubber.Scrub(s.streamId)
-		// Needs write lock to reset last scrubbed time.
-		go s.resetLastScrubbed()
+		go s.maybeScheduleScrub()
 	}
 }
 
-// resetLastScrubbed reset the last scrubbed time on the stream, which is used for
-// determining when the stream is eligible for another scrub.
-// resetLastScrubbed is thread-safe.
-func (s *Stream) resetLastScrubbed() {
+func (s *Stream) shouldScrub() bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if s.local != nil {
+	if s.params.Config.Scrubbing.ScrubEligibleDuration > 0 &&
+		time.Since(s.local.lastScrubbedTime) > s.params.Config.Scrubbing.ScrubEligibleDuration {
 		s.local.lastScrubbedTime = time.Now()
+		return true
+	}
+	return false
+}
+
+func (s *Stream) maybeScheduleScrub() {
+	if s.shouldScrub() {
+		s.params.Scrubber.Scrub(s.streamId)
 	}
 }
 
@@ -653,10 +650,17 @@ func (s *Stream) GetMiniblocks(
 // AddEvent adds an event to the stream.
 // AddEvent is thread-safe.
 func (s *Stream) AddEvent(ctx context.Context, event *ParsedEvent) error {
+	_, err := s.AddEvent2(ctx, event)
+	return err
+}
+
+// AddEvent2 adds an event to the stream and returns the new stream view.
+// AddEvent2 is thread-safe.
+func (s *Stream) AddEvent2(ctx context.Context, event *ParsedEvent) (*StreamView, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if err := s.loadInternal(ctx); err != nil {
-		return err
+		return nil, err
 	}
 
 	return s.addEventLocked(ctx, event)
@@ -683,25 +687,25 @@ func (s *Stream) notifySubscribersLocked(
 
 // addEventLocked is not thread-safe.
 // Callers must have a lock held.
-func (s *Stream) addEventLocked(ctx context.Context, event *ParsedEvent) error {
+func (s *Stream) addEventLocked(ctx context.Context, event *ParsedEvent) (*StreamView, error) {
 	envelopeBytes, err := event.GetEnvelopeBytes()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	oldSV := s.view()
 	err = oldSV.ValidateNextEvent(ctx, s.params.ChainConfig.Get(), event, time.Time{})
 	if err != nil {
 		if IsRiverErrorCode(err, Err_DUPLICATE_EVENT) {
-			return nil
+			return oldSV, nil
 		}
-		return AsRiverError(err).Func("copyAndAddEvent")
+		return nil, AsRiverError(err).Func("copyAndAddEvent")
 	}
 
 	// Check if event can be added before writing to storage.
 	newSV, err := oldSV.copyAndAddEvent(event)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	err = s.params.Storage.WriteEvent(
@@ -727,7 +731,7 @@ func (s *Stream) addEventLocked(ctx context.Context, event *ParsedEvent) error {
 			eventsStr = sb.String()
 		}
 
-		return AsRiverError(err, Err_DB_OPERATION_FAILURE).
+		return nil, AsRiverError(err, Err_DB_OPERATION_FAILURE).
 			Tag("inMemoryBlocks", len(s.view().blocks)).
 			Tag("inMemoryEvents", eventsStr)
 	}
@@ -737,7 +741,7 @@ func (s *Stream) addEventLocked(ctx context.Context, event *ParsedEvent) error {
 
 	s.notifySubscribersLocked([]*Envelope{event.Envelope}, newSyncCookie)
 
-	return nil
+	return newSV, nil
 }
 
 // Sub subscribes the reciever to the stream, sending all content between the cookie and the

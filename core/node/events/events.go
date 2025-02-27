@@ -37,7 +37,9 @@ func MakeStreamEvent(
 
 	if prevMiniblock != nil && prevMiniblock.Hash != (common.Hash{}) {
 		event.PrevMiniblockHash = prevMiniblock.Hash[:]
-		event.PrevMiniblockNum = prevMiniblock.Num
+		if prevMiniblock.Num >= 0 {
+			event.PrevMiniblockNum = &prevMiniblock.Num
+		}
 	}
 
 	return event, nil
@@ -58,7 +60,9 @@ func MakeStreamEventWithTags(
 
 	if prevMiniblock != nil && prevMiniblock.Hash != (common.Hash{}) {
 		event.PrevMiniblockHash = prevMiniblock.Hash[:]
-		event.PrevMiniblockNum = prevMiniblock.Num
+		if prevMiniblock.Num >= 0 {
+			event.PrevMiniblockNum = &prevMiniblock.Num
+		}
 	}
 
 	return event, nil
@@ -80,13 +84,18 @@ func MakeDelegatedStreamEvent(
 	epochMillis := time.Now().UnixNano() / int64(time.Millisecond)
 
 	event := &StreamEvent{
-		CreatorAddress:    wallet.Address.Bytes(),
-		Salt:              salt,
-		PrevMiniblockHash: prevMiniblock.Hash[:],
-		PrevMiniblockNum:  prevMiniblock.Num,
-		Payload:           payload,
-		DelegateSig:       delegateSig,
-		CreatedAtEpochMs:  epochMillis,
+		CreatorAddress:   wallet.Address.Bytes(),
+		Salt:             salt,
+		Payload:          payload,
+		DelegateSig:      delegateSig,
+		CreatedAtEpochMs: epochMillis,
+	}
+
+	if prevMiniblock != nil && prevMiniblock.Hash != (common.Hash{}) {
+		event.PrevMiniblockHash = prevMiniblock.Hash[:]
+		if prevMiniblock.Num >= 0 {
+			event.PrevMiniblockNum = &prevMiniblock.Num
+		}
 	}
 
 	return event, nil
@@ -100,8 +109,8 @@ func MakeEnvelopeWithEvent(wallet *crypto.Wallet, streamEvent *StreamEvent) (*En
 			Func("MakeEnvelopeWithEvent")
 	}
 
-	hash := crypto.RiverHash(eventBytes)
-	signature, err := wallet.SignHash(hash[:])
+	hash := crypto.TownsHashForEvents.Hash(eventBytes)
+	signature, err := wallet.SignHash(hash)
 	if err != nil {
 		return nil, err
 	}
@@ -455,6 +464,22 @@ func Make_UserMetadataPayload_Inception(
 				Inception: &UserMetadataPayload_Inception{
 					StreamId: streamId[:],
 					Settings: settings,
+				},
+			},
+		},
+	}
+}
+
+func Make_UserMetadataPayload_EncryptionDevice(
+	deviceKey string,
+	fallbackKey string,
+) *StreamEvent_UserMetadataPayload {
+	return &StreamEvent_UserMetadataPayload{
+		UserMetadataPayload: &UserMetadataPayload{
+			Content: &UserMetadataPayload_EncryptionDevice_{
+				EncryptionDevice: &UserMetadataPayload_EncryptionDevice{
+					DeviceKey:   deviceKey,
+					FallbackKey: fallbackKey,
 				},
 			},
 		},

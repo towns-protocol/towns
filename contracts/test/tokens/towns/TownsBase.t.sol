@@ -14,12 +14,12 @@ import {TownsLib} from "contracts/src/tokens/towns/base/TownsLib.sol";
 //contracts
 import {DeployTownsBase} from "contracts/scripts/deployments/utils/DeployTownsBase.s.sol";
 import {Towns} from "contracts/src/tokens/towns/base/Towns.sol";
+import {TownsV2} from "contracts/src/tokens/towns/base/versions/TownsV2.sol";
 import {ERC20} from "solady/tokens/ERC20.sol";
 import {ERC20Votes} from "solady/tokens/ERC20Votes.sol";
 
 contract TownsBaseTest is TestUtils, EIP712Utils, ILockBase {
   DeployTownsBase internal deployTownsBase = new DeployTownsBase();
-
   Towns towns;
 
   address internal deployer;
@@ -284,5 +284,47 @@ contract TownsBaseTest is TestUtils, EIP712Utils, ILockBase {
     towns.transfer(bob, amountA);
 
     assertEq(towns.getVotes(space), amountA + amountB);
+  }
+
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                           Upgrades                         */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+  function test_upgrade() external {
+    address impl = address(new TownsV2());
+
+    vm.prank(address(deployer));
+    TownsV2(address(towns)).upgradeToAndCall(
+      impl,
+      abi.encodeCall(TownsV2.updateCoolDown, (100)) // Function call on the new impl
+    );
+  }
+
+  function test_enabledLockUpdated(
+    address alice,
+    address space,
+    uint256 amount
+  ) external givenCallerHasBridgedTokens(alice, amount) {
+    vm.assume(space != address(0));
+
+    address impl = address(new TownsV2());
+    uint256 cooldown = 300; // 5 mins
+
+    // upgrade and call updateCoolDown on the new impl
+    vm.prank(address(deployer));
+    TownsV2(address(towns)).upgradeToAndCall(
+      impl,
+      abi.encodeCall(TownsV2.updateCoolDown, (cooldown)) // Function call on the new impl
+    );
+
+    vm.startPrank(alice);
+    vm.expectEmit(address(towns));
+    emit LockUpdated(alice, true, 0);
+    towns.delegate(space);
+    vm.stopPrank();
+
+    vm.prank(alice);
+    vm.expectEmit(address(towns));
+    emit LockUpdated(alice, false, block.timestamp + cooldown);
+    towns.delegate(address(0));
   }
 }

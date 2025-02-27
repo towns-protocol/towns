@@ -12,7 +12,6 @@ type RenderableData interface {
 		*CacheData |
 		*TransactionPoolData |
 		*OnChainConfigData |
-		*GoRoutineData |
 		*SystemStatsData |
 		*InfoIndexData |
 		*DebugMultiData |
@@ -71,10 +70,6 @@ type CacheDataStream struct {
 	TotalEventsEver       int64
 }
 
-type GoRoutineData struct {
-	Stacks []*GoRoutineStack
-}
-
 type TransactionPoolData struct {
 	River struct {
 		ProcessedTransactions        int64
@@ -94,15 +89,6 @@ func (d StreamSummaryData) TemplateName() string {
 
 func (d TransactionPoolData) TemplateName() string {
 	return "templates/debug/txpool.template.html"
-}
-
-func (d GoRoutineData) TemplateName() string {
-	return "templates/debug/stacks.template.html"
-}
-
-type GoRoutineStack struct {
-	Description string
-	Lines       []string
 }
 
 // Struct for memory stats

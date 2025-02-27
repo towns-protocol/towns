@@ -3,6 +3,7 @@ package events
 import (
 	"context"
 	"slices"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -10,18 +11,20 @@ import (
 	"github.com/gammazero/workerpool"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/puzpuzpuz/xsync/v3"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/contracts/river"
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/logging"
+	. "github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/registries"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/storage"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
 )
 
 type Scrubber interface {
@@ -42,7 +45,9 @@ type StreamCacheParams struct {
 	Metrics                 infra.MetricsFactory
 	RemoteMiniblockProvider RemoteMiniblockProvider
 	Scrubber                Scrubber
+	NodeRegistry            NodeRegistry
 	Tracer                  trace.Tracer
+	disableCallbacks        bool // for test purposes
 }
 
 type StreamCache struct {
@@ -62,13 +67,14 @@ type StreamCache struct {
 	streamCacheUnloadedGauge prometheus.Gauge
 	streamCacheRemoteGauge   prometheus.Gauge
 
+	stoppedMu            sync.RWMutex
 	onlineSyncWorkerPool *workerpool.WorkerPool
+	stopped              bool
+
+	disableCallbacks bool
 }
 
-func NewStreamCache(
-	ctx context.Context,
-	params *StreamCacheParams,
-) *StreamCache {
+func NewStreamCache(params *StreamCacheParams) *StreamCache {
 	return &StreamCache{
 		params: params,
 		cache:  xsync.NewMapOf[StreamId, *Stream](),
@@ -95,6 +101,7 @@ func NewStreamCache(
 		),
 		chainConfig:          params.ChainConfig,
 		onlineSyncWorkerPool: workerpool.New(params.Config.StreamReconciliation.OnlineWorkerPoolSize),
+		disableCallbacks:     params.disableCallbacks,
 	}
 }
 
@@ -118,24 +125,21 @@ func (s *StreamCache) Start(ctx context.Context) error {
 
 	// load local streams in-memory cache
 	initialSyncWorkerPool := workerpool.New(s.params.Config.StreamReconciliation.InitialWorkerPoolSize)
-	for _, stream := range localStreamResults {
-		si := &Stream{
+	for _, streamRecord := range localStreamResults {
+		stream := &Stream{
 			params:              s.params,
-			streamId:            stream.StreamId,
+			streamId:            streamRecord.StreamId,
 			lastAppliedBlockNum: s.params.AppliedBlockNum,
 			local:               &localStreamState{},
 		}
-		si.nodesLocked.Reset(stream.Nodes, s.params.Wallet.Address)
-		s.cache.Store(stream.StreamId, si)
+		stream.nodesLocked.Reset(streamRecord.Nodes, s.params.Wallet.Address)
+		s.cache.Store(streamRecord.StreamId, stream)
 		if s.params.Config.StreamReconciliation.InitialWorkerPoolSize > 0 {
-			s.submitSyncStreamTask(
+			s.submitSyncStreamTaskToPool(
 				ctx,
 				initialSyncWorkerPool,
-				stream.StreamId,
-				&MiniblockRef{
-					Hash: stream.LastMiniblockHash,
-					Num:  int64(stream.LastMiniblockNum),
-				},
+				stream,
+				streamRecord,
 			)
 		}
 	}
@@ -143,21 +147,24 @@ func (s *StreamCache) Start(ctx context.Context) error {
 	s.appliedBlockNum.Store(uint64(s.params.AppliedBlockNum))
 
 	// Close initial worker pool after all tasks are executed.
-	go func() {
-		initialSyncWorkerPool.StopWait()
-	}()
+	go initialSyncWorkerPool.StopWait()
 
 	// TODO: add buffered channel to avoid blocking ChainMonitor
-	s.params.RiverChain.ChainMonitor.OnBlockWithLogs(
-		s.params.AppliedBlockNum+1,
-		s.onBlockWithLogs,
-	)
+	if !s.disableCallbacks {
+		s.params.RiverChain.ChainMonitor.OnBlockWithLogs(
+			s.params.AppliedBlockNum+1,
+			s.onBlockWithLogs,
+		)
+	}
 
 	go s.runCacheCleanup(ctx)
 
 	go func() {
 		<-ctx.Done()
+		s.stoppedMu.Lock()
+		s.stopped = true
 		s.onlineSyncWorkerPool.Stop()
+		s.stoppedMu.Unlock()
 		initialSyncWorkerPool.Stop()
 	}()
 
@@ -173,17 +180,20 @@ func (s *StreamCache) onBlockWithLogs(ctx context.Context, blockNum crypto.Block
 
 	// TODO: parallel processing?
 	for streamId, events := range streamEvents {
-		allocatedEvent, ok := events[0].(*river.StreamAllocated)
-		if ok {
-			s.onStreamAllocated(ctx, allocatedEvent, events[1:], blockNum)
+		switch event := events[0].(type) {
+		case *river.StreamAllocated:
+			s.onStreamAllocated(ctx, event, events[1:], blockNum)
 			continue
-		}
-
-		stream, ok := s.cache.Load(streamId)
-		if !ok {
+		case *river.StreamCreated:
+			s.onStreamCreated(ctx, event, blockNum)
 			continue
+		default:
+			stream, ok := s.cache.Load(streamId)
+			if !ok {
+				continue
+			}
+			stream.applyStreamEvents(ctx, events, blockNum)
 		}
-		stream.applyStreamEvents(ctx, events, blockNum)
 	}
 
 	s.appliedBlockNum.Store(uint64(blockNum))
@@ -195,22 +205,24 @@ func (s *StreamCache) onStreamAllocated(
 	otherEvents []river.EventWithStreamId,
 	blockNum crypto.BlockNumber,
 ) {
-	if slices.Contains(event.Nodes, s.params.Wallet.Address) {
-		stream := &Stream{
-			params:              s.params,
-			streamId:            StreamId(event.StreamId),
-			lastAppliedBlockNum: blockNum,
-			lastAccessedTime:    time.Now(),
-			local:               &localStreamState{},
-		}
-		stream.nodesLocked.Reset(event.Nodes, s.params.Wallet.Address)
-		stream, created, err := s.createStreamStorage(ctx, stream, event.GenesisMiniblock)
-		if err != nil {
-			logging.FromCtx(ctx).Errorw("Failed to allocate stream", "err", err, "streamId", stream.streamId)
-		}
-		if created && len(otherEvents) > 0 {
-			stream.applyStreamEvents(ctx, otherEvents, blockNum)
-		}
+	if !slices.Contains(event.Nodes, s.params.Wallet.Address) {
+		return
+	}
+
+	stream := &Stream{
+		params:              s.params,
+		streamId:            event.GetStreamId(),
+		lastAppliedBlockNum: blockNum,
+		lastAccessedTime:    time.Now(),
+		local:               &localStreamState{},
+	}
+	stream.nodesLocked.Reset(event.Nodes, s.params.Wallet.Address)
+	stream, created, err := s.createStreamStorage(ctx, stream, event.GenesisMiniblock)
+	if err != nil {
+		logging.FromCtx(ctx).Errorw("Failed to allocate stream", "err", err, "streamId", event.GetStreamId())
+	}
+	if created && len(otherEvents) > 0 {
+		stream.applyStreamEvents(ctx, otherEvents, blockNum)
 	}
 }
 
@@ -438,7 +450,7 @@ func (s *StreamCache) ForceFlushAll(ctx context.Context) {
 func (s *StreamCache) GetLoadedViews(ctx context.Context) []*StreamView {
 	var result []*StreamView
 	s.cache.Range(func(streamID StreamId, stream *Stream) bool {
-		view := stream.tryGetView()
+		view, _ := stream.tryGetView()
 		if view != nil {
 			result = append(result, view)
 		}

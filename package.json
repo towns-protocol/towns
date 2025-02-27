@@ -39,8 +39,6 @@
     },
     "devDependencies": {
         "@arethetypeswrong/cli": "^0.15.3",
-        "@river-build/mls-rs-wasm": "^0.0.16",
-        "@river-build/mls-rs-wasm-node": "^0.0.16",
         "@typechain/ethers-v5": "^10.1.1",
         "@types/node": "^20.5.0",
         "eslint": "^8.53.0",
@@ -59,7 +57,7 @@
         "turbo": "^2.0.12",
         "typechain": "^8.1.1",
         "typescript": "^5.1.6",
-        "vitest": "^2.1.5",
+        "vitest": "3.0.5",
         "wait-on": "^7.0.1"
     },
     "husky": {

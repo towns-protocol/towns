@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-set -x
-
 function parse_git_branch() {
     git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/'
 }
@@ -17,7 +15,7 @@ if [[ "$(git status --porcelain)" != "" ]]; then
     exit 1
 elif [[ "$(parse_git_branch)" != "main" ]]; then
     echo "You must be on the main branch to run this script."
-    # exit 1
+    exit 1
 fi
 
 # get the current git hash 
@@ -69,7 +67,18 @@ npx lerna version patch --yes --force-publish --no-private --tag-version-prefix 
 
 PR_DESCRIPTION="$(make_pr_description)"
 
-gh pr create --base main --head "${BRANCH_NAME}" --title "${PR_TITLE}" --body "${PR_DESCRIPTION}"
+# Create PR and capture the PR number
+PR_URL=$(gh pr create --base main --head "${BRANCH_NAME}" --title "${PR_TITLE}" --body "${PR_DESCRIPTION}")
+if [ $? -ne 0 ]; then
+    echo "Failed to create PR"
+    exit 1
+fi
+PR_NUMBER=$(echo $PR_URL | rev | cut -d'/' -f1 | rev)
+
+# Enable auto-merge
+gh pr merge "${PR_NUMBER}" --auto --squash
+
+echo "Created PR #${PR_NUMBER}"
 
 while true; do
     WAIT_TIME=5
@@ -97,6 +106,7 @@ while true; do
                 exit $exit_status
             fi
         else
+            echo "Harmony CI is failing. Restart CI."
             exit $exit_status
         fi
     else 
@@ -105,28 +115,31 @@ while true; do
     fi
 done
 
-# Merge the pull request
-gh pr merge "${BRANCH_NAME}" --squash --delete-branch --auto
-
+# Wait for PR to be merged using the specific PR number
 TIMEOUT=2100  # 35 minutes in seconds
 START_TIME=$(date +%s)
 
-while gh pr status --json number -q ".currentBranch.number" > /dev/null 2>&1; do
+while gh pr view "$PR_NUMBER" --json state -q ".state" | grep -q "OPEN"; do
     CURRENT_TIME=$(date +%s)
     ELAPSED_TIME=$(($CURRENT_TIME - $START_TIME))
 
     if [ $ELAPSED_TIME -ge $TIMEOUT ]; then
-        echo "Error: Timed out waiting for PR to merge after 35 minutes"
+        echo "Error: Timed out waiting for PR #${PR_NUMBER} to merge after 35 minutes"
         exit 1
     fi
 
-    echo "Waiting for PR to be merged..."
-    sleep 10
+    echo "Waiting for PR #${PR_NUMBER} to be merged..."
+    sleep 30
 done
-echo "PR has been merged"
+echo "PR #${PR_NUMBER} has been merged"
 
 # Pull the changes to local main
 git pull --rebase
 
 # Publish the nightly version to npm
-npx lerna publish from-package --yes --no-private --force-publish --tag-version-prefix "${VERSION_PREFIX}"
+echo "Starting Lerna publish..."
+npx lerna publish from-package --yes --no-private --force-publish --tag-version-prefix "${VERSION_PREFIX}" || {
+    echo "Lerna publish failed with exit code $?"
+    exit 1
+}
+echo "Lerna publish completed successfully"

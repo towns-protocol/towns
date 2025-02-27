@@ -1,0 +1,38 @@
+# This is a docker compose file for running go tests locally.
+# It expects postgres to run on localhost:5433.
+#
+# To run all tests:
+#
+#    docker compose -f scripts/local-go-test-docker-compose.yml up
+#
+# To connect to terminal:
+#
+#    docker compose -f scripts/local-go-test-docker-compose.yml run --entrypoint bash towns-go-test
+#
+# To set the number of CPUs:
+#
+#    DOCKER_CPUS=4.0 docker compose -f scripts/local-go-test-docker-compose.yml run --entrypoint bash towns-go-test
+#
+
+services:
+    towns-go-test:
+        image: golang:1.23.3-bookworm
+        volumes:
+            - ..:/core
+            - go-cache:/go
+        working_dir: /core
+        environment:
+            - TEST_DATABASE_URL=postgres://postgres:postgres@host.docker.internal:5433/river?sslmode=disable&pool_max_conns=1000
+        extra_hosts:
+            - 'host.docker.internal:host-gateway'
+        deploy:
+            resources:
+                limits:
+                    cpus: '${DOCKER_CPUS:-8.0}'
+                    memory: 8G
+                reservations:
+                    memory: 4G
+        command: go test -v ./...
+
+volumes:
+    go-cache:

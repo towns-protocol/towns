@@ -7,21 +7,19 @@ import (
 	"sync/atomic"
 	"time"
 
-	"go.uber.org/zap"
-
-	"github.com/towns-protocol/towns/core/node/bot_registry"
-	"github.com/towns-protocol/towns/core/node/notifications"
-
 	"connectrpc.com/otelconnect"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
+	"go.uber.org/zap"
 
 	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/node/app_registry"
 	"github.com/towns-protocol/towns/core/node/auth"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	. "github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/nodes"
+	"github.com/towns-protocol/towns/core/node/notifications"
 	. "github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
 	"github.com/towns-protocol/towns/core/node/registries"
 	river_sync "github.com/towns-protocol/towns/core/node/rpc/sync"
@@ -59,8 +57,8 @@ type Service struct {
 	// Notifications
 	notifications notifications.UserPreferencesStore
 
-	// Bot Registry
-	botStore storage.BotRegistryStore
+	// App Registry
+	appStore storage.AppRegistryStore
 
 	// River chain
 	riverChain       *crypto.Blockchain
@@ -91,8 +89,8 @@ type Service struct {
 	// NotificationService is not nil if running in notification mode
 	NotificationService *notifications.Service
 
-	// BotRegistryService is not nil if running in bot registry mode
-	BotRegistryService *bot_registry.Service
+	// AppRegistryService is not nil if running in app registry mode
+	AppRegistryService *app_registry.Service
 
 	// Metrics
 	metrics               infra.MetricsFactory

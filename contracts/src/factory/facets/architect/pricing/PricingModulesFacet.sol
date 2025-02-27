@@ -9,12 +9,7 @@ import {OwnableBase} from "@river-build/diamond/src/facets/ownable/OwnableBase.s
 import {PricingModulesBase} from "./PricingModulesBase.sol";
 import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
 
-contract PricingModulesFacet is
-  IPricingModules,
-  PricingModulesBase,
-  OwnableBase,
-  Facet
-{
+contract PricingModulesFacet is IPricingModules, OwnableBase, Facet {
   function __PricingModulesFacet_init(
     address[] memory pricingModules
   ) external onlyInitializing {
@@ -26,23 +21,23 @@ contract PricingModulesFacet is
   ) internal {
     _addInterface(type(IPricingModules).interfaceId);
     for (uint256 i = 0; i < pricingModules.length; i++) {
-      _addPricingModule(pricingModules[i]);
+      PricingModulesBase.addPricingModule(pricingModules[i]);
     }
   }
 
   function addPricingModule(address pricingModule) external onlyOwner {
-    _addPricingModule(pricingModule);
+    PricingModulesBase.addPricingModule(pricingModule);
   }
 
   function isPricingModule(address module) external view returns (bool) {
-    return _isPricingModule(module);
+    return PricingModulesBase.isPricingModule(module);
   }
 
   function removePricingModule(address module) external onlyOwner {
-    _removePricingModule(module);
+    PricingModulesBase.removePricingModule(module);
   }
 
   function listPricingModules() external view returns (PricingModule[] memory) {
-    return _listPricingModules();
+    return PricingModulesBase.listPricingModules();
   }
 }

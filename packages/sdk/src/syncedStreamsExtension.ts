@@ -9,7 +9,7 @@ import {
     isDMChannelStreamId,
     isGDMChannelStreamId,
 } from './id'
-import { check, dlog, dlogError } from '@river-build/dlog'
+import { check, dlog, dlogError, DLogger } from '@river-build/dlog'
 import { Stream } from './stream'
 import { ClientInitStatus } from './types'
 import pLimit from 'p-limit'
@@ -35,9 +35,9 @@ const MAX_CONCURRENT_FROM_NETWORK = 20
 const concurrencyLimit = pLimit(MAX_CONCURRENT_FROM_NETWORK)
 
 export class SyncedStreamsExtension {
-    private log = dlog('csb:syncedStreamsExtension', { defaultEnabled: true })
-    private logDebug = dlog('csb:syncedStreamsExtension:debug', { defaultEnabled: false })
-    private logError = dlogError('csb:syncedStreamsExtension:error')
+    private log: DLogger
+    private logDebug: DLogger
+    private logError: DLogger
     private readonly delegate: SyncedStreamsExtensionDelegate
 
     private readonly tasks = new Array<() => Promise<void>>()
@@ -69,7 +69,13 @@ export class SyncedStreamsExtension {
         highPriorityStreamIds: string[] | undefined,
         delegate: SyncedStreamsExtensionDelegate,
         private persistenceStore: IPersistenceStore,
+        private logId: string,
     ) {
+        this.log = dlog('csb:syncedStreamsExtension', { defaultEnabled: true }).extend(logId)
+        this.logDebug = dlog('csb:syncedStreamsExtension:debug', { defaultEnabled: false }).extend(
+            logId,
+        )
+        this.logError = dlogError('csb:syncedStreamsExtension:error').extend(logId)
         this.highPriorityIds = new Set(highPriorityStreamIds ?? [])
         this.delegate = delegate
     }

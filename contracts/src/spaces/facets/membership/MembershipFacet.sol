@@ -30,14 +30,11 @@ contract MembershipFacet is
       CustomRevert.revertWith(Membership__InvalidAddress.selector);
 
     // get the balance
-    uint256 balance = _getCreatorBalance();
+    uint256 balance = address(this).balance;
 
     // verify the balance is not 0
     if (balance == 0)
       CustomRevert.revertWith(Membership__InsufficientPayment.selector);
-
-    // reset the balance
-    _setCreatorBalance(0);
 
     CurrencyTransfer.transferCurrency(
       _getMembershipCurrency(),
@@ -49,7 +46,7 @@ contract MembershipFacet is
 
   /// @inheritdoc IMembership
   function revenue() external view returns (uint256) {
-    return _getCreatorBalance();
+    return address(this).balance;
   }
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

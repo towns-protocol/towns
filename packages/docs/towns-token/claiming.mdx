@@ -9,6 +9,10 @@ At the end of each distribution period, addresses that are delegating or designa
 
 ## Claim Execution
 
-Rewards are claimed by calling the `claim()` function on the Distribution contract, which transfers the tokens to the claimant's wallet. 
+Rewards are claimed by calling the `claimReward(address beneficiary, address recipient)` function on the [RewardsDistribution](https://github.com/towns-protocol/towns/blob/main/contracts/src/base/registry/facets/distribution/v2/RewardsDistribution.sol) contract, which transfers the tokens to the recipient's wallet.
+
+The `claimReward` function is called from the claimer address, who is either the beneficiary or an authorized claimer that can claim the reward for the beneficiary.
+
+<Note>Since the RewardsDistribution contract is a facet of the BaseRegistry contract, the `claimReward` function is called from the BaseRegistry contract address (see [contracts](../run/contracts)).</Note>
 
 If the wallet is already delegating on Base, the newly acquired tokens are automatically delegated to the same operator, conforming to the [ERC20Votes](https://docs.openzeppelin.com/contracts/4.x/api/token/erc20#ERC20Votes) specification.

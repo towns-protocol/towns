@@ -116,7 +116,7 @@ describe('transactions_Tip', () => {
     })
 
     afterEach(() => {
-        expect(dummyTipEventCopy).toEqual(dummyTipEvent) // don't modify it please
+        expect(dummyTipEventCopy).toEqual(dummyTipEvent) // don't modify it please, it's used for error cases
     })
 
     test('addTip', async () => {
@@ -225,8 +225,7 @@ describe('transactions_Tip', () => {
                 throw new Error('no tip event found')
             return tip.remoteEvent.event.payload.value.content.value
         })
-        expect(tipEvent?.transaction?.receipt).toBeDefined()
-        expect(userIdFromAddress(tipEvent!.fromUserAddress)).toEqual(bobIdentity.rootWallet.address)
+        expect(userIdFromAddress(tipEvent.fromUserAddress)).toEqual(bobIdentity.rootWallet.address)
         expect(stream.view.membershipContent.tips[ETH_ADDRESS]).toEqual(1000n)
     })
 

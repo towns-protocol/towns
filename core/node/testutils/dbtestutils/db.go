@@ -74,34 +74,31 @@ func ConfigureDbWithSchemaName(
 	dbSchemaName string,
 ) (*config.DatabaseConfig, string, func(), error) {
 	dbUrl := os.Getenv("TEST_DATABASE_URL")
-	if dbUrl != "" {
-		return &config.DatabaseConfig{
-			Url:          dbUrl,
-			StartupDelay: 2 * time.Millisecond,
-		}, "", func() {}, nil
-	} else {
-		cfg := &config.DatabaseConfig{
-			Host:          "localhost",
-			Port:          5433,
-			User:          "postgres",
-			Password:      "postgres",
-			Database:      "river",
-			Extra:         "?sslmode=disable&pool_max_conns=1000",
-			StartupDelay:  2 * time.Millisecond,
-			NumPartitions: 4,
-		}
-		return cfg,
-			dbSchemaName,
-			func() {
-				// lint:ignore context.Background() is fine here
-				err := DeleteTestSchema(context.Background(), cfg.GetUrl(), dbSchemaName)
-				// Force test writers to properly clean up schemas if this fails for some reason.
-				if err != nil {
-					panic(err)
-				}
-			},
-			nil
+	cfg := config.DatabaseConfig{
+		StartupDelay:  2 * time.Millisecond,
+		NumPartitions: 4,
 	}
+	if dbUrl != "" {
+		cfg.Url = dbUrl
+	} else {
+		cfg.Host = "localhost"
+		cfg.Port = 5433
+		cfg.User = "postgres"
+		cfg.Password = "postgres"
+		cfg.Database = "river"
+		cfg.Extra = "?sslmode=disable&pool_max_conns=1000"
+	}
+	return &cfg,
+		dbSchemaName,
+		func() {
+			// lint:ignore context.Background() is fine here
+			err := DeleteTestSchema(context.Background(), cfg.GetUrl(), dbSchemaName)
+			// Force test writers to properly clean up schemas if this fails for some reason.
+			if err != nil {
+				panic(err)
+			}
+		},
+		nil
 }
 
 func ConfigureDB(ctx context.Context) (*config.DatabaseConfig, string, func(), error) {

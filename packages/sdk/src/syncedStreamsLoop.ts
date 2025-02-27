@@ -68,6 +68,7 @@ export interface ISyncedStream {
         nextSyncCookie: SyncCookie,
         cleartexts: Record<string, Uint8Array | string> | undefined,
     ): Promise<void>
+    resetUpToDate(): void
 }
 
 interface NonceStats {
@@ -127,8 +128,10 @@ export class SyncedStreamsLoop {
     private inProgressTick?: Promise<void>
     private pendingSyncCookies: string[] = []
     private inFlightSyncCookies = new Set<string>()
+    private lastLogInflightAt = 0
+    private syncStartedAt: number | undefined = undefined
     private readonly MAX_IN_FLIGHT_COOKIES = 40
-    private readonly MIN_IN_FLIGHT_COOKIES = 10
+    private readonly MIN_IN_FLIGHT_COOKIES = 0
 
     public pingInfo: PingInfo = {
         currentSequence: 0,
@@ -245,7 +248,6 @@ export class SyncedStreamsLoop {
         const pendingIndex = this.pendingSyncCookies.indexOf(streamId)
         if (pendingIndex !== -1) {
             this.pendingSyncCookies.splice(pendingIndex, 1)
-            this.inFlightSyncCookies.delete(streamId)
             streamRecord.stream.stop()
             this.streams.delete(streamId)
             this.log('removed stream from pending sync', streamId)
@@ -274,6 +276,7 @@ export class SyncedStreamsLoop {
                 { streamId, syncState: this.syncState },
             )
         }
+        this.inFlightSyncCookies.delete(streamId)
     }
 
     public setHighPriorityStreams(streamIds: string[]) {
@@ -311,14 +314,29 @@ export class SyncedStreamsLoop {
                 ) {
                     // get cookies from all the known streams to sync
                     this.inFlightSyncCookies.clear()
-                    this.pendingSyncCookies = Array.from(this.streams.keys())
+                    this.pendingSyncCookies = []
+                    this.syncStartedAt = performance.now()
+
+                    // get cookies from all the known streams to sync
+                    const syncCookies = Array.from(this.streams.entries())
+                        .sort((a, b) => {
+                            const aPriority = priorityFromStreamId(a[0], this.highPriorityIds)
+                            const bPriority = priorityFromStreamId(b[0], this.highPriorityIds)
+                            return aPriority - bPriority
+                        })
+                        .map((streamRecord) => {
+                            this.inFlightSyncCookies.add(streamRecord[0])
+                            return streamRecord[1].syncCookie
+                        })
 
                     this.log(
                         'sync ITERATION start',
                         ++iteration,
                         this.syncState,
                         `pending: ${this.pendingSyncCookies.length}`,
+                        `syncCookies: ${syncCookies.length}`,
                     )
+
                     if (this.syncState === SyncState.Retrying) {
                         this.setSyncState(SyncState.Starting)
                     }
@@ -329,7 +347,7 @@ export class SyncedStreamsLoop {
                         this.syncId = undefined
                         const streams = this.rpcClient.syncStreams(
                             {
-                                syncPos: [],
+                                syncPos: syncCookies,
                             },
                             { timeoutMs: -1 },
                         )
@@ -484,6 +502,7 @@ export class SyncedStreamsLoop {
                 this.inFlightSyncCookies.size <= this.MIN_IN_FLIGHT_COOKIES &&
                 this.pendingSyncCookies.length > 0
             ) {
+                const syncId = this.syncId
                 this.pendingSyncCookies.sort((a, b) => {
                     const aPriority = priorityFromStreamId(a, this.highPriorityIds)
                     const bPriority = priorityFromStreamId(b, this.highPriorityIds)
@@ -491,7 +510,7 @@ export class SyncedStreamsLoop {
                 })
                 const streamsToAdd = this.pendingSyncCookies.splice(0, this.MAX_IN_FLIGHT_COOKIES)
                 this.logSync('tick: modifySync', {
-                    syncId: this.syncId,
+                    syncId,
                     addStreams: streamsToAdd,
                     inFlight: this.inFlightSyncCookies.size,
                 })
@@ -499,11 +518,19 @@ export class SyncedStreamsLoop {
                 const syncPos = streamsToAdd.map((x) => this.streams.get(x)?.syncCookie)
                 try {
                     await this.rpcClient.modifySync({
-                        syncId: this.syncId,
+                        syncId,
                         addStreams: syncPos.filter(isDefined),
                     })
                 } catch (err) {
                     this.logError('modifySync error', err)
+                    if (this.syncId === syncId && this.syncState === SyncState.Syncing) {
+                        streamsToAdd.forEach((x) => {
+                            if (this.inFlightSyncCookies.delete(x)) {
+                                this.pendingSyncCookies.push(x)
+                            }
+                        })
+                        this.checkStartTicking()
+                    }
                 }
             }
         }
@@ -554,6 +581,11 @@ export class SyncedStreamsLoop {
             if (this.syncState !== SyncState.Retrying) {
                 this.setSyncState(SyncState.Retrying)
                 this.syncId = undefined
+                this.streams.forEach((streamRecord) => {
+                    streamRecord.stream.resetUpToDate()
+                })
+                this.inFlightSyncCookies.clear()
+                this.pendingSyncCookies = []
                 this.clientEmitter.emit('streamSyncActive', false)
             }
 
@@ -684,7 +716,6 @@ export class SyncedStreamsLoop {
         }
     }
 
-    private lastLogInflightAt = 0
     private async onUpdate(res: SyncStreamsResponse): Promise<void> {
         // Until we've completed canceling, accept responses
         if (this.syncState === SyncState.Syncing || this.syncState === SyncState.Canceling) {
@@ -716,10 +747,19 @@ export class SyncedStreamsLoop {
                             this.inFlightSyncCookies.size === 0 ||
                             Date.now() - this.lastLogInflightAt > 3000
                         ) {
-                            this.log(
-                                'onUpdate: remaining streams in flight',
-                                this.inFlightSyncCookies.size,
-                            )
+                            if (
+                                this.inFlightSyncCookies.size === 0 &&
+                                this.syncStartedAt !== undefined
+                            ) {
+                                const duration = performance.now() - this.syncStartedAt
+                                this.log('sync completed in', duration, 'ms')
+                                this.syncStartedAt = undefined
+                            } else {
+                                this.log(
+                                    'onUpdate: remaining streams in flight',
+                                    this.inFlightSyncCookies.size,
+                                )
+                            }
                             this.lastLogInflightAt = Date.now()
                         }
                     }

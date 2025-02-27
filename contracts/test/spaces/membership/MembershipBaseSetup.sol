@@ -15,6 +15,7 @@ import {IPrepay} from "contracts/src/spaces/facets/prepay/IPrepay.sol";
 import {IWalletLink, IWalletLinkBase} from "contracts/src/factory/facets/wallet-link/IWalletLink.sol";
 import {IPartnerRegistry} from "contracts/src/factory/facets/partner/IPartnerRegistry.sol";
 import {IReferrals} from "contracts/src/spaces/facets/referrals/IReferrals.sol";
+import {ITownsPointsBase, ITownsPoints} from "contracts/src/airdrop/points/ITownsPoints.sol";
 
 // libraries
 // libraries
@@ -122,18 +123,15 @@ contract MembershipBaseSetup is
   }
 
   modifier givenAliceHasPaidMembership() {
-    vm.startPrank(alice);
-    vm.deal(alice, MEMBERSHIP_PRICE);
+    hoax(alice, MEMBERSHIP_PRICE);
     membership.joinSpace{value: MEMBERSHIP_PRICE}(alice);
     assertEq(membershipToken.balanceOf(alice), 1);
-    vm.stopPrank();
     _;
   }
 
   modifier givenAliceHasMintedMembership() {
-    vm.startPrank(alice);
+    vm.prank(alice);
     membership.joinSpace(alice);
-    vm.stopPrank();
     _;
   }
 
@@ -204,5 +202,13 @@ contract MembershipBaseSetup is
   modifier givenFounderIsCaller() {
     vm.startPrank(founder);
     _;
+  }
+
+  function _getPoints(uint256 price) internal view returns (uint256) {
+    return
+      ITownsPoints(riverAirdrop).getPoints(
+        ITownsPointsBase.Action.JoinSpace,
+        abi.encode(price)
+      );
   }
 }

@@ -374,6 +374,7 @@ func TestArchiveOneStream(t *testing.T) {
 		GenShortNanoid(),
 		make(chan error, 1),
 		infra.NewMetricsFactory(nil, "", ""),
+		time.Minute*10,
 	)
 	require.NoError(err)
 

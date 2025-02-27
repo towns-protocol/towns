@@ -8,12 +8,14 @@ import (
 
 const (
 	Event_StreamAllocated            = "StreamAllocated"
+	Event_StreamCreated              = "StreamCreated"
 	Event_StreamLastMiniblockUpdated = "StreamLastMiniblockUpdated"
 	Event_StreamPlacementUpdated     = "StreamPlacementUpdated"
 )
 
 type (
 	StreamAllocated            = StreamRegistryV1StreamAllocated
+	StreamCreated              = StreamRegistryV1StreamCreated
 	StreamLastMiniblockUpdated = StreamRegistryV1StreamLastMiniblockUpdated
 	StreamPlacementUpdated     = StreamRegistryV1StreamPlacementUpdated
 )
@@ -27,15 +29,19 @@ type EventWithStreamId interface {
 }
 
 func (e *StreamAllocated) GetStreamId() StreamId {
-	return StreamId(e.StreamId)
+	return e.StreamId
+}
+
+func (e *StreamCreated) GetStreamId() StreamId {
+	return e.StreamId
 }
 
 func (e *StreamLastMiniblockUpdated) GetStreamId() StreamId {
-	return StreamId(e.StreamId)
+	return e.StreamId
 }
 
 func (e *StreamPlacementUpdated) GetStreamId() StreamId {
-	return StreamId(e.StreamId)
+	return e.StreamId
 }
 
 func MiniblockRefFromContractRecord(stream *Stream) *MiniblockRef {

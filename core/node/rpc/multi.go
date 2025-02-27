@@ -295,8 +295,6 @@ func GetRiverNetworkStatus(
 		connectOpts := []connect.ClientOption{connect.WithGRPC()}
 		if connectOtelIterceptor != nil {
 			connectOpts = append(connectOpts, connect.WithInterceptors(connectOtelIterceptor))
-		} else {
-			logging.FromCtx(ctx).Errorw("No OpenTelemetry interceptor for gRPC client")
 		}
 
 		wg.Add(4)

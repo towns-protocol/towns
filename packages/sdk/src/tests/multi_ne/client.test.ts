@@ -341,6 +341,17 @@ describe('clientTest', () => {
             bobsClient.makeEventAndAddToStream(bobsClient.userSettingsStreamId!, payload),
         ).rejects.toThrow('INVALID_ARGUMENT')
 
+        // solicitation with empty key should fail
+        payload = make_MemberPayload_KeySolicitation({
+            deviceKey: 'foo',
+            sessionIds: [''],
+            fallbackKey: 'baz',
+            isNewDevice: false,
+        })
+        await expect(
+            bobsClient.makeEventAndAddToStream(bobsClient.userSettingsStreamId!, payload),
+        ).rejects.toThrow('INVALID_ARGUMENT')
+
         // solicitation for isNewDevice should resolve
         payload = make_MemberPayload_KeySolicitation({
             deviceKey: 'foo',

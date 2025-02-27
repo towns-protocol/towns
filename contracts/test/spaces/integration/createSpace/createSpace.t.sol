@@ -14,8 +14,11 @@ import {IRuleEntitlementBase} from "contracts/src/spaces/entitlements/rule/IRule
 import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
 import {IPlatformRequirements} from "contracts/src/factory/facets/platform/requirements/IPlatformRequirements.sol";
 import {IPrepay} from "contracts/src/spaces/facets/prepay/IPrepay.sol";
+import {IERC173} from "@river-build/diamond/src/facets/ownable/IERC173.sol";
+
 // libraries
 import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
+import {Validator__InvalidAddress} from "contracts/src/utils/Validator.sol";
 
 // contracts
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
@@ -48,7 +51,7 @@ contract IntegrationCreateSpace is
     vm.assume(bytes(spaceId).length > 2 && bytes(spaceId).length < 100);
 
     SpaceInfo memory spaceInfo = _createEveryoneSpaceInfo(spaceId);
-    spaceInfo.membership.settings.pricingModule = pricingModule;
+    spaceInfo.membership.settings.pricingModule = tieredPricingModule;
 
     vm.prank(founder);
     address newSpace = createSpaceFacet.createSpace(spaceInfo);
@@ -73,7 +76,7 @@ contract IntegrationCreateSpace is
     users[0] = user;
 
     SpaceInfo memory spaceInfo = _createUserSpaceInfo(spaceId, users);
-    spaceInfo.membership.settings.pricingModule = pricingModule;
+    spaceInfo.membership.settings.pricingModule = tieredPricingModule;
     spaceInfo.membership.settings.freeAllocation = FREE_ALLOCATION;
     spaceInfo.membership.permissions = new string[](1);
     spaceInfo.membership.permissions[0] = Permissions.Read;
@@ -132,7 +135,7 @@ contract IntegrationCreateSpace is
 
     SpaceInfo memory spaceInfo = _createSpaceInfo(spaceId);
     spaceInfo.membership.requirements.ruleData = abi.encode(ruleData);
-    spaceInfo.membership.settings.pricingModule = pricingModule;
+    spaceInfo.membership.settings.pricingModule = tieredPricingModule;
 
     vm.prank(founder);
     createSpaceFacet.createSpace(spaceInfo);
@@ -154,7 +157,7 @@ contract IntegrationCreateSpace is
 
     // create space with default channel
     SpaceInfo memory spaceInfo = _createEveryoneSpaceInfo(spaceId);
-    spaceInfo.membership.settings.pricingModule = pricingModule;
+    spaceInfo.membership.settings.pricingModule = tieredPricingModule;
     spaceInfo.membership.settings.freeAllocation = FREE_ALLOCATION;
 
     vm.prank(founder);
@@ -257,7 +260,7 @@ contract IntegrationCreateSpace is
 
     // create space with default channel
     CreateSpace memory spaceInfo = _createSpaceWithPrepayInfo(spaceId);
-    spaceInfo.membership.settings.pricingModule = pricingModule;
+    spaceInfo.membership.settings.pricingModule = tieredPricingModule;
     spaceInfo.prepay.supply = 100;
     spaceInfo.membership.requirements.everyone = true;
 
@@ -283,5 +286,49 @@ contract IntegrationCreateSpace is
       prepaidSupply == spaceInfo.prepay.supply,
       "Prepaid supply should be equal to the supply"
     );
+  }
+
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                       CreateSpaceV2                        */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+  function test_createSpaceV2_with_invalid_pricing_module() public {
+    vm.prank(founder);
+    vm.expectRevert(Validator__InvalidAddress.selector);
+    createSpaceFacet.createSpaceV2(
+      _createSpaceWithPrepayInfo("test"),
+      SpaceOptions({to: founder})
+    );
+  }
+
+  function test_createSpaceV2_with_invalid_to() public {
+    CreateSpace memory spaceInfo = _createSpaceWithPrepayInfo("test");
+    spaceInfo.membership.settings.pricingModule = tieredPricingModule;
+    spaceInfo.membership.requirements.everyone = true;
+
+    vm.prank(founder);
+    vm.expectRevert(Validator__InvalidAddress.selector);
+    createSpaceFacet.createSpaceV2(spaceInfo, SpaceOptions({to: address(0)}));
+  }
+
+  function test_fuzz_createSpaceV2(
+    string memory spaceId,
+    address founder,
+    address member
+  ) external assumeEOA(founder) assumeEOA(member) {
+    vm.assume(bytes(spaceId).length > 2 && bytes(spaceId).length < 100);
+    vm.assume(founder != member);
+
+    // create space with default channel
+    CreateSpace memory spaceInfo = _createSpaceWithPrepayInfo(spaceId);
+    spaceInfo.membership.settings.pricingModule = tieredPricingModule;
+    spaceInfo.membership.requirements.everyone = true;
+
+    vm.prank(founder);
+    address newSpace = createSpaceFacet.createSpaceV2(
+      spaceInfo,
+      SpaceOptions({to: member})
+    );
+
+    assertTrue(IERC173(newSpace).owner() == member);
   }
 }

@@ -10,12 +10,13 @@ import {
 import { EncryptionDelegate } from './encryptionDelegate'
 import { GroupEncryptionAlgorithmId, GroupEncryptionSession } from './olmLib'
 import { bin_equal, bin_fromHexString, bin_toHexString, dlog } from '@river-build/dlog'
-import type {
-    ExtendedInboundGroupSessionData,
-    GroupSessionRecord,
-    HybridGroupSessionRecord,
-} from './storeTypes'
-import { HybridGroupSessionKey } from '@river-build/proto'
+import type { HybridGroupSessionRecord } from './storeTypes'
+import {
+    ExportedDevice,
+    ExportedDevice_GroupSession,
+    ExportedDevice_HybridGroupSession,
+    HybridGroupSessionKey,
+} from '@river-build/proto'
 import { exportAesGsmKeyBytes, generateNewAesGcmKey } from './cryptoAesGcm'
 import { Dexie } from 'dexie'
 
@@ -33,14 +34,6 @@ export interface InboundGroupSessionData {
     keysClaimed: Record<string, string>
     /** whether this session is untrusted. */
     untrusted?: boolean
-}
-
-export type ExportedDevice = {
-    pickleKey: string
-    pickledAccount: string
-    outboundSessions: GroupSessionRecord[]
-    inboundSessions: ExtendedInboundGroupSessionData[]
-    hybridGroupSessions: HybridGroupSessionRecord[]
 }
 
 export type EncryptionDeviceInitOpts = {
@@ -188,7 +181,11 @@ export class EncryptionDevice {
                     this.cryptoStore.storeEndToEndInboundGroupSession(
                         session.streamId,
                         session.sessionId,
-                        session,
+                        {
+                            stream_id: session.streamId,
+                            session: session.session,
+                            keysClaimed: {},
+                        } satisfies InboundGroupSessionData,
                     ),
                 ),
                 ...exportedData.hybridGroupSessions.map((session) =>
@@ -225,13 +222,35 @@ export class EncryptionDevice {
             this.cryptoStore.getAllHybridGroupSessions(),
         ])
 
-        return {
+        return new ExportedDevice({
             pickleKey: this.pickleKey,
             pickledAccount,
-            inboundSessions,
-            outboundSessions,
-            hybridGroupSessions,
-        }
+            inboundSessions: inboundSessions.map(
+                (session) =>
+                    new ExportedDevice_GroupSession({
+                        sessionId: session.sessionId,
+                        streamId: session.streamId,
+                        session: session.session,
+                    }),
+            ),
+            outboundSessions: outboundSessions.map(
+                (session) =>
+                    new ExportedDevice_GroupSession({
+                        sessionId: session.sessionId,
+                        streamId: session.streamId,
+                        session: session.session,
+                    }),
+            ),
+            hybridGroupSessions: hybridGroupSessions.map(
+                (session) =>
+                    new ExportedDevice_HybridGroupSession({
+                        sessionId: session.sessionId,
+                        streamId: session.streamId,
+                        sessionKey: session.sessionKey,
+                        miniblockNum: session.miniblockNum,
+                    }),
+            ),
+        })
     }
 
     /**

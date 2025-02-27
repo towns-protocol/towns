@@ -5,6 +5,7 @@ import (
 	"context"
 	"math/big"
 	"slices"
+	"sort"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -16,10 +17,9 @@ import (
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/logging"
-	"github.com/towns-protocol/towns/core/node/mls_service"
-	"github.com/towns-protocol/towns/core/node/mls_service/mls_tools"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/xchain/bindings/erc20"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 )
@@ -79,31 +79,6 @@ type aePinRules struct {
 type aeUnpinRules struct {
 	params *aeParams
 	unpin  *MemberPayload_Unpin
-}
-
-type aeMlsInitializeGroupRules struct {
-	params          *aeParams
-	initializeGroup *MemberPayload_Mls_InitializeGroup
-}
-
-type aeMlsExternalJoinRules struct {
-	params       *aeParams
-	externalJoin *MemberPayload_Mls_ExternalJoin
-}
-
-type aeMlsEpochSecrets struct {
-	params  *aeParams
-	secrets *MemberPayload_Mls_EpochSecrets
-}
-
-type aeMlsKeyPackageRules struct {
-	params     *aeParams
-	keyPackage *MemberPayload_KeyPackage
-}
-
-type aeMlsWelcomeMessageRules struct {
-	params         *aeParams
-	welcomeMessage *MemberPayload_Mls_WelcomeMessage
 }
 
 type aeMediaPayloadChunkRules struct {
@@ -592,70 +567,9 @@ func (params *aeParams) canAddMemberPayload(payload *StreamEvent_MemberPayload) 
 			check(params.creatorIsValidNode).
 			check(ru.validMemberBlockchainTransaction_IsUnique).
 			check(ru.validMemberBlockchainTransaction_ReceiptMetadata)
-	case *MemberPayload_Mls_:
-		if !params.config.EnableMls {
-			return aeBuilder().
-				fail(RiverError(Err_INVALID_ARGUMENT, "mls disabled globally"))
-		}
-		return params.canAddMlsPayload(content.Mls)
-
 	case *MemberPayload_EncryptionAlgorithm_:
 		return aeBuilder().
 			check(params.creatorIsMember)
-	default:
-		return aeBuilder().
-			fail(unknownContentType(content))
-	}
-}
-
-func (params *aeParams) canAddMlsPayload(payload *MemberPayload_Mls) ruleBuilderAE {
-	switch content := payload.Content.(type) {
-	case *MemberPayload_Mls_InitializeGroup_:
-		ru := &aeMlsInitializeGroupRules{
-			params:          params,
-			initializeGroup: content.InitializeGroup,
-		}
-		return aeBuilder().
-			check(params.creatorIsMember).
-			check(ru.validMlsInitializeGroup)
-	case *MemberPayload_Mls_ExternalJoin_:
-		ru := &aeMlsExternalJoinRules{
-			params:       params,
-			externalJoin: content.ExternalJoin,
-		}
-		return aeBuilder().
-			check(params.creatorIsMember).
-			check(params.mlsInitialized).
-			check(ru.validMlsExternalJoin)
-	case *MemberPayload_Mls_EpochSecrets_:
-		ru := &aeMlsEpochSecrets{
-			params:  params,
-			secrets: content.EpochSecrets,
-		}
-		return aeBuilder().
-			check(params.creatorIsMember).
-			check(params.mlsInitialized).
-			check(ru.validMlsEpochSecrets)
-
-	case *MemberPayload_Mls_KeyPackage:
-		ru := &aeMlsKeyPackageRules{
-			params:     params,
-			keyPackage: content.KeyPackage,
-		}
-		return aeBuilder().
-			check(params.creatorIsMember).
-			check(params.mlsInitialized).
-			check(ru.validMlsKeyPackage)
-
-	case *MemberPayload_Mls_WelcomeMessage_:
-		ru := &aeMlsWelcomeMessageRules{
-			params:         params,
-			welcomeMessage: content.WelcomeMessage,
-		}
-		return aeBuilder().
-			check(params.creatorIsMember).
-			check(params.mlsInitialized).
-			check(ru.validMlsWelcomeMessage)
 	default:
 		return aeBuilder().
 			fail(unknownContentType(content))
@@ -694,14 +608,6 @@ func (params *aeParams) creatorIsMember() (bool, error) {
 	return true, nil
 }
 
-func (params *aeParams) mlsInitialized() (bool, error) {
-	mlsInitialized, err := params.streamView.IsMlsInitialized()
-	if err != nil {
-		return false, err
-	}
-	return mlsInitialized, nil
-}
-
 func (ru *aeMemberBlockchainTransactionRules) validMemberBlockchainTransaction_ReceiptMetadata() (bool, error) {
 	// check creator
 	switch content := ru.memberTransaction.Transaction.Content.(type) {
@@ -723,10 +629,26 @@ func (ru *aeMemberBlockchainTransactionRules) validMemberBlockchainTransaction_R
 			return false, RiverError(Err_INVALID_ARGUMENT, "tip transaction message id is nil")
 		}
 		return true, nil
+	case *BlockchainTransaction_TokenTransfer_:
+		err := checkIsMember(ru.params, ru.memberTransaction.GetFromUserAddress())
+		if err != nil {
+			return false, err
+		}
+		// we need a ref event id
+		if content.TokenTransfer.GetMessageId() == nil {
+			return false, RiverError(Err_INVALID_ARGUMENT, "transfer transaction message id is nil")
+		}
+		return true, nil
+	case *BlockchainTransaction_SpaceReview_:
+		err := checkIsMember(ru.params, ru.memberTransaction.GetFromUserAddress())
+		if err != nil {
+			return false, err
+		}
+		return true, nil
 	default:
 		return false, RiverError(
 			Err_INVALID_ARGUMENT,
-			"unknown transaction content",
+			"unknown transaction content - member blockchain transaction",
 			"content",
 			content,
 		)
@@ -787,6 +709,16 @@ func (ru *aeBlockchainTransactionRules) validBlockchainTransaction_IsUnique() (b
 }
 
 func (ru *aeBlockchainTransactionRules) validBlockchainTransaction_CheckReceiptMetadata() (bool, error) {
+	if ru.transaction.Receipt != nil {
+		return ru.validBlockchainTransaction_CheckReceiptMetadataEVM()
+	} else if ru.transaction.SolanaReceipt != nil {
+		return ru.validBlockchainTransaction_CheckReceiptMetadataSolana()
+	} else {
+		return false, RiverError(Err_INVALID_ARGUMENT, "receipt is nil")
+	}
+}
+
+func (ru *aeBlockchainTransactionRules) validBlockchainTransaction_CheckReceiptMetadataEVM() (bool, error) {
 	receipt := ru.transaction.Receipt
 	if receipt == nil {
 		return false, RiverError(Err_INVALID_ARGUMENT, "receipt is nil")
@@ -847,6 +779,185 @@ func (ru *aeBlockchainTransactionRules) validBlockchainTransaction_CheckReceiptM
 			Err_INVALID_ARGUMENT,
 			"matching tip event not found in receipt logs",
 		)
+	case *BlockchainTransaction_TokenTransfer_:
+		amount := &big.Int{}
+		amount, ok := amount.SetString(content.TokenTransfer.GetAmount(), 10)
+		if !ok {
+			return false, RiverError(Err_INVALID_ARGUMENT, "failed to parse amount")
+		}
+		filterer, err := erc20.NewErc20Filterer(common.Address{}, nil)
+		if err != nil {
+			return false, err
+		}
+
+		senderAddress := common.BytesToAddress(content.TokenTransfer.GetSender())
+
+		for _, receiptLog := range receipt.Logs {
+			if !bytes.Equal(receiptLog.GetAddress(), content.TokenTransfer.GetAddress()) {
+				continue
+			}
+			topics := make([]common.Hash, len(receiptLog.Topics))
+			for i, topic := range receiptLog.Topics {
+				topics[i] = common.BytesToHash(topic)
+			}
+			log := ethTypes.Log{
+				Address: common.BytesToAddress(receiptLog.Address),
+				Topics:  topics,
+				Data:    receiptLog.Data,
+			}
+			transfer, err := filterer.ParseTransfer(log)
+			if err != nil {
+				continue
+			}
+
+			if transfer.Value.Cmp(amount) != 0 {
+				continue
+			}
+
+			if content.TokenTransfer.IsBuy && transfer.To.Cmp(senderAddress) != 0 {
+				continue
+			}
+
+			if !content.TokenTransfer.IsBuy && transfer.From.Cmp(senderAddress) != 0 {
+				continue
+			}
+
+			return true, nil
+		}
+		return false, RiverError(Err_INVALID_ARGUMENT, "matching transfer event not found in receipt logs")
+	case *BlockchainTransaction_SpaceReview_:
+		// parse the logs for the review event, make sure it matches the review metadata
+		filterer, err := baseContracts.NewSpaceReviewFilterer(common.Address{}, nil)
+		if err != nil {
+			return false, err
+		}
+		for _, receiptLog := range receipt.Logs {
+			if !bytes.Equal(receiptLog.Address, content.SpaceReview.GetSpaceAddress()) {
+				continue
+			}
+
+			topics := make([]common.Hash, len(receiptLog.Topics))
+			for i, topic := range receiptLog.Topics {
+				topics[i] = common.BytesToHash(topic)
+			}
+			log := ethTypes.Log{
+				Address: common.BytesToAddress(receiptLog.Address),
+				Topics:  topics,
+				Data:    receiptLog.Data,
+			}
+			switch content.SpaceReview.GetAction() {
+			case BlockchainTransaction_SpaceReview_Add:
+				reviewEvent, err := filterer.ParseReviewAdded(log)
+				if err != nil {
+					continue
+				}
+				if reviewEvent.Rating != uint8(content.SpaceReview.GetEvent().Rating) {
+					continue
+				}
+				if !bytes.Equal(reviewEvent.User[:], content.SpaceReview.GetEvent().User) {
+					continue
+				}
+				return true, nil
+			case BlockchainTransaction_SpaceReview_Update:
+				reviewEvent, err := filterer.ParseReviewUpdated(log)
+				if err != nil {
+					continue
+				}
+				if reviewEvent.Rating != uint8(content.SpaceReview.GetEvent().Rating) {
+					continue
+				}
+				if !bytes.Equal(reviewEvent.User[:], content.SpaceReview.GetEvent().User) {
+					continue
+				}
+				return true, nil
+			case BlockchainTransaction_SpaceReview_Delete:
+				reviewEvent, err := filterer.ParseReviewDeleted(log)
+				if err != nil {
+					continue
+				}
+				if !bytes.Equal(reviewEvent.User[:], content.SpaceReview.GetEvent().User) {
+					continue
+				}
+				return true, nil
+			default:
+				continue
+			}
+		}
+		return false, RiverError(
+			Err_INVALID_ARGUMENT,
+			"matching review event not found in receipt logs",
+		)
+	default:
+		return false, RiverError(
+			Err_INVALID_ARGUMENT,
+			"unknown transaction type - check receipt metadata",
+			"transactionType",
+			content,
+		)
+	}
+}
+
+func (ru *aeBlockchainTransactionRules) validBlockchainTransaction_CheckReceiptMetadataSolana() (bool, error) {
+	receipt := ru.transaction.SolanaReceipt
+	if receipt == nil {
+		return false, RiverError(Err_INVALID_ARGUMENT, "solana receipt is nil")
+	}
+
+	switch content := ru.transaction.Content.(type) {
+	case nil:
+		// for unspecified types, we don't need to check anything specific
+		// the other checks should make sure the transaction is valid and from this user
+		return true, nil
+	case *BlockchainTransaction_Tip_:
+		return false, RiverError(Err_INVALID_ARGUMENT, "solana tip transactions are not supported")
+	case *BlockchainTransaction_TokenTransfer_:
+		meta := receipt.GetMeta()
+		if meta == nil {
+			return false, RiverError(Err_INVALID_ARGUMENT, "solana transfer transaction meta is nil")
+		}
+
+		sender := string(content.TokenTransfer.Sender)
+		// get the amount _before_ the transfer
+		idx := sort.Search(len(meta.GetPreTokenBalances()), func(i int) bool {
+			return meta.GetPreTokenBalances()[i].Mint == string(content.TokenTransfer.Address) && meta.GetPreTokenBalances()[i].Owner == sender
+		})
+		if idx == len(meta.GetPreTokenBalances()) {
+			return false, RiverError(Err_INVALID_ARGUMENT, "solana transfer transaction mint not found in preTokenBalances")
+		}
+		amountBefore, ok := new(big.Int).SetString(meta.GetPreTokenBalances()[idx].Amount.Amount, 0)
+		if !ok {
+			return false, RiverError(Err_INVALID_ARGUMENT, "invalid pre token balance amount")
+		}
+
+		// get the amount _after_ the transfer
+		idx = sort.Search(len(meta.GetPostTokenBalances()), func(i int) bool {
+			return meta.GetPostTokenBalances()[i].Mint == string(content.TokenTransfer.Address) && meta.GetPreTokenBalances()[i].Owner == sender
+		})
+		if idx == len(meta.GetPreTokenBalances()) {
+			return false, RiverError(Err_INVALID_ARGUMENT, "solana transfer transaction mint not found in postTokenBalances")
+		}
+		amountAfter, ok := new(big.Int).SetString(meta.GetPostTokenBalances()[idx].Amount.Amount, 0)
+		if !ok {
+			return false, RiverError(Err_INVALID_ARGUMENT, "invalid post token balance amount")
+		}
+
+		// check the amount
+		expectedBalanceDiff, ok := new(big.Int).SetString(content.TokenTransfer.Amount, 0)
+		if !ok {
+			return false, RiverError(Err_INVALID_ARGUMENT, "invalid balance amount")
+		}
+
+		if expectedBalanceDiff.CmpAbs(new(big.Int).Sub(amountAfter, amountBefore)) != 0 {
+			return false, RiverError(Err_INVALID_ARGUMENT, "solana transfer transaction amount not equal to balance diff")
+		}
+
+		// make sure it's a valid buy or sell
+		if content.TokenTransfer.IsBuy && amountAfter.Cmp(amountBefore) < 0 {
+			return false, RiverError(Err_INVALID_ARGUMENT, "solana transfer transaction is buy but balance decreased")
+		} else if !content.TokenTransfer.IsBuy && amountAfter.Cmp(amountBefore) > 0 {
+			return false, RiverError(Err_INVALID_ARGUMENT, "solana transfer transaction is sell but balance increased")
+		}
+		return true, nil
 	default:
 		return false, RiverError(
 			Err_INVALID_ARGUMENT,
@@ -911,6 +1022,10 @@ func (ru *aeReceivedBlockchainTransactionRules) parentEventForReceivedBlockchain
 			StreamId: streamId,
 			Tags:     ru.params.parsedEvent.Event.Tags, // forward tags
 		}, nil
+	case *BlockchainTransaction_TokenTransfer_:
+		return nil, RiverError(Err_INVALID_ARGUMENT, "transfer transactions are not supported", "transaction", transaction)
+	case *BlockchainTransaction_SpaceReview_:
+		return nil, RiverError(Err_INVALID_ARGUMENT, "space review is not a valid received blockchain transaction")
 	default:
 		return nil, RiverError(Err_INVALID_ARGUMENT, "unknown transaction content", "content", content)
 	}
@@ -933,7 +1048,8 @@ func (ru *aeBlockchainTransactionRules) parentEventForBlockchainTransaction() (*
 		}
 		if shared.ValidChannelStreamId(&toStreamId) ||
 			shared.ValidDMChannelStreamId(&toStreamId) ||
-			shared.ValidGDMChannelStreamId(&toStreamId) {
+			shared.ValidGDMChannelStreamId(&toStreamId) ||
+			shared.ValidSpaceStreamId(&toStreamId) {
 			return &DerivedEvent{
 				Payload: events.Make_UserPayload_ReceivedBlockchainTransaction(
 					ru.params.parsedEvent.Event.CreatorAddress,
@@ -950,10 +1066,56 @@ func (ru *aeBlockchainTransactionRules) parentEventForBlockchainTransaction() (*
 			"streamId",
 			toStreamId,
 		)
+	case *BlockchainTransaction_TokenTransfer_:
+		if content.TokenTransfer.GetChannelId() == nil {
+			return nil, RiverError(Err_INVALID_ARGUMENT, "transaction channel id is nil")
+		}
+		// convert to stream id
+		toStreamId, err := shared.StreamIdFromBytes(content.TokenTransfer.GetChannelId())
+		if err != nil {
+			return nil, err
+		}
+
+		if !shared.ValidChannelStreamId(&toStreamId) &&
+			!shared.ValidDMChannelStreamId(&toStreamId) &&
+			!shared.ValidGDMChannelStreamId(&toStreamId) {
+			return nil, RiverError(
+				Err_INVALID_ARGUMENT,
+				"tip transaction streamId is not a valid channel/dm/gdm stream id",
+				"streamId",
+				toStreamId,
+			)
+		}
+
+		// forward the transfer to the stream as a member event, preserving the original sender as the from address
+		return &DerivedEvent{
+			Payload: events.Make_MemberPayload_BlockchainTransaction(
+				ru.params.parsedEvent.Event.CreatorAddress,
+				ru.transaction,
+			),
+			StreamId: toStreamId,
+			Tags:     ru.params.parsedEvent.Event.Tags, // forward tags
+		}, nil
+	case *BlockchainTransaction_SpaceReview_:
+		// forward the space review to the space stream
+		spaceStreamId, err := shared.SpaceIdFromBytes(content.SpaceReview.GetSpaceAddress())
+		if err != nil {
+			return nil, err
+		}
+
+		// forward the tip to the space stream as a member event, preserving the original sender as the from address
+		return &DerivedEvent{
+			Payload: events.Make_MemberPayload_BlockchainTransaction(
+				ru.params.parsedEvent.Event.CreatorAddress,
+				ru.transaction,
+			),
+			StreamId: spaceStreamId,
+			Tags:     ru.params.parsedEvent.Event.Tags, // forward tags if any
+		}, nil
 	default:
 		return nil, RiverError(
 			Err_INVALID_ARGUMENT,
-			"unknown transaction type",
+			"unknown transaction type - parent event for blockchain transaction",
 			"transactionType",
 			content,
 		)
@@ -966,6 +1128,15 @@ func (ru *aeBlockchainTransactionRules) blockchainTransaction_GetReceipt() (*Blo
 
 // check to see that the transaction is from a wallet linked to the creator
 func (ru *aeBlockchainTransactionRules) blockchainTransaction_ChainAuth() (*auth.ChainAuthArgs, error) {
+	if ru.transaction.SolanaReceipt != nil {
+		// not applicable to Solana transactions for now
+		return nil, nil
+	}
+
+	if ru.transaction.Receipt == nil {
+		return nil, RiverError(Err_INVALID_ARGUMENT, "transaction receipt is nil")
+	}
+
 	if bytes.Equal(ru.transaction.Receipt.From, ru.params.parsedEvent.Event.CreatorAddress) {
 		return nil, nil
 	}
@@ -983,10 +1154,22 @@ func (ru *aeBlockchainTransactionRules) blockchainTransaction_ChainAuth() (*auth
 			ru.params.parsedEvent.Event.CreatorAddress,
 			content.Tip.GetEvent().GetSender(),
 		), nil
+	case *BlockchainTransaction_TokenTransfer_:
+		return auth.NewChainAuthArgsForIsWalletLinked(
+			ru.params.parsedEvent.Event.CreatorAddress,
+			content.TokenTransfer.GetSender(),
+		), nil
+	case *BlockchainTransaction_SpaceReview_:
+		// space reviews can be sent through a bundler, verify the space review sender
+		// as specified in the space review content and verified against the logs in blockchainTransaction_CheckReceiptMetadata
+		return auth.NewChainAuthArgsForIsWalletLinked(
+			ru.params.parsedEvent.Event.CreatorAddress,
+			content.SpaceReview.GetEvent().GetUser(),
+		), nil
 	default:
 		return nil, RiverError(
 			Err_INVALID_ARGUMENT,
-			"unknown transaction type",
+			"unknown transaction type - chain auth",
 			"transactionType",
 			content,
 		)
@@ -1447,124 +1630,6 @@ func (ru *aeMembershipRules) channelMembershipEntitlements() (*auth.ChainAuthArg
 	return chainAuthArgs, nil
 }
 
-func (ru *aeMlsInitializeGroupRules) validMlsInitializeGroup() (bool, error) {
-	mlsInitialized, err := ru.params.streamView.IsMlsInitialized()
-	if err != nil {
-		return false, err
-	}
-	if mlsInitialized {
-		return false, RiverError(Err_INVALID_ARGUMENT, "group already initialized")
-	}
-	request := mls_tools.InitialGroupInfoRequest{
-		SignaturePublicKey:    ru.initializeGroup.SignaturePublicKey,
-		GroupInfoMessage:      ru.initializeGroup.GroupInfoMessage,
-		ExternalGroupSnapshot: ru.initializeGroup.ExternalGroupSnapshot,
-	}
-	resp, err := mls_service.InitialGroupInfoRequest(&request)
-	if err != nil {
-		return false, err
-	}
-	if resp.GetResult() != mls_tools.ValidationResult_VALID {
-		return false, RiverError(Err_INVALID_ARGUMENT, "invalid group init", "result", resp.GetResult())
-	}
-	return true, nil
-}
-
-func (ru *aeMlsExternalJoinRules) validMlsExternalJoin() (bool, error) {
-	view := ru.params.streamView
-	mlsGroupState, err := view.GetMlsGroupState()
-	if err != nil {
-		return false, err
-	}
-
-	externalJoinRequest := &mls_tools.ExternalJoinRequest{
-		GroupState:                      mlsGroupState,
-		ProposedExternalJoinCommit:      ru.externalJoin.Commit,
-		ProposedExternalJoinInfoMessage: ru.externalJoin.GroupInfoMessage,
-		SignaturePublicKey:              ru.externalJoin.SignaturePublicKey,
-	}
-
-	resp, err := mls_service.ExternalJoinRequest(externalJoinRequest)
-	if err != nil {
-		return false, err
-	}
-	if resp.GetResult() != mls_tools.ValidationResult_VALID {
-		return false, RiverError(Err_INVALID_ARGUMENT, "invalid external join", "result", resp.GetResult())
-	}
-	return true, nil
-}
-
-func (ru *aeMlsEpochSecrets) validMlsEpochSecrets() (bool, error) {
-	if len(ru.secrets.Secrets) == 0 {
-		return false, RiverError(Err_INVALID_ARGUMENT, "no secrets provided")
-	}
-	view := ru.params.streamView
-	epochSecrets, err := view.GetMlsEpochSecrets()
-	if err != nil {
-		return false, err
-	}
-	for _, secret := range ru.secrets.Secrets {
-		if _, ok := epochSecrets[secret.Epoch]; ok {
-			return false, RiverError(Err_INVALID_ARGUMENT, "epoch already exists", "epoch", secret.Epoch)
-		}
-	}
-	return true, nil
-}
-
-func (ru *aeMlsKeyPackageRules) validMlsKeyPackage() (bool, error) {
-	view := ru.params.streamView
-	mlsGroupState, err := view.GetMlsGroupState()
-	if err != nil {
-		return false, err
-	}
-
-	keyPackageRequest := &mls_tools.KeyPackageRequest{
-		GroupState: mlsGroupState,
-		KeyPackage: &mls_tools.KeyPackage{
-			KeyPackage:         ru.keyPackage.KeyPackage,
-			SignaturePublicKey: ru.keyPackage.SignaturePublicKey,
-		},
-	}
-
-	resp, err := mls_service.KeyPackageRequest(keyPackageRequest)
-	if err != nil {
-		return false, err
-	}
-
-	if resp.GetResult() != mls_tools.ValidationResult_VALID {
-		return false, RiverError(Err_INVALID_ARGUMENT, "invalid key package", "result", resp.GetResult())
-	}
-
-	return true, nil
-}
-
-func (ru *aeMlsWelcomeMessageRules) validMlsWelcomeMessage() (bool, error) {
-	view := ru.params.streamView
-	mlsGroupState, err := view.GetMlsGroupState()
-	if err != nil {
-		return false, err
-	}
-
-	welcomeMessageRequest := &mls_tools.WelcomeMessageRequest{
-		GroupState:           mlsGroupState,
-		SignaturePublicKeys:  ru.welcomeMessage.SignaturePublicKeys,
-		GroupInfoMessage:     ru.welcomeMessage.GroupInfoMessage,
-		WelcomeMessages:      ru.welcomeMessage.WelcomeMessages,
-		WelcomeMessageCommit: ru.welcomeMessage.Commit,
-	}
-
-	resp, err := mls_service.WelcomeMessageRequest(welcomeMessageRequest)
-	if err != nil {
-		return false, err
-	}
-
-	if resp.GetResult() != mls_tools.ValidationResult_VALID {
-		return false, RiverError(Err_INVALID_ARGUMENT, "invalid welcome message", "result", resp.GetResult())
-	}
-
-	return true, nil
-}
-
 // return function that can be used to check if a user has a permission for a space
 func (params *aeParams) spaceEntitlements(permission auth.Permission) func() (*auth.ChainAuthArgs, error) {
 	return func() (*auth.ChainAuthArgs, error) {
@@ -1748,7 +1813,7 @@ func (ru *aePinRules) validPin() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	computedHash := crypto.RiverHash(eventBytes)
+	computedHash := crypto.TownsHashForEvents.Hash(eventBytes)
 
 	if !bytes.Equal(ru.pin.EventId, computedHash[:]) {
 		return false, RiverError(Err_INVALID_ARGUMENT, "invalid message hash")
@@ -1914,6 +1979,14 @@ func (ru *aeKeySolicitationRules) validKeySolicitation() (bool, error) {
 
 	if !slices.IsSorted(ru.solicitation.SessionIds) {
 		return false, RiverError(Err_INVALID_ARGUMENT, "session ids must be sorted")
+	}
+
+	if len(ru.solicitation.SessionIds) > 0 {
+		for _, sessionId := range ru.solicitation.SessionIds {
+			if sessionId == "" {
+				return false, RiverError(Err_INVALID_ARGUMENT, "session ids must not be empty")
+			}
+		}
 	}
 
 	return true, nil
