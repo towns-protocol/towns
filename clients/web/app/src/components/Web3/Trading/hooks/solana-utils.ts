@@ -1,4 +1,8 @@
-import { ConfirmedTransactionMeta } from '@solana/web3.js'
+import { BlockchainTransaction_TokenTransfer } from '@river-build/proto'
+import { PlainMessage } from '@bufbuild/protobuf'
+import { SolanaTransactionReceipt } from '@river-build/sdk'
+import { ConfirmedTransactionMeta, VersionedTransactionResponse } from '@solana/web3.js'
+import { bin_fromHexString, bin_fromString } from '@river-build/dlog'
 
 /**
  * Extracts the token transfer amount from a Solana transaction metadata.
@@ -40,4 +44,66 @@ export function extractTransferAmountFromMeta(
 
     // Calculate the absolute difference between pre and post balances
     return postAmount > preAmount ? postAmount - preAmount : preAmount - postAmount
+}
+
+export function createSendTokenTransferDataSolana(
+    transactionResponse: VersionedTransactionResponse,
+    mintAddress: string,
+    ownerAddress: string,
+    channelId: string,
+    messageId: string,
+    isBuy: boolean,
+):
+    | {
+          receipt: SolanaTransactionReceipt
+          event: PlainMessage<BlockchainTransaction_TokenTransfer>
+      }
+    | undefined {
+    if (!transactionResponse.meta) {
+        return undefined
+    }
+    const amount = extractTransferAmountFromMeta(
+        transactionResponse.meta,
+        mintAddress,
+        ownerAddress,
+    )
+    if (amount === 0n) {
+        return undefined
+    }
+
+    const event: PlainMessage<BlockchainTransaction_TokenTransfer> = {
+        amount: amount.toString(),
+        address: bin_fromString(mintAddress),
+        sender: bin_fromString(ownerAddress),
+        messageId: bin_fromHexString(messageId),
+        channelId: bin_fromHexString(channelId),
+        isBuy: isBuy,
+    }
+
+    const receipt: SolanaTransactionReceipt = {
+        meta: {
+            preTokenBalances:
+                transactionResponse.meta.preTokenBalances?.map((balance) => ({
+                    amount: {
+                        amount: balance.uiTokenAmount?.amount ?? '0',
+                        decimals: balance.uiTokenAmount?.decimals ?? 9,
+                    },
+                    mint: balance.mint,
+                    owner: balance.owner ?? '',
+                })) ?? [],
+            postTokenBalances:
+                transactionResponse.meta.postTokenBalances?.map((balance) => ({
+                    amount: {
+                        amount: balance.uiTokenAmount?.amount ?? '0',
+                        decimals: balance.uiTokenAmount?.decimals ?? 9,
+                    },
+                    mint: balance.mint,
+                    owner: balance.owner ?? '',
+                })) ?? [],
+        },
+        slot: BigInt(transactionResponse.slot),
+        transaction: { signatures: transactionResponse.transaction.signatures },
+    }
+
+    return { event, receipt }
 }
