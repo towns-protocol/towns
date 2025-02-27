@@ -145,6 +145,7 @@ export class SyncedStreamsLoop {
         logNamespace: string,
         readonly unpackEnvelopeOpts: UnpackEnvelopeOpts | undefined,
         private highPriorityIds: Set<string>,
+        private streamOpts: { useModifySync?: boolean } | undefined,
     ) {
         this.rpcClient = rpcClient
         this.clientEmitter = clientEmitter
@@ -314,7 +315,30 @@ export class SyncedStreamsLoop {
                 ) {
                     // get cookies from all the known streams to sync
                     this.inFlightSyncCookies.clear()
-                    this.pendingSyncCookies = Array.from(this.streams.keys())
+                    this.pendingSyncCookies = []
+                    const syncCookies: SyncCookie[] = []
+                    if (this.streamOpts?.useModifySync == true) {
+                        this.pendingSyncCookies.push(...Array.from(this.streams.keys()))
+                    } else {
+                        syncCookies.push(
+                            ...Array.from(this.streams.entries())
+                                .sort((a, b) => {
+                                    const aPriority = priorityFromStreamId(
+                                        a[0],
+                                        this.highPriorityIds,
+                                    )
+                                    const bPriority = priorityFromStreamId(
+                                        b[0],
+                                        this.highPriorityIds,
+                                    )
+                                    return aPriority - bPriority
+                                })
+                                .map((streamRecord) => {
+                                    this.inFlightSyncCookies.add(streamRecord[0])
+                                    return streamRecord[1].syncCookie
+                                }),
+                        )
+                    }
                     this.syncStartedAt = performance.now()
 
                     this.log(
@@ -334,7 +358,7 @@ export class SyncedStreamsLoop {
                         this.syncId = undefined
                         const streams = this.rpcClient.syncStreams(
                             {
-                                syncPos: [],
+                                syncPos: syncCookies,
                             },
                             { timeoutMs: -1 },
                         )

@@ -224,6 +224,7 @@ export class Client
         unpackEnvelopeOpts?: UnpackEnvelopeOpts,
         defaultGroupEncryptionAlgorithm?: GroupEncryptionAlgorithmId,
         inLogId?: string,
+        private streamOpts?: { useModifySync?: boolean },
     ) {
         super()
         if (logNamespaceFilter) {
@@ -272,6 +273,7 @@ export class Client
             this,
             this.unpackEnvelopeOpts,
             this.logId,
+            this.streamOpts,
         )
         this.syncedStreamsExtensions = new SyncedStreamsExtension(
             highPriorityStreamIds,
