@@ -20,6 +20,7 @@ lcov.info
 coverage.json
 .npmrc
 
+
 # Contracts
 contracts/.openzeppelin/unknown-*.json
 contracts/docs/coverage

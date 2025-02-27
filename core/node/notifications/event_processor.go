@@ -122,6 +122,8 @@ func (p *MessageToNotificationsProcessor) OnMessageEvent(
 		return
 	case MessageInteractionType_MESSAGE_INTERACTION_TYPE_REDACTION:
 		return
+	case MessageInteractionType_MESSAGE_INTERACTION_TYPE_TRADE:
+		return
 	}
 
 	usersToNotify := make(map[common.Address]*types.UserPreferences)
@@ -524,7 +526,7 @@ func (p *MessageToNotificationsProcessor) sendNotification(
 
 	if len(userPref.Subscriptions.APNPush) > 0 {
 		// eventHash is used by iOS/OSX to route the user on the device notification to the message
-		eventHash := hex.EncodeToString(crypto.RiverHash(eventBytes).Bytes())
+		eventHash := hex.EncodeToString(crypto.TownsHashForEvents.Hash(eventBytes).Bytes())
 
 		for _, sub := range userPref.Subscriptions.APNPush {
 			if time.Since(sub.LastSeen) >= p.subscriptionExpiration {

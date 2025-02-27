@@ -1,5 +1,10 @@
 import { Message, PlainMessage } from '@bufbuild/protobuf'
-import { Permission } from '@river-build/web3'
+import {
+    Permission,
+    SpaceAddressFromSpaceId,
+    SpaceReviewAction,
+    SpaceReviewEventObject,
+} from '@river-build/web3'
 import {
     MembershipOp,
     ChannelOp,
@@ -33,6 +38,7 @@ import {
     CreateStreamResponse,
     ChannelProperties,
     CreationCookie,
+    BlockchainTransaction_TokenTransfer,
 } from '@river-build/proto'
 import {
     bin_fromHexString,
@@ -85,14 +91,7 @@ import {
     contractAddressFromSpaceId,
     isUserId,
 } from './id'
-import {
-    checkEventSignature,
-    makeEvent,
-    unpackEnvelope,
-    UnpackEnvelopeOpts,
-    unpackStream,
-    unpackStreamEx,
-} from './sign'
+import { makeEvent, unpackEnvelope, UnpackEnvelopeOpts, unpackStream, unpackStreamEx } from './sign'
 import { StreamEvents } from './streamEvents'
 import { IStreamStateView, StreamStateView } from './streamStateView'
 import {
@@ -139,6 +138,8 @@ import {
     make_UserPayload_BlockchainTransaction,
     ContractReceipt,
     make_MemberPayload_EncryptionAlgorithm,
+    SolanaTransactionReceipt,
+    isSolanaTransactionReceipt,
 } from './types'
 
 import debug from 'debug'
@@ -158,7 +159,7 @@ import { SyncedStream } from './syncedStream'
 import { SyncedStreamsExtension } from './syncedStreamsExtension'
 import { SignerContext } from './signerContext'
 import { decryptAESGCM, deriveKeyAndIV, encryptAESGCM, uint8ArrayToBase64 } from './crypto_utils'
-import { makeTags, makeTipTags } from './tags'
+import { makeTags, makeTipTags, makeTransferTags } from './tags'
 import { TipEventObject } from '@river-build/generated/dev/typings/ITipping'
 
 export type ClientEvents = StreamEvents & DecryptionEvents
@@ -209,8 +210,8 @@ export class Client
     private decryptionExtensions?: BaseDecryptionExtensions
     private syncedStreamsExtensions?: SyncedStreamsExtension
     private persistenceStore: IPersistenceStore
-    private validatedEvents: Record<string, { isValid: boolean; reason?: string }> = {}
     private defaultGroupEncryptionAlgorithm: GroupEncryptionAlgorithmId
+    private logId: string
 
     constructor(
         signerContext: SignerContext,
@@ -222,7 +223,8 @@ export class Client
         highPriorityStreamIds?: string[],
         unpackEnvelopeOpts?: UnpackEnvelopeOpts,
         defaultGroupEncryptionAlgorithm?: GroupEncryptionAlgorithmId,
-        logId?: string,
+        inLogId?: string,
+        private streamOpts?: { useModifySync?: boolean },
     ) {
         super()
         if (logNamespaceFilter) {
@@ -245,18 +247,18 @@ export class Client
         this.defaultGroupEncryptionAlgorithm =
             defaultGroupEncryptionAlgorithm ?? GroupEncryptionAlgorithmId.HybridGroupEncryption
 
-        const shortId =
-            logId ??
+        this.logId =
+            inLogId ??
             shortenHexString(this.userId.startsWith('0x') ? this.userId.slice(2) : this.userId)
 
-        this.logCall = dlog('csb:cl:call').extend(shortId)
-        this.logSync = dlog('csb:cl:sync').extend(shortId)
-        this.logEmitFromStream = dlog('csb:cl:stream').extend(shortId)
-        this.logEmitFromClient = dlog('csb:cl:emit').extend(shortId)
-        this.logEvent = dlog('csb:cl:event').extend(shortId)
-        this.logError = dlogError('csb:cl:error').extend(shortId)
-        this.logInfo = dlog('csb:cl:info', { defaultEnabled: true }).extend(shortId)
-        this.logDebug = dlog('csb:cl:debug').extend(shortId)
+        this.logCall = dlog('csb:cl:call').extend(this.logId)
+        this.logSync = dlog('csb:cl:sync').extend(this.logId)
+        this.logEmitFromStream = dlog('csb:cl:stream').extend(this.logId)
+        this.logEmitFromClient = dlog('csb:cl:emit').extend(this.logId)
+        this.logEvent = dlog('csb:cl:event').extend(this.logId)
+        this.logError = dlogError('csb:cl:error').extend(this.logId)
+        this.logInfo = dlog('csb:cl:info', { defaultEnabled: true }).extend(this.logId)
+        this.logDebug = dlog('csb:cl:debug').extend(this.logId)
         this.cryptoStore = cryptoStore
 
         if (persistenceStoreName) {
@@ -265,7 +267,14 @@ export class Client
             this.persistenceStore = new StubPersistenceStore()
         }
 
-        this.streams = new SyncedStreams(this.userId, this.rpcClient, this, this.unpackEnvelopeOpts)
+        this.streams = new SyncedStreams(
+            this.userId,
+            this.rpcClient,
+            this,
+            this.unpackEnvelopeOpts,
+            this.logId,
+            this.streamOpts,
+        )
         this.syncedStreamsExtensions = new SyncedStreamsExtension(
             highPriorityStreamIds,
             {
@@ -278,7 +287,7 @@ export class Client
                 emitClientInitStatus: (status) => this.emit('clientInitStatusUpdated', status),
             },
             this.persistenceStore,
-            shortId,
+            this.logId,
         )
 
         this.logCall('new Client')
@@ -319,38 +328,6 @@ export class Client
         )
         this.streams.set(streamId, stream)
         return stream
-    }
-
-    isValidEvent(streamId: string, eventId: string): { isValid: boolean; reason?: string } {
-        // if we didn't disable signature validation, we can assume the event is valid
-        if (this.unpackEnvelopeOpts?.disableSignatureValidation !== true) {
-            return { isValid: true }
-        }
-        const stream = this.stream(streamId)
-        if (!stream) {
-            return { isValid: false, reason: 'stream not found' }
-        }
-        const sigBundle = stream.view.getSignature(eventId)
-        if (!sigBundle) {
-            return { isValid: false, reason: 'event not found' }
-        }
-        if (!sigBundle.signature) {
-            return { isValid: false, reason: 'remote event signature not found' }
-        }
-        if (this.validatedEvents[eventId]) {
-            return this.validatedEvents[eventId]
-        }
-        try {
-            checkEventSignature(sigBundle.event, sigBundle.hash, sigBundle.signature)
-            const result = { isValid: true }
-            this.validatedEvents[eventId] = result
-            return result
-        } catch (err) {
-            // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-            const result = { isValid: false, reason: `error: ${err}` }
-            this.validatedEvents[eventId] = result
-            return result
-        }
     }
 
     private initUserJoinedStreams() {
@@ -1802,10 +1779,12 @@ export class Client
         data: Uint8Array,
         chunkIndex: number,
         prevMiniblockHash: Uint8Array,
+        iv?: Uint8Array,
     ): Promise<{ prevMiniblockHash: Uint8Array; eventId: string }> {
         const payload = make_MediaPayload_Chunk({
             data: data,
             chunkIndex: chunkIndex,
+            iv: iv,
         })
         return this.makeEventWithHashAndAddToStream(streamId, payload, prevMiniblockHash)
     }
@@ -1815,10 +1794,12 @@ export class Client
         last: boolean,
         data: Uint8Array,
         chunkIndex: number,
+        iv?: Uint8Array,
     ): Promise<{ creationCookie: CreationCookie }> {
         const payload = make_MediaPayload_Chunk({
             data: data,
             chunkIndex: chunkIndex,
+            iv: iv,
         })
         return this.makeMediaEventWithHashAndAddToMediaStream(creationCookie, last, payload)
     }
@@ -2089,24 +2070,27 @@ export class Client
     // upload transactions made on the base chain
     async addTransaction(
         chainId: number,
-        receipt: ContractReceipt,
+        receipt: ContractReceipt | SolanaTransactionReceipt,
         content?: PlainMessage<BlockchainTransaction>['content'],
         tags?: PlainMessage<Tags>,
     ): Promise<{ eventId: string }> {
         check(isDefined(this.userStreamId))
         const transaction = {
-            receipt: {
-                chainId: BigInt(chainId),
-                transactionHash: bin_fromHexString(receipt.transactionHash),
-                blockNumber: BigInt(receipt.blockNumber),
-                to: bin_fromHexString(receipt.to),
-                from: bin_fromHexString(receipt.from),
-                logs: receipt.logs.map((log) => ({
-                    address: bin_fromHexString(log.address),
-                    topics: log.topics.map(bin_fromHexString),
-                    data: bin_fromHexString(log.data),
-                })),
-            },
+            receipt: !isSolanaTransactionReceipt(receipt)
+                ? {
+                      chainId: BigInt(chainId),
+                      transactionHash: bin_fromHexString(receipt.transactionHash),
+                      blockNumber: BigInt(receipt.blockNumber),
+                      to: bin_fromHexString(receipt.to),
+                      from: bin_fromHexString(receipt.from),
+                      logs: receipt.logs.map((log) => ({
+                          address: bin_fromHexString(log.address),
+                          topics: log.topics.map(bin_fromHexString),
+                          data: bin_fromHexString(log.data),
+                      })),
+                  }
+                : undefined,
+            solanaReceipt: isSolanaTransactionReceipt(receipt) ? receipt : undefined,
             content: content ?? { case: undefined },
         } satisfies PlainMessage<BlockchainTransaction>
         const event = make_UserPayload_BlockchainTransaction(transaction)
@@ -2148,6 +2132,46 @@ export class Client
             },
             tags,
         )
+    }
+
+    async addTransaction_Transfer(
+        chainId: number,
+        receipt: ContractReceipt | SolanaTransactionReceipt,
+        event: PlainMessage<BlockchainTransaction_TokenTransfer>,
+        opts?: SendBlockchainTransactionOptions,
+    ): Promise<{ eventId: string }> {
+        const stream = this.stream(streamIdAsString(event.channelId))
+        const tags =
+            opts?.disableTags || !stream?.view ? undefined : makeTransferTags(event, stream.view)
+        return this.addTransaction(
+            chainId,
+            receipt,
+            {
+                case: 'tokenTransfer',
+                value: event,
+            },
+            tags,
+        )
+    }
+
+    async addTransaction_SpaceReview(
+        chainId: number,
+        receipt: ContractReceipt,
+        event: SpaceReviewEventObject,
+        spaceId: string,
+    ): Promise<{ eventId: string }> {
+        check(event.action !== SpaceReviewAction.None, 'invalid space review event')
+        return this.addTransaction(chainId, receipt, {
+            case: 'spaceReview',
+            value: {
+                action: event.action.valueOf(),
+                spaceAddress: bin_fromHexString(SpaceAddressFromSpaceId(spaceId)),
+                event: {
+                    rating: event.rating,
+                    user: addressFromUserId(event.user),
+                },
+            },
+        })
     }
 
     async getMiniblocks(
@@ -2546,6 +2570,8 @@ export class Client
             this.entitlementsDelegate,
             this.userId,
             this.userDeviceKey(),
+            this.unpackEnvelopeOpts,
+            this.logId,
         )
     }
 

@@ -32,7 +32,7 @@ import {
     makeUserStreamId,
     userIdFromAddress,
 } from '../id'
-import { ParsedEvent, DecryptedTimelineEvent } from '../types'
+import { ParsedEvent, DecryptedTimelineEvent, StreamTimelineEvent } from '../types'
 import { getPublicKey, utils } from 'ethereum-cryptography/secp256k1'
 import { EntitlementsDelegate } from '@river-build/encryption'
 import { bin_fromHexString, check, dlog } from '@river-build/dlog'
@@ -927,7 +927,7 @@ export async function linkWallets(
 export function waitFor<T>(
     callback: (() => T) | (() => Promise<T>),
     options: { timeoutMS: number } = { timeoutMS: 5000 },
-): Promise<T | undefined> {
+): Promise<T> {
     const timeoutContext: Error = new Error(
         'waitFor timed out after ' + options.timeoutMS.toString() + 'ms',
     )
@@ -941,8 +941,10 @@ export function waitFor<T>(
         function onDone(result?: T) {
             clearInterval(intervalId)
             clearInterval(timeoutId)
-            if (result || promiseStatus === 'resolved') {
+            if (result) {
                 resolve(result)
+            } else if (result === undefined && promiseStatus === 'resolved') {
+                resolve(undefined as T)
             } else {
                 reject(lastError)
             }
@@ -972,7 +974,11 @@ export function waitFor<T>(
                     )
                 } else {
                     promiseStatus = 'resolved'
-                    resolve(result)
+                    if (result) {
+                        // if result is not truthy, resolve
+                        resolve(result)
+                    }
+                    // otherwise let the polling continue
                 }
             } catch (err: any) {
                 lastError = err
@@ -1468,4 +1474,38 @@ export const findMessageByText = (
             event.content?.kind === RiverTimelineEvent.ChannelMessage &&
             event.content.body === text,
     )
+}
+
+export function extractBlockchainTransactionTransferEvents(timeline: StreamTimelineEvent[]) {
+    return timeline
+        .map((e) => {
+            if (
+                e.remoteEvent?.event.payload.case === 'userPayload' &&
+                e.remoteEvent?.event.payload.value.content.case === 'blockchainTransaction' &&
+                e.remoteEvent?.event.payload.value.content.value.content.case === 'tokenTransfer'
+            ) {
+                return e.remoteEvent?.event.payload.value.content.value.content.value
+            }
+            return undefined
+        })
+        .filter((e) => e !== undefined)
+}
+
+export function extractMemberBlockchainTransactions(client: Client, channelId: string) {
+    const stream = client.streams.get(channelId)
+    if (!stream) throw new Error('no stream found')
+
+    return stream.view.timeline
+        .map((e) => {
+            if (
+                e.remoteEvent?.event.payload.case === 'memberPayload' &&
+                e.remoteEvent?.event.payload.value.content.case === 'memberBlockchainTransaction' &&
+                e.remoteEvent.event.payload.value.content.value.transaction?.content.case ===
+                    'tokenTransfer'
+            ) {
+                return e.remoteEvent.event.payload.value.content.value.transaction.content.value
+            }
+            return undefined
+        })
+        .filter((e) => e !== undefined)
 }

@@ -98,7 +98,7 @@ func GetHttp2LocalhostTLSConfig() *tls.Config {
 	}
 }
 
-func GetHttp2LocalhostTLSClient(ctx context.Context, cfg *config.Config) (*http.Client, error) {
+func GetHttp2LocalhostTLSClient(ctx context.Context, _ *config.Config) (*http.Client, error) {
 	return &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{

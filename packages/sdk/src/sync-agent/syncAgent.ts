@@ -78,7 +78,7 @@ export class SyncAgent {
         const baseProvider = config.baseProvider ?? makeBaseProvider(config.riverConfig)
         const riverProvider = config.riverProvider ?? makeRiverProvider(config.riverConfig)
         this.store = new Store(this.syncAgentDbName(), DB_VERSION, DB_MODELS)
-        this.store.newTransactionGroup('SyncAgent::initalization')
+        this.store.newTransactionGroup('SyncAgent::initialization')
         const spaceDapp = new SpaceDapp(base.chainConfig, baseProvider)
         const riverRegistryDapp = new RiverRegistry(river.chainConfig, riverProvider)
         this.riverConnection = new RiverConnection(this.store, spaceDapp, riverRegistryDapp, {

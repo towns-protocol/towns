@@ -877,10 +877,10 @@
       "license": "MIT"
     },
     "contracts/src/base/registry/facets/distribution/v2/IRewardsDistribution.sol": {
-      "keccak256": "0x7c3e7dfd78b9131e69ddeac57b3923a004f7ddc7df4b2172f4496d29f226e1e6",
+      "keccak256": "0xc0c824458d68efeb75b8c31d0e1ce673f2cffd019fcab637c05740c8aaddb1bf",
       "urls": [
-        "bzz-raw://d262840d9ba5f389bf6f4ee89d03e10b831c99dd1bf50f26073d74b3860d5e91",
-        "dweb:/ipfs/QmWSdFJHEvJDBEAoDg8j1SDJTf3eFk8k4YdgpidabVcNxm"
+        "bzz-raw://2f1e9f1c86bdcbf35629ab08933cdebe4267d6dd95c63225e8bd099f442535b4",
+        "dweb:/ipfs/QmTp2ExQiWYmuJeZJKd7C1yPUocyHxfZaJTEGzgBdTaGrQ"
       ],
       "license": "MIT"
     },

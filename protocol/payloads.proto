@@ -186,7 +186,6 @@ message EmbeddedMedia {
 }
 
 message ChunkedMedia {
-
     message AESGCM {
         bytes iv = 1;
         bytes secretKey = 2;
