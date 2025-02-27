@@ -7,6 +7,7 @@ import {
     UserBio,
     AddEventResponse_Error,
     CreationCookie,
+    BlockchainTransaction_TokenTransfer,
 } from '@river-build/proto'
 import { PlainMessage } from '@bufbuild/protobuf'
 import {
@@ -46,7 +47,12 @@ import {
 import { create } from 'zustand'
 import { MembershipStruct, Permission, IRuleEntitlementV2Base } from '@river-build/web3'
 import { BlockchainTransactionType, TSigner } from 'types/web3-types'
-import { SignerContext, ChannelMessageEvent } from '@river-build/sdk'
+import {
+    SignerContext,
+    ChannelMessageEvent,
+    ContractReceipt,
+    SolanaTransactionReceipt,
+} from '@river-build/sdk'
 import { UserOps } from '@towns/userops'
 
 export type TownsErrorStoreState = {
@@ -267,6 +273,11 @@ interface TownsClientImpl {
         chunkIndex: number,
     ) => Promise<{ creationCookie: CreationCookie } | undefined>
     sendReadReceipt: (marker: FullyReadMarker, isUnread?: boolean) => Promise<void>
+    sendTokenTransfer: (
+        chainId: number,
+        receipt: ContractReceipt | SolanaTransactionReceipt,
+        event: PlainMessage<BlockchainTransaction_TokenTransfer>,
+    ) => Promise<void>
     setAvatarUrl: (ravatarUrl: string) => Promise<void>
     setRoomProperties: (roomId: string, title: string, topic: string) => Promise<void>
     setDisplayName: (streamId: string, displayName: string) => Promise<void>
@@ -492,6 +503,7 @@ export function useTownsClient(): TownsClientImpl {
         sendMediaPayload: useWithCatch(clientSingleton?.sendMediaPayload),
         sendMediaPayloadNew: useWithCatch(clientSingleton?.sendMediaPayloadNew),
         sendReadReceipt: useWithCatch(sendReadReceipt),
+        sendTokenTransfer: useWithCatch(clientSingleton?.sendTokenTransfer),
         adminRedactMessage: useWithCatch(clientSingleton?.adminRedactMessage),
         setDisplayName: useWithCatch(clientSingleton?.setDisplayName),
         setRoomProperties: useWithCatch(clientSingleton?.setRoomProperties),
