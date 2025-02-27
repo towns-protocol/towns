@@ -34,7 +34,7 @@ export class Observable<T> {
             condition: opts?.condition ?? (() => true),
         } satisfies Subscription<T>
         this.subscribers.push(sub)
-        if (opts.fireImmediately) {
+        if (opts.fireImediately) {
             this._notify(sub, this.value)
         }
         return () => this.unsubscribe(subscriber)
@@ -55,7 +55,7 @@ export class Observable<T> {
                     clearTimeout(timeoutHandle)
                     resolve(value)
                 },
-                { fireImmediately: true, condition: condition, once: true },
+                { fireImediately: true, condition: condition, once: true },
             )
         })
     }
