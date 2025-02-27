@@ -14,6 +14,8 @@ import { DEFAULT_MEMBERSHIP_LIMIT } from '@components/SpaceSettingsPanel/default
 import { CreateTownForm, CreateTownFormRender } from './CreateTown'
 import { GATING_ENABLED } from './createTown.schema'
 
+const FREE_ALLOCATION_FOR_FREE_SPACE = 2 // in create form, for dev/testnet we make free allocation very low to easily test free allocation exceeded scenarios, so match that here
+
 const Wrapper = (props: PropsWithChildren) => {
     return (
         <TestApp>
@@ -297,7 +299,7 @@ describe('CreateTown', () => {
                     settings: {
                         ...expected.settings,
                         pricingModule: `0x${Lib.FIXED_PRICING}`,
-                        freeAllocation: 1000,
+                        freeAllocation: FREE_ALLOCATION_FOR_FREE_SPACE,
                         price: 0n,
                     },
                 },
@@ -348,7 +350,7 @@ describe('CreateTown', () => {
                     settings: {
                         ...expected.settings,
                         pricingModule: `0x${Lib.FIXED_PRICING}`,
-                        freeAllocation: 1000,
+                        freeAllocation: FREE_ALLOCATION_FOR_FREE_SPACE,
                         price: 0n,
                     },
                 },
@@ -416,7 +418,7 @@ const getCreateSpaceTransactionDefaultResult = () =>
             duration: YEAR_MS / 1000,
             currency: ethers.constants.AddressZero,
             feeRecipient: ethers.constants.AddressZero,
-            freeAllocation: 1000,
+            freeAllocation: FREE_ALLOCATION_FOR_FREE_SPACE,
             maxSupply: DEFAULT_MEMBERSHIP_LIMIT,
             name: 'testtown - Member',
             price: 0n,

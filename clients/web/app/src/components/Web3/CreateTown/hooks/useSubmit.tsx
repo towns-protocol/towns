@@ -3,7 +3,9 @@ import React, { useCallback, useRef } from 'react'
 import { UseFormReturn } from 'react-hook-form'
 import { useNavigate } from 'react-router'
 import {
+    BASE_SEPOLIA,
     CreateSpaceInfo,
+    LOCALHOST_CHAIN_ID,
     MembershipStruct,
     Permission,
     PricingModuleStruct,
@@ -27,8 +29,8 @@ import { GetSigner } from 'privy/WalletReady'
 import { PATHS } from 'routes'
 import { addressFromSpaceId } from 'ui/utils/utils'
 import { parseUnits } from 'hooks/useBalance'
+import { useEnvironment } from 'hooks/useEnvironmnet'
 import { CreateTownFormSchema } from '../types'
-
 type Props = {
     form: UseFormReturn<CreateTownFormSchema>
     onCreateSpaceFlowStatus?: (status: CreateSpaceFlowStatus) => void
@@ -51,6 +53,8 @@ export const useSubmit = (props: Props) => {
     // because we submit the form with freeAllocation = 0 for dyamic pricing,
     // the contracts will use this value to calculate the free allocation
     const { data: platformMintLimit } = usePlatformMintLimit()
+    const { baseChain } = useEnvironment()
+    const baseChainId = baseChain.id
 
     const onSubmit = useCallback(
         async (getSigner: GetSigner) => {
@@ -151,6 +155,7 @@ export const useSubmit = (props: Props) => {
                         dynamicPricingModuleAddress,
                         platformMintLimit,
                         price: priceInWei,
+                        baseChainId,
                     })
 
                     const { tokensGatedBy, usersGatedBy, ruleData } = prepareGatedDataForSubmit(
@@ -293,6 +298,7 @@ export const useSubmit = (props: Props) => {
             onCreateSpaceFlowStatus,
             uploadTownImageToStream,
             spaceInfoCache,
+            baseChainId,
             navigate,
         ],
     )
@@ -317,6 +323,7 @@ function getPriceConfiguration(args: {
     dynamicPricingModuleAddress: string | undefined
     platformMintLimit: number | undefined
     price: bigint
+    baseChainId: number
 }): PriceConfiguration {
     const {
         townType,
@@ -325,6 +332,7 @@ function getPriceConfiguration(args: {
         dynamicPricingModuleAddress,
         platformMintLimit,
         price,
+        baseChainId,
     } = args
     if (isFixedPricing) {
         if (!fixedPricingModuleAddress) {
@@ -336,7 +344,11 @@ function getPriceConfiguration(args: {
             }
 
             return {
-                freeAllocation: platformMintLimit,
+                freeAllocation:
+                    // on dev/testnet make free allocation very low to easily test free allocation exceeded scenarios
+                    baseChainId === LOCALHOST_CHAIN_ID || baseChainId === BASE_SEPOLIA
+                        ? 2
+                        : platformMintLimit,
                 pricingModule: fixedPricingModuleAddress,
                 price: 0n,
             }
