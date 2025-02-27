@@ -795,6 +795,7 @@ export class Client
         userId: string | undefined,
         chunkCount: number,
         streamSettings?: PlainMessage<StreamSettings>,
+        perChunkEncryption?: boolean,
     ): Promise<{ streamId: string; prevMiniblockHash: Uint8Array }> {
         assert(this.userStreamId !== undefined, 'userStreamId must be set')
         if (!channelId && !spaceId && !userId) {
@@ -827,6 +828,7 @@ export class Client
                 userId: userId ? addressFromUserId(userId) : undefined,
                 chunkCount,
                 settings: streamSettings,
+                perChunkEncryption: perChunkEncryption,
             }),
         )
 
@@ -860,6 +862,7 @@ export class Client
         userId: string | undefined,
         chunkCount: number,
         streamSettings?: PlainMessage<StreamSettings>,
+        perChunkEncryption?: boolean,
     ): Promise<{ creationCookie: CreationCookie }> {
         assert(this.userStreamId !== undefined, 'userStreamId must be set')
         if (!channelId && !spaceId && !userId) {
@@ -892,6 +895,7 @@ export class Client
                 userId: userId ? addressFromUserId(userId) : undefined,
                 chunkCount,
                 settings: streamSettings,
+                perChunkEncryption: perChunkEncryption,
             }),
         )
 
