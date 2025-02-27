@@ -68,9 +68,8 @@ abstract contract MembershipBase is IMembershipBase {
     IPlatformRequirements platform = _getPlatformRequirements();
 
     uint256 minPrice = platform.getMembershipMinPrice();
-    uint256 fixedFee = platform.getMembershipFee();
 
-    if (membershipPrice < minPrice) return fixedFee;
+    if (membershipPrice < minPrice) return platform.getMembershipFee();
 
     return BasisPoints.calculate(membershipPrice, platform.getMembershipBps());
   }
@@ -164,9 +163,8 @@ abstract contract MembershipBase is IMembershipBase {
     IPlatformRequirements platform = _getPlatformRequirements();
 
     uint256 minPrice = platform.getMembershipMinPrice();
-    uint256 fixedFee = platform.getMembershipFee();
 
-    if (membershipPrice < minPrice) membershipPrice = fixedFee;
+    if (membershipPrice < minPrice) return platform.getMembershipFee();
   }
 
   function _setMembershipRenewalPrice(

@@ -101,7 +101,9 @@ interact-any-explicit :;
 	@echo "Running $(contract) on remote network"
 	@SAVE_DEPLOYMENTS=1 $(if $(context),DEPLOYMENT_CONTEXT=$(context)) \
 	forge script scripts/interactions/${contract}.s.sol:${contract} \
-	--ffi --rpc-url ${rpc} --private-key ${private_key} --broadcast --verifier-url ${verifier} --etherscan-api-key ${etherscan} --verify
+	--ffi --rpc-url ${rpc} --private-key ${private_key} --broadcast \
+	--verifier-url ${verifier} --etherscan-api-key ${etherscan} --verify \
+	$(if $(gas_limit),--gas-limit ${gas_limit})
 
 interact-any-explicit-blockscout :;
 	@echo "Running $(contract) on remote network"
