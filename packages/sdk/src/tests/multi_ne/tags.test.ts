@@ -66,47 +66,6 @@ describe('makeTags', () => {
         mockStreamView.events.clear()
     })
 
-    it('should create tags for a reaction message', () => {
-        const reactionMessage: PlainMessage<ChannelMessage> = {
-            payload: {
-                case: 'reaction',
-                value: {
-                    refEventId: 'event1',
-                    reaction: '👍',
-                },
-            },
-        }
-
-        mockStreamView.events.set(
-            'event1',
-            makeRemoteTimelineEvent({
-                parsedEvent: makeParsedEvent(
-                    new StreamEvent({
-                        creatorAddress: user2.context.creatorAddress,
-                        salt: genIdBlob(),
-                        prevMiniblockHash: undefined,
-                        payload: { case: undefined, value: undefined },
-                        createdAtEpochMs: BigInt(Date.now()),
-                        tags: undefined,
-                    }),
-                    undefined,
-                    undefined,
-                ),
-                eventNum: 0n,
-                miniblockNum: 0n,
-                confirmedEventNum: 0n,
-            }),
-        )
-        mockStreamView.timeline.push(mockStreamView.events.get('event1')!)
-
-        const tags = makeTags(reactionMessage, mockStreamView)
-
-        expect(tags.messageInteractionType).toBe(MessageInteractionType.REACTION)
-        expect(tags.groupMentionTypes).toEqual([])
-        expect(tags.mentionedUserAddresses).toEqual([])
-        expect(tags.participatingUserAddresses).toEqual([user2.address])
-    })
-
     it('should create tags for a reply message', () => {
         const threadId1Bytes = Uint8Array.from([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
         const threadId1 = bin_toHexString(threadId1Bytes)

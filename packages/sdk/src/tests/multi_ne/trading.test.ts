@@ -1,13 +1,16 @@
 import { Client } from '../../client'
 import { makeUniqueChannelStreamId } from '../../id'
 import {
+    extractBlockchainTransactionTransferEvents,
+    extractMemberBlockchainTransactions,
     getXchainConfigForTesting,
+    makeDonePromise,
     makeTestClient,
     makeUniqueSpaceStreamId,
     makeUserContextFromWallet,
     waitFor,
 } from '../testUtils'
-import { ContractReceipt, StreamTimelineEvent } from '../../types'
+import { ContractReceipt } from '../../types'
 import { PlainMessage } from '@bufbuild/protobuf'
 import { bin_fromHexString } from '@river-build/dlog'
 import { ethers } from 'ethers'
@@ -32,7 +35,7 @@ describe('Trading', () => {
     let buyReceipt: ContractReceipt
     let sellReceipt: ContractReceipt
     const amountToTransfer = 10n
-
+    const eventEmittedPromise = makeDonePromise()
     const provider = new ethers.providers.StaticJsonRpcProvider(
         getXchainConfigForTesting().supportedRpcUrls[31337],
     )
@@ -107,6 +110,17 @@ describe('Trading', () => {
             blockNumber: buyTransaction.blockNumber!,
             logs: buyTransactionReceipt.logs,
         }
+
+        bobClient.on('streamTokenTransfer', (streamId, data) => {
+            expect(streamId).toBe(channelId)
+            expect(data.userId).toBe(bobClient.userId)
+            expect(data.createdAtEpochMs > 0n).toBe(true)
+            expect(data.chainId).toBe('31337')
+            expect(data.amount).toBe(10n)
+            expect(data.messageId).toBe(threadParentId)
+            expect(data.isBuy).toBe(false)
+            eventEmittedPromise.done()
+        })
     })
 
     test('should reject token transfers where the amount doesnt match the transferred amount', async () => {
@@ -236,6 +250,22 @@ describe('Trading', () => {
         )
     })
 
+    test('tokentransfer events are emitted', async () => {
+        await eventEmittedPromise.expectToSucceed()
+    })
+
+    test('the token transfer is represented in the membership content', async () => {
+        const stream = bobClient.streams.get(channelId)
+        expect(stream).toBeDefined()
+        const transfer = stream!.view.membershipContent.tokenTransfers[0]
+        expect(transfer.userId).toBe(bobClient.userId)
+        expect(transfer.createdAtEpochMs > 0n).toBe(true)
+        expect(transfer.chainId).toBe('31337')
+        expect(transfer.amount).toBe(10n)
+        expect(transfer.messageId).toBe(threadParentId)
+        expect(transfer.isBuy).toBe(false)
+    })
+
     test('should reject duplicate transfers', async () => {
         // alice can't add the same transfer event twice
         const transferEvent: PlainMessage<BlockchainTransaction_TokenTransfer> = {
@@ -293,37 +323,3 @@ describe('Trading', () => {
         })
     })
 })
-
-function extractBlockchainTransactionTransferEvents(timeline: StreamTimelineEvent[]) {
-    return timeline
-        .map((e) => {
-            if (
-                e.remoteEvent?.event.payload.case === 'userPayload' &&
-                e.remoteEvent?.event.payload.value.content.case === 'blockchainTransaction' &&
-                e.remoteEvent?.event.payload.value.content.value.content.case === 'tokenTransfer'
-            ) {
-                return e.remoteEvent?.event.payload.value.content.value.content.value
-            }
-            return undefined
-        })
-        .filter((e) => e !== undefined)
-}
-
-export function extractMemberBlockchainTransactions(client: Client, channelId: string) {
-    const stream = client.streams.get(channelId)
-    if (!stream) throw new Error('no stream found')
-
-    return stream.view.timeline
-        .map((e) => {
-            if (
-                e.remoteEvent?.event.payload.case === 'memberPayload' &&
-                e.remoteEvent?.event.payload.value.content.case === 'memberBlockchainTransaction' &&
-                e.remoteEvent.event.payload.value.content.value.transaction?.content.case ===
-                    'tokenTransfer'
-            ) {
-                return e.remoteEvent.event.payload.value.content.value.transaction.content.value
-            }
-            return undefined
-        })
-        .filter((e) => e !== undefined)
-}

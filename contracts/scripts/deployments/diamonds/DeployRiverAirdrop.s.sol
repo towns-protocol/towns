@@ -49,9 +49,9 @@ contract DeployRiverAirdrop is DiamondHelper, Deployer {
   mapping(string => address) private facetDeployments;
 
   constructor() {
-    facetDeployments["dropHelper"] = address(dropHelper);
-    facetDeployments["pointsHelper"] = address(pointsHelper);
-    facetDeployments["metadataHelper"] = address(metadataHelper);
+    facetDeployments["DropFacet"] = address(dropHelper);
+    facetDeployments["TownsPoints"] = address(pointsHelper);
+    facetDeployments["MetadataFacet"] = address(metadataHelper);
   }
 
   function versionName() public pure override returns (string memory) {

@@ -44,7 +44,7 @@ func (s *Service) startAppRegistryMode(opts *ServerStartOpts) error {
 	}
 
 	var registries []nodes.NodeRegistry
-	for range 10 {
+	for range 11 {
 		registry, err := nodes.LoadNodeRegistry(
 			s.serverCtx,
 			s.registryContract,
