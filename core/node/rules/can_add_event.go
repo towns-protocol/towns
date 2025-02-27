@@ -659,7 +659,7 @@ func (ru *aeMemberBlockchainTransactionRules) validMemberBlockchainTransaction_I
 	// loop over all events in the view, check if the transaction is already in the view
 	streamView := ru.params.streamView
 
-	hasTransaction, err := streamView.HasTransaction(ru.memberTransaction.Transaction.GetReceipt())
+	hasTransaction, err := streamView.HasTransaction(ru.memberTransaction.Transaction.GetReceipt(), ru.memberTransaction.Transaction.GetSolanaReceipt())
 	if err != nil {
 		return false, err
 	}
@@ -675,7 +675,7 @@ func (ru *aeReceivedBlockchainTransactionRules) validReceivedBlockchainTransacti
 	// loop over all events in the view, check if the transaction is already in the view
 	userStreamView := ru.params.streamView
 
-	hasTransaction, err := userStreamView.HasTransaction(ru.receivedTransaction.Transaction.GetReceipt())
+	hasTransaction, err := userStreamView.HasTransaction(ru.receivedTransaction.Transaction.GetReceipt(), ru.receivedTransaction.Transaction.GetSolanaReceipt())
 	if err != nil {
 		return false, err
 	}
@@ -691,7 +691,7 @@ func (ru *aeBlockchainTransactionRules) validBlockchainTransaction_IsUnique() (b
 	// loop over all events in the view, check if the transaction is already in the view
 	userStreamView := ru.params.streamView
 
-	hasTransaction, err := userStreamView.HasTransaction(ru.transaction.GetReceipt())
+	hasTransaction, err := userStreamView.HasTransaction(ru.transaction.GetReceipt(), ru.transaction.GetSolanaReceipt())
 	if err != nil {
 		return false, err
 	}
