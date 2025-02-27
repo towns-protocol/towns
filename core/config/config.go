@@ -444,10 +444,11 @@ type AppRegistryConfig struct {
 	// characters, plus an optional '0x' prefix.
 	SharedSecretDataEncryptionKey string `json:"-" yaml:"-"` // Omit sensitive field from logging
 
-	// AllowLoopbackWebhooks allows webhooks that resolve to a loopback address via DNS. This setting
-	// was added for local/unit testing only and ishould not be used in production environments,
-	// in order to prevent server side request forgery attacks.
-	AllowLoopbackWebhooks bool
+	// AllowInsecureWebhooks allows non-https webhooks, webhooks that resolve to a a private or loopback,
+	// address via DNS, and webhooks that result in redirects. This setting was added for local/unit
+	// testing only and should not be used in production environments, in order to prevent server side
+	// request forgery attacks.
+	AllowInsecureWebhooks bool
 }
 
 type LogConfig struct {

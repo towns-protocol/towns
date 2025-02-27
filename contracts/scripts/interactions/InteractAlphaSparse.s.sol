@@ -20,7 +20,7 @@ import {DeploySpace} from "contracts/scripts/deployments/diamonds/DeploySpace.s.
 import {DeploySpaceFactory} from "contracts/scripts/deployments/diamonds/DeploySpaceFactory.s.sol";
 import {DeployBaseRegistry} from "contracts/scripts/deployments/diamonds/DeployBaseRegistry.s.sol";
 import {DeploySpaceOwner} from "contracts/scripts/deployments/diamonds/DeploySpaceOwner.s.sol";
-//import {DeployRiverAirdrop} from "contracts/scripts/deployments/diamonds/DeployRiverAirdrop.s.sol";
+import {DeployRiverAirdrop} from "contracts/scripts/deployments/diamonds/DeployRiverAirdrop.s.sol";
 
 contract InteractAlphaSparse is AlphaHelper {
   using stdJson for string;
@@ -65,6 +65,15 @@ contract InteractAlphaSparse is AlphaHelper {
       console.log("Failed to deploy BaseRegistry:", reason);
     } catch (bytes memory) {
       console.log("Failed to deploy BaseRegistry (low level error)");
+    }
+
+    try new DeployRiverAirdrop() returns (DeployRiverAirdrop riverAirdrop) {
+      diamondDeployments["riverAirdrop"] = address(riverAirdrop);
+      console.log("riverAirdrop deployed to:", address(riverAirdrop));
+    } catch Error(string memory reason) {
+      console.log("Failed to deploy RiverAirdrop:", reason);
+    } catch (bytes memory) {
+      console.log("Failed to deploy RiverAirdrop (low level error)");
     }
 
     vm.resumeGasMetering();

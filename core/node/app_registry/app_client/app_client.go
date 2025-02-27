@@ -4,12 +4,22 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"io"
 	"net/http"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/protocol"
 )
+
+type EncryptionDevice struct {
+	DeviceKey   string `json:"deviceKey"`
+	FallbackKey string `json:"fallbackKey"`
+}
+
+type InitializeResponse struct {
+	DefaultEncryptionDevice EncryptionDevice `json:"defaultEncryptionDevice"`
+}
 
 type InitializeData struct{}
 
@@ -24,7 +34,7 @@ type AppClient struct {
 
 func NewAppClient(httpClient *http.Client, allowLoopback bool) *AppClient {
 	if !allowLoopback {
-		httpClient = NewExternalHttpClient(httpClient)
+		httpClient = NewExternalHttpsClient(httpClient)
 	}
 	return &AppClient{
 		httpClient: httpClient,
@@ -41,27 +51,27 @@ func (b *AppClient) InitializeWebhook(
 	webhookUrl string,
 	appId common.Address,
 	hs256SharedSecret [32]byte,
-) error {
+) (*EncryptionDevice, error) {
 	payload := AppServiceRequestPayload{
 		Command: "initialize",
 	}
 	jsonData, err := json.Marshal(payload)
 	if err != nil {
-		return base.WrapRiverError(protocol.Err_INTERNAL, err).
+		return nil, base.WrapRiverError(protocol.Err_INTERNAL, err).
 			Message("Error constructing request payload to initialize webhook").
 			Tag("appId", appId)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, "POST", webhookUrl, bytes.NewBuffer(jsonData))
 	if err != nil {
-		return base.WrapRiverError(protocol.Err_INTERNAL, err).
+		return nil, base.WrapRiverError(protocol.Err_INTERNAL, err).
 			Message("Error constructing request to initialize webhook").
 			Tag("appId", appId)
 	}
 
 	// Add authorization header based on the shared secret for this app.
 	if err := signRequest(req, hs256SharedSecret[:], appId); err != nil {
-		return base.WrapRiverError(protocol.Err_INTERNAL, err).
+		return nil, base.WrapRiverError(protocol.Err_INTERNAL, err).
 			Message("Error signing request to initialize webhook").
 			Tag("appId", appId)
 	}
@@ -70,7 +80,7 @@ func (b *AppClient) InitializeWebhook(
 
 	resp, err := b.httpClient.Do(req)
 	if err != nil {
-		return base.WrapRiverError(protocol.Err_CANNOT_CALL_WEBHOOK, err).
+		return nil, base.WrapRiverError(protocol.Err_CANNOT_CALL_WEBHOOK, err).
 			Message("Unable to initialize the webhook").
 			Tag("appId", appId)
 	}
@@ -81,12 +91,25 @@ func (b *AppClient) InitializeWebhook(
 	// device_id, fallback key should come in via sync runner and tracked streams,
 	// and be persisted to the cache / db.
 	if resp.StatusCode != http.StatusOK {
-		return base.WrapRiverError(protocol.Err_CANNOT_CALL_WEBHOOK, err).
-			Message("Webhook response non-OK status").
+		return nil, base.RiverError(protocol.Err_CANNOT_CALL_WEBHOOK, "webhook response non-OK status").
 			Tag("appId", appId)
 	}
 
-	return nil
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, base.WrapRiverError(protocol.Err_CANNOT_CALL_WEBHOOK, err).
+			Message("Webhook response was unreadable").
+			Tag("appId", appId)
+	}
+
+	var initializeResp InitializeResponse
+	if err = json.Unmarshal(body, &initializeResp); err != nil {
+		return nil, base.WrapRiverError(protocol.Err_MALFORMED_WEBHOOK_RESPONSE, err).
+			Message("Webhook response was unparsable").
+			Tag("appId", appId)
+	}
+
+	return &initializeResp.DefaultEncryptionDevice, nil
 }
 
 // GetWebhookStatus sends an "info" message to the app service and expects a 200 with

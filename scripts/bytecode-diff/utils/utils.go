@@ -100,7 +100,7 @@ func GetFacetFiles(facetSourcePath string, verbose bool) ([]FacetFile, error) {
 			return err
 		}
 
-		if strings.Contains(path, "facets") {
+		if strings.Contains(path, "facets") || strings.Contains(path, "airdrop") {
 			if !info.IsDir() && strings.HasSuffix(info.Name(), ".sol") && !strings.HasPrefix(info.Name(), "I") {
 				if verbose {
 					Log.Info().Msgf("Found facet file: %s", info.Name())
