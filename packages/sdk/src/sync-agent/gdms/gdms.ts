@@ -34,7 +34,7 @@ export class Gdms extends PersistedObservable<GdmsModel> {
             (value) => {
                 this.onUserMembershipsChanged(value)
             },
-            { fireImmediately: true },
+            { fireImediately: true },
         )
     }
 
