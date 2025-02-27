@@ -39,7 +39,7 @@ export class Spaces extends PersistedObservable<SpacesModel> {
             (value) => {
                 this.onUserMembershipsChanged(value)
             },
-            { fireImmediately: true },
+            { fireImediately: true },
         )
     }
 
