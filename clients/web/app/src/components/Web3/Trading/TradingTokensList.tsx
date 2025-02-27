@@ -17,7 +17,7 @@ export const TradingTokensList = ({ assets }: { assets: ChainWalletAssets[] }) =
         return assets
             .map((asset) => asset.tokens)
             .flat()
-            .filter((token) => token.holdingValueCents > 1)
+            .filter((token) => token.holdingValueCents > 0.01)
             .sort((a, b) => b.holdingValueCents - a.holdingValueCents)
     }, [assets])
 
