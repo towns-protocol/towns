@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"go.uber.org/zap"
+
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
 	. "github.com/towns-protocol/towns/core/node/base"
@@ -50,6 +52,13 @@ type (
 		CancelReq       *connect.Request[CancelSyncRequest]
 		DebugDropStream shared.StreamId
 		reply           chan error
+	}
+
+	// responseMessage is a wrapper for the sync stream response message with an error channel that can be used to
+	// indicate if there was any error when sending back a response to the client.
+	responseMessage struct {
+		msg *SyncStreamsResponse
+		err chan error
 	}
 )
 
@@ -134,96 +143,18 @@ func (syncOp *StreamSyncOperation) Run(
 	// stop is used to signal the message sender to stop sending messages to the client when the sync is closed
 	stop := make(chan struct{})
 
-	// Create a channel to send messages to the client
-	type clientMsg struct {
-		msg *SyncStreamsResponse
-		err chan error
-	}
-	clientMsgs := make(chan clientMsg, 1)
+	// Create a channel for messages that need to be sent to the client.
+	// There are two separate processes that send messages to the client, one for stream updates and one for commands.
+	// The messages channel is used to send stream updates to the client sequentially and avoid data races.
+	// responseMessage type is used to send the message and an error channel to signal if there was an error sending the
+	// message to the client.
+	responses := make(chan responseMessage, 1)
 
 	// Start a separate goroutine to process stream update messages
-	go func() {
-		var messagesSendToClient int
-		defer log.Debugw("Stream sync operation stopped", "send", messagesSendToClient)
-		for {
-			select {
-			case <-syncOp.ctx.Done():
-				return
-			case <-stop:
-				return
-			case msg, ok := <-messages:
-				if !ok {
-					return
-				}
-
-				errChan := make(chan error, 1)
-				clientMsgs <- clientMsg{
-					msg: msg,
-					err: errChan,
-				}
-
-				if err := <-errChan; err != nil {
-					log.Errorw("Unable to send sync stream update to client", "err", err)
-					close(stop)
-					return
-				}
-
-				messagesSendToClient++
-
-				log.Debug("Pending messages in sync operation", "count", len(messages))
-			}
-		}
-	}()
+	go syncOp.runMessagesProcessing(log, messages, responses, stop)
 
 	// Start separate goroutine to process sync stream commands
-	go func() {
-		for {
-			select {
-			case <-syncOp.ctx.Done():
-				return
-			case <-stop:
-				return
-			case cmd := <-syncOp.commands:
-				if cmd.AddStreamReq != nil {
-					nodeAddress := common.BytesToAddress(cmd.AddStreamReq.Msg.GetSyncPos().GetNodeAddress())
-					streamID, err := shared.StreamIdFromBytes(cmd.AddStreamReq.Msg.GetSyncPos().GetStreamId())
-					if err != nil {
-						cmd.Reply(err)
-						continue
-					}
-
-					cmd.Reply(syncers.AddStream(cmd.Ctx, nodeAddress, streamID, cmd.AddStreamReq.Msg.GetSyncPos()))
-				} else if cmd.RmStreamReq != nil {
-					streamID, err := shared.StreamIdFromBytes(cmd.RmStreamReq.Msg.GetStreamId())
-					if err != nil {
-						cmd.Reply(err)
-						continue
-					}
-					cmd.Reply(syncers.RemoveStream(cmd.Ctx, streamID))
-				} else if cmd.DebugDropStream != (shared.StreamId{}) {
-					cmd.Reply(syncers.DebugDropStream(cmd.Ctx, cmd.DebugDropStream))
-				} else if cmd.CancelReq != nil {
-					clientMsgs <- clientMsg{
-						msg: &SyncStreamsResponse{SyncOp: SyncOp_SYNC_CLOSE},
-						err: make(chan error, 1),
-					}
-					close(stop)
-					cmd.Reply(nil)
-					return
-				} else if cmd.PingReq != nil {
-					errChan := make(chan error, 1)
-					clientMsgs <- clientMsg{
-						msg: &SyncStreamsResponse{
-							SyncOp:    SyncOp_SYNC_PONG,
-							PongNonce: cmd.PingReq.Msg.GetNonce(),
-						},
-						err: errChan,
-					}
-					cmd.Reply(<-errChan)
-				}
-			}
-		}
-	}()
+	go syncOp.runCommandsProcessing(syncers, responses, stop)
 
 	for {
 		select {
@@ -236,9 +167,100 @@ func (syncOp *StreamSyncOperation) Run(
 			return context.Cause(syncOp.ctx)
 		case <-stop:
 			return nil
-		case msg := <-clientMsgs:
+		case msg := <-responses:
 			msg.msg.SyncId = syncOp.SyncID
 			msg.err <- res.Send(msg.msg)
+		}
+	}
+}
+
+func (syncOp *StreamSyncOperation) runCommandsProcessing(
+	syncers *client.SyncerSet,
+	responses chan responseMessage,
+	stop chan struct{},
+) {
+	for {
+		select {
+		case <-syncOp.ctx.Done():
+			return
+		case <-stop:
+			return
+		case cmd := <-syncOp.commands:
+			if cmd.AddStreamReq != nil {
+				nodeAddress := common.BytesToAddress(cmd.AddStreamReq.Msg.GetSyncPos().GetNodeAddress())
+				streamID, err := shared.StreamIdFromBytes(cmd.AddStreamReq.Msg.GetSyncPos().GetStreamId())
+				if err != nil {
+					cmd.Reply(err)
+					continue
+				}
+
+				cmd.Reply(syncers.AddStream(cmd.Ctx, nodeAddress, streamID, cmd.AddStreamReq.Msg.GetSyncPos()))
+			} else if cmd.RmStreamReq != nil {
+				streamID, err := shared.StreamIdFromBytes(cmd.RmStreamReq.Msg.GetStreamId())
+				if err != nil {
+					cmd.Reply(err)
+					continue
+				}
+				cmd.Reply(syncers.RemoveStream(cmd.Ctx, streamID))
+			} else if cmd.DebugDropStream != (shared.StreamId{}) {
+				cmd.Reply(syncers.DebugDropStream(cmd.Ctx, cmd.DebugDropStream))
+			} else if cmd.CancelReq != nil {
+				responses <- responseMessage{
+					msg: &SyncStreamsResponse{SyncOp: SyncOp_SYNC_CLOSE},
+					err: make(chan error, 1),
+				}
+				close(stop)
+				cmd.Reply(nil)
+				return
+			} else if cmd.PingReq != nil {
+				errChan := make(chan error, 1)
+				responses <- responseMessage{
+					msg: &SyncStreamsResponse{
+						SyncOp:    SyncOp_SYNC_PONG,
+						PongNonce: cmd.PingReq.Msg.GetNonce(),
+					},
+					err: errChan,
+				}
+				cmd.Reply(<-errChan)
+			}
+		}
+	}
+}
+
+func (syncOp *StreamSyncOperation) runMessagesProcessing(
+	log *zap.SugaredLogger,
+	messages chan *SyncStreamsResponse,
+	responses chan responseMessage,
+	stop chan struct{},
+) {
+	var messagesSendToClient int
+	defer log.Debugw("Stream sync operation stopped", "send", messagesSendToClient)
+	for {
+		select {
+		case <-syncOp.ctx.Done():
+			return
+		case <-stop:
+			return
+		case msg, ok := <-messages:
+			if !ok {
+				return
+			}
+
+			errChan := make(chan error, 1)
+			responses <- responseMessage{
+				msg: msg,
+				err: errChan,
+			}
+
+			if err := <-errChan; err != nil {
+				log.Errorw("Unable to send sync stream update to client", "err", err)
+				close(stop)
+				return
+			}
+
+			messagesSendToClient++
+
+			log.Debug("Pending messages in sync operation", "count", len(messages))
 		}
 	}
 }
