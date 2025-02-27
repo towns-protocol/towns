@@ -39,6 +39,7 @@ import { useRiverConnectedSuccessfullyAnalyticsEvent } from '@components/Analyti
 import { validateAndParseXChainConfig } from 'utils/validateAndParseXChainConfig'
 import { FundWalletModal } from '@components/Web3/Wallet/FundWalletModal'
 import { TradingContextProvider } from '@components/Web3/Trading/TradingContextProvider'
+import { LocalStorageMigrator } from 'store/localStorageMigrator'
 import { wagmiConfig } from './wagmiConfig'
 
 FontLoader.init()
@@ -202,6 +203,7 @@ export const App = () => {
                         <UserOpTxModal />
                         <FundWalletModal />
                         <TrackRiverConnectedSuccessfully />
+                        <LocalStorageMigrator />
                     </TradingContextProvider>
                 </CombinedAuthContextProvider>
             </WagmiProvider>
