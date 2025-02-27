@@ -306,7 +306,8 @@ func (up *UserPreferences) WantNotificationForSpaceChannelMessage(
 			MessageInteractionType_MESSAGE_INTERACTION_TYPE_UNSPECIFIED:
 			return true
 		case MessageInteractionType_MESSAGE_INTERACTION_TYPE_EDIT,
-			MessageInteractionType_MESSAGE_INTERACTION_TYPE_REDACTION:
+			MessageInteractionType_MESSAGE_INTERACTION_TYPE_REDACTION,
+			MessageInteractionType_MESSAGE_INTERACTION_TYPE_TRADE:
 			return false
 		}
 

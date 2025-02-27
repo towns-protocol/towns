@@ -3,11 +3,13 @@ import {
     DecryptionSessionError,
     EncryptedContentItem,
     EntitlementsDelegate,
+    EventSignatureBundle,
     GroupEncryptionCrypto,
     GroupSessionsData,
     KeyFulfilmentData,
     KeySolicitationContent,
     KeySolicitationData,
+    KeySolicitationItem,
     UserDevice,
 } from '@river-build/encryption'
 import {
@@ -34,9 +36,12 @@ import {
     isUserStreamId,
     isChannelStreamId,
 } from './id'
+import { checkEventSignature } from './sign'
 
 export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
     private isMobileSafariBackgrounded = false
+    private validatedEvents: Record<string, { isValid: boolean; reason?: string }> = {}
+    private unpackEnvelopeOpts?: { disableSignatureValidation?: boolean }
 
     constructor(
         private readonly client: Client,
@@ -44,6 +49,8 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         delegate: EntitlementsDelegate,
         userId: string,
         userDevice: UserDevice,
+        unpackEnvelopeOpts: { disableSignatureValidation?: boolean } | undefined,
+        logId: string,
     ) {
         const upToDateStreams = new Set<string>()
         client.streams.getStreams().forEach((stream) => {
@@ -52,8 +59,9 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
             }
         })
 
-        super(client, crypto, delegate, userDevice, userId, upToDateStreams)
+        super(client, crypto, delegate, userDevice, userId, upToDateStreams, logId)
 
+        this.unpackEnvelopeOpts = unpackEnvelopeOpts
         const onMembershipChange = (streamId: string, userId: string) => {
             if (userId === this.userId) {
                 this.retryDecryptionFailures(streamId)
@@ -78,7 +86,15 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
             fromUserId: string,
             fromUserAddress: Uint8Array,
             keySolicitation: KeySolicitationContent,
-        ) => this.enqueueKeySolicitation(streamId, fromUserId, fromUserAddress, keySolicitation)
+            sigBundle: EventSignatureBundle,
+        ) =>
+            this.enqueueKeySolicitation(
+                streamId,
+                fromUserId,
+                fromUserAddress,
+                keySolicitation,
+                sigBundle,
+            )
 
         const onInitKeySolicitations = (
             streamId: string,
@@ -87,7 +103,8 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
                 userAddress: Uint8Array
                 solicitations: KeySolicitationContent[]
             }[],
-        ) => this.enqueueInitKeySolicitations(streamId, members)
+            sigBundle: EventSignatureBundle,
+        ) => this.enqueueInitKeySolicitations(streamId, members, sigBundle)
 
         const onStreamInitialized = (streamId: string) => {
             if (isUserInboxStreamId(streamId)) {
@@ -208,8 +225,32 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         return true
     }
 
-    public isValidEvent(streamId: string, eventId: string): { isValid: boolean; reason?: string } {
-        return this.client.isValidEvent(streamId, eventId)
+    public isValidEvent(item: KeySolicitationItem): { isValid: boolean; reason?: string } {
+        if (this.unpackEnvelopeOpts?.disableSignatureValidation !== true) {
+            return { isValid: true }
+        }
+        const eventId = item.solicitation.srcEventId
+        const sigBundle = item.sigBundle
+        if (!sigBundle) {
+            return { isValid: false, reason: 'event not found' }
+        }
+        if (!sigBundle.signature) {
+            return { isValid: false, reason: 'remote event signature not found' }
+        }
+        if (this.validatedEvents[eventId]) {
+            return this.validatedEvents[eventId]
+        }
+        try {
+            checkEventSignature(sigBundle.event, sigBundle.hash, sigBundle.signature)
+            const result = { isValid: true }
+            this.validatedEvents[eventId] = result
+            return result
+        } catch (err) {
+            // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+            const result = { isValid: false, reason: `error: ${err}` }
+            this.validatedEvents[eventId] = result
+            return result
+        }
     }
 
     public onDecryptionError(item: EncryptedContentItem, err: DecryptionSessionError): void {

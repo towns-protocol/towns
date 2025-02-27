@@ -10,22 +10,16 @@ export default [
         "internalType": "address"
       },
       {
-        "name": "review",
-        "type": "tuple",
+        "name": "comment",
+        "type": "string",
         "indexed": false,
-        "internalType": "struct ReviewStorage.Content",
-        "components": [
-          {
-            "name": "comment",
-            "type": "string",
-            "internalType": "string"
-          },
-          {
-            "name": "rating",
-            "type": "uint8",
-            "internalType": "uint8"
-          }
-        ]
+        "internalType": "string"
+      },
+      {
+        "name": "rating",
+        "type": "uint8",
+        "indexed": false,
+        "internalType": "uint8"
       }
     ],
     "anonymous": false
@@ -54,22 +48,16 @@ export default [
         "internalType": "address"
       },
       {
-        "name": "review",
-        "type": "tuple",
+        "name": "comment",
+        "type": "string",
         "indexed": false,
-        "internalType": "struct ReviewStorage.Content",
-        "components": [
-          {
-            "name": "comment",
-            "type": "string",
-            "internalType": "string"
-          },
-          {
-            "name": "rating",
-            "type": "uint8",
-            "internalType": "uint8"
-          }
-        ]
+        "internalType": "string"
+      },
+      {
+        "name": "rating",
+        "type": "uint8",
+        "indexed": false,
+        "internalType": "uint8"
       }
     ],
     "anonymous": false
@@ -82,6 +70,16 @@ export default [
   {
     "type": "error",
     "name": "ReviewFacet__InvalidRating",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "ReviewFacet__ReviewAlreadyExists",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "ReviewFacet__ReviewDoesNotExist",
     "inputs": []
   }
 ] as const

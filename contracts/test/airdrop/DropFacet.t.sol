@@ -17,7 +17,6 @@ import {DropFacet} from "contracts/src/airdrop/drop/DropFacet.sol";
 import {RewardsDistribution} from "contracts/src/base/registry/facets/distribution/v2/RewardsDistribution.sol";
 import {BasisPoints} from "contracts/src/utils/libraries/BasisPoints.sol";
 import {DropStorage} from "contracts/src/airdrop/drop/DropStorage.sol";
-import {EIP712Utils} from "contracts/test/utils/EIP712Utils.sol";
 import {NodeOperatorStatus} from "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
 
 // contracts
@@ -29,7 +28,6 @@ import {StakingRewards} from "contracts/src/base/registry/facets/distribution/v2
 
 contract DropFacetTest is
   BaseSetup,
-  EIP712Utils,
   IDropFacetBase,
   IOwnableBase,
   IRewardsDistributionBase

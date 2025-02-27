@@ -9,6 +9,7 @@ import { BaseContractShim } from './BaseContractShim'
 
 import DevAbi from '@river-build/generated/dev/abis/IReview.abi.json' assert { type: 'json' }
 import { Address } from 'abitype'
+import { bin_toHexString } from '@river-build/dlog'
 
 // solidity doesn't export enums, so we need to define them here, boooooo
 export enum SpaceReviewAction {
@@ -16,6 +17,13 @@ export enum SpaceReviewAction {
     Add = 0,
     Update = 1,
     Delete = 2,
+}
+
+export interface SpaceReviewEventObject {
+    action: SpaceReviewAction
+    user: string
+    comment?: string
+    rating: number
 }
 
 export interface ReviewParams {
@@ -84,6 +92,20 @@ export class IReviewShim extends BaseContractShim<IReview, IReviewInterface> {
     }
 }
 
+export function getSpaceReviewEventDataBin(
+    binLogs: { topics: Uint8Array[]; data: Uint8Array; address: Uint8Array }[],
+    from: Uint8Array,
+): SpaceReviewEventObject {
+    const logs =
+        binLogs.map((log) => ({
+            address: '0x' + bin_toHexString(log.address),
+            topics: log.topics.map((topic) => '0x' + bin_toHexString(topic)),
+            data: '0x' + bin_toHexString(log.data),
+        })) ?? []
+    const senderWallet = '0x' + bin_toHexString(from)
+    return getSpaceReviewEventData(logs, senderWallet)
+}
+
 /**
  * Get the review event data from a receipt, public static for ease of use in the SDK
  * @param receipt - The receipt of the transaction
@@ -91,9 +113,9 @@ export class IReviewShim extends BaseContractShim<IReview, IReviewInterface> {
  * @returns The review event data
  */
 export function getSpaceReviewEventData(
-    logs: { topics: string[]; data: string }[],
+    logs: { topics: string[]; data: string; address: string }[],
     senderAddress: string,
-): { comment?: string; rating: number; kind: SpaceReviewAction } {
+): SpaceReviewEventObject {
     const contractInterface = new ethers.utils.Interface(DevAbi) as IReviewInterface
     for (const log of logs) {
         const parsedLog = contractInterface.parseLog(log)
@@ -102,29 +124,32 @@ export function getSpaceReviewEventData(
             (parsedLog.args.user as string).toLowerCase() === senderAddress.toLowerCase()
         ) {
             return {
-                comment: (parsedLog.args.review as ReviewStorage.ContentStructOutput)[0],
-                rating: (parsedLog.args.review as ReviewStorage.ContentStructOutput)[1],
-                kind: SpaceReviewAction.Add,
+                user: parsedLog.args.user,
+                comment: parsedLog.args.comment,
+                rating: parsedLog.args.rating,
+                action: SpaceReviewAction.Add,
             }
         } else if (
             parsedLog.name === 'ReviewUpdated' &&
             (parsedLog.args.user as string).toLowerCase() === senderAddress.toLowerCase()
         ) {
             return {
-                comment: (parsedLog.args.review as ReviewStorage.ContentStructOutput)[0],
-                rating: (parsedLog.args.review as ReviewStorage.ContentStructOutput)[1],
-                kind: SpaceReviewAction.Update,
+                user: parsedLog.args.user,
+                comment: parsedLog.args.comment,
+                rating: parsedLog.args.rating,
+                action: SpaceReviewAction.Update,
             }
         } else if (
             parsedLog.name === 'ReviewDeleted' &&
             (parsedLog.args.user as string).toLowerCase() === senderAddress.toLowerCase()
         ) {
             return {
+                user: parsedLog.args.user,
                 comment: undefined,
                 rating: 0,
-                kind: SpaceReviewAction.Delete,
+                action: SpaceReviewAction.Delete,
             }
         }
     }
-    return { comment: undefined, rating: 0, kind: SpaceReviewAction.None }
+    return { user: '', comment: undefined, rating: 0, action: SpaceReviewAction.None }
 }

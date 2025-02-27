@@ -31,9 +31,6 @@ const (
 	KEY_FILE_PERMISSIONS     = 0o600
 )
 
-// String 'CSBLANCA' as bytes.
-var HASH_HEADER = []byte{67, 83, 66, 76, 65, 78, 67, 65}
-
 // String 'ABCDEFG>' as bytes.
 var HASH_SEPARATOR = []byte{65, 66, 67, 68, 69, 70, 71, 62}
 
@@ -50,20 +47,24 @@ func writeOrPanic(w io.Writer, buf []byte) {
 	}
 }
 
-// RiverHash computes the hash of the given buffer using the River hashing algorithm.
+// TownsHash is a hasher with a given header. Use different headers for different types of hashes to avoid replay attacks.
+type TownsHash [8]byte
+
+// TownsHashForEvents is a TownsHash with the prefix 'CSBLANCA' as bytes for hashing Towns events.
+var TownsHashForEvents = TownsHash{67, 83, 66, 76, 65, 78, 67, 65} // Prefix 'CSBLANCA' as bytes.
+
+// Hash computes the hash of the given buffer using the Towns hashing algorithm.
 // It uses Keccak256 to ensure compatability with the EVM and uses a header, separator,
-// and footer to ensure that the hash is unique to River.
-func RiverHash(buffer []byte) common.Hash {
+// and footer to ensure that the hash is unique to Towns.
+func (h TownsHash) Hash(buffer []byte) common.Hash {
 	hash := sha3.NewLegacyKeccak256()
-	writeOrPanic(hash, HASH_HEADER)
-	// Write length of buffer as 64-bit little endian uint.
-	err := binary.Write(hash, binary.LittleEndian, uint64(len(buffer)))
-	if err != nil {
-		panic(err)
-	}
-	writeOrPanic(hash, HASH_SEPARATOR)
-	writeOrPanic(hash, buffer)
-	writeOrPanic(hash, HASH_FOOTER)
+	_, _ = hash.Write(h[:])
+	// Write length of the buffer as 64-bit little endian uint.
+	l := uint64(len(buffer))
+	_, _ = hash.Write([]byte{byte(l), byte(l >> 8), byte(l >> 16), byte(l >> 24), byte(l >> 32), byte(l >> 40), byte(l >> 48), byte(l >> 56)})
+	_, _ = hash.Write(HASH_SEPARATOR)
+	_, _ = hash.Write(buffer)
+	_, _ = hash.Write(HASH_FOOTER)
 	return common.BytesToHash(hash.Sum(nil))
 }
 
@@ -283,8 +284,8 @@ func (w *Wallet) SaveWallet(
 	return nil
 }
 
-func (w *Wallet) SignHash(hash []byte) ([]byte, error) {
-	return secp256k1.Sign(hash, w.PrivateKey)
+func (w *Wallet) SignHash(hash common.Hash) ([]byte, error) {
+	return secp256k1.Sign(hash[:], w.PrivateKey)
 }
 
 func RecoverSignerPublicKey(hash []byte, signature []byte) ([]byte, error) {
@@ -301,10 +302,10 @@ func PublicKeyToAddress(publicKey []byte) common.Address {
 	return common.BytesToAddress(crypto.Keccak256(publicKey[1:])[12:])
 }
 
-func PackWithNonce(address common.Address, nonce uint64) ([]byte, error) {
+func PackWithNonce(address common.Address, nonce uint64) (common.Hash, error) {
 	addressTy, err := abi.NewType("address", "address", nil)
 	if err != nil {
-		return nil, AsRiverError(err, Err_INTERNAL).
+		return common.Hash{}, AsRiverError(err, Err_INTERNAL).
 			Message("Invalid abi type definition").
 			Tag("type", "address").
 			Func("PackWithNonce")
@@ -312,7 +313,7 @@ func PackWithNonce(address common.Address, nonce uint64) ([]byte, error) {
 
 	uint256Ty, err := abi.NewType("uint256", "uint256", nil)
 	if err != nil {
-		return nil, AsRiverError(err, Err_INTERNAL).
+		return common.Hash{}, AsRiverError(err, Err_INTERNAL).
 			Message("Invalid abi type definition").
 			Tag("type", "uint256").
 			Func("PackWithNonce")
@@ -327,7 +328,7 @@ func PackWithNonce(address common.Address, nonce uint64) ([]byte, error) {
 	}
 	bytes, err := arguments.Pack(address, new(big.Int).SetUint64(nonce))
 	if err != nil {
-		return nil, AsRiverError(err, Err_INTERNAL).
+		return common.Hash{}, AsRiverError(err, Err_INTERNAL).
 			Message("Failed to pack arguments").
 			Func("PackWithNonce")
 	}
@@ -336,16 +337,16 @@ func PackWithNonce(address common.Address, nonce uint64) ([]byte, error) {
 	hasher.Write(bytes)
 	bytes = hasher.Sum(nil)
 
-	return bytes, nil
+	return common.BytesToHash(bytes), nil
 }
 
-func ToEthMessageHash(messageHash []byte) []byte {
+func ToEthMessageHash(messageHash common.Hash) common.Hash {
 	bytes := append(
 		[]byte("\x19Ethereum Signed Message:\n"),
 		[]byte(fmt.Sprintf("%d", len(messageHash)))...,
 	)
-	bytes = append(bytes, messageHash...)
-	return crypto.Keccak256(bytes)
+	bytes = append(bytes, messageHash.Bytes()...)
+	return crypto.Keccak256Hash(bytes)
 }
 
 func (w Wallet) String() string {

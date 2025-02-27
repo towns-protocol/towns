@@ -305,15 +305,13 @@ func (s *PostgresEventStore) init(
 		s.isolationLevel = pgx.Serializable
 	case "repeatable read", "repeatable_read", "repeatableread":
 		s.isolationLevel = pgx.RepeatableRead
-	case "read committed", "read_committed", "readcommitted":
+	case "read committed", "read_committed", "readcommitted", "":
 		s.isolationLevel = pgx.ReadCommitted
 	default:
-		s.isolationLevel = pgx.Serializable
+		return RiverError(Err_BAD_CONFIG, "Unknown IsolationLevel in config", "value", poolInfo.Config.IsolationLevel)
 	}
 
-	if s.isolationLevel != pgx.Serializable {
-		log.Infow("PostgresEventStore: using isolation level", "level", s.isolationLevel)
-	}
+	log.Infow("PostgresEventStore: using isolation level", "level", s.isolationLevel)
 
 	if s.config.DebugTransactions {
 		s.txTracker.enable()

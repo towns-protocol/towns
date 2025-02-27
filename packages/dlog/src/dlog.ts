@@ -224,7 +224,7 @@ export const dlog = (ns: string, opts?: DLogOpts): DLogger => {
  * @returns New logger with namespace `ns`.
  */
 export const dlogError = (ns: string): DLogger => {
-    const l = makeDlog(debug(ns), { defaultEnabled: true, printStack: true })
+    const l = makeDlog(debug(ns), { defaultEnabled: true, printStack: true, allowJest: true })
     return l
 }
 

@@ -13,7 +13,7 @@ import {RiverRegistryErrors} from "contracts/src/river/registry/libraries/Regist
 import {RegistryModifiers} from "contracts/src/river/registry/libraries/RegistryStorage.sol";
 
 library StreamFlags {
-  uint64 constant SEALED = 1;
+  uint64 internal constant SEALED = 1;
 }
 
 contract StreamRegistry is IStreamRegistry, RegistryModifiers {
@@ -23,32 +23,20 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
   /// @inheritdoc IStreamRegistry
   function allocateStream(
     bytes32 streamId,
-    address[] memory nodes,
+    address[] calldata nodes,
     bytes32 genesisMiniblockHash,
-    bytes memory genesisMiniblock
-  ) external onlyNode(msg.sender) {
-    // verify that the streamId is not already in the registry
-    if (ds.streams.contains(streamId))
-      revert(RiverRegistryErrors.ALREADY_EXISTS);
-
-    // verify that the nodes stream is placed on are in the registry
-    uint256 nodeCount = nodes.length;
-    for (uint256 i = 0; i < nodeCount; ++i) {
-      if (!ds.nodes.contains(nodes[i]))
-        revert(RiverRegistryErrors.NODE_NOT_FOUND);
-    }
-
+    bytes calldata genesisMiniblock
+  )
+    external
+    onlyNode(msg.sender)
+    onlyStreamNotExists(streamId)
+    onlyRegisteredNodes(nodes)
+  {
     // Add the stream to the registry
-    Stream memory stream = Stream({
-      lastMiniblockHash: genesisMiniblockHash,
-      lastMiniblockNum: 0,
-      flags: 0,
-      reserved0: 0,
-      nodes: nodes
-    });
+    Stream storage stream = ds.streamById[streamId];
+    (stream.lastMiniblockHash, stream.nodes) = (genesisMiniblockHash, nodes);
 
     ds.streams.add(streamId);
-    ds.streamById[streamId] = stream;
     ds.genesisMiniblockByStreamId[streamId] = genesisMiniblock;
     ds.genesisMiniblockHashByStreamId[streamId] = genesisMiniblockHash;
 
@@ -64,35 +52,18 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
   function addStream(
     bytes32 streamId,
     bytes32 genesisMiniblockHash,
-    Stream memory stream
-  ) external onlyNode(msg.sender) {
-    // verify that the streamId is not already in the registry
-    if (ds.streams.contains(streamId))
-      revert(RiverRegistryErrors.ALREADY_EXISTS);
-
-    // verify that the nodes stream is placed on are in the registry
-    uint256 nodeCount = stream.nodes.length;
-    for (uint256 i = 0; i < nodeCount; ++i) {
-      if (!ds.nodes.contains(stream.nodes[i]))
-        revert(RiverRegistryErrors.NODE_NOT_FOUND);
-    }
-
+    Stream calldata stream
+  )
+    external
+    onlyNode(msg.sender)
+    onlyStreamNotExists(streamId)
+    onlyRegisteredNodes(stream.nodes)
+  {
     ds.streams.add(streamId);
     ds.streamById[streamId] = stream;
     ds.genesisMiniblockHashByStreamId[streamId] = genesisMiniblockHash;
 
     emit StreamCreated(streamId, genesisMiniblockHash, stream);
-  }
-
-  /// @inheritdoc IStreamRegistry
-  function getStream(bytes32 streamId) external view returns (Stream memory) {
-    if (!ds.streams.contains(streamId)) revert(RiverRegistryErrors.NOT_FOUND);
-    return ds.streamById[streamId];
-  }
-
-  /// @inheritdoc IStreamRegistry
-  function isStream(bytes32 streamId) external view returns (bool) {
-    return ds.streams.contains(streamId);
   }
 
   function setStreamLastMiniblockBatch(
@@ -102,7 +73,7 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
 
     if (miniblockCount == 0) revert(RiverRegistryErrors.BAD_ARG);
 
-    for (uint256 i = 0; i < miniblockCount; ++i) {
+    for (uint256 i; i < miniblockCount; ++i) {
       SetMiniblock calldata miniblock = miniblocks[i];
 
       if (!ds.streams.contains(miniblock.streamId)) {
@@ -158,7 +129,7 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
         stream.flags |= StreamFlags.SEALED;
       }
 
-      emit StreamLastMiniblockUpdated(
+      _emitStreamLastMiniblockUpdated(
         miniblock.streamId,
         miniblock.lastMiniblockHash,
         miniblock.lastMiniblockNum,
@@ -174,12 +145,7 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     bytes32 lastMiniblockHash,
     uint64 lastMiniblockNum,
     bool isSealed
-  ) external onlyNode(msg.sender) {
-    // Validate that the streamId is in the registry
-    if (!ds.streams.contains(streamId)) {
-      revert(RiverRegistryErrors.NOT_FOUND);
-    }
-
+  ) external onlyNode(msg.sender) onlyStream(streamId) {
     Stream storage stream = ds.streamById[streamId];
 
     // Check if the stream is already sealed using bitwise AND
@@ -204,7 +170,7 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
       stream.flags |= StreamFlags.SEALED;
     }
 
-    emit StreamLastMiniblockUpdated(
+    _emitStreamLastMiniblockUpdated(
       streamId,
       lastMiniblockHash,
       lastMiniblockNum,
@@ -213,10 +179,77 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
   }
 
   /// @inheritdoc IStreamRegistry
+  function placeStreamOnNode(
+    bytes32 streamId,
+    address nodeAddress
+  ) external onlyStream(streamId) onlyNode(msg.sender) {
+    Stream storage stream = ds.streamById[streamId];
+    address[] storage nodes = stream.nodes;
+
+    // validate that the node is not already on the stream
+    uint256 nodeCount = nodes.length;
+
+    for (uint256 i; i < nodeCount; ++i) {
+      if (nodes[i] == nodeAddress) revert(RiverRegistryErrors.ALREADY_EXISTS);
+    }
+
+    nodes.push(nodeAddress);
+
+    emit StreamPlacementUpdated(streamId, nodeAddress, true);
+  }
+
+  /// @inheritdoc IStreamRegistry
+  function removeStreamFromNode(
+    bytes32 streamId,
+    address nodeAddress
+  ) external onlyStream(streamId) onlyNode(msg.sender) {
+    Stream storage stream = ds.streamById[streamId];
+    address[] storage nodes = stream.nodes;
+
+    bool found = false;
+    uint256 nodeCount = nodes.length;
+
+    for (uint256 i; i < nodeCount; ++i) {
+      if (nodes[i] == nodeAddress) {
+        nodes[i] = nodes[nodeCount - 1];
+        nodes.pop();
+        found = true;
+        break;
+      }
+    }
+
+    if (!found) revert(RiverRegistryErrors.NODE_NOT_FOUND);
+
+    emit StreamPlacementUpdated(streamId, nodeAddress, false);
+  }
+
+  /// @inheritdoc IStreamRegistry
+  function getStream(
+    bytes32 streamId
+  ) external view returns (Stream memory stream) {
+    assembly ("memory-safe") {
+      // By default, memory has been implicitly allocated for `stream`.
+      // But we don't need this implicitly allocated memory.
+      // So we just set the free memory pointer to what it was before `stream` has been allocated.
+      mstore(0x40, stream)
+    }
+    _verifyStreamIdExists(streamId);
+    stream = ds.streamById[streamId];
+  }
+
+  /// @inheritdoc IStreamRegistry
+  function isStream(bytes32 streamId) external view returns (bool) {
+    return ds.streams.contains(streamId);
+  }
+
+  /// @inheritdoc IStreamRegistry
   function getStreamWithGenesis(
     bytes32 streamId
-  ) external view returns (Stream memory, bytes32, bytes memory) {
-    if (!ds.streams.contains(streamId)) revert(RiverRegistryErrors.NOT_FOUND);
+  ) external view returns (Stream memory stream, bytes32, bytes memory) {
+    assembly ("memory-safe") {
+      mstore(0x40, stream)
+    }
+    _verifyStreamIdExists(streamId);
 
     return (
       ds.streamById[streamId],
@@ -233,21 +266,18 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
   /// @inheritdoc IStreamRegistry
   function getStreamCountOnNode(
     address nodeAddress
-  ) external view returns (uint256) {
-    uint256 count = 0;
+  ) external view returns (uint256 count) {
     uint256 streamLength = ds.streams.length();
-    for (uint256 i = 0; i < streamLength; ++i) {
+    for (uint256 i; i < streamLength; ++i) {
       bytes32 id = ds.streams.at(i);
       Stream storage stream = ds.streamById[id];
-      for (uint256 j = 0; j < stream.nodes.length; ++j) {
+      for (uint256 j; j < stream.nodes.length; ++j) {
         if (stream.nodes[j] == nodeAddress) {
-          count++;
+          ++count;
           break;
         }
       }
     }
-
-    return count;
   }
 
   /// @inheritdoc IStreamRegistry
@@ -263,7 +293,7 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
 
     StreamWithId[] memory streams = new StreamWithId[](count);
 
-    for (uint256 i = 0; i < count; ++i) {
+    for (uint256 i; i < count; ++i) {
       bytes32 id = ds.streams.at(start + i);
       streams[i] = StreamWithId({id: id, stream: ds.streamById[id]});
     }
@@ -271,47 +301,25 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     return (streams, stop >= streamCount);
   }
 
-  /// @inheritdoc IStreamRegistry
-  function placeStreamOnNode(
+  /// @dev Emits the StreamLastMiniblockUpdated event without memory expansion
+  function _emitStreamLastMiniblockUpdated(
     bytes32 streamId,
-    address nodeAddress
-  ) external onlyStream(streamId) onlyNode(msg.sender) {
-    Stream storage stream = ds.streamById[streamId];
-
-    // validate that the node is not already on the stream
-    uint256 nodeCount = stream.nodes.length;
-
-    for (uint256 i = 0; i < nodeCount; ++i) {
-      if (stream.nodes[i] == nodeAddress)
-        revert(RiverRegistryErrors.ALREADY_EXISTS);
+    bytes32 lastMiniblockHash,
+    uint64 lastMiniblockNum,
+    bool isSealed
+  ) internal {
+    bytes32 topic0 = StreamLastMiniblockUpdated.selector;
+    assembly ("memory-safe") {
+      // cache the free memory pointer
+      let fmp := mload(0x40)
+      mstore(0, streamId)
+      mstore(0x20, lastMiniblockHash)
+      mstore(0x40, lastMiniblockNum)
+      mstore(0x60, isSealed)
+      log1(0, 0x80, topic0)
+      // restore the free memory pointer and zero slot
+      mstore(0x40, fmp)
+      mstore(0x60, 0)
     }
-
-    stream.nodes.push(nodeAddress);
-
-    emit StreamPlacementUpdated(streamId, nodeAddress, true);
-  }
-
-  /// @inheritdoc IStreamRegistry
-  function removeStreamFromNode(
-    bytes32 streamId,
-    address nodeAddress
-  ) external onlyStream(streamId) onlyNode(msg.sender) {
-    Stream storage stream = ds.streamById[streamId];
-
-    bool found = false;
-    uint256 nodeCount = stream.nodes.length;
-
-    for (uint256 i = 0; i < nodeCount; ++i) {
-      if (stream.nodes[i] == nodeAddress) {
-        stream.nodes[i] = stream.nodes[nodeCount - 1];
-        stream.nodes.pop();
-        found = true;
-        break;
-      }
-    }
-
-    if (!found) revert(RiverRegistryErrors.NODE_NOT_FOUND);
-
-    emit StreamPlacementUpdated(streamId, nodeAddress, false);
   }
 }

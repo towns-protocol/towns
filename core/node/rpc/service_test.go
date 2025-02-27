@@ -18,6 +18,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/common"
 	eth_crypto "github.com/ethereum/go-ethereum/crypto"
+	"github.com/stretchr/testify/require"
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/events"
@@ -28,7 +29,6 @@ import (
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/testutils"
 	"github.com/towns-protocol/towns/core/node/testutils/testfmt"
-	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -73,7 +73,7 @@ func makeDelegateSig(primaryWallet *crypto.Wallet, deviceWallet *crypto.Wallet, 
 		return nil, err
 	}
 	hash := accounts.TextHash(hashSrc)
-	delegatSig, err := primaryWallet.SignHash(hash)
+	delegatSig, err := primaryWallet.SignHash(common.BytesToHash(hash))
 	return delegatSig, err
 }
 

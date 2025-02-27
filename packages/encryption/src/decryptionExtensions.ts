@@ -63,12 +63,24 @@ export interface KeySolicitationContent {
     srcEventId: string
 }
 
+// paired down from StreamEvent, required for signature validation
+export interface EventSignatureBundle {
+    hash: Uint8Array
+    signature: Uint8Array | undefined
+    event: {
+        creatorAddress: Uint8Array
+        delegateSig: Uint8Array
+        delegateExpiryEpochMs: bigint
+    }
+}
+
 export interface KeySolicitationItem {
     streamId: string
     fromUserId: string
     fromUserAddress: Uint8Array
     solicitation: KeySolicitationContent
     respondAfter: number // ms since epoch
+    sigBundle: EventSignatureBundle
 }
 
 export interface KeySolicitationData {
@@ -210,6 +222,7 @@ export abstract class BaseDecryptionExtensions {
         userDevice: UserDevice,
         userId: string,
         upToDateStreams: Set<string>,
+        inLogId: string,
     ) {
         this.emitter = emitter
         this.crypto = crypto
@@ -220,7 +233,8 @@ export abstract class BaseDecryptionExtensions {
         // ready for processing
         this.upToDateStreams = upToDateStreams
 
-        const logId = generateLogId(userId, userDevice.deviceKey)
+        const shortKey = shortenHexString(userDevice.deviceKey)
+        const logId = `${inLogId}:${shortKey}`
         this.log = {
             debug: dlog('csb:decryption:debug', { defaultEnabled: false }).extend(logId),
             info: dlog('csb:decryption', { defaultEnabled: true }).extend(logId),
@@ -246,10 +260,7 @@ export abstract class BaseDecryptionExtensions {
         userId: string,
         opts?: { skipOnChainValidation: boolean },
     ): Promise<boolean>
-    public abstract isValidEvent(
-        streamId: string,
-        eventId: string,
-    ): { isValid: boolean; reason?: string }
+    public abstract isValidEvent(item: KeySolicitationItem): { isValid: boolean; reason?: string }
     public abstract isUserInboxStreamUpToDate(upToDateStreams: Set<string>): boolean
     public abstract onDecryptionError(item: EncryptedContentItem, err: DecryptionSessionError): void
     public abstract sendKeySolicitation(args: KeySolicitationData): Promise<void>
@@ -308,6 +319,7 @@ export abstract class BaseDecryptionExtensions {
             userAddress: Uint8Array
             solicitations: KeySolicitationContent[]
         }[],
+        sigBundle: EventSignatureBundle,
     ): void {
         const streamQueue = this.streamQueues.getQueue(streamId)
         streamQueue.keySolicitations = []
@@ -334,6 +346,7 @@ export abstract class BaseDecryptionExtensions {
                     solicitation: keySolicitation,
                     respondAfter:
                         Date.now() + this.getRespondDelayMSForKeySolicitation(streamId, fromUserId),
+                    sigBundle,
                 } satisfies KeySolicitationItem)
             }
         }
@@ -346,6 +359,7 @@ export abstract class BaseDecryptionExtensions {
         fromUserId: string,
         fromUserAddress: Uint8Array,
         keySolicitation: KeySolicitationContent,
+        sigBundle: EventSignatureBundle,
     ): void {
         if (keySolicitation.deviceKey === this.userDevice.deviceKey) {
             //this.log.debug('ignoring key solicitation for our own device')
@@ -374,6 +388,7 @@ export abstract class BaseDecryptionExtensions {
                 solicitation: keySolicitation,
                 respondAfter:
                     Date.now() + this.getRespondDelayMSForKeySolicitation(streamId, fromUserId),
+                sigBundle,
             } satisfies KeySolicitationItem)
             this.checkStartTicking()
         } else if (index > -1) {
@@ -800,9 +815,8 @@ export abstract class BaseDecryptionExtensions {
         const streamId = item.streamId
 
         check(this.hasStream(streamId), 'stream not found')
-        const knownSessionIds = await this.crypto.getGroupSessionIds(streamId)
 
-        const { isValid, reason } = this.isValidEvent(streamId, item.solicitation.srcEventId)
+        const { isValid, reason } = this.isValidEvent(item)
         if (!isValid) {
             this.log.error('processing key solicitation: invalid event id', {
                 streamId,
@@ -811,6 +825,8 @@ export abstract class BaseDecryptionExtensions {
             })
             return
         }
+
+        const knownSessionIds = await this.crypto.getGroupSessionIds(streamId)
 
         // todo split this up by algorithm so that we can send all the new hybrid keys
         knownSessionIds.sort()
@@ -955,11 +971,4 @@ function isSessionNotFoundError(err: unknown): boolean {
         return (err.message as string).toLowerCase().includes('session not found')
     }
     return false
-}
-
-function generateLogId(userId: string, deviceKey: string): string {
-    const shortId = shortenHexString(userId.startsWith('0x') ? userId.slice(2) : userId)
-    const shortKey = shortenHexString(deviceKey)
-    const logId = `${shortId}:${shortKey}`
-    return logId
 }

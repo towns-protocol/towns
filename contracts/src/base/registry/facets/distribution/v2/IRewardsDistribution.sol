@@ -228,6 +228,24 @@ interface IRewardsDistribution is IRewardsDistributionBase {
   /// @param amount The amount of stakeToken to stake
   function increaseStake(uint256 depositId, uint96 amount) external;
 
+  /// @notice Approves the contract to spend the stakeToken with an EIP-2612 permit and increases the
+  /// stake of an existing deposit
+  /// @dev The caller must be the owner of the deposit
+  /// @param depositId The ID of the deposit
+  /// @param amount The amount of stakeToken to stake
+  /// @param deadline The deadline for the permit
+  /// @param v The recovery byte of the permit
+  /// @param r The R signature of the permit
+  /// @param s The S signature of the permit
+  function permitAndIncreaseStake(
+    uint256 depositId,
+    uint96 amount,
+    uint256 deadline,
+    uint8 v,
+    bytes32 r,
+    bytes32 s
+  ) external;
+
   /// @notice Redelegates an existing deposit to a new delegatee or reactivates a pending withdrawal
   /// @dev The caller must be the owner of the deposit
   /// @param depositId The ID of the deposit

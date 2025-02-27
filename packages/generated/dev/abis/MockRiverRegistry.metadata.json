@@ -880,7 +880,7 @@
         "outputs": [
           {
             "internalType": "struct Stream",
-            "name": "",
+            "name": "stream",
             "type": "tuple",
             "components": [
               {
@@ -939,7 +939,7 @@
         "outputs": [
           {
             "internalType": "uint256",
-            "name": "",
+            "name": "count",
             "type": "uint256"
           }
         ]
@@ -958,7 +958,7 @@
         "outputs": [
           {
             "internalType": "struct Stream",
-            "name": "",
+            "name": "stream",
             "type": "tuple",
             "components": [
               {
@@ -1377,7 +1377,7 @@
             "streamId": "The ID of the stream to get"
           },
           "returns": {
-            "_0": "Stream The stream data"
+            "stream": "Stream The stream data"
           }
         },
         "getStreamCount()": {
@@ -1390,7 +1390,7 @@
             "nodeAddress": "The address of the node to check"
           },
           "returns": {
-            "_0": "uint256 The number of streams on the node"
+            "count": "uint256 The number of streams on the node"
           }
         },
         "getStreamWithGenesis(bytes32)": {
@@ -1398,9 +1398,9 @@
             "streamId": "The ID of the stream to get"
           },
           "returns": {
-            "_0": "Stream The stream data",
             "_1": "bytes32 The genesis miniblock hash",
-            "_2": "bytes The genesis miniblock data"
+            "_2": "bytes The genesis miniblock data",
+            "stream": "Stream The stream data"
           }
         },
         "isConfigurationManager(address)": {
@@ -1623,10 +1623,10 @@
       "license": "MIT"
     },
     "contracts/src/river/registry/facets/stream/StreamRegistry.sol": {
-      "keccak256": "0xc03eab6e7207c9f1a5e727e18046b26a6d39356d02c13a5e9c76800a6d8a4cff",
+      "keccak256": "0x76b45180d80a2c9b75945015f238e9feec89ff70da70d49ed991accab13eccfd",
       "urls": [
-        "bzz-raw://38f368a9c988cdadc3835281875c6f4bbafec2c9b8327d26b180c80dcc829351",
-        "dweb:/ipfs/QmSoLZdCKbCSsoN7RZb9DwbTAswy5cWzUiCkK6KSSz6c8B"
+        "bzz-raw://8b738a44a1eac9be252fd7dc524f442eb3be08122c36c1228e203fd73c892ba4",
+        "dweb:/ipfs/QmNMzsR9Bqra24yGxRjviNQDVswK6AkhTRH4jqKN7tnjzk"
       ],
       "license": "MIT"
     },

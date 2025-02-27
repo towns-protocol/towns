@@ -10,21 +10,31 @@ interface IReviewBase {
     Delete
   }
 
+  struct Review {
+    string comment;
+    uint8 rating;
+  }
+
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                       CUSTOM ERRORS                        */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
   error ReviewFacet__InvalidCommentLength();
   error ReviewFacet__InvalidRating();
+  error ReviewFacet__ReviewAlreadyExists();
+  error ReviewFacet__ReviewDoesNotExist();
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                           EVENTS                           */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-  event ReviewAdded(address indexed user, ReviewStorage.Content review);
+  /// @notice Emitted when a review is added
+  event ReviewAdded(address indexed user, string comment, uint8 rating);
 
-  event ReviewUpdated(address indexed user, ReviewStorage.Content review);
+  /// @notice Emitted when a review is updated
+  event ReviewUpdated(address indexed user, string comment, uint8 rating);
 
+  /// @notice Emitted when a review is deleted
   event ReviewDeleted(address indexed user);
 }
 

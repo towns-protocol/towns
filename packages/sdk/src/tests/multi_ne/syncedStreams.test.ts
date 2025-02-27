@@ -8,7 +8,7 @@ import { SyncState, stateConstraints } from '../../syncedStreamsLoop'
 import { makeDonePromise, makeRandomUserContext, makeTestRpcClient, waitFor } from '../testUtils'
 import { makeUserInboxStreamId, streamIdToBytes, userIdFromAddress } from '../../id'
 import { make_UserInboxPayload_Ack, make_UserInboxPayload_Inception } from '../../types'
-import { dlog } from '@river-build/dlog'
+import { dlog, shortenHexString } from '@river-build/dlog'
 import TypedEmitter from 'typed-emitter'
 import EventEmitter from 'events'
 import { StreamEvents } from '../../streamEvents'
@@ -62,6 +62,7 @@ describe('syncStreams', () => {
             rpcClient,
             mockClientEmitter,
             undefined,
+            shortenHexString(alicesUserId),
         )
 
         // some helper functions

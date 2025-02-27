@@ -2,7 +2,7 @@
 # TODO: rename this script
 # install go deps required to work with protobufs, format and analyze go code
 # run this script if your version doesn't match the checked in proto version
-# note 7/2023 - At some point we should probaby freeze these and update them by hand? For now just get latest.
+# note 7/2023 - At some point we should probably freeze these and update them by hand? For now just get latest.
 #
 
 
