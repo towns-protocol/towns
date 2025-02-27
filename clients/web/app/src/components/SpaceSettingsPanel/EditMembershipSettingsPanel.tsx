@@ -3,10 +3,9 @@ import {
     BlockchainTransactionType,
     useIsTransactionPending,
     useMembershipFreeAllocation,
-    usePlatformMinMembershipPrice,
     usePricingModules,
 } from 'use-towns-client'
-import { BigNumber, constants } from 'ethers'
+import { constants } from 'ethers'
 import { FormProvider, UseFormReturn } from 'react-hook-form'
 import { FormRender, Icon, Paragraph, Stack, Text } from '@ui'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
@@ -21,7 +20,7 @@ import { formatUnits } from 'hooks/useBalance'
 import { EditPricingTitle } from '@components/Web3/EditMembership/EditPricingTitle'
 import { useEntitlements } from 'hooks/useEntitlements'
 import { EditMembershipSchemaType, editMembershipSchema } from './editMembershipSchema'
-import { useMembershipInfoAndRoleDetails } from './hooks'
+import { useIsFreeSpace, useMembershipInfoAndRoleDetails } from './hooks'
 import { EditMembershipSubmitButton } from './EditMembershipSubmitButton'
 import { minterRoleId } from './rolePermissions.const'
 
@@ -76,8 +75,6 @@ function EditMembershipForm({
 
     const { data: pricingModules, isLoading: isLoadingPricingModules } = usePricingModules()
 
-    const { data: minMembershipPrice } = usePlatformMinMembershipPrice()
-
     const defaultValues: EditMembershipSchemaType = useMemo(
         () => ({
             gatingType: entitlements.hasEntitlements ? 'gated' : 'everyone',
@@ -94,10 +91,10 @@ function EditMembershipForm({
         [entitlements, membershipInfo, pricingModule],
     )
 
-    const isFree =
-        pricingModule?.isFixed &&
-        minMembershipPrice instanceof BigNumber &&
-        membershipInfo?.price.lt(minMembershipPrice)
+    const isFree = useIsFreeSpace({
+        isFixedPricingModule: pricingModule?.isFixed ?? false,
+        spaceId,
+    })
 
     if (isEntitlementsLoading) {
         return <ButtonSpinner />

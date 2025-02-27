@@ -3,9 +3,11 @@ import {
     Permission,
     type RoleDetails,
     useMembershipInfo,
+    usePlatformMembershipFee,
     usePricingModuleForMembership,
     useRoleDetails,
 } from 'use-towns-client'
+import { BigNumber } from 'ethers'
 import { channelPermissionDescriptions, townPermissionDescriptions } from './rolePermissions.const'
 
 export function useMembershipInfoAndRoleDetails(spaceId: string | undefined) {
@@ -95,4 +97,22 @@ export function useChannelAndTownRoleDetails(roleDetails: RoleDetails | null | u
             defaultChannelPermissionsValues,
         }
     }, [roleDetails])
+}
+
+// a space is free
+// 1. if it's price is 0
+// 2. if it's price is equal to the platform membership fee. Because if a free space has exceeded its free allocations, members have to pay the platform membership fee to join.
+export function useIsFreeSpace(args: {
+    isFixedPricingModule: boolean
+    spaceId: string | undefined
+}) {
+    const { isFixedPricingModule, spaceId } = args
+    const { data: membershipInfo } = useMembershipInfo(spaceId ?? '')
+    const { data: platformMembershipFee } = usePlatformMembershipFee()
+
+    return (
+        isFixedPricingModule &&
+        platformMembershipFee instanceof BigNumber &&
+        (membershipInfo?.price.eq(0) || membershipInfo?.price.eq(platformMembershipFee))
+    )
 }
