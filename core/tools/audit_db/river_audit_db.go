@@ -151,43 +151,38 @@ func init() {
 	rootCmd.AddCommand(testCmd)
 }
 
-var (
-	listCmdCount bool
-	listCmd      = &cobra.Command{
-		Use:   "list",
-		Short: "List database schemas",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			ctx := cmd.Context()
-			pool, _, err := getDbPool(ctx, false)
+var listCmd = &cobra.Command{
+	Use:   "list",
+	Short: "List database schemas",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := cmd.Context()
+		pool, _, err := getDbPool(ctx, false)
+		if err != nil {
+			return err
+		}
+
+		rows, err := pool.Query(ctx, "SELECT schema_name FROM information_schema.schemata")
+		if err != nil {
+			return err
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var schema string
+			err = rows.Scan(&schema)
 			if err != nil {
 				return err
 			}
+			fmt.Println(schema)
+		}
 
-			rows, err := pool.Query(ctx, "SELECT schema_name FROM information_schema.schemata")
-			if err != nil {
-				return err
-			}
-			defer rows.Close()
+		return nil
+	},
+}
 
-			for rows.Next() {
-				var schema string
-				err = rows.Scan(&schema)
-				if err != nil {
-					return err
-				}
-				if !listCmdCount {
-					fmt.Println(schema)
-				} else {
-					streamCount := -1
-					_ = pool.QueryRow(ctx, fmt.Sprintf("SELECT count(*) FROM %s.es", schema)).Scan(&streamCount)
-					fmt.Println(schema, streamCount)
-				}
-			}
-
-			return nil
-		},
-	}
-)
+func init() {
+	rootCmd.AddCommand(listCmd)
+}
 
 func escapeSql(sql string, suffix string) string {
 	sql = strings.ReplaceAll(
@@ -245,7 +240,7 @@ func checkCandidates(ctx context.Context, pool *pgxpool.Pool, info *dbInfo) erro
 		var seqNum int64
 		var totalCount int64
 		if err := rows.Scan(&streamIdHex, &seqNum, &totalCount); err != nil {
-			return fmt.Errorf("Error scanning candidate row: %w", err)
+			return fmt.Errorf("error scanning candidate row: %w", err)
 		}
 		fmt.Println(streamIdHex, seqNum, totalCount)
 	}
