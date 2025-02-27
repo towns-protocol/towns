@@ -3,6 +3,7 @@ package crypto
 import (
 	"testing"
 
+	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/towns-protocol/towns/core/node/base/test"
@@ -42,4 +43,12 @@ func TestSign(t *testing.T) {
 	assert.Nil(t, err)
 	recoveredAddress = PublicKeyToAddress(key)
 	assert.NotEqual(t, wallet.Address, recoveredAddress)
+}
+
+func TestSecp256k1Available(t *testing.T) {
+	// If geth is built without cgo, geth.crypto defaults to pure go implementation.
+	// Node can be run in this mode, but it is slower.
+	// While running like this is supported, this test fails to build in without cgo crypto to
+	// detect such situation.
+	_, _ = secp256k1.Sign([]byte("Hello, World!"), []byte("Hello, World!"))
 }

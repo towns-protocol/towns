@@ -84,6 +84,13 @@ func setupAppRegistryStorageTest(t *testing.T) *testAppRegistryStoreParams {
 	return params
 }
 
+func safeAddress(t *testing.T) common.Address {
+	var addr common.Address
+	_, err := rand.Read(addr[:])
+	require.NoError(t, err)
+	return addr
+}
+
 func TestAppRegistryStorage_RegisterWebhook(t *testing.T) {
 	params := setupAppRegistryStorageTest(t)
 	t.Cleanup(params.closer)
@@ -91,14 +98,11 @@ func TestAppRegistryStorage_RegisterWebhook(t *testing.T) {
 	require := require.New(t)
 	store := params.pgAppRegistryStore
 
-	var owner, app, unregisteredApp common.Address
-	_, err := rand.Read(owner[:])
-	require.NoError(err)
-	_, err = rand.Read(app[:])
-	require.NoError(err)
-
-	_, err = rand.Read(unregisteredApp[:])
-	require.NoError(err)
+	owner := safeAddress(t)
+	app := safeAddress(t)
+	unregisteredApp := safeAddress(t)
+	deviceKey := safeAddress(t).String()
+	fallbackKey := safeAddress(t).String()
 
 	secretBytes, err := hex.DecodeString(testSecretHexString)
 	require.NoError(err)
@@ -113,10 +117,11 @@ func TestAppRegistryStorage_RegisterWebhook(t *testing.T) {
 	require.Equal(owner, info.Owner)
 	require.Equal([32]byte(secretBytes), info.EncryptedSecret)
 	require.Equal("", info.WebhookUrl)
+	require.Equal("", info.EncryptionDevice.DeviceKey)
+	require.Equal("", info.EncryptionDevice.FallbackKey)
 
 	webhook := "https://webhook.com/callme"
-	webhook2 := "http://api.org/textme"
-	err = store.RegisterWebhook(params.ctx, app, webhook)
+	err = store.RegisterWebhook(params.ctx, app, webhook, deviceKey, fallbackKey)
 	require.NoError(err)
 
 	info, err = store.GetAppInfo(params.ctx, app)
@@ -125,8 +130,13 @@ func TestAppRegistryStorage_RegisterWebhook(t *testing.T) {
 	require.Equal(owner, info.Owner)
 	require.Equal([32]byte(secretBytes), info.EncryptedSecret)
 	require.Equal(webhook, info.WebhookUrl)
+	require.Equal(deviceKey, info.EncryptionDevice.DeviceKey)
+	require.Equal(fallbackKey, info.EncryptionDevice.FallbackKey)
 
-	err = store.RegisterWebhook(params.ctx, app, webhook2)
+	webhook2 := "https://www.webhook.com/beepme"
+	deviceKey2 := safeAddress(t).String()
+	fallbackKey2 := safeAddress(t).String()
+	err = store.RegisterWebhook(params.ctx, app, webhook2, deviceKey2, fallbackKey2)
 	require.NoError(err)
 
 	info, err = store.GetAppInfo(params.ctx, app)
@@ -135,8 +145,10 @@ func TestAppRegistryStorage_RegisterWebhook(t *testing.T) {
 	require.Equal(owner, info.Owner)
 	require.Equal([32]byte(secretBytes), info.EncryptedSecret)
 	require.Equal(webhook2, info.WebhookUrl)
+	require.Equal(deviceKey2, info.EncryptionDevice.DeviceKey)
+	require.Equal(fallbackKey2, info.EncryptionDevice.FallbackKey)
 
-	err = store.RegisterWebhook(params.ctx, unregisteredApp, webhook)
+	err = store.RegisterWebhook(params.ctx, unregisteredApp, webhook, deviceKey, fallbackKey)
 	require.ErrorContains(err, "app was not found in registry")
 }
 
@@ -148,17 +160,11 @@ func TestAppRegistryStorage(t *testing.T) {
 	store := params.pgAppRegistryStore
 
 	// Generate random addresses
-	var owner, owner2, app, app2, app3 common.Address
-	_, err := rand.Read(owner[:])
-	require.NoError(err)
-	_, err = rand.Read(owner2[:])
-	require.NoError(err)
-	_, err = rand.Read(app[:])
-	require.NoError(err)
-	_, err = rand.Read(app2[:])
-	require.NoError(err)
-	_, err = rand.Read(app3[:])
-	require.NoError(err)
+	owner := safeAddress(t)
+	owner2 := safeAddress(t)
+	app := safeAddress(t)
+	app2 := safeAddress(t)
+	app3 := safeAddress(t)
 
 	secretBytes, err := hex.DecodeString(testSecretHexString)
 	require.NoError(err)
@@ -184,12 +190,16 @@ func TestAppRegistryStorage(t *testing.T) {
 	require.Equal(app, info.App)
 	require.Equal(owner, info.Owner)
 	require.Equal("", info.WebhookUrl)
+	require.Equal("", info.EncryptionDevice.DeviceKey)
+	require.Equal("", info.EncryptionDevice.FallbackKey)
 
 	info, err = store.GetAppInfo(params.ctx, app2)
 	require.NoError(err)
 	require.Equal(app2, info.App)
 	require.Equal(owner, info.Owner)
 	require.Equal("", info.WebhookUrl)
+	require.Equal("", info.EncryptionDevice.DeviceKey)
+	require.Equal("", info.EncryptionDevice.FallbackKey)
 
 	info, err = store.GetAppInfo(params.ctx, app3)
 	require.Nil(info)

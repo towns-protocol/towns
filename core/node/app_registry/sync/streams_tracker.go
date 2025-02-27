@@ -11,6 +11,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/registries"
 	"github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/storage"
 	"github.com/towns-protocol/towns/core/node/track_streams"
 )
 
@@ -18,6 +19,7 @@ type AppRegistryStreamsTracker struct {
 	// TODO: eventually this struct will contain references to whatever types of cache / storage access
 	// the TrackedStreamView for the app registry service needs.
 	track_streams.StreamsTrackerImpl
+	store storage.AppRegistryStore
 }
 
 func NewAppRegistryStreamsTracker(
@@ -28,8 +30,11 @@ func NewAppRegistryStreamsTracker(
 	nodes []nodes.NodeRegistry,
 	metricsFactory infra.MetricsFactory,
 	listener track_streams.StreamEventListener,
+	store storage.AppRegistryStore,
 ) (track_streams.StreamsTracker, error) {
-	tracker := &AppRegistryStreamsTracker{}
+	tracker := &AppRegistryStreamsTracker{
+		store: store,
+	}
 	if err := tracker.StreamsTrackerImpl.Init(
 		ctx,
 		onChainConfig,
@@ -68,5 +73,6 @@ func (tracker *AppRegistryStreamsTracker) NewTrackedStream(
 		cfg,
 		stream,
 		tracker.StreamsTrackerImpl.Listener(),
+		tracker.store,
 	)
 }
