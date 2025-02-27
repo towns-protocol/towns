@@ -30,6 +30,7 @@ export class SyncedStreams {
         clientEmitter: TypedEmitter<SyncedStreamEvents>,
         private readonly unpackEnvelopeOpts: UnpackEnvelopeOpts | undefined,
         private readonly logId: string,
+        private readonly streamOpts?: { useModifySync?: boolean },
     ) {
         this.userId = userId
         this.rpcClient = rpcClient
@@ -113,6 +114,7 @@ export class SyncedStreams {
             this.logId,
             this.unpackEnvelopeOpts,
             this.highPriorityIds,
+            this.streamOpts,
         )
         this.syncedStreamsLoop.start()
     }
