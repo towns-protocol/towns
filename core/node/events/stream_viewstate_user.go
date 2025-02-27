@@ -93,9 +93,9 @@ func transactionsAreEqual(blockChainTransaction *BlockchainTransaction,
 
 	if blockChainTransaction == nil {
 		return false
-	} else if evmReceipt != nil {
+	} else if evmReceipt != nil && blockChainTransaction.Receipt != nil {
 		return bytes.Equal(blockChainTransaction.Receipt.TransactionHash, evmReceipt.TransactionHash)
-	} else if solanaReceipt != nil {
+	} else if solanaReceipt != nil && blockChainTransaction.SolanaReceipt != nil {
 		if len(blockChainTransaction.SolanaReceipt.Transaction.Signatures) != len(solanaReceipt.Transaction.Signatures) {
 			return false
 		}
