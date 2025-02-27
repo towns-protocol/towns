@@ -16,7 +16,12 @@ func (s *StreamCache) submitSyncStreamTask(
 	ctx context.Context,
 	stream *Stream,
 ) {
-	s.submitSyncStreamTaskToPool(ctx, s.onlineSyncWorkerPool, stream, nil)
+	s.stoppedMu.RLock()
+	defer s.stoppedMu.RUnlock()
+
+	if !s.stopped {
+		s.submitSyncStreamTaskToPool(ctx, s.onlineSyncWorkerPool, stream, nil)
+	}
 }
 
 func (s *StreamCache) submitSyncStreamTaskToPool(
