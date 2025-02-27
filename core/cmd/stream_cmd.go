@@ -14,7 +14,6 @@ import (
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
-	"gopkg.in/yaml.v3"
 
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/events"
@@ -408,9 +407,6 @@ func runStreamDumpCmd(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-
-	streamData, _ := yaml.Marshal(&stream)
-	fmt.Printf("\nStream result:\n\n%s\n", streamData)
 
 	nodes := nodes.NewStreamNodesWithLock(stream.Nodes, common.Address{})
 	remoteNodeAddress := nodes.GetStickyPeer()
