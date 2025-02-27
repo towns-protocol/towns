@@ -210,7 +210,7 @@
       "@openzeppelin/=node_modules/@openzeppelin/",
       "@prb/math/=node_modules/@prb/math/src/",
       "@prb/test/=node_modules/@prb/test/src/",
-      "@river-build/diamond/=node_modules/@river-build/diamond/",
+      "@towns-protocol/diamond/=node_modules/@towns-protocol/diamond/",
       "account-abstraction/=node_modules/account-abstraction/contracts/",
       "ds-test/=node_modules/ds-test/src/",
       "forge-std/=node_modules/forge-std/src/",
@@ -296,7 +296,7 @@
       ],
       "license": "MIT"
     },
-    "node_modules/@river-build/diamond/src/facets/Facet.sol": {
+    "node_modules/@towns-protocol/diamond/src/facets/Facet.sol": {
       "keccak256": "0xca7529809751c8c40aebd904b776f9ff28074b5a8a2df99f5bd1b588cb4b297c",
       "urls": [
         "bzz-raw://74bf56c81fcb3064f372bf9fb5ae895fd976d1cf8fd535c4f03397bdfabeb25e",
@@ -304,7 +304,7 @@
       ],
       "license": "MIT"
     },
-    "node_modules/@river-build/diamond/src/facets/initializable/Initializable.sol": {
+    "node_modules/@towns-protocol/diamond/src/facets/initializable/Initializable.sol": {
       "keccak256": "0xe02e99665b5acb22d5c508c3bda97c35acd2597ce0a58569a19cc12f0010da90",
       "urls": [
         "bzz-raw://b586a51dbe63e8763ae0b2b3dadd5c8559f47bc8cbaa0e9fe52aaec4c3677552",
@@ -312,7 +312,7 @@
       ],
       "license": "MIT"
     },
-    "node_modules/@river-build/diamond/src/facets/initializable/InitializableStorage.sol": {
+    "node_modules/@towns-protocol/diamond/src/facets/initializable/InitializableStorage.sol": {
       "keccak256": "0xf8170e6977d685c218f65185478fbb9916e64f63aab1dcd195056438466f458a",
       "urls": [
         "bzz-raw://83ea3cf77f012eef93d10593e3beded36b449611063fd8dfbdb44e4346f87eb4",
@@ -320,7 +320,7 @@
       ],
       "license": "MIT"
     },
-    "node_modules/@river-build/diamond/src/facets/introspection/IIntrospectionBase.sol": {
+    "node_modules/@towns-protocol/diamond/src/facets/introspection/IIntrospectionBase.sol": {
       "keccak256": "0x51e706ab1184a3a5b353b87cfee07d471b9a5ef93897022bbcd1085b39a0c762",
       "urls": [
         "bzz-raw://3df386912c5cc759faee161b7825b2014040d04bf06528e74f4d759f06f2eb19",
@@ -328,7 +328,7 @@
       ],
       "license": "MIT"
     },
-    "node_modules/@river-build/diamond/src/facets/introspection/IntrospectionBase.sol": {
+    "node_modules/@towns-protocol/diamond/src/facets/introspection/IntrospectionBase.sol": {
       "keccak256": "0x35f27aa0a4b64673a2648110422f31de0c5a71c68df562eccb9c4f2a27ee6647",
       "urls": [
         "bzz-raw://2eb1f2ff2e2d7222bf8fe2cf7558a2e47925e3d4557208362b1f50e63cb43006",
@@ -336,7 +336,7 @@
       ],
       "license": "MIT"
     },
-    "node_modules/@river-build/diamond/src/facets/introspection/IntrospectionStorage.sol": {
+    "node_modules/@towns-protocol/diamond/src/facets/introspection/IntrospectionStorage.sol": {
       "keccak256": "0x306f41ef86bc5050a28c1dbf855d3f6f623be4aebc0a0f96474dae85979f7763",
       "urls": [
         "bzz-raw://dbad6f8e6685690ae75f6c9066972a45400b45307245feab8990af18a4c38e91",
@@ -344,7 +344,7 @@
       ],
       "license": "MIT"
     },
-    "node_modules/@river-build/diamond/src/facets/ownable/IERC173.sol": {
+    "node_modules/@towns-protocol/diamond/src/facets/ownable/IERC173.sol": {
       "keccak256": "0x187fcc652a498aa18be665689a8496daad50511e6d7d926be0a210469325cdd8",
       "urls": [
         "bzz-raw://00c489916ad6e3ef2bfeb1d5f0230022cf776caab4b1372f0bf79b839810f1a2",
@@ -352,7 +352,7 @@
       ],
       "license": "MIT"
     },
-    "node_modules/@river-build/diamond/src/facets/ownable/OwnableBase.sol": {
+    "node_modules/@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol": {
       "keccak256": "0x272abaecc104d5f23d77a623cf1548620d24b0f447eb2a12144e27561ff489f2",
       "urls": [
         "bzz-raw://fcb8c20ff7346bdc5dba82e6680cc0ea64087460a12153e3b6c3416f6addf875",
@@ -360,7 +360,7 @@
       ],
       "license": "MIT"
     },
-    "node_modules/@river-build/diamond/src/facets/ownable/OwnableStorage.sol": {
+    "node_modules/@towns-protocol/diamond/src/facets/ownable/OwnableStorage.sol": {
       "keccak256": "0xda650482ce08c04110366cb01408aaabd01383d9c504b7cacfb2674aae688dcd",
       "urls": [
         "bzz-raw://694f42ffb353fccaa1eadf91dee3a3cee7253e3f357bcba2b175fd7be701e27e",

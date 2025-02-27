@@ -1,5 +1,5 @@
-import type { NodeStructOutput } from '@river-build/generated/dev/typings/INodeRegistry'
-import { RiverRegistry, getWeb3Deployment } from '@river-build/web3'
+import type { NodeStructOutput } from '@towns-protocol/generated/dev/typings/INodeRegistry'
+import { RiverRegistry, getWeb3Deployment } from '@towns-protocol/web3'
 import { ethers } from 'ethers'
 
 const NODE_STATUS = {

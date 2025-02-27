@@ -18,10 +18,10 @@ import {
     NoopRuleData,
     Permission,
     createSpaceDapp,
-} from '@river-build/web3'
+} from '@towns-protocol/web3'
 import { SignerContext } from '../../signerContext'
 import { makeBaseChainConfig } from '../../riverConfig'
-import { dlog } from '@river-build/dlog'
+import { dlog } from '@towns-protocol/dlog'
 
 const log = dlog('csb:test:mediaWithEntitlements')
 

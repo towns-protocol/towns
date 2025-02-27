@@ -3,9 +3,9 @@ pragma solidity ^0.8.23;
 
 // interfaces
 
-import {IDiamondCut} from "@river-build/diamond/src/facets/cut/IDiamondCut.sol";
+import {IDiamondCut} from "@towns-protocol/diamond/src/facets/cut/IDiamondCut.sol";
 
-import {Diamond} from "@river-build/diamond/src/Diamond.sol";
+import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
 
 // libraries
 import "forge-std/console.sol";

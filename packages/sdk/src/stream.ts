@@ -1,12 +1,12 @@
-import { ChannelMessage, MembershipOp, Snapshot, SyncCookie } from '@river-build/proto'
-import { DLogger } from '@river-build/dlog'
+import { ChannelMessage, MembershipOp, Snapshot, SyncCookie } from '@towns-protocol/proto'
+import { DLogger } from '@towns-protocol/dlog'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
 import { IStreamStateView, StreamStateView } from './streamStateView'
 import { LocalEventStatus, ParsedEvent, ParsedMiniblock, isLocalEvent } from './types'
 import { StreamEvents } from './streamEvents'
 import { DecryptedContent } from './encryptedContentTypes'
-import { DecryptionSessionError } from '@river-build/encryption'
+import { DecryptionSessionError } from '@towns-protocol/encryption'
 
 export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents>) {
     readonly clientEmitter: TypedEmitter<StreamEvents>

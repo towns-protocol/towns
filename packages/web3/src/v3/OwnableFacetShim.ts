@@ -1,9 +1,9 @@
 import {
     OwnableFacet as LocalhostContract,
     OwnableFacetInterface as LocalhostInterface,
-} from '@river-build/generated/dev/typings/OwnableFacet'
+} from '@towns-protocol/generated/dev/typings/OwnableFacet'
 
-import LocalhostAbi from '@river-build/generated/dev/abis/OwnableFacet.abi.json' assert { type: 'json' }
+import LocalhostAbi from '@towns-protocol/generated/dev/abis/OwnableFacet.abi.json' assert { type: 'json' }
 
 import { ethers } from 'ethers'
 import { BaseContractShim } from './BaseContractShim'

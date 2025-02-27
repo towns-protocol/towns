@@ -5,12 +5,12 @@
 import _ from 'lodash'
 import { unpackEnvelope, makeEvent, publicKeyToAddress } from '../../sign'
 import { make_UserPayload_Inception } from '../../types'
-import { dlog, bin_fromHexString, bin_toHexString } from '@river-build/dlog'
+import { dlog, bin_fromHexString, bin_toHexString } from '@towns-protocol/dlog'
 import { PlainMessage } from '@bufbuild/protobuf'
 import { makeUserStreamId, streamIdToBytes } from '../../id'
 import { getPublicKey } from 'ethereum-cryptography/secp256k1'
 import { ethers } from 'ethers'
-import { EncryptedData, StreamEvent } from '@river-build/proto'
+import { EncryptedData, StreamEvent } from '@towns-protocol/proto'
 import { TEST_ENCRYPTED_MESSAGE_PROPS } from '../testUtils'
 import {
     SignerContext,

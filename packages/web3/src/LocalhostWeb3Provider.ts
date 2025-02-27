@@ -1,5 +1,5 @@
 import { ethers } from 'ethers'
-import { dlogger } from '@river-build/dlog'
+import { dlogger } from '@towns-protocol/dlog'
 import { BaseChainConfig } from './IStaticContractsInfo'
 import { mintMockNFT } from './ContractHelpers'
 

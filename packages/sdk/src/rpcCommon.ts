@@ -4,7 +4,7 @@ import {
     ConnectTransportOptions as ConnectTransportOptionsWeb,
 } from '@connectrpc/connect-web'
 import { type RetryParams } from './rpcInterceptors'
-import { isNodeEnv, isTestEnv } from '@river-build/dlog'
+import { isNodeEnv, isTestEnv } from '@towns-protocol/dlog'
 
 export interface RpcOptions {
     retryParams?: RetryParams

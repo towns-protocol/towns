@@ -1,8 +1,8 @@
-import { Snapshot } from '@river-build/proto'
+import { Snapshot } from '@towns-protocol/proto'
 import { snapshotMigration0002 } from '../../migrations/snapshotMigration0002'
 import { makeUniqueSpaceStreamId } from '../testUtils'
 import { makeDefaultChannelStreamId, makeUniqueChannelStreamId, streamIdAsBytes } from '../../id'
-import { check } from '@river-build/dlog'
+import { check } from '@towns-protocol/dlog'
 
 describe('snapshotMigration0002', () => {
     test('run migration', () => {

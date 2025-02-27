@@ -1,4 +1,4 @@
-import { useGdm, useTimeline } from '@river-build/react-sdk'
+import { useGdm, useTimeline } from '@towns-protocol/react-sdk'
 import { useParams } from 'react-router-dom'
 import { Timeline } from '@/components/blocks/timeline'
 

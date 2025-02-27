@@ -1,5 +1,5 @@
 {
-    "name": "@river-build/metrics-discovery",
+    "name": "@towns-protocol/metrics-discovery",
     "description": "",
     "version": "0.0.15",
     "author": "",
@@ -18,8 +18,8 @@
         "typecheck": "tsc --noEmit"
     },
     "dependencies": {
-        "@river-build/generated": "workspace:^",
-        "@river-build/web3": "workspace:^",
+        "@towns-protocol/generated": "workspace:^",
+        "@towns-protocol/web3": "workspace:^",
         "ethers": "^5.7.2",
         "zod": "^3.21.4"
     },

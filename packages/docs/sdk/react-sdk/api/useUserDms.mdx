@@ -6,14 +6,14 @@ Hook to get the direct messages of the current user.
 ## Imports
 
 ```ts
-import { useUserDms } from '@river-build/react-sdk'
+import { useUserDms } from '@towns-protocol/react-sdk'
 ```
 
 ## Examples
 
 You can combine this hook with the `useDm`, `useMemberList` and `useMember` hooks to get all direct messages of the current user and render them, showing the name of the other user in the dm:
 ```tsx
-import { useDm, useMyMember, useMemberList, useMember } from '@river-build/react-sdk'
+import { useDm, useMyMember, useMemberList, useMember } from '@towns-protocol/react-sdk'
 
 const AllDms = () => {
     const { streamIds } = useUserDms()
@@ -63,7 +63,7 @@ function useUserDms(
 }
 ```
 
-**Source:** [useUserDms](https://github.com/river-build/river/blob/main/packages/react-sdk/src/useUserDms.ts)
+**Source:** [useUserDms](https://github.com/towns-protocol/towns/blob/main/packages/react-sdk/src/useUserDms.ts)
 
 ## Parameters
 

@@ -1,4 +1,4 @@
-import { type ReactionsMap, Space, assert } from '@river-build/sdk'
+import { type ReactionsMap, Space, assert } from '@towns-protocol/sdk'
 import { useSyncAgent } from './useSyncAgent'
 import { type ObservableConfig, useObservable } from './useObservable'
 import { getRoom } from './utils'

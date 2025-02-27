@@ -1,5 +1,5 @@
 'use client'
-import type { Observable, SyncAgent } from '@river-build/sdk'
+import type { Observable, SyncAgent } from '@towns-protocol/sdk'
 import { type ObservableConfig, useObservable } from './useObservable'
 import { useSyncAgent } from './useSyncAgent'
 

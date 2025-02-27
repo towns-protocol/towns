@@ -4,16 +4,16 @@ import {
     Bot,
     SyncAgent,
     spaceIdFromChannelId,
-} from '@river-build/sdk'
-import { LocalhostWeb3Provider, SpaceDapp } from '@river-build/web3'
-import { bin_fromBase64, bin_toBase64, shortenHexString } from '@river-build/dlog'
+} from '@towns-protocol/sdk'
+import { LocalhostWeb3Provider, SpaceDapp } from '@towns-protocol/web3'
+import { bin_fromBase64, bin_toBase64, shortenHexString } from '@towns-protocol/dlog'
 import { Wallet } from 'ethers'
 import { PlainMessage } from '@bufbuild/protobuf'
 import {
     ChannelMessage_Post_Attachment,
     ChannelMessage_Post_Mention,
     ExportedDevice,
-} from '@river-build/proto'
+} from '@towns-protocol/proto'
 import { waitFor } from './waitFor'
 import { IStorage } from './storage'
 import { sha256 } from 'ethers/lib/utils'

@@ -1,4 +1,4 @@
-import { Snapshot, SpacePayload_ChannelSettings } from '@river-build/proto'
+import { Snapshot, SpacePayload_ChannelSettings } from '@towns-protocol/proto'
 import { isDefaultChannelId, streamIdFromBytes } from '../id'
 
 export function snapshotMigration0002(snapshot: Snapshot): Snapshot {

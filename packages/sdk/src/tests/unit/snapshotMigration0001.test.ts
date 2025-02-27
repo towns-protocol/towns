@@ -1,9 +1,9 @@
-import { Snapshot } from '@river-build/proto'
+import { Snapshot } from '@towns-protocol/proto'
 import { snapshotMigration0001 } from '../../migrations/snapshotMigration0001'
 import { ethers } from 'ethers'
 import { makeUniqueSpaceStreamId } from '../testUtils'
 import { addressFromUserId, makeUniqueChannelStreamId, streamIdAsBytes } from '../../id'
-import { check } from '@river-build/dlog'
+import { check } from '@towns-protocol/dlog'
 
 // a no-op migration test for the initial snapshot, use as a template for new migrations
 describe('snapshotMigration0001', () => {

@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useCreateChannel } from '@river-build/react-sdk'
+import { useCreateChannel } from '@towns-protocol/react-sdk'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { useEthersSigner } from '@/utils/viem-to-ethers'

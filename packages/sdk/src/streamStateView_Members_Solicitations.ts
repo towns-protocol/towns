@@ -1,9 +1,9 @@
 import TypedEmitter from 'typed-emitter'
-import { MemberPayload_KeyFulfillment, MemberPayload_KeySolicitation } from '@river-build/proto'
+import { MemberPayload_KeyFulfillment, MemberPayload_KeySolicitation } from '@towns-protocol/proto'
 import { StreamEncryptionEvents } from './streamEvents'
 import { StreamMember } from './streamStateView_Members'
 import { removeCommon } from './utils'
-import { EventSignatureBundle, KeySolicitationContent } from '@river-build/encryption'
+import { EventSignatureBundle, KeySolicitationContent } from '@towns-protocol/encryption'
 
 export class StreamStateView_Members_Solicitations {
     constructor(readonly streamId: string) {}

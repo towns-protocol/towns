@@ -5,10 +5,10 @@ import {
     persistedObservable,
 } from '../../observable/persistedObservable'
 import { UserMemberships, UserMembershipsModel } from '../user/models/userMemberships'
-import { MembershipOp } from '@river-build/proto'
+import { MembershipOp } from '@towns-protocol/proto'
 import { isDMChannelStreamId, makeDMStreamId } from '../../id'
 import { RiverConnection } from '../river-connection/riverConnection'
-import { check } from '@river-build/dlog'
+import { check } from '@towns-protocol/dlog'
 import type { Client } from '../../client'
 import { Dm } from './models/dm'
 

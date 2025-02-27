@@ -2,7 +2,7 @@
  * @group main
  */
 
-import { MemberPayload_Nft } from '@river-build/proto'
+import { MemberPayload_Nft } from '@towns-protocol/proto'
 import { Client } from '../../client'
 import { makeUniqueChannelStreamId, userIdFromAddress } from '../../id'
 import {
@@ -13,7 +13,7 @@ import {
     waitFor,
 } from '../testUtils'
 import { make_MemberPayload_Nft } from '../../types'
-import { bin_fromString, bin_toString } from '@river-build/dlog'
+import { bin_fromString, bin_toString } from '@towns-protocol/dlog'
 
 describe('memberMetadataTests', () => {
     let bobsClient: Client

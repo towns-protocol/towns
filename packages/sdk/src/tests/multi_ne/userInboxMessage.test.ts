@@ -4,9 +4,9 @@
 
 import { Client } from '../../client'
 import { makeDonePromise, makeTestClient, makeUniqueSpaceStreamId } from '../testUtils'
-import { dlog } from '@river-build/dlog'
-import { GroupEncryptionAlgorithmId, UserDeviceCollection } from '@river-build/encryption'
-import { UserInboxPayload_GroupEncryptionSessions } from '@river-build/proto'
+import { dlog } from '@towns-protocol/dlog'
+import { GroupEncryptionAlgorithmId, UserDeviceCollection } from '@towns-protocol/encryption'
+import { UserInboxPayload_GroupEncryptionSessions } from '@towns-protocol/proto'
 import { makeUniqueChannelStreamId, streamIdAsString } from '../../id'
 
 const log = dlog('test:inboxMessage')

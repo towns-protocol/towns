@@ -5,7 +5,7 @@ import {
     bin_fromHexString,
     bin_toHexString,
     check,
-} from '@river-build/dlog'
+} from '@towns-protocol/dlog'
 import { isDefined, assert, hasElements } from './check'
 import {
     Envelope,
@@ -16,7 +16,7 @@ import {
     StreamAndCookie,
     SyncCookie,
     Tags,
-} from '@river-build/proto'
+} from '@towns-protocol/proto'
 import { assertBytes } from 'ethereum-cryptography/utils'
 import { recoverPublicKey, signSync, verify } from 'ethereum-cryptography/secp256k1'
 import { genIdBlob, streamIdAsBytes, streamIdAsString, userIdFromAddress } from './id'

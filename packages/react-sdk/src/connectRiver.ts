@@ -6,7 +6,7 @@ import {
     type SyncAgentConfig,
     makeSignerContext,
     makeSignerContextFromBearerToken,
-} from '@river-build/sdk'
+} from '@towns-protocol/sdk'
 import { ethers } from 'ethers'
 
 const defaultConfig: Partial<SyncAgentConfig> = {

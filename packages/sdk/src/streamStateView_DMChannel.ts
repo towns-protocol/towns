@@ -1,5 +1,5 @@
 import TypedEmitter from 'typed-emitter'
-import { DmChannelPayload_Snapshot, Snapshot, DmChannelPayload } from '@river-build/proto'
+import { DmChannelPayload_Snapshot, Snapshot, DmChannelPayload } from '@towns-protocol/proto'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import {
     ConfirmedTimelineEvent,
@@ -9,7 +9,7 @@ import {
 } from './types'
 import { DecryptedContent } from './encryptedContentTypes'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
-import { check } from '@river-build/dlog'
+import { check } from '@towns-protocol/dlog'
 import { logNever } from './check'
 import { userIdFromAddress } from './id'
 

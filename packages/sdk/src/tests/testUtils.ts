@@ -13,7 +13,7 @@ import {
     SyncStreamsResponse,
     SyncOp,
     EncryptedDataVersion,
-} from '@river-build/proto'
+} from '@towns-protocol/proto'
 import { Entitlements } from '../sync-agent/entitlements/entitlements'
 import { PlainMessage } from '@bufbuild/protobuf'
 import { IStreamStateView } from '../streamStateView'
@@ -34,8 +34,8 @@ import {
 } from '../id'
 import { ParsedEvent, DecryptedTimelineEvent, StreamTimelineEvent } from '../types'
 import { getPublicKey, utils } from 'ethereum-cryptography/secp256k1'
-import { EntitlementsDelegate } from '@river-build/encryption'
-import { bin_fromHexString, check, dlog } from '@river-build/dlog'
+import { EntitlementsDelegate } from '@towns-protocol/encryption'
+import { bin_fromHexString, check, dlog } from '@towns-protocol/dlog'
 import { ethers, ContractTransaction } from 'ethers'
 import { RiverDbManager } from '../riverDbManager'
 import { StreamRpcClient, makeStreamRpcClient } from '../makeStreamRpcClient'
@@ -82,7 +82,7 @@ import {
     UpdateRoleParams,
     getFixedPricingModule,
     getDynamicPricingModule,
-} from '@river-build/web3'
+} from '@towns-protocol/web3'
 import {
     RiverTimelineEvent,
     type TimelineEvent,

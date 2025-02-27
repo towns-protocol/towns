@@ -1,5 +1,5 @@
-import { SyncCookie, SyncOp, SyncStreamsResponse } from '@river-build/proto'
-import { DLogger, dlog, dlogError } from '@river-build/dlog'
+import { SyncCookie, SyncOp, SyncStreamsResponse } from '@towns-protocol/proto'
+import { DLogger, dlog, dlogError } from '@towns-protocol/dlog'
 import { StreamRpcClient } from './makeStreamRpcClient'
 import { UnpackEnvelopeOpts, unpackStream, unpackStreamAndCookie } from './sign'
 import { SyncedStreamEvents } from './streamEvents'

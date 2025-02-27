@@ -2,7 +2,7 @@
  * @group with-entitlements
  */
 
-import { NoopRuleData } from '@river-build/web3'
+import { NoopRuleData } from '@towns-protocol/web3'
 import { expectUserCanJoinChannel, setupChannelWithCustomRole } from '../testUtils'
 
 describe('disableChannel', () => {

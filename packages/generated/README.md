@@ -1,4 +1,4 @@
-# @river-build/generated
+# @towns-protocol/generated
 
 ## How to generate contract types
 

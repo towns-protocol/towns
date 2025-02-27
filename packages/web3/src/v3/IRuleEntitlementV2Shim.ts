@@ -1,9 +1,9 @@
 import {
     IRuleEntitlementV2 as LocalhostIRuleEntitlementV2,
     IRuleEntitlementBase,
-} from '@river-build/generated/dev/typings/IRuleEntitlement.sol/IRuleEntitlementV2'
+} from '@towns-protocol/generated/dev/typings/IRuleEntitlement.sol/IRuleEntitlementV2'
 
-import LocalhostEntitlementV2Abi from '@river-build/generated/dev/abis/IRuleEntitlementV2.abi'
+import LocalhostEntitlementV2Abi from '@towns-protocol/generated/dev/abis/IRuleEntitlementV2.abi'
 
 export type { LocalhostIRuleEntitlementV2 as IRuleEntitlementV2 }
 export type { IRuleEntitlementBase as IRuleEntitlementV2Base }

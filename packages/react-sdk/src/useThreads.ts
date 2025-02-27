@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { Space, type Threads, assert } from '@river-build/sdk'
+import { Space, type Threads, assert } from '@towns-protocol/sdk'
 import { useSyncAgent } from './useSyncAgent'
 import { type ObservableConfig, useObservable } from './useObservable'
 import { getRoom } from './utils'

@@ -12,11 +12,11 @@ import {
 } from '../testUtils'
 import { ContractReceipt } from '../../types'
 import { PlainMessage } from '@bufbuild/protobuf'
-import { bin_fromHexString } from '@river-build/dlog'
+import { bin_fromHexString } from '@towns-protocol/dlog'
 import { ethers } from 'ethers'
 
-import { TestERC20 } from '@river-build/web3'
-import { BlockchainTransaction_TokenTransfer } from '@river-build/proto'
+import { TestERC20 } from '@towns-protocol/web3'
+import { BlockchainTransaction_TokenTransfer } from '@towns-protocol/proto'
 
 describe('Trading', () => {
     const tokenName = 'Erc20 token test'

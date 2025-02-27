@@ -1,4 +1,4 @@
-import { bin_toHexString } from '@river-build/dlog'
+import { bin_toHexString } from '@towns-protocol/dlog'
 import {
     ChannelMessage_Post_Attachment,
     ChannelMessage_Post,
@@ -13,7 +13,7 @@ import {
     type UserPayload,
     MembershipOp,
     BlockchainTransaction,
-} from '@river-build/proto'
+} from '@towns-protocol/proto'
 import { isDefined, logNever, checkNever } from '../../../check'
 import {
     type TimelineEvent_OneOf,
@@ -66,7 +66,7 @@ import {
     isCiphertext,
 } from '../../../types'
 
-import { getSpaceReviewEventDataBin } from '@river-build/web3'
+import { getSpaceReviewEventDataBin } from '@towns-protocol/web3'
 
 type SuccessResult = {
     content: TimelineEvent_OneOf

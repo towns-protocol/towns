@@ -2,20 +2,20 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IDiamond} from "@river-build/diamond/src/IDiamond.sol";
+import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 
 // helpers
 import {DiamondHelper} from "contracts/test/diamond/Diamond.t.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 
 // contracts
-import {Diamond} from "@river-build/diamond/src/Diamond.sol";
+import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
 
 import {Architect} from "contracts/src/factory/facets/architect/Architect.sol";
-import {ProxyManager} from "@river-build/diamond/src/proxy/manager/ProxyManager.sol";
+import {ProxyManager} from "@towns-protocol/diamond/src/proxy/manager/ProxyManager.sol";
 
 // space helpers
-import {MultiInit} from "@river-build/diamond/src/initializers/MultiInit.sol";
+import {MultiInit} from "@towns-protocol/diamond/src/initializers/MultiInit.sol";
 
 // deployments
 import {DeployOwnable} from "contracts/scripts/deployments/facets/DeployOwnable.s.sol";

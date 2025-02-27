@@ -1,4 +1,4 @@
-import { PersistedMiniblock, PersistedSyncedStream, Snapshot } from '@river-build/proto'
+import { PersistedMiniblock, PersistedSyncedStream, Snapshot } from '@towns-protocol/proto'
 import Dexie, { Table } from 'dexie'
 import { ParsedMiniblock } from './types'
 import {
@@ -8,7 +8,7 @@ import {
     ParsedPersistedSyncedStream,
 } from './streamUtils'
 
-import { bin_toHexString, dlog, dlogError } from '@river-build/dlog'
+import { bin_toHexString, dlog, dlogError } from '@towns-protocol/dlog'
 import { isDefined } from './check'
 import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from './id'
 

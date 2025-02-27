@@ -2,8 +2,8 @@ import type { GroupSessionExtraData } from './encryptionDevice'
 
 import { DecryptionAlgorithm, DecryptionError, IDecryptionParams } from './base'
 import { GroupEncryptionAlgorithmId, GroupEncryptionSession } from './olmLib'
-import { EncryptedData, EncryptedDataVersion } from '@river-build/proto'
-import { bin_fromBase64, dlogError } from '@river-build/dlog'
+import { EncryptedData, EncryptedDataVersion } from '@towns-protocol/proto'
+import { bin_fromBase64, dlogError } from '@towns-protocol/dlog'
 import { LRUCache } from 'lru-cache'
 import { InboundGroupSession } from '@matrix-org/olm'
 

@@ -11,8 +11,8 @@ import {
     expectUserCanJoin,
     createRole,
 } from '../testUtils'
-import { check } from '@river-build/dlog'
-import { Permission, NoopRuleData } from '@river-build/web3'
+import { check } from '@towns-protocol/dlog'
+import { Permission, NoopRuleData } from '@towns-protocol/web3'
 
 describe('channelSpaceSettingsTests', () => {
     test('channel creation with default settings', async () => {

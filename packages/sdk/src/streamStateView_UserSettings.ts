@@ -9,11 +9,11 @@ import {
     UserSettingsPayload_Snapshot_UserBlocks,
     UserSettingsPayload_Snapshot_UserBlocks_Block,
     UserSettingsPayload_UserBlock,
-} from '@river-build/proto'
+} from '@towns-protocol/proto'
 import TypedEmitter from 'typed-emitter'
 import { RemoteTimelineEvent } from './types'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
-import { check, dlog } from '@river-build/dlog'
+import { check, dlog } from '@towns-protocol/dlog'
 import { logNever } from './check'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { toPlainMessage } from '@bufbuild/protobuf'

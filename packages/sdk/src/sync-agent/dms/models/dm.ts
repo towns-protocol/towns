@@ -1,4 +1,4 @@
-import { check, dlogger } from '@river-build/dlog'
+import { check, dlogger } from '@towns-protocol/dlog'
 import { isDefined } from '../../../check'
 import { PersistedObservable, persistedObservable } from '../../../observable/persistedObservable'
 import { Identifiable, LoadPriority, Store } from '../../../store/store'
@@ -8,7 +8,7 @@ import type {
     ChannelMessage_Post_Attachment,
     ChannelMessage_Post_Mention,
     ChannelProperties,
-} from '@river-build/proto'
+} from '@towns-protocol/proto'
 import type { PlainMessage } from '@bufbuild/protobuf'
 import { MessageTimeline } from '../../timeline/timeline'
 

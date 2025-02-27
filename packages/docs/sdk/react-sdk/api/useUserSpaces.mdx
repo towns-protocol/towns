@@ -6,14 +6,14 @@ Hook to get the spaces of the current user.
 ## Imports
 
 ```ts
-import { useUserSpaces } from '@river-build/react-sdk'
+import { useUserSpaces } from '@towns-protocol/react-sdk'
 ```
 
 ## Examples
 
 You can combine this hook with the `useSpace` hook to get all spaces of the current user and render them:
 ```tsx
-import { useUserSpaces, useSpace } from '@river-build/react-sdk'
+import { useUserSpaces, useSpace } from '@towns-protocol/react-sdk'
 
 const AllSpaces = () => {
     const { spaceIds } = useUserSpaces()
@@ -55,7 +55,7 @@ function useUserSpaces(
 }
 ```
 
-**Source:** [useUserSpaces](https://github.com/river-build/river/blob/main/packages/react-sdk/src/useUserSpaces.ts)
+**Source:** [useUserSpaces](https://github.com/towns-protocol/towns/blob/main/packages/react-sdk/src/useUserSpaces.ts)
 
 ## Parameters
 

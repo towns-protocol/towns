@@ -14,7 +14,7 @@ import { MockCrossChainEntitlement } from './MockCrossChainEntitlement'
 import { deployContract, Mutex } from './TestGatingUtils'
 import { Address } from './ContractTypes'
 
-import { dlogger } from '@river-build/dlog'
+import { dlogger } from '@towns-protocol/dlog'
 
 const logger = dlogger('csb:TestGatingCrossChainEntitlement')
 

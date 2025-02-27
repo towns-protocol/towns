@@ -6,13 +6,13 @@ import {
 } from '../../observable/persistedObservable'
 import { Space } from './models/space'
 import { UserMemberships, UserMembershipsModel } from '../user/models/userMemberships'
-import { MembershipOp } from '@river-build/proto'
+import { MembershipOp } from '@towns-protocol/proto'
 import { isSpaceStreamId, makeDefaultChannelStreamId, makeSpaceStreamId } from '../../id'
 import { RiverConnection } from '../river-connection/riverConnection'
-import { CreateSpaceParams, SpaceDapp } from '@river-build/web3'
+import { CreateSpaceParams, SpaceDapp } from '@towns-protocol/web3'
 import { makeDefaultMembershipInfo } from '../utils/spaceUtils'
 import { ethers } from 'ethers'
-import { check, dlogger } from '@river-build/dlog'
+import { check, dlogger } from '@towns-protocol/dlog'
 
 const logger = dlogger('csb:spaces')
 

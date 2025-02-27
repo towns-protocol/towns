@@ -3,9 +3,9 @@ import {
     PersistedMiniblock,
     PersistedSyncedStream,
     SyncCookie,
-} from '@river-build/proto'
+} from '@towns-protocol/proto'
 import { ParsedEvent, ParsedMiniblock } from './types'
-import { bin_toHexString } from '@river-build/dlog'
+import { bin_toHexString } from '@towns-protocol/dlog'
 import { isDefined, logNever } from './check'
 
 export interface ParsedPersistedSyncedStream {

@@ -1,4 +1,4 @@
-import { dlog, dlogError, bin_toHexString, check } from '@river-build/dlog'
+import { dlog, dlogError, bin_toHexString, check } from '@towns-protocol/dlog'
 import { isDefined, logNever } from './check'
 import {
     ChannelMessage,
@@ -7,7 +7,7 @@ import {
     SyncCookie,
     Snapshot,
     MiniblockHeader,
-} from '@river-build/proto'
+} from '@towns-protocol/proto'
 import TypedEmitter from 'typed-emitter'
 import {
     ConfirmedTimelineEvent,
@@ -51,7 +51,7 @@ import { StreamStateView_MemberMetadata } from './streamStateView_MemberMetadata
 import { StreamStateView_ChannelMetadata } from './streamStateView_ChannelMetadata'
 import { StreamEvents, StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 import isEqual from 'lodash/isEqual'
-import { DecryptionSessionError } from '@river-build/encryption'
+import { DecryptionSessionError } from '@towns-protocol/encryption'
 import { migrateSnapshot } from './migrations/migrateSnapshot'
 
 const log = dlog('csb:streams')

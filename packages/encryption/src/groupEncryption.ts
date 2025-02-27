@@ -1,7 +1,7 @@
-import { EncryptedData, EncryptedDataVersion } from '@river-build/proto'
+import { EncryptedData, EncryptedDataVersion } from '@towns-protocol/proto'
 import { EncryptionAlgorithm, IEncryptionParams } from './base'
 import { GroupEncryptionAlgorithmId } from './olmLib'
-import { bin_toBase64, dlog } from '@river-build/dlog'
+import { bin_toBase64, dlog } from '@towns-protocol/dlog'
 
 const log = dlog('csb:encryption:groupEncryption')
 

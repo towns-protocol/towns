@@ -9,7 +9,7 @@ import {
     isGDMChannelStreamId,
     isSpaceStreamId,
     spaceIdFromChannelId,
-} from '@river-build/sdk'
+} from '@towns-protocol/sdk'
 
 export const getRoom = (sync: SyncAgent, streamId: string): Gdm | Channel | Dm | Space => {
     if (isChannelStreamId(streamId)) {

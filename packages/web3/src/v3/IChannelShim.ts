@@ -2,9 +2,9 @@ import {
     IChannel as LocalhostContract,
     IChannelBase as LocalhostIChannelBase,
     IChannelInterface as LocalhostInterface,
-} from '@river-build/generated/dev/typings/IChannel'
+} from '@towns-protocol/generated/dev/typings/IChannel'
 
-import LocalhostAbi from '@river-build/generated/dev/abis/Channels.abi.json' assert { type: 'json' }
+import LocalhostAbi from '@towns-protocol/generated/dev/abis/Channels.abi.json' assert { type: 'json' }
 
 import { ethers } from 'ethers'
 import { BaseContractShim } from './BaseContractShim'

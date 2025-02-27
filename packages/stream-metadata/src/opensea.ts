@@ -1,4 +1,4 @@
-import { BASE_MAINNET, BASE_SEPOLIA, type SpaceInfo } from '@river-build/web3'
+import { BASE_MAINNET, BASE_SEPOLIA, type SpaceInfo } from '@towns-protocol/web3'
 import { BigNumber } from 'ethers'
 import { FastifyBaseLogger } from 'fastify'
 

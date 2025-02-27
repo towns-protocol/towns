@@ -5,7 +5,7 @@
 import { makeTestClient, makeUniqueSpaceStreamId } from '../testUtils'
 import { Client } from '../../client'
 import { makeUniqueChannelStreamId, makeDMStreamId, streamIdAsString } from '../../id'
-import { CreationCookie, InfoRequest } from '@river-build/proto'
+import { CreationCookie, InfoRequest } from '@towns-protocol/proto'
 import { deriveKeyAndIV, encryptAESGCM } from '../../crypto_utils'
 
 describe('mediaTests', () => {
