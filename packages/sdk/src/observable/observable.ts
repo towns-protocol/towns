@@ -25,7 +25,7 @@ export class Observable<T> {
 
     subscribe(
         subscriber: (newValue: T) => void,
-        opts: { fireImmediately?: boolean; once?: boolean; condition?: (value: T) => boolean } = {},
+        opts: { fireImediately?: boolean; once?: boolean; condition?: (value: T) => boolean } = {},
     ): () => void {
         const sub = {
             id: this._nextId++,
