@@ -1,8 +1,8 @@
 import { ecrecover, fromRpcSig, hashPersonalMessage } from '@ethereumjs/util'
 import { ethers } from 'ethers'
-import { bin_equal, bin_fromHexString, bin_toHexString, check } from '@river-build/dlog'
+import { bin_equal, bin_fromHexString, bin_toHexString, check } from '@towns-protocol/dlog'
 import { publicKeyToAddress, publicKeyToUint8Array, riverDelegateHashSrc } from './sign'
-import { BearerToken, Err } from '@river-build/proto'
+import { BearerToken, Err } from '@towns-protocol/proto'
 import { bytesToHex, hexToBytes } from 'ethereum-cryptography/utils'
 
 /**

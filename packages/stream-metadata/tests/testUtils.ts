@@ -1,7 +1,7 @@
 import 'fake-indexeddb/auto' // used to mock indexdb in dexie, don't remove
 
 import { ethers } from 'ethers'
-import { ChunkedMedia, CreationCookie, MediaInfo } from '@river-build/proto'
+import { ChunkedMedia, CreationCookie, MediaInfo } from '@towns-protocol/proto'
 import {
 	Client,
 	encryptAESGCM,
@@ -14,7 +14,7 @@ import {
 	SignerContext,
 	streamIdAsString,
 	userIdFromAddress,
-} from '@river-build/sdk'
+} from '@towns-protocol/sdk'
 import {
 	CreateLegacySpaceParams,
 	ETH_ADDRESS,
@@ -24,7 +24,7 @@ import {
 	NoopRuleData,
 	Permission,
 	SpaceDapp,
-} from '@river-build/web3'
+} from '@towns-protocol/web3'
 
 import { config } from '../src/environment'
 import { getRiverRegistry } from '../src/evmRpcClient'

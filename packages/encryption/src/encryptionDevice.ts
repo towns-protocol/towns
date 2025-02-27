@@ -9,14 +9,14 @@ import {
 } from './encryptionTypes'
 import { EncryptionDelegate } from './encryptionDelegate'
 import { GroupEncryptionAlgorithmId, GroupEncryptionSession } from './olmLib'
-import { bin_equal, bin_fromHexString, bin_toHexString, dlog } from '@river-build/dlog'
+import { bin_equal, bin_fromHexString, bin_toHexString, dlog } from '@towns-protocol/dlog'
 import type { HybridGroupSessionRecord } from './storeTypes'
 import {
     ExportedDevice,
     ExportedDevice_GroupSession,
     ExportedDevice_HybridGroupSession,
     HybridGroupSessionKey,
-} from '@river-build/proto'
+} from '@towns-protocol/proto'
 import { exportAesGsmKeyBytes, generateNewAesGcmKey } from './cryptoAesGcm'
 import { Dexie } from 'dexie'
 

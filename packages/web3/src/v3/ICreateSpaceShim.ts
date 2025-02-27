@@ -3,9 +3,9 @@ import {
     ICreateSpace as LocalhostContract,
     IArchitectBase as LocalhostISpaceArchitectBase,
     ICreateSpaceInterface as LocalhostInterface,
-} from '@river-build/generated/dev/typings/ICreateSpace'
+} from '@towns-protocol/generated/dev/typings/ICreateSpace'
 
-import LocalhostAbi from '@river-build/generated/dev/abis/ICreateSpace.abi.json' assert { type: 'json' }
+import LocalhostAbi from '@towns-protocol/generated/dev/abis/ICreateSpace.abi.json' assert { type: 'json' }
 
 import { ethers } from 'ethers'
 import { BaseContractShim } from './BaseContractShim'

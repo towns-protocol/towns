@@ -2,9 +2,9 @@
  * @group main
  */
 
-import { dlog } from '@river-build/dlog'
+import { dlog } from '@towns-protocol/dlog'
 import { ethers } from 'ethers'
-import { LocalhostWeb3Provider, createRiverRegistry } from '@river-build/web3'
+import { LocalhostWeb3Provider, createRiverRegistry } from '@towns-protocol/web3'
 import { makeRiverChainConfig } from '../../riverConfig'
 
 const log = dlog('csb:test')

@@ -1,7 +1,7 @@
 import TypedEmitter from 'typed-emitter'
-import { MemberPayload_Nft } from '@river-build/proto'
+import { MemberPayload_Nft } from '@towns-protocol/proto'
 import { StreamStateEvents } from './streamEvents'
-import { bin_toString, dlog } from '@river-build/dlog'
+import { bin_toString, dlog } from '@towns-protocol/dlog'
 import { userIdFromAddress } from './id'
 
 export class MemberMetadata_Nft {

@@ -1,7 +1,7 @@
 import axios, { AxiosResponse } from 'axios'
-import { dlog } from '@river-build/dlog'
+import { dlog } from '@towns-protocol/dlog'
 import { ethers } from 'ethers'
-import { Client } from '@river-build/sdk'
+import { Client } from '@towns-protocol/sdk'
 
 import {
 	encryptAndSendMediaPayload,

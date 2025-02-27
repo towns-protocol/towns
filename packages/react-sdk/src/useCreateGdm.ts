@@ -1,6 +1,6 @@
 'use client'
 
-import type { Gdms } from '@river-build/sdk'
+import type { Gdms } from '@towns-protocol/sdk'
 import { type ActionConfig, useAction } from './internals/useAction'
 import { useSyncAgent } from './useSyncAgent'
 

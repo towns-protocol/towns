@@ -1,7 +1,7 @@
 import TypedEmitter from 'typed-emitter'
-import { EncryptedData } from '@river-build/proto'
+import { EncryptedData } from '@towns-protocol/proto'
 import { usernameChecksum } from './utils'
-import { dlog } from '@river-build/dlog'
+import { dlog } from '@towns-protocol/dlog'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 
 const textDecoder = new TextDecoder()

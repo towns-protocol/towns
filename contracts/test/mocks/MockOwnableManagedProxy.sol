@@ -6,9 +6,9 @@ pragma solidity ^0.8.23;
 // libraries
 
 // contracts
-import {ManagedProxyBase} from "@river-build/diamond/src/proxy/managed/ManagedProxyBase.sol";
-import {OwnableBase} from "@river-build/diamond/src/facets/ownable/OwnableBase.sol";
-import {IntrospectionBase} from "@river-build/diamond/src/facets/introspection/IntrospectionBase.sol";
+import {ManagedProxyBase} from "@towns-protocol/diamond/src/proxy/managed/ManagedProxyBase.sol";
+import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
+import {IntrospectionBase} from "@towns-protocol/diamond/src/facets/introspection/IntrospectionBase.sol";
 
 contract MockOwnableManagedProxy is
   ManagedProxyBase,

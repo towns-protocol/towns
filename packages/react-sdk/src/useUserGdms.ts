@@ -1,4 +1,4 @@
-import type { Gdms } from '@river-build/sdk/dist/sync-agent/gdms/gdms'
+import type { Gdms } from '@towns-protocol/sdk/dist/sync-agent/gdms/gdms'
 import type { ObservableConfig } from './useObservable'
 import { useRiver } from './useRiver'
 
@@ -10,7 +10,7 @@ import { useRiver } from './useRiver'
  * You can combine this hook with the `useGdm` hook to get all group dm streams of the current user and render them:
  *
  * ```tsx
- * import { useUserGdms, useGdm } from '@river-build/react-sdk'
+ * import { useUserGdms, useGdm } from '@towns-protocol/react-sdk'
  *
  * const AllGdms = () => {
  *     const { streamIds } = useUserGdms()

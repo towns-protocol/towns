@@ -2,9 +2,9 @@ import {
     IRoles as LocalhostContract,
     IRolesBase as LocalhostIRolesBase,
     IRolesInterface as LocalhostInterface,
-} from '@river-build/generated/dev/typings/IRoles'
+} from '@towns-protocol/generated/dev/typings/IRoles'
 
-import LocalhostAbi from '@river-build/generated/dev/abis/Roles.abi.json' assert { type: 'json' }
+import LocalhostAbi from '@towns-protocol/generated/dev/abis/Roles.abi.json' assert { type: 'json' }
 
 import { ethers } from 'ethers'
 import { BaseContractShim } from './BaseContractShim'

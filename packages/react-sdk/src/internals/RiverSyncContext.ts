@@ -1,5 +1,5 @@
 'use client'
-import { SyncAgent } from '@river-build/sdk'
+import { SyncAgent } from '@towns-protocol/sdk'
 import { createContext } from 'react'
 
 type SpaceContextProps = {

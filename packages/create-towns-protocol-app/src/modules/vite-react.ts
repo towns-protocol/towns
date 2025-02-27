@@ -20,7 +20,7 @@ export const buildRiverReactApp = async (cfg: CreateRiverBuildAppConfig) => {
     console.log(picocolors.blue('\nAdding River SDK dependencies...'))
 
     await addDependencies(cfg.projectDir, () => ({
-        dependencies: ['@river-build/react-sdk', '@river-build/sdk'],
+        dependencies: ['@towns-protocol/react-sdk', '@towns-protocol/sdk'],
         devDependencies: ['vite-plugin-node-polyfills'],
     }))
 

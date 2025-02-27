@@ -1,5 +1,5 @@
 import TypedEmitter from 'typed-emitter'
-import { GdmChannelPayload, GdmChannelPayload_Snapshot, Snapshot } from '@river-build/proto'
+import { GdmChannelPayload, GdmChannelPayload_Snapshot, Snapshot } from '@towns-protocol/proto'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import {
     ConfirmedTimelineEvent,
@@ -10,7 +10,7 @@ import {
 import { DecryptedContent } from './encryptedContentTypes'
 import { StreamEncryptionEvents, StreamEvents, StreamStateEvents } from './streamEvents'
 import { StreamStateView_ChannelMetadata } from './streamStateView_ChannelMetadata'
-import { check } from '@river-build/dlog'
+import { check } from '@towns-protocol/dlog'
 import { logNever } from './check'
 
 export class StreamStateView_GDMChannel extends StreamStateView_AbstractContent {

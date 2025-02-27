@@ -2,14 +2,14 @@ import {
     IReview,
     IReviewInterface,
     ReviewStorage,
-} from '@river-build/generated/dev/typings/IReview'
+} from '@towns-protocol/generated/dev/typings/IReview'
 
 import { ContractTransaction, ethers } from 'ethers'
 import { BaseContractShim } from './BaseContractShim'
 
-import DevAbi from '@river-build/generated/dev/abis/IReview.abi.json' assert { type: 'json' }
+import DevAbi from '@towns-protocol/generated/dev/abis/IReview.abi.json' assert { type: 'json' }
 import { Address } from 'abitype'
-import { bin_toHexString } from '@river-build/dlog'
+import { bin_toHexString } from '@towns-protocol/dlog'
 
 // solidity doesn't export enums, so we need to define them here, boooooo
 export enum SpaceReviewAction {

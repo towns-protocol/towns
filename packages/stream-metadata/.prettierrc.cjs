@@ -3,5 +3,5 @@
  * @type {import("prettier").Config}
  */
 module.exports = {
-	...require("@river-build/prettier-config"),
+	...require("@towns-protocol/prettier-config"),
 };

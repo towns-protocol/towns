@@ -2,10 +2,10 @@
  * @group with-entitlements
  */
 
-import { dlog } from '@river-build/dlog'
+import { dlog } from '@towns-protocol/dlog'
 import { makeSpaceStreamId } from '../../id'
 import { makeBaseChainConfig, makeRiverConfig } from '../../riverConfig'
-import { createSpaceDapp, LocalhostWeb3Provider, SpaceDapp } from '@river-build/web3'
+import { createSpaceDapp, LocalhostWeb3Provider, SpaceDapp } from '@towns-protocol/web3'
 import { ethers } from 'ethers'
 import { makeDefaultMembershipInfo } from '../../sync-agent/utils/spaceUtils'
 import { linkWallets, unlinkCaller } from '../testUtils'

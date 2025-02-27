@@ -13,7 +13,7 @@ import {CurrencyTransfer} from "contracts/src/utils/libraries/CurrencyTransfer.s
 
 // contracts
 import {EntitlementGated} from "contracts/src/spaces/facets/gated/EntitlementGated.sol";
-import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
+import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {ReentrancyGuard} from "solady/utils/ReentrancyGuard.sol";
 
 contract XChain is IXChain, ReentrancyGuard, Facet {

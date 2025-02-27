@@ -1,5 +1,5 @@
 'use client'
-import type { SyncAgent } from '@river-build/sdk'
+import type { SyncAgent } from '@towns-protocol/sdk'
 import { useEffect, useState } from 'react'
 import { RiverSyncContext } from './internals/RiverSyncContext'
 

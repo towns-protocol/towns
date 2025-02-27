@@ -1,6 +1,6 @@
 'use client'
 
-import type { Space } from '@river-build/sdk'
+import type { Space } from '@towns-protocol/sdk'
 import { useMemo } from 'react'
 import { type ActionConfig, useAction } from './internals/useAction'
 import { useSyncAgent } from './useSyncAgent'

@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import type { MembersModel } from '@river-build/sdk'
+import type { MembersModel } from '@towns-protocol/sdk'
 import { type ObservableConfig, useObservable } from './useObservable'
 import { useSyncAgent } from './useSyncAgent'
 import { getRoom } from './utils'

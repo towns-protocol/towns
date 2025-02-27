@@ -20,7 +20,7 @@ import {Context} from "@openzeppelin/contracts/utils/Context.sol";
 // contracts
 import {Initializable} from "solady/utils/Initializable.sol";
 import {UUPSUpgradeable} from "solady/utils/UUPSUpgradeable.sol";
-import {IntrospectionBase} from "@river-build/diamond/src/facets/introspection/IntrospectionBase.sol";
+import {IntrospectionBase} from "@towns-protocol/diamond/src/facets/introspection/IntrospectionBase.sol";
 import {Ownable} from "solady/auth/Ownable.sol";
 import {ERC20Votes} from "solady/tokens/ERC20Votes.sol";
 import {LockBase} from "contracts/src/tokens/lock/LockBase.sol";

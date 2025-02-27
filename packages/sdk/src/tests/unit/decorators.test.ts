@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 // new test with description "decorator tests"
 
-import { check, dlogger } from '@river-build/dlog'
+import { check, dlogger } from '@towns-protocol/dlog'
 
 const logger = dlogger('csb:test:decorators')
 

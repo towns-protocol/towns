@@ -1,7 +1,7 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
-import { SpaceInfo } from '@river-build/web3'
+import { SpaceInfo } from '@towns-protocol/web3'
 import { z } from 'zod'
-import { makeStreamId, StreamPrefix } from '@river-build/sdk'
+import { makeStreamId, StreamPrefix } from '@towns-protocol/sdk'
 
 import { config } from '../environment'
 import { isValidEthereumAddress } from '../validators'

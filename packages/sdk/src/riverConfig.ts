@@ -5,9 +5,9 @@ import {
     Web3Deployment,
     getWeb3Deployment,
     getWeb3Deployments,
-} from '@river-build/web3'
+} from '@towns-protocol/web3'
 import { isDefined } from './check'
-import { check } from '@river-build/dlog'
+import { check } from '@towns-protocol/dlog'
 
 function getEnvironmentId(): string {
     if (typeof process === 'object') {

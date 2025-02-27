@@ -1,4 +1,4 @@
-import type { Address } from '@river-build/web3'
+import type { Address } from '@towns-protocol/web3'
 import type { RiverConnection } from '../../river-connection/riverConnection'
 import { addressFromUserId } from '../../../id'
 import { Member, type NftModel } from './member'

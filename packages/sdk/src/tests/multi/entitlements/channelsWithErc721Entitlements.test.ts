@@ -9,8 +9,8 @@ import {
     expectUserCanJoinChannel,
     expectUserCannotJoinChannel,
 } from '../../testUtils'
-import { dlog } from '@river-build/dlog'
-import { Address, TestERC721 } from '@river-build/web3'
+import { dlog } from '@towns-protocol/dlog'
+import { Address, TestERC721 } from '@towns-protocol/web3'
 
 const log = dlog('csb:test:channelsWithErc721Entitlements')
 

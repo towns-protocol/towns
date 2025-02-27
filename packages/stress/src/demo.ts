@@ -6,23 +6,23 @@ import {
     makeStreamRpcClient,
     NotificationService,
     randomUrlSelector,
-} from '@river-build/sdk'
-import { check } from '@river-build/dlog'
+} from '@towns-protocol/sdk'
+import { check } from '@towns-protocol/dlog'
 import {
     DmChannelSettingValue,
     GdmChannelSettingValue,
     GetSettingsRequest,
     InfoRequest,
     SetDmGdmSettingsRequest,
-} from '@river-build/proto'
-import { EncryptionDelegate } from '@river-build/encryption'
+} from '@towns-protocol/proto'
+import { EncryptionDelegate } from '@towns-protocol/encryption'
 import { makeStressClient } from './utils/stressClient'
 import { expect, isSet } from './utils/expect'
 import { getSystemInfo } from './utils/systemInfo'
 import { waitFor } from './utils/waitFor'
 import { ethers, Wallet } from 'ethers'
 import { RedisStorage } from './utils/storage'
-import { createRiverRegistry } from '@river-build/web3'
+import { createRiverRegistry } from '@towns-protocol/web3'
 import { getLogger } from './utils/logger'
 
 check(isSet(process.env.RIVER_ENV), 'process.env.RIVER_ENV')

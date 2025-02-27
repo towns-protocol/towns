@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
-import type { Space } from '@river-build/sdk'
+import type { Space } from '@towns-protocol/sdk'
 import { useSyncAgent } from './useSyncAgent'
 import { type ObservableConfig, useObservable } from './useObservable'
 
@@ -15,7 +15,7 @@ import { type ObservableConfig, useObservable } from './useObservable'
  * You can use this hook to display the data about a space:
  *
  * ```tsx
- * import { useSpace } from '@river-build/react-sdk'
+ * import { useSpace } from '@towns-protocol/react-sdk'
  *
  * const Space = ({ spaceId }: { spaceId: string }) => {
  *     const { data: space } = useSpace(spaceId)

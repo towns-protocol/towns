@@ -1,10 +1,10 @@
-import { bin_toHexString, bin_toString, check } from '@river-build/dlog'
+import { bin_toHexString, bin_toString, check } from '@towns-protocol/dlog'
 import { isDefined } from '../../../check'
 import { PersistedObservable, persistedObservable } from '../../../observable/persistedObservable'
 import type { Store } from '../../../store/store'
 import type { RiverConnection } from '../../river-connection/riverConnection'
-import { MembershipOp } from '@river-build/proto'
-import type { Address } from '@river-build/web3'
+import { MembershipOp } from '@towns-protocol/proto'
+import type { Address } from '@towns-protocol/web3'
 
 export type MemberModel = {
     /**

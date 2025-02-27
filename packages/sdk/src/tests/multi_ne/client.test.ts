@@ -2,9 +2,13 @@
  * @group main
  */
 
-import { dlog, check } from '@river-build/dlog'
+import { dlog, check } from '@towns-protocol/dlog'
 import { isDefined } from '../../check'
-import { DecryptionStatus, GroupEncryptionAlgorithmId, UserDevice } from '@river-build/encryption'
+import {
+    DecryptionStatus,
+    GroupEncryptionAlgorithmId,
+    UserDevice,
+} from '@towns-protocol/encryption'
 import { Client } from '../../client'
 import {
     makeUserStreamId,
@@ -34,7 +38,7 @@ import {
     SyncStreamsResponse,
     UserBio,
     type ChunkedMedia,
-} from '@river-build/proto'
+} from '@towns-protocol/proto'
 import { PartialMessage, type PlainMessage } from '@bufbuild/protobuf'
 import { CallOptions } from '@connectrpc/connect'
 import { vi } from 'vitest'

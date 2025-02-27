@@ -1,7 +1,7 @@
-import { check } from '@river-build/dlog'
+import { check } from '@towns-protocol/dlog'
 import type { StressClient } from '../../utils/stressClient'
 import { ChatConfig } from '../common/types'
-import { isDefined } from '@river-build/sdk'
+import { isDefined } from '@towns-protocol/sdk'
 import { getLogger } from '../../utils/logger'
 
 export async function waitForAllIn(rootClient: StressClient, chatConfig: ChatConfig) {

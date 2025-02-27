@@ -1,9 +1,9 @@
 import {
     TokenPausableFacet as LocalhostContract,
     TokenPausableFacetInterface as LocalhostInterface,
-} from '@river-build/generated/dev/typings/TokenPausableFacet'
+} from '@towns-protocol/generated/dev/typings/TokenPausableFacet'
 
-import LocalhostAbi from '@river-build/generated/dev/abis/TokenPausableFacet.abi.json' assert { type: 'json' }
+import LocalhostAbi from '@towns-protocol/generated/dev/abis/TokenPausableFacet.abi.json' assert { type: 'json' }
 
 import { ethers } from 'ethers'
 import { BaseContractShim } from './BaseContractShim'

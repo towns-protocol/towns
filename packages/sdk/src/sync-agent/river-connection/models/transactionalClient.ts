@@ -2,7 +2,7 @@ import {
     CryptoStore,
     EntitlementsDelegate,
     GroupEncryptionAlgorithmId,
-} from '@river-build/encryption'
+} from '@towns-protocol/encryption'
 import { Client, ClientEvents } from '../../../client'
 import { StreamRpcClient } from '../../../makeStreamRpcClient'
 import { SignerContext } from '../../../signerContext'

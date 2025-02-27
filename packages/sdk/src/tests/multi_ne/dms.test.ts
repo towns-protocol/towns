@@ -7,7 +7,7 @@ import { Client } from '../../client'
 import { addressFromUserId, makeDMStreamId, streamIdAsBytes } from '../../id'
 import { makeEvent } from '../../sign'
 import { make_DMChannelPayload_Inception, make_MemberPayload_Membership2 } from '../../types'
-import { MembershipOp } from '@river-build/proto'
+import { MembershipOp } from '@towns-protocol/proto'
 
 describe('dmsTests', () => {
     let clients: Client[] = []

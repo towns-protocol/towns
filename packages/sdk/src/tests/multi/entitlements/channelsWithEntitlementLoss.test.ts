@@ -9,8 +9,8 @@ import {
     expectUserCanJoinChannel,
     expectUserCannotJoinChannel,
 } from '../../testUtils'
-import { MembershipOp } from '@river-build/proto'
-import { Address, Permission, TestERC721 } from '@river-build/web3'
+import { MembershipOp } from '@towns-protocol/proto'
+import { Address, Permission, TestERC721 } from '@towns-protocol/web3'
 import { make_MemberPayload_KeySolicitation } from '../../../types'
 
 describe('channelsWithEntitlementLoss', () => {

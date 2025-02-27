@@ -2,10 +2,10 @@
  * @group main
  */
 
-import { MemberPayload_Nft } from '@river-build/proto'
+import { MemberPayload_Nft } from '@towns-protocol/proto'
 import { MemberMetadata_Nft } from '../../memberMetadata_Nft'
 import { makeRandomUserAddress } from '../testUtils'
-import { bin_fromString } from '@river-build/dlog'
+import { bin_fromString } from '@towns-protocol/dlog'
 
 describe('memberMetadata_NftTests', () => {
     const streamId = 'streamid1'

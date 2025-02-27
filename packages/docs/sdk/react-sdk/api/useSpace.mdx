@@ -6,14 +6,14 @@ Hook to get data about a space. You can use this hook to get space metadata and 
 ## Imports
 
 ```ts
-import { useSpace } from '@river-build/react-sdk'
+import { useSpace } from '@towns-protocol/react-sdk'
 ```
 
 ## Examples
 
 You can use this hook to display the data about a space:
 ```tsx
-import { useSpace } from '@river-build/react-sdk'
+import { useSpace } from '@towns-protocol/react-sdk'
 
 const Space = ({ spaceId }: { spaceId: string }) => {
     const { data: space } = useSpace(spaceId)
@@ -51,7 +51,7 @@ function useSpace(
 }
 ```
 
-**Source:** [useSpace](https://github.com/river-build/river/blob/main/packages/react-sdk/src/useSpace.ts)
+**Source:** [useSpace](https://github.com/towns-protocol/towns/blob/main/packages/react-sdk/src/useSpace.ts)
 
 ## Parameters
 

@@ -3,7 +3,7 @@ import {
     ChannelProperties,
     EncryptedData,
     EncryptedDataVersion,
-} from '@river-build/proto'
+} from '@towns-protocol/proto'
 import { checkNever, logNever } from './check'
 
 /*************

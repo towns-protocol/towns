@@ -6,9 +6,9 @@ import { makeTestClient, makeUniqueSpaceStreamId } from '../testUtils'
 import { Client } from '../../client'
 
 import { genShortId, makeUniqueChannelStreamId } from '../../id'
-import { ChannelMessage } from '@river-build/proto'
-import { GroupEncryptionAlgorithmId } from '@river-build/encryption'
-import { checkNever } from '@river-build/web3'
+import { ChannelMessage } from '@towns-protocol/proto'
+import { GroupEncryptionAlgorithmId } from '@towns-protocol/encryption'
+import { checkNever } from '@towns-protocol/web3'
 
 describe('outboundSessionTests', () => {
     let bobsDeviceId: string

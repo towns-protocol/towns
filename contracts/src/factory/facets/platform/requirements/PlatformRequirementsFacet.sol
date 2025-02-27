@@ -8,8 +8,8 @@ import {IPlatformRequirements} from "./IPlatformRequirements.sol";
 
 // contracts
 import {PlatformRequirementsBase} from "./PlatformRequirementsBase.sol";
-import {OwnableBase} from "@river-build/diamond/src/facets/ownable/OwnableBase.sol";
-import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
+import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
+import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 
 contract PlatformRequirementsFacet is
   IPlatformRequirements,

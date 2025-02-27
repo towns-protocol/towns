@@ -1,4 +1,4 @@
-import { useChannel, useSpace } from '@river-build/react-sdk'
+import { useChannel, useSpace } from '@towns-protocol/react-sdk'
 import { Link, Outlet, useNavigate, useParams } from 'react-router-dom'
 import { useCallback, useState } from 'react'
 import { ArrowLeftIcon, PlusIcon } from '@radix-ui/react-icons'

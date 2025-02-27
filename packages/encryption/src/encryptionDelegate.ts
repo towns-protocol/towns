@@ -16,7 +16,7 @@ import {
     Session,
     Utility,
 } from './encryptionTypes'
-import { isNodeEnv } from '@river-build/dlog'
+import { isNodeEnv } from '@towns-protocol/dlog'
 
 type OlmLib = typeof Olm
 

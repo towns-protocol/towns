@@ -1,6 +1,6 @@
 import * as dotenv from 'dotenv'
 import { z } from 'zod'
-import { getWeb3Deployment } from '@river-build/web3'
+import { getWeb3Deployment } from '@towns-protocol/web3'
 import { v4 } from 'uuid'
 
 dotenv.config({

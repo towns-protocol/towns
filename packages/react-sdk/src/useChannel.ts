@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
-import type { Channel } from '@river-build/sdk'
+import type { Channel } from '@towns-protocol/sdk'
 import { useSyncAgent } from './useSyncAgent'
 import { type ObservableConfig, useObservable } from './useObservable'
 

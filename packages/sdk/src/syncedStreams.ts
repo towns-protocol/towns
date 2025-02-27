@@ -1,5 +1,5 @@
-import { SyncCookie } from '@river-build/proto'
-import { DLogger, check, dlog, dlogError } from '@river-build/dlog'
+import { SyncCookie } from '@towns-protocol/proto'
+import { DLogger, check, dlog, dlogError } from '@towns-protocol/dlog'
 import { StreamRpcClient } from './makeStreamRpcClient'
 import { SyncedStreamEvents } from './streamEvents'
 import TypedEmitter from 'typed-emitter'

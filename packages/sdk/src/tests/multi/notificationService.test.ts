@@ -1,5 +1,5 @@
 import { env } from 'process'
-import { dlogger } from '@river-build/dlog'
+import { dlogger } from '@towns-protocol/dlog'
 import { NotificationService } from '../../notificationService'
 import { ethers } from 'ethers'
 import {
@@ -7,7 +7,7 @@ import {
     GdmChannelSettingValue,
     GetSettingsRequest,
     SetDmGdmSettingsRequest,
-} from '@river-build/proto'
+} from '@towns-protocol/proto'
 import { makeSignerContext } from '../../signerContext'
 
 const logger = dlogger('notificationService.test')

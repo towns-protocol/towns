@@ -1,11 +1,11 @@
 import TypedEmitter from 'typed-emitter'
-import { Permission } from '@river-build/web3'
+import { Permission } from '@towns-protocol/web3'
 import {
     AddEventResponse_Error,
     EncryptedData,
     SessionKeys,
     UserInboxPayload_GroupEncryptionSessions,
-} from '@river-build/proto'
+} from '@towns-protocol/proto'
 import {
     shortenHexString,
     dlog,
@@ -13,7 +13,7 @@ import {
     DLogger,
     check,
     bin_toHexString,
-} from '@river-build/dlog'
+} from '@towns-protocol/dlog'
 import {
     GroupEncryptionAlgorithmId,
     GroupEncryptionSession,

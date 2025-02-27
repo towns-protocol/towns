@@ -16,7 +16,7 @@ import {CurrencyTransfer} from "contracts/src/utils/libraries/CurrencyTransfer.s
 
 // contracts
 import {ERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/ERC721ABase.sol";
-import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
+import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {ReentrancyGuard} from "solady/utils/ReentrancyGuard.sol";
 
 contract TippingFacet is ITipping, ERC721ABase, Facet, ReentrancyGuard {

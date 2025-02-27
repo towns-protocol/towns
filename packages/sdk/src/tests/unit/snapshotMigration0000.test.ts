@@ -1,4 +1,4 @@
-import { Snapshot } from '@river-build/proto'
+import { Snapshot } from '@towns-protocol/proto'
 import { snapshotMigration0000 } from '../../migrations/snapshotMigration0000'
 
 // a no-op migration test for the initial snapshot, use as a template for new migrations

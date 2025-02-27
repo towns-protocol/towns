@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { ethers } from 'ethers'
-import { dlog } from '@river-build/dlog'
-import { Client, contractAddressFromSpaceId } from '@river-build/sdk'
+import { dlog } from '@towns-protocol/dlog'
+import { Client, contractAddressFromSpaceId } from '@towns-protocol/sdk'
 
 import {
 	encryptAndSendMediaPayload,

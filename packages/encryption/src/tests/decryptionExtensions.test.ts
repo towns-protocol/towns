@@ -17,20 +17,20 @@ import {
     AddEventResponse_Error,
     EncryptedData,
     UserInboxPayload_GroupEncryptionSessions,
-} from '@river-build/proto'
+} from '@towns-protocol/proto'
 import {
     GroupEncryptionAlgorithmId,
     GroupEncryptionSession,
     UserDevice,
     UserDeviceCollection,
 } from '../olmLib'
-import { bin_fromHexString, bin_toHexString, dlog, shortenHexString } from '@river-build/dlog'
+import { bin_fromHexString, bin_toHexString, dlog, shortenHexString } from '@towns-protocol/dlog'
 
 import { CryptoStore } from '../cryptoStore'
 import EventEmitter from 'events'
 import { GroupEncryptionCrypto } from '../groupEncryptionCrypto'
 import { IGroupEncryptionClient } from '../base'
-import { Permission } from '@river-build/web3'
+import { Permission } from '@towns-protocol/web3'
 import TypedEmitter from 'typed-emitter'
 import { customAlphabet } from 'nanoid'
 

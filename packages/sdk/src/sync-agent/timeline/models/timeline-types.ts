@@ -14,9 +14,9 @@ import type {
     UserPayload_ReceivedBlockchainTransaction,
     BlockchainTransaction_Tip,
     BlockchainTransaction_SpaceReview_Action,
-} from '@river-build/proto'
+} from '@towns-protocol/proto'
 import type { PlainMessage } from '@bufbuild/protobuf'
-import type { DecryptionSessionError } from '@river-build/encryption'
+import type { DecryptionSessionError } from '@towns-protocol/encryption'
 
 export enum EventStatus {
     /** The event was not sent and will no longer be retried. */
