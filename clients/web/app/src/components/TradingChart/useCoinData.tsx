@@ -102,7 +102,7 @@ export const useCoinData = ({
             const apiKey = env.VITE_CODEX_API_KEY
             if (!apiKey) {
                 console.error('VITE_CODEX_API_KEY missing')
-                return []
+                return undefined
             }
             const url = 'https://graph.defined.fi/graphql'
             const resp = await fetch(url, {

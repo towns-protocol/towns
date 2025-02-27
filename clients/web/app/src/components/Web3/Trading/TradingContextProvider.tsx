@@ -1,8 +1,9 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo } from 'react'
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef } from 'react'
 import { Connection as SolanaConnection, VersionedTransaction } from '@solana/web3.js'
 import { base64ToUint8Array } from '@river-build/sdk'
-import { TransactionStatus, queryClient, useTownsClient } from 'use-towns-client'
+import { TransactionStatus, queryClient, useTownsClient, useTownsContext } from 'use-towns-client'
 import { Signer } from 'ethers'
+import { bin_toHexString, bin_toString } from '@river-build/dlog'
 import { env } from 'utils'
 import { StandardToast, dismissToast } from '@components/Notifications/StandardToast'
 import { popupToast } from '@components/Notifications/popupToast'
@@ -44,11 +45,13 @@ const TradingContext = createContext<{
     sendEvmTransaction: (transaction: EvmTransactionRequest, signer: Signer) => void
     pendingEvmTransaction: EvmTransactionRequest | undefined
     pendingSolanaTransaction: SolanaTransactionRequest | undefined
+    tokenTransferRollups: ReturnType<typeof useTokenTransferRollups>['tokenTransferRollups']
 }>({
     sendSolanaTransaction: () => {},
     sendEvmTransaction: () => {},
     pendingEvmTransaction: undefined,
     pendingSolanaTransaction: undefined,
+    tokenTransferRollups: {},
 })
 
 export const useTradingContext = () => {
@@ -72,6 +75,8 @@ export const TradingContextProvider = ({ children }: { children: React.ReactNode
         }
         return new SolanaConnection(env.VITE_SOLANA_MAINNET_RPC_URL)
     }, [])
+
+    const { tokenTransferRollups } = useTokenTransferRollups()
 
     const sendSolanaTransaction = useCallback(
         async (transaction: SolanaTransactionRequest) => {
@@ -294,9 +299,75 @@ export const TradingContextProvider = ({ children }: { children: React.ReactNode
                 pendingEvmTransaction,
                 sendSolanaTransaction,
                 sendEvmTransaction,
+                tokenTransferRollups,
             }}
         >
             {children}
         </TradingContext.Provider>
     )
+}
+
+const useTokenTransferRollups = () => {
+    const { casablancaClient } = useTownsContext()
+
+    // map of trades: token address -> transfers
+    const rollup = useRef<{
+        [key: string]: {
+            channelId: string
+            address: Uint8Array
+            amount: bigint
+            isBuy: boolean
+            chainId: string
+            userId: string
+            createdAtEpochMs: bigint
+            messageId: string
+        }[]
+    }>({})
+
+    useEffect(() => {
+        if (!casablancaClient) {
+            return
+        }
+
+        const onStreamTokenTransfer = (
+            channelId: string,
+            transfer: {
+                address: Uint8Array
+                amount: bigint
+                isBuy: boolean
+                chainId: string
+                userId: string
+                createdAtEpochMs: bigint
+                messageId: string
+            },
+        ) => {
+            // solana does not use hex strings for addresses
+            const address =
+                transfer.chainId === 'solana-mainnet'
+                    ? bin_toString(transfer.address)
+                    : bin_toHexString(transfer.address)
+            if (!rollup.current[address]) {
+                rollup.current[address] = []
+            }
+            rollup.current[address].push({ ...transfer, channelId })
+        }
+
+        const onStreamInitialized = (streamId: string) => {
+            const stream = casablancaClient.streams.get(streamId)
+            if (!stream) {
+                return
+            }
+            for (const tokenTransfer of stream.view.membershipContent.tokenTransfers) {
+                onStreamTokenTransfer(stream.view.streamId, tokenTransfer)
+            }
+        }
+
+        casablancaClient.on('streamTokenTransfer', onStreamTokenTransfer)
+        casablancaClient.on('streamInitialized', onStreamInitialized)
+        return () => {
+            casablancaClient.off('streamTokenTransfer', onStreamTokenTransfer)
+            casablancaClient.off('streamInitialized', onStreamInitialized)
+        }
+    }, [casablancaClient])
+    return { tokenTransferRollups: rollup.current }
 }

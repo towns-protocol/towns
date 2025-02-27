@@ -13,6 +13,8 @@ import {
     makeRiverRpcClient,
     ChannelMessageEvent,
     transformAttachments,
+    ContractReceipt,
+    SolanaTransactionReceipt,
 } from '@river-build/sdk'
 import { EntitlementsDelegate } from '@river-build/encryption'
 import { IRuleEntitlementV2Base, XchainConfig, ISpaceDapp, SpaceDapp } from '@river-build/web3'
@@ -23,6 +25,7 @@ import {
     FullyReadMarker,
     UserBio,
     CreationCookie,
+    BlockchainTransaction_TokenTransfer,
 } from '@river-build/proto'
 import {
     ChannelTransactionContext,
@@ -1463,6 +1466,17 @@ export class TownsClient
             },
         )
         this.log('sendReaction')
+    }
+
+    public async sendTokenTransfer(
+        chainId: number,
+        receipt: ContractReceipt | SolanaTransactionReceipt,
+        event: PlainMessage<BlockchainTransaction_TokenTransfer>,
+    ): Promise<void> {
+        if (!this.casablancaClient) {
+            throw new Error('Casablanca client not initialized')
+        }
+        await this.casablancaClient.addTransaction_Transfer(chainId, receipt, event)
     }
 
     /************************************************

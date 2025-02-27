@@ -18,6 +18,7 @@ import { prepareGatedDataForSubmit } from '@components/Tokens/utils'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { GetSigner, WalletReady } from 'privy/WalletReady'
 import { EditMembershipSchemaType } from './editMembershipSchema'
+import { useIsFreeSpace } from './hooks'
 
 export function EditMembershipSubmitButton({
     children,
@@ -64,6 +65,11 @@ export function EditMembershipSubmitButton({
     const isSubmittedRef = React.useRef(false)
 
     const { data: minimumMmebershipPrice } = usePlatformMinMembershipPriceInEth()
+
+    const isFreeSpace = useIsFreeSpace({
+        isFixedPricingModule: watchAllFields.membershipPricingType === 'fixed',
+        spaceId,
+    })
 
     const onValid = useEvent(async (data: EditMembershipSchemaType, getSigner: GetSigner) => {
         if (
@@ -112,14 +118,13 @@ export function EditMembershipSubmitButton({
         }
 
         const isFixedPricing = watchAllFields.membershipPricingType === 'fixed'
-        const defaultPriceInWei = parseUnits(defaultValues?.membershipCost ?? '0')
 
         // fixed price space that was not created with a minimum price must be at least the minimum price
         // or else the contract will revert
         if (
+            !isFreeSpace &&
             minimumMmebershipPrice !== undefined &&
             isFixedPricing &&
-            defaultPriceInWei !== 0n &&
             priceInWei < parseUnits(minimumMmebershipPrice)
         ) {
             setError('membershipPricingType', {

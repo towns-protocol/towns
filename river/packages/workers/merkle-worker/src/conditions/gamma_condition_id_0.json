@@ -1,5 +1,5 @@
 {
-    "txHash": "",
+    "txHash": "0xc2410e34d5b6e09f2171f938fc07398f6378c998c40cdadacb5648efa1a3badf",
     "conditionId": "0",
     "claims": [
         {
@@ -40,6 +40,18 @@
         },
         {
             "address": "0x2198DB4FCAB6bED053c36403032febA40B950047",
+            "amount": "1000000000000000000"
+        },
+        {
+            "address": "0x3e0DACD81ce3C8ac4966743eCB3DdCdEe1771bb4",
+            "amount": "1000000000000000000"
+        },
+        {
+            "address": "0xe524eA5d9C77f4C9274C53e2dAE53e941ED18d5e",
+            "amount": "1000000000000000000"
+        },
+        {
+            "address": "0x8FF69AA76281ac191cD25869AE06180670B46f44",
             "amount": "1000000000000000000"
         }
     ]
