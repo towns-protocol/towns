@@ -111,6 +111,9 @@ const envSchema = z.object({
     VITE_CODEX_API_KEY: z.string().optional(),
     // Solana mainnet rpc url
     VITE_SOLANA_MAINNET_RPC_URL: z.string().url().optional(),
+    // Reviews feature flag and OpenAI integration
+    VITE_REVIEWS_ENABLED: boolish.default(false),
+    VITE_OPENAI_API_KEY: z.string().optional(),
 })
 
 const parsed = envSchema.safeParse(import.meta.env)

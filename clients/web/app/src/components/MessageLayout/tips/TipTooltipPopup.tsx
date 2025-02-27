@@ -38,14 +38,11 @@ export function TipTooltipPopup(props: {
     const isDmOrGDM =
         !!channelId && (isDMChannelStreamId(channelId) || isGDMChannelStreamId(channelId))
 
-    //console.log('TipTooltipPopup render:', { tipValue, channelId, tipPending, isOpen })
-
     if (!channelId || isDmOrGDM) {
         return null
     }
 
     const handleSetTipValue = (value: TipOption | undefined) => {
-        //console.log('TipTooltipPopup setTipValue called with:', value)
         setTipValue(value)
         if (value) {
             setIsOpen(true)
@@ -147,10 +144,12 @@ export function TipConfirmWithCardContext(props: {
     )
 }
 
-export function TipIcoButton(props: { tipPending: boolean; triggerProps: CardOpenerTriggerProps }) {
+export function TipIconButton(props: {
+    tipPending: boolean
+    triggerProps: CardOpenerTriggerProps
+}) {
     const { tipPending, triggerProps } = props
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { cursor, onClick: onTriggerClick, ...rest } = triggerProps
+    const { onClick: onTriggerClick, ...rest } = triggerProps
 
     const onTip = useShortcut(
         'TipMessage',
@@ -176,11 +175,11 @@ export function TipIcoButton(props: { tipPending: boolean; triggerProps: CardOpe
             hoverColor="cta1"
             data-testid="message-tip--button"
             disabled={tipPending}
-            cursor={tipPending ? 'not-allowed' : 'pointer'}
             onClick={() => {
                 onTip()
             }}
             {...rest}
+            cursor={tipPending ? 'not-allowed' : 'pointer'}
         />
     )
 }

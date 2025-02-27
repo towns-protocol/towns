@@ -22,4 +22,13 @@ export const iconButton = styleVariants({
             },
         },
     ],
+    error: [
+        base,
+        {
+            ':hover': {
+                color: vars.color.background.error,
+                opacity: 0.8,
+            },
+        },
+    ],
 })

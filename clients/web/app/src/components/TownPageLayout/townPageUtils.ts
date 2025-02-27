@@ -13,7 +13,7 @@ export const getPriceText = (
 
     return {
         value: isFree ? 'Free' : `${formatUnitsToFixedLength(parseUnits(price))}`,
-        suffix: isFree ? `Next ${remainingFreeSupply}` : 'ETH',
+        suffix: isFree ? `(Next ${remainingFreeSupply})` : 'ETH',
     }
 }
 

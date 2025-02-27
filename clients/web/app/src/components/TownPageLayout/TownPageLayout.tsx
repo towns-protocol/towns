@@ -3,14 +3,13 @@ import {
     Address,
     useContractSpaceInfo,
     useGetRootKeyFromLinkedWallet,
-    useSpaceTips,
     useUserLookupStore,
 } from 'use-towns-client'
 import { useEvent } from 'react-use-event-hook'
 import { isAddress } from 'viem'
 import { InteractiveTownsToken } from '@components/TownsToken/InteractiveTownsToken'
 import { ImageVariants, useImageSource } from '@components/UploadImage/useImageSource'
-import { Box, Button, Heading, Icon, IconButton, MotionStack, Paragraph, Stack, Text } from '@ui'
+import { Box, Button, Heading, Icon, IconButton, Paragraph, Stack, Text } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { AvatarTextHorizontal } from '@components/Avatar/AvatarTextHorizontal'
 import { useEnvironment } from 'hooks/useEnvironmnet'
@@ -19,16 +18,9 @@ import { vars } from 'ui/styles/vars.css'
 import { ToneName } from 'ui/styles/themes'
 import { getInviteUrl } from 'ui/utils/utils'
 import useCopyToClipboard from 'hooks/useCopyToClipboard'
-import { Entitlements, useEntitlements } from 'hooks/useEntitlements'
-import { MotionBoxProps } from 'ui/components/Motion/MotionComponents'
-import { shimmerClass } from 'ui/styles/globals/shimmer.css'
-import { minterRoleId } from '@components/SpaceSettingsPanel/rolePermissions.const'
-import { useEthToUsdFormatted } from '@components/Web3/useEthPrice'
 import { useSpacePageChannels } from './hooks/useSpacePageChannels'
-import { useReadableMembershipInfo } from './useReadableMembershipInfo'
-import { TokenInfoBox } from './TokenInfoBox'
-import { InformationBox } from './InformationBox'
-import { getDurationText, getPriceText } from './townPageUtils'
+import { TownReviewsSection } from './TownReviewsSection'
+import { TownInfoSection } from './TownInfoSection'
 
 type TownPageLayoutProps = {
     headerContent?: React.ReactNode
@@ -86,27 +78,10 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
 
     const { isTouch } = useDevice()
 
-    const { data: membershipInfo } = useReadableMembershipInfo(spaceId)
-
-    const { data: entitlements, isLoading: isEntitlementsLoading } = useEntitlements(
-        spaceId,
-        minterRoleId,
-    )
-
     const { imageSrc } = useImageSource(spaceId, ImageVariants.thumbnail600)
     const leftColRef = useRef<HTMLDivElement>(null)
     const rightColRef = useRef<HTMLDivElement>(null)
     const [leftColWidth, rightColWidth] = useColumnWidths({ leftColRef, rightColRef })
-
-    const priceText = useMemo(
-        () => getPriceText(membershipInfo?.price, membershipInfo?.remainingFreeSupply),
-        [membershipInfo?.price, membershipInfo?.remainingFreeSupply],
-    )
-
-    const durationText = useMemo(
-        () => getDurationText(membershipInfo?.duration),
-        [membershipInfo?.duration],
-    )
 
     return (
         <>
@@ -160,19 +135,10 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
                                 chainId={chainId}
                             />
                         </Stack>
-                        <InformationBoxes
-                            spaceId={spaceId}
-                            imageSrc={imageSrc}
-                            price={priceText}
-                            duration={durationText}
-                            address={address}
-                            chainId={chainId}
-                            isEntitlementsLoading={isEntitlementsLoading}
-                            entitlements={entitlements}
-                        />
+                        <TownInfoSection spaceId={spaceId} />
                         <Bio bio={bio} />
                         <ChannelList spaceId={spaceId} />
-                        <Box>{props.activityContent}</Box>
+                        <TownReviewsSection spaceId={spaceId} />
                         <Box height="x12" shrink={false} />
                     </Stack>
                     {/* right column */}
@@ -188,27 +154,25 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
                                 spaceName={name}
                             />
 
-                            {!isPreview && (
-                                <Box tooltip="Copy link">
-                                    <Button
-                                        size="button_md"
-                                        width="300"
-                                        tone="lightHover"
-                                        color="default"
-                                        data-testid="town-preview-share-link-button"
-                                        onClick={onCopyInviteLink}
-                                    >
-                                        {copiedLink ? (
-                                            'Link copied'
-                                        ) : (
-                                            <>
-                                                <Icon type="share" />
-                                                Share Link
-                                            </>
-                                        )}
-                                    </Button>
-                                </Box>
-                            )}
+                            <Box tooltip="Copy link">
+                                <Button
+                                    size="button_md"
+                                    width="300"
+                                    tone="lightHover"
+                                    color="default"
+                                    data-testid="town-preview-share-link-button"
+                                    onClick={onCopyInviteLink}
+                                >
+                                    {copiedLink ? (
+                                        'Link copied'
+                                    ) : (
+                                        <>
+                                            <Icon type="share" />
+                                            Share Link
+                                        </>
+                                    )}
+                                </Button>
+                            </Box>
                         </Stack>
                     )}
                 </Stack>
@@ -385,116 +349,6 @@ const Header = (props: {
                 </Box>
             )}
         </Stack>
-    )
-}
-
-const Placeholder = (props: MotionBoxProps) => {
-    const { isTouch } = useDevice()
-    return (
-        <MotionStack
-            horizontal
-            gap="sm"
-            height="x12"
-            minHeight="x12"
-            width="600"
-            alignItems="center"
-            overflowX="scroll"
-            scrollbars={false}
-            shrink={false}
-            layout="position"
-            style={{
-                paddingLeft: isTouch ? vars.space['lg'] : 'none',
-                marginLeft: isTouch ? vars.space['-lg'] : 'none',
-                marginRight: isTouch ? vars.space['-lg'] : 'none',
-            }}
-            {...props}
-        />
-    )
-}
-
-const InformationBoxes = (props: {
-    spaceId: string
-    imageSrc?: string
-    price: { value: string; suffix: string } | undefined
-    duration: { value: string; suffix: string } | undefined
-    address?: `0x${string}`
-    chainId: number
-    isEntitlementsLoading: boolean
-    entitlements?: Entitlements
-}) => {
-    const { spaceId, duration, isEntitlementsLoading, price, entitlements } = props
-
-    const { data: tips } = useSpaceTips({ spaceId })
-    const totalTipsInUsd = useEthToUsdFormatted({
-        ethAmount: tips?.amount,
-        refetchInterval: 8_000,
-    })
-
-    if (isEntitlementsLoading || !entitlements) {
-        return (
-            <Placeholder>
-                {Array.from({ length: 5 })
-                    .map((_, i) => `key-${i}`)
-                    .map((k) => (
-                        <Box
-                            borderRadius="md"
-                            key={k}
-                            width="x12"
-                            height="x12"
-                            className={shimmerClass}
-                        />
-                    ))}
-            </Placeholder>
-        )
-    }
-
-    return (
-        <Placeholder>
-            <TokenInfoBox
-                spaceId={spaceId}
-                title="Access"
-                subtitle={entitlements.hasEntitlements ? 'Gated' : 'Open'}
-                isEntitlementsLoading={isEntitlementsLoading}
-                entitlements={entitlements}
-                dataTestId="town-preview-membership-info-bubble"
-            />
-            {totalTipsInUsd && (
-                <InformationBox
-                    key="tips"
-                    title="Tips Sent"
-                    centerContent={
-                        <Icon type="dollarFilled" color="cta1" size="square_md" padding="xxs" />
-                    }
-                    subtitle={`${totalTipsInUsd || '0'}`}
-                    dataTestId="town-preview-tips-info-bubble"
-                />
-            )}
-            <InformationBox
-                key="cost"
-                title="Entry"
-                placeholder={!price}
-                centerContent={
-                    <Text size="lg" fontWeight="strong">
-                        {price?.value}
-                    </Text>
-                }
-                subtitle={price?.suffix}
-                dataTestId="town-preview-cost-info-bubble"
-            />
-            <InformationBox
-                key="duration"
-                title="Valid for"
-                placeholder={!duration}
-                centerContent={
-                    <Text size="lg" fontWeight="strong">
-                        {duration?.value}
-                    </Text>
-                }
-                subtitle={duration?.suffix}
-                dataTestId="town-preview-valid-for-info-bubble"
-            />
-            <Box width="x2" shrink={false} />
-        </Placeholder>
     )
 }
 

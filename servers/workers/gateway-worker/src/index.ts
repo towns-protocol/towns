@@ -22,6 +22,7 @@ export interface Env extends AuthEnv {
     LINEAR_REPORT_CONTENT_PROJECT_ID: string
     USER_FEEDBACK_TOPIC_ARN: string
     CROSSMINT_API_KEY: string
+    OPENAI_API_KEY: string
 }
 
 export default {

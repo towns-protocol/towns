@@ -3,49 +3,50 @@ import { useSearchParams } from 'react-router-dom'
 import React from 'react'
 import { RiverPointsPanel } from '@components/PointsPanel/PointsPanel'
 import { RoleRestrictedChannelJoinPanel } from 'routes/RoleRestrictedChannelJoinPanel'
+import { SpacesChannelReplies } from 'routes/SpacesChannelReplies'
+import { TownMembersPanel } from '@components/TownMembersPanel/TownMembersPanel'
+import { TradingDepositPanel } from '@components/Web3/Trading/TradingDepositPanel'
+import { TradingPanel } from '@components/Web3/Trading/TradingPanel'
+import { TradingWalletPanel } from '@components/Web3/Trading/TradingWalletPanel'
+import { UserPreferences } from '@components/UserProfile/UserPreferences'
+import { VerifyEventSignaturePanel } from '@components/VerifyEventSignature/VerfiyEventSignature'
+import { Panel } from '@components/Panel/Panel'
 import { MintBotPrivyWrapper } from '@components/MintBotPanel/MintBotPanel'
 import { BrowseChannelsPanel } from '@components/BrowseChannelsPanel/BrowseChannelsPanel'
-import { CHANNEL_INFO_PARAMS, PATHS } from 'routes'
-import { BugReportPanel } from 'routes/BugReportPanel'
-import { DMChannelInfoPanel } from 'routes/DMChannelInfoPanel'
 import { ChannelInfoPanel } from 'routes/SpaceChannelInfoPanel'
 import { SpaceChannelWrapper } from '@components/Channel/ChannelWrapper'
-import { SpacesChannelReplies } from 'routes/SpacesChannelReplies'
 import { SpaceProfilePanel } from 'routes/SpacesProfilePanel'
 import { ChannelMembersPanel } from '@components/ChannelMembersPanel/ChannelMembersPanel'
 import { CreateChannelPanel } from '@components/CreateChannelPanel/CreateChannelPanel'
 import { SpaceInfoPanel } from 'routes/SpaceInfoPanel'
 import { RolesPanel } from '@components/SpaceSettingsPanel/RolesPanel'
 import { WalletLinkingPanel } from '@components/Web3/WalletLinkingPanel'
-import { Panel } from '@components/Panel/Panel'
 import { ChannelPermissionsNameDescriptionPanel } from '@components/ChannelSettings/ChannelPermissionsNameDescriptionForm'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { ChannelInvitePanel } from 'routes/ChannelInvitePanel'
-import { UserPreferences } from '@components/UserProfile/UserPreferences'
 import { EditMembershipSettingsPanel } from '@components/SpaceSettingsPanel/EditMembershipSettingsPanel'
 import { SpaceSettingsNavigationPanel } from '@components/SpaceSettingsPanel/SpaceSettingsNavigationPanel'
 import { EditPrepaidPanel } from '@components/SpaceSettingsPanel/EditPrepaidPanel'
+import { ChannelRiverMetadataSettingsPanel } from '@components/ChannelSettings/ChannelRiverMetadataSettingsForm'
+import { ChannelPermissionOverridesPanel } from '@components/ChannelSettings/ChannelPermissionOverridesPanel'
+import { BearerTokenPrivyWrapper } from '@components/BearerTokenPanel/BearerTokenPanel'
+import { SingleWalletPanel } from '@components/Web3/Wallet/SingleWalletPanel'
+import { TransferAssetsPanel } from '@components/Web3/Wallet/TransferAssetsPanel'
+import { PrivyIdentityPanel } from '@components/PrivyIdentity/PrivyIdentityPanel'
+import { CHANNEL_INFO_PARAMS, PATHS } from 'routes'
+import { BugReportPanel } from 'routes/BugReportPanel'
+import { DMChannelInfoPanel } from 'routes/DMChannelInfoPanel'
 import { NodeStatusPanel } from '@components/NodeConnectionStatusPanel/ConnectionStatusPanel'
 import { SpaceBannedUsers } from 'routes/SpaceBannedUsers'
 import { MutualTownsPanel } from '@components/MutualTownsPanel/MutualTownsPanel'
 import { PinsPanel } from '@components/PinsPanel/PinsPanel'
-import { ChannelRiverMetadataSettingsPanel } from '@components/ChannelSettings/ChannelRiverMetadataSettingsForm'
-import { ChannelPermissionOverridesPanel } from '@components/ChannelSettings/ChannelPermissionOverridesPanel'
-import { BearerTokenPrivyWrapper } from '@components/BearerTokenPanel/BearerTokenPanel'
-import { TownMembersPanel } from '@components/TownMembersPanel/TownMembersPanel'
-import { SingleWalletPanel } from '@components/Web3/Wallet/SingleWalletPanel'
-import { TransferAssetsPanel } from '@components/Web3/Wallet/TransferAssetsPanel'
-import { VerifyEventSignaturePanel } from '@components/VerifyEventSignature/VerfiyEventSignature'
-import { PrivyIdentityPanel } from '@components/PrivyIdentity/PrivyIdentityPanel'
-import { TradingWalletPanel } from '@components/Web3/Trading/TradingWalletPanel'
-import { TradingDepositPanel } from '@components/Web3/Trading/TradingDepositPanel'
-import { TradingPanel } from '@components/Web3/Trading/TradingPanel'
+import { ReviewsPanel } from '@components/TownReviews/ReviewsPanel'
 
 export const usePanels = () => {
     const [searchParams] = useSearchParams()
+    const { createLink } = useCreateLink()
 
     const panel = searchParams.get('panel')
-    const { createLink } = useCreateLink()
 
     const repliesRoute = useMatch(
         `/${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/${PATHS.REPLIES}/:messageId`,
@@ -209,6 +210,9 @@ export const usePanels = () => {
         }
         case CHANNEL_INFO_PARAMS.TRADE_PANEL: {
             return <TradingPanel />
+        }
+        case CHANNEL_INFO_PARAMS.REVIEWS: {
+            return <ReviewsPanel />
         }
     }
 

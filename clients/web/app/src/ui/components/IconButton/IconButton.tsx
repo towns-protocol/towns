@@ -10,7 +10,7 @@ type Props = {
     opaque?: boolean
     active?: boolean
     icon: IconName
-    hoverColor?: 'default' | 'cta1'
+    hoverColor?: 'default' | 'cta1' | 'error'
     size?: IconAtoms['size']
     'data-testid'?: string
 } & Omit<BoxProps, 'size'> &

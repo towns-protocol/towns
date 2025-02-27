@@ -54,7 +54,7 @@ export type GasOverrides = {
 }
 
 const NON_SPONSORED_LOGIN_METHODS = ['email']
-const NON_SPONSORED_FUNCTION_HASHES: FunctionHash[] = ['checkIn']
+const NON_SPONSORED_FUNCTION_HASHES: FunctionHash[] = ['checkIn', 'unsponsored']
 
 export const paymasterProxyMiddleware = async (
     args: {

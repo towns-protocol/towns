@@ -61,6 +61,17 @@ import {
     checkIn,
 } from './operations'
 import { getAbstractAccountAddress } from './utils/getAbstractAccountAddress'
+import { review } from './operations/review'
+
+interface ReviewParams {
+    spaceId: string
+    rating: number
+    comment: string
+    isUpdate?: boolean
+    isDelete?: boolean
+    signer: ethers.Signer
+}
+
 export class UserOps {
     private bundlerUrl: string
     private aaRpcUrl: string
@@ -626,6 +637,13 @@ export class UserOps {
 
     public async sendCheckInOp(args: Parameters<SpaceDapp['airdrop']['checkIn']>) {
         return checkIn({
+            ...this.commonParams(),
+            fnArgs: args,
+        })
+    }
+
+    public async sendReviewOp(args: [ReviewParams, ethers.Signer]) {
+        return review({
             ...this.commonParams(),
             fnArgs: args,
         })

@@ -64,6 +64,16 @@ import { ContractReceipt, ContractTransaction } from 'ethers'
 import { toUtf8String } from 'ethers/lib/utils'
 import { makeSpaceStreamId, makeUniqueChannelStreamId } from '@river-build/sdk'
 import { waitForTimeoutOrMembership } from '../utils/waitForTimeoutOrMembershipEvent'
+import { logTxnResult } from './TownsClientTypes'
+
+interface ReviewParams {
+    spaceId: string
+    rating: number
+    comment: string
+    isUpdate?: boolean
+    isDelete?: boolean
+    signer: TSigner
+}
 
 export class BaseTransactor {
     public userOps: UserOps | undefined = undefined
@@ -1857,5 +1867,77 @@ export class BaseTransactor {
         } else {
             return new Error(defaultText)
         }
+    }
+
+    public async reviewTransaction(
+        args: [ReviewParams, TSigner],
+    ): Promise<TransactionContext<void>> {
+        const [{ spaceId, rating, comment, isUpdate, isDelete }, signer] = args
+
+        let transaction: TransactionOrUserOperation | undefined = undefined
+        let error: Error | undefined = undefined
+
+        const continueStoreTx = this.blockchainTransactionStore.begin({
+            type: BlockchainTransactionType.Review,
+            data: {
+                spaceId,
+                rating,
+                comment,
+                isUpdate,
+                isDelete,
+            },
+        })
+
+        try {
+            // Let the contract enforce membership
+            this.log('[reviewTransaction] submitting review', {
+                spaceId,
+                rating,
+                comment,
+                isUpdate,
+                isDelete,
+            })
+
+            if (this.isAccountAbstractionEnabled()) {
+                transaction = await this.userOps?.sendReviewOp(args)
+            } else {
+                const space = this.spaceDapp.getSpace(spaceId)
+                if (!space) {
+                    throw new Error(`Space with spaceId "${spaceId}" is not found.`)
+                }
+
+                if (isDelete) {
+                    transaction = await space.Review.deleteReview(signer)
+                } else {
+                    transaction = isUpdate
+                        ? await space.Review.updateReview({ rating, comment }, signer)
+                        : await space.Review.addReview({ rating, comment }, signer)
+                }
+            }
+            this.log(`[reviewTransaction] transaction created`)
+        } catch (err) {
+            this.log('[reviewTransaction] error', err)
+            error = this.tryDecodeError(err, 'Failed to submit review')
+        }
+
+        continueStoreTx({
+            hashOrUserOpHash: getTransactionHashOrUserOpHash(transaction),
+            transaction,
+            error,
+        })
+
+        return createTransactionContext<void>({
+            status: error ? TransactionStatus.Failed : TransactionStatus.Pending,
+            transaction,
+            error,
+        })
+    }
+
+    public async waitForReviewTransaction(
+        context: TransactionContext<void> | undefined,
+    ): Promise<TransactionContext<void>> {
+        const txnContext = await this.waitForBlockchainTransaction(context)
+        logTxnResult('waitForReviewTransaction', txnContext)
+        return txnContext
     }
 }

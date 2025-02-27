@@ -68,6 +68,15 @@ export const useTownsErrorStore = create<TownsErrorStoreState>((set) => ({
         })),
 }))
 
+interface ReviewParams {
+    spaceId: string
+    rating: number
+    comment: string
+    isUpdate?: boolean
+    isDelete?: boolean
+    signer: TSigner
+}
+
 /**
  * client API to interact with the river server.
  */
@@ -359,6 +368,12 @@ interface TownsClientImpl {
     waitForUserOperationWithCallDataTransaction: (
         transactionContext: TransactionContext<void>,
     ) => Promise<TransactionContext<void> | undefined>
+    reviewTransaction: (
+        args: [ReviewParams, TSigner],
+    ) => Promise<TransactionContext<void> | undefined>
+    waitForReviewTransaction: (
+        context: TransactionContext<void> | undefined,
+    ) => Promise<TransactionContext<void> | undefined>
 }
 
 export function useTownsClient(): TownsClientImpl {
@@ -539,6 +554,8 @@ export function useTownsClient(): TownsClientImpl {
         waitForUserOperationWithCallDataTransaction: useWithCatch(
             clientSingleton?.waitForUserOperationWithCallDataTransaction,
         ),
+        reviewTransaction: useWithCatch(clientSingleton?.reviewTransaction),
+        waitForReviewTransaction: useWithCatch(clientSingleton?.waitForReviewTransaction),
     }
 }
 

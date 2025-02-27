@@ -86,6 +86,15 @@ export type TownsClientEvents = {
     onWalletUnlinked: (userId: string, walletAddress: string) => void
 }
 
+interface ReviewParams {
+    spaceId: string
+    rating: number
+    comment: string
+    isUpdate?: boolean
+    isDelete?: boolean
+    signer: TSigner
+}
+
 export class TownsClient
     extends (EventEmitter as new () => TypedEmitter<TownsClientEvents>)
     implements EntitlementsDelegate
@@ -1921,6 +1930,18 @@ export class TownsClient
         transactionContext: TransactionContext<void>,
     ): Promise<TransactionContext<void> | undefined> {
         return this.baseTransactor.waitForBlockchainTransaction(transactionContext)
+    }
+
+    public async reviewTransaction(
+        args: [ReviewParams, TSigner],
+    ): Promise<TransactionContext<void>> {
+        return this.baseTransactor.reviewTransaction(args)
+    }
+
+    public async waitForReviewTransaction(
+        context: TransactionContext<void> | undefined,
+    ): Promise<TransactionContext<void>> {
+        return this.baseTransactor.waitForReviewTransaction(context)
     }
 
     protected log(message: string, ...optionalParams: unknown[]) {

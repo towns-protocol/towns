@@ -57,6 +57,8 @@ import { TownNotificationsButton } from '@components/NotificationSettings/Notifi
 import { minterRoleId } from '@components/SpaceSettingsPanel/rolePermissions.const'
 import { SpaceTotalTips } from '@components/MessageLayout/tips/SpaceTotalTips'
 import { env } from 'utils'
+import { TownReviews } from '@components/TownReviews/TownReviews'
+import { ReviewsPanel } from '@components/TownReviews/ReviewsPanel'
 import { PublicTownPageForAuthenticatedUser } from './PublicTownPage/PublicTownPage'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
 
@@ -113,6 +115,7 @@ export const SpaceInfo = () => {
         | 'edit-membership'
         | (typeof CHANNEL_INFO_PARAMS)[keyof typeof CHANNEL_INFO_PARAMS]
         | (typeof TOWN_INFO_PARAMS)[keyof typeof TOWN_INFO_PARAMS]
+        | 'reviews'
         | undefined
     >(undefined)
 
@@ -317,6 +320,10 @@ export const SpaceInfo = () => {
                     longDescription={longDescription}
                     onEdit={onEditTownInfoClick}
                 />
+                <TownReviews
+                    setActiveModal={(modal) => setActiveModal(modal === null ? undefined : modal)}
+                    spaceId={spaceId}
+                />
                 <TownTreasury {...contractSpaceInfo} />
                 <TownTips spaceId={spaceId} />
 
@@ -416,6 +423,12 @@ export const SpaceInfo = () => {
             {activeModal === CHANNEL_INFO_PARAMS.ROLES && (
                 <ModalContainer padding="none" border="none" onHide={setModalUndefined}>
                     <RolesPanel />
+                </ModalContainer>
+            )}
+
+            {activeModal === 'reviews' && (
+                <ModalContainer padding="none" border="none" onHide={setModalUndefined}>
+                    <ReviewsPanel />
                 </ModalContainer>
             )}
         </>

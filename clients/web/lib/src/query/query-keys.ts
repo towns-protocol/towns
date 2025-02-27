@@ -99,4 +99,5 @@ export const blockchainKeys = {
         ownerAddress,
     ],
     protocolFee: (spaceId: string | undefined) => ['protocolFee', spaceId ?? 'waitingForSpaceId'],
+    spaceReviews: (spaceId: string) => ['spaceReviews', spaceId],
 }

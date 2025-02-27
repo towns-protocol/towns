@@ -63,6 +63,7 @@ export enum BlockchainTransactionType {
     Tip = 'tip',
     CheckIn = 'checkIn',
     Trade = 'trade',
+    Review = 'review',
 }
 
 export type BlockchainTransaction = {

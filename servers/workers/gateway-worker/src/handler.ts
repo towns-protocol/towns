@@ -2,8 +2,9 @@ import { Request as IttyRequest, Router } from 'itty-router'
 import { type Env } from './index'
 import { createLinearIssue } from './linearClient'
 import { getLinearPayloadFromFormData } from './getLinearPayloadFromFormData'
-import { LinkedAccountWithMetadata, PrivyClient } from '@privy-io/server-auth'
+import { PrivyClient } from '@privy-io/server-auth'
 import { LinkedAccountType } from './types'
+import { OpenAI } from 'openai'
 
 const router = Router()
 
@@ -276,6 +277,82 @@ router.post('/report-content', async (request: WorkerRequest, env: Env, ctx: Exe
 
     // Send the response immediately
     return new Response('ok', { status: 200 })
+})
+
+router.post('/ai/moderate-review', async (request: WorkerRequest, env: Env) => {
+    const body = await request.json()
+    const { text, townContext } = body as {
+        text: string
+        townContext: { name: string; description?: string }
+    }
+
+    if (!text || !townContext?.name) {
+        return new Response(JSON.stringify({ error: 'Missing required fields' }), { status: 400 })
+    }
+
+    try {
+        const openai = new OpenAI({
+            apiKey: env.OPENAI_API_KEY,
+        })
+
+        const response = await openai.chat.completions.create({
+            model: 'gpt-4o-mini',
+            messages: [
+                {
+                    role: 'system',
+                    content: `You are a review moderator. Analyze the following review and determine if it's a valid, meaningful review. The user is reviewing a Town called "${
+                        townContext.name
+                    }"${
+                        townContext.description
+                            ? ` which is described as: "${townContext.description}"`
+                            : ''
+                    }. This is a decentralized social network.
+
+                    Important context:
+                    - Accept any common crypto terms like "we cooked", "hodl", "farming", etc.
+                    - Understand that "Beaver" is Towns's mascot so something like "rub the beaver belly" is allowed.
+                    - If the Town name or description mentions specific tokens (like "$PENGU holders"), allow discussion of those tokens or general hype about the token.
+                    - Accept discussion of tokens that are clearly related to the Town's purpose.
+                    - Common tokens like ETH, BTC, or the $TOWNS token are always allowed.
+                    - Don't refer to the town by its name, just say "this Town".
+                    - Something like "this town is great" or "best town ever" is valid.
+
+                    Consider:
+                    1. Is it gibberish or random characters?
+                    2. Is it a meaningful opinion or feedback?
+                    3. Does it make sense in the context of this specific Town?
+                    4. Is it a promotion or advertisement for unrelated products/services?
+                    5. Is it a question? (Rhetorical questions like "Is this the best Town ever?" are valid)
+                    6. Is it a statement that doesn't include any opinion or feedback about the Town?
+                    7. Is it promoting a crypto token or project totally unrelated to the Town?)
+                    
+                    Respond with a JSON object containing:
+                    {
+                        "valid": boolean,
+                        "reason": string (only if valid is false)
+                    }`,
+                },
+                {
+                    role: 'user',
+                    content: text,
+                },
+            ],
+            response_format: { type: 'json_object' },
+            temperature: 0,
+            max_tokens: 50,
+            top_p: 1,
+            n: 1,
+        })
+
+        const result = JSON.parse(
+            response.choices[0].message.content || '{"valid": false, "reason": "Invalid response"}',
+        )
+
+        return new Response(JSON.stringify(result), { status: 200 })
+    } catch (error) {
+        console.error('AI validation error:', error)
+        return new Response(JSON.stringify({ valid: true }), { status: 200 })
+    }
 })
 
 router.post('/')

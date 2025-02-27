@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react'
+import React, { useCallback, useEffect, useMemo } from 'react'
 import {
     AuthStatus,
     Permission,
@@ -20,6 +20,8 @@ import { StandardToast, dismissToast } from '@components/Notifications/StandardT
 import { GetSigner, WalletReady } from 'privy/WalletReady'
 import { useJoinFunnelAnalytics } from '@components/Analytics/useJoinFunnelAnalytics'
 import { useGatherSpaceDetailsAnalytics } from '@components/Analytics/useGatherSpaceDetailsAnalytics'
+import { getPriceText } from '@components/TownPageLayout/townPageUtils'
+import { useReadableMembershipInfo } from '@components/TownPageLayout/useReadableMembershipInfo'
 import { usePublicPageLoginFlow } from './usePublicPageLoginFlow'
 
 const LoginComponent = React.lazy(() => import('@components/Login/LoginComponent'))
@@ -31,7 +33,6 @@ export function JoinLoginButton({
     spaceId: string | undefined
     maxSupplyReached: boolean
 }) {
-    const isPreview = false
     const { isAuthenticated, loggedInWalletAddress } = useConnectivity()
     const { clientSingleton, signerContext } = useTownsContext()
     const { data: spaceInfo } = useContractSpaceInfoWithoutClient(spaceId)
@@ -125,9 +126,16 @@ export function JoinLoginButton({
 
     const isEvaluating = useWatchEvaluatingCredentialsAuthStatus()
 
-    if (isPreview) {
-        return
-    }
+    const { data: membershipInfo } = useReadableMembershipInfo(spaceId ?? '')
+
+    const joinOrPriceText = useMemo(() => {
+        if (!membershipInfo?.price || !membershipInfo?.remainingFreeSupply) {
+            return 'Join'
+        }
+
+        const price = getPriceText(membershipInfo.price, membershipInfo.remainingFreeSupply)
+        return price?.value && price?.suffix ? `${price.value} ${price.suffix}` : 'Join'
+    }, [membershipInfo?.price, membershipInfo?.remainingFreeSupply])
 
     const content = () => {
         if (isEvaluating) {
@@ -138,7 +146,7 @@ export function JoinLoginButton({
         if (!isAuthenticated) {
             return (
                 <Box width={isTouch ? undefined : '300'}>
-                    <LoginComponent text="Join" onLoginClick={onLoginClick} />
+                    <LoginComponent text={joinOrPriceText} onLoginClick={onLoginClick} />
                 </Box>
             )
         }
@@ -160,7 +168,7 @@ export function JoinLoginButton({
                             spinner={!!spaceBeingJoined}
                             onClick={() => onJoinClick(getSigner)}
                         >
-                            Join
+                            {joinOrPriceText}
                         </FancyButton>
                     </Box>
                 )}

@@ -24,7 +24,7 @@ import { env } from 'utils'
 import { useCreateUnreadMarker } from './hooks/useCreateUnreadMarker'
 import { DeleteMessagePrompt } from './DeleteMessagePrompt'
 import { useRedactMessage } from './hooks/useRedactMessage'
-import { TipIcoButton, TipTooltipPopup } from './tips/TipTooltipPopup'
+import { TipIconButton, TipTooltipPopup } from './tips/TipTooltipPopup'
 
 type Props = {
     eventId: string
@@ -348,7 +348,10 @@ export const MessageContextMenu = (props: Props) => {
                             tooltip={<ShortcutTooltip action="TipMessage" />}
                         >
                             {({ triggerProps, tipPending }) => (
-                                <TipIcoButton tipPending={tipPending} triggerProps={triggerProps} />
+                                <TipIconButton
+                                    tipPending={tipPending}
+                                    triggerProps={triggerProps}
+                                />
                             )}
                         </TipTooltipPopup>
                     )}

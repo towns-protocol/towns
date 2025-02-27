@@ -48,6 +48,7 @@ export const CHANNEL_INFO_PARAMS = {
     PERMISSIONS: 'permissions',
     PREFERENCES: 'preferences',
     PROFILE: 'profile',
+    REVIEWS: 'reviews',
     ROLES: 'roles',
     THREAD: 'thread',
     TOWN_INFO: 'town-info',

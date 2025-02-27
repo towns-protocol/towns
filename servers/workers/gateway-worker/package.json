@@ -20,6 +20,7 @@
         "aws-sdk": "^2.1339.0",
         "buffer": "^6.0.3",
         "itty-router": "^2.6.6",
+        "openai": "^4.85.4",
         "worker-common": "workspace:^"
     },
     "devDependencies": {
