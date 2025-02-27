@@ -470,6 +470,22 @@ func Make_UserMetadataPayload_Inception(
 	}
 }
 
+func Make_UserMetadataPayload_EncryptionDevice(
+	deviceKey string,
+	fallbackKey string,
+) *StreamEvent_UserMetadataPayload {
+	return &StreamEvent_UserMetadataPayload{
+		UserMetadataPayload: &UserMetadataPayload{
+			Content: &UserMetadataPayload_EncryptionDevice_{
+				EncryptionDevice: &UserMetadataPayload_EncryptionDevice{
+					DeviceKey:   deviceKey,
+					FallbackKey: fallbackKey,
+				},
+			},
+		},
+	}
+}
+
 func Make_UserPayload_Membership(
 	op MembershipOp,
 	streamId StreamId,
