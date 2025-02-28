@@ -54,6 +54,7 @@ import {
     StreamEncryptionAlgorithmEvent,
     TipEvent,
     SpaceReviewEvent,
+    TokenTransferEvent,
 } from './timeline-types'
 import type { PlainMessage } from '@bufbuild/protobuf'
 import { userIdFromAddress, streamIdFromBytes, streamIdAsString } from '../../../id'
@@ -399,7 +400,16 @@ function toTownsContent_MemberPayload(
                     }
                 }
                 case 'tokenTransfer':
-                    return { error: `${description} unsupported content` }
+                    return {
+                        content: {
+                            kind: RiverTimelineEvent.TokenTransfer,
+                            transaction: transaction,
+                            transfer: transaction.content.value,
+                            fromUserId: userIdFromAddress(fromUserAddress),
+                            createdAtEpochMs: event.createdAtEpochMs,
+                            threadParentId: bin_toHexString(transaction.content.value.messageId),
+                        } satisfies TokenTransferEvent,
+                    }
                 case 'spaceReview': {
                     if (!transaction.receipt) {
                         return { error: `${description} no receipt` }
