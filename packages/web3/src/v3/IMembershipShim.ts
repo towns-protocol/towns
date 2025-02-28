@@ -46,7 +46,7 @@ export class IMembershipShim extends BaseContractShim<LocalhostContract, Localho
               }, 20_000)
 
         const abortController = providedAbortController ?? timeoutController!
-        // TODO: this isn't picking up correct typed fucntion signature, treating as string
+        // TODO: this isn't picking up correct typed function signature, treating as string
         const issuedFilter = this.read.filters['MembershipTokenIssued(address,uint256)'](
             receiver,
         ) as string
