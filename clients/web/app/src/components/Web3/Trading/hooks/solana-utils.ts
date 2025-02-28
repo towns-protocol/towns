@@ -80,26 +80,33 @@ export function createSendTokenTransferDataSolana(
         isBuy: isBuy,
     }
 
+    const preTokenBalances =
+        transactionResponse.meta.preTokenBalances?.map((balance) => ({
+            amount: {
+                amount: balance.uiTokenAmount?.amount ?? '0',
+                decimals: balance.uiTokenAmount?.decimals ?? 9,
+            },
+            mint: balance.mint,
+            owner: balance.owner ?? '',
+        })) ?? []
+    const postTokenBalances =
+        transactionResponse.meta.postTokenBalances?.map((balance) => ({
+            amount: {
+                amount: balance.uiTokenAmount?.amount ?? '0',
+                decimals: balance.uiTokenAmount?.decimals ?? 9,
+            },
+            mint: balance.mint,
+            owner: balance.owner ?? '',
+        })) ?? []
+
     const receipt: SolanaTransactionReceipt = {
         meta: {
-            preTokenBalances:
-                transactionResponse.meta.preTokenBalances?.map((balance) => ({
-                    amount: {
-                        amount: balance.uiTokenAmount?.amount ?? '0',
-                        decimals: balance.uiTokenAmount?.decimals ?? 9,
-                    },
-                    mint: balance.mint,
-                    owner: balance.owner ?? '',
-                })) ?? [],
-            postTokenBalances:
-                transactionResponse.meta.postTokenBalances?.map((balance) => ({
-                    amount: {
-                        amount: balance.uiTokenAmount?.amount ?? '0',
-                        decimals: balance.uiTokenAmount?.decimals ?? 9,
-                    },
-                    mint: balance.mint,
-                    owner: balance.owner ?? '',
-                })) ?? [],
+            preTokenBalances: preTokenBalances.filter(
+                (balance) => balance.mint === mintAddress && balance.owner === ownerAddress,
+            ),
+            postTokenBalances: postTokenBalances.filter(
+                (balance) => balance.mint === mintAddress && balance.owner === ownerAddress,
+            ),
         },
         slot: BigInt(transactionResponse.slot),
         transaction: { signatures: transactionResponse.transaction.signatures },
