@@ -27,7 +27,7 @@ export function getPrettyDisplayName(
 // .eth is only allowed for verified ens names
 const removeDotEth = (name: string) => name.replace(/\.eth$/, '')
 
-export const _getPrettyDisplayName = memoize(
+const _getPrettyDisplayName = memoize(
     (
         name?: string,
         username?: string,

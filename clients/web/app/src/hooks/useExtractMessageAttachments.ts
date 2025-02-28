@@ -72,6 +72,7 @@ const useCreateStaticInfo = () => {
                 spaceName,
                 userName: user?.username,
                 displayName: user?.displayName,
+                ensName: user?.ensName,
             }
         },
         [spaces],
