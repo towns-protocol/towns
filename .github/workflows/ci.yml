@@ -711,7 +711,7 @@ jobs:
               working-directory: core
 
             - name: Run go tests
-              run: just test-all -race -timeout 24m -parallel 1 -count 1 -p 8
+              run: just test-all -race -timeout 24m -parallel 2 -count 1 -p 8
               working-directory: core
 
     XChain_Integration:
