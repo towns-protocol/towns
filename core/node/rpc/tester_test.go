@@ -26,6 +26,7 @@ import (
 
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/contracts/river"
+	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/base/test"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	. "github.com/towns-protocol/towns/core/node/events"
@@ -659,10 +660,21 @@ func (tc *testClient) say(channelId StreamId, message string) {
 	ref := tc.getLastMiniblockHash(channelId)
 	envelope, err := MakeEnvelopeWithPayload(tc.wallet, Make_ChannelPayload_Message(message), ref)
 	tc.require.NoError(err)
-	_, err = tc.client.AddEvent(tc.ctx, connect.NewRequest(&AddEventRequest{
-		StreamId: channelId[:],
-		Event:    envelope,
-	}))
+
+	backoff := BackoffTracker{MaxAttempts: 5}
+	for {
+		_, err = tc.client.AddEvent(tc.ctx, connect.NewRequest(&AddEventRequest{
+			StreamId: channelId[:],
+			Event:    envelope,
+		}))
+		if err == nil {
+			break
+		}
+		err = backoff.Wait(tc.ctx, err)
+		if err != nil {
+			break
+		}
+	}
 	tc.require.NoError(err)
 }
 

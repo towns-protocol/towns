@@ -68,7 +68,7 @@ func (s *Service) addParsedEvent(
 	localStream *Stream,
 	streamView *StreamView,
 ) ([]*EventRef, error) {
-	// TODO: here it should loop and re-check the rules if view was updated in the meantime.
+	// TODO: REPLICATION: FIX: here it should loop and re-check the rules if view was updated in the meantime.
 	canAddEvent, verifications, sideEffects, err := rules.CanAddEvent(
 		ctx,
 		*s.config,
@@ -79,8 +79,17 @@ func (s *Service) addParsedEvent(
 		streamView,
 	)
 
-	if !canAddEvent || err != nil {
+	if err != nil {
+		if IsRiverErrorCode(err, Err_DUPLICATE_EVENT) {
+			// TODO: REPLICATION: FIX: implement returning relevant EventRefs here. How are they used in SDK?
+			return nil, nil
+		}
 		return nil, err
+	}
+
+	// TODO: REPLICATION: FIX: why canAddEvent exists? It doesn't seem to be correct to return nil, nil here.
+	if !canAddEvent {
+		return nil, nil
 	}
 
 	if len(verifications.OneOfChainAuths) > 0 {
