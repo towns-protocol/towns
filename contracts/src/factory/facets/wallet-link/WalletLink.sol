@@ -79,4 +79,26 @@ contract WalletLink is IWalletLink, WalletLinkBase, Facet {
   ) external view returns (uint256) {
     return _latestNonce(rootKey);
   }
+
+  /// @inheritdoc IWalletLink
+  function setDefaultWallet(
+    address rootWallet,
+    address wallet,
+    uint256 chainId
+  ) external {
+    _setDefaultWallet(rootWallet, wallet, chainId);
+  }
+
+  /// @inheritdoc IWalletLink
+  function setCallerAsDefaultWallet(address rootWallet) external {
+    _setDefaultWallet(rootWallet, msg.sender, block.chainid);
+  }
+
+  /// @inheritdoc IWalletLink
+  function getDefaultWallet(
+    address rootWallet,
+    uint256 chainId
+  ) external view returns (address) {
+    return _getDefaultWallet(rootWallet, chainId);
+  }
 }
