@@ -20,7 +20,7 @@ on:
                 description: 'Processes per container'
                 required: true
                 type: number
-                default: 2
+                default: 1
             container_count:
                 description: 'Container count'
                 required: true
@@ -55,12 +55,12 @@ on:
                 description: 'Processes per container'
                 required: false
                 type: number
-                default: 2
+                default: 1
             container_count:
                 description: 'Container count'
                 required: false
                 type: number
-                default: 2
+                default: 4
             stress_duration:
                 description: 'Stress test duration (seconds)'
                 required: false
