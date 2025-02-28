@@ -13,7 +13,7 @@ type SyncSelector = SyncAgent['observables']
  * @param config - Configuration options for the observable.
  * @returns The data from the selected observable.
  */
-export function useRiver<T>(
+export function useTowns<T>(
     selector: (sync: SyncSelector) => Observable<T>,
     config?: ObservableConfig.FromData<T>,
 ) {

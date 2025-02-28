@@ -1,22 +1,22 @@
 ---
-title: RiverSyncProvider
+title: TownsSyncProvider
 ---
-Provides the sync agent to all hooks usage that interacts with the River network.
+Provides the sync agent to all hooks usage that interacts with the Towns Protocol.
 
-- If you want to interact with the sync agent directly, you can use the `useSyncAgent` hook. - If you want to interact with the River network using hooks provided by this SDK, you should wrap your App with this provider.
+- If you want to interact with the sync agent directly, you can use the `useSyncAgent` hook. - If you want to interact with the Towns Protocol using hooks provided by this SDK, you should wrap your App with this provider.
 
 You can pass an initial sync agent instance to the provider. This can be useful for persisting authentication.
 
 ## Imports
 
 ```ts
-import { RiverSyncProvider } from '@towns-protocol/react-sdk'
+import { TownsSyncProvider } from '@towns-protocol/react-sdk'
 ```
 
 ## Definition
 
 ```ts
-function RiverSyncProvider(
+function TownsSyncProvider(
   props: {
     syncAgent?: SyncAgent;
     config?: {
@@ -27,7 +27,7 @@ function RiverSyncProvider(
 ): JSX.Element
 ```
 
-**Source:** [RiverSyncProvider](https://github.com/towns-protocol/towns/blob/main/packages/react-sdk/src/RiverSyncProvider.tsx)
+**Source:** [TownsSyncProvider](https://github.com/towns-protocol/towns/blob/main/packages/react-sdk/src/TownsSyncProvider.tsx)
 
 ## Parameters
 

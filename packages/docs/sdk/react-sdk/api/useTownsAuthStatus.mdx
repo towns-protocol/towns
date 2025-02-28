@@ -1,32 +1,32 @@
 ---
-title: useRiverAuthStatus
+title: useTownsAuthStatus
 ---
-Hook to get the auth status of the user connection with the River network.
+Hook to get the auth status of the user connection with the Towns network.
 
 ## Imports
 
 ```ts
-import { useRiverAuthStatus } from '@towns-protocol/react-sdk'
+import { useTownsAuthStatus } from '@towns-protocol/react-sdk'
 ```
 
 ## Definition
 
 ```ts
-function useRiverAuthStatus(
+function useTownsAuthStatus(
   config?: ObservableConfig.FromObservable<AuthStatus>,
 ): {
     status: AuthStatus;
     isInitializing: boolean;
     isEvaluatingCredentials: boolean;
     isCredentialed: boolean;
-    isConnectingToRiver: boolean;
-    isConnectedToRiver: boolean;
+    isConnectingToTowns: boolean;
+    isConnectedToTowns: boolean;
     isDisconnected: boolean;
     isError: boolean;
 }
 ```
 
-**Source:** [useRiverAuthStatus](https://github.com/towns-protocol/towns/blob/main/packages/react-sdk/src/useRiverAuthStatus.ts)
+**Source:** [useTownsAuthStatus](https://github.com/towns-protocol/towns/blob/main/packages/react-sdk/src/useTownsAuthStatus.ts)
 
 ## Parameters
 
@@ -47,8 +47,8 @@ An object containing the current AuthStatus status and boolean flags for each po
     isInitializing: boolean;
     isEvaluatingCredentials: boolean;
     isCredentialed: boolean;
-    isConnectingToRiver: boolean;
-    isConnectedToRiver: boolean;
+    isConnectingToTowns: boolean;
+    isConnectedToTowns: boolean;
     isDisconnected: boolean;
     isError: boolean;
 }

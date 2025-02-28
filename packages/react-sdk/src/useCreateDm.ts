@@ -16,7 +16,7 @@ export const useCreateDm = (config?: ActionConfig<Dms['createDM']>) => {
     return {
         /**
          * Creates a new DM.
-         * @param userId - The River `userId` of the user to create a DM with.
+         * @param userId - The `userId` of the user to create a DM with.
          * @returns A promise that resolves to the result of the create operation.
          */
         createDM,
