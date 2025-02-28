@@ -1020,6 +1020,8 @@ export function getFallbackContent(
             return `tip from: ${content.fromUserId} to: ${content.toUserId} refEventId: ${
                 content.refEventId
             } amount: ${content.tip.event?.amount.toString() ?? '??'}`
+        case RiverTimelineEvent.TokenTransfer:
+            return `tokenTransfer from: ${content.fromUserId} amount: ${content.transfer.amount}`
         case RiverTimelineEvent.SpaceReview:
             return `spaceReview from: ${content.fromUserId} rating: ${content.rating} comment: ${content.comment}`
         case RiverTimelineEvent.UserReceivedBlockchainTransaction:
