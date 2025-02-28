@@ -582,7 +582,7 @@ func testRiverDeviceId(tester *serviceTester) {
 		delegateSig,
 	)
 	require.NoError(err)
-	msg, err := events.MakeEnvelopeWithEvent(
+	envelope, err := events.MakeEnvelopeWithEvent(
 		deviceWallet,
 		event,
 	)
@@ -593,7 +593,7 @@ func testRiverDeviceId(tester *serviceTester) {
 		connect.NewRequest(
 			&protocol.AddEventRequest{
 				StreamId: channelId[:],
-				Event:    msg,
+				Event:    envelope,
 			},
 		),
 	)
@@ -604,24 +604,37 @@ func testRiverDeviceId(tester *serviceTester) {
 		connect.NewRequest(
 			&protocol.AddEventRequest{
 				StreamId: channelId[:],
-				Event:    msg,
+				Event:    envelope,
 			},
 		),
 	)
-	require.Error(err) // expected error when calling AddEvent
+	require.NoError(err) // Duplicate event is allowed
 
-	// send it optionally
+	// receive optional error
+	event, err = events.MakeDelegatedStreamEvent(
+		wallet,
+		events.Make_ChannelPayload_Inception(channelId, spaceId, nil),
+		channelHash,
+		delegateSig,
+	)
+	require.NoError(err)
+	envelope, err = events.MakeEnvelopeWithEvent(
+		deviceWallet,
+		event,
+	)
+	require.NoError(err)
+
 	resp, err := client.AddEvent(
 		ctx,
 		connect.NewRequest(
 			&protocol.AddEventRequest{
 				StreamId: channelId[:],
-				Event:    msg,
+				Event:    envelope,
 				Optional: true,
 			},
 		),
 	)
-	require.NoError(err) // expected error when calling AddEvent
+	require.NoError(err)
 	require.NotNil(resp.Msg.Error, "expected error")
 }
 
