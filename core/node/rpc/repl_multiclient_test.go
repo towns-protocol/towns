@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/towns-protocol/towns/core/node/crypto"
+	"github.com/towns-protocol/towns/core/node/testutils"
 	"github.com/towns-protocol/towns/core/node/testutils/testfmt"
 	//. "github.com/towns-protocol/towns/core/node/shared"
 )
@@ -131,6 +132,7 @@ func TestReplMcConversation(t *testing.T) {
 		testReplMcConversation(t, 10, 1000, 20, 1000)
 	})
 	t.Run("30x1000", func(t *testing.T) {
+		testutils.SkipXlTest(t)
 		if testing.Short() {
 			t.Skip("skipping 30x1000 in short mode")
 		}
