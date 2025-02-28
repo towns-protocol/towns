@@ -1,6 +1,6 @@
 import type { Spaces } from '@towns-protocol/sdk'
 import type { ObservableConfig } from './useObservable'
-import { useRiver } from './useRiver'
+import { useTowns } from './useTowns'
 
 /**
  * Hook to get the spaces of the current user.
@@ -24,6 +24,6 @@ import { useRiver } from './useRiver'
  * ```
  */
 export const useUserSpaces = (config?: ObservableConfig.FromObservable<Spaces>) => {
-    const { data, ...rest } = useRiver((s) => s.spaces, config)
+    const { data, ...rest } = useTowns((s) => s.spaces, config)
     return { spaceIds: data.spaceIds, ...rest }
 }

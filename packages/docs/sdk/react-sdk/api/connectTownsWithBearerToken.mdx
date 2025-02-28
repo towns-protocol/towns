@@ -1,0 +1,45 @@
+---
+title: connectTownsWithBearerToken
+---
+Connect to Towns using a Bearer Token Towns clients can use this to connect to Towns Protocol on behalf of a user
+
+Useful for server side code, allowing you to persist the signer context and use it to auth with Towns later
+
+## Imports
+
+```ts
+import { connectTownsWithBearerToken } from '@towns-protocol/react-sdk'
+```
+
+## Definition
+
+```ts
+function connectTownsWithBearerToken(
+  token: string,
+  config: Omit<SyncAgentConfig, 'context'>,
+): Promise<SyncAgent>
+```
+
+**Source:** [connectTownsWithBearerToken](https://github.com/towns-protocol/towns/blob/main/packages/react-sdk/src/connectTowns.ts)
+
+## Parameters
+
+### token
+
+- **Type:** `string`
+
+The bearer token to use
+
+### config
+
+- **Type:** `Omit<SyncAgentConfig, 'context'>`
+
+The configuration for the sync agent
+
+## Return Type
+
+The sync agent
+
+```ts
+Promise<SyncAgent>
+```
