@@ -3,6 +3,7 @@ import axios from 'axios'
 import { parseInt } from 'lodash'
 import { z } from 'zod'
 import { env } from 'utils'
+import { SECOND_MS } from 'data/constants'
 
 export type LifiQuote = {
     id: string
@@ -123,6 +124,7 @@ export const useLifiQuote = (props: {
                 return undefined
             }
         },
+        gcTime: SECOND_MS * 30,
     })
 
     return { data, isLoading, isError, error }

@@ -4,6 +4,7 @@ import { useThrottledValue } from 'use-towns-client'
 import { useEffect, useState } from 'react'
 import { env } from 'utils'
 import { useIsHNTMember } from 'hooks/useIsHNTMember'
+import { MINUTE_MS } from 'data/constants'
 import { TComboboxItemWithData, TMentionTicker } from './types'
 
 const zParsedToken = z.object({
@@ -104,6 +105,7 @@ export const useSearchTokens = ({
             return remapped
         },
         enabled: enabled && isHNTMember,
+        gcTime: MINUTE_MS,
     })
 
     useEffect(() => {
