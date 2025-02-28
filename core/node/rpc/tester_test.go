@@ -663,7 +663,9 @@ func (tc *testClient) say(channelId StreamId, message string) {
 
 	backoff := BackoffTracker{MaxAttempts: 5}
 	for {
-		_, err = tc.client.AddEvent(tc.ctx, connect.NewRequest(&AddEventRequest{
+		ctx, ctxCancel := context.WithTimeout(tc.ctx, 10*time.Second)
+		defer ctxCancel()
+		_, err = tc.client.AddEvent(ctx, connect.NewRequest(&AddEventRequest{
 			StreamId: channelId[:],
 			Event:    envelope,
 		}))
