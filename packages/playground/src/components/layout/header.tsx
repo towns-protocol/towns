@@ -7,7 +7,7 @@ import {
 import { useLocation, useParams } from 'react-router-dom'
 import { useState } from 'react'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
-import { RiverBeaver } from '@/components/river-beaver'
+import { TownsMinimal } from '@/components/towns-minimal'
 import { RiverEnvSwitcher } from '../dialog/env-switcher'
 import { Button } from '../ui/button'
 import { UpdateMetadata } from '../form/metadata/update'
@@ -21,8 +21,8 @@ export const LayoutHeader = () => {
     return (
         <header className="flex justify-between border-b border-zinc-200 px-4 py-3 dark:border-zinc-800">
             <div className="flex items-center gap-2">
-                <RiverBeaver />
-                <h1 className="text-2xl font-bold">River Playground</h1>
+                <TownsMinimal className="size-6" />
+                <h1 className="text-xl font-bold">Protocol Playground</h1>
             </div>
             <div className="flex items-center gap-6">
                 {!isAuthRoute && <RiverEnvSwitcher />}
