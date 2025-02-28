@@ -27,14 +27,16 @@ func TestCreateMediaStream(t *testing.T) {
 	tt.require.NoError(err)
 
 	const chunks = 10
+	var trueVal = true
 	inception, err := events.MakeEnvelopeWithPayload(
 		alice.wallet,
 		events.Make_MediaPayload_Inception(&protocol.MediaPayload_Inception{
-			StreamId:   mediaStreamId[:],
-			ChannelId:  channelId[:],
-			SpaceId:    spaceId[:],
-			UserId:     alice.userId[:],
-			ChunkCount: chunks,
+			StreamId:           mediaStreamId[:],
+			ChannelId:          channelId[:],
+			SpaceId:            spaceId[:],
+			UserId:             alice.userId[:],
+			ChunkCount:         chunks,
+			PerChunkEncryption: &trueVal,
 		}),
 		nil,
 	)
@@ -57,7 +59,7 @@ func TestCreateMediaStream(t *testing.T) {
 	// On-chain registration of ephemeral streams happen after the last chunk is uploaded.
 	// At this time, the stream does not exist on-chain so AddEvent should fail.
 	t.Run("AddEvent failed for ephemeral streams", func(t *testing.T) {
-		mp := events.Make_MediaPayload_Chunk([]byte("chunk 0"), 0)
+		mp := events.Make_MediaPayload_Chunk([]byte("chunk 0"), 0, nil)
 		envelope, err := events.MakeEnvelopeWithPayload(alice.wallet, mp, mb)
 		require.NoError(t, err)
 
@@ -71,7 +73,7 @@ func TestCreateMediaStream(t *testing.T) {
 	})
 
 	t.Run("AddMediaEvent failed to add event with out of range chunk index", func(t *testing.T) {
-		mp := events.Make_MediaPayload_Chunk([]byte("chunk"), chunks+1)
+		mp := events.Make_MediaPayload_Chunk([]byte("chunk"), chunks+1, nil)
 		envelope, err := events.MakeEnvelopeWithPayload(alice.wallet, mp, mb)
 		require.NoError(t, err)
 
@@ -86,11 +88,12 @@ func TestCreateMediaStream(t *testing.T) {
 
 	t.Run("AddMediaEvent passed for ephemeral media streams", func(t *testing.T) {
 		// Add the rest of the media chunks
+		iv := []byte{1, 3, 3}
 		mediaChunks := make([][]byte, chunks)
 		for i := 0; i < chunks; i++ {
 			// Create media chunk event
 			mediaChunks[i] = []byte("chunk " + fmt.Sprint(i))
-			mp := events.Make_MediaPayload_Chunk(mediaChunks[i], int32(i))
+			mp := events.Make_MediaPayload_Chunk(mediaChunks[i], int32(i), iv)
 			envelope, err := events.MakeEnvelopeWithPayload(alice.wallet, mp, mb)
 			tt.require.NoError(err)
 
@@ -131,6 +134,7 @@ func TestCreateMediaStream(t *testing.T) {
 				mp, ok := pe.Event.GetPayload().(*protocol.StreamEvent_MediaPayload)
 				require.True(t, ok)
 				require.Equal(t, int32(chunks), mp.MediaPayload.GetInception().GetChunkCount())
+				require.True(t, mp.MediaPayload.GetInception().GetPerChunkEncryption())
 
 				// The rest of the miniblocks are the media chunks
 				for i, mb := range mbs[1:] {
@@ -140,6 +144,7 @@ func TestCreateMediaStream(t *testing.T) {
 					mp, ok = pe.Event.GetPayload().(*protocol.StreamEvent_MediaPayload)
 					require.True(t, ok)
 					require.Equal(t, mediaChunks[i], mp.MediaPayload.GetChunk().Data)
+					require.Equal(t, iv, mp.MediaPayload.GetChunk().Iv)
 				}
 			})
 		}
@@ -187,7 +192,7 @@ func TestCreateMediaStream_Legacy(t *testing.T) {
 	for i := 0; i < chunks; i++ {
 		// Create media chunk event
 		mediaChunks[i] = []byte("chunk " + fmt.Sprint(i))
-		mp := events.Make_MediaPayload_Chunk(mediaChunks[i], int32(i))
+		mp := events.Make_MediaPayload_Chunk(mediaChunks[i], int32(i), nil)
 		envelope, err := events.MakeEnvelopeWithPayload(alice.wallet, mp, mb)
 		tt.require.NoError(err)
 
