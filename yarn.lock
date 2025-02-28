@@ -3457,6 +3457,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@hono/node-server@npm:^1.13.8":
+  version: 1.13.8
+  resolution: "@hono/node-server@npm:1.13.8"
+  peerDependencies:
+    hono: ^4
+  checksum: 83ebab5429ac579483368b17cdb713cfe6020253c4eb4dda0e865bda98a2988c0ccfa5d3720af29aaa762f1104d0493b28c2aa79720a31fe464736518240a3ad
+  languageName: node
+  linkType: hard
+
 "@hookform/resolvers@npm:^3.6.0":
   version: 3.6.0
   resolution: "@hookform/resolvers@npm:3.6.0"
@@ -6601,6 +6610,35 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@river-build/bot@workspace:packages/bot":
+  version: 0.0.0-use.local
+  resolution: "@river-build/bot@workspace:packages/bot"
+  dependencies:
+    "@bufbuild/protobuf": ^1.9.0
+    "@hono/node-server": ^1.13.8
+    "@river-build/encryption": "workspace:*"
+    "@river-build/proto": "workspace:*"
+    "@river-build/sdk": "workspace:*"
+    "@river-build/web3": "workspace:*"
+    "@types/debug": ^4.1.8
+    "@types/lodash": ^4.14.186
+    "@types/node": ^20.5.0
+    "@types/seedrandom": ^3.0.4
+    "@typescript-eslint/eslint-plugin": ^6.10.0
+    "@typescript-eslint/parser": ^7.14.1
+    eslint: ^8.53.0
+    eslint-import-resolver-typescript: ^3.5.5
+    eslint-plugin-import: ^2.27.5
+    eslint-plugin-tsdoc: ^0.3.0
+    fake-indexeddb: ^4.0.1
+    hono: ^4.7.2
+    typed-emitter: ^2.1.0
+    typescript: ^5.1.6
+    vitest: ^2.1.5
+    vitest-fetch-mock: ^0.4.3
+  languageName: unknown
+  linkType: soft
+
 "@river-build/contracts@workspace:contracts":
   version: 0.0.0-use.local
   resolution: "@river-build/contracts@workspace:contracts"
@@ -6660,7 +6698,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@river-build/encryption@workspace:^, @river-build/encryption@workspace:packages/encryption":
+"@river-build/encryption@workspace:*, @river-build/encryption@workspace:^, @river-build/encryption@workspace:packages/encryption":
   version: 0.0.0-use.local
   resolution: "@river-build/encryption@workspace:packages/encryption"
   dependencies:
@@ -6793,7 +6831,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@river-build/proto@workspace:^, @river-build/proto@workspace:packages/proto":
+"@river-build/proto@workspace:*, @river-build/proto@workspace:^, @river-build/proto@workspace:packages/proto":
   version: 0.0.0-use.local
   resolution: "@river-build/proto@workspace:packages/proto"
   dependencies:
@@ -6842,7 +6880,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@river-build/sdk@workspace:^, @river-build/sdk@workspace:packages/sdk":
+"@river-build/sdk@workspace:*, @river-build/sdk@workspace:^, @river-build/sdk@workspace:packages/sdk":
   version: 0.0.0-use.local
   resolution: "@river-build/sdk@workspace:packages/sdk"
   dependencies:
@@ -6965,7 +7003,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@river-build/web3@workspace:^, @river-build/web3@workspace:packages/web3":
+"@river-build/web3@workspace:*, @river-build/web3@workspace:^, @river-build/web3@workspace:packages/web3":
   version: 0.0.0-use.local
   resolution: "@river-build/web3@workspace:packages/web3"
   dependencies:
@@ -17457,6 +17495,13 @@ __metadata:
   dependencies:
     parse-passwd: ^1.0.0
   checksum: 18dd4db87052c6a2179d1813adea0c4bfcfa4f9996f0e226fefb29eb3d548e564350fa28ec46b0bf1fbc0a1d2d6922ceceb80093115ea45ff8842a4990139250
+  languageName: node
+  linkType: hard
+
+"hono@npm:^4.7.2":
+  version: 4.7.2
+  resolution: "hono@npm:4.7.2"
+  checksum: d0154b61e3c8f7599a3dfcb3c2ee841569d3d9dc7e79f115ab767c99cacda8df528f3d0c866756befb9cdb49aa3e18fa924b6ae8b7487470993462cdb8c588f3
   languageName: node
   linkType: hard
 
