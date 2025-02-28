@@ -9,5 +9,6 @@ declare global {
     interface Window {
         townsAppStartTime: number
         townsMeasureFlag: boolean
+        townsNewMediaEncryptionFlag: boolean
     }
 }

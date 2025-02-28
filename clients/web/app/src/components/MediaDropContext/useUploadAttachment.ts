@@ -1,4 +1,4 @@
-import { EncryptionResult, encryptAESGCM, useTownsClient } from 'use-towns-client'
+import { chunkSize, encryptAESGCM, encryptChunkedAESGCM, useTownsClient } from 'use-towns-client'
 import { useCallback } from 'react'
 import imageCompression from 'browser-image-compression'
 import { ChunkedMedia, CreationCookie } from '@river-build/proto'
@@ -6,15 +6,8 @@ import { Attachment, ChunkedMediaAttachment, MediaInfo, streamIdAsString } from 
 import { refreshSpaceCache, refreshUserImageCache } from 'api/lib/fetchImage'
 import { isImageMimeType } from 'utils/isMediaMimeType'
 
-const CHUNK_SIZE = 500_000
 const MAX_THUMBNAIL_WIDTH = 20 // pixels
 const MAX_THUMBNAIL_SIZE = 0.0003 // 300 bytes
-
-export type EncryptionMetadataForUpload = {
-    encryptionResult: EncryptionResult
-    dataLength: number
-    uri: URL
-}
 
 export const useUploadAttachment = () => {
     const { createMediaStreamNew, setUserProfileImage, sendMediaPayloadNew, setSpaceImage } =
@@ -36,13 +29,16 @@ export const useUploadAttachment = () => {
             thumbnail: File | undefined,
             setProgress: (progress: number) => void,
         ): Promise<Attachment> => {
-            const encryptionResult = await encryptAESGCM(data)
-            const chunkCount = Math.ceil(encryptionResult.ciphertext.length / CHUNK_SIZE)
+            const encryptionResult = window.townsNewMediaEncryptionFlag
+                ? await encryptChunkedAESGCM(data, chunkSize)
+                : await encryptAESGCM(data, chunkSize)
+            const chunkCount = encryptionResult.chunks.length
             const mediaStreamInfo = await createMediaStreamNew(
                 channelId,
                 spaceId,
                 userId,
                 chunkCount,
+                window.townsNewMediaEncryptionFlag,
             )
             if (!mediaStreamInfo) {
                 throw new Error('Failed to create media stream')
@@ -53,18 +49,19 @@ export const useUploadAttachment = () => {
                 channelId: channelId ?? 'undefined',
                 userId: userId ?? 'undefined',
                 creationCookie: mediaStreamInfo.creationCookie ?? 'undefined',
+                perChunkEncryption: window.townsNewMediaEncryptionFlag ?? 'undefined',
             })
 
-            let chunkIndex = 0
             let cc: CreationCookie = new CreationCookie(mediaStreamInfo.creationCookie)
-            for (let i = 0; i < encryptionResult.ciphertext.length; i += CHUNK_SIZE) {
-                const chunk = encryptionResult.ciphertext.slice(i, i + CHUNK_SIZE)
-                setProgress(i / encryptionResult.ciphertext.length)
+            for (let chunkIndex = 0; chunkIndex < chunkCount; chunkIndex++) {
+                const chunk = encryptionResult.chunks[chunkIndex]
+                setProgress(chunkIndex / chunkCount)
                 const result = await sendMediaPayloadNew(
                     cc,
                     chunkIndex == chunkCount - 1,
-                    chunk,
+                    chunk.ciphertext,
                     chunkIndex++,
+                    window.townsNewMediaEncryptionFlag ? chunk.iv : undefined,
                 )
                 if (!result) {
                     throw new Error('Failed to send media payload')
@@ -92,7 +89,9 @@ export const useUploadAttachment = () => {
                 type: 'chunked_media',
                 streamId: streamIdAsString(mediaStreamInfo.creationCookie.streamId),
                 encryption: {
-                    iv: encryptionResult.iv,
+                    iv: window.townsNewMediaEncryptionFlag
+                        ? new Uint8Array(0)
+                        : (encryptionResult.chunks[0].iv as Uint8Array),
                     secretKey: encryptionResult.secretKey,
                 },
                 info: {

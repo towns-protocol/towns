@@ -162,12 +162,14 @@ interface TownsClientImpl {
         spaceId: string | undefined,
         userId: string | undefined,
         chunkCount: number,
+        perChunkEncryption?: boolean,
     ) => Promise<MediaStreamBlockInfo | undefined>
     createMediaStreamNew: (
         channelId: string | undefined,
         spaceId: string | undefined,
         userId: string | undefined,
         chunkCount: number,
+        perChunkEncryption?: boolean,
     ) => Promise<{ creationCookie: CreationCookie } | undefined>
     createRoleTransaction: (
         spaceNetworkId: string,
@@ -274,12 +276,14 @@ interface TownsClientImpl {
         data: Uint8Array,
         chunkIndex: number,
         prevMiniblockHash: Uint8Array,
+        iv?: Uint8Array,
     ) => Promise<{ prevMiniblockHash: Uint8Array; eventId: string } | undefined>
     sendMediaPayloadNew: (
         creationCookie: CreationCookie,
         last: boolean,
         data: Uint8Array,
         chunkIndex: number,
+        iv?: Uint8Array,
     ) => Promise<{ creationCookie: CreationCookie } | undefined>
     sendReadReceipt: (marker: FullyReadMarker, isUnread?: boolean) => Promise<void>
     sendTokenTransfer: (

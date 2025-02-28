@@ -35,7 +35,7 @@ export { useChannelTimeline } from './hooks/use-channel-timeline'
 export { useChannelThreadStat } from './hooks/use-channel-thread-stat'
 export { useChannelThreadStats } from './hooks/use-channel-thread-stats'
 export * from './hooks/use-chunked-media'
-export { useChunkedMedia, useDownloadFile } from './hooks/use-chunked-media'
+export { chunkSize, useChunkedMedia, useDownloadFile } from './hooks/use-chunked-media'
 export {
     useClearChannelPermissionOverrides,
     useSetChannelPermissionOverrides,

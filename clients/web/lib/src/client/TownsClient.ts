@@ -663,11 +663,19 @@ export class TownsClient
         spaceId: string | undefined,
         userId: string | undefined,
         chunkCount: number,
+        perChunkEncryption?: boolean,
     ): Promise<MediaStreamBlockInfo> {
         if (!this.casablancaClient) {
             throw new Error("Casablanca client doesn't exist")
         }
-        return await this.casablancaClient.createMediaStream(channelId, spaceId, userId, chunkCount)
+        return await this.casablancaClient.createMediaStream(
+            channelId,
+            spaceId,
+            userId,
+            chunkCount,
+            undefined,
+            perChunkEncryption,
+        )
     }
 
     public async createMediaStreamNew(
@@ -675,6 +683,7 @@ export class TownsClient
         spaceId: string | Uint8Array | undefined,
         userId: string | undefined,
         chunkCount: number,
+        perChunkEncryption?: boolean,
     ): Promise<{ creationCookie: CreationCookie }> {
         if (!this.casablancaClient) {
             throw new Error("Casablanca client doesn't exist")
@@ -684,6 +693,8 @@ export class TownsClient
             spaceId,
             userId,
             chunkCount,
+            undefined,
+            perChunkEncryption,
         )
     }
 
@@ -1416,6 +1427,7 @@ export class TownsClient
         data: Uint8Array,
         chunkIndex: number,
         prevMiniblockHash: Uint8Array,
+        iv?: Uint8Array,
     ): Promise<{ prevMiniblockHash: Uint8Array; eventId: string }> {
         if (!this.casablancaClient) {
             throw new Error('Casablanca client not initialized')
@@ -1425,6 +1437,7 @@ export class TownsClient
             data,
             chunkIndex,
             prevMiniblockHash,
+            iv,
         )
     }
 
@@ -1433,6 +1446,7 @@ export class TownsClient
         last: boolean,
         data: Uint8Array,
         chunkIndex: number,
+        iv?: Uint8Array,
     ): Promise<{ creationCookie: CreationCookie }> {
         if (!this.casablancaClient) {
             throw new Error('Casablanca client not initialized')
@@ -1442,6 +1456,7 @@ export class TownsClient
             last,
             data,
             chunkIndex,
+            iv,
         )
     }
 
