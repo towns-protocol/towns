@@ -971,7 +971,11 @@ export function getRedactsId(content: TimelineEvent_OneOf | undefined): string |
 }
 
 export function getThreadParentId(content: TimelineEvent_OneOf | undefined): string | undefined {
-    return content?.kind === RiverTimelineEvent.ChannelMessage ? content.threadId : undefined
+    return content?.kind === RiverTimelineEvent.ChannelMessage
+        ? content.threadId
+        : content?.kind === RiverTimelineEvent.TokenTransfer
+        ? content.threadParentId
+        : undefined
 }
 
 export function getReplyParentId(content: TimelineEvent_OneOf | undefined): string | undefined {

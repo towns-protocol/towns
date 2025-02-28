@@ -3,6 +3,7 @@ import { ThreadStatsData, staticAssertNever, useTownsClient, useUserLookup } fro
 import { useSearchParams } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
 import { MessageType, Pin, RiverTimelineEvent, TimelineEvent } from '@river-build/sdk'
+import { bin_toString } from '@river-build/dlog'
 import {
     MessageLayout,
     MessageLayoutProps,
@@ -28,6 +29,7 @@ import {
     MessageRenderEvent,
     RedactedMessageRenderEvent,
     RenderEventType,
+    TokenTransferRenderEvent,
     isChannelMessage,
     isRedactedChannelMessage,
 } from '@components/MessageTimeline/util/getEventsByDate'
@@ -39,8 +41,13 @@ import { FileUpload } from '@components/MediaDropContext/mediaDropTypes'
 import { TimelineMessageEditor } from '../MessageEditor'
 import { MessageBody } from './MessageBody/MessageBody'
 import { QuotedMessage } from './QuotedMessage'
+import { TokenTransfer } from '../TokenTransfer'
 
-type ItemDataType = MessageRenderEvent | EncryptedMessageRenderEvent | RedactedMessageRenderEvent
+type ItemDataType =
+    | MessageRenderEvent
+    | EncryptedMessageRenderEvent
+    | RedactedMessageRenderEvent
+    | TokenTransferRenderEvent
 
 type Props = {
     itemData: ItemDataType
@@ -208,6 +215,8 @@ export const MessageItem = (props: Props) => {
                         {!!messageUploads?.length && <MessageUploads uploads={messageUploads} />}
                     </>
                 )
+            ) : event.content.kind === RiverTimelineEvent.TokenTransfer ? (
+                <TokenTransfer event={event.content} />
             ) : (
                 <>not a message</>
             )}
@@ -373,6 +382,15 @@ function getItemContentKey(itemData: ItemDataType): string {
             return itemData.event.content.error === undefined ? 'enc' : 'enc-error'
         case RenderEventType.RedactedMessage:
             return 'redacted'
+        case RenderEventType.TokenTransfer: {
+            const transaction = itemData?.event.content.transaction
+            if (!transaction) {
+                return ''
+            }
+            return transaction.receipt?.transactionHash
+                ? bin_toString(transaction.receipt.transactionHash)
+                : transaction.solanaReceipt?.transaction?.signatures[0] ?? ''
+        }
         default:
             staticAssertNever(itemData)
     }

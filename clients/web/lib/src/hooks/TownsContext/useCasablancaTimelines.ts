@@ -51,6 +51,7 @@ import {
     toMembership,
     TickerAttachment,
     SpaceReviewEvent,
+    TokenTransferEvent,
 } from '@river-build/sdk'
 import {
     ChannelMessage_Post,
@@ -241,7 +242,7 @@ export function useCasablancaTimelines(
 
 export function toEvent(timelineEvent: StreamTimelineEvent, userId: string): TimelineEvent {
     const eventId = timelineEvent.hashStr
-    const senderId = timelineEvent.creatorUserId
+    const senderId = getSenderId(timelineEvent)
 
     const sender = {
         id: senderId,
@@ -290,6 +291,17 @@ export function toEvent(timelineEvent: StreamTimelineEvent, userId: string): Tim
         sender,
         sessionId,
     }
+}
+
+function getSenderId(timelineEvent: StreamTimelineEvent): string {
+    const payload = timelineEvent.remoteEvent?.event.payload
+    if (
+        payload?.case === 'memberPayload' &&
+        payload?.value.content.case === 'memberBlockchainTransaction'
+    ) {
+        return userIdFromAddress(payload.value.content.value.fromUserAddress)
+    }
+    return timelineEvent.creatorUserId
 }
 
 function toTownsContent(timelineEvent: StreamTimelineEvent): TownsContentResult {
@@ -528,11 +540,11 @@ function toTownsContent_MemberPayload(
             if (!transaction) {
                 return { error: `${description} no transaction` }
             }
-            if (!transaction.receipt?.transactionHash) {
-                return { error: `${description} no transactionHash` }
-            }
             switch (transaction.content.case) {
                 case 'tip': {
+                    if (!transaction.receipt?.transactionHash) {
+                        return { error: `${description} no transactionHash` }
+                    }
                     const tipContent = transaction.content.value
                     if (!tipContent.event) {
                         return { error: `${description} no event in tip` }
@@ -568,8 +580,19 @@ function toTownsContent_MemberPayload(
                         } satisfies SpaceReviewEvent,
                     }
                 }
-                case 'tokenTransfer':
-                    return { error: `${description} token transfer events not yet supported` }
+                case 'tokenTransfer': {
+                    const transferContent = transaction.content.value
+                    return {
+                        content: {
+                            kind: RiverTimelineEvent.TokenTransfer,
+                            transaction: transaction,
+                            transfer: transferContent,
+                            fromUserId: userIdFromAddress(fromUserAddress),
+                            createdAtEpochMs: event.createdAtEpochMs,
+                            threadParentId: bin_toHexString(transferContent.messageId),
+                        } satisfies TokenTransferEvent,
+                    }
+                }
                 case undefined:
                     return {
                         content: {

@@ -13,6 +13,7 @@ import {
     StreamMembershipEvent,
     ThreadStatsData,
     TimelineEvent,
+    TokenTransferEvent,
 } from '@river-build/sdk'
 import { ExperimentsState } from 'store/experimentsStore'
 import { MINUTE_MS } from 'data/constants'
@@ -29,6 +30,7 @@ export enum RenderEventType {
     ChannelHeader = 'ChannelHeader',
     NewDivider = 'NewDivider',
     ThreadUpdate = 'ThreadUpdate',
+    TokenTransfer = 'TokenTransfer',
     ChannelProperties = 'ChannelProperties',
 }
 
@@ -58,6 +60,10 @@ export type ZRoomMissingMessageEvent = Omit<TimelineEvent, 'content'> & {
 
 export type ZStreamMembershipEvent = Omit<TimelineEvent, 'content'> & {
     content: StreamMembershipEvent
+}
+
+export type ZTokenTransferEvent = Omit<TimelineEvent, 'content'> & {
+    content: TokenTransferEvent
 }
 
 export type ZInceptionEvent = Omit<TimelineEvent, 'content'> & { content: InceptionEvent }
@@ -149,6 +155,12 @@ export interface ThreadUpdateRenderEvent extends BaseEvent {
     events: ZChannelMessageEvent[]
 }
 
+export interface TokenTransferRenderEvent extends BaseEvent {
+    type: RenderEventType.TokenTransfer
+    key: string
+    event: ZTokenTransferEvent
+}
+
 const isInception = (event: TimelineEvent): event is ZInceptionEvent => {
     return event.content?.kind === RiverTimelineEvent.Inception
 }
@@ -181,6 +193,10 @@ const isStreamMembership = (event: TimelineEvent): event is ZStreamMembershipEve
     return event.content?.kind === RiverTimelineEvent.StreamMembership
 }
 
+export const isTokenTransfer = (event: TimelineEvent): event is ZTokenTransferEvent => {
+    return event.content?.kind === RiverTimelineEvent.TokenTransfer
+}
+
 export type DateGroup = {
     key: string
     date: {
@@ -207,6 +223,7 @@ export type RenderEvent =
     | ThreadUpdateRenderEvent
     | UserMessagesRenderEvent
     | RoomPropertiesRenderEvent
+    | TokenTransferRenderEvent
 
 const DEBUG_NO_GROUP_BY_USER = false
 
@@ -386,6 +403,16 @@ export const getEventsByDate = (
                 renderEvents.push({
                     type: RenderEventType.ChannelProperties,
                     key: `room-properties-${event.eventId}`,
+                    event,
+                })
+            } else if (isTokenTransfer(event)) {
+                if (!isThread && event.threadParentId) {
+                    // skip messages from threads if not applicable
+                    return result
+                }
+                renderEvents.push({
+                    type: RenderEventType.TokenTransfer,
+                    key: `token-transfer-${event.eventId}`,
                     event,
                 })
             }

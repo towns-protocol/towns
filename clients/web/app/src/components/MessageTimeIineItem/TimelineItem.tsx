@@ -32,6 +32,7 @@ export const MessageTimelineItem = React.memo(
         switch (itemData.type) {
             case RenderEventType.EncryptedMessage:
             case RenderEventType.RedactedMessage:
+            case RenderEventType.TokenTransfer:
             case RenderEventType.Message: {
                 return (
                     <MessageItem itemData={itemData} key={itemData.key} isHighlight={isHighlight} />
