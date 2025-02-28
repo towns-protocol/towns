@@ -1,6 +1,6 @@
 import type { Gdms } from '@towns-protocol/sdk/dist/sync-agent/gdms/gdms'
 import type { ObservableConfig } from './useObservable'
-import { useRiver } from './useRiver'
+import { useTowns } from './useTowns'
 
 /**
  * Hook to get the group dm streams of the current user.
@@ -24,6 +24,6 @@ import { useRiver } from './useRiver'
  * ```
  */
 export const useUserGdms = (config?: ObservableConfig.FromObservable<Gdms>) => {
-    const { data, ...rest } = useRiver((s) => s.gdms, config)
+    const { data, ...rest } = useTowns((s) => s.gdms, config)
     return { streamIds: data.streamIds, ...rest }
 }

@@ -16,7 +16,7 @@ export const useCreateGdm = (config?: ActionConfig<Gdms['createGDM']>) => {
     return {
         /**
          * Creates a new GDM.
-         * @param userIds - The River `userIds` of the users to invite to the GDM.
+         * @param userIds - The `userIds` of the users to invite to the GDM.
          * @returns A promise that resolves to the result of the create operation.
          */
         createGDM,

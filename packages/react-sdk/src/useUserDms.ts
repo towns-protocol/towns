@@ -1,6 +1,6 @@
 import type { Dms } from '@towns-protocol/sdk'
 import type { ObservableConfig } from './useObservable'
-import { useRiver } from './useRiver'
+import { useTowns } from './useTowns'
 
 /**
  * Hook to get the direct messages of the current user.
@@ -33,6 +33,6 @@ import { useRiver } from './useRiver'
  * ```
  */
 export const useUserDms = (config?: ObservableConfig.FromObservable<Dms>) => {
-    const { data, ...rest } = useRiver((s) => s.dms, config)
+    const { data, ...rest } = useTowns((s) => s.dms, config)
     return { streamIds: data.streamIds, ...rest }
 }
