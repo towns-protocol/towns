@@ -661,7 +661,12 @@ func (tc *testClient) say(channelId StreamId, message string) {
 	envelope, err := MakeEnvelopeWithPayload(tc.wallet, Make_ChannelPayload_Message(message), ref)
 	tc.require.NoError(err)
 
-	backoff := BackoffTracker{MaxAttempts: 5}
+	backoff := BackoffTracker{
+		NextDelay:   50 * time.Millisecond,
+		MaxAttempts: 7,
+		Multiplier:  2,
+		Divisor:     1,
+	}
 	for {
 		ctx, ctxCancel := context.WithTimeout(tc.ctx, 10*time.Second)
 		defer ctxCancel()
