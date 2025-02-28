@@ -3,57 +3,59 @@ pragma solidity ^0.8.23;
 
 import {LibClone} from "solady/utils/LibClone.sol";
 
-/**
- * @title Factory for arbitrary code deployment using the "CREATE" and "CREATE2" opcodes
- */
+/// @title Factory for arbitrary code deployment using the "CREATE" and "CREATE2" opcodes
 library Factory {
-  error Factory__FailedDeployment();
+  /// @notice Emitted when deployment fails
+  /// @param revertData Nested revert data
+  error Factory__FailedDeployment(bytes revertData);
 
-  /**
-   * @notice deploy contract code using "CREATE" opcode
-   * @param initCode contract initialization code
-   * @return deployment address of deployed contract
-   */
+  /// @notice deploy contract code using "CREATE" opcode
+  /// @param initCode contract initialization code
+  /// @return deployment address of deployed contract
   function deploy(bytes memory initCode) internal returns (address deployment) {
     assembly ("memory-safe") {
-      let encoded_data := add(0x20, initCode)
-      let encoded_size := mload(initCode)
-      deployment := create(0, encoded_data, encoded_size)
+      deployment := create(0, add(initCode, 0x20), mload(initCode))
       if iszero(deployment) {
-        mstore(0, 0xef35ca19) // revert Factory__FailedDeployment()
-        revert(0x1c, 0x04)
+        // revert Factory__FailedDeployment(revertData)
+        mstore(0, 0x2b1c2246)
+        mstore(0x20, 0x20)
+        mstore(0x40, returndatasize())
+        returndatacopy(0x60, 0, returndatasize())
+        // round up to nearest 32 bytes
+        let rounded_len := and(not(0x1f), add(0x1f, returndatasize()))
+        revert(0x1c, add(0x44, rounded_len))
       }
     }
   }
 
-  /**
-   * @notice deploy contract code using "CREATE2" opcode
-   * @dev reverts if deployment is not successful (likely because salt has already been used)
-   * @param initCode contract initialization code
-   * @param salt input for deterministic address calculation
-   * @return deployment address of deployed contract
-   */
+  /// @notice deploy contract code using "CREATE2" opcode
+  /// @dev reverts if deployment is not successful (likely because salt has already been used)
+  /// @param initCode contract initialization code
+  /// @param salt input for deterministic address calculation
+  /// @return deployment address of deployed contract
   function deploy(
     bytes memory initCode,
     bytes32 salt
   ) internal returns (address deployment) {
     assembly ("memory-safe") {
-      let encoded_data := add(0x20, initCode)
-      let encoded_size := mload(initCode)
-      deployment := create2(0, encoded_data, encoded_size, salt)
+      deployment := create2(0, add(initCode, 0x20), mload(initCode), salt)
       if iszero(deployment) {
-        mstore(0, 0xef35ca19) // revert Factory__FailedDeployment()
-        revert(0x1c, 0x04)
+        // revert Factory__FailedDeployment(revertData)
+        mstore(0, 0x2b1c2246)
+        mstore(0x20, 0x20)
+        mstore(0x40, returndatasize())
+        returndatacopy(0x60, 0, returndatasize())
+        // round up to nearest 32 bytes
+        let rounded_len := and(not(0x1f), add(0x1f, returndatasize()))
+        revert(0x1c, add(0x44, rounded_len))
       }
     }
   }
 
-  /**
-   * @notice calculate the _deployMetamorphicContract deployment address for a given salt
-   * @param initCodeHash hash of contract initialization code
-   * @param salt input for deterministic address calculation
-   * @return deployment deployment address
-   */
+  /// @notice calculate the _deployMetamorphicContract deployment address for a given salt
+  /// @param initCodeHash hash of contract initialization code
+  /// @param salt input for deterministic address calculation
+  /// @return deployment deployment address
   function calculateDeploymentAddress(
     bytes32 initCodeHash,
     bytes32 salt

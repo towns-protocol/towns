@@ -7,6 +7,7 @@ import {IPricingModules} from "contracts/src/factory/facets/architect/pricing/IP
 import {IEntitlementsManager} from "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
 import {IOwnableBase} from "@river-build/diamond/src/facets/ownable/IERC173.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import {IERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
 import {IERC173} from "@river-build/diamond/src/facets/ownable/IERC173.sol";
 import {IPausableBase, IPausable} from "@river-build/diamond/src/facets/pausable/IPausable.sol";
 import {IGuardian} from "contracts/src/spaces/facets/guardian/IGuardian.sol";
@@ -328,7 +329,14 @@ contract ArchitectTest is
     SpaceInfo memory spaceInfo = _createSpaceInfo(spaceName);
     spaceInfo.membership.settings.pricingModule = pricingModule;
 
-    vm.expectRevert(Factory.Factory__FailedDeployment.selector);
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        Factory.Factory__FailedDeployment.selector,
+        abi.encodeWithSelector(
+          IERC721ABase.TransferToNonERC721ReceiverImplementer.selector
+        )
+      )
+    );
 
     vm.prank(address(this));
     createSpaceFacet.createSpace(spaceInfo);
