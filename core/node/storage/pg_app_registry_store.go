@@ -24,11 +24,17 @@ type (
 		exitSignal chan error
 	}
 
+	EncryptionDevice struct {
+		DeviceKey   string
+		FallbackKey string
+	}
+
 	AppInfo struct {
-		App             common.Address
-		Owner           common.Address
-		EncryptedSecret [32]byte
-		WebhookUrl      string
+		App              common.Address
+		Owner            common.Address
+		EncryptedSecret  [32]byte
+		WebhookUrl       string
+		EncryptionDevice EncryptionDevice
 	}
 
 	AppRegistryStore interface {
@@ -43,6 +49,8 @@ type (
 			ctx context.Context,
 			app common.Address,
 			webhook string,
+			deviceKey string,
+			fallbackKey string,
 		) error
 
 		GetAppInfo(
@@ -183,17 +191,21 @@ func (s *PostgresAppRegistryStore) RegisterWebhook(
 	ctx context.Context,
 	app common.Address,
 	webhook string,
+	deviceKey string,
+	fallbackKey string,
 ) error {
 	return s.txRunner(
 		ctx,
 		"RegisterWebhook",
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
-			return s.registerWebhook(ctx, app, webhook, tx)
+			return s.registerWebhook(ctx, app, webhook, deviceKey, fallbackKey, tx)
 		},
 		nil,
 		"appAddress", app,
 		"webhook", webhook,
+		"deviceKey", deviceKey,
+		"fallbackKey", fallbackKey,
 	)
 }
 
@@ -201,13 +213,17 @@ func (s *PostgresAppRegistryStore) registerWebhook(
 	ctx context.Context,
 	app common.Address,
 	webhook string,
+	deviceKey string,
+	fallbackKey string,
 	txn pgx.Tx,
 ) error {
 	tag, err := txn.Exec(
 		ctx,
-		`UPDATE app_registry SET webhook = $2 WHERE app_id = $1`,
+		`UPDATE app_registry SET webhook = $2, device_key = $3, fallback_key = $4 WHERE app_id = $1`,
 		PGAddress(app),
 		webhook,
+		deviceKey,
+		fallbackKey,
 	)
 	if err != nil {
 		return AsRiverError(err, protocol.Err_DB_OPERATION_FAILURE).Message("error updating app webhook")
@@ -233,7 +249,7 @@ func (s *PostgresAppRegistryStore) GetAppInfo(
 		pgx.ReadOnly,
 		func(ctx context.Context, tx pgx.Tx) error {
 			var err error
-			appInfo, err = s.getAppInfo(ctx, tx, app)
+			appInfo, err = s.getAppInfo(ctx, app, tx)
 			return err
 		},
 		nil,
@@ -247,8 +263,8 @@ func (s *PostgresAppRegistryStore) GetAppInfo(
 
 func (s *PostgresAppRegistryStore) getAppInfo(
 	ctx context.Context,
-	tx pgx.Tx,
 	appAddr common.Address,
+	tx pgx.Tx,
 ) (
 	*AppInfo,
 	error,
@@ -257,8 +273,22 @@ func (s *PostgresAppRegistryStore) getAppInfo(
 	var encryptedSecret PGSecret
 	app = PGAddress(appAddr)
 	var appInfo AppInfo
-	if err := tx.QueryRow(ctx, "select app_id, app_owner_id, encrypted_shared_secret, COALESCE(webhook, '') from app_registry where app_id = $1", app).
-		Scan(&app, &owner, &encryptedSecret, &appInfo.WebhookUrl); err != nil {
+	if err := tx.QueryRow(
+		ctx,
+		`
+		    SELECT app_id, app_owner_id, encrypted_shared_secret, COALESCE(webhook, ''),
+		        COALESCE(device_key, ''), COALESCE(fallback_key, '')
+		    FROM app_registry WHERE app_id = $1
+		`,
+		app,
+	).Scan(
+		&app,
+		&owner,
+		&encryptedSecret,
+		&appInfo.WebhookUrl,
+		&appInfo.EncryptionDevice.DeviceKey,
+		&appInfo.EncryptionDevice.FallbackKey,
+	); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, RiverError(protocol.Err_NOT_FOUND, "app does not exist")
 		} else {

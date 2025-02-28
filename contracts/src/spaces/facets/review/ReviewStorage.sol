@@ -11,13 +11,13 @@ library ReviewStorage {
   struct Content {
     string comment;
     uint8 rating;
+    uint40 createdAt;
+    uint40 updatedAt;
   }
 
   struct Layout {
     mapping(address user => Content) reviewByUser;
     EnumerableSetLib.AddressSet usersReviewed;
-    uint16 minCommentLength;
-    uint16 maxCommentLength;
   }
 
   function layout() internal pure returns (Layout storage l) {

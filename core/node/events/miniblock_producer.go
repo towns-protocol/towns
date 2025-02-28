@@ -474,6 +474,9 @@ func (p *miniblockProducer) promoteConfirmedCandidates(ctx context.Context, jobs
 		if err != nil {
 			log.Error("Unable to retrieve stream details from registry",
 				"streamId", job.stream.streamId, "err", err)
+
+			p.jobDone(ctx, job)
+			continue
 		}
 
 		committedLocalCandidateRef := MiniblockRef{

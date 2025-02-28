@@ -3,6 +3,7 @@ package events
 import (
 	"context"
 	"slices"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -66,7 +67,9 @@ type StreamCache struct {
 	streamCacheUnloadedGauge prometheus.Gauge
 	streamCacheRemoteGauge   prometheus.Gauge
 
+	stoppedMu            sync.RWMutex
 	onlineSyncWorkerPool *workerpool.WorkerPool
+	stopped              bool
 
 	disableCallbacks bool
 }
@@ -122,17 +125,22 @@ func (s *StreamCache) Start(ctx context.Context) error {
 
 	// load local streams in-memory cache
 	initialSyncWorkerPool := workerpool.New(s.params.Config.StreamReconciliation.InitialWorkerPoolSize)
-	for _, stream := range localStreamResults {
-		si := &Stream{
+	for _, streamRecord := range localStreamResults {
+		stream := &Stream{
 			params:              s.params,
-			streamId:            stream.StreamId,
+			streamId:            streamRecord.StreamId,
 			lastAppliedBlockNum: s.params.AppliedBlockNum,
 			local:               &localStreamState{},
 		}
-		si.nodesLocked.Reset(stream.Nodes, s.params.Wallet.Address)
-		s.cache.Store(stream.StreamId, si)
+		stream.nodesLocked.Reset(streamRecord.Nodes, s.params.Wallet.Address)
+		s.cache.Store(streamRecord.StreamId, stream)
 		if s.params.Config.StreamReconciliation.InitialWorkerPoolSize > 0 {
-			s.submitSyncStreamTask(ctx, initialSyncWorkerPool, si, stream)
+			s.submitSyncStreamTaskToPool(
+				ctx,
+				initialSyncWorkerPool,
+				stream,
+				streamRecord,
+			)
 		}
 	}
 
@@ -153,7 +161,10 @@ func (s *StreamCache) Start(ctx context.Context) error {
 
 	go func() {
 		<-ctx.Done()
+		s.stoppedMu.Lock()
+		s.stopped = true
 		s.onlineSyncWorkerPool.Stop()
+		s.stoppedMu.Unlock()
 		initialSyncWorkerPool.Stop()
 	}()
 

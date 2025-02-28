@@ -234,10 +234,7 @@ func IsRiverError(err error) bool {
 }
 
 func IsRiverErrorCode(err error, code protocol.Err) bool {
-	if e, ok := err.(*RiverErrorImpl); ok {
-		return e.Code == code
-	}
-	return false
+	return AsRiverError(err).Code == code
 }
 
 // IsCodeWithBases checks if the error or any of base errors match the given code.

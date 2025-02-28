@@ -1,5 +1,5 @@
 import { SyncCookie } from '@river-build/proto'
-import { DLogger, check, dlog, dlogError, shortenHexString } from '@river-build/dlog'
+import { DLogger, check, dlog, dlogError } from '@river-build/dlog'
 import { StreamRpcClient } from './makeStreamRpcClient'
 import { SyncedStreamEvents } from './streamEvents'
 import TypedEmitter from 'typed-emitter'
@@ -14,7 +14,6 @@ export class SyncedStreams {
     private highPriorityIds: Set<string> = new Set()
     // userId is the current user id
     private readonly userId: string
-    private readonly logNamespace: string
     // mapping of stream id to stream
     private readonly streams: Map<string, SyncedStream> = new Map()
     // loggers
@@ -30,15 +29,14 @@ export class SyncedStreams {
         rpcClient: StreamRpcClient,
         clientEmitter: TypedEmitter<SyncedStreamEvents>,
         private readonly unpackEnvelopeOpts: UnpackEnvelopeOpts | undefined,
+        private readonly logId: string,
+        private readonly streamOpts?: { useModifySync?: boolean },
     ) {
         this.userId = userId
         this.rpcClient = rpcClient
         this.clientEmitter = clientEmitter
-        this.logNamespace = shortenHexString(
-            this.userId.startsWith('0x') ? this.userId.slice(2) : this.userId,
-        )
-        this.logSync = dlog('csb:cl:sync').extend(this.logNamespace)
-        this.logError = dlogError('csb:cl:sync:stream').extend(this.logNamespace)
+        this.logSync = dlog('csb:cl:sync').extend(this.logId)
+        this.logError = dlogError('csb:cl:sync:stream').extend(this.logId)
     }
 
     public get syncState(): SyncState {
@@ -113,9 +111,10 @@ export class SyncedStreams {
             this.clientEmitter,
             this.rpcClient,
             streamRecords,
-            this.logNamespace,
+            this.logId,
             this.unpackEnvelopeOpts,
             this.highPriorityIds,
+            this.streamOpts,
         )
         this.syncedStreamsLoop.start()
     }

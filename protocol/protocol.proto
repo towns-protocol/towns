@@ -476,7 +476,6 @@ message UserInboxPayload {
         Inception inception = 1;
         Ack ack = 2;
         GroupEncryptionSessions group_encryption_sessions = 3;
-        
     }
 }
 
@@ -577,11 +576,17 @@ message MediaPayload {
         StreamSettings settings = 4;
         optional bytes space_id = 5;
         optional bytes user_id = 6;
+
+        // Setting for enabling per chunk encryption for media payloads.
+        // Meaning, the given media stream has each chunk individually encrypted
+        // rather than encrypting the full data and splitting into chunks.
+        optional bool per_chunk_encryption = 7;
     }
 
     message Chunk {
         bytes data = 1;
         int32 chunk_index = 2;
+        optional bytes iv = 3;
     }
 
     oneof content {
@@ -701,9 +706,10 @@ message SolanaBlockchainTransactionReceipt {
 }
 
 /**
- * Derived event is produces by server when there should be additional event to compliment
- * received event. For example, when user joins a space through event in the space stream, server will produce a derived event
- * in a user stream to indicate that user joined a particual space.
+ * A derived event is produced by the server when there should be an additional event to compliment the
+ * received event. For example, when a user joins a space through an event in the space stream,
+ * the server will produce a derived event in the user stream to indicate that the user joined a
+ * particular space.
  *
  * EventRef is used to reference the event that caused the derived event to be produced.
  */
@@ -1216,4 +1222,11 @@ enum Err {
 
     // App webhook could not successfully be called.
     CANNOT_CALL_WEBHOOK = 66;
+
+    // App webhook response was unparsable as JSON or did not match expected schema.
+    MALFORMED_WEBHOOK_RESPONSE = 67;
+
+    // The encryption device returned by the app service webhook does not match the first
+    // encryption device found in the app's user metadata stream.
+    BAD_ENCRYPTION_DEVICE = 68;
 }

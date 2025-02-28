@@ -201,14 +201,14 @@ func (s *Service) debugInfoMakeMiniblock(
 			Version:  v,
 		}), nil
 	} else {
-		return peerNodeRequestWithRetries(
+		return utils.PeerNodeRequestWithRetries(
 			ctx,
 			stream,
-			s,
 			func(ctx context.Context, stub StreamServiceClient) (*connect.Response[InfoResponse], error) {
 				return stub.Info(ctx, request)
 			},
-			-1,
+			s.config.Network.NumRetries,
+			s.nodeRegistry,
 		)
 	}
 }

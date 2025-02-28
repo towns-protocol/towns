@@ -32,6 +32,16 @@ const _abi = [
             type: "uint8",
             internalType: "uint8",
           },
+          {
+            name: "createdAt",
+            type: "uint40",
+            internalType: "uint40",
+          },
+          {
+            name: "updatedAt",
+            type: "uint40",
+            internalType: "uint40",
+          },
         ],
       },
     ],
@@ -62,6 +72,16 @@ const _abi = [
             name: "rating",
             type: "uint8",
             internalType: "uint8",
+          },
+          {
+            name: "createdAt",
+            type: "uint40",
+            internalType: "uint40",
+          },
+          {
+            name: "updatedAt",
+            type: "uint40",
+            internalType: "uint40",
           },
         ],
       },
@@ -97,22 +117,16 @@ const _abi = [
         internalType: "address",
       },
       {
-        name: "review",
-        type: "tuple",
+        name: "comment",
+        type: "string",
         indexed: false,
-        internalType: "struct ReviewStorage.Content",
-        components: [
-          {
-            name: "comment",
-            type: "string",
-            internalType: "string",
-          },
-          {
-            name: "rating",
-            type: "uint8",
-            internalType: "uint8",
-          },
-        ],
+        internalType: "string",
+      },
+      {
+        name: "rating",
+        type: "uint8",
+        indexed: false,
+        internalType: "uint8",
       },
     ],
     anonymous: false,
@@ -141,22 +155,16 @@ const _abi = [
         internalType: "address",
       },
       {
-        name: "review",
-        type: "tuple",
+        name: "comment",
+        type: "string",
         indexed: false,
-        internalType: "struct ReviewStorage.Content",
-        components: [
-          {
-            name: "comment",
-            type: "string",
-            internalType: "string",
-          },
-          {
-            name: "rating",
-            type: "uint8",
-            internalType: "uint8",
-          },
-        ],
+        internalType: "string",
+      },
+      {
+        name: "rating",
+        type: "uint8",
+        indexed: false,
+        internalType: "uint8",
       },
     ],
     anonymous: false,
@@ -169,6 +177,16 @@ const _abi = [
   {
     type: "error",
     name: "ReviewFacet__InvalidRating",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "ReviewFacet__ReviewAlreadyExists",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "ReviewFacet__ReviewDoesNotExist",
     inputs: [],
   },
 ] as const;

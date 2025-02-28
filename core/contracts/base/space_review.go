@@ -31,13 +31,15 @@ var (
 
 // ReviewStorageContent is an auto generated low-level Go binding around an user-defined struct.
 type ReviewStorageContent struct {
-	Comment string
-	Rating  uint8
+	Comment   string
+	Rating    uint8
+	CreatedAt *big.Int
+	UpdatedAt *big.Int
 }
 
 // SpaceReviewMetaData contains all meta data concerning the SpaceReview contract.
 var SpaceReviewMetaData = &bind.MetaData{
-	ABI: "[{\"type\":\"function\",\"name\":\"getAllReviews\",\"inputs\":[],\"outputs\":[{\"name\":\"users\",\"type\":\"address[]\",\"internalType\":\"address[]\"},{\"name\":\"reviews\",\"type\":\"tuple[]\",\"internalType\":\"structReviewStorage.Content[]\",\"components\":[{\"name\":\"comment\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"rating\",\"type\":\"uint8\",\"internalType\":\"uint8\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getReview\",\"inputs\":[{\"name\":\"user\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structReviewStorage.Content\",\"components\":[{\"name\":\"comment\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"rating\",\"type\":\"uint8\",\"internalType\":\"uint8\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"setReview\",\"inputs\":[{\"name\":\"action\",\"type\":\"uint8\",\"internalType\":\"enumIReviewBase.Action\"},{\"name\":\"data\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"ReviewAdded\",\"inputs\":[{\"name\":\"user\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"review\",\"type\":\"tuple\",\"indexed\":false,\"internalType\":\"structReviewStorage.Content\",\"components\":[{\"name\":\"comment\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"rating\",\"type\":\"uint8\",\"internalType\":\"uint8\"}]}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"ReviewDeleted\",\"inputs\":[{\"name\":\"user\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"ReviewUpdated\",\"inputs\":[{\"name\":\"user\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"review\",\"type\":\"tuple\",\"indexed\":false,\"internalType\":\"structReviewStorage.Content\",\"components\":[{\"name\":\"comment\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"rating\",\"type\":\"uint8\",\"internalType\":\"uint8\"}]}],\"anonymous\":false},{\"type\":\"error\",\"name\":\"ReviewFacet__InvalidCommentLength\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"ReviewFacet__InvalidRating\",\"inputs\":[]}]",
+	ABI: "[{\"type\":\"function\",\"name\":\"getAllReviews\",\"inputs\":[],\"outputs\":[{\"name\":\"users\",\"type\":\"address[]\",\"internalType\":\"address[]\"},{\"name\":\"reviews\",\"type\":\"tuple[]\",\"internalType\":\"structReviewStorage.Content[]\",\"components\":[{\"name\":\"comment\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"rating\",\"type\":\"uint8\",\"internalType\":\"uint8\"},{\"name\":\"createdAt\",\"type\":\"uint40\",\"internalType\":\"uint40\"},{\"name\":\"updatedAt\",\"type\":\"uint40\",\"internalType\":\"uint40\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getReview\",\"inputs\":[{\"name\":\"user\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structReviewStorage.Content\",\"components\":[{\"name\":\"comment\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"rating\",\"type\":\"uint8\",\"internalType\":\"uint8\"},{\"name\":\"createdAt\",\"type\":\"uint40\",\"internalType\":\"uint40\"},{\"name\":\"updatedAt\",\"type\":\"uint40\",\"internalType\":\"uint40\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"setReview\",\"inputs\":[{\"name\":\"action\",\"type\":\"uint8\",\"internalType\":\"enumIReviewBase.Action\"},{\"name\":\"data\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"ReviewAdded\",\"inputs\":[{\"name\":\"user\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"comment\",\"type\":\"string\",\"indexed\":false,\"internalType\":\"string\"},{\"name\":\"rating\",\"type\":\"uint8\",\"indexed\":false,\"internalType\":\"uint8\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"ReviewDeleted\",\"inputs\":[{\"name\":\"user\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"ReviewUpdated\",\"inputs\":[{\"name\":\"user\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"comment\",\"type\":\"string\",\"indexed\":false,\"internalType\":\"string\"},{\"name\":\"rating\",\"type\":\"uint8\",\"indexed\":false,\"internalType\":\"uint8\"}],\"anonymous\":false},{\"type\":\"error\",\"name\":\"ReviewFacet__InvalidCommentLength\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"ReviewFacet__InvalidRating\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"ReviewFacet__ReviewAlreadyExists\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"ReviewFacet__ReviewDoesNotExist\",\"inputs\":[]}]",
 }
 
 // SpaceReviewABI is the input ABI used to generate the binding from.
@@ -188,7 +190,7 @@ func (_SpaceReview *SpaceReviewTransactorRaw) Transact(opts *bind.TransactOpts, 
 
 // GetAllReviews is a free data retrieval call binding the contract method 0x45a7b01c.
 //
-// Solidity: function getAllReviews() view returns(address[] users, (string,uint8)[] reviews)
+// Solidity: function getAllReviews() view returns(address[] users, (string,uint8,uint40,uint40)[] reviews)
 func (_SpaceReview *SpaceReviewCaller) GetAllReviews(opts *bind.CallOpts) (struct {
 	Users   []common.Address
 	Reviews []ReviewStorageContent
@@ -213,7 +215,7 @@ func (_SpaceReview *SpaceReviewCaller) GetAllReviews(opts *bind.CallOpts) (struc
 
 // GetAllReviews is a free data retrieval call binding the contract method 0x45a7b01c.
 //
-// Solidity: function getAllReviews() view returns(address[] users, (string,uint8)[] reviews)
+// Solidity: function getAllReviews() view returns(address[] users, (string,uint8,uint40,uint40)[] reviews)
 func (_SpaceReview *SpaceReviewSession) GetAllReviews() (struct {
 	Users   []common.Address
 	Reviews []ReviewStorageContent
@@ -223,7 +225,7 @@ func (_SpaceReview *SpaceReviewSession) GetAllReviews() (struct {
 
 // GetAllReviews is a free data retrieval call binding the contract method 0x45a7b01c.
 //
-// Solidity: function getAllReviews() view returns(address[] users, (string,uint8)[] reviews)
+// Solidity: function getAllReviews() view returns(address[] users, (string,uint8,uint40,uint40)[] reviews)
 func (_SpaceReview *SpaceReviewCallerSession) GetAllReviews() (struct {
 	Users   []common.Address
 	Reviews []ReviewStorageContent
@@ -233,7 +235,7 @@ func (_SpaceReview *SpaceReviewCallerSession) GetAllReviews() (struct {
 
 // GetReview is a free data retrieval call binding the contract method 0x694a34bb.
 //
-// Solidity: function getReview(address user) view returns((string,uint8))
+// Solidity: function getReview(address user) view returns((string,uint8,uint40,uint40))
 func (_SpaceReview *SpaceReviewCaller) GetReview(opts *bind.CallOpts, user common.Address) (ReviewStorageContent, error) {
 	var out []interface{}
 	err := _SpaceReview.contract.Call(opts, &out, "getReview", user)
@@ -250,14 +252,14 @@ func (_SpaceReview *SpaceReviewCaller) GetReview(opts *bind.CallOpts, user commo
 
 // GetReview is a free data retrieval call binding the contract method 0x694a34bb.
 //
-// Solidity: function getReview(address user) view returns((string,uint8))
+// Solidity: function getReview(address user) view returns((string,uint8,uint40,uint40))
 func (_SpaceReview *SpaceReviewSession) GetReview(user common.Address) (ReviewStorageContent, error) {
 	return _SpaceReview.Contract.GetReview(&_SpaceReview.CallOpts, user)
 }
 
 // GetReview is a free data retrieval call binding the contract method 0x694a34bb.
 //
-// Solidity: function getReview(address user) view returns((string,uint8))
+// Solidity: function getReview(address user) view returns((string,uint8,uint40,uint40))
 func (_SpaceReview *SpaceReviewCallerSession) GetReview(user common.Address) (ReviewStorageContent, error) {
 	return _SpaceReview.Contract.GetReview(&_SpaceReview.CallOpts, user)
 }
@@ -352,14 +354,15 @@ func (it *SpaceReviewReviewAddedIterator) Close() error {
 
 // SpaceReviewReviewAdded represents a ReviewAdded event raised by the SpaceReview contract.
 type SpaceReviewReviewAdded struct {
-	User   common.Address
-	Review ReviewStorageContent
-	Raw    types.Log // Blockchain specific contextual infos
+	User    common.Address
+	Comment string
+	Rating  uint8
+	Raw     types.Log // Blockchain specific contextual infos
 }
 
-// FilterReviewAdded is a free log retrieval operation binding the contract event 0xef64c395c507efa8da45a759e5f40382f6f968af5cbe4979db646657b35f10a2.
+// FilterReviewAdded is a free log retrieval operation binding the contract event 0x327bf0d86574aefd94222d9175868a81de3e65af4338f4649a8cf37baaef0c8d.
 //
-// Solidity: event ReviewAdded(address indexed user, (string,uint8) review)
+// Solidity: event ReviewAdded(address indexed user, string comment, uint8 rating)
 func (_SpaceReview *SpaceReviewFilterer) FilterReviewAdded(opts *bind.FilterOpts, user []common.Address) (*SpaceReviewReviewAddedIterator, error) {
 
 	var userRule []interface{}
@@ -374,9 +377,9 @@ func (_SpaceReview *SpaceReviewFilterer) FilterReviewAdded(opts *bind.FilterOpts
 	return &SpaceReviewReviewAddedIterator{contract: _SpaceReview.contract, event: "ReviewAdded", logs: logs, sub: sub}, nil
 }
 
-// WatchReviewAdded is a free log subscription operation binding the contract event 0xef64c395c507efa8da45a759e5f40382f6f968af5cbe4979db646657b35f10a2.
+// WatchReviewAdded is a free log subscription operation binding the contract event 0x327bf0d86574aefd94222d9175868a81de3e65af4338f4649a8cf37baaef0c8d.
 //
-// Solidity: event ReviewAdded(address indexed user, (string,uint8) review)
+// Solidity: event ReviewAdded(address indexed user, string comment, uint8 rating)
 func (_SpaceReview *SpaceReviewFilterer) WatchReviewAdded(opts *bind.WatchOpts, sink chan<- *SpaceReviewReviewAdded, user []common.Address) (event.Subscription, error) {
 
 	var userRule []interface{}
@@ -416,9 +419,9 @@ func (_SpaceReview *SpaceReviewFilterer) WatchReviewAdded(opts *bind.WatchOpts, 
 	}), nil
 }
 
-// ParseReviewAdded is a log parse operation binding the contract event 0xef64c395c507efa8da45a759e5f40382f6f968af5cbe4979db646657b35f10a2.
+// ParseReviewAdded is a log parse operation binding the contract event 0x327bf0d86574aefd94222d9175868a81de3e65af4338f4649a8cf37baaef0c8d.
 //
-// Solidity: event ReviewAdded(address indexed user, (string,uint8) review)
+// Solidity: event ReviewAdded(address indexed user, string comment, uint8 rating)
 func (_SpaceReview *SpaceReviewFilterer) ParseReviewAdded(log types.Log) (*SpaceReviewReviewAdded, error) {
 	event := new(SpaceReviewReviewAdded)
 	if err := _SpaceReview.contract.UnpackLog(event, "ReviewAdded", log); err != nil {
@@ -641,14 +644,15 @@ func (it *SpaceReviewReviewUpdatedIterator) Close() error {
 
 // SpaceReviewReviewUpdated represents a ReviewUpdated event raised by the SpaceReview contract.
 type SpaceReviewReviewUpdated struct {
-	User   common.Address
-	Review ReviewStorageContent
-	Raw    types.Log // Blockchain specific contextual infos
+	User    common.Address
+	Comment string
+	Rating  uint8
+	Raw     types.Log // Blockchain specific contextual infos
 }
 
-// FilterReviewUpdated is a free log retrieval operation binding the contract event 0x0c438dd06b1847df23132c8365fab914da55271c9dcbc95e00e5c9f526367958.
+// FilterReviewUpdated is a free log retrieval operation binding the contract event 0x6535cc20a53fe6f0b4482780339f3fcbb54f634a86f288e551a651bc9facc55d.
 //
-// Solidity: event ReviewUpdated(address indexed user, (string,uint8) review)
+// Solidity: event ReviewUpdated(address indexed user, string comment, uint8 rating)
 func (_SpaceReview *SpaceReviewFilterer) FilterReviewUpdated(opts *bind.FilterOpts, user []common.Address) (*SpaceReviewReviewUpdatedIterator, error) {
 
 	var userRule []interface{}
@@ -663,9 +667,9 @@ func (_SpaceReview *SpaceReviewFilterer) FilterReviewUpdated(opts *bind.FilterOp
 	return &SpaceReviewReviewUpdatedIterator{contract: _SpaceReview.contract, event: "ReviewUpdated", logs: logs, sub: sub}, nil
 }
 
-// WatchReviewUpdated is a free log subscription operation binding the contract event 0x0c438dd06b1847df23132c8365fab914da55271c9dcbc95e00e5c9f526367958.
+// WatchReviewUpdated is a free log subscription operation binding the contract event 0x6535cc20a53fe6f0b4482780339f3fcbb54f634a86f288e551a651bc9facc55d.
 //
-// Solidity: event ReviewUpdated(address indexed user, (string,uint8) review)
+// Solidity: event ReviewUpdated(address indexed user, string comment, uint8 rating)
 func (_SpaceReview *SpaceReviewFilterer) WatchReviewUpdated(opts *bind.WatchOpts, sink chan<- *SpaceReviewReviewUpdated, user []common.Address) (event.Subscription, error) {
 
 	var userRule []interface{}
@@ -705,9 +709,9 @@ func (_SpaceReview *SpaceReviewFilterer) WatchReviewUpdated(opts *bind.WatchOpts
 	}), nil
 }
 
-// ParseReviewUpdated is a log parse operation binding the contract event 0x0c438dd06b1847df23132c8365fab914da55271c9dcbc95e00e5c9f526367958.
+// ParseReviewUpdated is a log parse operation binding the contract event 0x6535cc20a53fe6f0b4482780339f3fcbb54f634a86f288e551a651bc9facc55d.
 //
-// Solidity: event ReviewUpdated(address indexed user, (string,uint8) review)
+// Solidity: event ReviewUpdated(address indexed user, string comment, uint8 rating)
 func (_SpaceReview *SpaceReviewFilterer) ParseReviewUpdated(log types.Log) (*SpaceReviewReviewUpdated, error) {
 	event := new(SpaceReviewReviewUpdated)
 	if err := _SpaceReview.contract.UnpackLog(event, "ReviewUpdated", log); err != nil {
