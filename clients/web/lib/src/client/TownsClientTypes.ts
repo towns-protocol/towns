@@ -26,6 +26,7 @@ export interface TownsOpts {
     ethMainnetRpcUrl?: string
     analytics?: TownsAnalytics
     createLegacySpaces?: boolean
+    useModifySync?: boolean
 }
 
 export interface SpaceIdentifier {

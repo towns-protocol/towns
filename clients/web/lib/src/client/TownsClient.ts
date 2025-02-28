@@ -288,6 +288,9 @@ export class TownsClient
             this.opts.logNamespaceFilter,
             this.opts.highPriorityStreamIds,
             this.opts.unpackEnvelopeOpts,
+            undefined,
+            undefined,
+            { useModifySync: this.opts.useModifySync },
         )
         this.casablancaClient.setMaxListeners(100)
 

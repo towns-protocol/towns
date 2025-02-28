@@ -165,6 +165,7 @@ export const App = () => {
             ethMainnetRpcUrl={env.VITE_ETHEREUM_RPC_URL}
             analytics={analyticsInstance}
             streamMetadataUrl={env.VITE_RIVER_STREAM_METADATA_URL}
+            useModifySync={env.VITE_USE_MODIFY_SYNC}
         >
             <WagmiProvider config={wagmiConfig}>
                 <CombinedAuthContextProvider>

@@ -100,6 +100,7 @@ interface TownsContextProviderProps {
     analytics?: TownsAnalytics
     createLegacySpaces?: boolean
     streamMetadataUrl?: string
+    useModifySync?: boolean
 }
 
 export function TownsContextProvider({
@@ -162,6 +163,7 @@ const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
             ethMainnetRpcUrl: props.ethMainnetRpcUrl,
             analytics: props.analytics,
             createLegacySpaces: props.createLegacySpaces,
+            useModifySync: props.useModifySync,
         } satisfies TownsOpts
     }, [
         baseChain.id,
@@ -175,6 +177,7 @@ const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
         props.supportedXChainRpcMapping,
         props.analytics,
         props.createLegacySpaces,
+        props.useModifySync,
         riverChain.chainId,
         riverConfig,
         riverProvider,
