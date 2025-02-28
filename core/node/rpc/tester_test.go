@@ -633,16 +633,7 @@ func (tc *testClient) joinChannel(spaceId StreamId, channelId StreamId, mb *Mini
 	tc.require.NoError(err)
 
 	userStreamId := UserStreamIdFromAddr(tc.wallet.Address)
-	_, err = tc.client.AddEvent(
-		tc.ctx,
-		connect.NewRequest(
-			&AddEventRequest{
-				StreamId: userStreamId[:],
-				Event:    userJoin,
-			},
-		),
-	)
-	tc.require.NoError(err)
+	tc.addEvent(userStreamId, userJoin)
 }
 
 func (tc *testClient) getLastMiniblockHash(streamId StreamId) *MiniblockRef {
@@ -661,10 +652,22 @@ func (tc *testClient) say(channelId StreamId, message string) {
 	envelope, err := MakeEnvelopeWithPayload(tc.wallet, Make_ChannelPayload_Message(message), ref)
 	tc.require.NoError(err)
 
-	backoff := BackoffTracker{MaxAttempts: 5}
+	tc.addEvent(channelId, envelope)
+}
+
+func (tc *testClient) addEvent(streamId StreamId, envelope *Envelope) {
+	backoff := BackoffTracker{
+		NextDelay:   50 * time.Millisecond,
+		MaxAttempts: 7,
+		Multiplier:  2,
+		Divisor:     1,
+	}
+	var err error
 	for {
-		_, err = tc.client.AddEvent(tc.ctx, connect.NewRequest(&AddEventRequest{
-			StreamId: channelId[:],
+		ctx, ctxCancel := context.WithTimeout(tc.ctx, 10*time.Second)
+		defer ctxCancel()
+		_, err = tc.client.AddEvent(ctx, connect.NewRequest(&AddEventRequest{
+			StreamId: streamId[:],
 			Event:    envelope,
 		}))
 		if err == nil {
