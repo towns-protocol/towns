@@ -85,6 +85,7 @@ message ChannelMessage {
                     optional string displayName = 2;
                     optional string channelName = 3;
                     optional string spaceName = 4;
+                    optional string ensName = 5;
                 }
 
                 string url = 1;
