@@ -12,6 +12,7 @@ import {EntitlementsManagerStorage} from "contracts/src/spaces/facets/entitlemen
 import {MembershipStorage} from "contracts/src/spaces/facets/membership/MembershipStorage.sol";
 import {ERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/ERC721ABase.sol";
 import {WalletLinkProxyBase} from "contracts/src/spaces/facets/delegation/WalletLinkProxyBase.sol";
+import {InstallLib} from "contracts/src/spaces/facets/install/InstallLib.sol";
 
 // contracts
 import {TokenOwnableBase} from "@river-build/diamond/src/facets/ownable/token/TokenOwnableBase.sol";
@@ -41,6 +42,8 @@ abstract contract Entitled is
     address user,
     bytes32 permission
   ) internal view returns (bool) {
+    if (InstallLib.isAppEntitled(channelId, user, permission)) return true;
+
     address owner = _owner();
 
     address[] memory wallets = _getLinkedWalletsWithUser(user);

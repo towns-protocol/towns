@@ -18,4 +18,6 @@ library Permissions {
   string public constant Write = "Write";
   string public constant React = "React";
   string public constant Ping = "Ping";
+  string public constant InstallApp = "InstallApp";
+  string public constant UninstallApp = "UninstallApp";
 }
