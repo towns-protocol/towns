@@ -17,11 +17,19 @@ library StringSet {
    * already present.
    */
   function _add(Set storage set, string memory value) private returns (bool) {
-    if (!_contains(set, value)) {
+    uint256 indexSlot = _indexSlot(set, value);
+    bool notContained;
+    assembly ("memory-safe") {
+      notContained := iszero(sload(indexSlot))
+    }
+    if (notContained) {
       set._values.push(value);
       // The value is stored at length-1, but we add 1 to all indexes
       // and use 0 as a sentinel value
-      set._indexes[value] = set._values.length;
+      // equivalent: set._indexes[value] = set._values.length;
+      assembly ("memory-safe") {
+        sstore(indexSlot, sload(set.slot))
+      }
       return true;
     } else {
       return false;
@@ -39,7 +47,11 @@ library StringSet {
     string memory value
   ) private returns (bool) {
     // We read and store the value's index to prevent multiple reads from the same storage slot
-    uint256 valueIndex = set._indexes[value];
+    uint256 indexSlot = _indexSlot(set, value);
+    uint256 valueIndex;
+    assembly ("memory-safe") {
+      valueIndex := sload(indexSlot)
+    }
 
     if (valueIndex != 0) {
       // Equivalent to contains(set, value)
@@ -56,18 +68,49 @@ library StringSet {
         // Move the last value to the index where the value to delete is
         set._values[toDeleteIndex] = lastValue;
         // Update the index for the moved value
-        set._indexes[lastValue] = valueIndex; // Replace lastValue's index to valueIndex
+        uint256 lastValueIndexSlot = _indexSlot(set, lastValue);
+        assembly ("memory-safe") {
+          // Replace lastValue's index to valueIndex
+          sstore(lastValueIndexSlot, valueIndex)
+        }
       }
 
       // Delete the slot where the moved value was stored
       set._values.pop();
 
       // Delete the index for the deleted slot
-      delete set._indexes[value];
+      assembly ("memory-safe") {
+        sstore(indexSlot, 0)
+      }
 
       return true;
     } else {
       return false;
+    }
+  }
+
+  /**
+   * @dev Returns the storage slot of the index of the string.
+   */
+  function _indexSlot(
+    Set storage set,
+    string memory value
+  ) private pure returns (uint256 slot) {
+    // https://docs.soliditylang.org/en/latest/internals/layout_in_storage.html#mappings-and-dynamic-arrays
+    assembly ("memory-safe") {
+      let key_len := add(mload(value), 0x20)
+      let end := add(value, key_len)
+      let cache := mload(end)
+      // concat the string and mapping slot
+      mstore(end, add(set.slot, 1))
+      slot := keccak256(add(value, 0x20), key_len)
+      mstore(end, cache)
+    }
+  }
+
+  function _sload(uint256 slot) private view returns (uint256 res) {
+    assembly ("memory-safe") {
+      res := sload(slot)
     }
   }
 
@@ -77,8 +120,12 @@ library StringSet {
   function _contains(
     Set storage set,
     string memory value
-  ) private view returns (bool) {
-    return set._indexes[value] != 0;
+  ) private view returns (bool contained) {
+    // return set._indexes[value] != 0;
+    uint256 indexSlot = _indexSlot(set, value);
+    assembly ("memory-safe") {
+      contained := iszero(iszero(sload(indexSlot)))
+    }
   }
 
   /**
