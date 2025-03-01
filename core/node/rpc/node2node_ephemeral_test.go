@@ -32,7 +32,7 @@ func TestCreateEphemeralStream(t *testing.T) {
 			Num:  0,
 		}
 
-		mp := events.Make_MediaPayload_Chunk([]byte("non-existing stream"), 0)
+		mp := events.Make_MediaPayload_Chunk([]byte("non-existing stream"), 0, nil)
 		envelope, err := events.MakeEnvelopeWithPayload(alice.wallet, mp, mb)
 		tt.require.NoError(err)
 
@@ -91,7 +91,7 @@ func TestCreateEphemeralStream(t *testing.T) {
 	for i := 0; i < chunks; i++ {
 		// Create media chunk event
 		mediaChunks[i] = []byte("chunk " + fmt.Sprint(i))
-		mp := events.Make_MediaPayload_Chunk(mediaChunks[i], int32(i))
+		mp := events.Make_MediaPayload_Chunk(mediaChunks[i], int32(i), nil)
 		envelope, err := events.MakeEnvelopeWithPayload(alice.wallet, mp, mb)
 		tt.require.NoError(err)
 
