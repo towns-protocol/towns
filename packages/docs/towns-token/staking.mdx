@@ -1,0 +1,44 @@
+---
+title: Staking
+---
+
+### Staking Process
+
+Towns token can be staked on Base to earn periodic rewards emitted by the protocol. Rewards are issued every two weeks to
+active operators and their delegates. Anyone with Towns tokens therefore can participate in staking by delegating to an active operator.
+
+
+
+### Staking Contracts
+
+Staking is handled by the v2 version of the [RewardsDistribution](https://github.com/towns-protocol/towns/blob/main/contracts/src/base/registry/facets/distribution/v2/RewardsDistribution.sol) contract.
+
+External methods from RewardsDistribution can be called from the BaseRegistry diamond contract directly using any ethereum compatible client such as [cast](https://book.getfoundry.sh/cast/).
+
+The BaseRegistry diamond is deployed on Base (see [contracts](../run/contracts)).
+
+### Staking Execution
+
+<Warning>Though we illustrate programmatic instructions below, interacting with the staking contract is best performed through the staking site available in [www.towns.com/staking](https://www.towns.com/staking).</Warning>
+
+To stake, the user must call the `stake(uint96 amount, address delegatee, address beneficiary)(uint256 depositIds)` method  of the RewardsDistribution facet from the BaseRegistry diamond contract.
+
+Users must select a delegatee, for instance an active operator (active operators are listed on [www.towns.com/staking](https://www.towns.com/staking)), to delegate to in order to earn periodic rewards.
+
+Users must also select a beneficiary, which is the address that will receive the rewards.
+
+Once `stake()` is called, a unique `depositId` is returned to track the stake for the owner. A given address can have multiple deposits or can manage a single deposit.
+
+To increase the amount of stake, the deposit owner can call `increaseStake(uint256 depositId, uint96 amount)`.
+
+<Note>Users can switch their delegatee at any time without withdrawing their stake by calling `redelegate(uint256 depositId, address delegatee)`.</Note>
+
+
+#### Withdrawing Stake
+
+To withdraw stake, the owner of the depositId should follow the below steps or use the staking site available in [towns.com](https://www.towns.com/staking).
+
+1. Call `getDepositsByDepositor(address depositor)` to get the list of depositIds for the depositor.
+2. Call `initiateWithdraw(uint256 depositId)` with the depositId to start the withdrawal process.
+2. Wait for the withdrawal to be processed subject to token lockup period.
+3. Call `withdraw(uint256 depositId)` to complete the withdrawal process transferring the stake back to the owner.

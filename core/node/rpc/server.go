@@ -243,6 +243,10 @@ func (s *Service) initInstance(mode string, opts *ServerStartOpts) {
 		"version", version.GetFullVersion(),
 	)
 
+	if !utils.CgoEnabled {
+		s.defaultLogger.Warnw("CGO is disabled, signature verification and hashing will be slower")
+	}
+
 	subsystem := mode
 	if mode == ServerModeFull {
 		subsystem = "stream"
