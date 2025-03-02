@@ -931,9 +931,9 @@ func (ru *aeBlockchainTransactionRules) validBlockchainTransaction_CheckReceiptM
 
 		// get the amount _after_ the transfer
 		idx = sort.Search(len(meta.GetPostTokenBalances()), func(i int) bool {
-			return meta.GetPostTokenBalances()[i].Mint == string(content.TokenTransfer.Address) && meta.GetPreTokenBalances()[i].Owner == sender
+			return meta.GetPostTokenBalances()[i].Mint == string(content.TokenTransfer.Address) && meta.GetPostTokenBalances()[i].Owner == sender
 		})
-		if idx == len(meta.GetPreTokenBalances()) {
+		if idx == len(meta.GetPostTokenBalances()) {
 			return false, RiverError(Err_INVALID_ARGUMENT, "solana transfer transaction mint not found in postTokenBalances")
 		}
 		amountAfter, ok := new(big.Int).SetString(meta.GetPostTokenBalances()[idx].Amount.Amount, 0)
