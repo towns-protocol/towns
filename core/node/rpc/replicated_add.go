@@ -2,7 +2,6 @@ package rpc
 
 import (
 	"context"
-	"fmt"
 	"sync"
 	"time"
 
@@ -242,7 +241,7 @@ func (s *Service) replicatedAddMediaEventImpl(ctx context.Context, event *Parsed
 		}
 
 		// Seal ephemeral stream in remotes
-		_, err = stub.SealEphemeralStream(
+		resp, err := stub.SealEphemeralStream(
 			ctx,
 			connect.NewRequest[SealEphemeralStreamRequest](
 				&SealEphemeralStreamRequest{
@@ -257,13 +256,16 @@ func (s *Service) replicatedAddMediaEventImpl(ctx context.Context, event *Parsed
 
 		quorumCheckMu.Lock()
 		streamSuccessCount++
+		if len(resp.Msg.GetGenesisMiniblockHash()) == 32 {
+			genesisMiniblockHash = common.BytesToHash(resp.Msg.GetGenesisMiniblockHash())
+		}
 		quorumCheckMu.Unlock()
 
 		return nil
 	})
 
 	if err = quorum.Wait(); err != nil {
-		fmt.Println("wait error", err)
+		logging.FromCtx(ctx).Errorw("replicatedAddMediaEvent: quorum.Wait() failed", "err", err)
 		return nil, err
 	}
 
