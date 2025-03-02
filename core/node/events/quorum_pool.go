@@ -130,7 +130,7 @@ func (q *QuorumPool) Wait() error {
 			return nil
 		}
 
-		if q.externalQuorumCheck == nil && len(q.errors) >= quorumNum { // not able to achieve quorum anymore
+		if q.externalQuorumCheck == nil && len(q.errors) > (q.totalTasks - quorumNum) { // not able to achieve quorum anymore
 			remotes := q.totalTasks
 			if q.hasLocalTask {
 				remotes--
