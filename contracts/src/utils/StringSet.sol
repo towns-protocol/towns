@@ -130,6 +130,19 @@ library StringSet {
   }
 
   /**
+   * @dev Removes all values from a set. O(n).
+   */
+  function clear(Set storage set) internal {
+    Uint256Ref storage lengthRef = _valuesLengthRef(set);
+    uint256 len = lengthRef.value;
+    for (uint256 i; i < len; ++i) {
+      _indexRef(set, set._values[i]).value = 0;
+      delete set._values[i];
+    }
+    lengthRef.value = 0;
+  }
+
+  /**
    * @dev Returns true if the value is in the set. O(1).
    */
   function contains(

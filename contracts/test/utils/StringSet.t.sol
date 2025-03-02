@@ -63,10 +63,7 @@ contract StringSetTest is TestUtils {
   }
 
   function test_at() public {
-    // Add multiple values
-    mockSet.add("value1");
-    mockSet.add("value2");
-    mockSet.add("value3");
+    _addValues();
 
     // Retrieve values by index
     string memory firstValue = mockSet.at(0);
@@ -99,9 +96,7 @@ contract StringSetTest is TestUtils {
 
   function test_removeAndSwap() public {
     /* Ensure the removal logic 'swap and pop' is tested */
-    mockSet.add("value1");
-    mockSet.add("value2");
-    mockSet.add("value3");
+    _addValues();
 
     // Remove middle value and test index integrity
     bool removed = mockSet.remove("value2");
@@ -117,21 +112,37 @@ contract StringSetTest is TestUtils {
   }
 
   function test_removeAll() public {
-    mockSet.add("value1");
-    mockSet.add("value2");
-    mockSet.add("value3");
+    _addValues();
     mockSet.remove("value1");
     mockSet.remove("value2");
     mockSet.remove("value3");
+    _checkRemovedValues();
   }
 
   function test_removeAll_reverse() public {
-    mockSet.add("value1");
-    mockSet.add("value2");
-    mockSet.add("value3");
+    _addValues();
     mockSet.remove("value3");
     mockSet.remove("value2");
     mockSet.remove("value1");
+    _checkRemovedValues();
+  }
+
+  function test_clear() public {
+    _addValues();
+    mockSet.clear();
+    _checkRemovedValues();
+  }
+
+  function _addValues() private {
+    mockSet.add("value1");
+    mockSet.add("value2");
+    mockSet.add("value3");
+  }
+
+  function _checkRemovedValues() private view {
+    assertFalse(mockSet.contains("value1"), "Expected 'value1' to be removed");
+    assertFalse(mockSet.contains("value2"), "Expected 'value2' to be removed");
+    assertFalse(mockSet.contains("value3"), "Expected 'value3' to be removed");
   }
 }
 
@@ -146,6 +157,10 @@ contract MockStringSet {
 
   function remove(string memory value) external returns (bool) {
     return testSet.remove(value);
+  }
+
+  function clear() external {
+    testSet.clear();
   }
 
   function contains(string memory value) external view returns (bool) {
