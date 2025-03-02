@@ -16,3 +16,19 @@ The `claimReward` function is called from the claimer address, who is either the
 <Note>Since the RewardsDistribution contract is a facet of the BaseRegistry contract, the `claimReward` function is called from the BaseRegistry contract address (see [contracts](../run/contracts)).</Note>
 
 If the wallet is already delegating on Base, the newly acquired tokens are automatically delegated to the same operator, conforming to the [ERC20Votes](https://docs.openzeppelin.com/contracts/4.x/api/token/erc20#ERC20Votes) specification.
+
+To view the current reward claimable by `claimReward` in wei, call `currentReward(address beneficiary)` on the RewardsDistribution contract from the BaseRegistry diamond contract.
+
+The following example shows how to call `currentReward` from the BaseRegistry diamond contract with `cast`:
+
+```
+cast call \
+--rpc-url $BASE_RPC_URL \
+"0x7c0422b31401C936172C897802CF0373B35B7698" \
+"currentReward(address)(uint256)" \
+"0xa4742402D6E314a069CeB1c3C2C4eFb2982d7D44"
+
+37995641418907243501899 [3.799e22]
+```
+
+<Note>To convert the current reward to base token units from wei, divide the result by `1e18`.</Note>
