@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"context"
+	"github.com/ethereum/go-ethereum/common"
 	"time"
 
 	"connectrpc.com/connect"
@@ -113,25 +114,28 @@ func (s *Service) SealEphemeralStream(
 	defer cancel()
 	log.Debug("SealEphemeralStream ENTER")
 
-	if err := s.sealEphemeralStream(ctx, req.Msg); err != nil {
+	genesisMiniblockHash, err := s.sealEphemeralStream(ctx, req.Msg)
+	if err != nil {
 		return nil, AsRiverError(err).Func("SealEphemeralStream").
 			Tag("streamId", req.Msg.StreamId).
 			LogWarn(log).
 			AsConnectError()
 	}
 	log.Debug("SealEphemeralStream LEAVE")
-	return connect.NewResponse(&SealEphemeralStreamResponse{}), nil
+
+	return connect.NewResponse(&SealEphemeralStreamResponse{
+		GenesisMiniblockHash: genesisMiniblockHash[:],
+	}), nil
 }
 
 func (s *Service) sealEphemeralStream(
 	ctx context.Context,
 	req *SealEphemeralStreamRequest,
-) error {
+) (common.Hash, error) {
 	streamId, err := StreamIdFromBytes(req.GetStreamId())
 	if err != nil {
-		return AsRiverError(err).Func("sealEphemeralStream")
+		return common.Hash{}, AsRiverError(err).Func("sealEphemeralStream")
 	}
 
-	_, err = s.storage.NormalizeEphemeralStream(ctx, streamId)
-	return err
+	return s.storage.NormalizeEphemeralStream(ctx, streamId)
 }

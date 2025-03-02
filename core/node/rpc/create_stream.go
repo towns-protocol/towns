@@ -3,6 +3,7 @@ package rpc
 import (
 	"context"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"connectrpc.com/connect"
@@ -175,7 +176,7 @@ func (s *Service) createReplicatedStream(
 	remotes, isLocal := nodes.GetRemotesAndIsLocal()
 	sender := NewQuorumPool("method", "createReplicatedStream", "streamId", streamId)
 
-	var localSyncCookie *SyncCookie
+	var localSyncCookie atomic.Pointer[SyncCookie]
 	if isLocal {
 		sender.GoLocal(ctx, func(ctx context.Context) error {
 			st, err := s.cache.GetStreamNoWait(ctx, streamId)
@@ -186,7 +187,7 @@ func (s *Service) createReplicatedStream(
 			if err != nil {
 				return err
 			}
-			localSyncCookie = sv.SyncCookie(s.wallet.Address)
+			localSyncCookie.Store(sv.SyncCookie(s.wallet.Address))
 			return nil
 		})
 	}
@@ -223,7 +224,7 @@ func (s *Service) createReplicatedStream(
 		return nil, err
 	}
 
-	cookie := localSyncCookie
+	cookie := localSyncCookie.Load()
 	if cookie == nil {
 		cookie = remoteSyncCookie
 	}
