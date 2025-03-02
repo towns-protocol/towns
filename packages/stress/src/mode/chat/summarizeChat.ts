@@ -42,16 +42,16 @@ export async function summarizeChat(
             // for each channel, count the number of joinChat checkins we got (look for sessionId)
             const messages = client.streamsClient.stream(channelId)?.view.timeline
 
-            const checkInMesssages =
+            const checkInMessages =
                 messages?.filter(
                     channelMessagePostWhere((value) => value.body.includes(cfg.sessionId)),
                 ) ?? []
 
             const key = shortenHexString(channelId)
-            const count = checkinCounts[key]?.[checkInMesssages.length.toString()] ?? 0
+            const count = checkinCounts[key]?.[checkInMessages.length.toString()] ?? 0
             checkinCounts[key] = {
                 ...checkinCounts[key],
-                [checkInMesssages.length.toString()]: count + 1,
+                [checkInMessages.length.toString()]: count + 1,
             }
         }
     }
