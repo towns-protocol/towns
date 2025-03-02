@@ -43,7 +43,7 @@
         "@types/node": "^20.5.0",
         "eslint": "^8.53.0",
         "eslint-config-prettier": "^8.8.0",
-        "eslint-plugin-mocha": "^10.1.0",
+        "eslint-plugin-mocha": "^10.4.3",
         "eslint-plugin-n": "^16.0.0",
         "eslint-plugin-prettier": "^4.2.1",
         "husky": "^9.1.4",
