@@ -31,6 +31,19 @@ library StringSet {
   }
 
   /**
+   * @dev Returns the storage reference at position `index` in the set without bounds check.
+   */
+  function _at(
+    Set storage set,
+    uint256 index
+  ) private pure returns (string storage ref) {
+    assembly ("memory-safe") {
+      mstore(0, set.slot)
+      ref.slot := add(keccak256(0, 0x20), index)
+    }
+  }
+
+  /**
    * @dev Returns the storage reference for the index of a value in the set.
    */
   function _indexRef(
@@ -46,6 +59,39 @@ library StringSet {
       mstore(end, add(set.slot, 1))
       ref.slot := keccak256(add(value, 0x20), key_len)
       mstore(end, cache)
+    }
+  }
+
+  /**
+   * @dev Deletes a string from storage.
+   *
+   * The `delete` keyword is not applicable to local string storage references.
+   */
+  function _delete(string storage $) internal {
+    // https://docs.soliditylang.org/en/latest/internals/layout_in_storage.html#bytes-and-string
+    assembly ("memory-safe") {
+      let packed := sload($.slot)
+      let is_long_string := and(packed, 1)
+      for {} 1 {} {
+        sstore($.slot, 0)
+        if iszero(is_long_string) {
+          break
+        }
+        let len := shr(1, packed)
+        // the number of words used to store the string
+        let words := shr(5, add(len, 0x1f))
+        let p := keccak256(0, 0x20)
+        for {
+          let i := 0
+        } 1 {} {
+          if iszero(lt(i, words)) {
+            break
+          }
+          sstore(add(p, i), 0)
+          i := add(i, 1)
+        }
+        break
+      }
     }
   }
 
@@ -104,8 +150,9 @@ library StringSet {
         lastIndex = len - 1;
       }
 
+      string storage lastRef = _at(set, lastIndex);
       if (len != valueIndex) {
-        string memory lastValue = set._values[lastIndex];
+        string memory lastValue = lastRef;
 
         unchecked {
           // Move the last value to the index where the value to delete is
@@ -117,7 +164,7 @@ library StringSet {
 
       // Delete the slot where the moved value was stored
       // equivalent: set._values.pop();
-      delete set._values[lastIndex];
+      _delete(lastRef);
       lengthRef.value = lastIndex;
 
       // Delete the index for the deleted slot
@@ -136,8 +183,9 @@ library StringSet {
     Uint256Ref storage lengthRef = _valuesLengthRef(set);
     uint256 len = lengthRef.value;
     for (uint256 i; i < len; ++i) {
-      _indexRef(set, set._values[i]).value = 0;
-      delete set._values[i];
+      string storage valueRef = _at(set, i);
+      _indexRef(set, valueRef).value = 0;
+      _delete(valueRef);
     }
     lengthRef.value = 0;
   }

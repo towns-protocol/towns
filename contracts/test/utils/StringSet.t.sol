@@ -7,6 +7,14 @@ import {TestUtils} from "./TestUtils.sol";
 
 contract StringSetTest is TestUtils {
   MockStringSet private mockSet = new MockStringSet();
+  string private s;
+
+  function test_fuzz_delete(string memory _s) public {
+    s = _s;
+    StringSet._delete(s);
+    _s = s;
+    assertEq(_s, "");
+  }
 
   function test_add() public {
     // Test adding unique strings
