@@ -166,13 +166,13 @@ func (s *Service) createReplicatedMediaStream(
 
 	// Create ephemeral stream within the local node
 	if isLocal {
-		sender.AddWorker(func(ctx context.Context) error {
+		sender.AddTask(func(ctx context.Context) error {
 			return s.storage.CreateEphemeralStreamStorage(ctx, streamId, mbBytes)
 		})
 	}
 
 	// Create ephemeral stream in replicas
-	sender.AddNodeWorkers(remotes, func(ctx context.Context, node common.Address) error {
+	sender.AddNodeTasks(remotes, func(ctx context.Context, node common.Address) error {
 		stub, err := s.nodeRegistry.GetNodeToNodeClientForAddress(node)
 		if err != nil {
 			return err

@@ -178,7 +178,7 @@ func (s *Service) createReplicatedStream(
 
 	var localSyncCookie atomic.Pointer[SyncCookie]
 	if isLocal {
-		sender.AddWorker(func(ctx context.Context) error {
+		sender.AddTask(func(ctx context.Context) error {
 			st, err := s.cache.GetStreamNoWait(ctx, streamId)
 			if err != nil {
 				return err
@@ -195,7 +195,7 @@ func (s *Service) createReplicatedStream(
 	var remoteSyncCookie *SyncCookie
 	var remoteSyncCookieOnce sync.Once
 	if len(remotes) > 0 {
-		sender.AddNodeWorkers(remotes, func(ctx context.Context, node common.Address) error {
+		sender.AddNodeTasks(remotes, func(ctx context.Context, node common.Address) error {
 			stub, err := s.nodeRegistry.GetNodeToNodeClientForAddress(node)
 			if err != nil {
 				return err

@@ -61,14 +61,14 @@ func quorumPoolSuccess(t *testing.T) {
 
 	wg.Add(1 + len(remotes))
 
-	qPool.AddWorker(func(ctx context.Context) error {
+	qPool.AddTask(func(ctx context.Context) error {
 		defer wg.Done()
 
 		time.Sleep(time.Duration(rand.Int()%500) * time.Millisecond)
 		return nil
 	})
 
-	qPool.AddNodeWorkers(remotes, func(ctx context.Context, node common.Address) error {
+	qPool.AddNodeTasks(remotes, func(ctx context.Context, node common.Address) error {
 		defer wg.Done()
 
 		time.Sleep(time.Duration(rand.Int()%500) * time.Millisecond)
@@ -95,7 +95,7 @@ func quorumPoolFail(t *testing.T) {
 
 	wg.Add(1 + len(remotes))
 
-	qPool.AddWorker(func(ctx context.Context) error {
+	qPool.AddTask(func(ctx context.Context) error {
 		defer wg.Done()
 
 		time.Sleep(time.Duration(rand.Int()%500) * time.Millisecond)
@@ -103,7 +103,7 @@ func quorumPoolFail(t *testing.T) {
 		return fmt.Errorf("local node returned error")
 	})
 
-	qPool.AddNodeWorkers(remotes, func(ctx context.Context, node common.Address) error {
+	qPool.AddNodeTasks(remotes, func(ctx context.Context, node common.Address) error {
 		defer wg.Done()
 
 		time.Sleep(time.Duration(rand.Int()%500) * time.Millisecond)
@@ -132,7 +132,7 @@ func quorumPoolWithSomeSlowRemotes(t *testing.T) {
 
 	wg.Add(1 + len(remotes))
 
-	qPool.AddWorker(func(ctx context.Context) error {
+	qPool.AddTask(func(ctx context.Context) error {
 		defer wg.Done()
 
 		select {
@@ -143,7 +143,7 @@ func quorumPoolWithSomeSlowRemotes(t *testing.T) {
 		}
 	})
 
-	qPool.AddNodeWorkers(remotes, func(ctx context.Context, node common.Address) error {
+	qPool.AddNodeTasks(remotes, func(ctx context.Context, node common.Address) error {
 		defer wg.Done()
 
 		duration := time.Duration(100 * time.Millisecond)
@@ -178,7 +178,7 @@ func quorumPoolWithTooManySlowRemotes(t *testing.T) {
 
 	wg.Add(1 + len(remotes))
 
-	qPool.AddWorker(func(ctx context.Context) error {
+	qPool.AddTask(func(ctx context.Context) error {
 		defer wg.Done()
 
 		select {
@@ -189,7 +189,7 @@ func quorumPoolWithTooManySlowRemotes(t *testing.T) {
 		}
 	})
 
-	qPool.AddNodeWorkers(remotes, func(ctx context.Context, node common.Address) error {
+	qPool.AddNodeTasks(remotes, func(ctx context.Context, node common.Address) error {
 		defer wg.Done()
 
 		duration := time.Duration(10 * time.Millisecond)
@@ -229,12 +229,12 @@ func quorumPoolWithExternalCheckFail(t *testing.T) {
 
 	wg.Add(1 + len(remotes))
 
-	qPool.AddWorker(func(ctx context.Context) error {
+	qPool.AddTask(func(ctx context.Context) error {
 		defer wg.Done()
 		return nil
 	})
 
-	qPool.AddNodeWorkers(remotes, func(ctx context.Context, node common.Address) error {
+	qPool.AddNodeTasks(remotes, func(ctx context.Context, node common.Address) error {
 		defer wg.Done()
 		return nil
 	})
@@ -265,13 +265,13 @@ func quorumPoolWithExternalCheckSuccess(t *testing.T) {
 
 	wg.Add(1 + len(remotes))
 
-	qPool.AddWorker(func(ctx context.Context) error {
+	qPool.AddTask(func(ctx context.Context) error {
 		defer wg.Done()
 		success.Add(1)
 		return nil
 	})
 
-	qPool.AddNodeWorkers(remotes, func(ctx context.Context, node common.Address) error {
+	qPool.AddNodeTasks(remotes, func(ctx context.Context, node common.Address) error {
 		defer wg.Done()
 		success.Add(1)
 		return nil

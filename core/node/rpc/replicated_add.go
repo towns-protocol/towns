@@ -74,11 +74,11 @@ func (s *Service) replicatedAddEventImpl(ctx context.Context, stream *Stream, ev
 	// TODO: REPLICATION: TEST: setting so test can have more aggressive timeout
 	sender := NewQuorumPool(ctx, NewQuorumPoolOpts().WriteModeWithTimeout(2500*time.Millisecond).WithTags("method", "replicatedStream.AddEvent", "streamId", streamId))
 
-	sender.AddWorker(func(ctx context.Context) error {
+	sender.AddTask(func(ctx context.Context) error {
 		return stream.AddEvent(ctx, event)
 	})
 
-	sender.AddNodeWorkers(remotes, func(ctx context.Context, node common.Address) error {
+	sender.AddNodeTasks(remotes, func(ctx context.Context, node common.Address) error {
 		stub, err := s.nodeRegistry.GetNodeToNodeClientForAddress(node)
 		if err != nil {
 			return err
@@ -179,7 +179,7 @@ func (s *Service) replicatedAddMediaEventImpl(ctx context.Context, event *Parsed
 	quorum = NewQuorumPool(ctx, quorumOpts)
 
 	// Save the ephemeral miniblock locally
-	quorum.AddWorker(func(ctx context.Context) error {
+	quorum.AddTask(func(ctx context.Context) error {
 		mbBytes, err := proto.Marshal(ephemeralMb)
 		if err != nil {
 			return err
@@ -214,7 +214,7 @@ func (s *Service) replicatedAddMediaEventImpl(ctx context.Context, event *Parsed
 	})
 
 	// Save the ephemeral miniblock on remotes
-	quorum.AddNodeWorkers(remotes, func(ctx context.Context, node common.Address) error {
+	quorum.AddNodeTasks(remotes, func(ctx context.Context, node common.Address) error {
 		stub, err := s.nodeRegistry.GetNodeToNodeClientForAddress(node)
 		if err != nil {
 			return err
