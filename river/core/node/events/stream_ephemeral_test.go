@@ -54,7 +54,7 @@ func Test_StreamCache_normalizeEphemeralStream(t *testing.T) {
 		for i := 0; i < chunks; i++ {
 			// Create media chunk event
 			mediaChunks[i] = []byte("chunk " + fmt.Sprint(i))
-			mp := Make_MediaPayload_Chunk(mediaChunks[i], int32(i))
+			mp := Make_MediaPayload_Chunk(mediaChunks[i], int32(i), nil)
 			envelope, err := MakeEnvelopeWithPayload(leaderInstance.params.Wallet, mp, &mbRef)
 			tc.require.NoError(err)
 
@@ -115,7 +115,7 @@ func Test_StreamCache_normalizeEphemeralStream(t *testing.T) {
 		for i := 0; i < chunks; i++ {
 			// Create media chunk event
 			mediaChunks[i] = []byte("chunk " + fmt.Sprint(i))
-			mp := Make_MediaPayload_Chunk(mediaChunks[i], int32(i))
+			mp := Make_MediaPayload_Chunk(mediaChunks[i], int32(i), nil)
 			envelope, err := MakeEnvelopeWithPayload(leaderInstance.params.Wallet, mp, &mbRef)
 			tc.require.NoError(err)
 
