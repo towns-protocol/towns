@@ -102,8 +102,8 @@ func NewQuorumPool(ctx context.Context, opts *QuorumPoolOpts) *QuorumPool {
 	}
 }
 
-// GoLocal executes f concurrently and captures the result for which the caller must wait.
-func (q *QuorumPool) GoLocal(f func(ctx context.Context) error) {
+// AddWorker executes f concurrently and captures the result for which the caller must wait.
+func (q *QuorumPool) AddWorker(f func(ctx context.Context) error) {
 	q.totalTasks++
 
 	go func() {
@@ -113,8 +113,8 @@ func (q *QuorumPool) GoLocal(f func(ctx context.Context) error) {
 	}()
 }
 
-// GoRemotes executes f on the given nodes concurrently and captures the results for which the caller must wait.
-func (q *QuorumPool) GoRemotes(
+// AddNodeWorkers executes f on the given nodes concurrently and captures the results for which the caller must wait.
+func (q *QuorumPool) AddNodeWorkers(
 	nodes []common.Address,
 	f func(ctx context.Context, node common.Address) error,
 ) {
