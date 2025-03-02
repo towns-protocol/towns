@@ -55,7 +55,7 @@ library StringSet {
    * Returns true if the value was added to the set, that is if it was not
    * already present.
    */
-  function _add(Set storage set, string memory value) private returns (bool) {
+  function add(Set storage set, string memory value) internal returns (bool) {
     Uint256Ref storage indexRef = _indexRef(set, value);
     if (indexRef.value == 0) {
       Uint256Ref storage lengthRef = _valuesLengthRef(set);
@@ -83,10 +83,10 @@ library StringSet {
    * Returns true if the value was removed from the set, that is if it was
    * present.
    */
-  function _remove(
+  function remove(
     Set storage set,
     string memory value
-  ) private returns (bool) {
+  ) internal returns (bool) {
     // We read and store the value's index to prevent multiple reads from the same storage slot
     Uint256Ref storage indexRef = _indexRef(set, value);
     uint256 valueIndex = indexRef.value;
@@ -132,88 +132,19 @@ library StringSet {
   /**
    * @dev Returns true if the value is in the set. O(1).
    */
-  function _contains(
-    Set storage set,
-    string memory value
-  ) private view returns (bool) {
-    // equivalent: return set._indexes[value] != 0;
-    return _indexRef(set, value).value != 0;
-  }
-
-  /**
-   * @dev Returns the number of values on the set. O(1).
-   */
-  function _length(Set storage set) private view returns (uint256) {
-    return set._values.length;
-  }
-
-  /**
-   * @dev Returns the value stored at position `index` in the set. O(1).
-   *
-   * Note that there are no guarantees on the ordering of values inside the
-   * array, and it may change when more values are added or removed.
-   *
-   * Requirements:
-   *
-   * - `index` must be strictly less than {length}.
-   */
-  function _at(
-    Set storage set,
-    uint256 index
-  ) private view returns (string memory) {
-    return set._values[index];
-  }
-
-  /**
-   * @dev Return the entire set in an array
-   *
-   * WARNING: This operation will copy the entire storage to memory, which can be quite expensive. This is designed
-   * to mostly be used by view accessors that are queried without any gas fees. Developers should keep in mind that
-   * this function has an unbounded cost, and using it as part of a state-changing function may render the function
-   * uncallable if the set grows to a point where copying to memory consumes too much gas to fit in a block.
-   */
-  function _values(Set storage set) private view returns (string[] memory) {
-    return set._values;
-  }
-
-  /**
-   * @dev Add a value to a set. O(1).
-   *
-   * Returns true if the value was added to the set, that is if it was not
-   * already present.
-   */
-  function add(Set storage set, string memory value) internal returns (bool) {
-    return _add(set, value);
-  }
-
-  /**
-   * @dev Removes a value from a set. O(1).
-   *
-   * Returns true if the value was removed from the set, that is if it was
-   * present.
-   */
-  function remove(
-    Set storage set,
-    string memory value
-  ) internal returns (bool) {
-    return _remove(set, value);
-  }
-
-  /**
-   * @dev Returns true if the value is in the set. O(1).
-   */
   function contains(
     Set storage set,
     string memory value
   ) internal view returns (bool) {
-    return _contains(set, value);
+    // equivalent: return set._indexes[value] != 0;
+    return _indexRef(set, value).value != 0;
   }
 
   /**
    * @dev Returns the number of values in the set. O(1).
    */
   function length(Set storage set) internal view returns (uint256) {
-    return _length(set);
+    return set._values.length;
   }
 
   /**
@@ -230,7 +161,7 @@ library StringSet {
     Set storage set,
     uint256 index
   ) internal view returns (string memory) {
-    return _at(set, index);
+    return set._values[index];
   }
 
   /**
@@ -242,6 +173,6 @@ library StringSet {
    * uncallable if the set grows to a point where copying to memory consumes too much gas to fit in a block.
    */
   function values(Set storage set) internal view returns (string[] memory) {
-    return _values(set);
+    return set._values;
   }
 }
