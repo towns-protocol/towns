@@ -30,6 +30,10 @@ type QuorumPoolOpts struct {
 	Tags []any
 }
 
+func NewQuorumPoolOpts() *QuorumPoolOpts {
+	return &QuorumPoolOpts{}
+}
+
 // WithTags adds tags that are added to log statements.
 func (o *QuorumPoolOpts) WithTags(tags ...any) *QuorumPoolOpts {
 	o.Tags = append(o.Tags, tags...)
@@ -58,6 +62,11 @@ func (o *QuorumPoolOpts) ReadMode() *QuorumPoolOpts {
 		return ctx, func() {}
 	}
 	o.WaitForExtraSuccess = true
+	return o
+}
+
+func (o *QuorumPoolOpts) WithExternalQuorumCheck(check func() bool) *QuorumPoolOpts {
+	o.ExternalQuorumCheck = check
 	return o
 }
 
@@ -198,12 +207,12 @@ func (q *QuorumPool) Wait() error {
 }
 
 func (q *QuorumPool) waitForExtraSuccessLocked(waitStarted time.Time) error {
-	extraWaitTimestamp := time.Now()
-	alreadyWaited := extraWaitTimestamp.Sub(waitStarted)
+	// extraWaitTimestamp := time.Now()
+	// alreadyWaited := extraWaitTimestamp.Sub(waitStarted)
 
-	contextDeadline, ok := q.ctx.Deadline()
+	// contextDeadline, ok := q.ctx.Deadline()
+	return nil
 
-	
 }
 
 func TotalQuorumNum(totalNumNodes int) int {

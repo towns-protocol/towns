@@ -55,20 +55,20 @@ func quorumPoolSuccess(t *testing.T) {
 		ctx     = context.Background()
 		req     = require.New(t)
 		remotes = []common.Address{common.Address{1}, common.Address{2}, common.Address{3}, common.Address{4}}
-		qPool   = events.NewQuorumPool()
+		qPool   = events.NewQuorumPool(ctx, events.NewQuorumPoolOpts().WriteMode())
 		wg      sync.WaitGroup
 	)
 
 	wg.Add(1 + len(remotes))
 
-	qPool.GoLocal(ctx, func(ctx context.Context) error {
+	qPool.GoLocal(func(ctx context.Context) error {
 		defer wg.Done()
 
 		time.Sleep(time.Duration(rand.Int()%500) * time.Millisecond)
 		return nil
 	})
 
-	qPool.GoRemotes(ctx, remotes, func(ctx context.Context, node common.Address) error {
+	qPool.GoRemotes(remotes, func(ctx context.Context, node common.Address) error {
 		defer wg.Done()
 
 		time.Sleep(time.Duration(rand.Int()%500) * time.Millisecond)
@@ -89,13 +89,13 @@ func quorumPoolFail(t *testing.T) {
 		ctx     = context.Background()
 		req     = require.New(t)
 		remotes = []common.Address{common.Address{1}, common.Address{2}, common.Address{3}, common.Address{4}}
-		qPool   = events.NewQuorumPool()
+		qPool   = events.NewQuorumPool(ctx, events.NewQuorumPoolOpts().WriteMode())
 		wg      sync.WaitGroup
 	)
 
 	wg.Add(1 + len(remotes))
 
-	qPool.GoLocal(ctx, func(ctx context.Context) error {
+	qPool.GoLocal(func(ctx context.Context) error {
 		defer wg.Done()
 
 		time.Sleep(time.Duration(rand.Int()%500) * time.Millisecond)
@@ -103,7 +103,7 @@ func quorumPoolFail(t *testing.T) {
 		return fmt.Errorf("local node returned error")
 	})
 
-	qPool.GoRemotes(ctx, remotes, func(ctx context.Context, node common.Address) error {
+	qPool.GoRemotes(remotes, func(ctx context.Context, node common.Address) error {
 		defer wg.Done()
 
 		time.Sleep(time.Duration(rand.Int()%500) * time.Millisecond)
@@ -126,13 +126,13 @@ func quorumPoolWithSomeSlowRemotes(t *testing.T) {
 		ctx     = context.Background()
 		req     = require.New(t)
 		remotes = []common.Address{common.Address{1}, common.Address{2}, common.Address{3}, common.Address{4}}
-		qPool   = events.NewQuorumPoolWithTimeoutForRemotes(time.Second)
+		qPool   = events.NewQuorumPool(ctx, events.NewQuorumPoolOpts().WriteModeWithTimeout(time.Second))
 		wg      sync.WaitGroup
 	)
 
 	wg.Add(1 + len(remotes))
 
-	qPool.GoLocal(ctx, func(ctx context.Context) error {
+	qPool.GoLocal(func(ctx context.Context) error {
 		defer wg.Done()
 
 		select {
@@ -143,7 +143,7 @@ func quorumPoolWithSomeSlowRemotes(t *testing.T) {
 		}
 	})
 
-	qPool.GoRemotes(ctx, remotes, func(ctx context.Context, node common.Address) error {
+	qPool.GoRemotes(remotes, func(ctx context.Context, node common.Address) error {
 		defer wg.Done()
 
 		duration := time.Duration(100 * time.Millisecond)
@@ -172,13 +172,13 @@ func quorumPoolWithTooManySlowRemotes(t *testing.T) {
 		ctx     = context.Background()
 		req     = require.New(t)
 		remotes = []common.Address{common.Address{1}, common.Address{2}, common.Address{3}, common.Address{4}}
-		qPool   = events.NewQuorumPoolWithTimeoutForRemotes(time.Second)
+		qPool   = events.NewQuorumPool(ctx, events.NewQuorumPoolOpts().WriteModeWithTimeout(time.Second))
 		wg      sync.WaitGroup
 	)
 
 	wg.Add(1 + len(remotes))
 
-	qPool.GoLocal(ctx, func(ctx context.Context) error {
+	qPool.GoLocal(func(ctx context.Context) error {
 		defer wg.Done()
 
 		select {
@@ -189,7 +189,7 @@ func quorumPoolWithTooManySlowRemotes(t *testing.T) {
 		}
 	})
 
-	qPool.GoRemotes(ctx, remotes, func(ctx context.Context, node common.Address) error {
+	qPool.GoRemotes(remotes, func(ctx context.Context, node common.Address) error {
 		defer wg.Done()
 
 		duration := time.Duration(10 * time.Millisecond)
@@ -223,18 +223,18 @@ func quorumPoolWithExternalCheckFail(t *testing.T) {
 		req     = require.New(t)
 		remotes = []common.Address{common.Address{1}, common.Address{2}, common.Address{3}, common.Address{4}}
 		check   = func() bool { return false }
-		qPool   = events.NewQuorumPoolWithQuorumCheck(check)
+		qPool   = events.NewQuorumPool(ctx, events.NewQuorumPoolOpts().WriteMode().WithExternalQuorumCheck(check))
 		wg      sync.WaitGroup
 	)
 
 	wg.Add(1 + len(remotes))
 
-	qPool.GoLocal(ctx, func(ctx context.Context) error {
+	qPool.GoLocal(func(ctx context.Context) error {
 		defer wg.Done()
 		return nil
 	})
 
-	qPool.GoRemotes(ctx, remotes, func(ctx context.Context, node common.Address) error {
+	qPool.GoRemotes(remotes, func(ctx context.Context, node common.Address) error {
 		defer wg.Done()
 		return nil
 	})
@@ -259,19 +259,19 @@ func quorumPoolWithExternalCheckSuccess(t *testing.T) {
 		check   = func() bool {
 			return int(success.Load()) >= events.TotalQuorumNum(1+len(remotes))
 		}
-		qPool = events.NewQuorumPoolWithQuorumCheck(check)
+		qPool = events.NewQuorumPool(ctx, events.NewQuorumPoolOpts().WriteMode().WithExternalQuorumCheck(check))
 		wg    sync.WaitGroup
 	)
 
 	wg.Add(1 + len(remotes))
 
-	qPool.GoLocal(ctx, func(ctx context.Context) error {
+	qPool.GoLocal(func(ctx context.Context) error {
 		defer wg.Done()
 		success.Add(1)
 		return nil
 	})
 
-	qPool.GoRemotes(ctx, remotes, func(ctx context.Context, node common.Address) error {
+	qPool.GoRemotes(remotes, func(ctx context.Context, node common.Address) error {
 		defer wg.Done()
 		success.Add(1)
 		return nil

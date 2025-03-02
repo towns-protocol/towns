@@ -162,17 +162,17 @@ func (s *Service) createReplicatedMediaStream(
 
 	nodes := NewStreamNodesWithLock(nodesList, s.wallet.Address)
 	remotes, isLocal := nodes.GetRemotesAndIsLocal()
-	sender := NewQuorumPool("method", "createReplicatedMediaStream", "streamId", streamId)
+	sender := NewQuorumPool(ctx, NewQuorumPoolOpts().WriteMode().WithTags("method", "createReplicatedMediaStream", "streamId", streamId))
 
 	// Create ephemeral stream within the local node
 	if isLocal {
-		sender.GoLocal(ctx, func(ctx context.Context) error {
+		sender.GoLocal(func(ctx context.Context) error {
 			return s.storage.CreateEphemeralStreamStorage(ctx, streamId, mbBytes)
 		})
 	}
 
 	// Create ephemeral stream in replicas
-	sender.GoRemotes(ctx, remotes, func(ctx context.Context, node common.Address) error {
+	sender.GoRemotes(remotes, func(ctx context.Context, node common.Address) error {
 		stub, err := s.nodeRegistry.GetNodeToNodeClientForAddress(node)
 		if err != nil {
 			return err

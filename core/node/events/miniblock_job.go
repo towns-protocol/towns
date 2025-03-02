@@ -243,7 +243,7 @@ func (j *mbJob) gatherRemoteProposals(
 	request *ProposeMiniblockRequest,
 ) ([]*ProposeMiniblockResponse, []error) {
 	// TODO: better timeout?
-	// TODO: once quorum is achieved, it could be beneficial to return reasonably early.
+	// TODO: REPLICATION: FIX: use quorum pool: once quorum is achieved, it could be beneficial to return reasonably early.
 	ctx, cancel := context.WithTimeout(ctx, j.cache.Params().RiverChain.Config.BlockTime())
 	defer cancel()
 
@@ -282,9 +282,18 @@ func (j *mbJob) gatherRemoteProposals(
 }
 
 func (j *mbJob) saveCandidate(ctx context.Context) error {
-	qp := NewQuorumPool("method", "mbJob.saveCandidate", "streamId", j.stream.streamId, "miniblock", j.candidate.Ref)
+	qp := NewQuorumPool(
+		ctx,
+		NewQuorumPoolOpts().
+			WriteMode().
+			WithTags(
+				"method", "mbJob.saveCandidate",
+				"streamId", j.stream.streamId,
+				"miniblock", j.candidate.Ref,
+			),
+	)
 
-	qp.GoLocal(ctx, func(ctx context.Context) error {
+	qp.GoLocal(func(ctx context.Context) error {
 		miniblockBytes, err := j.candidate.ToBytes()
 		if err != nil {
 			return err
@@ -299,7 +308,7 @@ func (j *mbJob) saveCandidate(ctx context.Context) error {
 		)
 	})
 
-	qp.GoRemotes(ctx, j.remoteNodes, func(ctx context.Context, node common.Address) error {
+	qp.GoRemotes(j.remoteNodes, func(ctx context.Context, node common.Address) error {
 		return j.cache.Params().RemoteMiniblockProvider.SaveMbCandidate(ctx, node, j.stream.streamId, j.candidate.Proto)
 	})
 

@@ -72,13 +72,13 @@ func (s *Service) replicatedAddEventImpl(ctx context.Context, stream *Stream, ev
 	streamId := stream.StreamId()
 
 	// TODO: REPLICATION: TEST: setting so test can have more aggressive timeout
-	sender := NewQuorumPoolWithTimeoutForRemotes(2500*time.Millisecond, "method", "replicatedStream.AddEvent", "streamId", streamId)
+	sender := NewQuorumPool(ctx, NewQuorumPoolOpts().WriteModeWithTimeout(2500*time.Millisecond).WithTags("method", "replicatedStream.AddEvent", "streamId", streamId))
 
-	sender.GoLocal(ctx, func(ctx context.Context) error {
+	sender.GoLocal(func(ctx context.Context) error {
 		return stream.AddEvent(ctx, event)
 	})
 
-	sender.GoRemotes(ctx, remotes, func(ctx context.Context, node common.Address) error {
+	sender.GoRemotes(remotes, func(ctx context.Context, node common.Address) error {
 		stub, err := s.nodeRegistry.GetNodeToNodeClientForAddress(node)
 		if err != nil {
 			return err
@@ -164,25 +164,22 @@ func (s *Service) replicatedAddMediaEventImpl(ctx context.Context, event *Parsed
 		quorum               *QuorumPool
 	)
 
+	quorumOpts := NewQuorumPoolOpts().WriteMode().WithTags("method", "replicatedAddMediaEvent", "streamId", streamId)
 	if seal {
 		// TODO: once nodes are updated to return the genesis miniblock hash in the response when sealing the
 		// stream only reach quorum when enough nodes voted for the same genesis miniblock hash.
 		// For now reach quorum when the local task and enough remotes have successfully sealed the stream
 		// without counting the genesis miniblock hash.
-		check := func() bool {
+		quorumOpts = quorumOpts.WithExternalQuorumCheck(func() bool {
 			quorumCheckMu.Lock()
 			defer quorumCheckMu.Unlock()
-
 			return streamSuccessCount >= requiredVotes && genesisMiniblockHash != (common.Hash{})
-		}
-
-		quorum = NewQuorumPoolWithQuorumCheck(check, "method", "replicatedAddMediaEvent", "streamId", streamId)
-	} else {
-		quorum = NewQuorumPool("method", "replicatedAddMediaEvent", "streamId", streamId)
+		})
 	}
+	quorum = NewQuorumPool(ctx, quorumOpts)
 
 	// Save the ephemeral miniblock locally
-	quorum.GoLocal(ctx, func(ctx context.Context) error {
+	quorum.GoLocal(func(ctx context.Context) error {
 		mbBytes, err := proto.Marshal(ephemeralMb)
 		if err != nil {
 			return err
@@ -217,7 +214,7 @@ func (s *Service) replicatedAddMediaEventImpl(ctx context.Context, event *Parsed
 	})
 
 	// Save the ephemeral miniblock on remotes
-	quorum.GoRemotes(ctx, remotes, func(ctx context.Context, node common.Address) error {
+	quorum.GoRemotes(remotes, func(ctx context.Context, node common.Address) error {
 		stub, err := s.nodeRegistry.GetNodeToNodeClientForAddress(node)
 		if err != nil {
 			return err
