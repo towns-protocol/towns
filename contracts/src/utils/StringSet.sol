@@ -20,6 +20,36 @@ library StringSet {
   }
 
   /**
+   * @dev Returns the storage reference for the length of the values array.
+   */
+  function _valuesLengthRef(
+    Set storage set
+  ) private pure returns (Uint256Ref storage ref) {
+    assembly ("memory-safe") {
+      ref.slot := set.slot
+    }
+  }
+
+  /**
+   * @dev Returns the storage reference for the index of a value in the set.
+   */
+  function _indexRef(
+    Set storage set,
+    string memory value
+  ) private pure returns (Uint256Ref storage ref) {
+    // https://docs.soliditylang.org/en/latest/internals/layout_in_storage.html#mappings-and-dynamic-arrays
+    assembly ("memory-safe") {
+      let key_len := add(mload(value), 0x20)
+      let end := add(value, key_len)
+      let cache := mload(end)
+      // concat the string and mapping slot
+      mstore(end, add(set.slot, 1))
+      ref.slot := keccak256(add(value, 0x20), key_len)
+      mstore(end, cache)
+    }
+  }
+
+  /**
    * @dev Add a value to a set. O(1).
    *
    * Returns true if the value was added to the set, that is if it was not
@@ -28,11 +58,19 @@ library StringSet {
   function _add(Set storage set, string memory value) private returns (bool) {
     Uint256Ref storage indexRef = _indexRef(set, value);
     if (indexRef.value == 0) {
-      set._values.push(value);
+      Uint256Ref storage lengthRef = _valuesLengthRef(set);
+      uint256 len = lengthRef.value;
+      uint256 newLen;
+      unchecked {
+        newLen = len + 1;
+      }
+      // equivalent: set._values.push(value);
+      lengthRef.value = newLen;
+      set._values[len] = value;
       // The value is stored at length-1, but we add 1 to all indexes
       // and use 0 as a sentinel value
       // equivalent: set._indexes[value] = set._values.length;
-      indexRef.value = set._values.length;
+      indexRef.value = newLen;
       return true;
     } else {
       return false;
@@ -59,20 +97,28 @@ library StringSet {
       // the array, and then remove the last element (sometimes called as 'swap and pop').
       // This modifies the order of the array, as noted in {at}.
 
-      uint256 toDeleteIndex = valueIndex - 1;
-      uint256 lastIndex = set._values.length - 1;
+      Uint256Ref storage lengthRef = _valuesLengthRef(set);
+      uint256 len = lengthRef.value;
+      uint256 lastIndex;
+      unchecked {
+        lastIndex = len - 1;
+      }
 
-      if (lastIndex != toDeleteIndex) {
+      if (len != valueIndex) {
         string memory lastValue = set._values[lastIndex];
 
-        // Move the last value to the index where the value to delete is
-        set._values[toDeleteIndex] = lastValue;
+        unchecked {
+          // Move the last value to the index where the value to delete is
+          set._values[valueIndex - 1] = lastValue;
+        }
         // Update the index for the moved value
         _indexRef(set, lastValue).value = valueIndex;
       }
 
       // Delete the slot where the moved value was stored
-      set._values.pop();
+      // equivalent: set._values.pop();
+      delete set._values[lastIndex];
+      lengthRef.value = lastIndex;
 
       // Delete the index for the deleted slot
       indexRef.value = 0;
@@ -80,25 +126,6 @@ library StringSet {
       return true;
     } else {
       return false;
-    }
-  }
-
-  /**
-   * @dev Returns the storage reference for the index of a value in the set.
-   */
-  function _indexRef(
-    Set storage set,
-    string memory value
-  ) private pure returns (Uint256Ref storage ref) {
-    // https://docs.soliditylang.org/en/latest/internals/layout_in_storage.html#mappings-and-dynamic-arrays
-    assembly ("memory-safe") {
-      let key_len := add(mload(value), 0x20)
-      let end := add(value, key_len)
-      let cache := mload(end)
-      // concat the string and mapping slot
-      mstore(end, add(set.slot, 1))
-      ref.slot := keccak256(add(value, 0x20), key_len)
-      mstore(end, cache)
     }
   }
 
