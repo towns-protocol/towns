@@ -273,7 +273,11 @@ func (s *Service) replicatedAddMediaEventImpl(ctx context.Context, event *Parsed
 		return ephemeralMb.Header.Hash, nil
 	}
 
-	if genesisMiniblockHash == (common.Hash{}) {
+	quorumCheckMu.Lock()
+	genesisMbHash := genesisMiniblockHash
+	quorumCheckMu.Unlock()
+
+	if genesisMbHash == (common.Hash{}) {
 		return nil, RiverError(Err_QUORUM_FAILED, "replicatedAddMediaEvent: quorum not reached", "stream", streamId)
 	}
 
@@ -283,7 +287,7 @@ func (s *Service) replicatedAddMediaEventImpl(ctx context.Context, event *Parsed
 			ctx,
 			streamId,
 			cc.NodeAddresses(),
-			genesisMiniblockHash,
+			genesisMbHash,
 			common.BytesToHash(ephemeralMb.Header.Hash),
 			cc.MiniblockNum,
 			true,
