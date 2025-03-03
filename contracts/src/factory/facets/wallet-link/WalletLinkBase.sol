@@ -25,10 +25,10 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
     0x6bb89d031fcd292ecd4c0e6855878b7165cebc3a2f35bc6bbac48c088dd8325c;
 
   /// @dev Maximum number of linked wallets per root key
-  uint256 private constant MAX_LINKED_WALLETS = 10;
+  uint256 internal constant MAX_LINKED_WALLETS = 10;
 
   // Address of delegate.xyz v2 registry
-  uint256 constant DELEGATE_VERSION = 2;
+  uint256 internal constant DELEGATE_VERSION = 2;
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                      External - Write
