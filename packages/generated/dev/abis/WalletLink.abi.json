@@ -2,7 +2,13 @@
   {
     "type": "function",
     "name": "__WalletLink_init",
-    "inputs": [],
+    "inputs": [
+      {
+        "name": "delegateRegistry",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
     "outputs": [],
     "stateMutability": "nonpayable"
   },
@@ -26,6 +32,44 @@
         "name": "",
         "type": "bool",
         "internalType": "bool"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getDefaultWallet",
+    "inputs": [
+      {
+        "name": "rootWallet",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getDelegateByVersion",
+    "inputs": [
+      {
+        "name": "version",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
       }
     ],
     "stateMutability": "view"
@@ -71,6 +115,25 @@
   {
     "type": "function",
     "name": "getWalletsByRootKey",
+    "inputs": [
+      {
+        "name": "rootKey",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "wallets",
+        "type": "address[]",
+        "internalType": "address[]"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getWalletsByRootKeyWithDelegations",
     "inputs": [
       {
         "name": "rootKey",
@@ -227,6 +290,37 @@
     "stateMutability": "nonpayable"
   },
   {
+    "type": "function",
+    "name": "setDefaultWallet",
+    "inputs": [
+      {
+        "name": "defaultWallet",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "setDelegateByVersion",
+    "inputs": [
+      {
+        "name": "version",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "delegate",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
     "type": "event",
     "name": "Initialized",
     "inputs": [
@@ -267,6 +361,25 @@
   },
   {
     "type": "event",
+    "name": "LinkThirdPartyDelegation",
+    "inputs": [
+      {
+        "name": "delegator",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "delegatedWallet",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "LinkWalletToRootKey",
     "inputs": [
       {
@@ -286,6 +399,25 @@
   },
   {
     "type": "event",
+    "name": "OwnershipTransferred",
+    "inputs": [
+      {
+        "name": "previousOwner",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "newOwner",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "RemoveLink",
     "inputs": [
       {
@@ -296,6 +428,25 @@
       },
       {
         "name": "secondWallet",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "SetDefaultWallet",
+    "inputs": [
+      {
+        "name": "rootKey",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "defaultWallet",
         "type": "address",
         "indexed": true,
         "internalType": "address"
@@ -368,6 +519,22 @@
   },
   {
     "type": "error",
+    "name": "Ownable__NotOwner",
+    "inputs": [
+      {
+        "name": "account",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "Ownable__ZeroAddress",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "WalletLink__CannotLinkToRootWallet",
     "inputs": [
       {
@@ -389,7 +556,17 @@
   },
   {
     "type": "error",
+    "name": "WalletLink__CannotRemoveDefaultWallet",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "WalletLink__CannotRemoveRootWallet",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "WalletLink__DefaultWalletAlreadySet",
     "inputs": []
   },
   {
@@ -433,6 +610,11 @@
         "internalType": "address"
       }
     ]
+  },
+  {
+    "type": "error",
+    "name": "WalletLink__MaxLinkedWalletsReached",
+    "inputs": []
   },
   {
     "type": "error",

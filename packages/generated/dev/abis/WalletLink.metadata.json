@@ -72,6 +72,22 @@
         "inputs": [
           {
             "internalType": "address",
+            "name": "account",
+            "type": "address"
+          }
+        ],
+        "type": "error",
+        "name": "Ownable__NotOwner"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "Ownable__ZeroAddress"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
             "name": "wallet",
             "type": "address"
           },
@@ -92,7 +108,17 @@
       {
         "inputs": [],
         "type": "error",
+        "name": "WalletLink__CannotRemoveDefaultWallet"
+      },
+      {
+        "inputs": [],
+        "type": "error",
         "name": "WalletLink__CannotRemoveRootWallet"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "WalletLink__DefaultWalletAlreadySet"
       },
       {
         "inputs": [],
@@ -135,6 +161,11 @@
         ],
         "type": "error",
         "name": "WalletLink__LinkedToAnotherRootKey"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "WalletLink__MaxLinkedWalletsReached"
       },
       {
         "inputs": [
@@ -195,6 +226,25 @@
         "inputs": [
           {
             "internalType": "address",
+            "name": "delegator",
+            "type": "address",
+            "indexed": true
+          },
+          {
+            "internalType": "address",
+            "name": "delegatedWallet",
+            "type": "address",
+            "indexed": true
+          }
+        ],
+        "type": "event",
+        "name": "LinkThirdPartyDelegation",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
             "name": "wallet",
             "type": "address",
             "indexed": true
@@ -208,6 +258,25 @@
         ],
         "type": "event",
         "name": "LinkWalletToRootKey",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "previousOwner",
+            "type": "address",
+            "indexed": true
+          },
+          {
+            "internalType": "address",
+            "name": "newOwner",
+            "type": "address",
+            "indexed": true
+          }
+        ],
+        "type": "event",
+        "name": "OwnershipTransferred",
         "anonymous": false
       },
       {
@@ -230,7 +299,32 @@
         "anonymous": false
       },
       {
-        "inputs": [],
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "rootKey",
+            "type": "address",
+            "indexed": true
+          },
+          {
+            "internalType": "address",
+            "name": "defaultWallet",
+            "type": "address",
+            "indexed": true
+          }
+        ],
+        "type": "event",
+        "name": "SetDefaultWallet",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "delegateRegistry",
+            "type": "address"
+          }
+        ],
         "stateMutability": "nonpayable",
         "type": "function",
         "name": "__WalletLink_init"
@@ -256,6 +350,44 @@
             "internalType": "bool",
             "name": "",
             "type": "bool"
+          }
+        ]
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "rootWallet",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function",
+        "name": "getDefaultWallet",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ]
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "version",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function",
+        "name": "getDelegateByVersion",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
           }
         ]
       },
@@ -308,6 +440,25 @@
         "stateMutability": "view",
         "type": "function",
         "name": "getWalletsByRootKey",
+        "outputs": [
+          {
+            "internalType": "address[]",
+            "name": "wallets",
+            "type": "address[]"
+          }
+        ]
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "rootKey",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function",
+        "name": "getWalletsByRootKeyWithDelegations",
         "outputs": [
           {
             "internalType": "address[]",
@@ -450,6 +601,35 @@
         "stateMutability": "nonpayable",
         "type": "function",
         "name": "removeLink"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "defaultWallet",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function",
+        "name": "setDefaultWallet"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "version",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "delegate",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function",
+        "name": "setDelegateByVersion"
       }
     ],
     "devdoc": {
@@ -462,6 +642,19 @@
           },
           "returns": {
             "_0": "areLinked boolean if they are linked together"
+          }
+        },
+        "getDefaultWallet(address)": {
+          "params": {
+            "rootKey": "the public key of the users rootkey to find associated wallets for"
+          },
+          "returns": {
+            "_0": "defaultWallet the default wallet for the root key"
+          }
+        },
+        "getDelegateByVersion(uint256)": {
+          "params": {
+            "version": "the version of the delegate to get"
           }
         },
         "getLatestNonceForRootKey(address)": {
@@ -478,6 +671,14 @@
           }
         },
         "getWalletsByRootKey(address)": {
+          "params": {
+            "rootKey": "the public key of the users rootkey to find associated wallets for"
+          },
+          "returns": {
+            "wallets": "an array of ethereum wallets linked to this root key"
+          }
+        },
+        "getWalletsByRootKeyWithDelegations(address)": {
           "params": {
             "rootKey": "the public key of the users rootkey to find associated wallets for"
           },
@@ -502,6 +703,18 @@
           "params": {
             "wallet": "the wallet being unlinked from the sending wallet"
           }
+        },
+        "setDefaultWallet(address)": {
+          "details": "A wallet can only be set as the default wallet if it is already linked to the root walletThe default wallet can only be an EVM wallet for now",
+          "params": {
+            "defaultWallet": "the wallet being set as the default wallet"
+          }
+        },
+        "setDelegateByVersion(uint256,address)": {
+          "params": {
+            "delegate": "the delegate to set",
+            "version": "the version of the delegate to set"
+          }
         }
       },
       "version": 1
@@ -512,6 +725,12 @@
         "checkIfLinked(address,address)": {
           "notice": "checks if a root key and wallet are linked"
         },
+        "getDefaultWallet(address)": {
+          "notice": "Returns the default wallet for a root key"
+        },
+        "getDelegateByVersion(uint256)": {
+          "notice": "gets the delegate for a given version"
+        },
         "getLatestNonceForRootKey(address)": {
           "notice": "gets the latest nonce for a rootkey to use a higher one for next link action"
         },
@@ -520,6 +739,9 @@
         },
         "getWalletsByRootKey(address)": {
           "notice": "Returns all wallets linked to a root key"
+        },
+        "getWalletsByRootKeyWithDelegations(address)": {
+          "notice": "Returns all wallets linked to a root key with their delegations"
         },
         "linkCallerToRootKey((address,bytes,string),uint256)": {
           "notice": "Link caller wallet to a root wallet"
@@ -532,6 +754,12 @@
         },
         "removeLink(address,(address,bytes,string),uint256)": {
           "notice": "Called via the rootkey signing a message to a remove a wallet from itself"
+        },
+        "setDefaultWallet(address)": {
+          "notice": "Set the default wallet by the root wallet"
+        },
+        "setDelegateByVersion(uint256,address)": {
+          "notice": "sets the delegate for a given version"
         }
       },
       "version": 1
@@ -565,36 +793,44 @@
   },
   "sources": {
     "contracts/src/factory/facets/wallet-link/IWalletLink.sol": {
-      "keccak256": "0x5ed1537dfea0969be2cef70cfd3858695fa7c736a1df677db6c85c0180a0ea0c",
+      "keccak256": "0xbbdc56c3c617263f0435d8a688543e1638d9940b5aea117ec5a4af55540619dc",
       "urls": [
-        "bzz-raw://0305e0d8ba95c608fd848ce99c288bf80892cc61bc01d53bf8d6f79a4a6a550d",
-        "dweb:/ipfs/QmQoBXVdpRraU2BcA1Usw5HZB7e6cdnHvNyVhETKRUg4XC"
+        "bzz-raw://b59853a33237ed5a3b3c30213231774d7222a968447d4a4b23c9aa42a0931b66",
+        "dweb:/ipfs/QmTzbiaBQf8JY8NaqY34QeC216AUFje974zF7aE5NQ3wAr"
       ],
       "license": "MIT"
     },
     "contracts/src/factory/facets/wallet-link/WalletLink.sol": {
-      "keccak256": "0x7cf7230eb124cfecca4483a60c34545c520aa862d4ffcfc5664ca5ca645d2672",
+      "keccak256": "0xeef5c7042f420297b85d3184b63df723b268e4d4fa6dc42ce02feb7955d5d764",
       "urls": [
-        "bzz-raw://f98c22db9bc1494c2081a5e05da809cae83d9f4545bd9371141672b7ce7bce6b",
-        "dweb:/ipfs/QmPvppHRi3JsxqcsfCWzpKVNx8P9EEVjjTtW2cZf4Tnjsy"
+        "bzz-raw://b1aa38808a6a06cf29fc06f5502affd80ce5009aedd7846bf85e61a1ba314a9f",
+        "dweb:/ipfs/QmVYqNQ5XrRMfEiw14jREpUbrbyb6kU2PKQH48wLCpejn1"
       ],
       "license": "MIT"
     },
     "contracts/src/factory/facets/wallet-link/WalletLinkBase.sol": {
-      "keccak256": "0x4aecc16e5d01efe162c9f312bcef074a8470e439a0dd47da24317f4114119266",
+      "keccak256": "0x8084fd1fd98c1bf311a5de94bce1a80b77dd443c7fe0340641b52ff20abf66b0",
       "urls": [
-        "bzz-raw://b107fd7433cc248001bbc7b35501bcdbb819b3128b602a12d457f5b1e4e111b4",
-        "dweb:/ipfs/QmQdP6B99f2A9v2PHJ6YZWyXRMazkgA3uYc4prVhea3Z1Y"
+        "bzz-raw://e16b52fc7321b60147458d88cf4b9658543452835d85102f4a07dbc0c695ee1a",
+        "dweb:/ipfs/QmX4aMT1nLTRmWAkxEM4fnATHPZPQkbJcSBcp1YrnHbqjo"
       ],
       "license": "MIT"
     },
     "contracts/src/factory/facets/wallet-link/WalletLinkStorage.sol": {
-      "keccak256": "0xd3d9dc249b35a7ddee3059f7d2bbb5252fdb5e335132eb8089c68e0b25a539cb",
+      "keccak256": "0x0fbba7da19ec4e2923df2fdc2f13758d7802227ca2cb6c66e211d0814a2c73bb",
       "urls": [
-        "bzz-raw://f8a4b35972a333c56ddae4196fd7bbb9130a79b031787788882fc7e3725c314c",
-        "dweb:/ipfs/QmSb3jprfkFZQxhgMvMJh684wUernTWLztnRagBUx17k2o"
+        "bzz-raw://46bac520fe4670dcd86abd6014bab685b6b0622b874b6aaa25b708c79d93b341",
+        "dweb:/ipfs/QmUTBFctRAESSAKmz3JVhihna5bk57z7eYbF9UQuxCdLqd"
       ],
       "license": "MIT"
+    },
+    "contracts/src/factory/facets/wallet-link/interfaces/IDelegateRegistry.sol": {
+      "keccak256": "0x080591ced5f07f2ac04e35a44ac0d67816a9d50f06cddb32707fe3e135ccb238",
+      "urls": [
+        "bzz-raw://5297646974474ccbbffd75993f685a397268dad9eaf28cb39f5e41d208e8bb8a",
+        "dweb:/ipfs/QmVdNEto4EXUhrDpyfgiEGT79w6wQHYVWuf3sNHS9MYd1a"
+      ],
+      "license": "CC0-1.0"
     },
     "node_modules/@openzeppelin/contracts/utils/Address.sol": {
       "keccak256": "0xaaa1d17c1129b127a4a401db2fbd72960e2671474be3d08cae71ccdc42f7624c",
@@ -729,6 +965,30 @@
       "urls": [
         "bzz-raw://dbad6f8e6685690ae75f6c9066972a45400b45307245feab8990af18a4c38e91",
         "dweb:/ipfs/QmcTUqiSL1z2nwokpNNsXQkjVTaFdFJiM2exguZpPDDXEM"
+      ],
+      "license": "MIT"
+    },
+    "node_modules/@river-build/diamond/src/facets/ownable/IERC173.sol": {
+      "keccak256": "0x187fcc652a498aa18be665689a8496daad50511e6d7d926be0a210469325cdd8",
+      "urls": [
+        "bzz-raw://00c489916ad6e3ef2bfeb1d5f0230022cf776caab4b1372f0bf79b839810f1a2",
+        "dweb:/ipfs/QmV2h8sDoHeyZKvbKeJBk6WaS5F87QaDMCq3iEymsbrmVh"
+      ],
+      "license": "MIT"
+    },
+    "node_modules/@river-build/diamond/src/facets/ownable/OwnableBase.sol": {
+      "keccak256": "0x272abaecc104d5f23d77a623cf1548620d24b0f447eb2a12144e27561ff489f2",
+      "urls": [
+        "bzz-raw://fcb8c20ff7346bdc5dba82e6680cc0ea64087460a12153e3b6c3416f6addf875",
+        "dweb:/ipfs/QmfEEufJBzudSDekQteQkb3CzmnzUPT3GDhNgVpHNC9xaf"
+      ],
+      "license": "MIT"
+    },
+    "node_modules/@river-build/diamond/src/facets/ownable/OwnableStorage.sol": {
+      "keccak256": "0xda650482ce08c04110366cb01408aaabd01383d9c504b7cacfb2674aae688dcd",
+      "urls": [
+        "bzz-raw://694f42ffb353fccaa1eadf91dee3a3cee7253e3f357bcba2b175fd7be701e27e",
+        "dweb:/ipfs/QmPxxVerATSYrNLp7snnSvNVsbLPm1wzHULhBbtR333eik"
       ],
       "license": "MIT"
     },

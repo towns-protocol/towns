@@ -12,7 +12,6 @@ import {Vm} from "forge-std/Test.sol";
 import {DeployBase} from "contracts/scripts/common/DeployBase.s.sol";
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
 import {Nonces} from "@river-build/diamond/src/utils/Nonces.sol";
-import {DeployWalletLink} from "contracts/scripts/deployments/facets/DeployWalletLink.s.sol";
 
 contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
   Vm.Wallet internal rootWallet;

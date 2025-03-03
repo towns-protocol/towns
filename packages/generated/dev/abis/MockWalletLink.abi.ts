@@ -174,6 +174,25 @@ export default [
   },
   {
     "type": "event",
+    "name": "LinkThirdPartyDelegation",
+    "inputs": [
+      {
+        "name": "delegator",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "delegatedWallet",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "LinkWalletToRootKey",
     "inputs": [
       {
@@ -211,6 +230,25 @@ export default [
     "anonymous": false
   },
   {
+    "type": "event",
+    "name": "SetDefaultWallet",
+    "inputs": [
+      {
+        "name": "rootKey",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "defaultWallet",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
     "type": "error",
     "name": "WalletLink__CannotLinkToRootWallet",
     "inputs": [
@@ -233,7 +271,17 @@ export default [
   },
   {
     "type": "error",
+    "name": "WalletLink__CannotRemoveDefaultWallet",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "WalletLink__CannotRemoveRootWallet",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "WalletLink__DefaultWalletAlreadySet",
     "inputs": []
   },
   {
@@ -277,6 +325,11 @@ export default [
         "internalType": "address"
       }
     ]
+  },
+  {
+    "type": "error",
+    "name": "WalletLink__MaxLinkedWalletsReached",
+    "inputs": []
   },
   {
     "type": "error",

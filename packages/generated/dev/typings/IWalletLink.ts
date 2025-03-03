@@ -44,30 +44,48 @@ export declare namespace IWalletLinkBase {
 export interface IWalletLinkInterface extends utils.Interface {
   functions: {
     "checkIfLinked(address,address)": FunctionFragment;
+    "getDefaultWallet(address)": FunctionFragment;
+    "getDelegateByVersion(uint256)": FunctionFragment;
     "getLatestNonceForRootKey(address)": FunctionFragment;
     "getRootKeyForWallet(address)": FunctionFragment;
     "getWalletsByRootKey(address)": FunctionFragment;
+    "getWalletsByRootKeyWithDelegations(address)": FunctionFragment;
     "linkCallerToRootKey((address,bytes,string),uint256)": FunctionFragment;
     "linkWalletToRootKey((address,bytes,string),(address,bytes,string),uint256)": FunctionFragment;
     "removeCallerLink()": FunctionFragment;
     "removeLink(address,(address,bytes,string),uint256)": FunctionFragment;
+    "setDefaultWallet(address)": FunctionFragment;
+    "setDelegateByVersion(uint256,address)": FunctionFragment;
   };
 
   getFunction(
     nameOrSignatureOrTopic:
       | "checkIfLinked"
+      | "getDefaultWallet"
+      | "getDelegateByVersion"
       | "getLatestNonceForRootKey"
       | "getRootKeyForWallet"
       | "getWalletsByRootKey"
+      | "getWalletsByRootKeyWithDelegations"
       | "linkCallerToRootKey"
       | "linkWalletToRootKey"
       | "removeCallerLink"
       | "removeLink"
+      | "setDefaultWallet"
+      | "setDelegateByVersion"
   ): FunctionFragment;
 
   encodeFunctionData(
     functionFragment: "checkIfLinked",
     values: [PromiseOrValue<string>, PromiseOrValue<string>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getDefaultWallet",
+    values: [PromiseOrValue<string>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getDelegateByVersion",
+    values: [PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
     functionFragment: "getLatestNonceForRootKey",
@@ -79,6 +97,10 @@ export interface IWalletLinkInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "getWalletsByRootKey",
+    values: [PromiseOrValue<string>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getWalletsByRootKeyWithDelegations",
     values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
@@ -105,9 +127,25 @@ export interface IWalletLinkInterface extends utils.Interface {
       PromiseOrValue<BigNumberish>
     ]
   ): string;
+  encodeFunctionData(
+    functionFragment: "setDefaultWallet",
+    values: [PromiseOrValue<string>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "setDelegateByVersion",
+    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<string>]
+  ): string;
 
   decodeFunctionResult(
     functionFragment: "checkIfLinked",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getDefaultWallet",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getDelegateByVersion",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -123,6 +161,10 @@ export interface IWalletLinkInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "getWalletsByRootKeyWithDelegations",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "linkCallerToRootKey",
     data: BytesLike
   ): Result;
@@ -135,15 +177,39 @@ export interface IWalletLinkInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "removeLink", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "setDefaultWallet",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "setDelegateByVersion",
+    data: BytesLike
+  ): Result;
 
   events: {
+    "LinkThirdPartyDelegation(address,address)": EventFragment;
     "LinkWalletToRootKey(address,address)": EventFragment;
     "RemoveLink(address,address)": EventFragment;
+    "SetDefaultWallet(address,address)": EventFragment;
   };
 
+  getEvent(nameOrSignatureOrTopic: "LinkThirdPartyDelegation"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "LinkWalletToRootKey"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "RemoveLink"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "SetDefaultWallet"): EventFragment;
 }
+
+export interface LinkThirdPartyDelegationEventObject {
+  delegator: string;
+  delegatedWallet: string;
+}
+export type LinkThirdPartyDelegationEvent = TypedEvent<
+  [string, string],
+  LinkThirdPartyDelegationEventObject
+>;
+
+export type LinkThirdPartyDelegationEventFilter =
+  TypedEventFilter<LinkThirdPartyDelegationEvent>;
 
 export interface LinkWalletToRootKeyEventObject {
   wallet: string;
@@ -167,6 +233,18 @@ export type RemoveLinkEvent = TypedEvent<
 >;
 
 export type RemoveLinkEventFilter = TypedEventFilter<RemoveLinkEvent>;
+
+export interface SetDefaultWalletEventObject {
+  rootKey: string;
+  defaultWallet: string;
+}
+export type SetDefaultWalletEvent = TypedEvent<
+  [string, string],
+  SetDefaultWalletEventObject
+>;
+
+export type SetDefaultWalletEventFilter =
+  TypedEventFilter<SetDefaultWalletEvent>;
 
 export interface IWalletLink extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
@@ -201,6 +279,16 @@ export interface IWalletLink extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[boolean]>;
 
+    getDefaultWallet(
+      rootKey: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<[string]>;
+
+    getDelegateByVersion(
+      version: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<[string]>;
+
     getLatestNonceForRootKey(
       rootKey: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -212,6 +300,11 @@ export interface IWalletLink extends BaseContract {
     ): Promise<[string] & { rootKey: string }>;
 
     getWalletsByRootKey(
+      rootKey: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<[string[]] & { wallets: string[] }>;
+
+    getWalletsByRootKeyWithDelegations(
       rootKey: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<[string[]] & { wallets: string[] }>;
@@ -239,6 +332,17 @@ export interface IWalletLink extends BaseContract {
       nonce: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
+
+    setDefaultWallet(
+      defaultWallet: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    setDelegateByVersion(
+      version: PromiseOrValue<BigNumberish>,
+      delegate: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
   };
 
   checkIfLinked(
@@ -246,6 +350,16 @@ export interface IWalletLink extends BaseContract {
     wallet: PromiseOrValue<string>,
     overrides?: CallOverrides
   ): Promise<boolean>;
+
+  getDefaultWallet(
+    rootKey: PromiseOrValue<string>,
+    overrides?: CallOverrides
+  ): Promise<string>;
+
+  getDelegateByVersion(
+    version: PromiseOrValue<BigNumberish>,
+    overrides?: CallOverrides
+  ): Promise<string>;
 
   getLatestNonceForRootKey(
     rootKey: PromiseOrValue<string>,
@@ -258,6 +372,11 @@ export interface IWalletLink extends BaseContract {
   ): Promise<string>;
 
   getWalletsByRootKey(
+    rootKey: PromiseOrValue<string>,
+    overrides?: CallOverrides
+  ): Promise<string[]>;
+
+  getWalletsByRootKeyWithDelegations(
     rootKey: PromiseOrValue<string>,
     overrides?: CallOverrides
   ): Promise<string[]>;
@@ -286,12 +405,33 @@ export interface IWalletLink extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  setDefaultWallet(
+    defaultWallet: PromiseOrValue<string>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  setDelegateByVersion(
+    version: PromiseOrValue<BigNumberish>,
+    delegate: PromiseOrValue<string>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
   callStatic: {
     checkIfLinked(
       rootKey: PromiseOrValue<string>,
       wallet: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<boolean>;
+
+    getDefaultWallet(
+      rootKey: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<string>;
+
+    getDelegateByVersion(
+      version: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<string>;
 
     getLatestNonceForRootKey(
       rootKey: PromiseOrValue<string>,
@@ -304,6 +444,11 @@ export interface IWalletLink extends BaseContract {
     ): Promise<string>;
 
     getWalletsByRootKey(
+      rootKey: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<string[]>;
+
+    getWalletsByRootKeyWithDelegations(
       rootKey: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<string[]>;
@@ -329,9 +474,29 @@ export interface IWalletLink extends BaseContract {
       nonce: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
+
+    setDefaultWallet(
+      defaultWallet: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    setDelegateByVersion(
+      version: PromiseOrValue<BigNumberish>,
+      delegate: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<void>;
   };
 
   filters: {
+    "LinkThirdPartyDelegation(address,address)"(
+      delegator?: PromiseOrValue<string> | null,
+      delegatedWallet?: PromiseOrValue<string> | null
+    ): LinkThirdPartyDelegationEventFilter;
+    LinkThirdPartyDelegation(
+      delegator?: PromiseOrValue<string> | null,
+      delegatedWallet?: PromiseOrValue<string> | null
+    ): LinkThirdPartyDelegationEventFilter;
+
     "LinkWalletToRootKey(address,address)"(
       wallet?: PromiseOrValue<string> | null,
       rootKey?: PromiseOrValue<string> | null
@@ -349,12 +514,31 @@ export interface IWalletLink extends BaseContract {
       wallet?: PromiseOrValue<string> | null,
       secondWallet?: PromiseOrValue<string> | null
     ): RemoveLinkEventFilter;
+
+    "SetDefaultWallet(address,address)"(
+      rootKey?: PromiseOrValue<string> | null,
+      defaultWallet?: PromiseOrValue<string> | null
+    ): SetDefaultWalletEventFilter;
+    SetDefaultWallet(
+      rootKey?: PromiseOrValue<string> | null,
+      defaultWallet?: PromiseOrValue<string> | null
+    ): SetDefaultWalletEventFilter;
   };
 
   estimateGas: {
     checkIfLinked(
       rootKey: PromiseOrValue<string>,
       wallet: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    getDefaultWallet(
+      rootKey: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    getDelegateByVersion(
+      version: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
@@ -369,6 +553,11 @@ export interface IWalletLink extends BaseContract {
     ): Promise<BigNumber>;
 
     getWalletsByRootKey(
+      rootKey: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    getWalletsByRootKeyWithDelegations(
       rootKey: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
@@ -394,6 +583,17 @@ export interface IWalletLink extends BaseContract {
       wallet: PromiseOrValue<string>,
       rootWallet: IWalletLinkBase.LinkedWalletStruct,
       nonce: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    setDefaultWallet(
+      defaultWallet: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    setDelegateByVersion(
+      version: PromiseOrValue<BigNumberish>,
+      delegate: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
   };
@@ -405,6 +605,16 @@ export interface IWalletLink extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
+    getDefaultWallet(
+      rootKey: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    getDelegateByVersion(
+      version: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
     getLatestNonceForRootKey(
       rootKey: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -416,6 +626,11 @@ export interface IWalletLink extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     getWalletsByRootKey(
+      rootKey: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    getWalletsByRootKeyWithDelegations(
       rootKey: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
@@ -441,6 +656,17 @@ export interface IWalletLink extends BaseContract {
       wallet: PromiseOrValue<string>,
       rootWallet: IWalletLinkBase.LinkedWalletStruct,
       nonce: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    setDefaultWallet(
+      defaultWallet: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    setDelegateByVersion(
+      version: PromiseOrValue<BigNumberish>,
+      delegate: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
   };

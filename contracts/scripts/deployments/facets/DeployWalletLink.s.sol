@@ -12,13 +12,14 @@ contract DeployWalletLink is FacetHelper, Deployer {
     addSelector(WalletLink.linkWalletToRootKey.selector);
     addSelector(WalletLink.removeLink.selector);
     addSelector(WalletLink.getWalletsByRootKey.selector);
-    addSelector(WalletLink.getWalletsByRootKeyWithDelegations.selector);
     addSelector(WalletLink.getRootKeyForWallet.selector);
     addSelector(WalletLink.checkIfLinked.selector);
     addSelector(WalletLink.getLatestNonceForRootKey.selector);
     addSelector(WalletLink.removeCallerLink.selector);
+
     addSelector(WalletLink.setDefaultWallet.selector);
     addSelector(WalletLink.getDefaultWallet.selector);
+    addSelector(WalletLink.getWalletsByRootKeyWithDelegations.selector);
     addSelector(WalletLink.getDelegateByVersion.selector);
     addSelector(WalletLink.setDelegateByVersion.selector);
   }
@@ -27,6 +28,7 @@ contract DeployWalletLink is FacetHelper, Deployer {
     return WalletLink.__WalletLink_init.selector;
   }
 
+  // 0xa3f100e500000000000000000000000000000000000000447e69651d841bd8d104bed49300000000000000000000000000000000000000000000000000000000
   function makeInitData(
     address delegateRegistry
   ) public pure returns (bytes memory) {

@@ -33,6 +33,44 @@ const _abi = [
   },
   {
     type: "function",
+    name: "getDefaultWallet",
+    inputs: [
+      {
+        name: "rootKey",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+    outputs: [
+      {
+        name: "",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "getDelegateByVersion",
+    inputs: [
+      {
+        name: "version",
+        type: "uint256",
+        internalType: "uint256",
+      },
+    ],
+    outputs: [
+      {
+        name: "",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
     name: "getLatestNonceForRootKey",
     inputs: [
       {
@@ -72,6 +110,25 @@ const _abi = [
   {
     type: "function",
     name: "getWalletsByRootKey",
+    inputs: [
+      {
+        name: "rootKey",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+    outputs: [
+      {
+        name: "wallets",
+        type: "address[]",
+        internalType: "address[]",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "getWalletsByRootKeyWithDelegations",
     inputs: [
       {
         name: "rootKey",
@@ -228,6 +285,56 @@ const _abi = [
     stateMutability: "nonpayable",
   },
   {
+    type: "function",
+    name: "setDefaultWallet",
+    inputs: [
+      {
+        name: "defaultWallet",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "setDelegateByVersion",
+    inputs: [
+      {
+        name: "version",
+        type: "uint256",
+        internalType: "uint256",
+      },
+      {
+        name: "delegate",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "event",
+    name: "LinkThirdPartyDelegation",
+    inputs: [
+      {
+        name: "delegator",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+      {
+        name: "delegatedWallet",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+    ],
+    anonymous: false,
+  },
+  {
     type: "event",
     name: "LinkWalletToRootKey",
     inputs: [
@@ -266,6 +373,25 @@ const _abi = [
     anonymous: false,
   },
   {
+    type: "event",
+    name: "SetDefaultWallet",
+    inputs: [
+      {
+        name: "rootKey",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+      {
+        name: "defaultWallet",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+    ],
+    anonymous: false,
+  },
+  {
     type: "error",
     name: "WalletLink__CannotLinkToRootWallet",
     inputs: [
@@ -288,7 +414,17 @@ const _abi = [
   },
   {
     type: "error",
+    name: "WalletLink__CannotRemoveDefaultWallet",
+    inputs: [],
+  },
+  {
+    type: "error",
     name: "WalletLink__CannotRemoveRootWallet",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "WalletLink__DefaultWalletAlreadySet",
     inputs: [],
   },
   {
@@ -332,6 +468,11 @@ const _abi = [
         internalType: "address",
       },
     ],
+  },
+  {
+    type: "error",
+    name: "WalletLink__MaxLinkedWalletsReached",
+    inputs: [],
   },
   {
     type: "error",
