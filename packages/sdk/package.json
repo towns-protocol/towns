@@ -1,6 +1,6 @@
 {
     "name": "@river-build/sdk",
-    "version": "0.0.179",
+    "version": "0.0.180",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "dist/index.js",
