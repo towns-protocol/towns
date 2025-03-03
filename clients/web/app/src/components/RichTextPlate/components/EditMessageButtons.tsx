@@ -12,9 +12,18 @@ export const EditMessageButtons = (props: {
     hasImage: boolean
     verticalButtons?: boolean
     disabled?: boolean
+    renderSendButton?: (onSend: () => void) => React.ReactNode
 }) => {
     const { isTouch } = useDevice()
-    const { onCancel, onSave, isEditing, isEditorEmpty, hasImage, verticalButtons } = props
+    const {
+        onCancel,
+        onSave,
+        isEditing,
+        isEditorEmpty,
+        hasImage,
+        verticalButtons,
+        renderSendButton,
+    } = props
 
     useEffect(() => {
         if (!onCancel) {
@@ -122,19 +131,23 @@ export const EditMessageButtons = (props: {
                     onMouseDown={disabled ? cancelButtonPressed : saveButtonPressed}
                 />
             ) : (
-                <MotionIconButton
-                    whileHover={
-                        disabled
-                            ? {}
-                            : {
-                                  opacity: 0.8,
-                              }
-                    }
-                    data-testid="submit"
-                    icon={disabled ? 'touchSendDisabled' : 'touchSendEnabled'}
-                    size="square_md"
-                    onClick={disabled ? undefined : saveButtonPressed}
-                />
+                <>
+                    {(onSave && renderSendButton?.(onSave)) || (
+                        <MotionIconButton
+                            whileHover={
+                                disabled
+                                    ? {}
+                                    : {
+                                          opacity: 0.8,
+                                      }
+                            }
+                            data-testid="submit"
+                            icon={disabled ? 'touchSendDisabled' : 'touchSendEnabled'}
+                            size="square_md"
+                            onClick={disabled ? undefined : saveButtonPressed}
+                        />
+                    )}
+                </>
             )}
         </Stack>
     )

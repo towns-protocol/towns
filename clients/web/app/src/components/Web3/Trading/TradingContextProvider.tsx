@@ -20,6 +20,7 @@ type TokenInfo = {
 }
 export type SolanaTransactionRequest = {
     id: string
+    type: 'solana'
     transactionData: string
     token: TokenInfo
     signature?: string
@@ -28,6 +29,7 @@ export type SolanaTransactionRequest = {
 
 export type EvmTransactionRequest = {
     id: string
+    type: 'evm'
     transaction: {
         toAddress: string
         callData: string
@@ -38,6 +40,18 @@ export type EvmTransactionRequest = {
     token: TokenInfo
     approvalAddress: string
     status: TransactionStatus
+}
+
+export const isSolanaTransactionRequest = (
+    request: EvmTransactionRequest | SolanaTransactionRequest | undefined,
+): request is SolanaTransactionRequest => {
+    return request?.type === 'solana'
+}
+
+export const isEvmTransactionRequest = (
+    request: EvmTransactionRequest | SolanaTransactionRequest | undefined,
+): request is EvmTransactionRequest => {
+    return request?.type === 'evm'
 }
 
 const TradingContext = createContext<{

@@ -182,7 +182,7 @@ export const MessageLayout = (props: Props) => {
             onMouseEnter={onMouseEnter}
             {...boxProps}
             hoverable={isSelectable}
-            elevate={(isEditing && !pin) || isHighlight}
+            elevate={isEditing && !pin}
             hoverActive={isEditing || isHighlight}
             {...backgroundProps}
             tabIndex={props.tabIndex ?? 0}

@@ -49,6 +49,14 @@ export const buttonStyle = recipe({
                 paddingRight: vars.space.md,
                 gap: vars.space.sm,
             },
+            button_x5: {
+                fontSize: vars.fontSize.sm,
+                height: vars.dims.baseline.x5,
+                fontVariationSettings: vars.fontWeight.medium.fontVariationSettings,
+                paddingLeft: vars.space.md,
+                paddingRight: vars.space.md,
+                gap: vars.space.sm,
+            },
             button_md: {
                 fontSize: vars.fontSize.md,
                 height: vars.dims.button.button_md,

@@ -55,6 +55,7 @@ type Props = {
     draftUserIds?: string[]
     userId?: string
     isFullWidthOnTouch?: boolean
+    renderSendButton?: (onSend: () => void) => React.ReactNode
 } & Pick<BoxProps, 'background'>
 
 const TownsTextEditorWithoutBoundary = ({
@@ -73,6 +74,7 @@ const TownsTextEditorWithoutBoundary = ({
     spaceMemberIds,
     draftUserIds,
     initialValue,
+    renderSendButton,
     background = 'level2',
 }: Props) => {
     const { uploadFiles, files } = useMediaDropContext()
@@ -272,6 +274,7 @@ const TownsTextEditorWithoutBoundary = ({
                     lookupUser={lookupUser}
                     unfurledLinkAttachments={unfurledLinkAttachments}
                     tickerAttachments={tickerAttachments}
+                    renderSendButton={renderSendButton}
                     onSelectTicker={onAddTickerAttachment}
                     onRemoveTicker={onRemoveTickerAttachment}
                     onMessageLinksUpdated={onMessageLinksUpdated}

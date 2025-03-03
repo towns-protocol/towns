@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import {
     SendMessageOptions,
     useChannelContext,
@@ -12,7 +12,7 @@ import { useLocation } from 'react-router'
 import { MessageTimeline } from '@components/MessageTimeline/MessageTimeline'
 import { MessageTimelineWrapper } from '@components/MessageTimeline/MessageTimelineContext'
 import { TownsEditorContainer } from '@components/RichTextPlate/TownsEditorContainer'
-import { Box, Paragraph, Stack } from '@ui'
+import { Box, FancyButton, Paragraph, Stack } from '@ui'
 import { useIsChannelWritable } from 'hooks/useIsChannelWritable'
 import { useSendReply } from 'hooks/useSendReply'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
@@ -23,6 +23,15 @@ import { MediaDropContextProvider } from '@components/MediaDropContext/MediaDrop
 import { useIsChannelReactable } from 'hooks/useIsChannelReactable'
 import { getPostedMessageType, trackPostedMessage } from '@components/Analytics/postedMessage'
 import { useGatherSpaceDetailsAnalytics } from '@components/Analytics/useGatherSpaceDetailsAnalytics'
+import { QuoteMetaData, TradeComponent } from '@components/Web3/Trading/TradeComponent'
+import { useOnPressTrade } from '@components/Web3/Trading/hooks/useTradeQuote'
+import {
+    EvmTransactionRequest,
+    SolanaTransactionRequest,
+} from '@components/Web3/Trading/TradingContextProvider'
+import { WalletReady } from 'privy/WalletReady'
+import { getTickerAttachment } from './getTickerAttachment'
+import { TickerThreadContext } from './TickerThreadContext'
 
 type Props = {
     messageId: string
@@ -48,6 +57,10 @@ export const MessageThreadPanel = (props: Props) => {
         spaceId,
         channelId,
     })
+
+    const tickerAttachment = useMemo(() => {
+        return getTickerAttachment(parentMessage)
+    }, [parentMessage])
 
     const onSend = useCallback(
         (value: string, options: SendMessageOptions | undefined) => {
@@ -89,6 +102,9 @@ export const MessageThreadPanel = (props: Props) => {
 
     const panelLabel = (
         <Paragraph truncate>
+            {tickerAttachment ? (
+                <span className={atoms({ color: 'default' })}>Trading </span>
+            ) : null}
             Thread{' '}
             {channelLabel ? (
                 <>
@@ -107,66 +123,141 @@ export const MessageThreadPanel = (props: Props) => {
         ? `You don't have permission to send media to this channel`
         : `Loading permissions`
 
+    const [tradeData, setTradeData] = useState<
+        | {
+              request: EvmTransactionRequest | SolanaTransactionRequest
+              metaData: QuoteMetaData
+          }
+        | undefined
+    >(undefined)
+
+    const { onPressTrade } = useOnPressTrade({
+        request: tradeData?.request,
+        chainId: tickerAttachment?.chainId,
+    })
+
+    const editor = (
+        <TownsEditorContainer
+            isFullWidthOnTouch
+            background={tickerAttachment ? 'level1' : undefined}
+            key={`${messageId}-${isChannelWritable ? '' : '-readonly'}`}
+            autoFocus={!isTouch}
+            editable={!!isChannelWritable}
+            displayButtons="on-focus"
+            placeholder={tickerAttachment ? 'Add an optional message...' : 'Reply...'}
+            storageId={`${channelId}-${messageId}`}
+            threadId={messageId}
+            channels={channels}
+            spaceMemberIds={memberIds}
+            userId={userId}
+            renderSendButton={(onSend) => {
+                return tradeData && onPressTrade ? (
+                    <Box
+                        centerContent
+                        tooltip={`${tradeData?.metaData.mode === 'buy' ? 'Buy' : 'Sell'} ${
+                            tradeData?.metaData.value.value
+                        } ${tradeData?.metaData.value.symbol}`}
+                    >
+                        <WalletReady>
+                            {({ getSigner }) => (
+                                <FancyButton
+                                    compact="x4"
+                                    gap="xxs"
+                                    paddingLeft="sm"
+                                    paddingRight="md"
+                                    background={
+                                        tradeData?.metaData.mode === 'buy' ? 'positive' : 'negative'
+                                    }
+                                    borderRadius="full"
+                                    icon="lightning"
+                                    onClick={async () => {
+                                        const a = async () => {
+                                            await onPressTrade?.(getSigner)
+                                            onSend()
+                                        }
+                                        a()
+                                    }}
+                                >
+                                    {tradeData?.metaData.mode === 'buy' ? 'Buy' : 'Sell'}
+                                </FancyButton>
+                            )}
+                        </WalletReady>
+                    </Box>
+                ) : undefined
+            }}
+            onSend={onSend}
+        />
+    )
+
     return (
         <Panel label={panelLabel} padding="none" gap="none" parentRoute={props.parentRoute}>
-            <MediaDropContextProvider
-                title={imageUploadTitle}
-                channelId={channelId}
-                spaceId={spaceId}
-                eventId={messageId}
-                key={messageId}
-                disableDrop={!isChannelWritable}
-            >
-                <Stack
-                    grow
-                    position="relative"
-                    overflow="hidden"
-                    justifyContent={{ default: 'start', touch: 'end' }}
-                    width="100%"
+            <TickerThreadContext.Provider value={tickerAttachment}>
+                <MediaDropContextProvider
+                    title={imageUploadTitle}
+                    channelId={channelId}
+                    spaceId={spaceId}
+                    eventId={messageId}
+                    key={messageId}
+                    disableDrop={!isChannelWritable}
                 >
-                    <MessageTimelineWrapper
-                        spaceId={spaceId}
-                        channelId={channelId}
-                        threadParentId={messageId}
-                        events={messagesWithParent}
-                        isChannelWritable={isChannelWritable}
-                        isChannelReactable={isChannelReactable}
+                    <Stack
+                        grow
+                        position="relative"
+                        overflow="hidden"
+                        justifyContent={{ default: 'start', touch: 'end' }}
+                        width="100%"
                     >
-                        <MessageTimeline
-                            align="bottom"
-                            highlightId={highlightId}
-                            groupByUser={false}
-                        />
-                    </MessageTimelineWrapper>
-                </Stack>
-                {isChannelWritable && (
-                    <Box
-                        paddingX={{ default: 'md', touch: 'none' }}
-                        paddingBottom={{ default: 'md', touch: 'none' }}
-                        paddingTop={{ default: 'none', touch: 'none' }}
-                        bottom={isTouch ? 'sm' : 'none'}
-                        // this id is added to both MessageThreadPanel.tsx and Channel.tsx
-                        // to allow for the MessageEditor to be attached in the same
-                        // container via React.createPortal
-                        id="editor-container"
-                    >
-                        <TownsEditorContainer
-                            isFullWidthOnTouch
-                            key={`${messageId}-${isChannelWritable ? '' : '-readonly'}`}
-                            autoFocus={!isTouch}
-                            editable={!!isChannelWritable}
-                            displayButtons="on-focus"
-                            placeholder="Reply..."
-                            storageId={`${channelId}-${messageId}`}
-                            threadId={messageId}
-                            channels={channels}
-                            spaceMemberIds={memberIds}
-                            userId={userId}
-                            onSend={onSend}
-                        />
-                    </Box>
-                )}
-            </MediaDropContextProvider>
+                        <MessageTimelineWrapper
+                            spaceId={spaceId}
+                            channelId={channelId}
+                            threadParentId={messageId}
+                            events={messagesWithParent}
+                            isChannelWritable={isChannelWritable}
+                            isChannelReactable={isChannelReactable}
+                        >
+                            <MessageTimeline
+                                align="bottom"
+                                highlightId={highlightId}
+                                groupByUser={false}
+                            />
+                        </MessageTimelineWrapper>
+                    </Stack>
+                    {isChannelWritable && (
+                        <Box
+                            paddingX={{ default: 'md', touch: 'none' }}
+                            paddingBottom={{ default: 'md', touch: 'none' }}
+                            paddingTop={{ default: 'none', touch: 'none' }}
+                            bottom={isTouch ? 'sm' : 'none'}
+                            // this id is added to both MessageThreadPanel.tsx and Channel.tsx
+                            // to allow for the MessageEditor to be attached in the same
+                            // container via React.createPortal
+                            id="editor-container"
+                        >
+                            {tickerAttachment ? (
+                                <Box elevate background="readability" rounded="md">
+                                    <Box padding="md">
+                                        <TradeComponent
+                                            mode="buy"
+                                            tokenAddress={tickerAttachment.address}
+                                            chainId={tickerAttachment.chainId}
+                                            onQuoteChanged={(request, metaData) => {
+                                                setTradeData(
+                                                    request && metaData
+                                                        ? { request, metaData }
+                                                        : undefined,
+                                                )
+                                            }}
+                                        />
+                                    </Box>
+                                    <Box>{editor}</Box>
+                                </Box>
+                            ) : (
+                                editor
+                            )}
+                        </Box>
+                    )}
+                </MediaDropContextProvider>
+            </TickerThreadContext.Provider>
         </Panel>
     )
 }

@@ -75,7 +75,7 @@ export const QuotedMessage = (props: Props) => {
                         value={{ isMessageAttachementContext: true }}
                     >
                         {attachments && attachments.length > 0 && (
-                            <MessageAttachments attachments={attachments} />
+                            <MessageAttachments attachments={attachments} eventId={eventId} />
                         )}
                     </MessageAttachmentsContext.Provider>
                 </Box>

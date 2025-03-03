@@ -44,8 +44,9 @@ export const MessageAttachments = (props: {
     attachments: Attachment[] | undefined
     onClick?: (e: React.MouseEvent) => void
     onAttachmentClick?: (streamId: string) => void
+    eventId: string | undefined
 }) => {
-    const { onAttachmentClick, attachments, onClick } = props
+    const { onAttachmentClick, attachments, onClick, eventId } = props
 
     // prevent recursive rendering of message attachments
     const isMessageAttachementContext =
@@ -123,6 +124,7 @@ export const MessageAttachments = (props: {
                         <EmbeddedMessageContainer
                             key={attachment.id}
                             attachment={attachment}
+                            eventId={eventId}
                             onAttachmentClick={onAttachmentClick}
                             onClick={onClick}
                         />
@@ -142,7 +144,7 @@ export const MessageAttachments = (props: {
                     {tickerAttachments.map((ticker) => {
                         return (
                             <Box key={ticker.id} gap="lg">
-                                <TradingChartAttachment attachment={ticker} />
+                                <TradingChartAttachment attachment={ticker} eventId={eventId} />
                             </Box>
                         )
                     })}
@@ -197,8 +199,9 @@ const EmbeddedMessageContainer = (props: {
     attachment: EmbeddedMessageAttachment
     onClick?: (e: React.MouseEvent) => void
     onAttachmentClick?: (attachmentId: string) => void
+    eventId: string | undefined
 }) => {
-    const { attachment } = props
+    const { attachment, eventId } = props
     const attachedMessage =
         attachment.channelMessageEvent?.content?.msgType === MessageType.Text
             ? attachment.channelMessageEvent
@@ -214,6 +217,7 @@ const EmbeddedMessageContainer = (props: {
             attachmentChildren={
                 <MessageAttachments
                     attachments={attachment.channelMessageEvent?.attachments}
+                    eventId={eventId}
                     onAttachmentClick={props.onAttachmentClick}
                     onClick={props.onClick}
                 />

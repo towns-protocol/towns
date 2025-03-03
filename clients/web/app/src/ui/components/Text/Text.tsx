@@ -38,6 +38,7 @@ export type TextProps = Props &
         | 'marginBottom'
         | 'overflow'
         | 'title'
+        | 'maxWidth'
     >
 
 export const Text = forwardRef<HTMLElement, TextProps>((props, ref) => {

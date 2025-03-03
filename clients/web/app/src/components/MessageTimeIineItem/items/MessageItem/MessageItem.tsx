@@ -365,6 +365,7 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
             {props.children}
             {attachments && attachments.length > 0 && (
                 <MessageAttachments
+                    eventId={event.eventId}
                     attachments={attachments}
                     onAttachmentClick={onAttachmentClick}
                     onClick={isTouch && selectable ? onMediaClick : undefined}

@@ -1,5 +1,5 @@
 import React, { forwardRef, useCallback, useEffect, useRef, useState } from 'react'
-import { Box, Icon, Stack, Text, Tooltip } from '@ui'
+import { Box, BoxProps, Icon, Stack, Text, Tooltip } from '@ui'
 import useCopyToClipboard from 'hooks/useCopyToClipboard'
 import { TextProps } from 'ui/components/Text/Text'
 
@@ -9,9 +9,11 @@ type Props = {
     color?: TextProps['color']
     fontSize?: TextProps['fontSize']
     fontWeight?: TextProps['fontWeight']
+    maxWidth?: TextProps['maxWidth']
     children?: React.ReactNode
     vertical?: boolean
     noTooltip?: boolean
+    gap?: BoxProps['gap']
     onClick?: () => void
 }
 
@@ -43,7 +45,14 @@ export function CopyIcon({ copied, color }: { copied: boolean; color: TextProps[
 }
 
 export const ClipboardCopy = forwardRef<HTMLDivElement, Props>((props, ref) => {
-    const { fontSize = 'md', fontWeight = undefined, vertical = false, noTooltip = false } = props
+    const {
+        fontSize = 'md',
+        gap = 'sm',
+        maxWidth = undefined,
+        fontWeight = undefined,
+        vertical = false,
+        noTooltip = false,
+    } = props
     const [, copy] = useCopyToClipboard()
     const color = props.color ?? 'gray2'
 
@@ -75,8 +84,9 @@ export const ClipboardCopy = forwardRef<HTMLDivElement, Props>((props, ref) => {
             }}
         >
             <Stack
+                maxWidth={maxWidth}
                 direction={vertical ? 'columnReverse' : 'row'}
-                gap="sm"
+                gap={gap}
                 alignItems={vertical ? 'center' : 'end'}
                 cursor={!copied ? 'pointer' : 'default'}
                 ref={ref}

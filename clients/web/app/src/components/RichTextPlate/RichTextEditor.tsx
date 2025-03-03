@@ -86,6 +86,7 @@ type RichTextEditorProps = {
     onCancel?: () => void
     onChange?: (editor: TPlateEditor) => void
     onArrowEscape?: (direction: 'up' | 'down') => void
+    renderSendButton?: (onSend: () => void) => React.ReactNode
 }
 
 export const RichTextEditor = ({
@@ -117,6 +118,7 @@ export const RichTextEditor = ({
     onCancel = noop,
     onSend = noop,
     onChange = noop,
+    renderSendButton,
 }: RichTextEditorProps) => {
     /* refs */
     const { isTouch, isAndroid } = useDevice()
@@ -362,6 +364,7 @@ export const RichTextEditor = ({
             key="markdownplugin"
             isEditorEmpty={isEditorEmpty}
             sendMessage={sendMessage}
+            renderSendButton={renderSendButton}
             onCancel={onCancel}
         />
     )

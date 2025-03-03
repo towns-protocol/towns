@@ -1,19 +1,20 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { ComponentProps, useCallback, useEffect, useState } from 'react'
 import { Icon, IconName, TextField } from '@ui'
 import { formatUnits, parseUnits } from 'hooks/useBalance'
 
-export const BigIntInput = (props: {
+type Props = {
     icon: IconName
     decimals: number
     value: bigint | undefined
     onChange: (value: bigint) => void
-}) => {
-    const { icon, decimals, value: rawValue, onChange } = props
+} & Omit<ComponentProps<typeof TextField>, 'onChange' | 'value'>
+
+export const BigIntInput = (props: Props) => {
+    const { icon, decimals, value: rawValue, onChange, ...inputProps } = props
     const [displayValue, setDisplayValue] = useState('')
 
     useEffect(() => {
-        if (!rawValue) {
-            setDisplayValue('')
+        if (typeof rawValue === 'undefined') {
             return
         }
         try {
@@ -33,7 +34,6 @@ export const BigIntInput = (props: {
                 onChange(0n)
                 return
             }
-
             try {
                 const rawValue = BigInt(parseUnits(inputValue, decimals))
                 onChange(rawValue)
@@ -45,13 +45,16 @@ export const BigIntInput = (props: {
     )
     return (
         <TextField
-            paddingX
+            background="level2"
+            paddingX="md"
             rounded="full"
-            background="level3"
             before={<Icon type={icon} size="square_xs" />}
             value={displayValue}
-            placeholder="Custom Amount"
+            height="x5"
+            style={{ width: '100%', minWidth: 55 }}
+            maxWidth="x20"
             onChange={onTextFieldChanged}
+            {...inputProps}
         />
     )
 }

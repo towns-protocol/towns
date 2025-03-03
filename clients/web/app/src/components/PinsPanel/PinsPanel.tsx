@@ -107,7 +107,10 @@ const PinnedMessage = (props: { pin: TimelinePin; channelId: string; canPin?: bo
                         content={timelineEvent.content.body}
                     />
                     {(timelineEvent.content.attachments?.length ?? 0) > 0 && (
-                        <MessageAttachments attachments={timelineEvent.content.attachments} />
+                        <MessageAttachments
+                            attachments={timelineEvent.content.attachments}
+                            eventId={timelineEvent.eventId}
+                        />
                     )}
                 </>
             ) : (

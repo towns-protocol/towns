@@ -1,7 +1,5 @@
-import { AnimatePresence } from 'framer-motion'
-
 import React from 'react'
-import { Box, BoxProps, MotionBox, Stack } from '@ui'
+import { Box, BoxProps, Stack, Text } from '@ui'
 
 export const TabPanel = (
     props: {
@@ -9,7 +7,7 @@ export const TabPanel = (
         value: string
         children: React.ReactNode
         tabs: { label: string; value: string }[]
-        onChange: (tab: string) => void
+        onChange?: (tab: 'buy' | 'sell') => void
     } & Omit<BoxProps, 'onChange'>,
 ) => {
     const { tabs, onChange, children, value, ...boxProps } = props
@@ -26,23 +24,21 @@ export const TabPanel = (
                             cursor="pointer"
                             key={tab.value}
                             height="x4"
-                            onClick={() => onChange(tab.value)}
+                            onClick={() => onChange?.(tab.value as 'buy' | 'sell')}
                         >
                             <Box centerContent grow>
-                                {tab.label}
+                                <Text
+                                    fontWeight={isSelected ? 'strong' : 'normal'}
+                                    color={isSelected ? 'default' : 'gray2'}
+                                >
+                                    {tab.label}
+                                </Text>
                             </Box>
-                            <AnimatePresence>
-                                {isSelected ? (
-                                    <MotionBox
-                                        height="2"
-                                        background="cta2"
-                                        layoutId={props.layoutId + 'tab'}
-                                        layout="position"
-                                    />
-                                ) : (
-                                    <Box height="2" />
-                                )}
-                            </AnimatePresence>
+                            <Box
+                                height="2"
+                                background={isSelected ? 'cta2' : 'none'}
+                                transition="default"
+                            />
                         </Box>
                     )
                 })}

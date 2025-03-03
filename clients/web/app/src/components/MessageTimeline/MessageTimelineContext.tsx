@@ -20,7 +20,7 @@ import { useHandleReaction } from 'hooks/useReactions'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { useGetAbstractAccountAddressAsync } from 'hooks/useAbstractAccountAddress'
-import { ErrorNotification } from '@components/Notifications/ErrorNotifcation'
+import { StandardToast } from '@components/Notifications/StandardToast'
 import { useTimelineMessageEditing } from './hooks/useTimelineMessageEditing'
 import { useTimelineRecorder } from './hooks/useTimelineRecorder'
 
@@ -117,9 +117,9 @@ export const MessageTimelineWrapper = (props: {
                 console.error('Error navigating to user profile', error)
                 toast.custom((t) => {
                     return (
-                        <ErrorNotification
+                        <StandardToast.Error
                             toast={t}
-                            errorMessage={"There was an error navigating to this users's profile."}
+                            message={"There was an error navigating to this users's profile."}
                         />
                     )
                 })

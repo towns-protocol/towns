@@ -14,6 +14,7 @@ export const SendMarkdownPlugin = (props: {
     sendMessage?: () => void
     onCancel?: () => void
     isEditorEmpty: boolean
+    renderSendButton?: (onSend: () => void) => React.ReactNode
 }) => {
     const { disabled, sendMessage, isEditorEmpty, hasImage } = props
 
@@ -47,6 +48,7 @@ export const SendMarkdownPlugin = (props: {
                             hasImage={hasImage}
                             disabled={disabled}
                             verticalButtons={verticalButtons}
+                            renderSendButton={props.renderSendButton}
                             onCancel={props.onCancel}
                             onSave={sendMessage}
                         />

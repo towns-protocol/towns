@@ -111,7 +111,7 @@ export const EditorAttachmentPreview = (props: {
                 )}
                 {props.attachments?.length ? (
                     <Box>
-                        <MessageAttachments attachments={props.attachments} />
+                        <MessageAttachments attachments={props.attachments} eventId={undefined} />
                     </Box>
                 ) : (
                     <></>

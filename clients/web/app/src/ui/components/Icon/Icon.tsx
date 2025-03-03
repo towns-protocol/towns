@@ -751,6 +751,17 @@ export const KeyIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
     </svg>
 ))
 
+const LightningIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
+    <svg width="16" height="17" viewBox="0 0 16 17" fill="none" {...props} ref={ref}>
+        <path
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="M9.44988 2.47627L3.5793 8.34686C3.05317 8.87298 3.42579 9.77257 4.16985 9.77257H6.02572L5.13735 14.6586C4.99089 15.4641 5.97064 15.9775 6.54959 15.3985L12.4202 9.52796C12.9463 9.00183 12.5737 8.10224 11.8296 8.10224H9.97375L10.8621 3.21623C11.0086 2.41066 10.0288 1.89732 9.44988 2.47627Z"
+            fill="currentColor"
+        />
+    </svg>
+))
+
 const LinkIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
     <svg
         width="24"
@@ -2387,6 +2398,7 @@ const iconMap = {
     invite: InviteIcon,
     italic: ItalicIcon,
     key: KeyIcon,
+    lightning: LightningIcon,
     link: LinkIcon,
     linkOut: LinkOut,
     linkOutWithFrame: LinkOutWithFrame,

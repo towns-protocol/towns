@@ -11,24 +11,30 @@ import { TextSprinkles } from '../Text/Text.css'
 type FancyButtonProps = {
     children?: string
     cta?: boolean
-    compact?: boolean
+    compact?: boolean | BoxProps['height']
     spinner?: boolean
     disabled?: boolean
     icon?: IconName
     color?: TextSprinkles['color']
     onClick?: () => void
     onClickDisabled?: () => void
-    borderRadius?: BoxProps['borderRadius']
-    boxShadow?: BoxProps['boxShadow']
-    background?: BoxProps['background']
-    gap?: BoxProps['gap']
-    paddingX?: BoxProps['paddingX']
     iconSize?: IconAtoms['size']
+    layoutRoot?: boolean
 } & Omit<
     ButtonHTMLAttributes<HTMLButtonElement>,
     'onDrag' | 'onDragEnd' | 'onDragStart' | 'onAnimationStart' | 'size' | 'color'
 > &
-    Pick<BoxProps, 'width'>
+    Pick<
+        BoxProps,
+        | 'width'
+        | 'paddingLeft'
+        | 'paddingRight'
+        | 'paddingX'
+        | 'borderRadius'
+        | 'boxShadow'
+        | 'background'
+        | 'gap'
+    >
 
 /**
  * Convulted button that enables background transitions
@@ -38,7 +44,7 @@ export const FancyButton = React.forwardRef<HTMLButtonElement, FancyButtonProps>
         children,
         cta,
         icon,
-        compact,
+        compact = false,
         spinner,
         disabled,
         boxShadow,
@@ -47,6 +53,7 @@ export const FancyButton = React.forwardRef<HTMLButtonElement, FancyButtonProps>
         gap,
         iconSize,
         color,
+        layoutRoot,
         ...buttonProps
     } = props
 
@@ -98,6 +105,7 @@ export const FancyButton = React.forwardRef<HTMLButtonElement, FancyButtonProps>
             layout
             horizontal
             centerContent
+            layoutRoot={layoutRoot}
             ref={ref}
             whileTap="tap"
             as="button"
@@ -108,7 +116,7 @@ export const FancyButton = React.forwardRef<HTMLButtonElement, FancyButtonProps>
             animate="show"
             exit="hide"
             background={background}
-            height={compact ? 'x5' : 'x6'}
+            height={compact === true ? 'x5' : compact === false ? 'x6' : compact}
             paddingX="lg"
             style={
                 {
