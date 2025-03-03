@@ -217,20 +217,98 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
   function _getWalletsByRootKeyWithDelegations(
     address rootKey
   ) internal view returns (address[] memory wallets) {
-    address[] memory linkedWallets = WalletLinkStorage
-      .layout()
-      .walletsByRootKey[rootKey]
-      .values();
+    // Single storage read for layout
+    WalletLinkStorage.Layout storage ds = WalletLinkStorage.layout();
+    address delegateRegistry = ds.delegateByVersion[DELEGATE_VERSION];
+    EnumerableSet.AddressSet storage linkedWalletsSet = ds.walletsByRootKey[
+      rootKey
+    ];
 
-    uint256 count = 0;
-    uint256 linkedWalletsLength = linkedWallets.length;
+    uint256 linkedWalletsLength = linkedWalletsSet.length();
+    if (linkedWalletsLength == 0) {
+      return new address[](0);
+    }
 
+    // Get linked wallets and count total delegations
+    address[] memory linkedWallets = linkedWalletsSet.values();
+    uint256 totalCount = linkedWalletsLength;
+
+    // First pass: count total delegations add to totalCount
     for (uint256 i; i < linkedWalletsLength; ++i) {
-      address[] memory delegators = _getThirdPartyDelegators(linkedWallets[i]);
-      uint256 delegatorsLength = delegators.length;
-      for (uint256 j; j < delegatorsLength; ++j) {
-        wallets[count] = delegators[j];
-        count++;
+      IDelegateRegistry.Delegation[] memory delegations = IDelegateRegistry(
+        delegateRegistry
+      ).getIncomingDelegations(linkedWallets[i]);
+
+      uint256 delegationsLength = delegations.length;
+      for (uint256 j; j < delegationsLength; ++j) {
+        if (delegations[j].type_ == IDelegateRegistry.DelegationType.ALL) {
+          ++totalCount;
+        }
+      }
+    }
+
+    // Initialize result array
+    wallets = new address[](totalCount);
+
+    assembly {
+      // Copy linked wallets to result array
+      let walletsPtr := add(wallets, 0x20)
+      let linkedWalletsPtr := add(linkedWallets, 0x20)
+      let size := mul(linkedWalletsLength, 0x20)
+
+      // Copy linked wallets data
+      pop(staticcall(gas(), 4, linkedWalletsPtr, size, walletsPtr, size))
+
+      // Current position in result array
+      let currentIndex := linkedWalletsLength
+
+      // Get the array pointer
+      let ptr := walletsPtr
+
+      // Update ptr to the next empty slot
+      ptr := add(ptr, mul(currentIndex, 0x20))
+
+      // Store the current position for later use
+      mstore(0x40, ptr)
+    }
+
+    // Second pass: add delegators
+    uint256 currentIndex = linkedWalletsLength;
+    for (uint256 i; i < linkedWalletsLength; ) {
+      IDelegateRegistry.Delegation[] memory delegations = IDelegateRegistry(
+        delegateRegistry
+      ).getIncomingDelegations(linkedWallets[i]);
+
+      uint256 delegationsLength = delegations.length;
+
+      assembly {
+        // Get delegations array data pointer
+        let delegationsPtr := add(delegations, 0x20)
+
+        // Get wallets array data pointer
+        let walletsPtr := add(wallets, 0x20)
+
+        // Loop through delegations
+        for {
+          let j := 0
+        } lt(j, delegationsLength) {
+          j := add(j, 1)
+        } {
+          let delegationPtr := mload(add(delegationsPtr, mul(j, 0x20)))
+
+          // Check if type is ALL (1)
+          if eq(mload(delegationPtr), 1) {
+            // Load the 'from' address and store it
+            mstore(
+              add(walletsPtr, mul(currentIndex, 0x20)),
+              mload(add(delegationPtr, 0x40))
+            )
+            currentIndex := add(currentIndex, 1)
+          }
+        }
+      }
+      unchecked {
+        ++i;
       }
     }
 
@@ -303,32 +381,6 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
 
   function _setDelegateByVersion(uint256 version, address delegate) internal {
     WalletLinkStorage.layout().delegateByVersion[version] = delegate;
-  }
-
-  function _getThirdPartyDelegators(
-    address linkedWallet
-  ) internal view returns (address[] memory delegators) {
-    IDelegateRegistry.Delegation[] memory delegations = IDelegateRegistry(
-      WalletLinkStorage.layout().delegateByVersion[DELEGATE_VERSION]
-    ).getIncomingDelegations(linkedWallet);
-
-    if (delegations.length == 0) {
-      return new address[](0);
-    }
-
-    uint256 count = 0;
-    for (uint256 i; i < delegations.length; ++i) {
-      if (delegations[i].type_ == IDelegateRegistry.DelegationType.ALL) {
-        delegators[count] = delegations[i].from;
-        count++;
-      }
-    }
-
-    assembly {
-      mstore(delegators, count)
-    }
-
-    return delegators;
   }
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

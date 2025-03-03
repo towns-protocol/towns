@@ -809,10 +809,10 @@
       "license": "MIT"
     },
     "contracts/src/factory/facets/wallet-link/WalletLinkBase.sol": {
-      "keccak256": "0x8084fd1fd98c1bf311a5de94bce1a80b77dd443c7fe0340641b52ff20abf66b0",
+      "keccak256": "0x179269e2c5c244618859c0745f80d807177eee26aad1781c64394d1bea26b0ab",
       "urls": [
-        "bzz-raw://e16b52fc7321b60147458d88cf4b9658543452835d85102f4a07dbc0c695ee1a",
-        "dweb:/ipfs/QmX4aMT1nLTRmWAkxEM4fnATHPZPQkbJcSBcp1YrnHbqjo"
+        "bzz-raw://9868ccd6dd573551220942eb9fa32bb4bf0d16be0e312cd733aaa7bae71c4372",
+        "dweb:/ipfs/QmZ1phbTijDkXt7Ead5e5v8WAausHTXCr5JHqKaFZcsbDk"
       ],
       "license": "MIT"
     },

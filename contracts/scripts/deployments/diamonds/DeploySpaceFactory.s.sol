@@ -128,6 +128,7 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
   address public tieredLogPricingV2;
   address public tieredLogPricingV3;
   address public fixedPricing;
+  address public mockDelegationRegistry;
   address[] pricingModules;
 
   // init
@@ -444,7 +445,8 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
 
   function _getDelegateRegistry() internal returns (address) {
     if (isAnvil()) {
-      return address(new MockDelegationRegistry());
+      mockDelegationRegistry = address(new MockDelegationRegistry());
+      return mockDelegationRegistry;
     }
     return 0x00000000000000447e69651d841bD8D104Bed493;
   }

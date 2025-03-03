@@ -7,18 +7,22 @@ import {WalletLink} from "contracts/src/factory/facets/wallet-link/WalletLink.so
 
 // libraries
 import {Vm} from "forge-std/Test.sol";
-
+import {console} from "forge-std/console.sol";
 // contracts
 import {DeployBase} from "contracts/scripts/common/DeployBase.s.sol";
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
 import {Nonces} from "@river-build/diamond/src/utils/Nonces.sol";
+import {MockDelegationRegistry} from "contracts/test/mocks/MockDelegationRegistry.sol";
 
 contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
   Vm.Wallet internal rootWallet;
   Vm.Wallet internal wallet;
   Vm.Wallet internal smartAccount;
 
+  MockDelegationRegistry public mockDelegationRegistry;
+
   uint256 private constant MAX_LINKED_WALLETS = 10;
+  uint256 private constant DELEGATE_VERSION = 2;
 
   function setUp() public override {
     super.setUp();
@@ -26,6 +30,10 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
     rootWallet = vm.createWallet("rootKey");
     wallet = vm.createWallet("eoaWallet");
     smartAccount = vm.createWallet("smartAccount");
+
+    mockDelegationRegistry = MockDelegationRegistry(
+      walletLink.getDelegateByVersion(DELEGATE_VERSION)
+    );
   }
 
   // =============================================================
@@ -703,5 +711,33 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
       )
     );
     walletLink.removeCallerLink();
+  }
+
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                           Delegations                      */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+  /*
+   * @dev This test checks that a cold wallet can delegate to a linked wallet
+   *      and that the linked wallet and the cold wallet are both included in
+   *      the returned array
+   */
+  function test_getWalletsByRootKeyWithDelegations()
+    external
+    givenWalletIsLinkedViaCaller
+  {
+    address coldWallet = vm.createWallet("coldWallet").addr;
+
+    // As a cold wallet, delegate to a linked wallet
+    // This is what delegate.xyz v2 does
+    vm.prank(coldWallet);
+    mockDelegationRegistry.delegateAll(wallet.addr);
+
+    address[] memory wallets = walletLink.getWalletsByRootKeyWithDelegations(
+      rootWallet.addr
+    );
+
+    assertContains(wallets, coldWallet);
+    assertContains(wallets, wallet.addr);
   }
 }

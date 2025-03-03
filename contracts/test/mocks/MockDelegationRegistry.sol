@@ -5,10 +5,19 @@ pragma solidity ^0.8.23;
 import {IDelegateRegistry} from "contracts/src/factory/facets/wallet-link/interfaces/IDelegateRegistry.sol";
 
 // libraries
+import {EnumerableSetLib} from "solady/utils/EnumerableSetLib.sol";
 
 // contracts
 
 contract MockDelegationRegistry is IDelegateRegistry {
+  using EnumerableSetLib for EnumerableSetLib.AddressSet;
+
+  mapping(address to => EnumerableSetLib.AddressSet) internal _delegations;
+
+  function delegateAll(address to) external {
+    _delegations[to].add(msg.sender);
+  }
+
   function checkDelegateForAll(
     address,
     address,
@@ -18,8 +27,29 @@ contract MockDelegationRegistry is IDelegateRegistry {
   }
 
   function getIncomingDelegations(
-    address
-  ) external pure returns (Delegation[] memory delegations) {
-    return new Delegation[](0);
+    address to
+  ) external view returns (Delegation[] memory delegations) {
+    EnumerableSetLib.AddressSet storage incomingDelegations = _delegations[to];
+
+    uint256 count = incomingDelegations.length();
+
+    if (count == 0) {
+      return new Delegation[](0);
+    }
+
+    delegations = new Delegation[](count);
+
+    for (uint256 i; i < count; i++) {
+      address from = incomingDelegations.at(i);
+      delegations[i] = Delegation({
+        type_: IDelegateRegistry.DelegationType.ALL,
+        to: to,
+        from: from,
+        rights: bytes32(0),
+        contract_: address(0),
+        tokenId: 0,
+        amount: 0
+      });
+    }
   }
 }
