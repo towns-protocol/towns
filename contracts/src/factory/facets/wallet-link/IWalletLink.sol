@@ -52,7 +52,8 @@ interface IWalletLinkBase {
   error WalletLink__CannotLinkToSelf();
   error WalletLink__CannotLinkToRootWallet(address wallet, address rootKey);
   error WalletLink__DefaultWalletAlreadySet();
-  error WalletLink__MaxLinkedWalletsReached(address rootKey);
+  error WalletLink__MaxLinkedWalletsReached();
+  error WalletLink__CannotRemoveDefaultWallet();
 }
 
 interface IWalletLink is IWalletLinkBase {
@@ -93,9 +94,24 @@ interface IWalletLink is IWalletLinkBase {
    */
   function removeCallerLink() external;
 
+  /**
+   * @notice Set the default wallet by the root wallet
+   * @param defaultWallet the wallet being set as the default wallet
+   * @dev A wallet can only be set as the default wallet if it is already linked to the root wallet
+   * @dev The default wallet can only be an EVM wallet for now
+   */
+  function setDefaultWallet(address defaultWallet) external;
+
   // =============================================================
   //                      External - Read
   // =============================================================
+
+  /**
+   * @notice Returns the default wallet for a root key
+   * @param rootKey the public key of the users rootkey to find associated wallets for
+   * @return defaultWallet the default wallet for the root key
+   */
+  function getDefaultWallet(address rootKey) external view returns (address);
 
   /**
    * @notice Returns all wallets linked to a root key
@@ -103,6 +119,15 @@ interface IWalletLink is IWalletLinkBase {
    * @return wallets an array of ethereum wallets linked to this root key
    */
   function getWalletsByRootKey(
+    address rootKey
+  ) external view returns (address[] memory wallets);
+
+  /**
+   * @notice Returns all wallets linked to a root key with their delegations
+   * @param rootKey the public key of the users rootkey to find associated wallets for
+   * @return wallets an array of ethereum wallets linked to this root key
+   */
+  function getWalletsByRootKeyWithDelegations(
     address rootKey
   ) external view returns (address[] memory wallets);
 
@@ -133,4 +158,19 @@ interface IWalletLink is IWalletLinkBase {
   function getLatestNonceForRootKey(
     address rootKey
   ) external view returns (uint256);
+
+  /**
+   * @notice gets the delegate for a given version
+   * @param version the version of the delegate to get
+   */
+  function getDelegateByVersion(
+    uint256 version
+  ) external view returns (address);
+
+  /**
+   * @notice sets the delegate for a given version
+   * @param version the version of the delegate to set
+   * @param delegate the delegate to set
+   */
+  function setDelegateByVersion(uint256 version, address delegate) external;
 }

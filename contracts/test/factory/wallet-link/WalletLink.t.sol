@@ -9,14 +9,17 @@ import {WalletLink} from "contracts/src/factory/facets/wallet-link/WalletLink.so
 import {Vm} from "forge-std/Test.sol";
 
 // contracts
+import {DeployBase} from "contracts/scripts/common/DeployBase.s.sol";
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
-
 import {Nonces} from "@river-build/diamond/src/utils/Nonces.sol";
+import {DeployWalletLink} from "contracts/scripts/deployments/facets/DeployWalletLink.s.sol";
 
-contract WalletLinkTest is IWalletLinkBase, BaseSetup {
+contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
   Vm.Wallet internal rootWallet;
   Vm.Wallet internal wallet;
   Vm.Wallet internal smartAccount;
+
+  uint256 private constant MAX_LINKED_WALLETS = 10;
 
   function setUp() public override {
     super.setUp();
@@ -195,6 +198,43 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup {
     walletLink.linkCallerToRootKey(
       LinkedWallet(root, signature, LINKED_WALLET_MESSAGE),
       nonce2
+    );
+  }
+
+  function test_revertWhen_linkCallerToRootKeyMaxLinkedWalletsReached()
+    external
+  {
+    address[] memory accounts = _createAccounts(MAX_LINKED_WALLETS);
+
+    uint256 nonce;
+    bytes memory signature;
+
+    for (uint256 i = 0; i < MAX_LINKED_WALLETS; i++) {
+      address account = accounts[i];
+
+      nonce = walletLink.getLatestNonceForRootKey(rootWallet.addr);
+      signature = _signWalletLink(rootWallet.privateKey, account, nonce);
+
+      vm.prank(account);
+      walletLink.linkCallerToRootKey(
+        LinkedWallet({
+          addr: rootWallet.addr,
+          signature: signature,
+          message: LINKED_WALLET_MESSAGE
+        }),
+        nonce
+      );
+    }
+
+    address failingAccount = _randomAddress();
+    nonce = walletLink.getLatestNonceForRootKey(rootWallet.addr);
+    signature = _signWalletLink(rootWallet.privateKey, failingAccount, nonce);
+
+    vm.prank(failingAccount);
+    vm.expectRevert(WalletLink__MaxLinkedWalletsReached.selector);
+    walletLink.linkCallerToRootKey(
+      LinkedWallet(rootWallet.addr, signature, LINKED_WALLET_MESSAGE),
+      nonce
     );
   }
 
@@ -413,6 +453,70 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup {
       LinkedWallet(rootWallet.addr, rootSignature, LINKED_WALLET_MESSAGE),
       nonce
     );
+  }
+
+  // =============================================================
+  //                         setDefaultWallet
+  // =============================================================
+
+  function test_setDefaultWallet() external givenWalletIsLinkedViaCaller {
+    assertTrue(walletLink.checkIfLinked(rootWallet.addr, wallet.addr));
+
+    vm.prank(wallet.addr);
+    vm.expectEmit(address(walletLink));
+    emit SetDefaultWallet(rootWallet.addr, wallet.addr);
+    walletLink.setDefaultWallet(wallet.addr);
+
+    assertEq(walletLink.getDefaultWallet(rootWallet.addr), wallet.addr);
+  }
+
+  function test_revertWhen_setDefaultWalletAddressIsZero() external {
+    vm.expectRevert(WalletLink__InvalidAddress.selector);
+    walletLink.setDefaultWallet(address(0));
+  }
+
+  function test_revertWhen_setDefaultWalletNotLinked() external {
+    address anotherWallet = vm.createWallet("wallet2").addr;
+
+    assertFalse(walletLink.checkIfLinked(rootWallet.addr, anotherWallet));
+
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        WalletLink__NotLinked.selector,
+        anotherWallet,
+        address(0)
+      )
+    );
+    walletLink.setDefaultWallet(anotherWallet);
+  }
+
+  function test_revertWhen_setDefaultWalletWalletNotLinked()
+    external
+    givenWalletIsLinkedViaCaller
+  {
+    address randomAddress = _randomAddress();
+
+    vm.prank(randomAddress);
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        WalletLink__NotLinked.selector,
+        randomAddress,
+        rootWallet.addr
+      )
+    );
+    walletLink.setDefaultWallet(wallet.addr);
+  }
+
+  function test_revertWhen_setDefaultWalletDefaultWalletAlreadySet()
+    external
+    givenWalletIsLinkedViaCaller
+  {
+    vm.prank(wallet.addr);
+    walletLink.setDefaultWallet(wallet.addr);
+
+    vm.prank(wallet.addr);
+    vm.expectRevert(WalletLink__DefaultWalletAlreadySet.selector);
+    walletLink.setDefaultWallet(wallet.addr);
   }
 
   // =============================================================

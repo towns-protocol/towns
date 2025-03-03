@@ -71,18 +71,16 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
     ds.walletsByRootKey[rootWallet.addr].add(newWallet);
     ds.rootKeyByWallet[newWallet] = rootWallet.addr;
 
-    // if there are no default wallets, set the new wallet as the default wallet
-    if (_getDefaultWallet(rootWallet.addr) == address(0)) {
-      ds.defaultWalletByRootKey[rootWallet.addr] = newWallet;
-    }
-
     emit LinkWalletToRootKey(newWallet, rootWallet.addr);
   }
 
   /// @dev Links a wallet to a root wallet
   /// @param wallet the wallet that is being linked to the root wallet
   /// @param rootWallet the root wallet that the wallet is linking to
-  /// @param nonce a nonce used to prevent replay attacks, nonce must always be higher than previous nonce
+  /// @param nonce The root wallet's nonce used to prevent replay attacks, nonce must always be higher than previous nonce
+  /// @dev Links a wallet to a root wallet by verifying both the wallet's signature and root wallet's signature.
+  /// The wallet signs a message containing the root wallet's address and nonce, while the root wallet signs a message
+  /// containing the wallet's address and nonce. Both signatures must be valid for the link to be created.
   function _linkWalletToRootWallet(
     LinkedWallet memory wallet,
     LinkedWallet memory rootWallet,
@@ -127,11 +125,6 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
     ds.walletsByRootKey[rootWallet.addr].add(wallet.addr);
     ds.rootKeyByWallet[wallet.addr] = rootWallet.addr;
 
-    // if there are no default wallets, set the new wallet as the default wallet
-    if (_getDefaultWallet(rootWallet.addr) == address(0)) {
-      ds.defaultWalletByRootKey[rootWallet.addr] = wallet.addr;
-    }
-
     emit LinkWalletToRootKey(wallet.addr, rootWallet.addr);
   }
 
@@ -159,6 +152,11 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
     // Check that the wallet is linked to the root wallet
     if (ds.rootKeyByWallet[walletToRemove] != rootWallet.addr) {
       revert WalletLink__NotLinked(walletToRemove, rootWallet.addr);
+    }
+
+    // Check that the wallet is not the default wallet
+    if (ds.defaultWalletByRootKey[rootWallet.addr] == walletToRemove) {
+      revert WalletLink__CannotRemoveDefaultWallet();
     }
 
     // Verify that the root wallet signature contains the correct nonce and the correct wallet
@@ -195,6 +193,11 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
       revert WalletLink__NotLinked(walletToRemove, rootWallet);
     }
 
+    // check that the default wallet is not the wallet to remove
+    if (ds.defaultWalletByRootKey[rootWallet] == walletToRemove) {
+      revert WalletLink__CannotRemoveDefaultWallet();
+    }
+
     // Remove the link in the walletToRemove to root keys map
     ds.rootKeyByWallet[walletToRemove] = address(0);
     ds.walletsByRootKey[rootWallet].remove(walletToRemove);
@@ -211,7 +214,7 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
     return WalletLinkStorage.layout().walletsByRootKey[rootKey].values();
   }
 
-  function _getWalletsByRootKeyWithDelegators(
+  function _getWalletsByRootKeyWithDelegations(
     address rootKey
   ) internal view returns (address[] memory wallets) {
     address[] memory linkedWallets = WalletLinkStorage
@@ -252,39 +255,34 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
   /*                   Default Wallet Functions                 */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-  function _setDefaultWallet(
-    address defaultWallet,
-    LinkedWallet memory rootWallet,
-    uint256 nonce
-  ) internal {
+  function _setDefaultWallet(address caller, address defaultWallet) internal {
+    // check that the default wallet is not address(0)
+    if (defaultWallet == address(0)) {
+      revert WalletLink__InvalidAddress();
+    }
+
+    address rootWallet = _getRootKeyByWallet(defaultWallet);
+
+    // check that the default wallet is linked to a root wallet
+    if (rootWallet == address(0)) {
+      revert WalletLink__NotLinked(defaultWallet, rootWallet);
+    }
+
+    // check that the caller can only be a linked wallet or the root wallet
+    if (!_checkIfLinked(rootWallet, caller) && caller != rootWallet) {
+      revert WalletLink__NotLinked(caller, rootWallet);
+    }
+
     WalletLinkStorage.Layout storage ds = WalletLinkStorage.layout();
 
-    // Verify the default wallet is linked to the root wallet and that the default wallet is not the root wallet itself
-    if (
-      !_checkIfLinked(rootWallet.addr, defaultWallet) &&
-      defaultWallet != rootWallet.addr
-    ) {
-      revert WalletLink__NotLinked(defaultWallet, rootWallet.addr);
+    // check that the default isn't already the default wallet
+    if (ds.defaultWalletByRootKey[rootWallet] == defaultWallet) {
+      revert WalletLink__DefaultWalletAlreadySet();
     }
 
-    bytes32 structHash = _getLinkedWalletTypedDataHash(
-      rootWallet.message,
-      defaultWallet,
-      nonce
-    );
-    bytes32 rootKeyMessageHash = _hashTypedDataV4(structHash);
+    ds.defaultWalletByRootKey[rootWallet] = defaultWallet;
 
-    // Verify the signature of the root wallet is correct for the nonce and wallet address
-    if (
-      ECDSA.recover(rootKeyMessageHash, rootWallet.signature) != rootWallet.addr
-    ) {
-      revert WalletLink__InvalidSignature();
-    }
-
-    _useCheckedNonce(rootWallet.addr, nonce);
-    ds.defaultWalletByRootKey[rootWallet.addr] = defaultWallet;
-
-    emit SetDefaultWallet(rootWallet.addr, defaultWallet);
+    emit SetDefaultWallet(rootWallet, defaultWallet);
   }
 
   function _getDefaultWallet(
@@ -372,7 +370,7 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
 
     // Check that we haven't reached the maximum number of linked wallets
     if (ds.walletsByRootKey[rootWallet].length() >= MAX_LINKED_WALLETS) {
-      revert WalletLink__MaxLinkedWalletsReached(rootWallet);
+      revert WalletLink__MaxLinkedWalletsReached();
     }
   }
 

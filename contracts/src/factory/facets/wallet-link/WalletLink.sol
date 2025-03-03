@@ -9,8 +9,9 @@ import {IWalletLink} from "./IWalletLink.sol";
 // contracts
 import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
 import {WalletLinkBase} from "./WalletLinkBase.sol";
+import {OwnableBase} from "@river-build/diamond/src/facets/ownable/OwnableBase.sol";
 
-contract WalletLink is IWalletLink, WalletLinkBase, Facet {
+contract WalletLink is IWalletLink, WalletLinkBase, OwnableBase, Facet {
   function __WalletLink_init(
     address delegateRegistry
   ) external onlyInitializing {
@@ -49,6 +50,18 @@ contract WalletLink is IWalletLink, WalletLinkBase, Facet {
     _removeCallerLink();
   }
 
+  /// @inheritdoc IWalletLink
+  function setDefaultWallet(address defaultWallet) external {
+    _setDefaultWallet(msg.sender, defaultWallet);
+  }
+
+  /// @inheritdoc IWalletLink
+  function getDefaultWallet(
+    address rootWallet
+  ) external view returns (address) {
+    return _getDefaultWallet(rootWallet);
+  }
+
   /*
    * @inheritdoc IWalletLink
    */
@@ -56,6 +69,15 @@ contract WalletLink is IWalletLink, WalletLinkBase, Facet {
     address rootKey
   ) external view returns (address[] memory wallets) {
     return _getWalletsByRootKey(rootKey);
+  }
+
+  /**
+   * @inheritdoc IWalletLink
+   */
+  function getWalletsByRootKeyWithDelegations(
+    address rootKey
+  ) external view returns (address[] memory wallets) {
+    return _getWalletsByRootKeyWithDelegations(rootKey);
   }
 
   /**
@@ -77,9 +99,31 @@ contract WalletLink is IWalletLink, WalletLinkBase, Facet {
     return _checkIfLinked(rootKey, wallet);
   }
 
+  /**
+   * @inheritdoc IWalletLink
+   */
   function getLatestNonceForRootKey(
     address rootKey
   ) external view returns (uint256) {
     return _latestNonce(rootKey);
+  }
+
+  /**
+   * @inheritdoc IWalletLink
+   */
+  function getDelegateByVersion(
+    uint256 version
+  ) external view returns (address) {
+    return _getDelegateByVersion(version);
+  }
+
+  /**
+   * @inheritdoc IWalletLink
+   */
+  function setDelegateByVersion(
+    uint256 version,
+    address delegate
+  ) external onlyOwner {
+    _setDelegateByVersion(version, delegate);
   }
 }
