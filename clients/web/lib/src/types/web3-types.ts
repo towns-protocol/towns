@@ -3,7 +3,7 @@ import {
     RoleDetails as R_RoleDetails,
     ISpaceDapp as R_ISpaceDapp,
 } from '@river-build/web3'
-import { TownsUserOpClientSendUserOperationResponse } from '@towns/userops'
+import { SendUserOperationReturnType } from '@towns/userops'
 import { ContractReceipt, ContractTransaction, Signer, providers } from 'ethers'
 
 export type ContractEventListener = {
@@ -85,9 +85,7 @@ export type RoleDetails = R_RoleDetails
 export type ISpaceDapp = R_ISpaceDapp
 export type ReceiptType = ContractReceipt
 
-export type TransactionOrUserOperation =
-    | ContractTransaction
-    | TownsUserOpClientSendUserOperationResponse
+export type TransactionOrUserOperation = ContractTransaction | SendUserOperationReturnType
 
 export interface IChainConfig {
     chainId: number

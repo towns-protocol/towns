@@ -11,30 +11,30 @@ export function usePriceBreakdown(args: {
 }) {
     const { gasLimit, preVerificationGas, verificationGasLimit, gasPrice, value } = args
     const gasCost = costOfGas({
-        gasLimit,
-        preVerificationGas,
-        verificationGasLimit,
-        gasPrice,
+        gasLimit: BigNumber.from(gasLimit).toBigInt(),
+        preVerificationGas: BigNumber.from(preVerificationGas).toBigInt(),
+        verificationGasLimit: BigNumber.from(verificationGasLimit).toBigInt(),
+        gasPrice: BigNumber.from(gasPrice).toBigInt(),
     })
 
     const totalCost = totalCostOfUserOp({
-        gasLimit,
-        preVerificationGas,
-        verificationGasLimit,
-        gasPrice,
-        value,
+        gasLimit: BigNumber.from(gasLimit).toBigInt(),
+        preVerificationGas: BigNumber.from(preVerificationGas).toBigInt(),
+        verificationGasLimit: BigNumber.from(verificationGasLimit).toBigInt(),
+        gasPrice: BigNumber.from(gasPrice).toBigInt(),
+        value: value ? BigNumber.from(value).toBigInt() : undefined,
     })
 
-    const gasInEth = formatUnitsToFixedLength(gasCost.toBigInt())
+    const gasInEth = formatUnitsToFixedLength(gasCost)
 
     const currOpValueInEth = value
         ? formatUnitsToFixedLength(BigNumber.from(value).toBigInt())
         : undefined
 
     const totalInEth = {
-        full: formatUnitsToFixedLength(totalCost.toBigInt(), 18, 18),
-        truncated: formatUnitsToFixedLength(totalCost.toBigInt(), 18, 5),
-        value: totalCost.toBigInt(),
+        full: formatUnitsToFixedLength(totalCost, 18, 18),
+        truncated: formatUnitsToFixedLength(totalCost, 18, 5),
+        value: totalCost,
     }
 
     return {

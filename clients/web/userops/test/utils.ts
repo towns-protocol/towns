@@ -23,8 +23,17 @@ import {
     Space,
 } from '@river-build/web3'
 import { userOpsStore } from '../src/store/userOpsStore'
-import { TownsUserOpClientSendUserOperationResponse } from '../src/lib/useropjs/TownsUserOpClient'
+import { SendUserOperationReturnType } from '../src/lib/types'
 import * as encodeUpdateRoleDataHelpers from '../src/utils/encodeUpdateRoleData'
+import {
+    formatUserOperationRequest,
+    UserOperation,
+    PrepareUserOperationParameters,
+    prepareUserOperation,
+    SendUserOperationParameters,
+} from 'viem/account-abstraction'
+import { getAction, parseAccount } from 'viem/utils'
+import { AccountNotFoundError, SmartAccountClient } from 'permissionless'
 
 export const fundWallet = async (address: string, provider: LocalhostWeb3Provider) => {
     const wallet = new ethers.Wallet(
@@ -53,7 +62,13 @@ export const boredApeRuleData = createOperationsTree([
     },
 ])
 
-export const UserOps = ({ spaceDapp }: { spaceDapp: SpaceDapp }) => {
+export const UserOps = ({
+    spaceDapp,
+    lib,
+}: {
+    spaceDapp: SpaceDapp
+    lib: 'useropjs' | 'permissionless' | undefined
+}) => {
     return new TestUserOps({
         provider: spaceDapp.provider,
         config: spaceDapp.config,
@@ -65,6 +80,7 @@ export const UserOps = ({ spaceDapp }: { spaceDapp: SpaceDapp }) => {
         factoryAddress: process.env.AA_FACTORY_ADDRESS,
         paymasterProxyAuthSecret: process.env.AA_PAYMASTER_PROXY_AUTH_SECRET!,
         fetchAccessTokenFn: undefined,
+        lib: lib ?? (process.env.AA_LIB as 'useropjs' | 'permissionless'),
     })
 }
 
@@ -87,7 +103,7 @@ export async function createUngatedSpace({
     signer: ethers.Signer
     rolePermissions: Permission[]
     spaceName?: string
-}): Promise<TownsUserOpClientSendUserOperationResponse> {
+}): Promise<SendUserOperationReturnType> {
     const signerAddress = await signer.getAddress()
     const { spaceName: generatedSpaceName, channelName: channelName } =
         getSpaceAndChannelName(signerAddress)
@@ -169,7 +185,7 @@ export async function createGatedSpace({
     signer: ethers.Signer
     rolePermissions: Permission[]
     spaceName?: string
-}): Promise<TownsUserOpClientSendUserOperationResponse> {
+}): Promise<SendUserOperationReturnType> {
     const signerAddress = await signer.getAddress()
     const { spaceName: generatedSpaceName, channelName: channelName } =
         getSpaceAndChannelName(signerAddress)
@@ -255,7 +271,7 @@ export async function createFixedPriceSpace({
     rolePermissions: Permission[]
     spaceName?: string
     price?: string
-}): Promise<TownsUserOpClientSendUserOperationResponse> {
+}): Promise<SendUserOperationReturnType> {
     const signerAddress = await signer.getAddress()
     const { spaceName: generatedSpaceName, channelName: channelName } =
         getSpaceAndChannelName(signerAddress)
@@ -332,12 +348,16 @@ export function generatePrivyWalletIfKey(privateKey?: string) {
     }
 }
 
-export const createSpaceDappAndUserops = async (provider: LocalhostWeb3Provider) => {
+export const createSpaceDappAndUserops = async (
+    provider: LocalhostWeb3Provider,
+    lib?: 'useropjs' | 'permissionless',
+) => {
     const baseConfig = getWeb3Deployment(process.env.RIVER_ENV as string).base // see util.test.ts for loading from env
     const spaceDapp = new SpaceDapp(baseConfig, provider)
 
     const userOpsInstance = UserOps({
         spaceDapp,
+        lib,
     })
 
     const aaAddress = await userOpsInstance.getAbstractAccountAddress({
@@ -362,7 +382,7 @@ export const createSpaceDappAndUserops = async (provider: LocalhostWeb3Provider)
 }
 
 export const waitForOpAndTx = async (
-    op: TownsUserOpClientSendUserOperationResponse,
+    op: SendUserOperationReturnType,
     provider: ethers.providers.StaticJsonRpcProvider,
     action?: string,
 ) => {
@@ -518,4 +538,55 @@ export async function encodeUpdateRoleData(
             spaceDapp,
         })
     }
+}
+
+// viem sendUserOperation calls prepareUserOperation internally
+// need to do this so can test error handling from failed eth_sendUserOperation
+export async function mockViemSendUserOperation(
+    client: SmartAccountClient,
+    parameters: SendUserOperationParameters,
+) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { account: account_ = client.account, entryPointAddress } = parameters
+
+    if (!account_ && !parameters.sender) throw new AccountNotFoundError()
+    const account = account_ ? parseAccount(account_) : undefined
+
+    const request = account
+        ? await getAction(
+              client,
+              prepareUserOperation,
+              'prepareUserOperation',
+          )(parameters as unknown as PrepareUserOperationParameters)
+        : parameters
+
+    const signature = (parameters.signature ||
+        (await account?.signUserOperation(request as UserOperation)))!
+
+    const rpcParameters = formatUserOperationRequest({
+        ...request,
+        signature,
+    } as UserOperation)
+
+    return { rpcParameters, signature, request }
+    // the rest of the viem function we don't need
+    // try {
+    //     return await client.request(
+    //       {
+    //         method: 'eth_sendUserOperation',
+    //         params: [
+    //           rpcParameters,
+    //           (entryPointAddress ?? account?.entryPoint.address)!,
+    //         ],
+    //       },
+    //       { retryCount: 0 },
+    //     )
+    //   } catch (error) {
+    //     const calls = (parameters as any).calls
+    //     throw getUserOperationError(error as BaseError, {
+    //       ...(request as UserOperation),
+    //       ...(calls ? { calls } : {}),
+    //       signature,
+    //     })
+    //   }
 }

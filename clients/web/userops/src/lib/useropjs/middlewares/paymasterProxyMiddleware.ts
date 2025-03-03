@@ -1,12 +1,14 @@
-import { FunctionHash, PaymasterErrorCode, UserOpsConfig } from '../types'
+import { FunctionHash, PaymasterErrorCode, UserOpsConfig } from '../../../types'
 import { BigNumber, BigNumberish, utils } from 'ethers'
 import { BundlerJsonRpcProvider, IUserOperation, IUserOperationMiddlewareCtx } from 'userop'
 import { z } from 'zod'
-import { CodeException } from '../errors'
-import { isUsingAlchemyBundler } from '../utils/isUsingAlchemyBundler'
-import { selectUserOpsByAddress, userOpsStore } from '../store/userOpsStore'
-import { getPrivyLoginMethodFromLocalStorage } from './privyLoginMethod'
+import { CodeException } from '../../../errors'
+import { isUsingAlchemyBundler } from '../../../utils/isUsingAlchemyBundler'
+import { selectUserOpsByAddress, userOpsStore } from '../../../store/userOpsStore'
+import { getPrivyLoginMethodFromLocalStorage } from '../../../utils/privyLoginMethod'
 import { estimateGasFeesWithReplacement } from './estimateGasFees'
+import { NON_SPONSORED_LOGIN_METHODS } from '../../../constants'
+import { NON_SPONSORED_FUNCTION_HASHES } from '../../../constants'
 
 type PaymasterProxyResponse = {
     data: {
@@ -52,9 +54,6 @@ export type GasOverrides = {
     preVerificationGas?: BigNumberish | Multiplier
     verificationGasLimit?: BigNumberish | Multiplier
 }
-
-const NON_SPONSORED_LOGIN_METHODS = ['email']
-const NON_SPONSORED_FUNCTION_HASHES: FunctionHash[] = ['checkIn', 'unsponsored']
 
 export const paymasterProxyMiddleware = async (
     args: {

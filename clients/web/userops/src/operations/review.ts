@@ -2,7 +2,7 @@ import { SpaceDapp } from '@river-build/web3'
 import { UserOps } from '../UserOperations'
 import { ethers } from 'ethers'
 
-interface ReviewParams {
+export interface ReviewParams {
     spaceId: string
     rating: number
     comment: string

@@ -1,9 +1,9 @@
 import { IUserOperationMiddlewareCtx } from 'userop'
 import { BigNumberish, BigNumber, utils } from 'ethers'
-import { FunctionHash } from '../types'
-import { TownsSimpleAccount } from '../lib/useropjs/TownsSimpleAccount'
+import { FunctionHash } from '../../../types'
+import { TownsSimpleAccount } from '../TownsSimpleAccount'
 import { totalCostOfUserOp, costOfGas } from './balance'
-import { NegativeValueException } from '../errors'
+import { NegativeValueException } from '../../../errors'
 
 type AdjustValueRelativeToBalanceArgs = {
     callGasLimit: BigNumberish

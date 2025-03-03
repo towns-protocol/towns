@@ -8,16 +8,34 @@ import {
 import { datadogLogs } from '@datadog/browser-logs'
 import { TownsUserOpClient } from './useropjs/TownsUserOpClient'
 import { TownsSimpleAccount } from './useropjs/TownsSimpleAccount'
-import { userOpsStore } from '../store/userOpsStore'
+import { selectUserOpsByAddress, userOpsStore } from '../store/userOpsStore'
 import { IUserOperation } from 'userop'
-
-export const sendUserOperationWithRetry = async (args: {
+import { SendUserOperationReturnType } from './types'
+import { Hex } from 'viem'
+import { TSmartAccount } from './permissionless/accounts/createSmartAccountClient'
+export async function sendUserOperationWithRetry(args: {
     userOpClient: TownsUserOpClient
     simpleAccount: TownsSimpleAccount
     onBuild?: (op: IUserOperation) => void
     retryCount?: number
-}) => {
-    const { userOpClient, simpleAccount, retryCount } = args
+}): Promise<SendUserOperationReturnType>
+
+export async function sendUserOperationWithRetry(args: {
+    smartAccount: TSmartAccount
+    onBuild?: (op: IUserOperation) => void
+    retryCount?: number
+    callData: Hex
+}): Promise<SendUserOperationReturnType>
+
+export async function sendUserOperationWithRetry(args: {
+    userOpClient?: TownsUserOpClient
+    simpleAccount?: TownsSimpleAccount
+    smartAccount?: TSmartAccount
+    onBuild?: (op: IUserOperation) => void
+    retryCount?: number
+    callData?: Hex
+}): Promise<SendUserOperationReturnType> {
+    const { userOpClient, simpleAccount, smartAccount, retryCount, callData } = args
     const { setOperationAttempt, setRetryDetails } = userOpsStore.getState()
 
     let attempt = 0
@@ -26,33 +44,44 @@ export const sendUserOperationWithRetry = async (args: {
 
     while (shouldTry && attempt < (retryCount ?? 3)) {
         try {
-            // Not tracking this event because it tracks all middlewares
-            // This could include both a user hanging on the confirmation modal
-            // As well as internal userop.js middlewares
-            //
-            // internal userop.js accounts for 1-2s of the total time
-            //
-            // instead, each middleware should be tracked individually
-            // if we need to track internal userop.js middlewares and actual request for sending the user operation
-            // then we need to extract the middlewares from userop.js, as well as the request
-            //
-            const res = await userOpClient.sendUserOperation(simpleAccount, {
-                onBuild: (op) => {
-                    console.log('[UserOperations] Signed UserOperation:', op)
-                    args.onBuild?.(op)
-                },
-            })
-            console.log('[UserOperations] userOpHash:', res.userOpHash)
-            return res
+            if (userOpClient && simpleAccount) {
+                const res = await userOpClient.sendUserOperation(simpleAccount, {
+                    onBuild: (op) => {
+                        console.log('[UserOperations] Signed UserOperation:', op)
+                        args.onBuild?.(op)
+                    },
+                })
+                console.log('[UserOperations] userOpHash:', res.userOpHash)
+                return res
+            } else if (smartAccount && callData) {
+                const res = await smartAccount.sendUserOperation({
+                    callData,
+                })
+                return res
+            }
+            throw new Error('[sendUserOperationWithRetry] missing userOpClient or smartAccount')
         } catch (error) {
             const matchPrivyError = matchPrivyUnknownConnectorError(error)
             const matchGasError = matchGasTooLowError(error)
             const replacementUnderpriced = matchReplacementUnderpriced(error)
 
+            const storedOp = selectUserOpsByAddress(smartAccount?.address).current.op
+
+            const senderAddress = simpleAccount
+                ? simpleAccount.getSenderAddress()
+                : smartAccount?.address
+            const paymasterAndData = simpleAccount
+                ? simpleAccount.getPaymasterAndData()
+                : storedOp?.paymasterAndData
+
+            if (!senderAddress) {
+                throw new Error('[sendUserOperationWithRetry] missing senderAddress')
+            }
+
             if (matchPrivyError) {
                 const { error: privyError } = matchPrivyError
                 _error = privyError
-                setOperationAttempt(simpleAccount.getSenderAddress(), attempt++)
+                setOperationAttempt(senderAddress, attempt++)
 
                 datadogLogs.logger.error('[UserOperations] privy unknown connector error', {
                     error,
@@ -61,7 +90,7 @@ export const sendUserOperationWithRetry = async (args: {
                     operationAttempt: attempt,
                 })
                 // backoff for privy errors
-                const delay = 2_000 * attempt
+                const delay = process.env.NODE_ENV === 'test' ? 0 : 2_000 * attempt
                 console.warn(`Unknown connector error. Retry attempt ${attempt} after ${delay}ms`)
                 await new Promise((resolve) => setTimeout(resolve, delay))
                 continue
@@ -87,7 +116,7 @@ export const sendUserOperationWithRetry = async (args: {
             else if (matchGasError) {
                 const { error: gasTooLowError, type } = matchGasError
                 _error = gasTooLowError
-                setOperationAttempt(simpleAccount.getSenderAddress(), attempt++)
+                setOperationAttempt(senderAddress, attempt++)
 
                 datadogLogs.logger.error('[UserOperations] gas too low error', {
                     error,
@@ -97,13 +126,13 @@ export const sendUserOperationWithRetry = async (args: {
                     operationAttempt: attempt,
                 })
 
-                setRetryDetails(simpleAccount.getSenderAddress(), {
+                setRetryDetails(senderAddress, {
                     type: 'gasTooLow',
                     data: type,
                 })
                 await new Promise((resolve) => setTimeout(resolve, 500))
                 // this is a paid op. just retry until the user dismisses
-                if (simpleAccount.getPaymasterAndData() === '0x') {
+                if (paymasterAndData === undefined || paymasterAndData === '0x') {
                     continue
                 }
 
@@ -112,9 +141,9 @@ export const sendUserOperationWithRetry = async (args: {
                 shouldTry = false
                 _error = errorToCodeException(
                     error,
-                    simpleAccount.getPaymasterAndData() !== '0x'
-                        ? 'userop_sponsored'
-                        : 'userop_non_sponsored',
+                    paymasterAndData === undefined || paymasterAndData === '0x'
+                        ? 'userop_non_sponsored'
+                        : 'userop_sponsored',
                 )
             }
         }

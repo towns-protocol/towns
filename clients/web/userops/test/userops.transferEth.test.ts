@@ -1,7 +1,8 @@
 import { Address, LocalhostWeb3Provider } from '@river-build/web3'
 import { createSpaceDappAndUserops, generatePrivyWalletIfKey, waitForOpAndTx } from './utils'
 import { Wallet, utils } from 'ethers'
-import * as balance from '../src/middlewares/balance'
+import * as balanceUseropjs from '../src/lib/useropjs/middlewares/balance'
+import * as balancePermissionless from '../src/lib/permissionless/middleware/balance'
 import { vi } from 'vitest'
 import { NegativeValueException } from '../src/errors'
 
@@ -88,7 +89,10 @@ test('can transfer max eth to given address', async () => {
 test('cannot transfer eth if value is less than gas cost', async () => {
     const amountToTransfer = utils.parseEther('1')
     const gasCost = utils.parseEther('2')
-    vi.spyOn(balance, 'costOfGas').mockReturnValue(gasCost)
+
+    // mock both for whatever scenario
+    vi.spyOn(balanceUseropjs, 'costOfGas').mockReturnValue(gasCost)
+    vi.spyOn(balancePermissionless, 'costOfGas').mockReturnValue(gasCost.toBigInt())
 
     const alice = new LocalhostWeb3Provider(
         process.env.AA_RPC_URL as string,

@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-base-to-string */
 import {
     EVERYONE_ADDRESS,
-    ISpaceDapp,
     LocalhostWeb3Provider,
     NoopRuleData,
     Space,
+    SpaceDapp,
     convertRuleDataV1ToV2,
     findFixedPricingModule,
 } from '@river-build/web3'
@@ -25,6 +25,7 @@ import {
 import { vi } from 'vitest'
 import { ethers } from 'ethers'
 import { TestUserOps } from './TestUserOps'
+import { getDetailsForEditingMembershipSettings } from '../src/utils/getDetailsForEditingMembershipSettings'
 
 test('should update ungated minter role to gated', async () => {
     const alice = new LocalhostWeb3Provider(
@@ -399,30 +400,36 @@ test('should update limit on the membership', async () => {
 
 async function getMembershipData({
     spaceDapp,
-    userOps,
     spaceId,
     space,
 }: {
     spaceId: string
     space: Space | undefined
-    spaceDapp: ISpaceDapp
+    spaceDapp: SpaceDapp
     userOps: TestUserOps
 }) {
+    if (!space) {
+        throw new Error('Space is required')
+    }
     const { membershipInfo, roleEntitlements, freeAllocation } =
-        await userOps.getDetailsForEditingMembershipSettings(spaceId, space!)
+        await getDetailsForEditingMembershipSettings({
+            spaceDapp,
+            spaceId,
+            space,
+        })
 
     expect(roleEntitlements).toBeDefined()
 
     const _role = await spaceDapp.getRole(spaceId, 1)
     expect(_role).toBeDefined()
 
-    const role = _role!
+    const role = _role
     const roleData = {
         spaceNetworkId: spaceId,
-        roleId: role.id,
-        roleName: role.name,
-        permissions: role.permissions,
-        users: role.users,
+        roleId: role!.id,
+        roleName: role!.name,
+        permissions: role!.permissions,
+        users: role!.users,
         ruleData: roleEntitlements!.ruleData,
     }
 

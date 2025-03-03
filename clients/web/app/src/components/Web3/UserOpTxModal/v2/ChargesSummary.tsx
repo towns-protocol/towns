@@ -9,7 +9,7 @@ import { useIsJoinSpace } from '../hooks/useIsJoinSpace'
 
 export function ChargesSummary(props: {
     gasInEth: string
-    gasCost: BigNumber
+    gasCost: bigint
     currOpValueInEth: string | undefined
     totalInEth: string
     spaceId: string | undefined
@@ -22,7 +22,7 @@ export function ChargesSummary(props: {
 
     const gasWithProtocolFee: string = useMemo(() => {
         if (isPaidTown && protocolFee) {
-            return formatUnitsToFixedLength(gasCost.toBigInt() + protocolFee)
+            return formatUnitsToFixedLength(gasCost + protocolFee)
         }
         return gasInEth
     }, [isPaidTown, gasInEth, gasCost, protocolFee])

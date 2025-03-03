@@ -134,7 +134,7 @@ export class BlockchainTransactionStore extends (EventEmitter as new () => Typed
                                 return
                             }
 
-                            hashToWaitFor = userOpEvent.transactionHash as `0x${string}`
+                            hashToWaitFor = userOpEvent.transactionHash
                         }
 
                         // this should be the same wait time as townsClient.waitForTransaction

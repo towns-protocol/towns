@@ -1,5 +1,5 @@
 import { BaseChainConfig, SpaceDapp } from '@river-build/web3'
-import { BigNumberish, Signer, BytesLike } from 'ethers'
+import { BigNumberish } from 'ethers'
 
 export type AccountAbstractionConfig = Omit<UserOpsConfig, 'chainId' | 'provider' | 'config'>
 
@@ -23,21 +23,7 @@ export type UserOpsConfig = {
     factoryAddress?: string
     paymasterProxyAuthSecret?: string
     fetchAccessTokenFn: (() => Promise<string | null>) | undefined
-}
-
-export type UserOpParams = {
-    value?: BigNumberish
-    signer: Signer
-} & (ExecuteSingleData | ExecuteBatchData)
-
-type ExecuteSingleData = {
-    toAddress?: string
-    callData?: BytesLike
-}
-
-type ExecuteBatchData = {
-    toAddress?: string[]
-    callData?: BytesLike[]
+    lib?: 'useropjs' | 'permissionless'
 }
 
 export const FunctionHash = {

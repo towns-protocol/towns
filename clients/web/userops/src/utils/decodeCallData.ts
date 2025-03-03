@@ -1,20 +1,21 @@
-import { BigNumberish, BigNumber, BytesLike, utils } from 'ethers'
+import { BytesLike, BigNumberish, utils, BigNumber } from 'ethers'
 import { Address, Space } from '@river-build/web3'
 import { FunctionHash } from '../types'
 import { decodeTransferCallData } from './generateTransferCallData'
-import { TownsSimpleAccount } from '../lib/useropjs/TownsSimpleAccount'
+import { Hex, isHex } from 'viem'
+import { decodeExecuteAbi, decodeExecuteBatchAbi } from '../lib/permissionless/accounts/simple/abi'
 
 type SingleExecuteData = {
     type: 'single'
     toAddress: Address
-    value: BigNumberish
-    decodedCallData: BytesLike
+    value: bigint
+    decodedCallData: Hex
 }
 
 type BatchExecuteData = {
     type: 'batch'
     toAddress: Address[]
-    decodedCallData: BytesLike[]
+    decodedCallData: Hex[]
     value?: never
 }
 
@@ -22,8 +23,8 @@ type ExecuteData = SingleExecuteData | BatchExecuteData
 
 type DecodedSingleCallData<F extends FunctionHash> = {
     toAddress: Address
-    value: BigNumberish | undefined
-    executeData: BytesLike
+    value: bigint | undefined
+    executeData: Hex
     functionHash: F | undefined
     functionData?: unknown
     executeType: 'single'
@@ -31,7 +32,7 @@ type DecodedSingleCallData<F extends FunctionHash> = {
 
 type DecodedBatchCallData<F extends FunctionHash> = {
     toAddress: Address[]
-    executeData: BytesLike[]
+    executeData: Hex[]
     value?: never
     functionHash: F | undefined
     functionData?: unknown
@@ -62,7 +63,7 @@ type WithdrawData = DecodedCallData<'withdraw'> & {
 
 type TransferEthData = Omit<DecodedCallData<'transferEth'>, 'toAddress' | 'executeData'> & {
     toAddress: Address
-    executeData: BytesLike
+    executeData: Hex
     executeType: 'single'
 }
 
@@ -70,26 +71,46 @@ export function decodeCallData<F extends FunctionHash>(args: {
     callData: BytesLike
     space?: Space | undefined
     functionHash: F | undefined
-    builder: TownsSimpleAccount
 }) {
-    const { callData, space, functionHash, builder } = args
+    const { callData, space, functionHash } = args
 
     let executeData: ExecuteData
     try {
-        const [_toAddress, _value, _dataBytes] = builder.decodeExecute(callData)
-        executeData = {
-            type: 'single',
-            toAddress: _toAddress as Address,
-            value: _value as BigNumberish,
-            decodedCallData: _dataBytes as BytesLike,
+        if (typeof callData === 'string') {
+            if (!isHex(callData)) {
+                throw new Error('callData is not a valid hex string')
+            }
+            const [_toAddress, _value, _dataBytes] = decodeExecuteAbi(callData).args
+            executeData = {
+                type: 'single',
+                toAddress: _toAddress,
+                value: _value,
+                decodedCallData: _dataBytes,
+            }
+        } else {
+            const ethersCallData = utils.hexlify(callData)
+            if (!isHex(ethersCallData)) {
+                throw new Error('callData is not a valid hex string')
+            }
+            const [_toAddress, _value, _dataBytes] = decodeExecuteAbi(ethersCallData).args
+            executeData = {
+                type: 'single',
+                toAddress: _toAddress,
+                value: _value,
+                decodedCallData: _dataBytes,
+            }
         }
     } catch (error) {
         try {
-            const [_toAddress, _dataBytes] = builder.decodeExecuteBatch(callData)
+            const ethersCallData = utils.hexlify(callData)
+            if (!isHex(ethersCallData)) {
+                throw new Error('callData is not a valid hex string')
+            }
+            const [_toAddress, _dataBytes] = decodeExecuteBatchAbi(ethersCallData).args
             executeData = {
                 type: 'batch',
                 toAddress: _toAddress as Address[],
-                decodedCallData: _dataBytes as BytesLike[],
+                decodedCallData: _dataBytes as Hex[],
             }
         } catch (error) {
             throw new Error('failed to decode call data')
@@ -151,8 +172,8 @@ export function decodeCallData<F extends FunctionHash>(args: {
                 }
 
                 const [fromAddress, recipient, tokenId] = decodeTransferCallData(
-                    utils.hexlify(executeData.decodedCallData),
-                )
+                    executeData.decodedCallData,
+                ).args
 
                 if (!fromAddress || !recipient || !tokenId) {
                     break
@@ -160,9 +181,9 @@ export function decodeCallData<F extends FunctionHash>(args: {
                 return {
                     ...data,
                     functionData: {
-                        fromAddress: fromAddress as Address,
-                        recipient: recipient as Address,
-                        tokenId: BigNumber.from(tokenId).toString(),
+                        fromAddress: fromAddress,
+                        recipient: recipient,
+                        tokenId: tokenId.toString(),
                     },
                 } as TransferTokensData
             }

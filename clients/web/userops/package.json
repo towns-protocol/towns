@@ -10,17 +10,19 @@
         "postinstall": "yarn build",
         "lint:fix": "yarn lint --fix",
         "watch": "tsc --watch",
-        "test:exclude:limits": "vitest run --coverage --exclude **/**/userops.limits.test.ts",
-        "test:userops:paymaster-limits": "DOTENV_CONFIG_PATH=.env.test-sample vitest limits run",
-        "test:userops:privy-wallet": "DOTENV_CONFIG_PATH=.env.test-sample PRIVY_WALLET_PRIVATE_KEY_1=09892cb15045f5989457e72dd4c7321f29d1dcb93b9f90d78da6fc433852a367 PRIVY_WALLET_PRIVATE_KEY_2=757fb31b53bdf75d16ce0342c54047d1a848a66ba3b0d656b883208a88460ee3 yarn test:exclude:limits",
-        "test:userops:random-wallet": "DOTENV_CONFIG_PATH=.env.test-sample yarn test:exclude:limits",
-        "test:userops:legacy": "DOTENV_CONFIG_PATH=.env.test-sample vitest createSpace.test.ts roles.test.ts"
+        "test:userops:paymaster-limits": "DOTENV_CONFIG_PATH=.env.test-sample vitest run --project limits",
+        "test:userops": "DOTENV_CONFIG_PATH=.env.test-sample vitest run --project permissionless",
+        "test:userops:legacy": "DOTENV_CONFIG_PATH=.env.test-sample CREATE_LEGACY_SPACES=true vitest run --project legacy",
+        "test:userops:useropjs": "DOTENV_CONFIG_PATH=.env.test-sample AA_LIB=useropjs vitest run --project useropjs"
     },
     "dependencies": {
         "@river-build/web3": "workspace:^",
         "dotenv": "^16.4.5",
+        "permissionless": "^0.2.33",
         "superjson": "^2.2.2",
         "userop": "^0.3.7",
+        "viem": "2.23.2",
+        "web3": "^4.16.0",
         "zod": "^3.21.4",
         "zustand": "^4.5.4"
     },
@@ -33,7 +35,7 @@
         "eslint": "^8.53.0",
         "eslint-plugin-import": "^2.27.5",
         "eslint-plugin-vitest": "^0.5.4",
-        "typescript": "^5.1.6",
+        "typescript": "5.6.2",
         "vitest": "^1.6.0"
     }
 }

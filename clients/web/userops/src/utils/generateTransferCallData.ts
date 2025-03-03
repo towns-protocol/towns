@@ -1,11 +1,12 @@
 import { utils } from 'ethers'
 import { BundlerJsonRpcProvider } from 'userop'
 import { isERC1155, isERC721 } from './tokenTypes'
+import { decodeFunctionData, isHex, parseAbi } from 'viem'
 
 const abi = [
     'function transferFrom(address from, address to, uint256 tokenId) external',
     'function safeTransferFrom(address from, address to, uint256 id, uint256 amount, bytes data) external',
-]
+] as const
 const iface = new utils.Interface(abi)
 
 export async function getTransferCallData(args: {
@@ -48,5 +49,11 @@ export async function getTransferCallData(args: {
 }
 
 export function decodeTransferCallData(callData: string) {
-    return iface.decodeFunctionData('transferFrom', callData)
+    if (!isHex(callData)) {
+        throw new Error('[decodeTransferCallData]::callData is not a valid hex string')
+    }
+    return decodeFunctionData({
+        abi: parseAbi(abi),
+        data: callData,
+    })
 }

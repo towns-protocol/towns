@@ -3,7 +3,6 @@ import {
     BundlerJsonRpcProvider,
     IClientOpts,
     ISendUserOperationOpts,
-    ISendUserOperationResponse,
     StateOverrideSet,
     UserOperationBuilder,
     UserOperationMiddlewareCtx,
@@ -15,12 +14,10 @@ import { datadogLogs } from '@datadog/browser-logs'
 import {
     getUserOperationReceipt,
     isEthGetUserOperationReceiptResponse,
-    EthGetUserOperationReceiptResponse,
 } from '../getUserOperationReceipt'
-
-export type TownsUserOpClientSendUserOperationResponse = ISendUserOperationResponse & {
-    getUserOperationReceipt: () => Promise<EthGetUserOperationReceiptResponse | null>
-}
+import { EthGetUserOperationReceiptResponse, SendUserOperationReturnType } from '../types'
+import { UserOperationEvent } from '../userOperationEvent'
+import { Address, Hex } from 'viem'
 
 export class TownsUserOpClient {
     private provider: BundlerJsonRpcProvider
@@ -91,7 +88,7 @@ export class TownsUserOpClient {
     async sendUserOperation(
         builder: UserOperationBuilder,
         opts?: ISendUserOperationOpts,
-    ): Promise<TownsUserOpClientSendUserOperationResponse> {
+    ): Promise<SendUserOperationReturnType> {
         const dryRun = Boolean(opts?.dryRun)
         const op = await this.buildUserOperation(builder, opts?.stateOverrides)
         opts?.onBuild?.(op)
@@ -112,15 +109,38 @@ export class TownsUserOpClient {
         const response = {
             userOpHash,
             // original wait function from userop.js
-            wait: async () => {
+            wait: async (): Promise<UserOperationEvent | null> => {
                 const block = await this.provider.getBlock('latest')
-                const polledAction = await this.poll({
+                const polledAction = await this.poll<UserOperationEvent>({
                     action: async () => {
                         const events = await this.entryPoint.queryFilter(
                             this.entryPoint.filters.UserOperationEvent(userOpHash),
                             Math.max(0, block.number - 100),
                         )
-                        return events.length > 0 ? events[0] : null
+                        if (events.length > 0) {
+                            const ev = events[0]
+                            return {
+                                address: ev.address as Address,
+                                blockHash: ev.blockHash as Hex,
+                                blockNumber: BigInt(ev.blockNumber),
+                                data: ev.data as Hex,
+                                transactionHash: ev.transactionHash as Address,
+                                transactionIndex: ev.transactionIndex,
+                                eventName: 'UserOperationEvent',
+                                userOpHash: ev.args.userOpHash as Hex,
+                                logIndex: ev.logIndex,
+                                removed: ev.removed,
+                                args: {
+                                    userOpHash: ev.args.userOpHash as Hex,
+                                    sender: ev.args.sender as Address,
+                                    paymaster: ev.args.paymaster as Address,
+                                    nonce: ev.args.nonce.toBigInt(),
+                                    success: ev.args.success as boolean,
+                                },
+                                topics: ev.topics as [Hex, Hex, Hex, Hex],
+                            }
+                        }
+                        return null
                     },
                 })
                 return polledAction?.result ?? null

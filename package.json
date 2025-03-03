@@ -199,6 +199,21 @@
                     "dev",
                     "peer"
                 ]
+            },
+            {
+                "label": "Different versions in @towns/userops",
+                "dependencies": [
+                    "viem",
+                    "typescript"
+                ],
+                "packages": [
+                    "@towns/userops"
+                ],
+                "dependencyTypes": [
+                    "prod",
+                    "dev",
+                    "peer"
+                ]
             }
         ]
     },

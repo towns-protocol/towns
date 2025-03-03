@@ -1,36 +1,11 @@
-import {
-    Address,
-    SpaceDapp,
-    UpdateRoleParams,
-    LegacyUpdateRoleParams,
-    Space,
-} from '@river-build/web3'
+import { Address, SpaceDapp, UpdateRoleParams, LegacyUpdateRoleParams } from '@river-build/web3'
 import { ethers } from 'ethers'
-import { UserOpsConfig, UserOpParams, FunctionHash, TimeTracker, TimeTrackerEvents } from './types'
+import { UserOpsConfig, FunctionHash, TimeTracker, TimeTrackerEvents } from './types'
 import { selectUserOpsByAddress, userOpsStore } from './store/userOpsStore'
 import { ERC4337 } from 'userop/dist/constants'
-import { InsufficientTipBalanceException } from './errors'
-import { OpToJSON } from './utils/opToJson'
-import { isUsingAlchemyBundler } from './utils/isUsingAlchemyBundler'
-import {
-    signUserOpHash,
-    estimateGasLimit,
-    subtractGasFromBalance,
-    promptUser,
-    isSponsoredOp,
-    paymasterProxyMiddleware,
-    totalCostOfUserOp,
-    balanceOf,
-    estimateGasFeesMiddleware,
-} from './middlewares'
 import { TownsSimpleAccount } from './lib/useropjs/TownsSimpleAccount'
-import {
-    TownsUserOpClient,
-    TownsUserOpClientSendUserOperationResponse,
-} from './lib/useropjs/TownsUserOpClient'
-import { sendUserOperationWithRetry } from './lib/sendUserOperationWithRetry'
-import { decodeCallData, isBatchData, isSingleData } from './utils/decodeCallData'
-import { getUserOperationReceipt } from './lib/getUserOperationReceipt'
+import { TownsUserOpClient } from './lib/useropjs/TownsUserOpClient'
+import { SendUserOperationReturnType } from './lib/types'
 import {
     removeLink,
     linkEOA,
@@ -59,18 +34,20 @@ import {
     refreshMetadata,
     tip,
     checkIn,
+    review,
+    ReviewParams,
 } from './operations'
 import { getAbstractAccountAddress } from './utils/getAbstractAccountAddress'
-import { review } from './operations/review'
-
-interface ReviewParams {
-    spaceId: string
-    rating: number
-    comment: string
-    isUpdate?: boolean
-    isDelete?: boolean
-    signer: ethers.Signer
-}
+import { sendUserOpWithUseropJs, UserOpParamsUseropJs } from './lib/useropjs/sendUserOpWithUseropJs'
+import { addMiddleware } from './lib/useropjs/addMiddleware'
+import { isSingleData } from './utils/decodeCallData'
+import { isBatchData } from './utils/decodeCallData'
+import { TSmartAccount } from './lib/permissionless/accounts/createSmartAccountClient'
+import {
+    sendUseropWithPermissionless,
+    UserOpParamsPermissionless,
+} from './lib/permissionless/sendUseropWithPermissionless'
+import { simpleSmartAccount } from './lib/permissionless/accounts/simple/client'
 
 export class UserOps {
     private bundlerUrl: string
@@ -81,12 +58,20 @@ export class UserOps {
     // defaults to Stackup's deployed factory
     private factoryAddress: string | undefined
     private paymasterProxyAuthSecret: string | undefined
-    private userOpClient: Promise<TownsUserOpClient> | undefined
-    private builder: Promise<TownsSimpleAccount> | undefined
     protected spaceDapp: SpaceDapp | undefined
     private timeTracker: TimeTracker | undefined
     private fetchAccessTokenFn: (() => Promise<string | null>) | undefined
     private middlewareInitialized = false
+    private lib: 'useropjs' | 'permissionless'
+    private smartAccount: Promise<TSmartAccount> | undefined
+    /**
+     * @deprecated
+     */
+    private userOpClient: Promise<TownsUserOpClient> | undefined
+    /**
+     * @deprecated
+     */
+    private builder: Promise<TownsSimpleAccount> | undefined
 
     constructor(
         config: UserOpsConfig & {
@@ -103,6 +88,14 @@ export class UserOps {
         this.spaceDapp = config.spaceDapp
         this.timeTracker = config.timeTracker
         this.fetchAccessTokenFn = config.fetchAccessTokenFn
+        if (config.lib) {
+            if (config.lib !== 'useropjs' && config.lib !== 'permissionless') {
+                throw new Error('Invalid lib used for UserOps constructor')
+            }
+            this.lib = config.lib
+        } else {
+            this.lib = 'useropjs'
+        }
     }
 
     public async getAbstractAccountAddress({
@@ -116,6 +109,9 @@ export class UserOps {
         })
     }
 
+    /**
+     * @deprecated
+     */
     public async getUserOpClient() {
         if (!this.userOpClient) {
             this.userOpClient = TownsUserOpClient.init(this.aaRpcUrl, {
@@ -127,61 +123,143 @@ export class UserOps {
     }
 
     public async sendUserOp(
-        args: UserOpParams & {
+        args: (UserOpParamsUseropJs | UserOpParamsPermissionless) & {
             // a function signature hash to pass to paymaster proxy - this is just the function name for now
             functionHashForPaymasterProxy: FunctionHash
             spaceId: string | undefined
             retryCount?: number
         },
         sequenceName?: TimeTrackerEvents,
-    ): Promise<TownsUserOpClientSendUserOperationResponse> {
-        const { toAddress, callData, value } = args
-        const builder = await this.getBuilder({ signer: args.signer })
-        const sender = builder.getSenderAddress()
+    ): Promise<SendUserOperationReturnType> {
+        const { functionHashForPaymasterProxy, spaceId, retryCount, ...rest } = args
+        if (this.lib === 'useropjs') {
+            return this.sendUserOpWithUseropJs(
+                {
+                    functionHashForPaymasterProxy,
+                    spaceId,
+                    retryCount,
+                    ...(rest as UserOpParamsUseropJs),
+                },
+                sequenceName,
+            )
+        } else {
+            return this.sendUserOpWithPermissionless(
+                {
+                    functionHashForPaymasterProxy,
+                    spaceId,
+                    retryCount,
+                    ...(rest as UserOpParamsPermissionless),
+                },
+                sequenceName,
+            )
+        }
+    }
 
+    public async getSmartAccountClient(args: { signer: ethers.Signer }) {
+        if (!this.smartAccount) {
+            if (!this.paymasterProxyUrl) {
+                throw new Error('paymasterProxyUrl is required')
+            }
+            if (!this.paymasterProxyAuthSecret) {
+                throw new Error('paymasterProxyAuthSecret is required')
+            }
+            const { signer } = args
+            this.smartAccount = simpleSmartAccount({
+                signer: signer,
+                rpcUrl: this.aaRpcUrl,
+                bundlerUrl: this.bundlerUrl,
+                paymasterProxyUrl: this.paymasterProxyUrl,
+                paymasterProxyAuthSecret: this.paymasterProxyAuthSecret,
+                spaceDapp: this.spaceDapp,
+                fetchAccessTokenFn: this.fetchAccessTokenFn,
+            })
+        }
+        return this.smartAccount
+    }
+
+    private commonParams() {
+        return {
+            spaceDapp: this.spaceDapp,
+            timeTracker: this.timeTracker,
+            entryPointAddress: this.entryPointAddress,
+            factoryAddress: this.factoryAddress,
+            aaRpcUrl: this.aaRpcUrl,
+            sendUserOp: this.sendUserOp.bind(this),
+        }
+    }
+
+    private clearStore(sender: string | undefined) {
+        if (sender) {
+            userOpsStore.getState().reset(sender)
+        }
+    }
+
+    private async sendUserOpWithPermissionless(
+        args: UserOpParamsPermissionless & {
+            functionHashForPaymasterProxy: FunctionHash
+            spaceId: string | undefined
+            retryCount?: number
+        },
+        sequenceName?: TimeTrackerEvents,
+    ): Promise<SendUserOperationReturnType> {
+        const timeTracker = this.timeTracker
+
+        let endInitClient: (() => void) | undefined
+        if (sequenceName) {
+            endInitClient = timeTracker?.startMeasurement(sequenceName, 'userops_init_client')
+        }
+        const smartAccountClient = await this.getSmartAccountClient({ signer: args.signer })
+        endInitClient?.()
+
+        if (Array.isArray(args.toAddress) && Array.isArray(args.callData)) {
+            return sendUseropWithPermissionless({
+                ...args,
+                spaceDapp: this.spaceDapp,
+                smartAccountClient,
+            })
+        } else if (typeof args.toAddress === 'string' && typeof args.callData === 'string') {
+            return sendUseropWithPermissionless({
+                ...args,
+                spaceDapp: this.spaceDapp,
+                smartAccountClient,
+            })
+        }
+        throw new Error('[UserOperations.sendUserOpWithPermissionless]::Invalid arguments')
+    }
+
+    private async sendUserOpWithUseropJs(
+        args: UserOpParamsUseropJs & {
+            // a function signature hash to pass to paymaster proxy - this is just the function name for now
+            functionHashForPaymasterProxy: FunctionHash
+            spaceId: string | undefined
+            retryCount?: number
+        },
+        sequenceName?: TimeTrackerEvents,
+    ): Promise<SendUserOperationReturnType> {
         const timeTracker = this.timeTracker
 
         let endInitBuilder: (() => void) | undefined
+
         if (sequenceName) {
             endInitBuilder = timeTracker?.startMeasurement(sequenceName, 'userops_init_builder')
         }
+        const builder = await this.getBuilder({ signer: args.signer })
 
-        this.addMiddleware({ builder, signer: args.signer })
+        if (!this.middlewareInitialized) {
+            this.middlewareInitialized = true
+            addMiddleware({
+                builder,
+                signer: args.signer,
+                bundlerUrl: this.bundlerUrl,
+                paymasterProxyUrl: this.paymasterProxyUrl,
+                paymasterProxyAuthSecret: this.paymasterProxyAuthSecret,
+                fetchAccessTokenFn: this.fetchAccessTokenFn,
+                timeTracker,
+                spaceDapp: this.spaceDapp,
+            })
+        }
 
         endInitBuilder?.()
-
-        if (!toAddress) {
-            throw new Error('toAddress is required')
-        }
-        if (!callData) {
-            throw new Error('callData is required')
-        }
-
-        let simpleAccount: TownsSimpleAccount
-        if (Array.isArray(toAddress)) {
-            if (!Array.isArray(callData)) {
-                throw new Error('callData must be an array if toAddress is an array')
-            }
-            if (toAddress.length !== callData.length) {
-                throw new Error('toAddress and callData must be the same length')
-            }
-            simpleAccount = builder.executeBatch(toAddress, callData)
-        } else {
-            if (Array.isArray(callData)) {
-                throw new Error('callData must be a string if toAddress is a string')
-            }
-            /**
-             * IMPORTANT: This value can result in RPC errors if the smart account has insufficient funds
-             *
-             * If estimating user operation gas, you can override sender balance via state overrides https://docs.stackup.sh/docs/erc-4337-bundler-rpc-methods#eth_senduseroperation
-             * which we are doing, see prompttUser middleware
-             *
-             * However, in the case of a tx that costs ETH, but that we also want to sponsor, this value should be 0
-             * Otherwise, the paymaster will reject the operation if the user does not have enough funds
-             * This kind of tx would be something like joining a town that has a fixed membership cost, but ALSO contains prepaid seats
-             */
-            simpleAccount = builder.execute(toAddress, value ?? 0, callData)
-        }
 
         let endInitClient: (() => void) | undefined
         if (sequenceName) {
@@ -190,69 +268,12 @@ export class UserOps {
         const userOpClient = await this.getUserOpClient()
         endInitClient?.()
 
-        const op = simpleAccount.getOp()
-
-        const resetUseropStore = () => {
-            const { setCurrent, reset, setSequenceName } = userOpsStore.getState()
-            reset(sender)
-            const space = args.spaceId ? this.spaceDapp?.getSpace(args.spaceId) : undefined
-            const decodedCallData = decodeCallData({
-                callData: op.callData,
-                functionHash: args.functionHashForPaymasterProxy,
-                builder,
-                space,
-            })
-            setSequenceName(sender, sequenceName)
-            setCurrent({
-                sender,
-                op: OpToJSON(op),
-                value: args.value,
-                decodedCallData,
-                functionHashForPaymasterProxy: args.functionHashForPaymasterProxy,
-                spaceId: args.spaceId,
-            })
-        }
-
-        const pendingUserOp = selectUserOpsByAddress(sender).pending
-
-        if (pendingUserOp.hash) {
-            try {
-                // check if the pending op has landed
-                const result = await getUserOperationReceipt({
-                    provider: builder.provider,
-                    userOpHash: pendingUserOp.hash,
-                })
-                if (result) {
-                    resetUseropStore()
-                }
-            } catch (error) {
-                // TODO: retry getUserOperationReceipt
-                console.log('[UserOperations] error getting user operation receipt', error)
-                resetUseropStore()
-            }
-        } else {
-            resetUseropStore()
-        }
-
-        const opResponse = await sendUserOperationWithRetry({
+        return sendUserOpWithUseropJs({
+            ...args,
+            builder,
             userOpClient,
-            simpleAccount,
-            retryCount: args.retryCount,
-            onBuild: (op) => {
-                // update finalized op
-                userOpsStore.getState().setCurrent({
-                    sender,
-                    op: OpToJSON(op),
-                })
-            },
+            spaceDapp: this.spaceDapp,
         })
-
-        // if op made it to the bundler, copy to pending
-        userOpsStore.getState().setPending({
-            sender,
-            hash: opResponse.userOpHash,
-        })
-        return opResponse
     }
 
     public async dropAndReplace(hash: string, signer: ethers.Signer) {
@@ -307,7 +328,7 @@ export class UserOps {
 
     public async sendCreateLegacySpaceOp(
         args: Parameters<SpaceDapp['createLegacySpace']>,
-    ): Promise<TownsUserOpClientSendUserOperationResponse> {
+    ): Promise<SendUserOperationReturnType> {
         return createLegacySpace({
             ...this.commonParams(),
             fnArgs: args,
@@ -316,46 +337,11 @@ export class UserOps {
 
     public async sendCreateSpaceOp(
         args: Parameters<SpaceDapp['createSpace']>,
-    ): Promise<TownsUserOpClientSendUserOperationResponse> {
+    ): Promise<SendUserOperationReturnType> {
         return createSpace({
             ...this.commonParams(),
             fnArgs: args,
         })
-    }
-
-    private commonParams() {
-        return {
-            spaceDapp: this.spaceDapp,
-            timeTracker: this.timeTracker,
-            entryPointAddress: this.entryPointAddress,
-            factoryAddress: this.factoryAddress,
-            aaRpcUrl: this.aaRpcUrl,
-            sendUserOp: this.sendUserOp.bind(this),
-        }
-    }
-
-    private async encodeDataForLinkingSmartAccount(
-        rootKeySigner: ethers.Signer,
-        abstractAccountAddress: Address,
-    ) {
-        if (!this.spaceDapp) {
-            throw new Error('spaceDapp is required')
-        }
-
-        if (!abstractAccountAddress) {
-            throw new Error('abstractAccountAddress is required')
-        }
-
-        return this.spaceDapp.walletLink.encodeLinkCallerToRootKey(
-            rootKeySigner,
-            abstractAccountAddress,
-        )
-    }
-
-    private clearStore(sender: string | undefined) {
-        if (sender) {
-            userOpsStore.getState().reset(sender)
-        }
     }
 
     /**
@@ -363,7 +349,7 @@ export class UserOps {
      */
     public async sendJoinSpaceOp(
         args: Parameters<SpaceDapp['joinSpace']>,
-    ): Promise<TownsUserOpClientSendUserOperationResponse> {
+    ): Promise<SendUserOperationReturnType> {
         return joinSpace({
             ...this.commonParams(),
             fnArgs: args,
@@ -378,7 +364,7 @@ export class UserOps {
         rootKeySigner: ethers.Signer,
         abstractAccountAddress: Address,
         sequenceName?: TimeTrackerEvents,
-    ): Promise<TownsUserOpClientSendUserOperationResponse> {
+    ): Promise<SendUserOperationReturnType> {
         return linkSmartAccount({
             ...this.commonParams(),
             rootKeySigner,
@@ -404,7 +390,7 @@ export class UserOps {
 
     public async sendRemoveWalletLinkOp(
         args: Parameters<SpaceDapp['walletLink']['removeLink']>,
-    ): Promise<TownsUserOpClientSendUserOperationResponse> {
+    ): Promise<SendUserOperationReturnType> {
         return removeLink({
             ...this.commonParams(),
             fnArgs: args,
@@ -413,7 +399,7 @@ export class UserOps {
 
     public async sendUpdateSpaceInfoOp(
         args: Parameters<SpaceDapp['updateSpaceInfo']>,
-    ): Promise<TownsUserOpClientSendUserOperationResponse> {
+    ): Promise<SendUserOperationReturnType> {
         return updateSpaceInfo({
             ...this.commonParams(),
             fnArgs: args,
@@ -422,7 +408,7 @@ export class UserOps {
 
     public async sendCreateChannelOp(
         args: Parameters<SpaceDapp['createChannelWithPermissionOverrides']>,
-    ): Promise<TownsUserOpClientSendUserOperationResponse> {
+    ): Promise<SendUserOperationReturnType> {
         return createChannel({
             ...this.commonParams(),
             fnArgs: args,
@@ -431,7 +417,7 @@ export class UserOps {
 
     public async sendUpdateChannelOp(
         args: Parameters<SpaceDapp['updateChannel']>,
-    ): Promise<TownsUserOpClientSendUserOperationResponse> {
+    ): Promise<SendUserOperationReturnType> {
         return updateChannel({
             ...this.commonParams(),
             fnArgs: args,
@@ -440,7 +426,7 @@ export class UserOps {
 
     public async sendLegacyCreateRoleOp(
         args: Parameters<SpaceDapp['legacyCreateRole']>,
-    ): Promise<TownsUserOpClientSendUserOperationResponse> {
+    ): Promise<SendUserOperationReturnType> {
         return legacyCreateRole({
             ...this.commonParams(),
             fnArgs: args,
@@ -449,7 +435,7 @@ export class UserOps {
 
     public async sendCreateRoleOp(
         args: Parameters<SpaceDapp['createRole']>,
-    ): Promise<TownsUserOpClientSendUserOperationResponse> {
+    ): Promise<SendUserOperationReturnType> {
         return createRole({
             ...this.commonParams(),
             fnArgs: args,
@@ -458,7 +444,7 @@ export class UserOps {
 
     public async sendDeleteRoleOp(
         args: Parameters<SpaceDapp['deleteRole']>,
-    ): Promise<TownsUserOpClientSendUserOperationResponse> {
+    ): Promise<SendUserOperationReturnType> {
         return deleteRole({
             ...this.commonParams(),
             fnArgs: args,
@@ -467,7 +453,7 @@ export class UserOps {
 
     public async sendUpdateRoleOp(
         args: Parameters<SpaceDapp['updateRole']>,
-    ): Promise<TownsUserOpClientSendUserOperationResponse> {
+    ): Promise<SendUserOperationReturnType> {
         return updateRole({
             ...this.commonParams(),
             fnArgs: args,
@@ -476,7 +462,7 @@ export class UserOps {
 
     public async sendSetChannelPermissionOverridesOp(
         args: Parameters<SpaceDapp['setChannelPermissionOverrides']>,
-    ): Promise<TownsUserOpClientSendUserOperationResponse> {
+    ): Promise<SendUserOperationReturnType> {
         return setChannelPermissionOverrides({
             ...this.commonParams(),
             fnArgs: args,
@@ -485,7 +471,7 @@ export class UserOps {
 
     public async sendClearChannelPermissionOverridesOp(
         args: Parameters<SpaceDapp['clearChannelPermissionOverrides']>,
-    ): Promise<TownsUserOpClientSendUserOperationResponse> {
+    ): Promise<SendUserOperationReturnType> {
         return clearChannelPermissionOverrides({
             ...this.commonParams(),
             fnArgs: args,
@@ -494,7 +480,7 @@ export class UserOps {
 
     public async sendLegacyUpdateRoleOp(
         args: Parameters<SpaceDapp['legacyUpdateRole']>,
-    ): Promise<TownsUserOpClientSendUserOperationResponse> {
+    ): Promise<SendUserOperationReturnType> {
         return legacyUpdateRole({
             ...this.commonParams(),
             fnArgs: args,
@@ -513,26 +499,6 @@ export class UserOps {
             ...this.commonParams(),
             fnArgs: args,
         })
-    }
-
-    public async getDetailsForEditingMembershipSettings(spaceId: string, space: Space) {
-        if (!this.spaceDapp) {
-            throw new Error('spaceDapp is required')
-        }
-        const membershipInfo = await this.spaceDapp.getMembershipInfo(spaceId)
-
-        const entitlementShims = await space.getEntitlementShims()
-        if (!entitlementShims.length) {
-            throw new Error('Rule entitlement not found')
-        }
-
-        // minter role = 1
-        const roleEntitlements = await space.getRoleEntitlements(entitlementShims, 1)
-        return {
-            membershipInfo,
-            freeAllocation: await space.Membership.read.getMembershipFreeAllocation(),
-            roleEntitlements,
-        }
     }
 
     public async sendEditMembershipSettingsOp(args: {
@@ -662,6 +628,9 @@ export class UserOps {
         })
     }
 
+    /**
+     * @deprecated Use `getSmartAccountClient` instead
+     */
     public async getBuilder(args: { signer: ethers.Signer }) {
         if (!this.builder) {
             const { signer } = args
@@ -676,147 +645,29 @@ export class UserOps {
         return this.builder
     }
 
-    private addMiddleware({
-        builder,
-        signer,
-    }: {
-        builder: TownsSimpleAccount
-        signer: ethers.Signer
-    }) {
-        if (this.middlewareInitialized) {
-            return
-        }
-        this.middlewareInitialized = true
-        const timeTracker = this.timeTracker
-
-        // stackup bundler (local dev)
-        // stackup paymaster requires gas fee estimates to be included in the user operation
-        // alchemy bundler does not require gas fee estimates b/c we are using alchemy_requestGasAndPaymasterAndData in the paymaster proxy server
-        // https://docs.alchemy.com/reference/alchemy-requestgasandpaymasteranddata
-        builder
-            .useMiddleware(async (ctx) => {
-                if (!isUsingAlchemyBundler(this.bundlerUrl)) {
-                    return estimateGasFeesMiddleware(ctx, builder.provider)
-                }
-            })
-            // pass user op with new gas data to paymaster.
-            // If approved, paymaster returns preverification gas and we assign it to the user operation.
-            // The userop fields can no longer be manipulated or else the paymaster sig will be invalid
-            //
-            // If rejected, gas must be estimated in later middleware
-            .useMiddleware(async (ctx) => {
-                if (this.paymasterProxyUrl && this.paymasterProxyAuthSecret) {
-                    const { sequenceName, current } = selectUserOpsByAddress(ctx.op.sender)
-
-                    let endPaymasterMiddleware: (() => void) | undefined
-
-                    if (sequenceName) {
-                        endPaymasterMiddleware = timeTracker?.startMeasurement(
-                            sequenceName,
-                            `userops_${current.functionHashForPaymasterProxy}_paymasterProxyMiddleware`,
-                        )
-                    }
-                    await paymasterProxyMiddleware({
-                        rootKeyAddress: await signer.getAddress(),
-                        userOpContext: ctx,
-                        paymasterProxyAuthSecret: this.paymasterProxyAuthSecret,
-                        paymasterProxyUrl: this.paymasterProxyUrl,
-                        bundlerUrl: this.bundlerUrl,
-                        provider: builder.provider,
-                        fetchAccessTokenFn: this.fetchAccessTokenFn,
-                    })
-
-                    endPaymasterMiddleware?.()
-                }
-            })
-            .useMiddleware(async (ctx) => {
-                if (isUsingAlchemyBundler(this.bundlerUrl)) {
-                    if (isSponsoredOp(ctx)) {
-                        return
-                    }
-                    return estimateGasFeesMiddleware(ctx, builder.provider)
-                }
-            })
-            .useMiddleware(async (ctx) => {
-                const { current } = selectUserOpsByAddress(ctx.op.sender)
-                const { spaceId, functionHashForPaymasterProxy } = current
-                if (isSponsoredOp(ctx)) {
-                    return
-                }
-                return estimateGasLimit({
-                    ctx,
-                    provider: builder.provider,
-                    bundlerUrl: this.bundlerUrl,
-                    spaceId,
-                    spaceDapp: this.spaceDapp,
-                    functionHashForPaymasterProxy: functionHashForPaymasterProxy,
-                })
-            })
-            // we have gas limits, estimates paymaster, nonce, etc now, so update the current op
-            .useMiddleware(async (ctx) => {
-                userOpsStore.getState().setCurrent({
-                    sender: ctx.op.sender,
-                    op: OpToJSON(ctx.op),
-                })
-                await Promise.resolve()
-            })
-            // prompt user if the paymaster rejected
-            .useMiddleware(async (ctx) => {
-                if (isSponsoredOp(ctx)) {
-                    return
-                }
-                const { current } = selectUserOpsByAddress(ctx.op.sender)
-
-                // tip is a special case
-                // - it is not sponsored
-                // - it will make tx without prompting user
-                // - we only want to prompt user if not enough balance in sender wallet
-                if (current.functionHashForPaymasterProxy === 'tip') {
-                    const op = ctx.op
-                    const totalCost = totalCostOfUserOp({
-                        gasLimit: op.callGasLimit,
-                        preVerificationGas: op.preVerificationGas,
-                        verificationGasLimit: op.verificationGasLimit,
-                        gasPrice: op.maxFeePerGas,
-                        value: current.value,
-                    })
-                    const balance = await balanceOf(op.sender, builder.provider)
-
-                    if (balance.lt(totalCost)) {
-                        throw new InsufficientTipBalanceException()
-                    }
-                } else {
-                    await promptUser(ctx.op.sender)
-                }
-            })
-            .useMiddleware(async (ctx) => {
-                const { current } = selectUserOpsByAddress(ctx.op.sender)
-                const { functionHashForPaymasterProxy, value } = current
-
-                if (value && functionHashForPaymasterProxy === 'transferEth') {
-                    return subtractGasFromBalance(ctx, {
-                        functionHash: functionHashForPaymasterProxy,
-                        builder,
-                        value,
-                    })
-                }
-            })
-            .useMiddleware(async (ctx) => signUserOpHash(ctx, signer))
-    }
-
     /**
      * Collectively these calls can take > 1s
      * So optionally you can call this method to prep the builder and userOpClient prior to sending the first user operation
      */
     public async setup(signer: ethers.Signer) {
-        return Promise.all([this.getBuilder({ signer }), this.getUserOpClient()])
+        if (this.lib === 'useropjs') {
+            return Promise.all([this.getBuilder({ signer }), this.getUserOpClient()])
+        } else {
+            return Promise.all([this.getSmartAccountClient({ signer })])
+        }
     }
 
     public async reset() {
-        const sender = (await this.builder)?.getSenderAddress()
+        let sender: string | undefined
+        if (this.lib === 'useropjs') {
+            sender = (await this.builder)?.getSenderAddress()
+        } else {
+            sender = (await this.smartAccount)?.address
+        }
         this.builder = undefined
         this.userOpClient = undefined
         this.middlewareInitialized = false
+        this.smartAccount = undefined
         this.clearStore(sender)
     }
 }

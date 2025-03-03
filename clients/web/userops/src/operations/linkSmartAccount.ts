@@ -2,11 +2,10 @@ import { Address, SpaceDapp } from '@river-build/web3'
 import { ethers } from 'ethers'
 import { UserOps } from '../UserOperations'
 import { TimeTracker, TimeTrackerEvents } from '../types'
-import { TownsUserOpClientSendUserOperationResponse } from '../lib/useropjs/TownsUserOpClient'
 import { getFunctionSigHash } from '../utils/getFunctionSigHash'
 import { encodeDataForLinkingSmartAccount } from '../utils/encodeDataForLinkingSmartAccount'
-import { UserOperationEventEvent } from 'userop/dist/typechain/EntryPoint'
 import { CodeException } from '../errors'
+import { SendUserOperationReturnType } from '../lib/types'
 
 type Common = {
     spaceDapp: SpaceDapp | undefined
@@ -31,7 +30,7 @@ export async function linkSmartAccountAndWaitForReceipt(
         sendUserOp,
     })
 
-    let userOpEventWalletLink: UserOperationEventEvent | null
+    let userOpEventWalletLink: Awaited<ReturnType<SendUserOperationReturnType['wait']>> | null
 
     try {
         const endLinkRelay = timeTracker?.startMeasurement(
@@ -93,7 +92,7 @@ export async function linkSmartAccount(
         sequenceName?: TimeTrackerEvents
         sendUserOp: UserOps['sendUserOp']
     },
-): Promise<TownsUserOpClientSendUserOperationResponse> {
+) {
     const {
         spaceDapp,
         timeTracker,

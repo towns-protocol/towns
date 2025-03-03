@@ -5,7 +5,7 @@ import {
     userOpsStore,
 } from '@towns/userops'
 import { useMemo } from 'react'
-import { BigNumberish } from 'ethers'
+import { BigNumber, BigNumberish } from 'ethers'
 
 export function useInsufficientBalance(args: {
     balance: bigint | undefined
@@ -40,11 +40,11 @@ export function useInsufficientBalance(args: {
             try {
                 adjustValueRelativeToBalance({
                     balance,
-                    value,
-                    callGasLimit: gasLimit,
-                    preVerificationGas,
-                    verificationGasLimit,
-                    maxFeePerGas: gasPrice,
+                    value: BigNumber.from(value).toBigInt(),
+                    callGasLimit: BigNumber.from(gasLimit).toBigInt(),
+                    preVerificationGas: BigNumber.from(preVerificationGas).toBigInt(),
+                    verificationGasLimit: BigNumber.from(verificationGasLimit).toBigInt(),
+                    maxFeePerGas: BigNumber.from(gasPrice).toBigInt(),
                 })
                 return false
             } catch (e) {
@@ -55,13 +55,13 @@ export function useInsufficientBalance(args: {
             }
         } else {
             const cost = totalCostOfUserOp({
-                gasLimit,
-                preVerificationGas,
-                verificationGasLimit,
-                gasPrice,
-                value,
+                gasLimit: BigNumber.from(gasLimit).toBigInt(),
+                preVerificationGas: BigNumber.from(preVerificationGas).toBigInt(),
+                verificationGasLimit: BigNumber.from(verificationGasLimit).toBigInt(),
+                gasPrice: BigNumber.from(gasPrice).toBigInt(),
+                value: value ? BigNumber.from(value).toBigInt() : undefined,
             })
-            return balance === undefined ? false : balance < cost.toBigInt()
+            return balance === undefined ? false : balance < cost
         }
     }, [
         balance,

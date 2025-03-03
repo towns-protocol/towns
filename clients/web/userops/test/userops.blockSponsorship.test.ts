@@ -1,7 +1,7 @@
 import { LocalhostWeb3Provider } from '@river-build/web3'
 import { Permission } from '@river-build/web3'
 import { createSpaceDappAndUserops, createUngatedSpace, generatePrivyWalletIfKey } from './utils'
-import * as privyLoginMethod from '../src/middlewares/privyLoginMethod'
+import * as privyLoginMethod from '../src/utils/privyLoginMethod'
 import { vi } from 'vitest'
 
 test('with non-sponsored login method, sponsorship is blocked', async () => {

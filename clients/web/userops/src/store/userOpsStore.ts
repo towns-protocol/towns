@@ -10,6 +10,10 @@ import {
     V2PersistentState,
     V2State,
 } from './userOpsStoreMigrations'
+import { Hex } from 'viem'
+import { UserOperation } from 'viem/account-abstraction/types/userOperation'
+import { Address } from 'viem'
+import { BigNumber } from 'ethers'
 
 type OpDetails = V2OpDetails
 
@@ -255,4 +259,34 @@ export const userOpsStore = create<State & Actions>()(
 export const selectUserOpsByAddress = (address: string | undefined, state?: State) => {
     if (!address) return { ...initialState }
     return (state ?? userOpsStore.getState()).userOps[address] ?? { ...initialState }
+}
+
+type OpDetailsViem = UserOperation<'0.6'> | undefined
+
+export function ethersOpDetailsToViemOpDetails({ op }: { op: OpDetails['op'] }): OpDetailsViem {
+    if (!op) return
+    return {
+        sender: op.sender as Address,
+        nonce: BigNumber.from(op.nonce).toBigInt(),
+        initCode: op.initCode as Hex,
+        callData: op.callData as Hex,
+        callGasLimit: BigNumber.from(op.callGasLimit).toBigInt(),
+        verificationGasLimit: BigNumber.from(op.verificationGasLimit).toBigInt(),
+        preVerificationGas: BigNumber.from(op.preVerificationGas).toBigInt(),
+        maxFeePerGas: BigNumber.from(op.maxFeePerGas).toBigInt(),
+        maxPriorityFeePerGas: BigNumber.from(op.maxPriorityFeePerGas).toBigInt(),
+        paymasterAndData: op.paymasterAndData as Hex,
+        signature: op.signature as Hex,
+    }
+}
+
+export function viemOpDetailsToEthersOpDetails(
+    opDetails: OpDetailsViem,
+): OpDetails['op'] | undefined {
+    if (!opDetails) return
+    return {
+        ...opDetails,
+        initCode: opDetails.initCode ? opDetails.initCode : '0x',
+        paymasterAndData: opDetails.paymasterAndData ? opDetails.paymasterAndData : '0x',
+    }
 }

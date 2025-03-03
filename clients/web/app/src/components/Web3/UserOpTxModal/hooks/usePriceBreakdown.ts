@@ -19,31 +19,27 @@ export function usePriceBreakdown(args: {
         balanceIsLessThanCost,
     } = args
     const gasCost = costOfGas({
-        gasLimit,
-        preVerificationGas,
-        verificationGasLimit,
-        gasPrice,
+        gasLimit: BigNumber.from(gasLimit).toBigInt(),
+        preVerificationGas: BigNumber.from(preVerificationGas).toBigInt(),
+        verificationGasLimit: BigNumber.from(verificationGasLimit).toBigInt(),
+        gasPrice: BigNumber.from(gasPrice).toBigInt(),
     })
 
     const totalCost = totalCostOfUserOp({
-        gasLimit,
-        preVerificationGas,
-        verificationGasLimit,
-        gasPrice,
-        value,
+        gasLimit: BigNumber.from(gasLimit).toBigInt(),
+        preVerificationGas: BigNumber.from(preVerificationGas).toBigInt(),
+        verificationGasLimit: BigNumber.from(verificationGasLimit).toBigInt(),
+        gasPrice: BigNumber.from(gasPrice).toBigInt(),
+        value: value ? BigNumber.from(value).toBigInt() : undefined,
     })
 
-    const gasInEth = formatUnitsToFixedLength(gasCost.toBigInt())
+    const gasInEth = formatUnitsToFixedLength(gasCost)
 
     const currOpValueInEth = value
         ? formatUnitsToFixedLength(BigNumber.from(value).toBigInt())
         : undefined
 
-    const totalInEth = formatUnitsToFixedLength(
-        totalCost.toBigInt(),
-        18,
-        balanceIsLessThanCost ? 18 : 5,
-    )
+    const totalInEth = formatUnitsToFixedLength(totalCost, 18, balanceIsLessThanCost ? 18 : 5)
 
     return {
         gasCost,

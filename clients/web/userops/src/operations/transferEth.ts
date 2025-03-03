@@ -43,7 +43,6 @@ export async function transferEth(params: {
         toAddress: recipient,
         callData: '0x',
         functionHashForPaymasterProxy: 'transferEth',
-        signer,
         spaceId: undefined,
         value,
     })
