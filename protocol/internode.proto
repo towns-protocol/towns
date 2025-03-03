@@ -94,6 +94,7 @@ message SealEphemeralStreamRequest {
 }
 
 message SealEphemeralStreamResponse {
+    bytes genesis_miniblock_hash = 1;
 }
 
 // NodeToNode is the service that network nodes are using to communicate with each other.
