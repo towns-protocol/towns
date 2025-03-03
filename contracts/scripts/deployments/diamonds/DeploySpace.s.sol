@@ -35,6 +35,7 @@ import {DeployMembershipToken} from "contracts/scripts/deployments/facets/Deploy
 import {DeploySpaceEntitlementGated} from "contracts/scripts/deployments/facets/DeploySpaceEntitlementGated.s.sol";
 import {DeployTipping} from "contracts/scripts/deployments/facets/DeployTipping.s.sol";
 import {DeployMultiInit} from "contracts/scripts/deployments/utils/DeployMultiInit.s.sol";
+import {DeployInstallFacet} from "contracts/scripts/deployments/facets/DeployInstallFacet.s.sol";
 
 // Test Facets
 import {DeployMockLegacyMembership} from "contracts/scripts/deployments/utils/DeployMockLegacyMembership.s.sol";
@@ -68,7 +69,7 @@ contract DeploySpace is DiamondHelper, Deployer {
     new DeploySpaceEntitlementGated();
   DeployMultiInit deployMultiInit = new DeployMultiInit();
   DeployTipping tippingHelper = new DeployTipping();
-
+  DeployInstallFacet installFacetHelper = new DeployInstallFacet();
   // Test Facets
   DeployMockLegacyMembership mockLegacyMembershipHelper =
     new DeployMockLegacyMembership();
@@ -94,6 +95,7 @@ contract DeploySpace is DiamondHelper, Deployer {
   address referrals;
   address review;
   address tipping;
+  address installFacet;
   address multiInit;
 
   // Test Facets
@@ -150,6 +152,7 @@ contract DeploySpace is DiamondHelper, Deployer {
     review = reviewHelper.deploy(deployer);
     entitlementGated = entitlementGatedHelper.deploy(deployer);
     tipping = tippingHelper.deploy(deployer);
+    installFacet = installFacetHelper.deploy(deployer);
     membershipTokenHelper.removeSelector(IERC721A.tokenURI.selector);
 
     if (isAnvil()) {
@@ -201,6 +204,9 @@ contract DeploySpace is DiamondHelper, Deployer {
     addCut(referralsHelper.makeCut(referrals, IDiamond.FacetCutAction.Add));
     addCut(reviewHelper.makeCut(review, IDiamond.FacetCutAction.Add));
     addCut(tippingHelper.makeCut(tipping, IDiamond.FacetCutAction.Add));
+    addCut(
+      installFacetHelper.makeCut(installFacet, IDiamond.FacetCutAction.Add)
+    );
 
     if (isAnvil()) {
       addCut(
@@ -324,6 +330,11 @@ contract DeploySpace is DiamondHelper, Deployer {
             entitlementGated,
             IDiamond.FacetCutAction.Add
           )
+        );
+      } else if (facetNameHash == keccak256(abi.encodePacked("InstallFacet"))) {
+        installFacet = installFacetHelper.deploy(deployer);
+        addCut(
+          installFacetHelper.makeCut(installFacet, IDiamond.FacetCutAction.Add)
         );
       }
     }
