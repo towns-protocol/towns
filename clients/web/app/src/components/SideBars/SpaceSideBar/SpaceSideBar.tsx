@@ -17,10 +17,13 @@ import { ActionNavItem } from '@components/NavItem/ActionNavItem'
 import { ChannelNavGroup } from '@components/NavItem/ChannelNavGroup'
 import { ChannelNavItem } from '@components/NavItem/ChannelNavItem'
 import { CreateChannelFormContainer } from '@components/Web3/CreateChannelForm'
-import { Badge, Box, Card, IconButton, MotionBox, Paragraph, Stack } from '@ui'
+import { Badge, Box, Card, Icon, IconButton, MotionBox, Paragraph, Stack, Text } from '@ui'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { useShortcut } from 'hooks/useShortcut'
 import { useSortedChannels } from 'hooks/useSortedChannels'
+import { useReviewStore } from 'store/reviewStore'
+import { useReviews } from 'hooks/useReviews'
+import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { CHANNEL_INFO_PARAMS, PATHS } from 'routes'
 import { ReloadPrompt } from '@components/ReloadPrompt/ReloadPrompt'
 import { env } from 'utils'
@@ -139,6 +142,22 @@ export const SpaceSideBar = (props: Props) => {
         unreadThreadMentions,
     })
 
+    const { dismissReview, hasReviewBeenDismissed } = useReviewStore()
+    const { reviews } = useReviews(space.id)
+    const { data: aaAddress } = useAbstractAccountAddress({
+        rootKeyAddress: loggedInWalletAddress,
+    })
+
+    const hasUserReviewed = aaAddress
+        ? reviews.some((review) => review.author === aaAddress)
+        : false
+
+    const shouldShowReviewPrompt = !hasReviewBeenDismissed(space.id) && !hasUserReviewed
+
+    const handleReviewClick = useEvent(() => {
+        openPanel(CHANNEL_INFO_PARAMS.REVIEWS)
+    })
+
     const itemRenderer = useCallback(
         (
             u: (typeof unreadChannels)[0] | (typeof membersNotInDMs.data)[0],
@@ -178,6 +197,10 @@ export const SpaceSideBar = (props: Props) => {
         [membersNotInDMs, space],
     )
 
+    const handleReviewDismiss = useEvent((e: React.MouseEvent) => {
+        dismissReview(space.id)
+    })
+
     return (
         <>
             <Card
@@ -207,6 +230,28 @@ export const SpaceSideBar = (props: Props) => {
                         ) : (
                             <>
                                 <MenuGroup>
+                                    {/* review prompt */}
+                                    {shouldShowReviewPrompt && (
+                                        <SpaceSideBarListItem key="review">
+                                            <ActionNavItem
+                                                icon={
+                                                    <Icon
+                                                        type="star"
+                                                        padding="line"
+                                                        background="level2"
+                                                        color="blue"
+                                                        size="square_lg"
+                                                    />
+                                                }
+                                                id="review"
+                                                label={<Text color="blue">Review This Town</Text>}
+                                                minHeight="x5"
+                                                data-testid="review-nav-item"
+                                                closeAction={handleReviewDismiss}
+                                                onClick={handleReviewClick}
+                                            />
+                                        </SpaceSideBarListItem>
+                                    )}
                                     {/* threads */}
                                     <SpaceSideBarListItem key="threads">
                                         <OffscreenMarker

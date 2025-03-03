@@ -95,7 +95,7 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
                 {props.headerContent}
                 <Stack
                     justifyContent={{
-                        desktop: 'center',
+                        desktop: 'spaceBetween',
                         tablet: 'end',
                     }}
                     flexDirection={{
@@ -104,13 +104,14 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
                     }}
                     paddingBottom="x4"
                     width="100%"
-                    maxWidth={isTouch ? '100%' : undefined}
+                    style={{ maxWidth: isTouch ? '100%' : '1050px' }}
                     pointerEvents="all"
                     height="100%"
                     gap={{
                         desktop: 'x20',
                         tablet: 'md',
                     }}
+                    paddingTop="x4"
                 >
                     <Stack gap="x4" ref={leftColRef}>
                         <Stack horizontal gap="sm" alignContent="start">
@@ -143,7 +144,7 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
                     </Stack>
                     {/* right column */}
                     {!isTouch && (
-                        <Stack gap="lg" alignItems="center" paddingTop="x8" ref={rightColRef}>
+                        <Stack gap="lg" alignItems="center" ref={rightColRef}>
                             <Box height="x2" shrink={false} />
                             <InteractiveTownsToken
                                 key={imageSrc}

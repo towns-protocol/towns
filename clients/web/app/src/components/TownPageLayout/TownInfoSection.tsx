@@ -19,10 +19,12 @@ export const TownInfoSection = ({ spaceId }: TownInfoSectionProps) => {
     })
     const isMobile = useMobile()
 
+    const hasReviews = totalReviews > 0
+
     return (
         <Stack
             horizontal
-            background="level2"
+            border="level4"
             rounded="md"
             paddingX="none"
             paddingY="sm"
@@ -30,42 +32,20 @@ export const TownInfoSection = ({ spaceId }: TownInfoSectionProps) => {
             alignItems="center"
             width="100%"
             style={{
-                minWidth: isMobile ? '100%' : '450px',
+                minWidth: isMobile ? '100%' : hasReviews ? '450px' : '300px',
             }}
         >
             <Stack grow alignItems="center" position="relative" style={{ flex: 1, height: '80px' }}>
                 <Box
                     position="absolute"
-                    top="lg"
-                    width="100%"
-                    display="flex"
-                    justifyContent="center"
-                    alignItems="center"
-                >
-                    <Text
-                        size="lg"
-                        fontWeight="strong"
-                        textAlign="center"
-                        style={{ lineHeight: 0.5 }}
-                    >
-                        {averageRating.toFixed(1)}
-                    </Text>
-                </Box>
-                <Box
-                    position="absolute"
                     display="flex"
                     justifyContent="center"
                     alignItems="center"
                     top="x4"
                     height="height_lg"
                 >
-                    <ReviewStars rating={averageRating} size={16} />
+                    <ReviewStars rating={hasReviews ? averageRating : 0} size={16} />
                 </Box>
-            </Stack>
-
-            <Box style={{ width: '1px', height: '72px' }} background="level4" />
-
-            <Stack grow alignItems="center" position="relative" style={{ flex: 1, height: '80px' }}>
                 <Box
                     position="absolute"
                     top="lg"
@@ -74,28 +54,70 @@ export const TownInfoSection = ({ spaceId }: TownInfoSectionProps) => {
                     justifyContent="center"
                     alignItems="center"
                 >
-                    <Text
-                        size="lg"
-                        fontWeight="strong"
-                        textAlign="center"
-                        style={{ lineHeight: 0.5 }}
-                    >
-                        {totalReviews}
-                    </Text>
-                </Box>
-                <Box
-                    position="absolute"
-                    display="flex"
-                    justifyContent="center"
-                    alignItems="center"
-                    top="x4"
-                    height="height_lg"
-                >
-                    <Text size="sm" color="gray1">
-                        {totalReviews === 1 ? 'Review' : 'Reviews'}
-                    </Text>
+                    {hasReviews ? (
+                        <Text
+                            size="lg"
+                            fontWeight="strong"
+                            textAlign="center"
+                            style={{ lineHeight: 0.5 }}
+                        >
+                            {averageRating.toFixed(1)}
+                        </Text>
+                    ) : (
+                        <Text
+                            size="lg"
+                            fontWeight="strong"
+                            textAlign="center"
+                            style={{ lineHeight: 0.5 }}
+                        >
+                            No Reviews
+                        </Text>
+                    )}
                 </Box>
             </Stack>
+
+            {hasReviews && (
+                <>
+                    <Box style={{ width: '1px', height: '72px' }} background="level4" />
+
+                    <Stack
+                        grow
+                        alignItems="center"
+                        position="relative"
+                        style={{ flex: 1, height: '80px' }}
+                    >
+                        <Box
+                            position="absolute"
+                            top="lg"
+                            width="100%"
+                            display="flex"
+                            justifyContent="center"
+                            alignItems="center"
+                        >
+                            <Text
+                                size="lg"
+                                fontWeight="strong"
+                                textAlign="center"
+                                style={{ lineHeight: 0.5 }}
+                            >
+                                {totalReviews}
+                            </Text>
+                        </Box>
+                        <Box
+                            position="absolute"
+                            display="flex"
+                            justifyContent="center"
+                            alignItems="center"
+                            top="x4"
+                            height="height_lg"
+                        >
+                            <Text size="sm" color="gray1">
+                                {totalReviews === 1 ? 'Review' : 'Reviews'}
+                            </Text>
+                        </Box>
+                    </Stack>
+                </>
+            )}
 
             <Box style={{ width: '1px', height: '72px' }} background="level4" />
 

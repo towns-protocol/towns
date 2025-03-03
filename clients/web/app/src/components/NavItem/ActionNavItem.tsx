@@ -1,5 +1,5 @@
 import React from 'react'
-import { BoxProps, ButtonText, Stack } from '@ui'
+import { BoxProps, ButtonText, IconButton, Stack } from '@ui'
 import { Icon, IconName } from 'ui/components/Icon'
 import { TooltipOptions } from 'ui/components/Tooltip/TooltipRenderer'
 import { NavItem } from './_NavItem'
@@ -15,6 +15,7 @@ type Props = {
     tooltipOptions?: TooltipOptions
     minHeight?: BoxProps['minHeight']
     onClick?: (e: React.MouseEvent) => void
+    closeAction?: (e: React.MouseEvent) => void
     exact?: boolean
     children?: React.ReactNode
 }
@@ -28,6 +29,7 @@ export const ActionNavItem = (props: Props) => {
         label,
         badge,
         onClick,
+        closeAction,
         tooltip,
         tooltipOptions,
         minHeight,
@@ -69,11 +71,20 @@ export const ActionNavItem = (props: Props) => {
                     {label}
                 </ButtonText>
             )}
-            {!!badge && (
-                <Stack horizontal grow justifyContent="end">
-                    {badge}
-                </Stack>
-            )}
+            <Stack horizontal grow justifyContent="end" alignItems="center" gap="sm">
+                {!!badge && badge}
+                {closeAction && (
+                    <IconButton
+                        icon="close"
+                        background="none"
+                        color={{ hover: 'default', default: 'gray2' }}
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            closeAction(e)
+                        }}
+                    />
+                )}
+            </Stack>
             {children}
         </NavItem>
     )

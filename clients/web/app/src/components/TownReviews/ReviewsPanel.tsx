@@ -35,7 +35,7 @@ export const ReviewsPanel = () => {
 
     const space = useSpaceData()
     const { data: contractSpaceInfo } = useContractSpaceInfo(space?.id)
-    const [sortBy, setSortBy] = useState<'relevant' | 'recent'>('recent')
+    const [sortBy, setSortBy] = useState<'recommended' | 'recent'>('recent')
     const [isDropdownOpen, setIsDropdownOpen] = useState(false)
     const [activeModal, setActiveModal] = useState<{
         type: 'write' | 'edit'
@@ -51,7 +51,7 @@ export const ReviewsPanel = () => {
     )
 
     const sortedReviews = useMemo(() => {
-        if (sortBy === 'relevant') {
+        if (sortBy === 'recommended') {
             // Sort by rating (highest to lowest)
             return [...reviews].sort((a, b) => b.rating - a.rating)
         }
@@ -151,10 +151,10 @@ export const ReviewsPanel = () => {
         : undefined
 
     const { ref: containerRef, width: containerWidth } = useContainerWidth()
-    const isNarrow = containerWidth > 0 && containerWidth < 500
+    const isNarrow = containerWidth > 0 && containerWidth < 430
 
     return (
-        <Panel label="Reviews" padding="none" paddingX="none">
+        <Panel label="Reviews" padding="none" paddingX="none" paddingTop="sm">
             <Stack gap="md" ref={containerRef}>
                 <Stack paddingX="lg" paddingY="md" gap="lg">
                     <Stack
@@ -168,30 +168,24 @@ export const ReviewsPanel = () => {
                                 {averageRating.toFixed(1)}
                             </Text>
                             <Stack gap="sm">
-                                <ReviewStars rating={averageRating} size={32} />
+                                <ReviewStars rating={averageRating} size={24} />
                                 <Text color="gray2">
                                     {totalReviews} {totalReviews === 1 ? 'Review' : 'Reviews'}
                                 </Text>
                             </Stack>
                         </Stack>
                         <Box width={isNarrow ? '100%' : undefined}>
-                            {userReview ? (
-                                <Button
-                                    tone="cta1"
-                                    width={isNarrow ? '100%' : undefined}
-                                    onClick={() => handleEditReview(userReview.id)}
-                                >
-                                    Edit Review
-                                </Button>
-                            ) : (
-                                <Button
-                                    tone="cta1"
-                                    width={isNarrow ? '100%' : undefined}
-                                    onClick={() => setActiveModal({ type: 'write' })}
-                                >
-                                    Write a Review
-                                </Button>
-                            )}
+                            <Button
+                                tone="cta1"
+                                width={isNarrow ? '100%' : 'x20'}
+                                onClick={() =>
+                                    userReview
+                                        ? handleEditReview(userReview.id)
+                                        : setActiveModal({ type: 'write' })
+                                }
+                            >
+                                {userReview ? 'Edit Review' : 'Write a Review'}
+                            </Button>
                         </Box>
                     </Stack>
                 </Stack>
@@ -216,7 +210,7 @@ export const ReviewsPanel = () => {
                                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                                 >
                                     <Text>
-                                        {sortBy === 'relevant' ? 'Most Relevant' : 'Recent'}
+                                        {sortBy === 'recommended' ? 'Recommended' : 'Recent'}
                                     </Text>
                                     <Icon type="arrowDown" size="square_sm" color="gray2" />
                                 </Stack>
@@ -236,18 +230,18 @@ export const ReviewsPanel = () => {
                                             hoverable
                                             background={{
                                                 default:
-                                                    sortBy === 'relevant' ? 'level2' : undefined,
+                                                    sortBy === 'recommended' ? 'level2' : undefined,
                                                 hover: 'level3',
                                             }}
                                             paddingX="md"
                                             paddingY="sm"
                                             onClick={(e) => {
                                                 e.stopPropagation()
-                                                setSortBy('relevant')
+                                                setSortBy('recommended')
                                                 setIsDropdownOpen(false)
                                             }}
                                         >
-                                            <Text>Most Relevant</Text>
+                                            <Text>Recommended</Text>
                                         </Stack>
                                         <Divider space="none" />
                                         <Stack
