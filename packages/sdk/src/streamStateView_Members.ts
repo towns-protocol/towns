@@ -4,6 +4,8 @@ import {
     Snapshot,
     WrappedEncryptedData,
     MemberPayload_Nft,
+    MemberPayload_MemberBlockchainTransaction,
+    BlockchainTransaction_TokenTransfer,
 } from '@river-build/proto'
 import TypedEmitter from 'typed-emitter'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
@@ -60,6 +62,16 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
         review: SpaceReviewEventObject
         createdAtEpochMs: bigint
         eventHashStr: string
+    }[] = []
+
+    tokenTransfers: {
+        address: Uint8Array
+        amount: bigint
+        isBuy: boolean
+        chainId: string
+        userId: string
+        createdAtEpochMs: bigint
+        messageId: string
     }[] = []
 
     constructor(streamId: string) {
@@ -207,10 +219,19 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                         }
                         break
                     }
+                    case 'tokenTransfer': {
+                        this.addTokenTransfer(
+                            payload.content.value,
+                            transactionContent.value,
+                            event.createdAtEpochMs,
+                            stateEmitter,
+                            true,
+                        )
+                        break
+                    }
                     default:
                         break
                 }
-
                 break
             }
             default:
@@ -370,7 +391,6 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                 }
                 break
             case 'memberBlockchainTransaction': {
-                const receipt = payload.content.value.transaction?.receipt
                 const transactionContent = payload.content.value.transaction?.content
                 switch (transactionContent?.case) {
                     case undefined:
@@ -391,8 +411,15 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                         break
                     }
                     case 'tokenTransfer':
+                        this.addTokenTransfer(
+                            payload.content.value,
+                            transactionContent.value,
+                            event.createdAtEpochMs,
+                            stateEmitter,
+                        )
                         break
                     case 'spaceReview': {
+                        const receipt = payload.content.value.transaction?.receipt
                         if (!receipt) {
                             return
                         }
@@ -524,6 +551,33 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
 
     joinedOrInvitedParticipants(): Set<string> {
         return this.membership.joinedOrInvitedParticipants()
+    }
+
+    private addTokenTransfer(
+        payload: MemberPayload_MemberBlockchainTransaction,
+        transferContent: BlockchainTransaction_TokenTransfer,
+        createdAtEpochMs: bigint,
+        stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
+        prepend: boolean = false,
+    ) {
+        const receipt = payload.transaction?.receipt
+        const solanaReceipt = payload.transaction?.solanaReceipt
+
+        const transferData = {
+            address: transferContent.address,
+            userId: userIdFromAddress(payload.fromUserAddress),
+            chainId: receipt
+                ? receipt.chainId.toString()
+                : solanaReceipt
+                ? 'solana-mainnet'
+                : 'unknown chain',
+            createdAtEpochMs: createdAtEpochMs,
+            isBuy: transferContent.isBuy,
+            messageId: bin_toHexString(transferContent.messageId),
+            amount: BigInt(transferContent.amount),
+        }
+        prepend ? this.tokenTransfers.unshift(transferData) : this.tokenTransfers.push(transferData)
+        stateEmitter?.emit('streamTokenTransfer', this.streamId, transferData)
     }
 
     private addPin(

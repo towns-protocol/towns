@@ -94,11 +94,7 @@ func (syncOp *StreamSyncOperation) Run(
 	res StreamsResponseSubscriber,
 ) error {
 	log := logging.FromCtx(syncOp.ctx).With("syncId", syncOp.SyncID)
-
-	messagesSendToClient := 0
-
 	log.Debug("Stream sync operation start")
-	defer log.Debugw("Stream sync operation stopped", "send", messagesSendToClient)
 
 	syncers, messages, err := client.NewSyncers(
 		syncOp.ctx, syncOp.cancel, syncOp.SyncID, syncOp.streamCache,
@@ -123,20 +119,33 @@ func (syncOp *StreamSyncOperation) Run(
 			}
 			if err := syncOp.process(cmd); err != nil {
 				select {
+				case <-syncOp.ctx.Done():
+					return
 				case messages <- &SyncStreamsResponse{
 					SyncOp:   SyncOp_SYNC_DOWN,
 					StreamId: cookie.GetStreamId(),
 				}:
 					continue
-				case <-syncOp.ctx.Done():
-					return
 				}
 			}
 		}
 	}()
 
+	// Start separate goroutine to process sync stream commands
+	go syncOp.runCommandsProcessing(syncers, messages)
+
+	var messagesSendToClient int
+	defer log.Debugw("Stream sync operation stopped", "send", messagesSendToClient)
+
 	for {
 		select {
+		case <-syncOp.ctx.Done():
+			// clientErr non-nil indicates client hung up, get the error from the root ctx.
+			if clientErr := syncOp.rootCtx.Err(); clientErr != nil {
+				return clientErr
+			}
+			// otherwise syncOp is stopped internally.
+			return context.Cause(syncOp.ctx)
 		case msg, ok := <-messages:
 			if !ok {
 				_ = res.Send(&SyncStreamsResponse{
@@ -156,14 +165,22 @@ func (syncOp *StreamSyncOperation) Run(
 
 			log.Debug("Pending messages in sync operation", "count", len(messages))
 
-		case <-syncOp.ctx.Done():
-			// clientErr non-nil indicates client hung up, get the error from the root ctx.
-			if clientErr := syncOp.rootCtx.Err(); clientErr != nil {
-				return clientErr
+			// If the message is a close message, stop sending messages to the client and close the sync operation
+			if msg.GetSyncOp() == SyncOp_SYNC_CLOSE {
+				return nil
 			}
-			// otherwise syncOp is stopped internally.
-			return context.Cause(syncOp.ctx)
+		}
+	}
+}
 
+func (syncOp *StreamSyncOperation) runCommandsProcessing(
+	syncers *client.SyncerSet,
+	messages chan *SyncStreamsResponse,
+) {
+	for {
+		select {
+		case <-syncOp.ctx.Done():
+			return
 		case cmd := <-syncOp.commands:
 			if cmd.AddStreamReq != nil {
 				nodeAddress := common.BytesToAddress(cmd.AddStreamReq.Msg.GetSyncPos().GetNodeAddress())
@@ -181,23 +198,18 @@ func (syncOp *StreamSyncOperation) Run(
 					continue
 				}
 				cmd.Reply(syncers.RemoveStream(cmd.Ctx, streamID))
-			} else if cmd.PingReq != nil {
-				err := res.Send(&SyncStreamsResponse{
-					SyncId:    syncOp.SyncID,
-					SyncOp:    SyncOp_SYNC_PONG,
-					PongNonce: cmd.PingReq.Msg.GetNonce(),
-				})
-				cmd.Reply(err)
 			} else if cmd.DebugDropStream != (shared.StreamId{}) {
 				cmd.Reply(syncers.DebugDropStream(cmd.Ctx, cmd.DebugDropStream))
 			} else if cmd.CancelReq != nil {
-				_ = res.Send(&SyncStreamsResponse{
-					SyncId: syncOp.SyncID,
-					SyncOp: SyncOp_SYNC_CLOSE,
-				})
-
+				messages <- &SyncStreamsResponse{SyncOp: SyncOp_SYNC_CLOSE}
 				cmd.Reply(nil)
-				return nil
+				return
+			} else if cmd.PingReq != nil {
+				messages <- &SyncStreamsResponse{
+					SyncOp:    SyncOp_SYNC_PONG,
+					PongNonce: cmd.PingReq.Msg.GetNonce(),
+				}
+				cmd.Reply(nil)
 			}
 		}
 	}

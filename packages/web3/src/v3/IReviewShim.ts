@@ -125,8 +125,8 @@ export function getSpaceReviewEventData(
         ) {
             return {
                 user: parsedLog.args.user,
-                comment: (parsedLog.args.review as ReviewStorage.ContentStructOutput)[0],
-                rating: (parsedLog.args.review as ReviewStorage.ContentStructOutput)[1],
+                comment: parsedLog.args.comment,
+                rating: parsedLog.args.rating,
                 action: SpaceReviewAction.Add,
             }
         } else if (
@@ -135,8 +135,8 @@ export function getSpaceReviewEventData(
         ) {
             return {
                 user: parsedLog.args.user,
-                comment: (parsedLog.args.review as ReviewStorage.ContentStructOutput)[0],
-                rating: (parsedLog.args.review as ReviewStorage.ContentStructOutput)[1],
+                comment: parsedLog.args.comment,
+                rating: parsedLog.args.rating,
                 action: SpaceReviewAction.Update,
             }
         } else if (

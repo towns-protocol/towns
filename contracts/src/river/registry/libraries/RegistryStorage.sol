@@ -98,13 +98,23 @@ abstract contract RegistryModifiers {
     _;
   }
 
+  modifier onlyRegisteredNodes(address[] calldata nodes) {
+    _verifyNodes(nodes);
+    _;
+  }
+
   modifier onlyOperator(address operator) {
     if (!ds.operators.contains(operator)) revert(RiverRegistryErrors.BAD_AUTH);
     _;
   }
 
   modifier onlyStream(bytes32 streamId) {
-    if (!ds.streams.contains(streamId)) revert(RiverRegistryErrors.NOT_FOUND);
+    _verifyStreamIdExists(streamId);
+    _;
+  }
+
+  modifier onlyStreamNotExists(bytes32 streamId) {
+    _verifyStreamIdNotExists(streamId);
     _;
   }
 
@@ -124,5 +134,25 @@ abstract contract RegistryModifiers {
     if (!ds.configurationManagers.contains(manager))
       revert(RiverRegistryErrors.BAD_AUTH);
     _;
+  }
+
+  /// @dev Verifies that the streamId is in the registry
+  function _verifyStreamIdExists(bytes32 streamId) internal view {
+    if (!ds.streams.contains(streamId)) revert(RiverRegistryErrors.NOT_FOUND);
+  }
+
+  /// @dev Verifies that the streamId is not in the registry
+  function _verifyStreamIdNotExists(bytes32 streamId) internal view {
+    if (ds.streams.contains(streamId))
+      revert(RiverRegistryErrors.ALREADY_EXISTS);
+  }
+
+  /// @dev Verifies that the nodes are in the registry
+  function _verifyNodes(address[] calldata nodes) internal view {
+    uint256 nodeCount = nodes.length;
+    for (uint256 i; i < nodeCount; ++i) {
+      if (!ds.nodes.contains(nodes[i]))
+        revert(RiverRegistryErrors.NODE_NOT_FOUND);
+    }
   }
 }

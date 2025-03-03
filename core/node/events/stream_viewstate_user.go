@@ -12,7 +12,8 @@ type UserStreamView interface {
 	GetUserInception() (*UserPayload_Inception, error)
 	GetUserMembership(streamId shared.StreamId) (MembershipOp, error)
 	IsMemberOf(streamId shared.StreamId) bool
-	HasTransaction(receipt *BlockchainTransactionReceipt) (bool, error)
+	HasTransaction(evmReceipt *BlockchainTransactionReceipt, 
+		solanaReceipt *SolanaBlockchainTransactionReceipt) (bool, error)
 }
 
 var _ UserStreamView = (*StreamView)(nil)
@@ -86,20 +87,42 @@ func (r *StreamView) GetUserMembership(streamId shared.StreamId) (MembershipOp, 
 	return retValue, err
 }
 
+func transactionsAreEqual(blockChainTransaction *BlockchainTransaction, 
+	evmReceipt *BlockchainTransactionReceipt, 
+	solanaReceipt *SolanaBlockchainTransactionReceipt) bool {
+
+	if blockChainTransaction == nil {
+		return false
+	} else if evmReceipt != nil && blockChainTransaction.Receipt != nil {
+		return bytes.Equal(blockChainTransaction.Receipt.TransactionHash, evmReceipt.TransactionHash)
+	} else if solanaReceipt != nil && blockChainTransaction.SolanaReceipt != nil {
+		if len(blockChainTransaction.SolanaReceipt.Transaction.Signatures) != len(solanaReceipt.Transaction.Signatures) {
+			return false
+		}
+		for i, sig := range blockChainTransaction.SolanaReceipt.Transaction.Signatures {
+			if !bytes.Equal([]byte(sig), []byte(solanaReceipt.Transaction.Signatures[i])) {
+				return false
+			}
+		}
+		return true
+	}
+	return false
+}
+
 // handles transactions for user streams and member payload of any stream
-func (r *StreamView) HasTransaction(receipt *BlockchainTransactionReceipt) (bool, error) {
+func (r *StreamView) HasTransaction(evmReceipt *BlockchainTransactionReceipt, solanaReceipt *SolanaBlockchainTransactionReceipt) (bool, error) {
 	retValue := false
 	updateFn := func(e *ParsedEvent, minibockNum int64, eventNum int64) (bool, error) {
 		switch payload := e.Event.Payload.(type) {
 		case *StreamEvent_UserPayload:
 			switch payload := payload.UserPayload.Content.(type) {
 			case *UserPayload_BlockchainTransaction:
-				if bytes.Equal(payload.BlockchainTransaction.Receipt.TransactionHash, receipt.TransactionHash) {
+				if transactionsAreEqual(payload.BlockchainTransaction, evmReceipt, solanaReceipt) {
 					retValue = true
 					return false, nil
 				}
 			case *UserPayload_ReceivedBlockchainTransaction_:
-				if bytes.Equal(payload.ReceivedBlockchainTransaction.Transaction.Receipt.TransactionHash, receipt.TransactionHash) {
+				if transactionsAreEqual(payload.ReceivedBlockchainTransaction.Transaction, evmReceipt, solanaReceipt) {
 					retValue = true
 					return false, nil
 				}
@@ -108,7 +131,7 @@ func (r *StreamView) HasTransaction(receipt *BlockchainTransactionReceipt) (bool
 		case *StreamEvent_MemberPayload:
 			switch payload := payload.MemberPayload.Content.(type) {
 			case *MemberPayload_MemberBlockchainTransaction_:
-				if bytes.Equal(payload.MemberBlockchainTransaction.Transaction.Receipt.TransactionHash, receipt.TransactionHash) {
+				if transactionsAreEqual(payload.MemberBlockchainTransaction.Transaction, evmReceipt, solanaReceipt) {
 					retValue = true
 					return false, nil
 				}

@@ -222,6 +222,7 @@ export abstract class BaseDecryptionExtensions {
         userDevice: UserDevice,
         userId: string,
         upToDateStreams: Set<string>,
+        inLogId: string,
     ) {
         this.emitter = emitter
         this.crypto = crypto
@@ -232,7 +233,8 @@ export abstract class BaseDecryptionExtensions {
         // ready for processing
         this.upToDateStreams = upToDateStreams
 
-        const logId = generateLogId(userId, userDevice.deviceKey)
+        const shortKey = shortenHexString(userDevice.deviceKey)
+        const logId = `${inLogId}:${shortKey}`
         this.log = {
             debug: dlog('csb:decryption:debug', { defaultEnabled: false }).extend(logId),
             info: dlog('csb:decryption', { defaultEnabled: true }).extend(logId),
@@ -969,11 +971,4 @@ function isSessionNotFoundError(err: unknown): boolean {
         return (err.message as string).toLowerCase().includes('session not found')
     }
     return false
-}
-
-function generateLogId(userId: string, deviceKey: string): string {
-    const shortId = shortenHexString(userId.startsWith('0x') ? userId.slice(2) : userId)
-    const shortKey = shortenHexString(deviceKey)
-    const logId = `${shortId}:${shortKey}`
-    return logId
 }

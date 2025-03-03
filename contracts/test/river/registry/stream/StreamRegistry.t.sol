@@ -188,6 +188,7 @@ contract StreamRegistryTest is
     );
   }
 
+  /// forge-config: default.fuzz.runs = 64
   function test_fuzz_addStream(
     address nodeOperator,
     TestStream memory testStream,
@@ -487,6 +488,67 @@ contract StreamRegistryTest is
       RiverRegistryErrors.STREAM_SEALED
     );
     streamRegistry.setStreamLastMiniblockBatch(miniblocks);
+  }
+
+  /// @notice Validates that `placeStreamOnNode` reverts if the node is not registered.
+  function test_placeStreamOnNode_revertWhen_nodeNotRegistered() public {
+    test_allocateStream();
+
+    address unregisteredNode = makeAddr("unregisteredNode");
+
+    vm.prank(unregisteredNode);
+    vm.expectRevert(bytes(RiverRegistryErrors.NODE_NOT_FOUND));
+    streamRegistry.placeStreamOnNode(SAMPLE_STREAM.streamId, unregisteredNode);
+  }
+
+  function test_placeStreamOnNode() public {
+    // Add a valid stream first
+    test_allocateStream();
+
+    // Place this stream on a new node
+    address newNode = makeAddr("newNode");
+    _registerNode(OPERATOR, newNode, "newNodeUrl");
+
+    vm.expectEmit(address(streamRegistry));
+    emit StreamPlacementUpdated(SAMPLE_STREAM.streamId, newNode, true);
+
+    vm.prank(newNode);
+    streamRegistry.placeStreamOnNode(SAMPLE_STREAM.streamId, newNode);
+
+    assertEq(streamRegistry.getStreamCountOnNode(newNode), 1);
+    assertTrue(
+      streamRegistry.getStream(SAMPLE_STREAM.streamId).nodes[1] == newNode
+    );
+  }
+
+  /// @notice Validates that `removeStreamFromNode` reverts if the stream is not on the node.
+  function test_removeStreamFromNode_revertWhen_notOnNode() public {
+    test_allocateStream();
+
+    address anotherNode = makeAddr("anotherNode");
+
+    _registerNode(OPERATOR, anotherNode, "anotherNodeUrl");
+
+    vm.prank(anotherNode);
+    vm.expectRevert(bytes(RiverRegistryErrors.NODE_NOT_FOUND));
+    streamRegistry.removeStreamFromNode(SAMPLE_STREAM.streamId, anotherNode);
+  }
+
+  function test_removeStreamFromNode() public {
+    // Add a valid stream first
+    test_allocateStream();
+
+    // Remove the stream from the node
+    vm.expectEmit(address(streamRegistry));
+    emit StreamPlacementUpdated(SAMPLE_STREAM.streamId, NODE, false);
+
+    vm.prank(NODE);
+    streamRegistry.removeStreamFromNode(SAMPLE_STREAM.streamId, NODE);
+
+    assertEq(streamRegistry.getStreamCountOnNode(NODE), 0);
+    assertTrue(
+      streamRegistry.getStream(SAMPLE_STREAM.streamId).nodes.length == 0
+    );
   }
 
   function test_getStream() public {

@@ -470,6 +470,22 @@ func Make_UserMetadataPayload_Inception(
 	}
 }
 
+func Make_UserMetadataPayload_EncryptionDevice(
+	deviceKey string,
+	fallbackKey string,
+) *StreamEvent_UserMetadataPayload {
+	return &StreamEvent_UserMetadataPayload{
+		UserMetadataPayload: &UserMetadataPayload{
+			Content: &UserMetadataPayload_EncryptionDevice_{
+				EncryptionDevice: &UserMetadataPayload_EncryptionDevice{
+					DeviceKey:   deviceKey,
+					FallbackKey: fallbackKey,
+				},
+			},
+		},
+	}
+}
+
 func Make_UserPayload_Membership(
 	op MembershipOp,
 	streamId StreamId,
@@ -573,13 +589,14 @@ func Make_MediaPayload_Inception(inception *MediaPayload_Inception) *StreamEvent
 	}
 }
 
-func Make_MediaPayload_Chunk(data []byte, chunkIndex int32) *StreamEvent_MediaPayload {
+func Make_MediaPayload_Chunk(data []byte, chunkIndex int32, iv []byte) *StreamEvent_MediaPayload {
 	return &StreamEvent_MediaPayload{
 		MediaPayload: &MediaPayload{
 			Content: &MediaPayload_Chunk_{
 				Chunk: &MediaPayload_Chunk{
 					Data:       data,
 					ChunkIndex: chunkIndex,
+					Iv:         iv,
 				},
 			},
 		},
