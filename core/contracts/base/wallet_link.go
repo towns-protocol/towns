@@ -38,7 +38,7 @@ type IWalletLinkBaseLinkedWallet struct {
 
 // WalletLinkMetaData contains all meta data concerning the WalletLink contract.
 var WalletLinkMetaData = &bind.MetaData{
-	ABI: "[{\"type\":\"function\",\"name\":\"checkIfLinked\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getLatestNonceForRootKey\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getRootKeyForWallet\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getWalletsByRootKey\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"wallets\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"linkCallerToRootKey\",\"inputs\":[{\"name\":\"rootWallet\",\"type\":\"tuple\",\"internalType\":\"structIWalletLinkBase.LinkedWallet\",\"components\":[{\"name\":\"addr\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"message\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"name\":\"nonce\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"linkWalletToRootKey\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"tuple\",\"internalType\":\"structIWalletLinkBase.LinkedWallet\",\"components\":[{\"name\":\"addr\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"message\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"name\":\"rootWallet\",\"type\":\"tuple\",\"internalType\":\"structIWalletLinkBase.LinkedWallet\",\"components\":[{\"name\":\"addr\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"message\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"name\":\"nonce\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"removeCallerLink\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"removeLink\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootWallet\",\"type\":\"tuple\",\"internalType\":\"structIWalletLinkBase.LinkedWallet\",\"components\":[{\"name\":\"addr\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"message\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"name\":\"nonce\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"LinkWalletToRootKey\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"RemoveLink\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"secondWallet\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"error\",\"name\":\"WalletLink__CannotLinkToRootWallet\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__CannotLinkToSelf\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__CannotRemoveRootWallet\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__InvalidAddress\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__InvalidSignature\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__LinkAlreadyExists\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__LinkedToAnotherRootKey\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__NotLinked\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]}]",
+	ABI: "[{\"type\":\"function\",\"name\":\"checkIfLinked\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getDefaultWallet\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getDelegateByVersion\",\"inputs\":[{\"name\":\"version\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getLatestNonceForRootKey\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getRootKeyForWallet\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getWalletsByRootKey\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"wallets\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getWalletsByRootKeyWithDelegations\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"wallets\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"linkCallerToRootKey\",\"inputs\":[{\"name\":\"rootWallet\",\"type\":\"tuple\",\"internalType\":\"structIWalletLinkBase.LinkedWallet\",\"components\":[{\"name\":\"addr\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"message\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"name\":\"nonce\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"linkWalletToRootKey\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"tuple\",\"internalType\":\"structIWalletLinkBase.LinkedWallet\",\"components\":[{\"name\":\"addr\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"message\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"name\":\"rootWallet\",\"type\":\"tuple\",\"internalType\":\"structIWalletLinkBase.LinkedWallet\",\"components\":[{\"name\":\"addr\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"message\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"name\":\"nonce\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"removeCallerLink\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"removeLink\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootWallet\",\"type\":\"tuple\",\"internalType\":\"structIWalletLinkBase.LinkedWallet\",\"components\":[{\"name\":\"addr\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"message\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"name\":\"nonce\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setDefaultWallet\",\"inputs\":[{\"name\":\"defaultWallet\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setDelegateByVersion\",\"inputs\":[{\"name\":\"version\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"delegate\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"LinkThirdPartyDelegation\",\"inputs\":[{\"name\":\"delegator\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"delegatedWallet\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"LinkWalletToRootKey\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"RemoveLink\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"secondWallet\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"SetDefaultWallet\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"defaultWallet\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"error\",\"name\":\"WalletLink__CannotLinkToRootWallet\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__CannotLinkToSelf\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__CannotRemoveDefaultWallet\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__CannotRemoveRootWallet\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__DefaultWalletAlreadySet\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__InvalidAddress\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__InvalidSignature\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__LinkAlreadyExists\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__LinkedToAnotherRootKey\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__MaxLinkedWalletsReached\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__NotLinked\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]}]",
 }
 
 // WalletLinkABI is the input ABI used to generate the binding from.
@@ -218,6 +218,68 @@ func (_WalletLink *WalletLinkCallerSession) CheckIfLinked(rootKey common.Address
 	return _WalletLink.Contract.CheckIfLinked(&_WalletLink.CallOpts, rootKey, wallet)
 }
 
+// GetDefaultWallet is a free data retrieval call binding the contract method 0x101659b1.
+//
+// Solidity: function getDefaultWallet(address rootKey) view returns(address)
+func (_WalletLink *WalletLinkCaller) GetDefaultWallet(opts *bind.CallOpts, rootKey common.Address) (common.Address, error) {
+	var out []interface{}
+	err := _WalletLink.contract.Call(opts, &out, "getDefaultWallet", rootKey)
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
+}
+
+// GetDefaultWallet is a free data retrieval call binding the contract method 0x101659b1.
+//
+// Solidity: function getDefaultWallet(address rootKey) view returns(address)
+func (_WalletLink *WalletLinkSession) GetDefaultWallet(rootKey common.Address) (common.Address, error) {
+	return _WalletLink.Contract.GetDefaultWallet(&_WalletLink.CallOpts, rootKey)
+}
+
+// GetDefaultWallet is a free data retrieval call binding the contract method 0x101659b1.
+//
+// Solidity: function getDefaultWallet(address rootKey) view returns(address)
+func (_WalletLink *WalletLinkCallerSession) GetDefaultWallet(rootKey common.Address) (common.Address, error) {
+	return _WalletLink.Contract.GetDefaultWallet(&_WalletLink.CallOpts, rootKey)
+}
+
+// GetDelegateByVersion is a free data retrieval call binding the contract method 0xd1093a3e.
+//
+// Solidity: function getDelegateByVersion(uint256 version) view returns(address)
+func (_WalletLink *WalletLinkCaller) GetDelegateByVersion(opts *bind.CallOpts, version *big.Int) (common.Address, error) {
+	var out []interface{}
+	err := _WalletLink.contract.Call(opts, &out, "getDelegateByVersion", version)
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
+}
+
+// GetDelegateByVersion is a free data retrieval call binding the contract method 0xd1093a3e.
+//
+// Solidity: function getDelegateByVersion(uint256 version) view returns(address)
+func (_WalletLink *WalletLinkSession) GetDelegateByVersion(version *big.Int) (common.Address, error) {
+	return _WalletLink.Contract.GetDelegateByVersion(&_WalletLink.CallOpts, version)
+}
+
+// GetDelegateByVersion is a free data retrieval call binding the contract method 0xd1093a3e.
+//
+// Solidity: function getDelegateByVersion(uint256 version) view returns(address)
+func (_WalletLink *WalletLinkCallerSession) GetDelegateByVersion(version *big.Int) (common.Address, error) {
+	return _WalletLink.Contract.GetDelegateByVersion(&_WalletLink.CallOpts, version)
+}
+
 // GetLatestNonceForRootKey is a free data retrieval call binding the contract method 0x20a00ac8.
 //
 // Solidity: function getLatestNonceForRootKey(address rootKey) view returns(uint256)
@@ -311,6 +373,37 @@ func (_WalletLink *WalletLinkCallerSession) GetWalletsByRootKey(rootKey common.A
 	return _WalletLink.Contract.GetWalletsByRootKey(&_WalletLink.CallOpts, rootKey)
 }
 
+// GetWalletsByRootKeyWithDelegations is a free data retrieval call binding the contract method 0x3d005eab.
+//
+// Solidity: function getWalletsByRootKeyWithDelegations(address rootKey) view returns(address[] wallets)
+func (_WalletLink *WalletLinkCaller) GetWalletsByRootKeyWithDelegations(opts *bind.CallOpts, rootKey common.Address) ([]common.Address, error) {
+	var out []interface{}
+	err := _WalletLink.contract.Call(opts, &out, "getWalletsByRootKeyWithDelegations", rootKey)
+
+	if err != nil {
+		return *new([]common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([]common.Address)).(*[]common.Address)
+
+	return out0, err
+
+}
+
+// GetWalletsByRootKeyWithDelegations is a free data retrieval call binding the contract method 0x3d005eab.
+//
+// Solidity: function getWalletsByRootKeyWithDelegations(address rootKey) view returns(address[] wallets)
+func (_WalletLink *WalletLinkSession) GetWalletsByRootKeyWithDelegations(rootKey common.Address) ([]common.Address, error) {
+	return _WalletLink.Contract.GetWalletsByRootKeyWithDelegations(&_WalletLink.CallOpts, rootKey)
+}
+
+// GetWalletsByRootKeyWithDelegations is a free data retrieval call binding the contract method 0x3d005eab.
+//
+// Solidity: function getWalletsByRootKeyWithDelegations(address rootKey) view returns(address[] wallets)
+func (_WalletLink *WalletLinkCallerSession) GetWalletsByRootKeyWithDelegations(rootKey common.Address) ([]common.Address, error) {
+	return _WalletLink.Contract.GetWalletsByRootKeyWithDelegations(&_WalletLink.CallOpts, rootKey)
+}
+
 // LinkCallerToRootKey is a paid mutator transaction binding the contract method 0x2f461453.
 //
 // Solidity: function linkCallerToRootKey((address,bytes,string) rootWallet, uint256 nonce) returns()
@@ -393,6 +486,201 @@ func (_WalletLink *WalletLinkSession) RemoveLink(wallet common.Address, rootWall
 // Solidity: function removeLink(address wallet, (address,bytes,string) rootWallet, uint256 nonce) returns()
 func (_WalletLink *WalletLinkTransactorSession) RemoveLink(wallet common.Address, rootWallet IWalletLinkBaseLinkedWallet, nonce *big.Int) (*types.Transaction, error) {
 	return _WalletLink.Contract.RemoveLink(&_WalletLink.TransactOpts, wallet, rootWallet, nonce)
+}
+
+// SetDefaultWallet is a paid mutator transaction binding the contract method 0xbaafda6b.
+//
+// Solidity: function setDefaultWallet(address defaultWallet) returns()
+func (_WalletLink *WalletLinkTransactor) SetDefaultWallet(opts *bind.TransactOpts, defaultWallet common.Address) (*types.Transaction, error) {
+	return _WalletLink.contract.Transact(opts, "setDefaultWallet", defaultWallet)
+}
+
+// SetDefaultWallet is a paid mutator transaction binding the contract method 0xbaafda6b.
+//
+// Solidity: function setDefaultWallet(address defaultWallet) returns()
+func (_WalletLink *WalletLinkSession) SetDefaultWallet(defaultWallet common.Address) (*types.Transaction, error) {
+	return _WalletLink.Contract.SetDefaultWallet(&_WalletLink.TransactOpts, defaultWallet)
+}
+
+// SetDefaultWallet is a paid mutator transaction binding the contract method 0xbaafda6b.
+//
+// Solidity: function setDefaultWallet(address defaultWallet) returns()
+func (_WalletLink *WalletLinkTransactorSession) SetDefaultWallet(defaultWallet common.Address) (*types.Transaction, error) {
+	return _WalletLink.Contract.SetDefaultWallet(&_WalletLink.TransactOpts, defaultWallet)
+}
+
+// SetDelegateByVersion is a paid mutator transaction binding the contract method 0x8a56a2c5.
+//
+// Solidity: function setDelegateByVersion(uint256 version, address delegate) returns()
+func (_WalletLink *WalletLinkTransactor) SetDelegateByVersion(opts *bind.TransactOpts, version *big.Int, delegate common.Address) (*types.Transaction, error) {
+	return _WalletLink.contract.Transact(opts, "setDelegateByVersion", version, delegate)
+}
+
+// SetDelegateByVersion is a paid mutator transaction binding the contract method 0x8a56a2c5.
+//
+// Solidity: function setDelegateByVersion(uint256 version, address delegate) returns()
+func (_WalletLink *WalletLinkSession) SetDelegateByVersion(version *big.Int, delegate common.Address) (*types.Transaction, error) {
+	return _WalletLink.Contract.SetDelegateByVersion(&_WalletLink.TransactOpts, version, delegate)
+}
+
+// SetDelegateByVersion is a paid mutator transaction binding the contract method 0x8a56a2c5.
+//
+// Solidity: function setDelegateByVersion(uint256 version, address delegate) returns()
+func (_WalletLink *WalletLinkTransactorSession) SetDelegateByVersion(version *big.Int, delegate common.Address) (*types.Transaction, error) {
+	return _WalletLink.Contract.SetDelegateByVersion(&_WalletLink.TransactOpts, version, delegate)
+}
+
+// WalletLinkLinkThirdPartyDelegationIterator is returned from FilterLinkThirdPartyDelegation and is used to iterate over the raw logs and unpacked data for LinkThirdPartyDelegation events raised by the WalletLink contract.
+type WalletLinkLinkThirdPartyDelegationIterator struct {
+	Event *WalletLinkLinkThirdPartyDelegation // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *WalletLinkLinkThirdPartyDelegationIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(WalletLinkLinkThirdPartyDelegation)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(WalletLinkLinkThirdPartyDelegation)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *WalletLinkLinkThirdPartyDelegationIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *WalletLinkLinkThirdPartyDelegationIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// WalletLinkLinkThirdPartyDelegation represents a LinkThirdPartyDelegation event raised by the WalletLink contract.
+type WalletLinkLinkThirdPartyDelegation struct {
+	Delegator       common.Address
+	DelegatedWallet common.Address
+	Raw             types.Log // Blockchain specific contextual infos
+}
+
+// FilterLinkThirdPartyDelegation is a free log retrieval operation binding the contract event 0x940bab3abd8e37cf3cb3ed9f3dd4b7d6f8a22ec30d8f6e9d05f753e8d7879fba.
+//
+// Solidity: event LinkThirdPartyDelegation(address indexed delegator, address indexed delegatedWallet)
+func (_WalletLink *WalletLinkFilterer) FilterLinkThirdPartyDelegation(opts *bind.FilterOpts, delegator []common.Address, delegatedWallet []common.Address) (*WalletLinkLinkThirdPartyDelegationIterator, error) {
+
+	var delegatorRule []interface{}
+	for _, delegatorItem := range delegator {
+		delegatorRule = append(delegatorRule, delegatorItem)
+	}
+	var delegatedWalletRule []interface{}
+	for _, delegatedWalletItem := range delegatedWallet {
+		delegatedWalletRule = append(delegatedWalletRule, delegatedWalletItem)
+	}
+
+	logs, sub, err := _WalletLink.contract.FilterLogs(opts, "LinkThirdPartyDelegation", delegatorRule, delegatedWalletRule)
+	if err != nil {
+		return nil, err
+	}
+	return &WalletLinkLinkThirdPartyDelegationIterator{contract: _WalletLink.contract, event: "LinkThirdPartyDelegation", logs: logs, sub: sub}, nil
+}
+
+// WatchLinkThirdPartyDelegation is a free log subscription operation binding the contract event 0x940bab3abd8e37cf3cb3ed9f3dd4b7d6f8a22ec30d8f6e9d05f753e8d7879fba.
+//
+// Solidity: event LinkThirdPartyDelegation(address indexed delegator, address indexed delegatedWallet)
+func (_WalletLink *WalletLinkFilterer) WatchLinkThirdPartyDelegation(opts *bind.WatchOpts, sink chan<- *WalletLinkLinkThirdPartyDelegation, delegator []common.Address, delegatedWallet []common.Address) (event.Subscription, error) {
+
+	var delegatorRule []interface{}
+	for _, delegatorItem := range delegator {
+		delegatorRule = append(delegatorRule, delegatorItem)
+	}
+	var delegatedWalletRule []interface{}
+	for _, delegatedWalletItem := range delegatedWallet {
+		delegatedWalletRule = append(delegatedWalletRule, delegatedWalletItem)
+	}
+
+	logs, sub, err := _WalletLink.contract.WatchLogs(opts, "LinkThirdPartyDelegation", delegatorRule, delegatedWalletRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(WalletLinkLinkThirdPartyDelegation)
+				if err := _WalletLink.contract.UnpackLog(event, "LinkThirdPartyDelegation", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseLinkThirdPartyDelegation is a log parse operation binding the contract event 0x940bab3abd8e37cf3cb3ed9f3dd4b7d6f8a22ec30d8f6e9d05f753e8d7879fba.
+//
+// Solidity: event LinkThirdPartyDelegation(address indexed delegator, address indexed delegatedWallet)
+func (_WalletLink *WalletLinkFilterer) ParseLinkThirdPartyDelegation(log types.Log) (*WalletLinkLinkThirdPartyDelegation, error) {
+	event := new(WalletLinkLinkThirdPartyDelegation)
+	if err := _WalletLink.contract.UnpackLog(event, "LinkThirdPartyDelegation", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
 }
 
 // WalletLinkLinkWalletToRootKeyIterator is returned from FilterLinkWalletToRootKey and is used to iterate over the raw logs and unpacked data for LinkWalletToRootKey events raised by the WalletLink contract.
@@ -695,6 +983,159 @@ func (_WalletLink *WalletLinkFilterer) WatchRemoveLink(opts *bind.WatchOpts, sin
 func (_WalletLink *WalletLinkFilterer) ParseRemoveLink(log types.Log) (*WalletLinkRemoveLink, error) {
 	event := new(WalletLinkRemoveLink)
 	if err := _WalletLink.contract.UnpackLog(event, "RemoveLink", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// WalletLinkSetDefaultWalletIterator is returned from FilterSetDefaultWallet and is used to iterate over the raw logs and unpacked data for SetDefaultWallet events raised by the WalletLink contract.
+type WalletLinkSetDefaultWalletIterator struct {
+	Event *WalletLinkSetDefaultWallet // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *WalletLinkSetDefaultWalletIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(WalletLinkSetDefaultWallet)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(WalletLinkSetDefaultWallet)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *WalletLinkSetDefaultWalletIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *WalletLinkSetDefaultWalletIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// WalletLinkSetDefaultWallet represents a SetDefaultWallet event raised by the WalletLink contract.
+type WalletLinkSetDefaultWallet struct {
+	RootKey       common.Address
+	DefaultWallet common.Address
+	Raw           types.Log // Blockchain specific contextual infos
+}
+
+// FilterSetDefaultWallet is a free log retrieval operation binding the contract event 0x63a3f19f9166855a56a40467088468f9ae049d32865102cf64b70444db555036.
+//
+// Solidity: event SetDefaultWallet(address indexed rootKey, address indexed defaultWallet)
+func (_WalletLink *WalletLinkFilterer) FilterSetDefaultWallet(opts *bind.FilterOpts, rootKey []common.Address, defaultWallet []common.Address) (*WalletLinkSetDefaultWalletIterator, error) {
+
+	var rootKeyRule []interface{}
+	for _, rootKeyItem := range rootKey {
+		rootKeyRule = append(rootKeyRule, rootKeyItem)
+	}
+	var defaultWalletRule []interface{}
+	for _, defaultWalletItem := range defaultWallet {
+		defaultWalletRule = append(defaultWalletRule, defaultWalletItem)
+	}
+
+	logs, sub, err := _WalletLink.contract.FilterLogs(opts, "SetDefaultWallet", rootKeyRule, defaultWalletRule)
+	if err != nil {
+		return nil, err
+	}
+	return &WalletLinkSetDefaultWalletIterator{contract: _WalletLink.contract, event: "SetDefaultWallet", logs: logs, sub: sub}, nil
+}
+
+// WatchSetDefaultWallet is a free log subscription operation binding the contract event 0x63a3f19f9166855a56a40467088468f9ae049d32865102cf64b70444db555036.
+//
+// Solidity: event SetDefaultWallet(address indexed rootKey, address indexed defaultWallet)
+func (_WalletLink *WalletLinkFilterer) WatchSetDefaultWallet(opts *bind.WatchOpts, sink chan<- *WalletLinkSetDefaultWallet, rootKey []common.Address, defaultWallet []common.Address) (event.Subscription, error) {
+
+	var rootKeyRule []interface{}
+	for _, rootKeyItem := range rootKey {
+		rootKeyRule = append(rootKeyRule, rootKeyItem)
+	}
+	var defaultWalletRule []interface{}
+	for _, defaultWalletItem := range defaultWallet {
+		defaultWalletRule = append(defaultWalletRule, defaultWalletItem)
+	}
+
+	logs, sub, err := _WalletLink.contract.WatchLogs(opts, "SetDefaultWallet", rootKeyRule, defaultWalletRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(WalletLinkSetDefaultWallet)
+				if err := _WalletLink.contract.UnpackLog(event, "SetDefaultWallet", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseSetDefaultWallet is a log parse operation binding the contract event 0x63a3f19f9166855a56a40467088468f9ae049d32865102cf64b70444db555036.
+//
+// Solidity: event SetDefaultWallet(address indexed rootKey, address indexed defaultWallet)
+func (_WalletLink *WalletLinkFilterer) ParseSetDefaultWallet(log types.Log) (*WalletLinkSetDefaultWallet, error) {
+	event := new(WalletLinkSetDefaultWallet)
+	if err := _WalletLink.contract.UnpackLog(event, "SetDefaultWallet", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log

@@ -31,7 +31,7 @@ var (
 
 // MockWalletLinkMetaData contains all meta data concerning the MockWalletLink contract.
 var MockWalletLinkMetaData = &bind.MetaData{
-	ABI:	"[{\"type\":\"function\",\"name\":\"checkIfLinked\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getLatestNonceForRootKey\",\"inputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"pure\"},{\"type\":\"function\",\"name\":\"getRootKeyForWallet\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getWalletsByRootKey\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"wallets\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"linkCallerToRootKey\",\"inputs\":[{\"name\":\"rootWallet\",\"type\":\"tuple\",\"internalType\":\"structIWalletLinkBase.LinkedWallet\",\"components\":[{\"name\":\"addr\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"message\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"linkWalletToRootKey\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"tuple\",\"internalType\":\"structIWalletLinkBase.LinkedWallet\",\"components\":[{\"name\":\"addr\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"message\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"name\":\"rootWallet\",\"type\":\"tuple\",\"internalType\":\"structIWalletLinkBase.LinkedWallet\",\"components\":[{\"name\":\"addr\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"message\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"LinkWalletToRootKey\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"RemoveLink\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"secondWallet\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"error\",\"name\":\"WalletLink__CannotLinkToRootWallet\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__CannotLinkToSelf\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__CannotRemoveRootWallet\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__InvalidAddress\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__InvalidSignature\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__LinkAlreadyExists\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__LinkedToAnotherRootKey\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__NotLinked\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]}]",
+	ABI:	"[{\"type\":\"function\",\"name\":\"checkIfLinked\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getLatestNonceForRootKey\",\"inputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"pure\"},{\"type\":\"function\",\"name\":\"getRootKeyForWallet\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getWalletsByRootKey\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"wallets\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"linkCallerToRootKey\",\"inputs\":[{\"name\":\"rootWallet\",\"type\":\"tuple\",\"internalType\":\"structIWalletLinkBase.LinkedWallet\",\"components\":[{\"name\":\"addr\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"message\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"linkWalletToRootKey\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"tuple\",\"internalType\":\"structIWalletLinkBase.LinkedWallet\",\"components\":[{\"name\":\"addr\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"message\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"name\":\"rootWallet\",\"type\":\"tuple\",\"internalType\":\"structIWalletLinkBase.LinkedWallet\",\"components\":[{\"name\":\"addr\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"message\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"LinkThirdPartyDelegation\",\"inputs\":[{\"name\":\"delegator\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"delegatedWallet\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"LinkWalletToRootKey\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"RemoveLink\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"secondWallet\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"SetDefaultWallet\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"defaultWallet\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"error\",\"name\":\"WalletLink__CannotLinkToRootWallet\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__CannotLinkToSelf\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__CannotRemoveDefaultWallet\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__CannotRemoveRootWallet\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__DefaultWalletAlreadySet\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__InvalidAddress\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__InvalidSignature\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__LinkAlreadyExists\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__LinkedToAnotherRootKey\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__MaxLinkedWalletsReached\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__NotLinked\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]}]",
 	Bin:	"0x608060405234801561001057600080fd5b50610689806100206000396000f3fe608060405234801561001057600080fd5b50600436106100625760003560e01c806302345b981461006757806320a00ac814610090578063243a7134146100b25780632f461453146100c7578063912b9758146100da578063f821039814610139575b600080fd5b61007a6100753660046103dc565b61019c565b60405161008791906103f7565b60405180910390f35b6100a461009e3660046103dc565b50600090565b604051908152602001610087565b6100c56100c03660046105a4565b6101e5565b005b6100c56100d5366004610611565b61026a565b6101296100e8366004610656565b6001600160a01b0390811660009081527f53bdded980027e2c478b287c6d24ce77f39d36276f54116d9f518f7ecd94eb016020526040902054811691161490565b6040519015158152602001610087565b6101846101473660046103dc565b6001600160a01b0390811660009081527f53bdded980027e2c478b287c6d24ce77f39d36276f54116d9f518f7ecd94eb0160205260409020541690565b6040516001600160a01b039091168152602001610087565b6001600160a01b03811660009081527f53bdded980027e2c478b287c6d24ce77f39d36276f54116d9f518f7ecd94eb00602052604090206060906101df906102ec565b92915050565b825182516001600160a01b031660009081527f53bdded980027e2c478b287c6d24ce77f39d36276f54116d9f518f7ecd94eb0060208190526040909120909161022e9190610300565b50915192516001600160a01b0390811660009081526001909301602052604090922080546001600160a01b031916929093169190911790915550565b81516001600160a01b031660009081527f53bdded980027e2c478b287c6d24ce77f39d36276f54116d9f518f7ecd94eb006020819052604090912033906102b19082610300565b5092516001600160a01b039384166000908152600192909201602052604090912080546001600160a01b031916939091169290921790915550565b606060006102f983610315565b9392505050565b60006102f9836001600160a01b038416610371565b60608160000180548060200260200160405190810160405280929190818152602001828054801561036557602002820191906000526020600020905b815481526020019060010190808311610351575b50505050509050919050565b60008181526001830160205260408120546103b8575081546001818101845560008481526020808220909301849055845484825282860190935260409020919091556101df565b5060006101df565b80356001600160a01b03811681146103d757600080fd5b919050565b6000602082840312156103ee57600080fd5b6102f9826103c0565b6020808252825182820181905260009190848201906040850190845b818110156104385783516001600160a01b031683529284019291840191600101610413565b50909695505050505050565b634e487b7160e01b600052604160045260246000fd5b6040516060810167ffffffffffffffff8111828210171561047d5761047d610444565b60405290565b600067ffffffffffffffff8084111561049e5761049e610444565b604051601f8501601f19908116603f011681019082821181831017156104c6576104c6610444565b816040528093508581528686860111156104df57600080fd5b858560208301376000602087830101525050509392505050565b60006060828403121561050b57600080fd5b61051361045a565b905061051e826103c0565b8152602082013567ffffffffffffffff8082111561053b57600080fd5b818401915084601f83011261054f57600080fd5b61055e85833560208501610483565b6020840152604084013591508082111561057757600080fd5b508201601f8101841361058957600080fd5b61059884823560208401610483565b60408301525092915050565b6000806000606084860312156105b957600080fd5b833567ffffffffffffffff808211156105d157600080fd5b6105dd878388016104f9565b945060208601359150808211156105f357600080fd5b50610600868287016104f9565b925050604084013590509250925092565b6000806040838503121561062457600080fd5b823567ffffffffffffffff81111561063b57600080fd5b610647858286016104f9565b95602094909401359450505050565b6000806040838503121561066957600080fd5b610672836103c0565b9150610680602084016103c0565b9050925092905056",
 }
 
@@ -368,6 +368,159 @@ func (_MockWalletLink *MockWalletLinkTransactorSession) LinkWalletToRootKey(wall
 	return _MockWalletLink.Contract.LinkWalletToRootKey(&_MockWalletLink.TransactOpts, wallet, rootWallet, arg2)
 }
 
+// MockWalletLinkLinkThirdPartyDelegationIterator is returned from FilterLinkThirdPartyDelegation and is used to iterate over the raw logs and unpacked data for LinkThirdPartyDelegation events raised by the MockWalletLink contract.
+type MockWalletLinkLinkThirdPartyDelegationIterator struct {
+	Event	*MockWalletLinkLinkThirdPartyDelegation	// Event containing the contract specifics and raw log
+
+	contract	*bind.BoundContract	// Generic contract to use for unpacking event data
+	event		string			// Event name to use for unpacking event data
+
+	logs	chan types.Log		// Log channel receiving the found contract events
+	sub	ethereum.Subscription	// Subscription for errors, completion and termination
+	done	bool			// Whether the subscription completed delivering logs
+	fail	error			// Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *MockWalletLinkLinkThirdPartyDelegationIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(MockWalletLinkLinkThirdPartyDelegation)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(MockWalletLinkLinkThirdPartyDelegation)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *MockWalletLinkLinkThirdPartyDelegationIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *MockWalletLinkLinkThirdPartyDelegationIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// MockWalletLinkLinkThirdPartyDelegation represents a LinkThirdPartyDelegation event raised by the MockWalletLink contract.
+type MockWalletLinkLinkThirdPartyDelegation struct {
+	Delegator	common.Address
+	DelegatedWallet	common.Address
+	Raw		types.Log	// Blockchain specific contextual infos
+}
+
+// FilterLinkThirdPartyDelegation is a free log retrieval operation binding the contract event 0x940bab3abd8e37cf3cb3ed9f3dd4b7d6f8a22ec30d8f6e9d05f753e8d7879fba.
+//
+// Solidity: event LinkThirdPartyDelegation(address indexed delegator, address indexed delegatedWallet)
+func (_MockWalletLink *MockWalletLinkFilterer) FilterLinkThirdPartyDelegation(opts *bind.FilterOpts, delegator []common.Address, delegatedWallet []common.Address) (*MockWalletLinkLinkThirdPartyDelegationIterator, error) {
+
+	var delegatorRule []interface{}
+	for _, delegatorItem := range delegator {
+		delegatorRule = append(delegatorRule, delegatorItem)
+	}
+	var delegatedWalletRule []interface{}
+	for _, delegatedWalletItem := range delegatedWallet {
+		delegatedWalletRule = append(delegatedWalletRule, delegatedWalletItem)
+	}
+
+	logs, sub, err := _MockWalletLink.contract.FilterLogs(opts, "LinkThirdPartyDelegation", delegatorRule, delegatedWalletRule)
+	if err != nil {
+		return nil, err
+	}
+	return &MockWalletLinkLinkThirdPartyDelegationIterator{contract: _MockWalletLink.contract, event: "LinkThirdPartyDelegation", logs: logs, sub: sub}, nil
+}
+
+// WatchLinkThirdPartyDelegation is a free log subscription operation binding the contract event 0x940bab3abd8e37cf3cb3ed9f3dd4b7d6f8a22ec30d8f6e9d05f753e8d7879fba.
+//
+// Solidity: event LinkThirdPartyDelegation(address indexed delegator, address indexed delegatedWallet)
+func (_MockWalletLink *MockWalletLinkFilterer) WatchLinkThirdPartyDelegation(opts *bind.WatchOpts, sink chan<- *MockWalletLinkLinkThirdPartyDelegation, delegator []common.Address, delegatedWallet []common.Address) (event.Subscription, error) {
+
+	var delegatorRule []interface{}
+	for _, delegatorItem := range delegator {
+		delegatorRule = append(delegatorRule, delegatorItem)
+	}
+	var delegatedWalletRule []interface{}
+	for _, delegatedWalletItem := range delegatedWallet {
+		delegatedWalletRule = append(delegatedWalletRule, delegatedWalletItem)
+	}
+
+	logs, sub, err := _MockWalletLink.contract.WatchLogs(opts, "LinkThirdPartyDelegation", delegatorRule, delegatedWalletRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(MockWalletLinkLinkThirdPartyDelegation)
+				if err := _MockWalletLink.contract.UnpackLog(event, "LinkThirdPartyDelegation", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseLinkThirdPartyDelegation is a log parse operation binding the contract event 0x940bab3abd8e37cf3cb3ed9f3dd4b7d6f8a22ec30d8f6e9d05f753e8d7879fba.
+//
+// Solidity: event LinkThirdPartyDelegation(address indexed delegator, address indexed delegatedWallet)
+func (_MockWalletLink *MockWalletLinkFilterer) ParseLinkThirdPartyDelegation(log types.Log) (*MockWalletLinkLinkThirdPartyDelegation, error) {
+	event := new(MockWalletLinkLinkThirdPartyDelegation)
+	if err := _MockWalletLink.contract.UnpackLog(event, "LinkThirdPartyDelegation", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
 // MockWalletLinkLinkWalletToRootKeyIterator is returned from FilterLinkWalletToRootKey and is used to iterate over the raw logs and unpacked data for LinkWalletToRootKey events raised by the MockWalletLink contract.
 type MockWalletLinkLinkWalletToRootKeyIterator struct {
 	Event	*MockWalletLinkLinkWalletToRootKey	// Event containing the contract specifics and raw log
@@ -668,6 +821,159 @@ func (_MockWalletLink *MockWalletLinkFilterer) WatchRemoveLink(opts *bind.WatchO
 func (_MockWalletLink *MockWalletLinkFilterer) ParseRemoveLink(log types.Log) (*MockWalletLinkRemoveLink, error) {
 	event := new(MockWalletLinkRemoveLink)
 	if err := _MockWalletLink.contract.UnpackLog(event, "RemoveLink", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// MockWalletLinkSetDefaultWalletIterator is returned from FilterSetDefaultWallet and is used to iterate over the raw logs and unpacked data for SetDefaultWallet events raised by the MockWalletLink contract.
+type MockWalletLinkSetDefaultWalletIterator struct {
+	Event	*MockWalletLinkSetDefaultWallet	// Event containing the contract specifics and raw log
+
+	contract	*bind.BoundContract	// Generic contract to use for unpacking event data
+	event		string			// Event name to use for unpacking event data
+
+	logs	chan types.Log		// Log channel receiving the found contract events
+	sub	ethereum.Subscription	// Subscription for errors, completion and termination
+	done	bool			// Whether the subscription completed delivering logs
+	fail	error			// Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *MockWalletLinkSetDefaultWalletIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(MockWalletLinkSetDefaultWallet)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(MockWalletLinkSetDefaultWallet)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *MockWalletLinkSetDefaultWalletIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *MockWalletLinkSetDefaultWalletIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// MockWalletLinkSetDefaultWallet represents a SetDefaultWallet event raised by the MockWalletLink contract.
+type MockWalletLinkSetDefaultWallet struct {
+	RootKey		common.Address
+	DefaultWallet	common.Address
+	Raw		types.Log	// Blockchain specific contextual infos
+}
+
+// FilterSetDefaultWallet is a free log retrieval operation binding the contract event 0x63a3f19f9166855a56a40467088468f9ae049d32865102cf64b70444db555036.
+//
+// Solidity: event SetDefaultWallet(address indexed rootKey, address indexed defaultWallet)
+func (_MockWalletLink *MockWalletLinkFilterer) FilterSetDefaultWallet(opts *bind.FilterOpts, rootKey []common.Address, defaultWallet []common.Address) (*MockWalletLinkSetDefaultWalletIterator, error) {
+
+	var rootKeyRule []interface{}
+	for _, rootKeyItem := range rootKey {
+		rootKeyRule = append(rootKeyRule, rootKeyItem)
+	}
+	var defaultWalletRule []interface{}
+	for _, defaultWalletItem := range defaultWallet {
+		defaultWalletRule = append(defaultWalletRule, defaultWalletItem)
+	}
+
+	logs, sub, err := _MockWalletLink.contract.FilterLogs(opts, "SetDefaultWallet", rootKeyRule, defaultWalletRule)
+	if err != nil {
+		return nil, err
+	}
+	return &MockWalletLinkSetDefaultWalletIterator{contract: _MockWalletLink.contract, event: "SetDefaultWallet", logs: logs, sub: sub}, nil
+}
+
+// WatchSetDefaultWallet is a free log subscription operation binding the contract event 0x63a3f19f9166855a56a40467088468f9ae049d32865102cf64b70444db555036.
+//
+// Solidity: event SetDefaultWallet(address indexed rootKey, address indexed defaultWallet)
+func (_MockWalletLink *MockWalletLinkFilterer) WatchSetDefaultWallet(opts *bind.WatchOpts, sink chan<- *MockWalletLinkSetDefaultWallet, rootKey []common.Address, defaultWallet []common.Address) (event.Subscription, error) {
+
+	var rootKeyRule []interface{}
+	for _, rootKeyItem := range rootKey {
+		rootKeyRule = append(rootKeyRule, rootKeyItem)
+	}
+	var defaultWalletRule []interface{}
+	for _, defaultWalletItem := range defaultWallet {
+		defaultWalletRule = append(defaultWalletRule, defaultWalletItem)
+	}
+
+	logs, sub, err := _MockWalletLink.contract.WatchLogs(opts, "SetDefaultWallet", rootKeyRule, defaultWalletRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(MockWalletLinkSetDefaultWallet)
+				if err := _MockWalletLink.contract.UnpackLog(event, "SetDefaultWallet", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseSetDefaultWallet is a log parse operation binding the contract event 0x63a3f19f9166855a56a40467088468f9ae049d32865102cf64b70444db555036.
+//
+// Solidity: event SetDefaultWallet(address indexed rootKey, address indexed defaultWallet)
+func (_MockWalletLink *MockWalletLinkFilterer) ParseSetDefaultWallet(log types.Log) (*MockWalletLinkSetDefaultWallet, error) {
+	event := new(MockWalletLinkSetDefaultWallet)
+	if err := _MockWalletLink.contract.UnpackLog(event, "SetDefaultWallet", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log

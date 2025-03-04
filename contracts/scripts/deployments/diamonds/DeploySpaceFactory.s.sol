@@ -47,6 +47,7 @@ import {DeployPartnerRegistry} from "contracts/scripts/deployments/facets/Deploy
 import {DeployMockLegacyArchitect} from "contracts/scripts/deployments/facets/DeployMockLegacyArchitect.s.sol";
 import {DeploySpaceProxyInitializer} from "contracts/scripts/deployments/utils/DeploySpaceProxyInitializer.s.sol";
 import {DeploySpaceFactoryInit} from "contracts/scripts/deployments/facets/DeploySpaceFactoryInit.s.sol";
+import {MockDelegationRegistry} from "contracts/test/mocks/MockDelegationRegistry.sol";
 
 contract DeploySpaceFactory is DiamondHelper, Deployer {
   // diamond helpers
@@ -127,6 +128,7 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
   address public tieredLogPricingV2;
   address public tieredLogPricingV3;
   address public fixedPricing;
+  address public mockDelegationRegistry;
   address[] pricingModules;
 
   // init
@@ -279,7 +281,7 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
     addFacet(
       walletLinkHelper.makeCut(walletLink, IDiamond.FacetCutAction.Add),
       walletLink,
-      walletLinkHelper.makeInitData("")
+      walletLinkHelper.makeInitData(_getDelegateRegistry())
     );
     addFacet(
       eip712Helper.makeCut(eip712, IDiamond.FacetCutAction.Add),
@@ -403,10 +405,11 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
         );
       } else if (facetNameHash == keccak256(abi.encodePacked("WalletLink"))) {
         walletLink = walletLinkHelper.deploy(deployer);
+        address delegateRegistry = _getDelegateRegistry();
         addFacet(
           walletLinkHelper.makeCut(walletLink, IDiamond.FacetCutAction.Add),
           walletLink,
-          walletLinkHelper.makeInitData("")
+          walletLinkHelper.makeInitData(delegateRegistry)
         );
       } else if (facetNameHash == keccak256(abi.encodePacked("EIP712Facet"))) {
         eip712 = eip712Helper.deploy(deployer);
@@ -438,6 +441,14 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
         );
       }
     }
+  }
+
+  function _getDelegateRegistry() internal returns (address) {
+    if (isAnvil()) {
+      mockDelegationRegistry = address(new MockDelegationRegistry());
+      return mockDelegationRegistry;
+    }
+    return 0x00000000000000447e69651d841bD8D104Bed493;
   }
 
   function diamondInitHelper(

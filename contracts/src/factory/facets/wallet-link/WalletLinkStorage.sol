@@ -18,6 +18,10 @@ library WalletLinkStorage {
     mapping(address => EnumerableSet.AddressSet) walletsByRootKey;
     // mapping Ethereum Wallets to RootKey is a 1 to 1 relationship, a wallet can only be linked to 1 root key
     mapping(address => address) rootKeyByWallet;
+    // mapping rootkey to default wallet
+    mapping(address => address) defaultWalletByRootKey;
+    // mapping to delegate.xyz contract address
+    mapping(uint256 => address) delegateByVersion;
   }
 
   function layout() internal pure returns (Layout storage s) {
