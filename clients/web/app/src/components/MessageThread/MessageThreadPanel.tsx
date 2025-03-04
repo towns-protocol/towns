@@ -12,6 +12,7 @@ import {
 } from 'use-towns-client'
 import { useLocation } from 'react-router'
 import { TickerAttachment } from '@river-build/sdk'
+import { isEqual } from 'lodash'
 import { MessageTimeline } from '@components/MessageTimeline/MessageTimeline'
 import { MessageTimelineWrapper } from '@components/MessageTimeline/MessageTimelineContext'
 import { TownsEditorContainer } from '@components/RichTextPlate/TownsEditorContainer'
@@ -242,6 +243,19 @@ const EditorWithSigner = (props: {
         ],
     )
 
+    const onQuoteChanged = useCallback(
+        (
+            request: EvmTransactionRequest | SolanaTransactionRequest | undefined,
+            metaData: QuoteMetaData | undefined,
+        ) => {
+            if (isEqual(tradeData?.request, request) && isEqual(tradeData?.metaData, metaData)) {
+                return
+            }
+            setTradeData(request && metaData ? { request, metaData } : undefined)
+        },
+        [tradeData, setTradeData],
+    )
+
     const editor = (
         <TownsEditorContainer
             isFullWidthOnTouch
@@ -294,11 +308,8 @@ const EditorWithSigner = (props: {
                             mode="buy"
                             tokenAddress={tickerAttachment.address}
                             chainId={tickerAttachment.chainId}
-                            onQuoteChanged={(request, metaData) => {
-                                setTradeData(
-                                    request && metaData ? { request, metaData } : undefined,
-                                )
-                            }}
+                            threadInfo={messageId ? { channelId, messageId } : undefined}
+                            onQuoteChanged={onQuoteChanged}
                         />
                     </Box>
                     <Box>{editor}</Box>

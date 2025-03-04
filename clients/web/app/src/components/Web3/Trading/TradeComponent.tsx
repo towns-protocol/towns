@@ -27,6 +27,7 @@ type Props = {
         request: EvmTransactionRequest | SolanaTransactionRequest | undefined,
         metaData: QuoteMetaData | undefined,
     ) => void
+    threadInfo: { channelId: string; messageId: string } | undefined
 }
 
 export type QuoteMetaData = {
@@ -36,7 +37,7 @@ export type QuoteMetaData = {
 }
 
 export const TradeComponent = (props: Props) => {
-    const { tokenAddress } = props
+    const { tokenAddress, threadInfo, onQuoteChanged } = props
 
     const [mode, setMode] = useState<'buy' | 'sell'>(props.mode ?? 'buy')
 
@@ -162,8 +163,6 @@ export const TradeComponent = (props: Props) => {
     })
 
     const { data: quoteData } = quote
-    const onQuoteChangedRef = useRef(props.onQuoteChanged)
-    onQuoteChangedRef.current = props.onQuoteChanged
 
     const request = useMemo(() => {
         if (!quoteData) {
@@ -183,6 +182,8 @@ export const TradeComponent = (props: Props) => {
                     decimals: coinData?.token.decimals ?? 0,
                 },
                 status: TransactionStatus.Pending,
+                threadInfo: threadInfo,
+                isBuy: mode === 'buy',
             } satisfies SolanaTransactionRequest
         } else {
             return {
@@ -204,9 +205,11 @@ export const TradeComponent = (props: Props) => {
                     value: quoteData.transactionRequest.value ?? '0',
                 },
                 status: TransactionStatus.Pending,
+                threadInfo: threadInfo,
+                isBuy: mode === 'buy',
             } satisfies EvmTransactionRequest
         }
-    }, [amount, coinData, fromTokenAddress, isSolana, quoteData, tokenAddress])
+    }, [amount, coinData, fromTokenAddress, isSolana, quoteData, tokenAddress, threadInfo, mode])
 
     const metaData = useMemo(() => {
         if (!quoteData) {
@@ -234,8 +237,10 @@ export const TradeComponent = (props: Props) => {
     }, [quoteData, mode, toTokenAddress, chainConfig, coinData, fromTokenAddress])
 
     useEffect(() => {
-        onQuoteChangedRef.current?.(request, metaData)
-    }, [quoteData, metaData, request])
+        if (request && metaData) {
+            onQuoteChanged?.(request, metaData)
+        }
+    }, [request, metaData, onQuoteChanged])
 
     if (!isTradingChain(chainId)) {
         return (

@@ -10,6 +10,7 @@ import { popupToast } from '@components/Notifications/popupToast'
 import { useSolanaWallet } from './useSolanaWallet'
 import { tradingChains } from './tradingConstants'
 import { generateApproveAmountCallData } from './hooks/erc20-utils'
+import { createSendTokenTransferDataSolana } from './hooks/solana-utils'
 
 type TokenInfo = {
     name: string
@@ -25,6 +26,8 @@ export type SolanaTransactionRequest = {
     token: TokenInfo
     signature?: string
     status: TransactionStatus
+    isBuy: boolean
+    threadInfo: { channelId: string; messageId: string } | undefined
 }
 
 export type EvmTransactionRequest = {
@@ -40,6 +43,8 @@ export type EvmTransactionRequest = {
     token: TokenInfo
     approvalAddress: string
     status: TransactionStatus
+    isBuy: boolean
+    threadInfo: { channelId: string; messageId: string } | undefined
 }
 
 export const isSolanaTransactionRequest = (
@@ -144,6 +149,32 @@ export const TradingContextProvider = ({ children }: { children: React.ReactNode
                                 />
                             ))
                         } else if (txResult.blockTime) {
+                            if (txResult.meta && transaction.threadInfo) {
+                                // send token transfer event, but don't fail the entire chain
+                                // of events if it fails
+                                try {
+                                    const transferData = createSendTokenTransferDataSolana(
+                                        txResult,
+                                        transaction.token.address,
+                                        solanaWallet.address,
+                                        transaction.threadInfo.channelId,
+                                        transaction.threadInfo.messageId,
+                                        transaction.isBuy,
+                                    )
+                                    if (transferData) {
+                                        await townsClient.sendTokenTransfer(
+                                            1151111081099710,
+                                            transferData.receipt,
+                                            transferData.event,
+                                        )
+                                    } else {
+                                        console.error('Failed to create transfer data')
+                                    }
+                                } catch (error) {
+                                    console.error('Error sending token transfer:', error)
+                                }
+                            }
+
                             console.log('Solana Transaction confirmed:', txResult)
                             transaction.status = TransactionStatus.Success
                             popupToast(
@@ -175,7 +206,13 @@ export const TradingContextProvider = ({ children }: { children: React.ReactNode
             }
             setPendingSolanaTransaction(undefined)
         },
-        [solanaWallet, connection, setPendingSolanaTransaction, pendingSolanaTransaction],
+        [
+            solanaWallet,
+            connection,
+            setPendingSolanaTransaction,
+            pendingSolanaTransaction,
+            townsClient,
+        ],
     )
 
     const sendEvmTransaction = useCallback(

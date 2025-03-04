@@ -45,6 +45,7 @@ export const TradingPanel = () => {
                 mode={mode as 'buy' | 'sell'}
                 tokenAddress={tokenAddress as `0x${string}`}
                 chainId={chainId}
+                threadInfo={undefined}
                 onModeChanged={onTabChanged}
             />
         </Panel>
