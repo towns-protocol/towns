@@ -5,7 +5,7 @@
     "packageManager": "yarn@3.8.0",
     "scripts": {
         "all": "make all",
-        "build": "make all",
+        "build": "make install && make build",
         "clean": "make clean",
         "format": "make format",
         "lint": "make lint",
