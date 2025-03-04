@@ -134,7 +134,7 @@ done
 echo "PR #${PR_NUMBER} has been merged"
 
 # Pull the changes to local main
-git pull --rebase
+git pull --rebase --autostash
 
 # Publish the nightly version to npm
 echo "Starting Lerna publish..."
