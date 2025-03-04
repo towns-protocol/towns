@@ -204,7 +204,13 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                         if (!receipt) {
                             return
                         }
-                        const review = getSpaceReviewEventDataBin(receipt.logs, receipt.from)
+                        if (!transactionContent.value.event) {
+                            return
+                        }
+                        const review = getSpaceReviewEventDataBin(
+                            receipt.logs,
+                            transactionContent.value.event.user,
+                        )
                         const existingReview = this.spaceReviews.find(
                             (r) => r.review.user === review.user,
                         )
@@ -423,7 +429,13 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                         if (!receipt) {
                             return
                         }
-                        const review = getSpaceReviewEventDataBin(receipt.logs, receipt.from)
+                        if (!transactionContent.value.event) {
+                            return
+                        }
+                        const review = getSpaceReviewEventDataBin(
+                            receipt.logs,
+                            transactionContent.value.event.user,
+                        )
                         const existingReviewIndex = this.spaceReviews.findIndex(
                             (r) => r.review.user === review.user,
                         )

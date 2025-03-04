@@ -159,13 +159,7 @@
       "pages": [
         "build/towns-messaging-datastructures",
         "build/delegate-key-signing",
-        "build/towns-encryption",
-        {
-          "group": "Recipes",
-          "pages": [
-            "towns-recipes/adding-events"
-          ]
-        }
+        "build/towns-encryption"
       ]
     },
     {

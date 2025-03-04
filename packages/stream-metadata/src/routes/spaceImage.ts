@@ -63,7 +63,7 @@ export async function fetchSpaceImage(request: FastifyRequest, reply: FastifyRep
 	// get the image metatdata from the stream
 	const spaceImage = await getSpaceImage(logger, stream)
 	if (!spaceImage) {
-		logger.error({ spaceAddress, streamId: stream.streamId }, 'spaceImage not found')
+		logger.info({ spaceAddress, streamId: stream.streamId }, 'spaceImage not found')
 		return reply
 			.code(404)
 			.header('Cache-Control', CACHE_CONTROL[400])

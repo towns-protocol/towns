@@ -101,12 +101,12 @@ const getSpaceMemberMetadata = async (
 			{
 				trait_type: 'Renewal Price',
 				display_type: 'number',
-				value: renewalPrice.toNumber(),
+				value: renewalPrice.toString(),
 			},
 			{
 				trait_type: 'Membership Expiration',
 				display_type: 'date',
-				value: membershipExpiration.toNumber(),
+				value: membershipExpiration.toString(),
 			},
 			{
 				trait_type: 'Membership Banned',
