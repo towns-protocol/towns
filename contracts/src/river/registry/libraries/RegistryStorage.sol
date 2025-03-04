@@ -76,6 +76,8 @@ struct AppStorage {
   mapping(bytes32 => Setting[]) configuration;
   // Set of addresses of all configuration managers
   EnumerableSet.AddressSet configurationManagers;
+  // Map of node address to its stream ids
+  mapping(address => EnumerableSet.Bytes32Set) streamIdsByNode;
 }
 
 library RiverRegistryStorage {

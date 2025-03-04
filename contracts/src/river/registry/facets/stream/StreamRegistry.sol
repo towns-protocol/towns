@@ -7,6 +7,7 @@ import {Stream, StreamWithId, SetMiniblock} from "contracts/src/river/registry/l
 
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 import {RiverRegistryErrors} from "contracts/src/river/registry/libraries/RegistryErrors.sol";
 
 // contracts
@@ -40,6 +41,8 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     ds.genesisMiniblockByStreamId[streamId] = genesisMiniblock;
     ds.genesisMiniblockHashByStreamId[streamId] = genesisMiniblockHash;
 
+    _addStreamIdToNodes(streamId, nodes);
+
     emit StreamAllocated(
       streamId,
       nodes,
@@ -62,6 +65,8 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     ds.streams.add(streamId);
     ds.streamById[streamId] = stream;
     ds.genesisMiniblockHashByStreamId[streamId] = genesisMiniblockHash;
+
+    _addStreamIdToNodes(streamId, stream.nodes);
 
     emit StreamCreated(streamId, genesisMiniblockHash, stream);
   }
@@ -186,6 +191,8 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     Stream storage stream = ds.streamById[streamId];
     address[] storage nodes = stream.nodes;
 
+    ds.streamIdsByNode[nodeAddress].add(streamId);
+
     // validate that the node is not already on the stream
     uint256 nodeCount = nodes.length;
 
@@ -205,6 +212,8 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
   ) external onlyStream(streamId) onlyNode(msg.sender) {
     Stream storage stream = ds.streamById[streamId];
     address[] storage nodes = stream.nodes;
+
+    ds.streamIdsByNode[nodeAddress].remove(streamId);
 
     bool found = false;
     uint256 nodeCount = nodes.length;
@@ -267,16 +276,46 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
   function getStreamCountOnNode(
     address nodeAddress
   ) external view returns (uint256 count) {
-    uint256 streamLength = ds.streams.length();
-    for (uint256 i; i < streamLength; ++i) {
-      bytes32 id = ds.streams.at(i);
-      Stream storage stream = ds.streamById[id];
-      for (uint256 j; j < stream.nodes.length; ++j) {
-        if (stream.nodes[j] == nodeAddress) {
-          ++count;
-          break;
-        }
+    count = ds.streamIdsByNode[nodeAddress].length();
+  }
+
+  /// @inheritdoc IStreamRegistry
+  function getStreamsOnNode(
+    address nodeAddress
+  ) external view returns (StreamWithId[] memory streams) {
+    EnumerableSet.Bytes32Set storage streamIds = ds.streamIdsByNode[
+      nodeAddress
+    ];
+    uint256 streamCount = streamIds.length();
+    streams = new StreamWithId[](streamCount);
+
+    for (uint256 i; i < streamCount; ++i) {
+      StreamWithId memory stream = streams[i];
+      stream.id = streamIds.at(i);
+      stream.stream = ds.streamById[stream.id];
+    }
+  }
+
+  /// @inheritdoc IStreamRegistry
+  function getPaginatedStreamsOnNode(
+    address nodeAddress,
+    uint256 start,
+    uint256 stop
+  ) external view returns (StreamWithId[] memory streams) {
+    EnumerableSet.Bytes32Set storage streamIds = ds.streamIdsByNode[
+      nodeAddress
+    ];
+    uint256 streamCount = streamIds.length();
+    uint256 maxStreamIndex = FixedPointMathLib.min(stop, streamCount);
+    uint256 count = FixedPointMathLib.zeroFloorSub(maxStreamIndex, start);
+
+    streams = new StreamWithId[](count);
+    for (uint256 i; i < count; ++i) {
+      StreamWithId memory stream = streams[i];
+      unchecked {
+        stream.id = streamIds.at(start + i);
       }
+      stream.stream = ds.streamById[stream.id];
     }
   }
 
@@ -285,20 +324,29 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     uint256 start,
     uint256 stop
   ) external view returns (StreamWithId[] memory, bool) {
-    if (start >= stop) revert(RiverRegistryErrors.BAD_ARG);
-
     uint256 streamCount = ds.streams.length();
-    uint256 maxStreamIndex = stop > streamCount ? streamCount : stop;
-    uint256 count = maxStreamIndex > start ? maxStreamIndex - start : 0;
+    uint256 maxStreamIndex = FixedPointMathLib.min(stop, streamCount);
+    uint256 count = FixedPointMathLib.zeroFloorSub(maxStreamIndex, start);
 
     StreamWithId[] memory streams = new StreamWithId[](count);
-
     for (uint256 i; i < count; ++i) {
-      bytes32 id = ds.streams.at(start + i);
-      streams[i] = StreamWithId({id: id, stream: ds.streamById[id]});
+      StreamWithId memory stream = streams[i];
+      unchecked {
+        stream.id = ds.streams.at(start + i);
+      }
+      stream.stream = ds.streamById[stream.id];
     }
 
     return (streams, stop >= streamCount);
+  }
+
+  function _addStreamIdToNodes(
+    bytes32 streamId,
+    address[] calldata nodes
+  ) internal {
+    for (uint256 i; i < nodes.length; ++i) {
+      ds.streamIdsByNode[nodes[i]].add(streamId);
+    }
   }
 
   /// @dev Emits the StreamLastMiniblockUpdated event without memory expansion
