@@ -7,12 +7,10 @@ IGNORED="${1:-}"
 FROZEN="${2:-}"
 ABI_DIR="packages/generated/dev/abis"
 
-SKIP_BUILD_CONTRACT_TYPES="${SKIP_BUILD_CONTRACT_TYPES:-false}"
-
-
 # some packages strictly don't want to build contract types. but since this script
 # is coupled with the build process, we need to allow opting out of it.
 # examples include: stream-metadata service, xchain monitor, metrics-aggregator
+SKIP_BUILD_CONTRACT_TYPES="${SKIP_BUILD_CONTRACT_TYPES:-false}"
 if [ "$SKIP_BUILD_CONTRACT_TYPES" = "true" ]; then
   echo "Skipping build-contract-types.sh"
   exit 0
