@@ -2,6 +2,7 @@ import React from 'react'
 import { Box, Stack, Text } from '@ui'
 import { useReviews } from 'hooks/useReviews'
 import { ReviewItem } from '@components/TownReviews/ReviewItem'
+import { env } from 'utils'
 
 interface TownReviewsSectionProps {
     spaceId: string
@@ -10,7 +11,11 @@ interface TownReviewsSectionProps {
 export const TownReviewsSection = ({ spaceId }: TownReviewsSectionProps) => {
     const { reviews } = useReviews(spaceId)
 
-    if (reviews.length === 0) {
+    const isReviewsEnabled = env.VITE_REVIEWS_ENABLED
+
+    console.log('isReviewsEnabled', isReviewsEnabled)
+
+    if (reviews.length === 0 || !isReviewsEnabled) {
         return null
     }
 

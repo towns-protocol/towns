@@ -373,10 +373,12 @@ const ChannelList = ({ spaceId }: { spaceId: string }) => {
                 {visibleChannels.map((channel) => (
                     <Box
                         key={channel.channelNetworkId}
-                        background="level3"
                         paddingX="sm"
                         paddingY="sm"
                         borderRadius="sm"
+                        style={{
+                            border: '1px solid rgba(255, 255, 255, 0.10)',
+                        }}
                     >
                         <Text color="gray1">#{channel.name}</Text>
                     </Box>

@@ -35,8 +35,11 @@ import {
     CreateSpaceTransactionContext,
     createTransactionContext,
     PrepayMembershipTransactionContext,
+    ReviewTransactionContext,
+    ReviewTransactionData,
     RoleTransactionContext,
     TipTransactionContext,
+    TownsReviewParams,
     TransactionContext,
     TransactionStatus,
     TransferAssetTransactionContext,
@@ -65,15 +68,6 @@ import { toUtf8String } from 'ethers/lib/utils'
 import { makeSpaceStreamId, makeUniqueChannelStreamId } from '@river-build/sdk'
 import { waitForTimeoutOrMembership } from '../utils/waitForTimeoutOrMembershipEvent'
 import { logTxnResult } from './TownsClientTypes'
-
-interface ReviewParams {
-    spaceId: string
-    rating: number
-    comment: string
-    isUpdate?: boolean
-    isDelete?: boolean
-    signer: TSigner
-}
 
 export class BaseTransactor {
     public userOps: UserOps | undefined = undefined
@@ -1870,9 +1864,9 @@ export class BaseTransactor {
     }
 
     public async reviewTransaction(
-        args: [ReviewParams, TSigner],
-    ): Promise<TransactionContext<void>> {
-        const [{ spaceId, rating, comment, isUpdate, isDelete }, signer] = args
+        args: [TownsReviewParams, TSigner],
+    ): Promise<ReviewTransactionContext> {
+        const [{ spaceId, rating, comment, isUpdate, isDelete, senderAddress }, signer] = args
 
         let transaction: TransactionOrUserOperation | undefined = undefined
         let error: Error | undefined = undefined
@@ -1926,9 +1920,17 @@ export class BaseTransactor {
             error,
         })
 
-        return createTransactionContext<void>({
+        return createTransactionContext<ReviewTransactionData>({
             status: error ? TransactionStatus.Failed : TransactionStatus.Pending,
             transaction,
+            data: {
+                spaceId,
+                rating,
+                comment,
+                isUpdate: isUpdate || false,
+                isDelete: isDelete || false,
+                senderAddress,
+            },
             error,
         })
     }

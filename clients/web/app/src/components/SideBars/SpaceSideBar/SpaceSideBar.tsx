@@ -152,7 +152,8 @@ export const SpaceSideBar = (props: Props) => {
         ? reviews.some((review) => review.author === aaAddress)
         : false
 
-    const shouldShowReviewPrompt = !hasReviewBeenDismissed(space.id) && !hasUserReviewed
+    const shouldShowReviewPrompt =
+        !hasReviewBeenDismissed(space.id) && !hasUserReviewed && env.VITE_REVIEWS_ENABLED
 
     const handleReviewClick = useEvent(() => {
         openPanel(CHANNEL_INFO_PARAMS.REVIEWS)

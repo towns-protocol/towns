@@ -98,6 +98,13 @@ export const ReviewsPanel = () => {
                     return
                 }
 
+                if (!aaAddress) {
+                    popupToast(({ toast }) => (
+                        <StandardToast.Error message="No abstract account address" toast={toast} />
+                    ))
+                    return
+                }
+
                 await review(
                     {
                         spaceId: space.id,
@@ -105,6 +112,7 @@ export const ReviewsPanel = () => {
                         comment: '',
                         isDelete: true,
                         signer,
+                        senderAddress: aaAddress,
                     },
                     {
                         onSuccess: () => {
@@ -135,7 +143,7 @@ export const ReviewsPanel = () => {
                 ))
             }
         },
-        [refetch, space?.id, review],
+        [space?.id, aaAddress, review, refetch],
     )
 
     const isUserReview = useCallback(

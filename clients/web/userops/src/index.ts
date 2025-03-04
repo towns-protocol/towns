@@ -14,3 +14,4 @@ export {
     getPrivyLoginMethodFromLocalStorage,
     setPrivyLoginMethodToLocalStorage,
 } from './utils/privyLoginMethod'
+export { TownsReviewParams } from './operations/review'

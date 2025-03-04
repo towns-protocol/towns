@@ -94,6 +94,7 @@ export const WriteReviewModal = ({
                     comment: data.text,
                     isUpdate: !!initialReview,
                     signer,
+                    senderAddress: myAbstractAccount,
                 },
                 {
                     onSuccess: () => {

@@ -19,8 +19,10 @@ import {
     ITownsServerVersions,
     JoinFlowStatus,
     PrepayMembershipTransactionContext,
+    ReviewTransactionContext,
     RoleTransactionContext,
     TipTransactionContext,
+    TownsReviewParams,
     TransactionContext,
     TransferAssetTransactionContext,
     WalletLinkTransactionContext,
@@ -67,15 +69,6 @@ export const useTownsErrorStore = create<TownsErrorStoreState>((set) => ({
             errors: [...state.errors, error],
         })),
 }))
-
-interface ReviewParams {
-    spaceId: string
-    rating: number
-    comment: string
-    isUpdate?: boolean
-    isDelete?: boolean
-    signer: TSigner
-}
 
 /**
  * client API to interact with the river server.
@@ -373,11 +366,11 @@ interface TownsClientImpl {
         transactionContext: TransactionContext<void>,
     ) => Promise<TransactionContext<void> | undefined>
     reviewTransaction: (
-        args: [ReviewParams, TSigner],
-    ) => Promise<TransactionContext<void> | undefined>
+        args: [TownsReviewParams, TSigner],
+    ) => Promise<ReviewTransactionContext | undefined>
     waitForReviewTransaction: (
-        context: TransactionContext<void> | undefined,
-    ) => Promise<TransactionContext<void> | undefined>
+        transactionContext: ReviewTransactionContext,
+    ) => Promise<ReviewTransactionContext | undefined>
 }
 
 export function useTownsClient(): TownsClientImpl {

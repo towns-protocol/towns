@@ -2,25 +2,26 @@ import { SpaceDapp } from '@river-build/web3'
 import { UserOps } from '../UserOperations'
 import { ethers } from 'ethers'
 
-export interface ReviewParams {
-    spaceId: string
-    rating: number
-    comment: string
-    isUpdate?: boolean
-    isDelete?: boolean
-    signer: ethers.Signer
-}
-
 enum SpaceReviewAction {
     Add = 0,
     Update = 1,
     Delete = 2,
 }
 
+export interface TownsReviewParams {
+    spaceId: string
+    rating: number
+    comment: string
+    isUpdate?: boolean
+    isDelete?: boolean
+    signer: ethers.Signer
+    senderAddress: string
+}
+
 export async function review(params: {
     spaceDapp: SpaceDapp | undefined
     sendUserOp: UserOps['sendUserOp']
-    fnArgs: [ReviewParams, ethers.Signer]
+    fnArgs: [TownsReviewParams, ethers.Signer]
 }) {
     const { spaceDapp, sendUserOp, fnArgs } = params
     const [{ spaceId, rating, comment, isUpdate, isDelete }, signer] = fnArgs

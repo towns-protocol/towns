@@ -53,6 +53,12 @@ export const validateReview = async (
         return basicResult
     }
 
-    // If basic validation passes, perform AI validation
-    return await moderateReview(text, townContext)
+    try {
+        // If basic validation passes, perform AI validation
+        return await moderateReview(text, townContext)
+    } catch (error) {
+        // If AI moderation fails, allow the review to proceed
+        console.error('AI moderation failed:', error)
+        return { valid: true }
+    }
 }

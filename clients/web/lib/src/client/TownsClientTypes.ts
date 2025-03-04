@@ -5,6 +5,7 @@ import { Address, BaseChainConfig, RiverChainConfig } from '@river-build/web3'
 import { AccountAbstractionConfig } from '@towns/userops'
 import { TownsAnalytics } from 'types/TownsAnalytics'
 import { UnpackEnvelopeOpts } from '@river-build/sdk'
+import { TownsReviewParams as UserOpsTownsReviewParams } from '@towns/userops'
 
 export interface TownsOpts {
     environmentId: string
@@ -148,6 +149,10 @@ export type TipTransactionContext = TransactionContext<{
     amount: bigint
     currency: string
 }>
+
+export type TownsReviewParams = UserOpsTownsReviewParams
+export type ReviewTransactionData = Omit<TownsReviewParams, 'signer'>
+export type ReviewTransactionContext = TransactionContext<ReviewTransactionData>
 
 export type TownsClientEventHandlers = {
     onCreateSpace?: (roomId: string) => void

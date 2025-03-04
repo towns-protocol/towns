@@ -45,6 +45,8 @@ import {
     CreateSpaceFlowStatus,
     TransferAssetTransactionContext,
     TipTransactionContext,
+    ReviewTransactionContext,
+    TownsReviewParams,
 } from './TownsClientTypes'
 import {
     CreateChannelInfo,
@@ -69,6 +71,8 @@ import { TimeTrackerEvents, getTimeTracker } from '../SequenceTimeTracker'
 import { TownsAnalytics } from '../types/TownsAnalytics'
 import { BaseTransactor } from './BaseTransactor'
 import { UserOps } from '@towns/userops'
+import { getSpaceReviewEventData } from '@river-build/web3'
+
 /***
  * Towns Client
  * for calls that originate from a roomIdentifier, or for createing new rooms
@@ -84,15 +88,6 @@ import { UserOps } from '@towns/userops'
 export type TownsClientEvents = {
     onCasablancaClientCreated: (client: CasablancaClient) => void
     onWalletUnlinked: (userId: string, walletAddress: string) => void
-}
-
-interface ReviewParams {
-    spaceId: string
-    rating: number
-    comment: string
-    isUpdate?: boolean
-    isDelete?: boolean
-    signer: TSigner
 }
 
 export class TownsClient
@@ -1951,15 +1946,89 @@ export class TownsClient
     }
 
     public async reviewTransaction(
-        args: [ReviewParams, TSigner],
-    ): Promise<TransactionContext<void>> {
+        args: [TownsReviewParams, TSigner],
+    ): Promise<ReviewTransactionContext> {
         return this.baseTransactor.reviewTransaction(args)
     }
 
     public async waitForReviewTransaction(
-        context: TransactionContext<void> | undefined,
-    ): Promise<TransactionContext<void>> {
-        return this.baseTransactor.waitForReviewTransaction(context)
+        context: ReviewTransactionContext | undefined,
+    ): Promise<ReviewTransactionContext> {
+        const txnContext = (await this.baseTransactor.waitForBlockchainTransaction(
+            context,
+            undefined,
+            // wait for at least 2 confirmations like in tip transaction
+            2,
+        )) as ReviewTransactionContext
+        logTxnResult('waitForReviewTransaction', txnContext)
+
+        const receipt = txnContext.receipt
+        const chainId = this.spaceDapp?.config.chainId
+
+        console.log('waitForReviewTransaction receipt:', receipt)
+
+        if (
+            txnContext.status === TransactionStatus.Success &&
+            receipt &&
+            chainId &&
+            txnContext.data?.spaceId
+        ) {
+            console.log('waitForReviewTransaction::success', {
+                status: txnContext.status,
+                spaceId: txnContext.data.spaceId,
+                receipt: receipt,
+            })
+
+            try {
+                const reviewEvent = getSpaceReviewEventData(
+                    receipt.logs,
+                    txnContext.data.senderAddress,
+                )
+                console.log('waitForReviewTransaction::reviewEvent', reviewEvent)
+
+                if (reviewEvent) {
+                    console.log('waitForReviewTransaction::success::reviewEvent', {
+                        reviewEvent,
+                        spaceId: txnContext.data.spaceId,
+                    })
+
+                    await retryOperation(
+                        async () => {
+                            const client = this.casablancaClient as CasablancaClient
+                            await client?.addTransaction_SpaceReview(
+                                chainId,
+                                receipt,
+                                reviewEvent,
+                                txnContext.data!.spaceId,
+                            )
+                        },
+                        {
+                            maxRetries: 3,
+                            onError: (error: unknown, retryCount: number) => {
+                                console.error('Error in addTransaction_SpaceReview:', error)
+                                this.log('Retrying addTransaction_SpaceReview', { retryCount })
+                            },
+                            getRetryDelay: () => 1000,
+                        },
+                    )
+                } else {
+                    console.error(
+                        'waitForReviewTransaction::error: No review event found in receipt',
+                    )
+                }
+            } catch (error) {
+                console.error('waitForReviewTransaction::error processing review event:', error)
+            }
+        } else {
+            console.error('waitForReviewTransaction::error: Invalid transaction context', {
+                status: txnContext.status,
+                hasReceipt: !!receipt,
+                hasChainId: !!chainId,
+                hasSpaceId: !!txnContext.data?.spaceId,
+            })
+        }
+
+        return txnContext
     }
 
     protected log(message: string, ...optionalParams: unknown[]) {

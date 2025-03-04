@@ -35,7 +35,7 @@ import {
     tip,
     checkIn,
     review,
-    ReviewParams,
+    TownsReviewParams,
 } from './operations'
 import { getAbstractAccountAddress } from './utils/getAbstractAccountAddress'
 import { sendUserOpWithUseropJs, UserOpParamsUseropJs } from './lib/useropjs/sendUserOpWithUseropJs'
@@ -608,7 +608,7 @@ export class UserOps {
         })
     }
 
-    public async sendReviewOp(args: [ReviewParams, ethers.Signer]) {
+    public async sendReviewOp(args: [TownsReviewParams, ethers.Signer]) {
         return review({
             ...this.commonParams(),
             fnArgs: args,
