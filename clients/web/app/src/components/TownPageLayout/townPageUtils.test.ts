@@ -35,7 +35,7 @@ describe('TownPageUtilsTests', () => {
         const remainingFreeSupply = 100
         const priceText = getPriceText(price, remainingFreeSupply)
         expect(priceText?.value).toBe('Free')
-        expect(priceText?.suffix).toBe(`(Next ${remainingFreeSupply})`)
+        expect(priceText?.suffix).toBe('')
     })
 
     test('should respect decimals', () => {
@@ -59,6 +59,6 @@ describe('TownPageUtilsTests', () => {
         const remainingFreeSupply = 100
         const priceText = getPriceText(price, remainingFreeSupply)
         expect(priceText?.value).toBe('Free')
-        expect(priceText?.suffix).toBe(`(Next ${remainingFreeSupply})`)
+        expect(priceText?.suffix).toBe('')
     })
 })

@@ -22,6 +22,8 @@ import { useJoinFunnelAnalytics } from '@components/Analytics/useJoinFunnelAnaly
 import { useGatherSpaceDetailsAnalytics } from '@components/Analytics/useGatherSpaceDetailsAnalytics'
 import { getPriceText } from '@components/TownPageLayout/townPageUtils'
 import { useReadableMembershipInfo } from '@components/TownPageLayout/useReadableMembershipInfo'
+import { useEntitlements } from 'hooks/useEntitlements'
+import { minterRoleId } from '@components/SpaceSettingsPanel/rolePermissions.const'
 import { usePublicPageLoginFlow } from './usePublicPageLoginFlow'
 
 const LoginComponent = React.lazy(() => import('@components/Login/LoginComponent'))
@@ -67,6 +69,20 @@ export function JoinLoginButton({
     const defaultUsername = useMyDefaultUsernames()?.[0]
     const { clickedJoinTownOnTownPage: clickedJoinTown, viewedGatedTownRequirementsModal } =
         useJoinFunnelAnalytics()
+
+    const { data: entitlements } = useEntitlements(spaceId, minterRoleId)
+    const { data: membershipInfo } = useReadableMembershipInfo(spaceId ?? '')
+
+    const joinOrPriceText = useMemo(() => {
+        if (entitlements?.hasEntitlements) {
+            return 'Verify Assets to Join'
+        }
+        if (!membershipInfo?.price) {
+            return 'Join'
+        }
+        const price = getPriceText(membershipInfo.price, membershipInfo.remainingFreeSupply)
+        return `Join for ${price?.value} ${price?.suffix}`
+    }, [membershipInfo?.price, membershipInfo?.remainingFreeSupply, entitlements?.hasEntitlements])
 
     const onJoinClick = useCallback(
         async (getSigner: GetSigner) => {
@@ -126,17 +142,6 @@ export function JoinLoginButton({
 
     const isEvaluating = useWatchEvaluatingCredentialsAuthStatus()
 
-    const { data: membershipInfo } = useReadableMembershipInfo(spaceId ?? '')
-
-    const joinOrPriceText = useMemo(() => {
-        if (!membershipInfo?.price || !membershipInfo?.remainingFreeSupply) {
-            return 'Join'
-        }
-
-        const price = getPriceText(membershipInfo.price, membershipInfo.remainingFreeSupply)
-        return price?.value && price?.suffix ? `${price.value} ${price.suffix}` : 'Join'
-    }, [membershipInfo?.price, membershipInfo?.remainingFreeSupply])
-
     const content = () => {
         if (isEvaluating) {
             return (
@@ -146,7 +151,19 @@ export function JoinLoginButton({
         if (!isAuthenticated) {
             return (
                 <Box width={isTouch ? undefined : '300'}>
-                    <LoginComponent text={joinOrPriceText} onLoginClick={onLoginClick} />
+                    <LoginComponent
+                        text={
+                            entitlements?.hasEntitlements ? (
+                                <Box horizontal centerContent gap="sm">
+                                    <Icon type="lock" size="square_xs" />
+                                    {joinOrPriceText}
+                                </Box>
+                            ) : (
+                                joinOrPriceText
+                            )
+                        }
+                        onLoginClick={onLoginClick}
+                    />
                 </Box>
             )
         }
@@ -168,7 +185,16 @@ export function JoinLoginButton({
                             spinner={!!spaceBeingJoined}
                             onClick={() => onJoinClick(getSigner)}
                         >
-                            {joinOrPriceText}
+                            {
+                                (entitlements?.hasEntitlements ? (
+                                    <Box horizontal centerContent gap="sm">
+                                        <Icon type="lock" size="square_xs" />
+                                        {joinOrPriceText}
+                                    </Box>
+                                ) : (
+                                    joinOrPriceText
+                                )) as string
+                            }
                         </FancyButton>
                     </Box>
                 )}

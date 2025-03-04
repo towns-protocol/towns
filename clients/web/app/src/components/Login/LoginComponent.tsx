@@ -7,7 +7,7 @@ import { useStartupTime } from 'StartupProvider'
 import { useJoinFunnelAnalytics } from '@components/Analytics/useJoinFunnelAnalytics'
 
 type LoginComponentProps = {
-    text?: string
+    text?: React.ReactNode
     loggingInText?: string
     onLoginClick?: () => void
 }
@@ -59,10 +59,10 @@ function LoginComponent({
                     cta
                     disabled={!privyReady || isBusy}
                     spinner={isBusy}
-                    data-testid={`${text.toLowerCase()}-button`}
+                    data-testid={`${text?.toString().toLowerCase()}-button`}
                     onClick={onButtonClick}
                 >
-                    {loginContent()}
+                    {loginContent() as string}
                 </FancyButton>
             </Box>
         </Box>

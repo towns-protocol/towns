@@ -13,8 +13,6 @@ export const TownReviewsSection = ({ spaceId }: TownReviewsSectionProps) => {
 
     const isReviewsEnabled = env.VITE_REVIEWS_ENABLED
 
-    console.log('isReviewsEnabled', isReviewsEnabled)
-
     if (reviews.length === 0 || !isReviewsEnabled) {
         return null
     }

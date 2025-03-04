@@ -5,7 +5,7 @@ export const getPriceText = (
     price: string | undefined,
     remainingFreeSupply: number | undefined,
 ) => {
-    if (typeof price === 'undefined' || typeof remainingFreeSupply === 'undefined') {
+    if (typeof price === 'undefined') {
         return undefined
     }
     const numericPrice = parseFloat(price || '0')
@@ -13,7 +13,7 @@ export const getPriceText = (
 
     return {
         value: isFree ? 'Free' : `${formatUnitsToFixedLength(parseUnits(price))}`,
-        suffix: isFree ? `(Next ${remainingFreeSupply})` : 'ETH',
+        suffix: isFree ? '' : 'ETH',
     }
 }
 
