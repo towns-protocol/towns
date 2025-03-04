@@ -34,6 +34,7 @@ export default ({ mode }: { mode: string }) => {
     const devPlugins: PluginOption[] = [
         checker({
             typescript: true,
+            overlay: env.DEV_DISABLE_ERROR_OVERLAY === 'true' ? false : true,
             eslint: {
                 lintCommand: 'eslint "./src/**/*.{ts,tsx}"',
             },
