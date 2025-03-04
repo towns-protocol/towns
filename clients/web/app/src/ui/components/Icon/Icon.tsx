@@ -226,6 +226,51 @@ export const BaseIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => 
     </svg>
 ))
 
+export const BaseEthLightIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
+    <svg
+        width="20"
+        height="20"
+        viewBox="0 0 20 20"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        {...props}
+        ref={ref}
+    >
+        <path
+            d="M10 1.60156L15.1172 10.1172L10 13.1641L4.84375 10.1172L10 1.60156Z"
+            fill="url(#paint0_linear_29_6749)"
+        />
+        <path
+            d="M4.84375 11.0937L10 14.1406L15.1172 11.0937L10 18.3203L4.84375 11.0937Z"
+            fill="url(#paint1_linear_29_6749)"
+        />
+        <defs>
+            <linearGradient
+                id="paint0_linear_29_6749"
+                x1="9.98243"
+                y1="1.51892"
+                x2="9.98243"
+                y2="18.3823"
+                gradientUnits="userSpaceOnUse"
+            >
+                <stop stopColor="#5E63FF" />
+                <stop offset="1" stopColor="#6DA8FF" />
+            </linearGradient>
+            <linearGradient
+                id="paint1_linear_29_6749"
+                x1="9.98243"
+                y1="1.51892"
+                x2="9.98243"
+                y2="18.3823"
+                gradientUnits="userSpaceOnUse"
+            >
+                <stop stopColor="#5E63FF" />
+                <stop offset="1" stopColor="#6DA8FF" />
+            </linearGradient>
+        </defs>
+    </svg>
+))
+
 export const BellIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" {...props} ref={ref}>
         <path
@@ -2356,6 +2401,7 @@ const iconMap = {
     back: BackIcon,
     ban: BanIcon,
     base: BaseIcon,
+    baseEthLight: BaseEthLightIcon,
     bell: BellIcon,
     beaver: BeaverIcon,
     blockquote: BlockQuoteIcon,
