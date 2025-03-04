@@ -175,17 +175,18 @@ interface IWalletLink is IWalletLinkBase {
   ) external view returns (uint256);
 
   /**
-   * @notice gets the delegate for a given version
-   * @param version the version of the delegate to get
+   * @notice gets the dependency address for a given dependency label
+   * @param dependency the dependency label to get
    */
-  function getDelegateByVersion(
-    uint256 version
-  ) external view returns (address);
+  function getDependency(bytes32 dependency) external view returns (address);
 
   /**
-   * @notice sets the delegate for a given version
-   * @param version the version of the delegate to set
-   * @param delegate the delegate to set
+   * @notice sets the dependency address for a given dependency label
+   * @param dependency the dependency label to set
+   * @param dependencyAddress the dependency address to set
    */
-  function setDelegateByVersion(uint256 version, address delegate) external;
+  function setDependency(
+    bytes32 dependency,
+    address dependencyAddress
+  ) external;
 }

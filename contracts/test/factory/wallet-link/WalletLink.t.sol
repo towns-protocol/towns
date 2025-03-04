@@ -24,7 +24,8 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
   MockDelegationRegistry public mockDelegationRegistry;
 
   uint256 private constant MAX_LINKED_WALLETS = 10;
-  uint256 private constant DELEGATE_VERSION = 2;
+  bytes32 private constant DELEGATE_REGISTRY_V2 =
+    bytes32("DELEGATE_REGISTRY_V2");
 
   function setUp() public override {
     super.setUp();
@@ -34,7 +35,7 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
     smartAccount = vm.createWallet("smartAccount");
 
     mockDelegationRegistry = MockDelegationRegistry(
-      walletLink.getDelegateByVersion(DELEGATE_VERSION)
+      walletLink.getDependency(DELEGATE_REGISTRY_V2)
     );
   }
 
