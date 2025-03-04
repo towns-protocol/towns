@@ -24,7 +24,7 @@ func Test_Node2Node_GetMiniblocksByIds(t *testing.T) {
 	alice := tt.newTestClient(0)
 	_ = alice.createUserStream()
 	spaceId, _ := alice.createSpace()
-	channelId, creationMb := alice.createChannel(spaceId)
+	channelId, creationMb, _ := alice.createChannel(spaceId)
 
 	mbNums := []int64{creationMb.Num}
 	const messagesNumber = 100
