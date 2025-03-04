@@ -57,7 +57,7 @@ export async function fetchUserProfileImage(request: FastifyRequest, reply: Fast
 	// get the image metadata from the stream
 	const profileImage = await getUserProfileImage(stream)
 	if (!profileImage) {
-		logger.error({ userId, streamId: stream.streamId }, 'profileImage not found')
+		logger.info({ userId, streamId: stream.streamId }, 'profileImage not found')
 		return reply
 			.code(404)
 			.header('Cache-Control', CACHE_CONTROL[404])

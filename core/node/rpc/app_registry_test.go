@@ -171,14 +171,13 @@ func TestAppRegistry_ForwardsChannelEvents(t *testing.T) {
 	require.NotNil(channel)
 
 	testMessageText := "abc"
-	event, err := events.MakeEnvelopeWithPayloadAndTags(
+	event, err := events.MakeEnvelopeWithPayload(
 		wallet,
 		events.Make_ChannelPayload_Message(testMessageText),
 		&MiniblockRef{
 			Num:  channel.GetMinipoolGen() - 1,
 			Hash: common.Hash(channel.GetPrevMiniblockHash()),
 		},
-		nil,
 	)
 	tester.require.NoError(err)
 

@@ -625,16 +625,31 @@ jobs:
                 env:
                     POSTGRES_USER: postgres
                     POSTGRES_PASSWORD: postgres
+                    POSTGRES_INITDB_ARGS: >-
+                        -c shared_buffers=2GB
+                        -c effective_cache_size=6GB
+                        -c maintenance_work_mem=512MB
+                        -c work_mem=32MB
+                        -c wal_buffers=16MB
+                        -c max_connections=1000
+                        -c max_worker_processes=4
+                        -c max_parallel_workers=4
+                        -c max_parallel_workers_per_gather=2
+                        -c min_wal_size=1GB
+                        -c max_wal_size=4GB
+                        -c checkpoint_completion_target=0.9
+                        -c default_statistics_target=200
                 ports:
                     # Maps tcp port 5433 on service container to the host
                     - 5433:5432
                 options: >-
+                    --cpus 3
+                    --memory 8G
                     --health-cmd pg_isready
                     --health-interval 10s
                     --health-timeout 5s
                     --health-retries 5
                     --name river_postgres_container
-
         steps:
             - uses: taiki-e/install-action@just
 
@@ -649,21 +664,6 @@ jobs:
 
             - name: Install Rust Toolchain
               uses: actions-rust-lang/setup-rust-toolchain@v1
-
-            - name: Show PostgreSQL max_connections
-              run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
-              env:
-                  POSTGRES_PASSWORD: postgres
-                  PGPASSWORD: postgres
-
-            - name: Increase max_connections in Postgres
-              run: |
-                  docker exec -i river_postgres_container bash << EOF
-                    echo 'max_connections = 1000' >> /var/lib/postgresql/data/postgresql.conf
-                    echo 'shared_buffers = 2GB' >> /var/lib/postgresql/data/postgresql.conf
-                  EOF
-                  docker restart --time 0 river_postgres_container
-                  sleep 5
 
             - name: Show PostgreSQL max_connections
               run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
@@ -710,8 +710,12 @@ jobs:
               run: ./scripts/register-ca.sh
               working-directory: core
 
-            - name: Run go tests
-              run: just test-all -race -timeout 24m -parallel 2 -count 1 -p 8
+            - name: Run go tests with race detection exluding large tests
+              run: go test ./... -race -v -timeout 15m -parallel 4 -count 1 -p 2
+              working-directory: core
+
+            - name: Run large go tests without race detection
+              run: go test ./... -v -timeout 15m -parallel 4 -count 1 -p 2 -run NoRace
               working-directory: core
 
     XChain_Integration:
