@@ -131,59 +131,64 @@ func (q *QuorumPool) onTaskFinished(remote common.Address, err error) {
 	q.taskResults <- err
 }
 
-type quorumState struct {
-	taskCount    int
-	quorumNum    int
-	successCount int
-	taskErrors   []error
+type QuorumState struct {
+	TaskCount    int
+	QuorumNum    int
+	SuccessCount int
+	TaskErrors   []error
+	WaitStarted  time.Time
 }
 
-func (s *quorumState) update(err error) {
+func (s *QuorumState) update(err error) {
 	if err != nil {
-		s.taskErrors = append(s.taskErrors, err)
+		s.TaskErrors = append(s.TaskErrors, err)
 	} else {
-		s.successCount++
+		s.SuccessCount++
 	}
 }
 
-func (s *quorumState) checkDoneNoExternal() (bool, error) {
+func (s *QuorumState) checkAllDone() bool {
+	return s.SuccessCount+len(s.TaskErrors) >= s.TaskCount
+}
+
+func (s *QuorumState) checkDoneNoExternal() (bool, error) {
 	// Is quorum achieved?
-	if s.successCount >= s.quorumNum {
+	if s.SuccessCount >= s.QuorumNum {
 		return true, nil
 	}
 
 	// Can still achieve quorum?
-	maxAllowedErrors := s.taskCount - s.quorumNum
-	if len(s.taskErrors) > maxAllowedErrors {
-		return true, RiverErrorWithBases(Err_QUORUM_FAILED, "quorum failed", s.taskErrors,
-			"totalTasks", s.taskCount,
-			"quorumNum", s.quorumNum,
-			"failed", len(s.taskErrors),
-			"succeeded", s.successCount)
+	maxAllowedErrors := s.TaskCount - s.QuorumNum
+	if len(s.TaskErrors) > maxAllowedErrors {
+		return true, RiverErrorWithBases(Err_QUORUM_FAILED, "quorum failed", s.TaskErrors,
+			"totalTasks", s.TaskCount,
+			"quorumNum", s.QuorumNum,
+			"failed", len(s.TaskErrors),
+			"succeeded", s.SuccessCount)
 	}
 
 	return false, nil
 }
 
-func (s *quorumState) checkDoneExternal(check func() bool) (bool, error) {
+func (s *QuorumState) checkDoneExternal(check func() bool) (bool, error) {
 	// Is quorum achieved?
 	if check() {
 		return true, nil
 	}
 
 	// if no more results are expected and quorum hasn't been reached return error
-	if s.successCount+len(s.taskErrors) >= s.taskCount {
-		return true, RiverErrorWithBases(Err_QUORUM_FAILED, "quorum failed: no more results expected", s.taskErrors,
-			"totalTasks", s.taskCount,
-			"quorumNum", s.quorumNum,
-			"failed", len(s.taskErrors),
-			"succeeded", s.successCount)
+	if s.checkAllDone() {
+		return true, RiverErrorWithBases(Err_QUORUM_FAILED, "quorum failed: no more results expected", s.TaskErrors,
+			"totalTasks", s.TaskCount,
+			"quorumNum", s.QuorumNum,
+			"failed", len(s.TaskErrors),
+			"succeeded", s.SuccessCount)
 	}
 
 	return false, nil
 }
 
-func (s *quorumState) checkDone(check func() bool) (bool, error) {
+func (s *QuorumState) checkDone(check func() bool) (bool, error) {
 	if check == nil {
 		return s.checkDoneNoExternal()
 	} else {
@@ -194,11 +199,17 @@ func (s *quorumState) checkDone(check func() bool) (bool, error) {
 // Wait returns nil in case quorum is achieved, error otherwise.
 // It must be called after all local and remote tasks are added.
 func (q *QuorumPool) Wait() error {
-	state := &quorumState{
-		taskCount: len(q.tasks),
-		quorumNum: TotalQuorumNum(len(q.tasks)),
+	_, err := q.WaitWithState()
+	return err
+}
+
+func (q *QuorumPool) WaitWithState() (*QuorumState, error) {
+	state := &QuorumState{
+		TaskCount:   len(q.tasks),
+		QuorumNum:   TotalQuorumNum(len(q.tasks)),
+		WaitStarted: time.Now(),
 	}
-	q.taskResults = make(chan error, state.taskCount)
+	q.taskResults = make(chan error, state.TaskCount)
 
 	for _, task := range q.tasks {
 		go task()
@@ -210,10 +221,49 @@ func (q *QuorumPool) Wait() error {
 			state.update(err)
 			done, err := state.checkDone(q.opts.ExternalQuorumCheck)
 			if done {
-				return err
+				if err == nil && q.opts.WaitForExtraSuccess {
+					q.waitForExtraSuccess(state)
+					return state, nil
+				}
+				return state, err
 			}
 		case <-q.ctx.Done():
-			return q.ctx.Err()
+			return state, q.ctx.Err()
+		}
+	}
+}
+
+func (q *QuorumPool) waitForExtraSuccess(state *QuorumState) {
+	now := time.Now()
+	alreadyWaited := now.Sub(state.WaitStarted)
+
+	waitTimeout := alreadyWaited * 2
+
+	contextDeadline, ok := q.ctx.Deadline()
+	if ok {
+		// Only wait for up to 90% of the original context timeout
+		contextDeadlineTrim := contextDeadline.Sub(state.WaitStarted) / 10
+		contextDeadline := contextDeadline.Add(-contextDeadlineTrim)
+		contextTimeout := contextDeadline.Sub(now)
+		if contextTimeout <= 0 {
+			return
+		}
+		if contextTimeout < waitTimeout {
+			waitTimeout = contextTimeout
+		}
+	}
+
+	for {
+		select {
+		case err := <-q.taskResults:
+			state.update(err)
+			if state.checkAllDone() {
+				return
+			}
+		case <-time.After(waitTimeout):
+			return
+		case <-q.ctx.Done():
+			return // return success anyway since quorum already achieved
 		}
 	}
 }
