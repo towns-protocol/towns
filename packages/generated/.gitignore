@@ -2,3 +2,5 @@
 config/*
 # ignore any known localhost deployments
 deployments/local*
+# ignore dev artifacts
+dev
