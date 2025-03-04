@@ -24,6 +24,7 @@ import { TokenIcon } from '@components/Web3/Trading/ui/TokenIcon'
 import { TokenPrice } from '@components/Web3/Trading/ui/TokenPrice'
 import { useOpenMessageThread } from 'hooks/useOpenThread'
 import { TickerThreadContext } from '@components/MessageThread/TickerThreadContext'
+import { MessageTimelineContext } from '@components/MessageTimeline/MessageTimelineContext'
 import { GetBars, TimeFrame, useCoinBars } from './useCoinBars'
 import { useCoinData } from './useCoinData'
 
@@ -54,10 +55,13 @@ export const TradingChartAttachment = (props: {
     const { onOpenMessageThread } = useOpenMessageThread()
 
     const isTradeThreadContext = useContext(TickerThreadContext) !== undefined
+    const timelineContext = useContext(MessageTimelineContext)
 
     const onTradeClick = useCallback(
         (mode: 'buy' | 'sell') => {
-            if (eventId) {
+            // if the user is not in a space, open the trade panel
+            // for now, we don't support threaded trading in DMs
+            if (eventId && timelineContext?.spaceId) {
                 onOpenMessageThread(eventId)
             } else {
                 openPanel(CHANNEL_INFO_PARAMS.TRADE_PANEL, {
@@ -67,7 +71,14 @@ export const TradingChartAttachment = (props: {
                 })
             }
         },
-        [eventId, onOpenMessageThread, openPanel, attachment.address, remappedChain],
+        [
+            eventId,
+            onOpenMessageThread,
+            openPanel,
+            attachment.address,
+            remappedChain,
+            timelineContext,
+        ],
     )
 
     const { containerWidth } = useSizeContext()

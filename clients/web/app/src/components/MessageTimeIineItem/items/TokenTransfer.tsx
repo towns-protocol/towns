@@ -28,10 +28,9 @@ export const TokenTransfer = (props: Props) => {
             BigInt(event.transfer.amount),
             coinData?.token.decimals ?? 9,
         )
-        if (event.transfer.isBuy) {
-            return `Bought ${formattedAmount} ${coinData?.token.symbol}`
-        }
-        return `Sold ${formattedAmount} ${coinData?.token.symbol}`
+        const verb = event.transfer.isBuy ? 'Bought' : 'Sold'
+        const symbol = coinData?.token.symbol ?? ''
+        return `${verb} ${formattedAmount} ${symbol}`
     }, [event, coinData])
 
     return (
