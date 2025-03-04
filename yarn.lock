@@ -6601,7 +6601,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@river-build/contracts@workspace:contracts":
+"@river-build/contracts@workspace:^, @river-build/contracts@workspace:contracts":
   version: 0.0.0-use.local
   resolution: "@river-build/contracts@workspace:contracts"
   dependencies:
@@ -6703,7 +6703,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@river-build/generated@workspace:packages/generated"
   dependencies:
-    "@river-build/contracts": "workspace:contracts"
+    "@river-build/contracts": "workspace:^"
   languageName: unknown
   linkType: soft
 
