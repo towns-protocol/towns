@@ -16,7 +16,7 @@ contract WalletLink is IWalletLink, WalletLinkBase, OwnableBase, Facet {
     address delegateRegistry
   ) external onlyInitializing {
     _addInterface(type(IWalletLink).interfaceId);
-    _setDelegateByVersion(DELEGATE_VERSION, delegateRegistry);
+    _setDependency(DELEGATE_REGISTRY_V2, delegateRegistry);
   }
 
   /// @inheritdoc IWalletLink
@@ -111,19 +111,17 @@ contract WalletLink is IWalletLink, WalletLinkBase, OwnableBase, Facet {
   /**
    * @inheritdoc IWalletLink
    */
-  function getDelegateByVersion(
-    uint256 version
-  ) external view returns (address) {
-    return _getDelegateByVersion(version);
+  function getDependency(bytes32 dependency) external view returns (address) {
+    return _getDependency(dependency);
   }
 
   /**
    * @inheritdoc IWalletLink
    */
-  function setDelegateByVersion(
-    uint256 version,
-    address delegate
+  function setDependency(
+    bytes32 dependency,
+    address dependencyAddress
   ) external onlyOwner {
-    _setDelegateByVersion(version, delegate);
+    _setDependency(dependency, dependencyAddress);
   }
 }

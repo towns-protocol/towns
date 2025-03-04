@@ -28,7 +28,8 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
   uint256 internal constant MAX_LINKED_WALLETS = 10;
 
   // Address of delegate.xyz v2 registry
-  uint256 internal constant DELEGATE_VERSION = 2;
+  bytes32 internal constant DELEGATE_REGISTRY_V2 =
+    bytes32("DELEGATE_REGISTRY_V2");
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                      External - Write
@@ -219,7 +220,7 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
   ) internal view returns (address[] memory wallets) {
     // Single storage read for layout
     WalletLinkStorage.Layout storage ds = WalletLinkStorage.layout();
-    address delegateRegistry = ds.delegateByVersion[DELEGATE_VERSION];
+    address delegateRegistry = ds.dependencies[DELEGATE_REGISTRY_V2];
     EnumerableSet.AddressSet storage linkedWalletsSet = ds.walletsByRootKey[
       rootKey
     ];
@@ -370,17 +371,17 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
   }
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-  /*                      Delegate Functions                    */
+  /*                      Dependencies Functions                */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-  function _getDelegateByVersion(
-    uint256 version
-  ) internal view returns (address delegate) {
-    return WalletLinkStorage.layout().delegateByVersion[version];
+  function _getDependency(bytes32 dependency) internal view returns (address) {
+    return WalletLinkStorage.layout().dependencies[dependency];
   }
 
-  function _setDelegateByVersion(uint256 version, address delegate) internal {
-    WalletLinkStorage.layout().delegateByVersion[version] = delegate;
+  function _setDependency(
+    bytes32 dependency,
+    address dependencyAddress
+  ) internal {
+    WalletLinkStorage.layout().dependencies[dependency] = dependencyAddress;
   }
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

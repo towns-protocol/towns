@@ -20,8 +20,8 @@ library WalletLinkStorage {
     mapping(address => address) rootKeyByWallet;
     // mapping rootkey to default wallet
     mapping(address => address) defaultWalletByRootKey;
-    // mapping to delegate.xyz contract address
-    mapping(uint256 => address) delegateByVersion;
+    // mapping of wallet link external dependencies
+    mapping(bytes32 => address) dependencies;
   }
 
   function layout() internal pure returns (Layout storage s) {
