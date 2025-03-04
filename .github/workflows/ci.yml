@@ -711,11 +711,11 @@ jobs:
               working-directory: core
 
             - name: Run go tests with race detection exluding large tests
-              run: go test ./... -race -timeout 15m -parallel 4 -count 1 -p 2
+              run: go test ./... -race -v -timeout 15m -parallel 4 -count 1 -p 2
               working-directory: core
 
             - name: Run large go tests without race detection
-              run: go test ./... -timeout 15m -parallel 4 -count 1 -p 2 -run NoRace
+              run: go test ./... -v -timeout 15m -parallel 4 -count 1 -p 2 -run NoRace
               working-directory: core
 
     XChain_Integration:
