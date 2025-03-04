@@ -10,6 +10,8 @@ import { TradingTokensList } from './TradingTokensList'
 import { AutoCreateSolanaWallet } from './AutoCreateSolanaWallet'
 import { TabPanel } from './ui/TabPanel'
 import { TradingActivity } from './TradingActivity'
+import { useTradingWalletAddresses } from './useTradingWalletAddresses'
+import { NftsList } from '../Wallet/NftsList'
 
 export function TradingWalletPanel() {
     const { openPanel } = usePanelActions()
@@ -17,10 +19,15 @@ export function TradingWalletPanel() {
         openPanel(CHANNEL_INFO_PARAMS.TRADING_DEPOSIT)
     }, [openPanel])
 
+    const { evmWalletAddress } = useTradingWalletAddresses()
     const { data: chainWalletAssets } = useTradingWallet()
     const totalHoldingValueCents = useMemo(() => {
         return calculateTotalHoldingValueCents(chainWalletAssets)
     }, [chainWalletAssets])
+
+    const onTransferAsset = () => {
+        openPanel('transfer-assets', { assetSource: evmWalletAddress })
+    }
 
     const holdingValue24hAgo = useMemo(() => {
         if (!chainWalletAssets) {
@@ -49,7 +56,7 @@ export function TradingWalletPanel() {
         <Panel padding label="Towns Wallet">
             <AutoCreateSolanaWallet />
 
-            <Stack gap>
+            <Stack gap grow>
                 <Text fontSize="h2" fontWeight="strong" textAlign="center">
                     {formatCents(totalHoldingValueCents)}
                 </Text>
@@ -73,6 +80,7 @@ export function TradingWalletPanel() {
 
                 <Text fontSize="h4" textAlign="center" color="cta1" />
                 <TabPanel
+                    grow
                     layoutId="tradingTokensList"
                     value={tab}
                     tabs={[
@@ -82,12 +90,16 @@ export function TradingWalletPanel() {
                     ]}
                     onChange={onTabChange}
                 >
-                    <Stack gap paddingY>
+                    <Stack gap paddingY grow>
                         {tab === 'tokens' && <TradingTokensList assets={chainWalletAssets ?? []} />}
                         {tab === 'nfts' && (
-                            <Box centerContent color="gray1">
-                                NFTs
-                            </Box>
+                            <Stack gap grow>
+                                <PanelButton cursor="pointer" onClick={onTransferAsset}>
+                                    <Icon type="linkOutWithFrame" size="square_sm" color="gray2" />
+                                    <Text strong>Transfer Asset</Text>
+                                </PanelButton>
+                                <NftsList walletAddress={evmWalletAddress} />
+                            </Stack>
                         )}
                         {tab === 'activity' && <TradingActivity />}
                     </Stack>
