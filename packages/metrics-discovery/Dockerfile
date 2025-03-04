@@ -2,6 +2,9 @@ FROM node:lts-alpine3.20
 
 WORKDIR /river
 
+# install binaries
+RUN apk add --no-cache git curl bash
+
 # monorepo root config
 COPY ./package.json ./package.json
 COPY ./.yarn/plugins ./.yarn/plugins
@@ -28,10 +31,9 @@ COPY ./packages/proto /river/packages/proto
 COPY ./packages/metrics-discovery /river/packages/metrics-discovery
 
 # install dependencies and build
-RUN apk add --no-cache git curl
 RUN corepack enable
 RUN yarn install
-RUN yarn run turbo build --filter @river-build/metrics-discovery
+RUN SKIP_BUILD_CONTRACT_TYPES=true yarn run turbo build --filter @river-build/metrics-discovery
 
 WORKDIR /river/packages/metrics-discovery
 
