@@ -3,7 +3,7 @@ import { TokenTransferEvent } from '@river-build/sdk'
 import { bin_toHexString, bin_toString } from '@river-build/dlog'
 import { Box, Stack, Text } from '@ui'
 import { useCoinData } from '@components/TradingChart/useCoinData'
-import { formatUnits } from 'hooks/useBalance'
+import { formatUnitsToFixedLength } from 'hooks/useBalance'
 
 type Props = {
     event: TokenTransferEvent
@@ -24,9 +24,12 @@ export const TokenTransfer = (props: Props) => {
     const { data: coinData } = useCoinData(coinDataParams)
 
     const text = useMemo(() => {
-        const formattedAmount = formatUnits(
-            BigInt(event.transfer.amount),
-            coinData?.token.decimals ?? 9,
+        const amount = event.transfer.amount
+        const preFormattedAmount = Number(
+            formatUnitsToFixedLength(BigInt(amount), coinData?.token.decimals ?? 9, 2),
+        )
+        const formattedAmount = Intl.NumberFormat('en-US', { notation: 'compact' }).format(
+            preFormattedAmount,
         )
         const verb = event.transfer.isBuy ? 'Bought' : 'Sold'
         const symbol = coinData?.token.symbol ?? ''
