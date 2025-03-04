@@ -74,7 +74,8 @@ function remarkTransformUserAndChannels(
         )
 
         const TICKER_TRIGGER = '$'
-        const TICKER_NAME_REGEX = '[-a-z0-9]{0,20}'
+        // require the ticker to start with at least one letter
+        const TICKER_NAME_REGEX = '[a-z][-a-z0-9]*'
         const TICKER_ELEMENT_REGEX = new RegExp(
             `(?:^|\\s)\\${TICKER_TRIGGER}(${TICKER_NAME_REGEX})`,
             'gui',
