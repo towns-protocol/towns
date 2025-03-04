@@ -37,7 +37,7 @@ func TestGetStreamEx(t *testing.T) {
 	alice := tt.newTestClient(0)
 	_ = alice.createUserStream()
 	spaceId, _ := alice.createSpace()
-	channelId, _ := alice.createChannel(spaceId)
+	channelId, _, _ := alice.createChannel(spaceId)
 
 	for count := range 100 {
 		alice.say(channelId, fmt.Sprintf("hello from Alice %d", count))
@@ -104,7 +104,7 @@ func TestMiniBlockProductionFrequency(t *testing.T) {
 	alice := tt.newTestClient(0)
 	_ = alice.createUserStream()
 	spaceId, _ := alice.createSpace()
-	channelId, _ := alice.createChannel(spaceId)
+	channelId, _, _ := alice.createChannel(spaceId)
 
 	// retrieve set last miniblock events and make sure that only 1 out of miniblockRegistrationFrequency
 	// miniblocks is registered

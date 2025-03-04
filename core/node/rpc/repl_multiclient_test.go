@@ -53,7 +53,7 @@ func TestReplMcSpeakUntilMbTrim(t *testing.T) {
 	alice := tt.newTestClient(0)
 	_ = alice.createUserStream()
 	spaceId, _ := alice.createSpace()
-	channelId, _ := alice.createChannel(spaceId)
+	channelId, _, _ := alice.createChannel(spaceId)
 
 	for count := range 1000 {
 		alice.say(channelId, fmt.Sprintf("hello from Alice %d", count))

@@ -3,6 +3,9 @@ package rpc
 import (
 	"context"
 	"fmt"
+	"github.com/google/go-cmp/cmp"
+	"github.com/puzpuzpuz/xsync/v3"
+	"go.uber.org/atomic"
 	"hash/fnv"
 	"io"
 	"log"
@@ -14,6 +17,7 @@ import (
 	"runtime"
 	"slices"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -521,6 +525,25 @@ func (st *serviceTester) httpGet(url string) string {
 	return string(body)
 }
 
+type receivedStreamUpdates struct {
+	mu      sync.Mutex
+	updates []*SyncStreamsResponse
+}
+
+func (r *receivedStreamUpdates) AddUpdate(update *SyncStreamsResponse) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	r.updates = append(r.updates, update)
+}
+
+func (r *receivedStreamUpdates) Updates() []*SyncStreamsResponse {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	return slices.Clone(r.updates)
+}
+
 type testClient struct {
 	t               *testing.T
 	ctx             context.Context
@@ -528,10 +551,13 @@ type testClient struct {
 	require         *require.Assertions
 	client          protocolconnect.StreamServiceClient
 	node2nodeClient protocolconnect.NodeToNodeClient
+	nodes           []*testNodeRecord
 	wallet          *crypto.Wallet
 	userId          common.Address
 	userStreamId    StreamId
 	name            string
+	syncID          atomic.String // use testClient#SyncID() to retrieve the value
+	updates         *xsync.MapOf[StreamId, *receivedStreamUpdates]
 }
 
 func (st *serviceTester) newTestClient(i int) *testClient {
@@ -544,10 +570,12 @@ func (st *serviceTester) newTestClient(i int) *testClient {
 		require:         st.require,
 		client:          st.testClient(i),
 		node2nodeClient: st.testNode2NodeClient(i),
+		nodes:           st.nodes,
 		wallet:          wallet,
 		userId:          wallet.Address,
 		userStreamId:    UserStreamIdFromAddr(wallet.Address),
 		name:            fmt.Sprintf("%d-%s", i, wallet.Address.Hex()[2:8]),
+		updates:         xsync.NewMapOf[StreamId, *receivedStreamUpdates](),
 	}
 }
 
@@ -559,6 +587,9 @@ func (st *serviceTester) newTestClients(numClients int) testClients {
 	}
 	clients.parallelForAll(func(tc *testClient) {
 		tc.createUserStream()
+	})
+	clients.parallelForAll(func(tc *testClient) {
+		tc.startSync()
 	})
 	return clients
 }
@@ -585,6 +616,66 @@ func (tc *testClient) createUserStream(
 	}
 }
 
+func (tcs testClients) requireSubscribed(streamId StreamId, expectedMemberships ...[]common.Address) {
+	tcs.parallelForAll(func(tc *testClient) {
+		tc.requireSubscribed(streamId)
+	})
+}
+
+func (tc *testClient) requireSubscribed(channelId StreamId) {
+	tc.require.Eventually(func() bool {
+		_, ok := tc.updates.Load(channelId)
+		return ok
+	}, 10*time.Second, 10*time.Millisecond)
+}
+
+func (tc *testClient) syncChannel(cookie *SyncCookie) {
+	_, err := tc.client.ModifySync(tc.ctx, connect.NewRequest(&ModifySyncRequest{
+		SyncId:     tc.SyncID(),
+		AddStreams: []*SyncCookie{cookie},
+	}))
+
+	tc.require.NoError(err)
+}
+
+// startSync initiates a sync session without streams.
+func (tc *testClient) startSync() {
+	updates, err := tc.client.SyncStreams(tc.ctx, connect.NewRequest(&SyncStreamsRequest{}))
+	tc.require.NoError(err)
+
+	if updates.Receive() {
+		tc.require.NoError(updates.Err())
+		update := updates.Msg()
+		tc.require.Equal(SyncOp_SYNC_NEW, update.GetSyncOp())
+		tc.syncID.Store(update.GetSyncId())
+	} else {
+		tc.assert.Fail("Didn't receive sync new update")
+	}
+
+	go func() {
+		for updates.Receive() {
+			tc.require.NoError(updates.Err())
+
+			update := updates.Msg()
+			if update.GetSyncOp() == SyncOp_SYNC_UPDATE {
+				streamID, _ := StreamIdFromBytes(update.GetStream().GetNextSyncCookie().GetStreamId())
+				streamUpdates := &receivedStreamUpdates{}
+				updates, _ := tc.updates.LoadOrStore(streamID, streamUpdates)
+				updates.AddUpdate(update)
+			}
+		}
+	}()
+}
+
+func (tc *testClient) SyncID() string {
+	for {
+		if syncID := tc.syncID.Load(); syncID != "" {
+			return syncID
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+}
+
 func (tc *testClient) createSpace(
 	streamSettings ...*StreamSettings,
 ) (StreamId, *MiniblockRef) {
@@ -605,7 +696,7 @@ func (tc *testClient) createSpace(
 func (tc *testClient) createChannel(
 	spaceId StreamId,
 	streamSettings ...*StreamSettings,
-) (StreamId, *MiniblockRef) {
+) (StreamId, *MiniblockRef, *SyncCookie) {
 	channelId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	var ss *StreamSettings
 	if len(streamSettings) > 0 {
@@ -616,7 +707,7 @@ func (tc *testClient) createChannel(
 	return channelId, &MiniblockRef{
 		Hash: common.BytesToHash(cookie.PrevMiniblockHash),
 		Num:  cookie.MinipoolGen - 1,
-	}
+	}, cookie
 }
 
 func (tc *testClient) joinChannel(spaceId StreamId, channelId StreamId, mb *MiniblockRef) {
@@ -1050,13 +1141,13 @@ func (tcs testClients) parallelForAllT(t require.TestingT, f func(*testClient)) 
 	}
 }
 
-// setupChannelWithClients creates a channel and returns a testClients with clients connected to it.
+// setupChannelWithClients creates a channel and returns a testClients with clients subscribed/connected to it.
 // The first client is the creator of both the space and the channel.
 // Other clients join the channel.
 // Clients are connected to nodes in a round-robin fashion.
 func (tcs testClients) createChannelAndJoin(spaceId StreamId) StreamId {
 	alice := tcs[0]
-	channelId, _ := alice.createChannel(spaceId)
+	channelId, _, syncCookie := alice.createChannel(spaceId)
 
 	tcs[1:].parallelForAll(func(tc *testClient) {
 		userLastMb := tc.getLastMiniblockHash(tc.userStreamId)
@@ -1064,6 +1155,12 @@ func (tcs testClients) createChannelAndJoin(spaceId StreamId) StreamId {
 	})
 
 	tcs.requireMembership(channelId)
+
+	tcs.parallelForAll(func(tc *testClient) {
+		tc.syncChannel(syncCookie)
+	})
+
+	tcs.requireSubscribed(channelId)
 
 	return channelId
 }
@@ -1123,8 +1220,31 @@ func (tcs testClients) compareNowImpl(t require.TestingT, streamId StreamId) []*
 			"different minipool slot, 0 and %d",
 			i+1,
 		)
-
 	}
+
+	firstClient := tcs[0]
+	for _, client := range tcs[1:] {
+		f, _ := firstClient.updates.Load(streamId)
+		c, _ := client.updates.Load(streamId)
+
+		firstUpdates := f.Updates()
+		clientUpdates := c.Updates()
+
+		success = success && len(firstUpdates) == len(clientUpdates)
+
+		for i, first := range firstUpdates {
+			success = success && cmp.Equal(first, clientUpdates[i],
+				cmp.Comparer(func(x, y *SyncStreamsResponse) bool {
+					return cmp.Equal(x.GetSyncOp(), y.GetSyncOp()) &&
+						cmp.Equal(x.GetStreamId(), y.GetStreamId()) &&
+						cmp.Equal(x.GetStream().GetSyncReset(), y.GetStream().GetSyncReset()) &&
+						cmp.Equal(x.GetStream().GetNextSyncCookie().GetMinipoolGen(), y.GetStream().GetNextSyncCookie().GetMinipoolGen()) &&
+						cmp.Equal(x.GetStream().GetNextSyncCookie().GetMinipoolSlot(), y.GetStream().GetNextSyncCookie().GetMinipoolSlot()) &&
+						cmp.Equal(x.GetStream().GetNextSyncCookie().GetPrevMiniblockHash(), y.GetStream().GetNextSyncCookie().GetPrevMiniblockHash())
+				}))
+		}
+	}
+
 	if !success {
 		return streams
 	}

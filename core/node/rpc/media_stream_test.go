@@ -21,7 +21,7 @@ func TestCreateMediaStream(t *testing.T) {
 	alice := tt.newTestClient(0)
 	_ = alice.createUserStream()
 	spaceId, _ := alice.createSpace()
-	channelId, _ := alice.createChannel(spaceId)
+	channelId, _, _ := alice.createChannel(spaceId)
 
 	mediaStreamId, err := StreamIdFromString(STREAM_MEDIA_PREFIX + strings.Repeat("0", 62))
 	tt.require.NoError(err)
@@ -158,7 +158,7 @@ func TestCreateMediaStream_Legacy(t *testing.T) {
 	alice := tt.newTestClient(0)
 	_ = alice.createUserStream()
 	spaceId, _ := alice.createSpace()
-	channelId, _ := alice.createChannel(spaceId)
+	channelId, _, _ := alice.createChannel(spaceId)
 
 	mediaStreamId, err := StreamIdFromString(STREAM_MEDIA_PREFIX + strings.Repeat("0", 62))
 	tt.require.NoError(err)
