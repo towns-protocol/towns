@@ -7,7 +7,7 @@
         "make-config": "node ./scripts/make-config.js",
         "preinstall": "node ./scripts/make-config.js"
     },
-  "dependencies": {
-    "@river-build/contracts": "^"
-  }
+    "dependencies": {
+        "@river-build/contracts": "^0.0.181"
+    }
 }
