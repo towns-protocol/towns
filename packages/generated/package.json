@@ -8,6 +8,6 @@
         "preinstall": "node ./scripts/make-config.js"
     },
     "dependencies": {
-        "@river-build/contracts": "workspace:contracts"
+        "@river-build/contracts": "workspace:^"
     }
 }
