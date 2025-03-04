@@ -2,6 +2,10 @@ FROM node:lts-alpine3.20
 
 WORKDIR /river
 
+RUN apk update 
+RUN apk add --no-cache git curl make build-base
+RUN apk add --no-cache python3 
+
 # monorepo root config
 COPY ./package.json ./package.json
 COPY ./.yarn/plugins ./.yarn/plugins
@@ -25,16 +29,14 @@ COPY ./packages/generated /river/packages/generated
 COPY ./packages/web3 /river/packages/web3
 COPY ./packages/dlog /river/packages/dlog
 COPY ./packages/proto /river/packages/proto
+COPY ./contracts /river/contracts
 COPY ./packages/metrics-discovery /river/packages/metrics-discovery
 
 # install dependencies and build
-RUN apk add --no-cache git curl
 RUN corepack enable
 RUN yarn install
 RUN yarn run turbo build --filter @river-build/metrics-discovery
 
 WORKDIR /river/packages/metrics-discovery
-
-HEALTHCHECK --interval=30s --timeout=10s --retries=3 CMD curl -f http://localhost:8080 || exit 1
 
 CMD [ "yarn", "start"]
