@@ -16,9 +16,18 @@ type QuorumPoolOpts struct {
 	// ContextMaker is used to transform initial context for each individual task.
 	ContextMaker func(ctx context.Context) (context.Context, context.CancelFunc)
 
-	// WaitForExtraSuccess is true if the quorum pool is waiting for extra successes
-	// after quorum is achieved.
-	WaitForExtraSuccess bool
+	// WaitForExtraSuccessFraction is the fraction of the time it took to achieve quorum
+	// that the quorum pool will wait for extra successes after quorum is achieved.
+	// I.e. for 5 tasks, and setting 1.0, and if quorum was achieved in 1 second,
+	// the quorum pool will wait for extra successes for additional 1 second.
+	// This is can be used in read mode to get more results, while not waiting for the unavailable replicas.
+	// If both WaitForExtraSuccessFraction and WaitForExtraSuccessTimeout are 0,
+	// the quorum pool will not wait for extra successes.
+	WaitForExtraSuccessFraction float64
+
+	// WaitForExtraSuccessTimeout is additional timeout for waiting for extra successes.
+	// See WaitForExtraSuccessFraction for more details.
+	WaitForExtraSuccessTimeout time.Duration
 
 	// ExternalQuorumCheck is a callback that returns true if quorum is reached.
 	// If provided, the quorum pool will not count successes and errors, but will
@@ -60,13 +69,25 @@ func (o *QuorumPoolOpts) ReadMode() *QuorumPoolOpts {
 	o.ContextMaker = func(ctx context.Context) (context.Context, context.CancelFunc) {
 		return ctx, func() {}
 	}
-	o.WaitForExtraSuccess = true
+	o.WaitForExtraSuccessFraction = 1.0
+	o.WaitForExtraSuccessTimeout = 100 * time.Millisecond
+	return o
+}
+
+func (o *QuorumPoolOpts) ReadModeWithFractionAndTimeout(fraction float64, timeout time.Duration) *QuorumPoolOpts {
+	o = o.ReadMode()
+	o.WaitForExtraSuccessFraction = fraction
+	o.WaitForExtraSuccessTimeout = timeout
 	return o
 }
 
 func (o *QuorumPoolOpts) WithExternalQuorumCheck(check func() bool) *QuorumPoolOpts {
 	o.ExternalQuorumCheck = check
 	return o
+}
+
+func (o *QuorumPoolOpts) shouldWaitForExtraSuccess() bool {
+	return o.WaitForExtraSuccessFraction > 0 || o.WaitForExtraSuccessTimeout > 0
 }
 
 type QuorumPool struct {
@@ -221,7 +242,7 @@ func (q *QuorumPool) WaitWithState() (*QuorumState, error) {
 			state.update(err)
 			done, err := state.checkDone(q.opts.ExternalQuorumCheck)
 			if done {
-				if err == nil && q.opts.WaitForExtraSuccess {
+				if err == nil && q.opts.shouldWaitForExtraSuccess() {
 					q.waitForExtraSuccess(state)
 					return state, nil
 				}
@@ -237,7 +258,13 @@ func (q *QuorumPool) waitForExtraSuccess(state *QuorumState) {
 	now := time.Now()
 	alreadyWaited := now.Sub(state.WaitStarted)
 
-	waitTimeout := alreadyWaited * 2
+	var waitTimeout time.Duration
+	if q.opts.WaitForExtraSuccessFraction > 0 {
+		waitTimeout += time.Duration(float64(alreadyWaited) * q.opts.WaitForExtraSuccessFraction)
+	}
+	if q.opts.WaitForExtraSuccessTimeout > 0 {
+		waitTimeout += q.opts.WaitForExtraSuccessTimeout
+	}
 
 	contextDeadline, ok := q.ctx.Deadline()
 	if ok {

@@ -68,7 +68,7 @@ func quorumPoolSuccess(t *testing.T) {
 
 	var (
 		req     = require.New(t)
-		remotes = []common.Address{common.Address{1}, common.Address{2}, common.Address{3}, common.Address{4}}
+		remotes = []common.Address{{1}, {2}, {3}, {4}}
 		qPool   = events.NewQuorumPool(ctx, events.NewQuorumPoolOpts().WriteMode())
 		wg      sync.WaitGroup
 	)
@@ -104,7 +104,7 @@ func quorumPoolFail(t *testing.T) {
 
 	var (
 		req     = require.New(t)
-		remotes = []common.Address{common.Address{1}, common.Address{2}, common.Address{3}, common.Address{4}}
+		remotes = []common.Address{{1}, {2}, {3}, {4}}
 		qPool   = events.NewQuorumPool(ctx, events.NewQuorumPoolOpts().WriteMode())
 		wg      sync.WaitGroup
 	)
@@ -143,7 +143,7 @@ func quorumPoolWithSomeSlowRemotes(t *testing.T) {
 
 	var (
 		req     = require.New(t)
-		remotes = []common.Address{common.Address{1}, common.Address{2}, common.Address{3}, common.Address{4}}
+		remotes = []common.Address{{1}, {2}, {3}, {4}}
 		qPool   = events.NewQuorumPool(ctx, events.NewQuorumPoolOpts().WriteModeWithTimeout(time.Second))
 		wg      sync.WaitGroup
 	)
@@ -191,7 +191,7 @@ func quorumPoolWithTooManySlowRemotes(t *testing.T) {
 
 	var (
 		req     = require.New(t)
-		remotes = []common.Address{common.Address{1}, common.Address{2}, common.Address{3}, common.Address{4}}
+		remotes = []common.Address{{1}, {2}, {3}, {4}}
 		qPool   = events.NewQuorumPool(ctx, events.NewQuorumPoolOpts().WriteModeWithTimeout(time.Second))
 		wg      sync.WaitGroup
 	)
@@ -243,7 +243,7 @@ func quorumPoolWithExternalCheckFail(t *testing.T) {
 
 	var (
 		req     = require.New(t)
-		remotes = []common.Address{common.Address{1}, common.Address{2}, common.Address{3}, common.Address{4}}
+		remotes = []common.Address{{1}, {2}, {3}, {4}}
 		check   = func() bool { return false }
 		qPool   = events.NewQuorumPool(ctx, events.NewQuorumPoolOpts().WriteMode().WithExternalQuorumCheck(check))
 		wg      sync.WaitGroup
@@ -278,7 +278,7 @@ func quorumPoolWithExternalCheckSuccess(t *testing.T) {
 
 	var (
 		req     = require.New(t)
-		remotes = []common.Address{common.Address{1}, common.Address{2}, common.Address{3}, common.Address{4}}
+		remotes = []common.Address{{1}, {2}, {3}, {4}}
 		success atomic.Int64
 		check   = func() bool {
 			return int(success.Load()) >= events.TotalQuorumNum(1+len(remotes))
@@ -313,7 +313,7 @@ func quorumPoolReadModeAllSuccess(t *testing.T) {
 	defer cancel()
 	require := require.New(t)
 
-	pool := events.NewQuorumPool(ctx, events.NewQuorumPoolOpts().ReadMode())
+	pool := events.NewQuorumPool(ctx, events.NewQuorumPoolOpts().ReadModeWithFractionAndTimeout(1.0, time.Second))
 
 	for range 5 {
 		pool.AddTask(func(ctx context.Context) error {
