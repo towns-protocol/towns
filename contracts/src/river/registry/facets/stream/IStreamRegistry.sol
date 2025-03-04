@@ -129,11 +129,21 @@ interface IStreamRegistry is IStreamRegistryBase {
     address nodeAddress
   ) external view returns (uint256);
 
+  function getStreamsOnNode(
+    address nodeAddress
+  ) external view returns (StreamWithId[] memory streams);
+
+  function getPaginatedStreamsOnNode(
+    address nodeAddress,
+    uint256 start,
+    uint256 stop
+  ) external view returns (StreamWithId[] memory streams);
+
   /**
    * @notice Get a paginated list of streams from the registry
    * @dev Recommended range is 5000 streams to avoid gas limits
    * @param start The starting index for pagination
-   * @param stop The ending index for pagination
+   * @param stop The ending index for pagination, exclusive
    * @return StreamWithId[] Array of streams with their IDs in the requested range
    * @return bool True if this is the last page of results
    */

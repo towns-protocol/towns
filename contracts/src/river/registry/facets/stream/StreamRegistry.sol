@@ -7,6 +7,7 @@ import {Stream, StreamWithId, SetMiniblock} from "contracts/src/river/registry/l
 
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 import {RiverRegistryErrors} from "contracts/src/river/registry/libraries/RegistryErrors.sol";
 
 // contracts
@@ -278,15 +279,43 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     count = ds.streamIdsByNode[nodeAddress].length();
   }
 
+  /// @inheritdoc IStreamRegistry
   function getStreamsOnNode(
     address nodeAddress
   ) external view returns (StreamWithId[] memory streams) {
-    uint256 streamCount = ds.streamIdsByNode[nodeAddress].length();
+    EnumerableSet.Bytes32Set storage streamIds = ds.streamIdsByNode[
+      nodeAddress
+    ];
+    uint256 streamCount = streamIds.length();
     streams = new StreamWithId[](streamCount);
 
     for (uint256 i; i < streamCount; ++i) {
-      bytes32 id = ds.streamIdsByNode[nodeAddress].at(i);
-      streams[i] = StreamWithId({id: id, stream: ds.streamById[id]});
+      StreamWithId memory stream = streams[i];
+      stream.id = streamIds.at(i);
+      stream.stream = ds.streamById[stream.id];
+    }
+  }
+
+  /// @inheritdoc IStreamRegistry
+  function getPaginatedStreamsOnNode(
+    address nodeAddress,
+    uint256 start,
+    uint256 stop
+  ) external view returns (StreamWithId[] memory streams) {
+    EnumerableSet.Bytes32Set storage streamIds = ds.streamIdsByNode[
+      nodeAddress
+    ];
+    uint256 streamCount = streamIds.length();
+    uint256 maxStreamIndex = FixedPointMathLib.min(stop, streamCount);
+    uint256 count = FixedPointMathLib.zeroFloorSub(maxStreamIndex, start);
+
+    streams = new StreamWithId[](count);
+    for (uint256 i; i < count; ++i) {
+      StreamWithId memory stream = streams[i];
+      unchecked {
+        stream.id = streamIds.at(start + i);
+      }
+      stream.stream = ds.streamById[stream.id];
     }
   }
 
@@ -295,17 +324,17 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     uint256 start,
     uint256 stop
   ) external view returns (StreamWithId[] memory, bool) {
-    if (start >= stop) revert(RiverRegistryErrors.BAD_ARG);
-
     uint256 streamCount = ds.streams.length();
-    uint256 maxStreamIndex = stop > streamCount ? streamCount : stop;
-    uint256 count = maxStreamIndex > start ? maxStreamIndex - start : 0;
+    uint256 maxStreamIndex = FixedPointMathLib.min(stop, streamCount);
+    uint256 count = FixedPointMathLib.zeroFloorSub(maxStreamIndex, start);
 
     StreamWithId[] memory streams = new StreamWithId[](count);
-
     for (uint256 i; i < count; ++i) {
-      bytes32 id = ds.streams.at(start + i);
-      streams[i] = StreamWithId({id: id, stream: ds.streamById[id]});
+      StreamWithId memory stream = streams[i];
+      unchecked {
+        stream.id = ds.streams.at(start + i);
+      }
+      stream.stream = ds.streamById[stream.id];
     }
 
     return (streams, stop >= streamCount);
