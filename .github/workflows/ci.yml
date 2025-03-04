@@ -625,18 +625,7 @@ jobs:
                 env:
                     POSTGRES_USER: postgres
                     POSTGRES_PASSWORD: postgres
-                ports:
-                    # Maps tcp port 5433 on service container to the host
-                    - 5433:5432
-                options: >-
-                    --cpus 3
-                    --memory 8G
-                    --health-cmd pg_isready
-                    --health-interval 10s
-                    --health-timeout 5s
-                    --health-retries 5
-                    --name river_postgres_container
-                    postgres
+                    POSTGRES_INITDB_ARGS: >-
                       -c shared_buffers=2GB
                       -c effective_cache_size=6GB
                       -c maintenance_work_mem=512MB
@@ -650,6 +639,17 @@ jobs:
                       -c max_wal_size=4GB
                       -c checkpoint_completion_target=0.9
                       -c default_statistics_target=200
+                ports:
+                    # Maps tcp port 5433 on service container to the host
+                    - 5433:5432
+                options: >-
+                    --cpus 3
+                    --memory 8G
+                    --health-cmd pg_isready
+                    --health-interval 10s
+                    --health-timeout 5s
+                    --health-retries 5
+                    --name river_postgres_container
         steps:
             - uses: taiki-e/install-action@just
 
