@@ -86,7 +86,7 @@ describe('transaction_SpaceReview', () => {
         expect(tx).toBeDefined()
         const receipt = await tx.wait(2)
         expect(receipt).toBeDefined()
-        const reviewEvent = getSpaceReviewEventData(receipt.logs, receipt.from)
+        const reviewEvent = getSpaceReviewEventData(receipt.logs, aliceIdentity.userId)
         expect(reviewEvent).toBeDefined()
         expect(reviewEvent.rating).toBe(5)
         expect(reviewEvent.comment).toBe('This is a test review')
@@ -120,9 +120,12 @@ describe('transaction_SpaceReview', () => {
         }
         expect(reviewEvent.receipt).toBeDefined()
         expect(reviewEvent.content.value.action).toBe(BlockchainTransaction_SpaceReview_Action.Add)
+        if (!reviewEvent.content.value.event) {
+            throw new Error('no event in space review')
+        }
         const { comment, rating, action } = getSpaceReviewEventDataBin(
             reviewEvent.receipt!.logs,
-            reviewEvent.receipt!.from,
+            reviewEvent.content.value.event.user,
         )
         expect(action).toBe(SpaceReviewAction.Add)
         expect(comment).toBe('This is a test review')

@@ -415,9 +415,12 @@ function toTownsContent_MemberPayload(
                         return { error: `${description} no receipt` }
                     }
                     const reviewContent = transaction.content.value
+                    if (!reviewContent.event) {
+                        return { error: `${description} no event in space review` }
+                    }
                     const { comment, rating } = getSpaceReviewEventDataBin(
                         transaction.receipt.logs,
-                        transaction.receipt.from,
+                        reviewContent.event.user,
                     )
                     return {
                         content: {

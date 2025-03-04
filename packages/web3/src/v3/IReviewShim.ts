@@ -118,37 +118,41 @@ export function getSpaceReviewEventData(
 ): SpaceReviewEventObject {
     const contractInterface = new ethers.utils.Interface(DevAbi) as IReviewInterface
     for (const log of logs) {
-        const parsedLog = contractInterface.parseLog(log)
-        if (
-            parsedLog.name === 'ReviewAdded' &&
-            (parsedLog.args.user as string).toLowerCase() === senderAddress.toLowerCase()
-        ) {
-            return {
-                user: parsedLog.args.user,
-                comment: parsedLog.args.comment,
-                rating: parsedLog.args.rating,
-                action: SpaceReviewAction.Add,
+        try {
+            const parsedLog = contractInterface.parseLog(log)
+            if (
+                parsedLog.name === 'ReviewAdded' &&
+                (parsedLog.args.user as string).toLowerCase() === senderAddress.toLowerCase()
+            ) {
+                return {
+                    user: parsedLog.args.user,
+                    comment: parsedLog.args.comment,
+                    rating: parsedLog.args.rating,
+                    action: SpaceReviewAction.Add,
+                }
+            } else if (
+                parsedLog.name === 'ReviewUpdated' &&
+                (parsedLog.args.user as string).toLowerCase() === senderAddress.toLowerCase()
+            ) {
+                return {
+                    user: parsedLog.args.user,
+                    comment: parsedLog.args.comment,
+                    rating: parsedLog.args.rating,
+                    action: SpaceReviewAction.Update,
+                }
+            } else if (
+                parsedLog.name === 'ReviewDeleted' &&
+                (parsedLog.args.user as string).toLowerCase() === senderAddress.toLowerCase()
+            ) {
+                return {
+                    user: parsedLog.args.user,
+                    comment: undefined,
+                    rating: 0,
+                    action: SpaceReviewAction.Delete,
+                }
             }
-        } else if (
-            parsedLog.name === 'ReviewUpdated' &&
-            (parsedLog.args.user as string).toLowerCase() === senderAddress.toLowerCase()
-        ) {
-            return {
-                user: parsedLog.args.user,
-                comment: parsedLog.args.comment,
-                rating: parsedLog.args.rating,
-                action: SpaceReviewAction.Update,
-            }
-        } else if (
-            parsedLog.name === 'ReviewDeleted' &&
-            (parsedLog.args.user as string).toLowerCase() === senderAddress.toLowerCase()
-        ) {
-            return {
-                user: parsedLog.args.user,
-                comment: undefined,
-                rating: 0,
-                action: SpaceReviewAction.Delete,
-            }
+        } catch {
+            // no need for error, this log is not from the contract we're interested in
         }
     }
     return { user: '', comment: undefined, rating: 0, action: SpaceReviewAction.None }
