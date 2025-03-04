@@ -315,6 +315,42 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
     return wallets;
   }
 
+  function _getWalletsByRootKeyWithMetadata(
+    address rootKey
+  ) internal view returns (WalletWithMetadata[] memory wallets) {
+    WalletLinkStorage.Layout storage ds = WalletLinkStorage.layout();
+
+    // Get all linked wallets
+    address[] memory linkedWallets = ds.walletsByRootKey[rootKey].values();
+    uint256 length = linkedWallets.length;
+
+    // Initialize result array
+    wallets = new WalletWithMetadata[](length);
+
+    // Get default wallet for comparison
+    address defaultWallet = ds.defaultWalletByRootKey[rootKey];
+
+    // Populate metadata for each wallet
+    for (uint256 i; i < length; ++i) {
+      address wallet = linkedWallets[i];
+
+      // Check if wallet is a smart account by checking code length
+      uint256 codeSize;
+      assembly {
+        codeSize := extcodesize(wallet)
+      }
+      bool isSmartAccount = codeSize > 0;
+
+      wallets[i] = WalletWithMetadata({
+        wallet: wallet,
+        isDefaultWallet: wallet == defaultWallet,
+        isSmartAccount: isSmartAccount
+      });
+    }
+
+    return wallets;
+  }
+
   function _getRootKeyByWallet(
     address wallet
   ) internal view returns (address rootKey) {

@@ -18,6 +18,12 @@ interface IWalletLinkBase {
     string message;
   }
 
+  struct WalletWithMetadata {
+    address wallet;
+    bool isDefaultWallet;
+    bool isSmartAccount;
+  }
+
   // =============================================================
   //                           Events
   // =============================================================
@@ -130,6 +136,15 @@ interface IWalletLink is IWalletLinkBase {
   function getWalletsByRootKeyWithDelegations(
     address rootKey
   ) external view returns (address[] memory wallets);
+
+  /**
+   * @notice Returns all wallets linked to a root key with their metadata
+   * @param rootKey the public key of the users rootkey to find associated wallets for
+   * @return wallets an array of wallets with their metadata
+   */
+  function getWalletsByRootKeyWithMetadata(
+    address rootKey
+  ) external view returns (WalletWithMetadata[] memory wallets);
 
   /**
    * @notice Returns the root key for a given wallet

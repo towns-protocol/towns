@@ -22,6 +22,7 @@ contract DeployWalletLink is FacetHelper, Deployer {
     addSelector(WalletLink.getWalletsByRootKeyWithDelegations.selector);
     addSelector(WalletLink.getDelegateByVersion.selector);
     addSelector(WalletLink.setDelegateByVersion.selector);
+    addSelector(WalletLink.getWalletsByRootKeyWithMetadata.selector);
   }
 
   function initializer() public pure override returns (bytes4) {
