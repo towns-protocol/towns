@@ -3,10 +3,7 @@ import { TransactionStatus, useConnectivity } from 'use-towns-client'
 import { useCoinData } from '@components/TradingChart/useCoinData'
 import { Box, Stack, Text } from '@ui'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
-import { shimmerClass } from 'ui/styles/globals/shimmer.css'
-import { ChainConfig, isTradingChain, tradingChains } from './tradingConstants'
 import { BigIntInput } from './ui/BigIntInput'
-import { QuoteCard } from './ui/QuoteCard'
 import { RadioButton } from './ui/RadioButton'
 import { ButtonSelection } from './ui/SelectButton'
 import { TabPanel } from './ui/TabPanel'
@@ -17,8 +14,9 @@ import { useSolanaWallet } from './useSolanaWallet'
 import { EvmTransactionRequest, SolanaTransactionRequest } from './TradingContextProvider'
 import { useTokenBalance } from './useTokenBalance'
 import { getTokenValueData } from './hooks/getTokenValue'
+import { isTradingChain, tradingChains } from './tradingConstants'
 
-const DISPLAY_QUOTE = false
+// const DISPLAY_QUOTE = false
 
 type Props = {
     mode: 'buy' | 'sell'
@@ -84,10 +82,10 @@ export const TradeComponent = (props: Props) => {
         chain: chainId,
     })
 
-    const { data: toTokenData } = useCoinData({
-        address: toTokenAddress,
-        chain: chainId,
-    })
+    // const { data: toTokenData } = useCoinData({
+    //     address: toTokenAddress,
+    //     chain: chainId,
+    // })
 
     const currentBalanceDecimals =
         mode === 'buy' ? chainConfig.decimals : fromTokenData?.token.decimals ?? 18
@@ -292,7 +290,7 @@ export const TradeComponent = (props: Props) => {
                         </Stack>
                     </Stack>
 
-                    {DISPLAY_QUOTE && (
+                    {/* {DISPLAY_QUOTE && (
                         <QuotePreview
                             chainConfig={chainConfig}
                             chainId={chainId}
@@ -302,61 +300,9 @@ export const TradeComponent = (props: Props) => {
                             toTokenAddress={toTokenAddress}
                             toTokenData={toTokenData}
                         />
-                    )}
+                    )} */}
                 </Stack>
             </TabPanel>
         )
     }
 }
-
-const QuotePreview = ({
-    chainConfig,
-    chainId,
-    fromTokenAddress,
-    fromTokenData,
-    quote,
-    toTokenAddress,
-    toTokenData,
-}: {
-    chainConfig: ChainConfig
-    chainId: string
-    fromTokenAddress: string
-    fromTokenData: ReturnType<typeof useCoinData>['data']
-    quote: ReturnType<typeof useLifiQuote>
-    toTokenAddress: string
-    toTokenData: ReturnType<typeof useCoinData>['data']
-}) =>
-    quote.isLoading ? (
-        <Stack gap padding className={shimmerClass} rounded="sm" height="100">
-            <Stack height="x4" width="100%" />
-            <Stack height="x4" width="100%" />
-        </Stack>
-    ) : quote.isError ? (
-        <Stack
-            gap
-            padding
-            rounded="sm"
-            border="negative"
-            overflow="hidden"
-            background="negativeSubtle"
-        >
-            <Text size="sm">Error</Text>
-            <Box as="pre" fontSize="sm" wrap="wrap">
-                {quote.error?.message}
-            </Box>
-        </Stack>
-    ) : quote.data ? (
-        <Stack gap="sm">
-            <QuoteCard
-                chainConfig={chainConfig}
-                {...quote.data}
-                fromTokenAddress={fromTokenAddress}
-                toTokenAddress={toTokenAddress}
-                chainId={chainId}
-                fromTokenData={fromTokenData}
-                toTokenData={toTokenData}
-            />
-        </Stack>
-    ) : (
-        <></>
-    )

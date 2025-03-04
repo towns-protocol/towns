@@ -1,6 +1,8 @@
 import React, { useCallback, useMemo, useState } from 'react'
 import {
     SendMessageOptions,
+    TSigner,
+    ThreadStatsData,
     useChannelContext,
     useChannelData,
     useConnectivity,
@@ -9,6 +11,7 @@ import {
     useTimelineThread,
 } from 'use-towns-client'
 import { useLocation } from 'react-router'
+import { TickerAttachment } from '@river-build/sdk'
 import { MessageTimeline } from '@components/MessageTimeline/MessageTimeline'
 import { MessageTimelineWrapper } from '@components/MessageTimeline/MessageTimelineContext'
 import { TownsEditorContainer } from '@components/RichTextPlate/TownsEditorContainer'
@@ -50,43 +53,12 @@ export const MessageThreadPanel = (props: Props) => {
         return parentMessage ? [parentMessage, ...messages] : messages
     }, [messages, parentMessage])
 
-    const { memberIds } = useSpaceMembers()
-
-    const { sendReply } = useSendReply(messageId)
-    const spaceDetailsAnalytics = useGatherSpaceDetailsAnalytics({
-        spaceId,
-        channelId,
-    })
-
     const tickerAttachment = useMemo(() => {
         return getTickerAttachment(parentMessage)
     }, [parentMessage])
 
-    const onSend = useCallback(
-        (value: string, options: SendMessageOptions | undefined) => {
-            trackPostedMessage({
-                spaceId,
-                channelId,
-                messageType: getPostedMessageType(value, {
-                    messageType: options?.messageType,
-                }),
-                threadId: 'threadId',
-                canReplyInline: undefined,
-                replyToEventId: undefined,
-                ...spaceDetailsAnalytics,
-            })
-            const userIds = parent?.userIds ?? new Set<string>()
-            if (parent?.parentEvent) {
-                userIds.add(parent.parentEvent.sender.id)
-            }
-            sendReply(value, channelId, options, userIds)
-        },
-        [channelId, parent, sendReply, spaceDetailsAnalytics, spaceId],
-    )
-
-    const userId = useMyProfile()?.userId
     const { loggedInWalletAddress } = useConnectivity()
-    const channels = useSpaceChannels()
+
     const { isTouch } = useDevice()
 
     const location = useLocation()
@@ -123,70 +95,21 @@ export const MessageThreadPanel = (props: Props) => {
         ? `You don't have permission to send media to this channel`
         : `Loading permissions`
 
-    const [tradeData, setTradeData] = useState<
-        | {
-              request: EvmTransactionRequest | SolanaTransactionRequest
-              metaData: QuoteMetaData
-          }
-        | undefined
-    >(undefined)
+    const editorProps = {
+        spaceId,
+        channelId,
+        messageId,
+        tickerAttachment,
+        parent,
+        isChannelWritable,
+    }
 
-    const { onPressTrade } = useOnPressTrade({
-        request: tradeData?.request,
-        chainId: tickerAttachment?.chainId,
-    })
-
-    const editor = (
-        <TownsEditorContainer
-            isFullWidthOnTouch
-            background={tickerAttachment ? 'level1' : undefined}
-            key={`${messageId}-${isChannelWritable ? '' : '-readonly'}`}
-            autoFocus={!isTouch}
-            editable={!!isChannelWritable}
-            displayButtons="on-focus"
-            placeholder={tickerAttachment ? 'Add an optional message...' : 'Reply...'}
-            storageId={`${channelId}-${messageId}`}
-            threadId={messageId}
-            channels={channels}
-            spaceMemberIds={memberIds}
-            userId={userId}
-            renderSendButton={(onSend) => {
-                return tradeData && onPressTrade ? (
-                    <Box
-                        centerContent
-                        tooltip={`${tradeData?.metaData.mode === 'buy' ? 'Buy' : 'Sell'} ${
-                            tradeData?.metaData.value.value
-                        } ${tradeData?.metaData.value.symbol}`}
-                    >
-                        <WalletReady>
-                            {({ getSigner }) => (
-                                <FancyButton
-                                    compact="x4"
-                                    gap="xxs"
-                                    paddingLeft="sm"
-                                    paddingRight="md"
-                                    background={
-                                        tradeData?.metaData.mode === 'buy' ? 'positive' : 'negative'
-                                    }
-                                    borderRadius="full"
-                                    icon="lightning"
-                                    onClick={async () => {
-                                        const a = async () => {
-                                            await onPressTrade?.(getSigner)
-                                            onSend()
-                                        }
-                                        a()
-                                    }}
-                                >
-                                    {tradeData?.metaData.mode === 'buy' ? 'Buy' : 'Sell'}
-                                </FancyButton>
-                            )}
-                        </WalletReady>
-                    </Box>
-                ) : undefined
-            }}
-            onSend={onSend}
-        />
+    const editor = tickerAttachment ? (
+        <WalletReady>
+            {({ getSigner }) => <EditorWithSigner {...editorProps} getSigner={getSigner} />}
+        </WalletReady>
+    ) : (
+        <EditorWithSigner {...editorProps} />
     )
 
     return (
@@ -233,31 +156,156 @@ export const MessageThreadPanel = (props: Props) => {
                             // container via React.createPortal
                             id="editor-container"
                         >
-                            {tickerAttachment ? (
-                                <Box elevate background="readability" rounded="md">
-                                    <Box padding="md">
-                                        <TradeComponent
-                                            mode="buy"
-                                            tokenAddress={tickerAttachment.address}
-                                            chainId={tickerAttachment.chainId}
-                                            onQuoteChanged={(request, metaData) => {
-                                                setTradeData(
-                                                    request && metaData
-                                                        ? { request, metaData }
-                                                        : undefined,
-                                                )
-                                            }}
-                                        />
-                                    </Box>
-                                    <Box>{editor}</Box>
-                                </Box>
-                            ) : (
-                                editor
-                            )}
+                            {editor}
                         </Box>
                     )}
                 </MediaDropContextProvider>
             </TickerThreadContext.Provider>
         </Panel>
+    )
+}
+
+const EditorWithSigner = (props: {
+    spaceId?: string
+    channelId: string
+    messageId?: string
+    tickerAttachment?: TickerAttachment
+    parent?: ThreadStatsData
+    isChannelWritable?: boolean
+    getSigner?: () => Promise<TSigner | undefined>
+}) => {
+    const {
+        channelId,
+        getSigner,
+        isChannelWritable,
+        messageId,
+        parent,
+        spaceId,
+        tickerAttachment,
+    } = props
+    const { isTouch } = useDevice()
+    const userId = useMyProfile()?.userId
+    const channels = useSpaceChannels()
+    const { memberIds } = useSpaceMembers()
+
+    const [tradeData, setTradeData] = useState<
+        | {
+              request: EvmTransactionRequest | SolanaTransactionRequest
+              metaData: QuoteMetaData
+          }
+        | undefined
+    >(undefined)
+
+    const { onPressTrade } = useOnPressTrade({
+        request: tradeData?.request,
+        chainId: tickerAttachment?.chainId,
+    })
+
+    const { sendReply } = useSendReply(messageId)
+
+    const spaceDetailsAnalytics = useGatherSpaceDetailsAnalytics({
+        spaceId,
+        channelId,
+    })
+
+    const onSend = useCallback(
+        async (value: string, options: SendMessageOptions | undefined) => {
+            if (tradeData && onPressTrade && getSigner) {
+                await onPressTrade?.(getSigner)
+            }
+            trackPostedMessage({
+                spaceId,
+                channelId,
+                messageType: getPostedMessageType(value, {
+                    messageType: options?.messageType,
+                }),
+                threadId: 'threadId',
+                canReplyInline: undefined,
+                replyToEventId: undefined,
+                ...spaceDetailsAnalytics,
+            })
+            const userIds = parent?.userIds ?? new Set<string>()
+            if (parent?.parentEvent) {
+                userIds.add(parent.parentEvent.sender.id)
+            }
+            sendReply(value, channelId, options, userIds)
+        },
+        [
+            channelId,
+            getSigner,
+            onPressTrade,
+            parent,
+            sendReply,
+            spaceDetailsAnalytics,
+            spaceId,
+            tradeData,
+        ],
+    )
+
+    const editor = (
+        <TownsEditorContainer
+            isFullWidthOnTouch
+            background={tickerAttachment ? 'level1' : undefined}
+            key={`${messageId}-${isChannelWritable ? '' : '-readonly'}`}
+            autoFocus={!isTouch}
+            editable={!!isChannelWritable}
+            displayButtons="on-focus"
+            placeholder={tickerAttachment ? 'Add an optional message...' : 'Reply...'}
+            storageId={`${channelId}-${messageId}`}
+            threadId={messageId}
+            channels={channels}
+            spaceMemberIds={memberIds}
+            userId={userId}
+            renderSendButton={(onSend) => {
+                return getSigner && tradeData && onPressTrade ? (
+                    <Box
+                        centerContent
+                        tooltip={`${tradeData?.metaData.mode === 'buy' ? 'Buy' : 'Sell'} ${
+                            tradeData?.metaData.value.value
+                        } ${tradeData?.metaData.value.symbol}`}
+                    >
+                        <FancyButton
+                            compact="x4"
+                            gap="xxs"
+                            paddingLeft="sm"
+                            paddingRight="md"
+                            background={
+                                tradeData?.metaData.mode === 'buy' ? 'positive' : 'negative'
+                            }
+                            borderRadius="full"
+                            icon="lightning"
+                            onClick={onSend}
+                        >
+                            {tradeData?.metaData.mode === 'buy' ? 'Buy' : 'Sell'}
+                        </FancyButton>
+                    </Box>
+                ) : undefined
+            }}
+            onSend={onSend}
+        />
+    )
+
+    return (
+        <>
+            {tickerAttachment ? (
+                <Box elevate background="readability" rounded="md">
+                    <Box padding="md">
+                        <TradeComponent
+                            mode="buy"
+                            tokenAddress={tickerAttachment.address}
+                            chainId={tickerAttachment.chainId}
+                            onQuoteChanged={(request, metaData) => {
+                                setTradeData(
+                                    request && metaData ? { request, metaData } : undefined,
+                                )
+                            }}
+                        />
+                    </Box>
+                    <Box>{editor}</Box>
+                </Box>
+            ) : (
+                editor
+            )}
+        </>
     )
 }
