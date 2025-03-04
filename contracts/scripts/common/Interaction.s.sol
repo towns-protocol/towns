@@ -20,7 +20,7 @@ abstract contract Interaction is Script, DeployBase {
   // will first try to load existing deployments from `deployments/<network>/<contract>.json`
   // if OVERRIDE_DEPLOYMENTS is set or if no deployment is found:
   // - read PRIVATE_KEY from env
-  // - invoke __deploy() with the private key
+  // - invoke __interact() with the private key
   // - save the deployment to `deployments/<network>/<contract>.json`
   function interact() public virtual {
     address deployer = _msgSender();
