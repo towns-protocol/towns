@@ -245,7 +245,17 @@ func (j *mbJob) gatherRemoteProposals(
 	proposals := make([]*ProposeMiniblockResponse, 0, len(j.remoteNodes))
 	var mu sync.Mutex
 
-	qp := NewQuorumPool(ctx, NewQuorumPoolOpts().ReadModeWithFractionAndTimeout(2.0, 100*time.Millisecond))
+	qp := NewQuorumPool(
+		ctx,
+		NewQuorumPoolOpts().
+			ReadModeWithFractionAndTimeout(2.0, 100*time.Millisecond).
+			WithTags(
+				"method", "mbJob.gatherRemoteProposals",
+				"streamId", j.stream.streamId,
+				"newMiniblockNum", request.NewMiniblockNum,
+				"prevMiniblockHash", request.PrevMiniblockHash,
+			),
+	)
 
 	// Add fake task to return success for local node, it's a bit hacky, but it is required for correct quorum calculations.
 	qp.AddTask(func(ctx context.Context) error {
