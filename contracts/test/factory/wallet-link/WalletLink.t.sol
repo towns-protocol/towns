@@ -7,12 +7,14 @@ import {WalletLink} from "contracts/src/factory/facets/wallet-link/WalletLink.so
 
 // libraries
 import {Vm} from "forge-std/Test.sol";
-import {console} from "forge-std/console.sol";
+
 // contracts
 import {DeployBase} from "contracts/scripts/common/DeployBase.s.sol";
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
 import {Nonces} from "@river-build/diamond/src/utils/Nonces.sol";
 import {MockDelegationRegistry} from "contracts/test/mocks/MockDelegationRegistry.sol";
+import {SimpleAccount} from "account-abstraction/samples/SimpleAccount.sol";
+import {console} from "forge-std/console.sol";
 
 contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
   Vm.Wallet internal rootWallet;
@@ -739,5 +741,45 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
 
     assertContains(wallets, coldWallet);
     assertContains(wallets, wallet.addr);
+  }
+
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                          Metadata                          */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+  function test_getWalletsByRootKeyWithMetadata()
+    external
+    givenWalletIsLinkedViaCaller
+  {
+    SimpleAccount simpleAccount = _createSimpleAccount(rootWallet.addr);
+    uint256 nonce = walletLink.getLatestNonceForRootKey(rootWallet.addr);
+    bytes memory signature = _signWalletLink(
+      rootWallet.privateKey,
+      address(simpleAccount),
+      nonce
+    );
+
+    vm.startPrank(address(simpleAccount));
+    walletLink.linkCallerToRootKey(
+      LinkedWallet(rootWallet.addr, signature, LINKED_WALLET_MESSAGE),
+      nonce
+    );
+    walletLink.setDefaultWallet(address(simpleAccount));
+    vm.stopPrank();
+
+    WalletWithMetadata[] memory wallets = walletLink
+      .getWalletsByRootKeyWithMetadata(rootWallet.addr);
+    uint256 walletLen = wallets.length;
+
+    for (uint256 i; i < walletLen; ++i) {
+      WalletWithMetadata memory w = wallets[i];
+      if (w.wallet == address(simpleAccount)) {
+        assertEq(w.isDefaultWallet, true);
+        assertEq(w.isSmartAccount, true);
+      } else if (w.wallet == wallet.addr) {
+        assertEq(w.isDefaultWallet, false);
+        assertEq(w.isSmartAccount, false);
+      }
+    }
   }
 }

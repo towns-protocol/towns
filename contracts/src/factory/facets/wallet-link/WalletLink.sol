@@ -83,6 +83,15 @@ contract WalletLink is IWalletLink, WalletLinkBase, OwnableBase, Facet {
   /**
    * @inheritdoc IWalletLink
    */
+  function getWalletsByRootKeyWithMetadata(
+    address rootKey
+  ) external view returns (WalletWithMetadata[] memory wallets) {
+    return _getWalletsByRootKeyWithMetadata(rootKey);
+  }
+
+  /**
+   * @inheritdoc IWalletLink
+   */
   function getRootKeyForWallet(
     address wallet
   ) external view returns (address rootKey) {
