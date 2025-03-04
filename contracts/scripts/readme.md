@@ -61,7 +61,7 @@ This makes it easy to:
 
 # save the key in .env (LOCAL_PRIVATE_KEY=...)
 
-# Fund the deployer address (this is the first address shown when runing `anvil`)
+# Fund the deployer address (this is the first address shown when running `anvil`)
 -> cast send ${NEW_WALLET_ADDRESS} --value 1ether -f 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --unlocked
 
 # perform a local simulation
@@ -90,7 +90,7 @@ This makes it easy to:
 -> make interact-any-local rpc=base_anvil contract=InteractMockERC721A
 ```
 
-# How to deploy predeterministic contracts?
+# How to deploy pre-deterministic contracts?
 
 ```
 // SPDX-License-Identifier: MIT
@@ -104,7 +104,7 @@ pragma solidity ^0.8.20;
 import {Deployer} from "./utils/Deployer.s.sol";
 import {Hello} from "src/hello/Hello.sol";
 
-// debuggging
+// debugging
 import {console} from "forge-std/console.sol";
 
 contract DeployHello is Deployer {
