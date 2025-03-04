@@ -6700,8 +6700,6 @@ __metadata:
 "@river-build/generated@workspace:^, @river-build/generated@workspace:packages/generated":
   version: 0.0.0-use.local
   resolution: "@river-build/generated@workspace:packages/generated"
-  dependencies:
-    "@river-build/contracts": "workspace:contracts"
   languageName: unknown
   linkType: soft
 
