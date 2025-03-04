@@ -51,7 +51,8 @@
             // (and not the monorepo root
             "outputs": ["dist/**", "build/**", "out/**", "cache/**"],
             "cache": true,
-            "dependsOn": ["^build"]
+            "dependsOn": ["^build"],
+            "env": ["SKIP_BUILD_CONTRACT_TYPES"]
         },
         "lint": {
             "cache": true
