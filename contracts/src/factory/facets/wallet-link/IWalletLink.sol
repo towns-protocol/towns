@@ -70,12 +70,15 @@ interface IWalletLinkBase {
 
   /// @notice Emitted when a non-EVM wallet is linked to a root key
   event LinkNonEVMWalletToRootWallet(
-    string indexed wallet,
+    bytes32 indexed walletHash,
     address indexed rootKey
   );
 
   /// @notice Emitted when a non-EVM wallet is removed from a root key
-  event RemoveNonEVMWalletLink(string indexed wallet, address indexed rootKey);
+  event RemoveNonEVMWalletLink(
+    bytes32 indexed walletHash,
+    address indexed rootKey
+  );
 
   // =============================================================
   //                      Errors
@@ -120,6 +123,28 @@ interface IWalletLink is IWalletLinkBase {
   function linkWalletToRootKey(
     LinkedWallet memory wallet,
     LinkedWallet memory rootWallet,
+    uint256 nonce
+  ) external;
+
+  /**
+   * @notice Link a non-EVM wallet to a root wallet
+   * @param wallet the wallet being linked to the root wallet
+   * @param nonce a nonce used to prevent replay attacks, nonce must always be higher than previous nonce
+   * @dev The function is called by an already linked wallet
+   */
+  function linkNonEVMWalletToRootKey(
+    NonEVMLinkedWallet calldata wallet,
+    uint256 nonce
+  ) external;
+
+  /**
+   * @notice Remove a non-EVM wallet link from a root wallet
+   * @param wallet the wallet being removed from the root wallet
+   * @param nonce a nonce used to prevent replay attacks, nonce must always be higher than previous nonce
+   * @dev The function is called by an already linked wallet
+   */
+  function removeNonEVMWalletLink(
+    WalletLib.Wallet memory wallet,
     uint256 nonce
   ) external;
 
@@ -203,6 +228,17 @@ interface IWalletLink is IWalletLinkBase {
   function checkIfLinked(
     address rootKey,
     address wallet
+  ) external view returns (bool);
+
+  /**
+   * @notice checks if a root key and non-EVM wallet are linked
+   * @param rootKey the public key of the users rootkey to check
+   * @param walletHash the hash of the non-EVM wallet to check
+   * @return areLinked boolean if they are linked together
+   */
+  function checkIfNonEVMWalletLinked(
+    address rootKey,
+    bytes32 walletHash
   ) external view returns (bool);
 
   /**

@@ -8,12 +8,18 @@ import {WalletLink} from "contracts/src/factory/facets/wallet-link/WalletLink.so
 // libraries
 import {Vm} from "forge-std/Test.sol";
 import {LibString} from "solady/utils/LibString.sol";
+import {SCL_EIP6565_UTILS} from "crypto-lib/lib/libSCL_eddsaUtils.sol";
+import {WalletLib} from "contracts/src/factory/facets/wallet-link/libraries/WalletLib.sol";
+import {SolanaUtils} from "contracts/test/factory/wallet-link/SolanaUtils.sol";
+
 // contracts
 import {DeployBase} from "contracts/scripts/common/DeployBase.s.sol";
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
 import {Nonces} from "@river-build/diamond/src/utils/Nonces.sol";
 import {MockDelegationRegistry} from "contracts/test/mocks/MockDelegationRegistry.sol";
 import {SimpleAccount} from "account-abstraction/samples/SimpleAccount.sol";
+
+// debugging
 import {console} from "forge-std/console.sol";
 
 contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
@@ -26,6 +32,12 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
   uint256 private constant MAX_LINKED_WALLETS = 10;
   bytes32 private constant DELEGATE_REGISTRY_V2 =
     bytes32("DELEGATE_REGISTRY_V2");
+
+  string private constant SOLANA_WALLET_ADDRESS =
+    "3p5wau6jqBV8sQswjN1HEeSZLjv5TB173zBgupGQD4we";
+
+  uint256[5] extPubKey;
+  uint256[2] signer;
 
   function setUp() public override {
     super.setUp();
@@ -100,9 +112,81 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
     _;
   }
 
+  modifier givenSolanaWalletIsLinkedToRootKey(uint256 secretSeed) {
+    (extPubKey, signer) = SCL_EIP6565_UTILS.SetKey(secretSeed);
+
+    string memory solanaAddress = SolanaUtils.toBase58String(
+      bytes32(extPubKey[4])
+    );
+
+    string memory consentMessage = LibString.toHexString(rootWallet.addr);
+    (uint256 r, uint256 s) = SCL_EIP6565_UTILS.Sign(
+      extPubKey[4],
+      signer,
+      consentMessage
+    );
+
+    WalletLib.Wallet memory solanaWallet = WalletLib.Wallet({
+      addr: solanaAddress,
+      vmType: WalletLib.VirtualMachineType.SVM
+    });
+
+    VMSpecificData[] memory extraData = new VMSpecificData[](1);
+    extraData[0] = VMSpecificData({
+      key: "extPubKey",
+      value: abi.encode(SolanaSpecificData({extPubKey: extPubKey}))
+    });
+
+    NonEVMLinkedWallet memory nonEVMWallet = NonEVMLinkedWallet({
+      wallet: solanaWallet,
+      signature: abi.encodePacked(r, s),
+      message: consentMessage,
+      extraData: extraData
+    });
+
+    uint256 nonce = walletLink.getLatestNonceForRootKey(rootWallet.addr);
+
+    vm.prank(wallet.addr);
+    walletLink.linkNonEVMWalletToRootKey(nonEVMWallet, nonce);
+
+    _;
+  }
+
   // =============================================================
   //                   linkCallerToRootKey
   // =============================================================
+
+  function test_linkNonEVMWalletToRootKey(
+    uint256 secretSeed
+  )
+    external
+    givenWalletIsLinkedViaCaller
+    givenSolanaWalletIsLinkedToRootKey(secretSeed)
+  {
+    string memory solanaAddress = SolanaUtils.toBase58String(
+      bytes32(extPubKey[4])
+    );
+
+    WalletLib.Wallet memory solanaWallet = WalletLib.Wallet({
+      addr: solanaAddress,
+      vmType: WalletLib.VirtualMachineType.SVM
+    });
+
+    bytes32 walletHash = keccak256(abi.encode(solanaWallet));
+
+    assertTrue(
+      walletLink.checkIfNonEVMWalletLinked(rootWallet.addr, walletHash)
+    );
+
+    WalletMetadata[] memory wallets = walletLink.explicitWalletsByRootKey(
+      rootWallet.addr,
+      WalletQueryOptions({includeDelegations: false})
+    );
+
+    for (uint256 i; i < wallets.length; ++i) {
+      console.log(wallets[i].wallet.addr);
+    }
+  }
 
   function test_linkCallerToRootKey() external givenWalletIsLinkedViaCaller {
     assertTrue(walletLink.checkIfLinked(rootWallet.addr, wallet.addr));

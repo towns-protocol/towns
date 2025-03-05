@@ -128,6 +128,16 @@ contract WalletLink is IWalletLink, WalletLinkBase, OwnableBase, Facet {
   /**
    * @inheritdoc IWalletLink
    */
+  function checkIfNonEVMWalletLinked(
+    address rootKey,
+    bytes32 walletHash
+  ) external view returns (bool) {
+    return _checkIfNonEVMWalletLinked(rootKey, walletHash);
+  }
+
+  /**
+   * @inheritdoc IWalletLink
+   */
   function getLatestNonceForRootKey(
     address rootKey
   ) external view returns (uint256) {

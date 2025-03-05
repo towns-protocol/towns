@@ -179,7 +179,7 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
 
     _useCheckedNonce(rootKey, nonce);
 
-    emit LinkNonEVMWalletToRootWallet(nonEVMWallet.wallet.addr, rootKey);
+    emit LinkNonEVMWalletToRootWallet(walletHash, rootKey);
   }
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -211,7 +211,7 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
     // Remove the wallet from the root wallet
     rootWallet.removeWallet(walletHash);
 
-    emit RemoveNonEVMWalletLink(wallet.addr, rootKey);
+    emit RemoveNonEVMWalletLink(walletHash, rootKey);
   }
 
   function _removeLink(
@@ -466,6 +466,13 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
     return ds.rootKeyByWallet[wallet] == rootKey;
   }
 
+  function _checkIfNonEVMWalletLinked(
+    address rootKey,
+    bytes32 walletHash
+  ) internal view returns (bool) {
+    return WalletLinkStorage.layout().rootKeyByHash[walletHash] == rootKey;
+  }
+
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                   Default Wallet Functions                 */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -620,7 +627,7 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
       revert WalletLink__InvalidSignature();
     }
 
-    bool isValidSignature = sclEIP6565.Verify(
+    bool isValidSignature = sclEIP6565.Verify_LE(
       nonEVMWallet.message,
       r,
       s,
