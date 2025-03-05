@@ -1,6 +1,6 @@
 name: Nightly npm package publish
 env:
-    FOUNDRY_VERSION: stable
+    FOUNDRY_VERSION: nightly
 on:
     schedule:
         - cron: '0 0 * * *' # Runs every night at midnight
