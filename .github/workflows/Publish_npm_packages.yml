@@ -1,6 +1,6 @@
 name: Nightly npm package publish
 env:
-    FOUNDRY_VERSION: stable
+    FOUNDRY_VERSION: nightly
 on:
     schedule:
         - cron: '0 0 * * *' # Runs every night at midnight
@@ -62,9 +62,6 @@ jobs:
 
             - name: Print versions
               run: ./scripts/print-versions.sh
-
-            - name: Build contract artifacts
-              run: ./scripts/build-contract-types.sh
 
             - name: Authenticate to npm
               run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
