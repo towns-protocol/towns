@@ -5,6 +5,7 @@
     "scripts": {
         "build": "yarn make-config && bash ../../scripts/build-contract-types.sh",
         "make-config": "node ./scripts/make-config.js",
-        "preinstall": "node ./scripts/make-config.js"
+        "preinstall": "node ./scripts/make-config.js",
+        "update-dependents": "node ./scripts/update-dependents.js"
     }
 }
