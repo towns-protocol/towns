@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { TransactionStatus, useConnectivity } from 'use-towns-client'
+import { TSigner, TransactionStatus, useConnectivity } from 'use-towns-client'
 import { useCoinData } from '@components/TradingChart/useCoinData'
-import { Box, Stack, Text } from '@ui'
+import { Box, FancyButton, Stack, Text } from '@ui'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
+import { WalletReady } from 'privy/WalletReady'
 import { BigIntInput } from './ui/BigIntInput'
 import { RadioButton } from './ui/RadioButton'
 import { ButtonSelection } from './ui/SelectButton'
@@ -11,10 +12,15 @@ import { useBalanceOnChain } from './useBalanceOnChain'
 import { useLifiQuote } from './useLifiQuote'
 import { useSolanaBalance } from './useSolanaBalance'
 import { useSolanaWallet } from './useSolanaWallet'
-import { EvmTransactionRequest, SolanaTransactionRequest } from './TradingContextProvider'
+import {
+    EvmTransactionRequest,
+    SolanaTransactionRequest,
+    useTradingContext,
+} from './TradingContextProvider'
 import { useTokenBalance } from './useTokenBalance'
 import { getTokenValueData } from './hooks/getTokenValue'
 import { isTradingChain, tradingChains } from './tradingConstants'
+import { useOnPressTrade } from './hooks/useTradeQuote'
 
 // const DISPLAY_QUOTE = false
 
@@ -223,6 +229,11 @@ export const TradeComponent = (props: Props) => {
         address,
     ])
 
+    const { onPressTrade } = useOnPressTrade({
+        request: request,
+        chainId: chainId,
+    })
+
     const metaData = useMemo(() => {
         if (!quoteData) {
             return undefined
@@ -305,6 +316,16 @@ export const TradeComponent = (props: Props) => {
                                 onChange={onSetPreselectedAmount}
                             />
                         </Stack>
+
+                        {/* if there's no threadInfo, we're inside the global trade panel,
+                            show buy/sell button */}
+                        {!threadInfo && onPressTrade && (
+                            <BuySellButton
+                                mode={mode}
+                                chainId={chainId}
+                                onPressTrade={onPressTrade}
+                            />
+                        )}
                     </Stack>
 
                     {/* {DISPLAY_QUOTE && (
@@ -322,4 +343,39 @@ export const TradeComponent = (props: Props) => {
             </TabPanel>
         )
     }
+}
+
+const BuySellButton = (props: {
+    onPressTrade: (getSigner: (() => Promise<TSigner | undefined>) | undefined) => Promise<void>
+    mode: 'buy' | 'sell'
+    chainId: string
+}) => {
+    const tradingContext = useTradingContext()
+    const { onPressTrade, mode, chainId } = props
+    const isSolana = chainId === 'solana-mainnet'
+    const isTransacting = isSolana
+        ? tradingContext.pendingSolanaTransaction !== undefined
+        : tradingContext.pendingEvmTransaction !== undefined
+
+    return (
+        <WalletReady>
+            {({ getSigner }) => (
+                <FancyButton
+                    compact="x4"
+                    gap="xxs"
+                    paddingLeft="sm"
+                    paddingRight="md"
+                    background={mode === 'buy' ? 'positive' : 'negative'}
+                    borderRadius="full"
+                    icon="lightning"
+                    iconSize="square_sm"
+                    disabled={isTransacting}
+                    spinner={isTransacting}
+                    onClick={() => onPressTrade(getSigner)}
+                >
+                    {mode === 'buy' ? 'Buy' : 'Sell'}
+                </FancyButton>
+            )}
+        </WalletReady>
+    )
 }
