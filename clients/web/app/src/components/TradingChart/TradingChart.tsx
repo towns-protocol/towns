@@ -10,7 +10,7 @@ import {
 } from 'lightweight-charts'
 import { zip } from 'lodash'
 import { useInView } from 'react-intersection-observer'
-import { useUserLookupContext } from 'use-towns-client'
+import { useMyUserId, useUserLookupContext } from 'use-towns-client'
 import { themes } from 'ui/styles/themes'
 import { Box, Button, Dropdown, Icon, IconButton, Pill, SizeBox, Stack, Text } from '@ui'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
@@ -26,6 +26,8 @@ import { TokenPrice } from '@components/Web3/Trading/ui/TokenPrice'
 import { useOpenMessageThread } from 'hooks/useOpenThread'
 import { TickerThreadContext } from '@components/MessageThread/TickerThreadContext'
 import { MessageTimelineContext } from '@components/MessageTimeline/MessageTimelineContext'
+import { useTokenBalance } from '@components/Web3/Trading/useTokenBalance'
+import { formatUnitsToFixedLength } from 'hooks/useBalance'
 import { useTradingContext } from '@components/Web3/Trading/TradingContextProvider'
 import { Avatar } from '@components/Avatar/Avatar'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
@@ -135,7 +137,7 @@ export const TradingChartAttachment = (props: {
 }
 export const TradingChart = (props: { address: string; chainId: string; disabled?: boolean }) => {
     const { address, chainId, disabled } = props
-
+    const balance = useTokenBalance(chainId, address)
     const [timeframe, setTimeframe] = useState<TimeFrame>('1d')
     const [chartType, setChartType] = useState<'area' | 'candlestick'>('area')
 
@@ -291,6 +293,18 @@ export const TradingChart = (props: { address: string; chainId: string; disabled
                         </Stack>
                         {(!isTradingThreadContext || isExpanded) && (
                             <Stack grow horizontal gap="sm" color="gray2" flexWrap="wrap">
+                                {balance > 0n && coinData && (
+                                    <Pill background="level3" color="inherit" whiteSpace="nowrap">
+                                        <Stack horizontal gap="xs" alignItems="center">
+                                            <Icon type="wallet" size="square_xs" />
+                                            {formatUnitsToFixedLength(
+                                                balance,
+                                                coinData.token.decimals,
+                                                2,
+                                            )}
+                                        </Stack>
+                                    </Pill>
+                                )}
                                 {/* 
                             `codexResponse.marketCap` is actually not the market cap, but the FDV.
                             This is a bit confusing, but it's how the API is.
@@ -541,27 +555,35 @@ const TickerChangeIndicator = ({ change }: { change: number }) => (
 
 const TradingUserIds = ({ userIds }: { userIds: string[] }) => {
     const { lookupUser } = useUserLookupContext()
+    const myUserId = useMyUserId()
+
     const summaryText = useMemo(() => {
         if (userIds.length === 0) {
             return ''
         }
+        const getPrettyDisplayNameOrYou = (userId: string) => {
+            if (userId === myUserId) {
+                return 'you'
+            }
+            return getPrettyDisplayName(lookupUser(userId))
+        }
         if (userIds.length === 1) {
-            const user = lookupUser(userIds[0])
-            return getPrettyDisplayName(user) + ' traded'
+            return getPrettyDisplayNameOrYou(userIds[0]) + ' traded'
         }
         if (userIds.length === 2) {
-            const user1 = lookupUser(userIds[0])
-            const user2 = lookupUser(userIds[1])
-            return getPrettyDisplayName(user1) + ' and ' + getPrettyDisplayName(user2) + ' traded'
+            return (
+                getPrettyDisplayNameOrYou(userIds[0]) +
+                ' and ' +
+                getPrettyDisplayNameOrYou(userIds[1]) +
+                ' traded'
+            )
         }
-
-        const user1 = lookupUser(userIds[0])
-        const user2 = lookupUser(userIds[1])
-        const prefix = getPrettyDisplayName(user1) + ', ' + getPrettyDisplayName(user2)
+        const prefix =
+            getPrettyDisplayNameOrYou(userIds[0]) + ', ' + getPrettyDisplayNameOrYou(userIds[1])
         return userIds.length == 3
             ? prefix + ' and one other traded'
             : prefix + ' and ' + (userIds.length - 2) + ' others traded'
-    }, [lookupUser, userIds])
+    }, [lookupUser, userIds, myUserId])
 
     return (
         <Stack horizontal gap="xs" alignItems="center" paddingLeft="sm">
