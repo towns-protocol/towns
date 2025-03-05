@@ -287,36 +287,82 @@ func (s *remoteSyncer) modifySync() error {
 		defer span.End()
 	}
 
-	resp, err := s.client.ModifySync(ctx, connect.NewRequest(&ModifySyncRequest{
-		SyncId:        s.syncID,
-		AddStreams:    toAdd,
-		RemoveStreams: toRemove,
-	}))
-	if err != nil {
-		return err
-	}
-
-	// Remove failed adds
-	for _, failed := range resp.Msg.GetAdds() {
-		id1, _ := StreamIdFromBytes(failed.GetStreamId())
+	if false {
+		fmt.Println("toAdd", len(toAdd))
+		fmt.Println("toRemove", len(toRemove))
 		for _, cookie := range toAdd {
-			id2, _ := StreamIdFromBytes(cookie.GetStreamId())
-			if id1.Compare(id2) != 0 {
-				s.streams.Store(id2, struct{}{})
+			_, err := s.client.AddStreamToSync(ctx, connect.NewRequest(&AddStreamToSyncRequest{
+				SyncId:  s.syncID,
+				SyncPos: cookie,
+			}))
+			if err != nil {
+				logging.FromCtx(s.syncStreamCtx).Errorw("Failed to add stream", "stream", cookie.GetStreamId())
 			} else {
-				logging.FromCtx(s.syncStreamCtx).Errorw("Failed to add stream", "stream", id1)
+				streamID, _ := StreamIdFromBytes(cookie.GetStreamId())
+				s.streams.Store(streamID, struct{}{})
 			}
 		}
-	}
 
-	// Remove failed removals
-	for _, failed := range resp.Msg.GetRemovals() {
-		id1, _ := StreamIdFromBytes(failed.GetStreamId())
-		for _, id2 := range toRemove {
-			if id1.Compare(StreamId(id2)) != 0 {
-				s.streams.Delete(StreamId(id2))
+		for _, streamID := range toRemove {
+			_, err := s.client.RemoveStreamFromSync(ctx, connect.NewRequest(&RemoveStreamFromSyncRequest{
+				SyncId:   s.syncID,
+				StreamId: streamID,
+			}))
+			if err != nil {
+				logging.FromCtx(s.syncStreamCtx).Errorw("Failed to remove stream", "stream", streamID)
 			} else {
-				logging.FromCtx(s.syncStreamCtx).Errorw("Failed to remove stream", "stream", id1)
+				s.streams.Delete(StreamId(streamID))
+			}
+		}
+	} else {
+		fmt.Println("toAdd", len(toAdd))
+		fmt.Println("toRemove", len(toRemove))
+		resp, err := s.client.ModifySync(ctx, connect.NewRequest(&ModifySyncRequest{
+			SyncId:        s.syncID,
+			AddStreams:    toAdd,
+			RemoveStreams: toRemove,
+		}))
+		if err != nil {
+			return err
+		}
+
+		// Remove failed adds
+		for _, cookie := range toAdd {
+			streamId, _ := StreamIdFromBytes(cookie.GetStreamId())
+
+			var isFailed bool
+			for _, failed := range resp.Msg.GetAdds() {
+				failedStreamId, _ := StreamIdFromBytes(failed.GetStreamId())
+				if failedStreamId.Compare(streamId) == 0 {
+					isFailed = true
+					break
+				}
+			}
+
+			if isFailed {
+				logging.FromCtx(s.syncStreamCtx).Errorw("Failed to add stream", "stream", streamId)
+			} else {
+				s.streams.Store(streamId, struct{}{})
+			}
+		}
+
+		// Remove failed removals
+		for _, streamId := range toRemove {
+			streamId := StreamId(streamId)
+
+			var isFailed bool
+			for _, failed := range resp.Msg.GetRemovals() {
+				failedStreamId, _ := StreamIdFromBytes(failed.GetStreamId())
+				if failedStreamId.Compare(streamId) == 0 {
+					isFailed = true
+					break
+				}
+			}
+
+			if isFailed {
+				logging.FromCtx(s.syncStreamCtx).Errorw("Failed to remove stream", "stream", streamId)
+			} else {
+				s.streams.Delete(streamId)
 			}
 		}
 	}
@@ -339,7 +385,10 @@ func (s *remoteSyncer) Address() common.Address {
 }
 
 func (s *remoteSyncer) AddStream(ctx context.Context, cookie *SyncCookie) error {
-	streamID, _ := StreamIdFromBytes(cookie.GetStreamId())
+	streamID, err := StreamIdFromBytes(cookie.GetStreamId())
+	if err != nil {
+		return err
+	}
 
 	if s.otelTracer != nil {
 		_, span := s.otelTracer.Start(ctx, "remoteSyncer::AddStream",
