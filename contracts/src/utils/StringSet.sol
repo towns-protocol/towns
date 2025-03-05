@@ -101,9 +101,13 @@ library StringSet {
    * Returns true if the value was added to the set, that is if it was not
    * already present.
    */
-  function add(Set storage set, string memory value) internal returns (bool) {
+  function add(
+    Set storage set,
+    string memory value
+  ) internal returns (bool added) {
     Uint256Ref storage indexRef = _indexRef(set, value);
-    if (indexRef.value == 0) {
+    added = indexRef.value == 0;
+    if (added) {
       Uint256Ref storage lengthRef = _valuesLengthRef(set);
       uint256 len = lengthRef.value;
       uint256 newLen;
@@ -117,9 +121,6 @@ library StringSet {
       // and use 0 as a sentinel value
       // equivalent: set._indexes[value] = set._values.length;
       indexRef.value = newLen;
-      return true;
-    } else {
-      return false;
     }
   }
 
@@ -132,12 +133,12 @@ library StringSet {
   function remove(
     Set storage set,
     string memory value
-  ) internal returns (bool) {
+  ) internal returns (bool removed) {
     // We read and store the value's index to prevent multiple reads from the same storage slot
     Uint256Ref storage indexRef = _indexRef(set, value);
     uint256 valueIndex = indexRef.value;
-
-    if (valueIndex != 0) {
+    removed = valueIndex != 0;
+    if (removed) {
       // Equivalent to contains(set, value)
       // To delete an element from the _values array in O(1), we swap the element to delete with the last one in
       // the array, and then remove the last element (sometimes called as 'swap and pop').
@@ -153,7 +154,6 @@ library StringSet {
       string storage lastRef = _at(set, lastIndex);
       if (len != valueIndex) {
         string memory lastValue = lastRef;
-
         unchecked {
           // Move the last value to the index where the value to delete is
           set._values[valueIndex - 1] = lastValue;
@@ -169,10 +169,6 @@ library StringSet {
 
       // Delete the index for the deleted slot
       indexRef.value = 0;
-
-      return true;
-    } else {
-      return false;
     }
   }
 
