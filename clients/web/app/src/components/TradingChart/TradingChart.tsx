@@ -92,8 +92,8 @@ export const TradingChartAttachment = (props: {
         <Stack
             gap="paragraph"
             rounded="md"
-            width="500"
             style={{
+                width: 550,
                 maxWidth: containerWidth - 80,
             }}
             background="level2"

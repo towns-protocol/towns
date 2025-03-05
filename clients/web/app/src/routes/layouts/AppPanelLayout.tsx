@@ -14,6 +14,7 @@ import { SomethingWentWrong } from '@components/Errors/SomethingWentWrong'
 import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
 import { PATHS } from 'routes'
 import { AppStoreBanner } from '@components/AppStoreBanner/AppStoreBanner'
+import { useMobile } from 'hooks/useMobile'
 import { usePanels } from './hooks/usePanels'
 
 const config = ['spaces', 'primary-menu', 'secondary-menu', 'content']
@@ -83,6 +84,8 @@ export const AppPanelLayout = () => {
 }
 
 const CentralPanelLayout = () => {
+    const isMobile = useMobile()
+
     const { sizes, onSizesChange } = usePersistPanes(['channel', 'right'])
 
     const panel = usePanels()
@@ -94,13 +97,13 @@ const CentralPanelLayout = () => {
 
     return (
         <Allotment onChange={onSizesChange}>
-            <Allotment.Pane minSize={550}>
+            <Allotment.Pane minSize={500}>
                 <ErrorBoundary FallbackComponent={ErrorFallbackComponent}>
                     <Card absoluteFillSafeSafari>{ready && <Outlet />}</Card>
                 </ErrorBoundary>
             </Allotment.Pane>
             {panel && (
-                <Allotment.Pane minSize={300} preferredSize={sizes[1] || 450}>
+                <Allotment.Pane minSize={isMobile ? 300 : 400} preferredSize={sizes[1] || 450}>
                     <ErrorBoundary FallbackComponent={ErrorFallbackComponent}>
                         {/* named outled would have been ideal here */}
                         {panel}
