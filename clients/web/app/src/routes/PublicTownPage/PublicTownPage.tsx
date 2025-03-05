@@ -9,7 +9,6 @@ import { AppProgressState } from '@components/AppProgressOverlay/AppProgressStat
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { LogoSingleLetter } from '@components/Logo/Logo'
 import { BlurredBackground } from '@components/TouchLayoutHeader/BlurredBackground'
-import { TownPageActivity } from '@components/TownPageLayout/TownPageActivity'
 import { TownPageLayout } from '@components/TownPageLayout/TownPageLayout'
 import { FadeInBox } from '@components/Transitions'
 import { ImageVariants, useImageSource } from '@components/UploadImage/useImageSource'
@@ -79,7 +78,6 @@ const PublicTownPage = (props: { isPreview?: boolean; onClosePreview?: () => voi
                         />
                     )}
                     spaceInfo={spaceInfo}
-                    activityContent={<TownPageActivity townId={spaceInfo.networkId} />}
                     isPreview={isPreview}
                     spaceId={spaceInfo.networkId}
                 />

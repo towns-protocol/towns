@@ -136,7 +136,7 @@ export const useFetchUnauthenticatedActivity = (townId: string) => {
             const provider = makeProviderFromConfig(riverChain)
 
             try {
-                console.log('[TownPageActivity] fetch hook enter')
+                console.log('[TownPageMembers] fetch hook enter')
                 const streamId = townId
                 const rpcClient = await withAbort(
                     () => makeRiverRpcClient(provider, riverChainConfig),
@@ -206,11 +206,11 @@ export const useFetchUnauthenticatedActivity = (townId: string) => {
                     }
                 }
                 console.log(
-                    `[TownPageActivity] fetch hook fetchChannelStats (${channelsIds?.length} channels)`,
+                    `[TownPageMembers] fetch hook fetchChannelStats (${channelsIds?.length} channels)`,
                 )
                 await Promise.all(channelsIds.map((channelId) => fetchChannelStats(channelId)))
 
-                console.log('[TownPageActivity] fetch hook fetchChannelStats done')
+                console.log('[TownPageMembers] fetch hook fetchChannelStats done')
 
                 setTownStats(townId, {
                     latestCreatedChannels: getLatestCreatedChannels(channelCreatedEvents),
@@ -225,7 +225,7 @@ export const useFetchUnauthenticatedActivity = (townId: string) => {
         fetch()
 
         return () => {
-            console.log('TownPageActivity fetch hook exit')
+            console.log('TownPageMembers fetch hook exit')
             abortController.abort()
         }
     }, [
@@ -249,7 +249,7 @@ export const useFetchUnauthenticatedActivity = (townId: string) => {
 }
 
 async function getChannelStats(client: UnauthenticatedClient, channelId: string) {
-    console.log('TownPageActivity fetch channel', channelId)
+    console.log('TownPageMembers fetch channel', channelId)
     const streamView = await client.getStream(channelId)
     const channelMessages = streamView.timeline.filter(
         (x) =>

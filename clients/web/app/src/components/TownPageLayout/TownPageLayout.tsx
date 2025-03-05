@@ -21,10 +21,10 @@ import useCopyToClipboard from 'hooks/useCopyToClipboard'
 import { useSpacePageChannels } from './hooks/useSpacePageChannels'
 import { TownReviewsSection } from './TownReviewsSection'
 import { TownInfoSection } from './TownInfoSection'
+import { TownPageMembers } from './TownPageMembers'
 
 type TownPageLayoutProps = {
     headerContent?: React.ReactNode
-    activityContent?: React.ReactNode
     bottomContent?: ({
         leftColWidth,
         rightColWidth,
@@ -139,6 +139,7 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
                         <TownInfoSection spaceId={spaceId} />
                         <Bio bio={bio} />
                         <ChannelList spaceId={spaceId} />
+                        <TownPageMembers townId={spaceInfo.networkId} />
                         <TownReviewsSection spaceId={spaceId} />
                         <Box height="x12" shrink={false} />
                     </Stack>
@@ -257,7 +258,9 @@ const Header = (props: {
         const url = getInviteUrl({ spaceId })
         try {
             await navigator.share({ title: name, url: url })
-        } catch (_) {} // eslint-disable-line no-empty
+        } catch (e) {
+            console.error(e)
+        }
     })
 
     const onAddressClick = useEvent(() => {
@@ -386,10 +389,12 @@ const ChannelList = ({ spaceId }: { spaceId: string }) => {
                 {remainingCount > 0 && (
                     <Box
                         key={`remaining-${remainingCount}`}
-                        background="level3"
                         paddingX="sm"
                         paddingY="sm"
                         borderRadius="sm"
+                        style={{
+                            border: '1px solid rgba(255, 255, 255, 0.10)',
+                        }}
                     >
                         <Text color="gray1">+{remainingCount} more</Text>
                     </Box>
@@ -414,7 +419,11 @@ const Bio = (props: { bio?: string }) => {
 
     const canExpand = bio && bio.length > BIO_MAX_LENGTH && !isExpanded
 
-    return bio ? (
+    if (bio.length === 0) {
+        return null
+    }
+
+    return (
         <Stack gap="md">
             <Text strong size="md">
                 About
@@ -434,7 +443,5 @@ const Bio = (props: { bio?: string }) => {
                 </Paragraph>
             </Box>
         </Stack>
-    ) : (
-        <></>
     )
 }
