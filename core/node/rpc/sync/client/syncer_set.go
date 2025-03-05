@@ -138,16 +138,8 @@ func NewSyncers(
 			}
 			syncers[nodeAddress] = syncer
 		} else {
-			client, err := nodeRegistry.GetStreamServiceClientForAddress(nodeAddress)
-			if err != nil {
-				log.Warnw("Unable to find client for remote stream sync",
-					"err", err, "remoteNode", nodeAddress)
-				go unavailableRemote(cookieSet)
-				continue
-			}
-
 			syncer, err := newRemoteSyncer(
-				ctx, globalSyncOpCtxCancel, syncID, nodeAddress, client, cookieSet.AsSlice(),
+				ctx, globalSyncOpCtxCancel, syncID, nodeAddress, nodeRegistry, cookieSet.AsSlice(),
 				ss.rmStream, messages, ss.otelTracer)
 			if err != nil {
 				log.Warnw("Unable to connect to remote stream when starting stream sync",
@@ -235,10 +227,6 @@ func (ss *SyncerSet) AddStream(
 			span.End()
 		}
 	} else {
-		client, err := ss.nodeRegistry.GetStreamServiceClientForAddress(nodeAddress)
-		if err != nil {
-			return err
-		}
 		var span trace.Span
 		if ss.otelTracer != nil {
 			_, span = ss.otelTracer.Start(ctx, "NewRemoteSyncer",
@@ -246,7 +234,7 @@ func (ss *SyncerSet) AddStream(
 					attribute.String("remote", nodeAddress.String())))
 		}
 		if syncer, err = newRemoteSyncer(
-			ss.ctx, ss.globalSyncOpCtxCancel, ss.syncID, nodeAddress, client,
+			ss.ctx, ss.globalSyncOpCtxCancel, ss.syncID, nodeAddress, ss.nodeRegistry,
 			[]*SyncCookie{cookie}, ss.rmStream, ss.messages, ss.otelTracer); err != nil {
 			if span != nil {
 				span.End()
