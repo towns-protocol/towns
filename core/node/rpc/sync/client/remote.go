@@ -254,7 +254,7 @@ func (s *remoteSyncer) startStreamModifier() {
 	for {
 		select {
 		case <-modifySyncTicker.C:
-			if err := s.modifySync(s.syncStreamCtx); err != nil {
+			if err := s.modifySync(); err != nil {
 				log.Errorw("modify sync failed", "remote", s.remoteAddr, "err", err)
 				s.cancelGlobalSyncOp(err)
 				return
@@ -267,23 +267,24 @@ func (s *remoteSyncer) startStreamModifier() {
 }
 
 // modifySync sends a modify sync request to the remote.
-func (s *remoteSyncer) modifySync(ctx context.Context) error {
+func (s *remoteSyncer) modifySync() error {
 	s.pendingModifySyncLock.Lock()
 	toAdd := s.pendingModifySync.GetAddStreams()[:]
 	toRemove := s.pendingModifySync.GetRemoveStreams()[:]
 	s.pendingModifySync = &ModifySyncRequest{}
 	s.pendingModifySyncLock.Unlock()
 
+	if len(toAdd) == 0 && len(toRemove) == 0 {
+		return nil
+	}
+
+	ctx := s.syncStreamCtx
 	if s.otelTracer != nil {
 		var span trace.Span
 		ctx, span = s.otelTracer.Start(ctx, "remoteSyncer::modifySync",
 			trace.WithAttributes(attribute.Int("toAdd", len(toAdd))),
 			trace.WithAttributes(attribute.Int("toRemove", len(toRemove))))
 		defer span.End()
-	}
-
-	if len(toAdd) == 0 && len(toRemove) == 0 {
-		return nil
 	}
 
 	resp, err := s.client.ModifySync(ctx, connect.NewRequest(&ModifySyncRequest{
@@ -295,13 +296,29 @@ func (s *remoteSyncer) modifySync(ctx context.Context) error {
 		return err
 	}
 
-	for _, cookie := range resp.Msg.GetAdds() {
-		streamID, _ := StreamIdFromBytes(cookie.GetStreamId())
-		s.streams.Store(streamID, struct{}{})
+	// Remove failed adds
+	for _, failed := range resp.Msg.GetAdds() {
+		id1, _ := StreamIdFromBytes(failed.GetStreamId())
+		for _, cookie := range toAdd {
+			id2, _ := StreamIdFromBytes(cookie.GetStreamId())
+			if id1.Compare(id2) != 0 {
+				s.streams.Store(id2, struct{}{})
+			} else {
+				logging.FromCtx(s.syncStreamCtx).Errorw("Failed to add stream", "stream", id1)
+			}
+		}
 	}
 
-	for _, streamID := range resp.Msg.GetRemovals() {
-		s.streams.Delete(streamID)
+	// Remove failed removals
+	for _, failed := range resp.Msg.GetRemovals() {
+		id1, _ := StreamIdFromBytes(failed.GetStreamId())
+		for _, id2 := range toRemove {
+			if id1.Compare(StreamId(id2)) != 0 {
+				s.streams.Delete(StreamId(id2))
+			} else {
+				logging.FromCtx(s.syncStreamCtx).Errorw("Failed to remove stream", "stream", id1)
+			}
+		}
 	}
 
 	noMoreStreams := true
