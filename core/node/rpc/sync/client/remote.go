@@ -20,18 +20,19 @@ import (
 )
 
 type remoteSyncer struct {
-	cancelGlobalSyncOp context.CancelCauseFunc
-	syncStreamCtx      context.Context
-	syncStreamCancel   context.CancelFunc
-	syncID             string
-	forwarderSyncID    string
-	remoteAddr         common.Address
-	client             protocolconnect.StreamServiceClient
-	cookies            []*SyncCookie
-	messages           chan<- *SyncStreamsResponse
-	streams            sync.Map
-	responseStream     *connect.ServerStreamForClient[SyncStreamsResponse]
-	unsubStream        func(streamID StreamId)
+	cancelGlobalSyncOp    context.CancelCauseFunc
+	syncStreamCtx         context.Context
+	syncStreamCancel      context.CancelFunc
+	syncID                string
+	forwarderSyncID       string
+	remoteAddr            common.Address
+	client                protocolconnect.StreamServiceClient
+	messages              chan<- *SyncStreamsResponse
+	streams               sync.Map
+	responseStream        *connect.ServerStreamForClient[SyncStreamsResponse]
+	unsubStream           func(streamID StreamId)
+	pendingModifySync     ModifySyncRequest
+	pendingModifySyncLock sync.Mutex
 	// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
 	otelTracer trace.Tracer
 }
@@ -93,7 +94,6 @@ func newRemoteSyncer(
 		syncStreamCtx:      syncStreamCtx,
 		syncStreamCancel:   syncStreamCancel,
 		client:             client,
-		cookies:            cookies,
 		messages:           messages,
 		responseStream:     responseStream,
 		remoteAddr:         remoteAddr,
@@ -103,7 +103,7 @@ func newRemoteSyncer(
 
 	s.syncID = responseStream.Msg().GetSyncId()
 
-	for _, cookie := range s.cookies {
+	for _, cookie := range cookies {
 		streamID, _ := StreamIdFromBytes(cookie.GetStreamId())
 		s.streams.Store(streamID, struct{}{})
 	}
@@ -240,6 +240,66 @@ func (s *remoteSyncer) connectionAlive(latestMsgReceived *atomic.Value) {
 	}
 }
 
+// startStreamModifier starts a goroutine that periodically sends modify sync requests to the remote.
+func (s *remoteSyncer) startStreamModifier() {
+	var (
+		log = logging.FromCtx(s.syncStreamCtx)
+		// check every modifySyncTicker if it's time to send a modify sync req to remote
+		modifySyncTicker = time.NewTicker(5 * time.Second)
+	)
+	defer modifySyncTicker.Stop()
+
+	for {
+		select {
+		case <-modifySyncTicker.C:
+			if err := s.modifySync(s.syncStreamCtx); err != nil {
+				log.Errorw("modify sync failed", "remote", s.remoteAddr, "err", err)
+				s.cancelGlobalSyncOp(err)
+				return
+			}
+
+		case <-s.syncStreamCtx.Done():
+			return
+		}
+	}
+}
+
+// modifySync sends a modify sync request to the remote.
+func (s *remoteSyncer) modifySync(ctx context.Context) error {
+	s.pendingModifySyncLock.Lock()
+	modifySync := &s.pendingModifySync
+	s.pendingModifySync = ModifySyncRequest{}
+	s.pendingModifySyncLock.Unlock()
+
+	if s.otelTracer != nil {
+		var span trace.Span
+		ctx, span = s.otelTracer.Start(ctx, "remoteSyncer::modifySync",
+			trace.WithAttributes(attribute.Int("toAdd", len(modifySync.GetAddStreams()))),
+			trace.WithAttributes(attribute.Int("toRemove", len(modifySync.GetRemoveStreams()))))
+		defer span.End()
+	}
+
+	if len(modifySync.GetAddStreams()) == 0 && len(modifySync.GetRemoveStreams()) == 0 {
+		return nil
+	}
+
+	modifySync.SyncId = s.syncID
+	if _, err := s.client.ModifySync(ctx, connect.NewRequest(modifySync)); err != nil {
+		return err
+	}
+
+	for _, cookie := range modifySync.AddStreams {
+		streamID, _ := StreamIdFromBytes(cookie.GetStreamId())
+		s.streams.Store(streamID, struct{}{})
+	}
+
+	for _, streamID := range modifySync.RemoveStreams {
+		s.streams.Delete(streamID)
+	}
+
+	return nil
+}
+
 func (s *remoteSyncer) Address() common.Address {
 	return s.remoteAddr
 }
@@ -253,21 +313,11 @@ func (s *remoteSyncer) AddStream(ctx context.Context, cookie *SyncCookie) error 
 		defer span.End()
 	}
 
-	streamID, err := StreamIdFromBytes(cookie.GetStreamId())
-	if err != nil {
-		return err
-	}
+	s.pendingModifySyncLock.Lock()
+	s.pendingModifySync.AddStreams = append(s.pendingModifySync.AddStreams, cookie)
+	s.pendingModifySyncLock.Unlock()
 
-	_, err = s.client.AddStreamToSync(ctx, connect.NewRequest(&AddStreamToSyncRequest{
-		SyncId:  s.syncID,
-		SyncPos: cookie,
-	}))
-
-	if err == nil {
-		s.streams.Store(streamID, struct{}{})
-	}
-
-	return err
+	return nil
 }
 
 func (s *remoteSyncer) RemoveStream(ctx context.Context, streamID StreamId) (bool, error) {
@@ -278,16 +328,26 @@ func (s *remoteSyncer) RemoveStream(ctx context.Context, streamID StreamId) (boo
 		defer span.End()
 	}
 
-	_, err := s.client.RemoveStreamFromSync(ctx, connect.NewRequest(&RemoveStreamFromSyncRequest{
-		SyncId:   s.syncID,
-		StreamId: streamID[:],
-	}))
+	s.pendingModifySyncLock.Lock()
+	defer s.pendingModifySyncLock.Unlock()
 
-	if err == nil {
-		s.streams.Delete(streamID)
+	// If the given stream exists in the pending list to add, remove it from there
+	var removed bool
+	for i, cookie := range s.pendingModifySync.AddStreams {
+		addStreamID, _ := StreamIdFromBytes(cookie.GetStreamId())
+		if streamID.Compare(addStreamID) == 0 {
+			s.pendingModifySync.AddStreams = append(s.pendingModifySync.AddStreams[:i], s.pendingModifySync.AddStreams[i+1:]...)
+			removed = true
+			break
+		}
 	}
 
-	noMoreStreams := true
+	// If the stream was not in the pending list to add, add it to the list to remove
+	if !removed {
+		s.pendingModifySync.RemoveStreams = append(s.pendingModifySync.RemoveStreams, streamID[:])
+	}
+
+	noMoreStreams := len(s.pendingModifySync.AddStreams) == 0
 	s.streams.Range(func(key, value any) bool {
 		noMoreStreams = false
 		return false
@@ -297,7 +357,7 @@ func (s *remoteSyncer) RemoveStream(ctx context.Context, streamID StreamId) (boo
 		s.syncStreamCancel()
 	}
 
-	return noMoreStreams, err
+	return noMoreStreams, nil
 }
 
 func (s *remoteSyncer) DebugDropStream(ctx context.Context, streamID StreamId) (bool, error) {
