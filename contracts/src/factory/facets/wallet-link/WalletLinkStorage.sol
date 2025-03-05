@@ -19,13 +19,9 @@ library WalletLinkStorage {
     mapping(address => EnumerableSet.AddressSet) walletsByRootKey;
     // mapping Ethereum Wallets to RootKey is a 1 to 1 relationship, a wallet can only be linked to 1 root key
     mapping(address => address) rootKeyByWallet;
-    // mapping rootkey to default wallet
-    mapping(address => address) defaultWalletByRootKey;
     // mapping of wallet link external dependencies
     mapping(bytes32 => address) dependencies;
-    //mapping RootKey to NonEVMWallets is a 1 to many relationship, a root key can have many nonEVMWallets
     mapping(address => WalletLib.RootWallet) rootWalletByRootKey;
-    // mapping NonEVMWallets to RootKey is a 1 to 1 relationship, a nonEVMWallet can only be linked to 1 root key
     mapping(bytes32 => address) rootKeyByHash;
   }
 

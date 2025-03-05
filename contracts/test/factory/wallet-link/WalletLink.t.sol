@@ -7,7 +7,7 @@ import {WalletLink} from "contracts/src/factory/facets/wallet-link/WalletLink.so
 
 // libraries
 import {Vm} from "forge-std/Test.sol";
-
+import {LibString} from "solady/utils/LibString.sol";
 // contracts
 import {DeployBase} from "contracts/scripts/common/DeployBase.s.sol";
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
@@ -736,9 +736,16 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
     vm.prank(coldWallet);
     mockDelegationRegistry.delegateAll(wallet.addr);
 
-    address[] memory wallets = walletLink.getWalletsByRootKeyWithDelegations(
-      rootWallet.addr
-    );
+    WalletMetadata[] memory walletMetadata = walletLink
+      .explicitWalletsByRootKey(
+        rootWallet.addr,
+        WalletQueryOptions({includeDelegations: true})
+      );
+
+    address[] memory wallets = new address[](walletMetadata.length);
+    for (uint256 i; i < walletMetadata.length; ++i) {
+      wallets[i] = vm.parseAddress(walletMetadata[i].wallet.addr);
+    }
 
     assertContains(wallets, coldWallet);
     assertContains(wallets, wallet.addr);
@@ -768,16 +775,25 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
     walletLink.setDefaultWallet(address(simpleAccount));
     vm.stopPrank();
 
-    WalletWithMetadata[] memory wallets = walletLink
-      .getWalletsByRootKeyWithMetadata(rootWallet.addr);
+    WalletMetadata[] memory wallets = walletLink.explicitWalletsByRootKey(
+      rootWallet.addr,
+      WalletQueryOptions({includeDelegations: false})
+    );
     uint256 walletLen = wallets.length;
 
     for (uint256 i; i < walletLen; ++i) {
-      WalletWithMetadata memory w = wallets[i];
-      if (w.wallet == address(simpleAccount)) {
+      WalletMetadata memory w = wallets[i];
+      if (
+        LibString.eq(
+          w.wallet.addr,
+          LibString.toHexString(address(simpleAccount))
+        )
+      ) {
         assertEq(w.isDefaultWallet, true);
         assertEq(w.isSmartAccount, true);
-      } else if (w.wallet == wallet.addr) {
+      } else if (
+        LibString.eq(w.wallet.addr, LibString.toHexString(wallet.addr))
+      ) {
         assertEq(w.isDefaultWallet, false);
         assertEq(w.isSmartAccount, false);
       }

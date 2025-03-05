@@ -45,6 +45,13 @@ contract WalletLink is IWalletLink, WalletLinkBase, OwnableBase, Facet {
     _linkNonEVMWalletToRootWalletViaCaller(wallet, nonce);
   }
 
+  function removeNonEVMWalletLink(
+    WalletLib.Wallet memory wallet,
+    uint256 nonce
+  ) external {
+    _removeNonEVMWalletLink(wallet, nonce);
+  }
+
   /// @inheritdoc IWalletLink
   function removeLink(
     address wallet,
@@ -95,7 +102,7 @@ contract WalletLink is IWalletLink, WalletLinkBase, OwnableBase, Facet {
   function explicitWalletsByRootKey(
     address rootKey,
     WalletQueryOptions calldata options
-  ) external view returns (WalletLib.Wallet[] memory wallets) {
+  ) external view returns (WalletMetadata[] memory wallets) {
     return _explicitWalletsByRootKey(rootKey, options);
   }
 

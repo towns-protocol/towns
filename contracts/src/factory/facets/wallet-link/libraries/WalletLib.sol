@@ -29,6 +29,7 @@ library WalletLib {
 
   struct RootWallet {
     EnumerableSet.Bytes32Set walletHashes;
+    address defaultWallet;
     mapping(bytes32 => Wallet) walletByHash;
   }
 
@@ -39,6 +40,11 @@ library WalletLib {
   ) internal {
     self.walletHashes.add(walletHash);
     self.walletByHash[walletHash] = wallet;
+  }
+
+  function removeWallet(RootWallet storage self, bytes32 walletHash) internal {
+    self.walletHashes.remove(walletHash);
+    delete self.walletByHash[walletHash];
   }
 
   function exists(
