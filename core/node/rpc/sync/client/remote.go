@@ -1,6 +1,7 @@
 package client
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -286,17 +287,28 @@ func (s *remoteSyncer) modifySync(ctx context.Context) error {
 	}
 
 	modifySync.SyncId = s.syncID
-	if _, err := s.client.ModifySync(ctx, connect.NewRequest(modifySync)); err != nil {
+	resp, err := s.client.ModifySync(ctx, connect.NewRequest(modifySync))
+	if err != nil {
 		return err
 	}
 
-	for _, cookie := range modifySync.AddStreams {
+	for _, cookie := range resp.Msg.GetAdds() {
 		streamID, _ := StreamIdFromBytes(cookie.GetStreamId())
 		s.streams.Store(streamID, struct{}{})
 	}
 
-	for _, streamID := range modifySync.RemoveStreams {
+	for _, streamID := range resp.Msg.GetRemovals() {
 		s.streams.Delete(streamID)
+	}
+
+	noMoreStreams := true
+	s.streams.Range(func(key, value any) bool {
+		noMoreStreams = false
+		return false
+	})
+
+	if noMoreStreams {
+		s.syncStreamCancel()
 	}
 
 	return nil
@@ -316,8 +328,25 @@ func (s *remoteSyncer) AddStream(ctx context.Context, cookie *SyncCookie) error 
 	}
 
 	s.pendingModifySyncLock.Lock()
-	s.pendingModifySync.AddStreams = append(s.pendingModifySync.AddStreams, cookie)
-	s.pendingModifySyncLock.Unlock()
+	defer s.pendingModifySyncLock.Unlock()
+
+	// If the given stream exists in the pending list to remove, remove it from there
+	var removed bool
+	for i := len(s.pendingModifySync.RemoveStreams) - 1; i >= 0; i-- {
+		if bytes.Equal(s.pendingModifySync.RemoveStreams[i], cookie.GetStreamId()) {
+			if i == len(s.pendingModifySync.RemoveStreams)-1 {
+				s.pendingModifySync.RemoveStreams = s.pendingModifySync.RemoveStreams[:i]
+			} else {
+				s.pendingModifySync.RemoveStreams = append(s.pendingModifySync.RemoveStreams[:i], s.pendingModifySync.RemoveStreams[i+1:]...)
+			}
+			removed = true
+			break
+		}
+	}
+
+	if !removed {
+		s.pendingModifySync.AddStreams = append(s.pendingModifySync.AddStreams, cookie)
+	}
 
 	return nil
 }
@@ -338,7 +367,11 @@ func (s *remoteSyncer) RemoveStream(ctx context.Context, streamID StreamId) (boo
 	for i := len(s.pendingModifySync.AddStreams) - 1; i >= 0; i-- {
 		addStreamID, _ := StreamIdFromBytes(s.pendingModifySync.AddStreams[i].GetStreamId())
 		if streamID.Compare(addStreamID) == 0 {
-			s.pendingModifySync.AddStreams = append(s.pendingModifySync.AddStreams[:i], s.pendingModifySync.AddStreams[i+1:]...)
+			if i == len(s.pendingModifySync.AddStreams)-1 {
+				s.pendingModifySync.AddStreams = s.pendingModifySync.AddStreams[:i] // Trim the last element safely
+			} else {
+				s.pendingModifySync.AddStreams = append(s.pendingModifySync.AddStreams[:i], s.pendingModifySync.AddStreams[i+1:]...)
+			}
 			removed = true
 			break
 		}
@@ -349,15 +382,27 @@ func (s *remoteSyncer) RemoveStream(ctx context.Context, streamID StreamId) (boo
 		s.pendingModifySync.RemoveStreams = append(s.pendingModifySync.RemoveStreams, streamID[:])
 	}
 
-	noMoreStreams := len(s.pendingModifySync.AddStreams) == 0
+	// Add current streams
+	var streamsCandidate sync.Map
 	s.streams.Range(func(key, value any) bool {
+		streamsCandidate.Store(key, value)
+		return true
+	})
+
+	// Update based on the pending state
+	for _, cookie := range s.pendingModifySync.AddStreams {
+		streamID, _ := StreamIdFromBytes(cookie.GetStreamId())
+		streamsCandidate.Store(streamID, struct{}{})
+	}
+	for _, streamID := range s.pendingModifySync.RemoveStreams {
+		streamsCandidate.Delete(StreamId(streamID))
+	}
+
+	noMoreStreams := true
+	streamsCandidate.Range(func(key, value any) bool {
 		noMoreStreams = false
 		return false
 	})
-
-	if noMoreStreams {
-		s.syncStreamCancel()
-	}
 
 	return noMoreStreams, nil
 }
