@@ -1,6 +1,5 @@
 {
     "name": "@river-build/contracts",
-    "version": "0.0.0",
     "private": true,
     "packageManager": "yarn@3.8.0",
     "scripts": {

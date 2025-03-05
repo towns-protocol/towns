@@ -32,8 +32,12 @@ COPY ./packages/proto /river/packages/proto
 COPY ./packages/web3 /river/packages/web3
 COPY ./packages/xchain-monitor /river/packages/xchain-monitor
 
+
+# This updates ^workspace references to the actual package version
+# which is necessary to pull the correct version from npm
+RUN node ./scripts/update-generated-dependents.js && rm -rf ./packages/generated
+
 # install dependencies and build
-RUN apk add --no-cache git curl
 RUN corepack enable
 RUN yarn install
 RUN SKIP_BUILD_CONTRACT_TYPES=true yarn run turbo build --filter @river-build/xchain-monitor
