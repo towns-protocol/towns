@@ -33,14 +33,14 @@ export function extractTransferAmountFromMeta(
         (balance) => balance.mint === mintAddress && balance.owner === ownerAddress,
     )
 
-    // If either balance is not found, return 0
-    if (!preTokenBalance || !postTokenBalance) {
+    // If both balances aren't found, return 0
+    if (!preTokenBalance && !postTokenBalance) {
         return 0n
     }
     // Calculate the difference between post and pre balances
     // A positive value indicates tokens received, negative indicates tokens sent
-    const preAmount = BigInt(preTokenBalance.uiTokenAmount?.amount || '0')
-    const postAmount = BigInt(postTokenBalance.uiTokenAmount?.amount || '0')
+    const preAmount = BigInt(preTokenBalance?.uiTokenAmount?.amount || '0')
+    const postAmount = BigInt(postTokenBalance?.uiTokenAmount?.amount || '0')
 
     // Calculate the absolute difference between pre and post balances
     return postAmount > preAmount ? postAmount - preAmount : preAmount - postAmount
