@@ -1942,7 +1942,7 @@ export class TownsClient
     public async waitForUserOperationWithCallDataTransaction(
         transactionContext: TransactionContext<void>,
     ): Promise<TransactionContext<void> | undefined> {
-        return this.baseTransactor.waitForBlockchainTransaction(transactionContext)
+        return this.baseTransactor.waitForBlockchainTransaction(transactionContext, undefined, 2)
     }
 
     public async reviewTransaction(

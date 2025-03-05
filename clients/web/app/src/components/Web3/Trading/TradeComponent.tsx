@@ -204,12 +204,23 @@ export const TradeComponent = (props: Props) => {
                     fromTokenAddress: fromTokenAddress,
                     value: quoteData.transactionRequest.value ?? '0',
                 },
+                walletAddress: address ?? '',
                 status: TransactionStatus.Pending,
                 threadInfo: threadInfo,
                 isBuy: mode === 'buy',
             } satisfies EvmTransactionRequest
         }
-    }, [amount, coinData, fromTokenAddress, isSolana, quoteData, tokenAddress, threadInfo, mode])
+    }, [
+        amount,
+        coinData,
+        fromTokenAddress,
+        isSolana,
+        quoteData,
+        tokenAddress,
+        threadInfo,
+        mode,
+        address,
+    ])
 
     const metaData = useMemo(() => {
         if (!quoteData) {

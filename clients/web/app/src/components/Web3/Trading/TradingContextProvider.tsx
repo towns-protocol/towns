@@ -11,6 +11,7 @@ import { useSolanaWallet } from './useSolanaWallet'
 import { tradingChains } from './tradingConstants'
 import { generateApproveAmountCallData } from './hooks/erc20-utils'
 import { createSendTokenTransferDataSolana } from './hooks/solana-utils'
+import { createSendTokenTransferDataEVM } from './hooks/evm-trading-utils'
 
 type TokenInfo = {
     name: string
@@ -40,6 +41,7 @@ export type EvmTransactionRequest = {
         fromTokenAddress: string
         value: string
     }
+    walletAddress: string
     token: TokenInfo
     approvalAddress: string
     status: TransactionStatus
@@ -281,6 +283,30 @@ export const TradingContextProvider = ({ children }: { children: React.ReactNode
                     queryClient.invalidateQueries({
                         predicate: (query) => query.queryKey[0] === 'walletContents',
                     })
+
+                    if (request.threadInfo && transactionContext.receipt) {
+                        try {
+                            const transferData = createSendTokenTransferDataEVM(
+                                transactionContext.receipt,
+                                request.walletAddress,
+                                request.token.address,
+                                request.threadInfo.channelId,
+                                request.threadInfo.messageId,
+                                request.isBuy,
+                            )
+                            if (transferData) {
+                                await townsClient.sendTokenTransfer(
+                                    8453,
+                                    transferData.receipt,
+                                    transferData.event,
+                                )
+                            } else {
+                                console.error('Failed to create transfer data')
+                            }
+                        } catch (error) {
+                            console.error('Error sending token transfer:', error)
+                        }
+                    }
                 } else {
                     showErrorToast('Transaction failed')
                     return
