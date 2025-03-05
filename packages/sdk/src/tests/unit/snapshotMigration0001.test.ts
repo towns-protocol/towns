@@ -1,9 +1,10 @@
-import { Snapshot } from '@river-build/proto'
+import { SnapshotSchema } from '@river-build/proto'
 import { snapshotMigration0001 } from '../../migrations/snapshotMigration0001'
 import { ethers } from 'ethers'
 import { makeUniqueSpaceStreamId } from '../testUtils'
 import { addressFromUserId, makeUniqueChannelStreamId, streamIdAsBytes } from '../../id'
 import { check } from '@river-build/dlog'
+import { create } from '@bufbuild/protobuf'
 
 // a no-op migration test for the initial snapshot, use as a template for new migrations
 describe('snapshotMigration0001', () => {
@@ -16,7 +17,7 @@ describe('snapshotMigration0001', () => {
         const channelId = streamIdAsBytes(channelIdStr)
 
         // members
-        const badMemberSnap = new Snapshot({
+        const badMemberSnap = create(SnapshotSchema, {
             members: {
                 joined: [{ userAddress: userAddress }, { userAddress: userAddress }],
             },
@@ -25,7 +26,7 @@ describe('snapshotMigration0001', () => {
         expect(result.members?.joined.length).toBe(1)
 
         // space channel payloads
-        const badSpaceSnap = new Snapshot({
+        const badSpaceSnap = create(SnapshotSchema, {
             content: {
                 case: 'spaceContent',
                 value: {
@@ -38,7 +39,7 @@ describe('snapshotMigration0001', () => {
         expect(result2.content?.value.channels.length).toBe(1)
 
         // user payload
-        const badUserPayload = new Snapshot({
+        const badUserPayload = create(SnapshotSchema, {
             content: {
                 case: 'userContent',
                 value: {
@@ -51,7 +52,7 @@ describe('snapshotMigration0001', () => {
         expect(result3.content?.value.memberships.length).toBe(1)
 
         // user settings
-        const badUserSettings = new Snapshot({
+        const badUserSettings = create(SnapshotSchema, {
             content: {
                 case: 'userSettingsContent',
                 value: {

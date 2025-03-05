@@ -1,8 +1,9 @@
-import { Snapshot } from '@river-build/proto'
+import { SnapshotSchema } from '@river-build/proto'
 import { snapshotMigration0002 } from '../../migrations/snapshotMigration0002'
 import { makeUniqueSpaceStreamId } from '../testUtils'
 import { makeDefaultChannelStreamId, makeUniqueChannelStreamId, streamIdAsBytes } from '../../id'
 import { check } from '@river-build/dlog'
+import { create } from '@bufbuild/protobuf'
 
 describe('snapshotMigration0002', () => {
     test('run migration', () => {
@@ -10,7 +11,7 @@ describe('snapshotMigration0002', () => {
         const defaultChannelId = makeDefaultChannelStreamId(spaceId)
         const channelId = makeUniqueChannelStreamId(spaceId)
 
-        const snap = new Snapshot({
+        const snap = create(SnapshotSchema, {
             content: {
                 case: 'spaceContent',
                 value: {

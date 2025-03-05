@@ -6,9 +6,10 @@ import { makeTestClient, makeUniqueSpaceStreamId } from '../testUtils'
 import { Client } from '../../client'
 
 import { genShortId, makeUniqueChannelStreamId } from '../../id'
-import { ChannelMessage } from '@river-build/proto'
+import { ChannelMessageSchema } from '@river-build/proto'
 import { GroupEncryptionAlgorithmId } from '@river-build/encryption'
 import { checkNever } from '@river-build/web3'
+import { create, toBinary } from '@bufbuild/protobuf'
 
 describe('outboundSessionTests', () => {
     let bobsDeviceId: string
@@ -40,7 +41,7 @@ describe('outboundSessionTests', () => {
             ).resolves.not.toThrow()
             await expect(bobsClient.waitForStream(channelId)).resolves.not.toThrow()
 
-            const message = new ChannelMessage({
+            const channelMessage = create(ChannelMessageSchema, {
                 payload: {
                     case: 'post',
                     value: {
@@ -51,6 +52,7 @@ describe('outboundSessionTests', () => {
                     },
                 },
             })
+            const buffer = toBinary(ChannelMessageSchema, channelMessage)
 
             const bobsOtherClient = await makeTestClient({
                 context: bobsClient.signerContext,
@@ -59,12 +61,8 @@ describe('outboundSessionTests', () => {
             await expect(bobsOtherClient.initializeUser()).resolves.not.toThrow()
             bobsOtherClient.startSync()
 
-            const encrypted1 = await bobsClient.encryptGroupEvent(message, channelId, algorithm)
-            const encrypted2 = await bobsOtherClient.encryptGroupEvent(
-                message,
-                channelId,
-                algorithm,
-            )
+            const encrypted1 = await bobsClient.encryptGroupEvent(buffer, channelId, algorithm)
+            const encrypted2 = await bobsOtherClient.encryptGroupEvent(buffer, channelId, algorithm)
 
             expect(encrypted1?.sessionId).toBeDefined()
             expect(encrypted1.sessionId).toEqual(encrypted2.sessionId)
@@ -96,7 +94,7 @@ describe('outboundSessionTests', () => {
             ).resolves.not.toThrow()
             await expect(bobsClient.waitForStream(channelId2)).resolves.not.toThrow()
 
-            const message = new ChannelMessage({
+            const channelMessage = create(ChannelMessageSchema, {
                 payload: {
                     case: 'post',
                     value: {
@@ -107,19 +105,20 @@ describe('outboundSessionTests', () => {
                     },
                 },
             })
+            const buffer = toBinary(ChannelMessageSchema, channelMessage)
 
             const encryptedChannel1_1 = await bobsClient.encryptGroupEvent(
-                message,
+                buffer,
                 channelId1,
                 algorithm,
             )
             const encryptedChannel1_2 = await bobsClient.encryptGroupEvent(
-                message,
+                buffer,
                 channelId1,
                 algorithm,
             )
             const encryptedChannel2_1 = await bobsClient.encryptGroupEvent(
-                message,
+                buffer,
                 channelId2,
                 algorithm,
             )

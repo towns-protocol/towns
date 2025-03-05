@@ -15,8 +15,8 @@ import type {
     BlockchainTransaction_Tip,
     BlockchainTransaction_SpaceReview_Action,
     BlockchainTransaction_TokenTransfer,
+    PlainMessage,
 } from '@river-build/proto'
-import type { PlainMessage } from '@bufbuild/protobuf'
 import type { DecryptionSessionError } from '@river-build/encryption'
 
 export enum EventStatus {

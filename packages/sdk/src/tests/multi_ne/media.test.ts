@@ -5,8 +5,9 @@
 import { makeTestClient, makeUniqueSpaceStreamId } from '../testUtils'
 import { Client } from '../../client'
 import { makeUniqueChannelStreamId, makeDMStreamId, streamIdAsString } from '../../id'
-import { CreationCookie, InfoRequest } from '@river-build/proto'
+import { CreationCookie, CreationCookieSchema, InfoRequestSchema } from '@river-build/proto'
 import { deriveKeyAndIV, encryptAESGCM } from '../../crypto_utils'
+import { create } from '@bufbuild/protobuf'
 
 describe('mediaTests', () => {
     let bobsClient: Client
@@ -284,7 +285,7 @@ describe('mediaTests', () => {
         await bobSendMediaPayloads(streamId, 10, prevMiniblockHash)
         // Force server to flush minipool events into a block
         await bobsClient.rpcClient.info(
-            new InfoRequest({
+            create(InfoRequestSchema, {
                 debug: ['make_miniblock', streamId],
             }),
             { timeoutMs: 10000 },
@@ -351,14 +352,14 @@ describe('mediaTestsNew', () => {
         creationCookie: CreationCookie,
         chunks: number,
     ): Promise<CreationCookie> {
-        let cc: CreationCookie = new CreationCookie(creationCookie)
+        let cc: CreationCookie = create(CreationCookieSchema, creationCookie)
         for (let i = 0; i < chunks; i++) {
             const chunk = new Uint8Array(100)
             // Create novel chunk content for testing purposes
             chunk.fill(i, 0, 100)
             const last = i == chunks - 1
             const result = await bobsClient.sendMediaPayloadNew(cc, last, chunk, i)
-            cc = new CreationCookie({
+            cc = create(CreationCookieSchema, {
                 ...cc,
                 prevMiniblockHash: new Uint8Array(result.creationCookie.prevMiniblockHash),
                 miniblockNum: result.creationCookie.miniblockNum,
@@ -593,7 +594,7 @@ describe('mediaTestsNew', () => {
         await bobSendMediaPayloads(creationCookie, 10)
         // Force server to flush minipool events into a block
         await bobsClient.rpcClient.info(
-            new InfoRequest({
+            create(InfoRequestSchema, {
                 debug: ['make_miniblock', streamId],
             }),
             { timeoutMs: 10000 },
