@@ -7,8 +7,10 @@ import (
 	"sync/atomic"
 	"time"
 
+	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/gammazero/workerpool"
+	"github.com/linkdata/deadlock"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/puzpuzpuz/xsync/v3"
 	"go.opentelemetry.io/otel/attribute"
@@ -67,9 +69,11 @@ type StreamCache struct {
 	streamCacheUnloadedGauge prometheus.Gauge
 	streamCacheRemoteGauge   prometheus.Gauge
 
-	stoppedMu            sync.RWMutex
-	onlineSyncWorkerPool *workerpool.WorkerPool
-	stopped              bool
+	stoppedMu                         sync.RWMutex
+	onlineSyncWorkerPool              *workerpool.WorkerPool
+	onlineSyncStreamTasksInProgressMu deadlock.Mutex
+	onlineSyncStreamTasksInProgress   mapset.Set[StreamId]
+	stopped                           bool
 
 	disableCallbacks bool
 }
@@ -99,9 +103,10 @@ func NewStreamCache(params *StreamCacheParams) *StreamCache {
 			params.RiverChain.ChainId.String(),
 			params.Wallet.Address.String(),
 		),
-		chainConfig:          params.ChainConfig,
-		onlineSyncWorkerPool: workerpool.New(params.Config.StreamReconciliation.OnlineWorkerPoolSize),
-		disableCallbacks:     params.disableCallbacks,
+		chainConfig:                     params.ChainConfig,
+		onlineSyncWorkerPool:            workerpool.New(params.Config.StreamReconciliation.OnlineWorkerPoolSize),
+		disableCallbacks:                params.disableCallbacks,
+		onlineSyncStreamTasksInProgress: mapset.NewSet[StreamId](),
 	}
 }
 

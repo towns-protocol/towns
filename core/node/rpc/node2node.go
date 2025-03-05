@@ -99,6 +99,42 @@ func (s *Service) newEventReceived(
 		return nil, err
 	}
 
+	if parsedEvent.MiniblockRef.Num >= 0 {
+		view, err := stream.GetViewIfLocal(ctx)
+		if err != nil {
+			return nil, err
+		}
+		// before trying to add the event to the stream schedule a sync request if outdated.
+		var timeout <-chan time.Time
+		scheduled := false
+		for {
+			// TODO: this has the potential to cause a lot of syn stream tasks.
+			//  Consider not scheduling a sync task when the node is almost up to date and trust on the client retry mechanism
+			streamUpToDate := view.GetStats().LastMiniblockNum >= parsedEvent.MiniblockRef.Num
+			if streamUpToDate {
+				break
+			}
+
+			if !scheduled {
+				s.cache.SubmitSyncStreamTask(ctx, stream)
+				scheduled = true
+				timeout = time.After(5000 * time.Millisecond)
+			}
+
+			select {
+			case <-time.After(10 * time.Millisecond):
+				view, err = stream.GetViewIfLocal(ctx)
+				if err != nil {
+					return nil, err
+				}
+			case <-timeout:
+				return nil, RiverError(Err_MINIBLOCK_TOO_NEW, "Miniblock too new").Func("localAddEvent")
+			case <-ctx.Done():
+				return nil, ctx.Err()
+			}
+		}
+	}
+
 	err = stream.AddEvent(ctx, parsedEvent)
 	if err != nil {
 		return nil, err
