@@ -7,14 +7,13 @@ import (
 	. "github.com/towns-protocol/towns/core/node/events"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/shared"
-	"github.com/towns-protocol/towns/core/node/storage"
 	"github.com/towns-protocol/towns/core/node/track_streams"
 )
 
 type AppRegistryTrackedStreamView struct {
 	TrackedStreamViewImpl
 	listener track_streams.StreamEventListener
-	store    storage.AppRegistryStore
+	store    EncryptedMessageStore
 }
 
 func (b *AppRegistryTrackedStreamView) onNewEvent(ctx context.Context, view *StreamView, event *ParsedEvent) error {
@@ -48,7 +47,7 @@ func NewTrackedStreamForAppRegistryService(
 	cfg crypto.OnChainConfiguration,
 	stream *StreamAndCookie,
 	listener track_streams.StreamEventListener,
-	store storage.AppRegistryStore,
+	store EncryptedMessageStore,
 ) (TrackedStreamView, error) {
 	trackedView := &AppRegistryTrackedStreamView{
 		listener: listener,

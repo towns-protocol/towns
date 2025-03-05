@@ -10,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/shared"
 )
 
 type EncryptionDevice struct {
@@ -86,10 +87,6 @@ func (b *AppClient) InitializeWebhook(
 	}
 	defer resp.Body.Close()
 
-	// TODO: validate that the app server returns the expected device_id and fallback key
-	// based on what we also see in the app's user stream.
-	// device_id, fallback key should come in via sync runner and tracked streams,
-	// and be persisted to the cache / db.
 	if resp.StatusCode != http.StatusOK {
 		return nil, base.RiverError(protocol.Err_CANNOT_CALL_WEBHOOK, "webhook response non-OK status").
 			Tag("appId", appId)
@@ -112,6 +109,16 @@ func (b *AppClient) InitializeWebhook(
 	return &initializeResp.DefaultEncryptionDevice, nil
 }
 
+func (b *AppClient) RequestSolicitation(
+	ctx context.Context,
+	webhookUrl string,
+	appId common.Address,
+	channelId shared.StreamId,
+	sessionId string,
+) error {
+	return base.RiverError(protocol.Err_UNIMPLEMENTED, "RequestSolicitation unimplemented")
+}
+
 // GetWebhookStatus sends an "info" message to the app service and expects a 200 with
 // version info returned.
 // TODO - implement.
@@ -121,5 +128,17 @@ func (b *AppClient) GetWebhookStatus(
 	appId common.Address,
 	hs256SharedSecret [32]byte,
 ) error {
-	return nil
+	return base.RiverError(protocol.Err_UNIMPLEMENTED, "GetWebhookStatus unimplemented")
+}
+
+func (b *AppClient) SendSessionMessages(
+	ctx context.Context,
+	appId common.Address,
+	deviceKey string,
+	hs256SharedSecret [32]byte,
+	cipherText string,
+	webhookUrl string,
+	streamEvents [][]byte,
+) error {
+	return base.RiverError(protocol.Err_UNIMPLEMENTED, "SendSessionMessages unimplemented")
 }

@@ -20,6 +20,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/nodes"
+	"github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
 	"github.com/towns-protocol/towns/core/node/registries"
@@ -37,7 +38,7 @@ type (
 	Service struct {
 		authentication.AuthServiceMixin
 		cfg                           config.AppRegistryConfig
-		store                         storage.AppRegistryStore
+		store                         *CachedEncryptedMessageQueue
 		streamsTracker                track_streams.StreamsTracker
 		sharedSecretDataEncryptionKey [32]byte
 		appClient                     *app_client.AppClient
@@ -65,10 +66,32 @@ func NewService(
 			"App registry service initialized with insufficient node registries",
 		)
 	}
+	sharedSecretDataEncryptionKey, err := hex.DecodeString(cfg.SharedSecretDataEncryptionKey)
+	if err != nil || len(sharedSecretDataEncryptionKey) != 32 {
+		return nil, base.AsRiverError(err, Err_INVALID_ARGUMENT).
+			Message("AppRegistryConfig SharedSecretDataEncryptionKey must be a 32-byte key encoded as hex")
+	}
+	fixedWidthDataEncryptionKey := [32]byte(sharedSecretDataEncryptionKey)
+
 	streamTrackerNodeRegistries := nodes
 	if len(nodes) > 1 {
 		streamTrackerNodeRegistries = nodes[1:]
 	}
+	appClient := app_client.NewAppClient(httpClient, cfg.AllowInsecureWebhooks)
+	cache, err := NewCachedEncryptedMessageQueue(
+		ctx,
+		store,
+		NewAppDispatcher(ctx, &cfg, appClient, fixedWidthDataEncryptionKey),
+	)
+	if err != nil {
+		return nil, base.AsRiverError(err, protocol.Err_INTERNAL).
+			Message("Unable to create CachedEncryptedMessageQueue")
+	}
+
+	if listener == nil {
+		listener = NewAppMessageProcessor(ctx, cache)
+	}
+
 	tracker, err := sync.NewAppRegistryStreamsTracker(
 		ctx,
 		cfg,
@@ -77,24 +100,18 @@ func NewService(
 		streamTrackerNodeRegistries,
 		metrics,
 		listener,
-		store,
+		cache,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	sharedSecretDataEncryptionKey, err := hex.DecodeString(cfg.SharedSecretDataEncryptionKey)
-	if err != nil || len(sharedSecretDataEncryptionKey) != 32 {
-		return nil, base.AsRiverError(err, Err_INVALID_ARGUMENT).
-			Message("AppRegistryConfig SharedSecretDataEncryptionKey must be a 32-byte key encoded as hex")
-	}
-
 	s := &Service{
 		cfg:                           cfg,
-		store:                         store,
+		store:                         cache,
 		streamsTracker:                tracker,
-		sharedSecretDataEncryptionKey: [32]byte(sharedSecretDataEncryptionKey),
-		appClient:                     app_client.NewAppClient(httpClient, cfg.AllowInsecureWebhooks),
+		sharedSecretDataEncryptionKey: fixedWidthDataEncryptionKey,
+		appClient:                     appClient,
 		riverRegistry:                 riverRegistry,
 		nodeRegistry:                  nodes[0],
 	}

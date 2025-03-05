@@ -3,6 +3,7 @@ package sync
 import (
 	"context"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/events"
@@ -11,15 +12,36 @@ import (
 	"github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/registries"
 	"github.com/towns-protocol/towns/core/node/shared"
-	"github.com/towns-protocol/towns/core/node/storage"
 	"github.com/towns-protocol/towns/core/node/track_streams"
 )
+
+type EncryptedMessageStore interface {
+	PublishSessionKey(
+		ctx context.Context,
+		deviceKey string,
+		sessionId string,
+		ciphertext string,
+	) (err error)
+
+	HasRegisteredWebhook(
+		ctx context.Context,
+		appId common.Address,
+	) bool
+
+	EnqueueMessages(
+		ctx context.Context,
+		appIds []common.Address,
+		sessionId string,
+		streamId shared.StreamId,
+		streamEventBytes []byte,
+	) (err error)
+}
 
 type AppRegistryStreamsTracker struct {
 	// TODO: eventually this struct will contain references to whatever types of cache / storage access
 	// the TrackedStreamView for the app registry service needs.
 	track_streams.StreamsTrackerImpl
-	store storage.AppRegistryStore
+	store EncryptedMessageStore
 }
 
 func NewAppRegistryStreamsTracker(
@@ -30,7 +52,7 @@ func NewAppRegistryStreamsTracker(
 	nodes []nodes.NodeRegistry,
 	metricsFactory infra.MetricsFactory,
 	listener track_streams.StreamEventListener,
-	store storage.AppRegistryStore,
+	store EncryptedMessageStore,
 ) (track_streams.StreamsTracker, error) {
 	tracker := &AppRegistryStreamsTracker{
 		store: store,

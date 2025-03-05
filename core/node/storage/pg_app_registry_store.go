@@ -50,22 +50,31 @@ type (
 		StreamEvents          [][]byte
 	}
 
-	// When SendableDevice is returned, the caller has access to the session id and
+	// When SendableApp is returned, the caller has access to the session id and
 	// stream event binary already. Return
 	// (appId, deviceKey, encryptedSharedSecret, ciphertext)
-	SendableDevice struct {
+	SendableApp struct {
 		AppId              common.Address
 		DeviceKey          string
+		WebhookUrl         string
 		SendMessageSecrets SendMessageSecrets
+	}
+
+	// UnsendableApp is returned to supply all information needed for the caller to
+	// request a key solicitation if the attempt to send a message was unsuccessful.
+	// In this case, the caller has access to the session id and stream id already. Return
+	// (appId, deviceKey, webhookUrl, encryptedSharedSecret)
+	UnsendableApp struct {
+		AppId                 common.Address
+		DeviceKey             string
+		WebhookUrl            string
+		EncryptedSharedSecret [32]byte
 	}
 
 	SendMessageSecrets struct {
 		CipherText            string
 		EncryptedSharedSecret [32]byte
 	}
-
-	// map[deviceId]SendMessageSecrets
-	DeviceSecrets map[string]SendMessageSecrets
 
 	AppInfo struct {
 		App              common.Address
@@ -112,19 +121,10 @@ type (
 		// key and encrypted shared secret for jwt token generation.
 		EnqueueUnsendableMessages(
 			ctx context.Context,
-			deviceKeys []string,
+			appIds []common.Address,
 			sessionId string,
 			streamEventBytes []byte,
-		) (sendableDevices []SendableDevice, numEnqueued int, err error)
-
-		// IsRegistered can be called by any client to determine if an app with the given
-		// deviceKey is registered. At this time we only allow 1 device key per app and all
-		// device keys must be unique, so there is a 1 to 1 correspondence between device
-		// keys and app ids.
-		IsRegistered(
-			ctx context.Context,
-			deviceKey string,
-		) (bool, error)
+		) (sendableDevices []SendableApp, unsendableDevices []UnsendableApp, err error)
 	}
 )
 
@@ -193,11 +193,23 @@ func NewPostgresAppRegistryStore(
 	exitSignal chan error,
 	metrics infra.MetricsFactory,
 ) (*PostgresAppRegistryStore, error) {
-	store := &PostgresAppRegistryStore{
-		exitSignal: exitSignal,
+	store := &PostgresAppRegistryStore{}
+	if err := store.Init(ctx, poolInfo, exitSignal, metrics); err != nil {
+		return nil, err
 	}
 
-	if err := store.PostgresEventStore.init(
+	return store, nil
+}
+
+func (s *PostgresAppRegistryStore) Init(
+	ctx context.Context,
+	poolInfo *PgxPoolInfo,
+	exitSignal chan error,
+	metrics infra.MetricsFactory,
+) error {
+	s.exitSignal = exitSignal
+
+	if err := s.PostgresEventStore.init(
 		ctx,
 		poolInfo,
 		metrics,
@@ -205,14 +217,14 @@ func NewPostgresAppRegistryStore(
 		&AppRegistryDir,
 		"app_registry_migrations",
 	); err != nil {
-		return nil, AsRiverError(err).Func("NewPostgresAppRegistryStore")
+		return AsRiverError(err).Func("PostgresAppRegistryStore.Init")
 	}
 
-	if err := store.initStorage(ctx); err != nil {
-		return nil, AsRiverError(err).Func("NewPostgresAppRegistryStore")
+	if err := s.initStorage(ctx); err != nil {
+		return AsRiverError(err).Func("PostgresAppRegistryStore.Init")
 	}
 
-	return store, nil
+	return nil
 }
 
 func (s *PostgresAppRegistryStore) CreateApp(
@@ -502,158 +514,163 @@ func (s *PostgresAppRegistryStore) publishSessionKey(
 
 func (s *PostgresAppRegistryStore) EnqueueUnsendableMessages(
 	ctx context.Context,
-	deviceKeys []string,
+	appIds []common.Address,
 	sessionId string,
 	streamEventBytes []byte,
-) (sendableDevices []SendableDevice, enqueued int, err error) {
+) (sendableDevices []SendableApp, unsendableDevices []UnsendableApp, err error) {
 	if err = s.txRunner(
 		ctx,
 		"EnqueueUnsendableMessages",
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
 			var err error
-			sendableDevices, enqueued, err = s.enqueueUnsendableMessages(ctx, deviceKeys, sessionId, streamEventBytes, tx)
+			sendableDevices, unsendableDevices, err = s.enqueueUnsendableMessages(ctx, appIds, sessionId, streamEventBytes, tx)
 			return err
 		},
 		nil,
-		"deviceKeys", deviceKeys,
+		"appIds", appIds,
 		"sessionId", sessionId,
 	); err != nil {
-		return nil, 0, err
+		return nil, nil, err
 	}
-	return sendableDevices, enqueued, nil
+	return sendableDevices, unsendableDevices, nil
 }
 
 func (s *PostgresAppRegistryStore) enqueueUnsendableMessages(
 	ctx context.Context,
-	deviceKeys []string,
+	appIds []common.Address,
 	sessionId string,
 	streamEventBytes []byte,
 	tx pgx.Tx,
-) (sendableDevices []SendableDevice, enqueued int, err error) {
+) (sendableApps []SendableApp, unsendableApps []UnsendableApp, err error) {
+	appIdStrings := make([]string, len(appIds))
+	for i, appId := range appIds {
+		appIdStrings[i] = hex.EncodeToString(appId[:])
+	}
 	rows, err := tx.Query(
 		ctx,
-		`   SELECT app_id, device_keys.device_key, encrypted_shared_secret, ciphertext
-		    FROM (
-		        SELECT *
-		        FROM app_session_keys
-		        WHERE app_session_keys.session_id = $1
-		        AND app_session_keys.device_key = ANY($2)
-		    ) as device_keys
-		    INNER JOIN app_registry
-			ON device_keys.device_key = app_registry.device_key
+		`   SELECT app_id, app_ids.device_key, webhook, encrypted_shared_secret, ciphertext
+			FROM (
+				SELECT * FROM app_registry
+				WHERE app_registry.app_id = ANY($2)
+			) as app_ids
+		    INNER JOIN app_session_keys
+			ON app_ids.device_key = app_session_keys.device_key
+			AND app_session_keys.session_id = $1
 		`,
 		sessionId,
-		deviceKeys,
+		appIdStrings,
 	)
 	if err != nil {
-		return nil, 0, WrapRiverError(
+		return nil, nil, WrapRiverError(
 			protocol.Err_DB_OPERATION_FAILURE,
 			err,
 		).Message("unable to get existing session keys for devices")
 	}
-	sendableDevices = make([]SendableDevice, 0)
-	sendableDeviceIds := mapset.NewSet[string]()
+	sendableApps = make([]SendableApp, 0)
+	sendableAppIds := mapset.NewSet[common.Address]()
 
-	var sendableDevice SendableDevice
+	var sendableDevice SendableApp
 	var appId PGAddress
 	var encryptedSharedSecret PGSecret
 	if _, err := pgx.ForEachRow(
 		rows,
-		[]any{&appId, &sendableDevice.DeviceKey, &encryptedSharedSecret, &sendableDevice.SendMessageSecrets.CipherText},
+		[]any{&appId, &sendableDevice.DeviceKey, &sendableDevice.WebhookUrl, &encryptedSharedSecret, &sendableDevice.SendMessageSecrets.CipherText},
 		func() error {
 			sendableDevice.AppId = common.Address(appId)
 			sendableDevice.SendMessageSecrets.EncryptedSharedSecret = encryptedSharedSecret
-			sendableDevices = append(sendableDevices, sendableDevice)
-			sendableDeviceIds.Add(sendableDevice.DeviceKey)
+			sendableApps = append(sendableApps, sendableDevice)
+			sendableAppIds.Add(sendableDevice.AppId)
 			return nil
 		},
 	); err != nil {
-		return nil, 0, WrapRiverError(
+		return nil, nil, WrapRiverError(
 			protocol.Err_DB_OPERATION_FAILURE,
 			err,
 		).Message("unable to get existing keys for devices")
 	}
 
-	unsendableDevices := make([]string, 0, len(deviceKeys)-len(sendableDevices))
-	for _, deviceKey := range deviceKeys {
-		if !sendableDeviceIds.Contains(deviceKey) {
-			unsendableDevices = append(unsendableDevices, deviceKey)
+	unsendableAppIds := make([]common.Address, 0, len(appIds)-len(sendableApps))
+	for _, appId := range appIds {
+		if !sendableAppIds.Contains(appId) {
+			unsendableAppIds = append(unsendableAppIds, appId)
 		}
 	}
+	unsendableAppIdStrings := make([]string, len(unsendableAppIds))
+	for i, appId := range unsendableAppIds {
+		unsendableAppIdStrings[i] = hex.EncodeToString(appId[:])
+	}
 
+	rows, err = tx.Query(
+		ctx,
+		`   SELECT app_id, device_key, webhook, encrypted_shared_secret
+		    FROM app_registry
+		    WHERE app_id = ANY($1)
+		`,
+		unsendableAppIdStrings,
+	)
+	if err != nil {
+		return nil, nil, WrapRiverError(
+			protocol.Err_DB_OPERATION_FAILURE,
+			err,
+		).Message("unable to get app metadata for unsendable devices")
+	}
 	nextRow := 0
+	var deviceId string
+	var webhook string
+	unsendableApps = make([]UnsendableApp, len(unsendableAppIds))
+	if _, err := pgx.ForEachRow(rows, []any{&appId, &deviceId, &webhook, &encryptedSharedSecret}, func() error {
+		unsendableApps[nextRow].AppId = common.Address(appId)
+		unsendableApps[nextRow].DeviceKey = deviceId
+		unsendableApps[nextRow].WebhookUrl = webhook
+		unsendableApps[nextRow].EncryptedSharedSecret = encryptedSharedSecret
+		nextRow += 1
+		return nil
+	}); err != nil {
+		return nil, nil, AsRiverError(
+			err,
+			protocol.Err_DB_OPERATION_FAILURE,
+		).Message("error streaming app metadata for unsendable devices")
+	}
+	if len(unsendableAppIds) > nextRow {
+		return nil, nil, RiverError(protocol.Err_NOT_FOUND, "some app ids were not registered")
+	}
+
+	// Insert unsendable messages
+	nextRow = 0
 	insertCount, err := tx.CopyFrom(
 		ctx,
 		pgx.Identifier{"enqueued_messages"},
 		[]string{"device_key", "session_id", "message_envelope"},
 		pgx.CopyFromFunc(func() ([]interface{}, error) {
-			if nextRow >= len(unsendableDevices) {
+			if nextRow >= len(unsendableApps) {
 				return nil, nil
 			}
 
-			row := []interface{}{unsendableDevices[nextRow], sessionId, streamEventBytes}
+			row := []interface{}{unsendableApps[nextRow].DeviceKey, sessionId, streamEventBytes}
 			nextRow++
 			return row, nil
 		}),
 	)
 	if err != nil {
 		if isPgError(err, pgerrcode.ForeignKeyViolation) {
-			return nil, 0, WrapRiverError(protocol.Err_NOT_FOUND, err).Message(
+			return nil, nil, WrapRiverError(protocol.Err_NOT_FOUND, err).Message(
 				"unable to enqueue messages for session - app with device key is not registered",
-			).Tag("deviceKey", unsendableDevices[nextRow-1])
+			).Tag("deviceKey", unsendableApps[nextRow-1].DeviceKey)
 		} else {
-			return nil, 0, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).Message(
+			return nil, nil, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).Message(
 				"unable to enqueue messages for session",
 			)
 		}
 	}
-	if insertCount < int64(len(unsendableDevices)) {
-		return nil, 0, RiverError(
+	if insertCount < int64(len(unsendableAppIds)) {
+		return nil, nil, RiverError(
 			protocol.Err_DB_OPERATION_FAILURE,
 			"Could not enqueue all unsendable messages for session",
 		)
 	}
-	return sendableDevices, len(unsendableDevices), nil
-}
 
-func (s *PostgresAppRegistryStore) IsRegistered(
-	ctx context.Context,
-	deviceKey string,
-) (isRegistered bool, err error) {
-	if err = s.txRunner(
-		ctx,
-		"IsRegistered",
-		pgx.ReadWrite,
-		func(ctx context.Context, tx pgx.Tx) error {
-			var err error
-			isRegistered, err = s.isRegistered(ctx, deviceKey, tx)
-			return err
-		},
-		nil,
-		"deviceKey", deviceKey,
-	); err != nil {
-		return false, err
-	}
-	return isRegistered, nil
-}
-
-func (s *PostgresAppRegistryStore) isRegistered(
-	ctx context.Context,
-	deviceKey string,
-	tx pgx.Tx,
-) (isRegistered bool, err error) {
-	if err = tx.QueryRow(
-		ctx,
-		`SELECT COUNT(*) > 0 FROM app_registry WHERE device_key = $1`,
-		deviceKey,
-	).Scan(&isRegistered); err != nil {
-		return false, WrapRiverError(
-			protocol.Err_DB_OPERATION_FAILURE,
-			err,
-		).Message("unable to determine if device id is registered")
-	}
-	return isRegistered, nil
+	return sendableApps, unsendableApps, nil
 }
 
 // Close closes the postgres connection pool
