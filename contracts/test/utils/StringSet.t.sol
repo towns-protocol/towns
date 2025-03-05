@@ -11,9 +11,31 @@ contract StringSetTest is TestUtils {
 
   function test_fuzz_delete(string memory _s) public {
     s = _s;
+    // brutalize memory
+    assembly ("memory-safe") {
+      mstore(0, 0x1234567890abcdef)
+    }
     StringSet._delete(s);
-    _s = s;
-    assertEq(_s, "");
+    uint256 packed;
+    assembly {
+      packed := sload(s.slot)
+    }
+    assertEq(packed, 0, "Expected the length slot to be zero");
+    if (bytes(_s).length >= 32) {
+      uint256 p;
+      assembly ("memory-safe") {
+        mstore(0, s.slot)
+        p := keccak256(0, 0x20)
+      }
+      uint256 words = (bytes(_s).length + 31) / 32;
+      for (uint256 i; i < words; ++i) {
+        uint256 word;
+        assembly {
+          word := sload(add(p, i))
+        }
+        assertEq(word, 0, "Expected every word to be zero");
+      }
+    }
   }
 
   function test_add() public {

@@ -80,15 +80,15 @@ library StringSet {
         let len := shr(1, packed)
         // the number of words used to store the string
         let words := shr(5, add(len, 0x1f))
-        let p := keccak256(0, 0x20)
-        for {
-          let i := 0
-        } 1 {} {
-          if iszero(lt(i, words)) {
+        mstore(0, $.slot)
+        let ptr := keccak256(0, 0x20)
+        let end := add(ptr, words)
+        for {} 1 {} {
+          if iszero(lt(ptr, end)) {
             break
           }
-          sstore(add(p, i), 0)
-          i := add(i, 1)
+          sstore(ptr, 0)
+          ptr := add(ptr, 1)
         }
         break
       }
