@@ -331,10 +331,10 @@ func (s *remoteSyncer) RemoveStream(ctx context.Context, streamID StreamId) (boo
 	s.pendingModifySyncLock.Lock()
 	defer s.pendingModifySyncLock.Unlock()
 
-	// If the given stream exists in the pending list to add, remove it from there
+	// If the given stream exists in the pending list to add, remove the last one from there
 	var removed bool
-	for i, cookie := range s.pendingModifySync.AddStreams {
-		addStreamID, _ := StreamIdFromBytes(cookie.GetStreamId())
+	for i := len(s.pendingModifySync.AddStreams) - 1; i >= 0; i-- {
+		addStreamID, _ := StreamIdFromBytes(s.pendingModifySync.AddStreams[i].GetStreamId())
 		if streamID.Compare(addStreamID) == 0 {
 			s.pendingModifySync.AddStreams = append(s.pendingModifySync.AddStreams[:i], s.pendingModifySync.AddStreams[i+1:]...)
 			removed = true
