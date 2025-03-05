@@ -160,6 +160,7 @@ export const TradeComponent = (props: Props) => {
         currentTokenBalance,
         fromChain: chainId,
         toChain: chainId,
+        slippage: 0.01,
     })
 
     const { data: quoteData } = quote

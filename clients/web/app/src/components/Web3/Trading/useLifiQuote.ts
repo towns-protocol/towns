@@ -58,6 +58,7 @@ export const useLifiQuote = (props: {
     fromAddress: string
     toAddress: string
     currentTokenBalance: bigint
+    slippage: number
 }) => {
     const {
         fromChain,
@@ -68,6 +69,7 @@ export const useLifiQuote = (props: {
         fromAddress,
         toAddress,
         currentTokenBalance,
+        slippage,
     } = props
 
     const remappedFromChain =
@@ -110,6 +112,7 @@ export const useLifiQuote = (props: {
                         toToken,
                         fromAmount,
                         fromAddress,
+                        slippage,
                         // toAddress,
                     },
                     headers: {
