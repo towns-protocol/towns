@@ -271,10 +271,8 @@ func (j *mbJob) gatherRemoteProposals(
 			}
 
 			// Sanity check: discard proposals for wrong miniblock number and wrong prev hash.
-			if err == nil {
-				if proposal.Proposal.NewMiniblockNum != request.NewMiniblockNum || !bytes.Equal(proposal.Proposal.PrevMiniblockHash, request.PrevMiniblockHash) {
-					return RiverError(Err_MINIBLOCK_TOO_OLD, "gatherRemoteProposals: wrong miniblock number or prev hash")
-				}
+			if proposal.Proposal.NewMiniblockNum != request.NewMiniblockNum || !bytes.Equal(proposal.Proposal.PrevMiniblockHash, request.PrevMiniblockHash) {
+				return RiverError(Err_MINIBLOCK_TOO_OLD, "gatherRemoteProposals: wrong miniblock number or prev hash")
 			}
 
 			mu.Lock()
@@ -285,7 +283,12 @@ func (j *mbJob) gatherRemoteProposals(
 	)
 
 	err := qp.Wait()
-	return proposals, err
+
+	mu.Lock()
+	defer mu.Unlock()
+	ret := proposals
+	proposals = nil
+	return ret, err
 }
 
 func (j *mbJob) saveCandidate(ctx context.Context) error {
