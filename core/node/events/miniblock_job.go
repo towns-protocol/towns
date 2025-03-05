@@ -132,7 +132,7 @@ func (j *mbJob) processRemoteProposals(ctx context.Context) ([]*mbProposal, *Str
 		return nil, nil, err
 	}
 	if view.minipool.generation != request.NewMiniblockNum {
-		// TODO: REPLICATION: FIX: if and MissingEvents are received, should they still be attempted to be added? I.e. conde block below should be still executed?
+		// TODO: REPLICATION: FIX: if any MissingEvents are received, should they still be attempted to be added? I.e. loop below should be still executed?
 		return nil, nil, RiverError(Err_MINIBLOCK_TOO_OLD, "mbJob.processRemoteProposals: stream advanced in the meantime (1)")
 	}
 
