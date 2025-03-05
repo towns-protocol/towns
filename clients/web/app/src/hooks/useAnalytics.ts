@@ -103,7 +103,7 @@ export class Analytics implements TownsAnalytics {
             const pluginsSDKBaseURL = env.VITE_RUDDERSTACK_PLUGINS_SDK_URL
             const isAnalyticsConfigured = writeKey && dataPlaneUrl && destSDKBaseURL && configUrl
 
-            if (!isAnalyticsConfigured) {
+            if (!isAnalyticsConfigured || env.MODE !== 'production') {
                 console.warn('[analytics] Analytics is not enabled')
                 Analytics.instance = new Analytics(new LocalhostAnalyticsBackend())
             } else {

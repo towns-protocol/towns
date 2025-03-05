@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import { useEvent } from 'react-use-event-hook'
 import { ethers, providers } from 'ethers'
 import {
@@ -11,7 +11,6 @@ import {
 import { debug } from 'debug'
 import { isAddress } from 'ethers/lib/utils'
 import { usePrivy } from '@privy-io/react-auth'
-import { useEmbeddedWallet } from '@towns/privy'
 import { useNavigate } from 'react-router'
 
 import { Box, Button, Divider, Stack, Text, TextField } from '@ui'
@@ -19,12 +18,7 @@ import { ModalContainer } from '@components/Modals/ModalContainer'
 import { shortAddress } from 'ui/utils/utils'
 import { isTouch } from 'hooks/useDevice'
 
-import {
-    ENVIRONMENTS,
-    TownsEnvironmentInfo,
-    UseEnvironmentReturn,
-    useEnvironment,
-} from 'hooks/useEnvironmnet'
+import { UseEnvironmentReturn, useEnvironment } from 'hooks/useEnvironmnet'
 import { useCombinedAuth } from 'privy/useCombinedAuth'
 import { useMockNftBalance } from 'hooks/useMockNftBalance'
 import { useBalance } from 'hooks/useBalance'
@@ -32,7 +26,6 @@ import { useBalance } from 'hooks/useBalance'
 const log = debug('app:DebugBar')
 const anvilKey = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
 
-import { env } from 'utils'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 
 type ModalProps = {
@@ -156,7 +149,7 @@ const DebugModal = ({ environment }: ModalProps) => {
     const { logout: fullLogout } = useCombinedAuth()
     const { logout: privyLogout } = usePrivy()
     const { loggedInWalletAddress } = useConnectivity()
-    const { setEnvironment, clearEnvironment } = environment
+    const { clearEnvironment } = environment
 
     const { data: abstractAccountAddress } = useAbstractAccountAddress({
         rootKeyAddress: loggedInWalletAddress,
@@ -173,8 +166,6 @@ const DebugModal = ({ environment }: ModalProps) => {
         [clientSingleton, signerContext],
     )
 
-    const switchNetwork = useAsyncSwitchNetwork()
-
     const deleteDbs = useCallback(() => {
         const dbs = [persistenceDbName, cryptoDbName]
         dbs.forEach((db) => {
@@ -190,25 +181,6 @@ const DebugModal = ({ environment }: ModalProps) => {
             }
         })
     }, [persistenceDbName, cryptoDbName])
-
-    const onSwitchEnvironment = useCallback(
-        async (env: TownsEnvironmentInfo) => {
-            log('onSwitchEnvironment', { env })
-            if (env.baseChain.id !== environment.baseChain.id) {
-                log('onSwitchEnvironment switching chain')
-                const newChainId = await switchNetwork?.(env.baseChain.id)
-                log('onSwitchEnvironment switched chain', { newChainId })
-            }
-            if (env.id !== environment.id) {
-                log('onSwitchEnvironment logging out')
-                await fullLogout()
-                log('onSwitchEnvironment updating environment')
-                setEnvironment(env.id)
-                goHome()
-            }
-        },
-        [environment, fullLogout, setEnvironment, switchNetwork],
-    )
 
     const onClear = useCallback(() => {
         clearEnvironment()
@@ -252,23 +224,6 @@ const DebugModal = ({ environment }: ModalProps) => {
                         <Divider />
 
                         <Stack gap justifyContent="end">
-                            {ENVIRONMENTS.filter(
-                                (e) => env.VITE_PRIVY_CLIENT_ID || e.name !== 'omega',
-                            ).map((env) => (
-                                <Button
-                                    key={env.name}
-                                    size="button_xs"
-                                    tone="accent"
-                                    disabled={
-                                        environment.baseChain.id === env.baseChain.id &&
-                                        walletChain.id === env.baseChain.id &&
-                                        environment.id === env.id
-                                    }
-                                    onClick={() => onSwitchEnvironment(env)}
-                                >
-                                    Switch to {env.name}/{env.baseChain.name}
-                                </Button>
-                            ))}
                             <Button size="button_xs" onClick={onClear}>
                                 <Text size="sm" color="default">
                                     Clear Local Storage
@@ -309,61 +264,6 @@ const DebugModal = ({ environment }: ModalProps) => {
             </Stack>
         </ModalContainer>
     )
-}
-
-const useAsyncSwitchNetwork = () => {
-    const promiseRef = useRef<Promise<number>>()
-    const resolveRef = useRef<(chainId: number) => void>()
-    const rejectRef = useRef<(error: Error) => void>()
-    const { embeddedWallet } = useEmbeddedWallet()
-
-    if (!promiseRef.current) {
-        log('useSwitchNetwork creating promise')
-        promiseRef.current = new Promise<number>((resolve, reject) => {
-            resolveRef.current = resolve
-            rejectRef.current = reject
-        })
-        log('useSwitchNetwork promise created', promiseRef.current)
-    }
-
-    const switchNetwork = useCallback(
-        async (chainId: number) => {
-            try {
-                await embeddedWallet?.switchChain(chainId)
-                log('switched network to', chainId)
-                resolveRef.current?.(chainId)
-            } catch (error) {
-                console.error('switch network error', error)
-                rejectRef.current?.(error as Error)
-            }
-        },
-        [embeddedWallet],
-    )
-
-    const executor = useCallback(
-        async (chainId: number) => {
-            log('useSwitchNetwork calling switchNetwork with chainId: ', {
-                chainId,
-                promise: promiseRef.current,
-            })
-            switchNetwork?.(chainId)
-            try {
-                log('useSwitchNetwork waiting for promise', promiseRef.current)
-                const chainId = await promiseRef.current
-                log('useSwitchNetwork promise resolved with chainId: ', chainId)
-                return chainId
-            } finally {
-                // skip the catch, because we want to reject if things fail, but always reset
-                log('useSwitchNetwork resetting promise')
-                promiseRef.current = new Promise<number>((resolve, reject) => {
-                    resolveRef.current = resolve
-                    rejectRef.current = reject
-                })
-            }
-        },
-        [switchNetwork],
-    )
-    return executor
 }
 
 const DebugBar = (environment: UseEnvironmentReturn) => {

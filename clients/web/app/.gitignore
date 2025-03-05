@@ -28,5 +28,7 @@ __ignore*
 *.sln
 *.sw?
 
+.deployment.env.*
+!.deployment.env.localhost
 .env
-*.env.local
+!.env.local-sample

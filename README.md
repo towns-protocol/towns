@@ -54,7 +54,6 @@ We now require yarn 3.8.0, so after installing you should run:
 First:
 
 ```
-cp clients/web/sample-app/.env.local-sample clients/web/sample-app/.env.local
 cp clients/web/app/.env.local-sample clients/web/app/.env.local
 ```
 

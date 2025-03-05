@@ -9,6 +9,20 @@
   },
   "tasks": [
     {
+      "label": "Dependencies",
+      "dependsOn": [
+        "CheckVersions",
+        "FoundryUp",
+        "YarnInstall",
+        "BuildProtobufs",
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "dependsOrder": "sequence"
+    },
+    {
       // start local dev:
       //
       // 1. yarn install
@@ -18,11 +32,9 @@
       //
       // it's important to do in this order since the servers
       // and use the artifacts of the contracts in their builds
-      "label": "~Start Local Dev~",
+      "label": "~Start Local Dev (localhost)~",
       "dependsOn": [
-        "CheckVersions",
-        "FoundryUp",
-        "YarnInstall",
+        "Dependencies",
         "Stage 1",
       ],
       // Mark as the default build task so cmd/ctrl+shift+b will create them
@@ -48,7 +60,6 @@
       "label": "Stage 2",
       "dependsOn": [
         "Configure Casablanca-Multinode",
-        "BuildProtobufs",
         "Stage 3"
       ],
       "group": {
@@ -60,7 +71,14 @@
     {
       "label": "Stage 3",
       "dependsOn": [
-        "Apps and Workers",
+        "Start Watches",
+        "App - localhost",
+        "UnfurlWorker",
+        "TokenWorker",
+        "StreamMetadataService",
+        "GatewayWorker",
+        //"NotificationService",
+        "StackupWorker",
         "Casablanca-Multinode",
       ],
       "group": {
@@ -82,9 +100,7 @@
       // and use the artifacts of the contracts in their builds
       "label": "~ 4337: Start Local Dev~",
       "dependsOn": [
-        "CheckVersions",
-        "FoundryUp",
-        "YarnInstall",
+        "Dependencies",
         "4337: Stage 1",
       ],
       // Mark as the default build task so cmd/ctrl+shift+b will create them
@@ -109,7 +125,6 @@
       "label": "4337: Stage 2",
       "dependsOn": [
         "WaitFor4337",
-        "BuildProtobufs",
         "4337: Configure Casablanca-Multinode",
         "4337: Stage 3"
       ],
@@ -147,7 +162,7 @@
       "label": "4337: Stage 3",
       "dependsOn": [
         "Start Watches",
-        "App",
+        "App - localhost",
         "UnfurlWorker",
         "TokenWorker",
         "StreamMetadataService",
@@ -163,63 +178,43 @@
       "problemMatcher": []
     },
     {
-      "label": "Start Local Apps and Workers",
+      "label": "Start Local Dev - alpha",
       "dependsOn": [
-        "CheckVersions",
-        "YarnInstall",
-        "Apps and Workers",
+        "Dependencies",
+        "Start Watches",
+        "App - alpha",
       ],
       // Mark as the default build task so cmd/ctrl+shift+b will create them
       "group": {
         "kind": "build",
         "isDefault": true
       },
-      "dependsOrder": "sequence"
     },
     {
-      "label": "Start Local App",
+      "label": "Start Local Dev - gamma",
       "dependsOn": [
-        "CheckVersions",
-        "YarnInstall",
-        "App and Watches",
+        "Dependencies",
+        "Start Watches",
+        "App - gamma",
       ],
       // Mark as the default build task so cmd/ctrl+shift+b will create them
       "group": {
         "kind": "build",
         "isDefault": true
       },
-      "dependsOrder": "sequence"
     },
     {
-      "label": "Apps and Workers",
+      "label": "Start Local Dev - omega",
       "dependsOn": [
+        "Dependencies",
         "Start Watches",
-        "App",
-        "SampleApp",
-        "UnfurlWorker",
-        "TokenWorker",
-        "StreamMetadataService",
-        "GatewayWorker",
-        //"NotificationService",
-        "StackupWorker"
+        "App - omega",
       ],
+      // Mark as the default build task so cmd/ctrl+shift+b will create them
       "group": {
         "kind": "build",
-        "isDefault": false
+        "isDefault": true
       },
-      "problemMatcher": []
-    },
-    {
-      "label": "App and Watches",
-      "dependsOn": [
-        "Start Watches",
-        "App",
-      ],
-      "group": {
-        "kind": "build",
-        "isDefault": false
-      },
-      "problemMatcher": []
     },
     {
       "label": "Start Watches",
@@ -371,16 +366,6 @@
       }
     },
     {
-      "label": "BaseChain",
-      "type": "shell",
-      "command": "RIVER_BLOCK_TIME=1 ./river/scripts/start-local-basechain.sh",
-      "isBackground": true,
-      "problemMatcher": [],
-      "presentation": {
-        "group": "local-blockchains"
-      }
-    },
-    {
       "label": "4337",
       "type": "shell",
       "command": "./scripts/start-4337.sh",
@@ -394,6 +379,16 @@
       "label": "WaitFor4337",
       "type": "shell",
       "command": "./scripts/wait-for-4337.sh",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "local-blockchains"
+      }
+    },
+    {
+      "label": "BaseChain",
+      "type": "shell",
+      "command": "RIVER_BLOCK_TIME=1 ./river/scripts/start-local-basechain.sh",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -537,9 +532,18 @@
       }
     },
     {
-      "label": "App",
+      "label": "App - localhost",
       "type": "shell",
-      "command": "cd clients/web/app && yarn dev",
+      "command": "./scripts/switch-to-env.sh localhost && cd clients/web/app && yarn dev",
+      "problemMatcher": [],
+      "presentation": {
+        "group": "local-clients"
+      }
+    },
+    {
+      "label": "App - omega",
+      "type": "shell",
+      "command": "./scripts/switch-to-env.sh omega && cd clients/web/app && yarn dev",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -547,9 +551,19 @@
       }
     },
     {
-      "label": "SampleApp",
+      "label": "App - gamma",
       "type": "shell",
-      "command": "cd clients/web/sample-app && yarn dev",
+      "command": "./scripts/switch-to-env.sh gamma && cd clients/web/app && yarn dev",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "local-clients"
+      }
+    },
+    {
+      "label": "App - alpha",
+      "type": "shell",
+      "command": "./scripts/switch-to-env.sh alpha && cd clients/web/app && yarn dev",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -559,7 +573,7 @@
     {
       "label": "MITM - Casablanca",
       "type": "shell",
-      "command": "mitmweb -p 7105 --mode reverse:http://localhost:7104/",
+      "command": "mitmweb -p 7105:http://localhost:7104/",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -667,18 +681,6 @@
       "type": "shell",
       "command": "./river/scripts/kill-watches.sh",
       "isBackground": false,
-      "problemMatcher": [],
-      "presentation": {
-        "group": "ephemeral",
-        "focus": true,
-        "panel": "shared",
-      }
-    },
-    {
-      "label": "Start Local Blockscout",
-      "type": "shell",
-      "command": "./river/scripts/start-local-blockscout.sh",
-      "isBackground": true,
       "problemMatcher": [],
       "presentation": {
         "group": "ephemeral",

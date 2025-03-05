@@ -4,7 +4,7 @@ import webAppPackageJSON from '../package.json'
 import { env } from './utils'
 
 const getDDSettings = () => {
-    if (env.VITE_DD_CLIENT_TOKEN) {
+    if (env.MODE === 'production' && env.VITE_DD_CLIENT_TOKEN) {
         const ddSettings: LogsInitConfiguration = {
             clientToken: env.VITE_DD_CLIENT_TOKEN,
             service: 'towns-webapp',

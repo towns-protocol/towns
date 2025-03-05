@@ -27,5 +27,3 @@ __ignore*
 *.sln
 *.sw?
 
-
-*.env.local
