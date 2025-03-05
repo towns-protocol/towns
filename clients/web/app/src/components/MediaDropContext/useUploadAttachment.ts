@@ -60,7 +60,7 @@ export const useUploadAttachment = () => {
                     cc,
                     chunkIndex == chunkCount - 1,
                     chunk.ciphertext,
-                    chunkIndex++,
+                    chunkIndex,
                     window.townsNewMediaEncryptionFlag ? chunk.iv : undefined,
                 )
                 if (!result) {
