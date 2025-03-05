@@ -998,17 +998,13 @@ describe('streamRpcClient', () => {
             }),
         ).resolves.not.toThrow()
 
-        log('Bob fails to add message twice')
+        log('Adding event again succeeds (noop)')
         await expect(
             bob.addEvent({
                 streamId: channelId,
                 event: messageEvent,
             }),
-        ).rejects.toThrow(
-            expect.objectContaining({
-                message: expect.stringContaining('37:DUPLICATE_EVENT'),
-            }),
-        )
+        ).resolves.not.toThrow()
 
         log('Bob failes to add event with bad signature')
         const badEvent = await makeEvent(
