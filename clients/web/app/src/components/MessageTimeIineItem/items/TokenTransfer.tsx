@@ -17,7 +17,7 @@ export const TokenTransfer = (props: Props) => {
         const address =
             chainId === 'solana-mainnet'
                 ? bin_toString(event.transfer.address)
-                : bin_toHexString(event.transfer.address)
+                : '0x' + bin_toHexString(event.transfer.address)
         return { address, chain: chainId }
     }, [event])
 
