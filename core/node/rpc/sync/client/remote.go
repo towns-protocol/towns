@@ -1,7 +1,6 @@
 package client
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -32,7 +31,7 @@ type remoteSyncer struct {
 	streams               sync.Map
 	responseStream        *connect.ServerStreamForClient[SyncStreamsResponse]
 	unsubStream           func(streamID StreamId)
-	pendingModifySync     ModifySyncRequest
+	pendingModifySync     *ModifySyncRequest
 	pendingModifySyncLock sync.Mutex
 	// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
 	otelTracer trace.Tracer
@@ -270,24 +269,29 @@ func (s *remoteSyncer) startStreamModifier() {
 // modifySync sends a modify sync request to the remote.
 func (s *remoteSyncer) modifySync(ctx context.Context) error {
 	s.pendingModifySyncLock.Lock()
-	modifySync := &s.pendingModifySync
-	s.pendingModifySync = ModifySyncRequest{}
+	toAdd := s.pendingModifySync.GetAddStreams()[:]
+	toRemove := s.pendingModifySync.GetRemoveStreams()[:]
+	s.pendingModifySync.RemoveStreams = nil
+	s.pendingModifySync.AddStreams = nil
 	s.pendingModifySyncLock.Unlock()
 
 	if s.otelTracer != nil {
 		var span trace.Span
 		ctx, span = s.otelTracer.Start(ctx, "remoteSyncer::modifySync",
-			trace.WithAttributes(attribute.Int("toAdd", len(modifySync.GetAddStreams()))),
-			trace.WithAttributes(attribute.Int("toRemove", len(modifySync.GetRemoveStreams()))))
+			trace.WithAttributes(attribute.Int("toAdd", len(toAdd))),
+			trace.WithAttributes(attribute.Int("toRemove", len(toRemove))))
 		defer span.End()
 	}
 
-	if len(modifySync.GetAddStreams()) == 0 && len(modifySync.GetRemoveStreams()) == 0 {
+	if len(toAdd) == 0 && len(toRemove) == 0 {
 		return nil
 	}
 
-	modifySync.SyncId = s.syncID
-	resp, err := s.client.ModifySync(ctx, connect.NewRequest(modifySync))
+	resp, err := s.client.ModifySync(ctx, connect.NewRequest(&ModifySyncRequest{
+		SyncId:        s.syncID,
+		AddStreams:    toAdd,
+		RemoveStreams: toRemove,
+	}))
 	if err != nil {
 		return err
 	}
@@ -319,10 +323,10 @@ func (s *remoteSyncer) Address() common.Address {
 }
 
 func (s *remoteSyncer) AddStream(ctx context.Context, cookie *SyncCookie) error {
+	streamID, _ := StreamIdFromBytes(cookie.GetStreamId())
+
 	if s.otelTracer != nil {
-		var span trace.Span
-		streamID, _ := StreamIdFromBytes(cookie.GetStreamId())
-		ctx, span = s.otelTracer.Start(ctx, "remoteSyncer::AddStream",
+		_, span := s.otelTracer.Start(ctx, "remoteSyncer::AddStream",
 			trace.WithAttributes(attribute.String("stream", streamID.String())))
 		defer span.End()
 	}
@@ -330,10 +334,14 @@ func (s *remoteSyncer) AddStream(ctx context.Context, cookie *SyncCookie) error 
 	s.pendingModifySyncLock.Lock()
 	defer s.pendingModifySyncLock.Unlock()
 
+	if s.pendingModifySync == nil {
+		s.pendingModifySync = &ModifySyncRequest{}
+	}
+
 	// If the given stream exists in the pending list to remove, remove it from there
 	var removed bool
 	for i := len(s.pendingModifySync.RemoveStreams) - 1; i >= 0; i-- {
-		if bytes.Equal(s.pendingModifySync.RemoveStreams[i], cookie.GetStreamId()) {
+		if StreamId(s.pendingModifySync.RemoveStreams[i]).Compare(streamID) == 0 {
 			if i == len(s.pendingModifySync.RemoveStreams)-1 {
 				s.pendingModifySync.RemoveStreams = s.pendingModifySync.RemoveStreams[:i]
 			} else {
@@ -353,14 +361,17 @@ func (s *remoteSyncer) AddStream(ctx context.Context, cookie *SyncCookie) error 
 
 func (s *remoteSyncer) RemoveStream(ctx context.Context, streamID StreamId) (bool, error) {
 	if s.otelTracer != nil {
-		var span trace.Span
-		ctx, span = s.otelTracer.Start(ctx, "remoteSyncer::removeStream",
+		_, span := s.otelTracer.Start(ctx, "remoteSyncer::removeStream",
 			trace.WithAttributes(attribute.String("stream", streamID.String())))
 		defer span.End()
 	}
 
 	s.pendingModifySyncLock.Lock()
 	defer s.pendingModifySyncLock.Unlock()
+
+	if s.pendingModifySync == nil {
+		s.pendingModifySync = &ModifySyncRequest{}
+	}
 
 	// If the given stream exists in the pending list to add, remove the last one from there
 	var removed bool
@@ -390,11 +401,11 @@ func (s *remoteSyncer) RemoveStream(ctx context.Context, streamID StreamId) (boo
 	})
 
 	// Update based on the pending state
-	for _, cookie := range s.pendingModifySync.AddStreams {
+	for _, cookie := range s.pendingModifySync.GetAddStreams() {
 		streamID, _ := StreamIdFromBytes(cookie.GetStreamId())
 		streamsCandidate.Store(streamID, struct{}{})
 	}
-	for _, streamID := range s.pendingModifySync.RemoveStreams {
+	for _, streamID := range s.pendingModifySync.GetRemoveStreams() {
 		streamsCandidate.Delete(StreamId(streamID))
 	}
 
@@ -416,15 +427,34 @@ func (s *remoteSyncer) DebugDropStream(ctx context.Context, streamID StreamId) (
 		return false, AsRiverError(err)
 	}
 
-	noMoreStreams := true
+	s.pendingModifySyncLock.Lock()
+	defer s.pendingModifySyncLock.Unlock()
+
+	if s.pendingModifySync == nil {
+		s.pendingModifySync = &ModifySyncRequest{}
+	}
+
+	// Add current streams
+	var streamsCandidate sync.Map
 	s.streams.Range(func(key, value any) bool {
+		streamsCandidate.Store(key, value)
+		return true
+	})
+
+	// Update based on the pending state
+	for _, cookie := range s.pendingModifySync.GetAddStreams() {
+		streamID, _ := StreamIdFromBytes(cookie.GetStreamId())
+		streamsCandidate.Store(streamID, struct{}{})
+	}
+	for _, streamID := range s.pendingModifySync.GetRemoveStreams() {
+		streamsCandidate.Delete(StreamId(streamID))
+	}
+
+	noMoreStreams := true
+	streamsCandidate.Range(func(key, value any) bool {
 		noMoreStreams = false
 		return false
 	})
-
-	if noMoreStreams {
-		s.syncStreamCancel()
-	}
 
 	return noMoreStreams, nil
 }
