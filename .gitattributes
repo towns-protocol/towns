@@ -1,0 +1,2 @@
+# Mark files as generated (won't show in diffs)
+packages/generated/dev/** linguist-generated
