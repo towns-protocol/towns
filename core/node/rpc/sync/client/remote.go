@@ -248,7 +248,7 @@ func (s *remoteSyncer) startStreamModifier() {
 	var (
 		log = logging.FromCtx(s.syncStreamCtx)
 		// check every modifySyncTicker if it's time to send a modify sync req to remote
-		modifySyncTicker = time.NewTicker(5 * time.Second)
+		modifySyncTicker = time.NewTicker(3 * time.Second)
 	)
 	defer modifySyncTicker.Stop()
 

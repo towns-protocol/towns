@@ -933,9 +933,9 @@ OuterLoop:
 	)
 	require.Nilf(err, "error creating message event: %v", err)
 
-	// Wait 6 seconds for the remote syncer to send ModifySync request to alice's node with the remoted stream.
+	// Wait 4 seconds for the remote syncer to send ModifySync request to alice's node with the remoted stream.
 	// Check remote syncer implementation.
-	time.Sleep(time.Second * 6)
+	time.Sleep(time.Second * 4)
 
 	_, err = aliceClient.AddEvent(
 		ctx,
