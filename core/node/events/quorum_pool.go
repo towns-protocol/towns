@@ -3,7 +3,6 @@ package events
 import (
 	"context"
 	"errors"
-	"sync"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -13,160 +12,286 @@ import (
 	"github.com/towns-protocol/towns/core/node/utils"
 )
 
+type QuorumPoolOpts struct {
+	// ContextMaker is used to transform initial context for each individual task.
+	ContextMaker func(ctx context.Context) (context.Context, context.CancelFunc)
+
+	// WaitForExtraSuccessFraction is the fraction of the time it took to achieve quorum
+	// that the quorum pool will wait for extra successes after quorum is achieved.
+	// I.e. for 5 tasks, and setting 1.0, and if quorum was achieved in 1 second,
+	// the quorum pool will wait for extra successes for additional 1 second.
+	// This is can be used in read mode to get more results, while not waiting for the unavailable replicas.
+	// If both WaitForExtraSuccessFraction and WaitForExtraSuccessTimeout are 0,
+	// the quorum pool will not wait for extra successes.
+	WaitForExtraSuccessFraction float64
+
+	// WaitForExtraSuccessTimeout is additional timeout for waiting for extra successes.
+	// See WaitForExtraSuccessFraction for more details.
+	WaitForExtraSuccessTimeout time.Duration
+
+	// ExternalQuorumCheck is a callback that returns true if quorum is reached.
+	// If provided, the quorum pool will not count successes and errors, but will
+	// use the provided callback to determine if quorum is reached.
+	ExternalQuorumCheck func() bool
+
+	// Tags are added to logging.
+	Tags []any
+}
+
+func NewQuorumPoolOpts() *QuorumPoolOpts {
+	return &QuorumPoolOpts{}
+}
+
+// WithTags adds tags that are added to log statements.
+func (o *QuorumPoolOpts) WithTags(tags ...any) *QuorumPoolOpts {
+	o.Tags = append(o.Tags, tags...)
+	return o
+}
+
+// WriteMode sets context maker to return uncancelable context with default timeouts.
+func (o *QuorumPoolOpts) WriteMode() *QuorumPoolOpts {
+	o.ContextMaker = func(ctx context.Context) (context.Context, context.CancelFunc) {
+		return utils.UncancelContext(ctx, 5*time.Second, 10*time.Second)
+	}
+	return o
+}
+
+// WriteModeWithTimeout sets context maker to return uncancelable context with given timeout.
+func (o *QuorumPoolOpts) WriteModeWithTimeout(timeout time.Duration) *QuorumPoolOpts {
+	o.ContextMaker = func(ctx context.Context) (context.Context, context.CancelFunc) {
+		return utils.UncancelContextWithTimeout(ctx, timeout)
+	}
+	return o
+}
+
+// ReadMode sets context maker to return unmodified context and enables extra success waiting.
+func (o *QuorumPoolOpts) ReadMode() *QuorumPoolOpts {
+	o.ContextMaker = func(ctx context.Context) (context.Context, context.CancelFunc) {
+		return ctx, func() {}
+	}
+	o.WaitForExtraSuccessFraction = 1.0
+	o.WaitForExtraSuccessTimeout = 100 * time.Millisecond
+	return o
+}
+
+func (o *QuorumPoolOpts) ReadModeWithFractionAndTimeout(fraction float64, timeout time.Duration) *QuorumPoolOpts {
+	o = o.ReadMode()
+	o.WaitForExtraSuccessFraction = fraction
+	o.WaitForExtraSuccessTimeout = timeout
+	return o
+}
+
+func (o *QuorumPoolOpts) WithExternalQuorumCheck(check func() bool) *QuorumPoolOpts {
+	o.ExternalQuorumCheck = check
+	return o
+}
+
+func (o *QuorumPoolOpts) shouldWaitForExtraSuccess() bool {
+	return o.WaitForExtraSuccessFraction > 0 || o.WaitForExtraSuccessTimeout > 0
+}
+
 type QuorumPool struct {
-	// hasLocalTask indicates if a local task was submitted
-	hasLocalTask bool
-	// remoteTasks keeps track of how many remote tasks are submitted.
-	totalTasks int
-	// tags are added to logging
-	tags []any
-	// Timeout is the timeout for each remote task.
-	timeout time.Duration
-	// externalQuorumCheck holds a callback that returns if quorum is reached.
-	externalQuorumCheck func() bool
-	// resultAvailable is called each time the result of a local or remote action was available.
-	// it guards totalSuccess and errors and is used to check if quorum is reached.
-	resultAvailable *sync.Cond
-	// totalSuccess keeps track how many local or remote tasks succeeded.
-	totalSuccess int
-	// errors captures all errors from local or remote tasks.
-	errors []error
+	opts QuorumPoolOpts
+
+	ctx context.Context
+
+	tasks       []func()
+	taskResults chan error
 }
 
 // NewQuorumPool creates a new quorum pool.
-func NewQuorumPool(tags ...any) *QuorumPool {
-	return NewQuorumPoolWithTimeoutForRemotes(0, tags...)
+func NewQuorumPool(ctx context.Context, opts *QuorumPoolOpts) *QuorumPool {
+	if opts == nil || opts.ContextMaker == nil {
+		panic("ContextMaker is required")
+	}
+
+	return &QuorumPool{
+		opts: *opts,
+		ctx:  ctx,
+	}
 }
 
-// NewQuorumPoolWithTimeoutForRemotes creates a new quorum pool with a global timeout for remote tasks.
-func NewQuorumPoolWithTimeoutForRemotes(timeout time.Duration, tags ...any) *QuorumPool {
-	return &QuorumPool{timeout: timeout, tags: tags, resultAvailable: sync.NewCond(&sync.Mutex{})}
+// AddTask executes f concurrently and captures the result for which the caller must wait.
+func (q *QuorumPool) AddTask(f func(ctx context.Context) error) {
+	q.tasks = append(q.tasks, func() {
+		ctx, cancel := q.opts.ContextMaker(q.ctx)
+		defer cancel()
+		result := f(ctx)
+		q.onTaskFinished(common.Address{}, result)
+	})
 }
 
-// NewQuorumPoolWithQuorumCheck creates a new quorum pool that uses the provided check callback to
-// determine if quorum is reached instead of counting success/errors returned by the submitted tasks.
-func NewQuorumPoolWithQuorumCheck(check func() bool, tags ...any) *QuorumPool {
-	return &QuorumPool{externalQuorumCheck: check, tags: tags, resultAvailable: sync.NewCond(&sync.Mutex{})}
-}
-
-// GoLocal executes f concurrently and captures the result for which the caller must wait.
-func (q *QuorumPool) GoLocal(ctx context.Context, f func(ctx context.Context) error) {
-	q.hasLocalTask = true
-	q.totalTasks++
-
-	go func() {
-		q.onTaskFinished(ctx, nil, f(ctx))
-	}()
-}
-
-// GoRemotes executes f on the given nodes concurrently and captures the results for which the caller must wait.
-func (q *QuorumPool) GoRemotes(
-	ctx context.Context,
+// AddNodeTasks executes f on the given nodes concurrently and captures the results for which the caller must wait.
+func (q *QuorumPool) AddNodeTasks(
 	nodes []common.Address,
 	f func(ctx context.Context, node common.Address) error,
 ) {
-	q.totalTasks += len(nodes)
-
 	for _, node := range nodes {
-		var ctx2 context.Context
-		var cancel context.CancelFunc
-		if q.timeout > 0 {
-			ctx2, cancel = utils.UncancelContextWithTimeout(ctx, q.timeout)
-		} else {
-			ctx2, cancel = utils.UncancelContext(ctx, 5*time.Second, 10*time.Second)
-		}
-		go func() {
+		q.tasks = append(q.tasks, func() {
+			ctx, cancel := q.opts.ContextMaker(q.ctx)
 			defer cancel()
-			q.onTaskFinished(ctx2, &node, f(ctx2, node))
-		}()
+			result := f(ctx, node)
+			q.onTaskFinished(node, result)
+		})
 	}
 }
 
-func (q *QuorumPool) onTaskFinished(ctx context.Context, remote *common.Address, err error) {
-	q.resultAvailable.L.Lock()
-	if err == nil {
-		q.totalSuccess++
-	} else {
-		q.errors = append(q.errors, err)
+func (q *QuorumPool) onTaskFinished(remote common.Address, err error) {
+	// Cancel error is expected here: Wait() returns once quorum is achieved
+	// and some remotes are still in progress.
+	// Eventually Wait caller is going to cancel the context.
+	// On the receiver side, write operations should be detached from cancelable contexts
+	// (grpc transmits context cancellation from client to server), i.e. once local write
+	// operation is started, it should not be cancelled and should proceed to completion.
+	if err != nil && !errors.Is(err, context.Canceled) {
+		tags := []any{"error", err, "remote", remote}
+		tags = append(tags, q.opts.Tags...)
+		logging.FromCtx(q.ctx).Warnw("QuorumPool: Replica Error", tags...)
 	}
 
-	q.resultAvailable.Signal()
-	q.resultAvailable.L.Unlock()
+	q.taskResults <- err
+}
 
+type QuorumState struct {
+	TaskCount    int
+	QuorumNum    int
+	SuccessCount int
+	TaskErrors   []error
+	WaitStarted  time.Time
+}
+
+func (s *QuorumState) update(err error) {
 	if err != nil {
-		tags := []any{"error", err}
-		tags = append(tags, q.tags...)
-		if remote == nil {
-			logging.FromCtx(ctx).Warnw("QuorumPool: GoLocal: Error", tags...)
-		} else if !errors.Is(err, context.Canceled) {
-			// Cancel error is expected here: Wait() returns once quorum is achieved
-			// and some remotes are still in progress.
-			// Eventually Wait caller is going to cancel the context.
-			// On the receiver side, write operations should be detached from cancelable contexts
-			// (grpc transmits context cancellation from client to server), i.e. once local write
-			// operation is started, it should not be cancelled and should proceed to completion.
-			tags := []any{"error", err, "node", *remote}
-			tags = append(tags, q.tags...)
-			logging.FromCtx(ctx).Warnw("QuorumPool: GoRemotes: Error", tags...)
-		}
+		s.TaskErrors = append(s.TaskErrors, err)
+	} else {
+		s.SuccessCount++
+	}
+}
+
+func (s *QuorumState) checkAllDone() bool {
+	return s.SuccessCount+len(s.TaskErrors) >= s.TaskCount
+}
+
+func (s *QuorumState) checkDoneNoExternal() (bool, error) {
+	// Is quorum achieved?
+	if s.SuccessCount >= s.QuorumNum {
+		return true, nil
+	}
+
+	// Can still achieve quorum?
+	maxAllowedErrors := s.TaskCount - s.QuorumNum
+	if len(s.TaskErrors) > maxAllowedErrors {
+		return true, RiverErrorWithBases(Err_QUORUM_FAILED, "quorum failed", s.TaskErrors,
+			"totalTasks", s.TaskCount,
+			"quorumNum", s.QuorumNum,
+			"failed", len(s.TaskErrors),
+			"succeeded", s.SuccessCount)
+	}
+
+	return false, nil
+}
+
+func (s *QuorumState) checkDoneExternal(check func() bool) (bool, error) {
+	// Is quorum achieved?
+	if check() {
+		return true, nil
+	}
+
+	// if no more results are expected and quorum hasn't been reached return error
+	if s.checkAllDone() {
+		return true, RiverErrorWithBases(Err_QUORUM_FAILED, "quorum failed: no more results expected", s.TaskErrors,
+			"totalTasks", s.TaskCount,
+			"quorumNum", s.QuorumNum,
+			"failed", len(s.TaskErrors),
+			"succeeded", s.SuccessCount)
+	}
+
+	return false, nil
+}
+
+func (s *QuorumState) checkDone(check func() bool) (bool, error) {
+	if check == nil {
+		return s.checkDoneNoExternal()
+	} else {
+		return s.checkDoneExternal(check)
 	}
 }
 
 // Wait returns nil in case quorum is achieved, error otherwise.
-// It must be called after all local and remote tasks are submitted.
+// It must be called after all local and remote tasks are added.
 func (q *QuorumPool) Wait() error {
-	quorumNum := TotalQuorumNum(q.totalTasks)
+	_, err := q.WaitWithState()
+	return err
+}
 
-	q.resultAvailable.L.Lock()
-	defer q.resultAvailable.L.Unlock()
+func (q *QuorumPool) WaitWithState() (*QuorumState, error) {
+	state := &QuorumState{
+		TaskCount:   len(q.tasks),
+		QuorumNum:   TotalQuorumNum(len(q.tasks)),
+		WaitStarted: time.Now(),
+	}
+	q.taskResults = make(chan error, state.TaskCount)
+
+	for _, task := range q.tasks {
+		go task()
+	}
 
 	for {
-		// determined if quorum is reached is done through external callback
-		if q.externalQuorumCheck != nil && q.externalQuorumCheck() {
-			return nil
-		}
-
-		if q.externalQuorumCheck == nil && q.totalSuccess >= quorumNum { // quorum achieved
-			return nil
-		}
-
-		if q.externalQuorumCheck == nil && len(q.errors) > (q.totalTasks - quorumNum) { // not able to achieve quorum anymore
-			remotes := q.totalTasks
-			if q.hasLocalTask {
-				remotes--
+		select {
+		case err := <-q.taskResults:
+			state.update(err)
+			done, err := state.checkDone(q.opts.ExternalQuorumCheck)
+			if done {
+				if err == nil && q.opts.shouldWaitForExtraSuccess() {
+					q.waitForExtraSuccess(state)
+					return state, nil
+				}
+				return state, err
 			}
-
-			baseErrors := q.errors
-			q.errors = nil
-
-			return RiverErrorWithBases(Err_QUORUM_FAILED, "quorum failed", baseErrors,
-				"remotes", remotes,
-				"local", q.hasLocalTask,
-				"quorumNum", quorumNum,
-				"failed", len(baseErrors),
-				"succeeded", q.totalSuccess)
+		case <-q.ctx.Done():
+			return state, q.ctx.Err()
 		}
+	}
+}
 
-		// if no more results are expected and quorum hasn't been reached return error
-		if q.totalSuccess+len(q.errors) >= q.totalTasks {
-			remotes := q.totalTasks
-			if q.hasLocalTask {
-				remotes--
+func (q *QuorumPool) waitForExtraSuccess(state *QuorumState) {
+	now := time.Now()
+	alreadyWaited := now.Sub(state.WaitStarted)
+
+	var waitTimeout time.Duration
+	if q.opts.WaitForExtraSuccessFraction > 0 {
+		waitTimeout += time.Duration(float64(alreadyWaited) * q.opts.WaitForExtraSuccessFraction)
+	}
+	if q.opts.WaitForExtraSuccessTimeout > 0 {
+		waitTimeout += q.opts.WaitForExtraSuccessTimeout
+	}
+
+	contextDeadline, ok := q.ctx.Deadline()
+	if ok {
+		// Only wait for up to 90% of the original context timeout
+		contextDeadlineTrim := contextDeadline.Sub(state.WaitStarted) / 10
+		contextDeadline := contextDeadline.Add(-contextDeadlineTrim)
+		contextTimeout := contextDeadline.Sub(now)
+		if contextTimeout <= 0 {
+			return
+		}
+		if contextTimeout < waitTimeout {
+			waitTimeout = contextTimeout
+		}
+	}
+
+	for {
+		select {
+		case err := <-q.taskResults:
+			state.update(err)
+			if state.checkAllDone() {
+				return
 			}
-
-			baseErrors := q.errors
-			q.errors = nil
-
-			return RiverErrorWithBases(Err_QUORUM_FAILED, "quorum failed", baseErrors,
-				"remotes", remotes,
-				"local", q.hasLocalTask,
-				"quorumNum", quorumNum,
-				"failed", len(baseErrors),
-				"succeeded", q.totalSuccess)
+		case <-time.After(waitTimeout):
+			return
+		case <-q.ctx.Done():
+			return // return success anyway since quorum already achieved
 		}
-
-		// wait for more task results
-		q.resultAvailable.Wait()
 	}
 }
 
