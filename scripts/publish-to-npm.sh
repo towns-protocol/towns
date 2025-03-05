@@ -133,9 +133,8 @@ while gh pr view "$PR_NUMBER" --json state -q ".state" | grep -q "OPEN"; do
 done
 echo "PR #${PR_NUMBER} has been merged"
 
-# Commented out until we begin publishing @river-build/contracts to npm
-# # Pull the changes to local main
-# git pull --rebase --autostash
+# Pull the changes to local main
+git pull --rebase
 
 # Publish the nightly version to npm
 echo "Starting Lerna publish..."
