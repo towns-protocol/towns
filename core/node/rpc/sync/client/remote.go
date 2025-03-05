@@ -122,6 +122,8 @@ func (s *remoteSyncer) Run() {
 
 	go s.connectionAlive(&latestMsgReceived)
 
+	go s.startStreamModifier()
+
 	for s.responseStream.Receive() {
 		if s.syncStreamCtx.Err() != nil {
 			break
