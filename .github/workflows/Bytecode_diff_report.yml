@@ -1,6 +1,6 @@
 name: Bytecode Diff Report
 env:
-    FOUNDRY_VERSION: stable
+    FOUNDRY_VERSION: nightly
     OMEGA_PRIVATE_KEY: ${{ secrets.OMEGA_BASE_DEPLOYER_PK }}
     TESTNET_PRIVATE_KEY: ${{ secrets.GAMMA_BASE_SEPOLIA_DEPLOYER_PK }}
     BASE_RPC_URL: ${{ secrets.BASE_RPC_URL }}

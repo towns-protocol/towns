@@ -1,10 +1,11 @@
 {
     "name": "@river-build/contracts",
+    "version": "0.0.0",
     "private": true,
     "packageManager": "yarn@3.8.0",
     "scripts": {
         "all": "make all",
-        "build": "make install && make build",
+        "build": "make all",
         "clean": "make clean",
         "format": "make format",
         "lint": "make lint",

@@ -1,31 +1,31 @@
 FROM docker.io/golang:1.22.2-bookworm
 
 # Install curl and software-properties-common, necessary for adding repositories
-RUN apt-get update && apt-get install -y curl software-properties-common gnupg2 bash
+RUN apt-get update && apt-get install -y curl software-properties-common gnupg2
 
 # Add the NodeSource Node.js 20.x repo for Debian-based distributions
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
 
 # Now install Node.js (which includes npm) and other dependencies
 RUN apt-get update && apt-get install -y \
-  nodejs \
-  bash \
-  git \
-  curl \
-  protobuf-compiler \
-  python3 \
-  python3-pip \
-  make \
-  uuid-runtime \
-  && apt-get clean \
-  && rm -rf /var/lib/apt/lists/*
+    nodejs \
+    bash \
+    git \
+    curl \
+    protobuf-compiler \
+    python3 \
+    python3-pip \
+    make \
+    uuid-runtime \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # Python config
 RUN pip3 install --break-system-packages --no-cache --upgrade pip setuptools
 
 # Install buf
 RUN GO111MODULE=on GOBIN=/usr/local/bin go install \
-  github.com/bufbuild/buf/cmd/buf@v1.28.1
+    github.com/bufbuild/buf/cmd/buf@v1.28.1
 
 # Install yarn
 RUN npm install -g corepack@0.24.1
@@ -37,12 +37,8 @@ COPY . /monorepo
 
 WORKDIR /monorepo
 
-# This updates ^workspace references to the actual package version
-# which is necessary to pull the correct version from npm
-RUN node ./scripts/update-generated-dependents.js && rm -rf ./packages/generated
-
 RUN yarn
-RUN SKIP_BUILD_CONTRACT_TYPES=true yarn csb:build
+RUN yarn csb:build
 
 ENV MONOREPO_ROOT=/monorepo
 ENV SINGLE_LINE_LOGS="true"
