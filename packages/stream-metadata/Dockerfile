@@ -2,9 +2,6 @@ FROM node:lts-alpine3.20 as builder
 
 WORKDIR /river
 
-# install binaries
-RUN apk add --no-cache git curl bash
-
 # monorepo root config
 COPY ./package.json ./package.json
 COPY ./.yarn/plugins ./.yarn/plugins
@@ -38,7 +35,7 @@ COPY ./packages/stream-metadata /river/packages/stream-metadata
 RUN apk add --no-cache git curl
 RUN corepack enable
 RUN yarn install
-RUN SKIP_BUILD_CONTRACT_TYPES=true yarn run turbo build --filter @river-build/stream-metadata
+RUN yarn run turbo build --filter @river-build/stream-metadata
 
 # create runner image with only the necessary files
 FROM node:lts-alpine3.20 as runner
@@ -53,7 +50,7 @@ RUN yarn add dd-trace@^5.19.0
 ARG GIT_SHA
 
 ENV DD_GIT_REPOSITORY_URL="https://github.com/river-build/river" \
-  DD_GIT_COMMIT_SHA=${GIT_SHA} \
-  NODE_ENV=production
+    DD_GIT_COMMIT_SHA=${GIT_SHA} \
+    NODE_ENV=production
 
 CMD ["node", "--enable-source-maps", "./dist/node_esbuild.cjs"]
