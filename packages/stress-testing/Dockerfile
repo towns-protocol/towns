@@ -37,6 +37,10 @@ COPY . /monorepo
 
 WORKDIR /monorepo
 
+# This updates ^workspace references to the actual package version
+# which is necessary to pull the correct version from npm
+RUN node ./scripts/update-generated-dependents.js && rm -rf ./packages/generated
+
 RUN yarn
 RUN SKIP_BUILD_CONTRACT_TYPES=true yarn csb:build
 
