@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useLayoutEffect, useRef, useState } from 'react'
+import React, { useCallback, useContext, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { TickerAttachment } from '@river-build/sdk'
 import {
     AreaSeries,
@@ -10,6 +10,7 @@ import {
 } from 'lightweight-charts'
 import { zip } from 'lodash'
 import { useInView } from 'react-intersection-observer'
+import { useUserLookupContext } from 'use-towns-client'
 import { themes } from 'ui/styles/themes'
 import { Box, Button, Dropdown, Icon, IconButton, Pill, SizeBox, Stack, Text } from '@ui'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
@@ -25,9 +26,11 @@ import { TokenPrice } from '@components/Web3/Trading/ui/TokenPrice'
 import { useOpenMessageThread } from 'hooks/useOpenThread'
 import { TickerThreadContext } from '@components/MessageThread/TickerThreadContext'
 import { MessageTimelineContext } from '@components/MessageTimeline/MessageTimelineContext'
+import { useTradingContext } from '@components/Web3/Trading/TradingContextProvider'
+import { Avatar } from '@components/Avatar/Avatar'
+import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { GetBars, TimeFrame, useCoinBars } from './useCoinBars'
 import { useCoinData } from './useCoinData'
-
 const CHART_TIME_FORMAT_OPTIONS: {
     [key: string]: object
 } = {
@@ -137,6 +140,16 @@ export const TradingChart = (props: { address: string; chainId: string; disabled
     const [chartType, setChartType] = useState<'area' | 'candlestick'>('area')
 
     const isTradingThreadContext = useContext(TickerThreadContext) !== undefined
+
+    const { tokenTransferRollups } = useTradingContext()
+    const tradingUserIds = useMemo(() => {
+        const transfers = tokenTransferRollups[address] ?? []
+        const userIds = transfers.reduce((acc, transfer) => {
+            acc.add(transfer.userId)
+            return acc
+        }, new Set<string>())
+        return Array.from(userIds)
+    }, [tokenTransferRollups, address])
 
     const onToggleChartType = useCallback(() => {
         setChartType((t) => (t === 'area' ? 'candlestick' : 'area'))
@@ -303,6 +316,11 @@ export const TradingChart = (props: { address: string; chainId: string; disabled
                                 <Pill background="level3" color="inherit" whiteSpace="nowrap">
                                     FDV&#8201;{formatCompactUSD(Number(coinData.marketCap))}
                                 </Pill>
+                                {tradingUserIds.length > 0 && (
+                                    <Pill background="level3" color="inherit" whiteSpace="nowrap">
+                                        <TradingUserIds userIds={tradingUserIds} />
+                                    </Pill>
+                                )}
                             </Stack>
                         )}
                     </>
@@ -520,3 +538,45 @@ const TickerChangeIndicator = ({ change }: { change: number }) => (
         </Text>
     </Box>
 )
+
+const TradingUserIds = ({ userIds }: { userIds: string[] }) => {
+    const { lookupUser } = useUserLookupContext()
+    const summaryText = useMemo(() => {
+        if (userIds.length === 0) {
+            return ''
+        }
+        if (userIds.length === 1) {
+            const user = lookupUser(userIds[0])
+            return getPrettyDisplayName(user) + ' traded'
+        }
+        if (userIds.length === 2) {
+            const user1 = lookupUser(userIds[0])
+            const user2 = lookupUser(userIds[1])
+            return getPrettyDisplayName(user1) + ' and ' + getPrettyDisplayName(user2) + ' traded'
+        }
+
+        const user1 = lookupUser(userIds[0])
+        const user2 = lookupUser(userIds[1])
+        const prefix = getPrettyDisplayName(user1) + ', ' + getPrettyDisplayName(user2)
+        return userIds.length == 3
+            ? prefix + ' and one other traded'
+            : prefix + ' and ' + (userIds.length - 2) + ' others traded'
+    }, [lookupUser, userIds])
+
+    return (
+        <Stack horizontal gap="xs" alignItems="center" paddingLeft="sm">
+            <Stack horizontal gap="xs">
+                {userIds.slice(0, 3).map((userId) => (
+                    <Box insetLeft="sm" paddingLeft="xs" key={userId}>
+                        <Box border="faint" rounded="full" zIndex="above">
+                            <Avatar size="avatar_xs" userId={userId} />
+                        </Box>
+                    </Box>
+                ))}
+            </Stack>
+            <Text fontSize="sm" color="default" fontWeight="medium">
+                {summaryText}
+            </Text>
+        </Stack>
+    )
+}

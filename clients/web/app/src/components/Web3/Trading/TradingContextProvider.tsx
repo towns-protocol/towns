@@ -422,7 +422,7 @@ const useTokenTransferRollups = () => {
             const address =
                 transfer.chainId === 'solana-mainnet'
                     ? bin_toString(transfer.address)
-                    : bin_toHexString(transfer.address)
+                    : '0x' + bin_toHexString(transfer.address)
             if (!rollup.current[address]) {
                 rollup.current[address] = []
             }
