@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"runtime/pprof"
+	"sync"
 	"time"
 
 	"connectrpc.com/connect"
@@ -86,43 +87,59 @@ func (s *Service) ModifySync(
 	res := connect.NewResponse(&ModifySyncResponse{})
 
 	runWithLabels(ctx, req.Msg.GetSyncId(), func(ctx context.Context) {
-		for _, syncPos := range req.Msg.GetAddStreams() {
-			if _, err := s.syncHandler.AddStreamToSync(ctx, connect.NewRequest(&AddStreamToSyncRequest{
-				SyncId:  req.Msg.GetSyncId(),
-				SyncPos: syncPos,
-			})); err != nil {
-				connectErr := AsRiverError(err).
-					Tags("syncId", req.Msg.GetSyncId(), "streamId", syncPos.GetStreamId()).
-					Func("AddStreamsToSync").
-					LogWarn(log).
-					AsConnectError()
+		var wg sync.WaitGroup
 
-				res.Msg.Adds = append(res.Msg.Adds, &SyncStreamOpStatus{
-					StreamId: syncPos.GetStreamId(),
-					Code:     int32(connectErr.Code()),
-					Message:  connectErr.Error(),
-				})
-			}
+		for _, syncPos := range req.Msg.GetAddStreams() {
+			wg.Add(1)
+			go func(syncPos *SyncCookie) {
+				if _, err := s.syncHandler.AddStreamToSync(ctx, connect.NewRequest(&AddStreamToSyncRequest{
+					SyncId:  req.Msg.GetSyncId(),
+					SyncPos: syncPos,
+				})); err != nil {
+					connectErr := AsRiverError(err).
+						Tags("syncId", req.Msg.GetSyncId(), "streamId", syncPos.GetStreamId()).
+						Func("AddStreamsToSync").
+						LogWarn(log).
+						AsConnectError()
+
+					res.Msg.Adds = append(res.Msg.Adds, &SyncStreamOpStatus{
+						StreamId: syncPos.GetStreamId(),
+						Code:     int32(connectErr.Code()),
+						Message:  connectErr.Error(),
+					})
+				}
+
+				wg.Done()
+			}(syncPos)
 		}
+
+		wg.Wait()
 
 		for _, streamID := range req.Msg.GetRemoveStreams() {
-			if _, err := s.syncHandler.RemoveStreamFromSync(ctx, connect.NewRequest(&RemoveStreamFromSyncRequest{
-				SyncId:   req.Msg.GetSyncId(),
-				StreamId: streamID,
-			})); err != nil {
-				connectErr := AsRiverError(err).
-					Tags("syncId", req.Msg.GetSyncId(), "streamId", streamID).
-					Func("RemoveStreamFromSync").
-					LogWarn(log).
-					AsConnectError()
-
-				res.Msg.Removals = append(res.Msg.Removals, &SyncStreamOpStatus{
+			wg.Add(1)
+			go func(streamID []byte) {
+				if _, err := s.syncHandler.RemoveStreamFromSync(ctx, connect.NewRequest(&RemoveStreamFromSyncRequest{
+					SyncId:   req.Msg.GetSyncId(),
 					StreamId: streamID,
-					Code:     int32(connectErr.Code()),
-					Message:  connectErr.Error(),
-				})
-			}
+				})); err != nil {
+					connectErr := AsRiverError(err).
+						Tags("syncId", req.Msg.GetSyncId(), "streamId", streamID).
+						Func("RemoveStreamFromSync").
+						LogWarn(log).
+						AsConnectError()
+
+					res.Msg.Removals = append(res.Msg.Removals, &SyncStreamOpStatus{
+						StreamId: streamID,
+						Code:     int32(connectErr.Code()),
+						Message:  connectErr.Error(),
+					})
+				}
+
+				wg.Done()
+			}(streamID)
 		}
+
+		wg.Wait()
 	})
 
 	return res, nil
