@@ -271,8 +271,7 @@ func (s *remoteSyncer) modifySync(ctx context.Context) error {
 	s.pendingModifySyncLock.Lock()
 	toAdd := s.pendingModifySync.GetAddStreams()[:]
 	toRemove := s.pendingModifySync.GetRemoveStreams()[:]
-	s.pendingModifySync.RemoveStreams = nil
-	s.pendingModifySync.AddStreams = nil
+	s.pendingModifySync = &ModifySyncRequest{}
 	s.pendingModifySyncLock.Unlock()
 
 	if s.otelTracer != nil {
@@ -393,27 +392,7 @@ func (s *remoteSyncer) RemoveStream(ctx context.Context, streamID StreamId) (boo
 		s.pendingModifySync.RemoveStreams = append(s.pendingModifySync.RemoveStreams, streamID[:])
 	}
 
-	// Add current streams
-	var streamsCandidate sync.Map
-	s.streams.Range(func(key, value any) bool {
-		streamsCandidate.Store(key, value)
-		return true
-	})
-
-	// Update based on the pending state
-	for _, cookie := range s.pendingModifySync.GetAddStreams() {
-		streamID, _ := StreamIdFromBytes(cookie.GetStreamId())
-		streamsCandidate.Store(streamID, struct{}{})
-	}
-	for _, streamID := range s.pendingModifySync.GetRemoveStreams() {
-		streamsCandidate.Delete(StreamId(streamID))
-	}
-
-	noMoreStreams := true
-	streamsCandidate.Range(func(key, value any) bool {
-		noMoreStreams = false
-		return false
-	})
+	_, noMoreStreams := s.getStateCandidateNoLock()
 
 	return noMoreStreams, nil
 }
@@ -428,8 +407,13 @@ func (s *remoteSyncer) DebugDropStream(ctx context.Context, streamID StreamId) (
 	}
 
 	s.pendingModifySyncLock.Lock()
-	defer s.pendingModifySyncLock.Unlock()
+	_, noMoreStreams := s.getStateCandidateNoLock()
+	s.pendingModifySyncLock.Unlock()
 
+	return noMoreStreams, nil
+}
+
+func (s *remoteSyncer) getStateCandidateNoLock() (*sync.Map, bool) {
 	if s.pendingModifySync == nil {
 		s.pendingModifySync = &ModifySyncRequest{}
 	}
@@ -456,5 +440,5 @@ func (s *remoteSyncer) DebugDropStream(ctx context.Context, streamID StreamId) (
 		return false
 	})
 
-	return noMoreStreams, nil
+	return &streamsCandidate, noMoreStreams
 }
