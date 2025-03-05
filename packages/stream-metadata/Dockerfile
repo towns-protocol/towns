@@ -34,11 +34,8 @@ COPY ./packages/sdk /river/packages/sdk
 COPY ./packages/encryption /river/packages/encryption
 COPY ./packages/stream-metadata /river/packages/stream-metadata
 
-# This updates ^workspace references to the actual package version
-# which is necessary to pull the correct version from npm
-RUN node ./scripts/update-generated-dependents.js && rm -rf ./packages/generated
-
 # install dependencies and build
+RUN apk add --no-cache git curl
 RUN corepack enable
 RUN yarn install
 RUN SKIP_BUILD_CONTRACT_TYPES=true yarn run turbo build --filter @river-build/stream-metadata

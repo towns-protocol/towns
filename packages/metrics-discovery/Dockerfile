@@ -30,11 +30,6 @@ COPY ./packages/dlog /river/packages/dlog
 COPY ./packages/proto /river/packages/proto
 COPY ./packages/metrics-discovery /river/packages/metrics-discovery
 
-
-# This updates ^workspace references to the actual package version
-# which is necessary to pull the correct version from npm
-RUN node ./scripts/update-generated-dependents.js && rm -rf ./packages/generated
-
 # install dependencies and build
 RUN corepack enable
 RUN yarn install
