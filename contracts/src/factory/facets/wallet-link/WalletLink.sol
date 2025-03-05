@@ -5,7 +5,7 @@ pragma solidity ^0.8.23;
 import {IWalletLink} from "./IWalletLink.sol";
 
 // libraries
-
+import {WalletLib} from "./libraries/WalletLib.sol";
 // contracts
 import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
 import {WalletLinkBase} from "./WalletLinkBase.sol";
@@ -36,6 +36,13 @@ contract WalletLink is IWalletLink, WalletLinkBase, OwnableBase, Facet {
     uint256 nonce
   ) external {
     _linkWalletToRootWallet(wallet, rootWallet, nonce);
+  }
+
+  function linkNonEVMWalletToRootKey(
+    NonEVMLinkedWallet calldata wallet,
+    uint256 nonce
+  ) external {
+    _linkNonEVMWalletToRootWalletViaCaller(wallet, nonce);
   }
 
   /// @inheritdoc IWalletLink
@@ -85,10 +92,11 @@ contract WalletLink is IWalletLink, WalletLinkBase, OwnableBase, Facet {
   /**
    * @inheritdoc IWalletLink
    */
-  function getWalletsByRootKeyWithMetadata(
-    address rootKey
-  ) external view returns (WalletWithMetadata[] memory wallets) {
-    return _getWalletsByRootKeyWithMetadata(rootKey);
+  function explicitWalletsByRootKey(
+    address rootKey,
+    WalletQueryOptions calldata options
+  ) external view returns (WalletLib.Wallet[] memory wallets) {
+    return _explicitWalletsByRootKey(rootKey, options);
   }
 
   /**

@@ -4,7 +4,7 @@ pragma solidity ^0.8.23;
 // interfaces
 
 // libraries
-
+import {WalletLib} from "./libraries/WalletLib.sol";
 // contracts
 
 interface IWalletLinkBase {
@@ -12,16 +12,35 @@ interface IWalletLinkBase {
   //                           Structs
   // =============================================================
 
+  /// @notice Struct for Solana wallet linking requirements
+  /// @dev This will be encoded in extraData for Solana wallets with key being "extPubKey"
+  /// extPubKey[5] = abi.decode(extraData["extPubKey"], (uint256[5]))
+  struct SolanaWalletData {
+    uint256[5] extPubKey; // Extended public key for Solana
+  }
+
+  /// @notice Struct for EVM only linked wallets
   struct LinkedWallet {
     address addr;
     bytes signature;
     string message;
   }
 
-  struct WalletWithMetadata {
-    address wallet;
-    bool isDefaultWallet;
-    bool isSmartAccount;
+  struct VMSpecificData {
+    string key;
+    bytes value;
+  }
+
+  /// @notice Struct for non-EVM linked wallets
+  struct NonEVMLinkedWallet {
+    WalletLib.Wallet wallet;
+    bytes signature; // Signature in the VM's native format
+    string message; // Message that was signed
+    VMSpecificData[] extraData; // Flexible array for VM-specific requirements
+  }
+
+  struct WalletQueryOptions {
+    bool includeDelegations;
   }
 
   // =============================================================
@@ -40,10 +59,10 @@ interface IWalletLinkBase {
     address indexed defaultWallet
   );
 
-  /// @notice Emitted when a third party delegation is linked
-  event LinkThirdPartyDelegation(
-    address indexed delegator,
-    address indexed delegatedWallet
+  /// @notice Emitted when a non-EVM wallet is linked to a root key
+  event LinkNonEVMWalletToRootWallet(
+    string indexed wallet,
+    address indexed rootKey
   );
 
   // =============================================================
@@ -60,6 +79,12 @@ interface IWalletLinkBase {
   error WalletLink__DefaultWalletAlreadySet();
   error WalletLink__MaxLinkedWalletsReached();
   error WalletLink__CannotRemoveDefaultWallet();
+  error WalletLink__UnsupportedVMType();
+  error WalletLink__InvalidVMSpecificData(string key, bytes value);
+  error WalletLink__InvalidMessage();
+  error WalletLink__NonEVMWalletAlreadyLinked(string wallet, address rootKey);
+  error WalletLink__InvalidNonEVMAddress();
+  error WalletLink__RootKeyMismatch(address callerRootKey, address rootKey);
 }
 
 interface IWalletLink is IWalletLinkBase {
@@ -142,9 +167,10 @@ interface IWalletLink is IWalletLinkBase {
    * @param rootKey the public key of the users rootkey to find associated wallets for
    * @return wallets an array of wallets with their metadata
    */
-  function getWalletsByRootKeyWithMetadata(
-    address rootKey
-  ) external view returns (WalletWithMetadata[] memory wallets);
+  function explicitWalletsByRootKey(
+    address rootKey,
+    WalletQueryOptions calldata options
+  ) external view returns (WalletLib.Wallet[] memory wallets);
 
   /**
    * @notice Returns the root key for a given wallet

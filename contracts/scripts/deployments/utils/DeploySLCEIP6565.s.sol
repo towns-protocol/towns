@@ -14,6 +14,7 @@ contract DeploySLCEIP6565 is Deployer {
     address verifierLib;
     bytes memory bytecode = abi.encodePacked(type(SCL_EIP6565).creationCode);
 
+    // Libraries are deployed differently in Foundry
     vm.startBroadcast(deployer);
     assembly {
       verifierLib := create(0, add(bytecode, 0x20), mload(bytecode))

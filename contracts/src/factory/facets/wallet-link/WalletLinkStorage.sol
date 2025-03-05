@@ -4,7 +4,8 @@ pragma solidity ^0.8.23;
 // interfaces
 
 // libraries
-
+import {WalletLib} from "./libraries/WalletLib.sol";
+import {StringSet} from "contracts/src/utils/StringSet.sol";
 // contracts
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
@@ -22,6 +23,10 @@ library WalletLinkStorage {
     mapping(address => address) defaultWalletByRootKey;
     // mapping of wallet link external dependencies
     mapping(bytes32 => address) dependencies;
+    //mapping RootKey to NonEVMWallets is a 1 to many relationship, a root key can have many nonEVMWallets
+    mapping(address => WalletLib.RootWallet) rootWalletByRootKey;
+    // mapping NonEVMWallets to RootKey is a 1 to 1 relationship, a nonEVMWallet can only be linked to 1 root key
+    mapping(bytes32 => address) rootKeyByHash;
   }
 
   function layout() internal pure returns (Layout storage s) {
