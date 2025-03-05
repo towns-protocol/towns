@@ -109,7 +109,6 @@ export const TradingChartAttachment = (props: {
             {!isTradeThreadContext && (
                 <Stack horizontal paddingX paddingY="none" gap="sm">
                     <Button
-                        compact
                         grow
                         size="button_x5"
                         tone="level3"
@@ -120,7 +119,6 @@ export const TradingChartAttachment = (props: {
                         Buy
                     </Button>
                     <Button
-                        compact
                         grow
                         size="button_x5"
                         tone="level3"

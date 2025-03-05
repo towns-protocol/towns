@@ -61,9 +61,20 @@ export const isEvmTransactionRequest = (
     return request?.type === 'evm'
 }
 
+type SendOptions = {
+    skipPendingToast?: boolean
+}
+
 const TradingContext = createContext<{
-    sendSolanaTransaction: (transaction: SolanaTransactionRequest) => void
-    sendEvmTransaction: (transaction: EvmTransactionRequest, signer: Signer) => void
+    sendSolanaTransaction: (
+        transaction: SolanaTransactionRequest,
+        options?: SendOptions,
+    ) => void | Promise<void>
+    sendEvmTransaction: (
+        transaction: EvmTransactionRequest,
+        signer: Signer,
+        options: SendOptions,
+    ) => void | Promise<void>
     pendingEvmTransaction: EvmTransactionRequest | undefined
     pendingSolanaTransaction: SolanaTransactionRequest | undefined
     tokenTransferRollups: ReturnType<typeof useTokenTransferRollups>['tokenTransferRollups']
@@ -83,11 +94,12 @@ export const TradingContextProvider = ({ children }: { children: React.ReactNode
     const { solanaWallet } = useSolanaWallet()
     const townsClient = useTownsClient()
     const [pendingSolanaTransaction, setPendingSolanaTransaction] = React.useState<
-        SolanaTransactionRequest | undefined
+        (SolanaTransactionRequest & { skipPendingToast?: boolean }) | undefined
     >(undefined)
 
-    const [pendingEvmTransaction, setPendingEvmTransaction] =
-        React.useState<EvmTransactionRequest>()
+    const [pendingEvmTransaction, setPendingEvmTransaction] = React.useState<
+        EvmTransactionRequest & { skipPendingToast?: boolean }
+    >()
 
     const connection = useMemo(() => {
         if (!env.VITE_SOLANA_MAINNET_RPC_URL) {
@@ -100,7 +112,7 @@ export const TradingContextProvider = ({ children }: { children: React.ReactNode
     const { tokenTransferRollups } = useTokenTransferRollups()
 
     const sendSolanaTransaction = useCallback(
-        async (transaction: SolanaTransactionRequest) => {
+        async (transaction: SolanaTransactionRequest, options?: SendOptions) => {
             if (!solanaWallet) {
                 console.error('No Solana wallet')
                 return
@@ -117,7 +129,10 @@ export const TradingContextProvider = ({ children }: { children: React.ReactNode
             }
 
             console.info('Sending Solana transaction:', transaction)
-            setPendingSolanaTransaction(transaction)
+            setPendingSolanaTransaction({
+                ...transaction,
+                skipPendingToast: options?.skipPendingToast,
+            })
 
             try {
                 const versionedTransaction = VersionedTransaction.deserialize(
@@ -218,8 +233,12 @@ export const TradingContextProvider = ({ children }: { children: React.ReactNode
     )
 
     const sendEvmTransaction = useCallback(
-        async (request: EvmTransactionRequest, signer: Signer) => {
-            setPendingEvmTransaction({ ...request, status: TransactionStatus.Pending })
+        async (request: EvmTransactionRequest, signer: Signer, options?: SendOptions) => {
+            setPendingEvmTransaction({
+                ...request,
+                status: TransactionStatus.Pending,
+                skipPendingToast: options?.skipPendingToast,
+            })
             // IF this is a token transfer, we need to approve the token first
             // by bundling an approve call with the actual transaction call.
             // call approve(spender, amount) with quote.estimate.approvalAddress, amount
@@ -326,6 +345,7 @@ export const TradingContextProvider = ({ children }: { children: React.ReactNode
     useEffect(() => {
         if (
             !pendingTransactionData ||
+            pendingSolanaTransaction?.skipPendingToast ||
             pendingSolanaTransaction?.status === TransactionStatus.Success
         ) {
             return
@@ -349,7 +369,11 @@ export const TradingContextProvider = ({ children }: { children: React.ReactNode
 
     const pendingEvmTransactionData = pendingEvmTransaction?.transaction
     useEffect(() => {
-        if (!pendingEvmTransaction || pendingEvmTransaction?.status === TransactionStatus.Success) {
+        if (
+            !pendingEvmTransaction ||
+            pendingEvmTransaction.skipPendingToast ||
+            pendingEvmTransaction?.status === TransactionStatus.Success
+        ) {
             return
         }
         const toastId = popupToast(

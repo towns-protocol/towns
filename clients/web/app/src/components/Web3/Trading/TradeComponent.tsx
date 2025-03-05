@@ -1,9 +1,18 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, {
+    useCallback,
+    useEffect,
+    useImperativeHandle,
+    useMemo,
+    useRef,
+    useState,
+} from 'react'
 import { TSigner, TransactionStatus, useConnectivity } from 'use-towns-client'
 import { useCoinData } from '@components/TradingChart/useCoinData'
 import { Box, FancyButton, Stack, Text } from '@ui'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { WalletReady } from 'privy/WalletReady'
+import { popupToast } from '@components/Notifications/popupToast'
+import { StandardToast } from '@components/Notifications/StandardToast'
 import { BigIntInput } from './ui/BigIntInput'
 import { RadioButton } from './ui/RadioButton'
 import { ButtonSelection } from './ui/SelectButton'
@@ -20,20 +29,29 @@ import {
 import { useTokenBalance } from './useTokenBalance'
 import { getTokenValueData } from './hooks/getTokenValue'
 import { isTradingChain, tradingChains } from './tradingConstants'
-import { useOnPressTrade } from './hooks/useTradeQuote'
+import { useSendTradeTransaction } from './hooks/useTradeQuote'
 
 // const DISPLAY_QUOTE = false
+
+export type QuoteStatus = (
+    | { status: 'loading' | 'error' | 'idle' }
+    | {
+          status: 'ready'
+          data: {
+              request: EvmTransactionRequest | SolanaTransactionRequest
+              metaData: QuoteMetaData
+          }
+      }
+) & { mode: 'buy' | 'sell' }
 
 type Props = {
     mode: 'buy' | 'sell'
     tokenAddress: string
     chainId: string
     onModeChanged?: (mode: 'buy' | 'sell') => void
-    onQuoteChanged?: (
-        request: EvmTransactionRequest | SolanaTransactionRequest | undefined,
-        metaData: QuoteMetaData | undefined,
-    ) => void
+    onQuoteStatusChanged?: (status: QuoteStatus | undefined) => void
     threadInfo: { channelId: string; messageId: string } | undefined
+    resetRef?: React.RefObject<{ reset: () => void }>
 }
 
 export type QuoteMetaData = {
@@ -43,7 +61,7 @@ export type QuoteMetaData = {
 }
 
 export const TradeComponent = (props: Props) => {
-    const { tokenAddress, threadInfo, onQuoteChanged } = props
+    const { tokenAddress, threadInfo, onQuoteStatusChanged } = props
 
     const [mode, setMode] = useState<'buy' | 'sell'>(props.mode ?? 'buy')
 
@@ -139,6 +157,13 @@ export const TradeComponent = (props: Props) => {
 
     const [preselectedOption, setPreselectedOption] = useState<{ label: string; value: bigint }>()
 
+    useImperativeHandle(props.resetRef, () => ({
+        reset: () => {
+            setPreselectedOption(undefined)
+            setAmount(0n)
+        },
+    }))
+
     const onSetPreselectedAmount = useCallback((option: { label: string; value: bigint }) => {
         setPreselectedOption(option)
         setAmount(option.value)
@@ -169,7 +194,15 @@ export const TradeComponent = (props: Props) => {
         slippage: 0.01,
     })
 
-    const { data: quoteData } = quote
+    const {
+        data: quoteData,
+        isLoading: isQuoteLoading,
+        isError: isQuoteError,
+        error: quoteError,
+    } = quote
+
+    const onQuoteStatusChangedRef = useRef(onQuoteStatusChanged)
+    onQuoteStatusChangedRef.current = onQuoteStatusChanged
 
     const request = useMemo(() => {
         if (!quoteData) {
@@ -229,7 +262,7 @@ export const TradeComponent = (props: Props) => {
         address,
     ])
 
-    const { onPressTrade } = useOnPressTrade({
+    const { sendTradeTransaction } = useSendTradeTransaction({
         request: request,
         chainId: chainId,
     })
@@ -260,10 +293,30 @@ export const TradeComponent = (props: Props) => {
     }, [quoteData, mode, toTokenAddress, chainConfig, coinData, fromTokenAddress])
 
     useEffect(() => {
-        if (request && metaData) {
-            onQuoteChanged?.(request, metaData)
+        if (isQuoteError) {
+            popupToast(({ toast }) => (
+                <StandardToast.Error
+                    message="Error getting quote"
+                    subMessage={quoteError?.message}
+                    toast={toast}
+                />
+            ))
+            onQuoteStatusChangedRef.current?.({ status: 'error', mode })
+        } else if (isQuoteLoading) {
+            onQuoteStatusChangedRef.current?.({ status: 'loading', mode })
+        } else if (request && metaData) {
+            onQuoteStatusChangedRef.current?.({
+                status: 'ready',
+                mode,
+                data: {
+                    request: request,
+                    metaData: metaData,
+                },
+            })
+        } else {
+            onQuoteStatusChangedRef.current?.(undefined)
         }
-    }, [request, metaData, onQuoteChanged])
+    }, [isQuoteError, isQuoteLoading, metaData, mode, quoteError?.message, request])
 
     if (!isTradingChain(chainId)) {
         return (
@@ -295,7 +348,7 @@ export const TradeComponent = (props: Props) => {
                                 options={quickSelectValues}
                                 renderItem={({ option, onSelect, selected }) =>
                                     option.label === 'custom' ? (
-                                        <Box grow flexBasis="none">
+                                        <Box grow flexBasis="none" key={option.label}>
                                             <BigIntInput
                                                 icon={chainConfig.icon}
                                                 decimals={currentBalanceDecimals}
@@ -306,6 +359,7 @@ export const TradeComponent = (props: Props) => {
                                         </Box>
                                     ) : (
                                         <RadioButton
+                                            key={option.label}
                                             label={option.label}
                                             selected={selected}
                                             icon={option.icon}
@@ -319,11 +373,11 @@ export const TradeComponent = (props: Props) => {
 
                         {/* if there's no threadInfo, we're inside the global trade panel,
                             show buy/sell button */}
-                        {!threadInfo && onPressTrade && (
+                        {!threadInfo && sendTradeTransaction && (
                             <BuySellButton
                                 mode={mode}
                                 chainId={chainId}
-                                onPressTrade={onPressTrade}
+                                onPressTrade={sendTradeTransaction}
                             />
                         )}
                     </Stack>

@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useMemo, useRef, useState } from 'react'
 import {
     SendMessageOptions,
     TSigner,
@@ -13,6 +13,7 @@ import {
 import { useLocation } from 'react-router'
 import { TickerAttachment } from '@river-build/sdk'
 import { isEqual } from 'lodash'
+import { useEvent } from 'react-use-event-hook'
 import { MessageTimeline } from '@components/MessageTimeline/MessageTimeline'
 import { MessageTimelineWrapper } from '@components/MessageTimeline/MessageTimelineContext'
 import { TownsEditorContainer } from '@components/RichTextPlate/TownsEditorContainer'
@@ -27,8 +28,8 @@ import { MediaDropContextProvider } from '@components/MediaDropContext/MediaDrop
 import { useIsChannelReactable } from 'hooks/useIsChannelReactable'
 import { getPostedMessageType, trackPostedMessage } from '@components/Analytics/postedMessage'
 import { useGatherSpaceDetailsAnalytics } from '@components/Analytics/useGatherSpaceDetailsAnalytics'
-import { QuoteMetaData, TradeComponent } from '@components/Web3/Trading/TradeComponent'
-import { useOnPressTrade } from '@components/Web3/Trading/hooks/useTradeQuote'
+import { QuoteMetaData, QuoteStatus, TradeComponent } from '@components/Web3/Trading/TradeComponent'
+import { useSendTradeTransaction } from '@components/Web3/Trading/hooks/useTradeQuote'
 import {
     EvmTransactionRequest,
     SolanaTransactionRequest,
@@ -197,9 +198,10 @@ const EditorWithSigner = (props: {
         | undefined
     >(undefined)
 
-    const { onPressTrade } = useOnPressTrade({
+    const { sendTradeTransaction: onSendTrade } = useSendTradeTransaction({
         request: tradeData?.request,
         chainId: tickerAttachment?.chainId,
+        skipPendingToast: true,
     })
 
     const { sendReply } = useSendReply(messageId)
@@ -209,11 +211,24 @@ const EditorWithSigner = (props: {
         channelId,
     })
 
+    const allowEmptyMessage = !!tickerAttachment
+
+    const resetRef = useRef<{ reset: () => void }>({ reset: () => {} })
+
+    const [isTradingProgress, setIsTradingProgress] = useState(false)
+
     const onSend = useCallback(
         async (value: string, options: SendMessageOptions | undefined) => {
-            if (tradeData && onPressTrade && getSigner) {
-                await onPressTrade?.(getSigner)
+            if (tradeData && onSendTrade && getSigner) {
+                setIsTradingProgress(true)
+                await onSendTrade?.(getSigner)
+                resetRef.current?.reset()
+                setIsTradingProgress(false)
+                if (options && 'emptyMessage' in options && !!options?.emptyMessage) {
+                    return
+                }
             }
+
             trackPostedMessage({
                 spaceId,
                 channelId,
@@ -234,7 +249,7 @@ const EditorWithSigner = (props: {
         [
             channelId,
             getSigner,
-            onPressTrade,
+            onSendTrade,
             parent,
             sendReply,
             spaceDetailsAnalytics,
@@ -243,18 +258,29 @@ const EditorWithSigner = (props: {
         ],
     )
 
-    const onQuoteChanged = useCallback(
-        (
-            request: EvmTransactionRequest | SolanaTransactionRequest | undefined,
-            metaData: QuoteMetaData | undefined,
-        ) => {
-            if (isEqual(tradeData?.request, request) && isEqual(tradeData?.metaData, metaData)) {
+    const [quoteStatus, setQuoteStatus] = useState<QuoteStatus | undefined>(undefined)
+
+    const tradeDataRef = useRef(tradeData)
+    tradeDataRef.current = tradeData
+
+    const onQuoteStatusChanged = useEvent((status: QuoteStatus | undefined) => {
+        setQuoteStatus(status)
+        if (!status) {
+            return
+        }
+
+        if (status.status === 'ready') {
+            if (
+                isEqual(tradeDataRef.current?.request, status.data.request) &&
+                isEqual(tradeDataRef.current?.metaData, status.data.metaData)
+            ) {
                 return
             }
-            setTradeData(request && metaData ? { request, metaData } : undefined)
-        },
-        [tradeData, setTradeData],
-    )
+            setTradeData(status.data)
+        } else {
+            setTradeData(undefined)
+        }
+    })
 
     const editor = (
         <TownsEditorContainer
@@ -270,27 +296,36 @@ const EditorWithSigner = (props: {
             channels={channels}
             spaceMemberIds={memberIds}
             userId={userId}
+            allowEmptyMessage={allowEmptyMessage}
             renderSendButton={(onSend) => {
-                return getSigner && tradeData && onPressTrade ? (
+                const mode = tradeData?.metaData.mode ?? quoteStatus?.mode
+                return getSigner && quoteStatus ? (
                     <Box
                         centerContent
-                        tooltip={`${tradeData?.metaData.mode === 'buy' ? 'Buy' : 'Sell'} ${
-                            tradeData?.metaData.value.value
-                        } ${tradeData?.metaData.value.symbol}`}
+                        tooltip={
+                            quoteStatus.status === 'error'
+                                ? ``
+                                : `${mode === 'buy' ? 'Buy' : 'Sell'} ${
+                                      tradeData?.metaData.value.value
+                                  } ${tradeData?.metaData.value.symbol}`
+                        }
+                        opacity={
+                            quoteStatus?.status !== 'ready' || isTradingProgress ? '0.5' : undefined
+                        }
                     >
                         <FancyButton
                             compact="x4"
                             gap="xxs"
                             paddingLeft="sm"
                             paddingRight="md"
-                            background={
-                                tradeData?.metaData.mode === 'buy' ? 'positive' : 'negative'
-                            }
+                            background={mode === 'buy' ? 'positive' : 'negative'}
                             borderRadius="full"
                             icon="lightning"
+                            spinner={quoteStatus?.status === 'loading' || isTradingProgress}
+                            disabled={quoteStatus?.status !== 'ready' || isTradingProgress}
                             onClick={onSend}
                         >
-                            {tradeData?.metaData.mode === 'buy' ? 'Buy' : 'Sell'}
+                            {mode === 'buy' ? 'Buy' : 'Sell'}
                         </FancyButton>
                     </Box>
                 ) : undefined
@@ -298,6 +333,10 @@ const EditorWithSigner = (props: {
             onSend={onSend}
         />
     )
+
+    const threadInfo = useMemo(() => {
+        return messageId ? { channelId, messageId } : undefined
+    }, [channelId, messageId])
 
     return (
         <>
@@ -308,8 +347,9 @@ const EditorWithSigner = (props: {
                             mode="buy"
                             tokenAddress={tickerAttachment.address}
                             chainId={tickerAttachment.chainId}
-                            threadInfo={messageId ? { channelId, messageId } : undefined}
-                            onQuoteChanged={onQuoteChanged}
+                            threadInfo={threadInfo}
+                            resetRef={resetRef}
+                            onQuoteStatusChanged={onQuoteStatusChanged}
                         />
                     </Box>
                     <Box>{editor}</Box>

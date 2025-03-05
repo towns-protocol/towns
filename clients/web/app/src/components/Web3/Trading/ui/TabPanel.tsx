@@ -10,7 +10,15 @@ export const TabPanel = (
         onChange?: (tab: 'buy' | 'sell') => void
     } & Omit<BoxProps, 'onChange'>,
 ) => {
-    const { tabs, onChange, children, value, ...boxProps } = props
+    const {
+        tabs,
+        onChange,
+        children,
+        value,
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        layoutId,
+        ...boxProps
+    } = props
 
     return (
         <Stack {...boxProps}>

@@ -14,7 +14,7 @@ type Props = {
     minWidth?: BoxProps['minWidth']
     width?: BoxProps['width']
     animate?: boolean
-    compact?: boolean
+    // compact?: boolean
     type?: 'button' | 'submit' | 'reset'
     onClick?: (e: React.MouseEvent) => void
 } & Omit<

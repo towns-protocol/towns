@@ -81,12 +81,13 @@ type RichTextEditorProps = {
     /* callback invoked when user presses enter key or click send button  */
     onSend?: (
         message: string,
-        options: Pick<SendTextMessageOptions, 'mentions' | 'messageType'>,
+        options: Pick<SendTextMessageOptions, 'mentions' | 'messageType' | 'emptyMessage'>,
     ) => void
     onCancel?: () => void
     onChange?: (editor: TPlateEditor) => void
     onArrowEscape?: (direction: 'up' | 'down') => void
     renderSendButton?: (onSend: () => void) => React.ReactNode
+    allowEmptyMessage?: boolean
 }
 
 export const RichTextEditor = ({
@@ -119,6 +120,7 @@ export const RichTextEditor = ({
     onSend = noop,
     onChange = noop,
     renderSendButton,
+    allowEmptyMessage = false,
 }: RichTextEditorProps) => {
     /* refs */
     const { isTouch, isAndroid } = useDevice()
@@ -257,8 +259,14 @@ export const RichTextEditor = ({
                 mentions: mentions.length > 0 ? mentions : undefined,
             })
             resetEditorAfterSend()
+        } else if (allowEmptyMessage) {
+            onSend('', {
+                messageType: MessageType.Text,
+                emptyMessage: true,
+            })
+            resetEditorAfterSend()
         }
-    }, [editor, editorText.length, fileCount, onSend, resetEditorAfterSend])
+    }, [allowEmptyMessage, editor, editorText.length, fileCount, onSend, resetEditorAfterSend])
 
     // Update the editor text in the component state one time when the editor is initialized
     // After the editor is initialized, the editor text is updated in the `onChange` handler

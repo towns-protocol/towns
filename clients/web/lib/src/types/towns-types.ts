@@ -167,6 +167,7 @@ export type SendTextMessageOptions = SendMessageOptionsBase & {
     messageType?: MessageType.Text
     mentions?: Mention[]
     attachments?: Attachment[]
+    emptyMessage?: true
 }
 
 export interface Mention {

@@ -12,13 +12,14 @@ import { tradingChains } from '../tradingConstants'
 type Props = {
     request: EvmTransactionRequest | SolanaTransactionRequest | undefined
     chainId?: string
+    skipPendingToast?: boolean
 }
 
-export const useOnPressTrade = (props: Props) => {
-    const { chainId, request } = props
+export const useSendTradeTransaction = (props: Props) => {
+    const { chainId, request, skipPendingToast } = props
     const tradingContext = useTradingContext()
 
-    const onPressTrade = useCallback(
+    const sendTradeTransaction = useCallback(
         async (getSigner: (() => Promise<TSigner | undefined>) | undefined) => {
             if (!chainId) {
                 throw new Error('chainId is required')
@@ -28,7 +29,7 @@ export const useOnPressTrade = (props: Props) => {
                     console.error("chainId doesn't match")
                     return
                 }
-                tradingContext.sendSolanaTransaction(request)
+                await tradingContext.sendSolanaTransaction(request, { skipPendingToast })
             } else if (isEvmTransactionRequest(request)) {
                 if (!getSigner) {
                     throw new Error('getSigner is required')
@@ -37,11 +38,11 @@ export const useOnPressTrade = (props: Props) => {
                 if (chainId !== '8453' || !signer) {
                     return
                 }
-                tradingContext.sendEvmTransaction(request, signer)
+                await tradingContext.sendEvmTransaction(request, signer, { skipPendingToast })
             }
         },
-        [chainId, tradingContext, request],
+        [chainId, request, tradingContext, skipPendingToast],
     )
 
-    return { onPressTrade: request ? onPressTrade : undefined }
+    return { sendTradeTransaction: request ? sendTradeTransaction : undefined }
 }
