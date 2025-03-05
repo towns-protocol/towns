@@ -31,6 +31,9 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
   bytes32 internal constant DELEGATE_REGISTRY_V2 =
     bytes32("DELEGATE_REGISTRY_V2");
 
+  // Address of SCL_EIP6565 verifier library
+  bytes32 internal constant SCL_EIP6565 = bytes32("SCL_EIP6565");
+
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                      External - Write
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

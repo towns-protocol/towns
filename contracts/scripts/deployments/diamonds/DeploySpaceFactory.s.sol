@@ -47,6 +47,7 @@ import {DeployPartnerRegistry} from "contracts/scripts/deployments/facets/Deploy
 import {DeployMockLegacyArchitect} from "contracts/scripts/deployments/facets/DeployMockLegacyArchitect.s.sol";
 import {DeploySpaceProxyInitializer} from "contracts/scripts/deployments/utils/DeploySpaceProxyInitializer.s.sol";
 import {DeploySpaceFactoryInit} from "contracts/scripts/deployments/facets/DeploySpaceFactoryInit.s.sol";
+import {DeploySLCEIP6565} from "contracts/scripts/deployments/utils/DeploySLCEIP6565.s.sol";
 import {MockDelegationRegistry} from "contracts/test/mocks/MockDelegationRegistry.sol";
 
 contract DeploySpaceFactory is DiamondHelper, Deployer {
@@ -92,6 +93,8 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
   DeploySpaceProxyInitializer deploySpaceProxyInitializer =
     new DeploySpaceProxyInitializer();
 
+  DeploySLCEIP6565 deployVerifierLib = new DeploySLCEIP6565();
+
   DeploySpaceFactoryInit deploySpaceFactoryInit = new DeploySpaceFactoryInit();
 
   // helpers
@@ -129,6 +132,7 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
   address public tieredLogPricingV3;
   address public fixedPricing;
   address public mockDelegationRegistry;
+  address public sclEip6565;
   address[] pricingModules;
 
   // init
@@ -164,6 +168,7 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
     diamondLoupe = diamondLoupeHelper.deploy(deployer);
     introspection = introspectionHelper.deploy(deployer);
     ownable = ownableHelper.deploy(deployer);
+    sclEip6565 = deployVerifierLib.deploy(deployer);
 
     addFacet(
       diamondCutHelper.makeCut(diamondCut, IDiamond.FacetCutAction.Add),
@@ -281,7 +286,7 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
     addFacet(
       walletLinkHelper.makeCut(walletLink, IDiamond.FacetCutAction.Add),
       walletLink,
-      walletLinkHelper.makeInitData(_getDelegateRegistry())
+      walletLinkHelper.makeInitData(_getDelegateRegistry(), sclEip6565)
     );
     addFacet(
       eip712Helper.makeCut(eip712, IDiamond.FacetCutAction.Add),
@@ -405,11 +410,12 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
         );
       } else if (facetNameHash == keccak256(abi.encodePacked("WalletLink"))) {
         walletLink = walletLinkHelper.deploy(deployer);
+        sclEip6565 = deployVerifierLib.deploy(deployer);
         address delegateRegistry = _getDelegateRegistry();
         addFacet(
           walletLinkHelper.makeCut(walletLink, IDiamond.FacetCutAction.Add),
           walletLink,
-          walletLinkHelper.makeInitData(delegateRegistry)
+          walletLinkHelper.makeInitData(delegateRegistry, sclEip6565)
         );
       } else if (facetNameHash == keccak256(abi.encodePacked("EIP712Facet"))) {
         eip712 = eip712Helper.deploy(deployer);

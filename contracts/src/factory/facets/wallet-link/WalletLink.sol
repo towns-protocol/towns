@@ -13,10 +13,12 @@ import {OwnableBase} from "@river-build/diamond/src/facets/ownable/OwnableBase.s
 
 contract WalletLink is IWalletLink, WalletLinkBase, OwnableBase, Facet {
   function __WalletLink_init(
-    address delegateRegistry
+    address delegateRegistry,
+    address sclEip6565
   ) external onlyInitializing {
     _addInterface(type(IWalletLink).interfaceId);
     _setDependency(DELEGATE_REGISTRY_V2, delegateRegistry);
+    _setDependency(SCL_EIP6565, sclEip6565);
   }
 
   /// @inheritdoc IWalletLink

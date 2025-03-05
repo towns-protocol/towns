@@ -16,7 +16,6 @@ contract DeployWalletLink is FacetHelper, Deployer {
     addSelector(WalletLink.checkIfLinked.selector);
     addSelector(WalletLink.getLatestNonceForRootKey.selector);
     addSelector(WalletLink.removeCallerLink.selector);
-
     addSelector(WalletLink.setDefaultWallet.selector);
     addSelector(WalletLink.getDefaultWallet.selector);
     addSelector(WalletLink.getWalletsByRootKeyWithDelegations.selector);
@@ -31,9 +30,10 @@ contract DeployWalletLink is FacetHelper, Deployer {
 
   // 0xa3f100e500000000000000000000000000000000000000447e69651d841bd8d104bed49300000000000000000000000000000000000000000000000000000000
   function makeInitData(
-    address delegateRegistry
+    address delegateRegistry,
+    address sclEip6565
   ) public pure returns (bytes memory) {
-    return abi.encodeWithSelector(initializer(), delegateRegistry);
+    return abi.encodeWithSelector(initializer(), delegateRegistry, sclEip6565);
   }
 
   function versionName() public pure override returns (string memory) {
