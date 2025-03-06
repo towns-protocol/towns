@@ -3,16 +3,31 @@ import { Link } from 'react-router-dom'
 import { intlFormatDistance } from 'date-fns'
 import { Box, Stack, Text } from '@ui'
 import { formatUnitsToFixedLength } from 'hooks/useBalance'
+import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { useTradingWalletAddresses } from './useTradingWalletAddresses'
 import { TradingActivityItem, useTradingActivity } from './hooks/useTradingActivity'
 
 export const TradingActivity = () => {
     const { solanaWalletAddress, evmWalletAddress } = useTradingWalletAddresses()
-    const { data: baseData } = useTradingActivity(evmWalletAddress, '8453')
-    const { data: solanaData } = useTradingActivity(solanaWalletAddress, 'solana-mainnet')
+    const { data: baseData, isLoading: isBaseLoading } = useTradingActivity(
+        evmWalletAddress,
+        '8453',
+    )
+    const { data: solanaData, isLoading: isSolanaLoading } = useTradingActivity(
+        solanaWalletAddress,
+        'solana-mainnet',
+    )
     const allData = useMemo(() => {
         return [...baseData, ...solanaData].sort((a, b) => b.timestamp - a.timestamp)
     }, [baseData, solanaData])
+
+    if (isBaseLoading && isSolanaLoading) {
+        return (
+            <Box paddingY="x4">
+                <ButtonSpinner />
+            </Box>
+        )
+    }
 
     return (
         <Stack>

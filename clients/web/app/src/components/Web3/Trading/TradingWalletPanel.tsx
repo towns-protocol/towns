@@ -20,7 +20,7 @@ export function TradingWalletPanel() {
     }, [openPanel])
 
     const { evmWalletAddress } = useTradingWalletAddresses()
-    const { data: chainWalletAssets } = useTradingWallet()
+    const { data: chainWalletAssets, isLoading: isLoadingChainWalletAssets } = useTradingWallet()
     const totalHoldingValueCents = useMemo(() => {
         return calculateTotalHoldingValueCents(chainWalletAssets)
     }, [chainWalletAssets])
@@ -91,7 +91,12 @@ export function TradingWalletPanel() {
                     onChange={onTabChange}
                 >
                     <Stack gap paddingY grow>
-                        {tab === 'tokens' && <TradingTokensList assets={chainWalletAssets ?? []} />}
+                        {tab === 'tokens' && (
+                            <TradingTokensList
+                                assets={chainWalletAssets ?? []}
+                                isLoading={isLoadingChainWalletAssets}
+                            />
+                        )}
                         {tab === 'nfts' && (
                             <Stack gap grow>
                                 <PanelButton cursor="pointer" onClick={onTransferAsset}>

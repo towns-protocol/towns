@@ -4,6 +4,7 @@ import { Box, Icon, Stack, Text } from '@ui'
 import { formatUnitsToFixedLength } from 'hooks/useBalance'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { notUndefined } from 'ui/utils/utils'
+import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { ChainWalletAssets, formatCents } from './tradingUtils'
 import { TokenIcon } from './ui/TokenIcon'
 
@@ -12,7 +13,13 @@ const baseImageURL =
 const solImageURL =
     'https://coin-images.coingecko.com/coins/images/4128/thumb/solana.png?1718769756'
 
-export const TradingTokensList = ({ assets }: { assets: ChainWalletAssets[] }) => {
+export const TradingTokensList = ({
+    assets,
+    isLoading,
+}: {
+    assets: ChainWalletAssets[]
+    isLoading: boolean
+}) => {
     const flattenedAssets = useMemo(() => {
         return assets
             .map((asset) => asset.tokens)
@@ -58,6 +65,14 @@ export const TradingTokensList = ({ assets }: { assets: ChainWalletAssets[] }) =
     const allAssets = useMemo(() => {
         return [baseNativeAsset, solNativeAsset, ...flattenedAssets].filter(notUndefined)
     }, [baseNativeAsset, solNativeAsset, flattenedAssets])
+
+    if (isLoading) {
+        return (
+            <Box paddingY="x4">
+                <ButtonSpinner />
+            </Box>
+        )
+    }
 
     return (
         <>
