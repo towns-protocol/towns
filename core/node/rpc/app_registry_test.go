@@ -375,9 +375,12 @@ func safeCreateStreamsForApp(
 
 func TestAppRegistry_RegisterWebhook(t *testing.T) {
 	tester := newServiceTester(t, serviceTesterOpts{numNodes: 1, start: true})
-	service, _ := initAppRegistryService(tester.ctx, tester)
+	ctx := tester.ctx
+	// Uncomment for logging of app registry service
+	// ctx := logging.CtxWithLog(tester.ctx, logging.DefaultZapLogger(zapcore.DebugLevel))
+	service, _ := initAppRegistryService(ctx, tester)
 
-	httpClient, _ := testcert.GetHttp2LocalhostTLSClient(tester.ctx, tester.getConfig())
+	httpClient, _ := testcert.GetHttp2LocalhostTLSClient(ctx, tester.getConfig())
 	serviceAddr := "https://" + service.listener.Addr().String()
 	authClient := protocolconnect.NewAuthenticationServiceClient(
 		httpClient, serviceAddr,
@@ -386,22 +389,22 @@ func TestAppRegistry_RegisterWebhook(t *testing.T) {
 		httpClient, serviceAddr,
 	)
 
-	unregisteredAppWallet := safeNewWallet(tester.ctx, tester.require)
-	appWallet := safeNewWallet(tester.ctx, tester.require)
-	ownerWallet := safeNewWallet(tester.ctx, tester.require)
-	app2Wallet := safeNewWallet(tester.ctx, tester.require)
+	unregisteredAppWallet := safeNewWallet(ctx, tester.require)
+	appWallet := safeNewWallet(ctx, tester.require)
+	ownerWallet := safeNewWallet(ctx, tester.require)
+	app2Wallet := safeNewWallet(ctx, tester.require)
 
 	// Create needed streams and add an encryption device to the user metadata stream for the app service.
 	tc := tester.newTestClient(0)
-	safeCreateStreamsForApp(t, tester.ctx, appWallet, tc.client, &testEncryptionDevice)
+	safeCreateStreamsForApp(t, ctx, appWallet, tc.client, &testEncryptionDevice)
 	// No user metadata stream for app 2
-	_, _, err := createUserInboxStream(tester.ctx, app2Wallet, tc.client, nil)
+	_, _, err := createUserInboxStream(ctx, app2Wallet, tc.client, nil)
 	require.NoError(t, err)
 
 	// Register 2 apps. One will have a user metadata stream created with an ecryption device populated,
 	// and one will not.
 	appSharedSecret := register(
-		tester.ctx,
+		ctx,
 		tester.require,
 		appWallet.Address.Bytes(),
 		ownerWallet.Address.Bytes(),
@@ -411,7 +414,7 @@ func TestAppRegistry_RegisterWebhook(t *testing.T) {
 	)
 
 	app2SharedSecret := register(
-		tester.ctx,
+		ctx,
 		tester.require,
 		app2Wallet.Address.Bytes(),
 		ownerWallet.Address.Bytes(),
@@ -518,7 +521,7 @@ func TestAppRegistry_RegisterWebhook(t *testing.T) {
 
 			// Unauthenticated requests should fail
 			if tc.authenticatingWallet != nil {
-				authenticateBS(tester.ctx, tester.require, authClient, tc.authenticatingWallet, req)
+				authenticateBS(ctx, tester.require, authClient, tc.authenticatingWallet, req)
 			}
 
 			resp, err := AppRegistryClient.RegisterWebhook(

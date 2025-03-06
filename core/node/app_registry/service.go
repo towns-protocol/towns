@@ -210,6 +210,7 @@ func (s *Service) waitForAppEncryptionDevice(
 	ctx context.Context,
 	appId common.Address,
 ) (*storage.EncryptionDevice, error) {
+	log := logging.FromCtx(ctx)
 	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 	userMetadataStreamId := shared.UserMetadataStreamIdFromAddress(appId)
 	defer cancel()
@@ -217,8 +218,12 @@ func (s *Service) waitForAppEncryptionDevice(
 	var delay time.Duration
 	var encryptionDevices []*UserMetadataPayload_EncryptionDevice
 	var loopExitErr error
+	var view *events.StreamView
 waitLoop:
 	for {
+		if view != nil {
+			break
+		}
 		delay = max(2*delay, 20*time.Millisecond)
 		select {
 		case <-ctx.Done():
@@ -229,6 +234,7 @@ waitLoop:
 			if err != nil {
 				continue
 			}
+			log.Debugw("Found user metadata stream record", "streamId", userMetadataStreamId, "appId", appId)
 			nodes := nodes.NewStreamNodesWithLock(stream.Nodes, common.Address{})
 			streamResponse, err := utils.PeerNodeRequestWithRetries(
 				ctx,
@@ -251,9 +257,9 @@ waitLoop:
 				s.nodeRegistry,
 			)
 			if err != nil {
+				log.Warnw("Error fetching user metadata stream for app", "error", err, "streamId", userMetadataStreamId, "appId", appId)
 				continue
 			}
-			var view *events.StreamView
 			view, loopExitErr = events.MakeRemoteStreamView(ctx, streamResponse.Msg.Stream)
 			if loopExitErr != nil {
 				break waitLoop
@@ -266,6 +272,7 @@ waitLoop:
 	}
 
 	if len(encryptionDevices) == 0 {
+		log.Errorw("No usermetadata stream available for app", "appId", appId, "stream", userMetadataStreamId)
 		return nil, base.AsRiverError(loopExitErr, Err_NOT_FOUND).
 			Message("encryption device for app not found").
 			Tag("appId", appId).
