@@ -10,7 +10,6 @@ export type PayloadValueType = StreamEvent['payload']['value']
 
 export type FullyReadMarker = FullyReadMarkers_Content
 
-
 // Check if type has $typeName and potentially $unknown properties
 type HasMessageProperties<T> = T extends { $typeName: any } ? true : false
 
@@ -33,6 +32,12 @@ type IsBuiltInObjectType<T> = T extends Uint8Array
     ? true
     : false
 
+// connect-es v2 dropped the PlainMessage type, so we need to implement our own
+// the message is a type now, which is nice
+// except, it still has the goofy "$typename" variable as required!
+// so if you want to use it as a parameter to your api function you need to strip it
+// the lib has the MessageInitShape type, which is what we want IF we could make fields non-optional!
+// I want typescript to tell me when I'm missing required fields! If you want that - use PlainMessage
 export type PlainMessage<T> =
     // Distribute over unions
     T extends any
