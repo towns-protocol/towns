@@ -74,13 +74,13 @@ function createQuery(address: string, chain: string, timeframe: TimeFrame): stri
             case '1h':
                 return '1'
             case '1d':
-                return '30'
+                return '15'
             case '7d':
-                return '240'
+                return '60'
             case '30d':
-                return '720'
+                return '240'
             case '90d':
-                return '1D'
+                return '720'
             case '365d':
                 return '7D'
         }
