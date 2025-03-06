@@ -1,6 +1,6 @@
 module github.com/towns-protocol/towns/core
 
-go 1.23.3
+go 1.23.6
 
 require (
 	connectrpc.com/connect v1.17.0
