@@ -1,7 +1,7 @@
 import React from 'react'
-import { useGetRootKeyFromLinkedWallet, useUserLookup } from 'use-towns-client'
+import { Address, useGetRootKeyFromLinkedWallet, useUserLookup } from 'use-towns-client'
 import { Box, Stack, Text } from '@ui'
-import { Avatar } from '@components/Avatar/Avatar'
+import { AvatarWithoutDot } from '@components/Avatar/Avatar'
 import { ReviewStars } from '@components/ReviewStars/ReviewStars'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { shortAddress } from 'ui/utils/utils'
@@ -32,10 +32,14 @@ export const ReviewItem: React.FC<ReviewItemProps> = ({
 }) => {
     const { id, author, rating, text, timestamp } = review
 
+    const { data: rootKeyAddress } = useGetRootKeyFromLinkedWallet({
+        walletAddress: author as Address,
+    })
+
     return (
         <Stack position="relative">
             <Stack horizontal gap="sm" alignItems="start">
-                <Avatar userId={author} size="avatar_md" />
+                <AvatarWithoutDot userId={rootKeyAddress} size="avatar_md" />
                 <Stack grow gap="sm">
                     <ReviewStars rating={rating} size={16} />
                     <Text>{text}</Text>

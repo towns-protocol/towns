@@ -1866,46 +1866,34 @@ export class BaseTransactor {
     public async reviewTransaction(
         args: [TownsReviewParams, TSigner],
     ): Promise<ReviewTransactionContext> {
-        const [{ spaceId, rating, comment, isUpdate, isDelete, senderAddress }, signer] = args
+        const [reviewParams, signer] = args
 
         let transaction: TransactionOrUserOperation | undefined = undefined
         let error: Error | undefined = undefined
 
         const continueStoreTx = this.blockchainTransactionStore.begin({
             type: BlockchainTransactionType.Review,
-            data: {
-                spaceId,
-                rating,
-                comment,
-                isUpdate,
-                isDelete,
-            },
+            data: { ...reviewParams },
         })
 
         try {
             // Let the contract enforce membership
-            this.log('[reviewTransaction] submitting review', {
-                spaceId,
-                rating,
-                comment,
-                isUpdate,
-                isDelete,
-            })
+            this.log('[reviewTransaction] submitting review', reviewParams)
 
             if (this.isAccountAbstractionEnabled()) {
                 transaction = await this.userOps?.sendReviewOp(args)
             } else {
-                const space = this.spaceDapp.getSpace(spaceId)
+                const space = this.spaceDapp.getSpace(reviewParams.spaceId)
                 if (!space) {
-                    throw new Error(`Space with spaceId "${spaceId}" is not found.`)
+                    throw new Error(`Space with spaceId "${reviewParams.spaceId}" is not found.`)
                 }
 
-                if (isDelete) {
+                if (reviewParams.isDelete) {
                     transaction = await space.Review.deleteReview(signer)
                 } else {
-                    transaction = isUpdate
-                        ? await space.Review.updateReview({ rating, comment }, signer)
-                        : await space.Review.addReview({ rating, comment }, signer)
+                    transaction = reviewParams.isUpdate
+                        ? await space.Review.updateReview(reviewParams, signer)
+                        : await space.Review.addReview(reviewParams, signer)
                 }
             }
             this.log(`[reviewTransaction] transaction created`)
@@ -1923,14 +1911,7 @@ export class BaseTransactor {
         return createTransactionContext<ReviewTransactionData>({
             status: error ? TransactionStatus.Failed : TransactionStatus.Pending,
             transaction,
-            data: {
-                spaceId,
-                rating,
-                comment,
-                isUpdate: isUpdate || false,
-                isDelete: isDelete || false,
-                senderAddress,
-            },
+            data: reviewParams,
             error,
         })
     }

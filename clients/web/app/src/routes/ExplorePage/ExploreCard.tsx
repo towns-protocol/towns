@@ -113,7 +113,17 @@ export const ExploreCard = ({ address, variant }: ExploreCardProps) => {
                                     {spaceInfo?.name}
                                 </Heading>
                                 {spaceInfo?.shortDescription && (
-                                    <Paragraph color="gray2" size="lg">
+                                    <Paragraph
+                                        color="gray2"
+                                        size="lg"
+                                        style={{
+                                            overflow: 'hidden',
+                                            display: '-webkit-box',
+                                            WebkitLineClamp: 1,
+                                            WebkitBoxOrient: 'vertical',
+                                            paddingBottom: '4px',
+                                        }}
+                                    >
                                         {spaceInfo.shortDescription}
                                     </Paragraph>
                                 )}
@@ -154,7 +164,17 @@ export const ExploreCard = ({ address, variant }: ExploreCardProps) => {
                             {spaceInfo?.name}
                         </Heading>
                         {spaceInfo?.shortDescription && (
-                            <Paragraph color="gray2" style={{ marginTop: '8px' }}>
+                            <Paragraph
+                                color="gray2"
+                                style={{
+                                    marginTop: '8px',
+                                    marginRight: '4px',
+                                    overflow: 'hidden',
+                                    display: '-webkit-box',
+                                    WebkitLineClamp: 1,
+                                    WebkitBoxOrient: 'vertical',
+                                }}
+                            >
                                 {spaceInfo?.shortDescription}
                             </Paragraph>
                         )}
