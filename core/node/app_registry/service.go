@@ -234,6 +234,7 @@ waitLoop:
 			if err != nil {
 				continue
 			}
+			log.Debugw("Found user metadata stream record", "streamId", userMetadataStreamId, "appId", appId)
 			nodes := nodes.NewStreamNodesWithLock(stream.Nodes, common.Address{})
 			streamResponse, err := utils.PeerNodeRequestWithRetries(
 				ctx,
