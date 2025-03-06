@@ -37,7 +37,6 @@ import {
     CancelSyncResponseSchema,
     CancelSyncRequestSchema,
     MediaInfoSchema,
-    UserBioSchema,
 } from '@river-build/proto'
 import { create, MessageInitShape, toBinary } from '@bufbuild/protobuf'
 import { CallOptions } from '@connectrpc/connect'
