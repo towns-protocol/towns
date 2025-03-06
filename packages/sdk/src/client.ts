@@ -1152,7 +1152,7 @@ export class Client
         return this.stream(streamId)?.view.userMetadataContent.getProfileImage()
     }
 
-    async setUserBio(bio: UserBio) {
+    async setUserBio(bio: PlainMessage<UserBio>) {
         this.logCall('setUserBio', bio)
 
         // create the chunked media to be added
@@ -1163,7 +1163,7 @@ export class Client
         // use the lowercased userId as the key phrase
         const { key, iv } = await deriveKeyAndIV(context)
         bio.updatedAtEpochMs = BigInt(Date.now())
-        const bioBinary = toBinary(UserBioSchema, bio)
+        const bioBinary = toBinary(UserBioSchema, create(UserBioSchema, bio))
         const { ciphertext } = await encryptAESGCM(bioBinary, key, iv)
         const encryptedData = create(EncryptedDataSchema, {
             ciphertext: uint8ArrayToBase64(ciphertext),

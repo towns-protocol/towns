@@ -1073,12 +1073,12 @@ describe('clientTest', () => {
 
         expect(userMetadataStream).toBeDefined()
 
-        const bio = create(UserBioSchema, { bio: 'Hello, world!' })
+        const bio = { bio: 'Hello, world!' }
         const { eventId } = await bobsClient.setUserBio(bio)
         await waitFor(() => expect(userMetadataStream.view.events.has(eventId)).toBe(true))
 
         const decrypted = await bobsClient.getUserBio(bobsClient.userId)
-        expect(decrypted).toStrictEqual(bio)
+        expect(decrypted?.bio).toStrictEqual(bio.bio)
     })
 
     test('setUserBio empty', async () => {
@@ -1089,11 +1089,11 @@ describe('clientTest', () => {
 
         expect(userMetadataStream).toBeDefined()
 
-        const bio = create(UserBioSchema, { bio: '' })
+        const bio = { bio: '' }
         const { eventId } = await bobsClient.setUserBio(bio)
         await waitFor(() => expect(userMetadataStream.view.events.has(eventId)).toBe(true))
 
         const decrypted = await bobsClient.getUserBio(bobsClient.userId)
-        expect(decrypted).toStrictEqual(bio)
+        expect(decrypted?.bio).toStrictEqual(bio.bio)
     })
 })
