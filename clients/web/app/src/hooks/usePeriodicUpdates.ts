@@ -9,7 +9,7 @@ import { PATHS, PATHS_REGEX } from 'routes'
 const log = debug('app:updating')
 log.enabled = true
 
-const UPDATE_INTERVAL_MS = 5 * MINUTE_MS
+const UPDATE_INTERVAL_MS = 10 * MINUTE_MS
 
 export const usePeriodicUpdates = () => {
     const intervalRef = useRef<NodeJS.Timeout>()
