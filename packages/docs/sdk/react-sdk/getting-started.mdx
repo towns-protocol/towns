@@ -67,7 +67,7 @@ Here's how to set them up:
 ```tsx App.tsx
 import { RiverSyncProvider } from "@river-build/react-sdk";
 import { base, baseSepolia } from 'viem/chains'
-import { WagmiConfig, createConfig } from "wagmi";
+import { WagmiProvider, createConfig } from "wagmi";
 import { createPublicClient, http } from 'viem'
 
 // Configure Wagmi
@@ -81,11 +81,11 @@ export const wagmiConfig = createConfig({
 
 function App() {
   return (
-    <WagmiConfig config={wagmiConfig}>
+    <WagmiProvider config={wagmiConfig}>
       <RiverSyncProvider>
         {/* Your app content */}
       </RiverSyncProvider>
-    </WagmiConfig>
+    </WagmiProvider>
   );
 }
 ```
