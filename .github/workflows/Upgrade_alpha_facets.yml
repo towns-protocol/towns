@@ -1,6 +1,6 @@
 name: Upgrade Alpha Facets
 env:
-    FOUNDRY_VERSION: nightly
+    FOUNDRY_VERSION: stable
     ALPHA_BASE_SEPOLIA_DEPLOYER_PK: ${{ secrets.ALPHA_BASE_SEPOLIA_DEPLOYER_PK }}
     BASE_SEPOLIA_RPC_URL: ${{ secrets.ALPHA_BASE_SEPOLIA_RPC_URL }}
     RIVER_RPC_URL: ${{ secrets.RIVER_TESTNET_RPC_URL }}

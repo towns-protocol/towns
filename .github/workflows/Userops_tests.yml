@@ -1,6 +1,6 @@
 name: 'Run Userops Tests'
 env:
-    FOUNDRY_VERSION: nightly
+    FOUNDRY_VERSION: stable
     RIVER_BLOCK_TIME: 1
     BASE_EXECUTION_CLIENT: geth_dev
     BASE_BLOCK_TIME: 2
