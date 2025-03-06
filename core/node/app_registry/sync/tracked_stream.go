@@ -52,9 +52,6 @@ func (b *AppRegistryTrackedStreamView) onNewEvent(ctx context.Context, view *Str
 	}
 
 	members, err := view.GetChannelMembers()
-	if err != nil {
-		return err
-	}
 	appMembers := mapset.NewSet[string]()
 	members.Each(func(member string) bool {
 		// Trim 0x prefix
@@ -73,6 +70,9 @@ func (b *AppRegistryTrackedStreamView) onNewEvent(ctx context.Context, view *Str
 		}
 		return false
 	})
+	if err != nil {
+		return err
+	}
 
 	// log.Debugw(
 	// 	"Witnessed channel message",
