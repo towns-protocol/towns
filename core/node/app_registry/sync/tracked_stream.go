@@ -81,6 +81,9 @@ func (b *AppRegistryTrackedStreamView) onNewEvent(ctx context.Context, view *Str
 		}
 		return false
 	})
+	if err != nil {
+		return err
+	}
 
 	// log.Debugw(
 	// 	"Witnessed channel message",
