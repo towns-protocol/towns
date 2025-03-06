@@ -9,19 +9,7 @@ import {
 	MediaInfo,
 	MediaInfoSchema,
 } from '@river-build/proto'
-import {
-	Client,
-	encryptAESGCM,
-	genId,
-	makeSignerContext,
-	makeSpaceStreamId,
-	makeStreamRpcClient,
-	MockEntitlementsDelegate,
-	RiverDbManager,
-	SignerContext,
-	streamIdAsString,
-	userIdFromAddress,
-} from '@river-build/sdk'
+import { Client, encryptAESGCM, streamIdAsString } from '@river-build/sdk'
 import {
 	CreateLegacySpaceParams,
 	ETH_ADDRESS,
@@ -35,11 +23,6 @@ import {
 import { create } from '@bufbuild/protobuf'
 
 import { config } from '../src/environment'
-import { getRiverRegistry } from '../src/evmRpcClient'
-
-export function makeUniqueSpaceStreamId(): string {
-	return makeSpaceStreamId(genId(40))
-}
 
 export function getTestServerUrl() {
 	// use the .env.test config to derive the baseURL of the server under test
@@ -47,28 +30,8 @@ export function getTestServerUrl() {
 	return streamMetadataBaseUrl
 }
 
-export async function getAnyNodeUrlFromRiverRegistry() {
-	const riverRegistry = getRiverRegistry()
-	const nodes = await riverRegistry.getAllNodeUrls()
-
-	if (!nodes || nodes.length === 0) {
-		return undefined
-	}
-
-	const randomIndex = Math.floor(Math.random() * nodes.length)
-	const anyNode = nodes[randomIndex]
-
-	return anyNode.url
-}
-
 export function makeEthersProvider(wallet: ethers.Wallet) {
 	return new LocalhostWeb3Provider(config.baseChainRpcUrl, wallet)
-}
-
-export async function makeUserContext(wallet: ethers.Wallet): Promise<SignerContext> {
-	const userPrimaryWallet = wallet
-	const delegateWallet = ethers.Wallet.createRandom()
-	return makeSignerContext(userPrimaryWallet, delegateWallet, { days: 1 })
 }
 
 export function makeJpegBlob(fillSize: number): {

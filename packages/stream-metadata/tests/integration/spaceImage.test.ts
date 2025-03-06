@@ -20,11 +20,9 @@ describe('integration/stream-metadata/space/:spaceAddress/image', () => {
 	log('baseURL', baseURL)
 
 	let bobsClient: TestClient
-	let bobsWallet: ethers.Wallet
 
 	beforeEach(async () => {
 		bobsClient = await makeTestClient()
-		bobsWallet = bobsClient.wallet
 		await bobsClient.initializeUser()
 		bobsClient.startSync()
 	})
