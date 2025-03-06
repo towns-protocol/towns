@@ -322,6 +322,74 @@
       {
         "inputs": [
           {
+            "internalType": "address",
+            "name": "nodeAddress",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "start",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "stop",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function",
+        "name": "getPaginatedStreamsOnNode",
+        "outputs": [
+          {
+            "internalType": "struct StreamWithId[]",
+            "name": "streams",
+            "type": "tuple[]",
+            "components": [
+              {
+                "internalType": "bytes32",
+                "name": "id",
+                "type": "bytes32"
+              },
+              {
+                "internalType": "struct Stream",
+                "name": "stream",
+                "type": "tuple",
+                "components": [
+                  {
+                    "internalType": "bytes32",
+                    "name": "lastMiniblockHash",
+                    "type": "bytes32"
+                  },
+                  {
+                    "internalType": "uint64",
+                    "name": "lastMiniblockNum",
+                    "type": "uint64"
+                  },
+                  {
+                    "internalType": "uint64",
+                    "name": "reserved0",
+                    "type": "uint64"
+                  },
+                  {
+                    "internalType": "uint64",
+                    "name": "flags",
+                    "type": "uint64"
+                  },
+                  {
+                    "internalType": "address[]",
+                    "name": "nodes",
+                    "type": "address[]"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "inputs": [
+          {
             "internalType": "bytes32",
             "name": "streamId",
             "type": "bytes32"
@@ -576,6 +644,23 @@
         "stateMutability": "nonpayable",
         "type": "function",
         "name": "setStreamLastMiniblockBatch"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "start",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "stop",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function",
+        "name": "syncNodesOnStreams"
       }
     ],
     "devdoc": {
@@ -600,7 +685,7 @@
           "details": "Recommended range is 5000 streams to avoid gas limits",
           "params": {
             "start": "The starting index for pagination",
-            "stop": "The ending index for pagination"
+            "stop": "The ending index for pagination, exclusive"
           },
           "returns": {
             "_0": "StreamWithId[] Array of streams with their IDs in the requested range",
@@ -673,6 +758,12 @@
           "params": {
             "miniblocks": "Array of SetMiniblock structs containing stream IDs and their last miniblock information"
           }
+        },
+        "syncNodesOnStreams(uint256,uint256)": {
+          "params": {
+            "start": "The starting index for pagination",
+            "stop": "The ending index for pagination, exclusive"
+          }
         }
       },
       "version": 1
@@ -715,6 +806,9 @@
         },
         "setStreamLastMiniblockBatch((bytes32,bytes32,bytes32,uint64,bool)[])": {
           "notice": "Set the last miniblock for multiple streams in a batch operation"
+        },
+        "syncNodesOnStreams(uint256,uint256)": {
+          "notice": "Sync node addresses for streams in a range to `streamIdsByNode` mapping"
         }
       },
       "version": 1
@@ -748,18 +842,18 @@
   },
   "sources": {
     "contracts/src/river/registry/facets/stream/IStreamRegistry.sol": {
-      "keccak256": "0xa72836372c31f4dbb87ef2ef4eada35173d8d18b0a3d56a1d7c8c1984d0e4795",
+      "keccak256": "0x06302a58bcf1a6abce7e48113a0c3c83ef8db405f2bd90df00250d9ecf83f339",
       "urls": [
-        "bzz-raw://aaf8c0d16891fb009b8c3d2fd23d2a82752a5841a77709ba8334070ff877aed6",
-        "dweb:/ipfs/QmWEmMtnvVLUis4kcDthoQ7PkkVsZtCBNLhKKrtcKJhyUT"
+        "bzz-raw://0f9da906b67f94b83f910bc8c23731910861ed80764e8043810415ceaf289b92",
+        "dweb:/ipfs/QmXoxuk38q5jBYe5ay9psfP4RTbpHDV7vxADUS3c28tWwZ"
       ],
       "license": "MIT"
     },
     "contracts/src/river/registry/facets/stream/StreamRegistry.sol": {
-      "keccak256": "0x1a23c49bbb272ede09625416f7c3f730bfa8c565a688a50485738ddecaa4e7e4",
+      "keccak256": "0x7c5d2ace5c2e3c0d862fefe95d2941d5d6bdc77f6eee0cb43b1646a002446712",
       "urls": [
-        "bzz-raw://09489412195d1168801534bcefe6d7f851755ff8ed19dce67f06dd218d42e37e",
-        "dweb:/ipfs/QmUB5vWApELk6MNpywbtxW2kcR2rkoJSaptb5WWvs9UDud"
+        "bzz-raw://08813c75f7bb2034b9de0375b757ca82ba0f95c561443e81eea43bd8f7b0b2ce",
+        "dweb:/ipfs/QmPVfjcp5MoguUMhKXUQPyUgEApjvecsGavHjcdDwd7Cx7"
       ],
       "license": "MIT"
     },
@@ -772,10 +866,10 @@
       "license": "MIT"
     },
     "contracts/src/river/registry/libraries/RegistryStorage.sol": {
-      "keccak256": "0x6e1de865271972b6e49a69b74836e6d152fe7c0dd573912652a9bb7b3e2a34db",
+      "keccak256": "0x6746f596f0241c8848bc6811829cc7a2264413ae0d4696dae95dcb0df0302034",
       "urls": [
-        "bzz-raw://ac3b9c7f663a44d029d981e99c80f83845367d10cfc36b0b8a02cd66623f3410",
-        "dweb:/ipfs/QmRDyxWfrvfZPQEEtdettUtkz2jtj1eVCwsx3hPCxx7Lw9"
+        "bzz-raw://4c6315755c549e6c5fa0e88dce5394b26e0886b0f8863077463adfd34f0f16af",
+        "dweb:/ipfs/QmcgBsAoEMNdkXkTT9AGdd7kcT9DRNLb5sDFiUktFcm6qr"
       ],
       "license": "MIT"
     },
@@ -784,6 +878,14 @@
       "urls": [
         "bzz-raw://821500c39d095eaa25b06f46e65f1d0e97c4c96b39227f79077dee7d9e84051f",
         "dweb:/ipfs/QmSTeGorKzSWF6HAmxo32uCZiEuKNvreQdUiX1AaYtUMTz"
+      ],
+      "license": "MIT"
+    },
+    "node_modules/solady/src/utils/FixedPointMathLib.sol": {
+      "keccak256": "0x08ab121a1074161b4470c48dadcd6ed71eeb33db1adbefe514771e03cf380fba",
+      "urls": [
+        "bzz-raw://b8d7a3b1dd013ee2b1f56d55b58f1d0b09ae3bcbe630e5a122f8998072c1ecad",
+        "dweb:/ipfs/QmNRnBQ6me4s6xDeejdHRjn9Drb5MgcRtfwit9HbYhkJkk"
       ],
       "license": "MIT"
     }
