@@ -3,6 +3,15 @@ import { Observable } from './observable'
 import { LoadPriority, Store, Identifiable } from '../store/store'
 import { isDefined } from '../check'
 
+// Add Vite HMR types
+declare global {
+    interface ImportMeta {
+        hot?: {
+            on(event: string, callback: () => void): void
+        }
+    }
+}
+
 export interface PersistedOpts {
     tableName: string
 }
@@ -16,9 +25,19 @@ interface Storable {}
 
 const all_tables = new Set<string>()
 
+// Clear tables on HMR
+if (import.meta.hot) {
+    import.meta.hot.on('vite:beforeUpdate', () => {
+        all_tables.clear()
+    })
+}
+
 /// decorator
 export function persistedObservable(options: PersistedOpts) {
-    check(!all_tables.has(options.tableName), `duplicate table name: ${options.tableName}`)
+    // In development, allow table recreation during HMR
+    if (process.env.NODE_ENV !== 'development' || !import.meta.hot) {
+        check(!all_tables.has(options.tableName), `duplicate table name: ${options.tableName}`)
+    }
     all_tables.add(options.tableName)
     return function <T extends { new (...args: any[]): Storable }>(constructor: T) {
         return class extends constructor {
