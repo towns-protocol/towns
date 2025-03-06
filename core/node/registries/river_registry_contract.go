@@ -830,9 +830,9 @@ func (c *RiverRegistryContract) callOptsWithBlockNum(ctx context.Context, blockN
 
 type NodeEvents interface {
 	river.NodeRegistryV1NodeAdded |
-	river.NodeRegistryV1NodeRemoved |
-	river.NodeRegistryV1NodeStatusUpdated |
-	river.NodeRegistryV1NodeUrlUpdated
+		river.NodeRegistryV1NodeRemoved |
+		river.NodeRegistryV1NodeStatusUpdated |
+		river.NodeRegistryV1NodeUrlUpdated
 }
 
 func (c *RiverRegistryContract) GetNodeEventsForBlock(ctx context.Context, blockNum crypto.BlockNumber) ([]any, error) {
@@ -890,6 +890,7 @@ func (c *RiverRegistryContract) OnStreamEvent(
 	ctx context.Context,
 	startBlockNumInclusive crypto.BlockNumber,
 	allocated func(ctx context.Context, event *river.StreamRegistryV1StreamAllocated),
+	added func(ctx context.Context, event *river.StreamRegistryV1StreamCreated),
 	lastMiniblockUpdated func(ctx context.Context, event *river.StreamRegistryV1StreamLastMiniblockUpdated),
 	placementUpdated func(ctx context.Context, event *river.StreamRegistryV1StreamPlacementUpdated),
 ) error {
@@ -906,6 +907,8 @@ func (c *RiverRegistryContract) OnStreamEvent(
 			switch e := parsed.(type) {
 			case *river.StreamRegistryV1StreamAllocated:
 				allocated(ctx, e)
+			case *river.StreamRegistryV1StreamCreated:
+				added(ctx, e)
 			case *river.StreamRegistryV1StreamLastMiniblockUpdated:
 				lastMiniblockUpdated(ctx, e)
 			case *river.StreamRegistryV1StreamPlacementUpdated:
