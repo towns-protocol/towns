@@ -1,5 +1,10 @@
 import TypedEmitter from 'typed-emitter'
-import { PersistedSyncedStream, MiniblockHeader, Snapshot, SyncCookie } from '@river-build/proto'
+import {
+    MiniblockHeader,
+    Snapshot,
+    SyncCookie,
+    PersistedSyncedStreamSchema,
+} from '@river-build/proto'
 import { Stream } from './stream'
 import { ParsedMiniblock, ParsedEvent, ParsedStreamResponse } from './types'
 import { DLogger, bin_toHexString, dlog } from '@river-build/dlog'
@@ -7,6 +12,7 @@ import { isDefined } from './check'
 import { IPersistenceStore, LoadedStream } from './persistenceStore'
 import { StreamEvents } from './streamEvents'
 import { ISyncedStream } from './syncedStreamsLoop'
+import { create } from '@bufbuild/protobuf'
 
 export class SyncedStream extends Stream implements ISyncedStream {
     log: DLogger
@@ -67,7 +73,7 @@ export class SyncedStream extends Stream implements ISyncedStream {
             cleartexts,
         )
 
-        const cachedSyncedStream = new PersistedSyncedStream({
+        const cachedSyncedStream = create(PersistedSyncedStreamSchema, {
             syncCookie: nextSyncCookie,
             lastSnapshotMiniblockNum: miniblocks[0].header.miniblockNum,
             minipoolEvents: events,
@@ -155,7 +161,7 @@ export class SyncedStream extends Stream implements ISyncedStream {
                 ? miniblock.header.miniblockNum
                 : miniblock.header.prevSnapshotMiniblockNum
 
-        const cachedSyncedStream = new PersistedSyncedStream({
+        const cachedSyncedStream = create(PersistedSyncedStreamSchema, {
             syncCookie: syncCookie,
             lastSnapshotMiniblockNum: lastSnapshotMiniblockNum,
             minipoolEvents: minipoolEvents,

@@ -1,7 +1,14 @@
 import 'fake-indexeddb/auto' // used to mock indexdb in dexie, don't remove
 
 import { ethers } from 'ethers'
-import { ChunkedMedia, CreationCookie, MediaInfo } from '@river-build/proto'
+import {
+	ChunkedMedia,
+	ChunkedMediaSchema,
+	CreationCookie,
+	CreationCookieSchema,
+	MediaInfo,
+	MediaInfoSchema,
+} from '@river-build/proto'
 import {
 	Client,
 	encryptAESGCM,
@@ -25,6 +32,7 @@ import {
 	Permission,
 	SpaceDapp,
 } from '@river-build/web3'
+import { create } from '@bufbuild/protobuf'
 
 import { config } from '../src/environment'
 import { getRiverRegistry } from '../src/evmRpcClient'
@@ -114,7 +122,7 @@ export function makeJpegBlob(fillSize: number): {
 	return {
 		magicBytes,
 		data,
-		info: new MediaInfo({
+		info: create(MediaInfoSchema, {
 			mimetype: 'image/jpeg', // Set the expected MIME type
 			sizeBytes: BigInt(data.length),
 		}),
@@ -142,20 +150,20 @@ export async function encryptAndSendMediaPayload(
 		throw new Error('Failed to create media stream')
 	}
 
-	let cc: CreationCookie = new CreationCookie(mediaStreamInfo.creationCookie)
+	let cc: CreationCookie = create(CreationCookieSchema, mediaStreamInfo.creationCookie)
 	for (let i = 0, index = 0; i < ciphertext.length; i += chunkSize, index++) {
 		const chunk = ciphertext.slice(i, i + chunkSize)
 		const last = ciphertext.length - i <= chunkSize
 		const { creationCookie } = await client.sendMediaPayloadNew(cc, last, chunk, index)
 
-		cc = new CreationCookie({
+		cc = create(CreationCookieSchema, {
 			...cc,
 			prevMiniblockHash: new Uint8Array(creationCookie.prevMiniblockHash),
 			miniblockNum: creationCookie.miniblockNum,
 		})
 	}
 
-	const chunkedMedia = new ChunkedMedia({
+	const chunkedMedia = create(ChunkedMediaSchema, {
 		info,
 		streamId: streamIdAsString(mediaStreamInfo.creationCookie.streamId),
 		encryption: {

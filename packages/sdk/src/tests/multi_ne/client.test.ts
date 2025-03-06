@@ -24,18 +24,21 @@ import {
     makeRandomUserAddress,
 } from '../testUtils'
 import {
-    CancelSyncRequest,
     CancelSyncResponse,
     ChannelMessage,
-    MediaInfo,
+    ChannelMessageSchema,
     SnapshotCaseType,
     SyncOp,
-    SyncStreamsRequest,
     SyncStreamsResponse,
-    UserBio,
     type ChunkedMedia,
+    SyncStreamsRequestSchema,
+    PlainMessage,
+    SyncStreamsResponseSchema,
+    CancelSyncResponseSchema,
+    CancelSyncRequestSchema,
+    MediaInfoSchema,
 } from '@river-build/proto'
-import { PartialMessage, type PlainMessage } from '@bufbuild/protobuf'
+import { create, MessageInitShape, toBinary } from '@bufbuild/protobuf'
 import { CallOptions } from '@connectrpc/connect'
 import { vi } from 'vitest'
 import {
@@ -64,7 +67,7 @@ const createMockSyncGenerator = (shouldFail: () => boolean, updateEmitted?: () =
         if (syncCanceled) {
             log('emitting close')
             return Promise.resolve(
-                new SyncStreamsResponse({
+                create(SyncStreamsResponseSchema, {
                     syncId: 'mockSyncId',
                     syncOp: SyncOp.SYNC_CLOSE,
                 }),
@@ -74,7 +77,7 @@ const createMockSyncGenerator = (shouldFail: () => boolean, updateEmitted?: () =
             syncStarted = true
             log('emitting new')
             return Promise.resolve(
-                new SyncStreamsResponse({
+                create(SyncStreamsResponseSchema, {
                     syncId: 'mockSyncId',
                     syncOp: SyncOp.SYNC_NEW,
                 }),
@@ -83,7 +86,7 @@ const createMockSyncGenerator = (shouldFail: () => boolean, updateEmitted?: () =
             log('emitting junk')
             updateEmitted?.()
             return Promise.resolve(
-                new SyncStreamsResponse({
+                create(SyncStreamsResponseSchema, {
                     syncId: 'mockSyncId',
                     syncOp: SyncOp.SYNC_UPDATE,
                     stream: { events: [], nextSyncCookie: {} },
@@ -174,18 +177,19 @@ describe('clientTest', () => {
 
         // hand construct a message, (don't do this normally! just use sendMessage(..))
         const algorithm = GroupEncryptionAlgorithmId.GroupEncryption // algorithm doesn't matter here, don't copy paste
-        const encrypted = await bobsClient.encryptGroupEvent(
-            new ChannelMessage({
-                payload: {
-                    case: 'post',
-                    value: {
-                        content: {
-                            case: 'text',
-                            value: { body: 'Hello world' },
-                        },
+        const channelMessage = create(ChannelMessageSchema, {
+            payload: {
+                case: 'post',
+                value: {
+                    content: {
+                        case: 'text',
+                        value: { body: 'Hello world', mentions: [], attachments: [] },
                     },
                 },
-            }),
+            },
+        } satisfies PlainMessage<ChannelMessage>)
+        const encrypted = await bobsClient.encryptGroupEvent(
+            toBinary(ChannelMessageSchema, channelMessage),
             channelId,
             algorithm,
         )
@@ -213,7 +217,7 @@ describe('clientTest', () => {
             .spyOn(alicesClient.rpcClient, 'syncStreams')
             .mockImplementation(
                 (
-                    _request: PartialMessage<SyncStreamsRequest>,
+                    _request: MessageInitShape<typeof SyncStreamsRequestSchema>,
                     _options?: CallOptions,
                 ): AsyncIterable<SyncStreamsResponse> => {
                     return makeMockSyncGenerator(generator)
@@ -232,12 +236,12 @@ describe('clientTest', () => {
             .spyOn(alicesClient.rpcClient, 'cancelSync')
             .mockImplementation(
                 (
-                    request: PartialMessage<CancelSyncRequest>,
+                    request: MessageInitShape<typeof CancelSyncRequestSchema>,
                     _options?: CallOptions,
                 ): Promise<CancelSyncResponse> => {
                     log('mocked cancelSync', request)
                     generator.setSyncCancelled()
-                    return Promise.resolve(new CancelSyncResponse({}))
+                    return Promise.resolve(create(CancelSyncResponseSchema, {}))
                 },
             )
 
@@ -260,7 +264,7 @@ describe('clientTest', () => {
             .spyOn(alicesClient.rpcClient, 'syncStreams')
             .mockImplementation(
                 (
-                    _request: PartialMessage<SyncStreamsRequest>,
+                    _request: MessageInitShape<typeof SyncStreamsRequestSchema>,
                     _options?: CallOptions,
                 ): AsyncIterable<SyncStreamsResponse> => {
                     return makeMockSyncGenerator(generator)
@@ -279,12 +283,12 @@ describe('clientTest', () => {
             .spyOn(alicesClient.rpcClient, 'cancelSync')
             .mockImplementation(
                 (
-                    request: PartialMessage<CancelSyncRequest>,
+                    request: MessageInitShape<typeof CancelSyncRequestSchema>,
                     _options?: CallOptions,
                 ): Promise<CancelSyncResponse> => {
                     log('mocked cancelSync', request)
                     generator.setSyncCancelled()
-                    return Promise.resolve(new CancelSyncResponse({}))
+                    return Promise.resolve(create(CancelSyncResponseSchema, {}))
                 },
             )
 
@@ -1034,7 +1038,7 @@ describe('clientTest', () => {
 
         // make a space image event
         const mediaStreamId = makeUniqueMediaStreamId()
-        const image = new MediaInfo({
+        const image = create(MediaInfoSchema, {
             mimetype: 'image/png',
             filename: 'bob-1.png',
         })
@@ -1068,12 +1072,12 @@ describe('clientTest', () => {
 
         expect(userMetadataStream).toBeDefined()
 
-        const bio = new UserBio({ bio: 'Hello, world!' })
+        const bio = { bio: 'Hello, world!' }
         const { eventId } = await bobsClient.setUserBio(bio)
         await waitFor(() => expect(userMetadataStream.view.events.has(eventId)).toBe(true))
 
         const decrypted = await bobsClient.getUserBio(bobsClient.userId)
-        expect(decrypted).toStrictEqual(bio)
+        expect(decrypted?.bio).toStrictEqual(bio.bio)
     })
 
     test('setUserBio empty', async () => {
@@ -1084,11 +1088,11 @@ describe('clientTest', () => {
 
         expect(userMetadataStream).toBeDefined()
 
-        const bio = new UserBio({ bio: '' })
+        const bio = { bio: '' }
         const { eventId } = await bobsClient.setUserBio(bio)
         await waitFor(() => expect(userMetadataStream.view.events.has(eventId)).toBe(true))
 
         const decrypted = await bobsClient.getUserBio(bobsClient.userId)
-        expect(decrypted).toStrictEqual(bio)
+        expect(decrypted?.bio).toStrictEqual(bio.bio)
     })
 })

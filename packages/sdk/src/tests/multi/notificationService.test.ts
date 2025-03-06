@@ -5,11 +5,11 @@ import { ethers } from 'ethers'
 import {
     DmChannelSettingValue,
     GdmChannelSettingValue,
-    GetSettingsRequest,
-    SetDmGdmSettingsRequest,
+    GetSettingsRequestSchema,
+    SetDmGdmSettingsRequestSchema,
 } from '@river-build/proto'
 import { makeSignerContext } from '../../signerContext'
-
+import { create } from '@bufbuild/protobuf'
 const logger = dlogger('notificationService.test')
 
 describe('notificationServicetest', () => {
@@ -29,11 +29,11 @@ describe('notificationServicetest', () => {
             await NotificationService.authenticateWithSigner(userId, signer, notificationServiceUrl)
         logger.info('authenticated', { startResponse, finishResponse })
 
-        const settings = await notificationRpcClient.getSettings(new GetSettingsRequest())
+        const settings = await notificationRpcClient.getSettings(create(GetSettingsRequestSchema))
         logger.info('settings', settings)
 
         const newSettings = await notificationRpcClient.setDmGdmSettings(
-            new SetDmGdmSettingsRequest({
+            create(SetDmGdmSettingsRequestSchema, {
                 dmGlobal: DmChannelSettingValue.DM_MESSAGES_NO,
                 gdmGlobal: GdmChannelSettingValue.GDM_MESSAGES_NO,
             }),
@@ -57,11 +57,11 @@ describe('notificationServicetest', () => {
             await NotificationService.authenticate(signerContext, notificationServiceUrl)
         logger.info('authenticated', { startResponse, finishResponse })
 
-        const settings = await notificationRpcClient.getSettings(new GetSettingsRequest())
+        const settings = await notificationRpcClient.getSettings(create(GetSettingsRequestSchema))
         logger.info('settings', settings)
 
         const newSettings = await notificationRpcClient.setDmGdmSettings(
-            new SetDmGdmSettingsRequest({
+            create(SetDmGdmSettingsRequestSchema, {
                 dmGlobal: DmChannelSettingValue.DM_MESSAGES_NO,
                 gdmGlobal: GdmChannelSettingValue.GDM_MESSAGES_NO,
             }),

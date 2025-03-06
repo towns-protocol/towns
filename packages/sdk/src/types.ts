@@ -1,5 +1,6 @@
-import { PlainMessage } from '@bufbuild/protobuf'
+import { create, fromJsonString } from '@bufbuild/protobuf'
 import {
+    PlainMessage,
     StreamEvent,
     ChannelMessage,
     ChannelMessage_Post_Content_Text,
@@ -36,6 +37,7 @@ import {
     MemberPayload,
     MemberPayload_Nft,
     BlockchainTransaction,
+    ChannelMessageSchema,
 } from '@river-build/proto'
 import { keccak256 } from 'ethereum-cryptography/keccak'
 import { bin_toHexString } from '@river-build/dlog'
@@ -406,7 +408,7 @@ export const make_ChannelMessage_Post_Content_Text = (
     mentions?: PlainMessage<ChannelMessage_Post_Mention>[],
 ): ChannelMessage => {
     const mentionsPayload = mentions !== undefined ? mentions : []
-    return new ChannelMessage({
+    return create(ChannelMessageSchema, {
         payload: {
             case: 'post',
             value: {
@@ -426,7 +428,7 @@ export const make_ChannelMessage_Post_Content_GM = (
     typeUrl: string,
     value?: Uint8Array,
 ): ChannelMessage => {
-    return new ChannelMessage({
+    return create(ChannelMessageSchema, {
         payload: {
             case: 'post',
             value: {
@@ -446,7 +448,7 @@ export const make_ChannelMessage_Reaction = (
     refEventId: string,
     reaction: string,
 ): ChannelMessage => {
-    return new ChannelMessage({
+    return create(ChannelMessageSchema, {
         payload: {
             case: 'reaction',
             value: {
@@ -461,7 +463,7 @@ export const make_ChannelMessage_Edit = (
     refEventId: string,
     post: PlainMessage<ChannelMessage_Post>,
 ): ChannelMessage => {
-    return new ChannelMessage({
+    return create(ChannelMessageSchema, {
         payload: {
             case: 'edit',
             value: {
@@ -476,7 +478,7 @@ export const make_ChannelMessage_Redaction = (
     refEventId: string,
     reason?: string,
 ): ChannelMessage => {
-    return new ChannelMessage({
+    return create(ChannelMessageSchema, {
         payload: {
             case: 'redaction',
             value: {
@@ -917,7 +919,7 @@ export const getMessagePayloadContent = (
     if (!payload) {
         return undefined
     }
-    return ChannelMessage.fromJsonString(payload.ciphertext)
+    return fromJsonString(ChannelMessageSchema, payload.ciphertext)
 }
 
 export const getMessagePayloadContent_Text = (

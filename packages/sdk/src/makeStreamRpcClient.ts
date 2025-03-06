@@ -1,4 +1,4 @@
-import { PromiseClient, createPromiseClient } from '@connectrpc/connect'
+import { Client, createClient } from '@connectrpc/connect'
 import { ConnectTransportOptions as ConnectTransportOptionsWeb } from '@connectrpc/connect-web'
 import { StreamService } from '@river-build/proto'
 import { dlog } from '@river-build/dlog'
@@ -22,7 +22,7 @@ export interface StreamRpcClientOptions {
     retryParams: RetryParams
 }
 
-export type StreamRpcClient = PromiseClient<typeof StreamService> & {
+export type StreamRpcClient = Client<typeof StreamService> & {
     url: string
     opts: StreamRpcClientOptions
 }
@@ -53,13 +53,13 @@ export function makeStreamRpcClient(
         logInfo('makeStreamRpcClient: running in debug mode, using JSON format')
         options.useBinaryFormat = false
         options.jsonOptions = {
-            emitDefaultValues: true,
+            alwaysEmitImplicit: true,
             useProtoFieldName: true,
         }
     }
     const transport = createHttp2ConnectTransport(options)
 
-    const client: StreamRpcClient = createPromiseClient(StreamService, transport) as StreamRpcClient
+    const client: StreamRpcClient = createClient(StreamService, transport) as StreamRpcClient
     client.url = url
     client.opts = { retryParams }
     return client

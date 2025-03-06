@@ -8,16 +8,18 @@ import {
 import { LocalhostWeb3Provider, SpaceDapp } from '@river-build/web3'
 import { bin_fromBase64, bin_toBase64, shortenHexString } from '@river-build/dlog'
 import { Wallet } from 'ethers'
-import { PlainMessage } from '@bufbuild/protobuf'
 import {
     ChannelMessage_Post_Attachment,
     ChannelMessage_Post_Mention,
     ExportedDevice,
+    ExportedDeviceSchema,
+    PlainMessage,
 } from '@river-build/proto'
 import { waitFor } from './waitFor'
 import { IStorage } from './storage'
 import { sha256 } from 'ethers/lib/utils'
 import { getLogger } from './logger'
+import { create, fromBinary, toBinary } from '@bufbuild/protobuf'
 
 export async function makeStressClient(
     config: RiverConfig,
@@ -40,7 +42,7 @@ export async function makeStressClient(
 
     if (rawDevice) {
         try {
-            device = ExportedDevice.fromBinary(bin_fromBase64(rawDevice))
+            device = fromBinary(ExportedDeviceSchema, bin_fromBase64(rawDevice))
         } catch (e) {
             logger.error(e, 'failed to parse device')
             // backwards compatibility
@@ -50,7 +52,7 @@ export async function makeStressClient(
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                 if (jsonDevice.pickleKey && jsonDevice.pickledAccount) {
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-                    device = new ExportedDevice({
+                    device = create(ExportedDeviceSchema, {
                         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
                         outboundSessions: jsonDevice.outboundSessions ?? [],
                         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
@@ -213,7 +215,7 @@ export class StressClient {
             try {
                 await this.globalPersistedStore?.set(
                     this.storageKey,
-                    bin_toBase64(device.toBinary()),
+                    bin_toBase64(toBinary(ExportedDeviceSchema, device)),
                 )
                 this.logger.info({ storageKey: this.storageKey }, 'device exported')
             } catch (e) {
