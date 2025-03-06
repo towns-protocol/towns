@@ -28,6 +28,14 @@ interface IWalletLinkBase {
   /// @notice Emitted when two wallets are unlinked
   event RemoveLink(address indexed wallet, address indexed secondWallet);
 
+  /// @notice Emitted when the default wallet for a chain is updated
+  event DefaultWalletUpdated(
+    address indexed rootKey,
+    address indexed prevDefault,
+    address indexed newDefault,
+    uint256 chainId
+  );
+
   // =============================================================
   //                      Errors
   // =============================================================
@@ -39,6 +47,7 @@ interface IWalletLinkBase {
   error WalletLink__CannotRemoveRootWallet();
   error WalletLink__CannotLinkToSelf();
   error WalletLink__CannotLinkToRootWallet(address wallet, address rootKey);
+  error WalletLink__DefaultWalletAlreadySet();
 }
 
 interface IWalletLink is IWalletLinkBase {
@@ -119,4 +128,33 @@ interface IWalletLink is IWalletLinkBase {
   function getLatestNonceForRootKey(
     address rootKey
   ) external view returns (uint256);
+
+  /**
+   * @notice sets the caller as the default wallet for a rootkey and chainId
+   * @param rootWallet the root wallet to set the default wallet for
+   * @dev the caller must be linked to the rootwallet
+   */
+  function setCallerAsDefaultWallet(address rootWallet) external;
+
+  /**
+   * @notice sets the default wallet for a rootkey and chainId
+   * @param rootWallet the root wallet to set the default wallet for
+   * @param wallet the wallet to set as the default wallet for
+   * @param chainId the chainId to set the default wallet for
+   */
+  function setDefaultWallet(
+    address rootWallet,
+    address wallet,
+    uint256 chainId
+  ) external;
+
+  /**
+   * @notice gets the default wallet for a rootkey and chainId
+   * @param rootWallet the root wallet to get the default wallet for
+   * @param chainId the chainId to get the default wallet for
+   */
+  function getDefaultWallet(
+    address rootWallet,
+    uint256 chainId
+  ) external view returns (address);
 }

@@ -601,4 +601,87 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup {
     );
     walletLink.removeCallerLink();
   }
+
+  // =============================================================
+  //                   setDefaultWallet
+  // =============================================================
+
+  function test_setDefaultWallet() external givenWalletIsLinkedViaCaller {
+    address anotherWallet = vm.createWallet("anotherWallet").addr;
+    _linkWallet(anotherWallet);
+
+    uint256 chainId = block.chainid;
+
+    vm.prank(rootWallet.addr);
+    vm.expectEmit(address(walletLink));
+    emit DefaultWalletUpdated(
+      rootWallet.addr,
+      address(0),
+      anotherWallet,
+      chainId
+    );
+    walletLink.setDefaultWallet(rootWallet.addr, anotherWallet, chainId);
+
+    assertEq(
+      walletLink.getDefaultWallet(rootWallet.addr, chainId),
+      anotherWallet
+    );
+  }
+
+  function test_revertWhen_setDefaultWalletRootWalletNotLinked() external {
+    vm.prank(rootWallet.addr);
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        WalletLink__NotLinked.selector,
+        wallet.addr,
+        rootWallet.addr
+      )
+    );
+    walletLink.setDefaultWallet(rootWallet.addr, wallet.addr, block.chainid);
+  }
+
+  function test_revertWhen_setDefaultWalletDefaultWalletAlreadySet() external {
+    _linkWallet(wallet.addr);
+
+    vm.prank(wallet.addr);
+    walletLink.setCallerAsDefaultWallet(rootWallet.addr);
+
+    vm.prank(rootWallet.addr);
+    vm.expectRevert(WalletLink__DefaultWalletAlreadySet.selector);
+    walletLink.setDefaultWallet(rootWallet.addr, wallet.addr, block.chainid);
+  }
+
+  function test_setCallerAsDefaultWallet()
+    external
+    givenWalletIsLinkedViaCaller
+  {
+    vm.prank(wallet.addr);
+    vm.expectEmit(address(walletLink));
+    emit DefaultWalletUpdated(
+      rootWallet.addr,
+      address(0),
+      wallet.addr,
+      block.chainid
+    );
+    walletLink.setCallerAsDefaultWallet(rootWallet.addr);
+  }
+
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                           helpers                          */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+  function _linkWallet(address newWallet) internal {
+    uint256 nonce = walletLink.getLatestNonceForRootKey(rootWallet.addr);
+    bytes memory signature = _signWalletLink(
+      rootWallet.privateKey,
+      newWallet,
+      nonce
+    );
+
+    vm.prank(newWallet);
+    walletLink.linkCallerToRootKey(
+      LinkedWallet(rootWallet.addr, signature, LINKED_WALLET_MESSAGE),
+      nonce
+    );
+  }
 }
