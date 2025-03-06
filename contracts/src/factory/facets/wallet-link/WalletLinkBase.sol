@@ -603,10 +603,6 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
       (SolanaSpecificData)
     );
 
-    if (solanaSpecificData.extPubKey.length != 5) {
-      revert WalletLink__InvalidSignature();
-    }
-
     // Check that the extPubKey and the wallet address match
     if (
       !SolanaUtils.isValidSolanaAddress(
@@ -614,7 +610,7 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
         solanaSpecificData.extPubKey
       )
     ) {
-      revert WalletLink__InvalidSignature();
+      revert WalletLink__AddressMismatch();
     }
 
     ISCL_EIP6565 sclEIP6565 = ISCL_EIP6565(_getDependency(SCL_EIP6565));

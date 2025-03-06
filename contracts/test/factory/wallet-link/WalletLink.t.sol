@@ -374,10 +374,88 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
     vm.expectRevert(WalletLink__MaxLinkedWalletsReached.selector);
     walletLink.linkNonEVMWalletToRootKey(nonEVMWallet, nonce);
   }
+
+  function test_revertWhen_linkNonEVMWalletToRootKeyInvalidVM()
+    external
+    givenWalletIsLinkedViaCaller
+  {
+    NonEVMLinkedWallet memory nonEVMWallet = _createNonEVMWallet(
+      _randomUint256(),
+      rootWallet.addr
+    );
+
+    uint256 nonce = walletLink.getLatestNonceForRootKey(rootWallet.addr);
+
+    nonEVMWallet.wallet.vmType = WalletLib.VirtualMachineType.UNKNOWN;
+
+    vm.prank(wallet.addr);
+    vm.expectRevert(WalletLink__UnsupportedVMType.selector);
+    walletLink.linkNonEVMWalletToRootKey(nonEVMWallet, nonce);
+  }
+
+  function test_revertWhen_linkNonEVMWalletToRootKeyInvalidSolanaAddress()
+    external
+    givenWalletIsLinkedViaCaller
+  {
+    NonEVMLinkedWallet memory nonEVMWallet = _createNonEVMWallet(
+      _randomUint256(),
+      rootWallet.addr
+    );
+
+    nonEVMWallet
+      .wallet
+      .addr = "3p5wau6jqBV8sQswjN1HEeSZLjv5TB173zBgupGQD4weinvalid";
+
+    vm.prank(wallet.addr);
+    vm.expectRevert(WalletLink__InvalidNonEVMAddress.selector);
+    walletLink.linkNonEVMWalletToRootKey(nonEVMWallet, 0);
+  }
+
+  function test_revertWhen_linkNonEVMWalletToRootKeyInvalidMismatchedSolanaAddress()
+    external
+    givenWalletIsLinkedViaCaller
+  {
+    NonEVMLinkedWallet memory nonEVMWallet = _createNonEVMWallet(
+      _randomUint256(),
+      rootWallet.addr
+    );
+
+    nonEVMWallet.wallet.addr = SOLANA_WALLET_ADDRESS;
+
+    vm.prank(wallet.addr);
+    vm.expectRevert(WalletLink__AddressMismatch.selector);
+    walletLink.linkNonEVMWalletToRootKey(nonEVMWallet, 0);
+  }
+
+  function test_revertWhen_linkNonEVMWalletToRootKeyInvalidSignature()
+    external
+    givenWalletIsLinkedViaCaller
+  {
+    (
+      uint256[5] memory secondExtPubKey,
+      uint256[2] memory solanaSigner
+    ) = SCL_EIP6565_UTILS.SetKey(_randomUint256());
+    string memory consentMessage = LibString.toHexString(rootWallet.addr);
+    (uint256 r, uint256 s) = SCL_EIP6565_UTILS.Sign(
+      secondExtPubKey[4],
+      solanaSigner,
+      consentMessage
+    );
+
+    NonEVMLinkedWallet memory nonEVMWallet = _createNonEVMWallet(
+      _randomUint256(),
+      rootWallet.addr
+    );
+
+    nonEVMWallet.signature = abi.encodePacked(r, s);
+
+    vm.prank(wallet.addr);
+    vm.expectRevert(WalletLink__InvalidSignature.selector);
+    walletLink.linkNonEVMWalletToRootKey(nonEVMWallet, 0);
+  }
   // =============================================================
   //                   linkCallerToRootKey
   // =============================================================
-
   function test_linkCallerToRootKey() external givenWalletIsLinkedViaCaller {
     assertTrue(walletLink.checkIfLinked(rootWallet.addr, wallet.addr));
   }

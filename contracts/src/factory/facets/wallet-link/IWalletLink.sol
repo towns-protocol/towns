@@ -95,6 +95,7 @@ interface IWalletLinkBase {
   error WalletLink__InvalidNonEVMAddress();
   error WalletLink__RootKeyMismatch(address callerRootKey, address rootKey);
   error WalletLink__NonEVMWalletNotLinked(string wallet, address rootKey);
+  error WalletLink__AddressMismatch();
 }
 
 interface IWalletLink is IWalletLinkBase {
