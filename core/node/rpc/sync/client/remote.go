@@ -29,7 +29,6 @@ type remoteSyncer struct {
 	forwarderSyncID       string
 	remoteAddr            common.Address
 	client                protocolconnect.StreamServiceClient
-	clientForUpdates      protocolconnect.StreamServiceClient
 	messages              chan<- *SyncStreamsResponse
 	streams               sync.Map
 	responseStream        *connect.ServerStreamForClient[SyncStreamsResponse]
