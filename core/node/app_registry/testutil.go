@@ -161,7 +161,7 @@ func (b *TestAppServer) solicitKeys(ctx context.Context, data app_client.KeySoli
 		},
 	)
 	if err != nil {
-		return fmt.Errorf("Failed to construct key solicitation stream event: %w", err)
+		return fmt.Errorf("failed to construct key solicitation stream event: %w", err)
 	}
 
 	addEventResp, err := b.client.AddEvent(
@@ -174,11 +174,11 @@ func (b *TestAppServer) solicitKeys(ctx context.Context, data app_client.KeySoli
 		},
 	)
 	if err != nil {
-		return fmt.Errorf("Error adding key solicitation event to stream: %w", err)
+		return fmt.Errorf("error adding key solicitation event to stream: %w", err)
 	}
 	if addErr := addEventResp.Msg.GetError(); addErr != nil {
 		return fmt.Errorf(
-			"Failed to add key solicitation event to stream: %v, %v, %v",
+			"failed to add key solicitation event to stream: %v, %v, %v",
 			addErr.Msg,
 			addErr.Code,
 			addErr.Funcs,

@@ -335,9 +335,9 @@ func (s *Service) RegisterWebhook(
 	webhook := req.Msg.WebhookUrl
 	serverEncryptionDevice, err := s.appClient.InitializeWebhook(
 		ctx,
-		webhook,
 		app,
 		decryptedSecret,
+		webhook,
 	)
 	if err != nil {
 		return nil, base.WrapRiverError(Err_UNKNOWN, err).Message("Unable to initialize app service")

@@ -10,7 +10,6 @@ import (
 	"time"
 
 	mapset "github.com/deckarep/golang-set/v2"
-	"go.uber.org/zap/zapcore"
 
 	"connectrpc.com/connect"
 
@@ -148,9 +147,8 @@ func initAppRegistryService(
 
 func TestAppRegistry_ForwardsChannelEvents(t *testing.T) {
 	tester := newServiceTester(t, serviceTesterOpts{numNodes: 1, start: true})
-	loggingCtx := logging.CtxWithLog(tester.ctx, logging.DefaultZapLogger(zapcore.DebugLevel))
 	service, listener := initAppRegistryService(
-		loggingCtx,
+		tester.ctx,
 		tester,
 	)
 
@@ -206,7 +204,7 @@ func TestAppRegistry_ForwardsChannelEvents(t *testing.T) {
 	_, _, err := createSpace(tester.ctx, wallet, client, spaceId, nil)
 	require.NoError(err)
 
-	// Create the space's default / general channel
+	// Create a channel in the space
 	channelId := StreamId{STREAM_CHANNEL_BIN}
 	copy(channelId[1:21], spaceId[1:21])
 	_, err = rand.Read(channelId[21:])
@@ -229,14 +227,11 @@ func TestAppRegistry_ForwardsChannelEvents(t *testing.T) {
 	)
 	require.NoError(err)
 
-	log := logging.FromCtx(loggingCtx)
-	log.Info("About to add event")
 	_, err = client.AddEvent(tester.ctx, connect.NewRequest(&protocol.AddEventRequest{
 		StreamId: channelId[:],
 		Event:    event,
 		Optional: false,
 	}))
-	log.Info("Added event")
 	require.NoError(err)
 
 	require.EventuallyWithT(func(c *assert.CollectT) {
@@ -260,7 +255,6 @@ func TestAppRegistry_ForwardsChannelEvents(t *testing.T) {
 		}
 		assert.True(c, found, "Message not found %v", records)
 	}, 10*time.Second, 100*time.Millisecond, "App registry service did not forward channel event")
-	log.Info("Done!")
 }
 
 // invalidAddressBytes is a slice of bytes that cannot be parsed into an address, because
@@ -549,7 +543,7 @@ func TestAppRegistry_Status(t *testing.T) {
 	authClient := protocolconnect.NewAuthenticationServiceClient(
 		httpClient, serviceAddr,
 	)
-	AppRegistryClient := protocolconnect.NewAppRegistryServiceClient(
+	appRegistryClient := protocolconnect.NewAppRegistryServiceClient(
 		httpClient, serviceAddr,
 	)
 
@@ -557,11 +551,9 @@ func TestAppRegistry_Status(t *testing.T) {
 	_, err := rand.Read(unregisteredApp[:])
 	tester.require.NoError(err)
 
-	appWallet, err := crypto.NewWallet(tester.ctx)
-	tester.require.NoError(err)
-
-	ownerWallet, err := crypto.NewWallet(tester.ctx)
-	tester.require.NoError(err)
+	appWallet := safeNewWallet(tester.ctx, tester.require)
+	ownerWallet := safeNewWallet(tester.ctx, tester.require)
+	safeCreateStreamsForApp(t, tester.ctx, appWallet, tester.testClient(0), &testEncryptionDevice)
 
 	req := &connect.Request[protocol.RegisterRequest]{
 		Msg: &protocol.RegisterRequest{
@@ -570,13 +562,13 @@ func TestAppRegistry_Status(t *testing.T) {
 		},
 	}
 	authenticateBS(tester.ctx, tester.require, authClient, ownerWallet, req)
-	resp, err := AppRegistryClient.Register(
+	resp, err := appRegistryClient.Register(
 		tester.ctx,
 		req,
 	)
 
-	tester.require.NotNil(resp)
 	tester.require.NoError(err)
+	tester.require.NotNil(resp)
 	statusTests := map[string]struct {
 		appId                []byte
 		expectedIsRegistered bool
@@ -593,7 +585,7 @@ func TestAppRegistry_Status(t *testing.T) {
 
 	for name, tc := range statusTests {
 		t.Run(name, func(t *testing.T) {
-			status, err := AppRegistryClient.GetStatus(
+			status, err := appRegistryClient.GetStatus(
 				tester.ctx,
 				&connect.Request[protocol.GetStatusRequest]{
 					Msg: &protocol.GetStatusRequest{

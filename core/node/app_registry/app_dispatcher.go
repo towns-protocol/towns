@@ -78,7 +78,7 @@ func (d *AppDispatcher) RequestKeySolicitations(
 			d.workerPool.Submit(
 				func() {
 					// TODO: retries?
-					if err := d.appClient.RequestSolicitation(ctx, device.AppId, device.WebhookUrl, channelId, sharedSecret, sessionId); err != nil {
+					if err := d.appClient.RequestSolicitation(ctx, device.AppId, sharedSecret, device.WebhookUrl, channelId, sessionId); err != nil {
 						logging.FromCtx(ctx).Errorw(
 							"Could not complete request for app to send a key solicitation",
 							"appId",
@@ -113,8 +113,8 @@ func (d *AppDispatcher) SubmitMessages(
 			if err := d.appClient.SendSessionMessages(
 				ctx,
 				messages.AppId,
-				messages.DeviceKey,
 				sharedSecret,
+				messages.SessionIds,
 				messages.CipherTexts,
 				messages.WebhookUrl,
 				messages.StreamEvents,
