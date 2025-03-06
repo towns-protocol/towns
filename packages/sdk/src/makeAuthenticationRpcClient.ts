@@ -1,4 +1,4 @@
-import { PromiseClient, createPromiseClient } from '@connectrpc/connect'
+import { Client, createClient } from '@connectrpc/connect'
 import { ConnectTransportOptions } from '@connectrpc/connect-web'
 import { AuthenticationService } from '@river-build/proto'
 import { dlog } from '@river-build/dlog'
@@ -10,7 +10,7 @@ const logInfo = dlog('csb:auto-rpc:info')
 
 let nextRpcClientNum = 0
 
-export type AuthenticationRpcClient = PromiseClient<typeof AuthenticationService> & { url: string }
+export type AuthenticationRpcClient = Client<typeof AuthenticationService> & { url: string }
 
 export function makeAuthenticationRpcClient(
     dest: string,
@@ -42,12 +42,12 @@ export function makeAuthenticationRpcClient(
         logInfo('makeAuthenticationRpcClient: running in debug mode, using JSON format')
         options.useBinaryFormat = false
         options.jsonOptions = {
-            emitDefaultValues: true,
+            alwaysEmitImplicit: true,
             useProtoFieldName: true,
         }
     }
     const transport = createHttp2ConnectTransport(options)
-    const client: AuthenticationRpcClient = createPromiseClient(
+    const client: AuthenticationRpcClient = createClient(
         AuthenticationService,
         transport,
     ) as AuthenticationRpcClient

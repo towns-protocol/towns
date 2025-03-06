@@ -1,4 +1,4 @@
-import { PromiseClient, createPromiseClient } from '@connectrpc/connect'
+import { Client, createClient } from '@connectrpc/connect'
 import { ConnectTransportOptions } from '@connectrpc/connect-web'
 import { NotificationService } from '@river-build/proto'
 import { dlog } from '@river-build/dlog'
@@ -15,7 +15,7 @@ const logInfo = dlog('csb:rpc:info')
 
 let nextRpcClientNum = 0
 
-export type NotificationRpcClient = PromiseClient<typeof NotificationService> & { url: string }
+export type NotificationRpcClient = Client<typeof NotificationService> & { url: string }
 
 export function makeNotificationRpcClient(
     dest: string,
@@ -49,12 +49,12 @@ export function makeNotificationRpcClient(
         logInfo('makeNotificationRpcClient: running in debug mode, using JSON format')
         options.useBinaryFormat = false
         options.jsonOptions = {
-            emitDefaultValues: true,
+            alwaysEmitImplicit: true,
             useProtoFieldName: true,
         }
     }
     const transport = createHttp2ConnectTransport(options)
-    const client: NotificationRpcClient = createPromiseClient(
+    const client: NotificationRpcClient = createClient(
         NotificationService,
         transport,
     ) as NotificationRpcClient
