@@ -1,5 +1,5 @@
 import { SyncCookie } from '@river-build/proto'
-import { DLogger, check, dlog, dlogError } from '@river-build/dlog'
+import { DLogger as DLoggerType, check, dlog, dlogError } from '@river-build/dlog'
 import { StreamRpcClient } from './makeStreamRpcClient'
 import { SyncedStreamEvents } from './streamEvents'
 import TypedEmitter from 'typed-emitter'
@@ -63,7 +63,7 @@ interface Metrics {
     incrementFailedRetries(): void
 }
 
-interface Logger {
+interface ErrorLogger {
     error(message: string, metadata?: Record<string, unknown>): void
 }
 
@@ -82,8 +82,9 @@ export class SyncedStreams {
     // mapping of stream id to stream
     private readonly streams: Map<string, SyncedStream> = new Map()
     // loggers
-    private readonly logSync: DLogger
-    private readonly logError: DLogger
+    private readonly logSync: DLoggerType
+    private readonly logError: DLoggerType
+    private readonly logger: ErrorLogger
     // clientEmitter is used to proxy the events from the streams to the client
     private readonly clientEmitter: TypedEmitter<SyncedStreamEvents>
     // rpcClient is used to receive sync updates from the server
@@ -95,7 +96,6 @@ export class SyncedStreams {
     private gcInterval: number | undefined
     private preloadQueue: string[] = []
     private metrics: Metrics
-    private logger: Logger
     private normalPriorityStreams: Set<string>
     private prewarmInterval: number | undefined
 
@@ -110,8 +110,10 @@ export class SyncedStreams {
         this.userId = userId
         this.rpcClient = rpcClient
         this.clientEmitter = clientEmitter
-        this.logSync = dlog('csb:cl:sync').extend(this.logId)
-        this.logError = dlogError('csb:cl:sync:stream').extend(this.logId)
+        this.logSync = dlog('csb:cl:sync')
+        this.logError = dlogError('csb:cl:sync:stream')
+        this.logSync = this.logSync.extend(this.logId)
+        this.logError = this.logError.extend(this.logId)
         this.initializeConnectionPool()
         this.startCacheCleanup()
         this.startGarbageCollection()
