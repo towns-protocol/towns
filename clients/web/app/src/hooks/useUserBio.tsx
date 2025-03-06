@@ -2,7 +2,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback } from 'react'
 import { z } from 'zod'
 import { useOfflineStore, useTownsClient } from 'use-towns-client'
-import { UserBio } from '@river-build/proto'
 import { env } from 'utils'
 import { refreshUserBioCache } from 'api/lib/fetchImage'
 import { axiosClient } from '../api/apiClient'
@@ -66,7 +65,7 @@ export const useSetUserBio = (userId: string | undefined) => {
             if (!userId) {
                 return
             }
-            await client?.setUserBio(new UserBio({ bio }))
+            await client?.setUserBio({ bio })
             setOfflineUserBio(userId, bio)
             queryClient.setQueryData([queryKey, userId], bio)
             await refreshUserBioCache(userId)

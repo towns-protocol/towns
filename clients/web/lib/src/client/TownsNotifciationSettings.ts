@@ -1,15 +1,19 @@
 import {
-    DmChannelSetting,
     DmChannelSettingValue,
     FinishAuthenticationResponse,
-    GdmChannelSetting,
     GdmChannelSettingValue,
     GetSettingsResponse,
-    SpaceChannelSetting,
     SpaceChannelSettingValue,
-    SpaceSetting,
     StartAuthenticationResponse,
     WebPushSubscriptionObject,
+    PlainMessage,
+    StartAuthenticationResponseSchema,
+    FinishAuthenticationResponseSchema,
+    GetSettingsResponseSchema,
+    DmChannelSettingSchema,
+    GdmChannelSettingSchema,
+    SpaceSettingSchema,
+    SpaceChannelSettingSchema,
 } from '@river-build/proto'
 import {
     SignerContext,
@@ -25,32 +29,33 @@ import {
     isDMChannelStreamId,
     isGDMChannelStreamId,
 } from '@river-build/sdk'
-import { Message, PlainMessage } from '@bufbuild/protobuf'
+import { create, DescMessage, fromBinary, MessageShape, toBinary, toJson } from '@bufbuild/protobuf'
 import { useCallback, useEffect, useMemo, useSyncExternalStore } from 'react'
 import { useTownsContext } from '../components/TownsContextProvider'
 import { bin_fromBase64, bin_toBase64 } from '@river-build/dlog'
+import cloneDeep from 'lodash/cloneDeep'
 
 export interface INotificationStore {
-    getItem<T extends Message>(key: string, messageType: { new (): T }): T | undefined
-    setItem(key: string, value: Message): void
+    getItem<Desc extends DescMessage>(schema: Desc, key: string): MessageShape<Desc> | undefined
+    setItem<Desc extends DescMessage>(schema: Desc, key: string, value: MessageShape<Desc>): void
 }
 
 class LocalStorageNotificationStore implements INotificationStore {
-    getItem<T extends Message>(key: string, messageType: { new (): T }): T | undefined {
+    getItem<Desc extends DescMessage>(schema: Desc, key: string): MessageShape<Desc> | undefined {
         const data = localStorage.getItem(key)
         if (!data) {
             return undefined
         }
         try {
-            return new messageType().fromBinary(bin_fromBase64(data))
+            return fromBinary(schema, bin_fromBase64(data))
         } catch (error) {
             console.error('TNS PUSH: error parsing local storage', error)
             return undefined
         }
     }
 
-    setItem<T extends Message>(key: string, value: T): void {
-        const bytes = value.toBinary()
+    setItem<Desc extends DescMessage>(schema: Desc, key: string, value: MessageShape<Desc>): void {
+        const bytes = toBinary(schema, value)
         localStorage.setItem(key, bin_toBase64(bytes))
     }
 }
@@ -99,34 +104,34 @@ export class NotificationSettingsClient {
     }
 
     private getLocalStartResponse(): StartAuthenticationResponse | undefined {
-        return this.store.getItem(this.startResponseKey, StartAuthenticationResponse)
+        return this.store.getItem(StartAuthenticationResponseSchema, this.startResponseKey)
     }
 
     private setLocalStartResponse(response: StartAuthenticationResponse) {
-        this.store.setItem(this.startResponseKey, response)
+        this.store.setItem(StartAuthenticationResponseSchema, this.startResponseKey, response)
     }
 
     private getLocalFinishResponse(): FinishAuthenticationResponse | undefined {
-        return this.store.getItem(this.finishResponseKey, FinishAuthenticationResponse)
+        return this.store.getItem(FinishAuthenticationResponseSchema, this.finishResponseKey)
     }
 
     private setLocalFinishResponse(response: FinishAuthenticationResponse) {
-        this.store.setItem(this.finishResponseKey, response)
+        this.store.setItem(FinishAuthenticationResponseSchema, this.finishResponseKey, response)
     }
 
     private getLocalSettings(): GetSettingsResponse | undefined {
-        return this.store.getItem(this.settingsKey, GetSettingsResponse)
+        return this.store.getItem(GetSettingsResponseSchema, this.settingsKey)
     }
 
     private setLocalSettings(settings: GetSettingsResponse) {
-        this.store.setItem(this.settingsKey, settings)
+        this.store.setItem(GetSettingsResponseSchema, this.settingsKey, settings)
     }
 
     private updateLocalSettings(fn: (current: GetSettingsResponse) => void) {
         if (!this.data.value.settings) {
             throw new Error('TNS PUSH: settings has not been fetched')
         }
-        const newSettings = this.data.value.settings.clone()
+        const newSettings = cloneDeep(this.data.value.settings) // aellis we probably don't need a clone deep
         fn(newSettings)
         this.setLocalSettings(newSettings)
         this.data.setValue({ ...this.data.value, settings: newSettings })
@@ -228,7 +233,10 @@ export class NotificationSettingsClient {
                     settings: response,
                     error: undefined,
                 })
-                console.log('TNS PUSH: fetched settings', response.toJson())
+                console.log(
+                    'TNS PUSH: fetched settings',
+                    toJson(GetSettingsResponseSchema, response),
+                )
                 this.getSettingsPromise = undefined
                 return response
             } catch (error) {
@@ -293,7 +301,10 @@ export class NotificationSettingsClient {
                     (c) => streamIdAsString(c.channelId) !== channelId,
                 )
                 settings.dmChannels.push(
-                    new DmChannelSetting({ channelId: streamIdAsBytes(channelId), value }),
+                    create(DmChannelSettingSchema, {
+                        channelId: streamIdAsBytes(channelId),
+                        value,
+                    }),
                 )
             })
         })
@@ -309,7 +320,10 @@ export class NotificationSettingsClient {
                     (c) => streamIdAsString(c.channelId) !== channelId,
                 )
                 settings.gdmChannels.push(
-                    new GdmChannelSetting({ channelId: streamIdAsBytes(channelId), value }),
+                    create(GdmChannelSettingSchema, {
+                        channelId: streamIdAsBytes(channelId),
+                        value,
+                    }),
                 )
             })
         })
@@ -326,7 +340,7 @@ export class NotificationSettingsClient {
                     settings.space[spaceIndex].value = value
                 } else {
                     settings.space.push(
-                        new SpaceSetting({
+                        create(SpaceSettingSchema, {
                             spaceId: streamIdAsBytes(spaceId),
                             value,
                             channels: [],
@@ -352,7 +366,7 @@ export class NotificationSettingsClient {
                 if (spaceIndex == -1) {
                     spaceIndex = settings.space.length
                     settings.space.push(
-                        new SpaceSetting({
+                        create(SpaceSettingSchema, {
                             spaceId: streamIdAsBytes(spaceId),
                             value: SpaceChannelSettingValue.SPACE_CHANNEL_SETTING_UNSPECIFIED,
                             channels: [],
@@ -364,7 +378,10 @@ export class NotificationSettingsClient {
                 )
                 if (channelIndex == -1) {
                     settings.space[spaceIndex].channels.push(
-                        new SpaceChannelSetting({ channelId: streamIdAsBytes(channelId), value }),
+                        create(SpaceChannelSettingSchema, {
+                            channelId: streamIdAsBytes(channelId),
+                            value,
+                        }),
                     )
                 } else {
                     settings.space[spaceIndex].channels[channelIndex].value = value

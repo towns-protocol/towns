@@ -16,7 +16,9 @@ import {
 import {
     AddEventResponse_Error,
     EncryptedData,
+    SessionKeysSchema,
     UserInboxPayload_GroupEncryptionSessions,
+    UserInboxPayload_GroupEncryptionSessionsSchema,
 } from '@river-build/proto'
 import {
     GroupEncryptionAlgorithmId,
@@ -33,6 +35,7 @@ import { IGroupEncryptionClient } from '../base'
 import { Permission } from '@river-build/web3'
 import TypedEmitter from 'typed-emitter'
 import { customAlphabet } from 'nanoid'
+import { create, toJsonString } from '@bufbuild/protobuf'
 
 const log = dlog('test:decryptionExtensions:')
 
@@ -495,7 +498,7 @@ class MockGroupEncryptionClient
         // prepare the common parts of the payload
         const streamIdBytes = streamIdToBytes(streamId)
         const sessionIds = sessions.map((s) => s.sessionId)
-        const payload = makeSessionKeys(sessions).toJsonString()
+        const payload = toJsonString(SessionKeysSchema, makeSessionKeys(sessions))
 
         // encrypt and send the payload to each client
         const otherClients = Object.values(this.clientDiscoveryService).filter(
@@ -503,14 +506,16 @@ class MockGroupEncryptionClient
         )
         const promises = otherClients.map(async (c) => {
             const cipertext = await this.crypto?.encryptWithDeviceKeys(payload, [c.userDevice!])
-            const groupSession: UserInboxPayload_GroupEncryptionSessions =
-                new UserInboxPayload_GroupEncryptionSessions({
+            const groupSession: UserInboxPayload_GroupEncryptionSessions = create(
+                UserInboxPayload_GroupEncryptionSessionsSchema,
+                {
                     streamId: streamIdBytes,
                     senderKey: this.userDevice?.deviceKey,
                     sessionIds: sessionIds,
                     ciphertexts: cipertext,
                     algorithm: args.algorithm,
-                })
+                },
+            )
             // pretend sending the payload to the client
             // ....
             // pretend receiving the response

@@ -1,5 +1,4 @@
-import { BlockchainTransaction_TokenTransfer } from '@river-build/proto'
-import { PlainMessage } from '@bufbuild/protobuf'
+import { BlockchainTransaction_TokenTransfer, PlainMessage } from '@river-build/proto'
 import { SolanaTransactionReceipt } from '@river-build/sdk'
 import { ConfirmedTransactionMeta, VersionedTransactionResponse } from '@solana/web3.js'
 import { bin_fromHexString, bin_fromString } from '@river-build/dlog'

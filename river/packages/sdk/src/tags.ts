@@ -1,10 +1,10 @@
-import { PlainMessage } from '@bufbuild/protobuf'
 import {
     BlockchainTransaction_TokenTransfer,
     ChannelMessage,
     GroupMentionType,
     MessageInteractionType,
     Tags,
+    PlainMessage,
 } from '@river-build/proto'
 import { IStreamStateView } from './streamStateView'
 import { addressFromUserId } from './id'

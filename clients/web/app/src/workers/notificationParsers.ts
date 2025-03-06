@@ -1,5 +1,5 @@
 import * as z from 'zod'
-import { StreamEvent } from '@river-build/proto'
+import { StreamEventSchema } from '@river-build/proto'
 import { bin_fromHexString } from '@river-build/dlog'
 import {
     isChannelStreamId,
@@ -7,6 +7,7 @@ import {
     isGDMChannelStreamId,
     spaceIdFromChannelId,
 } from '@river-build/sdk'
+import { fromBinary } from '@bufbuild/protobuf'
 import { NotificationClicked } from 'store/notificationCurrentUser'
 import { PATHS } from '../routes'
 import { AppNotification, NotificationContent, NotificationKind } from './types.d'
@@ -31,7 +32,7 @@ const payloadSchema = z
     })
     .transform((data): AppNotification | undefined => {
         const eventBytes = data.payload.event ? bin_fromHexString(data.payload.event) : undefined
-        const event = eventBytes ? StreamEvent.fromBinary(eventBytes) : undefined
+        const event = eventBytes ? fromBinary(StreamEventSchema, eventBytes) : undefined
         return {
             topic: data.topic,
             channelId: data.channelId, // aellis: not sure why we're doing double channelId at top level

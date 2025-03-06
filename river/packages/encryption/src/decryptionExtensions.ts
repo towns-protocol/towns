@@ -3,7 +3,9 @@ import { Permission } from '@river-build/web3'
 import {
     AddEventResponse_Error,
     EncryptedData,
+    PlainMessage,
     SessionKeys,
+    SessionKeysSchema,
     UserInboxPayload_GroupEncryptionSessions,
 } from '@river-build/proto'
 import {
@@ -20,6 +22,7 @@ import {
     parseGroupEncryptionAlgorithmId,
     UserDevice,
 } from './olmLib'
+import { create, fromJsonString } from '@bufbuild/protobuf'
 import { GroupEncryptionCrypto } from './groupEncryptionCrypto'
 
 export interface EntitlementsDelegate {
@@ -658,7 +661,7 @@ export abstract class BaseDecryptionExtensions {
         }
         // decrypt the message
         const cleartext = await this.crypto.decryptWithDeviceKey(ciphertext, session.senderKey)
-        const sessionKeys = SessionKeys.fromJsonString(cleartext)
+        const sessionKeys = fromJsonString(SessionKeysSchema, cleartext)
         check(sessionKeys.keys.length === session.sessionIds.length, 'bad sessionKeys')
         // make group sessions
         const sessions = neededKeyIndexs.map(
@@ -920,9 +923,9 @@ export abstract class BaseDecryptionExtensions {
 
 export function makeSessionKeys(sessions: GroupEncryptionSession[]): SessionKeys {
     const sessionKeys = sessions.map((s) => s.sessionKey)
-    return new SessionKeys({
+    return create(SessionKeysSchema, {
         keys: sessionKeys,
-    })
+    } satisfies PlainMessage<SessionKeys>)
 }
 
 /// Returns the first item from the array,

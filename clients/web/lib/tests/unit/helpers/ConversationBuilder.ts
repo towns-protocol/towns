@@ -17,8 +17,7 @@ import {
 import { hexToBytes } from 'viem'
 import { randomBytes } from 'crypto'
 import { ETH_ADDRESS } from '@river-build/web3'
-import { BlockchainTransaction_Tip } from '@river-build/proto'
-import { PlainMessage } from '@bufbuild/protobuf'
+import { BlockchainTransaction_Tip, PlainMessage } from '@river-build/proto'
 import { EventStatus, RiverTimelineEvent } from '@river-build/sdk'
 
 export class ConversationBuilder {

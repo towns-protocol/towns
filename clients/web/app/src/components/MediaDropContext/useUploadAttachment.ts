@@ -1,8 +1,9 @@
 import { chunkSize, encryptAESGCM, encryptChunkedAESGCM, useTownsClient } from 'use-towns-client'
 import { useCallback } from 'react'
 import imageCompression from 'browser-image-compression'
-import { ChunkedMedia, CreationCookie } from '@river-build/proto'
+import { ChunkedMediaSchema, CreationCookie, CreationCookieSchema } from '@river-build/proto'
 import { Attachment, ChunkedMediaAttachment, MediaInfo, streamIdAsString } from '@river-build/sdk'
+import { create } from '@bufbuild/protobuf'
 import { refreshSpaceCache, refreshUserImageCache } from 'api/lib/fetchImage'
 import { isImageMimeType } from 'utils/isMediaMimeType'
 
@@ -52,7 +53,7 @@ export const useUploadAttachment = () => {
                 perChunkEncryption: window.townsNewMediaEncryptionFlag ?? 'undefined',
             })
 
-            let cc: CreationCookie = new CreationCookie(mediaStreamInfo.creationCookie)
+            let cc: CreationCookie = create(CreationCookieSchema, mediaStreamInfo.creationCookie)
             for (let chunkIndex = 0; chunkIndex < chunkCount; chunkIndex++) {
                 const chunk = encryptionResult.chunks[chunkIndex]
                 setProgress(chunkIndex / chunkCount)
@@ -66,7 +67,7 @@ export const useUploadAttachment = () => {
                 if (!result) {
                     throw new Error('Failed to send media payload')
                 }
-                cc = new CreationCookie(result.creationCookie)
+                cc = create(CreationCookieSchema, result.creationCookie)
             }
             setProgress(1)
 
@@ -222,7 +223,7 @@ export const useUploadAttachment = () => {
                 // add a spaceImage event to the stream
                 // will be encrypted by client.setSpaceImage()
                 // no need for encryption here
-                const chunkedMedia = new ChunkedMedia({
+                const chunkedMedia = create(ChunkedMediaSchema, {
                     info: mediaInfo.info,
                     streamId: mediaInfo.streamId,
                     encryption: {
@@ -275,7 +276,7 @@ export const useUploadAttachment = () => {
                 )) as ChunkedMediaAttachment
 
                 // Will be encrypted by client.setUserProfileImage()
-                const chunkedMedia = new ChunkedMedia({
+                const chunkedMedia = create(ChunkedMediaSchema, {
                     info: mediaInfo.info,
                     streamId: mediaInfo.streamId,
                     encryption: {

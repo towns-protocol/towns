@@ -1,5 +1,4 @@
-import { BlockchainTransaction_TokenTransfer } from '@river-build/proto'
-import { PlainMessage } from '@bufbuild/protobuf'
+import { BlockchainTransaction_TokenTransfer, PlainMessage } from '@river-build/proto'
 import { ContractReceipt as EthersContractReceipt } from 'ethers'
 import { ContractReceipt } from '@river-build/sdk'
 import { bin_fromHexString } from '@river-build/dlog'

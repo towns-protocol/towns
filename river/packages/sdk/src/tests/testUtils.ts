@@ -13,9 +13,10 @@ import {
     SyncStreamsResponse,
     SyncOp,
     EncryptedDataVersion,
+    PlainMessage,
+    BlockchainTransaction_TokenTransfer,
 } from '@river-build/proto'
 import { Entitlements } from '../sync-agent/entitlements/entitlements'
-import { PlainMessage } from '@bufbuild/protobuf'
 import { IStreamStateView } from '../streamStateView'
 import { Client } from '../client'
 import {
@@ -89,6 +90,7 @@ import {
 } from '../sync-agent/timeline/models/timeline-types'
 import { SyncState } from '../syncedStreamsLoop'
 import { RpcOptions } from '../rpcCommon'
+import { isDefined } from '../check'
 
 const log = dlog('csb:test:util')
 
@@ -1476,7 +1478,9 @@ export const findMessageByText = (
     )
 }
 
-export function extractBlockchainTransactionTransferEvents(timeline: StreamTimelineEvent[]) {
+export function extractBlockchainTransactionTransferEvents(
+    timeline: StreamTimelineEvent[],
+): BlockchainTransaction_TokenTransfer[] {
     return timeline
         .map((e) => {
             if (
@@ -1488,10 +1492,13 @@ export function extractBlockchainTransactionTransferEvents(timeline: StreamTimel
             }
             return undefined
         })
-        .filter((e) => e !== undefined)
+        .filter(isDefined)
 }
 
-export function extractMemberBlockchainTransactions(client: Client, channelId: string) {
+export function extractMemberBlockchainTransactions(
+    client: Client,
+    channelId: string,
+): BlockchainTransaction_TokenTransfer[] {
     const stream = client.streams.get(channelId)
     if (!stream) throw new Error('no stream found')
 
@@ -1507,5 +1514,5 @@ export function extractMemberBlockchainTransactions(client: Client, channelId: s
             }
             return undefined
         })
-        .filter((e) => e !== undefined)
+        .filter(isDefined)
 }

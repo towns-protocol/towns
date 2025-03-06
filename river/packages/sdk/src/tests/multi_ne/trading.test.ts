@@ -11,12 +11,11 @@ import {
     waitFor,
 } from '../testUtils'
 import { ContractReceipt } from '../../types'
-import { PlainMessage } from '@bufbuild/protobuf'
 import { bin_fromHexString } from '@river-build/dlog'
 import { ethers } from 'ethers'
 
 import { TestERC20 } from '@river-build/web3'
-import { BlockchainTransaction_TokenTransfer } from '@river-build/proto'
+import { BlockchainTransaction_TokenTransfer, PlainMessage } from '@river-build/proto'
 
 describe('Trading', () => {
     const tokenName = 'Erc20 token test'
@@ -291,7 +290,7 @@ describe('Trading', () => {
             const transferEvents = extractBlockchainTransactionTransferEvents(stream.view.timeline)
             expect(transferEvents.length).toBe(1)
             const event0 = transferEvents[0]
-            expect(BigInt(event0!.amount)).toBe(amountToTransfer)
+            expect(BigInt(event0.amount)).toBe(amountToTransfer)
         })
     })
 
@@ -304,8 +303,8 @@ describe('Trading', () => {
             const transferEvents = extractBlockchainTransactionTransferEvents(stream.view.timeline)
             expect(transferEvents.length).toBe(1)
             const event0 = transferEvents[0]
-            expect(BigInt(event0!.amount)).toBe(amountToTransfer)
-            expect(new Uint8Array(event0!.sender)).toEqual(bin_fromHexString(bobClient.userId))
+            expect(BigInt(event0.amount)).toBe(amountToTransfer)
+            expect(new Uint8Array(event0.sender)).toEqual(bin_fromHexString(bobClient.userId))
         })
     })
 
@@ -314,12 +313,12 @@ describe('Trading', () => {
             const transferEvents = extractMemberBlockchainTransactions(aliceClient, channelId)
             expect(transferEvents.length).toBe(2)
             const [event0, event1] = [transferEvents[0], transferEvents[1]]
-            expect(BigInt(event0!.amount)).toBe(amountToTransfer)
-            expect(new Uint8Array(event0!.sender)).toEqual(bin_fromHexString(bobClient.userId))
-            expect(event0!.isBuy).toBe(false)
-            expect(BigInt(event1!.amount)).toBe(amountToTransfer)
-            expect(new Uint8Array(event1!.sender)).toEqual(bin_fromHexString(aliceClient.userId))
-            expect(event1!.isBuy).toBe(true)
+            expect(BigInt(event0.amount)).toBe(amountToTransfer)
+            expect(new Uint8Array(event0.sender)).toEqual(bin_fromHexString(bobClient.userId))
+            expect(event0.isBuy).toBe(false)
+            expect(BigInt(event1.amount)).toBe(amountToTransfer)
+            expect(new Uint8Array(event1.sender)).toEqual(bin_fromHexString(aliceClient.userId))
+            expect(event1.isBuy).toBe(true)
         })
     })
 })

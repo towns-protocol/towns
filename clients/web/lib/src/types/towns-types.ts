@@ -1,5 +1,4 @@
-import { PlainMessage } from '@bufbuild/protobuf'
-import { SpacePayload_ChannelSettings, StreamSettings } from '@river-build/proto'
+import { SpacePayload_ChannelSettings, StreamSettings, PlainMessage } from '@river-build/proto'
 import { Permission } from '@river-build/web3'
 import { TSigner } from './web3-types'
 import { MessageType, Attachment, Membership } from '@river-build/sdk'

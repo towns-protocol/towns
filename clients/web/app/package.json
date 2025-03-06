@@ -19,6 +19,7 @@
     },
     "dependencies": {
         "@ariakit/react": "^0.4.13",
+        "@bufbuild/protobuf": "^2.2.2",
         "@capsizecss/vanilla-extract": "^1.0.0",
         "@cassiozen/usestatemachine": "^1.0.1",
         "@crossmint/client-sdk-react-ui": "^1.11.3",

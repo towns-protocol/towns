@@ -2,8 +2,8 @@ import { ecrecover, fromRpcSig, hashPersonalMessage } from '@ethereumjs/util'
 import { ethers } from 'ethers'
 import { bin_equal, bin_fromHexString, bin_toHexString, check } from '@river-build/dlog'
 import { publicKeyToAddress, publicKeyToUint8Array, riverDelegateHashSrc } from './sign'
-import { BearerToken, Err } from '@river-build/proto'
-import { bytesToHex, hexToBytes } from 'ethereum-cryptography/utils'
+import { BearerTokenSchema, Err } from '@river-build/proto'
+import { create, fromBinary, toBinary } from '@bufbuild/protobuf'
 
 /**
  * SignerContext is a context used for signing events.
@@ -123,18 +123,18 @@ export async function makeBearerToken(
           },
 ): Promise<string> {
     const delegate = await makeSignerDelegate(signer, expiry)
-    const bearerToken = new BearerToken({
+    const bearerToken = create(BearerTokenSchema, {
         delegatePrivateKey: delegate.delegateWallet.privateKey,
         delegateSig: delegate.signerContext.delegateSig,
         expiryEpochMs: delegate.signerContext.delegateExpiryEpochMs,
     })
-    return bytesToHex(bearerToken.toBinary())
+    return bin_toHexString(toBinary(BearerTokenSchema, bearerToken))
 }
 
 export async function makeSignerContextFromBearerToken(
     bearerTokenStr: string,
 ): Promise<SignerContext> {
-    const bearerToken = BearerToken.fromBinary(hexToBytes(bearerTokenStr))
+    const bearerToken = fromBinary(BearerTokenSchema, bin_fromHexString(bearerTokenStr))
     const delegateWallet = new ethers.Wallet(bearerToken.delegatePrivateKey)
     const creatorAddress = recoverPublicKeyFromDelegateSig({
         delegatePubKey: delegateWallet.publicKey,

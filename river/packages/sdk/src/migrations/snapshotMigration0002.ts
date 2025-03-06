@@ -1,12 +1,13 @@
-import { Snapshot, SpacePayload_ChannelSettings } from '@river-build/proto'
+import { Snapshot, SpacePayload_ChannelSettingsSchema } from '@river-build/proto'
 import { isDefaultChannelId, streamIdFromBytes } from '../id'
+import { create } from '@bufbuild/protobuf'
 
 export function snapshotMigration0002(snapshot: Snapshot): Snapshot {
     switch (snapshot.content?.case) {
         case 'spaceContent': {
             snapshot.content.value.channels = snapshot.content.value.channels.map((c) => {
                 if (c.settings === undefined) {
-                    c.settings = new SpacePayload_ChannelSettings({
+                    c.settings = create(SpacePayload_ChannelSettingsSchema, {
                         autojoin: false,
                         hideUserJoinLeaveEvents: false,
                     })

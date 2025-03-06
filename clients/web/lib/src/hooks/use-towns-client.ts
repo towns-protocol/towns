@@ -8,8 +8,8 @@ import {
     AddEventResponse_Error,
     CreationCookie,
     BlockchainTransaction_TokenTransfer,
+    PlainMessage,
 } from '@river-build/proto'
-import { PlainMessage } from '@bufbuild/protobuf'
 import {
     BanUnbanWalletTransactionContext,
     ChannelTransactionContext,
@@ -299,7 +299,7 @@ interface TownsClientImpl {
         | undefined
     >
     setUserProfileImage: (chunkedMedia: PlainMessage<ChunkedMedia>) => Promise<void>
-    setUserBio: (bio: UserBio) => Promise<void>
+    setUserBio: (bio: PlainMessage<UserBio>) => Promise<void>
     refreshMetadataTransaction: (
         spaceId: string,
         signer: TSigner,

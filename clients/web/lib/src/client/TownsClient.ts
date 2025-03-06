@@ -1,4 +1,3 @@
-import { Empty, PlainMessage } from '@bufbuild/protobuf'
 import { BigNumber, ethers } from 'ethers'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
@@ -20,12 +19,13 @@ import { EntitlementsDelegate } from '@river-build/encryption'
 import { IRuleEntitlementV2Base, XchainConfig, ISpaceDapp, SpaceDapp } from '@river-build/web3'
 import {
     AddEventResponse_Error,
-    ChannelMessage_Post_Mention,
     ChunkedMedia,
     FullyReadMarker,
     UserBio,
     CreationCookie,
     BlockchainTransaction_TokenTransfer,
+    PlainMessage,
+    ChannelMessage_Post_MentionSchema,
 } from '@river-build/proto'
 import {
     ChannelTransactionContext,
@@ -72,6 +72,7 @@ import { TownsAnalytics } from '../types/TownsAnalytics'
 import { BaseTransactor } from './BaseTransactor'
 import { UserOps } from '@towns/userops'
 import { getSpaceReviewEventData } from '@river-build/web3'
+import { create } from '@bufbuild/protobuf'
 
 /***
  * Towns Client
@@ -1352,14 +1353,14 @@ export class TownsClient
                     const mentions =
                         options?.mentions?.map((x) => {
                             if (x.atChannel) {
-                                return new ChannelMessage_Post_Mention({
+                                return create(ChannelMessage_Post_MentionSchema, {
                                     mentionBehavior: {
                                         case: 'atChannel',
-                                        value: new Empty(),
+                                        value: {},
                                     },
                                 })
                             } else {
-                                return new ChannelMessage_Post_Mention(x)
+                                return create(ChannelMessage_Post_MentionSchema, x)
                             }
                         }) ?? []
                     await this.casablancaClient.sendChannelMessage_Text(
@@ -1544,7 +1545,9 @@ export class TownsClient
             replyPreview: originalEventContent.replyPreview,
             content: {
                 body: message,
-                mentions: options?.mentions?.map((x) => new ChannelMessage_Post_Mention(x)) ?? [],
+                mentions:
+                    options?.mentions?.map((x) => create(ChannelMessage_Post_MentionSchema, x)) ??
+                    [],
                 attachments: transformAttachments(options?.attachments),
             },
         })
@@ -1686,7 +1689,7 @@ export class TownsClient
         return this.casablancaClient.getUserProfileImage(userId)
     }
 
-    public async setUserBio(bio: UserBio): Promise<void> {
+    public async setUserBio(bio: PlainMessage<UserBio>): Promise<void> {
         if (!this.casablancaClient) {
             throw new Error('No casablanca client')
         }
