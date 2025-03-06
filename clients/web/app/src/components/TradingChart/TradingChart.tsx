@@ -461,6 +461,18 @@ const ChartComponent = (props: {
         return { current: new Map<number, HTMLElement | null>() }
     })
 
+    const filteredTransfers = useMemo(() => {
+        if (data.t.length === 0) {
+            return []
+        }
+        return transfers.filter((transfer) => {
+            return (
+                Number(transfer.createdAtEpochMs) / 1000 > data.t[0] - 3600 && // 1hr before
+                Number(transfer.createdAtEpochMs) / 1000 < data.t[data.t.length - 1] + 3600 // 1hr after
+            )
+        })
+    }, [transfers, data])
+
     useLayoutEffect(() => {
         const container = chartContainerRef.current
         if (!container) {
@@ -519,7 +531,9 @@ const ChartComponent = (props: {
                 return { time: time as UTCTimestamp, value: close }
             })
             areaSeries.setData(formattedData)
-            areaSeries.attachPrimitive(new MyThing(chart, transfers, transferMapRef))
+            areaSeries.attachPrimitive(
+                new ChartAvatarSeriesPrimitive(chart, filteredTransfers, transferMapRef),
+            )
         } else {
             const candleStickSeries = chart.addSeries(CandlestickSeries, {})
             const formattedData = zip(data.t, data.o, data.h, data.l, data.c).map(
@@ -528,7 +542,9 @@ const ChartComponent = (props: {
                 },
             )
             candleStickSeries.setData(formattedData)
-            candleStickSeries.attachPrimitive(new MyThing(chart, transfers, transferMapRef))
+            candleStickSeries.attachPrimitive(
+                new ChartAvatarSeriesPrimitive(chart, filteredTransfers, transferMapRef),
+            )
         }
 
         chartRef.current = chart
@@ -551,21 +567,9 @@ const ChartComponent = (props: {
         chartType,
         backgroundGradientBottom,
         backgroundGradientTop,
-        transfers,
+        filteredTransfers,
         transferMapRef,
     ])
-
-    const filteredTransfers = useMemo(() => {
-        if (data.t.length === 0) {
-            return []
-        }
-        return transfers.filter((transfer) => {
-            return (
-                Number(transfer.createdAtEpochMs) / 1000 > data.t[0] &&
-                Number(transfer.createdAtEpochMs) / 1000 < data.t[data.t.length - 1]
-            )
-        })
-    }, [transfers, data])
 
     useLayoutEffect(() => {
         if (chartRef.current) {
@@ -717,7 +721,7 @@ const TradingUserIds = ({ userIds }: { userIds: string[] }) => {
     )
 }
 
-class MyThing implements ISeriesPrimitive<Time> {
+class ChartAvatarSeriesPrimitive implements ISeriesPrimitive<Time> {
     private readonly transfers: TokenTransferRollupEvent[]
     private readonly chart: IChartApi
     private readonly markers: HTMLElement[] = []
@@ -745,16 +749,25 @@ class MyThing implements ISeriesPrimitive<Time> {
         const chartRect = this.chart.chartElement().getBoundingClientRect()
         const leftMarginWidth = chartRect.width - paneSize.width
 
+        const toggleVisibility = (refIndex: number, visible: boolean) => {
+            const ref = this.transferMapRef.current.get(refIndex)
+            if (ref) {
+                ref.style.display = visible ? 'block' : 'none'
+            }
+        }
+
         for (const [i, transfer] of this.transfers.entries()) {
             const time = (Number(transfer.createdAtEpochMs) / 1000) as UTCTimestamp
             const index = this.chart.timeScale().timeToIndex(time, true)
             if (!index || series.data().length < index) {
+                toggleVisibility(i, false)
                 continue
             }
 
             const dataPoint = series.data()[index]
             const price = extractPrice(dataPoint)
             if (!price) {
+                toggleVisibility(i, false)
                 continue
             }
 
@@ -762,9 +775,11 @@ class MyThing implements ISeriesPrimitive<Time> {
             const y = series.priceToCoordinate(price)
             const ref = this.transferMapRef.current.get(i)
             if (!x || !y) {
+                toggleVisibility(i, false)
                 continue
             }
 
+            toggleVisibility(i, true)
             if (ref) {
                 ref.style.left = leftMarginWidth + x - 10 + 'px'
                 ref.style.top = y - 10 + 'px'
