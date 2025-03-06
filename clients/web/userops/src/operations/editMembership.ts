@@ -4,6 +4,7 @@ import {
     findFixedPricingModule,
     LegacyUpdateRoleParams,
     NoopRuleData,
+    Space,
     SpaceDapp,
     UpdateRoleParams,
 } from '@river-build/web3'
@@ -83,94 +84,25 @@ export async function editMembership(params: {
 
     ///////////////////////////////////////////////////////////////////////////////////
     //// update membership pricing ////////////////////////////////////////////////////
-    // To change a "free" (paid w/ price = 0 + freeAllocation > 0) membership to a paid membership:
-    // 1. freeAllocation must be 0
-    // 2. membership price must be set
-    //
-    // Cannot change a paid space to a free space (contract reverts)
+    const priceChanges = await evaluatePricingChanges({
+        space,
+        spaceDapp,
+        spaceId,
+        newPricingModule,
+        newMembershipPrice,
+        newFreeAllocation,
+    })
 
-    const pricingModules = await spaceDapp.listPricingModules()
-    const fixedPricingModule = findFixedPricingModule(pricingModules)
-    const dynamicPricingModule = findDynamicPricingModule(pricingModules)
-    const currentFreeAllocation = await space.Membership.read.getMembershipFreeAllocation()
-    const { price: currentMembershipPrice } = await spaceDapp.getJoinSpacePriceDetails(spaceId)
-
-    if (!fixedPricingModule || !dynamicPricingModule) {
-        throw new Error('Pricing modules not found')
-    }
-
-    const currentPricingModule = await space.Membership.read.getMembershipPricingModule()
-    const currentIsFixedPricing =
-        currentPricingModule.toLowerCase() ===
-        (await fixedPricingModule.module).toString().toLowerCase()
-    const newIsFixedPricing =
-        newPricingModule.toLowerCase() ===
-        (await fixedPricingModule.module).toString().toLowerCase()
-    const newMembershipPriceBigNumber = ethers.BigNumber.from(newMembershipPrice)
-
-    // fixed price of 0 ("free") to fixed price of non-zero
-    if (
-        currentIsFixedPricing &&
-        currentFreeAllocation.toBigInt() > 0n &&
-        newIsFixedPricing &&
-        newMembershipPriceBigNumber.gt(0) &&
-        newFreeAllocation === 0
-    ) {
-        const freeAllocationCallData = space.Membership.encodeFunctionData(
-            'setMembershipFreeAllocation',
-            [newFreeAllocation],
-        )
-        txs.push({
-            callData: freeAllocationCallData,
-            toAddress: space.Membership.address,
-        })
-
-        const membershipPriceCallData = space.Membership.encodeFunctionData('setMembershipPrice', [
-            newMembershipPrice,
-        ])
-        txs.push({
-            callData: membershipPriceCallData,
-            toAddress: space.Membership.address,
-        })
-    }
-    // switching from fixed to dynamic space
-    else if (currentIsFixedPricing && !newIsFixedPricing) {
-        throw new CodeException({
-            message: 'Cannot change a fixed pricing space to a dynamic pricing space',
-            code: 'USER_OPS_CANNOT_CHANGE_TO_DYNAMIC_PRICING_SPACE',
-            category: 'userop',
-        })
-    }
-    // dynamic to dynamic
-    else if (!currentIsFixedPricing && !newIsFixedPricing) {
-        // do nothing
-    }
-    // price update only
-    else if (!currentMembershipPrice.eq(newMembershipPriceBigNumber)) {
-        const membershipPriceCallData = space.Membership.encodeFunctionData('setMembershipPrice', [
-            newMembershipPrice,
-        ])
-        txs.push({
-            callData: membershipPriceCallData,
-            toAddress: space.Membership.address,
-        })
-    }
+    txs.push(...priceChanges)
 
     ///////////////////////////////////////////////////////////////////////////////////
     //// update membership limit ////////////////////////////////////////////////////
-    if (
-        !ethers.BigNumber.from(membershipInfo.maxSupply).eq(
-            ethers.BigNumber.from(newMembershipSupply),
-        )
-    ) {
-        const callData = space.Membership.encodeFunctionData('setMembershipLimit', [
-            newMembershipSupply,
-        ])
-        txs.push({
-            callData,
-            toAddress: space.Membership.address,
-        })
-    }
+    const membershipLimitChanges = await evaluateMembershipLimitChanges({
+        space,
+        membershipInfo,
+        newMembershipSupply,
+    })
+    txs.push(...membershipLimitChanges)
 
     return sendUserOp({
         toAddress: txs.map((tx) => tx.toAddress),
@@ -274,12 +206,54 @@ export async function legacyEditMembership(params: {
 
     ///////////////////////////////////////////////////////////////////////////////////
     //// update membership pricing ////////////////////////////////////////////////////
-    // To change a free membership to a paid membership:
-    // 1. pricing module must be changed to a non-fixed pricing module
-    // 2. freeAllocation must be > 0 (contract reverts otherwise). If set to 1 (recommended), the first membership on the paid space will be free
-    // 3. membership price must be set
-    //
-    // Cannot change a paid space to a free space (contract reverts)
+    const priceChanges = await evaluatePricingChanges({
+        space,
+        spaceDapp,
+        spaceId,
+        newPricingModule,
+        newMembershipPrice,
+        newFreeAllocation,
+    })
+
+    txs.push(...priceChanges)
+
+    ///////////////////////////////////////////////////////////////////////////////////
+    //// update membership limit ////////////////////////////////////////////////////
+    const membershipLimitChanges = await evaluateMembershipLimitChanges({
+        space,
+        membershipInfo,
+        newMembershipSupply,
+    })
+    txs.push(...membershipLimitChanges)
+
+    return sendUserOp({
+        toAddress: txs.map((tx) => tx.toAddress),
+        callData: txs.map((tx) => tx.callData),
+        signer: signer,
+        spaceId,
+        functionHashForPaymasterProxy: 'editMembershipSettings',
+    })
+}
+
+async function evaluatePricingChanges({
+    space,
+    spaceDapp,
+    spaceId,
+    newPricingModule,
+    newMembershipPrice,
+    newFreeAllocation,
+}: {
+    space: Space
+    spaceDapp: SpaceDapp
+    spaceId: string
+    newPricingModule: string
+    newMembershipPrice: ethers.BigNumberish
+    newFreeAllocation: ethers.BigNumberish
+}) {
+    const txs: {
+        callData: string
+        toAddress: string
+    }[] = []
 
     const pricingModules = await spaceDapp.listPricingModules()
     const fixedPricingModule = findFixedPricingModule(pricingModules)
@@ -300,6 +274,14 @@ export async function legacyEditMembership(params: {
         (await fixedPricingModule.module).toString().toLowerCase()
     const newMembershipPriceBigNumber = ethers.BigNumber.from(newMembershipPrice)
 
+    // To change a "free" (paid w/ price = 0 + freeAllocation > 0) membership to a paid membership:
+    // 1. freeAllocation must be 0
+    // 2. membership price must be set
+    //
+    // Cannot change a paid space to a free space (contract reverts)
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // Free -> Paid ////////////////////////////////////////////////////////////////
     // fixed price of 0 ("free") to fixed price of non-zero
     if (
         currentIsFixedPricing &&
@@ -325,7 +307,9 @@ export async function legacyEditMembership(params: {
             toAddress: space.Membership.address,
         })
     }
-    // switching from fixed to dynamic space
+    ////////////////////////////////////////////////////////////////////////////////
+    // Fixed -> Dynamic //////////////////////////////////////////////////////////
+    // TODO: 3.5.2025 this was a revert in the past, unknown if it still is
     else if (currentIsFixedPricing && !newIsFixedPricing) {
         throw new CodeException({
             message: 'Cannot change a fixed pricing space to a dynamic pricing space',
@@ -333,11 +317,33 @@ export async function legacyEditMembership(params: {
             category: 'userop',
         })
     }
-    // dynamic to dynamic
+    ////////////////////////////////////////////////////////////////////////////////
+    // Dynamic -> Dynamic ////////////////////////////////////////////////////////
     else if (!currentIsFixedPricing && !newIsFixedPricing) {
         // do nothing
     }
-    // price update only
+    ////////////////////////////////////////////////////////////////////////////////
+    // Dynamic -> Fixed //////////////////////////////////////////////////////////
+    // change pricing module + set new price
+    else if (!currentIsFixedPricing && newIsFixedPricing) {
+        const pricingModuleCallData = space.Membership.encodeFunctionData(
+            'setMembershipPricingModule',
+            [await fixedPricingModule.module],
+        )
+        txs.push({
+            callData: pricingModuleCallData,
+            toAddress: space.Membership.address,
+        })
+        const membershipPriceCallData = space.Membership.encodeFunctionData('setMembershipPrice', [
+            newMembershipPrice,
+        ])
+        txs.push({
+            callData: membershipPriceCallData,
+            toAddress: space.Membership.address,
+        })
+    }
+    ////////////////////////////////////////////////////////////////////////////////
+    // Price update only /////////////////////////////////////////////////////////
     else if (!currentMembershipPrice.eq(newMembershipPriceBigNumber)) {
         const membershipPriceCallData = space.Membership.encodeFunctionData('setMembershipPrice', [
             newMembershipPrice,
@@ -348,8 +354,25 @@ export async function legacyEditMembership(params: {
         })
     }
 
-    ///////////////////////////////////////////////////////////////////////////////////
-    //// update membership limit ////////////////////////////////////////////////////
+    return txs
+}
+
+async function evaluateMembershipLimitChanges({
+    space,
+    membershipInfo,
+    newMembershipSupply,
+}: {
+    space: Space
+    membershipInfo: {
+        maxSupply: ethers.BigNumberish
+    }
+    newMembershipSupply: ethers.BigNumberish
+}) {
+    const txs: {
+        callData: string
+        toAddress: string
+    }[] = []
+
     if (
         !ethers.BigNumber.from(membershipInfo.maxSupply).eq(
             ethers.BigNumber.from(newMembershipSupply),
@@ -364,11 +387,5 @@ export async function legacyEditMembership(params: {
         })
     }
 
-    return sendUserOp({
-        toAddress: txs.map((tx) => tx.toAddress),
-        callData: txs.map((tx) => tx.callData),
-        signer: signer,
-        spaceId,
-        functionHashForPaymasterProxy: 'editMembershipSettings',
-    })
+    return txs
 }

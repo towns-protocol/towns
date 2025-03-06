@@ -21,6 +21,8 @@ import {
     UpdateRoleParams,
     LegacyUpdateRoleParams,
     Space,
+    TIERED_PRICING_ORACLE_V2,
+    TIERED_PRICING_ORACLE_V3,
 } from '@river-build/web3'
 import { userOpsStore } from '../src/store/userOpsStore'
 import { SendUserOperationReturnType } from '../src/lib/types'
@@ -97,12 +99,14 @@ export async function createUngatedSpace({
     signer,
     rolePermissions,
     spaceName,
+    legacy = false,
 }: {
     userOps: TestUserOps
     spaceDapp: SpaceDapp
     signer: ethers.Signer
     rolePermissions: Permission[]
     spaceName?: string
+    legacy?: boolean
 }): Promise<SendUserOperationReturnType> {
     const signerAddress = await signer.getAddress()
     const { spaceName: generatedSpaceName, channelName: channelName } =
@@ -110,7 +114,7 @@ export async function createUngatedSpace({
     const name = spaceName ?? generatedSpaceName
     const fixedPricingModule = await getFixedPricingModule(spaceDapp)
 
-    if (userOps.createLegacySpaces()) {
+    if (legacy || userOps.createLegacySpaces()) {
         console.log('OPS creating legacy space')
         const downgradedMembershipInfo: LegacyMembershipStruct = {
             settings: {
@@ -342,6 +346,105 @@ export async function createFixedPriceSpace({
     }
 }
 
+export async function createDynamicPricingSpace({
+    userOps,
+    spaceDapp,
+    signer,
+    rolePermissions,
+    spaceName,
+    version,
+}: {
+    userOps: TestUserOps
+    spaceDapp: SpaceDapp
+    signer: ethers.Signer
+    rolePermissions: Permission[]
+    spaceName?: string
+    version: 'v2' | 'v3'
+}): Promise<SendUserOperationReturnType> {
+    const signerAddress = await signer.getAddress()
+    const { spaceName: generatedSpaceName, channelName: channelName } =
+        getSpaceAndChannelName(signerAddress)
+    const name = spaceName ?? generatedSpaceName
+    const pricingModules = await spaceDapp.listPricingModules()
+    let pricingModule: string | undefined
+    // we don't deploy TieredLogPricingOracle locally, it starts with TieredLogPricingOracleV2
+    if (version === 'v2') {
+        pricingModule = await pricingModules.find(
+            (module) => module.name === TIERED_PRICING_ORACLE_V2,
+        )?.module
+    } else if (version === 'v3') {
+        pricingModule = await pricingModules.find(
+            (module) => module.name === TIERED_PRICING_ORACLE_V3,
+        )?.module
+    }
+
+    if (!pricingModule) {
+        throw new Error('Pricing module not found')
+    }
+
+    if (userOps.createLegacySpaces()) {
+        const membershipInfo: LegacyMembershipStruct = {
+            settings: {
+                name: 'Dynamic Pricing Space',
+                symbol: 'MEMBER',
+                price: 0n,
+                maxSupply: 200,
+                duration: 0,
+                currency: ethers.constants.AddressZero,
+                feeRecipient: ethers.constants.AddressZero,
+                freeAllocation: 0, // this will effect the price
+                pricingModule,
+            },
+            permissions: rolePermissions,
+            requirements: {
+                everyone: true,
+                users: [],
+                ruleData: NoopRuleData,
+                syncEntitlements: false,
+            },
+        }
+
+        const townInfo = {
+            spaceName: name,
+            uri: name,
+            channelName,
+            membership: membershipInfo,
+        } satisfies CreateLegacySpaceParams
+
+        return userOps.sendCreateLegacySpaceOp([townInfo, signer])
+    } else {
+        const membershipInfo: MembershipStruct = {
+            settings: {
+                name: 'Dynamic Pricing Space',
+                symbol: 'MEMBER',
+                price: 0n,
+                maxSupply: 200,
+                duration: 0,
+                currency: ethers.constants.AddressZero,
+                feeRecipient: ethers.constants.AddressZero,
+                freeAllocation: 0, // this will effect the price
+                pricingModule: pricingModule,
+            },
+            permissions: rolePermissions,
+            requirements: {
+                everyone: true,
+                users: [],
+                ruleData: EncodedNoopRuleData,
+                syncEntitlements: false,
+            },
+        }
+
+        const townInfo = {
+            spaceName: name,
+            uri: name,
+            channelName,
+            membership: membershipInfo,
+        } satisfies CreateSpaceParams
+
+        return userOps.sendCreateSpaceOp([townInfo, signer])
+    }
+}
+
 export function generatePrivyWalletIfKey(privateKey?: string) {
     if (privateKey) {
         return new ethers.Wallet(privateKey)
@@ -377,6 +480,7 @@ export const createSpaceDappAndUserops = async (
 
     return {
         spaceDapp,
+        aaAddress,
         userOps: userOpsInstance,
     }
 }

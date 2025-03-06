@@ -33,7 +33,11 @@ export default defineWorkspace([
     },
     {
         test: {
-            include: ['**/test/userops.createSpace.test.ts', '**/test/userops.roles.test.ts'],
+            include: [
+                '**/test/userops.joinSpace.test.ts',
+                '**/test/userops.roles.test.ts',
+                '**/test/userops.editMembership.test.ts',
+            ],
             name: 'legacy',
             ...commonConfig,
         },
