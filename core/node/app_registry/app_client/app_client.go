@@ -24,6 +24,13 @@ type InitializeResponse struct {
 
 type InitializeData struct{}
 
+type KeySolicitationResponse struct{}
+
+type KeySolicitationData struct {
+	SessionId string `json:"sessionId"`
+	ChannelId string `json:"channelId"`
+}
+
 type AppServiceRequestPayload struct {
 	Command string `json:"command"`
 	Data    any    `json:",omitempty"`
@@ -111,12 +118,61 @@ func (b *AppClient) InitializeWebhook(
 
 func (b *AppClient) RequestSolicitation(
 	ctx context.Context,
-	webhookUrl string,
 	appId common.Address,
+	webhookUrl string,
+	hs256SharedSecret [32]byte,
 	channelId shared.StreamId,
 	sessionId string,
 ) error {
-	return base.RiverError(protocol.Err_UNIMPLEMENTED, "RequestSolicitation unimplemented")
+	payload := AppServiceRequestPayload{
+		Command: "solicit",
+		Data: KeySolicitationData{
+			SessionId: sessionId,
+			ChannelId: channelId.String(),
+		},
+	}
+	jsonData, err := json.Marshal(payload)
+	if err != nil {
+		return base.WrapRiverError(protocol.Err_INTERNAL, err).
+			Message("Error constructing request payload").
+			Tag("appId", appId).
+			Tag("channelId", channelId).
+			Tag("sessionId", sessionId)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "POST", webhookUrl, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return base.WrapRiverError(protocol.Err_INTERNAL, err).
+			Message("Error constructing http request").
+			Tag("appId", appId)
+	}
+
+	// Add authorization header based on the shared secret for this app.
+	if err := signRequest(req, hs256SharedSecret[:], appId); err != nil {
+		return base.WrapRiverError(protocol.Err_INTERNAL, err).
+			Message("Error signing request").
+			Tag("appId", appId)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := b.httpClient.Do(req)
+	if err != nil {
+		return base.WrapRiverError(protocol.Err_CANNOT_CALL_WEBHOOK, err).
+			Message("Unable to request a key solicitation").
+			Tag("appId", appId).
+			Tag("channelId", channelId).
+			Tag("sessionId", sessionId)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return base.RiverError(protocol.Err_CANNOT_CALL_WEBHOOK, "webhook response non-OK status").
+			Tag("appId", appId).
+			Tag("channelId", channelId).
+			Tag("sessionId", sessionId)
+	}
+	return nil
 }
 
 // GetWebhookStatus sends an "info" message to the app service and expects a 200 with

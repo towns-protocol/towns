@@ -44,10 +44,8 @@ func NewAppDispatcher(
 
 	// Cleanup
 	go func() {
-		select {
-		case <-ctx.Done():
-			d.Close()
-		}
+		<-ctx.Done()
+		d.Close()
 	}()
 
 	return d
@@ -60,7 +58,7 @@ func (d *AppDispatcher) Close() {
 func (d *AppDispatcher) RequestKeySolicitations(
 	ctx context.Context,
 	sessionId string,
-	streamId shared.StreamId,
+	channelId shared.StreamId,
 	devices []SolicitationDevice,
 ) error {
 	for _, device := range devices {
@@ -72,10 +70,15 @@ func (d *AppDispatcher) RequestKeySolicitations(
 			continue
 		} else {
 			d.solicitationRateLimitCache.Set(cacheKey, struct{}{}, cache.DefaultExpiration)
+			sharedSecret, err := decryptSharedSecret(device.EncryptedSharedSecret, d.dataEncryptionKey)
+			if err != nil {
+				return err
+			}
+
 			d.workerPool.Submit(
 				func() {
 					// TODO: retries?
-					if err := d.appClient.RequestSolicitation(ctx, device.WebhookUrl, device.AppId, streamId, sessionId); err != nil {
+					if err := d.appClient.RequestSolicitation(ctx, device.AppId, device.WebhookUrl, channelId, sharedSecret, sessionId); err != nil {
 						logging.FromCtx(ctx).Errorw(
 							"Could not complete request for app to send a key solicitation",
 							"appId",
@@ -83,7 +86,7 @@ func (d *AppDispatcher) RequestKeySolicitations(
 							"deviceKey",
 							device.DeviceKey,
 							"channel",
-							streamId,
+							channelId,
 							"webhookUrl",
 							device.WebhookUrl,
 							"error",
@@ -112,7 +115,7 @@ func (d *AppDispatcher) SubmitMessages(
 				messages.AppId,
 				messages.DeviceKey,
 				sharedSecret,
-				messages.CipherText,
+				messages.CipherTexts,
 				messages.WebhookUrl,
 				messages.StreamEvents,
 			); err != nil {

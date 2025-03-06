@@ -10,10 +10,15 @@ import (
 	"strings"
 	"testing"
 
+	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/towns-protocol/towns/core/node/app_registry/app_client"
 	"github.com/towns-protocol/towns/core/node/crypto"
+	"github.com/towns-protocol/towns/core/node/events"
+	"github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
+	"github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/testutils/testcert"
 	"github.com/towns-protocol/towns/core/node/utils"
 )
@@ -26,6 +31,8 @@ type TestAppServer struct {
 	appWallet        *crypto.Wallet
 	hs256SecretKey   []byte
 	encryptionDevice app_client.EncryptionDevice
+	client           protocolconnect.StreamServiceClient
+	solicitations    chan shared.StreamId
 }
 
 // validateSignature verifies that the incoming request has a HS256-encoded jwt auth token stored
@@ -77,6 +84,7 @@ func validateSignature(req *http.Request, secretKey []byte, appId common.Address
 func NewTestAppServer(
 	t *testing.T,
 	appWallet *crypto.Wallet,
+	client protocolconnect.StreamServiceClient,
 ) *TestAppServer {
 	listener, url := testcert.MakeTestListener(t)
 
@@ -85,6 +93,9 @@ func NewTestAppServer(
 		listener:  listener,
 		url:       url,
 		appWallet: appWallet,
+		// Make this channel large enough not to block for most tests if
+		// the caller chooses not to wait for solicitations
+		solicitations: make(chan shared.StreamId, 256),
 	}
 
 	return b
@@ -109,6 +120,71 @@ func (b *TestAppServer) Close() {
 	if b.listener != nil {
 		b.listener.Close()
 	}
+}
+
+func (b *TestAppServer) solicitKeys(ctx context.Context, data app_client.KeySolicitationData) error {
+	streamBytes, err := hex.DecodeString(data.ChannelId)
+	if err != nil {
+		return fmt.Errorf("failed to solicit keys: %w", err)
+	}
+	resp, err := b.client.GetLastMiniblockHash(
+		ctx,
+		&connect.Request[protocol.GetLastMiniblockHashRequest]{
+			Msg: &protocol.GetLastMiniblockHashRequest{
+				StreamId: streamBytes,
+			},
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("failed to get last miniblock hash for stream %v: %w", data.ChannelId, err)
+	}
+
+	envelope, err := events.MakeEnvelopeWithPayload(
+		b.appWallet,
+		&protocol.StreamEvent_MemberPayload{
+			MemberPayload: &protocol.MemberPayload{
+				Content: &protocol.MemberPayload_KeySolicitation_{
+					KeySolicitation: &protocol.MemberPayload_KeySolicitation{
+						DeviceKey:   b.encryptionDevice.DeviceKey,
+						FallbackKey: b.encryptionDevice.FallbackKey,
+						IsNewDevice: false,
+						SessionIds: []string{
+							data.SessionId,
+						},
+					},
+				},
+			},
+		},
+		&shared.MiniblockRef{
+			Hash: common.BytesToHash(resp.Msg.Hash),
+			Num:  resp.Msg.MiniblockNum,
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("Failed to construct key solicitation stream event: %w", err)
+	}
+
+	addEventResp, err := b.client.AddEvent(
+		ctx,
+		&connect.Request[protocol.AddEventRequest]{
+			Msg: &protocol.AddEventRequest{
+				StreamId: streamBytes,
+				Event:    envelope,
+			},
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("Error adding key solicitation event to stream: %w", err)
+	}
+	if addErr := addEventResp.Msg.GetError(); addErr != nil {
+		return fmt.Errorf(
+			"Failed to add key solicitation event to stream: %v, %v, %v",
+			addErr.Msg,
+			addErr.Code,
+			addErr.Funcs,
+		)
+	}
+	return nil
 }
 
 func (b *TestAppServer) rootHandler(w http.ResponseWriter, r *http.Request) {
@@ -153,6 +229,12 @@ func (b *TestAppServer) rootHandler(w http.ResponseWriter, r *http.Request) {
 				FallbackKey: b.encryptionDevice.FallbackKey,
 			},
 		}
+	case "solicit":
+		data := payload.Data.(app_client.KeySolicitationData)
+		if err := b.solicitKeys(r.Context(), data); err != nil {
+			http.Error(w, fmt.Sprintf("Unable to solicit keys: %v", err), http.StatusBadRequest)
+		}
+		response = app_client.KeySolicitationResponse{}
 	default:
 		http.Error(w, fmt.Sprintf("Unrecognized payload type: %v", payload.Command), http.StatusBadRequest)
 		return

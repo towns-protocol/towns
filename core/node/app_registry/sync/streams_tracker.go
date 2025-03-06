@@ -16,11 +16,12 @@ import (
 )
 
 type EncryptedMessageStore interface {
-	PublishSessionKey(
+	PublishSessionKeys(
 		ctx context.Context,
+		streamId shared.StreamId,
 		deviceKey string,
-		sessionId string,
-		ciphertext string,
+		sessionIds []string,
+		ciphertexts string,
 	) (err error)
 
 	HasRegisteredWebhook(

@@ -2,9 +2,14 @@ package sync
 
 import (
 	"context"
+	"encoding/hex"
+
+	mapset "github.com/deckarep/golang-set/v2"
+	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/towns-protocol/towns/core/node/crypto"
 	. "github.com/towns-protocol/towns/core/node/events"
+	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/track_streams"
@@ -18,22 +23,64 @@ type AppRegistryTrackedStreamView struct {
 
 func (b *AppRegistryTrackedStreamView) onNewEvent(ctx context.Context, view *StreamView, event *ParsedEvent) error {
 	streamId := view.StreamId()
+	log := logging.FromCtx(ctx)
 
 	if streamId.Type() == shared.STREAM_USER_INBOX_BIN {
-		// TODO: update app encrypted session keys, possibly triggering a flurry of webhook calls
-		// that were queued up waiting for a particular session key
+		// Capture keys sent to the app's inbox and store them in the message cache so that
+		// we can dequeue any existing messages that require decryption this session, and immediately
+		// forward incoming messages with the same session id.
+		if payload := event.Event.GetUserInboxPayload(); payload != nil {
+			if groupEncryptionSessions := payload.GetGroupEncryptionSessions(); groupEncryptionSessions != nil {
+				sessionIds := groupEncryptionSessions.GetSessionIds()
+				deviceCipherTexts := groupEncryptionSessions.GetCiphertexts()
+				for deviceKey, cipherTexts := range deviceCipherTexts {
+					log.Debugw("Publishing session keys for device", "deviceKey", deviceKey, "streamId", streamId)
+					if err := b.store.PublishSessionKeys(ctx, *streamId, deviceKey, sessionIds, cipherTexts); err != nil {
+						logging.FromCtx(ctx).Errorw(
+							"Unable to publish session keys for device",
+							"deviceKey",
+							deviceKey,
+							"streamId",
+							streamId,
+							"sessionIds",
+							sessionIds,
+						)
+						return err
+					}
+				}
+			}
+		}
 		return nil
 	}
 
-	// TODO: this list of "members" should be the list of app members in the channel. We
-	// expect the StreamEventListener to make webhook calls for apps that meet "notification"
-	// criteria for this channel message.
 	members, err := view.GetChannelMembers()
+	appMembers := mapset.NewSet[string]()
+	members.Each(func(member string) bool {
+		// Trim 0x prefix
+		if len(member) > 2 && member[:2] == "0x" {
+			member = member[2:]
+		}
+
+		bytes, err := hex.DecodeString(member)
+		if err != nil {
+			log.Errorw("Error decoding hex of channel member address", "member", member, "error", err)
+			return false
+		}
+		memberAddress := common.BytesToAddress(bytes)
+		if b.store.HasRegisteredWebhook(ctx, memberAddress) {
+			appMembers.Add(member)
+		}
+		return false
+	})
 	if err != nil {
 		return err
 	}
 
-	b.listener.OnMessageEvent(ctx, *streamId, view.StreamParentId(), members, event)
+	if appMembers.Cardinality() > 0 {
+		log.Debugw("OnMessageEvent message", "streamId", streamId, "appMembers", appMembers, "event", event)
+		b.listener.OnMessageEvent(ctx, *streamId, view.StreamParentId(), appMembers, event)
+	}
+
 	return nil
 }
 

@@ -16,7 +16,8 @@ type SessionMessages struct {
 	AppId                 common.Address // included for logging / metrics
 	DeviceKey             string
 	EncryptedSharedSecret [32]byte
-	CipherText            string
+	SessionIds            []string
+	CipherTexts           string
 	WebhookUrl            string
 	StreamEvents          [][]byte
 }
@@ -71,13 +72,14 @@ func (q *CachedEncryptedMessageQueue) RegisterWebhook(
 	return nil
 }
 
-func (q *CachedEncryptedMessageQueue) PublishSessionKey(
+func (q *CachedEncryptedMessageQueue) PublishSessionKeys(
 	ctx context.Context,
+	streamId shared.StreamId,
 	deviceKey string,
-	sessionId string,
-	ciphertext string,
+	sessionIds []string,
+	ciphertexts string,
 ) (err error) {
-	sendableMessages, err := q.store.PublishSessionKey(ctx, deviceKey, sessionId, ciphertext)
+	sendableMessages, err := q.store.PublishSessionKeys(ctx, streamId, deviceKey, sessionIds, ciphertexts)
 	if err != nil {
 		return err
 	}
@@ -85,7 +87,8 @@ func (q *CachedEncryptedMessageQueue) PublishSessionKey(
 		AppId:                 sendableMessages.AppId,
 		EncryptedSharedSecret: sendableMessages.EncryptedSharedSecret,
 		DeviceKey:             deviceKey,
-		CipherText:            ciphertext,
+		SessionIds:            sessionIds,
+		CipherTexts:           ciphertexts,
 		WebhookUrl:            sendableMessages.WebhookUrl,
 		StreamEvents:          sendableMessages.StreamEvents,
 	}
@@ -98,7 +101,7 @@ func (q *CachedEncryptedMessageQueue) EnqueueMessages(
 	ctx context.Context,
 	appIds []common.Address,
 	sessionId string,
-	streamId shared.StreamId,
+	channelId shared.StreamId,
 	streamEventBytes []byte,
 ) (err error) {
 	sendableApps, unsendableApps, err := q.store.EnqueueUnsendableMessages(
@@ -126,7 +129,7 @@ func (q *CachedEncryptedMessageQueue) EnqueueMessages(
 			AppId:                 sendableApp.AppId,
 			DeviceKey:             sendableApp.DeviceKey,
 			EncryptedSharedSecret: sendableApp.SendMessageSecrets.EncryptedSharedSecret,
-			CipherText:            sendableApp.SendMessageSecrets.CipherText,
+			CipherTexts:           sendableApp.SendMessageSecrets.CipherTexts,
 			WebhookUrl:            sendableApp.WebhookUrl,
 			StreamEvents:          [][]byte{streamEventBytes},
 		}); err != nil {
@@ -136,7 +139,7 @@ func (q *CachedEncryptedMessageQueue) EnqueueMessages(
 	return q.appDispatcher.RequestKeySolicitations(
 		ctx,
 		sessionId,
-		streamId,
+		channelId,
 		unsendableApps,
 	)
 }

@@ -17,6 +17,7 @@ import (
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/shared"
 )
 
 type (
@@ -32,14 +33,15 @@ type (
 	}
 
 	// When this is returned, caller already has access to the device key,
-	// session key, and ciphertext. They can combine these with the returned
+	// and session keys + ciphertexts. They can combine these with the returned
 	// information here to form the following tuple needed for sending each message
-	// (webhookUrl, ciphertext, encryptedSharedSecret, streamEvent)
+	// (webhookUrl, ciphertexts, session_ids, encryptedSharedSecret, streamEvent)
 	// where:
 	// - webhookUrl is the address of the bot service
-	// - ciphertext is the session key encrypted with the fallback public key of the
-	//   bot's device key, decryptable only by the bot, who has access to the private
-	//   key of the fallback key pair
+	// - (session_keys, ciphertexts) is the tuple of session ids and session keys encrypted
+	//   with the fallback public key of the bot's device key, which were sent together in
+	//   to the bot's User inbox stream in a single message. `ciphertexts` is decryptable
+	//   only by the bot, who has unique access to the private key of the fallback key pair
 	// - encryptedSharedSecret is the shared hmac secret used by the app registry server
 	//   to sign jwt tokens for authentication of origination of webhook calls, and
 	// - StreamEvents is an array of serialized channel message payload stream events
@@ -71,8 +73,12 @@ type (
 		EncryptedSharedSecret [32]byte
 	}
 
+	// Each session key is stored in a string list that has been encrypted by a device's fallback
+	// public key. We send back the entire encrypted string of keys as the Ciphertexts value, along
+	// with the list of session ids so the app server can extract the correct key from the list.
 	SendMessageSecrets struct {
-		CipherText            string
+		SessionIds            []string
+		CipherTexts           string
 		EncryptedSharedSecret [32]byte
 	}
 
@@ -105,14 +111,15 @@ type (
 			app common.Address,
 		) (*AppInfo, error)
 
-		// PublishSessionKey creates a key for a (device_key, session_id) pair and returns all enqueued messages
-		// that become sendable now that this session key is available. If no keys become sendable, messages
-		// is nil.
-		PublishSessionKey(
+		// PublishSessionKeys creates a row with the encrypted ciphertexts and list of session ids for the
+		// device key, and returns all enqueued messages that become sendable now that these session keys
+		// are available. If no keys become sendable, messages is nil.
+		PublishSessionKeys(
 			ctx context.Context,
+			streamId shared.StreamId,
 			deviceKey string,
-			sessionId string,
-			ciphertext string,
+			sessionIds []string,
+			ciphertexts string,
 		) (messages *SendableMessages, err error)
 
 		// EnqueueUnsendableMessages enqueues the message to be sent for all devices that do not yet
@@ -388,11 +395,12 @@ func (s *PostgresAppRegistryStore) getAppInfo(
 	return &appInfo, nil
 }
 
-func (s *PostgresAppRegistryStore) PublishSessionKey(
+func (s *PostgresAppRegistryStore) PublishSessionKeys(
 	ctx context.Context,
+	streamId shared.StreamId,
 	deviceKey string,
-	sessionId string,
-	ciphertext string,
+	sessionIds []string,
+	ciphertexts string,
 ) (messages *SendableMessages, err error) {
 	err = s.txRunner(
 		ctx,
@@ -400,12 +408,12 @@ func (s *PostgresAppRegistryStore) PublishSessionKey(
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
 			var err error
-			messages, err = s.publishSessionKey(ctx, deviceKey, sessionId, ciphertext, tx)
+			messages, err = s.publishSessionKeys(ctx, streamId, deviceKey, sessionIds, ciphertexts, tx)
 			return err
 		},
 		nil,
 		"deviceKey", deviceKey,
-		"sessionId", sessionId,
+		"sessionIds", sessionIds,
 	)
 	if err != nil {
 		return nil, err
@@ -413,21 +421,23 @@ func (s *PostgresAppRegistryStore) PublishSessionKey(
 	return messages, nil
 }
 
-func (s *PostgresAppRegistryStore) publishSessionKey(
+func (s *PostgresAppRegistryStore) publishSessionKeys(
 	ctx context.Context,
+	streamId shared.StreamId,
 	deviceKey string,
-	sessionId string,
-	ciphertext string,
+	sessionIds []string,
+	ciphertexts string,
 	tx pgx.Tx,
 ) (messages *SendableMessages, err error) {
 	_, err = tx.Exec(
 		ctx,
-		`   INSERT INTO app_session_keys (device_key, session_id, ciphertext)
-			VALUES ($1, $2, $3);	
+		`   INSERT INTO app_session_keys (device_key, stream_id, session_ids, ciphertexts)
+			VALUES ($1, $2, $3, $4);	
 		`,
 		deviceKey,
-		sessionId,
-		ciphertext,
+		streamId,
+		sessionIds,
+		ciphertexts,
 	)
 	if err != nil {
 		if isPgError(err, pgerrcode.UniqueViolation) {
@@ -455,11 +465,11 @@ func (s *PostgresAppRegistryStore) publishSessionKey(
 		`
 		    DELETE FROM enqueued_messages
 			WHERE device_key = $1
-			AND session_id = $2
+			AND session_id = ANY($2)
 			RETURNING message_envelope;
 		`,
 		deviceKey,
-		sessionId,
+		sessionIds,
 	)
 	if err != nil {
 		return nil, WrapRiverError(
@@ -549,14 +559,14 @@ func (s *PostgresAppRegistryStore) enqueueUnsendableMessages(
 	}
 	rows, err := tx.Query(
 		ctx,
-		`   SELECT app_id, app_ids.device_key, webhook, encrypted_shared_secret, ciphertext
+		`   SELECT app_id, app_ids.device_key, webhook, encrypted_shared_secret, session_ids, ciphertexts
 			FROM (
 				SELECT * FROM app_registry
 				WHERE app_registry.app_id = ANY($2)
 			) as app_ids
 		    INNER JOIN app_session_keys
 			ON app_ids.device_key = app_session_keys.device_key
-			AND app_session_keys.session_id = $1
+			AND $1 = ANY(app_session_keys.session_ids)
 		`,
 		sessionId,
 		appIdStrings,
@@ -575,7 +585,7 @@ func (s *PostgresAppRegistryStore) enqueueUnsendableMessages(
 	var encryptedSharedSecret PGSecret
 	if _, err := pgx.ForEachRow(
 		rows,
-		[]any{&appId, &sendableDevice.DeviceKey, &sendableDevice.WebhookUrl, &encryptedSharedSecret, &sendableDevice.SendMessageSecrets.CipherText},
+		[]any{&appId, &sendableDevice.DeviceKey, &sendableDevice.WebhookUrl, &encryptedSharedSecret, &sendableDevice.SendMessageSecrets.SessionIds, &sendableDevice.SendMessageSecrets.CipherTexts},
 		func() error {
 			sendableDevice.AppId = common.Address(appId)
 			sendableDevice.SendMessageSecrets.EncryptedSharedSecret = encryptedSharedSecret

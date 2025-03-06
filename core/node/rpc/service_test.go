@@ -41,6 +41,31 @@ func TestMain(m *testing.M) {
 	crypto.TestMainForLeaksIgnoreGeth()
 }
 
+func createUserInboxStream(
+	ctx context.Context,
+	wallet *crypto.Wallet,
+	client protocolconnect.StreamServiceClient,
+	streamSettings *protocol.StreamSettings,
+) (*protocol.SyncCookie, []byte, error) {
+	userInboxStreamId := UserInboxStreamIdFromAddress(wallet.Address)
+	inception, err := events.MakeEnvelopeWithPayload(
+		wallet,
+		events.Make_UserInboxPayload_Inception(userInboxStreamId, streamSettings),
+		nil,
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+	res, err := client.CreateStream(ctx, connect.NewRequest(&protocol.CreateStreamRequest{
+		Events:   []*protocol.Envelope{inception},
+		StreamId: userInboxStreamId[:],
+	}))
+	if err != nil {
+		return nil, nil, err
+	}
+	return res.Msg.Stream.NextSyncCookie, inception.Hash, nil
+}
+
 func createUserMetadataStream(
 	ctx context.Context,
 	wallet *crypto.Wallet,

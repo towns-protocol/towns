@@ -454,6 +454,19 @@ func Make_UserPayload_Inception(streamId StreamId, settings *StreamSettings) *St
 	}
 }
 
+func Make_UserInboxPayload_Inception(streamId StreamId, settings *StreamSettings) *StreamEvent_UserInboxPayload {
+	return &StreamEvent_UserInboxPayload{
+		UserInboxPayload: &UserInboxPayload{
+			Content: &UserInboxPayload_Inception_{
+				Inception: &UserInboxPayload_Inception{
+					StreamId: streamId[:],
+					Settings: settings,
+				},
+			},
+		},
+	}
+}
+
 func Make_UserMetadataPayload_Inception(
 	streamId StreamId,
 	settings *StreamSettings,

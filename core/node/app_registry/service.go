@@ -20,7 +20,6 @@ import (
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/nodes"
-	"github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
 	"github.com/towns-protocol/towns/core/node/registries"
@@ -84,7 +83,7 @@ func NewService(
 		NewAppDispatcher(ctx, &cfg, appClient, fixedWidthDataEncryptionKey),
 	)
 	if err != nil {
-		return nil, base.AsRiverError(err, protocol.Err_INTERNAL).
+		return nil, base.AsRiverError(err, Err_INTERNAL).
 			Message("Unable to create CachedEncryptedMessageQueue")
 	}
 
@@ -188,7 +187,12 @@ func (s *Service) Register(
 	}
 
 	if err := s.store.CreateApp(ctx, owner, app, encrypted); err != nil {
-		return nil, base.AsRiverError(err, Err_INTERNAL).Func("Register")
+		return nil, base.AsRiverError(err, Err_INTERNAL).Message("Error creating app in database")
+	}
+
+	if err := s.streamsTracker.AddStream(ctx, shared.UserInboxStreamIdFromAddress(app)); err != nil {
+		return nil, base.AsRiverError(err, Err_INTERNAL).
+			Message("Error subscribing to app's user inbox stream to watch for keys")
 	}
 
 	return &connect.Response[RegisterResponse]{

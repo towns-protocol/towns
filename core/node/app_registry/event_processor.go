@@ -49,5 +49,11 @@ func (p *MessageToAppProcessor) OnMessageEvent(
 			Errorw("Error marshalling stream event", "event", event, "streamId", channelId, "spaceId", spaceId)
 		return
 	}
-	p.cache.EnqueueMessages(ctx, appIds, event.GetChannelMessage().Message.SessionId, channelId, streamBytes)
+
+	// The cache is also a broker that will dispatch sendable messages to the appropriate
+	// consumers in order to make webhook calls to app services.
+	if err := p.cache.EnqueueMessages(ctx, appIds, event.GetChannelMessage().Message.SessionId, channelId, streamBytes); err != nil {
+		logging.FromCtx(ctx).
+			Errorw("Error enqueueing messages for stream event", "event", event, "streamId", channelId, "spaceId", spaceId, "error", err)
+	}
 }
