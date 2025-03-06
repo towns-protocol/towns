@@ -105,7 +105,7 @@ func (s *Service) newEventReceived(
 	}
 
 	if parsedEvent.MiniblockRef.Num >= 0 {
-		view, err = s.getStreamViewForAddEvent(ctx, view, parsedEvent, stream, err)
+		view, err = s.getStreamViewForAddEvent(ctx, view, parsedEvent, stream)
 		if err != nil {
 			return nil, err
 		}

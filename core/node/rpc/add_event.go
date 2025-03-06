@@ -32,7 +32,7 @@ func (s *Service) localAddEvent(
 	log.Debugw("localAddEvent", "parsedEvent", parsedEvent)
 
 	if parsedEvent.MiniblockRef.Num >= 0 {
-		streamView, err = s.getStreamViewForAddEvent(ctx, streamView, parsedEvent, localStream, err)
+		streamView, err = s.getStreamViewForAddEvent(ctx, streamView, parsedEvent, localStream)
 		if err != nil {
 			return nil, err
 		}
@@ -74,7 +74,6 @@ func (s *Service) getStreamViewForAddEvent(
 	streamView *StreamView,
 	parsedEvent *ParsedEvent,
 	localStream *Stream,
-	err error,
 ) (*StreamView, error) {
 	retryCount := 0
 	backoff := BackoffTracker{
@@ -82,6 +81,7 @@ func (s *Service) getStreamViewForAddEvent(
 		Multiplier: 2,
 		Divisor:    1,
 	}
+	var err error
 
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
