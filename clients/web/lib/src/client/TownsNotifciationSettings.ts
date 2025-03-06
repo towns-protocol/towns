@@ -136,8 +136,8 @@ export class NotificationSettingsClient {
         if (this.getClientPromise) {
             return this.getClientPromise
         }
-        this.getClientPromise = this._getClient()
         try {
+            this.getClientPromise = this._getClient()
             const result = await this.getClientPromise
             this.getClientPromise = undefined
             return result
