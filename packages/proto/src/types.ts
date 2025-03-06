@@ -31,7 +31,6 @@ type IsBuiltInObjectType<T> = T extends Uint8Array
     ? true
     : false
 
-
 // connect-es v2 dropped the PlainMessage type
 // if you want to use a Message interface as a parameter to your api function you want to
 // strip out $typeName as a required field, but leave the rest of the properties as required
