@@ -1,4 +1,3 @@
-import { PlainMessage } from '@bufbuild/protobuf'
 import {
     Client as CasablancaClient,
     EventStatus,
@@ -844,7 +843,7 @@ function toTownsContent_ChannelPayload_ChannelProperties(
 }
 
 function toTownsContent_ChannelPayload_Message_Post(
-    value: PlainMessage<ChannelMessage_Post>,
+    value: ChannelMessage_Post,
     eventId: string,
     editsEventId: string | undefined,
     description: string,
@@ -997,7 +996,7 @@ function getEventStatus(timelineEvent: StreamTimelineEvent): EventStatus {
 }
 
 function toAttachments(
-    attachments: PlainMessage<ChannelMessage_Post_Attachment>[],
+    attachments: ChannelMessage_Post_Attachment[],
     parentEventId: string,
 ): Attachment[] {
     return attachments
@@ -1006,7 +1005,7 @@ function toAttachments(
 }
 
 function toAttachment(
-    attachment: PlainMessage<ChannelMessage_Post_Attachment>,
+    attachment: ChannelMessage_Post_Attachment,
     parentEventId: string,
     index: number,
 ): Attachment | undefined {
