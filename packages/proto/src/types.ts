@@ -13,31 +13,11 @@ export type FullyReadMarker = FullyReadMarkers_Content
 // Check if type has $typeName and potentially $unknown properties
 type HasMessageProperties<T> = T extends { $typeName: any } ? true : false
 
-// Special handling for built-in object types we don't want to transform
-type IsBuiltInObjectType<T> = T extends Uint8Array
-    ? true
-    : T extends Date
-    ? true
-    : T extends RegExp
-    ? true
-    : T extends Map<any, any>
-    ? true
-    : T extends Set<any>
-    ? true
-    : T extends Promise<any>
-    ? true
-    : T extends ArrayBuffer
-    ? true
-    : T extends DataView
-    ? true
-    : false
-
-// connect-es v2 dropped the PlainMessage type, so we need to implement our own
-// the message is a type now, which is nice
-// except, it still has the goofy "$typename" variable as required!
-// so if you want to use it as a parameter to your api function you need to strip it
-// the lib has the MessageInitShape type, which is what we want IF we could make fields non-optional!
-// I want typescript to tell me when I'm missing required fields! If you want that - use PlainMessage
+// connect-es v2 dropped the PlainMessage type
+// if you want to use a Message interface as a parameter to your api function you want to
+// strip out $typeName as a required field, but leave the rest of the properties as required
+// the lib has the MessageInitShape type, but all fields are optional
+// if you want typescript to tell you when you're missing required fields, use PlainMessage
 export type PlainMessage<T> =
     // Distribute over unions
     T extends any
@@ -57,14 +37,6 @@ export type PlainMessage<T> =
                   // Keep `case` as is, but recurse on `value` and any other fields
                   [K in keyof T]: K extends 'value' ? PlainMessage<T[K]> : T[K]
               }
-            : // 4) If it's a built-in object type we don't want to transform, leave it as is
-            IsBuiltInObjectType<T> extends true
-            ? T
-            : // 5) If it's some other object, recurse on each property
-            T extends object
-            ? {
-                  [K in keyof T]: PlainMessage<T[K]>
-              }
-            : // 6) Otherwise, leave it alone (primitives, etc.)
+            : // 4) Otherwise, leave it alone (primitives, etc.)
               T
         : never
