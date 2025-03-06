@@ -65,15 +65,15 @@ mutation CreateIssue($issueTitle: String!, $issueDescription: String!){
     const issueDescription = [
         `**Name**: ${name}`,
         `**Email**: ${email}`,
-        `**Device Info**:`,
-        deviceInfo,
-        `* Date UTC: ${date.toUTCString()}`,
-        `* Date PST: ${date.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })}`,
         '### User Feedback:',
         comments,
         '### Attachments:',
         attachmentInfo,
         '### Logs:',
+        `* Date UTC: ${date.toUTCString()}`,
+        `* Date PST: ${date.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })}`,
+        `**Device Info**:`,
+        deviceInfo,
         logInfo,
     ].join('\n\n')
 
