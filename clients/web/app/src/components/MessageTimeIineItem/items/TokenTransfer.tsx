@@ -8,33 +8,36 @@ import { formatUnitsToFixedLength } from 'hooks/useBalance'
 type Props = {
     event: TokenTransferEvent
 }
-export const TokenTransfer = (props: Props) => {
-    const { event } = props
-    const coinDataParams = useMemo(() => {
-        const chainId = event.transaction.receipt
-            ? event.transaction.receipt.chainId.toString()
-            : 'solana-mainnet'
-        const address =
-            chainId === 'solana-mainnet'
-                ? bin_toString(event.transfer.address)
-                : '0x' + bin_toHexString(event.transfer.address)
-        return { address, chain: chainId }
-    }, [event])
 
-    const { data: coinData } = useCoinData(coinDataParams)
+type TokenTransferImplProps = {
+    chainId: string
+    rawAddress: Uint8Array
+    amount: string
+    isBuy: boolean
+}
+
+export const TokenTransferImpl = (props: TokenTransferImplProps) => {
+    const { chainId, rawAddress, amount, isBuy } = props
+
+    const address = useMemo(() => {
+        return chainId === 'solana-mainnet'
+            ? bin_toString(rawAddress)
+            : '0x' + bin_toHexString(rawAddress)
+    }, [chainId, rawAddress])
+
+    const { data: coinData } = useCoinData({ address, chain: chainId })
 
     const text = useMemo(() => {
-        const amount = event.transfer.amount
         const preFormattedAmount = Number(
             formatUnitsToFixedLength(BigInt(amount), coinData?.token.decimals ?? 9, 2),
         )
         const formattedAmount = Intl.NumberFormat('en-US', { notation: 'compact' }).format(
             preFormattedAmount,
         )
-        const verb = event.transfer.isBuy ? 'Bought' : 'Sold'
+        const verb = isBuy ? 'Bought' : 'Sold'
         const symbol = coinData?.token.symbol ?? ''
         return `${verb} ${formattedAmount} ${symbol}`
-    }, [event, coinData])
+    }, [amount, isBuy, coinData])
 
     return (
         <Stack horizontal>
@@ -42,21 +45,32 @@ export const TokenTransfer = (props: Props) => {
                 shrink
                 grow={false}
                 justifyContent="start"
-                background={event.transfer.isBuy ? 'positiveSubtle' : 'negativeSubtle'}
+                background={isBuy ? 'positiveSubtle' : 'negativeSubtle'}
                 paddingX="sm"
                 alignItems="start"
                 rounded="xs"
             >
-                <Text
-                    // using separate vpadding here to avoid text clipping
-                    paddingBottom="sm"
-                    paddingTop="sm"
-                    color={event.transfer.isBuy ? 'greenBlue' : 'error'}
-                >
+                <Text paddingBottom="sm" paddingTop="sm" color={isBuy ? 'greenBlue' : 'error'}>
                     {text}
                 </Text>
             </Box>
             <Box grow />
         </Stack>
+    )
+}
+
+export const TokenTransfer = (props: Props) => {
+    const { event } = props
+    const chainId = event.transaction.receipt
+        ? event.transaction.receipt.chainId.toString()
+        : 'solana-mainnet'
+
+    return (
+        <TokenTransferImpl
+            chainId={chainId}
+            rawAddress={event.transfer.address}
+            amount={event.transfer.amount}
+            isBuy={event.transfer.isBuy}
+        />
     )
 }

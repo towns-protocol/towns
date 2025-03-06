@@ -49,6 +49,16 @@ export type EvmTransactionRequest = {
     threadInfo: { channelId: string; messageId: string } | undefined
 }
 
+export type TokenTransferRollupEvent = {
+    address: Uint8Array
+    amount: bigint
+    isBuy: boolean
+    chainId: string
+    userId: string
+    createdAtEpochMs: bigint
+    messageId: string
+}
+
 export const isSolanaTransactionRequest = (
     request: EvmTransactionRequest | SolanaTransactionRequest | undefined,
 ): request is SolanaTransactionRequest => {
@@ -77,7 +87,7 @@ const TradingContext = createContext<{
     ) => void | Promise<void>
     pendingEvmTransaction: EvmTransactionRequest | undefined
     pendingSolanaTransaction: SolanaTransactionRequest | undefined
-    tokenTransferRollups: ReturnType<typeof useTokenTransferRollups>['tokenTransferRollups']
+    tokenTransferRollups: { [key: string]: TokenTransferRollupEvent[] }
 }>({
     sendSolanaTransaction: () => {},
     sendEvmTransaction: () => {},
@@ -430,18 +440,7 @@ const useTokenTransferRollups = () => {
             return
         }
 
-        const onStreamTokenTransfer = (
-            channelId: string,
-            transfer: {
-                address: Uint8Array
-                amount: bigint
-                isBuy: boolean
-                chainId: string
-                userId: string
-                createdAtEpochMs: bigint
-                messageId: string
-            },
-        ) => {
+        const onStreamTokenTransfer = (channelId: string, transfer: TokenTransferRollupEvent) => {
             // solana does not use hex strings for addresses
             const address =
                 transfer.chainId === 'solana-mainnet'

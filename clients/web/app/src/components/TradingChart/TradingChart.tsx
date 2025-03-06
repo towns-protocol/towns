@@ -5,13 +5,17 @@ import {
     CandlestickSeries,
     ColorType,
     IChartApi,
+    ISeriesPrimitive,
+    SeriesAttachedParameter,
+    SeriesType,
+    Time,
     UTCTimestamp,
     createChart,
 } from 'lightweight-charts'
 import { zip } from 'lodash'
 import { useInView } from 'react-intersection-observer'
 import { useMyUserId, useUserLookupContext } from 'use-towns-client'
-import { themes } from 'ui/styles/themes'
+import { ToneName, themes } from 'ui/styles/themes'
 import { Box, Button, Dropdown, Icon, IconButton, Pill, SizeBox, Stack, Text } from '@ui'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { useStore } from 'store/store'
@@ -28,9 +32,14 @@ import { TickerThreadContext } from '@components/MessageThread/TickerThreadConte
 import { MessageTimelineContext } from '@components/MessageTimeline/MessageTimelineContext'
 import { useTokenBalance } from '@components/Web3/Trading/useTokenBalance'
 import { formatUnits } from 'hooks/useBalance'
-import { useTradingContext } from '@components/Web3/Trading/TradingContextProvider'
+import {
+    TokenTransferRollupEvent,
+    useTradingContext,
+} from '@components/Web3/Trading/TradingContextProvider'
 import { Avatar } from '@components/Avatar/Avatar'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
+import { vars } from 'ui/styles/vars.css'
+import { TokenTransferImpl } from '@components/MessageTimeIineItem/items/TokenTransfer'
 import { GetBars, TimeFrame, useCoinBars } from './useCoinBars'
 import { useCoinData } from './useCoinData'
 const CHART_TIME_FORMAT_OPTIONS: {
@@ -142,14 +151,19 @@ export const TradingChart = (props: { address: string; chainId: string; disabled
     const isTradingThreadContext = useContext(TickerThreadContext) !== undefined
 
     const { tokenTransferRollups } = useTradingContext()
-    const tradingUserIds = useMemo(() => {
+
+    const transfers = useMemo(() => {
         const transfers = tokenTransferRollups[address] ?? []
+        return transfers
+    }, [tokenTransferRollups, address])
+
+    const tradingUserIds = useMemo(() => {
         const userIds = transfers.reduce((acc, transfer) => {
             acc.add(transfer.userId)
             return acc
         }, new Set<string>())
         return Array.from(userIds)
-    }, [tokenTransferRollups, address])
+    }, [transfers])
 
     const onToggleChartType = useCallback(() => {
         setChartType((t) => (t === 'area' ? 'candlestick' : 'area'))
@@ -188,6 +202,7 @@ export const TradingChart = (props: { address: string; chainId: string; disabled
                         data={barData}
                         chartType={chartType}
                         timeframe={timeframe}
+                        transfers={transfers}
                     />
                 </SizeBox>
                 {isLoadingData && (
@@ -401,8 +416,9 @@ const ChartComponent = (props: {
     data: GetBars
     timeframe: TimeFrame
     chartType: 'area' | 'candlestick'
+    transfers: TokenTransferRollupEvent[]
 }) => {
-    const { isFocused, data, chartType, timeframe } = props
+    const { isFocused, data, chartType, timeframe, transfers } = props
 
     const { getTheme } = useStore()
     const theme = getTheme()
@@ -440,6 +456,10 @@ const ChartComponent = (props: {
             })
         }
     }, [])
+
+    const [transferMapRef] = useState(() => {
+        return { current: new Map<number, HTMLElement | null>() }
+    })
 
     useLayoutEffect(() => {
         const container = chartContainerRef.current
@@ -499,6 +519,7 @@ const ChartComponent = (props: {
                 return { time: time as UTCTimestamp, value: close }
             })
             areaSeries.setData(formattedData)
+            areaSeries.attachPrimitive(new MyThing(chart, transfers, transferMapRef))
         } else {
             const candleStickSeries = chart.addSeries(CandlestickSeries, {})
             const formattedData = zip(data.t, data.o, data.h, data.l, data.c).map(
@@ -507,6 +528,7 @@ const ChartComponent = (props: {
                 },
             )
             candleStickSeries.setData(formattedData)
+            candleStickSeries.attachPrimitive(new MyThing(chart, transfers, transferMapRef))
         }
 
         chartRef.current = chart
@@ -529,7 +551,21 @@ const ChartComponent = (props: {
         chartType,
         backgroundGradientBottom,
         backgroundGradientTop,
+        transfers,
+        transferMapRef,
     ])
+
+    const filteredTransfers = useMemo(() => {
+        if (data.t.length === 0) {
+            return []
+        }
+        return transfers.filter((transfer) => {
+            return (
+                Number(transfer.createdAtEpochMs) / 1000 > data.t[0] &&
+                Number(transfer.createdAtEpochMs) / 1000 < data.t[data.t.length - 1]
+            )
+        })
+    }, [transfers, data])
 
     useLayoutEffect(() => {
         if (chartRef.current) {
@@ -546,7 +582,67 @@ const ChartComponent = (props: {
         }
     }, [isFocused, focusChart])
 
-    return <Box height="200" ref={chartContainerRef} pointerEvents={isFocused ? 'auto' : 'none'} />
+    return (
+        <Box height="200" ref={chartContainerRef}>
+            <Box absoluteFill zIndex="above" pointerEvents="none">
+                {filteredTransfers
+                    .map((transfer, index) => ({
+                        ...transfer,
+                        key: `fake-key-${index}`,
+                    }))
+                    .map((transfer, index) => (
+                        <Box
+                            position="absolute"
+                            key={`${transfer.key}`}
+                            width="x2"
+                            height="x2"
+                            ref={(ref) => transferMapRef.current.set(index, ref)}
+                        >
+                            <ChartTransfer transfer={transfer} />
+                        </Box>
+                    ))}
+            </Box>
+        </Box>
+    )
+}
+
+const ChartTransfer = ({ transfer }: { transfer: TokenTransferRollupEvent }) => {
+    const { lookupUser } = useUserLookupContext()
+    const user = lookupUser(transfer.userId)
+    return (
+        <Box
+            position="absolute"
+            rounded="full"
+            background="level4"
+            style={{
+                border: `2px solid ${
+                    transfer.isBuy
+                        ? vars.color.tone[ToneName.Positive]
+                        : vars.color.tone[ToneName.Negative]
+                }`,
+            }}
+            pointerEvents="auto"
+            tooltip={
+                <Stack background="level3" rounded="sm" padding="sm" gap="sm" border="level4">
+                    {user && (
+                        <Text fontSize="xs" color="default" fontWeight="strong">
+                            {getPrettyDisplayName(user)}
+                        </Text>
+                    )}
+                    <TokenTransferImpl
+                        rawAddress={transfer.address}
+                        amount={transfer.amount.toString()}
+                        isBuy={transfer.isBuy}
+                        chainId={transfer.chainId}
+                    />
+                </Stack>
+            }
+        >
+            <Box style={{ padding: '1px' }}>
+                <Avatar size="avatar_xs" userId={transfer.userId} />
+            </Box>
+        </Box>
+    )
 }
 
 const TickerChangeIndicator = ({ change }: { change: number }) => (
@@ -619,4 +715,99 @@ const TradingUserIds = ({ userIds }: { userIds: string[] }) => {
             </Text>
         </Stack>
     )
+}
+
+class MyThing implements ISeriesPrimitive<Time> {
+    private readonly transfers: TokenTransferRollupEvent[]
+    private readonly chart: IChartApi
+    private readonly markers: HTMLElement[] = []
+    private readonly transferMapRef: { current: Map<number, HTMLElement | null> }
+    constructor(
+        chart: IChartApi,
+        transfers: TokenTransferRollupEvent[],
+        transferMapRef: { current: Map<number, HTMLElement | null> },
+    ) {
+        this.chart = chart
+        this.transfers = transfers
+        this.transferMapRef = transferMapRef
+    }
+
+    attached(param: SeriesAttachedParameter<Time, SeriesType>): void {}
+
+    detached(): void {}
+
+    updateAllViews(): void {
+        if (this.chart.panes().length === 0 || this.chart.panes()[0].getSeries().length === 0) {
+            return
+        }
+        const series = this.chart.panes()[0].getSeries()[0]
+        const paneSize = this.chart.paneSize(0)
+        const chartRect = this.chart.chartElement().getBoundingClientRect()
+        const leftMarginWidth = chartRect.width - paneSize.width
+
+        for (const [i, transfer] of this.transfers.entries()) {
+            const time = (Number(transfer.createdAtEpochMs) / 1000) as UTCTimestamp
+            const index = this.chart.timeScale().timeToIndex(time, true)
+            if (!index || series.data().length < index) {
+                continue
+            }
+
+            const dataPoint = series.data()[index]
+            const price = extractPrice(dataPoint)
+            if (!price) {
+                continue
+            }
+
+            const x = this.chart.timeScale().timeToCoordinate(dataPoint.time)
+            const y = series.priceToCoordinate(price)
+            const ref = this.transferMapRef.current.get(i)
+            if (!x || !y) {
+                continue
+            }
+
+            if (ref) {
+                ref.style.left = leftMarginWidth + x - 10 + 'px'
+                ref.style.top = y - 10 + 'px'
+            }
+        }
+    }
+    applyOptions(): void {}
+}
+
+function extractPrice(dataPoint: unknown): number | undefined {
+    const hasCandleData = (
+        data: unknown,
+    ): data is {
+        open: number
+        close: number
+        time: UTCTimestamp
+    } => {
+        return (
+            typeof data === 'object' &&
+            data !== null &&
+            'open' in data &&
+            data.open !== null &&
+            typeof data.open === 'number'
+        )
+    }
+    const hasValue = (
+        data: unknown,
+    ): data is {
+        value: number
+        time: UTCTimestamp
+    } => {
+        return (
+            typeof data === 'object' &&
+            data !== null &&
+            'value' in data &&
+            data.value !== null &&
+            typeof data.value === 'number'
+        )
+    }
+    if (hasValue(dataPoint)) {
+        return dataPoint.value
+    } else if (hasCandleData(dataPoint)) {
+        return (dataPoint.open + dataPoint.close) / 2
+    }
+    return undefined
 }
