@@ -10,40 +10,6 @@ export type PayloadValueType = StreamEvent['payload']['value']
 
 export type FullyReadMarker = FullyReadMarkers_Content
 
-// //
-// export type PlainMessage<T> =
-//     // Distribute over unions:
-//     T extends any
-//         ? // 1) If it's a Message, omit $typeName/$unknown, then recurse:
-//           T extends Message
-//             ? {
-//                   // remove $typeName, $unknown, but for every other key
-//                   [K in keyof T as K extends '$typeName' | '$unknown' ? never : K]: PlainMessage<
-//                       T[K]
-//                   >
-//               }
-//             : // 2) If it's an array, recurse on the element type:
-//             T extends (infer U)[]
-//             ? PlainMessage<U>[]
-//             : // (3) If it is a oneof shape (has `case` and `value`), preserve that discriminant
-//             T extends { case: unknown; value: unknown }
-//             ? {
-//                   // Keep `case` exactly as is (so the string literal stays intact),
-//                   // but still recurse into other fields like `value`.
-//                   [K in keyof T]: K extends 'value'
-//                       ? PlainMessage<T[K]>
-//                       : // You might also want to *recursively* process any other fields
-//                         // beyond `case` and `value`. If your oneof objects only have these two,
-//                         // you can just do `T[K]` for `case`.
-//                         // If they can have extra fields, you might RecurPlain them, too:
-//                         T[K]
-//               }
-//             : // 4) If it's some other object, recurse on each property:
-//             T extends object
-//             ? { [K in keyof T]: PlainMessage<T[K]> }
-//             : // 4) Otherwise, leave it alone (primitives, etc.):
-//               T
-//         : never
 
 // Check if type has $typeName and potentially $unknown properties
 type HasMessageProperties<T> = T extends { $typeName: any } ? true : false
