@@ -85,6 +85,11 @@
         "name": "Ownable__ZeroAddress"
       },
       {
+        "inputs": [],
+        "type": "error",
+        "name": "WalletLink__AddressMismatch"
+      },
+      {
         "inputs": [
           {
             "internalType": "address",
@@ -1101,10 +1106,10 @@
   },
   "sources": {
     "contracts/src/factory/facets/wallet-link/IWalletLink.sol": {
-      "keccak256": "0xbed0307b4646d2d3ce2c0d93fd837822b72b46a25743c4083b5c5841e8e7577a",
+      "keccak256": "0xb37a03936a2f15ce5c94fb9925594627cc65cfdd186c14eaff32d299ec569b5f",
       "urls": [
-        "bzz-raw://bfb2f9375fead317832f747ddf0216df41b11e25bf40e73f88d867436c8b1f4c",
-        "dweb:/ipfs/QmTnn9Fq8N2SJcXc3xY5W4RqHbKUxJ1yW6AuBwc4G4xQjW"
+        "bzz-raw://085ef4945195eae38879c2d84e70a5a2f3cb02e6ad53e8ae37e6dd2591379327",
+        "dweb:/ipfs/QmRP7RH7sX1MUXFDwacLABBcVdGDoyKm36JbSfDDwXy4EW"
       ],
       "license": "MIT"
     },
@@ -1117,10 +1122,10 @@
       "license": "MIT"
     },
     "contracts/src/factory/facets/wallet-link/WalletLinkBase.sol": {
-      "keccak256": "0xdabf7cb0714422521ac7abf0880ccf1a56caa0464b44238331bb660a2d49c21d",
+      "keccak256": "0xd72a27d9f2b9733b1b54c0230916f48f6091656fbf77067fc99a1ac00d04d4d2",
       "urls": [
-        "bzz-raw://1d0758c8a2840379726a0422b79896d8524929d0f7948e99c21ec4eef4a31741",
-        "dweb:/ipfs/QmQhrtizuge2m1wczhaWVxbVQA8p34fTgpAGbNwFcYwBLE"
+        "bzz-raw://bf298979e1bb93522b4af642f6c77f91969ed87e065c93360733184ac32b15d7",
+        "dweb:/ipfs/QmYrALvEvhZLzXPq2F7d9YCo4iZtnoyHHFmpnNTyBHVmfV"
       ],
       "license": "MIT"
     },

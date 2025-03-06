@@ -1180,10 +1180,10 @@
       "license": "MIT"
     },
     "contracts/src/factory/facets/wallet-link/IWalletLink.sol": {
-      "keccak256": "0xbed0307b4646d2d3ce2c0d93fd837822b72b46a25743c4083b5c5841e8e7577a",
+      "keccak256": "0xb37a03936a2f15ce5c94fb9925594627cc65cfdd186c14eaff32d299ec569b5f",
       "urls": [
-        "bzz-raw://bfb2f9375fead317832f747ddf0216df41b11e25bf40e73f88d867436c8b1f4c",
-        "dweb:/ipfs/QmTnn9Fq8N2SJcXc3xY5W4RqHbKUxJ1yW6AuBwc4G4xQjW"
+        "bzz-raw://085ef4945195eae38879c2d84e70a5a2f3cb02e6ad53e8ae37e6dd2591379327",
+        "dweb:/ipfs/QmRP7RH7sX1MUXFDwacLABBcVdGDoyKm36JbSfDDwXy4EW"
       ],
       "license": "MIT"
     },

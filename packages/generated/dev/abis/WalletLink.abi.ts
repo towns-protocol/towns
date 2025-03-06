@@ -720,6 +720,11 @@ export default [
   },
   {
     "type": "error",
+    "name": "WalletLink__AddressMismatch",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "WalletLink__CannotLinkToRootWallet",
     "inputs": [
       {
