@@ -321,90 +321,52 @@ func (s *remoteSyncer) modifySync() error {
 			}
 		}
 	} else {
-		batchSize := 1
-
-		// Helper function to process batched modifications
-		processBatch := func(addBatch []*SyncCookie, removeBatch [][]byte) error {
-			resp, err := s.client.ModifySync(ctx, connect.NewRequest(&ModifySyncRequest{
-				SyncId:        s.syncID,
-				AddStreams:    addBatch,
-				RemoveStreams: removeBatch,
-			}))
-			if err != nil {
-				return err
-			}
-
-			// Remove failed adds
-			for _, cookie := range addBatch {
-				streamId, _ := StreamIdFromBytes(cookie.GetStreamId())
-
-				var isFailed bool
-				for _, failed := range resp.Msg.GetAdds() {
-					failedStreamId, _ := StreamIdFromBytes(failed.GetStreamId())
-					if failedStreamId.Compare(streamId) == 0 {
-						isFailed = true
-						break
-					}
-				}
-
-				if isFailed {
-					logging.FromCtx(s.syncStreamCtx).Errorw("Failed to add stream", "stream", streamId)
-				} else {
-					s.streams.Store(streamId, struct{}{})
-				}
-			}
-
-			// Remove failed removals
-			for _, streamId := range removeBatch {
-				streamId := StreamId(streamId)
-
-				var isFailed bool
-				for _, failed := range resp.Msg.GetRemovals() {
-					failedStreamId, _ := StreamIdFromBytes(failed.GetStreamId())
-					if failedStreamId.Compare(streamId) == 0 {
-						isFailed = true
-						break
-					}
-				}
-
-				if isFailed {
-					logging.FromCtx(s.syncStreamCtx).Errorw("Failed to remove stream", "stream", streamId)
-				} else {
-					s.streams.Delete(streamId)
-				}
-			}
-
-			return nil
+		resp, err := s.client.ModifySync(ctx, connect.NewRequest(&ModifySyncRequest{
+			SyncId:        s.syncID,
+			AddStreams:    toAdd,
+			RemoveStreams: toRemove,
+		}))
+		if err != nil {
+			return err
 		}
 
-		// Process batches
-		maxLen := len(toAdd)
-		if len(toRemove) > maxLen {
-			maxLen = len(toRemove)
+		// Remove failed adds
+		for _, cookie := range toAdd {
+			streamId, _ := StreamIdFromBytes(cookie.GetStreamId())
+
+			var isFailed bool
+			for _, failed := range resp.Msg.GetAdds() {
+				failedStreamId, _ := StreamIdFromBytes(failed.GetStreamId())
+				if failedStreamId.Compare(streamId) == 0 {
+					isFailed = true
+					break
+				}
+			}
+
+			if isFailed {
+				logging.FromCtx(s.syncStreamCtx).Errorw("Failed to add stream", "stream", streamId)
+			} else {
+				s.streams.Store(streamId, struct{}{})
+			}
 		}
 
-		for i := 0; i < maxLen; i += batchSize {
-			var addBatch []*SyncCookie
-			var removeBatch [][]byte
+		// Remove failed removals
+		for _, streamId := range toRemove {
+			streamId := StreamId(streamId)
 
-			if i < len(toAdd) {
-				endAdd := i + batchSize
-				if endAdd > len(toAdd) {
-					endAdd = len(toAdd)
+			var isFailed bool
+			for _, failed := range resp.Msg.GetRemovals() {
+				failedStreamId, _ := StreamIdFromBytes(failed.GetStreamId())
+				if failedStreamId.Compare(streamId) == 0 {
+					isFailed = true
+					break
 				}
-				addBatch = toAdd[i:endAdd]
 			}
 
-			if i < len(toRemove) {
-				endRemove := i + batchSize
-				if endRemove > len(toRemove) {
-					endRemove = len(toRemove)
-				}
-				removeBatch = toRemove[i:endRemove]
-			}
-
-			if err := processBatch(addBatch, removeBatch); err != nil {
-				return err
+			if isFailed {
+				logging.FromCtx(s.syncStreamCtx).Errorw("Failed to remove stream", "stream", streamId)
+			} else {
+				s.streams.Delete(streamId)
 			}
 		}
 	}
