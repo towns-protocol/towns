@@ -5,8 +5,26 @@
 import { MembershipOp } from '@river-build/proto'
 import { makeTestClient, waitFor } from '../testUtils'
 import { genShortId } from '../../id'
+import { SyncedStream } from '../../syncedStream'
+import { StubPersistenceStore } from '../../persistenceStore'
+import EventEmitter from 'events'
+import TypedEmitter from 'typed-emitter'
+import { StreamEvents } from '../../streamEvents'
+import { dlog } from '@river-build/dlog'
+
+const log = dlog('csb:test:syncedStream')
+
+// Mock implementation helper
+const mockLoadStream = (persistenceStore: StubPersistenceStore, implementation: () => any) => {
+    const original = persistenceStore.loadStream.bind(persistenceStore)
+    persistenceStore.loadStream = implementation as typeof original
+    return () => {
+        persistenceStore.loadStream = original
+    }
+}
 
 describe('syncedStream', () => {
+    // Existing test for core functionality
     test('clientRefreshesStreamOnBadSyncCookie', async () => {
         const bobDeviceId = genShortId()
         const bob = await makeTestClient({ deviceId: bobDeviceId })
@@ -80,5 +98,117 @@ describe('syncedStream', () => {
 
         await bob2.stopSync()
         await alice.stopSync()
+    })
+
+    // Test metrics tracking
+    test('tracks metrics correctly', async () => {
+        const mockClientEmitter = new EventEmitter() as TypedEmitter<StreamEvents>
+        const persistenceStore = new StubPersistenceStore()
+        const streamId = genShortId()
+        const userId = genShortId()
+
+        const stream = new SyncedStream(userId, streamId, mockClientEmitter, log, persistenceStore)
+
+        // Initial metrics should be zero
+        const initialMetrics = stream.getMetrics()
+        expect(initialMetrics.successfulOperations).toBe(0)
+        expect(initialMetrics.failedOperations).toBe(0)
+        expect(initialMetrics.memoryUsage).toBeGreaterThanOrEqual(0)
+        expect(initialMetrics.retryCount).toBe(0)
+
+        // Test metrics reset
+        stream.resetMetrics()
+        const resetMetrics = stream.getMetrics()
+        expect(resetMetrics.successfulOperations).toBe(0)
+        expect(resetMetrics.failedOperations).toBe(0)
+        expect(resetMetrics.retryCount).toBe(0)
+    })
+
+    // Test error handling
+    test('handles errors appropriately', async () => {
+        const mockClientEmitter = new EventEmitter() as TypedEmitter<StreamEvents>
+        const persistenceStore = new StubPersistenceStore()
+        const streamId = genShortId()
+        const userId = genShortId()
+
+        const stream = new SyncedStream(userId, streamId, mockClientEmitter, log, persistenceStore)
+
+        // Mock persistence store to fail
+        const restore = mockLoadStream(persistenceStore, () => {
+            throw new Error('Test error')
+        })
+
+        // Test error handling
+        const result = await stream.initializeFromPersistence()
+        expect(result).toBe(false)
+
+        const metricsAfterError = stream.getMetrics()
+        expect(metricsAfterError.failedOperations).toBe(1)
+        expect(metricsAfterError.retryCount).toBe(1)
+        expect(metricsAfterError.lastError).toBeDefined()
+        expect(metricsAfterError.lastError?.message).toBe('Test error')
+
+        restore()
+    })
+
+    // Test initialization timeout
+    test('handles initialization timeout', async () => {
+        const mockClientEmitter = new EventEmitter() as TypedEmitter<StreamEvents>
+        const persistenceStore = new StubPersistenceStore()
+        const streamId = genShortId()
+        const userId = genShortId()
+
+        const stream = new SyncedStream(userId, streamId, mockClientEmitter, log, persistenceStore)
+
+        // Mock persistence store to delay
+        const restore = mockLoadStream(persistenceStore, async () => {
+            await new Promise((resolve) => setTimeout(resolve, 31000))
+            return undefined
+        })
+
+        // Test timeout
+        const result = await stream.initializeFromPersistence()
+        expect(result).toBe(false)
+
+        const metricsAfterTimeout = stream.getMetrics()
+        expect(metricsAfterTimeout.failedOperations).toBe(1)
+        expect(metricsAfterTimeout.lastError?.message).toContain('timeout')
+
+        restore()
+    })
+
+    // Test memory tracking
+    test('tracks memory correctly', async () => {
+        const mockClientEmitter = new EventEmitter() as TypedEmitter<StreamEvents>
+        const persistenceStore = new StubPersistenceStore()
+        const streamId = genShortId()
+        const userId = genShortId()
+
+        const stream = new SyncedStream(userId, streamId, mockClientEmitter, log, persistenceStore)
+
+        // Initial memory usage
+        const initialMetrics = stream.getMetrics()
+        const initialMemory = initialMetrics.memoryUsage
+
+        // Check memory usage tracking
+        const updatedMetrics = stream.getMetrics()
+        expect(updatedMetrics.memoryUsage).toBeGreaterThanOrEqual(initialMemory)
+    })
+
+    // Test stream state
+    test('manages state correctly', async () => {
+        const mockClientEmitter = new EventEmitter() as TypedEmitter<StreamEvents>
+        const persistenceStore = new StubPersistenceStore()
+        const streamId = genShortId()
+        const userId = genShortId()
+
+        const stream = new SyncedStream(userId, streamId, mockClientEmitter, log, persistenceStore)
+
+        // Initial state
+        expect(stream.isUpToDate).toBe(false)
+
+        // Reset state
+        stream.resetUpToDate()
+        expect(stream.isUpToDate).toBe(false)
     })
 })

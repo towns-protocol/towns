@@ -279,7 +279,7 @@ export class Client
             highPriorityStreamIds,
             {
                 startSyncStreams: async () => {
-                    this.streams.startSyncStreams()
+                    await this.streams.startSyncStreams()
                     this.decryptionExtensions?.start()
                 },
                 initStream: (streamId, allowGetStream, persistedData) =>
